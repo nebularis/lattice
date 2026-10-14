@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# A patch log is declared and no generated operation writes the delta graphs (TD-46). The base already declares dal:PatchLog, so
+# this file names it again on a scope of higher priority, to say what it witnesses.
+# base: _base-thing.ttl
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:PatchLogScope a dal:ClassScope ; dal:priority 20 ; dal:targetClass ex:Thing .
+ex:PatchLogProfile a dal:DataAccessProfile ; dal:appliesTo ex:PatchLogScope ; dal:receiptModel dal:PatchLog .

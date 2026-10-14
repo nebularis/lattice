@@ -26,19 +26,19 @@ Rust implementation, so the answer does not rest on one engine. They agree on ev
 
 | File | Role |
 |---|---|
-| `oxigraph_backend.py` | `OxigraphBackend`: an in-memory quad store with `update`, `select`, `quads` and `count`, and `bind_parameters`, which fills a template's `$name` parameters with SPARQL term text, as a caller's client would |
+| `oxigraph_backend.py` | re-exports the adapter, which moved to [`tools/testing/oxigraph`](../../tools/testing/oxigraph/README.md) (ADR-A125, slice H2.4b): an in-memory quad store with `update`, `select`, `quads` and `count`, and `bind_parameters`, which fills a template's `$name` parameters with SPARQL term text, as a caller's client would |
 | `scenarios.py` | the experiments as functions that return data |
 | `run.py` | prints both experiments on Oxigraph |
 | `rdflib_comparison.py` | runs the same scenarios on rdflib and on Oxigraph and compares |
 | `test_spike.py` | eight checks, including that the two engines agree. Skipped without `pyoxigraph` |
-| `requirements.txt` | `pyoxigraph`, for this spike only |
+| `requirements.txt` | points at the test-support package |
 
 ## Running it
 
 From the repository root, after `mise run bootstrap` for the persistence packages.
 
 ```bash
-mise exec -- python -m pip install -r spikes/persistence-oxigraph/requirements.txt  # needs a Python the pyoxigraph wheels support
+mise run bootstrap:testing-oxigraph  # pyoxigraph 0.5.11 has a wheel for Python 3.14, so the checkout's own .venv is enough
 mise exec -- python spikes/persistence-oxigraph/run.py
 mise exec -- python spikes/persistence-oxigraph/rdflib_comparison.py
 mise exec -- python -m pytest spikes/persistence-oxigraph -q
@@ -75,6 +75,7 @@ After C, sequence 1 has no revision record.
 
 ## Limits to know
 
+- The scenarios run the generated updates **without the parameter guards** (`guards=False`). The spike is about what the update does, and the guard is a separate layer (ADR-A123). Oxigraph also cannot pass the guard's datatype test, which `tools/persistence/tests/test_store_probes.py` records (probe P5).
 - `bind_parameters` is textual. It does not look inside string literals, IRIs or comments. The
   generated templates have none that contain a parameter name. It replaces `?name` as well as
   `$name`, since SPARQL treats them as one variable.

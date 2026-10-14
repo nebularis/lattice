@@ -96,3 +96,7 @@ WINGMAN
 
 # Claude Code personal settings (ADR-A117)
 .claude/settings.local.json
+
+# Generated benchmark reports (ADR-A124)
+benchmark/*/report.json
+benchmark/*/report.md

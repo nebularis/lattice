@@ -145,6 +145,18 @@ that the approach is wrong (skip a named list of build/dependency directories; `
 4. If the test will shell out for a repository-wide check, use `repo_files` instead, not a fresh
    `subprocess.run(["git", "grep", ...])` call.
 
+## Tests that run SPARQL on an engine
+
+A test that executes generated SPARQL opts in to every engine with `@engines.each_engine`
+(`tools/persistence/tests/engines.py`), so it runs on rdflib and, where `tools/testing/oxigraph` is installed, on Oxigraph.
+What the engines do differently is recorded in
+[docs/architecture/triple-store-discovery.md](../../../docs/architecture/triple-store-discovery.md), and skill
+`lattice-triple-stores` says how to probe and record a new difference. Two points from it matter for any such test.
+
+- On rdflib, the order of solutions from a non-lazy join follows `PYTHONHASHSEED` (TSD-01). A test whose result depends on that
+  order passes or fails by process. Fix the seed or sweep it in child processes.
+- rdflib drops a result row whose projected variables are all unbound (TSD-10). Project a variable you know is bound.
+
 ## A pytest quirk on Windows worth knowing
 
 A long multi-line PowerShell command block sent to a persistent terminal can appear to echo stale

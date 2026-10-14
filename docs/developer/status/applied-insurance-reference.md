@@ -154,3 +154,8 @@ AIR-2.3, AIR-2.4 and AIR-4.2 built on `air/applied-reference` (not yet handed to
   [air-leftovers.md](../plans/air-leftovers.md).
 - 2026-10-14: AIR-3.4-Q1 and AIR-3.4-Q2 decided at their leanings. No question of the trip remains
   open, so `air/applied-reference` can be created.
+- 2026-10-14: TD-49 raised from formal-methods track H. AIR-4.1 and AIR-4.2 on `air/applied-reference` make exposure set membership
+  inverse-functional, against the module README's design, which the maintainer confirmed: unchanged members are shared across
+  exposure set versions by identity, not duplicated by node. To fix before or with the branch's merge, with an example of two
+  schedule versions sharing an unchanged location. Phase 4 plan corrected for the planned membership properties.
+

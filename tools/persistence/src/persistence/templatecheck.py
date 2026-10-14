@@ -81,6 +81,8 @@ OPTIONAL_INSERT_VARIABLES: dict[str, dict[str, str]] = {
 _SLOT_STAND_INS = {
     "payloadTriples": "<urn:x-check:s> <urn:x-check:p> <urn:x-check:o> .",
     "logGraphs": "<urn:x-check:log>",
+    "eventRows": '(<urn:x-check:event> <urn:x-check:type> "1"^^<http://www.w3.org/2001/XMLSchema#long> "2026-01-01T00:00:00Z"^^<http://www.w3.org/2001/XMLSchema#dateTime>)',
+    "eventTriples": "<urn:x-check:event> <urn:x-check:p> <urn:x-check:o> .",
 }
 
 _COMMENT = re.compile(r"\{\{!.*?\}\}", re.S)
@@ -98,7 +100,7 @@ class Operation:
     text: str  # rendered, request-time slots filled with stand-ins
 
 
-def operations(compiled: Graph) -> list[Operation]:
+def operations(compiled: Graph, guards: bool = True) -> list[Operation]:
     """Every generated operation of every target in a compiled profile,
     rendered as ``instantiate`` renders it."""
     out: list[Operation] = []
@@ -108,7 +110,7 @@ def operations(compiled: Graph) -> list[Operation]:
         if deployment is not None:
             target += "@" + str(deployment).rsplit("#", 1)[-1]
         for node in sorted(compiled.objects(profile, DAL.generatedOperation), key=str):
-            name, text = _render_operation(compiled, node, None)
+            name, text = _render_operation(compiled, node, None, guards)
             path = str(compiled.value(compiled.value(node, DAL.usesTemplate), DAL.templatePath))
             for slot in REQUEST_TIME_SLOTS:
                 text = text.replace("{{{" + slot + "}}}", _SLOT_STAND_INS[slot])

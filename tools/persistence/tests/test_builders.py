@@ -12,6 +12,8 @@ import functools
 import re
 
 import pytest
+
+import engines
 from rdflib import RDF, XSD, Dataset, Literal as RdfLiteral, URIRef
 
 from persistence import witness
@@ -52,12 +54,18 @@ def _first(stem: str):
 
 
 def test_h2_2_t1_the_ported_operations_are_the_templates_listed_and_every_one_is_generated_by_a_fixture():
-    assert PORTED == [
+    assert PORTED == sorted([
         "append-event", "append-event-dataset-guard", "bootstrap-version-row", "bootstrap-version-row-dataset-guard",
+        "cas-replace-composite-property", "cas-replace-composite-property-dataset-guard",
         "cas-replace-named-graph", "cas-replace-named-graph-dataset-guard",
+        "create-if-absent-composite", "create-if-absent-composite-dataset-guard",
         "create-if-absent-named-graph", "create-if-absent-named-graph-dataset-guard",
+        "tombstone-delete-composite", "tombstone-delete-composite-dataset-guard",
         "tombstone-delete-named-graph", "tombstone-delete-named-graph-dataset-guard", "unconditional-write",
-    ]
+        # H2.5: the key claims and the audits. Every template is ported, apart from cas-replace-value-guard (TD-43).
+        "key-claim-write", "key-claim-write-dual", "key-claim-retire", "key-claim-quarantine", "key-claim-merge-rewrite",
+        "key-claim-duplicate-audit", "fork-detection-audit", "gap-scan-audit", "revision-multi-txn-audit", "txn-multi-revision-audit",
+    ])
     assert {stem for _, _, stem, _ in _ported()} == set(PORTED)
 
 
@@ -132,11 +140,13 @@ def _expected_guard_line(params) -> str:
         if p.kind is Kind.IRI:
             tests.append(f"ISIRI(${p.name})")
         elif p.kind in (Kind.LONG, Kind.POSITION):
-            tests.append(f"DATATYPE(${p.name}) = xsd:long")
+            tests.append(f"DATATYPE(${p.name}) = DATATYPE(\"0\"^^xsd:long)")
         elif p.kind in (Kind.DIGEST, Kind.STRING):
             tests.append(f"DATATYPE(${p.name}) = xsd:string")
         elif p.kind is Kind.IRI_OR_LITERAL:
             tests.append(f"(ISIRI(${p.name}) || ISLITERAL(${p.name}))")
+        elif p.kind is Kind.LITERAL:
+            tests.append(f'ISLITERAL(${p.name}) && LANG(${p.name}) = ""')
         if p.equals is not None:  # computed from the parameter list, as the type tests are
             tests.append(_Out().expr(TermGuard(ParamRef(p.name), p.equals)))
     return "FILTER(" + " && ".join(tests) + ")"
@@ -151,8 +161,12 @@ def test_h2_2_t6_the_guard_is_exactly_one_group_with_one_filter_of_type_tests_fi
     assert bare.guard == GUARDS_OFF and guarded.guard != GUARDS_OFF
     assert dataclasses.replace(guarded, guard=GUARDS_OFF) == bare
     on, off = render(guarded).splitlines(), render(bare).splitlines()
+    required = [p for p in guarded.params if p.required and p.kind not in SLOT_KINDS]
+    if not required:
+        assert on == off  # nothing to require, so no guard group at all (plan 4.3, gate 1)
+        return
     start = on.index("WHERE {")
-    line = _expected_guard_line([p for p in guarded.params if p.required and p.kind not in SLOT_KINDS])
+    line = _expected_guard_line(required)
     # one group, one FILTER, first in WHERE, on one line when short and on three otherwise
     candidates = [["  { " + line + " }"], ["  {", "    " + line, "  }"]]
     assert any(on == off[: start + 1] + group + off[start + 1:] for group in candidates)
@@ -171,13 +185,25 @@ LONG = lambda n: RdfLiteral(n, datatype=XSD.long)
 STREAM = URIRef("urn:stream:orders/1")
 APPEND = {
     "stream": STREAM, "epoch": LONG(3), "revBase": RdfLiteral("urn:rev:orders/1/e3/"), "txnId": URIRef("urn:txn:1"),
-    "requestDigest": RdfLiteral("ab" * 32), "event": URIRef("urn:event:1"), "eventType": URIRef("urn:type:Placed"),
-    "opSeq": LONG(1), "occurredAt": RdfLiteral("2026-10-12T10:00:00Z", datatype=XSD.dateTime),
+    "requestDigest": RdfLiteral("ab" * 32),
 }
 
 
+def event_row(event: str = "urn:event:1", event_type: str = "urn:type:Placed", op_seq: int = 1, at: str = "2026-10-12T10:00:00Z") -> str:
+    """One row of an append's `{{{eventRows}}}` slot, as a caller renders it (formal-methods H2.6b)."""
+    return f'(<{event}> <{event_type}> "{op_seq}"^^<{XSD.long}> "{at}"^^<{XSD.dateTime}>)'
+
+
+EVENT_SLOTS = ("{{{eventRows}}}", "{{{eventTriples}}}")
+
+
+def fill_events(text: str, rows: str | None = None, triples: str = "") -> str:
+    """The text of an append with its two request-time slots filled. Other operations have neither slot."""
+    return text.replace(EVENT_SLOTS[0], event_row() if rows is None else rows).replace(EVENT_SLOTS[1], triples)
+
+
 def _store(*, rows: int = 1, dataset_epoch: int | None = None) -> Dataset:
-    ds = Dataset()
+    ds = engines.dataset()
     meta = ds.graph(URIRef("urn:g:meta"))
     for i in range(rows):
         row = URIRef(f"urn:stream:orders/{i + 1}")
@@ -188,8 +214,9 @@ def _store(*, rows: int = 1, dataset_epoch: int | None = None) -> Dataset:
     return ds
 
 
-def _run(stem: str, ds: Dataset, bindings: dict, *, guards: bool = True) -> Dataset:
-    ds.update(render(build(stem, CONTEXT, guards=guards)), initBindings=bindings)
+def _run(stem: str, ds: Dataset, bindings: dict, *, guards: bool | None = None, rows: str | None = None, triples: str = "") -> Dataset:
+    text = fill_events(render(build(stem, CONTEXT, guards=engines.guards(guards))), rows, triples)
+    ds.update(text, initBindings=bindings)
     return ds
 
 
@@ -197,6 +224,7 @@ def _meta(ds: Dataset) -> set:
     return {(str(s), str(p).removeprefix(PAT), str(o)) for s, p, o in ds.graph(URIRef("urn:g:meta"))}
 
 
+@engines.each_engine_and_guards
 def test_h2_2_t7_append_writes_the_event_the_receipt_the_log_and_moves_the_head():
     ds = _run("append-event", _store(), APPEND)
     rev = "urn:rev:orders/1/e3/0000000000000000001"
@@ -209,6 +237,7 @@ def test_h2_2_t7_append_writes_the_event_the_receipt_the_log_and_moves_the_head(
     assert len(log_graphs) == 1
 
 
+@engines.each_engine_and_guards
 def test_h2_2_t8_the_first_revision_has_no_previous_revision_and_is_still_written():
     ds = _run("append-event", _store(), APPEND)
     log = next(g for g in ds.graphs() if str(g.identifier).startswith(LOG))
@@ -216,6 +245,7 @@ def test_h2_2_t8_the_first_revision_has_no_previous_revision_and_is_still_writte
     assert len(list(log.objects(None, URIRef(PAT + "recordedAt")))) == 1
 
 
+@engines.each_engine_and_guards
 def test_h2_2_t9_a_retry_with_the_same_transaction_changes_nothing():
     ds = _run("append-event", _store(), APPEND)
     before = {(str(g.identifier), s, p, o) for g in ds.graphs() for s, p, o in g}
@@ -223,15 +253,17 @@ def test_h2_2_t9_a_retry_with_the_same_transaction_changes_nothing():
     assert {(str(g.identifier), s, p, o) for g in ds.graphs() for s, p, o in g} == before
 
 
+@engines.each_engine_and_guards
 def test_h2_2_t10_a_second_event_chains_to_the_first():
     ds = _run("append-event", _store(), APPEND)
-    second = {**APPEND, "txnId": URIRef("urn:txn:2"), "event": URIRef("urn:event:2"), "opSeq": LONG(2)}
-    _run("append-event", ds, second)
+    second = {**APPEND, "txnId": URIRef("urn:txn:2")}
+    _run("append-event", ds, second, rows=event_row("urn:event:2", op_seq=2))
     assert (str(STREAM), "seq", "2") in _meta(ds)
     log = next(g for g in ds.graphs() if str(g.identifier).startswith(LOG))
     assert (URIRef("urn:rev:orders/1/e3/0000000000000000002"), URIRef(PAT + "prevRev"), URIRef("urn:rev:orders/1/e3/0000000000000000001")) in log
 
 
+@engines.each_engine_and_guards
 def test_h2_2_t11_the_dataset_guard_variant_writes_only_while_the_dataset_epoch_matches():
     wrote = _run("append-event-dataset-guard", _store(dataset_epoch=3), APPEND)
     assert (str(STREAM), "seq", "1") in _meta(wrote)
@@ -239,15 +271,17 @@ def test_h2_2_t11_the_dataset_guard_variant_writes_only_while_the_dataset_epoch_
     assert (str(STREAM), "seq", "0") in _meta(refused) and not any(s == str(STREAM) and p == "head" for s, p, _ in _meta(refused))
 
 
+@engines.each_engine_and_guards
 def test_h2_2_t12_bootstrap_creates_the_row_once():
     target = URIRef("urn:stream:new")
-    ds = _run("bootstrap-version-row", Dataset(), {"target": target, "epoch": LONG(3)})
+    ds = _run("bootstrap-version-row", engines.dataset(), {"target": target, "epoch": LONG(3)})
     rows = _meta(ds)
     assert rows == {(str(target), "epoch", "3"), (str(target), "seq", "0"), (str(target), str(RDF.type), PAT + "VersionRow")}
     _run("bootstrap-version-row", ds, {"target": target, "epoch": LONG(9)})
     assert _meta(ds) == rows
 
 
+@engines.each_engine_and_guards
 def test_h2_2_t13_the_bootstrap_dataset_guard_variant_needs_a_matching_dataset_epoch():
     target = URIRef("urn:stream:new")
     assert _meta(_run("bootstrap-version-row-dataset-guard", _store(rows=0, dataset_epoch=4), {"target": target, "epoch": LONG(3)})) == set()
@@ -265,8 +299,8 @@ _TYPE = (str(_TARGET), str(RDF.type), PAT + "VersionRow")
     ("target as a literal", {"target": RdfLiteral("urn:stream:new"), "epoch": LONG(3)}, {_TYPE, (str(_TARGET), "seq", "0"), (str(_TARGET), "epoch", "3")}),
 ])
 def test_h2_2_t14_a_missing_or_mistyped_parameter_writes_nothing_where_without_the_guard_it_writes_a_bad_row(name, bindings, unguarded):
-    assert _meta(_run("bootstrap-version-row", Dataset(), bindings)) == set()
-    assert _meta(_run("bootstrap-version-row", Dataset(), bindings, guards=False)) == unguarded  # TD-34
+    assert _meta(_run("bootstrap-version-row", engines.dataset(), bindings)) == set()
+    assert _meta(_run("bootstrap-version-row", engines.dataset(), bindings, guards=False)) == unguarded  # TD-34
 
 
 @pytest.mark.parametrize("missing", sorted(set(APPEND) - {"stream"}))
@@ -310,7 +344,7 @@ def test_h2_2_t18_an_overriding_template_library_is_still_rendered_by_mustache(t
     for template in _template_dir_default().glob("*.mustache"):
         (tmp_path / template.name).write_text(template.read_text(encoding="utf-8"), encoding="utf-8")
     text = next(iter(_instantiate(template_dir=tmp_path).values()))["append"]
-    assert "ISIRI" not in text and "{{" not in text.replace("{{{payloadTriples}}}", "")
+    assert "ISIRI" not in text and "{{" not in text.replace("{{{payloadTriples}}}", "").replace("{{{eventRows}}}", "").replace("{{{eventTriples}}}", "")
 
 
 def test_h2_2_t19_the_command_line_flag_leaves_the_guards_out(tmp_path):

@@ -11,6 +11,8 @@ import re
 import urllib.parse
 
 import pytest
+
+import engines
 from rdflib import RDF, XSD, Dataset, Literal as RdfLiteral, URIRef
 
 from persistence.builders import build
@@ -52,8 +54,8 @@ def tombstone_args(root=ROOT, expected=1, n=1) -> dict:
     return {**replace_args(root, expected, n), "cause": URIRef("urn:cause:gdpr"), "actor": URIRef("urn:actor:admin")}
 
 
-def run(stem: str, ds: Dataset, args: dict, *, payload: str = PAYLOAD, guards: bool = True, names: str = "query") -> Dataset:
-    text = render(build(stem, CONTEXT, guards=guards, graph_names=names)).replace(SLOT, payload)
+def run(stem: str, ds: Dataset, args: dict, *, payload: str = PAYLOAD, guards: bool | None = None, names: str = "query") -> Dataset:
+    text = render(build(stem, CONTEXT, guards=engines.guards(guards), graph_names=names)).replace(SLOT, payload)
     ds.update(text, initBindings=args)
     return ds
 
@@ -67,7 +69,7 @@ def everything(ds: Dataset) -> set:
 
 
 def created(root=ROOT, *, dataset_epoch: int | None = None) -> Dataset:
-    ds = Dataset()
+    ds = engines.dataset()
     if dataset_epoch is not None:
         ds.graph(URIRef("urn:g:dataset")).add((URIRef("urn:g:dataset-node"), URIRef(PAT + "epoch"), LONG(dataset_epoch)))
     stem = "create-if-absent-named-graph" + ("-dataset-guard" if dataset_epoch is not None else "")
@@ -77,6 +79,7 @@ def created(root=ROOT, *, dataset_epoch: int | None = None) -> Dataset:
 # ---- create-if-absent ------------------------------------------------------------------------------------------
 
 
+@engines.each_engine_and_guards
 def test_h2_3_t3_a_create_writes_the_payload_into_the_roots_own_graph_and_a_version_row_at_seq_1():
     ds = created()
     assert quads(ds, graph_of(ROOT)) == {("urn:root:1", "urn:p", "v1")}
@@ -87,6 +90,7 @@ def test_h2_3_t3_a_create_writes_the_payload_into_the_roots_own_graph_and_a_vers
     assert len(receipts) == 1 and (URIRef(f"urn:rev:{ROOT}/1"), URIRef(PAT + "target"), ROOT) in receipts[0]
 
 
+@engines.each_engine_and_guards
 def test_h2_3_t4_a_second_create_of_the_same_root_writes_nothing():
     ds = created()
     before = everything(ds)
@@ -96,17 +100,18 @@ def test_h2_3_t4_a_second_create_of_the_same_root_writes_nothing():
 
 def test_h2_3_t5_without_a_root_nothing_is_written_and_without_the_guard_a_claim_and_receipt_are():
     args = {k: v for k, v in create_args().items() if k != "root"}
-    assert everything(run("create-if-absent-named-graph", Dataset(), args)) == set()
-    unguarded = run("create-if-absent-named-graph", Dataset(), args, guards=False)
+    assert everything(run("create-if-absent-named-graph", engines.dataset(), args)) == set()
+    unguarded = run("create-if-absent-named-graph", engines.dataset(), args, guards=False)
     written = everything(unguarded)
     # what rdflib does, recorded: a claim and the part of a receipt that needs no root, no row and no payload
     assert any(g == "urn:g:txn" for g, *_ in written)
     assert not any(g == "urn:g:meta" for g, *_ in written) and not any(g.startswith("urn:g:orders/") for g, *_ in written)
 
 
+@engines.each_engine_and_guards
 def test_h2_3_t6_a_create_under_the_dataset_guard_needs_the_matching_dataset_epoch():
     assert quads(created(dataset_epoch=3), graph_of(ROOT)) == {("urn:root:1", "urn:p", "v1")}
-    ds = Dataset()
+    ds = engines.dataset()
     ds.graph(URIRef("urn:g:dataset")).add((URIRef("urn:g:dataset-node"), URIRef(PAT + "epoch"), LONG(4)))
     run("create-if-absent-named-graph-dataset-guard", ds, create_args())
     assert quads(ds, graph_of(ROOT)) == set() and _meta(ds) == set()
@@ -115,24 +120,26 @@ def test_h2_3_t6_a_create_under_the_dataset_guard_needs_the_matching_dataset_epo
 # ---- unconditional-write -----------------------------------------------------------------------------------------
 
 
+@engines.each_engine_and_guards
 def test_h2_3_t7_an_unconditional_write_writes_into_the_roots_graph_and_nowhere_else():
-    ds = run("unconditional-write", Dataset(), {"root": ROOT})
+    ds = run("unconditional-write", engines.dataset(), {"root": ROOT})
     assert everything(ds) == {(str(graph_of(ROOT)), "urn:root:1", "urn:p", "v1")}
 
 
 def test_h2_3_t8_a_literal_root_builds_a_graph_name_only_without_the_guard_and_a_missing_root_never_names_a_graph():
-    assert everything(run("unconditional-write", Dataset(), {"root": RdfLiteral("urn:root:1")})) == set()
-    unguarded = run("unconditional-write", Dataset(), {"root": RdfLiteral("urn:root:1")}, guards=False)
+    assert everything(run("unconditional-write", engines.dataset(), {"root": RdfLiteral("urn:root:1")})) == set()
+    unguarded = run("unconditional-write", engines.dataset(), {"root": RdfLiteral("urn:root:1")}, guards=False)
     assert quads(unguarded, graph_of(ROOT)) == {("urn:root:1", "urn:p", "v1")}  # a name built from a literal's text
     # rdflib, recorded: with no root and no guard it writes the payload into a fresh blank-node graph, where the
     # specification skips a quad whose graph is unbound. No graph with an IRI is touched.
-    unnamed = everything(run("unconditional-write", Dataset(), {}, guards=False))
+    unnamed = everything(run("unconditional-write", engines.dataset(), {}, guards=False))
     assert not any(graph.startswith("urn:") for graph, *_ in unnamed)
 
 
 # ---- cas-replace ---------------------------------------------------------------------------------------------------
 
 
+@engines.each_engine_and_guards
 def test_h2_3_t9_a_replace_leaves_exactly_the_payload_and_moves_the_row():
     ds = created()
     run("cas-replace-named-graph", ds, replace_args(), payload=PAYLOAD2)
@@ -142,6 +149,7 @@ def test_h2_3_t9_a_replace_leaves_exactly_the_payload_and_moves_the_row():
     assert (str(ROOT), "head", f"urn:rev:{ROOT}/2") in meta and (str(ROOT), "head", f"urn:rev:{ROOT}/1") not in meta
 
 
+@engines.each_engine_and_guards
 def test_h2_3_t10_a_replace_at_the_wrong_seq_writes_nothing():
     ds = created()
     before = everything(ds)
@@ -149,6 +157,7 @@ def test_h2_3_t10_a_replace_at_the_wrong_seq_writes_nothing():
     assert everything(ds) == before
 
 
+@engines.each_engine_and_guards
 def test_h2_3_t11_the_first_replace_after_a_create_chains_its_receipt_to_the_create():
     ds = created()
     run("cas-replace-named-graph", ds, replace_args(), payload=PAYLOAD2)
@@ -156,6 +165,7 @@ def test_h2_3_t11_the_first_replace_after_a_create_chains_its_receipt_to_the_cre
     assert (URIRef(f"urn:rev:{ROOT}/2"), URIRef(PAT + "prevRev"), URIRef(f"urn:rev:{ROOT}/1")) in receipts
 
 
+@engines.each_engine_and_guards
 def test_h2_3_t12_a_replace_without_asserted_and_retracted_graphs_writes_the_receipt_without_those_two_triples():
     ds = created()
     run("cas-replace-named-graph", ds, replace_args(), payload=PAYLOAD2)
@@ -168,6 +178,7 @@ def test_h2_3_t12_a_replace_without_asserted_and_retracted_graphs_writes_the_rec
     assert (URIRef(f"urn:rev:{ROOT}/3"), URIRef(PAT + "asserts"), URIRef("urn:g:added")) in receipts
 
 
+@engines.each_engine_and_guards
 def test_h2_3_t13_a_replace_of_one_root_leaves_another_roots_graph_alone():
     ds = created()
     run("create-if-absent-named-graph", ds, create_args(OTHER, n=3), payload='<urn:root:2> <urn:p> "other" .')
@@ -176,6 +187,7 @@ def test_h2_3_t13_a_replace_of_one_root_leaves_another_roots_graph_alone():
     assert quads(ds, graph_of(OTHER)) == other == {("urn:root:2", "urn:p", "other")}
 
 
+@engines.each_engine_and_guards
 def test_h2_3_t14_a_replay_of_a_replace_changes_nothing():
     ds = created()
     run("cas-replace-named-graph", ds, replace_args(), payload=PAYLOAD2)
@@ -184,6 +196,7 @@ def test_h2_3_t14_a_replay_of_a_replace_changes_nothing():
     assert everything(ds) == before
 
 
+@engines.each_engine_and_guards
 def test_h2_3_t15_a_replace_under_the_dataset_guard_rebases_the_rows_epoch():
     ds = created(dataset_epoch=3)
     ds.graph(URIRef("urn:g:dataset")).remove((None, None, None))
@@ -214,6 +227,7 @@ def test_h2_3_t16_a_replace_with_no_root_writes_nothing_where_without_the_guard_
 # ---- tombstone-delete --------------------------------------------------------------------------------------------
 
 
+@engines.each_engine_and_guards
 def test_h2_3_t17_a_tombstone_empties_the_graph_marks_the_row_and_writes_a_deletion_receipt_with_cause_and_actor():
     ds = created()
     run("tombstone-delete-named-graph", ds, tombstone_args())
@@ -225,6 +239,7 @@ def test_h2_3_t17_a_tombstone_empties_the_graph_marks_the_row_and_writes_a_delet
     assert (rev, URIRef(PAT + "cause"), URIRef("urn:cause:gdpr")) in receipts and (rev, URIRef(PAT + "actor"), URIRef("urn:actor:admin")) in receipts
 
 
+@engines.each_engine_and_guards
 def test_h2_3_t18_after_a_tombstone_a_replace_writes_nothing_and_a_replay_of_the_tombstone_changes_nothing():
     ds = created()
     run("tombstone-delete-named-graph", ds, tombstone_args())
@@ -234,6 +249,7 @@ def test_h2_3_t18_after_a_tombstone_a_replace_writes_nothing_and_a_replay_of_the
     assert everything(ds) == before
 
 
+@engines.each_engine_and_guards
 def test_h2_3_t19_a_tombstone_under_the_dataset_guard_needs_the_matching_dataset_epoch():
     ds = created(dataset_epoch=3)
     ds.graph(URIRef("urn:g:dataset")).remove((None, None, None))
@@ -263,6 +279,7 @@ def _normalised(ds: Dataset) -> set:
     return {(g, s, p, "<time>" if p.endswith("recordedAt") else o) for g, s, p, o in everything(ds)}
 
 
+@engines.each_engine_and_guards
 def test_h2_3_t21_with_the_right_g_a_replace_gives_the_same_result_as_the_query_naming_the_graph():
     by_query = created()
     run("cas-replace-named-graph", by_query, replace_args(), payload=PAYLOAD2)
@@ -278,7 +295,7 @@ def test_h2_3_t21_with_the_right_g_a_replace_gives_the_same_result_as_the_query_
 ])
 def test_h2_3_t22_with_the_right_g_each_naming_operation_equals_its_default_form(stem, args):
     def prepared() -> Dataset:
-        return Dataset() if stem != "tombstone-delete-named-graph" else created()
+        return engines.dataset() if stem != "tombstone-delete-named-graph" else created()
 
     default = run(stem, prepared(), args)
     caller = run(stem, prepared(), {**args, "g": graph_of(ROOT)}, names="caller")
@@ -287,11 +304,11 @@ def test_h2_3_t22_with_the_right_g_each_naming_operation_equals_its_default_form
 
 @pytest.mark.parametrize("wrong", [URIRef("urn:g:orders/other"), URIRef("urn:g:orders/urn:root:1"), RdfLiteral("urn:g:orders/urn%3Aroot%3A1")])
 def test_h2_3_t23_a_wrong_g_writes_nothing_under_the_guard_and_into_that_graph_without_it(wrong):
-    ds = Dataset()
+    ds = engines.dataset()
     run("unconditional-write", ds, {"root": ROOT, "g": wrong}, names="caller")
     assert everything(ds) == set()
     if isinstance(wrong, URIRef):
-        unguarded = run("unconditional-write", Dataset(), {"root": ROOT, "g": wrong}, guards=False, names="caller")
+        unguarded = run("unconditional-write", engines.dataset(), {"root": ROOT, "g": wrong}, guards=False, names="caller")
         assert quads(unguarded, wrong) == {("urn:root:1", "urn:p", "v1")}
 
 
@@ -310,9 +327,10 @@ def _substitute(text: str, args: dict) -> str:
     return text
 
 
+@engines.each_engine_and_guards
 def test_h2_3_t25_a_caller_that_substitutes_text_gets_a_constant_graph_and_the_same_result():
     args = {**replace_args(), "g": graph_of(ROOT)}
-    text = render(build("cas-replace-named-graph", CONTEXT, graph_names="caller")).replace(SLOT, PAYLOAD2)
+    text = render(build("cas-replace-named-graph", CONTEXT, guards=engines.guards(), graph_names="caller")).replace(SLOT, PAYLOAD2)
     substituted = _substitute(text, args)
     assert f"GRAPH <{graph_of(ROOT)}>" in substituted and "GRAPH ?g" not in substituted and "GRAPH $g" not in substituted
     assert set(re.findall(r"\$\w+", substituted)) == {"$assertGraph", "$retractGraph"}  # the optional parameters nobody gave

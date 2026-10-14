@@ -53,13 +53,15 @@ class Kind(Enum):
     POSITION = "Position"
     DIGEST = "Digest"
     IRI_OR_LITERAL = "IriOrLiteral"
+    LITERAL = "Literal"
     PAYLOAD = "Payload"
     REGISTRY_LIST = "RegistryList"
+    ROWS = "Rows"
 
 
-SLOT_KINDS = frozenset({Kind.PAYLOAD, Kind.REGISTRY_LIST})
-"""Kinds that are Mustache-style request-time slots and not SPARQL variables. A set of triples or of graph
-IRIs is not one RDF term, so the caller fills the slot with text before sending."""
+SLOT_KINDS = frozenset({Kind.PAYLOAD, Kind.REGISTRY_LIST, Kind.ROWS})
+"""Kinds that are Mustache-style request-time slots and not SPARQL variables. A set of triples, of graph
+IRIs or of ``VALUES`` rows is not one RDF term, so the caller fills the slot with text before sending."""
 
 
 class Compare(Enum):
@@ -69,6 +71,18 @@ class Compare(Enum):
 
     TERM = "term"
     VALUE = "value"
+
+
+class AccessMode(Enum):
+    """How an operation touches a logical resource (formal-methods H2.6). An absence read is what write skew turns on, so it
+    is named apart from a point read."""
+
+    POINT_READ = "PointRead"
+    ABSENCE_READ = "AbsenceRead"
+    SCAN_READ = "ScanRead"
+    WHOLE_AGGREGATE_READ = "WholeAggregateRead"
+    INSERT = "Insert"
+    DELETE = "Delete"
 
 
 class Binding(Enum):
@@ -205,6 +219,14 @@ class RegistrySlot:
     param: str
 
 
+@dataclass(frozen=True)
+class RowsSlot:
+    """Where the caller's rows of a multi-variable ``VALUES`` block go, such as the events of an append. It names a declared
+    parameter of kind ``Rows`` and is rendered as the Mustache tag ``{{{name}}}``."""
+
+    param: str
+
+
 # ---- graphs
 
 
@@ -332,6 +354,16 @@ class Values:
 
 
 @dataclass(frozen=True)
+class RowValues:
+    """``VALUES (?a ?b ...) { rows }`` with the rows supplied by the caller in a :class:`RowsSlot`, one row per event of an
+    append (formal-methods H2.6b). An empty slot gives no solution, so nothing is written. Each row carries its own values, so
+    nothing depends on the order a store visits the solutions in."""
+
+    vars: tuple
+    slot: RowsSlot
+
+
+@dataclass(frozen=True)
 class Union_:
     groups: tuple = ()
 
@@ -349,9 +381,29 @@ class Projected:
 
 @dataclass(frozen=True)
 class Select:
+    """A ``SELECT``: the whole of a query operation, or the head of a :class:`SubSelect`. The fragment is closed
+    (ADR-A123, addendum of 2026-10-13): projection of variables and aggregates, ``GROUP BY`` over variables, and
+    ``HAVING``. ``distinct``, ``order_by``, ``limit`` and ``offset`` exist so that the checker can refuse them with a
+    named rule, ``FragmentLimit``, and each is lifted when a template needs it, with an engine test. Only ``distinct``
+    on a top-level query is allowed."""
+
     projection: tuple = ()
     group_by: tuple = ()
     having: tuple = ()
+    distinct: bool = False
+    order_by: tuple = ()
+    limit: Optional[int] = None
+    offset: Optional[int] = None
+
+
+@dataclass(frozen=True)
+class SubSelect:
+    """``{ SELECT ... WHERE { ... } GROUP BY ... HAVING ... }`` as a pattern element. It is evaluated on its own,
+    before it is joined with the rest of its group, so it sees no variable of the enclosing group and only its
+    projections leave it. Inside a ``GRAPH`` block it reads that graph."""
+
+    select: Select
+    where: Group
 
 
 @dataclass(frozen=True)
@@ -399,8 +451,8 @@ class Operation:
 
 
 __all__ = [
-    "IrError", "Kind", "SLOT_KINDS", "Compare", "Binding", "Param", "Var", "ParamRef", "Const", "RdfType", "A",
+    "IrError", "Kind", "SLOT_KINDS", "Compare", "AccessMode", "Binding", "Param", "Var", "ParamRef", "Const", "RdfType", "A",
     "Path", "Triple", "PayloadSlot", "RegistrySlot", "GraphRole", "Graph", "Func", "Op", "Not", "TermGuard",
-    "ValueGuard", "Group", "GraphBlock", "Optional_", "NotExists", "Bind", "Filter", "Values", "Union_",
-    "Projected", "Select", "ParameterGuard", "GUARDS_OFF", "Operation",
+    "ValueGuard", "Group", "GraphBlock", "Optional_", "NotExists", "Bind", "Filter", "Values", "RowValues", "RowsSlot", "Union_",
+    "Projected", "Select", "SubSelect", "ParameterGuard", "GUARDS_OFF", "Operation",
 ]

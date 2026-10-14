@@ -30,11 +30,16 @@ along the way.
 | Root | Owns |
 |---|---|
 | `ontology/` | semantic assets only: sources, shapes, vocabularies, projections, examples, their documentation |
-| `tools/` | executable reference implementations and developer toolchains |
+| `tools/` | executable reference implementations and developer toolchains. `tools/testing/` holds test-support packages, used only by tests, checks and benchmarks (ADR-A125) |
+| `benchmark/` | checks that measure, run on demand and never part of `check`. They fail on a wrong result, never on time (ADR-A124) |
 | `platform/`, `apps/`, `packages/`, `contracts/`, `deployment/`, `workers/`, `test/`, `spikes/` | services, applications, libraries, data contracts, the local environment, the worker runtime, end-to-end suites, experiments |
 | `docs/architecture/` | architecture documents and the ADRs, in `decisions/` |
 | `docs/developer/` | sketches, plans, status records, review requests, Validation Packs, and durable guidance |
 | `.claude/skills/` | the skills below |
+
+How each triple store behaves, and how we found out, is recorded in
+[docs/architecture/triple-store-discovery.md](docs/architecture/triple-store-discovery.md). Read it before relying on what a
+store does with SPARQL, and add to it when you find something new (skill `lattice-triple-stores`).
 
 Do not add a directory at the root, or a new kind of directory anywhere, without an accepted ADR.
 `mise` is the only task entry point (ADR-A29). Every command you run or give the maintainer goes
@@ -104,3 +109,4 @@ Load the skill whose description matches the task. Each lives in `.claude/skills
 | `lattice-toolchain` | building, testing, running checks, or setting up or repairing an environment |
 | `lattice-testing` | a slow test suite, writing or extending a Python test under `tools/` that parses an ontology graph or calls pySHACL, sharing state across test modules with pytest fixtures, or a repository-wide text scan that must work on every platform |
 | `lattice-publication-hygiene` | before a commit or pull request, and whenever writing text that will be published |
+| `lattice-triple-stores` | relying on, probing or recording how a triple store behaves: running generated SPARQL on rdflib, Oxigraph or another engine, writing an engine test, or meeting unexpected store behaviour |

@@ -8,7 +8,7 @@
     {
       "name": "lattice",
       "source": "./.claude",
-      "description": "LATTICE's development lifecycle, design practice, architecture, ontology authoring, toolchain and publication hygiene"
+      "description": "LATTICE's development lifecycle, design practice, architecture, ontology authoring, toolchain, testing, triple-store behaviour and publication hygiene"
     }
   ]
 }

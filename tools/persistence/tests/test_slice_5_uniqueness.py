@@ -263,7 +263,7 @@ def _render(name: str, **extra) -> str:
 
 def test_merge_rewrite_uses_min_owner_as_canonical_and_guards_idempotently():
     text = _render("key-claim-merge-rewrite.mustache", mergeRelation=Iri.encode("https://example.org/lending#supersededBy"))
-    assert "MIN(?owner) AS ?canonical" in text
+    assert "IRI(MIN(STR(?owner))) AS ?canonical" in text
     assert "FILTER NOT EXISTS" in text
     assert "<https://example.org/lending#supersededBy>" in text
 

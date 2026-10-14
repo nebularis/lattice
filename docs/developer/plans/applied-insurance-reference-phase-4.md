@@ -135,7 +135,17 @@ the mixins and restrictions in the sketch:
 
 Membership properties from the exposure set, each `owl:InverseFunctionalProperty`:
 `aeo:hasLocation`, `aeo:hasAsset`, `aeo:hasInterest`, `aeo:hasValuation`. The other membership
-properties of §5.2 arrive with their classes. Disjointness (§6) among this slice's classes, and
+properties of §5.2 arrive with their classes.
+
+> **Correction, 2026-10-14 (TD-49).** The inverse functionality is wrong. The maintainer confirmed
+> the design the module's README states: unchanged members are shared across exposure set versions
+> by identity, not duplicated by node, so one location or asset version may belong to several
+> exposure set versions. The membership properties are plain object properties, and the
+> membership row of the shapes table below is withdrawn. The same applies to `aeo:hasAssessment`
+> (AIR-4.2) and to the planned `aeo:hasDependency`, `aeo:hasPerilMetric` and
+> `aeo:hasLossExperience`. `aeo:zoneDesignation` and `aeo:poolParticipation` are to be checked with
+> the fix, since designations follow a location's identity. An example with two schedule versions
+> sharing an unchanged location goes in with the fix. Disjointness (§6) among this slice's classes, and
 with `pty:Actor` for all but `aeo:LegalEntity`.
 
 ### Vocabulary, `core` region
@@ -187,7 +197,7 @@ in `.github/copilot-instructions.md` ("Authoring SHACL-SPARQL shapes").
 | valuation | exactly one `aeo:valueOf`, one value type and one basis. Either one amount, or one rate and one horizon, never both and never neither |
 | control | exactly one controller and one controlled, and no cycle through `aeo:controller` / `aeo:controlled` |
 | legal entity | at most one domicile and one legal form |
-| membership | a member belongs to at most one exposure set version |
+| membership | ~~a member belongs to at most one exposure set version~~ withdrawn 2026-10-14 (TD-49): unchanged members are shared across versions |
 
 ### Other files
 

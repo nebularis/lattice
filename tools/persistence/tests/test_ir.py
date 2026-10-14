@@ -16,14 +16,14 @@ from persistence import ir, ir_render
 from persistence.ir import (
     GUARDS_OFF, A, Bind, Binding, Compare, Const, Filter, Func, Graph, GraphBlock, GraphRole, Group, IrError, Kind, Not,
     NotExists, Op, Operation, Optional_, Param, ParameterGuard, ParamRef, PayloadSlot, Path, Projected,
-    RegistrySlot, Select, TermGuard, Triple, Union_, ValueGuard, Values, Var,
+    RegistrySlot, RowsSlot, RowValues, Select, SubSelect, TermGuard, Triple, Union_, ValueGuard, Values, Var,
 )
 from persistence.ir_render import RULES, check, render
 from persistence.paths import Step
 from persistence.terms import Iri, Literal, PropertyPath, SparqlTerm
 
 from ir_fixtures import (
-    DATA, EPOCH, EXPECTED, META, NEXT, PARAMS, REV, ROOT, TXN, TXN_ID, delete, insert, iri, pat, string, true,
+    DATA, EPOCH, EXPECTED, META, NEXT, PARAMS, REV, ROOT, TXN, TXN_ID, delete, insert, integer, iri, pat, string, true,
     valid, where,
 )
 
@@ -44,9 +44,34 @@ def _with_param(*extra: Param) -> tuple:
     return (*PARAMS, *extra)
 
 
+def _rows_op(*vars_, slot="rows", declared=True) -> Operation:
+    params = _with_param(Param("rows", Kind.ROWS)) if declared else PARAMS
+    return valid(params=params, where_=(*where(), RowValues(tuple(Var(v) for v in vars_), RowsSlot(slot))))
+
+
 def _bad_construction(make) -> None:
     with pytest.raises(IrError):
         make()
+
+
+# ---- the SELECT rules (H2.5, ADR-A123 addendum of 2026-10-13) ----------------------------------------------------
+
+_KEYS = Graph(GraphRole.KEYS, iri("urn:g:keys"))
+_CLAIMS = GraphBlock(_KEYS, (Triple(Var("claim"), pat("claimedBy"), Var("owner")),))
+_COUNT = Projected(Func("COUNT", (Var("owner"),)), Var("n"))
+_MANY = ValueGuard(">", Func("COUNT", (Var("owner"),)), integer(1))
+
+
+def _query(select: Select, where_=(_CLAIMS,)) -> Operation:
+    return Operation.build("audit", (), Group(where_), select=select)
+
+
+def _sub(select: Select) -> SubSelect:
+    return SubSelect(select, Group((_CLAIMS,)))
+
+
+def _outer_with(sub: SubSelect, *more) -> Operation:
+    return valid(where_=(*where(), sub, *more))
 
 
 # ---- the positive case the refusals vary ----------------------------------------------------------
@@ -141,6 +166,10 @@ def _refusals() -> list[tuple[str, str, object]]:
         ("SlotMisuse", "slot naming a non-payload parameter", lambda: valid(insert_=(*insert(), GraphBlock(META, (PayloadSlot("root"),))))),
         ("SlotMisuse", "slot bound as a term", lambda: valid(where_=(*where(), GraphBlock(META, (Triple(ROOT, pat("p"), ParamRef("payloadTriples")),))))),
         ("SlotMisuse", "registry slot naming a payload", lambda: valid(where_=(*where(), Values(Var("log"), (RegistrySlot("payloadTriples"),))))),
+        ("SlotMisuse", "a rows slot naming a payload parameter", lambda: _rows_op("a", slot="payloadTriples")),
+        ("UndeclaredParameter", "a rows slot that is not declared", lambda: _rows_op("a", slot="nope")),
+        ("InvalidName", "rows that name a variable twice", lambda: _rows_op("a", "a")),
+        ("InvalidName", "rows with no variable", lambda: _rows_op()),
         ("UnknownFunction", "unsupported", lambda: valid(where_=(*where(), Bind(Func("RAND"), Var("r"))))),
         ("UnknownFunction", "wrong arity", lambda: valid(where_=(*where(), Bind(Func("STR", ()), Var("r"))))),
         ("UnknownFunction", "DISTINCT on a scalar", lambda: valid(where_=(*where(), Bind(Func("STR", (ROOT,), distinct=True), Var("r"))))),
@@ -148,6 +177,18 @@ def _refusals() -> list[tuple[str, str, object]]:
         ("UnknownOperator", "unknown Op", lambda: valid(where_=(*where(), Bind(Op("%", string("a"), string("b")), Var("r"))))),
         ("UnknownOperator", "unknown comparison", lambda: valid(where_=(*where(), Filter(ValueGuard("~", ROOT, ROOT))))),
         ("AggregateOutsideSelect", "COUNT in BIND", lambda: valid(where_=(*where(), Bind(Func("COUNT", (Var("now"),)), Var("r"))))),
+        ("AggregateOutsideSelect", "an aggregate inside an aggregate", lambda: _query(Select((Projected(Func("COUNT", (Func("MIN", (Var("owner"),)),)), Var("n")),), group_by=(Var("claim"),)))),
+        ("UngroupedProjection", "a variable that is not grouped", lambda: _query(Select((Var("claim"), Var("owner")), group_by=(Var("claim"),)))),
+        ("UngroupedProjection", "a variable beside an aggregate with no GROUP BY", lambda: _query(Select((Var("claim"), _COUNT)))),
+        ("UngroupedProjection", "an expression over an ungrouped variable", lambda: _query(Select((Projected(Func("STR", (Var("owner"),)), Var("s")), _COUNT)))),
+        ("HavingNotGrouped", "a HAVING term over an ungrouped variable", lambda: _query(Select((Var("claim"),), group_by=(Var("claim"),), having=(ValueGuard(">", Var("owner", compare=Compare.VALUE), integer(1)),)))),
+        ("SubSelectLeak", "an inner variable used outside the sub-select", lambda: _outer_with(_sub(Select((Var("claim"), _COUNT), group_by=(Var("claim"),))), GraphBlock(META, (Triple(Var("owner"), pat("p"), Var("claim")),)))),
+        ("SubSelectLeak", "an inner variable that another sub-select projects", lambda: _outer_with(_sub(Select((Var("claim"),), group_by=(Var("claim"),))), SubSelect(Select((Var("owner"),), group_by=(Var("owner"),)), Group((_CLAIMS,))))),
+        ("FragmentLimit", "ORDER BY", lambda: _query(Select((Var("claim"),), order_by=(Var("claim"),)))),
+        ("FragmentLimit", "LIMIT", lambda: _query(Select((Var("claim"),), limit=1))),
+        ("FragmentLimit", "OFFSET", lambda: _query(Select((Var("claim"),), offset=1))),
+        ("FragmentLimit", "DISTINCT inside a sub-select", lambda: _outer_with(_sub(Select((Var("claim"),), distinct=True)))),
+        ("FragmentLimit", "a sub-select inside a sub-select", lambda: _outer_with(SubSelect(Select((Var("claim"),)), Group((_sub(Select((Var("claim"),))),))))),
     ]
 
 
@@ -240,3 +281,16 @@ def test_h2_1_t9_an_optional_parameter_is_not_guarded():
     op = valid(params=params, where_=(*where(), GraphBlock(META, (Triple(ROOT, pat("cause"), ParamRef("cause")),))))
     assert "cause" not in [p.name for p in op.guard.params]
     assert "BOUND($cause)" not in render(op)
+
+
+def test_h2_6b_t10_rows_of_values_bind_their_variables_in_every_solution_and_render_as_one_slot():
+    """`VALUES (?a ?b) { slot }`. A template variable tagged Bound may use them, and an unused rows parameter is refused like any other."""
+    op = valid(
+        params=_with_param(Param("rows", Kind.ROWS)),
+        where_=(RowValues((Var("a"), Var("b")), RowsSlot("rows")), *where()),
+        insert_=(*insert(), GraphBlock(META, (Triple(ROOT, pat("p"), Var("a", binding=Binding.BOUND)),))),
+    )
+    check(op)
+    assert "VALUES (?a ?b) { {{{rows}}} }" in render(op)
+    refused("UnusedParameter", valid(params=_with_param(Param("rows", Kind.ROWS))))
+    assert Kind.ROWS in ir.SLOT_KINDS and "rows" not in {p.name for p in op.guard.params}  # a slot is never guarded

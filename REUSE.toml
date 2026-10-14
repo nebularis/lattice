@@ -23,3 +23,10 @@ SPDX-License-Identifier = "MPL-2.0"
 path = ["contracts/authoring/fixtures/wording/*.nt"]
 precedence = "aggregate"
 SPDX-License-Identifier = "MPL-2.0"
+
+# Persistence builder goldens (formal-methods H2.6): the version and a digest of the text each builder renders. JSON has no
+# comment syntax, so the licence is declared here.
+[[annotations]]
+path = ["tools/persistence/tests/fixtures/ir/builder-goldens.json"]
+precedence = "aggregate"
+SPDX-License-Identifier = "MPL-2.0"

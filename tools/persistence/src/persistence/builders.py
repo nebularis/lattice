@@ -18,8 +18,8 @@ from __future__ import annotations
 from typing import Callable, Mapping
 
 from .ir import (
-    A, Bind, Binding, Const, Filter, Func, Graph, GraphBlock, GraphRole, Group, Kind, NotExists, Op, Operation,
-    Optional_, Param, ParamRef, PayloadSlot, Path, Triple, Var,
+    A, Bind, Binding, Compare, Const, Filter, Func, Graph, GraphBlock, GraphRole, Group, Kind, NotExists, Op, Operation,
+    Optional_, Param, ParamRef, PayloadSlot, Path, Projected, RegistrySlot, RowsSlot, RowValues, Select, SubSelect, Triple, ValueGuard, Values, Var,
 )
 from .namespaces import PAT
 from .terms import Integer, Iri, Literal, PropertyPath
@@ -152,7 +152,9 @@ def _append(b: Bindings, *, guards: bool, dataset_guard: bool) -> Operation:
     n, n1, rev, prev = Var("n"), Var("n1"), Var("rev"), Var("prev")
     row_epoch = Var("rowEpoch")
 
-    where: list = []
+    # The events come first, as rows the caller supplies (the guide's batch, formal-methods H2.6b). Every row joins the one counter
+    # row, so k events give k solutions that write the same version row, claim and receipt, and each event its own triples.
+    where: list = [RowValues((Var("event"), Var("eventType"), Var("opSeq"), Var("occurredAt")), RowsSlot("eventRows"))]
     if dataset_guard:
         where.append(GraphBlock(b.graph("datasetGraph"), (Triple(b.const("datasetNode"), _pat("epoch"), epoch),)))
         where.append(GraphBlock(meta, (Triple(stream, _pat("epoch"), row_epoch), Triple(stream, _pat("seq"), n))))
@@ -190,10 +192,11 @@ def _append(b: Bindings, *, guards: bool, dataset_guard: bool) -> Operation:
             Triple(txn_id, _pat("requestDigest"), ParamRef("requestDigest")),
         )),
         GraphBlock(graph_var("eventGraph", Binding.BOUND), (
-            Triple(ParamRef("event"), A, ParamRef("eventType")),
-            Triple(ParamRef("event"), _pat("revision"), _bound("rev")),
-            Triple(ParamRef("event"), _pat("opSeq"), ParamRef("opSeq")),
-            Triple(ParamRef("event"), _pat("occurredAt"), ParamRef("occurredAt")),
+            Triple(_bound("event"), A, _bound("eventType")),
+            Triple(_bound("event"), _pat("revision"), _bound("rev")),
+            Triple(_bound("event"), _pat("opSeq"), _bound("opSeq")),
+            Triple(_bound("event"), _pat("occurredAt"), _bound("occurredAt")),
+            PayloadSlot("eventTriples"),
         )),
         GraphBlock(graph_var("logGraph", Binding.BOUND), (
             Triple(_bound("rev"), A, _pat("Revision")),
@@ -209,8 +212,8 @@ def _append(b: Bindings, *, guards: bool, dataset_guard: bool) -> Operation:
         "append-event-dataset-guard" if dataset_guard else "append-event",
         (
             Param("stream", Kind.IRI), Param("epoch", Kind.LONG), Param("revBase", Kind.STRING),
-            Param("txnId", Kind.IRI), Param("requestDigest", Kind.DIGEST), Param("event", Kind.IRI),
-            Param("eventType", Kind.IRI), Param("opSeq", Kind.POSITION), Param("occurredAt", Kind.IRI_OR_LITERAL),
+            Param("txnId", Kind.IRI), Param("requestDigest", Kind.DIGEST), Param("eventRows", Kind.ROWS),
+            Param("eventTriples", Kind.PAYLOAD),
         ),
         Group(tuple(where)),
         guards=guards,
@@ -329,13 +332,13 @@ def _sweep_delete(b: Bindings, named: _Named, *, dataset_guard: bool) -> tuple:
     )
 
 
-def _row_where(b: Bindings, named: _Named, *, dataset_guard: bool) -> tuple:
-    """The `WHERE` of replace and tombstone, which differ only in their templates."""
+def _row_where(b: Bindings, *, binds: tuple, dataset_guard: bool, sweep) -> tuple:
+    """The `WHERE` of replace and tombstone, which differ only in their templates. `binds` come first, then the
+    optional dataset guard, the version row, the claim check, and last the `sweep` of what the aggregate holds."""
     root = ParamRef("root")
     epoch = Var("rowEpoch") if dataset_guard else ParamRef("epoch")
     return (
-        *named.binds(),
-        *_log_binds(b),
+        *binds,
         *(_dataset_guard(b) if dataset_guard else ()),
         GraphBlock(b.graph("metaGraphPrefix"), (
             Triple(root, _pat("epoch"), epoch),
@@ -345,8 +348,13 @@ def _row_where(b: Bindings, named: _Named, *, dataset_guard: bool) -> tuple:
         )),
         NotExists(Group((GraphBlock(b.graph("txnGraph"), (Triple(ParamRef("txnId"), _pat("rev"), _ANY),)),))),
         *_claim_binds(),
-        Optional_(Group((GraphBlock(named.graph(), (Triple(Var("s"), Var("p"), Var("o")),)),))),
+        sweep,
     )
+
+
+def _named_where(b: Bindings, named: _Named, *, dataset_guard: bool) -> tuple:
+    sweep = Optional_(Group((GraphBlock(named.graph(), (Triple(Var("s"), Var("p"), Var("o")),)),)))
+    return _row_where(b, binds=(*named.binds(), *_log_binds(b)), dataset_guard=dataset_guard, sweep=sweep)
 
 
 def _replace(b: Bindings, *, guards: bool, dataset_guard: bool, graph_names: str) -> Operation:
@@ -371,7 +379,7 @@ def _replace(b: Bindings, *, guards: bool, dataset_guard: bool, graph_names: str
             *_CAS_PARAMS, Param("assertGraph", Kind.IRI, required=False), Param("retractGraph", Kind.IRI, required=False),
             Param("payloadTriples", Kind.PAYLOAD), *named.params(),
         ),
-        Group(_row_where(b, named, dataset_guard=dataset_guard)), guards=guards, insert=insert,
+        Group(_named_where(b, named, dataset_guard=dataset_guard)), guards=guards, insert=insert,
         delete=_sweep_delete(b, named, dataset_guard=dataset_guard),
     )
 
@@ -396,7 +404,7 @@ def _tombstone(b: Bindings, *, guards: bool, dataset_guard: bool, graph_names: s
     return Operation.build(
         "tombstone-delete-named-graph" + ("-dataset-guard" if dataset_guard else ""),
         (*_CAS_PARAMS, Param("cause", Kind.IRI), Param("actor", Kind.IRI), *named.params()),
-        Group(_row_where(b, named, dataset_guard=dataset_guard)), guards=guards, insert=insert,
+        Group(_named_where(b, named, dataset_guard=dataset_guard)), guards=guards, insert=insert,
         delete=_sweep_delete(b, named, dataset_guard=dataset_guard),
     )
 
@@ -408,6 +416,331 @@ def _unconditional(b: Bindings, *, guards: bool, graph_names: str) -> Operation:
         (Param("root", Kind.IRI), Param("payloadTriples", Kind.PAYLOAD), *named.params()),
         Group(named.binds()), guards=guards,
         insert=(GraphBlock(named.graph(Binding.BOUND), (PayloadSlot("payloadTriples"),)),),
+    )
+
+
+# ---- the composite family
+
+
+def _composite_sweep(b: Bindings) -> Optional_:
+    """The root and every member the owned path reaches, in the data graph. The path can match no steps, so the first
+    `?s` is the root itself."""
+    return Optional_(Group((GraphBlock(b.graph("dataGraph"), (
+        Triple(ParamRef("root"), b.path("ownedPath"), Var("s")),
+        Triple(Var("s"), Var("p"), Var("o")),
+    )),)))
+
+
+def _composite_delete(b: Bindings, *, dataset_guard: bool) -> tuple:
+    root = ParamRef("root")
+    row = (Triple(root, _pat("epoch"), _bound("rowEpoch")),) if dataset_guard else ()
+    return (
+        GraphBlock(b.graph("dataGraph"), (Triple(_optional("s"), _optional("p"), _optional("o")),)),
+        GraphBlock(b.graph("metaGraphPrefix"), (*row, Triple(root, _pat("seq"), ParamRef("expectedSeq")), Triple(root, _pat("head"), _optional("prevRev")))),
+    )
+
+
+def _composite_create(b: Bindings, *, guards: bool, dataset_guard: bool) -> Operation:
+    meta = b.graph("metaGraphPrefix")
+    root, epoch, new_rev = ParamRef("root"), ParamRef("epoch"), ParamRef("newRev")
+    where = (
+        *_log_binds(b),
+        *(_dataset_guard(b) if dataset_guard else ()),
+        NotExists(Group((GraphBlock(meta, (Triple(root, _pat("seq"), _ANY),)),))),
+        NotExists(Group((GraphBlock(b.graph("dataGraph"), (Triple(root, Var("anyP"), Var("anyO")),)),))),
+        NotExists(Group((GraphBlock(b.graph("txnGraph"), (Triple(ParamRef("txnId"), _pat("rev"), _ANY),)),))),
+        *_claim_binds(),
+    )
+    insert = (
+        GraphBlock(b.graph("dataGraph"), (PayloadSlot("payloadTriples"),)),
+        GraphBlock(meta, (
+            Triple(root, A, _pat("VersionRow")), Triple(root, _pat("epoch"), epoch),
+            Triple(root, _pat("seq"), _long("1")), Triple(root, _pat("head"), new_rev),
+        )),
+        _claim_block(b),
+        GraphBlock(graph_var("logGraph", Binding.BOUND), (
+            Triple(new_rev, A, _pat("Revision")), Triple(new_rev, _pat("target"), root), Triple(new_rev, _pat("epoch"), epoch),
+            Triple(new_rev, _pat("seq"), _long("1")), Triple(new_rev, _pat("txn"), _bound("txnKey")),
+            Triple(new_rev, _pat("recordedAt"), _bound("now")),
+        )),
+    )
+    return Operation.build(
+        "create-if-absent-composite" + ("-dataset-guard" if dataset_guard else ""),
+        (*_ROW_PARAMS, Param("payloadTriples", Kind.PAYLOAD)),
+        Group(where), guards=guards, insert=insert,
+    )
+
+
+def _composite_replace(b: Bindings, *, guards: bool, dataset_guard: bool) -> Operation:
+    root, epoch, new_rev = ParamRef("root"), ParamRef("epoch"), ParamRef("newRev")
+    # the receipt goes to ?logGraph2, a copy of ?logGraph that the templates have always had (plan 4.2, fact 4)
+    binds = (*_log_binds(b), Bind(Var("logGraph"), Var("logGraph2")))
+    insert = (
+        GraphBlock(b.graph("dataGraph"), (PayloadSlot("payloadTriples"),)),
+        GraphBlock(b.graph("metaGraphPrefix"), (
+            Triple(root, _pat("epoch"), epoch), Triple(root, _pat("seq"), ParamRef("nextSeq")), Triple(root, _pat("head"), new_rev),
+        )),
+        _claim_block(b),
+        GraphBlock(graph_var("logGraph2", Binding.BOUND), (
+            Triple(new_rev, A, _pat("Revision")), Triple(new_rev, _pat("target"), root), Triple(new_rev, _pat("epoch"), epoch),
+            Triple(new_rev, _pat("seq"), ParamRef("nextSeq")), Triple(new_rev, _pat("prevRev"), _optional("prevRev")),
+            Triple(new_rev, _pat("txn"), _bound("txnKey")), Triple(new_rev, _pat("recordedAt"), _bound("now")),
+        )),
+    )
+    return Operation.build(
+        "cas-replace-composite-property" + ("-dataset-guard" if dataset_guard else ""),
+        (*_CAS_PARAMS, Param("payloadTriples", Kind.PAYLOAD)),
+        Group(_row_where(b, binds=binds, dataset_guard=dataset_guard, sweep=_composite_sweep(b))),
+        guards=guards, insert=insert, delete=_composite_delete(b, dataset_guard=dataset_guard),
+    )
+
+
+def _composite_tombstone(b: Bindings, *, guards: bool, dataset_guard: bool) -> Operation:
+    root, epoch, new_rev = ParamRef("root"), ParamRef("epoch"), ParamRef("newRev")
+    insert = (
+        GraphBlock(b.graph("metaGraphPrefix"), (
+            Triple(root, _pat("epoch"), epoch), Triple(root, _pat("seq"), ParamRef("nextSeq")),
+            Triple(root, _pat("head"), new_rev), Triple(root, _pat("deleted"), _TRUE),
+        )),
+        _claim_block(b),
+        GraphBlock(graph_var("logGraph", Binding.BOUND), (
+            Triple(new_rev, A, _pat("Revision")), Triple(new_rev, A, _pat("Deletion")), Triple(new_rev, _pat("target"), root),
+            Triple(new_rev, _pat("epoch"), epoch), Triple(new_rev, _pat("seq"), ParamRef("nextSeq")),
+            Triple(new_rev, _pat("prevRev"), _optional("prevRev")), Triple(new_rev, _pat("txn"), _bound("txnKey")),
+            Triple(new_rev, _pat("recordedAt"), _bound("now")), Triple(new_rev, _pat("cause"), ParamRef("cause")),
+            Triple(new_rev, _pat("actor"), ParamRef("actor")),
+        )),
+    )
+    return Operation.build(
+        "tombstone-delete-composite" + ("-dataset-guard" if dataset_guard else ""),
+        (*_CAS_PARAMS, Param("cause", Kind.IRI), Param("actor", Kind.IRI)),
+        Group(_row_where(b, binds=_log_binds(b), dataset_guard=dataset_guard, sweep=_composite_sweep(b))),
+        guards=guards, insert=insert, delete=_composite_delete(b, dataset_guard=dataset_guard),
+    )
+
+
+# ---- the key claims
+
+_KEY_CLAIM = "KeyClaim"
+
+
+def _other_owner(b: Bindings, claim: ParamRef, owner: ParamRef, other: str) -> NotExists:
+    """`FILTER NOT EXISTS { GRAPH keys { claim pat:claimedBy ?other . FILTER(?other != owner) } }`. That `?other` is an IRI is a
+    data invariant, from the patterns guide's shape on `pat:claimedBy` (`sh:nodeKind sh:IRI`), assumed here and not proved by the
+    types."""
+    var = Var(other, kind=Kind.IRI)
+    return NotExists(Group((GraphBlock(b.graph("keysGraph"), (
+        Triple(claim, _pat("claimedBy"), var),
+        Filter(ValueGuard("!=", var, owner)),
+    )),)))
+
+
+def _claim_triples(b: Bindings, claim: ParamRef, owner: ParamRef) -> tuple:
+    return (
+        Triple(claim, A, _pat(_KEY_CLAIM)),
+        Triple(claim, _pat("constraint"), b.const("constraintId")),
+        Triple(claim, _pat("claimedBy"), owner),
+    )
+
+
+def _key_claim_write(b: Bindings, *, guards: bool) -> Operation:
+    claim, owner = ParamRef("claim"), ParamRef("owner")
+    return Operation.build(
+        "key-claim-write",
+        (Param("claim", Kind.IRI), Param("owner", Kind.IRI)),
+        Group((_other_owner(b, claim, owner, "other"),)),
+        guards=guards,
+        insert=(GraphBlock(b.graph("keysGraph"), _claim_triples(b, claim, owner)),),
+    )
+
+
+def _key_claim_write_dual(b: Bindings, *, guards: bool) -> Operation:
+    current, following, owner = ParamRef("claimCurrent"), ParamRef("claimNext"), ParamRef("owner")
+    return Operation.build(
+        "key-claim-write-dual",
+        (Param("claimCurrent", Kind.IRI), Param("claimNext", Kind.IRI), Param("owner", Kind.IRI)),
+        Group((_other_owner(b, current, owner, "otherCurrent"), _other_owner(b, following, owner, "otherNext"))),
+        guards=guards,
+        insert=(GraphBlock(b.graph("keysGraph"), (*_claim_triples(b, current, owner), *_claim_triples(b, following, owner))),),
+    )
+
+
+def _key_claim_retire(b: Bindings, *, guards: bool) -> Operation:
+    claim, owner = ParamRef("claim"), ParamRef("owner")
+    keys = b.graph("keysGraph")
+    return Operation.build(
+        "key-claim-retire",
+        (Param("claim", Kind.IRI), Param("owner", Kind.IRI), Param("now", Kind.LITERAL)),
+        Group((GraphBlock(keys, (Triple(claim, _pat("claimedBy"), owner),)),)),
+        guards=guards,
+        delete=(GraphBlock(keys, (Triple(claim, _pat("claimedBy"), owner),)),),
+        insert=(GraphBlock(keys, (Triple(claim, _pat("retiredBy"), owner), Triple(claim, _pat("retiredAt"), ParamRef("now")))),),
+    )
+
+
+def _duplicated_claims(b: Bindings, *, project) -> SubSelect:
+    """The claims with more than one owner, from the keys graph, scoped to one constraint."""
+    claim, owner = Var("claim"), Var("owner")
+    return SubSelect(
+        Select(project, group_by=(claim,), having=(ValueGuard(">", Func("COUNT", (owner,)), _int(1)),)),
+        Group((GraphBlock(b.graph("keysGraph"), (
+            Triple(claim, A, _pat(_KEY_CLAIM)), Triple(claim, _pat("constraint"), b.const("constraintId")),
+            Triple(claim, _pat("claimedBy"), owner),
+        )),)),
+    )
+
+
+def _key_claim_quarantine(b: Bindings, *, guards: bool) -> Operation:
+    claim, other, now = Var("claim"), Var("other"), Var("now")
+    quarantine = b.graph("keyQuarantineGraph")
+    return Operation.build(
+        "key-claim-quarantine",
+        (),
+        Group((
+            _duplicated_claims(b, project=(claim,)),
+            GraphBlock(b.graph("keysGraph"), (Triple(claim, _pat("claimedBy"), other),)),
+            NotExists(Group((GraphBlock(quarantine, (Triple(claim, _pat("quarantinedOwner"), other),)),))),
+            Bind(Func("NOW"), now),
+        )),
+        guards=guards,
+        insert=(GraphBlock(quarantine, (
+            Triple(_bound("claim"), _pat("quarantinedOwner"), _bound("other")),
+            Triple(_bound("claim"), _pat("quarantinedAt"), _bound("now")),
+            Triple(_bound("claim"), _pat("constraint"), b.const("constraintId")),
+        )),),
+    )
+
+
+def _key_claim_merge_rewrite(b: Bindings, *, guards: bool) -> Operation:
+    """The canonical owner is the lowest owner IRI, taken over the IRI text and turned back into an IRI, because rdflib's `MIN` over
+    IRIs returns a plain literal (TSD-16, decided in FMH-H2-5, decision 1). The Mustache template says the same."""
+    claim, owner, canonical = Var("claim"), Var("owner"), Var("canonical")
+    other = Var("other", kind=Kind.IRI)
+    relation = b.const("mergeRelation")
+    keys = b.graph("keysGraph")
+    return Operation.build(
+        "key-claim-merge-rewrite",
+        (),
+        Group((
+            _duplicated_claims(b, project=(claim, Projected(Func("IRI", (Func("MIN", (Func("STR", (owner,)),)),)), canonical))),
+            GraphBlock(keys, (Triple(claim, _pat("claimedBy"), other),)),
+            Filter(ValueGuard("!=", other, Var("canonical", kind=Kind.IRI))),
+            NotExists(Group((GraphBlock(keys, (Triple(other, relation, canonical),)),))),
+        )),
+        guards=guards,
+        insert=(GraphBlock(keys, (Triple(_bound("other"), relation, _bound("canonical")),)),),
+    )
+
+
+# ---- the audits
+
+_VALUE = dict(compare=Compare.VALUE)
+
+
+def _count(name: str, argument: Var, alias: str, *, distinct: bool = False) -> Projected:
+    return Projected(Func(name, (argument,), distinct=distinct), Var(alias))
+
+
+def _key_claim_duplicate_audit(b: Bindings, *, guards: bool) -> Operation:
+    claim, owner = Var("claim", kind=Kind.IRI), Var("owner")
+    return Operation.build(
+        "key-claim-duplicate-audit",
+        (),
+        Group((GraphBlock(b.graph("keysGraph"), (
+            Triple(claim, A, _pat(_KEY_CLAIM)), Triple(claim, _pat("constraint"), b.const("constraintId")),
+            Triple(claim, _pat("claimedBy"), owner),
+        )),)),
+        guards=guards,
+        select=Select(
+            (claim, _count("COUNT", owner, "n"), Projected(Func("GROUP_CONCAT", (Func("STR", (owner,)),), separator=" "), Var("owners"))),
+            group_by=(claim,),
+            having=(ValueGuard(">", Func("COUNT", (owner,)), _int(1)),),
+        ),
+    )
+
+
+def _fork_detection_audit(b: Bindings, *, guards: bool) -> Operation:
+    rev, txn = Var("rev", kind=Kind.IRI), Var("t")
+    return Operation.build(
+        "fork-detection-audit",
+        (),
+        Group((GraphBlock(b.graph("txnGraph"), (Triple(txn, _pat("rev"), rev),)),)),
+        guards=guards,
+        select=Select(
+            (rev, _count("COUNT", txn, "n", distinct=True)),
+            group_by=(rev,),
+            having=(ValueGuard(">", Func("COUNT", (txn,), distinct=True), _int(1)),),
+        ),
+    )
+
+
+def _log_values(b: Bindings) -> Values:
+    """`VALUES ?log { <pinned graph> {{{logGraphs}}} }`. The pinned head is the SPARQL realisation of receipt retention, so ?log
+    ranges over receipts and has the role LOG (plan 4.3, NQ2)."""
+    return Values(Var("log"), (b.const("pinnedGraph"), RegistrySlot("logGraphs")))
+
+
+_LOG_GRAPHS = Param("logGraphs", Kind.REGISTRY_LIST)
+
+
+def _revision_multi_txn_audit(b: Bindings, *, guards: bool) -> Operation:
+    rev, txn = Var("rev", kind=Kind.IRI), Var("t")
+    return Operation.build(
+        "revision-multi-txn-audit",
+        (_LOG_GRAPHS,),
+        Group((_log_values(b), GraphBlock(graph_var("log"), (Triple(rev, A, _pat("Revision")), Triple(rev, _pat("txn"), txn))))),
+        guards=guards,
+        select=Select(
+            (rev, _count("COUNT", txn, "n", distinct=True)),
+            group_by=(rev,),
+            having=(ValueGuard(">", Func("COUNT", (txn,), distinct=True), _int(1)),),
+        ),
+    )
+
+
+def _txn_multi_revision_audit(b: Bindings, *, guards: bool) -> Operation:
+    rev, txn = Var("rev"), Var("t", kind=Kind.STRING)
+    return Operation.build(
+        "txn-multi-revision-audit",
+        (_LOG_GRAPHS,),
+        Group((_log_values(b), GraphBlock(graph_var("log"), (Triple(rev, A, _pat("Revision")), Triple(rev, _pat("txn"), txn))))),
+        guards=guards,
+        select=Select(
+            (txn, _count("COUNT", rev, "n", distinct=True)),
+            group_by=(txn,),
+            having=(ValueGuard(">", Func("COUNT", (rev,), distinct=True), _int(1)),),
+        ),
+    )
+
+
+def _gap_scan_audit(b: Bindings, *, guards: bool) -> Operation:
+    """For each version row with sequence S and retention low-water mark L, the receipts with seq in the closed range L to S
+    must number exactly S - L + 1. Positions are compared as terms in guards and as values in audits (plan 4.3, step 12), so
+    `?seq`, `?S` and `?L` declare `Compare.VALUE`: the stored positions are `xsd:long`, and a receipt written by hand with another
+    integer type would otherwise be missed."""
+    target = Var("target", kind=Kind.IRI)
+    seq, last, low, lwm = (Var(n, Kind.POSITION, Compare.VALUE) for n in ("seq", "S", "L", "lwm"))
+    return Operation.build(
+        "gap-scan-audit",
+        (_LOG_GRAPHS,),
+        Group((
+            GraphBlock(b.graph("metaGraphPrefix"), (Triple(target, A, _pat("VersionRow")), Triple(target, _pat("seq"), last))),
+            Optional_(Group((GraphBlock(b.graph("retentionGraph"), (Triple(target, _pat("retentionLowWaterMark"), lwm),)),))),
+            Bind(Func("COALESCE", (lwm, _long("1"))), low),
+            Optional_(Group((
+                _log_values(b),
+                GraphBlock(graph_var("log"), (
+                    Triple(Var("r"), A, _pat("Revision")), Triple(Var("r"), _pat("target"), target), Triple(Var("r"), _pat("seq"), seq),
+                )),
+                Filter(Op("&&", ValueGuard(">=", seq, low), ValueGuard("<=", seq, last))),
+            ))),
+        )),
+        guards=guards,
+        select=Select(
+            (target, last, low, _count("COUNT", seq, "n", distinct=True)),
+            group_by=(target, last, low),
+            having=(ValueGuard("!=", Func("COUNT", (seq,), distinct=True), Op("+", Op("-", last, low), _int(1))),),
+        ),
     )
 
 
@@ -425,6 +758,22 @@ BUILDERS: dict[str, Builder] = {
     "tombstone-delete-named-graph": lambda b, guards, names: _tombstone(b, guards=guards, dataset_guard=False, graph_names=names),
     "tombstone-delete-named-graph-dataset-guard": lambda b, guards, names: _tombstone(b, guards=guards, dataset_guard=True, graph_names=names),
     "unconditional-write": lambda b, guards, names: _unconditional(b, guards=guards, graph_names=names),
+    "create-if-absent-composite": lambda b, guards, names: _composite_create(b, guards=guards, dataset_guard=False),
+    "create-if-absent-composite-dataset-guard": lambda b, guards, names: _composite_create(b, guards=guards, dataset_guard=True),
+    "cas-replace-composite-property": lambda b, guards, names: _composite_replace(b, guards=guards, dataset_guard=False),
+    "cas-replace-composite-property-dataset-guard": lambda b, guards, names: _composite_replace(b, guards=guards, dataset_guard=True),
+    "tombstone-delete-composite": lambda b, guards, names: _composite_tombstone(b, guards=guards, dataset_guard=False),
+    "tombstone-delete-composite-dataset-guard": lambda b, guards, names: _composite_tombstone(b, guards=guards, dataset_guard=True),
+    "key-claim-write": lambda b, guards, names: _key_claim_write(b, guards=guards),
+    "key-claim-write-dual": lambda b, guards, names: _key_claim_write_dual(b, guards=guards),
+    "key-claim-retire": lambda b, guards, names: _key_claim_retire(b, guards=guards),
+    "key-claim-quarantine": lambda b, guards, names: _key_claim_quarantine(b, guards=guards),
+    "key-claim-merge-rewrite": lambda b, guards, names: _key_claim_merge_rewrite(b, guards=guards),
+    "key-claim-duplicate-audit": lambda b, guards, names: _key_claim_duplicate_audit(b, guards=guards),
+    "fork-detection-audit": lambda b, guards, names: _fork_detection_audit(b, guards=guards),
+    "gap-scan-audit": lambda b, guards, names: _gap_scan_audit(b, guards=guards),
+    "revision-multi-txn-audit": lambda b, guards, names: _revision_multi_txn_audit(b, guards=guards),
+    "txn-multi-revision-audit": lambda b, guards, names: _txn_multi_revision_audit(b, guards=guards),
 }
 """The ported operations, keyed by template stem. A template with no entry is still rendered by Mustache."""
 

@@ -356,6 +356,14 @@ model A branches on the same field.
 **The one stop.** If Oxigraph shows R0 to be wrong, not just slow, H2.4 stops and asks, since that is
 a defect in what ships today.
 
+**Measured 2026-10-12 (H2.4b), and corrected 2026-10-13.** The probes of [FMH-H2-4b](../validation/FMH-H2-4b.md) first reported
+that rdflib follows the specification's order. That was wrong. The paragraphs above are right: rdflib 7.6.0 applies each solution in
+turn, and the order of the solutions follows the process's hash seed. Oxigraph 0.5.11 also applies each solution in turn, in solution
+order. So neither is snapshot, R2 is unsafe on both, and R0 is right on both because it inserts the whole payload in every solution.
+R0 is superlinear on both, in memory too on Oxigraph. Request atomicity differs: Oxigraph rolls back a request whose second operation
+fails, and rdflib keeps the first. The detail is in [triple-store discovery](../../architecture/triple-store-discovery.md), TSD-01,
+TSD-02 and TSD-06.
+
 ## 5. Questions for the maintainer
 
 | # | Question | Options | Leaning |
@@ -399,10 +407,11 @@ tokens, rough, for comparison with the actual cost.
 | H2.2 | the equivalence harness of §7.1, with its non-vacuity mutations. The builders take the guards flag. `bootstrap-version-row` and `append-event`, each with its dataset-guard variant, ported. The required-parameter guard, with TD-34's demonstration as a negative test on rdflib. TD-34 closed for these operations | `ir`, `builders` (new) | H2.1 | 350k |
 | H2.3 | the named-graph row writers ported: create-if-absent, cas-replace, cas-replace value guard, tombstone delete, unconditional write, with their variants (8 templates). The term and value guard tags meet their first real positions | `builders` | H2.2 | 400k |
 | H2.4 | the composite family: `OwnershipTree` and `PropertyPath` as IR values, the closure read set, create, replace and tombstone (6 templates). R0 ported unchanged. The benchmark and the two capability probes of §4.3 committed, on rdflib and Oxigraph (TD-42). A stop only if R0 is wrong on Oxigraph | `builders`, `paths` | H2.2 | 400k |
-| H2.5 | key claims and audits ported (10 templates). `logGraphs` as a typed `RegistryList`. `Now()` kept out of every guard | `builders` | H2.2 | 400k |
-| H2.6 | examples first (ADR-A-C2): the expected compiled-profile fixture with parameter declarations, read and write sets and a payload contract, for the maintainer to commit. With it, the paper check of §7.2 | `ontology/persistence/examples` | H2.0 | 150k |
-| H2.7 | the vocabulary and its emission: `dal:ParameterDeclaration`, read and write sets over the logical resources of H2-Q6, `dal:PayloadContract`, `dal:GroundNTriples`, the term recording whether guards are on, `--no-parameter-guards`, `dal:templatePath` removed. `persistence` and its shapes at 0.4.0, release tags owed | `ontology/persistence`, `compiler` | H2.6, H2.3 to H2.5 | 450k |
-| H2.8 | the typed payload, per H2-Q1 to H2-Q3: the `Payload` type, canonical N-Triples and the digest, the generated `payload-check` query, the caller-side parameter check of H2-Q4, the `INFO` diagnostic and its warning option of H2-Q2, and the `INFO` diagnostic for guards that are off, with their witnesses (§7.3) | `payload` (new), `builders` | H2.4, H2.7 | 400k |
+| H2.5 | the ten remaining ports (key claims and audits), guard D, the closed `SELECT` fragment with a `SubSelect` element and its type rules, and the `Literal` kind. Planned in detail in the [Track H plan §4.3](../plans/formal-methods-track-h.md#43-h25-key-claims-the-audits-and-the-self-calibrating-guard-planned-2026-10-13), after the [design review](../notes/track-h-feedback.md) | `ir`, `ir_render`, `builders` | H2.4 | 600k |
+| H2.6 | examples first (ADR-A-C2): nine expected compiled profiles holding the operation contract (kinds, parameters, digest contract, accesses with modes and logical keys, payload and result contracts), the role-to-resource mapping in `builders.py`, five tests, and the paper check of §7.2. Planned in detail in the [Track H plan §4.4](../plans/formal-methods-track-h.md#44-h26-the-expected-compiled-profile-examples-first-and-the-paper-check-planned-2026-10-13). Runs after H2.5 | `ontology/persistence/test`, `builders` | H2.5 | 300k |
+| H2.6b | the event and patch-content slots, added 2026-10-14 (H-D30, H-D31): an event slot on the append, patch-log variants that write their delta graphs in the same update, digest parts per slot, and a warning for the snapshot model. [Track H plan §4.6](../plans/formal-methods-track-h.md#46-h26b-the-event-and-patch-content-slots-planned-2026-10-14) | `builders`, `contract` | H2.6 | 450k |
+| H2.7 | planned in detail in the [Track H plan §4.7](../plans/formal-methods-track-h.md#47-h27-the-vocabulary-and-the-compilers-emission-planned-2026-10-14). The vocabulary and its emission: `dal:ParameterDeclaration`, read and write sets over the logical resources of H2-Q6, `dal:PayloadContract`, `dal:GroundNTriples`, the term recording whether guards are on, `--no-parameter-guards`, `dal:templatePath` removed. `persistence` and its shapes at 0.4.0, release tags owed | `ontology/persistence`, `compiler` | H2.6, H2.3 to H2.5 | 450k |
+| H2.8 | planned in detail in the [Track H plan §4.8](../plans/formal-methods-track-h.md#48-h28-the-typed-payload-and-the-caller-side-checks-planned-2026-10-14), over every slot of H2.6b. The typed payload, per H2-Q1 to H2-Q3: the `Payload` type, canonical N-Triples and the digest, the generated `payload-check` query, the caller-side parameter check of H2-Q4, the `INFO` diagnostic and its warning option of H2-Q2, and the `INFO` diagnostic for guards that are off, with their witnesses (§7.3) | `payload` (new), `builders` | H2.4, H2.7 | 400k |
 | H2.9 | Mustache retired: the templates, `render.py`, `chevron` and the harness removed. S-3 and S-4 run over the IR's output and pass by construction, and S-3 reads the parameter declarations instead of the `$name` convention (H-D11). The injection corpus runs over the builders. README, ADR-A79 addendum, milestone FMH2 | `instantiate`, `templatecheck`, tests | H2.8 | 400k |
 
 ### 7.1 The equivalence harness (H2.2)
@@ -468,3 +477,66 @@ its Validation Pack for countersignature, under the non-weakening rule.
 - PL-C, and the staged in-store payload check.
 - PL-D, a published SDK, sketched separately in [persistence-client-sdk.md](persistence-client-sdk.md).
 - Any relational realisation (ADR-A-FM4 decision 1). H2-Q6 only keeps its door open.
+
+## 9. Toward a stored IR (H2-Q7, decided 2026-10-12)
+
+H2-Q5 (a) keeps the IR out of the compiled profile, and the IR is never stored (§3). The maintainer asked whether to reverse
+that, since a stored IR gives more options. We decided to keep H2-Q5 for now and to decide what a stored IR is with PDD-06's
+ADR, so that the IR published is the semantic SPARQL IR of plan §5.1 and is published once. This section records why, and
+the rules that keep a clean stored IR possible until then.
+
+### 9.1 What a stored IR would give
+
+| Gain | How |
+|---|---|
+| the IR can hold the `OwnershipTree` | a stored IR is built by `compile`, where the tree exists, so ADR-A123 decision 4's "the IR holds a reference to it" becomes true |
+| `instantiate` becomes a printer | it turns a stored IR into text and decides nothing, which is the "mechanical, verified" last step PDD-06 asks for |
+| readers outside Python | an SDK built on one core (option S-C of the [SDK sketch](persistence-client-sdk.md)), renderers in other languages, a MORK mapping target (PDD-06), H5's models reading operations |
+| type rules as shapes | the rules of §3 written as SHACL shapes over the stored IR, so any language can check an operation |
+| an artefact to review | the structure of every operation, versioned and diffable beside the profile |
+
+### 9.2 What it would cost
+
+- **The IR becomes a contract.** Every change to it is an ontology change, versioned under ADR-A86 with release tags, where
+  today it can change with a builder.
+- **A vocabulary for SPARQL's structure**, written or adopted. SPIN's SPARQL syntax vocabulary, a W3C member submission of
+  2011, is one existing RDF encoding to evaluate. H2.7's vocabulary work grows with it.
+- **The builders move into `compile`**, which reverses FMH-H2-2's decision 2, and the harness compares the stored IR, printed,
+  with the templates.
+- **The compiled profile grows**, by roughly hundreds of triples per operation per target.
+- **Two migrations if it is done now.** Today's `persistence.ir` is a typed syntax tree, and PDD-06 plans to replace it with an
+  IR of SPARQL's semantics. Storing the syntax tree would publish a format we expect to retire.
+
+### 9.3 The options, and the decision
+
+| Option | Consequence |
+|---|---|
+| **(A) keep H2-Q5, re-decide it with PDD-06's ADR** | one contract, published once, in the shape PDD-06 settles. **Decided 2026-10-12** |
+| (B) reverse now, storing today's syntax IR as RDF | every gain of §9.1 now, at the cost of a contract we expect to replace and a second migration |
+| (C) also export the IR as an unversioned artefact | readable now without a vocabulary, at the risk of a dependence on a format that promises nothing |
+
+### 9.4 Rules that keep a clean stored IR possible
+
+Until PDD-06, nothing in H2 may make storing harder. Each rule holds today unless it says otherwise.
+
+| # | Rule | Why it matters to a stored IR | Today |
+|---|---|---|---|
+| SI-1 | every IR value is a frozen dataclass whose fields hold only IR values, enums, `str`, `int`, `bool`, tuples of these, or encoded terms from `persistence.terms`. No callables, no rdflib nodes, no mutable containers | a structural encoding exists for every value, so it can be written as RDF or any other form | holds, not enforced |
+| SI-2 | a builder is a pure function of its bindings and options. The same inputs give an equal `Operation`. It reads no file, clock or environment | a stored IR and a rebuilt one are the same value | holds, not enforced |
+| SI-3 | every option that changes an operation is visible in the value | a stored IR records it | holds. `GUARDS_OFF` is a field value, and `graph_names="caller"` shows as the parameter `$g` with its `equals` |
+| SI-4 | every graph names its role, from `GRAPH_ROLES` | a stored IR carries the logical resource of each pattern (H2-Q6) | holds, enforced by H2.2's T20, T21 and H2.3's T32 |
+| SI-5 | no IR value holds SPARQL text, apart from encoded terms. From H2.6 on the same rule holds, and is enforced, for the operation contract in the compiled profile | a stored IR is structure, not text to parse again | **does not hold for paths.** `Path` holds a `PropertyPath`, which is rendered text, because `instantiate` sees only the path's text in the profile. A stored IR would hold the path's structure, `persistence.paths.PathExpr`, which `compile` has |
+| SI-6 | the tree and the path agree | a stored IR built by `compile` can carry both | holds on the `compile` side, by HO4's property test and, later, H4's C10 check |
+
+SI-1 and SI-2 get a test in slice H2.4a: every ported operation goes through a generic structural encoding and back and is
+equal to itself, and building it twice gives equal values. SI-5's gap is recorded here and is what PDD-06 closes.
+
+### 9.5 What PDD-06's ADR has to decide about storage
+
+1. Which IR is stored: the semantic SPARQL IR, the configuration IR (the logical operation contract of H2-Q6), or both, and
+   which is canonical.
+2. Where it is stored: in the compiled profile, or beside it as its own artefact with its own version.
+3. Its encoding: a LATTICE vocabulary, SPIN's or another existing one, and whether its type rules are SHACL shapes.
+4. Who builds it: `compile`, with the builders moved there, and what `instantiate` keeps.
+5. How it is verified against the text: extraction of the printer, or translation validation by an independent parser.
+6. How it is versioned, and what an adopter's migration from today's profile looks like.

@@ -1509,6 +1509,8 @@ requestDigest = hex(SHA-256(enc([operationKind, target, expected,
 
 `operationKind` is the template's name (`cas-replace`, `append`, `create`, `tombstone`), `expected` is the expected `seq` as a decimal string for a CAS and the empty string otherwise, and `enc` is the tuple encoding of [Chapter 5](#chapter-5--p0-deterministic-iris--make-uniqueness-structural). The payload is skolemized before hashing, so the digest is a function of the request's content.
 
+> **Dated note, 2026-10-14 (formal-methods H2.6b).** An `append` carries its events as rows, and the digest has one part per slot of the request in a fixed order. The event part covers each row's `rdf:type`, `pat:opSeq` and `pat:occurredAt` triples with the event triples the caller supplies, and leaves out `pat:revision`, which the store mints. The contract declares the part. The code that computes it is H2.8.
+
 ```sparql
 SELECT ?rev ?digest WHERE {
   GRAPH <urn:g:txn> { <urn:txn:01J8Q3Z5K9V2N7M4X6P1R8T0W2> pat:rev ?rev ; pat:requestDigest ?digest }

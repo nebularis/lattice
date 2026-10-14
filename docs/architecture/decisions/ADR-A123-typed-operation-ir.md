@@ -2,7 +2,7 @@
 
 # ADR-A123: A typed operation IR for the persistence compiler
 
-**Status:** Accepted, 2026-10-10, with the ADR-A79 addendum applied the same day, and two addenda of its own (2026-10-12)
+**Status:** Accepted, 2026-10-10, with the ADR-A79 addendum applied the same day, and five addenda of its own (2026-10-12 and 2026-10-13)
 **Date:** 2026-10-10
 **Supersedes:** parts of [ADR-A79](ADR-A79-persistence-compiler-toolchain.md), listed under Decision 10. ADR-A79 stays Accepted for the rest
 **Related:** [ADR-A78](ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md),
@@ -172,3 +172,76 @@ Decided by the maintainer while planning slice H2.3 (Track H plan §4.1, H2.3-Q2
 This leaves ADR-A122 decision 8's rule unchanged and moves its enforcement to the caller only when the caller turns off
 both the query's naming and its guards.
 
+## Addendum, 2026-10-12: the path is the IR's reference to the tree, and the IR is not stored yet
+
+Decided by the maintainer while planning slice H2.4 (Track H plan §4.2, H2.4-Q1, and the status record's H2-Q7).
+
+1. **Decision 4's "the IR holds a reference to it" is corrected.** The IR is built by the builders inside `instantiate`
+   (FMH-H2-2, decision 2), which reads only the compiled profile (ADR-A79 decision 1), and the profile holds the owned path,
+   not the tree (H2-Q5). So the compiled path is the IR's reference to the `OwnershipTree`. A composite operation reads it
+   with `Bindings.path`, and its read set marks the sweep a closure read with the path's text. The tree stays in
+   `persistence.boundary`, where `compile`, H4's language check (C10) and H5's models use it. The sentence was written in the
+   typed IR brief without checking where the IR is built.
+2. **H2-Q5 stands, and a stored IR is decided with PDD-06's ADR.** The IR published, if any, is the semantic SPARQL IR that
+   PDD-06 proposes, so that one contract is published once. Until then the rules SI-1 to SI-6 of the
+   [typed IR sketch §9.4](../../developer/sketches/formal-methods-track-h-typed-ir.md#94-rules-that-keep-a-clean-stored-ir-possible)
+   keep a clean stored IR possible, and §9.5 lists what that ADR must decide. One rule does not hold today: a `Path` holds the
+   path's rendered text, not its structure.
+
+## Addendum, 2026-10-13: the datatype test calibrates itself to the store
+
+Decided by the maintainer after slice H2.4b (FMH-H2-4b, decision 1, option D). It amends the first addendum's point 2.
+
+1. **The test for `Long` and `Position` is `DATATYPE($p) = DATATYPE("0"^^xsd:long)`**, not `DATATYPE($p) = xsd:long`. It compares
+   the parameter's datatype with what the store makes of an `xsd:long` constant. Oxigraph 0.5.11 stores every integer-derived literal as
+   `xsd:integer`, in expressions as in data, so the first addendum's test could never pass there and every guarded write was refused
+   ([TSD-07](../triple-store-discovery.md#tsd-07-numeric-datatypes-are-not-kept-by-oxigraph)).
+2. **On a store that keeps datatypes it is the same test as before.** On rdflib only an `xsd:long` passes, so an `xsd:integer` epoch,
+   which a bootstrap or create would store and no later guarded replace would match, is still refused. On a store that turns every
+   integer into `xsd:integer`, any integer passes, and the mismatch cannot arise. A missing or non-numeric parameter is refused on both.
+3. **No option and no capability field.** The test adapts by evaluating in the store. It rests on the store treating a constant, a
+   parameter and a stored value alike, which probe P5 asserts per store. A store that fails P5 needs a decision of its own.
+4. The tests for `Iri`, `Digest`, `String`, `LangString` and `IriOrLiteral` are unchanged. `Digest` and `String` keep
+   `DATATYPE($p) = xsd:string`, since no probed store turns a simple literal into another datatype, and P5 asserts it per store.
+5. **The Python caller's own check is strict and store-independent** (decided 2026-10-13, NQ6 of the
+   [design review](../../developer/notes/track-h-feedback.md)): a `Long` or `Position` parameter must be exactly `xsd:long` on any store.
+   The SPARQL guard is the store-calibrated backstop, whose acceptance set differs by store, which H5's capability record carries as
+   whether a store normalises numeric datatypes. Built with the caller check in H2.8.
+
+## Addendum, 2026-10-13: queries, sub-selects and two parameter kinds
+
+Decided by the maintainer on the [design review](../../developer/notes/track-h-feedback.md) of slices H2.5 and H2.6 (Track H plan §4.3,
+H2.5-Q1 and Q2). It extends decision 2.
+
+1. **One `Select` value serves a query operation and a sub-select**, as a `SubSelect` pattern element. The fragment is closed: projection
+   of variables and aggregates, `GROUP BY` over variables, and `HAVING`.
+2. **Four further type rules**, each refused with a named rule because the form is illegal SPARQL or fails silently: an aggregate outside a
+   projection or `HAVING`, a projected variable neither grouped nor aggregated, a `HAVING` term neither a group key nor an aggregate, and an
+   inner variable used outside a sub-select without being projected.
+3. **A projected item is bound in every solution only as the plan's boundness table says.** `COUNT` always is. `MIN`, `MAX`, `SAMPLE`,
+   `SUM`, `AVG` and `GROUP_CONCAT` are only with an explicit `GROUP BY` and a bound argument that cannot raise a type error. No aggregate
+   but `COUNT` is, without a `GROUP BY`.
+4. **`ORDER BY`, `LIMIT`, `OFFSET`, `DISTINCT` inside a sub-select, and nested sub-selects are outside the fragment** for now. They are
+   limits, not type rules, each lifted with an engine test when a template needs it.
+5. **Two parameter kinds join decision 2's list**: `IriOrLiteral` (FMH-H2-2 decision 1), guarded by `isIRI($p) || isLiteral($p)`, and
+   `Literal`, guarded by `isLiteral($p) && LANG($p) = ""`, which accepts any timestamp datatype and refuses an IRI or a missing value.
+
+
+## Addendum, 2026-10-14: the event slots and the digest parts (draft for the maintainer's acceptance)
+
+Drafted in slice H2.6b (Track H plan §4.6, H-D30 and H-D32) for the maintainer to accept. It extends decision 2 and the H2.4a addendum on
+request-time slots.
+
+1. **Two request-time slots join `payloadTriples` and `logGraphs`.** `{{{eventRows}}}` holds the rows of
+   `VALUES (?event ?eventType ?opSeq ?occurredAt)` and `{{{eventTriples}}}` holds the data written beside each event. The IR has a `Rows`
+   slot kind and a `RowValues` element, which binds its variables. The checker does not restrict where it is placed (review note,
+   2026-10-14). Like every
+   slot, neither is parameter-guarded.
+2. **An append takes its events from the rows.** One request still steps the seq once and writes one receipt and one claim. Each event's
+   `pat:revision` is that receipt, so its position is (epoch, seq, `opSeq`). Every solution writes the same version row, claim and receipt,
+   which makes the batch independent of the order in which a store applies solutions (TSD-01). `append-event` is builder version 2.
+3. **The digest of an append has an event part.** One part per slot, in a fixed order. The event part has two sources, the rows slot and the
+   triples slot, and covers each row's type, `pat:opSeq` and `pat:occurredAt` triples with the event triples. It leaves out `pat:revision`,
+   which the store mints. This slice declares the part in the contract. H2.8 computes it.
+4. **`compile` warns `ReceiptModelNotHonoured`** for a target whose receipt model is `dal:PatchLog` or `dal:SnapshotPerRevision`, as it warns
+   for `ShardingNotHonoured` (TD-46).

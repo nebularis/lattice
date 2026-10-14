@@ -29,7 +29,7 @@ def generated_update(fixture: Path, template: str) -> str:
     renders it. Only the request-time slots are left to the caller. ``_load_fixture`` is the
     witness harness's loader, which understands the ``# base:`` patch format."""
     compiled, _ = compile_to_graph(witness._load_fixture(fixture))
-    return next(op.text for op in templatecheck.operations(compiled) if op.template == template)
+    return next(op.text for op in templatecheck.operations(compiled, guards=False) if op.template == template)
 
 
 def _meta_graph(update: str) -> str:
@@ -60,7 +60,7 @@ def composite_update(owns_payment: bool = False) -> str:
         graph.add((edge, URIRef(DAL + "ownership"), URIRef(DAL + "Owned")))
         graph.add((URIRef(EX + "PaymentShape"), RDF.type, URIRef(SH + "NodeShape")))
     compiled, _ = compile_to_graph(graph)
-    update = next(op.text for op in templatecheck.operations(compiled) if op.template == "cas-replace-composite-property")
+    update = next(op.text for op in templatecheck.operations(compiled, guards=False) if op.template == "cas-replace-composite-property")
     return update.replace(templatecheck._SLOT_STAND_INS["payloadTriples"], "")
 
 
@@ -100,7 +100,7 @@ def project_update() -> str:
     """The generated composite replace for the project fixture of ADR-A122 (several owned edges, a
     recursion, an inverse edge), with an empty payload."""
     compiled, _ = compile_to_graph(witness._load_fixture(PROJECT_EXAMPLE))
-    update = next(op.text for op in templatecheck.operations(compiled) if op.template == "cas-replace-composite-property")
+    update = next(op.text for op in templatecheck.operations(compiled, guards=False) if op.template == "cas-replace-composite-property")
     return update.replace(templatecheck._SLOT_STAND_INS["payloadTriples"], "")
 
 
@@ -128,7 +128,7 @@ def project_sweep() -> list[str]:
 def _project_operation(template: str, payload: str = "") -> str:
     """The generated ``template`` for the project fixture, with ``payload`` (N-Triples) in the payload slot."""
     compiled, _ = compile_to_graph(witness._load_fixture(PROJECT_EXAMPLE))
-    update = next(op.text for op in templatecheck.operations(compiled) if op.template == template)
+    update = next(op.text for op in templatecheck.operations(compiled, guards=False) if op.template == template)
     return update.replace(templatecheck._SLOT_STAND_INS["payloadTriples"], payload)
 
 
@@ -214,7 +214,7 @@ def append_event_runs() -> list[StreamState]:
     the caller forgetting ``$revBase``, then a retry with the same transaction id and every
     parameter. No run raises an error. See TD-34."""
     update = generated_update(witness.WITNESS_DIR / "template-append-event.ttl", "append-event")
-    meta = re.search(r"DELETE \{ GRAPH <([^>]+)>", update).group(1)
+    meta = re.search(r"DELETE \{\s*GRAPH <([^>]+)>", update).group(1)
     full = _append_parameters()
     without = {k: v for k, v in full.items() if k != "revBase"}
 
