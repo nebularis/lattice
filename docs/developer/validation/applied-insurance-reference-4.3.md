@@ -89,3 +89,15 @@ deferred (amendment of 2026-10-14), so the heavy suites did not run. Cheap ad ho
 ## Results
 
 Written on machine R at verification.
+
+- **Open Results Data names, checked 2026-10-14** against `ORD_Definitions.md`,
+  `Schema/ORD_Perspectives.csv` and the concepts page of `OasisLMF/ODS_OpenResultsData`:
+  - The metric kinds match ORD's EPType codes (OEP 1, OEP TVaR 2, AEP 3, AEP TVaR 4), and the
+    average annual loss is ORD's average loss table. The notes now cite the codes.
+  - The third perspective was wrong, from the brief: ORD's is RI, net of all reinsurance
+    (perspective 2), and ORD's "Reinsurance Loss" (perspective 10) is the reinsurers' loss.
+    `aeo-voc:ReinsuranceLoss` is renamed `aeo-voc:NetOfReinsuranceLoss`, with the note saying so.
+    GUL and IL now cite perspectives 0 and 1 (Ground-up, Gross).
+  - ORD has four calculation methods (EPCalc 1 to 4), so `aeo-voc:MeanDamage` and
+    `aeo-voc:SampleMean` are added beside `FullUncertainty` and `PerSampleMean`, whose
+    definitions now follow ORD's wording.

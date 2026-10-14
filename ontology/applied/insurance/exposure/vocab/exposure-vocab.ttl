@@ -1966,19 +1966,19 @@ aeo-voc:SubstitutabilityScheme skos:hasTopConcept aeo-voc:NotSubstitutable , aeo
 
 aeo-voc:AverageAnnualLoss a skos:Concept ; skos:inScheme aeo-voc:MetricKindScheme ; skos:topConceptOf aeo-voc:MetricKindScheme ;
     skos:prefLabel "Average annual loss"@en ; skos:definition "The expected loss in a year, averaged over all events and years the model considers."@en ;
-    skos:note "Follows the average annual loss (AAL) of Oasis Open Results Data (ORD)."@en .
+    skos:note "Follows the average loss table (ALT) of Oasis Open Results Data (ORD), which gives the mean and standard deviation of loss over all periods. An ORD period is usually, but not always, a year."@en .
 aeo-voc:OccurrenceExceedanceLoss a skos:Concept ; skos:inScheme aeo-voc:MetricKindScheme ; skos:topConceptOf aeo-voc:MetricKindScheme ;
     skos:prefLabel "Occurrence exceedance loss"@en ; skos:definition "The loss in the largest single event of a year that is exceeded with a stated probability or return period."@en ;
-    skos:note "Follows the occurrence exceedance probability (OEP) of Oasis Open Results Data (ORD). States exactly one of aeo:returnPeriod and aeo:exceedanceProbability."@en .
+    skos:note "Follows the occurrence exceedance probability (OEP) of Oasis Open Results Data (ORD), EPType 1 of its exceedance probability table (EPT). States exactly one of aeo:returnPeriod and aeo:exceedanceProbability."@en .
 aeo-voc:AggregateExceedanceLoss a skos:Concept ; skos:inScheme aeo-voc:MetricKindScheme ; skos:topConceptOf aeo-voc:MetricKindScheme ;
     skos:prefLabel "Aggregate exceedance loss"@en ; skos:definition "The total loss over a year that is exceeded with a stated probability or return period."@en ;
-    skos:note "Follows the aggregate exceedance probability (AEP) of Oasis Open Results Data (ORD). States exactly one of aeo:returnPeriod and aeo:exceedanceProbability. A 1 in 200 year return period is the convention of Solvency II's capital calculation."@en .
+    skos:note "Follows the aggregate exceedance probability (AEP) of Oasis Open Results Data (ORD), EPType 3 of its exceedance probability table (EPT). States exactly one of aeo:returnPeriod and aeo:exceedanceProbability. A 1 in 200 year return period is the convention of Solvency II's capital calculation."@en .
 aeo-voc:OccurrenceTailValueAtRisk a skos:Concept ; skos:inScheme aeo-voc:MetricKindScheme ; skos:topConceptOf aeo-voc:MetricKindScheme ;
     skos:prefLabel "Occurrence tail value at risk"@en ; skos:definition "The mean of the largest single-event losses beyond a stated occurrence exceedance threshold."@en ;
-    skos:note "Follows the occurrence tail value at risk (OEP TVaR) of Oasis Open Results Data (ORD). States exactly one of aeo:returnPeriod and aeo:exceedanceProbability."@en .
+    skos:note "Follows the occurrence tail value at risk (OEP TVaR) of Oasis Open Results Data (ORD), EPType 2 of its exceedance probability table (EPT). States exactly one of aeo:returnPeriod and aeo:exceedanceProbability."@en .
 aeo-voc:AggregateTailValueAtRisk a skos:Concept ; skos:inScheme aeo-voc:MetricKindScheme ; skos:topConceptOf aeo-voc:MetricKindScheme ;
     skos:prefLabel "Aggregate tail value at risk"@en ; skos:definition "The mean of the largest annual total losses beyond a stated aggregate exceedance threshold."@en ;
-    skos:note "Follows the aggregate tail value at risk (AEP TVaR) of Oasis Open Results Data (ORD). States exactly one of aeo:returnPeriod and aeo:exceedanceProbability."@en .
+    skos:note "Follows the aggregate tail value at risk (AEP TVaR) of Oasis Open Results Data (ORD), EPType 4 of its exceedance probability table (EPT). States exactly one of aeo:returnPeriod and aeo:exceedanceProbability."@en .
 aeo-voc:ProbabilityOfEvents a skos:Concept ; skos:inScheme aeo-voc:MetricKindScheme ; skos:topConceptOf aeo-voc:MetricKindScheme ;
     skos:prefLabel "Probability of events"@en ; skos:definition "The probability, or expected number, of events of a stated kind in a stated period, not a loss."@en ;
     skos:note "A hazard frequency figure as catastrophe model and hazard data providers report it. Not an exceedance kind, so aeo:returnPeriod is unused here and the exceedance shape does not apply."@en .
@@ -1996,26 +1996,32 @@ aeo-voc:MetricKindScheme skos:hasTopConcept aeo-voc:AverageAnnualLoss , aeo-voc:
 
 aeo-voc:GroundUpLoss a skos:Concept ; skos:inScheme aeo-voc:PerspectiveScheme ; skos:topConceptOf aeo-voc:PerspectiveScheme ;
     skos:prefLabel "Ground-up loss"@en ; skos:definition "The loss before any policy terms are applied."@en ;
-    skos:note "Follows the ground-up loss (GUL) perspective of Oasis Open Results Data (ORD)."@en .
+    skos:note "Follows the ground-up loss (GUL) perspective of Oasis Open Results Data (ORD), perspective 0 (Ground-up) in its perspective list."@en .
 aeo-voc:InsuredLoss a skos:Concept ; skos:inScheme aeo-voc:PerspectiveScheme ; skos:topConceptOf aeo-voc:PerspectiveScheme ;
     skos:prefLabel "Insured loss"@en ; skos:definition "The loss after policy terms (limits, deductibles) are applied."@en ;
-    skos:note "Follows the insured loss (IL) perspective of Oasis Open Results Data (ORD). The market's gross loss is usually this perspective, and a metric states which perspective it is rather than relying on the word."@en .
-aeo-voc:ReinsuranceLoss a skos:Concept ; skos:inScheme aeo-voc:PerspectiveScheme ; skos:topConceptOf aeo-voc:PerspectiveScheme ;
-    skos:prefLabel "Reinsurance loss"@en ; skos:definition "The loss after reinsurance recoveries are applied."@en ;
-    skos:note "Follows the reinsurance loss (RIL) perspective of Oasis Open Results Data (ORD). The market's net loss is the loss after reinsurance, and a metric states which perspective it is rather than relying on the word."@en .
-aeo-voc:PerspectiveScheme skos:hasTopConcept aeo-voc:GroundUpLoss , aeo-voc:InsuredLoss , aeo-voc:ReinsuranceLoss .
+    skos:note "Follows the insured loss (IL) perspective of Oasis Open Results Data (ORD), which its perspective list calls Gross (perspective 1). The market's gross loss is usually this perspective, and a metric states which perspective it is rather than relying on the word."@en .
+aeo-voc:NetOfReinsuranceLoss a skos:Concept ; skos:inScheme aeo-voc:PerspectiveScheme ; skos:topConceptOf aeo-voc:PerspectiveScheme ;
+    skos:prefLabel "Net of reinsurance loss"@en ; skos:definition "The loss after policy terms and every reinsurance recovery are applied."@en ;
+    skos:note "Follows the reinsurance (RI) perspective of Oasis Open Results Data (ORD), which its perspective list calls Net of all reinsurance (perspective 2). The list's Reinsurance Loss (perspective 10), the loss falling to reinsurers, is a different perspective and is not this one. The market's net loss is the loss after reinsurance, and a metric states which perspective it is rather than relying on the word."@en .
+aeo-voc:PerspectiveScheme skos:hasTopConcept aeo-voc:GroundUpLoss , aeo-voc:InsuredLoss , aeo-voc:NetOfReinsuranceLoss .
 
 #################################################################
 #    Calculation method
 #################################################################
 
 aeo-voc:FullUncertainty a skos:Concept ; skos:inScheme aeo-voc:CalculationMethodScheme ; skos:topConceptOf aeo-voc:CalculationMethodScheme ;
-    skos:prefLabel "Full uncertainty"@en ; skos:definition "The exceedance curve is built from every sampled loss, with the model's uncertainty carried through."@en ;
-    skos:note "Follows the full uncertainty exceedance curve calculation named in the exceedance probability table of Oasis Open Results Data (ORD)."@en .
+    skos:prefLabel "Full uncertainty"@en ; skos:definition "The exceedance curve is calculated across all samples, each sample of a year counted as a further year."@en ;
+    skos:note "Follows EPCalc 2 (Full Uncertainty) of the exceedance probability table (EPT) of Oasis Open Results Data (ORD), which ORD calls the most accurate single exceedance curve."@en .
 aeo-voc:PerSampleMean a skos:Concept ; skos:inScheme aeo-voc:CalculationMethodScheme ; skos:topConceptOf aeo-voc:CalculationMethodScheme ;
-    skos:prefLabel "Per-sample mean"@en ; skos:definition "The exceedance curve is built from each sample's own losses and the curves are averaged across samples."@en ;
-    skos:note "Follows the per-sample mean exceedance curve calculation named in the exceedance probability table of Oasis Open Results Data (ORD)."@en .
-aeo-voc:CalculationMethodScheme skos:hasTopConcept aeo-voc:FullUncertainty , aeo-voc:PerSampleMean .
+    skos:prefLabel "Per-sample mean"@en ; skos:definition "The loss at each return period is the average of the losses at that return period on the per-sample exceedance curves."@en ;
+    skos:note "Follows EPCalc 3 (Per Sample Mean) of the exceedance probability table (EPT) of Oasis Open Results Data (ORD). The per-sample curves are its per-sample exceedance probability table (PSEPT)."@en .
+aeo-voc:MeanDamage a skos:Concept ; skos:inScheme aeo-voc:CalculationMethodScheme ; skos:topConceptOf aeo-voc:CalculationMethodScheme ;
+    skos:prefLabel "Mean damage"@en ; skos:definition "The loss for each year is calculated from each event's mean damage, obtained by numerical integration of the damage distributions rather than by sampling."@en ;
+    skos:note "Follows EPCalc 1 (Mean Damage Ratio) of the exceedance probability table (EPT) of Oasis Open Results Data (ORD)."@en .
+aeo-voc:SampleMean a skos:Concept ; skos:inScheme aeo-voc:CalculationMethodScheme ; skos:topConceptOf aeo-voc:CalculationMethodScheme ;
+    skos:prefLabel "Sample mean"@en ; skos:definition "The loss for each year is calculated from each event's mean loss over its samples."@en ;
+    skos:note "Follows EPCalc 4 (Sample Mean) of the exceedance probability table (EPT) of Oasis Open Results Data (ORD)."@en .
+aeo-voc:CalculationMethodScheme skos:hasTopConcept aeo-voc:MeanDamage , aeo-voc:FullUncertainty , aeo-voc:PerSampleMean , aeo-voc:SampleMean .
 
 #################################################################
 #    Model option
