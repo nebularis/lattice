@@ -50,8 +50,8 @@ Verifying queue (S slices handed over and not yet merged): none.
 
 ## Machine S
 
-**Position:** round 3, the one trip. AIR-1.1, AIR-2.1, AIR-1.2 and AIR-2.0 built on
-`air/applied-reference` (not yet handed to R). Next: AIR-2.2.
+**Position:** round 3, the one trip. AIR-1.1, AIR-2.1, AIR-1.2, AIR-2.0 and AIR-2.2 built on
+`air/applied-reference` (not yet handed to R). Next: AIR-4.1.
 **Last updated:** 2026-10-14
 **Blockers:** none.
 
@@ -61,8 +61,8 @@ Verifying queue (S slices handed over and not yet merged): none.
 | 4 | AIR-1.2 | merged | set by R. Tags `applied-classification-v0.1.0`, `applied-classification-vocab-v0.1.0`, `insurance-common-v0.1.0`, `insurance-common-vocab-v0.1.0` |
 | 5 | AIR-2.1 | merged | set by R: three shape defects fixed at verification. Tags `applied-insurance-peril-shapes-v0.1.0`, `insurance-peril-v0.1.0`, `insurance-peril-vocab-v0.1.0` |
 | 5a | AIR-2.0 | built | `insurance/common` and `insurance/peril` converted to literate READMEs, the extractor extended (nested `--layer` paths, `@output-file` on `turtle-vocab`), `prl:DocumentationShape` added (shapes `0.1.0` → `0.2.0`). No spec/vocab version change. [Validation Pack](../validation/applied-insurance-reference-2.0.md) |
-| 6 | AIR-2.2 | in progress | brief refreshed and amended 2026-10-13 |
-| 7 | AIR-4.1 | ready | brief refreshed 2026-10-13, literate |
+| 6 | AIR-2.2 | built | peril spec `0.4.0`→`0.5.0` (common import, four sub-property axioms), peril-vocab `0.4.0`→`0.5.0` (70 characteristic/companion concepts, four `voc:boundScheme` bindings). Lists amended beyond the first brief (Intentional/Economic agency, 13 more mechanisms, consequence widened to 19). [Validation Pack](../validation/applied-insurance-reference-2.2.md) |
+| 7 | AIR-4.1 | in progress | brief refreshed 2026-10-13, literate |
 | 9 | AIR-2.3 | ready | after AIR-2.6 |
 | 10 | AIR-2.4 | ready | |
 | 11 | AIR-4.2 | ready | brief written 2026-10-13 |
