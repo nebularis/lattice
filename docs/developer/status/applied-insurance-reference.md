@@ -50,8 +50,8 @@ Verifying queue (S slices handed over and not yet merged): none.
 
 ## Machine S
 
-**Position:** round 3, the one trip. AIR-1.1, AIR-2.1, AIR-1.2, AIR-2.0, AIR-2.2, AIR-4.1 and AIR-2.6
-built on `air/applied-reference` (not yet handed to R). Next: AIR-2.3.
+**Position:** round 3, the one trip. AIR-1.1, AIR-2.1, AIR-1.2, AIR-2.0, AIR-2.2, AIR-4.1, AIR-2.6
+and AIR-2.3 built on `air/applied-reference` (not yet handed to R). Next: AIR-2.4.
 **Last updated:** 2026-10-14
 **Blockers:** none.
 
@@ -63,8 +63,8 @@ built on `air/applied-reference` (not yet handed to R). Next: AIR-2.3.
 | 5a | AIR-2.0 | built | `insurance/common` and `insurance/peril` converted to literate READMEs, the extractor extended (nested `--layer` paths, `@output-file` on `turtle-vocab`), `prl:DocumentationShape` added (shapes `0.1.0` → `0.2.0`). No spec/vocab version change. [Validation Pack](../validation/applied-insurance-reference-2.0.md) |
 | 6 | AIR-2.2 | built | peril spec `0.4.0`→`0.5.0` (common import, four sub-property axioms), peril-vocab `0.4.0`→`0.5.0` (70 characteristic/companion concepts, four `voc:boundScheme` bindings). Lists amended beyond the first brief (Intentional/Economic agency, 13 more mechanisms, consequence widened to 19). [Validation Pack](../validation/applied-insurance-reference-2.2.md) |
 | 7 | AIR-4.1 | built | new module `ontology/applied/insurance/exposure/` (`aeo:`), literate from the start: exposure set, location, legal entity, control, asset, interest, valuation, seven scheme contracts, nine programme roles. [Validation Pack](../validation/applied-insurance-reference-4.1.md) |
-| 9 | AIR-2.3 | ready | after AIR-2.6 |
-| 10 | AIR-2.4 | ready | |
+| 9 | AIR-2.3 | built | peril-vocab's `cause-N`, `cause-T` and `cause-E` regions filled: 90 N concepts, 71 T, 15 E, 176 in total, each with its characteristics, mechanisms, in-family cross-links and, for 16 concepts, an Oasis OED model code. No version bump (AIR-2.2 already bumped `peril-vocab` this trip). [Validation Pack](../validation/applied-insurance-reference-2.3.md) |
+| 10 | AIR-2.4 | ready | after AIR-2.3 |
 | 11 | AIR-4.2 | ready | brief written 2026-10-13 |
 | 12 | AIR-4.4 | ready | brief written 2026-10-13. After AIR-4.3 |
 | 14 | AIR-2.6 | built | `common-vocab` `0.5.0`→`0.6.0` (QUDT-aligned units across nine families, four exact conversions, ISO 4217 currencies on `icm-voc:Money`). New document `vocab/peril-intensity.ttl` (own ontology IRI, version in unison with `peril-vocab` `0.5.0`): the intensity measure scheme, 24 measures each with a `qnt:ValueSpace`, three ordinal sub-schemes (MMI, Saffir–Simpson, Enhanced Fujita), seven threshold-defined cause concepts' `prl:definingThreshold` range sets, other causes' `prl:intensityMeasure` links, and `prl:customaryEventWindow` for two groups. `prl:ThresholdDefinitionShape` extended to cross-check a threshold's space against the concept's own measures (peril shapes `0.2.0`→`0.3.0`). [Validation Pack](../validation/applied-insurance-reference-2.6.md) |
