@@ -2807,38 +2807,1122 @@ prl-voc:E.DET.INV a skos:Concept ;
 ### Cause: H (human and criminal acts)
 
 ```turtle-vocab
-# Filled by AIR-2.4: 37 concepts, sketch §5.4.
+# 37 concepts, sketch §5.4. Family default: typicalAgency MaliciousCriminal, onset Sudden,
+# definitionBasis Physical, accumulationClass Attritional, harmSubject Property, unless an
+# override below says otherwise.
+
+prl-voc:H a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ; skos:topConceptOf prl-voc:CauseScheme ;
+    skos:notation "H"^^prl:ReferenceCode ;
+    skos:prefLabel "Deliberate human act"@en ;
+    skos:definition "An event a person brings about on purpose, with agency malicious criminal unless stated otherwise."@en ;
+    skos:note "Common property and casualty market usage for this family."@en ;
+    prl:typicalAgency prl-voc:MaliciousCriminal ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:H.THF a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "H.THF"^^prl:ReferenceCode ;
+    skos:prefLabel "Theft"@en ;
+    skos:definition "The dishonest taking of property, with the intention of permanently depriving its owner of it."@en ;
+    skos:note "Common property crime market usage."@en ;
+    prl:broaderGeneric prl-voc:H ; skos:broader prl-voc:H ;
+    prl:typicalMechanism prl-voc:Deprivation ;
+    prl:typicalAgency prl-voc:MaliciousCriminal ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:H.THF.BUR a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "H.THF.BUR"^^prl:ReferenceCode ;
+    skos:prefLabel "Burglary"@en ;
+    skos:definition "Theft from premises entered by force or stealth."@en ;
+    skos:note "Common property crime market usage."@en ;
+    prl:broaderGeneric prl-voc:H.THF ; skos:broader prl-voc:H.THF ;
+    prl:typicalMechanism prl-voc:Deprivation ;
+    prl:typicalAgency prl-voc:MaliciousCriminal ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:H.THF.ROB a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "H.THF.ROB"^^prl:ReferenceCode ;
+    skos:prefLabel "Robbery"@en ;
+    skos:definition "Theft by force or the threat of force against a person."@en ;
+    skos:note "Common property crime market usage."@en ;
+    prl:broaderGeneric prl-voc:H.THF ; skos:broader prl-voc:H.THF ;
+    prl:typicalMechanism prl-voc:Deprivation ;
+    prl:typicalAgency prl-voc:MaliciousCriminal ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:H.THF.EMP a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "H.THF.EMP"^^prl:ReferenceCode ;
+    skos:prefLabel "Employee theft"@en ;
+    skos:definition "Theft by a person from their employer."@en ;
+    skos:note "Common fidelity and crime market usage."@en ;
+    prl:broaderGeneric prl-voc:H.THF ; skos:broader prl-voc:H.THF ;
+    prl:typicalMechanism prl-voc:Deprivation ;
+    prl:typicalAgency prl-voc:MaliciousCriminal ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:H.THF.TRS a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "H.THF.TRS"^^prl:ReferenceCode ;
+    skos:prefLabel "Theft in transit"@en ;
+    skos:definition "Theft of property while it is being carried between places."@en ;
+    skos:note "Kept distinct from other theft because custody in transit changes how the risk is underwritten, not only its context."@en ;
+    prl:broaderGeneric prl-voc:H.THF ; skos:broader prl-voc:H.THF ;
+    prl:typicalMechanism prl-voc:Deprivation ;
+    prl:typicalAgency prl-voc:MaliciousCriminal ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:H.FRD a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "H.FRD"^^prl:ReferenceCode ;
+    skos:prefLabel "Fraud and dishonesty"@en ;
+    skos:definition "A dishonest act intended to secure a gain or cause a loss by deception."@en ;
+    skos:note "Common fidelity and crime market usage."@en ;
+    prl:broaderGeneric prl-voc:H ; skos:broader prl-voc:H ;
+    prl:typicalMechanism prl-voc:Deprivation ;
+    prl:typicalAgency prl-voc:MaliciousCriminal ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:FinancialInterest .
+
+prl-voc:H.FRD.FOR a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "H.FRD.FOR"^^prl:ReferenceCode ;
+    skos:prefLabel "Forgery"@en ;
+    skos:definition "The making or altering of a document or instrument with intent to deceive."@en ;
+    skos:note "Common fidelity and crime market usage."@en ;
+    prl:broaderGeneric prl-voc:H.FRD ; skos:broader prl-voc:H.FRD ;
+    prl:typicalMechanism prl-voc:Deprivation ;
+    prl:typicalAgency prl-voc:MaliciousCriminal ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:FinancialInterest .
+
+prl-voc:H.FRD.SOC a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "H.FRD.SOC"^^prl:ReferenceCode ;
+    skos:prefLabel "Social engineering fraud"@en ;
+    skos:definition "Deceiving a person into transferring funds or property to a fraudster, without the fraudster accessing a computer system without authority."@en ;
+    skos:note "Its extension intersects C.MAL.SEN, the matching cyber-market attack technique."@en ;
+    prl:broaderGeneric prl-voc:H.FRD ; skos:broader prl-voc:H.FRD ;
+    prl:overlaps prl-voc:C.MAL.SEN ;
+    prl:typicalMechanism prl-voc:Deprivation ;
+    prl:typicalAgency prl-voc:MaliciousCriminal ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:FinancialInterest .
+
+prl-voc:H.FRD.CMP a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "H.FRD.CMP"^^prl:ReferenceCode ;
+    skos:prefLabel "Computer fraud"@en ;
+    skos:definition "Fraud carried out using a computer system, without the fraudster's own malicious access to the victim's systems being the cause of the loss."@en ;
+    skos:note "Its extension intersects C.MAL, malicious cyber acts generally."@en ;
+    prl:broaderGeneric prl-voc:H.FRD ; skos:broader prl-voc:H.FRD ;
+    prl:overlaps prl-voc:C.MAL ;
+    prl:typicalMechanism prl-voc:Deprivation ;
+    prl:typicalAgency prl-voc:MaliciousCriminal ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:FinancialInterest .
+
+prl-voc:H.FRD.EMD a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "H.FRD.EMD"^^prl:ReferenceCode ;
+    skos:prefLabel "Employee dishonesty"@en ;
+    skos:definition "A dishonest act by an employee against their employer, accumulating over time rather than at one moment."@en ;
+    skos:note "Common fidelity and crime market usage."@en ;
+    prl:broaderGeneric prl-voc:H.FRD ; skos:broader prl-voc:H.FRD ;
+    prl:typicalMechanism prl-voc:Deprivation ;
+    prl:typicalAgency prl-voc:MaliciousCriminal ; prl:onset prl-voc:Gradual ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:FinancialInterest .
+
+prl-voc:H.FRD.CFT a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "H.FRD.CFT"^^prl:ReferenceCode ;
+    skos:prefLabel "Counterfeiting"@en ;
+    skos:definition "The making or dealing in imitation currency, goods or documents, presented as genuine."@en ;
+    skos:note "Common fidelity and crime market usage."@en ;
+    prl:broaderGeneric prl-voc:H.FRD ; skos:broader prl-voc:H.FRD ;
+    prl:typicalMechanism prl-voc:Deprivation ;
+    prl:typicalAgency prl-voc:MaliciousCriminal ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:FinancialInterest .
+
+prl-voc:H.EXT a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "H.EXT"^^prl:ReferenceCode ;
+    skos:prefLabel "Extortion"@en ;
+    skos:definition "Obtaining money, property or an advantage from a person by a threat of harm."@en ;
+    skos:note "Common crime and kidnap and ransom market usage."@en ;
+    prl:broaderGeneric prl-voc:H ; skos:broader prl-voc:H ;
+    prl:typicalMechanism prl-voc:Deprivation ;
+    prl:typicalAgency prl-voc:MaliciousCriminal ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:FinancialInterest .
+
+prl-voc:H.EXT.KID a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "H.EXT.KID"^^prl:ReferenceCode ;
+    skos:prefLabel "Kidnap for ransom"@en ;
+    skos:definition "The unlawful seizure and detention of a person, with release demanded in exchange for a ransom."@en ;
+    skos:note "Common kidnap and ransom market usage. Harms the person taken, unlike the family's default financial-interest harm."@en ;
+    prl:broaderGeneric prl-voc:H.EXT ; skos:broader prl-voc:H.EXT ;
+    prl:typicalMechanism prl-voc:Deprivation ;
+    prl:typicalAgency prl-voc:MaliciousCriminal ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Persons .
+
+prl-voc:H.EXT.THR a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "H.EXT.THR"^^prl:ReferenceCode ;
+    skos:prefLabel "Extortion threat"@en ;
+    skos:definition "A threat of harm made to obtain money, property or an advantage, other than through a computer system."@en ;
+    skos:note "Common crime market usage. The cyber kind is C.MAL.EXT."@en ;
+    prl:broaderGeneric prl-voc:H.EXT ; skos:broader prl-voc:H.EXT ;
+    prl:typicalMechanism prl-voc:Deprivation ;
+    prl:typicalAgency prl-voc:MaliciousCriminal ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:FinancialInterest .
+
+prl-voc:H.EXT.HJK a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "H.EXT.HJK"^^prl:ReferenceCode ;
+    skos:prefLabel "Hijack and detention"@en ;
+    skos:definition "The unlawful seizure of a vehicle, vessel or aircraft, or the unlawful detention of its crew or cargo."@en ;
+    skos:note "Common marine and aviation crime market usage."@en ;
+    prl:broaderGeneric prl-voc:H.EXT ; skos:broader prl-voc:H.EXT ;
+    prl:typicalMechanism prl-voc:Deprivation ;
+    prl:typicalAgency prl-voc:MaliciousCriminal ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:FinancialInterest .
+
+prl-voc:H.MAL a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "H.MAL"^^prl:ReferenceCode ;
+    skos:prefLabel "Malicious damage"@en ;
+    skos:definition "Damage to property deliberately caused, without an intent to take it."@en ;
+    skos:note "Common property market usage."@en ;
+    prl:broaderGeneric prl-voc:H ; skos:broader prl-voc:H ;
+    prl:typicalAgency prl-voc:MaliciousCriminal ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:H.MAL.VAN a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "H.MAL.VAN"^^prl:ReferenceCode ;
+    skos:prefLabel "Vandalism"@en ;
+    skos:definition "Deliberate damage to or defacement of property, without a theft."@en ;
+    skos:note "Common property market usage."@en ;
+    prl:broaderGeneric prl-voc:H.MAL ; skos:broader prl-voc:H.MAL ;
+    prl:typicalMechanism prl-voc:Impact ;
+    prl:typicalAgency prl-voc:MaliciousCriminal ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:H.MAL.ARS a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "H.MAL.ARS"^^prl:ReferenceCode ;
+    skos:prefLabel "Arson"@en ;
+    skos:definition "A fire deliberately set."@en ;
+    skos:note "Common property and casualty market usage."@en ;
+    prl:broaderGeneric prl-voc:H.MAL ; skos:broader prl-voc:H.MAL ;
+    prl:typicalMechanism prl-voc:Fire ;
+    prl:typicalAgency prl-voc:MaliciousCriminal ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:H.MAL.TMP a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "H.MAL.TMP"^^prl:ReferenceCode ;
+    skos:prefLabel "Malicious product tampering"@en ;
+    skos:definition "The deliberate contamination or alteration of a product, intended to cause harm."@en ;
+    skos:note "Common product recall and liability market usage."@en ;
+    prl:broaderGeneric prl-voc:H.MAL ; skos:broader prl-voc:H.MAL ;
+    prl:typicalMechanism prl-voc:Contamination ;
+    prl:typicalAgency prl-voc:MaliciousCriminal ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:H.VIO a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "H.VIO"^^prl:ReferenceCode ;
+    skos:prefLabel "Violence against persons"@en ;
+    skos:definition "A deliberate act of physical force against a person."@en ;
+    skos:note "Common casualty market usage. Harms the person, unlike the family's default property harm."@en ;
+    prl:broaderGeneric prl-voc:H ; skos:broader prl-voc:H ;
+    prl:typicalMechanism prl-voc:Impact ;
+    prl:typicalAgency prl-voc:MaliciousCriminal ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Persons .
+
+prl-voc:H.VIO.ASL a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "H.VIO.ASL"^^prl:ReferenceCode ;
+    skos:prefLabel "Assault and battery"@en ;
+    skos:definition "A deliberate act, or threatened act, of physical force against a person."@en ;
+    skos:note "Common casualty market usage."@en ;
+    prl:broaderGeneric prl-voc:H.VIO ; skos:broader prl-voc:H.VIO ;
+    prl:typicalMechanism prl-voc:Impact ;
+    prl:typicalAgency prl-voc:MaliciousCriminal ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Persons .
+
+prl-voc:H.VIO.ABS a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "H.VIO.ABS"^^prl:ReferenceCode ;
+    skos:prefLabel "Abuse and molestation"@en ;
+    skos:definition "A deliberate act of physical, sexual or psychological abuse against a person, whose consequences typically come to light long after the act."@en ;
+    skos:note "Common liability market usage, a long-tail exposure whose onset in a claim is latent."@en ;
+    prl:broaderGeneric prl-voc:H.VIO ; skos:broader prl-voc:H.VIO ;
+    prl:typicalMechanism prl-voc:Impact ;
+    prl:typicalAgency prl-voc:MaliciousCriminal ; prl:onset prl-voc:Latent ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Persons .
+
+prl-voc:H.WRA a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "H.WRA"^^prl:ReferenceCode ;
+    skos:prefLabel "Wrongful act"@en ;
+    skos:definition "Conduct that gives rise to a legal liability, by a negligent or an intentional actor."@en ;
+    skos:note "Common management and professional liability market usage. The liability basis a wording attaches to this conduct is a matter of coverage, not of this peril concept (whitepaper §4)."@en ;
+    prl:broaderGeneric prl-voc:H ; skos:broader prl-voc:H ;
+    prl:typicalAgency prl-voc:Negligent , prl-voc:Intentional ; prl:onset prl-voc:Latent ; prl:definitionBasis prl-voc:WordingDefined ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:FinancialInterest .
+
+prl-voc:H.WRA.EMP a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "H.WRA.EMP"^^prl:ReferenceCode ;
+    skos:prefLabel "Employment practices wrongful act"@en ;
+    skos:definition "A wrongful act committed by an employer against an employee or a job applicant."@en ;
+    skos:note "Common employment practices liability market usage."@en ;
+    prl:broaderGeneric prl-voc:H.WRA ; skos:broader prl-voc:H.WRA ;
+    prl:typicalAgency prl-voc:Intentional ; prl:onset prl-voc:Latent ; prl:definitionBasis prl-voc:WordingDefined ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:FinancialInterest .
+
+prl-voc:H.WRA.EMP.DIS a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "H.WRA.EMP.DIS"^^prl:ReferenceCode ;
+    skos:prefLabel "Discrimination"@en ;
+    skos:definition "Unfavourable treatment of a person based on a protected characteristic."@en ;
+    skos:note "Common employment practices liability market usage."@en ;
+    prl:broaderGeneric prl-voc:H.WRA.EMP ; skos:broader prl-voc:H.WRA.EMP ;
+    prl:typicalAgency prl-voc:Intentional ; prl:onset prl-voc:Latent ; prl:definitionBasis prl-voc:WordingDefined ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:FinancialInterest .
+
+prl-voc:H.WRA.EMP.HAR a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "H.WRA.EMP.HAR"^^prl:ReferenceCode ;
+    skos:prefLabel "Harassment"@en ;
+    skos:definition "Unwanted conduct related to a protected characteristic, violating a person's dignity at work."@en ;
+    skos:note "Common employment practices liability market usage."@en ;
+    prl:broaderGeneric prl-voc:H.WRA.EMP ; skos:broader prl-voc:H.WRA.EMP ;
+    prl:typicalAgency prl-voc:Intentional ; prl:onset prl-voc:Latent ; prl:definitionBasis prl-voc:WordingDefined ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:FinancialInterest .
+
+prl-voc:H.WRA.EMP.DSM a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "H.WRA.EMP.DSM"^^prl:ReferenceCode ;
+    skos:prefLabel "Wrongful dismissal"@en ;
+    skos:definition "The termination of employment in breach of a legal obligation owed to the employee."@en ;
+    skos:note "Common employment practices liability market usage."@en ;
+    prl:broaderGeneric prl-voc:H.WRA.EMP ; skos:broader prl-voc:H.WRA.EMP ;
+    prl:typicalAgency prl-voc:Intentional ; prl:onset prl-voc:Latent ; prl:definitionBasis prl-voc:WordingDefined ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:FinancialInterest .
+
+prl-voc:H.WRA.EMP.RET a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "H.WRA.EMP.RET"^^prl:ReferenceCode ;
+    skos:prefLabel "Retaliation"@en ;
+    skos:definition "Adverse treatment of an employee because they made a protected complaint or claim."@en ;
+    skos:note "Common employment practices liability market usage."@en ;
+    prl:broaderGeneric prl-voc:H.WRA.EMP ; skos:broader prl-voc:H.WRA.EMP ;
+    prl:typicalAgency prl-voc:Intentional ; prl:onset prl-voc:Latent ; prl:definitionBasis prl-voc:WordingDefined ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:FinancialInterest .
+
+prl-voc:H.WRA.EMP.WHV a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "H.WRA.EMP.WHV"^^prl:ReferenceCode ;
+    skos:prefLabel "Wage and hour violation"@en ;
+    skos:definition "A failure to pay an employee the wages or overtime a law requires."@en ;
+    skos:note "Common employment practices liability market usage."@en ;
+    prl:broaderGeneric prl-voc:H.WRA.EMP ; skos:broader prl-voc:H.WRA.EMP ;
+    prl:typicalAgency prl-voc:Intentional ; prl:onset prl-voc:Latent ; prl:definitionBasis prl-voc:WordingDefined ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:FinancialInterest .
+
+prl-voc:H.WRA.MGT a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "H.WRA.MGT"^^prl:ReferenceCode ;
+    skos:prefLabel "Management breach of duty"@en ;
+    skos:definition "A breach, by a director or officer, of a duty owed to the organisation or its stakeholders."@en ;
+    skos:note "Common directors and officers liability market usage."@en ;
+    prl:broaderGeneric prl-voc:H.WRA ; skos:broader prl-voc:H.WRA ;
+    prl:typicalAgency prl-voc:Negligent , prl-voc:Intentional ; prl:onset prl-voc:Latent ; prl:definitionBasis prl-voc:WordingDefined ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:FinancialInterest .
+
+prl-voc:H.WRA.FID a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "H.WRA.FID"^^prl:ReferenceCode ;
+    skos:prefLabel "Fiduciary breach"@en ;
+    skos:definition "A breach of a duty owed by a person acting on behalf of another's financial interest, such as a pension trustee."@en ;
+    skos:note "Common fiduciary and pension trustee liability market usage."@en ;
+    prl:broaderGeneric prl-voc:H.WRA ; skos:broader prl-voc:H.WRA ;
+    prl:typicalAgency prl-voc:Negligent , prl-voc:Intentional ; prl:onset prl-voc:Latent ; prl:definitionBasis prl-voc:WordingDefined ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:FinancialInterest .
+
+prl-voc:H.WRA.IPI a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "H.WRA.IPI"^^prl:ReferenceCode ;
+    skos:prefLabel "Intellectual property infringement"@en ;
+    skos:definition "The unauthorised use of another's patent, trademark, copyright or trade secret."@en ;
+    skos:note "Common media and intellectual property liability market usage."@en ;
+    prl:broaderGeneric prl-voc:H.WRA ; skos:broader prl-voc:H.WRA ;
+    prl:typicalAgency prl-voc:Negligent , prl-voc:Intentional ; prl:onset prl-voc:Latent ; prl:definitionBasis prl-voc:WordingDefined ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:FinancialInterest .
+
+prl-voc:H.WRA.DEF a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "H.WRA.DEF"^^prl:ReferenceCode ;
+    skos:prefLabel "Defamation"@en ;
+    skos:definition "A false statement harming a person's or an organisation's standing."@en ;
+    skos:note "Common media liability market usage. Harms reputation, unlike the family's default financial-interest harm."@en ;
+    prl:broaderGeneric prl-voc:H.WRA ; skos:broader prl-voc:H.WRA ;
+    prl:typicalAgency prl-voc:Negligent , prl-voc:Intentional ; prl:onset prl-voc:Latent ; prl:definitionBasis prl-voc:WordingDefined ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Reputation .
+
+prl-voc:H.WRA.PRV a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "H.WRA.PRV"^^prl:ReferenceCode ;
+    skos:prefLabel "Privacy violation"@en ;
+    skos:definition "The unauthorised use or disclosure of a person's private information, without a malicious cyber act as its cause."@en ;
+    skos:note "Its extension intersects C.MAL.EXF, data exfiltration by a malicious cyber act."@en ;
+    prl:broaderGeneric prl-voc:H.WRA ; skos:broader prl-voc:H.WRA ;
+    prl:overlaps prl-voc:C.MAL.EXF ;
+    prl:typicalAgency prl-voc:Negligent , prl-voc:Intentional ; prl:onset prl-voc:Latent ; prl:definitionBasis prl-voc:WordingDefined ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:FinancialInterest .
+
+prl-voc:H.WRA.MIS a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "H.WRA.MIS"^^prl:ReferenceCode ;
+    skos:prefLabel "Misrepresentation and mis-selling"@en ;
+    skos:definition "A false or misleading statement made to induce a person to enter into a transaction."@en ;
+    skos:note "Common financial lines liability market usage."@en ;
+    prl:broaderGeneric prl-voc:H.WRA ; skos:broader prl-voc:H.WRA ;
+    prl:typicalAgency prl-voc:Negligent , prl-voc:Intentional ; prl:onset prl-voc:Latent ; prl:definitionBasis prl-voc:WordingDefined ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:FinancialInterest .
+
+prl-voc:H.WRA.ANT a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "H.WRA.ANT"^^prl:ReferenceCode ;
+    skos:prefLabel "Anticompetitive conduct"@en ;
+    skos:definition "Conduct that unlawfully restricts or distorts competition in a market."@en ;
+    skos:note "Common competition and antitrust liability market usage."@en ;
+    prl:broaderGeneric prl-voc:H.WRA ; skos:broader prl-voc:H.WRA ;
+    prl:typicalAgency prl-voc:Negligent , prl-voc:Intentional ; prl:onset prl-voc:Latent ; prl:definitionBasis prl-voc:WordingDefined ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:FinancialInterest .
 ```
 
 ### Cause: P (political)
 
 ```turtle-vocab
-# Filled by AIR-2.4: 36 concepts, sketch §5.5.
+# 36 concepts, sketch §5.5. Family default: typicalAgency Belligerent, MaliciousPolitical and
+# Sovereign (all three), onset Sudden, definitionBasis WordingDefined, accumulationClass
+# Catastrophe, harmSubject Property, unless an override below says otherwise. P is wording-
+# defined throughout: the reference definitions below are informative, and a bound wording's own
+# defined term governs (decided 2026-10-13).
+
+prl-voc:P a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ; skos:topConceptOf prl-voc:CauseScheme ;
+    skos:notation "P"^^prl:ReferenceCode ;
+    skos:prefLabel "Conflict and political event"@en ;
+    skos:definition "An event arising from armed conflict, civil disorder or an act of a government or sovereign authority."@en ;
+    skos:note "Common political risk and war market usage."@en ;
+    prl:typicalAgency prl-voc:Belligerent , prl-voc:MaliciousPolitical , prl-voc:Sovereign ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:accumulationClass prl-voc:Catastrophe ; prl:harmSubject prl-voc:Property .
+
+prl-voc:P.WAR a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "P.WAR"^^prl:ReferenceCode ;
+    skos:prefLabel "War and hostile acts"@en ;
+    skos:definition "Armed conflict between states or organised armed groups, declared or not, and the hostile acts of a belligerent party to it."@en ;
+    skos:note "Common war market usage, the subject of the standard war exclusion most property and casualty wordings carry."@en ;
+    prl:broaderGeneric prl-voc:P ; skos:broader prl-voc:P ;
+    prl:typicalMechanism prl-voc:Explosion , prl-voc:Fire , prl-voc:Impact ;
+    prl:typicalAgency prl-voc:Belligerent ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:accumulationClass prl-voc:Catastrophe ; prl:harmSubject prl-voc:Property .
+
+prl-voc:P.WAR.WAR a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "P.WAR.WAR"^^prl:ReferenceCode ;
+    skos:prefLabel "War"@en ;
+    skos:definition "Armed conflict between states, whether formally declared or not."@en ;
+    skos:note "Common war market usage."@en ;
+    prl:broaderGeneric prl-voc:P.WAR ; skos:broader prl-voc:P.WAR ;
+    prl:typicalMechanism prl-voc:Explosion , prl-voc:Fire , prl-voc:Impact ;
+    prl:typicalAgency prl-voc:Belligerent ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:accumulationClass prl-voc:Catastrophe ; prl:harmSubject prl-voc:Property .
+
+prl-voc:P.WAR.CVW a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "P.WAR.CVW"^^prl:ReferenceCode ;
+    skos:prefLabel "Civil war"@en ;
+    skos:definition "Armed conflict between organised factions within a state."@en ;
+    skos:note "Common war market usage."@en ;
+    prl:broaderGeneric prl-voc:P.WAR ; skos:broader prl-voc:P.WAR ;
+    prl:typicalMechanism prl-voc:Explosion , prl-voc:Fire , prl-voc:Impact ;
+    prl:typicalAgency prl-voc:Belligerent ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:accumulationClass prl-voc:Catastrophe ; prl:harmSubject prl-voc:Property .
+
+prl-voc:P.WAR.INV a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "P.WAR.INV"^^prl:ReferenceCode ;
+    skos:prefLabel "Invasion"@en ;
+    skos:definition "The entry of a state's armed forces into another state's territory by force."@en ;
+    skos:note "Common war market usage."@en ;
+    prl:broaderGeneric prl-voc:P.WAR ; skos:broader prl-voc:P.WAR ;
+    prl:typicalMechanism prl-voc:Explosion , prl-voc:Fire , prl-voc:Impact ;
+    prl:typicalAgency prl-voc:Belligerent ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:accumulationClass prl-voc:Catastrophe ; prl:harmSubject prl-voc:Property .
+
+prl-voc:P.WAR.HOS a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "P.WAR.HOS"^^prl:ReferenceCode ;
+    skos:prefLabel "Hostile act by a belligerent"@en ;
+    skos:definition "An act of a belligerent party preparing for or carrying out war, short of war itself being declared."@en ;
+    skos:note "Common war market usage."@en ;
+    prl:broaderGeneric prl-voc:P.WAR ; skos:broader prl-voc:P.WAR ;
+    prl:typicalMechanism prl-voc:Explosion , prl-voc:Fire , prl-voc:Impact ;
+    prl:typicalAgency prl-voc:Belligerent ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:accumulationClass prl-voc:Catastrophe ; prl:harmSubject prl-voc:Property .
+
+prl-voc:P.WAR.WPN a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "P.WAR.WPN"^^prl:ReferenceCode ;
+    skos:prefLabel "Weapons of war"@en ;
+    skos:definition "A derelict mine, torpedo, bomb or other munition of war, remaining hazardous after the conflict that left it."@en ;
+    skos:note "Common war and marine market usage."@en ;
+    prl:broaderGeneric prl-voc:P.WAR ; skos:broader prl-voc:P.WAR ;
+    prl:typicalMechanism prl-voc:Explosion , prl-voc:Fire , prl-voc:Impact ;
+    prl:typicalAgency prl-voc:Belligerent ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:accumulationClass prl-voc:Catastrophe ; prl:harmSubject prl-voc:Property .
+
+prl-voc:P.WAR.SZR a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "P.WAR.SZR"^^prl:ReferenceCode ;
+    skos:prefLabel "War seizure and capture"@en ;
+    skos:definition "The taking of property by a belligerent party under the laws or usages of war."@en ;
+    skos:note "Common marine war market usage."@en ;
+    prl:broaderGeneric prl-voc:P.WAR ; skos:broader prl-voc:P.WAR ;
+    prl:typicalMechanism prl-voc:Deprivation ;
+    prl:typicalAgency prl-voc:Belligerent ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:accumulationClass prl-voc:Catastrophe ; prl:harmSubject prl-voc:Property .
+
+prl-voc:P.WAR.CYW a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "P.WAR.CYW"^^prl:ReferenceCode ;
+    skos:prefLabel "State cyber operation"@en ;
+    skos:definition "A cyber operation attributed to a state or a state-directed group, carried out as an act of war or hostility."@en ;
+    skos:note "Its extension intersects C.MAL, malicious cyber acts generally."@en ;
+    prl:broaderGeneric prl-voc:P.WAR ; skos:broader prl-voc:P.WAR ;
+    prl:overlaps prl-voc:C.MAL ;
+    prl:typicalAgency prl-voc:Sovereign , prl-voc:Belligerent ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:accumulationClass prl-voc:Catastrophe ; prl:harmSubject prl-voc:DataAndSystems .
+
+prl-voc:P.TER a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "P.TER"^^prl:ReferenceCode ;
+    skos:prefLabel "Terrorism"@en ;
+    skos:definition "An act of violence, or the threat of one, intended to influence a government or intimidate a population for a political, religious or ideological purpose."@en ;
+    skos:note "Common terrorism market usage. A terrorism pool's own statutory definition applies by territory through a market edition (sketch §9.4)."@en ;
+    prl:broaderGeneric prl-voc:P ; skos:broader prl-voc:P ;
+    prl:typicalAgency prl-voc:MaliciousPolitical ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:accumulationClass prl-voc:Catastrophe ; prl:harmSubject prl-voc:Property .
+
+prl-voc:P.TER.CNV a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "P.TER.CNV"^^prl:ReferenceCode ;
+    skos:prefLabel "Conventional terrorism"@en ;
+    skos:definition "An act of terrorism using conventional weapons or explosives, without a chemical, biological, radiological or nuclear agent."@en ;
+    skos:note "Common terrorism market usage."@en ;
+    prl:broaderGeneric prl-voc:P.TER ; skos:broader prl-voc:P.TER ;
+    prl:typicalMechanism prl-voc:Explosion , prl-voc:Fire ;
+    prl:typicalAgency prl-voc:MaliciousPolitical ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:accumulationClass prl-voc:Catastrophe ; prl:harmSubject prl-voc:Property .
+
+prl-voc:P.TER.CBR a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "P.TER.CBR"^^prl:ReferenceCode ;
+    skos:prefLabel "CBRN terrorism"@en ;
+    skos:definition "An act of terrorism using a chemical, biological, radiological or nuclear agent."@en ;
+    skos:note "Common terrorism market usage."@en ;
+    prl:broaderGeneric prl-voc:P.TER ; skos:broader prl-voc:P.TER ;
+    prl:typicalAgency prl-voc:MaliciousPolitical ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:accumulationClass prl-voc:Catastrophe ; prl:harmSubject prl-voc:Property .
+
+prl-voc:P.TER.CBR.CHM a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "P.TER.CBR.CHM"^^prl:ReferenceCode ;
+    skos:prefLabel "Chemical attack"@en ;
+    skos:definition "An act of terrorism using a chemical agent."@en ;
+    skos:note "Common terrorism market usage."@en ;
+    prl:broaderGeneric prl-voc:P.TER.CBR ; skos:broader prl-voc:P.TER.CBR ;
+    prl:typicalMechanism prl-voc:Contamination ;
+    prl:typicalAgency prl-voc:MaliciousPolitical ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:accumulationClass prl-voc:Catastrophe ; prl:harmSubject prl-voc:Property .
+
+prl-voc:P.TER.CBR.BIO a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "P.TER.CBR.BIO"^^prl:ReferenceCode ;
+    skos:prefLabel "Biological attack"@en ;
+    skos:definition "An act of terrorism using a biological agent."@en ;
+    skos:note "Common terrorism market usage."@en ;
+    prl:broaderGeneric prl-voc:P.TER.CBR ; skos:broader prl-voc:P.TER.CBR ;
+    prl:typicalMechanism prl-voc:BiologicalAgent ;
+    prl:typicalAgency prl-voc:MaliciousPolitical ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:accumulationClass prl-voc:Catastrophe ; prl:harmSubject prl-voc:Property .
+
+prl-voc:P.TER.CBR.RAD a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "P.TER.CBR.RAD"^^prl:ReferenceCode ;
+    skos:prefLabel "Radiological attack"@en ;
+    skos:definition "An act of terrorism using radioactive material, without a nuclear detonation."@en ;
+    skos:note "Related to T.REL.RAD, the accidental kind of the same release."@en ;
+    prl:broaderGeneric prl-voc:P.TER.CBR ; skos:broader prl-voc:P.TER.CBR ;
+    prl:typicalMechanism prl-voc:Radiation , prl-voc:Contamination ;
+    prl:typicalAgency prl-voc:MaliciousPolitical ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:accumulationClass prl-voc:Catastrophe ; prl:harmSubject prl-voc:Property .
+
+prl-voc:P.TER.CBR.NUC a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "P.TER.CBR.NUC"^^prl:ReferenceCode ;
+    skos:prefLabel "Nuclear attack"@en ;
+    skos:definition "An act of terrorism using a nuclear detonation."@en ;
+    skos:note "Common terrorism market usage."@en ;
+    prl:broaderGeneric prl-voc:P.TER.CBR ; skos:broader prl-voc:P.TER.CBR ;
+    prl:typicalMechanism prl-voc:Radiation , prl-voc:Explosion ;
+    prl:typicalAgency prl-voc:MaliciousPolitical ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:accumulationClass prl-voc:Catastrophe ; prl:harmSubject prl-voc:Property .
+
+prl-voc:P.TER.CYT a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "P.TER.CYT"^^prl:ReferenceCode ;
+    skos:prefLabel "Cyber terrorism"@en ;
+    skos:definition "An act of terrorism carried out using a cyber operation."@en ;
+    skos:note "Its extension intersects C.MAL, malicious cyber acts generally."@en ;
+    prl:broaderGeneric prl-voc:P.TER ; skos:broader prl-voc:P.TER ;
+    prl:overlaps prl-voc:C.MAL ;
+    prl:typicalAgency prl-voc:MaliciousPolitical ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:accumulationClass prl-voc:Catastrophe ; prl:harmSubject prl-voc:DataAndSystems .
+
+prl-voc:P.PV a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "P.PV"^^prl:ReferenceCode ;
+    skos:prefLabel "Political violence"@en ;
+    skos:definition "An act of civil disorder or politically motivated collective action, other than war or terrorism."@en ;
+    skos:note "Common political violence market usage."@en ;
+    prl:broaderGeneric prl-voc:P ; skos:broader prl-voc:P ;
+    prl:typicalMechanism prl-voc:Fire , prl-voc:Impact ;
+    prl:typicalAgency prl-voc:MaliciousPolitical ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:accumulationClass prl-voc:Catastrophe ; prl:harmSubject prl-voc:Property .
+
+prl-voc:P.PV.RIO a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "P.PV.RIO"^^prl:ReferenceCode ;
+    skos:prefLabel "Riot"@en ;
+    skos:definition "Violent disorder by an assembled group of people."@en ;
+    skos:note "Common political violence market usage."@en ;
+    prl:broaderGeneric prl-voc:P.PV ; skos:broader prl-voc:P.PV ;
+    prl:typicalMechanism prl-voc:Fire , prl-voc:Impact ;
+    prl:typicalAgency prl-voc:MaliciousPolitical ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:accumulationClass prl-voc:Catastrophe ; prl:harmSubject prl-voc:Property .
+
+prl-voc:P.PV.CCM a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "P.PV.CCM"^^prl:ReferenceCode ;
+    skos:prefLabel "Civil commotion"@en ;
+    skos:definition "Sustained civil disorder, more organised and prolonged than a riot."@en ;
+    skos:note "Common political violence market usage."@en ;
+    prl:broaderGeneric prl-voc:P.PV ; skos:broader prl-voc:P.PV ;
+    prl:typicalMechanism prl-voc:Fire , prl-voc:Impact ;
+    prl:typicalAgency prl-voc:MaliciousPolitical ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:accumulationClass prl-voc:Catastrophe ; prl:harmSubject prl-voc:Property .
+
+prl-voc:P.PV.STK a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "P.PV.STK"^^prl:ReferenceCode ;
+    skos:prefLabel "Strike and labour disturbance"@en ;
+    skos:definition "A collective withdrawal of labour, or an employer's lockout, and the disorder it causes."@en ;
+    skos:note "Common political violence market usage, traditionally grouped with riot and civil commotion."@en ;
+    prl:broaderGeneric prl-voc:P.PV ; skos:broader prl-voc:P.PV ;
+    prl:typicalAgency prl-voc:Intentional ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:accumulationClass prl-voc:Catastrophe ; prl:harmSubject prl-voc:Property .
+
+prl-voc:P.PV.INS a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "P.PV.INS"^^prl:ReferenceCode ;
+    skos:prefLabel "Insurrection"@en ;
+    skos:definition "An organised uprising against an established authority, short of civil war."@en ;
+    skos:note "Common political violence market usage."@en ;
+    prl:broaderGeneric prl-voc:P.PV ; skos:broader prl-voc:P.PV ;
+    prl:typicalMechanism prl-voc:Fire , prl-voc:Impact ;
+    prl:typicalAgency prl-voc:MaliciousPolitical ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:accumulationClass prl-voc:Catastrophe ; prl:harmSubject prl-voc:Property .
+
+prl-voc:P.PV.RBL a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "P.PV.RBL"^^prl:ReferenceCode ;
+    skos:prefLabel "Rebellion and revolution"@en ;
+    skos:definition "An organised attempt to overthrow an established authority."@en ;
+    skos:note "Common political violence market usage."@en ;
+    prl:broaderGeneric prl-voc:P.PV ; skos:broader prl-voc:P.PV ;
+    prl:typicalMechanism prl-voc:Fire , prl-voc:Impact ;
+    prl:typicalAgency prl-voc:MaliciousPolitical ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:accumulationClass prl-voc:Catastrophe ; prl:harmSubject prl-voc:Property .
+
+prl-voc:P.PV.CPD a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "P.PV.CPD"^^prl:ReferenceCode ;
+    skos:prefLabel "Coup d'\u00e9tat"@en ;
+    skos:definition "The sudden, unconstitutional overthrow of a government, typically by a faction within it."@en ;
+    skos:note "Common political violence and political risk market usage."@en ;
+    prl:broaderGeneric prl-voc:P.PV ; skos:broader prl-voc:P.PV ;
+    prl:typicalMechanism prl-voc:Fire , prl-voc:Impact ;
+    prl:typicalAgency prl-voc:MaliciousPolitical ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:accumulationClass prl-voc:Catastrophe ; prl:harmSubject prl-voc:Property .
+
+prl-voc:P.PV.SAB a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "P.PV.SAB"^^prl:ReferenceCode ;
+    skos:prefLabel "Political sabotage"@en ;
+    skos:definition "Deliberate damage to property for a political purpose."@en ;
+    skos:note "Related to H.MAL, malicious damage generally, of which it is the politically motivated kind."@en ;
+    prl:broaderGeneric prl-voc:P.PV ; skos:broader prl-voc:P.PV ;
+    skos:related prl-voc:H.MAL ;
+    prl:typicalMechanism prl-voc:Fire , prl-voc:Impact ;
+    prl:typicalAgency prl-voc:MaliciousPolitical ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:accumulationClass prl-voc:Catastrophe ; prl:harmSubject prl-voc:Property .
+
+prl-voc:P.GOV a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "P.GOV"^^prl:ReferenceCode ;
+    skos:prefLabel "Government and sovereign action"@en ;
+    skos:definition "An act of a government or sovereign authority depriving a person of property, rights or the use of either."@en ;
+    skos:note "Common political risk market usage."@en ;
+    prl:broaderGeneric prl-voc:P ; skos:broader prl-voc:P ;
+    prl:typicalAgency prl-voc:Sovereign ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:harmSubject prl-voc:FinancialInterest .
+
+prl-voc:P.GOV.EXP a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "P.GOV.EXP"^^prl:ReferenceCode ;
+    skos:prefLabel "Expropriation"@en ;
+    skos:definition "A government's taking of property, with or without compensation."@en ;
+    skos:note "Common political risk market usage."@en ;
+    prl:broaderGeneric prl-voc:P.GOV ; skos:broader prl-voc:P.GOV ;
+    prl:typicalMechanism prl-voc:Deprivation ;
+    prl:typicalAgency prl-voc:Sovereign ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:harmSubject prl-voc:FinancialInterest .
+
+prl-voc:P.GOV.CNF a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "P.GOV.CNF"^^prl:ReferenceCode ;
+    skos:prefLabel "Confiscation"@en ;
+    skos:definition "A government's seizure of property, typically under a claimed legal authority."@en ;
+    skos:note "Common political risk market usage."@en ;
+    prl:broaderGeneric prl-voc:P.GOV ; skos:broader prl-voc:P.GOV ;
+    prl:typicalMechanism prl-voc:Deprivation ;
+    prl:typicalAgency prl-voc:Sovereign ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:harmSubject prl-voc:FinancialInterest .
+
+prl-voc:P.GOV.NAT a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "P.GOV.NAT"^^prl:ReferenceCode ;
+    skos:prefLabel "Nationalisation"@en ;
+    skos:definition "A government's taking of an industry or an enterprise into state ownership."@en ;
+    skos:note "Common political risk market usage."@en ;
+    prl:broaderGeneric prl-voc:P.GOV ; skos:broader prl-voc:P.GOV ;
+    prl:typicalMechanism prl-voc:Deprivation ;
+    prl:typicalAgency prl-voc:Sovereign ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:harmSubject prl-voc:FinancialInterest .
+
+prl-voc:P.GOV.DEP a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "P.GOV.DEP"^^prl:ReferenceCode ;
+    skos:prefLabel "Creeping deprivation"@en ;
+    skos:definition "A series of government acts, none alone a taking, that together deprive a person of the use or value of property."@en ;
+    skos:note "Common political risk market usage."@en ;
+    prl:broaderGeneric prl-voc:P.GOV ; skos:broader prl-voc:P.GOV ;
+    prl:typicalMechanism prl-voc:Deprivation ;
+    prl:typicalAgency prl-voc:Sovereign ; prl:onset prl-voc:Gradual ; prl:definitionBasis prl-voc:WordingDefined ; prl:harmSubject prl-voc:FinancialInterest .
+
+prl-voc:P.GOV.CIV a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "P.GOV.CIV"^^prl:ReferenceCode ;
+    skos:prefLabel "Currency inconvertibility"@en ;
+    skos:definition "A government restriction preventing local currency from being exchanged for another currency."@en ;
+    skos:note "Common political risk market usage."@en ;
+    prl:broaderGeneric prl-voc:P.GOV ; skos:broader prl-voc:P.GOV ;
+    prl:typicalAgency prl-voc:Sovereign ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:harmSubject prl-voc:FinancialInterest .
+
+prl-voc:P.GOV.TRR a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "P.GOV.TRR"^^prl:ReferenceCode ;
+    skos:prefLabel "Transfer restriction"@en ;
+    skos:definition "A government restriction preventing funds or assets from being moved out of a country."@en ;
+    skos:note "Common political risk market usage."@en ;
+    prl:broaderGeneric prl-voc:P.GOV ; skos:broader prl-voc:P.GOV ;
+    prl:typicalAgency prl-voc:Sovereign ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:harmSubject prl-voc:FinancialInterest .
+
+prl-voc:P.GOV.EMB a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "P.GOV.EMB"^^prl:ReferenceCode ;
+    skos:prefLabel "Embargo and sanctions"@en ;
+    skos:definition "A government restriction on trade with a country, person or entity."@en ;
+    skos:note "Common political risk and trade credit market usage."@en ;
+    prl:broaderGeneric prl-voc:P.GOV ; skos:broader prl-voc:P.GOV ;
+    prl:typicalAgency prl-voc:Sovereign ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:harmSubject prl-voc:FinancialInterest .
+
+prl-voc:P.GOV.LIC a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "P.GOV.LIC"^^prl:ReferenceCode ;
+    skos:prefLabel "Licence cancellation"@en ;
+    skos:definition "A government's cancellation or non-renewal of a licence or concession needed to operate."@en ;
+    skos:note "Common political risk market usage."@en ;
+    prl:broaderGeneric prl-voc:P.GOV ; skos:broader prl-voc:P.GOV ;
+    prl:typicalAgency prl-voc:Sovereign ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:harmSubject prl-voc:FinancialInterest .
+
+prl-voc:P.GOV.CFR a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "P.GOV.CFR"^^prl:ReferenceCode ;
+    skos:prefLabel "Contract frustration by a sovereign"@en ;
+    skos:definition "A government act that prevents the performance of a contract with a sovereign counterparty."@en ;
+    skos:note "Common political risk and trade credit market usage. The non-sovereign kind is F.CFR."@en ;
+    prl:broaderGeneric prl-voc:P.GOV ; skos:broader prl-voc:P.GOV ;
+    prl:typicalAgency prl-voc:Sovereign ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:harmSubject prl-voc:FinancialInterest .
+
+prl-voc:P.GOV.ACA a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "P.GOV.ACA"^^prl:ReferenceCode ;
+    skos:prefLabel "Acts of authorities"@en ;
+    skos:definition "A closure order, a detainment or a requisition by a public authority."@en ;
+    skos:note "Common property and business interruption market usage, often following a nearby peril the authority is responding to."@en ;
+    prl:broaderGeneric prl-voc:P.GOV ; skos:broader prl-voc:P.GOV ;
+    prl:typicalConsequence prl-voc:DenialOfAccess ;
+    prl:typicalAgency prl-voc:Sovereign ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:harmSubject prl-voc:Property .
 ```
 
 ### Cause: C (cyber)
 
 ```turtle-vocab
-# Filled by AIR-2.4: 17 concepts, sketch §5.6.
+# 17 concepts, sketch §5.6. Family default: typicalAgency UndeterminedAgency, onset Sudden,
+# definitionBasis WordingDefined, no accumulationClass, harmSubject DataAndSystems, unless an
+# override below says otherwise. The first split is by agency (C.MAL, malicious; C.NML, non-
+# malicious), because every market wording that treats cyber splits there; the agency
+# characteristic is asserted on each concept too, so both views agree (sketch §5.6).
+
+prl-voc:C a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ; skos:topConceptOf prl-voc:CauseScheme ;
+    skos:notation "C"^^prl:ReferenceCode ;
+    skos:prefLabel "Cyber event"@en ;
+    skos:definition "An event affecting the confidentiality, integrity or availability of data or a computer system."@en ;
+    skos:note "Definition basis is wording-defined: this reference definition is informative, and a bound wording's own defined term governs."@en ;
+    prl:typicalAgency prl-voc:UndeterminedAgency ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:harmSubject prl-voc:DataAndSystems .
+
+prl-voc:C.MAL a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "C.MAL"^^prl:ReferenceCode ;
+    skos:prefLabel "Malicious cyber act"@en ;
+    skos:definition "A cyber event a person deliberately carries out, without authority, against a system or data."@en ;
+    skos:note "Common cyber market usage."@en ;
+    prl:broaderGeneric prl-voc:C ; skos:broader prl-voc:C ;
+    prl:typicalAgency prl-voc:MaliciousCriminal , prl-voc:MaliciousPolitical , prl-voc:Sovereign ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:harmSubject prl-voc:DataAndSystems .
+
+prl-voc:C.MAL.INT a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "C.MAL.INT"^^prl:ReferenceCode ;
+    skos:prefLabel "Unauthorised access and intrusion"@en ;
+    skos:definition "Gaining access to a computer system without authority."@en ;
+    skos:note "Common cyber market usage."@en ;
+    prl:broaderGeneric prl-voc:C.MAL ; skos:broader prl-voc:C.MAL ;
+    prl:typicalAgency prl-voc:MaliciousCriminal , prl-voc:MaliciousPolitical , prl-voc:Sovereign ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:harmSubject prl-voc:DataAndSystems .
+
+prl-voc:C.MAL.RAN a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "C.MAL.RAN"^^prl:ReferenceCode ;
+    skos:prefLabel "Ransomware"@en ;
+    skos:definition "Malicious software that encrypts data or systems, with release conditioned on payment."@en ;
+    skos:note "Common cyber market usage."@en ;
+    prl:broaderGeneric prl-voc:C.MAL ; skos:broader prl-voc:C.MAL ;
+    prl:typicalMechanism prl-voc:DataEncryption ; prl:typicalConsequence prl-voc:ExtortionPayment , prl-voc:DataRestoration ;
+    prl:typicalAgency prl-voc:MaliciousCriminal , prl-voc:MaliciousPolitical , prl-voc:Sovereign ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:harmSubject prl-voc:DataAndSystems .
+
+prl-voc:C.MAL.MWR a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "C.MAL.MWR"^^prl:ReferenceCode ;
+    skos:prefLabel "Other malware"@en ;
+    skos:definition "Malicious software other than ransomware, introduced into a system without authority."@en ;
+    skos:note "Common cyber market usage."@en ;
+    prl:broaderGeneric prl-voc:C.MAL ; skos:broader prl-voc:C.MAL ;
+    prl:typicalAgency prl-voc:MaliciousCriminal , prl-voc:MaliciousPolitical , prl-voc:Sovereign ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:harmSubject prl-voc:DataAndSystems .
+
+prl-voc:C.MAL.DOS a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "C.MAL.DOS"^^prl:ReferenceCode ;
+    skos:prefLabel "Denial of service attack"@en ;
+    skos:definition "Deliberately overwhelming a system so its intended users cannot use it."@en ;
+    skos:note "Common cyber market usage."@en ;
+    prl:broaderGeneric prl-voc:C.MAL ; skos:broader prl-voc:C.MAL ;
+    prl:typicalAgency prl-voc:MaliciousCriminal , prl-voc:MaliciousPolitical , prl-voc:Sovereign ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:harmSubject prl-voc:DataAndSystems .
+
+prl-voc:C.MAL.EXF a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "C.MAL.EXF"^^prl:ReferenceCode ;
+    skos:prefLabel "Data exfiltration"@en ;
+    skos:definition "The deliberate, unauthorised copying or removal of data from a system."@en ;
+    skos:note "Common cyber market usage."@en ;
+    prl:broaderGeneric prl-voc:C.MAL ; skos:broader prl-voc:C.MAL ;
+    prl:typicalAgency prl-voc:MaliciousCriminal , prl-voc:MaliciousPolitical , prl-voc:Sovereign ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:harmSubject prl-voc:DataAndSystems .
+
+prl-voc:C.MAL.SEN a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "C.MAL.SEN"^^prl:ReferenceCode ;
+    skos:altLabel "Phishing"@en ;
+    skos:prefLabel "Social engineering attack"@en ;
+    skos:definition "Deceiving a person into granting system access or disclosing credentials, without the fraudster obtaining funds or property directly."@en ;
+    skos:note "Its extension intersects H.FRD.SOC, the matching market-wide social engineering fraud concept."@en ;
+    prl:broaderGeneric prl-voc:C.MAL ; skos:broader prl-voc:C.MAL ;
+    prl:typicalAgency prl-voc:MaliciousCriminal , prl-voc:MaliciousPolitical , prl-voc:Sovereign ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:harmSubject prl-voc:DataAndSystems .
+
+prl-voc:C.MAL.EXT a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "C.MAL.EXT"^^prl:ReferenceCode ;
+    skos:prefLabel "Cyber extortion"@en ;
+    skos:definition "A threat, made through or against a computer system, to obtain money or an advantage."@en ;
+    skos:note "Common cyber market usage. The non-cyber kind is H.EXT.THR."@en ;
+    prl:broaderGeneric prl-voc:C.MAL ; skos:broader prl-voc:C.MAL ;
+    prl:typicalAgency prl-voc:MaliciousCriminal , prl-voc:MaliciousPolitical , prl-voc:Sovereign ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:harmSubject prl-voc:DataAndSystems .
+
+prl-voc:C.MAL.SUP a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "C.MAL.SUP"^^prl:ReferenceCode ;
+    skos:prefLabel "Supply chain compromise"@en ;
+    skos:definition "A malicious cyber act carried out through a shared supplier, affecting many of that supplier's customers at once."@en ;
+    skos:note "Common cyber market usage, carrying systemic accumulation potential, unlike most of this family."@en ;
+    prl:broaderGeneric prl-voc:C.MAL ; skos:broader prl-voc:C.MAL ;
+    prl:accumulationClass prl-voc:Systemic ;
+    prl:typicalAgency prl-voc:MaliciousCriminal , prl-voc:MaliciousPolitical , prl-voc:Sovereign ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:harmSubject prl-voc:DataAndSystems .
+
+prl-voc:C.MAL.OTA a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "C.MAL.OTA"^^prl:ReferenceCode ;
+    skos:prefLabel "Operational technology attack"@en ;
+    skos:definition "A malicious cyber act against the systems that control physical equipment or a process."@en ;
+    skos:note "C.MAL.OTA prl:canTrigger T.FIR, T.EXP and T.EQB (cross-group-links): a compromised control system can cause a fire, an explosion or an equipment breakdown."@en ;
+    prl:broaderGeneric prl-voc:C.MAL ; skos:broader prl-voc:C.MAL ;
+    prl:typicalAgency prl-voc:MaliciousCriminal , prl-voc:MaliciousPolitical , prl-voc:Sovereign ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:harmSubject prl-voc:Property , prl-voc:DataAndSystems .
+
+prl-voc:C.NML a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "C.NML"^^prl:ReferenceCode ;
+    skos:prefLabel "Non-malicious cyber event"@en ;
+    skos:definition "A cyber event with no deliberate, unauthorised act as its cause."@en ;
+    skos:note "Common cyber market usage."@en ;
+    prl:broaderGeneric prl-voc:C ; skos:broader prl-voc:C ;
+    prl:typicalAgency prl-voc:Accidental , prl-voc:Negligent ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:harmSubject prl-voc:DataAndSystems .
+
+prl-voc:C.NML.SWF a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "C.NML.SWF"^^prl:ReferenceCode ;
+    skos:prefLabel "Software failure"@en ;
+    skos:definition "A defect in software causing it to fail or behave unexpectedly, without a malicious act."@en ;
+    skos:note "Common cyber market usage."@en ;
+    prl:broaderGeneric prl-voc:C.NML ; skos:broader prl-voc:C.NML ;
+    prl:typicalAgency prl-voc:Accidental , prl-voc:Negligent ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:harmSubject prl-voc:DataAndSystems .
+
+prl-voc:C.NML.CFG a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "C.NML.CFG"^^prl:ReferenceCode ;
+    skos:prefLabel "Configuration and operator error"@en ;
+    skos:definition "A mistake made in configuring or operating a system, without a malicious act."@en ;
+    skos:note "Related to E.HUM, human error generally (cross-group-links)."@en ;
+    prl:broaderGeneric prl-voc:C.NML ; skos:broader prl-voc:C.NML ;
+    prl:typicalAgency prl-voc:Accidental , prl-voc:Negligent ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:harmSubject prl-voc:DataAndSystems .
+
+prl-voc:C.NML.SVC a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "C.NML.SVC"^^prl:ReferenceCode ;
+    skos:prefLabel "Third-party IT service outage"@en ;
+    skos:definition "The failure of a cloud, hosting or other IT service supplied by a third party, without a malicious act."@en ;
+    skos:note "Common cyber market usage, carrying systemic accumulation potential across the supplier's customers."@en ;
+    prl:broaderGeneric prl-voc:C.NML ; skos:broader prl-voc:C.NML ;
+    prl:accumulationClass prl-voc:Systemic ;
+    prl:typicalAgency prl-voc:Accidental , prl-voc:Negligent ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:harmSubject prl-voc:DataAndSystems .
+
+prl-voc:C.NML.OTF a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "C.NML.OTF"^^prl:ReferenceCode ;
+    skos:prefLabel "Operational technology failure"@en ;
+    skos:definition "The failure of software controlling physical equipment or a process, without a malicious act."@en ;
+    skos:note "C.NML.OTF prl:canTrigger T.FIR, T.EXP and T.EQB (cross-group-links), the same as its malicious counterpart C.MAL.OTA."@en ;
+    prl:broaderGeneric prl-voc:C.NML ; skos:broader prl-voc:C.NML ;
+    prl:typicalAgency prl-voc:Accidental , prl-voc:Negligent ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:harmSubject prl-voc:Property , prl-voc:DataAndSystems .
+
+prl-voc:C.NML.DLS a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "C.NML.DLS"^^prl:ReferenceCode ;
+    skos:prefLabel "Accidental data loss or disclosure"@en ;
+    skos:definition "Data destroyed, lost or disclosed by accident, without a malicious act."@en ;
+    skos:note "Common cyber market usage."@en ;
+    prl:broaderGeneric prl-voc:C.NML ; skos:broader prl-voc:C.NML ;
+    prl:typicalAgency prl-voc:Accidental , prl-voc:Negligent ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:harmSubject prl-voc:DataAndSystems .
 ```
 
 ### Cause: F (financial)
 
 ```turtle-vocab
-# Filled by AIR-2.4: 10 concepts, sketch §5.7.
+# 10 concepts, sketch §5.7. Family default: typicalAgency Economic, onset Sudden,
+# definitionBasis WordingDefined, no accumulationClass, harmSubject FinancialInterest, unless an
+# override below says otherwise. "Financial guarantee" is not a cause: the CBAA standard
+# exclusion that names it reads as a class of business and an insurable interest, not a peril
+# (whitepaper §3.2), so it is not a concept here.
+
+prl-voc:F a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ; skos:topConceptOf prl-voc:CauseScheme ;
+    skos:notation "F"^^prl:ReferenceCode ;
+    skos:prefLabel "Financial and counterparty event"@en ;
+    skos:definition "An event in which a counterparty fails to pay, perform or honour an obligation, or in which a market price moves adversely."@en ;
+    skos:note "Common trade credit, surety and financial lines market usage."@en ;
+    prl:typicalAgency prl-voc:Economic ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:harmSubject prl-voc:FinancialInterest .
+
+prl-voc:F.DEF a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "F.DEF"^^prl:ReferenceCode ;
+    skos:prefLabel "Default"@en ;
+    skos:definition "A counterparty's failure to meet a payment or performance obligation when due."@en ;
+    skos:note "Common trade credit and surety market usage."@en ;
+    prl:broaderGeneric prl-voc:F ; skos:broader prl-voc:F ;
+    prl:typicalAgency prl-voc:Economic ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:harmSubject prl-voc:FinancialInterest .
+
+prl-voc:F.DEF.NPY a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "F.DEF.NPY"^^prl:ReferenceCode ;
+    skos:prefLabel "Non-payment"@en ;
+    skos:definition "A buyer's or borrower's failure to pay an amount owed when due, accumulating as the overdue period lengthens."@en ;
+    skos:note "Common trade credit market usage."@en ;
+    prl:broaderGeneric prl-voc:F.DEF ; skos:broader prl-voc:F.DEF ;
+    prl:typicalAgency prl-voc:Economic ; prl:onset prl-voc:Gradual ; prl:definitionBasis prl-voc:WordingDefined ; prl:harmSubject prl-voc:FinancialInterest .
+
+prl-voc:F.DEF.SOV a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "F.DEF.SOV"^^prl:ReferenceCode ;
+    skos:prefLabel "Sovereign default"@en ;
+    skos:definition "A state's or state-owned entity's failure to meet a payment or performance obligation when due."@en ;
+    skos:note "Common sovereign and political risk market usage."@en ;
+    prl:broaderGeneric prl-voc:F.DEF ; skos:broader prl-voc:F.DEF ;
+    prl:accumulationClass prl-voc:Systemic ;
+    prl:typicalAgency prl-voc:Sovereign ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:harmSubject prl-voc:FinancialInterest .
+
+prl-voc:F.DEF.PNP a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "F.DEF.PNP"^^prl:ReferenceCode ;
+    skos:prefLabel "Principal non-performance"@en ;
+    skos:definition "A principal's failure to perform an obligation a surety bond guarantees."@en ;
+    skos:note "Common surety market usage, the trigger a surety bond responds to."@en ;
+    prl:broaderGeneric prl-voc:F.DEF ; skos:broader prl-voc:F.DEF ;
+    prl:typicalAgency prl-voc:Economic ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:harmSubject prl-voc:FinancialInterest .
+
+prl-voc:F.INS a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "F.INS"^^prl:ReferenceCode ;
+    skos:prefLabel "Insolvency"@en ;
+    skos:definition "A counterparty's formal inability to pay its debts as they fall due, under the law that applies to it."@en ;
+    skos:note "Common trade credit market usage, its basis set by the applicable insolvency law rather than by the wording alone."@en ;
+    prl:broaderGeneric prl-voc:F ; skos:broader prl-voc:F ;
+    prl:typicalAgency prl-voc:Economic ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Statutory ; prl:harmSubject prl-voc:FinancialInterest .
+
+prl-voc:F.CFR a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "F.CFR"^^prl:ReferenceCode ;
+    skos:prefLabel "Contract frustration"@en ;
+    skos:definition "An event preventing the performance of a contract with a non-sovereign counterparty."@en ;
+    skos:note "Common trade credit market usage. The sovereign-counterparty kind is P.GOV.CFR."@en ;
+    prl:broaderGeneric prl-voc:F ; skos:broader prl-voc:F ;
+    prl:typicalAgency prl-voc:Economic ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:WordingDefined ; prl:harmSubject prl-voc:FinancialInterest .
+
+prl-voc:F.MKT a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "F.MKT"^^prl:ReferenceCode ;
+    skos:prefLabel "Adverse market movement"@en ;
+    skos:definition "A change in a market price or index, measured against a reference level, that reduces the value of the financial interest it affects."@en ;
+    skos:note "Common residual value and trade credit market usage."@en ;
+    prl:broaderGeneric prl-voc:F ; skos:broader prl-voc:F ;
+    prl:accumulationClass prl-voc:Systemic ;
+    prl:typicalAgency prl-voc:Economic ; prl:onset prl-voc:Gradual ; prl:definitionBasis prl-voc:Index ; prl:harmSubject prl-voc:FinancialInterest .
+
+prl-voc:F.MKT.RVS a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "F.MKT.RVS"^^prl:ReferenceCode ;
+    skos:prefLabel "Residual value shortfall"@en ;
+    skos:definition "A leased or financed asset's market value at a stated date falling short of its projected residual value."@en ;
+    skos:note "Common residual value and asset finance market usage."@en ;
+    prl:broaderGeneric prl-voc:F.MKT ; skos:broader prl-voc:F.MKT ;
+    prl:accumulationClass prl-voc:Systemic ;
+    prl:typicalAgency prl-voc:Economic ; prl:onset prl-voc:Gradual ; prl:definitionBasis prl-voc:Index ; prl:harmSubject prl-voc:FinancialInterest .
+
+prl-voc:F.MKT.MVD a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "F.MKT.MVD"^^prl:ReferenceCode ;
+    skos:prefLabel "Market value decline"@en ;
+    skos:definition "A decline in the traded market value of an asset or instrument."@en ;
+    skos:note "Common financial lines market usage."@en ;
+    prl:broaderGeneric prl-voc:F.MKT ; skos:broader prl-voc:F.MKT ;
+    prl:accumulationClass prl-voc:Systemic ;
+    prl:typicalAgency prl-voc:Economic ; prl:onset prl-voc:Gradual ; prl:definitionBasis prl-voc:Index ; prl:harmSubject prl-voc:FinancialInterest .
 ```
 
 ### Cause: L (liability-adjacent)
 
 ```turtle-vocab
-# Filled by AIR-2.4: 11 concepts, sketch §5.8.
+# 11 concepts, sketch §5.8. Family default: typicalAgency Natural, onset Gradual,
+# definitionBasis Physical, no accumulationClass, harmSubject Persons, unless an override below
+# says otherwise.
+
+prl-voc:L a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ; skos:topConceptOf prl-voc:CauseScheme ;
+    skos:notation "L"^^prl:ReferenceCode ;
+    skos:prefLabel "Life and health event"@en ;
+    skos:definition "An event affecting a person's life, health or capacity to work."@en ;
+    skos:note "Common life and health market usage."@en ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Gradual ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Persons .
+
+prl-voc:L.MOR a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "L.MOR"^^prl:ReferenceCode ;
+    skos:altLabel "Mortality"@en ;
+    skos:prefLabel "Death"@en ;
+    skos:definition "The death of a person, from a natural or an accidental cause."@en ;
+    skos:note "Common life market usage."@en ;
+    prl:broaderGeneric prl-voc:L ; skos:broader prl-voc:L ;
+    prl:typicalAgency prl-voc:Natural , prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Persons .
+
+prl-voc:L.MRB a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "L.MRB"^^prl:ReferenceCode ;
+    skos:altLabel "Morbidity"@en ;
+    skos:prefLabel "Illness and disability"@en ;
+    skos:definition "A person's illness or disability, however caused."@en ;
+    skos:note "Common health and disability market usage."@en ;
+    prl:broaderGeneric prl-voc:L ; skos:broader prl-voc:L ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Gradual ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Persons .
+
+prl-voc:L.MRB.CRI a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "L.MRB.CRI"^^prl:ReferenceCode ;
+    skos:prefLabel "Critical illness diagnosis"@en ;
+    skos:definition "The diagnosis of a person with a condition a wording names as a critical illness."@en ;
+    skos:note "Common critical illness market usage: which conditions qualify is a matter the wording defines."@en ;
+    prl:broaderGeneric prl-voc:L.MRB ; skos:broader prl-voc:L.MRB ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Gradual ; prl:definitionBasis prl-voc:WordingDefined ; prl:harmSubject prl-voc:Persons .
+
+prl-voc:L.MRB.DIS a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "L.MRB.DIS"^^prl:ReferenceCode ;
+    skos:prefLabel "Disability"@en ;
+    skos:definition "A person's loss of capacity to work or function, to a degree a wording defines."@en ;
+    skos:note "Common disability market usage."@en ;
+    prl:broaderGeneric prl-voc:L.MRB ; skos:broader prl-voc:L.MRB ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Gradual ; prl:definitionBasis prl-voc:WordingDefined ; prl:harmSubject prl-voc:Persons .
+
+prl-voc:L.MRB.LTC a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "L.MRB.LTC"^^prl:ReferenceCode ;
+    skos:prefLabel "Need for long-term care"@en ;
+    skos:definition "A person's loss of ability to perform daily activities without assistance, to a degree a wording defines."@en ;
+    skos:note "Common long-term care market usage."@en ;
+    prl:broaderGeneric prl-voc:L.MRB ; skos:broader prl-voc:L.MRB ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Gradual ; prl:definitionBasis prl-voc:WordingDefined ; prl:harmSubject prl-voc:Persons .
+
+prl-voc:L.LNG a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "L.LNG"^^prl:ReferenceCode ;
+    skos:prefLabel "Longevity"@en ;
+    skos:definition "A population living longer than a reference mortality assumption projects."@en ;
+    skos:note "Common pension and annuity market usage, a systemic risk across the whole insured population."@en ;
+    prl:broaderGeneric prl-voc:L ; skos:broader prl-voc:L ;
+    prl:accumulationClass prl-voc:Systemic ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Gradual ; prl:definitionBasis prl-voc:Index ; prl:harmSubject prl-voc:Persons .
+
+prl-voc:L.ACC a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "L.ACC"^^prl:ReferenceCode ;
+    skos:prefLabel "Accident to a person"@en ;
+    skos:definition "A sudden, unintended event causing bodily injury to a person."@en ;
+    skos:note "Common personal accident market usage."@en ;
+    prl:broaderGeneric prl-voc:L ; skos:broader prl-voc:L ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Persons .
+
+prl-voc:L.ACC.OCC a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "L.ACC.OCC"^^prl:ReferenceCode ;
+    skos:prefLabel "Occupational accident"@en ;
+    skos:definition "An accident to a person arising out of and in the course of their employment."@en ;
+    skos:note "Common workers compensation market usage."@en ;
+    prl:broaderGeneric prl-voc:L.ACC ; skos:broader prl-voc:L.ACC ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Persons .
+
+prl-voc:L.OCD a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "L.OCD"^^prl:ReferenceCode ;
+    skos:prefLabel "Occupational disease"@en ;
+    skos:definition "A disease a person contracts from exposure to a hazard of their work, its onset typically becoming apparent long after exposure began."@en ;
+    skos:note "Common workers compensation market usage, qualified under the law that governs the claim."@en ;
+    prl:broaderGeneric prl-voc:L ; skos:broader prl-voc:L ;
+    prl:typicalAgency prl-voc:Negligent ; prl:onset prl-voc:Latent ; prl:definitionBasis prl-voc:Statutory ; prl:harmSubject prl-voc:Persons .
+
+prl-voc:L.MED a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "L.MED"^^prl:ReferenceCode ;
+    skos:prefLabel "Medical treatment injury"@en ;
+    skos:definition "Injury to a person arising from their medical treatment, falling below the standard of care it required."@en ;
+    skos:note "Related to E.PRO, professional error and omission generally (cross-group-links), of which this is the medical kind."@en ;
+    prl:broaderGeneric prl-voc:L ; skos:broader prl-voc:L ;
+    prl:typicalAgency prl-voc:Negligent ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Persons .
 ```
 
 ### Cross-group links
 
 ```turtle-vocab
-# Filled by AIR-2.4: every prl:canTrigger, prl:overlaps or skos:related link with one end in
-# N, T or E and the other in H, P, C, F or L, and every link within H to L (sketch §8.1).
+# Every prl:canTrigger, prl:overlaps or skos:related link with one end in N, T or E and the
+# other in H, P, C, F or L (sketch §8.1). Links with both ends inside N/T/E were declared in
+# AIR-2.3; links with both ends inside H to L were declared alongside their own family above.
+
+prl-voc:T.EQB.CTL prl:overlaps prl-voc:C.NML.OTF .
+prl-voc:T.UTL.TEL prl:overlaps prl-voc:C.NML.SVC .
+prl-voc:T.REL.RAD skos:related prl-voc:P.TER.CBR.RAD .
+prl-voc:C.NML.CFG skos:related prl-voc:E.HUM .
+prl-voc:L.MED skos:related prl-voc:E.PRO .
+prl-voc:C.MAL.OTA prl:canTrigger prl-voc:T.FIR , prl-voc:T.EXP , prl-voc:T.EQB .
+prl-voc:C.NML.OTF prl:canTrigger prl-voc:T.FIR , prl-voc:T.EXP , prl-voc:T.EQB .
+
+# The scheme's own skos:hasTopConcept now has all eight families (AIR24-04).
+prl-voc:CauseScheme skos:hasTopConcept prl-voc:H , prl-voc:P , prl-voc:C , prl-voc:F , prl-voc:L .
 ```
 
 ## 5.5 Intensity measures and thresholds (AIR-2.6)

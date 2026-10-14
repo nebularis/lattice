@@ -518,3 +518,135 @@ def test_air23_08_no_definition_uses_coverage_language():
         if match:
             offenders.append((concept, match.group(1)))
     assert offenders == []
+
+
+# ---- AIR24-01: H has 37 concepts, P 36, C 17, F 10, L 11, 287 in the whole scheme --------------
+
+
+def test_air24_01_full_scheme_family_counts_and_unique_codes():
+    vocab = _vocab()
+    counts = {label: 0 for label in ("N", "T", "E", "H", "P", "C", "F", "L")}
+    codes: list[str] = []
+    for concept in vocab.subjects(SKOS.inScheme, PRLV.CauseScheme):
+        notations = [n for n in vocab.objects(concept, SKOS.notation) if n.datatype == PRL.ReferenceCode]
+        assert len(notations) == 1, concept
+        code = str(notations[0])
+        codes.append(code)
+        counts[code.split(".")[0]] += 1
+    assert counts == {"N": 90, "T": 71, "E": 15, "H": 37, "P": 36, "C": 17, "F": 10, "L": 11}
+    assert sum(counts.values()) == 287
+    assert len(codes) == len(set(codes))
+
+
+# ---- AIR24-02: the whole cause scheme with peril-intensity.ttl / the peril shapes / no result --
+
+
+def test_air24_02_whole_scheme_with_intensity_has_no_results():
+    assert results(_fixture()) == []
+
+
+# ---- AIR24-03: five spot-checked concepts' characteristics -------------------------------------
+
+
+def test_air24_03_five_spot_checked_concepts():
+    vocab = _vocab()
+    assert set(vocab.objects(PRLV["H.WRA.EMP.DIS"], PRL.typicalAgency)) == {PRLV.Intentional}
+    assert set(vocab.objects(PRLV["P.PV.STK"], PRL.typicalAgency)) == {PRLV.Intentional}
+    assert set(vocab.objects(PRLV["F.INS"], PRL.typicalAgency)) == {PRLV.Economic}
+    assert set(vocab.objects(PRLV["F.INS"], PRL.definitionBasis)) == {PRLV.Statutory}
+    assert set(vocab.objects(PRLV["L.OCD"], PRL.typicalAgency)) == {PRLV.Negligent}
+    assert set(vocab.objects(PRLV["L.OCD"], PRL.onset)) == {PRLV.Latent}
+    assert set(vocab.objects(PRLV["L.OCD"], PRL.definitionBasis)) == {PRLV.Statutory}
+    assert set(vocab.objects(PRLV["C.NML.SWF"], PRL.typicalAgency)) == {PRLV.Accidental, PRLV.Negligent}
+
+
+# ---- AIR24-04: the scheme has eight top concepts, N to L ---------------------------------------
+
+
+def test_air24_04_eight_top_concepts():
+    vocab = _vocab()
+    tops = set(vocab.objects(PRLV.CauseScheme, SKOS.hasTopConcept))
+    assert tops == {PRLV.N, PRLV.T, PRLV.E, PRLV.H, PRLV.P, PRLV.C, PRLV.F, PRLV.L}
+
+
+# ---- AIR24-05: cross-group-links hold the six named links, none with both ends in one group ----
+
+GROUP_1 = {"N", "T", "E"}
+GROUP_2 = {"H", "P", "C", "F", "L"}
+
+
+def _family(code: str) -> str:
+    return code.split(".")[0]
+
+
+def test_air24_05_cross_group_links():
+    vocab = _vocab()
+    assert (PRLV["T.EQB.CTL"], PRL.overlaps, PRLV["C.NML.OTF"]) in vocab
+    assert (PRLV["T.UTL.TEL"], PRL.overlaps, PRLV["C.NML.SVC"]) in vocab
+    assert (PRLV["T.REL.RAD"], SKOS.related, PRLV["P.TER.CBR.RAD"]) in vocab
+    assert (PRLV["C.NML.CFG"], SKOS.related, PRLV["E.HUM"]) in vocab
+    assert (PRLV["L.MED"], SKOS.related, PRLV["E.PRO"]) in vocab
+    assert (PRLV["C.MAL.OTA"], PRL.canTrigger, PRLV["T.FIR"]) in vocab
+    assert (PRLV["C.MAL.OTA"], PRL.canTrigger, PRLV["T.EXP"]) in vocab
+    assert (PRLV["C.MAL.OTA"], PRL.canTrigger, PRLV["T.EQB"]) in vocab
+
+    code_of: dict[URIRef, str] = {}
+    for concept in vocab.subjects(SKOS.inScheme, PRLV.CauseScheme):
+        notation = next(n for n in vocab.objects(concept, SKOS.notation) if n.datatype == PRL.ReferenceCode)
+        code_of[concept] = str(notation)
+
+    # No link (canTrigger, overlaps, related) has both ends in the same group: exactly the five
+    # named single links above, plus C.MAL.OTA's and C.NML.OTF's three-way canTrigger each
+    # (eleven triples once each (subject, predicate, object) is counted separately).
+    cross = []
+    for predicate in (PRL.canTrigger, PRL.overlaps, SKOS.related):
+        for s, o in vocab.subject_objects(predicate):
+            if s not in code_of or o not in code_of:
+                continue
+            fam_s, fam_o = _family(code_of[s]), _family(code_of[o])
+            in_1_s, in_1_o = fam_s in GROUP_1, fam_o in GROUP_1
+            if in_1_s != in_1_o:
+                cross.append((s, predicate, o))
+    assert len(cross) == 11
+
+
+# ---- AIR24-06: a hierarchical all-perils-except-flood condition, evaluated with the real kernel -
+
+
+def _ancestors(vocab: Graph, concept: URIRef) -> set:
+    seen = {concept}
+    frontier = {concept}
+    while frontier:
+        nxt = set()
+        for c in frontier:
+            for parent in vocab.objects(c, SKOS.broader):
+                if parent not in seen:
+                    seen.add(parent)
+                    nxt.add(parent)
+        frontier = nxt
+    return seen
+
+
+def test_air24_06_all_perils_except_flood_hierarchical_condition():
+    from reference_eligibility.kernel import DENIED, PERMITTED, UNDETERMINED, and3
+
+    vocab = _fixture()
+    tops = {PRLV.N, PRLV.T, PRLV.E, PRLV.H, PRLV.P, PRLV.C, PRLV.F, PRLV.L}
+
+    def decide(concept: URIRef) -> object:
+        ancestors = _ancestors(vocab, concept)
+        required = PERMITTED if ancestors & tops else UNDETERMINED
+        excluded = DENIED if PRLV["N.HYD.FLD"] in ancestors else PERMITTED
+        return and3(required, excluded)
+
+    assert decide(PRLV["N.HYD.FLD.FLU"]) is DENIED
+    assert decide(PRLV["P.TER.CNV"]) is PERMITTED
+
+
+# ---- AIR24-07: P.TER.CNV given skos:related to P.TER is an associative integrity violation ------
+
+
+def test_air24_07_related_to_own_ancestor_is_rejected():
+    data = _fixture()
+    data.add((PRLV["P.TER.CNV"], SKOS.related, PRLV["P.TER"]))
+    assert ASSOCIATIVE_INTEGRITY in shapes_for(PRLV["P.TER.CNV"], data)
