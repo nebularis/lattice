@@ -128,7 +128,7 @@ def test_spec_and_vocab_parse_and_import_the_pinned_versions():
         "https://www.nebularis.org/neuro-semantic/insurance/peril/0.5.0",
         "https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0",
         "https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0",
-        "https://www.nebularis.org/neuro-semantic/insurance/common-vocab/0.5.0",
+        "https://www.nebularis.org/neuro-semantic/insurance/common-vocab/0.6.0",
     }
 
 

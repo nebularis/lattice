@@ -191,4 +191,18 @@ prl:ThresholdDefinitionShape
               $this prl:definitionBasis prl-voc:Threshold .
               FILTER NOT EXISTS { $this prl:definingThreshold ?t }
             }
+        """ ] ;
+    sh:sparql [
+        sh:message "A prl:definingThreshold's qnt:onSpace must be the prl:measuredOn space of one of the concept's prl:intensityMeasure concepts (AIR-2.6)." ;
+        sh:select """
+            PREFIX prl: <https://www.nebularis.org/neuro-semantic/insurance/peril#>
+            PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+            SELECT $this WHERE {
+              $this prl:definingThreshold ?threshold .
+              ?threshold qnt:onSpace ?space .
+              FILTER NOT EXISTS {
+                $this prl:intensityMeasure ?measure .
+                ?measure prl:measuredOn ?space .
+              }
+            }
         """ ] .

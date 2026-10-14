@@ -56,7 +56,7 @@ flowchart TB
 |---|---|---|---|---|
 | `spec/peril.ttl` | the `prl:` properties and datatypes only. No scheme, no concept | `https://www.nebularis.org/neuro-semantic/insurance/peril#` | `prl:` | `…/insurance/peril/0.5.0` |
 | `vocab/peril-vocab.ttl` | the eight reference schemes, and the cause scheme's members | `https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#` | `prl-voc:` | `…/insurance/peril-vocab/0.5.0` |
-| `vocab/peril-intensity.ttl` | the intensity measure scheme and its `qnt:ValueSpace`s | as above | `prl-voc:` | AIR-2.6 |
+| `vocab/peril-intensity.ttl` | the intensity measure scheme, its `qnt:ValueSpace`s, and cause concepts' thresholds, intensity links and customary windows | as above | `prl-voc:` | `…/insurance/peril-vocab/0.5.0` (shares `peril-vocab.ttl`'s version, ADR-A120 addendum) |
 | `vocab/peril-collections.ttl` | reference collections | as above | `prl-voc:` | AIR-2.5 |
 | `crosswalk/*.ttl` | reviewed crosswalks from external code systems | — | — | AIR-3.4 |
 | `shapes/` | well-formedness (§6), versioned by its own `.version` | — | — | `0.2.0` |
@@ -271,7 +271,7 @@ prl:measuredOn a owl:ObjectProperty ;
 prl:definingThreshold a owl:ObjectProperty ;
     rdfs:domain skos:Concept ; rdfs:range qnt:RangeSet ;
     rdfs:label "defining threshold"@en ;
-    rdfs:comment "The Quantification range set a threshold-defined cause concept must fall within to be that cause (PV6)." ;
+    rdfs:comment "The Quantification range set a threshold-defined cause concept must fall within to be that cause (PV6). A concept with several defining thresholds meets all of them." ;
     fnd:utility "Required whenever prl:definitionBasis is prl-voc:Threshold (the threshold-definitions shape). Point at a qnt:RangeSet over the relevant intensity measure's value space." .
 
 prl:customaryEventWindow a owl:ObjectProperty ;
@@ -338,7 +338,7 @@ by `skos:editorialNote "Reference edition published by LATTICE. Not a market sta
     owl:imports <https://www.nebularis.org/neuro-semantic/insurance/peril/0.5.0> ,
                 <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> ,
                 <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
-                <https://www.nebularis.org/neuro-semantic/insurance/common-vocab/0.5.0> .
+                <https://www.nebularis.org/neuro-semantic/insurance/common-vocab/0.6.0> .
 
 #################################################################
 #    The eight reference schemes (ADR-A99 §5, §6). Each is an
@@ -1050,6 +1050,489 @@ inheritance, mechanism and definition rules.
 # N, T or E and the other in H, P, C, F or L, and every link within H to L (sketch §8.1).
 ```
 
+## 5.5 Intensity measures and thresholds (AIR-2.6)
+
+A new document, `vocab/peril-intensity.ttl`, carrying `vocab/peril-vocab.ttl`'s own version (the
+module's vocabulary documents move in unison, ADR-A120 addendum): the flat intensity measure
+scheme `prl-voc:IntensityMeasureScheme`, one [Quantification](../../../quantification/README.md)
+`qnt:ValueSpace` per measure linked by `prl:measuredOn`, the three ordinal measures' own small
+schemes, and the defining thresholds, other intensity links and customary event windows that name
+cause concepts by IRI before AIR-2.3 and AIR-2.4 declare them. A measure's averaging period or
+scale is part of the measure itself, never of its unit (sketch §6.4): `SustainedWind1Min` and
+`MeanWind10Min` are different measures on the same physical quantity, not one measure with two
+units.
+
+```mermaid
+flowchart LR
+    cause["a cause concept\n(declared by AIR-2.3/AIR-2.4)"] -- "prl:intensityMeasure" --> measure["an intensity measure\n(prl-voc:IntensityMeasureScheme)"]
+    measure -- "prl:measuredOn" --> space["qnt:ValueSpace\n(one per measure)"]
+    cause -- "prl:definingThreshold\n(one or more, ADR-A99 PV6)" --> rangeset["qnt:RangeSet\non one measure's space"]
+    cause -- "prl:customaryEventWindow\n(informative, PV8)" --> window["qnt:Quantity\non the duration space"]
+```
+
+`prl:definingThreshold`'s comment (already stated in `spec/peril.ttl`, AIR-2.1) gains one sentence
+in this slice: "A concept with several defining thresholds meets all of them." A threshold-defined
+concept with, for example, a wind speed and a visibility requirement carries two
+`prl:definingThreshold` triples, one `qnt:RangeSet` each, and both must hold.
+
+### Measures and their value spaces
+
+Every measure's note cites the standard in the table below. A measure with no standard listed
+(central pressure, flood depth, flow velocity, surge height, rainfall depth, hail diameter, snow
+load, visibility, path length, event duration) is a plain physical quantity with no single
+authority to cite, and its note says so.
+
+```turtle-vocab
+# @output-file "vocab/peril-intensity.ttl"
+@prefix prl:     <https://www.nebularis.org/neuro-semantic/insurance/peril#> .
+@prefix prl-voc: <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#> .
+@prefix icm-voc: <https://www.nebularis.org/neuro-semantic/insurance/common/vocab#> .
+@prefix qnt:     <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@base <https://www.nebularis.org/neuro-semantic/insurance/peril/intensity> .
+
+<https://www.nebularis.org/neuro-semantic/insurance/peril/intensity>
+    rdf:type owl:Ontology ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/peril-intensity/0.5.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/insurance/peril-vocab/0.5.0> ,
+                <https://www.nebularis.org/neuro-semantic/insurance/common-vocab/0.6.0> .
+
+prl-voc:IntensityMeasureScheme a voc:ConceptScheme ;
+    fnd:hasIdentity prl-voc:IntensityMeasureScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference intensity measure scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+prl-voc:PeakGroundAcceleration a skos:Concept ; skos:inScheme prl-voc:IntensityMeasureScheme ; skos:topConceptOf prl-voc:IntensityMeasureScheme ; skos:prefLabel "Peak ground acceleration"@en ;
+    skos:definition "The maximum acceleration of the ground during an earthquake, in a stated direction."@en ;
+    skos:note "Follows the USGS ShakeMap system's PGA ground-motion parameter."@en ;
+    prl:measuredOn prl-voc:PeakGroundAccelerationSpace .
+prl-voc:PeakGroundAccelerationSpace a qnt:ValueSpace ;
+    qnt:spaceKey "pga" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ; qnt:spaceHash "pga-v1" ;
+    skos:note "Canonical unit standard gravity (icm-voc:G), following USGS ShakeMap."@en .
+
+prl-voc:SpectralAcceleration a skos:Concept ; skos:inScheme prl-voc:IntensityMeasureScheme ; skos:topConceptOf prl-voc:IntensityMeasureScheme ; skos:prefLabel "Spectral acceleration"@en ;
+    skos:definition "The peak acceleration of a damped single-degree-of-freedom oscillator of a stated natural period, responding to ground motion."@en ;
+    skos:note "Follows the USGS ShakeMap system's SA ground-motion parameter. The oscillator period is stated in the observation, not in this measure."@en ;
+    prl:measuredOn prl-voc:SpectralAccelerationSpace .
+prl-voc:SpectralAccelerationSpace a qnt:ValueSpace ;
+    qnt:spaceKey "sa" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ; qnt:spaceHash "sa-v1" ;
+    skos:note "Canonical unit standard gravity (icm-voc:G), following USGS ShakeMap."@en .
+
+prl-voc:ModifiedMercalliIntensity a skos:Concept ; skos:inScheme prl-voc:IntensityMeasureScheme ; skos:topConceptOf prl-voc:IntensityMeasureScheme ; skos:prefLabel "Modified Mercalli intensity"@en ;
+    skos:definition "The observed intensity of shaking and damage at a place, on the twelve-grade Modified Mercalli scale."@en ;
+    skos:note "Follows the Modified Mercalli Intensity scale."@en ;
+    prl:measuredOn prl-voc:ModifiedMercalliIntensitySpace .
+prl-voc:ModifiedMercalliIntensitySpace a qnt:ValueSpace ;
+    qnt:spaceKey "mmi" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Discrete ; qnt:spaceHash "mmi-v1" ;
+    skos:note "An ordinal space over prl-voc:MmiScale (I to XII)."@en .
+
+prl-voc:MmiScale a voc:ConceptScheme ;
+    fnd:hasIdentity prl-voc:MmiScale-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Modified Mercalli Intensity scale"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+prl-voc:MMI-I a skos:Concept ; skos:inScheme prl-voc:MmiScale ; skos:topConceptOf prl-voc:MmiScale ; skos:notation "I" ;
+    skos:prefLabel "I — Not felt"@en ; skos:definition "Not felt except by a very few under especially favourable conditions."@en ;
+    skos:note "Modified Mercalli Intensity scale, grade I."@en .
+prl-voc:MMI-II a skos:Concept ; skos:inScheme prl-voc:MmiScale ; skos:topConceptOf prl-voc:MmiScale ; skos:notation "II" ;
+    skos:prefLabel "II — Weak"@en ; skos:definition "Felt only by a few persons at rest, especially on upper floors."@en ;
+    skos:note "Modified Mercalli Intensity scale, grade II."@en .
+prl-voc:MMI-III a skos:Concept ; skos:inScheme prl-voc:MmiScale ; skos:topConceptOf prl-voc:MmiScale ; skos:notation "III" ;
+    skos:prefLabel "III — Weak"@en ; skos:definition "Felt quite noticeably indoors, especially on upper floors, but many people do not recognise it as an earthquake."@en ;
+    skos:note "Modified Mercalli Intensity scale, grade III."@en .
+prl-voc:MMI-IV a skos:Concept ; skos:inScheme prl-voc:MmiScale ; skos:topConceptOf prl-voc:MmiScale ; skos:notation "IV" ;
+    skos:prefLabel "IV — Light"@en ; skos:definition "Felt indoors by many, outdoors by few; dishes, windows and doors disturbed."@en ;
+    skos:note "Modified Mercalli Intensity scale, grade IV."@en .
+prl-voc:MMI-V a skos:Concept ; skos:inScheme prl-voc:MmiScale ; skos:topConceptOf prl-voc:MmiScale ; skos:notation "V" ;
+    skos:prefLabel "V — Moderate"@en ; skos:definition "Felt by nearly everyone; sleepers wakened; some dishes and windows broken."@en ;
+    skos:note "Modified Mercalli Intensity scale, grade V."@en .
+prl-voc:MMI-VI a skos:Concept ; skos:inScheme prl-voc:MmiScale ; skos:topConceptOf prl-voc:MmiScale ; skos:notation "VI" ;
+    skos:prefLabel "VI — Strong"@en ; skos:definition "Felt by all; heavy furniture moved; damage slight."@en ;
+    skos:note "Modified Mercalli Intensity scale, grade VI."@en .
+prl-voc:MMI-VII a skos:Concept ; skos:inScheme prl-voc:MmiScale ; skos:topConceptOf prl-voc:MmiScale ; skos:notation "VII" ;
+    skos:prefLabel "VII — Very strong"@en ; skos:definition "Negligible damage in well-built structures; slight to moderate damage in ordinary structures."@en ;
+    skos:note "Modified Mercalli Intensity scale, grade VII."@en .
+prl-voc:MMI-VIII a skos:Concept ; skos:inScheme prl-voc:MmiScale ; skos:topConceptOf prl-voc:MmiScale ; skos:notation "VIII" ;
+    skos:prefLabel "VIII — Severe"@en ; skos:definition "Slight damage in specially designed structures; considerable damage in ordinary buildings."@en ;
+    skos:note "Modified Mercalli Intensity scale, grade VIII."@en .
+prl-voc:MMI-IX a skos:Concept ; skos:inScheme prl-voc:MmiScale ; skos:topConceptOf prl-voc:MmiScale ; skos:notation "IX" ;
+    skos:prefLabel "IX — Violent"@en ; skos:definition "Considerable damage in specially designed structures; buildings shifted off foundations."@en ;
+    skos:note "Modified Mercalli Intensity scale, grade IX."@en .
+prl-voc:MMI-X a skos:Concept ; skos:inScheme prl-voc:MmiScale ; skos:topConceptOf prl-voc:MmiScale ; skos:notation "X" ;
+    skos:prefLabel "X — Extreme"@en ; skos:definition "Some well-built wooden structures destroyed; most masonry and frame structures destroyed."@en ;
+    skos:note "Modified Mercalli Intensity scale, grade X."@en .
+prl-voc:MMI-XI a skos:Concept ; skos:inScheme prl-voc:MmiScale ; skos:topConceptOf prl-voc:MmiScale ; skos:notation "XI" ;
+    skos:prefLabel "XI — Extreme"@en ; skos:definition "Few, if any, masonry structures remain standing; rails bent greatly."@en ;
+    skos:note "Modified Mercalli Intensity scale, grade XI."@en .
+prl-voc:MMI-XII a skos:Concept ; skos:inScheme prl-voc:MmiScale ; skos:topConceptOf prl-voc:MmiScale ; skos:notation "XII" ;
+    skos:prefLabel "XII — Extreme"@en ; skos:definition "Damage total; waves seen on ground surfaces; objects thrown into the air."@en ;
+    skos:note "Modified Mercalli Intensity scale, grade XII."@en .
+
+prl-voc:MomentMagnitude a skos:Concept ; skos:inScheme prl-voc:IntensityMeasureScheme ; skos:topConceptOf prl-voc:IntensityMeasureScheme ; skos:prefLabel "Moment magnitude"@en ;
+    skos:definition "The size of an earthquake, derived from its seismic moment, on a logarithmic scale."@en ;
+    skos:note "Follows the moment magnitude scale."@en ;
+    prl:measuredOn prl-voc:MomentMagnitudeSpace .
+prl-voc:MomentMagnitudeSpace a qnt:ValueSpace ;
+    qnt:spaceKey "mw" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ; qnt:spaceHash "mw-v1" ;
+    skos:note "Dimensionless, following the moment magnitude scale."@en .
+
+prl-voc:SustainedWind1Min a skos:Concept ; skos:inScheme prl-voc:IntensityMeasureScheme ; skos:topConceptOf prl-voc:IntensityMeasureScheme ; skos:prefLabel "Sustained wind, 1-minute average"@en ;
+    skos:definition "Wind speed averaged over one minute at a stated height."@en ;
+    skos:note "Follows the US National Hurricane Center's 1-minute averaging convention, one of the WMO-recognised regional averaging periods."@en ;
+    prl:measuredOn prl-voc:SustainedWind1MinSpace .
+prl-voc:SustainedWind1MinSpace a qnt:ValueSpace ;
+    qnt:spaceKey "wind-1min" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ; qnt:spaceHash "wind-1min-v1" ;
+    skos:note "Canonical unit metre per second (icm-voc:MPerSec), commonly reported in knots (icm-voc:Knot)."@en .
+
+prl-voc:MeanWind10Min a skos:Concept ; skos:inScheme prl-voc:IntensityMeasureScheme ; skos:topConceptOf prl-voc:IntensityMeasureScheme ; skos:prefLabel "Mean wind, 10-minute average"@en ;
+    skos:definition "Wind speed averaged over ten minutes at a stated height."@en ;
+    skos:note "Follows the WMO's standard 10-minute averaging convention, used by most meteorological agencies outside the United States."@en ;
+    prl:measuredOn prl-voc:MeanWind10MinSpace .
+prl-voc:MeanWind10MinSpace a qnt:ValueSpace ;
+    qnt:spaceKey "wind-10min" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ; qnt:spaceHash "wind-10min-v1" ;
+    skos:note "Canonical unit metre per second (icm-voc:MPerSec), commonly reported in knots (icm-voc:Knot)."@en .
+
+prl-voc:WindGust3s a skos:Concept ; skos:inScheme prl-voc:IntensityMeasureScheme ; skos:topConceptOf prl-voc:IntensityMeasureScheme ; skos:prefLabel "Wind gust, 3-second average"@en ;
+    skos:definition "The peak wind speed averaged over three seconds, during a stated period."@en ;
+    skos:note "Follows the WMO's gust definition (a 3-second moving average)."@en ;
+    prl:measuredOn prl-voc:WindGust3sSpace .
+prl-voc:WindGust3sSpace a qnt:ValueSpace ;
+    qnt:spaceKey "gust-3s" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ; qnt:spaceHash "gust-3s-v1" ;
+    skos:note "Canonical unit metre per second (icm-voc:MPerSec)."@en .
+
+prl-voc:CentralPressure a skos:Concept ; skos:inScheme prl-voc:IntensityMeasureScheme ; skos:topConceptOf prl-voc:IntensityMeasureScheme ; skos:prefLabel "Central pressure"@en ;
+    skos:definition "The atmospheric pressure at the centre of a low-pressure system."@en ;
+    skos:note "No single published standard names this measure as such. A plain meteorological observation, reported in hectopascals."@en ;
+    prl:measuredOn prl-voc:CentralPressureSpace .
+prl-voc:CentralPressureSpace a qnt:ValueSpace ;
+    qnt:spaceKey "central-pressure" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ; qnt:spaceHash "central-pressure-v1" ;
+    skos:note "Canonical unit hectopascal (icm-voc:HectoPascal)."@en .
+
+prl-voc:SaffirSimpsonCategory a skos:Concept ; skos:inScheme prl-voc:IntensityMeasureScheme ; skos:topConceptOf prl-voc:IntensityMeasureScheme ; skos:prefLabel "Saffir–Simpson category"@en ;
+    skos:definition "The category of a tropical cyclone's sustained wind on the five-grade Saffir–Simpson Hurricane Wind Scale."@en ;
+    skos:note "Follows the Saffir–Simpson Hurricane Wind Scale."@en ;
+    prl:measuredOn prl-voc:SaffirSimpsonCategorySpace .
+prl-voc:SaffirSimpsonCategorySpace a qnt:ValueSpace ;
+    qnt:spaceKey "saffir-simpson" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Discrete ; qnt:spaceHash "saffir-simpson-v1" ;
+    skos:note "An ordinal space over prl-voc:SaffirSimpsonScale (1 to 5)."@en .
+
+prl-voc:SaffirSimpsonScale a voc:ConceptScheme ;
+    fnd:hasIdentity prl-voc:SaffirSimpsonScale-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Saffir–Simpson Hurricane Wind Scale"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+prl-voc:SaffirSimpson-1 a skos:Concept ; skos:inScheme prl-voc:SaffirSimpsonScale ; skos:topConceptOf prl-voc:SaffirSimpsonScale ; skos:notation "1" ;
+    skos:prefLabel "Category 1"@en ; skos:definition "Sustained wind 64 to 82 kn, very dangerous winds producing some damage."@en ;
+    skos:note "Saffir–Simpson Hurricane Wind Scale, category 1."@en .
+prl-voc:SaffirSimpson-2 a skos:Concept ; skos:inScheme prl-voc:SaffirSimpsonScale ; skos:topConceptOf prl-voc:SaffirSimpsonScale ; skos:notation "2" ;
+    skos:prefLabel "Category 2"@en ; skos:definition "Sustained wind 83 to 95 kn, extremely dangerous winds producing extensive damage."@en ;
+    skos:note "Saffir–Simpson Hurricane Wind Scale, category 2."@en .
+prl-voc:SaffirSimpson-3 a skos:Concept ; skos:inScheme prl-voc:SaffirSimpsonScale ; skos:topConceptOf prl-voc:SaffirSimpsonScale ; skos:notation "3" ;
+    skos:prefLabel "Category 3 (major)"@en ; skos:definition "Sustained wind 96 to 112 kn, devastating damage will occur."@en ;
+    skos:note "Saffir–Simpson Hurricane Wind Scale, category 3, the threshold of a 'major' hurricane."@en .
+prl-voc:SaffirSimpson-4 a skos:Concept ; skos:inScheme prl-voc:SaffirSimpsonScale ; skos:topConceptOf prl-voc:SaffirSimpsonScale ; skos:notation "4" ;
+    skos:prefLabel "Category 4 (major)"@en ; skos:definition "Sustained wind 113 to 136 kn, catastrophic damage will occur."@en ;
+    skos:note "Saffir–Simpson Hurricane Wind Scale, category 4."@en .
+prl-voc:SaffirSimpson-5 a skos:Concept ; skos:inScheme prl-voc:SaffirSimpsonScale ; skos:topConceptOf prl-voc:SaffirSimpsonScale ; skos:notation "5" ;
+    skos:prefLabel "Category 5 (major)"@en ; skos:definition "Sustained wind 137 kn or higher, catastrophic damage will occur."@en ;
+    skos:note "Saffir–Simpson Hurricane Wind Scale, category 5."@en .
+
+prl-voc:EnhancedFujitaRating a skos:Concept ; skos:inScheme prl-voc:IntensityMeasureScheme ; skos:topConceptOf prl-voc:IntensityMeasureScheme ; skos:prefLabel "Enhanced Fujita rating"@en ;
+    skos:definition "The intensity of a tornado, estimated from the damage it caused, on the six-grade Enhanced Fujita scale."@en ;
+    skos:note "Follows the US National Weather Service's Enhanced Fujita scale."@en ;
+    prl:measuredOn prl-voc:EnhancedFujitaRatingSpace .
+prl-voc:EnhancedFujitaRatingSpace a qnt:ValueSpace ;
+    qnt:spaceKey "ef-scale" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Discrete ; qnt:spaceHash "ef-scale-v1" ;
+    skos:note "An ordinal space over prl-voc:EnhancedFujitaScale (EF0 to EF5)."@en .
+
+prl-voc:EnhancedFujitaScale a voc:ConceptScheme ;
+    fnd:hasIdentity prl-voc:EnhancedFujitaScale-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "US Enhanced Fujita scale"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+prl-voc:EF0 a skos:Concept ; skos:inScheme prl-voc:EnhancedFujitaScale ; skos:topConceptOf prl-voc:EnhancedFujitaScale ; skos:notation "EF0" ;
+    skos:prefLabel "EF0"@en ; skos:definition "Estimated 3-second gust 29 to 38 m/s, light damage."@en ;
+    skos:note "US Enhanced Fujita scale, EF0."@en .
+prl-voc:EF1 a skos:Concept ; skos:inScheme prl-voc:EnhancedFujitaScale ; skos:topConceptOf prl-voc:EnhancedFujitaScale ; skos:notation "EF1" ;
+    skos:prefLabel "EF1"@en ; skos:definition "Estimated 3-second gust 38 to 49 m/s, moderate damage."@en ;
+    skos:note "US Enhanced Fujita scale, EF1."@en .
+prl-voc:EF2 a skos:Concept ; skos:inScheme prl-voc:EnhancedFujitaScale ; skos:topConceptOf prl-voc:EnhancedFujitaScale ; skos:notation "EF2" ;
+    skos:prefLabel "EF2"@en ; skos:definition "Estimated 3-second gust 49 to 60 m/s, considerable damage."@en ;
+    skos:note "US Enhanced Fujita scale, EF2."@en .
+prl-voc:EF3 a skos:Concept ; skos:inScheme prl-voc:EnhancedFujitaScale ; skos:topConceptOf prl-voc:EnhancedFujitaScale ; skos:notation "EF3" ;
+    skos:prefLabel "EF3"@en ; skos:definition "Estimated 3-second gust 60 to 74 m/s, severe damage."@en ;
+    skos:note "US Enhanced Fujita scale, EF3."@en .
+prl-voc:EF4 a skos:Concept ; skos:inScheme prl-voc:EnhancedFujitaScale ; skos:topConceptOf prl-voc:EnhancedFujitaScale ; skos:notation "EF4" ;
+    skos:prefLabel "EF4"@en ; skos:definition "Estimated 3-second gust 74 to 89 m/s, devastating damage."@en ;
+    skos:note "US Enhanced Fujita scale, EF4."@en .
+prl-voc:EF5 a skos:Concept ; skos:inScheme prl-voc:EnhancedFujitaScale ; skos:topConceptOf prl-voc:EnhancedFujitaScale ; skos:notation "EF5" ;
+    skos:prefLabel "EF5"@en ; skos:definition "Estimated 3-second gust 89 m/s or higher, incredible damage."@en ;
+    skos:note "US Enhanced Fujita scale, EF5."@en .
+
+prl-voc:FloodDepth a skos:Concept ; skos:inScheme prl-voc:IntensityMeasureScheme ; skos:topConceptOf prl-voc:IntensityMeasureScheme ; skos:prefLabel "Flood depth"@en ;
+    skos:definition "The depth of standing or flowing water above ground level at a place."@en ;
+    skos:note "No single published standard names this measure as such. A plain hydrological observation, reported in metres."@en ;
+    prl:measuredOn prl-voc:FloodDepthSpace .
+prl-voc:FloodDepthSpace a qnt:ValueSpace ;
+    qnt:spaceKey "flood-depth" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ; qnt:spaceHash "flood-depth-v1" ;
+    skos:note "Canonical unit metre (icm-voc:Metre)."@en .
+
+prl-voc:FlowVelocity a skos:Concept ; skos:inScheme prl-voc:IntensityMeasureScheme ; skos:topConceptOf prl-voc:IntensityMeasureScheme ; skos:prefLabel "Flow velocity"@en ;
+    skos:definition "The speed of moving water at a place."@en ;
+    skos:note "No single published standard names this measure as such. A plain hydrological observation, reported in metres per second."@en ;
+    prl:measuredOn prl-voc:FlowVelocitySpace .
+prl-voc:FlowVelocitySpace a qnt:ValueSpace ;
+    qnt:spaceKey "flow-velocity" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ; qnt:spaceHash "flow-velocity-v1" ;
+    skos:note "Canonical unit metre per second (icm-voc:MPerSec)."@en .
+
+prl-voc:SurgeHeight a skos:Concept ; skos:inScheme prl-voc:IntensityMeasureScheme ; skos:topConceptOf prl-voc:IntensityMeasureScheme ; skos:prefLabel "Surge height"@en ;
+    skos:definition "The height of the sea above the predicted astronomical tide, at a place."@en ;
+    skos:note "No single published standard names this measure as such. A plain oceanographic observation, reported in metres above the predicted tide."@en ;
+    prl:measuredOn prl-voc:SurgeHeightSpace .
+prl-voc:SurgeHeightSpace a qnt:ValueSpace ;
+    qnt:spaceKey "surge-height" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ; qnt:spaceHash "surge-height-v1" ;
+    skos:note "Canonical unit metre (icm-voc:Metre), above the predicted astronomical tide."@en .
+
+prl-voc:RainfallDepth a skos:Concept ; skos:inScheme prl-voc:IntensityMeasureScheme ; skos:topConceptOf prl-voc:IntensityMeasureScheme ; skos:prefLabel "Rainfall depth"@en ;
+    skos:definition "The accumulated depth of rain fallen at a place over a stated duration."@en ;
+    skos:note "No single published standard names this measure as such. A plain meteorological observation. The accumulation duration is stated in the observation, not in this measure, in the same way spectral acceleration's period is."@en ;
+    prl:measuredOn prl-voc:RainfallDepthSpace .
+prl-voc:RainfallDepthSpace a qnt:ValueSpace ;
+    qnt:spaceKey "rainfall-depth" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ; qnt:spaceHash "rainfall-depth-v1" ;
+    skos:note "Canonical unit millimetre (icm-voc:MilliMetre)."@en .
+
+prl-voc:HailDiameter a skos:Concept ; skos:inScheme prl-voc:IntensityMeasureScheme ; skos:topConceptOf prl-voc:IntensityMeasureScheme ; skos:prefLabel "Hail diameter"@en ;
+    skos:definition "The diameter of the largest hailstone observed at a place."@en ;
+    skos:note "No single published standard names this measure as such. A plain meteorological observation, reported in millimetres."@en ;
+    prl:measuredOn prl-voc:HailDiameterSpace .
+prl-voc:HailDiameterSpace a qnt:ValueSpace ;
+    qnt:spaceKey "hail-diameter" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ; qnt:spaceHash "hail-diameter-v1" ;
+    skos:note "Canonical unit millimetre (icm-voc:MilliMetre)."@en .
+
+prl-voc:IceAccretion a skos:Concept ; skos:inScheme prl-voc:IntensityMeasureScheme ; skos:topConceptOf prl-voc:IntensityMeasureScheme ; skos:prefLabel "Ice accretion"@en ;
+    skos:definition "The radial thickness of ice accreted on a stated reference object, from freezing rain."@en ;
+    skos:note "Follows the ASCE 7 standard's ice-load convention (radial thickness on a reference cylinder)."@en ;
+    prl:measuredOn prl-voc:IceAccretionSpace .
+prl-voc:IceAccretionSpace a qnt:ValueSpace ;
+    qnt:spaceKey "ice-accretion" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ; qnt:spaceHash "ice-accretion-v1" ;
+    skos:note "Canonical unit millimetre (icm-voc:MilliMetre), radial thickness."@en .
+
+prl-voc:SnowLoad a skos:Concept ; skos:inScheme prl-voc:IntensityMeasureScheme ; skos:topConceptOf prl-voc:IntensityMeasureScheme ; skos:prefLabel "Snow load"@en ;
+    skos:definition "The weight of accumulated snow per unit area at a place."@en ;
+    skos:note "No single published standard names this measure as such. A plain structural engineering observation, reported in kilopascals."@en ;
+    prl:measuredOn prl-voc:SnowLoadSpace .
+prl-voc:SnowLoadSpace a qnt:ValueSpace ;
+    qnt:spaceKey "snow-load" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ; qnt:spaceHash "snow-load-v1" ;
+    skos:note "Canonical unit kilopascal (icm-voc:KiloPascal)."@en .
+
+prl-voc:AshLoad a skos:Concept ; skos:inScheme prl-voc:IntensityMeasureScheme ; skos:topConceptOf prl-voc:IntensityMeasureScheme ; skos:prefLabel "Ash load"@en ;
+    skos:definition "The weight of accumulated volcanic ash per unit area at a place."@en ;
+    skos:note "No single published standard names this measure as such. A plain volcanological observation, reported in kilograms per square metre."@en ;
+    prl:measuredOn prl-voc:AshLoadSpace .
+prl-voc:AshLoadSpace a qnt:ValueSpace ;
+    qnt:spaceKey "ash-load" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ; qnt:spaceHash "ash-load-v1" ;
+    skos:note "Canonical unit kilogram per square metre (icm-voc:KiloGramPerSquareMetre)."@en .
+
+prl-voc:FirelineIntensity a skos:Concept ; skos:inScheme prl-voc:IntensityMeasureScheme ; skos:topConceptOf prl-voc:IntensityMeasureScheme ; skos:prefLabel "Fireline intensity"@en ;
+    skos:definition "The rate of heat release per unit length of a moving fire front."@en ;
+    skos:note "Follows Byram's fireline intensity, the standard wildfire behaviour measure."@en ;
+    prl:measuredOn prl-voc:FirelineIntensitySpace .
+prl-voc:FirelineIntensitySpace a qnt:ValueSpace ;
+    qnt:spaceKey "fireline-intensity" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ; qnt:spaceHash "fireline-intensity-v1" ;
+    skos:note "Canonical unit kilowatt per metre (icm-voc:KiloWattPerMetre), following Byram."@en .
+
+prl-voc:StandardisedPrecipitationIndex a skos:Concept ; skos:inScheme prl-voc:IntensityMeasureScheme ; skos:topConceptOf prl-voc:IntensityMeasureScheme ; skos:prefLabel "Standardised Precipitation Index"@en ;
+    skos:definition "A measure of precipitation deficit relative to the long-term record at a place, over a stated period."@en ;
+    skos:note "Follows the WMO-recommended Standardised Precipitation Index."@en ;
+    prl:measuredOn prl-voc:StandardisedPrecipitationIndexSpace .
+prl-voc:StandardisedPrecipitationIndexSpace a qnt:ValueSpace ;
+    qnt:spaceKey "spi" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ; qnt:spaceHash "spi-v1" ;
+    skos:note "Dimensionless, following the WMO's Standardised Precipitation Index."@en .
+
+prl-voc:WarmSpellDurationIndex a skos:Concept ; skos:inScheme prl-voc:IntensityMeasureScheme ; skos:topConceptOf prl-voc:IntensityMeasureScheme ; skos:prefLabel "Warm Spell Duration Index"@en ;
+    skos:definition "The number of days in a warm spell, where the daily maximum temperature exceeds the local 90th-percentile threshold for at least six consecutive days."@en ;
+    skos:note "Follows the ETCCDI (Expert Team on Climate Change Detection and Indices) WSDI index."@en ;
+    prl:measuredOn prl-voc:WarmSpellDurationIndexSpace .
+prl-voc:WarmSpellDurationIndexSpace a qnt:ValueSpace ;
+    qnt:spaceKey "wsdi" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Discrete ; qnt:spaceHash "wsdi-v1" ;
+    skos:note "Canonical unit day (icm-voc:Day), following the ETCCDI WSDI index."@en .
+
+prl-voc:ColdSpellDurationIndex a skos:Concept ; skos:inScheme prl-voc:IntensityMeasureScheme ; skos:topConceptOf prl-voc:IntensityMeasureScheme ; skos:prefLabel "Cold Spell Duration Index"@en ;
+    skos:definition "The number of days in a cold spell, where the daily minimum temperature falls below the local 10th-percentile threshold for at least six consecutive days."@en ;
+    skos:note "Follows the ETCCDI CSDI index."@en ;
+    prl:measuredOn prl-voc:ColdSpellDurationIndexSpace .
+prl-voc:ColdSpellDurationIndexSpace a qnt:ValueSpace ;
+    qnt:spaceKey "csdi" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Discrete ; qnt:spaceHash "csdi-v1" ;
+    skos:note "Canonical unit day (icm-voc:Day), following the ETCCDI CSDI index."@en .
+
+prl-voc:Visibility a skos:Concept ; skos:inScheme prl-voc:IntensityMeasureScheme ; skos:topConceptOf prl-voc:IntensityMeasureScheme ; skos:prefLabel "Visibility"@en ;
+    skos:definition "The greatest distance at which an object can be seen and identified, at a place."@en ;
+    skos:note "No single published standard names this measure as such. A plain meteorological observation, reported in metres."@en ;
+    prl:measuredOn prl-voc:VisibilitySpace .
+prl-voc:VisibilitySpace a qnt:ValueSpace ;
+    qnt:spaceKey "visibility" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ; qnt:spaceHash "visibility-v1" ;
+    skos:note "Canonical unit metre (icm-voc:Metre)."@en .
+
+prl-voc:PathLength a skos:Concept ; skos:inScheme prl-voc:IntensityMeasureScheme ; skos:topConceptOf prl-voc:IntensityMeasureScheme ; skos:prefLabel "Path length"@en ;
+    skos:definition "The length of ground track a moving hazard (a tornado or a derecho) travelled."@en ;
+    skos:note "No single published standard names this measure as such. A plain meteorological observation, reported in kilometres."@en ;
+    prl:measuredOn prl-voc:PathLengthSpace .
+prl-voc:PathLengthSpace a qnt:ValueSpace ;
+    qnt:spaceKey "path-length" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ; qnt:spaceHash "path-length-v1" ;
+    skos:note "Canonical unit kilometre (icm-voc:KiloMetre)."@en .
+
+prl-voc:EventDuration a skos:Concept ; skos:inScheme prl-voc:IntensityMeasureScheme ; skos:topConceptOf prl-voc:IntensityMeasureScheme ; skos:prefLabel "Event duration"@en ;
+    skos:definition "The length of time a hazard's conditions persisted at a place or over an area."@en ;
+    skos:note "No single published standard names this measure as such. A plain meteorological observation, reported in hours."@en ;
+    prl:measuredOn prl-voc:EventDurationSpace .
+prl-voc:EventDurationSpace a qnt:ValueSpace ;
+    qnt:spaceKey "event-duration" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ; qnt:spaceHash "event-duration-v1" ;
+    skos:note "Canonical unit hour (icm-voc:Hour)."@en .
+
+#################################################################
+#    Threshold-defined cause concepts (Q7, PV6). Named by IRI
+#    before AIR-2.3/AIR-2.4 declare them. A concept with several
+#    defining thresholds meets all of them (prl:definingThreshold's
+#    comment, spec/peril.ttl, states this). Written as flat,
+#    labelled blank nodes (_:label), never bracket-nested more than
+#    one level, so a reader (and an author) can check bracket
+#    balance by eye.
+#################################################################
+
+prl-voc:N.MET.TC.HUR prl:definingThreshold _:hur-range ;
+    skos:note "Threshold: sustained wind (1-minute) at or above 64 kn, following the US National Hurricane Center and the Saffir–Simpson scale."@en .
+_:hur-range a qnt:RangeSet ; qnt:onSpace prl-voc:SustainedWind1MinSpace ; qnt:hasRange _:hur-interval .
+_:hur-interval a qnt:Range ; qnt:onSpace prl-voc:SustainedWind1MinSpace ; qnt:lowerBound _:hur-lower .
+_:hur-lower a qnt:Bound ; qnt:onSpace prl-voc:SustainedWind1MinSpace ; qnt:boundSense qnt:Lower ; qnt:boundClosure qnt:Closed ; qnt:boundValue _:hur-lower-value .
+_:hur-lower-value a qnt:Quantity ; qnt:onSpace prl-voc:SustainedWind1MinSpace ; qnt:numericValue "64"^^xsd:decimal ; qnt:inUnit icm-voc:Knot .
+
+prl-voc:N.MET.TC.TST prl:definingThreshold _:tst-range ;
+    skos:note "Threshold: sustained wind (1-minute) at least 34 kn and below 64 kn, following the US National Hurricane Center."@en .
+_:tst-range a qnt:RangeSet ; qnt:onSpace prl-voc:SustainedWind1MinSpace ; qnt:hasRange _:tst-interval .
+_:tst-interval a qnt:Range ; qnt:onSpace prl-voc:SustainedWind1MinSpace ; qnt:lowerBound _:tst-lower ; qnt:upperBound _:tst-upper .
+_:tst-lower a qnt:Bound ; qnt:onSpace prl-voc:SustainedWind1MinSpace ; qnt:boundSense qnt:Lower ; qnt:boundClosure qnt:Closed ; qnt:boundValue _:tst-lower-value .
+_:tst-lower-value a qnt:Quantity ; qnt:onSpace prl-voc:SustainedWind1MinSpace ; qnt:numericValue "34"^^xsd:decimal ; qnt:inUnit icm-voc:Knot .
+_:tst-upper a qnt:Bound ; qnt:onSpace prl-voc:SustainedWind1MinSpace ; qnt:boundSense qnt:Upper ; qnt:boundClosure qnt:Open ; qnt:boundValue _:tst-upper-value .
+_:tst-upper-value a qnt:Quantity ; qnt:onSpace prl-voc:SustainedWind1MinSpace ; qnt:numericValue "64"^^xsd:decimal ; qnt:inUnit icm-voc:Knot .
+
+prl-voc:N.MET.TC.TDP prl:definingThreshold _:tdp-range ;
+    skos:note "Threshold: sustained wind (1-minute) below 34 kn, following the US National Hurricane Center and the WMO tropical cyclone classification. A depression is numbered but not named in the North Atlantic, so it is not, of itself, a named storm (N.MET.NS)."@en .
+_:tdp-range a qnt:RangeSet ; qnt:onSpace prl-voc:SustainedWind1MinSpace ; qnt:hasRange _:tdp-interval .
+_:tdp-interval a qnt:Range ; qnt:onSpace prl-voc:SustainedWind1MinSpace ; qnt:upperBound _:tdp-upper .
+_:tdp-upper a qnt:Bound ; qnt:onSpace prl-voc:SustainedWind1MinSpace ; qnt:boundSense qnt:Upper ; qnt:boundClosure qnt:Open ; qnt:boundValue _:tdp-upper-value .
+_:tdp-upper-value a qnt:Quantity ; qnt:onSpace prl-voc:SustainedWind1MinSpace ; qnt:numericValue "34"^^xsd:decimal ; qnt:inUnit icm-voc:Knot .
+
+prl-voc:N.MET.TC.TYP prl:definingThreshold _:typ-range ;
+    skos:note "Threshold: mean wind (10-minute) at or above 64 kn, following RSMC Tokyo (the Japan Meteorological Agency). JTWC's 1-minute figures for the western North Pacific belong in a market edition, not this reference."@en .
+_:typ-range a qnt:RangeSet ; qnt:onSpace prl-voc:MeanWind10MinSpace ; qnt:hasRange _:typ-interval .
+_:typ-interval a qnt:Range ; qnt:onSpace prl-voc:MeanWind10MinSpace ; qnt:lowerBound _:typ-lower .
+_:typ-lower a qnt:Bound ; qnt:onSpace prl-voc:MeanWind10MinSpace ; qnt:boundSense qnt:Lower ; qnt:boundClosure qnt:Closed ; qnt:boundValue _:typ-lower-value .
+_:typ-lower-value a qnt:Quantity ; qnt:onSpace prl-voc:MeanWind10MinSpace ; qnt:numericValue "64"^^xsd:decimal ; qnt:inUnit icm-voc:Knot .
+
+prl-voc:N.MET.TC.SEV prl:definingThreshold _:sev-range ;
+    skos:note "Threshold: mean wind (10-minute) at or above 64 kn, following the Australian Bureau of Meteorology's category 3 and above, and RSMC La Réunion. The Indian Meteorological Department's 3-minute convention belongs in a market edition, not this reference."@en .
+_:sev-range a qnt:RangeSet ; qnt:onSpace prl-voc:MeanWind10MinSpace ; qnt:hasRange _:sev-interval .
+_:sev-interval a qnt:Range ; qnt:onSpace prl-voc:MeanWind10MinSpace ; qnt:lowerBound _:sev-lower .
+_:sev-lower a qnt:Bound ; qnt:onSpace prl-voc:MeanWind10MinSpace ; qnt:boundSense qnt:Lower ; qnt:boundClosure qnt:Closed ; qnt:boundValue _:sev-lower-value .
+_:sev-lower-value a qnt:Quantity ; qnt:onSpace prl-voc:MeanWind10MinSpace ; qnt:numericValue "64"^^xsd:decimal ; qnt:inUnit icm-voc:Knot .
+
+prl-voc:N.MET.SCS.SLW.DER prl:definingThreshold _:der-wind-range , _:der-path-range ;
+    skos:note "Threshold (two measures, both must hold): wind gusts at or above 26 m/s and a path length at or above 400 km, following the NOAA Storm Prediction Center's derecho definition."@en .
+_:der-wind-range a qnt:RangeSet ; qnt:onSpace prl-voc:WindGust3sSpace ; qnt:hasRange _:der-wind-interval .
+_:der-wind-interval a qnt:Range ; qnt:onSpace prl-voc:WindGust3sSpace ; qnt:lowerBound _:der-wind-lower .
+_:der-wind-lower a qnt:Bound ; qnt:onSpace prl-voc:WindGust3sSpace ; qnt:boundSense qnt:Lower ; qnt:boundClosure qnt:Closed ; qnt:boundValue _:der-wind-lower-value .
+_:der-wind-lower-value a qnt:Quantity ; qnt:onSpace prl-voc:WindGust3sSpace ; qnt:numericValue "26"^^xsd:decimal ; qnt:inUnit icm-voc:MPerSec .
+_:der-path-range a qnt:RangeSet ; qnt:onSpace prl-voc:PathLengthSpace ; qnt:hasRange _:der-path-interval .
+_:der-path-interval a qnt:Range ; qnt:onSpace prl-voc:PathLengthSpace ; qnt:lowerBound _:der-path-lower .
+_:der-path-lower a qnt:Bound ; qnt:onSpace prl-voc:PathLengthSpace ; qnt:boundSense qnt:Lower ; qnt:boundClosure qnt:Closed ; qnt:boundValue _:der-path-lower-value .
+_:der-path-lower-value a qnt:Quantity ; qnt:onSpace prl-voc:PathLengthSpace ; qnt:numericValue "400"^^xsd:decimal ; qnt:inUnit icm-voc:KiloMetre .
+
+prl-voc:N.MET.WIN.BLZ prl:definingThreshold _:blz-wind-range , _:blz-vis-range , _:blz-dur-range ;
+    skos:note "Threshold (three measures, all must hold): sustained wind at or above 15.6 m/s, visibility below 400 m, for at least 3 hours, following the US National Weather Service. Other national blizzard definitions belong in market editions, not this reference."@en .
+_:blz-wind-range a qnt:RangeSet ; qnt:onSpace prl-voc:SustainedWind1MinSpace ; qnt:hasRange _:blz-wind-interval .
+_:blz-wind-interval a qnt:Range ; qnt:onSpace prl-voc:SustainedWind1MinSpace ; qnt:lowerBound _:blz-wind-lower .
+_:blz-wind-lower a qnt:Bound ; qnt:onSpace prl-voc:SustainedWind1MinSpace ; qnt:boundSense qnt:Lower ; qnt:boundClosure qnt:Closed ; qnt:boundValue _:blz-wind-lower-value .
+_:blz-wind-lower-value a qnt:Quantity ; qnt:onSpace prl-voc:SustainedWind1MinSpace ; qnt:numericValue "15.6"^^xsd:decimal ; qnt:inUnit icm-voc:MPerSec .
+_:blz-vis-range a qnt:RangeSet ; qnt:onSpace prl-voc:VisibilitySpace ; qnt:hasRange _:blz-vis-interval .
+_:blz-vis-interval a qnt:Range ; qnt:onSpace prl-voc:VisibilitySpace ; qnt:upperBound _:blz-vis-upper .
+_:blz-vis-upper a qnt:Bound ; qnt:onSpace prl-voc:VisibilitySpace ; qnt:boundSense qnt:Upper ; qnt:boundClosure qnt:Open ; qnt:boundValue _:blz-vis-upper-value .
+_:blz-vis-upper-value a qnt:Quantity ; qnt:onSpace prl-voc:VisibilitySpace ; qnt:numericValue "400"^^xsd:decimal ; qnt:inUnit icm-voc:Metre .
+_:blz-dur-range a qnt:RangeSet ; qnt:onSpace prl-voc:EventDurationSpace ; qnt:hasRange _:blz-dur-interval .
+_:blz-dur-interval a qnt:Range ; qnt:onSpace prl-voc:EventDurationSpace ; qnt:lowerBound _:blz-dur-lower .
+_:blz-dur-lower a qnt:Bound ; qnt:onSpace prl-voc:EventDurationSpace ; qnt:boundSense qnt:Lower ; qnt:boundClosure qnt:Closed ; qnt:boundValue _:blz-dur-lower-value .
+_:blz-dur-lower-value a qnt:Quantity ; qnt:onSpace prl-voc:EventDurationSpace ; qnt:numericValue "3"^^xsd:decimal ; qnt:inUnit icm-voc:Hour .
+
+#################################################################
+#    Other intensity links (no threshold, informative where the
+#    concept's own definitionBasis is not Threshold)
+#################################################################
+
+prl-voc:N.GEO.EQ prl:intensityMeasure prl-voc:MomentMagnitude .
+prl-voc:N.GEO.EQ.SHK prl:intensityMeasure prl-voc:PeakGroundAcceleration , prl-voc:SpectralAcceleration , prl-voc:ModifiedMercalliIntensity .
+prl-voc:N.MET.TC.WND prl:intensityMeasure prl-voc:SustainedWind1Min , prl-voc:MeanWind10Min , prl-voc:WindGust3s , prl-voc:CentralPressure , prl-voc:SaffirSimpsonCategory .
+prl-voc:N.MET.TC.SRG prl:intensityMeasure prl-voc:SurgeHeight , prl-voc:FloodDepth .
+prl-voc:N.MET.ETC.SRG prl:intensityMeasure prl-voc:SurgeHeight , prl-voc:FloodDepth .
+prl-voc:N.HYD.FLD.CST prl:intensityMeasure prl-voc:SurgeHeight , prl-voc:FloodDepth .
+prl-voc:N.MET.TC.RFL prl:intensityMeasure prl-voc:FloodDepth , prl-voc:FlowVelocity .
+prl-voc:N.HYD.FLD prl:intensityMeasure prl-voc:FloodDepth , prl-voc:FlowVelocity .
+prl-voc:N.HYD.FLD.PLU prl:intensityMeasure prl-voc:RainfallDepth , prl-voc:FloodDepth .
+prl-voc:N.MET.SCS.HVR prl:intensityMeasure prl-voc:RainfallDepth , prl-voc:FloodDepth .
+prl-voc:N.MET.ETC.WND prl:intensityMeasure prl-voc:WindGust3s , prl-voc:MeanWind10Min .
+prl-voc:N.MET.LWS prl:intensityMeasure prl-voc:WindGust3s , prl-voc:MeanWind10Min .
+prl-voc:N.MET.SCS.SLW prl:intensityMeasure prl-voc:WindGust3s , prl-voc:MeanWind10Min .
+prl-voc:N.MET.SCS.TOR prl:intensityMeasure prl-voc:EnhancedFujitaRating , prl-voc:WindGust3s .
+prl-voc:N.MET.TC.TOR prl:intensityMeasure prl-voc:EnhancedFujitaRating , prl-voc:WindGust3s .
+prl-voc:N.MET.SCS.HAI prl:intensityMeasure prl-voc:HailDiameter .
+prl-voc:N.MET.WIN.SNL prl:intensityMeasure prl-voc:SnowLoad .
+prl-voc:N.MET.WIN.ICE prl:intensityMeasure prl-voc:IceAccretion .
+prl-voc:N.GEO.VOL.ASH prl:intensityMeasure prl-voc:AshLoad .
+prl-voc:N.CLI.WF prl:intensityMeasure prl-voc:FirelineIntensity .
+prl-voc:N.CLI.HTW prl:intensityMeasure prl-voc:WarmSpellDurationIndex .
+prl-voc:N.CLI.CLD prl:intensityMeasure prl-voc:ColdSpellDurationIndex .
+prl-voc:N.CLI.DRT prl:intensityMeasure prl-voc:StandardisedPrecipitationIndex .
+
+#################################################################
+#    Customary event windows (Q9, informative, PV8). The window
+#    that applies to a contract is always a stated term.
+#################################################################
+
+prl-voc:N.MET.TC prl:customaryEventWindow [ a qnt:Quantity ; qnt:onSpace prl-voc:EventDurationSpace ; qnt:numericValue "72"^^xsd:decimal ; qnt:inUnit icm-voc:Hour ] ;
+    skos:note "72 hours is the figure hours clauses commonly use for a tropical cyclone. The window that applies to a given contract is always a stated term."@en .
+prl-voc:N.MET.NS prl:customaryEventWindow [ a qnt:Quantity ; qnt:onSpace prl-voc:EventDurationSpace ; qnt:numericValue "72"^^xsd:decimal ; qnt:inUnit icm-voc:Hour ] ;
+    skos:note "72 hours, for the same reason as N.MET.TC."@en .
+prl-voc:N.MET.ETC prl:customaryEventWindow [ a qnt:Quantity ; qnt:onSpace prl-voc:EventDurationSpace ; qnt:numericValue "72"^^xsd:decimal ; qnt:inUnit icm-voc:Hour ] ;
+    skos:note "72 hours, for the same reason as N.MET.TC."@en .
+prl-voc:N.MET.SCS prl:customaryEventWindow [ a qnt:Quantity ; qnt:onSpace prl-voc:EventDurationSpace ; qnt:numericValue "72"^^xsd:decimal ; qnt:inUnit icm-voc:Hour ] ;
+    skos:note "72 hours, for the same reason as N.MET.TC."@en .
+prl-voc:N.MET.LWS prl:customaryEventWindow [ a qnt:Quantity ; qnt:onSpace prl-voc:EventDurationSpace ; qnt:numericValue "72"^^xsd:decimal ; qnt:inUnit icm-voc:Hour ] ;
+    skos:note "72 hours, for the same reason as N.MET.TC."@en .
+prl-voc:P.PV.RIO prl:customaryEventWindow [ a qnt:Quantity ; qnt:onSpace prl-voc:EventDurationSpace ; qnt:numericValue "72"^^xsd:decimal ; qnt:inUnit icm-voc:Hour ] ;
+    skos:note "72 hours is the figure strikes, riot and civil commotion hours clauses commonly use. The window that applies to a given contract is always a stated term."@en .
+prl-voc:P.PV.CCM prl:customaryEventWindow [ a qnt:Quantity ; qnt:onSpace prl-voc:EventDurationSpace ; qnt:numericValue "72"^^xsd:decimal ; qnt:inUnit icm-voc:Hour ] ;
+    skos:note "72 hours, for the same reason as P.PV.RIO."@en .
+prl-voc:N.GEO.EQ prl:customaryEventWindow [ a qnt:Quantity ; qnt:onSpace prl-voc:EventDurationSpace ; qnt:numericValue "168"^^xsd:decimal ; qnt:inUnit icm-voc:Hour ] ;
+    skos:note "168 hours (seven days) is the figure hours clauses commonly use for earthquake. The window that applies to a given contract is always a stated term."@en .
+prl-voc:N.GEO.TSU prl:customaryEventWindow [ a qnt:Quantity ; qnt:onSpace prl-voc:EventDurationSpace ; qnt:numericValue "168"^^xsd:decimal ; qnt:inUnit icm-voc:Hour ] ;
+    skos:note "168 hours, for the same reason as N.GEO.EQ."@en .
+prl-voc:N.GEO.VOL prl:customaryEventWindow [ a qnt:Quantity ; qnt:onSpace prl-voc:EventDurationSpace ; qnt:numericValue "168"^^xsd:decimal ; qnt:inUnit icm-voc:Hour ] ;
+    skos:note "168 hours, for the same reason as N.GEO.EQ."@en .
+prl-voc:N.HYD.FLD prl:customaryEventWindow [ a qnt:Quantity ; qnt:onSpace prl-voc:EventDurationSpace ; qnt:numericValue "168"^^xsd:decimal ; qnt:inUnit icm-voc:Hour ] ;
+    skos:note "168 hours, for the same reason as N.GEO.EQ."@en .
+```
+
+### Sources consulted for this section
+
+USGS ShakeMap, the Modified Mercalli Intensity scale, the moment magnitude scale, WMO wind
+averaging conventions, the US National Hurricane Center, the Saffir–Simpson Hurricane Wind Scale,
+RSMC Tokyo (JMA), the Australian Bureau of Meteorology, RSMC La Réunion, the US NWS Enhanced
+Fujita scale, the NOAA Storm Prediction Center's derecho definition, ASCE 7's ice-load convention,
+Byram's fireline intensity, the WMO-recommended Standardised Precipitation Index, the ETCCDI
+climate indices.
+
 ## 6. Shapes (ADR-A99 §10)
 
 "Cause concept" means a concept with `skos:inScheme prl-voc:CauseScheme`. All shapes are
@@ -1066,7 +1549,7 @@ flowchart LR
     causeConcept --> CH["CharacteristicsShape\nagency, onset, basis, accumulation"]
     causeConcept --> AI["AssociativeIntegrityShape\nno related/overlaps/canTrigger\nacross a broader+ chain"]
     causeConcept --> AC["AcyclicShape\nno concept is broader+ of itself"]
-    causeConcept --> TD["ThresholdDefinitionShape\nThreshold basis needs definingThreshold"]
+    causeConcept --> TD["ThresholdDefinitionShape\nThreshold basis needs definingThreshold,\neach on a space the concept's\nintensityMeasure names (AIR-2.6)"]
 ```
 
 | Shape | Rule |
@@ -1079,7 +1562,7 @@ flowchart LR
 | `prl:CharacteristicsShape` | every cause concept has at least one `prl:typicalAgency`, exactly one `prl:onset`, exactly one `prl:definitionBasis`, and at most one `prl:accumulationClass`, each in its own scheme |
 | `prl:AssociativeIntegrityShape` | no `skos:related`, `prl:overlaps` or `prl:canTrigger`, in either direction, between two concepts one of which is `skos:broader+` of the other |
 | `prl:AcyclicShape` | no concept is `skos:broader+` of itself |
-| `prl:ThresholdDefinitionShape` | a concept whose `prl:definitionBasis` is `prl-voc:Threshold` has a `prl:definingThreshold` |
+| `prl:ThresholdDefinitionShape` | a concept whose `prl:definitionBasis` is `prl-voc:Threshold` has a `prl:definingThreshold`, and every `prl:definingThreshold`'s `qnt:onSpace` is the `prl:measuredOn` space of one of the concept's `prl:intensityMeasure`s (AIR-2.6) |
 
 **Deferred, not built in this slice:** the collections shape (AIR-2.5) and the crosswalk shape
 (AIR-3.4). The sketch's "overlap coverage on data" shape reads a consumer's wording statements,
@@ -1332,6 +1815,20 @@ prl:ThresholdDefinitionShape
               $this prl:definitionBasis prl-voc:Threshold .
               FILTER NOT EXISTS { $this prl:definingThreshold ?t }
             }
+        """ ] ;
+    sh:sparql [
+        sh:message "A prl:definingThreshold's qnt:onSpace must be the prl:measuredOn space of one of the concept's prl:intensityMeasure concepts (AIR-2.6)." ;
+        sh:select """
+            PREFIX prl: <https://www.nebularis.org/neuro-semantic/insurance/peril#>
+            PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+            SELECT $this WHERE {
+              $this prl:definingThreshold ?threshold .
+              ?threshold qnt:onSpace ?space .
+              FILTER NOT EXISTS {
+                $this prl:intensityMeasure ?measure .
+                ?measure prl:measuredOn ?space .
+              }
+            }
         """ ] .
 ```
 
@@ -1366,6 +1863,11 @@ each concept, never copied verbatim:
 - the GDPR Articles 33, 34 and 83, for the first-party cyber and privacy heads of loss
 - for T, E, H, P, C, F and L, which the sources above do not cover, common legal and market
   usage, stated neutrally
+- for intensity measures and thresholds (AIR-2.6): the USGS ShakeMap ground-motion parameters, the
+  Modified Mercalli Intensity scale, the moment magnitude scale, the US National Hurricane Center's
+  and the WMO's wind-averaging conventions, the Saffir–Simpson Hurricane Wind Scale, the US National
+  Weather Service's Enhanced Fujita scale, the ASCE 7 ice-load convention, Byram's fireline
+  intensity, the ETCCDI climate indices, ISO 4217 (currencies) and QUDT (units)
 
 ## 9. Fixture and tests
 
@@ -1374,7 +1876,9 @@ scheme (two family tops and a four-generation branch under `N.MET.TC`) that conf
 shape above. [`tools/test_peril_vocabulary.py`](../../../../tools/test_peril_vocabulary.py)
 validates it, plus one negative case per shape by mutating a copy of the fixture, with pySHACL
 (`advanced=True`, `inference="none"`), and checks the eight schemes conform to Vocabulary's own
-shapes. Runs under `mise run check:ontology-catalog`, which runs every `tools/test_*.py`.
+shapes. [`tools/test_peril_intensity.py`](../../../../tools/test_peril_intensity.py) does the same
+for `vocab/peril-intensity.ttl` and `insurance/common`'s units (AIR-2.6). Runs under
+`mise run check:ontology-catalog`, which runs every `tools/test_*.py`.
 
 ```turtle-example
 prl-voc:N.MET.TC.HUR a skos:Concept ;

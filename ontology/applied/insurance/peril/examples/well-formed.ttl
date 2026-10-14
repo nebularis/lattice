@@ -94,12 +94,18 @@ prl-voc:N.MET.TC.HUR a skos:Concept ;
     prl:typicalAgency prl-voc:Natural ;
     prl:onset prl-voc:Sudden ;
     prl:definitionBasis prl-voc:Threshold ;
+    prl:intensityMeasure ex:sustained-wind-measure ;
     prl:definingThreshold ex:hurricane-wind-threshold .
 
 # ---- Quantification placeholder for N.MET.TC.HUR's threshold --------------
 # Minimal: only what prl:definingThreshold's own range (qnt:RangeSet) needs
-# to exist as. The real sustained-wind value space is AIR-2.6.
+# to exist as, and a placeholder measure on the same space, so the
+# ThresholdDefinitionShape's space cross-check (AIR-2.6) is satisfied
+# without depending on peril-intensity.ttl. The real sustained-wind value
+# space and measure are AIR-2.6's prl-voc:SustainedWind1MinSpace and
+# prl-voc:SustainedWind1Min.
 
 ex:sustained-wind-space a qnt:ValueSpace .
+ex:sustained-wind-measure prl:measuredOn ex:sustained-wind-space .
 ex:hurricane-wind-threshold a qnt:RangeSet ;
     qnt:onSpace ex:sustained-wind-space .

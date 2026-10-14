@@ -155,7 +155,7 @@ prl:measuredOn a owl:ObjectProperty ;
 prl:definingThreshold a owl:ObjectProperty ;
     rdfs:domain skos:Concept ; rdfs:range qnt:RangeSet ;
     rdfs:label "defining threshold"@en ;
-    rdfs:comment "The Quantification range set a threshold-defined cause concept must fall within to be that cause (PV6)." ;
+    rdfs:comment "The Quantification range set a threshold-defined cause concept must fall within to be that cause (PV6). A concept with several defining thresholds meets all of them." ;
     fnd:utility "Required whenever prl:definitionBasis is prl-voc:Threshold (the threshold-definitions shape). Point at a qnt:RangeSet over the relevant intensity measure's value space." .
 
 prl:customaryEventWindow a owl:ObjectProperty ;
