@@ -132,7 +132,7 @@ def kinds_graph() -> Graph:
     members("GuardStatus", (s.value for s in GuardStatus))
     members("GraphNaming", (n.value for n in GraphNaming))
     members("DeclarationSource", (s.value for s in DeclarationSource))
-    members("DigestPartRole", ("OperationKindPart", "TargetPart", "ExpectedSeqPart", "PayloadPart"))
+    members("DigestPartRole", ("OperationKindPart", "TargetPart", "ExpectedSeqPart", "PayloadPart", "EventPart"))
     members("Rule", ("GraphNameOfRoot",), {"GraphNameOfRoot": "the graph IRI the family's dal:graphIriTemplate gives for the value of the root parameter"})
     members("Source", ("RegistryGraph", "NoSource"), {"RegistryGraph": "the family's dal:registryGraph, a caller obligation"})
     members("PayloadEncoding", ("GroundNTriples",))
@@ -222,18 +222,23 @@ def _emit_operation(g: Graph, node, target_iri: URIRef, name: str, c: OperationC
         g.add((dc, RDF.type, DAL.DigestContract))
         g.add((dc, DAL.digestAlgorithm, Literal("SHA-256")))
         parts = [
-            ("OperationKindPart", None),
-            ("TargetPart", c.digest.target),
-            ("ExpectedSeqPart", c.digest.expected),
-            ("PayloadPart", c.digest.payload),
+            ("OperationKindPart", ()),
+            ("TargetPart", (c.digest.target,) if c.digest.target else ()),
+            ("ExpectedSeqPart", (c.digest.expected,) if c.digest.expected else ()),
+            # the content of the request, one part: the payload of a write, or the events of an append (H2.6b, Q5)
+            ("EventPart", c.digest.event) if c.digest.event else ("PayloadPart", (c.digest.payload,) if c.digest.payload else ()),
         ]
-        for i, (role, source) in enumerate(parts, 1):
+        for i, (role, sources) in enumerate(parts, 1):
             dp = m(f"digest-part-{i}")
             g.add((dc, DAL.digestPart, dp))
             g.add((dp, RDF.type, DAL.DigestPart))
             g.add((dp, DAL.partOrder, Literal(i, datatype=XSD.integer)))
             g.add((dp, DAL.partRole, DAL[role]))
-            g.add((dp, DAL.partSource, m(f"param-{source}") if source else DAL.NoSource))
+            if sources:
+                for source in sources:
+                    g.add((dp, DAL.partSource, m(f"param-{source}")))
+            else:
+                g.add((dp, DAL.partSource, DAL.NoSource))
 
 
 def emit(example: str, *, guards: bool = True, graph_names: str = "query", source: Graph | None = None) -> Graph:

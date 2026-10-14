@@ -3,8 +3,8 @@
 # Formal Methods, Track H: Status
 
 **Unit ID:** `formal-methods-track-h` (phase, within the `formal-methods` epic)
-**Status:** In progress. H1 (H1.1 to H1.5, with H1.4c), the aggregate-ownership slices HO0 to HO9 and H2.0 to H2.3 are merged to `main` and signed off (H1 and HO 2026-10-10, H2.0 to H2.3 2026-10-12). H2.4a and H2.4b are built and reviewed, and every decision in their Validation Packs is taken (2026-10-13), awaiting the maintainer's merge with the triple-store record. ADR-A123 is accepted with five addenda, ADR-A124 and ADR-A125 are accepted. H2.5 and H2.6 are built (2026-10-13). Every decision of H2.5 is taken, and the maintainer approved H2.6 on 2026-10-13 with three design questions open (RQ4 to RQ6), awaiting the merge
-**Last updated:** 2026-10-13
+**Status:** In progress. H1 (H1.1 to H1.5, with H1.4c), the aggregate-ownership slices HO0 to HO9 and H2.0 to H2.3 are merged to `main` and signed off (H1 and HO 2026-10-10, H2.0 to H2.3 2026-10-12). H2.4a and H2.4b are built and reviewed, and every decision in their Validation Packs is taken (2026-10-13), awaiting the maintainer's merge with the triple-store record. ADR-A123 is accepted with five addenda, ADR-A124 and ADR-A125 are accepted. H2.5 and H2.6 are built (2026-10-13). Every decision of H2.5 is taken, and the maintainer approved H2.6 on 2026-10-13 with three design questions open (RQ4 to RQ6), awaiting the merge. H2.6b's event half is built (2026-10-14), awaiting the maintainer's review and the re-approval of six expected profiles H2.6b's event half is built (2026-10-14) and awaits the maintainer's review. Its patch-log half is held (H-D33).
+**Last updated:** 2026-10-14
 **Plan:** [formal-methods-track-h.md](../plans/formal-methods-track-h.md)
 **Sketches:** [formal-methods-track-h.md](../sketches/formal-methods-track-h.md) (main),
 [formal-methods-track-h-protocols.md](../sketches/formal-methods-track-h-protocols.md),
@@ -53,10 +53,8 @@ section below.
 
 ## Next action
 
-1. **The cloud agent builds H2.6b's event half** from `main`, once the maintainer has committed the planning documents of 2026-10-14
-   ([plan §4.6](../plans/formal-methods-track-h.md#46-h26b-the-event-and-patch-content-slots-planned-2026-10-14), "Steps, the event
-   half"). Every H2.6b question is answered. It regenerates the expected profiles that change, which the maintainer re-approves.
-   🟢 READY TO BRANCH.
+1. **The maintainer reviews H2.6b's event half** ([Validation Pack](../validation/FMH-H2-6b.md)), re-approves the six expected profiles that
+   changed, and accepts or changes the ADR-A123 addendum drafted on 2026-10-14. Nothing else is built until the redesign settles.
 2. **Meanwhile, locally,** the maintainer reviews the [history and versioning sketch](../sketches/persistence-history-and-versioning.md),
    VH-Q1 to VH-Q7, and we work on the design changes it leads to. VH-Q7 needs research first.
 3. **Before H2.7 and H2.8 branch**, the maintainer answers H2.7-Q1 to Q4
@@ -99,7 +97,7 @@ section below.
 | H2.4b (Oxigraph, probes, benchmark) | **built** 2026-10-12, reviewed 2026-10-13. [Validation Pack](../validation/FMH-H2-4b.md). Decision 1 decided (option D, built in H2.5), and the corrected P1 test countersigned | the maintainer's merge |
 | H2.5 (key claims, audits, guard D, the `SELECT` fragment) | **built** 2026-10-13, autonomously, in six gates. [Validation Pack](../validation/FMH-H2-5.md). [Plan §4.3](../plans/formal-methods-track-h.md#43-h25-key-claims-the-audits-and-the-self-calibrating-guard-planned-2026-10-13). TD-34 closed. every decision taken | the maintainer's merge |
 | H2.6 (expected compiled profiles, paper check) | **built 2026-10-13 and approved by the maintainer 2026-10-13.** [Validation Pack](../validation/FMH-H2-6.md). [Plan §4.4](../plans/formal-methods-track-h.md#44-h26-the-expected-compiled-profile-examples-first-and-the-paper-check-planned-2026-10-13). Five of eight review questions answered (H-D24 to H-D28), three open ([write-up](../notes/track-h-h26-review-questions.md)). `mise run build:persistence-expected-profiles` and a check in `check:persistence` | the maintainer's merge. H2.7 waits for RQ4 to RQ6 |
-| H2.6b (event slots, patch-log half held, H-D33) | **ready to branch** 2026-10-14, [plan §4.6](../plans/formal-methods-track-h.md#46-h26b-the-event-and-patch-content-slots-planned-2026-10-14) | H2.6b-Q1 to Q5, answered |
+| H2.6b (event slots, patch-log half held, H-D33) | **event half built 2026-10-14.** [Validation Pack](../validation/FMH-H2-6b.md), [plan §4.6](../plans/formal-methods-track-h.md#46-h26b-the-event-and-patch-content-slots-planned-2026-10-14). The patch-log half is held | the maintainer's review |
 | H2.7 (vocabulary and emission) | **planned** 2026-10-14, [plan §4.7](../plans/formal-methods-track-h.md#47-h27-the-vocabulary-and-the-compilers-emission-planned-2026-10-14) | H2.7-Q1 to Q4, and H2.6b's merge |
 | H2.8 (typed payload, caller checks) | **planned** 2026-10-14, [plan §4.8](../plans/formal-methods-track-h.md#48-h28-the-typed-payload-and-the-caller-side-checks-planned-2026-10-14) | H2.8-Q1 to Q3, and H2.7's merge |
 | H3 (specification registry) | not started, outlined in the plan | H2 preferred first (smaller, more self-contained), not a hard blocker |
@@ -633,3 +631,6 @@ section below.
   event half on its own: events as `VALUES` rows in an `eventRows` slot, event data in an `eventTriples` slot, the digest's payload and
   event parts, and the warning. H2.8's checks no longer name the add and del graphs. H2.6b is ready to branch once the planning documents
   are on `main`.
+- 2026-10-14: H2.6b's event half built autonomously on the branch ([FMH-H2-6b](../validation/FMH-H2-6b.md)). An append takes `{{{eventRows}}}` and
+  `{{{eventTriples}}}`, the contract declares the event digest part, and `compile` warns `ReceiptModelNotHonoured` for both models, so six expected
+  profiles changed. TSD-21 recorded. The patch-log half, H2.7 and H2.8 are not built.

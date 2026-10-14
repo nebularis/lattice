@@ -1194,6 +1194,13 @@ The patch log adds little to TD-42's quadratic cost and does not change its orde
    now reports both models. Anything a store does that the record lacks goes into the triple-store record first (skill
    `lattice-triple-stores`).
 
+#### Built (2026-10-14), the event half
+
+Steps 1 to 6 are built as written, with the [Validation Pack](../validation/FMH-H2-6b.md). Differences from the plan: the second planned probe
+(the `VALUES` block in a group of its own) does not fail any test, since a group holding only a `VALUES` block joins as the bare block does,
+so the pack uses a mutation that ties the receipt to the event instead. An empty `eventRows` raises on rdflib and gives no solution on Oxigraph
+(TSD-21). `test_ho6_t14` now subtracts the warnings its base example reports on its own.
+
 #### Planned validation
 
 One Validation Pack, `FMH-H2-6b`, with `mise run check:persistence` and `mise run check:persistence-oxigraph`. Probes at the gate: the

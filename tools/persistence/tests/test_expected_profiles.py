@@ -119,7 +119,7 @@ def _facts(c: OperationContract, shape: str | None) -> set:
     if c.payload:
         facts.add(("payload", c.payload.parameter, c.payload.root, shape or "NoBoundaryShape"))
     if c.digest:
-        facts.add(("digest", c.digest.target, c.digest.expected, c.digest.payload))
+        facts.add(("digest", c.digest.target, c.digest.expected, c.digest.payload, c.digest.event))
     return facts
 
 
@@ -158,9 +158,13 @@ def _read_contract(g: Graph, node) -> tuple[OperationContract, str | None]:
     digest = None
     dc = g.value(node, DAL.digestContract)
     if dc is not None:
-        parts = {str(_local(g.value(dp, DAL.partRole))): g.value(dp, DAL.partSource) for dp in g.objects(dc, DAL.digestPart)}
-        name = lambda role: None if parts[role] == DAL.NoSource else param_names[parts[role]]
-        digest = DigestContract(name("TargetPart"), name("ExpectedSeqPart"), name("PayloadPart"))
+        parts = {str(_local(g.value(dp, DAL.partRole))): set(g.objects(dp, DAL.partSource)) for dp in g.objects(dc, DAL.digestPart)}
+
+        def names(role):
+            return tuple(sorted(param_names[o] for o in parts.get(role, ()) if o != DAL.NoSource))
+
+        single = lambda role: (names(role) or (None,))[0]
+        digest = DigestContract(single("TargetPart"), single("ExpectedSeqPart"), single("PayloadPart"), names("EventPart"))
     contract = OperationContract(
         id=str(g.value(node, DAL.forOperation)), kind=OperationKind(_local(g.value(node, DAL.operationKind))),
         version=int(g.value(node, DAL.templateVersion)), guard_status=GuardStatus(_local(g.value(node, DAL.guardStatus))),

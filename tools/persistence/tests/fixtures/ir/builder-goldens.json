@@ -1,11 +1,11 @@
 {
   "append-event": {
-    "sha256": "9fb3ccc271c9ee5473b2ac47cf901daa50c698633db3faec384bf1cdf8dbd5c2",
-    "version": 1
+    "sha256": "82e960d269d514237b3cd302bd82c8ca4868324b695d8dace294f570a8ae5517",
+    "version": 2
   },
   "append-event-dataset-guard": {
-    "sha256": "3781e340c2ee12ea77fcc89e671c8c920a17d0ab74e098aa28ad2075cced4c62",
-    "version": 1
+    "sha256": "3b6388ce5eb979a59de262a61a00a2b1bdb1bf31d6ae72e985c3e9626012265a",
+    "version": 2
   },
   "bootstrap-version-row": {
     "sha256": "ba709a1b66aa7e324022bfa4be462a34848493df4435af842c462383c3934dc4",

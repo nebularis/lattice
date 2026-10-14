@@ -404,11 +404,11 @@ def test_h2_5_t37_the_gap_scan_does_not_count_a_receipt_outside_the_range_or_of_
 @engines.each_engine
 def test_h2_5_t38_an_append_then_a_replace_on_one_stream_gives_a_clean_gap_scan():
     import test_named_graph_builders as named
-    from test_builders import APPEND, _store
+    from test_builders import APPEND, _store, event_row, fill_events
 
     stream = APPEND["stream"]
     ds = _store()
-    ds.update(render(build("append-event", CONTEXT, guards=engines.guards())), initBindings=APPEND)
+    ds.update(fill_events(render(build("append-event", CONTEXT, guards=engines.guards())), event_row()), initBindings=APPEND)
     buckets = sorted(str(g.identifier) for g in ds.graphs() if str(g.identifier).startswith("urn:g:txlog/"))
     assert buckets
     args = {**named.replace_args(root=stream, expected=1), "epoch": LONG(3)}

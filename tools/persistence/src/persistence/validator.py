@@ -430,6 +430,23 @@ def _check_slice_2(target: Target, dimensions: dict[str, ResolvedDimension]) -> 
                 f"dal:{name} is {int(count)}, but the generated SPARQL writes a single {graph} graph. "
                 "The declaration is recorded in the compiled profile and not yet applied.",
             ))
+
+    # TD-46: the receipt models that no template honours. A patch log names delta graphs and a snapshot copies the aggregate per
+    # revision, and no template writes either, so a profile that chooses one still records a receipt only. H1.4c: a declaration the
+    # compiler cannot honour is a warning or a refusal, never silent. CompositeBoundaryReceiptOnly still demands a patch log of a
+    # composite family, so the examples keep compiling, with this warning.
+    receipt_model = _local(_value(dimensions, "receiptModel"))
+    if receipt_model in ("PatchLog", "SnapshotPerRevision"):
+        what = (
+            "asserts and retracts delta graphs alongside each receipt" if receipt_model == "PatchLog"
+            else "a snapshot of the aggregate per revision"
+        )
+        out.append(_warning(
+            "ReceiptModelNotHonoured", target,
+            f"dal:receiptModel dal:{receipt_model} declares {what}, but no generated operation writes it. "
+            "The compiled profile records the declaration and the operations write a receipt only (TD-46). "
+            "Do not rely on replay, as-of reads or change capture from this profile.",
+        ))
     return out
 
 

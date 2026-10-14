@@ -215,6 +215,7 @@ to the store or where it is a matter of capacity.
 | [TSD-18](#tsd-18-count-distinct-over-xsdlong-and-xsdinteger-terms) | `COUNT(DISTINCT)` over `xsd:long` and `xsd:integer` | two terms, so two | counts them apart | counts them together, since it stores both as `xsd:integer` | Observed |
 | [TSD-19](#tsd-19-the-order-of-group_concat) | the order of `GROUP_CONCAT` | not specified | the order the data was stored in, whatever the hash seed (this query shape) | the order of the solutions | Observed |
 | [TSD-20](#tsd-20-a-filter-inside-not-exists-and-a-parameter) | a `FILTER` inside `NOT EXISTS` and a parameter or a sub-select's projection | sees them by substitution | ✔ by initial binding and by text | ✔ by text | Observed |
+| [TSD-21](#tsd-21-an-empty-values-block-in-an-update) | an empty `VALUES` block in an update `WHERE` | no solution | ✘ raises `AttributeError`, before changing anything | ✔ no solution, nothing written | Observed |
 
 ## 6. The findings
 
@@ -898,6 +899,17 @@ put in the text and when it is an initial binding (rdflib).
 
 **What it means for LATTICE.** `key-claim-write` and merge-rewrite rely on this, and it holds on both stores for both ways of binding.
 Test `test_h2_5_t14`.
+
+### TSD-21. An empty `VALUES` block in an update
+
+**Evidence:** Observed on both stores, rdflib 7.6.0 and Oxigraph 0.5.x, probe run for H2.6b.
+
+**What the store does.** `VALUES (?a ?b) { }` as the first element of an update's `WHERE`, with a `DELETE`/`INSERT` template after it, gives no
+solution on Oxigraph, so nothing is written. rdflib raises an `AttributeError` while evaluating the block. It does so before it changes
+anything, so the store is left as it was.
+
+**What it means for LATTICE.** An append with an empty `eventRows` slot writes nothing on either store, and on rdflib it raises. H2.8's caller
+check refuses an empty slot before sending, so the generated operation never meets the difference. Test `test_h2_6b_t6`.
 
 ## 7. Corrections, and what they taught us
 

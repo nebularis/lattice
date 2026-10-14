@@ -83,6 +83,8 @@ dal:Event a dal:ResourceKind ;
     rdfs:comment "an event in its monthly event bucket" ;
     dal:logicalKey "stream, seq" .
 
+dal:EventPart a dal:DigestPartRole .
+
 dal:ExpectedSeqPart a dal:DigestPartRole .
 
 dal:GraphNameOfRoot a dal:Rule ;
@@ -173,6 +175,8 @@ dal:Replace a dal:OperationKind .
 dal:RetentionMark a dal:ResourceKind ;
     rdfs:comment "a target's retention low-water mark, in the retention graph" ;
     dal:logicalKey "target" .
+
+dal:RowsKind a dal:ParameterKind .
 
 dal:ScanRead a dal:AccessMode .
 

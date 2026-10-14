@@ -19,7 +19,7 @@ from typing import Callable, Mapping
 
 from .ir import (
     A, Bind, Binding, Compare, Const, Filter, Func, Graph, GraphBlock, GraphRole, Group, Kind, NotExists, Op, Operation,
-    Optional_, Param, ParamRef, PayloadSlot, Path, Projected, RegistrySlot, Select, SubSelect, Triple, ValueGuard, Values, Var,
+    Optional_, Param, ParamRef, PayloadSlot, Path, Projected, RegistrySlot, RowsSlot, RowValues, Select, SubSelect, Triple, ValueGuard, Values, Var,
 )
 from .namespaces import PAT
 from .terms import Integer, Iri, Literal, PropertyPath
@@ -152,7 +152,9 @@ def _append(b: Bindings, *, guards: bool, dataset_guard: bool) -> Operation:
     n, n1, rev, prev = Var("n"), Var("n1"), Var("rev"), Var("prev")
     row_epoch = Var("rowEpoch")
 
-    where: list = []
+    # The events come first, as rows the caller supplies (the guide's batch, formal-methods H2.6b). Every row joins the one counter
+    # row, so k events give k solutions that write the same version row, claim and receipt, and each event its own triples.
+    where: list = [RowValues((Var("event"), Var("eventType"), Var("opSeq"), Var("occurredAt")), RowsSlot("eventRows"))]
     if dataset_guard:
         where.append(GraphBlock(b.graph("datasetGraph"), (Triple(b.const("datasetNode"), _pat("epoch"), epoch),)))
         where.append(GraphBlock(meta, (Triple(stream, _pat("epoch"), row_epoch), Triple(stream, _pat("seq"), n))))
@@ -190,10 +192,11 @@ def _append(b: Bindings, *, guards: bool, dataset_guard: bool) -> Operation:
             Triple(txn_id, _pat("requestDigest"), ParamRef("requestDigest")),
         )),
         GraphBlock(graph_var("eventGraph", Binding.BOUND), (
-            Triple(ParamRef("event"), A, ParamRef("eventType")),
-            Triple(ParamRef("event"), _pat("revision"), _bound("rev")),
-            Triple(ParamRef("event"), _pat("opSeq"), ParamRef("opSeq")),
-            Triple(ParamRef("event"), _pat("occurredAt"), ParamRef("occurredAt")),
+            Triple(_bound("event"), A, _bound("eventType")),
+            Triple(_bound("event"), _pat("revision"), _bound("rev")),
+            Triple(_bound("event"), _pat("opSeq"), _bound("opSeq")),
+            Triple(_bound("event"), _pat("occurredAt"), _bound("occurredAt")),
+            PayloadSlot("eventTriples"),
         )),
         GraphBlock(graph_var("logGraph", Binding.BOUND), (
             Triple(_bound("rev"), A, _pat("Revision")),
@@ -209,8 +212,8 @@ def _append(b: Bindings, *, guards: bool, dataset_guard: bool) -> Operation:
         "append-event-dataset-guard" if dataset_guard else "append-event",
         (
             Param("stream", Kind.IRI), Param("epoch", Kind.LONG), Param("revBase", Kind.STRING),
-            Param("txnId", Kind.IRI), Param("requestDigest", Kind.DIGEST), Param("event", Kind.IRI),
-            Param("eventType", Kind.IRI), Param("opSeq", Kind.POSITION), Param("occurredAt", Kind.IRI_OR_LITERAL),
+            Param("txnId", Kind.IRI), Param("requestDigest", Kind.DIGEST), Param("eventRows", Kind.ROWS),
+            Param("eventTriples", Kind.PAYLOAD),
         ),
         Group(tuple(where)),
         guards=guards,

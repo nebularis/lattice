@@ -137,10 +137,11 @@ def stem_of(operation_id: str) -> str:
     return operation_id.removesuffix(DATASET_GUARD_SUFFIX)
 
 
-BUILDER_VERSIONS: dict[str, int] = {stem: 1 for stem in sorted(_STEM_KIND)}
+BUILDER_VERSIONS: dict[str, int] = {**{stem: 1 for stem in sorted(_STEM_KIND)}, "append-event": 2}
 """The version of each builder, which any change to the text it renders must bump. A golden check
 (`tests/test_builder_versions.py`) holds the version to the text, and it is a number kept here, never computed, so that a
-change to a builder is a change a reviewer sees. A dataset-guard variant shares its base operation's version."""
+change to a builder is a change a reviewer sees. A dataset-guard variant shares its base operation's version. `append-event` is at 2
+since its events became request-time slots (formal-methods H2.6b)."""
 
 
 class GuardStatus(Enum):
@@ -192,12 +193,15 @@ class PayloadContract:
 @dataclass(frozen=True)
 class DigestContract:
     """What the request digest is taken over (the patterns guide, remediation A5): the kind of the operation, the target it
-    names, the sequence it expects, and the sorted canonical N-Triples of the payload. A part an operation does not have is
-    ``None``. The hash and the encoding are fixed by the contract, and the algorithm is built in H2.8."""
+    names, the sequence it expects, and the sorted canonical N-Triples of what the request asserts. That last part is one slot
+    per kind of content, in a fixed order, so a triple's role is part of what is hashed (formal-methods H2.6b, Q5): the payload of
+    a write, or for an append the events, which are its rows slot and its triples slot together. A part an operation does not
+    have is ``None`` or empty. The hash and the encoding are fixed by the contract, and the algorithm is built in H2.8."""
 
     target: Optional[str]
     expected: Optional[str]
     payload: Optional[str]
+    event: tuple = ()
 
 
 @dataclass(frozen=True)
@@ -298,14 +302,18 @@ def contract_of(operation: Operation) -> OperationContract:
         )
         for p in operation.params
     ))
+    kind = _STEM_KIND[stem]
     payload_name = next((p.name for p in operation.params if p.kind is Kind.PAYLOAD), None)
+    # An append's triples slot holds its events' domain triples, which are not the aggregate's payload and have no boundary shape.
+    event = tuple(sorted(p.name for p in operation.params if p.kind in SLOT_KINDS and p.kind is not Kind.REGISTRY_LIST)) if kind is OperationKind.APPEND else ()
+    payload_name = None if kind is OperationKind.APPEND else payload_name
     payload = PayloadContract(payload_name, "root" if "root" in params else None) if payload_name else None
     digest = None
     if "requestDigest" in params:
         target = next((a.keyed_by for a in sorted(accesses) if a.resource == ResourceKind.VERSION_ROW.value and a.keyed_by), None)
-        digest = DigestContract(target, "expectedSeq" if "expectedSeq" in params else None, payload_name)
+        digest = DigestContract(target, "expectedSeq" if "expectedSeq" in params else None, payload_name, event)
     return OperationContract(
-        id=operation.id, kind=_STEM_KIND[stem], version=BUILDER_VERSIONS[stem], guard_status=status, graph_naming=naming,
+        id=operation.id, kind=kind, version=BUILDER_VERSIONS[stem], guard_status=status, graph_naming=naming,
         parameters=parameters, accesses=tuple(sorted(accesses)), results=_result_columns(operation), payload=payload, digest=digest,
     )
 

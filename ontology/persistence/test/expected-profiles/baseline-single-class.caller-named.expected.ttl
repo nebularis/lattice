@@ -542,6 +542,10 @@
     dal:diagnostic [ a dal:Diagnostic ;
             dal:diagnosticKind "RowLevelGuardOnly" ;
             dal:diagnosticMessage "dal:epochGuardScope is dal:RowLevelGuardOnly (either explicitly declared or the platform baseline default): a write guarded only on the version row's own epoch can still match an unrestored row after a dataset-level bump that never reaches that row. dal:DatasetLevelGuard is required for restore safety to actually hold (iri-identity-patterns.md §10.3)." ;
+            dal:diagnosticSeverity "WARNING" ],
+        [ a dal:Diagnostic ;
+            dal:diagnosticKind "ReceiptModelNotHonoured" ;
+            dal:diagnosticMessage "dal:receiptModel dal:PatchLog declares asserts and retracts delta graphs alongside each receipt, but no generated operation writes it. The compiled profile records the declaration and the operations write a receipt only (TD-46). Do not rely on replay, as-of reads or change capture from this profile." ;
             dal:diagnosticSeverity "WARNING" ] ;
     dal:forTarget <https://example.org/lending#LoanApplication> ;
     dal:generatedOperation [ a dal:GeneratedOperation ;

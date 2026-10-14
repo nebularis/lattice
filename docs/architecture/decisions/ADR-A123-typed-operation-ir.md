@@ -226,3 +226,21 @@ H2.5-Q1 and Q2). It extends decision 2.
 5. **Two parameter kinds join decision 2's list**: `IriOrLiteral` (FMH-H2-2 decision 1), guarded by `isIRI($p) || isLiteral($p)`, and
    `Literal`, guarded by `isLiteral($p) && LANG($p) = ""`, which accepts any timestamp datatype and refuses an IRI or a missing value.
 
+
+## Addendum, 2026-10-14: the event slots and the digest parts (draft for the maintainer's acceptance)
+
+Drafted in slice H2.6b (Track H plan §4.6, H-D30 and H-D32) for the maintainer to accept. It extends decision 2 and the H2.4a addendum on
+request-time slots.
+
+1. **Two request-time slots join `payloadTriples` and `logGraphs`.** `{{{eventRows}}}` holds the rows of
+   `VALUES (?event ?eventType ?opSeq ?occurredAt)` and `{{{eventTriples}}}` holds the data written beside each event. The IR has a `Rows`
+   slot kind and a `RowValues` element, which the checker accepts only at the top of a `WHERE` and which binds its variables. Like every
+   slot, neither is parameter-guarded.
+2. **An append takes its events from the rows.** One request still steps the seq once and writes one receipt and one claim. Each event's
+   `pat:revision` is that receipt, so its position is (epoch, seq, `opSeq`). Every solution writes the same version row, claim and receipt,
+   which makes the batch independent of the order in which a store applies solutions (TSD-01). `append-event` is builder version 2.
+3. **The digest of an append has an event part.** One part per slot, in a fixed order. The event part has two sources, the rows slot and the
+   triples slot, and covers each row's type, `pat:opSeq` and `pat:occurredAt` triples with the event triples. It leaves out `pat:revision`,
+   which the store mints. This slice declares the part in the contract. H2.8 computes it.
+4. **`compile` warns `ReceiptModelNotHonoured`** for a target whose receipt model is `dal:PatchLog` or `dal:SnapshotPerRevision`, as it warns
+   for `ShardingNotHonoured` (TD-46).

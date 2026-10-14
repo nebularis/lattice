@@ -77,32 +77,13 @@
 
 <https://example.org/lending/DecisionStream/compiled/append#digest-part-4> a dal:DigestPart ;
     dal:partOrder 4 ;
-    dal:partRole dal:PayloadPart ;
-    dal:partSource dal:NoSource .
+    dal:partRole dal:EventPart ;
+    dal:partSource <https://example.org/lending/DecisionStream/compiled/append#param-eventRows>,
+        <https://example.org/lending/DecisionStream/compiled/append#param-eventTriples> .
 
 <https://example.org/lending/DecisionStream/compiled/append#param-epoch> a dal:ParameterDeclaration ;
     dal:parameterKind dal:LongKind ;
     dal:parameterName "epoch" ;
-    dal:required true .
-
-<https://example.org/lending/DecisionStream/compiled/append#param-event> a dal:ParameterDeclaration ;
-    dal:parameterKind dal:IriKind ;
-    dal:parameterName "event" ;
-    dal:required true .
-
-<https://example.org/lending/DecisionStream/compiled/append#param-eventType> a dal:ParameterDeclaration ;
-    dal:parameterKind dal:IriKind ;
-    dal:parameterName "eventType" ;
-    dal:required true .
-
-<https://example.org/lending/DecisionStream/compiled/append#param-occurredAt> a dal:ParameterDeclaration ;
-    dal:parameterKind dal:IriOrLiteralKind ;
-    dal:parameterName "occurredAt" ;
-    dal:required true .
-
-<https://example.org/lending/DecisionStream/compiled/append#param-opSeq> a dal:ParameterDeclaration ;
-    dal:parameterKind dal:PositionKind ;
-    dal:parameterName "opSeq" ;
     dal:required true .
 
 <https://example.org/lending/DecisionStream/compiled/append#param-requestDigest> a dal:ParameterDeclaration ;
@@ -226,6 +207,16 @@
     dal:columnName "t" ;
     dal:columnPosition 1 .
 
+<https://example.org/lending/DecisionStream/compiled/append#param-eventRows> a dal:ParameterDeclaration ;
+    dal:parameterKind dal:RowsKind ;
+    dal:parameterName "eventRows" ;
+    dal:required true .
+
+<https://example.org/lending/DecisionStream/compiled/append#param-eventTriples> a dal:ParameterDeclaration ;
+    dal:parameterKind dal:PayloadKind ;
+    dal:parameterName "eventTriples" ;
+    dal:required true .
+
 <https://example.org/lending/DecisionStream/compiled/append#param-txnId> a dal:ParameterDeclaration ;
     dal:parameterKind dal:IriKind ;
     dal:parameterName "txnId" ;
@@ -243,6 +234,10 @@
 
 [] a dal:CompiledProfile ;
     dal:capabilityRequirement [ a dal:CapabilityRequirement ] ;
+    dal:diagnostic [ a dal:Diagnostic ;
+            dal:diagnosticKind "ReceiptModelNotHonoured" ;
+            dal:diagnosticMessage "dal:receiptModel dal:PatchLog declares asserts and retracts delta graphs alongside each receipt, but no generated operation writes it. The compiled profile records the declaration and the operations write a receipt only (TD-46). Do not rely on replay, as-of reads or change capture from this profile." ;
+            dal:diagnosticSeverity "WARNING" ] ;
     dal:forTarget <https://example.org/lending#DecisionStream> ;
     dal:generatedOperation [ a dal:GeneratedOperation ;
             dal:access <https://example.org/lending/DecisionStream/compiled/bootstrap-version-row#access-1>,
@@ -377,15 +372,13 @@
                     dal:paramValue "<urn:g:txn>" ] ;
             dal:operationKind dal:Append ;
             dal:parameter <https://example.org/lending/DecisionStream/compiled/append#param-epoch>,
-                <https://example.org/lending/DecisionStream/compiled/append#param-event>,
-                <https://example.org/lending/DecisionStream/compiled/append#param-eventType>,
-                <https://example.org/lending/DecisionStream/compiled/append#param-occurredAt>,
-                <https://example.org/lending/DecisionStream/compiled/append#param-opSeq>,
+                <https://example.org/lending/DecisionStream/compiled/append#param-eventRows>,
+                <https://example.org/lending/DecisionStream/compiled/append#param-eventTriples>,
                 <https://example.org/lending/DecisionStream/compiled/append#param-requestDigest>,
                 <https://example.org/lending/DecisionStream/compiled/append#param-revBase>,
                 <https://example.org/lending/DecisionStream/compiled/append#param-stream>,
                 <https://example.org/lending/DecisionStream/compiled/append#param-txnId> ;
-            dal:templateVersion 1 ;
+            dal:templateVersion 2 ;
             dal:usesTemplate [ a dal:Template ;
                     dal:templateId "append-event-dataset-guard" ] ],
         [ a dal:GeneratedOperation ;

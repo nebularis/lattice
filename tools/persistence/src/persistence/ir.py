@@ -56,11 +56,12 @@ class Kind(Enum):
     LITERAL = "Literal"
     PAYLOAD = "Payload"
     REGISTRY_LIST = "RegistryList"
+    ROWS = "Rows"
 
 
-SLOT_KINDS = frozenset({Kind.PAYLOAD, Kind.REGISTRY_LIST})
-"""Kinds that are Mustache-style request-time slots and not SPARQL variables. A set of triples or of graph
-IRIs is not one RDF term, so the caller fills the slot with text before sending."""
+SLOT_KINDS = frozenset({Kind.PAYLOAD, Kind.REGISTRY_LIST, Kind.ROWS})
+"""Kinds that are Mustache-style request-time slots and not SPARQL variables. A set of triples, of graph
+IRIs or of ``VALUES`` rows is not one RDF term, so the caller fills the slot with text before sending."""
 
 
 class Compare(Enum):
@@ -218,6 +219,14 @@ class RegistrySlot:
     param: str
 
 
+@dataclass(frozen=True)
+class RowsSlot:
+    """Where the caller's rows of a multi-variable ``VALUES`` block go, such as the events of an append. It names a declared
+    parameter of kind ``Rows`` and is rendered as the Mustache tag ``{{{name}}}``."""
+
+    param: str
+
+
 # ---- graphs
 
 
@@ -345,6 +354,16 @@ class Values:
 
 
 @dataclass(frozen=True)
+class RowValues:
+    """``VALUES (?a ?b ...) { rows }`` with the rows supplied by the caller in a :class:`RowsSlot`, one row per event of an
+    append (formal-methods H2.6b). An empty slot gives no solution, so nothing is written. Each row carries its own values, so
+    nothing depends on the order a store visits the solutions in."""
+
+    vars: tuple
+    slot: RowsSlot
+
+
+@dataclass(frozen=True)
 class Union_:
     groups: tuple = ()
 
@@ -434,6 +453,6 @@ class Operation:
 __all__ = [
     "IrError", "Kind", "SLOT_KINDS", "Compare", "AccessMode", "Binding", "Param", "Var", "ParamRef", "Const", "RdfType", "A",
     "Path", "Triple", "PayloadSlot", "RegistrySlot", "GraphRole", "Graph", "Func", "Op", "Not", "TermGuard",
-    "ValueGuard", "Group", "GraphBlock", "Optional_", "NotExists", "Bind", "Filter", "Values", "Union_",
+    "ValueGuard", "Group", "GraphBlock", "Optional_", "NotExists", "Bind", "Filter", "Values", "RowValues", "RowsSlot", "Union_",
     "Projected", "Select", "SubSelect", "ParameterGuard", "GUARDS_OFF", "Operation",
 ]

@@ -10,10 +10,17 @@
     version guard: the txn claim is its only protection against a late
     retry, so the txn graph's TTL must cover the redelivery horizon (guide
     §24.2). requestDigest is computed by the caller as lower-case
-    hex SHA-256 over the tuple-encoded operation kind, target, expected
-    seq and sorted canonical N-Triples of the skolemized payload (guide
-    §15.2), and recorded on the txn claim so a confirmation can tell a
-    replay from a different request reusing the txn id.
+    hex SHA-256 over the tuple-encoded operation kind, target, the empty
+    string for the expected seq, and the sorted canonical N-Triples of the
+    events (guide §15.2), and recorded on the txn claim so a confirmation
+    can tell a replay from a different request reusing the txn id.
+    The events arrive in two request-time slots (formal-methods H2.6b, the
+    guide's batch of §10.1). The rows slot holds one row per event, as the
+    values of the event, its type, its position within the request and its
+    valid time, and the triples slot holds the events' domain triples. One
+    request steps the seq once and writes one receipt and one claim, and
+    an event's position is its epoch, the seq and its own opSeq. An empty
+    rows slot gives no solution and writes nothing.
     Note for template authors: never put a Mustache tag inside this
     comment block. Chevron's comment parser ends at the first closing
     double-brace it sees, which silently truncates the comment. }}
@@ -25,7 +32,8 @@ INSERT {
   GRAPH {{{metaGraphPrefix}}} { $stream pat:seq ?n1 ; pat:head ?rev }
   GRAPH {{{txnGraph}}}        { $txnId pat:rev ?rev ; pat:requestDigest $requestDigest }
   GRAPH ?eventGraph {
-      $event a $eventType ; pat:revision ?rev ; pat:opSeq $opSeq ; pat:occurredAt $occurredAt
+      ?event a ?eventType ; pat:revision ?rev ; pat:opSeq ?opSeq ; pat:occurredAt ?occurredAt .
+      {{{eventTriples}}}
   }
   GRAPH ?logGraph {
       ?rev a pat:Revision ; pat:target $stream ; pat:epoch $epoch ; pat:seq ?n1 ;
@@ -33,6 +41,7 @@ INSERT {
   }
 }
 WHERE {
+  VALUES (?event ?eventType ?opSeq ?occurredAt) { {{{eventRows}}} }
   GRAPH {{{metaGraphPrefix}}} { $stream pat:epoch $epoch ; pat:seq ?n }
   OPTIONAL { GRAPH {{{metaGraphPrefix}}} { $stream pat:head ?prev } }
   FILTER NOT EXISTS { GRAPH {{{metaGraphPrefix}}} { $stream pat:deleted true } }

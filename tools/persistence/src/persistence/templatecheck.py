@@ -81,6 +81,8 @@ OPTIONAL_INSERT_VARIABLES: dict[str, dict[str, str]] = {
 _SLOT_STAND_INS = {
     "payloadTriples": "<urn:x-check:s> <urn:x-check:p> <urn:x-check:o> .",
     "logGraphs": "<urn:x-check:log>",
+    "eventRows": '(<urn:x-check:event> <urn:x-check:type> "1"^^<http://www.w3.org/2001/XMLSchema#long> "2026-01-01T00:00:00Z"^^<http://www.w3.org/2001/XMLSchema#dateTime>)',
+    "eventTriples": "<urn:x-check:event> <urn:x-check:p> <urn:x-check:o> .",
 }
 
 _COMMENT = re.compile(r"\{\{!.*?\}\}", re.S)

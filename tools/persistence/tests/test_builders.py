@@ -185,9 +185,21 @@ LONG = lambda n: RdfLiteral(n, datatype=XSD.long)
 STREAM = URIRef("urn:stream:orders/1")
 APPEND = {
     "stream": STREAM, "epoch": LONG(3), "revBase": RdfLiteral("urn:rev:orders/1/e3/"), "txnId": URIRef("urn:txn:1"),
-    "requestDigest": RdfLiteral("ab" * 32), "event": URIRef("urn:event:1"), "eventType": URIRef("urn:type:Placed"),
-    "opSeq": LONG(1), "occurredAt": RdfLiteral("2026-10-12T10:00:00Z", datatype=XSD.dateTime),
+    "requestDigest": RdfLiteral("ab" * 32),
 }
+
+
+def event_row(event: str = "urn:event:1", event_type: str = "urn:type:Placed", op_seq: int = 1, at: str = "2026-10-12T10:00:00Z") -> str:
+    """One row of an append's `{{{eventRows}}}` slot, as a caller renders it (formal-methods H2.6b)."""
+    return f'(<{event}> <{event_type}> "{op_seq}"^^<{XSD.long}> "{at}"^^<{XSD.dateTime}>)'
+
+
+EVENT_SLOTS = ("{{{eventRows}}}", "{{{eventTriples}}}")
+
+
+def fill_events(text: str, rows: str | None = None, triples: str = "") -> str:
+    """The text of an append with its two request-time slots filled. Other operations have neither slot."""
+    return text.replace(EVENT_SLOTS[0], event_row() if rows is None else rows).replace(EVENT_SLOTS[1], triples)
 
 
 def _store(*, rows: int = 1, dataset_epoch: int | None = None) -> Dataset:
@@ -202,8 +214,9 @@ def _store(*, rows: int = 1, dataset_epoch: int | None = None) -> Dataset:
     return ds
 
 
-def _run(stem: str, ds: Dataset, bindings: dict, *, guards: bool | None = None) -> Dataset:
-    ds.update(render(build(stem, CONTEXT, guards=engines.guards(guards))), initBindings=bindings)
+def _run(stem: str, ds: Dataset, bindings: dict, *, guards: bool | None = None, rows: str | None = None, triples: str = "") -> Dataset:
+    text = fill_events(render(build(stem, CONTEXT, guards=engines.guards(guards))), rows, triples)
+    ds.update(text, initBindings=bindings)
     return ds
 
 
@@ -243,8 +256,8 @@ def test_h2_2_t9_a_retry_with_the_same_transaction_changes_nothing():
 @engines.each_engine_and_guards
 def test_h2_2_t10_a_second_event_chains_to_the_first():
     ds = _run("append-event", _store(), APPEND)
-    second = {**APPEND, "txnId": URIRef("urn:txn:2"), "event": URIRef("urn:event:2"), "opSeq": LONG(2)}
-    _run("append-event", ds, second)
+    second = {**APPEND, "txnId": URIRef("urn:txn:2")}
+    _run("append-event", ds, second, rows=event_row("urn:event:2", op_seq=2))
     assert (str(STREAM), "seq", "2") in _meta(ds)
     log = next(g for g in ds.graphs() if str(g.identifier).startswith(LOG))
     assert (URIRef("urn:rev:orders/1/e3/0000000000000000002"), URIRef(PAT + "prevRev"), URIRef("urn:rev:orders/1/e3/0000000000000000001")) in log
@@ -331,7 +344,7 @@ def test_h2_2_t18_an_overriding_template_library_is_still_rendered_by_mustache(t
     for template in _template_dir_default().glob("*.mustache"):
         (tmp_path / template.name).write_text(template.read_text(encoding="utf-8"), encoding="utf-8")
     text = next(iter(_instantiate(template_dir=tmp_path).values()))["append"]
-    assert "ISIRI" not in text and "{{" not in text.replace("{{{payloadTriples}}}", "")
+    assert "ISIRI" not in text and "{{" not in text.replace("{{{payloadTriples}}}", "").replace("{{{eventRows}}}", "").replace("{{{eventTriples}}}", "")
 
 
 def test_h2_2_t19_the_command_line_flag_leaves_the_guards_out(tmp_path):

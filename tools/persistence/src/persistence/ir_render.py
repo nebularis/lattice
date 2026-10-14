@@ -26,7 +26,7 @@ from rdflib.namespace import XSD
 from .ir import (
     AccessMode, Binding, Bind, Compare, Const, Expr, Filter, Func, Graph, GraphBlock, GraphRole, Group, IrError, Kind,
     Not, NotExists, Op, Operation, Optional_, Param, ParameterGuard, ParamRef, Path, PayloadSlot, Projected, RdfType,
-    RegistrySlot,
+    RegistrySlot, RowValues,
     SLOT_KINDS, Select, SubSelect, TermGuard, Triple, Union_, ValueGuard, Values, Var,
 )
 from .namespaces import PAT
@@ -378,6 +378,16 @@ class _Checker:
             else:
                 scope.possible.add(el.var.name)
             return names | {el.var.name}
+        if isinstance(el, RowValues):
+            if not el.vars or not all(isinstance(v, Var) for v in el.vars):
+                raise IrError("InvalidName", f"{self.op.id}: VALUES rows need one or more Vars")
+            for v in el.vars:
+                self._var(v)
+            if len({v.name for v in el.vars}) != len(el.vars):
+                raise IrError("InvalidName", f"{self.op.id}: VALUES rows name a variable twice")
+            self._slot(el.slot.param, Kind.ROWS)
+            scope.definite |= {v.name for v in el.vars}
+            return {v.name for v in el.vars}
         if isinstance(el, Values):
             if not isinstance(el.var, Var):
                 raise IrError("InvalidName", f"{self.op.id}: VALUES needs a Var")
@@ -475,6 +485,8 @@ class _Checker:
                 names.add(el.var.name)
             elif isinstance(el, Values):
                 names.add(el.var.name)
+            elif isinstance(el, RowValues):
+                names |= {v.name for v in el.vars}
         return names
 
     def _slot(self, name: str, kind: Kind) -> None:
@@ -950,6 +962,9 @@ class _Out:
             block = self.braced("", self.select_lines(el.select, self.statements(el.where.elements)))
             block[0] = block[0].lstrip()
             return block
+        if isinstance(el, RowValues):
+            names = " ".join(f"?{v.name}" for v in el.vars)
+            return ["VALUES (" + names + ") { {{{" + el.slot.param + "}}} }"]
         if isinstance(el, Union_):
             out: list[str] = []
             for i, g in enumerate(el.groups):
