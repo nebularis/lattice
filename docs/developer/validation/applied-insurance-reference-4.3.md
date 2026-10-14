@@ -88,16 +88,22 @@ deferred (amendment of 2026-10-14), so the heavy suites did not run. Cheap ad ho
 
 ## Results
 
-Written on machine R at verification.
+| ID | Result |
+|---|---|
+| AIR43-03 | `dependencies.ttl` with `core.ttl`, and `units.ttl`, against every exposure shape with pySHACL: conform (run by hand) |
+| AIR43-04, 05 | `exposure_units` run by hand over `units.ttl`: eight units and an empty report. The currency case is not run |
+| AIR43-06 | the M3 profile run by hand with this branch's SPARQL backend: seven of eight units decide as stated, site D's flood unit reads Undetermined until CCS HQ-6a.2 merges. No unit triple in the source graph |
+| AIR43-07, 08 | one-change probes of the exceedance and comparability shapes, run by hand: reported |
+| AIR43-01, 02, 09 | not built, in AIR-deferred-testing |
 
-- **Open Results Data names, checked 2026-10-14** against `ORD_Definitions.md`,
-  `Schema/ORD_Perspectives.csv` and the concepts page of `OasisLMF/ODS_OpenResultsData`:
-  - The metric kinds match ORD's EPType codes (OEP 1, OEP TVaR 2, AEP 3, AEP TVaR 4), and the
-    average annual loss is ORD's average loss table. The notes now cite the codes.
-  - The third perspective was wrong, from the brief: ORD's is RI, net of all reinsurance
-    (perspective 2), and ORD's "Reinsurance Loss" (perspective 10) is the reinsurers' loss.
-    `aeo-voc:ReinsuranceLoss` is renamed `aeo-voc:NetOfReinsuranceLoss`, with the note saying so.
-    GUL and IL now cite perspectives 0 and 1 (Ground-up, Gross).
-  - ORD has four calculation methods (EPCalc 1 to 4), so `aeo-voc:MeanDamage` and
-    `aeo-voc:SampleMean` are added beside `FullUncertainty` and `PerSampleMean`, whose
-    definitions now follow ORD's wording.
+`check:full-sweep` against `main` on 2026-10-14, then `check:ontology-catalog` again after one fix:
+
+| Check | Result |
+|---|---|
+| ontology versions, release register, import guard, python root, deny terms | pass |
+| `check:vocabulary` | 16 passed |
+| `check:mork-compilers` | pass |
+| `check:reference-eligibility` | 58 passed |
+| `check:formal-freshness`, `build:mtp`, `check:mtp`, `check:agent-guidance` | pass |
+| `check:persistence` | 2549 passed, 207 skipped, 1 xfailed |
+| `check:ontology-catalog` | first run 772 passed and 1 failed (`test_applied_shared_contracts.py` pinned nine `insurance/common` contracts, AIR-4.4 adds a tenth, test restated in `5492e39`). Rerun: 773 passed, catalog consistent with 2 known defects in MORK example files |

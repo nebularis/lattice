@@ -105,4 +105,22 @@ deferred (amendment of 2026-10-14), so the heavy suites did not run. Cheap ad ho
 
 ## Results
 
-Written on machine R at verification.
+| ID | Result |
+|---|---|
+| AIR44-01 | the importers of `insurance/common` name 0.6.0, and `test_applied_shared_contracts.py`, `test_peril_vocabulary.py` and `test_exposure_ontology.py` pass with their pins moved |
+| AIR44-03 | `losses.ttl` with `core.ttl` against every exposure shape with pySHACL: conforms (run by hand) |
+| AIR44-04 | `effective_characteristics` over `losses.ttl`: one defaulted characteristic, none for the recorded links, output equal to the file's last section (run by hand) |
+| AIR44-06 to 11 | one-change probes, run by hand: each reported the expected shape |
+| AIR44-02, 05, 12, 13 | not built, in AIR-deferred-testing |
+
+`check:full-sweep` against `main` on 2026-10-14, then `check:ontology-catalog` again after one fix:
+
+| Check | Result |
+|---|---|
+| ontology versions, release register, import guard, python root, deny terms | pass |
+| `check:vocabulary` | 16 passed |
+| `check:mork-compilers` | pass |
+| `check:reference-eligibility` | 58 passed |
+| `check:formal-freshness`, `build:mtp`, `check:mtp`, `check:agent-guidance` | pass |
+| `check:persistence` | 2549 passed, 207 skipped, 1 xfailed |
+| `check:ontology-catalog` | first run 772 passed and 1 failed (`test_applied_shared_contracts.py` pinned nine `insurance/common` contracts, AIR-4.4 adds a tenth, test restated in `5492e39`). Rerun: 773 passed, catalog consistent with 2 known defects in MORK example files |

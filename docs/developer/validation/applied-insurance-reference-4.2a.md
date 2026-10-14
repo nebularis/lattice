@@ -66,4 +66,21 @@ restated one.
 
 ## Results
 
-Written on machine R at verification.
+| ID | Result |
+|---|---|
+| AIR42a-02 | `versions.ttl` against every exposure shape with pySHACL: conforms (run by hand) |
+| AIR42a-03 | AIR41-09 restated as "sharing is accepted" in `test_exposure_ontology.py`, inside `check:ontology-catalog`: pass |
+| AIR42a-05 | literate extraction: the generated files match the README |
+| AIR42a-01, 04 | not built, in AIR-deferred-testing |
+
+`check:full-sweep` against `main` on 2026-10-14, then `check:ontology-catalog` again after one fix:
+
+| Check | Result |
+|---|---|
+| ontology versions, release register, import guard, python root, deny terms | pass |
+| `check:vocabulary` | 16 passed |
+| `check:mork-compilers` | pass |
+| `check:reference-eligibility` | 58 passed |
+| `check:formal-freshness`, `build:mtp`, `check:mtp`, `check:agent-guidance` | pass |
+| `check:persistence` | 2549 passed, 207 skipped, 1 xfailed |
+| `check:ontology-catalog` | first run 772 passed and 1 failed (`test_applied_shared_contracts.py` pinned nine `insurance/common` contracts, AIR-4.4 adds a tenth, test restated in `5492e39`). Rerun: 773 passed, catalog consistent with 2 known defects in MORK example files |
