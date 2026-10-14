@@ -1,0 +1,394 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix aeo:     <https://www.nebularis.org/neuro-semantic/insurance/exposure#> .
+@prefix aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#> .
+@prefix voc:     <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix pty:     <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@base <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab> .
+
+<https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab>
+    rdf:type owl:Ontology ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/exposure-vocab/0.1.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/insurance/exposure/0.1.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
+                <https://www.nebularis.org/neuro-semantic/insurance/common-vocab/0.5.0> .
+
+#################################################################
+#    Reference schemes (AIR-4.1), each the unscoped fallback
+#    (ADR-A99 decision 1).
+#################################################################
+
+aeo-voc:GeoPrecisionScheme a voc:ConceptScheme ;
+    fnd:hasIdentity aeo-voc:GeoPrecisionScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference geographic precision scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+aeo-voc:ControlKindScheme a voc:ConceptScheme ;
+    fnd:hasIdentity aeo-voc:ControlKindScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference control kind scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+aeo-voc:InterestKindScheme a voc:ConceptScheme ;
+    fnd:hasIdentity aeo-voc:InterestKindScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference interest kind scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+aeo-voc:ValueTypeScheme a voc:ConceptScheme ;
+    fnd:hasIdentity aeo-voc:ValueTypeScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference value type scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+aeo-voc:ValuationBasisScheme a voc:ConceptScheme ;
+    fnd:hasIdentity aeo-voc:ValuationBasisScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference valuation basis scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+aeo-voc:ValuationMethodScheme a voc:ConceptScheme ;
+    fnd:hasIdentity aeo-voc:ValuationMethodScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference valuation method scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+aeo-voc:LegalFormScheme a voc:ConceptScheme ;
+    fnd:hasIdentity aeo-voc:LegalFormScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference legal form scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+aeo-voc:ProgrammeRoleScheme a voc:ConceptScheme ;
+    fnd:hasIdentity aeo-voc:ProgrammeRoleScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference programme role scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+#################################################################
+#    Reference bindings: one voc:SchemeContract per concept-valued
+#    property of this slice, bound to its reference scheme as the
+#    unscoped fallback (ADR-A99 decision 1), declared as
+#    insurance/common's contracts are.
+#################################################################
+
+aeo-voc:GeoPrecisionContract a voc:SchemeContract ;
+    fnd:hasIdentity aeo-voc:GeoPrecisionContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Geographic precision scheme contract"@en ;
+    voc:constrainsProperty aeo:geoPrecision ;
+    voc:boundScheme aeo-voc:GeoPrecisionScheme .
+
+aeo-voc:ControlKindContract a voc:SchemeContract ;
+    fnd:hasIdentity aeo-voc:ControlKindContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Control kind scheme contract"@en ;
+    voc:constrainsProperty aeo:controlKind ;
+    voc:boundScheme aeo-voc:ControlKindScheme .
+
+aeo-voc:InterestKindContract a voc:SchemeContract ;
+    fnd:hasIdentity aeo-voc:InterestKindContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Interest kind scheme contract"@en ;
+    voc:constrainsProperty aeo:interestKind ;
+    voc:boundScheme aeo-voc:InterestKindScheme .
+
+aeo-voc:ValueTypeContract a voc:SchemeContract ;
+    fnd:hasIdentity aeo-voc:ValueTypeContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Value type scheme contract"@en ;
+    voc:constrainsProperty aeo:valueType ;
+    voc:boundScheme aeo-voc:ValueTypeScheme .
+
+aeo-voc:ValuationBasisContract a voc:SchemeContract ;
+    fnd:hasIdentity aeo-voc:ValuationBasisContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Valuation basis scheme contract"@en ;
+    voc:constrainsProperty aeo:valuationBasis ;
+    voc:boundScheme aeo-voc:ValuationBasisScheme .
+
+aeo-voc:ValuationMethodContract a voc:SchemeContract ;
+    fnd:hasIdentity aeo-voc:ValuationMethodContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Valuation method scheme contract"@en ;
+    voc:constrainsProperty aeo:valuationMethod ;
+    voc:boundScheme aeo-voc:ValuationMethodScheme .
+
+aeo-voc:LegalFormContract a voc:SchemeContract ;
+    fnd:hasIdentity aeo-voc:LegalFormContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Legal form scheme contract"@en ;
+    voc:constrainsProperty aeo:legalForm ;
+    voc:boundScheme aeo-voc:LegalFormScheme .
+
+#################################################################
+#    Geographic precision
+#################################################################
+
+aeo-voc:Rooftop a skos:Concept ; skos:inScheme aeo-voc:GeoPrecisionScheme ; skos:topConceptOf aeo-voc:GeoPrecisionScheme ;
+    skos:prefLabel "Rooftop"@en ; skos:definition "Located to the exact building footprint."@en ;
+    skos:note "No single published standard names this axis. Follows common catastrophe-modelling geocoding precision levels."@en .
+aeo-voc:Parcel a skos:Concept ; skos:inScheme aeo-voc:GeoPrecisionScheme ; skos:topConceptOf aeo-voc:GeoPrecisionScheme ;
+    skos:prefLabel "Parcel"@en ; skos:definition "Located to the land parcel a building sits on."@en ;
+    skos:note "Common catastrophe-modelling geocoding precision usage."@en .
+aeo-voc:Street a skos:Concept ; skos:inScheme aeo-voc:GeoPrecisionScheme ; skos:topConceptOf aeo-voc:GeoPrecisionScheme ;
+    skos:prefLabel "Street"@en ; skos:definition "Located to a point along a street, interpolated from an address range."@en ;
+    skos:note "Common catastrophe-modelling geocoding precision usage."@en .
+aeo-voc:Postcode a skos:Concept ; skos:inScheme aeo-voc:GeoPrecisionScheme ; skos:topConceptOf aeo-voc:GeoPrecisionScheme ;
+    skos:prefLabel "Postcode"@en ; skos:definition "Located to the centroid of a postal code area."@en ;
+    skos:note "Common catastrophe-modelling geocoding precision usage."@en .
+aeo-voc:City a skos:Concept ; skos:inScheme aeo-voc:GeoPrecisionScheme ; skos:topConceptOf aeo-voc:GeoPrecisionScheme ;
+    skos:prefLabel "City"@en ; skos:definition "Located to the centroid of a city or town."@en ;
+    skos:note "Common catastrophe-modelling geocoding precision usage."@en .
+aeo-voc:ZoneCentroid a skos:Concept ; skos:inScheme aeo-voc:GeoPrecisionScheme ; skos:topConceptOf aeo-voc:GeoPrecisionScheme ;
+    skos:prefLabel "Zone centroid"@en ; skos:definition "Located to the centroid of the coarsest hazard or administrative zone known."@en ;
+    skos:note "Common catastrophe-modelling geocoding precision usage, the coarsest level."@en .
+
+aeo-voc:GeoPrecisionScheme skos:hasTopConcept aeo-voc:Rooftop , aeo-voc:Parcel , aeo-voc:Street ,
+    aeo-voc:Postcode , aeo-voc:City , aeo-voc:ZoneCentroid .
+
+#################################################################
+#    Control kind
+#################################################################
+
+aeo-voc:Subsidiary a skos:Concept ; skos:inScheme aeo-voc:ControlKindScheme ; skos:topConceptOf aeo-voc:ControlKindScheme ;
+    skos:prefLabel "Subsidiary"@en ; skos:definition "Controlled by majority ownership or voting power."@en ;
+    skos:note "Common corporate usage."@en .
+aeo-voc:Affiliate a skos:Concept ; skos:inScheme aeo-voc:ControlKindScheme ; skos:topConceptOf aeo-voc:ControlKindScheme ;
+    skos:prefLabel "Affiliate"@en ; skos:definition "Related by common control or significant influence, without majority ownership."@en ;
+    skos:note "Common corporate usage."@en .
+aeo-voc:JointVenture a skos:Concept ; skos:inScheme aeo-voc:ControlKindScheme ; skos:topConceptOf aeo-voc:ControlKindScheme ;
+    skos:prefLabel "Joint venture"@en ; skos:definition "Jointly controlled by two or more entities under a shared arrangement."@en ;
+    skos:note "Common corporate usage."@en .
+aeo-voc:Branch a skos:Concept ; skos:inScheme aeo-voc:ControlKindScheme ; skos:topConceptOf aeo-voc:ControlKindScheme ;
+    skos:prefLabel "Branch"@en ; skos:definition "An establishment of an entity, without its own separate legal personality."@en ;
+    skos:note "Common corporate usage."@en .
+aeo-voc:Franchise a skos:Concept ; skos:inScheme aeo-voc:ControlKindScheme ; skos:topConceptOf aeo-voc:ControlKindScheme ;
+    skos:prefLabel "Franchise"@en ; skos:definition "Operated under licence from another entity's brand and system, without ownership control."@en ;
+    skos:note "Common commercial usage."@en .
+
+aeo-voc:ControlKindScheme skos:hasTopConcept aeo-voc:Subsidiary , aeo-voc:Affiliate , aeo-voc:JointVenture ,
+    aeo-voc:Branch , aeo-voc:Franchise .
+
+#################################################################
+#    Interest kind
+#################################################################
+
+aeo-voc:Owner a skos:Concept ; skos:inScheme aeo-voc:InterestKindScheme ; skos:topConceptOf aeo-voc:InterestKindScheme ;
+    skos:prefLabel "Owner"@en ; skos:definition "Holds title to the asset."@en ;
+    skos:note "Common property market usage."@en .
+aeo-voc:Lessee a skos:Concept ; skos:inScheme aeo-voc:InterestKindScheme ; skos:topConceptOf aeo-voc:InterestKindScheme ;
+    skos:prefLabel "Lessee"@en ; skos:definition "Holds a leasehold interest in the asset."@en ;
+    skos:note "Common property market usage."@en .
+aeo-voc:Lessor a skos:Concept ; skos:inScheme aeo-voc:InterestKindScheme ; skos:topConceptOf aeo-voc:InterestKindScheme ;
+    skos:prefLabel "Lessor"@en ; skos:definition "Grants a leasehold interest in the asset to another."@en ;
+    skos:note "Common property market usage. Distinct from the programme role aeo-voc:LessorRole, which names a claims programme role, not this interest."@en .
+aeo-voc:SecuredLender a skos:Concept ; skos:inScheme aeo-voc:InterestKindScheme ; skos:topConceptOf aeo-voc:InterestKindScheme ;
+    skos:prefLabel "Secured lender"@en ; skos:definition "Holds a security interest in the asset as collateral for a loan."@en ;
+    skos:note "Common finance market usage. Carries what a lender covenant turns on."@en .
+aeo-voc:Bailee a skos:Concept ; skos:inScheme aeo-voc:InterestKindScheme ; skos:topConceptOf aeo-voc:InterestKindScheme ;
+    skos:prefLabel "Bailee"@en ; skos:definition "Holds lawful possession of another's asset without owning it, with a duty of care."@en ;
+    skos:note "Follows the general legal meaning of bailment. Carries what 'property of others in care, custody or control' means, without a new asset class."@en .
+aeo-voc:Beneficiary a skos:Concept ; skos:inScheme aeo-voc:InterestKindScheme ; skos:topConceptOf aeo-voc:InterestKindScheme ;
+    skos:prefLabel "Beneficiary"@en ; skos:definition "Benefits from the asset without holding title, possession or a security interest in it."@en ;
+    skos:note "Common usage for a residual interest not otherwise named."@en .
+
+aeo-voc:InterestKindScheme skos:hasTopConcept aeo-voc:Owner , aeo-voc:Lessee , aeo-voc:Lessor ,
+    aeo-voc:SecuredLender , aeo-voc:Bailee , aeo-voc:Beneficiary .
+
+#################################################################
+#    Value type
+#################################################################
+
+aeo-voc:Building a skos:Concept ; skos:inScheme aeo-voc:ValueTypeScheme ; skos:topConceptOf aeo-voc:ValueTypeScheme ;
+    skos:prefLabel "Building"@en ; skos:definition "The value of a building structure."@en ;
+    skos:note "Corresponds to the Open Exposure Data (OED) location field BuildingTIV."@en .
+aeo-voc:Contents a skos:Concept ; skos:inScheme aeo-voc:ValueTypeScheme ; skos:topConceptOf aeo-voc:ValueTypeScheme ;
+    skos:prefLabel "Contents"@en ; skos:definition "The value of movable contents within a building or location."@en ;
+    skos:note "Corresponds to the OED location field ContentsTIV."@en .
+aeo-voc:Stock a skos:Concept ; skos:inScheme aeo-voc:ValueTypeScheme ; skos:topConceptOf aeo-voc:ValueTypeScheme ;
+    skos:prefLabel "Stock"@en ; skos:definition "The value of goods held for sale or use in production."@en ;
+    skos:note "OED has no dedicated stock field: it falls within the coarser OtherTIV. This vocabulary gives it its own value type."@en .
+aeo-voc:Machinery a skos:Concept ; skos:inScheme aeo-voc:ValueTypeScheme ; skos:topConceptOf aeo-voc:ValueTypeScheme ;
+    skos:prefLabel "Machinery"@en ; skos:definition "The value of plant and machinery."@en ;
+    skos:note "OED has no dedicated machinery field: it falls within the coarser OtherTIV. This vocabulary gives it its own value type."@en .
+aeo-voc:GrossProfit a skos:Concept ; skos:inScheme aeo-voc:ValueTypeScheme ; skos:topConceptOf aeo-voc:ValueTypeScheme ;
+    skos:prefLabel "Gross profit"@en ; skos:definition "The business interruption value measured as gross profit."@en ;
+    skos:note "Corresponds to the OED location field BITIV (business interruption), which does not itself distinguish gross profit from revenue or rental."@en .
+aeo-voc:Revenue a skos:Concept ; skos:inScheme aeo-voc:ValueTypeScheme ; skos:topConceptOf aeo-voc:ValueTypeScheme ;
+    skos:prefLabel "Revenue"@en ; skos:definition "The business interruption value measured as revenue."@en ;
+    skos:note "Corresponds to the OED location field BITIV, narrowed to the revenue basis."@en .
+aeo-voc:Rental a skos:Concept ; skos:inScheme aeo-voc:ValueTypeScheme ; skos:topConceptOf aeo-voc:ValueTypeScheme ;
+    skos:prefLabel "Rental"@en ; skos:definition "The business interruption value measured as rental income."@en ;
+    skos:note "Corresponds to the OED location field BITIV, narrowed to the rental basis."@en .
+aeo-voc:ExtraExpense a skos:Concept ; skos:inScheme aeo-voc:ValueTypeScheme ; skos:topConceptOf aeo-voc:ValueTypeScheme ;
+    skos:prefLabel "Extra expense"@en ; skos:definition "The value of cost incurred to avoid or reduce a loss that would otherwise follow an interruption."@en ;
+    skos:note "Corresponds to the OED location field BITIV, narrowed to the extra expense basis."@en .
+aeo-voc:OtherValue a skos:Concept ; skos:inScheme aeo-voc:ValueTypeScheme ; skos:topConceptOf aeo-voc:ValueTypeScheme ;
+    skos:prefLabel "Other value"@en ; skos:definition "A value not otherwise classified by this scheme."@en ;
+    skos:note "Corresponds to the OED location field OtherTIV."@en .
+
+aeo-voc:ValueTypeScheme skos:hasTopConcept aeo-voc:Building , aeo-voc:Contents , aeo-voc:Stock , aeo-voc:Machinery ,
+    aeo-voc:GrossProfit , aeo-voc:Revenue , aeo-voc:Rental , aeo-voc:ExtraExpense , aeo-voc:OtherValue .
+
+#################################################################
+#    Valuation basis
+#################################################################
+
+aeo-voc:ReplacementCost a skos:Concept ; skos:inScheme aeo-voc:ValuationBasisScheme ; skos:topConceptOf aeo-voc:ValuationBasisScheme ;
+    skos:prefLabel "Replacement cost"@en ; skos:definition "The cost of replacing the asset new, without deduction for depreciation."@en ;
+    skos:note "Common property market usage."@en .
+aeo-voc:ActualCashValue a skos:Concept ; skos:inScheme aeo-voc:ValuationBasisScheme ; skos:topConceptOf aeo-voc:ValuationBasisScheme ;
+    skos:prefLabel "Actual cash value"@en ; skos:definition "Replacement cost less deduction for depreciation and wear."@en ;
+    skos:note "Common property market usage."@en .
+aeo-voc:AgreedValue a skos:Concept ; skos:inScheme aeo-voc:ValuationBasisScheme ; skos:topConceptOf aeo-voc:ValuationBasisScheme ;
+    skos:prefLabel "Agreed value"@en ; skos:definition "A value fixed by agreement between the parties, not subject to later valuation dispute."@en ;
+    skos:note "Common property market usage."@en .
+aeo-voc:MarketValue a skos:Concept ; skos:inScheme aeo-voc:ValuationBasisScheme ; skos:topConceptOf aeo-voc:ValuationBasisScheme ;
+    skos:prefLabel "Market value"@en ; skos:definition "The price the asset would command in an open market sale."@en ;
+    skos:note "Common property market usage."@en .
+aeo-voc:FunctionalReplacement a skos:Concept ; skos:inScheme aeo-voc:ValuationBasisScheme ; skos:topConceptOf aeo-voc:ValuationBasisScheme ;
+    skos:prefLabel "Functional replacement"@en ; skos:definition "The cost of replacing the asset's function with a modern equivalent, not its exact original form."@en ;
+    skos:note "Common property market usage for an asset whose like-for-like replacement is no longer practical."@en .
+aeo-voc:Reinstatement a skos:Concept ; skos:inScheme aeo-voc:ValuationBasisScheme ; skos:topConceptOf aeo-voc:ValuationBasisScheme ;
+    skos:prefLabel "Reinstatement"@en ; skos:definition "The cost of restoring the asset to its condition immediately before the loss."@en ;
+    skos:note "Common property market usage."@en .
+
+aeo-voc:ValuationBasisScheme skos:hasTopConcept aeo-voc:ReplacementCost , aeo-voc:ActualCashValue , aeo-voc:AgreedValue ,
+    aeo-voc:MarketValue , aeo-voc:FunctionalReplacement , aeo-voc:Reinstatement .
+
+#################################################################
+#    Valuation method
+#################################################################
+
+aeo-voc:Declared a skos:Concept ; skos:inScheme aeo-voc:ValuationMethodScheme ; skos:topConceptOf aeo-voc:ValuationMethodScheme ;
+    skos:prefLabel "Declared"@en ; skos:definition "Stated by the insured, without independent verification."@en ;
+    skos:note "Common property market usage."@en .
+aeo-voc:Appraised a skos:Concept ; skos:inScheme aeo-voc:ValuationMethodScheme ; skos:topConceptOf aeo-voc:ValuationMethodScheme ;
+    skos:prefLabel "Appraised"@en ; skos:definition "Determined by an independent appraisal or survey."@en ;
+    skos:note "Common property market usage."@en .
+aeo-voc:Indexed a skos:Concept ; skos:inScheme aeo-voc:ValuationMethodScheme ; skos:topConceptOf aeo-voc:ValuationMethodScheme ;
+    skos:prefLabel "Indexed"@en ; skos:definition "Derived from a prior value adjusted by a published index."@en ;
+    skos:note "Common property market usage."@en .
+aeo-voc:Modelled a skos:Concept ; skos:inScheme aeo-voc:ValuationMethodScheme ; skos:topConceptOf aeo-voc:ValuationMethodScheme ;
+    skos:prefLabel "Modelled"@en ; skos:definition "Estimated by a statistical or engineering model from other known attributes."@en ;
+    skos:note "Common catastrophe-modelling usage for exposure enrichment."@en .
+aeo-voc:Audited a skos:Concept ; skos:inScheme aeo-voc:ValuationMethodScheme ; skos:topConceptOf aeo-voc:ValuationMethodScheme ;
+    skos:prefLabel "Audited"@en ; skos:definition "Verified by an independent audit, such as a premium audit."@en ;
+    skos:note "Common property and casualty market usage."@en .
+
+aeo-voc:ValuationMethodScheme skos:hasTopConcept aeo-voc:Declared , aeo-voc:Appraised , aeo-voc:Indexed ,
+    aeo-voc:Modelled , aeo-voc:Audited .
+
+#################################################################
+#    Legal form (ISO 20275 generic kinds)
+#################################################################
+
+aeo-voc:Corporation a skos:Concept ; skos:inScheme aeo-voc:LegalFormScheme ; skos:topConceptOf aeo-voc:LegalFormScheme ;
+    skos:prefLabel "Corporation"@en ; skos:definition "A body corporate with legal personality separate from its members."@en ;
+    skos:note "A generic kind. Follows ISO 20275 (Entity Legal Forms), whose own codes are per jurisdiction and run to thousands: a deployment binds an edition by territory, mapped to these kinds by skos:broadMatch."@en ;
+    rdfs:seeAlso <https://www.gleif.org/en/about-lei/code-lists/iso-20275-entity-legal-forms-code-list> .
+aeo-voc:LimitedLiabilityCompany a skos:Concept ; skos:inScheme aeo-voc:LegalFormScheme ; skos:topConceptOf aeo-voc:LegalFormScheme ;
+    skos:prefLabel "Limited liability company"@en ; skos:definition "A company whose members' liability is limited to their investment, combining features of a corporation and a partnership."@en ;
+    skos:note "A generic kind. Follows ISO 20275, per the Corporation entry's note."@en .
+aeo-voc:Partnership a skos:Concept ; skos:inScheme aeo-voc:LegalFormScheme ; skos:topConceptOf aeo-voc:LegalFormScheme ;
+    skos:prefLabel "Partnership"@en ; skos:definition "An association of two or more persons carrying on a business together, without limited liability."@en ;
+    skos:note "A generic kind. Follows ISO 20275, per the Corporation entry's note."@en .
+aeo-voc:LimitedPartnership a skos:Concept ; skos:inScheme aeo-voc:LegalFormScheme ; skos:topConceptOf aeo-voc:LegalFormScheme ;
+    skos:prefLabel "Limited partnership"@en ; skos:definition "A partnership with at least one partner whose liability is limited to their contribution."@en ;
+    skos:note "A generic kind. Follows ISO 20275, per the Corporation entry's note."@en .
+aeo-voc:SoleProprietorship a skos:Concept ; skos:inScheme aeo-voc:LegalFormScheme ; skos:topConceptOf aeo-voc:LegalFormScheme ;
+    skos:prefLabel "Sole proprietorship"@en ; skos:definition "A business owned and run by one natural person, with no separate legal personality."@en ;
+    skos:note "A generic kind. Follows ISO 20275, per the Corporation entry's note."@en .
+aeo-voc:Trust a skos:Concept ; skos:inScheme aeo-voc:LegalFormScheme ; skos:topConceptOf aeo-voc:LegalFormScheme ;
+    skos:prefLabel "Trust"@en ; skos:definition "An arrangement in which a trustee holds property for the benefit of others."@en ;
+    skos:note "A generic kind. Follows ISO 20275, per the Corporation entry's note."@en .
+aeo-voc:Mutual a skos:Concept ; skos:inScheme aeo-voc:LegalFormScheme ; skos:topConceptOf aeo-voc:LegalFormScheme ;
+    skos:prefLabel "Mutual"@en ; skos:definition "An organisation owned by its members, who are also its customers or policyholders."@en ;
+    skos:note "A generic kind. Follows ISO 20275, per the Corporation entry's note."@en .
+aeo-voc:Cooperative a skos:Concept ; skos:inScheme aeo-voc:LegalFormScheme ; skos:topConceptOf aeo-voc:LegalFormScheme ;
+    skos:prefLabel "Cooperative"@en ; skos:definition "An organisation owned and democratically controlled by its members, for their mutual benefit."@en ;
+    skos:note "A generic kind. Follows ISO 20275, per the Corporation entry's note."@en .
+aeo-voc:PublicFoundation a skos:Concept ; skos:inScheme aeo-voc:LegalFormScheme ; skos:topConceptOf aeo-voc:LegalFormScheme ;
+    skos:prefLabel "Foundation"@en ; skos:definition "A body established to hold and apply assets for a stated purpose, without members or shareholders."@en ;
+    skos:note "A generic kind. Follows ISO 20275, per the Corporation entry's note. Named PublicFoundation to avoid a name clash with Vocabulary's own voc:ConceptScheme usage elsewhere in this README's prose."@en .
+aeo-voc:PublicBody a skos:Concept ; skos:inScheme aeo-voc:LegalFormScheme ; skos:topConceptOf aeo-voc:LegalFormScheme ;
+    skos:prefLabel "Public body"@en ; skos:definition "A body established by or under public law to carry out a public function."@en ;
+    skos:note "A generic kind. Follows ISO 20275, per the Corporation entry's note."@en .
+aeo-voc:UnincorporatedAssociation a skos:Concept ; skos:inScheme aeo-voc:LegalFormScheme ; skos:topConceptOf aeo-voc:LegalFormScheme ;
+    skos:prefLabel "Unincorporated association"@en ; skos:definition "A group of persons acting together for a common purpose, without separate legal personality."@en ;
+    skos:note "A generic kind. Follows ISO 20275, per the Corporation entry's note."@en .
+
+aeo-voc:LegalFormScheme skos:hasTopConcept aeo-voc:Corporation , aeo-voc:LimitedLiabilityCompany , aeo-voc:Partnership ,
+    aeo-voc:LimitedPartnership , aeo-voc:SoleProprietorship , aeo-voc:Trust , aeo-voc:Mutual , aeo-voc:Cooperative ,
+    aeo-voc:PublicFoundation , aeo-voc:PublicBody , aeo-voc:UnincorporatedAssociation .
+
+#################################################################
+#    Programme roles (pty:Role individuals, declared as icm-voc:Claimant is)
+#################################################################
+
+aeo-voc:NamedInsured a owl:NamedIndividual , pty:Role ;
+    rdfs:label "Named insured"@en ;
+    rdfs:comment "A party named in the programme as an insured." ;
+    skos:note "Common property and casualty market usage."@en ;
+    fnd:utility "Type a pty:RoleOccupancy with this role for a named insured."@en .
+aeo-voc:FirstNamedInsured a owl:NamedIndividual , pty:Role ;
+    rdfs:label "First named insured"@en ;
+    rdfs:comment "The named insured the policy designates first, typically for notice and premium purposes." ;
+    skos:note "Common property and casualty market usage."@en ;
+    fnd:utility "Type a pty:RoleOccupancy with this role for the first named insured."@en .
+aeo-voc:AdditionalInsured a owl:NamedIndividual , pty:Role ;
+    rdfs:label "Additional insured"@en ;
+    rdfs:comment "A party added as an insured by endorsement, typically at a counterparty's request." ;
+    skos:note "Common liability market usage. The additional-insured variants by ISO endorsement (CG 20 10, CG 20 37, CG 20 38) are conferred by the contract (Phase 5), not this role alone."@en ;
+    fnd:utility "Type a pty:RoleOccupancy with this role for an additional insured."@en .
+aeo-voc:LossPayee a owl:NamedIndividual , pty:Role ;
+    rdfs:label "Loss payee"@en ;
+    rdfs:comment "A party named to receive payment of a loss, without the broader rights of a mortgagee." ;
+    skos:note "Common property market usage."@en ;
+    fnd:utility "Type a pty:RoleOccupancy with this role for a simple loss payee."@en .
+aeo-voc:LendersLossPayee a owl:NamedIndividual , pty:Role ;
+    skos:broader aeo-voc:LossPayee ;
+    rdfs:label "Lender's loss payee"@en ;
+    rdfs:comment "A lender named to receive payment of a loss, with rights a simple loss payee lacks." ;
+    skos:note "Narrower than aeo-voc:LossPayee. Follows the ISO commercial property loss payable provisions endorsement (CP 12 18), whose lender's loss payable clause gives a lender rights a simple loss payee lacks, and the London market's practice of noting a lender's interest with a loss payee clause."@en ;
+    fnd:utility "Type a pty:RoleOccupancy with this role for a lender's loss payee."@en .
+aeo-voc:Mortgagee a owl:NamedIndividual , pty:Role ;
+    rdfs:label "Mortgagee"@en ;
+    rdfs:comment "A party holding a mortgage over the insured property, with rights under a standard mortgage clause." ;
+    skos:note "Common property market usage."@en ;
+    fnd:utility "Type a pty:RoleOccupancy with this role for a mortgagee."@en .
+aeo-voc:LessorRole a owl:NamedIndividual , pty:Role ;
+    rdfs:label "Lessor (programme role)"@en ;
+    rdfs:comment "A lessor named in the programme, distinct from the interest kind aeo-voc:Lessor." ;
+    skos:note "No single published standard names this axis. Named distinctly from aeo-voc:Lessor (an interest kind) because a programme role and an interest are different things: a lessor may be named without an aeo:Interest being recorded, or vice versa."@en ;
+    fnd:utility "Type a pty:RoleOccupancy with this role for a lessor named in the programme."@en .
+aeo-voc:Bailor a owl:NamedIndividual , pty:Role ;
+    rdfs:label "Bailor"@en ;
+    rdfs:comment "A party who has bailed property to the insured bailee." ;
+    skos:note "Follows the general legal meaning of bailment."@en ;
+    fnd:utility "Type a pty:RoleOccupancy with this role for a bailor."@en .
+aeo-voc:WaiverOfSubrogationBeneficiary a owl:NamedIndividual , pty:Role ;
+    rdfs:label "Waiver of subrogation beneficiary"@en ;
+    rdfs:comment "A party who benefits from a waiver of the insurer's subrogation rights against them." ;
+    skos:note "Common liability market usage. The waiver itself is a contract term (Phase 5): this role only names who benefits."@en ;
+    fnd:utility "Type a pty:RoleOccupancy with this role for a waiver beneficiary."@en .
+
+# ==== BEGIN README SECTION zones-attributes-assessments (AIR-4.2) ====
+# ==== END README SECTION zones-attributes-assessments ====
+
+# ==== BEGIN README SECTION dependencies-metrics-units (AIR-4.3) ====
+# ==== END README SECTION dependencies-metrics-units ====
+
+# ==== BEGIN README SECTION losses-requirements-cover (AIR-4.4) ====
+# ==== END README SECTION losses-requirements-cover ====
+
+# ==== BEGIN README SECTION liability (AIR-4.5) ====
+# ==== END README SECTION liability ====

@@ -1,0 +1,183 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Structural (per-node) shapes for the asset exposure ontology (ADR-A99-style
+# well-formedness, applied-insurance-reference AIR-4.1). Cross-node and
+# cycle shapes are in constraints.ttl. Every rule is SHACL-SPARQL (sh:sparql,
+# never sh:property), so pySHACL's sh:sourceShape always names the shape
+# itself rather than an anonymous nested property shape, validated with
+# pySHACL advanced=True (tools/test_exposure_ontology.py).
+
+@prefix sh:      <http://www.w3.org/ns/shacl#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix aeo:     <https://www.nebularis.org/neuro-semantic/insurance/exposure#> .
+@prefix aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#> .
+
+aeo:ExposureSetShape a sh:NodeShape ;
+    sh:targetClass aeo:ExposureSet ;
+    sh:sparql [
+        sh:message "An exposure set needs exactly one identity, one reporting unit, one temporal scope and one governance state." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            SELECT $this WHERE {
+              {
+                SELECT $this (COUNT(DISTINCT ?i) AS ?ni) (COUNT(DISTINCT ?u) AS ?nu)
+                              (COUNT(DISTINCT ?t) AS ?nt) (COUNT(DISTINCT ?g) AS ?ng) WHERE {
+                  $this a aeo:ExposureSet .
+                  OPTIONAL { $this fnd:hasIdentity ?i }
+                  OPTIONAL { $this aeo:reportingUnit ?u }
+                  OPTIONAL { $this fnd:hasTemporalScope ?t }
+                  OPTIONAL { $this fnd:hasGovernanceState ?g }
+                } GROUP BY $this
+              }
+              FILTER (?ni != 1 || ?nu != 1 || ?nt != 1 || ?ng != 1)
+            }
+        """ ] .
+
+aeo:LocationShape a sh:NodeShape ;
+    sh:targetClass aeo:Location ;
+    sh:sparql [
+        sh:message "A location needs exactly one identity, and at least one territory." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            SELECT $this WHERE {
+              {
+                SELECT $this (COUNT(DISTINCT ?i) AS ?ni) (COUNT(DISTINCT ?t) AS ?nt) WHERE {
+                  $this a aeo:Location .
+                  OPTIONAL { $this fnd:hasIdentity ?i }
+                  OPTIONAL { $this aeo:territory ?t }
+                } GROUP BY $this
+              }
+              FILTER (?ni != 1 || ?nt < 1)
+            }
+        """ ] ;
+    sh:sparql [
+        sh:message "A location with a geometry needs a geographic precision." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            SELECT $this WHERE {
+              $this aeo:geometry ?g .
+              FILTER NOT EXISTS { $this aeo:geoPrecision ?p }
+            }
+        """ ] .
+
+aeo:AssetShape a sh:NodeShape ;
+    sh:targetClass aeo:Asset ;
+    sh:sparql [
+        sh:message "An asset needs exactly one identity and exactly one asset class." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            SELECT $this WHERE {
+              {
+                SELECT $this (COUNT(DISTINCT ?i) AS ?ni) (COUNT(DISTINCT ?c) AS ?nc) WHERE {
+                  $this a aeo:Asset .
+                  OPTIONAL { $this fnd:hasIdentity ?i }
+                  OPTIONAL { $this aeo:assetClass ?c }
+                } GROUP BY $this
+              }
+              FILTER (?ni != 1 || ?nc != 1)
+            }
+        """ ] ;
+    sh:sparql [
+        sh:message "An asset must not have both aeo:locatedAt and aeo:presence." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            SELECT $this WHERE {
+              $this aeo:locatedAt ?l ; aeo:presence ?p .
+            }
+        """ ] .
+
+aeo:InterestShape a sh:NodeShape ;
+    sh:targetClass aeo:Interest ;
+    sh:sparql [
+        sh:message "An interest needs exactly one holder, one asset and one kind." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            SELECT $this WHERE {
+              {
+                SELECT $this (COUNT(DISTINCT ?h) AS ?nh) (COUNT(DISTINCT ?a) AS ?na) (COUNT(DISTINCT ?k) AS ?nk) WHERE {
+                  $this a aeo:Interest .
+                  OPTIONAL { $this aeo:interestHolder ?h }
+                  OPTIONAL { $this aeo:interestIn ?a }
+                  OPTIONAL { $this aeo:interestKind ?k }
+                } GROUP BY $this
+              }
+              FILTER (?nh != 1 || ?na != 1 || ?nk != 1)
+            }
+        """ ] .
+
+aeo:ValuationShape a sh:NodeShape ;
+    sh:targetClass aeo:Valuation ;
+    sh:sparql [
+        sh:message "A valuation needs exactly one aeo:valueOf, one value type and one valuation basis." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            SELECT $this WHERE {
+              {
+                SELECT $this (COUNT(DISTINCT ?v) AS ?nv) (COUNT(DISTINCT ?t) AS ?nt) (COUNT(DISTINCT ?b) AS ?nb) WHERE {
+                  $this a aeo:Valuation .
+                  OPTIONAL { $this aeo:valueOf ?v }
+                  OPTIONAL { $this aeo:valueType ?t }
+                  OPTIONAL { $this aeo:valuationBasis ?b }
+                } GROUP BY $this
+              }
+              FILTER (?nv != 1 || ?nt != 1 || ?nb != 1)
+            }
+        """ ] ;
+    sh:sparql [
+        sh:message "A valuation needs either exactly one aeo:amount, or exactly one aeo:rate with exactly one aeo:horizon, never both and never neither." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            SELECT $this WHERE {
+              {
+                SELECT $this (COUNT(DISTINCT ?a) AS ?na) (COUNT(DISTINCT ?r) AS ?nr) (COUNT(DISTINCT ?h) AS ?nh) WHERE {
+                  $this a aeo:Valuation .
+                  OPTIONAL { $this aeo:amount ?a }
+                  OPTIONAL { $this aeo:rate ?r }
+                  OPTIONAL { $this aeo:horizon ?h }
+                } GROUP BY $this
+              }
+              FILTER (!(
+                (?na = 1 && ?nr = 0 && ?nh = 0) || (?na = 0 && ?nr = 1 && ?nh = 1)
+              ))
+            }
+        """ ] .
+
+aeo:LegalEntityShape a sh:NodeShape ;
+    sh:targetClass aeo:LegalEntity ;
+    sh:sparql [
+        sh:message "A legal entity may have at most one domicile and at most one legal form." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            SELECT $this WHERE {
+              {
+                SELECT $this (COUNT(DISTINCT ?d) AS ?nd) (COUNT(DISTINCT ?f) AS ?nf) WHERE {
+                  $this a aeo:LegalEntity .
+                  OPTIONAL { $this aeo:domicile ?d }
+                  OPTIONAL { $this aeo:legalForm ?f }
+                } GROUP BY $this
+              }
+              FILTER (?nd > 1 || ?nf > 1)
+            }
+        """ ] .
+
+aeo:DocumentationShape a sh:NodeShape ;
+    sh:targetClass skos:Concept ;
+    sh:sparql [
+        sh:message "A concept in a reference exposure scheme needs at least one skos:note in @en, naming the published standards, scales or sources it follows (AIR-2.0 documentation rule)." ;
+        sh:select """
+            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#>
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+            SELECT $this WHERE {
+              $this skos:inScheme ?scheme .
+              FILTER (?scheme IN (aeo-voc:GeoPrecisionScheme, aeo-voc:ControlKindScheme, aeo-voc:InterestKindScheme,
+                                  aeo-voc:ValueTypeScheme, aeo-voc:ValuationBasisScheme, aeo-voc:ValuationMethodScheme,
+                                  aeo-voc:LegalFormScheme))
+              OPTIONAL { $this skos:note ?n . FILTER (LANG(?n) = "en") }
+            }
+            GROUP BY $this
+            HAVING (COUNT(DISTINCT ?n) < 1)
+        """ ] .
