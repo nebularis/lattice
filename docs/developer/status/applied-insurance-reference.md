@@ -50,8 +50,8 @@ Verifying queue (S slices handed over and not yet merged): none.
 
 ## Machine S
 
-**Position:** round 3, the one trip. AIR-1.1, AIR-2.1, AIR-1.2, AIR-2.0, AIR-2.2 and AIR-4.1 built
-on `air/applied-reference` (not yet handed to R). Next: AIR-2.6.
+**Position:** round 3, the one trip. AIR-1.1, AIR-2.1, AIR-1.2, AIR-2.0, AIR-2.2, AIR-4.1 and AIR-2.6
+built on `air/applied-reference` (not yet handed to R). Next: AIR-2.3.
 **Last updated:** 2026-10-14
 **Blockers:** none.
 
@@ -67,7 +67,7 @@ on `air/applied-reference` (not yet handed to R). Next: AIR-2.6.
 | 10 | AIR-2.4 | ready | |
 | 11 | AIR-4.2 | ready | brief written 2026-10-13 |
 | 12 | AIR-4.4 | ready | brief written 2026-10-13. After AIR-4.3 |
-| 14 | AIR-2.6 | in progress | before AIR-2.3 |
+| 14 | AIR-2.6 | built | `common-vocab` `0.5.0`→`0.6.0` (QUDT-aligned units across nine families, four exact conversions, ISO 4217 currencies on `icm-voc:Money`). New document `vocab/peril-intensity.ttl` (own ontology IRI, version in unison with `peril-vocab` `0.5.0`): the intensity measure scheme, 24 measures each with a `qnt:ValueSpace`, three ordinal sub-schemes (MMI, Saffir–Simpson, Enhanced Fujita), seven threshold-defined cause concepts' `prl:definingThreshold` range sets, other causes' `prl:intensityMeasure` links, and `prl:customaryEventWindow` for two groups. `prl:ThresholdDefinitionShape` extended to cross-check a threshold's space against the concept's own measures (peril shapes `0.2.0`→`0.3.0`). [Validation Pack](../validation/applied-insurance-reference-2.6.md) |
 | 15 | AIR-2.7 | ready | brief written 2026-10-13 |
 | 16 | AIR-4.3 | ready | brief written 2026-10-13, before AIR-4.4 |
 | 17 | AIR-4.5 | ready | brief written 2026-10-13 |
