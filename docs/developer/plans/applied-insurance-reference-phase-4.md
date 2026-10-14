@@ -18,6 +18,7 @@ about the world, not about cover. No class the substrate already provides.
 |---|---|---|
 | AIR-4.1 | exposure set, location, legal entity, control relations, asset, interest, valuation. Spec, vocabulary and shapes created with one region per slice (lanes §8) | §5.1 to §5.3, §5.5, §5.6 |
 | AIR-4.2 | zones and pool participation, hazard attributes, assessments and profile shapes | §5.4, §5.7, §5.8 |
+| AIR-4.2a | share unchanged exposure members across versions (TD-49): no inverse-functional membership, designation, participation, assessment or attribute property, `aeo:MembershipShape` withdrawn, an example of two schedule versions. Added 2026-10-14, before 4.3 | §5.2 |
 | AIR-4.3 | dependencies, peril metrics, exposure units derived on demand (no materialisation required) | §5.9 to §5.11 |
 | AIR-4.4 | loss history with one `aeo:LossCause` node per link of the cause chain (peril, position, mechanism, agency), effective characteristic values defaulted from the cause's typical values as derived artefacts (epic D12), the loss event class in `insurance/common/` (D7), coverage requirements, existing cover, financial metrics | §5.12 to §5.14 |
 | AIR-4.5 | liability exposure: counterparty populations, relationship depth, exposure bases | §5.15 |
@@ -137,7 +138,7 @@ Membership properties from the exposure set, each `owl:InverseFunctionalProperty
 `aeo:hasLocation`, `aeo:hasAsset`, `aeo:hasInterest`, `aeo:hasValuation`. The other membership
 properties of §5.2 arrive with their classes.
 
-> **Correction, 2026-10-14 (TD-49).** The inverse functionality is wrong. The maintainer confirmed
+> **Correction, 2026-10-14 (TD-49), made in AIR-4.2a.** The inverse functionality was wrong. The maintainer confirmed
 > the design the module's README states: unchanged members are shared across exposure set versions
 > by identity, not duplicated by node, so one location or asset version may belong to several
 > exposure set versions. The membership properties are plain object properties, and the

@@ -66,29 +66,29 @@ aeo:reportingUnit a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:comment "The currency or unit an exposure set's values are reported in." ;
     fnd:utility "Subject: an exposure set. Value: the qnt:Unit its amounts are expressed in, before any per-valuation unit is read. Exactly one." .
 
-aeo:hasLocation a owl:ObjectProperty, owl:InverseFunctionalProperty ;
+aeo:hasLocation a owl:ObjectProperty ;
     rdfs:domain aeo:ExposureSet ; rdfs:range aeo:Location ;
     rdfs:label "has location"@en ;
     rdfs:comment "A location belonging to this exposure set version." ;
-    fnd:utility "Subject: an exposure set. Value: one of its locations. Inverse functional: a location version belongs to at most one exposure set version." .
+    fnd:utility "Subject: an exposure set. Value: one of its locations. Not inverse functional: an unchanged location version is listed by every exposure set version it holds for, shared by identity (TD-49)." .
 
-aeo:hasAsset a owl:ObjectProperty, owl:InverseFunctionalProperty ;
+aeo:hasAsset a owl:ObjectProperty ;
     rdfs:domain aeo:ExposureSet ; rdfs:range aeo:Asset ;
     rdfs:label "has asset"@en ;
     rdfs:comment "An asset belonging to this exposure set version." ;
-    fnd:utility "Subject: an exposure set. Value: one of its assets. Inverse functional, for the same reason as aeo:hasLocation." .
+    fnd:utility "Subject: an exposure set. Value: one of its assets. Not inverse functional, for the same reason as aeo:hasLocation." .
 
-aeo:hasInterest a owl:ObjectProperty, owl:InverseFunctionalProperty ;
+aeo:hasInterest a owl:ObjectProperty ;
     rdfs:domain aeo:ExposureSet ; rdfs:range aeo:Interest ;
     rdfs:label "has interest"@en ;
     rdfs:comment "An interest belonging to this exposure set version." ;
-    fnd:utility "Subject: an exposure set. Value: one of its interests. Inverse functional, for the same reason as aeo:hasLocation." .
+    fnd:utility "Subject: an exposure set. Value: one of its interests. Not inverse functional, for the same reason as aeo:hasLocation." .
 
-aeo:hasValuation a owl:ObjectProperty, owl:InverseFunctionalProperty ;
+aeo:hasValuation a owl:ObjectProperty ;
     rdfs:domain aeo:ExposureSet ; rdfs:range aeo:Valuation ;
     rdfs:label "has valuation"@en ;
     rdfs:comment "A valuation belonging to this exposure set version." ;
-    fnd:utility "Subject: an exposure set. Value: one of its valuations. Inverse functional, for the same reason as aeo:hasLocation." .
+    fnd:utility "Subject: an exposure set. Value: one of its valuations. Not inverse functional, for the same reason as aeo:hasLocation." .
 
 #################################################################
 #    Location (sketch §5.3)
@@ -349,11 +349,11 @@ aeo:ZoneDesignation a owl:Class ;
     rdfs:comment "A location's placement in one hazard zone, from one map or source, for the period the map is in effect." ;
     fnd:utility "Subject: a zone designation. The temporal scope is the map's own effective period, not the assessment that read it. Exactly one zone (through one of aeo:floodZone, aeo:seismicZone, aeo:windZone, aeo:wildfireZone, aeo:tsunamiZone, aeo:accumulationZone) and one designation source." .
 
-aeo:zoneDesignation a owl:ObjectProperty, owl:InverseFunctionalProperty ;
+aeo:zoneDesignation a owl:ObjectProperty ;
     rdfs:domain aeo:Location ; rdfs:range aeo:ZoneDesignation ;
     rdfs:label "zone designation"@en ;
     rdfs:comment "A zone designation belonging to this location." ;
-    fnd:utility "Subject: a location. Value: one of its zone designations. Inverse functional: a zone designation belongs to one location." .
+    fnd:utility "Subject: a location. Value: one of its zone designations. Not inverse functional: a designation follows a location's identity, so every version of the location it holds for carries it (TD-49)." .
 
 aeo:zone a owl:ObjectProperty ;
     rdfs:domain aeo:ZoneDesignation ; rdfs:range skos:Concept ;
@@ -411,11 +411,11 @@ aeo:PoolParticipation a owl:Class ;
     rdfs:comment "A location's participation in a peril pool, for the perils the pool covers at this location." ;
     fnd:utility "Subject: a pool participation. Exactly one pool, at least one peril scope." .
 
-aeo:poolParticipation a owl:ObjectProperty, owl:InverseFunctionalProperty ;
+aeo:poolParticipation a owl:ObjectProperty ;
     rdfs:domain aeo:Location ; rdfs:range aeo:PoolParticipation ;
     rdfs:label "pool participation"@en ;
     rdfs:comment "A pool participation belonging to this location." ;
-    fnd:utility "Subject: a location. Value: one of its pool participations. Inverse functional: a pool participation belongs to one location." .
+    fnd:utility "Subject: a location. Value: one of its pool participations. Not inverse functional: a participation follows a location's identity, so every version of the location it holds for carries it (TD-49)." .
 
 aeo:pool a owl:ObjectProperty ;
     rdfs:subPropertyOf icm:pool ;
@@ -444,11 +444,11 @@ aeo:Assessment a owl:Class ;
     rdfs:comment "An account of one or more attribute values for a subject, obtained by a stated means at a stated time." ;
     fnd:utility "Subject: an assessment. At least one subject (aeo:assesses), exactly one kind, at least one attribute value, a temporal scope (when the account holds), and the evidence a fnd:Evidenced node always carries (who or what supplied it). aeo:profileFamily names which question family it answers, independent of its kind: a questionnaire or a survey may answer several families." .
 
-aeo:hasAssessment a owl:ObjectProperty, owl:InverseFunctionalProperty ;
+aeo:hasAssessment a owl:ObjectProperty ;
     rdfs:domain aeo:ExposureSet ; rdfs:range aeo:Assessment ;
     rdfs:label "has assessment"@en ;
     rdfs:comment "An assessment belonging to this exposure set version." ;
-    fnd:utility "Subject: an exposure set. Value: one of its assessments. Inverse functional, for the same reason as aeo:hasLocation." .
+    fnd:utility "Subject: an exposure set. Value: one of its assessments. Not inverse functional, for the same reason as aeo:hasLocation." .
 
 aeo:assesses a owl:ObjectProperty ;
     rdfs:domain aeo:Assessment ;
@@ -475,11 +475,11 @@ aeo:AttributeValue a owl:Class ;
     rdfs:comment "One value of one attribute type, held in a concept, a quantity or a literal, whichever form the type declares." ;
     fnd:utility "Subject: an attribute value. Exactly one attribute type, and exactly one of aeo:conceptValue, aeo:quantityValue or aeo:literalValue, whichever aeo:valueForm the type names (the attribute-value shape)." .
 
-aeo:hasAttribute a owl:ObjectProperty, owl:InverseFunctionalProperty ;
+aeo:hasAttribute a owl:ObjectProperty ;
     rdfs:domain aeo:Assessment ; rdfs:range aeo:AttributeValue ;
     rdfs:label "has attribute"@en ;
     rdfs:comment "An attribute value belonging to this assessment." ;
-    fnd:utility "Subject: an assessment. Value: one of its attribute values. Inverse functional: an attribute value belongs to one assessment." .
+    fnd:utility "Subject: an assessment. Value: one of its attribute values. Not inverse functional: an assessment that restates an unchanged value may share the node (TD-49)." .
 
 aeo:attributeType a owl:ObjectProperty ;
     rdfs:domain aeo:AttributeValue ; rdfs:range skos:Concept ;

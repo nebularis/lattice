@@ -121,9 +121,12 @@ classDiagram
 An `aeo:ExposureSet` is a versioned snapshot of one insured's schedule: the identity follows the
 schedule across renewals, and each version is a schedule as of a date, with the record's own
 governance state (Draft while being assembled, Active when submitted, Superseded by the next). A
-member (a location, an asset, an interest or a valuation) belongs to exactly one exposure set
-version, by an inverse-functional membership property, so unchanged locations and assets are
-shared across versions by identity, not duplicated by node.
+member (a location, an asset, an interest or a valuation) is listed by an exposure set version
+through a plain membership property, and is not owned by it. An unchanged member is listed by every
+version it holds for, shared by identity and not duplicated by node, so a mid-term change adds the
+nodes that changed and a new version that lists the rest. Membership is not inverse functional,
+which a reasoner would read as an identity statement and merge two schedule versions that list one
+location (TD-49).
 
 | Class | Mixins | Key properties |
 |---|---|---|
@@ -192,29 +195,29 @@ aeo:reportingUnit a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:comment "The currency or unit an exposure set's values are reported in." ;
     fnd:utility "Subject: an exposure set. Value: the qnt:Unit its amounts are expressed in, before any per-valuation unit is read. Exactly one." .
 
-aeo:hasLocation a owl:ObjectProperty, owl:InverseFunctionalProperty ;
+aeo:hasLocation a owl:ObjectProperty ;
     rdfs:domain aeo:ExposureSet ; rdfs:range aeo:Location ;
     rdfs:label "has location"@en ;
     rdfs:comment "A location belonging to this exposure set version." ;
-    fnd:utility "Subject: an exposure set. Value: one of its locations. Inverse functional: a location version belongs to at most one exposure set version." .
+    fnd:utility "Subject: an exposure set. Value: one of its locations. Not inverse functional: an unchanged location version is listed by every exposure set version it holds for, shared by identity (TD-49)." .
 
-aeo:hasAsset a owl:ObjectProperty, owl:InverseFunctionalProperty ;
+aeo:hasAsset a owl:ObjectProperty ;
     rdfs:domain aeo:ExposureSet ; rdfs:range aeo:Asset ;
     rdfs:label "has asset"@en ;
     rdfs:comment "An asset belonging to this exposure set version." ;
-    fnd:utility "Subject: an exposure set. Value: one of its assets. Inverse functional, for the same reason as aeo:hasLocation." .
+    fnd:utility "Subject: an exposure set. Value: one of its assets. Not inverse functional, for the same reason as aeo:hasLocation." .
 
-aeo:hasInterest a owl:ObjectProperty, owl:InverseFunctionalProperty ;
+aeo:hasInterest a owl:ObjectProperty ;
     rdfs:domain aeo:ExposureSet ; rdfs:range aeo:Interest ;
     rdfs:label "has interest"@en ;
     rdfs:comment "An interest belonging to this exposure set version." ;
-    fnd:utility "Subject: an exposure set. Value: one of its interests. Inverse functional, for the same reason as aeo:hasLocation." .
+    fnd:utility "Subject: an exposure set. Value: one of its interests. Not inverse functional, for the same reason as aeo:hasLocation." .
 
-aeo:hasValuation a owl:ObjectProperty, owl:InverseFunctionalProperty ;
+aeo:hasValuation a owl:ObjectProperty ;
     rdfs:domain aeo:ExposureSet ; rdfs:range aeo:Valuation ;
     rdfs:label "has valuation"@en ;
     rdfs:comment "A valuation belonging to this exposure set version." ;
-    fnd:utility "Subject: an exposure set. Value: one of its valuations. Inverse functional, for the same reason as aeo:hasLocation." .
+    fnd:utility "Subject: an exposure set. Value: one of its valuations. Not inverse functional, for the same reason as aeo:hasLocation." .
 
 #################################################################
 #    Location (sketch §5.3)
@@ -475,11 +478,11 @@ aeo:ZoneDesignation a owl:Class ;
     rdfs:comment "A location's placement in one hazard zone, from one map or source, for the period the map is in effect." ;
     fnd:utility "Subject: a zone designation. The temporal scope is the map's own effective period, not the assessment that read it. Exactly one zone (through one of aeo:floodZone, aeo:seismicZone, aeo:windZone, aeo:wildfireZone, aeo:tsunamiZone, aeo:accumulationZone) and one designation source." .
 
-aeo:zoneDesignation a owl:ObjectProperty, owl:InverseFunctionalProperty ;
+aeo:zoneDesignation a owl:ObjectProperty ;
     rdfs:domain aeo:Location ; rdfs:range aeo:ZoneDesignation ;
     rdfs:label "zone designation"@en ;
     rdfs:comment "A zone designation belonging to this location." ;
-    fnd:utility "Subject: a location. Value: one of its zone designations. Inverse functional: a zone designation belongs to one location." .
+    fnd:utility "Subject: a location. Value: one of its zone designations. Not inverse functional: a designation follows a location's identity, so every version of the location it holds for carries it (TD-49)." .
 
 aeo:zone a owl:ObjectProperty ;
     rdfs:domain aeo:ZoneDesignation ; rdfs:range skos:Concept ;
@@ -537,11 +540,11 @@ aeo:PoolParticipation a owl:Class ;
     rdfs:comment "A location's participation in a peril pool, for the perils the pool covers at this location." ;
     fnd:utility "Subject: a pool participation. Exactly one pool, at least one peril scope." .
 
-aeo:poolParticipation a owl:ObjectProperty, owl:InverseFunctionalProperty ;
+aeo:poolParticipation a owl:ObjectProperty ;
     rdfs:domain aeo:Location ; rdfs:range aeo:PoolParticipation ;
     rdfs:label "pool participation"@en ;
     rdfs:comment "A pool participation belonging to this location." ;
-    fnd:utility "Subject: a location. Value: one of its pool participations. Inverse functional: a pool participation belongs to one location." .
+    fnd:utility "Subject: a location. Value: one of its pool participations. Not inverse functional: a participation follows a location's identity, so every version of the location it holds for carries it (TD-49)." .
 
 aeo:pool a owl:ObjectProperty ;
     rdfs:subPropertyOf icm:pool ;
@@ -570,11 +573,11 @@ aeo:Assessment a owl:Class ;
     rdfs:comment "An account of one or more attribute values for a subject, obtained by a stated means at a stated time." ;
     fnd:utility "Subject: an assessment. At least one subject (aeo:assesses), exactly one kind, at least one attribute value, a temporal scope (when the account holds), and the evidence a fnd:Evidenced node always carries (who or what supplied it). aeo:profileFamily names which question family it answers, independent of its kind: a questionnaire or a survey may answer several families." .
 
-aeo:hasAssessment a owl:ObjectProperty, owl:InverseFunctionalProperty ;
+aeo:hasAssessment a owl:ObjectProperty ;
     rdfs:domain aeo:ExposureSet ; rdfs:range aeo:Assessment ;
     rdfs:label "has assessment"@en ;
     rdfs:comment "An assessment belonging to this exposure set version." ;
-    fnd:utility "Subject: an exposure set. Value: one of its assessments. Inverse functional, for the same reason as aeo:hasLocation." .
+    fnd:utility "Subject: an exposure set. Value: one of its assessments. Not inverse functional, for the same reason as aeo:hasLocation." .
 
 aeo:assesses a owl:ObjectProperty ;
     rdfs:domain aeo:Assessment ;
@@ -601,11 +604,11 @@ aeo:AttributeValue a owl:Class ;
     rdfs:comment "One value of one attribute type, held in a concept, a quantity or a literal, whichever form the type declares." ;
     fnd:utility "Subject: an attribute value. Exactly one attribute type, and exactly one of aeo:conceptValue, aeo:quantityValue or aeo:literalValue, whichever aeo:valueForm the type names (the attribute-value shape)." .
 
-aeo:hasAttribute a owl:ObjectProperty, owl:InverseFunctionalProperty ;
+aeo:hasAttribute a owl:ObjectProperty ;
     rdfs:domain aeo:Assessment ; rdfs:range aeo:AttributeValue ;
     rdfs:label "has attribute"@en ;
     rdfs:comment "An attribute value belonging to this assessment." ;
-    fnd:utility "Subject: an assessment. Value: one of its attribute values. Inverse functional: an attribute value belongs to one assessment." .
+    fnd:utility "Subject: an assessment. Value: one of its attribute values. Not inverse functional: an assessment that restates an unchanged value may share the node (TD-49)." .
 
 aeo:attributeType a owl:ObjectProperty ;
     rdfs:domain aeo:AttributeValue ; rdfs:range skos:Concept ;
@@ -2527,7 +2530,6 @@ the shape itself since `sh:sparql`'s value is a constraint, not a nested propert
 | `aeo:ValuationShape` | exactly one `aeo:valueOf`, one value type and one basis. Either one amount, or one rate and one horizon, never both and never neither |
 | `aeo:ControlRelationShape` | exactly one controller and one controlled, and no cycle through `aeo:controller` / `aeo:controlled` |
 | `aeo:LegalEntityShape` | at most one domicile and one legal form |
-| `aeo:MembershipShape` | a member belongs to at most one exposure set version |
 | `aeo:DocumentationShape` | every concept in an `aeo-voc:` scheme has at least one `skos:note` in `@en` (AIR-2.0 documentation rule) |
 | `aeo:ZoneDesignationShape` (AIR-4.2) | exactly one zone, through one of the six hazard-kind sub-properties, exactly one source, a temporal scope |
 | `aeo:ZoneInTerritoryShape` (AIR-4.2) | a zone designation's zone is in the scheme currently bound to its contract, where a deployment has bound one |
@@ -2923,26 +2925,12 @@ aeo:ScreeningShape a sh:NodeShape ;
 ```
 
 ```turtle-shapes
-# Cross-node shapes for the asset exposure ontology: membership and cycles
+# Cross-node shapes for the asset exposure ontology: control cycles
 # (applied-insurance-reference AIR-4.1). Per-node shapes are in
 # structural.ttl.
 
 @prefix sh:  <http://www.w3.org/ns/shacl#> .
 @prefix aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#> .
-
-aeo:MembershipShape a sh:NodeShape ;
-    sh:targetObjectsOf aeo:hasLocation , aeo:hasAsset , aeo:hasInterest , aeo:hasValuation ;
-    sh:sparql [
-        sh:message "A location, asset, interest or valuation must belong to at most one exposure set version." ;
-        sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
-            SELECT $this WHERE {
-              { $this ^aeo:hasLocation ?s1 . $this ^aeo:hasLocation ?s2 . FILTER (?s1 != ?s2) }
-              UNION { $this ^aeo:hasAsset ?s1 . $this ^aeo:hasAsset ?s2 . FILTER (?s1 != ?s2) }
-              UNION { $this ^aeo:hasInterest ?s1 . $this ^aeo:hasInterest ?s2 . FILTER (?s1 != ?s2) }
-              UNION { $this ^aeo:hasValuation ?s1 . $this ^aeo:hasValuation ?s2 . FILTER (?s1 != ?s2) }
-            }
-        """ ] .
 
 aeo:ControlRelationShape a sh:NodeShape ;
     sh:targetClass aeo:ControlRelation ;
@@ -3159,8 +3147,14 @@ domicile and a legal form. [`tools/test_exposure_ontology.py`](../../../../tools
 validates it, plus one negative case per shape, with pySHACL (`advanced=True`, `inference="none"`),
 modelled on `tools/test_peril_vocabulary.py`.
 
+[`examples/versions.ttl`](examples/versions.ttl) (AIR-4.2a, TD-49) shows two versions of one
+schedule sharing an unchanged location, building and valuation by identity, with one location
+changed between them. It passes every shape, and is the case that fails if membership is made
+inverse functional again.
+
 ## 10. Release notes
 
 | Version | Change |
 |---|---|
 | `0.1.0` | AIR-4.1: exposure set, location, legal entity, control relations, asset, interest, valuation. Seven scheme contracts, nine programme roles. Literate from the start |
+| `0.1.0` (AIR-4.2a) | Exposure set membership, zone designations, pool participations, assessments and attribute values are no longer inverse functional, and `aeo:MembershipShape` is withdrawn (TD-49). Unchanged members are shared across exposure set versions by identity, as this README always stated. Corrects `0.1.0` before it is released, so no version bump. Example `versions.ttl` added |

@@ -1,25 +1,11 @@
 # SPDX-License-Identifier: MPL-2.0
 
-# Cross-node shapes for the asset exposure ontology: membership and cycles
+# Cross-node shapes for the asset exposure ontology: control cycles
 # (applied-insurance-reference AIR-4.1). Per-node shapes are in
 # structural.ttl.
 
 @prefix sh:  <http://www.w3.org/ns/shacl#> .
 @prefix aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#> .
-
-aeo:MembershipShape a sh:NodeShape ;
-    sh:targetObjectsOf aeo:hasLocation , aeo:hasAsset , aeo:hasInterest , aeo:hasValuation ;
-    sh:sparql [
-        sh:message "A location, asset, interest or valuation must belong to at most one exposure set version." ;
-        sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
-            SELECT $this WHERE {
-              { $this ^aeo:hasLocation ?s1 . $this ^aeo:hasLocation ?s2 . FILTER (?s1 != ?s2) }
-              UNION { $this ^aeo:hasAsset ?s1 . $this ^aeo:hasAsset ?s2 . FILTER (?s1 != ?s2) }
-              UNION { $this ^aeo:hasInterest ?s1 . $this ^aeo:hasInterest ?s2 . FILTER (?s1 != ?s2) }
-              UNION { $this ^aeo:hasValuation ?s1 . $this ^aeo:hasValuation ?s2 . FILTER (?s1 != ?s2) }
-            }
-        """ ] .
 
 aeo:ControlRelationShape a sh:NodeShape ;
     sh:targetClass aeo:ControlRelation ;

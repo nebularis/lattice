@@ -38,7 +38,6 @@ ASSET = AEO.AssetShape
 INTEREST = AEO.InterestShape
 VALUATION = AEO.ValuationShape
 LEGAL_ENTITY = AEO.LegalEntityShape
-MEMBERSHIP = AEO.MembershipShape
 CONTROL_RELATION = AEO.ControlRelationShape
 DOCUMENTATION = AEO.DocumentationShape
 
@@ -276,15 +275,15 @@ def test_air41_08_control_cycle_is_rejected():
     assert CONTROL_RELATION in found
 
 
-# ---- AIR41-09: a location in two exposure set versions --------------------------------------------
+# ---- AIR41-09 (restated by AIR-4.2a, TD-49): a location in two exposure set versions ----------------
 
 
-def test_air41_09_location_in_two_exposure_sets_is_rejected():
+def test_air41_09_location_in_two_exposure_sets_is_shared_not_rejected():
     data = _fixture()
     other = EX["other-schedule"]
     data.add((other, RDF.type, AEO.ExposureSet))
     data.add((other, AEO.hasLocation, EX.factory))
-    assert MEMBERSHIP in shapes_for(EX.factory, data)
+    assert not shapes_for(EX.factory, data)
 
 
 # ---- AIR41-10: exposure set without a reporting unit -----------------------------------------------
