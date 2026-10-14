@@ -129,3 +129,73 @@ aeo:UnitDerivationShape a sh:NodeShape ;
               FILTER NOT EXISTS { $this prov:wasGeneratedBy ?run . ?run a fnd:DerivationRun }
             }
         """ ] .
+
+#################################################################
+#    AIR-4.4: loss period, defaulted characteristics, scope
+#################################################################
+
+aeo:LossInPeriodShape a sh:NodeShape ;
+    sh:targetClass aeo:LossRecord ;
+    sh:sparql [
+        sh:message "A loss record's date must be within the temporal scope of the loss experience that lists it." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            SELECT $this WHERE {
+              ?exp aeo:hasLossRecord $this ; fnd:hasTemporalScope ?ts .
+              $this aeo:lossDate ?d .
+              OPTIONAL { ?ts fnd:validFrom ?from }
+              OPTIONAL { ?ts fnd:validTo ?to }
+              FILTER ((BOUND(?from) && STR(?d) < SUBSTR(STR(?from), 1, 10)) || (BOUND(?to) && STR(?d) > SUBSTR(STR(?to), 1, 10)))
+            }
+        """ ] .
+
+aeo:DefaultedAgencyShape a sh:NodeShape ;
+    sh:targetClass aeo:LossCause ;
+    sh:sparql [
+        sh:message "An effective agency that differs from every recorded agency needs a defaulted characteristic, and one with a recorded agency must have none." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            SELECT $this WHERE {
+              {
+                $this aeo:effectiveAgency ?e .
+                FILTER NOT EXISTS { $this aeo:agency ?e }
+                FILTER NOT EXISTS { ?d a aeo:DefaultedCharacteristic ; aeo:defaultedOn $this ; aeo:defaultedProperty aeo:effectiveAgency }
+              } UNION {
+                $this aeo:agency ?r .
+                ?d a aeo:DefaultedCharacteristic ; aeo:defaultedOn $this ; aeo:defaultedProperty aeo:effectiveAgency .
+              }
+            }
+        """ ] .
+
+aeo:DefaultedMechanismShape a sh:NodeShape ;
+    sh:targetClass aeo:LossCause ;
+    sh:sparql [
+        sh:message "An effective mechanism that differs from every recorded mechanism needs a defaulted characteristic, and a cause with a recorded mechanism must have none." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            SELECT $this WHERE {
+              {
+                $this aeo:effectiveMechanism ?e .
+                FILTER NOT EXISTS { $this aeo:mechanism ?e }
+                FILTER NOT EXISTS { ?d a aeo:DefaultedCharacteristic ; aeo:defaultedOn $this ; aeo:defaultedProperty aeo:effectiveMechanism }
+              } UNION {
+                $this aeo:mechanism ?r .
+                ?d a aeo:DefaultedCharacteristic ; aeo:defaultedOn $this ; aeo:defaultedProperty aeo:effectiveMechanism .
+              }
+            }
+        """ ] .
+
+aeo:RequirementScopeShape a sh:NodeShape ;
+    sh:targetClass aeo:CoverageRequirement ;
+    sh:sparql [
+        sh:message "A requirement's scope must be an admission profile whose conditions are bound to subject class aeo:ExposureUnit." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+            SELECT $this WHERE {
+              $this aeo:requirementScope ?profile .
+              FILTER (NOT EXISTS { ?profile elg:hasCondition ?c1 . ?b1 elg:bindsCondition ?c1 ; elg:subjectClass aeo:ExposureUnit }
+                      || EXISTS { ?profile elg:hasCondition ?c2 . ?b2 elg:bindsCondition ?c2 ; elg:subjectClass ?cl . FILTER (?cl != aeo:ExposureUnit) })
+            }
+        """ ] .

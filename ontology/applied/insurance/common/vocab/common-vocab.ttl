@@ -14,7 +14,7 @@
 <https://www.nebularis.org/neuro-semantic/insurance/common/vocab>
     rdf:type owl:Ontology ;
     owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/common-vocab/0.6.0> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/insurance/common/0.5.0> .
+    owl:imports <https://www.nebularis.org/neuro-semantic/insurance/common/0.6.0> .
 
 icm-voc:PerilContract a voc:SchemeContract ;
     fnd:hasIdentity icm-voc:PerilContract-identity ;
@@ -51,6 +51,21 @@ icm-voc:PoolContract a voc:SchemeContract ;
     fnd:hasGovernanceState fnd:Active ;
     skos:prefLabel "Pool scheme contract"@en ;
     voc:constrainsProperty icm:pool .
+
+icm-voc:ClassOfBusinessContract a voc:SchemeContract ;
+    fnd:hasIdentity icm-voc:ClassOfBusinessContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Class of business scheme contract"@en ;
+    skos:note "Follows the lines of business of Annex I to Commission Delegated Regulation (EU) 2015/35 (Solvency II) as the model edition a deployment binds. No reference scheme here: unbound until a deployment binds an edition by territory scope. AIR-4.6 binds an example edition."@en ;
+    voc:constrainsProperty icm:classOfBusiness .
+
+icm-voc:GlideNumber a fnd:KeyScheme ;
+    rdfs:label "GLIDE numbers"@en ;
+    skos:note "The GLobal IDEntifier number the Asian Disaster Reduction Center assigns to a disaster, in the form of a hazard type code, a year, a six digit serial number and an ISO 3166 country code (for example FL-2002-000217-AFG). The open reference key for a loss event. Insurance industry event identifiers (catastrophe serial numbers, industry loss index event codes) are key schemes their publishers own, declared where they are used (AIR-4.6's examples)."@en ;
+    fnd:reissuesValues false ;
+    fnd:sensitiveDataScheme false ;
+    fnd:valuePattern "^[A-Z]{2,3}-[0-9]{4}-[0-9]{6}-[A-Z]{3}$" ;
+    fnd:keyNormalisation "NfkcTrimUppercase" .
 
 icm-voc:HarmedParty a owl:NamedIndividual , pty:Role ;
     rdfs:label "Harmed party"@en ;

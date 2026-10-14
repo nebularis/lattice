@@ -2041,6 +2041,382 @@ aeo-voc:ModelOptionScheme skos:hasTopConcept aeo-voc:SecondaryUncertainty , aeo-
 # ==== END README SECTION dependencies-metrics-units ====
 
 # ==== BEGIN README SECTION losses-requirements-cover (AIR-4.4) ====
+
+#################################################################
+#    Value spaces (AIR-4.4). MoneyShare is a proportion of money
+#    over the same money space twice (ADR-A93): a capacity share of
+#    a limit, or a bound relative to a financial metric.
+#################################################################
+
+aeo-voc:MoneyShare a qnt:DerivedValueSpace ;
+    qnt:spaceKey "money-share" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ; qnt:spaceHash "money-share-v1" ;
+    qnt:numeratorSpace icm-voc:Money ; qnt:denominatorSpace icm-voc:Money ;
+    skos:note "A proportion space (ADR-A93): an amount of money as a share of another amount of money, for example a participant's share of a limit or a net retained loss as a share of equity. Dimensionless, from 0 upwards."@en .
+
+#################################################################
+#    Reference schemes (AIR-4.4), each the unscoped fallback
+#    (ADR-A99 decision 1).
+#################################################################
+
+aeo-voc:LossExperienceSourceScheme a voc:ConceptScheme ;
+    fnd:hasIdentity aeo-voc:LossExperienceSourceScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference loss experience source scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+aeo-voc:LossStatusScheme a voc:ConceptScheme ;
+    fnd:hasIdentity aeo-voc:LossStatusScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference loss status scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+aeo-voc:CausePositionScheme a voc:ConceptScheme ;
+    fnd:hasIdentity aeo-voc:CausePositionScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference cause position scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+aeo-voc:RequirementSourceScheme a voc:ConceptScheme ;
+    fnd:hasIdentity aeo-voc:RequirementSourceScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference requirement source scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+aeo-voc:RequirementStrengthScheme a voc:ConceptScheme ;
+    fnd:hasIdentity aeo-voc:RequirementStrengthScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference requirement strength scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+aeo-voc:MeasureScheme a voc:ConceptScheme ;
+    fnd:hasIdentity aeo-voc:MeasureScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference measure scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+aeo-voc:CoverRelationScheme a voc:ConceptScheme ;
+    fnd:hasIdentity aeo-voc:CoverRelationScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference cover relation scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+aeo-voc:TriggerBasisScheme a voc:ConceptScheme ;
+    fnd:hasIdentity aeo-voc:TriggerBasisScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference trigger basis scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+aeo-voc:CoverHistoryEventKindScheme a voc:ConceptScheme ;
+    fnd:hasIdentity aeo-voc:CoverHistoryEventKindScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference cover history event kind scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+aeo-voc:FinancialMetricKindScheme a voc:ConceptScheme ;
+    fnd:hasIdentity aeo-voc:FinancialMetricKindScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference financial metric kind scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+#################################################################
+#    Reference bindings (AIR-4.4)
+#################################################################
+
+aeo-voc:LossExperienceSourceContract a voc:SchemeContract ;
+    fnd:hasIdentity aeo-voc:LossExperienceSourceContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Loss experience source scheme contract"@en ;
+    voc:constrainsProperty aeo:experienceSource ;
+    voc:boundScheme aeo-voc:LossExperienceSourceScheme .
+
+aeo-voc:LossStatusContract a voc:SchemeContract ;
+    fnd:hasIdentity aeo-voc:LossStatusContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Loss status scheme contract"@en ;
+    voc:constrainsProperty aeo:lossStatus ;
+    voc:boundScheme aeo-voc:LossStatusScheme .
+
+aeo-voc:CausePositionContract a voc:SchemeContract ;
+    fnd:hasIdentity aeo-voc:CausePositionContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Cause position scheme contract"@en ;
+    voc:constrainsProperty aeo:causePosition ;
+    voc:boundScheme aeo-voc:CausePositionScheme .
+
+aeo-voc:RequirementSourceContract a voc:SchemeContract ;
+    fnd:hasIdentity aeo-voc:RequirementSourceContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Requirement source scheme contract"@en ;
+    voc:constrainsProperty aeo:requirementSource ;
+    voc:boundScheme aeo-voc:RequirementSourceScheme .
+
+aeo-voc:RequirementStrengthContract a voc:SchemeContract ;
+    fnd:hasIdentity aeo-voc:RequirementStrengthContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Requirement strength scheme contract"@en ;
+    voc:constrainsProperty aeo:requirementStrength ;
+    voc:boundScheme aeo-voc:RequirementStrengthScheme .
+
+aeo-voc:MeasureContract a voc:SchemeContract ;
+    fnd:hasIdentity aeo-voc:MeasureContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Measure scheme contract"@en ;
+    voc:constrainsProperty aeo:measure ;
+    voc:boundScheme aeo-voc:MeasureScheme .
+
+aeo-voc:CoverRelationContract a voc:SchemeContract ;
+    fnd:hasIdentity aeo-voc:CoverRelationContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Cover relation scheme contract"@en ;
+    voc:constrainsProperty aeo:coverRelation ;
+    voc:boundScheme aeo-voc:CoverRelationScheme .
+
+aeo-voc:TriggerBasisContract a voc:SchemeContract ;
+    fnd:hasIdentity aeo-voc:TriggerBasisContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Trigger basis scheme contract"@en ;
+    voc:constrainsProperty aeo:triggerBasis ;
+    voc:boundScheme aeo-voc:TriggerBasisScheme .
+
+aeo-voc:CoverHistoryEventKindContract a voc:SchemeContract ;
+    fnd:hasIdentity aeo-voc:CoverHistoryEventKindContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Cover history event kind scheme contract"@en ;
+    voc:constrainsProperty aeo:historyEventKind ;
+    voc:boundScheme aeo-voc:CoverHistoryEventKindScheme .
+
+aeo-voc:FinancialMetricKindContract a voc:SchemeContract ;
+    fnd:hasIdentity aeo-voc:FinancialMetricKindContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Financial metric kind scheme contract"@en ;
+    voc:constrainsProperty aeo:financialMetricKind ;
+    voc:boundScheme aeo-voc:FinancialMetricKindScheme .
+
+#################################################################
+#    Loss experience source
+#################################################################
+
+aeo-voc:InsuredDeclared a skos:Concept ; skos:inScheme aeo-voc:LossExperienceSourceScheme ; skos:topConceptOf aeo-voc:LossExperienceSourceScheme ;
+    skos:prefLabel "Insured declared"@en ; skos:definition "The insured's own statement of its losses."@en ;
+    skos:note "Common underwriting submission usage."@en .
+aeo-voc:InsurerLossRun a skos:Concept ; skos:inScheme aeo-voc:LossExperienceSourceScheme ; skos:topConceptOf aeo-voc:LossExperienceSourceScheme ;
+    skos:prefLabel "Insurer loss run"@en ; skos:definition "A statement of the claims an insurer holds on the insured, as the insurer issued it."@en ;
+    skos:note "Common underwriting submission usage. Usually the most reliable source for the period it covers."@en .
+aeo-voc:ClaimsAdministratorReport a skos:Concept ; skos:inScheme aeo-voc:LossExperienceSourceScheme ; skos:topConceptOf aeo-voc:LossExperienceSourceScheme ;
+    skos:prefLabel "Claims administrator report"@en ; skos:definition "A report from a third party administrator that handles claims for the insured or an insurer."@en ;
+    skos:note "Common underwriting submission usage."@en .
+aeo-voc:BrokerRecord a skos:Concept ; skos:inScheme aeo-voc:LossExperienceSourceScheme ; skos:topConceptOf aeo-voc:LossExperienceSourceScheme ;
+    skos:prefLabel "Broker record"@en ; skos:definition "A record of the insured's losses held by its broker."@en ;
+    skos:note "Common underwriting submission usage."@en .
+aeo-voc:LossExperienceSourceScheme skos:hasTopConcept aeo-voc:InsuredDeclared , aeo-voc:InsurerLossRun , aeo-voc:ClaimsAdministratorReport , aeo-voc:BrokerRecord .
+
+#################################################################
+#    Loss status
+#################################################################
+
+aeo-voc:Open a skos:Concept ; skos:inScheme aeo-voc:LossStatusScheme ; skos:topConceptOf aeo-voc:LossStatusScheme ;
+    skos:prefLabel "Open"@en ; skos:definition "The claim is open and may still change."@en ;
+    skos:note "Follows common claims status practice, as in the ACORD claim status codes, generalised to six statuses."@en .
+aeo-voc:Closed a skos:Concept ; skos:inScheme aeo-voc:LossStatusScheme ; skos:topConceptOf aeo-voc:LossStatusScheme ;
+    skos:prefLabel "Closed"@en ; skos:definition "The claim is closed after payment."@en ;
+    skos:note "Follows common claims status practice, as in the ACORD claim status codes."@en .
+aeo-voc:ClosedWithoutPayment a skos:Concept ; skos:inScheme aeo-voc:LossStatusScheme ; skos:topConceptOf aeo-voc:LossStatusScheme ;
+    skos:prefLabel "Closed without payment"@en ; skos:definition "The claim is closed and nothing was paid."@en ;
+    skos:note "Follows common claims status practice, as in the ACORD claim status codes. Distinguishes a claim closed with no payment from one closed after payment."@en .
+aeo-voc:Reopened a skos:Concept ; skos:inScheme aeo-voc:LossStatusScheme ; skos:topConceptOf aeo-voc:LossStatusScheme ;
+    skos:prefLabel "Reopened"@en ; skos:definition "A closed claim was opened again."@en ;
+    skos:note "Follows common claims status practice, as in the ACORD claim status codes."@en .
+aeo-voc:InLitigation a skos:Concept ; skos:inScheme aeo-voc:LossStatusScheme ; skos:topConceptOf aeo-voc:LossStatusScheme ;
+    skos:prefLabel "In litigation"@en ; skos:definition "The claim is the subject of court or arbitration proceedings."@en ;
+    skos:note "Common claims practice."@en .
+aeo-voc:InRecovery a skos:Concept ; skos:inScheme aeo-voc:LossStatusScheme ; skos:topConceptOf aeo-voc:LossStatusScheme ;
+    skos:prefLabel "In recovery"@en ; skos:definition "The claim is paid and the insurer is pursuing recovery from a third party or from salvage."@en ;
+    skos:note "Common claims practice. Recoveries are stated in aeo:recovered."@en .
+aeo-voc:LossStatusScheme skos:hasTopConcept aeo-voc:Open , aeo-voc:Closed , aeo-voc:ClosedWithoutPayment , aeo-voc:Reopened , aeo-voc:InLitigation , aeo-voc:InRecovery .
+
+#################################################################
+#    Cause position
+#################################################################
+
+aeo-voc:Initiating a skos:Concept ; skos:inScheme aeo-voc:CausePositionScheme ; skos:topConceptOf aeo-voc:CausePositionScheme ;
+    skos:prefLabel "Initiating"@en ; skos:definition "The first link of the chain, the one that set the others in motion."@en ;
+    skos:note "English law's proximate cause doctrine distinguishes the dominant or effective cause from the others (Leyland Shipping Co Ltd v Norwich Union Fire Insurance Society Ltd [1918] AC 350). The initiating link is the first in time, which need not be the dominant one."@en .
+aeo-voc:Intermediate a skos:Concept ; skos:inScheme aeo-voc:CausePositionScheme ; skos:topConceptOf aeo-voc:CausePositionScheme ;
+    skos:prefLabel "Intermediate"@en ; skos:definition "A link between the initiating and the proximate link."@en ;
+    skos:note "Common loss adjusting usage. Several links can be intermediate."@en .
+aeo-voc:Proximate a skos:Concept ; skos:inScheme aeo-voc:CausePositionScheme ; skos:topConceptOf aeo-voc:CausePositionScheme ;
+    skos:prefLabel "Proximate"@en ; skos:definition "The link a contract may treat as the cause of the loss."@en ;
+    skos:note "Follows English law's dominant or effective cause (Leyland Shipping Co Ltd v Norwich Union Fire Insurance Society Ltd [1918] AC 350), concurrent causes (Wayne Tank and Pump Co Ltd v Employers Liability Assurance Corp Ltd [1974] QB 57) and the US efficient proximate cause doctrine (Sabella v Wisler, 59 Cal.2d 21 (1963)). Several links can be proximate under concurrent causation, and which link a contract reads is the contract's rule, not this scheme's."@en .
+aeo-voc:CausePositionScheme skos:hasTopConcept aeo-voc:Initiating , aeo-voc:Intermediate , aeo-voc:Proximate .
+
+#################################################################
+#    Requirement source
+#################################################################
+
+aeo-voc:RiskAppetite a skos:Concept ; skos:inScheme aeo-voc:RequirementSourceScheme ; skos:topConceptOf aeo-voc:RequirementSourceScheme ;
+    skos:prefLabel "Risk appetite"@en ; skos:definition "The insured's own statement of how much risk it will retain."@en ;
+    skos:note "Common risk management usage."@en .
+aeo-voc:LenderCovenant a skos:Concept ; skos:inScheme aeo-voc:RequirementSourceScheme ; skos:topConceptOf aeo-voc:RequirementSourceScheme ;
+    skos:prefLabel "Lender covenant"@en ; skos:definition "A covenant in a loan or facility agreement requiring cover."@en ;
+    skos:note "Common secured lending usage."@en .
+aeo-voc:Regulation a skos:Concept ; skos:inScheme aeo-voc:RequirementSourceScheme ; skos:topConceptOf aeo-voc:RequirementSourceScheme ;
+    skos:prefLabel "Regulation"@en ; skos:definition "A law or regulator's rule requiring cover."@en ;
+    skos:note "Common usage."@en .
+aeo-voc:LeaseOrContract a skos:Concept ; skos:inScheme aeo-voc:RequirementSourceScheme ; skos:topConceptOf aeo-voc:RequirementSourceScheme ;
+    skos:prefLabel "Lease or contract"@en ; skos:definition "A lease or commercial contract requiring cover."@en ;
+    skos:note "Common commercial contract usage."@en .
+aeo-voc:BoardMandate a skos:Concept ; skos:inScheme aeo-voc:RequirementSourceScheme ; skos:topConceptOf aeo-voc:RequirementSourceScheme ;
+    skos:prefLabel "Board mandate"@en ; skos:definition "A resolution or mandate of the insured's board."@en ;
+    skos:note "Common corporate governance usage."@en .
+aeo-voc:RequirementSourceScheme skos:hasTopConcept aeo-voc:RiskAppetite , aeo-voc:LenderCovenant , aeo-voc:Regulation , aeo-voc:LeaseOrContract , aeo-voc:BoardMandate .
+
+#################################################################
+#    Requirement strength
+#################################################################
+
+aeo-voc:Mandatory a skos:Concept ; skos:inScheme aeo-voc:RequirementStrengthScheme ; skos:topConceptOf aeo-voc:RequirementStrengthScheme ;
+    skos:prefLabel "Mandatory"@en ; skos:definition "The requirement must be met."@en ;
+    skos:note "Follows RFC 2119's MUST, as an analogy for the force of a client's requirement."@en .
+aeo-voc:Preferred a skos:Concept ; skos:inScheme aeo-voc:RequirementStrengthScheme ; skos:topConceptOf aeo-voc:RequirementStrengthScheme ;
+    skos:prefLabel "Preferred"@en ; skos:definition "The requirement should be met unless there is reason not to."@en ;
+    skos:note "Follows RFC 2119's SHOULD, as an analogy for the force of a client's requirement."@en .
+aeo-voc:Optional a skos:Concept ; skos:inScheme aeo-voc:RequirementStrengthScheme ; skos:topConceptOf aeo-voc:RequirementStrengthScheme ;
+    skos:prefLabel "Optional"@en ; skos:definition "The requirement may be met."@en ;
+    skos:note "Follows RFC 2119's MAY, as an analogy for the force of a client's requirement."@en .
+aeo-voc:RequirementStrengthScheme skos:hasTopConcept aeo-voc:Mandatory , aeo-voc:Preferred , aeo-voc:Optional .
+
+#################################################################
+#    Measure
+#################################################################
+
+aeo-voc:Limit a skos:Concept ; skos:inScheme aeo-voc:MeasureScheme ; skos:topConceptOf aeo-voc:MeasureScheme ;
+    skos:prefLabel "Limit"@en ; skos:definition "The most the cover pays."@en ;
+    skos:note "Common insurance usage."@en ;
+    aeo:measureSpace icm-voc:Money .
+aeo-voc:SubLimit a skos:Concept ; skos:inScheme aeo-voc:MeasureScheme ; skos:topConceptOf aeo-voc:MeasureScheme ;
+    skos:prefLabel "Sub-limit"@en ; skos:definition "A limit for one peril, location or head of loss within the overall limit."@en ;
+    skos:note "Common insurance usage."@en ;
+    aeo:measureSpace icm-voc:Money .
+aeo-voc:Attachment a skos:Concept ; skos:inScheme aeo-voc:MeasureScheme ; skos:topConceptOf aeo-voc:MeasureScheme ;
+    skos:prefLabel "Attachment"@en ; skos:definition "The loss amount above which a layer of cover starts to pay."@en ;
+    skos:note "Common reinsurance and excess cover usage."@en ;
+    aeo:measureSpace icm-voc:Money .
+aeo-voc:Retention a skos:Concept ; skos:inScheme aeo-voc:MeasureScheme ; skos:topConceptOf aeo-voc:MeasureScheme ;
+    skos:prefLabel "Retention"@en ; skos:definition "The amount of each loss the insured bears."@en ;
+    skos:note "Common insurance usage, covering deductibles and self-insured retentions."@en ;
+    aeo:measureSpace icm-voc:Money .
+aeo-voc:IndemnityPeriod a skos:Concept ; skos:inScheme aeo-voc:MeasureScheme ; skos:topConceptOf aeo-voc:MeasureScheme ;
+    skos:prefLabel "Indemnity period"@en ; skos:definition "The period over which business interruption loss is covered."@en ;
+    skos:note "Common business interruption usage. Stated in a duration, in months through a calendar unit whose conversion is contextual (ADR-A94)."@en ;
+    aeo:measureSpace aeo-voc:Duration .
+aeo-voc:WaitingPeriod a skos:Concept ; skos:inScheme aeo-voc:MeasureScheme ; skos:topConceptOf aeo-voc:MeasureScheme ;
+    skos:prefLabel "Waiting period"@en ; skos:definition "The period after an event before cover begins to pay."@en ;
+    skos:note "Common business interruption usage, also called the time excess."@en ;
+    aeo:measureSpace aeo-voc:Duration .
+aeo-voc:CapacityShare a skos:Concept ; skos:inScheme aeo-voc:MeasureScheme ; skos:topConceptOf aeo-voc:MeasureScheme ;
+    skos:prefLabel "Capacity share"@en ; skos:definition "A share of the limit that a participant takes."@en ;
+    skos:note "Common placement usage. A share of the limit, on a proportion space."@en ;
+    aeo:measureSpace aeo-voc:MoneyShare .
+aeo-voc:NetRetainedLoss a skos:Concept ; skos:inScheme aeo-voc:MeasureScheme ; skos:topConceptOf aeo-voc:MeasureScheme ;
+    skos:prefLabel "Net retained loss"@en ; skos:definition "The loss the insured keeps after cover, at a stated return period."@en ;
+    skos:note "Common risk management usage. States aeo:atReturnPeriod."@en ;
+    aeo:measureSpace icm-voc:Money .
+aeo-voc:Premium a skos:Concept ; skos:inScheme aeo-voc:MeasureScheme ; skos:topConceptOf aeo-voc:MeasureScheme ;
+    skos:prefLabel "Premium"@en ; skos:definition "The price of the cover."@en ;
+    skos:note "Common insurance usage. For summary terms only: a requirement never constrains the premium, and the requirement shape rejects it."@en ;
+    aeo:measureSpace icm-voc:Money .
+aeo-voc:MeasureScheme skos:hasTopConcept aeo-voc:Limit , aeo-voc:SubLimit , aeo-voc:Attachment , aeo-voc:Retention , aeo-voc:IndemnityPeriod , aeo-voc:WaitingPeriod , aeo-voc:CapacityShare , aeo-voc:NetRetainedLoss , aeo-voc:Premium .
+
+#################################################################
+#    Cover relation
+#################################################################
+
+aeo-voc:Underlying a skos:Concept ; skos:inScheme aeo-voc:CoverRelationScheme ; skos:topConceptOf aeo-voc:CoverRelationScheme ;
+    skos:prefLabel "Underlying"@en ; skos:definition "The existing cover sits below the cover being placed."@en ;
+    skos:note "Common excess and umbrella usage."@en .
+aeo-voc:Alongside a skos:Concept ; skos:inScheme aeo-voc:CoverRelationScheme ; skos:topConceptOf aeo-voc:CoverRelationScheme ;
+    skos:prefLabel "Alongside"@en ; skos:definition "The existing cover runs beside the cover being placed."@en ;
+    skos:note "Common co-insurance and layered placement usage."@en .
+aeo-voc:Replaced a skos:Concept ; skos:inScheme aeo-voc:CoverRelationScheme ; skos:topConceptOf aeo-voc:CoverRelationScheme ;
+    skos:prefLabel "Replaced"@en ; skos:definition "The cover being placed replaces the existing cover."@en ;
+    skos:note "Common renewal and replacement usage."@en .
+aeo-voc:CoverRelationScheme skos:hasTopConcept aeo-voc:Underlying , aeo-voc:Alongside , aeo-voc:Replaced .
+
+#################################################################
+#    Trigger basis
+#################################################################
+
+aeo-voc:Indemnity a skos:Concept ; skos:inScheme aeo-voc:TriggerBasisScheme ; skos:topConceptOf aeo-voc:TriggerBasisScheme ;
+    skos:prefLabel "Indemnity"@en ; skos:definition "The cover pays the insured's actual loss."@en ;
+    skos:note "Common insurance usage."@en .
+aeo-voc:Parametric a skos:Concept ; skos:inScheme aeo-voc:TriggerBasisScheme ; skos:topConceptOf aeo-voc:TriggerBasisScheme ;
+    skos:prefLabel "Parametric"@en ; skos:definition "The cover pays on a measured parameter of an event, not on the loss."@en ;
+    skos:note "Common parametric insurance usage."@en .
+aeo-voc:IndustryLossIndex a skos:Concept ; skos:inScheme aeo-voc:TriggerBasisScheme ; skos:topConceptOf aeo-voc:TriggerBasisScheme ;
+    skos:prefLabel "Industry loss index"@en ; skos:definition "The cover pays on the size of an industry loss index for an event."@en ;
+    skos:note "Common insurance-linked securities and reinsurance usage."@en .
+aeo-voc:TriggerBasisScheme skos:hasTopConcept aeo-voc:Indemnity , aeo-voc:Parametric , aeo-voc:IndustryLossIndex .
+
+#################################################################
+#    Cover history event kind
+#################################################################
+
+aeo-voc:Declined a skos:Concept ; skos:inScheme aeo-voc:CoverHistoryEventKindScheme ; skos:topConceptOf aeo-voc:CoverHistoryEventKindScheme ;
+    skos:prefLabel "Declined"@en ; skos:definition "An insurer declined to offer cover."@en ;
+    skos:note "The UK Insurance Act 2015 sets the insured's duty of fair presentation (section 3) and the insurer's remedies (Schedule 1), and the prior cover questions of the ACORD 125 commercial application ask for these events."@en .
+aeo-voc:NonRenewed a skos:Concept ; skos:inScheme aeo-voc:CoverHistoryEventKindScheme ; skos:topConceptOf aeo-voc:CoverHistoryEventKindScheme ;
+    skos:prefLabel "Non-renewed"@en ; skos:definition "An insurer chose not to renew the cover."@en ;
+    skos:note "The UK Insurance Act 2015 sets the insured's duty of fair presentation (section 3) and the insurer's remedies (Schedule 1), and the prior cover questions of the ACORD 125 commercial application ask for these events."@en .
+aeo-voc:Cancelled a skos:Concept ; skos:inScheme aeo-voc:CoverHistoryEventKindScheme ; skos:topConceptOf aeo-voc:CoverHistoryEventKindScheme ;
+    skos:prefLabel "Cancelled"@en ; skos:definition "The cover was cancelled before its expiry."@en ;
+    skos:note "The UK Insurance Act 2015 sets the insured's duty of fair presentation (section 3) and the insurer's remedies (Schedule 1), and the prior cover questions of the ACORD 125 commercial application ask for these events."@en .
+aeo-voc:SpecialTermsImposed a skos:Concept ; skos:inScheme aeo-voc:CoverHistoryEventKindScheme ; skos:topConceptOf aeo-voc:CoverHistoryEventKindScheme ;
+    skos:prefLabel "Special terms imposed"@en ; skos:definition "An insurer offered cover only on special terms."@en ;
+    skos:note "The UK Insurance Act 2015 sets the insured's duty of fair presentation (section 3) and the insurer's remedies (Schedule 1), and the prior cover questions of the ACORD 125 commercial application ask for these events."@en .
+aeo-voc:Avoided a skos:Concept ; skos:inScheme aeo-voc:CoverHistoryEventKindScheme ; skos:topConceptOf aeo-voc:CoverHistoryEventKindScheme ;
+    skos:prefLabel "Avoided"@en ; skos:definition "An insurer avoided the cover for non-disclosure or misrepresentation."@en ;
+    skos:note "The UK Insurance Act 2015 sets the insured's duty of fair presentation (section 3) and the insurer's remedies (Schedule 1), and the prior cover questions of the ACORD 125 commercial application ask for these events. Avoidance is one of the Schedule 1 remedies."@en .
+aeo-voc:CoverHistoryEventKindScheme skos:hasTopConcept aeo-voc:Declined , aeo-voc:NonRenewed , aeo-voc:Cancelled , aeo-voc:SpecialTermsImposed , aeo-voc:Avoided .
+
+#################################################################
+#    Financial metric kind
+#################################################################
+
+aeo-voc:RevenueMetric a skos:Concept ; skos:inScheme aeo-voc:FinancialMetricKindScheme ; skos:topConceptOf aeo-voc:FinancialMetricKindScheme ;
+    skos:prefLabel "Revenue"@en ; skos:definition "Income from the entity's ordinary activities."@en ;
+    skos:note "Follows IFRS 15."@en .
+aeo-voc:GrossProfitMetric a skos:Concept ; skos:inScheme aeo-voc:FinancialMetricKindScheme ; skos:topConceptOf aeo-voc:FinancialMetricKindScheme ;
+    skos:prefLabel "Gross profit"@en ; skos:definition "Revenue less the cost of what was sold."@en ;
+    skos:note "Follows the statement lines of IAS 1. Gross profit is not a required line, so the source's definition is evidence."@en .
+aeo-voc:Ebitda a skos:Concept ; skos:inScheme aeo-voc:FinancialMetricKindScheme ; skos:topConceptOf aeo-voc:FinancialMetricKindScheme ;
+    skos:prefLabel "EBITDA"@en ; skos:definition "Earnings before interest, tax, depreciation and amortisation."@en ;
+    skos:note "Not defined by IFRS, so its source's definition is evidence."@en .
+aeo-voc:NetIncome a skos:Concept ; skos:inScheme aeo-voc:FinancialMetricKindScheme ; skos:topConceptOf aeo-voc:FinancialMetricKindScheme ;
+    skos:prefLabel "Net income"@en ; skos:definition "Profit after all expenses and tax."@en ;
+    skos:note "Follows the statement lines of IAS 1. "@en .
+aeo-voc:Equity a skos:Concept ; skos:inScheme aeo-voc:FinancialMetricKindScheme ; skos:topConceptOf aeo-voc:FinancialMetricKindScheme ;
+    skos:prefLabel "Equity"@en ; skos:definition "The residual interest in the entity's assets after liabilities."@en ;
+    skos:note "Follows the statement lines of IAS 1. "@en .
+aeo-voc:TotalAssets a skos:Concept ; skos:inScheme aeo-voc:FinancialMetricKindScheme ; skos:topConceptOf aeo-voc:FinancialMetricKindScheme ;
+    skos:prefLabel "Total assets"@en ; skos:definition "The sum of the entity's assets."@en ;
+    skos:note "Follows the statement lines of IAS 1. "@en .
+aeo-voc:Payroll a skos:Concept ; skos:inScheme aeo-voc:FinancialMetricKindScheme ; skos:topConceptOf aeo-voc:FinancialMetricKindScheme ;
+    skos:prefLabel "Payroll"@en ; skos:definition "The entity's total remuneration of its employees."@en ;
+    skos:note "Common liability and workers compensation rating usage."@en .
+aeo-voc:HeadcountMetric a skos:Concept ; skos:inScheme aeo-voc:FinancialMetricKindScheme ; skos:topConceptOf aeo-voc:FinancialMetricKindScheme ;
+    skos:prefLabel "Headcount"@en ; skos:definition "The number of people the entity employs. A count, not money."@en ;
+    skos:note "Common liability rating usage."@en .
+aeo-voc:MarketCapitalisation a skos:Concept ; skos:inScheme aeo-voc:FinancialMetricKindScheme ; skos:topConceptOf aeo-voc:FinancialMetricKindScheme ;
+    skos:prefLabel "Market capitalisation"@en ; skos:definition "The market value of the entity's listed equity."@en ;
+    skos:note "Common directors and officers underwriting usage."@en .
+aeo-voc:Fees a skos:Concept ; skos:inScheme aeo-voc:FinancialMetricKindScheme ; skos:topConceptOf aeo-voc:FinancialMetricKindScheme ;
+    skos:prefLabel "Fees"@en ; skos:definition "Fees the entity earns for professional services."@en ;
+    skos:note "Common professional indemnity rating usage."@en .
+aeo-voc:Turnover a skos:Concept ; skos:inScheme aeo-voc:FinancialMetricKindScheme ; skos:topConceptOf aeo-voc:FinancialMetricKindScheme ;
+    skos:prefLabel "Turnover"@en ; skos:definition "Sales or receipts, as a rating basis."@en ;
+    skos:note "Common liability rating usage. Distinct from IFRS 15 revenue where a policy defines turnover its own way."@en .
+aeo-voc:FinancialMetricKindScheme skos:hasTopConcept aeo-voc:RevenueMetric , aeo-voc:GrossProfitMetric , aeo-voc:Ebitda , aeo-voc:NetIncome , aeo-voc:Equity , aeo-voc:TotalAssets , aeo-voc:Payroll , aeo-voc:HeadcountMetric , aeo-voc:MarketCapitalisation , aeo-voc:Fees , aeo-voc:Turnover .
+
 # ==== END README SECTION losses-requirements-cover ====
 
 # ==== BEGIN README SECTION liability (AIR-4.5) ====

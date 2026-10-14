@@ -135,7 +135,7 @@ scheme (§7, §8):
     owl:imports <http://www.w3.org/2004/02/skos/core> ,
                 <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
                 <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.8.0> ,
-                <https://www.nebularis.org/neuro-semantic/insurance/common/0.5.0> .
+                <https://www.nebularis.org/neuro-semantic/insurance/common/0.6.0> .
 
 #################################################################
 #    Kind and part (ADR-A99 decision 4, PV3). iso-thes: terms are

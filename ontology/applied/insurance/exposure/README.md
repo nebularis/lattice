@@ -41,8 +41,8 @@ flowchart TB
     RO -->|pty:occupiedBy| LE
 ```
 
-Exposure imports Foundation, Vocabulary, Quantification, Party and `insurance/common` (which
-brings `classification/`), all by exact version IRI. It does not import the `insurance/peril` spec, which no term here uses: perils are
+Exposure imports Foundation, Vocabulary, Quantification, Party, Eligibility (for `elg:AdmissionProfile`, AIR-4.4)
+and `insurance/common` (which brings `classification/`), all by exact version IRI. It does not import the `insurance/peril` spec, which no term here uses: perils are
 `icm:peril` values, and only the vocabulary imports `insurance/peril`'s vocabulary, for the cause
 concepts it links. Imported in turn
 by later Phase 4 slices and, eventually, the contract module (Phase 5).
@@ -56,6 +56,7 @@ by later Phase 4 slices and, eventually, the contract module (Phase 5).
 @prefix pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#> .
 @prefix cls:  <https://www.nebularis.org/neuro-semantic/lattice/applied/classification#> .
 @prefix icm:  <https://www.nebularis.org/neuro-semantic/insurance/common#> .
+@prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
 @prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix owl:  <http://www.w3.org/2002/07/owl#> .
@@ -152,7 +153,8 @@ schedule versions, not one snapshot.
                 <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> ,
                 <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.8.0> ,
                 <https://www.nebularis.org/neuro-semantic/lattice/party/0.9.0> ,
-                <https://www.nebularis.org/neuro-semantic/insurance/common/0.5.0> .
+                <https://www.nebularis.org/neuro-semantic/insurance/common/0.6.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.12.0> .
 
 #################################################################
 #    Identity classes (AIR-4.1). Each versioned class below has
@@ -188,7 +190,7 @@ aeo:ExposureSet a owl:Class ;
         [ a owl:Restriction ; owl:onProperty aeo:reportingUnit ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
     rdfs:label "Exposure set"@en ;
     rdfs:comment "A versioned snapshot of one insured's schedule, as of a date." ;
-    fnd:utility "Subject: an exposure set version. Its identity (aeo:ExposureIdentity) follows the schedule across renewals. Governance state is Draft while assembled, Active when submitted, Superseded by the next version. Link members with aeo:hasLocation, aeo:hasAsset, aeo:hasInterest, aeo:hasValuation, aeo:hasAssessment, aeo:hasDependency and aeo:hasPerilMetric." .
+    fnd:utility "Subject: an exposure set version. Its identity (aeo:ExposureIdentity) follows the schedule across renewals. Governance state is Draft while assembled, Active when submitted, Superseded by the next version. Link members with aeo:hasLocation, aeo:hasAsset, aeo:hasInterest, aeo:hasValuation, aeo:hasAssessment, aeo:hasDependency, aeo:hasPerilMetric, aeo:hasLossExperience, aeo:hasRequirement, aeo:hasExistingCover, aeo:hasCoverHistoryEvent and aeo:hasFinancialMetric." .
 
 aeo:reportingUnit a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:domain aeo:ExposureSet ; rdfs:range qnt:Unit ;
@@ -962,6 +964,552 @@ aeo:scheduleGroup a owl:ObjectProperty ;
 [] a owl:AllDisjointClasses ;
     owl:members ( aeo:ExposureSet aeo:Location aeo:Asset aeo:Interest aeo:Valuation
                   aeo:Dependency aeo:PerilMetric aeo:ExposureUnit aeo:MetricComparison ) .
+```
+
+### 4.4 Losses, requirements, cover and financial metrics (AIR-4.4)
+
+Four groups of terms. Each is an evidenced fact about an insured. None of them computes cover.
+
+**Loss experience.** An `aeo:LossExperience` is one source's account of an insured's losses over a
+period, which is its temporal scope. It may be stated complete (`aeo:statedComplete`). The losses
+belong to the experience, not directly to the exposure set, so that an experience stated complete
+with no records says "no losses in the period" while an absent experience says nothing. An
+`aeo:LossRecord` states a date, a status and the amounts the source recorded (gross, deductible
+applied, paid, reserved, incurred and recovered), all in one currency, and links to the
+`aeo:LossCause` nodes of its cause chain. A loss event (`icm:LossEvent`, in `insurance/common`) is
+shared by the records it caused.
+
+**Cause chains.** A loss cause is one link of the chain, with its peril, its position in the chain
+(initiating, intermediate or proximate), and the agency and mechanisms the source recorded. These
+are what the source said, and a source may record a mechanism or agency that differs from the cause
+concept's typical value. The effective agency and mechanisms (`aeo:effectiveAgency`,
+`aeo:effectiveMechanism`) are what a check reads. They are written by `effective_characteristics`
+in `tools/exposure_derivations.py` and never by hand: a recorded value is copied, and only where
+nothing is recorded is the cause concept's typical value used, with an `aeo:DefaultedCharacteristic`
+beside it so that a reviewer sees which values were defaulted. A cause concept with no typical
+values (a drafter's flat code) leaves the effective value empty, and a check reading it is
+Undetermined (sketch §5.12).
+
+**Coverage requirements.** An `aeo:CoverageRequirement` states what a client, lender or regulator
+requires of the cover on a set of exposure, with a source, a strength and one or more measure
+constraints (a limit of at least some amount, a retention of at most some amount, a net retained
+loss at a return period not above a share of equity). Its scope is an Eligibility admission profile
+over exposure units (AIR-4.3), so "flood exposure in a special flood hazard area" is a condition
+and not a list. A relative bound has no construct in Quantification (an anchor binding derives a
+range from a nominal value and offsets, which is a different thing), so a bound relative to a
+metric is on a proportion space (ADR-A93) and names the metric with `aeo:relativeTo`. The link from
+a requirement to the obligation it arises from is not built: Instrument is being rewritten, and
+Phase 5 adds it. `aeo:owedTo` names the obligee until then.
+
+**Existing cover, cover history and financial metrics.** An `aeo:ExistingCover` records a policy
+period, how it relates to the cover being placed (underlying, alongside or replaced), and either a
+reference to the contract, which the contract module owns, or summary terms (the expiring limit,
+retention or premium) when the contract is not in the graph. An `aeo:CoverHistoryEvent` records a
+declinature, a non-renewal, a cancellation, special terms or a risk avoided, with its date. An
+`aeo:FinancialMetric` records a figure about an entity for a reporting period, for example revenue
+by territory, or the equity a requirement's bound is relative to.
+
+```mermaid
+classDiagram
+    class LossExperience["aeo:LossExperience"] {
+        fnd:TemporallyScoped
+        aeo:experienceOf 1
+        aeo:experienceSource 1
+        aeo:statedComplete 0..1
+    }
+    class LossRecord["aeo:LossRecord"] {
+        aeo:lossDate 1
+        aeo:lossStatus 1
+        aeo:paid 0..1
+        aeo:incurred 0..1
+    }
+    class LossCause["aeo:LossCause"] {
+        aeo:peril 1
+        aeo:causePosition 1
+        aeo:agency 0..1
+        aeo:effectiveAgency 0..1
+    }
+    class DefaultedCharacteristic["aeo:DefaultedCharacteristic"] {
+        fnd:DerivedArtefact
+        aeo:defaultedOn 1
+        aeo:defaultedProperty 1
+    }
+    class CoverageRequirement["aeo:CoverageRequirement"] {
+        aeo:requirementSource 1
+        aeo:requirementStrength 1
+        aeo:requiredMeasure 1..*
+        aeo:requirementScope 0..1
+    }
+    class MeasureConstraint["aeo:MeasureConstraint"] {
+        aeo:measure 1
+        aeo:bound 1
+        aeo:relativeTo 0..1
+    }
+    LossExperience --> LossRecord : aeo:hasLossRecord
+    LossRecord --> LossCause : aeo:hasCause
+    DefaultedCharacteristic --> LossCause : aeo:defaultedOn
+    CoverageRequirement --> MeasureConstraint : aeo:requiredMeasure
+```
+
+```turtle-spec
+#################################################################
+#    Loss experience and losses (AIR-4.4, sketch §5.12)
+#################################################################
+
+aeo:LossExperience a owl:Class ;
+    rdfs:subClassOf fnd:Evidenced , fnd:TemporallyScoped ,
+        [ a owl:Restriction ; owl:onProperty aeo:experienceOf ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:experienceSource ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:statedComplete ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
+    rdfs:label "Loss experience"@en ;
+    rdfs:comment "One source's account of an insured's losses over a period." ;
+    fnd:utility "Subject: a loss experience. Its temporal scope is the period it covers. Exactly one entity and one source. If it is stated complete, an experience with no loss records says there were no losses in the period. An insured with no experience at all says nothing. Link it to its exposure set with aeo:hasLossExperience and its records with aeo:hasLossRecord." .
+
+aeo:experienceOf a owl:ObjectProperty ;
+    rdfs:domain aeo:LossExperience ; rdfs:range aeo:LegalEntity ;
+    rdfs:label "experience of"@en ;
+    rdfs:comment "The legal entity whose losses the experience accounts for." ;
+    fnd:utility "Subject: a loss experience. Value: an aeo:LegalEntity. Exactly one." .
+
+aeo:experienceSource a owl:ObjectProperty ;
+    rdfs:domain aeo:LossExperience ; rdfs:range skos:Concept ;
+    rdfs:label "experience source"@en ;
+    rdfs:comment "Who gave the account (the insured, an insurer's loss run, a claims administrator, a broker)." ;
+    fnd:utility "Subject: a loss experience. Value: a concept bound by aeo-voc:LossExperienceSourceContract. Exactly one." .
+
+aeo:statedComplete a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:LossExperience ; rdfs:range xsd:boolean ;
+    rdfs:label "stated complete"@en ;
+    rdfs:comment "Whether the source states the account lists every loss in the period." ;
+    fnd:utility "Subject: a loss experience. Value: true when the source states the account complete. At most one. Absent says the account may be partial." .
+
+aeo:classOfBusiness a owl:ObjectProperty ;
+    rdfs:subPropertyOf icm:classOfBusiness ;
+    rdfs:range skos:Concept ;
+    rdfs:label "class of business"@en ;
+    rdfs:comment "The class or line of business something is under." ;
+    fnd:utility "Subject: a loss experience, loss record, coverage requirement, existing cover or cover history event. Value: a concept bound by insurance/common's icm-voc:ClassOfBusinessContract. Not functional on an experience, requirement, cover or event, at most one on a loss record. Specialises icm:classOfBusiness." .
+
+aeo:hasLossExperience a owl:ObjectProperty ;
+    rdfs:domain aeo:ExposureSet ; rdfs:range aeo:LossExperience ;
+    rdfs:label "has loss experience"@en ;
+    rdfs:comment "A loss experience listed in this exposure set version." ;
+    fnd:utility "Subject: an exposure set. Value: one of its loss experiences. Not inverse functional, for the same reason as aeo:hasLocation (TD-49)." .
+
+aeo:hasLossRecord a owl:ObjectProperty ;
+    rdfs:domain aeo:LossExperience ; rdfs:range aeo:LossRecord ;
+    rdfs:label "has loss record"@en ;
+    rdfs:comment "A loss record in this loss experience." ;
+    fnd:utility "Subject: a loss experience. Value: one of its loss records. Not inverse functional (TD-49): a later experience from the same source may list a record unchanged." .
+
+aeo:LossRecord a owl:Class ;
+    rdfs:subClassOf fnd:Evidenced , fnd:NaturallyKeyed ,
+        [ a owl:Restriction ; owl:onProperty aeo:lossDate ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:lossStatus ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
+    rdfs:label "Loss record"@en ;
+    rdfs:comment "One loss as a source recorded it." ;
+    fnd:utility "Subject: a loss record. A date, a status, the amounts the source recorded (all in one currency), the line it was paid under, the loss event it belongs to, and the links of its cause chain. Its claim reference is a fnd:naturalKey." .
+
+aeo:lossDate a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:LossRecord ; rdfs:range xsd:date ;
+    rdfs:label "loss date"@en ;
+    rdfs:comment "The date of the loss." ;
+    fnd:utility "Subject: a loss record. Value: an xsd:date. Exactly one, and within the temporal scope of the experience that lists the record (the loss-in-period shape)." .
+
+aeo:lossAt a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:LossRecord ; rdfs:range aeo:Location ;
+    rdfs:label "loss at"@en ;
+    rdfs:comment "The location the loss occurred at, where known." ;
+    fnd:utility "Subject: a loss record. Value: an aeo:Location. At most one." .
+
+aeo:lossStatus a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:LossRecord ; rdfs:range skos:Concept ;
+    rdfs:label "loss status"@en ;
+    rdfs:comment "Where the claim stands (open, closed, closed without payment, reopened, in litigation, in recovery)." ;
+    fnd:utility "Subject: a loss record. Value: a concept bound by aeo-voc:LossStatusContract. Exactly one." .
+
+aeo:lossEvent a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:LossRecord ; rdfs:range icm:LossEvent ;
+    rdfs:label "loss event"@en ;
+    rdfs:comment "The event in the world that caused the loss, where it belongs to one." ;
+    fnd:utility "Subject: a loss record. Value: an icm:LossEvent shared by every loss it caused. At most one." .
+
+aeo:hasCause a owl:ObjectProperty ;
+    rdfs:domain aeo:LossRecord ; rdfs:range aeo:LossCause ;
+    rdfs:label "has cause"@en ;
+    rdfs:comment "A link of the loss's cause chain." ;
+    fnd:utility "Subject: a loss record. Value: one of its loss causes, one node per link. Not functional." .
+
+aeo:consequence a owl:ObjectProperty ;
+    rdfs:subPropertyOf icm:consequence ;
+    rdfs:domain aeo:LossRecord ; rdfs:range skos:Concept ;
+    rdfs:label "consequence"@en ;
+    rdfs:comment "The head of loss the record is paid under." ;
+    fnd:utility "Subject: a loss record. Value: a consequence concept under insurance/common's consequence contract. Not functional. Specialises icm:consequence." .
+
+aeo:grossAmount a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:LossRecord ; rdfs:range qnt:Quantity ;
+    rdfs:label "gross amount"@en ;
+    rdfs:comment "The loss before the deductible." ;
+    fnd:utility "Subject: a loss record. Value: a money qnt:Quantity. At most one. Every money amount on a record is in one currency (the loss-record currency shape)." .
+
+aeo:deductibleApplied a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:LossRecord ; rdfs:range qnt:Quantity ;
+    rdfs:label "deductible applied"@en ;
+    rdfs:comment "The deductible taken off the gross loss." ;
+    fnd:utility "Subject: a loss record. Value: a money qnt:Quantity. At most one." .
+
+aeo:paid a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:LossRecord ; rdfs:range qnt:Quantity ;
+    rdfs:label "paid"@en ;
+    rdfs:comment "The amount paid." ;
+    fnd:utility "Subject: a loss record. Value: a money qnt:Quantity. At most one." .
+
+aeo:reserved a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:LossRecord ; rdfs:range qnt:Quantity ;
+    rdfs:label "reserved"@en ;
+    rdfs:comment "The amount reserved for payment still to come." ;
+    fnd:utility "Subject: a loss record. Value: a money qnt:Quantity. At most one." .
+
+aeo:incurred a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:LossRecord ; rdfs:range qnt:Quantity ;
+    rdfs:label "incurred"@en ;
+    rdfs:comment "The amount paid plus the amount reserved." ;
+    fnd:utility "Subject: a loss record. Value: a money qnt:Quantity. At most one. Equal to paid plus reserved when all three are present (the incurred shape)." .
+
+aeo:recovered a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:LossRecord ; rdfs:range qnt:Quantity ;
+    rdfs:label "recovered"@en ;
+    rdfs:comment "The amount recovered after payment, by subrogation or salvage." ;
+    fnd:utility "Subject: a loss record. Value: a money qnt:Quantity. At most one." .
+
+aeo:LossCause a owl:Class ;
+    rdfs:subClassOf fnd:Evidenced ,
+        [ a owl:Restriction ; owl:onProperty aeo:peril ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:causePosition ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:agency ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:effectiveAgency ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
+    rdfs:label "Loss cause"@en ;
+    rdfs:comment "One link of a loss's cause chain: a peril, its position in the chain, and the agency and mechanisms the source recorded." ;
+    fnd:utility "Subject: a loss cause. Exactly one peril and one position, at most one recorded agency, any number of recorded mechanisms. The effective agency and mechanisms are derived (tools/exposure_derivations.py, effective_characteristics), never written by hand. The recorded values are what the source said." .
+
+aeo:peril a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:subPropertyOf icm:peril ;
+    rdfs:domain aeo:LossCause ; rdfs:range skos:Concept ;
+    rdfs:label "peril"@en ;
+    rdfs:comment "The peril of this link of the cause chain." ;
+    fnd:utility "Subject: a loss cause. Value: a cause concept under insurance/common's peril contract. Exactly one. Specialises icm:peril." .
+
+aeo:causePosition a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:LossCause ; rdfs:range skos:Concept ;
+    rdfs:label "cause position"@en ;
+    rdfs:comment "Where this link stands in the chain (initiating, intermediate or proximate)." ;
+    fnd:utility "Subject: a loss cause. Value: a concept bound by aeo-voc:CausePositionContract. Exactly one. Several links can be proximate under concurrent causation, and which link a contract reads is the contract's rule, not this property's." .
+
+aeo:agency a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:subPropertyOf icm:agency ;
+    rdfs:domain aeo:LossCause ; rdfs:range skos:Concept ;
+    rdfs:label "agency"@en ;
+    rdfs:comment "The agency the source recorded for this link." ;
+    fnd:utility "Subject: a loss cause. Value: a concept under insurance/common's agency contract. At most one. What the source recorded, which may differ from the cause concept's typical agency. Specialises icm:agency." .
+
+aeo:mechanism a owl:ObjectProperty ;
+    rdfs:subPropertyOf icm:mechanism ;
+    rdfs:domain aeo:LossCause ; rdfs:range skos:Concept ;
+    rdfs:label "mechanism"@en ;
+    rdfs:comment "A mechanism of harm the source recorded for this link." ;
+    fnd:utility "Subject: a loss cause. Value: a concept under insurance/common's mechanism contract. Not functional. What the source recorded. Specialises icm:mechanism." .
+
+aeo:effectiveAgency a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:subPropertyOf icm:agency ;
+    rdfs:domain aeo:LossCause ; rdfs:range skos:Concept ;
+    rdfs:label "effective agency"@en ;
+    rdfs:comment "The agency a check reads: the recorded one, else the cause concept's typical one." ;
+    fnd:utility "Subject: a loss cause. Value: an agency concept. At most one. Written by effective_characteristics, never by hand. Eligibility bindings read this property." .
+
+aeo:effectiveMechanism a owl:ObjectProperty ;
+    rdfs:subPropertyOf icm:mechanism ;
+    rdfs:domain aeo:LossCause ; rdfs:range skos:Concept ;
+    rdfs:label "effective mechanism"@en ;
+    rdfs:comment "A mechanism a check reads: the recorded ones, else the cause concept's typical ones." ;
+    fnd:utility "Subject: a loss cause. Value: a mechanism concept. Not functional. Written by effective_characteristics, never by hand. Eligibility bindings read this property." .
+
+aeo:DefaultedCharacteristic a owl:Class ;
+    rdfs:subClassOf fnd:DerivedArtefact ,
+        [ a owl:Restriction ; owl:onProperty aeo:defaultedOn ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:defaultedProperty ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
+    rdfs:label "Defaulted characteristic"@en ;
+    rdfs:comment "Marks an effective value that was defaulted from the cause concept's typical value rather than copied from what the source recorded." ;
+    fnd:utility "Subject: a defaulted characteristic, one per defaulted effective property of a loss cause. Exactly one loss cause and one property (aeo:effectiveAgency or aeo:effectiveMechanism). prov:wasDerivedFrom names the cause concept whose typical value was used, and prov:wasGeneratedBy the derivation run." .
+
+aeo:defaultedOn a owl:ObjectProperty ;
+    rdfs:domain aeo:DefaultedCharacteristic ; rdfs:range aeo:LossCause ;
+    rdfs:label "defaulted on"@en ;
+    rdfs:comment "The loss cause whose effective value was defaulted." ;
+    fnd:utility "Subject: a defaulted characteristic. Value: an aeo:LossCause. Exactly one." .
+
+aeo:defaultedProperty a owl:ObjectProperty ;
+    rdfs:domain aeo:DefaultedCharacteristic ; rdfs:range rdf:Property ;
+    rdfs:label "defaulted property"@en ;
+    rdfs:comment "The effective property that was defaulted." ;
+    fnd:utility "Subject: a defaulted characteristic. Value: aeo:effectiveAgency or aeo:effectiveMechanism. Exactly one." .
+
+#################################################################
+#    Coverage requirements (AIR-4.4, sketch §5.13)
+#################################################################
+
+aeo:RequirementIdentity a owl:Class ;
+    rdfs:subClassOf fnd:PersistentIdentity ;
+    rdfs:label "Requirement identity"@en ;
+    rdfs:comment "The identity a coverage requirement keeps across revisions." ;
+    fnd:utility "Give every aeo:CoverageRequirement version fnd:hasIdentity an individual of this class." .
+
+aeo:CoverageRequirement a owl:Class ;
+    rdfs:subClassOf fnd:Version , fnd:Evidenced ,
+        [ a owl:Restriction ; owl:onProperty aeo:requirementSource ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:requirementStrength ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:requiredMeasure ; owl:minCardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:requirementScope ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:owedTo ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
+    rdfs:label "Coverage requirement"@en ;
+    rdfs:comment "What a client, lender, regulator or lease requires of the cover on a set of exposure." ;
+    fnd:utility "Subject: a coverage requirement version, with an aeo:RequirementIdentity. Exactly one source and one strength, at least one measure constraint, at most one scope and at most one obligee. It states a need, never what a contract insures. Link it to its exposure set with aeo:hasRequirement." .
+
+aeo:requirementSource a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:CoverageRequirement ; rdfs:range skos:Concept ;
+    rdfs:label "requirement source"@en ;
+    rdfs:comment "Where the requirement comes from (risk appetite, a lender covenant, a regulation, a lease or contract, a board mandate)." ;
+    fnd:utility "Subject: a coverage requirement. Value: a concept bound by aeo-voc:RequirementSourceContract. Exactly one." .
+
+aeo:requirementStrength a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:CoverageRequirement ; rdfs:range skos:Concept ;
+    rdfs:label "requirement strength"@en ;
+    rdfs:comment "How firmly the requirement is held (mandatory, preferred, optional)." ;
+    fnd:utility "Subject: a coverage requirement. Value: a concept bound by aeo-voc:RequirementStrengthContract. Exactly one." .
+
+aeo:requiredMeasure a owl:ObjectProperty ;
+    rdfs:domain aeo:CoverageRequirement ; rdfs:range aeo:MeasureConstraint ;
+    rdfs:label "required measure"@en ;
+    rdfs:comment "A measure of the cover and the bound the requirement puts on it." ;
+    fnd:utility "Subject: a coverage requirement. Value: an aeo:MeasureConstraint. At least one." .
+
+aeo:requirementScope a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:CoverageRequirement ; rdfs:range elg:AdmissionProfile ;
+    rdfs:label "requirement scope"@en ;
+    rdfs:comment "The exposure the requirement applies to, as an Eligibility admission profile over exposure units." ;
+    fnd:utility "Subject: a coverage requirement. Value: an elg:AdmissionProfile whose conditions are bound to subject class aeo:ExposureUnit (AIR-4.3), so the scope is evaluated over units computed for the perils it names. At most one. Absent says the requirement applies to the whole schedule." .
+
+aeo:owedTo a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:CoverageRequirement ; rdfs:range pty:RoleOccupancy ;
+    rdfs:label "owed to"@en ;
+    rdfs:comment "Who the requirement is owed to, as an occupancy of a role (a lender as mortgagee, for example)." ;
+    fnd:utility "Subject: a coverage requirement. Value: a pty:RoleOccupancy. At most one. Names the obligee until Phase 5 links a requirement to the obligation it arises from." .
+
+aeo:MeasureConstraint a owl:Class ;
+    rdfs:subClassOf
+        [ a owl:Restriction ; owl:onProperty aeo:measure ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:bound ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:atReturnPeriod ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:relativeTo ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
+    rdfs:label "Measure constraint"@en ;
+    rdfs:comment "A bound a requirement puts on one measure of the cover." ;
+    fnd:utility "Subject: a measure constraint. Exactly one measure and one bound, on the measure's value space (the measure-constraint shape). At most one return period, for a net retained loss, and at most one metric the bound is relative to." .
+
+aeo:measure a owl:ObjectProperty ;
+    rdfs:range skos:Concept ;
+    rdfs:label "measure"@en ;
+    rdfs:comment "Which measure of the cover a constraint or a summary term is about (limit, retention, indemnity period and others)." ;
+    fnd:utility "Subject: a measure constraint or a term summary. Value: a concept bound by aeo-voc:MeasureContract, each with an aeo:measureSpace. Exactly one on each." .
+
+aeo:bound a owl:ObjectProperty ;
+    rdfs:domain aeo:MeasureConstraint ; rdfs:range qnt:RangeSet ;
+    rdfs:label "bound"@en ;
+    rdfs:comment "The values of the measure the requirement allows." ;
+    fnd:utility "Subject: a measure constraint. Value: a qnt:RangeSet on the measure's value space (a limit of at least an amount is a range with a lower bound only). Exactly one." .
+
+aeo:atReturnPeriod a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:MeasureConstraint ; rdfs:range qnt:Quantity ;
+    rdfs:label "at return period"@en ;
+    rdfs:comment "The return period a net retained loss constraint is stated at." ;
+    fnd:utility "Subject: a measure constraint on aeo-voc:NetRetainedLoss. Value: a qnt:Quantity on aeo-voc:ReturnPeriodSpace. At most one." .
+
+aeo:relativeTo a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:MeasureConstraint ; rdfs:range aeo:FinancialMetric ;
+    rdfs:label "relative to"@en ;
+    rdfs:comment "The financial metric a relative bound is a share of." ;
+    fnd:utility "Subject: a measure constraint whose bound is on a proportion space (qnt:DerivedValueSpace). Value: an aeo:FinancialMetric, equity for example. At most one." .
+
+aeo:measureSpace a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain skos:Concept ; rdfs:range qnt:ValueSpace ;
+    rdfs:label "measure space"@en ;
+    rdfs:comment "The value space a measure concept's bounds and summary values are on." ;
+    fnd:utility "Subject: a measure concept. Value: the qnt:ValueSpace. Exactly one. Money for amounts, a duration for periods, a share of the limit for capacity." .
+
+aeo:hasRequirement a owl:ObjectProperty ;
+    rdfs:domain aeo:ExposureSet ; rdfs:range aeo:CoverageRequirement ;
+    rdfs:label "has requirement"@en ;
+    rdfs:comment "A coverage requirement listed in this exposure set version." ;
+    fnd:utility "Subject: an exposure set. Value: one of its coverage requirements. Not inverse functional, for the same reason as aeo:hasLocation (TD-49)." .
+
+#################################################################
+#    Existing cover and cover history (AIR-4.4, sketch §5.14)
+#################################################################
+
+aeo:ExistingCover a owl:Class ;
+    rdfs:subClassOf fnd:Evidenced , fnd:TemporallyScoped ,
+        [ a owl:Restriction ; owl:onProperty aeo:coverRelation ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:coverReference ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:triggerBasis ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
+    rdfs:label "Existing cover"@en ;
+    rdfs:comment "Cover already in place on the insured's exposure, for a policy period." ;
+    fnd:utility "Subject: an existing cover. Its temporal scope is the policy period. Exactly one relation to the cover being placed, at most one reference to the contract (which the contract module owns) and at most one trigger basis. Either a reference or summary terms should be present (the existing-cover evidence shape). Link it to its exposure set with aeo:hasExistingCover." .
+
+aeo:coverRelation a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:ExistingCover ; rdfs:range skos:Concept ;
+    rdfs:label "cover relation"@en ;
+    rdfs:comment "How the existing cover relates to the cover being placed (underlying, alongside or replaced)." ;
+    fnd:utility "Subject: an existing cover. Value: a concept bound by aeo-voc:CoverRelationContract. Exactly one." .
+
+aeo:coverReference a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:ExistingCover ; rdfs:range xsd:anyURI ;
+    rdfs:label "cover reference"@en ;
+    rdfs:comment "A reference to the existing cover's contract." ;
+    fnd:utility "Subject: an existing cover. Value: an xsd:anyURI naming the contract, which the contract module owns. At most one." .
+
+aeo:triggerBasis a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:ExistingCover ; rdfs:range skos:Concept ;
+    rdfs:label "trigger basis"@en ;
+    rdfs:comment "What sets the existing cover off (the insured's indemnity, a parametric index, an industry loss index)." ;
+    fnd:utility "Subject: an existing cover. Value: a concept bound by aeo-voc:TriggerBasisContract. At most one." .
+
+aeo:insurer a owl:ObjectProperty ;
+    rdfs:range pty:Actor ;
+    rdfs:label "insurer"@en ;
+    rdfs:comment "An insurer on the existing cover." ;
+    fnd:utility "Subject: an existing cover. Value: a pty:Actor. Not functional." .
+
+aeo:summaryTerm a owl:ObjectProperty ;
+    rdfs:domain aeo:ExistingCover ; rdfs:range aeo:TermSummary ;
+    rdfs:label "summary term"@en ;
+    rdfs:comment "A term of the existing cover stated as a summary figure, where the contract is not in the graph." ;
+    fnd:utility "Subject: an existing cover. Value: an aeo:TermSummary (the expiring limit, retention or premium). Not functional." .
+
+aeo:TermSummary a owl:Class ;
+    rdfs:subClassOf
+        [ a owl:Restriction ; owl:onProperty aeo:measure ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:summaryValue ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
+    rdfs:label "Term summary"@en ;
+    rdfs:comment "One term of an existing cover as a figure." ;
+    fnd:utility "Subject: a term summary. Exactly one measure (which may be aeo-voc:Premium here, though not in a requirement) and one value on that measure's space." .
+
+aeo:summaryValue a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:TermSummary ; rdfs:range qnt:Quantity ;
+    rdfs:label "summary value"@en ;
+    rdfs:comment "The figure a term summary states." ;
+    fnd:utility "Subject: a term summary. Value: a qnt:Quantity on the measure's value space. Exactly one." .
+
+aeo:hasExistingCover a owl:ObjectProperty ;
+    rdfs:domain aeo:ExposureSet ; rdfs:range aeo:ExistingCover ;
+    rdfs:label "has existing cover"@en ;
+    rdfs:comment "An existing cover listed in this exposure set version." ;
+    fnd:utility "Subject: an exposure set. Value: one of its existing covers. Not inverse functional, for the same reason as aeo:hasLocation (TD-49)." .
+
+aeo:CoverHistoryEvent a owl:Class ;
+    rdfs:subClassOf fnd:Evidenced ,
+        [ a owl:Restriction ; owl:onProperty aeo:historyEventKind ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:eventDate ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:byInsurer ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:reasonGiven ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
+    rdfs:label "Cover history event"@en ;
+    rdfs:comment "Something that happened to the insured's cover in the past (a declinature, a non-renewal, a cancellation, special terms, a risk avoided)." ;
+    fnd:utility "Subject: a cover history event. Exactly one kind and one date, at most one insurer and one reason, any number of classes of business. Link it to its exposure set with aeo:hasCoverHistoryEvent." .
+
+aeo:historyEventKind a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:CoverHistoryEvent ; rdfs:range skos:Concept ;
+    rdfs:label "history event kind"@en ;
+    rdfs:comment "What kind of event it was." ;
+    fnd:utility "Subject: a cover history event. Value: a concept bound by aeo-voc:CoverHistoryEventKindContract. Exactly one." .
+
+aeo:eventDate a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:CoverHistoryEvent ; rdfs:range xsd:date ;
+    rdfs:label "event date"@en ;
+    rdfs:comment "The date of the event." ;
+    fnd:utility "Subject: a cover history event. Value: an xsd:date. Exactly one." .
+
+aeo:byInsurer a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:CoverHistoryEvent ; rdfs:range pty:Actor ;
+    rdfs:label "by insurer"@en ;
+    rdfs:comment "The insurer that did it, where one did." ;
+    fnd:utility "Subject: a cover history event. Value: a pty:Actor. At most one." .
+
+aeo:reasonGiven a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:CoverHistoryEvent ; rdfs:range xsd:string ;
+    rdfs:label "reason given"@en ;
+    rdfs:comment "The reason the insurer gave, in its words." ;
+    fnd:utility "Subject: a cover history event. Value: an xsd:string. At most one." .
+
+aeo:hasCoverHistoryEvent a owl:ObjectProperty ;
+    rdfs:domain aeo:ExposureSet ; rdfs:range aeo:CoverHistoryEvent ;
+    rdfs:label "has cover history event"@en ;
+    rdfs:comment "A cover history event listed in this exposure set version." ;
+    fnd:utility "Subject: an exposure set. Value: one of its cover history events. Not inverse functional, for the same reason as aeo:hasLocation (TD-49)." .
+
+#################################################################
+#    Financial metrics (AIR-4.4, sketch §5.14)
+#################################################################
+
+aeo:FinancialMetric a owl:Class ;
+    rdfs:subClassOf fnd:Evidenced , fnd:TemporallyScoped ,
+        [ a owl:Restriction ; owl:onProperty aeo:metricOf ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:financialMetricKind ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:metricAmount ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:audited ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
+    rdfs:label "Financial metric"@en ;
+    rdfs:comment "A figure about an entity's finances for a reporting period." ;
+    fnd:utility "Subject: a financial metric. Its temporal scope is the reporting period. Exactly one entity, kind and amount, at most one audited flag, any number of territories (for turnover by territory). Link it to its exposure set with aeo:hasFinancialMetric." .
+
+aeo:metricOf a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:FinancialMetric ; rdfs:range aeo:LegalEntity ;
+    rdfs:label "metric of"@en ;
+    rdfs:comment "The entity the financial figure is about." ;
+    fnd:utility "Subject: a financial metric. Value: an aeo:LegalEntity. Exactly one." .
+
+aeo:financialMetricKind a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:FinancialMetric ; rdfs:range skos:Concept ;
+    rdfs:label "financial metric kind"@en ;
+    rdfs:comment "What the figure is (revenue, gross profit, equity, headcount, and others)." ;
+    fnd:utility "Subject: a financial metric. Value: a concept bound by aeo-voc:FinancialMetricKindContract. Exactly one." .
+
+aeo:metricAmount a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:FinancialMetric ; rdfs:range qnt:Quantity ;
+    rdfs:label "metric amount"@en ;
+    rdfs:comment "The figure." ;
+    fnd:utility "Subject: a financial metric. Value: a qnt:Quantity, money for every kind but aeo-voc:HeadcountMetric, which is a count (the financial-metric shape). Exactly one." .
+
+aeo:audited a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:FinancialMetric ; rdfs:range xsd:boolean ;
+    rdfs:label "audited"@en ;
+    rdfs:comment "Whether the figure comes from audited accounts." ;
+    fnd:utility "Subject: a financial metric. Value: true when audited. At most one." .
+
+aeo:metricTerritory a owl:ObjectProperty ;
+    rdfs:subPropertyOf cls:territory ;
+    rdfs:domain aeo:FinancialMetric ; rdfs:range skos:Concept ;
+    rdfs:label "metric territory"@en ;
+    rdfs:comment "A territory the figure is for, where the entity reports it by territory." ;
+    fnd:utility "Subject: a financial metric. Value: a territory concept. Not functional: turnover by territory is one metric per territory. Specialises cls:territory." .
+
+aeo:hasFinancialMetric a owl:ObjectProperty ;
+    rdfs:domain aeo:ExposureSet ; rdfs:range aeo:FinancialMetric ;
+    rdfs:label "has financial metric"@en ;
+    rdfs:comment "A financial metric listed in this exposure set version." ;
+    fnd:utility "Subject: an exposure set. Value: one of its financial metrics. Not inverse functional, for the same reason as aeo:hasLocation (TD-49)." .
+
+[] a owl:AllDisjointClasses ;
+    owl:members ( aeo:ExposureSet aeo:Location aeo:Asset aeo:Interest aeo:Valuation
+                  aeo:LossExperience aeo:LossRecord aeo:LossCause aeo:DefaultedCharacteristic
+                  aeo:CoverageRequirement aeo:MeasureConstraint aeo:ExistingCover aeo:TermSummary
+                  aeo:CoverHistoryEvent aeo:FinancialMetric ) .
 ```
 
 ## 5. Vocabulary, `core` region
@@ -3031,6 +3579,382 @@ aeo-voc:ModelOptionScheme skos:hasTopConcept aeo-voc:SecondaryUncertainty , aeo-
 # ==== END README SECTION dependencies-metrics-units ====
 
 # ==== BEGIN README SECTION losses-requirements-cover (AIR-4.4) ====
+
+#################################################################
+#    Value spaces (AIR-4.4). MoneyShare is a proportion of money
+#    over the same money space twice (ADR-A93): a capacity share of
+#    a limit, or a bound relative to a financial metric.
+#################################################################
+
+aeo-voc:MoneyShare a qnt:DerivedValueSpace ;
+    qnt:spaceKey "money-share" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ; qnt:spaceHash "money-share-v1" ;
+    qnt:numeratorSpace icm-voc:Money ; qnt:denominatorSpace icm-voc:Money ;
+    skos:note "A proportion space (ADR-A93): an amount of money as a share of another amount of money, for example a participant's share of a limit or a net retained loss as a share of equity. Dimensionless, from 0 upwards."@en .
+
+#################################################################
+#    Reference schemes (AIR-4.4), each the unscoped fallback
+#    (ADR-A99 decision 1).
+#################################################################
+
+aeo-voc:LossExperienceSourceScheme a voc:ConceptScheme ;
+    fnd:hasIdentity aeo-voc:LossExperienceSourceScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference loss experience source scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+aeo-voc:LossStatusScheme a voc:ConceptScheme ;
+    fnd:hasIdentity aeo-voc:LossStatusScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference loss status scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+aeo-voc:CausePositionScheme a voc:ConceptScheme ;
+    fnd:hasIdentity aeo-voc:CausePositionScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference cause position scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+aeo-voc:RequirementSourceScheme a voc:ConceptScheme ;
+    fnd:hasIdentity aeo-voc:RequirementSourceScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference requirement source scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+aeo-voc:RequirementStrengthScheme a voc:ConceptScheme ;
+    fnd:hasIdentity aeo-voc:RequirementStrengthScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference requirement strength scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+aeo-voc:MeasureScheme a voc:ConceptScheme ;
+    fnd:hasIdentity aeo-voc:MeasureScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference measure scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+aeo-voc:CoverRelationScheme a voc:ConceptScheme ;
+    fnd:hasIdentity aeo-voc:CoverRelationScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference cover relation scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+aeo-voc:TriggerBasisScheme a voc:ConceptScheme ;
+    fnd:hasIdentity aeo-voc:TriggerBasisScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference trigger basis scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+aeo-voc:CoverHistoryEventKindScheme a voc:ConceptScheme ;
+    fnd:hasIdentity aeo-voc:CoverHistoryEventKindScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference cover history event kind scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+aeo-voc:FinancialMetricKindScheme a voc:ConceptScheme ;
+    fnd:hasIdentity aeo-voc:FinancialMetricKindScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Reference financial metric kind scheme"@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
+
+#################################################################
+#    Reference bindings (AIR-4.4)
+#################################################################
+
+aeo-voc:LossExperienceSourceContract a voc:SchemeContract ;
+    fnd:hasIdentity aeo-voc:LossExperienceSourceContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Loss experience source scheme contract"@en ;
+    voc:constrainsProperty aeo:experienceSource ;
+    voc:boundScheme aeo-voc:LossExperienceSourceScheme .
+
+aeo-voc:LossStatusContract a voc:SchemeContract ;
+    fnd:hasIdentity aeo-voc:LossStatusContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Loss status scheme contract"@en ;
+    voc:constrainsProperty aeo:lossStatus ;
+    voc:boundScheme aeo-voc:LossStatusScheme .
+
+aeo-voc:CausePositionContract a voc:SchemeContract ;
+    fnd:hasIdentity aeo-voc:CausePositionContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Cause position scheme contract"@en ;
+    voc:constrainsProperty aeo:causePosition ;
+    voc:boundScheme aeo-voc:CausePositionScheme .
+
+aeo-voc:RequirementSourceContract a voc:SchemeContract ;
+    fnd:hasIdentity aeo-voc:RequirementSourceContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Requirement source scheme contract"@en ;
+    voc:constrainsProperty aeo:requirementSource ;
+    voc:boundScheme aeo-voc:RequirementSourceScheme .
+
+aeo-voc:RequirementStrengthContract a voc:SchemeContract ;
+    fnd:hasIdentity aeo-voc:RequirementStrengthContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Requirement strength scheme contract"@en ;
+    voc:constrainsProperty aeo:requirementStrength ;
+    voc:boundScheme aeo-voc:RequirementStrengthScheme .
+
+aeo-voc:MeasureContract a voc:SchemeContract ;
+    fnd:hasIdentity aeo-voc:MeasureContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Measure scheme contract"@en ;
+    voc:constrainsProperty aeo:measure ;
+    voc:boundScheme aeo-voc:MeasureScheme .
+
+aeo-voc:CoverRelationContract a voc:SchemeContract ;
+    fnd:hasIdentity aeo-voc:CoverRelationContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Cover relation scheme contract"@en ;
+    voc:constrainsProperty aeo:coverRelation ;
+    voc:boundScheme aeo-voc:CoverRelationScheme .
+
+aeo-voc:TriggerBasisContract a voc:SchemeContract ;
+    fnd:hasIdentity aeo-voc:TriggerBasisContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Trigger basis scheme contract"@en ;
+    voc:constrainsProperty aeo:triggerBasis ;
+    voc:boundScheme aeo-voc:TriggerBasisScheme .
+
+aeo-voc:CoverHistoryEventKindContract a voc:SchemeContract ;
+    fnd:hasIdentity aeo-voc:CoverHistoryEventKindContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Cover history event kind scheme contract"@en ;
+    voc:constrainsProperty aeo:historyEventKind ;
+    voc:boundScheme aeo-voc:CoverHistoryEventKindScheme .
+
+aeo-voc:FinancialMetricKindContract a voc:SchemeContract ;
+    fnd:hasIdentity aeo-voc:FinancialMetricKindContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Financial metric kind scheme contract"@en ;
+    voc:constrainsProperty aeo:financialMetricKind ;
+    voc:boundScheme aeo-voc:FinancialMetricKindScheme .
+
+#################################################################
+#    Loss experience source
+#################################################################
+
+aeo-voc:InsuredDeclared a skos:Concept ; skos:inScheme aeo-voc:LossExperienceSourceScheme ; skos:topConceptOf aeo-voc:LossExperienceSourceScheme ;
+    skos:prefLabel "Insured declared"@en ; skos:definition "The insured's own statement of its losses."@en ;
+    skos:note "Common underwriting submission usage."@en .
+aeo-voc:InsurerLossRun a skos:Concept ; skos:inScheme aeo-voc:LossExperienceSourceScheme ; skos:topConceptOf aeo-voc:LossExperienceSourceScheme ;
+    skos:prefLabel "Insurer loss run"@en ; skos:definition "A statement of the claims an insurer holds on the insured, as the insurer issued it."@en ;
+    skos:note "Common underwriting submission usage. Usually the most reliable source for the period it covers."@en .
+aeo-voc:ClaimsAdministratorReport a skos:Concept ; skos:inScheme aeo-voc:LossExperienceSourceScheme ; skos:topConceptOf aeo-voc:LossExperienceSourceScheme ;
+    skos:prefLabel "Claims administrator report"@en ; skos:definition "A report from a third party administrator that handles claims for the insured or an insurer."@en ;
+    skos:note "Common underwriting submission usage."@en .
+aeo-voc:BrokerRecord a skos:Concept ; skos:inScheme aeo-voc:LossExperienceSourceScheme ; skos:topConceptOf aeo-voc:LossExperienceSourceScheme ;
+    skos:prefLabel "Broker record"@en ; skos:definition "A record of the insured's losses held by its broker."@en ;
+    skos:note "Common underwriting submission usage."@en .
+aeo-voc:LossExperienceSourceScheme skos:hasTopConcept aeo-voc:InsuredDeclared , aeo-voc:InsurerLossRun , aeo-voc:ClaimsAdministratorReport , aeo-voc:BrokerRecord .
+
+#################################################################
+#    Loss status
+#################################################################
+
+aeo-voc:Open a skos:Concept ; skos:inScheme aeo-voc:LossStatusScheme ; skos:topConceptOf aeo-voc:LossStatusScheme ;
+    skos:prefLabel "Open"@en ; skos:definition "The claim is open and may still change."@en ;
+    skos:note "Follows common claims status practice, as in the ACORD claim status codes, generalised to six statuses."@en .
+aeo-voc:Closed a skos:Concept ; skos:inScheme aeo-voc:LossStatusScheme ; skos:topConceptOf aeo-voc:LossStatusScheme ;
+    skos:prefLabel "Closed"@en ; skos:definition "The claim is closed after payment."@en ;
+    skos:note "Follows common claims status practice, as in the ACORD claim status codes."@en .
+aeo-voc:ClosedWithoutPayment a skos:Concept ; skos:inScheme aeo-voc:LossStatusScheme ; skos:topConceptOf aeo-voc:LossStatusScheme ;
+    skos:prefLabel "Closed without payment"@en ; skos:definition "The claim is closed and nothing was paid."@en ;
+    skos:note "Follows common claims status practice, as in the ACORD claim status codes. Distinguishes a claim closed with no payment from one closed after payment."@en .
+aeo-voc:Reopened a skos:Concept ; skos:inScheme aeo-voc:LossStatusScheme ; skos:topConceptOf aeo-voc:LossStatusScheme ;
+    skos:prefLabel "Reopened"@en ; skos:definition "A closed claim was opened again."@en ;
+    skos:note "Follows common claims status practice, as in the ACORD claim status codes."@en .
+aeo-voc:InLitigation a skos:Concept ; skos:inScheme aeo-voc:LossStatusScheme ; skos:topConceptOf aeo-voc:LossStatusScheme ;
+    skos:prefLabel "In litigation"@en ; skos:definition "The claim is the subject of court or arbitration proceedings."@en ;
+    skos:note "Common claims practice."@en .
+aeo-voc:InRecovery a skos:Concept ; skos:inScheme aeo-voc:LossStatusScheme ; skos:topConceptOf aeo-voc:LossStatusScheme ;
+    skos:prefLabel "In recovery"@en ; skos:definition "The claim is paid and the insurer is pursuing recovery from a third party or from salvage."@en ;
+    skos:note "Common claims practice. Recoveries are stated in aeo:recovered."@en .
+aeo-voc:LossStatusScheme skos:hasTopConcept aeo-voc:Open , aeo-voc:Closed , aeo-voc:ClosedWithoutPayment , aeo-voc:Reopened , aeo-voc:InLitigation , aeo-voc:InRecovery .
+
+#################################################################
+#    Cause position
+#################################################################
+
+aeo-voc:Initiating a skos:Concept ; skos:inScheme aeo-voc:CausePositionScheme ; skos:topConceptOf aeo-voc:CausePositionScheme ;
+    skos:prefLabel "Initiating"@en ; skos:definition "The first link of the chain, the one that set the others in motion."@en ;
+    skos:note "English law's proximate cause doctrine distinguishes the dominant or effective cause from the others (Leyland Shipping Co Ltd v Norwich Union Fire Insurance Society Ltd [1918] AC 350). The initiating link is the first in time, which need not be the dominant one."@en .
+aeo-voc:Intermediate a skos:Concept ; skos:inScheme aeo-voc:CausePositionScheme ; skos:topConceptOf aeo-voc:CausePositionScheme ;
+    skos:prefLabel "Intermediate"@en ; skos:definition "A link between the initiating and the proximate link."@en ;
+    skos:note "Common loss adjusting usage. Several links can be intermediate."@en .
+aeo-voc:Proximate a skos:Concept ; skos:inScheme aeo-voc:CausePositionScheme ; skos:topConceptOf aeo-voc:CausePositionScheme ;
+    skos:prefLabel "Proximate"@en ; skos:definition "The link a contract may treat as the cause of the loss."@en ;
+    skos:note "Follows English law's dominant or effective cause (Leyland Shipping Co Ltd v Norwich Union Fire Insurance Society Ltd [1918] AC 350), concurrent causes (Wayne Tank and Pump Co Ltd v Employers Liability Assurance Corp Ltd [1974] QB 57) and the US efficient proximate cause doctrine (Sabella v Wisler, 59 Cal.2d 21 (1963)). Several links can be proximate under concurrent causation, and which link a contract reads is the contract's rule, not this scheme's."@en .
+aeo-voc:CausePositionScheme skos:hasTopConcept aeo-voc:Initiating , aeo-voc:Intermediate , aeo-voc:Proximate .
+
+#################################################################
+#    Requirement source
+#################################################################
+
+aeo-voc:RiskAppetite a skos:Concept ; skos:inScheme aeo-voc:RequirementSourceScheme ; skos:topConceptOf aeo-voc:RequirementSourceScheme ;
+    skos:prefLabel "Risk appetite"@en ; skos:definition "The insured's own statement of how much risk it will retain."@en ;
+    skos:note "Common risk management usage."@en .
+aeo-voc:LenderCovenant a skos:Concept ; skos:inScheme aeo-voc:RequirementSourceScheme ; skos:topConceptOf aeo-voc:RequirementSourceScheme ;
+    skos:prefLabel "Lender covenant"@en ; skos:definition "A covenant in a loan or facility agreement requiring cover."@en ;
+    skos:note "Common secured lending usage."@en .
+aeo-voc:Regulation a skos:Concept ; skos:inScheme aeo-voc:RequirementSourceScheme ; skos:topConceptOf aeo-voc:RequirementSourceScheme ;
+    skos:prefLabel "Regulation"@en ; skos:definition "A law or regulator's rule requiring cover."@en ;
+    skos:note "Common usage."@en .
+aeo-voc:LeaseOrContract a skos:Concept ; skos:inScheme aeo-voc:RequirementSourceScheme ; skos:topConceptOf aeo-voc:RequirementSourceScheme ;
+    skos:prefLabel "Lease or contract"@en ; skos:definition "A lease or commercial contract requiring cover."@en ;
+    skos:note "Common commercial contract usage."@en .
+aeo-voc:BoardMandate a skos:Concept ; skos:inScheme aeo-voc:RequirementSourceScheme ; skos:topConceptOf aeo-voc:RequirementSourceScheme ;
+    skos:prefLabel "Board mandate"@en ; skos:definition "A resolution or mandate of the insured's board."@en ;
+    skos:note "Common corporate governance usage."@en .
+aeo-voc:RequirementSourceScheme skos:hasTopConcept aeo-voc:RiskAppetite , aeo-voc:LenderCovenant , aeo-voc:Regulation , aeo-voc:LeaseOrContract , aeo-voc:BoardMandate .
+
+#################################################################
+#    Requirement strength
+#################################################################
+
+aeo-voc:Mandatory a skos:Concept ; skos:inScheme aeo-voc:RequirementStrengthScheme ; skos:topConceptOf aeo-voc:RequirementStrengthScheme ;
+    skos:prefLabel "Mandatory"@en ; skos:definition "The requirement must be met."@en ;
+    skos:note "Follows RFC 2119's MUST, as an analogy for the force of a client's requirement."@en .
+aeo-voc:Preferred a skos:Concept ; skos:inScheme aeo-voc:RequirementStrengthScheme ; skos:topConceptOf aeo-voc:RequirementStrengthScheme ;
+    skos:prefLabel "Preferred"@en ; skos:definition "The requirement should be met unless there is reason not to."@en ;
+    skos:note "Follows RFC 2119's SHOULD, as an analogy for the force of a client's requirement."@en .
+aeo-voc:Optional a skos:Concept ; skos:inScheme aeo-voc:RequirementStrengthScheme ; skos:topConceptOf aeo-voc:RequirementStrengthScheme ;
+    skos:prefLabel "Optional"@en ; skos:definition "The requirement may be met."@en ;
+    skos:note "Follows RFC 2119's MAY, as an analogy for the force of a client's requirement."@en .
+aeo-voc:RequirementStrengthScheme skos:hasTopConcept aeo-voc:Mandatory , aeo-voc:Preferred , aeo-voc:Optional .
+
+#################################################################
+#    Measure
+#################################################################
+
+aeo-voc:Limit a skos:Concept ; skos:inScheme aeo-voc:MeasureScheme ; skos:topConceptOf aeo-voc:MeasureScheme ;
+    skos:prefLabel "Limit"@en ; skos:definition "The most the cover pays."@en ;
+    skos:note "Common insurance usage."@en ;
+    aeo:measureSpace icm-voc:Money .
+aeo-voc:SubLimit a skos:Concept ; skos:inScheme aeo-voc:MeasureScheme ; skos:topConceptOf aeo-voc:MeasureScheme ;
+    skos:prefLabel "Sub-limit"@en ; skos:definition "A limit for one peril, location or head of loss within the overall limit."@en ;
+    skos:note "Common insurance usage."@en ;
+    aeo:measureSpace icm-voc:Money .
+aeo-voc:Attachment a skos:Concept ; skos:inScheme aeo-voc:MeasureScheme ; skos:topConceptOf aeo-voc:MeasureScheme ;
+    skos:prefLabel "Attachment"@en ; skos:definition "The loss amount above which a layer of cover starts to pay."@en ;
+    skos:note "Common reinsurance and excess cover usage."@en ;
+    aeo:measureSpace icm-voc:Money .
+aeo-voc:Retention a skos:Concept ; skos:inScheme aeo-voc:MeasureScheme ; skos:topConceptOf aeo-voc:MeasureScheme ;
+    skos:prefLabel "Retention"@en ; skos:definition "The amount of each loss the insured bears."@en ;
+    skos:note "Common insurance usage, covering deductibles and self-insured retentions."@en ;
+    aeo:measureSpace icm-voc:Money .
+aeo-voc:IndemnityPeriod a skos:Concept ; skos:inScheme aeo-voc:MeasureScheme ; skos:topConceptOf aeo-voc:MeasureScheme ;
+    skos:prefLabel "Indemnity period"@en ; skos:definition "The period over which business interruption loss is covered."@en ;
+    skos:note "Common business interruption usage. Stated in a duration, in months through a calendar unit whose conversion is contextual (ADR-A94)."@en ;
+    aeo:measureSpace aeo-voc:Duration .
+aeo-voc:WaitingPeriod a skos:Concept ; skos:inScheme aeo-voc:MeasureScheme ; skos:topConceptOf aeo-voc:MeasureScheme ;
+    skos:prefLabel "Waiting period"@en ; skos:definition "The period after an event before cover begins to pay."@en ;
+    skos:note "Common business interruption usage, also called the time excess."@en ;
+    aeo:measureSpace aeo-voc:Duration .
+aeo-voc:CapacityShare a skos:Concept ; skos:inScheme aeo-voc:MeasureScheme ; skos:topConceptOf aeo-voc:MeasureScheme ;
+    skos:prefLabel "Capacity share"@en ; skos:definition "A share of the limit that a participant takes."@en ;
+    skos:note "Common placement usage. A share of the limit, on a proportion space."@en ;
+    aeo:measureSpace aeo-voc:MoneyShare .
+aeo-voc:NetRetainedLoss a skos:Concept ; skos:inScheme aeo-voc:MeasureScheme ; skos:topConceptOf aeo-voc:MeasureScheme ;
+    skos:prefLabel "Net retained loss"@en ; skos:definition "The loss the insured keeps after cover, at a stated return period."@en ;
+    skos:note "Common risk management usage. States aeo:atReturnPeriod."@en ;
+    aeo:measureSpace icm-voc:Money .
+aeo-voc:Premium a skos:Concept ; skos:inScheme aeo-voc:MeasureScheme ; skos:topConceptOf aeo-voc:MeasureScheme ;
+    skos:prefLabel "Premium"@en ; skos:definition "The price of the cover."@en ;
+    skos:note "Common insurance usage. For summary terms only: a requirement never constrains the premium, and the requirement shape rejects it."@en ;
+    aeo:measureSpace icm-voc:Money .
+aeo-voc:MeasureScheme skos:hasTopConcept aeo-voc:Limit , aeo-voc:SubLimit , aeo-voc:Attachment , aeo-voc:Retention , aeo-voc:IndemnityPeriod , aeo-voc:WaitingPeriod , aeo-voc:CapacityShare , aeo-voc:NetRetainedLoss , aeo-voc:Premium .
+
+#################################################################
+#    Cover relation
+#################################################################
+
+aeo-voc:Underlying a skos:Concept ; skos:inScheme aeo-voc:CoverRelationScheme ; skos:topConceptOf aeo-voc:CoverRelationScheme ;
+    skos:prefLabel "Underlying"@en ; skos:definition "The existing cover sits below the cover being placed."@en ;
+    skos:note "Common excess and umbrella usage."@en .
+aeo-voc:Alongside a skos:Concept ; skos:inScheme aeo-voc:CoverRelationScheme ; skos:topConceptOf aeo-voc:CoverRelationScheme ;
+    skos:prefLabel "Alongside"@en ; skos:definition "The existing cover runs beside the cover being placed."@en ;
+    skos:note "Common co-insurance and layered placement usage."@en .
+aeo-voc:Replaced a skos:Concept ; skos:inScheme aeo-voc:CoverRelationScheme ; skos:topConceptOf aeo-voc:CoverRelationScheme ;
+    skos:prefLabel "Replaced"@en ; skos:definition "The cover being placed replaces the existing cover."@en ;
+    skos:note "Common renewal and replacement usage."@en .
+aeo-voc:CoverRelationScheme skos:hasTopConcept aeo-voc:Underlying , aeo-voc:Alongside , aeo-voc:Replaced .
+
+#################################################################
+#    Trigger basis
+#################################################################
+
+aeo-voc:Indemnity a skos:Concept ; skos:inScheme aeo-voc:TriggerBasisScheme ; skos:topConceptOf aeo-voc:TriggerBasisScheme ;
+    skos:prefLabel "Indemnity"@en ; skos:definition "The cover pays the insured's actual loss."@en ;
+    skos:note "Common insurance usage."@en .
+aeo-voc:Parametric a skos:Concept ; skos:inScheme aeo-voc:TriggerBasisScheme ; skos:topConceptOf aeo-voc:TriggerBasisScheme ;
+    skos:prefLabel "Parametric"@en ; skos:definition "The cover pays on a measured parameter of an event, not on the loss."@en ;
+    skos:note "Common parametric insurance usage."@en .
+aeo-voc:IndustryLossIndex a skos:Concept ; skos:inScheme aeo-voc:TriggerBasisScheme ; skos:topConceptOf aeo-voc:TriggerBasisScheme ;
+    skos:prefLabel "Industry loss index"@en ; skos:definition "The cover pays on the size of an industry loss index for an event."@en ;
+    skos:note "Common insurance-linked securities and reinsurance usage."@en .
+aeo-voc:TriggerBasisScheme skos:hasTopConcept aeo-voc:Indemnity , aeo-voc:Parametric , aeo-voc:IndustryLossIndex .
+
+#################################################################
+#    Cover history event kind
+#################################################################
+
+aeo-voc:Declined a skos:Concept ; skos:inScheme aeo-voc:CoverHistoryEventKindScheme ; skos:topConceptOf aeo-voc:CoverHistoryEventKindScheme ;
+    skos:prefLabel "Declined"@en ; skos:definition "An insurer declined to offer cover."@en ;
+    skos:note "The UK Insurance Act 2015 sets the insured's duty of fair presentation (section 3) and the insurer's remedies (Schedule 1), and the prior cover questions of the ACORD 125 commercial application ask for these events."@en .
+aeo-voc:NonRenewed a skos:Concept ; skos:inScheme aeo-voc:CoverHistoryEventKindScheme ; skos:topConceptOf aeo-voc:CoverHistoryEventKindScheme ;
+    skos:prefLabel "Non-renewed"@en ; skos:definition "An insurer chose not to renew the cover."@en ;
+    skos:note "The UK Insurance Act 2015 sets the insured's duty of fair presentation (section 3) and the insurer's remedies (Schedule 1), and the prior cover questions of the ACORD 125 commercial application ask for these events."@en .
+aeo-voc:Cancelled a skos:Concept ; skos:inScheme aeo-voc:CoverHistoryEventKindScheme ; skos:topConceptOf aeo-voc:CoverHistoryEventKindScheme ;
+    skos:prefLabel "Cancelled"@en ; skos:definition "The cover was cancelled before its expiry."@en ;
+    skos:note "The UK Insurance Act 2015 sets the insured's duty of fair presentation (section 3) and the insurer's remedies (Schedule 1), and the prior cover questions of the ACORD 125 commercial application ask for these events."@en .
+aeo-voc:SpecialTermsImposed a skos:Concept ; skos:inScheme aeo-voc:CoverHistoryEventKindScheme ; skos:topConceptOf aeo-voc:CoverHistoryEventKindScheme ;
+    skos:prefLabel "Special terms imposed"@en ; skos:definition "An insurer offered cover only on special terms."@en ;
+    skos:note "The UK Insurance Act 2015 sets the insured's duty of fair presentation (section 3) and the insurer's remedies (Schedule 1), and the prior cover questions of the ACORD 125 commercial application ask for these events."@en .
+aeo-voc:Avoided a skos:Concept ; skos:inScheme aeo-voc:CoverHistoryEventKindScheme ; skos:topConceptOf aeo-voc:CoverHistoryEventKindScheme ;
+    skos:prefLabel "Avoided"@en ; skos:definition "An insurer avoided the cover for non-disclosure or misrepresentation."@en ;
+    skos:note "The UK Insurance Act 2015 sets the insured's duty of fair presentation (section 3) and the insurer's remedies (Schedule 1), and the prior cover questions of the ACORD 125 commercial application ask for these events. Avoidance is one of the Schedule 1 remedies."@en .
+aeo-voc:CoverHistoryEventKindScheme skos:hasTopConcept aeo-voc:Declined , aeo-voc:NonRenewed , aeo-voc:Cancelled , aeo-voc:SpecialTermsImposed , aeo-voc:Avoided .
+
+#################################################################
+#    Financial metric kind
+#################################################################
+
+aeo-voc:RevenueMetric a skos:Concept ; skos:inScheme aeo-voc:FinancialMetricKindScheme ; skos:topConceptOf aeo-voc:FinancialMetricKindScheme ;
+    skos:prefLabel "Revenue"@en ; skos:definition "Income from the entity's ordinary activities."@en ;
+    skos:note "Follows IFRS 15."@en .
+aeo-voc:GrossProfitMetric a skos:Concept ; skos:inScheme aeo-voc:FinancialMetricKindScheme ; skos:topConceptOf aeo-voc:FinancialMetricKindScheme ;
+    skos:prefLabel "Gross profit"@en ; skos:definition "Revenue less the cost of what was sold."@en ;
+    skos:note "Follows the statement lines of IAS 1. Gross profit is not a required line, so the source's definition is evidence."@en .
+aeo-voc:Ebitda a skos:Concept ; skos:inScheme aeo-voc:FinancialMetricKindScheme ; skos:topConceptOf aeo-voc:FinancialMetricKindScheme ;
+    skos:prefLabel "EBITDA"@en ; skos:definition "Earnings before interest, tax, depreciation and amortisation."@en ;
+    skos:note "Not defined by IFRS, so its source's definition is evidence."@en .
+aeo-voc:NetIncome a skos:Concept ; skos:inScheme aeo-voc:FinancialMetricKindScheme ; skos:topConceptOf aeo-voc:FinancialMetricKindScheme ;
+    skos:prefLabel "Net income"@en ; skos:definition "Profit after all expenses and tax."@en ;
+    skos:note "Follows the statement lines of IAS 1. "@en .
+aeo-voc:Equity a skos:Concept ; skos:inScheme aeo-voc:FinancialMetricKindScheme ; skos:topConceptOf aeo-voc:FinancialMetricKindScheme ;
+    skos:prefLabel "Equity"@en ; skos:definition "The residual interest in the entity's assets after liabilities."@en ;
+    skos:note "Follows the statement lines of IAS 1. "@en .
+aeo-voc:TotalAssets a skos:Concept ; skos:inScheme aeo-voc:FinancialMetricKindScheme ; skos:topConceptOf aeo-voc:FinancialMetricKindScheme ;
+    skos:prefLabel "Total assets"@en ; skos:definition "The sum of the entity's assets."@en ;
+    skos:note "Follows the statement lines of IAS 1. "@en .
+aeo-voc:Payroll a skos:Concept ; skos:inScheme aeo-voc:FinancialMetricKindScheme ; skos:topConceptOf aeo-voc:FinancialMetricKindScheme ;
+    skos:prefLabel "Payroll"@en ; skos:definition "The entity's total remuneration of its employees."@en ;
+    skos:note "Common liability and workers compensation rating usage."@en .
+aeo-voc:HeadcountMetric a skos:Concept ; skos:inScheme aeo-voc:FinancialMetricKindScheme ; skos:topConceptOf aeo-voc:FinancialMetricKindScheme ;
+    skos:prefLabel "Headcount"@en ; skos:definition "The number of people the entity employs. A count, not money."@en ;
+    skos:note "Common liability rating usage."@en .
+aeo-voc:MarketCapitalisation a skos:Concept ; skos:inScheme aeo-voc:FinancialMetricKindScheme ; skos:topConceptOf aeo-voc:FinancialMetricKindScheme ;
+    skos:prefLabel "Market capitalisation"@en ; skos:definition "The market value of the entity's listed equity."@en ;
+    skos:note "Common directors and officers underwriting usage."@en .
+aeo-voc:Fees a skos:Concept ; skos:inScheme aeo-voc:FinancialMetricKindScheme ; skos:topConceptOf aeo-voc:FinancialMetricKindScheme ;
+    skos:prefLabel "Fees"@en ; skos:definition "Fees the entity earns for professional services."@en ;
+    skos:note "Common professional indemnity rating usage."@en .
+aeo-voc:Turnover a skos:Concept ; skos:inScheme aeo-voc:FinancialMetricKindScheme ; skos:topConceptOf aeo-voc:FinancialMetricKindScheme ;
+    skos:prefLabel "Turnover"@en ; skos:definition "Sales or receipts, as a rating basis."@en ;
+    skos:note "Common liability rating usage. Distinct from IFRS 15 revenue where a policy defines turnover its own way."@en .
+aeo-voc:FinancialMetricKindScheme skos:hasTopConcept aeo-voc:RevenueMetric , aeo-voc:GrossProfitMetric , aeo-voc:Ebitda , aeo-voc:NetIncome , aeo-voc:Equity , aeo-voc:TotalAssets , aeo-voc:Payroll , aeo-voc:HeadcountMetric , aeo-voc:MarketCapitalisation , aeo-voc:Fees , aeo-voc:Turnover .
+
 # ==== END README SECTION losses-requirements-cover ====
 
 # ==== BEGIN README SECTION liability (AIR-4.5) ====
@@ -3063,6 +3987,22 @@ the shape itself since `sh:sparql`'s value is a constraint, not a nested propert
 | `aeo:SingleValuedTypesShape` (AIR-4.2) | at most one value per attribute type per assessment, unless the type is `aeo:multiValued` |
 | `aeo:ScreeningShape` (AIR-4.2) | `aeo-voc:SanctionsScreeningOutcome` only in an assessment of kind `aeo-voc:ScreeningRun` that is a `fnd:DerivedArtefact` |
 | `aeo:PerilCompletenessShape` (AIR-4.2, warning) | a location exposed to a peril should have a value for each attribute type that peril, or a broader cause concept, names relevant, read per location not per asset |
+| `aeo:LossExperienceShape` (AIR-4.4) | exactly one entity, source and temporal scope |
+| `aeo:LossRecordShape` (AIR-4.4) | exactly one date and status, at most one class of business |
+| `aeo:LossRecordCurrencyShape` (AIR-4.4) | every money amount in a currency unit, all the same |
+| `aeo:LossInPeriodShape` (AIR-4.4) | a record's date within its experience's temporal scope |
+| `aeo:IncurredShape` (AIR-4.4) | incurred equals paid plus reserved when all three are present |
+| `aeo:LossCauseShape` (AIR-4.4) | exactly one peril and position, at most one agency and one effective agency |
+| `aeo:DefaultedAgencyShape`, `aeo:DefaultedMechanismShape` (AIR-4.4) | an effective value that differs from every recorded value has a defaulted characteristic, and one with a recorded value has none |
+| `aeo:CoverageRequirementShape` (AIR-4.4) | exactly one identity, source and strength, at least one required measure |
+| `aeo:RequirementNoPremiumShape` (AIR-4.4) | no requirement constrains `aeo-voc:Premium` |
+| `aeo:MeasureConstraintShape`, `aeo:MeasureSpaceShape` (AIR-4.4) | exactly one measure and bound. The bound is on the measure's space, or a proportion space over it when relative to a metric |
+| `aeo:RequirementScopeShape` (AIR-4.4) | a scope's conditions are bound to subject class `aeo:ExposureUnit` |
+| `aeo:ExistingCoverShape` (AIR-4.4) | exactly one relation and temporal scope, at most one trigger basis |
+| `aeo:ExistingCoverEvidenceShape` (AIR-4.4, warning) | a cover with neither a reference nor a summary term is reported |
+| `aeo:TermSummaryShape` (AIR-4.4) | exactly one measure and value, on the measure's space |
+| `aeo:CoverHistoryEventShape` (AIR-4.4) | exactly one kind and date |
+| `aeo:FinancialMetricShape`, `aeo:FinancialMetricSpaceShape` (AIR-4.4) | exactly one entity, kind, amount and temporal scope. A headcount is a count and the rest money |
 | `aeo:DependencyShape` (AIR-4.3) | exactly one dependent, provider and dependency kind |
 | `aeo:PerilMetricShape` (AIR-4.3) | at least one peril scope, exactly one subject, kind, perspective and value |
 | `aeo:ExceedanceMetricShape` (AIR-4.3) | an exceedance or tail value-at-risk kind states exactly one of a return period and an exceedance probability |
@@ -3573,6 +4513,278 @@ aeo:ExposureUnitShape a sh:NodeShape ;
               FILTER (?nl != 1 || ?nc != 1 || ?np != 1 || ?nv > 1)
             }
         """ ] .
+
+#################################################################
+#    AIR-4.4: losses, requirements, cover, financial metrics
+#################################################################
+
+aeo:LossExperienceShape a sh:NodeShape ;
+    sh:targetClass aeo:LossExperience ;
+    sh:sparql [
+        sh:message "A loss experience must have exactly one entity, one source and one temporal scope." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            SELECT $this WHERE {
+              {
+                SELECT $this (COUNT(DISTINCT ?e) AS ?ne) (COUNT(DISTINCT ?s) AS ?ns) (COUNT(DISTINCT ?t) AS ?nt) WHERE {
+                  $this a aeo:LossExperience .
+                  OPTIONAL { $this aeo:experienceOf ?e }
+                  OPTIONAL { $this aeo:experienceSource ?s }
+                  OPTIONAL { $this fnd:hasTemporalScope ?t }
+                } GROUP BY $this
+              }
+              FILTER (?ne != 1 || ?ns != 1 || ?nt != 1)
+            }
+        """ ] .
+
+aeo:LossRecordShape a sh:NodeShape ;
+    sh:targetClass aeo:LossRecord ;
+    sh:sparql [
+        sh:message "A loss record must have exactly one date and one status, and at most one class of business." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            SELECT $this WHERE {
+              {
+                SELECT $this (COUNT(DISTINCT ?d) AS ?nd) (COUNT(DISTINCT ?s) AS ?ns) (COUNT(DISTINCT ?c) AS ?nc) WHERE {
+                  $this a aeo:LossRecord .
+                  OPTIONAL { $this aeo:lossDate ?d }
+                  OPTIONAL { $this aeo:lossStatus ?s }
+                  OPTIONAL { $this aeo:classOfBusiness ?c }
+                } GROUP BY $this
+              }
+              FILTER (?nd != 1 || ?ns != 1 || ?nc > 1)
+            }
+        """ ] .
+
+aeo:LossRecordCurrencyShape a sh:NodeShape ;
+    sh:targetClass aeo:LossRecord ;
+    sh:sparql [
+        sh:message "Every money amount on a loss record must be in a currency unit, and all in the same one." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+            SELECT $this WHERE {
+              {
+                SELECT $this (COUNT(DISTINCT ?u) AS ?nu) (COUNT(DISTINCT ?q) AS ?nq) (COUNT(DISTINCT ?qu) AS ?nqu) WHERE {
+                  $this a aeo:LossRecord .
+                  OPTIONAL {
+                    $this (aeo:grossAmount|aeo:deductibleApplied|aeo:paid|aeo:reserved|aeo:incurred|aeo:recovered) ?q .
+                    OPTIONAL { ?q qnt:inUnit ?u }
+                    BIND(IF(BOUND(?u), ?q, ?none) AS ?qu)
+                  }
+                } GROUP BY $this
+              }
+              FILTER (?nu > 1 || ?nq != ?nqu)
+            }
+        """ ] .
+
+aeo:IncurredShape a sh:NodeShape ;
+    sh:targetClass aeo:LossRecord ;
+    sh:sparql [
+        sh:message "Incurred must equal paid plus reserved when all three are present." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+            SELECT $this WHERE {
+              $this aeo:paid/qnt:numericValue ?p ; aeo:reserved/qnt:numericValue ?r ; aeo:incurred/qnt:numericValue ?i .
+              FILTER (?i != ?p + ?r)
+            }
+        """ ] .
+
+aeo:LossCauseShape a sh:NodeShape ;
+    sh:targetClass aeo:LossCause ;
+    sh:sparql [
+        sh:message "A loss cause must have exactly one peril and one position, and at most one agency and one effective agency." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            SELECT $this WHERE {
+              {
+                SELECT $this (COUNT(DISTINCT ?p) AS ?np) (COUNT(DISTINCT ?c) AS ?nc) (COUNT(DISTINCT ?a) AS ?na) (COUNT(DISTINCT ?e) AS ?ne) WHERE {
+                  $this a aeo:LossCause .
+                  OPTIONAL { $this aeo:peril ?p }
+                  OPTIONAL { $this aeo:causePosition ?c }
+                  OPTIONAL { $this aeo:agency ?a }
+                  OPTIONAL { $this aeo:effectiveAgency ?e }
+                } GROUP BY $this
+              }
+              FILTER (?np != 1 || ?nc != 1 || ?na > 1 || ?ne > 1)
+            }
+        """ ] .
+
+aeo:CoverageRequirementShape a sh:NodeShape ;
+    sh:targetClass aeo:CoverageRequirement ;
+    sh:sparql [
+        sh:message "A coverage requirement must have exactly one identity, source and strength, and at least one required measure." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            SELECT $this WHERE {
+              {
+                SELECT $this (COUNT(DISTINCT ?i) AS ?ni) (COUNT(DISTINCT ?s) AS ?ns) (COUNT(DISTINCT ?t) AS ?nt) (COUNT(DISTINCT ?m) AS ?nm) WHERE {
+                  $this a aeo:CoverageRequirement .
+                  OPTIONAL { $this fnd:hasIdentity ?i }
+                  OPTIONAL { $this aeo:requirementSource ?s }
+                  OPTIONAL { $this aeo:requirementStrength ?t }
+                  OPTIONAL { $this aeo:requiredMeasure ?m }
+                } GROUP BY $this
+              }
+              FILTER (?ni != 1 || ?ns != 1 || ?nt != 1 || ?nm < 1)
+            }
+        """ ] .
+
+aeo:RequirementNoPremiumShape a sh:NodeShape ;
+    sh:targetClass aeo:CoverageRequirement ;
+    sh:sparql [
+        sh:message "A coverage requirement must not constrain the premium: aeo-voc:Premium is for summary terms of an existing cover only." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#>
+            SELECT $this WHERE {
+              $this aeo:requiredMeasure/aeo:measure aeo-voc:Premium .
+            }
+        """ ] .
+
+aeo:MeasureConstraintShape a sh:NodeShape ;
+    sh:targetClass aeo:MeasureConstraint ;
+    sh:sparql [
+        sh:message "A measure constraint must have exactly one measure and one bound." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            SELECT $this WHERE {
+              {
+                SELECT $this (COUNT(DISTINCT ?m) AS ?nm) (COUNT(DISTINCT ?b) AS ?nb) WHERE {
+                  $this a aeo:MeasureConstraint .
+                  OPTIONAL { $this aeo:measure ?m }
+                  OPTIONAL { $this aeo:bound ?b }
+                } GROUP BY $this
+              }
+              FILTER (?nm != 1 || ?nb != 1)
+            }
+        """ ] .
+
+aeo:MeasureSpaceShape a sh:NodeShape ;
+    sh:targetClass aeo:MeasureConstraint ;
+    sh:sparql [
+        sh:message "A measure constraint's bound must be on its measure's value space. A bound relative to a metric must be on a proportion space (a qnt:DerivedValueSpace) over that value space." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+            SELECT $this WHERE {
+              $this aeo:measure ?m ; aeo:bound/qnt:onSpace ?bs .
+              ?m aeo:measureSpace ?ms .
+              FILTER ((NOT EXISTS { $this aeo:relativeTo ?x } && ?bs != ?ms)
+                      || (EXISTS { $this aeo:relativeTo ?y } && NOT EXISTS { ?bs a qnt:DerivedValueSpace ; qnt:numeratorSpace ?ms }))
+            }
+        """ ] .
+
+aeo:ExistingCoverShape a sh:NodeShape ;
+    sh:targetClass aeo:ExistingCover ;
+    sh:sparql [
+        sh:message "An existing cover must have exactly one cover relation and one temporal scope, and at most one trigger basis." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            SELECT $this WHERE {
+              {
+                SELECT $this (COUNT(DISTINCT ?r) AS ?nr) (COUNT(DISTINCT ?t) AS ?nt) (COUNT(DISTINCT ?b) AS ?nb) WHERE {
+                  $this a aeo:ExistingCover .
+                  OPTIONAL { $this aeo:coverRelation ?r }
+                  OPTIONAL { $this fnd:hasTemporalScope ?t }
+                  OPTIONAL { $this aeo:triggerBasis ?b }
+                } GROUP BY $this
+              }
+              FILTER (?nr != 1 || ?nt != 1 || ?nb > 1)
+            }
+        """ ] .
+
+aeo:ExistingCoverEvidenceShape a sh:NodeShape ;
+    sh:targetClass aeo:ExistingCover ;
+    sh:severity sh:Warning ;
+    sh:sparql [
+        sh:message "An existing cover with neither a reference to its contract nor a summary term says nothing about what it covers." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            SELECT $this WHERE {
+              $this a aeo:ExistingCover .
+              FILTER NOT EXISTS { $this aeo:coverReference ?r }
+              FILTER NOT EXISTS { $this aeo:summaryTerm ?t }
+            }
+        """ ] .
+
+aeo:TermSummaryShape a sh:NodeShape ;
+    sh:targetClass aeo:TermSummary ;
+    sh:sparql [
+        sh:message "A term summary must have exactly one measure and one value, and the value must be on the measure's value space." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+            SELECT $this WHERE {
+              {
+                SELECT $this (COUNT(DISTINCT ?m) AS ?nm) (COUNT(DISTINCT ?v) AS ?nv) WHERE {
+                  $this a aeo:TermSummary .
+                  OPTIONAL { $this aeo:measure ?m }
+                  OPTIONAL { $this aeo:summaryValue ?v }
+                } GROUP BY $this
+              }
+              OPTIONAL { $this aeo:measure ?measure . ?measure aeo:measureSpace ?ms . $this aeo:summaryValue/qnt:onSpace ?vs }
+              FILTER (?nm != 1 || ?nv != 1 || (BOUND(?ms) && ?vs != ?ms))
+            }
+        """ ] .
+
+aeo:CoverHistoryEventShape a sh:NodeShape ;
+    sh:targetClass aeo:CoverHistoryEvent ;
+    sh:sparql [
+        sh:message "A cover history event must have exactly one kind and one date." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            SELECT $this WHERE {
+              {
+                SELECT $this (COUNT(DISTINCT ?k) AS ?nk) (COUNT(DISTINCT ?d) AS ?nd) WHERE {
+                  $this a aeo:CoverHistoryEvent .
+                  OPTIONAL { $this aeo:historyEventKind ?k }
+                  OPTIONAL { $this aeo:eventDate ?d }
+                } GROUP BY $this
+              }
+              FILTER (?nk != 1 || ?nd != 1)
+            }
+        """ ] .
+
+aeo:FinancialMetricShape a sh:NodeShape ;
+    sh:targetClass aeo:FinancialMetric ;
+    sh:sparql [
+        sh:message "A financial metric must have exactly one entity, kind and amount, and one temporal scope." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            SELECT $this WHERE {
+              {
+                SELECT $this (COUNT(DISTINCT ?e) AS ?ne) (COUNT(DISTINCT ?k) AS ?nk) (COUNT(DISTINCT ?a) AS ?na) (COUNT(DISTINCT ?t) AS ?nt) WHERE {
+                  $this a aeo:FinancialMetric .
+                  OPTIONAL { $this aeo:metricOf ?e }
+                  OPTIONAL { $this aeo:financialMetricKind ?k }
+                  OPTIONAL { $this aeo:metricAmount ?a }
+                  OPTIONAL { $this fnd:hasTemporalScope ?t }
+                } GROUP BY $this
+              }
+              FILTER (?ne != 1 || ?nk != 1 || ?na != 1 || ?nt != 1)
+            }
+        """ ] .
+
+aeo:FinancialMetricSpaceShape a sh:NodeShape ;
+    sh:targetClass aeo:FinancialMetric ;
+    sh:sparql [
+        sh:message "A headcount is a count, and every other financial metric is money." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#>
+            PREFIX icm-voc: <https://www.nebularis.org/neuro-semantic/insurance/common/vocab#>
+            PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+            SELECT $this WHERE {
+              $this aeo:financialMetricKind ?k ; aeo:metricAmount/qnt:onSpace ?space .
+              FILTER ((?k = aeo-voc:HeadcountMetric && ?space != aeo-voc:Count) || (?k != aeo-voc:HeadcountMetric && ?space != icm-voc:Money))
+            }
+        """ ] .
 ```
 
 ```turtle-shapes
@@ -3703,6 +4915,76 @@ aeo:UnitDerivationShape a sh:NodeShape ;
             SELECT $this WHERE {
               $this a aeo:ExposureUnit .
               FILTER NOT EXISTS { $this prov:wasGeneratedBy ?run . ?run a fnd:DerivationRun }
+            }
+        """ ] .
+
+#################################################################
+#    AIR-4.4: loss period, defaulted characteristics, scope
+#################################################################
+
+aeo:LossInPeriodShape a sh:NodeShape ;
+    sh:targetClass aeo:LossRecord ;
+    sh:sparql [
+        sh:message "A loss record's date must be within the temporal scope of the loss experience that lists it." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            SELECT $this WHERE {
+              ?exp aeo:hasLossRecord $this ; fnd:hasTemporalScope ?ts .
+              $this aeo:lossDate ?d .
+              OPTIONAL { ?ts fnd:validFrom ?from }
+              OPTIONAL { ?ts fnd:validTo ?to }
+              FILTER ((BOUND(?from) && STR(?d) < SUBSTR(STR(?from), 1, 10)) || (BOUND(?to) && STR(?d) > SUBSTR(STR(?to), 1, 10)))
+            }
+        """ ] .
+
+aeo:DefaultedAgencyShape a sh:NodeShape ;
+    sh:targetClass aeo:LossCause ;
+    sh:sparql [
+        sh:message "An effective agency that differs from every recorded agency needs a defaulted characteristic, and one with a recorded agency must have none." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            SELECT $this WHERE {
+              {
+                $this aeo:effectiveAgency ?e .
+                FILTER NOT EXISTS { $this aeo:agency ?e }
+                FILTER NOT EXISTS { ?d a aeo:DefaultedCharacteristic ; aeo:defaultedOn $this ; aeo:defaultedProperty aeo:effectiveAgency }
+              } UNION {
+                $this aeo:agency ?r .
+                ?d a aeo:DefaultedCharacteristic ; aeo:defaultedOn $this ; aeo:defaultedProperty aeo:effectiveAgency .
+              }
+            }
+        """ ] .
+
+aeo:DefaultedMechanismShape a sh:NodeShape ;
+    sh:targetClass aeo:LossCause ;
+    sh:sparql [
+        sh:message "An effective mechanism that differs from every recorded mechanism needs a defaulted characteristic, and a cause with a recorded mechanism must have none." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            SELECT $this WHERE {
+              {
+                $this aeo:effectiveMechanism ?e .
+                FILTER NOT EXISTS { $this aeo:mechanism ?e }
+                FILTER NOT EXISTS { ?d a aeo:DefaultedCharacteristic ; aeo:defaultedOn $this ; aeo:defaultedProperty aeo:effectiveMechanism }
+              } UNION {
+                $this aeo:mechanism ?r .
+                ?d a aeo:DefaultedCharacteristic ; aeo:defaultedOn $this ; aeo:defaultedProperty aeo:effectiveMechanism .
+              }
+            }
+        """ ] .
+
+aeo:RequirementScopeShape a sh:NodeShape ;
+    sh:targetClass aeo:CoverageRequirement ;
+    sh:sparql [
+        sh:message "A requirement's scope must be an admission profile whose conditions are bound to subject class aeo:ExposureUnit." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+            SELECT $this WHERE {
+              $this aeo:requirementScope ?profile .
+              FILTER (NOT EXISTS { ?profile elg:hasCondition ?c1 . ?b1 elg:bindsCondition ?c1 ; elg:subjectClass aeo:ExposureUnit }
+                      || EXISTS { ?profile elg:hasCondition ?c2 . ?b2 elg:bindsCondition ?c2 ; elg:subjectClass ?cl . FILTER (?cl != aeo:ExposureUnit) })
             }
         """ ] .
 ```
@@ -3844,6 +5126,12 @@ scales or sources it follows, how it follows them, and where it departs from the
 - Oasis Open Results Data (ORD), for the metric kinds, perspectives and exceedance curve calculation
   methods
 - Commission Delegated Regulation (EU) 2015/35 (Solvency II), for the 1 in 200 return period convention
+  and the lines of business
+- the UK Insurance Act 2015 (sections 3 and Schedule 1) and the ACORD 125 commercial application, for
+  cover history events
+- English and US proximate cause authorities (Leyland Shipping v Norwich Union, Wayne Tank v Employers
+  Liability, Sabella v Wisler), for the cause position concepts
+- IAS 1 and IFRS 15, for the financial metric kinds, and RFC 2119 as an analogy for requirement strength
 - for geographic precision, control kind, interest kind, valuation basis and valuation method,
   which the above do not cover, common catastrophe-modelling and property market usage, stated
   neutrally
@@ -3869,6 +5157,12 @@ is milestone M3's first half: four locations, two in a special flood hazard area
 units `tools/exposure_derivations.py` computes for flood and wind, and an Eligibility admission
 profile over them.
 
+[`examples/losses.ttl`](examples/losses.ttl) (AIR-4.4) holds a five-year loss experience stated
+complete with two records (a flood loss with a two-link cause chain and a fire loss under a
+loss event with a GLIDE key), a second experience with no records, a lender's flood requirement and an
+appetite requirement relative to equity, an expiring programme with summary terms, a non-renewal and
+revenue by territory, with the output of `effective_characteristics` for its causes.
+
 ## 10. Release notes
 
 | Version | Change |
@@ -3876,3 +5170,4 @@ profile over them.
 | `0.1.0` | AIR-4.1: exposure set, location, legal entity, control relations, asset, interest, valuation. Seven scheme contracts, nine programme roles. Literate from the start |
 | `0.1.0` (AIR-4.2a) | Exposure set membership, zone designations, pool participations, assessments and attribute values are no longer inverse functional, and `aeo:MembershipShape` is withdrawn (TD-49). Unchanged members are shared across exposure set versions by identity, as this README always stated. Corrects `0.1.0` before it is released, so no version bump. Example `versions.ttl` added |
 | `0.1.0` (AIR-4.3) | Dependencies, peril metrics, metric comparisons and exposure units, with the dependency kind, substitutability, metric kind, perspective, calculation method and model option schemes, the schedule group and scenario contracts, and the output share, return period and exceedance probability spaces. `aeo:perilScope` loses its domain (AIR-4.2 gave it `aeo:PoolParticipation`, which a metric's use would have contradicted). Nine shapes |
+| `0.1.0` (AIR-4.4) | Loss experiences, loss records, cause chains with recorded and effective characteristics and defaulted characteristics, coverage requirements with measure constraints, existing cover with summary terms, cover history events and financial metrics, with ten reference schemes and contracts, the money share space, and nineteen shapes. Imports Eligibility 0.12.0 and `insurance/common` 0.6.0. Financial metric kinds for revenue, gross profit and headcount are `aeo-voc:RevenueMetric`, `aeo-voc:GrossProfitMetric` and `aeo-voc:HeadcountMetric`, since `Revenue`, `GrossProfit` and `Headcount` name a value type and an attribute type |

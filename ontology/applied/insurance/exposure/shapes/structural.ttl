@@ -496,3 +496,275 @@ aeo:ExposureUnitShape a sh:NodeShape ;
               FILTER (?nl != 1 || ?nc != 1 || ?np != 1 || ?nv > 1)
             }
         """ ] .
+
+#################################################################
+#    AIR-4.4: losses, requirements, cover, financial metrics
+#################################################################
+
+aeo:LossExperienceShape a sh:NodeShape ;
+    sh:targetClass aeo:LossExperience ;
+    sh:sparql [
+        sh:message "A loss experience must have exactly one entity, one source and one temporal scope." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            SELECT $this WHERE {
+              {
+                SELECT $this (COUNT(DISTINCT ?e) AS ?ne) (COUNT(DISTINCT ?s) AS ?ns) (COUNT(DISTINCT ?t) AS ?nt) WHERE {
+                  $this a aeo:LossExperience .
+                  OPTIONAL { $this aeo:experienceOf ?e }
+                  OPTIONAL { $this aeo:experienceSource ?s }
+                  OPTIONAL { $this fnd:hasTemporalScope ?t }
+                } GROUP BY $this
+              }
+              FILTER (?ne != 1 || ?ns != 1 || ?nt != 1)
+            }
+        """ ] .
+
+aeo:LossRecordShape a sh:NodeShape ;
+    sh:targetClass aeo:LossRecord ;
+    sh:sparql [
+        sh:message "A loss record must have exactly one date and one status, and at most one class of business." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            SELECT $this WHERE {
+              {
+                SELECT $this (COUNT(DISTINCT ?d) AS ?nd) (COUNT(DISTINCT ?s) AS ?ns) (COUNT(DISTINCT ?c) AS ?nc) WHERE {
+                  $this a aeo:LossRecord .
+                  OPTIONAL { $this aeo:lossDate ?d }
+                  OPTIONAL { $this aeo:lossStatus ?s }
+                  OPTIONAL { $this aeo:classOfBusiness ?c }
+                } GROUP BY $this
+              }
+              FILTER (?nd != 1 || ?ns != 1 || ?nc > 1)
+            }
+        """ ] .
+
+aeo:LossRecordCurrencyShape a sh:NodeShape ;
+    sh:targetClass aeo:LossRecord ;
+    sh:sparql [
+        sh:message "Every money amount on a loss record must be in a currency unit, and all in the same one." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+            SELECT $this WHERE {
+              {
+                SELECT $this (COUNT(DISTINCT ?u) AS ?nu) (COUNT(DISTINCT ?q) AS ?nq) (COUNT(DISTINCT ?qu) AS ?nqu) WHERE {
+                  $this a aeo:LossRecord .
+                  OPTIONAL {
+                    $this (aeo:grossAmount|aeo:deductibleApplied|aeo:paid|aeo:reserved|aeo:incurred|aeo:recovered) ?q .
+                    OPTIONAL { ?q qnt:inUnit ?u }
+                    BIND(IF(BOUND(?u), ?q, ?none) AS ?qu)
+                  }
+                } GROUP BY $this
+              }
+              FILTER (?nu > 1 || ?nq != ?nqu)
+            }
+        """ ] .
+
+aeo:IncurredShape a sh:NodeShape ;
+    sh:targetClass aeo:LossRecord ;
+    sh:sparql [
+        sh:message "Incurred must equal paid plus reserved when all three are present." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+            SELECT $this WHERE {
+              $this aeo:paid/qnt:numericValue ?p ; aeo:reserved/qnt:numericValue ?r ; aeo:incurred/qnt:numericValue ?i .
+              FILTER (?i != ?p + ?r)
+            }
+        """ ] .
+
+aeo:LossCauseShape a sh:NodeShape ;
+    sh:targetClass aeo:LossCause ;
+    sh:sparql [
+        sh:message "A loss cause must have exactly one peril and one position, and at most one agency and one effective agency." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            SELECT $this WHERE {
+              {
+                SELECT $this (COUNT(DISTINCT ?p) AS ?np) (COUNT(DISTINCT ?c) AS ?nc) (COUNT(DISTINCT ?a) AS ?na) (COUNT(DISTINCT ?e) AS ?ne) WHERE {
+                  $this a aeo:LossCause .
+                  OPTIONAL { $this aeo:peril ?p }
+                  OPTIONAL { $this aeo:causePosition ?c }
+                  OPTIONAL { $this aeo:agency ?a }
+                  OPTIONAL { $this aeo:effectiveAgency ?e }
+                } GROUP BY $this
+              }
+              FILTER (?np != 1 || ?nc != 1 || ?na > 1 || ?ne > 1)
+            }
+        """ ] .
+
+aeo:CoverageRequirementShape a sh:NodeShape ;
+    sh:targetClass aeo:CoverageRequirement ;
+    sh:sparql [
+        sh:message "A coverage requirement must have exactly one identity, source and strength, and at least one required measure." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            SELECT $this WHERE {
+              {
+                SELECT $this (COUNT(DISTINCT ?i) AS ?ni) (COUNT(DISTINCT ?s) AS ?ns) (COUNT(DISTINCT ?t) AS ?nt) (COUNT(DISTINCT ?m) AS ?nm) WHERE {
+                  $this a aeo:CoverageRequirement .
+                  OPTIONAL { $this fnd:hasIdentity ?i }
+                  OPTIONAL { $this aeo:requirementSource ?s }
+                  OPTIONAL { $this aeo:requirementStrength ?t }
+                  OPTIONAL { $this aeo:requiredMeasure ?m }
+                } GROUP BY $this
+              }
+              FILTER (?ni != 1 || ?ns != 1 || ?nt != 1 || ?nm < 1)
+            }
+        """ ] .
+
+aeo:RequirementNoPremiumShape a sh:NodeShape ;
+    sh:targetClass aeo:CoverageRequirement ;
+    sh:sparql [
+        sh:message "A coverage requirement must not constrain the premium: aeo-voc:Premium is for summary terms of an existing cover only." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#>
+            SELECT $this WHERE {
+              $this aeo:requiredMeasure/aeo:measure aeo-voc:Premium .
+            }
+        """ ] .
+
+aeo:MeasureConstraintShape a sh:NodeShape ;
+    sh:targetClass aeo:MeasureConstraint ;
+    sh:sparql [
+        sh:message "A measure constraint must have exactly one measure and one bound." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            SELECT $this WHERE {
+              {
+                SELECT $this (COUNT(DISTINCT ?m) AS ?nm) (COUNT(DISTINCT ?b) AS ?nb) WHERE {
+                  $this a aeo:MeasureConstraint .
+                  OPTIONAL { $this aeo:measure ?m }
+                  OPTIONAL { $this aeo:bound ?b }
+                } GROUP BY $this
+              }
+              FILTER (?nm != 1 || ?nb != 1)
+            }
+        """ ] .
+
+aeo:MeasureSpaceShape a sh:NodeShape ;
+    sh:targetClass aeo:MeasureConstraint ;
+    sh:sparql [
+        sh:message "A measure constraint's bound must be on its measure's value space. A bound relative to a metric must be on a proportion space (a qnt:DerivedValueSpace) over that value space." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+            SELECT $this WHERE {
+              $this aeo:measure ?m ; aeo:bound/qnt:onSpace ?bs .
+              ?m aeo:measureSpace ?ms .
+              FILTER ((NOT EXISTS { $this aeo:relativeTo ?x } && ?bs != ?ms)
+                      || (EXISTS { $this aeo:relativeTo ?y } && NOT EXISTS { ?bs a qnt:DerivedValueSpace ; qnt:numeratorSpace ?ms }))
+            }
+        """ ] .
+
+aeo:ExistingCoverShape a sh:NodeShape ;
+    sh:targetClass aeo:ExistingCover ;
+    sh:sparql [
+        sh:message "An existing cover must have exactly one cover relation and one temporal scope, and at most one trigger basis." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            SELECT $this WHERE {
+              {
+                SELECT $this (COUNT(DISTINCT ?r) AS ?nr) (COUNT(DISTINCT ?t) AS ?nt) (COUNT(DISTINCT ?b) AS ?nb) WHERE {
+                  $this a aeo:ExistingCover .
+                  OPTIONAL { $this aeo:coverRelation ?r }
+                  OPTIONAL { $this fnd:hasTemporalScope ?t }
+                  OPTIONAL { $this aeo:triggerBasis ?b }
+                } GROUP BY $this
+              }
+              FILTER (?nr != 1 || ?nt != 1 || ?nb > 1)
+            }
+        """ ] .
+
+aeo:ExistingCoverEvidenceShape a sh:NodeShape ;
+    sh:targetClass aeo:ExistingCover ;
+    sh:severity sh:Warning ;
+    sh:sparql [
+        sh:message "An existing cover with neither a reference to its contract nor a summary term says nothing about what it covers." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            SELECT $this WHERE {
+              $this a aeo:ExistingCover .
+              FILTER NOT EXISTS { $this aeo:coverReference ?r }
+              FILTER NOT EXISTS { $this aeo:summaryTerm ?t }
+            }
+        """ ] .
+
+aeo:TermSummaryShape a sh:NodeShape ;
+    sh:targetClass aeo:TermSummary ;
+    sh:sparql [
+        sh:message "A term summary must have exactly one measure and one value, and the value must be on the measure's value space." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+            SELECT $this WHERE {
+              {
+                SELECT $this (COUNT(DISTINCT ?m) AS ?nm) (COUNT(DISTINCT ?v) AS ?nv) WHERE {
+                  $this a aeo:TermSummary .
+                  OPTIONAL { $this aeo:measure ?m }
+                  OPTIONAL { $this aeo:summaryValue ?v }
+                } GROUP BY $this
+              }
+              OPTIONAL { $this aeo:measure ?measure . ?measure aeo:measureSpace ?ms . $this aeo:summaryValue/qnt:onSpace ?vs }
+              FILTER (?nm != 1 || ?nv != 1 || (BOUND(?ms) && ?vs != ?ms))
+            }
+        """ ] .
+
+aeo:CoverHistoryEventShape a sh:NodeShape ;
+    sh:targetClass aeo:CoverHistoryEvent ;
+    sh:sparql [
+        sh:message "A cover history event must have exactly one kind and one date." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            SELECT $this WHERE {
+              {
+                SELECT $this (COUNT(DISTINCT ?k) AS ?nk) (COUNT(DISTINCT ?d) AS ?nd) WHERE {
+                  $this a aeo:CoverHistoryEvent .
+                  OPTIONAL { $this aeo:historyEventKind ?k }
+                  OPTIONAL { $this aeo:eventDate ?d }
+                } GROUP BY $this
+              }
+              FILTER (?nk != 1 || ?nd != 1)
+            }
+        """ ] .
+
+aeo:FinancialMetricShape a sh:NodeShape ;
+    sh:targetClass aeo:FinancialMetric ;
+    sh:sparql [
+        sh:message "A financial metric must have exactly one entity, kind and amount, and one temporal scope." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            SELECT $this WHERE {
+              {
+                SELECT $this (COUNT(DISTINCT ?e) AS ?ne) (COUNT(DISTINCT ?k) AS ?nk) (COUNT(DISTINCT ?a) AS ?na) (COUNT(DISTINCT ?t) AS ?nt) WHERE {
+                  $this a aeo:FinancialMetric .
+                  OPTIONAL { $this aeo:metricOf ?e }
+                  OPTIONAL { $this aeo:financialMetricKind ?k }
+                  OPTIONAL { $this aeo:metricAmount ?a }
+                  OPTIONAL { $this fnd:hasTemporalScope ?t }
+                } GROUP BY $this
+              }
+              FILTER (?ne != 1 || ?nk != 1 || ?na != 1 || ?nt != 1)
+            }
+        """ ] .
+
+aeo:FinancialMetricSpaceShape a sh:NodeShape ;
+    sh:targetClass aeo:FinancialMetric ;
+    sh:sparql [
+        sh:message "A headcount is a count, and every other financial metric is money." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#>
+            PREFIX icm-voc: <https://www.nebularis.org/neuro-semantic/insurance/common/vocab#>
+            PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+            SELECT $this WHERE {
+              $this aeo:financialMetricKind ?k ; aeo:metricAmount/qnt:onSpace ?space .
+              FILTER ((?k = aeo-voc:HeadcountMetric && ?space != aeo-voc:Count) || (?k != aeo-voc:HeadcountMetric && ?space != icm-voc:Money))
+            }
+        """ ] .

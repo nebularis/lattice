@@ -80,7 +80,7 @@ python3 tools/literate_extract.py ontology/applied/insurance/common/README.md \
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/insurance/common>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/common/0.5.0> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/common/0.6.0> ;
     rdfs:label "Insurance domain shared contracts"@en ;
     rdfs:comment "Insurance scheme contracts shared by two or more of the domain's modules (ADR-A98 decision 1, epic D7): peril, mechanism, agency, consequence, harm subject and pool classifications. The liability role types of ADR-A102 are declared in vocab/common-vocab.ttl, alongside these properties' scheme contracts. The loss event (AIR-4.4) and the liability direction scheme (Phase 5) are not yet declared here." ;
     owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
@@ -123,6 +123,18 @@ icm:pool a owl:ObjectProperty ;
     rdfs:label "pool"@en ;
     rdfs:comment "A classification by risk pool (a national terrorism or flood pool, for example)." ;
     fnd:utility "Link anything needing a pool classification to a concept in a pool scheme, for the same reason as icm:peril." .
+
+icm:classOfBusiness a owl:ObjectProperty ;
+    rdfs:range skos:Concept ;
+    rdfs:label "class of business"@en ;
+    rdfs:comment "A classification by class or line of business (AIR-4.4)." ;
+    fnd:utility "Link anything needing a class of business to a concept in a class of business scheme, for the same reason as icm:peril. Declared with no domain, so exposure, claims and the contract module may specialise it. A deployment binds an edition by territory scope, for example the lines of business of Solvency II's Annex I." .
+
+icm:LossEvent a owl:Class ;
+    rdfs:subClassOf fnd:Evidenced , fnd:TemporallyScoped , fnd:NaturallyKeyed ;
+    rdfs:label "Loss event"@en ;
+    rdfs:comment "One occurrence in the world (a storm, an earthquake, a cyber campaign) that many losses can share (AIR-4.4)." ;
+    fnd:utility "Subject: a loss event. Its temporal scope is the event's span, its perils are icm:peril values and its territories cls:territory values. Identify it by a natural key such as a GLIDE number (icm-voc:GlideNumber). It is not an insurance occurrence: grouping losses into one occurrence under a contract is the contract's rule, not this class's." .
 ```
 
 | Contract | Constrains | Typically bound to (from Phase 2 onwards) |
@@ -154,7 +166,7 @@ without the full peril vocabulary, can depend on `common/` alone.
 <https://www.nebularis.org/neuro-semantic/insurance/common/vocab>
     rdf:type owl:Ontology ;
     owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/common-vocab/0.6.0> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/insurance/common/0.5.0> .
+    owl:imports <https://www.nebularis.org/neuro-semantic/insurance/common/0.6.0> .
 
 icm-voc:PerilContract a voc:SchemeContract ;
     fnd:hasIdentity icm-voc:PerilContract-identity ;
@@ -191,6 +203,21 @@ icm-voc:PoolContract a voc:SchemeContract ;
     fnd:hasGovernanceState fnd:Active ;
     skos:prefLabel "Pool scheme contract"@en ;
     voc:constrainsProperty icm:pool .
+
+icm-voc:ClassOfBusinessContract a voc:SchemeContract ;
+    fnd:hasIdentity icm-voc:ClassOfBusinessContract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Class of business scheme contract"@en ;
+    skos:note "Follows the lines of business of Annex I to Commission Delegated Regulation (EU) 2015/35 (Solvency II) as the model edition a deployment binds. No reference scheme here: unbound until a deployment binds an edition by territory scope. AIR-4.6 binds an example edition."@en ;
+    voc:constrainsProperty icm:classOfBusiness .
+
+icm-voc:GlideNumber a fnd:KeyScheme ;
+    rdfs:label "GLIDE numbers"@en ;
+    skos:note "The GLobal IDEntifier number the Asian Disaster Reduction Center assigns to a disaster, in the form of a hazard type code, a year, a six digit serial number and an ISO 3166 country code (for example FL-2002-000217-AFG). The open reference key for a loss event. Insurance industry event identifiers (catastrophe serial numbers, industry loss index event codes) are key schemes their publishers own, declared where they are used (AIR-4.6's examples)."@en ;
+    fnd:reissuesValues false ;
+    fnd:sensitiveDataScheme false ;
+    fnd:valuePattern "^[A-Z]{2,3}-[0-9]{4}-[0-9]{6}-[A-Z]{3}$" ;
+    fnd:keyNormalisation "NfkcTrimUppercase" .
 ```
 
 ## 5. The four liability role types (ADR-A102)
@@ -520,8 +547,7 @@ icm-voc:ISK a qnt:Unit ; qnt:onSpace icm-voc:Money ; skos:exactMatch <http://qud
 
 | Content | Arrives in |
 |---|---|
-| class of business, industry, domicile and legal form on the legal entity | AIR-4.x (Phase 4) |
-| the loss event, shared by exposure and claims | AIR-4.4 |
+| industry, domicile and legal form on the legal entity | AIR-4.x (Phase 4) |
 | the liability direction scheme (ADR-A102) | Phase 5 |
 
 ## 8. Documentation rule
@@ -558,4 +584,5 @@ every conversion's factor, and every currency's notation, QUDT match and placeme
 |---|---|
 | `0.1.0` | AIR-1.2: the six shared classification properties, the six scheme contracts, the four liability role types |
 | `0.5.0` | re-pinned by the computable-contract-substrate unit's Foundation, Vocabulary and Party cascades (no content change) |
+| `0.6.0` (spec) | AIR-4.4: `icm:LossEvent` and `icm:classOfBusiness`. The vocabulary adds `icm-voc:ClassOfBusinessContract` and `icm-voc:GlideNumber` and re-pins to the spec's 0.6.0 |
 | `0.6.0` | AIR-2.6: QUDT-aligned units across nine families, four exact conversions, and a draft list of ISO 4217 currencies on one money value space (common-vocab only, no spec change) |

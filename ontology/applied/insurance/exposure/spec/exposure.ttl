@@ -6,6 +6,7 @@
 @prefix pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#> .
 @prefix cls:  <https://www.nebularis.org/neuro-semantic/lattice/applied/classification#> .
 @prefix icm:  <https://www.nebularis.org/neuro-semantic/insurance/common#> .
+@prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
 @prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix owl:  <http://www.w3.org/2002/07/owl#> .
@@ -22,7 +23,8 @@
                 <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> ,
                 <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.8.0> ,
                 <https://www.nebularis.org/neuro-semantic/lattice/party/0.9.0> ,
-                <https://www.nebularis.org/neuro-semantic/insurance/common/0.5.0> .
+                <https://www.nebularis.org/neuro-semantic/insurance/common/0.6.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.12.0> .
 
 #################################################################
 #    Identity classes (AIR-4.1). Each versioned class below has
@@ -58,7 +60,7 @@ aeo:ExposureSet a owl:Class ;
         [ a owl:Restriction ; owl:onProperty aeo:reportingUnit ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
     rdfs:label "Exposure set"@en ;
     rdfs:comment "A versioned snapshot of one insured's schedule, as of a date." ;
-    fnd:utility "Subject: an exposure set version. Its identity (aeo:ExposureIdentity) follows the schedule across renewals. Governance state is Draft while assembled, Active when submitted, Superseded by the next version. Link members with aeo:hasLocation, aeo:hasAsset, aeo:hasInterest, aeo:hasValuation, aeo:hasAssessment, aeo:hasDependency and aeo:hasPerilMetric." .
+    fnd:utility "Subject: an exposure set version. Its identity (aeo:ExposureIdentity) follows the schedule across renewals. Governance state is Draft while assembled, Active when submitted, Superseded by the next version. Link members with aeo:hasLocation, aeo:hasAsset, aeo:hasInterest, aeo:hasValuation, aeo:hasAssessment, aeo:hasDependency, aeo:hasPerilMetric, aeo:hasLossExperience, aeo:hasRequirement, aeo:hasExistingCover, aeo:hasCoverHistoryEvent and aeo:hasFinancialMetric." .
 
 aeo:reportingUnit a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:domain aeo:ExposureSet ; rdfs:range qnt:Unit ;
@@ -764,3 +766,462 @@ aeo:scheduleGroup a owl:ObjectProperty ;
 [] a owl:AllDisjointClasses ;
     owl:members ( aeo:ExposureSet aeo:Location aeo:Asset aeo:Interest aeo:Valuation
                   aeo:Dependency aeo:PerilMetric aeo:ExposureUnit aeo:MetricComparison ) .
+
+#################################################################
+#    Loss experience and losses (AIR-4.4, sketch §5.12)
+#################################################################
+
+aeo:LossExperience a owl:Class ;
+    rdfs:subClassOf fnd:Evidenced , fnd:TemporallyScoped ,
+        [ a owl:Restriction ; owl:onProperty aeo:experienceOf ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:experienceSource ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:statedComplete ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
+    rdfs:label "Loss experience"@en ;
+    rdfs:comment "One source's account of an insured's losses over a period." ;
+    fnd:utility "Subject: a loss experience. Its temporal scope is the period it covers. Exactly one entity and one source. If it is stated complete, an experience with no loss records says there were no losses in the period. An insured with no experience at all says nothing. Link it to its exposure set with aeo:hasLossExperience and its records with aeo:hasLossRecord." .
+
+aeo:experienceOf a owl:ObjectProperty ;
+    rdfs:domain aeo:LossExperience ; rdfs:range aeo:LegalEntity ;
+    rdfs:label "experience of"@en ;
+    rdfs:comment "The legal entity whose losses the experience accounts for." ;
+    fnd:utility "Subject: a loss experience. Value: an aeo:LegalEntity. Exactly one." .
+
+aeo:experienceSource a owl:ObjectProperty ;
+    rdfs:domain aeo:LossExperience ; rdfs:range skos:Concept ;
+    rdfs:label "experience source"@en ;
+    rdfs:comment "Who gave the account (the insured, an insurer's loss run, a claims administrator, a broker)." ;
+    fnd:utility "Subject: a loss experience. Value: a concept bound by aeo-voc:LossExperienceSourceContract. Exactly one." .
+
+aeo:statedComplete a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:LossExperience ; rdfs:range xsd:boolean ;
+    rdfs:label "stated complete"@en ;
+    rdfs:comment "Whether the source states the account lists every loss in the period." ;
+    fnd:utility "Subject: a loss experience. Value: true when the source states the account complete. At most one. Absent says the account may be partial." .
+
+aeo:classOfBusiness a owl:ObjectProperty ;
+    rdfs:subPropertyOf icm:classOfBusiness ;
+    rdfs:range skos:Concept ;
+    rdfs:label "class of business"@en ;
+    rdfs:comment "The class or line of business something is under." ;
+    fnd:utility "Subject: a loss experience, loss record, coverage requirement, existing cover or cover history event. Value: a concept bound by insurance/common's icm-voc:ClassOfBusinessContract. Not functional on an experience, requirement, cover or event, at most one on a loss record. Specialises icm:classOfBusiness." .
+
+aeo:hasLossExperience a owl:ObjectProperty ;
+    rdfs:domain aeo:ExposureSet ; rdfs:range aeo:LossExperience ;
+    rdfs:label "has loss experience"@en ;
+    rdfs:comment "A loss experience listed in this exposure set version." ;
+    fnd:utility "Subject: an exposure set. Value: one of its loss experiences. Not inverse functional, for the same reason as aeo:hasLocation (TD-49)." .
+
+aeo:hasLossRecord a owl:ObjectProperty ;
+    rdfs:domain aeo:LossExperience ; rdfs:range aeo:LossRecord ;
+    rdfs:label "has loss record"@en ;
+    rdfs:comment "A loss record in this loss experience." ;
+    fnd:utility "Subject: a loss experience. Value: one of its loss records. Not inverse functional (TD-49): a later experience from the same source may list a record unchanged." .
+
+aeo:LossRecord a owl:Class ;
+    rdfs:subClassOf fnd:Evidenced , fnd:NaturallyKeyed ,
+        [ a owl:Restriction ; owl:onProperty aeo:lossDate ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:lossStatus ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
+    rdfs:label "Loss record"@en ;
+    rdfs:comment "One loss as a source recorded it." ;
+    fnd:utility "Subject: a loss record. A date, a status, the amounts the source recorded (all in one currency), the line it was paid under, the loss event it belongs to, and the links of its cause chain. Its claim reference is a fnd:naturalKey." .
+
+aeo:lossDate a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:LossRecord ; rdfs:range xsd:date ;
+    rdfs:label "loss date"@en ;
+    rdfs:comment "The date of the loss." ;
+    fnd:utility "Subject: a loss record. Value: an xsd:date. Exactly one, and within the temporal scope of the experience that lists the record (the loss-in-period shape)." .
+
+aeo:lossAt a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:LossRecord ; rdfs:range aeo:Location ;
+    rdfs:label "loss at"@en ;
+    rdfs:comment "The location the loss occurred at, where known." ;
+    fnd:utility "Subject: a loss record. Value: an aeo:Location. At most one." .
+
+aeo:lossStatus a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:LossRecord ; rdfs:range skos:Concept ;
+    rdfs:label "loss status"@en ;
+    rdfs:comment "Where the claim stands (open, closed, closed without payment, reopened, in litigation, in recovery)." ;
+    fnd:utility "Subject: a loss record. Value: a concept bound by aeo-voc:LossStatusContract. Exactly one." .
+
+aeo:lossEvent a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:LossRecord ; rdfs:range icm:LossEvent ;
+    rdfs:label "loss event"@en ;
+    rdfs:comment "The event in the world that caused the loss, where it belongs to one." ;
+    fnd:utility "Subject: a loss record. Value: an icm:LossEvent shared by every loss it caused. At most one." .
+
+aeo:hasCause a owl:ObjectProperty ;
+    rdfs:domain aeo:LossRecord ; rdfs:range aeo:LossCause ;
+    rdfs:label "has cause"@en ;
+    rdfs:comment "A link of the loss's cause chain." ;
+    fnd:utility "Subject: a loss record. Value: one of its loss causes, one node per link. Not functional." .
+
+aeo:consequence a owl:ObjectProperty ;
+    rdfs:subPropertyOf icm:consequence ;
+    rdfs:domain aeo:LossRecord ; rdfs:range skos:Concept ;
+    rdfs:label "consequence"@en ;
+    rdfs:comment "The head of loss the record is paid under." ;
+    fnd:utility "Subject: a loss record. Value: a consequence concept under insurance/common's consequence contract. Not functional. Specialises icm:consequence." .
+
+aeo:grossAmount a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:LossRecord ; rdfs:range qnt:Quantity ;
+    rdfs:label "gross amount"@en ;
+    rdfs:comment "The loss before the deductible." ;
+    fnd:utility "Subject: a loss record. Value: a money qnt:Quantity. At most one. Every money amount on a record is in one currency (the loss-record currency shape)." .
+
+aeo:deductibleApplied a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:LossRecord ; rdfs:range qnt:Quantity ;
+    rdfs:label "deductible applied"@en ;
+    rdfs:comment "The deductible taken off the gross loss." ;
+    fnd:utility "Subject: a loss record. Value: a money qnt:Quantity. At most one." .
+
+aeo:paid a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:LossRecord ; rdfs:range qnt:Quantity ;
+    rdfs:label "paid"@en ;
+    rdfs:comment "The amount paid." ;
+    fnd:utility "Subject: a loss record. Value: a money qnt:Quantity. At most one." .
+
+aeo:reserved a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:LossRecord ; rdfs:range qnt:Quantity ;
+    rdfs:label "reserved"@en ;
+    rdfs:comment "The amount reserved for payment still to come." ;
+    fnd:utility "Subject: a loss record. Value: a money qnt:Quantity. At most one." .
+
+aeo:incurred a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:LossRecord ; rdfs:range qnt:Quantity ;
+    rdfs:label "incurred"@en ;
+    rdfs:comment "The amount paid plus the amount reserved." ;
+    fnd:utility "Subject: a loss record. Value: a money qnt:Quantity. At most one. Equal to paid plus reserved when all three are present (the incurred shape)." .
+
+aeo:recovered a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:LossRecord ; rdfs:range qnt:Quantity ;
+    rdfs:label "recovered"@en ;
+    rdfs:comment "The amount recovered after payment, by subrogation or salvage." ;
+    fnd:utility "Subject: a loss record. Value: a money qnt:Quantity. At most one." .
+
+aeo:LossCause a owl:Class ;
+    rdfs:subClassOf fnd:Evidenced ,
+        [ a owl:Restriction ; owl:onProperty aeo:peril ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:causePosition ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:agency ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:effectiveAgency ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
+    rdfs:label "Loss cause"@en ;
+    rdfs:comment "One link of a loss's cause chain: a peril, its position in the chain, and the agency and mechanisms the source recorded." ;
+    fnd:utility "Subject: a loss cause. Exactly one peril and one position, at most one recorded agency, any number of recorded mechanisms. The effective agency and mechanisms are derived (tools/exposure_derivations.py, effective_characteristics), never written by hand. The recorded values are what the source said." .
+
+aeo:peril a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:subPropertyOf icm:peril ;
+    rdfs:domain aeo:LossCause ; rdfs:range skos:Concept ;
+    rdfs:label "peril"@en ;
+    rdfs:comment "The peril of this link of the cause chain." ;
+    fnd:utility "Subject: a loss cause. Value: a cause concept under insurance/common's peril contract. Exactly one. Specialises icm:peril." .
+
+aeo:causePosition a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:LossCause ; rdfs:range skos:Concept ;
+    rdfs:label "cause position"@en ;
+    rdfs:comment "Where this link stands in the chain (initiating, intermediate or proximate)." ;
+    fnd:utility "Subject: a loss cause. Value: a concept bound by aeo-voc:CausePositionContract. Exactly one. Several links can be proximate under concurrent causation, and which link a contract reads is the contract's rule, not this property's." .
+
+aeo:agency a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:subPropertyOf icm:agency ;
+    rdfs:domain aeo:LossCause ; rdfs:range skos:Concept ;
+    rdfs:label "agency"@en ;
+    rdfs:comment "The agency the source recorded for this link." ;
+    fnd:utility "Subject: a loss cause. Value: a concept under insurance/common's agency contract. At most one. What the source recorded, which may differ from the cause concept's typical agency. Specialises icm:agency." .
+
+aeo:mechanism a owl:ObjectProperty ;
+    rdfs:subPropertyOf icm:mechanism ;
+    rdfs:domain aeo:LossCause ; rdfs:range skos:Concept ;
+    rdfs:label "mechanism"@en ;
+    rdfs:comment "A mechanism of harm the source recorded for this link." ;
+    fnd:utility "Subject: a loss cause. Value: a concept under insurance/common's mechanism contract. Not functional. What the source recorded. Specialises icm:mechanism." .
+
+aeo:effectiveAgency a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:subPropertyOf icm:agency ;
+    rdfs:domain aeo:LossCause ; rdfs:range skos:Concept ;
+    rdfs:label "effective agency"@en ;
+    rdfs:comment "The agency a check reads: the recorded one, else the cause concept's typical one." ;
+    fnd:utility "Subject: a loss cause. Value: an agency concept. At most one. Written by effective_characteristics, never by hand. Eligibility bindings read this property." .
+
+aeo:effectiveMechanism a owl:ObjectProperty ;
+    rdfs:subPropertyOf icm:mechanism ;
+    rdfs:domain aeo:LossCause ; rdfs:range skos:Concept ;
+    rdfs:label "effective mechanism"@en ;
+    rdfs:comment "A mechanism a check reads: the recorded ones, else the cause concept's typical ones." ;
+    fnd:utility "Subject: a loss cause. Value: a mechanism concept. Not functional. Written by effective_characteristics, never by hand. Eligibility bindings read this property." .
+
+aeo:DefaultedCharacteristic a owl:Class ;
+    rdfs:subClassOf fnd:DerivedArtefact ,
+        [ a owl:Restriction ; owl:onProperty aeo:defaultedOn ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:defaultedProperty ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
+    rdfs:label "Defaulted characteristic"@en ;
+    rdfs:comment "Marks an effective value that was defaulted from the cause concept's typical value rather than copied from what the source recorded." ;
+    fnd:utility "Subject: a defaulted characteristic, one per defaulted effective property of a loss cause. Exactly one loss cause and one property (aeo:effectiveAgency or aeo:effectiveMechanism). prov:wasDerivedFrom names the cause concept whose typical value was used, and prov:wasGeneratedBy the derivation run." .
+
+aeo:defaultedOn a owl:ObjectProperty ;
+    rdfs:domain aeo:DefaultedCharacteristic ; rdfs:range aeo:LossCause ;
+    rdfs:label "defaulted on"@en ;
+    rdfs:comment "The loss cause whose effective value was defaulted." ;
+    fnd:utility "Subject: a defaulted characteristic. Value: an aeo:LossCause. Exactly one." .
+
+aeo:defaultedProperty a owl:ObjectProperty ;
+    rdfs:domain aeo:DefaultedCharacteristic ; rdfs:range rdf:Property ;
+    rdfs:label "defaulted property"@en ;
+    rdfs:comment "The effective property that was defaulted." ;
+    fnd:utility "Subject: a defaulted characteristic. Value: aeo:effectiveAgency or aeo:effectiveMechanism. Exactly one." .
+
+#################################################################
+#    Coverage requirements (AIR-4.4, sketch §5.13)
+#################################################################
+
+aeo:RequirementIdentity a owl:Class ;
+    rdfs:subClassOf fnd:PersistentIdentity ;
+    rdfs:label "Requirement identity"@en ;
+    rdfs:comment "The identity a coverage requirement keeps across revisions." ;
+    fnd:utility "Give every aeo:CoverageRequirement version fnd:hasIdentity an individual of this class." .
+
+aeo:CoverageRequirement a owl:Class ;
+    rdfs:subClassOf fnd:Version , fnd:Evidenced ,
+        [ a owl:Restriction ; owl:onProperty aeo:requirementSource ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:requirementStrength ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:requiredMeasure ; owl:minCardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:requirementScope ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:owedTo ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
+    rdfs:label "Coverage requirement"@en ;
+    rdfs:comment "What a client, lender, regulator or lease requires of the cover on a set of exposure." ;
+    fnd:utility "Subject: a coverage requirement version, with an aeo:RequirementIdentity. Exactly one source and one strength, at least one measure constraint, at most one scope and at most one obligee. It states a need, never what a contract insures. Link it to its exposure set with aeo:hasRequirement." .
+
+aeo:requirementSource a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:CoverageRequirement ; rdfs:range skos:Concept ;
+    rdfs:label "requirement source"@en ;
+    rdfs:comment "Where the requirement comes from (risk appetite, a lender covenant, a regulation, a lease or contract, a board mandate)." ;
+    fnd:utility "Subject: a coverage requirement. Value: a concept bound by aeo-voc:RequirementSourceContract. Exactly one." .
+
+aeo:requirementStrength a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:CoverageRequirement ; rdfs:range skos:Concept ;
+    rdfs:label "requirement strength"@en ;
+    rdfs:comment "How firmly the requirement is held (mandatory, preferred, optional)." ;
+    fnd:utility "Subject: a coverage requirement. Value: a concept bound by aeo-voc:RequirementStrengthContract. Exactly one." .
+
+aeo:requiredMeasure a owl:ObjectProperty ;
+    rdfs:domain aeo:CoverageRequirement ; rdfs:range aeo:MeasureConstraint ;
+    rdfs:label "required measure"@en ;
+    rdfs:comment "A measure of the cover and the bound the requirement puts on it." ;
+    fnd:utility "Subject: a coverage requirement. Value: an aeo:MeasureConstraint. At least one." .
+
+aeo:requirementScope a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:CoverageRequirement ; rdfs:range elg:AdmissionProfile ;
+    rdfs:label "requirement scope"@en ;
+    rdfs:comment "The exposure the requirement applies to, as an Eligibility admission profile over exposure units." ;
+    fnd:utility "Subject: a coverage requirement. Value: an elg:AdmissionProfile whose conditions are bound to subject class aeo:ExposureUnit (AIR-4.3), so the scope is evaluated over units computed for the perils it names. At most one. Absent says the requirement applies to the whole schedule." .
+
+aeo:owedTo a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:CoverageRequirement ; rdfs:range pty:RoleOccupancy ;
+    rdfs:label "owed to"@en ;
+    rdfs:comment "Who the requirement is owed to, as an occupancy of a role (a lender as mortgagee, for example)." ;
+    fnd:utility "Subject: a coverage requirement. Value: a pty:RoleOccupancy. At most one. Names the obligee until Phase 5 links a requirement to the obligation it arises from." .
+
+aeo:MeasureConstraint a owl:Class ;
+    rdfs:subClassOf
+        [ a owl:Restriction ; owl:onProperty aeo:measure ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:bound ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:atReturnPeriod ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:relativeTo ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
+    rdfs:label "Measure constraint"@en ;
+    rdfs:comment "A bound a requirement puts on one measure of the cover." ;
+    fnd:utility "Subject: a measure constraint. Exactly one measure and one bound, on the measure's value space (the measure-constraint shape). At most one return period, for a net retained loss, and at most one metric the bound is relative to." .
+
+aeo:measure a owl:ObjectProperty ;
+    rdfs:range skos:Concept ;
+    rdfs:label "measure"@en ;
+    rdfs:comment "Which measure of the cover a constraint or a summary term is about (limit, retention, indemnity period and others)." ;
+    fnd:utility "Subject: a measure constraint or a term summary. Value: a concept bound by aeo-voc:MeasureContract, each with an aeo:measureSpace. Exactly one on each." .
+
+aeo:bound a owl:ObjectProperty ;
+    rdfs:domain aeo:MeasureConstraint ; rdfs:range qnt:RangeSet ;
+    rdfs:label "bound"@en ;
+    rdfs:comment "The values of the measure the requirement allows." ;
+    fnd:utility "Subject: a measure constraint. Value: a qnt:RangeSet on the measure's value space (a limit of at least an amount is a range with a lower bound only). Exactly one." .
+
+aeo:atReturnPeriod a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:MeasureConstraint ; rdfs:range qnt:Quantity ;
+    rdfs:label "at return period"@en ;
+    rdfs:comment "The return period a net retained loss constraint is stated at." ;
+    fnd:utility "Subject: a measure constraint on aeo-voc:NetRetainedLoss. Value: a qnt:Quantity on aeo-voc:ReturnPeriodSpace. At most one." .
+
+aeo:relativeTo a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:MeasureConstraint ; rdfs:range aeo:FinancialMetric ;
+    rdfs:label "relative to"@en ;
+    rdfs:comment "The financial metric a relative bound is a share of." ;
+    fnd:utility "Subject: a measure constraint whose bound is on a proportion space (qnt:DerivedValueSpace). Value: an aeo:FinancialMetric, equity for example. At most one." .
+
+aeo:measureSpace a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain skos:Concept ; rdfs:range qnt:ValueSpace ;
+    rdfs:label "measure space"@en ;
+    rdfs:comment "The value space a measure concept's bounds and summary values are on." ;
+    fnd:utility "Subject: a measure concept. Value: the qnt:ValueSpace. Exactly one. Money for amounts, a duration for periods, a share of the limit for capacity." .
+
+aeo:hasRequirement a owl:ObjectProperty ;
+    rdfs:domain aeo:ExposureSet ; rdfs:range aeo:CoverageRequirement ;
+    rdfs:label "has requirement"@en ;
+    rdfs:comment "A coverage requirement listed in this exposure set version." ;
+    fnd:utility "Subject: an exposure set. Value: one of its coverage requirements. Not inverse functional, for the same reason as aeo:hasLocation (TD-49)." .
+
+#################################################################
+#    Existing cover and cover history (AIR-4.4, sketch §5.14)
+#################################################################
+
+aeo:ExistingCover a owl:Class ;
+    rdfs:subClassOf fnd:Evidenced , fnd:TemporallyScoped ,
+        [ a owl:Restriction ; owl:onProperty aeo:coverRelation ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:coverReference ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:triggerBasis ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
+    rdfs:label "Existing cover"@en ;
+    rdfs:comment "Cover already in place on the insured's exposure, for a policy period." ;
+    fnd:utility "Subject: an existing cover. Its temporal scope is the policy period. Exactly one relation to the cover being placed, at most one reference to the contract (which the contract module owns) and at most one trigger basis. Either a reference or summary terms should be present (the existing-cover evidence shape). Link it to its exposure set with aeo:hasExistingCover." .
+
+aeo:coverRelation a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:ExistingCover ; rdfs:range skos:Concept ;
+    rdfs:label "cover relation"@en ;
+    rdfs:comment "How the existing cover relates to the cover being placed (underlying, alongside or replaced)." ;
+    fnd:utility "Subject: an existing cover. Value: a concept bound by aeo-voc:CoverRelationContract. Exactly one." .
+
+aeo:coverReference a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:ExistingCover ; rdfs:range xsd:anyURI ;
+    rdfs:label "cover reference"@en ;
+    rdfs:comment "A reference to the existing cover's contract." ;
+    fnd:utility "Subject: an existing cover. Value: an xsd:anyURI naming the contract, which the contract module owns. At most one." .
+
+aeo:triggerBasis a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:ExistingCover ; rdfs:range skos:Concept ;
+    rdfs:label "trigger basis"@en ;
+    rdfs:comment "What sets the existing cover off (the insured's indemnity, a parametric index, an industry loss index)." ;
+    fnd:utility "Subject: an existing cover. Value: a concept bound by aeo-voc:TriggerBasisContract. At most one." .
+
+aeo:insurer a owl:ObjectProperty ;
+    rdfs:range pty:Actor ;
+    rdfs:label "insurer"@en ;
+    rdfs:comment "An insurer on the existing cover." ;
+    fnd:utility "Subject: an existing cover. Value: a pty:Actor. Not functional." .
+
+aeo:summaryTerm a owl:ObjectProperty ;
+    rdfs:domain aeo:ExistingCover ; rdfs:range aeo:TermSummary ;
+    rdfs:label "summary term"@en ;
+    rdfs:comment "A term of the existing cover stated as a summary figure, where the contract is not in the graph." ;
+    fnd:utility "Subject: an existing cover. Value: an aeo:TermSummary (the expiring limit, retention or premium). Not functional." .
+
+aeo:TermSummary a owl:Class ;
+    rdfs:subClassOf
+        [ a owl:Restriction ; owl:onProperty aeo:measure ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:summaryValue ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
+    rdfs:label "Term summary"@en ;
+    rdfs:comment "One term of an existing cover as a figure." ;
+    fnd:utility "Subject: a term summary. Exactly one measure (which may be aeo-voc:Premium here, though not in a requirement) and one value on that measure's space." .
+
+aeo:summaryValue a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:TermSummary ; rdfs:range qnt:Quantity ;
+    rdfs:label "summary value"@en ;
+    rdfs:comment "The figure a term summary states." ;
+    fnd:utility "Subject: a term summary. Value: a qnt:Quantity on the measure's value space. Exactly one." .
+
+aeo:hasExistingCover a owl:ObjectProperty ;
+    rdfs:domain aeo:ExposureSet ; rdfs:range aeo:ExistingCover ;
+    rdfs:label "has existing cover"@en ;
+    rdfs:comment "An existing cover listed in this exposure set version." ;
+    fnd:utility "Subject: an exposure set. Value: one of its existing covers. Not inverse functional, for the same reason as aeo:hasLocation (TD-49)." .
+
+aeo:CoverHistoryEvent a owl:Class ;
+    rdfs:subClassOf fnd:Evidenced ,
+        [ a owl:Restriction ; owl:onProperty aeo:historyEventKind ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:eventDate ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:byInsurer ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:reasonGiven ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
+    rdfs:label "Cover history event"@en ;
+    rdfs:comment "Something that happened to the insured's cover in the past (a declinature, a non-renewal, a cancellation, special terms, a risk avoided)." ;
+    fnd:utility "Subject: a cover history event. Exactly one kind and one date, at most one insurer and one reason, any number of classes of business. Link it to its exposure set with aeo:hasCoverHistoryEvent." .
+
+aeo:historyEventKind a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:CoverHistoryEvent ; rdfs:range skos:Concept ;
+    rdfs:label "history event kind"@en ;
+    rdfs:comment "What kind of event it was." ;
+    fnd:utility "Subject: a cover history event. Value: a concept bound by aeo-voc:CoverHistoryEventKindContract. Exactly one." .
+
+aeo:eventDate a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:CoverHistoryEvent ; rdfs:range xsd:date ;
+    rdfs:label "event date"@en ;
+    rdfs:comment "The date of the event." ;
+    fnd:utility "Subject: a cover history event. Value: an xsd:date. Exactly one." .
+
+aeo:byInsurer a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:CoverHistoryEvent ; rdfs:range pty:Actor ;
+    rdfs:label "by insurer"@en ;
+    rdfs:comment "The insurer that did it, where one did." ;
+    fnd:utility "Subject: a cover history event. Value: a pty:Actor. At most one." .
+
+aeo:reasonGiven a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:CoverHistoryEvent ; rdfs:range xsd:string ;
+    rdfs:label "reason given"@en ;
+    rdfs:comment "The reason the insurer gave, in its words." ;
+    fnd:utility "Subject: a cover history event. Value: an xsd:string. At most one." .
+
+aeo:hasCoverHistoryEvent a owl:ObjectProperty ;
+    rdfs:domain aeo:ExposureSet ; rdfs:range aeo:CoverHistoryEvent ;
+    rdfs:label "has cover history event"@en ;
+    rdfs:comment "A cover history event listed in this exposure set version." ;
+    fnd:utility "Subject: an exposure set. Value: one of its cover history events. Not inverse functional, for the same reason as aeo:hasLocation (TD-49)." .
+
+#################################################################
+#    Financial metrics (AIR-4.4, sketch §5.14)
+#################################################################
+
+aeo:FinancialMetric a owl:Class ;
+    rdfs:subClassOf fnd:Evidenced , fnd:TemporallyScoped ,
+        [ a owl:Restriction ; owl:onProperty aeo:metricOf ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:financialMetricKind ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:metricAmount ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:audited ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
+    rdfs:label "Financial metric"@en ;
+    rdfs:comment "A figure about an entity's finances for a reporting period." ;
+    fnd:utility "Subject: a financial metric. Its temporal scope is the reporting period. Exactly one entity, kind and amount, at most one audited flag, any number of territories (for turnover by territory). Link it to its exposure set with aeo:hasFinancialMetric." .
+
+aeo:metricOf a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:FinancialMetric ; rdfs:range aeo:LegalEntity ;
+    rdfs:label "metric of"@en ;
+    rdfs:comment "The entity the financial figure is about." ;
+    fnd:utility "Subject: a financial metric. Value: an aeo:LegalEntity. Exactly one." .
+
+aeo:financialMetricKind a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:FinancialMetric ; rdfs:range skos:Concept ;
+    rdfs:label "financial metric kind"@en ;
+    rdfs:comment "What the figure is (revenue, gross profit, equity, headcount, and others)." ;
+    fnd:utility "Subject: a financial metric. Value: a concept bound by aeo-voc:FinancialMetricKindContract. Exactly one." .
+
+aeo:metricAmount a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:FinancialMetric ; rdfs:range qnt:Quantity ;
+    rdfs:label "metric amount"@en ;
+    rdfs:comment "The figure." ;
+    fnd:utility "Subject: a financial metric. Value: a qnt:Quantity, money for every kind but aeo-voc:HeadcountMetric, which is a count (the financial-metric shape). Exactly one." .
+
+aeo:audited a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain aeo:FinancialMetric ; rdfs:range xsd:boolean ;
+    rdfs:label "audited"@en ;
+    rdfs:comment "Whether the figure comes from audited accounts." ;
+    fnd:utility "Subject: a financial metric. Value: true when audited. At most one." .
+
+aeo:metricTerritory a owl:ObjectProperty ;
+    rdfs:subPropertyOf cls:territory ;
+    rdfs:domain aeo:FinancialMetric ; rdfs:range skos:Concept ;
+    rdfs:label "metric territory"@en ;
+    rdfs:comment "A territory the figure is for, where the entity reports it by territory." ;
+    fnd:utility "Subject: a financial metric. Value: a territory concept. Not functional: turnover by territory is one metric per territory. Specialises cls:territory." .
+
+aeo:hasFinancialMetric a owl:ObjectProperty ;
+    rdfs:domain aeo:ExposureSet ; rdfs:range aeo:FinancialMetric ;
+    rdfs:label "has financial metric"@en ;
+    rdfs:comment "A financial metric listed in this exposure set version." ;
+    fnd:utility "Subject: an exposure set. Value: one of its financial metrics. Not inverse functional, for the same reason as aeo:hasLocation (TD-49)." .
+
+[] a owl:AllDisjointClasses ;
+    owl:members ( aeo:ExposureSet aeo:Location aeo:Asset aeo:Interest aeo:Valuation
+                  aeo:LossExperience aeo:LossRecord aeo:LossCause aeo:DefaultedCharacteristic
+                  aeo:CoverageRequirement aeo:MeasureConstraint aeo:ExistingCover aeo:TermSummary
+                  aeo:CoverHistoryEvent aeo:FinancialMetric ) .

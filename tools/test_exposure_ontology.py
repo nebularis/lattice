@@ -151,7 +151,8 @@ def test_air42_01_spec_and_vocab_parse_every_import_resolves():
         "https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0",
         "https://www.nebularis.org/neuro-semantic/lattice/quantification/0.8.0",
         "https://www.nebularis.org/neuro-semantic/lattice/party/0.9.0",
-        "https://www.nebularis.org/neuro-semantic/insurance/common/0.5.0",
+        "https://www.nebularis.org/neuro-semantic/insurance/common/0.6.0",
+        "https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.12.0",
     }
     vocab_imports = {str(o) for o in vocab.objects(None, OWL.imports)}
     assert vocab_imports == {
