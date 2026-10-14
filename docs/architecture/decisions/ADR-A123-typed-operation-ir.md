@@ -234,7 +234,8 @@ request-time slots.
 
 1. **Two request-time slots join `payloadTriples` and `logGraphs`.** `{{{eventRows}}}` holds the rows of
    `VALUES (?event ?eventType ?opSeq ?occurredAt)` and `{{{eventTriples}}}` holds the data written beside each event. The IR has a `Rows`
-   slot kind and a `RowValues` element, which the checker accepts only at the top of a `WHERE` and which binds its variables. Like every
+   slot kind and a `RowValues` element, which binds its variables. The checker does not restrict where it is placed (review note,
+   2026-10-14). Like every
    slot, neither is parameter-guarded.
 2. **An append takes its events from the rows.** One request still steps the seq once and writes one receipt and one claim. Each event's
    `pat:revision` is that receipt, so its position is (epoch, seq, `opSeq`). Every solution writes the same version row, claim and receipt,

@@ -1196,7 +1196,7 @@ The patch log adds little to TD-42's quadratic cost and does not change its orde
 
 #### Built (2026-10-14), the event half
 
-Steps 1 to 6 are built as written, with the [Validation Pack](../validation/FMH-H2-6b.md). Differences from the plan: the second planned probe
+Approved by the maintainer and complete, 2026-10-14. Steps 1 to 6 are built as written, with the [Validation Pack](../validation/FMH-H2-6b.md). Differences from the plan: the second planned probe
 (the `VALUES` block in a group of its own) does not fail any test, since a group holding only a `VALUES` block joins as the bare block does,
 so the pack uses a mutation that ties the receipt to the event instead. An empty `eventRows` raises on rdflib and gives no solution on Oxigraph
 (TSD-21). `test_ho6_t14` now subtracts the warnings its base example reports on its own.
@@ -1307,11 +1307,13 @@ H2.8-Q1 to Q3 are for the maintainer before a branch.
 #### Steps
 
 1. **The `Payload` type** (sketch §4.2, PL-B): ground triples, each term through `persistence.terms`, rendered as sorted canonical N-Triples, no
-   blank node, and the slot's text built from it. One type serves every slot.
+   blank node, and the slot's text built from it. One type serves every slot. A `Rows` type does the same for `eventRows`, each value through `persistence.terms`. The rows slot
+   sits in an update's `WHERE`, so text that is not built this way can change the guards, not only the data written (H2.6b review).
 2. **The digest**, from the digest contract: its parts in order, each the sorted canonical N-Triples of its slot (H2.6b-Q5), hashed as guide §15.2
    says, with test vectors in `contracts/` that an independent tool verifies (ADR-A84 decision 5's precedent).
 3. **The payload checks.** For the payload slot, every subject is the root or reached from it by the owned
-   path within the slot. For the event slots, Q2, each row's `opSeq` an `xsd:long`, distinct within the batch, and at least one row. `instantiate` emits a `payload-check` query per family (H2.7-Q3) that runs over a local graph
+   path within the slot. For the event slots, Q2, each row's `opSeq` an `xsd:long`, distinct within the batch, each event IRI distinct, no `UNDEF`
+   in any row, and at least one row. `instantiate` emits a `payload-check` query per family (H2.7-Q3) that runs over a local graph
    and returns the subjects outside the bound. The Python type runs the same query.
 4. **The caller check** (H2-Q4 (c), NQ6): every declared parameter present and of its kind, a `Long` or `Position` exactly `xsd:long` on any
    store, a `Literal` not an IRI, `logGraphs` non-empty (Q3) and every member an IRI, a caller-named `$g` equal to the naming rule. It refuses

@@ -5,7 +5,11 @@
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice H2.6b, the event half only, planned in
 [plan §4.6](../plans/formal-methods-track-h.md#46-h26b-the-event-and-patch-content-slots-planned-2026-10-14) ("Steps, the event half"), after
 [H2.6](FMH-H2-6.md). The patch-log half is held (H-D33) and is not built.
-**For the maintainer:** re-approve the six expected profiles that changed (below), accept or
+**Sign-off, 2026-10-14.** Approved by the maintainer and complete. The six regenerated expected profiles are re-approved, and the change to
+`test_ho6_t14` is countersigned. The review's three points are recorded in the status record's log. The ADR-A123 addendum stays a draft until
+the maintainer accepts it.
+
+**For the maintainer (done 2026-10-14):** re-approve the six expected profiles that changed (below), accept or
 change the ADR-A123 addendum draft, and read the probe results, one of which did not behave as the plan predicted.
 **For countersignature (non-weakening rule):** one existing test was changed. `test_ho6_t14` asserted that a warning witness triggers exactly its own
 rule. The composite example it extends declares `dal:PatchLog`, so its own compile now warns `ReceiptModelNotHonoured` (TD-46), and the test now
