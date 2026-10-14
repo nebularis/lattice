@@ -1,19 +1,18 @@
 # SPDX-License-Identifier: MPL-2.0
 
-# Positive fixture (applied-insurance-reference AIR-2.1, AIR-2.2): a small,
-# real fragment of the cause scheme that passes every shape in
-# structural.ttl and constraints.ttl. No owl:Ontology header: not a released
-# document.
+# Positive fixture (applied-insurance-reference AIR-2.1, AIR-2.2, AIR-2.3): a small, real
+# fragment of the cause scheme that passes every shape in structural.ttl and constraints.ttl.
+# No owl:Ontology header: not a released document.
 #
-# Six cause concepts: two family tops (N, T), the N.MET / N.MET.TC path to
-# them, N.MET.TC.SRG as a partitive part of N.MET.TC, and N.MET.TC.HUR as a
-# generic kind of N.MET.TC, threshold-defined with a prl:definingThreshold.
-# Their characteristic values (Natural, Sudden, Physical, Threshold) are the
-# vocabulary's own reference concepts (AIR-2.2), not local placeholders.
-# Reference codes follow sketch §5. The Quantification range set behind
-# N.MET.TC.HUR's threshold is a minimal placeholder in its own example
-# namespace, not the peril vocabulary's: the real intensity-measure value
-# spaces are AIR-2.6.
+# Six cause concepts, all now declared for real in vocab/peril-vocab.ttl (AIR-2.3): two family
+# tops (N, T), the N.MET / N.MET.TC path to them, N.MET.TC.SRG as a partitive part of N.MET.TC,
+# and N.MET.TC.HUR as a generic kind of N.MET.TC, threshold-defined with a prl:definingThreshold.
+# This fixture no longer re-declares their identity: AIR-2.3 made that redundant, and a
+# re-declaration that drifted from the real text would itself be a second, distinct value,
+# breaking LabelAndDefinitionShape's "exactly one" rule. Every threshold-defined cause concept's
+# real prl:definingThreshold lives in vocab/peril-intensity.ttl (AIR-2.6), which every consumer
+# of this fixture now loads alongside it (tools/test_peril_vocabulary.py,
+# tools/test_peril_intensity.py), so this fixture adds no placeholder of its own.
 
 @prefix prl:     <https://www.nebularis.org/neuro-semantic/insurance/peril#> .
 @prefix prl-voc: <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#> .
@@ -21,91 +20,4 @@
 @prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
 @prefix ex:      <https://example.org/lattice/insurance/peril/examples#> .
 
-# ---- Cause concepts --------------------------------------------------------
 
-prl-voc:N a skos:Concept ;
-    skos:inScheme prl-voc:CauseScheme ;
-    skos:prefLabel "Natural hazard"@en ;
-    skos:definition "A peril whose initiating event arises from a natural process."@en ;
-    skos:notation "N"^^prl:ReferenceCode ;
-    skos:note "Follows the IRDR Peril Classification's top-level distinction between natural and human-induced hazards."@en ;
-    prl:typicalAgency prl-voc:Natural ;
-    prl:onset prl-voc:Sudden ;
-    prl:definitionBasis prl-voc:Physical .
-
-prl-voc:T a skos:Concept ;
-    skos:inScheme prl-voc:CauseScheme ;
-    skos:prefLabel "Technological and accidental event"@en ;
-    skos:definition "A peril whose initiating event is accidental, or arises from human technology or activity."@en ;
-    skos:notation "T"^^prl:ReferenceCode ;
-    skos:note "The IRDR Peril Classification covers natural hazards only. This family follows common market and EM-DAT usage for technological and accidental events, stated neutrally."@en ;
-    prl:typicalAgency prl-voc:Natural ;
-    prl:onset prl-voc:Sudden ;
-    prl:definitionBasis prl-voc:Physical .
-
-prl-voc:CauseScheme skos:hasTopConcept prl-voc:N , prl-voc:T .
-prl-voc:N skos:topConceptOf prl-voc:CauseScheme .
-prl-voc:T skos:topConceptOf prl-voc:CauseScheme .
-
-prl-voc:N.MET a skos:Concept ;
-    skos:inScheme prl-voc:CauseScheme ;
-    skos:prefLabel "Meteorological hazard"@en ;
-    skos:definition "A natural hazard arising from atmospheric processes."@en ;
-    skos:notation "N.MET"^^prl:ReferenceCode ;
-    skos:note "Follows the IRDR Peril Classification's meteorological hazard family."@en ;
-    prl:broaderGeneric prl-voc:N ;
-    skos:broader prl-voc:N ;
-    prl:typicalAgency prl-voc:Natural ;
-    prl:onset prl-voc:Sudden ;
-    prl:definitionBasis prl-voc:Physical .
-
-prl-voc:N.MET.TC a skos:Concept ;
-    skos:inScheme prl-voc:CauseScheme ;
-    skos:prefLabel "Tropical cyclone"@en ;
-    skos:definition "An organised, warm-cored cyclonic storm system originating over tropical or sub-tropical waters. Its own event family: several of its concepts are its parts."@en ;
-    skos:notation "N.MET.TC"^^prl:ReferenceCode ;
-    skos:note "Follows the IRDR Peril Classification's tropical cyclone entry and the WMO's definition of the storm system. Unlike a flat code list, storm surge and other effects are modelled as parts of this concept (prl:broaderPartitive), not separate hazards (PV2)."@en ;
-    prl:broaderGeneric prl-voc:N.MET ;
-    skos:broader prl-voc:N.MET ;
-    prl:typicalAgency prl-voc:Natural ;
-    prl:onset prl-voc:Sudden ;
-    prl:definitionBasis prl-voc:Physical .
-
-prl-voc:N.MET.TC.SRG a skos:Concept ;
-    skos:inScheme prl-voc:CauseScheme ;
-    skos:prefLabel "Tropical cyclone storm surge"@en ;
-    skos:definition "The rise in sea level caused by a tropical cyclone's winds and pressure, part of a tropical cyclone occurrence."@en ;
-    skos:notation "N.MET.TC.SRG"^^prl:ReferenceCode ;
-    skos:note "Some code lists give storm surge its own top-level flood code. Here it is kept as a part of the tropical cyclone that caused it (PV2), reached by prl:broaderPartitive, since it never occurs without one."@en ;
-    prl:broaderPartitive prl-voc:N.MET.TC ;
-    skos:broader prl-voc:N.MET.TC ;
-    prl:typicalAgency prl-voc:Natural ;
-    prl:onset prl-voc:Sudden ;
-    prl:definitionBasis prl-voc:Physical .
-
-prl-voc:N.MET.TC.HUR a skos:Concept ;
-    skos:inScheme prl-voc:CauseScheme ;
-    skos:prefLabel "Hurricane"@en ;
-    skos:definition "A tropical cyclone at or above hurricane strength in the North Atlantic and eastern North Pacific basins."@en ;
-    skos:notation "N.MET.TC.HUR"^^prl:ReferenceCode ;
-    skos:note "Follows the WMO's basin-specific naming: 'hurricane' names the same wind-speed class the WMO calls 'severe tropical cyclone' or 'typhoon' in other basins. The numeric threshold itself is recorded in peril-intensity.ttl (AIR-2.6), not here."@en ;
-    prl:broaderGeneric prl-voc:N.MET.TC ;
-    skos:broader prl-voc:N.MET.TC ;
-    prl:typicalAgency prl-voc:Natural ;
-    prl:onset prl-voc:Sudden ;
-    prl:definitionBasis prl-voc:Threshold ;
-    prl:intensityMeasure ex:sustained-wind-measure ;
-    prl:definingThreshold ex:hurricane-wind-threshold .
-
-# ---- Quantification placeholder for N.MET.TC.HUR's threshold --------------
-# Minimal: only what prl:definingThreshold's own range (qnt:RangeSet) needs
-# to exist as, and a placeholder measure on the same space, so the
-# ThresholdDefinitionShape's space cross-check (AIR-2.6) is satisfied
-# without depending on peril-intensity.ttl. The real sustained-wind value
-# space and measure are AIR-2.6's prl-voc:SustainedWind1MinSpace and
-# prl-voc:SustainedWind1Min.
-
-ex:sustained-wind-space a qnt:ValueSpace .
-ex:sustained-wind-measure prl:measuredOn ex:sustained-wind-space .
-ex:hurricane-wind-threshold a qnt:RangeSet ;
-    qnt:onSpace ex:sustained-wind-space .

@@ -12,6 +12,7 @@ negative fixture file per case (the plan's own choice for this slice).
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import pytest
@@ -55,11 +56,13 @@ def _vocab() -> Graph:
 
 
 def _fixture() -> Graph:
-    """spec + vocab (schemes, no concepts) + the well-formed fixture,
-    fresh per call so tests can mutate their own copy safely."""
+    """spec + vocab (schemes and, from AIR-2.3, the cause scheme) + peril-intensity.ttl
+    (AIR-2.6, every threshold-defined cause concept's real prl:definingThreshold) + the
+    well-formed fixture, fresh per call so tests can mutate their own copy safely."""
     return _graph(
         MODULE / "spec" / "peril.ttl",
         MODULE / "vocab" / "peril-vocab.ttl",
+        MODULE / "vocab" / "peril-intensity.ttl",
         MODULE / "examples" / "well-formed.ttl",
     )
 
@@ -347,7 +350,10 @@ def test_air22_03_each_scheme_holds_exactly_its_table_each_a_top_concept():
 
 
 def test_air22_04_vocabulary_alone_has_no_results():
-    assert results(_vocab()) == []
+    # From AIR-2.3, the vocabulary carries threshold-defined cause concepts whose
+    # prl:definingThreshold lives in the separate vocab/peril-intensity.ttl document
+    # (AIR-2.6, ADR-A120 addendum), so "vocabulary alone" means both documents together.
+    assert results(_graph(MODULE / "vocab" / "peril-vocab.ttl", MODULE / "vocab" / "peril-intensity.ttl")) == []
 
 
 # ---- AIR22-05: the four bound contracts conform to Vocabulary's shapes -------------------------
@@ -394,3 +400,121 @@ def test_air22_08_cause_concept_with_mismatched_scheme_characteristic_is_rejecte
     data.remove((PRLV["N.MET.TC.SRG"], PRL.onset, None))
     data.add((PRLV["N.MET.TC.SRG"], PRL.onset, PRLV.Shaking))
     assert CHARACTERISTICS in shapes_for(PRLV["N.MET.TC.SRG"], data)
+
+
+# ---- AIR23-01: N has 90 concepts, T 71, E 15, every code present once --------------------------
+
+
+def test_air23_01_n_t_and_e_family_counts_and_unique_codes():
+    vocab = _vocab()
+    family_prefixes = {"N": "N", "T": "T", "E": "E"}
+    counts = {label: 0 for label in family_prefixes}
+    codes: list[str] = []
+    for concept in vocab.subjects(SKOS.inScheme, PRLV.CauseScheme):
+        notations = [n for n in vocab.objects(concept, SKOS.notation) if n.datatype == PRL.ReferenceCode]
+        assert len(notations) == 1, concept
+        code = str(notations[0])
+        codes.append(code)
+        family = code.split(".")[0]
+        if family in counts:
+            counts[family] += 1
+    assert counts == {"N": 90, "T": 71, "E": 15}
+    assert len(codes) == len(set(codes))
+
+
+# ---- AIR23-02: the vocabulary with peril-intensity.ttl / the peril shapes / no result -----------
+
+
+def test_air23_02_vocabulary_with_intensity_has_no_results():
+    data = _graph(MODULE / "vocab" / "peril-vocab.ttl", MODULE / "vocab" / "peril-intensity.ttl")
+    assert results(data) == []
+
+
+# ---- AIR23-03: every N, T, E concept has exactly one onset, one basis, 1+ agency ---------------
+
+
+def test_air23_03_every_n_t_e_concept_has_the_required_characteristics():
+    vocab = _vocab()
+    for concept in vocab.subjects(SKOS.inScheme, PRLV.CauseScheme):
+        notation = next(n for n in vocab.objects(concept, SKOS.notation) if n.datatype == PRL.ReferenceCode)
+        if str(notation).split(".")[0] not in ("N", "T", "E"):
+            continue
+        onsets = list(vocab.objects(concept, PRL.onset))
+        bases = list(vocab.objects(concept, PRL.definitionBasis))
+        agencies = list(vocab.objects(concept, PRL.typicalAgency))
+        assert len(onsets) == 1, concept
+        assert len(bases) == 1, concept
+        assert len(agencies) >= 1, concept
+
+
+def test_air23_03_five_spot_checked_concepts():
+    vocab = _vocab()
+    assert set(vocab.objects(PRLV["N.CLI.WF.FOR"], PRL.typicalAgency)) == {PRLV.UndeterminedAgency}
+    assert set(vocab.objects(PRLV["N.MET.TC.HUR"], PRL.definitionBasis)) == {PRLV.Threshold}
+    assert set(vocab.objects(PRLV["E.DET.COR"], PRL.typicalAgency)) == {PRLV.Natural}
+    assert set(vocab.objects(PRLV["E.DET.COR"], PRL.onset)) == {PRLV.Gradual}
+    assert set(vocab.objects(PRLV["T.REL.ASB"], PRL.onset)) == {PRLV.Latent}
+    assert set(vocab.objects(PRLV["N.BIO.OUT.PAN"], PRL.definitionBasis)) == {PRLV.Designation}
+    assert set(vocab.objects(PRLV["N.BIO.OUT.PAN"], PRL.accumulationClass)) == {PRLV.Systemic}
+
+
+# ---- AIR23-04: N.GEO.EQ.FFE and N.MET.TC.SRG's partitive links and mechanisms ------------------
+
+
+def test_air23_04_ffe_and_srg_partitive_links_and_mechanisms():
+    vocab = _vocab()
+    assert (PRLV["N.GEO.EQ.FFE"], PRL.broaderPartitive, PRLV["N.GEO.EQ"]) in vocab
+    assert set(vocab.objects(PRLV["N.GEO.EQ.FFE"], PRL.typicalMechanism)) == {PRLV.Fire}
+    assert (PRLV["N.MET.TC.SRG"], PRL.broaderPartitive, PRLV["N.MET.TC"]) in vocab
+    assert set(vocab.objects(PRLV["N.MET.TC.SRG"], PRL.typicalMechanism)) == {PRLV.Inundation}
+
+
+# ---- AIR23-05: every model code of sketch 5.1 is a prl:CatModelCode notation -------------------
+
+
+def test_air23_05_every_model_code_is_a_cat_model_code_notation():
+    vocab = _vocab()
+    expected = {
+        "N.GEO.EQ.SHK": "QEQ", "N.GEO.EQ.FFE": "QFF", "N.GEO.EQ.LIQ": "QLF", "N.GEO.EQ.LSD": "QLS",
+        "N.GEO.TSU.EQT": "QTS", "N.MET.TC.WND": "WTC", "N.MET.TC.SRG": "WSS", "N.MET.ETC.WND": "WEC",
+        "N.MET.SCS.TOR": "XTD", "N.MET.SCS.HAI": "XHL", "N.MET.SCS.SLW": "XSL",
+        "N.HYD.FLD.FLU": "ORF", "N.HYD.FLD.PLU": "OPF", "N.HYD.FLD.CST": "OSF",
+        "N.CLI.WF": "BBF", "N.CLI.WF.GRS": "BSK",
+    }
+    for code, model_code in expected.items():
+        notations = {str(n) for n in vocab.objects(PRLV[code], SKOS.notation) if n.datatype == PRL.CatModelCode}
+        assert notations == {model_code}, code
+
+
+# ---- AIR23-06: N.GEO.EQ canTrigger N.GEO.TSU.EQT, N.MET.TC.SRG overlaps N.HYD.FLD.CST -----------
+
+
+def test_air23_06_named_cross_links():
+    vocab = _vocab()
+    assert (PRLV["N.GEO.EQ"], PRL.canTrigger, PRLV["N.GEO.TSU.EQT"]) in vocab
+    assert (PRLV["N.MET.TC.SRG"], PRL.overlaps, PRLV["N.HYD.FLD.CST"]) in vocab
+
+
+# ---- AIR23-07: a threshold-basis concept with its onset removed is a characteristics violation --
+
+
+def test_air23_07_hur_without_onset_is_rejected():
+    data = _fixture()
+    data.remove((PRLV["N.MET.TC.HUR"], PRL.onset, None))
+    assert CHARACTERISTICS in shapes_for(PRLV["N.MET.TC.HUR"], data)
+
+
+# ---- AIR23-08: no definition names coverage, exclusion or the policy -----------------------------
+
+BANNED_WORDS = ("cover", "covered", "exclude", "insured", "policy")
+BANNED_WORD_RE = re.compile(r"\b(" + "|".join(BANNED_WORDS) + r")\b", re.IGNORECASE)
+
+
+def test_air23_08_no_definition_uses_coverage_language():
+    vocab = _vocab()
+    offenders = []
+    for concept, definition in vocab.subject_objects(SKOS.definition):
+        match = BANNED_WORD_RE.search(str(definition))
+        if match:
+            offenders.append((concept, match.group(1)))
+    assert offenders == []

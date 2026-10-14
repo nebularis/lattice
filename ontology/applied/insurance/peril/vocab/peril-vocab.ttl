@@ -605,12 +605,1803 @@ prl-voc:Reputation a skos:Concept ;
 prl-voc:HarmSubjectScheme skos:hasTopConcept prl-voc:Property , prl-voc:Persons , prl-voc:FinancialInterest ,
     prl-voc:DataAndSystems , prl-voc:Environment , prl-voc:Reputation .
 
-# Filled by AIR-2.3: 90 concepts (geophysical, hydrological, meteorological, climatological,
-# biological, extraterrestrial), sketch §5.1.
+# 90 concepts (geophysical, hydrological, meteorological, climatological, biological,
+# extraterrestrial), sketch §5.1. K marks a generic (kind-of) link, P a partitive (part-of) link
+# (sketch §6.1); every non-top concept states exactly one, materialised as skos:broader too.
+# Family default (sketch AIR-2.3 "Family defaults"): typicalAgency Natural, onset Sudden,
+# definitionBasis Physical, harmSubject Property, no accumulationClass, no typicalMechanism,
+# unless an override below says otherwise. intensityMeasure/definingThreshold links to
+# vocab/peril-intensity.ttl (AIR-2.6) are not repeated here: that document already names these
+# concepts by IRI.
 
-# Filled by AIR-2.3: 71 concepts, sketch §5.2.
+# CauseScheme's own skos:hasTopConcept gains its first three members here (N, T, E). AIR-2.4
+# adds H, P, C, F and L to the same list, for eight in total (AIR24-04).
+prl-voc:CauseScheme skos:hasTopConcept prl-voc:N , prl-voc:T , prl-voc:E .
 
-# Filled by AIR-2.3: 15 concepts, sketch §5.3.
+prl-voc:N a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ; skos:topConceptOf prl-voc:CauseScheme ;
+    skos:notation "N"^^prl:ReferenceCode ;
+    skos:prefLabel "Natural hazard"@en ;
+    skos:definition "A hazard arising from a natural geophysical, hydrological, meteorological, climatological, biological or extraterrestrial process, with no human act as its proximate cause."@en ;
+    skos:note "Follows the IRDR Peril Classification and Hazard Glossary's natural-hazard families, which this family's six groups mirror."@en ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.GEO a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.GEO"^^prl:ReferenceCode ;
+    skos:prefLabel "Geophysical hazard"@en ;
+    skos:definition "A hazard arising from a process of the solid earth: its crust, its tectonic plates or its volcanic systems."@en ;
+    skos:note "Follows the IRDR Peril Classification's geophysical hazard family."@en ;
+    prl:broaderGeneric prl-voc:N ; skos:broader prl-voc:N ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.GEO.EQ a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.GEO.EQ"^^prl:ReferenceCode ;
+    skos:prefLabel "Earthquake"@en ;
+    skos:definition "The sudden release of stress accumulated along a geological fault, and its direct physical effects."@en ;
+    skos:note "Follows the IRDR Peril Classification's earthquake hazard. An event family: its partitive parts (ground shaking, fire following earthquake, liquefaction, landslide, sprinkler leakage) are below it, not kinds of it. The collection grouping it with tsunami (prl:AllEarthquake) is AIR-2.5."@en ;
+    prl:broaderGeneric prl-voc:N.GEO ; skos:broader prl-voc:N.GEO ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:Shaking ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property ;
+    prl:canTrigger prl-voc:N.GEO.TSU.EQT .
+
+prl-voc:N.GEO.EQ.SHK a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.GEO.EQ.SHK"^^prl:ReferenceCode , "QEQ"^^prl:CatModelCode ;
+    skos:prefLabel "Ground shaking"@en ;
+    skos:definition "The vibration of the ground caused directly by the passage of seismic waves from an earthquake."@en ;
+    skos:note "The QEQ model code follows the Oasis Open Exposure Data peril classification."@en ;
+    prl:broaderPartitive prl-voc:N.GEO.EQ ; skos:broader prl-voc:N.GEO.EQ ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:Shaking ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.GEO.EQ.FFE a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.GEO.EQ.FFE"^^prl:ReferenceCode , "QFF"^^prl:CatModelCode ;
+    skos:prefLabel "Fire following earthquake"@en ;
+    skos:definition "A fire ignited as a secondary effect of an earthquake, for example by a broken gas line or a downed electrical conductor."@en ;
+    skos:note "Canonical example of two causes compounding a single occurrence (PV2), between the earthquake and the fire it starts. The QFF model code follows the Oasis Open Exposure Data peril classification."@en ;
+    prl:broaderPartitive prl-voc:N.GEO.EQ ; skos:broader prl-voc:N.GEO.EQ ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:Fire ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.GEO.EQ.LIQ a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.GEO.EQ.LIQ"^^prl:ReferenceCode , "QLF"^^prl:CatModelCode ;
+    skos:prefLabel "Liquefaction"@en ;
+    skos:definition "The loss of soil strength during an earthquake, as shaking makes saturated, loose soil behave as a fluid."@en ;
+    skos:note "The QLF model code follows the Oasis Open Exposure Data peril classification."@en ;
+    prl:broaderPartitive prl-voc:N.GEO.EQ ; skos:broader prl-voc:N.GEO.EQ ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:GroundFailure ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.GEO.EQ.LSD a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.GEO.EQ.LSD"^^prl:ReferenceCode , "QLS"^^prl:CatModelCode ;
+    skos:prefLabel "Earthquake-induced landslide"@en ;
+    skos:definition "A landslide triggered directly by the shaking of an earthquake."@en ;
+    skos:note "Its extension intersects N.GEO.MM.LS, a landslide of any origin: a landslide during an earthquake may be classified under either (§8). The QLS model code follows the Oasis Open Exposure Data peril classification."@en ;
+    prl:broaderPartitive prl-voc:N.GEO.EQ ; skos:broader prl-voc:N.GEO.EQ ;
+    prl:overlaps prl-voc:N.GEO.MM.LS ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:GroundFailure ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.GEO.EQ.SPL a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.GEO.EQ.SPL"^^prl:ReferenceCode ;
+    skos:prefLabel "Sprinkler leakage following earthquake"@en ;
+    skos:definition "Water discharged from a fire sprinkler system whose pipework or heads an earthquake's shaking damaged."@en ;
+    skos:note "Related to T.EOW.SPR, the same mechanism's accidental (non-earthquake) kind."@en ;
+    prl:broaderPartitive prl-voc:N.GEO.EQ ; skos:broader prl-voc:N.GEO.EQ ;
+    skos:related prl-voc:T.EOW.SPR ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:WaterDamage ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.GEO.EQ.AFT a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.GEO.EQ.AFT"^^prl:ReferenceCode ;
+    skos:prefLabel "Aftershock"@en ;
+    skos:definition "A further earthquake, smaller than the one it follows, in the same fault region."@en ;
+    skos:note "Whether an aftershock is the same occurrence as the earthquake it follows is an event-definition question a contract settles, not a question this vocabulary answers."@en ;
+    prl:broaderGeneric prl-voc:N.GEO.EQ ; skos:broader prl-voc:N.GEO.EQ ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:Shaking ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.GEO.TSU a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.GEO.TSU"^^prl:ReferenceCode ;
+    skos:prefLabel "Tsunami"@en ;
+    skos:definition "A series of ocean waves generated by a sudden, large displacement of water, most often by an earthquake, a landslide or a volcanic eruption."@en ;
+    skos:note "Its own family: several hazards can trigger it (prl:canTrigger), so it is not a kind or part of any one of them."@en ;
+    prl:broaderGeneric prl-voc:N.GEO ; skos:broader prl-voc:N.GEO ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:Inundation , prl-voc:Impact ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.GEO.TSU.EQT a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.GEO.TSU.EQT"^^prl:ReferenceCode , "QTS"^^prl:CatModelCode ;
+    skos:prefLabel "Earthquake-induced tsunami"@en ;
+    skos:definition "A tsunami generated by the sudden displacement of the sea floor during an earthquake."@en ;
+    skos:note "N.GEO.EQ prl:canTrigger this concept. The QTS model code follows the Oasis Open Exposure Data peril classification."@en ;
+    prl:broaderGeneric prl-voc:N.GEO.TSU ; skos:broader prl-voc:N.GEO.TSU ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:Inundation , prl-voc:Impact ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.GEO.TSU.LST a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.GEO.TSU.LST"^^prl:ReferenceCode ;
+    skos:prefLabel "Landslide or volcanic tsunami"@en ;
+    skos:definition "A tsunami generated by a landslide (on land or undersea) or by a volcanic eruption or flank collapse, rather than by an earthquake."@en ;
+    skos:note "N.GEO.MM and N.GEO.VOL each prl:canTrigger this concept."@en ;
+    prl:broaderGeneric prl-voc:N.GEO.TSU ; skos:broader prl-voc:N.GEO.TSU ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:Inundation , prl-voc:Impact ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.GEO.VOL a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.GEO.VOL"^^prl:ReferenceCode ;
+    skos:prefLabel "Volcanic activity"@en ;
+    skos:definition "An eruption of magma, ash, gas or rock debris from a volcano, and its direct physical effects."@en ;
+    skos:note "Follows the IRDR Peril Classification's volcanic activity hazard."@en ;
+    prl:broaderGeneric prl-voc:N.GEO ; skos:broader prl-voc:N.GEO ;
+    prl:accumulationClass prl-voc:Catastrophe ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property ;
+    prl:canTrigger prl-voc:N.GEO.TSU.LST .
+
+prl-voc:N.GEO.VOL.ASH a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.GEO.VOL.ASH"^^prl:ReferenceCode ;
+    skos:prefLabel "Volcanic ashfall"@en ;
+    skos:definition "Fragmented volcanic rock and glass, deposited on a surface or suspended in the air, downwind of an eruption."@en ;
+    skos:note "Relevant to aviation (engine ingestion) as well as property (roof load and contamination)."@en ;
+    prl:broaderPartitive prl-voc:N.GEO.VOL ; skos:broader prl-voc:N.GEO.VOL ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:Load , prl-voc:Contamination ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.GEO.VOL.LAV a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.GEO.VOL.LAV"^^prl:ReferenceCode ;
+    skos:prefLabel "Lava flow"@en ;
+    skos:definition "Molten rock erupted from a volcano and flowing over the surface."@en ;
+    skos:note "Common usage in volcanic hazard assessment; no single published model-code standard names it."@en ;
+    prl:broaderPartitive prl-voc:N.GEO.VOL ; skos:broader prl-voc:N.GEO.VOL ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:Fire , prl-voc:Heat ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.GEO.VOL.PYR a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.GEO.VOL.PYR"^^prl:ReferenceCode ;
+    skos:prefLabel "Pyroclastic flow"@en ;
+    skos:definition "A fast-moving current of hot gas and volcanic matter flowing down the flank of an erupting volcano."@en ;
+    skos:note "Common usage in volcanic hazard assessment."@en ;
+    prl:broaderPartitive prl-voc:N.GEO.VOL ; skos:broader prl-voc:N.GEO.VOL ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:Heat , prl-voc:Impact ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.GEO.VOL.LAH a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.GEO.VOL.LAH"^^prl:ReferenceCode ;
+    skos:prefLabel "Lahar"@en ;
+    skos:definition "A fast-moving flow of volcanic debris mixed with water, typically down a river valley draining a volcano."@en ;
+    skos:note "Its extension intersects N.GEO.MM.LS.DF, a debris flow of any origin."@en ;
+    prl:broaderPartitive prl-voc:N.GEO.VOL ; skos:broader prl-voc:N.GEO.VOL ;
+    prl:overlaps prl-voc:N.GEO.MM.LS.DF ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:Impact , prl-voc:GroundFailure ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.GEO.VOL.GAS a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.GEO.VOL.GAS"^^prl:ReferenceCode ;
+    skos:prefLabel "Volcanic gas release"@en ;
+    skos:definition "A release of volcanic gases, such as sulphur dioxide or carbon dioxide, harmful at the concentrations an eruption can produce."@en ;
+    skos:note "Common usage in volcanic hazard assessment."@en ;
+    prl:broaderPartitive prl-voc:N.GEO.VOL ; skos:broader prl-voc:N.GEO.VOL ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:Contamination ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.GEO.MM a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.GEO.MM"^^prl:ReferenceCode ;
+    skos:prefLabel "Mass movement"@en ;
+    skos:altLabel "Earth movement"@en ;
+    skos:definition "The downslope movement of rock, soil or debris under gravity, not triggered by an earthquake or a volcanic eruption."@en ;
+    skos:note "Follows the IRDR Peril Classification's mass movement hazard (dry)."@en ;
+    prl:broaderGeneric prl-voc:N.GEO ; skos:broader prl-voc:N.GEO ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:GroundFailure ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property ;
+    prl:canTrigger prl-voc:N.GEO.TSU.LST .
+
+prl-voc:N.GEO.MM.LS a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.GEO.MM.LS"^^prl:ReferenceCode ;
+    skos:prefLabel "Landslide"@en ;
+    skos:definition "The downslope movement of a mass of rock, earth or debris, by sliding, falling or flowing, not triggered by an earthquake."@en ;
+    skos:note "Common usage across geotechnical and catastrophe-modelling practice."@en ;
+    prl:broaderGeneric prl-voc:N.GEO.MM ; skos:broader prl-voc:N.GEO.MM ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:GroundFailure , prl-voc:Impact ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.GEO.MM.LS.RF a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.GEO.MM.LS.RF"^^prl:ReferenceCode ;
+    skos:prefLabel "Rockfall and rockslide"@en ;
+    skos:definition "The detachment and fall, or the sliding, of rock from a slope."@en ;
+    skos:note "Common geotechnical usage."@en ;
+    prl:broaderGeneric prl-voc:N.GEO.MM.LS ; skos:broader prl-voc:N.GEO.MM.LS ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:GroundFailure , prl-voc:Impact ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.GEO.MM.LS.DF a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.GEO.MM.LS.DF"^^prl:ReferenceCode ;
+    skos:prefLabel "Debris flow"@en ;
+    skos:definition "A fast-moving mixture of rock, soil, organic matter and water, flowing down a slope or channel."@en ;
+    skos:note "Its extension intersects N.GEO.VOL.LAH, a debris flow of specifically volcanic origin."@en ;
+    prl:broaderGeneric prl-voc:N.GEO.MM.LS ; skos:broader prl-voc:N.GEO.MM.LS ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:GroundFailure , prl-voc:Impact ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.GEO.MM.LS.MF a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.GEO.MM.LS.MF"^^prl:ReferenceCode ;
+    skos:prefLabel "Mudflow and mudslide"@en ;
+    skos:definition "A landslide in which the moving mass is predominantly fine-grained soil saturated with water."@en ;
+    skos:note "Some national flood schemes classify mudflow as flood. This vocabulary keeps it under mass movement and leaves the difference to a market crosswalk (AIR-3.4), not a second parent."@en ;
+    prl:broaderGeneric prl-voc:N.GEO.MM.LS ; skos:broader prl-voc:N.GEO.MM.LS ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:GroundFailure , prl-voc:Impact ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.GEO.MM.SUB a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.GEO.MM.SUB"^^prl:ReferenceCode ;
+    skos:prefLabel "Subsidence"@en ;
+    skos:definition "The gradual sinking or settling of the ground surface by a natural process, such as soil shrinkage or natural drainage of underlying material."@en ;
+    skos:note "A subsidence a human activity induces (for example mining or groundwater extraction) is T.STR.FND with negligent agency, not this concept."@en ;
+    prl:broaderGeneric prl-voc:N.GEO.MM ; skos:broader prl-voc:N.GEO.MM ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:GroundFailure ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Gradual ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.GEO.MM.SNK a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.GEO.MM.SNK"^^prl:ReferenceCode ;
+    skos:prefLabel "Sinkhole collapse"@en ;
+    skos:definition "The sudden collapse of the ground surface into a cavity formed by the dissolution of underlying soluble rock."@en ;
+    skos:note "Common usage in karst-hazard assessment."@en ;
+    prl:broaderGeneric prl-voc:N.GEO.MM ; skos:broader prl-voc:N.GEO.MM ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:GroundFailure ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.GEO.MM.HVE a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.GEO.MM.HVE"^^prl:ReferenceCode ;
+    skos:prefLabel "Ground heave"@en ;
+    skos:definition "The gradual upward swelling of the ground surface, typically as clay soil absorbs water."@en ;
+    skos:note "Common geotechnical usage, the converse of subsidence."@en ;
+    prl:broaderGeneric prl-voc:N.GEO.MM ; skos:broader prl-voc:N.GEO.MM ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:GroundFailure ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Gradual ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.GEO.MM.AVL a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.GEO.MM.AVL"^^prl:ReferenceCode ;
+    skos:prefLabel "Snow avalanche"@en ;
+    skos:definition "A rapid flow of snow down a slope."@en ;
+    skos:note "N.MET.WIN prl:canTrigger this concept."@en ;
+    prl:broaderGeneric prl-voc:N.GEO.MM ; skos:broader prl-voc:N.GEO.MM ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:Impact , prl-voc:Load ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.MET a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.MET"^^prl:ReferenceCode ;
+    skos:prefLabel "Meteorological hazard"@en ;
+    skos:definition "A hazard arising from a short-lived atmospheric process, as distinct from a longer climatological one."@en ;
+    skos:note "Follows the IRDR Peril Classification's meteorological hazard family."@en ;
+    prl:broaderGeneric prl-voc:N ; skos:broader prl-voc:N ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.MET.TC a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.MET.TC"^^prl:ReferenceCode ;
+    skos:prefLabel "Tropical cyclone"@en ;
+    skos:definition "A warm-core, low-pressure weather system forming over tropical or subtropical waters, with its wind, surge and rainfall effects."@en ;
+    skos:note "Follows the WMO's tropical cyclone definition. An event family: wind, surge and rainfall are its partitive parts (whitepaper §3)."@en ;
+    prl:broaderGeneric prl-voc:N.MET ; skos:broader prl-voc:N.MET ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:WindLoad , prl-voc:Inundation ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.MET.TC.WND a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.MET.TC.WND"^^prl:ReferenceCode , "WTC"^^prl:CatModelCode ;
+    skos:prefLabel "Tropical cyclone wind"@en ;
+    skos:definition "Wind damage caused by a tropical cyclone."@en ;
+    skos:note "The WTC model code follows the Oasis Open Exposure Data peril classification."@en ;
+    prl:broaderPartitive prl-voc:N.MET.TC ; skos:broader prl-voc:N.MET.TC ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:WindLoad ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.MET.TC.SRG a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.MET.TC.SRG"^^prl:ReferenceCode , "WSS"^^prl:CatModelCode ;
+    skos:prefLabel "Tropical cyclone storm surge"@en ;
+    skos:definition "An abnormal rise of sea level during a tropical cyclone, caused by the storm's wind and pressure field."@en ;
+    skos:note "Its extension intersects N.HYD.FLD.CST, coastal flood of any origin (whitepaper §3.5). The WSS model code follows the Oasis Open Exposure Data peril classification."@en ;
+    prl:broaderPartitive prl-voc:N.MET.TC ; skos:broader prl-voc:N.MET.TC ;
+    prl:overlaps prl-voc:N.HYD.FLD.CST ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:Inundation ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.MET.TC.RFL a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.MET.TC.RFL"^^prl:ReferenceCode ;
+    skos:prefLabel "Tropical cyclone rainfall flooding"@en ;
+    skos:definition "Flooding caused by the heavy rainfall a tropical cyclone brings, as distinct from its wind or its surge."@en ;
+    skos:note "Its extension intersects N.HYD.FLD, flood of any origin."@en ;
+    prl:broaderPartitive prl-voc:N.MET.TC ; skos:broader prl-voc:N.MET.TC ;
+    prl:overlaps prl-voc:N.HYD.FLD ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:Inundation ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.MET.TC.TOR a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.MET.TC.TOR"^^prl:ReferenceCode ;
+    skos:prefLabel "Tropical cyclone tornado"@en ;
+    skos:definition "A tornado spawned by a tropical cyclone, typically in its outer rainbands."@en ;
+    skos:note "Its extension intersects N.MET.SCS.TOR, a tornado of any origin."@en ;
+    prl:broaderPartitive prl-voc:N.MET.TC ; skos:broader prl-voc:N.MET.TC ;
+    prl:overlaps prl-voc:N.MET.SCS.TOR ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:WindLoad ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.MET.TC.HUR a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.MET.TC.HUR"^^prl:ReferenceCode ;
+    skos:prefLabel "Hurricane"@en ;
+    skos:definition "A tropical cyclone at or above hurricane strength in the North Atlantic and eastern North Pacific basins."@en ;
+    skos:note "Follows the WMO's basin-specific naming: 'hurricane' names the same wind-speed class the WMO calls 'severe tropical cyclone' or 'typhoon' in other basins. The numeric threshold itself is recorded in peril-intensity.ttl (AIR-2.6), not here."@en ;
+    prl:broaderGeneric prl-voc:N.MET.TC ; skos:broader prl-voc:N.MET.TC ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:WindLoad , prl-voc:Inundation ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Threshold ; prl:harmSubject prl-voc:Property ;
+    prl:intensityMeasure prl-voc:SustainedWind1Min .
+
+prl-voc:N.MET.TC.TYP a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.MET.TC.TYP"^^prl:ReferenceCode ;
+    skos:prefLabel "Typhoon"@en ;
+    skos:definition "A tropical cyclone at or above typhoon strength in the western North Pacific basin."@en ;
+    skos:note "Follows RSMC Tokyo (the Japan Meteorological Agency)'s typhoon classification, on its 10-minute mean wind convention. The JTWC's 1-minute figures belong in a market edition. The threshold itself is in peril-intensity.ttl (AIR-2.6)."@en ;
+    prl:broaderGeneric prl-voc:N.MET.TC ; skos:broader prl-voc:N.MET.TC ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:WindLoad , prl-voc:Inundation ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Threshold ; prl:harmSubject prl-voc:Property ;
+    prl:intensityMeasure prl-voc:MeanWind10Min .
+
+prl-voc:N.MET.TC.SEV a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.MET.TC.SEV"^^prl:ReferenceCode ;
+    skos:prefLabel "Severe tropical cyclone"@en ;
+    skos:altLabel "Cyclone"@en ;
+    skos:definition "A tropical cyclone at or above severe strength in the South Pacific and Indian Ocean basins."@en ;
+    skos:note "Follows the Australian Bureau of Meteorology (category 3 and above) and RSMC La R\u00e9union conventions. The IMD's 3-minute convention for the North Indian Ocean belongs in a market edition. The threshold itself is in peril-intensity.ttl (AIR-2.6)."@en ;
+    prl:broaderGeneric prl-voc:N.MET.TC ; skos:broader prl-voc:N.MET.TC ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:WindLoad , prl-voc:Inundation ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Threshold ; prl:harmSubject prl-voc:Property ;
+    prl:intensityMeasure prl-voc:MeanWind10Min .
+
+prl-voc:N.MET.TC.TST a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.MET.TC.TST"^^prl:ReferenceCode ;
+    skos:prefLabel "Tropical storm"@en ;
+    skos:definition "A tropical cyclone below hurricane strength but at or above tropical storm strength."@en ;
+    skos:note "Follows the US National Hurricane Center's classification. The threshold itself is in peril-intensity.ttl (AIR-2.6)."@en ;
+    prl:broaderGeneric prl-voc:N.MET.TC ; skos:broader prl-voc:N.MET.TC ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:WindLoad , prl-voc:Inundation ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Threshold ; prl:harmSubject prl-voc:Property ;
+    prl:intensityMeasure prl-voc:SustainedWind1Min .
+
+prl-voc:N.MET.TC.TDP a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.MET.TC.TDP"^^prl:ReferenceCode ;
+    skos:prefLabel "Tropical depression"@en ;
+    skos:definition "A tropical cyclone below tropical storm strength."@en ;
+    skos:note "Follows the WMO's tropical cyclone classification. A depression is numbered but not named in the North Atlantic, so it is not a named storm (N.MET.NS). The threshold itself is in peril-intensity.ttl (AIR-2.6)."@en ;
+    prl:broaderGeneric prl-voc:N.MET.TC ; skos:broader prl-voc:N.MET.TC ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:WindLoad , prl-voc:Inundation ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Threshold ; prl:harmSubject prl-voc:Property ;
+    prl:intensityMeasure prl-voc:SustainedWind1Min .
+
+prl-voc:N.MET.NS a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.MET.NS"^^prl:ReferenceCode ;
+    skos:prefLabel "Named storm"@en ;
+    skos:definition "A storm a recognised meteorological authority has assigned a name, independent of which hazard family produced it."@en ;
+    skos:note "Its extension intersects both N.MET.TC and N.MET.ETC: it is a kind of neither (whitepaper §3.4), since a name is assigned by designation, not by the storm's own physical kind."@en ;
+    prl:broaderGeneric prl-voc:N.MET ; skos:broader prl-voc:N.MET ;
+    prl:overlaps prl-voc:N.MET.TC , prl-voc:N.MET.ETC ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:WindLoad ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Designation ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.MET.ETC a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.MET.ETC"^^prl:ReferenceCode ;
+    skos:altLabel "Windstorm"@en , "European windstorm"@en ;
+    skos:prefLabel "Extratropical cyclone"@en ;
+    skos:definition "A large-scale, low-pressure weather system forming outside the tropics along a front between air masses of different temperatures, with its wind and surge effects."@en ;
+    skos:note "Common meteorological usage, widely known in Europe as 'windstorm'."@en ;
+    prl:broaderGeneric prl-voc:N.MET ; skos:broader prl-voc:N.MET ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:WindLoad ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.MET.ETC.WND a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.MET.ETC.WND"^^prl:ReferenceCode , "WEC"^^prl:CatModelCode ;
+    skos:prefLabel "Extratropical cyclone wind"@en ;
+    skos:definition "Wind damage caused by an extratropical cyclone."@en ;
+    skos:note "The WEC model code follows the Oasis Open Exposure Data peril classification."@en ;
+    prl:broaderPartitive prl-voc:N.MET.ETC ; skos:broader prl-voc:N.MET.ETC ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:WindLoad ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.MET.ETC.SRG a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.MET.ETC.SRG"^^prl:ReferenceCode ;
+    skos:prefLabel "Extratropical storm surge"@en ;
+    skos:definition "An abnormal rise of sea level caused by an extratropical cyclone's wind and pressure field."@en ;
+    skos:note "Its extension intersects N.HYD.FLD.CST, coastal flood of any origin."@en ;
+    prl:broaderPartitive prl-voc:N.MET.ETC ; skos:broader prl-voc:N.MET.ETC ;
+    prl:overlaps prl-voc:N.HYD.FLD.CST ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:Inundation ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.MET.SCS a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.MET.SCS"^^prl:ReferenceCode ;
+    skos:prefLabel "Severe convective storm"@en ;
+    skos:definition "A thunderstorm or cluster of thunderstorms producing tornadoes, hail, damaging straight-line wind or lightning."@en ;
+    skos:note "Follows common catastrophe-modelling usage for this event family: tornado, hail, straight-line wind and lightning are its partitive parts."@en ;
+    prl:broaderGeneric prl-voc:N.MET ; skos:broader prl-voc:N.MET ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:WindLoad ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.MET.SCS.TOR a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.MET.SCS.TOR"^^prl:ReferenceCode , "XTD"^^prl:CatModelCode ;
+    skos:prefLabel "Tornado"@en ;
+    skos:definition "A violently rotating column of air extending from a thunderstorm to the ground."@en ;
+    skos:note "Its extension intersects N.MET.TC.TOR, a tornado spawned specifically by a tropical cyclone. The XTD model code follows the Oasis Open Exposure Data peril classification."@en ;
+    prl:broaderPartitive prl-voc:N.MET.SCS ; skos:broader prl-voc:N.MET.SCS ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:WindLoad ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.MET.SCS.HAI a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.MET.SCS.HAI"^^prl:ReferenceCode , "XHL"^^prl:CatModelCode ;
+    skos:prefLabel "Hail"@en ;
+    skos:definition "Balls or lumps of ice falling from a thunderstorm."@en ;
+    skos:note "The XHL model code follows the Oasis Open Exposure Data peril classification."@en ;
+    prl:broaderPartitive prl-voc:N.MET.SCS ; skos:broader prl-voc:N.MET.SCS ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:Impact ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.MET.SCS.SLW a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.MET.SCS.SLW"^^prl:ReferenceCode , "XSL"^^prl:CatModelCode ;
+    skos:prefLabel "Straight-line wind"@en ;
+    skos:definition "Damaging wind from a thunderstorm that does not rotate, as a tornado does."@en ;
+    skos:note "The XSL model code follows the Oasis Open Exposure Data peril classification."@en ;
+    prl:broaderPartitive prl-voc:N.MET.SCS ; skos:broader prl-voc:N.MET.SCS ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:WindLoad ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.MET.SCS.SLW.DER a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.MET.SCS.SLW.DER"^^prl:ReferenceCode ;
+    skos:prefLabel "Derecho"@en ;
+    skos:definition "A widespread, long-lived windstorm produced by a fast-moving band of severe thunderstorms."@en ;
+    skos:note "Follows the US NOAA Storm Prediction Center's derecho definition. The threshold itself is in peril-intensity.ttl (AIR-2.6)."@en ;
+    prl:broaderGeneric prl-voc:N.MET.SCS.SLW ; skos:broader prl-voc:N.MET.SCS.SLW ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:WindLoad ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Threshold ; prl:harmSubject prl-voc:Property ;
+    prl:intensityMeasure prl-voc:WindGust3s , prl-voc:PathLength .
+
+prl-voc:N.MET.SCS.LTG a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.MET.SCS.LTG"^^prl:ReferenceCode ;
+    skos:prefLabel "Lightning"@en ;
+    skos:definition "An electrical discharge between a cloud and the ground, or within or between clouds."@en ;
+    skos:note "Occurs without a severe storm too, which this definition allows."@en ;
+    prl:broaderPartitive prl-voc:N.MET.SCS ; skos:broader prl-voc:N.MET.SCS ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:ElectricalOverstress , prl-voc:Fire ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property ;
+    prl:canTrigger prl-voc:T.EQB.ELC.OVV .
+
+prl-voc:N.MET.SCS.HVR a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.MET.SCS.HVR"^^prl:ReferenceCode ;
+    skos:prefLabel "Convective heavy rainfall"@en ;
+    skos:definition "Intense, short-duration rainfall from a thunderstorm."@en ;
+    skos:note "Can trigger pluvial and flash flooding."@en ;
+    prl:broaderPartitive prl-voc:N.MET.SCS ; skos:broader prl-voc:N.MET.SCS ;
+    prl:canTrigger prl-voc:N.HYD.FLD.PLU , prl-voc:N.HYD.FLD.FSH ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:Inundation ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.MET.WIN a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.MET.WIN"^^prl:ReferenceCode ;
+    skos:prefLabel "Winter storm and cold"@en ;
+    skos:definition "A hazard of winter weather: heavy snow, ice, blizzard conditions or a sudden freeze."@en ;
+    skos:note "Common catastrophe-modelling usage for this event family."@en ;
+    prl:broaderGeneric prl-voc:N.MET ; skos:broader prl-voc:N.MET ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:Load , prl-voc:WindLoad , prl-voc:Freezing ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property ;
+    prl:canTrigger prl-voc:N.GEO.MM.AVL .
+
+prl-voc:N.MET.WIN.SNL a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.MET.WIN.SNL"^^prl:ReferenceCode ;
+    skos:prefLabel "Snow load"@en ;
+    skos:definition "The weight of accumulated snow bearing on a structure."@en ;
+    skos:note "Common structural engineering usage."@en ;
+    prl:broaderPartitive prl-voc:N.MET.WIN ; skos:broader prl-voc:N.MET.WIN ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:Load ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property ;
+    prl:intensityMeasure prl-voc:SnowLoad .
+
+prl-voc:N.MET.WIN.ICE a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.MET.WIN.ICE"^^prl:ReferenceCode ;
+    skos:prefLabel "Ice storm and freezing rain"@en ;
+    skos:definition "Rain that freezes on contact with a surface, coating structures and vegetation in ice."@en ;
+    skos:note "Follows the ASCE 7 standard's ice-load convention for assessing the accreted ice's effect."@en ;
+    prl:broaderPartitive prl-voc:N.MET.WIN ; skos:broader prl-voc:N.MET.WIN ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:Load ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property ;
+    prl:intensityMeasure prl-voc:IceAccretion .
+
+prl-voc:N.MET.WIN.BLZ a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.MET.WIN.BLZ"^^prl:ReferenceCode ;
+    skos:prefLabel "Blizzard"@en ;
+    skos:definition "A severe snowstorm combining strong wind with low visibility, sustained for a period."@en ;
+    skos:note "Follows the US National Weather Service's blizzard definition. Other national definitions belong in a market edition. The threshold itself is in peril-intensity.ttl (AIR-2.6)."@en ;
+    prl:broaderGeneric prl-voc:N.MET.WIN ; skos:broader prl-voc:N.MET.WIN ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:Load , prl-voc:WindLoad , prl-voc:Freezing ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Threshold ; prl:harmSubject prl-voc:Property ;
+    prl:intensityMeasure prl-voc:SustainedWind1Min , prl-voc:Visibility , prl-voc:EventDuration .
+
+prl-voc:N.MET.WIN.FRZ a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.MET.WIN.FRZ"^^prl:ReferenceCode ;
+    skos:prefLabel "Freeze"@en ;
+    skos:definition "A sudden drop of air temperature below freezing, over a wide area."@en ;
+    skos:note "N.MET.WIN.FRZ prl:canTrigger T.EOW.PIP, a frozen pipe's subsequent burst."@en ;
+    prl:broaderGeneric prl-voc:N.MET.WIN ; skos:broader prl-voc:N.MET.WIN ;
+    prl:canTrigger prl-voc:T.EOW.PIP ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:Freezing ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.MET.WIN.FRS a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.MET.WIN.FRS"^^prl:ReferenceCode ;
+    skos:prefLabel "Frost"@en ;
+    skos:definition "Ice crystals forming on a surface as air temperature falls to or below freezing, damaging agricultural crops."@en ;
+    skos:note "Common agricultural usage."@en ;
+    prl:broaderGeneric prl-voc:N.MET.WIN ; skos:broader prl-voc:N.MET.WIN ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:Freezing ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.MET.LWS a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.MET.LWS"^^prl:ReferenceCode ;
+    skos:altLabel "Tempest"@en ;
+    skos:prefLabel "Local and other windstorm"@en ;
+    skos:definition "A non-cyclonic wind hazard not otherwise named in this scheme, such as a downslope wind or a localised squall."@en ;
+    skos:note "Some wordings define 'storm' by a wind-speed threshold. A market edition expresses that with definition basis Threshold, not here."@en ;
+    prl:broaderGeneric prl-voc:N.MET ; skos:broader prl-voc:N.MET ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:WindLoad ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.MET.DST a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.MET.DST"^^prl:ReferenceCode ;
+    skos:prefLabel "Sand and dust storm"@en ;
+    skos:definition "Strong wind lifting and transporting sand or dust over a wide area, reducing visibility."@en ;
+    skos:note "Common meteorological usage, most frequent in arid regions."@en ;
+    prl:broaderGeneric prl-voc:N.MET ; skos:broader prl-voc:N.MET ;
+    prl:typicalMechanism prl-voc:Impact , prl-voc:Contamination ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.HYD a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.HYD"^^prl:ReferenceCode ;
+    skos:prefLabel "Hydrological hazard"@en ;
+    skos:definition "A hazard arising from the movement or accumulation of water on or near the surface, not attributed to a tropical or extratropical cyclone."@en ;
+    skos:note "Follows the IRDR Peril Classification's hydrological hazard family."@en ;
+    prl:broaderGeneric prl-voc:N ; skos:broader prl-voc:N ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.HYD.FLD a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.HYD.FLD"^^prl:ReferenceCode ;
+    skos:prefLabel "Flood"@en ;
+    skos:definition "Inland or coastal water covering land that is normally dry, from a source other than a tropical or extratropical cyclone's own surge or rainfall."@en ;
+    skos:note "The grouping of its kinds into one open peril (model code OO1) is a collection, AIR-2.5."@en ;
+    prl:broaderGeneric prl-voc:N.HYD ; skos:broader prl-voc:N.HYD ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:Inundation ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.HYD.FLD.FLU a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.HYD.FLD.FLU"^^prl:ReferenceCode , "ORF"^^prl:CatModelCode ;
+    skos:prefLabel "Fluvial flood"@en ;
+    skos:definition "A river or other watercourse overflowing its banks."@en ;
+    skos:note "The ORF model code follows the Oasis Open Exposure Data peril classification."@en ;
+    prl:broaderGeneric prl-voc:N.HYD.FLD ; skos:broader prl-voc:N.HYD.FLD ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:Inundation ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.HYD.FLD.PLU a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.HYD.FLD.PLU"^^prl:ReferenceCode , "OPF"^^prl:CatModelCode ;
+    skos:prefLabel "Pluvial and surface-water flood"@en ;
+    skos:definition "Rainfall accumulating on the surface faster than it can drain or soak away, independent of any watercourse overflowing."@en ;
+    skos:note "The OPF model code follows the Oasis Open Exposure Data peril classification."@en ;
+    prl:broaderGeneric prl-voc:N.HYD.FLD ; skos:broader prl-voc:N.HYD.FLD ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:Inundation ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.HYD.FLD.FSH a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.HYD.FLD.FSH"^^prl:ReferenceCode ;
+    skos:prefLabel "Flash flood"@en ;
+    skos:definition "A flood developing within a few hours of its causing rainfall, typically in a steep or urbanised catchment."@en ;
+    skos:note "Common hydrological usage."@en ;
+    prl:broaderGeneric prl-voc:N.HYD.FLD ; skos:broader prl-voc:N.HYD.FLD ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:Inundation ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.HYD.FLD.GWF a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.HYD.FLD.GWF"^^prl:ReferenceCode ;
+    skos:prefLabel "Groundwater flood"@en ;
+    skos:definition "Water emerging at the surface as the water table rises above ground level, without surface runoff as its proximate source."@en ;
+    skos:note "Common hydrological usage."@en ;
+    prl:broaderGeneric prl-voc:N.HYD.FLD ; skos:broader prl-voc:N.HYD.FLD ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:Inundation ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.HYD.FLD.CST a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.HYD.FLD.CST"^^prl:ReferenceCode , "OSF"^^prl:CatModelCode ;
+    skos:prefLabel "Coastal flood"@en ;
+    skos:definition "High water or wave overtopping at the coast, from a source other than a cyclone's own surge."@en ;
+    skos:note "A cyclone's own surge is under its cyclone (N.MET.TC.SRG, N.MET.ETC.SRG) and overlaps here. The OSF model code follows the Oasis Open Exposure Data peril classification."@en ;
+    prl:broaderGeneric prl-voc:N.HYD.FLD ; skos:broader prl-voc:N.HYD.FLD ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:Inundation ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.HYD.FLD.ICJ a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.HYD.FLD.ICJ"^^prl:ReferenceCode ;
+    skos:prefLabel "Ice-jam flood"@en ;
+    skos:definition "A river flooding as an accumulation of ice blocks its channel."@en ;
+    skos:note "Common hydrological usage in cold-climate regions."@en ;
+    prl:broaderGeneric prl-voc:N.HYD.FLD ; skos:broader prl-voc:N.HYD.FLD ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:Inundation ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.HYD.FLD.GLF a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.HYD.FLD.GLF"^^prl:ReferenceCode ;
+    skos:prefLabel "Glacial lake outburst flood"@en ;
+    skos:definition "A sudden release of water impounded by a glacier or a moraine dam."@en ;
+    skos:note "Common hydrological usage in glaciated mountain regions."@en ;
+    prl:broaderGeneric prl-voc:N.HYD.FLD ; skos:broader prl-voc:N.HYD.FLD ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:Inundation ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.HYD.ERS a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.HYD.ERS"^^prl:ReferenceCode ;
+    skos:prefLabel "Erosion"@en ;
+    skos:definition "The gradual wearing away of land by water."@en ;
+    skos:note "Common hydrological and geotechnical usage."@en ;
+    prl:broaderGeneric prl-voc:N.HYD ; skos:broader prl-voc:N.HYD ;
+    prl:typicalMechanism prl-voc:Erosion ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Gradual ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.HYD.ERS.CST a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.HYD.ERS.CST"^^prl:ReferenceCode ;
+    skos:prefLabel "Coastal erosion"@en ;
+    skos:definition "The gradual wearing away of a shoreline by wave action and currents."@en ;
+    skos:note "Common coastal-engineering usage."@en ;
+    prl:broaderGeneric prl-voc:N.HYD.ERS ; skos:broader prl-voc:N.HYD.ERS ;
+    prl:typicalMechanism prl-voc:Erosion ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Gradual ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.HYD.ERS.FLD a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.HYD.ERS.FLD"^^prl:ReferenceCode ;
+    skos:prefLabel "Flood-related erosion"@en ;
+    skos:definition "The gradual wearing away of land by the recurring passage of floodwater."@en ;
+    skos:note "Common hydrological usage."@en ;
+    prl:broaderGeneric prl-voc:N.HYD.ERS ; skos:broader prl-voc:N.HYD.ERS ;
+    prl:typicalMechanism prl-voc:Erosion ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Gradual ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.HYD.WAV a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.HYD.WAV"^^prl:ReferenceCode ;
+    skos:prefLabel "Wave action"@en ;
+    skos:definition "The mechanical force of wind-driven waves on a shoreline or a structure, without a flood or a storm surge."@en ;
+    skos:note "Related to the marine market's traditional 'perils of the seas' usage (sketch §9.3)."@en ;
+    prl:broaderGeneric prl-voc:N.HYD ; skos:broader prl-voc:N.HYD ;
+    prl:typicalMechanism prl-voc:Impact ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.CLI a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.CLI"^^prl:ReferenceCode ;
+    skos:prefLabel "Climatological hazard"@en ;
+    skos:definition "A hazard arising from a persistent or recurring pattern of weather over an extended period, as distinct from a short-lived meteorological event."@en ;
+    skos:note "Follows the IRDR Peril Classification's climatological hazard family."@en ;
+    prl:broaderGeneric prl-voc:N ; skos:broader prl-voc:N ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.CLI.DRT a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.CLI.DRT"^^prl:ReferenceCode ;
+    skos:prefLabel "Drought"@en ;
+    skos:definition "A prolonged shortfall of precipitation, relative to the normal for a place and season."@en ;
+    skos:note "The Standardised Precipitation Index (WMO-recommended) is its typical quantitative measure (peril-intensity.ttl, AIR-2.6)."@en ;
+    prl:broaderGeneric prl-voc:N.CLI ; skos:broader prl-voc:N.CLI ;
+    prl:accumulationClass prl-voc:Catastrophe ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Gradual ; prl:definitionBasis prl-voc:Index ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.CLI.HTW a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.CLI.HTW"^^prl:ReferenceCode ;
+    skos:altLabel "Heatwave"@en ;
+    skos:prefLabel "Extreme heat"@en ;
+    skos:definition "A period of abnormally high temperature, sustained over several days."@en ;
+    skos:note "The Warm Spell Duration Index (an ETCCDI climate index) is its typical quantitative measure (peril-intensity.ttl, AIR-2.6)."@en ;
+    prl:broaderGeneric prl-voc:N.CLI ; skos:broader prl-voc:N.CLI ;
+    prl:typicalMechanism prl-voc:Heat ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Index ; prl:harmSubject prl-voc:Persons .
+
+prl-voc:N.CLI.CLD a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.CLI.CLD"^^prl:ReferenceCode ;
+    skos:altLabel "Cold wave"@en ;
+    skos:prefLabel "Extreme cold"@en ;
+    skos:definition "A period of abnormally low temperature, sustained over several days."@en ;
+    skos:note "The Cold Spell Duration Index (an ETCCDI climate index) is its typical quantitative measure (peril-intensity.ttl, AIR-2.6)."@en ;
+    prl:broaderGeneric prl-voc:N.CLI ; skos:broader prl-voc:N.CLI ;
+    prl:typicalMechanism prl-voc:Freezing ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Index ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.CLI.WF a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.CLI.WF"^^prl:ReferenceCode , "BBF"^^prl:CatModelCode ;
+    skos:altLabel "Bushfire"@en ;
+    skos:prefLabel "Wildfire"@en ;
+    skos:definition "An uncontrolled fire burning vegetation in a natural or semi-natural area."@en ;
+    skos:note "Agency is undetermined: ignition may be lightning, accident or deliberate. 'Bushfire' is the usual regional name in Australia. The BBF model code follows the Oasis Open Exposure Data peril classification."@en ;
+    prl:broaderGeneric prl-voc:N.CLI ; skos:broader prl-voc:N.CLI ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:Fire , prl-voc:Smoke ;
+    prl:typicalAgency prl-voc:UndeterminedAgency ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.CLI.WF.FOR a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.CLI.WF.FOR"^^prl:ReferenceCode ;
+    skos:prefLabel "Forest fire"@en ;
+    skos:definition "A wildfire burning primarily in forested land."@en ;
+    skos:note "Common wildfire-management usage."@en ;
+    prl:broaderGeneric prl-voc:N.CLI.WF ; skos:broader prl-voc:N.CLI.WF ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:Fire , prl-voc:Smoke ;
+    prl:typicalAgency prl-voc:UndeterminedAgency ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.CLI.WF.GRS a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.CLI.WF.GRS"^^prl:ReferenceCode , "BSK"^^prl:CatModelCode ;
+    skos:prefLabel "Grass and brush fire"@en ;
+    skos:definition "A wildfire burning primarily in grassland or scrub."@en ;
+    skos:note "The BSK model code follows the Oasis Open Exposure Data peril classification."@en ;
+    prl:broaderGeneric prl-voc:N.CLI.WF ; skos:broader prl-voc:N.CLI.WF ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:Fire , prl-voc:Smoke ;
+    prl:typicalAgency prl-voc:UndeterminedAgency ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.BIO a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.BIO"^^prl:ReferenceCode ;
+    skos:prefLabel "Biological hazard"@en ;
+    skos:definition "A hazard arising from a living organism or its toxin, affecting humans, animals, crops or the environment."@en ;
+    skos:note "Follows the IRDR Peril Classification's biological hazard family."@en ;
+    prl:broaderGeneric prl-voc:N ; skos:broader prl-voc:N ;
+    prl:typicalMechanism prl-voc:BiologicalAgent ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.BIO.OUT a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.BIO.OUT"^^prl:ReferenceCode ;
+    skos:prefLabel "Infectious disease outbreak"@en ;
+    skos:definition "A marked increase in cases of an infectious disease among humans in a place and period."@en ;
+    skos:note "Follows WMO/UNDRR and ISC Hazard Information Profile usage."@en ;
+    prl:broaderGeneric prl-voc:N.BIO ; skos:broader prl-voc:N.BIO ;
+    prl:typicalMechanism prl-voc:BiologicalAgent ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Gradual ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Persons .
+
+prl-voc:N.BIO.OUT.EPI a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.BIO.OUT.EPI"^^prl:ReferenceCode ;
+    skos:prefLabel "Epidemic"@en ;
+    skos:definition "An outbreak confined to one country or region."@en ;
+    skos:note "Common public-health usage, distinguished from pandemic by its geographic extent."@en ;
+    prl:broaderGeneric prl-voc:N.BIO.OUT ; skos:broader prl-voc:N.BIO.OUT ;
+    prl:typicalMechanism prl-voc:BiologicalAgent ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Gradual ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Persons .
+
+prl-voc:N.BIO.OUT.PAN a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.BIO.OUT.PAN"^^prl:ReferenceCode ;
+    skos:prefLabel "Pandemic"@en ;
+    skos:definition "An outbreak that the World Health Organization, or an equivalent recognised authority, has declared to span multiple countries or continents."@en ;
+    skos:note "Follows the WHO's pandemic declaration as the designating authority."@en ;
+    prl:broaderGeneric prl-voc:N.BIO.OUT ; skos:broader prl-voc:N.BIO.OUT ;
+    prl:typicalMechanism prl-voc:BiologicalAgent ;
+    prl:accumulationClass prl-voc:Systemic ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Gradual ; prl:definitionBasis prl-voc:Designation ; prl:harmSubject prl-voc:Persons .
+
+prl-voc:N.BIO.INF a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.BIO.INF"^^prl:ReferenceCode ;
+    skos:prefLabel "Infestation"@en ;
+    skos:definition "An unwanted and damaging increase of pests, vermin or an invasive species in a place."@en ;
+    skos:note "Common agricultural and property usage."@en ;
+    prl:broaderGeneric prl-voc:N.BIO ; skos:broader prl-voc:N.BIO ;
+    prl:typicalMechanism prl-voc:BiologicalAgent ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Gradual ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.BIO.CRD a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.BIO.CRD"^^prl:ReferenceCode ;
+    skos:prefLabel "Crop disease"@en ;
+    skos:definition "A disease impairing the growth or yield of a cultivated crop."@en ;
+    skos:note "Common agricultural usage."@en ;
+    prl:broaderGeneric prl-voc:N.BIO ; skos:broader prl-voc:N.BIO ;
+    prl:typicalMechanism prl-voc:BiologicalAgent ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Gradual ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.BIO.ANI a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.BIO.ANI"^^prl:ReferenceCode ;
+    skos:prefLabel "Animal disease"@en ;
+    skos:definition "A disease affecting livestock, bloodstock or farmed aquatic animals."@en ;
+    skos:note "Common agricultural and bloodstock market usage."@en ;
+    prl:broaderGeneric prl-voc:N.BIO ; skos:broader prl-voc:N.BIO ;
+    prl:typicalMechanism prl-voc:BiologicalAgent ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Gradual ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.BIO.MLD a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.BIO.MLD"^^prl:ReferenceCode ;
+    skos:prefLabel "Mould and fungal growth"@en ;
+    skos:definition "Fungal growth on a surface, typically where moisture has persisted."@en ;
+    skos:note "Commonly treated as a maintenance matter in property wordings, a usage this reference definition itself does not state."@en ;
+    prl:broaderGeneric prl-voc:N.BIO ; skos:broader prl-voc:N.BIO ;
+    prl:typicalMechanism prl-voc:BiologicalAgent ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Gradual ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.BIO.ALG a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.BIO.ALG"^^prl:ReferenceCode ;
+    skos:prefLabel "Harmful algal bloom"@en ;
+    skos:definition "A rapid increase of algae in a body of water, producing toxins or depleting oxygen."@en ;
+    skos:note "Common aquaculture and environmental usage."@en ;
+    prl:broaderGeneric prl-voc:N.BIO ; skos:broader prl-voc:N.BIO ;
+    prl:typicalMechanism prl-voc:BiologicalAgent ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Gradual ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.EXT a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.EXT"^^prl:ReferenceCode ;
+    skos:prefLabel "Extraterrestrial hazard"@en ;
+    skos:definition "A hazard originating beyond the earth's atmosphere."@en ;
+    skos:note "Follows the IRDR Peril Classification's extraterrestrial hazard family."@en ;
+    prl:broaderGeneric prl-voc:N ; skos:broader prl-voc:N ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.EXT.GMS a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.EXT.GMS"^^prl:ReferenceCode ;
+    skos:prefLabel "Geomagnetic storm"@en ;
+    skos:definition "A disturbance of the earth's magnetosphere caused by a burst of solar wind, inducing currents in long electrical conductors."@en ;
+    skos:note "N.EXT.GMS prl:canTrigger T.UTL.PWR, a power grid failure the induced currents cause."@en ;
+    prl:broaderGeneric prl-voc:N.EXT ; skos:broader prl-voc:N.EXT ;
+    prl:canTrigger prl-voc:T.UTL.PWR ;
+    prl:accumulationClass prl-voc:Systemic ; prl:typicalMechanism prl-voc:ElectricalOverstress ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.EXT.SRS a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.EXT.SRS"^^prl:ReferenceCode ;
+    skos:altLabel "Solar flare"@en ;
+    skos:prefLabel "Solar radiation storm"@en ;
+    skos:definition "A burst of energetic particles from the sun, elevating radiation exposure, especially at high altitude and latitude."@en ;
+    skos:note "Common space-weather usage."@en ;
+    prl:broaderGeneric prl-voc:N.EXT ; skos:broader prl-voc:N.EXT ;
+    prl:typicalMechanism prl-voc:Radiation ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:N.EXT.MET a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "N.EXT.MET"^^prl:ReferenceCode ;
+    skos:prefLabel "Meteoroid impact"@en ;
+    skos:definition "The impact of a meteoroid or its fragments on the earth's surface or a structure."@en ;
+    skos:note "Common usage, a rare but recognised natural hazard."@en ;
+    prl:broaderGeneric prl-voc:N.EXT ; skos:broader prl-voc:N.EXT ;
+    prl:typicalMechanism prl-voc:Impact ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+# 71 concepts, sketch §5.2. Family default: typicalAgency Accidental, onset Sudden,
+# definitionBasis Physical, accumulationClass Attritional, harmSubject Property, unless an
+# override below says otherwise (T.NUC Catastrophe, T.UTL and below Systemic/BusinessInterruption,
+# T.EQB.TCF Spoilage, T.REL.ASB Latent).
+
+prl-voc:T a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ; skos:topConceptOf prl-voc:CauseScheme ;
+    skos:notation "T"^^prl:ReferenceCode ;
+    skos:prefLabel "Technological and accidental event"@en ;
+    skos:definition "An unintended event arising from equipment, infrastructure, transport or a human activity, with agency accidental unless stated otherwise."@en ;
+    skos:note "Common property and casualty market usage for this family."@en ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.FIR a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.FIR"^^prl:ReferenceCode ;
+    skos:prefLabel "Fire"@en ;
+    skos:definition "An accidental fire, not initiated by a natural hazard."@en ;
+    skos:note "Common property market usage."@en ;
+    prl:broaderGeneric prl-voc:T ; skos:broader prl-voc:T ;
+    prl:typicalMechanism prl-voc:Fire , prl-voc:Smoke ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.FIR.ELF a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.FIR.ELF"^^prl:ReferenceCode ;
+    skos:prefLabel "Electrical fire"@en ;
+    skos:definition "A fire ignited by a fault in an electrical installation or appliance."@en ;
+    skos:note "Related to T.EQB.ELC, the electrical breakdown that often precedes it."@en ;
+    prl:broaderGeneric prl-voc:T.FIR ; skos:broader prl-voc:T.FIR ;
+    skos:related prl-voc:T.EQB.ELC ;
+    prl:typicalMechanism prl-voc:Fire , prl-voc:Smoke ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.FIR.SCB a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.FIR.SCB"^^prl:ReferenceCode ;
+    skos:prefLabel "Spontaneous combustion"@en ;
+    skos:definition "A fire that ignites without an external flame or spark, from heat generated within a material itself."@en ;
+    skos:note "Common property market usage, typically of stored organic or oily material."@en ;
+    prl:broaderGeneric prl-voc:T.FIR ; skos:broader prl-voc:T.FIR ;
+    prl:typicalMechanism prl-voc:Fire , prl-voc:Smoke ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.FIR.HWK a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.FIR.HWK"^^prl:ReferenceCode ;
+    skos:prefLabel "Hot work fire"@en ;
+    skos:definition "A fire ignited by welding, cutting or another hot-work process."@en ;
+    skos:note "Common construction and industrial market usage."@en ;
+    prl:broaderGeneric prl-voc:T.FIR ; skos:broader prl-voc:T.FIR ;
+    prl:typicalMechanism prl-voc:Fire , prl-voc:Smoke ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.EXP a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.EXP"^^prl:ReferenceCode ;
+    skos:prefLabel "Explosion"@en ;
+    skos:definition "A sudden, violent release of energy producing a blast wave."@en ;
+    skos:note "Common property and casualty market usage."@en ;
+    prl:broaderGeneric prl-voc:T ; skos:broader prl-voc:T ;
+    prl:typicalMechanism prl-voc:Explosion ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.EXP.PVE a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.EXP.PVE"^^prl:ReferenceCode ;
+    skos:prefLabel "Boiler and pressure vessel explosion"@en ;
+    skos:definition "An explosion caused by the sudden, uncontrolled release of energy stored in a pressurised boiler or vessel."@en ;
+    skos:note "Related to T.EQB.PVF, the pressure vessel failure that produces it."@en ;
+    prl:broaderGeneric prl-voc:T.EXP ; skos:broader prl-voc:T.EXP ;
+    skos:related prl-voc:T.EQB.PVF ;
+    prl:typicalMechanism prl-voc:Explosion ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.EXP.GAS a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.EXP.GAS"^^prl:ReferenceCode ;
+    skos:prefLabel "Gas explosion"@en ;
+    skos:definition "An explosion of a flammable gas that has accumulated in a confined space."@en ;
+    skos:note "Related to T.REL.GLK, the gas leak that often precedes it."@en ;
+    prl:broaderGeneric prl-voc:T.EXP ; skos:broader prl-voc:T.EXP ;
+    skos:related prl-voc:T.REL.GLK ;
+    prl:typicalMechanism prl-voc:Explosion ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.EXP.DST a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.EXP.DST"^^prl:ReferenceCode ;
+    skos:prefLabel "Dust explosion"@en ;
+    skos:definition "An explosion of a combustible dust suspended in air, typically within processing or storage equipment."@en ;
+    skos:note "Common industrial market usage."@en ;
+    prl:broaderGeneric prl-voc:T.EXP ; skos:broader prl-voc:T.EXP ;
+    prl:typicalMechanism prl-voc:Explosion ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.EXP.CHM a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.EXP.CHM"^^prl:ReferenceCode ;
+    skos:prefLabel "Chemical explosion"@en ;
+    skos:definition "An explosion from an uncontrolled chemical reaction."@en ;
+    skos:note "Common industrial and chemical-processing market usage."@en ;
+    prl:broaderGeneric prl-voc:T.EXP ; skos:broader prl-voc:T.EXP ;
+    prl:typicalMechanism prl-voc:Explosion ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.EXP.VCE a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.EXP.VCE"^^prl:ReferenceCode ;
+    skos:prefLabel "Vapour cloud explosion"@en ;
+    skos:definition "An explosion of a cloud of flammable vapour released into the open air before it ignites."@en ;
+    skos:note "Common process-industry usage."@en ;
+    prl:broaderGeneric prl-voc:T.EXP ; skos:broader prl-voc:T.EXP ;
+    prl:typicalMechanism prl-voc:Explosion ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.EXP.EXS a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.EXP.EXS"^^prl:ReferenceCode ;
+    skos:prefLabel "Accidental detonation of explosives"@en ;
+    skos:definition "The unintended detonation of a manufactured explosive substance or device."@en ;
+    skos:note "Common usage in the explosives manufacturing and handling market."@en ;
+    prl:broaderGeneric prl-voc:T.EXP ; skos:broader prl-voc:T.EXP ;
+    prl:typicalMechanism prl-voc:Explosion ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.EQB a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.EQB"^^prl:ReferenceCode ;
+    skos:prefLabel "Equipment breakdown"@en ;
+    skos:definition "The sudden failure of machinery or equipment during normal operation, from an internal cause."@en ;
+    skos:note "The equipment itself is an asset class, and the matching coverage section a separate consequence matter, not this concept."@en ;
+    prl:broaderGeneric prl-voc:T ; skos:broader prl-voc:T ;
+    prl:typicalMechanism prl-voc:Breakdown ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.EQB.MEC a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.EQB.MEC"^^prl:ReferenceCode ;
+    skos:prefLabel "Mechanical breakdown"@en ;
+    skos:definition "An equipment breakdown caused by the failure of a moving mechanical part."@en ;
+    skos:note "Common engineering market usage."@en ;
+    prl:broaderGeneric prl-voc:T.EQB ; skos:broader prl-voc:T.EQB ;
+    prl:typicalMechanism prl-voc:Breakdown ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.EQB.MEC.TRB a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.EQB.MEC.TRB"^^prl:ReferenceCode ;
+    skos:prefLabel "Turbine failure"@en ;
+    skos:definition "A mechanical breakdown of a turbine, such as blade failure or bearing seizure."@en ;
+    skos:note "Common power-generation engineering usage."@en ;
+    prl:broaderGeneric prl-voc:T.EQB.MEC ; skos:broader prl-voc:T.EQB.MEC ;
+    prl:typicalMechanism prl-voc:Breakdown ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.EQB.ELC a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.EQB.ELC"^^prl:ReferenceCode ;
+    skos:prefLabel "Electrical breakdown"@en ;
+    skos:definition "An equipment breakdown caused by an electrical fault."@en ;
+    skos:note "Related to T.FIR.ELF, the electrical fire such a fault can start."@en ;
+    prl:broaderGeneric prl-voc:T.EQB ; skos:broader prl-voc:T.EQB ;
+    prl:typicalMechanism prl-voc:Breakdown , prl-voc:ElectricalOverstress ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.EQB.ELC.SCT a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.EQB.ELC.SCT"^^prl:ReferenceCode ;
+    skos:prefLabel "Short circuit"@en ;
+    skos:definition "An unintended low-resistance path between points of different electrical potential, carrying a damaging current."@en ;
+    skos:note "Common electrical engineering usage."@en ;
+    prl:broaderGeneric prl-voc:T.EQB.ELC ; skos:broader prl-voc:T.EQB.ELC ;
+    prl:typicalMechanism prl-voc:Breakdown , prl-voc:ElectricalOverstress ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.EQB.ELC.OVV a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.EQB.ELC.OVV"^^prl:ReferenceCode ;
+    skos:prefLabel "Overvoltage and power surge"@en ;
+    skos:definition "A transient rise of electrical voltage above an installation's rated level."@en ;
+    skos:note "N.MET.SCS.LTG prl:canTrigger this concept."@en ;
+    prl:broaderGeneric prl-voc:T.EQB.ELC ; skos:broader prl-voc:T.EQB.ELC ;
+    prl:typicalMechanism prl-voc:Breakdown , prl-voc:ElectricalOverstress ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.EQB.ELC.ARC a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.EQB.ELC.ARC"^^prl:ReferenceCode ;
+    skos:prefLabel "Arc flash"@en ;
+    skos:definition "A release of energy caused by an electrical arc fault, with intense heat and pressure."@en ;
+    skos:note "Common electrical safety and engineering usage."@en ;
+    prl:broaderGeneric prl-voc:T.EQB.ELC ; skos:broader prl-voc:T.EQB.ELC ;
+    prl:typicalMechanism prl-voc:Breakdown , prl-voc:ElectricalOverstress ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.EQB.ELC.TRF a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.EQB.ELC.TRF"^^prl:ReferenceCode ;
+    skos:prefLabel "Transformer failure"@en ;
+    skos:definition "An electrical breakdown of a transformer, such as winding or insulation failure."@en ;
+    skos:note "Common power-engineering usage."@en ;
+    prl:broaderGeneric prl-voc:T.EQB.ELC ; skos:broader prl-voc:T.EQB.ELC ;
+    prl:typicalMechanism prl-voc:Breakdown , prl-voc:ElectricalOverstress ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.EQB.PVF a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.EQB.PVF"^^prl:ReferenceCode ;
+    skos:prefLabel "Pressure vessel failure"@en ;
+    skos:definition "The failure of a vessel designed to contain fluid at a pressure other than atmospheric."@en ;
+    skos:note "Related to T.EXP.PVE, the explosion such a failure can produce."@en ;
+    prl:broaderGeneric prl-voc:T.EQB ; skos:broader prl-voc:T.EQB ;
+    prl:typicalMechanism prl-voc:Breakdown ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.EQB.TCF a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.EQB.TCF"^^prl:ReferenceCode ;
+    skos:prefLabel "Refrigeration and temperature-control failure"@en ;
+    skos:definition "The failure of a refrigeration or temperature-control system, letting the temperature of its stored contents drift outside its intended range."@en ;
+    skos:note "Common cold-chain and food-storage market usage."@en ;
+    prl:broaderGeneric prl-voc:T.EQB ; skos:broader prl-voc:T.EQB ;
+    prl:typicalMechanism prl-voc:Breakdown ; prl:typicalConsequence prl-voc:Spoilage ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.EQB.CTL a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.EQB.CTL"^^prl:ReferenceCode ;
+    skos:prefLabel "Control system malfunction"@en ;
+    skos:definition "The malfunction of a non-cyber control or monitoring system governing equipment or a process."@en ;
+    skos:note "Its extension intersects C.NML.OTF, a non-malicious operational technology failure, where the malfunction is in software rather than in the control hardware itself."@en ;
+    prl:broaderGeneric prl-voc:T.EQB ; skos:broader prl-voc:T.EQB ;
+    prl:typicalMechanism prl-voc:Breakdown ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.STR a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.STR"^^prl:ReferenceCode ;
+    skos:prefLabel "Structural failure"@en ;
+    skos:definition "The failure of a building or civil structure's load-bearing capacity, from a cause other than a natural hazard."@en ;
+    skos:note "Common structural engineering usage."@en ;
+    prl:broaderGeneric prl-voc:T ; skos:broader prl-voc:T ;
+    prl:typicalMechanism prl-voc:Collapse ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.STR.COL a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.STR.COL"^^prl:ReferenceCode ;
+    skos:prefLabel "Collapse"@en ;
+    skos:definition "The sudden fall of a structure or part of it, from a cause other than a natural hazard."@en ;
+    skos:note "Common property market usage."@en ;
+    prl:broaderGeneric prl-voc:T.STR ; skos:broader prl-voc:T.STR ;
+    prl:typicalMechanism prl-voc:Collapse ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.STR.FAC a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.STR.FAC"^^prl:ReferenceCode ;
+    skos:prefLabel "Facade and cladding failure"@en ;
+    skos:definition "The detachment or failure of a building's external facade or cladding."@en ;
+    skos:note "Common structural engineering usage."@en ;
+    prl:broaderGeneric prl-voc:T.STR ; skos:broader prl-voc:T.STR ;
+    prl:typicalMechanism prl-voc:Collapse ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.STR.FND a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.STR.FND"^^prl:ReferenceCode ;
+    skos:prefLabel "Foundation failure"@en ;
+    skos:definition "The failure or settlement of a structure's foundation from a cause other than a natural hazard, including subsidence a human activity such as mining or groundwater extraction induces."@en ;
+    skos:note "Distinguished from N.GEO.MM.SUB, whose cause is natural throughout, by agency."@en ;
+    prl:broaderGeneric prl-voc:T.STR ; skos:broader prl-voc:T.STR ;
+    prl:typicalMechanism prl-voc:Collapse ;
+    prl:typicalAgency prl-voc:Accidental , prl-voc:Negligent ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.STR.DAM a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.STR.DAM"^^prl:ReferenceCode ;
+    skos:prefLabel "Dam and levee failure"@en ;
+    skos:definition "The failure of a dam or levee's structure, other than by the natural hazard that may have stressed it."@en ;
+    skos:note "T.STR.DAM prl:canTrigger N.HYD.FLD, the flood a breach releases."@en ;
+    prl:broaderGeneric prl-voc:T.STR ; skos:broader prl-voc:T.STR ;
+    prl:canTrigger prl-voc:N.HYD.FLD ;
+    prl:typicalMechanism prl-voc:Collapse ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.EOW a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.EOW"^^prl:ReferenceCode ;
+    skos:altLabel "Water damage"@en ;
+    skos:prefLabel "Escape of water and other liquids"@en ;
+    skos:definition "Liquid escaping from a pipe, tank, appliance or system, by a cause other than flood."@en ;
+    skos:note "Distinct from flood by definition: its source is a contained system, not surface or ground water."@en ;
+    prl:broaderGeneric prl-voc:T ; skos:broader prl-voc:T ;
+    prl:typicalMechanism prl-voc:WaterDamage ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.EOW.PIP a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.EOW.PIP"^^prl:ReferenceCode ;
+    skos:prefLabel "Pipe burst"@en ;
+    skos:definition "The rupture of a pipe carrying water or another liquid, releasing its contents."@en ;
+    skos:note "N.MET.WIN.FRZ prl:canTrigger this concept, a pipe bursting after it freezes."@en ;
+    prl:broaderGeneric prl-voc:T.EOW ; skos:broader prl-voc:T.EOW ;
+    prl:typicalMechanism prl-voc:WaterDamage ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.EOW.SPR a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.EOW.SPR"^^prl:ReferenceCode ;
+    skos:prefLabel "Sprinkler leakage"@en ;
+    skos:definition "Water discharged from a fire sprinkler system by an accidental cause, not an earthquake's shaking."@en ;
+    skos:note "Related to N.GEO.EQ.SPL, the same mechanism's earthquake-caused kind."@en ;
+    prl:broaderGeneric prl-voc:T.EOW ; skos:broader prl-voc:T.EOW ;
+    prl:typicalMechanism prl-voc:WaterDamage ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.EOW.SWR a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.EOW.SWR"^^prl:ReferenceCode ;
+    skos:prefLabel "Sewer and drain backup"@en ;
+    skos:definition "Waste water or storm water forced back into a building through a sewer or drain connection."@en ;
+    skos:note "Common property market usage."@en ;
+    prl:broaderGeneric prl-voc:T.EOW ; skos:broader prl-voc:T.EOW ;
+    prl:typicalMechanism prl-voc:WaterDamage ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.EOW.TNK a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.EOW.TNK"^^prl:ReferenceCode ;
+    skos:prefLabel "Tank rupture and leakage"@en ;
+    skos:definition "The rupture or leakage of a tank storing water or another liquid."@en ;
+    skos:note "Common property market usage."@en ;
+    prl:broaderGeneric prl-voc:T.EOW ; skos:broader prl-voc:T.EOW ;
+    prl:typicalMechanism prl-voc:WaterDamage ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.UTL a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.UTL"^^prl:ReferenceCode ;
+    skos:prefLabel "Utility service failure"@en ;
+    skos:definition "A loss of a supplied utility service, from a cause arising outside the affected premises."@en ;
+    skos:note "Its extent across many connected premises at once is why this is systemic, not attritional, unlike most of this family."@en ;
+    prl:broaderGeneric prl-voc:T ; skos:broader prl-voc:T ;
+    prl:accumulationClass prl-voc:Systemic ; prl:typicalConsequence prl-voc:BusinessInterruption ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.UTL.PWR a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.UTL.PWR"^^prl:ReferenceCode ;
+    skos:prefLabel "Power supply failure"@en ;
+    skos:definition "A loss of electrical power supply from the grid."@en ;
+    skos:note "N.EXT.GMS prl:canTrigger this concept."@en ;
+    prl:broaderGeneric prl-voc:T.UTL ; skos:broader prl-voc:T.UTL ;
+    prl:accumulationClass prl-voc:Systemic ; prl:typicalConsequence prl-voc:BusinessInterruption ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.UTL.GAS a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.UTL.GAS"^^prl:ReferenceCode ;
+    skos:prefLabel "Gas supply failure"@en ;
+    skos:definition "A loss of piped gas supply."@en ;
+    skos:note "Common property and business interruption market usage."@en ;
+    prl:broaderGeneric prl-voc:T.UTL ; skos:broader prl-voc:T.UTL ;
+    prl:accumulationClass prl-voc:Systemic ; prl:typicalConsequence prl-voc:BusinessInterruption ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.UTL.WAT a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.UTL.WAT"^^prl:ReferenceCode ;
+    skos:prefLabel "Water supply failure"@en ;
+    skos:definition "A loss of piped water supply."@en ;
+    skos:note "Common property and business interruption market usage."@en ;
+    prl:broaderGeneric prl-voc:T.UTL ; skos:broader prl-voc:T.UTL ;
+    prl:accumulationClass prl-voc:Systemic ; prl:typicalConsequence prl-voc:BusinessInterruption ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.UTL.TEL a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.UTL.TEL"^^prl:ReferenceCode ;
+    skos:prefLabel "Telecommunications failure"@en ;
+    skos:definition "A loss of telecommunications or data connectivity supplied from outside the affected premises."@en ;
+    skos:note "Its extension intersects C.NML.SVC, a non-malicious supplier service outage, where the cause is in the supplier's systems rather than its physical network."@en ;
+    prl:broaderGeneric prl-voc:T.UTL ; skos:broader prl-voc:T.UTL ;
+    prl:accumulationClass prl-voc:Systemic ; prl:typicalConsequence prl-voc:BusinessInterruption ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.REL a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.REL"^^prl:ReferenceCode ;
+    skos:altLabel "Pollution"@en ;
+    skos:prefLabel "Release of hazardous substances"@en ;
+    skos:definition "The accidental release of a substance hazardous to people, property or the environment."@en ;
+    skos:note "Common environmental and casualty market usage."@en ;
+    prl:broaderGeneric prl-voc:T ; skos:broader prl-voc:T ;
+    prl:typicalMechanism prl-voc:Contamination ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.REL.CHM a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.REL.CHM"^^prl:ReferenceCode ;
+    skos:prefLabel "Chemical release"@en ;
+    skos:definition "The accidental release of a hazardous chemical substance."@en ;
+    skos:note "Common environmental and casualty market usage."@en ;
+    prl:broaderGeneric prl-voc:T.REL ; skos:broader prl-voc:T.REL ;
+    prl:typicalMechanism prl-voc:Contamination ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.REL.OIL a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.REL.OIL"^^prl:ReferenceCode ;
+    skos:prefLabel "Oil spill"@en ;
+    skos:definition "The accidental release of petroleum or a petroleum product."@en ;
+    skos:note "Common environmental and marine market usage."@en ;
+    prl:broaderGeneric prl-voc:T.REL ; skos:broader prl-voc:T.REL ;
+    prl:typicalMechanism prl-voc:Contamination ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.REL.GLK a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.REL.GLK"^^prl:ReferenceCode ;
+    skos:prefLabel "Gas leak"@en ;
+    skos:definition "The accidental release of a flammable or toxic gas from its containment or piping."@en ;
+    skos:note "Related to T.EXP.GAS, the explosion a leak can lead to."@en ;
+    prl:broaderGeneric prl-voc:T.REL ; skos:broader prl-voc:T.REL ;
+    prl:typicalMechanism prl-voc:Contamination ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.REL.RAD a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.REL.RAD"^^prl:ReferenceCode ;
+    skos:prefLabel "Accidental radiological release"@en ;
+    skos:definition "The accidental release of radioactive material."@en ;
+    skos:note "Related to P.TER.CBR.RAD, the deliberate kind of the same release (AIR-2.4's cross-group links)."@en ;
+    prl:broaderGeneric prl-voc:T.REL ; skos:broader prl-voc:T.REL ;
+    prl:typicalMechanism prl-voc:Radiation , prl-voc:Contamination ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.REL.ASB a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.REL.ASB"^^prl:ReferenceCode ;
+    skos:prefLabel "Asbestos release"@en ;
+    skos:definition "The release of asbestos fibres from material that contains them, whose harm to health may not manifest for decades."@en ;
+    skos:note "Common long-tail liability market usage, the paradigm case of latent onset."@en ;
+    prl:broaderGeneric prl-voc:T.REL ; skos:broader prl-voc:T.REL ;
+    prl:typicalMechanism prl-voc:Contamination ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Latent ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.REL.BIO a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.REL.BIO"^^prl:ReferenceCode ;
+    skos:prefLabel "Accidental biological agent release"@en ;
+    skos:definition "The accidental release of a biological agent from a laboratory or facility handling it."@en ;
+    skos:note "Common biosafety and life-sciences market usage."@en ;
+    prl:broaderGeneric prl-voc:T.REL ; skos:broader prl-voc:T.REL ;
+    prl:typicalMechanism prl-voc:Contamination ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.NUC a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.NUC"^^prl:ReferenceCode ;
+    skos:prefLabel "Nuclear installation incident"@en ;
+    skos:definition "An accident at a nuclear installation releasing radioactive material or ionising radiation."@en ;
+    skos:note "Commonly subject to a dedicated pooling arrangement in the market, a fact this reference definition does not itself state."@en ;
+    prl:broaderGeneric prl-voc:T ; skos:broader prl-voc:T ;
+    prl:accumulationClass prl-voc:Catastrophe ; prl:typicalMechanism prl-voc:Radiation , prl-voc:Contamination ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.TRN a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.TRN"^^prl:ReferenceCode ;
+    skos:prefLabel "Transport accident"@en ;
+    skos:definition "An accident involving a vehicle, vessel, aircraft or spacecraft in transit."@en ;
+    skos:note "Common casualty and transport market usage."@en ;
+    prl:broaderGeneric prl-voc:T ; skos:broader prl-voc:T ;
+    prl:typicalMechanism prl-voc:Impact ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.TRN.RD a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.TRN.RD"^^prl:ReferenceCode ;
+    skos:prefLabel "Road collision"@en ;
+    skos:definition "A collision involving a road vehicle."@en ;
+    skos:note "Common motor market usage."@en ;
+    prl:broaderGeneric prl-voc:T.TRN ; skos:broader prl-voc:T.TRN ;
+    prl:typicalMechanism prl-voc:Impact ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.TRN.OVT a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.TRN.OVT"^^prl:ReferenceCode ;
+    skos:prefLabel "Overturn"@en ;
+    skos:definition "A vehicle rolling onto its side or roof without colliding with another object."@en ;
+    skos:note "Common motor market usage."@en ;
+    prl:broaderGeneric prl-voc:T.TRN ; skos:broader prl-voc:T.TRN ;
+    prl:typicalMechanism prl-voc:Impact ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.TRN.MAR a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.TRN.MAR"^^prl:ReferenceCode ;
+    skos:prefLabel "Marine casualty"@en ;
+    skos:definition "An accident involving a vessel at sea or in port."@en ;
+    skos:note "Common marine market usage."@en ;
+    prl:broaderGeneric prl-voc:T.TRN ; skos:broader prl-voc:T.TRN ;
+    prl:typicalMechanism prl-voc:Impact ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.TRN.MAR.COL a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.TRN.MAR.COL"^^prl:ReferenceCode ;
+    skos:prefLabel "Collision at sea"@en ;
+    skos:definition "A collision between two vessels, or between a vessel and a fixed object."@en ;
+    skos:note "Common marine market usage."@en ;
+    prl:broaderGeneric prl-voc:T.TRN.MAR ; skos:broader prl-voc:T.TRN.MAR ;
+    prl:typicalMechanism prl-voc:Impact ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.TRN.MAR.GRD a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.TRN.MAR.GRD"^^prl:ReferenceCode ;
+    skos:prefLabel "Grounding and stranding"@en ;
+    skos:definition "A vessel running aground or becoming stranded."@en ;
+    skos:note "Common marine market usage."@en ;
+    prl:broaderGeneric prl-voc:T.TRN.MAR ; skos:broader prl-voc:T.TRN.MAR ;
+    prl:typicalMechanism prl-voc:Impact ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.TRN.MAR.SNK a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.TRN.MAR.SNK"^^prl:ReferenceCode ;
+    skos:prefLabel "Sinking, capsizing and foundering"@en ;
+    skos:definition "A vessel sinking, capsizing or foundering."@en ;
+    skos:note "Follows the York-Antwerp Rules 2016's usage in general average practice, where these terms recur."@en ;
+    prl:broaderGeneric prl-voc:T.TRN.MAR ; skos:broader prl-voc:T.TRN.MAR ;
+    prl:typicalMechanism prl-voc:Inundation ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.TRN.AIR a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.TRN.AIR"^^prl:ReferenceCode ;
+    skos:prefLabel "Aviation accident"@en ;
+    skos:definition "An accident involving an aircraft."@en ;
+    skos:note "Common aviation market usage."@en ;
+    prl:broaderGeneric prl-voc:T.TRN ; skos:broader prl-voc:T.TRN ;
+    prl:typicalMechanism prl-voc:Impact ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.TRN.AIR.CRS a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.TRN.AIR.CRS"^^prl:ReferenceCode ;
+    skos:prefLabel "Aircraft crash"@en ;
+    skos:definition "An aircraft striking the ground or water other than in a controlled landing."@en ;
+    skos:note "Common aviation market usage."@en ;
+    prl:broaderGeneric prl-voc:T.TRN.AIR ; skos:broader prl-voc:T.TRN.AIR ;
+    prl:typicalMechanism prl-voc:Impact ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.TRN.AIR.GND a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.TRN.AIR.GND"^^prl:ReferenceCode ;
+    skos:prefLabel "Ground collision"@en ;
+    skos:definition "A collision involving an aircraft on the ground."@en ;
+    skos:note "Common aviation market usage."@en ;
+    prl:broaderGeneric prl-voc:T.TRN.AIR ; skos:broader prl-voc:T.TRN.AIR ;
+    prl:typicalMechanism prl-voc:Impact ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.TRN.AIR.BRD a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.TRN.AIR.BRD"^^prl:ReferenceCode ;
+    skos:prefLabel "Bird strike"@en ;
+    skos:definition "A collision between an aircraft and one or more birds."@en ;
+    skos:note "Common aviation market usage."@en ;
+    prl:broaderGeneric prl-voc:T.TRN.AIR ; skos:broader prl-voc:T.TRN.AIR ;
+    prl:typicalMechanism prl-voc:Impact ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.TRN.AIR.FOD a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.TRN.AIR.FOD"^^prl:ReferenceCode ;
+    skos:prefLabel "Foreign object ingestion"@en ;
+    skos:definition "An aircraft engine ingesting debris or another foreign object, other than a bird."@en ;
+    skos:note "Common aviation market usage."@en ;
+    prl:broaderGeneric prl-voc:T.TRN.AIR ; skos:broader prl-voc:T.TRN.AIR ;
+    prl:typicalMechanism prl-voc:Impact ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.TRN.RAI a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.TRN.RAI"^^prl:ReferenceCode ;
+    skos:prefLabel "Rail accident"@en ;
+    skos:definition "An accident involving a railway vehicle."@en ;
+    skos:note "Common rail market usage."@en ;
+    prl:broaderGeneric prl-voc:T.TRN ; skos:broader prl-voc:T.TRN ;
+    prl:typicalMechanism prl-voc:Impact ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.TRN.RAI.DER a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.TRN.RAI.DER"^^prl:ReferenceCode ;
+    skos:prefLabel "Derailment"@en ;
+    skos:definition "A railway vehicle leaving its track."@en ;
+    skos:note "Common rail market usage."@en ;
+    prl:broaderGeneric prl-voc:T.TRN.RAI ; skos:broader prl-voc:T.TRN.RAI ;
+    prl:typicalMechanism prl-voc:Impact ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.TRN.RAI.COL a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.TRN.RAI.COL"^^prl:ReferenceCode ;
+    skos:prefLabel "Rail collision"@en ;
+    skos:definition "A collision involving a railway vehicle."@en ;
+    skos:note "Common rail market usage."@en ;
+    prl:broaderGeneric prl-voc:T.TRN.RAI ; skos:broader prl-voc:T.TRN.RAI ;
+    prl:typicalMechanism prl-voc:Impact ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.TRN.SPC a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.TRN.SPC"^^prl:ReferenceCode ;
+    skos:prefLabel "Space activity accident"@en ;
+    skos:definition "An accident involving a launch vehicle or a spacecraft."@en ;
+    skos:note "Common space market usage."@en ;
+    prl:broaderGeneric prl-voc:T.TRN ; skos:broader prl-voc:T.TRN ;
+    prl:typicalMechanism prl-voc:Impact ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.TRN.SPC.LCH a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.TRN.SPC.LCH"^^prl:ReferenceCode ;
+    skos:prefLabel "Launch failure"@en ;
+    skos:definition "The failure of a launch vehicle before or during ascent to orbit."@en ;
+    skos:note "Common space market usage."@en ;
+    prl:broaderGeneric prl-voc:T.TRN.SPC ; skos:broader prl-voc:T.TRN.SPC ;
+    prl:typicalMechanism prl-voc:Impact ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.TRN.SPC.ORB a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.TRN.SPC.ORB"^^prl:ReferenceCode ;
+    skos:prefLabel "In-orbit failure"@en ;
+    skos:definition "The failure of a spacecraft or satellite after it has reached its intended orbit."@en ;
+    skos:note "Common space market usage."@en ;
+    prl:broaderGeneric prl-voc:T.TRN.SPC ; skos:broader prl-voc:T.TRN.SPC ;
+    prl:typicalMechanism prl-voc:Impact ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.TRN.SPC.DEB a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.TRN.SPC.DEB"^^prl:ReferenceCode ;
+    skos:prefLabel "Space debris collision"@en ;
+    skos:definition "A collision between a spacecraft and orbital debris."@en ;
+    skos:note "Common space market usage."@en ;
+    prl:broaderGeneric prl-voc:T.TRN.SPC ; skos:broader prl-voc:T.TRN.SPC ;
+    prl:typicalMechanism prl-voc:Impact ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.TRN.SPC.REE a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.TRN.SPC.REE"^^prl:ReferenceCode ;
+    skos:prefLabel "Re-entry failure"@en ;
+    skos:definition "The failure of a spacecraft to complete its intended re-entry into the atmosphere."@en ;
+    skos:note "Common space market usage."@en ;
+    prl:broaderGeneric prl-voc:T.TRN.SPC ; skos:broader prl-voc:T.TRN.SPC ;
+    prl:typicalMechanism prl-voc:Impact ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.IMP a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.IMP"^^prl:ReferenceCode ;
+    skos:prefLabel "Impact"@en ;
+    skos:definition "An impact on property, caused by an object or vehicle other than through a transport accident of the affected property's own operator."@en ;
+    skos:note "Common property market usage."@en ;
+    prl:broaderGeneric prl-voc:T ; skos:broader prl-voc:T ;
+    prl:typicalMechanism prl-voc:Impact ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.IMP.VEH a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.IMP.VEH"^^prl:ReferenceCode ;
+    skos:prefLabel "Vehicle impact"@en ;
+    skos:definition "A vehicle striking a structure."@en ;
+    skos:note "Common property market usage."@en ;
+    prl:broaderGeneric prl-voc:T.IMP ; skos:broader prl-voc:T.IMP ;
+    prl:typicalMechanism prl-voc:Impact ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.IMP.ACR a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.IMP.ACR"^^prl:ReferenceCode ;
+    skos:prefLabel "Aircraft and articles dropped from aircraft"@en ;
+    skos:definition "An aircraft, or an article falling from one, striking property on the ground."@en ;
+    skos:note "Common property market usage, a long-standing named peril."@en ;
+    prl:broaderGeneric prl-voc:T.IMP ; skos:broader prl-voc:T.IMP ;
+    prl:typicalMechanism prl-voc:Impact ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.IMP.FOB a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.IMP.FOB"^^prl:ReferenceCode ;
+    skos:prefLabel "Falling objects"@en ;
+    skos:definition "An object falling and striking property, from a cause other than wind."@en ;
+    skos:note "Common property market usage, a long-standing named peril."@en ;
+    prl:broaderGeneric prl-voc:T.IMP ; skos:broader prl-voc:T.IMP ;
+    prl:typicalMechanism prl-voc:Impact ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:T.HND a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "T.HND"^^prl:ReferenceCode ;
+    skos:prefLabel "Handling and loading damage"@en ;
+    skos:definition "Damage caused while goods are being loaded, unloaded or otherwise handled."@en ;
+    skos:note "Common cargo and logistics market usage."@en ;
+    prl:broaderGeneric prl-voc:T ; skos:broader prl-voc:T ;
+    prl:typicalMechanism prl-voc:Impact ;
+    prl:typicalAgency prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+# 15 concepts, sketch §5.3. Family default: typicalAgency Negligent and Accidental, onset Latent,
+# definitionBasis Physical, accumulationClass Attritional, harmSubject Property, unless an
+# override below says otherwise.
+
+prl-voc:E a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ; skos:topConceptOf prl-voc:CauseScheme ;
+    skos:notation "E"^^prl:ReferenceCode ;
+    skos:prefLabel "Error, defect and deterioration"@en ;
+    skos:definition "Harm arising from a defect, an error or the gradual deterioration of property, rather than from an external accidental event."@en ;
+    skos:note "Separated from T because most property wordings treat defect and deterioration differently from a sudden accidental event, with ensuing-loss write-backs of their own."@en ;
+    prl:typicalAgency prl-voc:Negligent , prl-voc:Accidental ; prl:onset prl-voc:Latent ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:E.DES a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "E.DES"^^prl:ReferenceCode ;
+    skos:prefLabel "Design defect"@en ;
+    skos:definition "A flaw in the design of a structure, system or product, present before it was built or made."@en ;
+    skos:note "Common professional liability and construction market usage."@en ;
+    prl:broaderGeneric prl-voc:E ; skos:broader prl-voc:E ;
+    prl:typicalAgency prl-voc:Negligent , prl-voc:Accidental ; prl:onset prl-voc:Latent ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:E.WRK a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "E.WRK"^^prl:ReferenceCode ;
+    skos:prefLabel "Defective workmanship"@en ;
+    skos:definition "Work performed to a standard below what the design or a reasonable standard of care required."@en ;
+    skos:note "Common construction market usage."@en ;
+    prl:broaderGeneric prl-voc:E ; skos:broader prl-voc:E ;
+    prl:typicalAgency prl-voc:Negligent , prl-voc:Accidental ; prl:onset prl-voc:Latent ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:E.MAT a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "E.MAT"^^prl:ReferenceCode ;
+    skos:prefLabel "Faulty materials"@en ;
+    skos:definition "A material used in construction or manufacture that does not meet its specification."@en ;
+    skos:note "Common construction and products market usage."@en ;
+    prl:broaderGeneric prl-voc:E ; skos:broader prl-voc:E ;
+    prl:typicalAgency prl-voc:Negligent , prl-voc:Accidental ; prl:onset prl-voc:Latent ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:E.LAT a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "E.LAT"^^prl:ReferenceCode ;
+    skos:prefLabel "Latent defect"@en ;
+    skos:definition "A defect present at completion but not discoverable by reasonable inspection at the time."@en ;
+    skos:note "Common construction and professional indemnity market usage."@en ;
+    prl:broaderGeneric prl-voc:E ; skos:broader prl-voc:E ;
+    prl:typicalAgency prl-voc:Negligent , prl-voc:Accidental ; prl:onset prl-voc:Latent ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:E.TST a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "E.TST"^^prl:ReferenceCode ;
+    skos:prefLabel "Testing and commissioning failure"@en ;
+    skos:definition "A failure that occurs during the testing or commissioning of a structure, system or installation before its ordinary operation begins."@en ;
+    skos:note "Common construction and engineering market usage. Its onset is sudden: the failure manifests at a specific test or commissioning event, not gradually."@en ;
+    prl:broaderGeneric prl-voc:E ; skos:broader prl-voc:E ;
+    prl:typicalAgency prl-voc:Negligent , prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:E.PRD a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "E.PRD"^^prl:ReferenceCode ;
+    skos:prefLabel "Product defect"@en ;
+    skos:definition "A defect in a manufactured product: a manufacturing flaw, contamination or mislabelling."@en ;
+    skos:note "Common products liability market usage. Harms both property and persons, unlike the family default."@en ;
+    prl:broaderGeneric prl-voc:E ; skos:broader prl-voc:E ;
+    prl:typicalAgency prl-voc:Negligent , prl-voc:Accidental ; prl:onset prl-voc:Latent ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property , prl-voc:Persons .
+
+prl-voc:E.HUM a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "E.HUM"^^prl:ReferenceCode ;
+    skos:prefLabel "Human error"@en ;
+    skos:definition "A mistake made by a person performing a task, with harm following at the time of the mistake."@en ;
+    skos:note "Common casualty market usage. Its onset is sudden: the error's effect manifests at the time it is made, not gradually."@en ;
+    prl:broaderGeneric prl-voc:E ; skos:broader prl-voc:E ;
+    prl:typicalAgency prl-voc:Negligent , prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:E.HUM.OPR a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "E.HUM.OPR"^^prl:ReferenceCode ;
+    skos:prefLabel "Operator error"@en ;
+    skos:definition "A mistake made by the person operating equipment or a process."@en ;
+    skos:note "Common casualty market usage."@en ;
+    prl:broaderGeneric prl-voc:E.HUM ; skos:broader prl-voc:E.HUM ;
+    prl:typicalAgency prl-voc:Negligent , prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:E.HUM.MNT a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "E.HUM.MNT"^^prl:ReferenceCode ;
+    skos:prefLabel "Maintenance failure"@en ;
+    skos:definition "A failure to carry out necessary maintenance, or maintenance carried out incorrectly."@en ;
+    skos:note "Common engineering and casualty market usage."@en ;
+    prl:broaderGeneric prl-voc:E.HUM ; skos:broader prl-voc:E.HUM ;
+    prl:typicalAgency prl-voc:Negligent , prl-voc:Accidental ; prl:onset prl-voc:Sudden ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:E.PRO a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "E.PRO"^^prl:ReferenceCode ;
+    skos:prefLabel "Professional error and omission"@en ;
+    skos:definition "Negligent advice, calculation, administration or service by a professional, falling below the standard of care their profession requires."@en ;
+    skos:note "Common professional indemnity market usage. What the standard of care requires is a matter the engagement and its wording define, so definition basis is wording-defined, and the harm is financial rather than physical."@en ;
+    prl:broaderGeneric prl-voc:E ; skos:broader prl-voc:E ;
+    prl:typicalAgency prl-voc:Negligent , prl-voc:Accidental ; prl:onset prl-voc:Latent ; prl:definitionBasis prl-voc:WordingDefined ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:FinancialInterest .
+
+prl-voc:E.DET a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "E.DET"^^prl:ReferenceCode ;
+    skos:prefLabel "Deterioration"@en ;
+    skos:definition "The gradual decline of property's condition through a natural process, rather than through a defect or an accident."@en ;
+    skos:note "Common property market usage. Its agency is natural and its onset gradual, unlike the rest of this family, since it is a natural process rather than an error."@en ;
+    prl:broaderGeneric prl-voc:E ; skos:broader prl-voc:E ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Gradual ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:E.DET.WNT a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "E.DET.WNT"^^prl:ReferenceCode ;
+    skos:prefLabel "Wear and tear"@en ;
+    skos:definition "The gradual decline of property's condition through ordinary use."@en ;
+    skos:note "Common property market usage."@en ;
+    prl:broaderGeneric prl-voc:E.DET ; skos:broader prl-voc:E.DET ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Gradual ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:E.DET.COR a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "E.DET.COR"^^prl:ReferenceCode ;
+    skos:prefLabel "Corrosion"@en ;
+    skos:definition "The gradual chemical degradation of a material, typically a metal, through reaction with its environment."@en ;
+    skos:note "Common property and engineering market usage."@en ;
+    prl:broaderGeneric prl-voc:E.DET ; skos:broader prl-voc:E.DET ;
+    prl:typicalMechanism prl-voc:Corrosion ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Gradual ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
+
+prl-voc:E.DET.INV a skos:Concept ;
+    skos:inScheme prl-voc:CauseScheme ;
+    skos:notation "E.DET.INV"^^prl:ReferenceCode ;
+    skos:prefLabel "Inherent vice"@en ;
+    skos:definition "Property's own tendency to deteriorate or self-destruct from its own nature, without an external cause."@en ;
+    skos:note "Common cargo and property market usage."@en ;
+    prl:broaderGeneric prl-voc:E.DET ; skos:broader prl-voc:E.DET ;
+    prl:typicalAgency prl-voc:Natural ; prl:onset prl-voc:Gradual ; prl:definitionBasis prl-voc:Physical ; prl:accumulationClass prl-voc:Attritional ; prl:harmSubject prl-voc:Property .
 
 # Filled by AIR-2.4: 37 concepts, sketch §5.4.
 
