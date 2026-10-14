@@ -53,16 +53,18 @@ section below.
 
 ## Next action
 
-0. **The maintainer merges this branch into `main`.** H2.5 ([FMH-H2-5](../validation/FMH-H2-5.md)) has no open decision. H2.6 ([FMH-H2-6](../validation/FMH-H2-6.md))
-   is approved, and its review answered five of eight questions (H-D24 to H-D28). Run `mise run check:persistence` (expect `2711 passed, 1 xfailed`, with
-   `check:persistence-expected-profiles` ahead of it) and `mise run check:persistence-oxigraph` (189 passed). No release tag is owed.
-1. **Before H2.7 is briefed, the maintainer answers H2.6-RQ4 to RQ6** (the pinned head, the append's digest, the patch content), from
-   [the write-up](../notes/track-h-h26-review-questions.md). The leanings are A, A and B. 🔴 PLAN FIRST.
-2. **H2.7**, the vocabulary and its emission, against the approved expected profiles in `ontology/persistence/test/expected-profiles/`. It also takes the
-   suffix-free `dal:templateId` (H-D25), empties the table of intended differences, and settles TD-43.
-3. H2.7 reads [the order and handoff rules](../plans/formal-methods-track-h.md#45-order-h25-then-h26-then-h27-one-at-a-time-on-the-cloud-agent)
-   and the [design review](../notes/track-h-feedback.md) first.
-4. Later, not scheduled: the SPARQL semantic IR of plan §5.1 (PDD-06).
+1. **The cloud agent builds H2.6b's event half** from `main`, once the maintainer has committed the planning documents of 2026-10-14
+   ([plan §4.6](../plans/formal-methods-track-h.md#46-h26b-the-event-and-patch-content-slots-planned-2026-10-14), "Steps, the event
+   half"). Every H2.6b question is answered. It regenerates the expected profiles that change, which the maintainer re-approves.
+   🟢 READY TO BRANCH.
+2. **Meanwhile, locally,** the maintainer reviews the [history and versioning sketch](../sketches/persistence-history-and-versioning.md),
+   VH-Q1 to VH-Q7, and we work on the design changes it leads to. VH-Q7 needs research first.
+3. **Before H2.7 and H2.8 branch**, the maintainer answers H2.7-Q1 to Q4
+   ([§4.7](../plans/formal-methods-track-h.md#47-h27-the-vocabulary-and-the-compilers-emission-planned-2026-10-14)) and H2.8-Q1 to Q3
+   ([§4.8](../plans/formal-methods-track-h.md#48-h28-the-typed-payload-and-the-caller-side-checks-planned-2026-10-14)). They follow H2.6b in
+   turn, each from `main` after the previous one merges (H-D32). H2.7 owes release tags for `persistence` and `persistence-shapes` 0.4.0.
+4. Then H2.9, retiring Mustache. H2.6b's held half and H2.10 wait on the sketch's answers (H-D33).
+5. Later, not scheduled: the SPARQL semantic IR of plan §5.1 (PDD-06).
 
 ## Slices
 
@@ -97,6 +99,9 @@ section below.
 | H2.4b (Oxigraph, probes, benchmark) | **built** 2026-10-12, reviewed 2026-10-13. [Validation Pack](../validation/FMH-H2-4b.md). Decision 1 decided (option D, built in H2.5), and the corrected P1 test countersigned | the maintainer's merge |
 | H2.5 (key claims, audits, guard D, the `SELECT` fragment) | **built** 2026-10-13, autonomously, in six gates. [Validation Pack](../validation/FMH-H2-5.md). [Plan §4.3](../plans/formal-methods-track-h.md#43-h25-key-claims-the-audits-and-the-self-calibrating-guard-planned-2026-10-13). TD-34 closed. every decision taken | the maintainer's merge |
 | H2.6 (expected compiled profiles, paper check) | **built 2026-10-13 and approved by the maintainer 2026-10-13.** [Validation Pack](../validation/FMH-H2-6.md). [Plan §4.4](../plans/formal-methods-track-h.md#44-h26-the-expected-compiled-profile-examples-first-and-the-paper-check-planned-2026-10-13). Five of eight review questions answered (H-D24 to H-D28), three open ([write-up](../notes/track-h-h26-review-questions.md)). `mise run build:persistence-expected-profiles` and a check in `check:persistence` | the maintainer's merge. H2.7 waits for RQ4 to RQ6 |
+| H2.6b (event slots, patch-log half held, H-D33) | **ready to branch** 2026-10-14, [plan §4.6](../plans/formal-methods-track-h.md#46-h26b-the-event-and-patch-content-slots-planned-2026-10-14) | H2.6b-Q1 to Q5, answered |
+| H2.7 (vocabulary and emission) | **planned** 2026-10-14, [plan §4.7](../plans/formal-methods-track-h.md#47-h27-the-vocabulary-and-the-compilers-emission-planned-2026-10-14) | H2.7-Q1 to Q4, and H2.6b's merge |
+| H2.8 (typed payload, caller checks) | **planned** 2026-10-14, [plan §4.8](../plans/formal-methods-track-h.md#48-h28-the-typed-payload-and-the-caller-side-checks-planned-2026-10-14) | H2.8-Q1 to Q3, and H2.7's merge |
 | H3 (specification registry) | not started, outlined in the plan | H2 preferred first (smaller, more self-contained), not a hard blocker |
 | H4 (exhaustive cross-axis validation, BDD/SMT) | not started, outline only | H3 |
 | H5 (capability-record extension, TLA+/Quint toolchain spike, protocol models A-D) | not started, outline only | H2 (read/write sets from the IR). ADR-A-FM4 is accepted |
@@ -143,7 +148,14 @@ section below.
 | H-D26 | whether `Event`, `MergeRecord` and `KeyQuarantine` are folded into another resource (H2.6 review question 3) | **decided 2026-10-13**: kept apart, since each has its own key in both realisations |
 | H-D27 | whether the gaps of the paper check are recorded in the relational note (H2.6 review question 7) | **decided 2026-10-13**: yes, as [lattice-sql.md §9.1](../notes/rdf-engine/lattice-sql.md#91-gaps-found-by-the-paper-check-of-formal-methods-h26-2026-10-13) |
 | H-D28 | the type of `$oldValue` and `$newValue` of the value guard (H2.6 review question 8) | **decided 2026-10-13**: `IriOrLiteral` for now. TD-43 settles it |
-| H2.6-RQ4 to RQ6 | the pinned head, the append's digest and the patch content (H2.6 review questions 4 to 6) | **open**, with [a write-up](../notes/track-h-h26-review-questions.md) of the options, their consequences and a leaning for each. They are answered before H2.7 is briefed |
+| H-D29 | H2.6-RQ4, the pinned head | **decided 2026-10-14: A**, part of `Receipt`, as built. Reopened if a retention job becomes a generated operation |
+| H-D30 | H2.6-RQ5, the digest of `append-event` | **decided 2026-10-14: B.** An event carries domain triples, so the append gains a payload slot of event triples, and the digest's payload part covers that slot like any other write. A change to the operation, in its own slice with H2.8's payload check (see the [write-up](../notes/track-h-h26-review-questions.md#h26-rq5-the-digest-of-append-event)). Its open points: one event or several per request (the guide's example appends three), what bounds an event's triples (its subject, or a shape), and where `opSeq` comes from when the query assigns it |
+| H-D31 | H2.6-RQ6, the patch content of a patch log | **decided 2026-10-14: B**, recorded in the same update, built in H2.6b |
+| H-D32 | the order of the remaining H2 slices | **decided 2026-10-14**: H2.6b, H2.7, H2.8, on the cloud agent |
+| H-D33 | H2.6b's patch-log half, and H2.10 | **decided 2026-10-14**: held for the [history and versioning sketch](../sketches/persistence-history-and-versioning.md). H2.6b ships its event half |
+| H2.6b-Q1 to Q5 | which writes log patches, who names the delta graphs, the snapshot model, events per request, the digest parts | **decided** 2026-10-14, (a) for Q1 to Q3 and Q5, (c) for Q4, the guide's batch. Q3's warning covers both receipt models while the patch log is held (H-D33). Q1 and Q2 are held with the patch-log half |
+| H2.7-Q1 to Q4, H2.8-Q1 to Q3 | the remaining questions of the plans (plan §4.7, §4.8) | **open**, the maintainer. Leanings (a) |
+| VH-Q1 to VH-Q7 | history, versions and the receipt models ([sketch §8](../sketches/persistence-history-and-versioning.md#8-questions-for-the-maintainer)) | **open**, the maintainer. VH-Q7 needs research first |
 | H2.5-Q1 to Q3, H2.6-Q1 to Q4, NQ1 to NQ7 | the design review's questions and the plans' own ([track-h-feedback.md](../notes/track-h-feedback.md)) | **decided 2026-10-13**: the closed `SELECT` fragment with four type rules and three fragment limits, a `Literal` kind for `$now`, one H2.5 slice, `test/expected-profiles/`, nine expected profiles, the value guard hand-declared, the model proposed now, the pinned head a realisation of receipts, a digest contract, minted IRIs, a strict caller check (H2.8). NQ5 waits for H2.5's `MIN` finding, NQ7 was answered by the template (merge relations go to the keys graph). Recorded in plan §4.3 and §4.4 and ADR-A123's fourth and fifth addenda |
 | H-D7 | H1's checks live in one new module, `persistence.hygiene`, behind one `hygiene` subcommand, and run under `check:persistence`. No new `mise` task until H1's closing slice | agreed 2026-10-09 |
 
@@ -593,3 +605,31 @@ section below.
   consequences and a leaning each. A mise task regenerates the expected profiles (`build:persistence-expected-profiles`) and a check of them is part of
   `check:persistence`, with `build:persistence-builder-goldens` for the builder versions. The class diagram of the Validation Pack did not render (a colon in
   a relationship label) and is fixed, and every diagram of the new documents was loaded in Mermaid.
+- 2026-10-14: the maintainer decided H2.6-RQ4 (A, the pinned head stays part of `Receipt`) and RQ5 (B: an event must carry domain triples, so
+  the append gains a payload slot, in a slice of its own with H2.8's payload check). On RQ6 the maintainer asked whether rdflib is the only
+  store without request atomicity. From the stores' documentation, it is not: SPARQL 1.1 Update only recommends atomicity, Virtuoso's
+  recommended update mode commits each operation as it runs, and Jena TDB2 and Neptune appear atomic. Added to TSD-06 as documented evidence,
+  with TSD-Q13 to probe them. That favours RQ6 option B. RQ6 awaits the maintainer.
+- 2026-10-14: the maintainer chose H2.6-RQ6 B (H-D31) and the order H2.6b, H2.7, H2.8 (H-D32), with `main` merged into this branch. Planned all
+  three. Planning H2.6b found that `dal:PatchLog`, which the validator requires for every composite family, is honoured only by the named-graph
+  replace, which names its delta graphs and never fills them, and that `dal:SnapshotPerRevision` is never honoured, with no warning for either
+  (TD-46). H2.6b comes before H2.7 so the vocabulary is published once against the final slots. Twelve questions are open, every leaning (a).
+- 2026-10-14: the maintainer decided H2.6b-Q1 to Q3, each (a), and asked for the snapshot model on the roadmap, now H2.10 (plan §5). Reading
+  guide §10.1 showed it already answers H2.6b-Q4. Several events go in one commit with one receipt, ordered by caller-supplied `opSeq`, so the
+  earlier claim that they need ordered rows (TSD-01) was wrong. Q4 is re-presented with options (a) to (c), leaning (c), and plan §4.6 gains the
+  patch-log invariants and worked space and time costs. Skill `lattice-design` now asks for diagrams and quantified costs by default.
+- 2026-10-14: the maintainer decided H2.6b-Q4 (c), several events in one commit ordered by `opSeq`. Asked about retention, we found that
+  nothing declares a retention window and nothing prunes, recorded as TD-47.
+- 2026-10-14: the maintainer asked why a patch log keeps its added triples. Going back from the current graph needs them, since a pure addition
+  has no old value to log. Working this through showed that the guide's as-of read replays forward and loses triples once old buckets are
+  pruned, where a backward read does not. Recorded as TD-48.
+- 2026-10-14: the maintainer and we discussed how deep a patch tracks a change, with a broker's tower and a carrier's requote as the case.
+  Persistence keeps history without reference to Foundation's versioning, and a composite replace deletes an old version ADR-A67 keeps.
+  The maintainer placed quotes in a `NegotiationThread` aggregate, not the tower's. H-D33: H2.6b ships its event half only, with
+  `ReceiptModelNotHonoured` for both receipt models, and its patch-log half and H2.10 are held for a new sketch,
+  [persistence: history, versions and the receipt models](../sketches/persistence-history-and-versioning.md), VH-Q1 to VH-Q7, including
+  whether Behaviour's versioning differs for a reason.
+- 2026-10-14: the maintainer decided H2.6b-Q5 (a) and confirmed `ReceiptModelNotHonoured` for both receipt models. Plan §4.6 now briefs the
+  event half on its own: events as `VALUES` rows in an `eventRows` slot, event data in an `eventTriples` slot, the digest's payload and
+  event parts, and the warning. H2.8's checks no longer name the add and del graphs. H2.6b is ready to branch once the planning documents
+  are on `main`.

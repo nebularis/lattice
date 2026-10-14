@@ -238,3 +238,12 @@ capability record must say which stores accept a two-operation request.
 | RQ4 A | none. RQ4 B: the checker (a role per `Values` item), `resource_of`, `kinds.expected.ttl`, the expected profiles of every audit, builder versions of the audits |
 | RQ5 A | `contract.py` (a payload part with several sources), the digest part in the files of `append-stream-dataset-guard`, one test. RQ5 B: the append's template, builder and golden, H2.8's payload check. RQ5 C: guide §15.2 and the remediation record |
 | RQ6 A | the contract states the caller obligation, and the expected profiles gain a note on `$assertGraph` and `$retractGraph`. RQ6 B: the replace's template and builder (version 2), the contract (`PatchContent`), H2.7's vocabulary, H2.8's payload check, TD-42's measurement. RQ6 C: a new template and builder, the capability record |
+
+## Answers
+
+| # | Answer | Date |
+|---|---|---|
+| H2.6-RQ4 | **A**, the pinned head is part of `Receipt` (H-D29) | 2026-10-14 |
+| H2.6-RQ5 | **B**, the append gains a payload slot, since an event must be able to carry domain triples (H-D30). The question this write-up asked, whether an event carries only its four fields, is answered: it does not | 2026-10-14 |
+| H2.6-RQ6 | **B**, the write records its patch content in the same update (H-D31), since request atomicity varies by store and by configuration (TSD-06, TSD-Q13). Built in H2.6b, Track H plan §4.6 | 2026-10-14 |
+
