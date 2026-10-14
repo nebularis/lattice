@@ -83,7 +83,11 @@ README ([ADR-A120](../architecture/decisions/ADR-A120-literate-specs-with-severa
 `turtle-spec` block whose first line is `# @output-file "spec/<file>.ttl"` goes to that file, which
 gains `spec/<layer>.ttl`'s `@prefix` lines. The directive counts only on the first line. Each such
 block states its own ontology header. All of a layer's spec documents carry one version and are
-bumped together. The extractor refuses them otherwise.
+bumped together. The extractor refuses them otherwise. The same directive works on a
+`turtle-vocab` block, for a module with several vocabulary documents (a module's own version for
+its vocabulary, independent of its spec version). `--layer` may itself be a nested module path
+below `ontology/`, such as `applied/insurance/peril`, whose last segment names the default
+documents (ADR-A120 addendum, AIR-2.0).
 
 ```bash
 # Check a layer's generated files still match its README (writes nothing, exits non-zero on drift)
@@ -97,6 +101,11 @@ python tools/literate_extract.py ontology/surface/README.md --layer surface --ro
 # Extract a formalised layer's Isabelle datatype too
 python tools/literate_extract.py ontology/eligibility/README.md --layer eligibility --root . \
   --proofs-root tools/proofs --shapes shapes/structural.ttl shapes/constraints.ttl --check
+
+# A nested applied-insurance module, with several vocabulary documents
+python tools/literate_extract.py ontology/applied/insurance/peril/README.md \
+  --layer applied/insurance/peril --root . \
+  --shapes shapes/structural.ttl shapes/constraints.ttl --check
 ```
 
 **Not every layer passes `--check` today.** Vocabulary, Party and Eligibility's own `spec`/`vocab`/

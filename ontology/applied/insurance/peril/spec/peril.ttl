@@ -9,7 +9,6 @@
 @prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
-@base <https://www.nebularis.org/neuro-semantic/insurance/peril> .
 
 <https://www.nebularis.org/neuro-semantic/insurance/peril>
     rdf:type owl:Ontology ;
@@ -68,7 +67,11 @@ prl:overlaps a owl:ObjectProperty , owl:SymmetricProperty , owl:IrreflexivePrope
 
 #################################################################
 #    Characteristics (ADR-A99 decision 4, PV1): one scheme per axis,
-#    linked from cause concepts for typical values.
+#    linked from cause concepts for typical values. Four of these
+#    specialise insurance/common's own classification properties
+#    (AIR-2.2), so a check on a common/ property also reads the peril
+#    vocabulary: prl:onset and prl:definitionBasis have no common/
+#    counterpart, since only the peril vocabulary uses those axes.
 #################################################################
 
 prl:typicalAgency a owl:ObjectProperty ;
@@ -114,9 +117,9 @@ prl:harmSubject a owl:ObjectProperty ;
     fnd:utility "Informative only (PV8). Liability direction is derived from party roles, never from this property (term-parameters sketch §7)." .
 
 #################################################################
-#    Intensity and collections links (§6.4, §7). The intensity
-#    measure scheme itself, its qnt:ValueSpaces, and collection
-#    classes are out of scope for this slice (AIR-2.6, AIR-2.5).
+#    Intensity and collections links (§6.4, §7 of the sketch). The
+#    intensity measure scheme itself, its qnt:ValueSpaces, and
+#    collection classes are built in AIR-2.6 and AIR-2.5.
 #################################################################
 
 prl:intensityMeasure a owl:ObjectProperty ;

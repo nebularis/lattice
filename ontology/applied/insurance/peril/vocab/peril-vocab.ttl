@@ -21,7 +21,8 @@
 #    unscoped-fallback reference edition (ADR-A99 decision 1): never
 #    a market standard, always the default when nothing more specific
 #    is bound. No concepts in this slice: the cause scheme's own
-#    members are added region by region, AIR-2.2 to AIR-2.4.
+#    members are added region by region, AIR-2.2 to AIR-2.4, each in
+#    its own README section below (§5.2, §5.3).
 #################################################################
 
 prl-voc:CauseScheme a voc:ConceptScheme ;
@@ -72,50 +73,43 @@ prl-voc:HarmSubjectScheme a voc:ConceptScheme ;
     skos:prefLabel "Reference harm-subject scheme"@en ;
     skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
 
-# ==== BEGIN REGION agency (AIR-2.2) ====
-# ==== END REGION agency ====
+# Filled by AIR-2.2: Natural, Accidental, Negligent, Intentional, MaliciousCriminal,
+# MaliciousPolitical, Sovereign, Belligerent, Economic, UndeterminedAgency.
 
-# ==== BEGIN REGION mechanism (AIR-2.2) ====
-# ==== END REGION mechanism ====
+# Filled by AIR-2.2: Shaking, GroundFailure, Inundation, WaterDamage, WindLoad, Load, Fire,
+# Smoke, Heat, Freezing, Explosion, Impact, Collapse, Breakdown, Corrosion, Erosion,
+# Contamination, BiologicalAgent, Radiation, ElectricalOverstress, DataEncryption, Deprivation.
 
-# ==== BEGIN REGION onset (AIR-2.2) ====
-# ==== END REGION onset ====
+# Filled by AIR-2.2: Sudden, Gradual, Latent, Recurrent.
 
-# ==== BEGIN REGION definition-basis (AIR-2.2) ====
-# ==== END REGION definition-basis ====
+# Filled by AIR-2.2: Physical, Designation, Threshold, WordingDefined, Statutory, Index.
 
-# ==== BEGIN REGION accumulation-class (AIR-2.2) ====
-# ==== END REGION accumulation-class ====
+# Filled by AIR-2.2: Catastrophe, Systemic, Attritional.
 
-# ==== BEGIN REGION consequence (AIR-2.2) ====
-# ==== END REGION consequence ====
+# Filled by AIR-2.2: DirectPhysicalDamage, BusinessInterruption, ExtraExpense, Spoilage,
+# DenialOfAccess, Recall, CleanUp, DataRestoration, ExtortionPayment, LiabilityToOthers,
+# DefenceCosts, Delay, ShortageOrNonDelivery, GeneralAverageContribution, ReputationalHarm,
+# RegulatoryPenalty, NotificationCosts, ForensicCosts, CancellationCosts.
 
-# ==== BEGIN REGION harm-subject (AIR-2.2) ====
-# ==== END REGION harm-subject ====
+# Filled by AIR-2.2: Property, Persons, FinancialInterest, DataAndSystems, Environment,
+# Reputation.
 
-# ==== BEGIN REGION cause-N (AIR-2.3) ====
-# ==== END REGION cause-N ====
+# Filled by AIR-2.3: 90 concepts (geophysical, hydrological, meteorological, climatological,
+# biological, extraterrestrial), sketch §5.1.
 
-# ==== BEGIN REGION cause-T (AIR-2.3) ====
-# ==== END REGION cause-T ====
+# Filled by AIR-2.3: 71 concepts, sketch §5.2.
 
-# ==== BEGIN REGION cause-E (AIR-2.3) ====
-# ==== END REGION cause-E ====
+# Filled by AIR-2.3: 15 concepts, sketch §5.3.
 
-# ==== BEGIN REGION cause-H (AIR-2.4) ====
-# ==== END REGION cause-H ====
+# Filled by AIR-2.4: 37 concepts, sketch §5.4.
 
-# ==== BEGIN REGION cause-P (AIR-2.4) ====
-# ==== END REGION cause-P ====
+# Filled by AIR-2.4: 36 concepts, sketch §5.5.
 
-# ==== BEGIN REGION cause-C (AIR-2.4) ====
-# ==== END REGION cause-C ====
+# Filled by AIR-2.4: 17 concepts, sketch §5.6.
 
-# ==== BEGIN REGION cause-F (AIR-2.4) ====
-# ==== END REGION cause-F ====
+# Filled by AIR-2.4: 10 concepts, sketch §5.7.
 
-# ==== BEGIN REGION cause-L (AIR-2.4) ====
-# ==== END REGION cause-L ====
+# Filled by AIR-2.4: 11 concepts, sketch §5.8.
 
-# ==== BEGIN REGION cross-group-links (AIR-2.4) ====
-# ==== END REGION cross-group-links ====
+# Filled by AIR-2.4: every prl:canTrigger, prl:overlaps or skos:related link with one end in
+# N, T or E and the other in H, P, C, F or L, and every link within H to L (sketch §8.1).

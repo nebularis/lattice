@@ -16,13 +16,6 @@
     owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/common-vocab/0.5.0> ;
     owl:imports <https://www.nebularis.org/neuro-semantic/insurance/common/0.5.0> .
 
-#################################################################
-#    One voc:SchemeContract per common:spec property (ADR-A98
-#    decision 1). No voc:boundScheme here: reference editions bind
-#    themselves when they arrive (peril's AIR-2.2 onwards), and a
-#    deployment binds its own.
-#################################################################
-
 icm-voc:PerilContract a voc:SchemeContract ;
     fnd:hasIdentity icm-voc:PerilContract-identity ;
     fnd:hasGovernanceState fnd:Active ;
@@ -58,15 +51,6 @@ icm-voc:PoolContract a voc:SchemeContract ;
     fnd:hasGovernanceState fnd:Active ;
     skos:prefLabel "Pool scheme contract"@en ;
     voc:constrainsProperty icm:pool .
-
-#################################################################
-#    Liability role types (ADR-A102 decision 1). pty:Role
-#    individuals, declared the same way Party declares its own
-#    (ontology/party/vocab/party-vocab.ttl's pty:Obligor and
-#    pty:Obligee). Occupancies of these roles are created and
-#    filled at claim time (ADR-A102 decision 2); this slice
-#    declares the role types only.
-#################################################################
 
 icm-voc:HarmedParty a owl:NamedIndividual , pty:Role ;
     rdfs:label "Harmed party"@en ;

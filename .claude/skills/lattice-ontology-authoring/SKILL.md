@@ -30,7 +30,11 @@ Follow every step for any change to `ontology/**/spec/`, `ontology/**/vocab/`, o
    - A `turtle-spec` block whose **first** line is `# @output-file "spec/<file>.ttl"` goes to that
      file instead, which gains `spec/<layer>.ttl`'s `@prefix` lines (ADR-A120). It states its own
      ontology header. All of a layer's spec documents share one version, bumped together even when
-     only one changed. The extractor refuses them otherwise.
+     only one changed. The extractor refuses them otherwise. The same directive works on a
+     `turtle-vocab` block, for a module with several vocabulary documents, with its own
+     one-shared-version rule independent of the spec documents' version (ADR-A120 addendum). A
+     nested module path (`--layer applied/insurance/peril`) is also accepted, its last segment
+     naming the default documents.
    - Add `--check` to compare without writing. Run it **before** relying on a README. If the layer
      already drifts, the README is not yet its source (technical debt TD-16). Compare the extracted
      and committed graphs (`rdflib.compare.graph_diff` over `to_isomorphic` graphs) before

@@ -55,6 +55,20 @@ SPDX header, so its blocks state only its own ontology header and content. All
 of a layer's spec documents carry the same version (``owl:versionIRI ending
 /X.Y.Z``), or extraction fails.
 
+ADR-A120 addendum (2026-10-13, AIR-2.0): the same directive is read on the
+first line of a ``turtle-vocab`` block, and must name a ``.ttl`` file under the
+module's ``vocab/``, for example::
+
+    # @output-file "vocab/peril-intensity.ttl"
+
+A module's vocabulary documents move in unison the same way its spec
+documents do: they all carry one ``owl:versionIRI`` version, independent of
+the spec documents' own shared version. ``--layer`` also accepts a path under
+``ontology/`` rather than a single segment, for example
+``applied/insurance/peril``, whose last segment names the module's default
+documents (``spec/peril.ttl``, ``vocab/peril-vocab.ttl``). A single-segment
+``--layer`` behaves exactly as before.
+
 Usage::
 
     python3 -m tools.lattice.literate_extract ontology/surface/README.md \\
@@ -68,7 +82,9 @@ Usage::
     python3 -m tools.lattice.literate_extract ontology/eligibility/README.md \\
         --layer eligibility --root . --proofs-root tools/proofs \
         --reference-root tools/reference
-"""
+    python3 -m tools.lattice.literate_extract ontology/applied/insurance/peril/README.md \
+        --layer applied/insurance/peril --root . \
+        --shapes shapes/structural.ttl shapes/constraints.ttl"""
 
 from __future__ import annotations
 
@@ -277,15 +293,23 @@ def plan(
     Every path is relative to ``--root`` (the ontology directory) except an
     ``isabelle-spec`` output, which is relative to the repository root, via
     ``proofs_root``, since ``tools/proofs/`` sits outside ``ontology/``
-    entirely (ADR-A-FM2).
+    entirely (ADR-A-FM2). ``layer`` may itself be a nested module path (for
+    example ``applied/insurance/peril``, ADR-A120 addendum): its last segment
+    names the module's default spec and vocabulary documents.
     """
-    default_spec = f"ontology/{layer}/spec/{layer}.ttl"
+    last_segment = layer.rsplit("/", 1)[-1]
+    default_spec = f"ontology/{layer}/spec/{last_segment}.ttl"
+    default_vocab = f"ontology/{layer}/vocab/{last_segment}-vocab.ttl"
     spec_docs: Dict[str, List[str]] = {}
     for block in blocks:
         if block.tag == "turtle-spec":
             target, body = _spec_target(block, layer, default_spec)
             spec_docs.setdefault(target, []).append(body)
-    vocab_bodies = [b.body for b in blocks if b.tag == "turtle-vocab"]
+    vocab_docs: Dict[str, List[str]] = {}
+    for block in blocks:
+        if block.tag == "turtle-vocab":
+            target, body = _vocab_target(block, layer, default_vocab)
+            vocab_docs.setdefault(target, []).append(body)
     shape_blocks = [b for b in blocks if b.tag == "turtle-shapes"]
     isabelle_bodies = [b.body for b in blocks if b.tag == "isabelle-spec"]
 
@@ -324,8 +348,19 @@ def plan(
             f"({', '.join(f'{t}: {m.group(1) if m else None}' for t, m in sorted(versions.items()))}); "
             f"a layer's spec documents move in unison (ADR-A120)"
         )
-    if vocab_bodies:
-        outputs[f"ontology/{layer}/vocab/{layer}-vocab.ttl"] = render(vocab_bodies)
+    vocab_prefixes = PREFIX_RE.findall("\n".join(vocab_docs.get(default_vocab, [])))
+    for target, bodies in vocab_docs.items():
+        if target != default_vocab and vocab_prefixes:
+            bodies = ["\n".join(vocab_prefixes) + "\n"] + bodies
+        outputs[target] = render(bodies)
+    vocab_versions = {t: VERSION_RE.search(outputs[t]) for t in vocab_docs}
+    vocab_found = {m.group("version") for m in vocab_versions.values() if m}
+    if len(vocab_docs) > 1 and len(vocab_found) > 1:
+        raise ValueError(
+            f"{layer}'s vocabulary documents carry different versions "
+            f"({', '.join(f'{t}: {m.group(1) if m else None}' for t, m in sorted(vocab_versions.items()))}); "
+            f"a module's vocabulary documents move in unison (ADR-A120 addendum)"
+        )
     for block, target in zip(shape_blocks, shape_targets):
         outputs[f"ontology/{layer}/{target}"] = render([block.body])
     if isabelle_bodies:
@@ -350,10 +385,33 @@ def _spec_target(block: Block, layer: str, default: str) -> tuple[str, str]:
     if match is None:
         return default, block.body
     path = match.group("path")
-    if Path(path).is_absolute() or ".." in Path(path).parts or not path.endswith(".ttl"):
+    if _escapes_layer(path) or not path.endswith(".ttl"):
         raise ValueError(
             f"turtle-spec block at line {block.start_line}: @output-file must name a .ttl "
             f"file inside the layer directory, not {path!r}"
+        )
+    return f"ontology/{layer}/{path}", rest.lstrip("\n")
+
+
+def _escapes_layer(path: str) -> bool:
+    """Whether a directive's path would resolve outside its module directory: an
+    absolute path (POSIX-style, since Windows' ``Path.is_absolute()`` does not
+    recognise ``/tmp/x.ttl`` as absolute without a drive letter) or a ``..`` segment."""
+    return path.startswith("/") or Path(path).is_absolute() or ".." in Path(path).parts
+
+
+def _vocab_target(block: Block, layer: str, default: str) -> tuple[str, str]:
+    """The vocabulary document a ``turtle-vocab`` block goes to, and its body without
+    the directive (ADR-A120 addendum)."""
+    first, _, rest = block.body.partition("\n")
+    match = OUTPUT_FILE_RE.match(first)
+    if match is None:
+        return default, block.body
+    path = match.group("path")
+    if _escapes_layer(path) or not path.endswith(".ttl") or not path.startswith("vocab/"):
+        raise ValueError(
+            f"turtle-vocab block at line {block.start_line}: @output-file must name a .ttl "
+            f"file under the module's vocab/, not {path!r}"
         )
     return f"ontology/{layer}/{path}", rest.lstrip("\n")
 
@@ -419,7 +477,12 @@ def main(argv: Sequence[str] | None = None) -> int:
                 drifted.append(relative)
             continue
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(content, encoding="utf-8")
+        # newline="\n" pins the line ending to LF regardless of platform: without it,
+        # Path.write_text() translates embedded "\n" to the OS separator, which turns
+        # into CRLF inside a multi-line SPARQL string literal on Windows, silently
+        # changing that literal's value (not just insignificant whitespace) and
+        # producing CRLF noise against the repository's LF-committed .ttl files.
+        target.write_text(content, encoding="utf-8", newline="\n")
         print(f"wrote {relative} ({len(content.splitlines())} lines)")
 
     if args.check:

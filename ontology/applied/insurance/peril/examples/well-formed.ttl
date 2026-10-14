@@ -24,22 +24,26 @@
 prl-voc:Natural a skos:Concept ;
     skos:inScheme prl-voc:AgencyScheme ;
     skos:prefLabel "Natural"@en ;
-    skos:definition "Caused by a natural process, without human involvement."@en .
+    skos:definition "Caused by a natural process, without human involvement."@en ;
+    skos:note "No single published standard names an agency axis for perils. Follows common catastrophe-modelling usage, which separates a hazard's physical cause from who or what is responsible for it."@en .
 
 prl-voc:Sudden a skos:Concept ;
     skos:inScheme prl-voc:OnsetScheme ;
     skos:prefLabel "Sudden"@en ;
-    skos:definition "Onset within a short, identifiable period."@en .
+    skos:definition "Onset within a short, identifiable period."@en ;
+    skos:note "No single published standard names an onset axis for perils. Follows common catastrophe-modelling usage (the distinction behind 'occurrence' versus 'aggregate' treaty forms)."@en .
 
 prl-voc:Physical a skos:Concept ;
     skos:inScheme prl-voc:DefinitionBasisScheme ;
     skos:prefLabel "Physical"@en ;
-    skos:definition "Exists as a distinct thing by its own physical character, needing no external designation or threshold."@en .
+    skos:definition "Exists as a distinct thing by its own physical character, needing no external designation or threshold."@en ;
+    skos:note "No single published standard names this axis. Introduced by this vocabulary (ADR-A99 §10, PV6) to separate what makes a peril a distinct thing from what it typically does."@en .
 
 prl-voc:Threshold a skos:Concept ;
     skos:inScheme prl-voc:DefinitionBasisScheme ;
     skos:prefLabel "Threshold"@en ;
-    skos:definition "Exists as a distinct thing only once a measured intensity crosses a stated threshold."@en .
+    skos:definition "Exists as a distinct thing only once a measured intensity crosses a stated threshold."@en ;
+    skos:note "No single published standard names this axis. A threshold-defined concept's own numeric threshold is recorded in peril-intensity.ttl (AIR-2.6), never here."@en .
 
 # ---- Cause concepts --------------------------------------------------------
 
@@ -48,6 +52,7 @@ prl-voc:N a skos:Concept ;
     skos:prefLabel "Natural hazard"@en ;
     skos:definition "A peril whose initiating event arises from a natural process."@en ;
     skos:notation "N"^^prl:ReferenceCode ;
+    skos:note "Follows the IRDR Peril Classification's top-level distinction between natural and human-induced hazards."@en ;
     prl:typicalAgency prl-voc:Natural ;
     prl:onset prl-voc:Sudden ;
     prl:definitionBasis prl-voc:Physical .
@@ -57,6 +62,7 @@ prl-voc:T a skos:Concept ;
     skos:prefLabel "Technological and accidental event"@en ;
     skos:definition "A peril whose initiating event is accidental, or arises from human technology or activity."@en ;
     skos:notation "T"^^prl:ReferenceCode ;
+    skos:note "The IRDR Peril Classification covers natural hazards only. This family follows common market and EM-DAT usage for technological and accidental events, stated neutrally."@en ;
     prl:typicalAgency prl-voc:Natural ;
     prl:onset prl-voc:Sudden ;
     prl:definitionBasis prl-voc:Physical .
@@ -70,6 +76,7 @@ prl-voc:N.MET a skos:Concept ;
     skos:prefLabel "Meteorological hazard"@en ;
     skos:definition "A natural hazard arising from atmospheric processes."@en ;
     skos:notation "N.MET"^^prl:ReferenceCode ;
+    skos:note "Follows the IRDR Peril Classification's meteorological hazard family."@en ;
     prl:broaderGeneric prl-voc:N ;
     skos:broader prl-voc:N ;
     prl:typicalAgency prl-voc:Natural ;
@@ -81,6 +88,7 @@ prl-voc:N.MET.TC a skos:Concept ;
     skos:prefLabel "Tropical cyclone"@en ;
     skos:definition "An organised, warm-cored cyclonic storm system originating over tropical or sub-tropical waters. Its own event family: several of its concepts are its parts."@en ;
     skos:notation "N.MET.TC"^^prl:ReferenceCode ;
+    skos:note "Follows the IRDR Peril Classification's tropical cyclone entry and the WMO's definition of the storm system. Unlike a flat code list, storm surge and other effects are modelled as parts of this concept (prl:broaderPartitive), not separate hazards (PV2)."@en ;
     prl:broaderGeneric prl-voc:N.MET ;
     skos:broader prl-voc:N.MET ;
     prl:typicalAgency prl-voc:Natural ;
@@ -92,6 +100,7 @@ prl-voc:N.MET.TC.SRG a skos:Concept ;
     skos:prefLabel "Tropical cyclone storm surge"@en ;
     skos:definition "The rise in sea level caused by a tropical cyclone's winds and pressure, part of a tropical cyclone occurrence."@en ;
     skos:notation "N.MET.TC.SRG"^^prl:ReferenceCode ;
+    skos:note "Some code lists give storm surge its own top-level flood code. Here it is kept as a part of the tropical cyclone that caused it (PV2), reached by prl:broaderPartitive, since it never occurs without one."@en ;
     prl:broaderPartitive prl-voc:N.MET.TC ;
     skos:broader prl-voc:N.MET.TC ;
     prl:typicalAgency prl-voc:Natural ;
@@ -103,6 +112,7 @@ prl-voc:N.MET.TC.HUR a skos:Concept ;
     skos:prefLabel "Hurricane"@en ;
     skos:definition "A tropical cyclone at or above hurricane strength in the North Atlantic and eastern North Pacific basins."@en ;
     skos:notation "N.MET.TC.HUR"^^prl:ReferenceCode ;
+    skos:note "Follows the WMO's basin-specific naming: 'hurricane' names the same wind-speed class the WMO calls 'severe tropical cyclone' or 'typhoon' in other basins. The numeric threshold itself is recorded in peril-intensity.ttl (AIR-2.6), not here."@en ;
     prl:broaderGeneric prl-voc:N.MET.TC ;
     skos:broader prl-voc:N.MET.TC ;
     prl:typicalAgency prl-voc:Natural ;

@@ -28,12 +28,14 @@ environment and can be installed with `.[community]` when needed.
 
 Regenerates a layer's compiled Turtle from its README, which is the
 authoritative specification. Fenced blocks are extracted in document order:
-`turtle-spec` → `ontology/<layer>/spec/<layer>.ttl`, unless the block's first line is
+`turtle-spec` → `ontology/<layer>/spec/<last-segment>.ttl`, unless the block's first line is
 `# @output-file "spec/<file>.ttl"`, which sends it to that file in the layer, with
-`spec/<layer>.ttl`'s prefixes. A layer's spec documents share one version, or extraction fails
-(ADR-A120). `turtle-vocab` → `ontology/<layer>/vocab/<layer>-vocab.ttl`,
-`turtle-shapes` → the shape files named on the command line, in order.
-`turtle-example` blocks are never extracted. `isabelle-spec` → a layer's
+`spec/<last-segment>.ttl`'s prefixes. A layer's spec documents share one version, or extraction
+fails (ADR-A120). `turtle-vocab` → `ontology/<layer>/vocab/<last-segment>-vocab.ttl`, with the same
+`@output-file` redirection and one-shared-version rule for several vocabulary documents (ADR-A120
+addendum). `--layer` may be a nested module path (for example `applied/insurance/peril`): its last
+segment names the default documents. `turtle-shapes` → the shape files named on the command line,
+in order. `turtle-example` blocks are never extracted. `isabelle-spec` → a layer's
 closed Isabelle datatype only, at `<proofs-root>/<layer>/Kernel.thy`
 (`--proofs-root`, e.g. `tools/proofs`; see `tools/proofs/README.md`,
 ADR-A-FM2). Each output gains the project's SPDX header as its first line.
@@ -41,6 +43,12 @@ ADR-A-FM2). Each output gains the project's SPDX header as its first line.
 ```bash
 python3 tools/literate_extract.py ontology/surface/README.md \
     --layer surface --root . \
+    --shapes shapes/structural.ttl shapes/constraints.ttl
+```
+
+```bash
+python3 tools/literate_extract.py ontology/applied/insurance/peril/README.md \
+    --layer applied/insurance/peril --root . \
     --shapes shapes/structural.ttl shapes/constraints.ttl
 ```
 
