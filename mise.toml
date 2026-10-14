@@ -83,7 +83,7 @@ run = "corepack enable && yarn install --immutable"
 
 [tasks.check]
 description = "Run all repository validation tasks"
-depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:reasoning-isolation", "check:minting", "check:formal-freshness", "check:agent-guidance", "build:mtp", "check:mtp", "check:authoring-tools"]
+depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:reasoning-isolation", "check:minting", "check:formal-freshness", "check:agent-guidance", "check:tutorial-snippets", "build:mtp", "check:mtp", "check:authoring-tools"]
 
 [tasks.test]
 description = "Run the repository test suites"
@@ -240,6 +240,10 @@ run = "python -m pytest tools/reference/eligibility/tests -q"
 [tasks."check:formal-freshness"]
 description = "Check every tools/proofs/<layer>/Kernel.thy and tools/reference/<layer>/ law-coverage still matches its layer's literate README (formal-methods epic, epic principle E1)"
 run = "python tools/check_formal_freshness.py"
+
+[tasks."check:tutorial-snippets"]
+description = "Check every Turtle excerpt in the tutorial still matches its source file, and every repository link names a path that exists (plan lattice-tutorial, TUT-D5, TUT-Q1)"
+run = "python tools/tutorial_snippets.py && python -m pytest tools/test_tutorial_snippets.py -q"
 
 [tasks."build:agent-guidance"]
 description = "Write .github/copilot-instructions.md from AGENTS.md (ADR-A117)"
@@ -431,12 +435,13 @@ run = '$ErrorActionPreference = "SilentlyContinue"; Remove-Item -Recurse -Force 
 [tasks."bootstrap:jekyll"]
 description = "Install Ruby/Bundler/Jekyll locally for docs/ (GitHub Pages). Not part of the default bootstrap task — run explicitly when working on docs content."
 tools = { ruby = "3.4" }
-run = """
-cd docs
-gem install bundler -v 2.6.2 --conservative
-bundle config set --local path 'vendor/bundle'
-bundle install
-"""
+dir = "{{config_root}}/docs"
+# One command per entry. A multi-line run string runs only its first line under cmd.exe on Windows.
+run = [
+  "gem install bundler -v 2.6.2 --conservative",
+  "bundle config set --local path vendor/bundle",
+  "bundle install",
+]
 
 [tasks."serve:jekyll"]
 description = "Serve docs/ locally with Jekyll (run bootstrap:jekyll first)"

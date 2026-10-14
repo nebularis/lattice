@@ -22,6 +22,12 @@ From a clean clone to a passing `mise run check`. For what each tool actually do
   profile change actually works, rather than relying on a PATH edit that only applies to the
   current session.
 
+- **A C toolchain** (optional), only if you preview the documentation site with
+  `mise run bootstrap:jekyll` and `mise run serve:jekyll`. Several of the site's gems build native
+  extensions. On macOS that is the Xcode Command Line Tools (`xcode-select --install`), on
+  Debian or Ubuntu the `build-essential` package, and on Windows MSYS2 with its MINGW toolchain,
+  installed by running `ridk install` through mise (`mise exec ruby@3.4 -- ridk install`) and
+  choosing options 1 and 3.
 - **Docker** (optional), only if you plan to run `deployment/compose` or build the formal-methods
   toolchain spike's portable images (`mise run bootstrap:formal-images`).
 - **An extra root CA**, if your network intercepts TLS: several tools need it set

@@ -690,6 +690,20 @@ added `pytest-xdist` as the dominant speed lever.
 One catalogue of where things live in the repository, one interface module that reads it, and a check
 that code and documents agree with it. Shares work with `python-test-melting` (sketch §8.1).
 
+## 8.17 The LATTICE Tutorial — TUT-0 authored
+
+| Field | Value |
+|-------|-------|
+| **Status** | 🟡 Planned 2026-10-14, branch `tutorial/guide`. Every question answered. TUT-0 (skeleton and excerpt check) verified on Windows, awaiting commit |
+| **Unit ID** | `lattice-tutorial` |
+| **Plan** | [lattice-tutorial.md](plans/lattice-tutorial.md) |
+| **Status Record** | [lattice-tutorial.md](status/lattice-tutorial.md) |
+| **ADRs** | none |
+
+A read-only tutorial for data architects new to ontologies, published as one page of the GitHub
+Pages site (`docs/tutorial.md`), following one loan facility agreement through every substrate and
+the applied modules. A hands-on version is deferred to a later unit, not yet planned (plan §7).
+
 ## 8. Phase Handoff Documents (0-6)
 
 | Phase | Status Record | Key Outcome |

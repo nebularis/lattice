@@ -152,6 +152,7 @@ ordinary Turtle.
 | `literate_extract.py` | README ⇄ generated-artefact drift (§3) | see §3 |
 | `full_sweep.py` | Runs every check an ontology change needs, one line each, failures in red, logs in `.build/full-sweep`. Uses this checkout's tool packages, and compares versions with `main` | `mise run check:full-sweep`, or `-- --base-ref REF` |
 | `check_formal_freshness.py` | Formal artefact ⇄ README drift (§4) | `mise run check:formal-freshness` |
+| `tutorial_snippets.py` | Every Turtle excerpt in the tutorial (`docs/_includes/tutorial/`) still matches its source file, and every link to a repository file names a path that exists (`lattice-tutorial`) | `mise run check:tutorial-snippets` |
 | `ontology_catalog.py` | The import catalog (`ontology/catalog-v001.xml`) is complete and consistent (ADR-A88) | `mise run check:ontology-catalog` / `mise run build:ontology-catalog` |
 | `ontology_version_check.py` | Every changed ontology document bumped its version, with a release row (ADR-A86) | `mise run check:ontology-versioning` |
 | `ontology_releases.py` | Release rows exist for every version, tags are named correctly | `mise run build:ontology-releases` / `check` |

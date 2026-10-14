@@ -42,6 +42,11 @@ note true of one machine belongs in that person's own configuration, not here.
 
 ## Windows
 
+- **A multi-line `run` string runs only its first line on Windows.** `cmd.exe` stops at the first
+  newline and the task still reports success. Write a sequence as a `run` array, one command per
+  entry, and set `dir` instead of starting with `cd`. Single quotes are not quotes to `cmd.exe`.
+- **Ruby's native gems need MSYS2 on Windows.** `bundle install` fails with "MSYS2 could not be
+  found" until `ridk install` has installed MSYS2 and its MINGW toolchain.
 - **A shim is not the binary.** `mise`'s shims re-invoke `mise`, so they fail with "program not found"
   until the real `mise.exe` is on `PATH`. A newly installed `mise` is not on `PATH` in a terminal
   opened before the install.
