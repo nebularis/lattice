@@ -32,3 +32,58 @@ aeo:ControlRelationShape a sh:NodeShape ;
               ?b (^aeo:controller/aeo:controlled)+ ?a .
             }
         """ ] .
+
+#################################################################
+#    AIR-4.2: peril-attribute completeness and geo precision,
+#    read per location, not per asset (a per-asset rule would
+#    warn about a roof on stock, since attribute types do not say
+#    which asset classes they apply to).
+#################################################################
+
+aeo:PerilCompletenessShape a sh:NodeShape ;
+    sh:targetClass aeo:Location ;
+    sh:severity sh:Warning ;
+    sh:sparql [
+        sh:message "A location exposed to a peril (through a pool participation's peril scope) should have a value, in some assessment of the location or of an asset located there, for each attribute type that peril or a broader cause concept names relevant." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX prl: <https://www.nebularis.org/neuro-semantic/insurance/peril#>
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+            SELECT $this WHERE {
+              $this a aeo:Location ; aeo:poolParticipation ?pp .
+              ?pp aeo:perilScope ?peril .
+              ?peril skos:broader* ?ancestor .
+              ?ancestor prl:relevantAttribute ?type .
+              FILTER NOT EXISTS {
+                {
+                  ?asmt aeo:assesses $this .
+                } UNION {
+                  ?asmt aeo:assesses ?asset .
+                  ?asset aeo:locatedAt $this .
+                }
+                ?asmt aeo:hasAttribute ?av .
+                ?av aeo:attributeType ?type .
+              }
+            }
+        """ ] .
+
+aeo:GeoPrecisionForPerilShape a sh:NodeShape ;
+    sh:targetClass aeo:Location ;
+    sh:severity sh:Warning ;
+    sh:sparql [
+        sh:message "A location exposed to a peril with a minimum geographic precision should be known at least that precisely (aeo:geoPrecision no coarser than the peril's minimum, by skos:notation rank)." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX prl: <https://www.nebularis.org/neuro-semantic/insurance/peril#>
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+            PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+            SELECT $this WHERE {
+              $this a aeo:Location ; aeo:poolParticipation ?pp ; aeo:geoPrecision ?locPrecision .
+              ?pp aeo:perilScope ?peril .
+              ?peril skos:broader* ?ancestor .
+              ?ancestor prl:minimumGeoPrecision ?minPrecision .
+              ?locPrecision skos:notation ?locRank .
+              ?minPrecision skos:notation ?minRank .
+              FILTER (xsd:integer(?locRank) > xsd:integer(?minRank))
+            }
+        """ ] .

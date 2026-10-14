@@ -42,6 +42,25 @@ MEMBERSHIP = AEO.MembershipShape
 CONTROL_RELATION = AEO.ControlRelationShape
 DOCUMENTATION = AEO.DocumentationShape
 
+# AIR-4.2
+ZONE_DESIGNATION = AEO.ZoneDesignationShape
+ZONE_IN_TERRITORY = AEO.ZoneInTerritoryShape
+SPATIAL_JOIN = AEO.SpatialJoinShape
+POOL_PARTICIPATION = AEO.PoolParticipationShape
+ASSESSMENT = AEO.AssessmentShape
+ATTRIBUTE_VALUE = AEO.AttributeValueShape
+SINGLE_VALUED_TYPES = AEO.SingleValuedTypesShape
+SCREENING = AEO.ScreeningShape
+PERIL_COMPLETENESS = AEO.PerilCompletenessShape
+GEO_PRECISION_FOR_PERIL = AEO.GeoPrecisionForPerilShape
+CONSTRUCTION_PROTECTION_PROFILE = AEO.ConstructionProtectionProfileShape
+CONSTRUCTION_PROTECTION_PROFILE_OUTSIDE_FAMILY = AEO.ConstructionProtectionProfileOutsideFamilyShape
+CYBER_POSTURE_PROFILE = AEO.CyberPostureProfileShape
+CYBER_POSTURE_PROFILE_OUTSIDE_FAMILY = AEO.CyberPostureProfileOutsideFamilyShape
+
+PRL = Namespace("https://www.nebularis.org/neuro-semantic/insurance/peril#")
+PRLV = Namespace("https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#")
+
 
 def _graph(*paths: Path) -> Graph:
     g = Graph()
@@ -58,18 +77,35 @@ def _vocab() -> Graph:
     return _graph(MODULE / "vocab" / "exposure-vocab.ttl")
 
 
+PERIL = ROOT / "ontology" / "applied" / "insurance" / "peril"
+
+
 def _fixture() -> Graph:
-    """spec + vocab + the core fixture, fresh per call so tests can mutate
-    their own copy safely."""
+    """spec + vocab + peril's vocab and intensity documents (for
+    prl:relevantAttribute / prl:minimumGeoPrecision, AIR-4.2) + the core
+    and attributes fixtures, fresh per call so tests can mutate their own
+    copy safely."""
     return _graph(
         MODULE / "spec" / "exposure.ttl",
         MODULE / "vocab" / "exposure-vocab.ttl",
+        PERIL / "spec" / "peril.ttl",
+        PERIL / "vocab" / "peril-vocab.ttl",
+        PERIL / "vocab" / "peril-intensity.ttl",
         MODULE / "examples" / "core.ttl",
+        MODULE / "examples" / "attributes.ttl",
     )
 
 
+SHAPE_PATHS = (
+    MODULE / "shapes" / "structural.ttl",
+    MODULE / "shapes" / "constraints.ttl",
+    MODULE / "shapes" / "profiles" / "construction-protection.ttl",
+    MODULE / "shapes" / "profiles" / "cyber-posture.ttl",
+)
+
+
 def _shapes() -> Graph:
-    return _graph(MODULE / "shapes" / "structural.ttl", MODULE / "shapes" / "constraints.ttl")
+    return _graph(*SHAPE_PATHS)
 
 
 SHAPES = _shapes()
@@ -80,7 +116,7 @@ def _cached_graphs(request: pytest.FixtureRequest, graph_cache, validated) -> No
     """TM1/TM2: shared, session-scoped shapes graph and validation cache
     (python-test-melting)."""
     module = request.module
-    module.SHAPES = graph_cache(MODULE / "shapes" / "structural.ttl", MODULE / "shapes" / "constraints.ttl")
+    module.SHAPES = graph_cache(*SHAPE_PATHS)
     module.validate = validated
 
 
@@ -103,10 +139,11 @@ def shapes_for(focus: URIRef, data: Graph) -> set[URIRef]:
     return {shape for _, shape, f in results(data) if f == focus}
 
 
-# ---- AIR41-01: spec/vocab import closures, peril/ not imported ---------------------------------
+# ---- AIR42-01: spec/vocab import closures, every import resolves (supersedes AIR41-01's ----
+# ---- "peril not imported" check, now obsolete: AIR-4.2 imports peril-vocab deliberately) -----
 
 
-def test_air41_01_spec_and_vocab_parse_peril_not_imported():
+def test_air42_01_spec_and_vocab_parse_every_import_resolves():
     spec = _spec()
     vocab = _vocab()
     spec_imports = {str(o) for o in spec.objects(None, OWL.imports)}
@@ -122,9 +159,10 @@ def test_air41_01_spec_and_vocab_parse_peril_not_imported():
         "https://www.nebularis.org/neuro-semantic/insurance/exposure/0.1.0",
         "https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0",
         "https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0",
-        "https://www.nebularis.org/neuro-semantic/insurance/common-vocab/0.5.0",
+        "https://www.nebularis.org/neuro-semantic/insurance/common-vocab/0.6.0",
+        "https://www.nebularis.org/neuro-semantic/insurance/peril-vocab/0.5.0",
+        "https://www.nebularis.org/neuro-semantic/lattice/applied/classification-vocab/0.2.0",
     }
-    assert not any("peril" in i for i in spec_imports | vocab_imports)
 
 
 # ---- AIR41-02: the seven contracts conform and are bound to their reference scheme --------------
@@ -149,7 +187,7 @@ def test_air41_02_seven_contracts_conform_and_bound():
         assert (contract, RDF.type, VOCB.SchemeContract) in data
         assert (contract, VOCB.boundScheme, scheme) in data
     schemes = set(data.subjects(RDF.type, VOC.ConceptScheme))
-    assert schemes == {
+    assert schemes >= {
         AEOV.GeoPrecisionScheme,
         AEOV.ControlKindScheme,
         AEOV.InterestKindScheme,
@@ -158,7 +196,7 @@ def test_air41_02_seven_contracts_conform_and_bound():
         AEOV.ValuationMethodScheme,
         AEOV.LegalFormScheme,
         AEOV.ProgrammeRoleScheme,
-    }
+    }, "AIR-4.1's eight schemes, now a subset of a larger vocabulary (AIR-4.2 adds many more)"
 
 
 # ---- AIR41-03: aeo:territory and aeo:assetClass specialise cls: properties ----------------------
@@ -308,3 +346,177 @@ def test_air41_14_lenders_loss_payee_broader_and_every_role_and_form_documented(
         notes = list(vocab.objects(node, SKOS.note))
         assert notes, node
         assert any(n.language == "en" for n in notes), node
+
+
+# ==== AIR-4.2: zones, pool participation, attributes, assessments ================================
+
+# ---- AIR42-02: this slice's bound contracts conform and are bound to their reference scheme ------
+
+
+def test_air42_02_bound_contracts_conform_and_bound():
+    data = _vocab()
+    conforms, _, report = validate(
+        data, shacl_graph=_graph(VOCAB_SHAPES / "structural.ttl", VOCAB_SHAPES / "constraints.ttl"),
+        advanced=True, inference="none", allow_warnings=True,
+    )
+    assert conforms, report
+    bound = {
+        AEOV.AttributeTypeContract: AEOV.AttributeTypeScheme,
+        AEOV.DesignationSourceContract: AEOV.DesignationSourceScheme,
+        AEOV.AssessmentKindContract: AEOV.AssessmentKindScheme,
+        AEOV.ProfileFamilyContract: AEOV.ProfileFamilyScheme,
+        AEOV.FrequencyScaleContract: AEOV.FrequencyScale,
+        AEOV.SusceptibilityContract: AEOV.SusceptibilityScale,
+        AEOV.SprinklerSystemContract: AEOV.SprinklerSystemScheme,
+        AEOV.MfaCoverageContract: AEOV.MfaCoverageScheme,
+        AEOV.BackupStrategyContract: AEOV.BackupStrategyScheme,
+        AEOV.SanctionsScreeningOutcomeContract: AEOV.SanctionsScreeningOutcomeScheme,
+    }
+    for contract, scheme in bound.items():
+        assert (contract, VOC.boundScheme, scheme) in data, contract
+    # Market-only contracts stay unbound at this stage (AIR-4.6 binds a scheme per market).
+    for unbound in (AEOV.ConstructionClassContract, AEOV.OccupancyClassContract, AEOV.PublicProtectionClassContract):
+        assert (unbound, VOC.boundScheme, None) not in data, unbound
+
+
+# ---- AIR42-03: every attribute type has a form, a family, and the space/contract/datatype it needs
+
+
+def test_air42_03_every_attribute_type_has_form_family_and_its_value_slot():
+    vocab = _vocab()
+    types = set(vocab.subjects(SKOS.inScheme, AEOV.AttributeTypeScheme))
+    assert types, "expected at least one attribute type"
+    for t in types:
+        form = vocab.value(t, AEO.valueForm)
+        assert form is not None, t
+        assert vocab.value(t, AEO.attributeFamily) is not None, t
+        if form == AEOV.QuantityForm:
+            assert vocab.value(t, AEO.valueSpace) is not None, t
+        elif form == AEOV.ConceptForm:
+            assert vocab.value(t, AEO.valueContract) is not None, t
+        elif form == AEOV.LiteralForm:
+            assert vocab.value(t, AEO.literalDatatype) is not None, t
+        else:
+            pytest.fail(f"{t} has an unrecognised value form {form}")
+
+
+# ---- AIR42-04: the example conforms, no result, no warning ---------------------------------------
+
+
+def test_air42_04_example_has_no_results():
+    assert results(_fixture()) == []
+
+
+# ---- AIR42-05: an attribute value with both a concept and a quantity -----------------------------
+
+
+def test_air42_05_attribute_value_with_concept_and_quantity_is_rejected():
+    data = _fixture()
+    data.add(
+        (
+            EX["warehouse-construction-class"],
+            AEO.quantityValue,
+            data.value(EX["warehouse-storeys"], AEO.quantityValue),
+        )
+    )
+    assert ATTRIBUTE_VALUE in shapes_for(EX["warehouse-construction-class"], data)
+
+
+# ---- AIR42-06: FirstFloorHeight with a quantity on the wrong space --------------------------------
+
+
+def test_air42_06_first_floor_height_on_count_space_is_rejected():
+    data = _fixture()
+    qv = data.value(EX["warehouse-first-floor-height"], AEO.quantityValue)
+    data.remove((qv, QNT.onSpace, None))
+    data.add((qv, QNT.onSpace, AEOV.Count))
+    assert ATTRIBUTE_VALUE in shapes_for(EX["warehouse-first-floor-height"], data)
+
+
+# ---- AIR42-07: a zone designation whose zone is in a scheme bound only for another territory -------
+
+
+def test_air42_07_zone_in_scheme_bound_for_another_territory_is_rejected():
+    data = _fixture()
+    other_scheme = EX["other-territory-flood-scheme"]
+    data.add((other_scheme, RDF.type, VOC.ConceptScheme))
+    data.add((AEOV.FloodZoneContract, VOC.boundScheme, other_scheme))
+    assert ZONE_IN_TERRITORY in shapes_for(EX["warehouse-flood-zone"], data)
+
+
+# ---- AIR42-08: the example without its first-floor height ------------------------------------------
+
+
+def test_air42_08_example_without_first_floor_height_warns_once_for_flood():
+    data = _fixture()
+    data.remove((EX["warehouse-survey"], AEO.hasAttribute, EX["warehouse-first-floor-height"]))
+    data.remove((EX["warehouse-first-floor-height"], None, None))
+    found = [(sev, shape, focus) for sev, shape, focus in results(data) if shape == PERIL_COMPLETENESS]
+    assert len(found) == 1, found
+    assert found[0][2] == EX.warehouse
+
+
+# ---- AIR42-09: the example with the flood location at Postcode precision --------------------------
+
+
+def test_air42_09_flood_location_at_postcode_precision_warns_once():
+    data = _fixture()
+    data.remove((EX.warehouse, AEO.geoPrecision, None))
+    data.add((EX.warehouse, AEO.geoPrecision, AEOV.Postcode))
+    found = [(sev, shape, focus) for sev, shape, focus in results(data) if shape == GEO_PRECISION_FOR_PERIL]
+    assert len(found) == 1, found
+
+
+# ---- AIR42-10: a sanctions outcome in a questionnaire, not a screening run -------------------------
+
+
+def test_air42_10_sanctions_outcome_outside_screening_run_is_rejected():
+    data = _fixture()
+    av = EX["acme-sanctions-outcome"]
+    data.add((av, RDF.type, AEO.AttributeValue))
+    data.add((av, AEO.attributeType, AEOV.SanctionsScreeningOutcome))
+    data.add((av, AEO.conceptValue, AEOV.NoMatch))
+    data.add((EX["acme-cyber-questionnaire"], AEO.hasAttribute, av))
+    assert SCREENING in shapes_for(EX["acme-cyber-questionnaire"], data)
+
+
+# ---- AIR42-11: a cyber posture assessment without MfaCoverage --------------------------------------
+
+
+def test_air42_11_cyber_posture_assessment_without_mfa_coverage_is_rejected():
+    data = _fixture()
+    data.remove((EX["acme-cyber-questionnaire"], AEO.hasAttribute, EX["acme-mfa-coverage"]))
+    data.remove((EX["acme-mfa-coverage"], None, None))
+    assert CYBER_POSTURE_PROFILE in shapes_for(EX["acme-cyber-questionnaire"], data)
+
+
+# ---- AIR42-12: a link stated on N.HYD.FLD is read over a location exposed to N.HYD.FLD.PLU ----------
+
+
+def test_air42_12_completeness_shape_reads_a_link_stated_on_a_broader_cause():
+    data = _fixture()
+    data.add((EX.unassessed, RDF.type, AEO.Location))
+    data.add((EX["unassessed-identity"], RDF.type, AEO.LocationIdentity))
+    data.add((EX["unassessed-identity"], RDF.type, FND.PersistentIdentity))
+    data.add((EX.unassessed, FND.hasIdentity, EX["unassessed-identity"]))
+    data.add((EX.unassessed, AEO.territory, EX["great-britain"]))
+    pp = EX["unassessed-flood-pool"]
+    data.add((pp, RDF.type, AEO.PoolParticipation))
+    data.add((EX.unassessed, AEO.poolParticipation, pp))
+    scope = BNode()
+    data.add((scope, RDF.type, FND.TemporalScope))
+    data.add((scope, FND.validFrom, Literal("2027-01-01T00:00:00Z", datatype=XSD.dateTime)))
+    data.add((pp, FND.hasTemporalScope, scope))
+    data.add((pp, AEO.pool, EX["flood-reinsurance-pool"]))
+    data.add((pp, AEO.perilScope, PRLV["N.HYD.FLD.PLU"]))
+    found = [(sev, shape, focus) for sev, shape, focus in results(data) if shape == PERIL_COMPLETENESS]
+    assert any(focus == EX.unassessed for _, _, focus in found), found
+
+
+# ---- AIR42-13: every concept of this slice has a note ----------------------------------------------
+
+
+def test_air42_13_documentation_shape_has_no_results():
+    found = [shape for _, shape, _ in results(_fixture()) if shape == DOCUMENTATION]
+    assert found == []
+

@@ -6,6 +6,7 @@
 @prefix pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#> .
 @prefix cls:  <https://www.nebularis.org/neuro-semantic/lattice/applied/classification#> .
 @prefix icm:  <https://www.nebularis.org/neuro-semantic/insurance/common#> .
+@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix owl:  <http://www.w3.org/2002/07/owl#> .
 @prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
@@ -336,8 +337,214 @@ aeo:horizon a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:comment "The period a rate valuation's figure runs over." ;
     fnd:utility "Subject: a rate valuation. Value: a qnt:Quantity (a duration). Required alongside aeo:rate." .
 
+#################################################################
+#    Zones and pool participation (AIR-4.2, sketch §5.4)
+#################################################################
+
+aeo:ZoneDesignation a owl:Class ;
+    rdfs:subClassOf fnd:Evidenced , fnd:TemporallyScoped ,
+        [ a owl:Restriction ; owl:onProperty aeo:zone ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:designationSource ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
+    rdfs:label "Zone designation"@en ;
+    rdfs:comment "A location's placement in one hazard zone, from one map or source, for the period the map is in effect." ;
+    fnd:utility "Subject: a zone designation. The temporal scope is the map's own effective period, not the assessment that read it. Exactly one zone (through one of aeo:floodZone, aeo:seismicZone, aeo:windZone, aeo:wildfireZone, aeo:tsunamiZone, aeo:accumulationZone) and one designation source." .
+
+aeo:zoneDesignation a owl:ObjectProperty, owl:InverseFunctionalProperty ;
+    rdfs:domain aeo:Location ; rdfs:range aeo:ZoneDesignation ;
+    rdfs:label "zone designation"@en ;
+    rdfs:comment "A zone designation belonging to this location." ;
+    fnd:utility "Subject: a location. Value: one of its zone designations. Inverse functional: a zone designation belongs to one location." .
+
+aeo:zone a owl:ObjectProperty ;
+    rdfs:domain aeo:ZoneDesignation ; rdfs:range skos:Concept ;
+    rdfs:label "zone"@en ;
+    rdfs:comment "The zone concept a designation places a location in." ;
+    fnd:utility "Not used directly: state one of its six hazard-kind sub-properties instead (aeo:floodZone and the rest), each constrained by its own scheme contract, so a shape can require the right kind of zone for the right hazard." .
+
+aeo:floodZone a owl:ObjectProperty ;
+    rdfs:subPropertyOf aeo:zone ;
+    rdfs:label "flood zone"@en ;
+    rdfs:comment "A location's flood zone, from a flood map." ;
+    fnd:utility "Subject: a zone designation. Value: a concept bound by aeo-voc:FloodZoneContract." .
+
+aeo:seismicZone a owl:ObjectProperty ;
+    rdfs:subPropertyOf aeo:zone ;
+    rdfs:label "seismic zone"@en ;
+    rdfs:comment "A location's seismic zone, from a seismic hazard map." ;
+    fnd:utility "Subject: a zone designation. Value: a concept bound by aeo-voc:SeismicZoneContract." .
+
+aeo:windZone a owl:ObjectProperty ;
+    rdfs:subPropertyOf aeo:zone ;
+    rdfs:label "wind zone"@en ;
+    rdfs:comment "A location's wind zone, from a wind hazard map." ;
+    fnd:utility "Subject: a zone designation. Value: a concept bound by aeo-voc:WindZoneContract." .
+
+aeo:wildfireZone a owl:ObjectProperty ;
+    rdfs:subPropertyOf aeo:zone ;
+    rdfs:label "wildfire zone"@en ;
+    rdfs:comment "A location's wildfire zone, from a wildfire hazard map." ;
+    fnd:utility "Subject: a zone designation. Value: a concept bound by aeo-voc:WildfireZoneContract." .
+
+aeo:tsunamiZone a owl:ObjectProperty ;
+    rdfs:subPropertyOf aeo:zone ;
+    rdfs:label "tsunami zone"@en ;
+    rdfs:comment "A location's tsunami zone, from a tsunami inundation map." ;
+    fnd:utility "Subject: a zone designation. Value: a concept bound by aeo-voc:TsunamiZoneContract." .
+
+aeo:accumulationZone a owl:ObjectProperty ;
+    rdfs:subPropertyOf aeo:zone ;
+    rdfs:label "accumulation zone"@en ;
+    rdfs:comment "A location's accumulation control zone, from an aggregation management map." ;
+    fnd:utility "Subject: a zone designation. Value: a concept bound by aeo-voc:AccumulationZoneContract." .
+
+aeo:designationSource a owl:ObjectProperty ;
+    rdfs:domain aeo:ZoneDesignation ; rdfs:range skos:Concept ;
+    rdfs:label "designation source"@en ;
+    rdfs:comment "How a zone designation was obtained (a published map, a spatial join, a survey, a declaration)." ;
+    fnd:utility "Subject: a zone designation. Value: a concept bound by aeo-voc:DesignationSourceContract. Exactly one. A designation whose source is aeo-voc:SpatialJoin is a fnd:DerivedArtefact (the spatial-join shape)." .
+
+aeo:PoolParticipation a owl:Class ;
+    rdfs:subClassOf fnd:Evidenced , fnd:TemporallyScoped ,
+        [ a owl:Restriction ; owl:onProperty aeo:pool ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:perilScope ; owl:minCardinality "1"^^xsd:nonNegativeInteger ] ;
+    rdfs:label "Pool participation"@en ;
+    rdfs:comment "A location's participation in a peril pool, for the perils the pool covers at this location." ;
+    fnd:utility "Subject: a pool participation. Exactly one pool, at least one peril scope." .
+
+aeo:poolParticipation a owl:ObjectProperty, owl:InverseFunctionalProperty ;
+    rdfs:domain aeo:Location ; rdfs:range aeo:PoolParticipation ;
+    rdfs:label "pool participation"@en ;
+    rdfs:comment "A pool participation belonging to this location." ;
+    fnd:utility "Subject: a location. Value: one of its pool participations. Inverse functional: a pool participation belongs to one location." .
+
+aeo:pool a owl:ObjectProperty ;
+    rdfs:subPropertyOf icm:pool ;
+    rdfs:domain aeo:PoolParticipation ; rdfs:range skos:Concept ;
+    rdfs:label "pool"@en ;
+    rdfs:comment "The peril pool a location participates in." ;
+    fnd:utility "Subject: a pool participation. Value: a pool concept, bound under insurance/common's pool contract. Exactly one. Specialises icm:pool." .
+
+aeo:perilScope a owl:ObjectProperty ;
+    rdfs:subPropertyOf icm:peril ;
+    rdfs:domain aeo:PoolParticipation ; rdfs:range skos:Concept ;
+    rdfs:label "peril scope"@en ;
+    rdfs:comment "A peril this pool participation covers at this location." ;
+    fnd:utility "Subject: a pool participation. Value: a cause concept, bound under insurance/common's peril contract. Not functional: several perils may be named. Specialises icm:peril. Reused by peril metrics (AIR-4.3) and existing cover (AIR-4.4) for the same purpose: naming which perils a scope is about." .
+
+#################################################################
+#    Assessments and attribute values (AIR-4.2, sketch §5.7, §5.8)
+#################################################################
+
+aeo:Assessment a owl:Class ;
+    rdfs:subClassOf fnd:Evidenced , fnd:TemporallyScoped ,
+        [ a owl:Restriction ; owl:onProperty aeo:assesses ; owl:minCardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:assessmentKind ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+        [ a owl:Restriction ; owl:onProperty aeo:hasAttribute ; owl:minCardinality "1"^^xsd:nonNegativeInteger ] ;
+    rdfs:label "Assessment"@en ;
+    rdfs:comment "An account of one or more attribute values for a subject, obtained by a stated means at a stated time." ;
+    fnd:utility "Subject: an assessment. At least one subject (aeo:assesses), exactly one kind, at least one attribute value, a temporal scope (when the account holds), and the evidence a fnd:Evidenced node always carries (who or what supplied it). aeo:profileFamily names which question family it answers, independent of its kind: a questionnaire or a survey may answer several families." .
+
+aeo:hasAssessment a owl:ObjectProperty, owl:InverseFunctionalProperty ;
+    rdfs:domain aeo:ExposureSet ; rdfs:range aeo:Assessment ;
+    rdfs:label "has assessment"@en ;
+    rdfs:comment "An assessment belonging to this exposure set version." ;
+    fnd:utility "Subject: an exposure set. Value: one of its assessments. Inverse functional, for the same reason as aeo:hasLocation." .
+
+aeo:assesses a owl:ObjectProperty ;
+    rdfs:domain aeo:Assessment ;
+    rdfs:label "assesses"@en ;
+    rdfs:comment "The asset, location, legal entity or exposure set this assessment is about." ;
+    fnd:utility "Subject: an assessment. Value: an aeo:Asset, aeo:Location, aeo:LegalEntity or aeo:ExposureSet. At least one." .
+
+aeo:assessmentKind a owl:ObjectProperty ;
+    rdfs:domain aeo:Assessment ; rdfs:range skos:Concept ;
+    rdfs:label "assessment kind"@en ;
+    rdfs:comment "How the assessment was obtained (a survey report, a schedule row, a questionnaire, an inspection, a desktop review, an enrichment or a geocoder or screening run)." ;
+    fnd:utility "Subject: an assessment. Value: a concept bound by aeo-voc:AssessmentKindContract. Exactly one." .
+
+aeo:profileFamily a owl:ObjectProperty ;
+    rdfs:domain aeo:Assessment ; rdfs:range skos:Concept ;
+    rdfs:label "profile family"@en ;
+    rdfs:comment "Which family of questions this assessment answers (construction and protection, cyber posture, and others)." ;
+    fnd:utility "Subject: an assessment. Value: a concept bound by aeo-voc:ProfileFamilyContract. Zero or more: a questionnaire or a survey may answer several families at once. A family's own shape (shapes/profiles/) is selected by this property." .
+
+aeo:AttributeValue a owl:Class ;
+    rdfs:subClassOf
+        [ a owl:Restriction ; owl:onProperty aeo:attributeType ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
+    rdfs:label "Attribute value"@en ;
+    rdfs:comment "One value of one attribute type, held in a concept, a quantity or a literal, whichever form the type declares." ;
+    fnd:utility "Subject: an attribute value. Exactly one attribute type, and exactly one of aeo:conceptValue, aeo:quantityValue or aeo:literalValue, whichever aeo:valueForm the type names (the attribute-value shape)." .
+
+aeo:hasAttribute a owl:ObjectProperty, owl:InverseFunctionalProperty ;
+    rdfs:domain aeo:Assessment ; rdfs:range aeo:AttributeValue ;
+    rdfs:label "has attribute"@en ;
+    rdfs:comment "An attribute value belonging to this assessment." ;
+    fnd:utility "Subject: an assessment. Value: one of its attribute values. Inverse functional: an attribute value belongs to one assessment." .
+
+aeo:attributeType a owl:ObjectProperty ;
+    rdfs:domain aeo:AttributeValue ; rdfs:range skos:Concept ;
+    rdfs:label "attribute type"@en ;
+    rdfs:comment "Which attribute this value is a value of." ;
+    fnd:utility "Subject: an attribute value. Value: a concept bound by aeo-voc:AttributeTypeContract. Exactly one." .
+
+aeo:conceptValue a owl:ObjectProperty ;
+    rdfs:domain aeo:AttributeValue ; rdfs:range skos:Concept ;
+    rdfs:label "concept value"@en ;
+    rdfs:comment "An attribute value's value, where its type's form is concept-valued." ;
+    fnd:utility "Subject: an attribute value whose type's aeo:valueForm is aeo-voc:ConceptForm. Value: a concept in the scheme the type's aeo:valueContract binds." .
+
+aeo:quantityValue a owl:ObjectProperty ;
+    rdfs:domain aeo:AttributeValue ; rdfs:range qnt:Quantity ;
+    rdfs:label "quantity value"@en ;
+    rdfs:comment "An attribute value's value, where its type's form is quantity-valued." ;
+    fnd:utility "Subject: an attribute value whose type's aeo:valueForm is aeo-voc:QuantityForm. Value: a qnt:Quantity on the type's aeo:valueSpace." .
+
+aeo:literalValue a owl:DatatypeProperty ;
+    rdfs:domain aeo:AttributeValue ;
+    rdfs:label "literal value"@en ;
+    rdfs:comment "An attribute value's value, where its type's form is literal-valued." ;
+    fnd:utility "Subject: an attribute value whose type's aeo:valueForm is aeo-voc:LiteralForm. Value: a literal of the type's aeo:literalDatatype." .
+
+aeo:valueForm a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain skos:Concept ; rdfs:range skos:Concept ;
+    rdfs:label "value form"@en ;
+    rdfs:comment "Which of concept, quantity or literal an attribute type's values take." ;
+    fnd:utility "Subject: an attribute type concept. Value: one of aeo-voc:ConceptForm, aeo-voc:QuantityForm, aeo-voc:LiteralForm. Exactly one." .
+
+aeo:valueSpace a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain skos:Concept ; rdfs:range qnt:ValueSpace ;
+    rdfs:label "value space"@en ;
+    rdfs:comment "The value space a quantity-valued attribute type's quantities are on." ;
+    fnd:utility "Subject: an attribute type concept whose aeo:valueForm is aeo-voc:QuantityForm. Value: the qnt:ValueSpace. Exactly one." .
+
+aeo:valueContract a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain skos:Concept ; rdfs:range voc:SchemeContract ;
+    rdfs:label "value contract"@en ;
+    rdfs:comment "The scheme contract a concept-valued attribute type's values are drawn under." ;
+    fnd:utility "Subject: an attribute type concept whose aeo:valueForm is aeo-voc:ConceptForm. Value: the voc:SchemeContract. Exactly one." .
+
+aeo:literalDatatype a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain skos:Concept ;
+    rdfs:label "literal datatype"@en ;
+    rdfs:comment "The XSD datatype a literal-valued attribute type's values take." ;
+    fnd:utility "Subject: an attribute type concept whose aeo:valueForm is aeo-voc:LiteralForm. Value: an XSD datatype IRI (xsd:boolean, xsd:gYear, xsd:date, xsd:string). Exactly one." .
+
+aeo:attributeFamily a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain skos:Concept ; rdfs:range skos:Concept ;
+    rdfs:label "attribute family"@en ;
+    rdfs:comment "Which family an attribute type belongs to (construction, occupancy, protection, external exposure, geocoding quality, equipment, corporate, or one of the eight profile families)." ;
+    fnd:utility "Subject: an attribute type concept. Value: a concept of aeo-voc:AttributeFamilyScheme. Exactly one. Read by the profile shapes (shapes/profiles/) to flag a type outside the family a profile expects." .
+
+aeo:multiValued a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain skos:Concept ; rdfs:range xsd:boolean ;
+    rdfs:label "multi-valued"@en ;
+    rdfs:comment "Whether one assessment may hold several values of this attribute type." ;
+    fnd:utility "Subject: an attribute type concept. Value: true when several values are allowed per assessment (for example aeo-voc:PhysicalSecurity, aeo-voc:BackupStrategy, aeo-voc:CertifiedFramework), false or absent otherwise (the single-valued-types shape)." .
+
 [] a owl:AllDisjointClasses ;
     owl:members ( aeo:ExposureSet aeo:Location aeo:Asset aeo:Interest aeo:Valuation
-                  aeo:ControlRelation aeo:Presence aeo:Address ) .
+                  aeo:ControlRelation aeo:Presence aeo:Address
+                  aeo:ZoneDesignation aeo:PoolParticipation aeo:Assessment aeo:AttributeValue ) .
 aeo:LegalEntity owl:disjointWith aeo:ExposureSet , aeo:Location , aeo:Asset , aeo:Interest ,
-    aeo:Valuation , aeo:ControlRelation , aeo:Presence , aeo:Address .
+    aeo:Valuation , aeo:ControlRelation , aeo:Presence , aeo:Address ,
+    aeo:ZoneDesignation , aeo:PoolParticipation , aeo:Assessment , aeo:AttributeValue .
