@@ -694,7 +694,7 @@ that code and documents agree with it. Shares work with `python-test-melting` (s
 
 | Field | Value |
 |-------|-------|
-| **Status** | 🟡 Planned 2026-10-14, branch `tutorial/guide`. Every question answered. TUT-0 (skeleton and excerpt check) verified on Windows, awaiting commit |
+| **Status** | 🟡 Planned 2026-10-14, branch `tutorial/guide`. Every question answered. TUT-0 committed `2c99ead`. TUT-1 (chapters 0 to 3) written, awaiting review |
 | **Unit ID** | `lattice-tutorial` |
 | **Plan** | [lattice-tutorial.md](plans/lattice-tutorial.md) |
 | **Status Record** | [lattice-tutorial.md](status/lattice-tutorial.md) |

@@ -3,7 +3,7 @@
 # The LATTICE tutorial - Status
 
 **Unit ID:** `lattice-tutorial`
-**Status:** 🟢 TUT-0 verified on Windows 2026-10-14. Awaiting the maintainer's commit
+**Status:** 🔨 In progress. TUT-0 committed (`2c99ead`). TUT-1 written and checked, awaiting the maintainer's reading
 **Last updated:** 2026-10-14
 **Plan:** [lattice-tutorial.md](../plans/lattice-tutorial.md)
 **Branch:** `tutorial/guide`, local, created from `main` 2026-10-14. The maintainer pushes it
@@ -11,12 +11,15 @@
 ## Current position
 
 Every question is answered (TUT-D1 to TUT-D5, TUT-Q1 to TUT-Q4, plan §2 and §8). TUT-0, the
-skeleton, is built on `tutorial/guide` and verified on Windows (its Validation Pack, Results). It holds the page, its layout, 14 placeholder
+skeleton, is committed on `tutorial/guide` (`2c99ead`), verified on Windows (its Validation Pack, Results). It holds the page, its layout, 14 placeholder
 chapters, the home page links, and `check:tutorial-snippets` with its tests, wired into `check`.
 Its [Validation Pack](../validation/TUT-0.md) lists the one command and the preview steps.
 
-**Next action, for the maintainer:** review the TUT-0 Validation Pack results, optionally run its checks on
-macOS or Linux, then commit TUT-0. TUT-1, chapters 0 to 3, follows.
+TUT-1, chapters 0 to 3, is written, and its [Validation Pack](../validation/TUT-1.md) results are in.
+
+**Next action, for the maintainer:** read chapters 0 to 3 as the intended reader (TUT1-05), since
+they set the voice and depth for TUT-2 to TUT-4, then commit TUT-1. Before pushing, add the AI
+disclosure trailer GENAI_CONTRIBUTION.md requires to `2c99ead` and to the TUT-1 commit.
 
 ## History
 
@@ -37,3 +40,8 @@ macOS or Linux, then commit TUT-0. TUT-1, chapters 0 to 3, follows.
   covering a chapter heading after a contents link. `docs/Gemfile.lock` gained the Windows
   platform. One existing `check:agent-guidance` test fails on Windows without Developer Mode,
   unrelated to this unit and flagged as separate work.
+- 2026-10-14: the maintainer committed TUT-0 as `2c99ead`, not yet pushed. The commit has no
+  `Generated-by` and `AI-Content` trailer yet.
+- 2026-10-14: TUT-1 written, chapters 0 to 3. `check:tutorial-snippets` caught one excerpt that did
+  not match its source, now corrected. The Mermaid diagram, the Turtle highlighting and the 375 px
+  layout checked in a served preview. Awaiting the maintainer's reading.
