@@ -3,8 +3,8 @@
 # The LATTICE tutorial - Status
 
 **Unit ID:** `lattice-tutorial`
-**Status:** 🔨 In progress. TUT-0 and TUT-1 committed. TUT-2 written and checked, awaiting the maintainer's reading
-**Last updated:** 2026-10-15
+**Status:** 🔨 In progress. TUT-0 to TUT-2 committed. TUT-3 written and checked, awaiting the maintainer's reading
+**Last updated:** 2026-10-16
 **Plan:** [lattice-tutorial.md](../plans/lattice-tutorial.md)
 **Branch:** `tutorial/guide`, local, created from `main` 2026-10-14. The maintainer pushes it
 
@@ -15,12 +15,12 @@ skeleton, is committed on `tutorial/guide` (`2c99ead`), verified on Windows (its
 chapters, the home page links, and `check:tutorial-snippets` with its tests, wired into `check`.
 Its [Validation Pack](../validation/TUT-0.md) lists the one command and the preview steps.
 
-TUT-1, chapters 0 to 3, is committed (`834d9e4`). TUT-2, chapters 4 to 6, is written, and its
-[Validation Pack](../validation/TUT-2.md) results are in.
+TUT-1 (chapters 0 to 3) is committed as `834d9e4`, and TUT-2 (chapters 4 to 6) as `fe608d7`. TUT-3,
+chapters 7 to 9, is written, and its [Validation Pack](../validation/TUT-3.md) results are in.
 
-**Next action, for the maintainer:** read chapters 4 to 6 (TUT2-04), then commit TUT-2. Before
-pushing, add the AI disclosure trailer GENAI_CONTRIBUTION.md requires to `2c99ead`, `834d9e4` and
-the TUT-2 commit.
+**Next action, for the maintainer:** read chapters 7 to 9 (TUT3-04), then commit TUT-3. Before
+pushing, add the AI disclosure trailer GENAI_CONTRIBUTION.md requires to `2c99ead`, `834d9e4`,
+`fe608d7` and the TUT-3 commit.
 
 ## History
 
@@ -49,3 +49,6 @@ the TUT-2 commit.
 - 2026-10-15: the maintainer committed TUT-1 as `834d9e4`, without the disclosure trailer. TUT-2
   written, chapters 4 to 6. Every excerpt matched on the first run. The diagrams, highlighting and
   375 px layout checked in a served preview.
+- 2026-10-16: the maintainer committed TUT-2 as `fe608d7`, without the disclosure trailer. TUT-3
+  written, chapters 7 to 9. Every excerpt matched on the first run. The state diagram failed to
+  render because `default` is reserved in Mermaid, fixed by renaming the state.
