@@ -3,7 +3,7 @@
 # The LATTICE tutorial - Status
 
 **Unit ID:** `lattice-tutorial`
-**Status:** 🔨 In progress. TUT-0 to TUT-2 committed. TUT-3 written and checked, awaiting the maintainer's reading
+**Status:** 🟡 All four chapter slices written. TUT-0 to TUT-3 committed, TUT-4 awaiting the maintainer's reading and the unit's acceptance
 **Last updated:** 2026-10-16
 **Plan:** [lattice-tutorial.md](../plans/lattice-tutorial.md)
 **Branch:** `tutorial/guide`, local, created from `main` 2026-10-14. The maintainer pushes it
@@ -15,12 +15,15 @@ skeleton, is committed on `tutorial/guide` (`2c99ead`), verified on Windows (its
 chapters, the home page links, and `check:tutorial-snippets` with its tests, wired into `check`.
 Its [Validation Pack](../validation/TUT-0.md) lists the one command and the preview steps.
 
-TUT-1 (chapters 0 to 3) is committed as `834d9e4`, and TUT-2 (chapters 4 to 6) as `fe608d7`. TUT-3,
-chapters 7 to 9, is written, and its [Validation Pack](../validation/TUT-3.md) results are in.
+TUT-1 (chapters 0 to 3) is committed as `834d9e4`, TUT-2 (chapters 4 to 6) as `fe608d7`, and TUT-3
+(chapters 7 to 9) as `1f9a171`. TUT-4, chapters 10 to 13, is written, and its
+[Validation Pack](../validation/TUT-4.md) results are in. The page has no placeholder chapter left.
 
-**Next action, for the maintainer:** read chapters 7 to 9 (TUT3-04), then commit TUT-3. Before
-pushing, add the AI disclosure trailer GENAI_CONTRIBUTION.md requires to `2c99ead`, `834d9e4`,
-`fe608d7` and the TUT-3 commit.
+**Next action, for the maintainer:** read chapters 10 to 13 and the tutorial end to end (TUT4-05,
+the unit's acceptance criterion 5), then commit TUT-4. Before pushing, add the AI disclosure
+trailer GENAI_CONTRIBUTION.md requires to `2c99ead`, `834d9e4`, `fe608d7`, `1f9a171` and the TUT-4
+commit. The tutorial is published when the branch is merged into `main`, whose `docs/` GitHub Pages
+builds.
 
 ## History
 
@@ -52,3 +55,6 @@ pushing, add the AI disclosure trailer GENAI_CONTRIBUTION.md requires to `2c99ea
 - 2026-10-16: the maintainer committed TUT-2 as `fe608d7`, without the disclosure trailer. TUT-3
   written, chapters 7 to 9. Every excerpt matched on the first run. The state diagram failed to
   render because `default` is reserved in Mermaid, fixed by renaming the state.
+- 2026-10-16: the maintainer committed TUT-3 as `1f9a171`, without the disclosure trailer. TUT-4
+  written, chapters 10 to 13. Every excerpt matched on the first run. Chapter 3's Governance row
+  corrected, since `ontology/governance/` holds only an empty README.

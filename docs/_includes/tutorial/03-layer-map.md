@@ -57,7 +57,7 @@ Some parts of LATTICE are not layers that your data lives in. They work on the l
 | **Persistence** | declares which storage pattern each class uses, such as how concurrent writes and uniqueness are handled, and compiles that choice to SPARQL. It imports no layer and no layer imports it. It refers to classes by IRI | 11 |
 | **Surface** | restates values reachable along a path as direct statements, so common questions need no long traversal | 11 |
 | **MORK** | maps source material, such as schemas, records and free text, onto a target ontology, and compiles mappings and conditions to SPARQL, SHACL and other forms | 13 |
-| **Governance** | runs checks across all layers together, such as whether reference data meets its declared contracts | 13 |
+| **Governance** | the planned home for checks across all layers together, such as whether reference data meets its declared contracts. Its folder holds no content yet | 13 |
 | **SPC** | a formal model of the exchanges between agents. Developed separately and not yet joined to the layers | 13 |
 
 ### Inside a layer
