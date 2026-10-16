@@ -58,5 +58,5 @@ finding names the file, the line and the pattern's line number in the list, neve
 
 ## When something slipped through
 
-Remove it in a new commit, and tell the human. Rewriting published history is the human's decision,
+Remove it in a new commit, and tell the maintainer. Rewriting published history is the maintainer's decision,
 never the agent's.

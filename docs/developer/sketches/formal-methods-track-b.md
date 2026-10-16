@@ -93,14 +93,14 @@ not more.
 ## 4. B3: a property test for Surface (MORK and MCN deferred)
 
 Three items are named in the epic plan's B3 row (`formal-methods.md` §4, sketch §8.8). This phase
-builds only the first, by the human's own call (2026-10-07): MORK's lattice-law claim has always
+builds only the first, by our own call (2026-10-07): MORK's lattice-law claim has always
 been the least certain of the three, worth confirming properly in its own slice later rather than
 carried along here on the strength of a plausible-looking docstring:
 
 | Item | This phase? | Why |
 |---|---|---|
 | regeneration as naturality (ADR-A27) | **yes** | `tools/surface/src/surface/invalidation.py` already implements `RegenerationPlan` and minimal-scope planning; `test_regeneration_is_deterministic` already exists. The property itself — regenerating after a change equals applying the change's image to the old output — is not yet stated as a property test (only as example tests), which is exactly B3's job. ADR-A27 itself already requires this: "Fixture tests are required to demonstrate minimal-scope regeneration before this policy is considered discharged, not merely stated" |
-| MORK's lattice laws (the intent graph is a join-semilattice; co-occurrence axioms reject exactly the incomplete mappings) | **no, deferred by the human's own call** | a questionable claim as it stands — `IntentNodeSpec.refines` (`tools/mork/src/mork_schemas.py`) and `mork_validation.py`'s co-occurrence checks exist, but whether the refinement relation actually forms a join-semilattice has not been confirmed against the code, and is not this phase's job to find out. Left for a later slice to state and check properly, not carried here on an assumption |
+| MORK's lattice laws (the intent graph is a join-semilattice; co-occurrence axioms reject exactly the incomplete mappings) | **no, deferred by our own call** | a questionable claim as it stands — `IntentNodeSpec.refines` (`tools/mork/src/mork_schemas.py`) and `mork_validation.py`'s co-occurrence checks exist, but whether the refinement relation actually forms a join-semilattice has not been confirmed against the code, and is not this phase's job to find out. Left for a later slice to state and check properly, not carried here on an assumption |
 | MCN's round trip through RDFC-1.0 (decode after encode is the identity up to graph isomorphism) | **no, found blocked** | `tools/mork/src/mtp/mcnio.py`'s `NullTool.encode()` returns `None` — there is no RDF-to-MCN encoder anywhere in the repository today (confirmed also by `docs/developer/sketches/mtp-implementation-plan.md`: "MCN encoder (spec §15, RDF → MCN) | **Not built**"). A round-trip property needs both directions |
 
 B3 therefore covers only the Surface item this phase. MORK's lattice laws and MCN's round trip
@@ -161,5 +161,5 @@ Mechanising B1 or B3's properties in Isabelle (track E's job, later, where it pr
 `tools/mork_compilers`, `tools/surface` or `tools/mork`'s own production code to make a property
 hold — B2 and B3 find disagreements and report them; fixing what they find is the owning tool's
 own slice, not this track's. Building an MCN encoder (§4) — named as a gap, not undertaken here.
-Stating or checking MORK's join-semilattice claim (§4) — deferred by the human's own call, a
+Stating or checking MORK's join-semilattice claim (§4) — deferred by our own call, a
 later slice's job, not assumed true here.

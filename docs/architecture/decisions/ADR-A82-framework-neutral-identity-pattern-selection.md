@@ -6,7 +6,7 @@
 **Date:** 2026-09-23
 **Supersedes:** [ADR-A51](ADR-A51-iri-and-identity-policy.md)
 **Related:** [IRI and Identity Patterns](../iri-identity-patterns.md), [RDF & SPARQL Patterns Guide](../rdf-sparql-patterns-guide.md), ADR-A54, ADR-A63, ADR-A68, ADR-A78
-**Drafted by:** Agent following human architectural direction. Pending human ratification, see [phase-0-status.md](../../developer/status/phase-0-status.md).
+**Drafted:** following our architectural direction. Pending ratification, see [phase-0-status.md](../../developer/status/phase-0-status.md).
 **Amended:** 2026-09-23, point 5, before ratification (see "Amendment", below).
 
 ## Context
@@ -35,5 +35,5 @@ The persistence substrate already models independently selectable aggregate, con
 
 ## Amendment (2026-09-23, before ratification)
 
-Point 5 originally read "compiles them to minting, validation, conformance fixtures, and runtime requirements", which left open whether the compiler itself mints. It cannot at design time: minting needs a request's values, the claim secret and randomness, none of which exist when the compiler runs, and none of which SPARQL can provide. The amended wording splits minting three ways, as agreed with the human while scoping the `identity-minting` unit: the compiler produces **recipes** and **conformance vectors**, and **execution** happens at runtime, through the standalone libraries or an adopter's own implementation checked against the vectors.
+Point 5 originally read "compiles them to minting, validation, conformance fixtures, and runtime requirements", which left open whether the compiler itself mints. It cannot at design time: minting needs a request's values, the claim secret and randomness, none of which exist when the compiler runs, and none of which SPARQL can provide. The amended wording splits minting three ways, as agreed while scoping the `identity-minting` unit: the compiler produces **recipes** and **conformance vectors**, and **execution** happens at runtime, through the standalone libraries or an adopter's own implementation checked against the vectors.
 

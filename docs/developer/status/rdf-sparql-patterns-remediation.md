@@ -4,14 +4,14 @@
 
 **Unit ID:** `rdf-sparql-patterns-remediation`
 **State:** ✅ Complete and closed. Executed on 2026-09-23. Several of its fixes were later found incomplete or wrong by a further review and corrected by [`iri-patterns-post-3866b21-remediation`](iri-patterns-post-3866b21-remediation.md) (see "Later corrections", below). All three deferred items are now dispositioned (see Deferred, below). Nothing further is owed by this unit.
-**Plan:** [rdf-sparql-patterns-remediation.md](../plans/rdf-sparql-patterns-remediation.md) — superseded in execution by [docs/developer/review/IRI-patterns-remediation.md](../review/IRI-patterns-remediation.md), which the human designated authoritative when comparing it against this plan
+**Plan:** [rdf-sparql-patterns-remediation.md](../plans/rdf-sparql-patterns-remediation.md) — superseded in execution by [docs/developer/review/IRI-patterns-remediation.md](../review/IRI-patterns-remediation.md), which the maintainer designated authoritative when comparing it against this plan
 **Sketch:** None
 **Governing review:** [docs/developer/review/IRI-patterns-remediation.md](../review/IRI-patterns-remediation.md), executed against `iri-identity-patterns.md`/ADR-A82 as the identity authority
 **Primary target document:** [rdf-sparql-patterns-guide.md](../../architecture/rdf-sparql-patterns-guide.md)
 
 ## What changed and why this status supersedes the pre-execution plan below
 
-The original plan (still preserved unmodified for its analysis) treated several findings as blocked on a human design decision (B1(b), B3, B8, B9, B11). The human's execution instruction changed the resolution strategy for all of them: LATTICE does not mandate a single answer to a genuine deployment trade-off, so every one of those "open decisions" was resolved by adding a `dal:` property or class to `ontology/persistence/spec/persistence.ttl` (and, where the trade-off has a discouraged-but-valid option, a `sh:severity sh:Warning` shape in `ontology/persistence/shapes/constraints.ttl`) and repointing the guide's prose at the configuration choice instead of a mandated fix. No design decision was made unilaterally on the framework's behalf; each became a documented, adopter-facing choice.
+The original plan (still preserved unmodified for its analysis) treated several findings as blocked on a design decision (B1(b), B3, B8, B9, B11). The maintainer's execution instruction changed the resolution strategy for all of them: LATTICE does not mandate a single answer to a genuine deployment trade-off, so every one of those "open decisions" was resolved by adding a `dal:` property or class to `ontology/persistence/spec/persistence.ttl` (and, where the trade-off has a discouraged-but-valid option, a `sh:severity sh:Warning` shape in `ontology/persistence/shapes/constraints.ttl`) and repointing the guide's prose at the configuration choice instead of a mandated fix. No design decision was made unilaterally on the framework's behalf; each became a documented, adopter-facing choice.
 
 ## Findings disposition (post-execution)
 
@@ -62,13 +62,13 @@ The guide's worked examples use a 16-digit zero-padded revision-IRI width throug
 
 ## Deferred (not attempted in this pass)
 
-1. **Compiler wiring.** Handed over to [`persistence-compiler-iri-sync`](persistence-compiler-iri-sync.md), which owns it from here. **Closed 2026-09-25**: that unit's Slices 1–5 are complete, 774/774 tests passing, human-validated; Slice 6 (documentation close-out) is its own final pass.
+1. **Compiler wiring.** Handed over to [`persistence-compiler-iri-sync`](persistence-compiler-iri-sync.md), which owns it from here. **Closed 2026-09-25**: that unit's Slices 1–5 are complete, 774/774 tests passing, validated; Slice 6 (documentation close-out) is its own final pass.
 2. **New TCK test bodies.** Written as specifications in guide Chapter 27 by `iri-patterns-post-3866b21-remediation` (T-12 to T-17, the S-suite and the R-suite). The note above that "T-1 through T-13" existed was wrong: only T-1 to T-11 existed then. Executable TCK code belongs to the store SPI TCK (epic P0.5.6).
 3. **Fixture file for Worked example 4** (`examples/identity-epoch-privacy-profile.ttl`). Handed over to [`persistence-compiler-iri-sync`](persistence-compiler-iri-sync.md) and authored in its Slice 3 (2026-09-23); its privacy part is exercised by Slice 4.
 
 ## Validation performed
 
-All edits were verified with the editor's `get_errors` check (Markdown lint only) after each batch, with no errors reported at any point. No SHACL, SPARQL, or build/test command was run, per this repository's Default Mode (`.github/copilot-instructions.md`): build, test, and validation commands are for the human to run and report back on.
+All edits were verified with the editor's `get_errors` check (Markdown lint only) after each batch, with no errors reported at any point. No SHACL, SPARQL, or build/test command was run, per this repository's Default Mode (`.github/copilot-instructions.md`): build, test, and validation commands are for the maintainer to run and report back on.
 
 ## Commands to run
 
@@ -112,7 +112,7 @@ A pass is: no parse errors, no validation errors, no broken internal links. A fa
 
 | Blocker | Detail | Resolution owner |
 |---|---|---|
-| Five design decisions open | B1(b) epoch-allocation source, B3 target-IRI unification, B8 timeout-outcome policy, B9 retention/shape trade-off, B11 HLC-pagination safeguard | Human — see plan Part F items 1-3, 4, 5 |
+| Five design decisions open | B1(b) epoch-allocation source, B3 target-IRI unification, B8 timeout-outcome policy, B9 retention/shape trade-off, B11 HLC-pagination safeguard | Maintainer — see plan Part F items 1-3, 4, 5 |
 | One factual verification open | C2: whether `fnd:replacedBy` exists in `ontology/foundation/` | Whoever implements the slice, before touching §7.5/§23.3 |
 | One incomplete source document | C3: the governing review's own text ends mid-sentence at this finding | Review's author — plan Part F item 7 |
 
@@ -120,8 +120,8 @@ Nothing else blocks starting the mechanical (Decision required: NO) fixes listed
 
 ## Next steps
 
-1. Human resolves the five open design decisions in Part F items 1-5.
+1. The maintainer resolves the five open design decisions in Part F items 1-5.
 2. Implementer confirms the `fnd:replacedBy` question in `ontology/foundation/` (Part F item 6).
-3. Review's author completes finding C3, or the human explicitly accepts this plan's independent cross-check as sufficient to proceed on a stated width choice without it.
+3. Review's author completes finding C3, or the maintainer explicitly accepts this plan's independent cross-check as sufficient to proceed on a stated width choice without it.
 4. Once resolved, decompose the plan into one or more implementation slices per copilot-instructions' mandatory slice shape (code/doc change, Validation Pack, traceability update, doc delta), following the sequencing order in the plan's Part D.
-5. Each slice's Validation Pack must include at least one adversarial case per Blocking finding it closes, per the human validation gate's mutation-check step, given several of these defects (B2, B8 in particular) are exactly the kind of "test passes while the system is corrupt" bug that discipline exists to catch.
+5. Each slice's Validation Pack must include at least one adversarial case per Blocking finding it closes, per the validation gate's mutation-check step, given several of these defects (B2, B8 in particular) are exactly the kind of "test passes while the system is corrupt" bug that discipline exists to catch.

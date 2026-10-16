@@ -15,7 +15,7 @@ The review is right on its five headline points, and the plan and sketches are r
 The programme is re-sequenced into tracks so that the assurance ledger, the adequacy harness, the
 hand-written reference semantics and the design-time models no longer wait for the prover. The prover
 spike stays the first step, as decided on 2026-10-06, but narrowed, with declared abandonment
-conditions. Six points are rebutted or refined (§3). Four of them need the human's decision before
+conditions. Six points are rebutted or refined (§3). Four of them need our decision before
 the spike starts (§4).
 
 ## 2. Dispositions
@@ -118,12 +118,12 @@ RDFC-1.0 canonical form, which is standard and byte-comparable, for the codec an
 
 ### R6. Re-sequencing and the first step (review §11)
 
-The review's tracks are adopted. The human decided on 2026-10-06 that the cheap decisive experiment
+The review's tracks are adopted. We decided on 2026-10-06 that the cheap decisive experiment
 is the plan's first step, so the narrowed spike (track D) stays first. Tracks A, B and C do not
 depend on it and start alongside it, each after its own ADR. Track E starts only if D passes its
 abandonment conditions.
 
-## 4. Decisions for the human
+## 4. Decisions for the maintainer
 
 | # | Decision | Recommendation |
 |---|---|---|

@@ -3,9 +3,9 @@
 # Vocabulary Temporal-Binding Consumer Hardening - Status
 
 **Unit ID:** `temporal-binding-consumer-hardening`
-**Status:** Implemented (2026-09-25), at the human's direction ("proceed with
+**Status:** Implemented (2026-09-25), at our direction ("proceed with
 the attached plan"), which is treated as confirmation of Finding 1's Option B
-(the plan's own "Human Input" line already recorded this agreement). Not yet
+(the plan's own "Our input" line already recorded this agreement). Not yet
 executed in this sandbox — no `rdflib` here (network-restricted); statically
 verified (`py_compile`, a direct AST-level mutation probe for Finding 4) and
 handed off for `mise run check:vocabulary` / `python -m unittest surface.test_surface -v`.
@@ -152,7 +152,7 @@ cannot execute them.
 - **`command_parity --shared-corpus` left unguarded.** Flagged above as a
   documented, deliberate gap rather than a silent one.
 
-## Human validation gate
+## Validation gate
 
 Not yet performed. Before closing this unit:
 
@@ -160,7 +160,7 @@ Not yet performed. Before closing this unit:
    `python -m unittest surface.test_surface -v` (Findings 1/2's new cases)
    and report the result.
 2. Confirm Finding 1's Option B is accepted as implemented (the plan's own
-   "Human Input" line already recorded this, carried through unchanged).
+   "Our input" line already recorded this, carried through unchanged).
 3. Decide whether `command_parity --shared-corpus` needs the same guard in a
    follow-on unit, or stays a documented non-coverage.
 

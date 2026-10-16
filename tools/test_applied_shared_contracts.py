@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from pyshacl import validate
 from rdflib import Graph, Namespace, URIRef
 from rdflib.namespace import OWL, RDF
@@ -68,6 +69,16 @@ def _vocabulary_shapes() -> Graph:
     return _graph(VOCAB_SHAPES / "structural.ttl", VOCAB_SHAPES / "constraints.ttl")
 
 
+@pytest.fixture(scope="module", autouse=True)
+def _cached_validate(request: pytest.FixtureRequest, validated) -> None:
+    """TM2: shared, session-scoped validation cache (python-test-melting).
+    `_all_contracts`/`_vocabulary_shapes` stay plain functions (only two call
+    sites, each already a module-level-cacheable graph elsewhere), since the
+    files they build from are the same ones several Instrument-family
+    modules' EVERY_SHAPE already pulls through `graph_cache`."""
+    request.module.validate = validated
+
+
 # ---- AIR12-01: parse and pinned imports -------------------------------------------------------
 
 
@@ -86,17 +97,17 @@ def test_common_documents_parse_and_import_the_pinned_versions():
     assert spec_imports == {
         "https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0",
         "https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0",
-        "https://www.nebularis.org/neuro-semantic/lattice/party/0.8.0",
+        "https://www.nebularis.org/neuro-semantic/lattice/party/0.9.0",
         "https://www.nebularis.org/neuro-semantic/lattice/applied/classification/0.2.0",
     }
     vocab_imports = {str(o) for o in _common_vocab().objects(None, OWL.imports)}
-    assert vocab_imports == {"https://www.nebularis.org/neuro-semantic/insurance/common/0.4.0"}
+    assert vocab_imports == {"https://www.nebularis.org/neuro-semantic/insurance/common/0.6.0"}
 
 
-# ---- AIR12-02: the nine contracts conform to Vocabulary's shapes ------------------------------
+# ---- AIR12-02: the ten contracts conform to Vocabulary's shapes (nine, then AIR-4.4's class of business) ---
 
 
-def test_nine_contracts_conform_to_vocabulary_shapes():
+def test_ten_contracts_conform_to_vocabulary_shapes():
     data = _all_contracts()
     shapes = _vocabulary_shapes()
     conforms, _, report = validate(data, shacl_graph=shapes, advanced=True, inference="none", allow_warnings=True)
@@ -112,8 +123,9 @@ def test_nine_contracts_conform_to_vocabulary_shapes():
         ICMV.ConsequenceContract,
         ICMV.HarmSubjectContract,
         ICMV.PoolContract,
+        ICMV.ClassOfBusinessContract,
     }
-    assert len(contracts) == 9
+    assert len(contracts) == 10
 
 
 # ---- AIR12-03: a contract without voc:constrainsProperty is a violation -----------------------

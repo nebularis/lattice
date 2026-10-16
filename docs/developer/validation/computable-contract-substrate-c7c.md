@@ -3,7 +3,7 @@
 # Validation Pack: CCS C7c, what terms are, and who they bind
 
 **Unit:** [`computable-contract-substrate`](../status/computable-contract-substrate.md)
-**Machine:** R (Claude Code). **Branch:** `ccs/c7c-terms-and-parties`. Commits are the human's, and
+**Machine:** R. **Branch:** `ccs/c7c-terms-and-parties`. Commits are the maintainer's, and
 the change is merged into `main` before its release tags are created
 **Plan and test cases:** [CCS plan](../plans/computable-contract-substrate.md) (C7c in detail)
 **Decisions:** ADR-A104 decisions 4, 9, 11 and 12, ADR-A102, ADR-A87, ADR-A113. Laws I11, I15 and
@@ -41,7 +41,7 @@ Evaluation of definitions, deemings, sections and party resolution (C12, C13). D
 
 ## Handoff
 
-Written by the building machine when the work is ready for the human to commit.
+Written by the building machine when the work is ready for the maintainer to commit.
 
 Phase 1, examples first (ADR-A-C2), 2026-10-06, reworked under decisions D1 to D22 of the plan's
 C7c section:
@@ -70,7 +70,7 @@ C7c section:
   - the ADR-A104 addendum "what terms are, and who they bind" (Proposed), recording D1 to D22
   - in the plan: decisions D1 to D22, the reworked examples, shapes and tests (C7c-19 to C7c-22),
     slice C16b (required before the epic closes), and HQ-7. TD-19 in the technical debt register
-- **Run by the agent:** the five examples and `facility-agreement.ttl` against the C7b model and the
+- **Run:** the five examples and `facility-agreement.ttl` against the C7b model and the
   structural and constraint shapes of every layer, without inference. `trial-definitions.ttl`,
   `supply-classification.ttl` and `facility-agreement.ttl` conform. Three fail only where the
   model is to change:
@@ -128,7 +128,7 @@ Phase 2, the model, 2026-10-06:
     where the README keeps them
   - `tools/test_constitutive_terms.py` (49 tests), added to `check:ontology-catalog`. Version pins
     in eight existing test modules moved to the new versions
-- **Run by the agent:** every row below, with every tool package importing from this checkout.
+- **Run:** every row below, with every tool package importing from this checkout.
 - **Check first:** the deviations, in particular the removed ranges and the optional composition
   rule, which make 0.12.0 and Party 0.8.0 breaking.
 - **Deviations from the plan:**
@@ -160,7 +160,7 @@ Phase 2, the model, 2026-10-06:
 
 ## Results
 
-Run by the agent on machine R, 2026-10-06, with every tool package importing from this checkout.
+Run on machine R, 2026-10-06, with every tool package importing from this checkout.
 
 | Row | Result |
 |---|---|

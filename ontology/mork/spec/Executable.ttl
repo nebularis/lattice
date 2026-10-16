@@ -34,7 +34,7 @@
 
 <https://www.nebularis.org/neuro-semantic/lattice/executable>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/executable/0.6.0> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/executable/0.7.0> ;
 	owl:imports <http://www.nebularis.org/ontologies/Mork> ,
 		<http://www.w3.org/ns/prov-o-20130430> .
 
@@ -115,6 +115,9 @@
 
 :RefusedOperation a :Diagnostic ;
 	rdfs:comment "A profile's compatibility operation has no evaluable definition (elg:DimensionConsistent)." .
+
+:NoClosureLicence a :Diagnostic ;
+	rdfs:comment "The outcome needs the records a binding reaches to be complete, and no closure in force licenses that (ADR-A105, elg:L15, elg:L17). Also the reason a compiler refuses a binding that names something which is not a closure, or a closure with no source." .
 
 #################################################################
 #    Object properties

@@ -1,0 +1,44 @@
+{{! create-if-absent-composite-dataset-guard: guide §19.3, dal:DatasetLevelGuard variant: a writer
+    started under an older epoch cannot create a row after a bump.
+    The aggregate is created in the family's data graph (the dataGraph slot, the profile's
+    dal:dataGraph) and never in the default graph. A second guard beyond the version row asks that
+    nothing of the root is already in the data graph, since a composite aggregate has no graph of
+    its own whose emptiness would say so.
+    This is a P2 uniqueness problem, not a CAS problem: it guards on the
+    absence of a version row (dal:firstWrite dal:AbsentRow). The row is
+    typed pat:VersionRow so row shapes target rows only (guide Appendix B),
+    and it gets pat:head, so every later CAS finds one.
+    requestDigest is computed by the caller as lower-case
+    hex SHA-256 over the tuple-encoded operation kind, target, expected
+    seq and sorted canonical N-Triples of the skolemized payload (guide
+    §15.2), and recorded on the txn claim so a confirmation can tell a
+    replay from a different request reusing the txn id.
+    payloadTriples is a request-time Mustache slot, not a
+    SPARQL variable: a set of triples cannot be bound through one variable.
+    Instantiate leaves it in place, and the caller renders it with the
+    already-serialised, trusted payload triples before submission (see
+    tools/persistence/README.md, "Using the generated SPARQL directly").
+    Note for template authors: never put a Mustache tag inside this
+    comment block. Chevron's comment parser ends at the first closing
+    double-brace it sees, which silently truncates the comment. }}
+PREFIX pat: <https://example.org/lattice/patterns#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+INSERT {
+  GRAPH {{{dataGraph}}} { {{{payloadTriples}}} }
+  GRAPH {{{metaGraphPrefix}}} { $root a pat:VersionRow ; pat:epoch $epoch ; pat:seq "1"^^xsd:long ; pat:head $newRev }
+  GRAPH {{{txnGraph}}}        { $txnId pat:rev $newRev ; pat:requestDigest $requestDigest }
+  GRAPH ?logGraph {
+      $newRev a pat:Revision ; pat:target $root ; pat:epoch $epoch ; pat:seq "1"^^xsd:long ;
+              pat:txn ?txnKey ; pat:recordedAt ?now
+  }
+}
+WHERE {
+  BIND(IRI(CONCAT(STR({{{logGraphPrefix}}}), SUBSTR(STR(NOW()), 1, 7))) AS ?logGraph)
+  GRAPH {{{datasetGraph}}} { {{{datasetNode}}} pat:epoch $epoch }
+  FILTER NOT EXISTS { GRAPH {{{metaGraphPrefix}}} { $root pat:seq ?any } }
+  FILTER NOT EXISTS { GRAPH {{{dataGraph}}} { $root ?anyP ?anyO } }
+  FILTER NOT EXISTS { GRAPH {{{txnGraph}}} { $txnId pat:rev ?any } }
+  BIND(STR($txnId) AS ?txnKey)
+  BIND(NOW() AS ?now)
+}

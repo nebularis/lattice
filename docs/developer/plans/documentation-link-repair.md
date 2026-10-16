@@ -4,7 +4,7 @@
 
 **Unit ID:** `documentation-link-repair`
 **Status:** Pending. Not started.
-**Trigger:** human request, 2026-09-25, after `applied-ontology-readiness`
+**Trigger:** request, 2026-09-25, after `applied-ontology-readiness`
 found `mise run topology:links` failing at `HEAD`.
 **Status record:** [documentation-link-repair.md](../status/documentation-link-repair.md)
 **Governing decision:** [ADR-A77](../../architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md) (canonical paths, relocation notes)

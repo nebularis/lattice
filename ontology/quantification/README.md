@@ -58,7 +58,7 @@ It imports Foundation and Vocabulary. It is imported by Party, Eligibility, Word
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/quantification>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.7.0> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.8.0> ;
     owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
                 <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> .
 ```
@@ -81,7 +81,7 @@ python tools/literate_extract.py ontology/quantification/README.md --layer quant
 
 ## 4. Design Decisions
 
-Eleven decisions, several forced by the corrected structure below rather than freely chosen — worth reading in full before treating any single class in isolation, since a number of the later definitions only make sense in light of one of these.
+Twelve decisions, several forced by the corrected structure below rather than freely chosen — worth reading in full before treating any single class in isolation, since a number of the later definitions only make sense in light of one of these.
 
 **Quantification, not Quantity.** Grades, tiers, statuses, and priorities need exactly the same containment, overlap, minimum, and maximum operations that magnitudes need, without being magnitudes. A layer named after magnitudes either excludes them — forcing every deployment to invent ordinal comparison privately — or admits them under a name that misdescribes what it actually is. The layer declares how a value space is *ordered, bounded, and compared*; that is Quantification, and the rename costs one import change now against every deployment inventing this privately later.
 
@@ -104,6 +104,8 @@ Eleven decisions, several forced by the corrected structure below rather than fr
 **A value may be supplied by its context.** "Within 30 days of each invoice", "each year from the subscription start" and "six months before the Expiry Date" are each stated once, and resolve to a different value for every subject they are evaluated for. The statement names its anchor, and an evaluation context supplies the anchor's value. Such a value is complete as stated, yet resolved only when evaluated, so it is neither definite nor missing. It is therefore its own kind of value, `ContextValue`, named by a role ([ADR-A115](../../docs/architecture/decisions/ADR-A115-quantification-context-values.md)). Its offsets, such as "30 days" or "10 business days", are quantities with units, because a unitless decimal in the anchor's own space cannot count business days.
 
 **A value space's density determines what "adjacent" means and must be declared rather than assumed.** Range-set canonicalisation needs to know whether `[1,5]` and `[6,10]` merge — which depends entirely on whether the space is discrete (where "immediately following" is well-defined, via a granularity floor) or dense (where only closures abutting without a gap can merge). Leaving this undeclared, as an earlier draft did, made canonical form an open question for exactly the operation whose whole purpose is to have one.
+
+**Whether values add is a fact about the quantity, declared on its space.** Measurement theory separates *extensive* quantities, whose measure of a whole is the sum of the measures of its parts (a mass, an amount of money, a duration), from *intensive* ones, which do not add (a temperature, a rate, a rating). The distinction is independent of the scale of measure: a percentage is ratio-scale, yet 10% of one order and 10% of another add to nothing. A space states it with `additivity`, as it states its order, and a `Sum` within one space is declared only on an extensive space (law Q12). A `Sum` across two spaces, such as a position plus an extent, is a different operation and is unaffected. A proportion is additive only over one base, and which base a share is of is known only when it is evaluated: the same written line is a share of one order in one placement and of another in the next. So a proportion's space names its base as a context role (`baseRole`), and the evaluator compares the bindings the roles resolve to (law Q13). Whether a sum may cross a grouping, such as time for a balance, is a fact about what a value measures, not about its space, so it is left to the consuming layer (open question 7, §13).
 
 ## 5. Architecture
 
@@ -311,8 +313,9 @@ warehousing names three kinds of measure:
   on one date can be summed across accounts, giving the total held that day. The same account's
   balances summed across dates give nothing meaningful. Over time, the latest, the lowest or the
   highest balance is what means something. Stock levels and headcounts behave the same way
-- **non-additive** measures can never be summed: unit prices, percentages, ratios, grades and
-  dates. A total of percentages, or a total of dates, has no meaning
+- **non-additive** measures can never be summed: unit prices, ratios, grades, dates, and
+  percentages of different bases. A total of dates, or of percentages of different wholes, has no
+  meaning
 
 ```mermaid
 flowchart TB
@@ -329,15 +332,26 @@ flowchart TB
     style T2 fill:#f8d7da
 ```
 
+**Extensive and intensive spaces.** A space states whether its values add with `additivity`.
+An `Extensive` space's values add across disjoint parts: commitments in one currency, a duration, a
+headcount, the shares of one order. An `Intensive` space's values never do: a rate, a rating, a price
+per unit, a temperature. A space that declares neither permits no `Sum` within itself. Balances and
+payments in one currency share an Extensive space, since balances add across accounts and a payment
+adds to a balance. That balances do not add across dates is a fact about the measure, which the
+consuming layer states (open question 7). A `Sum` whose operands and result are all on one space is declared only where that space is
+`Extensive` (law Q12). `Count` is the sum of a unit measure, one for each value counted, so it asks
+nothing of the counted space: ratings may be counted though never added.
+
 The operations a kind of value supports:
 
-| Operation (`operationKind`) | Amount (ratio scale) | Position (interval scale) | Rate or proportion | Grade (ordinal) |
-|---|---|---|---|---|
-| `Compare`, `Minimum`, `Maximum` | yes | yes | yes | yes |
-| `Difference` | yes, an amount | yes, giving an extent | yes, in points | no |
-| `Sum` | yes | no | no | no |
-| `Ratio` | yes, giving a rate or proportion | no | not by default | no |
-| `Scale` | by a rate | no | applies to a base amount | no |
+| Operation (`operationKind`) | Amount (ratio scale) | Position (interval scale) | Rate | Proportion | Grade (ordinal) |
+|---|---|---|---|---|---|
+| `Compare`, `Minimum`, `Maximum` | yes | yes | yes | yes | yes |
+| `Difference` | yes, an amount | yes, giving an extent | yes | yes, in points | no |
+| `Sum` | yes, extensive | no, only plus an extent | no, intensive | yes, of one base | no |
+| `Count` | yes | yes | yes | yes | yes |
+| `Ratio` | yes, giving a rate or proportion | no | not by default | of two shares of one base | no |
+| `Scale` | by a rate | no | applies to a base amount | applies to its base | no |
 
 There is no averaging operation. A mean is a sum divided by a count, so it can be computed only
 from a declared `Sum`, `Count` and `Ratio`, and the sum it needs is meaningful only for additive
@@ -352,9 +366,17 @@ names its `resultSpace`. Worked example:
 [§14, position minus position](examples/examples.md#14-position-minus-position-yielding-an-extent).
 
 **What a capability cannot see.** A capability belongs to a space, and says nothing about which
-values are being aggregated. A space of balances may permit `Sum`, because summing balances across
-accounts on one date is meaningful. That the balances being summed are all on one date is a fact
-about the records, which only the consuming layer can check (open question 7, §13).
+values are being aggregated. Summing balances across accounts on one date is meaningful, and
+summing one account's balances across dates is not. That the balances being summed are all on one
+date is a fact about the records and what they measure, which only the consuming layer can check
+(open question 7, §13).
+
+**Sums are evaluated over like values.** Values in different units are summed only after each is
+converted to one unit, under the same rules as a comparison (§9.6). Commitments in euros and US
+dollars add only once the dollars are converted at a dated rate, and with no conversion context at
+the reference time the sum is `Undetermined` with `ConversionContextAbsent`. Shares add only when
+they have one base (§5.1.8). A limit stated in two currencies is still never converted (§5.1.4).
+Worked example: [`examples/additivity.ttl`](examples/additivity.ttl), and §9.9.
 
 #### 5.1.4 Bounds, ranges and range sets
 
@@ -493,6 +515,38 @@ flowchart LR
     BASE["body weight<br/>70 kg"] -- "Scale" --> RES
 ```
 
+**A proportion's base.** The space says what kind of whole a share is of, such as an amount of
+money, but not which whole. Lines written on two orders share a space, and their sum means nothing.
+A proportion's space names its base as a context role with `baseRole`, a concept under
+`ContextRoleContract`, as a `ContextValue` names its role (ADR-A115). Evaluated for a subject at a
+reference time, the role resolves to that subject's whole. Two shares have one base when their
+roles resolve to one binding. The amounts are never compared: two orders of EUR 10m are still two
+bases, and a sum of lines on both is `Undetermined` with `MixedBases`.
+
+```mermaid
+flowchart LR
+    SP["qnt:DerivedValueSpace<br/>line share, money ÷ money<br/>baseRole: the order"]
+    subgraph P1["placement 1"]
+        O1["the order: EUR 10m"]
+        A["line A: 50%"]
+        B["line B: 40%"]
+    end
+    subgraph P2["placement 2"]
+        O2["the order: EUR 10m"]
+        E["line E: 30%"]
+    end
+    A & B & E -. "onSpace" .-> SP
+    A & B -- "base resolves to" --> O1
+    E -- "base resolves to" --> O2
+```
+
+Line A plus line B is 90% of placement 1's order. Line A plus line E is `Undetermined`. Scaling the
+order by line A gives EUR 5m, an amount, which adds as money. An over-written order is signed down
+with the same two operations: the `Ratio` of the whole order to the total written gives a factor on
+a space whose numerator and denominator are both the line share, and `Scale` applies it to each
+written line, giving a signed line on the same base. Worked example:
+[`examples/additivity.ttl`](examples/additivity.ttl).
+
 #### 5.1.9 Operations are declared, never assumed
 
 That a space holds numbers does not permit arithmetic over it (§5.1.3). Each permitted operation is
@@ -563,6 +617,7 @@ flowchart TB
     U --> R5["OutsideDeclaredSpace"]
     U --> R6["OperationNotPermitted"]
     U --> R7["NoBoundInUnit"]
+    U --> R8["MixedBases"]
 ```
 
 A comparison worth keeping is recorded as a `Comparison`, with its result, its reasons, its
@@ -642,7 +697,7 @@ the same conformance corpus. Worked examples: Parts IX to XIV of
 
 **Definition.** A governed declaration of a space in which values may be represented, ordered, bounded, compared, and used by declared operations.
 
-**Utility.** Declare one whenever values need a stated home: whether they can be ordered, whether they require units, which operations are valid over them, and — for a discrete space — what its granularity floor is. A deployment may declare numeric, ordinal, temporal-position, temporal-extent, or other spaces without needing a new substrate subclass.
+**Utility.** Declare one whenever values need a stated home: whether they can be ordered, whether they require units, whether they add (`additivity`), which operations are valid over them, and — for a discrete space — what its granularity floor is. A deployment may declare numeric, ordinal, temporal-position, temporal-extent, or other spaces without needing a new substrate subclass.
 
 ```turtle-spec
 qnt:ValueSpace a owl:Class ;
@@ -930,13 +985,13 @@ qnt:ConversionContext a owl:Class ;
 
 **Definition.** A value space whose values are quotients of values in two other spaces.
 
-**Utility.** Rates and proportions (ADR-A93): a dose per body weight, a credit as a share of a fee. `qnt:Scale` applies a rate to a base value, and `qnt:Ratio` of two values names the derived space as its result space.
+**Utility.** Rates and proportions (ADR-A93): a dose per body weight, a credit as a share of a fee. `qnt:Scale` applies a rate to a base value, and `qnt:Ratio` of two values names the derived space as its result space. A proportion whose shares are summed names its base with `baseRole` (§5.1.8).
 
 ```turtle-spec
 qnt:DerivedValueSpace a owl:Class ;
     rdfs:subClassOf qnt:ValueSpace ;
     rdfs:comment "A value space whose values are quotients of values in two other spaces (ADR-A93)." ;
-    fnd:utility "Declare one for a rate or a proportion: point numeratorSpace and denominatorSpace at the spaces it divides. A proportion names the same space twice, so 10% of a fee and 10% of an income stay different spaces." ;
+    fnd:utility "Declare one for a rate or a proportion: point numeratorSpace and denominatorSpace at the spaces it divides. A proportion names the same space twice, so 10% of a fee and 10% of an income stay different spaces. Give a proportion a baseRole where its shares are summed, so shares of different wholes are never added." ;
     rdfs:subClassOf
         [ a owl:Restriction ; owl:onProperty qnt:numeratorSpace ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
         [ a owl:Restriction ; owl:onProperty qnt:denominatorSpace ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
@@ -1201,6 +1256,16 @@ qnt:unitContract a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:domain qnt:ValueSpace ; rdfs:range qnt:UnitContract ;
     rdfs:comment "The optional unit contract governing values in a ValueSpace." ;
     fnd:utility "Set where a space's values require or permit governed units and conversion." .
+
+qnt:additivity a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:ValueSpace ; rdfs:range qnt:Additivity ;
+    rdfs:comment "Whether the values of a ValueSpace add: Extensive or Intensive." ;
+    fnd:utility "Set Extensive where the values of disjoint parts add, such as amounts in one currency, whether payments or balances, durations or shares of one base, and Intensive where no sum does, such as rates, ratings or prices per unit. A Sum within one space needs Extensive. Whether a measure on an Extensive space may also be summed across time, as payments may and balances may not, is the measure's, stated by the consuming layer. An undeclared space permits no Sum within itself, and may still be counted." .
+
+qnt:baseRole a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain qnt:DerivedValueSpace ; rdfs:range skos:Concept ;
+    rdfs:comment "The context role naming the whole that a proportion's values are shares of (ADR-A115)." ;
+    fnd:utility "Set on a proportion whose shares are summed, such as lines on an order or allocations of a commitment. Name a concept from a scheme bound to qnt:ContextRoleContract. Each share's base is the value the role resolves to for its subject at the reference time, and shares add only when their bases are one binding. Different bases make a sum Undetermined with MixedBases." .
 
 qnt:numericValue a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:domain qnt:Quantity ; rdfs:range rdfs:Literal ;
@@ -1540,6 +1605,15 @@ qnt:Dense a qnt:DensityKind ;
 qnt:UnspecifiedDensity a qnt:DensityKind ;
     rdfs:comment "Adjacency is not defined; range-set merging uses overlap only." .
 
+qnt:Additivity a owl:Class ;
+    rdfs:comment "A mechanism-intrinsic kind of quantity, by whether its values add." .
+
+qnt:Extensive a qnt:Additivity ;
+    rdfs:comment "The measure of a whole is the sum of the measures of its parts, so any two values on the space add to a value on it." .
+
+qnt:Intensive a qnt:Additivity ;
+    rdfs:comment "Values on the space do not add, though they may be compared and counted." .
+
 qnt:BoundSense a owl:Class ;
     rdfs:comment "A mechanism-intrinsic designation of a bound as lower or upper." .
 
@@ -1620,6 +1694,8 @@ qnt:OutsideDeclaredSpace a qnt:UnresolvedReason .
 qnt:OperationNotPermitted a qnt:UnresolvedReason .
 qnt:NoBoundInUnit a qnt:UnresolvedReason ;
     rdfs:comment "No statement of a bound, among it and its alternatives, is in the candidate's unit (ADR-A95)." .
+qnt:MixedBases a qnt:UnresolvedReason ;
+    rdfs:comment "Shares to be summed have base roles resolving to different bindings, so they are shares of different wholes." .
 
 qnt:BinContiguity a owl:Class ;
     rdfs:comment "A mechanism-intrinsic policy governing whether recurrence bins are contiguous." .
@@ -1675,7 +1751,7 @@ The substrate ships these mechanism values only. It ships no unit, unit family, 
 
 **On the absent `PartialOrder` and `IncomparableValues`.** An earlier draft carried both alongside a stated intention to omit `PartialOrder` from the first release, while leaving `IncomparableValues` in the `UnresolvedReason` enumeration — meaning that reason had no order kind able to produce it: dead mechanism-intrinsic vocabulary. Both are omitted here together, to be reintroduced together only if a case arrives that Eligibility's scheme-subsumption mechanism genuinely cannot express — two poset mechanisms with no declared relationship between them is worse than a missing order kind.
 
-The role contract (ADR-A115). It binds no scheme: Quantification ships no roles, and a deployment or an upper layer binds its own, as Instrument binds its baseline of the arising, inception, ending and a period's start and end.
+The role contract (ADR-A115), for context values and a proportion's base. It binds no scheme: Quantification ships no roles, and a deployment or an upper layer binds its own, as Instrument binds its baseline of the arising, inception, ending and a period's start and end.
 
 ```turtle-vocab
 @prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
@@ -1687,7 +1763,7 @@ qnt:ContextRoleContract a voc:SchemeContract ;
     fnd:hasIdentity qnt:ContextRoleContract-identity ;
     fnd:hasGovernanceState fnd:Active ;
     skos:prefLabel "Context role scheme contract"@en ;
-    voc:constrainsProperty qnt:contextRole .
+    voc:constrainsProperty qnt:contextRole , qnt:baseRole .
 ```
 
 ## 9. Evaluation Semantics
@@ -1700,7 +1776,7 @@ qnt:ContextRoleContract a voc:SchemeContract ;
 | `qnt:False` | The requested relation is established not to hold. |
 | `qnt:Undetermined` | Available information is insufficient to establish either result. |
 
-`Undetermined` is not an error and not a coercion to false. It occurs where a required value is absent, explicitly unresolved, known only to insufficient granularity, dependent on an absent conversion context, outside the relevant declared space, or subject to an operation the ValueSpace doesn't permit.
+`Undetermined` is not an error and not a coercion to false. It occurs where a required value is absent, explicitly unresolved, known only to insufficient granularity, dependent on an absent conversion context, outside the relevant declared space, subject to an operation the ValueSpace doesn't permit, or a sum of shares of different bases.
 
 ### 9.2 Range containment
 
@@ -1756,6 +1832,42 @@ A `Recurrence` maps an anchor and period onto a deterministic sequence of ranges
 
 An `OrderingBasis` with a total sequence of `OrderingComponent`s produces the same order for the same input set and the same `unresolvedOrderPolicy`, independently of storage order or evaluation time — this is `Q11`, also runtime conformance, checked by actually running the ordering over a representative input set rather than by inspection.
 
+### 9.9 Sums
+
+A `Sum` of values on one space is evaluated at a reference time, which the consuming layer states,
+and needs a capability, as any operation does (Q7). Its operands must be like values:
+
+- **one unit.** Values in different units are each converted to one unit first, under §9.6, using
+  the conversion context in force at the reference time. Where a step has no context, the sum is
+  `Undetermined` with `ConversionContextAbsent`, and where no conversion is permitted, with the reason
+  §9.6 gives. A bound stated in several units is never converted (§9.2, ADR-A95), so a converted sum
+  is compared with the bound's statement in the unit it was converted to
+- **one base.** Where the space names a `baseRole`, each operand's role is resolved for its subject at
+  the reference time. The sum is evaluated only when every operand resolves to one binding, and is
+  otherwise `Undetermined` with `MixedBases`. Bindings are compared, never amounts. A role with no
+  binding is `Undetermined`, naming the role (ADR-A115)
+
+`Count` is the number of values counted, and needs neither. This is law `Q13`, runtime conformance.
+
+```mermaid
+flowchart TB
+    U{"One unit?"}
+    C{"Converted under §9.6,<br/>with a context at the<br/>reference time?"}
+    B{"A baseRole on the space?"}
+    R{"Every role resolves<br/>to one binding?"}
+    S["the sum"]
+    U1["Undetermined<br/>ConversionContextAbsent,<br/>or §9.6's reason"]
+    U2["Undetermined<br/>MixedBases"]
+    U -- "yes" --> B
+    U -- "no" --> C
+    C -- "yes" --> B
+    C -- "no" --> U1
+    B -- "no" --> S
+    B -- "yes" --> R
+    R -- "yes" --> S
+    R -- "no" --> U2
+```
+
 ---
 
 ## 10. Laws
@@ -1781,6 +1893,7 @@ Restructured into three registers, per §4's design decision — a discharge's e
 | **Q7** | Operation admissibility — an operation is evaluated only where a matching capability signature exists (= governance obligation 2). |
 | — | Governance obligations 1, 3, 4, 5, 7, 8, 12 (§11) — checkable from the declaration alone. |
 | — | Period-space compatibility — a Recurrence's period is on an extent space compatible with its anchor's position space (§6). |
+| **Q12** | Additive sums — a `Sum` capability whose operands and result are all on one space is declared only where that space is `Extensive`. A `Sum` across spaces, and `Count`, are unaffected (§5.1.3). |
 
 ### Runtime conformance (`qnt:RuntimeConformance`) — executed test runs against a named implementation profile
 
@@ -1790,6 +1903,7 @@ Restructured into three registers, per §4's design decision — a discharge's e
 | **Q9** | Recurrence determinism — independent recomputation of the same declaration and inputs produces identical bin keys. |
 | **Q10** | Unresolved non-coercion — every indeterminate path (insufficient granularity, unresolved value, missing conversion context, incomparability) produces the declared reason, never a definite result invented to fill the gap. |
 | **Q11** | Ordering determinism — an OrderingBasis with a total component sequence produces the same order for the same input set and unresolved-order policy, independently of storage order or evaluation time. |
+| **Q13** | Sums of like values — a sum is evaluated only over values in one unit, after any conversion §9.6 permits with its context at the reference time, and of one base, where the space names a `baseRole`. Otherwise it is `Undetermined` with `ConversionContextAbsent` or `MixedBases`, never a total of unlike values (§9.9). |
 
 ### Gate prerequisites
 
@@ -1859,7 +1973,7 @@ Checked over the relevant union graph and stated operational profile. They do no
 | 9 | Every persisted Comparison records its producing operational profile and any unresolved reason. |
 | 10 | Every in-use mechanism construct has evidence discharging its applicable laws, of the evidence type its law register requires. |
 | 11 | Every persisted derived representation traces to source declarations, graph inputs, producing profile, and a declared authority level (advisory, cached-reproducible, operationally authoritative, or externally authoritative-and-synchronised). |
-| 12 | Changing order kind, density kind, operation capability, canonical unit, recurrence anchor, period, binContiguity, boundaryDerivation, or bin-key strategy requires a major declaration version. |
+| 12 | Changing order kind, density kind, additivity, base role, operation capability, canonical unit, recurrence anchor, period, binContiguity, boundaryDerivation, or bin-key strategy requires a major declaration version. |
 
 **Conformance floor.** Direct SPARQL and SHACL validation are the mandatory baseline profiles; every other operational profile (reasoning, materialisation, projection, compiled evaluation) is per-deployment and must agree with the baseline over the shared conformance corpus (§15, and `examples/examples.md` §24) where supported.
 
@@ -1872,7 +1986,7 @@ Checked over the relevant union graph and stated operational profile. They do no
 | L2 | Values typed as Value/Quantity/OrdinalValue; space possibly unresolved. |
 | L3 | ValueSpace, UnitContract, OperationCapability, and Recurrence declarations satisfy authoring shapes. |
 | L4 | Suitable for stated SPARQL, reasoning, or materialisation profiles. |
-| L5 | Operation has a matching capability; required values resolved or explicitly unresolved; conversion context present where contextual. |
+| L5 | Operation has a matching capability; required values resolved or explicitly unresolved; conversion context present where contextual; a sum's operands in one unit and of one base. |
 | L6 | *Not applicable — Quantification produces comparisons, never executions.* |
 | L7 | Materialised bins, normal forms, or projections consistent with declared contract. |
 
@@ -1980,6 +2094,43 @@ qnt:AlternativeBoundShape
             }
         """
     ] .
+
+qnt:AdditivityShape
+    a sh:NodeShape ;
+    sh:targetSubjectsOf qnt:additivity ;
+    sh:property [ sh:path qnt:additivity ; sh:maxCount 1 ; sh:in ( qnt:Extensive qnt:Intensive ) ;
+        sh:message "A value space is Extensive or Intensive, never both." ] .
+
+qnt:BaseRoleShape
+    a sh:NodeShape ;
+    sh:targetSubjectsOf qnt:baseRole ;
+    sh:class qnt:DerivedValueSpace ;
+    sh:message "Only a derived value space names a base role." ;
+    sh:property [ sh:path qnt:baseRole ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+        sh:message "A proportion names exactly one base role (ADR-A115)." ] .
+
+qnt:SumWithinOneSpaceShape
+    a sh:NodeShape ;
+    sh:targetClass qnt:OperationCapability ;
+    sh:sparql [
+        sh:message "A Sum within one space needs that space declared Extensive (law Q12)." ;
+        sh:select """
+            PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+            SELECT $this ?value WHERE {
+                $this qnt:operationKind qnt:Sum .
+                { ?value qnt:hasOperationCapability $this }
+                UNION { $this qnt:hasOperand/qnt:operandSpace ?value }
+                UNION { $this qnt:resultSpace ?value }
+                FILTER NOT EXISTS {
+                    { ?other qnt:hasOperationCapability $this }
+                    UNION { $this qnt:hasOperand/qnt:operandSpace ?other }
+                    UNION { $this qnt:resultSpace ?other }
+                    FILTER (?other != ?value)
+                }
+                FILTER NOT EXISTS { ?value qnt:additivity qnt:Extensive }
+            }
+        """
+    ] .
 ```
 
 Substrate shapes are `qnt:`-named, as above; deployment shapes illustrating them (§14) are `ex:`-named — the two are never conflated in this document.
@@ -2032,11 +2183,14 @@ Instrument may consume Quantification values and ranges for declared qualifiers 
 4. ~~**Derived rate spaces.**~~ Resolved by [ADR-A93](../../docs/architecture/decisions/ADR-A93-quantification-derived-rate-spaces.md): `qnt:DerivedValueSpace` and the `Scale` operation.
 5. **Precision and rounding policy vocabulary.** `precisionPolicy` and `roundingPolicy` (§7) exist as properties but have no declared vocabulary of values yet — `rdfs:Literal`-valued for the first release, with a closed vocabulary to follow once a real implementation profile needs to interpret them rather than merely record them.
 6. **Business day conventions and times of day.** How to roll a date that falls on a non-business day (following, modified following, preceding), and how to state a time of day in a zone ("by 11:00 a.m. London time"), are held as CCS held design question HQ-3, to be decided with the first business continuity examples.
-7. **Semi-additive aggregation.** A capability says which operations a space permits, not along
-   which grouping its values may be aggregated. Summing balances across accounts on one date is
-   meaningful, and summing one account's balances across dates is not, yet both use the same
-   space's `Sum` (§5.1.3). Whether Quantification should declare the groupings along which a
-   space is additive, or leave that rule to the consuming layer, is open.
+7. **Semi-additive aggregation.** Answered in principle (CCS C9b2): a space declares only whether
+   its values add (`additivity`, §5.1.3), and the consuming layer says along which grouping a
+   measure may be summed. Summing balances across accounts on one date is meaningful, and summing
+   one account's balances across dates is not, though both are sums of one space. That is a fact
+   about what a value measures, as XBRL's period type is stated on the concept, not the unit. Its
+   home is the measure that a consuming layer aggregates, where the check runs. A third value,
+   `SemiAdditive`, and a property naming the grouping a sum must not cross would both be additive
+   changes, if a case needs them here.
 
 **Resolved, not reopened:** partial orders (omitted, §8); the L5a/L5b-equivalent classification for containment versus overlap (§9, `Q4a`/`Q4b`/`Q5`); cyclic range endpoint closure (§6); ordering tie-breakers (§6, `OrderingComponent`); range-set adjacency (§6, `densityKind`); the Gate prerequisite mapping (§10).
 
@@ -2102,6 +2256,12 @@ What changed from the earlier draft, and why — kept here rather than only in a
 
 ## 17. Release Notes
 
+- **0.8.0** (additive, CCS C9b2): `qnt:additivity`, with `qnt:Extensive` and `qnt:Intensive` in
+  `qnt:Additivity`, a proportion's base `qnt:baseRole`, constrained by `qnt:ContextRoleContract`, and
+  the unresolved reason `qnt:MixedBases`. Laws Q12 (static) and Q13 (runtime), §9.9 on sums, the
+  operations table corrected (proportions of one base add), and open question 7 answered in
+  principle. Shapes 0.3.0 (breaking): a Sum within one space needs an Extensive space, at most one
+  additivity, and one base role, on a derived space only. Every importer is re-pinned.
 - **0.7.0** (additive, CCS C7b, ADR-A115): `qnt:ContextValue` with `qnt:contextRole`, the role
   contract `qnt:ContextRoleContract`, and the unit-bearing offsets `qnt:lowerOffsetBy` and
   `qnt:upperOffsetBy` on `qnt:AnchorBinding`. Shapes 0.2.0 (additive): a context value's role and

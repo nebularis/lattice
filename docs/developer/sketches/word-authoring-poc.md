@@ -173,7 +173,7 @@ own named graph.
 
 ### 4.1.1 Deferred: adopt the published Wording ontology
 
-**Recorded 2026-10-02. Not scheduled or authorised for implementation.** The human reports that
+**Recorded 2026-10-02. Not scheduled or authorised for implementation.** We report that
 the POC runs successfully and that Wording is published and stable. The current repository has
 [Wording 0.2.0](../../../ontology/wording/README.md), its
 [vocabulary](../../../ontology/wording/vocab/wording-vocab.ttl), and
@@ -294,16 +294,16 @@ and no software on the machine.
 
 ## 7. Decisions
 
-The plan's §3 lists the decisions (WA-D1 to WA-D13) with recommendations. None is taken by the agent.
+The plan's §3 lists the decisions (WA-D1 to WA-D13) with recommendations. None is taken without the maintainer.
 
 ---
 
 ## 8. Follow-on enhancements (proposed, 2026-10-02)
 
-**Not authorised for implementation.** The human asked for three further enhancements once WA0 to
+**Not authorised for implementation.** We asked for three further enhancements once WA0 to
 WA11 were running: richer, more deeply nested sample data, a web authoring app, and parity brought
 back to the Word add-in. This section is the design for all three. The plan's §3 gains decisions
-WA-D14 to WA-D20 for the human to record, and its §4/§5 gain slices WA12 to WA20, none started.
+WA-D14 to WA-D20 for the maintainer to record, and its §4/§5 gain slices WA12 to WA20, none started.
 
 Nothing here changes the accepted spike of §1, or narrows what it already proved. It extends the
 same data model (§3, §4.1) and the same three-runtime split (§2) to a second client and a deeper
@@ -313,7 +313,7 @@ elements, binding meaning, accepting a proposal as fact, multi-user editing, or 
 ### 8.1 Part 1: a richer, deeply nested sample (deferred on CCS)
 
 **Deferred. Do not start until the CCS workstream (Wording, Instrument and Behaviour refactoring)
-is complete.** The human wants a sample built from a real-world binding authority agreement: not
+is complete.** We want a sample built from a real-world binding authority agreement: not
 every clause of the CBAA, but substantially more than the three existing samples' handful of
 sections each, with clauses nested inside clauses rather than the flat section-to-element shape
 every current sample uses.
@@ -337,14 +337,14 @@ of a real CBAA would. The sample nests at least one clause three levels deep (fo
 underwriting limit clause containing exceptions, one of which contains a further proviso), to give
 the web app's tree view and the add-in's nested marking commands a realistic document to exercise.
 
-Scheduling this is the human's decision once CCS completes, not the agent's. See plan WA20.
+Scheduling this is our decision once CCS completes. See plan WA20.
 
 ### 8.2 Part 2: a web authoring app
 
 A second client, alongside the Word add-in, that edits the same documents through the same service
 without Word: open a stored document, see its structure as a tree, select text and mark it up, edit
 a part, a variable or a definition on its own, review an older revision, and insert a clause or
-definition from a small library. The screenshots the human attached, of an unrelated commercial
+definition from a small library. The screenshots we attached, of an unrelated commercial
 contract-authoring tool, are cited below only for the general shape of a feature, never for its
 visual design, its wording, or its data model.
 
@@ -399,7 +399,7 @@ A document's revisions are already immutable named graphs (plan §2.3): nothing 
 in the store, only a routes to list them. The Versions panel lists every revision with its
 timestamp, and selecting an older one re-renders the tree and text panes from that revision's
 Wording graph, read-only (no "restore" action, no diff view, not in this tranche). This is
-deliberately the same light shape the human asked for, not a full history or comparison tool.
+deliberately the same light shape we asked for, not a full history or comparison tool.
 
 #### Library wordings (WA-D19)
 

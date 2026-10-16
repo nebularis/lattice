@@ -27,7 +27,7 @@ same rolling-wave discipline tracks C and E already use.
 | `tools/mork_compilers`' SPARQL and SHACL backends | exist, stable | nothing — B2 tests against what exists today |
 | `tools/surface/src/surface/invalidation.py` (`RegenerationPlan`) | exists | nothing — B3's item wraps it in a property test |
 | an RDF-to-MCN encoder | **does not exist anywhere in the repository** (`mcnio.NullTool.encode` returns `None`) | MCN's round-trip item — out of scope for this plan, recorded as a gap, not built here |
-| MORK's join-semilattice claim | **deferred by the human's own call** (2026-10-07): the claim has always been questionable and is left for a later slice to state and confirm properly | out of scope for this plan, not pursued here |
+| MORK's join-semilattice claim | **deferred by our own call** (2026-10-07): the claim has always been questionable and is left for a later slice to state and confirm properly | out of scope for this plan, not pursued here |
 | CCS's C12 | "waiting," several tranche-D slices away (confirmed on `main`, 2026-10-07) | B4 only, out of scope for this plan |
 
 ## 3. Slices
@@ -35,7 +35,7 @@ same rolling-wave discipline tracks C and E already use.
 ### B1: the kernel and Eligibility's denotation, in Python — done
 
 - Drafted `ADR-A-FM3` (home `tools/reference/`, scope B1-B3, restating E1/E3), **Proposed**, not
-  yet accepted by the human.
+  yet accepted.
 - `tools/reference/eligibility/kernel.py`: `or3`/`and3`/`neg3`/`decision_leq` ported from
   `tools/proofs/eligibility/KernelLaws.thy`, same names, same statements, docstring wording kept
   close enough to `ontology/eligibility/README.md` to align by inspection.
@@ -85,7 +85,7 @@ same rolling-wave discipline tracks C and E already use.
   BFS oracle, plus a monotonicity check (widening the changed set never shrinks the impacted set)
   and a direct assertion of ADR-A27's own words (a surface depending on nothing changed is never
   selected).
-- MORK's join-semilattice claim: **not pursued this slice**, by the human's own call — it has
+- MORK's join-semilattice claim: **not pursued this slice**, by our own call — it has
   always been the least certain of the three B3 items named in the epic plan, and is left for a
   later slice to state and confirm properly against `mork_schemas.py`'s `IntentNodeSpec.refines`
   and `mork_validation.py`'s co-occurrence checks, rather than being carried here on an assumption.
@@ -197,7 +197,7 @@ an unconditional claim.
 
 B4 (the evaluation-context reference, CCS C12's conformance kit) — a later phase, once CCS's C12
 is briefable. Building an MCN encoder. Stating or confirming MORK's join-semilattice claim —
-deferred by the human's own call, not this phase's to pursue. Mechanising any of B1 or B3's
+deferred by our own call, not this phase's to pursue. Mechanising any of B1 or B3's
 statements in Isabelle (track E, later). Fixing any disagreement B2 or B3 finds in
 `tools/mork_compilers`, `tools/surface` or `tools/mork`'s own production code — reported as a
 finding, fixed by that tool's own maintainers in its own slice.

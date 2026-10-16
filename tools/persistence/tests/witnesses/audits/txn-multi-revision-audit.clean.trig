@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# bind: logGraphs = <urn:g:txlog/1> <urn:g:txlog/2>
+# Every transaction applied once.
+@prefix pat: <https://example.org/lattice/patterns#> .
+
+<urn:g:txlog/1> { <urn:rev:1> a pat:Revision ; pat:txn <urn:txn:a> . }
+<urn:g:txlog/2> { <urn:rev:2> a pat:Revision ; pat:txn <urn:txn:b> . }

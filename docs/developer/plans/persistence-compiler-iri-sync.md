@@ -3,7 +3,7 @@
 # Persistence Compiler / IRI-Patterns Sync — Plan
 
 **Unit ID:** `persistence-compiler-iri-sync`
-**Status:** Complete — all six slices done, 774/774 tests passing, human-validated 2026-09-25. See [persistence-compiler-iri-sync.md](../status/persistence-compiler-iri-sync.md)
+**Status:** Complete — all six slices done, 774/774 tests passing, validated 2026-09-25. See [persistence-compiler-iri-sync.md](../status/persistence-compiler-iri-sync.md)
 **Sketch (gap analysis):** [persistence-compiler-iri-sync.md](../sketches/persistence-compiler-iri-sync.md)
 **Governing ADRs:** ADR-A78 (persistence substrate), ADR-A79 (compiler toolchain), ADR-A82 (framework-neutral identity pattern selection)
 **New ADR required for this plan itself:** No. Every dimension this plan wires already exists, ratified, in `ontology/persistence/spec/persistence.ttl`. This is compiler catch-up, not a new design.
@@ -112,7 +112,7 @@ One fixture per `dal:ResourceRole` resolving independently for one class. A name
 
 **Resolved 2026-09-25 (Decision 1):** the guarded write's "distinct generated operations" above turned out to belong in Chapter 7.5 (P7, the reconciler), not Chapter 6 (P1/P2, which only ever describes the `Reject` shape). Option A: `key-claim-write`/`key-claim-write-dual` never branch on `onViolation`; the policy instead selects one reconciler operation per constraint (`key-claim-duplicate-audit` / `key-claim-merge-rewrite` / `key-claim-quarantine`). See the status record's "Slice 5 decisions" and the [Slice 5 VP](../validation/persistence-compiler-iri-sync-slice-5.md).
 
-**Also folded into this slice (human decision, 2026-09-25):** the registry-token digest-scheme relaxation deferred from Slice 3/4 (status record "Next steps" item 4, found in `identity-minting` M3) — `dal:DigestSchemeRequiredShape` and its Python mirror now exempt `dal:PositionDerivedEvent` + `dal:RegistryTokenDerivation` only.
+**Also folded into this slice (decided 2026-09-25):** the registry-token digest-scheme relaxation deferred from Slice 3/4 (status record "Next steps" item 4, found in `identity-minting` M3) — `dal:DigestSchemeRequiredShape` and its Python mirror now exempt `dal:PositionDerivedEvent` + `dal:RegistryTokenDerivation` only.
 
 ## Slice 6 — Documentation close-out
 
@@ -130,14 +130,14 @@ Slice 1 (epoch guard, urgent) ──┐
 Slice 2 (extras, low risk)     ─┼─► independent, any order, can run in parallel
 Slice 6 (docs close-out)        │   waits on whichever slices actually land
                                  │
-Slice 3 (identity, blocked) ────┴─► blocked on human resolution-model decision
+Slice 3 (identity, blocked) ────┴─► blocked on resolution-model decision
 Slice 4 (privacy)                   independent of 1/2/3, can start any time
 Slice 5 (uniqueness/claim)          independent of 1/2/3/4, can start any time
 ```
 
 Slice 1 should land first given its severity, but nothing structurally blocks starting Slices 2, 4, or 5 in parallel. Slice 3 is the only slice gated on a decision this plan does not make.
 
-## Human decision required before Slice 3
+## Decision required before Slice 3
 
 **Does resolving `dal:IdentityProfile` require extending the `Target` model with a `resourceRole` axis, or is there a better-fitting mechanism?** See the sketch's G2 finding for the concrete scenario that forces the question (one aggregate class needing different identity strategies for its own entity identity versus its event occurrences' identity, simultaneously).
 
@@ -145,4 +145,4 @@ Slice 1 should land first given its severity, but nothing structurally blocks st
 
 ## Validation approach
 
-Per copilot-instructions' human validation gate: each slice's VP names its positive and negative cases, the single `mise run check:persistence` command, and at least one adversarial probe (deliberately break the new check, show it fails, per the pattern already established in `docs/developer/validation/persistence-substrate-and-compiler.md`'s two adversarial probes). No slice is signed off without one.
+Per copilot-instructions' validation gate: each slice's VP names its positive and negative cases, the single `mise run check:persistence` command, and at least one adversarial probe (deliberately break the new check, show it fails, per the pattern already established in `docs/developer/validation/persistence-substrate-and-compiler.md`'s two adversarial probes). No slice is signed off without one.

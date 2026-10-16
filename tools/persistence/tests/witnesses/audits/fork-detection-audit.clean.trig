@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# No fork. Each revision has exactly one txn claim.
+@prefix pat: <https://example.org/lattice/patterns#> .
+
+<urn:g:txn> {
+  <urn:txn:a> pat:rev <urn:rev:1> .
+  <urn:txn:b> pat:rev <urn:rev:2> .
+}

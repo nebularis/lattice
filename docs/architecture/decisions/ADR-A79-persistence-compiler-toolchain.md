@@ -2,7 +2,7 @@
 
 # ADR-A79: Persistence compiler toolchain and template-based SPARQL generation
 
-**Status:** Accepted
+**Status:** Accepted, with an addendum (2026-10-10)
 **Date:** 2026-09-22
 **Supersedes:** none
 **Related:** ADR-A78, ADR-A80, [rdf-sparql-patterns-guide.md](../rdf-sparql-patterns-guide.md) Chapter 25, [persistence-profile-substrate sketch](../../developer/sketches/persistence-profile-substrate.md)
@@ -36,3 +36,10 @@ The compiler's output must also remain distinct from two runtime concerns this A
 - Because Mustache is logic-less, any conditional structure in a generated query (for example, choosing between the `NamedGraphBoundary` and `CompositePropertyBoundary` variant of the corrected CAS pattern) is a template *selection* decision made by `compile`'s Python code, recorded as which `dal:Template` a `dal:GeneratedOperation` uses, never a control-flow construct inside a template. Templates stay auditable by inspection.
 - An adopter who never runs `tools/persistence` and never adopts any LATTICE runtime library can still hand-copy a `dal:CompiledProfile` and, if they choose to run `instantiate` once, the resulting `.rq`/`.ru` files, into their own stack, which is the explicit design goal stated in the sketch.
 - This ADR does not itself deliver a Java equivalent of the compiler. If a future phase needs the compiler embedded in a JVM build pipeline, that is a new slice wrapping or reimplementing this one, not a retrofit of it.
+
+## Addendum, 2026-10-10
+
+[ADR-A123](ADR-A123-typed-operation-ir.md), accepted on 2026-10-10, supersedes decision 3's Mustache layer,
+decision 4's renderer clause, the consequence that templates stay auditable by inspection, and `dal:templatePath`
+in decision 1. Everything else here stands. The templates stay in use until the last slice of formal-methods
+track H's H2 retires them.

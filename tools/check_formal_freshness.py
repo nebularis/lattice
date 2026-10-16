@@ -13,7 +13,10 @@ Two checks, run per layer:
    committed at ``tools/proofs/<layer>/Kernel.thy`` byte for byte. A changed
    README that adds, removes or edits a datatype without regenerating
    ``Kernel.thy`` is caught here, exactly as a changed Surface README's
-   ``turtle-spec`` block is caught by ``literate_extract.py --check``.
+   ``turtle-spec`` block is caught by ``literate_extract.py --check``. Where
+   an ``isabelle-spec`` block also carries ``fun`` clauses (FM-D17), the
+   same comparison is made of their generated Python rendering at
+   ``tools/reference/<layer>/src/reference_<layer>/_kernel_defs.py``.
 
    This does **not** call that script's own ``--check`` mode directly, which
    also compares a layer's ``spec``/``vocab``/``shapes`` output and would
@@ -89,7 +92,13 @@ def check_kernel_freshness(layer: str) -> List[str]:
     shape_block_count = sum(1 for b in blocks if b.tag == "turtle-shapes")
     placeholder_shapes = [f"shapes/__freshness_check_placeholder_{i}.ttl" for i in range(shape_block_count)]
     try:
-        outputs = plan(blocks, layer, placeholder_shapes, proofs_root=str(PROOFS_ROOT))
+        outputs = plan(
+            blocks,
+            layer,
+            placeholder_shapes,
+            proofs_root=str(PROOFS_ROOT),
+            reference_root=str(REFERENCE_ROOT),
+        )
     except ValueError as error:
         return [f"{kernel_path}: could not extract {readme_path}'s isabelle-spec blocks ({error})"]
 
@@ -99,9 +108,19 @@ def check_kernel_freshness(layer: str) -> List[str]:
 
     expected = outputs[key]
     actual = kernel_path.read_text(encoding="utf-8") if kernel_path.exists() else None
+    drift = []
     if actual != expected:
-        return [f"{kernel_path}: drifted from {readme_path}'s isabelle-spec block(s) — regenerate with literate_extract.py --proofs-root tools/proofs"]
-    return []
+        drift.append(f"{kernel_path}: drifted from {readme_path}'s isabelle-spec block(s) — regenerate with literate_extract.py --proofs-root tools/proofs")
+
+    # FM-D17: a fun block's generated Python rendering, when one exists, is checked the same way.
+    python_key = f"@reference-root@/{layer}/src/reference_{layer}/_kernel_defs.py"
+    if python_key in outputs:
+        python_path = REFERENCE_ROOT / layer / "src" / f"reference_{layer}" / "_kernel_defs.py"
+        expected_python = outputs[python_key]
+        actual_python = python_path.read_text(encoding="utf-8") if python_path.exists() else None
+        if actual_python != expected_python:
+            drift.append(f"{python_path}: drifted from {readme_path}'s isabelle-spec fun clauses (FM-D17) — regenerate with literate_extract.py --proofs-root tools/proofs --reference-root tools/reference")
+    return drift
 
 
 def check_law_coverage(layer: str) -> List[str]:

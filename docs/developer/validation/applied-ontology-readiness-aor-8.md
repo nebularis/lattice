@@ -55,7 +55,7 @@ reports `61 passed`.
   (any-sufficient, `elg:E4`), and E1's condition now declares a required
   concept, with the declaration-warning comment.
 
-## Adversarial probe (run by the agent)
+## Adversarial probe
 
 | Mutation | Tests failed |
 |---|---|

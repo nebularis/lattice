@@ -3,13 +3,13 @@
 # Validation Pack: CCS C11a, nested states, history and concurrent regimes
 
 **Unit:** [`computable-contract-substrate`](../status/computable-contract-substrate.md)
-**Machine:** R (Claude Code). **Branch:** `ccs/c11a-nested-states`. Commits are the human's
+**Machine:** R. **Branch:** `ccs/c11a-nested-states`. Commits are the maintainer's
 **Plan and test cases:** [CCS plan](../plans/computable-contract-substrate.md) (C11A in detail)
 **Decisions:** ADR-A106, C11-Q1, C11-Q2
 
 ## Invariant
 
-Behaviour can express composite states, history, and concurrent regimes on one subject with stated interaction rules, as configuration data evaluated by C12 without inference. Phase 1 is paper: a sketch and an A-106 addendum, gated by the human before Phase 2 changes the ontology.
+Behaviour can express composite states, history, and concurrent regimes on one subject with stated interaction rules, as configuration data evaluated by C12 without inference. Phase 1 is paper: a sketch and an A-106 addendum, gated by a maintainer before Phase 2 changes the ontology.
 
 ## Test cases
 
@@ -35,7 +35,7 @@ Phase 2, the ontology change, which is briefed after the gate. The evaluator its
 
 ## Handoff
 
-Written by the building machine when the work is ready for the human to commit.
+Written by the building machine when the work is ready for the maintainer to commit.
 
 - **Built:** `docs/developer/sketches/nested-states-and-history.md`, the ADR-A106 addendum
   (Proposed), the ADR index row, and a pointer from the CCS sketch §7.10.
@@ -59,8 +59,8 @@ Written on machine R, 2026-10-02.
 
 ## Phase 2
 
-Built on machine R, 2026-10-02, after the human committed the brief and examples (`03d8e8e`).
-Not committed, pending the human.
+Built on machine R, 2026-10-02, after we committed the brief and examples (`03d8e8e`).
+Not committed, pending the maintainer.
 
 - **Built:** `behaviour` and `behaviour-runtime` 0.10.0 (additive), `behaviour-vocab` 0.10.0
   (breaking: `bhv:Live` and `bhv:LiveStates`), shapes 0.4.0 (breaking), `applied/capacity`'s

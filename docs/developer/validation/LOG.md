@@ -2,7 +2,11 @@
 
 # Validation Sign-off Log
 
-One row per slice passing its human validation gate (see `.github/copilot-instructions.md`, "Human validation gate protocol").
+**Retired 2026-10-10.** Kept as a record of the slices signed off before then. A slice's adversarial
+probes are now recorded in its unit's status record, and the maintainer's merge is the sign-off (skill
+`lattice-lifecycle`).
+
+One row per slice passing its validation gate (see `.github/copilot-instructions.md`, "Validation gate protocol").
 
 | Slice | Date | Signed off by | Accepted deviations |
 |---|---|---|---|

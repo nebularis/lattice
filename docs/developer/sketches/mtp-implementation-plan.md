@@ -350,7 +350,7 @@ Deliverables:
 Exit criteria:
 
 - Running the six seed operators against the three seed cassettes produces a mutation matrix with at least one `caught-*` and, per the L2 document's own expectation, likely at least one `silent` verdict.
-- The silent-set report (L2 sketch: "the most valuable output in the whole design") is generated and reviewed by a human before Phase 4 starts — per L2 §8, this step alone will likely surface a real gap in `ontology/mork/shapes/constraints.ttl` and should be filed as a follow-up against that file rather than silently absorbed into a lens.
+- The silent-set report (L2 sketch: "the most valuable output in the whole design") is generated and reviewed by a maintainer before Phase 4 starts — per L2 §8, this step alone will likely surface a real gap in `ontology/mork/shapes/constraints.ttl` and should be filed as a follow-up against that file rather than silently absorbed into a lens.
 - `cassette.not-isomorphic` and `cassette.decode-failed` gates both produce a genuine failure when deliberately fed a broken fixture, confirming the gate actually fires.
 
 ## Phase 4, lenses
@@ -401,7 +401,7 @@ This phase is intentionally left as a stub. It resumes once the LLM-backend inte
 1. `mtp/evalset.py` and `out/eval/*.json` — the held-out task suite (LLM Training.md §7).
 2. `eval-report` CI step; `eval.leakage`/`eval.thin` gates.
 3. First-pass lint-clean rate, tokens-per-decoded-triple, semantic F1, unsafe-confidence rate scoring.
-4. ρ(t) stratification by `mtp-version` (L2 reconciliation R4) and the human-Stage-5-decision companion metric for repair-loop investment (R5).
+4. ρ(t) stratification by `mtp-version` (L2 reconciliation R4) and the maintainer-Stage-5-decision companion metric for repair-loop investment (R5).
 5. Grammar/tool-schema compilation target (GBNF or structured-output schema, generated from `mcn_codebook.py`) — technically backend-independent, but sequenced here because it is only useful once there is an eval harness to prove it "kills the syntax error class outright" (LLM Training.md §6e).
 6. Retrieval index and SFT/LoRA corpus compilation targets (LLM Training.md §6e) — explicitly named as optional accelerants in the source design; both depend on decisions the backend-interface effort owns.
 7. R3b–e (retrieval manifest, Meta-SHACL groundedness/minting-hygiene shapes) — owned by the domain/community-detection system, tracked here only as a dependency.

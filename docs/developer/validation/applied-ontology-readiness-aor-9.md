@@ -55,7 +55,7 @@ Pass: `74 passed`. Also `mise run check:ontology-catalog`, which runs the exampl
   `_bound_interval_rule`.
 - ADR-A91's implementation notes.
 
-## Adversarial probe (run by the agent)
+## Adversarial probe
 
 | Mutation | Tests failed |
 |---|---|

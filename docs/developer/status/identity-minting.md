@@ -9,7 +9,7 @@
 
 ## Is this unit complete?
 
-**No.** Slices M0–M4 are planned. M4 ends with a walk-through that only a human can do.
+**No.** Slices M0–M4 are planned. M4 ends with a walk-through done by hand, from the specification alone.
 
 | Slice | Scope | Status |
 |---|---|---|
@@ -19,15 +19,15 @@
 | M3 | Java library, vector coverage of every recipe feature | ✅ Complete, 43/43 Java tests, 66/66 Python, 11 vectors files — see [VP](../validation/identity-minting-m3.md) |
 | M4 | Specification completion, READMEs, human walk-through | ⏳ Not started |
 
-## Decisions awaiting human review
+## Decisions awaiting the maintainer's review
 
 The plan records six agent design decisions (P1–P6): recipe stored as canonical JSON inside the compiled TTL, `dal:tuplePrefix` as a list, position widths as vocabulary, natural-key rendering, the JSON restrictions that make the recipe digest simple, and (taken in M1) `dal:keyConstraint` as the source of a derived or natural key, with its scope value first. P1–P6 are now built on; reversing one means reworking M1.
 
-## Open question for the human
+## Open question for the maintainer
 
 **Should `NfkcTrimUppercase` and `NfkcTrimLowercase` remove default-ignorable code points?** Today they do not, because NFKC keeps them. A SKU typed with a zero-width space therefore mints a different IRI from the same SKU without one, and a key of nothing but default-ignorables mints rather than failing with `EmptyKeyComponent`. `NfkcTrimCasefold` removes them. Options: (a) keep this, documented as specification §11 pitfall and vector `key-default-ignorable-only-survives`, (b) add a `remove_default_ignorable` step to both pipelines, which changes every recipe digest using them and needs a Default_Ignorable_Code_Point table. My recommendation is (b), before any adopter mints with these pipelines, since changing it later is a re-key. Both libraries implement the current definition, and the change would touch the tables, both libraries, the anchors and the specification together.
 
-## Agent decisions taken in M3 (for human review)
+## Decisions taken in M3 (for the maintainer's review)
 
 - **An empty secret is no secret** (`MissingSecret`), in both libraries.
 - **"Blank" means `White_Space` only** for the content-addressed `canonicalizer` input.

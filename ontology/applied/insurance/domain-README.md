@@ -11,9 +11,9 @@ epic, whose sketches describe the design each module implements.
 
 | Module | Content | State | Built in |
 |---|---|---|---|
-| [`common/`](common/README.md) | insurance scheme contracts (peril, mechanism, agency, consequence, harm subject, pool), liability role types (ADR-A102) | contracts and roles built. The loss event arrives with AIR-4.4 | AIR-1.2 |
-| [`peril/`](peril/README.md) | reference peril vocabulary: cause scheme, characteristics, collections, crosswalks | properties, the eight scheme declarations and the well-formedness shapes built (AIR-2.1). Concepts arrive from AIR-2.2 | Phase 2 |
-| `exposure/` | locations, assets, values, zones, dependencies, exposure units, loss history, requirements, liability exposure | not yet built | Phase 4 |
+| [`common/`](common/README.md) | insurance scheme contracts (peril, mechanism, agency, consequence, harm subject, pool), liability role types (ADR-A102), physical units and ISO 4217 currencies | contracts, roles, units and currencies built. The loss event arrives with AIR-4.4 | AIR-1.2, AIR-2.6 |
+| [`peril/`](peril/README.md) | reference peril vocabulary: cause scheme, characteristics, intensity measures and thresholds, collections, crosswalks | properties, the eight scheme declarations, the characteristic and companion schemes, the intensity measure scheme and value spaces, the well-formedness shapes, and the full 287-concept cause scheme in eight families (AIR-2.1, AIR-2.2, AIR-2.3, AIR-2.4, AIR-2.6) built. Collections and crosswalks arrive from AIR-2.5 and AIR-3.4 | Phase 2 |
+| [`exposure/`](exposure/README.md) | locations, assets, values, zones, dependencies, exposure units, loss history, requirements, liability exposure | the core (exposure set, location, legal entity and control, asset, interest, valuation, AIR-4.1) and zones, pool participation, assessments and attribute values across fifteen attribute families with peril-attribute links (AIR-4.2) built. Dependencies, losses and liability arrive from AIR-4.3 | Phase 4 |
 | `submission/` | packaging an exposure set version for underwriting | not yet built | AIR-6.1 |
 | `claims/` | loss cause chains recorded against a responding contract | deferred with `contract/` (epic D2) | Phase 6 |
 | `contract/` | term parameters, term relations, liability direction, optional compilation | deferred until Phases 1 to 4 are wired into Open CBAA (epic D2) | Phase 5 |

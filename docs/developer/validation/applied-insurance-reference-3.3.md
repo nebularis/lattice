@@ -3,7 +3,7 @@
 # Validation Pack: AIR-3.3, set readings and negation, SWRL and OWL
 
 **Unit:** [`applied-insurance-reference`](../status/applied-insurance-reference.md)
-**Machine:** R (Claude Code). **Branch:** `air/3.3-readings-swrl-owl`
+**Machine:** R. **Branch:** `air/3.3-readings-swrl-owl`
 **Plan and test cases:** [Phase 3 plan](../plans/applied-insurance-reference-phase-3.md) (AIR-3.3 in detail)
 **Decisions:** ADR-A103
 

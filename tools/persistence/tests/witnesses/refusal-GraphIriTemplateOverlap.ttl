@@ -1,0 +1,12 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# Two families whose graph prefixes are nested could claim one graph. Here one is inside the other.
+# base: baseline-single-class.ttl
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:ArchiveClass a dal:ClassScope ; dal:targetClass ex:ArchivedApplication .
+ex:ArchiveProfile a dal:AggregateBoundaryProfile ;
+    dal:appliesTo ex:ArchiveClass ;
+    dal:strategy dal:NamedGraphBoundary ;
+    dal:graphIriTemplate "urn:g:loan-application/archive/{id}" .

@@ -27,7 +27,7 @@ a `SchemeBinding` with a real handover date.
 This plan scopes four independent-enough work items, two of them as design
 proposals requiring a decision before implementation, one as a documentation
 task, and one as a test-implementation task. It does not implement any of
-them — implementation is scheduled separately, as agreed with the human.
+them — implementation is scheduled separately, as we agreed.
 
 ## Finding 5 — explicitly out of scope
 
@@ -76,7 +76,7 @@ stated invariant and its "R1: Regeneration determinism" law
   the choice auditable after the fact, rather than changing compiler
   behaviour. Weakest option: does not restore the R1 invariant's letter.
 
-**Recommendation for the human decision:** Option B as the primary mechanical
+**Recommendation for the maintainer decision:** Option B as the primary mechanical
 fix (cheapest, preserves current behaviour for the common unscoped case, makes
 divergence impossible by construction rather than merely observable), with
 Option A's explicit-hash-input framing folded in as a documentation
@@ -88,11 +88,11 @@ population's resolution instant is a required, explicit input instead).
 
 This changes Surface's stated determinism contract and CLI ergonomics.
 Per the Agentic Development Contract, implementation must not start before
-this option choice is confirmed with the human, and the accepted option's
+this option choice is confirmed with the maintainer, and the accepted option's
 effect on `ontology/surface/README.md`'s law register (R1, S2) should be
 reflected in the same slice that implements it.
 
-**Human Input:** Agree to proceed with option B, and doc corrections per A, as recommended.
+**Our input:** Agree to proceed with option B, and doc corrections per A, as recommended.
 
 ## Finding 2 — resolution plan: no resolution trace in Surface's provenance
 
@@ -173,12 +173,12 @@ would catch a future regression the way persistence's test would.
 
 | Slice | Scope | Depends on | Gate | Status |
 |---|---|---|---|---|
-| 1 | Finding 3 (documentation only) | none | Human review of the wording | Done |
+| 1 | Finding 3 (documentation only) | none | Review of the wording | Done |
 | 2 | Finding 4 (test implementation) | none | Test passes and demonstrably fails against a deliberately introduced `datetime.now()` call (mutation probe) | Done, mutation-probed in-session |
-| 3 | Finding 1 (Surface compiler + CLI + ontology law text) | Human decision between Options A/B/C above | Existing Surface suite stays green; a new test proves two runs with different wall-clock time and an identical source graph now either produce identical output (if the fallback default is used) or the same `CompileError` in both directions (Option B) | Done, statically verified; execution pending (no `rdflib` in this sandbox) |
+| 3 | Finding 1 (Surface compiler + CLI + ontology law text) | Decision between Options A/B/C above | Existing Surface suite stays green; a new test proves two runs with different wall-clock time and an identical source graph now either produce identical output (if the fallback default is used) or the same `CompileError` in both directions (Option B) | Done, statically verified; execution pending (no `rdflib` in this sandbox) |
 | 4 | Finding 2 (Surface ontology + compiler + manifest) | Slice 3 (needs the resolution-instant decision) | Manifest for a scoped-binding compile records the winning binding/context; a mutation probe on the recorded trace demonstrates it changes when the context does | Done, statically verified; execution pending |
 
-Slices 3 and 4 require human sign-off on the design option before their own
+Slices 3 and 4 require the maintainer's sign-off on the design option before their own
 implementation starts, consistent with the Agentic Development Contract's
 "Pause For Architectural Guidance."
 

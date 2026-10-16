@@ -120,9 +120,19 @@ def test_export_recipes_writes_each_recipe_and_refuses_a_tampered_one(tmp_path, 
     assert len(written) == 7
     exported = {json.loads(p.read_text())["strategy"]: json.loads(p.read_text()) for p in written}
     assert exported == anchor_recipes
-    node = next(iter(out.subjects(predicate=DAL.recipeDocument)))
+    # Tamper with a recipe the edit actually changes. The AdoptedIdentity recipe
+    # has no "urn:" in it, so picking an arbitrary node made this test fail
+    # about one run in seven. Choosing deterministically, and asserting the
+    # tamper took effect, removes the dependence on graph iteration order.
+    documents = sorted(
+        ((str(out.value(n, DAL.recipeDocument)), n) for n in out.subjects(predicate=DAL.recipeDocument)),
+        key=lambda pair: pair[0],
+    )
+    text, node = next(pair for pair in documents if "urn:" in pair[0])
+    tampered = text.replace("urn:", "urx:")
+    assert tampered != text
     doc = out.value(node, DAL.recipeDocument)
-    out.set((node, DAL.recipeDocument, type(doc)(str(doc).replace("urn:", "urx:"), datatype=RDF_JSON)))
+    out.set((node, DAL.recipeDocument, type(doc)(tampered, datatype=RDF_JSON)))
     with pytest.raises(ValueError):
         export_recipes(out, tmp_path / "tampered")
 

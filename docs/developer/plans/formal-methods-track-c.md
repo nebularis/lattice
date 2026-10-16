@@ -76,7 +76,7 @@ checked model and a recommendation, not a mechanised law).
   not only reported as a pass/fail count. **Finding:** the overlap rule cannot be left unstated;
   three candidates are named (forbid overlap by a new Vocabulary shape, order sources by an
   explicit precedence rule, or allow free union and require `broader`'s transitive closure to
-  stay acyclic) with no choice made among them here — that choice is the human's, informed by
+  stay acyclic) with no choice made among them here — that choice is the maintainer's, informed by
   this evidence, for whichever ADR accepts scheme composition.
 
 ### C2.1: well-formedness facts, and a re-run — done
@@ -141,7 +141,7 @@ accidentally unsatisfiable everywhere.
 ## 6. Out of scope
 
 C3 (slot exclusivity and exhaustiveness, SMT, CCS C13a — a later slice). Writing the shared
-Vocabulary ADR (a human decision; this track's job is the evidence for it). Any change under
+Vocabulary ADR (the maintainer's decision, this track's job is the evidence for it). Any change under
 `ontology/` (this track produces a model and a recommendation, not a merged ontology edit).
 Eligibility's hierarchical-match addendum (`insurml-typing.md` §6.1's dependent follow-on),
 until the Vocabulary ADR itself is accepted.

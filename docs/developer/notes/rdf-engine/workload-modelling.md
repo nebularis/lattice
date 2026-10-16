@@ -33,7 +33,7 @@ before writing one, and measure before optimising.
 13. [Test infrastructure for a small FOSS project](#13-test-infrastructure-for-a-small-foss-project)
 14. [Relationship to G0 and the Store SPI](#14-relationship-to-g0-and-the-store-spi)
 15. [Risks and open questions](#15-risks-and-open-questions)
-16. [Decisions for the human](#16-decisions-for-the-human)
+16. [Decisions for the maintainer](#16-decisions-for-the-maintainer)
 17. [Partitioning: one store per tenant, not one store for everyone](#17-partitioning-one-store-per-tenant-not-one-store-for-everyone)
 18. [Distributed and federated queries across partitions](#18-distributed-and-federated-queries-across-partitions)
 19. [Coverage completeness as interval geometry, not graph traversal](#19-coverage-completeness-as-interval-geometry-not-graph-traversal)
@@ -663,7 +663,7 @@ though the project should still track it as a recurring line item rather than an
 
 ## 14. Relationship to G0 and the Store SPI
 
-This paper is the detailed design the human asked be put aside when paper 3 named G0 only in
+This paper is the detailed design we asked be put aside when paper 3 named G0 only in
 outline ("putting aside that the SPI layer/API isn't written yet"). ADR-A75's three-tier Store SPI
 is still Proposed and unimplemented, so G0's harness cannot yet target it. Two options, not decided
 here:
@@ -692,7 +692,7 @@ measurement sooner is worth a later rework of a thin calling layer.
 
 ---
 
-## 16. Decisions for the human
+## 16. Decisions for the maintainer
 
 | # | Decision | Options | Recommendation (judgement) |
 |---|---|---|---|
@@ -716,7 +716,7 @@ measurement sooner is worth a later rework of a thin calling layer.
 ### 17.1 This is not a new idea. It is an existing, unratified LATTICE decision
 
 ADR-A54 (`docs/architecture/decisions/ADR-A54-dataset-topology.md`, status Proposed) already answers
-most of the question the human raised. Restated here because it bears directly on every storage and
+most of the question we raised. Restated here because it bears directly on every storage and
 throughput figure in §7 and §8:
 
 | Tier | Isolation | Cross-tenant query | Cost at scale | ADR-A54's verdict |
@@ -725,7 +725,7 @@ throughput figure in §7 and §8:
 | **Dataset-per-tenant, shared store process** | strong at query scope | federation only | moderate | **default** |
 | Store-per-tenant | strongest | federation | expensive | large or regulated tenants only |
 
-ADR-A54 already rejects the weaker form of the human's suggestion (a named graph per tenant inside
+ADR-A54 already rejects the weaker form of our suggestion (a named graph per tenant inside
 one shared dataset), for the reason its own table states: a named graph is an application-layer
 convention, not a store-enforced boundary, and the repository's test taxonomy already names the
 attack this leaves open (`cross-tenant probe`, L8, §12 L8-03). The unit this section uses is

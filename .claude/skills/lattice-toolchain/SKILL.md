@@ -31,21 +31,26 @@ are in [environment-lessons.md](environment-lessons.md), beside this file.
 | Java under `platform/` | `check:java` |
 | an app under `apps/` | `check:frontend`, then `test:frontend` |
 | a formal-methods artefact | `check:formal-freshness`, and `check:proofs` where Isabelle is installed |
+| generated SPARQL, or a test that runs it on an engine | `check:persistence`, and `check:persistence-oxigraph` for the second engine (skill `lattice-triple-stores`) |
+| a benchmark under `benchmark/` | its own `check:<area>-<topic>`, run on demand, never part of `check` (ADR-A124) |
 | `AGENTS.md` or a skill | `build:agent-guidance`, then `check:agent-guidance` |
 | anything to be committed | `check:deny-terms` (skill `lattice-publication-hygiene`) |
 
 ## Is the code under test this checkout's?
 
-Editable installs can point at another clone. Before running anything that imports `persistence`,
+Each checkout, git worktrees included, has its own `.venv`, which `mise.toml` creates and which `mise
+run`, `mise exec` and an activated shell use. A bare `python` in a shell without mise activated is
+the global interpreter, whose editable installs can point at another clone. So run Python through
+`mise run` or `mise exec -- python`, and before running anything that imports `persistence`,
 `lattice_minting` or `surface`:
 
 ```bash
-python -c "import persistence, lattice_minting, surface; print(persistence.__file__, lattice_minting.__file__, surface.__file__)"
+mise exec -- python -c "import persistence, lattice_minting, surface; print(persistence.__file__, lattice_minting.__file__, surface.__file__)"
 ```
 
-If a path is outside this checkout, ask the human to re-run the matching `mise run bootstrap:*`
-task, or put `tools/persistence/src`, `packages/minting/python/src` and `tools/surface/src` first on
-`PYTHONPATH`.
+Every path must be inside this checkout. If not, or if the import fails, run `mise run bootstrap` in
+this checkout. Working in several checkouts at once, and integrating a bundle from a machine that
+cannot push, are in the developer guide, §9.
 
 ## Shell activation
 
@@ -73,7 +78,7 @@ Some networks reach public registries only through a mirror, or not at all.
 - Fix it in **user-level** configuration (`pip config file -f user` prints pip's), pointing at an
   approved mirror. Never edit repository files for it, never route around the block, and never
   record a mirror's hostname, an index URL or a credential in the repository or in published notes.
-- A package missing from a mirror, or a registry that cannot be reached, is handed to the human with
+- A package missing from a mirror, or a registry that cannot be reached, is handed to the maintainer with
   the exact command. Do not retry it.
 
 ## Rules for tasks and tools
@@ -90,4 +95,4 @@ Some networks reach public registries only through a mirror, or not at all.
   and `bootstrap:<pkg>` and `check:<pkg>` tasks wired into the aggregates.
 - A new build output outside `build/` or `.build/<name>/`, or a Maven module outside
   `platform/pom.xml`, needs adding to `clean` and `clean-win`, which list exact paths.
-- Ask the human to start Docker Desktop if its engine is not running. Do not start it yourself.
+- Ask the maintainer to start Docker Desktop if its engine is not running. Do not start it yourself.

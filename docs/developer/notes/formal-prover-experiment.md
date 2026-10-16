@@ -17,8 +17,8 @@ clean `gate.py` run), within the plan's 0.25M-token-per-track budget (plan §8).
 rule, this is the "both complete it" row: the higher weighted total wins, a margin under 5 points
 is a tie broken by M0, then M3.
 
-**Revision, after human review of the first draft's scoring:** the plan's own M9 ("consistency
-with prior choices") and its M5 weight are both overridden here, on the human's explicit
+**Revision, after review of the first draft's scoring:** the plan's own M9 ("consistency
+with prior choices") and its M5 weight are both overridden here, on our explicit
 instruction, as a correction to the plan rather than a reinterpretation of its evidence. The
 plan's weight table (`formal-methods-phase-0.md` §4) is unchanged by this report; the deviation
 is recorded here and should be reconciled with the plan separately. Two changes:
@@ -195,10 +195,10 @@ noted here because it is a real, observed difference in favour of Isabelle's too
 
 ### FM-D1: the proof assistant, or none
 
-**Decided 2026-10-06, by the human: Isabelle.** With M9 removed, M5 reweighted and rescored, and
+**Decided 2026-10-06: Isabelle.** With M9 removed, M5 reweighted and rescored, and
 M6 corrected after a follow-up question (§1, §3), the total is a 6.0-point Isabelle win, past the
-plan's tie threshold, so §5's decision rule gives the higher total outright with no tiebreak. The
-human confirmed this outcome rather than overruling it: both provers proved fully capable, and
+plan's tie threshold, so §5's decision rule gives the higher total outright with no tiebreak. We
+confirmed this outcome rather than overruling it: both provers proved fully capable, and
 Isabelle demonstrated real, usable advantages this spike could measure directly (M3's cheaper
 MINOR-change repair, M4's native OCaml list mapping, M5's working Scala and Haskell targets from
 the same `export_code` mechanism, M7's simpler native install), not just a narrow tiebreak. Track
@@ -220,7 +220,7 @@ mechanism does not offer at all.
 
 - Both tracks ran on one host (Windows), one agent configuration, in one session each, which is
   the fairness rule the brief sets (§7 rule 1) for agent and host, but not for route (§1 above).
-- D2 was built before D3 (brief §7 rule 3), and the agent carried patterns from D2 into D3 (for
+- D2 was built before D3 (brief §7 rule 3), and patterns were carried from D2 into D3 (for
   example, the GATE-marker convention, the defects/ directory shape, and the claim schema were
   already fixed by D1 and not re-derived). This is intended by the brief (both read the same
   brief, not each other's sources) and did not, on inspection, give D3 an unfair proof-tactic

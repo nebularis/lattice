@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# A conforming shape scope. No shipped example uses one, so without this the
+# shape could be shown to fire but never to accept anything. A file called
+# ok-X.ttl is a fixture that shape X accepts.
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+@prefix sh:  <http://www.w3.org/ns/shacl#> .
+
+ex:ThingShape a sh:NodeShape ; sh:targetClass ex:Thing .
+ex:ThingByShape a dal:ShapeScope ; dal:targetShape ex:ThingShape ; dal:priority 5 .

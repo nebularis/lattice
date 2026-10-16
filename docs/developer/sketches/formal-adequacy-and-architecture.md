@@ -109,7 +109,7 @@ order are all settled by the canonical form.
 | coverage | positive and negative fixtures. A law with no negative fixture is listed |
 
 A disagreement in the hand-written part is a defect in the shape, the theory, the reference or the
-fixture, and a human decides which. The adjudication rate is a standing metric (epic §6).
+fixture, and the maintainer decides which. The adjudication rate is a standing metric (epic §6).
 
 ### 4.5 Unformalised semantic commitments
 

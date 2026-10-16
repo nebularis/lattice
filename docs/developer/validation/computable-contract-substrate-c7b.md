@@ -3,7 +3,7 @@
 # Validation Pack: CCS C7b, terms in time
 
 **Unit:** [`computable-contract-substrate`](../status/computable-contract-substrate.md)
-**Machine:** R (Claude Code). **Branch:** `ccs/c7b-terms-in-time`. Commits are the human's, and the
+**Machine:** R. **Branch:** `ccs/c7b-terms-in-time`. Commits are the maintainer's, and the
 change is merged into `main` before its release tags are created
 **Plan and test cases:** [CCS plan](../plans/computable-contract-substrate.md) (C7b in detail)
 **Decisions:** ADR-A104 decisions 6, 13 and 14 and its 2026-10-04 addendum, ADR-A94, ADR-A113. Laws
@@ -43,7 +43,7 @@ Evaluation of due ranges, recurrences, ending and survival (C12, C13). What is r
 
 ## Handoff
 
-Written by the building machine when the work is ready for the human to commit.
+Written by the building machine when the work is ready for the maintainer to commit.
 
 Phase 1, examples first (ADR-A-C2), 2026-10-05:
 
@@ -68,7 +68,7 @@ Phase 1, examples first (ADR-A-C2), 2026-10-05:
     regime)
   - ADR-A115 (Quantification context values, Proposed) and the ADR-A104 addendum "terms in time"
     (Proposed), with the ADR index row
-- **Run by the agent:** each example against the C7a model and the structural and constraint shapes
+- **Run:** each example against the C7a model and the structural and constraint shapes
   of Foundation, Vocabulary, Quantification, Party, Eligibility, Wording, Behaviour and Instrument,
   without inference. `context-anchor.ttl`, `trial-reporting.ttl` and `service-renewal.ttl` conform.
   `lease-expiry.ttl` and `licence-survival.ttl` fail only where the model is to change: C7a's expiry
@@ -105,7 +105,7 @@ Phase 2, the model, 2026-10-05:
     and the unit-bearing offsets `qnt:lowerOffsetBy` and `qnt:upperOffsetBy`. Shapes 0.2.0: a
     context value's one role and space, and an anchor binding's offsets in one form. The README
     gains an eleventh design decision, a class section with two diagrams, a table of anchored
-    windows, an open question for HQ-3, and release notes. At the human's request (2026-10-05), a
+    windows, an open question for HQ-3, and release notes. At our request (2026-10-05), a
     guided tour (§5.1, thirteen steps, from value spaces to the law registers) and diagrams for
     range containment, law prerequisites and the layer's consumers: 20 diagrams, all rendered, with
     no change to the generated files
@@ -142,7 +142,7 @@ Phase 2, the model, 2026-10-05:
 
 ## Results
 
-Run by the agent on machine R, 2026-10-05, with every tool package importing from this checkout.
+Run on machine R, 2026-10-05, with every tool package importing from this checkout.
 
 | Row | Result |
 |---|---|

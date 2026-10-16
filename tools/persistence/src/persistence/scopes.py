@@ -18,6 +18,7 @@ from typing import Optional
 
 from rdflib import RDFS, Graph, URIRef
 
+from .functional import functional_value
 from .namespaces import DAL, SH
 
 
@@ -77,11 +78,11 @@ def load_scope(graph: Graph, scope: URIRef) -> Optional[ScopeInfo]:
     kind = scope_kind(graph, scope)
     if kind is None:
         return None
-    priority_lit = graph.value(scope, DAL.priority)
+    priority_lit = functional_value(graph, scope, DAL.priority)
     priority = int(priority_lit) if priority_lit is not None else 0
     requires_reasoning = kind == "EquivalentClassScope"
     if kind == "ClassScope":
-        include_sub = graph.value(scope, DAL.includeSubclasses)
+        include_sub = functional_value(graph, scope, DAL.includeSubclasses)
         # Only entailed (not asserted rdfs:subClassOf*) subclass membership
         # needs reasoning. This compiler always walks the asserted
         # rdfs:subClassOf* closure (a plain property path, sketch §3.2), so
@@ -117,10 +118,10 @@ def matches(graph: Graph, scope: ScopeInfo, target: Target) -> bool:
     cls = target.cls
 
     if scope.kind == "ClassScope":
-        declared = graph.value(scope.iri, DAL.targetClass)
+        declared = functional_value(graph, scope.iri, DAL.targetClass)
         if declared == cls:
             return True
-        include_sub = graph.value(scope.iri, DAL.includeSubclasses)
+        include_sub = functional_value(graph, scope.iri, DAL.includeSubclasses)
         if include_sub is not None and bool(include_sub):
             # asserted rdfs:subClassOf* closure only, never entailment
             subclasses = graph.transitive_subjects(RDFS.subClassOf, declared)
@@ -128,11 +129,11 @@ def matches(graph: Graph, scope: ScopeInfo, target: Target) -> bool:
         return False
 
     if scope.kind == "NamespaceScope":
-        prefix = graph.value(scope.iri, DAL.iriPrefix)
+        prefix = functional_value(graph, scope.iri, DAL.iriPrefix)
         return prefix is not None and str(cls).startswith(str(prefix))
 
     if scope.kind == "ShapeScope":
-        shape = graph.value(scope.iri, DAL.targetShape)
+        shape = functional_value(graph, scope.iri, DAL.targetShape)
         if shape is None:
             return False
         shape_target = graph.value(shape, SH.targetClass)
@@ -144,7 +145,7 @@ def matches(graph: Graph, scope: ScopeInfo, target: Target) -> bool:
         # when that class is syntactically named inside the equivalence
         # expression's owl:intersectionOf list. Full OWL entailment beyond
         # this is out of scope for a compiler with no reasoner dependency.
-        equiv = graph.value(scope.iri, DAL.equivalentTo)
+        equiv = functional_value(graph, scope.iri, DAL.equivalentTo)
         if equiv is None:
             return False
         from rdflib import OWL, RDF as _RDF
@@ -194,14 +195,14 @@ def graph_prefix_for_target(graph: Graph, target: Target) -> Optional[str]:
     from rdflib import RDF
 
     for profile in graph.subjects(RDF.type, DAL.AggregateBoundaryProfile):
-        scope = graph.value(profile, DAL.appliesTo)
+        scope = functional_value(graph, profile, DAL.appliesTo)
         if scope is None:
             continue
         info = load_scope(graph, scope)
         if info is None or info.kind == "GraphPatternScope":
             continue
         if matches(graph, info, target):
-            template = graph.value(profile, DAL.graphIriTemplate)
+            template = functional_value(graph, profile, DAL.graphIriTemplate)
             if template:
                 return str(template).split("{", 1)[0]
     return None

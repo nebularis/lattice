@@ -59,9 +59,9 @@ outline level, for when their own slice starts.
 
 | Model | System | Why it is prioritised (or deferred) |
 |---|---|---|
-| **A. Guarded CAS** | the core write protocol: epoch guard, row-epoch rebase, sequence CAS, tombstone guard, transaction-claim exclusion, head/chain maintenance | **H5, first.** This is the write path every other guarantee in the layer depends on; its expected finding (two writers both committing under `detectsWriteWriteConflict = false`) is a direct reproduction of the review's own worked defect, D.3 A6 |
+| **A. Guarded CAS** | the core write protocol: epoch guard, row-epoch rebase, sequence CAS, tombstone guard, transaction-claim exclusion, head/chain maintenance. Parametrised by boundary strategy since 2026-10-10: under the composite strategy the delete set is read at execution, and the model checks that a writer never changes a triple outside its aggregate's delete set ([ownership sketch §15](persistence-aggregate-ownership.md#15-effect-on-the-later-track-h-slices)) | **H5, first.** This is the write path every other guarantee in the layer depends on; its expected finding (two writers both committing under `detectsWriteWriteConflict = false`) is a direct reproduction of the review's own worked defect, D.3 A6 |
 | **B. Append form** | server-side counter allocation, `opSeq`, dataset/row/transaction guards | **H5.** Directly reproduces two already-recorded defects (A2 reader-skip, A4 double-append) as regression proofs, the cheapest possible first evidence that the modelling approach is faithful |
-| **C. First write / create race** | `AbsentRow` vs `PreCreatedRow`, concurrent creators | **H5.** Tests the review's flagged *default-unsafe baseline* (`dal:AbsentRow`) directly — a finding with an immediate consequence for the compiler's own warning text |
+| **C. First write / create race** | `AbsentRow` vs `PreCreatedRow`, concurrent creators, including the composite create of the ownership design, where two creators insert the same version-row statement ([ownership sketch §15](persistence-aggregate-ownership.md#15-effect-on-the-later-track-h-slices)) | **H5.** Tests the review's flagged *default-unsafe baseline* (`dal:AbsentRow`) directly — a finding with an immediate consequence for the compiler's own warning text |
 | **D. Key claim** | the three key-placement patterns (P1/P2/P3), rotation, retire, external allocation | **H5.** Rotation-under-concurrent-retire is named by the review as a genuine open question, not a known defect — the first model in this set that might find something nobody has found by hand yet |
 | E. Outcome classification | the confirmation decision procedure | H6, next: depends on A-D's guard semantics being modelled first |
 | F. Epoch bump and restore | quiesce, allocation, rebase, double-restore | H6 |
@@ -69,10 +69,11 @@ outline level, for when their own slice starts.
 | H. Global read (dataset tier) | HLC stamping, lag budget, late-arrival audit | H7 |
 | I. Fencing and external locks | lease/fence check-and-advance | H7. Directly reproduces a recorded defect (§16.2, checked but not advanced) |
 | J. Infrastructure-graph writers | the epoch authority, rotation job, retention job, concurrent readers | H7. Expected to be the single richest source of new findings (nothing here is guarded at all today, main sketch §3) |
-| K. Erasure | the full enumerated store list, including the out-of-band key-placement allocator | H8, gates any deployment holding personal data before this track calls itself done for Persistence |
-| L. Multi-aggregate writes | deadlock/livelock under each `dal:deadlockPolicy` | H8 |
-| M. Bulk load and cutover | offline positions, staging, gated cutover | H8 |
+| K. Erasure | the full enumerated store list, including the out-of-band key-placement allocator, and composite members reached through the owned path ([ownership sketch §15](persistence-aggregate-ownership.md#15-effect-on-the-later-track-h-slices)) | H8, gates any deployment holding personal data before this track calls itself done for Persistence |
+| L. Multi-aggregate writes | deadlock/livelock under each `dal:deadlockPolicy`, and references across aggregates: a reference added into an aggregate while it is deleted ([ownership sketch §15](persistence-aggregate-ownership.md#15-effect-on-the-later-track-h-slices)) | H8 |
+| M. Bulk load and cutover | offline positions, staging, gated cutover, and an out-of-band load that makes a node a member of two aggregates ([ownership sketch §15](persistence-aggregate-ownership.md#15-effect-on-the-later-track-h-slices)) | H8 |
 | N. Shard-count migration | moving rows between shard graphs under an acknowledged epoch bump | H8 |
+| O. Aggregate units | per-unit version rows: a removal bumps and tombstones the units below it, creating or removing a child is a write at the parent's level, and a cross-level invariant has its own row ([ownership sketch §11](persistence-aggregate-ownership.md#11-deferred-units-and-level-operations)). Seeded from [`concurrency_model.py`](../../../spikes/persistence-aggregate-ownership/concurrency_model.py), whose D0 to D4 table it would verify beyond pairs of writers and on a store that serialises writers ([review](../notes/persistence-aggregate-ownership-review.md) S5) | deferred. Built only if units are revived (AO-Q5) |
 
 ## 4. Grounding: a model is only as good as its fidelity
 

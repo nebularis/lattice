@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# Two targets in one graph family resolve to different receipt models.
+# The shipped example names ex:Widget only through dal:coversClass, and compile
+# discovers targets through dal:targetClass alone, so ex:Widget is never
+# compiled and the warning never leaves compile. This adds the scope that makes
+# ex:Widget a target. See the status record, finding F-1.
+# base: warning-mixed-receipt-model.ttl
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+@prefix sh:  <http://www.w3.org/ns/shacl#> .
+
+ex:WidgetClass a dal:ClassScope ; dal:targetClass ex:Widget ; dal:priority 0 .

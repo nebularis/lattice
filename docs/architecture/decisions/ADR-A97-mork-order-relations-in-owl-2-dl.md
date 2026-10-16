@@ -51,7 +51,7 @@ while being declared irreflexive.
 
 - Mork 0.3.0 → 0.4.0, MINOR, together with the repair of five GCI axiom
   annotations the OWL API could not parse. Every graph that conformed before still
-  conforms. The human accepted MINOR on 2026-09-25 since MORK has no
+  conforms. We accepted MINOR on 2026-09-25 since MORK has no
   consumers yet. The policy's letter would call a new Violation shape MAJOR.
 - A reasoner no longer reports a precedence cycle as an inconsistency.
   Running the shapes is the check.

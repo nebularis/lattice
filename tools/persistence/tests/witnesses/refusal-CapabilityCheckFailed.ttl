@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# A supplied capability record that cannot meet the configuration's own
+# requirements fails the compile.
+# base: baseline-single-class.ttl
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:WeakEnvironment a dal:CapabilitySpec ;
+    dal:appliesToTarget          ex:LoanApplication ;
+    dal:providesCas              "NONE" ;
+    dal:providesReasoning        false ;
+    dal:providesCommitValidation "NONE" ;
+    dal:providesSingleWriter     false .

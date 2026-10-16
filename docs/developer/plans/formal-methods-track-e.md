@@ -42,7 +42,7 @@ than being rewritten.
 | the literate-generation direction for Isabelle datatypes | **decided and done:** `isabelle-spec` fenced blocks, extending `tools/literate_extract.py` additively (new `--proofs-root` argument; every existing Turtle invocation unaffected) | nothing further |
 | track C's C2 (binding resolution, design-time model) | **done**, but the overlap-rule decision its own checked model surfaced (what composition does when two composed schemes disagree about a shared concept's `broader` parent) is not yet made, and the Vocabulary ADR insurml-alignment's IMA-D4a names is not yet drafted | E1.3 (binding resolution) specifically. E1.1 does not depend on it; E1.2 is retired (see §3) |
 | track B's B4 (the evaluation context's combinator algebra, rounding/residual rule) | not started, waits on CCS's C12 (`formal-methods-track-b.md` status) | the rounding/residual theorem, now retired from this plan's E1.2 and reassigned to E3/E4 once B4 states it precisely |
-| an Isabelle image | does not exist in this spike (deferred, human instruction, 2026-10-06, confirmed again for E1: native/local route only) | epic E9's "only an image route's verdict is recorded" rule, and gate D's own smoke-suite criterion. Track E proceeds on native evidence; closing this before claims are recorded for gate E, not gate D, is the human's call to make when it is needed |
+| an Isabelle image | does not exist in this spike (deferred, our instruction, 2026-10-06, confirmed again for E1: native/local route only) | epic E9's "only an image route's verdict is recorded" rule, and gate D's own smoke-suite criterion. Track E proceeds on native evidence; closing this before claims are recorded for gate E, not gate D, is our call to make when it is needed |
 
 ## 3. Slices
 
@@ -73,8 +73,8 @@ than being rewritten.
   moved content is verbatim.
 - **Validated:** the generated datatype and the spike's hand-written one are isomorphic (same
   three constructors, same names, confirmed by inspection — they are the same line of text).
-  `isabelle build -d tools/proofs/eligibility Eligibility` compiles clean (native route, per the
-  human's instruction to use native/local, not an image). `python tools/proofs/gate.py
+  `isabelle build -d tools/proofs/eligibility Eligibility` compiles clean (native route, per our
+  instruction to use native/local, not an image). `python tools/proofs/gate.py
   tools/proofs/eligibility` passes: AQ, TA1, TA2, TL1-some, TL1-every, TL2, TL3a, TL3b all
   `passed`, no digest mismatch, no banned marker.
 

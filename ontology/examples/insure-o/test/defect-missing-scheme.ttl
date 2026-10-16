@@ -4,7 +4,7 @@
 @prefix ins: <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
 @prefix voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
 
-ino:defect-01 a ins:Element ;
+ino:defect-01 a ino:PolicyDocument ;
     ino:hasPerilType <https://example.org/unknown/peril> .
 
 ino:defect-contract a voc:SchemeContract ;

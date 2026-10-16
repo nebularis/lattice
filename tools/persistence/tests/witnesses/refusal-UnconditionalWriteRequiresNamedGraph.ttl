@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# An unconditional write goes into the root's named graph. A target with no boundary has none.
+# base: value-based-cas.ttl
+# remove: ex:OrderStatusConcurrencyProfile dal:concurrencyProfile dal:Optimistic
+# remove: ex:OrderStatusConcurrencyProfile dal:valueGuardProperty
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:OrderStatusConcurrencyProfile dal:concurrencyProfile dal:ProvidedConcurrency .

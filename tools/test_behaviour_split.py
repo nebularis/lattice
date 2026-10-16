@@ -54,8 +54,18 @@ def _graph(*paths: Path) -> Graph:
 SHAPES = _graph(LAYER / "shapes" / "structural.ttl", LAYER / "shapes" / "constraints.ttl")
 
 
+@pytest.fixture(scope="module", autouse=True)
+def _cached_graphs(request: pytest.FixtureRequest, graph_cache, validated) -> None:
+    """TM1/TM2: MODEL used to be rebuilt by every `_conforms` call; now parsed
+    once, shared across the whole suite (python-test-melting)."""
+    module = request.module
+    module.MODEL = graph_cache(CONFIG, RUNTIME, VOCAB)
+    module.SHAPES = graph_cache(LAYER / "shapes" / "structural.ttl", LAYER / "shapes" / "constraints.ttl")
+    module.validate = validated
+
+
 def _conforms(data: Graph) -> bool:
-    return validate(_graph(CONFIG, RUNTIME, VOCAB) + data, shacl_graph=SHAPES, inference="none", advanced=True)[0]
+    return validate(MODEL + data, shacl_graph=SHAPES, inference="none", advanced=True)[0]
 
 
 PREFIXES = f"@prefix bhv: <{BHV}> .\n@prefix ex: <https://example.org/b/> .\n"
@@ -76,7 +86,7 @@ def _declared_classes(path: Path) -> set:
 def test_c10_01_imports() -> None:
     config, runtime = _graph(CONFIG), _graph(RUNTIME)
     assert set(config.objects(None, OWL.imports)) == {URIRef(LATTICE + f"{layer}") for layer in (
-        "foundation/0.4.0", "vocabulary/0.4.0", "quantification/0.7.0", "party/0.8.0", "eligibility/0.10.0")}
+        "foundation/0.4.0", "vocabulary/0.4.0", "quantification/0.8.0", "party/0.9.0", "eligibility/0.12.0")}
     assert {str(i).rsplit("/", 1)[0] for i in runtime.objects(None, OWL.imports)} == {LATTICE + "behaviour"}
 
 

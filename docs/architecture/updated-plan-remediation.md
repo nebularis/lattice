@@ -72,9 +72,9 @@ It is not yet internally consistent enough to start implementation without an ar
 The updated plan is broadly compatible with copilot-instructions.md:
 
 - Both require design and ADR work before implementation.
-- Both require human validation rather than agent-run integration validation by default.
+- Both require validation rather than agent-run integration validation by default.
 - Both require documentation changes in the same slice.
-- The plan’s Validation Pack and human-gate model strengthen the existing contract.
+- The plan’s Validation Pack and validation-gate model strengthen the existing contract.
 
 The instructions should be updated after the plan is ratified to make the new process enforceable:
 
@@ -82,7 +82,7 @@ The instructions should be updated after the plan is ratified to make the new pr
 - Require a traceability row and explicit non-coverage statement.
 - State that `mise` remains the only task-runner authority unless ADR-A29 is superseded.
 - Add the graph-primary authority rule and the artifact-realm exception once A74 is accepted.
-- Require agents to stop for human architectural guidance at each decision slice, which the existing instructions already require in principle.
+- Require agents to stop for the maintainer's architectural guidance at each decision slice, which the existing instructions already require in principle.
 - Replace the blanket “all listed architecture documents must be updated” wording with a requirement to update each affected normative document, while retaining the existing minimum set for cross-cutting changes.
 
 No repository files were changed and no validation commands were run.

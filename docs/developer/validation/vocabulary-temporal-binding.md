@@ -76,7 +76,7 @@ in `test_determinism.py`; VTB-12 and 14 in `test_consumer_boundary.py`.
 No live RDF store, fuzzy concept resolution, scope-membership derivation,
 concept-level version alignment, or backend-specific runtime behaviour is tested.
 
-## Human mutation probe
+## Mutation probe
 
 Disable the strict-superset comparison in the resolver and rerun VTB-06. The
 specific binding must no longer be accepted as the selected result. Retarget or

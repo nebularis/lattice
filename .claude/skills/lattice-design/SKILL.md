@@ -1,6 +1,6 @@
 ---
 name: lattice-design
-description: How to design in LATTICE and projects built on it. Use when writing or revising a sketch, a plan or slice brief, an ADR, or design questions for the human, and whenever presenting options for an architecture or modelling decision.
+description: How to design in LATTICE and projects built on it. Use when writing or revising a sketch, a plan or slice brief, an ADR, or design questions for the maintainer, and whenever presenting options for an architecture or modelling decision.
 ---
 
 # Designing in LATTICE
@@ -33,21 +33,30 @@ hard-codes one domain's practice as the only way is wrong at the substrate.
 - Check the design against the roadmap: the epic plans, the held design questions, and the slices
   waiting on this one. A design that works now and makes a roadmap item harder is wrong.
 - Say a design decision once, and cross-reference it.
+- A design that depends on how a triple store evaluates SPARQL cites the finding in
+  [docs/architecture/triple-store-discovery.md](../../../docs/architecture/triple-store-discovery.md) it rests on, or probes the
+  store and adds one first (skill `lattice-triple-stores`). The specification and a store often differ.
 
-## Presenting a question to the human
+## Presenting a question to the maintainer
 
 1. **Set the scene.** What exists today, what is missing, and why it matters. State the facts about
    the current model that constrain the options, each checked against the source.
-2. **Draw a picture** where the subject is structural or has more than two parts. Mermaid renders
-   on GitHub. Check every diagram renders before handing off, for example by loading it with
-   mermaid in a browser.
+2. **Draw pictures, by default.** Several, one per view the option changes: the data flow (where each
+   value comes from, for example compile, the caller or the query, and which graph or file it lands in), the state
+   before and after, a timeline of the failure cases (a race, a partial write, a retry), and the options
+   side by side. Show them inline when presenting, and put the ones that last into the plan or sketch as
+   mermaid, which renders on GitHub. Check every diagram renders before handing off, for example by
+   loading it with mermaid in a browser.
 3. **Each option, then its consequences**, compared on:
    - *design overheads*: is it hard to reason about, easy to model incorrectly, hard to assure or
      govern, or brittle under likely change
    - *runtime overheads*: does it explode the data, invite inconsistency, block common traversals or
      processing, or make common operations, such as aggregating or summing a measure, behave in
      surprising ways
-4. **KISS.** Is it needed now? If not, is it needed at all? If later, can it wait, or is there value
+   - *space and time, quantified*: the order of each cost (triples stored per write, template fills
+     or solutions per update, round trips, reads to reconstruct), then a worked example with stated
+     numbers in a table. Name where an option's cost crosses another's
+4. **KISS,** applied to a model that already reflects reality, never by waving reality away. Is it needed now? If not, is it needed at all? If later, can it wait, or is there value
    in doing it now? Is it as simple as it can be? KISS never overrides architectural conformance,
    non-functional requirements or standards in force.
 5. **A leaning**, with its reason. Then wait for the answer.
@@ -62,7 +71,7 @@ Record the answers in the plan or sketch, and in the status record's history.
   the same number. Epic-scoped blocks (`A-FM`, `A-CAP`) are reserved for their epics.
 - An ADR states context, decision and consequences. A decision found while building is recorded as
   an addendum, dated, rather than by rewriting the accepted text.
-- The agent drafts as Proposed. Only the human accepts.
+- The agent drafts as Proposed. Only the maintainer accepts.
 
 ## Links and paths
 

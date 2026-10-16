@@ -3,12 +3,12 @@
 # Ontology Semantic Versioning - Status
 
 **Unit ID:** `ontology-semantic-versioning`
-**Status:** Slices 1-4 implemented, at the human's explicit direction to
+**Status:** Slices 1-4 implemented, at our explicit direction to
 implement the plan autonomously (2026-09-25). ADR-A86 itself remains
-Proposed — ratifying it is a separate human action this implementation does
+Proposed — ratifying it is a separate action for the maintainer this implementation does
 not take on its own behalf.
 **Last updated:** 2026-09-25
-**Trigger:** human request, 2026-09-25 ("implement the semantic versioning
+**Trigger:** request, 2026-09-25 ("implement the semantic versioning
 plan autonomously")
 **Plan:** [ontology-semantic-versioning.md](../plans/ontology-semantic-versioning.md)
 **Sketch:** [ontology-semantic-versioning.md](../sketches/ontology-semantic-versioning.md)
@@ -16,12 +16,12 @@ plan autonomously")
 
 ## Current position
 
-All four slices are implemented. The human's instruction to implement is
+All four slices are implemented. Our instruction to implement is
 treated as confirmation of the ADR's recommended defaults (the `0.2.0`
 baseline, `owl:versionIRI` as the sole authoritative signal), per the working
 pattern this repository has followed for other units executed the same way
 (`vocabulary-temporal-binding`): implementation proceeds on the documented
-recommendation, ADR ratification itself stays a distinct, later human action.
+recommendation, ADR ratification itself stays a distinct, later action for the maintainer.
 
 ### Slice 1 — governance records
 
@@ -97,10 +97,10 @@ diff, which reported zero unbumped files across all 29 in-scope ontology
 documents (every file this unit touched changed its version at the same
 time, and every file it left alone was left alone).
 
-## Decisions made during implementation (flagged for human review)
+## Decisions made during implementation (flagged for the maintainer's review)
 
 - **The baseline number: `0.2.0`.** Applied as recommended; not separately
-  re-confirmed by a human before this session's implementation, per the
+  re-confirmed by the maintainer before this session's implementation, per the
   explicit "implement autonomously" instruction.
 - **`owl:versionInfo` dropped, not kept, on `applied/insurance/contract.ttl`.**
   `owl:versionIRI` is now that document's sole authoritative version signal;
@@ -125,7 +125,7 @@ time, and every file it left alone was left alone).
   check documentation cross-references and the ADR-A77 migration manifest
   respectively, a different concern from ontology-file version hygiene.
 
-## Human validation gate
+## Validation gate
 
 Not yet performed. Before treating this unit as fully closed:
 
@@ -145,5 +145,5 @@ Not yet performed. Before treating this unit as fully closed:
 
 None recorded against this unit's own four slices — all are implemented.
 ADR-A86 ratification and the extraction-drift follow-up (both above) are
-open items for a human, not blockers to what this unit set out to do.
+open items for the maintainer, not blockers to what this unit set out to do.
 

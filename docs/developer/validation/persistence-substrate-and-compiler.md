@@ -63,7 +63,7 @@ Equivalent to `python -m pytest tools/persistence/tests -q` from the repository 
 - **Multi-property, multi-level `CompositePropertyBoundary` closures.** The `cas-replace-composite-property` template uses only the first composite property found, with `+` traversal. A shape with several sibling composite properties at one level needs a property-path alternation this first cut does not generate (documented in `tools/persistence/README.md`, "Known limitations").
 - **`unconditional-write` for non-`NamedGraphBoundary` targets.** Documented as a known limitation; not covered by a passing test because no fixture currently exercises that combination.
 
-## Adversarial probe (for the human validation gate)
+## Adversarial probe (for the validation gate)
 
 Two suggested probes:
 

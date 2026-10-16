@@ -117,12 +117,12 @@ fixes the actual sigs, facts and run commands, and may find the shape above wron
 |---|---|---|
 | overlap rule | what composition does when two composed schemes share a member with different `broader` parents | forbid by a new Vocabulary shape (simplest, matches ADR-A85's "no OWL axiom silently selects"); allow with one source's hierarchy taking precedence (needs a rule); allow and let `skos:broader`'s own transitive closure merge freely (needs checking it stays acyclic) |
 | scope of "composition" | does a composed `Contract` answer stay a Vocabulary-level construct only (a new `voc:` term), or does it also need an Eligibility-level reading, since `insurml-typing.md` §6.1 names "Eligibility's hierarchical match reading the composition (an ADR-A100 addendum)" as a second, dependent change | Vocabulary alone first, Eligibility's addendum as a follow-on once the Vocabulary ADR is accepted |
-| who writes the shared ADR | `insurml-alignment.md`'s own IMA-D4a row says "a Vocabulary ADR shared with CCS HQ-4" | this track's job is the checked model the ADR cites as evidence, not drafting the ADR itself, which is a human decision this sketch does not take |
+| who writes the shared ADR | `insurml-alignment.md`'s own IMA-D4a row says "a Vocabulary ADR shared with CCS HQ-4" | this track's job is the checked model the ADR cites as evidence, not drafting the ADR itself, which is the maintainer's decision, not taken by this sketch |
 | toolchain | Alloy Analyzer (a single JAR, Java 25 already available via `mise`, MIT licensed) | install and smoke-test as C1, the plan's first slice, same shape as track D's D0 |
 
 ## 6. Non-goals
 
 Slot exclusivity and exhaustiveness by SMT (C3, CCS C13a — a separate slice, separate tool).
-Writing the shared Vocabulary ADR itself (a human decision, informed by this model, not taken by
+Writing the shared Vocabulary ADR itself (the maintainer's decision, informed by this model, not taken by
 it). Any ontology change (`ontology/vocabulary/`, `ontology/eligibility/`) — this track produces a
 checked model and a recommendation, not a merged ontology edit, until an ADR accepts it.

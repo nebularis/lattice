@@ -3,8 +3,8 @@
 # Ontology Semantic Versioning - Design Sketch
 
 **Unit ID:** `ontology-semantic-versioning`
-**Status:** Design sketch for human review. No implementation is claimed.
-**Trigger:** human request, 2026-09-25 — "we currently update our ontologies
+**Status:** Design sketch for the maintainer's review. No implementation is claimed.
+**Trigger:** request, 2026-09-25 — "we currently update our ontologies
 regularly, without any thought to a versioning approach."
 **Source of truth for the proposal:** [Semantic Versioning 2.0.0](https://semver.org/).
 
@@ -91,7 +91,7 @@ in the PR rather than an automated check:
 - **Silent semantic redefinition** — the IRI and the axioms are unchanged,
   but the layer's own "Design decisions" prose now means something different.
   This is a MAJOR change even when no SHACL shape moves, and it is the one
-  case where classification is a judgement call, for a human or an agent to
+  case where classification is a judgement call, for the contributor to
   make against the layer's own README, not a mechanical diff.
 - **Cross-layer import pinning.** `owl:imports` in this repository pins an
   *exact* `owl:versionIRI` (`vocabulary/README.md`: "Quantification and
@@ -120,8 +120,8 @@ in the PR rather than an automated check:
    "0.2.0 stable" in the SemVer sense — `semver.md` §4 ("major version zero
    ... is for initial development. Anything MAY change at any time.") keeps
    applying after the reset exactly as it did before.
-6. The documentation this unit produces is usable by a human contributor
-   *and* by an agentic coding assistant mid-PR, as a checklist it can apply
+6. The documentation this unit produces is usable by any contributor
+   mid-PR, as a checklist it can apply
    without external judgement calls beyond the one flagged exception above.
 
 ## Proposed deliverables
@@ -155,7 +155,7 @@ A single mechanical pass, gated on ADR ratification, that:
   through `0.99.0` minor-version range — effectively unlimited — as room to
   grow before any layer's API is asserted stable enough for `1.0.0`. This one
   number is the proposal's single open numeric parameter; the ADR states it
-  as Proposed pending human confirmation, not as settled.
+  as Proposed pending the maintainer's confirmation, not as settled.
 - Records the reset itself as one entry in each affected layer's own
   "Open items"/changelog note, so a future reader does not mistake the jump
   from, say, `0.0.7` to `0.2.0` for seven MINOR releases that never happened.
@@ -181,14 +181,14 @@ mechanical nudge: a check (in the spirit of `tools/repository_topology_check.py`
 and `literate_extract.py --check`) that fails when an in-scope `.ttl` file's
 content differs from its last committed state but its `owl:versionIRI`
 literal did not change at all. This catches "forgot to bump," not "bumped the
-wrong amount" — classification stays a human/agent judgement call against the
+wrong amount" — classification stays a judgement call against the
 documented table.
 
 ## Proposed slice boundaries
 
 | Slice | Scope | Validation level | Completion gate |
 |---|---|---|---|
-| 1 | ADR-A86, this sketch, plan, status record, traceability skeleton | L0 | Human review of the mapping table, versioning unit, and baseline number |
+| 1 | ADR-A86, this sketch, plan, status record, traceability skeleton | L0 | Review of the mapping table, versioning unit, and baseline number |
 | 2 | `docs/architecture/ontology-versioning-policy.md`, `CONTRIBUTING.md` and `ontology-architecture.md` §2 cross-references | L0 | Docs read coherently end to end; no dangling cross-reference (`mise run topology:links`) |
 | 3 | Baseline reset across every in-scope `.ttl` file, plus every importer's `owl:imports` update in the same change | L0, L3 (`literate_extract.py --check` where applicable; `reuse lint`) | Every in-scope ontology parses, every import resolves, no version left unreconciled |
 | 4 | The narrow "changed but not bumped" check, wired into `mise` | L0 | The check fires on a deliberately-mutated fixture and stays silent on an untouched one (mutation probe) |
@@ -196,7 +196,7 @@ documented table.
 ## Deliberate non-coverage
 
 - Automatic MAJOR/MINOR/PATCH classification of a change (a research problem,
-  not this unit's job — the table is a human/agent checklist, not a linter).
+  not this unit's job — the table is a checklist, not a linter).
 - A dependency-range import mechanism replacing exact-IRI `owl:imports`
   pinning (see "Open questions" — a real option, not decided here).
 - Re-versioning `shapes/*.ttl` or `projection/*.ttl` as independent

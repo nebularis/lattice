@@ -39,7 +39,7 @@ The working namespace for this applied layer is:
 
 The package uses the minimal subclassing approach agreed in the plan:
 
-- Structural classes are light subclasses of `ins:Element`, `ins:Provision`, `ins:Obligation`, and `ins:Qualifier`
+- Structural classes are light subclasses of `ins:Instrument`, `ins:Term`, `ins:Obligation` and `ins:Qualifier` (re-mapped 2026-10-10 from the terms Instrument 0.9.0 retired, TD-28)
 - Party roles remain vocabulary individuals and `pty:RoleOccupancy` relationships
 - Eligibility conditions are authored as `elg:Condition` individuals rather than a bespoke applied admission class
 - Behaviour capacity resources are a small `ino:` family of classes layered on `bhv:AllowanceDefinition` and `bhv:EffectDefinition`

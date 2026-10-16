@@ -8,11 +8,11 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 
 ino:PolicyDocument a owl:Class ;
-    rdfs:subClassOf ins:Element ;
+    rdfs:subClassOf ins:Instrument ;
     rdfs:comment "A policy document or contract root." .
 
 ino:CoverageTerm a owl:Class ;
-    rdfs:subClassOf ins:Provision ;
+    rdfs:subClassOf ins:Term ;
     rdfs:comment "A coverage term for a policy." .
 
 ino:LimitTerm a owl:Class ;

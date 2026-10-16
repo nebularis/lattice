@@ -22,8 +22,10 @@ track B's sketch §3).
 
 from __future__ import annotations
 
-from typing import Dict, Optional
+from itertools import chain, combinations
+from typing import Dict, Optional, Sequence
 
+import mork_compilers.eligibility_ir as eligibility_ir
 from mork_compilers.eligibility_ir import ConceptPlan, compile_concept_condition
 from mork_compilers.namespaces import ELG
 from mork_compilers.test_concept_backends import shacl, sparql, with_questions
@@ -34,6 +36,7 @@ from mork_compilers.test_flat_schemes import LENDER_B
 from mork_compilers.test_flat_schemes import example as lending_example
 from mork_compilers.test_hierarchical_conditions import DIAGNOSES
 from mork_compilers.test_hierarchical_conditions import EX as HIER_EX
+from mork_compilers.test_hierarchical_conditions import HEADER as HIER_HEADER
 from mork_compilers.test_hierarchical_conditions import graph as hier_graph
 from rdflib import RDF, Graph, URIRef
 
@@ -238,3 +241,129 @@ class TestHierarchyPreconditionL14:
             assert self._reference_for(name) == "Undetermined", name
             assert self.sparql_rows[HIER_EX[f"q-{name}"]][0] == "Undetermined", name
             assert self.shacl_rows[HIER_EX[f"q-{name}"]] == "Undetermined", name
+
+
+class TestHarnessCatchesACompilerFault:
+    """B2.1 (the formal-methods epic's second review \u00a73.1): this harness's stated
+    rationale is catching a bug shared by every backend through
+    ``eligibility_ir._expand``, not merely a disagreement the reference itself caused --
+    never tested until now. Both of B2's own recorded findings were bugs in the
+    reference, found because it disagreed with the compilers, never the reverse. Seed a
+    deliberate fault directly into ``_expand`` (not the reference) and confirm the
+    comparison against the unchanged reference catches it, the same "prove it can fail"
+    discipline every other seeded defect in this epic already uses. ``_expand`` feeds
+    ``ConceptPlan.expansion``, which the SHACL backend reads directly
+    (``shacl_backend.py``'s admitted/undetermined lists), so a fault here reaches a real
+    backend's real output, not only a second copy of the reference's own logic."""
+
+    def test_a_wrong_expand_result_is_caught_as_a_disagreement(self, monkeypatch) -> None:
+        data = hier_graph(DIAGNOSES)
+        plan = compile_concept_condition(data, HIER_EX["solid-tumour-arm"])
+        candidate = HIER_EX["lung-tumour"]
+        reference = reference_decision(plan, candidate)
+        assert reference == "Permitted"  # sanity, before the fault is seeded
+
+        real_expand = eligibility_ir._expand
+
+        def faulty_expand(ordering, hierarchical, required, excluded):
+            decided = real_expand(ordering, hierarchical, required, excluded)
+            return tuple(
+                (concept, eligibility_ir.DENIED) if concept == candidate else (concept, decision)
+                for concept, decision in decided
+            )
+
+        monkeypatch.setattr(eligibility_ir, "_expand", faulty_expand)
+        faulty_plan = compile_concept_condition(data, HIER_EX["solid-tumour-arm"])
+        asked = with_questions(data, faulty_plan.condition, {"lung": (candidate,)})
+        faulty_shacl_rows = shacl(faulty_plan, asked)
+
+        assert faulty_shacl_rows[HIER_EX["q-lung"]] != reference
+        assert faulty_shacl_rows[HIER_EX["q-lung"]] == "Denied"
+
+
+# Bounded-exhaustive generation (B2.1): three concepts in one generated scheme, every
+# scheme shape, every required/excluded subset drawn from a small alphabet, and both
+# match modes -- a defensible, bounded-universal claim over this input space, rather
+# than only the fixed, hand-picked fixtures above.
+_GEN_CONCEPTS = ("c0", "c1", "c2")
+
+
+def _powerset(items: Sequence[str]) -> list:
+    return [frozenset(c) for n in range(len(items) + 1) for c in combinations(items, n)]
+
+
+def _generated_turtle(*, chained: bool, hierarchical: bool, required: frozenset, excluded: frozenset) -> str:
+    """A small, generated Eligibility fixture (B2.1): ``c0``, ``c1``, ``c2`` in one
+    scheme, either flat or a ``c0 < c1 < c2`` chain (``skos:broader``), one condition
+    with the given required/excluded sets under the given match strategy, plus one
+    concept (``outsider``) deliberately outside the scheme entirely."""
+    lines = [
+        "ex:gen-scheme a voc:ConceptScheme .",
+        "ex:outsider a skos:Concept .",
+    ]
+    for concept in _GEN_CONCEPTS:
+        lines.append(f"ex:{concept} a skos:Concept ; skos:inScheme ex:gen-scheme .")
+    if chained:
+        lines.append("ex:c1 skos:broader ex:c0 .")
+        lines.append("ex:c2 skos:broader ex:c1 .")
+    lines.append("ex:gen-contract a voc:SchemeContract ; voc:boundScheme ex:gen-scheme .")
+    strategy = "elg:HierarchicalMatch" if hierarchical else "elg:SetMembership"
+    condition = [
+        "ex:gen-condition a elg:Condition ;",
+        f"    elg:matchStrategy {strategy} ;",
+        "    elg:compatibilityOperation elg:AllRequired ;",
+        "    elg:wildcardSemantics elg:NoWildcard ;",
+        "    elg:constrainedByContract ex:gen-contract",
+    ]
+    for concept in sorted(required):
+        condition.append(f"    ; elg:requiredConcept ex:{concept}")
+    for concept in sorted(excluded):
+        condition.append(f"    ; elg:excludedConcept ex:{concept}")
+    condition.append("    .")
+    lines.extend(condition)
+    return HIER_HEADER + "\n".join(lines)
+
+
+class TestBoundedExhaustiveConceptMatching:
+    """Every combination of: both match modes, a flat or a chained three-concept
+    scheme, every required subset of {c0, c1} and every excluded subset of {c2} (the
+    all-empty combination is refused by the compiler itself and skipped), checked for
+    every candidate inside and outside the scheme -- the concept-matching input space
+    is small enough to generate exhaustively rather than sample (B2.1)."""
+
+    CASES = [
+        (chained, hierarchical, required, excluded)
+        for chained in (False, True)
+        for hierarchical in (False, True)
+        for required in _powerset(("c0", "c1"))
+        for excluded in _powerset(("c2",))
+        if required or excluded
+    ]
+
+    def test_reference_agrees_with_sparql_and_shacl_for_every_case(self) -> None:
+        assert len(self.CASES) == 2 * 2 * 7  # a fixed count, so a change here is deliberate
+        for chained, hierarchical, required, excluded in self.CASES:
+            text = _generated_turtle(
+                chained=chained, hierarchical=hierarchical, required=required, excluded=excluded
+            )
+            data = graph_from(text)
+            plan = compile_concept_condition(data, HIER_EX["gen-condition"])
+            candidates = {name: HIER_EX[name] for name in (*_GEN_CONCEPTS, "outsider")}
+            asked = with_questions(data, plan.condition, {n: (c,) for n, c in candidates.items()})
+            sparql_rows = sparql(plan, asked)
+            shacl_rows = shacl(plan, asked)
+            for name, concept in candidates.items():
+                question = HIER_EX[f"q-{name}"]
+                expected = reference_decision(plan, concept)
+                case = (chained, hierarchical, sorted(required), sorted(excluded), name)
+                assert sparql_rows[question][0] == expected, case
+                assert shacl_rows[question] == expected, case
+
+
+def graph_from(text: str) -> Graph:
+    """A trivial wrapper so this module's generated fixtures do not depend on
+    ``test_hierarchical_conditions``'s own ``graph`` beyond its HEADER constant,
+    kept separate since that module's ``graph`` is not re-exported for reuse."""
+    g = Graph()
+    g.parse(data=text, format="turtle")
+    return g

@@ -9,21 +9,21 @@ is the source of `.github/copilot-instructions.md`. Edit it here, then run
 
 ## The contract
 
-We work iteratively. The agent suggests what to build next, and the human verifies the approach
+We work iteratively. The agent suggests what to build next, and the maintainer verifies the approach
 along the way.
 
 - **Default mode, unless told otherwise.** Write, then hand off. Do not run build, test, compile or
   integration commands to validate a change. End the turn with the exact commands to run, where to
   run them from, and what a pass looks like. Cheap static checks, such as a single-file syntax
   check, are fine.
-- **Autonomous mode, only when the human says so.** Run the checks yourself and report their real
+- **Autonomous mode, only when the maintainer says so.** Run the checks yourself and report their real
   results. It does not change anything else in this contract.
 - **Never claim a check passed** unless it ran and passed. Say "authored, not yet run" and give the
   command.
 - **Pause for design decisions.** Do not make an architecture or modelling decision alone. Present
   the options and their consequences (skill `lattice-design`) and wait for the answer.
-- **Never commit, merge, tag or push** without the human's go-ahead. Release tags are always the
-  human's to create. Do not mark an ADR Accepted yourself.
+- **Never commit, merge, tag or push** without the maintainer's go-ahead. Release tags are always the
+  maintainer's to create. Do not mark an ADR Accepted yourself.
 - **End a "what next" report** with 🔴 PLAN FIRST when something must be decided first, or
   🟢 READY TO BRANCH when a new branch is due.
 
@@ -32,14 +32,22 @@ along the way.
 | Root | Owns |
 |---|---|
 | `ontology/` | semantic assets only: sources, shapes, vocabularies, projections, examples, their documentation |
-| `tools/` | executable reference implementations and developer toolchains |
+| `tools/` | executable reference implementations and developer toolchains. `tools/testing/` holds test-support packages, used only by tests, checks and benchmarks (ADR-A125) |
+| `benchmark/` | checks that measure, run on demand and never part of `check`. They fail on a wrong result, never on time (ADR-A124) |
 | `platform/`, `apps/`, `packages/`, `contracts/`, `deployment/`, `workers/`, `test/`, `spikes/` | services, applications, libraries, data contracts, the local environment, the worker runtime, end-to-end suites, experiments |
 | `docs/architecture/` | architecture documents and the ADRs, in `decisions/` |
 | `docs/developer/` | sketches, plans, status records, review requests, Validation Packs, and durable guidance |
 | `.claude/skills/` | the skills below |
 
+How each triple store behaves, and how we found out, is recorded in
+[docs/architecture/triple-store-discovery.md](../docs/architecture/triple-store-discovery.md). Read it before relying on what a
+store does with SPARQL, and add to it when you find something new (skill `lattice-triple-stores`).
+
 Do not add a directory at the root, or a new kind of directory anywhere, without an accepted ADR.
-`mise` is the only task entry point (ADR-A29). The [developer guide](../docs/developer/developer-guide.md)
+`mise` is the only task entry point (ADR-A29). Every command you run or give the maintainer goes
+through it, as `mise run <task>` or `mise exec -- <command>`, never a bare `python`, `pytest` or `pip`.
+Only mise picks up this checkout's `.venv` and its dependencies, and a bare interpreter is the global
+one (skill `lattice-toolchain`). The [developer guide](../docs/developer/developer-guide.md)
 describes every tool.
 
 ## Writing
@@ -60,6 +68,21 @@ Every piece of text, in documents, code comments, commit messages and replies:
   **instantiation**, done by an **instantiator**, never a "binder" (skill `lattice-ontology-authoring`)
 - call a class that is a member of `fnd:Version` "versioned". Call a node "a version" only when it is
   one specific version
+- write as the team. Decisions, approvals and actions are ours: "we decided", "accepted
+  2026-10-10", "the maintainer accepts", never "the human decided" or "the agent built". An agent is
+  a developer on the team, and its decisions are still ratified by the maintainer (the contract
+  above). The only place AI involvement is marked is the commit trailer and pull request section that
+  [GENAI_CONTRIBUTION.md](../GENAI_CONTRIBUTION.md) requires, which EU legislation needs
+
+## Modelling
+
+- Ask how the law and contract drafting answer a question before modelling it, and model that.
+- Model reality first, then simplify. Never reduce reality's complexity by waving it away, and record
+  any drift forced by usability.
+- Judgements, such as whether a rule was met or an act took effect, are evaluated from facts, never
+  authored. Layers state, code executes.
+
+Skill `lattice-ontology-authoring` has the detail.
 
 ## A public repository
 
@@ -82,8 +105,10 @@ Load the skill whose description matches the task. Each lives in `.claude/skills
 | Skill | When |
 |---|---|
 | `lattice-lifecycle` | starting, continuing, handing off or closing a unit of work or slice: status, plans, Validation Packs, commits, merges, release tags |
-| `lattice-design` | writing a sketch, a plan brief, an ADR or design questions for the human |
+| `lattice-design` | writing a sketch, a plan brief, an ADR or design questions for the maintainer |
 | `lattice-architecture` | a design that crosses layers or modules, or needs the principles behind LATTICE's structure |
 | `lattice-ontology-authoring` | changing anything under `ontology/` |
 | `lattice-toolchain` | building, testing, running checks, or setting up or repairing an environment |
+| `lattice-testing` | a slow test suite, writing or extending a Python test under `tools/` that parses an ontology graph or calls pySHACL, sharing state across test modules with pytest fixtures, or a repository-wide text scan that must work on every platform |
 | `lattice-publication-hygiene` | before a commit or pull request, and whenever writing text that will be published |
+| `lattice-triple-stores` | relying on, probing or recording how a triple store behaves: running generated SPARQL on rdflib, Oxigraph or another engine, writing an engine test, or meeting unexpected store behaviour |

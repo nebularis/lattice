@@ -819,3 +819,37 @@ ins:OneCaseShape a sh:NodeShape ;
 			}
 		"""
 	] .
+# ---- C9b1: legal acts (§6.4) ---------------------------------------------------
+
+ins:ExerciseByHolderShape a sh:NodeShape ;
+	sh:targetClass ins:Exercise ;
+	sh:sparql [
+		sh:message "{$this} is made by {?actor}, who does not hold the power it exercises, {?power}: an exercise is made by the power's holder (§6.4)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#>
+			PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			SELECT $this ?actor ?power WHERE {
+				$this ins:exercises ?power ; ins:actBy ?actor .
+				?power ins:holder ?holder .
+				?holder a pty:RoleOccupancy .
+				FILTER (?actor != ?holder)
+				FILTER NOT EXISTS { ?actor fnd:hasIdentity ?id . ?holder fnd:hasIdentity ?id }
+			}
+		"""
+	] .
+
+ins:PursuantPrecedesShape a sh:NodeShape ;
+	sh:targetSubjectsOf ins:pursuantTo ;
+	sh:sparql [
+		sh:message "{$this}, done on {?done}, is made pursuant to {?relied}, done later, on {?later}: an act relied on is done no later than the act relying on it (§6.4)." ;
+		sh:select """
+			PREFIX ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+			PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			SELECT $this ?relied ?done ?later WHERE {
+				$this ins:pursuantTo ?relied ; fnd:hasTemporalScope/fnd:validFrom ?done .
+				?relied fnd:hasTemporalScope/fnd:validFrom ?later .
+				FILTER (?later > ?done)
+			}
+		"""
+	] .

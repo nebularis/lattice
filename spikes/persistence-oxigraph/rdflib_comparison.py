@@ -1,0 +1,181 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: MPL-2.0
+# NB: This module has been produced using GenAI
+
+"""Run the same scenarios on rdflib and on Oxigraph and compare the results.
+
+The project's own tests use rdflib. This shows that a second, independent engine reaches the
+same answers. Run from the repository root:
+
+    python spikes/persistence-oxigraph/rdflib_comparison.py
+"""
+
+from __future__ import annotations
+
+import re
+import sys
+import warnings
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from rdflib import Dataset, Literal, URIRef, Variable  # noqa: E402
+from rdflib.namespace import XSD  # noqa: E402
+
+from persistence import templatecheck, witness  # noqa: E402
+from persistence.compiler import compile_to_graph  # noqa: E402
+from scenarios import (  # noqa: E402
+    DATA_GRAPH, EX, PAT, PROJECT, PROJECT_DATA, PROJECT_EXAMPLE, PROJECT_GRAPH, append_event_runs, composite_sweep, composite_update,
+    generated_update, project_create_twice, project_sweep, project_tombstone, project_update,
+)
+
+
+def rdflib_composite_sweep(owns_payment: bool, with_payment: bool) -> list[str]:
+    update = composite_update(owns_payment)
+    meta = re.search(r"GRAPH <(urn:g:meta/\d+)>", update).group(1)
+    root = URIRef("urn:order:1")
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        ds = Dataset()
+        ds.graph(URIRef(meta)).add((root, URIRef(PAT + "epoch"), Literal(1)))
+        ds.graph(URIRef(meta)).add((root, URIRef(PAT + "seq"), Literal(1, datatype=XSD.long)))
+        data = ds.graph(URIRef(DATA_GRAPH))
+        rows = [(root, "status", Literal("open")), (root, "lineItem", URIRef("urn:li:1")), (URIRef("urn:li:1"), "sku", Literal("ABC"))]
+        if with_payment:
+            rows += [(root, "payment", URIRef("urn:pay:1")), (URIRef("urn:pay:1"), "amount", Literal("10"))]
+        for s, p, o in rows:
+            data.add((s, URIRef(EX + p), o))
+        values = {
+            "root": root, "epoch": Literal(1), "expectedSeq": Literal(1, datatype=XSD.long),
+            "nextSeq": Literal(2, datatype=XSD.long), "newRev": URIRef("urn:rev:2"),
+            "txnId": URIRef("urn:txn:a"), "requestDigest": Literal("d"),
+        }
+        ds.update(update, initBindings={Variable(k): v for k, v in values.items()})
+        return sorted({str(s) for s, _, _ in data})
+
+
+def rdflib_project_sweep() -> list[str]:
+    update = project_update()
+    meta = re.search(r"GRAPH <(urn:g:meta/\d+)>", update).group(1)
+    root = URIRef(PROJECT + "p1")
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        ds = Dataset()
+        ds.graph(URIRef(meta)).add((root, URIRef(PAT + "epoch"), Literal(1)))
+        ds.graph(URIRef(meta)).add((root, URIRef(PAT + "seq"), Literal(1, datatype=XSD.long)))
+        data = ds.graph(URIRef(PROJECT_GRAPH))
+        data.parse(PROJECT_DATA, format="turtle")
+        values = {
+            "root": root, "epoch": Literal(1), "expectedSeq": Literal(1, datatype=XSD.long),
+            "nextSeq": Literal(2, datatype=XSD.long), "newRev": URIRef("urn:rev:2"),
+            "txnId": URIRef("urn:txn:a"), "requestDigest": Literal("d"),
+        }
+        ds.update(update, initBindings={Variable(k): v for k, v in values.items()})
+        return sorted({str(s).rsplit("#", 1)[-1] for s, _, _ in data})
+
+
+def _rdflib_project_run(template: str, runs: list[dict], payload: str = "", load: bool = True):
+    compiled, _ = compile_to_graph(witness._load_fixture(PROJECT_EXAMPLE))
+    update = next(op.text for op in templatecheck.operations(compiled, guards=False) if op.template == template)
+    update = update.replace(templatecheck._SLOT_STAND_INS["payloadTriples"], payload)
+    meta = URIRef(re.search(r"GRAPH <(urn:g:meta/\d+)>", update).group(1))
+    root = URIRef(PROJECT + "p1")
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        ds = Dataset()
+        if load:
+            ds.graph(meta).add((root, URIRef(PAT + "epoch"), Literal(1)))
+            ds.graph(meta).add((root, URIRef(PAT + "seq"), Literal(1, datatype=XSD.long)))
+            ds.graph(URIRef(PROJECT_GRAPH)).parse(PROJECT_DATA, format="turtle")
+        data = ds.graph(URIRef(PROJECT_GRAPH))
+        sizes = []
+        for values in runs:
+            ds.update(update, initBindings={Variable(k): v for k, v in {"root": root, **values}.items()})
+            sizes.append(len(data))
+        return ds, data, meta, sizes
+
+
+def rdflib_project_tombstone() -> tuple[list[str], bool]:
+    values = {"epoch": Literal(1), "expectedSeq": Literal(1, datatype=XSD.long), "nextSeq": Literal(2, datatype=XSD.long),
+              "newRev": URIRef("urn:rev:2"), "txnId": URIRef("urn:txn:a"), "requestDigest": Literal("d"),
+              "cause": URIRef("urn:decision:1"), "actor": URIRef("urn:actor:1")}
+    ds, data, meta, _ = _rdflib_project_run("tombstone-delete-composite", [values])
+    left = sorted({str(s).rsplit("#", 1)[-1] for s, _, _ in data})
+    return left, len(list(ds.graph(meta).triples((None, URIRef(PAT + "deleted"), None)))) == 1
+
+
+def rdflib_project_create_twice() -> tuple[int, int]:
+    payload = f'<{PROJECT}p1> <{PROJECT}name> "Apollo" . '
+    runs = [{"epoch": Literal(1), "newRev": URIRef(f"urn:rev:{t}"), "txnId": URIRef(f"urn:txn:{t}"), "requestDigest": Literal("d")} for t in ("a", "b")]
+    _, _, _, sizes = _rdflib_project_run("create-if-absent-composite", runs, payload=payload, load=False)
+    return sizes[0], sizes[1]
+
+
+def rdflib_append_event_runs() -> list[tuple[list[str], int]]:
+    """For each of the three runs, (the sequence counter, the number of revision records)."""
+    update = generated_update(witness.WITNESS_DIR / "template-append-event.ttl", "append-event")
+    meta = re.search(r"DELETE \{\s*GRAPH <([^>]+)>", update).group(1)
+    stream = URIRef("urn:stream:1")
+    full = {
+        "stream": stream, "epoch": Literal(1), "txnId": URIRef("urn:txn:a"), "requestDigest": Literal("abc"),
+        "event": URIRef("urn:event:1"), "eventType": URIRef("urn:type:E"), "opSeq": Literal(1),
+        "occurredAt": Literal("2026-10-09T00:00:00Z"), "revBase": Literal("urn:rev:orders/1/e0000000000000000001/"),
+    }
+    without = {k: v for k, v in full.items() if k != "revBase"}
+
+    def fresh() -> Dataset:
+        ds = Dataset()
+        ds.graph(URIRef(meta)).add((stream, URIRef(PAT + "epoch"), Literal(1)))
+        ds.graph(URIRef(meta)).add((stream, URIRef(PAT + "seq"), Literal(0, datatype=XSD.long)))
+        return ds
+
+    def state(ds: Dataset) -> tuple[list[str], int]:
+        seq = [str(o) for o in ds.graph(URIRef(meta)).objects(stream, URIRef(PAT + "seq"))]
+        # count across every graph: a revision record lives in a log graph, not the default graph
+        return seq, len(list(ds.quads((None, URIRef(PAT + "target"), None, None))))
+
+    def run(ds: Dataset, values: dict) -> None:
+        ds.update(update, initBindings={Variable(k): v for k, v in values.items()})
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        out = []
+        ds = fresh()
+        run(ds, full)
+        out.append(state(ds))
+        ds = fresh()
+        run(ds, without)
+        out.append(state(ds))
+        run(ds, full)
+        out.append(state(ds))
+        return out
+
+
+def compare() -> list[tuple[str, object, object]]:
+    """(scenario, rdflib result, Oxigraph result) for every scenario."""
+    rows = []
+    for label, owns, payment in (("composite, no payment", False, False),
+                                  ("composite, payment not owned", False, True),
+                                  ("composite, payment owned", True, True)):
+        rows.append((label, rdflib_composite_sweep(owns, payment), composite_sweep(owns, payment)))
+    rows.append(("composite, project fixture", rdflib_project_sweep(), project_sweep()))
+    rows.append(("composite tombstone, project", rdflib_project_tombstone(), project_tombstone()))
+    rows.append(("composite create twice, project", rdflib_project_create_twice(), project_create_twice()))
+    ox_runs = [(s.sequence, s.revision_records) for s in append_event_runs()]
+    for label, a, b in zip(("append-event A, all parameters", "append-event B, no $revBase", "append-event C, retry"),
+                           rdflib_append_event_runs(), ox_runs):
+        rows.append((label, a, b))
+    return rows
+
+
+def main() -> int:
+    agree = True
+    print(f"{'scenario':38} {'agree':6} rdflib / Oxigraph")
+    for label, a, b in compare():
+        agree &= a == b
+        print(f"{label:38} {'yes' if a == b else 'NO':6} {a} / {b}")
+    return 0 if agree else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -3,8 +3,8 @@
 # Applied Ontology Readiness - Design Sketch
 
 **Unit ID:** `applied-ontology-readiness`
-**Status:** Design sketch for human review. No implementation is claimed.
-**Trigger:** human request, 2026-09-25. Close the gaps an applied (domain)
+**Status:** Design sketch for the maintainer's review. No implementation is claimed.
+**Trigger:** request, 2026-09-25. Close the gaps an applied (domain)
 ontology meets when it is built on LATTICE.
 **Baseline:** commit `9a12da4`.
 **Plan:** [applied-ontology-readiness.md](../plans/applied-ontology-readiness.md)

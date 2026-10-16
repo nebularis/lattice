@@ -1,0 +1,186 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. Acme's facility (facility-amendment.ttl) has a borrower and three
+# lenders. The borrower makes two requests of them. The first asks them to
+# amend the facility, the amendment C9a records. The second asks the lenders
+# to waive a default. Read this example with facility-amendment.ttl and
+# Wording's facility-form.ttl and facility-amendment.ttl.
+#
+# The two requests are answered differently, because the law treats them
+# differently (consent sketch §1.1):
+#
+# - An amendment by agreement binds each party through its own assent to the
+#   new version. So the first request proposes the amendment, and each party
+#   answers it by assenting to the version the amendment produces, which C9a's
+#   example already records.
+# - A waiver by the lenders as a group is the exercise of a power. A lender
+#   that does not agree is still bound once the power is exercised, so its
+#   answer is not an assent to anything. Each lender consents to the request
+#   or objects to it, and may later withdraw what it declared.
+#
+# The facts, by valid time:
+#
+# | Date (valid)  | Recorded | Act                                              |
+# |---------------|----------|--------------------------------------------------|
+# | 3 Feb 2028    | 3 Feb    | Acme proposes the amendment (request 1)          |
+# | 1 Mar 2028    | 1 Mar    | Acme asks the lenders to waive a default (request 2) |
+# | 3 Mar 2028    | 3 Mar    | Northgate consents to request 2                  |
+# | 4 Mar 2028    | 4 Mar    | Tidewater objects to request 2                   |
+# | 5 Mar 2028    | 6 Mar    | Larchmont consents to request 2                  |
+# | 8 Mar 2028    | 8 Mar    | Larchmont withdraws its consent                  |
+# | 9 Mar 2028    | 9 Mar    | Tidewater withdraws its objection                |
+# | 15 Mar 2028   | 15 Mar   | Acme asks the lenders to extend an interest period (request 3) |
+# | 16 Mar 2028   | 16 Mar   | Northgate consents to request 3                  |
+# | 17 Mar 2028   | 17 Mar   | Larchmont consents to request 3                  |
+#
+# What the example shows:
+#
+# | Construct                                       | Where                                   |
+# |-------------------------------------------------|-----------------------------------------|
+# | a proposal of an amendment, made when proposed  | ex:request-1, ins:proposes fam:amendment-1 |
+# | a proposal of another matter                    | ex:request-2, ins:proposes ex:waiver     |
+# | consents and an objection directed at it        | ex:consent-*, ex:objection-tidewater, ins:directedAt |
+# | a withdrawal of each kind of declaration        | ex:withdrawal-*, ins:withdraws           |
+# | who made each act                               | ins:proposedBy, ins:actBy                |
+# | "no Lender has objected", decided on absence    | ex:no-objection under ex:objections-register |
+#
+# Nothing here says whether the waiver is given. The rule that decides it,
+# such as a Majority Lenders definition and its qualifying rule, is CCS C9b4's.
+# Whether a withdrawal counts has no substrate default (consent sketch §6,
+# decision 7): the facility, or a deployment's evaluation profile, says so.
+# Here each withdrawal is recorded as made, and the waiver clause would decide
+# its effect.
+#
+# "No Lender has objected" is decided on absence (ADR-A105). The agency desk
+# keeps the facility's records and is the source of a closure over them, which
+# the condition's binding names. The condition reads the type of every act
+# directed at a request, some value, negated. It reads objections as recorded:
+# whether Tidewater's withdrawal undoes its objection is the clause's to say.
+#
+# | Request   | Acts directed at it                | With the closure | Without it   |
+# |-----------|------------------------------------|------------------|--------------|
+# | request 1 | none                               | Permitted        | Undetermined |
+# | request 2 | two consents, an objection         | Denied           | Denied       |
+# | request 3 | two consents                       | Permitted        | Undetermined |
+#
+# An objection, once recorded, proves the condition false with or without the
+# closure. That none was made needs the closure.
+
+@prefix ins:     <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix elg:     <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix prov:    <http://www.w3.org/ns/prov#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix fam:     <https://example.org/lattice/instrument/facility-amendment/> .
+@prefix ex:      <https://example.org/lattice/instrument/facility-requests/> .
+
+# ==== Request 1: an amendment by agreement ====================================
+#
+# Its valid time is when it was made. The amendment it proposes keeps its own
+# valid time, when it takes effect, 1 January 2028 (C9a).
+
+ex:request-1 a ins:Proposal ;
+    ins:proposedBy fam:borrower-occ ;
+    ins:proposes fam:amendment-1 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-02-03T09:00:00Z"^^xsd:dateTime ] ;
+    fnd:hasEvidence [ a fnd:Evidence ;
+        fnd:recordedAt "2028-02-03T10:00:00Z"^^xsd:dateTime ; fnd:assertedBy fam:agent-desk ] .
+
+# ==== Request 2: a waiver, put to the lenders =================================
+
+ex:waiver a prov:Entity ;
+    rdfs:label "a waiver of an Event of Default for the quarter ending 31 December 2027" .
+
+ex:request-2 a ins:Proposal ;
+    ins:proposedBy fam:borrower-occ ;
+    ins:proposes ex:waiver ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-03-01T09:00:00Z"^^xsd:dateTime ] ;
+    fnd:hasEvidence [ a fnd:Evidence ;
+        fnd:recordedAt "2028-03-01T09:30:00Z"^^xsd:dateTime ; fnd:assertedBy fam:agent-desk ] .
+
+ex:consent-northgate a ins:Consent ;
+    ins:actBy fam:northgate-occ ;
+    ins:directedAt ex:request-2 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-03-03T14:00:00Z"^^xsd:dateTime ] ;
+    fnd:hasEvidence [ a fnd:Evidence ;
+        fnd:recordedAt "2028-03-03T14:10:00Z"^^xsd:dateTime ; fnd:assertedBy fam:agent-desk ] .
+
+ex:objection-tidewater a ins:Objection ;
+    ins:actBy fam:tidewater-occ ;
+    ins:directedAt ex:request-2 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-03-04T11:00:00Z"^^xsd:dateTime ] ;
+    fnd:hasEvidence [ a fnd:Evidence ;
+        fnd:recordedAt "2028-03-04T11:00:00Z"^^xsd:dateTime ; fnd:assertedBy fam:agent-desk ] .
+
+# Signed on the 5th, received by the agent on the 6th.
+ex:consent-larchmont a ins:Consent ;
+    ins:actBy fam:larchmont-occ ;
+    ins:directedAt ex:request-2 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-03-05T17:00:00Z"^^xsd:dateTime ] ;
+    fnd:hasEvidence [ a fnd:Evidence ;
+        fnd:recordedAt "2028-03-06T08:45:00Z"^^xsd:dateTime ; fnd:assertedBy fam:agent-desk ] .
+
+ex:withdrawal-larchmont a ins:Withdrawal ;
+    ins:actBy fam:larchmont-occ ;
+    ins:withdraws ex:consent-larchmont ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-03-08T10:00:00Z"^^xsd:dateTime ] ;
+    fnd:hasEvidence [ a fnd:Evidence ;
+        fnd:recordedAt "2028-03-08T10:00:00Z"^^xsd:dateTime ; fnd:assertedBy fam:agent-desk ] .
+
+ex:withdrawal-tidewater a ins:Withdrawal ;
+    ins:actBy fam:tidewater-occ ;
+    ins:withdraws ex:objection-tidewater ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-03-09T16:00:00Z"^^xsd:dateTime ] ;
+    fnd:hasEvidence [ a fnd:Evidence ;
+        fnd:recordedAt "2028-03-09T16:20:00Z"^^xsd:dateTime ; fnd:assertedBy fam:agent-desk ] .
+
+# ==== Request 3: an extension, answered by consents alone ======================
+
+ex:interest-period-change a prov:Entity ;
+    rdfs:label "an extension of the current interest period by one month" .
+
+ex:request-3 a ins:Proposal ;
+    ins:proposedBy fam:borrower-occ ;
+    ins:proposes ex:interest-period-change ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-03-15T09:00:00Z"^^xsd:dateTime ] ;
+    fnd:hasEvidence [ a fnd:Evidence ;
+        fnd:recordedAt "2028-03-15T09:20:00Z"^^xsd:dateTime ; fnd:assertedBy fam:agent-desk ] .
+
+ex:consent-northgate-3 a ins:Consent ;
+    ins:actBy fam:northgate-occ ;
+    ins:directedAt ex:request-3 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-03-16T10:00:00Z"^^xsd:dateTime ] ;
+    fnd:hasEvidence [ a fnd:Evidence ;
+        fnd:recordedAt "2028-03-16T10:05:00Z"^^xsd:dateTime ; fnd:assertedBy fam:agent-desk ] .
+
+ex:consent-larchmont-3 a ins:Consent ;
+    ins:actBy fam:larchmont-occ ;
+    ins:directedAt ex:request-3 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-03-17T12:00:00Z"^^xsd:dateTime ] ;
+    fnd:hasEvidence [ a fnd:Evidence ;
+        fnd:recordedAt "2028-03-17T12:00:00Z"^^xsd:dateTime ; fnd:assertedBy fam:agent-desk ] .
+
+# ==== "No Lender has objected", decided on absence ==============================
+
+# The agency desk's records are complete for the acts directed at a request.
+ex:objections-register a elg:Closure ;
+    elg:licensedBy fam:agent-desk .
+
+ex:no-objection a elg:Condition ;
+    elg:conditionKey "no-lender-has-objected" ;
+    elg:matchStrategy elg:ExactMatch ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredConcept ins:Objection ;
+    elg:negated true .
+
+ex:no-objection-binding a elg:EvidenceBinding ;
+    elg:bindsCondition ex:no-objection ;
+    elg:subjectClass ins:Proposal ;
+    elg:valueReading elg:SomeValue ;
+    elg:closedUnder ex:objections-register ;
+    elg:evidenceStep
+        [ a elg:EvidenceStep ; elg:stepIndex 0 ; elg:stepProperty ins:directedAt ; elg:stepDirection elg:Inverse ] ,
+        [ a elg:EvidenceStep ; elg:stepIndex 1 ; elg:stepProperty rdf:type ;       elg:stepDirection elg:Forward ] .

@@ -332,6 +332,9 @@ ex:ben-garden-leave a bhv:ExerciseRecord ;
     bhv:tookEffect true ;
     bhv:fromStimulus ex:ben-s2 .
 
+# Withdrawing a notice by agreement has legal effect, so the withdrawal itself
+# is a legal act of the layer above. This act record shows its performance,
+# which the runtime reads (CCS C9b1).
 ex:ben-withdrawal a bhv:ActRecord ;
     bhv:activity ex:notice-withdrawn-by-agreement ;
     bhv:actor ex:employer-occ , ex:ben-occ ;

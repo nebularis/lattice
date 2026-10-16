@@ -16,7 +16,7 @@
 
 This plan enumerates every defect in the governing review, maps each to its exact location(s) in the source, and specifies the change required, including all named options and their consequences where the review or the surrounding text presents more than one valid fix.
 
-**This plan makes no changes.** Per the Agentic Development Contract's Design First and Planning Mode rules, and per the explicit instruction under which it was written, no edit has been applied to `rdf-sparql-patterns-guide.md` or any other file as part of producing this document. Implementation is one or more future slices, gated on the human confirming the items marked **Decision required: YES** below, per the Pause For Architectural Guidance clause: several fixes are design decisions with real operational trade-offs, not mechanical corrections, and this plan does not pre-empt them.
+**This plan makes no changes.** Per the Agentic Development Contract's Design First and Planning Mode rules, and per the explicit instruction under which it was written, no edit has been applied to `rdf-sparql-patterns-guide.md` or any other file as part of producing this document. Implementation is one or more future slices, gated on the maintainer confirming the items marked **Decision required: YES** below, per the Pause For Architectural Guidance clause: several fixes are design decisions with real operational trade-offs, not mechanical corrections, and this plan does not pre-empt them.
 
 **On the review's own completeness.** The governing review's §2 (Cross-document inconsistencies) ends mid-sentence at finding C3: *"Catalogue §7.4 and §10.2 both reject variable widths. The guide has"* — the source file itself is truncated at that point, not merely the excerpt seen in chat. §B.14 below records what can be independently established about C3 from the guide and the catalogue, and flags the rest as pending confirmation from the review's author rather than presenting a guess as the review's own conclusion.
 
@@ -26,7 +26,7 @@ This plan enumerates every defect in the governing review, maps each to its exac
 |---|---|
 | **Blocking** | From review §1. Production-unsafe as written. |
 | **Cross-doc** | From review §2. Consistency and citation defects. |
-| **Decision required: YES** | The fix has more than one architecturally valid option with different operational consequences. Do not implement until a human picks one (or an explicit combination). |
+| **Decision required: YES** | The fix has more than one architecturally valid option with different operational consequences. Do not implement until the maintainer picks one (or an explicit combination). |
 | **Decision required: NO** | The fix is a single correct correction (a spec-conformance bug, a missing cross-reference, an internal inconsistency with only one valid resolution). Safe to implement without further design discussion. |
 | **Decision required: VERIFY** | The fix depends on a short factual check outside this plan's scope (for example, whether an ontology term exists) before the mechanical edit is made. |
 
@@ -88,7 +88,7 @@ Correct §24.4 to state plainly that the write path reads and compares this trip
 | **3. Writer-start refusal** | Every writer, on connecting, refuses to issue any write until it has confirmed the dataset's epoch exceeds a durable external watermark it can read. | Fail-safe like Option 1. Adds availability risk during recovery (writers block until the check passes) and duplicates part of Option 1's machinery. |
 | **4. Store-local epoch only (current design)** | No external source; the epoch lives only inside `<urn:g:dataset>`. | Rejected. Unsafe under a double restore from the same backup, per the review and per the catalogue's own explicit classification of this pattern as unsafe. Recorded only so it is not silently re-proposed later. |
 
-Options 1 and 3 are not mutually exclusive; Option 3 can be layered on Option 1 for defence in depth at the cost of availability during recovery. No recommendation is asserted as final here — this table exists so the human can pick one (or the 1+3 combination) with the consequences visible, per the review's own framing.
+Options 1 and 3 are not mutually exclusive; Option 3 can be layered on Option 1 for defence in depth at the cost of availability during recovery. No recommendation is asserted as final here — this table exists so the maintainer can pick one (or the 1+3 combination) with the consequences visible, per the review's own framing.
 
 **Also update:** §24.4's runbook text (state the actual guard mechanism, not only "bump the epoch"); Appendix E if the epoch-source decision is deferred past this remediation pass (state it as an explicitly open item, not silently dropped).
 
@@ -388,7 +388,7 @@ The governing review's own text ends mid-sentence: *"Catalogue §7.4 and §10.2 
 | **1. Adopt 19 digits everywhere** | Set `REV_WIDTH = 19` and regenerate every worked example's zero-padded digit count throughout the guide. Remove the "(19 in production)" caveat from Chapter 13's table and from §19.4. | Matches full `xsd:long` range without ambiguity. Every worked example in the guide needs its digit count corrected, a large mechanical edit across many chapters. |
 | **2. Fix 16 digits as the platform's committed width** | Keep 16 digits, but state it as the single, permanent, enforced width (not "for legibility"), with an explicit, justified range bound (16 decimal digits covers sequences up to 10^16 − 1, which must be shown to be sufficient for every declared use, including the dataset-wide sparse tiers) recorded alongside the constant. Remove the "(19 in production)" caveat entirely. | Smaller mechanical edit (no example regeneration needed). Requires a justification that 16 digits is provably sufficient for every profile this guide permits, which has not been demonstrated anywhere in the current text. |
 
-**Decision required: YES**, and this decision should not be finalized until the review's own C3 finding is completed by its author, since the review may have identified a specific instance, consequence, or constraint this independent cross-check has not. This item is recorded in Part F as requiring both a human decision and a completed source review before implementation.
+**Decision required: YES**, and this decision should not be finalized until the review's own C3 finding is completed by its author, since the review may have identified a specific instance, consequence, or constraint this independent cross-check has not. This item is recorded in Part F as requiring both a decision and a completed source review before implementation.
 
 ---
 
@@ -462,11 +462,11 @@ Recorded here so the eventual implementation slice(s) do not discover these late
 - **Appendix D (traceability):** a new D.2 entry (or an addition to D.1) recording this remediation pass's own corrections, following the same table format D.1 already uses, once implemented.
 - **Appendix E (what remains open):** B1's epoch-source decision and B9's retention-option decision, if not resolved before implementation, must be added here as explicitly open rather than silently absent.
 - **Chapter 27 (TCK):** new rows for B4 (datatype round-trip), B13 (opposite-order two-stream deadlock/serialisation probe), and a rewrite of T-1's assertion text (B2).
-- **Per copilot-instructions' mandatory slice shape**, once this plan is executed: the resulting slice(s) need a Validation Pack at `docs/developer/validation/<slice-id>.md` (test cases against the corrected SPARQL, including at least one adversarial/mutation case per Blocking finding, per the human validation gate's "adversarial probe" step), a traceability update in `docs/developer/INDEX.md`, and the doc delta is this remediation itself (the guide is the normative document; there is no separate "doc update" step because the fix *is* the document).
+- **Per copilot-instructions' mandatory slice shape**, once this plan is executed: the resulting slice(s) need a Validation Pack at `docs/developer/validation/<slice-id>.md` (test cases against the corrected SPARQL, including at least one adversarial/mutation case per Blocking finding, per the validation gate's "adversarial probe" step), a traceability update in `docs/developer/INDEX.md`, and the doc delta is this remediation itself (the guide is the normative document; there is no separate "doc update" step because the fix *is* the document).
 
 ---
 
-## Part F — Open items requiring human confirmation before implementation
+## Part F — Open items requiring confirmation before implementation
 
 Every item below must be resolved (or explicitly deferred with a recorded reason) before an implementation slice starts, because each has more than one architecturally valid answer or depends on information outside this plan:
 

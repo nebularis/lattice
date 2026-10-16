@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# A singly-owned claim for this constraint, and a doubly-owned claim for a
+# different constraint, which this audit must not report.
+@prefix pat: <https://example.org/lattice/patterns#> .
+
+<urn:g:keys> {
+  <urn:claim:1> a pat:KeyClaim ; pat:constraint "loan-application-number-per-branch" ; pat:claimedBy <urn:o:a> .
+  <urn:claim:2> a pat:KeyClaim ; pat:constraint "some-other-constraint" ; pat:claimedBy <urn:o:a>, <urn:o:b> .
+}

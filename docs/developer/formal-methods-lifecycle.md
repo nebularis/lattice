@@ -98,7 +98,7 @@ or the protocol models, this section is what you are closing.
 A slice's Validation Pack (`docs/developer/validation/<slice-id>.md`) that touches a law states,
 in its own invariant paragraph, which of the three artefacts above it engages, and cites the
 actual command (`mise run check:formal-freshness`, `mise run check:proofs <layer>`, `mise run
-check:reference-eligibility`) a human can re-run — the same "one command to run everything"
+check:reference-eligibility`) anyone can re-run — the same "one command to run everything"
 discipline every Validation Pack already requires, not a formal-methods exception to it.
 
 ## 3. The one command that catches drift automatically

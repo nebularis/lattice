@@ -5,7 +5,7 @@
 **Unit ID:** `applied-insurance-reference-phase-3`
 **Epic:** [applied-insurance-reference](applied-insurance-reference.md)
 **Status:** Rolling-wave outline. AIR-3.1 to AIR-3.3 are substrate slices, detailed when their
-ADRs are accepted. AIR-3.4 and AIR-3.5 need the cause scheme and are detailed at AIR-2.4.
+ADRs are accepted. AIR-3.4 and AIR-3.5 were detailed on 2026-10-13, for the one trip (lanes §4).
 **Decisions:** [ADR-A100](../../architecture/decisions/ADR-A100-hierarchical-match-over-flat-schemes.md) (D11), [ADR-A103](../../architecture/decisions/ADR-A103-eligibility-set-readings.md) (D12)
 **Sketches:** [mork-bridge.md](../sketches/mork-bridge.md), [peril-vocabulary.md](../sketches/peril-vocabulary.md) §6.8
 
@@ -26,7 +26,7 @@ authored as fixtures before the README prose, and no insurance term enters eithe
 | AIR-3.1 | A-100: the law beside L11 in the Eligibility README, its two example fixtures, `exe:NoHierarchy` (Executable PATCH), the rule in the IR's expansion and in the SPARQL backend, and the OWL backend's refusal | `ontology/eligibility` (README, examples), `tools/mork_compilers`. `Executable.ttl` gains one individual, a stated deviation from the two-module rule |
 | AIR-3.2 | A-103: `elg:ValueReading`, its three individuals, `elg:valueReading` and `elg:negated` (Eligibility MINOR, cascade), fixtures, the IR, SPARQL and SHACL | `ontology/eligibility`, `tools/mork_compilers` |
 | AIR-3.3 | A-103 in the SWRL (sound subset, swapped heads under negation) and OWL (`∃`, `∀ ⊓ ∃`, complement) backends | `tools/mork_compilers` |
-| AIR-3.4 | crosswalk format: reviewed SKOS triples plus characteristic values on codes that name several things, as a `fnd:DerivedArtefact`. A crosswalk of one market list, and the lookup that lifts codes to reference concepts at ingestion | `insurance/peril/crosswalk/`, `ontology/mork` examples |
+| AIR-3.4 | crosswalk format: reviewed SKOS triples plus characteristic values on codes that name several things, as a `fnd:DerivedArtefact`. Crosswalks of OED's peril codes and an example house list, and the lookup that lifts codes to reference concepts at ingestion | `insurance/peril/crosswalk/` (the MORK mapping too, since MORK's own examples stay domain-neutral) |
 | AIR-3.5 | lowering to a market list, list-to-list through the reference, and milestone M2 | as 3.4, `insurance/exposure/examples/` |
 
 Tests at L1 and L2:
@@ -50,7 +50,7 @@ S2 also changes Eligibility, and rebases onto AIR-3.2. AIR-3.3 merges before
 
 ## AIR-3.1 in detail
 
-**Machine:** R (Claude Code). **Branch:** `air/3.1-flat-hierarchy`. **Validation Pack:**
+**Machine:** R. **Branch:** `air/3.1-flat-hierarchy`. **Validation Pack:**
 [applied-insurance-reference-3.1](../validation/applied-insurance-reference-3.1.md).
 **Decision:** ADR-A100, with its implementation note.
 
@@ -127,7 +127,7 @@ Disabling it in `sparql_backend.concept_select` fails AIR31-03, 04, 06 and 07.
 
 ## AIR-3.2 in detail
 
-**Machine:** R (Claude Code). **Branch:** `air/3.2-set-readings`. **Validation Pack:**
+**Machine:** R. **Branch:** `air/3.2-set-readings`. **Validation Pack:**
 [applied-insurance-reference-3.2](../validation/applied-insurance-reference-3.2.md).
 **Decision:** ADR-A103.
 
@@ -200,9 +200,25 @@ Authored in ADR-A-C2 order: examples, then laws and README, then code.
 
 ## AIR-3.3 in detail
 
-**Machine:** R (Claude Code). **Branch:** `air/3.3-readings-swrl-owl`. **Validation Pack:**
+**Machine:** R. **Branch:** `air/3.3-readings-swrl-owl`. **Validation Pack:**
 [applied-insurance-reference-3.3](../validation/applied-insurance-reference-3.3.md).
 **Decision:** ADR-A103 decisions 3 and 4.
+
+**Blocked (2026-10-13).** Do not start until CCS slice HQ-6a.2 (`ccs/hq6a2-closures-compilers`) has
+merged and AIR-3.3-Q1 is answered. HQ-6a.2 adds closed bindings to set readings and changes
+`eligibility_ir.py`, `sparql_backend.py` and `test_set_readings.py`, and leaves SWRL and OWL
+refusing set readings (HQ6a2-10), which this slice removes. HQ-6a.1 also changed the two examples
+AIR33-04 to AIR33-06 read. The branch is created from `main` after that merge, not reused: the old
+`air/3.3-readings-swrl-owl` held only the brief and is deleted.
+
+**AIR-3.3-Q1.** What do SWRL and OWL do with a closed binding?
+
+| Option | Consequence |
+|---|---|
+| (a) compile it as its open reading, with a mapping note | SWRL stays sound, since each rule it emits is fixed by one value and a closure only adds decisions SPARQL makes. OWL's open-world reading also ignores the closure, which fits design-time checks. Closures reach the reasoner routes as their open readings |
+| (b) keep refusing closed bindings in SWRL and OWL | simpler, but closures never reach the reasoner routes |
+
+Option (a) is the hypothesis to test. The brief below is amended with the answer.
 
 **Invariant:** the SWRL backend derives only outcomes a set reading fixes from positive facts,
 with heads swapped under negation, and every outcome it derives is the SPARQL reference's. The
@@ -261,6 +277,172 @@ No ontology changes, so no version bumps, catalog rows or tags. The examples are
 | AIR33-11 | a `SingleValue` binding without the claim, an unbound condition, an `elg:L14` plan / OWL / refused as before | L1 | − |
 | AIR33-12 | a plan with readings / compiled twice / identical graphs | L1 | + |
 | AIR33-13 | the existing compiler tests / unchanged / pass (non-weakening) | L1 | + |
+
+## AIR-3.4 in detail
+
+**Machine:** S (Copilot Business). **Branch:** `air/applied-reference`, commits `[AIR-3.4] …`, the
+last being `[AIR-3.4] Handoff`. **Validation Pack:**
+[applied-insurance-reference-3.4](../validation/applied-insurance-reference-3.4.md). **Decisions:**
+ADR-A100 (decisions 4 and 5), ADR-A13 (MORK review). **Sketch:** MORK bridge §3, §4.1, §6, §7,
+peril vocabulary §9.2. **Decided 2026-10-14:** AIR-3.4-Q1 and AIR-3.4-Q2 (below), at their
+leanings.
+
+**Invariant:** a crosswalk is a reviewed graph of SKOS mapping triples and characteristic values,
+recorded as a derived artefact whose read set is the two scheme editions. Only an exact mapping
+lifts a value to the reference, and a crosswalk is stale as soon as either edition changes.
+
+**AIR-3.4-Q1, which lists.** Decided: OED's peril codes in full, published with the reference
+because Oasis's licence allows it (PV-O6), and AIR-2.7's example house list, which has a code of
+every shape MORK bridge §4.1 names. The CBAA cause-of-loss list (several hundred codes, sketch
+§9.2) waits until its owner's terms are confirmed, and its review is a person's task (PV-O5), so it
+is not in the trip.
+
+**AIR-3.4-Q2, where a lifted value goes.** Decided: a derived property, `aeo:liftedPeril`
+(`⊑ icm:peril`), written beside `aeo:peril` by the lift, never instead of it. The operative value
+stays the drafter's (MORK bridge B1), a check written against the reference reads the lifted
+value, and an inexact mapping writes nothing (B5). The alternatives, lifting inside Eligibility at
+evaluation or replacing the recorded code, are a substrate change and a breach of B1.
+
+### Files
+
+The module's `crosswalk/` directory (ADR-A100 decision 4, MORK bridge §7). Each crosswalk is a
+document of its own, `0.1.0`, with an `owl:Ontology` importing the peril vocabulary at the branch
+version, and a README section in the peril module's README with its own `@output-file`.
+
+| File | Ontology IRI | Content |
+|---|---|---|
+| `crosswalk/oed-perils.ttl` | `…/insurance/peril/crosswalk/oed` | the OED peril code list as a scheme (`oed:` prefix, each code a concept with its code as `skos:notation`), and its crosswalk to the cause scheme |
+| `crosswalk/house-list.ttl` | `…/insurance/peril/crosswalk/house-list` | the crosswalk of `ex:HouseList` (AIR-2.7), an example, with its note saying so |
+| `crosswalk/house-list-ingestion.ttl` | as an example, no `owl:Ontology` | the MORK mapping that looks codes up at ingestion |
+
+The MORK mapping is an insurance example, so it lives here and not in `ontology/mork/examples/`,
+whose examples stay domain-neutral (ADR-A-C2). The phase table's "`ontology/mork` examples" is
+corrected to match.
+
+### Crosswalk content
+
+Each crosswalk is one `fnd:DerivedArtefact` node (the crosswalk), `prov:used` the two schemes'
+version IRIs (its read set), with `prov:wasAttributedTo` a reviewer (an example reviewer in the
+examples, and for OED the maintainer at verification) and evidence citing the source list's
+publication. Its mapping triples, by code shape (MORK bridge §4.1):
+
+| House code | Crosswalk |
+|---|---|
+| `FIRE` | `skos:exactMatch prl:T.FIR` |
+| `FLOOD` | `skos:closeMatch prl:N.HYD.FLD`. The house definition includes surge, so it is not exact |
+| `STORM` | `skos:narrowMatch prl:N.MET.TC`, `prl:N.MET.ETC`, `prl:N.MET.SCS`, `prl:N.MET.LWS` (the code is broader than each) |
+| `QUAKE` | `skos:exactMatch prl:N.GEO.EQ` |
+| `THEFT` | `skos:exactMatch prl:H.THF` |
+| `CYBER` | `skos:exactMatch prl:C` |
+| `LIGHTNING-FIRE` | `skos:exactMatch prl:N.MET.SCS.LTG`, with `prl:typicalMechanism prl-voc:Fire` on the code |
+| `DELAY` | no cause match. `prl:typicalConsequence prl-voc:Delay` on the code |
+
+For OED, the group codes map by membership of AIR-2.5's model groupings (a group code's notation is
+already on its grouping), single codes by `skos:exactMatch` where AIR-2.3's `prl:CatModelCode`
+notation put them, and by close, broad or narrow matches otherwise, each with a note on the
+difference. The crosswalk agrees with those notations, and a test checks it.
+
+### Code (`tools/peril_crosswalk.py`)
+
+- `lift(graph, crosswalk)`: for each `aeo:peril` (and `aeo:unitPeril`) value with an exact mapping,
+  write `aeo:liftedPeril` and one `fnd:DerivationRun`, as a separate graph. Close, broad and narrow
+  mappings write nothing.
+- `stale(crosswalk_graph, current)`: true when a scheme version the crosswalk used differs from the
+  one in force.
+
+The code-level characteristic values reach a loss cause through AIR-4.4's effective characteristics
+derivation, which reads `prl:typicalMechanism` on whatever concept `aeo:peril` names, so no second
+mechanism is needed.
+
+### Ingestion (`crosswalk/house-list-ingestion.ttl`)
+
+A MORK data mapping for a loss row with a cause code field: a `mork:Lookup` with
+`mork:referenceDataPath skos:notation` against `ex:HouseList`, producing the `aeo:LossCause` with
+its `aeo:peril`. The test compiles it with `tools/mork2rml.py` and checks the triples map holds the
+lookup. Running RML is not required, so the lift test starts from a graph shaped as the mapping
+produces.
+
+### Shapes (peril `constraints.ttl`)
+
+| Shape | Rule | Severity |
+|---|---|---|
+| crosswalk targets | every mapping target resolves to a concept or a collection | violation |
+| no mixed exactness | no code maps `skos:exactMatch` and `skos:broadMatch` to concepts in one `skos:broader` chain | violation |
+| read set | a crosswalk names exactly two scheme versions in `prov:used` | violation |
+| lifted from exact | an `aeo:liftedPeril` value is the target of an exact mapping of the `aeo:peril` beside it | violation |
+
+This slice declares `aeo:liftedPeril` in the exposure spec's `losses-requirements-cover` region
+(AIR-4.4 comes earlier in the trip), and the last shape goes with the exposure shapes.
+
+### Tests
+
+| ID | Given / When / Then | Level | +/- |
+|---|---|---|---|
+| AIR34-01 | both crosswalks / loaded / parse, every target resolves | L1 | + |
+| AIR34-02 | the OED crosswalk / compared with AIR-2.3's notations / every exact match agrees | L1 | + |
+| AIR34-03 | loss causes with `FIRE`, `FLOOD`, `STORM` / `lift` / `FIRE` lifted to T.FIR, nothing for the other two | L2 | + |
+| AIR34-04 | the house crosswalk with the cause scheme's version changed / `stale` / true | L2 | − |
+| AIR34-05 | a code mapped exact to N.HYD.FLD and broad to N.HYD.FLD.FLU / the shapes / violation | L1 | − |
+| AIR34-06 | a hand-written `aeo:liftedPeril` from a close mapping / the shapes / violation | L1 | − |
+| AIR34-07 | a `LIGHTNING-FIRE` cause with no recorded mechanism / AIR-4.4's derivation / effective mechanism Fire, defaulted | L2 | + |
+| AIR34-08 | the ingestion mapping / `mork2rml` / compiles, with the lookup | L1 | + |
+| AIR34-09 | every crosswalk / the documentation shape / each mapping's code has a note where the match is not exact | L1 | + |
+
+## AIR-3.5 in detail
+
+**Machine:** S (Copilot Business, moved from R on 2026-10-13). **Branch:** `air/applied-reference`,
+commits `[AIR-3.5] …`, the last being `[AIR-3.5] Handoff`. **Validation Pack:**
+[applied-insurance-reference-3.5](../validation/applied-insurance-reference-3.5.md). **Decisions:**
+ADR-A100, ADR-A103. **Sketch:** MORK bridge §4.2, §4.3, peril vocabulary §6.8. **Milestone:** M2.
+
+**Invariant:** a reference concept lowers to a list's code only through an exact mapping, a
+list-to-list correspondence through the reference is exact only when both legs are, and the cyber
+write-back check decides on the reference, is Undetermined with a reason on a flat list, and
+decides exactly mapped codes of a crosswalked list.
+
+### Code (`tools/peril_crosswalk.py`)
+
+- `lower(graph, crosswalk, concept)`: the code mapped exactly to the concept, or else the code
+  nearest above it, flagged inexact. A code is above a concept when it maps exactly to one of the
+  concept's broader concepts, or by `skos:narrowMatch` to the concept or one of them (the code is
+  the broader). Or else nothing, with a note. It never invents a code (MORK bridge §4.2).
+- `compose(first, second)`: the list-to-list correspondences through the reference, each exact only
+  when both legs are exact (MORK bridge §4.3), as a derived artefact whose read set is both
+  crosswalks.
+
+### Milestone M2 (`insurance/exposure/examples/m2.ttl`)
+
+The cyber write-back profile of sketch §6.8, with three changes since the sketch: it binds
+`aeo:effectiveAgency` and `aeo:effectiveMechanism` (AIR-4.4, Q11), the contracts are
+`icm-voc:AgencyContract` and `icm-voc:MechanismContract`, and a second copy binds
+`aeo:liftedPeril` for the crosswalked case. Loss causes and recorded decisions, by the SPARQL
+backend:
+
+| Case | Cause | Recorded | Decision |
+|---|---|---|---|
+| reference | C.NML.SWF | agency Accidental, mechanism Fire | Permitted |
+| reference | C.MAL.RAN | agency MaliciousCriminal, mechanism Fire | Denied |
+| reference | C.NML.CFG | agency Negligent, mechanism Explosion | Permitted |
+| flat list, under `ex:london-market` | `CYBER` | agency Accidental, mechanism Fire | Undetermined, `exe:NoHierarchy` on the cyber condition |
+| crosswalked, lifted profile | `CYBER`, lifted to C | agency Accidental, mechanism Fire | Permitted |
+| crosswalked, lifted profile | `FLOOD` (close match, not lifted) | none | Undetermined, `exe:MissingCandidate` |
+
+And the onset check of phase 3's test list: an existing cover whose `aeo:perilScope` is T.FIR and
+N.MET.TC.WND, a condition requiring `Sudden` on the path `aeo:perilScope` then `prl:onset`, read
+`elg:EveryValue`: Permitted, and Denied when N.CLI.DRT is added.
+
+### Tests
+
+| ID | Given / When / Then | Level | +/- |
+|---|---|---|---|
+| AIR35-01 | `lower` of T.FIR into the house list / called / `FIRE`, exact | L2 | + |
+| AIR35-02 | `lower` of N.MET.TC.WND, and of T.NUC, into the house list / called / `STORM` flagged inexact, and no code with a note | L2 | − |
+| AIR35-03 | `lower` of N.GEO.EQ.SHK into the house list / called / `QUAKE`, flagged inexact | L2 | + |
+| AIR35-04 | `compose` of the house crosswalk and the OED crosswalk / called / `FIRE` to OED's fire code exact where both legs are, `FLOOD` inexact | L2 | + |
+| AIR35-05 | M2 / SPARQL / the decisions in the table, with their diagnostics | L2 | + |
+| AIR35-06 | M2 / SHACL / agrees with SPARQL | L2 | + |
+| AIR35-07 | the onset check / SPARQL / Permitted, then Denied with N.CLI.DRT | L2 | + |
+| AIR35-08 | the M2 file / every exposure shape / no result | L1 | + |
 
 ## Documentation deltas
 

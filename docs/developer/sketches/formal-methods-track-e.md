@@ -67,7 +67,7 @@ started all at once (the plan, §4, below).
 | # | Question | Candidates |
 |---|---|---|
 | generation direction | extend `tools/literate_extract.py` with an Isabelle-datatype fenced-block kind (parallel to its `turtle-spec`/`turtle-vocab`/`turtle-shapes` blocks), or a separate generator | `literate_extract.py`'s existing block/file-count contract (one block per generated file, in document order) is proven infrastructure; reusing its shape is the lower-risk default unless Isabelle's datatype syntax does not fit it |
-| image route | Isabelle has no container image in this spike (deferred, human instruction, 2026-10-06, to conserve tokens) | build one before E1's claims are recorded, per epic E9's "only an image route's verdict is recorded", or accept native-only evidence for E1 specifically and revisit before gate E |
+| image route | Isabelle has no container image in this spike (deferred, our instruction, 2026-10-06, to conserve tokens) | build one before E1's claims are recorded, per epic E9's "only an image route's verdict is recorded", or accept native-only evidence for E1 specifically and revisit before gate E |
 | binding resolution's timing | start E1's kernel and rounding/residual parts now, defer binding resolution until track C's C2 model exists | do the two independent parts first (§3), track C's timing decides the third |
 
 ## 5. Compatibility with the improved-ontology-documentation sketch

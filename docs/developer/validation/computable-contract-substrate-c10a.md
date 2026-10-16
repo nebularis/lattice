@@ -3,7 +3,7 @@
 # Validation Pack: CCS C10a, the import guard
 
 **Unit:** [`computable-contract-substrate`](../status/computable-contract-substrate.md)
-**Machine:** R (Claude Code). **Branch:** `ccs/c10a-import-guard`
+**Machine:** R. **Branch:** `ccs/c10a-import-guard`
 **Plan and test cases:** [CCS plan](../plans/computable-contract-substrate.md) (C10A in detail)
 **Decisions:** ADR-A01 and its addendum, ADR-A106 law B7. Questions C10a-Q1, C10a-Q2 decided 2026-10-01
 

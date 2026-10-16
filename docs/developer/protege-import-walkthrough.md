@@ -100,8 +100,7 @@ LATTICE IRI to a file.
 
 ## Reporting
 
-Record the result in the AOR-4 Validation Pack sign-off
-(`docs/developer/validation/LOG.md`).
+Record the result in the status record of the unit that runs the walkthrough.
 
 If Test 1 shows missing LATTICE imports, Protégé did not follow the stub's
 relative `nextCatalog`. That is the open question in ADR-A88. Report which

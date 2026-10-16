@@ -3,7 +3,7 @@
 # Eligibility's reference semantics (track B1/B2)
 
 A hand-written, independent Python reference for Eligibility's logic kernel and denotation
-(`ontology/eligibility/README.md` §6, laws L9-L16), differentially tested against
+(`ontology/eligibility/README.md` §6, laws L9-L17), differentially tested against
 `tools/mork_compilers`' SPARQL and SHACL backends, for the formal-methods epic's track B
 ([sketch](../../../docs/developer/sketches/formal-methods-track-b.md),
 [plan](../../../docs/developer/plans/formal-methods-track-b.md),
@@ -21,7 +21,9 @@ A hand-written, independent Python reference for Eligibility's logic kernel and 
   that a complete check, not merely an example.
 - **`denotation.py`** is the single-candidate decision procedure for `elg:ExactMatch`,
   `elg:SetMembership` and `elg:HierarchicalMatch` (laws L9-L12, L14), and the set-reading and
-  negation composition on top of it (L15, L16). It was written directly from
+  negation composition on top of it (L15, L16), deciding on completeness only for a binding
+  that names a closure (L17, ADR-A105). `decide_condition_with_reliance` also reports whether
+  that decision relied on the closure (HQ6a2-Q3). It was written directly from
   `ontology/eligibility/README.md` §6's law prose, then cross-checked against
   `tools/mork_compilers/src/mork_compilers/eligibility_ir.py`'s `_expand` function only to confirm
   no case was missed — not copied from it. `_expand` is what every compiler backend (SPARQL,
@@ -48,7 +50,42 @@ A hand-written, independent Python reference for Eligibility's logic kernel and 
   a test-time oracle only, imported by its own tests and by B2's differential-test suite, never by
   a runtime path.
 
-## Install and test
+## What each tested backend is claimed to preserve (B2.1)
+
+The differential harness tests two of the four compiler backends (`tools/mork_compilers`'
+SPARQL and SHACL), by design (track B's sketch §3): SWRL and OWL refuse more than this harness
+exercises, by their own documented restrictions, and are out of scope until they do not. Each
+tested backend projects the reference's three-valued `{Permitted, Denied, Undetermined}` result
+differently, and the projection each one is claimed to preserve is stated here, not left implicit:
+
+- **SPARQL**, executed with **rdflib** (the engine the differential harness actually runs
+  against, not a production store — a different engine's semantics, for example around `IF`,
+  `COUNT` over unbound values, or blank-node handling, is untested by this harness), preserves the
+  full three-valued result directly: the compiled query's own result column names one of
+  `Permitted`, `Denied` or `Undetermined` (`exe:` individuals), so the comparison is exact, with
+  no projection at all.
+- **SHACL**, validated with **pySHACL**, is a conformance check, not a three-valued query: it
+  reports conforms/does-not-conform plus a results graph. The compiled shapes encode the
+  three-valued result as structure (an admitted-members list, an undetermined-members list;
+  `shacl_backend.py`'s own `admitted`/`undetermined` lists), which `tools/mork_compilers`' own
+  `shacl()` test helper reads back into the same three-valued vocabulary this harness compares
+  against — so what is actually tested is that reconstruction agreeing with the reference, not raw
+  SHACL conformance alone.
+
+## Adjudication log (B2.1)
+
+Every reference/compiler disagreement this harness has found gets a record here: which side was
+wrong, and the normative citation that settled it — never "the compiler says so" alone, since
+correcting the reference by reading the compiler's own implementation erodes the independence the
+reference exists to provide.
+
+| Found | Disagreement | Which side was wrong | Normative citation |
+|---|---|---|---|
+| B2 (2026-10-07) | a candidate outside the resolved scheme entirely, under hierarchical match | the reference (`decide_concept_match` checked ancestry but never scheme membership) | L9: "restricted to that scheme's members," `ontology/eligibility/README.md` §6 |
+| B2 (2026-10-07) | `SingleValue` reading with more than one candidate | the reference (took `values[0]` regardless of count) | the compiler's own SPARQL template (`exe:SeveralCandidates`) at the time — **recorded here as a reminder that this adjudication's citation is weaker than the others**: it was settled by reading the implementation, not a README law, and should be revisited if `ontology/eligibility/README.md` is ever extended to state `SingleValue`'s several-candidates case directly |
+| B2.2 (2026-10-09) | hierarchical match with no resolved scheme at all | the reference (fell through to the unmatched-required branch and returned Denied) | L9 (amended 2026-10-09: "a condition... with no resolved scheme at all has no closure to test a candidate against, and is undetermined for every candidate"), `ontology/eligibility/README.md` §6 |
+
+
 
 ```bash
 mise exec -- python -m pip install -e ./tools/reference/eligibility[test]

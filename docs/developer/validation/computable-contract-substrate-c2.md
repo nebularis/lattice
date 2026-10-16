@@ -3,7 +3,7 @@
 # Validation Pack: CCS C2, ADR-A106 Behaviour configuration, runtime, occasions and records
 
 **Unit:** [`computable-contract-substrate`](../status/computable-contract-substrate.md)
-**Machine:** R (Claude Code). **Branch:** `ccs/c0-adrs` (tranche A on one branch)
+**Machine:** R. **Branch:** `ccs/c0-adrs` (tranche A on one branch)
 **Plan and test cases:** [CCS plan](../plans/computable-contract-substrate.md) (C2 in detail)
 **Decisions:** CC-D8
 

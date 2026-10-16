@@ -3,7 +3,7 @@
 # Bidirectional XSLT transformation sidecar - Status
 
 **Unit ID:** `xslt-sidecar`
-**Status:** 🔵 Drafted, not started. Decisions XS-D1 to XS-D7 awaiting the human
+**Status:** 🔵 Drafted, not started. Decisions XS-D1 to XS-D7 awaiting the maintainer
 **Last updated:** 2026-10-02
 **Plan:** [xslt-sidecar.md](../plans/xslt-sidecar.md)
 **Sketch:** [xslt-sidecar.md](../sketches/xslt-sidecar.md)
@@ -12,7 +12,7 @@
 
 ## Current position
 
-At the human's request, a sketch and plan were drafted for a new unit: a Saxon-hosted XSLT 3.0
+At our request, a sketch and plan were drafted for a new unit: a Saxon-hosted XSLT 3.0
 engine, published as both a Java library and a standalone sidecar process, that projects known-shape
 SPI data to documents and reports on egress (building on the existing
 [xml-egress-and-transformation-kits.md](../sketches/xml-egress-and-transformation-kits.md) sketch),
@@ -24,9 +24,9 @@ Seven decisions (XS-D1 to XS-D7, sketch §11) are proposed, none recorded. Seven
 plan §4/§5) are drafted, none started, totalling about 2.31M tokens. No ADR is Accepted. No code,
 branch, or module exists yet.
 
-**Next action, for the human:** review the sketch and plan, record decisions XS-D1 to XS-D7 (plan
+**Next action, for the maintainer:** review the sketch and plan, record decisions XS-D1 to XS-D7 (plan
 §3, sketch §11), and decide whether and when the unit starts.
-**Next action, for the agent:** none. No slice may start before the decisions above are recorded.
+**Next action:** none. No slice may start before the decisions above are recorded.
 
 ## Relationship to other units
 
@@ -41,6 +41,6 @@ branch, or module exists yet.
 
 ## History
 
-- 2026-10-02: sketch and plan drafted at the human's request, alongside ADR-A119 (Proposed) and
+- 2026-10-02: sketch and plan drafted at our request, alongside ADR-A119 (Proposed) and
   this status record. No implementation authorised. Not committed to a feature branch yet, since no
   branch has been assigned to this unit.

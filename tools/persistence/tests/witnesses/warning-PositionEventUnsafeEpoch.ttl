@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# A position-derived event identity under the baseline row-level epoch guard
+# can reissue a position after a restore, so it is warned about. The anchors
+# example is safe by design, so this removes its dataset-level guard.
+# base: identity-minting-anchors.ttl
+# remove: ex:OrderEpoch dal:epochGuardScope
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .

@@ -4,7 +4,7 @@
 
 **Unit:** [`applied-ontology-readiness`](../status/applied-ontology-readiness.md)
 **Follows:** [AOR-3](applied-ontology-readiness-aor-3.md), whose job-family item was deferred
-**Decision:** [ADR-A86 addendum](../../architecture/decisions/ADR-A86-ontology-semantic-versioning.md#addendum-2026-09-25-guarantees-consumers-rely-on), item 5 (content-hash versions, agreed by the human 2026-09-25)
+**Decision:** [ADR-A86 addendum](../../architecture/decisions/ADR-A86-ontology-semantic-versioning.md#addendum-2026-09-25-guarantees-consumers-rely-on), item 5 (content-hash versions, agreed 2026-09-25)
 
 ## Invariant
 
@@ -53,7 +53,7 @@ structural checks passed`.
 - `ontology/mork/mtp/data/pins.lock.json`: the whole-graph hash, re-pinned. No
   term hash moved.
 
-## Adversarial probe (run by the agent)
+## Adversarial probe
 
 A constant version suffix failed AOR3B-03. Scanning with `rglob` again failed
 AOR3B-04 and AOR3B-05.

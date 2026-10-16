@@ -20,6 +20,7 @@ ino:CoverageTermShape a sh:NodeShape ;
 ino:PolicyDocumentShape a sh:NodeShape ;
     sh:targetClass ino:PolicyDocument ;
     sh:property [
-        sh:path ins:hasProvision ;
-        sh:minCount 1
+        sh:path [ sh:inversePath ins:boundIn ] ;
+        sh:minCount 1 ;
+        sh:message "A policy has at least one bound term."
     ] .

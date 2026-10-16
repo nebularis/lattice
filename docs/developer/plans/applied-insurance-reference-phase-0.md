@@ -22,8 +22,8 @@ schemes and crosswalks (D11) in A-100, with MB-Q3 answered there, and set readin
 A-103. A-100 and A-103 are substrate decisions and follow ADR-A-C2. In the same slice, make the sketches' citations of
 Open CBAA documents (design-spec, integration specification) name that repository.
 
-L0: `mise run topology:links` reports no failure under `docs/developer/sketches/`. Gate: human
-ratification of each ADR.
+L0: `mise run topology:links` reports no failure under `docs/developer/sketches/`. Gate: the
+maintainer's ratification of each ADR.
 
 ## Documentation deltas
 

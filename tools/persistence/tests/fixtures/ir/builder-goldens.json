@@ -1,0 +1,110 @@
+{
+  "append-event": {
+    "sha256": "82e960d269d514237b3cd302bd82c8ca4868324b695d8dace294f570a8ae5517",
+    "version": 2
+  },
+  "append-event-dataset-guard": {
+    "sha256": "3b6388ce5eb979a59de262a61a00a2b1bdb1bf31d6ae72e985c3e9626012265a",
+    "version": 2
+  },
+  "bootstrap-version-row": {
+    "sha256": "ba709a1b66aa7e324022bfa4be462a34848493df4435af842c462383c3934dc4",
+    "version": 1
+  },
+  "bootstrap-version-row-dataset-guard": {
+    "sha256": "28fcd312c9d6c0d62112c7da531183f6a8881f94ff526d421b1f1d8f58bcd5ac",
+    "version": 1
+  },
+  "cas-replace-composite-property": {
+    "sha256": "9bd4e7f177eedc33a0a24d8789272ff1f8661267cbfa9f1246fcfbfdc881f118",
+    "version": 1
+  },
+  "cas-replace-composite-property-dataset-guard": {
+    "sha256": "4424eda0969022591688fdebeb353de17f20670d3d35109573179091265a1832",
+    "version": 1
+  },
+  "cas-replace-named-graph": {
+    "sha256": "51d59da786c73c517eb1c8fe0f038c39daedbc0bfa07f982fe1111e40b89f3fc",
+    "version": 1
+  },
+  "cas-replace-named-graph-dataset-guard": {
+    "sha256": "471529ce941e112be9b7f326b4d209e59dea0d3e5a52c0397fd8c0d49d6de50f",
+    "version": 1
+  },
+  "create-if-absent-composite": {
+    "sha256": "86818e3fe91cf91459935cbff5c1ba146d99743650ec4b84c72ff0e3a236dd4f",
+    "version": 1
+  },
+  "create-if-absent-composite-dataset-guard": {
+    "sha256": "c895a673a46d5a75b66be8bb583e431eff5098118fede8055643049423acbd1d",
+    "version": 1
+  },
+  "create-if-absent-named-graph": {
+    "sha256": "76f0da0618435d14d3ef457e0c9a76b04f38f13064f8078babd8c2283c5d0022",
+    "version": 1
+  },
+  "create-if-absent-named-graph-dataset-guard": {
+    "sha256": "f6f08daf6592cad953f1c70acb81293e239e919ba2b5dfce6464f700a5127022",
+    "version": 1
+  },
+  "fork-detection-audit": {
+    "sha256": "5387da25bcedb0804ed5dd429098a43e6e751c0cdd2b828fd6571f0111f1b3b0",
+    "version": 1
+  },
+  "gap-scan-audit": {
+    "sha256": "c92a9bcc66bee30f35e9b588d43339fcf600edb1d02a31d6e1edb8b70901b09e",
+    "version": 1
+  },
+  "key-claim-duplicate-audit": {
+    "sha256": "32443376ab5aa3abaa65f674b3a61232498a68162cde854b1e13dbeb340e904c",
+    "version": 1
+  },
+  "key-claim-merge-rewrite": {
+    "sha256": "0695c4f880809342071c41a1b1e747111ac4eb61144aa86dda2c373b3f359026",
+    "version": 1
+  },
+  "key-claim-quarantine": {
+    "sha256": "0faf766d433f22e3a6f993caf24298a2ef6f7c63b19c5ff774dce27cd3044c2b",
+    "version": 1
+  },
+  "key-claim-retire": {
+    "sha256": "ff578079eb7e101ad876fb6e35fd05d73e2546d9b2f741a79fc7384c8c36fbfa",
+    "version": 1
+  },
+  "key-claim-write": {
+    "sha256": "1e556462e50add6b61b169f1a94b4ebc69a710252705eb92df5a9fb137f7896a",
+    "version": 1
+  },
+  "key-claim-write-dual": {
+    "sha256": "0a53816e83475b82e4f2070aae7d36bae9057a561084e19f6a3b06202ab0dedb",
+    "version": 1
+  },
+  "revision-multi-txn-audit": {
+    "sha256": "901c4f46c0e43d81b530aebae44d7b35da7b77075876b2ebe0612e0e5be37235",
+    "version": 1
+  },
+  "tombstone-delete-composite": {
+    "sha256": "b0367fc27a3c37c3e70fa6e7b0c538a019afeb2f30dede934353e83571338d2f",
+    "version": 1
+  },
+  "tombstone-delete-composite-dataset-guard": {
+    "sha256": "db366aab279447972ea18cfb0f89fcc04a3339800c776d04395ef8dfb28db178",
+    "version": 1
+  },
+  "tombstone-delete-named-graph": {
+    "sha256": "f318ed78f2476ce2c4c891efc1013db126a87cf4b5872704b32b5fd911522909",
+    "version": 1
+  },
+  "tombstone-delete-named-graph-dataset-guard": {
+    "sha256": "7a42ff50c532a9133e2c77071d53bb3d621400be1e784ea53e52815da75d5137",
+    "version": 1
+  },
+  "txn-multi-revision-audit": {
+    "sha256": "8285fec4263803a1ceb5bebf64117e893f3737c6aa1dbda88a5087a261ee9018",
+    "version": 1
+  },
+  "unconditional-write": {
+    "sha256": "a41c1e4f27eb50e6efe8c852031d1ddfb6fafbc7752c4e85907eac797d35cb1c",
+    "version": 1
+  }
+}

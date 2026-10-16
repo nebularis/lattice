@@ -1,0 +1,22 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# bind: logGraphs = <urn:g:txlog/1>
+# No gaps. Target A has receipts 1 to 3 across the pinned graph and a bucket.
+# Target B has a retention low-water mark of 2, so receipt 1 is legitimately
+# pruned and receipts 2 and 3 are the whole range.
+@prefix pat: <https://example.org/lattice/patterns#> .
+
+<urn:g:meta/47> {
+  <urn:t:A> a pat:VersionRow ; pat:seq 3 .
+  <urn:t:B> a pat:VersionRow ; pat:seq 3 .
+}
+<urn:g:retention> { <urn:t:B> pat:retentionLowWaterMark 2 . }
+<urn:g:txlog/pinned> {
+  <urn:r:a3> a pat:Revision ; pat:target <urn:t:A> ; pat:seq 3 .
+  <urn:r:b3> a pat:Revision ; pat:target <urn:t:B> ; pat:seq 3 .
+}
+<urn:g:txlog/1> {
+  <urn:r:a1> a pat:Revision ; pat:target <urn:t:A> ; pat:seq 1 .
+  <urn:r:a2> a pat:Revision ; pat:target <urn:t:A> ; pat:seq 2 .
+  <urn:r:b2> a pat:Revision ; pat:target <urn:t:B> ; pat:seq 2 .
+}

@@ -7,7 +7,7 @@
 **Epic status:** Proposed. Scope decisions recorded 2026-09-26 (§5). Decomposed into seven
 phase plans (below). Phases 0 and 1 are detailed to slice level. Phases 2 to 6 are rolling-wave:
 slices are outlined and detailed at the preceding phase gate.
-**Trigger:** human request, 2026-09-26
+**Trigger:** request, 2026-09-26
 **Status record:** [applied-insurance-reference.md](../status/applied-insurance-reference.md)
 **Governing model:** Epic Decomposition in the [lattice-lifecycle skill](../../../.claude/skills/lattice-lifecycle/SKILL.md)
 
@@ -50,7 +50,7 @@ Each is stated once in the sketch cited, and every phase plan inherits them.
 | E5 | Names: "characteristic" for peril axes, "term parameter" and "term relation" for contract terms. "Facet" is not used | term-parameters §2 |
 | E6 | Applied content is not substrate. Every substrate change it motivates follows the clean-room procedure (ADR-A-C2) and the restatement boundary (ADR-A-C1) | whitepaper §7.2 |
 | E7 | Every ontology change is classified under ADR-A86 and runs the import-pinning cascade | ontology-versioning-policy |
-| E8 | Agents do not run the git commands this plan uses for branching and merging (creating, switching, fetching, pulling, pushing, bundling, rebasing, merging). The human runs them. The one exception is machine R's agent, when the human explicitly asks it to. Agents may run any other local git command their normal workflow needs | lanes §1 |
+| E8 | Agents do not run the git commands this plan uses for branching and merging (creating, switching, fetching, pulling, pushing, bundling, rebasing, merging). The maintainer runs them. The one exception is machine R's agent, when we explicitly ask it to. Agents may run any other local git command their normal workflow needs | lanes §1 |
 
 ## 3. Phase map
 
@@ -62,7 +62,7 @@ Each is stated once in the sketch cited, and every phase plan inherits them.
 | 3 | [phase 3](applied-insurance-reference-phase-3.md) | Eligibility over flat schemes and several values (substrate), crosswalks, a check across cause and characteristics | 0 (3.1 to 3.3), 2 (3.4, 3.5), 4.4 (M2) | M2 |
 | 4 | [phase 4](applied-insurance-reference-phase-4.md) | exposure ontology | 1, and slices of 2 per the phase plan | M3 |
 | 5 | [phase 5](applied-insurance-reference-phase-5.md) | contract module: term parameters, liability direction in contract terms, optional compilation. Deferred (D2) | 1, 2, Open CBAA integration of 1 to 4 | M4, M5 |
-| 6 | [phase 6](applied-insurance-reference-phase-6.md) | submission (after 4), claims (after 5) | 4, 5 | M6 |
+| 6 | [phase 6](applied-insurance-reference-phase-6.md) and [claims](applied-insurance-reference-claims.md) | submission (after 4), claims: the claims core, money and wire formats after 4, the parts that evaluate cover after CCS C12 (claims plan §3) | 4, CCS, Phase 5 for term parameters | M6, M7, M8 |
 | S | [substrate track](applied-insurance-reference-substrate.md) | upstream LATTICE changes L-P1 to L-P5, spatial guidance, evidence resolution | 0 | none, non-blocking |
 
 ```mermaid
@@ -93,7 +93,7 @@ has one section per machine, and each machine's agent edits only its own. An age
 record at the start of a session and updates its section, in the same commit as its work, at the
 end. Handoff notes for a slice go in its Validation Pack. How the sections, states and handoffs
 work is in lanes §5. There are no per-phase status records, a deliberate deviation from the
-epic model in `.github/copilot-instructions.md`, agreed with the human on 2026-09-26.
+epic model in `.github/copilot-instructions.md`, agreed on 2026-09-26.
 
 ## 3b. Concurrent unit: normative rule substrate
 
@@ -104,10 +104,10 @@ unit on R. Its §4 measures the interference with this epic. The constraints tha
 |---|---|
 | R verifies an S bundle before continuing an NRS slice | S carries 17 of this epic's slices and has no runtime. A waiting bundle idles S |
 | AIR-3.3 merges before NRS N1 starts | both change `tools/mork_compilers/` |
-| Phase 2 (AIR-2.2 to AIR-2.7) completes before NRS N9 and CCS F1 start | both change Foundation (N9 a MAJOR bump, F1 adds identifiers), re-pinning `insurance/peril/spec` and `vocab`, which Phase 2 is authoring. They share one cascade |
+| Phase 2 (AIR-2.2 to AIR-2.7) completes before NRS N9 starts | N9 changes Foundation (a MAJOR bump), re-pinning `insurance/peril/spec` and `vocab`, which Phase 2 is authoring. CCS F1 has since run on its own (ADR-A114, Foundation 0.4.0, 2026-10-03) |
 | [CCS](computable-contract-substrate.md) C9 (Instrument rewrite, ADR-A104, with the Wording layer, ADR-A112) is merged before Phase 5 starts. NRS N4 moved into CCS on 2026-09-30 | A-101's term parameters qualify terms and legal relations, which need the new model (ADR-A-C1) |
 | CCS C10 re-pins `applied/capacity` | Behaviour's breaking MINOR cascades to its execution profile. After C10 Behaviour no longer imports Instrument, so the Instrument rewrite cascades nowhere outside Instrument. The epic does not author `applied/capacity` before Phase 5 |
-| Substrate S2 is authored with NRS N5, and S7 with NRS N10 | both pairs change the same layer's semantics: Eligibility well-foundedness, and precedence |
+| Substrate S2 is authored with CCS C9b3 (NRS NQ-4, 2026-10-10), and S7 with NRS N10 | both pairs change the same layer's semantics: Eligibility well-foundedness, and precedence |
 
 ## 4. Milestones
 
@@ -118,20 +118,22 @@ unit on R. Its §4 measures the interference with this epic. The constraints tha
 | M3 | exposure units derived on demand for a location set, and a zone-and-peril requirement evaluated over them without materialising units | phase 4 |
 | M4 | (deferred with Phase 5) a D&O programme example: Side A, B and C terms, and a claim by a claimant unknown at binding whose direction (third, fourth, insured against insured) is derived from roles and the relationship graph | phase 5 |
 | M5 | (deferred with Phase 5) one check run directly (route R1) and compiled (route R2) with equal results under the parity suite | phase 5 |
-| M6 | a submission packages an exposure set version, and a claim records a loss cause chain against the contract that responds | phase 6 |
+| M6 | a submission packages an exposure set version, and a claim records a loss cause chain against the contract that responds | phase 6 and the claims plan (AIR-6.5) |
+| M7 | one loss across a primary policy, an excess layer and a reinsurance: positions, movements, a settlement, a recovery and a derived loss run, each traced to the words | claims plan (AIR-6.12) |
+| M8 | a coverholder's claims bordereau lifted, reconciled into movements and statuses, and emitted again for the market with its lowering report, reproducible from the stored files | claims plan (AIR-6.W3) |
 
 ## 5. Decisions
 
-### 5.1 Scope decisions (human, 2026-09-26)
+### 5.1 Scope decisions (2026-09-26)
 
 | # | Decision | Effect |
 |---|---|---|
 | D1 | The existing contract module (`ontology/applied/insurance/spec/structure/contract.ttl`, its vocab and shapes) is dropped | AIR-1.1 deletes it. TP-Q2 is closed |
-| D2 | A new contract module is de-prioritised until Phases 1 to 4 are wired into Open CBAA | Phase 5 starts only after that integration. A-101 is drafted at Phase 5 start. Claims (Phase 6, AIR-6.2 onwards) waits with it |
+| D2 | A new contract module is de-prioritised until Phases 1 to 4 are wired into Open CBAA | Phase 5 starts only after that integration. A-101 is drafted at Phase 5 start. Claims (Phase 6, AIR-6.2 onwards) waits with it. Revisited by the [claims plan](applied-insurance-reference-claims.md)'s CL-Q1 (2026-10-16): if claims imports Instrument directly, the slices that need only Instrument and exposure may start before Phase 5 |
 | D3 | Open CBAA material stays in the sketches. A real-world contractual requirement is valid motivation for a LATTICE change | Phase 0 no longer separates consumer material from the sketches |
 | D4 | Open CBAA's local copies of the sketches are removed, and its documents link to LATTICE | done in Open CBAA, 2026-09-26 |
 
-### 5.2 Applied layout (human, 2026-09-26)
+### 5.2 Applied layout (2026-09-26)
 
 Input to A-98 and A-100. Sub-domains beyond the epic's phases are illustrative and do not change
 its scope.
@@ -144,8 +146,8 @@ its scope.
 | D8 | Classifications other domains also need (territory, asset class, industry) go in a cross-domain `applied/classification/` module from the start, so no IRI moves when lending arrives |
 | D9 | The peril vocabulary is an insurance sub-domain, `insurance/peril/`, with its own release cycle for editions and crosswalks. There is no `reference/` level. Its scheme contract stays in `common/`, so modules that only classify by peril need not import the vocabulary |
 | D10 | Reversed by D11. (Scheme profiles as a cross-domain applied module, `applied/scheme-profile/`.) |
-| D11 | Hierarchical match over a scheme without a hierarchy leaves unnamed members Undetermined, with a diagnostic, in Eligibility's law and compilers (ADR-A100). No Vocabulary change. Crosswalks are reviewed SKOS graphs with Foundation provenance, and MORK is where proposals wait for review. Human, 2026-09-26 |
-| D12 | Checks across cause and characteristics are Eligibility profiles with one condition per axis over one subject. Set readings (ADR-A103, formerly substrate item S3) move into Phase 3, and each link of a loss's cause chain is its own node (`aeo:LossCause`). Human, 2026-09-26 |
+| D11 | Hierarchical match over a scheme without a hierarchy leaves unnamed members Undetermined, with a diagnostic, in Eligibility's law and compilers (ADR-A100). No Vocabulary change. Crosswalks are reviewed SKOS graphs with Foundation provenance, and MORK is where proposals wait for review. Decided 2026-09-26 |
+| D12 | Checks across cause and characteristics are Eligibility profiles with one condition per axis over one subject. Set readings (ADR-A103, formerly substrate item S3) move into Phase 3, and each link of a loss's cause chain is its own node (`aeo:LossCause`). Decided 2026-09-26 |
 
 ```text
 applied/
@@ -195,12 +197,23 @@ filed here because Phase 3 implements them.
 | MB-Q3 publish a crosswalk of a widely used market list with the reference edition | A-100 |
 | PV-O3 concept lifecycle across editions | substrate track S1 |
 | PV-O4 matching over generic links only | substrate track S2 |
-| W-Q2 causation profiles and their legal review | phase 6 gate |
-| W-Q3 granularity of cause of loss in claims data | phase 6 gate |
+| W-Q2 causation profiles and their legal review | claims plan, gates AIR-6.4 |
+| W-Q3 granularity of cause of loss in claims data | claims plan §4: one code per claim in the CRS bordereau and ACORD, recorded as one cause link |
 | W-Q4 binding suspension on active hazard events | consumer decision |
 
 ## 7. Out of scope
 
+Every item here, and the workflow around information requests that AIR-6.1 leaves to consumers,
+is collected in [leftovers](air-leftovers.md).
+
 Catastrophe model internals, pricing, a consumer's statement modules and decision logs, market
 editions other than examples (they are published by their owners and bound by scope), and any
 runtime store or UI work.
+
+Added 2026-10-13, after a review of earlier designs against this plan:
+
+| Out of scope | Why, and where it would go |
+|---|---|
+| catastrophe model results: model runs, event sets, event and year loss tables, exceedance probability curves, hazard footprints | a follow-on unit, aligned with Oasis's Open Results Data. This epic records summary peril metrics (AIR-4.3), which cite a model's full output by IRI as evidence |
+| exposure of portfolios of many insureds, as a cedent's treaty portfolio or a binding authority's bordereau | Open CBAA's risks cover bordereaux. A treaty portfolio belongs with the contract module's reinsurance structures |
+| an insured's licences and permits | they are instruments granted by an authority, modelled once the Instrument rewrite (CCS C9) has merged |

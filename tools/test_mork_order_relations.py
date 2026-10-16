@@ -21,8 +21,16 @@ from mork_compilers import reasoning  # noqa: E402
 from ontology_catalog import Catalog, closure  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
-SHAPES = Graph().parse(ROOT / "ontology/mork/shapes/constraints.ttl")
 PREFIX = "@prefix : <http://www.nebularis.org/ontologies/Mork#> .\n@prefix ex: <https://example.org/m/> .\n"
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _cached_graphs(request: pytest.FixtureRequest, graph_cache, validated) -> None:
+    """TM1/TM2: shared, session-scoped shapes graph and validation cache
+    (python-test-melting)."""
+    module = request.module
+    module.SHAPES = graph_cache(ROOT / "ontology/mork/shapes/constraints.ttl")
+    module.validate = validated
 
 
 def violations(data: str) -> set:

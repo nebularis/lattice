@@ -15,7 +15,6 @@ from rdflib.namespace import OWL, RDF
 
 INS = Namespace("https://www.nebularis.org/neuro-semantic/lattice/instrument#")
 
-SHAPES = Graph().parse(Path(__file__).resolve().parents[1] / "ontology/quantification/shapes/constraints.ttl")
 PREFIXES = """
 @prefix qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
 @prefix ex: <https://example.org/q/> .
@@ -23,6 +22,15 @@ ex:mass a qnt:ValueSpace . ex:weight a qnt:ValueSpace . ex:money a qnt:ValueSpac
 ex:usd a qnt:Quantity ; qnt:inUnit ex:USD . ex:eur a qnt:Quantity ; qnt:inUnit ex:EUR . ex:usd2 a qnt:Quantity ; qnt:inUnit ex:USD .
 ex:day a qnt:Unit . ex:business-day a qnt:CalendarUnit .
 """
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _cached_graphs(request: pytest.FixtureRequest, graph_cache, validated) -> None:
+    """TM1/TM2: shared, session-scoped shapes graph and validation cache
+    (python-test-melting). The same file test_terms_in_time.py's QSHAPES uses."""
+    module = request.module
+    module.SHAPES = graph_cache(Path(__file__).resolve().parents[1] / "ontology/quantification/shapes/constraints.ttl")
+    module.validate = validated
 
 
 def conforms(text: str) -> bool:

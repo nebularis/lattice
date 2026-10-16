@@ -23,9 +23,9 @@ This layer is a far better formal-methods target than the SQL compilation work, 
 
 1. **The specification is already mostly written down and mostly declarative.** Dimensions with enumerated values, a baseline per dimension, a precedence algorithm, a refusal/warning table, an operation-selection table, a template library, an outcome table, and a set of standing audits. Almost all of this is finite, tabular, and therefore mechanisable at low cost. The expensive part of formalisation (recovering intent from code) has largely been done by the guide.
 
-2. **The historical defect profile is exactly what cheap formal methods catch.** Appendix D records three remediation passes. Nearly every defect in D.1–D.3 is a bounded-model-checkable or decision-table property: a guard that can never match, a shape that can never fire, an audit query that cannot detect the loss it claims to detect, a fencing token that is checked but never advanced, an unbounded read that skips a committed write, a digest that is not computed, a retention rule that prunes a live head. These were found by three successive human reviews over months. A model checker finds that class in hours. §1.3 makes the argument concretely.
+2. **The historical defect profile is exactly what cheap formal methods catch.** Appendix D records three remediation passes. Nearly every defect in D.1–D.3 is a bounded-model-checkable or decision-table property: a guard that can never match, a shape that can never fire, an audit query that cannot detect the loss it claims to detect, a fencing token that is checked but never advanced, an unbounded read that skips a committed write, a digest that is not computed, a retention rule that prunes a live head. These were found by three successive reviews over months. A model checker finds that class in hours. §1.3 makes the argument concretely.
 
-3. **Pluggable backends force the verification to be parametric, which is a virtue.** The honest statement of correctness here is not "the generated SPARQL is correct" but "*for this capability profile*, this strategy delivers this guarantee level". That is a matrix, each cell of which is a proof, a bounded check, or a counterexample. Once that matrix exists, the planner's `min_level` fail-fast becomes a lookup into checked evidence instead of a human claim, and the TCK's job narrows to establishing which column of the matrix a given store occupies. This is the single most valuable structural idea in this document (§4).
+3. **Pluggable backends force the verification to be parametric, which is a virtue.** The honest statement of correctness here is not "the generated SPARQL is correct" but "*for this capability profile*, this strategy delivers this guarantee level". That is a matrix, each cell of which is a proof, a bounded check, or a counterexample. Once that matrix exists, the planner's `min_level` fail-fast becomes a lookup into checked evidence instead of an unchecked claim, and the TCK's job narrows to establishing which column of the matrix a given store occupies. This is the single most valuable structural idea in this document (§4).
 
 **The principal risk the current design carries is not in the compiler.** It is in three places formal methods reach well and testing reaches poorly:
 
@@ -233,7 +233,7 @@ The matrix cells are produced **mechanically** by model-checking one parametric 
 | **Strategy dominance** | the planner's "strongest strategy the backend can deliver" is a genuine maximum, not a maximal element of an incomparable set | needs checking; if the order is partial, "strongest" is ill-defined and `strongest(...)` silently picks by list order |
 | **Declaration monotonicity** | strengthening a declared `min_level` never makes a previously refused deployment accepted | should hold trivially; cheap |
 
-The second row is a real finding and a design question for the human (PV-Q1): should the compiler warn when a capability *increase* weakens a resolved guarantee? I think yes, and it is a two-line check once resolution is a function you can evaluate twice.
+The second row is a real finding and a design question for the maintainer (PV-Q1): should the compiler warn when a capability *increase* weakens a resolved guarantee? I think yes, and it is a two-line check once resolution is a function you can evaluate twice.
 
 ---
 
@@ -877,7 +877,7 @@ The guide already says it well: "Tests can falsify a guarantee, never prove one.
 
 The compiler deliberately does not generate retention, epoch bumps or erasure (ADR-A80). That is a sound boundary, and it means those procedures have *no* machine-checked artefact today. Two consequences and two remedies.
 
-**Consequence 1.** The safety of the generated SPARQL depends on housekeeping obligations (claim TTL, prefix-only pruning with mark-first and pinned heads, registry rotation, epoch allocation and quiesce, erasure register replay). If housekeeping is a runbook, the obligation is discharged by a human, every time, under time pressure, during an incident.
+**Consequence 1.** The safety of the generated SPARQL depends on housekeeping obligations (claim TTL, prefix-only pruning with mark-first and pinned heads, registry rotation, epoch allocation and quiesce, erasure register replay). If housekeeping is a runbook, the obligation is discharged by an operator, every time, under time pressure, during an incident.
 
 **Consequence 2.** Nothing proves housekeeping *ran*. A pinned-head copy that was skipped is invisible until a dormant stream's next CAS fails with a dangling `prevRev`, long after the bucket is gone.
 
@@ -1015,7 +1015,7 @@ Model-checking at least one MVCC engine before trusting the capability model is 
 | 17 | **Store-state fixtures and semantic review of generated SPARQL** (execute, don't only diff); stable compiled-profile labels | §16.4 | small |
 | 18 | **Mutation operators over IR, rules and compiler**, each labelled with the check that must catch it | §16.2 | small–medium |
 
-### Decisions for the human
+### Decisions for the maintainer
 
 | # | Decision |
 |---|---|
@@ -1034,7 +1034,7 @@ Model-checking at least one MVCC engine before trusting the capability model is 
 
 ## 19. Bottom line
 
-The Persistence layer is unusually well suited to formal methods because its specification is already largely explicit, tabular and finite, and because its recorded defect history is dominated by exactly the classes that bounded model checking, decision-table exhaustion and witness obligations catch cheaply. Three remediation passes found eleven of twelve calibration defects by human review; a model checker finds that class in an afternoon.
+The Persistence layer is unusually well suited to formal methods because its specification is already largely explicit, tabular and finite, and because its recorded defect history is dominated by exactly the classes that bounded model checking, decision-table exhaustion and witness obligations catch cheaply. Three remediation passes found eleven of twelve calibration defects by review; a model checker finds that class in an afternoon.
 
 The highest-value work, in order:
 

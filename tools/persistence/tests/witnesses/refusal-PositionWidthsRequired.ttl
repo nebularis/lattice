@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# A position-derived identity needs its epoch and sequence widths.
+# base: identity-minting-anchors.ttl
+# remove: ex:OrderEvents dal:epochWidth
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+

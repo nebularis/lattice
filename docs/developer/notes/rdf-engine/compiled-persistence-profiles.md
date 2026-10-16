@@ -34,7 +34,7 @@ paper until a measurement shows guarded writes dominate latency (its §7, D3).
 13. [Workload hints](#13-workload-hints)
 14. [Verification](#14-verification)
 15. [Costs, risks, and when not to do this](#15-costs-risks-and-when-not-to-do-this)
-16. [Decisions for the human](#16-decisions-for-the-human)
+16. [Decisions for the maintainer](#16-decisions-for-the-maintainer)
 17. [Experiments](#17-experiments)
 - [Appendix A: A worked example](#appendix-a-a-worked-example)
 - [Appendix B: References](#appendix-b-references)
@@ -95,7 +95,7 @@ classify mechanically before anything is deployed (§12).
 
 ## 2. Decisions taken, and what they imply
 
-| Decision (recorded by the human, 2026-10-03) | Implication for this paper |
+| Decision (recorded 2026-10-03) | Implication for this paper |
 |---|---|
 | Rust for the database runtime | the physical structures (§7) are Rust, hand-written once and verified, and the planner's output is Rust source or Rust-consumable plan data |
 | The compiler toolchain is functional: Haskell or OCaml/OxCaml preferred, F# behind them | the physical planner, the diff compiler and the Rust emitter are written in that language |
@@ -914,7 +914,7 @@ controlled single-process setting where those cannot arise. It tests semantics, 
 
 ---
 
-## 16. Decisions for the human
+## 16. Decisions for the maintainer
 
 Proposed, none taken. Numbered for reference if this becomes a LATTICE unit.
 

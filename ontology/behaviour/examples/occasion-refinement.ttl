@@ -122,6 +122,9 @@ ex:s6 a bhv:Stimulus ;
 ex:r-loss a bhv:ActRecord ;
     bhv:activity ex:loss-occurred ; bhv:actor ex:insured-occ ; bhv:forCase ex:claim-41 ;
     bhv:fromStimulus ex:s0 .
+# A notification of a claim has legal effect, so the notification itself is a
+# legal act of the layer above. This act record shows its performance, which
+# the runtime reads (CCS C9b1).
 ex:r-notified a bhv:ActRecord ;
     bhv:activity ex:claim-notified ; bhv:actor ex:insured-occ ; bhv:forCase ex:claim-41 ;
     bhv:fromStimulus ex:s1 .

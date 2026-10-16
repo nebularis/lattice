@@ -1,0 +1,57 @@
+# A composite aggregate with the structure real domains have (ADR-A122, sketch §10).
+# A project owns its milestones and plan. A milestone owns its tasks. A task owns its
+# subtasks (a recursion), its attachment, and the comments that point at it (an edge from
+# child to parent, so an inverse path). The client, a task's assignee and a plan's
+# attachment are references, and a task's status is vocabulary. The same property,
+# ex:attachment, is owned from a task and a reference from a plan.
+@prefix dal:  <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:   <https://example.org/projects#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+ex:ProjectClass a dal:ClassScope ;
+    dal:targetClass ex:Project ;
+    dal:priority "20"^^xsd:integer .
+
+ex:ProjectBoundaryProfile a dal:AggregateBoundaryProfile ;
+    dal:appliesTo     ex:ProjectClass ;
+    dal:strategy      dal:CompositePropertyBoundary ;
+    dal:boundaryShape ex:ProjectShape ;
+    dal:dataGraph     <urn:g:projects> .
+
+ex:ProjectConcurrencyProfile a dal:ConcurrencyProfile ;
+    dal:appliesTo           ex:ProjectClass ;
+    dal:concurrencyProfile  dal:Optimistic ;
+    dal:minConcurrencyLevel dal:Linearizable .
+
+ex:ProjectReceiptProfile a dal:ReceiptProfile ;
+    dal:appliesTo    ex:ProjectClass ;
+    dal:receiptModel dal:PatchLog .
+
+ex:ProjectShape a sh:NodeShape ; sh:targetClass ex:Project ;
+    sh:property [ sh:path ex:name ; sh:datatype xsd:string ] ,
+                [ sh:path ex:forClient ; sh:class ex:Organisation ; dal:ownership dal:Reference ] ,
+                [ sh:path ex:hasMilestone ; sh:node ex:MilestoneShape ; dal:ownership dal:Owned ] ,
+                [ sh:path ex:hasPlan ; sh:node ex:PlanShape ; dal:ownership dal:Owned ] .
+
+ex:MilestoneShape a sh:NodeShape ; sh:targetClass ex:Milestone ;
+    sh:property [ sh:path ex:due ; sh:datatype xsd:date ] ,
+                [ sh:path ex:hasTask ; sh:node ex:TaskShape ; dal:ownership dal:Owned ] .
+
+ex:TaskShape a sh:NodeShape ; sh:targetClass ex:Task ;
+    sh:property [ sh:path ex:status ; sh:class skos:Concept ; dal:ownership dal:Vocabulary ] ,
+                [ sh:path ex:assignee ; sh:class ex:Person ; dal:ownership dal:Reference ] ,
+                [ sh:path ex:hasSubtask ; sh:node ex:TaskShape ; dal:ownership dal:Owned ] ,
+                [ sh:path ex:attachment ; sh:node ex:DocumentShape ; dal:ownership dal:Owned ] ,
+                [ sh:path [ sh:inversePath ex:onTask ] ; sh:node ex:CommentShape ; dal:ownership dal:Owned ] .
+
+ex:PlanShape a sh:NodeShape ; sh:targetClass ex:Plan ;
+    sh:property [ sh:path ex:attachment ; sh:class ex:Document ; dal:ownership dal:Reference ] .
+
+ex:DocumentShape a sh:NodeShape ; sh:targetClass ex:Document ;
+    sh:property [ sh:path ex:title ; sh:datatype xsd:string ] .
+
+ex:CommentShape a sh:NodeShape ; sh:targetClass ex:Comment ;
+    sh:property [ sh:path ex:text ; sh:datatype xsd:string ] ,
+                [ sh:path ex:onTask ; sh:class ex:Task ; dal:ownership dal:Reference ] .

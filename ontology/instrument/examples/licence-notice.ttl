@@ -164,14 +164,14 @@ tmpl:terminated a bhv:State ;
 # Legal triggers. Each names the stated power, and fires on the exercise of any
 # power bound from it.
 tmpl:on-notice-given a ins:OnExercise , bhv:TriggerDefinition ;
-    bhv:triggerKind bhv:ExternalStimulus ;
+    bhv:triggerKind bhv:DerivedTrigger ;
     ins:ofPower tmpl:end-on-notice .
 tmpl:on-notice-expiry a ins:OnExpiry , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:ScheduledTrigger ;
     ins:after [ a qnt:Quantity ; qnt:onSpace ex:duration-space ;
                 qnt:numericValue "90"^^xsd:decimal ; qnt:inUnit ex:day ] .   # anchored at entering the notice period
 tmpl:on-termination-for-breach a ins:OnExercise , bhv:TriggerDefinition ;
-    bhv:triggerKind bhv:ExternalStimulus ;
+    bhv:triggerKind bhv:DerivedTrigger ;
     ins:ofPower tmpl:end-for-breach .
 
 tmpl:give-notice a ins:RegimeTransition , bhv:TransitionDefinition ;

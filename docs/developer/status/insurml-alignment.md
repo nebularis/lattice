@@ -3,7 +3,7 @@
 # InsurML Alignment: Status
 
 **Unit ID:** `insurml-alignment` (epic)
-**Status:** 📝 Proposed. Vision, sketches, epic plan and Phase 0 plan drafted, awaiting human review
+**Status:** 📝 Proposed. Vision, sketches, epic plan and Phase 0 plan drafted, awaiting the maintainer's review
 **Last updated:** 2026-10-06
 **Plan:** [insurml-alignment.md](../plans/insurml-alignment.md), [phase 0](../plans/insurml-alignment-phase-0.md)
 **Vision:** [insurml-alignment-vision.md](../../architecture/insurml-alignment-vision.md)
@@ -15,7 +15,7 @@
 
 ## Current position
 
-Nothing is built. The epic waits for the human's review of the vision, the sketches and the plans,
+Nothing is built. The epic waits for the maintainer's review of the vision, the sketches and the plans,
 and for the gate-0 decisions. CCS remains the active unit, with C7c next.
 
 **Decided 2026-10-05:** IMA-D1 (depth 5, depth 6 to be discussed with InsurML's owner), IMA-D3 (two
@@ -23,13 +23,13 @@ documents in one module), IMA-D5 (publication permitted). **Open at gate 0:** IM
 given in chat, decision pending), IMA-D4 (explored in the [typing sketch](../sketches/insurml-typing.md)),
 IMA-D16, IMA-D17 (the assembly interface). **Answered by InsurML's owner, 2026-10-06:** Q-16. A contract may be a template or an instance. Its consequences are applied across the vision, sketches, identity note and analysis notes. Follow-ups Q-19 to Q-21 are open.
 
-**Next action, for the human:** decide IMA-D2, IMA-D4 and IMA-D17, and take Q-19 to Q-21 to InsurML's owner.
+**Next action, for the maintainer:** decide IMA-D2, IMA-D4 and IMA-D17, and take Q-19 to Q-21 to InsurML's owner.
 
 ## Phase board
 
 | Phase | State | Blocked on |
 |---|---|---|
-| 0 Decisions and engagement | not started | human review of this epic |
+| 0 Decisions and engagement | not started | review of this epic |
 | 1 Profile | not started | gate 0 |
 | 2 Lift and lower | not started | phase 1 |
 | 3 Wording changes | not started | phase 2, CCS C9 |

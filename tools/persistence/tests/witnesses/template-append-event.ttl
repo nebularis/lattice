@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# Generates the row-level append-event and bootstrap-version-row templates,
+# which no shipped example reaches (the append example uses the dataset-level
+# guard). The static template checks (H1.3) need every template generated.
+# base: append-stream-dataset-guard.ttl
+# remove: ex:DecisionStreamEpoch dal:epochGuardScope
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .

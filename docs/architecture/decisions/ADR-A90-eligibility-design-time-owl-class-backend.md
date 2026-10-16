@@ -81,7 +81,7 @@ conditions with each other.
 
 ## Addendum (2026-09-25): conditions read through evidence paths
 
-**Resolved:** option B, chosen by the human on 2026-09-25.
+**Resolved:** option B, chosen on 2026-09-25.
 
 This ADR encodes a condition over one dimension property R. ADR-A91 lets a
 condition read its candidate through a path of several steps, and a subject

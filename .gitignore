@@ -6,6 +6,7 @@
 # Build artifacts and caches consolidated in .build/
 .build/pytest-cache/*
 !.build/pytest-cache/.gitkeep
+.build/full-sweep/*
 .build/yarn-cache/*
 !.build/yarn-cache/.gitkeep
 .build/mork-review-workbench-test-results/*
@@ -95,3 +96,7 @@ WINGMAN
 
 # Claude Code personal settings (ADR-A117)
 .claude/settings.local.json
+
+# Generated benchmark reports (ADR-A124)
+benchmark/*/report.json
+benchmark/*/report.md

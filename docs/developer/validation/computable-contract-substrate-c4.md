@@ -3,7 +3,7 @@
 # Validation Pack: CCS C4, Wording tables, assembly and variable values
 
 **Unit:** [`computable-contract-substrate`](../status/computable-contract-substrate.md)
-**Machine:** R (Claude Code). **Branch:** `ccs/c4-wording-assembly`
+**Machine:** R. **Branch:** `ccs/c4-wording-assembly`
 **Plan and test cases:** [CCS plan](../plans/computable-contract-substrate.md) (C4 in detail)
 **Decisions:** ADR-A112 decision 3, CC-D6, ADR-A-C2 and its addendum. Questions C4-Q1 to C4-Q3 decided 2026-10-01
 
@@ -52,7 +52,7 @@ Written by the building machine when the work is committed.
   - The facility form's variants carry no inclusion condition: the drafter chooses between them.
     The conditional clause shows conditions over a governing variable.
 - **Deviations from the plan:** none.
-- **Tags for the human:** `wording-v0.2.0`, `wording-vocab-v0.2.0`, `wording-shapes-v0.2.0`.
+- **Tags for the maintainer:** `wording-v0.2.0`, `wording-vocab-v0.2.0`, `wording-shapes-v0.2.0`.
 
 ## Results
 

@@ -11,6 +11,26 @@
 @prefix prl:     <https://www.nebularis.org/neuro-semantic/insurance/peril#> .
 @prefix prl-voc: <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#> .
 
+prl:DocumentationShape
+    a sh:NodeShape ;
+    sh:targetClass skos:Concept ;
+    sh:sparql [
+        sh:message "A concept in a reference peril scheme needs at least one skos:note in @en, naming the published standards, scales or sources it follows, and where it departs from them (AIR-2.0 documentation rule, §7)." ;
+        sh:select """
+            PREFIX prl-voc: <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#>
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+            SELECT $this WHERE {
+              $this skos:inScheme ?scheme .
+              FILTER (?scheme IN (prl-voc:CauseScheme, prl-voc:AgencyScheme, prl-voc:MechanismScheme,
+                                  prl-voc:OnsetScheme, prl-voc:DefinitionBasisScheme,
+                                  prl-voc:AccumulationClassScheme, prl-voc:ConsequenceScheme,
+                                  prl-voc:HarmSubjectScheme))
+              OPTIONAL { $this skos:note ?n . FILTER (LANG(?n) = "en") }
+            }
+            GROUP BY $this
+            HAVING (COUNT(DISTINCT ?n) < 1)
+        """ ] .
+
 prl:ReferenceCodeShape
     a sh:NodeShape ;
     sh:targetClass skos:Concept ;
@@ -170,5 +190,19 @@ prl:ThresholdDefinitionShape
             SELECT $this WHERE {
               $this prl:definitionBasis prl-voc:Threshold .
               FILTER NOT EXISTS { $this prl:definingThreshold ?t }
+            }
+        """ ] ;
+    sh:sparql [
+        sh:message "A prl:definingThreshold's qnt:onSpace must be the prl:measuredOn space of one of the concept's prl:intensityMeasure concepts (AIR-2.6)." ;
+        sh:select """
+            PREFIX prl: <https://www.nebularis.org/neuro-semantic/insurance/peril#>
+            PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+            SELECT $this WHERE {
+              $this prl:definingThreshold ?threshold .
+              ?threshold qnt:onSpace ?space .
+              FILTER NOT EXISTS {
+                $this prl:intensityMeasure ?measure .
+                ?measure prl:measuredOn ?space .
+              }
             }
         """ ] .

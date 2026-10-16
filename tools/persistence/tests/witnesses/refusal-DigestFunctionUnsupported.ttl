@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# Only the listed digest functions are supported.
+# base: identity-minting-anchors.ttl
+# remove: ex:ProductDigest dal:digestFunction
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:ProductDigest dal:digestFunction "SHA-512" .

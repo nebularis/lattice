@@ -103,3 +103,40 @@ qnt:AlternativeBoundShape
             }
         """
     ] .
+
+qnt:AdditivityShape
+    a sh:NodeShape ;
+    sh:targetSubjectsOf qnt:additivity ;
+    sh:property [ sh:path qnt:additivity ; sh:maxCount 1 ; sh:in ( qnt:Extensive qnt:Intensive ) ;
+        sh:message "A value space is Extensive or Intensive, never both." ] .
+
+qnt:BaseRoleShape
+    a sh:NodeShape ;
+    sh:targetSubjectsOf qnt:baseRole ;
+    sh:class qnt:DerivedValueSpace ;
+    sh:message "Only a derived value space names a base role." ;
+    sh:property [ sh:path qnt:baseRole ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+        sh:message "A proportion names exactly one base role (ADR-A115)." ] .
+
+qnt:SumWithinOneSpaceShape
+    a sh:NodeShape ;
+    sh:targetClass qnt:OperationCapability ;
+    sh:sparql [
+        sh:message "A Sum within one space needs that space declared Extensive (law Q12)." ;
+        sh:select """
+            PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+            SELECT $this ?value WHERE {
+                $this qnt:operationKind qnt:Sum .
+                { ?value qnt:hasOperationCapability $this }
+                UNION { $this qnt:hasOperand/qnt:operandSpace ?value }
+                UNION { $this qnt:resultSpace ?value }
+                FILTER NOT EXISTS {
+                    { ?other qnt:hasOperationCapability $this }
+                    UNION { $this qnt:hasOperand/qnt:operandSpace ?other }
+                    UNION { $this qnt:resultSpace ?other }
+                    FILTER (?other != ?value)
+                }
+                FILTER NOT EXISTS { ?value qnt:additivity qnt:Extensive }
+            }
+        """
+    ] .

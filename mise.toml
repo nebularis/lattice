@@ -7,45 +7,73 @@ erlang = "27"
 elixir = "1.17"
 
 [env]
+# Each checkout, git worktrees included, gets its own .venv, so an editable install never points
+# at another checkout (developer guide, "Several checkouts side by side").
+_.python.venv = { path = ".venv", create = true }
 MAVEN_OPTS = "-Dstyle.color=always"
 PYTHONUNBUFFERED = "1"
 
 [tasks.bootstrap]
 description = "Install configured toolchains and dependency sets"
-depends = ["bootstrap:python-root", "bootstrap:mork", "bootstrap:mork-compilers", "bootstrap:vocabulary", "bootstrap:reference-eligibility", "bootstrap:surface", "bootstrap:persistence", "bootstrap:minting-python", "bootstrap:workers", "bootstrap:frontend"]
+depends = ["bootstrap:python", "bootstrap:frontend"]
+
+# One pip, once. The Python packages share one virtual environment per checkout, so they are
+# installed in a single resolve. Ten pip processes writing one site-packages at the same time
+# corrupt it when two of them want different versions of a package, and pip cannot see a conflict
+# between processes. A single resolve installs a consistent set or reports the conflict.
+[tasks."bootstrap:python"]
+description = "Install every Python package of the repository into this checkout's .venv in one resolve"
+depends = ["bootstrap:pip"]
+run = "python -m pip install -c requirements-lock.txt \".[reasoning,test]\" -e \"./workers[test,authoring]\" -e ./tools/mork -e \"./tools/mork_compilers[test]\" -e ./tools/surface -e \"./tools/persistence[test]\" -e \"./tools/vocabulary[test]\" -e \"./tools/reference/eligibility[test]\" -e \"./packages/minting/python[test]\""
+
+# A virtual environment that mise creates with uv has no pip. This puts one in, and does nothing
+# where pip is already there.
+[tasks."bootstrap:pip"]
+description = "Make sure this checkout's .venv has pip"
+run = "python -m ensurepip --upgrade"
 
 [tasks."bootstrap:python-root"]
+depends = ["bootstrap:pip"]
 description = "Install root ontology validation dependencies"
 run = "python -m pip install -c requirements-lock.txt \".[reasoning,test]\""
 
 [tasks."bootstrap:workers"]
+depends = ["bootstrap:pip"]
 description = "Install the worker package with test dependencies"
 run = "python -m pip install -e \"./workers[test,authoring]\""
 
 [tasks."bootstrap:mork"]
+depends = ["bootstrap:pip"]
 description = "Install the MORK package and MTP structural dependencies"
 run = "python -m pip install -e ./tools/mork"
 
 [tasks."bootstrap:mork-compilers"]
-depends = ["bootstrap:vocabulary"]
+depends = ["bootstrap:pip", "bootstrap:vocabulary"]
 description = "Install the MORK backend compiler package"
 run = "python -m pip install -e \"./tools/mork_compilers[test]\""
 
 [tasks."bootstrap:surface"]
-depends = ["bootstrap:vocabulary"]
+depends = ["bootstrap:pip", "bootstrap:vocabulary"]
 description = "Install the Surface compiler package"
 run = "python -m pip install -e ./tools/surface"
 
 [tasks."bootstrap:persistence"]
+depends = ["bootstrap:pip"]
 description = "Install the persistence profile compiler package (ADR-A78/A79)"
 run = "python -m pip install -e \"./tools/persistence[test]\""
 
+[tasks."bootstrap:testing-oxigraph"]
+depends = ["bootstrap:pip"]
+description = "Install the Oxigraph test-support package (ADR-A125). The default check does not need it"
+run = "python -m pip install -e \"./tools/testing/oxigraph[test]\""
+
 [tasks."bootstrap:vocabulary"]
+depends = ["bootstrap:pip"]
 description = "Install the Vocabulary scoped/temporal binding reference resolver (ADR-A85)"
 run = "python -m pip install -e \"./tools/vocabulary[test]\""
 
 [tasks."bootstrap:reference-eligibility"]
-depends = ["bootstrap:mork-compilers"]
+depends = ["bootstrap:pip", "bootstrap:mork-compilers"]
 description = "Install Eligibility's hand-written reference semantics (formal-methods track B1/B2, ADR-A-FM3)"
 run = "python -m pip install -e \"./tools/reference/eligibility[test]\""
 
@@ -121,6 +149,7 @@ description = "Recompute every identity-minting anchor vector with openssl and t
 run = "python contracts/identity/verify-anchors.py"
 
 [tasks."bootstrap:minting-python"]
+depends = ["bootstrap:pip"]
 description = "Install the standalone Python minting library (ADR-A84) with its test extra"
 run = "python -m pip install -e \"./packages/minting/python[test]\""
 
@@ -174,8 +203,31 @@ description = "Regenerate the pinned Unicode 16.0 tables from the UCD and fail i
 run = "python packages/minting/tools/generate_ucd_tables.py --check"
 
 [tasks."check:persistence"]
+depends = ["check:persistence-expected-profiles"]
 description = "Run the persistence profile compiler test suite (resolver, validator, capability, injection corpus, determinism)"
 run = "python -m pytest tools/persistence/tests -q"
+
+[tasks."check:persistence-expected-profiles"]
+description = "Check that the expected compiled profiles under ontology/persistence/test/expected-profiles are what the builders and compile give now (formal-methods H2.6). Fails with the names of the stale files. Part of check:persistence"
+run = "python tools/persistence/tests/expected_profiles.py --check"
+
+[tasks."build:persistence-expected-profiles"]
+description = "Regenerate the expected compiled profiles under ontology/persistence/test/expected-profiles, after a change to a builder or to compile output, in the same commit"
+run = "python tools/persistence/tests/expected_profiles.py --write"
+
+[tasks."build:persistence-builder-goldens"]
+description = "Record the version and a digest of the text each persistence builder renders, after bumping BUILDER_VERSIONS in persistence/contract.py. Refuses a changed text under an unchanged version"
+run = "python tools/persistence/tests/builder_goldens.py --update"
+
+[tasks."check:persistence-oxigraph"]
+depends = ["bootstrap:testing-oxigraph"]
+description = "Run the persistence engine tests on Oxigraph as well as rdflib (ADR-A125). Not part of check"
+run = "python -m pytest tools/testing/oxigraph/tests -q && python -m pytest tools/persistence/tests -q -m oxigraph"
+
+[tasks."check:persistence-composite-cost"]
+depends = ["bootstrap:testing-oxigraph"]
+description = "Measure the composite replace on rdflib and Oxigraph (ADR-A124, TD-42). Run on demand, not part of check. Fails on a wrong result, never on time. COMPOSITE_COST_MAX caps the size"
+run = "python -m pytest benchmark/persistence-composite-cost -q -p no:cacheprovider && python benchmark/persistence-composite-cost/check.py"
 
 [tasks."check:vocabulary"]
 description = "Run the Vocabulary scoped/temporal binding conformance package (SHACL fixtures, resolver, determinism, consumer boundary; ADR-A85)"
@@ -229,9 +281,21 @@ run = "python tools/import_guard.py"
 description = "Regenerate ontology/catalog-v001.xml and the spec/vocab stub catalogs (ADR-A88)"
 run = "python tools/ontology_catalog.py write"
 
+[tasks."check:full-sweep"]
+description = "Run every check an ontology change needs, one line each, failures in red with their failing tests, full logs in .build/full-sweep. Versions are compared with main, or pass -- --base-ref REF"
+run = "python tools/full_sweep.py"
+
+[tasks."dev:time-ontology-tests"]
+description = "Profile check:ontology-catalog as one real run, slowest files and tests first, or with -- --per-file one process per file to find a hung file (python-test-melting, TM0)"
+run = "python tools/time_ontology_tests.py"
+
 [tasks."check:ontology-catalog"]
-description = "Run the ontology tool tests (catalog, versioning, Eligibility examples, PROV-O alignment, Wording, Behaviour split, Instrument with its regimes and terms in time), then fail when a catalog drifts, an import does not resolve, or a known defect is fixed but still listed (ADR-A88)"
-run = "python -m pytest tools/test_applied_shared_contracts.py tools/test_eligibility_examples.py tools/test_mork_order_relations.py tools/test_ontology_catalog.py tools/test_ontology_releases.py tools/test_ontology_version_check.py tools/test_peril_vocabulary.py tools/test_provenance_alignment.py tools/test_reasoning_isolation.py tools/test_substrate_extensions.py tools/test_wording.py tools/test_behaviour_split.py tools/test_import_guard.py tools/test_behaviour_records.py tools/test_behaviour_nested.py tools/test_keys.py tools/test_instrument.py tools/test_regimes.py tools/test_terms_in_time.py tools/test_constitutive_terms.py tools/test_parameter_bindings.py tools/test_amendments.py -q && python tools/ontology_catalog.py check"
+description = "Run the ontology tool tests (catalog, versioning, Eligibility examples, PROV-O alignment, Wording, Behaviour split, Instrument with its regimes and terms in time), then fail when a catalog drifts, an import does not resolve, or a known defect is fixed but still listed (ADR-A88). Parallelised by file (python-test-melting, TM7): a shared, cached graph in tools/conftest.py is per-worker-process, not global, so each worker still benefits from it for its own share of files. tools/test_peril_vocabulary.py is excluded (TD-45): it now dominates the whole run on its own worker under --dist loadfile, run it with `mise run check:peril-vocabulary` instead, deliberately, until TM4 is revisited"
+run = "python -m pytest tools/test_applied_shared_contracts.py tools/test_eligibility_examples.py tools/test_exposure_ontology.py tools/test_mork_order_relations.py tools/test_ontology_catalog.py tools/test_ontology_releases.py tools/test_ontology_version_check.py tools/test_peril_intensity.py tools/test_provenance_alignment.py tools/test_reasoning_isolation.py tools/test_substrate_extensions.py tools/test_wording.py tools/test_behaviour_split.py tools/test_import_guard.py tools/test_behaviour_records.py tools/test_behaviour_nested.py tools/test_keys.py tools/test_instrument.py tools/test_regimes.py tools/test_terms_in_time.py tools/test_constitutive_terms.py tools/test_parameter_bindings.py tools/test_amendments.py tools/test_graph_cache.py tools/test_repo_files.py tools/test_environment_banner.py tools/test_reasoning_stalled_import.py tools/test_additivity.py tools/test_legal_acts.py tools/test_full_sweep.py tools/test_python_requirements.py tools/test_closures.py -q -n auto --dist loadfile && python tools/ontology_catalog.py check"
+
+[tasks."check:peril-vocabulary"]
+description = "Optional, deliberate-only (TD-45): tools/test_peril_vocabulary.py alone, now expensive (SHACL-SPARQL shapes re-evaluated per skos:Concept target over a 287-concept cause scheme). Not in check:ontology-catalog's depends, and not run by `mise run check`. -n auto here (test-level, not --dist loadfile's file-level) cuts it from about 16 minutes to about 2.5 minutes, since its tests are independent and this lets them spread across workers instead of queueing on one"
+run = "python -m pytest tools/test_peril_vocabulary.py -q -n auto"
 
 [tasks."bootstrap:reasoning-testkit"]
 description = "Build the test-only reasoning harness jar (ADR-A83). Tests that need it skip without it"

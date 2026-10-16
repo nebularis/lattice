@@ -335,7 +335,7 @@ tmpl:lot-4-withdrawn a bhv:State ;
     bhv:inStateSpace tmpl:lot-4-regime ; ins:stateKind ins-voc:Terminated ;
     ins:ends ex:lot-4-identity .                      # a section, not the instrument
 tmpl:on-withdrawal a ins:OnExercise , bhv:TriggerDefinition ;
-    bhv:triggerKind bhv:ExternalStimulus ;
+    bhv:triggerKind bhv:DerivedTrigger ;
     ins:ofPower tmpl:withdraw-lot-4 .
 tmpl:withdraw a ins:RegimeTransition , bhv:TransitionDefinition ;
     bhv:fromState tmpl:lot-4-open ; bhv:toState tmpl:lot-4-withdrawn ;

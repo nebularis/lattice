@@ -49,6 +49,9 @@ foundation
 | Scheme binding | concept schemes are bound to properties per scope and resolved by valid time | ADR-A85 |
 | Derived artefacts | anything generated is recorded with its derivation run, and regenerated within minimal scope | ADR-A27, ADR-A92 |
 | Repository topology | semantic assets in `ontology/`, executables in `tools/`, `mise` as the entry point | ADR-A77, ADR-A29 |
+| Model the law, then make it usable | Instrument is an accurate model of what an agreement means, to which wording connects and onto which data arrives. Users write words or assemble components, which are interpreted into an instrument, and rarely populate it directly. Performance comes after, from Surface's projections, sharing generated meaning, or materialising per deployment | ADR-A104, the Surface ADRs |
+| Layers state, code executes | ontology layers, Behaviour's runtime included, are data. The evaluator counts, sums and forces deferred values. No layer that states meaning depends on a runtime | the ontology authoring skill |
+| Behaviour is abstract | a state machine that applied ontologies use, implemented differently by deployment, market or jurisdiction. Legal concepts live in Instrument, findings and execution in Behaviour | ADR-A106 |
 | Agent guidance | an always-on `AGENTS.md` and skills loaded by task | ADR-A117 |
 
 ## Before changing a dependency

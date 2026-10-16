@@ -1,0 +1,3 @@
+# The engine adapter moved to tools/testing/oxigraph (ADR-A125). Install it with:
+#   mise run bootstrap:testing-oxigraph
+-e ../../tools/testing/oxigraph

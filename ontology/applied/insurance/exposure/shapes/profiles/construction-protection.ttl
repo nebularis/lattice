@@ -1,0 +1,59 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Profile shape: construction and protection (applied-insurance-reference
+# AIR-4.2, shapes/profiles/construction-protection.ttl). An assessment of
+# this profile family is expected to carry the four core attribute types
+# below, and only types from the four families a construction and
+# protection survey is about.
+
+@prefix sh:      <http://www.w3.org/ns/shacl#> .
+@prefix aeo:     <https://www.nebularis.org/neuro-semantic/insurance/exposure#> .
+@prefix aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#> .
+
+aeo:ConstructionProtectionProfileShape a sh:NodeShape ;
+    sh:targetClass aeo:Assessment ;
+    sh:sparql [
+        sh:message "An assessment of the construction and protection profile family must assess a location or an asset." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#>
+            SELECT $this WHERE {
+              $this a aeo:Assessment ; aeo:profileFamily aeo-voc:ConstructionAndProtection ; aeo:assesses ?s .
+              FILTER NOT EXISTS { ?s a aeo:Location }
+              FILTER NOT EXISTS { ?s a aeo:Asset }
+            }
+        """ ] ;
+    sh:sparql [
+        sh:message "An assessment of the construction and protection profile family must have values for ConstructionClass, OccupancyClass, YearBuilt and Storeys." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#>
+            SELECT $this WHERE {
+              $this a aeo:Assessment ; aeo:profileFamily aeo-voc:ConstructionAndProtection .
+              {
+                FILTER NOT EXISTS { $this aeo:hasAttribute/aeo:attributeType aeo-voc:ConstructionClass }
+              } UNION {
+                FILTER NOT EXISTS { $this aeo:hasAttribute/aeo:attributeType aeo-voc:OccupancyClass }
+              } UNION {
+                FILTER NOT EXISTS { $this aeo:hasAttribute/aeo:attributeType aeo-voc:YearBuilt }
+              } UNION {
+                FILTER NOT EXISTS { $this aeo:hasAttribute/aeo:attributeType aeo-voc:Storeys }
+              }
+            }
+        """ ] .
+
+aeo:ConstructionProtectionProfileOutsideFamilyShape a sh:NodeShape ;
+    sh:targetClass aeo:Assessment ;
+    sh:severity sh:Warning ;
+    sh:sparql [
+        sh:message "An attribute value on a construction and protection profile assessment is outside the Construction, Occupancy, Protection and External exposure families." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#>
+            SELECT $this WHERE {
+              $this a aeo:Assessment ; aeo:profileFamily aeo-voc:ConstructionAndProtection ; aeo:hasAttribute ?av .
+              ?av aeo:attributeType ?type .
+              ?type aeo:attributeFamily ?family .
+              FILTER (?family NOT IN (aeo-voc:Construction, aeo-voc:Occupancy, aeo-voc:Protection, aeo-voc:ExternalExposure))
+            }
+        """ ] .

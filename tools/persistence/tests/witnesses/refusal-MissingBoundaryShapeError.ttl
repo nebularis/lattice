@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# A composite boundary with no dal:boundaryShape has nothing to walk.
+# base: composite-property-boundary-shacl.ttl
+# remove: ex:OrderBoundaryProfile dal:boundaryShape
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+@prefix sh:  <http://www.w3.org/ns/shacl#> .

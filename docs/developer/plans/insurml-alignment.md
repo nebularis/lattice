@@ -4,9 +4,9 @@
 
 **Unit type:** Epic
 **Epic:** `insurml-alignment` (IMA)
-**Epic status:** Proposed, awaiting human review. Phase 0 is detailed to slice level in its own
+**Epic status:** Proposed, awaiting the maintainer's review. Phase 0 is detailed to slice level in its own
 plan. Phases 1 to 8 are rolling-wave. Each phase plan is written at the preceding phase's gate.
-**Trigger:** human request, 2026-10-05, after reading the InsurML specification (Draft 1.0, 4 October
+**Trigger:** request, 2026-10-05, after reading the InsurML specification (Draft 1.0, 4 October
 2026, Axiome Partners) and the two analysis notes
 **Vision:** [insurml-alignment-vision.md](../../architecture/insurml-alignment-vision.md)
 **Sketches:** [insurml-bridge.md](../sketches/insurml-bridge.md),
@@ -37,8 +37,8 @@ bind how the epic is run:
 |---|---|---|
 | E1 | Every change to a LATTICE layer has an accepted ADR and a domain-neutral case before its slice starts | AV3, Design First |
 | E2 | InsurML's owner permits publication of documentation and analysis of its current draft (IMA-D5). Market wording quoted in InsurML's examples keeps its own owners' terms, so fixtures stay clean-room | AV8, ADR-A-C2 |
-| E3 | Proposals to InsurML go to its owner only after a LATTICE fixture shows them working. The human sends them. Agents send nothing | IQ-10 |
-| E4 | Agents build and verify, the human commits, merges, tags and pushes. Every ontology change is classified under ADR-A86 and ADR-A113 and runs the re-pin cascade | CCS practice from C5 |
+| E3 | Proposals to InsurML go to its owner only after a LATTICE fixture shows them working. The maintainer sends them. Nobody else does | IQ-10 |
+| E4 | Slices are built and verified on a branch, and the maintainer commits, merges, tags and pushes. Every ontology change is classified under ADR-A86 and ADR-A113 and runs the re-pin cascade | CCS practice from C5 |
 
 ## 3. Phase map
 
@@ -54,7 +54,7 @@ bind how the epic is run:
 | 7 | wording teaching packs, compact form, library index, ingestion with InsurML as structure target | 2, ingestion vision phases 1 and 2 | IM6 | 2M to 4M |
 | 8 | standards engagement: proposals P-1 to P-16, profile re-pins per InsurML edition | continuous, from 2 | none | under 0.3M a round |
 
-Estimates are orders of magnitude for agent work, excluding human review, to be compared with
+Estimates are orders of magnitude for agent work, excluding review, to be compared with
 actuals.
 
 ```mermaid
@@ -194,7 +194,7 @@ profile when InsurML publishes an edition.
 
 ## 7. Decisions
 
-None of these may be taken by an agent. "Needed by" is the gate at which the epic stops without it.
+None of these is taken without the maintainer. "Needed by" is the gate at which the epic stops without it.
 
 | # | Decision | Options | Recommendation | Needed by |
 |---|---|---|---|---|
@@ -215,7 +215,7 @@ None of these may be taken by an agent. "Needed by" is the gate at which the epi
 | IMA-D14 | LegalRuleML beside InsurML | companion document, package, inside InsurML | companion document by default | gate 4 |
 | IMA-D15 | Teaching packs beyond MORK | extend ADR-A44, or a new ADR | a new ADR | gate 2 |
 | IMA-D17 | Adopt assembly through an interface in Wording, with InsurML's model as the insurance default | an interface (models, hooks, one record), a new Assembly layer, the profile only, or tools only ([assembly sketch](../sketches/wording-assembly-interface.md) §12) | the interface in Wording, adapters in tools, InsurML's model in the profile | gate 0 |
-| IMA-D16 | Collaboration model with InsurML's owner | proposals only, joint working sessions, contribution to InsurML's repository | proposals after fixtures, with joint review of each profile release. Licence of any contribution decided by the human | gate 0 |
+| IMA-D16 | Collaboration model with InsurML's owner | proposals only, joint working sessions, contribution to InsurML's repository | proposals after fixtures, with joint review of each profile release. Licence of any contribution decided by a maintainer | gate 0 |
 
 ## 8. Questions for InsurML's owner
 

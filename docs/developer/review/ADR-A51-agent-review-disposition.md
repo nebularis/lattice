@@ -2,18 +2,18 @@
 
 # Disposition: ADR-A51 Review
 
-**Superseded:** ADR-A51 was superseded by ADR-A82 before ratification, so the "pending human ratification alongside ADR-A51" note below no longer applies. This disposition is historical. Current state: [phase-0-status.md](../status/phase-0-status.md), P0.1.3.
+**Superseded:** ADR-A51 was superseded by ADR-A82 before ratification, so the "pending ratification alongside ADR-A51" note below no longer applies. This disposition is historical. Current state: [phase-0-status.md](../status/phase-0-status.md), P0.1.3.
 
 **Review:** [ADR-A51-review.md](ADR-A51-review.md)
 **Reviewed artefacts:** [ADR-A51](../../architecture/decisions/ADR-A51-iri-and-identity-policy.md), [iri-policy.md](../../architecture/iri-policy.md), [rdf-sparql-patterns-guide.md](../../architecture/rdf-sparql-patterns-guide.md)
 **Date:** 2026-09-23
-**Disposed by:** Agent, autonomous session. Pending human ratification alongside ADR-A51 itself — see [phase-0-status.md](../status/phase-0-status.md).
+**Disposed:** pending ratification alongside ADR-A51 itself — see [phase-0-status.md](../status/phase-0-status.md).
 
-This document records, finding by finding, what changed and why. It exists so the review does not have to be re-read in full to confirm a fix landed, and so a human reviewer can spot-check specific findings against the concrete diff rather than re-deriving the argument.
+This document records, finding by finding, what changed and why. It exists so the review does not have to be re-read in full to confirm a fix landed, and so a reviewer can spot-check specific findings against the concrete diff rather than re-deriving the argument.
 
 ## 1. Verdict
 
-Accepted in full. Every numbered finding (F-1 through F-17), every cross-document consistency row (review §5), and every technical issue raised against the patterns guide itself (review §6) that touches IRI/identity handling is resolved below. Two items are explicitly *not* resolved and are carried forward as open questions (§4 of this document): the URN-registration hygiene question (informal `urn-N` registration) and the public/dereferenceable identity decision — both are named in the review as decisions for a human, not defects to fix silently.
+Accepted in full. Every numbered finding (F-1 through F-17), every cross-document consistency row (review §5), and every technical issue raised against the patterns guide itself (review §6) that touches IRI/identity handling is resolved below. Two items are explicitly *not* resolved and are carried forward as open questions (§4 of this document): the URN-registration hygiene question (informal `urn-N` registration) and the public/dereferenceable identity decision — both are named in the review as decisions for the maintainer, not defects to fix silently.
 
 ## 2. ADR-A51 findings (review §3)
 

@@ -13,7 +13,8 @@ of this, see [`docs/diagrams/`](../diagrams/README.md).
 | Root | Owns |
 |---|---|
 | `ontology/` | Semantic assets only: normative sources, shapes, vocabularies, projections, examples, semantic documentation. One directory per layer (`foundation`, `vocabulary`, `quantification`, `party`, `eligibility`, `behaviour`, `wording`, `instrument`, `surface`, `mork`, `persistence`, `governance`, `spc`) plus `applied/` domain ontologies and `examples/` |
-| `tools/` | Executable reference implementations and developer-facing toolchains: compilers, resolvers, validators, formal-methods artefacts |
+| `tools/` | Executable reference implementations and developer-facing toolchains: compilers, resolvers, validators, formal-methods artefacts. `tools/testing/` holds test-support packages, used only by tests, checks and benchmarks (ADR-A125) |
+| `benchmark/` | Checks that measure, run on demand and never part of `check`. They fail on a wrong result, never on time (ADR-A124) |
 | `platform/` | Runtime platform services (Java/Maven): authoring, Surface workflow, release integration, the semantic dataset SPI and Fuseki backend, policy, the test-only reasoning harness |
 | `apps/` | User-facing web applications (TypeScript/React, Yarn workspace): the MORK Review Workbench, Surface Contract Studio, the Word authoring add-in |
 | `packages/` | Standalone libraries with no LATTICE dependency (identity minting, Python and Java) |
@@ -21,7 +22,7 @@ of this, see [`docs/diagrams/`](../diagrams/README.md).
 | `deployment/` | Local reference environment (Docker Compose) |
 | `workers/` | The asynchronous worker runtime |
 | `test/` | End-to-end conformance suites |
-| `spikes/` | Experimental feasibility work, not production (today: the formal-prover toolchain spike, track D) |
+| `spikes/` | Experimental feasibility work, not production (today: the formal-prover toolchain spike, track D, and `persistence-oxigraph`, which runs the persistence compiler's updates on a second SPARQL engine and defines no SPI (its adapter now lives in `tools/testing/oxigraph`), and `persistence-aggregate-ownership`, experiments for the aggregate ownership note) |
 | `docs/` | Architecture, ADRs, developer process (sketches/plans/status/validation), and the diagrams this guide links to |
 
 A layer under `ontology/` follows one shape: `README.md` (the one normative, literate source),
@@ -46,7 +47,7 @@ mise tasks               # list every task mise.toml declares, with its descript
 
 | Family | Does | Run |
 |---|---|---|
-| `bootstrap:*` | Installs one package's dependencies (`pip install -e`, `yarn install`, …) | Once per clone, again after a dependency changes |
+| `bootstrap:*` | Installs one package's dependencies (`pip install -e`, `yarn install`, …). `bootstrap:python` installs every Python package in one pip resolve | Once per clone, again after a dependency changes |
 | `check:*` | Validates one package or gate (tests, shape conformance, catalog/version checks) | Before every commit touching that package; `mise run check` runs all of them |
 | `build:*` | Regenerates a derived artefact (the ontology catalog, release rows, the MORK Teaching Pack, Persistence's compiled examples, minting vectors) | When the source it derives from changes |
 | `clean:*` | Removes build output and caches | When something looks stale |
@@ -78,6 +79,17 @@ for a formalised layer's closed datatype — are mechanically extracted by
 and (for formalised layers) `tools/proofs/<layer>/Kernel.thy`. Never hand-edit a generated file:
 edit the README's own fenced block and re-run the extractor.
 
+A layer with a second spec document, such as Behaviour's runtime document, writes it from the same
+README ([ADR-A120](../architecture/decisions/ADR-A120-literate-specs-with-several-documents.md)). A
+`turtle-spec` block whose first line is `# @output-file "spec/<file>.ttl"` goes to that file, which
+gains `spec/<layer>.ttl`'s `@prefix` lines. The directive counts only on the first line. Each such
+block states its own ontology header. All of a layer's spec documents carry one version and are
+bumped together. The extractor refuses them otherwise. The same directive works on a
+`turtle-vocab` block, for a module with several vocabulary documents (a module's own version for
+its vocabulary, independent of its spec version). `--layer` may itself be a nested module path
+below `ontology/`, such as `applied/insurance/peril`, whose last segment names the default
+documents (ADR-A120 addendum, AIR-2.0).
+
 ```bash
 # Check a layer's generated files still match its README (writes nothing, exits non-zero on drift)
 python tools/literate_extract.py ontology/surface/README.md --layer surface --root . \
@@ -90,6 +102,11 @@ python tools/literate_extract.py ontology/surface/README.md --layer surface --ro
 # Extract a formalised layer's Isabelle datatype too
 python tools/literate_extract.py ontology/eligibility/README.md --layer eligibility --root . \
   --proofs-root tools/proofs --shapes shapes/structural.ttl shapes/constraints.ttl --check
+
+# A nested applied-insurance module, with several vocabulary documents
+python tools/literate_extract.py ontology/applied/insurance/peril/README.md \
+  --layer applied/insurance/peril --root . \
+  --shapes shapes/structural.ttl shapes/constraints.ttl --check
 ```
 
 **Not every layer passes `--check` today.** Vocabulary, Party and Eligibility's own `spec`/`vocab`/
@@ -126,6 +143,8 @@ ordinary Turtle.
 | [`tools/surface/`](../../tools/surface/README.md) | Compiles Surface promotion/projection contracts into generated module packages, with minimal-scope regeneration planning (ADR-A27) | `mise run check:python-root` (its tests run under `surface.test_surface`) |
 | [`tools/persistence/`](../../tools/persistence/README.md) | Compiles Persistence profiles into SPARQL plans (ADR-A78/A79) | `mise run check:persistence` |
 | [`tools/mork/`](../../tools/mork/README.md) | The MORK package and the MORK Teaching Pack generator | `mise run check:mtp`, `mise run build:mtp` |
+| [`tools/testing/oxigraph/`](../../tools/testing/oxigraph/README.md) | An in-memory Oxigraph engine for the persistence tests and benchmark (ADR-A125). Not a store SPI | `mise run check:persistence-oxigraph` |
+| [`benchmark/persistence-composite-cost/`](../../benchmark/persistence-composite-cost/README.md) | The cost of a composite replace on rdflib and Oxigraph (ADR-A124, TD-42) | `mise run check:persistence-composite-cost` |
 
 ### Formal-methods toolchains (`tools/`)
 
@@ -140,6 +159,7 @@ ordinary Turtle.
 | Script | Checks | Command |
 |---|---|---|
 | `literate_extract.py` | README ⇄ generated-artefact drift (§3) | see §3 |
+| `full_sweep.py` | Runs every check an ontology change needs, one line each, failures in red, logs in `.build/full-sweep`. Uses this checkout's tool packages, and compares versions with `main` | `mise run check:full-sweep`, or `-- --base-ref REF` |
 | `check_formal_freshness.py` | Formal artefact ⇄ README drift (§4) | `mise run check:formal-freshness` |
 | `ontology_catalog.py` | The import catalog (`ontology/catalog-v001.xml`) is complete and consistent (ADR-A88) | `mise run check:ontology-catalog` / `mise run build:ontology-catalog` |
 | `ontology_version_check.py` | Every changed ontology document bumped its version, with a release row (ADR-A86) | `mise run check:ontology-versioning` |
@@ -148,6 +168,7 @@ ordinary Turtle.
 | `reasoning_isolation_check.py` | A reasoner is declared only in `platform/reasoning-testkit` (ADR-A83) | `mise run check:reasoning-isolation` |
 | `repository_topology_check.py` | The repository's own structure matches ADR-A77 | `mise run topology:preflight` / `topology:ready` / `topology:links` |
 | `phase8_conformance.py` | A shared conformance corpus runs clean across Surface and Eligibility's compiled backends | part of `mise run check:python-root` |
+| `conftest.py` | Shared, session-scoped caching for the `tools/test_*.py` suite (`graph_cache`, `validated`, `repo_files`; `python-test-melting`). A module that benefits declares one module-scoped autouse fixture fetching its own graphs from `graph_cache` and assigning `module.validate = validated`; see the module's own docstring. `mise run dev:time-ontology-tests` times `check:ontology-catalog`'s test files separately, slowest first | `mise run check:ontology-catalog` runs the whole suite with `pytest-xdist` (`-n auto --dist loadfile`). `tools/test_peril_vocabulary.py` is excluded (TD-45, too slow under file-level distribution once the cause scheme grew large): run it alone with `mise run check:peril-vocabulary` |
 
 ### Platform services (Java/Maven, `platform/`)
 
@@ -173,7 +194,7 @@ Framework-neutral identity-pattern libraries, Python and Java, with no LATTICE d
 `mise run check:*` tasks described above — nothing is reimplemented in YAML. All three are
 **manual-dispatch only** (`workflow_dispatch`), a deliberate cost-control choice, not a readiness
 gap: every job is written and ready, so switching to automatic triggering on push/PR is a one-line
-change (see the commented-out trigger block at the top of `platform.yml`), made when the human
+change (see the commented-out trigger block at the top of `platform.yml`), made when the maintainer
 chooses to activate it.
 
 `formal-methods.yml` is split out deliberately: its two jobs (`proofs`, native Isabelle; `models`,
@@ -186,8 +207,7 @@ never blocks the rest of CI.
 Any unit of work beyond a small fix follows the model in the [lattice-lifecycle skill](../../.claude/skills/lattice-lifecycle/SKILL.md) and
 [`docs/developer/INDEX.md`](INDEX.md): a sketch, a plan, a status record updated live, and (for a
 slice) a Validation Pack under `docs/developer/validation/` naming its test cases, the one command
-that runs them, and what a human should inspect before signing off in
-`docs/developer/validation/LOG.md`. Read that model before starting a new unit — this guide
+that runs them, and what a maintainer should inspect before merging, which is the sign-off. Read that model before starting a new unit — this guide
 covers the tools; INDEX.md and that skill cover the
 process those tools are run under.
 
@@ -220,3 +240,125 @@ fetched from GitHub. The script always exits 0, as a cloud setup script must, an
 report how long setup took, which must stay under about five minutes for the environment to be
 cached.
 
+
+## 9. Several checkouts side by side
+
+We often run several workstreams at once: a slice on one branch, a review of another, a bundle from
+a machine that cannot push. Each needs its own working files and its own installed tool packages,
+without containers. Two things give that: a virtual environment per checkout, and git worktrees.
+
+### A virtual environment per checkout
+
+`mise.toml` declares `_.python.venv = { path = ".venv", create = true }`. Every checkout, worktrees
+included, gets its own `.venv` (ignored by git), which mise activates in an activated shell inside the
+checkout and for every `mise run` and `mise exec`. Editable installs (`pip install -e`, which the
+`bootstrap:*` tasks use) then point at that checkout's own `tools/` and never at another's.
+
+- Run `mise run bootstrap` once in each new checkout. With pip's shared cache it takes a minute or two.
+- `mise run bootstrap` installs every Python package in one pip resolve (`bootstrap:python`), so
+  packages that need incompatible versions of a shared dependency fail at once and visibly. Keep
+  `pytest` and `pytest-xdist` specifiers identical in every `pyproject.toml`
+  (`tools/test_python_requirements.py` checks it).
+- `mise` creates the `.venv` with `uv` where `uv` is installed, and `uv` leaves out pip. Every Python
+  `bootstrap:*` task depends on `bootstrap:pip`, which runs `ensurepip`.
+- Run individual `bootstrap:<package>` tasks one at a time (`mise run --jobs 1 bootstrap:a bootstrap:b`).
+  Parallel pip runs into one `.venv` interleave files of different versions of the same package and
+  leave it unimportable. If that has happened, run `rm -rf .venv && mise run bootstrap`.
+- In a shell where mise is not activated, a bare `python` is mise's global interpreter, not the
+  checkout's. Use `mise run <task>` or `mise exec -- python ...`, or activate mise in the shell.
+- Check which code a test imports: `mise exec -- python -c "import persistence; print(persistence.__file__)"`
+  must print a path inside the checkout.
+
+### Git worktrees
+
+A git repository can have several working trees. Each has its own files, index and checked-out
+`HEAD`, and all share one object store, one set of branches and tags, and one set of remotes. So a
+`git fetch` in any of them is seen by all, and a commit made in one is visible from the others at
+once. Git refuses to check out the same branch in two worktrees, which protects a branch from two
+workstreams editing it at the same time.
+
+We keep the primary checkout at `~/work/lattice` and put its worktrees in `~/work/lattice-wt/`:
+
+```bash
+cd ~/work/lattice
+git fetch origin-ssh
+git worktree add ../lattice-wt/fm-review fm/some-branch                          # a local branch that exists: the worktree is on it
+git worktree add --track -b fm/some-branch ../lattice-wt/fm-review origin-ssh/fm/some-branch   # no local branch yet: create one tracking origin-ssh
+git worktree add -b ccs/c9b3-sets ../lattice-wt/c9b3 main                       # a new branch, started from main
+git worktree add --detach ../lattice-wt/look origin-ssh/fm/some-branch          # a read-only look at a commit, on no branch
+git worktree list                                                                # every worktree and what it has checked out
+git worktree remove ../lattice-wt/fm-review                                      # when done: refuses if there are uncommitted changes
+git worktree prune                                                               # forget worktrees deleted by hand
+```
+
+Name a **branch**, not a remote-tracking ref such as `origin-ssh/fm/some-branch`. Given a
+remote-tracking ref, `git worktree add` checks out its commit with no branch (a detached `HEAD`),
+where a commit belongs to no branch and a `git pull` has nothing to update. With no local branch of
+that name, git creates one tracking the remote only when exactly one remote has it. We have two,
+`origin` and `origin-ssh`, so create it explicitly with `--track -b` as above. A worktree already
+detached joins its branch with `git switch fm/some-branch`, and `git branch
+--set-upstream-to=origin-ssh/fm/some-branch` changes which remote it tracks.
+
+Then, in each new worktree:
+
+```bash
+cd ~/work/lattice-wt/c9b3
+mise trust          # once per worktree, since its mise.toml is a new file to mise
+mise run bootstrap  # its own .venv, node_modules and builds
+```
+
+To avoid `mise trust` per worktree, add `~/work` to `trusted_config_paths` in
+`~/.config/mise/config.toml`.
+
+**What stays separate:** the working files, `.venv`, `node_modules`, `target/` (so the reasoner jar),
+`.build/` (sweep logs, pytest cache) and the checked-out branch. **What is shared:** commits,
+branches, tags, remotes and stashes (so set work aside with a commit, not a bare `git stash`), and
+outside git, Maven's `~/.m2` and pip's cache, which are safe to share. Two worktrees running the
+authoring stack's dev servers at once collide on ports, so run one at a time.
+
+An agent session works in one worktree and stays there. Several sessions can run at once, one per
+worktree, as long as no two share a branch.
+
+### Integrating work from a machine that cannot push
+
+A machine with no route to the remote sends its commits as a git bundle: one file holding commits
+and the branches that name them, which another clone can fetch from as if it were a remote.
+
+**On the machine that cannot push (machine S):**
+
+```bash
+git bundle create ../fm-2026-10-10.bundle main..fm/some-branch   # only the commits main lacks
+git bundle verify ../fm-2026-10-10.bundle                        # checks it is complete
+```
+
+`main..fm/some-branch` sends only the commits that are not on `main`, so the bundle is small, and the
+receiving clone must already have `main` up to that point, which `verify` on the receiving side
+confirms. For a first bundle, or when unsure what the receiver has, bundle the whole branch:
+`git bundle create ../fm.bundle fm/some-branch`. For later bundles, send everything since the last
+one by tagging what was sent:
+
+```bash
+git bundle create ../fm-2026-10-11.bundle bundle/last-sent..fm/some-branch
+git tag -f bundle/last-sent fm/some-branch
+```
+
+Copy the file to the receiving machine by any means.
+
+**On the machine that can push (machine R):**
+
+```bash
+cd ~/work/lattice
+git bundle verify ~/Downloads/fm-2026-10-10.bundle                              # lists its heads, and says if a prerequisite commit is missing
+git fetch ~/Downloads/fm-2026-10-10.bundle 'refs/heads/*:refs/remotes/machine-s/*'
+git log --oneline main..machine-s/fm/some-branch                                 # what arrived
+git worktree add --detach ../lattice-wt/machine-s machine-s/fm/some-branch       # review it in its own worktree, on no branch
+```
+
+The fetch puts the bundle's branches under `machine-s/`, beside `origin-ssh/`, and every worktree
+sees them. Review and run the checks in the `machine-s` worktree. To accept the work, push it from
+any worktree with `git push origin-ssh machine-s/fm/some-branch:fm/some-branch` and merge it as any
+branch, or merge `machine-s/fm/some-branch` into `main` directly.
+
+**Sending updates back to machine S** works the same way in reverse: on R,
+`git bundle create ../r-main.bundle main`, and on S, `git fetch ../r-main.bundle main:refs/remotes/r/main`
+followed by a merge or rebase of `r/main` into its branch.

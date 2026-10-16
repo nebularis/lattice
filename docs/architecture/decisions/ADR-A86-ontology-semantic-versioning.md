@@ -22,7 +22,7 @@ at inconsistent, ungoverned numbers (`0.0.1` through `0.1.1`); two ontologies
 the same document; and every core layer's `owl:versionIRI` base URI except
 Persistence, MORK's `Executable.ttl`, and `applied/capacity`'s already
 disagrees with the namespace convention `ontology-architecture.md` §2
-documents. Neither a human contributor nor an agentic coding assistant has
+documents. No contributor has
 anything to check a proposed change against today.
 
 ## Decision
@@ -64,7 +64,7 @@ document under `ontology/` that declares `owl:Ontology`.**
   more MINOR releases that never happened.
 - **Documentation home:** a new `docs/architecture/ontology-versioning-policy.md`,
   cross-referenced from `CONTRIBUTING.md` and `ontology-architecture.md` §2,
-  written for both a human contributor and an agentic coding assistant to
+  written for any contributor to
   apply mid-PR without further judgement calls beyond the one flagged
   exception above.
 - **Tooling stays narrow.** No automatic MAJOR/MINOR/PATCH classifier is
@@ -126,7 +126,7 @@ IRI identifying one content. Accepted with the decision above on 2026-09-25.
 
 ## Addendum (2026-09-26): releases by tag
 
-**Status:** Accepted, human decision on 2026-09-26.
+**Status:** Accepted 2026-09-26.
 
 A consumer that knows the version it binds to must be able to fetch that
 version, with its shapes and projections, before LATTICE hosts its IRIs.
@@ -145,7 +145,7 @@ version, with its shapes and projections, before LATTICE hosts its IRIs.
    ontology's identity moves only when its axioms or documentation do. Each
    directory is released with its own tag. This replaces the policy's
    statement that a shapes change is covered by a `spec` or `vocab` bump.
-4. **Only a person creates tags.** An agent adds release rows and ends its
+4. **Only the maintainer creates tags.** A contributor adds release rows and ends their
    handoff with a notice listing the tags to create. The checks fail for a
    current version with no row and for a tag naming a commit with another
    version. They list missing tags without failing, since tags follow the

@@ -3,7 +3,7 @@
 # Validation Pack: CCS C0, ADRs A-112 and A-113 and the A-01 and A-C2 addenda
 
 **Unit:** [`computable-contract-substrate`](../status/computable-contract-substrate.md)
-**Machine:** R (Claude Code). **Branch:** `ccs/c0-adrs`
+**Machine:** R. **Branch:** `ccs/c0-adrs`
 **Plan and test cases:** [CCS plan](../plans/computable-contract-substrate.md) (C0 in detail)
 **Decisions:** CC-D1, CC-D2, CC-D4, CC-D7, CC-D8 (layer order). Brief questions C0-Q1 to C0-Q3
 
@@ -52,7 +52,7 @@ Written by the building machine when the work is committed.
 - **Check first:** A-113 decision 2, which creates a "Release notes" section in a layer's README
   on its first breaking change, since no layer README has one today.
 - **Deviations from the plan:** C0-10's scope is wider, because C1 and C2 were done on the same
-  branch at the human's instruction. The plan also gained the C1 and C2 briefs and the C10 row's
+  branch at our instruction. The plan also gained the C1 and C2 briefs and the C10 row's
   wording.
 
 ## Results

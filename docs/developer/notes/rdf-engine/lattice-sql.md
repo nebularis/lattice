@@ -38,7 +38,7 @@ rule, and any new `dal:` term is an ontology change under ADR-A86.
 14. [Costs, risks and limits](#14-costs-risks-and-limits)
 15. [Deployment options and a staged path](#15-deployment-options-and-a-staged-path)
 16. [Complexity and token estimate](#16-complexity-and-token-estimate)
-17. [Decisions for the human](#17-decisions-for-the-human)
+17. [Decisions for the maintainer](#17-decisions-for-the-maintainer)
 18. [Experiments](#18-experiments)
 - [Appendix A: Worked example](#appendix-a-worked-example)
 - [Appendix B: References](#appendix-b-references)
@@ -683,6 +683,28 @@ per target, whether RDF or SQL is the system of record. That would be a new `dal
 ontology change under ADR-A86 with a minor version bump and the full versioning cascade. Until an
 ADR decides it, the choice lives in deployment configuration (decision RS-D5).
 
+### 9.1 Gaps found by the paper check of formal-methods H2.6 (2026-10-13)
+
+Formal-methods Track H slice H2.6 wrote the expected compiled profile of each generated operation, with the logical resources each one reads and writes,
+and checked them against this section ([Validation Pack FMH-H2-6](../../validation/FMH-H2-6.md), the paper check). The resources and operation kinds all have
+a relational reading. These are the places where §9 is silent or incomplete, recorded here for a later revision of this paper. They are *judgement*: no relational
+compiler exists, so each is a reading of the text and not a measurement.
+
+| Where | What §9 says | What the contract needs | Reading |
+|---|---|---|---|
+| the transaction claim (`TransactionClaim`, keyed by the client transaction id) | no row. §4.2 mentions an idempotency table with a primary key on the client transaction ID, as paper 2's S7 | a row in §9 for the table, the `INSERT … ON CONFLICT` that replaces the absence read, and the request digest column that tells a retry from a reused id | add a row. The claim is logical, and every guarded write takes one |
+| the retention low-water mark (`RetentionMark`, keyed by target) | `retentionMode` and `asOfFloorSource` give partitioning and partition drop | where the per-target mark is recorded (a column or a table), since the gap scan compares receipts with it | add a row. The mark is logical, and partition drop alone does not hold it |
+| tombstone | no row | whether a tombstone is a flag on the root row or a physical delete with the cascade, and how a version row keeps counting after it | add a row for the tombstone, since `Gone` is a distinct outcome of the write protocol |
+| `ProvidedConcurrency` | `concurrencyProfile` lists `Optimistic`, `LockingConcurrency` and `AppendOnly` | the unconditional write, which takes no version check | add a row. Likely a plain insert or upsert in one transaction |
+| `NoBoundary` value guard | no row. The aggregate boundary row covers the transaction scope | the value-based compare-and-set, a single `UPDATE … WHERE col = $old` | add a row, and note that the SPARQL form reads the default graph today (TD-43) |
+| the patch log's change table | "a change table written by the generated operation, or logical decoding of the base tables" | which one, and what the table holds | open on the SPARQL side too: no generated operation writes the patch content today ([H2.6 review questions](../track-h-h26-review-questions.md), RQ6) |
+| `SnapshotPerRevision`, erasure by cascade or key shredding, deadlock-ordered multi-aggregate locks | rows exist | nothing yet: no template generates a snapshot, an erasure or a multi-aggregate operation | outside the contract until a template does |
+
+Two consequences for this paper's reading of the persistence guide. The five audits (duplicate claim, fork, revision with several transactions, transaction on
+several revisions, gap scan) are detective controls for what the RDF realisation cannot prevent, and a primary key or a unique index makes four of them impossible,
+so a relational compiler would not generate them. And the pinned heads of receipt retention have no relational counterpart: a foreign key from the version row to
+its head receipt keeps the receipt through a partition drop, so they are an artefact of the SPARQL realisation (M44, M46).
+
 ---
 
 ## 10. Keeping an RDF view
@@ -911,7 +933,7 @@ recurring cost (migrations per ontology release) is not included.
 
 ---
 
-## 17. Decisions for the human
+## 17. Decisions for the maintainer
 
 | # | Decision | Options | Recommendation (judgement) |
 |---|---|---|---|

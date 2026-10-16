@@ -2,12 +2,12 @@
 
 # Disposition: ADR-A51 Review Verification and Soundness Assessment By 2nd Autonomous Agent
 
-**Superseded:** ADR-A51 was superseded by ADR-A82 before ratification, so the "pending human ratification alongside ADR-A51" note below no longer applies. This disposition is historical. Current state: [phase-0-status.md](../status/phase-0-status.md), P0.1.3.
+**Superseded:** ADR-A51 was superseded by ADR-A82 before ratification, so the "pending ratification alongside ADR-A51" note below no longer applies. This disposition is historical. Current state: [phase-0-status.md](../status/phase-0-status.md), P0.1.3.
 
 **Review:** [ADR-A51-review.md](ADR-A51-review.md)
 **Reviewed artefacts:** [ADR-A51](../../architecture/decisions/ADR-A51-iri-and-identity-policy.md), [iri-policy.md](../../architecture/iri-policy.md), [rdf-sparql-patterns-guide.md](../../architecture/rdf-sparql-patterns-guide.md)
 **Date:** 2026-09-23
-**Disposed by:** 2nd Agent, autonomous session. Pending human ratification alongside ADR-A51 itself — see [phase-0-status.md](../status/phase-0-status.md).
+**Disposed by:** 2nd Agent, autonomous session. Pending ratification alongside ADR-A51 itself — see [phase-0-status.md](../status/phase-0-status.md).
 
 
 ## 1. Verdict
@@ -185,7 +185,7 @@ Also silently skipped from review §4 and §6:
 - The review asked for explicit link triples to be used for "all revisions of lineage X" instead of `STRSTARTS` scans.
 - The review asked how `owl:Ontology` headers and `owl:versionIRI` relate to the registry IRI, beyond the placeholder rule.
 
-A disposition that overstates completion is itself a risk: the human ratifier will trust the table rather than re-check the diff.
+A disposition that overstates completion is itself a risk: the maintainer ratifier will trust the table rather than re-check the diff.
 
 ---
 

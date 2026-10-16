@@ -15,7 +15,7 @@ A small citrus/fruit hierarchy is used throughout:
 
 from __future__ import annotations
 
-from reference_eligibility.denotation import Scheme, decide_concept_match, decide_condition
+from reference_eligibility.denotation import Scheme, decide_concept_match, decide_condition, decide_condition_with_reliance
 from reference_eligibility.kernel import DENIED, PERMITTED, UNDETERMINED
 
 FRUIT, CITRUS, ORANGE, LEMON, VEGETABLE = "fruit", "citrus", "orange", "lemon", "vegetable"
@@ -65,6 +65,22 @@ class TestL9HierarchicalClosure:
         members" (L9) takes priority over everything else."""
         decision = decide_concept_match(
             "mango", hierarchical=True, required={CITRUS}, excluded={CITRUS}, scheme=FRUIT_SCHEME
+        )
+        assert decision is UNDETERMINED
+
+    def test_hierarchical_match_with_no_resolved_scheme_is_undetermined(self) -> None:
+        """Found by the formal-methods epic's second review (B2.2): a
+        hierarchical condition with no resolved scheme at all has no closure
+        to test a candidate against -- L9's own statement is conditioned on
+        "the bound scheme", which does not exist here, the same reason L14
+        leaves an otherwise-undecided candidate Undetermined rather than
+        Denied. Before this fix, ``matches()`` silently returned False for
+        every candidate when ``hierarchical`` was true and ``scheme`` was
+        ``None``, so a declared ``required`` set fell through to the
+        unmatched-required branch and returned Denied -- a condition cannot
+        be shown to fail a closure that was never resolved."""
+        decision = decide_concept_match(
+            ORANGE, hierarchical=True, required={CITRUS}, excluded=set(), scheme=None
         )
         assert decision is UNDETERMINED
 
@@ -236,3 +252,82 @@ class TestL15SetReadingsAndL16Negation:
             scheme=FRUIT_SCHEME,
         )
         assert decided is UNDETERMINED
+
+
+class TestL17Closures:
+    """A set reading decides on completeness only under a closure (ADR-A105,
+    L15 as restated, L17). The admissions example
+    (ontology/eligibility/examples/set-reading-admissions.ttl), both of its
+    tables: with the registry's closure and without it."""
+
+    APPLICANTS = {
+        "ada": ["history", "physics"],
+        "ben": ["history"],
+        "cai": [],
+        "dee": ["medicine", "physics"],
+    }
+    CLOSED = {
+        "ada": (PERMITTED, PERMITTED),
+        "ben": (DENIED, PERMITTED),
+        "cai": (DENIED, PERMITTED),
+        "dee": (PERMITTED, DENIED),
+    }
+    OPEN = {
+        "ada": (PERMITTED, UNDETERMINED),
+        "ben": (UNDETERMINED, UNDETERMINED),
+        "cai": (UNDETERMINED, UNDETERMINED),
+        "dee": (PERMITTED, DENIED),
+    }
+
+    def decide(self, applicant: str, closed: bool) -> tuple:
+        values = self.APPLICANTS[applicant]
+        stem = decide_condition(values, reading="SomeValue", negated=False, closed=closed,
+                                hierarchical=False, required={"mathematics", "physics"}, excluded=set())
+        no_medicine = decide_condition(values, reading="SomeValue", negated=True, closed=closed,
+                                       hierarchical=False, required={"medicine"}, excluded=set())
+        return stem, no_medicine
+
+    def test_with_the_closure(self) -> None:
+        for applicant, expected in self.CLOSED.items():
+            assert self.decide(applicant, True) == expected, applicant
+
+    def test_without_the_closure(self) -> None:
+        for applicant, expected in self.OPEN.items():
+            assert self.decide(applicant, False) == expected, applicant
+
+    def test_a_closure_never_changes_a_single_value_reading(self) -> None:
+        for values in ([], ["x"], ["x", "y"]):
+            for closed in (True, False):
+                assert decide_condition(values, reading="SingleValue", negated=False, closed=closed,
+                                        hierarchical=False, required={"x"}, excluded=set()) is \
+                    decide_condition(values, reading="SingleValue", negated=False, closed=False,
+                                     hierarchical=False, required={"x"}, excluded=set())
+
+
+class TestReliance:
+    """The reference reports whether a set reading relied on completeness (ADR-A105's 2026-10-12
+    addendum, HQ6a2-Q3), so the differential harness can check the compilers' `?closure` column.
+    Reliance is decided before negation: a negated condition relies on what it negates relied on."""
+
+    def test_admissions_under_its_closure(self) -> None:
+        values = TestL17Closures.APPLICANTS
+        expected = {  # (stem, no-medicine), each (decision, relied)
+            "ada": ((PERMITTED, False), (PERMITTED, True)),
+            "ben": ((DENIED, True), (PERMITTED, True)),
+            "cai": ((DENIED, True), (PERMITTED, True)),
+            "dee": ((PERMITTED, False), (DENIED, False)),
+        }
+        for applicant, (stem, no_medicine) in expected.items():
+            assert decide_condition_with_reliance(
+                values[applicant], reading="SomeValue", negated=False, closed=True,
+                hierarchical=False, required={"mathematics", "physics"}, excluded=set()) == stem, applicant
+            assert decide_condition_with_reliance(
+                values[applicant], reading="SomeValue", negated=True, closed=True,
+                hierarchical=False, required={"medicine"}, excluded=set()) == no_medicine, applicant
+
+    def test_nothing_relies_on_an_absent_closure(self) -> None:
+        for values in ([], ["history"], ["physics"]):
+            _, relied = decide_condition_with_reliance(
+                values, reading="SomeValue", negated=False, closed=False,
+                hierarchical=False, required={"physics"}, excluded=set())
+            assert relied is False

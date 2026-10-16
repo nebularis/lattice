@@ -100,7 +100,7 @@ Each measure is scored 0 to 10 per prover by the report's evidence, weighted and
 | one completes it | that prover, unless its M3 is below 4 |
 | both complete it | the higher total. A margin under 5 points is a tie, broken by M0, then M3 |
 
-The human may overrule with reasons, which the status record keeps.
+The maintainer may overrule with reasons, which the status record keeps.
 
 ## 6. What is recorded
 
@@ -112,7 +112,7 @@ and the MINOR change's diff and repair.
 
 ### 7.1 A spike branch
 
-The experiment runs on its own branch, `fm/phase-0-prover-spike`, which the human creates from
+The experiment runs on its own branch, `fm/phase-0-prover-spike`, which the maintainer creates from
 `main`. The branch may never be merged. Whatever the outcome, what it learned reaches `main`.
 
 | Content | On the branch | Reaches `main` |
@@ -159,7 +159,7 @@ Two git-ignored locations, by kind:
 | native toolchains on a Windows host without long paths | a short root outside the repository | `LATTICE_FORMAL_ROOT` |
 | a proxy's root certificate, where a host needs one to build images | outside the repository, passed to the build as a secret | the host's own setting, never committed |
 
-Toolchains are installed by the human or with the human's approval, into `.build/formal/`, or the
+Toolchains are installed by a maintainer or with a maintainer's approval, into `.build/formal/`, or the
 short root, only. Images are pulled or built with the same approval.
 Before each commit on the branch, `git status` must show no build output, no binary, no generated
 data and no toolchain file. Only sources, the brief, the report, the status record and the

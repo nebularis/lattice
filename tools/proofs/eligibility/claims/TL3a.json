@@ -1,10 +1,13 @@
 {
   "subject": "TL3a",
   "statedAs": "Eligibility.negate_after_is_every_of_negated",
-  "statementDigest": "sha256:f483e7a4fb732e6671a74b3b6cc5baedfbfa31954b900324201a4ec446be1416",
+  "statementDigest": "sha256:ddc2843f4c4f517c6faa88c1d6229942bb214cfbf2717d89e3f43f74f6e4ec6f",
   "method": "Proof",
   "scope": "EveryList",
-  "assumptionAudit": "no sorry/oops in Eligibility.thy (gate.py's source scan)",
-  "tool": { "name": "Isabelle", "version": "Isabelle2025-2" },
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found (E1.4)",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
   "outcome": "passed"
 }

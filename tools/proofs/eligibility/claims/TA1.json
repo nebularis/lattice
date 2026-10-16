@@ -1,10 +1,13 @@
 {
   "subject": "TA1",
   "statedAs": "KernelLaws.or3_monotone_left/right, and3_monotone_left/right",
-  "statementDigest": "sha256:3d150a77ae3904e18f768e198af16adee3cdf1ed74b9d905c5e743de91b4de7c",
+  "statementDigest": "sha256:c7754f73a06fca60c19579668c8cd1bcc19d366cd05489a5809c7198dd35fca8",
   "method": "Proof",
   "scope": "EveryPair",
-  "assumptionAudit": "no sorry/oops in KernelLaws.thy (gate.py's source scan)",
-  "tool": { "name": "Isabelle", "version": "Isabelle2025-2" },
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found (E1.4)",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
   "outcome": "passed"
 }

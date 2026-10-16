@@ -3,7 +3,7 @@
 # Validation Pack: CCS C3, the Wording layer's spec and vocab
 
 **Unit:** [`computable-contract-substrate`](../status/computable-contract-substrate.md)
-**Machine:** R (Claude Code). **Branch:** `ccs/c3-wording-spec`
+**Machine:** R. **Branch:** `ccs/c3-wording-spec`
 **Plan and test cases:** [CCS plan](../plans/computable-contract-substrate.md) (C3 in detail)
 **Decisions:** ADR-A112, ADR-A113, ADR-A-C2 and its addendum, CC-D6, CC-D11. C3-Q1, C3-Q2 decided 2026-10-01
 
@@ -61,7 +61,7 @@ Written by the building machine when the work is committed.
 - **Deviations from the plan:** the shapes directory starts here rather than in C5, which now takes
   it to `0.2.0`. The root README and `ontology-architecture.md`
   show the accepted order with a note that Behaviour's move lands in C10.
-- **Tags for the human:** `wording-v0.1.0`, `wording-vocab-v0.1.0`, `wording-shapes-v0.1.0`.
+- **Tags for the maintainer:** `wording-v0.1.0`, `wording-vocab-v0.1.0`, `wording-shapes-v0.1.0`.
 
 ## Results
 

@@ -88,6 +88,35 @@ _LITERAL_ESCAPES = (
     ("\t", "\\t"),
 )
 
+def _escape(value: str) -> str:
+    """``value`` with the ECHAR escapes applied.
+
+    SPARQL processes ``\\uXXXX`` and ``\\UXXXXXXXX`` escapes over the whole query text before parsing
+    (SPARQL 1.1 section 19.2), and an engine such as rdflib does so without looking at the string
+    around them. A backslash before ``u`` or ``U`` would start an escape inside the escaped backslash,
+    and the literal would fail to parse or change value. The ``u`` of such a pair is written as its own
+    escape, ``\\u0075``. Hex digits that follow it are written as escapes too, since rdflib reads up to
+    eight digits after ``\\u``. Every engine then decodes the same value."""
+    table = dict(_LITERAL_ESCAPES)
+    out: list[str] = []
+    previous = ""
+    after_escape = False
+    for ch in value:
+        if ch in "uU" and previous == "\\":
+            out.append("\\u0075" if ch == "u" else "\\u0055")
+            after_escape = True
+        elif after_escape and ch in _HEX:
+            out.append(f"\\u{ord(ch):04X}")
+        else:
+            out.append(table.get(ch, ch))
+            after_escape = False
+        previous = ch
+    return "".join(out)
+
+
+_HEX = frozenset("0123456789abcdefABCDEF")
+
+
 _LANG_TAG_RE = re.compile(r"^[A-Za-z]{1,8}(-[A-Za-z0-9]{1,8})*$")
 
 
@@ -108,9 +137,7 @@ class Literal(SparqlTerm):
             raise SparqlTermError(f"Literal value must be a string, got {value!r}")
         if datatype and lang:
             raise SparqlTermError("a literal cannot carry both a datatype and a language tag")
-        escaped = value
-        for raw, esc in _LITERAL_ESCAPES:
-            escaped = escaped.replace(raw, esc)
+        escaped = _escape(value)
         quoted = f'"{escaped}"'
         if datatype:
             quoted += f"^^{Iri.encode(datatype)}"
@@ -148,4 +175,28 @@ class Integer(SparqlTerm):
         return cls(str(value))
 
 
-__all__ = ["SparqlTerm", "SparqlTermError", "Iri", "Literal", "Var", "Integer"]
+class PropertyPath(SparqlTerm):
+    """A validated SPARQL property path, such as the one that reaches an aggregate's members.
+
+    A path is structure and not a term, and it cannot be a variable, so it reaches a template as
+    compile-time text. The operators come from a fixed set (:mod:`persistence.paths`) and every
+    predicate in it is encoded by :meth:`Iri.encode`, so no adopter string reaches the query's
+    structure except as an encoded IRI. The text is also parsed as a path before it is returned."""
+
+    __slots__ = ()
+
+    @classmethod
+    def encode(cls, expr: "object") -> "PropertyPath":
+        from rdflib.plugins.sparql import prepareQuery
+
+        from .paths import render
+
+        text = render(expr)  # type: ignore[arg-type]
+        try:
+            prepareQuery("SELECT * WHERE { ?a " + text + " ?b }")
+        except Exception as error:
+            raise SparqlTermError(f"property path {text!r} does not parse: {error}") from error
+        return cls(text)
+
+
+__all__ = ["SparqlTerm", "SparqlTermError", "Iri", "Literal", "Var", "Integer", "PropertyPath"]

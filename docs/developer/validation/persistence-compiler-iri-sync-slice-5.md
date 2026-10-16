@@ -6,11 +6,11 @@
 **Plan:** [persistence-compiler-iri-sync.md](../plans/persistence-compiler-iri-sync.md#slice-5--uniqueness-onviolation-branching-mergerelation-claimscheme-rotation-g7)
 **Status:** [persistence-compiler-iri-sync.md](../status/persistence-compiler-iri-sync.md)
 **Mode:** fully autonomous (granted 2026-09-25)
-**Decisions:** taken by the human 2026-09-25, recorded in the status record's "Slice 5 decisions" section — Option A for `dal:onViolation` semantics, the registry-token digest relaxation, and autonomous mode with no install/test-run this tranche.
+**Decisions:** taken 2026-09-25, recorded in the status record's "Slice 5 decisions" section — Option A for `dal:onViolation` semantics, the registry-token digest relaxation, and autonomous mode with no install/test-run this tranche.
 
 ## Validated (2026-09-25)
 
-The human ran the suite and confirmed **774 passed**, after one fix found by the run itself (see "Found on the way" below). This slice is **complete**.
+We ran the suite and confirmed **774 passed**, after one fix found by the run itself (see "Found on the way" below). This slice is **complete**.
 
 ## What invariants does this slice protect?
 

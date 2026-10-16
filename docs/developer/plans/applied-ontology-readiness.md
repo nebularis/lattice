@@ -3,8 +3,8 @@
 # Plan: Applied ontology readiness
 
 **Unit ID:** `applied-ontology-readiness`
-**Status:** Proposed, awaiting human review before implementation
-**Trigger:** human request, 2026-09-25
+**Status:** Proposed, awaiting the maintainer's review before implementation
+**Trigger:** request, 2026-09-25
 **Sketch:** [applied-ontology-readiness.md](../sketches/applied-ontology-readiness.md)
 **Status record:** [applied-ontology-readiness.md](../status/applied-ontology-readiness.md)
 **ADRs:** [A-87](../../architecture/decisions/ADR-A87-eligibility-concept-inclusion-and-exclusion.md),
@@ -28,8 +28,8 @@ ADRs are drafted.
 
 ## Conventions for every slice
 
-- Default execution mode. The agent writes, then hands off a "Commands to run"
-  block. The human runs it.
+- Default execution mode. Write, then hand off a "Commands to run"
+  block. The maintainer runs it.
 - Each slice delivers its Validation Pack at
   `docs/developer/validation/applied-ontology-readiness-<slice>.md`, updates
   the status record and `docs/developer/INDEX.md`, and edits any normative
@@ -49,7 +49,7 @@ ADRs are drafted.
 
 ADRs A-87 to A-92 (Proposed), the ADR-A86 addendum, the sketch, this
 plan, the status record, the ADR catalogue rows, and `INDEX.md` entries. L0.
-Gate: human review of the ADRs and of the open questions in the sketch.
+Gate: review of the ADRs and of the open questions in the sketch.
 
 ### AOR-2: Eligibility examples and the declaration warning
 
@@ -270,8 +270,8 @@ is ratified.
 | AOR-16 | Alternative bounds stated per unit (AO12) | [A-95](../../architecture/decisions/ADR-A95-quantification-alternative-bounds.md) | Quantification MINOR, cascades | 120k |
 | AOR-17 | `ins:inProvision` no longer functional (AO13) | [A-96](../../architecture/decisions/ADR-A96-instrument-provision-attachment.md) | Instrument MINOR, cascades | 60k |
 
-AOR-14 to AOR-16 land as one Quantification change, cascading once (human
-decision, 2026-09-25). AOR-16 includes the compiler work that selects required
+AOR-14 to AOR-16 land as one Quantification change, cascading once (decided
+2026-09-25). AOR-16 includes the compiler work that selects required
 intervals by the candidate's unit.
 
 ## Documentation obligations
@@ -306,4 +306,4 @@ both evaluable compatibility operations. Phase C slices close individually.
 | C (AOR-12 to AOR-17) | 770k plus ADR drafting, about 40k per ADR |
 
 Estimates cover agent input and output for authoring and one round of fixes
-from human-reported failures. Actuals are recorded in the status record.
+from reported failures. Actuals are recorded in the status record.

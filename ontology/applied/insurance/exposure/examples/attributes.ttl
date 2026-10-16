@@ -1,0 +1,168 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Positive fixture (applied-insurance-reference AIR-4.2): extends
+# examples/core.ttl with zones, pool participation, assessments and
+# attribute values. No owl:Ontology header: not a released document.
+#
+# A flood zone designation on the warehouse (a published map), a wind zone
+# designation on the factory (a spatial join, so a derived artefact), a
+# pool participation on the warehouse for N.HYD.FLD, a survey report of
+# the construction and protection family on the warehouse (covering the
+# flood attributes N.HYD.FLD names relevant, so the peril-completeness
+# shape has nothing to warn about), a cyber posture questionnaire on the
+# insured, and a geocoder run on the warehouse. Loaded together with
+# examples/core.ttl and peril's vocab and intensity documents (for
+# prl:relevantAttribute / prl:minimumGeoPrecision), it passes every shape
+# in structural.ttl, constraints.ttl and shapes/profiles/ with no warning.
+
+@prefix aeo:      <https://www.nebularis.org/neuro-semantic/insurance/exposure#> .
+@prefix aeo-voc:  <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#> .
+@prefix prl-voc:  <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#> .
+@prefix fnd:      <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix qnt:      <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix skos:     <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd:      <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:       <https://example.org/lattice/insurance/exposure/examples#> .
+
+# ---- Units the AIR-4.2 attribute values need, beyond core.ttl's ----
+
+ex:metres a qnt:ValueSpace ;
+    qnt:spaceKey "metres" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ;
+    qnt:spaceHash "metres-v1" .
+
+ex:storeys-count a qnt:ValueSpace ;
+    qnt:spaceKey "storeys-count" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Discrete ;
+    qnt:spaceHash "storeys-count-v1" .
+
+# ---- Market-only concept values: ConstructionClass, OccupancyClass (no bound scheme yet) ----
+
+ex:masonry-construction a skos:Concept ; skos:prefLabel "Masonry, non-combustible roof"@en .
+ex:light-industrial-occupancy a skos:Concept ; skos:prefLabel "Light industrial"@en .
+
+# ---- The warehouse gains a geographic precision (AIR-4.1 left it unset) ----
+
+ex:warehouse aeo:geoPrecision aeo-voc:Rooftop .
+
+# ---- Zone designations --------------------------------------------------
+
+ex:warehouse-flood-zone a aeo:ZoneDesignation ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2024-01-01T00:00:00Z"^^xsd:dateTime ; fnd:validTo "2029-01-01T00:00:00Z"^^xsd:dateTime ] ;
+    aeo:floodZone ex:flood-zone-ae ;
+    aeo:designationSource aeo-voc:PublishedMap .
+
+ex:warehouse aeo:zoneDesignation ex:warehouse-flood-zone .
+
+ex:factory-wind-zone a aeo:ZoneDesignation , fnd:DerivedArtefact ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime ] ;
+    aeo:windZone ex:wind-zone-2 ;
+    aeo:designationSource aeo-voc:SpatialJoin .
+
+ex:factory aeo:zoneDesignation ex:factory-wind-zone .
+
+ex:flood-zone-ae a skos:Concept ; skos:prefLabel "Zone AE"@en .
+ex:wind-zone-2 a skos:Concept ; skos:prefLabel "Wind zone 2"@en .
+
+# ---- Pool participation: the warehouse participates for flood -----------
+
+ex:warehouse-flood-pool a aeo:PoolParticipation ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime ] ;
+    aeo:pool ex:flood-reinsurance-pool ;
+    aeo:perilScope prl-voc:N.HYD.FLD .
+
+ex:warehouse aeo:poolParticipation ex:warehouse-flood-pool .
+
+ex:flood-reinsurance-pool a skos:Concept ; skos:prefLabel "Flood reinsurance pool"@en .
+
+# ---- Construction and protection survey on the warehouse ----------------
+# Covers N.HYD.FLD's relevant attributes (FirstFloorHeight, Basement,
+# GroundElevation, BaseFloodElevation, DistanceToWaterBody), all within
+# the Construction and External exposure families this profile allows,
+# plus the four types the profile shape itself requires.
+
+ex:warehouse-survey a aeo:Assessment ;
+    aeo:assesses ex:warehouse ;
+    aeo:assessmentKind aeo-voc:SurveyReport ;
+    aeo:profileFamily aeo-voc:ConstructionAndProtection ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-02-01T00:00:00Z"^^xsd:dateTime ] ;
+    aeo:hasAttribute
+        ex:warehouse-construction-class ,
+        ex:warehouse-occupancy-class ,
+        ex:warehouse-year-built ,
+        ex:warehouse-storeys ,
+        ex:warehouse-first-floor-height ,
+        ex:warehouse-basement ,
+        ex:warehouse-ground-elevation ,
+        ex:warehouse-base-flood-elevation ,
+        ex:warehouse-distance-to-water .
+
+ex:warehouse-construction-class a aeo:AttributeValue ;
+    aeo:attributeType aeo-voc:ConstructionClass ;
+    aeo:conceptValue ex:masonry-construction .
+
+ex:warehouse-occupancy-class a aeo:AttributeValue ;
+    aeo:attributeType aeo-voc:OccupancyClass ;
+    aeo:conceptValue ex:light-industrial-occupancy .
+
+ex:warehouse-year-built a aeo:AttributeValue ;
+    aeo:attributeType aeo-voc:YearBuilt ;
+    aeo:literalValue "1998"^^xsd:gYear .
+
+ex:warehouse-storeys a aeo:AttributeValue ;
+    aeo:attributeType aeo-voc:Storeys ;
+    aeo:quantityValue [ a qnt:Quantity ; qnt:onSpace aeo-voc:Count ; qnt:numericValue "1"^^xsd:decimal ] .
+
+ex:warehouse-first-floor-height a aeo:AttributeValue ;
+    aeo:attributeType aeo-voc:FirstFloorHeight ;
+    aeo:quantityValue [ a qnt:Quantity ; qnt:onSpace aeo-voc:Length ; qnt:numericValue "0.3"^^xsd:decimal ] .
+
+ex:warehouse-basement a aeo:AttributeValue ;
+    aeo:attributeType aeo-voc:Basement ;
+    aeo:literalValue "false"^^xsd:boolean .
+
+ex:warehouse-ground-elevation a aeo:AttributeValue ;
+    aeo:attributeType aeo-voc:GroundElevation ;
+    aeo:quantityValue [ a qnt:Quantity ; qnt:onSpace aeo-voc:Length ; qnt:numericValue "12.5"^^xsd:decimal ] .
+
+ex:warehouse-base-flood-elevation a aeo:AttributeValue ;
+    aeo:attributeType aeo-voc:BaseFloodElevation ;
+    aeo:quantityValue [ a qnt:Quantity ; qnt:onSpace aeo-voc:Length ; qnt:numericValue "11.0"^^xsd:decimal ] .
+
+ex:warehouse-distance-to-water a aeo:AttributeValue ;
+    aeo:attributeType aeo-voc:DistanceToWaterBody ;
+    aeo:quantityValue [ a qnt:Quantity ; qnt:onSpace aeo-voc:Length ; qnt:numericValue "350"^^xsd:decimal ] .
+
+# ---- Cyber posture questionnaire on the insured --------------------------
+
+ex:acme-cyber-questionnaire a aeo:Assessment ;
+    aeo:assesses ex:acme-manufacturing ;
+    aeo:assessmentKind aeo-voc:Questionnaire ;
+    aeo:profileFamily aeo-voc:CyberPosture ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-01-15T00:00:00Z"^^xsd:dateTime ] ;
+    aeo:hasAttribute
+        ex:acme-mfa-coverage ,
+        ex:acme-backup-strategy ,
+        ex:acme-edr .
+
+ex:acme-mfa-coverage a aeo:AttributeValue ;
+    aeo:attributeType aeo-voc:MfaCoverage ;
+    aeo:conceptValue aeo-voc:AllUsers .
+
+ex:acme-backup-strategy a aeo:AttributeValue ;
+    aeo:attributeType aeo-voc:BackupStrategy ;
+    aeo:conceptValue aeo-voc:ImmutableBackup .
+
+ex:acme-edr a aeo:AttributeValue ;
+    aeo:attributeType aeo-voc:EndpointDetectionAndResponse ;
+    aeo:literalValue "true"^^xsd:boolean .
+
+# ---- Geocoder run on the warehouse ---------------------------------------
+
+ex:warehouse-geocoder-run a aeo:Assessment , fnd:DerivedArtefact ;
+    aeo:assesses ex:warehouse ;
+    aeo:assessmentKind aeo-voc:GeocoderRun ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-01-10T00:00:00Z"^^xsd:dateTime ] ;
+    aeo:hasAttribute ex:warehouse-address-match .
+
+ex:warehouse-address-match a aeo:AttributeValue ;
+    aeo:attributeType aeo-voc:AddressMatchStatus ;
+    aeo:conceptValue aeo-voc:ExactMatch .

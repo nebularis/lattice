@@ -5,7 +5,11 @@
 # excludes. Patients carry several diagnoses, so both bindings read the set
 # with elg:EveryValue (ADR-A103, elg:L15).
 #
-# Recorded decisions:
+# The protocol requires each site to record a patient's full medical history,
+# so the recorded diagnoses are all the patient has: a closure (ADR-A105),
+# licensed by the protocol's clause, which both bindings name.
+#
+# Recorded decisions, under the closure:
 #
 # | Patient | Diagnoses              | all-permitted | none-excluded |
 # |---------|------------------------|---------------|---------------|
@@ -15,11 +19,21 @@
 #
 # none-excluded is an exclusion-only condition: under elg:EveryValue one
 # excluded diagnosis is enough to refuse (ADR-A103 decision 2).
+#
+# Without the closure, elg:EveryValue is Permitted only when the records are
+# known to be complete (elg:L15). A recorded excluded diagnosis still refuses:
+#
+# | Patient | all-permitted | none-excluded |
+# |---------|---------------|---------------|
+# | pat-1   | Undetermined  | Undetermined  |
+# | pat-2   | Denied        | Denied        |
+# | pat-3   | Undetermined  | Undetermined  |
 
 @prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
 @prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
 @prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
 @prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix ex:   <https://example.org/lattice/eligibility/trial/> .
 
@@ -55,17 +69,25 @@ ex:none-excluded a elg:Condition ;
     elg:constrainedByContract ex:diagnosis-contract ;
     elg:excludedConcept ex:diabetes .
 
+# The closure. Its source is the protocol's requirement to record the full
+# medical history.
+ex:protocol-history-clause rdfs:label "Protocol 4.2: the site records the participant's full medical history" .
+ex:history-closure a elg:Closure ;
+    elg:licensedBy ex:protocol-history-clause .
+
 # The bindings.
 ex:permitted-binding a elg:EvidenceBinding ;
     elg:bindsCondition ex:all-permitted ;
     elg:subjectClass ex:Patient ;
     elg:valueReading elg:EveryValue ;
+    elg:closedUnder ex:history-closure ;
     elg:evidenceStep [ a elg:EvidenceStep ; elg:stepIndex 0 ; elg:stepProperty ex:hasDiagnosis ; elg:stepDirection elg:Forward ] .
 
 ex:excluded-binding a elg:EvidenceBinding ;
     elg:bindsCondition ex:none-excluded ;
     elg:subjectClass ex:Patient ;
     elg:valueReading elg:EveryValue ;
+    elg:closedUnder ex:history-closure ;
     elg:evidenceStep [ a elg:EvidenceStep ; elg:stepIndex 0 ; elg:stepProperty ex:hasDiagnosis ; elg:stepDirection elg:Forward ] .
 
 # The applied ontology's data.

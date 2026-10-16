@@ -1,0 +1,236 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This module has been produced using GenAI
+
+"""The experiments of formal-methods track H, H1.3 and H1.4a, as functions that return data.
+
+Each takes the update the persistence compiler actually generates and runs it on
+:class:`~oxigraph_backend.OxigraphBackend`. Nothing here is a test of the compiler. It shows
+what a generated update does to data.
+"""
+
+from __future__ import annotations
+
+import re
+from dataclasses import dataclass
+from pathlib import Path
+
+from persistence import templatecheck, witness
+from persistence.compiler import compile_to_graph
+
+from oxigraph_backend import OxigraphBackend, iri, literal, XSD
+import pyoxigraph as ox
+
+EX = "https://example.org/lending#"
+PAT = "https://example.org/lattice/patterns#"
+
+
+def generated_update(fixture: Path, template: str) -> str:
+    """The text of the first generated operation that uses ``template``, as ``instantiate``
+    renders it. Only the request-time slots are left to the caller. ``_load_fixture`` is the
+    witness harness's loader, which understands the ``# base:`` patch format."""
+    compiled, _ = compile_to_graph(witness._load_fixture(fixture))
+    return next(op.text for op in templatecheck.operations(compiled, guards=False) if op.template == template)
+
+
+def _meta_graph(update: str) -> str:
+    return re.search(r"GRAPH <(urn:g:meta/\d+)>", update).group(1)
+
+
+# ---- composite boundary: what a replace leaves behind -----------------------------------------
+
+
+DATA_GRAPH = "urn:g:orders"
+SH = "http://www.w3.org/ns/shacl#"
+DAL = "https://www.nebularis.org/neuro-semantic/lattice/persistence#"
+
+
+def composite_update(owns_payment: bool = False) -> str:
+    """The generated composite replace with an empty payload. The rendered text carries
+    ``templatecheck``'s stand-in for the payload slot, which the replace writes to the data graph, so
+    it is removed. With ``owns_payment`` the shape gains a second owned edge, ``payment``."""
+    from rdflib import BNode, URIRef
+    from rdflib.namespace import RDF
+
+    graph = witness._load_fixture(witness.EXAMPLES_DIR / "composite-property-boundary-shacl.ttl")
+    if owns_payment:
+        edge = BNode()
+        graph.add((URIRef(EX + "OrderAggregateShape"), URIRef(SH + "property"), edge))
+        graph.add((edge, URIRef(SH + "path"), URIRef(EX + "payment")))
+        graph.add((edge, URIRef(SH + "node"), URIRef(EX + "PaymentShape")))
+        graph.add((edge, URIRef(DAL + "ownership"), URIRef(DAL + "Owned")))
+        graph.add((URIRef(EX + "PaymentShape"), RDF.type, URIRef(SH + "NodeShape")))
+    compiled, _ = compile_to_graph(graph)
+    update = next(op.text for op in templatecheck.operations(compiled, guards=False) if op.template == "cas-replace-composite-property")
+    return update.replace(templatecheck._SLOT_STAND_INS["payloadTriples"], "")
+
+
+def composite_sweep(owns_payment: bool, with_payment: bool) -> list[str]:
+    """Run ``cas-replace-composite-property`` on an order and return the subjects that still have
+    triples in the data graph afterwards. ``owns_payment`` says whether the boundary shape owns the
+    ``payment`` edge, and ``with_payment`` whether the order has a payment. An empty list means the
+    replace swept everything the shape owns, and anything listed is a node the shape does not own."""
+    update = composite_update(owns_payment)
+    meta = _meta_graph(update)
+    backend, order, data_graph = OxigraphBackend(), iri("urn:order:1"), iri(DATA_GRAPH)
+    backend.add(order, iri(PAT + "epoch"), literal(1), iri(meta))
+    backend.add(order, iri(PAT + "seq"), literal(1, XSD + "long"), iri(meta))
+    rows = [("urn:order:1", "status", literal("open")), ("urn:order:1", "lineItem", iri("urn:li:1")), ("urn:li:1", "sku", literal("ABC"))]
+    if with_payment:
+        rows += [("urn:order:1", "payment", iri("urn:pay:1")), ("urn:pay:1", "amount", literal("10"))]
+    for subject, predicate, obj in rows:
+        backend.add(iri(subject), iri(EX + predicate), obj, data_graph)
+    backend.update(
+        update,
+        {
+            "root": order, "epoch": literal(1), "expectedSeq": literal(1, XSD + "long"),
+            "nextSeq": literal(2, XSD + "long"), "newRev": iri("urn:rev:2"),
+            "txnId": iri("urn:txn:a"), "requestDigest": literal("d"),
+        },
+    )
+    return sorted({q.subject.value for q in backend.quads(data_graph)})
+
+
+PROJECT_EXAMPLE = witness.EXAMPLES_DIR / "composite-project-ownership.ttl"
+PROJECT_DATA = Path(__file__).resolve().parents[2] / "tools" / "persistence" / "tests" / "fixtures" / "project-data.ttl"
+PROJECT_GRAPH = "urn:g:projects"
+PROJECT = "https://example.org/projects#"
+
+
+def project_update() -> str:
+    """The generated composite replace for the project fixture of ADR-A122 (several owned edges, a
+    recursion, an inverse edge), with an empty payload."""
+    compiled, _ = compile_to_graph(witness._load_fixture(PROJECT_EXAMPLE))
+    update = next(op.text for op in templatecheck.operations(compiled, guards=False) if op.template == "cas-replace-composite-property")
+    return update.replace(templatecheck._SLOT_STAND_INS["payloadTriples"], "")
+
+
+def project_sweep() -> list[str]:
+    """Run the replace on the project fixture's data and return the local names of the subjects that
+    still have triples in the data graph. The nodes outside the aggregate must all remain, and none of
+    the project or its eight members."""
+    update = project_update()
+    meta = _meta_graph(update)
+    backend, root = OxigraphBackend(), iri(PROJECT + "p1")
+    backend.add(root, iri(PAT + "epoch"), literal(1), iri(meta))
+    backend.add(root, iri(PAT + "seq"), literal(1, XSD + "long"), iri(meta))
+    backend.store.load(PROJECT_DATA.read_bytes(), format=ox.RdfFormat.TURTLE, to_graph=ox.NamedNode(PROJECT_GRAPH))
+    backend.update(
+        update,
+        {
+            "root": root, "epoch": literal(1), "expectedSeq": literal(1, XSD + "long"),
+            "nextSeq": literal(2, XSD + "long"), "newRev": iri("urn:rev:2"),
+            "txnId": iri("urn:txn:a"), "requestDigest": literal("d"),
+        },
+    )
+    return sorted({q.subject.value.rsplit("#", 1)[-1] for q in backend.quads(iri(PROJECT_GRAPH))})
+
+
+def _project_operation(template: str, payload: str = "") -> str:
+    """The generated ``template`` for the project fixture, with ``payload`` (N-Triples) in the payload slot."""
+    compiled, _ = compile_to_graph(witness._load_fixture(PROJECT_EXAMPLE))
+    update = next(op.text for op in templatecheck.operations(compiled, guards=False) if op.template == template)
+    return update.replace(templatecheck._SLOT_STAND_INS["payloadTriples"], payload)
+
+
+def project_tombstone() -> tuple[list[str], bool]:
+    """Run ``tombstone-delete-composite`` on the project fixture. Returns the local names of the subjects
+    left in the data graph, and whether the version row is tombstoned."""
+    update = _project_operation("tombstone-delete-composite")
+    meta = _meta_graph(update)
+    backend, root = OxigraphBackend(), iri(PROJECT + "p1")
+    backend.add(root, iri(PAT + "epoch"), literal(1), iri(meta))
+    backend.add(root, iri(PAT + "seq"), literal(1, XSD + "long"), iri(meta))
+    backend.store.load(PROJECT_DATA.read_bytes(), format=ox.RdfFormat.TURTLE, to_graph=ox.NamedNode(PROJECT_GRAPH))
+    backend.update(
+        update,
+        {
+            "root": root, "epoch": literal(1), "expectedSeq": literal(1, XSD + "long"),
+            "nextSeq": literal(2, XSD + "long"), "newRev": iri("urn:rev:2"), "txnId": iri("urn:txn:a"),
+            "requestDigest": literal("d"), "cause": iri("urn:decision:1"), "actor": iri("urn:actor:1"),
+        },
+    )
+    left = sorted({q.subject.value.rsplit("#", 1)[-1] for q in backend.quads(iri(PROJECT_GRAPH))})
+    return left, backend.count(PAT + "deleted", iri(meta)) == 1
+
+
+def project_create_twice() -> tuple[int, int]:
+    """Run ``create-if-absent-composite`` twice with different transaction ids. Returns the number of
+    triples in the data graph after the first and after the second run, which must be equal."""
+    payload = f'<{PROJECT}p1> <{PROJECT}name> "Apollo" . '
+    update = _project_operation("create-if-absent-composite", payload)
+    backend, root = OxigraphBackend(), iri(PROJECT + "p1")
+    counts = []
+    for txn in ("a", "b"):
+        backend.update(
+            update,
+            {"root": root, "epoch": literal(1), "newRev": iri(f"urn:rev:{txn}"), "txnId": iri(f"urn:txn:{txn}"), "requestDigest": literal("d")},
+        )
+        counts.append(len(backend.quads(iri(PROJECT_GRAPH))))
+    return counts[0], counts[1]
+
+
+# ---- append-event: what a missing parameter does ----------------------------------------------
+
+
+@dataclass(frozen=True)
+class StreamState:
+    label: str
+    quads: int
+    sequence: list[str]
+    revision_records: int
+    head_pointers: int
+    claim_predicates: list[str]
+
+    def __str__(self) -> str:
+        return (
+            f"{self.label}: {self.quads} quads | seq={self.sequence} | revision records={self.revision_records}"
+            f" | head pointers={self.head_pointers} | txn claim has={self.claim_predicates}"
+        )
+
+
+def _append_parameters() -> dict:
+    return {
+        "stream": iri("urn:stream:1"), "epoch": literal(1), "txnId": iri("urn:txn:a"),
+        "requestDigest": literal("abc"), "event": iri("urn:event:1"), "eventType": iri("urn:type:E"),
+        "opSeq": literal(1), "occurredAt": literal("2026-10-09T00:00:00Z"),
+        "revBase": literal("urn:rev:orders/1/e0000000000000000001/"),
+    }
+
+
+def _stream_state(backend: OxigraphBackend, meta: str, label: str) -> StreamState:
+    quads = backend.quads()
+    return StreamState(
+        label=label,
+        quads=len(quads),
+        sequence=[q.object.value for q in quads if q.predicate.value == PAT + "seq" and q.graph_name.value == meta],
+        revision_records=backend.count(PAT + "target"),
+        head_pointers=backend.count(PAT + "head"),
+        claim_predicates=sorted(q.predicate.value.split("#")[-1] for q in quads if q.subject.value == "urn:txn:a"),
+    )
+
+
+def append_event_runs() -> list[StreamState]:
+    """Three runs of the generated ``append-event`` update on one stream: every parameter supplied,
+    the caller forgetting ``$revBase``, then a retry with the same transaction id and every
+    parameter. No run raises an error. See TD-34."""
+    update = generated_update(witness.WITNESS_DIR / "template-append-event.ttl", "append-event")
+    meta = re.search(r"DELETE \{\s*GRAPH <([^>]+)>", update).group(1)
+    full = _append_parameters()
+    without = {k: v for k, v in full.items() if k != "revBase"}
+
+    def fresh() -> OxigraphBackend:
+        backend = OxigraphBackend()
+        backend.add(iri("urn:stream:1"), iri(PAT + "epoch"), literal(1), iri(meta))
+        backend.add(iri("urn:stream:1"), iri(PAT + "seq"), literal(0, XSD + "long"), iri(meta))
+        return backend
+
+    states = []
+    backend = fresh()
+    backend.update(update, full)
+    states.append(_stream_state(backend, meta, "A. every parameter supplied      "))
+    backend = fresh()
+    backend.update(update, without)
+    states.append(_stream_state(backend, meta, "B. caller forgets $revBase       "))
+    backend.update(update, full)
+    states.append(_stream_state(backend, meta, "C. retry, same txn id, all params"))
+    return states

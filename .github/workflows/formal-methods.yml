@@ -44,7 +44,7 @@ jobs:
 
   # Track C: design-time models (tools/models/, Alloy Analyzer). Evidence
   # for an ADR, not code that ships -- re-run here so a model's result is
-  # re-confirmed whenever this workflow runs, not only when a human happens
+  # re-confirmed whenever this workflow runs, not only when someone happens
   # to re-run it locally.
   models:
     runs-on: ubuntu-latest

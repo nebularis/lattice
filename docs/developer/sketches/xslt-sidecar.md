@@ -315,7 +315,7 @@ Extends the existing sketch's own §14 table with what this unit additionally st
 
 ## 11. Decisions
 
-None of these may be taken by the agent. Recorded here as proposals, pending the human's decision,
+None of these is taken without the maintainer. Recorded here as proposals, pending our decision,
 in the same spirit as the word authoring POC's WA-D table.
 
 | # | Decision | Options | Recommendation |
@@ -343,7 +343,7 @@ in the same spirit as the word authoring POC's WA-D table.
 
 | # | Question |
 |---|---|
-| XS-Q1 | Should `platform/runtime-host` (ADR-A81) be a precondition for this unit, or should the sidecar start on a minimal library and migrate later? §11's XS-D2 recommends the latter, but it is worth the human confirming rather than assuming |
+| XS-Q1 | Should `platform/runtime-host` (ADR-A81) be a precondition for this unit, or should the sidecar start on a minimal library and migrate later? §11's XS-D2 recommends the latter, but it is worth the maintainer confirming rather than assuming |
 | XS-Q2 | Does an ingress kit's published schema role (§6.2) need its own `contracts/xml/` subdirectory convention distinct from egress kits, or does the direction field in the manifest suffice on its own? |
 | XS-Q3 | Should the sidecar support batching several ingress documents in one call, or is one document per call acceptable for a first version? Scale questions are the existing sketch's §12 concern, revisited here only if a real caller needs it |
 | XS-Q4 | Who maintains a MORK mapping once it exists for an external schema: the team integrating that schema, or a central MORK-mapping owner? Not a technical question, but it affects XS-D5's long-run maintenance story |

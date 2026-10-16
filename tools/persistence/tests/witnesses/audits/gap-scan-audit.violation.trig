@@ -1,0 +1,16 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# bind: logGraphs = <urn:g:txlog/1>
+# Witness for gap-scan-audit. Target A is at sequence 3 but has no receipt 2,
+# and target B is at sequence 2 with no receipts at all, which only a scan
+# driven from the version rows can see.
+@prefix pat: <https://example.org/lattice/patterns#> .
+
+<urn:g:meta/47> {
+  <urn:t:A> a pat:VersionRow ; pat:seq 3 .
+  <urn:t:B> a pat:VersionRow ; pat:seq 2 .
+}
+<urn:g:txlog/1> {
+  <urn:r:a1> a pat:Revision ; pat:target <urn:t:A> ; pat:seq 1 .
+  <urn:r:a3> a pat:Revision ; pat:target <urn:t:A> ; pat:seq 3 .
+}

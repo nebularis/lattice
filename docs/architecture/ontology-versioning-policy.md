@@ -7,8 +7,8 @@ and `vocab/<layer>-vocab.ttl`, plus the directly-authored ontologies
 (Persistence, MORK's `Mork.ttl`/`Executable.ttl`, SPC, and applied domain
 ontologies) that carry their own `owl:versionIRI`. Decided in
 [ADR-A86](decisions/ADR-A86-ontology-semantic-versioning.md); read that ADR
-first for the *why*. This document is the *how*: the checklist a human
-contributor or an agentic coding assistant applies before committing a change.
+first for the *why*. This document is the *how*: the checklist every
+contributor applies before committing a change.
 
 Adopts [Semantic Versioning 2.0.0](https://semver.org/) (`X.Y.Z` —
 MAJOR.MINOR.PATCH) unmodified. If you have not read `semver.md`'s summary,
@@ -110,6 +110,11 @@ that is Eligibility, Instrument, Behaviour, and Surface), edit the version in
 *both* the README and the generated `spec/`/`vocab/` file, since
 `tools/literate_extract.py` is meant to keep them identical.
 
+**A layer with several spec documents** (Behaviour's `behaviour` and
+`behaviour-runtime`) gives them all one version, bumped together as one
+release, even when only one changed. The extractor refuses documents whose
+`owl:versionIRI` versions differ (ADR-A120).
+
 **A known, pre-existing gap this policy does not paper over:**
 `tools/literate_extract.py --check` does not currently pass for any of the
 seven core layers — Foundation's, Vocabulary's, and Party's committed
@@ -196,8 +201,8 @@ by `applied-insurance-reference` (epic decision D1, AIR-1.1).
    ([ADR-A88](decisions/ADR-A88-ontology-import-resolution-for-consumers.md)).
 6. Add release rows with `mise run build:ontology-releases`. It lists the tags
    the new versions need.
-7. After committing, create and push those tags (next section). An agent
-   never creates them. It ends its handoff with a notice listing them.
+7. After committing, create and push those tags (next section). Only the maintainer
+   creates them. Every other contributor ends their handoff with a notice listing them.
 
 ## Releasing a version
 

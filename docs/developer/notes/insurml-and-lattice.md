@@ -710,7 +710,7 @@ or applied) is a design question in itself. The companion document weighs them.
 | U-3 | Will InsurML be published, under which licence and base IRI, and when? | decides whether LATTICE can import, cite or test against it | the InsurML owner |
 | U-4 | Can InsurML's example wordings (AXA, LMA Module 12) be used in LATTICE's tests? | permissions are unsettled (distribution note) | the InsurML owner and the source owners |
 | U-5 | Does Open CBAA's `wim:` match InsurML's model exactly, beyond the four levels? | Open CBAA's repository is not in this workspace | the Open CBAA repository |
-| U-6 | Is LATTICE's single-parent rule (W1) a deliberate stance on reuse, or a consequence of rank keys on nodes? | decides L-1 | the human, with ADR-A112 |
+| U-6 | Is LATTICE's single-parent rule (W1) a deliberate stance on reuse, or a consequence of rank keys on nodes? | decides L-1 | the maintainer, with ADR-A112 |
 | U-7 | What does InsurML mean by "Step 6 selects the full set of condition kinds (D52, D57)"? | it may already plan what Eligibility offers | the InsurML owner |
 | U-8 | How does InsurML treat a cycle among `dependsOn` references? | a builder needs a rule | the InsurML owner |
 | U-9 | Is InsurLE, the controlled language LATTICE's ingestion vision attributes to John Cummins et al., meant to sit beside InsurML? | an InsurML component and an InsurLE rendering of it would be two views of one clause | the InsurML owner |
