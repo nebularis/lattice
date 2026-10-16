@@ -1,0 +1,159 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Positive fixture (applied-insurance-reference AIR-4.3, milestone M3, first
+# half): a schedule of four locations, two of them in a special flood hazard
+# area, and an Eligibility admission profile over the exposure units that
+# tools/exposure_derivations.py computes from it. No owl:Ontology header: not
+# a released document, and it holds no exposure unit. The units are derived
+# on demand and discarded.
+#
+# Each location holds one building valued in pounds. Locations A and B have a
+# flood zone designation in the example special flood hazard set. C has a
+# designation outside it, and D has none. The profile admits a unit when its
+# peril is under N.HYD.FLD (a hierarchical match) and its location has a
+# flood zone in the special flood hazard set (set membership read through
+# aeo:unitLocation, aeo:zoneDesignation and aeo:floodZone). That second
+# binding is a set reading closed under the schedule's own statement that
+# every designation it holds is recorded (ADR-A105), so a location with no
+# special flood hazard designation is Denied, not Undetermined.
+#
+# Recorded decisions, once the compilers apply closures (CCS HQ-6a.2):
+# the flood units of A and B are Permitted, those of C and D Denied, and
+# every wind unit (N.MET.TC.WND) is Denied by the first condition.
+# Before then, the compilers ignore the closure, and site D's flood unit reads
+# Undetermined (exe:MissingCandidate) while the other seven units decide as stated.
+# Loaded with the exposure spec and vocabulary and the peril vocabulary.
+
+@prefix aeo:      <https://www.nebularis.org/neuro-semantic/insurance/exposure#> .
+@prefix aeo-voc:  <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#> .
+@prefix prl-voc:  <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#> .
+@prefix elg:      <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix fnd:      <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix qnt:      <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix voc:      <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix skos:     <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd:      <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:       <https://example.org/lattice/insurance/exposure/examples#> .
+
+ex:GBP a qnt:ValueSpace ;
+    qnt:spaceKey "gbp" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ;
+    qnt:spaceHash "gbp-v1" .
+
+ex:great-britain a skos:Concept ; skos:prefLabel "Great Britain"@en .
+
+# ---- The schedule: four locations, one building each ------------------------
+
+ex:schedule-identity a aeo:ExposureIdentity , fnd:PersistentIdentity .
+
+ex:schedule-2027 a aeo:ExposureSet ;
+    fnd:hasIdentity ex:schedule-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime ] ;
+    fnd:hasGovernanceState fnd:Active ;
+    aeo:reportingUnit ex:GBP ;
+    aeo:hasLocation ex:site-a , ex:site-b , ex:site-c , ex:site-d ;
+    aeo:hasAsset ex:building-a , ex:building-b , ex:building-c , ex:building-d ;
+    aeo:hasValuation ex:value-a , ex:value-b , ex:value-c , ex:value-d .
+
+ex:site-a-identity a aeo:LocationIdentity , fnd:PersistentIdentity .
+ex:site-a a aeo:Location ; fnd:hasIdentity ex:site-a-identity ; aeo:territory ex:great-britain ;
+    aeo:zoneDesignation ex:site-a-flood .
+ex:site-b-identity a aeo:LocationIdentity , fnd:PersistentIdentity .
+ex:site-b a aeo:Location ; fnd:hasIdentity ex:site-b-identity ; aeo:territory ex:great-britain ;
+    aeo:zoneDesignation ex:site-b-flood .
+ex:site-c-identity a aeo:LocationIdentity , fnd:PersistentIdentity .
+ex:site-c a aeo:Location ; fnd:hasIdentity ex:site-c-identity ; aeo:territory ex:great-britain ;
+    aeo:zoneDesignation ex:site-c-flood .
+ex:site-d-identity a aeo:LocationIdentity , fnd:PersistentIdentity .
+ex:site-d a aeo:Location ; fnd:hasIdentity ex:site-d-identity ; aeo:territory ex:great-britain .
+
+ex:building-a-identity a aeo:AssetIdentity , fnd:PersistentIdentity .
+ex:building-a a aeo:Asset ; fnd:hasIdentity ex:building-a-identity ; aeo:assetClass aeo-voc:Building ; aeo:locatedAt ex:site-a .
+ex:building-b-identity a aeo:AssetIdentity , fnd:PersistentIdentity .
+ex:building-b a aeo:Asset ; fnd:hasIdentity ex:building-b-identity ; aeo:assetClass aeo-voc:Building ; aeo:locatedAt ex:site-b .
+ex:building-c-identity a aeo:AssetIdentity , fnd:PersistentIdentity .
+ex:building-c a aeo:Asset ; fnd:hasIdentity ex:building-c-identity ; aeo:assetClass aeo-voc:Building ; aeo:locatedAt ex:site-c .
+ex:building-d-identity a aeo:AssetIdentity , fnd:PersistentIdentity .
+ex:building-d a aeo:Asset ; fnd:hasIdentity ex:building-d-identity ; aeo:assetClass aeo-voc:Building ; aeo:locatedAt ex:site-d .
+
+ex:value-a a aeo:Valuation ; fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime ] ;
+    aeo:valueOf ex:building-a ; aeo:valueType aeo-voc:Building ; aeo:valuationBasis aeo-voc:ReplacementCost ;
+    aeo:amount [ a qnt:Quantity ; qnt:onSpace ex:GBP ; qnt:numericValue "1000000"^^xsd:decimal ] .
+ex:value-b a aeo:Valuation ; fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime ] ;
+    aeo:valueOf ex:building-b ; aeo:valueType aeo-voc:Building ; aeo:valuationBasis aeo-voc:ReplacementCost ;
+    aeo:amount [ a qnt:Quantity ; qnt:onSpace ex:GBP ; qnt:numericValue "2000000"^^xsd:decimal ] .
+ex:value-c a aeo:Valuation ; fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime ] ;
+    aeo:valueOf ex:building-c ; aeo:valueType aeo-voc:Building ; aeo:valuationBasis aeo-voc:ReplacementCost ;
+    aeo:amount [ a qnt:Quantity ; qnt:onSpace ex:GBP ; qnt:numericValue "3000000"^^xsd:decimal ] .
+ex:value-d a aeo:Valuation ; fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime ] ;
+    aeo:valueOf ex:building-d ; aeo:valueType aeo-voc:Building ; aeo:valuationBasis aeo-voc:ReplacementCost ;
+    aeo:amount [ a qnt:Quantity ; qnt:onSpace ex:GBP ; qnt:numericValue "4000000"^^xsd:decimal ] .
+
+# ---- Flood zones: an example map edition and special flood hazard set ----
+
+ex:flood-zones a voc:ConceptScheme ;
+    fnd:hasIdentity ex:flood-zones-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Example flood zone edition"@en .
+ex:zone-ae a skos:Concept ; skos:prefLabel "Zone AE"@en ; skos:inScheme ex:flood-zones .
+ex:zone-ve a skos:Concept ; skos:prefLabel "Zone VE"@en ; skos:inScheme ex:flood-zones .
+ex:zone-x a skos:Concept ; skos:prefLabel "Zone X"@en ; skos:inScheme ex:flood-zones .
+
+ex:site-a-flood a aeo:ZoneDesignation ; aeo:floodZone ex:zone-ae ; aeo:designationSource aeo-voc:PublishedMap ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2024-01-01T00:00:00Z"^^xsd:dateTime ] .
+ex:site-b-flood a aeo:ZoneDesignation ; aeo:floodZone ex:zone-ve ; aeo:designationSource aeo-voc:PublishedMap ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2024-01-01T00:00:00Z"^^xsd:dateTime ] .
+ex:site-c-flood a aeo:ZoneDesignation ; aeo:floodZone ex:zone-x ; aeo:designationSource aeo-voc:PublishedMap ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2024-01-01T00:00:00Z"^^xsd:dateTime ] .
+
+# ---- The M3 profile over exposure units -------------------------------------
+
+ex:peril-contract a voc:SchemeContract ;
+    fnd:hasIdentity ex:peril-contract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    voc:constrainsProperty aeo:unitPeril ;
+    voc:boundScheme prl-voc:CauseScheme .
+
+ex:flood-zone-contract a voc:SchemeContract ;
+    fnd:hasIdentity ex:flood-zone-contract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    voc:constrainsProperty aeo:floodZone ;
+    voc:boundScheme ex:flood-zones .
+
+ex:peril-under-flood a elg:Condition ;
+    elg:matchStrategy elg:HierarchicalMatch ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:constrainedByContract ex:peril-contract ;
+    elg:requiredConcept prl-voc:N.HYD.FLD .
+
+ex:zone-in-special-flood-hazard-area a elg:Condition ;
+    elg:matchStrategy elg:SetMembership ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:constrainedByContract ex:flood-zone-contract ;
+    elg:requiredConcept ex:zone-ae , ex:zone-ve .
+
+ex:flood-units a elg:AdmissionProfile ;
+    elg:hasCondition ex:peril-under-flood , ex:zone-in-special-flood-hazard-area ;
+    elg:matchStrategy elg:SetMembership ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard .
+
+ex:schedule-statement a elg:OperationalProfile .
+ex:designations-closure a elg:Closure ;
+    elg:licensedBy ex:schedule-statement .
+
+ex:peril-binding a elg:EvidenceBinding ;
+    elg:bindsCondition ex:peril-under-flood ;
+    elg:subjectClass aeo:ExposureUnit ;
+    elg:evidenceStep [ a elg:EvidenceStep ; elg:stepIndex 0 ; elg:stepProperty aeo:unitPeril ; elg:stepDirection elg:Forward ] .
+
+ex:zone-binding a elg:EvidenceBinding ;
+    elg:bindsCondition ex:zone-in-special-flood-hazard-area ;
+    elg:subjectClass aeo:ExposureUnit ;
+    elg:valueReading elg:SomeValue ;
+    elg:closedUnder ex:designations-closure ;
+    elg:evidenceStep
+        [ a elg:EvidenceStep ; elg:stepIndex 0 ; elg:stepProperty aeo:unitLocation ; elg:stepDirection elg:Forward ] ,
+        [ a elg:EvidenceStep ; elg:stepIndex 1 ; elg:stepProperty aeo:zoneDesignation ; elg:stepDirection elg:Forward ] ,
+        [ a elg:EvidenceStep ; elg:stepIndex 2 ; elg:stepProperty aeo:floodZone ; elg:stepDirection elg:Forward ] .

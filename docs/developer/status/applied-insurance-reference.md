@@ -50,26 +50,28 @@ Verifying queue (S slices handed over and not yet merged): none.
 
 ## Machine S
 
-**Position:** round 3, the one trip. AIR-1.1, AIR-2.1 and AIR-1.2 merged. Next: AIR-2.0, then the
-trip's order (lanes §4), on `air/applied-reference` once it is pushed.
+**Position:** round 3, the one trip. AIR-1.1, AIR-2.1, AIR-1.2, AIR-2.0, AIR-2.2, AIR-4.1, AIR-2.6,
+AIR-2.3, AIR-2.4, AIR-4.2, AIR-4.2a, AIR-4.3 and AIR-4.4 built on `air/applied-reference` (not yet
+handed to R). S became unavailable on 2026-10-14 and R built AIR-4.2a to AIR-4.4. Next: AIR-4.5.
 **Last updated:** 2026-10-14
-**Blockers:** none. The branch is pushed before S starts.
+**Blockers:** none.
 
 | Seq | Slice | State | Note |
 |---|---|---|---|
 | 3 | AIR-1.1 | merged | set by R. No version bumps, no tags |
 | 4 | AIR-1.2 | merged | set by R. Tags `applied-classification-v0.1.0`, `applied-classification-vocab-v0.1.0`, `insurance-common-v0.1.0`, `insurance-common-vocab-v0.1.0` |
 | 5 | AIR-2.1 | merged | set by R: three shape defects fixed at verification. Tags `applied-insurance-peril-shapes-v0.1.0`, `insurance-peril-v0.1.0`, `insurance-peril-vocab-v0.1.0` |
-| 5a | AIR-2.0 | ready | the trip's first slice. Brief written 2026-10-13 |
-| 6 | AIR-2.2 | ready | brief refreshed and amended 2026-10-13 |
-| 7 | AIR-4.1 | ready | brief refreshed 2026-10-13, literate |
-| 9 | AIR-2.3 | ready | after AIR-2.6 |
-| 10 | AIR-2.4 | ready | |
-| 11 | AIR-4.2 | ready | brief written 2026-10-13 |
-| 12 | AIR-4.4 | ready | brief written 2026-10-13. After AIR-4.3 |
-| 14 | AIR-2.6 | ready | before AIR-2.3 |
+| 5a | AIR-2.0 | built | `insurance/common` and `insurance/peril` converted to literate READMEs, the extractor extended (nested `--layer` paths, `@output-file` on `turtle-vocab`), `prl:DocumentationShape` added (shapes `0.1.0` → `0.2.0`). No spec/vocab version change. [Validation Pack](../validation/applied-insurance-reference-2.0.md) |
+| 6 | AIR-2.2 | built | peril spec `0.4.0`→`0.5.0` (common import, four sub-property axioms), peril-vocab `0.4.0`→`0.5.0` (70 characteristic/companion concepts, four `voc:boundScheme` bindings). Lists amended beyond the first brief (Intentional/Economic agency, 13 more mechanisms, consequence widened to 19). [Validation Pack](../validation/applied-insurance-reference-2.2.md) |
+| 7 | AIR-4.1 | built | new module `ontology/applied/insurance/exposure/` (`aeo:`), literate from the start: exposure set, location, legal entity, control, asset, interest, valuation, seven scheme contracts, nine programme roles. [Validation Pack](../validation/applied-insurance-reference-4.1.md) |
+| 9 | AIR-2.3 | built | peril-vocab's `cause-N`, `cause-T` and `cause-E` regions filled: 90 N concepts, 71 T, 15 E, 176 in total, each with its characteristics, mechanisms, in-family cross-links and, for 16 concepts, an Oasis OED model code. No version bump (AIR-2.2 already bumped `peril-vocab` this trip). [Validation Pack](../validation/applied-insurance-reference-2.3.md) |
+| 10 | AIR-2.4 | built | peril-vocab's `cause-H` to `cause-L` regions and `cross-group-links` filled: 37 H concepts, 36 P, 17 C, 10 F, 11 L, bringing the cause scheme to 287 concepts in eight families. Eleven cross-group `canTrigger`/`overlaps`/`related` links. `CauseScheme skos:hasTopConcept` now lists all eight family tops. No version bump. [Validation Pack](../validation/applied-insurance-reference-2.4.md) |
+| 11 | AIR-4.2 | built | zones, pool participation, assessments and attribute values: six zone contracts, designation source/assessment kind/profile family contracts and schemes, value forms and spaces, and an attribute type scheme across fifteen families (Construction with ten reference sub-schemes, Occupancy, Protection, External exposure, Geocoding quality, Equipment, Corporate, and seven profile-only families), with eleven peril-attribute links on `prl-voc:` cause concepts. Ten new structural shapes, two warning-severity cross-node shapes, and two new profile shape files (`shapes/profiles/construction-protection.ttl`, `shapes/profiles/cyber-posture.ttl`). No version bump (exposure already bumped to `0.1.0` this trip, at AIR-4.1). [Validation Pack](../validation/applied-insurance-reference-4.2.md) |
+| 11a | AIR-4.2a | built | TD-49 fixed, scope widened by the maintainer to every inverse-functional property of the module: eight properties made plain, `aeo:MembershipShape` withdrawn, `examples/versions.ttl` added. No version bump. [Validation Pack](../validation/applied-insurance-reference-4.2a.md) |
+| 12 | AIR-4.4 | built | `insurance/common` 0.5.0→0.6.0 (loss event, class of business, GLIDE key scheme) with importers re-pinned, and the exposure module's losses, cause chains with effective and defaulted characteristics, coverage requirements, existing cover, cover history and financial metrics: spec, ten schemes and contracts, the money share space, nineteen shapes, `effective_characteristics`, `examples/losses.ttl`. Eligibility 0.12.0 imported. Built by R. [Validation Pack](../validation/applied-insurance-reference-4.4.md) |
+| 14 | AIR-2.6 | built | `common-vocab` `0.5.0`→`0.6.0` (QUDT-aligned units across nine families, four exact conversions, ISO 4217 currencies on `icm-voc:Money`). New document `vocab/peril-intensity.ttl` (own ontology IRI, version in unison with `peril-vocab` `0.5.0`): the intensity measure scheme, 24 measures each with a `qnt:ValueSpace`, three ordinal sub-schemes (MMI, Saffir–Simpson, Enhanced Fujita), seven threshold-defined cause concepts' `prl:definingThreshold` range sets, other causes' `prl:intensityMeasure` links, and `prl:customaryEventWindow` for two groups. `prl:ThresholdDefinitionShape` extended to cross-check a threshold's space against the concept's own measures (peril shapes `0.2.0`→`0.3.0`). [Validation Pack](../validation/applied-insurance-reference-2.6.md) |
 | 15 | AIR-2.7 | ready | brief written 2026-10-13 |
-| 16 | AIR-4.3 | ready | brief written 2026-10-13, before AIR-4.4 |
+| 16 | AIR-4.3 | built | dependencies, peril metrics, metric comparisons and exposure units in the exposure module: spec, six schemes and contracts, two contracts with no reference scheme, four value spaces, nine shapes, `tools/exposure_derivations.py`, `examples/dependencies.ttl` and `examples/units.ttl` (M3, first half). `aeo:perilScope` loses its domain. Built by R. [Validation Pack](../validation/applied-insurance-reference-4.3.md) |
 | 17 | AIR-4.5 | ready | brief written 2026-10-13 |
 | 18 | AIR-2.5 | ready | brief written 2026-10-13 |
 | 19 | AIR-3.4 | ready | brief written 2026-10-13, AIR-3.4-Q1 and Q2 decided 2026-10-14 |
@@ -77,6 +79,7 @@ trip's order (lanes §4), on `air/applied-reference` once it is pushed.
 | 21 | AIR-3.5 | ready | moved from R on 2026-10-13 (lanes §2). Brief written the same day |
 | 22 | AIR-6.1 | ready | brief written 2026-10-13, AIR-6.1-Q1 decided 2026-10-14 |
 | 23+ | S6 | ready | brief written 2026-10-13 (substrate plan) |
+| — | AIR-deferred-testing | planned | the tests for slices built while testing is deferred, from AIR-4.2a. Test plans collected in the [Phase 4 plan](../plans/applied-insurance-reference-phase-4.md) |
 
 ## Merge log (machine R only)
 
@@ -158,4 +161,13 @@ trip's order (lanes §4), on `air/applied-reference` once it is pushed.
   inverse-functional, against the module README's design, which the maintainer confirmed: unchanged members are shared across
   exposure set versions by identity, not duplicated by node. To fix before or with the branch's merge, with an example of two
   schedule versions sharing an unchanged location. Phase 4 plan corrected for the planned membership properties.
-
+- 2026-10-14: machine S became unavailable. Machine R (cloud) took over S's slices on `air/applied-reference`, authorised to commit and push to that branch only. TD-49 widened to every inverse-functional property of the exposure module and built first as AIR-4.2a, then removed from the technical debt register. AIR-4.3 and AIR-4.4 follow autonomously.
+- 2026-10-14: amendment to the development contract, for AIR slices only and until further notice. The Python tests around `applied/insurance` are heavy and slow, so they are not run or written as the ontology is built. Each slice records its test plan in its Validation Pack, collected in the AIR-deferred-testing slice of the Phase 4 plan, and the tests are built later. Cheap static checks and the literate extraction still run. The rest of the contract stands.
+- 2026-10-14: AIR-4.3 and AIR-4.4 built by R on `air/applied-reference` under the testing amendment. Two points for the maintainer, none blocking: AIR-4.3's metric shape asks for a perspective on a hazard score, which has none (options in the AIR-4.3 Validation Pack), and AIR-4.4's financial metric kinds for revenue, gross profit and headcount carry a `Metric` suffix to avoid existing names. The M3 profile's site D reads Undetermined until CCS HQ-6a.2 merges.
+- 2026-10-14: release preparation for the merge. The maintainer's Open Results Data check (perspective renamed, two calculation methods added) is in. Catalogs regenerated and nine release rows added. `check:full-sweep` ran: 13 of 14 checks passed, and the catalog check's one failure (a pinned count of `insurance/common` contracts) is fixed, with the check rerun at 773 passed. Tags to create after the merge: `applied-insurance-exposure-shapes-v0.1.0`, `applied-insurance-peril-shapes-v0.3.0`, `insurance-common-v0.6.0`, `insurance-common-vocab-v0.6.0`, `insurance-exposure-v0.1.0`, `insurance-exposure-vocab-v0.1.0`, `insurance-peril-v0.5.0`, `insurance-peril-intensity-v0.5.0` and `insurance-peril-vocab-v0.5.0`
+- 2026-10-16: claims designed out of the epic's order, on `air/claims-reference`: the [claims sketch](../sketches/insurance-claims-ontology.md),
+  its [references and crosswalks](../sketches/claims-sketch-references.md) to ACORD and the Lloyd's claims
+  bordereau, and the [wire formats sketch](../sketches/claims-wire-formats.md). Turned into the
+  [claims plan](../plans/applied-insurance-reference-claims.md), which subsumes AIR-6.2 to AIR-6.4: slices
+  AIR-6.2 to AIR-6.12 and AIR-6.W0 to AIR-6.W7, milestones M7 and M8, substrate items S8 to S10.
+  Seventeen questions open (CL-Q1 to CL-Q10, WF-Q1 to WF-Q7), none answered. No slice briefed.

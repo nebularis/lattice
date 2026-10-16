@@ -25,11 +25,15 @@ parties resolved per claim.
 | Slice | Content |
 |---|---|
 | AIR-6.1 | submission package, its lifecycle and its citation of an exposure set version |
-| AIR-6.2 | claim, loss cause chain (initiating, proximate, mechanism), role occupancies filled at notification |
-| AIR-6.3 | occurrence grouping into events by anchored window, if substrate track S4 has landed. Otherwise deferred |
-| AIR-6.4 | causation profiles selected by governing law, only after W-Q2's legal review |
+| AIR-6.2 onwards | claims, planned in [applied-insurance-reference-claims.md](applied-insurance-reference-claims.md) |
 
-Milestone M6 closes in 6.1 and 6.2.
+**Claims moved to their own plan (2026-10-16).** The [claims plan](applied-insurance-reference-claims.md)
+subsumes AIR-6.2 to AIR-6.4 with a fuller treatment, from the [claims sketch](../sketches/insurance-claims-ontology.md)
+and its companions. AIR-6.2 is now the claims core, AIR-6.3 (aggregation) and AIR-6.4 (causation
+profiles) keep their meaning, and AIR-6.5 to AIR-6.12 and AIR-6.W0 to AIR-6.W7 are new. This plan
+keeps AIR-6.1 (submission).
+
+Milestone M6 closes in AIR-6.1 and the claims plan's AIR-6.5.
 
 ## AIR-6.1 in detail
 
@@ -125,4 +129,4 @@ posture of the insured. One location already has them, so the gaps are the other
 
 ## Exit gate
 
-M6 demonstrated. W-Q2 and W-Q3 answered or carried as open items in the module READMEs.
+AIR-6.1's part of M6 demonstrated. The claims plan has its own exit gate (its §10), which closes the rest of M6, and M7 and M8.

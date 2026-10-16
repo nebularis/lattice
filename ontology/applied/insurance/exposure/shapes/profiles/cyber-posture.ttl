@@ -1,0 +1,55 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Profile shape: cyber posture (applied-insurance-reference AIR-4.2,
+# shapes/profiles/cyber-posture.ttl). An assessment of this profile family
+# is expected to carry the three core attribute types below, assess a
+# legal entity, and carry only types from the Cyber posture family.
+
+@prefix sh:      <http://www.w3.org/ns/shacl#> .
+@prefix aeo:     <https://www.nebularis.org/neuro-semantic/insurance/exposure#> .
+@prefix aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#> .
+
+aeo:CyberPostureProfileShape a sh:NodeShape ;
+    sh:targetClass aeo:Assessment ;
+    sh:sparql [
+        sh:message "An assessment of the cyber posture profile family must assess a legal entity." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#>
+            SELECT $this WHERE {
+              $this a aeo:Assessment ; aeo:profileFamily aeo-voc:CyberPosture ; aeo:assesses ?s .
+              FILTER NOT EXISTS { ?s a aeo:LegalEntity }
+            }
+        """ ] ;
+    sh:sparql [
+        sh:message "An assessment of the cyber posture profile family must have values for MfaCoverage, BackupStrategy and EndpointDetectionAndResponse." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#>
+            SELECT $this WHERE {
+              $this a aeo:Assessment ; aeo:profileFamily aeo-voc:CyberPosture .
+              {
+                FILTER NOT EXISTS { $this aeo:hasAttribute/aeo:attributeType aeo-voc:MfaCoverage }
+              } UNION {
+                FILTER NOT EXISTS { $this aeo:hasAttribute/aeo:attributeType aeo-voc:BackupStrategy }
+              } UNION {
+                FILTER NOT EXISTS { $this aeo:hasAttribute/aeo:attributeType aeo-voc:EndpointDetectionAndResponse }
+              }
+            }
+        """ ] .
+
+aeo:CyberPostureProfileOutsideFamilyShape a sh:NodeShape ;
+    sh:targetClass aeo:Assessment ;
+    sh:severity sh:Warning ;
+    sh:sparql [
+        sh:message "An attribute value on a cyber posture profile assessment is outside the Cyber posture family." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#>
+            SELECT $this WHERE {
+              $this a aeo:Assessment ; aeo:profileFamily aeo-voc:CyberPosture ; aeo:hasAttribute ?av .
+              ?av aeo:attributeType ?type .
+              ?type aeo:attributeFamily ?family .
+              FILTER (?family != aeo-voc:CyberPosture)
+            }
+        """ ] .

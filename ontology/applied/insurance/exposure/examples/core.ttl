@@ -1,0 +1,170 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Positive fixture (applied-insurance-reference AIR-4.1): a small, real
+# fragment of one insured's schedule that passes every shape in
+# structural.ttl and constraints.ttl. No owl:Ontology header: not a
+# released document.
+#
+# One exposure set version with two locations (a factory and a warehouse),
+# a building and its contents at the factory, an owner's interest and a
+# lender's, three valuations (one amount, one rate with a 12-month
+# horizon), and a parent controlling the insured. The insured has an
+# industry, a domicile and a legal form. Amounts use a currency unit
+# declared here (ex:GBP), because insurance/common's currencies arrive
+# with AIR-2.6, later in the trip.
+
+@prefix aeo:     <https://www.nebularis.org/neuro-semantic/insurance/exposure#> .
+@prefix aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#> .
+@prefix cls-voc: <https://www.nebularis.org/neuro-semantic/lattice/applied/classification/vocab#> .
+@prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix qnt:     <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix pty:     <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex:      <https://example.org/lattice/insurance/exposure/examples#> .
+
+# ---- Units: a minimal currency placeholder (the real units are AIR-2.6) ----
+
+ex:GBP a qnt:ValueSpace ;
+    qnt:spaceKey "gbp" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ;
+    qnt:spaceHash "gbp-v1" .
+
+ex:proportion a qnt:ValueSpace ;
+    qnt:spaceKey "proportion" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ;
+    qnt:spaceHash "proportion-v1" .
+
+ex:months a qnt:ValueSpace ;
+    qnt:spaceKey "months" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Discrete ;
+    qnt:spaceHash "months-v1" .
+
+# ---- Classification placeholders (the real industry/territory schemes are substrate's) ----
+
+ex:manufacturing a skos:Concept ; skos:prefLabel "Manufacturing"@en .
+ex:great-britain a skos:Concept ; skos:prefLabel "Great Britain"@en .
+
+# ---- Parties and control --------------------------------------------------
+
+ex:acme-identity a fnd:PersistentIdentity .
+
+ex:acme-manufacturing a aeo:LegalEntity , fnd:NaturallyKeyed ;
+    rdfs:label "Acme Manufacturing Ltd" ;
+    aeo:industry ex:manufacturing ;
+    aeo:domicile ex:great-britain ;
+    aeo:legalForm aeo-voc:LimitedLiabilityCompany .
+
+ex:acme-holdings a aeo:LegalEntity , fnd:NaturallyKeyed ;
+    rdfs:label "Acme Holdings plc" ;
+    aeo:domicile ex:great-britain ;
+    aeo:legalForm aeo-voc:Corporation .
+
+ex:parent-control a aeo:ControlRelation ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2020-01-01T00:00:00Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> ] ;
+    aeo:controller ex:acme-holdings ;
+    aeo:controlled ex:acme-manufacturing ;
+    aeo:controlKind aeo-voc:Subsidiary ;
+    aeo:controlShare [ a qnt:Quantity ; qnt:onSpace ex:proportion ; qnt:numericValue "1.0"^^<http://www.w3.org/2001/XMLSchema#decimal> ] .
+
+# ---- The exposure set -------------------------------------------------------
+
+ex:schedule-identity a aeo:ExposureIdentity , fnd:PersistentIdentity .
+
+ex:schedule-2027 a aeo:ExposureSet ;
+    fnd:hasIdentity ex:schedule-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-01-01T00:00:00Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> ] ;
+    fnd:hasGovernanceState fnd:Active ;
+    aeo:reportingUnit ex:GBP ;
+    aeo:hasLocation ex:factory , ex:warehouse ;
+    aeo:hasAsset ex:factory-building , ex:factory-contents ;
+    aeo:hasInterest ex:owner-interest , ex:lender-interest ;
+    aeo:hasValuation ex:building-valuation , ex:contents-valuation , ex:bi-valuation .
+
+# ---- Locations ---------------------------------------------------------------
+
+ex:factory-identity a aeo:LocationIdentity , fnd:PersistentIdentity .
+
+ex:factory a aeo:Location ;
+    fnd:hasIdentity ex:factory-identity ;
+    aeo:address [ a aeo:Address ; rdfs:label "Unit 4, Riverside Industrial Estate" ] ;
+    aeo:territory ex:great-britain ;
+    aeo:geoPrecision aeo-voc:Street .
+
+ex:warehouse-identity a aeo:LocationIdentity , fnd:PersistentIdentity .
+
+ex:warehouse a aeo:Location ;
+    fnd:hasIdentity ex:warehouse-identity ;
+    aeo:territory ex:great-britain .
+
+# ---- Assets --------------------------------------------------------------
+
+ex:factory-building-identity a aeo:AssetIdentity , fnd:PersistentIdentity .
+
+ex:factory-building a aeo:Asset ;
+    fnd:hasIdentity ex:factory-building-identity ;
+    aeo:assetClass aeo-voc:Building ;
+    aeo:locatedAt ex:factory .
+
+ex:factory-contents-identity a aeo:AssetIdentity , fnd:PersistentIdentity .
+
+ex:factory-contents a aeo:Asset ;
+    fnd:hasIdentity ex:factory-contents-identity ;
+    aeo:assetClass aeo-voc:Machinery ;
+    aeo:locatedAt ex:factory ;
+    aeo:partOf ex:factory-building .
+
+# ---- Interests -------------------------------------------------------------
+
+ex:owner-occupancy a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:owner-occupancy-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2020-01-01T00:00:00Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> ] ;
+    pty:inRole aeo-voc:Owner ;
+    pty:occupiedBy ex:acme-manufacturing .
+
+ex:owner-occupancy-identity a fnd:PersistentIdentity .
+
+ex:owner-interest a aeo:Interest ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2020-01-01T00:00:00Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> ] ;
+    aeo:interestHolder ex:owner-occupancy ;
+    aeo:interestIn ex:factory-building ;
+    aeo:interestKind aeo-voc:Owner .
+
+ex:lender-occupancy a pty:RoleOccupancy ;
+    fnd:hasIdentity ex:lender-occupancy-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2024-06-01T00:00:00Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> ] ;
+    pty:inRole aeo-voc:SecuredLender ;
+    pty:occupiedBy ex:acme-holdings .
+
+ex:lender-occupancy-identity a fnd:PersistentIdentity .
+
+ex:lender-interest a aeo:Interest ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2024-06-01T00:00:00Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> ] ;
+    aeo:interestHolder ex:lender-occupancy ;
+    aeo:interestIn ex:factory-building ;
+    aeo:interestKind aeo-voc:SecuredLender ;
+    aeo:extent [ a qnt:Quantity ; qnt:onSpace ex:GBP ; qnt:numericValue "2500000"^^<http://www.w3.org/2001/XMLSchema#decimal> ] .
+
+# ---- Valuations --------------------------------------------------------------
+
+ex:building-valuation a aeo:Valuation ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-01-01T00:00:00Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> ] ;
+    aeo:valueOf ex:factory-building ;
+    aeo:valueType aeo-voc:Building ;
+    aeo:valuationBasis aeo-voc:ReplacementCost ;
+    aeo:valuationMethod aeo-voc:Appraised ;
+    aeo:amount [ a qnt:Quantity ; qnt:onSpace ex:GBP ; qnt:numericValue "4200000"^^<http://www.w3.org/2001/XMLSchema#decimal> ] .
+
+ex:contents-valuation a aeo:Valuation ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-01-01T00:00:00Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> ] ;
+    aeo:valueOf ex:factory-contents ;
+    aeo:valueType aeo-voc:Machinery ;
+    aeo:valuationBasis aeo-voc:ReplacementCost ;
+    aeo:valuationMethod aeo-voc:Declared ;
+    aeo:amount [ a qnt:Quantity ; qnt:onSpace ex:GBP ; qnt:numericValue "900000"^^<http://www.w3.org/2001/XMLSchema#decimal> ] .
+
+ex:bi-valuation a aeo:Valuation ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-01-01T00:00:00Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> ] ;
+    aeo:valueOf ex:factory-building ;
+    aeo:valueType aeo-voc:GrossProfit ;
+    aeo:valuationBasis aeo-voc:AgreedValue ;
+    aeo:valuationMethod aeo-voc:Declared ;
+    aeo:rate [ a qnt:Quantity ; qnt:onSpace ex:GBP ; qnt:numericValue "150000"^^<http://www.w3.org/2001/XMLSchema#decimal> ] ;
+    aeo:horizon [ a qnt:Quantity ; qnt:onSpace ex:months ; qnt:numericValue "12"^^<http://www.w3.org/2001/XMLSchema#decimal> ] .

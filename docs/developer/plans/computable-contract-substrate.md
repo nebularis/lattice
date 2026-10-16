@@ -4104,8 +4104,106 @@ and no coupling with the differential tests, which use single-value readings onl
 - the refusal: a binding naming something that is not a closure, or a closure with no source, is
   refused with `exe:NoClosureLicence`, declared in MORK's Executable ontology (0.7.0, so
   `build:mtp` moves MORK's pins)
-- a compiled decision names the closures it relied on (`elg:closureReliedOn`)
-- `test_set_readings.py` and the differential harness extended with the closure
+- a compiled decision names the closures it relied on, as a `?closure` column of the SPARQL rows
+  (HQ6a2-Q1), a profile's row the union of its conditions' (HQ6a2-Q2)
+- the reference semantics also returns whether a set reading relied on completeness (HQ6a2-Q3)
+- `test_set_readings.py`, `test_closure_readings.py` and `test_legal_acts.py` state the outcomes
+  first (examples phase)
+
+**Built (2026-10-12, on `ccs/hq6a2-closures-compilers`)** as planned, with three deviations recorded
+in its [Validation Pack](../validation/computable-contract-substrate-hq6a2.md): `build:mtp` moves no
+pins, since the MTP hashes MORK's own terms only, the SHACL backend needs no change, since its
+decided shapes reuse the SPARQL condition select, and AIR32-08 restated under a closure.
+
+**HQ-6a.2's questions** (raised in its examples phase, answered by the maintainer 2026-10-12). They
+settle how "this decision relied on that closure" leaves the compilers, which C12 (the evaluator,
+which records decisions), HQ-6b (supersession by a late fact), formal-methods Track H (per-root
+streams) and C13 (breach derivation) all build on.
+
+*Where reliance is first known, and who records it.* The compilers produce a query that returns one
+row per subject (`?decision`, `?diagnostic`, ADR-A89 item 5). They mint no records. The evaluator
+mints the `elg:EligibilityDecision`, stamps its recording time, which is the cut, and stores it:
+
+```mermaid
+flowchart LR
+    subgraph Compile["compile time (tools/mork_compilers)"]
+        IR["IR plan<br/>binding + closedUnder"] --> Q["SPARQL query template"]
+    end
+    subgraph Run["run time"]
+        Q --> R["rows: subject, decision,<br/>diagnostic, closure"]
+        R --> E["evaluator (C12)<br/>mints elg:EligibilityDecision"]
+        E --> DR["decision record<br/>decisionValue<br/>closureReliedOn<br/>fnd:recordedAt = the cut"]
+        DR --> S["store (Track H)<br/>per-root stream"]
+    end
+    LF["late fact, valid time before the cut<br/>(HQ-6b)"] -. "finds the decisions<br/>relying on its closure" .-> DR
+```
+
+**HQ6a2-Q1. How a compiled decision names its closure.**
+
+| Option | Design overheads | Runtime overheads |
+|---|---|---|
+| (1) a `?closure` column per row, bound only when completeness decided the outcome: some value Denied, every value Permitted, the empty case included | one column, logic in the SPARQL backend. Exact. A contract between compiler and evaluator, stated beside `?diagnostic` | none beyond the column |
+| (2) every row of a closed binding names the closure | a constant column. Overstates: a decision a record proved still claims the closure | HQ-6b re-evaluates every decision made under a closed binding, though no late fact can change most of them |
+| (3) the compilers mint decision records | a second place minting identities, and a clock (`NOW()`) inside a query, which is not deterministic. Blurs compiling and executing | records built in every backend |
+
+Precision matters because a decision relying on a closure is exactly one a late fact can overturn.
+Admissions, under the registry's closure:
+
+```mermaid
+flowchart TB
+    subgraph Option1["(1) per row: the closure named only where absence decided"]
+        A1["ada · stem Permitted (physics proves it) · no closure"]
+        B1["ben · stem Denied (no STEM recorded) · registry-closure"]
+        C1["cai · stem Denied (nothing recorded) · registry-closure"]
+        D1["dee · stem Permitted (physics proves it) · no closure"]
+    end
+    subgraph Option2["(2) per binding: every row names it"]
+        A2["ada · Permitted · registry-closure"]
+        B2["ben · Denied · registry-closure"]
+        C2["cai · Denied · registry-closure"]
+        D2["dee · Permitted · registry-closure"]
+    end
+    LF["a maths qualification for ada, recorded late"] -. "(1) nothing to revisit:<br/>ada was Permitted on a record" .-> A1
+    LF -. "(2) ada queued for re-evaluation,<br/>needlessly" .-> A2
+```
+
+Reliance arises only in the non-monotonic outcomes, some value Denied and every value Permitted.
+SWRL and OWL derive only monotonic ones, so they never rely on a closure and need no column. The
+SHACL backend reports violations only, so it agrees with SPARQL on decisions but cannot say what
+they relied on: the evaluator records from SPARQL, and SHACL stays a design-time and agreement
+check. **Answered (2026-10-12): (1).** The column is part of the compiled query's stated output,
+documented with `?diagnostic` in the backend and in ADR-A105's 2026-10-12 addendum.
+
+**HQ6a2-Q2. What a profile's decision relies on.** A profile (for example AllRequired over its
+conditions) relies on what its conditions relied on.
+
+```mermaid
+flowchart LR
+    S["stem: Permitted<br/>(no closure)"] --> PR
+    M["no-medicine: Permitted<br/>(registry-closure)"] --> PR
+    PR["ada's profile: Permitted<br/>relies on?"]
+    PR --> U1["(i) the union of its conditions' closures<br/>registry-closure"]
+    PR --> U2["(ii) only the closures of the conditions<br/>that determined the outcome"]
+```
+
+| Option | Design overheads | Runtime overheads |
+|---|---|---|
+| (i) the union of the closures its conditions' rows name | one aggregate in the profile query. Never misses a decision a late fact could overturn. Overstates only when an AllRequired Denied has one condition Denied on a record and another on absence: the profile's Denied then does not depend on the closure, yet names it | occasional needless re-evaluation in HQ-6b |
+| (ii) only the closures of the conditions that determined the outcome | exact, but needs strong Kleene "which inputs mattered" logic in the query | none |
+
+**Answered (2026-10-12): (i).** Conservative for HQ-6b. Refine to (ii) only if supersession
+volume shows the cost.
+
+**HQ6a2-Q3. The reference semantics and reliance.** The differential harness can check the
+`?closure` column only if the reference also says whether completeness decided. **Answered
+(2026-10-12):** the reference gains a reading that returns the decision and whether it relied on
+the closure, beside `decide_condition`, which is unchanged. The differential harness takes it up
+when it covers bound conditions (track B).
+
+**Left for later, and where:** minting the decision record, its cut and its identity (C12). Finding
+the decisions a late fact supersedes (HQ-6b). Binding a closure to a per-root stream (HQ-6b, Track
+H AO-Q6). Breach records' `bhv:closureReliedOn` filled the same way, from the rows of a relation's
+plan (C13).
 
 **Planned validation, HQ-6a.1** (pack `computable-contract-substrate-hq6a1.md`):
 

@@ -2,6 +2,7 @@
 
 @prefix prl:     <https://www.nebularis.org/neuro-semantic/insurance/peril#> .
 @prefix iso-thes: <http://purl.org/iso25964/skos-thes#> .
+@prefix icm:     <https://www.nebularis.org/neuro-semantic/insurance/common#> .
 @prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
 @prefix qnt:     <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
 @prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
@@ -9,16 +10,16 @@
 @prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
-@base <https://www.nebularis.org/neuro-semantic/insurance/peril> .
 
 <https://www.nebularis.org/neuro-semantic/insurance/peril>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/peril/0.4.0> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/peril/0.5.0> ;
     rdfs:label "LATTICE reference peril vocabulary properties"@en ;
     rdfs:comment "The prl: properties and datatypes the reference peril vocabulary uses to say more than plain SKOS: kind and part links, directed triggering, non-subsuming overlap, characteristic links (mechanism, agency, onset, definition basis, accumulation class), and links to Quantification for intensity thresholds and event windows. Schemes and concepts are declared in vocab/peril-vocab.ttl, in the prl-voc: namespace (ADR-A98 decision 6). This document declares no scheme and no concept. See ADR-A99 and docs/developer/sketches/peril-vocabulary.md." ;
     owl:imports <http://www.w3.org/2004/02/skos/core> ,
                 <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.8.0> .
+                <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.8.0> ,
+                <https://www.nebularis.org/neuro-semantic/insurance/common/0.6.0> .
 
 #################################################################
 #    Kind and part (ADR-A99 decision 4, PV3). iso-thes: terms are
@@ -68,10 +69,15 @@ prl:overlaps a owl:ObjectProperty , owl:SymmetricProperty , owl:IrreflexivePrope
 
 #################################################################
 #    Characteristics (ADR-A99 decision 4, PV1): one scheme per axis,
-#    linked from cause concepts for typical values.
+#    linked from cause concepts for typical values. Four of these
+#    specialise insurance/common's own classification properties
+#    (AIR-2.2), so a check on a common/ property also reads the peril
+#    vocabulary: prl:onset and prl:definitionBasis have no common/
+#    counterpart, since only the peril vocabulary uses those axes.
 #################################################################
 
 prl:typicalAgency a owl:ObjectProperty ;
+    rdfs:subPropertyOf icm:agency ;
     rdfs:domain skos:Concept ; rdfs:range skos:Concept ;
     rdfs:label "typical agency"@en ;
     rdfs:comment "A cause concept's typical agency (natural, accidental, negligent, malicious criminal, malicious political, sovereign, belligerent, undetermined), a concept in the agency scheme." ;
@@ -90,6 +96,7 @@ prl:definitionBasis a owl:ObjectProperty ;
     fnd:utility "Link a cause concept to exactly one definition-basis value. A value of prl-voc:Threshold requires prl:definingThreshold on the same concept (the threshold-definitions shape)." .
 
 prl:typicalMechanism a owl:ObjectProperty ;
+    rdfs:subPropertyOf icm:mechanism ;
     rdfs:domain skos:Concept ; rdfs:range skos:Concept ;
     rdfs:label "typical mechanism"@en ;
     rdfs:comment "A cause concept's typical mechanism of harm (shaking, inundation, wind load, fire, impact, contamination, electrical overstress, data encryption, and others), a concept in the mechanism scheme." ;
@@ -102,21 +109,23 @@ prl:accumulationClass a owl:ObjectProperty ;
     fnd:utility "Link a cause concept to at most one accumulation-class value. Optional: many perils have no single typical accumulation character." .
 
 prl:typicalConsequence a owl:ObjectProperty ;
+    rdfs:subPropertyOf icm:consequence ;
     rdfs:domain skos:Concept ; rdfs:range skos:Concept ;
     rdfs:label "typical consequence"@en ;
     rdfs:comment "A cause concept's typical head of loss (direct physical damage, business interruption, and others), a concept in the consequence scheme." ;
     fnd:utility "Informative only (PV8): records what is customary, never what a contract covers. The consequence scheme itself is built in AIR-2.2." .
 
 prl:harmSubject a owl:ObjectProperty ;
+    rdfs:subPropertyOf icm:harmSubject ;
     rdfs:domain skos:Concept ; rdfs:range skos:Concept ;
     rdfs:label "harm subject"@en ;
     rdfs:comment "What is typically harmed by a cause concept (property, persons, financial interest, data and systems, environment, reputation), a concept in the harm-subject scheme." ;
     fnd:utility "Informative only (PV8). Liability direction is derived from party roles, never from this property (term-parameters sketch §7)." .
 
 #################################################################
-#    Intensity and collections links (§6.4, §7). The intensity
-#    measure scheme itself, its qnt:ValueSpaces, and collection
-#    classes are out of scope for this slice (AIR-2.6, AIR-2.5).
+#    Intensity and collections links (§6.4, §7 of the sketch). The
+#    intensity measure scheme itself, its qnt:ValueSpaces, and
+#    collection classes are built in AIR-2.6 and AIR-2.5.
 #################################################################
 
 prl:intensityMeasure a owl:ObjectProperty ;
@@ -146,7 +155,7 @@ prl:measuredOn a owl:ObjectProperty ;
 prl:definingThreshold a owl:ObjectProperty ;
     rdfs:domain skos:Concept ; rdfs:range qnt:RangeSet ;
     rdfs:label "defining threshold"@en ;
-    rdfs:comment "The Quantification range set a threshold-defined cause concept must fall within to be that cause (PV6)." ;
+    rdfs:comment "The Quantification range set a threshold-defined cause concept must fall within to be that cause (PV6). A concept with several defining thresholds meets all of them." ;
     fnd:utility "Required whenever prl:definitionBasis is prl-voc:Threshold (the threshold-definitions shape). Point at a qnt:RangeSet over the relevant intensity measure's value space." .
 
 prl:customaryEventWindow a owl:ObjectProperty ;

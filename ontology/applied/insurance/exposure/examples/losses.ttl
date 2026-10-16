@@ -1,0 +1,286 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Positive fixture (applied-insurance-reference AIR-4.4): extends
+# examples/core.ttl with losses, requirements, cover, cover history and
+# financial metrics. No owl:Ontology header: not a released document.
+#
+# The insured has a five-year loss experience stated complete, with two
+# records: a flood loss with a two-link cause chain (the initiating cause
+# a tropical cyclone with its agency and mechanism recorded, the proximate
+# cause an inundation with its mechanism left for the derivation to
+# default), and a fire loss under a loss event that has a GLIDE key. A
+# second experience, from the prior insurer's loss run, has no records and
+# is not stated complete, so it says nothing about the period.
+#
+# A lender's flood requirement is mandatory, with a limit of at least the
+# lender's principal, and its scope is an admission profile over flood
+# exposure units in a special flood hazard area. An appetite requirement
+# bounds the net retained loss at a 1 in 100 year return period to 10% of
+# equity, a bound on a proportion space that names the equity metric. The
+# expiring programme is an underlying cover with summary terms, a
+# non-renewal is on record, and revenue is reported by territory.
+#
+# The final section is the output of effective_characteristics
+# (tools/exposure_derivations.py) for this file's causes, read with the
+# peril vocabulary. A test checks that it equals the function's output.
+# Loaded with examples/core.ttl, the peril and common vocabularies and the
+# exposure spec and vocabulary, it passes every shape with no warning.
+
+@prefix aeo:      <https://www.nebularis.org/neuro-semantic/insurance/exposure#> .
+@prefix aeo-voc:  <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#> .
+@prefix icm:      <https://www.nebularis.org/neuro-semantic/insurance/common#> .
+@prefix icm-voc:  <https://www.nebularis.org/neuro-semantic/insurance/common/vocab#> .
+@prefix prl-voc:  <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#> .
+@prefix elg:      <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix fnd:      <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix qnt:      <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix voc:      <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix prov:     <http://www.w3.org/ns/prov#> .
+@prefix skos:     <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:      <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:       <https://example.org/lattice/insurance/exposure/examples#> .
+
+# ---- Loss experience, stated complete -------------------------------------
+
+ex:experience-2022-2026 a aeo:LossExperience ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2022-01-01T00:00:00Z"^^xsd:dateTime ; fnd:validTo "2026-12-31T00:00:00Z"^^xsd:dateTime ] ;
+    aeo:experienceOf ex:acme-manufacturing ;
+    aeo:experienceSource aeo-voc:InsuredDeclared ;
+    aeo:statedComplete true ;
+    aeo:hasLossRecord ex:flood-loss , ex:fire-loss .
+
+ex:schedule-2027 aeo:hasLossExperience ex:experience-2022-2026 , ex:prior-insurer-run ;
+    aeo:hasRequirement ex:lender-flood-requirement , ex:appetite-requirement ;
+    aeo:hasExistingCover ex:expiring-programme ;
+    aeo:hasCoverHistoryEvent ex:non-renewal ;
+    aeo:hasFinancialMetric ex:revenue-gb , ex:equity .
+
+# ---- A flood loss with a two-link cause chain ------------------------------
+
+ex:flood-loss a aeo:LossRecord ;
+    aeo:lossDate "2024-11-03"^^xsd:date ;
+    aeo:lossStatus aeo-voc:Closed ;
+    aeo:lossAt ex:factory ;
+    aeo:classOfBusiness ex:property-line ;
+    aeo:hasCause ex:flood-loss-cyclone , ex:flood-loss-inundation ;
+    aeo:consequence prl-voc:DirectPhysicalDamage ;
+    aeo:grossAmount [ a qnt:Quantity ; qnt:onSpace icm-voc:Money ; qnt:inUnit icm-voc:GBP ; qnt:numericValue "420000"^^xsd:decimal ] ;
+    aeo:deductibleApplied [ a qnt:Quantity ; qnt:onSpace icm-voc:Money ; qnt:inUnit icm-voc:GBP ; qnt:numericValue "25000"^^xsd:decimal ] ;
+    aeo:paid [ a qnt:Quantity ; qnt:onSpace icm-voc:Money ; qnt:inUnit icm-voc:GBP ; qnt:numericValue "380000"^^xsd:decimal ] ;
+    aeo:reserved [ a qnt:Quantity ; qnt:onSpace icm-voc:Money ; qnt:inUnit icm-voc:GBP ; qnt:numericValue "15000"^^xsd:decimal ] ;
+    aeo:incurred [ a qnt:Quantity ; qnt:onSpace icm-voc:Money ; qnt:inUnit icm-voc:GBP ; qnt:numericValue "395000"^^xsd:decimal ] ;
+    aeo:recovered [ a qnt:Quantity ; qnt:onSpace icm-voc:Money ; qnt:inUnit icm-voc:GBP ; qnt:numericValue "20000"^^xsd:decimal ] .
+
+ex:property-line a skos:Concept ; skos:prefLabel "Fire and other damage to property"@en .
+
+ex:flood-loss-cyclone a aeo:LossCause ;
+    aeo:peril prl-voc:N.MET.TC ;
+    aeo:causePosition aeo-voc:Initiating ;
+    aeo:agency prl-voc:Natural ;
+    aeo:mechanism prl-voc:WindLoad .
+
+ex:flood-loss-inundation a aeo:LossCause ;
+    aeo:peril prl-voc:N.HYD.FLD ;
+    aeo:causePosition aeo-voc:Proximate ;
+    aeo:agency prl-voc:Natural .
+
+# ---- A fire loss under a loss event with a GLIDE key -----------------------
+
+ex:fire-event a icm:LossEvent , fnd:NaturallyKeyed ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2026-03-14T00:00:00Z"^^xsd:dateTime ; fnd:validTo "2026-03-15T00:00:00Z"^^xsd:dateTime ] ;
+    icm:peril prl-voc:T.FIR ;
+    fnd:naturalKey ex:fire-event-glide .
+
+ex:fire-event-glide a fnd:Key ;
+    fnd:keyScheme icm-voc:GlideNumber ;
+    fnd:keyValue "FR-2026-000012-GBR" .
+
+ex:fire-loss a aeo:LossRecord ;
+    aeo:lossDate "2026-03-14"^^xsd:date ;
+    aeo:lossStatus aeo-voc:Open ;
+    aeo:lossEvent ex:fire-event ;
+    aeo:hasCause ex:fire-loss-fire ;
+    aeo:incurred [ a qnt:Quantity ; qnt:onSpace icm-voc:Money ; qnt:inUnit icm-voc:GBP ; qnt:numericValue "180000"^^xsd:decimal ] .
+
+ex:fire-loss-fire a aeo:LossCause ;
+    aeo:peril prl-voc:T.FIR ;
+    aeo:causePosition aeo-voc:Proximate ;
+    aeo:agency prl-voc:Accidental ;
+    aeo:mechanism prl-voc:Fire .
+
+# ---- A second experience with no records ----------------------------------
+
+ex:prior-insurer a aeo:LegalEntity , fnd:NaturallyKeyed ;
+    rdfs:label "Prior Mutual Insurance Ltd" .
+
+ex:prior-insurer-run a aeo:LossExperience ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2022-01-01T00:00:00Z"^^xsd:dateTime ; fnd:validTo "2026-12-31T00:00:00Z"^^xsd:dateTime ] ;
+    aeo:experienceOf ex:acme-manufacturing ;
+    aeo:experienceSource aeo-voc:InsurerLossRun .
+
+# ---- A lender's flood requirement ------------------------------------------
+
+ex:lender-flood-requirement-identity a aeo:RequirementIdentity , fnd:PersistentIdentity .
+
+ex:lender-flood-requirement a aeo:CoverageRequirement ;
+    fnd:hasIdentity ex:lender-flood-requirement-identity ;
+    aeo:requirementSource aeo-voc:LenderCovenant ;
+    aeo:requirementStrength aeo-voc:Mandatory ;
+    aeo:owedTo ex:lender-occupancy ;
+    aeo:requirementScope ex:flood-units-in-hazard-area ;
+    aeo:requiredMeasure [
+        a aeo:MeasureConstraint ;
+        aeo:measure aeo-voc:Limit ;
+        aeo:bound [ a qnt:RangeSet ; qnt:onSpace icm-voc:Money ; qnt:hasRange [
+            a qnt:Range ; qnt:onSpace icm-voc:Money ;
+            qnt:lowerBound ex:principal-floor ; qnt:hasBound ex:principal-floor ] ]
+    ] .
+
+ex:principal-floor a qnt:Bound ;
+    qnt:onSpace icm-voc:Money ;
+    qnt:boundValue [ a qnt:Quantity ; qnt:onSpace icm-voc:Money ; qnt:inUnit icm-voc:GBP ; qnt:numericValue "2500000"^^xsd:decimal ] ;
+    qnt:boundSense qnt:Lower ; qnt:boundClosure qnt:Closed .
+
+# The scope: flood exposure units whose location has a flood zone in the special flood hazard set.
+
+ex:flood-zones a voc:ConceptScheme ;
+    fnd:hasIdentity ex:flood-zones-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Example flood zone edition"@en .
+ex:zone-ae a skos:Concept ; skos:prefLabel "Zone AE"@en ; skos:inScheme ex:flood-zones .
+ex:zone-ve a skos:Concept ; skos:prefLabel "Zone VE"@en ; skos:inScheme ex:flood-zones .
+
+ex:peril-contract a voc:SchemeContract ;
+    fnd:hasIdentity ex:peril-contract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    voc:constrainsProperty aeo:unitPeril ;
+    voc:boundScheme prl-voc:CauseScheme .
+
+ex:flood-zone-contract a voc:SchemeContract ;
+    fnd:hasIdentity ex:flood-zone-contract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    voc:constrainsProperty aeo:floodZone ;
+    voc:boundScheme ex:flood-zones .
+
+ex:peril-under-flood a elg:Condition ;
+    elg:matchStrategy elg:HierarchicalMatch ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:constrainedByContract ex:peril-contract ;
+    elg:requiredConcept prl-voc:N.HYD.FLD .
+
+ex:zone-in-hazard-area a elg:Condition ;
+    elg:matchStrategy elg:SetMembership ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:constrainedByContract ex:flood-zone-contract ;
+    elg:requiredConcept ex:zone-ae , ex:zone-ve .
+
+ex:flood-units-in-hazard-area a elg:AdmissionProfile ;
+    elg:hasCondition ex:peril-under-flood , ex:zone-in-hazard-area ;
+    elg:matchStrategy elg:SetMembership ;
+    elg:compatibilityOperation elg:AllRequired ;
+    elg:wildcardSemantics elg:NoWildcard .
+
+ex:schedule-statement a elg:OperationalProfile .
+ex:designations-closure a elg:Closure ;
+    elg:licensedBy ex:schedule-statement .
+
+ex:peril-binding a elg:EvidenceBinding ;
+    elg:bindsCondition ex:peril-under-flood ;
+    elg:subjectClass aeo:ExposureUnit ;
+    elg:evidenceStep [ a elg:EvidenceStep ; elg:stepIndex 0 ; elg:stepProperty aeo:unitPeril ; elg:stepDirection elg:Forward ] .
+
+ex:zone-binding a elg:EvidenceBinding ;
+    elg:bindsCondition ex:zone-in-hazard-area ;
+    elg:subjectClass aeo:ExposureUnit ;
+    elg:valueReading elg:SomeValue ;
+    elg:closedUnder ex:designations-closure ;
+    elg:evidenceStep
+        [ a elg:EvidenceStep ; elg:stepIndex 0 ; elg:stepProperty aeo:unitLocation ; elg:stepDirection elg:Forward ] ,
+        [ a elg:EvidenceStep ; elg:stepIndex 1 ; elg:stepProperty aeo:zoneDesignation ; elg:stepDirection elg:Forward ] ,
+        [ a elg:EvidenceStep ; elg:stepIndex 2 ; elg:stepProperty aeo:floodZone ; elg:stepDirection elg:Forward ] .
+
+# ---- An appetite requirement relative to equity ---------------------------
+
+ex:appetite-requirement-identity a aeo:RequirementIdentity , fnd:PersistentIdentity .
+
+ex:appetite-requirement a aeo:CoverageRequirement ;
+    fnd:hasIdentity ex:appetite-requirement-identity ;
+    aeo:requirementSource aeo-voc:RiskAppetite ;
+    aeo:requirementStrength aeo-voc:Preferred ;
+    aeo:requiredMeasure [
+        a aeo:MeasureConstraint ;
+        aeo:measure aeo-voc:NetRetainedLoss ;
+        aeo:atReturnPeriod [ a qnt:Quantity ; qnt:onSpace aeo-voc:ReturnPeriodSpace ; qnt:numericValue "100"^^xsd:decimal ] ;
+        aeo:relativeTo ex:equity ;
+        aeo:bound [ a qnt:RangeSet ; qnt:onSpace aeo-voc:MoneyShare ; qnt:hasRange [
+            a qnt:Range ; qnt:onSpace aeo-voc:MoneyShare ;
+            qnt:upperBound ex:ten-percent ; qnt:hasBound ex:ten-percent ] ]
+    ] .
+
+ex:ten-percent a qnt:Bound ;
+    qnt:onSpace aeo-voc:MoneyShare ;
+    qnt:boundValue [ a qnt:Quantity ; qnt:onSpace aeo-voc:MoneyShare ; qnt:numericValue "0.10"^^xsd:decimal ] ;
+    qnt:boundSense qnt:Upper ; qnt:boundClosure qnt:Closed .
+
+# ---- The expiring programme and a non-renewal -------------------------------
+
+ex:expiring-programme a aeo:ExistingCover ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2026-01-01T00:00:00Z"^^xsd:dateTime ; fnd:validTo "2027-01-01T00:00:00Z"^^xsd:dateTime ] ;
+    aeo:coverRelation aeo-voc:Underlying ;
+    aeo:triggerBasis aeo-voc:Indemnity ;
+    aeo:perilScope prl-voc:T.FIR , prl-voc:N.HYD.FLD ;
+    aeo:classOfBusiness ex:property-line ;
+    aeo:insurer ex:prior-insurer ;
+    aeo:summaryTerm
+        [ a aeo:TermSummary ; aeo:measure aeo-voc:Limit ; aeo:summaryValue [ a qnt:Quantity ; qnt:onSpace icm-voc:Money ; qnt:inUnit icm-voc:GBP ; qnt:numericValue "5000000"^^xsd:decimal ] ] ,
+        [ a aeo:TermSummary ; aeo:measure aeo-voc:Retention ; aeo:summaryValue [ a qnt:Quantity ; qnt:onSpace icm-voc:Money ; qnt:inUnit icm-voc:GBP ; qnt:numericValue "25000"^^xsd:decimal ] ] ,
+        [ a aeo:TermSummary ; aeo:measure aeo-voc:Premium ; aeo:summaryValue [ a qnt:Quantity ; qnt:onSpace icm-voc:Money ; qnt:inUnit icm-voc:GBP ; qnt:numericValue "42000"^^xsd:decimal ] ] .
+
+ex:non-renewal a aeo:CoverHistoryEvent ;
+    aeo:historyEventKind aeo-voc:NonRenewed ;
+    aeo:eventDate "2025-09-01"^^xsd:date ;
+    aeo:byInsurer ex:prior-insurer ;
+    aeo:classOfBusiness ex:property-line ;
+    aeo:reasonGiven "Withdrawal from the class" .
+
+# ---- Financial metrics ---------------------------------------------------------
+
+ex:revenue-gb a aeo:FinancialMetric ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2026-01-01T00:00:00Z"^^xsd:dateTime ; fnd:validTo "2026-12-31T00:00:00Z"^^xsd:dateTime ] ;
+    aeo:metricOf ex:acme-manufacturing ;
+    aeo:financialMetricKind aeo-voc:RevenueMetric ;
+    aeo:metricAmount [ a qnt:Quantity ; qnt:onSpace icm-voc:Money ; qnt:inUnit icm-voc:GBP ; qnt:numericValue "18500000"^^xsd:decimal ] ;
+    aeo:metricTerritory ex:great-britain ;
+    aeo:audited true .
+
+ex:equity a aeo:FinancialMetric ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2026-12-31T00:00:00Z"^^xsd:dateTime ] ;
+    aeo:metricOf ex:acme-manufacturing ;
+    aeo:financialMetricKind aeo-voc:Equity ;
+    aeo:metricAmount [ a qnt:Quantity ; qnt:onSpace icm-voc:Money ; qnt:inUnit icm-voc:GBP ; qnt:numericValue "9200000"^^xsd:decimal ] ;
+    aeo:audited true .
+
+# ---- Derived by effective_characteristics (tools/exposure_derivations.py), run ex:effective-characteristics-run ----
+# Never written by hand. A test checks this section equals the function's output.
+
+ex:effective-characteristics-run-defaulted-2e253b09afa3b1aaaa0316cc52347f6b a aeo:DefaultedCharacteristic ;
+    prov:wasDerivedFrom prl-voc:N.HYD.FLD ;
+    prov:wasGeneratedBy ex:effective-characteristics-run ;
+    aeo:defaultedOn ex:flood-loss-inundation ;
+    aeo:defaultedProperty aeo:effectiveMechanism .
+
+ex:fire-loss-fire aeo:effectiveAgency prl-voc:Accidental ;
+    aeo:effectiveMechanism prl-voc:Fire .
+
+ex:flood-loss-cyclone aeo:effectiveAgency prl-voc:Natural ;
+    aeo:effectiveMechanism prl-voc:WindLoad .
+
+ex:effective-characteristics-run a fnd:DerivationRun .
+
+ex:flood-loss-inundation aeo:effectiveAgency prl-voc:Natural ;
+    aeo:effectiveMechanism prl-voc:Inundation .
+
+

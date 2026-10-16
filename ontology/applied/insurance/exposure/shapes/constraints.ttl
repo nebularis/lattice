@@ -1,0 +1,201 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Cross-node shapes for the asset exposure ontology: control cycles
+# (applied-insurance-reference AIR-4.1). Per-node shapes are in
+# structural.ttl.
+
+@prefix sh:  <http://www.w3.org/ns/shacl#> .
+@prefix aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#> .
+
+aeo:ControlRelationShape a sh:NodeShape ;
+    sh:targetClass aeo:ControlRelation ;
+    sh:sparql [
+        sh:message "A control relation must not create a cycle through aeo:controller / aeo:controlled." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            SELECT $this WHERE {
+              $this aeo:controller ?a ; aeo:controlled ?b .
+              ?b (^aeo:controller/aeo:controlled)+ ?a .
+            }
+        """ ] .
+
+#################################################################
+#    AIR-4.2: peril-attribute completeness and geo precision,
+#    read per location, not per asset (a per-asset rule would
+#    warn about a roof on stock, since attribute types do not say
+#    which asset classes they apply to).
+#################################################################
+
+aeo:PerilCompletenessShape a sh:NodeShape ;
+    sh:targetClass aeo:Location ;
+    sh:severity sh:Warning ;
+    sh:sparql [
+        sh:message "A location exposed to a peril (through a pool participation's peril scope) should have a value, in some assessment of the location or of an asset located there, for each attribute type that peril or a broader cause concept names relevant." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX prl: <https://www.nebularis.org/neuro-semantic/insurance/peril#>
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+            SELECT $this WHERE {
+              $this a aeo:Location ; aeo:poolParticipation ?pp .
+              ?pp aeo:perilScope ?peril .
+              ?peril skos:broader* ?ancestor .
+              ?ancestor prl:relevantAttribute ?type .
+              FILTER NOT EXISTS {
+                {
+                  ?asmt aeo:assesses $this .
+                } UNION {
+                  ?asmt aeo:assesses ?asset .
+                  ?asset aeo:locatedAt $this .
+                }
+                ?asmt aeo:hasAttribute ?av .
+                ?av aeo:attributeType ?type .
+              }
+            }
+        """ ] .
+
+aeo:GeoPrecisionForPerilShape a sh:NodeShape ;
+    sh:targetClass aeo:Location ;
+    sh:severity sh:Warning ;
+    sh:sparql [
+        sh:message "A location exposed to a peril with a minimum geographic precision should be known at least that precisely (aeo:geoPrecision no coarser than the peril's minimum, by skos:notation rank)." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX prl: <https://www.nebularis.org/neuro-semantic/insurance/peril#>
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+            PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+            SELECT $this WHERE {
+              $this a aeo:Location ; aeo:poolParticipation ?pp ; aeo:geoPrecision ?locPrecision .
+              ?pp aeo:perilScope ?peril .
+              ?peril skos:broader* ?ancestor .
+              ?ancestor prl:minimumGeoPrecision ?minPrecision .
+              ?locPrecision skos:notation ?locRank .
+              ?minPrecision skos:notation ?minRank .
+              FILTER (xsd:integer(?locRank) > xsd:integer(?minRank))
+            }
+        """ ] .
+
+#################################################################
+#    AIR-4.3: dependency cycles, comparability, unit derivation
+#################################################################
+
+aeo:DependencyCycleShape a sh:NodeShape ;
+    sh:targetClass aeo:Dependency ;
+    sh:severity sh:Warning ;
+    sh:sparql [
+        sh:message "A cycle of dependencies is reported: a provider that depends, through other providers, on the dependent that depends on it." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            SELECT $this WHERE {
+              $this aeo:dependent ?a ; aeo:provider ?b .
+              ?b (^aeo:dependent/aeo:provider)+ ?a .
+            }
+        """ ] .
+
+aeo:MetricComparabilityShape a sh:NodeShape ;
+    sh:targetClass aeo:MetricComparison ;
+    sh:sparql [
+        sh:message "Peril metrics compared together must have equal peril scope, region scope and perspective." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            SELECT $this WHERE {
+              $this aeo:comparedMetric ?m1 .
+              $this aeo:comparedMetric ?m2 .
+              FILTER (?m1 != ?m2)
+              {
+                ?m1 aeo:perspective ?p1 . ?m2 aeo:perspective ?p2 . FILTER (?p1 != ?p2)
+              } UNION {
+                ?m1 aeo:perilScope ?s . FILTER NOT EXISTS { ?m2 aeo:perilScope ?s }
+              } UNION {
+                ?m2 aeo:perilScope ?s . FILTER NOT EXISTS { ?m1 aeo:perilScope ?s }
+              } UNION {
+                ?m1 aeo:regionScope ?r . FILTER NOT EXISTS { ?m2 aeo:regionScope ?r }
+              } UNION {
+                ?m2 aeo:regionScope ?r . FILTER NOT EXISTS { ?m1 aeo:regionScope ?r }
+              }
+            }
+        """ ] .
+
+aeo:UnitDerivationShape a sh:NodeShape ;
+    sh:targetClass aeo:ExposureUnit ;
+    sh:severity sh:Warning ;
+    sh:sparql [
+        sh:message "An exposure unit in a graph with no derivation run that produced it is reported: units are computed on demand, not asserted." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            PREFIX prov: <http://www.w3.org/ns/prov#>
+            SELECT $this WHERE {
+              $this a aeo:ExposureUnit .
+              FILTER NOT EXISTS { $this prov:wasGeneratedBy ?run . ?run a fnd:DerivationRun }
+            }
+        """ ] .
+
+#################################################################
+#    AIR-4.4: loss period, defaulted characteristics, scope
+#################################################################
+
+aeo:LossInPeriodShape a sh:NodeShape ;
+    sh:targetClass aeo:LossRecord ;
+    sh:sparql [
+        sh:message "A loss record's date must be within the temporal scope of the loss experience that lists it." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            SELECT $this WHERE {
+              ?exp aeo:hasLossRecord $this ; fnd:hasTemporalScope ?ts .
+              $this aeo:lossDate ?d .
+              OPTIONAL { ?ts fnd:validFrom ?from }
+              OPTIONAL { ?ts fnd:validTo ?to }
+              FILTER ((BOUND(?from) && STR(?d) < SUBSTR(STR(?from), 1, 10)) || (BOUND(?to) && STR(?d) > SUBSTR(STR(?to), 1, 10)))
+            }
+        """ ] .
+
+aeo:DefaultedAgencyShape a sh:NodeShape ;
+    sh:targetClass aeo:LossCause ;
+    sh:sparql [
+        sh:message "An effective agency that differs from every recorded agency needs a defaulted characteristic, and one with a recorded agency must have none." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            SELECT $this WHERE {
+              {
+                $this aeo:effectiveAgency ?e .
+                FILTER NOT EXISTS { $this aeo:agency ?e }
+                FILTER NOT EXISTS { ?d a aeo:DefaultedCharacteristic ; aeo:defaultedOn $this ; aeo:defaultedProperty aeo:effectiveAgency }
+              } UNION {
+                $this aeo:agency ?r .
+                ?d a aeo:DefaultedCharacteristic ; aeo:defaultedOn $this ; aeo:defaultedProperty aeo:effectiveAgency .
+              }
+            }
+        """ ] .
+
+aeo:DefaultedMechanismShape a sh:NodeShape ;
+    sh:targetClass aeo:LossCause ;
+    sh:sparql [
+        sh:message "An effective mechanism that differs from every recorded mechanism needs a defaulted characteristic, and a cause with a recorded mechanism must have none." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            SELECT $this WHERE {
+              {
+                $this aeo:effectiveMechanism ?e .
+                FILTER NOT EXISTS { $this aeo:mechanism ?e }
+                FILTER NOT EXISTS { ?d a aeo:DefaultedCharacteristic ; aeo:defaultedOn $this ; aeo:defaultedProperty aeo:effectiveMechanism }
+              } UNION {
+                $this aeo:mechanism ?r .
+                ?d a aeo:DefaultedCharacteristic ; aeo:defaultedOn $this ; aeo:defaultedProperty aeo:effectiveMechanism .
+              }
+            }
+        """ ] .
+
+aeo:RequirementScopeShape a sh:NodeShape ;
+    sh:targetClass aeo:CoverageRequirement ;
+    sh:sparql [
+        sh:message "A requirement's scope must be an admission profile whose conditions are bound to subject class aeo:ExposureUnit." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+            SELECT $this WHERE {
+              $this aeo:requirementScope ?profile .
+              FILTER (NOT EXISTS { ?profile elg:hasCondition ?c1 . ?b1 elg:bindsCondition ?c1 ; elg:subjectClass aeo:ExposureUnit }
+                      || EXISTS { ?profile elg:hasCondition ?c2 . ?b2 elg:bindsCondition ?c2 ; elg:subjectClass ?cl . FILTER (?cl != aeo:ExposureUnit) })
+            }
+        """ ] .

@@ -45,3 +45,26 @@ agrees with the README. Another layer is about to need a second spec document.
   needs them yet. A layer that does can supersede decision 3.
 - The developer contract changes: the authoring skill, the developer guide, the versioning policy
   and `tools/README.md` describe the directive.
+
+## Addendum (2026-10-13, AIR-2.0, Proposed until the applied-insurance-reference trip merges)
+
+Decision 4 widens. The applied insurance domain's modules sit below `ontology/applied/`, nest more
+than one segment deep, and some (the peril vocabulary) need several vocabulary documents
+(`peril-vocab.ttl`, `peril-intensity.ttl`, `peril-collections.ttl`), not only several spec
+documents.
+
+1. **Nested module paths.** `--layer` accepts a path under `ontology/` of more than one segment,
+   for example `applied/insurance/peril`. Its last segment names the module's default documents
+   (`spec/peril.ttl`, `vocab/peril-vocab.ttl`). A single-segment `--layer` behaves exactly as
+   before.
+2. **The directive on `turtle-vocab` blocks too.** The same `# @output-file "…"` directive, read on
+   a `turtle-vocab` block's first line, must name a `.ttl` path under the module's `vocab/`. A
+   redirected vocabulary document gains the default vocabulary document's `@prefix` lines, exactly
+   as a redirected spec document does (decision 2).
+3. **One version per module, independently for spec and vocabulary.** A module's vocabulary
+   documents all carry one `owl:versionIRI` version and move together, the same rule decision 3
+   gives the spec documents, but the two version lines are independent of each other: bumping the
+   vocabulary need not bump the spec, or vice versa.
+
+The consequences of decision 3 (above) apply equally to a module's vocabulary documents under this
+addendum.

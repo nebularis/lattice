@@ -101,13 +101,13 @@ def test_common_documents_parse_and_import_the_pinned_versions():
         "https://www.nebularis.org/neuro-semantic/lattice/applied/classification/0.2.0",
     }
     vocab_imports = {str(o) for o in _common_vocab().objects(None, OWL.imports)}
-    assert vocab_imports == {"https://www.nebularis.org/neuro-semantic/insurance/common/0.5.0"}
+    assert vocab_imports == {"https://www.nebularis.org/neuro-semantic/insurance/common/0.6.0"}
 
 
-# ---- AIR12-02: the nine contracts conform to Vocabulary's shapes ------------------------------
+# ---- AIR12-02: the ten contracts conform to Vocabulary's shapes (nine, then AIR-4.4's class of business) ---
 
 
-def test_nine_contracts_conform_to_vocabulary_shapes():
+def test_ten_contracts_conform_to_vocabulary_shapes():
     data = _all_contracts()
     shapes = _vocabulary_shapes()
     conforms, _, report = validate(data, shacl_graph=shapes, advanced=True, inference="none", allow_warnings=True)
@@ -123,8 +123,9 @@ def test_nine_contracts_conform_to_vocabulary_shapes():
         ICMV.ConsequenceContract,
         ICMV.HarmSubjectContract,
         ICMV.PoolContract,
+        ICMV.ClassOfBusinessContract,
     }
-    assert len(contracts) == 9
+    assert len(contracts) == 10
 
 
 # ---- AIR12-03: a contract without voc:constrainsProperty is a violation -----------------------

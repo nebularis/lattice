@@ -23,6 +23,9 @@ mechanism prose, and no insurance vocabulary in substrate text (ADR-A-C1).
 | S5 | Surface | generated classes from collections and characteristic conjunctions, optional per E3 | L-P4 | design-time checks over bundles and write-back scopes |
 | S6 | guidance only | spatial pattern: GeoSPARQL alignment, zones as concepts, spatial joins as derived artefacts | L-P6, AL-1 | Phase 4 zones |
 | S7 | Foundation | resolution policy for conflicting evidenced assertions of one attribute | AL-3 | Author with [NRS](normative-rule-substrate.md) N10 (epic §3b). several assessments of one building (Phase 4) |
+| S8 | Persistence | a disclosure class beside the privacy class, read by every export (legal privilege) | claims sketch S-CL2 | claims plan AIR-6.10 |
+| S9 | Persistence | retention per class after an anchoring event, and legal hold overriding retention and erasure | claims sketch S-CL3 | claims plan AIR-6.10 |
+| S10 | Persistence | erasure deferred by a duty to retain, a new `dal:ErasurePrecedence` member | claims sketch S-CL4 | claims plan AIR-6.10 |
 
 ## S6 in detail
 

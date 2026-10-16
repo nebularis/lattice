@@ -18,10 +18,12 @@ about the world, not about cover. No class the substrate already provides.
 |---|---|---|
 | AIR-4.1 | exposure set, location, legal entity, control relations, asset, interest, valuation. Spec, vocabulary and shapes created with one region per slice (lanes §8) | §5.1 to §5.3, §5.5, §5.6 |
 | AIR-4.2 | zones and pool participation, hazard attributes, assessments and profile shapes | §5.4, §5.7, §5.8 |
+| AIR-4.2a | share unchanged exposure members across versions (TD-49): no inverse-functional membership, designation, participation, assessment or attribute property, `aeo:MembershipShape` withdrawn, an example of two schedule versions. Added 2026-10-14, before 4.3 | §5.2 |
 | AIR-4.3 | dependencies, peril metrics, exposure units derived on demand (no materialisation required) | §5.9 to §5.11 |
 | AIR-4.4 | loss history with one `aeo:LossCause` node per link of the cause chain (peril, position, mechanism, agency), effective characteristic values defaulted from the cause's typical values as derived artefacts (epic D12), the loss event class in `insurance/common/` (D7), coverage requirements, existing cover, financial metrics | §5.12 to §5.14 |
 | AIR-4.5 | liability exposure: counterparty populations, relationship depth, exposure bases | §5.15 |
 | AIR-4.6 | London and US profiles as scheme bindings and shapes, the worked examples, and their persistence profiles (an aggregate boundary per exposure set version, a privacy profile for natural persons) | §10, §12, §5.2 |
+| AIR-deferred-testing | the tests for the applied insurance slices built while testing is deferred (amendment of 2026-10-14), from AIR-4.2a, with their test plans collected here | per slice |
 
 After 4.1, 4.2 needs AIR-2.3, 2.4 and 2.6 (it links their concepts and uses their units), 4.3
 needs 4.2 (it reuses `aeo:perilScope`), 4.4 needs 4.3 (requirement scopes range over exposure
@@ -137,7 +139,7 @@ Membership properties from the exposure set, each `owl:InverseFunctionalProperty
 `aeo:hasLocation`, `aeo:hasAsset`, `aeo:hasInterest`, `aeo:hasValuation`. The other membership
 properties of §5.2 arrive with their classes.
 
-> **Correction, 2026-10-14 (TD-49).** The inverse functionality is wrong. The maintainer confirmed
+> **Correction, 2026-10-14 (TD-49), made in AIR-4.2a.** The inverse functionality was wrong. The maintainer confirmed
 > the design the module's README states: unchanged members are shared across exposure set versions
 > by identity, not duplicated by node, so one location or asset version may belong to several
 > exposure set versions. The membership properties are plain object properties, and the
@@ -573,8 +575,8 @@ output file is evidence. Full curves and event tables are out of scope (epic §7
 | `DependencyKindContract` | `SupplyOfGoods`, `Utility`, `ItService`, `Logistics`, `Customer` | sketch §5.9. Customer dependencies give contingent business interruption on the customer side |
 | `SubstitutabilityContract` | `NotSubstitutable`, `PartlySubstitutable`, `FullySubstitutable` | |
 | `MetricKindContract` | `AverageAnnualLoss`, `OccurrenceExceedanceLoss`, `AggregateExceedanceLoss`, `OccurrenceTailValueAtRisk`, `AggregateTailValueAtRisk`, `ProbabilityOfEvents`, `HazardScore`, `ScenarioLoss` | Oasis Open Results Data (AAL, OEP, AEP and their TVaR), Solvency II's 1 in 200 convention for return periods, Lloyd's Realistic Disaster Scenarios for scenario losses. The note on `ProbabilityOfEvents` says it names a count with `aeo:returnPeriod` unused |
-| `PerspectiveContract` | `GroundUpLoss`, `InsuredLoss`, `ReinsuranceLoss` | Open Results Data's GUL, IL and RIL. The note says the market's "gross" is usually insured loss and its "net" loss after reinsurance, and that a metric states which it is |
-| `CalculationMethodContract` | the exceedance curve calculation methods of Open Results Data (for example full uncertainty and per-sample mean), those S is sure of | R checks them against the specification |
+| `PerspectiveContract` | `GroundUpLoss`, `InsuredLoss`, `NetOfReinsuranceLoss` | Open Results Data's GUL, IL and RI (perspectives 0, 1 and 2 of its list, which calls them ground-up, gross and net of all reinsurance). Corrected 2026-10-14: this brief first said RIL and named the third `ReinsuranceLoss`, which ORD's list uses for the reinsurers' loss. The note says the market's "gross" is usually insured loss and its "net" loss after reinsurance, and that a metric states which it is |
+| `CalculationMethodContract` | the four exceedance curve calculation methods of Open Results Data (EPCalc 1 to 4: `MeanDamage`, `FullUncertainty`, `PerSampleMean`, `SampleMean`, corrected 2026-10-14) | checked against the specification on 2026-10-14 |
 | `ModelOptionContract` | `SecondaryUncertainty`, `DemandSurge`, `StormSurgeIncluded`, `FireFollowingIncluded`, `ClimateConditioned` | |
 | `ScheduleGroupContract` | none. Bound per insured or drafter, at agreement or organisation scope | OED's location group field |
 
@@ -935,3 +937,72 @@ aggregates and privacy boundaries), `docs/architecture/ontology-architecture.md`
 ## Exit gate
 
 M3 demonstrated. Recommendations AI-1 to AI-4 closed or carried.
+
+## AIR-deferred-testing in detail
+
+**Amendment of 2026-10-14, for AIR slices only and until further notice.** The Python tests around
+`applied/insurance` parse large graphs and call pySHACL, and are slow. While the ontology layers are
+being built, a slice does not run `tools/test_exposure_ontology.py`, the catalog checks or
+`check:full-sweep`, and writes its test plan into its Validation Pack. This slice builds those
+tests later, in one pass, so the layers are not held up by them. The rest of the development
+contract stands: cheap static checks, the literate extraction and one-off scripts still run, and
+nothing is reported as passed that did not run.
+
+**Machine:** to be assigned. **Branch:** its own, from `air/applied-reference` after the trip merges.
+Write the tests with the `lattice-testing` skill: one shared, cached graph per module through the
+fixtures in `tools/conftest.py`, not a parse per test.
+
+**Slices whose tests this slice builds so far**
+
+| Slice | Test plan | Home |
+|---|---|---|
+| AIR-4.2a | AIR42a-01 to 05, in its Validation Pack | `tools/test_exposure_ontology.py` |
+| AIR-4.3 | AIR43-01 to 09 in the AIR-4.3 section above, and the probes below | `tools/test_exposure_ontology.py`, and `tools/test_exposure_derivations.py` (new) for AIR43-04 to 06 |
+| AIR-4.4 | AIR44-01 to 13 in the AIR-4.4 section above, and the probes below | `tools/test_exposure_ontology.py`, `tools/test_exposure_derivations.py`, and `tools/test_applied_shared_contracts.py` for the `insurance/common` additions |
+
+Later AIR slices built under the amendment add their rows here.
+
+**Negative cases already worked out.** Each is one change to a conforming fixture and the shape it
+must report, run once by hand when the slice was built.
+
+| Fixture | Change | Shape reported |
+|---|---|---|
+| `core.ttl` with `dependencies.ttl` | an exceedance metric with no return period, and with both a return period and a probability | `aeo:ExceedanceMetricShape` |
+| same | a hazard score on a space other than its `aeo:scoreSpace`, and with no score space | `aeo:HazardScoreShape` |
+| same | a scenario-loss metric with no scenario | `aeo:ScenarioMetricShape` |
+| same | a metric with no peril scope | `aeo:PerilMetricShape` and `aeo:MetricComparabilityShape` |
+| same | a dependency with no provider | `aeo:DependencyShape` |
+| same | a dependency that closes a cycle (warning) | `aeo:DependencyCycleShape` |
+| same | an insured-loss metric added to a comparison of ground-up metrics | `aeo:MetricComparabilityShape` |
+| same | an exposure unit with no location and no derivation run (warning for the run) | `aeo:ExposureUnitShape`, `aeo:UnitDerivationShape` |
+| `core.ttl` with `losses.ttl` | a loss dated after its experience's period | `aeo:LossInPeriodShape` |
+| same | incurred 20 with paid 380 and reserved 15 | `aeo:IncurredShape` |
+| same | one money amount in a second currency | `aeo:LossRecordCurrencyShape` |
+| same | a loss record with no date | `aeo:LossRecordShape` |
+| same | an effective agency that differs from the recorded one, with no defaulted node | `aeo:DefaultedAgencyShape` |
+| same | a defaulted node beside a recorded agency | `aeo:DefaultedAgencyShape` |
+| same | a cause with no position | `aeo:LossCauseShape` |
+| same | a limit bound on a duration space | `aeo:MeasureSpaceShape` |
+| same | a relative bound on the money space | `aeo:MeasureSpaceShape` |
+| same | a requirement that constrains the premium | `aeo:RequirementNoPremiumShape` |
+| same | a requirement scope bound to `aeo:Location` | `aeo:RequirementScopeShape` |
+| same | a requirement with no strength | `aeo:CoverageRequirementShape` |
+| same | a summary term on the wrong space | `aeo:TermSummaryShape` |
+| same | an existing cover with no reference and no summary term (warning) | `aeo:ExistingCoverEvidenceShape` |
+| same | a cover history event with no kind | `aeo:CoverHistoryEventShape` |
+| same | equity stated as a count | `aeo:FinancialMetricSpaceShape` |
+| same | a loss experience with no source | `aeo:LossExperienceShape` |
+
+**Positive cases.** `dependencies.ttl` with `core.ttl`, `units.ttl`, `versions.ttl`, `attributes.ttl`
+with `core.ttl` and the peril documents, and `losses.ttl` with `core.ttl`, each against every
+exposure shape: no result.
+
+**Cases that wait for CCS HQ-6a.2.** The M3 profile in `units.ttl` over the units
+`exposure_units` computes (AIR43-06): the flood units of sites A and B Permitted, C and D Denied, every
+wind unit Denied. With this branch's compilers site D's flood unit reads Undetermined
+(`exe:MissingCandidate`), because they ignore a closure.
+
+**Checks for R at verification, deferred with the tests:** `mise run build:ontology-catalog`,
+`build:ontology-releases` (rows for the versions the trip adds, including `insurance-common-v0.6.0`,
+written at the merge), `check:ontology-catalog`, `check:ontology-versioning` and
+`check:full-sweep`.

@@ -54,7 +54,7 @@ from rdflib import Graph, Literal, URIRef
 from rdflib.namespace import RDF, SKOS
 from vocabulary import BindingConflictError, NoApplicableBindingError, resolve
 
-from .namespaces import ELG, QNT, VOC
+from .namespaces import ELG, FND, QNT, VOC
 
 PERMITTED = "Permitted"
 DENIED = "Denied"
@@ -93,6 +93,7 @@ class EvidencePath:
     space: Optional[URIRef] = None  # elg:readOnSpace, for a literal at the path's end
     single_valued: bool = False  # elg:singleValued, the claim the OWL backend needs
     reading: URIRef = ELG.SingleValue  # elg:valueReading (ADR-A103, L15)
+    closure: Optional[URIRef] = None  # elg:closedUnder, in force at the resolution instant (ADR-A105, L17)
 
 
 @dataclass(frozen=True)
@@ -219,7 +220,9 @@ def _statements(graph: Graph, bound: URIRef, source_nodes: List[URIRef]) -> Dict
     return statements
 
 
-def read_evidence(graph: Graph, condition: URIRef) -> Optional[EvidencePath]:
+def read_evidence(
+    graph: Graph, condition: URIRef, context: Optional["ResolutionContext"] = None
+) -> Optional[EvidencePath]:
     """The condition's ``elg:EvidenceBinding``, if it has one."""
     bindings = sorted(graph.subjects(ELG.bindsCondition, condition), key=str)
     if not bindings:
@@ -247,10 +250,40 @@ def read_evidence(graph: Graph, condition: URIRef) -> Optional[EvidencePath]:
         space=graph.value(binding, ELG.readOnSpace),
         single_valued=graph.value(binding, ELG.singleValued) == Literal(True),
         reading=_reading(graph, binding),
+        closure=_closure(graph, binding, _reading(graph, binding), context),
     )
 
 
 READINGS = (ELG.SingleValue, ELG.SomeValue, ELG.EveryValue)
+
+
+def _closure(graph: Graph, binding: URIRef, reading: URIRef, context: Optional["ResolutionContext"]) -> Optional[URIRef]:
+    """The closure a binding relies on, if one is named and in force (ADR-A105, L17).
+
+    A binding naming something that is not an ``elg:Closure``, or a closure with no
+    ``elg:licensedBy`` source, is refused (``exe:NoClosureLicence``). A closure never changes a
+    single-value reading. A closure whose source states a valid time is in force from it, which
+    needs the caller's resolution instant (ADR-A89 item 2). The instant stands for the deciding
+    record's recording time, the cut."""
+    closure = graph.value(binding, ELG.closedUnder)
+    if closure is None:
+        return None
+    if (closure, RDF.type, ELG.Closure) not in graph:
+        raise IRCompileError(f"exe:NoClosureLicence: {binding} names {closure}, which is not an elg:Closure (ADR-A105)")
+    source = graph.value(closure, ELG.licensedBy)
+    if source is None:
+        raise IRCompileError(f"exe:NoClosureLicence: {closure} names no elg:licensedBy source (ADR-A105)")
+    if reading == ELG.SingleValue:
+        return None
+    start = graph.value(graph.value(source, FND.hasTemporalScope), FND.validFrom)
+    if start is None:
+        return closure
+    if context is None:
+        raise IRCompileError(
+            f"{closure}'s source takes effect at {start}, so compiling {binding} needs an explicit "
+            f"resolution instant (ADR-A89 item 2, L17)"
+        )
+    return closure if start.toPython() <= context.at else None
 
 
 def _reading(graph: Graph, binding: URIRef) -> URIRef:
@@ -482,7 +515,7 @@ def compile_concept_condition(
         source_nodes=tuple(dict.fromkeys((condition,) + required + excluded + resolution_nodes)),
         scheme=scheme,
         expansion=expansion,
-        evidence=read_evidence(graph, condition),
+        evidence=read_evidence(graph, condition, context),
         hierarchy=hierarchy,
         negated=_negated(graph, condition),
     )

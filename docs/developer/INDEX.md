@@ -539,8 +539,8 @@ longer exist. Five slices, about 180k tokens.
 |-------|-------|
 | **Status** | 🚧 Rounds 1 and 2 complete (AIR-3.1, 1.1, 2.1, 3.2, 1.2), Phase 1 complete. Round 3 under way. Machine S builds AIR-2.2, then AIR-4.1, on one branch, `air/applied-reference` (trip 1, 2026-10-13). AIR-3.3 waits for CCS HQ-6a.2 and AIR-3.3-Q1. Trip 2 briefs (AIR-2.3, 2.4, 4.2, 4.4) to draft. Phase 0 complete, AIR-0.1 merged (`3377a71`), A-98, A-99, A-100, A-102, A-103 Accepted. [Review](review/applied-insurance-reference-review.md), [VP](validation/applied-insurance-reference-0.1.md) |
 | **Unit ID** | `applied-insurance-reference` (epic) |
-| **Sketches** | [peril-vocabulary.md](sketches/peril-vocabulary.md), [asset-exposure-ontology.md](sketches/asset-exposure-ontology.md), [term-parameters.md](sketches/term-parameters.md), [mork-bridge.md](sketches/mork-bridge.md), [peril-structure-whitepaper.md](sketches/peril-structure-whitepaper.md) |
-| **Plan** | [applied-insurance-reference.md](plans/applied-insurance-reference.md), with phase plans 0 to 6, a substrate track, and [lanes and merge order](plans/applied-insurance-reference-lanes.md) |
+| **Sketches** | [insurance-claims-ontology.md](sketches/insurance-claims-ontology.md), [claims-sketch-references.md](sketches/claims-sketch-references.md), [claims-wire-formats.md](sketches/claims-wire-formats.md), [peril-vocabulary.md](sketches/peril-vocabulary.md), [asset-exposure-ontology.md](sketches/asset-exposure-ontology.md), [term-parameters.md](sketches/term-parameters.md), [mork-bridge.md](sketches/mork-bridge.md), [peril-structure-whitepaper.md](sketches/peril-structure-whitepaper.md) |
+| **Plan** | [applied-insurance-reference.md](plans/applied-insurance-reference.md), with phase plans 0 to 6, a [claims plan](plans/applied-insurance-reference-claims.md) (2026-10-16, subsuming AIR-6.2 to AIR-6.4), a substrate track, and [lanes and merge order](plans/applied-insurance-reference-lanes.md) |
 | **Status Record** | [applied-insurance-reference.md](status/applied-insurance-reference.md) |
 | **ADRs** | A-98 (with addendum), A-99, A-100, A-102, A-103 Accepted. A-101 reserved for Phase 5 |
 
@@ -573,7 +573,7 @@ non-blocking track.
 | **Plan** | [computable-contract-substrate.md](plans/computable-contract-substrate.md) |
 | **Status Record** | [computable-contract-substrate.md](status/computable-contract-substrate.md) |
 | **ADRs** | A-104, A-106, A-112, A-113 accepted, with addenda |
-| **Validation Packs** | [C8](validation/computable-contract-substrate-c8.md), [C8b](validation/computable-contract-substrate-c8b.md), [C9a](validation/computable-contract-substrate-c9a.md), [C9b0](validation/computable-contract-substrate-c9b0.md), [C9b1](validation/computable-contract-substrate-c9b1.md) and [C9b2](validation/computable-contract-substrate-c9b2.md) and [HQ-6a.1](validation/computable-contract-substrate-hq6a1.md), accepted 2026-10-12 |
+| **Validation Packs** | [C8](validation/computable-contract-substrate-c8.md), [C8b](validation/computable-contract-substrate-c8b.md), [C9a](validation/computable-contract-substrate-c9a.md), [C9b0](validation/computable-contract-substrate-c9b0.md), [C9b1](validation/computable-contract-substrate-c9b1.md), [C9b2](validation/computable-contract-substrate-c9b2.md), [HQ-6a.1](validation/computable-contract-substrate-hq6a1.md) and [HQ-6a.2](validation/computable-contract-substrate-hq6a2.md), accepted 2026-10-12 |
 
 A new Wording layer (from Open CBAA's `wim:`), Instrument rewritten around terms and legal
 relations, and Behaviour extended with occasions and records, tested against a package policy, an
