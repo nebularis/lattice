@@ -68,3 +68,23 @@ saying what one is. Instrument's `ins:when` and Behaviour's `bhv:closureReliedOn
   for set readings.
 - Deciding on absence is always traceable to a named source. A wrong reference to a closure is
   caught by review and examples, not by a shape.
+
+## Addendum (2026-10-12): how a compiled decision names its closure
+
+**Status:** Accepted 2026-10-12, proposed the same day (CCS slice HQ-6a.2, HQ6a2-Q1 to Q3). The
+options, their consequences and diagrams are in the CCS plan, "HQ-6a.2's questions".
+
+1. **Reliance is reported per subject.** The compiled SPARQL query returns, beside `?decision` and
+   `?diagnostic` (ADR-A89 item 5), a `?closure` column. It is bound only when completeness decided
+   the outcome: some value Denied or every value Permitted, the empty case included. A decision a
+   record proved names no closure, so a late fact never needlessly reopens it.
+2. **A profile's row names the union** of the closures its conditions' rows name. It may overstate,
+   never understate, what a profile relied on.
+3. **The compilers mint no decision records.** The evaluator (CCS C12) mints the
+   `elg:EligibilityDecision`, copies the row's closure into `elg:closureReliedOn`, and stamps the
+   recording time, which is the cut. Identities and the clock stay out of compiled queries.
+4. **SWRL and OWL never rely on a closure,** since they derive only monotonic outcomes. The SHACL
+   backend agrees with SPARQL on decisions but reports no reliance, so decisions are recorded from
+   SPARQL.
+5. **The reference semantics returns reliance** as well as the decision, so the differential harness
+   can check the column once it covers bound conditions.

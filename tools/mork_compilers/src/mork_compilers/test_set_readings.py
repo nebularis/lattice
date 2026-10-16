@@ -2,7 +2,9 @@
 
 """
 Set readings and negation (ADR-A103, elg:L15, elg:L16), AIR-3.2 of the
-applied-insurance-reference epic.
+applied-insurance-reference epic, with closures (ADR-A105, elg:L17, CCS HQ-6a.2): a set reading
+decides on completeness, Denied under some value and Permitted under every value, only for a
+binding that names a closure.
 
 One hierarchical condition decides each value as a single candidate would: a
 value under ``ex:a`` is Permitted, one elsewhere in the scheme Denied, and one
@@ -24,7 +26,7 @@ from rdflib.namespace import RDF
 
 from .common import mint
 from .eligibility_ir import IRCompileError, compile_any_condition, compile_profile
-from .namespaces import EXE, MORK, SH
+from .namespaces import ELG, EXE, MORK, SH
 from .owl_backend import compile_classes
 from .shacl_backend import compile_shapes
 from .sparql_backend import compile_query_template
@@ -55,7 +57,7 @@ MIXES = {
 }
 
 
-def fixture(reading: Optional[str], negated: bool = False) -> Graph:
+def fixture(reading: Optional[str], negated: bool = False, closed: bool = False) -> Graph:
     subjects = "\n".join(
         f"ex:s-{name} a ex:Subject" + (" ; ex:has " + " , ".join(f"ex:{v}" for v in values) if values else "") + " ."
         for name, values in MIXES.items()
@@ -80,7 +82,9 @@ ex:binding a elg:EvidenceBinding ;
     elg:bindsCondition ex:condition ;
     elg:subjectClass ex:Subject ;
     {f"elg:valueReading elg:{reading} ;" if reading else ""}
+    {"elg:closedUnder ex:closure ;" if closed else ""}
     elg:evidenceStep [ a elg:EvidenceStep ; elg:stepIndex 0 ; elg:stepProperty ex:has ; elg:stepDirection elg:Forward ] .
+ex:closure a elg:Closure ; elg:licensedBy ex:registry .
 {subjects}
 """, format="turtle")
 
@@ -116,19 +120,35 @@ def shacl(plan, data: Graph, subjects) -> Dict[str, str]:
 
 class ReadingTests(unittest.TestCase):
     def test_some_value(self) -> None:
-        # AIR32-01
+        # AIR32-01, HQ6a2-01: open, only a Permitted value decides
         rows = decisions(sparql(compile_any_condition(data := fixture("SomeValue"), EX.condition), data))
         self.assertEqual(
             (rows["s-pd"], rows["s-dd"], rows["s-du"], rows["s-pu"]),
-            ("Permitted", "Denied", "Undetermined", "Permitted"),
+            ("Permitted", "Undetermined", "Undetermined", "Permitted"),
+        )
+
+    def test_some_value_closed(self) -> None:
+        # HQ6a2-01: closed, every value Denied is Denied, the empty case included
+        rows = decisions(sparql(compile_any_condition(data := fixture("SomeValue", closed=True), EX.condition), data))
+        self.assertEqual(
+            (rows["s-pd"], rows["s-dd"], rows["s-du"], rows["s-pu"], rows["s-none"]),
+            ("Permitted", "Denied", "Undetermined", "Permitted", "Denied"),
         )
 
     def test_every_value(self) -> None:
-        # AIR32-02
+        # AIR32-02, HQ6a2-02: open, only a Denied value decides
         rows = decisions(sparql(compile_any_condition(data := fixture("EveryValue"), EX.condition), data))
         self.assertEqual(
             (rows["s-pp"], rows["s-pd"], rows["s-pu"], rows["s-du"]),
-            ("Permitted", "Denied", "Undetermined", "Denied"),
+            ("Undetermined", "Denied", "Undetermined", "Denied"),
+        )
+
+    def test_every_value_closed(self) -> None:
+        # HQ6a2-02: closed, every value Permitted is Permitted, the empty case included
+        rows = decisions(sparql(compile_any_condition(data := fixture("EveryValue", closed=True), EX.condition), data))
+        self.assertEqual(
+            (rows["s-pp"], rows["s-pd"], rows["s-pu"], rows["s-du"], rows["s-none"]),
+            ("Permitted", "Denied", "Undetermined", "Denied", "Permitted"),
         )
 
     def test_exclusion_read_every_value_denies_on_one_excluded_value(self) -> None:
@@ -138,10 +158,16 @@ class ReadingTests(unittest.TestCase):
         self.assertEqual(rows, {"pat-1": "Permitted", "pat-2": "Denied", "pat-3": "Permitted"})
 
     def test_no_value_is_undetermined_under_each_reading(self) -> None:
-        # AIR32-04
+        # AIR32-04: open
         for reading in ("SomeValue", "EveryValue"):
             rows = sparql(compile_any_condition(data := fixture(reading), EX.condition), data)
             self.assertEqual(rows["s-none"], ("Undetermined", EXE.MissingCandidate), reading)
+
+    def test_no_value_decides_under_a_closure(self) -> None:
+        # HQ6a2-03
+        for reading, expected in (("SomeValue", "Denied"), ("EveryValue", "Permitted")):
+            rows = sparql(compile_any_condition(data := fixture(reading, closed=True), EX.condition), data)
+            self.assertEqual(rows["s-none"], (expected, None), reading)
 
     def test_single_value_reading_is_unchanged(self) -> None:
         # AIR32-05: no reading, and an explicit SingleValue, behave as before
@@ -182,12 +208,13 @@ class NegationTests(unittest.TestCase):
         # AIR32-07
         data = Graph().parse(EXAMPLES / "set-reading-admissions.ttl")
         rows = decisions(sparql(compile_any_condition(data, ADM["no-medicine"]), data))
-        self.assertEqual(rows, {"ada": "Permitted", "ben": "Permitted", "cai": "Undetermined", "dee": "Denied"})
+        self.assertEqual(rows, {"ada": "Permitted", "ben": "Permitted", "cai": "Permitted", "dee": "Denied"})  # under its closure
 
 
 class IntervalTests(unittest.TestCase):
     def test_interval_read_every_value(self) -> None:
-        # AIR32-08
+        # AIR32-08, under a closure since L15's restatement (ADR-A105). Without it every value
+        # Permitted is Undetermined, and one Denied value still decides (HQ6a1-07)
         data = Graph().parse(data=HEADER + """
             ex:space a qnt:ValueSpace .
             ex:ten a qnt:Quantity ; qnt:onSpace ex:space ; qnt:numericValue "10"^^xsd:decimal .
@@ -197,13 +224,17 @@ class IntervalTests(unittest.TestCase):
             ex:c a elg:IntervalCondition ; elg:matchStrategy elg:IntervalContainment ; elg:compatibilityOperation elg:AllRequired ;
                 elg:wildcardSemantics elg:NoWildcard ; elg:requiredRangeSet ex:ranges .
             ex:b a elg:EvidenceBinding ; elg:bindsCondition ex:c ; elg:subjectClass ex:Subject ; elg:readOnSpace ex:space ;
-                elg:valueReading elg:EveryValue ;
+                elg:valueReading elg:EveryValue ; elg:closedUnder ex:scores-closure ;
                 elg:evidenceStep [ a elg:EvidenceStep ; elg:stepIndex 0 ; elg:stepProperty ex:score ; elg:stepDirection elg:Forward ] .
+            ex:scores-closure a elg:Closure ; elg:licensedBy ex:registry .
             ex:s-high a ex:Subject ; ex:score 12 , 15 .
             ex:s-mixed a ex:Subject ; ex:score 12 , 4 .
         """, format="turtle")
         rows = decisions(sparql(compile_any_condition(data, EX.c), data))
         self.assertEqual(rows, {"s-high": "Permitted", "s-mixed": "Denied"})
+        data.remove((None, ELG.closedUnder, None))
+        rows = decisions(sparql(compile_any_condition(data, EX.c), data))
+        self.assertEqual(rows, {"s-high": "Undetermined", "s-mixed": "Denied"})
 
 
 class ProfileTests(unittest.TestCase):
@@ -211,7 +242,7 @@ class ProfileTests(unittest.TestCase):
         # AIR32-09
         data = Graph().parse(EXAMPLES / "set-reading-admissions.ttl")
         rows = decisions(sparql(compile_profile(data, ADM["engineering-admission"]), data))
-        self.assertEqual(rows, {"ada": "Permitted", "ben": "Denied", "cai": "Undetermined", "dee": "Denied"})
+        self.assertEqual(rows, {"ada": "Permitted", "ben": "Denied", "cai": "Denied", "dee": "Denied"})  # under its closure
 
 
 class ShaclTests(unittest.TestCase):

@@ -232,14 +232,16 @@ def test_c9b1_09_settled_with_approval_is_permitted() -> None:
     g = _example("reinsurance-claims-cooperation")
     assert g.value(RE.indemnify, INS.scope) == RE["settled-with-approval"]
     assert g.value(RE.indemnify, INS.arisesOnExerciseOf) == RE.settle
-    # The compiled decision. Claim 2 has no approval: the claims file's closure makes it Denied in the
-    # reference semantics (test_closures.py, HQ6a1-09), and the compilers apply closures in HQ-6a.2.
-    assert _decisions(g) == {"claim-1": "Permitted", "claim-2": "Undetermined"}
+    # The compiled decision. Claim 2 has no approval, and the claims file's closure lets that absence
+    # decide (ADR-A105, HQ6a2-04), as the reference semantics does (test_closures.py, HQ6a1-09).
+    assert _decisions(g) == {"claim-1": "Permitted", "claim-2": "Denied"}
 
 
-def test_c9b1_09_without_the_settlements_reliance_the_claim_is_undetermined() -> None:
+def test_c9b1_09_without_the_settlements_reliance_the_claim_is_denied_under_the_claims_file() -> None:
+    # Was Undetermined before closures. The claims file's closure vouches that no other reliance was
+    # recorded, so the settlement's missing reliance decides (HQ6a2-04).
     g = _example("reinsurance-claims-cooperation", remove=((RE["settlement-1"], INS.pursuantTo, RE["approval-1"]),))
-    assert _decisions(g)["claim-1"] == "Undetermined"
+    assert _decisions(g)["claim-1"] == "Denied"
 
 
 # ---- C9b1-10: an exercise trigger is derived -----------------------------------------

@@ -15,7 +15,7 @@ A small citrus/fruit hierarchy is used throughout:
 
 from __future__ import annotations
 
-from reference_eligibility.denotation import Scheme, decide_concept_match, decide_condition
+from reference_eligibility.denotation import Scheme, decide_concept_match, decide_condition, decide_condition_with_reliance
 from reference_eligibility.kernel import DENIED, PERMITTED, UNDETERMINED
 
 FRUIT, CITRUS, ORANGE, LEMON, VEGETABLE = "fruit", "citrus", "orange", "lemon", "vegetable"
@@ -302,3 +302,32 @@ class TestL17Closures:
                                         hierarchical=False, required={"x"}, excluded=set()) is \
                     decide_condition(values, reading="SingleValue", negated=False, closed=False,
                                      hierarchical=False, required={"x"}, excluded=set())
+
+
+class TestReliance:
+    """The reference reports whether a set reading relied on completeness (ADR-A105's 2026-10-12
+    addendum, HQ6a2-Q3), so the differential harness can check the compilers' `?closure` column.
+    Reliance is decided before negation: a negated condition relies on what it negates relied on."""
+
+    def test_admissions_under_its_closure(self) -> None:
+        values = TestL17Closures.APPLICANTS
+        expected = {  # (stem, no-medicine), each (decision, relied)
+            "ada": ((PERMITTED, False), (PERMITTED, True)),
+            "ben": ((DENIED, True), (PERMITTED, True)),
+            "cai": ((DENIED, True), (PERMITTED, True)),
+            "dee": ((PERMITTED, False), (DENIED, False)),
+        }
+        for applicant, (stem, no_medicine) in expected.items():
+            assert decide_condition_with_reliance(
+                values[applicant], reading="SomeValue", negated=False, closed=True,
+                hierarchical=False, required={"mathematics", "physics"}, excluded=set()) == stem, applicant
+            assert decide_condition_with_reliance(
+                values[applicant], reading="SomeValue", negated=True, closed=True,
+                hierarchical=False, required={"medicine"}, excluded=set()) == no_medicine, applicant
+
+    def test_nothing_relies_on_an_absent_closure(self) -> None:
+        for values in ([], ["history"], ["physics"]):
+            _, relied = decide_condition_with_reliance(
+                values, reading="SomeValue", negated=False, closed=False,
+                hierarchical=False, required={"physics"}, excluded=set())
+            assert relied is False
