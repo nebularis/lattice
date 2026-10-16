@@ -694,12 +694,13 @@ that code and documents agree with it. Shares work with `python-test-melting` (s
 
 | Field | Value |
 |-------|-------|
-| **Status** | ⏳ Planned 2026-10-14, rewritten 2026-10-16, branch `docs/literate-v2`. Every design question answered. Not started |
+| **Status** | 🚧 In progress, branch `docs/literate-v2`. OD0 authored 2026-10-16, awaiting review |
 | **Unit ID** | `improved-ontology-documentation` (absorbs `repository-catalogue`) |
 | **Sketches** | [improved-ontology-documentation.md](sketches/improved-ontology-documentation.md), [repository-catalogue.md](sketches/repository-catalogue.md) |
 | **Plan** | [improved-ontology-documentation.md](plans/improved-ontology-documentation.md) |
 | **Status Record** | [improved-ontology-documentation.md](status/improved-ontology-documentation.md) |
-| **ADRs** | A-121, A-126 and A-127 to be drafted as Proposed in OD0 |
+| **ADRs** | A-121, A-126 and A-127 drafted as Proposed in OD0 (2026-10-16) |
+| **Validation Packs** | [OD0](validation/OD0.md) |
 
 One README layout whose normative sections compile to Turtle and SHACL from a markdown grammar, the
 repository catalogue with each module's entry in its README, and a sources rule for user-facing documents
@@ -863,6 +864,7 @@ built on published ADRs. Piloted on Eligibility, then Vocabulary.
 - [persistence-compiler-iri-sync-slice-4.md](validation/persistence-compiler-iri-sync-slice-4.md) — compiler sync Slice 4
 - [persistence-compiler-iri-sync-slice-5.md](validation/persistence-compiler-iri-sync-slice-5.md) — compiler sync Slice 5
 - [applied-ontology-readiness-aor-2.md](validation/applied-ontology-readiness-aor-2.md) to [aor-9](validation/applied-ontology-readiness-aor-9.md), [aor-3b](validation/applied-ontology-readiness-aor-3b.md), [aor-12](validation/applied-ontology-readiness-aor-12.md), [aor-13](validation/applied-ontology-readiness-aor-13.md) — applied ontology readiness
+- [OD0.md](validation/OD0.md) — improved ontology documentation, OD0 (the three ADRs, the agent rule, the conventions document)
 - More to be created as each slice/phase completes
 
 ## Test Taxonomy (L0–L8)

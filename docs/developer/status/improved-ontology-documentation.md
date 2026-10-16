@@ -3,7 +3,7 @@
 # Improved Ontology Documentation: Status
 
 **Unit ID:** `improved-ontology-documentation` (absorbs `repository-catalogue`)
-**Status:** Planned. Not started. Every design question answered.
+**Status:** In progress. OD0 authored, awaiting the maintainer's review.
 **Last updated:** 2026-10-16
 **Branch:** `docs/literate-v2`
 **Plan:** [improved-ontology-documentation.md](../plans/improved-ontology-documentation.md)
@@ -20,16 +20,16 @@ ontology file has changed.
 
 ## Next action
 
-1. The maintainer reviews and commits the plan and this record.
-2. OD0 then drafts A121, A126 and A127 as Proposed, adds the AGENTS.md rule of OD-D21, and starts
-   `docs/architecture/literate-specifications.md`.
-3. RC1 and OD1 can then run in parallel.
+1. The maintainer reviews the [OD0 Validation Pack](../validation/OD0.md), including its six drafting
+   choices, runs its one command (`build:agent-guidance` regenerates the Copilot copy of `AGENTS.md`), and
+   accepts, amends or returns ADR-A121, ADR-A126 and ADR-A127.
+2. Then RC1 and OD1, which do not depend on each other.
 
 ## Slices
 
 | Slice | State | Blocked on |
 |---|---|---|
-| OD0 ADRs, the AGENTS.md rule, the conventions document | planned | the maintainer's go-ahead |
+| OD0 ADRs, the AGENTS.md rule, the conventions document | authored 2026-10-16, [Validation Pack](../validation/OD0.md) | the maintainer's review |
 | RC1 catalogue and reader | planned | OD0 |
 | RC2 consumers use the reader | planned | RC1 |
 | RC3 roots, AGENTS.md table, bypass scan | planned | RC2 |
@@ -100,3 +100,8 @@ None.
 - 2026-10-16: OD-D28 amended at the maintainer's request: the sources check reads HTML comments and hidden
   blocks too. The one comment on any branch that cites a working document, the tutorial spine's authoring note,
   is repointed in DOC2.
+- 2026-10-16: OD0 authored. ADR-A121, ADR-A126 and ADR-A127 drafted as Proposed and listed in the catalogue
+  (numbers checked free on every local and remote branch), the AGENTS.md rule of OD-D21 and OD-D28 added, and
+  `docs/architecture/literate-specifications.md` started. Six drafting choices are listed in the Validation
+  Pack for the maintainer. Links and the boundaries search checked while drafting. `build:agent-guidance`
+  not yet run.

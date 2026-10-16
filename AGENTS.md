@@ -92,6 +92,12 @@ This repository is public, and so is everything it publishes.
 - Notes true of one machine or one person's setup belong in that person's own configuration or agent
   memory, never in the repository.
 - Substrate and layer documentation stays domain-neutral.
+- User-facing documents (layer READMEs, generated ontology documents, the site's pages, and published
+  ADRs outside their Provenance section) never refer to working documents: sketches, plans, status
+  records, review requests, Validation Packs, notes or the developer index. This covers text, links and
+  HTML comments. They cite only published ADRs, and may link durable guidance under `docs/developer/`,
+  such as the getting-started guide ([ADR-A127](docs/architecture/decisions/ADR-A127-published-architecture-decisions.md),
+  Proposed). Until decisions are published, they cite Accepted ADRs
 - AI-assisted contributions are disclosed as [GENAI_CONTRIBUTION.md](GENAI_CONTRIBUTION.md) requires.
 
 Skill `lattice-publication-hygiene` has the detail and the pre-commit check.

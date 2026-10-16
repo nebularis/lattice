@@ -119,10 +119,13 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-118](ADR-A118-word-authoring-proof-of-concept.md) | Word authoring proof of concept | Proposed |
 | [A-119](ADR-A119-xslt-transformation-sidecar.md) | Bidirectional XSLT transformation sidecar | Proposed |
 | [A-120](ADR-A120-literate-specs-with-several-documents.md) | Literate specs with several documents | Accepted |
+| [A-121](ADR-A121-repository-catalogue.md) | The repository catalogue | Proposed |
 | [A-122](ADR-A122-aggregate-ownership.md) | Aggregate ownership, a classified boundary shape for every boundary strategy | Accepted, 2026-10-10 |
 | [A-123](ADR-A123-typed-operation-ir.md) | A typed operation IR for the persistence compiler | Accepted, 2026-10-10, three addenda 2026-10-12 |
 | [A-124](ADR-A124-benchmark-root.md) | A benchmark root for checks that measure, run on demand | Accepted, 2026-10-12 |
 | [A-125](ADR-A125-test-support-tooling.md) | Test-support tooling under `tools/testing/` | Accepted, 2026-10-12 |
+| [A-126](ADR-A126-literate-specification-layout-and-grammar.md) | Literate specification layout and grammar | Proposed |
+| [A-127](ADR-A127-published-architecture-decisions.md) | Published architecture decisions | Proposed |
 
 **The `A-FM` block.** ADR-A-FM1 and its successors are the `formal-methods` epic's own ADRs,
 filed outside the main sequential pool for the same reason `A-CAP` and `A-C` are: this epic's
