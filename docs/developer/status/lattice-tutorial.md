@@ -3,8 +3,8 @@
 # The LATTICE tutorial - Status
 
 **Unit ID:** `lattice-tutorial`
-**Status:** 🔨 In progress. TUT-0 committed (`2c99ead`). TUT-1 written and checked, awaiting the maintainer's reading
-**Last updated:** 2026-10-14
+**Status:** 🔨 In progress. TUT-0 and TUT-1 committed. TUT-2 written and checked, awaiting the maintainer's reading
+**Last updated:** 2026-10-15
 **Plan:** [lattice-tutorial.md](../plans/lattice-tutorial.md)
 **Branch:** `tutorial/guide`, local, created from `main` 2026-10-14. The maintainer pushes it
 
@@ -15,11 +15,12 @@ skeleton, is committed on `tutorial/guide` (`2c99ead`), verified on Windows (its
 chapters, the home page links, and `check:tutorial-snippets` with its tests, wired into `check`.
 Its [Validation Pack](../validation/TUT-0.md) lists the one command and the preview steps.
 
-TUT-1, chapters 0 to 3, is written, and its [Validation Pack](../validation/TUT-1.md) results are in.
+TUT-1, chapters 0 to 3, is committed (`834d9e4`). TUT-2, chapters 4 to 6, is written, and its
+[Validation Pack](../validation/TUT-2.md) results are in.
 
-**Next action, for the maintainer:** read chapters 0 to 3 as the intended reader (TUT1-05), since
-they set the voice and depth for TUT-2 to TUT-4, then commit TUT-1. Before pushing, add the AI
-disclosure trailer GENAI_CONTRIBUTION.md requires to `2c99ead` and to the TUT-1 commit.
+**Next action, for the maintainer:** read chapters 4 to 6 (TUT2-04), then commit TUT-2. Before
+pushing, add the AI disclosure trailer GENAI_CONTRIBUTION.md requires to `2c99ead`, `834d9e4` and
+the TUT-2 commit.
 
 ## History
 
@@ -45,3 +46,6 @@ disclosure trailer GENAI_CONTRIBUTION.md requires to `2c99ead` and to the TUT-1 
 - 2026-10-14: TUT-1 written, chapters 0 to 3. `check:tutorial-snippets` caught one excerpt that did
   not match its source, now corrected. The Mermaid diagram, the Turtle highlighting and the 375 px
   layout checked in a served preview. Awaiting the maintainer's reading.
+- 2026-10-15: the maintainer committed TUT-1 as `834d9e4`, without the disclosure trailer. TUT-2
+  written, chapters 4 to 6. Every excerpt matched on the first run. The diagrams, highlighting and
+  375 px layout checked in a served preview.
