@@ -28,6 +28,9 @@ be checked against what claims will need of them.
 - [peril-vocabulary.md](peril-vocabulary.md) §6.8, §8 and [peril-structure-whitepaper.md](peril-structure-whitepaper.md)
   §3.8, §3.11, N7, N10, W-Q2, W-Q3
 - [mork-bridge.md](mork-bridge.md) §1 (B1 to B6) and §6, [robustness-testing-approach.md](robustness-testing-approach.md) §4
+- companions: [claims-sketch-references.md](claims-sketch-references.md) (what was taken from each
+  source, definitions, crosswalks to ACORD and the Lloyd's claims bordereau) and
+  [claims-wire-formats.md](claims-wire-formats.md) (ingress and egress of claims data)
 - the [Persistence README](../../../ontology/persistence/README.md) §7.1, §7.4 and §7.9
 
 Where this sketch and the epic or its ADRs differ, they take precedence.
@@ -104,10 +107,10 @@ rule.
 | Cover | Rule, as we understand it | Design consequence |
 |---|---|---|
 | first-party indemnity (property), English law | the insurer's promise is to hold the insured harmless, so it is in breach, and liable in damages, as soon as the loss occurs (*Ventouris v Mountain*, *The Italia Express (No 2)* [1992] 2 Lloyd's Rep 281, *Sprung v Royal Insurance* [1999] Lloyd's Rep IR 111). The Insurance Act 2015 s.13A, inserted by the Enterprise Act 2016, adds an implied term to pay sums due within a reasonable time | the indemnity occasion arises at the loss, not at notification. Notification and proof are conditions of the separate duty to pay, whose due range is "a reasonable time", an open-textured standard read from a finding (CCS §6.4) |
-| liability insurance, English law | the insured's right against the insurer arises only when its liability to the third party is established and quantified, by judgment, award or agreement (*Post Office v Norwich Union* [1968] 1 QB 363, *Bradley v Eagle Star* [1989] AC 957) | the indemnity occasion arises on a determination or settlement record, not on the demand. The defence and advancement duties arise earlier, on the demand or on tender |
+| liability insurance, English law | the insured's right against the insurer arises only when its liability to the third party is established and quantified, by judgment, award or agreement (*Post Office v Norwich Union* [1967] 2 QB 363, *Bradley v Eagle Star* [1989] AC 957) | the indemnity occasion arises on a determination or settlement record, not on the demand. The defence and advancement duties arise earlier, on the demand or on tender |
 | liability insurance, US law | the duty to defend is broader than the duty to indemnify and arises when a suit alleges facts potentially within cover (*Gray v Zurich Insurance* (1966) 65 Cal.2d 263). An insurer that unreasonably withholds benefits may be liable in tort for bad faith (*Gruenberg v Aetna* (1973) 9 Cal.3d 566) | the defence duty's arising condition reads the allegations (a some-value reading over the demand's alleged causes, ADR-A103). Bad faith is a finding, and its consequences relations arising on it |
 | third-party rights | a third party may proceed directly against the insurer of an insolvent insured (Third Parties (Rights against Insurers) Act 2010) and, for motor, against the insurer directly (Road Traffic Act 1988 s.151, the EU Motor Insurance Directive 2009/103/EC art. 18). Many civil law jurisdictions grant a general direct action | the claimant's demand may name the insurer, and the payee may be the claimant. A statutory right is a relation `ins:impliedBy` the statute |
-| reinsurance | the reinsurer follows the reinsured's settlements made honestly and in a proper and businesslike way (*Insurance Co of Africa v SCOR* [1985] 1 Lloyd's Rep 312, *Hill v M & G Re* [1996] LRLR 341). A claims co-operation clause that is a condition precedent stops the liability arising without approval (*Scor v Eras (No 2)* [1995] 2 All ER 278) | already modelled by CCS C9b (`reinsurance-claims-cooperation.ttl`). The reinsured's settlement is the arising act of the reinsurer's duty |
+| reinsurance | the reinsurer follows the reinsured's settlements made honestly and in a proper and businesslike way (*Insurance Co of Africa v SCOR* [1985] 1 Lloyd's Rep 312, *Hill v M & G Re* [1996] 1 WLR 1239). A claims co-operation clause that is a condition precedent stops the liability arising without approval (*Scor v Eras (No 2)* [1995] 2 All ER 278) | already modelled by CCS C9b (`reinsurance-claims-cooperation.ttl`). The reinsured's settlement is the arising act of the reinsurer's duty |
 
 ### 2.2 Which policy, and which period, responds?
 
@@ -359,7 +362,10 @@ trigger may read, as distinct properties, because they differ and a contract pic
 | `clm:exposureFrom`, `clm:exposureTo` | the span of exposure to the cause | exposure and continuous triggers, the Trigger litigation |
 
 Each date is evidenced and may be estimated, with its precision as metadata (as CCS §7.4.1 does for
-a proposal's values). An unknown date is absent, not guessed (CL8).
+a proposal's values). An unknown date is absent, not guessed (CL8). Neither ACORD's claims messages
+nor the Lloyd's claims bordereau carries the manifestation, discovery or exposure dates
+([references](claims-sketch-references.md) §8), so a claim whose trigger reads them takes them from
+its documents or from a person, and stays Undetermined until it does.
 
 The cause chain reuses the exposure module's `aeo:LossCause` (AIR-4.4), with the recorded and
 effective characteristics and the lifted peril already decided. A claim's loss and a loss history's
@@ -435,8 +441,9 @@ clm:Claim ⊑ fnd:Version ⊓ fnd:Governable ⊓ fnd:Evidenced
     ≥0 clm:hasResponse        → clm:Response           one per responding instrument version (§7.5)
     ≥0 clm:hasLossItem        → clm:LossItem           heads of loss and their quanta (§7.6)
     ≥0 clm:relatedTo          → clm:Claim              asserted relatedness, for a person to judge
-    ≥0 fnd:naturalKey         the insurer's claim number, the London market unique claim reference,
-                               a TPA's reference, each a key of its own scheme (ADR-A114)
+    ≥0 fnd:naturalKey         the insurer's claim number, a coverholder's or TPA's claim reference
+                               (CRS CR0104), a London market claim reference, each a key of its own
+                               scheme (ADR-A114)
 ```
 
 **A claim is versioned.** Its facts change as they are learned (a second injured party, a revised
@@ -748,8 +755,9 @@ clm:Movement ⊑ fnd:Evidenced ⊓ fnd:TemporallyScoped
     ≤1 clm:forItem        → clm:LossItem
     =1 clm:movementKind   reserve set, reserve change, payment, payment reversal, recovery receipt,
                           recovery reserve, fee, tax
-    =1 clm:costClass      indemnity, defence, adjusting expense, other expense
-                          (allocated and unallocated loss adjustment expense where a regime asks)
+    =1 clm:costClass      indemnity, fees, expenses, coverage counsel fees, adjusters fees,
+                          defence fees, TPA fees (the Lloyd's bordereau heads), grouped as
+                          allocated and unallocated loss adjustment expense where a regime asks
     =1 clm:amount         → qnt:Quantity in a currency
     ≤1 clm:payee          → pty:RoleOccupancy
     ≥0 clm:converted      → qnt:Conversion          to the settlement or reporting currency at a date
@@ -788,6 +796,10 @@ what CCS §7.8 already prescribes ("dynamic quantities live in capacity or in Be
 CL-Q4 asks which comes first.
 
 ```mermaid
+---
+config:
+  layout: elk
+---
 flowchart TB
     subgraph FACTS["Facts (claims module)"]
         M1["movement: payment<br/>GBP 400K, defence costs"]
@@ -1011,7 +1023,7 @@ and compared with what the insured declared.
 
 ## 14. Worked examples
 
-Names are fictional. The examples are written as the README's will be: facts and acts asserted,
+Names are fictional, and so are the references in them. The examples are written as the README's will be: facts and acts asserted,
 judgements derived, each step traced.
 
 ### 14.1 A London property and business interruption claim on a subscription placement
@@ -1056,7 +1068,7 @@ ex:claim-1 a clm:Claim ;
     fnd:hasIdentity ex:claim-1-id ;
     clm:openedBy ex:notice-1 ; clm:concernsLoss ex:loss-1 ;
     clm:hasResponse ex:resp-1 .
-ex:claim-1-id fnd:naturalKey [ a fnd:Key ; fnd:keyScheme ex:UniqueClaimReference ; fnd:keyValue "B0000XX27A0001" ] .
+ex:claim-1-id fnd:naturalKey [ a fnd:Key ; fnd:keyScheme ex:LeadClaimReference ; fnd:keyValue "LD-2027-000417" ] .
 
 ex:resp-1 a clm:Response ;
     clm:responseOf ex:claim-1 ;
@@ -1121,11 +1133,11 @@ is built on it), **mapped** (codes carried or crosswalked), **followed** (cited 
 | W3C SKOS, OWL 2, SHACL, PROV-O | vocabularies, ontology, constraints, provenance | conformed | everywhere, through LATTICE |
 | W3C Data Privacy Vocabulary (Community Group) | personal data categories, special categories, purposes and legal bases | mapped | §12.2 |
 | W3C EARL with PROV-O (assurance records profile) | what was checked about a decision | conformed, through formal methods track A | §16 |
-| ACORD P&C standards (XML, including the claims notification messages, for example `ClaimsNotificationAddRq` in the P&C/Surety specification) | first notice of loss, claim updates, payments, reserves | exchanged | §13.2 |
+| ACORD P&C/Surety claims service messages (`ClaimsNotificationAddRq`, `ClaimActivityNotify`, `ClaimDownloadNotify`, `ClaimStatusInqRq`, `LossRunInqRq`), read through a published model viewer, version not stated | first notice of loss, claim activity and images, payments and reserves, loss runs | exchanged | §13.2, [references](claims-sketch-references.md) §6 |
 | ACORD Global Reinsurance and Large Commercial standards, as used for the London market's electronic claims file | claims messaging between brokers, insurers and reinsurers | exchanged | §10.3 |
 | Lloyd's Claims Lead Arrangements (in force from 1 June 2023) | lead and second lead agreement of claims for followers | followed | §7.5 |
 | Lloyd's Coverholder Reporting Standards v5.2 (claims bordereau) | delegated authority claims reporting | exchanged | §13.1 |
-| London market unique claim reference | a claim's key across the market | mapped, as a key scheme | §7.4 |
+| Lloyd's CRS claim references (Claim Reference CR0104, UMR CR0005, Certificate Ref CR0029) | a delegated claim's key, with its contract | mapped, as key schemes | §7.4 |
 | HL7 FHIR financial module (Claim, ClaimResponse, ExplanationOfBenefit, Coverage, CoverageEligibilityRequest) | health claims and their adjudication | mapped for health and medical expense claims, and an influence on the response pattern (a claim and an adjudication per coverage) | §7.5, §7.6 |
 | WHO ICD-11, SNOMED CT (licensed) | injury and diagnosis coding | mapped, on medical evidence | §7.6.1 |
 | ISO 20022 (for example pain.001 credit transfer initiation, pacs.008 customer credit transfer) | claims payments | exchanged | §9.1 |
