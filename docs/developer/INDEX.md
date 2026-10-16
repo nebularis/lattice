@@ -678,17 +678,32 @@ suites, then shared parsed ontology graphs and SHACL validation results across t
 session-scoped cache, found and fixed a real identity-vs-content cache-key bug along the way, and
 added `pytest-xdist` as the dominant speed lever.
 
-## 8.16 Repository Catalogue — Sketch
+## 8.16 Repository Catalogue — Sketch, absorbed
 
 | Field | Value |
 |-------|-------|
-| **Status** | 🔵 Sketched 2026-10-09. RC-Q1 to RC-Q8 open. Not planned |
+| **Status** | 🔵 Sketched 2026-10-09. RC-Q1 to RC-Q8 answered 2026-10-16. Absorbed into `improved-ontology-documentation` (§8.17) |
 | **Unit ID** | `repository-catalogue` |
 | **Sketch** | [repository-catalogue.md](sketches/repository-catalogue.md) |
 | **ADRs** | A-121 to be drafted as Proposed once RC-Q3 and RC-Q7 are answered |
 
 One catalogue of where things live in the repository, one interface module that reads it, and a check
 that code and documents agree with it. Shares work with `python-test-melting` (sketch §8.1).
+
+## 8.17 Improved Ontology Documentation — Planned
+
+| Field | Value |
+|-------|-------|
+| **Status** | ⏳ Planned 2026-10-14, rewritten 2026-10-16, branch `docs/literate-v2`. Every design question answered. Not started |
+| **Unit ID** | `improved-ontology-documentation` (absorbs `repository-catalogue`) |
+| **Sketches** | [improved-ontology-documentation.md](sketches/improved-ontology-documentation.md), [repository-catalogue.md](sketches/repository-catalogue.md) |
+| **Plan** | [improved-ontology-documentation.md](plans/improved-ontology-documentation.md) |
+| **Status Record** | [improved-ontology-documentation.md](status/improved-ontology-documentation.md) |
+| **ADRs** | A-121, A-126 and A-127 to be drafted as Proposed in OD0 |
+
+One README layout whose normative sections compile to Turtle and SHACL from a markdown grammar, the
+repository catalogue with each module's entry in its README, and a sources rule for user-facing documents
+built on published ADRs. Piloted on Eligibility, then Vocabulary.
 
 ## 8. Phase Handoff Documents (0-6)
 

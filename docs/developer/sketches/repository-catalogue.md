@@ -3,7 +3,7 @@
 # Repository Catalogue — Sketch
 
 **Unit ID:** `repository-catalogue`
-**Status:** Sketch. Design questions RC-Q1 to RC-Q8 open. Not yet planned. Shares work with
+**Status:** Sketch. RC-Q1 to RC-Q8 answered 2026-10-16 and absorbed into the [`improved-ontology-documentation` plan](../plans/improved-ontology-documentation.md). Shares work with
 [`python-test-melting`](../plans/python-test-melting.md) (§8.1)
 **Date:** 2026-10-09
 **Question prefix:** RC

@@ -33,6 +33,7 @@ likely take.
 | # | Debt | Spotted | Cost while it stays | Likely home |
 |---|---|---|---|---|
 | TD-01 | The [Persistence README](../../../ontology/persistence/README.md) is not a literate specification. Its Turtle is excerpts, so `spec/persistence.ttl` and `shapes/constraints.ttl` cannot be regenerated from it, and `tools/literate_extract.py` cannot check it, as it does for Wording, Behaviour and Surface. Keep all of its content when fixing this | 2026-10-03, CCS F1 | the README and the spec can drift unnoticed | a Persistence documentation unit |
+| TD-50 | **The site's sections are assembled by copying sources into `docs/`.** Under OD-D29 a `mise` task copies each section's sources from outside `docs/` (for example the module READMEs) into `docs/_includes/<section>/`, tracked and kept current by a check, because GitHub Pages builds `docs/` with no workflow and Jekyll cannot include files above its source directory. A Pages workflow that assembles the site from the repository catalogue at deploy time (OD-Q15a option B) would remove the copies. It needs the repository's Pages source changed to GitHub Actions, which is the maintainer's to make, and a local preview that runs the same assembly | 2026-10-16, `improved-ontology-documentation`, OD-Q15a | about ten READMEs, and any other section source outside `docs/`, exist twice in git, and every change to one shows twice in a diff | a documentation tooling unit, once the catalogue's site sections (DOC2) are in use |
 
 ### Persistence compiler
 
