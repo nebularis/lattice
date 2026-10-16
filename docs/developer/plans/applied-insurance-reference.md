@@ -62,7 +62,7 @@ Each is stated once in the sketch cited, and every phase plan inherits them.
 | 3 | [phase 3](applied-insurance-reference-phase-3.md) | Eligibility over flat schemes and several values (substrate), crosswalks, a check across cause and characteristics | 0 (3.1 to 3.3), 2 (3.4, 3.5), 4.4 (M2) | M2 |
 | 4 | [phase 4](applied-insurance-reference-phase-4.md) | exposure ontology | 1, and slices of 2 per the phase plan | M3 |
 | 5 | [phase 5](applied-insurance-reference-phase-5.md) | contract module: term parameters, liability direction in contract terms, optional compilation. Deferred (D2) | 1, 2, Open CBAA integration of 1 to 4 | M4, M5 |
-| 6 | [phase 6](applied-insurance-reference-phase-6.md) | submission (after 4), claims (after 5) | 4, 5 | M6 |
+| 6 | [phase 6](applied-insurance-reference-phase-6.md) and [claims](applied-insurance-reference-claims.md) | submission (after 4), claims: the claims core, money and wire formats after 4, the parts that evaluate cover after CCS C12 (claims plan §3) | 4, CCS, Phase 5 for term parameters | M6, M7, M8 |
 | S | [substrate track](applied-insurance-reference-substrate.md) | upstream LATTICE changes L-P1 to L-P5, spatial guidance, evidence resolution | 0 | none, non-blocking |
 
 ```mermaid
@@ -118,7 +118,9 @@ unit on R. Its §4 measures the interference with this epic. The constraints tha
 | M3 | exposure units derived on demand for a location set, and a zone-and-peril requirement evaluated over them without materialising units | phase 4 |
 | M4 | (deferred with Phase 5) a D&O programme example: Side A, B and C terms, and a claim by a claimant unknown at binding whose direction (third, fourth, insured against insured) is derived from roles and the relationship graph | phase 5 |
 | M5 | (deferred with Phase 5) one check run directly (route R1) and compiled (route R2) with equal results under the parity suite | phase 5 |
-| M6 | a submission packages an exposure set version, and a claim records a loss cause chain against the contract that responds | phase 6 |
+| M6 | a submission packages an exposure set version, and a claim records a loss cause chain against the contract that responds | phase 6 and the claims plan (AIR-6.5) |
+| M7 | one loss across a primary policy, an excess layer and a reinsurance: positions, movements, a settlement, a recovery and a derived loss run, each traced to the words | claims plan (AIR-6.12) |
+| M8 | a coverholder's claims bordereau lifted, reconciled into movements and statuses, and emitted again for the market with its lowering report, reproducible from the stored files | claims plan (AIR-6.W3) |
 
 ## 5. Decisions
 
@@ -127,7 +129,7 @@ unit on R. Its §4 measures the interference with this epic. The constraints tha
 | # | Decision | Effect |
 |---|---|---|
 | D1 | The existing contract module (`ontology/applied/insurance/spec/structure/contract.ttl`, its vocab and shapes) is dropped | AIR-1.1 deletes it. TP-Q2 is closed |
-| D2 | A new contract module is de-prioritised until Phases 1 to 4 are wired into Open CBAA | Phase 5 starts only after that integration. A-101 is drafted at Phase 5 start. Claims (Phase 6, AIR-6.2 onwards) waits with it |
+| D2 | A new contract module is de-prioritised until Phases 1 to 4 are wired into Open CBAA | Phase 5 starts only after that integration. A-101 is drafted at Phase 5 start. Claims (Phase 6, AIR-6.2 onwards) waits with it. Revisited by the [claims plan](applied-insurance-reference-claims.md)'s CL-Q1 (2026-10-16): if claims imports Instrument directly, the slices that need only Instrument and exposure may start before Phase 5 |
 | D3 | Open CBAA material stays in the sketches. A real-world contractual requirement is valid motivation for a LATTICE change | Phase 0 no longer separates consumer material from the sketches |
 | D4 | Open CBAA's local copies of the sketches are removed, and its documents link to LATTICE | done in Open CBAA, 2026-09-26 |
 
@@ -195,8 +197,8 @@ filed here because Phase 3 implements them.
 | MB-Q3 publish a crosswalk of a widely used market list with the reference edition | A-100 |
 | PV-O3 concept lifecycle across editions | substrate track S1 |
 | PV-O4 matching over generic links only | substrate track S2 |
-| W-Q2 causation profiles and their legal review | phase 6 gate |
-| W-Q3 granularity of cause of loss in claims data | phase 6 gate |
+| W-Q2 causation profiles and their legal review | claims plan, gates AIR-6.4 |
+| W-Q3 granularity of cause of loss in claims data | claims plan §4: one code per claim in the CRS bordereau and ACORD, recorded as one cause link |
 | W-Q4 binding suspension on active hazard events | consumer decision |
 
 ## 7. Out of scope
