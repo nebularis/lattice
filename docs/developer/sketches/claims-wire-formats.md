@@ -62,6 +62,10 @@ The design:
 ## 2. Who sends what to whom
 
 ```mermaid
+---
+config:
+  layout: elk
+---
 flowchart LR
     INS["insured, broker"]
     TPA["coverholder, TPA, MGA"]
