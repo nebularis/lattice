@@ -68,3 +68,11 @@ documents.
 
 The consequences of decision 3 (above) apply equally to a module's vocabulary documents under this
 addendum.
+
+## Addendum (2026-10-17, ADR-A126): `output-file` in two forms, for every block kind
+
+[ADR-A126](ADR-A126-literate-specification-layout-and-grammar.md) decision 9 gives the directive's name a
+second form, the JSON key of an HTML comment marker. `<!-- start: {"output-file": "spec/<file>.ttl"} -->`
+sends a region of section 6 entries to that file, and `<!-- hidden: {"output-file": "..."}` sends a hidden
+block. Both forms apply to every extracted block kind, which widens decision 4 beyond `turtle-spec`. A block
+may carry only one of them, and the extractor refuses one that carries both. Decisions 1 to 3 are unchanged.

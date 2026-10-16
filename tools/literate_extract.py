@@ -69,6 +69,20 @@ the spec documents' own shared version. ``--layer`` also accepts a path under
 documents (``spec/peril.ttl``, ``vocab/peril-vocab.ttl``). A single-segment
 ``--layer`` behaves exactly as before.
 
+ADR-A126 (2026-10-17) adds HTML comment markers, documented for README authors in
+``docs/architecture/literate-specifications.md``. The scanner skips any other fence
+and any ordinary comment whole, so a tagged block or a marker shown inside one is
+text. ``<!-- start: {"key": value} -->`` opens a region and ``<!-- end -->`` closes
+the innermost, with one key of ``exclude``, ``output-file`` or ``generated``. An
+``output-file`` region sends the spec, vocab and shapes blocks inside it to that
+file. ``<!-- hidden`` or ``<!-- hidden: {"output-file": "..."}``, on its own line,
+wraps one tagged block that is extracted but not rendered, and is closed by a line
+holding only ``-->``. A block may name its file by one form only, the marker or its
+first line, and a ``turtle-shapes`` block that names one takes no ``--shapes``
+target. A README with a "Description Logic Encoding" section uses the layout, so its
+top-level sections are checked by title: a missing, extra or repeated one is an
+error, and a misnumbered one a warning.
+
 Usage::
 
     python3 -m tools.lattice.literate_extract ontology/surface/README.md \\
@@ -90,6 +104,8 @@ from __future__ import annotations
 
 import argparse
 import itertools
+import json
+import os
 import re
 import sys
 from dataclasses import dataclass
@@ -109,6 +125,21 @@ DECISION_CONST = {"Permitted": "PERMITTED", "Denied": "DENIED", "Undetermined": 
 FENCE_RE = re.compile(
     r"^```(?P<tag>turtle-spec|turtle-vocab|turtle-shapes|turtle-example|isabelle-spec)\s*$"
 )
+ANY_FENCE_RE = re.compile(r"^ {0,3}(?P<fence>`{3,}|~{3,})(?P<info>.*)$")
+# A marker word followed by ":", "-->" or the end of the line. "<!-- end of a table -->" is an ordinary comment.
+MARKER_WORD_RE = re.compile(r"^<!--\s*(start|end|hidden)\s*(:|-->|$)")
+REGION_START_RE = re.compile(r"^<!--\s*start:\s*(?P<json>\{.*\})\s*-->\s*$")
+REGION_END_RE = re.compile(r"^<!--\s*end\s*-->\s*$")
+HIDDEN_RE = re.compile(r"^<!--\s*hidden(?::\s*(?P<json>\{.*\}))?\s*$")
+SECTION_RE = re.compile(r"^## (?P<number>\d+)\.\s+(?P<title>.+?)\s*$")
+REGION_KEYS: Dict[str, type] = {"exclude": bool, "output-file": str, "generated": str}
+EXTRACTED_TO_ONTOLOGY = ("turtle-spec", "turtle-vocab", "turtle-shapes")
+# The README layout of ADR-A126 decision 1, in order. Sections are found by title.
+LAYOUT = (
+    "Purpose and Scope", "Namespace and Prefixes", "Extraction Contract", "Overview", "Detailed Design",
+    "Description Logic Encoding", "Shapes", "Examples", "Canonicalisation", "Formalisation", "Dependencies",
+    "Release Notes", "Open Issues",
+)
 FUN_HEADER_RE = re.compile(r"^\s*fun\s+(?P<name>\w+)\s*::")
 CLAUSE_LINE_RE = re.compile(r'^\s*\|?\s*"(?P<clause>[^"]*)"\s*$')
 FENCE_END_RE = re.compile(r"^```\s*$")
@@ -119,44 +150,218 @@ VERSION_RE = re.compile(r"owl:versionIRI\s+<[^>]*/(?P<version>\d+\.\d+\.\d+)>")
 
 @dataclass(frozen=True)
 class Block:
-    """One fenced block, with its tag, its ordinal within that tag, and its body."""
+    """One fenced block, with its tag, its ordinal within that tag, and its body.
+
+    ``output_file`` is the JSON form of the directive (ADR-A126 decision 9), set by a
+    hidden block's marker or by an enclosing ``output-file`` region, and ``hidden`` says
+    the block sat inside a ``<!-- hidden`` comment."""
 
     tag: str
     ordinal: int
     body: str
     start_line: int
+    output_file: str | None = None
+    hidden: bool = False
+
+
+@dataclass(frozen=True)
+class Region:
+    """A ``<!-- start: {...} -->`` ... ``<!-- end -->`` region, by its one key."""
+
+    key: str
+    value: object
+    start_line: int
+    end_line: int
+
+
+@dataclass(frozen=True)
+class Section:
+    """A top-level ``## N. Title`` heading outside any fence or comment."""
+
+    number: int
+    title: str
+    line: int
+
+
+@dataclass(frozen=True)
+class Scan:
+    blocks: List[Block]
+    regions: List[Region]
+    sections: List[Section]
 
 
 def parse_blocks(markdown: str) -> List[Block]:
     """Collect every recognised fenced block from a literate specification."""
-    blocks: List[Block] = []
-    counters: Dict[str, int] = {}
+    return scan(markdown).blocks
+
+
+def scan(markdown: str) -> Scan:
+    """Read a README once: its recognised blocks, its marker regions and its sections.
+
+    A fence of any other kind, and an ordinary HTML comment, are skipped whole, so a
+    tagged block or a marker shown inside one is text (ADR-A126 decision 8)."""
     lines = markdown.splitlines()
-    index = 0
-    while index < len(lines):
-        match = FENCE_RE.match(lines[index])
-        if match is None:
-            index += 1
-            continue
-        tag = match.group("tag")
-        start = index + 1
-        end = start
+    blocks: List[Block] = []
+    regions: List[Region] = []
+    sections: List[Section] = []
+    counters: Dict[str, int] = {}
+    open_regions: List[Tuple[str, object, int]] = []
+
+    def read_block(at: int, tag: str, output_file: str | None, hidden: bool) -> int:
+        end = at + 1
         while end < len(lines) and not FENCE_END_RE.match(lines[end]):
+            if hidden and "-->" in lines[end]:
+                raise ValueError(f"line {end + 1}: '-->' inside a hidden block would end its comment early")
             end += 1
         if end >= len(lines):
-            raise ValueError(f"Unterminated {tag} block opened at line {index + 1}")
+            raise ValueError(f"Unterminated {tag} block opened at line {at + 1}")
         ordinal = counters.get(tag, 0)
         counters[tag] = ordinal + 1
-        blocks.append(
-            Block(
-                tag=tag,
-                ordinal=ordinal,
-                body="\n".join(lines[start:end]).rstrip() + "\n",
-                start_line=index + 1,
-            )
-        )
-        index = end + 1
-    return blocks
+        body = "\n".join(lines[at + 1:end]).rstrip() + "\n"
+        blocks.append(Block(tag, ordinal, body, at + 1, output_file, hidden))
+        return end + 1
+
+    def region_file(tag: str) -> str | None:
+        if tag not in EXTRACTED_TO_ONTOLOGY:
+            return None
+        return next((v for k, v, _ in reversed(open_regions) if k == "output-file"), None)
+
+    index = 0
+    while index < len(lines):
+        line = lines[index]
+        tagged = FENCE_RE.match(line)
+        if tagged:
+            index = read_block(index, tagged.group("tag"), region_file(tagged.group("tag")), False)
+            continue
+        fence = ANY_FENCE_RE.match(line)
+        if fence:
+            index = _skip_fence(lines, index, fence.group("fence"))
+            continue
+        if line.startswith("<!--"):
+            if not MARKER_WORD_RE.match(line):
+                index = _skip_comment(lines, index)
+                continue
+            if REGION_END_RE.match(line):
+                if not open_regions:
+                    raise ValueError(f"line {index + 1}: <!-- end --> closes no region")
+                key, value, opened = open_regions.pop()
+                regions.append(Region(key, value, opened, index + 1))
+                index += 1
+                continue
+            start = REGION_START_RE.match(line)
+            if start:
+                key, value = _marker_json(start.group("json"), index, REGION_KEYS)
+                open_regions.append((key, value, index + 1))
+                index += 1
+                continue
+            hidden = HIDDEN_RE.match(line)
+            if hidden is None:
+                raise ValueError(f"line {index + 1}: malformed marker {line.strip()!r} (ADR-A126)")
+            output_file = None
+            if hidden.group("json"):
+                _, output_file = _marker_json(hidden.group("json"), index, {"output-file": str})
+            index += 1
+            while index < len(lines) and not lines[index].strip():
+                index += 1
+            inner = FENCE_RE.match(lines[index]) if index < len(lines) else None
+            if inner is None:
+                other = ANY_FENCE_RE.match(lines[index]) if index < len(lines) else None
+                if other and other.group("info").strip().startswith("mermaid"):
+                    raise ValueError(f"line {index + 1}: a mermaid diagram is never hidden (ADR-A126)")
+                raise ValueError(f"line {index + 1}: a hidden block holds one extracted fenced block (ADR-A126)")
+            tag = inner.group("tag")
+            if output_file is not None and tag not in EXTRACTED_TO_ONTOLOGY:
+                raise ValueError(f"line {index + 1}: a {tag} block takes no output-file (ADR-A126)")
+            enclosing = region_file(tag)
+            if output_file is not None and enclosing is not None:
+                raise ValueError(
+                    f"line {index + 1}: output-file is given twice, by the hidden block and by its region (ADR-A126)"
+                )
+            index = read_block(index, tag, output_file or enclosing, True)
+            while index < len(lines) and not lines[index].strip():
+                index += 1
+            if index >= len(lines) or lines[index].strip() != "-->":
+                raise ValueError(f"line {index + 1}: a hidden block ends with a line holding only '-->'")
+            index += 1
+            continue
+        section = SECTION_RE.match(line)
+        if section:
+            sections.append(Section(int(section.group("number")), section.group("title"), index + 1))
+        index += 1
+    if open_regions:
+        raise ValueError(f"the region opened at line {open_regions[-1][2]} is never closed")
+    return Scan(blocks, regions, sections)
+
+
+def _skip_fence(lines: Sequence[str], at: int, fence: str) -> int:
+    closing = re.compile(rf"^ {{0,3}}{re.escape(fence[0])}{{{len(fence)},}}\s*$")
+    for index in range(at + 1, len(lines)):
+        if closing.match(lines[index]):
+            return index + 1
+    raise ValueError(f"Unterminated fence opened at line {at + 1}")
+
+
+def _skip_comment(lines: Sequence[str], at: int) -> int:
+    if "-->" in lines[at][4:]:
+        return at + 1
+    for index in range(at + 1, len(lines)):
+        if "-->" in lines[index]:
+            return index + 1
+    raise ValueError(f"Unterminated HTML comment opened at line {at + 1}")
+
+
+def _marker_json(text: str, at: int, allowed: Mapping[str, type]) -> Tuple[str, object]:
+    """A marker's JSON: one key from ``allowed``, with a value of that key's type."""
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError as error:
+        raise ValueError(f"line {at + 1}: marker JSON does not parse ({error.msg})") from None
+    if not isinstance(data, dict) or len(data) != 1:
+        raise ValueError(f"line {at + 1}: a marker holds exactly one key, one of {', '.join(allowed)}")
+    ((key, value),) = data.items()
+    if key not in allowed:
+        raise ValueError(f"line {at + 1}: unknown marker key {key!r}, expected one of {', '.join(allowed)}")
+    if type(value) is not allowed[key]:
+        raise ValueError(f"line {at + 1}: marker key {key!r} takes a {allowed[key].__name__}")
+    return key, value
+
+
+def _norm(title: str) -> str:
+    return " ".join(title.split()).casefold()
+
+
+def layout_problems(sections: Sequence[Section]) -> Tuple[List[str], List[str]]:
+    """The errors and warnings of a README in the ADR-A126 layout. A README with no
+    "Description Logic Encoding" section is not yet migrated, and has neither."""
+    if not any(_norm(s.title) == _norm(LAYOUT[5]) for s in sections):
+        return [], []
+    expected = {_norm(title): (number, title) for number, title in enumerate(LAYOUT, 1)}
+    errors: List[str] = []
+    warnings: List[str] = []
+    seen: Dict[str, Section] = {}
+    for section in sections:
+        key = _norm(section.title)
+        if key not in expected:
+            errors.append(f"line {section.line}: section {section.title!r} is not in the layout (ADR-A126)")
+        elif key in seen:
+            errors.append(f"line {section.line}: section {section.title!r} appears twice")
+        else:
+            seen[key] = section
+            number = expected[key][0]
+            if section.number != number:
+                warnings.append(
+                    f"line {section.line}: {section.title!r} is numbered {section.number}, the layout numbers it {number}"
+                )
+    errors += [f"section {number}, {title!r}, is missing" for key, (number, title) in expected.items() if key not in seen]
+    return errors, warnings
+
+
+def _warn(message: str) -> None:
+    """A warning on stderr, in yellow where the stream is a terminal (and NO_COLOR is unset)."""
+    if sys.stderr.isatty() and not os.environ.get("NO_COLOR"):
+        sys.stderr.write(f"\033[33mWARNING {message}\033[0m\n")
+    else:
+        sys.stderr.write(f"WARNING {message}\n")
 
 
 def render(bodies: Sequence[str], header: str = SPDX_TTL) -> str:
@@ -303,19 +508,27 @@ def plan(
     spec_docs: Dict[str, List[str]] = {}
     for block in blocks:
         if block.tag == "turtle-spec":
-            target, body = _spec_target(block, layer, default_spec)
+            target, body = _target(block, layer, default_spec)
             spec_docs.setdefault(target, []).append(body)
     vocab_docs: Dict[str, List[str]] = {}
     for block in blocks:
         if block.tag == "turtle-vocab":
-            target, body = _vocab_target(block, layer, default_vocab)
+            target, body = _target(block, layer, default_vocab, under="vocab/")
             vocab_docs.setdefault(target, []).append(body)
-    shape_blocks = [b for b in blocks if b.tag == "turtle-shapes"]
+    shape_docs: Dict[str, List[str]] = {}
+    positional: List[str] = []
+    for block in blocks:
+        if block.tag == "turtle-shapes":
+            target, body = _target(block, layer, None, under="shapes/")
+            if target is None:
+                positional.append(body)
+            else:
+                shape_docs.setdefault(target, []).append(body)
     isabelle_bodies = [b.body for b in blocks if b.tag == "isabelle-spec"]
 
-    if len(shape_blocks) != len(shape_targets):
+    if len(positional) != len(shape_targets):
         raise ValueError(
-            f"{len(shape_blocks)} turtle-shapes block(s) found but "
+            f"{len(positional)} turtle-shapes block(s) without an output-file found but "
             f"{len(shape_targets)} shape target(s) declared; the extraction "
             f"contract in the README and the --shapes argument must agree"
         )
@@ -361,8 +574,13 @@ def plan(
             f"({', '.join(f'{t}: {m.group(1) if m else None}' for t, m in sorted(vocab_versions.items()))}); "
             f"a module's vocabulary documents move in unison (ADR-A120 addendum)"
         )
-    for block, target in zip(shape_blocks, shape_targets):
-        outputs[f"ontology/{layer}/{target}"] = render([block.body])
+    for body, target in zip(positional, shape_targets):
+        path = f"ontology/{layer}/{target}"
+        if path in shape_docs:
+            raise ValueError(f"{path} is named both by --shapes and by a block's output-file")
+        outputs[path] = render([body])
+    for path, bodies in shape_docs.items():
+        outputs[path] = render(bodies)
     if isabelle_bodies:
         # A path outside `root` (ontology/), marked with a recognisable prefix so
         # main() resolves it against --proofs-root instead of --root.
@@ -378,19 +596,31 @@ def plan(
     return outputs
 
 
-def _spec_target(block: Block, layer: str, default: str) -> tuple[str, str]:
-    """The spec document a ``turtle-spec`` block goes to, and its body without the directive."""
+def _target(block: Block, layer: str, default: str | None, under: str = "") -> tuple[str | None, str]:
+    """The document a block goes to, and its body without the directive. The directive
+    has two forms, a ``# @output-file`` first line (ADR-A120) and the JSON key of a marker
+    (``block.output_file``, ADR-A126 decision 9), and a block may carry only one. A block
+    with neither goes to ``default``."""
     first, _, rest = block.body.partition("\n")
     match = OUTPUT_FILE_RE.match(first)
-    if match is None:
-        return default, block.body
-    path = match.group("path")
-    if _escapes_layer(path) or not path.endswith(".ttl"):
+    if match and block.output_file:
         raise ValueError(
-            f"turtle-spec block at line {block.start_line}: @output-file must name a .ttl "
-            f"file inside the layer directory, not {path!r}"
+            f"{block.tag} block at line {block.start_line}: output-file is given twice, by a marker "
+            f"and by the block's first line (ADR-A126)"
         )
-    return f"ontology/{layer}/{path}", rest.lstrip("\n")
+    if match:
+        path, body = match.group("path"), rest.lstrip("\n")
+    elif block.output_file:
+        path, body = block.output_file, block.body
+    else:
+        return default, block.body
+    if _escapes_layer(path) or not path.endswith(".ttl") or not path.startswith(under):
+        where = f"under the module's {under}" if under else "inside the layer directory"
+        raise ValueError(
+            f"{block.tag} block at line {block.start_line}: @output-file must name a .ttl "
+            f"file {where}, not {path!r}"
+        )
+    return f"ontology/{layer}/{path}", body
 
 
 def _escapes_layer(path: str) -> bool:
@@ -398,22 +628,6 @@ def _escapes_layer(path: str) -> bool:
     absolute path (POSIX-style, since Windows' ``Path.is_absolute()`` does not
     recognise ``/tmp/x.ttl`` as absolute without a drive letter) or a ``..`` segment."""
     return path.startswith("/") or Path(path).is_absolute() or ".." in Path(path).parts
-
-
-def _vocab_target(block: Block, layer: str, default: str) -> tuple[str, str]:
-    """The vocabulary document a ``turtle-vocab`` block goes to, and its body without
-    the directive (ADR-A120 addendum)."""
-    first, _, rest = block.body.partition("\n")
-    match = OUTPUT_FILE_RE.match(first)
-    if match is None:
-        return default, block.body
-    path = match.group("path")
-    if _escapes_layer(path) or not path.endswith(".ttl") or not path.startswith("vocab/"):
-        raise ValueError(
-            f"turtle-vocab block at line {block.start_line}: @output-file must name a .ttl "
-            f"file under the module's vocab/, not {path!r}"
-        )
-    return f"ontology/{layer}/{path}", rest.lstrip("\n")
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -455,8 +669,15 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     readme_path = Path(args.readme)
-    blocks = parse_blocks(readme_path.read_text(encoding="utf-8"))
-    outputs = plan(blocks, args.layer, args.shapes, args.proofs_root, args.reference_root)
+    result = scan(readme_path.read_text(encoding="utf-8"))
+    errors, warnings = layout_problems(result.sections)
+    for message in warnings:
+        _warn(f"{readme_path}: {message}")
+    if errors:
+        for message in errors:
+            print(f"LAYOUT {readme_path}: {message}", file=sys.stderr)
+        return 1
+    outputs = plan(result.blocks, args.layer, args.shapes, args.proofs_root, args.reference_root)
 
     root = Path(args.root)
     proofs_root = Path(args.proofs_root) if args.proofs_root else None

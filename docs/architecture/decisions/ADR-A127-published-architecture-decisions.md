@@ -2,7 +2,7 @@
 
 # ADR-A127: Published architecture decisions
 
-**Status:** Proposed
+**Status:** Accepted, 2026-10-17
 **Date:** 2026-10-16
 **Supersedes:** none
 **Related:** [ADR-A77](ADR-A77-repository-topology-and-documentation-governance.md) (documentation governance),

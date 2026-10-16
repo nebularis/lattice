@@ -2,9 +2,9 @@
 
 # ADR-A126: Literate specification layout and grammar
 
-**Status:** Proposed
+**Status:** Accepted, 2026-10-17
 **Date:** 2026-10-16
-**Supersedes:** none. Adds addenda to ADR-A120 and to ADR-A01's convention note when accepted
+**Supersedes:** none. Adds addenda to ADR-A120 and to ADR-A01's convention note (2026-10-17)
 **Related:** [ADR-A01](ADR-A01-layer-dependency-order.md), [ADR-A86](ADR-A86-ontology-semantic-versioning.md)
 and the [versioning policy](../ontology-versioning-policy.md),
 [ADR-A97](ADR-A97-mork-order-relations-in-owl-2-dl.md) (OWL 2 DL), [ADR-A120](ADR-A120-literate-specs-with-several-documents.md),
@@ -108,9 +108,8 @@ state.
 
 ## Consequences
 
-- When this ADR is accepted, ADR-A120 gains an addendum for decision 9, and ADR-A01's convention note, which
-  places the ontology header in a README's first `turtle-spec` block, gains one saying the header now comes
-  from section 2.
+- ADR-A120 has an addendum for decision 9, and ADR-A01 one for its convention note, which placed the ontology
+  header in a README's first `turtle-spec` block (both 2026-10-17).
 - Each layer is migrated in its own change, with its own PATCH release. Until a layer is migrated, its
   README keeps today's conventions and `literate_extract.py --check` keeps testing it as now.
 - The 76 restrictions asserted in OWL with no shape today migrate as OWL only, so migration adds no shape

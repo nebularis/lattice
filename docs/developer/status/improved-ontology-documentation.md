@@ -3,7 +3,7 @@
 # Improved Ontology Documentation: Status
 
 **Unit ID:** `improved-ontology-documentation` (absorbs `repository-catalogue`)
-**Status:** In progress. OD0 authored, awaiting the maintainer's review.
+**Status:** In progress. OD0 accepted and committed. OD1 authored, not yet run.
 **Last updated:** 2026-10-16
 **Branch:** `docs/literate-v2`
 **Plan:** [improved-ontology-documentation.md](../plans/improved-ontology-documentation.md)
@@ -20,20 +20,19 @@ ontology file has changed.
 
 ## Next action
 
-1. The maintainer reviews the [OD0 Validation Pack](../validation/OD0.md), including its six drafting
-   choices, runs its one command (`build:agent-guidance` regenerates the Copilot copy of `AGENTS.md`), and
-   accepts, amends or returns ADR-A121, ADR-A126 and ADR-A127.
-2. Then RC1 and OD1, which do not depend on each other.
+1. The maintainer reviews the [OD1 Validation Pack](../validation/OD1.md), including its three
+   implementation choices, and runs its commands. OD1 is authored, not yet run.
+2. Then RC1 (the catalogue and its reader), and OD2 and OD3, which build on OD1.
 
 ## Slices
 
 | Slice | State | Blocked on |
 |---|---|---|
-| OD0 ADRs, the AGENTS.md rule, the conventions document | authored 2026-10-16, [Validation Pack](../validation/OD0.md) | the maintainer's review |
+| OD0 ADRs, the AGENTS.md rule, the conventions document | accepted 2026-10-17, committed, [Validation Pack](../validation/OD0.md) | |
 | RC1 catalogue and reader | planned | OD0 |
 | RC2 consumers use the reader | planned | RC1 |
 | RC3 roots, AGENTS.md table, bypass scan | planned | RC2 |
-| OD1 scanner and markers | planned | OD0 |
+| OD1 scanner and markers | authored 2026-10-17, not yet run, [Validation Pack](../validation/OD1.md) | the maintainer's run and review |
 | OD2 sections 1 and 2 | planned | OD1 |
 | OD3 section 6 to OWL | planned | OD1 |
 | OD4 section 6 to SHACL | planned | OD3 |
@@ -105,3 +104,11 @@ None.
   `docs/architecture/literate-specifications.md` started. Six drafting choices are listed in the Validation
   Pack for the maintainer. Links and the boundaries search checked while drafting. `build:agent-guidance`
   not yet run.
+- 2026-10-17: the maintainer agreed the six drafting choices and accepted ADR-A121, ADR-A126 and ADR-A127,
+  and committed OD0. Their Status lines and the catalogue rows now say Accepted, 2026-10-17. ADR-A120 and
+  ADR-A01 gained their addenda, the catalogue's convention lists the Published status, and the AGENTS.md rule
+  no longer marks ADR-A127 Proposed. The Copilot copy needs `build:agent-guidance` again.
+- 2026-10-17: OD1 authored, not yet run. A scan of all 22 module READMEs first showed no nested tagged
+  fence, no tagged fence inside a comment and no marker-like comment, so the new scanner leaves every
+  extraction unchanged (OD1-T1 tests it). `tools/test_literate_extract.py`, which no task ran, joins
+  `check:ontology-catalog`. Three implementation choices are listed in the Validation Pack.

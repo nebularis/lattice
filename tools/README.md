@@ -41,13 +41,13 @@ closed Isabelle datatype only, at `<proofs-root>/<layer>/Kernel.thy`
 ADR-A-FM2). Each output gains the project's SPDX header as its first line.
 
 ```bash
-python3 tools/literate_extract.py ontology/surface/README.md \
+mise exec -- python tools/literate_extract.py ontology/surface/README.md \
     --layer surface --root . \
     --shapes shapes/structural.ttl shapes/constraints.ttl
 ```
 
 ```bash
-python3 tools/literate_extract.py ontology/applied/insurance/peril/README.md \
+mise exec -- python tools/literate_extract.py ontology/applied/insurance/peril/README.md \
     --layer applied/insurance/peril --root . \
     --shapes shapes/structural.ttl shapes/constraints.ttl
 ```
@@ -55,6 +55,14 @@ python3 tools/literate_extract.py ontology/applied/insurance/peril/README.md \
 `--check` writes nothing and exits non-zero if any target differs from what
 would be written. Part of `mise run check:python-root` for Surface; run it
 directly for any other layer.
+
+The README layout, the markers and the extraction rules of ADR-A126 are described for authors in
+[literate-specifications.md](../docs/architecture/literate-specifications.md). The scanner skips any
+other fence and any ordinary HTML comment, so a tagged block or a marker shown inside one is text.
+`<!-- start: {...} -->` and `<!-- end -->` regions, and `<!-- hidden` blocks, are parsed and checked, and
+an `output-file` region or hidden block sends its blocks to that file. A README with a "Description
+Logic Encoding" section is checked against the layout by section title. The tests are
+`tools/test_literate_extract.py`, run by `mise run check:ontology-catalog`.
 
 ## `tools/check_formal_freshness.py`
 

@@ -2,8 +2,8 @@
 
 # Literate specifications
 
-**Status:** Proposed with [ADR-A126](decisions/ADR-A126-literate-specification-layout-and-grammar.md). The
-extractor does not implement these conventions yet. Until a module's README is migrated to them, the
+**Status:** Accepted with [ADR-A126](decisions/ADR-A126-literate-specification-layout-and-grammar.md),
+2026-10-17. The extractor does not implement these conventions yet. Until a module's README is migrated to them, the
 current conventions at the end of this document apply to it.
 
 A LATTICE module's `README.md` is its specification. The normative sections are read by

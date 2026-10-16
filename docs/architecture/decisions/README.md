@@ -9,14 +9,16 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 - Filename: `ADR-{id}-{slug}.md`, for example `ADR-A01-layer-dependency-order.md`.
 - IDs are stable once assigned and are never reused, even if an ADR is superseded.
 - Each ADR uses the same shape: Status, Context, Decision, Consequences.
-- Status is one of `Proposed`, `Accepted`, `Superseded by ADR-{id}`.
+- Status is one of `Proposed`, `Accepted`, `Published`, `Superseded by ADR-{id}`. A published decision is an accepted one
+  that the maintainer has published, with its references to working documents in a closing Provenance section
+  and the architecture documents describing it ([ADR-A127](ADR-A127-published-architecture-decisions.md)).
 - An ADR may be amended in place for clarifications that do not change the decision. A change to the decision itself is a new ADR that supersedes the old one.
 
 ## Index
 
 | ADR | Title | Status |
 |---|---|---|
-| [A-01](ADR-A01-layer-dependency-order.md) | Layer dependency order and import direction (with addendum) | Accepted |
+| [A-01](ADR-A01-layer-dependency-order.md) | Layer dependency order and import direction (with addenda) | Accepted |
 | [A-12](ADR-A12-identity-and-derivation-model.md) | Identity and derivation-authority model | Accepted |
 | [A-13](ADR-A13-dataset-graph-role-model.md) | Dataset, graph-role, and provenance model | Accepted |
 | [A-14](ADR-A14-conformance-levels.md) | Conformance-level framework | Accepted |
@@ -118,14 +120,14 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-117](ADR-A117-agent-guidance-and-skill-library.md) | Agent guidance and the skill library | Accepted, with addendum |
 | [A-118](ADR-A118-word-authoring-proof-of-concept.md) | Word authoring proof of concept | Proposed |
 | [A-119](ADR-A119-xslt-transformation-sidecar.md) | Bidirectional XSLT transformation sidecar | Proposed |
-| [A-120](ADR-A120-literate-specs-with-several-documents.md) | Literate specs with several documents | Accepted |
-| [A-121](ADR-A121-repository-catalogue.md) | The repository catalogue | Proposed |
+| [A-120](ADR-A120-literate-specs-with-several-documents.md) | Literate specs with several documents | Accepted, with addenda |
+| [A-121](ADR-A121-repository-catalogue.md) | The repository catalogue | Accepted, 2026-10-17 |
 | [A-122](ADR-A122-aggregate-ownership.md) | Aggregate ownership, a classified boundary shape for every boundary strategy | Accepted, 2026-10-10 |
 | [A-123](ADR-A123-typed-operation-ir.md) | A typed operation IR for the persistence compiler | Accepted, 2026-10-10, three addenda 2026-10-12 |
 | [A-124](ADR-A124-benchmark-root.md) | A benchmark root for checks that measure, run on demand | Accepted, 2026-10-12 |
 | [A-125](ADR-A125-test-support-tooling.md) | Test-support tooling under `tools/testing/` | Accepted, 2026-10-12 |
-| [A-126](ADR-A126-literate-specification-layout-and-grammar.md) | Literate specification layout and grammar | Proposed |
-| [A-127](ADR-A127-published-architecture-decisions.md) | Published architecture decisions | Proposed |
+| [A-126](ADR-A126-literate-specification-layout-and-grammar.md) | Literate specification layout and grammar | Accepted, 2026-10-17 |
+| [A-127](ADR-A127-published-architecture-decisions.md) | Published architecture decisions | Accepted, 2026-10-17 |
 
 **The `A-FM` block.** ADR-A-FM1 and its successors are the `formal-methods` epic's own ADRs,
 filed outside the main sequential pool for the same reason `A-CAP` and `A-C` are: this epic's

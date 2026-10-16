@@ -18,7 +18,7 @@ Follow every step for any change to `ontology/**/spec/`, `ontology/**/vocab/`, o
    regenerate:
 
    ```bash
-   python tools/literate_extract.py ontology/<layer>/README.md --layer <layer> --root . --shapes <shape files>
+   mise exec -- python tools/literate_extract.py ontology/<layer>/README.md --layer <layer> --root . --shapes <shape files>
    ```
 
    - `--shapes` lists one file per `turtle-shapes` block, relative to the layer, in block order.
@@ -41,6 +41,10 @@ Follow every step for any change to `ontology/**/spec/`, `ontology/**/vocab/`, o
      regenerating, and either restore the README or record the drift. A regeneration over a
      drifting layer can silently discard hand-maintained content.
    - Persistence and the applied modules are not literate. Edit their `.ttl` directly.
+   - A README migrated to the layout of ADR-A126 follows
+     [literate-specifications.md](https://github.com/nebularis/lattice/blob/main/docs/architecture/literate-specifications.md):
+     a term's axioms are written once, in its Description Logic Encoding section, and markers hide a
+     block, exclude text or send a region to another file.
 2. **Bump the version.** At major version zero an additive change is a MINOR, and a breaking one a
    MINOR marked breaking (ADR-A113). Change the document's `owl:versionIRI`. A `shapes/` or
    `projection/` directory is versioned by its `.version` file, never by the spec's IRI.

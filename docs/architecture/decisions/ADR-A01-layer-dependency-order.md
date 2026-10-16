@@ -79,3 +79,10 @@ Foundation
   substrate layer.
 
 Every other decision stands.
+
+## Addendum (2026-10-17, ADR-A126): where the ontology header is written
+
+The convention note above places a layer's ontology header in its README's first `turtle-spec` block. A
+README migrated to the layout of [ADR-A126](ADR-A126-literate-specification-layout-and-grammar.md) states
+its header in section 2's header table instead, and the extractor writes it from there. A README not yet
+migrated keeps the note above. The dependency order is unchanged.
