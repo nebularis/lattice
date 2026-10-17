@@ -148,20 +148,28 @@ def streamed(cmd):
     proc = subprocess.Popen(cmd, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
     hung = threading.Event()
     stop = threading.Event()
+    # daemon, so that an interrupted run is not held open until the timeout
     killer = threading.Timer(args.timeout, lambda: (hung.set(), proc.kill()))
+    killer.daemon = True
     killer.start()
     if os.name != "nt":
         threading.Thread(target=sample_memory, args=(proc.pid, stop, peaks), daemon=True).start()
     lines, mark = [], 10
-    for line in proc.stdout:
-        lines.append((time.perf_counter() - start, line.rstrip("\n")))
-        percent = re.search(r"\[\s*(\d+)%\]", line)
-        if percent and int(percent.group(1)) >= mark:
-            print(f"{lines[-1][0]:7.1f}s  {percent.group(1):>3s}%", flush=True)
-            mark = (int(percent.group(1)) // 10 + 1) * 10
-    proc.wait()
-    killer.cancel()
-    stop.set()
+    try:
+        for line in proc.stdout:
+            lines.append((time.perf_counter() - start, line.rstrip("\n")))
+            percent = re.search(r"\[\s*(\d+)%\]", line)
+            if percent and int(percent.group(1)) >= mark:
+                print(f"{lines[-1][0]:7.1f}s  {percent.group(1):>3s}%", flush=True)
+                mark = (int(percent.group(1)) // 10 + 1) * 10
+        proc.wait()
+    finally:
+        # an interrupt must not leave pytest and its workers running
+        killer.cancel()
+        stop.set()
+        if proc.poll() is None:
+            proc.kill()
+            proc.wait()
     return time.perf_counter() - start, None if hung.is_set() else proc, lines, peaks
 
 
@@ -266,4 +274,8 @@ def per_file():
                 print(f"  {l.strip()}")
 
 
-per_file() if args.per_file else one_run()
+try:
+    per_file() if args.per_file else one_run()
+except KeyboardInterrupt:
+    print("\nInterrupted, and the test run stopped.")
+    sys.exit(130)
