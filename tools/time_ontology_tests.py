@@ -120,9 +120,29 @@ def sample_memory(root_pid, stop, peaks):
         stop.wait(1.0)
 
 
+def system_memory():
+    """One line on how much memory the machine has free and how much it has swapped, or
+    nothing where it cannot be read. A suite that fits in memory still runs slowly on a
+    machine that is short of it."""
+    try:
+        if sys.platform == "darwin":
+            pressure = subprocess.run(["memory_pressure"], capture_output=True, text=True, timeout=10).stdout
+            free = re.search(r"free percentage: (\d+)%", pressure)
+            swap = subprocess.run(["sysctl", "-n", "vm.swapusage"], capture_output=True, text=True, timeout=10).stdout.strip()
+            used = re.search(r"used = ([\d.]+M)", swap)
+            return f"{free.group(1)}% of memory free, {used.group(1) if used else '?'} swapped out"
+        if sys.platform.startswith("linux"):
+            info = {k: int(v.split()[0]) for k, v in (l.split(":", 1) for l in Path("/proc/meminfo").read_text().splitlines())}
+            return f"{info['MemAvailable'] / 1024 ** 2:.1f} GB of {info['MemTotal'] / 1024 ** 2:.1f} GB available, {(info['SwapTotal'] - info['SwapFree']) / 1024:.0f} MB swapped out"
+    except (OSError, subprocess.SubprocessError, KeyError, ValueError):
+        pass
+    return None
+
+
 def streamed(cmd):
     """(seconds, completed or None when hung, [(seconds since start, line)], memory peaks).
-    Lines are timestamped as they arrive, which `timed` cannot do."""
+    Lines are timestamped as they arrive, which `timed` cannot do. Progress is printed
+    at every tenth of the run, from the percentage pytest puts on each result."""
     start = time.perf_counter()
     peaks = {"tree": 0, "python": 0, "jvm_count": 0, "jvm_total": 0}
     proc = subprocess.Popen(cmd, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
@@ -132,7 +152,13 @@ def streamed(cmd):
     killer.start()
     if os.name != "nt":
         threading.Thread(target=sample_memory, args=(proc.pid, stop, peaks), daemon=True).start()
-    lines = [(time.perf_counter() - start, line.rstrip("\n")) for line in proc.stdout]
+    lines, mark = [], 10
+    for line in proc.stdout:
+        lines.append((time.perf_counter() - start, line.rstrip("\n")))
+        percent = re.search(r"\[\s*(\d+)%\]", line)
+        if percent and int(percent.group(1)) >= mark:
+            print(f"{lines[-1][0]:7.1f}s  {percent.group(1):>3s}%", flush=True)
+            mark = (int(percent.group(1)) // 10 + 1) * 10
     proc.wait()
     killer.cancel()
     stop.set()
@@ -178,9 +204,15 @@ def one_run():
         flags = ["-v" if flag == "-q" else flag for flag in python_flags]
         cmd = [sys.executable, "-m", "pytest", *files, *flags, "-p", "no:cacheprovider", f"--junitxml={junit}"]
         print(f"Running: pytest {shlex.join(python_flags)} over {len(files)} files", flush=True)
+        before = system_memory()
+        if before:
+            print(f"Memory before: {before}", flush=True)
         elapsed, proc, lines, peaks = streamed(cmd)
         out = "\n".join(line for _, line in lines)
         print(f"\nWall time {elapsed:.1f}s. {last_summary(out)}")
+        after = system_memory()
+        if after:
+            print(f"Memory after: {after}")
         if proc is None:
             print("HUNG: no report is written until a run ends. Re-run with --per-file to find the file.")
             return
