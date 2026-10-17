@@ -79,20 +79,25 @@ def _vocab() -> Graph:
 PERIL = ROOT / "ontology" / "applied" / "insurance" / "peril"
 
 
+FIXTURE_PATHS = (
+    MODULE / "spec" / "exposure.ttl",
+    MODULE / "vocab" / "exposure-vocab.ttl",
+    PERIL / "spec" / "peril.ttl",
+    PERIL / "vocab" / "peril-vocab.ttl",
+    PERIL / "vocab" / "peril-intensity.ttl",
+    MODULE / "examples" / "core.ttl",
+    MODULE / "examples" / "attributes.ttl",
+)
+_FIXTURE_GRAPH: Graph | None = None  # the parsed FIXTURE_PATHS, set by _cached_graphs
+
+
 def _fixture() -> Graph:
     """spec + vocab + peril's vocab and intensity documents (for
     prl:relevantAttribute / prl:minimumGeoPrecision, AIR-4.2) + the core
     and attributes fixtures, fresh per call so tests can mutate their own
-    copy safely."""
-    return _graph(
-        MODULE / "spec" / "exposure.ttl",
-        MODULE / "vocab" / "exposure-vocab.ttl",
-        PERIL / "spec" / "peril.ttl",
-        PERIL / "vocab" / "peril-vocab.ttl",
-        PERIL / "vocab" / "peril-intensity.ttl",
-        MODULE / "examples" / "core.ttl",
-        MODULE / "examples" / "attributes.ttl",
-    )
+    copy safely. The seven files are parsed once for the session and each
+    call copies them: parsing took about 0.55s a call, 11s over the file."""
+    return Graph() + _FIXTURE_GRAPH
 
 
 SHAPE_PATHS = (
@@ -116,6 +121,7 @@ def _cached_graphs(request: pytest.FixtureRequest, graph_cache, validated) -> No
     (python-test-melting)."""
     module = request.module
     module.SHAPES = graph_cache(*SHAPE_PATHS)
+    module._FIXTURE_GRAPH = graph_cache(*FIXTURE_PATHS)
     module.validate = validated
 
 
