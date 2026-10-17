@@ -5,13 +5,13 @@ Run from the repository root:
 python tools/time_ontology_tests.py [--top N] [--per-file] [--workers N] [--dist MODE]
 
 Default: runs the task's own pytest command once, with its own flags (so the same xdist
-workers and `--dist loadfile` scheduling), plus a JUnit report, and prints the wall time, the
+workers and `--dist` mode), plus a JUnit report, and prints the wall time, the
 slowest files and the slowest tests. This is the shape of a real run, so a tail made of a few
 big files shows up here. It also prints when each xdist worker finished and which files it ran,
 which shows a run waiting on one worker, and the peak memory of the process tree (macOS and
 Linux). `--workers` and `--dist` replace the task's own `-n` and `--dist`, to compare worker
 counts and scheduling modes on the machine in front of you, for example
-`--workers 4 --dist worksteal`. On a machine with performance and efficiency cores, a late
+`--workers 4 --dist loadfile`. On a machine with performance and efficiency cores, a late
 worker is often one the scheduler put on an efficiency core.
 
 --per-file: runs each test file in its own process, one after another. Import-time ontology
