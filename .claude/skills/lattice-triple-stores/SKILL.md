@@ -61,3 +61,12 @@ Then:
 | Oxigraph | `tools/testing/oxigraph` (ADR-A125), parameters substituted as text | `mise run bootstrap:testing-oxigraph` | `mise run check:persistence-oxigraph` |
 
 A measurement of cost belongs in a benchmark under `benchmark/` (ADR-A124), which fails on a wrong result and never on time.
+`benchmark/sparql-constraint-query-cost` is the one for query forms, and `mise run check:sparql-constraint-query-cost` runs it.
+
+## Findings about cost
+
+How to write a query so that it runs in reasonable time is a design record, not a finding:
+[docs/architecture/efficient-queries-and-shapes.md](../../../docs/architecture/efficient-queries-and-shapes.md) (ADR-A128). A cost
+finding goes in the discovery record as TSD-22 to TSD-33 do, with its engine and version, and the design record's rule that rests on
+it cites it. When you find that a rule holds on one engine only, say so in both places, and mark it in the design record's table of
+what is specific to rdflib. A result on one engine is a hypothesis for the others until it is run on them.

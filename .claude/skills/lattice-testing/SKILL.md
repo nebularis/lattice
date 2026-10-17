@@ -57,6 +57,16 @@ contention, not slow tests. `PYTEST_XDIST_AUTO_NUM_WORKERS` sets what `auto` mea
 and `mise run dev:time-ontology-tests -- --workers N --dist MODE` compares settings and reports
 when each worker finished and the peak memory.
 
+## Speed: the record to read first
+
+[docs/architecture/efficient-queries-and-shapes.md](../../../docs/architecture/efficient-queries-and-shapes.md) records why the ontology
+suite was slow and what fixed it, rule by rule, with a tag on each saying whether it holds for any engine or only for rdflib, pySHACL,
+our harness or the machine. Its harness rules (H1 to H8) are the ones to apply here: translate each distinct query text once while
+pySHACL runs (`_sparql_translated_once`), sort the `PREFIX` block before keying, parse a fixture once and copy it (two parses of one
+document never compare equal as sets, because blank-node labels differ), distribute by test, match the workers to the cores that
+do real work, and check the machine (Low Power Mode, memory pressure, other applications) before reading a slow run as a regression.
+A shape or a fixture that changes for speed is replayed against the old results first (R7).
+
 ## The shared graph and validation cache (`tools/conftest.py`)
 
 Two session-scoped fixtures, available to every test under `tools/`:
@@ -165,6 +175,8 @@ What the engines do differently is recorded in
 - On rdflib, the order of solutions from a non-lazy join follows `PYTHONHASHSEED` (TSD-01). A test whose result depends on that
   order passes or fails by process. Fix the seed or sweep it in child processes.
 - rdflib drops a result row whose projected variables are all unbound (TSD-10). Project a variable you know is bound.
+- The cost of a query on rdflib depends on its form, and on Oxigraph it largely does not (TSD-22 to TSD-33). A cost measured on one
+  engine is a hypothesis for the other. `mise run check:sparql-constraint-query-cost` runs the same forms on both.
 
 ## A pytest quirk on Windows worth knowing
 

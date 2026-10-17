@@ -123,6 +123,7 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-123](ADR-A123-typed-operation-ir.md) | A typed operation IR for the persistence compiler | Accepted, 2026-10-10, three addenda 2026-10-12 |
 | [A-124](ADR-A124-benchmark-root.md) | A benchmark root for checks that measure, run on demand | Accepted, 2026-10-12 |
 | [A-125](ADR-A125-test-support-tooling.md) | Test-support tooling under `tools/testing/` | Accepted, 2026-10-12 |
+| [A-128](ADR-A128-efficient-queries-and-shapes.md) | Efficient queries and shapes | Proposed, 2026-10-17 |
 
 **The `A-FM` block.** ADR-A-FM1 and its successors are the `formal-methods` epic's own ADRs,
 filed outside the main sequential pool for the same reason `A-CAP` and `A-C` are: this epic's
