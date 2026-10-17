@@ -1341,11 +1341,15 @@ wrd:SlotConditionsShape a sh:NodeShape ;
 		sh:message "Two variants of a slot can both apply: their ranges overlap." ;
 		sh:select """
 			SELECT DISTINCT $this ?value WHERE {
-				$this wrd:hasVariant/wrd:includedWhen/elg:hasCondition/wrd:readsVariable ?g .
-				FILTER NOT EXISTS { $this wrd:hasVariant ?v . FILTER NOT EXISTS { ?v wrd:includedWhen/elg:hasCondition ?c } }
-				FILTER NOT EXISTS { $this wrd:hasVariant/wrd:includedWhen/elg:hasCondition ?c .
-					FILTER NOT EXISTS { ?c a elg:IntervalCondition ; wrd:readsVariable ?g } }
-				FILTER NOT EXISTS { $this wrd:hasVariant/wrd:includedWhen ?p . ?p elg:hasCondition ?c1 , ?c2 . FILTER (?c1 != ?c2) }
+				# The guards sit in their own group, so that they run before the candidate points are
+				# enumerated. A FILTER applies to the whole group it is in, wherever it is written.
+				{
+					$this wrd:hasVariant/wrd:includedWhen/elg:hasCondition/wrd:readsVariable ?g .
+					FILTER NOT EXISTS { $this wrd:hasVariant ?v . FILTER NOT EXISTS { ?v wrd:includedWhen/elg:hasCondition ?c } }
+					FILTER NOT EXISTS { $this wrd:hasVariant/wrd:includedWhen/elg:hasCondition ?c .
+						FILTER NOT EXISTS { ?c a elg:IntervalCondition ; wrd:readsVariable ?g } }
+					FILTER NOT EXISTS { $this wrd:hasVariant/wrd:includedWhen ?p . ?p elg:hasCondition ?c1 , ?c2 . FILTER (?c1 != ?c2) }
+				}
 				$this wrd:hasVariant ?va , ?value . FILTER (STR(?va) < STR(?value))
 				?va wrd:includedWhen/elg:hasCondition/elg:requiredRangeSet/qnt:hasRange ?ra .
 				?value wrd:includedWhen/elg:hasCondition/elg:requiredRangeSet/qnt:hasRange ?rb .
@@ -1370,11 +1374,15 @@ wrd:SlotConditionsShape a sh:NodeShape ;
 		sh:message "No variant of a slot applies to some admissible value of its governing variable." ;
 		sh:select """
 			SELECT DISTINCT $this ?value WHERE {
-				$this wrd:hasVariant/wrd:includedWhen/elg:hasCondition/wrd:readsVariable ?g .
-				FILTER NOT EXISTS { $this wrd:hasVariant ?v . FILTER NOT EXISTS { ?v wrd:includedWhen/elg:hasCondition ?c } }
-				FILTER NOT EXISTS { $this wrd:hasVariant/wrd:includedWhen/elg:hasCondition ?c .
-					FILTER NOT EXISTS { ?c a elg:IntervalCondition ; wrd:readsVariable ?g } }
-				FILTER NOT EXISTS { $this wrd:hasVariant/wrd:includedWhen ?p . ?p elg:hasCondition ?c1 , ?c2 . FILTER (?c1 != ?c2) }
+				# The guards sit in their own group, so that they run before the candidate points are
+				# enumerated. A FILTER applies to the whole group it is in, wherever it is written.
+				{
+					$this wrd:hasVariant/wrd:includedWhen/elg:hasCondition/wrd:readsVariable ?g .
+					FILTER NOT EXISTS { $this wrd:hasVariant ?v . FILTER NOT EXISTS { ?v wrd:includedWhen/elg:hasCondition ?c } }
+					FILTER NOT EXISTS { $this wrd:hasVariant/wrd:includedWhen/elg:hasCondition ?c .
+						FILTER NOT EXISTS { ?c a elg:IntervalCondition ; wrd:readsVariable ?g } }
+					FILTER NOT EXISTS { $this wrd:hasVariant/wrd:includedWhen ?p . ?p elg:hasCondition ?c1 , ?c2 . FILTER (?c1 != ?c2) }
+				}
 				{ $this wrd:hasVariant/wrd:includedWhen/elg:hasCondition/elg:requiredRangeSet/qnt:hasRange ?r1 } UNION { ?g wrd:admissibleValues/qnt:hasRange ?r1 }
 				{ $this wrd:hasVariant/wrd:includedWhen/elg:hasCondition/elg:requiredRangeSet/qnt:hasRange ?r2 } UNION { ?g wrd:admissibleValues/qnt:hasRange ?r2 }
 				?r1 (qnt:lowerBound|qnt:upperBound)/qnt:boundValue/qnt:numericValue ?e1 . ?r2 (qnt:lowerBound|qnt:upperBound)/qnt:boundValue/qnt:numericValue ?e2 .
@@ -1462,11 +1470,13 @@ wrd:W8AssembledShape a sh:NodeShape ;
 			SELECT DISTINCT $this ?element ?identity ?one ?other WHERE {
 				$this wrd:includes ?element .
 				{ ?element wrd:hasTextPart ?part . ?part wrd:refersToObject|wrd:refersToVariable ?identity } UNION { ?element wrd:linksTo ?identity }
+				# The versions of the identity come first, so that the two ways of being held are lookups.
+				# Pairing every included item first, and joining on the identity after, is quadratic.
+				?one fnd:hasIdentity ?identity . ?other fnd:hasIdentity ?identity .
+				FILTER (STR(?one) < STR(?other))
 				{ $this wrd:includes ?one , ?other }
 				UNION { $this wrd:includes ?d1 , ?d2 . ?d1 wrd:directlyComprises ?one . ?d2 wrd:directlyComprises ?other .
 				  ?one a/rdfs:subClassOf* wrd:Variable . ?other a/rdfs:subClassOf* wrd:Variable }
-				?one fnd:hasIdentity ?identity . ?other fnd:hasIdentity ?identity .
-				FILTER (STR(?one) < STR(?other))
 			}""" ] .
 
 wrd:W8RelianceShape a sh:NodeShape ;
@@ -1579,3 +1589,6 @@ Breaking versions at major version zero ([ADR-A113](../../docs/architecture/deci
   with it, with no other change (CCS C9b2).
 - 0.9.0 (`wording` and `wording-vocab`, breaking): re-pinned to Eligibility 0.12.0, whose set readings decide on completeness only under a closure
   (ADR-A105), and the layers re-pinned with it, with no other change (CCS HQ-6a.1).
+- Shapes 0.4.1: the slot-overlap and slot-coverage queries run their cheap guards as a sub-group before the
+  candidate points are enumerated, and law W8 looks up the versions of an identity before pairing the items a
+  wording holds. The same reports as before, from about half the work on the slot queries and W8.
