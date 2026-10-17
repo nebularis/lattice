@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import functools
 import subprocess
 import sys
 from pathlib import Path
@@ -25,9 +26,21 @@ ex:p a owl:ObjectProperty . ex:x a owl:NamedIndividual ; ex:p ex:y . ex:y a owl:
 needs_jar = pytest.mark.skipif(not reasoning.available(), reason="reasoning-testkit jar not built")
 
 
+@functools.cache
+def _jar_serves() -> bool:
+    """Whether the built jar has the `serve` command. A jar built before it existed prints a usage
+    message and exits with status 2, and `run` then falls back to a JVM per call, which is correct
+    but leaves nothing for these cases to check."""
+    done = subprocess.run(["java", *reasoning.jvm_options(), "-jar", str(reasoning.JAR), "serve"],
+                          input="", capture_output=True, text=True, timeout=120)
+    return done.returncode == 0
+
+
 @pytest.fixture
 def server(monkeypatch: pytest.MonkeyPatch):
     """A fresh server in place of the module's, stopped afterwards, with the option on."""
+    if not _jar_serves():
+        pytest.skip("the reasoning-testkit jar was built before `serve` existed: run `mise run bootstrap:reasoning-testkit`")
     monkeypatch.delenv("LATTICE_REASONING_SERVER", raising=False)
     fresh = reasoning._Server()
     monkeypatch.setattr(reasoning, "_SERVER", fresh)
