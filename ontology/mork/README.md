@@ -655,3 +655,14 @@ However, most users interact with MORK at one of three levels:
 **The Result:** A system that starts as an AI-assisted mapping tool and matures into a deterministic, auditable, self-improving semantic integration platform.
 
 ---
+
+## Repository catalogue entry
+
+The module's entry in the [repository catalogue](../../repository-catalogue.md)
+([ADR-A121](../../docs/architecture/decisions/ADR-A121-repository-catalogue.md)) follows.
+
+```toml repository-catalogue
+[module]
+kind = "standalone"
+roles = ["examples", "mtp", "shapes", "spec", "targets", "test"]
+```

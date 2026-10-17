@@ -271,6 +271,20 @@ Nothing in the derived-record tier is asserted by hand — a `srf:GeneratedSurfa
 
 Extraction and drift checking are performed by `tools/lattice/literate_extract.py`.
 
+The module's entry in the [repository catalogue](../../repository-catalogue.md)
+([ADR-A121](../../docs/architecture/decisions/ADR-A121-repository-catalogue.md)) follows.
+
+```toml repository-catalogue
+[module]
+kind = "standalone"
+roles = ["docs", "examples", "execution", "shapes", "spec", "test", "vocab"]
+
+[module.extract]
+spec = ["spec/surface.ttl"]
+vocab = ["vocab/surface-vocab.ttl"]
+shapes = ["shapes/structural.ttl", "shapes/constraints.ttl"]
+```
+
 ## 4. Design Decisions
 
 **Read path plus surface form, not a shadow-class mechanism.** A generated class per vocabulary member is one point in a larger space. Declaring a read path from a carrier to a value, and separately declaring the form in which that relationship is restated, covers promotion across ontologies, multi-hop flattening, hierarchical closure, and per-value class generation with one mechanism. Building only the per-value class case would require a second mechanism for any value space that isn't enumerable.

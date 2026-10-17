@@ -1570,3 +1570,14 @@ python -m persistence compile ontology/persistence/spec/persistence.ttl \
 | [persistence-profile-substrate.md](../../docs/developer/sketches/persistence-profile-substrate.md) | the original design sketch |
 | [ADR-A78](../../docs/architecture/decisions/ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md), [ADR-A79](../../docs/architecture/decisions/ADR-A79-persistence-compiler-toolchain.md), [ADR-A80](../../docs/architecture/decisions/ADR-A80-housekeeping-component-boundary.md), [ADR-A82](../../docs/architecture/decisions/ADR-A82-framework-neutral-identity-pattern-selection.md), [ADR-A84](../../docs/architecture/decisions/ADR-A84-standalone-minting-libraries.md) | the governing decisions |
 | [ADR-A114](../../docs/architecture/decisions/ADR-A114-external-and-natural-keys.md) | external and natural keys, which Persistence enforces for adopters who choose it |
+
+## Repository catalogue entry
+
+The module's entry in the [repository catalogue](../../repository-catalogue.md)
+([ADR-A121](../../docs/architecture/decisions/ADR-A121-repository-catalogue.md)) follows.
+
+```toml repository-catalogue
+[module]
+kind = "standalone"
+roles = ["docs", "examples", "shapes", "spec", "test"]
+```

@@ -79,6 +79,21 @@ python tools/literate_extract.py ontology/quantification/README.md --layer quant
 
 `fnd:utility` values throughout this document explain what a term is for and how to use it — never why it was shaped this way rather than some other way. That reasoning belongs in §4 (Design Decisions) alone, per the discipline corrected across Foundation, Vocabulary, and Party's own documents; nothing in this document's `fnd:utility` text should need to reference this section, a rejected alternative, or a dependency-order constraint to make sense to someone applying the term.
 
+The module's entry in the [repository catalogue](../../repository-catalogue.md)
+([ADR-A121](../../docs/architecture/decisions/ADR-A121-repository-catalogue.md)) follows.
+
+```toml repository-catalogue
+[module]
+kind = "substrate"
+roles = ["examples", "execution", "shapes", "spec", "vocab"]
+imports = ["foundation", "vocabulary"]
+
+[module.extract]
+spec = ["spec/quantification.ttl"]
+vocab = ["vocab/quantification-vocab.ttl"]
+shapes = ["shapes/constraints.ttl"]
+```
+
 ## 4. Design Decisions
 
 Twelve decisions, several forced by the corrected structure below rather than freely chosen — worth reading in full before treating any single class in isolation, since a number of the later definitions only make sense in light of one of these.

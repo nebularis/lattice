@@ -53,6 +53,21 @@ python3 tools/literate_extract.py ontology/wording/README.md --layer wording --r
     --shapes shapes/structural.ttl shapes/constraints.ttl --check
 ```
 
+The module's entry in the [repository catalogue](../../repository-catalogue.md)
+([ADR-A121](../../docs/architecture/decisions/ADR-A121-repository-catalogue.md)) follows.
+
+```toml repository-catalogue
+[module]
+kind = "substrate"
+roles = ["examples", "shapes", "spec", "vocab"]
+imports = ["foundation", "vocabulary", "quantification", "party", "eligibility"]
+
+[module.extract]
+spec = ["spec/wording.ttl"]
+vocab = ["vocab/wording-vocab.ttl"]
+shapes = ["shapes/structural.ttl", "shapes/constraints.ttl"]
+```
+
 ## 4. Worked examples
 
 Authored before this specification ([ADR-A-C2](../../docs/architecture/decisions/ADR-AC2-clean-room-authoring-procedure.md)).

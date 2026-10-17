@@ -75,6 +75,19 @@ python3 tools/literate_extract.py ontology/applied/insurance/common/README.md \
     --layer applied/insurance/common --root . --check
 ```
 
+The module's entry in the [repository catalogue](../../../../repository-catalogue.md)
+([ADR-A121](../../../../docs/architecture/decisions/ADR-A121-repository-catalogue.md)) follows.
+
+```toml repository-catalogue
+[module]
+kind = "applied"
+roles = ["spec", "vocab"]
+
+[module.extract]
+spec = ["spec/common.ttl"]
+vocab = ["vocab/common-vocab.ttl"]
+```
+
 ## 4. The six shared classifications
 
 ```turtle-spec

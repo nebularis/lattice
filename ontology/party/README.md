@@ -27,6 +27,19 @@ Party imports Foundation and Vocabulary, and is imported in turn by Instrument, 
 
 Same convention as the prior two documents: genuine specification content is fenced ` ```turtle-spec `; illustration is fenced ` ```turtle-example ` and is never part of the extraction. Concatenate the prefix block above with every ` ```turtle-spec ` block from §5 onward to produce `spec/party.ttl`. 
 
+The module's entry in the [repository catalogue](../../repository-catalogue.md)
+([ADR-A121](../../docs/architecture/decisions/ADR-A121-repository-catalogue.md)) follows.
+
+```toml repository-catalogue
+[module]
+kind = "substrate"
+roles = ["projection", "shapes", "spec", "vocab"]
+imports = ["foundation", "vocabulary", "quantification"]
+
+[module.extract]
+spec = ["spec/party.ttl"]
+```
+
 ## 4. Design Decisions
 
 **Role Occupancy has no property pointing back at whatever it's scoped to.** Earlier versions described occupancies as "scoped to an Instrument (or a specific Obligation within it)" which, read too literally, would mean declaring a property like `pty:withinInstrument` ranging over `ins:Instrument`, which Party cannot do without depending on a layer above it in the dependency order. The actual mechanism is the reverse: Scoping is established entirely from the referencing side.

@@ -46,6 +46,21 @@ python3 tools/literate_extract.py ontology/eligibility/README.md --layer eligibi
     --proofs-root tools/proofs --reference-root tools/reference --check
 ```
 
+The module's entry in the [repository catalogue](../../repository-catalogue.md)
+([ADR-A121](../../docs/architecture/decisions/ADR-A121-repository-catalogue.md)) follows.
+
+```toml repository-catalogue
+[module]
+kind = "substrate"
+roles = ["examples", "projection", "shapes", "spec", "test", "vocab"]
+imports = ["foundation", "vocabulary", "quantification", "party"]
+
+[module.extract]
+spec = ["spec/eligibility.ttl"]
+vocab = ["vocab/eligibility-vocab.ttl"]
+shapes = ["shapes/structural.ttl", "shapes/constraints.ttl", "shapes/rules.ttl"]
+```
+
 ## 4. Strategy Algebra
 
 - Included match strategies: `ExactMatch`, `SetMembership`, `IntervalContainment`, `HierarchicalMatch`, `Wildcard`.

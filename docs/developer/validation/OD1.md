@@ -94,3 +94,8 @@ mise run check:ontology-catalog
   (generated regions). OD1 parses and checks them.
 - Subsection checks inside section 6. They come with the grammar, in OD3.
 - Any README migrated to the layout. The first is Eligibility, in OD6.
+
+## Results
+
+2026-10-17: the maintainer ran the commands above, and the tests pass. The three implementation choices are
+agreed. The adversarial probes were not run.

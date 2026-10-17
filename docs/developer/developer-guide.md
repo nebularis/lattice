@@ -92,21 +92,37 @@ documents (ADR-A120 addendum, AIR-2.0).
 
 ```bash
 # Check a layer's generated files still match its README (writes nothing, exits non-zero on drift)
-python tools/literate_extract.py ontology/surface/README.md --layer surface --root . \
+mise exec -- python tools/literate_extract.py ontology/surface/README.md --layer surface --root . \
   --shapes shapes/structural.ttl shapes/constraints.ttl --check
 
 # Regenerate them (same command, without --check)
-python tools/literate_extract.py ontology/surface/README.md --layer surface --root . \
+mise exec -- python tools/literate_extract.py ontology/surface/README.md --layer surface --root . \
   --shapes shapes/structural.ttl shapes/constraints.ttl
 
 # Extract a formalised layer's Isabelle datatype too
-python tools/literate_extract.py ontology/eligibility/README.md --layer eligibility --root . \
+mise exec -- python tools/literate_extract.py ontology/eligibility/README.md --layer eligibility --root . \
   --proofs-root tools/proofs --shapes shapes/structural.ttl shapes/constraints.ttl --check
 
 # A nested applied-insurance module, with several vocabulary documents
-python tools/literate_extract.py ontology/applied/insurance/peril/README.md \
+mise exec -- python tools/literate_extract.py ontology/applied/insurance/peril/README.md \
   --layer applied/insurance/peril --root . \
   --shapes shapes/structural.ttl shapes/constraints.ttl --check
+```
+
+Each module's extraction contract is also stated in its README's entry in the
+[repository catalogue](../../repository-catalogue.md)
+([ADR-A121](../architecture/decisions/ADR-A121-repository-catalogue.md)), read by
+`tools/lattice_repo_catalogue.py`, the one module that finds the repository root and says where a
+module's artefacts are. `mise run check:catalogue`, part of `check`, fails when the catalogue and the
+tree disagree.
+
+```bash
+# The files a module's README generates for one role, in extraction order
+mise exec -- python tools/lattice_repo_catalogue.py paths instrument shapes
+
+# A role's directory, and the whole catalogue as JSON for other runtimes
+mise exec -- python tools/lattice_repo_catalogue.py path party projection
+mise exec -- python tools/lattice_repo_catalogue.py dump --json
 ```
 
 **Not every layer passes `--check` today.** Vocabulary, Party and Eligibility's own `spec`/`vocab`/

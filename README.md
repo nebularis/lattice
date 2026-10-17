@@ -89,6 +89,7 @@ lattice/
 ├── LICENSE                  # MPL 2.0 — ontology artefacts, tools/
 ├── LICENSE-DOCS.md          # CC BY-SA 4.0 — documentation, specifications
 ├── CONTRIBUTING.md
+├── repository-catalogue.md  # Where things live, read by tools (ADR-A121)
 ├── AGENTS.md                # Always-on instructions for AI agents (ADR-A117), imported by CLAUDE.md
 ├── .claude/skills/          # Agent skills, loaded by task, shared as a plugin by .claude-plugin/
 │

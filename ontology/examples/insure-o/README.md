@@ -55,3 +55,14 @@ The package uses the minimal subclassing approach agreed in the plan:
 - `execution/` — shadow-compilation and operational profile examples
 - `cases/` — worked scenarios
 - `test/` — defect fixtures
+
+## Repository catalogue entry
+
+The module's entry in the [repository catalogue](../../../repository-catalogue.md)
+([ADR-A121](../../../docs/architecture/decisions/ADR-A121-repository-catalogue.md)) follows.
+
+```toml repository-catalogue
+[module]
+kind = "example"
+roles = ["cases", "execution", "projection", "shapes", "spec", "test", "vocab"]
+```

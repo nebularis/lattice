@@ -42,3 +42,14 @@ This module never grows a domain-specific term (an insurance code, a lending pro
 on). A domain-specific classification, however cross-cutting it feels within that domain, belongs
 in that domain's own `common/` module (ADR-A98 decision 1) — `insurance/common/`'s `icm:peril` and
 the rest are the example, not `cls:` growing an insurance-shaped property.
+
+## Repository catalogue entry
+
+The module's entry in the [repository catalogue](../../../repository-catalogue.md)
+([ADR-A121](../../../docs/architecture/decisions/ADR-A121-repository-catalogue.md)) follows.
+
+```toml repository-catalogue
+[module]
+kind = "applied"
+roles = ["spec", "vocab"]
+```

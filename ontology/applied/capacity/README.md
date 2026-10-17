@@ -93,3 +93,14 @@ Breaking versions at major version zero ([ADR-A113](../../../docs/architecture/d
   0.8.0 (CCS C9b2), with no other change.
 - 0.15.0 (breaking): re-pinned to `behaviour-runtime` 0.15.0 and Eligibility 0.12.0, whose set
   readings decide on completeness only under a closure (ADR-A105), with no other change (CCS HQ-6a.1).
+
+## Repository catalogue entry
+
+The module's entry in the [repository catalogue](../../../repository-catalogue.md)
+([ADR-A121](../../../docs/architecture/decisions/ADR-A121-repository-catalogue.md)) follows.
+
+```toml repository-catalogue
+[module]
+kind = "applied"
+roles = ["docs", "spec"]
+```

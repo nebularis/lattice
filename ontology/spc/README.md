@@ -38,6 +38,18 @@ Genuine specification content is fenced ` ```turtle-spec ` and can be concatenat
 
 If regenerating `spec/spc.ttl` from this document, concatenate the prefix block in §2 and then every `turtle-spec` block from §5 through §19, in order.
 
+The module's entry in the [repository catalogue](../../repository-catalogue.md)
+([ADR-A121](../../docs/architecture/decisions/ADR-A121-repository-catalogue.md)) follows.
+
+```toml repository-catalogue
+[module]
+kind = "standalone"
+roles = ["docs", "execution", "shapes", "spec", "vocab"]
+
+[module.extract]
+spec = ["spec/spc.ttl"]
+```
+
 ## 4. Design Decisions
 
 - The ontology targets **OWL 2 DL**, and uses qualified cardinalities, keys, and property chains in the structural layer.

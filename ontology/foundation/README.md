@@ -76,6 +76,20 @@ The blocks are fragments, not independently complete files — prefixes are decl
 
 **Regenerating this document from `spec/foundation.ttl`:** walk the ontology's classes and properties, and for each, render its `rdfs:comment` as Definition, its `fnd:utility` as Utility, and its full axiom set as the Turtle block, in the section order given by §5–9 below (Annotation Properties, Classes, Object and Data Properties, Keys, Alignments). Because the prose is sourced from annotation values rather than written independently, the two artefacts can't drift apart from ordinary editing of either one — drift can only happen if someone edits the rendered Markdown prose directly instead of the annotation value it came from, which the convention above is designed to make unnecessary.
 
+The module's entry in the [repository catalogue](../../repository-catalogue.md)
+([ADR-A121](../../docs/architecture/decisions/ADR-A121-repository-catalogue.md)) follows.
+
+```toml repository-catalogue
+[module]
+kind = "substrate"
+roles = ["examples", "shapes", "spec", "vocab"]
+imports = []
+
+[module.extract]
+spec = ["spec/foundation.ttl"]
+shapes = ["shapes/constraints.ttl"]
+```
+
 ## 4. Design Decisions
 
 **Alignment with PROV-O.** Evidence is modelled as a subclass of `prov:Entity`, and `fnd:assertedBy` as a sub-property of `prov:wasAttributedTo`. Temporal scoping is *not* aligned with OWL-Time's `time:Instant`/`time:Interval` apparatus, since that would require modelling `validFrom`/`validTo` as individuals rather than plain `xsd:dateTime` literals. This is a considered asymmetry, not an oversight, and it's reversible later if temporal reasoning requirements grow.

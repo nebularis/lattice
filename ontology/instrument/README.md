@@ -67,6 +67,21 @@ python tools/literate_extract.py ontology/instrument/README.md --layer instrumen
     --shapes shapes/structural.ttl shapes/constraints.ttl shapes/single-expression.ttl
 ```
 
+The module's entry in the [repository catalogue](../../repository-catalogue.md)
+([ADR-A121](../../docs/architecture/decisions/ADR-A121-repository-catalogue.md)) follows.
+
+```toml repository-catalogue
+[module]
+kind = "substrate"
+roles = ["examples", "shapes", "spec", "vocab"]
+imports = ["foundation", "vocabulary", "quantification", "party", "eligibility", "wording", "behaviour"]
+
+[module.extract]
+spec = ["spec/instrument.ttl", "spec/instrument-acts.ttl"]
+vocab = ["vocab/instrument-vocab.ttl"]
+shapes = ["shapes/structural.ttl", "shapes/constraints.ttl", "shapes/single-expression.ttl"]
+```
+
 ## 4. Terminology
 
 A lawyer reads words such as "term", "obligation", "exclusion" and "power" as terms of the art developed over millennia of law making, with centuries of meaning behind them. By contrast, a software engineer reads terms like "relation", "template" and "variable", in the context of computing. The naming convention for this layer attempts to adopt the terms a contract lawyer would recognise. This section defines, for every class and property, where its name comes from and why it was chosen over the alternatives. Historical naming conventions and adjustment decisions are recorded in the [CCS sketch](../../docs/developer/sketches/computable-contract-substrate.md) §1.1 and §2, CC-D1 and ADR-A104.

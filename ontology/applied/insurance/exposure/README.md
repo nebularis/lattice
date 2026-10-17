@@ -82,6 +82,20 @@ python3 tools/literate_extract.py ontology/applied/insurance/exposure/README.md 
              shapes/profiles/construction-protection.ttl shapes/profiles/cyber-posture.ttl --check
 ```
 
+The module's entry in the [repository catalogue](../../../../repository-catalogue.md)
+([ADR-A121](../../../../docs/architecture/decisions/ADR-A121-repository-catalogue.md)) follows.
+
+```toml repository-catalogue
+[module]
+kind = "applied"
+roles = ["examples", "shapes", "spec", "vocab"]
+
+[module.extract]
+spec = ["spec/exposure.ttl"]
+vocab = ["vocab/exposure-vocab.ttl"]
+shapes = ["shapes/structural.ttl", "shapes/constraints.ttl", "shapes/profiles/construction-protection.ttl", "shapes/profiles/cyber-posture.ttl"]
+```
+
 ## 4. Core classes (AIR-4.1)
 
 ### 4.1 Legal entities and control

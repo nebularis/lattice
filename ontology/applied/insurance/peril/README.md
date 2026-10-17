@@ -96,6 +96,20 @@ python3 tools/literate_extract.py ontology/applied/insurance/peril/README.md \
     --shapes shapes/structural.ttl shapes/constraints.ttl --check
 ```
 
+The module's entry in the [repository catalogue](../../../../repository-catalogue.md)
+([ADR-A121](../../../../docs/architecture/decisions/ADR-A121-repository-catalogue.md)) follows.
+
+```toml repository-catalogue
+[module]
+kind = "applied"
+roles = ["examples", "shapes", "spec", "vocab"]
+
+[module.extract]
+spec = ["spec/peril.ttl"]
+vocab = ["vocab/peril-vocab.ttl", "vocab/peril-intensity.ttl"]
+shapes = ["shapes/structural.ttl", "shapes/constraints.ttl"]
+```
+
 ## 5. The `prl:` properties
 
 ### 5.1 Kind and part, triggering, overlap, characteristics (ADR-A99 decision 4)

@@ -54,6 +54,21 @@ python3 tools/literate_extract.py ontology/behaviour/README.md --layer behaviour
     --shapes shapes/structural.ttl --check
 ```
 
+The module's entry in the [repository catalogue](../../repository-catalogue.md)
+([ADR-A121](../../docs/architecture/decisions/ADR-A121-repository-catalogue.md)) follows.
+
+```toml repository-catalogue
+[module]
+kind = "substrate"
+roles = ["examples", "execution", "projection", "shapes", "spec", "test", "vocab"]
+imports = ["foundation", "vocabulary", "quantification", "party", "eligibility"]
+
+[module.extract]
+spec = ["spec/behaviour.ttl", "spec/behaviour-runtime.ttl"]
+vocab = ["vocab/behaviour-vocab.ttl"]
+shapes = ["shapes/structural.ttl"]
+```
+
 ## 4. Four-tier model
 
 Behaviour distinguishes four tiers:

@@ -3,7 +3,7 @@
 # Improved Ontology Documentation: Status
 
 **Unit ID:** `improved-ontology-documentation` (absorbs `repository-catalogue`)
-**Status:** In progress. OD0 accepted and committed. OD1 authored, not yet run.
+**Status:** In progress. OD0 accepted. OD1 passed. RC1 authored, not yet run.
 **Last updated:** 2026-10-16
 **Branch:** `docs/literate-v2`
 **Plan:** [improved-ontology-documentation.md](../plans/improved-ontology-documentation.md)
@@ -20,19 +20,19 @@ ontology file has changed.
 
 ## Next action
 
-1. The maintainer reviews the [OD1 Validation Pack](../validation/OD1.md), including its three
-   implementation choices, and runs its commands. OD1 is authored, not yet run.
-2. Then RC1 (the catalogue and its reader), and OD2 and OD3, which build on OD1.
+1. The maintainer reviews the [RC1 Validation Pack](../validation/RC1.md), including its eight implementation
+   choices, and runs its commands. RC1 is authored, not yet run.
+2. Then RC2, which moves the tools onto the reader, and OD2 and OD3 on the extractor.
 
 ## Slices
 
 | Slice | State | Blocked on |
 |---|---|---|
 | OD0 ADRs, the AGENTS.md rule, the conventions document | accepted 2026-10-17, committed, [Validation Pack](../validation/OD0.md) | |
-| RC1 catalogue and reader | planned | OD0 |
+| RC1 catalogue and reader | authored 2026-10-17, not yet run, [Validation Pack](../validation/RC1.md) | the maintainer's run and review |
 | RC2 consumers use the reader | planned | RC1 |
 | RC3 roots, AGENTS.md table, bypass scan | planned | RC2 |
-| OD1 scanner and markers | authored 2026-10-17, not yet run, [Validation Pack](../validation/OD1.md) | the maintainer's run and review |
+| OD1 scanner and markers | passed 2026-10-17, choices agreed, [Validation Pack](../validation/OD1.md) | the maintainer's merge |
 | OD2 sections 1 and 2 | planned | OD1 |
 | OD3 section 6 to OWL | planned | OD1 |
 | OD4 section 6 to SHACL | planned | OD3 |
@@ -112,3 +112,10 @@ None.
   fence, no tagged fence inside a comment and no marker-like comment, so the new scanner leaves every
   extraction unchanged (OD1-T1 tests it). `tools/test_literate_extract.py`, which no task ran, joins
   `check:ontology-catalog`. Three implementation choices are listed in the Validation Pack.
+- 2026-10-17: the maintainer ran OD1's tests, which pass, and agreed its three implementation choices. No
+  adversarial probe was run at the gate. RC1 started.
+- 2026-10-17: RC1 authored, not yet run. `repository-catalogue.md` at the root lists 19 modules, each README
+  holds its entry, and `tools/lattice_repo_catalogue.py` reads and checks them (`check:catalogue`, in
+  `check`). The extraction contracts were taken from what each README generates, by the extractor's
+  `plan()` in memory, and the substrate imports from `import_guard.ALLOWED`, and tests hold both. Eight
+  implementation choices and two deviations are in the Validation Pack.

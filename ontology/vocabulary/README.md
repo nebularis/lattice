@@ -42,6 +42,19 @@ Same template and same two-tag extraction convention as Foundation's document: g
 
 One small refinement versus Foundation's document, worth naming since consistency across layer documents matters: **§8 (Alignments) is the only place a relationship to an external vocabulary — here, SKOS — is asserted.** Foundation's document states `fnd:Evidence rdfs:subClassOf prov:Entity` both inline in the class's own block (§6) and again in its Alignments section (§8) — harmless, since duplicate triples collapse in RDF's set semantics, but untidy. This document doesn't repeat that pattern: `voc:ConceptScheme`'s block in §6 declares only its LATTICE-internal parentage (`fnd:Version`, `fnd:Governable`); its SKOS parentage is stated once, in §8. Worth tidying Foundation's document to match at some point — noted in [§11](#11-open-items).
 
+The module's entry in the [repository catalogue](../../repository-catalogue.md)
+([ADR-A121](../../docs/architecture/decisions/ADR-A121-repository-catalogue.md)) follows.
+
+```toml repository-catalogue
+[module]
+kind = "substrate"
+roles = ["examples", "shapes", "spec"]
+imports = ["foundation"]
+
+[module.extract]
+spec = ["spec/vocabulary.ttl"]
+```
+
 ## 4. Design Decisions
 
 **Scheme-level versioning through Foundation. Concept-level versioning explicitly out of scope.** A `ConceptScheme` is a `fnd:Version` — it has identity, and one version of a scheme can supersede another. An individual `skos:Concept` does not get its own independent version thread here. Tracking how a specific concept's meaning drifts or splits across scheme versions is a cross-version alignment problem that we do not address in this ontology.
