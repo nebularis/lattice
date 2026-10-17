@@ -8,10 +8,11 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from rdflib import Graph, Namespace
-from rdflib.namespace import SH
+from rdflib import Graph, Literal, Namespace
+from rdflib.namespace import RDF, SH
+from rdflib.plugins.sparql.processor import SPARQLProcessor
 
-from conftest import GraphCache, ValidationCache
+from conftest import GraphCache, ValidationCache, _sparql_translated_once
 
 ROOT = Path(__file__).resolve().parents[1]
 FOUNDATION_SPEC = ROOT / "ontology" / "foundation" / "spec" / "foundation.ttl"
@@ -258,3 +259,74 @@ def test_is_a_drop_in_replacement_for_pyshacl_validate() -> None:
     )
     conforms, _, _ = cache(ok, shacl_graph=shapes, inference="none", advanced=True)
     assert conforms is True
+
+
+def _count_parses(monkeypatch: pytest.MonkeyPatch) -> list[str]:
+    """Every text the cache hands to rdflib's parser, with an empty cache."""
+    import conftest as conftest_module
+
+    parses: list[str] = []
+    real = conftest_module.parseQuery
+
+    def counting(text, *args, **kwargs):
+        parses.append(text)
+        return real(text, *args, **kwargs)
+
+    monkeypatch.setattr(conftest_module, "parseQuery", counting)
+    monkeypatch.setattr(conftest_module, "_TRANSLATED_QUERIES", {})
+    return parses
+
+
+def test_a_query_text_is_parsed_once_however_often_it_runs(monkeypatch: pytest.MonkeyPatch) -> None:
+    """pySHACL runs one query text per focus node with different `initBindings`."""
+    parses = _count_parses(monkeypatch)
+    graph = Graph()
+    graph.add((EX.a, EX.p, Literal("one")))
+    graph.add((EX.b, EX.p, Literal("two")))
+    text = f"SELECT ?o WHERE {{ ?s <{EX.p}> ?o }}"
+    with _sparql_translated_once():
+        found = [sorted(str(row.o) for row in graph.query(text, initBindings={"s": focus})) for focus in (EX.a, EX.b, EX.a)]
+    assert found == [["one"], ["two"], ["one"]]
+    assert len(parses) == 1
+
+
+def test_the_same_text_under_different_prefix_bindings_is_translated_separately(monkeypatch: pytest.MonkeyPatch) -> None:
+    parses = _count_parses(monkeypatch)
+    first_ns = Namespace("https://example.org/lattice/test-graph-cache/first#")
+    second_ns = Namespace("https://example.org/lattice/test-graph-cache/second#")
+    first, second = Graph(), Graph()
+    first.bind("ex", first_ns)
+    second.bind("ex", second_ns)
+    first.add((first_ns.s, RDF.type, first_ns.T))
+    second.add((second_ns.s, RDF.type, second_ns.T))
+    text = "SELECT ?s WHERE { ?s a ex:T }"
+    with _sparql_translated_once():
+        found = [len(list(graph.query(text))) for graph in (first, second, first)]
+    assert found == [1, 1, 1]  # a shared translation would send `second` to the first namespace and find nothing
+    assert len(parses) == 2
+
+
+def test_the_query_patch_is_undone_after_the_block_even_on_an_error() -> None:
+    original = SPARQLProcessor.query
+    with pytest.raises(RuntimeError):
+        with _sparql_translated_once():
+            assert SPARQLProcessor.query is not original
+            raise RuntimeError("raised inside the block")
+    assert SPARQLProcessor.query is original
+
+
+def test_validated_runs_pyshacl_with_the_query_cache_active(monkeypatch: pytest.MonkeyPatch) -> None:
+    import conftest as conftest_module
+
+    original = SPARQLProcessor.query
+    active_during_call = []
+
+    def fake_validate(data, shacl_graph, **options):
+        active_during_call.append(SPARQLProcessor.query is not original)
+        return ("ok", "report", "text")
+
+    monkeypatch.setattr(conftest_module, "_pyshacl_validate", fake_validate)
+    graph_cache = GraphCache()
+    ValidationCache(graph_cache)(graph_cache(FOUNDATION_SPEC), shacl_graph=graph_cache(FOUNDATION_SHAPES))
+    assert active_during_call == [True]
+    assert SPARQLProcessor.query is original

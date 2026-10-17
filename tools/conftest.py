@@ -20,6 +20,12 @@ only, no sibling support module):
   data and shapes graphs plus every validation option, so the violation view
   and the warning view of the same run share one physical `validate()` call.
 
+A third speed-up sits under `validated`. pySHACL runs each SPARQL constraint once
+per focus node and rdflib parses the query text again every time, which was about
+90% of a validation's cost in `test_exposure_ontology.py`. `_sparql_translated_once`
+parses each distinct text once while `validated` runs pySHACL. Tests that call
+`pyshacl.validate` directly do not get it.
+
 **A cached graph is a shared object across the whole session. A test must
 never mutate one.** Every mutation helper in this suite already builds a
 fresh graph for a changed example (a fresh parse, or `cached_graph + data`,
@@ -65,15 +71,19 @@ forward-slash paths on every platform."""
 
 from __future__ import annotations
 
+import contextlib
 import re
 import shutil
 import sys
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any, Iterator, Sequence
 
 import pytest
 from pyshacl import validate as _pyshacl_validate
 from rdflib import Graph
+from rdflib.plugins.sparql.algebra import translateQuery
+from rdflib.plugins.sparql.parser import parseQuery
+from rdflib.plugins.sparql.processor import SPARQLProcessor
 
 ROOT = Path(__file__).resolve().parents[1]
 ONTOLOGY = ROOT / "ontology"
@@ -142,6 +152,46 @@ class GraphCache:
                 return
 
 
+_TRANSLATED_QUERIES: dict[tuple, Any] = {}
+
+
+@contextlib.contextmanager
+def _sparql_translated_once() -> Iterator[None]:
+    """While active, `SPARQLProcessor.query` translates each distinct query text
+    once and reuses the result, instead of parsing it again on every call.
+
+    pySHACL evaluates a SPARQL constraint with one `graph.query(text,
+    initBindings=...)` per focus node, and rdflib parses and translates `text`
+    from scratch each time with its pure-Python `pyparsing` grammar. Profiled on
+    `test_exposure_ontology.py`, one `validate()` issued 937 queries made of 30
+    distinct texts, and parsing plus translating them was about 90% of its 13s.
+    A translated query is the same object `prepareQuery` returns, which rdflib
+    documents as reusable with different `initBindings`, so only the repeated
+    parse is skipped. The key holds the namespace bindings and the base as well
+    as the text, because translation resolves prefixes and relative IRIs.
+
+    Scoped to the one pySHACL call it wraps and undone afterwards, so a test
+    that runs SPARQL on rdflib directly (the engine tests, for one) sees
+    rdflib's own behaviour. The cache itself outlives the call, so later
+    validations in the same process reuse earlier translations."""
+    original = SPARQLProcessor.query
+
+    def query(self, strOrQuery, initBindings=None, initNs=None, base=None, DEBUG=False):
+        if isinstance(strOrQuery, str):
+            key = (strOrQuery, base, tuple(sorted((prefix, str(namespace)) for prefix, namespace in dict(initNs or {}).items())))
+            translated = _TRANSLATED_QUERIES.get(key)
+            if translated is None:
+                translated = _TRANSLATED_QUERIES[key] = translateQuery(parseQuery(strOrQuery), base, initNs)
+            strOrQuery = translated
+        return original(self, strOrQuery, initBindings, initNs, base, DEBUG)
+
+    SPARQLProcessor.query = query
+    try:
+        yield
+    finally:
+        SPARQLProcessor.query = original
+
+
 class ValidationCache:
     """Memoises a whole pySHACL report, keyed on the *content* of the data and
     shapes graphs (not their Python identity) plus every validation option, so
@@ -180,7 +230,8 @@ class ValidationCache:
         cached = self._by_key.get(key)
         if cached is not None:
             return cached
-        result = _pyshacl_validate(data_graph, *args, shacl_graph=shacl_graph, **options)
+        with _sparql_translated_once():
+            result = _pyshacl_validate(data_graph, *args, shacl_graph=shacl_graph, **options)
         # pySHACL itself may have just added its own idempotent axioms to
         # either graph (see GraphCache.resnapshot's docstring); accepted, not
         # hidden, as this cache's own call is the only path a shapes graph
