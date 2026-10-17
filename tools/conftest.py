@@ -152,13 +152,28 @@ class GraphCache:
                 return
 
 
+_DECLARED_PREFIXES: dict[str, frozenset[str]] = {}
+_UNUSED_TREES: dict[str, Any] = {}
 _TRANSLATED_QUERIES: dict[tuple, Any] = {}
+
+
+def _declared_prefixes(text: str) -> frozenset[str]:
+    """The prefixes `text`'s own `PREFIX` lines declare, from one parse per text.
+    The tree from that parse is kept for the first translation only, because
+    translating may rewrite the tree it is given, so a later translation of the
+    same text parses again."""
+    declared = _DECLARED_PREFIXES.get(text)
+    if declared is None:
+        parsed = parseQuery(text)
+        declared = _DECLARED_PREFIXES[text] = frozenset(d.get("prefix", "") for d in parsed[0] if d.name == "PrefixDecl")
+        _UNUSED_TREES[text] = parsed
+    return declared
 
 
 @contextlib.contextmanager
 def _sparql_translated_once() -> Iterator[None]:
-    """While active, `SPARQLProcessor.query` translates each distinct query text
-    once and reuses the result, instead of parsing it again on every call.
+    """While active, `SPARQLProcessor.query` parses and translates each distinct
+    query text once and reuses the result, instead of doing both on every call.
 
     pySHACL evaluates a SPARQL constraint with one `graph.query(text,
     initBindings=...)` per focus node, and rdflib parses and translates `text`
@@ -167,21 +182,36 @@ def _sparql_translated_once() -> Iterator[None]:
     distinct texts, and parsing plus translating them was about 90% of its 13s.
     A translated query is the same object `prepareQuery` returns, which rdflib
     documents as reusable with different `initBindings`, so only the repeated
-    parse is skipped. The key holds the namespace bindings and the base as well
-    as the text, because translation resolves prefixes and relative IRIs.
+    parse is skipped.
+
+    Translation resolves a prefixed name from the query's own `PREFIX` lines,
+    and otherwise from the graph's namespace bindings, and resolves relative
+    IRIs against the base. The key therefore holds the text, the base, and the
+    graph's bindings for the prefixes the text uses without declaring. Keying on
+    all of a graph's bindings missed the cache whenever two graphs bound
+    different prefixes that the query never mentions (1,258 parses for 94
+    distinct texts in `test_parameter_bindings.py`). A prefix is counted as used
+    when `prefix:` occurs anywhere in the text, which can only include more
+    bindings than needed and so only splits entries, never shares a wrong one.
 
     Scoped to the one pySHACL call it wraps and undone afterwards, so a test
     that runs SPARQL on rdflib directly (the engine tests, for one) sees
-    rdflib's own behaviour. The cache itself outlives the call, so later
-    validations in the same process reuse earlier translations."""
+    rdflib's own behaviour. The caches outlive the call, so later validations
+    in the same process reuse earlier translations."""
     original = SPARQLProcessor.query
 
     def query(self, strOrQuery, initBindings=None, initNs=None, base=None, DEBUG=False):
         if isinstance(strOrQuery, str):
-            key = (strOrQuery, base, tuple(sorted((prefix, str(namespace)) for prefix, namespace in dict(initNs or {}).items())))
+            declared = _declared_prefixes(strOrQuery)
+            used = tuple(sorted(
+                (prefix, str(namespace)) for prefix, namespace in dict(initNs or {}).items()
+                if prefix not in declared and f"{prefix}:" in strOrQuery
+            ))
+            key = (strOrQuery, base, used)
             translated = _TRANSLATED_QUERIES.get(key)
             if translated is None:
-                translated = _TRANSLATED_QUERIES[key] = translateQuery(parseQuery(strOrQuery), base, initNs)
+                parsed = _UNUSED_TREES.pop(strOrQuery, None) or parseQuery(strOrQuery)
+                translated = _TRANSLATED_QUERIES[key] = translateQuery(parsed, base, initNs)
             strOrQuery = translated
         return original(self, strOrQuery, initBindings, initNs, base, DEBUG)
 

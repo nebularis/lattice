@@ -273,7 +273,8 @@ def _count_parses(monkeypatch: pytest.MonkeyPatch) -> list[str]:
         return real(text, *args, **kwargs)
 
     monkeypatch.setattr(conftest_module, "parseQuery", counting)
-    monkeypatch.setattr(conftest_module, "_TRANSLATED_QUERIES", {})
+    for name in ("_DECLARED_PREFIXES", "_UNUSED_TREES", "_TRANSLATED_QUERIES"):
+        monkeypatch.setattr(conftest_module, name, {})
     return parses
 
 
@@ -304,6 +305,40 @@ def test_the_same_text_under_different_prefix_bindings_is_translated_separately(
         found = [len(list(graph.query(text))) for graph in (first, second, first)]
     assert found == [1, 1, 1]  # a shared translation would send `second` to the first namespace and find nothing
     assert len(parses) == 2
+
+
+def test_bindings_for_prefixes_the_text_does_not_use_do_not_split_the_cache(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Example graphs bind different prefixes, so keying on all of a graph's
+    bindings missed the cache for a text that mentions none of them."""
+    parses = _count_parses(monkeypatch)
+    graphs = []
+    for name in ("one", "two", "three"):
+        graph = Graph()
+        graph.bind(f"only-{name}", Namespace(f"https://example.org/lattice/test-graph-cache/{name}#"))
+        graph.add((EX.a, EX.p, Literal(name)))
+        graphs.append(graph)
+    text = f"SELECT ?o WHERE {{ <{EX.a}> <{EX.p}> ?o }}"
+    with _sparql_translated_once():
+        found = [[str(row.o) for row in graph.query(text)] for graph in graphs]
+    assert found == [["one"], ["two"], ["three"]]
+    assert len(parses) == 1
+
+
+def test_a_prefix_the_text_declares_itself_does_not_split_the_cache(monkeypatch: pytest.MonkeyPatch) -> None:
+    parses = _count_parses(monkeypatch)
+    first_ns = Namespace("https://example.org/lattice/test-graph-cache/first#")
+    second_ns = Namespace("https://example.org/lattice/test-graph-cache/second#")
+    declared = Namespace("https://example.org/lattice/test-graph-cache/declared#")
+    first, second = Graph(), Graph()
+    first.bind("ex", first_ns)
+    second.bind("ex", second_ns)
+    for graph in (first, second):
+        graph.add((declared.s, RDF.type, declared.T))
+    text = f"PREFIX ex: <{declared}> SELECT ?s WHERE {{ ?s a ex:T }}"
+    with _sparql_translated_once():
+        found = [len(list(graph.query(text))) for graph in (first, second)]
+    assert found == [1, 1]  # the text's own PREFIX wins over either graph's binding
+    assert len(parses) == 1
 
 
 def test_the_query_patch_is_undone_after_the_block_even_on_an_error() -> None:
