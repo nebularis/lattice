@@ -7,12 +7,20 @@ with ``mise run bootstrap:reasoning-testkit``, and callers skip when
 ``available()`` is false. ``LATTICE_REASONING_TESTKIT`` overrides the jar path.
 ``LATTICE_REASONING_TIMEOUT`` (seconds, default 300) bounds one call, so a stalled JVM fails
 the test instead of hanging the run (TD-31).
+
+Each call starts a JVM, and for the closures the tests send, starting it and loading the OWL API
+and HermiT classes is about half of a call. ``jvm_options`` shortens that with a class-data
+archive that the JVM builds beside the jar on first use, a serial collector, and C1-only
+compilation. Over 41 closures from the ontology tests that took 51.8s to 29.9s. The archive
+is rebuilt by the JVM when the jar changes. ``LATTICE_REASONING_JVM_OPTIONS`` replaces the
+options, for example with an empty string to run the JVM with its defaults.
 """
 
 from __future__ import annotations
 
 import json
 import os
+import shlex
 import shutil
 import subprocess
 import tempfile
@@ -31,6 +39,22 @@ JAR = Path(os.environ.get(
 
 
 TIMEOUT = int(os.environ.get("LATTICE_REASONING_TIMEOUT", "300"))
+
+
+def jvm_options() -> list[str]:
+    """JVM startup options for one testkit call. The archive sits beside the jar, in a
+    directory that is build output. Logging is off so that a missing or stale archive, or an
+    unwritable directory, does not print anything and the call simply runs without it."""
+    override = os.environ.get("LATTICE_REASONING_JVM_OPTIONS")
+    if override is not None:
+        return shlex.split(override)
+    return [
+        "-XX:+AutoCreateSharedArchive",
+        f"-XX:SharedArchiveFile={JAR.with_suffix('.jsa')}",
+        "-XX:+UseSerialGC",
+        "-XX:TieredStopAtLevel=1",
+        "-Xlog:disable",
+    ]
 
 
 def available() -> bool:
@@ -65,6 +89,6 @@ def run(command: str, *iris: str, graphs: Iterable[Graph]):
         path = Path(directory) / "closure.owl"
         anonymise_rules(merged).serialize(path, format="xml")
         output = subprocess.run(
-            ["java", "--sun-misc-unsafe-memory-access=allow", "-jar", str(JAR), command, *iris, str(path)], capture_output=True, text=True, check=True, timeout=TIMEOUT
+            ["java", *jvm_options(), "--sun-misc-unsafe-memory-access=allow", "-jar", str(JAR), command, *iris, str(path)], capture_output=True, text=True, check=True, timeout=TIMEOUT
         ).stdout
     return json.loads(output.strip().splitlines()[-1])["result"]

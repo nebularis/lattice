@@ -114,7 +114,9 @@ the test-only `platform/reasoning-testkit` jar as a subprocess, passing one
 merged Turtle file and reading one JSON line back. Tests that need it are
 decorated `@unittest.skipUnless(reasoning.available(), ...)`. Build the jar
 with `mise run bootstrap:reasoning-testkit`, or point
-`LATTICE_REASONING_TESTKIT` at one. `test_reasoner.py` checks that HermiT
+`LATTICE_REASONING_TESTKIT` at one. Each call starts a JVM, so `reasoning.py` starts it
+with a class-data archive that the JVM builds beside the jar on first use. That roughly halves
+a call. `LATTICE_REASONING_JVM_OPTIONS` replaces the options. `test_reasoner.py` checks that HermiT
 derives what the SWRL rules derive, and `test_owl_backend.py` runs the OWL
 checks. Interval rules use `swrlb` builtins,
 which HermiT does not evaluate, so they are not checked under a reasoner.
