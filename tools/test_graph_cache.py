@@ -12,7 +12,7 @@ from rdflib import Graph, Literal, Namespace
 from rdflib.namespace import RDF, SH
 from rdflib.plugins.sparql.processor import SPARQLProcessor
 
-from conftest import GraphCache, ValidationCache, _sparql_translated_once
+from conftest import GraphCache, ValidationCache, _canonical_query, _sparql_translated_once
 
 ROOT = Path(__file__).resolve().parents[1]
 FOUNDATION_SPEC = ROOT / "ontology" / "foundation" / "spec" / "foundation.ttl"
@@ -273,7 +273,7 @@ def _count_parses(monkeypatch: pytest.MonkeyPatch) -> list[str]:
         return real(text, *args, **kwargs)
 
     monkeypatch.setattr(conftest_module, "parseQuery", counting)
-    for name in ("_DECLARED_PREFIXES", "_UNUSED_TREES", "_TRANSLATED_QUERIES"):
+    for name in ("_CANONICAL_QUERIES", "_DECLARED_PREFIXES", "_UNUSED_TREES", "_TRANSLATED_QUERIES"):
         monkeypatch.setattr(conftest_module, name, {})
     return parses
 
@@ -338,6 +338,37 @@ def test_a_prefix_the_text_declares_itself_does_not_split_the_cache(monkeypatch:
     with _sparql_translated_once():
         found = [len(list(graph.query(text))) for graph in (first, second)]
     assert found == [1, 1]  # the text's own PREFIX wins over either graph's binding
+    assert len(parses) == 1
+
+
+def test_prefix_declarations_are_sorted_whatever_order_the_text_lists_them_in() -> None:
+    first = "PREFIX b: <https://example.org/b#>\nPREFIX a: <https://example.org/a#>\n\nSELECT ?s WHERE { ?s a:p b:o }"
+    second = "PREFIX a: <https://example.org/a#>\nPREFIX b: <https://example.org/b#>\n\nSELECT ?s WHERE { ?s a:p b:o }"
+    assert _canonical_query(first) == _canonical_query(second)
+    assert _canonical_query(first).endswith("SELECT ?s WHERE { ?s a:p b:o }")
+
+
+def test_a_text_that_declares_a_prefix_twice_keeps_its_order() -> None:
+    twice = "PREFIX a: <https://example.org/one#>\nPREFIX b: <https://example.org/b#>\nPREFIX a: <https://example.org/two#>\nSELECT ?s WHERE { ?s a:p b:o }"
+    assert _canonical_query(twice) == twice
+
+
+def test_a_text_without_leading_prefixes_is_unchanged() -> None:
+    plain = "SELECT ?s WHERE { ?s ?p ?o }"
+    assert _canonical_query(plain) == plain
+    inline = "SELECT ?s WHERE { ?s ?p ?o } # PREFIX a: <https://example.org/a#>"
+    assert _canonical_query(inline) == inline
+
+
+def test_the_same_query_with_its_prefixes_in_another_order_is_parsed_once(monkeypatch: pytest.MonkeyPatch) -> None:
+    parses = _count_parses(monkeypatch)
+    graph = Graph()
+    graph.add((EX.a, EX.p, Literal("one")))
+    body = f"SELECT ?o WHERE {{ <{EX.a}> a:p ?o . FILTER (b:x = b:x) }}"
+    declarations = ["PREFIX a: <https://example.org/lattice/test-graph-cache/>", "PREFIX b: <https://example.org/other#>"]
+    with _sparql_translated_once():
+        found = [[str(row.o) for row in graph.query("\n".join(order) + "\n" + body)] for order in (declarations, declarations[::-1], declarations)]
+    assert found == [["one"], ["one"], ["one"]]
     assert len(parses) == 1
 
 

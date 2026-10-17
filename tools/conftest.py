@@ -152,9 +152,34 @@ class GraphCache:
                 return
 
 
+_CANONICAL_QUERIES: dict[str, str] = {}
 _DECLARED_PREFIXES: dict[str, frozenset[str]] = {}
 _UNUSED_TREES: dict[str, Any] = {}
 _TRANSLATED_QUERIES: dict[tuple, Any] = {}
+_PREFIX_DECLARATION = re.compile(r"\s*PREFIX[ \t]+([^\s:]*):[ \t]*<[^>\s]*>", re.IGNORECASE)
+
+
+def _canonical_query(text: str) -> str:
+    """`text` with its leading `PREFIX` declarations sorted, one per line.
+
+    pySHACL writes the declarations from a dict that follows the shapes graph, so
+    the same constraint reaches rdflib with its prefixes in a different order from
+    one validation to the next (511 distinct texts in 512 parses for the wording
+    tests). Order does not change what a query means, unless a prefix is declared
+    twice and the later one wins, so a text that declares one twice is left as it is."""
+    canonical = _CANONICAL_QUERIES.get(text)
+    if canonical is None:
+        declarations, position = [], 0
+        while (found := _PREFIX_DECLARATION.match(text, position)):
+            declarations.append((found.group(1), found.group(0).strip()))
+            position = found.end()
+        names = [name for name, _ in declarations]
+        if len(declarations) < 2 or len(set(names)) != len(names):
+            canonical = text
+        else:
+            canonical = "\n".join(sorted(declaration for _, declaration in declarations)) + "\n" + text[position:]
+        _CANONICAL_QUERIES[text] = canonical
+    return canonical
 
 
 def _declared_prefixes(text: str) -> frozenset[str]:
@@ -182,7 +207,8 @@ def _sparql_translated_once() -> Iterator[None]:
     distinct texts, and parsing plus translating them was about 90% of its 13s.
     A translated query is the same object `prepareQuery` returns, which rdflib
     documents as reusable with different `initBindings`, so only the repeated
-    parse is skipped.
+    parse is skipped. The text is first put in a canonical order of its `PREFIX`
+    declarations (`_canonical_query`).
 
     Translation resolves a prefixed name from the query's own `PREFIX` lines,
     and otherwise from the graph's namespace bindings, and resolves relative
@@ -202,15 +228,16 @@ def _sparql_translated_once() -> Iterator[None]:
 
     def query(self, strOrQuery, initBindings=None, initNs=None, base=None, DEBUG=False):
         if isinstance(strOrQuery, str):
-            declared = _declared_prefixes(strOrQuery)
+            text = _canonical_query(strOrQuery)
+            declared = _declared_prefixes(text)
             used = tuple(sorted(
                 (prefix, str(namespace)) for prefix, namespace in dict(initNs or {}).items()
-                if prefix not in declared and f"{prefix}:" in strOrQuery
+                if prefix not in declared and f"{prefix}:" in text
             ))
-            key = (strOrQuery, base, used)
+            key = (text, base, used)
             translated = _TRANSLATED_QUERIES.get(key)
             if translated is None:
-                parsed = _UNUSED_TREES.pop(strOrQuery, None) or parseQuery(strOrQuery)
+                parsed = _UNUSED_TREES.pop(text, None) or parseQuery(text)
                 translated = _TRANSLATED_QUERIES[key] = translateQuery(parsed, base, initNs)
             strOrQuery = translated
         return original(self, strOrQuery, initBindings, initNs, base, DEBUG)
