@@ -130,3 +130,7 @@ None for TM0.
   `--dist worksteal`, 9 to 11 percent faster on both machines. `dev:time-ontology-tests` reports worker
   finish times and memory. `tools/test_peril_vocabulary.py` alone now takes about 27s on four cores, so
   TD-45 can be reviewed.
+- 2026-10-17 (later). The reasoner now runs in one long-running JVM per Python process (`reasoning-testkit serve`, ADR-A83
+  addendum). 41 closures took 37.7s with a JVM per call and 6.3s through the server, and the suite on four
+  workers went from about 82s to about 55s. `dev:record-validations` and `dev:replay-validations` record every
+  validation the suite makes and replay them against changed shapes (`tools/validation_replay.py`).

@@ -74,7 +74,7 @@ This is the part to read first. The rules in §4 and §5 are not equally general
 | H3 | Parse a fixture once and copy it | blank-node labels are minted fresh by every parser | two parses never match as sets | the same | **any parser** |
 | H4 | Distribute tests with `worksteal`, not by file | none | 9 to 11% faster, two machines | not applicable | **harness** and xdist |
 | H5 | Use no more workers than cores that do real work | none | eight workers on 4 + 4 cores did no better than four | not applicable | **machine** |
-| H6 | Start the reasoner's JVM with a class-data archive | none | halves a call | not applicable | **JVM** |
+| H6 | Keep one reasoner JVM per process, started with a class-data archive | none | 41 closures 37.7 s to 6.3 s | not applicable | **JVM** |
 | H7 | Check the machine's power mode and memory before profiling | none | Low Power Mode made a run 3.5 times slower | not applicable | **machine** |
 
 ### 2.2 In words
@@ -154,6 +154,7 @@ R-D, four workers, `check:ontology-catalog`, each row cumulative. The container 
 | Prefix key, JVM class-data archive, peril shapes 0.3.1 (R1) | 103 s | 335 s |
 | `--dist worksteal` (H4) | 88 s | 330 s |
 | Prefix sort, exposure fixture copy, exposure shapes 0.1.1, wording shapes 0.4.1 | 71 s | 265 s |
+| A long-running reasoner JVM (H6), measured on its own against the row above on a different day | about 55 s against 82 s | |
 
 On R-E the run went from 237 s to 36 s. Of that, turning off the laptop's Low Power Mode accounted for a factor of 3.5 and the code changes for the rest (§5, H7).
 
@@ -293,11 +294,13 @@ was 9 to 11% faster and cost 2% more summed time, because each worker parses wha
 `PYTEST_XDIST_AUTO_NUM_WORKERS` sets what `auto` means. On R-E, eight workers on four performance and four efficiency cores gave the same wall time as four, and doubled the summed test time (331 s to 640 s), so the efficiency cores
 added nothing for this workload. **Scope:** machine. Whether macOS places the workers badly or the chip is power-limited was not isolated.
 
-### H6. Start the reasoner's JVM with a class-data archive
+### H6. Keep one reasoner JVM per process, started with a class-data archive
 
 A reasoner call starts a JVM, and starting it and loading the OWL API and HermiT classes was about half of a call. `reasoning.run` passes `-XX:+AutoCreateSharedArchive` with an archive beside the jar, which the JVM builds on the
 first call and rebuilds when the jar changes, with a serial collector and C1-only compilation. A trivial ontology went from 0.54 s to 0.24 s, a typical closure from 1.25 s to 0.70 s, and 41 closures from 51.8 s to 29.9 s. Eight
 concurrent first runs against a missing archive, six times, all returned the right result and left a valid archive. **Scope:** JVM. `LATTICE_REASONING_JVM_OPTIONS` replaces the options.
+
+The archive halves a call and leaves a JVM start in every call. `reasoning.run` therefore sends its calls to one long-running JVM per Python process, the testkit's `serve` command (ADR-A83, addendum of 2026-10-17). A request is one tab-separated line on standard input and an answer is one line of JSON. The JVM keeps the reasoners for its last four distinct closures, keyed by the content of their files, so several questions about one closure load and classify it once. A call that exceeds `TIMEOUT` kills the JVM and the next call starts another. 41 closures from the tests took 37.7 s with a JVM per call (archive on), 6.3 s on the first pass through one server, and 4.4 s on a second pass. Thirty calls on a small closure took 15.7 s and 0.6 s. The whole suite on four workers took 82 s and 81 s with `LATTICE_REASONING_SERVER=0`, and 57 s and 54 s with the server. A JVM per worker is the cost. One held 131 MB after its first closure and 242 MB after 41, with four reasoners kept (R-D, resident size from `ps`), and a closure's reasoner stays in memory until four newer ones displace it. `LATTICE_REASONING_SERVER=0` restores a JVM per call, and a jar built before `serve` existed makes the process fall back to that by itself.
 
 ### H7. Check the machine before profiling
 
@@ -373,7 +376,7 @@ If a query is run by both engines, as the persistence compiler's are, write it s
 - **The wording interval queries.** They enumerate candidate points, 132 ms and 82 ms per slot after the guard group. A different formulation of the candidate set could remove the redundant enumeration of the second end, and
   it would be a change of meaning to check carefully.
 - **Efficiency cores.** Why they added nothing on R-E.
-- **A long-running reasoner process.** A call still pays the JVM's start. See [ADR-A83](decisions/ADR-A83-test-only-reasoning-engine-isolation.md).
+- **The server's memory over a long session.** We measured one server over 41 closures (242 MB) and the wall time of the suite, and not the memory of eight servers at once on a small machine. The cache holds four reasoners per JVM.
 
 ## 9. The measurements
 

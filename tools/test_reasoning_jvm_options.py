@@ -42,6 +42,7 @@ def test_an_empty_override_runs_the_jvm_with_its_defaults(monkeypatch: pytest.Mo
 
 def test_run_puts_the_options_before_the_jar_and_reads_the_last_line(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("LATTICE_REASONING_JVM_OPTIONS", raising=False)
+    monkeypatch.setenv("LATTICE_REASONING_SERVER", "0")   # the one-shot path, which this test replaces
     seen: list[list[str]] = []
 
     def fake_run(command, **kwargs):
