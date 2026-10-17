@@ -65,7 +65,8 @@ our harness or the machine. Its harness rules (H1 to H8) are the ones to apply h
 pySHACL runs (`_sparql_translated_once`), sort the `PREFIX` block before keying, parse a fixture once and copy it (two parses of one
 document never compare equal as sets, because blank-node labels differ), distribute by test, match the workers to the cores that
 do real work, and check the machine (Low Power Mode, memory pressure, other applications) before reading a slow run as a regression.
-A shape or a fixture that changes for speed is replayed against the old results first (R7).
+A shape or a fixture that changes for speed is replayed against the old results first (R7): `mise run dev:record-validations` before the
+change, `mise run dev:replay-validations` before and after it (`tools/validation_replay.py` explains the baseline).
 
 ## The shared graph and validation cache (`tools/conftest.py`)
 

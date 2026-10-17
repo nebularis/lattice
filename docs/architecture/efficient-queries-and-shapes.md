@@ -247,7 +247,7 @@ portability rule for everyone.
 ### R7. Write a negative test for every constraint, and replay every change
 
 **Do.** A shape with no test that makes it fail cannot be rewritten safely. Exposure's documentation rule had none until we rewrote it. Before changing a constraint's query, record the
-reports the suite produces (§6.3), and compare them afterwards. **Scope.** everything.
+reports the suite produces (§6.3), with `mise run dev:record-validations`, and compare them afterwards with `mise run dev:replay-validations`. **Scope.** everything.
 
 ### R8. Start from the bound end of a path
 
@@ -337,9 +337,10 @@ new engine is tried (§7). It fails on a wrong result and never on time.
 
 1. **Write the claim of equivalence.** A rewrite is safe when the two forms mean the same. Say why (the guards read only variables the sub-group binds).
 2. **Record, then replay.** Run the suite while recording every validation with the shapes as they are, which stores each data graph and its full report. After the rewrite, validate the stored graphs again with the new
-   shapes and compare the reports with blank nodes masked. For wording we replayed 514 validations over 499 distinct data graphs. A tool for this is described in the developer guide.
-3. **Compare an unchanged tree first.** Replay against the unchanged shapes and note what fails to reproduce. Four eligibility validations did, because their options (a mix-in ontology) are not recorded, and they differ in the
-   same way after a change, so they are subtracted.
+   shapes and compare the reports with blank nodes masked. For wording we replayed 514 validations over 499 distinct data graphs. 
+   The tool is `tools/validation_replay.py`. Record at the commit before the change, `mise run dev:record-validations -- --out DIR`. Replay at that commit with `mise run dev:replay-validations -- DIR --write-baseline FILE`, switch to the change, and replay again with `--baseline FILE`. The replay exits 1 when a validation outside the baseline reports differently. A recording is about 500 distinct validations and takes the time of one suite run, and a replay takes about 40 s on four cores. Breaking the exposure documentation rule on purpose made 22 of them differ.
+3. **Compare an unchanged tree first.** Replay against the unchanged shapes and note what fails to reproduce (`--write-baseline`). Four eligibility validations did, because their options (a mix-in ontology) are not recorded, and they differ in the
+   same way after a change, so the second replay subtracts them (`--baseline`). Two data graphs, which have a literal as a subject, cannot be read back from N-Triples and are counted and skipped.
 4. **Add a test that makes it fail** (R7), and run the new tests against the old and new shapes. A test that passes only against the new shapes tests the rewrite and not the rule.
 5. **Bump the shapes version** as the versioning policy says. A rewrite with the same reports is a PATCH, and its tag is the maintainer's.
 6. **Measure** with the profiler and compare the constraint's cost per focus node, not the suite's wall time, which includes noise.
