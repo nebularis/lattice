@@ -134,3 +134,6 @@ None for TM0.
   addendum). 41 closures took 37.7s with a JVM per call and 6.3s through the server, and the suite on four
   workers went from about 82s to about 55s. `dev:record-validations` and `dev:replay-validations` record every
   validation the suite makes and replay them against changed shapes (`tools/validation_replay.py`).
+- 2026-10-17 (later still). `tools/test_peril_vocabulary.py` is back in `check:ontology-catalog` (39 tests). Under `--dist worksteal` it adds
+  about 22s on four cores (about 80s with it and about 58s without) and no longer queues on one worker. The register's second TD-45 row,
+  which recorded its exclusion, is removed. The cost it named, per-concept shape evaluation, was cut by peril shapes 0.3.1.
