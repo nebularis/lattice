@@ -258,11 +258,15 @@ def test_od1_t10_the_layout_is_checked_only_once_a_readme_uses_it() -> None:
 
 
 def _extractable(text: str) -> str:
-    """A layout README with what extraction needs since OD2: a header table in section 2 and the
-    catalogue entry in section 3."""
+    """A layout README with what extraction needs since OD2 and OD3: a header table in section 2, the
+    catalogue entry in section 3 and section 6's subsections."""
     text = text.replace("Namespace and Prefixes\n", "Namespace and Prefixes\n\n| Document | Ontology IRI | Version IRI | Imports |\n"
                         "|---|---|---|---|\n| `spec/x.ttl` | <https://example.org/x> | <https://example.org/x/0.1.0> | |\n")
-    return text.replace("Extraction Contract\n", "Extraction Contract\n\n```toml repository-catalogue\n[module]\n```\n")
+    text = text.replace("Extraction Contract\n", "Extraction Contract\n\n```toml repository-catalogue\n[module]\n```\n")
+    subsections = "".join(f"\n### 6.{i} {t}\n\nNone.\n" for i, t in enumerate(
+        ("Classes", "Object Properties", "Datatype Properties", "Individuals", "Disjointness and Keys", "Other Axioms",
+         "Axiom Index"), 1))
+    return text.replace("Description Logic Encoding\n", "Description Logic Encoding\n" + subsections)
 
 
 def test_od1_t11_main_warns_on_a_misnumbered_section_and_fails_on_a_missing_one(tmp_path: Path, capsys) -> None:

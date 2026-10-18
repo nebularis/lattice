@@ -91,19 +91,26 @@ second spec document, and links here for the rest.
 
 Section 6 is the only source of the module's axioms. Its subsections are 6.1 Classes, 6.2 Object
 Properties, 6.3 Datatype Properties, 6.4 Individuals, 6.5 Disjointness and Keys, 6.6 Other Axioms and 6.7
-Axiom Index.
+Axiom Index, each headed `### 6.N Title`. All seven are present, an empty one saying "None.", and no other is
+allowed. A subsection may open with prose before its first entry or table, which is not extracted.
+
+Entries and the rows of 6.5 go to the module's main spec document, `spec/<name>.ttl`, and individuals to its
+main vocab document, `vocab/<name>-vocab.ttl`. An `output-file` region sends what it encloses to another
+document. Either way the document must be a row of section 2's header table.
 
 ### Entries
 
-An entry is a level-4 heading holding one CURIE, followed by labelled paragraphs and tables. A labelled
-paragraph starts a line with a bold label ending in a full stop, and runs to the next blank line. An
-unknown label is an error.
+An entry is a level-4 heading holding one CURIE in backticks, followed by labelled paragraphs and tables.
+A labelled paragraph starts a line with a bold label ending in a full stop, and runs to the next blank line.
+Every paragraph of an entry starts with a label, an unknown label is an error, and a label that does not
+apply to the entry's kind is an error. A term has one entry.
 
 | Label | Applies to | Produces |
 |---|---|---|
 | `**Definition.**` | every term, required | `rdfs:comment` |
 | `**Utility.**` | every term | `fnd:utility` |
 | `**Label.**` | every term | `rdfs:label`, which is never derived from the local name |
+| `**Preferred label.**` | every term | `skos:prefLabel` |
 | `**Subclass of.**` | class | one `rdfs:subClassOf` per comma-separated class expression |
 | `**Equivalent to.**` | class | `owl:equivalentClass`, one class expression |
 | `**Key.**` | class | `owl:hasKey` |
@@ -113,11 +120,19 @@ unknown label is an error.
 | `**Inverse of.**`, `**Subproperty of.**` | property | `owl:inverseOf`, `rdfs:subPropertyOf` |
 | `**Scope note.**` | any term | `skos:scopeNote`. Further annotation labels are added the same way |
 
+An annotation's text becomes plain text, as section 1 does. Written as a Turtle literal instead, for example
+`"Wording node"@en`, it is used as written, which is how a language tag or a datatype is given. A
+comma-separated label (Subclass of, Key, Characteristics, Subproperty of) splits only at commas outside
+parentheses. `skos:` and `fnd:` must be in the prefix table for a label that uses them.
+
 ### Class expressions
 
 Class expressions are written in [OWL Manchester syntax](https://www.w3.org/TR/owl2-manchester-syntax/) with
 CURIEs: `and`, `or`, `not`, `some`, `only`, `value`, `min`, `max` and `exactly`, with parentheses for
-nesting. Literals use Turtle's forms, for example `value "x"^^xsd:string`. For example,
+nesting. `and` binds tighter than `or`, and `not` tighter than both. `min`, `max` and `exactly` take a whole
+number and an optional class, which makes them qualified. Literals use Turtle's forms, for example
+`value "x"^^xsd:string`, `value "x"@en` or `value 5`. A union, intersection or complement is written with
+`a owl:Class`, as the layers already write them. For example,
 `(ins:Obligation or ins:Permission)` is a union, and
 `spc:hasGuardExpression some (spc:Expression and spc:hasExpressionSort value spc:bool_sort)` nests an
 intersection inside a restriction.
@@ -161,10 +176,13 @@ per class in the module's structural shapes file. Other shapes are written by ha
 
 ### Individuals, disjointness and other axioms
 
-Section 6.4 lists individuals in one table per class, with the columns Individual, Type, Label and
-Definition. Section 6.5 holds `**All disjoint.**` lines and pairwise disjointness. Section 6.6 holds
-`turtle-spec` blocks, visible or hidden, for what the grammar does not express, for example property
-chains.
+Section 6.4 lists individuals in tables whose first two columns are Individual and Type, followed by any of
+the annotation columns Label, Preferred label, Definition, Utility and Scope note. Type holds one or more
+names, separated by commas, so an individual that is also an `owl:NamedIndividual` says so. Section 6.5 holds
+`**All disjoint.**` paragraphs, each naming two classes or more, which become one `owl:AllDisjointClasses`
+with its members in the order written, and `**Disjoint.**` paragraphs, each naming exactly two, which become
+an `owl:disjointWith`. Section 6.6 holds `turtle-spec` blocks, visible or hidden, for what the grammar does
+not express, for example property chains or an individual's other statements.
 
 ### Generated views
 

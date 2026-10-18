@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 from rdflib import Graph, Literal, URIRef
-from rdflib.namespace import DCTERMS, OWL, RDF
+from rdflib.namespace import DCTERMS, OWL, RDF, RDFS
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -38,14 +38,25 @@ PEOPLE_TABLE = f"""| Identifier | Role | Display name |
 ENTRY = f'{FENCE}toml repository-catalogue\n[module]\nkind = "substrate"\nroles = []\n{FENCE}'
 
 
+SUBSECTIONS = ("Classes", "Object Properties", "Datatype Properties", "Individuals", "Disjointness and Keys",
+               "Other Axioms", "Axiom Index")
+
+
+def six(classes: str = "None.", object_properties: str = "None.", datatype_properties: str = "None.",
+        individuals: str = "None.", disjointness: str = "None.", other: str = "None.") -> str:
+    """Section 6's seven subsections, each holding the given text."""
+    texts = (classes, object_properties, datatype_properties, individuals, disjointness, other, "None.")
+    return "\n\n".join(f"### 6.{i} {title}\n\n{text}" for i, (title, text) in enumerate(zip(SUBSECTIONS, texts), 1))
+
+
 def readme(purpose: str = "X models things.", section2: str | None = None, section3: str = ENTRY,
-           section6: str = "None.", numbers: dict[int, int] | None = None) -> str:
+           section6: str | None = None, numbers: dict[int, int] | None = None) -> str:
     """A README in the layout, every section present, with the given contents."""
     body = {
         1: purpose,
         2: section2 if section2 is not None else "\n\n".join([HEADER_TABLE, PREFIX_TABLE, PEOPLE_TABLE]),
         3: section3,
-        6: section6,
+        6: section6 if section6 is not None else six(),
     }
     parts = ["<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->", "", "# X", ""]
     for number, title in enumerate(literate_extract.LAYOUT, 1):
@@ -150,10 +161,10 @@ def test_od2_t5_a_malformed_section_2_is_refused(section2: str, message: str) ->
 
 def _two_documents(version: str) -> str:
     rows = HEADER_TABLE + f"\n| `spec/x-runtime.ttl` | <{X}-runtime> | <{X}-runtime/{version}> | <{X}/0.2.0> |"
-    return readme(section2=rows + "\n\n" + PREFIX_TABLE, section6="\n".join([
+    return readme(section2=rows + "\n\n" + PREFIX_TABLE, section6=six(other="\n".join([
         f'{FENCE}turtle-spec\n# @output-file "spec/x-runtime.ttl"\nex:R a owl:Class .\n{FENCE}',
         "", f"{FENCE}turtle-spec\nex:A a owl:Class .\n{FENCE}",
-    ]))
+    ])))
 
 
 def test_od2_t6_each_document_opens_with_its_own_header_and_takes_its_blocks() -> None:
@@ -168,7 +179,7 @@ def test_od2_t6_each_document_opens_with_its_own_header_and_takes_its_blocks() -
 
 
 def test_od2_t7_a_block_for_a_document_section_2_does_not_name_is_refused() -> None:
-    text = readme(section6=f'{FENCE}turtle-spec\n# @output-file "spec/other.ttl"\nex:A a owl:Class .\n{FENCE}')
+    text = readme(section6=six(other=f'{FENCE}turtle-spec\n# @output-file "spec/other.ttl"\nex:A a owl:Class .\n{FENCE}'))
     with pytest.raises(ValueError, match="section 2's header table does not name"):
         extract(text)
 
@@ -185,7 +196,7 @@ def test_od2_t8_a_migrated_readme_holds_one_catalogue_entry_in_section_3(section
 
 
 def test_od2_t8b_an_entry_outside_section_3_is_refused() -> None:
-    text = readme(section3="No entry here.", section6=ENTRY)
+    text = readme(section3="No entry here.", section6=six(other=ENTRY))
     result = literate_extract.scan(text)
     errors, _ = literate_extract.layout_problems(result.sections, result.catalogue_lines)
     assert any("found 1, 0 of them in section 3" in e for e in errors)
@@ -193,9 +204,244 @@ def test_od2_t8b_an_entry_outside_section_3_is_refused() -> None:
 
 def test_od2_t9_extraction_writes_the_document_and_then_finds_no_drift(tmp_path: Path) -> None:
     source = tmp_path / "README.md"
-    source.write_text(readme(section6=f"{FENCE}turtle-spec\nex:A a owl:Class .\n{FENCE}"), encoding="utf-8")
+    source.write_text(readme(section6=six(other=f"{FENCE}turtle-spec\nex:A a owl:Class .\n{FENCE}")), encoding="utf-8")
     args = [str(source), "--layer", "x", "--root", str(tmp_path)]
     assert literate_extract.main(args) == 0
     written = (tmp_path / "ontology/x/spec/x.ttl").read_text(encoding="utf-8")
     assert "ex:A a owl:Class" in written
     assert literate_extract.main([*args, "--check"]) == 0
+
+
+# ---- OD3: section 6 to OWL -------------------------------------------------------------------------
+
+from rdflib import BNode  # noqa: E402
+from rdflib.compare import isomorphic  # noqa: E402
+
+PREFIXES_EX_FND = f"""| Prefix | Namespace |
+|---|---|
+| `ex:` | <{X}#> |
+| `fnd:` | <https://www.nebularis.org/neuro-semantic/lattice/foundation#> |
+| `skos:` | <http://www.w3.org/2004/02/skos/core#> |"""
+TURTLE_PREFIXES = f"""@prefix ex: <{X}#> .
+@prefix fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+"""
+DECISION = """#### `ex:Decision`
+
+**Definition.** A recorded decision, about one `ex:Profile`.
+
+**Utility.** Holds the evidence.
+
+**Label.** "Decision"@en
+
+**Subclass of.** `ex:Evidenced`, `ex:Thing`
+
+**Key.** `ex:code`, `ex:issuer`
+
+**Restrictions.**
+
+| Property | Values | Asserted in | Message |
+|---|---|---|---|
+| `ex:forProfile` | exactly 1 | | |
+| `ex:hasQuestion` | min 1 | OWL | |
+| `ex:usesProfile` | exactly 1 | SHACL | |
+| `ex:reliedOn` | only `ex:Closure` | SHACL | A decision relies only on closures. |"""
+KIND = """#### `ex:Kind`
+
+**Definition.** A kind.
+
+**Equivalent to.** `ex:A or ex:B`"""
+
+
+def section6_readme(**parts: str) -> str:
+    return readme(section2=HEADER_TABLE + "\n\n" + PREFIXES_EX_FND, section6=six(**parts))
+
+
+def body(turtle: str) -> Graph:
+    """The generated statements, without the ontology header and the Dublin Core declarations."""
+    g = graph(turtle)
+    headers = set(g.subjects(RDF.type, OWL.Ontology))
+    for s, p, o in list(g):
+        if s in headers or str(s).startswith(str(DCTERMS)):
+            g.remove((s, p, o))
+    return g
+
+
+def expected(turtle: str) -> Graph:
+    return Graph().parse(data=TURTLE_PREFIXES + turtle, format="turtle")
+
+
+def test_od3_t1_a_class_entry_becomes_its_axioms_and_shacl_only_rows_assert_no_owl() -> None:
+    out = extract(section6_readme(classes=DECISION + "\n\n" + KIND))["ontology/x/spec/x.ttl"]
+    assert isomorphic(body(out), expected("""
+        ex:Decision a owl:Class ; rdfs:comment "A recorded decision, about one ex:Profile." ;
+            fnd:utility "Holds the evidence." ; rdfs:label "Decision"@en ;
+            rdfs:subClassOf ex:Evidenced, ex:Thing,
+                [ a owl:Restriction ; owl:onProperty ex:forProfile ; owl:cardinality "1"^^xsd:nonNegativeInteger ],
+                [ a owl:Restriction ; owl:onProperty ex:hasQuestion ; owl:minCardinality "1"^^xsd:nonNegativeInteger ] ;
+            owl:hasKey ( ex:code ex:issuer ) .
+        ex:Kind a owl:Class ; rdfs:comment "A kind." ; owl:equivalentClass [ a owl:Class ; owl:unionOf ( ex:A ex:B ) ] .
+    """))
+
+
+@pytest.mark.parametrize("expression,turtle", [
+    ("ex:A or ex:B and ex:C", "[ a owl:Class ; owl:unionOf ( ex:A [ a owl:Class ; owl:intersectionOf ( ex:B ex:C ) ] ) ]"),
+    ("(ex:A or ex:B) and ex:C", "[ a owl:Class ; owl:intersectionOf ( [ a owl:Class ; owl:unionOf ( ex:A ex:B ) ] ex:C ) ]"),
+    ("not ex:A and ex:B", "[ a owl:Class ; owl:intersectionOf ( [ a owl:Class ; owl:complementOf ex:A ] ex:B ) ]"),
+    ("ex:p some (ex:A and ex:q value ex:v)", "[ a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom "
+     "[ a owl:Class ; owl:intersectionOf ( ex:A [ a owl:Restriction ; owl:onProperty ex:q ; owl:hasValue ex:v ] ) ] ]"),
+    ("ex:p only xsd:string", "[ a owl:Restriction ; owl:onProperty ex:p ; owl:allValuesFrom xsd:string ]"),
+    ("ex:p exactly 2 ex:C", "[ a owl:Restriction ; owl:onProperty ex:p ; owl:qualifiedCardinality \"2\"^^xsd:nonNegativeInteger ; owl:onClass ex:C ]"),
+    ("ex:p max 1", "[ a owl:Restriction ; owl:onProperty ex:p ; owl:maxCardinality \"1\"^^xsd:nonNegativeInteger ]"),
+    ('ex:p value "x"@en', '[ a owl:Restriction ; owl:onProperty ex:p ; owl:hasValue "x"@en ]'),
+    ("ex:p value 5", "[ a owl:Restriction ; owl:onProperty ex:p ; owl:hasValue 5 ]"),
+    ('ex:p value "1"^^xsd:integer', '[ a owl:Restriction ; owl:onProperty ex:p ; owl:hasValue "1"^^xsd:integer ]'),
+])
+def test_od3_t2_manchester_expressions_become_their_owl_structures(expression: str, turtle: str) -> None:
+    prefixes = {"ex": X + "#", **lg.STANDARD_PREFIXES}
+    term = lg.class_expression(expression, prefixes, "test")
+    assert isomorphic(expected(f"ex:S rdfs:subClassOf {lg.render(term)} ."), expected(f"ex:S rdfs:subClassOf {turtle} ."))
+
+
+@pytest.mark.parametrize("expression,message", [
+    ("ex:A and", "expected a class"),
+    ("(ex:A or ex:B", "parenthesis is not closed"),
+    ("zz:A", "prefix zz: is not declared"),
+    ("ex:p exactly ex:C", "needs a whole number"),
+    ("ex:p some", "expected a class"),
+    ("ex:A ex:B", "unexpected 'ex:B'"),
+    ("ex:A & ex:B", "unexpected '&'"),
+])
+def test_od3_t3_a_malformed_expression_is_refused(expression: str, message: str) -> None:
+    with pytest.raises(lg.GrammarError, match=message):
+        lg.class_expression(expression, {"ex": X + "#", **lg.STANDARD_PREFIXES}, "test")
+
+
+def test_od3_t4_property_entries_become_their_axioms() -> None:
+    objects = """#### `ex:forProfile`
+
+**Definition.** The profile a decision is for.
+
+**Domain.** `ex:Decision`
+
+**Range.** `ex:Profile or ex:Group`
+
+**Characteristics.** functional, inverse functional
+
+**Inverse of.** `ex:hasDecision`
+
+**Subproperty of.** `ex:relatesTo`"""
+    data = """#### `ex:code`
+
+**Definition.** A code.
+
+**Domain.** `ex:Decision`
+
+**Range.** `xsd:string`
+
+**Characteristics.** functional"""
+    out = extract(section6_readme(object_properties=objects, datatype_properties=data))["ontology/x/spec/x.ttl"]
+    assert isomorphic(body(out), expected("""
+        ex:forProfile a owl:ObjectProperty, owl:FunctionalProperty, owl:InverseFunctionalProperty ;
+            rdfs:comment "The profile a decision is for." ; rdfs:domain ex:Decision ;
+            rdfs:range [ a owl:Class ; owl:unionOf ( ex:Profile ex:Group ) ] ;
+            owl:inverseOf ex:hasDecision ; rdfs:subPropertyOf ex:relatesTo .
+        ex:code a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:comment "A code." ;
+            rdfs:domain ex:Decision ; rdfs:range xsd:string .
+    """))
+
+
+def test_od3_t5_individuals_go_to_the_vocab_document_and_a_region_sends_entries_to_its_file() -> None:
+    rows = HEADER_TABLE + (f"\n| `spec/x-runtime.ttl` | <{X}-runtime> | <{X}-runtime/0.2.0> | |"
+                           f"\n| `vocab/x-vocab.ttl` | <{X}-vocab> | <{X}-vocab/0.1.0> | |")
+    individuals = """| Individual | Type | Preferred label | Definition |
+|---|---|---|---|
+| `ex:Permitted` | `owl:NamedIndividual`, `ex:Outcome` | "Permitted"@en | Admitted. |"""
+    runtime = '<!-- start: {"output-file": "spec/x-runtime.ttl"} -->\n\n' + KIND + "\n\n<!-- end -->"
+    text = readme(section2=rows + "\n\n" + PREFIXES_EX_FND, section6=six(classes=runtime, individuals=individuals))
+    out = extract(text)
+    assert isomorphic(body(out["ontology/x/vocab/x-vocab.ttl"]), expected(
+        'ex:Permitted a owl:NamedIndividual, ex:Outcome ; skos:prefLabel "Permitted"@en ; rdfs:comment "Admitted." .'))
+    assert "ex:Kind" in out["ontology/x/spec/x-runtime.ttl"] and "ex:Kind" not in out["ontology/x/spec/x.ttl"]
+
+
+def test_od3_t6_disjointness_keeps_the_order_of_its_members() -> None:
+    disjointness = "**All disjoint.** `ex:C`, `ex:A`, `ex:B`\n\n**Disjoint.** `ex:Decision`, `ex:Profile`"
+    out = extract(section6_readme(disjointness=disjointness))["ontology/x/spec/x.ttl"]
+    assert isomorphic(body(out), expected(
+        "[] a owl:AllDisjointClasses ; owl:members ( ex:C ex:A ex:B ) . ex:Decision owl:disjointWith ex:Profile ."))
+
+
+def _closure(g: Graph, node) -> Graph:
+    """The triples reachable from ``node`` through blank nodes."""
+    out, todo = Graph(), [node]
+    while todo:
+        for s, p, o in g.triples((todo.pop(), None, None)):
+            out.add((s, p, o))
+            if isinstance(o, BNode):
+                todo.append(o)
+    return out
+
+
+@pytest.mark.parametrize("subject,expression", [
+    ("spc:EndBehaviour", "not (spc:hasContinuation some owl:Thing)"),
+    ("spc:ConditionalBehaviour", "spc:hasGuardExpression some (spc:Expression and spc:hasExpressionSort value spc:bool_sort)"),
+])
+def test_od3_t7_the_grammar_states_two_of_spcs_axioms_as_spc_does(subject: str, expression: str) -> None:
+    spc = Graph().parse(ROOT / "ontology/spc/spec/spc.ttl")
+    ns = "http://example.org/spc#"
+    term = lg.class_expression(expression, {"spc": ns, **lg.STANDARD_PREFIXES}, "test")
+    ours = Graph().parse(data=f"@prefix spc: <{ns}> . @prefix owl: <http://www.w3.org/2002/07/owl#> . "
+                              f"@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> . "
+                              f"@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . "
+                              f"{subject} rdfs:subClassOf {lg.render(term)} .", format="turtle")
+    named = URIRef(ns + subject.split(":")[1])
+    mine = _closure(ours, next(ours.objects(named, RDFS.subClassOf)))
+    theirs = [_closure(spc, o) for o in spc.objects(named, RDFS.subClassOf) if isinstance(o, BNode)]
+    assert any(isomorphic(mine, candidate) for candidate in theirs)
+
+
+def _entry(label_block: str, curie: str = "ex:Thing") -> str:
+    return f"#### `{curie}`\n\n**Definition.** A thing.\n\n{label_block}"
+
+
+@pytest.mark.parametrize("parts,message", [
+    ({"classes": _entry("**Colour.** red")}, "unknown label"),
+    ({"classes": _entry("**Domain.** `ex:A`")}, "does not apply to classes"),
+    ({"object_properties": _entry("**Key.** `ex:a`", "ex:p")}, "does not apply to object properties"),
+    ({"classes": "#### `ex:Thing`\n\n**Utility.** No definition."}, "has no \\*\\*Definition"),
+    ({"classes": _entry("Some narrative without a label.")}, "starts with a label"),
+    ({"classes": "#### Thing\n\n**Definition.** A thing."}, "holds one CURIE"),
+    ({"classes": _entry("") + "\n\n" + _entry("")}, "has a second entry"),
+    ({"classes": _entry("**Restrictions.**\n\n| Property | Cardinality |\n|---|---|\n| `ex:p` | 1 |")}, "restriction table's columns"),
+    ({"classes": _entry("**Restrictions.**")}, "followed by its table"),
+    ({"classes": _entry("**Restrictions.**\n\n| Property | Values | Asserted in |\n|---|---|---|\n| `ex:p` | min 1 | RDFS |")}, "blank, OWL or SHACL"),
+    ({"classes": _entry("**Restrictions.**\n\n| Property | Values | Asserted in |\n|---|---|---|\n| `ex:p` | and ex:A | |")}, "do not make a restriction"),
+    ({"classes": _entry("**Subclass of.** `zz:Other`")}, "prefix zz: is not declared"),
+    ({"individuals": "| Individual | Colour |\n|---|---|\n| `ex:a` | red |"}, "individuals table's columns"),
+    ({"disjointness": "**All disjoint.** `ex:A`"}, "two classes or more"),
+    ({"disjointness": "**Disjoint.** `ex:A`, `ex:B`, `ex:C`"}, "exactly two classes"),
+    ({"disjointness": "**Overlap.** `ex:A`, `ex:B`"}, "takes \\*\\*All disjoint"),
+])
+def test_od3_t8_a_malformed_section_6_is_refused(parts: dict, message: str) -> None:
+    with pytest.raises(lg.GrammarError, match=message):
+        compile_readme(section6_readme(**parts))
+
+
+def test_od3_t9_section_6_needs_its_subsections_and_no_others() -> None:
+    with pytest.raises(lg.GrammarError, match="missing its subsection"):
+        compile_readme(readme(section2=HEADER_TABLE, section6="### 6.1 Classes\n\nNone."))
+    with pytest.raises(lg.GrammarError, match="no subsection 'Appendices'"):
+        compile_readme(readme(section2=HEADER_TABLE, section6=six() + "\n\n### 6.8 Appendices\n\nNone."))
+    with pytest.raises(lg.GrammarError, match="needs the prefix fnd:"):
+        compile_readme(readme(section2=HEADER_TABLE + "\n\n" + PREFIX_TABLE, section6=six(classes=_entry("**Utility.** Use."))))
+
+
+def test_od3_t10_the_output_does_not_depend_on_the_order_of_entries() -> None:
+    one = extract(section6_readme(classes=DECISION + "\n\n" + KIND))
+    two = extract(section6_readme(classes=KIND + "\n\n" + DECISION))
+    assert one == two
