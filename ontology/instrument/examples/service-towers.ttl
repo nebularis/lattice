@@ -219,20 +219,20 @@ tmpl:failover-report a ins:Obligation , ins:Template ;
 
 # ==== The instance: what the agreement stores (D1) ============================
 
-ex:meridian-wording-v1 a wrd:AssembledWording ;
-    fnd:hasIdentity ex:meridian-wording-identity ; fnd:hasGovernanceState fnd:Active ;
+ex:harbourside-wording-v1 a wrd:AssembledWording ;
+    fnd:hasIdentity ex:harbourside-wording-identity ; fnd:hasGovernanceState fnd:Active ;
     wrd:assembledFrom ex:form ;
     wrd:includes ex:general , ex:cl-2-1 , ex:cl-5-1 , ex:cl-5-2 , ex:cl-6-1 ,
                  ex:tower-a , ex:cl-a-1 , ex:tower-b , ex:cl-b-1 , ex:tower-b-dr , ex:cl-b2-1 ,
                  ex:tower-c , ex:cl-c-1 .
 
-ex:meridian-v1 a ins:Instrument ;
-    fnd:hasIdentity ex:meridian-identity ;
-    ins:expressedIn ex:meridian-wording-v1 ;
+ex:harbourside-v1 a ins:Instrument ;
+    fnd:hasIdentity ex:harbourside-identity ;
+    ins:expressedIn ex:harbourside-wording-v1 ;
     ins:party ex:provider-occ , ex:customer-occ .
 
 ex:lanthorn a pty:Actor ; rdfs:label "Lanthorn Managed Services Ltd" .
-ex:meridian a pty:Actor ; rdfs:label "Meridian Building Society" .
+ex:harbourside a pty:Actor ; rdfs:label "Harbourside Building Society" .
 
 ex:provider-occ a pty:RoleOccupancy ;
     fnd:hasIdentity ex:provider-occ-identity ;
@@ -241,7 +241,7 @@ ex:provider-occ a pty:RoleOccupancy ;
 ex:customer-occ a pty:RoleOccupancy ;
     fnd:hasIdentity ex:customer-occ-identity ;
     fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-07-01T00:00:00Z"^^xsd:dateTime ] ;
-    pty:inRole ex:Customer ; pty:occupiedBy ex:meridian .
+    pty:inRole ex:Customer ; pty:occupiedBy ex:harbourside .
 
 # ==== Generated bound meaning: the expected output, not stored (D4) ===========
 #
@@ -253,21 +253,21 @@ ex:customer-occ a pty:RoleOccupancy ;
 # | A.1, B.1, C.1 | their own tower | one each | placed by containment |
 # | B2.1 | Part B2 | one | placed by containment in a nested section |
 
-ex:term-2-1 a ins:Term ; ins:boundIn ex:meridian-v1 ; ins:boundFrom tmpl:term-2-1 .
+ex:term-2-1 a ins:Term ; ins:boundIn ex:harbourside-v1 ; ins:boundFrom tmpl:term-2-1 .
 
-ex:term-a-1 a ins:Term ; ins:boundIn ex:meridian-v1 ; ins:boundFrom tmpl:term-a-1 ;
+ex:term-a-1 a ins:Term ; ins:boundIn ex:harbourside-v1 ; ins:boundFrom tmpl:term-a-1 ;
     ins:boundWithin ex:tower-a-identity .
 ex:def-a a ins:Definition ;
     ins:boundFrom tmpl:def-a ; ins:arisesUnder ex:term-a-1 ;
     ins:defines ex:ServiceFailure ; ins:means ex:p1-unresolved .
 
-ex:term-b-1 a ins:Term ; ins:boundIn ex:meridian-v1 ; ins:boundFrom tmpl:term-b-1 ;
+ex:term-b-1 a ins:Term ; ins:boundIn ex:harbourside-v1 ; ins:boundFrom tmpl:term-b-1 ;
     ins:boundWithin ex:tower-b-identity .
 ex:def-b a ins:Definition ;
     ins:boundFrom tmpl:def-b ; ins:arisesUnder ex:term-b-1 ;
     ins:defines ex:ServiceFailure ; ins:means ex:dc-unavailable .
 
-ex:term-c-1 a ins:Term ; ins:boundIn ex:meridian-v1 ; ins:boundFrom tmpl:term-c-1 ;
+ex:term-c-1 a ins:Term ; ins:boundIn ex:harbourside-v1 ; ins:boundFrom tmpl:term-c-1 ;
     ins:boundWithin ex:tower-c-identity .
 ex:def-c a ins:Definition ;
     ins:boundFrom tmpl:def-c ; ins:arisesUnder ex:term-c-1 ;
@@ -275,7 +275,7 @@ ex:def-c a ins:Definition ;
 
 # 5.1, split by what "Service Failure" means in each tower. Each bound
 # relation arises on its tower's condition, through a generated trigger.
-ex:term-5-1-in-tower-a a ins:Term ; ins:boundIn ex:meridian-v1 ; ins:boundFrom tmpl:term-5-1 ;
+ex:term-5-1-in-tower-a a ins:Term ; ins:boundIn ex:harbourside-v1 ; ins:boundFrom tmpl:term-5-1 ;
     ins:boundWithin ex:tower-a-identity .
 ex:on-failure-in-tower-a a ins:OnCondition , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:DerivedTrigger ; ins:condition ex:p1-unresolved .
@@ -284,7 +284,7 @@ ex:service-credit-in-tower-a a ins:Obligation ;
     ins:obligor ex:provider-occ ; ins:obligee ex:customer-occ ;
     ins:activity ins-voc:Pay ; ins:arisesOn ex:on-failure-in-tower-a .
 
-ex:term-5-1-in-tower-b a ins:Term ; ins:boundIn ex:meridian-v1 ; ins:boundFrom tmpl:term-5-1 ;
+ex:term-5-1-in-tower-b a ins:Term ; ins:boundIn ex:harbourside-v1 ; ins:boundFrom tmpl:term-5-1 ;
     ins:boundWithin ex:tower-b-identity .
 ex:on-failure-in-tower-b a ins:OnCondition , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:DerivedTrigger ; ins:condition ex:dc-unavailable .
@@ -293,7 +293,7 @@ ex:service-credit-in-tower-b a ins:Obligation ;
     ins:obligor ex:provider-occ ; ins:obligee ex:customer-occ ;
     ins:activity ins-voc:Pay ; ins:arisesOn ex:on-failure-in-tower-b .
 
-ex:term-5-1-in-tower-c a ins:Term ; ins:boundIn ex:meridian-v1 ; ins:boundFrom tmpl:term-5-1 ;
+ex:term-5-1-in-tower-c a ins:Term ; ins:boundIn ex:harbourside-v1 ; ins:boundFrom tmpl:term-5-1 ;
     ins:boundWithin ex:tower-c-identity .
 ex:on-failure-in-tower-c a ins:OnCondition , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:DerivedTrigger ; ins:condition ex:latency-breach .
@@ -304,18 +304,18 @@ ex:service-credit-in-tower-c a ins:Obligation ;
 
 # The cap, bound once: one counter over every tower's credits (D10). Splitting
 # it per tower would give each tower a cap of its own, which 5.2 does not say.
-ex:term-5-2 a ins:Term ; ins:boundIn ex:meridian-v1 ; ins:boundFrom tmpl:term-5-2 .
+ex:term-5-2 a ins:Term ; ins:boundIn ex:harbourside-v1 ; ins:boundFrom tmpl:term-5-2 .
 ex:credit-cap a ins:Qualifier ;
     ins:boundFrom tmpl:credit-cap ; ins:arisesUnder ex:term-5-2 ;
     ins:qualifies ex:service-credit-in-tower-a , ex:service-credit-in-tower-b , ex:service-credit-in-tower-c .
 
-ex:term-6-1 a ins:Term ; ins:boundIn ex:meridian-v1 ; ins:boundFrom tmpl:term-6-1 .
+ex:term-6-1 a ins:Term ; ins:boundIn ex:harbourside-v1 ; ins:boundFrom tmpl:term-6-1 .
 ex:pay-charges a ins:Obligation ;
     ins:boundFrom tmpl:pay-charges ; ins:arisesUnder ex:term-6-1 ;
     ins:obligor ex:customer-occ ; ins:obligee ex:provider-occ ;
     ins:activity ins-voc:Pay .
 
-ex:term-b2-1 a ins:Term ; ins:boundIn ex:meridian-v1 ; ins:boundFrom tmpl:term-b2-1 ;
+ex:term-b2-1 a ins:Term ; ins:boundIn ex:harbourside-v1 ; ins:boundFrom tmpl:term-b2-1 ;
     ins:boundWithin ex:tower-b-dr-identity .
 ex:failover-report a ins:Obligation ;
     ins:boundFrom tmpl:failover-report ; ins:arisesUnder ex:term-b2-1 ;

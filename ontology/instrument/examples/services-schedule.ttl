@@ -24,7 +24,7 @@
 # | Construct                                            | Where                                        |
 # |------------------------------------------------------|----------------------------------------------|
 # | a concept word whose meaning is a variable's values  | tmpl:def-territory                           |
-# | a multi-valued variable, its values alternatives in a condition | ex:v-territories, ex:in-territory-meridian |
+# | a multi-valued variable, its values alternatives in a condition | ex:v-territories, ex:in-territory-northgate |
 # | text reviewed as binding nobody (S63)                | ex:cl-3-2 ins:encodingStatus ins-voc:NoMeaning |
 # | text not yet assessed, found by convention           | ex:cl-6-1, a leaf with neither meaning nor mark |
 # | containers expected to mean nothing                  | ex:sec-3, ex:sec-4, ex:sec-6, ex:schedule      |
@@ -179,8 +179,8 @@ tmpl:pay-charges a ins:Obligation , ins:Template ;
 
 # ==== The instance: what the agreement stores (D1) ============================
 
-ex:meridian-wording-v1 a wrd:AssembledWording ;
-    fnd:hasIdentity ex:meridian-wording-identity ; fnd:hasGovernanceState fnd:Active ;
+ex:northgate-wording-v1 a wrd:AssembledWording ;
+    fnd:hasIdentity ex:northgate-wording-identity ; fnd:hasGovernanceState fnd:Active ;
     wrd:assembledFrom ex:form ;
     wrd:includes ex:sec-3 , ex:cl-3-1 , ex:cl-3-2 , ex:sec-4 , ex:cl-4-1 , ex:sec-6 , ex:cl-6-1 ,
                  ex:schedule , ex:cl-s-1 ;
@@ -190,13 +190,13 @@ ex:v-territories a wrd:VariableValue ;
     wrd:forVariable ex:var-territories ;
     wrd:value ex:north , ex:midlands .
 
-ex:meridian-v1 a ins:Instrument ;
-    fnd:hasIdentity ex:meridian-identity ;
-    ins:expressedIn ex:meridian-wording-v1 ;
+ex:northgate-v1 a ins:Instrument ;
+    fnd:hasIdentity ex:northgate-identity ;
+    ins:expressedIn ex:northgate-wording-v1 ;
     ins:party ex:provider-occ , ex:customer-occ .
 
 ex:fieldcare a pty:Actor ; rdfs:label "Fieldcare Engineering Ltd" .
-ex:meridian a pty:Actor ; rdfs:label "Meridian Cold Stores Ltd" .
+ex:northgate a pty:Actor ; rdfs:label "Northgate Cold Stores Ltd" .
 ex:provider-occ a pty:RoleOccupancy ;
     fnd:hasIdentity ex:provider-occ-identity ;
     fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-01-01T00:00:00Z"^^xsd:dateTime ] ;
@@ -204,7 +204,7 @@ ex:provider-occ a pty:RoleOccupancy ;
 ex:customer-occ a pty:RoleOccupancy ;
     fnd:hasIdentity ex:customer-occ-identity ;
     fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-01-01T00:00:00Z"^^xsd:dateTime ] ;
-    pty:inRole ex:Customer ; pty:occupiedBy ex:meridian .
+    pty:inRole ex:Customer ; pty:occupiedBy ex:northgate .
 
 # ==== Generated bound meaning: the expected output, not stored (D4) ===========
 #
@@ -214,27 +214,27 @@ ex:customer-occ a pty:RoleOccupancy ;
 # Binding reports 6.1 as not yet assessed (a warning, law I17), and is silent
 # about 3.2, which is marked, and about the sections, which are containers.
 
-ex:term-s-1 a ins:Term ; ins:boundIn ex:meridian-v1 ; ins:boundFrom tmpl:term-s-1 .
+ex:term-s-1 a ins:Term ; ins:boundIn ex:northgate-v1 ; ins:boundFrom tmpl:term-s-1 .
 ex:def-territory a ins:Definition ;
     ins:boundFrom tmpl:def-territory ; ins:arisesUnder ex:term-s-1 ;
     ins:defines ex:Territory ;
     ins:means ex:north , ex:midlands .
 
-ex:term-3-1 a ins:Term ; ins:boundIn ex:meridian-v1 ; ins:boundFrom tmpl:term-3-1 .
+ex:term-3-1 a ins:Term ; ins:boundIn ex:northgate-v1 ; ins:boundFrom tmpl:term-3-1 .
 ex:attend a ins:Obligation ;
     ins:boundFrom tmpl:attend ; ins:arisesUnder ex:term-3-1 ;
     ins:obligor ex:provider-occ ; ins:obligee ex:customer-occ ;
     ins:activity ins-voc:ProvideService ;
     ins:arisesOn tmpl:on-fault ;
-    ins:scope ex:in-territory-meridian .
-ex:in-territory-meridian a elg:Condition ;
-    elg:conditionKey "site-in-the-territory-meridian-v1" ;
+    ins:scope ex:in-territory-northgate .
+ex:in-territory-northgate a elg:Condition ;
+    elg:conditionKey "site-in-the-territory-northgate-v1" ;
     elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:constrainedByContract ex:territory-contract ;
     elg:requiredConcept ex:north , ex:midlands .
 
-ex:term-4-1 a ins:Term ; ins:boundIn ex:meridian-v1 ; ins:boundFrom tmpl:term-4-1 .
+ex:term-4-1 a ins:Term ; ins:boundIn ex:northgate-v1 ; ins:boundFrom tmpl:term-4-1 .
 ex:pay-charges a ins:Obligation ;
     ins:boundFrom tmpl:pay-charges ; ins:arisesUnder ex:term-4-1 ;
     ins:obligor ex:customer-occ ; ins:obligee ex:provider-occ ;
