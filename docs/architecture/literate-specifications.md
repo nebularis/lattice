@@ -197,11 +197,30 @@ not express, for example property chains or an individual's other statements.
 
 ### Generated views
 
-The Axiom Index (6.7) and the class diagram in the Overview are generated from the entries into marked
-regions of the README and checked. The diagram shows subclassing, a property's cardinality in words, for
-example "matchStrategy, exactly one", an association arrow where a range is a class, datatype properties
-with their range, and a separate box for a property with no domain or range. It draws no composition
-arrows.
+The Axiom Index and the Overview's class diagram are generated from section 6 and written into the README by
+the extractor, each in its own region: `<!-- start: {"generated": "axiom-index"} -->` inside 6.7 and
+`<!-- start: {"generated": "class-diagram"} -->` inside section 4, each closed by `<!-- end -->`. Both regions
+are required, once each, in those places. The extractor rewrites what is between the markers, and `--check`
+reports the README as drift when a region is out of date, for example after a hand edit. Neither region is
+read as part of section 6.
+
+The **Axiom Index** is a table of every term, classes first, then object properties, datatype properties and
+individuals, each sorted by name. Its summary column states a class's superclasses, equivalent class, key,
+disjoint classes and restrictions (marked "OWL only" or "SHACL only" where a row says so), a property's
+domain, range, characteristics, inverse and super-property, and an individual's types.
+
+The **class diagram** is a mermaid `classDiagram`. It shows:
+
+- each class, with its restrictions as members in words, for example "matchStrategy, exactly one" or
+  "items, at least two Item"
+- a datatype property with a domain as a member of that class, with its range, for example
+  "code (xsd:string)"
+- subclassing as `<|--`
+- an object property with a named domain and range as an association arrow labelled with its name
+- a property with no named domain as a box of its own, for example "Object Property - relatesTo"
+
+Classes are named by their local names, qualified by their prefix where two would share one. The diagram draws
+no composition arrows, since nothing in section 6 says which associations are aggregates.
 
 ## Markers
 

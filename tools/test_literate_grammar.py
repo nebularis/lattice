@@ -38,6 +38,8 @@ PEOPLE_TABLE = f"""| Identifier | Role | Display name |
 ENTRY = f'{FENCE}toml repository-catalogue\n[module]\nkind = "substrate"\nroles = []\n{FENCE}'
 
 
+INDEX_REGION = '<!-- start: {"generated": "axiom-index"} -->\n<!-- end -->'
+DIAGRAM_REGION = '<!-- start: {"generated": "class-diagram"} -->\n<!-- end -->'
 SUBSECTIONS = ("Classes", "Object Properties", "Datatype Properties", "Individuals", "Disjointness and Keys",
                "Other Axioms", "Axiom Index")
 
@@ -45,7 +47,7 @@ SUBSECTIONS = ("Classes", "Object Properties", "Datatype Properties", "Individua
 def six(classes: str = "None.", object_properties: str = "None.", datatype_properties: str = "None.",
         individuals: str = "None.", disjointness: str = "None.", other: str = "None.") -> str:
     """Section 6's seven subsections, each holding the given text."""
-    texts = (classes, object_properties, datatype_properties, individuals, disjointness, other, "None.")
+    texts = (classes, object_properties, datatype_properties, individuals, disjointness, other, INDEX_REGION)
     return "\n\n".join(f"### 6.{i} {title}\n\n{text}" for i, (title, text) in enumerate(zip(SUBSECTIONS, texts), 1))
 
 
@@ -56,6 +58,7 @@ def readme(purpose: str = "X models things.", section2: str | None = None, secti
         1: purpose,
         2: section2 if section2 is not None else "\n\n".join([HEADER_TABLE, PREFIX_TABLE, PEOPLE_TABLE]),
         3: section3,
+        4: DIAGRAM_REGION,
         6: section6 if section6 is not None else six(),
     }
     parts = ["<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->", "", "# X", ""]
@@ -554,3 +557,97 @@ def test_od4_t7_the_grammar_states_eligibilitys_decision_shape_as_its_file_does(
     theirs = Graph().parse(ROOT / "ontology/eligibility/shapes/structural.ttl")
     shape = URIRef(elg + "EligibilityDecisionShape")
     assert isomorphic(_closure(ours, shape), _closure(theirs, shape))
+
+
+# ---- OD5: the generated regions ---------------------------------------------------------------------
+
+PROFILE = "#### `ex:Profile`\n\n**Definition.** A profile.\n\n**Subclass of.** `fnd:Version`"
+OBJECTS = ("#### `ex:forProfile`\n\n**Definition.** The profile.\n\n**Domain.** `ex:Decision`\n\n**Range.** `ex:Profile`\n\n"
+           "**Characteristics.** functional\n\n#### `ex:relatesTo`\n\n**Definition.** Relates.")
+DATA = "#### `ex:code`\n\n**Definition.** A code.\n\n**Domain.** `ex:Decision`\n\n**Range.** `xsd:string`"
+OUTCOMES = "| Individual | Type | Definition |\n|---|---|---|\n| `ex:Permitted` | `ex:Outcome` | Admitted. |"
+
+
+def views_readme(classes: str = DECISION + "\n\n" + KIND + "\n\n" + PROFILE) -> str:
+    rows = HEADER_TABLE + f"\n| `vocab/x-vocab.ttl` | <{X}-vocab> | <{X}-vocab/0.1.0> | |"
+    return readme(section2=rows + "\n\n" + PREFIXES_EX_FND, section6=six(
+        classes=classes, object_properties=OBJECTS, datatype_properties=DATA, individuals=OUTCOMES,
+        disjointness="**Disjoint.** `ex:Decision`, `ex:Profile`"))
+
+
+def region(text: str, name: str) -> str:
+    start = text.index(f'<!-- start: {{"generated": "{name}"}} -->')
+    return text[text.index("\n", start) + 1:text.index("<!-- end -->", start)].strip()
+
+
+def test_od5_t1_the_axiom_index_summarises_every_term() -> None:
+    assert region(compile_readme(views_readme()).readme, "axiom-index") == "\n".join([
+        "| Term | Kind | Summary |",
+        "|---|---|---|",
+        "| `ex:Decision` | Class | Subclass of `ex:Evidenced`, `ex:Thing`. Key `ex:code`, `ex:issuer`. Disjoint with "
+        "`ex:Profile`. Restrictions `ex:forProfile` exactly 1, `ex:hasQuestion` min 1 (OWL only), `ex:reliedOn` only "
+        "`ex:Closure` (SHACL only), `ex:usesProfile` exactly 1 (SHACL only). |",
+        "| `ex:Kind` | Class | Equivalent to `ex:A` or `ex:B`. |",
+        "| `ex:Profile` | Class | Subclass of `fnd:Version`. Disjoint with `ex:Decision`. |",
+        "| `ex:forProfile` | Object property | Domain `ex:Decision`. Range `ex:Profile`. Functional. |",
+        "| `ex:relatesTo` | Object property |  |",
+        "| `ex:code` | Datatype property | Domain `ex:Decision`. Range `xsd:string`. |",
+        "| `ex:Permitted` | Individual | Type `ex:Outcome`. |",
+    ])
+
+
+def test_od5_t2_the_class_diagram_draws_classes_subclassing_associations_and_lone_properties() -> None:
+    assert region(compile_readme(views_readme()).readme, "class-diagram") == "\n".join([
+        "```mermaid", "classDiagram",
+        "    class Decision {", "        code (xsd:string)", "        forProfile, exactly one",
+        "        hasQuestion, at least one", "        reliedOn, only Closure", "        usesProfile, exactly one", "    }",
+        "    class Evidenced", "    class Kind", "    class Profile", "    class Thing", "    class Version",
+        "    Decision --> Profile : forProfile", "    Evidenced <|-- Decision", "    Thing <|-- Decision",
+        "    Version <|-- Profile",
+        '    class ObjectProperty_relatesTo["Object Property - relatesTo"]',
+        "```",
+    ])
+
+
+def test_od5_t3_two_classes_with_one_local_name_are_qualified_by_prefix() -> None:
+    clash = "#### `ex:Version`\n\n**Definition.** A version of ours.\n\n**Subclass of.** `fnd:Version`"
+    diagram = region(compile_readme(views_readme(clash)).readme, "class-diagram")
+    assert "fnd_Version <|-- ex_Version" in diagram
+
+
+def test_od5_t4_extraction_writes_the_regions_and_a_hand_edit_is_drift(tmp_path: Path, capsys) -> None:
+    source = tmp_path / "README.md"
+    source.write_text(views_readme(), encoding="utf-8")
+    args = [str(source), "--layer", "x", "--root", str(tmp_path)]
+    assert literate_extract.main(args) == 0
+    assert "| `ex:Kind` | Class |" in source.read_text(encoding="utf-8")
+    assert literate_extract.main([*args, "--check"]) == 0
+    source.write_text(source.read_text(encoding="utf-8").replace("| `ex:Kind` | Class |", "| `ex:Kind` | Thing |"), encoding="utf-8")
+    capsys.readouterr()
+    assert literate_extract.main([*args, "--check"]) == 1
+    assert "its generated regions" in capsys.readouterr().err
+
+
+def test_od5_t5_regions_are_not_read_as_section_6_and_refreshing_twice_changes_nothing() -> None:
+    once = compile_readme(views_readme())
+    twice = compile_readme(once.readme)
+    assert twice.readme == once.readme and twice.documents == once.documents and twice.shapes == once.shapes
+
+
+@pytest.mark.parametrize("change,message", [
+    (lambda t: t.replace(INDEX_REGION, "None."), "one generated region 'axiom-index'"),
+    (lambda t: t.replace(DIAGRAM_REGION, "None.").replace("## 5. Detailed Design\n\nNone.", "## 5. Detailed Design\n\n" + DIAGRAM_REGION),
+     "one generated region 'class-diagram'"),
+    (lambda t: t.replace(DIAGRAM_REGION, DIAGRAM_REGION + "\n\n" + DIAGRAM_REGION), "one generated region 'class-diagram'"),
+    (lambda t: t.replace(INDEX_REGION, INDEX_REGION + '\n\n<!-- start: {"generated": "glossary"} -->\n<!-- end -->'), "no generated region is named 'glossary'"),
+])
+def test_od5_t6_each_region_is_required_once_in_its_place(change, message: str) -> None:
+    with pytest.raises(lg.GrammarError, match=message):
+        compile_readme(change(views_readme()))
+
+
+def test_od5_t7_the_views_do_not_depend_on_the_order_of_entries() -> None:
+    one = compile_readme(views_readme(DECISION + "\n\n" + KIND + "\n\n" + PROFILE)).readme
+    two = compile_readme(views_readme(PROFILE + "\n\n" + KIND + "\n\n" + DECISION)).readme
+    assert region(one, "axiom-index") == region(two, "axiom-index")
+    assert region(one, "class-diagram") == region(two, "class-diagram")

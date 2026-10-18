@@ -373,10 +373,12 @@ def read_section_2(readme: Readme, layer: str) -> Header:
 @dataclass(frozen=True)
 class Compiled:
     """What a README in the layout compiles to: the opening of each document section 2 names, and the
-    generated structural shapes file, if any restriction is asserted in SHACL. Both by output path."""
+    generated structural shapes file, if any restriction is asserted in SHACL, both by output path, and
+    the README with its generated regions brought up to date."""
 
     documents: Dict[str, str]
     shapes: Dict[str, str]
+    readme: str
 
 
 def compile_layout(markdown: str, scan, layer: str) -> Compiled:
@@ -407,7 +409,12 @@ def compile_layout(markdown: str, scan, layer: str) -> Compiled:
     section6.compile()
     documents = {target: document.turtle(header.prefixes) for target, document in header.documents.items()}
     shapes = structural_shapes(section6.restrictions, header.prefixes)
-    return Compiled(documents, {f"ontology/{layer}/shapes/structural.ttl": shapes} if shapes else {})
+    views = Views(header.documents.values(), section6)
+    regions = {"axiom-index": views.axiom_index(), "class-diagram": views.class_diagram()}
+    refreshed = refresh(markdown, scan, regions, {
+        "axiom-index": section6.ranges["axiom index"], "class-diagram": readme.section("Overview"),
+    })
+    return Compiled(documents, {f"ontology/{layer}/shapes/structural.ttl": shapes} if shapes else {}, refreshed)
 
 
 # ---- OWL Manchester syntax, the subset section 6 uses (ADR-A126 decision 4) ----------------------
@@ -601,6 +608,8 @@ class Section6:
         self.defaults = {"spec": f"ontology/{layer}/spec/{last}.ttl", "vocab": f"ontology/{layer}/vocab/{last}-vocab.ttl"}
         self.restrictions: List[Restriction] = []
         self.subjects: set = set()
+        self.ranges: Dict[str, Tuple[int, int]] = {}
+        self.table_terms: set = set()
 
     # -- helpers
 
@@ -638,6 +647,7 @@ class Section6:
                 raise GrammarError(f"line {number}: section 6 has no subsection {match.group('title')!r}")
             titles.append(title)
             stop = heads[i + 1][0] if i + 1 < len(heads) else end
+            self.ranges[title] = (number, stop)
             if title in KIND_TYPES:
                 self.entries(title, number, stop)
             elif title == "individuals":
@@ -735,6 +745,7 @@ class Section6:
             term = class_expression(f"{prop} {row[1]}", self.prefixes, f"line {number}")
             if not (isinstance(term, Node) and ("rdf:type", "owl:Restriction") in term.pairs):
                 raise GrammarError(f"line {number}: the values {row[1]!r} do not make a restriction on {prop}")
+            self.table_terms.add(term)
             if asserted != "shacl":
                 document.add(subject, "rdfs:subClassOf", term)
 
@@ -859,3 +870,215 @@ def structural_shapes(restrictions: Sequence[Restriction], prefixes: Mapping[str
     for name in sorted(shapes):
         lines += ["", f"{name} " + _pairs(shapes[name], " ;\n    ") + " ."]
     return "\n".join(lines) + "\n"
+
+
+
+# ---- generated views: the Axiom Index and the class diagram (ADR-A126 decision 7) --------------------
+
+KIND_NAMES = {"owl:Class": "Class", "owl:ObjectProperty": "Object property", "owl:DatatypeProperty": "Datatype property"}
+KIND_ORDER = ("Class", "Object property", "Datatype property", "Individual")
+NUMBER_WORDS = ("zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten")
+CHARACTERISTIC_NAMES = {v: k for k, v in CHARACTERISTICS.items()}
+COMPOUND = ("owl:unionOf", "owl:intersectionOf", "owl:complementOf")
+
+
+def manchester(term: Term, code: bool = True, nested: bool = False) -> str:
+    """A term written back in Manchester syntax, names in backticks when ``code``."""
+    if isinstance(term, str):
+        return f"`{term}`" if code and not term.startswith(('"', "<")) and not term[:1].isdigit() else term
+    if isinstance(term, Collection):
+        return ", ".join(manchester(item, code) for item in term.items)
+    pairs = dict(term.pairs)
+    if "owl:onProperty" in pairs:
+        prop = manchester(pairs["owl:onProperty"], code)
+        for key, word in (("owl:someValuesFrom", "some"), ("owl:allValuesFrom", "only"), ("owl:hasValue", "value")):
+            if key in pairs:
+                text = f"{prop} {word} {manchester(pairs[key], code, True)}"
+                break
+        else:
+            for word, (unqualified, qualified) in CARDINALITY.items():
+                if unqualified in pairs:
+                    text = f"{prop} {word} {_count(pairs[unqualified])}"
+                elif qualified in pairs:
+                    text = f"{prop} {word} {_count(pairs[qualified])} {manchester(pairs['owl:onClass'], code, True)}"
+                else:
+                    continue
+                break
+    elif "owl:complementOf" in pairs:
+        text = f"not {manchester(pairs['owl:complementOf'], code, True)}"
+    else:
+        key, word = ("owl:unionOf", " or ") if "owl:unionOf" in pairs else ("owl:intersectionOf", " and ")
+        text = word.join(manchester(item, code, True) for item in pairs[key].items)
+    return f"({text})" if nested else text
+
+
+def verbalise(term: Node) -> str:
+    """A restriction in the class diagram's words, for example "exactly one" or "at least two Item"."""
+    pairs = dict(term.pairs)
+    for word, phrase in (("exactly", "exactly"), ("min", "at least"), ("max", "at most")):
+        unqualified, qualified = CARDINALITY[word]
+        for key in (unqualified, qualified):
+            if key in pairs:
+                n = int(_count(pairs[key]))
+                count = NUMBER_WORDS[n] if n < len(NUMBER_WORDS) else str(n)
+                filler = f" {_local(pairs['owl:onClass'])}" if key == qualified else ""
+                return f"{phrase} {count}{filler}"
+    for key, word in (("owl:someValuesFrom", "some"), ("owl:allValuesFrom", "only"), ("owl:hasValue", "value")):
+        if key in pairs:
+            return f"{word} {_local(pairs[key])}"
+    return manchester(term, code=False)
+
+
+def _local(term: Term) -> str:
+    if isinstance(term, str) and ":" in term and not term.startswith(('"', "<")):
+        return term.split(":", 1)[1]
+    return manchester(term, code=False)
+
+
+class Views:
+    """The Axiom Index and the class diagram, read from the compiled statements and restriction rows."""
+
+    def __init__(self, documents: Iterable[Document], section6: "Section6") -> None:
+        self.facts: Dict[str, List[Tuple[str, Term]]] = {}
+        self.anonymous: List[Node] = []
+        for document in documents:
+            heads = {f"<{document.ontology_iri}>"}
+            for subject, pairs in document.statements.items():
+                types = {o for p, o in pairs if p == "rdf:type"}
+                if subject in heads or "owl:AnnotationProperty" in types:
+                    continue
+                self.facts.setdefault(subject, []).extend(pairs)
+            self.anonymous.extend(document.anonymous)
+        self.rows = section6.restrictions
+        self.table_terms = section6.table_terms
+        self.prefixes = section6.prefixes
+
+    def kind(self, subject: str) -> str:
+        types = {o for p, o in self.facts[subject] if p == "rdf:type"}
+        return next((KIND_NAMES[t] for t in KIND_NAMES if t in types), "Individual" if types else "")
+
+    def values(self, subject: str, predicate: str) -> List[Term]:
+        return [o for p, o in self.facts.get(subject, []) if p == predicate]
+
+    def axiom_index(self) -> str:
+        rows = []
+        for subject in sorted(self.facts, key=lambda s: (KIND_ORDER.index(self.kind(s)) if self.kind(s) in KIND_ORDER else 9, s)):
+            kind = self.kind(subject)
+            if not kind:
+                continue
+            rows.append(f"| `{subject}` | {kind} | {' '.join(self.summary(subject, kind))} |")
+        if not rows:
+            return "None."
+        return "\n".join(["| Term | Kind | Summary |", "|---|---|---|", *rows])
+
+    def summary(self, subject: str, kind: str) -> List[str]:
+        parts: List[str] = []
+
+        def sentence(label: str, terms: Sequence[Term]) -> None:
+            if terms:
+                parts.append(f"{label} {', '.join(manchester(term) for term in terms)}.")
+
+        if kind == "Class":
+            sentence("Subclass of", sorted((t for t in self.values(subject, "rdfs:subClassOf") if t not in self.table_terms), key=render))
+            sentence("Equivalent to", self.values(subject, "owl:equivalentClass"))
+            sentence("Key", self.values(subject, "owl:hasKey"))
+            disjoint = self.values(subject, "owl:disjointWith") + [
+                d for node in self.anonymous for d in dict(node.pairs)["owl:members"].items
+                if subject in dict(node.pairs)["owl:members"].items and d != subject
+            ] + [s for s in self.facts if subject in self.values(s, "owl:disjointWith")]
+            sentence("Disjoint with", sorted(set(disjoint)))
+            restrictions = []
+            for row in self.rows:
+                if row.subject == subject:
+                    note = {"owl": " (OWL only)", "shacl": " (SHACL only)"}.get(row.asserted_in, "")
+                    term = class_expression(f"{row.prop} {row.values}", self.prefixes, f"line {row.line}")
+                    restrictions.append(manchester(term) + note)
+            if restrictions:
+                parts.append(f"Restrictions {', '.join(sorted(restrictions))}.")
+        elif kind == "Individual":
+            sentence("Type", sorted(t for t in self.values(subject, "rdf:type")))
+        else:
+            sentence("Domain", self.values(subject, "rdfs:domain"))
+            sentence("Range", self.values(subject, "rdfs:range"))
+            characteristics = sorted(CHARACTERISTIC_NAMES[t] for t in self.values(subject, "rdf:type") if t in CHARACTERISTIC_NAMES)
+            if characteristics:
+                parts.append(", ".join(characteristics).capitalize() + ".")
+            sentence("Inverse of", self.values(subject, "owl:inverseOf"))
+            sentence("Subproperty of", self.values(subject, "rdfs:subPropertyOf"))
+        return parts
+
+    def class_diagram(self) -> str:
+        classes = sorted(s for s in self.facts if self.kind(s) == "Class")
+        properties = sorted(s for s in self.facts if self.kind(s) in ("Object property", "Datatype property"))
+        if not classes and not properties:
+            return "None."
+        named = set(classes)
+        for subject in classes:
+            named.update(t for t in self.values(subject, "rdfs:subClassOf") if isinstance(t, str))
+        for prop in properties:
+            named.update(t for p in ("rdfs:domain", "rdfs:range") for t in self.values(prop, p)
+                         if isinstance(t, str) and self.kind(prop) == "Object property")
+        ids = self._identifiers(named)
+        members: Dict[str, List[str]] = {c: [] for c in sorted(named)}
+        links: List[str] = []
+        boxes: List[str] = []
+        for row in self.rows:
+            term = class_expression(f"{row.prop} {row.values}", self.prefixes, f"line {row.line}")
+            members.setdefault(row.subject, []).append(f"{_local(row.prop)}, {verbalise(term)}")
+        for subject in classes:
+            for parent in sorted(t for t in self.values(subject, "rdfs:subClassOf") if isinstance(t, str)):
+                links.append(f"{ids[parent]} <|-- {ids[subject]}")
+        for prop in properties:
+            domains = [t for t in self.values(prop, "rdfs:domain") if isinstance(t, str)]
+            ranges = [t for t in self.values(prop, "rdfs:range") if isinstance(t, str)]
+            local = _local(prop)
+            if self.kind(prop) == "Object property" and domains and ranges:
+                links += [f"{ids[d]} --> {ids[r]} : {local}" for d in domains for r in ranges]
+            elif domains:
+                suffix = f" ({ranges[0]})" if self.kind(prop) == "Datatype property" and ranges else ""
+                for d in domains:
+                    if not any(m.startswith(f"{local},") for m in members.get(d, [])):
+                        members.setdefault(d, []).append(f"{local}{suffix}")
+            else:
+                kind = self.kind(prop).replace("property", "Property")
+                identifier = re.sub(r"[^A-Za-z0-9_]", "_", f"{kind.replace(' ', '')}_{local}")
+                boxes.append(f'    class {identifier}["{kind} - {local}"]')
+        lines = ["```mermaid", "classDiagram"]
+        for subject in sorted(members, key=lambda c: ids.get(c, c)):
+            if subject not in ids:
+                continue
+            if members[subject]:
+                lines += [f"    class {ids[subject]} {{", *[f"        {m}" for m in sorted(members[subject])], "    }"]
+            else:
+                lines.append(f"    class {ids[subject]}")
+        lines += [f"    {link}" for link in sorted(set(links))] + boxes + ["```"]
+        return "\n".join(lines)
+
+    @staticmethod
+    def _identifiers(names: Iterable[str]) -> Dict[str, str]:
+        """Each class's identifier in the diagram: its local name, qualified by its prefix where two
+        classes would otherwise share one."""
+        names = sorted(names)
+        locals_ = [_local(n) for n in names]
+        out = {}
+        for name, local in zip(names, locals_):
+            text = local if locals_.count(local) == 1 else name.replace(":", "_")
+            out[name] = re.sub(r"[^A-Za-z0-9_]", "_", text)
+        return out
+
+
+def refresh(markdown: str, scan, contents: Mapping[str, str], places: Mapping[str, Tuple[int, int]]) -> str:
+    """The README with each generated region's content replaced by ``contents``. Each region is required,
+    once, inside its place (a range of line numbers), and an unknown region is refused."""
+    lines = markdown.split("\n")
+    regions = [r for r in scan.regions if r.key == "generated"]
+    for region in regions:
+        if region.value not in contents:
+            raise GrammarError(f"line {region.start_line}: no generated region is named {region.value!r}")
+    for name, (start, end) in places.items():
+        found = [r for r in regions if r.value == name]
+        if len(found) != 1 or not start < found[0].start_line < end:
+            raise GrammarError(f"the README needs one generated region {name!r}, in its place (found {len(found)})")
+    for region in sorted(regions, key=lambda r: r.start_line, reverse=True):
+        lines[region.start_line:region.end_line - 1] = ["", *contents[region.value].split("\n"), ""]
+    return "\n".join(lines)

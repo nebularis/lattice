@@ -3,7 +3,7 @@
 # Improved Ontology Documentation: Status
 
 **Unit ID:** `improved-ontology-documentation` (absorbs `repository-catalogue`)
-**Status:** In progress. OD0 accepted. OD1, RC1, RC2, OD2 and OD3 done. OD4 built autonomously and committed locally, OD5 under way. Not pushed.
+**Status:** In progress. OD0 accepted. OD1, RC1, RC2, OD2 and OD3 done. OD4 and OD5 built autonomously and committed locally, not pushed.
 **Last updated:** 2026-10-16
 **Branch:** `docs/literate-v2`
 **Plan:** [improved-ontology-documentation.md](../plans/improved-ontology-documentation.md)
@@ -20,10 +20,9 @@ ontology file has changed.
 
 ## Next action
 
-1. OD5, the generated regions, built autonomously at the maintainer's request of 2026-10-18, committed locally
-   and not pushed.
-2. The maintainer then reviews the decisions taken alone in the [OD4](../validation/OD4.md) and OD5 Validation
-   Packs, and we plan the next slices: DOC1, the Eligibility pilot (OD6) and RC3.
+1. The maintainer reviews the decisions taken alone in the [OD4](../validation/OD4.md) (six) and
+   [OD5](../validation/OD5.md) (six) Validation Packs, and runs `mise run check:ontology-catalog`.
+2. Then we plan the next slices: DOC1, the Eligibility pilot (OD6), and RC3.
 
 ## Slices
 
@@ -37,7 +36,7 @@ ontology file has changed.
 | OD2 sections 1 to 3 | built autonomously 2026-10-18, committed locally (`8947e696`), [Validation Pack](../validation/OD2.md) | |
 | OD3 section 6 to OWL | built autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD3.md) | |
 | OD4 section 6 to SHACL | built autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD4.md) | the maintainer's review of six decisions taken alone |
-| OD5 generated regions | planned | OD3 |
+| OD5 generated regions | built autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD5.md) | the maintainer's review of six decisions taken alone |
 | OD6 Eligibility pilot | planned | RC2, OD2, OD4, OD5 |
 | OD7 Vocabulary | planned | OD6 |
 | OD8 onward, one per layer | planned | OD7, and for Foundation and Party their part of TD-16 |
@@ -152,3 +151,7 @@ None.
   whole, and rows for one property and message share a property shape. The grammar states Eligibility's
   `EligibilityDecisionShape` exactly as its file does (OD4-T7). Six decisions taken alone are listed in its
   Validation Pack. Its tests and the neighbouring suites pass.
+- 2026-10-18: OD5 built: the Axiom Index and the Overview's class diagram are generated from the compiled
+  section 6 into required regions of the README, rewritten by extraction and reported as drift by `--check`.
+  The generated diagram renders under mermaid 10.9.1. Six decisions taken alone are listed in its Validation
+  Pack. Its tests and the neighbouring suites pass. Committed locally, not pushed.

@@ -794,6 +794,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         target.write_text(content, encoding="utf-8", newline="\n")
         print(f"wrote {relative} ({len(content.splitlines())} lines)")
 
+    # A README in the layout is also an output: its generated regions, the Axiom Index and the
+    # class diagram, are rewritten in place (ADR-A126 decision 7).
+    if compiled is not None and compiled.readme != text:
+        if args.check:
+            drifted.append(f"{readme_path} (its generated regions)")
+        else:
+            readme_path.write_text(compiled.readme, encoding="utf-8", newline="\n")
+            print(f"wrote the generated regions of {readme_path}")
+
     if args.check:
         for relative in drifted:
             print(f"DRIFT {relative}", file=sys.stderr)

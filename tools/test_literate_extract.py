@@ -263,7 +263,9 @@ def _extractable(text: str) -> str:
     text = text.replace("Namespace and Prefixes\n", "Namespace and Prefixes\n\n| Document | Ontology IRI | Version IRI | Imports |\n"
                         "|---|---|---|---|\n| `spec/x.ttl` | <https://example.org/x> | <https://example.org/x/0.1.0> | |\n")
     text = text.replace("Extraction Contract\n", "Extraction Contract\n\n```toml repository-catalogue\n[module]\n```\n")
-    subsections = "".join(f"\n### 6.{i} {t}\n\nNone.\n" for i, t in enumerate(
+    regions = '<!-- start: {"generated": "axiom-index"} -->\n<!-- end -->\n'
+    text = text.replace("## 4. Overview\n", '## 4. Overview\n\n<!-- start: {"generated": "class-diagram"} -->\n<!-- end -->\n')
+    subsections = "".join(f"\n### 6.{i} {t}\n\n{regions if i == 7 else 'None.'}\n" for i, t in enumerate(
         ("Classes", "Object Properties", "Datatype Properties", "Individuals", "Disjointness and Keys", "Other Axioms",
          "Axiom Index"), 1))
     return text.replace("Description Logic Encoding\n", "Description Logic Encoding\n" + subsections)
