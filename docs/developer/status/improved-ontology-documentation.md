@@ -20,9 +20,8 @@ ontology file has changed.
 
 ## Next action
 
-1. The maintainer reviews the decisions taken alone in the [OD4](../validation/OD4.md) (six) and
-   [OD5](../validation/OD5.md) (six) Validation Packs, and runs `mise run check:ontology-catalog`.
-2. Then we plan the next slices: DOC1, the Eligibility pilot (OD6), and RC3.
+1. The maintainer commits this plan, merges this branch into `main`, and syncs it.
+2. Then OD6, the Eligibility pilot, on this branch, then DOC1 and RC3. Briefs are in the plan.
 
 ## Slices
 
@@ -31,16 +30,16 @@ ontology file has changed.
 | OD0 ADRs, the AGENTS.md rule, the conventions document | accepted 2026-10-17, committed, [Validation Pack](../validation/OD0.md) | |
 | RC1 catalogue and reader | committed 2026-10-17, tests pass, choices agreed 2026-10-18, [Validation Pack](../validation/RC1.md) | |
 | RC2 consumers use the reader | passed and committed 2026-10-18, [Validation Pack](../validation/RC2.md) | |
-| RC3 roots, AGENTS.md table, bypass scan | planned | RC2 |
+| RC3 roots, AGENTS.md table, bypass scan | briefed 2026-10-18 | |
 | OD1 scanner and markers | passed 2026-10-17, choices agreed, [Validation Pack](../validation/OD1.md) | the maintainer's merge |
 | OD2 sections 1 to 3 | built autonomously 2026-10-18, committed locally (`8947e696`), [Validation Pack](../validation/OD2.md) | |
 | OD3 section 6 to OWL | built autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD3.md) | |
 | OD4 section 6 to SHACL | built autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD4.md) | the maintainer's review of six decisions taken alone |
 | OD5 generated regions | built autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD5.md) | the maintainer's review of six decisions taken alone |
-| OD6 Eligibility pilot | planned | RC2, OD2, OD4, OD5 |
+| OD6 Eligibility pilot | briefed 2026-10-18 | the merge into `main` |
 | OD7 Vocabulary | planned | OD6 |
 | OD8 onward, one per layer | planned | OD7, and for Foundation and Party their part of TD-16 |
-| DOC1 published decisions | planned | OD0 |
+| DOC1 published decisions | briefed 2026-10-18 | OD6 preferred first |
 | DOC2 site sections | planned | DOC1, RC1 |
 | DOC3 tutorial and Field Guide review | planned | DOC2, `lattice-tutorial` merged |
 | RC4 downstream extension | planned | RC3 |
@@ -158,3 +157,12 @@ None.
 - 2026-10-18: OD4's decisions 2 to 6 and OD5's decisions 1 and 3 to 6 agreed. OD4's decision 1 (merging rows
   into one property shape) and OD5's decision 2 (the README as an output) agreed after explanation. Every OD4
   and OD5 decision is settled.
+- 2026-10-18: the planning round answered (OD-D32 to OD-D40): merge before the pilot and continue on this branch,
+  a reusable migration check, enumeration in the grammar for OWL enumerated classes and SHACL `sh:in`, individuals
+  with extra statements whole in 6.6 blocks, the maintainer named as creator with permission for the display name,
+  unpublished ADRs hidden by a Jekyll default, the first publication pass limited to what Eligibility cites, a
+  Described in field, and AGENTS.md's table generated with its columns unchanged. TD-52 (ADR metadata as a table)
+  and TD-53 (most of `docs/` unpublished by default, for a website sketch) added. Briefs for OD6, DOC1 and RC3
+  written into the plan.
+- 2026-10-18: RC3-Q2 answered (b), recorded as OD-D41: the bypass scan's exceptions in a file beside the reader,
+  with one technical debt row giving their count. Every planning question is answered.

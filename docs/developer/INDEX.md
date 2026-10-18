@@ -707,7 +707,7 @@ repository catalogue with each module's entry in its README, and a sources rule 
 built on published ADRs. Piloted on Eligibility, then Vocabulary.
 
 **Unplanned backlog** (the plan's own section): grammar support for a union of datatypes, for the property
-characteristics asymmetric, reflexive and irreflexive, and for `oneOf`, each added when a layer needs it.
+characteristics asymmetric, reflexive and irreflexive, each added when a layer needs it (`oneOf` is planned in OD6).
 Multilingual support is a pending design decision, PDD-10.
 
 ## 8. Phase Handoff Documents (0-6)
