@@ -90,7 +90,9 @@ state.
     - Extracted markdown becomes plain text. Links become their text and an absolute URL at the release tag
       that the section 2 version names.
     - Generated Turtle is sorted by subject and then by a fixed predicate order, so reorganising a README
-      changes no generated file.
+      changes no generated file. A document's fenced blocks follow its generated statements, ordered by
+      their own text, and declare no prefix, since section 2's prefix table is the one source of prefixes
+      (clarified 2026-10-18).
     - Dublin Core terms are declared in each document as annotation properties, with the `dct:` prefix, and
       never imported, so every document stays in OWL 2 DL.
     - Creators and contributors come from a table in section 2 that the maintainers keep. Each is

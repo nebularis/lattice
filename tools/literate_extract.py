@@ -589,7 +589,15 @@ def plan(
         if stray:
             raise ValueError(f"block(s) go to {', '.join(stray)}, which section 2's header table does not name")
         for target, preamble in preambles.items():
-            outputs[target] = render([preamble, *spec_docs.pop(target, []), *vocab_docs.pop(target, [])])
+            bodies = [*spec_docs.pop(target, []), *vocab_docs.pop(target, [])]
+            if any(PREFIX_RE.search(body) for body in bodies):
+                raise ValueError(
+                    f"a block for {target} declares a prefix. In a README in the layout, section 2's prefix "
+                    f"table is the one source of prefixes (ADR-A126)"
+                )
+            # Blocks are ordered by their own text, so moving one in the README changes no generated
+            # file (OD-D18, ADR-A126 decision 10). Without @prefix lines, their order cannot matter.
+            outputs[target] = render([preamble, *sorted(bodies)])
     prefixes = PREFIX_RE.findall("\n".join(spec_docs.get(default_spec, [])))
     for target, bodies in spec_docs.items():
         if target != default_spec and prefixes:

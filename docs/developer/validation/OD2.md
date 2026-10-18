@@ -102,3 +102,18 @@ mise exec -- python -m pytest tools/test_literate_grammar.py tools/test_literate
 - Section 6. OD3 compiles it.
 - Shapes from section 6, and the generated regions. OD4 and OD5.
 - Any real README in the layout. The first is Eligibility, in OD6.
+
+## Decisions answered
+
+2026-10-18, by the maintainer: decisions 2, 3, 4, 6, 7 and 8 agreed.
+
+- **Decision 1** agreed. The header table lists ontology documents only, the spec and vocab documents.
+  Shape and projection files have no ontology header, and their targets are in the catalogue entry. The
+  header table's documents and the entry's `extract.spec` and `extract.vocab` name the same files. Both
+  stay, held equal by RC1-T3 now and by every extraction after RC4 (OD2-Q1, option a).
+- **Decision 5** changed (OD2-Q5, option b). A document's blocks are ordered by their own text, not their
+  place in the README, and a block of a migrated README may not declare a prefix. OD-D18 then holds in full.
+  ADR-A126 decision 10 is clarified in place to say so. Tests OD2-T10 and OD2-T11 were added and pass. A
+  later change is planned so that the versioning check considers only a document's graph (TD-51).
+
+The maintainer ran every test suite on 2026-10-18, before this change, and all pass.

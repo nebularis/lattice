@@ -706,6 +706,10 @@ One README layout whose normative sections compile to Turtle and SHACL from a ma
 repository catalogue with each module's entry in its README, and a sources rule for user-facing documents
 built on published ADRs. Piloted on Eligibility, then Vocabulary.
 
+**Unplanned backlog** (the plan's own section): grammar support for a union of datatypes, for the property
+characteristics asymmetric, reflexive and irreflexive, and for `oneOf`, each added when a layer needs it.
+Multilingual support is a pending design decision, PDD-10.
+
 ## 8. Phase Handoff Documents (0-6)
 
 | Phase | Status Record | Key Outcome |

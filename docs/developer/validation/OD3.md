@@ -105,3 +105,11 @@ mise exec -- python -m pytest tools/test_literate_grammar.py tools/test_literate
 - SHACL from the restriction tables, and refusing a nested expression asserted in SHACL. OD4.
 - The Axiom Index and the class diagram. OD5.
 - A real README in the layout, and the graph-isomorphism check against today's files. OD6, with Eligibility.
+
+## Decisions answered
+
+2026-10-18, by the maintainer: all ten agreed. Decision 4 raised multilingual support, recorded as PDD-10 in the
+[pending design decisions](../plans/pending-design-decisions.md). Decision 10's unsupported forms are in the plan's
+unplanned backlog.
+
+The maintainer ran every test suite on 2026-10-18, and all pass.

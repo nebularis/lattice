@@ -228,6 +228,17 @@ modules splits.
 
 None. Every question was answered by 2026-10-16.
 
+## Unplanned backlog
+
+Work this unit found and does not plan. Each is a small addition when a layer needs it, and until then a
+layer can state it in a `turtle-spec` block in section 6.6.
+
+| Item | From | Note |
+|---|---|---|
+| A union of datatypes in a property's range | OD3, decision 10 | today it would be written as a class union. Needs `rdfs:Datatype` with `owl:unionOf` |
+| The property characteristics asymmetric, reflexive and irreflexive | OD3, decision 10 | no layer uses them |
+| `oneOf`, an enumerated class | OD3, decision 10 | no layer uses it |
+
 ## Deliberate non-coverage
 
 - Untracking generated Turtle (OD-D1).

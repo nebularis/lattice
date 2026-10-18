@@ -80,11 +80,14 @@ other two are optional. The values below are illustrative.
 
 Every generated document declares the Dublin Core terms it uses as annotation properties itself, with the
 `dct:` prefix, and never imports Dublin Core, so it stays in OWL 2 DL. A document's ontology header comes
-first, then its other statements sorted by subject, then the README's blocks for it in document order.
+first, then its other statements sorted by subject, then the README's blocks for it, ordered by their own
+text, so moving a block in the README changes no generated file. A block of a README in the layout declares
+no prefix of its own, since the prefix table is the one source of prefixes.
 
 **Section 3** holds the module's catalogue entry, exactly one fenced `toml repository-catalogue` block, which
 the layout check requires inside section 3. It names the module's spec documents, vocab documents, shape
-files in order and permitted imports. Its prose says only what is unusual about the module, for example a
+files in order and permitted imports. Its spec and vocab documents are the rows of section 2's header table,
+written twice, and a check holds the two lists equal. Its prose says only what is unusual about the module, for example a
 second spec document, and links here for the rest.
 
 ## Section 6, the Description Logic Encoding

@@ -445,3 +445,21 @@ def test_od3_t10_the_output_does_not_depend_on_the_order_of_entries() -> None:
     one = extract(section6_readme(classes=DECISION + "\n\n" + KIND))
     two = extract(section6_readme(classes=KIND + "\n\n" + DECISION))
     assert one == two
+
+
+# ---- OD2-Q5 (b), 2026-10-18: blocks in a migrated README ---------------------------------------
+
+
+def test_od2_t10_a_documents_blocks_are_ordered_by_their_text_not_their_place() -> None:
+    first, second = f"{FENCE}turtle-spec\nex:B a owl:Class .\n{FENCE}", f"{FENCE}turtle-spec\nex:A a owl:Class .\n{FENCE}"
+    one = extract(readme(section6=six(other=first + "\n\n" + second)))
+    two = extract(readme(section6=six(other=second + "\n\n" + first)))
+    assert one == two
+    text = one["ontology/x/spec/x.ttl"]
+    assert text.index("ex:A a owl:Class") < text.index("ex:B a owl:Class")
+
+
+def test_od2_t11_a_block_of_a_migrated_readme_declares_no_prefix() -> None:
+    block = f"{FENCE}turtle-spec\n@prefix zz: <https://example.org/zz#> .\nzz:A a owl:Class .\n{FENCE}"
+    with pytest.raises(ValueError, match="section 2's prefix table is the one source of prefixes"):
+        extract(readme(section6=six(other=block)))

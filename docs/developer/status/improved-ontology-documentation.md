@@ -3,7 +3,7 @@
 # Improved Ontology Documentation: Status
 
 **Unit ID:** `improved-ontology-documentation` (absorbs `repository-catalogue`)
-**Status:** In progress. OD0 accepted. OD1, RC1 and RC2 done. OD2 and OD3 built autonomously and committed locally, not pushed.
+**Status:** In progress. OD0 accepted. OD1, RC1, RC2, OD2 and OD3 done, OD2 and OD3 committed locally and not pushed.
 **Last updated:** 2026-10-16
 **Branch:** `docs/literate-v2`
 **Plan:** [improved-ontology-documentation.md](../plans/improved-ontology-documentation.md)
@@ -20,11 +20,9 @@ ontology file has changed.
 
 ## Next action
 
-1. The maintainer reviews the decisions taken alone in the [OD2](../validation/OD2.md) (eight) and
-   [OD3](../validation/OD3.md) (ten) Validation Packs, keeps or overrules each, and runs
-   `mise run check:ontology-catalog`. An overruled decision may lead to rewriting the two local commits before
-   the branch is pushed.
-2. Then OD4 (section 6 to SHACL) and OD5 (generated regions), then the Eligibility pilot, OD6.
+1. The maintainer decides whether OD4 (section 6 to SHACL) and OD5 (generated regions) are built
+   autonomously, as OD2 and OD3 were, and on OD4's four leanings.
+2. Then DOC1, and the Eligibility pilot, OD6. RC3 can come at any point.
 
 ## Slices
 
@@ -35,8 +33,8 @@ ontology file has changed.
 | RC2 consumers use the reader | passed and committed 2026-10-18, [Validation Pack](../validation/RC2.md) | |
 | RC3 roots, AGENTS.md table, bypass scan | planned | RC2 |
 | OD1 scanner and markers | passed 2026-10-17, choices agreed, [Validation Pack](../validation/OD1.md) | the maintainer's merge |
-| OD2 sections 1 to 3 | built autonomously 2026-10-18, committed locally (`8947e696`), [Validation Pack](../validation/OD2.md) | the maintainer's review of eight decisions taken alone |
-| OD3 section 6 to OWL | built autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD3.md) | the maintainer's review of ten decisions taken alone |
+| OD2 sections 1 to 3 | built autonomously 2026-10-18, committed locally (`8947e696`), [Validation Pack](../validation/OD2.md) | |
+| OD3 section 6 to OWL | built autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD3.md) | |
 | OD4 section 6 to SHACL | planned | OD3 |
 | OD5 generated regions | planned | OD3 |
 | OD6 Eligibility pilot | planned | RC2, OD2, OD4, OD5 |
@@ -143,3 +141,8 @@ None.
   decisions taken alone are listed in its Validation Pack. The grammar states two of SPC's axioms exactly as
   SPC's file does (OD3-T7). Its tests, the extractor and catalogue tests, the per-layer extraction tests, and
   the freshness and catalogue checks were run and pass. Committed locally, not pushed.
+- 2026-10-18: the maintainer answered OD2's and OD3's decisions. All agreed but OD2's decision 5, changed to
+  order a document's blocks by their text and refuse prefixes in a migrated README's blocks (OD2-Q5, option
+  b), with a later move to a version check on graph content (TD-51). Multilingual support recorded as PDD-10,
+  and OD3's unsupported forms in the plan's unplanned backlog. The maintainer ran every test suite and
+  all pass. The change and its tests (OD2-T10, OD2-T11) pass and are committed locally.
