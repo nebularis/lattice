@@ -20,6 +20,12 @@ only, no sibling support module):
   data and shapes graphs plus every validation option, so the violation view
   and the warning view of the same run share one physical `validate()` call.
 
+A third speed-up sits under `validated`. pySHACL runs each SPARQL constraint once
+per focus node and rdflib parses the query text again every time, which was about
+90% of a validation's cost in `test_exposure_ontology.py`. `_sparql_translated_once`
+parses each distinct text once while `validated` runs pySHACL. Tests that call
+`pyshacl.validate` directly do not get it.
+
 **A cached graph is a shared object across the whole session. A test must
 never mutate one.** Every mutation helper in this suite already builds a
 fresh graph for a changed example (a fresh parse, or `cached_graph + data`,
@@ -65,15 +71,19 @@ forward-slash paths on every platform."""
 
 from __future__ import annotations
 
+import contextlib
 import re
 import shutil
 import sys
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any, Iterator, Sequence
 
 import pytest
 from pyshacl import validate as _pyshacl_validate
 from rdflib import Graph
+from rdflib.plugins.sparql.algebra import translateQuery
+from rdflib.plugins.sparql.parser import parseQuery
+from rdflib.plugins.sparql.processor import SPARQLProcessor
 
 ROOT = Path(__file__).resolve().parents[1]
 ONTOLOGY = ROOT / "ontology"
@@ -142,6 +152,103 @@ class GraphCache:
                 return
 
 
+_CANONICAL_QUERIES: dict[str, str] = {}
+_DECLARED_PREFIXES: dict[str, frozenset[str]] = {}
+_UNUSED_TREES: dict[str, Any] = {}
+_TRANSLATED_QUERIES: dict[tuple, Any] = {}
+_PREFIX_DECLARATION = re.compile(r"\s*PREFIX[ \t]+([^\s:]*):[ \t]*<[^>\s]*>", re.IGNORECASE)
+
+
+def _canonical_query(text: str) -> str:
+    """`text` with its leading `PREFIX` declarations sorted, one per line.
+
+    pySHACL writes the declarations from a dict that follows the shapes graph, so
+    the same constraint reaches rdflib with its prefixes in a different order from
+    one validation to the next (511 distinct texts in 512 parses for the wording
+    tests). Order does not change what a query means, unless a prefix is declared
+    twice and the later one wins, so a text that declares one twice is left as it is."""
+    canonical = _CANONICAL_QUERIES.get(text)
+    if canonical is None:
+        declarations, position = [], 0
+        while (found := _PREFIX_DECLARATION.match(text, position)):
+            declarations.append((found.group(1), found.group(0).strip()))
+            position = found.end()
+        names = [name for name, _ in declarations]
+        if len(declarations) < 2 or len(set(names)) != len(names):
+            canonical = text
+        else:
+            canonical = "\n".join(sorted(declaration for _, declaration in declarations)) + "\n" + text[position:]
+        _CANONICAL_QUERIES[text] = canonical
+    return canonical
+
+
+def _declared_prefixes(text: str) -> frozenset[str]:
+    """The prefixes `text`'s own `PREFIX` lines declare, from one parse per text.
+    The tree from that parse is kept for the first translation only, because
+    translating may rewrite the tree it is given, so a later translation of the
+    same text parses again."""
+    declared = _DECLARED_PREFIXES.get(text)
+    if declared is None:
+        parsed = parseQuery(text)
+        declared = _DECLARED_PREFIXES[text] = frozenset(d.get("prefix", "") for d in parsed[0] if d.name == "PrefixDecl")
+        _UNUSED_TREES[text] = parsed
+    return declared
+
+
+@contextlib.contextmanager
+def _sparql_translated_once() -> Iterator[None]:
+    """While active, `SPARQLProcessor.query` parses and translates each distinct
+    query text once and reuses the result, instead of doing both on every call.
+
+    pySHACL evaluates a SPARQL constraint with one `graph.query(text,
+    initBindings=...)` per focus node, and rdflib parses and translates `text`
+    from scratch each time with its pure-Python `pyparsing` grammar. Profiled on
+    `test_exposure_ontology.py`, one `validate()` issued 937 queries made of 30
+    distinct texts, and parsing plus translating them was about 90% of its 13s.
+    A translated query is the same object `prepareQuery` returns, which rdflib
+    documents as reusable with different `initBindings`, so only the repeated
+    parse is skipped. The text is first put in a canonical order of its `PREFIX`
+    declarations (`_canonical_query`).
+
+    Translation resolves a prefixed name from the query's own `PREFIX` lines,
+    and otherwise from the graph's namespace bindings, and resolves relative
+    IRIs against the base. The key therefore holds the text, the base, and the
+    graph's bindings for the prefixes the text uses without declaring. Keying on
+    all of a graph's bindings missed the cache whenever two graphs bound
+    different prefixes that the query never mentions (1,258 parses for 94
+    distinct texts in `test_parameter_bindings.py`). A prefix is counted as used
+    when `prefix:` occurs anywhere in the text, which can only include more
+    bindings than needed and so only splits entries, never shares a wrong one.
+
+    Scoped to the one pySHACL call it wraps and undone afterwards, so a test
+    that runs SPARQL on rdflib directly (the engine tests, for one) sees
+    rdflib's own behaviour. The caches outlive the call, so later validations
+    in the same process reuse earlier translations."""
+    original = SPARQLProcessor.query
+
+    def query(self, strOrQuery, initBindings=None, initNs=None, base=None, DEBUG=False):
+        if isinstance(strOrQuery, str):
+            text = _canonical_query(strOrQuery)
+            declared = _declared_prefixes(text)
+            used = tuple(sorted(
+                (prefix, str(namespace)) for prefix, namespace in dict(initNs or {}).items()
+                if prefix not in declared and f"{prefix}:" in text
+            ))
+            key = (text, base, used)
+            translated = _TRANSLATED_QUERIES.get(key)
+            if translated is None:
+                parsed = _UNUSED_TREES.pop(text, None) or parseQuery(text)
+                translated = _TRANSLATED_QUERIES[key] = translateQuery(parsed, base, initNs)
+            strOrQuery = translated
+        return original(self, strOrQuery, initBindings, initNs, base, DEBUG)
+
+    SPARQLProcessor.query = query
+    try:
+        yield
+    finally:
+        SPARQLProcessor.query = original
+
+
 class ValidationCache:
     """Memoises a whole pySHACL report, keyed on the *content* of the data and
     shapes graphs (not their Python identity) plus every validation option, so
@@ -180,7 +287,8 @@ class ValidationCache:
         cached = self._by_key.get(key)
         if cached is not None:
             return cached
-        result = _pyshacl_validate(data_graph, *args, shacl_graph=shacl_graph, **options)
+        with _sparql_translated_once():
+            result = _pyshacl_validate(data_graph, *args, shacl_graph=shacl_graph, **options)
         # pySHACL itself may have just added its own idempotent axioms to
         # either graph (see GraphCache.resnapshot's docstring); accepted, not
         # hidden, as this cache's own call is the only path a shapes graph

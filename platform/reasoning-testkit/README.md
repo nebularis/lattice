@@ -22,6 +22,15 @@ java -jar target/reasoning-testkit.jar values PROPERTY FILE...
 Each prints one JSON line, `{"result": ...}`. `values` prints the entailed
 subject and object pairs of an object property.
 
+```bash
+java -jar target/reasoning-testkit.jar serve
+```
+
+keeps one JVM for many requests. Each line on standard input is a command and its arguments separated by tabs, for example
+`satisfiable<TAB>IRI<TAB>FILE`. Each is answered by one line, `{"result": ...}` or `{"error": "..."}`, and a failed request does
+not end the server. The server holds the reasoners for its last four distinct closures, by file content. It ends when standard
+input does. `mork_compilers.reasoning.run` uses it by default (ADR-A83, addendum of 2026-10-17).
+
 Limits, recorded in ADR-A83's implementation notes: imports are ignored, so
 pass the merged closure. SWRL rules parse only on anonymous `swrl:Imp` nodes.
 Rules bind named individuals only. `swrlb` builtins are not evaluated.

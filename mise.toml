@@ -229,6 +229,11 @@ depends = ["bootstrap:testing-oxigraph"]
 description = "Measure the composite replace on rdflib and Oxigraph (ADR-A124, TD-42). Run on demand, not part of check. Fails on a wrong result, never on time. COMPOSITE_COST_MAX caps the size"
 run = "python -m pytest benchmark/persistence-composite-cost -q -p no:cacheprovider && python benchmark/persistence-composite-cost/check.py"
 
+[tasks."check:sparql-constraint-query-cost"]
+depends = ["bootstrap:testing-oxigraph"]
+description = "Measure the forms of a SHACL-SPARQL constraint query on rdflib and Oxigraph (ADR-A124, ADR-A128). Run on demand, not part of check. Fails on a wrong result, never on time. SPARQL_COST_QUICK=1 runs the smallest sizes"
+run = "python -m pytest benchmark/sparql-constraint-query-cost -q -p no:cacheprovider && python benchmark/sparql-constraint-query-cost/check.py"
+
 [tasks."check:vocabulary"]
 description = "Run the Vocabulary scoped/temporal binding conformance package (SHACL fixtures, resolver, determinism, consumer boundary; ADR-A85)"
 run = "python -m pytest tools/vocabulary/tests -q"
@@ -289,12 +294,20 @@ run = "python tools/full_sweep.py"
 description = "Profile check:ontology-catalog as one real run, slowest files and tests first, or with -- --per-file one process per file to find a hung file (python-test-melting, TM0)"
 run = "python tools/time_ontology_tests.py"
 
+[tasks."dev:record-validations"]
+description = "Run check:ontology-catalog's tests and record every SHACL validation they make (shapes, data, report) to a directory, to replay after a change to a shape or a validator (docs/architecture/efficient-queries-and-shapes.md, R7)"
+run = "python tools/validation_replay.py record"
+
+[tasks."dev:replay-validations"]
+description = "Replay a recording from dev:record-validations against the shapes in the working tree and report any validation whose report differs. --write-baseline FILE saves the cases that do not reproduce on the old shapes, --baseline FILE ignores them"
+run = "python tools/validation_replay.py replay"
+
 [tasks."check:ontology-catalog"]
-description = "Run the ontology tool tests (catalog, versioning, Eligibility examples, PROV-O alignment, Wording, Behaviour split, Instrument with its regimes and terms in time), then fail when a catalog drifts, an import does not resolve, or a known defect is fixed but still listed (ADR-A88). Parallelised by file (python-test-melting, TM7): a shared, cached graph in tools/conftest.py is per-worker-process, not global, so each worker still benefits from it for its own share of files. tools/test_peril_vocabulary.py is excluded (TD-45): it now dominates the whole run on its own worker under --dist loadfile, run it with `mise run check:peril-vocabulary` instead, deliberately, until TM4 is revisited"
-run = "python -m pytest tools/test_applied_shared_contracts.py tools/test_eligibility_examples.py tools/test_exposure_ontology.py tools/test_mork_order_relations.py tools/test_ontology_catalog.py tools/test_ontology_releases.py tools/test_ontology_version_check.py tools/test_peril_intensity.py tools/test_provenance_alignment.py tools/test_reasoning_isolation.py tools/test_substrate_extensions.py tools/test_wording.py tools/test_behaviour_split.py tools/test_import_guard.py tools/test_behaviour_records.py tools/test_behaviour_nested.py tools/test_keys.py tools/test_instrument.py tools/test_regimes.py tools/test_terms_in_time.py tools/test_constitutive_terms.py tools/test_parameter_bindings.py tools/test_amendments.py tools/test_graph_cache.py tools/test_repo_files.py tools/test_environment_banner.py tools/test_reasoning_stalled_import.py tools/test_additivity.py tools/test_legal_acts.py tools/test_full_sweep.py tools/test_python_requirements.py tools/test_closures.py -q -n auto --dist loadfile && python tools/ontology_catalog.py check"
+description = "Run the ontology tool tests (catalog, versioning, Eligibility examples, PROV-O alignment, Wording, Behaviour split, Instrument with its regimes and terms in time), then fail when a catalog drifts, an import does not resolve, or a known defect is fixed but still listed (ADR-A88). Parallelised by test with --dist worksteal (python-test-melting, TM7): the shared, cached graphs in tools/conftest.py are per-worker-process, not global, so each worker parses what it needs. Measured on two machines, worksteal was 9 to 11 percent faster than the per-file --dist loadfile it replaces, because the largest file no longer sets a floor on the run. PYTEST_XDIST_AUTO_NUM_WORKERS sets what auto means, e.g. on a machine whose efficiency cores add nothing. tools/test_peril_vocabulary.py is included again (TD-45): under test-level distribution it adds about 22s on four cores, and no longer sets a floor on the run. `mise run check:peril-vocabulary` still runs it alone"
+run = "python -m pytest tools/test_applied_shared_contracts.py tools/test_eligibility_examples.py tools/test_exposure_ontology.py tools/test_mork_order_relations.py tools/test_ontology_catalog.py tools/test_ontology_releases.py tools/test_ontology_version_check.py tools/test_peril_intensity.py tools/test_peril_vocabulary.py tools/test_provenance_alignment.py tools/test_reasoning_isolation.py tools/test_substrate_extensions.py tools/test_wording.py tools/test_behaviour_split.py tools/test_import_guard.py tools/test_behaviour_records.py tools/test_behaviour_nested.py tools/test_keys.py tools/test_instrument.py tools/test_regimes.py tools/test_terms_in_time.py tools/test_constitutive_terms.py tools/test_parameter_bindings.py tools/test_amendments.py tools/test_graph_cache.py tools/test_repo_files.py tools/test_environment_banner.py tools/test_reasoning_stalled_import.py tools/test_reasoning_jvm_options.py tools/test_reasoning_server.py tools/test_additivity.py tools/test_legal_acts.py tools/test_full_sweep.py tools/test_python_requirements.py tools/test_closures.py tools/test_validation_replay.py -q -n auto --dist worksteal && python tools/ontology_catalog.py check"
 
 [tasks."check:peril-vocabulary"]
-description = "Optional, deliberate-only (TD-45): tools/test_peril_vocabulary.py alone, now expensive (SHACL-SPARQL shapes re-evaluated per skos:Concept target over a 287-concept cause scheme). Not in check:ontology-catalog's depends, and not run by `mise run check`. -n auto here (test-level, not --dist loadfile's file-level) cuts it from about 16 minutes to about 2.5 minutes, since its tests are independent and this lets them spread across workers instead of queueing on one"
+description = "tools/test_peril_vocabulary.py alone (TD-45), spread over workers by test. It is part of check:ontology-catalog, so this is only for running it by itself"
 run = "python -m pytest tools/test_peril_vocabulary.py -q -n auto"
 
 [tasks."bootstrap:reasoning-testkit"]

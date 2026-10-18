@@ -114,7 +114,11 @@ the test-only `platform/reasoning-testkit` jar as a subprocess, passing one
 merged Turtle file and reading one JSON line back. Tests that need it are
 decorated `@unittest.skipUnless(reasoning.available(), ...)`. Build the jar
 with `mise run bootstrap:reasoning-testkit`, or point
-`LATTICE_REASONING_TESTKIT` at one. `test_reasoner.py` checks that HermiT
+`LATTICE_REASONING_TESTKIT` at one. By default `reasoning.py` keeps one JVM per Python process
+(the testkit's `serve` command) and sends each call to it, which took 41 closures from 37.7s
+to 6.3s. `LATTICE_REASONING_SERVER=0` starts a JVM per call instead. A JVM starts with a
+class-data archive that it builds beside the jar on first use, which roughly halves a call
+when there is no server. `LATTICE_REASONING_JVM_OPTIONS` replaces the options. `test_reasoner.py` checks that HermiT
 derives what the SWRL rules derive, and `test_owl_backend.py` runs the OWL
 checks. Interval rules use `swrlb` builtins,
 which HermiT does not evaluate, so they are not checked under a reasoner.

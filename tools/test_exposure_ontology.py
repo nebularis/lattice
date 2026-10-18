@@ -79,20 +79,25 @@ def _vocab() -> Graph:
 PERIL = ROOT / "ontology" / "applied" / "insurance" / "peril"
 
 
+FIXTURE_PATHS = (
+    MODULE / "spec" / "exposure.ttl",
+    MODULE / "vocab" / "exposure-vocab.ttl",
+    PERIL / "spec" / "peril.ttl",
+    PERIL / "vocab" / "peril-vocab.ttl",
+    PERIL / "vocab" / "peril-intensity.ttl",
+    MODULE / "examples" / "core.ttl",
+    MODULE / "examples" / "attributes.ttl",
+)
+_FIXTURE_GRAPH: Graph | None = None  # the parsed FIXTURE_PATHS, set by _cached_graphs
+
+
 def _fixture() -> Graph:
     """spec + vocab + peril's vocab and intensity documents (for
     prl:relevantAttribute / prl:minimumGeoPrecision, AIR-4.2) + the core
     and attributes fixtures, fresh per call so tests can mutate their own
-    copy safely."""
-    return _graph(
-        MODULE / "spec" / "exposure.ttl",
-        MODULE / "vocab" / "exposure-vocab.ttl",
-        PERIL / "spec" / "peril.ttl",
-        PERIL / "vocab" / "peril-vocab.ttl",
-        PERIL / "vocab" / "peril-intensity.ttl",
-        MODULE / "examples" / "core.ttl",
-        MODULE / "examples" / "attributes.ttl",
-    )
+    copy safely. The seven files are parsed once for the session and each
+    call copies them: parsing took about 0.55s a call, 11s over the file."""
+    return Graph() + _FIXTURE_GRAPH
 
 
 SHAPE_PATHS = (
@@ -116,6 +121,7 @@ def _cached_graphs(request: pytest.FixtureRequest, graph_cache, validated) -> No
     (python-test-melting)."""
     module = request.module
     module.SHAPES = graph_cache(*SHAPE_PATHS)
+    module._FIXTURE_GRAPH = graph_cache(*FIXTURE_PATHS)
     module.validate = validated
 
 
@@ -520,3 +526,25 @@ def test_air42_13_documentation_shape_has_no_results():
     found = [shape for _, shape, _ in results(_fixture()) if shape == DOCUMENTATION]
     assert found == []
 
+
+def _without_english_note(data: Graph, concept: URIRef, replacement: Literal | None) -> Graph:
+    for note in list(data.objects(concept, SKOS.note)):
+        data.remove((concept, SKOS.note, note))
+    if replacement is not None:
+        data.add((concept, SKOS.note, replacement))
+    return data
+
+
+@pytest.mark.parametrize("replacement", [None, Literal("une note", lang="fr"), Literal("a note", lang="en-GB"), Literal("a note")])
+def test_air42_13_a_concept_with_no_english_note_is_rejected(replacement):
+    """Only a note tagged exactly @en counts, so no note, a note in another language, a regional
+    tag and an untagged note are each a missing note."""
+    data = _without_english_note(_fixture(), AEOV.Rooftop, replacement)
+    assert shapes_for(AEOV.Rooftop, data) == {DOCUMENTATION}
+
+
+def test_air42_13_a_concept_of_another_vocabulary_is_not_checked_by_this_shape():
+    """The peril concepts in the fixture are checked by the peril shapes, not this one."""
+    concept = next(iter(_fixture().subjects(SKOS.inScheme, PRLV.CauseScheme)))
+    data = _without_english_note(_fixture(), concept, None)
+    assert DOCUMENTATION not in shapes_for(concept, data)

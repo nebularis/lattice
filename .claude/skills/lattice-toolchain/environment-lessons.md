@@ -16,6 +16,15 @@ note true of one machine belongs in that person's own configuration, not here.
   explicitly, the only place it can be silently defaulted, such as a `--now` flag defaulting to the
   wall clock, is the CLI's own argument handling.
 
+## Timing a run
+
+- **Check the machine before reading a slow run as a regression.** On a laptop, Low Power Mode made the same suite 3.5 times slower
+  (126 s against 36 s), and memory pressure, a video call or a sync client moved it by tens of seconds. `mise run
+  dev:time-ontology-tests` prints the memory state and when each worker finished. Compare two commits by running both on the same
+  machine in the same state (design record H7 and H8, in `docs/architecture/efficient-queries-and-shapes.md`).
+- **More workers than cores that do real work add contention, not speed.** On four performance and four efficiency cores, 8 workers
+  gave the wall time of 4 and doubled the summed test time.
+
 ## Templates and shapes
 
 - **A mustache comment must not quote a real tag.** `chevron` parses `{{! … }}` bodies, so writing

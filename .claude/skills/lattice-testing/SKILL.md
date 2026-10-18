@@ -41,12 +41,32 @@ A slow suite's cause is a hypothesis until profiled. Guessing wrong costs more t
 
 ## `pytest-xdist`: the first thing to try
 
-`-n auto --dist loadfile` runs each file in its own worker process, so files are independent and
-parallel-safe by construction (no intra-file race). This was the single highest-value change in
-this unit: roughly a 3.6x reduction, confirmed with byte-identical outcomes. Try this before
-building anything else. A shared, session-scoped fixture (below) is still real and still worth
-doing, but each `xdist` worker gets its own fresh copy — cross-file sharing only happens for files
-that land in the same worker, which `loadfile` does not guarantee.
+`-n auto --dist worksteal` spreads the tests over workers, and an idle worker takes tests from a busy
+one. The first version, `--dist loadfile`, ran each file in its own worker so that files were
+independent by construction. It was the single highest-value change in this unit, roughly a 3.6x
+reduction with byte-identical outcomes, but a file is then the unit of work and the largest file sets
+a floor on the run. Measured on two machines with all tests passing, `worksteal` was 9 to 11 percent
+faster, and it cost about 2 percent more summed test time because each worker parses what it
+needs. A shared, session-scoped fixture (below) is still worth doing, but each `xdist` worker gets
+its own copy, so cross-file sharing happens only for tests that land on the same worker.
+
+More workers than cores doing real work do not help. On a laptop with four performance and four
+efficiency cores, 8 workers gave the same wall time as 4 and doubled the summed test time, since the
+same work ran at half the speed per worker. A summed time that doubles with the worker count is
+contention, not slow tests. `PYTEST_XDIST_AUTO_NUM_WORKERS` sets what `auto` means for one machine,
+and `mise run dev:time-ontology-tests -- --workers N --dist MODE` compares settings and reports
+when each worker finished and the peak memory.
+
+## Speed: the record to read first
+
+[docs/architecture/efficient-queries-and-shapes.md](../../../docs/architecture/efficient-queries-and-shapes.md) records why the ontology
+suite was slow and what fixed it, rule by rule, with a tag on each saying whether it holds for any engine or only for rdflib, pySHACL,
+our harness or the machine. Its harness rules (H1 to H8) are the ones to apply here: translate each distinct query text once while
+pySHACL runs (`_sparql_translated_once`), sort the `PREFIX` block before keying, parse a fixture once and copy it (two parses of one
+document never compare equal as sets, because blank-node labels differ), distribute by test, match the workers to the cores that
+do real work, and check the machine (Low Power Mode, memory pressure, other applications) before reading a slow run as a regression.
+A shape or a fixture that changes for speed is replayed against the old results first (R7): `mise run dev:record-validations` before the
+change, `mise run dev:replay-validations` before and after it (`tools/validation_replay.py` explains the baseline).
 
 ## The shared graph and validation cache (`tools/conftest.py`)
 
@@ -156,6 +176,8 @@ What the engines do differently is recorded in
 - On rdflib, the order of solutions from a non-lazy join follows `PYTHONHASHSEED` (TSD-01). A test whose result depends on that
   order passes or fails by process. Fix the seed or sweep it in child processes.
 - rdflib drops a result row whose projected variables are all unbound (TSD-10). Project a variable you know is bound.
+- The cost of a query on rdflib depends on its form, and on Oxigraph it largely does not (TSD-22 to TSD-33). A cost measured on one
+  engine is a hypothesis for the other. `mise run check:sparql-constraint-query-cost` runs the same forms on both.
 
 ## A pytest quirk on Windows worth knowing
 
