@@ -9,7 +9,7 @@ own ADR under the Design First rule. Nothing here changes an accepted ADR.
 **Sketches:** [insurml-bridge.md](../developer/sketches/insurml-bridge.md) (the profile, lift, lower,
 assembly parity and the substrate changes) and
 [insurml-toolchain-and-ai.md](../developer/sketches/insurml-toolchain-and-ai.md) (authoring,
-compilation, libraries, placement, exchange, teaching packs and ingestion).
+compilation, libraries, placement, exchange and ingestion).
 **Analysis it builds on:** [InsurML and LATTICE compared](../developer/notes/insurml-and-lattice.md)
 (the comparison, cited below as "comparison §n") and
 [integrating InsurML and LATTICE](../developer/notes/insurml-integration.md) (cited as
@@ -126,7 +126,7 @@ flowchart TB
         RO["LegalRuleML, Turtle, JSON-LD"]
     end
     subgraph AI["Reading with AI"]
-        TP["Teaching packs<br/>and library index"]
+        TP["Library index"]
         IG["Ingestion pipeline<br/>structure, facts, meaning"]
         RV{"Review"}
     end
@@ -161,7 +161,7 @@ The architecture has seven parts. The sketches give each its design.
 | Placement | a product form tailored for one risk, recorded as an assembled wording, its values and its bound instrument | InsurML for the document, LATTICE for the record | toolchain sketch §5 |
 | Execution | regimes, occasions, Eligibility decisions, allowances and capacity, evaluated deterministically | LATTICE | toolchain sketch §6 |
 | Exchange | lifts and lowers between the graph and XML, JSON and RDF forms | both | bridge sketch §5, §6, toolchain sketch §7 |
-| Reading with AI | teaching packs, a versioned library index and the ingestion pipeline, with review | both | toolchain sketch §9 |
+| Reading with AI | a versioned library index and the ingestion pipeline, with review | both | toolchain sketch §9 |
 
 Ownership of each kind of fact follows integration §3. The component file owns its words, the
 manifest owns order and inclusion, Instrument owns meaning, Behaviour's runtime owns state, and
@@ -330,32 +330,7 @@ The ingestion vision's pipeline gains a published structure target. Models read 
 schedule, quote, market reform contract slip, binding authority agreement or endorsement into
 InsurML components, which InsurML's grammar and shapes check. Library recognition replaces
 generation wherever the text is standard. Schedules become settings. Novel text becomes meaning
-proposals in LATTICE's terms. Reviewed results flow back into the library and into the teaching
-material.
-
-```mermaid
-flowchart LR
-    DOC["Document"] --> S["Structure<br/>into InsurML"]
-    S --> R{"Known component?"}
-    R -- "yes" --> F["Values only<br/>settings"]
-    R -- "no" --> M["Meaning proposal<br/>LATTICE terms"]
-    F --> V{"Review"}
-    M --> V
-    V --> LIB[("Library and<br/>placed contracts")]
-    LIB --> PK["Teaching packs,<br/>versioned index"]
-    PK --> S
-    PK --> M
-```
-
-Two techniques LATTICE has built for MORK carry over. A compact notation with a generated
-codebook, as MCN is for MORK, cuts the tokens a model reads and writes, and decodes losslessly.
-A teaching pack, as MTP is for MORK, gives a model a small resident kernel, doctrine units, minimal
-pairs and validated examples, built deterministically and pinned by hash. For InsurML the doctrine
-has an author who is its domain expert, which the ingestion vision rates as low risk (tier 3a), and
-InsurML's own invalid fixtures, each naming the assertion it must fail, are ready-made negative
-examples. Graph retrieval over the meaning-annotated library supplies exact, reviewed exemplars for
-each new clause. Whether these raise accuracy and lower review time is a hypothesis to measure
-(§11).
+proposals in LATTICE's terms. Reviewed results flow back into the library.
 
 ### 6.10 Mixing standards
 
@@ -401,7 +376,7 @@ Each row is a candidate decision.
 | Instrument | a qualifier naming the fragment it was read from (L-10) | traceability of amounts to their words | bridge §13 |
 | InsurML, proposed | settings format, conditions by IRI, dynamic table structure, IRIs for inclusion entries, and the rest of P-1 to P-13 | gaps LATTICE has already modelled | bridge §15 |
 | apps | Word add-in, web studio | authoring | toolchain §2 |
-| tools, ontology | wording teaching packs, compact notation, library index | AI-assisted reading | toolchain §9 |
+| tools | library index | recognition of known components | toolchain §9 |
 
 ## 9. Alignment with existing work
 
@@ -411,7 +386,6 @@ Each row is a candidate decision.
 | [AIR](../developer/plans/applied-insurance-reference.md) | supplies insurance modules | AIR-5.9 is built with InsurML in view, in the alignment epic. AIR-5.1 to AIR-5.4 give limits and excesses their meaning. AIR-5.8's policy renderings gain InsurML forms. Reference vocabularies supply market, class of business and area of coverage |
 | [NRS](../developer/plans/normative-rule-substrate.md) and the LegalRuleML sketches | interchange and normative statements | the companion LegalRuleML document reuses the runtime pipeline and the JSON form of LegalRuleML. N3's clash check is a verification pass |
 | [Ingestion vision](ingestion-vision.md) | the route from text to meaning | InsurML is a candidate structure target (its Q9), and component digests answer document recognition (its Q11) for marked-up text |
-| [MTP](mork-teaching-pack.md), [llm-training sketch](../developer/sketches/llm-training.md), [MCN](mork-compact-notation.md) | the packaging techniques | wording teaching packs and a compact form reuse the generator pattern, under a new ADR, since ADR-A44 bounds MTP to MORK |
 | [Wire protocol](../developer/sketches/normative-wire-protocol.md), [XML egress](../developer/sketches/xml-egress-and-transformation-kits.md) | exchange | InsurML kits sit beside the LATTICE instrument kit. Settings get a JSON skin |
 | [Evaluation context](../developer/sketches/evaluation-context.md) | ledgers for limits and aggregates | InsurML's limit and excess markup names the words that each ledger account is read from |
 | Platform phases 2 and 3 | ingestion and operation planes | component files live in the artefact realm, the graph in the semantic realm, lifts and assembly as worker jobs |
