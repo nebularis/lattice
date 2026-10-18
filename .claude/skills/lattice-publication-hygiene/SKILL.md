@@ -56,6 +56,13 @@ reads only the lines being committed (`git diff --cached`), and `--all` scans th
 finding names the file, the line and the pattern's line number in the list, never the pattern.
 `mise run hooks:install` adds an optional pre-commit hook that runs it.
 
+## The private overlay
+
+A maintainer's private guidance lives outside every repository, at `~/.config/lattice/private/`
+(`%USERPROFILE%\.config\lattice\private\` on Windows), usually a link to a private checkout.
+`AGENTS.md` says when it applies. Its content is held to the same rule as the deny-list. It never
+appears in a repository, a commit or a pull request, in any form.
+
 ## When something slipped through
 
 Remove it in a new commit, and tell the maintainer. Rewriting published history is the maintainer's decision,

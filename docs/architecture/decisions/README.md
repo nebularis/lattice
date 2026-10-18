@@ -115,7 +115,7 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-114](ADR-A114-external-and-natural-keys.md) | External and natural keys | Accepted |
 | [A-115](ADR-A115-quantification-context-values.md) | Quantification context values | Accepted |
 | [A-116](ADR-A116-vocabulary-scheme-composition.md) | Vocabulary scheme composition | Proposed |
-| [A-117](ADR-A117-agent-guidance-and-skill-library.md) | Agent guidance and the skill library | Accepted, with addendum |
+| [A-117](ADR-A117-agent-guidance-and-skill-library.md) | Agent guidance and the skill library | Accepted, with addendum. Addendum 2026-10-18 (private overlay) Proposed |
 | [A-118](ADR-A118-word-authoring-proof-of-concept.md) | Word authoring proof of concept | Proposed |
 | [A-119](ADR-A119-xslt-transformation-sidecar.md) | Bidirectional XSLT transformation sidecar | Proposed |
 | [A-120](ADR-A120-literate-specs-with-several-documents.md) | Literate specs with several documents | Accepted |

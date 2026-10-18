@@ -103,6 +103,15 @@ This repository is public, and so is everything it publishes.
 
 Skill `lattice-publication-hygiene` has the detail and the pre-commit check.
 
+## Private overlays
+
+A maintainer may keep private, user-level guidance for work that spans public and private projects
+(ADR-A117). If `~/.config/lattice/private/AGENTS.md` exists
+(`%USERPROFILE%\.config\lattice\private\AGENTS.md` on Windows), read it before every task and follow
+it. It adds to these rules and tightens them, and never relaxes them. Never quote, cite or
+paraphrase it in anything this repository publishes, including commit messages, pull requests and
+agent notes.
+
 ## Skills
 
 Load the skill whose description matches the task. Each lives in `.claude/skills/<name>/SKILL.md`.

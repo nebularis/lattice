@@ -236,17 +236,12 @@ compresses well because MORK is small by design and its authors are the experts 
 semantics, so its doctrine was written once by the people best placed to write it.
 
 A target domain ontology does not compress that way. It is meant to carry its domain's real
-distinctions, and the pipeline's builders are not experts in every ontology a deployment brings.
-Generating minimal pairs for an arbitrary ontology is knowledge acquisition, not compression,
-and a wrong generated pair produces confident, wrong mappings, which is the failure the whole
-design exists to avoid. So a target ontology is packaged in tiers, by risk:
+distinctions, so a target ontology is packaged in two tiers:
 
 | Tier | Content | Risk | When |
 |---|---|---|---|
 | 1. Mechanical | a codebook that shortens the target's identifiers, and a compact structural index: class hierarchy, disjointness, domain and range, cardinalities, named individuals, scheme contracts. Generated from the ontology's spec, vocab and shapes, the same operation MCN's codebook performs on `Mork.ttl` | none: meaning untouched | build first |
 | 2. Retrieval | Graph RAG over the index: per decision, the candidate class and its definition and usage note, its siblings and disjoint classes, the domain and range of candidate properties, and prior confirmed mappings from the mapping store | moderate, and bounded by review | the main mechanism for disambiguation |
-| 3a. Authored doctrine | lenses and minimal pairs written by the ontology's own authors, who are its domain experts, gated like MTP's curated doctrine | low | when an ontology's authors choose to invest |
-| 3b. Drafted doctrine | lenses and minimal pairs drafted by a model | high | deferred, and only where telemetry shows tiers 1 and 2 leave a specific, recurring, costly gap. Every draft is proposal-grade, carries its provenance, and passes conformance gating before it can become resident |
 
 **Readiness depends on annotation density, not size.** A large ontology with a definition and a
 usage note on every term and worked examples is a good retrieval target. A small one with bare
@@ -471,7 +466,7 @@ The isolation rules follow ADR-A83's pattern:
 |---|---|
 | MORK ontology, intent algebra and source-representation vocabulary | the representation for rules (§5) |
 | MCN and its decoder | the wire format for rules (§7) |
-| MTP | the model for tier 3a authored doctrine, and the codebook pattern for tier 1 (§6.2) |
+| MTP | the codebook pattern for tier 1 (§6.2) |
 | Review workbench, queue calibration governance | review and batch-confirmation bounds (§10.1) |
 | Conformance ladder (ADR-A14), graph roles (ADR-A13) | where each stage's output sits (§4) |
 | Quantification, Eligibility, Party, Instrument, Behaviour | the targets (§5.3) |
@@ -506,7 +501,6 @@ Indicative only. Each phase needs its own ADRs and plan.
 | 2 | Tier-2 retrieval over the index and the confirmed-mapping store, with versioned indexes. Structure mappings and meaning templates reviewed and reused. Generated compact JSON for facts | accuracy and review time per element, share of elements reused, reproducibility of runs against a fixed index |
 | 3 | Trained models for span tagging, classification, concept resolution and slot filling. Cross-document entity resolution | accuracy parity with the LLM baseline per stage before any routing moves |
 | 4 | Rule proposals under symbolic validation, active learning, calibrated batch confirmation of facts | calibration per pack, profile and model, and review volume against accuracy |
-| later, gated | Tier 3b drafted doctrine | only on telemetry showing a specific gap tiers 1 and 2 leave |
 
 MTP's deferred Phase 7 (output scoring, held-out evaluation sets, metrics) is the natural home
 for the measurement work each phase needs.
@@ -516,7 +510,6 @@ for the measurement work each phase needs.
 | # | Question | Notes |
 |---|---|---|
 | Q1 | The fact format's details | whether the per-layer JSON Schema and the key mapping are one generated artefact or two, decided when the compiler exists |
-| Q2 | The scope of target packaging | tiers 1 and 2 are generic tooling. Tier 3a needs a format for authored doctrine outside MORK, and ADR-A44 bounds MTP to MORK, so it needs its own ADR |
 | Q3 | Additions to the intent algebra | a normative-reference intent for text that cites an external standard, and a concept-typed operator scheme in place of free-text operators |
 | Q4 | Where proposals live physically | ADR-A13's Mapping role, with finer named graphs a deployment choice. Whether Foundation needs a graph-role or commitment-state property is ADR-A13's own open sub-question |
 | Q5 | Several values for one dimension | extraction must record whether text states one value or several. The OWL backend compiles only single-valued paths (ADR-A90). A quantified reading ("every value", "some value") would need an Eligibility ADR |
@@ -533,7 +526,6 @@ for the measurement work each phase needs.
 | Risk | Mitigation |
 |---|---|
 | A confident model asserts a wrong exact match | exact matches require grounding. Anything ungrounded is a hypothesis. Calibration gates batch confirmation |
-| Drafted doctrine teaches confident errors | tier 3b is deferred and gated (§6.2). Authored doctrine comes from the ontology's own experts |
 | A target ontology is too sparsely annotated to retrieve from | annotation density is an onboarding prerequisite, reported to the ontology's owners |
 | Retrieval makes runs irreproducible | indexes and memory snapshots are hashed, versioned and recorded (IV11) |
 | An error in a rule repeats across documents | rules are always reviewed item by item. A correction reopens every fact shaped by the rule (§10.2) |
@@ -554,7 +546,7 @@ for the measurement work each phase needs.
 | MCN does not help fact extraction, which needs its own compression | **Adopted.** Facts use generated compact JSON with tier-1 codebook keys (§7) |
 | Reuse MORK's convergence and Graph RAG for document shapes, and share Tier 1 to 3 extraction infrastructure across both pipelines | **Adopted** (§6.5, §6.6) |
 | Take local-first caching from Knwler, typed grounding from TrustGraph, entity resolution from Semantica | **Adopted** (§6.7, §2.1, S6) |
-| A target ontology does not compress like MORK. Package it in three tiers: mechanical, retrieval, then drafted doctrine only if gated | **Adopted**, with one refinement: doctrine written by an ontology's own authors (tier 3a) avoids the expertise gap and is lower risk than drafted doctrine (tier 3b) |
+| A target ontology does not compress like MORK. Package it in tiers: mechanical, then retrieval | **Adopted** |
 | Annotation density, not size, decides whether retrieval works | **Adopted** as an onboarding prerequisite (§6.2) |
 | Version and hash the retrieval index, and record it in provenance | **Adopted** as IV11, extended to memory snapshots |
 | One vocabulary or two for document structure, fact review gates, fingerprinting, topology | carried as Q9 to Q12, with a leaning on Q9 |

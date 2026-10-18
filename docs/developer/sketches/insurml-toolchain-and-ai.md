@@ -3,11 +3,11 @@
 # From drafting to reading: the InsurML and LATTICE toolchain
 
 **Unit:** [insurml-alignment](../plans/insurml-alignment.md) (epic). **Status:** sketch, 2026-10-05.
-Nothing here is ratified. New directories, apps and packs each need an ADR.
+Nothing here is ratified. New directories and apps each need an ADR.
 **Reads with:** [the vision](../../architecture/insurml-alignment-vision.md) (AV1 to AV10),
 [the bridge sketch](insurml-bridge.md) (the profile, lift, lower, parity and substrate changes this
 sketch builds on), the [ingestion vision](../../architecture/ingestion-vision.md) (IV1 to IV13,
-stages S0 to S9), [llm-training.md](llm-training.md) and [MTP](../../architecture/mork-teaching-pack.md),
+stages S0 to S9),
 the [XML egress](xml-egress-and-transformation-kits.md) and [wire protocol](normative-wire-protocol.md)
 sketches, and Open DARE's proof-of-concept notes (`open-dare/docs/discovery/poc-ideas.md`, §4 and §5).
 
@@ -25,7 +25,7 @@ Examples are clean-room and use `.example` hosts (AV8).
 6. [Execution](#6-execution)
 7. [Exchange](#7-exchange)
 8. [Mixing standards](#8-mixing-standards)
-9. [Teaching packs and AI-assisted reading](#9-teaching-packs-and-ai-assisted-reading)
+9. [Reading documents](#9-reading-documents)
 10. [Platform placement](#10-platform-placement)
 11. [Open questions](#11-open-questions)
 
@@ -117,7 +117,6 @@ flowchart LR
         B2["SPARQL, SHACL,<br/>OWL classes"]
         B3["JSON skins,<br/>LegalRuleML"]
         B4["Surface read paths"]
-        B5["Teaching packs,<br/>library index"]
     end
     F1 --> IR
     F2 --> F1
@@ -127,7 +126,6 @@ flowchart LR
     P3 --> B2
     P3 --> B3
     P3 --> B4
-    P3 --> B5
 ```
 
 | Pass | Checks or produces | State |
@@ -322,30 +320,11 @@ protocol carries the same structure for consumers without XML.
 | ACORD | an egress kit from the placed contract's values and terms | XML egress sketch §13, for policy administration systems |
 | MathML | a formula inside a component, read as `ins:computedBy` | the formula's meaning waits for contract amounts (CCS C7b) |
 
-## 9. Teaching packs and AI-assisted reading
-
-### 9.1 What changes for the ingestion pipeline
+## 9. Reading documents
 
 The ingestion vision reads a document into LATTICE through a structure stage, recognition, fact
 extraction and meaning proposals. InsurML gives the structure stage a published target with a
 grammar, a vocabulary and validators, and gives recognition exact identifiers and digests.
-
-```mermaid
-flowchart TD
-    D["Document<br/>PDF, DOCX, scan"] --> S0["S0, S1 layout and segments"]
-    S0 --> ST["Structure into InsurML<br/>components, compact form decoded"]
-    ST --> VA{"RELAX NG, Schematron"}
-    VA -- "invalid" --> ST
-    VA --> RC{"S2 recognise:<br/>digest, near match,<br/>library index"}
-    RC -- "known component" --> SV["S4b values only<br/>settings"]
-    RC -- "known with edits" --> DV["modified: text difference<br/>and meaning delta"]
-    RC -- "novel" --> MP["S4a meaning proposal<br/>in LATTICE terms"]
-    SV --> RV{"S7 review"}
-    DV --> RV
-    MP --> RV
-    RV -- "accepted" --> PR["S8 library, placed contract"]
-    RV --> LN["S9 learn: cassettes,<br/>errata, index"]
-```
 
 | Document | Structure target | Facts | Meaning |
 |---|---|---|---|
@@ -357,94 +336,12 @@ flowchart TD
 | certificate | an assembled contract of a known form | values | none |
 | bordereau | not a wording. A MORK structure mapping per layout | rows | none |
 
-### 9.2 Wording teaching packs
-
-MTP teaches a model a vocabulary cheaply, with a small resident kernel, doctrine units chosen
-per task, minimal pairs, validated examples, and an errata card, all generated deterministically
-and pinned by hash. The same generator pattern serves two new packs. ADR-A44 bounds MTP to MORK, so
-these need their own ADR (ingestion vision Q2).
-
-| Tier | InsurML structure pack | Insurance meaning pack |
-|---|---|---|
-| L0 kernel | what a component, group, inclusion and fragment are. The two forms of optionality. Identity is not position. Output contract | stated and bound meaning, the relation classes, legal triggers, Undetermined. Types do not decide meaning |
-| L1 codebook | element and attribute names, type slugs, optionality kinds, generated from the RELAX NG and vocabularies | the profile's and the layers' terms, from the structural index (ingestion vision §6.2, tier 1) |
-| L2 lenses | optionality and alternatives, composites and amounts, defined terms and scope, tables, guidance | exclusions and scope, conditions and triggers, notice and regimes, limits and bases, parties and shares |
-| L3 cassettes | InsurML's valid fixtures, and its invalid fixtures as negative examples, each naming the assertion it fails | library components paired with their reviewed meaning |
-| L4 errata | from Schematron and SHACL failures in use | from review decisions (Retarget, Reshape, Decline) |
-| L5 on demand | the specification, the full vocabularies | the layer READMEs |
-
-InsurML's design log, one decision per rule, is ready-made doctrine, and its author is the domain
-expert. The ingestion vision rates doctrine written by an ontology's own authors as low risk
-(tier 3a). So the structure pack's lenses should be written with InsurML's owner.
-
-**Minimal pairs from the term collisions.** The words that mean different things on each side
-(comparison §8) are the distinctions a model is likely to confuse:
-
-| Confusion | Use A when | Use B when |
-|---|---|---|
-| component type Exclusion, or `ins:Exclusion` | classifying the clause | the clause relieves someone of a duty or a power's liability within a scope. An exclusion clause may instead narrow a cover's scope |
-| component type Condition, `ins:OnCondition`, or an inclusion condition | classifying the clause | the clause makes a relation arise when a state of affairs holds / a part of the wording is included only for some answers |
-| `iml:variantOf`, or a variation slot's variant | one concrete component adapts another | one of several alternatives, exactly one of which a contract includes |
-| an optional phrase, or a user selection | the words depend on a governing answer | the drafter chooses |
-| a section group, or a section with its own meaning | a part of the document | a part with its own parties, authority, classes or capacity (`ins:appliesWithin`) |
-
-### 9.3 A compact form for structure
-
-MCN cut MORK's structural tokens by about three times against Turtle on the repository's examples.
-InsurML's XML has the same cost, since closing tags, namespaces and attribute names dominate a model's
-output. Two ways to reduce it, to be measured before either is adopted:
-
-| Option | How | Cost |
-|---|---|---|
-| Compact notation | an indentation-based form with codes from the L1 codebook, decoded losslessly into InsurML XML and round-trip tested as MCN is | a decoder and its tests |
-| Constrained decoding | the RELAX NG compiled to a grammar the model's sampler cannot violate, where the API supports it | depends on the provider |
-
-Facts use JSON generated from the shapes (ingestion vision §7), and meaning proposals use MCN.
-Every output is decoded deterministically before any validator sees it.
-
-### 9.4 Graph retrieval over the library
-
-The library is a graph of component versions, fragments, definitions in scope, inclusions,
-derivations and reviewed meaning. For each segment of a new document, retrieval returns the nearest
-components by digest, near match and embedding, with their meaning templates and the definitions
-they reference, as exemplars. A near match is presented as "library component X, modified", which
-feeds the deviation report of §5. The index is a derived artefact, built deterministically, hashed,
-and recorded in each run's provenance (IV11).
-
-### 9.5 The learning loop
-
-Every review decision is labelled data. Accepted pairs of words and meaning become cassettes and
-retrieval exemplars. Declines and corrections become errata and negative examples. A held-out set
-of documents with gold InsurML structure and gold meaning becomes the evaluation suite, run on every
-pack change and every model change (MTP Phase 7). Fine-tuning is an optional compilation target of
-the same corpus, never a dependency (llm-training §6).
-
-### 9.6 Why quality should rise, and how it is measured
-
-| # | Hypothesis | Measure |
-|---|---|---|
-| H1 | A published grammar as the structure target removes malformed structure | share of structure outputs valid on first decode, against an unconstrained baseline |
-| H2 | Recognition replaces generation for standard wording | share of segments matched to library components, and meaning proposals avoided |
-| H3 | Reviewed exemplars from the library raise meaning accuracy | review acceptance rate with and without retrieval |
-| H4 | Doctrine from InsurML's author and minimal pairs from the collisions cut the commonest errors | error rate on the collision pairs |
-| H5 | The loop lowers cost per document as the library grows | reviewer minutes and model cost per document over successive batches |
-| H6 | Confidence stays honest | the rate of confident output where an uncertain mapping was warranted |
-
-These are hypotheses. The ingestion vision's cost estimates are estimates too, and measuring them
-is part of its roadmap (§14 there).
-
-### 9.7 Training data and licences
-
-A pack carries only clean-room text, text its owner has licensed for the purpose, or a deployment's
-own text in a deployment-private pack. Market wording whose distribution is unsettled stays out of
-public packs and public indexes (AV8). Each pack records the provenance of every example it holds.
-
 ## 10. Platform placement
 
 Integration §8.18 places each concern. In short, component files and rendered documents live in
 the artefact realm, addressed by digest, while manifests, the lifted graph, meaning and values live
 in the semantic graph realm through the store SPI. Run records live in the operational realm.
-Lifts, assembly, rendering, compilation and pack builds run as worker jobs with idempotent
+Lifts, assembly, rendering and compilation run as worker jobs with idempotent
 delivery (ADR-A36), and the egress kits run in the planned semantic XML egress module.
 
 ## 11. Open questions
@@ -453,8 +350,6 @@ delivery (ADR-A36), and the egress kits run in the planned semantic XML egress m
 |---|---|---|
 | IT-Q1 | Which authoring front end first? | the Word add-in for drafters, since market wording lives in Word. The web studio follows for curation and review |
 | IT-Q2 | Where do the add-in and the studio live? | `apps/`, each under an ADR. The studio may grow from the review workbench's design |
-| IT-Q3 | Compact notation or constrained decoding for structure? | measure both on clean-room fixtures, adopt by measurement |
-| IT-Q4 | One teaching pack per standard, or one combined? | two packs, structure and meaning, routed per task as MTP routes lenses |
 | IT-Q5 | What container does a contract package use? | the release assembly's manifest and digests (ADR-A39), with OCI export where a recipient wants it (ADR-A40) |
 | IT-Q6 | Does a question plan belong in the profile, or in the builder? | in the compiler's output, as a derived artefact a builder reads |
 | IT-Q7 | Can tracked changes in Word round-trip as amendments? | yes for strike and substitute within one fragment, which is the common endorsement. Others become a new component version |
