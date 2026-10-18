@@ -101,3 +101,9 @@ mise exec -- python -m pytest tools/test_literate_grammar.py tools/test_literate
 - The Axiom Index and the class diagram. OD5.
 - A real README in the layout. OD6, with Eligibility, whose hand-written structural shapes beyond its tables
   are reconciled then.
+
+## Decisions answered
+
+2026-10-18, by the maintainer: decisions 2 to 6 agreed. Decision 1 (merging rows for one property and message)
+agreed after its consequences were set out: it keeps migrated graphs identical, changes no validation outcome,
+and refuses two rows that state the same constraint.

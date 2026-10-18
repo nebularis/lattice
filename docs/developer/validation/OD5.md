@@ -103,3 +103,10 @@ mise exec -- python -m pytest tools/test_literate_grammar.py tools/test_literate
 
 - A real README's regions. OD6 adds them to Eligibility, whose existing hand-drawn diagram is replaced.
 - Diagrams for unions in domains and ranges, and for individuals. They stay in the index only.
+
+## Decisions answered
+
+2026-10-18, by the maintainer: decisions 1 and 3 to 6 agreed. Decision 2 (the README as an output) agreed after a
+detailed explanation. Only what lies between a `generated` region's markers is rewritten. Everything else in
+the README is its source, so a concept is added by writing its entry in section 6, and the next extraction
+writes its Turtle and its place in the Axiom Index and the class diagram.

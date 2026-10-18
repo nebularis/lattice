@@ -155,3 +155,6 @@ None.
   section 6 into required regions of the README, rewritten by extraction and reported as drift by `--check`.
   The generated diagram renders under mermaid 10.9.1. Six decisions taken alone are listed in its Validation
   Pack. Its tests and the neighbouring suites pass. Committed locally, not pushed.
+- 2026-10-18: OD4's decisions 2 to 6 and OD5's decisions 1 and 3 to 6 agreed. OD4's decision 1 (merging rows
+  into one property shape) and OD5's decision 2 (the README as an output) agreed after explanation. Every OD4
+  and OD5 decision is settled.
