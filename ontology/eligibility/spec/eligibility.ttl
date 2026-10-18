@@ -50,7 +50,7 @@ elg:EvidenceStep a owl:Class ;
     rdfs:comment "One positioned traversal within an evidence binding's path, in a stated direction. Shaped like srf:PathStep." .
 
 elg:ExactCondition a owl:Class ;
-    rdfs:comment "A condition that matches its candidate by equality with a required concept (ExactMatch)." ;
+    rdfs:comment "A condition that admits a candidate equal to one of its required concepts (ExactMatch)." ;
     rdfs:subClassOf elg:Condition .
 
 elg:IntervalCondition a owl:Class ;
@@ -58,10 +58,10 @@ elg:IntervalCondition a owl:Class ;
     rdfs:subClassOf elg:Condition .
 
 elg:Law a owl:Class ;
-    rdfs:comment "A law of the Eligibility layer. A law may name how it is discharged (elg:lawRegister)." .
+    rdfs:comment "A logical law of the Eligibility layer, a property its declarations or decisions must satisfy, not a law in the legal sense. A law may name how it is discharged (elg:lawRegister)." .
 
 elg:LawRegister a owl:Class ;
-    rdfs:comment "How a law is discharged, by formal argument or by a static check of declarations." .
+    rdfs:comment "How a logical law of the Eligibility layer is discharged, by formal argument or by a static check of declarations." .
 
 elg:MatchStrategy a owl:Class ;
     rdfs:comment "How a condition matches its candidate, one of a closed set of named strategies." .
@@ -75,7 +75,7 @@ elg:Question a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ; owl:onProperty elg:forCondition ; owl:cardinality "1"^^xsd:nonNegativeInteger ], fnd:Evidenced .
 
 elg:SetMembershipCondition a owl:Class ;
-    rdfs:comment "A condition that matches its candidate by membership of the set of its required concepts (SetMembership)." ;
+    rdfs:comment "A condition that admits a candidate that is a member of the set of its required concepts (SetMembership)." ;
     rdfs:subClassOf elg:Condition .
 
 elg:StepDirection a owl:Class ;
@@ -172,7 +172,7 @@ elg:hasQuestion a owl:ObjectProperty ;
     rdfs:range elg:Question .
 
 elg:lawRegister a owl:FunctionalProperty, owl:ObjectProperty ;
-    rdfs:comment "How a law is discharged." ;
+    rdfs:comment "How a logical law of the Eligibility layer is discharged." ;
     rdfs:domain elg:Law ;
     rdfs:range elg:LawRegister .
 

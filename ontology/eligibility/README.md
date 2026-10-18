@@ -508,13 +508,13 @@ answers Undetermined.
 
 #### `elg:ExactCondition`
 
-**Definition.** A condition that matches its candidate by equality with a required concept (ExactMatch).
+**Definition.** A condition that admits a candidate equal to one of its required concepts (ExactMatch).
 
 **Subclass of.** `elg:Condition`
 
 #### `elg:SetMembershipCondition`
 
-**Definition.** A condition that matches its candidate by membership of the set of its required concepts (SetMembership).
+**Definition.** A condition that admits a candidate that is a member of the set of its required concepts (SetMembership).
 
 **Subclass of.** `elg:Condition`
 
@@ -594,11 +594,11 @@ answers Undetermined.
 
 #### `elg:Law`
 
-**Definition.** A law of the Eligibility layer. A law may name how it is discharged (`elg:lawRegister`).
+**Definition.** A logical law of the Eligibility layer, a property its declarations or decisions must satisfy, not a law in the legal sense. A law may name how it is discharged (`elg:lawRegister`).
 
 #### `elg:LawRegister`
 
-**Definition.** How a law is discharged, by formal argument or by a static check of declarations.
+**Definition.** How a logical law of the Eligibility layer is discharged, by formal argument or by a static check of declarations.
 
 #### `elg:EvidenceBinding`
 
@@ -785,7 +785,7 @@ answers Undetermined.
 
 #### `elg:lawRegister`
 
-**Definition.** How a law is discharged.
+**Definition.** How a logical law of the Eligibility layer is discharged.
 
 **Domain.** `elg:Law`
 

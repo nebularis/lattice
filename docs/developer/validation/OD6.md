@@ -73,8 +73,8 @@ Neither test is weakened for an unmigrated README.
 
 | Term | Definition |
 |---|---|
-| `elg:ExactCondition` | A condition that matches its candidate by equality with a required concept (ExactMatch). |
-| `elg:SetMembershipCondition` | A condition that matches its candidate by membership of the set of its required concepts (SetMembership). |
+| `elg:ExactCondition` | A condition that admits a candidate equal to one of its required concepts (ExactMatch). |
+| `elg:SetMembershipCondition` | A condition that admits a candidate that is a member of the set of its required concepts (SetMembership). |
 | `elg:IntervalCondition` | A condition that admits a candidate whose value lies within its required range set (IntervalContainment). |
 | `elg:WildcardCondition` | A condition that stands in for one or more dimensions of a match, as its wildcard policy allows (Wildcard). |
 | `elg:MatchStrategy` | How a condition matches its candidate, one of a closed set of named strategies. |
@@ -82,8 +82,8 @@ Neither test is weakened for an unmigrated README.
 | `elg:WildcardSemantics` | The wildcard policy a condition declares, one of a closed set of named policies. |
 | `elg:Decision` | The three-valued outcome of an admissibility decision: Permitted, Denied or Undetermined. |
 | `elg:OperationalProfile` | A reference conformance profile that a compiler backend is checked against. Versioned, since the profiles are themselves subject to change control. |
-| `elg:Law` | A law of the Eligibility layer. A law may name how it is discharged (elg:lawRegister). |
-| `elg:LawRegister` | How a law is discharged, by formal argument or by a static check of declarations. |
+| `elg:Law` | A logical law of the Eligibility layer, a property its declarations or decisions must satisfy, not a law in the legal sense. A law may name how it is discharged (elg:lawRegister). |
+| `elg:LawRegister` | How a logical law of the Eligibility layer is discharged, by formal argument or by a static check of declarations. |
 | `elg:StepDirection` | The direction in which an evidence step traverses its property. |
 | `elg:hasCondition` | A condition an admission profile composes. |
 | `elg:forCondition` | The one condition a question is posed against. |
@@ -97,7 +97,7 @@ Neither test is weakened for an unmigrated README.
 | `elg:forProfile` | The one admission profile a decision is for. |
 | `elg:hasQuestion` | A question a decision answers. |
 | `elg:decisionValue` | The one outcome a decision records: Permitted, Denied or Undetermined. |
-| `elg:lawRegister` | How a law is discharged. |
+| `elg:lawRegister` | How a logical law of the Eligibility layer is discharged. |
 | `elg:usesOperationalProfile` | The one operational profile a decision is made under. |
 | `elg:subjectRoleOccupancy` | The role occupancy of the subject a question is asked about. |
 | `elg:conditionKey` | The canonical identifier of a condition declaration, for comparison, caching and replay. |
@@ -157,3 +157,14 @@ The adversarial probes were not run beyond OD6-T2.
 - The class diagram was not rendered in a browser for this README. OD5's render check covered the same
   constructs.
 - Vocabulary's migration. OD7.
+
+## Decisions answered
+
+2026-10-18, by the maintainer:
+
+- **The definitions** are agreed, with three changes. The first three condition classes say what they admit
+  rather than what they match. `elg:LawRegister` makes clear that the laws are logical laws of the layer, not
+  laws in the legal sense, and `elg:Law` and `elg:lawRegister` say the same for consistency.
+- **`elg:CompatibilityOperation`'s name** is questioned, since what it describes is a composition. Open, as
+  OD6-Q7 in the status record.
+- **Decision 3** (L1 to L8 name no register). OD-REL adds the register.

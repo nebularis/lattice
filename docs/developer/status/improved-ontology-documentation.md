@@ -56,7 +56,9 @@ deliberate. The release slice OD-REL resolves it once, before the merge into `ma
 
 ## Open questions
 
-None.
+- **OD6-Q7. Rename `elg:CompatibilityOperation`?** It is declared on every condition, but evaluated only on an
+  admission profile, where it combines the conditions' outcomes (ADR-A89, ADR-A90). ADR-A05 records no reason
+  for the name. The options and their cost are in the reply of 2026-10-18, summarised in the OD6 Validation Pack.
 
 ## Coordination with other units
 
@@ -186,3 +188,6 @@ None.
   or shape changed. `check_formal_freshness.py` now reads only the Isabelle blocks, and OD1-T1 and RC1-T3 were
   adjusted for a migrated README. Two gaps found and left as the README's open issues: L1 to L8 name no
   register, and 14 individuals have no definition.
+
+- 2026-10-18: OD6 reviewed. The definitions agreed with three changes, applied and reconciled. L1 to L8's
+  register goes to OD-REL. OD6-Q7 opened on renaming `elg:CompatibilityOperation`.
