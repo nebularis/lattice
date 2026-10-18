@@ -74,9 +74,9 @@ PREDICATE_ORDER = (
     "owl:onProperty", "owl:intersectionOf", "owl:unionOf", "owl:complementOf", "owl:someValuesFrom",
     "owl:allValuesFrom", "owl:hasValue", "owl:cardinality", "owl:minCardinality", "owl:maxCardinality",
     "owl:qualifiedCardinality", "owl:minQualifiedCardinality", "owl:maxQualifiedCardinality", "owl:onClass",
-    "owl:members",
+    "owl:members", "owl:oneOf",
     "sh:targetClass", "sh:property", "sh:path", "sh:class", "sh:datatype", "sh:minCount", "sh:maxCount",
-    "sh:qualifiedValueShape", "sh:qualifiedMinCount", "sh:qualifiedMaxCount", "sh:hasValue", "sh:message",
+    "sh:qualifiedValueShape", "sh:qualifiedMinCount", "sh:qualifiedMaxCount", "sh:hasValue", "sh:in", "sh:message",
 )
 
 
@@ -420,7 +420,7 @@ def compile_layout(markdown: str, scan, layer: str) -> Compiled:
 # ---- OWL Manchester syntax, the subset section 6 uses (ADR-A126 decision 4) ----------------------
 
 TOKEN_RE = re.compile(
-    r'\s*(?:(?P<paren>[()])|(?P<literal>"(?:[^"\\]|\\.)*"(?:@[A-Za-z][\w-]*|\^\^[A-Za-z][\w.-]*:[\w.-]*)?)'
+    r'\s*(?:(?P<paren>[()])|(?P<brace>[{}])|(?P<comma>,)|(?P<literal>"(?:[^"\\]|\\.)*"(?:@[A-Za-z][\w-]*|\^\^[A-Za-z][\w.-]*:[\w.-]*)?)'
     r"|(?P<iri><[^>\s]+>)|(?P<number>-?\d+)|(?P<curie>[A-Za-z][\w.-]*:[\w.-]*|:[\w.-]+)|(?P<word>[a-z]+)|(?P<other>\S))"
 )
 RESTRICTION_WORDS = ("some", "only", "value", "min", "max", "exactly")
@@ -492,12 +492,40 @@ class Manchester:
             if self.take() != ("paren", ")"):
                 raise self.fail("a parenthesis is not closed")
             return term
+        if (kind, value) == ("brace", "{"):
+            return self.enumeration()
         if kind in ("curie", "iri"):
             name = self.name()
             if self.peek()[0] == "word" and self.peek()[1] in RESTRICTION_WORDS:
                 return self.restriction(name)
             return name
         raise self.fail(f"expected a class, a restriction or a parenthesis, found {value or 'the end'!r}")
+
+    def enumeration(self) -> Node:
+        """``{ a, b }``: an enumerated class of individuals, or an enumerated data range of literals."""
+        self.take()
+        items: List[str] = []
+        literals = []
+        while True:
+            kind, value = self.peek()
+            if kind in ("literal", "number"):
+                self.take()
+                items.append(self.literal(value))
+                literals.append(True)
+            elif kind in ("curie", "iri"):
+                items.append(self.name())
+                literals.append(False)
+            else:
+                raise self.fail(f"an enumeration holds names or literals, found {value or 'the end'!r}")
+            kind, value = self.take()
+            if (kind, value) == ("brace", "}"):
+                break
+            if kind != "comma":
+                raise self.fail("an enumeration separates its members with commas and ends with }")
+        if len(set(literals)) > 1:
+            raise self.fail("an enumeration holds names or literals, not both")
+        kind_of = "rdfs:Datatype" if literals[0] else "owl:Class"
+        return Node((("rdf:type", kind_of), ("owl:oneOf", Collection(tuple(items)))))
 
     def name(self) -> str:
         kind, value = self.take()
@@ -549,9 +577,9 @@ def split_top_level(text: str) -> List[str]:
     """``text`` split at the commas outside parentheses."""
     parts, depth, current = [], 0, []
     for char in text:
-        if char == "(":
+        if char in "({":
             depth += 1
-        elif char == ")":
+        elif char in ")}":
             depth -= 1
         if char == "," and depth == 0:
             parts.append("".join(current).strip())
@@ -817,6 +845,9 @@ def shacl_constraints(row: Restriction, term: Node) -> List[Tuple[str, Term]]:
     qualified form, never to ``sh:class`` with counts, since the two say different things."""
     pairs = dict(term.pairs)
     if "owl:allValuesFrom" in pairs:
+        enumerated = pairs["owl:allValuesFrom"]
+        if isinstance(enumerated, Node) and "owl:oneOf" in dict(enumerated.pairs):
+            return [("sh:in", dict(enumerated.pairs)["owl:oneOf"])]
         filler = _named(pairs["owl:allValuesFrom"], row, "only with")
         datatype = filler.startswith("xsd:") or filler in DATATYPE_NAMES
         return [("sh:datatype" if datatype else "sh:class", filler)]
@@ -904,6 +935,8 @@ def manchester(term: Term, code: bool = True, nested: bool = False) -> str:
                 else:
                     continue
                 break
+    elif "owl:oneOf" in pairs:
+        return "{" + ", ".join(manchester(item, code) for item in pairs["owl:oneOf"].items) + "}"
     elif "owl:complementOf" in pairs:
         text = f"not {manchester(pairs['owl:complementOf'], code, True)}"
     else:
@@ -925,7 +958,10 @@ def verbalise(term: Node) -> str:
                 return f"{phrase} {count}{filler}"
     for key, word in (("owl:someValuesFrom", "some"), ("owl:allValuesFrom", "only"), ("owl:hasValue", "value")):
         if key in pairs:
-            return f"{word} {_local(pairs[key])}"
+            filler = pairs[key]
+            if isinstance(filler, Node) and "owl:oneOf" in dict(filler.pairs):
+                return f"{word} one of {', '.join(_local(i) for i in dict(filler.pairs)['owl:oneOf'].items)}"
+            return f"{word} {_local(filler)}"
     return manchester(term, code=False)
 
 
