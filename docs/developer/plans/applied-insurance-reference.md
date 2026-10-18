@@ -63,6 +63,7 @@ Each is stated once in the sketch cited, and every phase plan inherits them.
 | 4 | [phase 4](applied-insurance-reference-phase-4.md) | exposure ontology | 1, and slices of 2 per the phase plan | M3 |
 | 5 | [phase 5](applied-insurance-reference-phase-5.md) | contract module: term parameters, liability direction in contract terms, optional compilation. Deferred (D2) | 1, 2, Open CBAA integration of 1 to 4 | M4, M5 |
 | 6 | [phase 6](applied-insurance-reference-phase-6.md) and [claims](applied-insurance-reference-claims.md) | submission (after 4), claims: the claims core, money and wire formats after 4, the parts that evaluate cover after CCS C12 (claims plan §3) | 4, CCS, Phase 5 for term parameters | M6, M7, M8 |
+| 7 | [phase 7](applied-insurance-reference-phase-7.md), proposed 2026-10-18 | placement and capital: programme data model, market responses, risk-capital vehicles | 1, 6 (claims), the [relations sketch](../sketches/instrument-relations.md) | M8 |
 | S | [substrate track](applied-insurance-reference-substrate.md) | upstream LATTICE changes L-P1 to L-P5, spatial guidance, evidence resolution | 0 | none, non-blocking |
 
 ```mermaid

@@ -135,8 +135,11 @@ provenance and the rest. Call a node "a version" only when it is one specific ve
 to be renamed `fnd:Versioned` (technical debt TD-20).
 
 **Domain-neutral substrate.** Explain a substrate term from law, contract drafting or computing,
-never by appeal to "the market". Never cite a downstream project in a layer README. Prefer examples
-from several domains, such as lending, licences, trials and warranties, over insurance ones.
+never by appeal to "the market". Never cite a downstream project in a layer README. Draw examples
+from several domains, such as lending, licences, trials, warranties and insurance, and order them by
+what explains the mechanism best. Headings, captions and table columns name the domain or instrument
+an example comes from ("Lending", "A guarantee"), and never rank one domain's examples before or
+after another's.
 
 **No market words as technical terms.** A word with a market meaning reads as that meaning to an
 insurance reader. "Binder" names a binding authority or a cover note, so producing bound meaning is
