@@ -174,8 +174,16 @@ an optional `sh:message`.
 
 An OWL restriction also holds in SHACL by default, since some restrictions guide the reasoner at design time
 and are checked on data as well. A qualified restriction is never mapped to `sh:class` with counts. The OWL
-form allows other values that are not `C`, and `sh:class` forbids them. Generated SHACL goes into one shape
-per class in the module's structural shapes file. Other shapes are written by hand in section 7.
+form allows other values that are not `C`, and `sh:class` forbids them. `only` maps to `sh:datatype` when
+its filler is an `xsd:` datatype, `rdfs:Literal` or `rdf:langString`, and to `sh:class` otherwise.
+
+Generated SHACL goes into the module's `shapes/structural.ttl`, which is generated whole: one
+`<Class>Shape` per class with a row checked in SHACL, targeting that class, and one property shape per
+property and message. Rows for one property with the same message, or none, share a property shape, so
+`max 1` and `only xsd:boolean` become one, as the layers write them today. Two such rows that state the same
+constraint are refused. The shapes carry no `sh:severity`, so each is a violation. A shape the table cannot
+state, such as a SPARQL constraint or a warning, is written by hand in section 7, in a block that names its
+file, which may not be `shapes/structural.ttl`. In a README in the layout every shape block names its file.
 
 ### Individuals, disjointness and other axioms
 

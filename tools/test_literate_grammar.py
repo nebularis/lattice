@@ -64,14 +64,15 @@ def readme(purpose: str = "X models things.", section2: str | None = None, secti
     return "\n".join(parts)
 
 
-def compile_readme(text: str, layer: str = "x") -> dict[str, str]:
+def compile_readme(text: str, layer: str = "x") -> lg.Compiled:
     result = literate_extract.scan(text)
     return lg.compile_layout(text, result, layer)
 
 
 def extract(text: str, layer: str = "x") -> dict[str, str]:
     result = literate_extract.scan(text)
-    return literate_extract.plan(result.blocks, layer, [], preambles=lg.compile_layout(text, result, layer))
+    compiled = lg.compile_layout(text, result, layer)
+    return literate_extract.plan(result.blocks, layer, [], preambles=compiled.documents, generated_shapes=compiled.shapes)
 
 
 def graph(turtle: str) -> Graph:
@@ -463,3 +464,93 @@ def test_od2_t11_a_block_of_a_migrated_readme_declares_no_prefix() -> None:
     block = f"{FENCE}turtle-spec\n@prefix zz: <https://example.org/zz#> .\nzz:A a owl:Class .\n{FENCE}"
     with pytest.raises(ValueError, match="section 2's prefix table is the one source of prefixes"):
         extract(readme(section6=six(other=block)))
+
+
+# ---- OD4: section 6 to SHACL ----------------------------------------------------------------------
+
+SH_PREFIX = "@prefix sh: <http://www.w3.org/ns/shacl#> .\n"
+STRUCTURAL = "ontology/x/shapes/structural.ttl"
+
+
+def _class_with(rows: str, curie: str = "ex:Thing") -> str:
+    head = "| Property | Values | Asserted in | Message |\n|---|---|---|---|\n"
+    return f"#### `{curie}`\n\n**Definition.** A thing.\n\n**Restrictions.**\n\n{head}{rows}"
+
+
+def shapes_of(**parts: str) -> Graph:
+    return Graph().parse(data=extract(section6_readme(**parts))[STRUCTURAL], format="turtle")
+
+
+def test_od4_t1_each_flat_form_maps_to_its_shacl_and_owl_only_rows_to_none() -> None:
+    rows = "\n".join([
+        "| `ex:a` | exactly 1 | | |", "| `ex:b` | min 2 | | |", "| `ex:c` | max 3 | | |",
+        "| `ex:d` | exactly 1 `ex:C` | | |", "| `ex:e` | only `ex:C` | | |", "| `ex:f` | only `xsd:string` | | |",
+        "| `ex:g` | some `ex:C` | | |", "| `ex:h` | value `ex:v` | SHACL | Must be v. |", "| `ex:i` | min 1 | OWL | |",
+    ])
+    assert isomorphic(shapes_of(classes=_class_with(rows)), expected(SH_PREFIX + """
+        ex:ThingShape a sh:NodeShape ; sh:targetClass ex:Thing ;
+            sh:property [ sh:path ex:a ; sh:minCount 1 ; sh:maxCount 1 ],
+                [ sh:path ex:b ; sh:minCount 2 ], [ sh:path ex:c ; sh:maxCount 3 ],
+                [ sh:path ex:d ; sh:qualifiedValueShape [ sh:class ex:C ] ; sh:qualifiedMinCount 1 ; sh:qualifiedMaxCount 1 ],
+                [ sh:path ex:e ; sh:class ex:C ], [ sh:path ex:f ; sh:datatype xsd:string ],
+                [ sh:path ex:g ; sh:qualifiedValueShape [ sh:class ex:C ] ; sh:qualifiedMinCount 1 ],
+                [ sh:path ex:h ; sh:hasValue ex:v ; sh:message "Must be v." ] .
+    """))
+
+
+def test_od4_t2_rows_for_one_property_and_message_share_a_property_shape() -> None:
+    rows = "\n".join(["| `ex:n` | max 1 | | |", "| `ex:n` | only `xsd:boolean` | | |", "| `ex:n` | min 1 | SHACL | Needed. |"])
+    assert isomorphic(shapes_of(classes=_class_with(rows)), expected(SH_PREFIX + """
+        ex:ThingShape a sh:NodeShape ; sh:targetClass ex:Thing ;
+            sh:property [ sh:path ex:n ; sh:maxCount 1 ; sh:datatype xsd:boolean ],
+                [ sh:path ex:n ; sh:minCount 1 ; sh:message "Needed." ] .
+    """))
+    with pytest.raises(lg.GrammarError, match="state sh:maxCount twice"):
+        compile_readme(section6_readme(classes=_class_with("| `ex:n` | max 1 | | |\n| `ex:n` | max 2 | | |")))
+
+
+@pytest.mark.parametrize("values", ["some (`ex:A` and `ex:B`)", "only (`ex:A` or `ex:B`)", "exactly 1 (not `ex:A`)"])
+def test_od4_t3_a_nested_expression_is_refused_in_shacl_and_accepted_as_owl_only(values: str) -> None:
+    with pytest.raises(lg.GrammarError, match="nested expression is not checked in SHACL"):
+        compile_readme(section6_readme(classes=_class_with(f"| `ex:p` | {values} | | |")))
+    compiled = compile_readme(section6_readme(classes=_class_with(f"| `ex:p` | {values} | OWL | |")))
+    assert compiled.shapes == {}
+
+
+def test_od4_t4_hand_written_shape_blocks_name_their_file_and_never_the_generated_one() -> None:
+    rows = _class_with("| `ex:a` | exactly 1 | | |")
+    named = f'{FENCE}turtle-shapes\n# @output-file "shapes/constraints.ttl"\nex:S a sh:NodeShape .\n{FENCE}'
+    out = extract(section6_readme(classes=rows, other=named))
+    assert "ex:S a sh:NodeShape" in out["ontology/x/shapes/constraints.ttl"] and "ex:ThingShape" in out[STRUCTURAL]
+    unnamed = f"{FENCE}turtle-shapes\nex:S a sh:NodeShape .\n{FENCE}"
+    with pytest.raises(ValueError, match="every shape block names its file"):
+        extract(section6_readme(classes=rows, other=unnamed))
+    clash = f'{FENCE}turtle-shapes\n# @output-file "shapes/structural.ttl"\nex:S a sh:NodeShape .\n{FENCE}'
+    with pytest.raises(ValueError, match="generated from section 6"):
+        extract(section6_readme(classes=rows, other=clash))
+
+
+def test_od4_t5_no_row_in_shacl_generates_no_structural_file() -> None:
+    assert compile_readme(section6_readme(classes=_class_with("| `ex:a` | exactly 1 | OWL | |"))).shapes == {}
+    assert STRUCTURAL not in extract(section6_readme())
+
+
+def test_od4_t6_the_shapes_do_not_depend_on_the_order_of_entries_or_rows() -> None:
+    a, b = _class_with("| `ex:a` | exactly 1 | | |\n| `ex:b` | min 1 | | |", "ex:A"), _class_with("| `ex:c` | max 1 | | |", "ex:B")
+    b_first = _class_with("| `ex:b` | min 1 | | |\n| `ex:a` | exactly 1 | | |", "ex:A")
+    assert extract(section6_readme(classes=a + "\n\n" + b))[STRUCTURAL] == extract(section6_readme(classes=b + "\n\n" + b_first))[STRUCTURAL]
+
+
+def test_od4_t7_the_grammar_states_eligibilitys_decision_shape_as_its_file_does() -> None:
+    elg = "https://www.nebularis.org/neuro-semantic/lattice/eligibility#"
+    rows = "\n".join([
+        "| `elg:forProfile` | exactly 1 | | |", "| `elg:hasQuestion` | min 1 | | |",
+        "| `elg:decisionValue` | exactly 1 | | |", "| `elg:usesOperationalProfile` | exactly 1 | SHACL | |",
+        "| `elg:closureReliedOn` | only `elg:Closure` | SHACL | A decision relies only on closures (ADR-A105). |",
+    ])
+    prefixes = PREFIXES_EX_FND + f"\n| `elg:` | <{elg}> |"
+    text = readme(section2=HEADER_TABLE + "\n\n" + prefixes, section6=six(classes=_class_with(rows, "elg:EligibilityDecision")))
+    ours = Graph().parse(data=extract(text)[STRUCTURAL], format="turtle")
+    theirs = Graph().parse(ROOT / "ontology/eligibility/shapes/structural.ttl")
+    shape = URIRef(elg + "EligibilityDecisionShape")
+    assert isomorphic(_closure(ours, shape), _closure(theirs, shape))

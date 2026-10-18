@@ -75,6 +75,8 @@ PREDICATE_ORDER = (
     "owl:allValuesFrom", "owl:hasValue", "owl:cardinality", "owl:minCardinality", "owl:maxCardinality",
     "owl:qualifiedCardinality", "owl:minQualifiedCardinality", "owl:maxQualifiedCardinality", "owl:onClass",
     "owl:members",
+    "sh:targetClass", "sh:property", "sh:path", "sh:class", "sh:datatype", "sh:minCount", "sh:maxCount",
+    "sh:qualifiedValueShape", "sh:qualifiedMinCount", "sh:qualifiedMaxCount", "sh:hasValue", "sh:message",
 )
 
 
@@ -368,8 +370,17 @@ def read_section_2(readme: Readme, layer: str) -> Header:
     return Header(prefixes, documents, people)
 
 
-def compile_layout(markdown: str, scan, layer: str) -> Dict[str, str]:
-    """The opening text of every document a README in the layout names, by output path."""
+@dataclass(frozen=True)
+class Compiled:
+    """What a README in the layout compiles to: the opening of each document section 2 names, and the
+    generated structural shapes file, if any restriction is asserted in SHACL. Both by output path."""
+
+    documents: Dict[str, str]
+    shapes: Dict[str, str]
+
+
+def compile_layout(markdown: str, scan, layer: str) -> Compiled:
+    """Compile a README in the layout."""
     readme = Readme.read(markdown, scan)
     header = read_section_2(readme, layer)
     last = layer.rsplit("/", 1)[-1]
@@ -392,8 +403,11 @@ def compile_layout(markdown: str, scan, layer: str) -> Dict[str, str]:
             used.append(predicate)
         for predicate in sorted(set(used)):
             document.add(predicate, "rdf:type", "owl:AnnotationProperty")
-    Section6(readme, header, layer, scan.regions, tag).compile()
-    return {target: document.turtle(header.prefixes) for target, document in header.documents.items()}
+    section6 = Section6(readme, header, layer, scan.regions, tag)
+    section6.compile()
+    documents = {target: document.turtle(header.prefixes) for target, document in header.documents.items()}
+    shapes = structural_shapes(section6.restrictions, header.prefixes)
+    return Compiled(documents, {f"ontology/{layer}/shapes/structural.ttl": shapes} if shapes else {})
 
 
 # ---- OWL Manchester syntax, the subset section 6 uses (ADR-A126 decision 4) ----------------------
@@ -765,3 +779,83 @@ class Section6:
                 document.add(names[0], "owl:disjointWith", names[1])
             else:
                 raise GrammarError(f"line {paragraph.line}: section 6.5 takes **All disjoint.** or **Disjoint.**, not **{match.group('label')}.**")
+
+
+
+# ---- section 6 to SHACL (ADR-A126 decision 5) ------------------------------------------------------
+
+SHACL_NAMESPACE = "http://www.w3.org/ns/shacl#"
+DATATYPE_NAMES = {"rdfs:Literal", "rdf:langString", "rdf:PlainLiteral"}
+
+
+def _count(literal_text: str) -> str:
+    return literal_text.split('"')[1]
+
+
+def _named(term: Term, row: Restriction, form: str) -> str:
+    if not isinstance(term, str):
+        raise GrammarError(
+            f"line {row.line}: {form} a nested expression is not checked in SHACL. Mark the row OWL, or state the "
+            f"shape in section 7"
+        )
+    return term
+
+
+def shacl_constraints(row: Restriction, term: Node) -> List[Tuple[str, Term]]:
+    """The SHACL that one restriction row's flat form maps to. A qualified restriction maps to SHACL's
+    qualified form, never to ``sh:class`` with counts, since the two say different things."""
+    pairs = dict(term.pairs)
+    if "owl:allValuesFrom" in pairs:
+        filler = _named(pairs["owl:allValuesFrom"], row, "only with")
+        datatype = filler.startswith("xsd:") or filler in DATATYPE_NAMES
+        return [("sh:datatype" if datatype else "sh:class", filler)]
+    if "owl:someValuesFrom" in pairs:
+        filler = _named(pairs["owl:someValuesFrom"], row, "some with")
+        return [("sh:qualifiedValueShape", Node((("sh:class", filler),))), ("sh:qualifiedMinCount", "1")]
+    if "owl:hasValue" in pairs:
+        return [("sh:hasValue", pairs["owl:hasValue"])]
+    for word, (unqualified, qualified) in CARDINALITY.items():
+        if unqualified in pairs:
+            n = _count(pairs[unqualified])
+            return {"exactly": [("sh:minCount", n), ("sh:maxCount", n)], "min": [("sh:minCount", n)],
+                    "max": [("sh:maxCount", n)]}[word]
+        if qualified in pairs:
+            n = _count(pairs[qualified])
+            shape = ("sh:qualifiedValueShape", Node((("sh:class", _named(pairs["owl:onClass"], row, word + " of")),)))
+            return [shape] + {"exactly": [("sh:qualifiedMinCount", n), ("sh:qualifiedMaxCount", n)],
+                              "min": [("sh:qualifiedMinCount", n)], "max": [("sh:qualifiedMaxCount", n)]}[word]
+    raise GrammarError(f"line {row.line}: the values {row.values!r} have no SHACL form")
+
+
+def structural_shapes(restrictions: Sequence[Restriction], prefixes: Mapping[str, str]) -> str:
+    """The structural shapes file: one ``<Class>Shape`` per class with a row asserted in SHACL, and one
+    property shape per property and message, merging the constraints of that property's rows."""
+    merged: Dict[Tuple[str, str, str], List[Tuple[str, Term]]] = {}
+    for row in restrictions:
+        if row.asserted_in == "owl":
+            continue
+        term = class_expression(f"{row.prop} {row.values}", prefixes, f"line {row.line}")
+        key = (row.subject, row.prop, row.message)
+        pairs = merged.setdefault(key, [])
+        for predicate, obj in shacl_constraints(row, term):
+            if any(p == predicate for p, _ in pairs):
+                raise GrammarError(
+                    f"line {row.line}: {row.subject}'s rows for {row.prop} state {predicate} twice. Give one of them its own message"
+                )
+            pairs.append((predicate, obj))
+    if not merged:
+        return ""
+    if prefixes.get("sh", SHACL_NAMESPACE) != SHACL_NAMESPACE:
+        raise GrammarError(f"prefix sh: is bound to {prefixes['sh']}, not the SHACL namespace")
+    shapes: Dict[str, List[Tuple[str, Term]]] = {}
+    for (subject, prop, message), pairs in merged.items():
+        if ":" not in subject or subject.startswith("<"):
+            raise GrammarError(f"{subject} needs a CURIE to name its shape")
+        name = f"{subject}Shape"
+        shape = shapes.setdefault(name, [("rdf:type", "sh:NodeShape"), ("sh:targetClass", subject)])
+        constraint = [("sh:path", prop), *pairs] + ([("sh:message", literal(message))] if message else [])
+        shape.append(("sh:property", Node(tuple(constraint))))
+    lines = [f"@prefix {p}: <{ns}> ." for p, ns in sorted({**prefixes, "sh": SHACL_NAMESPACE}.items())]
+    for name in sorted(shapes):
+        lines += ["", f"{name} " + _pairs(shapes[name], " ;\n    ") + " ."]
+    return "\n".join(lines) + "\n"

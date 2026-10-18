@@ -525,6 +525,7 @@ def plan(
     proofs_root: str | None = None,
     reference_root: str | None = None,
     preambles: Mapping[str, str] | None = None,
+    generated_shapes: Mapping[str, str] | None = None,
 ) -> Dict[str, str]:
     """Map each output path to the document it should contain.
 
@@ -560,6 +561,14 @@ def plan(
                 shape_docs.setdefault(target, []).append(body)
     isabelle_bodies = [b.body for b in blocks if b.tag == "isabelle-spec"]
 
+    if preambles is not None and positional:
+        raise ValueError(
+            f"{len(positional)} turtle-shapes block(s) name no file. In a README in the layout, every shape block "
+            f"names its file, and the structural shapes are generated from section 6 (ADR-A126)"
+        )
+    for path in generated_shapes or {}:
+        if path in shape_docs:
+            raise ValueError(f"a shape block names {path}, which is generated from section 6's restrictions")
     if len(positional) != len(shape_targets):
         raise ValueError(
             f"{len(positional)} turtle-shapes block(s) without an output-file found but "
@@ -633,6 +642,8 @@ def plan(
         outputs[path] = render([body])
     for path, bodies in shape_docs.items():
         outputs[path] = render(bodies)
+    for path, text in (generated_shapes or {}).items():
+        outputs[path] = render([text])
     if isabelle_bodies:
         # A path outside `root` (ontology/), marked with a recognisable prefix so
         # main() resolves it against --proofs-root instead of --root.
@@ -747,11 +758,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"CATALOGUE {error}", file=sys.stderr)
         return 1
     try:
-        preambles = literate_grammar.compile_layout(text, result, args.layer) if uses_layout(result.sections) else None
+        compiled = literate_grammar.compile_layout(text, result, args.layer) if uses_layout(result.sections) else None
     except literate_grammar.GrammarError as error:
         print(f"GRAMMAR {readme_path}: {error}", file=sys.stderr)
         return 1
-    outputs = plan(result.blocks, args.layer, shapes, args.proofs_root, args.reference_root, preambles)
+    outputs = plan(
+        result.blocks, args.layer, shapes, args.proofs_root, args.reference_root,
+        compiled.documents if compiled else None, compiled.shapes if compiled else None,
+    )
 
     root = Path(args.root)
     proofs_root = Path(args.proofs_root) if args.proofs_root else None
