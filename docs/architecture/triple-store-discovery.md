@@ -11,7 +11,9 @@ source of truth for the project. Read it before relying on how a store behaves, 
 skill `lattice-triple-stores` has the procedure.
 
 **Stores covered:** rdflib 7.6.0 and Oxigraph 0.5.11 (through `pyoxigraph`). Each finding names the versions it was seen on.
-A finding holds for those versions only, until it is checked again.
+A finding holds for those versions only, until it is checked again. **Tools above a store covered:** pySHACL 0.40.1, which validates
+shapes on rdflib (TSD-23, TSD-24, TSD-31). TSD-22 to TSD-33 are about the cost of running queries and shapes, and
+[Efficient queries and shapes](efficient-queries-and-shapes.md) says which of them are properties of rdflib or pySHACL and which hold anywhere.
 
 ## Contents
 
@@ -43,13 +45,15 @@ version, and the two together are what we aim for. A finding built only on Docum
 first line.
 
 **A run record** goes with every Observed finding: the date, the store and its version, the Python version, and the kind of
-machine, never the machine or person (ADR-A124 decision 5). Three run records appear below.
+machine, never the machine or person (ADR-A124 decision 5). Five run records appear below.
 
 | Run | Machine | Python | Stores |
 |---|---|---|---|
 | **R-A** | a Linux x86_64 container, 15 GB, used by an agent for H2.4b, 2026-10-12 | 3.14.8 | rdflib 7.6.0, pyoxigraph 0.5.11 |
 | **R-B** | a macOS arm64 workstation, used for the H2 reviews and for this document, 2026-10-10 to 2026-10-13 | 3.14.7 | rdflib 7.6.0, pyoxigraph 0.5.11 |
 | **R-C** | a Linux x86_64 container, 15 GB, used by an agent for H2.5, 2026-10-13 | 3.14.8 | rdflib 7.6.0, pyoxigraph 0.5.11 |
+| **R-D** | a Linux x86_64 container, 4 logical cores, 15 GB, used by an agent for the ontology test-suite speed work, 2026-10-16 to 2026-10-17 | 3.14.8 | rdflib 7.6.0, pyoxigraph 0.5.11, pySHACL 0.40.1 |
+| **R-E** | a macOS arm64 laptop with four performance and four efficiency cores and 8 GB, used by the maintainer to repeat R-D's runs, 2026-10-16 to 2026-10-17 | 3.14.7 | rdflib 7.6.0, pyoxigraph 0.5.11, pySHACL 0.40.1 |
 
 **How to add a finding** is in §6.0 and in the skill. In short: say what you were testing, how you found it, the smallest
 SPARQL that shows it, the result on each store you have, the reason if you can find it in the source, what it means for
@@ -216,6 +220,18 @@ to the store or where it is a matter of capacity.
 | [TSD-19](#tsd-19-the-order-of-group_concat) | the order of `GROUP_CONCAT` | not specified | the order the data was stored in, whatever the hash seed (this query shape) | the order of the solutions | Observed |
 | [TSD-20](#tsd-20-a-filter-inside-not-exists-and-a-parameter) | a `FILTER` inside `NOT EXISTS` and a parameter or a sub-select's projection | sees them by substitution | ✔ by initial binding and by text | ✔ by text | Observed |
 | [TSD-21](#tsd-21-an-empty-values-block-in-an-update) | an empty `VALUES` block in an update `WHERE` | no solution | ✘ raises `AttributeError`, before changing anything | ✔ no solution, nothing written | Observed |
+| [TSD-22](#tsd-22-rdflib-parses-and-translates-a-querys-text-on-every-call) | parsing a query's text | not specified | ✘ costs 20 ms for a 20-line query, 0.5 ms when prepared | 0.17 ms, parse and run | Source, Observed |
+| [TSD-23](#tsd-23-pyshacl-runs-a-sparql-constraint-once-per-focus-node) | how often a SPARQL-based constraint is run | defined per focus node | pySHACL: once per focus node | pySHACL runs on rdflib only | Source, Observed |
+| [TSD-24](#tsd-24-the-prefix-block-pyshacl-writes-changes-order-between-validations) | the order of the `PREFIX` lines pySHACL writes | not specified | varies between validations | not applicable | Source, Observed |
+| [TSD-25](#tsd-25-rdflib-fixes-the-order-of-a-groups-patterns-before-it-knows-the-initial-bindings) | the order of a group's patterns | not specified | ✘ fixed at translation, ignores initial bindings | ✔ no sensitivity seen | Source, Observed |
+| [TSD-26](#tsd-26-a-chain-of-three-or-more-groups-is-joined-by-evaluating-the-later-ones-whole) | joining a chain of groups | not specified | evaluates the later groups whole | not tested | Source, Observed |
+| [TSD-27](#tsd-27-a-filter-is-applied-after-its-groups-patterns-and-rdflib-does-not-move-it-earlier) | when a `FILTER` runs | after the group's patterns (scope) | ✘ after all of them | 1.3 to 1.5 times between forms | Source, Observed |
+| [TSD-28](#tsd-28-presence-and-absence-tests-the-forms-differ-little) | forms of a presence or absence test | equal | 1.0 to 1.4 times | 1.1 to 1.2 times | Observed |
+| [TSD-29](#tsd-29-two-parses-of-one-document-never-give-equal-triple-sets) | two parses of one document | blank nodes are fresh | fresh labels | fresh labels | Observed |
+| [TSD-30](#tsd-30-a-querys-undeclared-prefixes-resolve-from-the-data-graphs-bindings) | a prefix the query does not declare | an error | resolved from the graph's bindings | not tested | Source, Observed |
+| [TSD-31](#tsd-31-pyshacl-copies-the-data-graph-on-every-validation-unless-told-not-to) | copying the data graph for a validation | not specified | pySHACL copies it, 0.09 s for 5,000 to 14,000 triples | not applicable | Source, Observed |
+| [TSD-32](#tsd-32-a-constant-filter-whose-value-is-false-is-dropped-by-rdflib) | `FILTER (false)` | removes every solution | ✘ removes none | ✔ | Source, Observed |
+| [TSD-33](#tsd-33-on-oxigraph-count-over-a-statically-false-filter-returns-no-row) | `COUNT(*)` over a filter that is statically false | one row, 0 | ✔ except TSD-32 | ✘ no row | Observed |
 
 ## 6. The findings
 
@@ -911,6 +927,304 @@ anything, so the store is left as it was.
 **What it means for LATTICE.** An append with an empty `eventRows` slot writes nothing on either store, and on rdflib it raises. H2.8's caller
 check refuses an empty slot before sending, so the generated operation never meets the difference. Test `test_h2_6b_t6`.
 
+---
+
+### TSD-22. rdflib parses and translates a query's text on every call
+
+**Evidence:** Source (rdflib 7.6.0) and Observed, R-D and R-E. A property of rdflib. Oxigraph was timed from text only.
+
+**Context.** `check:ontology-catalog` validates the ontology shapes with pySHACL on rdflib, and took 427 s. One validation of the exposure fixture took 13 s, and
+we wanted to know where.
+
+**How we found it.**
+
+1. `cProfile` of that one test. Under the profiler, which inflates figures two to three times, the pySHACL call took 34 s of 36 s, and 26.6 s of it was
+   `pyparsing`, the library rdflib's SPARQL grammar is written in.
+2. The profile's callers table. 937 calls of `Processor.query`, each calling `parseQuery`, and `translateQuery` another 3.9 s.
+3. A probe that counted the texts: 937 calls, 30 distinct texts.
+4. A prototype that translated each distinct text once. The test went from 13.2 s to 1.8 s with the same result, and the whole suite from 427 s to 128 s.
+
+**What the store does.** The same twenty-line constraint query, run for one focus node (benchmark experiment E5).
+
+| Way of running it | Milliseconds per run |
+|---|---|
+| rdflib, text each time | 20.4 |
+| rdflib, prepared once with `prepareQuery` | 0.48 |
+| Oxigraph, text each time (parse and run) | 0.17 |
+
+**Why.** `rdflib/plugins/sparql/processor.py`, `SPARQLProcessor.query` (line 144). For a `str` it evaluates `translateQuery(parseQuery(strOrQuery), base,
+initNs)`, and for an already translated query it skips both. The grammar is `pyparsing`, in Python. We did not read Oxigraph's parser. Its figure is
+consistent with a compiled one.
+
+**What it means for LATTICE.** Parsing and translating is most of what a SHACL-SPARQL validation costs on rdflib (TSD-23 says why it happens so often).
+`tools/conftest.py` translates each distinct text once while `ValidationCache` runs pySHACL (`_sparql_translated_once`), keyed on the text, the base and the
+prefixes the text uses without declaring (TSD-24, TSD-30). This is not a property of SPARQL or of SHACL, and a different engine or validator may not have
+the cost. [Efficient queries and shapes](efficient-queries-and-shapes.md) draws the line.
+
+**Reproduce it.** `mise run check:sparql-constraint-query-cost`, experiment E5.
+
+### TSD-23. pySHACL runs a SPARQL constraint once per focus node
+
+**Evidence:** Source (pySHACL 0.40.1) and Observed, R-D. A property of pySHACL.
+
+**Context.** TSD-22 asked why a validation issued 937 queries.
+
+**What the tool does.** One constraint, 40 focus nodes, a shapes graph with a single `sh:sparql` constraint: 40 calls of `Graph.query`, all with one text.
+
+**Why.** `pyshacl/constraints/sparql/sparql_based_constraints.py`, `_evaluate_sparql_constraint` (line 113), loops over the focus nodes. For each it calls
+`sparql_query_helper.py`, `pre_bind_variables` (line 280), which runs `check_invalid_sparql` (a set of regular-expression checks of the text, about 0.4 ms
+a call in the profile of TSD-22) and returns `$this` as an initial binding, and then `_validate_sparql_query` (line 169) calls `Graph.query(text,
+initBindings=...)`. The SHACL specification defines a SPARQL-based constraint by its result for one focus node, with `$this` pre-bound, and says nothing
+about batching. Running once per node is pySHACL's choice.
+
+**What it means for LATTICE.** The cost of a node shape is the number of its focus nodes times the cost of one run, and a shape that targets a common class
+has one focus node per instance of that class in the data. Exposure's documentation rule targeted `skos:Concept` and ran 15,713 times over 21 validations.
+Whether Jena SHACL or another validator also runs once per node is not tested (TSD-Q14).
+
+**Reproduce it.** A shapes graph with one `sh:sparql` constraint, 40 focus nodes, and `Graph.query` wrapped to count calls. The script is in
+[efficient-queries-and-shapes.md](efficient-queries-and-shapes.md#96-reproductions).
+
+### TSD-24. The PREFIX block pySHACL writes changes order between validations
+
+**Evidence:** Source (pySHACL 0.40.1) and Observed, R-D. A property of pySHACL.
+
+**Context.** After TSD-22's cache went in, the wording tests still made 512 parses, and 511 of the texts were distinct.
+
+**What the tool does.** pySHACL writes the constraint's `PREFIX` declarations in front of its `sh:select` text. Twelve validations of one shapes document, parsed
+afresh each time, wrote the same five prefixes in two different orders (nine times and three times).
+
+**Why.** `pyshacl/helper/sparql_query_helper.py`, `__init__` (line 57), starts a dict with `rdf`, `rdfs` and `owl`, and adds each `sh:declare` it finds by
+iterating the shapes graph. `apply_prefixes` (line 200) writes the dict in that order. We did not trace why the order changes. The likely cause is that
+the declarations are blank nodes, whose labels differ between parses, and that the graph yields triples in the order of its indexes (Reasoned).
+
+**What it means for LATTICE.** Text is not a stable cache key. `_canonical_query` in `tools/conftest.py` sorts the leading declarations before keying, and
+leaves a text alone that declares a prefix twice, since the later declaration may be the one that applies.
+
+**Reproduce it.** The script in [efficient-queries-and-shapes.md](efficient-queries-and-shapes.md#96-reproductions).
+
+### TSD-25. rdflib fixes the order of a group's patterns before it knows the initial bindings
+
+**Evidence:** Source (rdflib 7.6.0) and Observed on both stores, R-D. A property of rdflib's evaluator. Oxigraph showed no sensitivity.
+
+**Context.** Two shape queries cost far more than the work they did. The peril vocabulary's reference-code uniqueness query took 2.0 s over 405 focus nodes,
+and exposure's documentation rule spent 0.7 ms of its 1.4 ms on a single type test.
+
+**What the store does.** A uniqueness test on nodes of one scheme, in two forms with the same solutions (benchmark E2). Milliseconds per focus node, with
+`$this` as the focus.
+
+```sparql
+# naive: join every other node of the scheme
+SELECT … WHERE { $this ex:inScheme ex:S ; ex:code ?c .
+                 ?o ex:inScheme ex:S ; ex:code ?c . FILTER (?o != $this) }
+# improved: look the other node up by the value, then test its scheme
+SELECT … WHERE { $this ex:inScheme ex:S ; ex:code ?c .
+                 FILTER EXISTS { ?o ex:code ?c . FILTER (?o != $this) FILTER EXISTS { ?o ex:inScheme ex:S } } }
+```
+
+| Nodes | rdflib naive | rdflib improved | Oxigraph naive | Oxigraph improved |
+|---|---|---|---|---|
+| 200 | 3.5 | 0.21 | 0.058 | 0.063 |
+| 400 | 7.2 | 0.21 | 0.052 | 0.067 |
+| 800 | 13.8 | 0.22 | 0.058 | 0.065 |
+
+Doubling the nodes doubles the naive form's cost per focus node on rdflib, so its total is quadratic. Neither the improved form nor either form on Oxigraph grows.
+A second case (E1) types a variable bound by an earlier pattern. Its cost on rdflib grows with the number of nodes of that type, and `FILTER EXISTS` removes it.
+
+| Schemes (400 focus nodes) | rdflib pattern | rdflib `FILTER EXISTS` | Oxigraph pattern | Oxigraph `FILTER EXISTS` |
+|---|---|---|---|---|
+| 16 | 0.23 | 0.21 | 0.061 | 0.062 |
+| 64 | 0.61 | 0.14 | 0.038 | 0.039 |
+| 256 | 2.26 | 0.14 | 0.038 | 0.039 |
+
+**Why.** `rdflib/plugins/sparql/algebra.py`, `simplify` (line 779) calls `reorderTriples` (line 122) on each basic graph pattern when the query is translated.
+It sorts the patterns by `_knownTerms` (line 104), the number of variable terms not yet bound by the patterns before it. At translation `$this` is an ordinary
+variable, because initial bindings arrive only when the query runs, so `?s a ex:Scheme` (one unknown term) sorts before `$this ex:inScheme ?s` (two). Then
+`evalBGP` (`evaluate.py`, line 77) runs the patterns in that order as nested loops, and the first one scans every node of the type. `FILTER EXISTS` is
+evaluated for each solution of its group with that solution's values substituted (`operators.py`, `Builtin_EXISTS`, line 580), so inside it `?s` is bound and
+the same pattern is a lookup. The two forms mean the same by the specification, which defines `EXISTS` by substitution (SPARQL 1.1 Query §8.1, and the evaluation of `EXISTS` in §18).
+
+SPARQL does not fix the order in which an engine matches the patterns of a group. Oxigraph, which showed no difference, orders them itself. We did not read its
+planner. That its naive forms are already fast is Observed.
+
+**What it means for LATTICE.** Rule R1 of [efficient-queries-and-shapes.md](efficient-queries-and-shapes.md). Three shapes changed: peril 0.3.1 (two queries, 2.0 s and
+2.3 s down to 0.11 s and 0.13 s over 405 focus nodes), exposure 0.1.1 (the documentation rule, 1.4 ms to 0.19 ms) and wording 0.4.1 (TSD-26, TSD-27). The benefit is
+specific to rdflib. The rewrite is harmless elsewhere, since it means the same, but on an optimising engine it buys nothing we measured.
+
+**Reproduce it.** `mise run check:sparql-constraint-query-cost`, experiments E1 and E2.
+
+### TSD-26. A chain of three or more groups is joined by evaluating the later ones whole
+
+**Evidence:** Source (rdflib 7.6.0) and Observed, R-D. A property of rdflib's evaluator. Not measured on Oxigraph.
+
+**Context.** The peril parent-code query joined `?parent skos:notation ?parentCode` after a `UNION` group, and cost as much as the uniqueness join of TSD-25
+although it never named another node of the scheme.
+
+**What the store does.** A two-part group passes the left side's bindings into the right side. A group of three or more parts does not. Counting
+`Graph.triples` lookups over 300 `ex:has` edges:
+
+| Query | Lookups | Scans with an unbound subject |
+|---|---|---|
+| `ex:root ex:has ?a . ?a ex:name ?n . ?n ex:kind ?k` (one pattern) | 601 | 0 |
+| `ex:root ex:has ?a . { ?a ex:name ?n . ?n ex:kind ?k }` (two parts) | 601 | 0 |
+| `ex:root ex:has ?a . { ?a ex:name ?n } { ?n ex:kind ?k }` (three parts) | 302 | 1 |
+
+**Why.** `algebra.py`, `analyse` (line 792) marks a `Join` lazy only when none of its operands is itself a join. `evaluate.py`, `evalJoin` (line 156) then
+either pushes the left side's bindings into the right (`evalLazyJoin`, line 141) or evaluates the right side whole into a set and hash-joins (`_join`). A chain
+of three parts is left-deep, so its outer join has a join for an operand and is not lazy. Evaluating an operand whole is cheaper than one lookup per left row
+when the left side is large. It is expensive when the left side is one row, as it is for every constraint query, because `$this` is pre-bound: the operand's
+whole extent (here, every notation of the scheme) is built for each focus node.
+
+What this does not explain. Moving W8's identity lookup ahead of its pair enumeration took that query from 67 ms to 32 ms per wording, and by this mechanism the
+join stays non-lazy either way. We did not isolate why it helped (TSD-Q15).
+
+**What it means for LATTICE.** Rule R2: keep a group to two operands, or put the dependent operand in `FILTER EXISTS`, where the substituted solution reaches it.
+TSD-Q1 asks about the order of a lazy join's solutions, which this finding does not answer.
+
+**Reproduce it.** The script in [efficient-queries-and-shapes.md](efficient-queries-and-shapes.md#96-reproductions).
+
+### TSD-27. A `FILTER` is applied after its group's patterns, and rdflib does not move it earlier
+
+**Evidence:** Source (rdflib 7.6.0) and Observed on both stores, R-D. The scope is the specification's (§4.3). The cost is the evaluator's.
+
+**Context.** The wording slot-overlap query put three cheap guards (every variant has a condition, every condition is an interval condition, no variant has two)
+in the group that then enumerates candidate points. It took 266 ms per slot.
+
+**What the store does.** Guards that reject 90% of the focus nodes, in the group of an enumeration or in a group of their own (benchmark E3). Milliseconds per
+focus node, 200 focus nodes.
+
+| Values per node | rdflib same group | rdflib own group | Oxigraph same group | Oxigraph own group |
+|---|---|---|---|---|
+| 10 | 9.6 | 0.51 | 0.090 | 0.069 |
+| 20 | 38.4 | 1.4 | 0.103 | 0.072 |
+| 30 | 81.9 | 3.5 | 0.127 | 0.099 |
+
+On the real wording slots the gain was 266 ms to 132 ms for overlap and 119 ms to 82 ms for coverage, smaller than the synthetic gain, which rejects 90% of the
+nodes. The gain follows the share of focus nodes the guards reject, so it is large only when they reject most.
+
+**Why.** A `FILTER` applies to the whole group it is written in (§4.3). rdflib wraps the whole group in one `Filter` node (`algebra.py`,
+`translateGroupGraphPattern`, around line 343), and `evalFilter` (`evaluate.py`, line 208) tests each solution of `evalPart(ctx, part.p)`, so every solution is
+built before any guard runs. In the synthetic case a guard in its own group is the left operand of a lazy join (TSD-26), so a node it rejects never reaches the right operand. We did not
+establish that every real query meets that condition, and the wording gain is smaller. Oxigraph orders filters itself, and its two forms differ by 1.3 to 1.5 times.
+
+**What it means for LATTICE.** Rule R3. The sub-group is exactly equivalent when the guards read only variables the sub-group binds, so the change is safe to
+make and to check by replay.
+
+**Reproduce it.** `mise run check:sparql-constraint-query-cost`, experiment E3.
+
+### TSD-28. Presence and absence tests: the forms differ little
+
+**Evidence:** Observed on both stores, R-D. Not explained from source.
+
+**Context.** Exposure's documentation rule counted English notes with `OPTIONAL`, `GROUP BY` and `HAVING (COUNT(DISTINCT ?n) < 1)`. We asked whether another form
+was cheaper.
+
+**What the store does.** The three forms, over 600 focus nodes with a note on five in six, in milliseconds per focus node. Only rdflib was timed, since Oxigraph rejects the
+`GROUP BY` form when the adapter substitutes `$this`.
+
+| Form | rdflib |
+|---|---|
+| `OPTIONAL`, `GROUP BY`, `HAVING (COUNT(DISTINCT ?n) < 1)` | 0.178 |
+| `OPTIONAL`, `FILTER (!BOUND(?n))` | 0.130 |
+| `FILTER NOT EXISTS` | 0.126 |
+
+Benchmark E4 compares the last two on both stores: 1.0 to 1.2 times on rdflib and 1.1 to 1.2 times on Oxigraph, which is noise. On the exposure fixture the first
+form cost 1.19 ms and `FILTER NOT EXISTS` 0.85 ms (29% less). Turning two pure existence patterns of the instrument word-use query into `FILTER EXISTS` saved 12%.
+
+**What it means for LATTICE.** These are worth taking when a query is being rewritten for another reason, and not worth a shapes release alone. We reverted the
+instrument change for that reason. Choose by clarity.
+
+**Reproduce it.** `mise run check:sparql-constraint-query-cost`, experiment E4.
+
+### TSD-29. Two parses of one document never give equal triple sets
+
+**Evidence:** Observed, R-D. Not a store property. A parser mints blank nodes (the RDF 1.1 Turtle and N-Triples specifications scope blank-node labels to a
+document), so this holds for any parser.
+
+**Context.** Exposure's test fixture is seven Turtle files, parsed afresh for each of twenty tests. Two tests that validated the same unchanged fixture never
+shared a validation, although `ValidationCache` keys on a graph's content.
+
+**What happens.** The fixture has 768 blank-node terms. Two parses compared as sets differ, and they are isomorphic. A copy of one parse (`Graph() + graph`)
+keeps the labels, so two copies compare equal as sets.
+
+**What it means for LATTICE.** A cache keyed on triple content cannot hit across parses. Build a fixture once with `graph_cache` and give each test a copy
+(`tools/test_exposure_ontology.py`, `_fixture`). The copy cost 0.14 s against 0.28 s to parse.
+
+**Reproduce it.** The script in [efficient-queries-and-shapes.md](efficient-queries-and-shapes.md#96-reproductions).
+
+### TSD-30. A query's undeclared prefixes resolve from the data graph's bindings
+
+**Evidence:** Source (rdflib 7.6.0) and Observed, R-D. A property of rdflib.
+
+**Context.** The first version of the translation cache of TSD-22 keyed on all of a graph's namespace bindings, and missed: 1,258 parses for 94 distinct texts in one
+test file.
+
+**What the store does.** `g.query("SELECT ?s WHERE { ?s ex:p ?o }")` on a graph with `ex` bound gives its rows, and without the binding raises `Unknown namespace
+prefix : ex`.
+
+**Why.** `rdflib/graph.py`, `Graph.query` (line 1716): `initNs = initNs or dict(self.namespaces())`. So a translation depends on the text and on the graph's
+bindings for the prefixes the text uses and does not declare. A prefix the text declares itself wins over the graph's.
+
+**What it means for LATTICE.** A cache key holds the text, the base and the bindings of the undeclared prefixes the text uses (`_sparql_translated_once`). Replaying
+a recorded validation needs the data graph's bindings restored. Whether Oxigraph has a fallback was not tested.
+
+**Reproduce it.** The script in [efficient-queries-and-shapes.md](efficient-queries-and-shapes.md#96-reproductions).
+
+### TSD-31. pySHACL copies the data graph on every validation unless told not to
+
+**Evidence:** Source (pySHACL 0.40.1) and Observed, R-D. A property of pySHACL.
+
+**What the tool does.** `validate(..., inplace=False)` (`pyshacl/entrypoints.py`, line 40) clones the data graph (`rdfutil/load.py`, `clone_graph`). In a profile of
+24 validations of a 5,000 to 14,000 triple graph, the clones took 2.2 s, about 0.09 s each.
+
+**What it means for LATTICE.** A fixed cost per validation that grows with the size of the data, about 9% of a validation in that profile. `inplace=True` would remove
+it, and pySHACL then may change the graph (inference, rules). Our caches share graphs between tests, and a guard fails the run when one changes
+(`_graph_cache_not_mutated`), so we did not adopt it (TSD-Q16).
+
+### TSD-32. A constant `FILTER` whose value is false is dropped by rdflib
+
+**Evidence:** Source (rdflib 7.6.0) and Observed on both stores, R-D. A defect in rdflib. Oxigraph is correct.
+
+**Context.** The benchmark's test of its own pass criterion used `FILTER (false)` for a deliberately wrong query, and the check did not fail.
+
+**What the store does.** Rows returned by `SELECT ?s WHERE { ?s ex:p ?o FILTER (<constant>) }` over two triples.
+
+| Constant | rdflib | Oxigraph | Correct |
+|---|---|---|---|
+| `false`, `0`, `""`, `0.0` | 2 | 0 | 0 |
+| `true`, `1`, `"x"` | 2 | 2 | 2 |
+| `!true`, `1 = 2`, `true && false`, `false || false` | 0 | 0 | 0 |
+
+The same drop occurs inside a `UNION` branch and a sub-group, and it inverts `EXISTS` and `NOT EXISTS`: `FILTER NOT EXISTS { ?s ex:p ?x FILTER (false) }` returns
+0 rows on rdflib where 2 are correct.
+
+**Why.** `rdflib/plugins/sparql/algebra.py`, `collectAndRemoveFilters` (line 278) returns `and_(*filters)`, which for one filter is that filter itself
+(`operators.py`, `and_`, line 975). `translateGroupGraphPattern` then tests `if filters:` and builds the `Filter` node only when that is true. A lone constant
+whose Python truth value is false (`Literal(False)`, `Literal(0)`, `Literal("")`) fails the test, and the algebra has no `Filter` node. A compound expression is
+an object that is always true, which is why `true && false` works.
+
+**What it means for LATTICE.** Never write a constant false filter to make a probe fail, on any engine, since rdflib ignores it. Break a triple pattern instead.
+The authoring skill said so for pySHACL (`FILTER (false)` is reported for every focus node), and this is the reason.
+
+**Reproduce it.** `SELECT ?s WHERE { ?s ?p ?o FILTER (false) }` over a graph with a triple.
+
+### TSD-33. On Oxigraph, `COUNT(*)` over a statically false filter returns no row
+
+**Evidence:** Observed, R-D. Not explained from source. A probable defect in Oxigraph 0.5.11.
+
+**What the store does.** `SELECT (COUNT(*) AS ?n) WHERE { ?s ex:p ?o FILTER (<constant>) }`.
+
+| Filter | rdflib | Oxigraph | Correct |
+|---|---|---|---|
+| `FILTER (1 = 2)`, a pattern that matches nothing, `FILTER (?o = ex:zz)` | one row, `n = 0` | one row, `n = 0` | one row, `n = 0` |
+| `FILTER (false)` | one row, `n = 2` (TSD-32) | no row | one row, `n = 0` |
+| `FILTER (true && false)` | one row, `n = 0` | no row | one row, `n = 0` |
+
+An aggregate query without `GROUP BY` always has exactly one solution (SPARQL 1.1 Query §11, Aggregates), so no row is wrong. It happens when the engine can decide the
+filter is false before it runs, and not when it has to evaluate it.
+
+**What it means for LATTICE.** Code that reads the first row of a `COUNT` from `OxigraphStore.select` should expect none (the benchmark's pass criterion never
+writes such a filter). The mechanism is open (TSD-Q17).
+
 ## 7. Corrections, and what they taught us
 
 ### 7.1 rdflib and the order of an update (TSD-01)
@@ -940,6 +1254,23 @@ bugs in the first scratch scripts. rdflib does materialise the solutions of a `W
 `list(res)` shows. That is a different property from applying the changes in the specification's order, which TSD-01 shows it
 does not.
 
+### 7.4 Cost claims, and what the first versions got wrong
+
+Four statements about cost were wrong or incomplete when first written, and a probe corrected each.
+
+- We first called a chain of groups "slower unless lazy". A probe that counted lookups (TSD-26) showed that evaluating an operand whole can be cheaper than one
+  lookup per row. It is expensive only when the left side is one row, which is the case for a constraint query, and the record now says that.
+- The first reproduction of the guard group (TSD-27) came out backwards, 0.6 times where we expected a gain. The guard group we wrote bound a variable with 25
+  values, so it multiplied the rows. The real guard group binds one variable. A reproduction has to be checked against the thing it stands for, as the gain
+  is a property of the rejection rate and the group's cardinality.
+- "Move the existence check into `FILTER EXISTS`" was first measured on the exposure documentation rule as 1.4 times, from rewriting the count as `NOT EXISTS`.
+  The real cost was the type pattern (TSD-25), found only by removing the query's parts one at a time.
+- `FILTER (false)` (TSD-32) was found because a test of the benchmark's own pass criterion did not fail. The authoring skill had warned against it without a
+  reason.
+
+What we take from it. State what a mechanism does not explain, as TSD-26 does for W8. Time the parts of a slow query separately before rewriting it. And test
+that a check can fail.
+
 ## 8. Open questions
 
 | # | Question | Why it matters | Next step |
@@ -952,3 +1283,8 @@ does not.
 | TSD-Q11 | whether Oxigraph groups a chain of same-precedence operators from the right in a later version, and why in 0.5.11 | TSD-17 is observed, not explained, and the renderer works around it | read the parser, try the newer releases, and report it upstream if it still holds |
 | TSD-Q12 | whether Fuseki, which `platform/semantic-dataset-fuseki` targets, shows TSD-15 to TSD-18 | they are measured on two in-process stores only | run the same probes against it |
 | TSD-Q13 | whether Virtuoso applies even one `DELETE`/`INSERT` atomically under `log_enable(2)` or `(2,1)`, and whether Jena TDB2 and Neptune make a multi-operation request one transaction | the guarded writes assume a single operation is atomic, and a two-operation form assumes the request is (TSD-06) | probe each store, with a failing operation and with a large update interrupted, starting with Fuseki (TSD-Q12) |
+| TSD-Q14 | whether Jena SHACL, TopBraid or another validator runs a SPARQL constraint once per focus node, and what a node shape costs there | TSD-23 and the choice of targets (rule R6) are measured on pySHACL only | run the same shapes on another validator |
+| TSD-Q15 | why moving W8's identity lookup ahead of its pair enumeration halved its cost | TSD-26 does not explain it | trace the join order and the sizes of the operands |
+| TSD-Q16 | what `inplace=True` saves, and whether it is safe with shared graphs | TSD-31's 9% is a fixed cost per validation | run the suite with a copy per test and `inplace=True`, and with the mutation guard on |
+| TSD-Q17 | why Oxigraph returns no row for `COUNT(*)` over a statically false filter | TSD-33 is observed, not explained | read Oxigraph's query optimiser |
+| TSD-Q18 | whether Fuseki or Jena ARQ shows the sensitivity of TSD-25 to TSD-27 | the rules in ADR-A128 assume only rdflib is sensitive | run benchmark `sparql-constraint-query-cost` against a Fuseki endpoint |

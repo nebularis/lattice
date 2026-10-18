@@ -43,6 +43,11 @@ How each triple store behaves, and how we found out, is recorded in
 [docs/architecture/triple-store-discovery.md](../docs/architecture/triple-store-discovery.md). Read it before relying on what a
 store does with SPARQL, and add to it when you find something new (skill `lattice-triple-stores`).
 
+How to write a SPARQL constraint, a generated query or a test fixture that runs in reasonable time is recorded in
+[docs/architecture/efficient-queries-and-shapes.md](../docs/architecture/efficient-queries-and-shapes.md)
+([ADR-A128](../docs/architecture/decisions/ADR-A128-efficient-queries-and-shapes.md)). Read it before writing or changing one. It says
+which of its rules hold for any engine and which only for rdflib, pySHACL or our harness.
+
 Do not add a directory at the root, or a new kind of directory anywhere, without an accepted ADR.
 `mise` is the only task entry point (ADR-A29). Every command you run or give the maintainer goes
 through it, as `mise run <task>` or `mise exec -- <command>`, never a bare `python`, `pytest` or `pip`.
@@ -103,6 +108,15 @@ This repository is public, and so is everything it publishes.
 - AI-assisted contributions are disclosed as [GENAI_CONTRIBUTION.md](../GENAI_CONTRIBUTION.md) requires.
 
 Skill `lattice-publication-hygiene` has the detail and the pre-commit check.
+
+## Private overlays
+
+A maintainer may keep private, user-level guidance for work that spans public and private projects
+(ADR-A117). If `~/.config/lattice/private/AGENTS.md` exists
+(`%USERPROFILE%\.config\lattice\private\AGENTS.md` on Windows), read it before every task and follow
+it. It adds to these rules and tightens them, and never relaxes them. Never quote, cite or
+paraphrase it in anything this repository publishes, including commit messages, pull requests and
+agent notes.
 
 ## Skills
 

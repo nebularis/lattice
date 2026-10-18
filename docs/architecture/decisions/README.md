@@ -117,7 +117,7 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-114](ADR-A114-external-and-natural-keys.md) | External and natural keys | Accepted |
 | [A-115](ADR-A115-quantification-context-values.md) | Quantification context values | Accepted |
 | [A-116](ADR-A116-vocabulary-scheme-composition.md) | Vocabulary scheme composition | Proposed |
-| [A-117](ADR-A117-agent-guidance-and-skill-library.md) | Agent guidance and the skill library | Accepted, with addendum |
+| [A-117](ADR-A117-agent-guidance-and-skill-library.md) | Agent guidance and the skill library | Accepted, with addendum. Addendum 2026-10-18 (private overlay) Proposed |
 | [A-118](ADR-A118-word-authoring-proof-of-concept.md) | Word authoring proof of concept | Proposed |
 | [A-119](ADR-A119-xslt-transformation-sidecar.md) | Bidirectional XSLT transformation sidecar | Proposed |
 | [A-120](ADR-A120-literate-specs-with-several-documents.md) | Literate specs with several documents | Accepted, with addenda |
@@ -128,6 +128,7 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-125](ADR-A125-test-support-tooling.md) | Test-support tooling under `tools/testing/` | Accepted, 2026-10-12 |
 | [A-126](ADR-A126-literate-specification-layout-and-grammar.md) | Literate specification layout and grammar | Accepted, 2026-10-17 |
 | [A-127](ADR-A127-published-architecture-decisions.md) | Published architecture decisions | Accepted, 2026-10-17 |
+| [A-128](ADR-A128-efficient-queries-and-shapes.md) | Efficient queries and shapes | Proposed, 2026-10-17 |
 
 **The `A-FM` block.** ADR-A-FM1 and its successors are the `formal-methods` epic's own ADRs,
 filed outside the main sequential pool for the same reason `A-CAP` and `A-C` are: this epic's

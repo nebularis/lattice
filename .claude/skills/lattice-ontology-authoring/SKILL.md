@@ -168,6 +168,11 @@ anything, check:
 
 ## SHACL-SPARQL shapes
 
+Read [docs/architecture/efficient-queries-and-shapes.md](../../../docs/architecture/efficient-queries-and-shapes.md) before writing or
+changing a constraint query, and follow its checklist (section 4.1). A constraint runs once per focus node, so its cost is multiplied by the
+nodes the shape targets. Most of its speed rules (R1 to R4, R8) are workarounds for how rdflib plans a query, and the record says which
+rules are portable. A rewrite for speed is a PATCH change to the shapes' version, replayed against the old shapes' results first.
+
 - **Declare prefixes inside the query**, with `PREFIX` lines at the top of `sh:select`, as
   `ontology/eligibility/shapes/constraints.ttl` does. Never point `sh:prefixes` at a namespace IRI
   without `sh:declare` triples for every prefix used, since pySHACL silently falls back to the
@@ -178,8 +183,9 @@ anything, check:
   then `GROUP BY $this HAVING (COUNT(DISTINCT ?x) != 1)`. Two or more, or high cardinality, need one
   grouped sub-query per count, each anchoring the subject before its own `OPTIONAL`. Several flat
   `OPTIONAL`s multiply rows, which `COUNT(DISTINCT …)` survives and plain `COUNT` and `SUM` do not.
-- **To probe that a test catches a broken shape, break a triple pattern**, never `FILTER (false)`,
-  which pySHACL reports for every focus node.
+- **To probe that a test catches a broken shape, break a triple pattern**, never `FILTER (false)`.
+  rdflib drops a constant false filter, so it removes no solutions (TSD-32), and a `NOT EXISTS` that contains
+  one is inverted.
 - **Test every cardinality rule at zero**, not only at too many.
 - **pySHACL drops a node shape's message reached through `sh:node`.** Put the message on the
   property shape that uses it.

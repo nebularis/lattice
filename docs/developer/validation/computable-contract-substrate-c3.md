@@ -55,7 +55,7 @@ Written by the building machine when the work is committed.
 - **Revised after review (2026-10-01):** the unions are named once (`wrd:WordingNode`,
   `wrd:LinkedDocument`, `wrd:ReferenceTarget`), each with its members' subclass triples asserted so
   SHACL sees what a reasoner infers. Every property's comment states its subject and value, for
-  readers and for a training pack. `shapes/structural.ttl` (`0.1.0`) checks the same intent in
+  readers. `shapes/structural.ttl` (`0.1.0`) checks the same intent in
   SHACL Core, so verification needs no reasoner. The spec stays `0.1.0`: it is not yet tagged or
   released.
 - **Deviations from the plan:** the shapes directory starts here rather than in C5, which now takes

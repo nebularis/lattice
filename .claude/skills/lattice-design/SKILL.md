@@ -36,6 +36,9 @@ hard-codes one domain's practice as the only way is wrong at the substrate.
 - A design that depends on how a triple store evaluates SPARQL cites the finding in
   [docs/architecture/triple-store-discovery.md](../../../docs/architecture/triple-store-discovery.md) it rests on, or probes the
   store and adds one first (skill `lattice-triple-stores`). The specification and a store often differ.
+- A design that generates a query, or adds a SHACL-SPARQL constraint, states its cost in the terms of
+  [docs/architecture/efficient-queries-and-shapes.md](../../../docs/architecture/efficient-queries-and-shapes.md): how many focus nodes or
+  solutions it runs over, and which of that record's rules it relies on. Say which engine each speed claim is for.
 
 ## Presenting a question to the maintainer
 

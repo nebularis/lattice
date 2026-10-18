@@ -4208,14 +4208,14 @@ aeo:DocumentationShape a sh:NodeShape ;
         sh:select """
             PREFIX voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#>
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-            SELECT $this WHERE {
+            SELECT DISTINCT $this WHERE {
               $this skos:inScheme ?scheme .
-              ?scheme a voc:ConceptScheme .
               FILTER (STRSTARTS(STR(?scheme), "https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#"))
-              OPTIONAL { $this skos:note ?n . FILTER (LANG(?n) = "en") }
+              # Checked with ?scheme bound. As a pattern of the group it is joined before $this
+              # is known to be bound, which scans the schemes once per focus node.
+              FILTER EXISTS { ?scheme a voc:ConceptScheme }
+              FILTER NOT EXISTS { $this skos:note ?n . FILTER (LANG(?n) = "en") }
             }
-            GROUP BY $this
-            HAVING (COUNT(DISTINCT ?n) < 1)
         """ ] .
 
 #################################################################
@@ -5192,3 +5192,4 @@ revenue by territory, with the output of `effective_characteristics` for its cau
 | `0.1.0` (AIR-4.2a) | Exposure set membership, zone designations, pool participations, assessments and attribute values are no longer inverse functional, and `aeo:MembershipShape` is withdrawn (TD-49). Unchanged members are shared across exposure set versions by identity, as this README always stated. Corrects `0.1.0` before it is released, so no version bump. Example `versions.ttl` added |
 | `0.1.0` (AIR-4.3) | Dependencies, peril metrics, metric comparisons and exposure units, with the dependency kind, substitutability, metric kind, perspective, calculation method and model option schemes, the schedule group and scenario contracts, and the output share, return period and exceedance probability spaces. `aeo:perilScope` loses its domain (AIR-4.2 gave it `aeo:PoolParticipation`, which a metric's use would have contradicted). Nine shapes |
 | `0.1.0` (AIR-4.4) | Loss experiences, loss records, cause chains with recorded and effective characteristics and defaulted characteristics, coverage requirements with measure constraints, existing cover with summary terms, cover history events and financial metrics, with ten reference schemes and contracts, the money share space, and nineteen shapes. Imports Eligibility 0.12.0 and `insurance/common` 0.6.0. Financial metric kinds for revenue, gross profit and headcount are `aeo-voc:RevenueMetric`, `aeo-voc:GrossProfitMetric` and `aeo-voc:HeadcountMetric`, since `Revenue`, `GrossProfit` and `Headcount` name a value type and an attribute type |
+| shapes `0.1.1` | `aeo:DocumentationShape` reads the same concepts with its scheme check as a `FILTER EXISTS` and its note check as a `FILTER NOT EXISTS`, instead of joining the scheme's type and counting notes. About six times faster on the reference fixture, with the same targets, focus nodes and message |

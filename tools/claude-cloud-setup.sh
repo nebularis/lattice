@@ -26,6 +26,13 @@
 # from the deadsnakes PPA, Node 22 and Maven from the image, Isabelle2025-2
 # from the Cambridge mirror. Erlang/Elixir (check:spc, which runs no tests yet,
 # TD-22) and Playwright's browsers are left out.
+#
+# The container has no DNS of its own. Outbound HTTPS goes through the agent
+# proxy named in HTTPS_PROXY, which accepts CONNECT only. Section 0 points pip,
+# Yarn, Maven and apt at it. The proxy's port can change when a session
+# resumes, so a shell that was set up earlier can refresh itself with
+#
+#   eval "$(bash tools/claude-cloud-setup.sh --proxy-only)"
 
 set -uo pipefail
 
@@ -39,6 +46,61 @@ mkdir -p "$LOGS"
 
 log()  { printf '\n\033[1;34m==>\033[0m %s\n' "$*"; }
 fail() { printf '\033[1;31mxx\033[0m %s\n' "$*" >&2; }
+
+### 0. The agent proxy ########################################################
+# Three things keep a tool from reaching the proxy by default:
+#   - pip, Yarn and Maven Central are listed in NO_PROXY as direct, but nothing
+#     resolves them directly here, so they are taken out of it.
+#   - Maven ignores HTTPS_PROXY and reads only settings.xml.
+#   - apt's Ubuntu sources are plain http, which the proxy refuses. They move to
+#     https, with the proxy named for https.
+# NO_PROXY is exported for this run only. Maven's and apt's settings are files,
+# so they hold the port of the session that wrote them.
+
+configure_proxy() {
+  [ -n "${HTTPS_PROXY:-}" ] || return 0
+  local hostport="${HTTPS_PROXY#*://}"
+  hostport="${hostport%/}"
+
+  local direct
+  direct=$(printf '%s' "${NO_PROXY:-}" | tr ',' '\n' |
+    grep -vxE 'pypi\.org|files\.pythonhosted\.org|registry\.npmjs\.org|repo\.maven\.apache\.org' |
+    paste -sd, -)
+  export NO_PROXY="$direct" no_proxy="$direct" npm_config_noproxy="$direct" GLOBAL_AGENT_NO_PROXY="$direct"
+
+  # A settings.xml that someone else wrote is left alone.
+  local m2="$HOME/.m2/settings.xml"
+  if [ ! -e "$m2" ] || grep -q 'claude-cloud-setup' "$m2"; then
+    mkdir -p "$HOME/.m2"
+    cat > "$m2" <<EOF
+<!-- Written by tools/claude-cloud-setup.sh from HTTPS_PROXY (claude-cloud-setup) -->
+<settings>
+  <proxies>
+    <proxy>
+      <id>agent-proxy</id>
+      <active>true</active>
+      <protocol>https</protocol>
+      <host>${hostport%:*}</host>
+      <port>${hostport##*:}</port>
+      <nonProxyHosts>localhost|127.0.0.1</nonProxyHosts>
+    </proxy>
+  </proxies>
+</settings>
+EOF
+  fi
+
+  sed -i -E 's#http://((archive|security)\.ubuntu\.com)#https://\1#' \
+    /etc/apt/sources.list.d/ubuntu.sources /etc/apt/sources.list 2>/dev/null
+  printf 'Acquire::https::Proxy "%s";\n' "$HTTPS_PROXY" > /etc/apt/apt.conf.d/99agent-proxy
+}
+
+if [ "${1:-}" = "--proxy-only" ]; then
+  configure_proxy >&2
+  printf 'export NO_PROXY=%q no_proxy=%q npm_config_noproxy=%q GLOBAL_AGENT_NO_PROXY=%q\n' \
+    "${NO_PROXY:-}" "${no_proxy:-}" "${npm_config_noproxy:-}" "${GLOBAL_AGENT_NO_PROXY:-}"
+  exit 0
+fi
+configure_proxy
 
 FAILED_STEPS=()
 # Run a step, logging to its own file. Record a failure instead of stopping.
@@ -115,7 +177,12 @@ done
 # Cached with the toolchains while setup stays under about five minutes. If
 # the summary shows it going over, move this step to a SessionStart hook.
 
+export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 step "bootstrap" mise run bootstrap
+# Not part of bootstrap. The reasoner jar (ADR-A83) is what the tests that need
+# a reasoner skip without, and the Oxigraph package is what ADR-A125's tests use.
+step "reasoning testkit" mise run bootstrap:reasoning-testkit
+step "testing oxigraph" mise run bootstrap:testing-oxigraph
 
 ### Summary ###################################################################
 

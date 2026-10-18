@@ -171,14 +171,14 @@ aeo:DocumentationShape a sh:NodeShape ;
         sh:select """
             PREFIX voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#>
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-            SELECT $this WHERE {
+            SELECT DISTINCT $this WHERE {
               $this skos:inScheme ?scheme .
-              ?scheme a voc:ConceptScheme .
               FILTER (STRSTARTS(STR(?scheme), "https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#"))
-              OPTIONAL { $this skos:note ?n . FILTER (LANG(?n) = "en") }
+              # Checked with ?scheme bound. As a pattern of the group it is joined before $this
+              # is known to be bound, which scans the schemes once per focus node.
+              FILTER EXISTS { ?scheme a voc:ConceptScheme }
+              FILTER NOT EXISTS { $this skos:note ?n . FILTER (LANG(?n) = "en") }
             }
-            GROUP BY $this
-            HAVING (COUNT(DISTINCT ?n) < 1)
         """ ] .
 
 #################################################################

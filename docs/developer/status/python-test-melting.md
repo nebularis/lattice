@@ -119,3 +119,21 @@ None for TM0.
   `sh:sparql` constraints in Instrument). Found while planning: three test modules import constants from
   `test_parameter_bindings`, five tests shell out to `git grep`, and the work in common with the repository
   catalogue is recorded in that sketch's §8.1.
+- 2026-10-17. Follow-up measured on a four-core x86 machine and a laptop with four performance and four
+  efficiency cores. Suite time on the first: 427s to about 100s with all 784 tests passing. pySHACL runs
+  one query per focus node and rdflib parsed the text again each time, about 90% of a validation, so
+  `ValidationCache` now translates each distinct query text once (`tools/conftest.py`, keyed on the text,
+  the base and the prefixes the text uses without declaring). The reasoner JVM starts with a class-data
+  archive that the JVM builds beside the jar (`mork_compilers/reasoning.py`, 51.8s to 29.9s over 41
+  closures). Two `prl:ReferenceCodeShape` queries read the same rows without scanning every concept
+  per focus node (peril shapes 0.3.1). `check:ontology-catalog` moved from `--dist loadfile` to
+  `--dist worksteal`, 9 to 11 percent faster on both machines. `dev:time-ontology-tests` reports worker
+  finish times and memory. `tools/test_peril_vocabulary.py` alone now takes about 27s on four cores, so
+  TD-45 can be reviewed.
+- 2026-10-17 (later). The reasoner now runs in one long-running JVM per Python process (`reasoning-testkit serve`, ADR-A83
+  addendum). 41 closures took 37.7s with a JVM per call and 6.3s through the server, and the suite on four
+  workers went from about 82s to about 55s. `dev:record-validations` and `dev:replay-validations` record every
+  validation the suite makes and replay them against changed shapes (`tools/validation_replay.py`).
+- 2026-10-17 (later still). `tools/test_peril_vocabulary.py` is back in `check:ontology-catalog` (39 tests). Under `--dist worksteal` it adds
+  about 22s on four cores (about 80s with it and about 58s without) and no longer queues on one worker. The register's second TD-45 row,
+  which recorded its exclusion, is removed. The cost it named, per-concept shape evaluation, was cut by peril shapes 0.3.1.
