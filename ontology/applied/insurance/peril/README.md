@@ -4732,6 +4732,10 @@ each concept, never copied verbatim:
   the N groups
 - the UNDRR and ISC Hazard Information Profiles
 - WMO definitions for tropical cyclone classes and the regional naming authorities
+- the US National Weather Service, whose definition of a tornado `N.MET.SCS.TOR` uses verbatim.
+  It is a work of the US federal government and in the public domain, and is the one definition
+  copied rather than cited. Rewording it waits for the next change to the cause scheme, so that it
+  needs no release of its own
 - the EM-DAT disaster classification
 - the Oasis Open Exposure Data peril codes, for the model-code notations (`prl:CatModelCode`)
 - the York-Antwerp Rules 2016, for general average
