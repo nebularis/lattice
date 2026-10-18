@@ -25,9 +25,10 @@ Two checks, run per layer:
    Instead it calls ``parse_blocks``/``plan``/``render`` as a library and
    checks only the ``@proofs-root@`` output, the same narrow extraction
    E1.0 used when Eligibility's README was first wired (see
-   ``docs/developer/status/formal-methods-track-e.md``). The shape targets
-   passed to ``plan()`` are the module's extraction contract, from the
-   repository catalogue (ADR-A121). Their content is never read or compared.
+   ``docs/developer/status/formal-methods-track-e.md``). Only the README's
+   ``isabelle-spec`` blocks are passed to ``plan()``, so a README in the
+   layout of ADR-A126, whose other blocks need its section 6 compiled, is
+   read the same way.
 
 2. **Law coverage** (every ``tools/reference/<layer>/`` directory). Every
    law code the README's law register declares with ``elg:lawRegister
@@ -95,16 +96,14 @@ def check_kernel_freshness(layer: str) -> List[str]:
     if not readme_path.is_file():
         return [f"{kernel_path}: no README at {readme_path} to check it against"]
 
-    blocks = parse_blocks(readme_path.read_text(encoding="utf-8"))
+    blocks = [b for b in parse_blocks(readme_path.read_text(encoding="utf-8")) if b.tag == "isabelle-spec"]
     if layer not in CATALOGUE.modules:
         return [f"{kernel_path}: {layer} is not a module in the repository catalogue"]
-    module = CATALOGUE.module(layer)
-    shapes = [f.relative_to(module.path).as_posix() for f in module.files("shapes")]
     try:
         outputs = plan(
             blocks,
             layer,
-            shapes,
+            [],
             proofs_root=str(PROOFS_ROOT),
             reference_root=str(REFERENCE_ROOT),
         )

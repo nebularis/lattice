@@ -20,8 +20,9 @@ ontology file has changed.
 
 ## Next action
 
-1. OD6, the Eligibility pilot, built autonomously with local commits (2026-10-18). Enumeration and the migration
-   check are written and pass. The README's migration follows.
+1. OD6, the Eligibility pilot, is built and committed locally. The maintainer reviews its
+   [Validation Pack](../validation/OD6.md), with seven decisions taken alone, the 32 drafted definitions and two
+   changed tests to countersign. DOC1 or RC3 follows.
 2. The sketch on how imports pin, [ontology-import-pinning.md](../sketches/ontology-import-pinning.md), is for
    the maintainer to read.
 
@@ -42,7 +43,7 @@ deliberate. The release slice OD-REL resolves it once, before the merge into `ma
 | OD3 section 6 to OWL | built autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD3.md) | |
 | OD4 section 6 to SHACL | built autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD4.md) | the maintainer's review of six decisions taken alone |
 | OD5 generated regions | built autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD5.md) | the maintainer's review of six decisions taken alone |
-| OD6 Eligibility pilot | briefed 2026-10-18 | the merge into `main` |
+| OD6 Eligibility pilot | built autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD6.md) | the maintainer's review of seven decisions, 32 definitions and two changed tests |
 | OD7 Vocabulary | planned | OD6 |
 | OD8 onward, one per layer | planned | OD7, and for Foundation and Party their part of TD-16 |
 | DOC1 published decisions | briefed 2026-10-18 | OD6 preferred first |
@@ -180,3 +181,8 @@ None.
   left inconsistent on this branch until one release slice, OD-REL, bumps and re-pins everything before the merge
   (OD-D43). The maintainer asked for a sketch on changing how imports pin, and authorised OD6 to continue
   autonomously with local commits.
+- 2026-10-18: OD6 finished. Eligibility's README is in the layout, and the migration check against `dab1c790`
+  passes with 40 reconciled differences, the 32 drafted definitions and each document's Dublin Core. No axiom
+  or shape changed. `check_formal_freshness.py` now reads only the Isabelle blocks, and OD1-T1 and RC1-T3 were
+  adjusted for a migrated README. Two gaps found and left as the README's open issues: L1 to L8 name no
+  register, and 14 individuals have no definition.

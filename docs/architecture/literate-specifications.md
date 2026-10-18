@@ -3,8 +3,9 @@
 # Literate specifications
 
 **Status:** Accepted with [ADR-A126](decisions/ADR-A126-literate-specification-layout-and-grammar.md),
-2026-10-17. The extractor does not implement these conventions yet. Until a module's README is migrated to them, the
-current conventions at the end of this document apply to it.
+2026-10-17. The extractor implements them, and [Eligibility](../../ontology/eligibility/README.md) is the first
+module migrated to them. Until a module's README is migrated, the current conventions at the end of this document
+apply to it.
 
 A LATTICE module's `README.md` is its specification. The normative sections are read by
 `tools/literate_extract.py`, which writes the module's Turtle and SHACL from them, so each fact about a term
@@ -134,8 +135,10 @@ Class expressions are written in [OWL Manchester syntax](https://www.w3.org/TR/o
 CURIEs: `and`, `or`, `not`, `some`, `only`, `value`, `min`, `max` and `exactly`, with parentheses for
 nesting. `and` binds tighter than `or`, and `not` tighter than both. `min`, `max` and `exactly` take a whole
 number and an optional class, which makes them qualified. Literals use Turtle's forms, for example
-`value "x"^^xsd:string`, `value "x"@en` or `value 5`. A union, intersection or complement is written with
-`a owl:Class`, as the layers already write them. For example,
+`value "x"^^xsd:string`, `value "x"@en` or `value 5`. An enumeration is written in braces, for example
+`{ elg:Forward, elg:Inverse }`, and is an enumerated class (`owl:oneOf`) of individuals, or an enumerated data
+range of literals. A union, intersection or complement is written with `a owl:Class`, as the layers already
+write them. For example,
 `(ins:Obligation or ins:Permission)` is a union, and
 `spc:hasGuardExpression some (spc:Expression and spc:hasExpressionSort value spc:bool_sort)` nests an
 intersection inside a restriction.
@@ -170,6 +173,7 @@ an optional `sh:message`.
 | `only C` | `owl:allValuesFrom` | `sh:class`, or `sh:datatype` for a datatype |
 | `some C` | `owl:someValuesFrom` | a qualified minimum count of 1 |
 | `value v` | `owl:hasValue` | `sh:hasValue` |
+| `only { a, b }` | `owl:allValuesFrom` an enumeration | `sh:in ( a b )` |
 | any nested expression | the expression | refused, unless the row says OWL |
 
 An OWL restriction also holds in SHACL by default, since some restrictions guide the reasoner at design time
@@ -192,8 +196,10 @@ the annotation columns Label, Preferred label, Definition, Utility and Scope not
 names, separated by commas, so an individual that is also an `owl:NamedIndividual` says so. Section 6.5 holds
 `**All disjoint.**` paragraphs, each naming two classes or more, which become one `owl:AllDisjointClasses`
 with its members in the order written, and `**Disjoint.**` paragraphs, each naming exactly two, which become
-an `owl:disjointWith`. Section 6.6 holds `turtle-spec` blocks, visible or hidden, for what the grammar does
-not express, for example property chains or an individual's other statements.
+an `owl:disjointWith`. Section 6.6 holds `turtle-spec` and `turtle-vocab` blocks, visible or hidden, for what
+the grammar does not express, for example property chains, or an individual with a statement the table's
+columns cannot hold, which is written whole. Such blocks declare no prefixes, since section 2's prefix table is
+their one source, and their order in the README does not matter.
 
 ### Generated views
 
@@ -293,7 +299,8 @@ the comment early. Mermaid diagrams are never hidden.
 - **Versions.** Generated documents are tracked and versioned as the
   [versioning policy](ontology-versioning-policy.md) describes. A module's first regeneration under this
   layout is one PATCH release, and its graph is the same as before except for reconciliations the
-  maintainer approves.
+  maintainer approves. `mise run check:literate-migration -- <module> <ref> --reconciliations <file>` compares
+  every file the module generates with the file at a git ref, and passes only when each difference is listed.
 
 ## Release Notes
 

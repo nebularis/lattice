@@ -17,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import import_guard  # noqa: E402
 import lattice_repo_catalogue as rc  # noqa: E402
 import literate_extract  # noqa: E402
+import literate_grammar  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 FENCE = "```"
@@ -59,9 +60,14 @@ def test_rc1_t2_the_catalogue_agrees_with_the_tree() -> None:
 @pytest.mark.parametrize("name", [m.name for m in rc.load(ROOT).modules.values() if m.literate])
 def test_rc1_t3_each_extraction_contract_is_what_its_readme_generates(name: str) -> None:
     module = rc.load(ROOT).module(name)
-    blocks = literate_extract.parse_blocks((ROOT / module.path / "README.md").read_text(encoding="utf-8"))
-    shapes = [f.relative_to(module.path).as_posix() for f in module.files("shapes")]
-    outputs = literate_extract.plan(blocks, name, shapes, proofs_root="proofs", reference_root="reference")
+    readme = ROOT / module.path / "README.md"
+    text = readme.read_text(encoding="utf-8")
+    result = literate_extract.scan(text)
+    shapes = literate_extract.contract_shapes(result.blocks, name, readme)
+    # A README in the layout compiles its documents' openings and its structural shapes (OD6 onwards).
+    compiled = literate_grammar.compile_layout(text, result, name) if literate_extract.uses_layout(result.sections) else None
+    outputs = literate_extract.plan(result.blocks, name, shapes, proofs_root="proofs", reference_root="reference",
+                                    preambles=compiled and compiled.documents, generated_shapes=compiled and compiled.shapes)
     generated = {Path(p) for p in outputs if not p.startswith("@")}
     declared = {f for role in rc.EXTRACT_KEYS for f in module.files(role)}
     assert generated == declared

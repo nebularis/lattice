@@ -1,61 +1,118 @@
 # SPDX-License-Identifier: MPL-2.0
 
-@prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
-@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix pty: <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@base <https://www.nebularis.org/neuro-semantic/eligibility-vocab> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-<https://www.nebularis.org/neuro-semantic/eligibility-vocab>
-	a owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility-vocab/0.13.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.12.0> .
+<https://www.nebularis.org/neuro-semantic/eligibility-vocab> a owl:Ontology ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility-vocab/0.13.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.12.0> ;
+    dct:description "Eligibility models admissibility by declaring reusable conditions, collecting evaluation questions, and recording a three-valued decision (Permitted, Denied, Undetermined)." ;
+    dct:creator <https://github.com/hyperthunk> .
 
-elg:ExactMatch a elg:MatchStrategy .
-elg:SetMembership a elg:MatchStrategy .
-elg:IntervalContainment a elg:MatchStrategy .
-elg:HierarchicalMatch a elg:MatchStrategy .
-elg:Wildcard a elg:MatchStrategy .
+dct:creator a owl:AnnotationProperty .
+
+dct:description a owl:AnnotationProperty .
 
 elg:AllRequired a elg:CompatibilityOperation .
+
 elg:AnySufficient a elg:CompatibilityOperation .
+
+elg:Denied a elg:Decision .
+
 elg:DimensionConsistent a elg:CompatibilityOperation .
 
-elg:SingleValue a elg:ValueReading ;
-	rdfs:comment "The path reaches one value. None, or several, leaves the condition undetermined. The default reading." .
-elg:SomeValue a elg:ValueReading ;
-	rdfs:comment "Permitted when any value is Permitted. Under a closure the binding names, Denied when every value is Denied, with no value included. Otherwise Undetermined (L15)." .
-elg:EveryValue a elg:ValueReading ;
-	rdfs:comment "Denied when any value is Denied. Under a closure the binding names, Permitted when every value is Permitted, with no value included. Otherwise Undetermined (L15)." .
+elg:E1 a elg:OperationalProfile ;
+    rdfs:comment "Exact-match profile" .
 
-elg:NoWildcard a elg:WildcardSemantics .
-elg:SingleDimensionWildcard a elg:WildcardSemantics .
+elg:E2 a elg:OperationalProfile ;
+    rdfs:comment "Interval-containment profile" .
+
+elg:E3 a elg:OperationalProfile ;
+    rdfs:comment "Wildcard profile" .
+
+elg:E4 a elg:OperationalProfile ;
+    rdfs:comment "Compatibility-any profile" .
+
+elg:E5 a elg:OperationalProfile ;
+    rdfs:comment "Compatibility-all profile" .
+
+elg:E6 a elg:OperationalProfile ;
+    rdfs:comment "Dimension-consistency profile" .
+
+elg:EveryValue a elg:ValueReading ;
+    rdfs:comment "Denied when any value is Denied. Under a closure the binding names, Permitted when every value is Permitted, with no value included. Otherwise Undetermined (L15)." .
+
+elg:ExactMatch a elg:MatchStrategy .
+
+elg:Forward a elg:StepDirection ;
+    rdfs:comment "Traversed from subject to object." .
+
+elg:HierarchicalMatch a elg:MatchStrategy .
+
+elg:IntervalContainment a elg:MatchStrategy .
+
+elg:Inverse a elg:StepDirection ;
+    rdfs:comment "Traversed from object to subject." .
+
+elg:L1 a elg:Law ;
+    rdfs:comment "Each condition declares exactly one match strategy." .
+
+elg:L2 a elg:Law ;
+    rdfs:comment "Each condition declares exactly one compatibility operation." .
+
+elg:L3 a elg:Law ;
+    rdfs:comment "Each condition declares exactly one wildcard policy." .
+
+elg:L4 a elg:Law ;
+    rdfs:comment "IntervalContainment requires declared requiredRangeSet." .
+
+elg:L5 a elg:Law ;
+    rdfs:comment "IntervalOverlap is excluded from admissibility decisions." .
+
+elg:L6 a elg:Law ;
+    rdfs:comment "EligibilityDecision has exactly one decision value." .
+
+elg:L7 a elg:Law ;
+    rdfs:comment "EligibilityDecision references at least one question." .
+
+elg:L8 a elg:Law ;
+    rdfs:comment "EligibilityDecision names one operational profile." .
+
 elg:MultiDimensionWildcard a elg:WildcardSemantics .
 
+elg:NoWildcard a elg:WildcardSemantics .
+
 elg:Permitted a elg:Decision .
-elg:Denied a elg:Decision .
+
+elg:SemanticLaw a elg:LawRegister ;
+    rdfs:comment "Discharged by formal argument." .
+
+elg:SetMembership a elg:MatchStrategy .
+
+elg:SingleDimensionWildcard a elg:WildcardSemantics .
+
+elg:SingleValue a elg:ValueReading ;
+    rdfs:comment "The path reaches one value. None, or several, leaves the condition undetermined. The default reading." .
+
+elg:SomeValue a elg:ValueReading ;
+    rdfs:comment "Permitted when any value is Permitted. Under a closure the binding names, Denied when every value is Denied, with no value included. Otherwise Undetermined (L15)." .
+
+elg:StaticConstraint a elg:LawRegister ;
+    rdfs:comment "Discharged by SHACL, SPARQL, or other static analysis of declarations." .
+
 elg:Undetermined a elg:Decision .
 
-elg:Forward a elg:StepDirection ; rdfs:comment "Traversed from subject to object." .
-elg:Inverse a elg:StepDirection ; rdfs:comment "Traversed from object to subject." .
+elg:Wildcard a elg:MatchStrategy .
 
-elg:E1 a elg:OperationalProfile ; rdfs:comment "Exact-match profile" .
-elg:E2 a elg:OperationalProfile ; rdfs:comment "Interval-containment profile" .
-elg:E3 a elg:OperationalProfile ; rdfs:comment "Wildcard profile" .
-elg:E4 a elg:OperationalProfile ; rdfs:comment "Compatibility-any profile" .
-elg:E5 a elg:OperationalProfile ; rdfs:comment "Compatibility-all profile" .
-elg:E6 a elg:OperationalProfile ; rdfs:comment "Dimension-consistency profile" .
-
-elg:SemanticLaw a elg:LawRegister ; rdfs:comment "Discharged by formal argument." .
-elg:StaticConstraint a elg:LawRegister ; rdfs:comment "Discharged by SHACL, SPARQL, or other static analysis of declarations." .
-
-elg:L1 a elg:Law ; rdfs:comment "Each condition declares exactly one match strategy." .
-elg:L2 a elg:Law ; rdfs:comment "Each condition declares exactly one compatibility operation." .
-elg:L3 a elg:Law ; rdfs:comment "Each condition declares exactly one wildcard policy." .
-elg:L4 a elg:Law ; rdfs:comment "IntervalContainment requires declared requiredRangeSet." .
-elg:L5 a elg:Law ; rdfs:comment "IntervalOverlap is excluded from admissibility decisions." .
-elg:L6 a elg:Law ; rdfs:comment "EligibilityDecision has exactly one decision value." .
-elg:L7 a elg:Law ; rdfs:comment "EligibilityDecision references at least one question." .
-elg:L8 a elg:Law ; rdfs:comment "EligibilityDecision names one operational profile." .
 elg:L9 a elg:Law ;
 	elg:lawRegister elg:SemanticLaw ;
 	rdfs:comment "Hierarchical match closure. A candidate value satisfies a condition under hierarchical match exactly when it stands in the reflexive-transitive closure of the bound scheme's ordering relation, restricted to that scheme's members, below the asserted value. The ordering relation is acyclic over the bound scheme; a scheme carrying a cycle is not evaluable under hierarchical match. A condition under hierarchical match with no resolved scheme at all has no closure to test a candidate against, and is undetermined for every candidate, the same reasoning L14 applies once a scheme resolves but states nothing about the candidate's position within it." .

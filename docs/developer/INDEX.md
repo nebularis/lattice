@@ -694,20 +694,20 @@ that code and documents agree with it. Shares work with `python-test-melting` (s
 
 | Field | Value |
 |-------|-------|
-| **Status** | 🚧 In progress, branch `docs/literate-v2`. OD0 accepted 2026-10-17. OD1, RC1 and RC2 done. OD2 to OD5 committed locally (2026-10-18), not pushed |
+| **Status** | 🚧 In progress, branch `docs/literate-v2`. OD0 accepted 2026-10-17. OD1, RC1 and RC2 done. OD2 to OD6 committed locally (2026-10-18), not pushed. Eligibility is the first README in the layout |
 | **Unit ID** | `improved-ontology-documentation` (absorbs `repository-catalogue`) |
 | **Sketches** | [improved-ontology-documentation.md](sketches/improved-ontology-documentation.md), [repository-catalogue.md](sketches/repository-catalogue.md) |
 | **Plan** | [improved-ontology-documentation.md](plans/improved-ontology-documentation.md) |
 | **Status Record** | [improved-ontology-documentation.md](status/improved-ontology-documentation.md) |
 | **ADRs** | A-121, A-126 and A-127, accepted 2026-10-17 |
-| **Validation Packs** | [OD0](validation/OD0.md), [OD1](validation/OD1.md), [RC1](validation/RC1.md), [RC2](validation/RC2.md), [OD2](validation/OD2.md), [OD3](validation/OD3.md), [OD4](validation/OD4.md), [OD5](validation/OD5.md) |
+| **Validation Packs** | [OD0](validation/OD0.md), [OD1](validation/OD1.md), [RC1](validation/RC1.md), [RC2](validation/RC2.md), [OD2](validation/OD2.md), [OD3](validation/OD3.md), [OD4](validation/OD4.md), [OD5](validation/OD5.md), [OD6](validation/OD6.md) |
 
 One README layout whose normative sections compile to Turtle and SHACL from a markdown grammar, the
 repository catalogue with each module's entry in its README, and a sources rule for user-facing documents
 built on published ADRs. Piloted on Eligibility, then Vocabulary.
 
 **Unplanned backlog** (the plan's own section): grammar support for a union of datatypes, for the property
-characteristics asymmetric, reflexive and irreflexive, each added when a layer needs it (`oneOf` is planned in OD6).
+characteristics asymmetric, reflexive and irreflexive, each added when a layer needs it (`oneOf` was added in OD6).
 Multilingual support is a pending design decision, PDD-10.
 
 **Sketch raised by this unit:** [ontology-import-pinning.md](sketches/ontology-import-pinning.md), how imports pin
