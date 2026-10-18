@@ -3,7 +3,7 @@
 # Improved Ontology Documentation: Status
 
 **Unit ID:** `improved-ontology-documentation` (absorbs `repository-catalogue`)
-**Status:** In progress. OD0 accepted. OD1, RC1 and RC2 pass. RC2-C1 changed to option (c), RC2-T7 not yet run.
+**Status:** In progress. OD0 accepted. OD1, RC1 and RC2 done. OD2 built autonomously and committed locally, OD3 under way.
 **Last updated:** 2026-10-16
 **Branch:** `docs/literate-v2`
 **Plan:** [improved-ontology-documentation.md](../plans/improved-ontology-documentation.md)
@@ -20,8 +20,10 @@ ontology file has changed.
 
 ## Next action
 
-1. The maintainer runs RC2-T7 (below) and commits RC2.
-2. Then OD2 and OD3 on the extractor, and RC3 for roots, tool packages and the generated AGENTS.md table.
+1. OD3, section 6 to OWL, built autonomously at the maintainer's request of 2026-10-18, committed locally and
+   not pushed.
+2. The maintainer then reviews the decisions taken alone in the [OD2](../validation/OD2.md) and OD3 Validation
+   Packs, and may overrule any of them before the branch is pushed.
 
 ## Slices
 
@@ -29,10 +31,10 @@ ontology file has changed.
 |---|---|---|
 | OD0 ADRs, the AGENTS.md rule, the conventions document | accepted 2026-10-17, committed, [Validation Pack](../validation/OD0.md) | |
 | RC1 catalogue and reader | committed 2026-10-17, tests pass, choices agreed 2026-10-18, [Validation Pack](../validation/RC1.md) | |
-| RC2 consumers use the reader | passed 2026-10-18, RC2-C1 changed to (c), RC2-T7 not yet run, [Validation Pack](../validation/RC2.md) | RC2-T7, the maintainer's commit |
+| RC2 consumers use the reader | passed and committed 2026-10-18, [Validation Pack](../validation/RC2.md) | |
 | RC3 roots, AGENTS.md table, bypass scan | planned | RC2 |
 | OD1 scanner and markers | passed 2026-10-17, choices agreed, [Validation Pack](../validation/OD1.md) | the maintainer's merge |
-| OD2 sections 1 and 2 | planned | OD1 |
+| OD2 sections 1 to 3 | built autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD2.md) | the maintainer's review of eight decisions taken alone |
 | OD3 section 6 to OWL | planned | OD1 |
 | OD4 section 6 to SHACL | planned | OD3 |
 | OD5 generated regions | planned | OD3 |
@@ -131,3 +133,8 @@ None.
   finds the catalogue above its README, from any working directory. Implemented with RC2-T7. On RC1-C5, a
   migrated README holds its entry in section 3, which OD2's layout check will enforce. RC2-C2's move to
   option (b), every extraction checked against its entry, is planned in RC4.
+- 2026-10-18: the maintainer committed and pushed RC2, and asked for OD2 and OD3 to be built without stopping
+  for decisions, with local commits only. OD2 built: `tools/literate_grammar.py` compiles sections 1 and 2 of
+  a README in the layout into each document's opening, and the layout check requires the catalogue entry in
+  section 3. Eight decisions taken alone are listed in its Validation Pack. Its tests, the catalogue tests,
+  the per-layer extraction tests and the freshness check were run and pass.

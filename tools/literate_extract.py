@@ -114,6 +114,7 @@ from pathlib import Path
 from typing import Dict, List, Mapping, Sequence, Tuple
 
 import lattice_repo_catalogue
+import literate_grammar
 
 SPDX_TTL = "# SPDX-License-Identifier: MPL-2.0"
 SPDX_THY = "(* SPDX-License-Identifier: MPL-2.0 *)"
@@ -137,6 +138,7 @@ HIDDEN_RE = re.compile(r"^<!--\s*hidden(?::\s*(?P<json>\{.*\}))?\s*$")
 SECTION_RE = re.compile(r"^## (?P<number>\d+)\.\s+(?P<title>.+?)\s*$")
 REGION_KEYS: Dict[str, type] = {"exclude": bool, "output-file": str, "generated": str}
 EXTRACTED_TO_ONTOLOGY = ("turtle-spec", "turtle-vocab", "turtle-shapes")
+CATALOGUE_TAG = "toml repository-catalogue"
 # The README layout of ADR-A126 decision 1, in order. Sections are found by title.
 LAYOUT = (
     "Purpose and Scope", "Namespace and Prefixes", "Extraction Contract", "Overview", "Detailed Design",
@@ -188,9 +190,14 @@ class Section:
 
 @dataclass(frozen=True)
 class Scan:
+    """``prose`` holds the 1-based numbers of the lines outside any fence, comment or marker, and
+    ``catalogue_lines`` those that open a repository catalogue block (ADR-A121)."""
+
     blocks: List[Block]
     regions: List[Region]
     sections: List[Section]
+    prose: frozenset = frozenset()
+    catalogue_lines: Tuple[int, ...] = ()
 
 
 def parse_blocks(markdown: str) -> List[Block]:
@@ -209,6 +216,8 @@ def scan(markdown: str) -> Scan:
     sections: List[Section] = []
     counters: Dict[str, int] = {}
     open_regions: List[Tuple[str, object, int]] = []
+    prose: List[int] = []
+    catalogue_lines: List[int] = []
 
     def read_block(at: int, tag: str, output_file: str | None, hidden: bool) -> int:
         end = at + 1
@@ -238,6 +247,8 @@ def scan(markdown: str) -> Scan:
             continue
         fence = ANY_FENCE_RE.match(line)
         if fence:
+            if fence.group("info").strip() == CATALOGUE_TAG:
+                catalogue_lines.append(index + 1)
             index = _skip_fence(lines, index, fence.group("fence"))
             continue
         if line.startswith("<!--"):
@@ -290,10 +301,11 @@ def scan(markdown: str) -> Scan:
         section = SECTION_RE.match(line)
         if section:
             sections.append(Section(int(section.group("number")), section.group("title"), index + 1))
+        prose.append(index + 1)
         index += 1
     if open_regions:
         raise ValueError(f"the region opened at line {open_regions[-1][2]} is never closed")
-    return Scan(blocks, regions, sections)
+    return Scan(blocks, regions, sections, frozenset(prose), tuple(catalogue_lines))
 
 
 def _skip_fence(lines: Sequence[str], at: int, fence: str) -> int:
@@ -333,10 +345,18 @@ def _norm(title: str) -> str:
     return " ".join(title.split()).casefold()
 
 
-def layout_problems(sections: Sequence[Section]) -> Tuple[List[str], List[str]]:
+def uses_layout(sections: Sequence[Section]) -> bool:
+    """Whether a README is migrated to the ADR-A126 layout: it has a "Description Logic Encoding" section."""
+    return any(_norm(s.title) == _norm(LAYOUT[5]) for s in sections)
+
+
+def layout_problems(
+    sections: Sequence[Section], catalogue_lines: Sequence[int] | None = None
+) -> Tuple[List[str], List[str]]:
     """The errors and warnings of a README in the ADR-A126 layout. A README with no
-    "Description Logic Encoding" section is not yet migrated, and has neither."""
-    if not any(_norm(s.title) == _norm(LAYOUT[5]) for s in sections):
+    "Description Logic Encoding" section is not yet migrated, and has neither. Given the lines
+    of its catalogue blocks, it also checks that there is one, in section 3 (RC1-C5)."""
+    if not uses_layout(sections):
         return [], []
     expected = {_norm(title): (number, title) for number, title in enumerate(LAYOUT, 1)}
     errors: List[str] = []
@@ -356,6 +376,16 @@ def layout_problems(sections: Sequence[Section]) -> Tuple[List[str], List[str]]:
                     f"line {section.line}: {section.title!r} is numbered {section.number}, the layout numbers it {number}"
                 )
     errors += [f"section {number}, {title!r}, is missing" for key, (number, title) in expected.items() if key not in seen]
+    contract = seen.get(_norm(LAYOUT[2]))
+    if catalogue_lines is not None and contract is not None:
+        after = [s.line for s in sections if s.line > contract.line]
+        end = min(after) if after else float("inf")
+        inside = [n for n in catalogue_lines if contract.line < n < end]
+        if len(catalogue_lines) != 1 or len(inside) != 1:
+            errors.append(
+                f"the README needs exactly one repository catalogue entry, in section 3 (found {len(catalogue_lines)}, "
+                f"{len(inside)} of them in section 3)"
+            )
     return errors, warnings
 
 
@@ -494,6 +524,7 @@ def plan(
     shape_targets: Sequence[str],
     proofs_root: str | None = None,
     reference_root: str | None = None,
+    preambles: Mapping[str, str] | None = None,
 ) -> Dict[str, str]:
     """Map each output path to the document it should contain.
 
@@ -551,14 +582,23 @@ def plan(
         )
 
     outputs: Dict[str, str] = {}
+    if preambles is not None:
+        # A README in the ADR-A126 layout: every spec or vocab document opens with the text its
+        # section 2 header row and section 6 compile to, and its blocks follow.
+        stray = sorted((set(spec_docs) | set(vocab_docs)) - set(preambles))
+        if stray:
+            raise ValueError(f"block(s) go to {', '.join(stray)}, which section 2's header table does not name")
+        for target, preamble in preambles.items():
+            outputs[target] = render([preamble, *spec_docs.pop(target, []), *vocab_docs.pop(target, [])])
     prefixes = PREFIX_RE.findall("\n".join(spec_docs.get(default_spec, [])))
     for target, bodies in spec_docs.items():
         if target != default_spec and prefixes:
             bodies = ["\n".join(prefixes) + "\n"] + bodies
         outputs[target] = render(bodies)
-    versions = {t: VERSION_RE.search(outputs[t]) for t in spec_docs}
+    spec_targets = [t for t in outputs if "/spec/" in t]
+    versions = {t: VERSION_RE.search(outputs[t]) for t in spec_targets}
     found = {m.group("version") for m in versions.values() if m}
-    if len(spec_docs) > 1 and len(found) > 1:
+    if len(spec_targets) > 1 and len(found) > 1:
         raise ValueError(
             f"{layer}'s spec documents carry different versions "
             f"({', '.join(f'{t}: {m.group(1) if m else None}' for t, m in sorted(versions.items()))}); "
@@ -569,9 +609,10 @@ def plan(
         if target != default_vocab and vocab_prefixes:
             bodies = ["\n".join(vocab_prefixes) + "\n"] + bodies
         outputs[target] = render(bodies)
-    vocab_versions = {t: VERSION_RE.search(outputs[t]) for t in vocab_docs}
+    vocab_targets = [t for t in outputs if "/vocab/" in t]
+    vocab_versions = {t: VERSION_RE.search(outputs[t]) for t in vocab_targets}
     vocab_found = {m.group("version") for m in vocab_versions.values() if m}
-    if len(vocab_docs) > 1 and len(vocab_found) > 1:
+    if len(vocab_targets) > 1 and len(vocab_found) > 1:
         raise ValueError(
             f"{layer}'s vocabulary documents carry different versions "
             f"({', '.join(f'{t}: {m.group(1) if m else None}' for t, m in sorted(vocab_versions.items()))}); "
@@ -683,8 +724,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     readme_path = Path(args.readme)
-    result = scan(readme_path.read_text(encoding="utf-8"))
-    errors, warnings = layout_problems(result.sections)
+    text = readme_path.read_text(encoding="utf-8")
+    result = scan(text)
+    errors, warnings = layout_problems(result.sections, result.catalogue_lines)
     for message in warnings:
         _warn(f"{readme_path}: {message}")
     if errors:
@@ -696,7 +738,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     except lattice_repo_catalogue.CatalogueError as error:
         print(f"CATALOGUE {error}", file=sys.stderr)
         return 1
-    outputs = plan(result.blocks, args.layer, shapes, args.proofs_root, args.reference_root)
+    try:
+        preambles = literate_grammar.compile_layout(text, result, args.layer) if uses_layout(result.sections) else None
+    except literate_grammar.GrammarError as error:
+        print(f"GRAMMAR {readme_path}: {error}", file=sys.stderr)
+        return 1
+    outputs = plan(result.blocks, args.layer, shapes, args.proofs_root, args.reference_root, preambles)
 
     root = Path(args.root)
     proofs_root = Path(args.proofs_root) if args.proofs_root else None

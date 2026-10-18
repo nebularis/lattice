@@ -42,38 +42,50 @@ and states only what is specific to its module.
 
 ## Sections 1 to 3
 
-**Section 1** becomes the ontology's `dct:description`, rendered as plain text (see "From markdown to
-Turtle"). Text that should stay in the README only is wrapped in an exclude region.
+**Section 1** becomes the `dct:description` of every document the README generates, rendered as plain
+text (see "From markdown to Turtle"). Text that should stay in the README only is wrapped in an exclude
+region. A table, a heading or an image in section 1 is refused unless it is excluded.
 
-**Section 2** holds three tables. The values below are illustrative.
+**Section 2** holds up to three tables, recognised by their columns. The header table is required, and the
+other two are optional. The values below are illustrative.
 
-| Field | Value |
-|---|---|
-| Ontology IRI | `https://www.nebularis.org/neuro-semantic/lattice/eligibility` |
-| Version | `0.12.0` |
-| Imports | `https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0` |
+| Document | Ontology IRI | Version IRI | Imports |
+|---|---|---|---|
+| `spec/eligibility.ttl` | <https://www.nebularis.org/neuro-semantic/eligibility> | <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.12.0> | <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> |
+| `vocab/eligibility-vocab.ttl` | <https://www.nebularis.org/neuro-semantic/eligibility-vocab> | <https://www.nebularis.org/neuro-semantic/lattice/eligibility-vocab/0.13.0> | <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.12.0> |
 
 | Prefix | Namespace |
 |---|---|
-| `elg:` | `https://www.nebularis.org/neuro-semantic/lattice/eligibility#` |
-| `fnd:` | `https://www.nebularis.org/neuro-semantic/lattice/foundation#` |
+| `elg:` | <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> |
+| `fnd:` | <https://www.nebularis.org/neuro-semantic/lattice/foundation#> |
 
 | Identifier | Role | Display name |
 |---|---|---|
-| `https://orcid.org/0000-0002-1825-0097` | creator | |
+| <https://orcid.org/0000-0002-1825-0097> | creator | |
 | `https://github.com/<handle>` | contributor | |
 
-Each creator and contributor is identified by an IRI, an ORCID iD where the person has one and their
-GitHub profile otherwise, and becomes a `dct:creator` or `dct:contributor` value. The display name is
-filled only with that person's express permission, and is never written to a generated file. The
-maintainers keep the table.
+- **The header table** has one row for each document the README generates, a `.ttl` path under `spec/` or
+  `vocab/`. Each document opens with its own ontology header: the ontology IRI, the version IRI, and an
+  `owl:imports` for each IRI in the Imports cell, separated by commas or spaces. The version IRI is written
+  in full, since not every ontology's version IRI extends its ontology IRI. It ends in the version
+  (`X.Y.Z`), and a module's spec documents share one version, as its vocab documents do. Every fenced block
+  the README extracts must go to a document this table names.
+- **The prefix table** gives each document's `@prefix` lines. `rdf:`, `rdfs:`, `owl:`, `xsd:` and `dct:` are
+  added with their standard namespaces where the table omits them, and binding one of them to another
+  namespace is refused.
+- **The creators and contributors table.** Each person is identified by an IRI, an ORCID iD where the person
+  has one and their GitHub profile otherwise, and becomes a `dct:creator` or `dct:contributor` of every
+  document. The display name is filled only with that person's express permission, and is never written to
+  a generated file. The maintainers keep the table.
 
-Every generated document declares `dct:description`, `dct:creator` and `dct:contributor` as annotation
-properties itself, with the `dct:` prefix, and never imports Dublin Core, so it stays in OWL 2 DL.
+Every generated document declares the Dublin Core terms it uses as annotation properties itself, with the
+`dct:` prefix, and never imports Dublin Core, so it stays in OWL 2 DL. A document's ontology header comes
+first, then its other statements sorted by subject, then the README's blocks for it in document order.
 
-**Section 3** holds the module's catalogue entry, a fenced `toml repository-catalogue` block naming its
-spec documents, vocab document, shape files in order, versioned roles and permitted imports. Its prose says
-only what is unusual about the module, for example a second spec document, and links here for the rest.
+**Section 3** holds the module's catalogue entry, exactly one fenced `toml repository-catalogue` block, which
+the layout check requires inside section 3. It names the module's spec documents, vocab documents, shape
+files in order and permitted imports. Its prose says only what is unusual about the module, for example a
+second spec document, and links here for the rest.
 
 ## Section 6, the Description Logic Encoding
 

@@ -257,10 +257,18 @@ def test_od1_t10_the_layout_is_checked_only_once_a_readme_uses_it() -> None:
     assert layout_problems(scan(unmigrated).sections) == ([], [])
 
 
+def _extractable(text: str) -> str:
+    """A layout README with what extraction needs since OD2: a header table in section 2 and the
+    catalogue entry in section 3."""
+    text = text.replace("Namespace and Prefixes\n", "Namespace and Prefixes\n\n| Document | Ontology IRI | Version IRI | Imports |\n"
+                        "|---|---|---|---|\n| `spec/x.ttl` | <https://example.org/x> | <https://example.org/x/0.1.0> | |\n")
+    return text.replace("Extraction Contract\n", "Extraction Contract\n\n```toml repository-catalogue\n[module]\n```\n")
+
+
 def test_od1_t11_main_warns_on_a_misnumbered_section_and_fails_on_a_missing_one(tmp_path: Path, capsys) -> None:
     readme = tmp_path / "README.md"
-    readme.write_text(_layout({7: 8}), encoding="utf-8")
-    assert literate_extract.main([str(readme), "--layer", "x", "--root", str(tmp_path), "--check"]) == 0
+    readme.write_text(_extractable(_layout({7: 8})), encoding="utf-8")
+    assert literate_extract.main([str(readme), "--layer", "x", "--root", str(tmp_path)]) == 0
     assert "WARNING" in capsys.readouterr().err
     readme.write_text(_layout(drop="Open Issues"), encoding="utf-8")
     assert literate_extract.main([str(readme), "--layer", "x", "--root", str(tmp_path), "--check"]) == 1
