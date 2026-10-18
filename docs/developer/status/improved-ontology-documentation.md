@@ -20,8 +20,14 @@ ontology file has changed.
 
 ## Next action
 
-1. The maintainer commits this plan, merges this branch into `main`, and syncs it.
-2. Then OD6, the Eligibility pilot, on this branch, then DOC1 and RC3. Briefs are in the plan.
+1. OD6, the Eligibility pilot, built autonomously with local commits (2026-10-18). Enumeration and the migration
+   check are written and pass. The README's migration follows.
+2. The sketch on how imports pin, [ontology-import-pinning.md](../sketches/ontology-import-pinning.md), is for
+   the maintainer to read.
+
+**Known inconsistency on this branch (OD-D43).** Migrated layers' documents change without new version IRIs,
+so `check:ontology-versioning` reports unbumped changes, and importers stay pinned to the old versions. This is
+deliberate. The release slice OD-REL resolves it once, before the merge into `main`.
 
 ## Slices
 
@@ -45,6 +51,7 @@ ontology file has changed.
 | RC4 downstream extension | planned | RC3 |
 | RC5 package promotion | planned | RC4 |
 | RC6 XML catalogue folded in | planned | RC5, a new ADR on ADR-A88 |
+| OD-REL release before the merge | planned | every migration on the branch |
 
 ## Open questions
 
@@ -166,3 +173,10 @@ None.
   written into the plan.
 - 2026-10-18: RC3-Q2 answered (b), recorded as OD-D41: the bypass scan's exceptions in a file beside the reader,
   with one technical debt row giving their count. Every planning question is answered.
+- 2026-10-18: OD6 started. Enumeration in the grammar and the migration check written, with their tests, which
+  pass. Two findings stopped the migration for a decision: 32 of Eligibility's 52 terms have no definition, and
+  any migration changes a layer's graphs (Dublin Core in the header), so each needs a version that cascades
+  through 11 documents in 5 modules. Answered: definitions are drafted and reviewed (OD-D42), and versions are
+  left inconsistent on this branch until one release slice, OD-REL, bumps and re-pins everything before the merge
+  (OD-D43). The maintainer asked for a sketch on changing how imports pin, and authorised OD6 to continue
+  autonomously with local commits.

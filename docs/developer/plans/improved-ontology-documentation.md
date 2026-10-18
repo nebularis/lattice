@@ -81,6 +81,8 @@ Decided by the maintainer on 2026-10-15 and 2026-10-16. The status record's log 
 | OD-D39 | A published ADR names the architecture documents that describe it in a `**Described in:**` header field. Moving ADR metadata from header fields to a table is technical debt (DOC1-Q3) |
 | OD-D40 | AGENTS.md's "Where things are" table keeps its columns, Root and Owns, and is generated from the root file (RC3-Q1) |
 | OD-D41 | The bypass scan's known exceptions are a text file beside the reader, `tools/lattice_repo_catalogue_exceptions.txt`, each with a reason, in a list that may only shrink. One technical debt row names the file and gives its count, which the scan checks (RC3-Q2, option b) |
+| OD-D42 | A migrated layer's terms each have a definition. Where a term has none today, we draft it from what the README already says, the maintainer reviews it, and the migration check lists the new `rdfs:comment` as an approved reconciliation (OD6-Q5, option a) |
+| OD-D43 | Versions are not bumped or re-pinned per migration. On this branch, migrated layers' documents change without new version IRIs and their importers stay pinned to the old ones, so the branch's versions are knowingly inconsistent. Before the merge into `main`, one release slice bumps every changed document once, re-pins every importer once, and adds the release rows and notes (OD6-Q6, option b) |
 
 ## The README layout
 
@@ -188,6 +190,7 @@ Estimates are in tokens.
 | RC4 | Downstream extension (RC-Q7): qualified names and an `extends` chain, tried against Open CBAA's layout. Then the extractor reads the catalogue for every extraction and fails when the files a README generates differ from its entry (RC2-C2 option b, deferred to here) | `tools/` | L1, L4 | 60k |
 | RC5 | Promotion to the `lattice-repo-catalogue` package, installable into each worktree's `.venv` and pinnable by version per branch downstream | `packages/`, `tools/` | L0, L4 | 50k |
 | RC6 | The XML catalogue (ADR-A88) folded into the repository catalogue, under a new ADR, with release and version management read from the same place | `tools/`, `ontology/` | L3, L4 | 80k |
+| OD-REL | The release before the merge (OD-D43): every document a migration changed takes one bump, the cascade is computed from the import graph and every importer re-pinned once, release rows are added and release notes written, and the versioning and catalogue checks pass again. The maintainer creates the tags | every changed module | L3, L4 | 60k, more as layers migrate |
 
 ```mermaid
 flowchart TB
@@ -252,8 +255,9 @@ The order is OD6, then DOC1 and RC3 in either order. This branch is merged into 
    - **Canonicalisation, Formalisation (its `isabelle-spec` block), Dependencies, Release Notes and Open
      Issues** follow.
    - **Release notes** are rewritten to say what changed and cite ADRs, with no slice references.
-4. **Versions.** The spec, the vocab and the shapes directory each take a PATCH release, with their release rows.
-   Tags are the maintainer's.
+4. **Versions (OD-D43).** No bump on this branch. Eligibility's documents change without new version IRIs, and
+   `check:ontology-versioning` reports them until the release slice OD-REL. The 32 terms with no definition gain
+   one each (OD-D42), drafted from the README and reviewed by the maintainer.
 
 **Validation.**
 

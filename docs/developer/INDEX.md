@@ -710,6 +710,9 @@ built on published ADRs. Piloted on Eligibility, then Vocabulary.
 characteristics asymmetric, reflexive and irreflexive, each added when a layer needs it (`oneOf` is planned in OD6).
 Multilingual support is a pending design decision, PDD-10.
 
+**Sketch raised by this unit:** [ontology-import-pinning.md](sketches/ontology-import-pinning.md), how imports pin
+their versions (IMP-Q1 to IMP-Q5 open). Not planned.
+
 ## 8. Phase Handoff Documents (0-6)
 
 | Phase | Status Record | Key Outcome |
