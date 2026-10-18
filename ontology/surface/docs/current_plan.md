@@ -368,7 +368,6 @@ The following documents are retained as rationale or historical material:
 - `surface-projection-design-sketch.md`: original Surface mechanism design and
   laws.
 - `x6SignatureScopeDecisionAnalysis.md`: plain-language X6 decision analysis.
-- `csoFboSurfaceTripleCheck.md`: CSO/FBO complexity boundary analysis.
 - `eligibility-L9-replacement.md`: completed L9 amendment.
 - `MorkEnhancements.md`: MORK and Eligibility design source, with implemented
   portions now reflected above.

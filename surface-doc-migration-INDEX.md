@@ -245,7 +245,6 @@ All files from `ontology/surface/docs/` have been migrated:
 
 ### Moved to docs/architecture/ (reference)
 - ⏳ `adr-bundle-outline-surface-mork-unified-projection.md` (will become surface-mork-adr-outline.md if needed as reference)
-- ⏳ `csoFboSurfaceTripleCheck.md` (archived analysis, may be referenced in ADR-A21)
 
 ### Analysis/Amendment documents
 - ✅ `eligibility-L9-replacement.md` (integrated into ontology/eligibility/README.md and Eligibility status)
