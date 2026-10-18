@@ -71,7 +71,7 @@ version IRI, and is imported in turn by `insurance/peril` and later applied insu
 - No `turtle-shapes` blocks: this module declares no shapes of its own.
 
 ```bash
-python3 tools/literate_extract.py ontology/applied/insurance/common/README.md \
+mise exec -- python tools/literate_extract.py ontology/applied/insurance/common/README.md \
     --layer applied/insurance/common --root . --check
 ```
 

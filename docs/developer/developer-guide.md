@@ -92,21 +92,18 @@ documents (ADR-A120 addendum, AIR-2.0).
 
 ```bash
 # Check a layer's generated files still match its README (writes nothing, exits non-zero on drift)
-mise exec -- python tools/literate_extract.py ontology/surface/README.md --layer surface --root . \
-  --shapes shapes/structural.ttl shapes/constraints.ttl --check
+mise exec -- python tools/literate_extract.py ontology/surface/README.md --layer surface --root . --check
 
 # Regenerate them (same command, without --check)
-mise exec -- python tools/literate_extract.py ontology/surface/README.md --layer surface --root . \
-  --shapes shapes/structural.ttl shapes/constraints.ttl
+mise exec -- python tools/literate_extract.py ontology/surface/README.md --layer surface --root .
 
 # Extract a formalised layer's Isabelle datatype too
 mise exec -- python tools/literate_extract.py ontology/eligibility/README.md --layer eligibility --root . \
-  --proofs-root tools/proofs --shapes shapes/structural.ttl shapes/constraints.ttl --check
+  --proofs-root tools/proofs --reference-root tools/reference --check
 
 # A nested applied-insurance module, with several vocabulary documents
 mise exec -- python tools/literate_extract.py ontology/applied/insurance/peril/README.md \
-  --layer applied/insurance/peril --root . \
-  --shapes shapes/structural.ttl shapes/constraints.ttl --check
+  --layer applied/insurance/peril --root . --check
 ```
 
 Each module's extraction contract is also stated in its README's entry in the

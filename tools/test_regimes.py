@@ -363,9 +363,7 @@ def test_c7a_12_state_kinds_and_activities() -> None:
 # ---- C7a-13: literate source and release notes ------------------------------
 
 def test_c7a_13_readme_is_the_source_and_releases_are_recorded() -> None:
-    assert literate_extract.main([str(LAYER / "README.md"), "--layer", "instrument", "--root", str(ROOT), "--shapes",
-                                  "shapes/structural.ttl", "shapes/constraints.ttl", "shapes/single-expression.ttl",
-                                  "--check"]) == 0
+    assert literate_extract.main([str(LAYER / "README.md"), "--layer", "instrument", "--root", str(ROOT), "--check"]) == 0
     readme = (LAYER / "README.md").read_text()
     assert "0.10.0 (CCS C7a" in readme and "Shapes 0.3.0 (additive" in readme
     assert (LAYER / "shapes" / ".version").read_text().strip() == "0.8.0"

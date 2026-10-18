@@ -91,9 +91,8 @@ Sketches and this README write concept and scheme IRIs as `prl:` for brevity (fo
   [`examples/well-formed.ttl`](examples/well-formed.ttl).
 
 ```bash
-python3 tools/literate_extract.py ontology/applied/insurance/peril/README.md \
-    --layer applied/insurance/peril --root . \
-    --shapes shapes/structural.ttl shapes/constraints.ttl --check
+mise exec -- python tools/literate_extract.py ontology/applied/insurance/peril/README.md \
+    --layer applied/insurance/peril --root . --check
 ```
 
 The module's entry in the [repository catalogue](../../../../repository-catalogue.md)

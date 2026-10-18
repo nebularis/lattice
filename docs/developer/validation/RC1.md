@@ -114,3 +114,16 @@ mise run check:ontology-catalog
 - Roots, tool packages, documentation areas, generated outputs, site sections, the generated AGENTS.md table
   and the bypass scan. RC3 and DOC2.
 - `dump --json` has no consumer in another runtime yet.
+
+## Results
+
+2026-10-18: RC1's tests passed within `check:ontology-catalog` (974 passed, 7 skipped, the skips being the
+reasoning tests that need the reasoning-testkit jar), run after RC2 and the merge of `main`, with RC1-T4 as RC2
+rewrote it. `check:catalogue` reports 19 modules agreeing with the tree. The eight implementation choices await
+the maintainer's confirmation.
+
+## Implementation choices, answered
+
+2026-10-18, by the maintainer: RC1-C1 to RC1-C8 as implemented, option (a) each (the eight choices above, in
+order). On RC1-C5, an entry sits in section 3 once its README is migrated. The placement above holds only until
+then, and the layout check will enforce section 3 for migrated READMEs (planned in OD2).

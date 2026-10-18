@@ -299,9 +299,7 @@ def test_c7c_14_prevails_over_between_relations_is_reported() -> None:
 # ---- C7c-15: literate source and release notes ------------------------------
 
 def test_c7c_15_readme_is_the_source_and_releases_are_recorded() -> None:
-    assert literate_extract.main([str(LAYER / "README.md"), "--layer", "instrument", "--root", str(ROOT), "--shapes",
-                                  "shapes/structural.ttl", "shapes/constraints.ttl", "shapes/single-expression.ttl",
-                                  "--check"]) == 0
+    assert literate_extract.main([str(LAYER / "README.md"), "--layer", "instrument", "--root", str(ROOT), "--check"]) == 0
     readme = (LAYER / "README.md").read_text()
     assert "0.12.0 (breaking, CCS C7c" in readme and "Shapes 0.5.0" in readme
     assert (LAYER / "shapes" / ".version").read_text().strip() == "0.8.0"

@@ -29,22 +29,18 @@ from typing import Iterator, Optional
 from rdflib import Graph
 from rdflib.namespace import OWL
 
-ROOT = Path(__file__).resolve().parent.parent
+import lattice_repo_catalogue
 
-# The order of ADR-A01's 2026-10-01 addendum: each layer and the layers it may
-# import. Wording and Behaviour are siblings, so neither may name the other.
-# Behaviour's configuration and runtime documents share one namespace and one
-# entry. The runtime document imports configuration, which is the same layer.
-SUBSTRATE = ("foundation", "vocabulary", "quantification", "party", "eligibility")
+CATALOGUE = lattice_repo_catalogue.load()
+ROOT = CATALOGUE.root
+
+# The order of ADR-A01 and its 2026-10-01 addendum: each substrate layer and the layers it
+# may import, as the repository catalogue's substrate entries state it (ADR-A121). Wording and
+# Behaviour are siblings, so neither may name the other. Behaviour's configuration and runtime
+# documents share one namespace and one entry. The runtime document imports configuration, which
+# is the same layer.
 ALLOWED: dict[str, frozenset[str]] = {
-    "foundation": frozenset(),
-    "vocabulary": frozenset(SUBSTRATE[:1]),
-    "quantification": frozenset(SUBSTRATE[:2]),
-    "party": frozenset(SUBSTRATE[:3]),
-    "eligibility": frozenset(SUBSTRATE[:4]),
-    "wording": frozenset(SUBSTRATE),
-    "behaviour": frozenset(SUBSTRATE),
-    "instrument": frozenset(SUBSTRATE) | {"wording", "behaviour"},
+    m.name: frozenset(m.imports or ()) for m in CATALOGUE.modules_of_kind("substrate")
 }
 APPLIED = "applied"
 
@@ -77,7 +73,7 @@ def forbidden(layer: str, named: str) -> bool:
 
 def layer_files(root: Path) -> Iterator[tuple[str, Path]]:
     for layer in ALLOWED:
-        directory = root / "ontology" / layer
+        directory = root / CATALOGUE.module(layer).path
         if directory.is_dir():
             for path in sorted(directory.rglob("*.ttl")):
                 yield layer, path

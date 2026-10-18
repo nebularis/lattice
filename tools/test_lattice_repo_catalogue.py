@@ -67,10 +67,21 @@ def test_rc1_t3_each_extraction_contract_is_what_its_readme_generates(name: str)
     assert generated == declared
 
 
-def test_rc1_t4_the_substrate_imports_are_the_import_guards() -> None:
+# ADR-A01 and its 2026-10-01 addendum, written out here so that an edit to the catalogue's order
+# fails a test until the ADR is amended (ADR-A121 decision 2). The import guard reads the same
+# entries since RC2.
+_LOWER = ("foundation", "vocabulary", "quantification", "party", "eligibility")
+ADR_A01_ORDER = {
+    "foundation": frozenset(), "vocabulary": frozenset(_LOWER[:1]), "quantification": frozenset(_LOWER[:2]),
+    "party": frozenset(_LOWER[:3]), "eligibility": frozenset(_LOWER[:4]), "wording": frozenset(_LOWER),
+    "behaviour": frozenset(_LOWER), "instrument": frozenset(_LOWER) | {"wording", "behaviour"},
+}
+
+
+def test_rc1_t4_the_substrate_imports_are_adr_a01s_order_and_the_import_guard_reads_them() -> None:
     catalogue = rc.load(ROOT)
     substrate = {m.name: frozenset(m.imports or ()) for m in catalogue.modules_of_kind("substrate")}
-    assert substrate == import_guard.ALLOWED
+    assert substrate == ADR_A01_ORDER == import_guard.ALLOWED
     assert all(m.imports is None for m in catalogue.modules.values() if m.kind != "substrate")
 
 
@@ -156,3 +167,69 @@ def test_rc1_t11_the_command_line_prints_paths_in_order_and_names_a_missing_role
     assert rc.main(["--root", str(ROOT), "dump", "--json"]) == 0
     assert json.loads(capsys.readouterr().out)["modules"]["behaviour"]["kind"] == "substrate"
     assert rc.main(["--root", str(ROOT), "check"]) == 0
+
+
+# ---- RC2: the tools read the catalogue ------------------------------------------------------
+
+import check_formal_freshness  # noqa: E402
+import ontology_version_check  # noqa: E402
+
+
+def test_rc2_t1_the_extractor_takes_no_shapes_argument(capsys) -> None:
+    with pytest.raises(SystemExit):
+        literate_extract.main([str(ROOT / "ontology/wording/README.md"), "--layer", "wording", "--shapes", "x.ttl"])
+    assert "--shapes" in capsys.readouterr().err
+
+
+def test_rc2_t2_the_extractor_reads_a_modules_shape_files_from_its_entry() -> None:
+    blocks = literate_extract.parse_blocks((ROOT / "ontology/instrument/README.md").read_text(encoding="utf-8"))
+    assert literate_extract.contract_shapes(blocks, "instrument") == [
+        "shapes/structural.ttl", "shapes/constraints.ttl", "shapes/single-expression.ttl",
+    ]
+
+
+def test_rc2_t3_a_readme_needs_the_catalogue_only_for_a_shape_block_that_names_no_file(tmp_path: Path, monkeypatch, capsys) -> None:
+    monkeypatch.delenv("LATTICE_ROOT", raising=False)
+    monkeypatch.chdir(tmp_path)
+    named = literate_extract.parse_blocks(f'{FENCE}turtle-shapes\n# @output-file "shapes/a.ttl"\nex:S a sh:NodeShape .\n{FENCE}\n')
+    assert literate_extract.contract_shapes(named, "nowhere") == []
+    readme = tmp_path / "README.md"
+    readme.write_text(f"{FENCE}turtle-shapes\nex:S a sh:NodeShape .\n{FENCE}\n", encoding="utf-8")
+    assert literate_extract.main([str(readme), "--layer", "nowhere", "--root", str(tmp_path), "--check"]) == 1
+    assert "CATALOGUE" in capsys.readouterr().err
+
+
+def test_rc2_t4_the_versioning_check_reads_its_directories_from_the_conventions() -> None:
+    conventions = rc.load(ROOT).conventions
+    assert ontology_version_check.VERSIONED_DIRECTORIES == frozenset(conventions["versioned"]) == {"spec", "vocab"}
+    assert ontology_version_check.ARTEFACT_DIRECTORIES == tuple(conventions["artefact-directories"]) == ("shapes", "projection")
+
+
+def test_rc2_t5_the_freshness_check_extracts_with_the_contract_and_names_a_directory_with_no_readme() -> None:
+    assert check_formal_freshness.check_kernel_freshness("eligibility") == []
+    assert "no README" in check_formal_freshness.check_kernel_freshness("nowhere")[0]
+
+
+# Where a command for the extractor is written for people or for continuous integration. Historical
+# records (plans, status records, Validation Packs, sketches, notes) keep the commands they ran.
+COMMAND_DOCUMENTS = (
+    [ROOT / "tools/README.md", ROOT / "tools/proofs/README.md", ROOT / "docs/developer/developer-guide.md",
+     ROOT / "docs/book.html", ROOT / "docs/architecture/ontology-versioning-policy.md",
+     ROOT / ".claude/skills/lattice-ontology-authoring/SKILL.md"]
+    + sorted((ROOT / ".github/workflows").glob("*.yml"))
+    + sorted((ROOT / "ontology").glob("**/README.md"))
+)
+
+
+@pytest.mark.parametrize("document", COMMAND_DOCUMENTS, ids=lambda p: p.relative_to(ROOT).as_posix())
+def test_rc2_t6_no_command_passes_the_removed_shapes_argument(document: Path) -> None:
+    assert "--shapes " not in document.read_text(encoding="utf-8")
+
+
+def test_rc2_t7_the_extractor_finds_the_catalogue_above_its_readme_from_any_directory(tmp_path: Path, monkeypatch) -> None:
+    """RC2-C1 option (c): the catalogue is the nearest one above the README, not the working directory's."""
+    monkeypatch.delenv("LATTICE_ROOT", raising=False)
+    monkeypatch.chdir(tmp_path)
+    readme = ROOT / "ontology" / "wording" / "README.md"
+    assert rc.root_above(readme) == ROOT.resolve() and rc.root_above(tmp_path) is None
+    assert literate_extract.main([str(readme), "--layer", "wording", "--root", str(ROOT), "--check"]) == 0

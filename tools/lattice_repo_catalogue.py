@@ -107,6 +107,17 @@ def find_root(root: Path | str | None = None) -> Path:
     )
 
 
+def root_above(path: Path | str) -> Optional[Path]:
+    """The nearest directory at or above ``path`` that holds the catalogue file, or None. A
+    caller that knows which file it is working on passes the result to ``load()`` as its
+    explicit root, so it works from any working directory."""
+    here = Path(path).resolve()
+    for candidate in (here, *here.parents):
+        if (candidate / CATALOGUE_FILE).is_file():
+            return candidate
+    return None
+
+
 def blocks(markdown: str) -> List[str]:
     """The bodies of a document's catalogue blocks. Any other fence is skipped whole."""
     lines, found, index = markdown.splitlines(), [], 0

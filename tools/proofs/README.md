@@ -76,8 +76,8 @@ Regenerate a layer's `Kernel.thy` from its README after an `isabelle-spec` block
 platform:
 
 ```bash
-python tools/literate_extract.py ontology/<layer>/README.md --layer <layer> --root . \
-  --proofs-root tools/proofs --shapes <that layer's existing --shapes arguments, unchanged>
+mise exec -- python tools/literate_extract.py ontology/<layer>/README.md --layer <layer> --root . \
+  --proofs-root tools/proofs --reference-root tools/reference
 ```
 
 **A layer whose `spec`/`vocab`/`shapes` extraction already drifts from its README** (tracked as

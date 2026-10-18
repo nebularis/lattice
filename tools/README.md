@@ -34,22 +34,20 @@ authoritative specification. Fenced blocks are extracted in document order:
 fails (ADR-A120). `turtle-vocab` → `ontology/<layer>/vocab/<last-segment>-vocab.ttl`, with the same
 `@output-file` redirection and one-shared-version rule for several vocabulary documents (ADR-A120
 addendum). `--layer` may be a nested module path (for example `applied/insurance/peril`): its last
-segment names the default documents. `turtle-shapes` → the shape files named on the command line,
-in order. `turtle-example` blocks are never extracted. `isabelle-spec` → a layer's
+segment names the default documents. `turtle-shapes` → the shape files the module's
+[repository catalogue](../repository-catalogue.md) entry names, in order (ADR-A121). `turtle-example` blocks are never extracted. `isabelle-spec` → a layer's
 closed Isabelle datatype only, at `<proofs-root>/<layer>/Kernel.thy`
 (`--proofs-root`, e.g. `tools/proofs`; see `tools/proofs/README.md`,
 ADR-A-FM2). Each output gains the project's SPDX header as its first line.
 
 ```bash
 mise exec -- python tools/literate_extract.py ontology/surface/README.md \
-    --layer surface --root . \
-    --shapes shapes/structural.ttl shapes/constraints.ttl
+    --layer surface --root .
 ```
 
 ```bash
 mise exec -- python tools/literate_extract.py ontology/applied/insurance/peril/README.md \
-    --layer applied/insurance/peril --root . \
-    --shapes shapes/structural.ttl shapes/constraints.ttl
+    --layer applied/insurance/peril --root .
 ```
 
 `--check` writes nothing and exits non-zero if any target differs from what
@@ -62,7 +60,9 @@ other fence and any ordinary HTML comment, so a tagged block or a marker shown i
 `<!-- start: {...} -->` and `<!-- end -->` regions, and `<!-- hidden` blocks, are parsed and checked, and
 an `output-file` region or hidden block sends its blocks to that file. A README with a "Description
 Logic Encoding" section is checked against the layout by section title. The tests are
-`tools/test_literate_extract.py`, run by `mise run check:ontology-catalog`.
+`tools/test_literate_extract.py`, run by `mise run check:ontology-catalog`. A shape block that names no
+file takes its target from the module's repository catalogue entry, and the extractor finds the catalogue
+above the README, so it runs from any working directory.
 
 ## `tools/check_formal_freshness.py`
 

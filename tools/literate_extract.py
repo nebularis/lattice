@@ -78,27 +78,28 @@ the innermost, with one key of ``exclude``, ``output-file`` or ``generated``. An
 file. ``<!-- hidden`` or ``<!-- hidden: {"output-file": "..."}``, on its own line,
 wraps one tagged block that is extracted but not rendered, and is closed by a line
 holding only ``-->``. A block may name its file by one form only, the marker or its
-first line, and a ``turtle-shapes`` block that names one takes no ``--shapes``
-target. A README with a "Description Logic Encoding" section uses the layout, so its
+first line. A ``turtle-shapes`` block that names no file takes the next shape file of
+the module's extraction contract, which the repository catalogue states (ADR-A121),
+so there is no ``--shapes`` argument. A README with a "Description Logic Encoding" section uses the layout, so its
 top-level sections are checked by title: a missing, extra or repeated one is an
 error, and a misnumbered one a warning.
 
-Usage::
+Usage, from the repository root::
 
-    python3 -m tools.lattice.literate_extract ontology/surface/README.md \\
-        --layer surface \\
-        --root . \\
-        --shapes shapes/structural.ttl shapes/constraints.ttl
+    mise exec -- python tools/literate_extract.py ontology/surface/README.md --layer surface --root .
 
-    python3 -m tools.lattice.literate_extract ontology/surface/README.md \\
-        --layer surface --root . --check
+    mise exec -- python tools/literate_extract.py ontology/surface/README.md --layer surface --root . --check
 
-    python3 -m tools.lattice.literate_extract ontology/eligibility/README.md \\
-        --layer eligibility --root . --proofs-root tools/proofs \
-        --reference-root tools/reference
-    python3 -m tools.lattice.literate_extract ontology/applied/insurance/peril/README.md \
-        --layer applied/insurance/peril --root . \
-        --shapes shapes/structural.ttl shapes/constraints.ttl"""
+    mise exec -- python tools/literate_extract.py ontology/eligibility/README.md \\
+        --layer eligibility --root . --proofs-root tools/proofs --reference-root tools/reference
+
+    mise exec -- python tools/literate_extract.py ontology/applied/insurance/peril/README.md \\
+        --layer applied/insurance/peril --root .
+
+``--layer`` is the module's name in the repository catalogue, its path under ``ontology/``.
+``--root`` is where outputs are written or compared. The catalogue is the nearest one above
+the README, so the extractor runs from any working directory. With none above it, it is found
+from ``LATTICE_ROOT`` or the working directory."""
 
 from __future__ import annotations
 
@@ -111,6 +112,8 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Mapping, Sequence, Tuple
+
+import lattice_repo_catalogue
 
 SPDX_TTL = "# SPDX-License-Identifier: MPL-2.0"
 SPDX_THY = "(* SPDX-License-Identifier: MPL-2.0 *)"
@@ -529,8 +532,8 @@ def plan(
     if len(positional) != len(shape_targets):
         raise ValueError(
             f"{len(positional)} turtle-shapes block(s) without an output-file found but "
-            f"{len(shape_targets)} shape target(s) declared; the extraction "
-            f"contract in the README and the --shapes argument must agree"
+            f"{len(shape_targets)} shape file(s) in the extraction contract. The README and its "
+            f"repository catalogue entry must agree (ADR-A121)"
         )
     if isabelle_bodies and not proofs_root:
         raise ValueError(
@@ -577,7 +580,7 @@ def plan(
     for body, target in zip(positional, shape_targets):
         path = f"ontology/{layer}/{target}"
         if path in shape_docs:
-            raise ValueError(f"{path} is named both by --shapes and by a block's output-file")
+            raise ValueError(f"{path} is named both by the extraction contract and by a block's output-file")
         outputs[path] = render([body])
     for path, bodies in shape_docs.items():
         outputs[path] = render(bodies)
@@ -630,17 +633,28 @@ def _escapes_layer(path: str) -> bool:
     return path.startswith("/") or Path(path).is_absolute() or ".." in Path(path).parts
 
 
+def contract_shapes(blocks: Sequence[Block], layer: str, readme: Path | None = None) -> List[str]:
+    """The module's shape files, relative to its directory and in extraction order, from its
+    repository catalogue entry. The catalogue is the nearest one above ``readme`` (RC2-C1), or,
+    with no ``readme`` or none above it, the one ``LATTICE_ROOT`` or the working directory
+    finds. It is read only when a shape block names no file, so a README outside the catalogue
+    with no such block still extracts (RC2-C2). After downstream catalogues exist (RC4), every
+    extraction will read it and check its generated files against the entry."""
+    if not any(
+        b.tag == "turtle-shapes" and not b.output_file and not OUTPUT_FILE_RE.match(b.body.partition("\n")[0])
+        for b in blocks
+    ):
+        return []
+    root = lattice_repo_catalogue.root_above(readme) if readme is not None else None
+    module = lattice_repo_catalogue.load(root).module(layer)
+    return [f.relative_to(module.path).as_posix() for f in module.files("shapes")]
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Extract compiled Turtle from a layer README")
     parser.add_argument("readme", help="path to the layer README.md")
-    parser.add_argument("--layer", required=True, help="layer directory name, e.g. surface")
-    parser.add_argument("--root", default=".", help="repository root (default: .)")
-    parser.add_argument(
-        "--shapes",
-        nargs="*",
-        default=[],
-        help="shape output paths, relative to the layer directory, in document order",
-    )
+    parser.add_argument("--layer", required=True, help="the module's name in the repository catalogue, e.g. surface")
+    parser.add_argument("--root", default=".", help="where outputs are written or compared (default: .)")
     parser.add_argument(
         "--proofs-root",
         default=None,
@@ -677,7 +691,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         for message in errors:
             print(f"LAYOUT {readme_path}: {message}", file=sys.stderr)
         return 1
-    outputs = plan(result.blocks, args.layer, args.shapes, args.proofs_root, args.reference_root)
+    try:
+        shapes = contract_shapes(result.blocks, args.layer, readme_path)
+    except lattice_repo_catalogue.CatalogueError as error:
+        print(f"CATALOGUE {error}", file=sys.stderr)
+        return 1
+    outputs = plan(result.blocks, args.layer, shapes, args.proofs_root, args.reference_root)
 
     root = Path(args.root)
     proofs_root = Path(args.proofs_root) if args.proofs_root else None

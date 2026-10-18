@@ -33,13 +33,18 @@ import sys
 from pathlib import Path
 from typing import Optional, Set
 
-ROOT = Path(__file__).resolve().parent.parent
+import lattice_repo_catalogue
+
+CATALOGUE = lattice_repo_catalogue.load()
+ROOT = CATALOGUE.root
 ONTOLOGY_ROOT = "ontology"
 
 VERSION_IRI_RE = re.compile(r"owl:versionIRI\s+<([^>]+)>")
 ONTOLOGY_MARKER_RE = re.compile(r"\bowl:Ontology\b")
-VERSIONED_DIRECTORIES = frozenset({"spec", "vocab"})
-ARTEFACT_DIRECTORIES = ("shapes", "projection")
+# Which documents carry an owl:versionIRI, and which directories a .version file, are the
+# repository catalogue's conventions (ADR-A121).
+VERSIONED_DIRECTORIES = frozenset(CATALOGUE.conventions["versioned"])
+ARTEFACT_DIRECTORIES = tuple(CATALOGUE.conventions["artefact-directories"])
 VERSION_FILE = ".version"
 SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+$")
 

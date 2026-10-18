@@ -63,8 +63,7 @@ This README is the source of three kinds of file. `tools/literate_extract.py` co
 `shapes/structural.ttl`, `shapes/constraints.ttl` and `shapes/single-expression.ttl`. A ` ```turtle-example ` block is illustration only.
 
 ```bash
-python tools/literate_extract.py ontology/instrument/README.md --layer instrument --root . \
-    --shapes shapes/structural.ttl shapes/constraints.ttl shapes/single-expression.ttl
+mise exec -- python tools/literate_extract.py ontology/instrument/README.md --layer instrument --root .
 ```
 
 The module's entry in the [repository catalogue](../../repository-catalogue.md)

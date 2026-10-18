@@ -694,13 +694,13 @@ that code and documents agree with it. Shares work with `python-test-melting` (s
 
 | Field | Value |
 |-------|-------|
-| **Status** | 🚧 In progress, branch `docs/literate-v2`. OD0 accepted 2026-10-17. OD1 passed. RC1 authored, not yet run |
+| **Status** | 🚧 In progress, branch `docs/literate-v2`. OD0 accepted 2026-10-17. OD1 passed. RC1 and RC2 pass (2026-10-18) |
 | **Unit ID** | `improved-ontology-documentation` (absorbs `repository-catalogue`) |
 | **Sketches** | [improved-ontology-documentation.md](sketches/improved-ontology-documentation.md), [repository-catalogue.md](sketches/repository-catalogue.md) |
 | **Plan** | [improved-ontology-documentation.md](plans/improved-ontology-documentation.md) |
 | **Status Record** | [improved-ontology-documentation.md](status/improved-ontology-documentation.md) |
 | **ADRs** | A-121, A-126 and A-127, accepted 2026-10-17 |
-| **Validation Packs** | [OD0](validation/OD0.md), [OD1](validation/OD1.md), [RC1](validation/RC1.md) |
+| **Validation Packs** | [OD0](validation/OD0.md), [OD1](validation/OD1.md), [RC1](validation/RC1.md), [RC2](validation/RC2.md) |
 
 One README layout whose normative sections compile to Turtle and SHACL from a markdown grammar, the
 repository catalogue with each module's entry in its README, and a sources rule for user-facing documents
@@ -867,6 +867,7 @@ built on published ADRs. Piloted on Eligibility, then Vocabulary.
 - [OD0.md](validation/OD0.md) — improved ontology documentation, OD0 (the three ADRs, the agent rule, the conventions document)
 - [OD1.md](validation/OD1.md) — improved ontology documentation, OD1 (the fence-aware scanner, markers and the layout check)
 - [RC1.md](validation/RC1.md) — improved ontology documentation, RC1 (the repository catalogue and its reader)
+- [RC2.md](validation/RC2.md) — improved ontology documentation, RC2 (the tools read the repository catalogue)
 - More to be created as each slice/phase completes
 
 ## Test Taxonomy (L0–L8)

@@ -49,8 +49,7 @@ in the release notes (§10).
 - `turtle-example` blocks are illustrative only. The worked examples live in `examples/`.
 
 ```bash
-python3 tools/literate_extract.py ontology/wording/README.md --layer wording --root . \
-    --shapes shapes/structural.ttl shapes/constraints.ttl --check
+mise exec -- python tools/literate_extract.py ontology/wording/README.md --layer wording --root . --check
 ```
 
 The module's entry in the [repository catalogue](../../repository-catalogue.md)

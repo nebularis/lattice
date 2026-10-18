@@ -247,7 +247,7 @@ moved, and cites only published decisions.
 |---|---|
 | `turtle-spec` | `spec/<layer>.ttl`, or the file its `# @output-file` first line names |
 | `turtle-vocab` | `vocab/<layer>-vocab.ttl` |
-| `turtle-shapes` | the shape files named on the extractor's command line, in order |
+| `turtle-shapes` | the shape files the module's repository catalogue entry names, in order |
 | `turtle-example` | never extracted |
 | `isabelle-spec` | the layer's Isabelle theory, and the Python generated from its `fun` clauses |
 

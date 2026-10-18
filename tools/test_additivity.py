@@ -274,7 +274,7 @@ def test_c9b2_13_signing_down_is_ratio_then_scale() -> None:
 
 def test_c9b2_14_readme_is_the_source_and_records_the_release() -> None:
     assert literate_extract.main([str(QLAYER / "README.md"), "--layer", "quantification", "--root", str(ROOT),
-                                  "--shapes", "shapes/constraints.ttl", "--check"]) == 0
+                                  "--check"]) == 0
     readme = (QLAYER / "README.md").read_text()
     assert "**0.8.0** (additive, CCS C9b2" in readme and "Shapes 0.3.0 (breaking)" in readme
     assert "| `Sum` | yes, extensive | no, only plus an extent | no, intensive | yes, of one base | no |" in readme

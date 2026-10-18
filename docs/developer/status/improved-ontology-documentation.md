@@ -3,7 +3,7 @@
 # Improved Ontology Documentation: Status
 
 **Unit ID:** `improved-ontology-documentation` (absorbs `repository-catalogue`)
-**Status:** In progress. OD0 accepted. OD1 passed. RC1 authored, not yet run.
+**Status:** In progress. OD0 accepted. OD1, RC1 and RC2 pass. RC2-C1 changed to option (c), RC2-T7 not yet run.
 **Last updated:** 2026-10-16
 **Branch:** `docs/literate-v2`
 **Plan:** [improved-ontology-documentation.md](../plans/improved-ontology-documentation.md)
@@ -20,17 +20,16 @@ ontology file has changed.
 
 ## Next action
 
-1. The maintainer reviews the [RC1 Validation Pack](../validation/RC1.md), including its eight implementation
-   choices, and runs its commands. RC1 is authored, not yet run.
-2. Then RC2, which moves the tools onto the reader, and OD2 and OD3 on the extractor.
+1. The maintainer runs RC2-T7 (below) and commits RC2.
+2. Then OD2 and OD3 on the extractor, and RC3 for roots, tool packages and the generated AGENTS.md table.
 
 ## Slices
 
 | Slice | State | Blocked on |
 |---|---|---|
 | OD0 ADRs, the AGENTS.md rule, the conventions document | accepted 2026-10-17, committed, [Validation Pack](../validation/OD0.md) | |
-| RC1 catalogue and reader | authored 2026-10-17, not yet run, [Validation Pack](../validation/RC1.md) | the maintainer's run and review |
-| RC2 consumers use the reader | planned | RC1 |
+| RC1 catalogue and reader | committed 2026-10-17, tests pass, choices agreed 2026-10-18, [Validation Pack](../validation/RC1.md) | |
+| RC2 consumers use the reader | passed 2026-10-18, RC2-C1 changed to (c), RC2-T7 not yet run, [Validation Pack](../validation/RC2.md) | RC2-T7, the maintainer's commit |
 | RC3 roots, AGENTS.md table, bypass scan | planned | RC2 |
 | OD1 scanner and markers | passed 2026-10-17, choices agreed, [Validation Pack](../validation/OD1.md) | the maintainer's merge |
 | OD2 sections 1 and 2 | planned | OD1 |
@@ -119,3 +118,16 @@ None.
   `check`). The extraction contracts were taken from what each README generates, by the extractor's
   `plan()` in memory, and the substrate imports from `import_guard.ALLOWED`, and tests hold both. Eight
   implementation choices and two deviations are in the Validation Pack.
+- 2026-10-17: the maintainer committed RC1 (`be612df5`). Its results and choices are not yet recorded.
+- 2026-10-17: RC2 authored, not yet run. The extractor reads shape targets from the catalogue and `--shapes`
+  is removed. The import guard, the versioning check and the freshness check read their constants from it.
+  Every extractor command for people or CI drops `--shapes` and goes through `mise exec`, CI's two Surface
+  steps included. RC1-T4 now compares the catalogue with ADR-A01's order written out in the test.
+- 2026-10-18: the maintainer merged `main` into the branch (`74989f04`, with `mise.toml` taking main's
+  `check:ontology-catalog` plus our two test modules) and ran RC2's checks: the import guard, versioning,
+  freshness and catalogue checks pass, and `check:ontology-catalog` passes with 974 tests and 7 skips (the
+  reasoning tests without their jar). RC1's tests pass in the same run.
+- 2026-10-18: RC1-C1 to RC1-C8 and RC2-C2 agreed as implemented, RC2-C1 changed to option (c): the extractor
+  finds the catalogue above its README, from any working directory. Implemented with RC2-T7. On RC1-C5, a
+  migrated README holds its entry in section 3, which OD2's layout check will enforce. RC2-C2's move to
+  option (b), every extraction checked against its entry, is planned in RC4.

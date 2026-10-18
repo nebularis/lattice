@@ -170,7 +170,7 @@ def test_c3_08_three_contracts_each_constraining_its_property() -> None:
 
 def test_c3_09_readme_blocks_equal_the_files() -> None:
     assert literate_extract.main([str(LAYER / "README.md"), "--layer", "wording", "--root", str(ROOT),
-                                  "--shapes", "shapes/structural.ttl", "shapes/constraints.ttl", "--check"]) == 0
+                                  "--check"]) == 0
 
 
 def test_c3_10_both_versions_have_release_rows() -> None:

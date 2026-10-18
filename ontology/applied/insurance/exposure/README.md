@@ -76,10 +76,8 @@ by later Phase 4 slices and, eventually, the contract module (Phase 5).
   [`examples/core.ttl`](examples/core.ttl).
 
 ```bash
-python3 tools/literate_extract.py ontology/applied/insurance/exposure/README.md \
-    --layer applied/insurance/exposure --root . \
-    --shapes shapes/structural.ttl shapes/constraints.ttl \
-             shapes/profiles/construction-protection.ttl shapes/profiles/cyber-posture.ttl --check
+mise exec -- python tools/literate_extract.py ontology/applied/insurance/exposure/README.md \
+    --layer applied/insurance/exposure --root . --check
 ```
 
 The module's entry in the [repository catalogue](../../../../repository-catalogue.md)

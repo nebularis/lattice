@@ -73,8 +73,7 @@ to `shapes/constraints.ttl`. The ontology header, with its version IRI and impor
 ` ```turtle-spec ` block in §2, so a version bump is an edit to this document.
 
 ```bash
-python tools/literate_extract.py ontology/quantification/README.md --layer quantification --root . \
-    --shapes shapes/constraints.ttl
+mise exec -- python tools/literate_extract.py ontology/quantification/README.md --layer quantification --root .
 ```
 
 `fnd:utility` values throughout this document explain what a term is for and how to use it — never why it was shaped this way rather than some other way. That reasoning belongs in §4 (Design Decisions) alone, per the discipline corrected across Foundation, Vocabulary, and Party's own documents; nothing in this document's `fnd:utility` text should need to reference this section, a rejected alternative, or a dependency-order constraint to make sense to someone applying the term.

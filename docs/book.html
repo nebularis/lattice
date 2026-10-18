@@ -158,9 +158,8 @@ runtime answers with provenance</code></pre>
 
       <h3>Literate specifications</h3>
       <p>Layer READMEs are not prose written <em>about</em> the ontology — they are its authoring surface. Fenced <code>turtle-spec</code>, <code>turtle-vocab</code>, and <code>turtle-shapes</code> blocks inside a layer's README are mechanically extracted, in document order, into the compiled files a reasoner would actually load; a <code>turtle-example</code> block is deliberately never extracted, so a README can show a worked case without it leaking into the compiled ontology. Run the drift check after changing a README, vocabulary, ontology, or shape file:</p>
-      <pre><code>python3 tools/literate_extract.py ontology/surface/README.md \
-  --layer surface --root . \
-  --shapes shapes/structural.ttl shapes/constraints.ttl --check</code></pre>
+      <pre><code>mise exec -- python tools/literate_extract.py ontology/surface/README.md \
+  --layer surface --root . --check</code></pre>
       <div class="callout warn"><strong>Known doc bug:</strong> <code>tools/README.md</code> still documents this script's path as <code>tools/lattice/literate_extract.py</code>. No such directory exists — the real path is <code>tools/literate_extract.py</code>, exactly as used above and exactly as the CI workflow invokes it. This guide uses the correct path throughout.</div>
     </section>
 

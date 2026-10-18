@@ -270,9 +270,7 @@ def test_c6_13_second_expression_conforms_except_to_the_optional_shape() -> None
 # ---- C6-14: literate source and release notes -------------------------------
 
 def test_c6_14_readme_is_the_source_and_releases_are_recorded() -> None:
-    assert literate_extract.main([str(LAYER / "README.md"), "--layer", "instrument", "--root", str(ROOT), "--shapes",
-                                  "shapes/structural.ttl", "shapes/constraints.ttl", "shapes/single-expression.ttl",
-                                  "--check"]) == 0
+    assert literate_extract.main([str(LAYER / "README.md"), "--layer", "instrument", "--root", str(ROOT), "--check"]) == 0
     readme = (LAYER / "README.md").read_text()
     assert "0.9.0 (breaking, CCS C6" in readme and "Shapes 0.2.0\n  (breaking)" in readme
     assert (LAYER / "shapes" / ".version").read_text().strip() == "0.8.0"

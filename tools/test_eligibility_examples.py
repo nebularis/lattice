@@ -175,8 +175,7 @@ SHAPE_FILES = ["shapes/structural.ttl", "shapes/constraints.ttl", "shapes/rules.
 
 def _literate_check(root: Path) -> int:
     return literate_extract.main([
-        str(LAYER / "README.md"), "--layer", "eligibility", "--root", str(root), "--shapes", *SHAPE_FILES,
-        "--proofs-root", str(ROOT / "tools" / "proofs"), "--reference-root", str(ROOT / "tools" / "reference"),
+        str(LAYER / "README.md"), "--layer", "eligibility", "--root", str(root), "--proofs-root", str(ROOT / "tools" / "proofs"), "--reference-root", str(ROOT / "tools" / "reference"),
         "--check",
     ])
 

@@ -25,10 +25,9 @@ Two checks, run per layer:
    Instead it calls ``parse_blocks``/``plan``/``render`` as a library and
    checks only the ``@proofs-root@`` output, the same narrow extraction
    E1.0 used when Eligibility's README was first wired (see
-   ``docs/developer/status/formal-methods-track-e.md``). The shape and spec
-   targets passed to ``plan()`` are placeholders, matched only in count to
-   the README's own ``turtle-shapes`` blocks (``plan()`` requires the
-   counts to agree) — their content is never read or compared.
+   ``docs/developer/status/formal-methods-track-e.md``). The shape targets
+   passed to ``plan()`` are the module's extraction contract, from the
+   repository catalogue (ADR-A121). Their content is never read or compared.
 
 2. **Law coverage** (every ``tools/reference/<layer>/`` directory). Every
    law code the README's law register declares with ``elg:lawRegister
@@ -54,11 +53,19 @@ from typing import List
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from literate_extract import parse_blocks, plan  # noqa: E402  (sibling script import)
+import lattice_repo_catalogue  # noqa: E402
 
-ROOT = Path(__file__).resolve().parent.parent
+CATALOGUE = lattice_repo_catalogue.load()
+ROOT = CATALOGUE.root
 PROOFS_ROOT = ROOT / "tools" / "proofs"
 REFERENCE_ROOT = ROOT / "tools" / "reference"
-ONTOLOGY_ROOT = ROOT / "ontology"
+
+
+def _readme(layer: str) -> Path:
+    """The README of the module a proof or reference directory is named after, from the
+    repository catalogue (ADR-A121). A directory named after no module has none."""
+    module = CATALOGUE.modules.get(layer)
+    return ROOT / (module.path if module else Path("ontology") / layer) / "README.md"
 
 LAW_START_RE = re.compile(r"(?P<prefix>[a-z]+):L(?P<number>\d+)\s+a\s+(?P=prefix):Law\b")
 
@@ -83,19 +90,21 @@ def _semantic_laws(readme_text: str) -> List[str]:
 def check_kernel_freshness(layer: str) -> List[str]:
     """Return a list of drift messages for ``layer``'s ``Kernel.thy``, empty
     if none."""
-    readme_path = ONTOLOGY_ROOT / layer / "README.md"
+    readme_path = _readme(layer)
     kernel_path = PROOFS_ROOT / layer / "Kernel.thy"
     if not readme_path.is_file():
         return [f"{kernel_path}: no README at {readme_path} to check it against"]
 
     blocks = parse_blocks(readme_path.read_text(encoding="utf-8"))
-    shape_block_count = sum(1 for b in blocks if b.tag == "turtle-shapes")
-    placeholder_shapes = [f"shapes/__freshness_check_placeholder_{i}.ttl" for i in range(shape_block_count)]
+    if layer not in CATALOGUE.modules:
+        return [f"{kernel_path}: {layer} is not a module in the repository catalogue"]
+    module = CATALOGUE.module(layer)
+    shapes = [f.relative_to(module.path).as_posix() for f in module.files("shapes")]
     try:
         outputs = plan(
             blocks,
             layer,
-            placeholder_shapes,
+            shapes,
             proofs_root=str(PROOFS_ROOT),
             reference_root=str(REFERENCE_ROOT),
         )
@@ -126,7 +135,7 @@ def check_kernel_freshness(layer: str) -> List[str]:
 def check_law_coverage(layer: str) -> List[str]:
     """Return a list of drift messages for ``layer``'s reference-semantics
     law coverage, empty if none."""
-    readme_path = ONTOLOGY_ROOT / layer / "README.md"
+    readme_path = _readme(layer)
     reference_dir = REFERENCE_ROOT / layer
     if not readme_path.is_file():
         return [f"{reference_dir}: no README at {readme_path} to check it against"]

@@ -281,9 +281,7 @@ def test_c8_13_the_instantiator_names_generated_nodes_deterministically() -> Non
 # ---- C8-14: literate source and release notes --------------------------------
 
 def test_c8_14_readme_is_the_source_and_releases_are_recorded() -> None:
-    assert literate_extract.main([str(LAYER / "README.md"), "--layer", "instrument", "--root", str(ROOT), "--shapes",
-                                  "shapes/structural.ttl", "shapes/constraints.ttl", "shapes/single-expression.ttl",
-                                  "--check"]) == 0
+    assert literate_extract.main([str(LAYER / "README.md"), "--layer", "instrument", "--root", str(ROOT), "--check"]) == 0
     readme = (LAYER / "README.md").read_text()
     assert "0.13.0 (additive, CCS C8" in readme and "Shapes 0.6.0 (breaking" in readme
     assert (LAYER / "shapes" / ".version").read_text().strip() == "0.8.0"

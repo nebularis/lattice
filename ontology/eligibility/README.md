@@ -41,8 +41,7 @@ Eligibility imports Foundation, Vocabulary, Quantification, and Party. Quantific
   The theory's proofs, and `decision_leq`, are hand-written, not generated.
 
 ```bash
-python3 tools/literate_extract.py ontology/eligibility/README.md --layer eligibility --root . \
-    --shapes shapes/structural.ttl shapes/constraints.ttl shapes/rules.ttl \
+mise exec -- python tools/literate_extract.py ontology/eligibility/README.md --layer eligibility --root . \
     --proofs-root tools/proofs --reference-root tools/reference --check
 ```
 

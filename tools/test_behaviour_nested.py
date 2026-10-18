@@ -246,7 +246,7 @@ def test_c11a_14_the_occasion_states_with_live() -> None:
 
 def test_c11a_15_readme_blocks_and_release_notes() -> None:
     assert literate_extract.main([str(LAYER / "README.md"), "--layer", "behaviour", "--root", str(ROOT),
-                                  "--shapes", "shapes/structural.ttl", "--check"]) == 0
+                                  "--check"]) == 0
     readme = (LAYER / "README.md").read_text()
     assert "behaviour-vocab` 0.10.0 (breaking)" in readme and "Shapes 0.4.0 (breaking)" in readme
     for name in NESTED:

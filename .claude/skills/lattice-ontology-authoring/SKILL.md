@@ -18,12 +18,12 @@ Follow every step for any change to `ontology/**/spec/`, `ontology/**/vocab/`, o
    regenerate:
 
    ```bash
-   mise exec -- python tools/literate_extract.py ontology/<layer>/README.md --layer <layer> --root . --shapes <shape files>
+   mise exec -- python tools/literate_extract.py ontology/<layer>/README.md --layer <layer> --root .
    ```
 
-   - `--shapes` lists one file per `turtle-shapes` block, relative to the layer, in block order.
-     For example, Wording takes `shapes/structural.ttl shapes/constraints.ttl`, and Instrument adds
-     `shapes/single-expression.ttl`. The layer's README or its test names them.
+   - `turtle-shapes` blocks go, in order, to the shape files named in the layer's entry in the
+     [repository catalogue](https://github.com/nebularis/lattice/blob/main/repository-catalogue.md),
+     in its README. Adding, removing or reordering a shape block is an edit to that entry.
    - All `turtle-spec` blocks concatenate, in order, into `spec/<layer>.ttl`, and all `turtle-vocab`
      blocks into `vocab/<layer>-vocab.ttl`. The ontology header is itself a block, so a version bump
      is a README edit.

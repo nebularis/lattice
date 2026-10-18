@@ -50,8 +50,7 @@ A model that only declares behaviour imports configuration and never meets a run
 - `turtle-example` blocks are illustrative only.
 
 ```bash
-python3 tools/literate_extract.py ontology/behaviour/README.md --layer behaviour --root . \
-    --shapes shapes/structural.ttl --check
+mise exec -- python tools/literate_extract.py ontology/behaviour/README.md --layer behaviour --root . --check
 ```
 
 The module's entry in the [repository catalogue](../../repository-catalogue.md)

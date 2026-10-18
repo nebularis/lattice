@@ -112,27 +112,17 @@ def test_air20_04_vocab_directive_stays_in_the_modules_vocab(path: str) -> None:
         plan(parse_blocks(readme), "x", [])
 
 
-LITERATE_LAYERS = [
-    ("foundation", ["shapes/constraints.ttl"]),
-    ("quantification", ["shapes/constraints.ttl"]),
-    ("wording", ["shapes/structural.ttl", "shapes/constraints.ttl"]),
-    ("behaviour", ["shapes/structural.ttl"]),
-    (
-        "instrument",
-        ["shapes/structural.ttl", "shapes/constraints.ttl", "shapes/single-expression.ttl"],
-    ),
-    ("eligibility", ["shapes/structural.ttl", "shapes/constraints.ttl", "shapes/rules.ttl"]),
-]
+# The literate layers whose README is the source of every file it generates. The shape files
+# each takes come from its repository catalogue entry (ADR-A121).
+LITERATE_LAYERS = ["foundation", "quantification", "wording", "behaviour", "instrument", "eligibility"]
 
 
-@pytest.mark.parametrize("layer,shapes", LITERATE_LAYERS)
-def test_air20_05_every_literate_layer_of_main_is_unchanged(layer: str, shapes: list[str]) -> None:
+@pytest.mark.parametrize("layer", LITERATE_LAYERS)
+def test_air20_05_every_literate_layer_of_main_is_unchanged(layer: str) -> None:
     readme = ROOT / "ontology" / layer / "README.md"
     kwargs = ["--proofs-root", str(ROOT / "tools" / "proofs"), "--reference-root", str(ROOT / "tools" / "reference")] \
         if layer == "eligibility" else []
-    assert literate_extract.main(
-        [str(readme), "--layer", layer, "--root", str(ROOT), "--shapes", *shapes, *kwargs, "--check"]
-    ) == 0
+    assert literate_extract.main([str(readme), "--layer", layer, "--root", str(ROOT), *kwargs, "--check"]) == 0
 
 
 # ---- ADR-A126, slice OD1: the fence- and marker-aware scanner, and the layout ----------
