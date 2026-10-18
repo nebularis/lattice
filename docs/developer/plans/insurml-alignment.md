@@ -51,7 +51,7 @@ bind how the epic is run:
 | 4 | the assembly interface: models, hooks and the record in Wording, the assembler interface with baseline and InsurML adapters, renderer, verification and optimisation passes, parity | 2, ideally 3 | IM2 | 1.5M to 3M |
 | 5 | meaning over components, placement records, deviation reports | 4, CCS C7c to C9, AIR-5.1 to AIR-5.4 | IM3 | 2M to 4M |
 | 6 | authoring (Word add-in, web studio) and exchange kits, contract packages, companion LegalRuleML | 2, 4, the XML egress ADR | IM4, IM5 | 2M to 4M |
-| 7 | wording teaching packs, compact form, library index, ingestion with InsurML as structure target | 2, ingestion vision phases 1 and 2 | IM6 | 2M to 4M |
+| 7 | library index, ingestion with InsurML as structure target | 2, ingestion vision phases 1 and 2 | IM6 | 2M to 4M |
 | 8 | standards engagement: proposals P-1 to P-16, profile re-pins per InsurML edition | continuous, from 2 | none | under 0.3M a round |
 
 Estimates are orders of magnitude for agent work, excluding review, to be compared with
@@ -70,7 +70,7 @@ flowchart LR
     AIR["AIR-5.1 to 5.4"] --> P5
     P2 --> P6["6 Authoring, exchange"]
     P4 --> P6
-    P2 --> P7["7 Packs, ingestion"]
+    P2 --> P7["7 Ingestion"]
     ING["Ingestion vision<br/>phases 1, 2"] --> P7
     P2 --> P8["8 Engagement"]
 ```
@@ -145,12 +145,10 @@ The Word add-in and the web studio (each an `apps/` ADR), the exchange kits of t
 contract package, and the companion LegalRuleML document using the runtime pipeline. Outlined at
 the Phase 4 gate.
 
-### Phase 7: teaching packs and ingestion
+### Phase 7: ingestion
 
-An ADR extending the teaching-pack pattern beyond MORK, the structure and meaning packs, the
-compact form measured against constrained decoding, the versioned library index, and ingestion with
-InsurML as the structure target, measured against hypotheses H1 to H6 (toolchain §9.6). Outlined at
-the Phase 2 gate, with the ingestion vision's phase 1 tooling in view.
+The versioned library index, and ingestion with InsurML as the structure target, measured as IM6
+states. Outlined at the Phase 2 gate, with the ingestion vision's phase 1 tooling in view.
 
 ### Phase 8: standards engagement
 
@@ -166,7 +164,7 @@ profile when InsurML publishes an edition.
 | IM3 | a placed contract with values, a chosen alternative, a modified clause and a manuscript clause yields its deviation report and bound meaning, and one regime runs to a decision that cites its fragment | phase 5 |
 | IM4 | a component edited in Word arrives as a valid InsurML component version and lifts | phase 6 |
 | IM5 | a contract package goes out and is lifted back with no loss beyond declared fidelity, including a companion LegalRuleML document | phase 6 |
-| IM6 | clean-room documents are read into InsurML structure with library recognition, and H1 and H2 are measured against gold | phase 7 |
+| IM6 | clean-room documents are read into InsurML structure with library recognition, and structure accuracy and library recognition are measured against gold | phase 7 |
 
 ## 6. Alignment with other work
 
@@ -184,7 +182,7 @@ profile when InsurML publishes an edition.
 | AIR | reference vocabularies | market, class of business and area of coverage schemes |
 | [NRS](normative-rule-substrate.md) | N3 | the clash check as a verification pass |
 | NRS | N12 and the LegalRuleML sketches | the companion LegalRuleML document (phase 6) |
-| [Ingestion vision](../../architecture/ingestion-vision.md) | phases 1 and 2, Q2, Q9, Q11 | InsurML as a structure target, packs beyond MORK, digests for recognition (phase 7) |
+| [Ingestion vision](../../architecture/ingestion-vision.md) | phases 1 and 2, Q9, Q11 | InsurML as a structure target, digests for recognition (phase 7) |
 | MTP | the generator | reused for wording packs under a new ADR (phase 7) |
 | [XML egress](../sketches/xml-egress-and-transformation-kits.md), [wire protocol](../sketches/normative-wire-protocol.md) | kits and skins | InsurML kits beside the instrument kit, settings as a JSON skin (phase 6) |
 | [Evaluation context](../sketches/evaluation-context.md) | ledgers | limits and excesses name the words each ledger account is read from |
@@ -213,7 +211,6 @@ None of these is taken without the maintainer. "Needed by" is the gate at which 
 | IMA-D12 | Home of the bridge tools and kits | a project under `tools/`, kits under `contracts/` | as the topology ADR drafted in phase 0 proposes | gate 1 |
 | IMA-D13 | First authoring front end | Word add-in or web studio | Word add-in | gate 4 |
 | IMA-D14 | LegalRuleML beside InsurML | companion document, package, inside InsurML | companion document by default | gate 4 |
-| IMA-D15 | Teaching packs beyond MORK | extend ADR-A44, or a new ADR | a new ADR | gate 2 |
 | IMA-D17 | Adopt assembly through an interface in Wording, with InsurML's model as the insurance default | an interface (models, hooks, one record), a new Assembly layer, the profile only, or tools only ([assembly sketch](../sketches/wording-assembly-interface.md) §12) | the interface in Wording, adapters in tools, InsurML's model in the profile | gate 0 |
 | IMA-D16 | Collaboration model with InsurML's owner | proposals only, joint working sessions, contribution to InsurML's repository | proposals after fixtures, with joint review of each profile release. Licence of any contribution decided by a maintainer | gate 0 |
 
@@ -226,7 +223,6 @@ Integration §14 lists Q-1 to Q-10. Five more:
 | Q-11 | Can LATTICE run InsurML's processor and checks for the parity suite, and under which licence? |
 | Q-12 | Would InsurML give inclusion entries IRIs (P-13)? |
 | Q-13 | Would InsurML accept meaning as informational foreign content, never contractual (P-14)? |
-| Q-14 | Would InsurML's owner write, or review, the doctrine of a structure teaching pack? |
 | Q-15 | Which renumbering rule does InsurML intend after filtering (Q32), given that LATTICE numbers a chosen variant as its slot? |
 | Q-16 | **Answered 2026-10-06:** an `iml:Contract` may be a template (a product form underwriters tailor case by case) or an instance (one client's bound policy in force) |
 | Q-19 | What does the date in an instance contract's IRI mean, its effective date or the date it was recorded, and how is a backdated endorsement versioned? (identity note §6) |
