@@ -52,13 +52,12 @@ deliberate. The release slice OD-REL resolves it once, before the merge into `ma
 | RC4 downstream extension | planned | RC3 |
 | RC5 package promotion | planned | RC4 |
 | RC6 XML catalogue folded in | planned | RC5, a new ADR on ADR-A88 |
+| ELC composition operation | briefed 2026-10-19 (OD-D44, OD-D45) | |
 | OD-REL release before the merge | planned | every migration on the branch |
 
 ## Open questions
 
-- **OD6-Q7. Rename `elg:CompatibilityOperation`?** It is declared on every condition, but evaluated only on an
-  admission profile, where it combines the conditions' outcomes (ADR-A89, ADR-A90). ADR-A05 records no reason
-  for the name. The options and their cost are in the reply of 2026-10-18, summarised in the OD6 Validation Pack.
+None.
 
 ## Coordination with other units
 
@@ -191,3 +190,6 @@ deliberate. The release slice OD-REL resolves it once, before the merge into `ma
 
 - 2026-10-18: OD6 reviewed. The definitions agreed with three changes, applied and reconciled. L1 to L8's
   register goes to OD-REL. OD6-Q7 opened on renaming `elg:CompatibilityOperation`.
+- 2026-10-19: OD6-Q7 answered. `elg:CompatibilityOperation` becomes `elg:CompositionOperation`, declared on
+  admission profiles only (OD-D44), and `elg:DimensionConsistent` is retired with `elg:E6` (OD-D45). Slice ELC
+  briefed, to land before OD-REL.

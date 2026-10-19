@@ -83,6 +83,8 @@ Decided by the maintainer on 2026-10-15 and 2026-10-16. The status record's log 
 | OD-D41 | The bypass scan's known exceptions are a text file beside the reader, `tools/lattice_repo_catalogue_exceptions.txt`, each with a reason, in a list that may only shrink. One technical debt row names the file and gives its count, which the scan checks (RC3-Q2, option b) |
 | OD-D42 | A migrated layer's terms each have a definition. Where a term has none today, we draft it from what the README already says, the maintainer reviews it, and the migration check lists the new `rdfs:comment` as an approved reconciliation (OD6-Q5, option a) |
 | OD-D43 | Versions are not bumped or re-pinned per migration. On this branch, migrated layers' documents change without new version IRIs and their importers stay pinned to the old ones, so the branch's versions are knowingly inconsistent. Before the merge into `main`, one release slice bumps every changed document once, re-pins every importer once, and adds the release rows and notes (OD6-Q6, option b) |
+| OD-D44 | `elg:CompatibilityOperation` becomes `elg:CompositionOperation`, and `elg:compatibilityOperation` becomes `elg:compositionOperation`. It is declared on admission profiles only, where it says how a profile combines its conditions' outcomes, and no longer on every condition, where it had no effect. L2 and `elg:ConditionShape` change to match (OD6-Q7a, option c, and OD6-Q7b) |
+| OD-D45 | `elg:DimensionConsistent` is retired, with the operational profile `elg:E6` that tested it. It was meant to check that conditions on different dimensions are compatible before they are combined, which is a precondition, not a way of composing outcomes. It has no evaluable definition and every compiler refuses it. A downstream ontology that needs such a check adds its own operation, as ADR-A05 allows (OD6-Q7c) |
 
 ## The README layout
 
@@ -190,6 +192,7 @@ Estimates are in tokens.
 | RC4 | Downstream extension (RC-Q7): qualified names and an `extends` chain, tried against Open CBAA's layout. Then the extractor reads the catalogue for every extraction and fails when the files a README generates differ from its entry (RC2-C2 option b, deferred to here) | `tools/` | L1, L4 | 60k |
 | RC5 | Promotion to the `lattice-repo-catalogue` package, installable into each worktree's `.venv` and pinnable by version per branch downstream | `packages/`, `tools/` | L0, L4 | 50k |
 | RC6 | The XML catalogue (ADR-A88) folded into the repository catalogue, under a new ADR, with release and version management read from the same place | `tools/`, `ontology/` | L3, L4 | 80k |
+| ELC | The composition operation (OD-D44, OD-D45). Brief below | `ontology/eligibility`, `ontology/instrument`, other modules' examples, `tools/mork_compilers`, `test/` | L3, L4 | 70k |
 | OD-REL | The release before the merge (OD-D43): every document a migration changed takes one bump, the cascade is computed from the import graph and every importer re-pinned once, release rows are added and release notes written, and the versioning and catalogue checks pass again. Eligibility's laws L1 to L8 gain `elg:lawRegister elg:StaticConstraint` in the same release (OD6 review, 2026-10-18). The maintainer creates the tags | every changed module | L3, L4 | 60k, more as layers migrate |
 
 ```mermaid
@@ -207,6 +210,7 @@ flowchart TB
     OD4 --> OD6
     OD5 --> OD6
     OD6 --> OD7["OD7 Vocabulary"]
+    OD6 --> ELC["ELC composition operation"]
     OD7 --> MIG["OD8 onward, per layer"]
     OD0 --> DOC1["DOC1 published decisions"]
     DOC1 --> DOC2["DOC2 site sections"]
@@ -271,6 +275,32 @@ The order is OD6, then DOC1 and RC3 in either order. This branch is merged into 
 - **Probe:** change one restriction row in the migrated README and show the migration check fail.
 
 **Not covered.** Vocabulary's migration (OD7), and TD-20's rename.
+
+### ELC, the composition operation (2026-10-19)
+
+**Scope.**
+
+1. **Eligibility's README.** `elg:CompositionOperation` and `elg:compositionOperation` replace the old names,
+   with definitions saying how an admission profile combines its conditions' outcomes. The restriction
+   `compositionOperation exactly 1` moves from `elg:Condition` to `elg:AdmissionProfile`. L2 is restated for
+   profiles. `elg:DimensionConsistent` and `elg:E6` are removed, and §5's prose and diagrams follow. ADR-A05 is
+   amended, and ADR-A03 gains an addendum for L2.
+2. **Every graph that names the old terms.** Examples and tests in Eligibility, Instrument, the applied
+   modules, Surface, Wording, MORK and `test/`: profiles rename the property, and leaf conditions drop it.
+3. **The compilers.** `tools/mork_compilers` reads `elg:compositionOperation` from a profile, writes
+   `exe:usesCompositionOperation`, and loses the `DimensionConsistent` refusal and its test. The reference
+   semantics follows.
+4. **Docs.** The glossary and the remaining architecture mentions.
+
+**Versions.** None on this branch (OD-D43). The change is breaking, and OD-REL releases it with the migration.
+
+**Validation.** The migration check against OD6's commit, with the renamed and removed triples as reconciliations,
+every Eligibility, Instrument and compiler suite, and `check:full-sweep` with only OD-D43's unbumped files
+failing.
+
+**ELC-Q1. Does a shape refuse a composition operation on a condition that is not a profile?** (a) Yes, a
+violation, so a stale declaration is found. (b) A warning. (c) No, the open world allows it and it is ignored.
+Leaning (a), since the term means nothing there.
 
 ### DOC1, published decisions
 

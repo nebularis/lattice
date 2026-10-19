@@ -165,6 +165,7 @@ The adversarial probes were not run beyond OD6-T2.
 - **The definitions** are agreed, with three changes. The first three condition classes say what they admit
   rather than what they match. `elg:LawRegister` makes clear that the laws are logical laws of the layer, not
   laws in the legal sense, and `elg:Law` and `elg:lawRegister` say the same for consistency.
-- **`elg:CompatibilityOperation`'s name** is questioned, since what it describes is a composition. Open, as
-  OD6-Q7 in the status record.
+- **`elg:CompatibilityOperation`'s name** is questioned, since what it describes is a composition. Answered
+  2026-10-19 as OD-D44 (renamed, and declared on profiles only) and OD-D45 (`elg:DimensionConsistent` and
+  `elg:E6` retired), for slice ELC.
 - **Decision 3** (L1 to L8 name no register). OD-REL adds the register.
