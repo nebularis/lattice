@@ -19,6 +19,15 @@ so each carries a ``.version`` file holding one semantic version shared by
 all its files. A change to any file in the directory must change its
 ``.version`` too, and the file must exist (ADR-A86 second addendum).
 
+The modules the repository catalogue's ``[conventions.release]`` names are
+released together (OD-D55). For them the per-document rules give way to three
+others: every member document's ``owl:versionIRI`` ends with the release
+number, every reference anywhere under ``ontology/`` to a member document's
+version IRI names that number, and a change to any member's documents, shapes
+or projections since the base ref needs a new release number. A member's
+artefact directories have no ``.version`` file, since the number lives in the
+catalogue (OD-D59).
+
 Usage::
 
     python tools/ontology_version_check.py [--root .] [--base-ref HEAD]
@@ -30,6 +39,7 @@ import argparse
 import re
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
 from typing import Optional, Set
 
@@ -98,6 +108,80 @@ def extract_version_iris(text: str) -> Set[str]:
     return set(VERSION_IRI_RE.findall(text))
 
 
+RELEASE_DIRECTORIES = ("spec", "vocab", "shapes", "projection")
+
+
+def release(root: Path) -> tuple[Optional[str], list[str]]:
+    """The release number and its members' directories, relative to the root, or (None, []) where the
+    root has no catalogue or no release."""
+    if not (root / lattice_repo_catalogue.CATALOGUE_FILE).is_file():
+        return None, []
+    catalogue = lattice_repo_catalogue.load(root)
+    return catalogue.release_version, [m.path.as_posix() for m in catalogue.release_members()]
+
+
+def is_member(relative: str, members: list[str]) -> bool:
+    return any(relative.startswith(f"{member}/") for member in members)
+
+
+def base_release(root: Path, base_ref: str) -> Optional[str]:
+    """The release number at the base ref, read from that commit's catalogue."""
+    text = git_show(root, base_ref, lattice_repo_catalogue.CATALOGUE_FILE)
+    if text is None:
+        return None
+    for block in lattice_repo_catalogue.blocks(text):
+        found = tomllib.loads(block).get("conventions", {}).get("release", {}).get("version")
+        if found:
+            return found
+    return None
+
+
+def check_release(root: Path) -> list[str]:
+    """Every member document carries the release number, and every reference to a member document's
+    version IRI names it."""
+    version, members = release(root)
+    if version is None:
+        return []
+    problems: list[str] = []
+    bases: Set[str] = set()
+    for path in find_in_scope_ttl_files(root):
+        relative = path.relative_to(root).as_posix()
+        if not (is_member(relative, members) and requires_version_iri(Path(relative))):
+            continue
+        for iri in extract_version_iris(path.read_text(encoding="utf-8")):
+            base, _, number = iri.rpartition("/")
+            bases.add(base)
+            if number != version:
+                problems.append(f"{relative}: owl:versionIRI {iri} is not at the release, {version}")
+    pattern = re.compile("(" + "|".join(re.escape(b) for b in sorted(bases)) + r")/(\d+\.\d+\.\d+)\b") if bases else None
+    for path in sorted(repository_files(root, ".ttl") + repository_files(root, ".md")):
+        relative = path.relative_to(root).as_posix()
+        if not relative.startswith(f"{ONTOLOGY_ROOT}/") or pattern is None:
+            continue
+        for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            for match in pattern.finditer(line):
+                if match.group(2) != version:
+                    problems.append(f"{relative}:{number}: names {match.group(0)}, not the release, {version}")
+    for directory in artefact_directories(root):
+        if is_member(directory + "/", members) and (root / directory / VERSION_FILE).exists():
+            problems.append(f"{directory}/{VERSION_FILE}: a release member's directory carries no version of its own")
+    return problems
+
+
+def check_release_bumped(root: Path, base_ref: str) -> list[str]:
+    """A change to any member's documents, shapes or projections since the base ref needs a new release."""
+    version, members = release(root)
+    if version is None or base_release(root, base_ref) != version:
+        return []
+    paths = [f"{m}/{d}" for m in members for d in RELEASE_DIRECTORIES if (root / m / d).is_dir()]
+    changed = set(git_lines(root, "diff", "--name-only", base_ref, "--", *paths)) if paths else set()
+    changed |= set(git_lines(root, "ls-files", "--others", "--exclude-standard", "--", *paths)) if paths else set()
+    if not changed:
+        return []
+    return [f"{len(changed)} release member file(s) changed since {base_ref}, for example {sorted(changed)[0]}, "
+            f"but the release is still {version}. Run mise run release:prepare -- <next version>"]
+
+
 def requires_version_iri(relative: Path) -> bool:
     """A document under a ``spec/`` or ``vocab/`` directory is a published
     ontology document and must carry its own version IRI."""
@@ -109,7 +193,10 @@ def check_unversioned(root: Path) -> list[str]:
     ``owl:versionIRI`` and does not, and per artefact directory without a
     valid ``.version``."""
     problems: list[str] = []
+    _, members = release(root)
     for directory in artefact_directories(root):
+        if is_member(directory + "/", members):
+            continue
         version = artefact_version(root, directory)
         if version is None or not SEMVER_RE.match(version):
             problems.append(f"{directory}/{VERSION_FILE}: missing, or not a semantic version X.Y.Z")
@@ -153,7 +240,10 @@ def check_artefacts(root: Path, base_ref: str) -> list[str]:
     """Return one message per artefact directory whose files changed relative
     to ``base_ref`` while its ``.version`` did not."""
     problems: list[str] = []
+    _, members = release(root)
     for directory in artefact_directories(root):
+        if is_member(directory + "/", members):
+            continue
         version_path = f"{directory}/{VERSION_FILE}"
         changed = set(git_lines(root, "diff", "--name-only", base_ref, "--", directory))
         changed |= set(git_lines(root, "ls-files", "--others", "--exclude-standard", "--", directory))
@@ -168,8 +258,11 @@ def check(root: Path, base_ref: str) -> list[str]:
     """Return one message per file whose content changed relative to
     ``base_ref`` but whose set of ``owl:versionIRI`` literals did not."""
     problems: list[str] = []
+    _, members = release(root)
     for path in find_in_scope_ttl_files(root):
         relative = path.relative_to(root).as_posix()
+        if is_member(relative, members):
+            continue  # released together, checked by check_release_bumped
         old_text = git_show(root, base_ref, relative)
         if old_text is None:
             continue  # new file: nothing to have forgotten to bump
@@ -199,17 +292,20 @@ def main(argv: Optional[list[str]] = None) -> int:
     args = parser.parse_args(argv)
 
     root = Path(args.root).resolve()
-    unbumped = check(root, args.base_ref) + check_artefacts(root, args.base_ref)
+    unbumped = check(root, args.base_ref) + check_artefacts(root, args.base_ref) + check_release_bumped(root, args.base_ref)
     unversioned = check_unversioned(root)
+    released = check_release(root)
 
     for problem in unbumped:
         print(f"UNBUMPED {problem}", file=sys.stderr)
     for problem in unversioned:
         print(f"UNVERSIONED {problem}", file=sys.stderr)
-    if unbumped or unversioned:
+    for problem in released:
+        print(f"RELEASE {problem}", file=sys.stderr)
+    if unbumped or unversioned or released:
         print(
             f"{len(unbumped)} ontology file(s) changed without a version bump "
-            f"relative to {args.base_ref}, {len(unversioned)} without a version IRI. "
+            f"relative to {args.base_ref}, {len(unversioned)} without a version IRI, {len(released)} off the release. "
             "See docs/architecture/ontology-versioning-policy.md.",
             file=sys.stderr,
         )

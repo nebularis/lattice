@@ -306,7 +306,10 @@ the comment early. Mermaid diagrams are never hidden.
 
 Every version named in section 2, and every released version in the
 [release register](ontology-releases.md), has an entry. An entry says what changed and which documents
-moved, and cites only published decisions.
+moved, and cites only published decisions. For a module in the release
+([ADR-A129](decisions/ADR-A129-one-release-for-the-substrate.md)), each change in an entry ends with its data
+class in brackets, `(no effect)`, `(may invalidate)` or `(changes meaning)`, as the
+[versioning policy](ontology-versioning-policy.md) defines them.
 
 ## Current conventions, until a module is migrated
 

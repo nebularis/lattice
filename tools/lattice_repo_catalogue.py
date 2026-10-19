@@ -45,7 +45,7 @@ SCAN_SKIP_DIRS = {"node_modules", "__pycache__", "build", "dist"}
 # catalogue's ``extends``, ADR-A121 decision 7) can be added without ambiguity.
 ROOT_KEYS = {
     "catalogue": {"schema", "modules"},
-    "conventions": {"roles", "kinds", "versioned", "artefact-directories"},
+    "conventions": {"roles", "kinds", "versioned", "artefact-directories", "release"},
     "generated": {"paths"},
 }
 # Blocks written as lists of tables, [[roots]] and so on, and the keys of each table.
@@ -120,6 +120,16 @@ class Catalogue:
     tools: Tuple[ToolPackage, ...] = ()
     generated: Tuple[str, ...] = ()
 
+    @property
+    def release_version(self) -> Optional[str]:
+        """The one release number every member module's documents carry (OD-D55), or None."""
+        return (self.conventions.get("release") or {}).get("version")
+
+    def release_members(self) -> List[Module]:
+        """The modules released together: those of the kinds the release names."""
+        kinds = set((self.conventions.get("release") or {}).get("kinds", ()))
+        return [m for m in self.modules.values() if m.kind in kinds]
+
     def is_generated(self, path: str) -> bool:
         """Whether a path is, or lies under, a generated path that a check may find missing."""
         return any(path.rstrip("/") == g.rstrip("/") or path.startswith(g.rstrip("/") + "/") for g in self.generated)
@@ -191,6 +201,20 @@ def _merge(into: Dict[str, Any], data: Dict[str, Any], where: str, prefix: str =
             raise CatalogueError(f"{where}: key {dotted!r} is defined twice")
         else:
             into[key] = value
+
+
+def _check_release(release: Any, kinds: Dict[str, Any]) -> None:
+    """``[conventions.release]``: the release number, and the kinds of module released together (OD-D55)."""
+    if release is None:
+        return
+    where = f"{CATALOGUE_FILE}: [conventions.release]"
+    if not isinstance(release, dict) or set(release) != {"version", "kinds"}:
+        raise CatalogueError(f"{where} holds exactly version and kinds")
+    if not isinstance(release["version"], str) or not re.fullmatch(r"\d+\.\d+\.\d+", release["version"]):
+        raise CatalogueError(f"{where}: version {release['version']!r} is not X.Y.Z")
+    unknown = set(_strings(release["kinds"], f"{where}: kinds")) - set(kinds)
+    if unknown:
+        raise CatalogueError(f"{where}: kinds {', '.join(sorted(unknown))} are not conventions' kinds")
 
 
 def _read(path: Path) -> Dict[str, Any]:
@@ -270,6 +294,7 @@ def load(root: Path | str | None = None) -> Catalogue:
             raise CatalogueError(f"{CATALOGUE_FILE}: unknown key(s) {', '.join(sorted(unknown))} in [{key}]")
     conventions = data.get("conventions", {})
     kinds = conventions.get("kinds", {})
+    _check_release(conventions.get("release"), kinds)
     names = _strings(data.get("catalogue", {}).get("modules", []), f"{CATALOGUE_FILE}: [catalogue] modules")
     if len(set(names)) != len(names):
         raise CatalogueError(f"{CATALOGUE_FILE}: a module is listed twice")

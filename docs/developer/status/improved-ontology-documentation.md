@@ -51,7 +51,7 @@ deliberate. The release slice OD-REL resolves it once, before the merge into `ma
 | RC6 XML catalogue folded in | planned | RC5, a new ADR on ADR-A88 |
 | ELC composition operation | approved 2026-10-19, committed locally, [Validation Pack](../validation/ELC.md) | |
 | MC1 migration check labels | built autonomously 2026-10-19, committed locally, [Validation Pack](../validation/MC1.md) | |
-| VER1 one release for the substrate | briefed 2026-10-19 | |
+| VER1 one release for the substrate | built autonomously 2026-10-19, committed locally, [Validation Pack](../validation/VER1.md) | ADR-A129 to accept |
 | OD-REL first release, 0.18.0 | planned | every migration on the branch |
 
 ## Open questions
@@ -221,3 +221,6 @@ deliberate. The release slice OD-REL resolves it once, before the merge into `ma
   and TD-55 is closed. DOC2 runs in its own worktree, `docs/literate-v2-doc2`.
 - 2026-10-19: OD7 built. Vocabulary's README is the source of its spec and three shape files, the same graphs
   but for four Dublin Core triples, and its part of TD-16 is closed.
+- 2026-10-19: VER1 built. ADR-A129 Proposed, the release number in the catalogue, the versioning check and register
+  by release, and `release:prepare`. `Executable.ttl` imports Eligibility. `.build/site` untracked, committed by
+  mistake with DOC1.

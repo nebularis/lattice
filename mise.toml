@@ -254,6 +254,10 @@ run = "python tools/agent_guidance.py build"
 description = "Check a module's README migration to the ADR-A126 layout left every generated graph as it was at a git ref: mise run check:literate-migration -- <module> <ref> [--reconciliations <file>] (OD-D9)"
 run = "python tools/literate_migration_check.py"
 
+[tasks."release:prepare"]
+description = "Move every release member's documents, imports and READMEs to a new release number, then regenerate the XML catalogs and the release register: mise run release:prepare -- <X.Y.Z> (OD-D55)"
+run = "python tools/ontology_release.py prepare"
+
 [tasks."build:published-decisions"]
 description = "Write docs/architecture/published-architecture-decisions.md from the ADRs' Status and Described in lines (ADR-A127)"
 run = "python tools/published_decisions.py build"
