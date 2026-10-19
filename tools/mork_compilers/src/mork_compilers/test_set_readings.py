@@ -74,7 +74,6 @@ ex:stranger a skos:Concept .
 
 ex:condition a elg:Condition ;
     elg:matchStrategy elg:HierarchicalMatch ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:constrainedByContract ex:contract ;
     elg:requiredConcept ex:a {"; elg:negated true" if negated else ""} .
@@ -193,7 +192,7 @@ class NegationTests(unittest.TestCase):
     def test_negated_question_condition_swaps_decided_outcomes(self) -> None:
         # AIR32-06, question-based
         data = Graph().parse(data=HEADER + """
-            ex:c a elg:Condition ; elg:matchStrategy elg:SetMembership ; elg:compatibilityOperation elg:AllRequired ;
+            ex:c a elg:Condition ; elg:matchStrategy elg:SetMembership ;
                 elg:wildcardSemantics elg:NoWildcard ; elg:requiredConcept ex:a ; elg:negated true .
             ex:q-in a elg:Question ; elg:forCondition ex:c ; elg:candidateConcept ex:a .
             ex:q-out a elg:Question ; elg:forCondition ex:c ; elg:candidateConcept ex:b .
@@ -221,7 +220,7 @@ class IntervalTests(unittest.TestCase):
             ex:low a qnt:Bound ; qnt:onSpace ex:space ; qnt:boundValue ex:ten ; qnt:boundSense qnt:Lower ; qnt:boundClosure qnt:Closed .
             ex:range a qnt:Range ; qnt:onSpace ex:space ; qnt:lowerBound ex:low ; qnt:hasBound ex:low .
             ex:ranges a qnt:RangeSet ; qnt:onSpace ex:space ; qnt:hasRange ex:range .
-            ex:c a elg:IntervalCondition ; elg:matchStrategy elg:IntervalContainment ; elg:compatibilityOperation elg:AllRequired ;
+            ex:c a elg:IntervalCondition ; elg:matchStrategy elg:IntervalContainment ;
                 elg:wildcardSemantics elg:NoWildcard ; elg:requiredRangeSet ex:ranges .
             ex:b a elg:EvidenceBinding ; elg:bindsCondition ex:c ; elg:subjectClass ex:Subject ; elg:readOnSpace ex:space ;
                 elg:valueReading elg:EveryValue ; elg:closedUnder ex:scores-closure ;

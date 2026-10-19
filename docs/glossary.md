@@ -191,7 +191,7 @@ Eligibility exists to turn a declared admissibility question into one of exactly
 
 The layer is conspicuously conservative about which strategies it's willing to admit at all, and that conservatism is itself worth understanding as a design stance: interval *overlap* is explicitly excluded as an admissibility strategy (only interval *containment* is admitted, because overlap's semantics are subtler than they look — two ranges can each overlap a third separately while having no three-way intersection at all), and hierarchical matching is admitted only under a formally pinned-down definition: a candidate satisfies a hierarchically-matched condition exactly when it stands in the reflexive-transitive closure of the bound scheme's ordering relation, restricted to that scheme's own members — and a scheme whose ordering relation contains a cycle simply isn't evaluable under this strategy at all, rather than producing an undefined or looping answer. That closure can be computed by live traversal or answered from a generated Surface index (Part III, above) — Eligibility doesn't care which, as long as the two agree.
 
-*Terms introduced here:* `elg:Condition` (and its subtypes `ExactCondition`, `SetMembershipCondition`, `IntervalCondition`, `WildcardCondition`), `elg:AdmissionProfile`, `elg:Question`, `elg:EligibilityDecision`, `elg:MatchStrategy`, `elg:CompatibilityOperation`, `elg:WildcardSemantics`, `elg:Decision` (`Permitted`/`Denied`/`Undetermined`).
+*Terms introduced here:* `elg:Condition` (and its subtypes `ExactCondition`, `SetMembershipCondition`, `IntervalCondition`, `WildcardCondition`), `elg:AdmissionProfile`, `elg:Question`, `elg:EligibilityDecision`, `elg:MatchStrategy`, `elg:CompositionOperation`, `elg:WildcardSemantics`, `elg:Decision` (`Permitted`/`Denied`/`Undetermined`).
 
 ### Behaviour — state, and the strict line between reading it and changing it
 
@@ -307,7 +307,7 @@ A quick-reference index, grouped by namespace prefix, of every term introduced a
 
 ### `elg:` — Eligibility
 - **AdmissionProfile** — a reusable, versioned bundle of composed conditions.
-- **CompatibilityOperation** — how multiple conditions combine into one outcome.
+- **CompositionOperation** — how an admission profile combines its conditions' outcomes into one.
 - **Condition** (and its subtypes `ExactCondition`, `SetMembershipCondition`, `IntervalCondition`, `WildcardCondition`) — a declared admissibility condition.
 - **Decision** — the three-valued outcome vocabulary: `Permitted`, `Denied`, `Undetermined`.
 - **EligibilityDecision** — the recorded, evidenced outcome of evaluating a profile against one or more questions.

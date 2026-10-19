@@ -96,20 +96,20 @@ The class diagram below is generated from section 6.
 ```mermaid
 classDiagram
     class AdmissionProfile {
+        compositionOperation, exactly one
         hasCondition, at least one
+        matchStrategy, at most zero
+        wildcardSemantics, at most zero
     }
     class Closure {
         licensedBy, exactly one
     }
-    class CompatibilityOperation
+    class CompositionOperation
     class Concept
     class Condition {
-        compatibilityOperation, exactly one
         conditionKey (xsd:string)
-        matchStrategy, exactly one
         negated, at most one
         negated, only boolean
-        wildcardSemantics, exactly one
     }
     class Decision
     class EligibilityDecision {
@@ -158,8 +158,8 @@ classDiagram
     class Version
     class WildcardCondition
     class WildcardSemantics
+    AdmissionProfile --> CompositionOperation : compositionOperation
     AdmissionProfile --> Condition : hasCondition
-    Condition --> CompatibilityOperation : compatibilityOperation
     Condition --> Concept : excludedConcept
     Condition --> Concept : requiredConcept
     Condition --> MatchStrategy : matchStrategy
@@ -203,10 +203,13 @@ classDiagram
 
 - Included match strategies: `ExactMatch`, `SetMembership`, `IntervalContainment`, `HierarchicalMatch`, `Wildcard`.
 - Excluded: `IntervalOverlap` as an admissibility strategy.
-- Compatibility operations: `AllRequired`, `AnySufficient`, `DimensionConsistent`.
 - Wildcard policies: `NoWildcard`, `SingleDimensionWildcard`, `MultiDimensionWildcard`.
+- Composition operations, for admission profiles: `AllRequired`, `AnySufficient`.
 
-Every condition declares exactly one of each mechanism, independently of the other two.
+A condition that is not an admission profile declares exactly one match strategy and one wildcard policy,
+independently of each other (L1, L3). An admission profile declares neither, since it tests no candidate
+itself. It declares exactly one composition operation, which says how it combines its conditions' outcomes
+(L2, §5.2).
 
 ```mermaid
 ---
@@ -214,15 +217,17 @@ config:
   layout: elk
 ---
 flowchart LR
-    C["elg:Condition"]
+    C["elg:Condition<br/>not a profile"]
+    P["elg:AdmissionProfile"]
     C -- "matchStrategy" --> MS["ExactMatch | SetMembership |<br/>IntervalContainment | HierarchicalMatch | Wildcard"]
-    C -- "compatibilityOperation" --> CO["AllRequired | AnySufficient |DimensionConsistent"]
-    C -- "wildcardSemantics" --> WS["NoWildcard |SingleDimensionWildcard |<br/>MultiDimensionWildcard"]
+    C -- "wildcardSemantics" --> WS["NoWildcard | SingleDimensionWildcard |<br/>MultiDimensionWildcard"]
+    P -- "compositionOperation" --> CO["AllRequired | AnySufficient"]
+    P -- "hasCondition" --> C
 ```
 
 `HierarchicalMatch` is valid when a dimension is backed by a concept scheme whose membership is resolved against a well-founded `skos:broader` hierarchy. Evaluation may compute closure at query time or use a generated surface, provided closure is interpreted over the bound scheme. A scheme can reach a hierarchical condition without a hierarchy, because a contract resolves to different schemes in different contexts (ADR-A85). Where no member of the resolved scheme has a broader concept within it, the condition decides only the concepts it names (L14, ADR-A100).
 
-Conditions matching by `ExactMatch`, `SetMembership`, or `HierarchicalMatch` state what they match against with `elg:requiredConcept` and `elg:excludedConcept`. A candidate *matches* a concept by equality under `ExactMatch` and `SetMembership`, and by standing at or below it in the bound scheme's ordering under `HierarchicalMatch`. Several required concepts are alternatives to one another, and each excluded concept excludes independently. Neither reading changes how the condition's compatibility operation is interpreted. An admission profile declares no concepts of its own, since its conditions do. A layer above may place one of its defined words, itself a `skos:Concept`, in `elg:requiredConcept` or `elg:excludedConcept` ("a Site in the Territory"), and replace it for each instance by the concepts the word means, so that a condition it generates never names a word. Instrument does, and its shapes report a word that is also a concept of the scheme its condition is constrained by, and a word whose meaning is not a concept (Instrument README §15.1). A word's meaning may come from a variable or from another word, and must not loop back to itself (Instrument README §18.4). A question offers its candidate with `elg:candidateConcept`. `IntervalContainment` needs no exclusion construct, since a `qnt:RangeSet` is a union of ranges and already expresses gaps.
+Conditions matching by `ExactMatch`, `SetMembership`, or `HierarchicalMatch` state what they match against with `elg:requiredConcept` and `elg:excludedConcept`. A candidate *matches* a concept by equality under `ExactMatch` and `SetMembership`, and by standing at or below it in the bound scheme's ordering under `HierarchicalMatch`. Several required concepts are alternatives to one another, and each excluded concept excludes independently. An admission profile declares no concepts of its own, since its conditions do. A layer above may place one of its defined words, itself a `skos:Concept`, in `elg:requiredConcept` or `elg:excludedConcept` ("a Site in the Territory"), and replace it for each instance by the concepts the word means, so that a condition it generates never names a word. Instrument does, and its shapes report a word that is also a concept of the scheme its condition is constrained by, and a word whose meaning is not a concept (Instrument README §15.1). A word's meaning may come from a variable or from another word, and must not loop back to itself (Instrument README §18.4). A question offers its candidate with `elg:candidateConcept`. `IntervalContainment` needs no exclusion construct, since a `qnt:RangeSet` is a union of ranges and already expresses gaps.
 
 | Candidate | Decision | Law |
 |---|---|---|
@@ -268,6 +273,20 @@ own. `elg:Condition` carries it directly, constrained by a scheme contract inste
 `elg:AdmissionProfile` is itself a condition, so profiles compose, and a profile can be one of another
 profile's conditions.
 
+A condition that is not a profile is one test. It takes one candidate, compares it with what it declares
+under its match strategy, and gives Permitted, Denied or Undetermined. A profile tests no candidate itself. It
+composes conditions (`elg:hasCondition`), and its outcome is theirs combined by its composition operation,
+`AllRequired` as a strong Kleene conjunction or `AnySufficient` as a disjunction. A decision is made for one
+profile. So a match strategy and a wildcard policy mean something only on a condition that is not a profile,
+and a composition operation only on a profile, and the shapes report each declared in the wrong place (L1 to
+L3). Several required concepts on one condition are alternatives whatever the profile around it composes.
+
+```text
+ex:relocation-benefit  (AdmissionProfile, AllRequired)
+ ├─ ex:engineering-family   (HierarchicalMatch, required ex:engineering, excluded ex:contractor-engineering)
+ └─ ex:minimum-tenure       (IntervalContainment, range set of two years or more)
+```
+
 ### 5.3 Questions and decisions
 
 A question is evidenced (`fnd:Evidenced`, Foundation) and names exactly one condition. A decision is
@@ -289,8 +308,8 @@ sequenceDiagram
 
 Seven classes carry no properties of their own, and each is a closed set of named individuals (6.4), never
 an open class a reader could extend without a new decision. `elg:MatchStrategy`,
-`elg:CompatibilityOperation` and `elg:WildcardSemantics` are the three mechanisms of §5.1.
-`elg:OperationalProfile` is versioned (`fnd:Version`), since the six reference profiles E1 to E6 are
+`elg:WildcardSemantics` and `elg:CompositionOperation` are the three mechanisms of §5.1.
+`elg:OperationalProfile` is versioned (`fnd:Version`), since the five reference profiles E1 to E5 are
 themselves subject to change control. Each names one reference conformance profile that the differential
 test harness (`tools/reference/eligibility/`) checks a compiler backend against, one per mechanism
 combination worth testing in isolation. `elg:Law` and `elg:LawRegister` classify the laws by how each is
@@ -458,7 +477,7 @@ static constraint, discharged by one of the shapes of section 7.
 flowchart TB
     subgraph Static["elg:StaticConstraint, a shape (§7)"]
         L1["L1 one match strategy"]
-        L2["L2 one compatibility operation"]
+        L2["L2 one composition operation, on a profile"]
         L3["L3 one wildcard policy"]
         L4["L4 IntervalContainment needs a range set"]
         L5["L5 IntervalOverlap excluded"]
@@ -500,9 +519,6 @@ answers Undetermined.
 
 | Property | Values | Asserted in | Message |
 |---|---|---|---|
-| `elg:matchStrategy` | exactly 1 | SHACL |  |
-| `elg:compatibilityOperation` | exactly 1 | SHACL |  |
-| `elg:wildcardSemantics` | exactly 1 | SHACL |  |
 | `elg:negated` | max 1 | SHACL |  |
 | `elg:negated` | only `xsd:boolean` | SHACL |  |
 
@@ -541,6 +557,9 @@ answers Undetermined.
 | Property | Values | Asserted in | Message |
 |---|---|---|---|
 | `elg:hasCondition` | min 1 |  |  |
+| `elg:compositionOperation` | exactly 1 | SHACL |  |
+| `elg:matchStrategy` | max 0 | SHACL | An admission profile declares no match strategy, since its conditions do (L1). |
+| `elg:wildcardSemantics` | max 0 | SHACL | An admission profile declares no wildcard policy, since its conditions do (L3). |
 
 #### `elg:Question`
 
@@ -574,9 +593,9 @@ answers Undetermined.
 
 **Definition.** How a condition matches its candidate, one of a closed set of named strategies.
 
-#### `elg:CompatibilityOperation`
+#### `elg:CompositionOperation`
 
-**Definition.** How a condition's requirements combine when it states several, one of a closed set of named operations.
+**Definition.** How an admission profile combines its conditions' outcomes, one of a closed set of named operations.
 
 #### `elg:WildcardSemantics`
 
@@ -735,13 +754,13 @@ answers Undetermined.
 
 **Range.** `voc:SchemeContract`
 
-#### `elg:compatibilityOperation`
+#### `elg:compositionOperation`
 
-**Definition.** The one compatibility operation a condition declares.
+**Definition.** The one composition operation an admission profile declares.
 
-**Domain.** `elg:Condition`
+**Domain.** `elg:AdmissionProfile`
 
-**Range.** `elg:CompatibilityOperation`
+**Range.** `elg:CompositionOperation`
 
 **Characteristics.** functional
 
@@ -961,9 +980,8 @@ that also name their register, L9 to L17, are in 6.6.
 
 | Individual | Type | Definition |
 |---|---|---|
-| `elg:AllRequired` | `elg:CompatibilityOperation` |  |
-| `elg:AnySufficient` | `elg:CompatibilityOperation` |  |
-| `elg:DimensionConsistent` | `elg:CompatibilityOperation` |  |
+| `elg:AllRequired` | `elg:CompositionOperation` | Denied when any condition is Denied, Permitted when every condition is Permitted, otherwise Undetermined, the strong Kleene conjunction. |
+| `elg:AnySufficient` | `elg:CompositionOperation` | Permitted when any condition is Permitted, Denied when every condition is Denied, otherwise Undetermined, the strong Kleene disjunction. |
 
 | Individual | Type | Definition |
 |---|---|---|
@@ -993,9 +1011,8 @@ that also name their register, L9 to L17, are in 6.6.
 | `elg:E1` | `elg:OperationalProfile` | Exact-match profile |
 | `elg:E2` | `elg:OperationalProfile` | Interval-containment profile |
 | `elg:E3` | `elg:OperationalProfile` | Wildcard profile |
-| `elg:E4` | `elg:OperationalProfile` | Compatibility-any profile |
-| `elg:E5` | `elg:OperationalProfile` | Compatibility-all profile |
-| `elg:E6` | `elg:OperationalProfile` | Dimension-consistency profile |
+| `elg:E4` | `elg:OperationalProfile` | AnySufficient composition profile |
+| `elg:E5` | `elg:OperationalProfile` | AllRequired composition profile |
 
 | Individual | Type | Definition |
 |---|---|---|
@@ -1004,9 +1021,9 @@ that also name their register, L9 to L17, are in 6.6.
 
 | Individual | Type | Definition |
 |---|---|---|
-| `elg:L1` | `elg:Law` | Each condition declares exactly one match strategy. |
-| `elg:L2` | `elg:Law` | Each condition declares exactly one compatibility operation. |
-| `elg:L3` | `elg:Law` | Each condition declares exactly one wildcard policy. |
+| `elg:L1` | `elg:Law` | Each condition that is not an admission profile declares exactly one match strategy, and an admission profile declares none. |
+| `elg:L2` | `elg:Law` | Each admission profile declares exactly one composition operation, and no other condition declares one. |
+| `elg:L3` | `elg:Law` | Each condition that is not an admission profile declares exactly one wildcard policy, and an admission profile declares none. |
 | `elg:L4` | `elg:Law` | IntervalContainment requires declared requiredRangeSet. |
 | `elg:L5` | `elg:Law` | IntervalOverlap is excluded from admissibility decisions. |
 | `elg:L6` | `elg:Law` | EligibilityDecision has exactly one decision value. |
@@ -1016,7 +1033,7 @@ that also name their register, L9 to L17, are in 6.6.
 ### 6.5 Disjointness and Keys
 
 **All disjoint.** `elg:Condition`, `elg:Question`, `elg:EligibilityDecision`, `elg:MatchStrategy`,
-`elg:CompatibilityOperation`, `elg:WildcardSemantics`, `elg:Decision`, `elg:OperationalProfile`, `elg:Law`,
+`elg:CompositionOperation`, `elg:WildcardSemantics`, `elg:Decision`, `elg:OperationalProfile`, `elg:Law`,
 `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:StepDirection`, `elg:ValueReading`, `elg:Closure`
 
 ### 6.6 Other Axioms
@@ -1067,33 +1084,33 @@ elg:L17 a elg:Law ;
 
 | Term | Kind | Summary |
 |---|---|---|
-| `elg:AdmissionProfile` | Class | Subclass of `elg:Condition`, `fnd:Version`. Restrictions `elg:hasCondition` min 1. |
-| `elg:Closure` | Class | Disjoint with `elg:CompatibilityOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. Restrictions `elg:licensedBy` exactly 1. |
-| `elg:CompatibilityOperation` | Class | Disjoint with `elg:Closure`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. |
-| `elg:Condition` | Class | Disjoint with `elg:Closure`, `elg:CompatibilityOperation`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. Restrictions `elg:compatibilityOperation` exactly 1 (SHACL only), `elg:matchStrategy` exactly 1 (SHACL only), `elg:negated` max 1 (SHACL only), `elg:negated` only `xsd:boolean` (SHACL only), `elg:wildcardSemantics` exactly 1 (SHACL only). |
-| `elg:Decision` | Class | Disjoint with `elg:Closure`, `elg:CompatibilityOperation`, `elg:Condition`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. |
-| `elg:EligibilityDecision` | Class | Subclass of `fnd:Evidenced`. Disjoint with `elg:Closure`, `elg:CompatibilityOperation`, `elg:Condition`, `elg:Decision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. Restrictions `elg:closureReliedOn` only `elg:Closure` (SHACL only), `elg:decisionValue` exactly 1, `elg:forProfile` exactly 1, `elg:hasQuestion` min 1, `elg:usesOperationalProfile` exactly 1 (SHACL only). |
-| `elg:EvidenceBinding` | Class | Disjoint with `elg:Closure`, `elg:CompatibilityOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. Restrictions `elg:bindsCondition` exactly 1 (SHACL only), `elg:closedUnder` max 1 (SHACL only), `elg:closedUnder` only `elg:Closure` (SHACL only), `elg:evidenceStep` min 1 (SHACL only), `elg:singleValued` max 1 (SHACL only), `elg:singleValued` only `xsd:boolean` (SHACL only), `elg:subjectClass` exactly 1 (SHACL only), `elg:valueReading` max 1 (SHACL only), `elg:valueReading` only {`elg:SingleValue`, `elg:SomeValue`, `elg:EveryValue`} (SHACL only). |
-| `elg:EvidenceStep` | Class | Disjoint with `elg:Closure`, `elg:CompatibilityOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. Restrictions `elg:stepDirection` exactly 1 (SHACL only), `elg:stepDirection` only {`elg:Forward`, `elg:Inverse`} (SHACL only), `elg:stepIndex` exactly 1 (SHACL only), `elg:stepProperty` exactly 1 (SHACL only). |
+| `elg:AdmissionProfile` | Class | Subclass of `elg:Condition`, `fnd:Version`. Restrictions `elg:compositionOperation` exactly 1 (SHACL only), `elg:hasCondition` min 1, `elg:matchStrategy` max 0 (SHACL only), `elg:wildcardSemantics` max 0 (SHACL only). |
+| `elg:Closure` | Class | Disjoint with `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. Restrictions `elg:licensedBy` exactly 1. |
+| `elg:CompositionOperation` | Class | Disjoint with `elg:Closure`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. |
+| `elg:Condition` | Class | Disjoint with `elg:Closure`, `elg:CompositionOperation`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. Restrictions `elg:negated` max 1 (SHACL only), `elg:negated` only `xsd:boolean` (SHACL only). |
+| `elg:Decision` | Class | Disjoint with `elg:Closure`, `elg:CompositionOperation`, `elg:Condition`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. |
+| `elg:EligibilityDecision` | Class | Subclass of `fnd:Evidenced`. Disjoint with `elg:Closure`, `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. Restrictions `elg:closureReliedOn` only `elg:Closure` (SHACL only), `elg:decisionValue` exactly 1, `elg:forProfile` exactly 1, `elg:hasQuestion` min 1, `elg:usesOperationalProfile` exactly 1 (SHACL only). |
+| `elg:EvidenceBinding` | Class | Disjoint with `elg:Closure`, `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. Restrictions `elg:bindsCondition` exactly 1 (SHACL only), `elg:closedUnder` max 1 (SHACL only), `elg:closedUnder` only `elg:Closure` (SHACL only), `elg:evidenceStep` min 1 (SHACL only), `elg:singleValued` max 1 (SHACL only), `elg:singleValued` only `xsd:boolean` (SHACL only), `elg:subjectClass` exactly 1 (SHACL only), `elg:valueReading` max 1 (SHACL only), `elg:valueReading` only {`elg:SingleValue`, `elg:SomeValue`, `elg:EveryValue`} (SHACL only). |
+| `elg:EvidenceStep` | Class | Disjoint with `elg:Closure`, `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. Restrictions `elg:stepDirection` exactly 1 (SHACL only), `elg:stepDirection` only {`elg:Forward`, `elg:Inverse`} (SHACL only), `elg:stepIndex` exactly 1 (SHACL only), `elg:stepProperty` exactly 1 (SHACL only). |
 | `elg:ExactCondition` | Class | Subclass of `elg:Condition`. |
 | `elg:IntervalCondition` | Class | Subclass of `elg:Condition`. |
-| `elg:Law` | Class | Disjoint with `elg:Closure`, `elg:CompatibilityOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. |
+| `elg:Law` | Class | Disjoint with `elg:Closure`, `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. |
 | `elg:LawRegister` | Class |  |
-| `elg:MatchStrategy` | Class | Disjoint with `elg:Closure`, `elg:CompatibilityOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. |
-| `elg:OperationalProfile` | Class | Subclass of `fnd:Version`. Disjoint with `elg:Closure`, `elg:CompatibilityOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. |
-| `elg:Question` | Class | Subclass of `fnd:Evidenced`. Disjoint with `elg:Closure`, `elg:CompatibilityOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. Restrictions `elg:forCondition` exactly 1 (OWL only). |
+| `elg:MatchStrategy` | Class | Disjoint with `elg:Closure`, `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. |
+| `elg:OperationalProfile` | Class | Subclass of `fnd:Version`. Disjoint with `elg:Closure`, `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. |
+| `elg:Question` | Class | Subclass of `fnd:Evidenced`. Disjoint with `elg:Closure`, `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. Restrictions `elg:forCondition` exactly 1 (OWL only). |
 | `elg:SetMembershipCondition` | Class | Subclass of `elg:Condition`. |
-| `elg:StepDirection` | Class | Disjoint with `elg:Closure`, `elg:CompatibilityOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:ValueReading`, `elg:WildcardSemantics`. |
-| `elg:ValueReading` | Class | Disjoint with `elg:Closure`, `elg:CompatibilityOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:WildcardSemantics`. |
+| `elg:StepDirection` | Class | Disjoint with `elg:Closure`, `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:ValueReading`, `elg:WildcardSemantics`. |
+| `elg:ValueReading` | Class | Disjoint with `elg:Closure`, `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:WildcardSemantics`. |
 | `elg:WildcardCondition` | Class | Subclass of `elg:Condition`. |
-| `elg:WildcardSemantics` | Class | Disjoint with `elg:Closure`, `elg:CompatibilityOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`. |
+| `elg:WildcardSemantics` | Class | Disjoint with `elg:Closure`, `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`. |
 | `elg:bindsCondition` | Object property | Domain `elg:EvidenceBinding`. Range `elg:Condition`. Functional. |
 | `elg:candidateConcept` | Object property | Domain `elg:Question`. Range `skos:Concept`. |
 | `elg:candidateRangeSet` | Object property | Domain `elg:Question`. Range `qnt:RangeSet`. |
 | `elg:candidateValue` | Object property | Domain `elg:Question`. Range `qnt:Value`. |
 | `elg:closedUnder` | Object property | Domain `elg:EvidenceBinding`. Range `elg:Closure`. Functional. |
 | `elg:closureReliedOn` | Object property | Domain `elg:EligibilityDecision`. Range `elg:Closure`. |
-| `elg:compatibilityOperation` | Object property | Domain `elg:Condition`. Range `elg:CompatibilityOperation`. Functional. |
+| `elg:compositionOperation` | Object property | Domain `elg:AdmissionProfile`. Range `elg:CompositionOperation`. Functional. |
 | `elg:constrainedByContract` | Object property | Domain `elg:Condition`. Range `voc:SchemeContract`. |
 | `elg:decisionValue` | Object property | Domain `elg:EligibilityDecision`. Range `elg:Decision`. Functional. |
 | `elg:evidenceStep` | Object property | Domain `elg:EvidenceBinding`. Range `elg:EvidenceStep`. |
@@ -1119,16 +1136,14 @@ elg:L17 a elg:Law ;
 | `elg:negated` | Datatype property | Domain `elg:Condition`. Range `xsd:boolean`. Functional. |
 | `elg:singleValued` | Datatype property | Domain `elg:EvidenceBinding`. Range `xsd:boolean`. Functional. |
 | `elg:stepIndex` | Datatype property | Domain `elg:EvidenceStep`. Range `xsd:nonNegativeInteger`. Functional. |
-| `elg:AllRequired` | Individual | Type `elg:CompatibilityOperation`. |
-| `elg:AnySufficient` | Individual | Type `elg:CompatibilityOperation`. |
+| `elg:AllRequired` | Individual | Type `elg:CompositionOperation`. |
+| `elg:AnySufficient` | Individual | Type `elg:CompositionOperation`. |
 | `elg:Denied` | Individual | Type `elg:Decision`. |
-| `elg:DimensionConsistent` | Individual | Type `elg:CompatibilityOperation`. |
 | `elg:E1` | Individual | Type `elg:OperationalProfile`. |
 | `elg:E2` | Individual | Type `elg:OperationalProfile`. |
 | `elg:E3` | Individual | Type `elg:OperationalProfile`. |
 | `elg:E4` | Individual | Type `elg:OperationalProfile`. |
 | `elg:E5` | Individual | Type `elg:OperationalProfile`. |
-| `elg:E6` | Individual | Type `elg:OperationalProfile`. |
 | `elg:EveryValue` | Individual | Type `elg:ValueReading`. |
 | `elg:ExactMatch` | Individual | Type `elg:MatchStrategy`. |
 | `elg:Forward` | Individual | Type `elg:StepDirection`. |
@@ -1165,12 +1180,15 @@ A shape lives in one file only, so no violation is reported twice.
 
 `shapes/structural.ttl` is generated from the restriction rows of section 6 that are checked in SHACL. It
 holds the cardinalities of conditions, profiles, decisions, evidence bindings, evidence steps and closures.
-`elg:ConditionShape` discharges L1 to L3, and `elg:EligibilityDecisionShape` L6 to L8. `elg:ClosureShape`
+`elg:AdmissionProfileShape` discharges L2, and the profile's half of L1 and L3, and
+`elg:EligibilityDecisionShape` L6 to L8. `elg:ClosureShape`
 requires a closure's one source.
 
 ### 7.2 Constraints
 
 `shapes/constraints.ttl` holds the other constraints.
+`elg:SingleConditionMechanismShape` discharges L1 and L3 for a condition that is not a profile, and
+`elg:CompositionOnProfileShape` the rest of L2, so only a profile declares a composition operation.
 `elg:IntervalContainmentRequiresRangeSet` discharges L4 for an `elg:IntervalCondition`.
 `elg:WildcardPolicyConsistency` reports a `Wildcard` match strategy under `NoWildcard` (ADR-A06).
 `elg:ConceptConditionDeclarationShape` warns of a concept condition that states nothing to match
@@ -1182,6 +1200,20 @@ decision to rely only on a closure a binding of its profile names (ADR-A105).
 ```turtle-shapes
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+
+elg:SingleConditionMechanismShape a sh:NodeShape ;
+	sh:targetClass elg:Condition ;
+	sh:or (
+		[ sh:class elg:AdmissionProfile ]
+		[ sh:property [ sh:path elg:matchStrategy ; sh:minCount 1 ; sh:maxCount 1 ] ,
+			[ sh:path elg:wildcardSemantics ; sh:minCount 1 ; sh:maxCount 1 ] ]
+	) ;
+	sh:message "A condition that is not an admission profile declares exactly one match strategy and one wildcard policy (L1, L3)." .
+
+elg:CompositionOnProfileShape a sh:NodeShape ;
+	sh:targetSubjectsOf elg:compositionOperation ;
+	sh:class elg:AdmissionProfile ;
+	sh:message "Only an admission profile declares a composition operation, which says how it combines its conditions' outcomes (L2)." .
 
 elg:IntervalContainmentRequiresRangeSet a sh:NodeShape ;
 	sh:targetClass elg:IntervalCondition ;
@@ -1390,7 +1422,7 @@ flowchart LR
 ```
 
 The question's candidate range set is the required range set itself, so the condition's
-`AllRequired` compatibility operation is satisfied trivially:
+`AllRequired` composition operation is satisfied trivially:
 
 ```turtle-example
 @prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
@@ -1476,7 +1508,7 @@ is only possible, not certain.
 Eligibility canonicalisation is declaration-first and profile-stable.
 
 - `elg:conditionKey` is the canonical identifier of a condition declaration for comparison, caching, and replay.
-- Canonicalisation never changes the declared strategy (`elg:matchStrategy`), compatibility operation (`elg:compatibilityOperation`), or wildcard semantics (`elg:wildcardSemantics`).
+- Canonicalisation never changes the declared strategy (`elg:matchStrategy`), wildcard semantics (`elg:wildcardSemantics`), or a profile's composition operation (`elg:compositionOperation`).
 - Interval admissibility canonicalises through Quantification ranges and range sets only, using `elg:requiredRangeSet` and `elg:candidateRangeSet` with `qnt:Range` and `qnt:RangeSet`.
 
 ## 10. Formalisation
@@ -1561,7 +1593,11 @@ Earlier versions are listed in the [ontology release register](../../docs/archit
   [ADR-A126](../../docs/architecture/decisions/ADR-A126-literate-specification-layout-and-grammar.md), and
   generates its documents' headers, their terms and the structural shapes from sections 1, 2 and 6. Both
   documents gain a `dct:description` and a `dct:creator`. Every class and property has a definition, 32 of them
-  new. No axiom changes.
+  new. Breaking: `elg:CompatibilityOperation` and `elg:compatibilityOperation` are renamed
+  `elg:CompositionOperation` and `elg:compositionOperation`, declared by admission profiles only, and a profile
+  no longer declares a match strategy or a wildcard policy. L1 to L3 are restated to match.
+  `elg:DimensionConsistent`, which no compiler could evaluate, is removed with the operational profile `elg:E6`
+  that tested it (ADR-A05, ADR-A03).
 - `eligibility` 0.12.0 (breaking, ADR-A105). Closures (§5.7). New: `elg:Closure`, `elg:licensedBy`,
   `elg:closedUnder` and `elg:closureReliedOn`. `eligibility-vocab` 0.13.0 (breaking). L15 restated, so a set
   reading is Denied under some value, or Permitted under every value, only under a closure the binding names,
@@ -1578,6 +1614,6 @@ Earlier versions are listed in the [ontology release register](../../docs/archit
 
 - **Laws L1 to L8 name no register.** §5.8 places them under `elg:StaticConstraint`, but only L9 to L17 state
   `elg:lawRegister`.
-- **Fourteen individuals have no definition**, the match strategies, the compatibility operations, the
-  wildcard policies and the decisions. §5.1 and §5.4 describe them.
+- **Eleven individuals have no definition**, the match strategies, the wildcard policies and the
+  decisions. §5.1 and §5.4 describe them.
 - **A closure over a period**, such as "within 60 days of the request", is not yet declared (§5.7).

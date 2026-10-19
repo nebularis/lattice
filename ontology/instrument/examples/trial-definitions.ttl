@@ -107,28 +107,28 @@ ex:Participant a pty:Role ; rdfs:label "the Participant" .
 # which ADR-A105 declares (HQ-6).
 ex:no-enrolment-in-90-days a elg:Condition ;
     elg:conditionKey "no-participant-enrolled-within-90-days-of-activation" ;
-    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:matchStrategy elg:ExactMatch ; 
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:no-enrolment .
 ex:no-enrolment a skos:Concept ; rdfs:label "no participant has been enrolled at the Site within 90 days of its activation" .
 
 ex:site-inactive a elg:Condition ;
     elg:conditionKey "site-inactive" ;
-    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:matchStrategy elg:ExactMatch ; 
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:inactive .
 ex:inactive a skos:Concept ; rdfs:label "the Site is inactive" .
 
 ex:injury-in-trial a elg:Condition ;
     elg:conditionKey "injury-arising-during-the-trial-from-an-adverse-event" ;
-    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:matchStrategy elg:ExactMatch ; 
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:in-trial .
 ex:in-trial a skos:Concept ; rdfs:label "an injury has arisen during the trial from an adverse event" .
 
 ex:apparent-within-12-months a elg:Condition ;
     elg:conditionKey "injury-apparent-within-12-months-after-last-visit" ;
-    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:matchStrategy elg:ExactMatch ; 
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:apparent-late .
 ex:apparent-late a skos:Concept ; rdfs:label "the injury became apparent within 12 months after the Participant's last visit" .
@@ -138,7 +138,7 @@ ex:apparent-late a skos:Concept ; rdfs:label "the injury became apparent within 
 # context supplies (C12, C13).
 ex:enrolled-at-event a elg:Condition ;
     elg:conditionKey "enrolled-at-the-date-of-the-event" ;
-    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:matchStrategy elg:ExactMatch ; 
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:enrolled .
 ex:enrolled a skos:Concept ; rdfs:label "the person was enrolled in the trial at the date of the adverse event" .

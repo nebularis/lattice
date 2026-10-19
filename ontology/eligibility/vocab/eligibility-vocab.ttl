@@ -22,13 +22,13 @@ dct:creator a owl:AnnotationProperty .
 
 dct:description a owl:AnnotationProperty .
 
-elg:AllRequired a elg:CompatibilityOperation .
+elg:AllRequired a elg:CompositionOperation ;
+    rdfs:comment "Denied when any condition is Denied, Permitted when every condition is Permitted, otherwise Undetermined, the strong Kleene conjunction." .
 
-elg:AnySufficient a elg:CompatibilityOperation .
+elg:AnySufficient a elg:CompositionOperation ;
+    rdfs:comment "Permitted when any condition is Permitted, Denied when every condition is Denied, otherwise Undetermined, the strong Kleene disjunction." .
 
 elg:Denied a elg:Decision .
-
-elg:DimensionConsistent a elg:CompatibilityOperation .
 
 elg:E1 a elg:OperationalProfile ;
     rdfs:comment "Exact-match profile" .
@@ -40,13 +40,10 @@ elg:E3 a elg:OperationalProfile ;
     rdfs:comment "Wildcard profile" .
 
 elg:E4 a elg:OperationalProfile ;
-    rdfs:comment "Compatibility-any profile" .
+    rdfs:comment "AnySufficient composition profile" .
 
 elg:E5 a elg:OperationalProfile ;
-    rdfs:comment "Compatibility-all profile" .
-
-elg:E6 a elg:OperationalProfile ;
-    rdfs:comment "Dimension-consistency profile" .
+    rdfs:comment "AllRequired composition profile" .
 
 elg:EveryValue a elg:ValueReading ;
     rdfs:comment "Denied when any value is Denied. Under a closure the binding names, Permitted when every value is Permitted, with no value included. Otherwise Undetermined (L15)." .
@@ -64,13 +61,13 @@ elg:Inverse a elg:StepDirection ;
     rdfs:comment "Traversed from object to subject." .
 
 elg:L1 a elg:Law ;
-    rdfs:comment "Each condition declares exactly one match strategy." .
+    rdfs:comment "Each condition that is not an admission profile declares exactly one match strategy, and an admission profile declares none." .
 
 elg:L2 a elg:Law ;
-    rdfs:comment "Each condition declares exactly one compatibility operation." .
+    rdfs:comment "Each admission profile declares exactly one composition operation, and no other condition declares one." .
 
 elg:L3 a elg:Law ;
-    rdfs:comment "Each condition declares exactly one wildcard policy." .
+    rdfs:comment "Each condition that is not an admission profile declares exactly one wildcard policy, and an admission profile declares none." .
 
 elg:L4 a elg:Law ;
     rdfs:comment "IntervalContainment requires declared requiredRangeSet." .

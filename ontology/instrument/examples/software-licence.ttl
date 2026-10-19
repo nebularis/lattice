@@ -93,7 +93,6 @@ ex:Licensee a pty:Role ; rdfs:label "Licensee" .
 ex:for-convenience a elg:Condition ;
     elg:conditionKey "termination-without-cause" ;
     elg:matchStrategy elg:ExactMatch ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:without-cause .
 ex:without-cause a skos:Concept ; rdfs:label "without cause, for the licensor's convenience" .
@@ -101,7 +100,6 @@ ex:without-cause a skos:Concept ; rdfs:label "without cause, for the licensor's 
 ex:perpetual-fee-paid a elg:Condition ;
     elg:conditionKey "perpetual-licence-fee-paid" ;
     elg:matchStrategy elg:ExactMatch ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:fee-paid .
 ex:fee-paid a skos:Concept ; rdfs:label "the perpetual licence fee has been paid" .

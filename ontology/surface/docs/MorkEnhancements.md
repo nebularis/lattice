@@ -65,7 +65,6 @@ The relevant semantics are represented by:
 
 ```turtle
 elg:matchStrategy elg:IntervalContainment ;
-elg:compatibilityOperation elg:AllRequired ;
 elg:requiredRangeSet ex:required-rangeset .
 ```
 
@@ -518,9 +517,9 @@ exe:usesEvaluationStrategy a owl:ObjectProperty ;
     rdfs:domain exe:ConditionPlan ;
     rdfs:range elg:MatchStrategy .
 
-exe:usesCompatibilityOperation a owl:ObjectProperty ;
+exe:usesCompositionOperation a owl:ObjectProperty ;
     rdfs:domain exe:ProfilePlan ;
-    rdfs:range elg:CompatibilityOperation .
+    rdfs:range elg:CompositionOperation .
 
 exe:usesWildcardSemantics a owl:ObjectProperty ;
     rdfs:domain exe:ConditionPlan ;
@@ -723,7 +722,6 @@ For an `elg:IntervalCondition`, compilation requires:
 
 ```text
 - exactly one match strategy
-- exactly one compatibility operation
 - exactly one wildcard semantics value
 - a requiredRangeSet
 - a supported range kind
@@ -830,7 +828,7 @@ Otherwise, the result is `elg:Undetermined`.
 
 ## 9. Profile Aggregation Semantics
 
-A profile plan evaluates its child condition plans and aggregates results according to its declared `elg:compatibilityOperation`.
+A profile plan evaluates its child condition plans and aggregates results according to its declared `elg:compositionOperation`.
 
 ### 9.1 AllRequired
 
@@ -848,11 +846,9 @@ Undetermined  if no child is Permitted and at least one child is Undetermined
 Denied        if every child condition is Denied
 ```
 
-### 9.3 DimensionConsistent
+### 9.3 DimensionConsistent, retired
 
-`DimensionConsistent` requires all relevant conditions to resolve against compatible dimensions, value spaces, or declared dimension keys before applying the chosen policy.
-
-The first executable release should support this operation only where a deployment supplies an explicit dimension relation. Otherwise, it must return `elg:Undetermined` with `exe:UnsupportedRangeKind` or a dedicated `exe:DimensionResolutionAbsent` diagnostic.
+`DimensionConsistent` was to check that conditions resolve against compatible dimensions before they are combined. That is a precondition, not a way of composing outcomes, and it had no evaluable definition, so it was retired in 2026-10 (ADR-A05's addendum). A downstream ontology that needs such a check adds its own operation.
 
 ---
 
@@ -866,7 +862,7 @@ The plan is the backend-neutral, canonical compiled representation. It must reco
 
 - source condition or profile
 - strategy
-- compatibility operation
+- composition operation
 - wildcard semantics
 - required ranges and value space
 - candidate evidence binding
@@ -1032,7 +1028,7 @@ ex:minimum-credit-condition-plan
 ex:profile-a-plan
     a exe:ProfilePlan ;
     exe:implementsProfile ex:profile-a ;
-    exe:usesCompatibilityOperation elg:AllRequired ;
+    exe:usesCompositionOperation elg:AllRequired ;
     exe:hasConditionPlan ex:minimum-credit-condition-plan ;
     exe:derivedFromEligibilityNode ex:profile-a,
                                    ex:minimum-credit-condition ;
@@ -1104,7 +1100,7 @@ For an indeterminate evaluation, the result must have `elg:Undetermined` and a d
 
 1. Load and validate the Eligibility, Quantification, Mork, and target graphs.
 2. Locate `elg:AdmissionProfile` and reachable `elg:Condition` nodes.
-3. Resolve the condition strategy, compatibility operation, wildcard policy, required inputs, and candidate evidence bindings.
+3. Resolve the condition strategy, composition operation, wildcard policy, required inputs, and candidate evidence bindings.
 4. Validate strategy-specific semantic requirements.
 5. Create canonical `exe:ConditionPlan` resources.
 6. Create `exe:ProfilePlan` resources that aggregate condition plans.
@@ -1144,7 +1140,7 @@ hash(
 )
 ```
 
-A change to a bound closure, numeric endpoint, value-space hash, candidate path, strategy, or compatibility operation must produce a distinct generated plan or artefact identifier.
+A change to a bound closure, numeric endpoint, value-space hash, candidate path, strategy, or composition operation must produce a distinct generated plan or artefact identifier.
 
 ---
 

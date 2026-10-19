@@ -200,7 +200,7 @@ Estimates are in tokens.
 | RC4 | Downstream extension (RC-Q7): qualified names and an `extends` chain, tried against Open CBAA's layout. Then the extractor reads the catalogue for every extraction and fails when the files a README generates differ from its entry (RC2-C2 option b, deferred to here) | `tools/` | L1, L4 | 60k |
 | RC5 | Promotion to the `lattice-repo-catalogue` package, installable into each worktree's `.venv` and pinnable by version per branch downstream | `packages/`, `tools/` | L0, L4 | 50k |
 | RC6 | The XML catalogue (ADR-A88) folded into the repository catalogue, under a new ADR, with release and version management read from the same place | `tools/`, `ontology/` | L3, L4 | 80k |
-| ELC | The composition operation (OD-D44, OD-D45). Brief below | `ontology/eligibility`, `ontology/instrument`, other modules' examples, `tools/mork_compilers`, `test/` | L3, L4 | 70k |
+| ELC | The composition operation (OD-D44, OD-D45). Built 2026-10-19, [Validation Pack](../validation/ELC.md). Brief below | `ontology/eligibility`, `ontology/instrument`, other modules' examples, `tools/mork_compilers`, `test/` | L3, L4 | 70k |
 | OD-REL | The release before the merge (OD-D43): every document a migration changed takes one bump, the cascade is computed from the import graph and every importer re-pinned once, release rows are added and release notes written, and the versioning and catalogue checks pass again. Eligibility's laws L1 to L8 gain `elg:lawRegister elg:StaticConstraint` in the same release (OD6 review, 2026-10-18). The maintainer creates the tags | every changed module | L3, L4 | 60k, more as layers migrate |
 
 ```mermaid

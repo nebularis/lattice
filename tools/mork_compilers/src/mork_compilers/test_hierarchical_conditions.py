@@ -56,7 +56,6 @@ ex:diagnosis-contract a voc:SchemeContract ; voc:boundScheme ex:diagnoses-2026 .
 
 ex:solid-tumour-arm a elg:Condition ;
     elg:matchStrategy elg:HierarchicalMatch ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:constrainedByContract ex:diagnosis-contract ;
     elg:requiredConcept ex:solid-tumour ;
@@ -64,14 +63,12 @@ ex:solid-tumour-arm a elg:Condition ;
 
 ex:non-haematological a elg:Condition ;
     elg:matchStrategy elg:HierarchicalMatch ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:constrainedByContract ex:diagnosis-contract ;
     elg:excludedConcept ex:haematological .
 
 ex:not-haematological-flat a elg:SetMembershipCondition ;
     elg:matchStrategy elg:SetMembership ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:constrainedByContract ex:diagnosis-contract ;
     elg:excludedConcept ex:haematological .
@@ -94,7 +91,6 @@ ex:binding-2026 a voc:SchemeBinding ; voc:forContract ex:grade-contract ; voc:bi
 
 ex:engineering-benefit a elg:Condition ;
     elg:matchStrategy elg:HierarchicalMatch ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:constrainedByContract ex:grade-contract ;
     elg:requiredConcept ex:engineering .

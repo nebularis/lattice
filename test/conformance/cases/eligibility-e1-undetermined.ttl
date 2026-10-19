@@ -9,7 +9,6 @@ ex:full-time a skos:Concept .
 ex:condition-e1
     a elg:ExactCondition ;
     elg:matchStrategy elg:ExactMatch ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     # Removing elg:requiredConcept raises elg:ConceptConditionDeclarationShape
     # (sh:Warning), and the compilers refuse a condition that states nothing to match.
@@ -18,9 +17,7 @@ ex:condition-e1
 ex:profile-e1
     a elg:AdmissionProfile ;
     elg:hasCondition ex:condition-e1 ;
-    elg:matchStrategy elg:SetMembership ;
-    elg:compatibilityOperation elg:AllRequired ;
-    elg:wildcardSemantics elg:NoWildcard .
+    elg:compositionOperation elg:AllRequired .
 
 ex:question-e1
     a elg:Question ;

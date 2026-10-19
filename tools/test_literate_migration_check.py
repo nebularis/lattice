@@ -63,3 +63,9 @@ def test_od6_t7_the_check_fails_on_a_change_and_passes_once_it_is_reconciled(tmp
     capsys.readouterr()
     assert mc.main([*args, "--reconciliations", str(reconciliations)]) == 1
     assert "no longer applies" in capsys.readouterr().err
+
+
+def test_elc_t1_a_multi_line_literal_is_one_difference_on_one_line() -> None:
+    query = '@prefix ex: <https://example.org/x#> .\nex:S ex:select """\nSELECT $this\nWHERE { }\n""" .\n'
+    changed = mc.differences("f.ttl", query, query.replace("WHERE", "where"))
+    assert len(changed) == 2 and all("\n" not in line and "\\n" in line for line in changed)

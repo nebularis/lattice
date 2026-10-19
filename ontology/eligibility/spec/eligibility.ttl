@@ -30,8 +30,8 @@ elg:Closure a owl:Class ;
     rdfs:comment "A source's warrant that the records an evidence binding reads are complete, so a set reading may decide on what is absent (ADR-A105, L15, L17). It covers exactly the bindings that name it." ;
     rdfs:subClassOf [ a owl:Restriction ; owl:onProperty elg:licensedBy ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
 
-elg:CompatibilityOperation a owl:Class ;
-    rdfs:comment "How a condition's requirements combine when it states several, one of a closed set of named operations." .
+elg:CompositionOperation a owl:Class ;
+    rdfs:comment "How an admission profile combines its conditions' outcomes, one of a closed set of named operations." .
 
 elg:Condition a owl:Class ;
     rdfs:comment "A declared admissibility condition." .
@@ -121,10 +121,10 @@ elg:closureReliedOn a owl:ObjectProperty ;
     rdfs:domain elg:EligibilityDecision ;
     rdfs:range elg:Closure .
 
-elg:compatibilityOperation a owl:FunctionalProperty, owl:ObjectProperty ;
-    rdfs:comment "The one compatibility operation a condition declares." ;
-    rdfs:domain elg:Condition ;
-    rdfs:range elg:CompatibilityOperation .
+elg:compositionOperation a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "The one composition operation an admission profile declares." ;
+    rdfs:domain elg:AdmissionProfile ;
+    rdfs:range elg:CompositionOperation .
 
 elg:conditionKey a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:comment "The canonical identifier of a condition declaration, for comparison, caching and replay." ;
@@ -249,6 +249,6 @@ elg:wildcardSemantics a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:domain elg:Condition ;
     rdfs:range elg:WildcardSemantics .
 
-[ a owl:AllDisjointClasses ; owl:members ( elg:Condition elg:Question elg:EligibilityDecision elg:MatchStrategy elg:CompatibilityOperation elg:WildcardSemantics elg:Decision elg:OperationalProfile elg:Law elg:EvidenceBinding elg:EvidenceStep elg:StepDirection elg:ValueReading elg:Closure ) ] .
+[ a owl:AllDisjointClasses ; owl:members ( elg:Condition elg:Question elg:EligibilityDecision elg:MatchStrategy elg:CompositionOperation elg:WildcardSemantics elg:Decision elg:OperationalProfile elg:Law elg:EvidenceBinding elg:EvidenceStep elg:StepDirection elg:ValueReading elg:Closure ) ] .
 
 rdf:Property a owl:Class .

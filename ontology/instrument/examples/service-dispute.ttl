@@ -106,7 +106,7 @@ ex:Customer a pty:Role ; rdfs:label "Customer" .
 # C13). Clause 21 is not modelled.
 ex:dispute-settled a elg:Condition ;
     elg:conditionKey "service-dispute-settled" ;
-    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:matchStrategy elg:ExactMatch ; 
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:settled .
 ex:settled a skos:Concept ; rdfs:label "the dispute has been settled under clause 21" .

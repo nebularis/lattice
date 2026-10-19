@@ -15,7 +15,7 @@
 
 elg:AdmissionProfileShape a sh:NodeShape ;
     sh:targetClass elg:AdmissionProfile ;
-    sh:property [ sh:path elg:hasCondition ; sh:minCount 1 ] .
+    sh:property [ sh:path elg:compositionOperation ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path elg:hasCondition ; sh:minCount 1 ], [ sh:path elg:matchStrategy ; sh:maxCount 0 ; sh:message "An admission profile declares no match strategy, since its conditions do (L1)." ], [ sh:path elg:wildcardSemantics ; sh:maxCount 0 ; sh:message "An admission profile declares no wildcard policy, since its conditions do (L3)." ] .
 
 elg:ClosureShape a sh:NodeShape ;
     sh:targetClass elg:Closure ;
@@ -23,7 +23,7 @@ elg:ClosureShape a sh:NodeShape ;
 
 elg:ConditionShape a sh:NodeShape ;
     sh:targetClass elg:Condition ;
-    sh:property [ sh:path elg:compatibilityOperation ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path elg:matchStrategy ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path elg:negated ; sh:datatype xsd:boolean ; sh:maxCount 1 ], [ sh:path elg:wildcardSemantics ; sh:minCount 1 ; sh:maxCount 1 ] .
+    sh:property [ sh:path elg:negated ; sh:datatype xsd:boolean ; sh:maxCount 1 ] .
 
 elg:EligibilityDecisionShape a sh:NodeShape ;
     sh:targetClass elg:EligibilityDecision ;

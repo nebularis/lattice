@@ -37,21 +37,16 @@ ex:refused a skos:Concept .
 
 ex:consent a elg:SetMembershipCondition ;
     elg:matchStrategy elg:SetMembership ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:consented .
 
 ex:all-arm a elg:AdmissionProfile ;
     elg:hasCondition ex:solid-tumour-arm , ex:consent ;
-    elg:matchStrategy elg:SetMembership ;
-    elg:compatibilityOperation elg:AllRequired ;
-    elg:wildcardSemantics elg:NoWildcard .
+    elg:compositionOperation elg:AllRequired .
 
 ex:any-arm a elg:AdmissionProfile ;
     elg:hasCondition ex:solid-tumour-arm , ex:consent ;
-    elg:matchStrategy elg:SetMembership ;
-    elg:compatibilityOperation elg:AnySufficient ;
-    elg:wildcardSemantics elg:NoWildcard .
+    elg:compositionOperation elg:AnySufficient .
 """
 
 # record -> (diagnosis candidate or None, consent candidate or None)
@@ -162,9 +157,9 @@ class ProfileTests(unittest.TestCase):
                 self.assertEqual(decision, EXPECTED[profile][name], f"{profile} {name}")  # sound
             self.assertEqual(outcomes, derivable[profile], profile)
 
-    def test_dimension_consistent_is_refused(self) -> None:
+    def test_an_unknown_composition_operation_is_refused(self) -> None:
         data = records("all-arm")
-        data.set((EX["all-arm"], ELG.compatibilityOperation, ELG.DimensionConsistent))
+        data.set((EX["all-arm"], ELG.compositionOperation, EX["some-downstream-operation"]))
         with self.assertRaises(IRCompileError):
             compile_profile(data, EX["all-arm"])
 
@@ -176,7 +171,7 @@ class ProfileTests(unittest.TestCase):
             set(artefact.objects(plan_node, EXE.hasConditionPlan)),
             {mint(EX["solid-tumour-arm"], "execplan"), mint(EX.consent, "execplan")},
         )
-        self.assertEqual(artefact.value(plan_node, EXE.usesCompatibilityOperation), ELG.AllRequired)
+        self.assertEqual(artefact.value(plan_node, EXE.usesCompositionOperation), ELG.AllRequired)
 
     def test_interval_profile_compiles_and_evaluates(self) -> None:
         data = Graph().parse(ROOT / "ontology/eligibility/examples/interval-containment.ttl")

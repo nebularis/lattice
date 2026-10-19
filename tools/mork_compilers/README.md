@@ -64,8 +64,8 @@ with several can derive both outcomes.
 
 A profile plan decides each `elg:EligibilityDecision` record of the profile
 by strong Kleene logic over its conditions' outcomes, with a condition the
-record asks no question of counted as `Undetermined`. `DimensionConsistent`
-is refused. The profile's SHACL shapes target the record and wrap the profile
+record asks no question of counted as `Undetermined`. A composition operation
+other than `AllRequired` and `AnySufficient` is refused. The profile's SHACL shapes target the record and wrap the profile
 query. Its SWRL rules derive `exe:impliesProfileDecision` from the questions'
 `exe:impliesDecision` facts. The shared conformance corpus runs every
 Eligibility case through SPARQL and SHACL (`python -m tools.phase8_conformance`).

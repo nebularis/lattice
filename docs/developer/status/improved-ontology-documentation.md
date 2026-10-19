@@ -52,7 +52,7 @@ deliberate. The release slice OD-REL resolves it once, before the merge into `ma
 | RC4 downstream extension | planned | RC3 |
 | RC5 package promotion | planned | RC4 |
 | RC6 XML catalogue folded in | planned | RC5, a new ADR on ADR-A88 |
-| ELC composition operation | briefed 2026-10-19 (OD-D44, OD-D45) | |
+| ELC composition operation | built autonomously 2026-10-19, committed locally, [Validation Pack](../validation/ELC.md) | the maintainer's review of six decisions and three changed tests |
 | OD-REL release before the merge | planned | every migration on the branch |
 
 ## Open questions
@@ -195,3 +195,7 @@ None.
   briefed, to land before OD-REL.
 - 2026-10-19: ELC-Q1 and Q2, DOC1-Q4 to Q7 and RC3-Q3 to Q5 answered (OD-D46 to OD-D53). The maintainer
   authorised ELC, DOC1 and RC3 to be built autonomously, committed locally and not pushed.
+- 2026-10-19: ELC built. `elg:CompositionOperation` on profiles only, `elg:DimensionConsistent` and `elg:E6`
+  removed, 42 graphs rewritten and checked graph to graph, and Instrument's warranty carve-back typed as the
+  profile it is. The migration check now escapes line breaks, and TD-55 records its whole-file blank node
+  labels. RC3 runs in a separate worktree.

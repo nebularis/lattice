@@ -6,15 +6,12 @@
 ex:condition-e1
     a elg:ExactCondition ;
     elg:matchStrategy elg:ExactMatch ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard .
 
 ex:profile-e1
     a elg:AdmissionProfile ;
     elg:hasCondition ex:condition-e1 ;
-    elg:matchStrategy elg:SetMembership ;
-    elg:compatibilityOperation elg:AllRequired ;
-    elg:wildcardSemantics elg:NoWildcard .
+    elg:compositionOperation elg:AllRequired .
 
 ex:question-e1
     a elg:Question ;

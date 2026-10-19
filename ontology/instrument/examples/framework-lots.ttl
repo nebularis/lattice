@@ -345,7 +345,7 @@ tmpl:withdraw a ins:RegimeTransition , bhv:TransitionDefinition ;
 # Placeholder: a scope stated, not yet evaluable (C13).
 ex:unpaid-invoice a elg:Condition ;
     elg:conditionKey "authority-failed-to-pay-undisputed-invoice" ;
-    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:matchStrategy elg:ExactMatch ; 
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:invoice-unpaid .
 ex:invoice-unpaid a skos:Concept ; rdfs:label "the Authority has failed to pay an undisputed invoice when due" .

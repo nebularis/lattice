@@ -32,3 +32,11 @@ Each condition instance must declare:
 - Strategy selection is explicit per condition and can be validated structurally.
 - A profile can be reasoned over as a condition itself, which keeps composition uniform.
 - Interval conditions can bind directly to Quantification ranges without introducing new numeric mechanisms in Eligibility.
+
+## Addendum, 2026-10-19: what a profile declares
+
+Agreed by the maintainer. A condition that is not an admission profile declares one match strategy and one
+wildcard policy. An admission profile declares neither, since it tests no candidate itself, and declares one
+composition operation, which says how it combines its conditions' outcomes (ADR-A05's addendum of the same
+date). Laws L1 to L3 and Eligibility's shapes say so.
+

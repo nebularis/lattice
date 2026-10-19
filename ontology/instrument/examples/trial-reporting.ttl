@@ -111,14 +111,14 @@ ex:business-day a qnt:CalendarUnit ; rdfs:label "business day" .
 # Placeholders: triggers and states stated, not yet evaluable (C13).
 ex:sae-known a elg:Condition ;
     elg:conditionKey "investigator-aware-of-serious-adverse-event" ;
-    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:matchStrategy elg:ExactMatch ; 
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:aware .
 ex:aware a skos:Concept ; rdfs:label "the Investigator is aware of a serious adverse event" .
 
 ex:enrolment-met a elg:Condition ;
     elg:conditionKey "at-least-20-participants-enrolled" ;
-    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:matchStrategy elg:ExactMatch ; 
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:enrolled .
 ex:enrolled a skos:Concept ; rdfs:label "at least 20 participants are enrolled" .

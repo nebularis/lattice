@@ -42,7 +42,8 @@ def differences(path: str, at_ref: Optional[str], in_tree: Optional[str]) -> Lis
     _, only_ref, only_tree = graph_diff(to_isomorphic(_graph(at_ref)), to_isomorphic(_graph(in_tree)))
     lines = [f"{path} only-at-ref {s.n3()} {p.n3()} {o.n3()} ." for s, p, o in only_ref]
     lines += [f"{path} only-in-tree {s.n3()} {p.n3()} {o.n3()} ." for s, p, o in only_tree]
-    return sorted(lines)
+    # One difference per line, so a literal's line breaks, for example in a SPARQL query, are escaped.
+    return sorted(line.replace("\r", "\\r").replace("\n", "\\n") for line in lines)
 
 
 def _at_ref(root: Path, ref: str, path: str) -> Optional[str]:

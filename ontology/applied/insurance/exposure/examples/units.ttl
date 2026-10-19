@@ -121,23 +121,19 @@ ex:flood-zone-contract a voc:SchemeContract ;
 
 ex:peril-under-flood a elg:Condition ;
     elg:matchStrategy elg:HierarchicalMatch ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:constrainedByContract ex:peril-contract ;
     elg:requiredConcept prl-voc:N.HYD.FLD .
 
 ex:zone-in-special-flood-hazard-area a elg:Condition ;
     elg:matchStrategy elg:SetMembership ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:constrainedByContract ex:flood-zone-contract ;
     elg:requiredConcept ex:zone-ae , ex:zone-ve .
 
 ex:flood-units a elg:AdmissionProfile ;
     elg:hasCondition ex:peril-under-flood , ex:zone-in-special-flood-hazard-area ;
-    elg:matchStrategy elg:SetMembership ;
-    elg:compatibilityOperation elg:AllRequired ;
-    elg:wildcardSemantics elg:NoWildcard .
+    elg:compositionOperation elg:AllRequired .
 
 ex:schedule-statement a elg:OperationalProfile .
 ex:designations-closure a elg:Closure ;

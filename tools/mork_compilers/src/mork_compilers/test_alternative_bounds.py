@@ -41,7 +41,6 @@ ex:allowed a qnt:RangeSet ; qnt:onSpace ex:money ; qnt:hasRange ex:up-to-limit .
 
 ex:facility-limit a elg:IntervalCondition ;
     elg:matchStrategy elg:IntervalContainment ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredRangeSet ex:allowed .
 """
