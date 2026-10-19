@@ -1,5 +1,8 @@
 # Amendment 1 to the LATTICE Platform Agentic Development Plan
 
+**Sketch status:** TBD. Moved here from `docs/architecture/` on 2026-10-20. Whether it is still current, and what
+becomes of it, is to be decided.
+
 **Status:** Amendment to *LATTICE Platform — Agentic Development Plan (v0.1)*. Read alongside it; this document replaces the named passages and adds the named slices. It does not restate unchanged material.
 
 **Trigger:** repository compatibility review (`updated-plan-remediation.md`), findings 1–7 plus its four recommendation sections.

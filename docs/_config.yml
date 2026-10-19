@@ -4,3 +4,83 @@
 # theme's own assets/css/style.scss and fails to compile locally under the
 # bundled (EOL) Ruby Sass gem with an encoding error.
 theme: null
+
+
+# ADR-A127 decision 5 (OD-D37): an architecture decision is on the site only once the maintainer has published
+# it. The decisions directory is excluded, and each published decision is included by name. Jekyll's own
+# default exclusions are restated, since setting `exclude` replaces them.
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - vendor
+  - .bundle
+  - .jekyll-cache
+  - architecture/decisions/ADR-*
+# OD-D30, OD-D31, TD-53: the site publishes its declared sections only (repository-catalogue.md, "Site"). Working
+# documents and every directory no section uses are excluded. A section page that shows a file with
+# include_relative reads it from disk, so the file is excluded here and appears only inside that page.
+  - developer
+  - diagrams
+  - operator
+  - operational-guidance.md
+  - security
+  - traceability
+# The decisions directory's index lists every ADR, published or not. The decisions section's page is
+# architecture/published-architecture-decisions.md, which lists published decisions only.
+  - architecture/decisions/README.md
+# Data the repository topology check reads, not a page.
+  - architecture/repository-topology-migration.json
+# BEGIN GENERATED published-decisions. Written by `mise run build:published-decisions`. Do not edit by hand.
+include:
+  - ADR-A03-condition-taxonomy.md
+  - ADR-A05-compatibility-vocabulary.md
+  - ADR-A06-wildcard-semantics.md
+  - ADR-A100-hierarchical-match-over-flat-schemes.md
+  - ADR-A103-eligibility-set-readings.md
+  - ADR-A105-closure-declarations.md
+  - ADR-A121-repository-catalogue.md
+  - ADR-A126-literate-specification-layout-and-grammar.md
+  - ADR-A129-one-release-for-the-substrate.md
+  - ADR-A85-vocabulary-scoped-temporal-binding-resolution.md
+  - ADR-A87-eligibility-concept-inclusion-and-exclusion.md
+  - ADR-A90-eligibility-design-time-owl-class-backend.md
+  - ADR-A91-eligibility-candidate-evidence-binding.md
+# END GENERATED published-decisions
+# BEGIN GENERATED site-sections. Written by `mise run build:site-sections`. Do not edit by hand.
+defaults:
+  - scope:
+      path: "theory.md"
+    values:
+      layout: theory
+      title: "Theoretical Foundations"
+  - scope:
+      path: "layer-specifications.md"
+    values:
+      layout: architecture
+      title: "Layer specifications"
+  - scope:
+      path: "architecture/index.md"
+    values:
+      layout: architecture
+      title: "Architecture"
+  - scope:
+      path: "architecture/published-architecture-decisions.md"
+    values:
+      layout: architecture
+      title: "Published architecture decisions"
+  - scope:
+      path: "operations.md"
+    values:
+      layout: architecture
+      title: "Operations"
+  - scope:
+      path: "glossary.md"
+    values:
+      layout: architecture
+      title: "Glossary"
+  - scope:
+      path: "contribute.md"
+    values:
+      layout: architecture
+      title: "Contributing"
+# END GENERATED site-sections

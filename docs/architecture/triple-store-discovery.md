@@ -75,8 +75,7 @@ things about a query means knowing what the query does. Three questions turned t
    claim about SPARQL. Two of those claims were wrong when first written (§7), and only running the queries showed it.
 2. **What does a write cost?** A composite aggregate's replace was suspected, then shown, to cost time or memory quadratic in
    the aggregate's size (TD-42). The cost depends on how the store applies an update, which is not fixed by the standard.
-3. **What may the compiler assume about a store?** The persistence layer's later work (H5 in the [Track H
-   plan](../developer/plans/formal-methods-track-h.md)) models each store's concurrency and gives the compiler a *capability
+3. **What may the compiler assume about a store?** The persistence layer's later work (H5 of the formal methods Track H) models each store's concurrency and gives the compiler a *capability
    record* to choose the right form of an operation for a store. The probes in this document are that record's first
    entries.
 
@@ -253,7 +252,7 @@ Each entry has the same parts, so a reader can find what they need.
 **Evidence:** Source and Observed, on both stores. Runs R-A and R-B. **Corrected 2026-10-13**, see §7.1.
 
 **Context.** A composite aggregate's replace, `cas-replace-composite-property`, deletes every triple of the aggregate and inserts
-the new state. A cheaper form of it (R2 in the [typed IR sketch §4.3](../developer/sketches/formal-methods-track-h-typed-ir.md#43-how-a-composite-replace-is-evaluated-and-what-it-costs))
+the new state. A cheaper form of it (R2 of the Track H typed IR design)
 would put the payload in `VALUES` rows beside the sweep's rows, so each payload triple is filled once. That form is right only
 if the store removes every deletion before it adds any insertion, because a payload often repeats a triple the aggregate
 already holds, an unchanged name for example. So we needed to know how each store applies an update.

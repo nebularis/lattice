@@ -4,7 +4,7 @@
 
 **Status:** Historical record. Not normative, not a reference profile, and not guidance.
 **Superseded by:** [IRI and Identity Patterns](iri-identity-patterns.md) and [ADR-A82](decisions/ADR-A82-framework-neutral-identity-pattern-selection.md), which supersedes [ADR-A51](decisions/ADR-A51-iri-and-identity-policy.md)
-**Body removed:** 2026-09-23, following [iri-patterns-post-3866b21-review.md](../developer/review/iri-patterns-post-3866b21-review.md) finding D7. The disposition is in [iri-patterns-post-3866b21-remediation.md](../developer/status/iri-patterns-post-3866b21-remediation.md).
+**Body removed:** 2026-09-23.
 
 ## What this document was
 

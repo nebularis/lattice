@@ -133,7 +133,7 @@ Not everything in a LATTICE graph was put there by a person asserting it. Some o
 
 **Governance** is the checking that has to run over the *union* of every layer's graph at once, because no single layer can see both sides of a cross-layer relationship on its own — whether a `voc:SchemeContract` some layer declared has actually been satisfied by a bound scheme in the right governance state; whether a generated index still matches the source it was built from; whether a deprecated term is quietly still in use somewhere. This is why governance is deliberately not folded into any one layer's own `shapes/` directory. As of this writing the `ontology/governance/` directory itself is largely scaffolding — the checks it's meant to run are described in the architecture decision records rather than implemented yet — but the role it's reserved for is real and load-bearing: it's the thing that would eventually make a claim like "this surface is still fresh" or "this scheme contract is satisfied" actually checkable, rather than merely asserted.
 
-Because a repository this layered inevitably accumulates documents that describe the same decision from different angles — and occasionally disagree — there's a settled order of authority for resolving that: **Architecture Decision Records outrank layer READMEs, which outrank `docs/GOVERNANCE.md` and `docs/architecture/`, which outrank informal design notes and worked-example commentary.** An ADR is where a cross-cutting decision (a new layer, a new cross-cutting rule, a resolved ambiguity in the dependency order) gets recorded once it's actually settled, and the `docs/architecture/decisions/` index is the place to check what's been decided and why.
+Because a repository this layered inevitably accumulates documents that describe the same decision from different angles — and occasionally disagree — there's a settled order of authority for resolving that: **Architecture Decision Records outrank layer READMEs, which outrank `docs/architecture/`, which outranks informal design notes and worked-example commentary.** An ADR is where a cross-cutting decision (a new layer, a new cross-cutting rule, a resolved ambiguity in the dependency order) gets recorded once it's actually settled, and the `docs/architecture/decisions/` index is the place to check what's been decided and why. The order is set out in [the ontology architecture](architecture/ontology-architecture.md#2-repository-conventions).
 
 ---
 
@@ -191,7 +191,7 @@ Eligibility exists to turn a declared admissibility question into one of exactly
 
 The layer is conspicuously conservative about which strategies it's willing to admit at all, and that conservatism is itself worth understanding as a design stance: interval *overlap* is explicitly excluded as an admissibility strategy (only interval *containment* is admitted, because overlap's semantics are subtler than they look — two ranges can each overlap a third separately while having no three-way intersection at all), and hierarchical matching is admitted only under a formally pinned-down definition: a candidate satisfies a hierarchically-matched condition exactly when it stands in the reflexive-transitive closure of the bound scheme's ordering relation, restricted to that scheme's own members — and a scheme whose ordering relation contains a cycle simply isn't evaluable under this strategy at all, rather than producing an undefined or looping answer. That closure can be computed by live traversal or answered from a generated Surface index (Part III, above) — Eligibility doesn't care which, as long as the two agree.
 
-*Terms introduced here:* `elg:Condition` (and its subtypes `ExactCondition`, `SetMembershipCondition`, `IntervalCondition`, `WildcardCondition`), `elg:AdmissionProfile`, `elg:Question`, `elg:EligibilityDecision`, `elg:MatchStrategy`, `elg:CompatibilityOperation`, `elg:WildcardSemantics`, `elg:Decision` (`Permitted`/`Denied`/`Undetermined`).
+*Terms introduced here:* `elg:Condition` (and its subtypes `ExactCondition`, `SetMembershipCondition`, `IntervalCondition`, `WildcardCondition`), `elg:AdmissionProfile`, `elg:Question`, `elg:EligibilityDecision`, `elg:MatchStrategy`, `elg:CompositionOperation`, `elg:WildcardSemantics`, `elg:Decision` (`Permitted`/`Denied`/`Undetermined`).
 
 ### Behaviour — state, and the strict line between reading it and changing it
 
@@ -307,7 +307,7 @@ A quick-reference index, grouped by namespace prefix, of every term introduced a
 
 ### `elg:` — Eligibility
 - **AdmissionProfile** — a reusable, versioned bundle of composed conditions.
-- **CompatibilityOperation** — how multiple conditions combine into one outcome.
+- **CompositionOperation** — how an admission profile combines its conditions' outcomes into one.
 - **Condition** (and its subtypes `ExactCondition`, `SetMembershipCondition`, `IntervalCondition`, `WildcardCondition`) — a declared admissibility condition.
 - **Decision** — the three-valued outcome vocabulary: `Permitted`, `Denied`, `Undetermined`.
 - **EligibilityDecision** — the recorded, evidenced outcome of evaluating a profile against one or more questions.

@@ -1,0 +1,16 @@
+# Non-test Python under tools/ that builds a path to a catalogued root itself (ADR-A121 decision 5).
+# One file per line, as "path | reason". The list may only shrink. `mise run check:catalogue` fails on a
+# listed file that no longer builds such a path, on a file that builds one and is not listed, and when the
+# technical debt row for this file (docs/developer/plans/technical-debt.md) gives the wrong count.
+tools/agent_guidance.py | names the skills directory and the marketplace file, to move to the reader's docs entries
+tools/authoring_stage.py | stages the authoring service from fixed build paths under platform/, apps/ and deployment/
+tools/check_formal_freshness.py | roots the proofs and reference trees under tools/, to move to the reader's tool packages
+tools/mork/src/mtp/cli.py | reaches ontology/mork by counting parents of __file__, to read the module's roles from the reader
+tools/mork_compilers/src/mork_compilers/reasoning.py | finds the reasoning harness jar under platform/ by counting parents of __file__
+tools/ontology_releases.py | names the releases register under docs/architecture/
+tools/persistence/src/persistence/witness.py | reaches ontology/persistence and its own tests by counting parents of __file__
+tools/phase8_conformance.py | builds the conformance suite's paths under test/ and ontology/ itself
+tools/proofs/check.py | names the prover driver under spikes/
+tools/reasoning_isolation_check.py | names the reasoning harness's pom under platform/
+tools/repository_topology_check.py | names the topology manifest and the ADR directory under docs/
+tools/validation_replay.py | puts tools/ on the replay's PYTHONPATH

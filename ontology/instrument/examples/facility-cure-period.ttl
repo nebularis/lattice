@@ -121,7 +121,6 @@ ex:permitted-leverage a qnt:RangeSet ; qnt:onSpace ex:leverage-space ; qnt:hasRa
 ex:leverage-ok a elg:IntervalCondition ;
     elg:conditionKey "leverage-within-covenant" ;
     elg:matchStrategy elg:IntervalContainment ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredRangeSet ex:permitted-leverage .
 
@@ -132,7 +131,6 @@ ex:excess-leverage a qnt:RangeSet ; qnt:onSpace ex:leverage-space ; qnt:hasRange
 ex:leverage-exceeded a elg:IntervalCondition ;
     elg:conditionKey "leverage-above-covenant" ;
     elg:matchStrategy elg:IntervalContainment ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredRangeSet ex:excess-leverage .
 
@@ -141,14 +139,14 @@ ex:leverage-exceeded a elg:IntervalCondition ;
 # C13).
 ex:force-majeure-prevents a elg:Condition ;
     elg:conditionKey "force-majeure-prevents-reporting" ;
-    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:matchStrategy elg:ExactMatch ; 
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:prevented .
 ex:prevented a skos:Concept ; rdfs:label "a force majeure event prevents the Borrower from reporting leverage" .
 
 ex:force-majeure-ended a elg:Condition ;
     elg:conditionKey "force-majeure-ended" ;
-    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:matchStrategy elg:ExactMatch ; 
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:ended .
 ex:ended a skos:Concept ; rdfs:label "the force majeure event no longer prevents the Borrower from reporting leverage" .

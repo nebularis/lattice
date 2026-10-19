@@ -1,14 +1,16 @@
+---
+published: true
+---
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
 # ADR-A100: Hierarchical match over schemes without a hierarchy
 
-**Status:** Accepted
-
+**Status:** Published, 2026-10-19. Accepted 2026-09-26.
+**Described in:** [Eligibility README](../../../ontology/eligibility/README.md)
 **Date:** 2026-09-26 (accepted in its final form, 2026-09-26) (NB: twice rewritten: first to place the concern in the substrate, then to reduce it to Eligibility and its compilers)
 
 **Related:** ADR-A85 (scoped binding resolution), ADR-A87 (concept exclusion), ADR-A89 (concept IR), ADR-A92 (derived artefacts), ADR-A13 (graph roles), ADR-A103 (set readings), ADR-A-C2, ADR-A98 (addendum)
 
-**Unit:** [`applied-insurance-reference`](../../developer/plans/applied-insurance-reference.md) (AIR-0.1, epic decision D11)
 
 ## Context
 
@@ -52,7 +54,7 @@ an `exe:Diagnostic`.
    consumer may lift a value through an exact mapping and evaluate it against the target scheme.
    An inexact mapping may advise, never decide. MORK is where proposed mappings wait for review
    (ADR-A13). Consumers read only the crosswalk.
-5. **Published crosswalks (MB-Q3).** An applied module may publish a reviewed crosswalk of a
+5. **Published crosswalks.** An applied module may publish a reviewed crosswalk of a
    widely used external list beside its reference edition, where the list owner's terms allow.
 
 ## Alternatives considered
@@ -76,7 +78,7 @@ needs to know which structure a scheme lacks.
   Undetermined (`exe:MissingCandidate`).
 - No applied `scheme-profile/` module exists (ADR-A98 addendum).
 
-## Implementation note (2026-09-26, AIR-3.1 planning)
+## Implementation note (2026-09-26)
 
 Two consequences above are corrected here. They change no decision:
 
@@ -84,3 +86,7 @@ Two consequences above are corrected here. They change no decision:
   vocabulary document does change: 0.6.0 → 0.7.0.
 - Adding a named individual is MINOR under the versioning policy, so Executable takes 0.5.0 →
   0.6.0, not a PATCH bump.
+
+## Provenance
+
+Part of the [`applied-insurance-reference`](../../developer/plans/applied-insurance-reference.md) unit (AIR-0.1, epic decision D11). Published crosswalks are question MB-Q3, and the implementation note was written in AIR-3.1 planning.

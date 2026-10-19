@@ -16,10 +16,12 @@ from pathlib import Path
 
 import pytest
 from pyshacl import validate
+import lattice_repo_catalogue
 from rdflib import BNode, Graph, Literal, Namespace, URIRef
 from rdflib.namespace import OWL, RDF, XSD
 
 ROOT = Path(__file__).resolve().parents[1]
+RELEASE = lattice_repo_catalogue.load(ROOT).release_version
 MODULE = ROOT / "ontology" / "applied" / "insurance" / "exposure"
 VOCAB_SHAPES = ROOT / "ontology" / "vocabulary" / "shapes"
 
@@ -153,21 +155,21 @@ def test_air42_01_spec_and_vocab_parse_every_import_resolves():
     vocab = _vocab()
     spec_imports = {str(o) for o in spec.objects(None, OWL.imports)}
     assert spec_imports == {
-        "https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0",
-        "https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0",
-        "https://www.nebularis.org/neuro-semantic/lattice/quantification/0.8.0",
-        "https://www.nebularis.org/neuro-semantic/lattice/party/0.9.0",
-        "https://www.nebularis.org/neuro-semantic/insurance/common/0.6.0",
-        "https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.12.0",
+        f"https://www.nebularis.org/neuro-semantic/lattice/foundation/{RELEASE}",
+        f"https://www.nebularis.org/neuro-semantic/lattice/vocabulary/{RELEASE}",
+        f"https://www.nebularis.org/neuro-semantic/lattice/quantification/{RELEASE}",
+        f"https://www.nebularis.org/neuro-semantic/lattice/party/{RELEASE}",
+        "https://www.nebularis.org/neuro-semantic/insurance/common/0.7.0",
+        f"https://www.nebularis.org/neuro-semantic/lattice/eligibility/{RELEASE}",
     }
     vocab_imports = {str(o) for o in vocab.objects(None, OWL.imports)}
     assert vocab_imports == {
-        "https://www.nebularis.org/neuro-semantic/insurance/exposure/0.1.0",
-        "https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0",
-        "https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0",
-        "https://www.nebularis.org/neuro-semantic/insurance/common-vocab/0.6.0",
-        "https://www.nebularis.org/neuro-semantic/insurance/peril-vocab/0.5.0",
-        "https://www.nebularis.org/neuro-semantic/lattice/applied/classification-vocab/0.2.0",
+        "https://www.nebularis.org/neuro-semantic/insurance/exposure/0.2.0",
+        f"https://www.nebularis.org/neuro-semantic/lattice/vocabulary/{RELEASE}",
+        f"https://www.nebularis.org/neuro-semantic/lattice/foundation/{RELEASE}",
+        "https://www.nebularis.org/neuro-semantic/insurance/common-vocab/0.7.0",
+        "https://www.nebularis.org/neuro-semantic/insurance/peril-vocab/0.6.0",
+        "https://www.nebularis.org/neuro-semantic/lattice/applied/classification-vocab/0.3.0",
     }
 
 

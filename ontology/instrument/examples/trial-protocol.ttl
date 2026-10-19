@@ -101,7 +101,6 @@ ex:Investigator a pty:Role ; rdfs:label "Investigator" .
 ex:fails-criteria a elg:Condition ;
     elg:conditionKey "participant-fails-eligibility-criteria" ;
     elg:matchStrategy elg:ExactMatch ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:ineligible .
 ex:ineligible a skos:Concept ; rdfs:label "does not meet the eligibility criteria" .
@@ -109,7 +108,6 @@ ex:ineligible a skos:Concept ; rdfs:label "does not meet the eligibility criteri
 ex:written-waiver a elg:Condition ;
     elg:conditionKey "participant-named-in-written-waiver" ;
     elg:matchStrategy elg:ExactMatch ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:waived-in-writing .
 ex:waived-in-writing a skos:Concept ; rdfs:label "a criterion waived in writing for this participant" .

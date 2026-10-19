@@ -178,7 +178,6 @@ ex:permitted-leverage a qnt:RangeSet ; qnt:onSpace ex:leverage-space ; qnt:hasRa
 ex:leverage-ok a elg:IntervalCondition ;
     elg:conditionKey "leverage-within-covenant" ;
     elg:matchStrategy elg:IntervalContainment ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredRangeSet ex:permitted-leverage .
 
@@ -187,7 +186,6 @@ ex:leverage-ok a elg:IntervalCondition ;
 ex:lien-by-law a elg:Condition ;
     elg:conditionKey "lien-arising-by-operation-of-law" ;
     elg:matchStrategy elg:ExactMatch ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:by-operation-of-law .
 ex:by-operation-of-law a skos:Concept ; rdfs:label "a security interest arising by operation of law" .

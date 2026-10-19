@@ -1,15 +1,19 @@
+---
+published: true
+---
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
 # ADR-A126: Literate specification layout and grammar
 
-**Status:** Accepted, 2026-10-17
+**Status:** Published, 2026-10-19. Accepted 2026-10-17.
+**Described in:** [Literate specifications](../literate-specifications.md)
 **Date:** 2026-10-16
 **Supersedes:** none. Adds addenda to ADR-A120 and to ADR-A01's convention note (2026-10-17)
-**Related:** [ADR-A01](ADR-A01-layer-dependency-order.md), [ADR-A86](ADR-A86-ontology-semantic-versioning.md)
+**Related:** [ADR-A01](https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-A01-layer-dependency-order.md), [ADR-A86](https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-A86-ontology-semantic-versioning.md)
 and the [versioning policy](../ontology-versioning-policy.md),
-[ADR-A97](ADR-A97-mork-order-relations-in-owl-2-dl.md) (OWL 2 DL), [ADR-A120](ADR-A120-literate-specs-with-several-documents.md),
-[ADR-A121](ADR-A121-repository-catalogue.md), [ADR-A127](ADR-A127-published-architecture-decisions.md),
-[ADR-A-C2](ADR-AC2-clean-room-authoring-procedure.md) (examples first), [conventions document](../literate-specifications.md)
+[ADR-A97](https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-A97-mork-order-relations-in-owl-2-dl.md) (OWL 2 DL), [ADR-A120](https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-A120-literate-specs-with-several-documents.md),
+[ADR-A121](ADR-A121-repository-catalogue.md), [ADR-A127](https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-A127-published-architecture-decisions.md),
+[ADR-A-C2](https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-AC2-clean-room-authoring-procedure.md) (examples first), [conventions document](../literate-specifications.md)
 
 ## Context
 

@@ -1,13 +1,16 @@
+---
+published: true
+---
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
 # ADR-A87: Eligibility concept inclusion and exclusion
 
-**Status:** Accepted
+**Status:** Published, 2026-10-19. Accepted 2026-09-25.
+**Described in:** [Eligibility README](../../../ontology/eligibility/README.md)
 **Date:** 2026-09-25 (proposed), 2026-09-25 (accepted)
 **Related:** ADR-A03 (condition taxonomy), ADR-A06 (wildcard semantics),
 ADR-A85 (scoped and temporal binding resolution), ADR-A86 (ontology semantic
 versioning)
-**Unit:** [`applied-ontology-readiness`](../../developer/plans/applied-ontology-readiness.md)
 
 ## Context
 
@@ -58,8 +61,12 @@ corrects one defect found since.
   policy requires.
 - Eligibility's own examples must declare concepts on their concept-matching
   conditions, or they demonstrate a warning. The examples are patched in the
-  unit's slice AOR-2, each with a comment naming the warning that removing the
+  same change, each with a comment naming the warning that removing the
   concept would raise.
 - No backend compiles these semantics yet. ADR-A89 proposes the compiled form.
 - Questions have no concept-valued candidate property. `elg:candidateValue`
   ranges over `qnt:Value`. ADR-A89 addresses this.
+
+## Provenance
+
+Part of the [`applied-ontology-readiness`](../../developer/plans/applied-ontology-readiness.md) unit, where the example patches are slice AOR-2.

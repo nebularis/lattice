@@ -1,11 +1,14 @@
+---
+published: true
+---
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
 # ADR-A103: Eligibility set readings and negation
 
-**Status:** Accepted
+**Status:** Published, 2026-10-19. Accepted 2026-09-26.
+**Described in:** [Eligibility README](../../../ontology/eligibility/README.md)
 **Date:** 2026-09-26 (proposed), 2026-09-26 (accepted, with negation added)
 **Related:** ADR-A87 (concept exclusion), ADR-A89 (profile aggregation), ADR-A90 (design-time OWL classes), ADR-A91 (evidence binding), ADR-A100, ADR-A-C2
-**Unit:** [`applied-insurance-reference`](../../developer/plans/applied-insurance-reference.md) (Phase 3, epic decision D12)
 
 ## Context
 
@@ -62,11 +65,11 @@ rule that means "some value qualifies" or "every value qualifies" cannot be stat
   import-pinning cascade runs.
 - Examples and README text follow ADR-A-C2: the two examples above are authored as fixtures before
   the law's prose.
-- Every backend changes. The IR and SPARQL and SHACL are one slice, SWRL and OWL another.
+- Every backend changes, the IR, SPARQL and SHACL in one change and SWRL and OWL in another.
 
 ## Addendum (2026-10-12): completeness needs a closure
 
-**Status:** Accepted 2026-10-12, proposed the same day (CCS slice HQ-6a.1, HQ6a-Q1). Narrows decision 1.
+**Status:** Accepted 2026-10-12, proposed the same day. Narrows decision 1.
 [ADR-A105](ADR-A105-closure-declarations.md) holds the reasoning.
 
 `elg:SomeValue` is Denied when every value is Denied, and `elg:EveryValue` Permitted when every value
@@ -76,3 +79,7 @@ the outcomes a record proves, and the rest is Undetermined. Decision 3's SWRL ba
 only those outcomes. The examples of this ADR name a closure: the admissions registry's, licensed by
 an operational profile, and the trial protocol's full-history clause. Negation (decision 4) is
 unchanged.
+
+## Provenance
+
+Part of the [`applied-insurance-reference`](../../developer/plans/applied-insurance-reference.md) unit (Phase 3, epic decision D12). The 2026-10-12 addendum was slice HQ-6a.1 of the [computable contract substrate](../../developer/plans/computable-contract-substrate.md) plan (CCS), question HQ6a-Q1.

@@ -41,15 +41,12 @@ ex:condition-e2
     a elg:IntervalCondition ;
     elg:requiredRangeSet ex:req-set ;
     elg:matchStrategy elg:IntervalContainment ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard .
 
 ex:profile-e2
     a elg:AdmissionProfile ;
     elg:hasCondition ex:condition-e2 ;
-    elg:matchStrategy elg:SetMembership ;
-    elg:compatibilityOperation elg:AllRequired ;
-    elg:wildcardSemantics elg:NoWildcard .
+    elg:compositionOperation elg:AllRequired .
 
 ex:question-e2
     a elg:Question ;

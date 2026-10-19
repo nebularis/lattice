@@ -147,8 +147,8 @@ def test_hq6a1_03_a_binding_names_only_a_closure() -> None:
 
 
 DECISION = """ex:profile a elg:AdmissionProfile ; elg:hasCondition ex:cond ;
-    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ; elg:wildcardSemantics elg:NoWildcard .
-ex:cond a elg:Condition ; elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:compositionOperation elg:AllRequired .
+ex:cond a elg:Condition ; elg:matchStrategy elg:ExactMatch ;
     elg:wildcardSemantics elg:NoWildcard ; elg:requiredConcept ex:x .
 ex:other a elg:Closure ; elg:licensedBy ex:clause .
 ex:d a elg:EligibilityDecision ; elg:forProfile ex:profile ; elg:hasQuestion ex:q ; elg:decisionValue elg:Permitted ;

@@ -57,14 +57,12 @@ ex:diabetes a skos:Concept ; skos:inScheme ex:diagnoses .
 # The conditions.
 ex:all-permitted a elg:Condition ;
     elg:matchStrategy elg:SetMembership ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:constrainedByContract ex:diagnosis-contract ;
     elg:requiredConcept ex:asthma , ex:eczema , ex:hypertension .
 
 ex:none-excluded a elg:Condition ;
     elg:matchStrategy elg:SetMembership ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:constrainedByContract ex:diagnosis-contract ;
     elg:excludedConcept ex:diabetes .

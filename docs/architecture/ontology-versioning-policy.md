@@ -15,6 +15,29 @@ MAJOR.MINOR.PATCH) unmodified. If you have not read `semver.md`'s summary,
 read it now; this document only translates its three rules into ontology
 terms.
 
+## The release, for the substrate and standalone modules
+
+From release 0.18.0, the substrate and standalone modules are released together, as one set with one number
+([ADR-A129](decisions/ADR-A129-one-release-for-the-substrate.md)). For them:
+
+- **One number**, the repository catalogue's `[conventions.release]` version. Every member document's version IRI
+  ends with it, every import of a member names it, and member shape and projection directories have no
+  `.version` file.
+- **A change anywhere is a new release.** `mise run release:prepare -- <X.Y.Z>` moves every member reference, in
+  the Turtle and in the literate READMEs, to the new number, and regenerates the XML catalogs and the release
+  register. Then write the release notes, run the checks and commit. The maintainer tags `ontologies-vX.Y.Z`.
+- **What the number means.** Semantic versioning applies to the set, and ADR-A113's major-zero rule with it.
+- **Release notes class each change** by its effect on a graph valid under the previous release:
+
+  | Class | For example | The release owes |
+  |---|---|---|
+  | no effect | a definition, a label, a new term no shape requires | nothing |
+  | may invalidate | a new restriction, shape, disjointness, key or domain | the rule, so an adopter can validate first |
+  | changes meaning | a renamed or removed term, a changed law | a migration, once an adopter holds production data |
+
+The rest of this document governs the applied modules and the examples, which keep their own versions and pin a
+release.
+
 ## The versioning unit
 
 **One `owl:versionIRI` per `owl:Ontology` document.** `spec/<layer>.ttl` and

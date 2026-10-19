@@ -143,21 +143,21 @@ ex:ServiceFailure a skos:Concept ; rdfs:label "Service Failure" .
 # Placeholders: each tower's meaning, stated and not yet evaluable (C13).
 ex:p1-unresolved a elg:Condition ;
     elg:conditionKey "priority-1-incident-unresolved-after-4-hours" ;
-    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:matchStrategy elg:ExactMatch ; 
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:p1-late .
 ex:p1-late a skos:Concept ; rdfs:label "a priority 1 incident has not been resolved within 4 hours" .
 
 ex:dc-unavailable a elg:Condition ;
     elg:conditionKey "data-centre-availability-below-99.95-percent" ;
-    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:matchStrategy elg:ExactMatch ; 
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:dc-down .
 ex:dc-down a skos:Concept ; rdfs:label "data centre availability was below 99.95% in a month" .
 
 ex:latency-breach a elg:Condition ;
     elg:conditionKey "network-latency-above-20ms-for-an-hour" ;
-    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:matchStrategy elg:ExactMatch ; 
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:slow-network .
 ex:slow-network a skos:Concept ; rdfs:label "network latency was above 20 milliseconds for an hour" .

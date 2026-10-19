@@ -311,7 +311,6 @@ def _generated_turtle(*, chained: bool, hierarchical: bool, required: frozenset,
     condition = [
         "ex:gen-condition a elg:Condition ;",
         f"    elg:matchStrategy {strategy} ;",
-        "    elg:compatibilityOperation elg:AllRequired ;",
         "    elg:wildcardSemantics elg:NoWildcard ;",
         "    elg:constrainedByContract ex:gen-contract",
     ]

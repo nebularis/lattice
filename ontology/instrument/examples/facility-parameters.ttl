@@ -201,7 +201,7 @@ tmpl:within-commitment a ins:ContinuingObligation , ins:Template ;
 # shared by every facility drawn from the form.
 ex:leverage-ok a elg:IntervalCondition ;
     elg:conditionKey "leverage-within-ceiling" ;
-    elg:matchStrategy elg:IntervalContainment ; elg:compatibilityOperation elg:AllRequired ;
+    elg:matchStrategy elg:IntervalContainment ; 
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredRangeSet [ a qnt:RangeSet ; qnt:onSpace ex:leverage-space ;
         qnt:hasRange [ a qnt:Range ; qnt:onSpace ex:leverage-space ;
@@ -212,7 +212,7 @@ ex:leverage-ceiling a qnt:Bound ; qnt:onSpace ex:leverage-space ;
 
 ex:loans-within-commitment a elg:IntervalCondition ;
     elg:conditionKey "loans-outstanding-within-commitment" ;
-    elg:matchStrategy elg:IntervalContainment ; elg:compatibilityOperation elg:AllRequired ;
+    elg:matchStrategy elg:IntervalContainment ; 
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredRangeSet [ a qnt:RangeSet ; qnt:onSpace ex:money ;
         qnt:hasRange [ a qnt:Range ; qnt:onSpace ex:money ;
@@ -306,7 +306,7 @@ ex:leverage a ins:ContinuingObligation ;
     ins:maintains ex:leverage-ok-halden .
 ex:leverage-ok-halden a elg:IntervalCondition ;
     elg:conditionKey "leverage-within-ceiling-halden-v1" ;
-    elg:matchStrategy elg:IntervalContainment ; elg:compatibilityOperation elg:AllRequired ;
+    elg:matchStrategy elg:IntervalContainment ; 
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredRangeSet [ a qnt:RangeSet ; qnt:onSpace ex:leverage-space ;
         qnt:hasRange [ a qnt:Range ; qnt:onSpace ex:leverage-space ;
@@ -322,7 +322,7 @@ ex:within-commitment a ins:ContinuingObligation ;
     ins:maintains ex:loans-within-commitment-halden .
 ex:loans-within-commitment-halden a elg:IntervalCondition ;
     elg:conditionKey "loans-outstanding-within-commitment-halden-v1" ;
-    elg:matchStrategy elg:IntervalContainment ; elg:compatibilityOperation elg:AllRequired ;
+    elg:matchStrategy elg:IntervalContainment ; 
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredRangeSet [ a qnt:RangeSet ; qnt:onSpace ex:money ;
         qnt:hasRange [ a qnt:Range ; qnt:onSpace ex:money ;

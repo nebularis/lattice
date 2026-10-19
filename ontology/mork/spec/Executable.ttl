@@ -34,9 +34,10 @@
 
 <https://www.nebularis.org/neuro-semantic/lattice/executable>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/executable/0.7.0> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/executable/0.18.0> ;
 	owl:imports <http://www.nebularis.org/ontologies/Mork> ,
-		<http://www.w3.org/ns/prov-o-20130430> .
+		<http://www.w3.org/ns/prov-o-20130430> ,
+		<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.18.0> .
 
 #################################################################
 #    Classes
@@ -114,7 +115,7 @@
 	rdfs:comment "No required interval is stated in the candidate's unit, and no conversion is attempted (qnt:NoBoundInUnit, ADR-A95)." .
 
 :RefusedOperation a :Diagnostic ;
-	rdfs:comment "A profile's compatibility operation has no evaluable definition (elg:DimensionConsistent)." .
+	rdfs:comment "A profile's composition operation has no evaluable definition here, for example one a downstream ontology adds (ADR-A05)." .
 
 :NoClosureLicence a :Diagnostic ;
 	rdfs:comment "The outcome needs the records a binding reaches to be complete, and no closure in force licenses that (ADR-A105, elg:L15, elg:L17). Also the reason a compiler refuses a binding that names something which is not a closure, or a closure with no source." .
@@ -143,8 +144,8 @@
 	rdfs:domain :ProfilePlan ; rdfs:range :ConditionPlan ;
 	rdfs:comment "One of a profile plan's constituent condition plans." .
 
-:usesCompatibilityOperation a owl:ObjectProperty, owl:FunctionalProperty ;
-	rdfs:domain :ProfilePlan ; rdfs:range elg:CompatibilityOperation ;
+:usesCompositionOperation a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain :ProfilePlan ; rdfs:range elg:CompositionOperation ;
 	rdfs:comment "How a profile plan aggregates its condition plans' outcomes (elg:AllRequired or elg:AnySufficient)." .
 
 :compiledFromMapping a owl:ObjectProperty ;

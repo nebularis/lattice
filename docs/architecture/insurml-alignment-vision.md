@@ -5,16 +5,9 @@
 **Status:** vision, 2026-10-05. Not a decision and not a plan. Each part that becomes work needs its
 own ADR under the Design First rule. Nothing here changes an accepted ADR.
 
-**Plan:** [insurml-alignment](../developer/plans/insurml-alignment.md) (epic).
-**Sketches:** [insurml-bridge.md](../developer/sketches/insurml-bridge.md) (the profile, lift, lower,
-assembly parity and the substrate changes) and
-[insurml-toolchain-and-ai.md](../developer/sketches/insurml-toolchain-and-ai.md) (authoring,
-compilation, libraries, placement, exchange and ingestion).
-**Analysis it builds on:** [InsurML and LATTICE compared](../developer/notes/insurml-and-lattice.md)
-(the comparison, cited below as "comparison §n") and
-[integrating InsurML and LATTICE](../developer/notes/insurml-integration.md) (cited as
-"integration §n"). Their gap numbers (L-n, I-n), mapping rows (M-nn, W-nn), proposals (P-n) and
-questions (U-n, Q-n) are reused here. §12 records where this paper departs from them.
+**Analysis it builds on:** two working analyses, an InsurML and LATTICE comparison (cited below as
+"comparison §n") and an integration analysis (cited as "integration §n"). Their gap numbers (L-n, I-n),
+mapping rows (M-nn, W-nn), proposals (P-n) and questions (U-n, Q-n) are reused here. §12 records where this paper departs from them.
 
 **Scope.** How InsurML, an XML markup standard for commercial insurance wording owned by John
 Cummins of Axiome Partners, and LATTICE, a domain-neutral substrate for governing documents, are
@@ -382,12 +375,12 @@ Each row is a candidate decision.
 
 | Workstream | Relationship | Consequence |
 |---|---|---|
-| [CCS](../developer/plans/computable-contract-substrate.md) | supplies Wording, Instrument, regimes, terms in time | C7c's brief takes InsurML's scope-based definition resolution as input. C9's amendments receive endorsements lifted from InsurML. C12 and C13 evaluate placed contracts. C13a verifies alternatives for every condition kind. Substrate changes wait until C9 is merged (integration R4) |
-| [AIR](../developer/plans/applied-insurance-reference.md) | supplies insurance modules | AIR-5.9 is built with InsurML in view, in the alignment epic. AIR-5.1 to AIR-5.4 give limits and excesses their meaning. AIR-5.8's policy renderings gain InsurML forms. Reference vocabularies supply market, class of business and area of coverage |
-| [NRS](../developer/plans/normative-rule-substrate.md) and the LegalRuleML sketches | interchange and normative statements | the companion LegalRuleML document reuses the runtime pipeline and the JSON form of LegalRuleML. N3's clash check is a verification pass |
+| CCS | supplies Wording, Instrument, regimes, terms in time | C7c's brief takes InsurML's scope-based definition resolution as input. C9's amendments receive endorsements lifted from InsurML. C12 and C13 evaluate placed contracts. C13a verifies alternatives for every condition kind. Substrate changes wait until C9 is merged (integration R4) |
+| AIR | supplies insurance modules | AIR-5.9 is built with InsurML in view, in the alignment epic. AIR-5.1 to AIR-5.4 give limits and excesses their meaning. AIR-5.8's policy renderings gain InsurML forms. Reference vocabularies supply market, class of business and area of coverage |
+| NRS and the LegalRuleML sketches | interchange and normative statements | the companion LegalRuleML document reuses the runtime pipeline and the JSON form of LegalRuleML. N3's clash check is a verification pass |
 | [Ingestion vision](ingestion-vision.md) | the route from text to meaning | InsurML is a candidate structure target (its Q9), and component digests answer document recognition (its Q11) for marked-up text |
-| [Wire protocol](../developer/sketches/normative-wire-protocol.md), [XML egress](../developer/sketches/xml-egress-and-transformation-kits.md) | exchange | InsurML kits sit beside the LATTICE instrument kit. Settings get a JSON skin |
-| [Evaluation context](../developer/sketches/evaluation-context.md) | ledgers for limits and aggregates | InsurML's limit and excess markup names the words that each ledger account is read from |
+| Wire protocol, XML egress | exchange | InsurML kits sit beside the LATTICE instrument kit. Settings get a JSON skin |
+| Evaluation context | ledgers for limits and aggregates | InsurML's limit and excess markup names the words that each ledger account is read from |
 | Platform phases 2 and 3 | ingestion and operation planes | component files live in the artefact realm, the graph in the semantic realm, lifts and assembly as worker jobs |
 | Open CBAA and Open DARE | the first consumer | `wim:` is replaced by the profile. The proof of concept's DOCX route becomes DOCX to InsurML to Wording. Certificate assembly with territory-conditional content (DA-I2) is InsurML assembly |
 

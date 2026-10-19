@@ -3,6 +3,20 @@
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
 
+elg:SingleConditionMechanismShape a sh:NodeShape ;
+	sh:targetClass elg:Condition ;
+	sh:or (
+		[ sh:class elg:AdmissionProfile ]
+		[ sh:property [ sh:path elg:matchStrategy ; sh:minCount 1 ; sh:maxCount 1 ] ,
+			[ sh:path elg:wildcardSemantics ; sh:minCount 1 ; sh:maxCount 1 ] ]
+	) ;
+	sh:message "A condition that is not an admission profile declares exactly one match strategy and one wildcard policy (L1, L3)." .
+
+elg:CompositionOnProfileShape a sh:NodeShape ;
+	sh:targetSubjectsOf elg:compositionOperation ;
+	sh:class elg:AdmissionProfile ;
+	sh:message "Only an admission profile declares a composition operation, which says how it combines its conditions' outcomes (L2)." .
+
 elg:IntervalContainmentRequiresRangeSet a sh:NodeShape ;
 	sh:targetClass elg:IntervalCondition ;
 	sh:property [ sh:path elg:requiredRangeSet ; sh:minCount 1 ] .

@@ -1087,13 +1087,13 @@ otherwise be walked, is illustrative, not a measured benchmark result.
   local at `.local/sketches/Theoretical Framing.txt` (§19).
 - PostgreSQL documentation: range types and GiST indexing *(verify current version's exact operator
   and function names)*.
-- `docs/architecture/Architecture Review.md` finding G-06 (PostgreSQL/Fuseki dual-write risk,
+- `docs/developer/review/Architecture Review.md` finding G-06 (PostgreSQL/Fuseki dual-write risk,
   §19.4), and `ontology/surface/docs/revision-lifecycle.md` (projection invalidation, §19.5).
 - [engine-build-versus-adopt.md](engine-build-versus-adopt.md) (paper 3, this paper's G0 design).
 - [compiled-persistence-physical-planning.md](compiled-persistence-physical-planning.md) (paper 2,
   shelved, its tiering and access-pattern ideas rehabilitated in §7.2, §9.1 and §18.3).
 - LATTICE: `docs/architecture/decisions/ADR-A54-dataset-topology.md`,
-  `docs/architecture/Architecture Review.md` (findings G-10, G-11, G-13, G-16),
+  `docs/developer/review/Architecture Review.md` (findings G-10, G-11, G-13, G-16),
   `docs/developer/plans/lattice-platform-agentic-development-v0.2.md` (P1.7.2 tenancy provisioning
   saga, P0.1.15 NFR/SLO catalogue).
 - W3C. SPARQL 1.1 Federated Query. W3C Recommendation, 2013.

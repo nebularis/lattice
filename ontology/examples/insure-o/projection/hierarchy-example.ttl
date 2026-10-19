@@ -18,7 +18,6 @@ ino:industrial-fire a skos:Concept ;
 
 ino:peril-hierarchy-constraint a elg:Condition ;
     elg:matchStrategy elg:HierarchicalMatch ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:boundScheme ino:peril-scheme .
 

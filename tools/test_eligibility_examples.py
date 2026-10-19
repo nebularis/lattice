@@ -120,14 +120,11 @@ def test_profile_is_exempt_from_declaration_warning() -> None:
         + """
         ex:member a elg:Condition ;
             elg:matchStrategy elg:SetMembership ;
-            elg:compatibilityOperation elg:AllRequired ;
             elg:wildcardSemantics elg:NoWildcard ;
             elg:requiredConcept ex:a .
         ex:profile a elg:AdmissionProfile ;
             elg:hasCondition ex:member ;
-            elg:matchStrategy elg:SetMembership ;
-            elg:compatibilityOperation elg:AllRequired ;
-            elg:wildcardSemantics elg:NoWildcard .
+            elg:compositionOperation elg:AllRequired .
         """,
         format="turtle",
     )
@@ -141,7 +138,6 @@ def test_condition_without_concepts_still_warns() -> None:
         + """
         ex:bare a elg:Condition ;
             elg:matchStrategy elg:SetMembership ;
-            elg:compatibilityOperation elg:AllRequired ;
             elg:wildcardSemantics elg:NoWildcard .
         """,
         format="turtle",
@@ -159,7 +155,6 @@ def test_unreachable_exclusion_warns() -> None:
         ex:elsewhere a skos:Concept .
         ex:condition a elg:Condition ;
             elg:matchStrategy elg:HierarchicalMatch ;
-            elg:compatibilityOperation elg:AllRequired ;
             elg:wildcardSemantics elg:NoWildcard ;
             elg:requiredConcept ex:root ;
             elg:excludedConcept ex:inside , ex:elsewhere .
@@ -218,18 +213,32 @@ def violations(data: Graph) -> list[tuple[URIRef, URIRef, object, URIRef]]:
 
 
 PROBES = {  # C9b0-04 to C9b0-09: each moved, renamed or once-duplicated shape fires on its probe
-    "bare-condition": (ELG.ConditionShape, "ex:probe a elg:Condition .", 3),
+    "bare-condition": (ELG.SingleConditionMechanismShape, "ex:probe a elg:Condition .", 1),
+    # ELC, OD-D46: a composition operation only on a profile, and a match strategy or wildcard policy never on one
+    "composition-on-a-condition": (ELG.CompositionOnProfileShape, """
+        ex:probe a elg:Condition ;
+            elg:matchStrategy elg:ExactMatch ;
+            elg:wildcardSemantics elg:NoWildcard ;
+            elg:requiredConcept ex:a ;
+            elg:compositionOperation elg:AllRequired .
+        """, 1),
+    "mechanism-on-a-profile": (ELG.AdmissionProfileShape, """
+        ex:probe a elg:AdmissionProfile ;
+            elg:hasCondition ex:c ;
+            elg:compositionOperation elg:AllRequired ;
+            elg:matchStrategy elg:ExactMatch ;
+            elg:wildcardSemantics elg:NoWildcard .
+        ex:c a elg:Condition ; elg:matchStrategy elg:ExactMatch ; elg:wildcardSemantics elg:NoWildcard ;
+            elg:requiredConcept ex:a .
+        """, 2),
     "wildcard": (ELG.WildcardPolicyConsistency, """
         ex:probe a elg:WildcardCondition ;
             elg:matchStrategy elg:Wildcard ;
-            elg:compatibilityOperation elg:AllRequired ;
             elg:wildcardSemantics elg:NoWildcard .
         """, 1),
     "empty-profile": (ELG.AdmissionProfileShape, """
         ex:probe a elg:AdmissionProfile ;
-            elg:matchStrategy elg:SetMembership ;
-            elg:compatibilityOperation elg:AllRequired ;
-            elg:wildcardSemantics elg:NoWildcard .
+            elg:compositionOperation elg:AllRequired .
         """, 1),
     "empty-decision": (ELG.EligibilityDecisionShape, "ex:probe a elg:EligibilityDecision .", 4),
     "cyclic-scheme": (ELG.HierarchyWellFoundednessShape, """
@@ -238,7 +247,6 @@ PROBES = {  # C9b0-04 to C9b0-09: each moved, renamed or once-duplicated shape f
         ex:b skos:inScheme ex:scheme ; skos:broader ex:a .
         ex:probe a elg:Condition ;
             elg:matchStrategy elg:HierarchicalMatch ;
-            elg:compatibilityOperation elg:AllRequired ;
             elg:wildcardSemantics elg:NoWildcard ;
             elg:constrainedByContract ex:contract ;
             elg:requiredConcept ex:a .
@@ -246,7 +254,6 @@ PROBES = {  # C9b0-04 to C9b0-09: each moved, renamed or once-duplicated shape f
     "interval-without-range-set": (ELG.IntervalContainmentRequiresRangeSet, """
         ex:probe a elg:IntervalCondition ;
             elg:matchStrategy elg:IntervalContainment ;
-            elg:compatibilityOperation elg:AllRequired ;
             elg:wildcardSemantics elg:NoWildcard .
         """, 1),
 }
@@ -267,7 +274,6 @@ def test_two_readings_and_a_double_negation_are_rejected() -> None:
         + """
         ex:c a elg:Condition ;
             elg:matchStrategy elg:SetMembership ;
-            elg:compatibilityOperation elg:AllRequired ;
             elg:wildcardSemantics elg:NoWildcard ;
             elg:requiredConcept ex:a ;
             elg:negated true , false .

@@ -1,46 +1,38 @@
 # SPDX-License-Identifier: MPL-2.0
 
-@prefix sh:   <http://www.w3.org/ns/shacl#> .
-@prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
-@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
-
-elg:ConditionShape a sh:NodeShape ;
-	sh:targetClass elg:Condition ;
-	sh:property [ sh:path elg:matchStrategy ; sh:minCount 1 ; sh:maxCount 1 ] ;
-	sh:property [ sh:path elg:compatibilityOperation ; sh:minCount 1 ; sh:maxCount 1 ] ;
-	sh:property [ sh:path elg:wildcardSemantics ; sh:minCount 1 ; sh:maxCount 1 ] ;
-	sh:property [ sh:path elg:negated ; sh:maxCount 1 ; sh:datatype xsd:boolean ] .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix pty: <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 elg:AdmissionProfileShape a sh:NodeShape ;
-	sh:targetClass elg:AdmissionProfile ;
-	sh:property [ sh:path elg:hasCondition ; sh:minCount 1 ] .
-
-elg:EligibilityDecisionShape a sh:NodeShape ;
-	sh:targetClass elg:EligibilityDecision ;
-	sh:property [ sh:path elg:forProfile ; sh:minCount 1 ; sh:maxCount 1 ] ;
-	sh:property [ sh:path elg:hasQuestion ; sh:minCount 1 ] ;
-	sh:property [ sh:path elg:decisionValue ; sh:minCount 1 ; sh:maxCount 1 ] ;
-	sh:property [ sh:path elg:usesOperationalProfile ; sh:minCount 1 ; sh:maxCount 1 ] ;
-	sh:property [ sh:path elg:closureReliedOn ; sh:class elg:Closure ;
-		sh:message "A decision relies only on closures (ADR-A105)." ] .
-
-elg:EvidenceBindingShape a sh:NodeShape ;
-	sh:targetClass elg:EvidenceBinding ;
-	sh:property [ sh:path elg:bindsCondition ; sh:minCount 1 ; sh:maxCount 1 ] ;
-	sh:property [ sh:path elg:subjectClass ; sh:minCount 1 ; sh:maxCount 1 ] ;
-	sh:property [ sh:path elg:evidenceStep ; sh:minCount 1 ] ;
-	sh:property [ sh:path elg:singleValued ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
-	sh:property [ sh:path elg:valueReading ; sh:maxCount 1 ; sh:in ( elg:SingleValue elg:SomeValue elg:EveryValue ) ] ;
-	sh:property [ sh:path elg:closedUnder ; sh:maxCount 1 ; sh:class elg:Closure ;
-		sh:message "A binding names at most one closure, and what it names is an elg:Closure (ADR-A105)." ] .
-
-elg:EvidenceStepShape a sh:NodeShape ;
-	sh:targetClass elg:EvidenceStep ;
-	sh:property [ sh:path elg:stepIndex ; sh:minCount 1 ; sh:maxCount 1 ] ;
-	sh:property [ sh:path elg:stepProperty ; sh:minCount 1 ; sh:maxCount 1 ] ;
-	sh:property [ sh:path elg:stepDirection ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( elg:Forward elg:Inverse ) ] .
+    sh:targetClass elg:AdmissionProfile ;
+    sh:property [ sh:path elg:compositionOperation ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path elg:hasCondition ; sh:minCount 1 ], [ sh:path elg:matchStrategy ; sh:maxCount 0 ; sh:message "An admission profile declares no match strategy, since its conditions do (L1)." ], [ sh:path elg:wildcardSemantics ; sh:maxCount 0 ; sh:message "An admission profile declares no wildcard policy, since its conditions do (L3)." ] .
 
 elg:ClosureShape a sh:NodeShape ;
-	sh:targetClass elg:Closure ;
-	sh:property [ sh:path elg:licensedBy ; sh:minCount 1 ; sh:maxCount 1 ;
-		sh:message "A closure names exactly one source (elg:licensedBy, ADR-A105)." ] .
+    sh:targetClass elg:Closure ;
+    sh:property [ sh:path elg:licensedBy ; sh:minCount 1 ; sh:maxCount 1 ; sh:message "A closure names exactly one source (elg:licensedBy, ADR-A105)." ] .
+
+elg:ConditionShape a sh:NodeShape ;
+    sh:targetClass elg:Condition ;
+    sh:property [ sh:path elg:negated ; sh:datatype xsd:boolean ; sh:maxCount 1 ] .
+
+elg:EligibilityDecisionShape a sh:NodeShape ;
+    sh:targetClass elg:EligibilityDecision ;
+    sh:property [ sh:path elg:closureReliedOn ; sh:class elg:Closure ; sh:message "A decision relies only on closures (ADR-A105)." ], [ sh:path elg:decisionValue ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path elg:forProfile ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path elg:hasQuestion ; sh:minCount 1 ], [ sh:path elg:usesOperationalProfile ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+elg:EvidenceBindingShape a sh:NodeShape ;
+    sh:targetClass elg:EvidenceBinding ;
+    sh:property [ sh:path elg:bindsCondition ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path elg:closedUnder ; sh:class elg:Closure ; sh:maxCount 1 ; sh:message "A binding names at most one closure, and what it names is an elg:Closure (ADR-A105)." ], [ sh:path elg:evidenceStep ; sh:minCount 1 ], [ sh:path elg:singleValued ; sh:datatype xsd:boolean ; sh:maxCount 1 ], [ sh:path elg:subjectClass ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path elg:valueReading ; sh:maxCount 1 ; sh:in ( elg:SingleValue elg:SomeValue elg:EveryValue ) ] .
+
+elg:EvidenceStepShape a sh:NodeShape ;
+    sh:targetClass elg:EvidenceStep ;
+    sh:property [ sh:path elg:stepDirection ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( elg:Forward elg:Inverse ) ], [ sh:path elg:stepIndex ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path elg:stepProperty ; sh:minCount 1 ; sh:maxCount 1 ] .

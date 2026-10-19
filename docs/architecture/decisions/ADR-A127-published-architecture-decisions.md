@@ -67,6 +67,20 @@ pages with no title, beside about twenty pages written for readers.
   catalogue at deploy time would remove the copies, and needs the repository's Pages source changed by the
   maintainer. It is recorded as technical debt.
 
+## Addendum, 2026-10-19: what a published decision may cite
+
+Agreed by the maintainer. Decision 4 holds for layer READMEs, generated ontology documents and the site's
+pages, which cite only published decisions. A published decision may also cite an accepted one, since a
+decision record often builds on decisions not yet published. Such a citation links the accepted ADR on
+GitHub, `https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/...`, because the site
+hides it. A published decision never cites a proposed one. Without this, publishing the ten decisions
+Eligibility's README cites would have meant publishing the 74 they cite in turn. `mise run
+check:published-decisions` checks the rule and keeps the list current.
+
+The status line of a published decision reads `**Status:** Published, YYYY-MM-DD. Accepted YYYY-MM-DD.`, and
+one published and then superseded reads `**Status:** Superseded by ADR-An. Published YYYY-MM-DD.` A layer
+README counts as a document that describes a decision.
+
 ## Provenance
 
 Raised by the maintainer on 2026-10-16 during the

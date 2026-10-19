@@ -37,7 +37,7 @@ def condition(name: str, required: str, excluded: str = "", claimed: bool = True
     claim = "elg:singleValued true ;" if claimed else ""
     return f"""
 ex:{name} a elg:Condition ; elg:matchStrategy elg:HierarchicalMatch ;
-    elg:compatibilityOperation elg:AllRequired ; elg:wildcardSemantics elg:NoWildcard ;
+    elg:wildcardSemantics elg:NoWildcard ;
     elg:constrainedByContract ex:job-family-contract ; elg:requiredConcept ex:{required} ; {exclusion} .
 ex:{name}-binding a elg:EvidenceBinding ; elg:bindsCondition ex:{name} ; elg:subjectClass ex:Employee ; {claim}
     elg:evidenceStep [ elg:stepIndex 0 ; elg:stepProperty ex:holdsRole ; elg:stepDirection elg:Forward ] ,
@@ -59,13 +59,13 @@ ex:at-least-five a qnt:Bound ; qnt:onSpace ex:tenure-space ; qnt:boundValue ex:f
 ex:five-or-more a qnt:Range ; qnt:onSpace ex:tenure-space ; qnt:lowerBound ex:at-least-five ; qnt:hasBound ex:at-least-five .
 ex:long-tenure-set a qnt:RangeSet ; qnt:onSpace ex:tenure-space ; qnt:hasRange ex:five-or-more .
 ex:long-tenure a elg:IntervalCondition ; elg:matchStrategy elg:IntervalContainment ;
-    elg:compatibilityOperation elg:AllRequired ; elg:wildcardSemantics elg:NoWildcard ; elg:requiredRangeSet ex:long-tenure-set .
+    elg:wildcardSemantics elg:NoWildcard ; elg:requiredRangeSet ex:long-tenure-set .
 ex:long-tenure-binding a elg:EvidenceBinding ; elg:bindsCondition ex:long-tenure ; elg:subjectClass ex:Employee ;
     elg:singleValued true ; elg:readOnSpace ex:tenure-space ;
     elg:evidenceStep [ elg:stepIndex 0 ; elg:stepProperty ex:tenureYears ; elg:stepDirection elg:Forward ] .
 
 ex:revised-benefit a elg:AdmissionProfile ; elg:hasCondition ex:any-engineering , ex:minimum-tenure ;
-    elg:matchStrategy elg:HierarchicalMatch ; elg:compatibilityOperation elg:AllRequired ; elg:wildcardSemantics elg:NoWildcard .
+    elg:compositionOperation elg:AllRequired .
 """
 
 # The applied ontology's declarations and Quantification's, without the data.

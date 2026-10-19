@@ -20,8 +20,13 @@ ontology file has changed.
 
 ## Next action
 
-1. The maintainer commits this plan, merges this branch into `main`, and syncs it.
-2. Then OD6, the Eligibility pilot, on this branch, then DOC1 and RC3. Briefs are in the plan.
+1. The maintainer squash-merges the branch into `main`.
+2. On `main`, the maintainer creates the tags `mise exec -- python tools/ontology_releases.py check` lists:
+   `ontologies-v0.18.0` and the applied modules' ten.
+3. The [release bundles sketch](../sketches/release-bundles.md) is discussed.
+
+**Versions are consistent again.** Release 0.18.0 brought every substrate and standalone document to one number,
+and the versioning check passes against `main`.
 
 ## Slices
 
@@ -30,25 +35,30 @@ ontology file has changed.
 | OD0 ADRs, the AGENTS.md rule, the conventions document | accepted 2026-10-17, committed, [Validation Pack](../validation/OD0.md) | |
 | RC1 catalogue and reader | committed 2026-10-17, tests pass, choices agreed 2026-10-18, [Validation Pack](../validation/RC1.md) | |
 | RC2 consumers use the reader | passed and committed 2026-10-18, [Validation Pack](../validation/RC2.md) | |
-| RC3 roots, AGENTS.md table, bypass scan | briefed 2026-10-18 | |
+| RC3 roots, AGENTS.md table, bypass scan | approved 2026-10-19 after the `reaches` audit, committed locally, [Validation Pack](../validation/RC3.md) | |
 | OD1 scanner and markers | passed 2026-10-17, choices agreed, [Validation Pack](../validation/OD1.md) | the maintainer's merge |
 | OD2 sections 1 to 3 | built autonomously 2026-10-18, committed locally (`8947e696`), [Validation Pack](../validation/OD2.md) | |
 | OD3 section 6 to OWL | built autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD3.md) | |
 | OD4 section 6 to SHACL | built autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD4.md) | the maintainer's review of six decisions taken alone |
 | OD5 generated regions | built autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD5.md) | the maintainer's review of six decisions taken alone |
-| OD6 Eligibility pilot | briefed 2026-10-18 | the merge into `main` |
-| OD7 Vocabulary | planned | OD6 |
+| OD6 Eligibility pilot | built autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD6.md) | the maintainer's review of seven decisions, 32 definitions and two changed tests |
+| OD7 Vocabulary | approved 2026-10-20, committed locally, [Validation Pack](../validation/OD7.md) | |
 | OD8 onward, one per layer | planned | OD7, and for Foundation and Party their part of TD-16 |
-| DOC1 published decisions | briefed 2026-10-18 | OD6 preferred first |
-| DOC2 site sections | planned | DOC1, RC1 |
+| DOC1 published decisions | approved 2026-10-19, committed locally, [Validation Pack](../validation/DOC1.md) | |
+| DOC2 site sections | approved 2026-10-20, merged, [Validation Pack](../validation/DOC2.md) | |
 | DOC3 tutorial and Field Guide review | planned | DOC2, `lattice-tutorial` merged |
 | RC4 downstream extension | planned | RC3 |
 | RC5 package promotion | planned | RC4 |
 | RC6 XML catalogue folded in | planned | RC5, a new ADR on ADR-A88 |
+| ELC composition operation | approved 2026-10-19, committed locally, [Validation Pack](../validation/ELC.md) | |
+| MC1 migration check labels | approved 2026-10-20, committed locally, [Validation Pack](../validation/MC1.md) | |
+| VER1 one release for the substrate | approved 2026-10-20, committed locally, [Validation Pack](../validation/VER1.md) | |
+| DOC2b working documents out of published pages | built autonomously 2026-10-20, committed locally, [Validation Pack](../validation/DOC2b.md) | |
+| OD-REL first release, 0.18.0 | approved 2026-10-20, committed locally, [Validation Pack](../validation/OD-REL.md) | the tags, on `main` after the merge |
 
 ## Open questions
 
-None.
+- **BUN-Q1 to BUN-Q7**, in the [release bundles sketch](../sketches/release-bundles.md).
 
 ## Coordination with other units
 
@@ -166,3 +176,66 @@ None.
   written into the plan.
 - 2026-10-18: RC3-Q2 answered (b), recorded as OD-D41: the bypass scan's exceptions in a file beside the reader,
   with one technical debt row giving their count. Every planning question is answered.
+- 2026-10-18: OD6 started. Enumeration in the grammar and the migration check written, with their tests, which
+  pass. Two findings stopped the migration for a decision: 32 of Eligibility's 52 terms have no definition, and
+  any migration changes a layer's graphs (Dublin Core in the header), so each needs a version that cascades
+  through 11 documents in 5 modules. Answered: definitions are drafted and reviewed (OD-D42), and versions are
+  left inconsistent on this branch until one release slice, OD-REL, bumps and re-pins everything before the merge
+  (OD-D43). The maintainer asked for a sketch on changing how imports pin, and authorised OD6 to continue
+  autonomously with local commits.
+- 2026-10-18: OD6 finished. Eligibility's README is in the layout, and the migration check against `dab1c790`
+  passes with 40 reconciled differences, the 32 drafted definitions and each document's Dublin Core. No axiom
+  or shape changed. `check_formal_freshness.py` now reads only the Isabelle blocks, and OD1-T1 and RC1-T3 were
+  adjusted for a migrated README. Two gaps found and left as the README's open issues: L1 to L8 name no
+  register, and 14 individuals have no definition.
+
+- 2026-10-18: OD6 reviewed. The definitions agreed with three changes, applied and reconciled. L1 to L8's
+  register goes to OD-REL. OD6-Q7 opened on renaming `elg:CompatibilityOperation`.
+- 2026-10-19: OD6-Q7 answered. `elg:CompatibilityOperation` becomes `elg:CompositionOperation`, declared on
+  admission profiles only (OD-D44), and `elg:DimensionConsistent` is retired with `elg:E6` (OD-D45). Slice ELC
+  briefed, to land before OD-REL.
+- 2026-10-19: ELC-Q1 and Q2, DOC1-Q4 to Q7 and RC3-Q3 to Q5 answered (OD-D46 to OD-D53). The maintainer
+  authorised ELC, DOC1 and RC3 to be built autonomously, committed locally and not pushed.
+- 2026-10-19: ELC built. `elg:CompositionOperation` on profiles only, `elg:DimensionConsistent` and `elg:E6`
+  removed, 42 graphs rewritten and checked graph to graph, and Instrument's warranty carve-back typed as the
+  profile it is. The migration check now escapes line breaks, and TD-55 records its whole-file blank node
+  labels. RC3 runs in a separate worktree.
+- 2026-10-19: DOC1 built. The published decisions list and the sources check run in `mise run check`, the
+  twelve ADRs Eligibility cites are published under the maintainer's advance approval (OD-D50), and the site
+  shows only those. The local site build showed Jekyll's `published: false` default hides nothing, so the site
+  excludes ADRs and includes each published one by name.
+- 2026-10-19: RC3 built in a separate worktree and cherry-picked onto this branch, without the main checkout's own
+  commit it was cut from. Its bypass scan found DOC1's new list tool building `docs/` paths, which now asks the
+  reader for the architecture area instead. ADR-A121's addendum keeps its slice reference in Provenance.
+
+- 2026-10-19: ELC, DOC1 and RC3 approved. RC3's `reaches` audited and now checked by RC3-T17. Two entries
+  corrected, and TD-56 records SPC's pipeline script writing into a missing directory.
+- 2026-10-19: next slices proposed (MC1, OD7, DOC2, OD-REL). NX-Q1 answered (a), the branch is cut after OD-REL.
+  The import pinning checks were run, and the maintainer asked to rethink versioning first. The
+  [release model sketch](../sketches/ontology-release-model.md) proposes one release for every ontology,
+  REL-Q1 to REL-Q6 open.
+- 2026-10-19: REL-Q1 to REL-Q6 and NX-Q3 to NX-Q5 answered (OD-D54 to OD-D62). One release for the substrate,
+  starting at 0.18.0, with the data class of every change in its notes. Briefs written for MC1, OD7, VER1, DOC2
+  and OD-REL. The check REL-Q2 asked for found three standalone modules depending on the substrate (REL-Q2a). The
+  release bundles sketch opened BUN-Q1 to BUN-Q7.
+- 2026-10-19: REL-Q2a answered (a), OD-D63. The maintainer authorised the slices to run autonomously.
+- 2026-10-19: MC1 built. Blank nodes are labelled by their subtree, ELC's reconciliations shrink from 126 to 102,
+  and TD-55 is closed. DOC2 runs in its own worktree, `docs/literate-v2-doc2`.
+- 2026-10-19: OD7 built. Vocabulary's README is the source of its spec and three shape files, the same graphs
+  but for four Dublin Core triples, and its part of TD-16 is closed.
+- 2026-10-19: VER1 built. ADR-A129 Proposed, the release number in the catalogue, the versioning check and register
+  by release, and `release:prepare`. `Executable.ttl` imports Eligibility. `.build/site` untracked, committed by
+  mistake with DOC1.
+- 2026-10-19: DOC2 built by a Sonnet sub-agent in its own worktree and merged. Site sections declared in the
+  catalogue, working documents off the site, which shrinks from 836 files to 96. Stray notes in `docs/` left for
+  the maintainer.
+- 2026-10-20: OD-REL built. Release 0.18.0 made with `release:prepare`, L1 to L8 given their register, the applied
+  modules bumped in two rounds, release notes with each change's data class, and tests reading the release
+  number. The full sweep passes, all 15 checks.
+- 2026-10-20: MC1, OD7, VER1, DOC2 and OD-REL approved, and ADR-A129 accepted. DOC2's decision 5 stands on condition
+  that TD-60's cleaning happens before the merge.
+- 2026-10-20: DOC2b built, the stray notes moved or retired as the maintainer decided, and ADR-A129 published,
+  so the 0.18.0 release notes cite it. The full sweep passes all 17 checks.
+- 2026-10-20: `docs/GOVERNANCE.md` and `docs/validation-and-test-plan.md` retired at the maintainer's decision. The
+  order of authority moves to the ontology architecture's §2, and every link is repointed. The branch is ready for
+  the maintainer's squash merge into `main`, after which the maintainer creates the release tags.

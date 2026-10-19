@@ -129,14 +129,14 @@ ex:within-14-days-of-ending a qnt:Range ;
 # Placeholders: scopes and triggers stated, not yet evaluable (C13).
 ex:confidential a elg:Condition ;
     elg:conditionKey "licensor-confidential-information" ;
-    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:matchStrategy elg:ExactMatch ; 
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:confidential-information .
 ex:confidential-information a skos:Concept ; rdfs:label "the Licensor's Confidential Information" .
 
 ex:infringement-claim a elg:Condition ;
     elg:conditionKey "third-party-infringement-claim" ;
-    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:matchStrategy elg:ExactMatch ; 
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:claim-made .
 ex:claim-made a skos:Concept ; rdfs:label "a third party claims that the Software infringes its rights" .

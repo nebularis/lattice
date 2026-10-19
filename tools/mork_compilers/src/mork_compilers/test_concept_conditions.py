@@ -45,7 +45,6 @@ ex:tier-enterprise-legacy a skos:Concept .
 
 ex:entitlement a elg:SetMembershipCondition ;
     elg:matchStrategy elg:SetMembership ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:tier-premium , ex:tier-enterprise , ex:tier-enterprise-legacy ;
     elg:excludedConcept ex:tier-enterprise-legacy .
