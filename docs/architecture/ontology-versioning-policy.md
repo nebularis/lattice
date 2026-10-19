@@ -18,7 +18,7 @@ terms.
 ## The release, for the substrate and standalone modules
 
 From release 0.18.0, the substrate and standalone modules are released together, as one set with one number
-([ADR-A129](decisions/ADR-A129-one-release-for-the-substrate.md), Proposed). For them:
+([ADR-A129](decisions/ADR-A129-one-release-for-the-substrate.md)). For them:
 
 - **One number**, the repository catalogue's `[conventions.release]` version. Every member document's version IRI
   ends with it, every import of a member names it, and member shape and projection directories have no

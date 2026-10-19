@@ -104,3 +104,9 @@ cd docs && mise exec -- bundle exec jekyll build -q -d ../.build/site
 - The Tutorial section, and the Field Guide review (DOC3).
 - The full `mise run check`, which needs Java and Node. Only the checks above ran.
 - A Pages workflow replacing the copies (TD-50).
+
+## Decisions answered
+
+2026-10-20, by the maintainer: approved, with every decision taken alone. Decision 5, the guides kept off the site
+until they stop naming working documents (TD-60), stands on condition that the cleaning happens. It is planned as
+slice DOC2b, before the merge into `main`.

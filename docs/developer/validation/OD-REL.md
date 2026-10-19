@@ -75,3 +75,7 @@ mise run check:full-sweep
 
 - Accept ADR-A129, then create the tag on the commit that adds the release's row: `git tag ontologies-v0.18.0`,
   and the applied modules' tags the register lists.
+
+## Decisions answered
+
+2026-10-20, by the maintainer: approved, with every decision taken alone.

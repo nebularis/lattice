@@ -2,7 +2,7 @@
 
 # ADR-A129: One release for the substrate and standalone ontologies
 
-**Status:** Proposed, 2026-10-19
+**Status:** Accepted, 2026-10-20
 **Date:** 2026-10-19
 **Supersedes:** [ADR-A86](ADR-A86-ontology-semantic-versioning.md)'s per-document versions and exact pins, for
 the modules this decision names. ADR-A86 still governs the applied modules and the examples.

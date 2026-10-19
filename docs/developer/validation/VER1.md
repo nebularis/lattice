@@ -68,3 +68,7 @@ mise exec -- python -m pytest tools/test_ontology_release.py tools/test_ontology
 
 2026-10-19: 130 passed. `check:import-guard`, the XML catalog check and `check:mork-compilers` (126 passed) pass
 with `Executable.ttl`'s new import. `check:published-decisions` passes.
+
+## Decisions answered
+
+2026-10-20, by the maintainer: approved, with every decision taken alone.

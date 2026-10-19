@@ -41,18 +41,19 @@ and the versioning check passes against `main`.
 | OD4 section 6 to SHACL | built autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD4.md) | the maintainer's review of six decisions taken alone |
 | OD5 generated regions | built autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD5.md) | the maintainer's review of six decisions taken alone |
 | OD6 Eligibility pilot | built autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD6.md) | the maintainer's review of seven decisions, 32 definitions and two changed tests |
-| OD7 Vocabulary | built autonomously 2026-10-19, committed locally, [Validation Pack](../validation/OD7.md) | |
+| OD7 Vocabulary | approved 2026-10-20, committed locally, [Validation Pack](../validation/OD7.md) | |
 | OD8 onward, one per layer | planned | OD7, and for Foundation and Party their part of TD-16 |
 | DOC1 published decisions | approved 2026-10-19, committed locally, [Validation Pack](../validation/DOC1.md) | |
-| DOC2 site sections | built autonomously 2026-10-19 in its own worktree, merged, [Validation Pack](../validation/DOC2.md) | the stray notes in `docs/`, for the maintainer |
+| DOC2 site sections | approved 2026-10-20, merged, [Validation Pack](../validation/DOC2.md) | TD-60's cleaning, planned as DOC2b |
 | DOC3 tutorial and Field Guide review | planned | DOC2, `lattice-tutorial` merged |
 | RC4 downstream extension | planned | RC3 |
 | RC5 package promotion | planned | RC4 |
 | RC6 XML catalogue folded in | planned | RC5, a new ADR on ADR-A88 |
 | ELC composition operation | approved 2026-10-19, committed locally, [Validation Pack](../validation/ELC.md) | |
-| MC1 migration check labels | built autonomously 2026-10-19, committed locally, [Validation Pack](../validation/MC1.md) | |
-| VER1 one release for the substrate | built autonomously 2026-10-19, committed locally, [Validation Pack](../validation/VER1.md) | ADR-A129 to accept |
-| OD-REL first release, 0.18.0 | built autonomously 2026-10-20, committed locally, [Validation Pack](../validation/OD-REL.md) | ADR-A129 to accept, the tag `ontologies-v0.18.0` |
+| MC1 migration check labels | approved 2026-10-20, committed locally, [Validation Pack](../validation/MC1.md) | |
+| VER1 one release for the substrate | approved 2026-10-20, committed locally, [Validation Pack](../validation/VER1.md) | |
+| DOC2b working documents out of published pages | planned 2026-10-20, before the merge | |
+| OD-REL first release, 0.18.0 | approved 2026-10-20, committed locally, [Validation Pack](../validation/OD-REL.md) | the tags, on `main` after the merge |
 
 ## Open questions
 
@@ -230,3 +231,5 @@ and the versioning check passes against `main`.
 - 2026-10-20: OD-REL built. Release 0.18.0 made with `release:prepare`, L1 to L8 given their register, the applied
   modules bumped in two rounds, release notes with each change's data class, and tests reading the release
   number. The full sweep passes, all 15 checks.
+- 2026-10-20: MC1, OD7, VER1, DOC2 and OD-REL approved, and ADR-A129 accepted. DOC2's decision 5 stands on condition
+  that TD-60's cleaning happens before the merge.

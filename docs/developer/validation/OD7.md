@@ -75,3 +75,7 @@ and Eligibility suites: 204 passed.
 
 - The class diagram was not rendered in a browser. It uses only constructs OD5 and OD6 rendered.
 - Versions. OD-REL releases the layer at 0.18.0.
+
+## Decisions answered
+
+2026-10-20, by the maintainer: approved, with every decision taken alone.

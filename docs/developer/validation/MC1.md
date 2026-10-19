@@ -54,3 +54,7 @@ mise run check:literate-migration -- eligibility 82fc2b25 --reconciliations docs
 ## Results
 
 2026-10-19: 5 passed. The ELC check passes with 102 reconciled differences.
+
+## Decisions answered
+
+2026-10-20, by the maintainer: approved, with every decision taken alone.
