@@ -450,3 +450,57 @@ def test_rc3_t16_the_real_scan_lists_exactly_what_the_tools_build_and_the_reader
     assert scan.problems == [] and set(scan.found) == set(scan.known) and len(scan.known) == 12
     assert "tools/lattice_repo_catalogue.py" not in scan.known
     assert all(not rc._is_test(Path(p)) for p in scan.known)
+
+
+# RC3 review (2026-10-19): a package's declared reaches are what its Python reads or writes outside its tree.
+import ast  # noqa: E402
+import re  # noqa: E402
+
+_ROOT_NAMES = {"ontology", "tools", "platform", "contracts", "test", "docs", "spikes", "apps", "packages",
+               "deployment", "workers", "benchmark"}
+
+
+def _path_parts(node: ast.AST) -> list[str]:
+    """The string parts of a ``/`` chain or a ``Path(...)`` call, with ``?`` for anything computed."""
+    if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Div):
+        return _path_parts(node.left) + _path_parts(node.right)
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return [node.value]
+    if isinstance(node, ast.Call) and getattr(node.func, "id", getattr(node.func, "attr", None)) == "Path":
+        return [p for a in node.args for p in _path_parts(a)]
+    return ["?"]
+
+
+def _reached(parts: list[str]) -> str | None:
+    """A path's first two segments from its first catalogued root on, if it names one."""
+    segments = [s for p in parts if p != "?" for s in p.strip("/").split("/") if s]
+    start = next((i for i, s in enumerate(segments) if s in _ROOT_NAMES), None)
+    if start is None or len(segments) < start + 2 or not re.fullmatch(r"[\w.-]+", segments[start + 1]):
+        return None
+    return "/".join(segments[start:start + 2])
+
+
+def derived_reaches(package: Path) -> set[str]:
+    found: set[str] = set()
+    for source in package.rglob("*.py"):
+        tree = ast.parse(source.read_text(encoding="utf-8"))
+        docstrings = {id(n.value) for n in ast.walk(tree) if isinstance(n, ast.Expr)}
+        for node in ast.walk(tree):
+            if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Div):
+                parts = _path_parts(node)
+            elif (isinstance(node, ast.Constant) and isinstance(node.value, str) and id(node) not in docstrings
+                  and "/" in node.value and not re.search(r"\s|^[a-z][\w+.-]*:", node.value)):
+                parts = [node.value]
+            else:
+                continue
+            reached = _reached(parts)
+            if reached:
+                found.add(reached)
+    own = package.relative_to(ROOT).as_posix()
+    return {r for r in found if not (r.startswith(own) or own.startswith(r))}
+
+
+@pytest.mark.parametrize("tool", rc.load(ROOT).tools, ids=lambda t: t.name)
+def test_rc3_t17_each_packages_reaches_are_what_its_code_reads(tool) -> None:
+    assert derived_reaches(ROOT / tool.path) == set(tool.reaches)
+

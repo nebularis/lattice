@@ -186,7 +186,10 @@ group = "services"
 
 A tool package is a directory under `tools/` with a `pyproject.toml`. The check fails when one on disk is
 not declared here. `import-names` are the packages it installs, and `reaches` the paths outside its own tree
-that its code or tests read or write. A path under `generated` may be absent.
+that its Python code or tests read or write at run time, named to the second segment, for example
+`ontology/eligibility`. A path a docstring or comment only mentions is not reached, nor is a package it
+imports. A test derives each package's reaches from its code and compares them. A path under `generated` may
+be absent.
 
 ```toml repository-catalogue
 [[tools]]
@@ -199,7 +202,7 @@ reaches = ["ontology/mork"]
 name = "mork_compilers"
 path = "tools/mork_compilers"
 import-names = ["mork_compilers"]
-reaches = ["ontology/eligibility", "ontology/mork", "ontology/quantification", "platform/reasoning-testkit/target/reasoning-testkit.jar"]
+reaches = ["ontology/eligibility", "ontology/mork", "ontology/quantification", "platform/reasoning-testkit"]
 
 [[tools]]
 name = "persistence"
@@ -211,7 +214,6 @@ reaches = ["ontology/persistence", "contracts/identity"]
 name = "reference/eligibility"
 path = "tools/reference/eligibility"
 import-names = ["reference_eligibility"]
-reaches = ["ontology/eligibility", "tools/proofs/eligibility"]
 
 [[tools]]
 name = "spc/python"
@@ -222,7 +224,7 @@ import-names = ["spc"]
 name = "surface"
 path = "tools/surface"
 import-names = ["surface"]
-reaches = ["ontology/surface", "ontology/mork", "test/conformance"]
+reaches = ["ontology/surface", "test/conformance"]
 
 [[tools]]
 name = "testing/oxigraph"

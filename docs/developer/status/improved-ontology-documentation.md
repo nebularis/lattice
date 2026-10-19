@@ -37,7 +37,7 @@ deliberate. The release slice OD-REL resolves it once, before the merge into `ma
 | OD0 ADRs, the AGENTS.md rule, the conventions document | accepted 2026-10-17, committed, [Validation Pack](../validation/OD0.md) | |
 | RC1 catalogue and reader | committed 2026-10-17, tests pass, choices agreed 2026-10-18, [Validation Pack](../validation/RC1.md) | |
 | RC2 consumers use the reader | passed and committed 2026-10-18, [Validation Pack](../validation/RC2.md) | |
-| RC3 roots, AGENTS.md table, bypass scan | built autonomously 2026-10-19, committed locally, [Validation Pack](../validation/RC3.md) | the maintainer's review of its decisions taken alone |
+| RC3 roots, AGENTS.md table, bypass scan | approved 2026-10-19 after the `reaches` audit, committed locally, [Validation Pack](../validation/RC3.md) | |
 | OD1 scanner and markers | passed 2026-10-17, choices agreed, [Validation Pack](../validation/OD1.md) | the maintainer's merge |
 | OD2 sections 1 to 3 | built autonomously 2026-10-18, committed locally (`8947e696`), [Validation Pack](../validation/OD2.md) | |
 | OD3 section 6 to OWL | built autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD3.md) | |
@@ -46,13 +46,13 @@ deliberate. The release slice OD-REL resolves it once, before the merge into `ma
 | OD6 Eligibility pilot | built autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD6.md) | the maintainer's review of seven decisions, 32 definitions and two changed tests |
 | OD7 Vocabulary | planned | OD6 |
 | OD8 onward, one per layer | planned | OD7, and for Foundation and Party their part of TD-16 |
-| DOC1 published decisions | built autonomously 2026-10-19, committed locally, [Validation Pack](../validation/DOC1.md) | the maintainer's review of the twelve published ADRs and eight decisions |
+| DOC1 published decisions | approved 2026-10-19, committed locally, [Validation Pack](../validation/DOC1.md) | |
 | DOC2 site sections | planned | DOC1, RC1 |
 | DOC3 tutorial and Field Guide review | planned | DOC2, `lattice-tutorial` merged |
 | RC4 downstream extension | planned | RC3 |
 | RC5 package promotion | planned | RC4 |
 | RC6 XML catalogue folded in | planned | RC5, a new ADR on ADR-A88 |
-| ELC composition operation | built autonomously 2026-10-19, committed locally, [Validation Pack](../validation/ELC.md) | the maintainer's review of six decisions and three changed tests |
+| ELC composition operation | approved 2026-10-19, committed locally, [Validation Pack](../validation/ELC.md) | |
 | OD-REL release before the merge | planned | every migration on the branch |
 
 ## Open questions
@@ -206,3 +206,6 @@ None.
 - 2026-10-19: RC3 built in a separate worktree and cherry-picked onto this branch, without the main checkout's own
   commit it was cut from. Its bypass scan found DOC1's new list tool building `docs/` paths, which now asks the
   reader for the architecture area instead. ADR-A121's addendum keeps its slice reference in Provenance.
+
+- 2026-10-19: ELC, DOC1 and RC3 approved. RC3's `reaches` audited and now checked by RC3-T17. Two entries
+  corrected, and TD-56 records SPC's pipeline script writing into a missing directory.

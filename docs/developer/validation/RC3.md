@@ -160,3 +160,22 @@ The full `mise run check` was not run. The adversarial probes were not run.
 - The unlisted `tools/ontology_catalog.py` and `tools/ontology_version_check.py` constants `"ontology"`, which
   are strings and not paths.
 - Windows path separators in the scan. It reads source text, and the listed paths are written with `/`.
+
+## Decisions answered
+
+2026-10-19, by the maintainer: every decision taken alone ratified and approved, with one change. The tool
+packages' `reaches` had to be confirmed, since they came from reading the code by hand.
+
+**The audit, the same day.** `reaches` now means the paths a package's Python code or tests read or write at
+run time, named to two segments. Mentions in docstrings and comments, imports and IRIs do not count.
+RC3-T17 derives each package's reaches from its code's path literals and `/` chains and compares them with
+the catalogue. Two entries were wrong and are corrected:
+
+- `reference/eligibility` reads nothing outside its tree. It cited `ontology/eligibility` and
+  `tools/proofs/eligibility` because its generated module is derived from them, but `literate_extract` writes
+  that module, and the package never opens either.
+- `surface` never reads `ontology/mork`. Its MORK interoperation uses the namespace only.
+
+`mork_compilers`' jar path is shortened to `platform/reasoning-testkit`, as the rule names two segments.
+`tools/spc/python/pipeline.sh` writes into `apps/spc_boundary/priv/`, which does not exist. A shell script is
+outside the test's reach, and the finding is TD-56.

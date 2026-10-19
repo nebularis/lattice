@@ -104,3 +104,8 @@ cd docs && mise exec -- bundle exec jekyll build -d ../.build/site
 - Question and slice IDs in published ADRs, which the check does not detect (decision 2).
 - The decisions index page on the site links every ADR, so its links to unpublished ones are broken there.
   DOC2 gives the site its sections and layouts.
+
+## Decisions answered
+
+2026-10-19, by the maintainer: all eight decisions taken alone ratified and approved, including links to
+unpublished ADRs at `main` and the site's exclude and include lists, and the twelve published ADRs kept.

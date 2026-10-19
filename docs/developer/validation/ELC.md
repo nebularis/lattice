@@ -116,3 +116,8 @@ mise run check:full-sweep
 
 - Versions. OD-REL releases ELC's breaking change with the migration (OD-D43).
 - A reasoner run over the new domain. The reasoning tests run in the sweep where the reasoner jar is built.
+
+## Decisions answered
+
+2026-10-19, by the maintainer: all six decisions taken alone ratified and approved, and the changed tests
+accepted.
