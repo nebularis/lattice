@@ -2,7 +2,8 @@
 
 # One release for LATTICE's ontologies — sketch
 
-**Status:** Sketch, 2026-10-19. Questions REL-Q1 to REL-Q6 open. Not planned.
+**Status:** Sketch, 2026-10-19. REL-Q1 to REL-Q6 answered the same day (OD-D55 to OD-D59), REL-Q2a open. Planned as
+slices VER1 and OD-REL.
 **Question prefix:** REL
 **Raised by:** the maintainer, 2026-10-19, while deciding IMP-Q1 of the
 [import pinning sketch](ontology-import-pinning.md), which this sketch widens and would replace.

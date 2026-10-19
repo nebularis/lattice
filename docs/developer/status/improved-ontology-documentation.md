@@ -20,11 +20,10 @@ ontology file has changed.
 
 ## Next action
 
-1. The maintainer reviews the Validation Packs of [ELC](../validation/ELC.md), [DOC1](../validation/DOC1.md) and
-   [RC3](../validation/RC3.md), built autonomously on 2026-10-19 and committed locally, including the twelve
-   published ADRs and the changed tests to countersign.
-2. Then OD7 (Vocabulary) is the next slice. The import pinning sketch's IMP-Q1 and IMP-Q5 decide how much of
-   OD-REL is a cascade.
+1. The maintainer answers REL-Q2a and lets MC1, OD7, VER1, DOC2 and OD-REL run autonomously (OD-D62). MC1, OD7
+   and DOC2 need no further answer. VER1 needs REL-Q2a.
+2. The [release bundles sketch](../sketches/release-bundles.md), BUN-Q1 to BUN-Q7, decides what ships with a
+   release beyond the RDF and where it goes.
 
 **Known inconsistency on this branch (OD-D43).** Migrated layers' documents change without new version IRIs,
 so `check:ontology-versioning` reports unbumped changes, and importers stay pinned to the old versions. This is
@@ -53,11 +52,16 @@ deliberate. The release slice OD-REL resolves it once, before the merge into `ma
 | RC5 package promotion | planned | RC4 |
 | RC6 XML catalogue folded in | planned | RC5, a new ADR on ADR-A88 |
 | ELC composition operation | approved 2026-10-19, committed locally, [Validation Pack](../validation/ELC.md) | |
-| OD-REL release before the merge | planned | every migration on the branch |
+| MC1 migration check labels | briefed 2026-10-19 | |
+| VER1 one release for the substrate | briefed 2026-10-19 | REL-Q2a |
+| OD-REL first release, 0.18.0 | planned | every migration on the branch |
 
 ## Open questions
 
-None.
+- **REL-Q2a. Do the standalone modules join the substrate's release?** MORK's `Mork.ttl`, Surface's `surface.ttl`
+  and Persistence's `persistent-foundation.ttl` import Foundation (Surface also Quantification and Vocabulary),
+  and MORK's `Executable.ttl` names Eligibility terms without importing Eligibility. SPC depends on nothing.
+- **BUN-Q1 to BUN-Q7**, in the [release bundles sketch](../sketches/release-bundles.md).
 
 ## Coordination with other units
 
@@ -213,3 +217,7 @@ None.
   The import pinning checks were run, and the maintainer asked to rethink versioning first. The
   [release model sketch](../sketches/ontology-release-model.md) proposes one release for every ontology,
   REL-Q1 to REL-Q6 open.
+- 2026-10-19: REL-Q1 to REL-Q6 and NX-Q3 to NX-Q5 answered (OD-D54 to OD-D62). One release for the substrate,
+  starting at 0.18.0, with the data class of every change in its notes. Briefs written for MC1, OD7, VER1, DOC2
+  and OD-REL. The check REL-Q2 asked for found three standalone modules depending on the substrate (REL-Q2a). The
+  release bundles sketch opened BUN-Q1 to BUN-Q7.

@@ -712,7 +712,8 @@ Multilingual support is a pending design decision, PDD-10.
 
 **Sketch raised by this unit:** [ontology-import-pinning.md](sketches/ontology-import-pinning.md), how imports pin
 their versions, widened by [ontology-release-model.md](sketches/ontology-release-model.md), one release for every
-ontology (REL-Q1 to REL-Q6 open). Not planned.
+ontology (REL-Q1 to REL-Q6 answered 2026-10-19, REL-Q2a open), and
+[release-bundles.md](sketches/release-bundles.md), what a release ships and where (BUN-Q1 to BUN-Q7 open).
 
 ## 8. Phase Handoff Documents (0-6)
 
