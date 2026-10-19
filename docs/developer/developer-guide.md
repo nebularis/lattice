@@ -111,7 +111,12 @@ Each module's extraction contract is also stated in its README's entry in the
 ([ADR-A121](../architecture/decisions/ADR-A121-repository-catalogue.md)), read by
 `tools/lattice_repo_catalogue.py`, the one module that finds the repository root and says where a
 module's artefacts are. `mise run check:catalogue`, part of `check`, fails when the catalogue and the
-tree disagree.
+tree disagree. The root file also declares the roots, the tool packages under `tools/`, the
+documentation areas and the generated outputs. A new root, tool package or documentation area is added
+there, and `mise run build:agent-guidance` then rewrites the "Where things are" table in `AGENTS.md`
+between its markers, never by hand. The same check reports Python under `tools/` that builds a path to a
+root itself, against the known cases in `tools/lattice_repo_catalogue_exceptions.txt`, a list that only
+shrinks. It does not scan tests.
 
 ```bash
 # The files a module's README generates for one role, in extraction order
@@ -233,8 +238,8 @@ is generated from `AGENTS.md`, never edited by hand.
 
 | Task | Does |
 |---|---|
-| `build:agent-guidance` | writes Copilot's file from `AGENTS.md` |
-| `check:agent-guidance` | checks that file, every skill's name and description, `AGENTS.md`'s skill table, the plugin marketplace and every link (in `check`) |
+| `build:agent-guidance` | writes `AGENTS.md`'s "Where things are" table from the repository catalogue, then Copilot's file from `AGENTS.md` |
+| `check:agent-guidance` | checks that table is current, that file, every skill's name and description, `AGENTS.md`'s skill table, the plugin marketplace and every link (in `check`) |
 | `skills:link` | links the skills into `~/.copilot/skills/` for Copilot in other projects, copying on Windows |
 | `check:deny-terms` | checks staged changes against your personal, never published, list of terms (skill `lattice-publication-hygiene`) |
 | `hooks:install` | adds an opt-in pre-commit hook running `check:deny-terms` |

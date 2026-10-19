@@ -105,6 +105,14 @@ This catalogue answers a different question, where the artefact with a given rol
 - Root discovery assumes callers run from the repository root or below it, as `mise`, pytest and continuous
   integration do. A tool started elsewhere sets `LATTICE_ROOT`, and the reader's error says so.
 
+## Addendum (2026-10-19): what the bypass scan covers
+
+Agreed by the maintainer. The scan of decision 5 covers the Python of the tools, and not their tests, until
+after slice RC4. A test (`test_*.py`, a `tests/` directory or `conftest.py`) may still build a path to a
+catalogued root. Its paths move to the reader when the tools have, and the scan then widens to cover tests.
+The known exceptions are listed in `tools/lattice_repo_catalogue_exceptions.txt`, one file per line with a
+reason, and the scan fails on a file that builds such a path and is not listed.
+
 ## Provenance
 
 Proposed in the [repository catalogue sketch](../../developer/sketches/repository-catalogue.md), whose

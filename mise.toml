@@ -247,7 +247,7 @@ description = "Check every tools/proofs/<layer>/Kernel.thy and tools/reference/<
 run = "python tools/check_formal_freshness.py"
 
 [tasks."build:agent-guidance"]
-description = "Write .github/copilot-instructions.md from AGENTS.md (ADR-A117)"
+description = "Write AGENTS.md's Where things are table from the repository catalogue, then .github/copilot-instructions.md from AGENTS.md (ADR-A117, ADR-A121)"
 run = "python tools/agent_guidance.py build"
 
 [tasks."check:literate-migration"]
@@ -263,11 +263,11 @@ description = "Check the published decisions list is current, every published AD
 run = "python tools/published_decisions.py check && python tools/sources_check.py --quiet && python -m pytest tools/test_published_decisions.py -q"
 
 [tasks."check:catalogue"]
-description = "Check the repository catalogue against the tree: every listed module's entry, roles and extracted files, and every module on disk listed (ADR-A121)"
+description = "Check the repository catalogue against the tree: every listed module's entry, roles and extracted files, every module on disk listed, the roots, documentation areas and tool packages declared, and the bypass scan of tools (ADR-A121)"
 run = "python tools/lattice_repo_catalogue.py check"
 
 [tasks."check:agent-guidance"]
-description = "Check Copilot's file matches AGENTS.md, every skill is well formed and listed, the plugin marketplace is right, and every link resolves (ADR-A117)"
+description = "Check AGENTS.md's Where things are table is current, Copilot's file matches AGENTS.md, every skill is well formed and listed, the plugin marketplace is right, and every link resolves (ADR-A117)"
 run = "python tools/agent_guidance.py check && python -m pytest tools/test_agent_guidance.py -q"
 
 [tasks."skills:link"]

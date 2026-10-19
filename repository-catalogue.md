@@ -103,3 +103,174 @@ shapes = ["shapes/structural.ttl", "shapes/constraints.ttl", "shapes/single-expr
   role's directory, and lists the shape files in the order of the README's shape blocks. The README's
   other shape files are written by hand.
 - Paths are relative to the module's directory.
+
+## Roots
+
+Each top-level root, what it owns and the decisions behind it. A root is a directory at the repository root
+that holds one kind of thing. A new root, or a new kind of directory anywhere, needs an accepted ADR.
+
+`owns` is one plain statement for the catalogue. `row` is the text of the root's row in the "Where things are"
+table of [AGENTS.md](AGENTS.md), which `mise run build:agent-guidance` generates from these entries. Roots
+that share a `group` are one row, written once on the first of them. The documentation areas below follow
+the roots in that table.
+
+```toml repository-catalogue
+[[roots]]
+path = "ontology/"
+owns = "semantic assets and their documentation"
+adrs = ["ADR-A01", "ADR-A77", "ADR-A121", "ADR-A126"]
+row = "semantic assets only: sources, shapes, vocabularies, projections, examples, their documentation"
+
+[[roots]]
+path = "tools/"
+owns = "executable reference implementations and developer toolchains"
+adrs = ["ADR-A29", "ADR-A121", "ADR-A125"]
+row = "executable reference implementations and developer toolchains. `tools/testing/` holds test-support packages, used only by tests, checks and benchmarks (ADR-A125)"
+
+[[roots]]
+path = "benchmark/"
+owns = "checks that measure"
+adrs = ["ADR-A124"]
+row = "checks that measure, run on demand and never part of `check`. They fail on a wrong result, never on time (ADR-A124)"
+
+[[roots]]
+path = "platform/"
+owns = "Java services"
+adrs = ["ADR-A77"]
+group = "services"
+row = "services, applications, libraries, data contracts, the local environment, the worker runtime, end-to-end suites, experiments"
+
+[[roots]]
+path = "apps/"
+owns = "applications"
+adrs = ["ADR-A77"]
+group = "services"
+
+[[roots]]
+path = "packages/"
+owns = "libraries"
+adrs = ["ADR-A77"]
+group = "services"
+
+[[roots]]
+path = "contracts/"
+owns = "data contracts"
+adrs = ["ADR-A77"]
+group = "services"
+
+[[roots]]
+path = "deployment/"
+owns = "the local environment"
+adrs = ["ADR-A77"]
+group = "services"
+
+[[roots]]
+path = "workers/"
+owns = "the worker runtime"
+adrs = ["ADR-A77"]
+group = "services"
+
+[[roots]]
+path = "test/"
+owns = "end-to-end suites"
+adrs = ["ADR-A77"]
+group = "services"
+
+[[roots]]
+path = "spikes/"
+owns = "experiments"
+group = "services"
+```
+
+## Tool packages
+
+A tool package is a directory under `tools/` with a `pyproject.toml`. The check fails when one on disk is
+not declared here. `import-names` are the packages it installs, and `reaches` the paths outside its own tree
+that its code or tests read or write. A path under `generated` may be absent.
+
+```toml repository-catalogue
+[[tools]]
+name = "mork"
+path = "tools/mork"
+import-names = ["mork_communities", "mtp", "mcn"]
+reaches = ["ontology/mork"]
+
+[[tools]]
+name = "mork_compilers"
+path = "tools/mork_compilers"
+import-names = ["mork_compilers"]
+reaches = ["ontology/eligibility", "ontology/mork", "ontology/quantification", "platform/reasoning-testkit/target/reasoning-testkit.jar"]
+
+[[tools]]
+name = "persistence"
+path = "tools/persistence"
+import-names = ["persistence"]
+reaches = ["ontology/persistence", "contracts/identity"]
+
+[[tools]]
+name = "reference/eligibility"
+path = "tools/reference/eligibility"
+import-names = ["reference_eligibility"]
+reaches = ["ontology/eligibility", "tools/proofs/eligibility"]
+
+[[tools]]
+name = "spc/python"
+path = "tools/spc/python"
+import-names = ["spc"]
+
+[[tools]]
+name = "surface"
+path = "tools/surface"
+import-names = ["surface"]
+reaches = ["ontology/surface", "ontology/mork", "test/conformance"]
+
+[[tools]]
+name = "testing/oxigraph"
+path = "tools/testing/oxigraph"
+import-names = ["lattice_testing_oxigraph"]
+
+[[tools]]
+name = "vocabulary"
+path = "tools/vocabulary"
+import-names = ["vocabulary"]
+reaches = ["ontology/vocabulary"]
+```
+
+## Documentation areas
+
+Documentation lives under `docs/`, and agent guidance under `.claude/skills/`. An entry has the same keys as
+a root, and its row follows the roots' rows in the "Where things are" table.
+
+```toml repository-catalogue
+[[docs]]
+path = "docs/architecture/"
+owns = "architecture documents and the ADRs"
+adrs = ["ADR-A77", "ADR-A127"]
+row = "architecture documents and the ADRs, in `decisions/`"
+
+[[docs]]
+path = "docs/developer/"
+owns = "working documents and durable developer guidance"
+adrs = ["ADR-A77", "ADR-A127"]
+row = "sketches, plans, status records, review requests, Validation Packs, and durable guidance"
+
+[[docs]]
+path = ".claude/skills/"
+owns = "agent skills"
+adrs = ["ADR-A117"]
+row = "the skills below"
+```
+
+## Generated outputs
+
+Paths a check may find missing, because a build writes them and a clean checkout does not have them.
+Files a module's README generates are not listed here. They stay under that module's `extract`.
+
+```toml repository-catalogue
+[generated]
+paths = [
+    ".build/",
+    "docs/_site/",
+    "platform/reasoning-testkit/target/reasoning-testkit.jar",
+]
+```

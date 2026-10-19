@@ -27,6 +27,8 @@ along the way.
 
 ## Where things are
 
+<!-- BEGIN GENERATED where-things-are. Written by `mise run build:agent-guidance` from repository-catalogue.md. Do not edit between the markers. -->
+
 | Root | Owns |
 |---|---|
 | `ontology/` | semantic assets only: sources, shapes, vocabularies, projections, examples, their documentation |
@@ -36,6 +38,8 @@ along the way.
 | `docs/architecture/` | architecture documents and the ADRs, in `decisions/` |
 | `docs/developer/` | sketches, plans, status records, review requests, Validation Packs, and durable guidance |
 | `.claude/skills/` | the skills below |
+
+<!-- END GENERATED where-things-are -->
 
 How each triple store behaves, and how we found out, is recorded in
 [docs/architecture/triple-store-discovery.md](docs/architecture/triple-store-discovery.md). Read it before relying on what a

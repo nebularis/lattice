@@ -27,13 +27,14 @@ are in [environment-lessons.md](environment-lessons.md), beside this file.
 | Change | Run |
 |---|---|
 | an ontology document | the list in skill `lattice-ontology-authoring`, step 7 |
-| a Python package under `tools/` | its `check:*` task, and `check:python-root` |
+| a Python package under `tools/` | its `check:*` task, and `check:python-root`. A new package is declared in `repository-catalogue.md`, which `check:catalogue` checks |
 | Java under `platform/` | `check:java` |
 | an app under `apps/` | `check:frontend`, then `test:frontend` |
 | a formal-methods artefact | `check:formal-freshness`, and `check:proofs` where Isabelle is installed |
 | generated SPARQL, or a test that runs it on an engine | `check:persistence`, and `check:persistence-oxigraph` for the second engine (skill `lattice-triple-stores`) |
 | a benchmark under `benchmark/` | its own `check:<area>-<topic>`, run on demand, never part of `check` (ADR-A124) |
-| `AGENTS.md` or a skill | `build:agent-guidance`, then `check:agent-guidance` |
+| `AGENTS.md` or a skill | `build:agent-guidance`, then `check:agent-guidance`. The "Where things are" table in `AGENTS.md` is generated from `repository-catalogue.md`, so edit a root, tool package or documentation area there |
+| a root, a tool package, a documentation area or a generated path | `repository-catalogue.md`, then `build:agent-guidance` and `check:catalogue` |
 | anything to be committed | `check:deny-terms` (skill `lattice-publication-hygiene`) |
 
 ## Is the code under test this checkout's?

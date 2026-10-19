@@ -22,11 +22,13 @@ Usage::
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 import os
 import re
 import sys
 import tomllib
+import warnings
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple
@@ -35,9 +37,23 @@ CATALOGUE_FILE = "repository-catalogue.md"
 BLOCK_TAG = "toml repository-catalogue"
 ANY_FENCE_RE = re.compile(r"^ {0,3}(?P<fence>`{3,}|~{3,})(?P<info>.*)$")
 
+EXCEPTIONS_FILE = "tools/lattice_repo_catalogue_exceptions.txt"
+DEBT_FILE = "docs/developer/plans/technical-debt.md"
+SCAN_SKIP_DIRS = {"node_modules", "__pycache__", "build", "dist"}
+
 # The schema. A key not listed here is an error, so later keys (for example a downstream
 # catalogue's ``extends``, ADR-A121 decision 7) can be added without ambiguity.
-ROOT_KEYS = {"catalogue": {"schema", "modules"}, "conventions": {"roles", "kinds", "versioned", "artefact-directories"}}
+ROOT_KEYS = {
+    "catalogue": {"schema", "modules"},
+    "conventions": {"roles", "kinds", "versioned", "artefact-directories"},
+    "generated": {"paths"},
+}
+# Blocks written as lists of tables, [[roots]] and so on, and the keys of each table.
+ENTRY_KEYS = {
+    "roots": {"path", "owns", "adrs", "row", "group"},
+    "docs": {"path", "owns", "adrs", "row", "group"},
+    "tools": {"name", "path", "import-names", "reaches"},
+}
 MODULE_KEYS = {"kind", "roles", "imports", "extract"}
 EXTRACT_KEYS = ("spec", "vocab", "shapes")
 
@@ -76,10 +92,37 @@ class Module:
 
 
 @dataclass(frozen=True)
+class Area:
+    """A root or a documentation area. ``row`` is the text of its row in AGENTS.md's table. The first
+    entry of a group carries it, and the rest of the group share that row."""
+    path: str
+    owns: str
+    adrs: Tuple[str, ...]
+    row: Optional[str]
+    group: Optional[str]
+
+
+@dataclass(frozen=True)
+class ToolPackage:
+    name: str
+    path: str
+    import_names: Tuple[str, ...]
+    reaches: Tuple[str, ...]
+
+
+@dataclass(frozen=True)
 class Catalogue:
     root: Path
     conventions: Dict[str, Any]
     modules: Dict[str, Module]
+    roots: Tuple[Area, ...] = ()
+    docs: Tuple[Area, ...] = ()
+    tools: Tuple[ToolPackage, ...] = ()
+    generated: Tuple[str, ...] = ()
+
+    def is_generated(self, path: str) -> bool:
+        """Whether a path is, or lies under, a generated path that a check may find missing."""
+        return any(path.rstrip("/") == g.rstrip("/") or path.startswith(g.rstrip("/") + "/") for g in self.generated)
 
     def module(self, name: str) -> Module:
         if name not in self.modules:
@@ -169,13 +212,59 @@ def _strings(value: Any, where: str) -> Tuple[str, ...]:
     return tuple(value)
 
 
+def _entries(value: Any, key: str, required: Sequence[str]) -> List[Dict[str, Any]]:
+    """The tables of a ``[[key]]`` block, each with known keys only, its required keys, and text as strings."""
+    if not isinstance(value, list) or not all(isinstance(v, dict) for v in value):
+        raise CatalogueError(f"{CATALOGUE_FILE}: {key} must be a list of tables, written [[{key}]]")
+    for number, entry in enumerate(value, 1):
+        where = f"{CATALOGUE_FILE}: {key} entry {number}"
+        unknown = set(entry) - ENTRY_KEYS[key]
+        if unknown:
+            raise CatalogueError(f"{where}: unknown key(s) {', '.join(sorted(unknown))}")
+        for name in required:
+            if name not in entry:
+                raise CatalogueError(f"{where}: needs {name!r}")
+        for name, item in entry.items():
+            if name not in ("adrs", "import-names", "reaches") and not isinstance(item, str):
+                raise CatalogueError(f"{where}: {name!r} must be a string")
+    return value
+
+
+def _areas(value: Any, key: str) -> Tuple[Area, ...]:
+    areas = []
+    for entry in _entries(value, key, ("path", "owns")):
+        adrs = _strings(entry.get("adrs", []), f"{CATALOGUE_FILE}: {key} {entry['path']}: adrs")
+        areas.append(Area(entry["path"], entry["owns"], adrs, entry.get("row"), entry.get("group")))
+    for index, area in enumerate(areas):
+        follows = area.group is not None and index > 0 and areas[index - 1].group == area.group
+        if follows and area.row is not None:
+            raise CatalogueError(f"{CATALOGUE_FILE}: {key} {area.path} follows the first entry of its group, so it takes no 'row'")
+        if not follows and area.row is None:
+            raise CatalogueError(f"{CATALOGUE_FILE}: {key} {area.path} needs 'row', the text of its row in AGENTS.md")
+        if area.group is not None and not follows and any(a.group == area.group for a in areas[:index]):
+            raise CatalogueError(f"{CATALOGUE_FILE}: the entries of group {area.group!r} must be next to each other")
+    return tuple(areas)
+
+
+def _tools(value: Any) -> Tuple[ToolPackage, ...]:
+    return tuple(
+        ToolPackage(
+            e["name"], e["path"], _strings(e["import-names"], f"{CATALOGUE_FILE}: tools {e['name']}: import-names"),
+            _strings(e.get("reaches", []), f"{CATALOGUE_FILE}: tools {e['name']}: reaches"),
+        )
+        for e in _entries(value, "tools", ("name", "path", "import-names"))
+    )
+
+
 def load(root: Path | str | None = None) -> Catalogue:
     """Read and validate the whole catalogue."""
     base = find_root(root)
     data = _read(base / CATALOGUE_FILE)
     for key, value in data.items():
-        if key not in ROOT_KEYS:
+        if key not in ROOT_KEYS and key not in ENTRY_KEYS:
             raise CatalogueError(f"{CATALOGUE_FILE}: unknown key {key!r}")
+        if key in ENTRY_KEYS:
+            continue
         unknown = set(value) - ROOT_KEYS[key]
         if unknown:
             raise CatalogueError(f"{CATALOGUE_FILE}: unknown key(s) {', '.join(sorted(unknown))} in [{key}]")
@@ -213,10 +302,51 @@ def load(root: Path | str | None = None) -> Catalogue:
             imports=None if imports is None else _strings(imports, f"{where}: imports"),
             extract=extract,
         )
-    return Catalogue(base, conventions, modules)
+    generated = data.get("generated", {})
+    return Catalogue(
+        base, conventions, modules,
+        _areas(data.get("roots", []), "roots"), _areas(data.get("docs", []), "docs"), _tools(data.get("tools", [])),
+        _strings(generated.get("paths", []), f"{CATALOGUE_FILE}: [generated] paths"),
+    )
 
 
-def check(catalogue: Catalogue) -> List[str]:
+def _walk(directory: Path, suffixes: Sequence[str]) -> List[Path]:
+    """Files under ``directory`` ending in one of ``suffixes``, skipping hidden, build and cache directories."""
+    found = []
+    for base, names, files in os.walk(directory):
+        names[:] = sorted(n for n in names if not n.startswith(".") and n not in SCAN_SKIP_DIRS and not n.endswith(".egg-info"))
+        found += [Path(base) / f for f in sorted(files) if f.endswith(tuple(suffixes))]
+    return found
+
+
+def _path_problems(catalogue: Catalogue) -> List[str]:
+    """Declared roots, documentation areas, tool packages and the paths a package reaches must exist, unless
+    generated, and every tool package on disk must be declared."""
+    root, problems = catalogue.root, []
+
+    def missing(path: str, what: str) -> None:
+        if not catalogue.is_generated(path) and not (root / path.rstrip("/")).exists():
+            problems.append(f"{what} {path} does not exist, and is not under [generated] paths")
+
+    for kind, areas in (("roots", catalogue.roots), ("docs", catalogue.docs)):
+        for area in areas:
+            missing(area.path, f"{kind} entry")
+    for tool in catalogue.tools:
+        missing(tool.path, f"tool package {tool.name}:")
+        if not (root / tool.path / "pyproject.toml").is_file():
+            problems.append(f"tool package {tool.name}: {tool.path} has no pyproject.toml")
+        for reached in tool.reaches:
+            missing(reached, f"tool package {tool.name} reaches")
+    if catalogue.tools:
+        declared = {t.path.rstrip("/") for t in catalogue.tools}
+        for pyproject in _walk(root / "tools", ("pyproject.toml",)):
+            package = pyproject.parent.relative_to(root).as_posix()
+            if package not in declared:
+                problems.append(f"{package} is a tool package (it has a pyproject.toml), but is not in the catalogue's tools")
+    return problems
+
+
+def check(catalogue: Catalogue, scan: Optional["Scan"] = None) -> List[str]:
     """Problems between the catalogue and the tree, in both directions. Empty when they agree."""
     root, problems = catalogue.root, []
     known_roles = set(catalogue.conventions.get("roles", []))
@@ -243,7 +373,102 @@ def check(catalogue: Catalogue) -> List[str]:
             continue
         if any((directory / role).is_dir() for role in known_roles):
             problems.append(f"{directory.relative_to(root).as_posix()} holds a module, but is not in the catalogue")
-    return problems
+    return problems + _path_problems(catalogue) + (scan if scan is not None else bypass_scan(catalogue)).problems
+
+
+@dataclass(frozen=True)
+class Scan:
+    found: Dict[str, int]    # file -> number of path constructions to a catalogued root
+    known: Dict[str, str]    # file -> reason, from the exceptions file
+    problems: List[str]
+
+
+def _is_test(path: Path) -> bool:
+    return path.name.startswith("test_") or path.name == "conftest.py" or "tests" in path.parts
+
+
+def _first_segment(node: ast.AST) -> Optional[str]:
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return node.value.split("/", 1)[0]
+    return None
+
+
+def count_bypasses(source: str, names: frozenset) -> int:
+    """Path constructions that name a catalogued root, as in ``base / "ontology"`` or ``Path("ontology/x")``."""
+    count = 0
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")  # other files' invalid escapes are not this scan's to report
+        tree = ast.parse(source)
+    for node in ast.walk(tree):
+        if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Div):
+            count += _first_segment(node.right) in names
+        elif isinstance(node, ast.Call) and node.args:
+            func = node.func.id if isinstance(node.func, ast.Name) else getattr(node.func, "attr", "")
+            count += func in ("Path", "PurePath", "PurePosixPath") and _first_segment(node.args[0]) in names
+    return count
+
+
+def bypass_scan(catalogue: Catalogue) -> Scan:
+    """Non-test Python under tools/ that builds a path to a catalogued root itself (ADR-A121 decision 5).
+    A listed file is reported. An unlisted file, a listed file that no longer occurs, and a technical debt
+    row giving the wrong count are problems, so the list only shrinks. Tests are not scanned until after
+    RC4 (ADR-A121, addendum of 2026-10-19), and the reader is not scanned."""
+    root, problems = catalogue.root, []
+    names = frozenset(a.path.rstrip("/").split("/", 1)[0] for a in (*catalogue.roots, *catalogue.docs))
+    if not names:
+        return Scan({}, {}, [])
+    found: Dict[str, int] = {}
+    for file in _walk(root / "tools", (".py",)):
+        relative = file.relative_to(root)
+        if _is_test(relative) or relative.as_posix() == "tools/lattice_repo_catalogue.py":
+            continue
+        try:
+            count = count_bypasses(file.read_text(encoding="utf-8"), names)
+        except SyntaxError as error:
+            problems.append(f"{relative.as_posix()}: the bypass scan cannot parse it ({error.msg}, line {error.lineno})")
+            continue
+        if count:
+            found[relative.as_posix()] = count
+    known: Dict[str, str] = {}
+    listing = root / EXCEPTIONS_FILE
+    for number, line in enumerate(listing.read_text(encoding="utf-8").splitlines() if listing.is_file() else [], 1):
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        path, bar, reason = (part.strip() for part in line.partition("|"))
+        if not bar or not reason:
+            problems.append(f"{EXCEPTIONS_FILE}:{number}: write 'path | reason', every exception has a reason")
+        elif path in known:
+            problems.append(f"{EXCEPTIONS_FILE}:{number}: {path} is listed twice")
+        else:
+            known[path] = reason
+    for path in sorted(set(found) - set(known)):
+        problems.append(
+            f"{path} builds a path to a catalogued root {found[path]} time(s). Ask the reader instead, or, for a known "
+            f"case, list it in {EXCEPTIONS_FILE} with a reason"
+        )
+    for path in sorted(set(known) - set(found)):
+        problems.append(f"{EXCEPTIONS_FILE} lists {path}, which no longer builds such a path. Remove it from the list")
+    name, debt = Path(EXCEPTIONS_FILE).name, root / DEBT_FILE
+    rows = [r for r in debt.read_text(encoding="utf-8").splitlines() if name in r] if debt.is_file() else []
+    if listing.is_file() and len(rows) != 1:  # a tree with no exceptions file has no row to check
+        problems.append(f"{DEBT_FILE} needs one row that names {name} and says 'lists N files'")
+    elif listing.is_file():
+        stated = re.search(r"lists (\d+) files", rows[0])
+        if stated is None or int(stated.group(1)) != len(known):
+            says = f"lists {stated.group(1)} files" if stated else "gives no count"
+            problems.append(f"the technical debt row for {name} must say 'lists {len(known)} files', and {says}")
+    return Scan(found, known, problems)
+
+
+def where_things_are(catalogue: Catalogue) -> str:
+    """AGENTS.md's "Where things are" table: the roots, then the documentation areas. A group is one row."""
+    lines, areas = ["| Root | Owns |", "|---|---|"], [*catalogue.roots, *catalogue.docs]
+    for index, area in enumerate(areas):
+        if area.group is not None and index > 0 and areas[index - 1].group == area.group:
+            continue
+        members = [a.path for a in areas if a.group == area.group] if area.group is not None else [area.path]
+        lines.append(f"| {', '.join(f'`{p}`' for p in members)} | {area.row} |")
+    return "\n".join(lines)
 
 
 def _dump(catalogue: Catalogue) -> Dict[str, Any]:
@@ -260,6 +485,10 @@ def _dump(catalogue: Catalogue) -> Dict[str, Any]:
             }
             for m in catalogue.modules.values()
         },
+        "roots": [vars(a) for a in catalogue.roots],
+        "docs": [vars(a) for a in catalogue.docs],
+        "tools": [vars(t) for t in catalogue.tools],
+        "generated": list(catalogue.generated),
     }
 
 
@@ -285,12 +514,17 @@ def main(argv: Sequence[str] | None = None) -> int:
         elif args.command == "dump":
             print(json.dumps(_dump(catalogue), indent=2))
         else:
-            problems = check(catalogue)
+            scan = bypass_scan(catalogue)
+            for path, reason in scan.known.items():
+                if path in scan.found:
+                    print(f"bypass scan, known: {path} builds {scan.found[path]} path(s) itself ({reason})")
+            problems = check(catalogue, scan)
             for problem in problems:
                 print(f"CATALOGUE {problem}", file=sys.stderr)
             if problems:
                 return 1
-            print(f"repository catalogue: {len(catalogue.modules)} module(s) agree with the tree")
+            print(f"repository catalogue: {len(catalogue.modules)} module(s) and {len(catalogue.tools)} tool package(s) "
+                  f"agree with the tree. Bypass scan: {len(scan.known)} known file(s)")
     except CatalogueError as error:
         print(f"CATALOGUE {error}", file=sys.stderr)
         return 1
