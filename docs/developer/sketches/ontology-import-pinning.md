@@ -2,7 +2,8 @@
 
 # How ontology imports pin their versions — sketch
 
-**Status:** Sketch, 2026-10-18. Questions IMP-Q1 to IMP-Q5 open. Not planned.
+**Status:** Sketch, 2026-10-18. Widened on 2026-10-19 by the [release model sketch](ontology-release-model.md),
+which records the checks of §6 and would replace this sketch's questions. Not planned.
 **Question prefix:** IMP
 **Raised by:** the maintainer, during `improved-ontology-documentation` OD6 (OD6-Q6, option d), because regular
 re-pinning has become a burden.

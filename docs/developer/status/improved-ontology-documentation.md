@@ -209,3 +209,7 @@ None.
 
 - 2026-10-19: ELC, DOC1 and RC3 approved. RC3's `reaches` audited and now checked by RC3-T17. Two entries
   corrected, and TD-56 records SPC's pipeline script writing into a missing directory.
+- 2026-10-19: next slices proposed (MC1, OD7, DOC2, OD-REL). NX-Q1 answered (a), the branch is cut after OD-REL.
+  The import pinning checks were run, and the maintainer asked to rethink versioning first. The
+  [release model sketch](../sketches/ontology-release-model.md) proposes one release for every ontology,
+  REL-Q1 to REL-Q6 open.
