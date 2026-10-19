@@ -10,8 +10,8 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 <https://www.nebularis.org/neuro-semantic/vocabulary> a owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> ;
-    owl:imports <http://www.w3.org/2004/02/skos/core>, <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.18.0> ;
+    owl:imports <http://www.w3.org/2004/02/skos/core>, <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.18.0> ;
     dct:description """Vocabulary provides a governed mechanism by which external, domain-specific concept schemes get bound into every other layer's concept-valued properties without those layers' own specifications ever naming a domain concept directly.
 
 vocab/ folders elsewhere in this repository hold small, mechanism-intrinsic enumerations (trigger kind, role type). Actual business vocabularies — product codes, jurisdiction lists, currency schemes, etc — are supplied entirely by whoever builds on LATTICE, and never appear in this repository at all.

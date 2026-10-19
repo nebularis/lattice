@@ -18,6 +18,7 @@ from rdflib import BNode, Graph, Namespace, URIRef
 from rdflib.namespace import OWL, RDF, RDFS, SH
 
 ROOT = Path(__file__).resolve().parents[1]
+RELEASE = __import__("lattice_repo_catalogue").load(ROOT).release_version
 sys.path.insert(0, str(ROOT / "tools"))
 sys.path.insert(0, str(ROOT / "tools" / "mork_compilers" / "src"))
 
@@ -111,8 +112,8 @@ LS_EX, LS = _ns("licence-survival")
 def test_c7b_01_version_imports_and_new_terms() -> None:
     spec = _graph(SPEC)
     ontology = URIRef("https://www.nebularis.org/neuro-semantic/instrument")
-    assert spec.value(ontology, OWL.versionIRI) == URIRef(LATTICE + "instrument/0.17.0")
-    assert URIRef(LATTICE + "quantification/0.8.0") in set(spec.objects(ontology, OWL.imports))
+    assert spec.value(ontology, OWL.versionIRI) == URIRef(LATTICE + f"instrument/{RELEASE}")
+    assert URIRef(LATTICE + f"quantification/{RELEASE}") in set(spec.objects(ontology, OWL.imports))
     for name in ("due", "recurrence", "window", "dueTolledIn", "at", "ofState", "ends", "survives", "survivalPeriod",
                  "survivesUntil"):
         utility = str(spec.value(INS[name], FND.utility))
@@ -229,7 +230,7 @@ def test_c7b_13_instrument_readme_and_releases() -> None:
     assert literate_extract.main([str(LAYER / "README.md"), "--layer", "instrument", "--root", str(ROOT), "--check"]) == 0
     readme = (LAYER / "README.md").read_text()
     assert "0.11.0 (CCS C7b" in readme and "Shapes 0.4.0 (additive" in readme and "0.12.0 (breaking, CCS C7c" in readme
-    assert (LAYER / "shapes" / ".version").read_text().strip() == "0.8.0"
+    assert not (LAYER / "shapes" / ".version").exists()
 
 
 def test_c7b_15_quantification_readme_is_the_source() -> None:
@@ -237,9 +238,9 @@ def test_c7b_15_quantification_readme_is_the_source() -> None:
                                   "--check"]) == 0
     spec = _graph(QLAYER / "spec" / "quantification.ttl")
     assert spec.value(URIRef("https://www.nebularis.org/neuro-semantic/quantification"), OWL.versionIRI) == \
-        URIRef(LATTICE + "quantification/0.8.0")
+        URIRef(LATTICE + f"quantification/{RELEASE}")
     assert "**0.7.0** (additive, CCS C7b" in (QLAYER / "README.md").read_text()
-    assert (QLAYER / "shapes" / ".version").read_text().strip() == "0.3.0"
+    assert not (QLAYER / "shapes" / ".version").exists()
 
 
 # ---- C7b-16: Quantification's shapes ----------------------------------------

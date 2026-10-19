@@ -15,8 +15,8 @@ Eligibility models admissibility by declaring reusable conditions, collecting ev
 
 | Document | Ontology IRI | Version IRI | Imports |
 |---|---|---|---|
-| `spec/eligibility.ttl` | <https://www.nebularis.org/neuro-semantic/eligibility> | <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.12.0> | <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0>, <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0>, <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.8.0>, <https://www.nebularis.org/neuro-semantic/lattice/party/0.9.0> |
-| `vocab/eligibility-vocab.ttl` | <https://www.nebularis.org/neuro-semantic/eligibility-vocab> | <https://www.nebularis.org/neuro-semantic/lattice/eligibility-vocab/0.13.0> | <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.12.0> |
+| `spec/eligibility.ttl` | <https://www.nebularis.org/neuro-semantic/eligibility> | <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.18.0> | <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.18.0>, <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.18.0>, <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.18.0>, <https://www.nebularis.org/neuro-semantic/lattice/party/0.18.0> |
+| `vocab/eligibility-vocab.ttl` | <https://www.nebularis.org/neuro-semantic/eligibility-vocab> | <https://www.nebularis.org/neuro-semantic/lattice/eligibility-vocab/0.18.0> | <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.18.0> |
 
 | Prefix | Namespace |
 |---|---|
@@ -967,8 +967,8 @@ answers Undetermined.
 ### 6.4 Individuals
 
 The mechanisms, value readings, decisions, step directions, reference profiles and law registers are each a
-closed set of named individuals, written to the vocabulary document. Laws L1 to L8 are listed here. The laws
-that also name their register, L9 to L17, are in 6.6.
+closed set of named individuals, written to the vocabulary document. The laws, L1 to L17, each name their
+register, so they are in 6.6.
 
 | Individual | Type | Definition |
 |---|---|---|
@@ -1019,17 +1019,6 @@ that also name their register, L9 to L17, are in 6.6.
 | `elg:SemanticLaw` | `elg:LawRegister` | Discharged by formal argument. |
 | `elg:StaticConstraint` | `elg:LawRegister` | Discharged by SHACL, SPARQL, or other static analysis of declarations. |
 
-| Individual | Type | Definition |
-|---|---|---|
-| `elg:L1` | `elg:Law` | Each condition that is not an admission profile declares exactly one match strategy, and an admission profile declares none. |
-| `elg:L2` | `elg:Law` | Each admission profile declares exactly one composition operation, and no other condition declares one. |
-| `elg:L3` | `elg:Law` | Each condition that is not an admission profile declares exactly one wildcard policy, and an admission profile declares none. |
-| `elg:L4` | `elg:Law` | IntervalContainment requires declared requiredRangeSet. |
-| `elg:L5` | `elg:Law` | IntervalOverlap is excluded from admissibility decisions. |
-| `elg:L6` | `elg:Law` | EligibilityDecision has exactly one decision value. |
-| `elg:L7` | `elg:Law` | EligibilityDecision references at least one question. |
-| `elg:L8` | `elg:Law` | EligibilityDecision names one operational profile. |
-
 ### 6.5 Disjointness and Keys
 
 **All disjoint.** `elg:Condition`, `elg:Question`, `elg:EligibilityDecision`, `elg:MatchStrategy`,
@@ -1045,10 +1034,34 @@ since an entry would give a term of RDF a definition of ours.
 rdf:Property a owl:Class .
 ```
 
-Laws L9 to L17 name their register (`elg:lawRegister`), which the individuals table of 6.4 cannot state, so
-they are written whole (§5.8).
+Every law names its register (`elg:lawRegister`), which the individuals table of 6.4 cannot state, so the laws
+are written whole (§5.8).
 
 ```turtle-vocab
+elg:L1 a elg:Law ;
+	elg:lawRegister elg:StaticConstraint ;
+	rdfs:comment "Each condition that is not an admission profile declares exactly one match strategy, and an admission profile declares none." .
+elg:L2 a elg:Law ;
+	elg:lawRegister elg:StaticConstraint ;
+	rdfs:comment "Each admission profile declares exactly one composition operation, and no other condition declares one." .
+elg:L3 a elg:Law ;
+	elg:lawRegister elg:StaticConstraint ;
+	rdfs:comment "Each condition that is not an admission profile declares exactly one wildcard policy, and an admission profile declares none." .
+elg:L4 a elg:Law ;
+	elg:lawRegister elg:StaticConstraint ;
+	rdfs:comment "IntervalContainment requires declared requiredRangeSet." .
+elg:L5 a elg:Law ;
+	elg:lawRegister elg:StaticConstraint ;
+	rdfs:comment "IntervalOverlap is excluded from admissibility decisions." .
+elg:L6 a elg:Law ;
+	elg:lawRegister elg:StaticConstraint ;
+	rdfs:comment "EligibilityDecision has exactly one decision value." .
+elg:L7 a elg:Law ;
+	elg:lawRegister elg:StaticConstraint ;
+	rdfs:comment "EligibilityDecision references at least one question." .
+elg:L8 a elg:Law ;
+	elg:lawRegister elg:StaticConstraint ;
+	rdfs:comment "EligibilityDecision names one operational profile." .
 elg:L9 a elg:Law ;
 	elg:lawRegister elg:SemanticLaw ;
 	rdfs:comment "Hierarchical match closure. A candidate value satisfies a condition under hierarchical match exactly when it stands in the reflexive-transitive closure of the bound scheme's ordering relation, restricted to that scheme's members, below the asserted value. The ordering relation is acyclic over the bound scheme; a scheme carrying a cycle is not evaluable under hierarchical match. A condition under hierarchical match with no resolved scheme at all has no closure to test a candidate against, and is undetermined for every candidate, the same reasoning L14 applies once a scheme resolves but states nothing about the candidate's position within it." .
@@ -1150,14 +1163,6 @@ elg:L17 a elg:Law ;
 | `elg:HierarchicalMatch` | Individual | Type `elg:MatchStrategy`. |
 | `elg:IntervalContainment` | Individual | Type `elg:MatchStrategy`. |
 | `elg:Inverse` | Individual | Type `elg:StepDirection`. |
-| `elg:L1` | Individual | Type `elg:Law`. |
-| `elg:L2` | Individual | Type `elg:Law`. |
-| `elg:L3` | Individual | Type `elg:Law`. |
-| `elg:L4` | Individual | Type `elg:Law`. |
-| `elg:L5` | Individual | Type `elg:Law`. |
-| `elg:L6` | Individual | Type `elg:Law`. |
-| `elg:L7` | Individual | Type `elg:Law`. |
-| `elg:L8` | Individual | Type `elg:Law`. |
 | `elg:MultiDimensionWildcard` | Individual | Type `elg:WildcardSemantics`. |
 | `elg:NoWildcard` | Individual | Type `elg:WildcardSemantics`. |
 | `elg:Permitted` | Individual | Type `elg:Decision`. |
@@ -1589,15 +1594,24 @@ Eligibility imports Foundation, Vocabulary, Quantification, and Party. Quantific
 
 Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).
 
-- Not yet released. The README follows the layout of
-  [ADR-A126](../../docs/architecture/decisions/ADR-A126-literate-specification-layout-and-grammar.md), and
-  generates its documents' headers, their terms and the structural shapes from sections 1, 2 and 6. Both
-  documents gain a `dct:description` and a `dct:creator`. Every class and property has a definition, 32 of them
-  new. Breaking: `elg:CompatibilityOperation` and `elg:compatibilityOperation` are renamed
-  `elg:CompositionOperation` and `elg:compositionOperation`, declared by admission profiles only, and a profile
-  no longer declares a match strategy or a wildcard policy. L1 to L3 are restated to match.
-  `elg:DimensionConsistent`, which no compiler could evaluate, is removed with the operational profile `elg:E6`
-  that tested it (ADR-A05, ADR-A03).
+- 0.18.0, the first release of the substrate and standalone modules as one set
+  (the [versioning policy](../../docs/architecture/ontology-versioning-policy.md)). Every
+  document takes the release's number and imports the other layers at it (no effect).
+  - The README follows the layout of
+    [ADR-A126](../../docs/architecture/decisions/ADR-A126-literate-specification-layout-and-grammar.md), and
+    generates its documents' headers, their terms and the structural shapes from sections 1, 2 and 6. Both
+    documents gain a `dct:description` and a `dct:creator`, every class and property has a definition, 32 of them
+    new, and `elg:AllRequired` and `elg:AnySufficient` gain definitions (no effect).
+  - `elg:CompatibilityOperation` and `elg:compatibilityOperation` are renamed `elg:CompositionOperation` and
+    `elg:compositionOperation`, declared by admission profiles only (changes meaning). A graph migrates by renaming
+    the property on profiles and removing it from other conditions.
+  - A profile declares no match strategy or wildcard policy, a condition that is not a profile declares exactly
+    one of each, and only a profile declares a composition operation. L1 to L3 are restated, and new shapes report
+    each in the wrong place (may invalidate).
+  - `elg:DimensionConsistent`, which no compiler could evaluate, is removed with the operational profile `elg:E6`
+    that tested it (changes meaning). A graph naming either has no evaluable meaning to migrate (ADR-A05, ADR-A03).
+  - Laws L1 to L8 state their register, `elg:StaticConstraint`, as L9 to L17 already did (no effect).
+  - The shapes and projection directories no longer carry a `.version`.
 - `eligibility` 0.12.0 (breaking, ADR-A105). Closures (§5.7). New: `elg:Closure`, `elg:licensedBy`,
   `elg:closedUnder` and `elg:closureReliedOn`. `eligibility-vocab` 0.13.0 (breaking). L15 restated, so a set
   reading is Denied under some value, or Permitted under every value, only under a closure the binding names,
@@ -1612,8 +1626,6 @@ Earlier versions are listed in the [ontology release register](../../docs/archit
 
 ## 13. Open Issues
 
-- **Laws L1 to L8 name no register.** §5.8 places them under `elg:StaticConstraint`, but only L9 to L17 state
-  `elg:lawRegister`.
 - **Eleven individuals have no definition**, the match strategies, the wildcard policies and the
   decisions. §5.1 and §5.4 describe them.
 - **A closure over a period**, such as "within 60 days of the request", is not yet declared (§5.7).

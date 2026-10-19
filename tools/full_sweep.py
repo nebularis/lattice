@@ -30,7 +30,7 @@ CHECKS = [
         "check:import-guard", "check:python-root", "check:deny-terms", "check:vocabulary",
         "check:mork-compilers", "check:reference-eligibility", "check:formal-freshness", "build:mtp",
         "check:mtp", "check:persistence", "check:agent-guidance", "check:ontology-catalog",
-        "check:published-decisions")],
+        "check:published-decisions", "check:site-sections", "check:catalogue")],
 ]
 
 ANSI = re.compile(r"\x1b\[[0-9;]*m")

@@ -20,12 +20,12 @@ ontology file has changed.
 
 ## Next action
 
-1. MC1, OD7, VER1, DOC2 and OD-REL, built autonomously from 2026-10-19 (OD-D62). DOC2 runs in its own worktree.
-2. The [release bundles sketch](../sketches/release-bundles.md) is discussed once they are done.
+1. The maintainer reviews MC1, OD7, VER1, DOC2 and OD-REL, accepts ADR-A129, and creates the release tags.
+2. The branch is then ready to merge into `main` (OD-D54).
+3. The [release bundles sketch](../sketches/release-bundles.md) is discussed.
 
-**Known inconsistency on this branch (OD-D43).** Migrated layers' documents change without new version IRIs,
-so `check:ontology-versioning` reports unbumped changes, and importers stay pinned to the old versions. This is
-deliberate. The release slice OD-REL resolves it once, before the merge into `main`.
+**Versions are consistent again.** Release 0.18.0 brought every substrate and standalone document to one number,
+and the versioning check passes against `main`.
 
 ## Slices
 
@@ -44,7 +44,7 @@ deliberate. The release slice OD-REL resolves it once, before the merge into `ma
 | OD7 Vocabulary | built autonomously 2026-10-19, committed locally, [Validation Pack](../validation/OD7.md) | |
 | OD8 onward, one per layer | planned | OD7, and for Foundation and Party their part of TD-16 |
 | DOC1 published decisions | approved 2026-10-19, committed locally, [Validation Pack](../validation/DOC1.md) | |
-| DOC2 site sections | planned | DOC1, RC1 |
+| DOC2 site sections | built autonomously 2026-10-19 in its own worktree, merged, [Validation Pack](../validation/DOC2.md) | the stray notes in `docs/`, for the maintainer |
 | DOC3 tutorial and Field Guide review | planned | DOC2, `lattice-tutorial` merged |
 | RC4 downstream extension | planned | RC3 |
 | RC5 package promotion | planned | RC4 |
@@ -52,7 +52,7 @@ deliberate. The release slice OD-REL resolves it once, before the merge into `ma
 | ELC composition operation | approved 2026-10-19, committed locally, [Validation Pack](../validation/ELC.md) | |
 | MC1 migration check labels | built autonomously 2026-10-19, committed locally, [Validation Pack](../validation/MC1.md) | |
 | VER1 one release for the substrate | built autonomously 2026-10-19, committed locally, [Validation Pack](../validation/VER1.md) | ADR-A129 to accept |
-| OD-REL first release, 0.18.0 | planned | every migration on the branch |
+| OD-REL first release, 0.18.0 | built autonomously 2026-10-20, committed locally, [Validation Pack](../validation/OD-REL.md) | ADR-A129 to accept, the tag `ontologies-v0.18.0` |
 
 ## Open questions
 
@@ -224,3 +224,9 @@ deliberate. The release slice OD-REL resolves it once, before the merge into `ma
 - 2026-10-19: VER1 built. ADR-A129 Proposed, the release number in the catalogue, the versioning check and register
   by release, and `release:prepare`. `Executable.ttl` imports Eligibility. `.build/site` untracked, committed by
   mistake with DOC1.
+- 2026-10-19: DOC2 built by a Sonnet sub-agent in its own worktree and merged. Site sections declared in the
+  catalogue, working documents off the site, which shrinks from 836 files to 96. Stray notes in `docs/` left for
+  the maintainer.
+- 2026-10-20: OD-REL built. Release 0.18.0 made with `release:prepare`, L1 to L8 given their register, the applied
+  modules bumped in two rounds, release notes with each change's data class, and tests reading the release
+  number. The full sweep passes, all 15 checks.

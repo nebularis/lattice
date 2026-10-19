@@ -23,6 +23,7 @@ from mork_compilers import reasoning  # noqa: E402
 from ontology_catalog import Catalog, closure  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
+RELEASE = __import__("lattice_repo_catalogue").load(ROOT).release_version
 LAYER = ROOT / "ontology" / "behaviour"
 LATTICE = "https://www.nebularis.org/neuro-semantic/lattice/"
 BHV = Namespace(LATTICE + "behaviour#")
@@ -93,7 +94,7 @@ def test_c11a_05_the_eight_worked_examples_exist() -> None:
 @pytest.mark.parametrize("name", NESTED)
 def test_c11a_06_examples_are_consistent(name: str) -> None:
     catalog = Catalog(ROOT / "ontology" / "catalog-v001.xml")
-    graph = closure(catalog, LATTICE + "behaviour-vocab/0.15.0") + closure(catalog, LATTICE + "behaviour-runtime/0.15.0")
+    graph = closure(catalog, LATTICE + f"behaviour-vocab/{RELEASE}") + closure(catalog, LATTICE + f"behaviour-runtime/{RELEASE}")
     assert reasoning.run("consistent", graphs=[graph, _example(name)]) is True
 
 
@@ -255,8 +256,8 @@ def test_c11a_15_readme_blocks_and_release_notes() -> None:
 
 def test_c11a_15_versions_and_release_rows() -> None:
     config, runtime = _graph(CONFIG), _graph(RUNTIME)
-    assert config.value(URIRef("https://www.nebularis.org/neuro-semantic/behaviour"), OWL.versionIRI) == URIRef(LATTICE + "behaviour/0.15.0")
-    assert set(runtime.objects(None, OWL.imports)) == {URIRef(LATTICE + "behaviour/0.15.0")}
+    assert config.value(URIRef("https://www.nebularis.org/neuro-semantic/behaviour"), OWL.versionIRI) == URIRef(LATTICE + f"behaviour/{RELEASE}")
+    assert set(runtime.objects(None, OWL.imports)) == {URIRef(LATTICE + f"behaviour/{RELEASE}")}
     register = (ROOT / "docs" / "architecture" / "ontology-releases.md").read_text()
     for tag in ("behaviour-v0.10.0", "behaviour-runtime-v0.10.0", "behaviour-vocab-v0.10.0", "behaviour-shapes-v0.4.0",
                 "applied-capacity-execution-v0.10.0"):

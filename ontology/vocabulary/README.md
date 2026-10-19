@@ -21,7 +21,7 @@ What Vocabulary does *not* do is resolve a fuzzy label to a concept - it defines
 
 | Document | Ontology IRI | Version IRI | Imports |
 |---|---|---|---|
-| `spec/vocabulary.ttl` | <https://www.nebularis.org/neuro-semantic/vocabulary> | <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> | <http://www.w3.org/2004/02/skos/core>, <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> |
+| `spec/vocabulary.ttl` | <https://www.nebularis.org/neuro-semantic/vocabulary> | <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.18.0> | <http://www.w3.org/2004/02/skos/core>, <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.18.0> |
 
 | Prefix | Namespace |
 |---|---|
@@ -578,10 +578,13 @@ Vocabulary imports Foundation, for identity, versions, governance and temporal s
 
 Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).
 
-- Not yet released. The README follows the layout of
+- 0.18.0, the first release of the substrate and standalone modules as one set
+  (the [versioning policy](../../docs/architecture/ontology-versioning-policy.md)). The README
+  follows the layout of
   [ADR-A126](../../docs/architecture/decisions/ADR-A126-literate-specification-layout-and-grammar.md), and is the
-  source of the spec document and all three shape files. The document gains a `dct:description` and a
-  `dct:creator`. No axiom or shape changes.
+  source of the spec document and all three shape files (no effect). The document gains a `dct:description` and a
+  `dct:creator` (no effect). It imports Foundation at the release's number (no effect), and the shapes directory
+  no longer carries a `.version`. No axiom or shape changes.
 - `vocabulary` 0.4.0. Re-pinned to Foundation 0.4.0. No other change.
 - `vocabulary` 0.3.0. Re-pinned to Foundation 0.3.0. No other change.
 - `vocabulary` 0.2.0, the first version under the versioning policy. Scoped, time-bounded scheme bindings:

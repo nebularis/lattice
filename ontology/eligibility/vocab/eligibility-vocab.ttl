@@ -13,8 +13,8 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 <https://www.nebularis.org/neuro-semantic/eligibility-vocab> a owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility-vocab/0.13.0> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.12.0> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility-vocab/0.18.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.18.0> ;
     dct:description "Eligibility models admissibility by declaring reusable conditions, collecting evaluation questions, and recording a three-valued decision (Permitted, Denied, Undetermined)." ;
     dct:creator <https://github.com/hyperthunk> .
 
@@ -60,30 +60,6 @@ elg:IntervalContainment a elg:MatchStrategy .
 elg:Inverse a elg:StepDirection ;
     rdfs:comment "Traversed from object to subject." .
 
-elg:L1 a elg:Law ;
-    rdfs:comment "Each condition that is not an admission profile declares exactly one match strategy, and an admission profile declares none." .
-
-elg:L2 a elg:Law ;
-    rdfs:comment "Each admission profile declares exactly one composition operation, and no other condition declares one." .
-
-elg:L3 a elg:Law ;
-    rdfs:comment "Each condition that is not an admission profile declares exactly one wildcard policy, and an admission profile declares none." .
-
-elg:L4 a elg:Law ;
-    rdfs:comment "IntervalContainment requires declared requiredRangeSet." .
-
-elg:L5 a elg:Law ;
-    rdfs:comment "IntervalOverlap is excluded from admissibility decisions." .
-
-elg:L6 a elg:Law ;
-    rdfs:comment "EligibilityDecision has exactly one decision value." .
-
-elg:L7 a elg:Law ;
-    rdfs:comment "EligibilityDecision references at least one question." .
-
-elg:L8 a elg:Law ;
-    rdfs:comment "EligibilityDecision names one operational profile." .
-
 elg:MultiDimensionWildcard a elg:WildcardSemantics .
 
 elg:NoWildcard a elg:WildcardSemantics .
@@ -110,6 +86,30 @@ elg:Undetermined a elg:Decision .
 
 elg:Wildcard a elg:MatchStrategy .
 
+elg:L1 a elg:Law ;
+	elg:lawRegister elg:StaticConstraint ;
+	rdfs:comment "Each condition that is not an admission profile declares exactly one match strategy, and an admission profile declares none." .
+elg:L2 a elg:Law ;
+	elg:lawRegister elg:StaticConstraint ;
+	rdfs:comment "Each admission profile declares exactly one composition operation, and no other condition declares one." .
+elg:L3 a elg:Law ;
+	elg:lawRegister elg:StaticConstraint ;
+	rdfs:comment "Each condition that is not an admission profile declares exactly one wildcard policy, and an admission profile declares none." .
+elg:L4 a elg:Law ;
+	elg:lawRegister elg:StaticConstraint ;
+	rdfs:comment "IntervalContainment requires declared requiredRangeSet." .
+elg:L5 a elg:Law ;
+	elg:lawRegister elg:StaticConstraint ;
+	rdfs:comment "IntervalOverlap is excluded from admissibility decisions." .
+elg:L6 a elg:Law ;
+	elg:lawRegister elg:StaticConstraint ;
+	rdfs:comment "EligibilityDecision has exactly one decision value." .
+elg:L7 a elg:Law ;
+	elg:lawRegister elg:StaticConstraint ;
+	rdfs:comment "EligibilityDecision references at least one question." .
+elg:L8 a elg:Law ;
+	elg:lawRegister elg:StaticConstraint ;
+	rdfs:comment "EligibilityDecision names one operational profile." .
 elg:L9 a elg:Law ;
 	elg:lawRegister elg:SemanticLaw ;
 	rdfs:comment "Hierarchical match closure. A candidate value satisfies a condition under hierarchical match exactly when it stands in the reflexive-transitive closure of the bound scheme's ordering relation, restricted to that scheme's members, below the asserted value. The ordering relation is acyclic over the bound scheme; a scheme carrying a cycle is not evaluable under hierarchical match. A condition under hierarchical match with no resolved scheme at all has no closure to test a candidate against, and is undetermined for every candidate, the same reasoning L14 applies once a scheme resolves but states nothing about the candidate's position within it." .

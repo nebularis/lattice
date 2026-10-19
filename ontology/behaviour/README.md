@@ -86,12 +86,12 @@ Behaviour distinguishes four tiers:
 
 <https://www.nebularis.org/neuro-semantic/behaviour>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.15.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.8.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/party/0.9.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.12.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.18.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.18.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.18.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.18.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/party/0.18.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.18.0> .
 
 bhv:StateSpace a owl:Class ;
 	rdfs:subClassOf fnd:Version ;
@@ -260,8 +260,8 @@ configuration document, at the same version.
 
 <https://www.nebularis.org/neuro-semantic/behaviour-runtime>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-runtime/0.15.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.15.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-runtime/0.18.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.18.0> .
 ```
 
 ```turtle-spec
@@ -607,8 +607,8 @@ stateDiagram-v2
 
 <https://www.nebularis.org/neuro-semantic/behaviour-vocab>
 	a owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-vocab/0.15.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.15.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-vocab/0.18.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.18.0> .
 
 bhv:ExternalStimulus a bhv:TriggerKind .
 bhv:ScheduledTrigger a bhv:TriggerKind .
@@ -1555,3 +1555,4 @@ Breaking versions at major version zero ([ADR-A113](../../docs/architecture/deci
 - 0.13.1 (`behaviour`, `behaviour-runtime` and `behaviour-vocab`, patch): the runtime document is
   extracted from §5.2 instead of authored as a file, with the same triples, and the three move
   together (ADR-A120).
+- 0.18.0, the first release of the substrate and standalone modules as one set (the [versioning policy](../../docs/architecture/ontology-versioning-policy.md)). Every document of the layer takes the release's number and imports the other layers at it (no effect). The shapes and projection directories no longer carry a `.version` of their own. No other change.
