@@ -20,11 +20,11 @@ ontology file has changed.
 
 ## Next action
 
-1. OD6, the Eligibility pilot, is built and committed locally. The maintainer reviews its
-   [Validation Pack](../validation/OD6.md), with seven decisions taken alone, the 32 drafted definitions and two
-   changed tests to countersign. DOC1 or RC3 follows.
-2. The sketch on how imports pin, [ontology-import-pinning.md](../sketches/ontology-import-pinning.md), is for
-   the maintainer to read.
+1. The maintainer reviews the Validation Packs of [ELC](../validation/ELC.md), [DOC1](../validation/DOC1.md) and
+   [RC3](../validation/RC3.md), built autonomously on 2026-10-19 and committed locally, including the twelve
+   published ADRs and the changed tests to countersign.
+2. Then OD7 (Vocabulary) is the next slice. The import pinning sketch's IMP-Q1 and IMP-Q5 decide how much of
+   OD-REL is a cascade.
 
 **Known inconsistency on this branch (OD-D43).** Migrated layers' documents change without new version IRIs,
 so `check:ontology-versioning` reports unbumped changes, and importers stay pinned to the old versions. This is
