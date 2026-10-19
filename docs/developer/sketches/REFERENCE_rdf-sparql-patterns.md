@@ -173,7 +173,7 @@ The sketch incorporates three counter-arguments from your Architecture Review ad
 | Plan | `docs/developer/plans/rdf-sparql-patterns-phase-plan.md` |
 | Status | `docs/developer/status/rdf-sparql-patterns-status.md` |
 | **These notes** | `docs/developer/notes/{Uniqueness,Ordering,Concurrency,Combined}.md` |
-| Architecture Review | `docs/architecture/Architecture Review.md` (§5.6, §5.11–5.12) |
+| Architecture Review | `docs/developer/review/Architecture Review.md` (§5.6, §5.11–5.12) |
 | Epic plan | `docs/developer/plans/lattice-platform-agentic-development-v0.2.md` (blocks on this RDF guide) |
 
 ---

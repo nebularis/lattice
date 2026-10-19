@@ -129,7 +129,7 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-126](ADR-A126-literate-specification-layout-and-grammar.md) | Literate specification layout and grammar | Published |
 | [A-127](ADR-A127-published-architecture-decisions.md) | Published architecture decisions | Accepted, 2026-10-17 |
 | [A-128](ADR-A128-efficient-queries-and-shapes.md) | Efficient queries and shapes | Proposed, 2026-10-17 |
-| [A-129](ADR-A129-one-release-for-the-substrate.md) | One release for the substrate and standalone ontologies | Accepted, 2026-10-20 |
+| [A-129](ADR-A129-one-release-for-the-substrate.md) | One release for the substrate and standalone ontologies | Published |
 
 **The `A-FM` block.** ADR-A-FM1 and its successors are the `formal-methods` epic's own ADRs,
 filed outside the main sequential pool for the same reason `A-CAP` and `A-C` are: this epic's

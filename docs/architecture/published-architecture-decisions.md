@@ -20,3 +20,4 @@ Do not edit it by hand.
 | [A105](decisions/ADR-A105-closure-declarations.md) | Closure declarations | 2026-10-19 | [Eligibility README](../../ontology/eligibility/README.md) |
 | [A121](decisions/ADR-A121-repository-catalogue.md) | The repository catalogue | 2026-10-19 | [Repository catalogue](../../repository-catalogue.md) |
 | [A126](decisions/ADR-A126-literate-specification-layout-and-grammar.md) | Literate specification layout and grammar | 2026-10-19 | [Literate specifications](literate-specifications.md) |
+| [A129](decisions/ADR-A129-one-release-for-the-substrate.md) | One release for the substrate and standalone ontologies | 2026-10-20 | [Ontology versioning policy](ontology-versioning-policy.md) |

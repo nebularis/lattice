@@ -579,7 +579,7 @@ Vocabulary imports Foundation, for identity, versions, governance and temporal s
 Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).
 
 - 0.18.0, the first release of the substrate and standalone modules as one set
-  (the [versioning policy](../../docs/architecture/ontology-versioning-policy.md)). The README
+  ([ADR-A129](../../docs/architecture/decisions/ADR-A129-one-release-for-the-substrate.md)). The README
   follows the layout of
   [ADR-A126](../../docs/architecture/decisions/ADR-A126-literate-specification-layout-and-grammar.md), and is the
   source of the spec document and all three shape files (no effect). The document gains a `dct:description` and a

@@ -1606,4 +1606,4 @@ Breaking versions at major version zero ([ADR-A113](../../docs/architecture/deci
 - Shapes 0.4.1: the slot-overlap and slot-coverage queries run their cheap guards as a sub-group before the
   candidate points are enumerated, and law W8 looks up the versions of an identity before pairing the items a
   wording holds. The same reports as before, from about half the work on the slot queries and W8.
-- 0.18.0, the first release of the substrate and standalone modules as one set (the [versioning policy](../../docs/architecture/ontology-versioning-policy.md)). Every document of the layer takes the release's number and imports the other layers at it (no effect). No other change.
+- 0.18.0, the first release of the substrate and standalone modules as one set ([ADR-A129](../../docs/architecture/decisions/ADR-A129-one-release-for-the-substrate.md)). Every document of the layer takes the release's number and imports the other layers at it (no effect). No other change.

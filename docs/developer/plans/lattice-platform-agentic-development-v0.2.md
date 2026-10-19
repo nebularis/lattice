@@ -21,7 +21,7 @@ Each phase plan cross-references its Part below for slice-level detail rather th
 
 **Governing model.** Epic decomposition, phase plans, and slice validation follow the Epic Decomposition model in the [lattice-lifecycle skill](../../../.claude/skills/lattice-lifecycle/SKILL.md). See that document for the standard approach to units of work, validation packs, traceability, and review gates.
 
-**Source of truth for scope.** `docs/architecutre/Architecture Review.md` (G-nn gaps, C-nn components, A-nn decisions), plus the three existing design documents it critiques. Every slice below carries traceability IDs back to those, recorded in `docs/traceability/matrix.csv`.
+**Source of truth for scope.** `docs/developer/review/Architecture Review.md` (G-nn gaps, C-nn components, A-nn decisions), plus the three existing design documents it critiques. Every slice below carries traceability IDs back to those, recorded in `docs/traceability/matrix.csv`.
 
 **Two structural commitments this plan makes, which you must ratify first:**
 

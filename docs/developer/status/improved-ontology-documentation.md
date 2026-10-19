@@ -44,7 +44,7 @@ and the versioning check passes against `main`.
 | OD7 Vocabulary | approved 2026-10-20, committed locally, [Validation Pack](../validation/OD7.md) | |
 | OD8 onward, one per layer | planned | OD7, and for Foundation and Party their part of TD-16 |
 | DOC1 published decisions | approved 2026-10-19, committed locally, [Validation Pack](../validation/DOC1.md) | |
-| DOC2 site sections | approved 2026-10-20, merged, [Validation Pack](../validation/DOC2.md) | TD-60's cleaning, planned as DOC2b |
+| DOC2 site sections | approved 2026-10-20, merged, [Validation Pack](../validation/DOC2.md) | |
 | DOC3 tutorial and Field Guide review | planned | DOC2, `lattice-tutorial` merged |
 | RC4 downstream extension | planned | RC3 |
 | RC5 package promotion | planned | RC4 |
@@ -52,7 +52,7 @@ and the versioning check passes against `main`.
 | ELC composition operation | approved 2026-10-19, committed locally, [Validation Pack](../validation/ELC.md) | |
 | MC1 migration check labels | approved 2026-10-20, committed locally, [Validation Pack](../validation/MC1.md) | |
 | VER1 one release for the substrate | approved 2026-10-20, committed locally, [Validation Pack](../validation/VER1.md) | |
-| DOC2b working documents out of published pages | planned 2026-10-20, before the merge | |
+| DOC2b working documents out of published pages | built autonomously 2026-10-20, committed locally, [Validation Pack](../validation/DOC2b.md) | |
 | OD-REL first release, 0.18.0 | approved 2026-10-20, committed locally, [Validation Pack](../validation/OD-REL.md) | the tags, on `main` after the merge |
 
 ## Open questions
@@ -233,3 +233,5 @@ and the versioning check passes against `main`.
   number. The full sweep passes, all 15 checks.
 - 2026-10-20: MC1, OD7, VER1, DOC2 and OD-REL approved, and ADR-A129 accepted. DOC2's decision 5 stands on condition
   that TD-60's cleaning happens before the merge.
+- 2026-10-20: DOC2b built, the stray notes moved or retired as the maintainer decided, and ADR-A129 published,
+  so the 0.18.0 release notes cite it. The full sweep passes all 17 checks.

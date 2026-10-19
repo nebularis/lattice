@@ -411,6 +411,8 @@ layout = "architecture"
 order = 10
 sources = [
     "docs/developer/getting-started.md",
+    "docs/developer/developer-guide.md",
+    "docs/developer/formal-methods-lifecycle.md",
     "docs/developer/windows-wsl.md",
     "docs/developer/protege-import-walkthrough.md",
 ]

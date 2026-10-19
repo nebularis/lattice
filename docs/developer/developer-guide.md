@@ -128,7 +128,7 @@ mise exec -- python tools/lattice_repo_catalogue.py dump --json
 ```
 
 **Not every layer passes `--check` today.** Vocabulary, Party and Eligibility's own `spec`/`vocab`/
-`shapes` predate the extractor (TD-16, `docs/developer/plans/technical-debt.md`) and currently
+`shapes` predate the extractor and currently
 drift from their README's blocks. Surface, Wording, Behaviour, Quantification and Instrument are
 clean. Before hand-editing a layer's generated file, run `--check` first and read the diff — on a
 layer that already drifts, a `--check`-clean regeneration could silently discard unrelated
@@ -224,10 +224,10 @@ never blocks the rest of CI.
 ## 7. Validation packs and the Epic Decomposition Model
 
 Any unit of work beyond a small fix follows the model in the [lattice-lifecycle skill](../../.claude/skills/lattice-lifecycle/SKILL.md) and
-[`docs/developer/INDEX.md`](INDEX.md): a sketch, a plan, a status record updated live, and (for a
-slice) a Validation Pack under `docs/developer/validation/` naming its test cases, the one command
+the developer index: a sketch, a plan, a status record updated live, and (for a
+slice) a Validation Pack naming its test cases, the one command
 that runs them, and what a maintainer should inspect before merging, which is the sign-off. Read that model before starting a new unit — this guide
-covers the tools; INDEX.md and that skill cover the
+covers the tools; that model and skill cover the
 process those tools are run under.
 
 ## 8. Agent guidance

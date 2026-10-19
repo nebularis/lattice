@@ -4,7 +4,7 @@
 
 **Status:** Accepted, with an addendum (2026-10-12)
 **Date:** 2026-09-20
-**Supersedes:** The repository-layout position in `docs/architecture/updated-plan-ammendment.md` AM-05
+**Supersedes:** The repository-layout position in `docs/developer/sketches/updated-plan-ammendment.md` AM-05
 **Related:** ADR-A29, repository topology and documentation governance plan
 
 ## Context

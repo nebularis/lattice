@@ -10,8 +10,7 @@ covenant, an entitlement scheme, a regulation) becomes LATTICE content that the 
 use, with a person deciding what is accepted. Examples are domain-neutral, following the
 repository's rule for public material.
 
-**Inputs:** two working notes, [MORK for document ingestion](../developer/notes/mork-for-doc-ingest-chat.md)
-and [scaling domain ontology mapping](../developer/notes/scaling-domain-ontology-mapping.md).
+**Inputs:** two working notes, on MORK for document ingestion and on scaling domain ontology mapping.
 Where this paper adopts, refines or departs from them, §17 says so.
 
 ---

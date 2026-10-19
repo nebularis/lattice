@@ -53,8 +53,8 @@ is in the built site.
 8. **No tutorial spine authoring note exists** in `docs/` on this branch, so none was repointed.
 9. **Stray working notes**, excluded and left in place. Recommendation for each:
    `docs/proposed-readme-updates.md` (investigative draft, retire),
-   `docs/architecture/updated-plan-ammendment.md` and `updated-plan-remediation.md` (an old plan, move to
-   `docs/developer/notes/`), `docs/architecture/Architecture Review.md` (a review, move to
+   `docs/developer/sketches/updated-plan-ammendment.md` and `updated-plan-remediation.md` (an old plan, move to
+   `docs/developer/notes/`), `docs/developer/review/Architecture Review.md` (a review, move to
    `docs/developer/review/`). `repository-topology-migration.md` is a record under ADR-A77 and stays published,
    with its JSON excluded. `GOVERNANCE.md` and `validation-and-test-plan.md` are in no section and still
    published. Add them to a section or exclude them.

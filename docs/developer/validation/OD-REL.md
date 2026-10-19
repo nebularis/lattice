@@ -79,3 +79,6 @@ mise run check:full-sweep
 ## Decisions answered
 
 2026-10-20, by the maintainer: approved, with every decision taken alone.
+
+2026-10-20, later: ADR-A129 published, and the 0.18.0 release notes now cite it in place of the versioning policy
+(decision 1 resolved).

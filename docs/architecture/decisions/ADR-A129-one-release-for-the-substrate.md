@@ -1,14 +1,18 @@
+---
+published: true
+---
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
 # ADR-A129: One release for the substrate and standalone ontologies
 
-**Status:** Accepted, 2026-10-20
+**Status:** Published, 2026-10-20. Accepted 2026-10-20.
+**Described in:** [Ontology versioning policy](../ontology-versioning-policy.md)
 **Date:** 2026-10-19
-**Supersedes:** [ADR-A86](ADR-A86-ontology-semantic-versioning.md)'s per-document versions and exact pins, for
+**Supersedes:** [ADR-A86](https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-A86-ontology-semantic-versioning.md)'s per-document versions and exact pins, for
 the modules this decision names. ADR-A86 still governs the applied modules and the examples.
-**Related:** [ADR-A113](ADR-A113-breaking-changes-at-major-version-zero.md) (major version zero),
-[ADR-A88](ADR-A88-ontology-import-resolution-for-consumers.md) (import resolution),
-[ADR-A121](ADR-A121-repository-catalogue.md) (the catalogue), [ADR-A01](ADR-A01-layer-dependency-order.md)
+**Related:** [ADR-A113](https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-A113-breaking-changes-at-major-version-zero.md) (major version zero),
+[ADR-A88](https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-A88-ontology-import-resolution-for-consumers.md) (import resolution),
+[ADR-A121](ADR-A121-repository-catalogue.md) (the catalogue), [ADR-A01](https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-A01-layer-dependency-order.md)
 
 ## Context
 

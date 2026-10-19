@@ -28,10 +28,7 @@ exclude:
 # The decisions directory's index lists every ADR, published or not. The decisions section's page is
 # architecture/published-architecture-decisions.md, which lists published decisions only.
   - architecture/decisions/README.md
-# Working notes outside docs/developer/, kept in place until the maintainer decides on each.
-  - proposed-readme-updates.md
-  - architecture/updated-plan-*.md
-  - "architecture/Architecture Review.md"
+# Data the repository topology check reads, not a page.
   - architecture/repository-topology-migration.json
 # BEGIN GENERATED published-decisions. Written by `mise run build:published-decisions`. Do not edit by hand.
 include:
@@ -43,6 +40,7 @@ include:
   - ADR-A105-closure-declarations.md
   - ADR-A121-repository-catalogue.md
   - ADR-A126-literate-specification-layout-and-grammar.md
+  - ADR-A129-one-release-for-the-substrate.md
   - ADR-A85-vocabulary-scoped-temporal-binding-resolution.md
   - ADR-A87-eligibility-concept-inclusion-and-exclusion.md
   - ADR-A90-eligibility-design-time-owl-class-backend.md
