@@ -710,6 +710,20 @@ built on published ADRs. Piloted on Eligibility, then Vocabulary.
 characteristics asymmetric, reflexive and irreflexive, each added when a layer needs it (`oneOf` is planned in OD6).
 Multilingual support is a pending design decision, PDD-10.
 
+## 8.18 Ledger — Proposed
+
+| Field | Value |
+|-------|-------|
+| **Status** | 📝 Plan proposed 2026-10-19, no slice briefed. ADR-A131 and ADR-A01's 2026-10-19 addendum Proposed |
+| **Unit ID** | `ledger` |
+| **Sketches** | [evaluation-context.md](sketches/evaluation-context.md) §5, [contract-amounts.md](sketches/contract-amounts.md) |
+| **Plan** | [ledger.md](plans/ledger.md) |
+| **ADRs** | [A-131](../architecture/decisions/ADR-A131-ledger-layer.md), Proposed |
+
+A substrate layer above Quantification for amounts consumed and restored over time: account trees,
+postings, balances and merge rules. Behaviour's allowances become a shorthand for it. Slices LG-0 to
+LG-4. CCS C12, Ensemble's slice 1, AIR Phase 5, AIR-6.8 and AIR-7.5 wait on it.
+
 ## 8. Phase Handoff Documents (0-6)
 
 | Phase | Status Record | Key Outcome |

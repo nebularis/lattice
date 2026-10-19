@@ -171,22 +171,22 @@ becomes the evaluator's problem.
 
 ## 6. Option B: a layer of its own
 
-A new substrate layer, working name **Linkage** (IR-Q1), sits above Instrument and Behaviour and
+A new substrate layer, **Ensemble** (IR-Q1), sits above Instrument and Behaviour and
 imports both. Instrument stays a model of one agreement.
 
 | Change | Detail |
 |---|---|
-| a new layer | `ontology/linkage/`, literate, with its own spec, vocabulary (K1 to K5 and their properties), shapes and laws |
-| `lnk:Relation` | the reified relation of §3, by kind |
+| a new layer | `ontology/ensemble/`, literate, with its own spec, vocabulary (K1 to K5 and their properties), shapes and laws |
+| `ens:Relation` | the reified relation of §3, by kind |
 | evaluation order | a set of related instruments is evaluated as a sequence of single-instrument evaluations, in an order the relations determine (dependencies before dependants, rank before rank). A cycle is rejected at design time |
 | state as facts | what one instrument needs of another, such as an exhaustion, a default or a payment, reaches it as a fact with provenance, produced by evaluating the other. The single-instrument evaluator never loads a neighbour |
 | one hook in Instrument | a regime's measured value, or a condition's evidence, may be supplied from outside the instrument with its source recorded. This is the only Instrument change, and it is generic |
-| K1 constructs | `ins:boundUnder` and incorporation stay in Instrument, where they are already proven, and Linkage reads them as K1 relations |
+| K1 constructs | `ins:boundUnder` and incorporation stay in Instrument, where they are already proven, and Ensemble reads them as K1 relations |
 | K5 | a single-agreement relation tells the composition step to treat stated children as one agreement for stated purposes, for example netting, as their own terms say |
 
 ```mermaid
 flowchart TB
-  subgraph LNK["Linkage"]
+  subgraph ENS["Ensemble"]
     REL["Relation K2: X reads P's exhaustion"]
     ORD["order: P, then X"]
   end
@@ -204,7 +204,7 @@ flowchart TB
 
 **Design overheads.** One more layer, an ADR, and an amendment to ADR-A01's substrate order,
 recorded in the repository catalogue (ADR-A121). A reader learns that one agreement's meaning lives
-in Instrument and a set's in Linkage. The hook in Instrument is small, but it must state what an
+in Instrument and a set's in Ensemble. The hook in Instrument is small, but it must state what an
 externally supplied value may and may not do, for example that it is a fact with provenance and
 never an assertion of the instrument's own state.
 
@@ -227,7 +227,7 @@ single-instrument evaluations either way. They differ in what each evaluation re
 | instruments loaded to evaluate one | itself and every instrument its gates read, transitively | itself only |
 | facts passed between instruments | none, the state is read in place | one per dependency, recorded |
 | evaluations that can run in parallel | only instruments with no relations | every set of instruments not ordered by a relation |
-| what a change to the relation model bumps | Instrument's spec, and every module importing Instrument re-pins | Linkage's spec, and its importers re-pin |
+| what a change to the relation model bumps | Instrument's spec, and every module importing Instrument re-pins | Ensemble's spec, and its importers re-pin |
 | proofs per instrument | restated for neighbourhoods | unchanged |
 | cycles | found at evaluation | rejected at design time by the order |
 
@@ -248,7 +248,7 @@ fact.
 
 **Cascades.** Instrument has no importers inside LATTICE today, but applied modules, the claims
 module and Open CBAA will import it. Under A, every refinement of relations across agreements
-bumps Instrument for all of them. Under B, those refinements bump Linkage only, and a module that
+bumps Instrument for all of them. Under B, those refinements bump Ensemble only, and a module that
 needs only single agreements never re-pins for them.
 
 ## 8. Guidance
@@ -278,7 +278,7 @@ first slice is K2 and K3, with K4 and K5 after. Nothing here needs building befo
 
 ```mermaid
 flowchart LR
-  S1["slice 1: Linkage skeleton,<br/>K2 and K3, the Instrument hook,<br/>lending and insurance examples"] --> S2["slice 2: K4 portions,<br/>HQ-12 share composition"]
+  S1["slice 1: Ensemble skeleton,<br/>K2 and K3, the Instrument hook,<br/>lending and insurance examples"] --> S2["slice 2: K4 portions,<br/>HQ-12 share composition"]
   S2 --> S3["slice 3: K5 single agreement,<br/>netting example"]
   S1 --> AIR["AIR-6.8 and M7<br/>claims across a programme"]
 ```
@@ -287,9 +287,9 @@ flowchart LR
 
 | ID | Question | Options | Leaning |
 |---|---|---|---|
-| **IR-Q1** | The layer's name | Linkage (`lnk:`), Connection, or another word the law uses | Linkage. "Linked" is the statutory word (linked credit agreements, linked transactions), and it coins nothing from one market's vocabulary |
-| **IR-Q2** | Option A or B | §5, §6 | B |
-| **IR-Q3** | Where `ins:boundUnder` and incorporation live | stay in Instrument and are read by Linkage as K1, or move to Linkage | stay. They are proven, and they concern how one instrument comes to exist |
+| **IR-Q1** | The layer's name | Linkage (`lnk:`), Ensemble (`ens:`), Nexus (`nex:`), Composition, or another word the law uses | **Answered 2026-10-19: Ensemble, `ens:`.** The Code civil's *ensemble contractuel* (art. 1186 al. 2) is a set of contracts serving one operation, interdependent. The word is unused in LATTICE and has no market meaning. "Composition" was rejected because Party and Vocabulary already use it |
+| **IR-Q2** | Option A or B | §5, §6 | **Answered 2026-10-18: B, Ensemble is a layer of its own.** [ADR-A130](../../architecture/decisions/ADR-A130-ensemble-layer.md) and ADR-A01's 2026-10-18 addendum drafted, Proposed |
+| **IR-Q3** | Where `ins:boundUnder` and incorporation live | stay in Instrument and are read by Ensemble as K1, or move to Ensemble | stay. They are proven, and they concern how one instrument comes to exist |
 | **IR-Q4** | The Instrument hook | a regime's measured value supplied from outside, or a condition's evidence supplied from outside, or both | both, as one rule: an externally supplied value is a recorded fact with provenance |
 | **IR-Q5** | The first slice's scope | K2 and K3 only, or K2 to K4 | K2 and K3, tested on a guarantee called on default and an excess attaching on exhaustion |
 | **IR-Q6** | Does this take over HQ-2, HQ-7 and HQ-12 from the CCS plan? | yes, with the CCS plan pointing here, or keep them in CCS | yes, once IR-Q2 is answered |

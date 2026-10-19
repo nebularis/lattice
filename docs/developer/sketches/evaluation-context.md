@@ -2,7 +2,9 @@
 
 # Evaluation context: ledger, combinators and environments
 
-**Status:** unplanned sketch, 2026-10-02. No plan owns it yet.
+**Status:** sketch, 2026-10-02. The ledger (§5) is placed in a substrate layer of its own by
+[ADR-A131](../../architecture/decisions/ADR-A131-ledger-layer.md) (Proposed) and planned in the
+[Ledger plan](../plans/ledger.md). Combinators, environments and the rest have no plan yet.
 **Comes back in with:** the [computable contract substrate](../plans/computable-contract-substrate.md)
 (`[ccs]`: C7b, C8a, C12, C13) and the
 [applied insurance reference](../plans/applied-insurance-reference.md) epic (`[air]`: Phase 5).
@@ -156,7 +158,8 @@ flowchart TB
 regime state does (ADR-A106 decision 5), so it outlives a new version of what it belongs to.
 
 **Relation to allowances.** An `AllowanceDefinition` is a one-account ledger with a reset
-recurrence. Whether allowances become ledger accounts or stay beside them is EC-Q2.
+recurrence. EC-Q2 is answered: allowances become a deprecated shorthand for Ledger accounts
+(ADR-A131 decision 7).
 
 ## 6. Lifting
 
@@ -329,12 +332,12 @@ Decided or to be kept so nothing here is foreclosed:
 | # | Question | First thoughts |
 |---|---|---|
 | EC-Q1 | Where combinators live | pure operations over quantities fit Quantification, which owns quantities, derived spaces and conversion. Instrument would name them, never define them |
-| EC-Q2 | Ledger and allowances | an allowance is a one-account ledger with a reset. Generalising allowances into ledger accounts avoids two mechanisms for one idea, at the cost of a breaking change to Behaviour |
-| EC-Q3 | Shared limits that are not a tree (A8) | an account with two parents, or a single account with two draw purposes. The second keeps the tree |
+| EC-Q2 | Ledger and allowances | **Answered 2026-10-19:** allowances become a deprecated shorthand for Ledger accounts, one mechanism for one idea, at the cost of a breaking change to Behaviour ([ADR-A131](../../architecture/decisions/ADR-A131-ledger-layer.md) decision 7, Ledger slice LG-3) |
+| EC-Q3 | Shared limits that are not a tree (A8) | moved to the [Ledger plan](../plans/ledger.md) as LG-Q2 |
 | EC-Q4 | How a combinator expression is written | an RDF expression IR like Eligibility's compiled IR in `tools/mork_compilers`, or the JSON abstract syntax the logic-encodings note proposes (§1, §4), with RDF as its projection |
 | EC-Q5 | How fine the log is | one derived artefact per pass, or per lifted computation. Per pass is cheaper. Per computation explains more |
 | EC-Q6 | A Datalog backend at runtime | an ADR beside A83 and under A71, choosing whether the platform may run a rules engine in production, and on what licence terms |
-| EC-Q7 | Whether this is a layer | the context is evaluation semantics, held by the evaluators. What it needs in the ontology (combinators, ledger, environments, merge rules) may be small enough to sit in Quantification and Behaviour, or may justify a substrate layer of its own |
+| EC-Q7 | Whether this is a layer | **Answered 2026-10-19 for the ledger:** the ledger and its merge rules are a substrate layer of their own, Ledger, above Quantification and imported by Behaviour (ADR-A131). Combinators stay with EC-Q1. Environments are evaluation semantics, held by the evaluators |
 
 ## 13. When it comes back in
 
@@ -345,5 +348,5 @@ Decided or to be kept so nothing here is foreclosed:
 | `[ccs]` | C8a | term and qualifier templates wait on bases (contract-amounts §1.7, `basis` here) |
 | `[ccs]` | C12 | the pass as a run of the context (§3, §11). The sequential environment |
 | `[ccs]` | C13 | relation plans whose scopes read computed values. The Datalog form of §9 as a candidate backend beside the SPARQL reference |
-| `[air]` | Phase 5 | A-101 term parameters: limits, retentions, aggregates, reinstatements and bases are ledger accounts, combinators and environments. Phase 5 should not start its contract module without this designed |
+| `[air]` | Phase 5 | A-101 term parameters: limits, retentions, aggregates, reinstatements and bases are ledger accounts, combinators and environments. Phase 5 should not start its contract module without this designed, and waits on Ledger slice LG-3 |
 | contract-amounts | its design | §3 items 1 to 8 answered in outline here, to be tested against all 58 constructs |

@@ -128,22 +128,23 @@ and proved once.
 | priority | an insolvency waterfall, an intercreditor agreement (K3)<br>reinsurance in inuring order, a bond's principal reduction across classes |
 | capped | a partnership distributing profits subject to a cap<br>a pool paying no more than its funds, then pro rata |
 
-Where each lives is question RV-Q2. A single amount shared by one instrument's terms sits naturally
-in Behaviour beside allowances. Priority across instruments is Linkage's K3.
+Where each lives is question RV-Q2. One amount shared among several accounts is a Ledger merge rule
+([ADR-A131](../../architecture/decisions/ADR-A131-ledger-layer.md) decision 6, Ledger slice LG-4).
+Priority across instruments is Ensemble's K3.
 
 ## 5. The applied vehicle module
 
-`ontology/applied/insurance/vehicle/`, literate (AIR-2.0), prefix `veh:` (RV-Q1).
+`ontology/applied/insurance/vehicle/`, literate (AIR-2.0), prefix `rcv:` (RV-Q1).
 
 | Part | Holds |
 |---|---|
 | vehicle kinds | a SKOS scheme: facility, quota share, surplus, excess of loss, collateralised reinsurance, sidecar, catastrophe bond, parametric cover, pool, captive and fronting. Kinds are concepts, so a new kind needs no new class |
-| `veh:Vehicle` | an identified, versioned arrangement naming the instruments that constitute it, by role (sponsor's agreement, notes, trust, member participation) |
+| `rcv:Vehicle` | an identified, versioned arrangement naming the instruments that constitute it, by role (sponsor's agreement, notes, trust, member participation) |
 | roles | sponsor, issuer, investor, cedent, reinsurer, member, fronting insurer, calculation agent, trustee, as Party roles |
 | trigger kinds | indemnity, industry loss, modelled loss, parametric, index, as concepts classifying a vehicle's trigger condition |
 | collateral terms | the account, permitted assets, the draw and release terms, as Instrument terms with their regimes |
 | lifecycle | risk period, extension, maturity, reset, as regimes of the vehicle's instruments |
-| examples | one clean-room vehicle of each of three kinds: a parametric cover with a count-within-window trigger, a pool with pro rata allocation and a shortfall, a collateralised reinsurance drawing on its trust |
+| examples | three or four clean-room vehicles, chosen when slice RV-0 starts (RV-Q5). Candidates: a parametric cover with a count-within-window trigger, a pool with pro rata allocation and a shortfall, a collateralised reinsurance drawing on its trust |
 
 **What the module does not hold.** No product form library, no structuring or sizing vocabulary,
 no pricing measures, no matching or portfolio terms (§3).
@@ -216,19 +217,19 @@ Proposed for the phase 7 plan. Estimates are in tokens.
 
 | Slice | Delivers | Depends on | Estimate |
 |---|---|---|---|
-| RV-0 | examples first: the three clean-room vehicles of §5, as data the model must accept | this sketch's questions answered | 150k |
+| RV-0 | examples first: the clean-room vehicles of §5, as data the model must accept | this sketch's questions answered | 150k |
 | RV-1 | substrate: conditions over observed values (§4.1), with examples from several domains | RV-0, an ADR | 300k |
-| RV-2 | substrate: allocation with conservation (§4.2), one instrument | RV-0, an ADR | 250k |
-| RV-3 | the vehicle module: kinds, `veh:Vehicle`, roles, trigger kinds, collateral terms, lifecycle | RV-0, Linkage slice 1 | 300k |
-| RV-4 | evaluation of the three examples end to end: trigger, payout, allocation, collateral draw | RV-1 to RV-3, CCS C12 | 300k |
+| RV-2 | substrate: allocation with conservation (§4.2), built as Ledger slice LG-4 | RV-0, ADR-A131 | 250k |
+| RV-3 | the vehicle module: kinds, `rcv:Vehicle`, roles, trigger kinds, collateral terms, lifecycle | RV-0, Ensemble slice 1 | 300k |
+| RV-4 | evaluation of the examples end to end: trigger, payout, allocation, collateral draw | RV-1 to RV-3, CCS C12 | 300k |
 
 ## 9. Questions RV-Q1 to RV-Q6
 
 | ID | Question | Options | Leaning |
 |---|---|---|---|
-| **RV-Q1** | The module's name and prefix | `vehicle/` with `veh:`, or `capital/` with `cap:`, which Capacity already uses | `vehicle/`, `veh:` |
-| **RV-Q2** | Where allocation lives | Behaviour beside allowances, Linkage for priority across instruments, or both | both: one instrument's rule in Behaviour, priority across instruments in Linkage (K3) |
-| **RV-Q3** | Where conditions over observed values live | Eligibility, as condition forms, or Instrument, as trigger kinds | Eligibility, so every layer that uses a condition gets them |
-| **RV-Q4** | Is a vehicle an instrument, or a set of instruments | a set of instruments with an identity of its own, or one instrument with sections | a set with its own identity, since a bond's agreements have different parties |
-| **RV-Q5** | How many example vehicles ship | three (§5), or one per kind | three. Enough to show the mechanism, few enough to stay clean-room |
-| **RV-Q6** | Observed values from an index publisher | a fact with a source like any other, or a dedicated observation class | a fact with a source, with the calculation agent as a Party role |
+| **RV-Q1** | The module's name and prefix | `vehicle/` with `veh:`, or `capital/` with `cap:`, which Capacity already uses | **Answered 2026-10-18:** `vehicle/`, with the prefix `rcv:` |
+| **RV-Q2** | Where allocation lives | Behaviour beside allowances, Ensemble for priority across instruments, or both | **Answered 2026-10-18:** both. **Revised 2026-10-19:** one amount's allocation is a Ledger merge rule rather than Behaviour's (ADR-A131), and priority across instruments is Ensemble's K3 |
+| **RV-Q3** | Where conditions over observed values live | Eligibility, as condition forms, or Instrument, as trigger kinds | **Answered 2026-10-18:** Eligibility |
+| **RV-Q4** | Is a vehicle an instrument, or a set of instruments | a set of instruments with an identity of its own, or one instrument with sections | **Answered 2026-10-18:** a set of instruments with its own identity |
+| **RV-Q5** | How many example vehicles ship | three (§5), or one per kind | **Answered 2026-10-18:** three or four, sketched when RV-0 starts |
+| **RV-Q6** | Observed values from an index publisher | a fact with a source like any other, or a dedicated observation class | **Answered 2026-10-18:** a fact with a source, with the calculation agent as a Party role |

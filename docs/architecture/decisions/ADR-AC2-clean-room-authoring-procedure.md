@@ -50,3 +50,34 @@ example is generic: no insurer's or broker's name, policy or agreement number, o
 **Consequences.** The unit's scenario coverage test (CCS slice C15) checks both conditions for
 every scenario and fails on either. Fuller insurance renderings stay in `applied/insurance` and in
 Open CBAA.
+
+## Addendum (2026-10-18): how examples are drawn and presented
+
+**Status:** Proposed
+
+**Context.** The Decision asks for worked examples "drawn from unrelated fields" before mechanism
+prose, and the 2026-10-01 addendum lets examples from the field that motivated a change sit beside
+them under two conditions. Both are sound. But documents written to them have taken to ranking
+fields against each other in their headings and table columns, for example by naming one field's
+examples as coming first and another's after the rest. That ranking is not part of the procedure,
+and it misdescribes LATTICE, which serves every field it is used in, including those with reference
+modules of their own.
+
+**Decision.**
+
+1. **The rule, restated without ranking.** A substrate change is authored from a generic premise,
+   then worked examples from at least two fields other than the one whose need motivated the change,
+   then mechanism prose. Examples from the motivating field may sit beside them on the 2026-10-01
+   addendum's two conditions. The order of authoring is unchanged.
+2. **Presentation.** A document presents its examples in the order that explains the mechanism best.
+   Headings, captions and table columns name the field or the instrument an example comes from, for
+   example "Lending" or "A guarantee", and never describe one field's examples as before, after or
+   instead of another's.
+3. **Guidance.** The ontology authoring skill states the presentation rule, and the lifecycle skill's
+   "examples first" refers to this ADR as before.
+
+**Consequences.**
+
+- No ontology changes. Existing documents are corrected when next edited, and two sketches of
+  2026-10-18 (relations between instruments, risk-capital vehicles) already follow it.
+- The scenario coverage test of the 2026-10-01 addendum (CCS slice C15) is unchanged.

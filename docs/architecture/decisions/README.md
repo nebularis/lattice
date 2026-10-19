@@ -18,7 +18,7 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 
 | ADR | Title | Status |
 |---|---|---|
-| [A-01](ADR-A01-layer-dependency-order.md) | Layer dependency order and import direction (with addenda) | Accepted |
+| [A-01](ADR-A01-layer-dependency-order.md) | Layer dependency order and import direction (with addenda) | Accepted. Addenda 2026-10-18 (Ensemble) and 2026-10-19 (Ledger) Proposed |
 | [A-12](ADR-A12-identity-and-derivation-model.md) | Identity and derivation-authority model | Accepted |
 | [A-13](ADR-A13-dataset-graph-role-model.md) | Dataset, graph-role, and provenance model | Accepted |
 | [A-14](ADR-A14-conformance-levels.md) | Conformance-level framework | Accepted |
@@ -63,7 +63,7 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-10](ADR-A10-behaviour-activation-policy.md) | Behaviour activation policy | Accepted |
 | [A-11](ADR-A11-effect-and-target-binding.md) | Effect payload and target binding contract | Accepted, amended by A-106 |
 | [A-C1](ADR-AC1-applied-layer-theorem-restatement.md) | Applied-layer theorem restatement policy | Accepted |
-| [A-C2](ADR-AC2-clean-room-authoring-procedure.md) | Clean-room authoring procedure for substrate content (with addendum) | Accepted |
+| [A-C2](ADR-AC2-clean-room-authoring-procedure.md) | Clean-room authoring procedure for substrate content (with addendum) | Accepted. Addendum 2026-10-18 (how examples are drawn and presented) Proposed |
 | [A-FM1](ADR-A-FM1-formal-methods-prover-choice.md) | Formal-methods prover choice and code-generation targets (Isabelle/HOL) | Accepted |
 | [A-FM2](ADR-A-FM2-formal-methods-theory-home.md) | Home of the formal-methods prover programme's theories (`tools/proofs/`) | Accepted |
 | [A-FM3](ADR-A-FM3-reference-evaluator-home-and-scope.md) | Home and scope of the reference evaluator and its oracle (`tools/reference/`) | Accepted |
@@ -129,6 +129,8 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-126](ADR-A126-literate-specification-layout-and-grammar.md) | Literate specification layout and grammar | Accepted, 2026-10-17 |
 | [A-127](ADR-A127-published-architecture-decisions.md) | Published architecture decisions | Accepted, 2026-10-17 |
 | [A-128](ADR-A128-efficient-queries-and-shapes.md) | Efficient queries and shapes | Proposed, 2026-10-17 |
+| [A-130](ADR-A130-ensemble-layer.md) | Ensemble, a substrate layer for relations between instruments | Proposed |
+| [A-131](ADR-A131-ledger-layer.md) | Ledger, a substrate layer for amounts consumed and restored over time | Proposed |
 
 **The `A-FM` block.** ADR-A-FM1 and its successors are the `formal-methods` epic's own ADRs,
 filed outside the main sequential pool for the same reason `A-CAP` and `A-C` are: this epic's
