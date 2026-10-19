@@ -1,0 +1,57 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="adr-a85-vocabulary-scoped-and-temporal-binding-resolution">ADR-A85: Vocabulary scoped and temporal binding resolution</h1>
+
+<p><strong>Status:</strong> Published, 2026-10-19. Accepted 2026-09-25.
+<strong>Described in:</strong> <a href="../../../ontology/vocabulary/README.md">Vocabulary README</a>
+<strong>Date:</strong> 2026-09-24 (proposed), 2026-09-25 (accepted)</p>
+
+<h2 id="context">Context</h2>
+
+<p>Vocabulary commit <code class="language-plaintext highlighter-rouge">65ac4a85e11cc1f8616e3e0c24efd59bf4ca410d</code> adds
+<code class="language-plaintext highlighter-rouge">voc:SchemeBinding</code>, <code class="language-plaintext highlighter-rouge">voc:BindingScope</code>, binding properties, temporal validity,
+and historical <code class="language-plaintext highlighter-rouge">voc:resolvedUnder</code> provenance. The ontology must support
+multiple scheme editions across contexts and time without changing the meaning
+of previously resolved records. OWL cardinality and open-world semantics cannot
+choose between overlapping bindings or express the complete context/time
+comparison safely.</p>
+
+<h2 id="decision">Decision</h2>
+
+<p>A binding is an n-ary relation between one <code class="language-plaintext highlighter-rouge">voc:SchemeContract</code>, one
+<code class="language-plaintext highlighter-rouge">voc:ConceptScheme</code> edition, zero or more conjunctive <code class="language-plaintext highlighter-rouge">voc:BindingScope</code> values,
+and one Foundation temporal scope. Resolution receives the active context and
+resolution time from its caller.</p>
+
+<p>For one contract, applicable bindings are those whose every named scope holds
+and whose temporal scope contains the resolution time. A binding whose scope set
+is a strict superset of another applicable binding takes precedence. If multiple
+applicable bindings remain at equal specificity, resolution fails as a
+conflict. If no binding applies, <code class="language-plaintext highlighter-rouge">voc:boundScheme</code> is the fallback. A scopeless
+binding and <code class="language-plaintext highlighter-rouge">boundScheme</code> must agree when both are present. A resolved record
+stores the selected binding with <code class="language-plaintext highlighter-rouge">voc:resolvedUnder</code> and is not retroactively
+re-resolved.</p>
+
+<p>Structural validity belongs in SHACL. Whole-graph precedence and context/time
+resolution belong in an explicit reference resolver or equivalent consuming
+implementation. No OWL axiom silently selects a binding.</p>
+
+<h2 id="consequences">Consequences</h2>
+
+<ul>
+  <li>Multiple bindings are represented by multiple individuals, not multiple values
+of a functional property.</li>
+  <li>Consumers must resolve a binding before interpreting concept-valued data when
+scoped or temporal binding is in use.</li>
+  <li>Examples, negative fixtures, SHACL-SPARQL constraints, deterministic tests,
+and historical provenance tests are required conformance artefacts.</li>
+  <li>Scope membership and fuzzy label resolution remain caller responsibilities.</li>
+  <li>Existing unscoped <code class="language-plaintext highlighter-rouge">boundScheme</code> consumers remain valid for inputs with no
+scoped bindings.</li>
+  <li>The ontology version IRI remains an explicit release decision, not an
+automatic consequence of adding the ADR.</li>
+</ul>
+
+<h2 id="provenance">Provenance</h2>
+
+<p>Proposed 2026-09-24 and accepted 2026-09-25, with the Vocabulary change it describes.</p>

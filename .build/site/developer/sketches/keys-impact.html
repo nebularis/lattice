@@ -1,0 +1,625 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="keys-impact-on-persistence-surface-and-the-foundation-cascade">Keys: impact on Persistence, Surface and the Foundation cascade</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/plans/computable-contract-substrate.html"><code class="language-plaintext highlighter-rouge">computable-contract-substrate</code></a>, slice F1
+phase 0. <strong>Status:</strong> analysis for the F1 gate, 2026-10-03. G2 and G3 answered, G1 revised (§6).
+<strong>Reads with:</strong> <a href="../../architecture/decisions/ADR-A114-external-and-natural-keys.md">ADR-A114</a>
+(Proposed), the <a href="../../../ontology/persistence/README.md">Persistence README</a>, the
+<a href="../../../ontology/surface/README.md">Surface README</a>, the
+<a href="/architecture/identity-minting-specification.html">identity minting specification</a>.</p>
+
+<hr />
+
+<h2 id="1-summary">1. Summary</h2>
+
+<p>ADR-A114 needs <strong>no change to Persistence’s compiler, Surface’s ontology or Surface’s compiler</strong>.
+Persistence needs one new optional document, <code class="language-plaintext highlighter-rouge">persistent-foundation</code>. Keys need one modelling
+convention Persistence imposes: one key class per scheme, defined by an OWL restriction on the
+scheme. The cascade is larger than the ADR
+says, and takes Instrument’s next version from C6.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Subsystem</th>
+      <th>Finding</th>
+      <th>Change</th>
+      <th>Where</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>P1</td>
+      <td>Persistence</td>
+      <td>a uniqueness constraint on <code class="language-plaintext highlighter-rouge">fnd:naturalKey</code> works as the compiler stands. Its key component is the key node’s IRI, and the mandatory normalisation pipeline is applied to that IRI, harmlessly</td>
+      <td>none. Record the reasoning</td>
+      <td>F1, docs</td>
+    </tr>
+    <tr>
+      <td>P2</td>
+      <td>Persistence</td>
+      <td>identity and privacy profiles target classes, so minting key IRIs differently per scheme needs one key class per scheme</td>
+      <td>a key class per scheme, <code class="language-plaintext highlighter-rouge">C ≡ ∃fnd:keyScheme.{S}</code>, required by shapes in <code class="language-plaintext highlighter-rouge">persistent-foundation</code></td>
+      <td>F1, gate question G1</td>
+    </tr>
+    <tr>
+      <td>P3</td>
+      <td>Persistence</td>
+      <td>each scheme’s key minting is an existing identity profile, with a uniqueness constraint on <code class="language-plaintext highlighter-rouge">fnd:keyValue</code> that also guarantees one key node per value</td>
+      <td>examples and shapes in <code class="language-plaintext highlighter-rouge">persistent-foundation</code></td>
+      <td>F1</td>
+    </tr>
+    <tr>
+      <td>P4</td>
+      <td>Persistence</td>
+      <td>all three violation policies apply to natural keys. Merge records <code class="language-plaintext highlighter-rouge">dal:mergeRelation</code>, never <code class="language-plaintext highlighter-rouge">owl:sameAs</code>, as ADR-A114 requires</td>
+      <td>none</td>
+      <td>F1, docs</td>
+    </tr>
+    <tr>
+      <td>P5</td>
+      <td>Persistence</td>
+      <td>a sensitive scheme’s keys take a surrogate with a keyed claim and a privacy profile other than public on their key class, and a personal-data scheme’s a <code class="language-plaintext highlighter-rouge">dal:PersonalData</code> one</td>
+      <td>shapes in <code class="language-plaintext highlighter-rouge">persistent-foundation</code></td>
+      <td>F1</td>
+    </tr>
+    <tr>
+      <td>P6</td>
+      <td>Persistence</td>
+      <td><code class="language-plaintext highlighter-rouge">persistent-foundation</code> is Persistence’s first document importing a layer</td>
+      <td>new document, catalog entry, README section</td>
+      <td>F1</td>
+    </tr>
+    <tr>
+      <td>P7</td>
+      <td>Persistence</td>
+      <td>the compiler could derive the natural-key uniqueness constraint from <code class="language-plaintext highlighter-rouge">dal:PersistenceKeyed</code> on its own</td>
+      <td>none now</td>
+      <td>follow-up FU-F1b</td>
+    </tr>
+    <tr>
+      <td>S1</td>
+      <td>Surface</td>
+      <td>an index over keys adds nothing: the key node is already the lookup symbol, and a key space is not an enumerable population</td>
+      <td>none</td>
+      <td>F1, docs</td>
+    </tr>
+    <tr>
+      <td>S2</td>
+      <td>Surface</td>
+      <td>a promotion contract can restate an identity’s natural key on each version, onto <code class="language-plaintext highlighter-rouge">fnd:externalKey</code>, never onto <code class="language-plaintext highlighter-rouge">fnd:naturalKey</code></td>
+      <td>example only</td>
+      <td>F1</td>
+    </tr>
+    <tr>
+      <td>S3</td>
+      <td>Surface</td>
+      <td>the same restatement could instead be a Foundation property chain, for adopters without Surface</td>
+      <td>none, or one axiom</td>
+      <td>gate question G2</td>
+    </tr>
+    <tr>
+      <td>S4</td>
+      <td>Surface</td>
+      <td>the cascade moves Surface to 0.6.0: the compiler’s ontology constant changes, and surfaces generated before F1 must be regenerated</td>
+      <td>one constant</td>
+      <td>F1</td>
+    </tr>
+    <tr>
+      <td>C1</td>
+      <td>cascade</td>
+      <td>15 documents pin <code class="language-plaintext highlighter-rouge">foundation/0.3.0</code> directly and 9 more transitively, so 25 documents bump, not 17</td>
+      <td>ADR-A114 corrected</td>
+      <td>F1</td>
+    </tr>
+    <tr>
+      <td>C2</td>
+      <td>cascade</td>
+      <td>Instrument takes 0.8.0 in the cascade, the version C6 had planned</td>
+      <td>C6 to C9 shift by one MINOR</td>
+      <td>gate question G3</td>
+    </tr>
+    <tr>
+      <td>C3</td>
+      <td>cascade</td>
+      <td>MORK’s teaching pack pins a hash of its ontology, which the re-pin changes</td>
+      <td><code class="language-plaintext highlighter-rouge">build:mtp</code>, lock committed</td>
+      <td>F1</td>
+    </tr>
+    <tr>
+      <td>C4</td>
+      <td>cascade</td>
+      <td>eleven test modules and one compiler constant name a cascaded version</td>
+      <td>updated with the cascade</td>
+      <td>F1</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="2-persistence">2. Persistence</h2>
+
+<h3 id="p1-uniqueness-on-fndnaturalkey">P1. Uniqueness on <code class="language-plaintext highlighter-rouge">fnd:naturalKey</code></h3>
+
+<p>A <code class="language-plaintext highlighter-rouge">dal:UniquenessConstraint</code> names its key properties (<code class="language-plaintext highlighter-rouge">dal:keyProperty</code>), a normalisation pipeline,
+an optional scope and claim schemes. The compiler (<code class="language-plaintext highlighter-rouge">recipes.py</code>, <code class="language-plaintext highlighter-rouge">resolver.py</code>) reads only the
+property IRIs, and the generated guarded write (<code class="language-plaintext highlighter-rouge">key-claim-write.mustache</code>) takes a claim IRI the
+caller computes as an HMAC over the tuple-encoded normalised key components. Nothing assumes a key
+value is a literal: for <code class="language-plaintext highlighter-rouge">fnd:naturalKey</code> the component is the key node’s IRI as a string.</p>
+
+<p>The compiler requires one of the three pipelines, so the IRI is normalised before the claim is
+computed. <code class="language-plaintext highlighter-rouge">NfkcTrimCasefold</code> would fold its case. That is harmless for minted key IRIs: two key IRIs
+of one scheme can differ only in case if their values do, and their values are normalised by the
+same pipeline before minting, while hash digests use a single-case alphabet (base32) or lowercase
+hex. Two distinct key nodes never fold to one claim. An exact pipeline (no case or compatibility
+mapping) would be the cleaner fit for IRI-valued keys, and is a change to the minting specification,
+out of F1’s scope. Recorded as follow-up FU-F1a in the CCS plan, owned by <code class="language-plaintext highlighter-rouge">identity-minting</code>.</p>
+
+<p>The CompositePropertyBoundary check (<code class="language-plaintext highlighter-rouge">validator.py</code>) requires a key property to be reachable within
+the boundary shape. A natural key on a persistent identity is one step from it, so a boundary shape
+naming <code class="language-plaintext highlighter-rouge">fnd:naturalKey</code> satisfies it.</p>
+
+<h3 id="p2-one-key-class-per-scheme">P2. One key class per scheme</h3>
+
+<p>ADR-A114 decision 6 mints key IRIs per scheme: derived hash for one, natural key for another, a
+surrogate with a keyed claim for a sensitive scheme. Persistence resolves every profile for a <strong>target</strong>,
+and a target is a class, optionally with a graph deployment (<code class="language-plaintext highlighter-rouge">scopes.py</code>, <code class="language-plaintext highlighter-rouge">Target</code>). A
+<code class="language-plaintext highlighter-rouge">dal:ShapeScope</code> is resolved once, at compile time, against classes, not per instance. So all
+<code class="language-plaintext highlighter-rouge">fnd:Key</code> instances get one identity profile unless the schemes’ keys are told apart by class or by
+graph:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Option</th>
+      <th>How</th>
+      <th>Cost</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>(a) a key class per scheme</strong></td>
+      <td><code class="language-plaintext highlighter-rouge">ex:UmrKey ⊑ fnd:Key</code>, asserted on every UMR key, targeted by a <code class="language-plaintext highlighter-rouge">dal:ClassScope</code></td>
+      <td>the scheme’s declarer declares the class, and the writer asserts it. No compiler change</td>
+    </tr>
+    <tr>
+      <td>(b) a graph family per scheme</td>
+      <td>keys of each scheme written into their own graphs, targeted by <code class="language-plaintext highlighter-rouge">dal:GraphPatternScope</code></td>
+      <td>ties a modelling distinction to storage layout</td>
+    </tr>
+    <tr>
+      <td>(c) a target keyed on a value</td>
+      <td>the compiler learns targets of <code class="language-plaintext highlighter-rouge">(class, keyScheme)</code></td>
+      <td>a compiler change for one use</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Recommended: (a).</strong> It also gives P5’s privacy profile its target.</p>
+
+<p><strong>How the class is tied to its scheme (revised at the gate).</strong> The first draft linked a key class to
+its scheme with a Persistence property, <code class="language-plaintext highlighter-rouge">dal:keyClassFor</code>. An OWL axiom does the same job with no new
+term, and means something to adopters without Persistence:</p>
+
+<pre><code class="language-turtle-example">ex:UmrKey a owl:Class ;
+    rdfs:subClassOf fnd:Key ;
+    owl:equivalentClass [ a owl:Restriction ;
+        owl:onProperty fnd:keyScheme ; owl:hasValue ex:umr ] .
+</code></pre>
+
+<p>A scheme stays a plain individual of <code class="language-plaintext highlighter-rouge">fnd:KeyScheme</code>, an OWL class, not a SKOS concept. Its key class
+is a second IRI defined from it, so no punning is needed. Punning the scheme’s IRI as its own key
+class was considered and rejected: OWL 2 DL treats a punned class and individual as unrelated, so a
+reasoner could derive neither the class from <code class="language-plaintext highlighter-rouge">fnd:keyScheme</code> nor the scheme from <code class="language-plaintext highlighter-rouge">rdf:type</code>. The <code class="language-plaintext highlighter-rouge">dal:</code>
+configuration does pun, by design (<code class="language-plaintext highlighter-rouge">dal:targetClass</code> and <code class="language-plaintext highlighter-rouge">dal:coversClass</code> are object properties
+whose values are classes, LATTICE’s convention for naming another layer’s terms without importing
+it), and is read as RDF by the compiler and by SHACL, never by a DL reasoner. A <code class="language-plaintext highlighter-rouge">dal:ClassScope</code> on
+<code class="language-plaintext highlighter-rouge">ex:UmrKey</code> is that ordinary case.</p>
+
+<p>Enforcement is by SHACL in <code class="language-plaintext highlighter-rouge">persistent-foundation</code>, run on the adopter’s ontology, configuration and
+data, since the compiler matches asserted types and never reasons:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Shape</th>
+      <th>Checks</th>
+      <th>Graph</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>scheme has a class</td>
+      <td>every <code class="language-plaintext highlighter-rouge">fnd:KeyScheme</code> has exactly one class of the restriction’s form. These shapes run only where an adopter uses <code class="language-plaintext highlighter-rouge">persistent-foundation</code></td>
+      <td>ontology</td>
+    </tr>
+    <tr>
+      <td>class has a profile</td>
+      <td>every such class is the <code class="language-plaintext highlighter-rouge">dal:targetClass</code> of a <code class="language-plaintext highlighter-rouge">dal:ClassScope</code> with an identity profile, and for a sensitive scheme, the P5 profiles</td>
+      <td>configuration</td>
+    </tr>
+    <tr>
+      <td>key is typed</td>
+      <td>every <code class="language-plaintext highlighter-rouge">fnd:Key</code> whose scheme has a key class is asserted a member of it, and of no other scheme’s</td>
+      <td>data</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The third shape matters beyond Persistence’s targeting. OWL makes no unique-name assumption, and
+<code class="language-plaintext highlighter-rouge">fnd:keyScheme</code> is functional, so a key asserted <code class="language-plaintext highlighter-rouge">ex:UmrKey</code> while carrying <code class="language-plaintext highlighter-rouge">fnd:keyScheme ex:lei</code>
+would lead a reasoner to infer <code class="language-plaintext highlighter-rouge">ex:umr owl:sameAs ex:lei</code>, a silent merge of two schemes. The shape
+reports it instead. Foundation’s examples also declare their schemes <code class="language-plaintext highlighter-rouge">owl:AllDifferent</code>, which turns
+the same mistake into an inconsistency for reasoner users.</p>
+
+<p><code class="language-plaintext highlighter-rouge">fnd:Key</code> stays usable without a key class by an adopter who does not use Persistence.</p>
+
+<h3 id="p3-minting-a-schemes-keys">P3. Minting a scheme’s keys</h3>
+
+<p>Each key class takes an existing <code class="language-plaintext highlighter-rouge">dal:IdentityProfile</code>:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Scheme</th>
+      <th>Strategy</th>
+      <th>Needs</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>UMR, company number (case-insensitive, public)</td>
+      <td><code class="language-plaintext highlighter-rouge">dal:DerivedHashIdentity</code> or <code class="language-plaintext highlighter-rouge">dal:NaturalKeyIdentity</code></td>
+      <td>a <code class="language-plaintext highlighter-rouge">dal:keyConstraint</code>: a uniqueness constraint on <code class="language-plaintext highlighter-rouge">( fnd:keyValue )</code> for the key class, scoped by tenant, with the scheme’s normalisation as <code class="language-plaintext highlighter-rouge">dal:normalizePipeline</code></td>
+    </tr>
+    <tr>
+      <td>a national ID (sensitive)</td>
+      <td><code class="language-plaintext highlighter-rouge">dal:SurrogateClaimedIdentity</code></td>
+      <td>the same constraint with a <code class="language-plaintext highlighter-rouge">dal:ClaimScheme</code> (HMAC under a tenant key)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The key constraint does double duty: it is what the recipe mints from, and it guarantees at write
+time that one value of one scheme is one key node. <code class="language-plaintext highlighter-rouge">fnd:keyNormalisation</code> (a string) and
+<code class="language-plaintext highlighter-rouge">dal:normalizePipeline</code> (an individual) must name the same pipeline: a shape in
+<code class="language-plaintext highlighter-rouge">persistent-foundation</code> compares the scheme’s string with the pipeline’s local name.</p>
+
+<h3 id="p4-violations">P4. Violations</h3>
+
+<p>The guarded write prevents a second claim on one natural key. The reconciler for slipped duplicates
+follows <code class="language-plaintext highlighter-rouge">dal:onViolation</code>: <code class="language-plaintext highlighter-rouge">Reject</code> audits, <code class="language-plaintext highlighter-rouge">Quarantine</code> copies the owners for review, <code class="language-plaintext highlighter-rouge">Merge</code> records
+<code class="language-plaintext highlighter-rouge">dal:mergeRelation</code> from each non-canonical owner to the canonical one and is documented as never
+<code class="language-plaintext highlighter-rouge">owl:sameAs</code>. That is exactly the behaviour ADR-A114 decision 8 assigns to <code class="language-plaintext highlighter-rouge">dal:PersistenceKeyed</code>.
+<code class="language-plaintext highlighter-rouge">persistent-foundation</code>’s default constraint uses <code class="language-plaintext highlighter-rouge">Reject</code>.</p>
+
+<h3 id="p5-sensitive-schemes">P5. Sensitive schemes</h3>
+
+<p>For a scheme with <code class="language-plaintext highlighter-rouge">fnd:sensitiveDataScheme true</code>, <code class="language-plaintext highlighter-rouge">persistent-foundation</code>’s shapes require its key
+class to have a <code class="language-plaintext highlighter-rouge">dal:SurrogateClaimedIdentity</code> profile (ADR-A51, ADR-A114 decision 6) and a
+<code class="language-plaintext highlighter-rouge">dal:PrivacyProfile</code> whose class is not <code class="language-plaintext highlighter-rouge">dal:PublicData</code>. Sensitive is wider than personal, so a
+second, optional flag says which sensitive schemes hold personal data: for
+<code class="language-plaintext highlighter-rouge">fnd:personalDataScheme true</code> (which Foundation’s shapes allow only with
+<code class="language-plaintext highlighter-rouge">fnd:sensitiveDataScheme true</code>), the privacy profile must be <code class="language-plaintext highlighter-rouge">dal:PersonalData</code>. Persistence’s
+existing rules then apply: no <code class="language-plaintext highlighter-rouge">dal:NoErasure</code>, and a replay-capable receipt model only with per-subject
+scoping or crypto-shredding. Erasing a person removes their key node and its value. A <code class="language-plaintext highlighter-rouge">fnd:naturalKey</code> triple pointing at it is
+removed with the subject’s graph under <code class="language-plaintext highlighter-rouge">dal:PerSubjectGraphDrop</code>, or left dangling where it lives
+outside it, which the privacy profile’s scope decides.</p>
+
+<h3 id="p6-persistent-foundation">P6. <code class="language-plaintext highlighter-rouge">persistent-foundation</code></h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Item</th>
+      <th>Choice</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>file</td>
+      <td><code class="language-plaintext highlighter-rouge">ontology/persistence/spec/persistent-foundation.ttl</code>, shapes in <code class="language-plaintext highlighter-rouge">ontology/persistence/shapes/persistent-foundation.ttl</code>, both authored files beside <code class="language-plaintext highlighter-rouge">persistence.ttl</code></td>
+    </tr>
+    <tr>
+      <td>version IRI</td>
+      <td><code class="language-plaintext highlighter-rouge">…/lattice/persistent-foundation/0.1.0</code>, its own release row and tag</td>
+    </tr>
+    <tr>
+      <td>imports</td>
+      <td><code class="language-plaintext highlighter-rouge">foundation/0.4.0</code> only. The <code class="language-plaintext highlighter-rouge">dal:</code> configuration ontology still imports no layer (Persistence README §1, updated to say so)</td>
+    </tr>
+    <tr>
+      <td>holds</td>
+      <td><code class="language-plaintext highlighter-rouge">dal:PersistenceKeyed ⊑ fnd:NaturallyKeyed</code>, the default natural-key uniqueness constraint (as a template an adopter scopes), the P2 and P5 shapes</td>
+    </tr>
+    <tr>
+      <td>import guard</td>
+      <td>Persistence is outside the layer order. The guard’s checks do not apply, as for Surface and MORK</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="p7-a-compiler-follow-up">P7. A compiler follow-up</h3>
+
+<p>The compiler could generate the natural-key uniqueness constraint for every class that is
+<code class="language-plaintext highlighter-rouge">dal:PersistenceKeyed</code>, so an adopter declares the mixin and nothing else. Today the adopter scopes
+the default constraint to their class. Worth doing once a deployment has several keyed classes. Not
+needed for F1. Recorded as follow-up FU-F1b in the CCS plan.</p>
+
+<h2 id="3-surface">3. Surface</h2>
+
+<h3 id="s1-no-index">S1. No index</h3>
+
+<p>Surface’s per-value index forms (<code class="language-plaintext highlighter-rouge">NominalClass</code>, <code class="language-plaintext highlighter-rouge">MembershipAssertion</code>, <code class="language-plaintext highlighter-rouge">ClosureRelation</code>) mint a
+symbol per value and need an enumerable population (a scheme contract, a class extent, an enumerated
+set). A key space is neither enumerable nor bounded: every UMR ever issued. And the retrieval an index
+would provide already exists: the key node is a symbol, so “everything carrying this key” is one
+triple pattern, <code class="language-plaintext highlighter-rouge">?x fnd:externalKey key:umr-B0123ABC20261234</code>. Making keys object-valued nodes is what
+makes an index unnecessary.</p>
+
+<h3 id="s2-promotion-onto-versions">S2. Promotion onto versions</h3>
+
+<p>A versioned thing carries its keys on its identity, so finding a version by key is one hop more
+than finding an actor. A <code class="language-plaintext highlighter-rouge">srf:PromotionContract</code> removes the hop:</p>
+
+<pre><code class="language-turtle-example">ex:version-keys a srf:PromotionContract ;
+    srf:contractKey "version-keys" ;
+    srf:carrier ex:Agreement ;                       # any fnd:Version class
+    srf:hasPathStep ex:step-0 , ex:step-1 ;
+    srf:promotesTo fnd:externalKey ;                 # authored, locating
+    srf:sourceFidelity srf:ExactSource ;
+    srf:realisationMode srf:Materialised ;
+    srf:targetNamespace &lt;https://example.org/generated/&gt; ;
+    srf:surfaceProfile ex:default-profile .
+
+ex:step-0 srf:stepIndex 0 ; srf:stepProperty fnd:hasIdentity ; srf:stepDirection srf:Forward .
+ex:step-1 srf:stepIndex 1 ; srf:stepProperty fnd:naturalKey  ; srf:stepDirection srf:Forward .
+</code></pre>
+
+<p>It promotes onto <code class="language-plaintext highlighter-rouge">fnd:externalKey</code>, an authored property, so its signature scope is the source’s,
+which Surface allows for an exact, materialised promotion. <strong>It must never promote onto
+<code class="language-plaintext highlighter-rouge">fnd:naturalKey</code>:</strong> every version would then hold its identity’s natural key, the versions would
+become <code class="language-plaintext highlighter-rouge">fnd:NaturallyKeyed</code> by the property’s domain, and Foundation’s uniqueness shape would report
+them as different things sharing one key. A promotion onto a generated property is equally valid,
+where an adopter wants promoted keys visibly apart from authored ones.</p>
+
+<h3 id="s3-or-a-property-chain-in-foundation">S3. Or a property chain in Foundation</h3>
+
+<p>The same restatement can be one OWL axiom in Foundation:
+<code class="language-plaintext highlighter-rouge">fnd:externalKey owl:propertyChainAxiom ( fnd:hasIdentity fnd:externalKey )</code>. Every version then
+carries, to a reasoner, each key of its identity, natural ones included through
+<code class="language-plaintext highlighter-rouge">fnd:naturalKey ⊑ fnd:externalKey</code>. It is valid OWL 2 DL (<code class="language-plaintext highlighter-rouge">fnd:externalKey</code> is not used where a simple
+property is required). It gives meaning to adopters without Surface, as <code class="language-plaintext highlighter-rouge">fnd:MergedOnNaturalKey</code>
+does for natural keys, and costs nothing at runtime, where no reasoner runs (ADR-A83). Gate question
+G2.</p>
+
+<h3 id="s4-the-cascades-effect-on-surface">S4. The cascade’s effect on Surface</h3>
+
+<p>The cascade takes <code class="language-plaintext highlighter-rouge">surface</code> and <code class="language-plaintext highlighter-rouge">surface-vocab</code> from 0.5.0 to 0.6.0. The Surface compiler names the
+ontology version it imports into every generated artefact (<code class="language-plaintext highlighter-rouge">tools/surface/src/surface/namespaces.py</code>,
+<code class="language-plaintext highlighter-rouge">SURFACE_ONTOLOGY</code>), so the constant moves to 0.6.0 in the same change. A surface generated before
+F1 imports <code class="language-plaintext highlighter-rouge">surface/0.5.0</code>, which the catalog no longer maps, and is regenerated. No committed
+generated surface or golden file names 0.5.0.</p>
+
+<h2 id="4-the-cascade">4. The cascade</h2>
+
+<p>ADR-A86: a document whose only change is an import update takes the bump level of the imported
+change. Foundation’s change is additive, so every document in its import closure takes a MINOR.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Document</th>
+      <th>From</th>
+      <th>To</th>
+      <th>Pins Foundation</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>foundation</td>
+      <td>0.3.0</td>
+      <td>0.4.0</td>
+      <td>(the change)</td>
+    </tr>
+    <tr>
+      <td>foundation-vocab</td>
+      <td>0.3.0</td>
+      <td>0.4.0</td>
+      <td>directly</td>
+    </tr>
+    <tr>
+      <td>vocabulary</td>
+      <td>0.3.0</td>
+      <td>0.4.0</td>
+      <td>directly</td>
+    </tr>
+    <tr>
+      <td>quantification</td>
+      <td>0.5.0</td>
+      <td>0.6.0</td>
+      <td>directly</td>
+    </tr>
+    <tr>
+      <td>party</td>
+      <td>0.5.0</td>
+      <td>0.6.0</td>
+      <td>directly</td>
+    </tr>
+    <tr>
+      <td>party-vocab</td>
+      <td>0.5.0</td>
+      <td>0.6.0</td>
+      <td>through party</td>
+    </tr>
+    <tr>
+      <td>eligibility</td>
+      <td>0.7.0</td>
+      <td>0.8.0</td>
+      <td>directly</td>
+    </tr>
+    <tr>
+      <td>eligibility-vocab</td>
+      <td>0.8.0</td>
+      <td>0.9.0</td>
+      <td>through eligibility</td>
+    </tr>
+    <tr>
+      <td>wording</td>
+      <td>0.3.0</td>
+      <td>0.4.0</td>
+      <td>directly</td>
+    </tr>
+    <tr>
+      <td>wording-vocab</td>
+      <td>0.3.0</td>
+      <td>0.4.0</td>
+      <td>through wording</td>
+    </tr>
+    <tr>
+      <td>behaviour</td>
+      <td>0.10.0</td>
+      <td>0.11.0</td>
+      <td>directly</td>
+    </tr>
+    <tr>
+      <td>behaviour-runtime</td>
+      <td>0.10.0</td>
+      <td>0.11.0</td>
+      <td>through behaviour</td>
+    </tr>
+    <tr>
+      <td>behaviour-vocab</td>
+      <td>0.10.0</td>
+      <td>0.11.0</td>
+      <td>through behaviour</td>
+    </tr>
+    <tr>
+      <td>instrument</td>
+      <td>0.7.0</td>
+      <td>0.8.0</td>
+      <td>directly</td>
+    </tr>
+    <tr>
+      <td>instrument-vocab</td>
+      <td>0.7.0</td>
+      <td>0.8.0</td>
+      <td>through instrument</td>
+    </tr>
+    <tr>
+      <td>surface</td>
+      <td>0.5.0</td>
+      <td>0.6.0</td>
+      <td>directly</td>
+    </tr>
+    <tr>
+      <td>surface-vocab</td>
+      <td>0.5.0</td>
+      <td>0.6.0</td>
+      <td>through surface</td>
+    </tr>
+    <tr>
+      <td>MORK (<code class="language-plaintext highlighter-rouge">…/ontologies/Mork</code>)</td>
+      <td>0.4.0</td>
+      <td>0.5.0</td>
+      <td>directly</td>
+    </tr>
+    <tr>
+      <td>applied classification</td>
+      <td>0.1.0</td>
+      <td>0.2.0</td>
+      <td>directly</td>
+    </tr>
+    <tr>
+      <td>applied classification-vocab</td>
+      <td>0.1.0</td>
+      <td>0.2.0</td>
+      <td>through classification</td>
+    </tr>
+    <tr>
+      <td>insurance common</td>
+      <td>0.1.0</td>
+      <td>0.2.0</td>
+      <td>directly</td>
+    </tr>
+    <tr>
+      <td>insurance common-vocab</td>
+      <td>0.1.0</td>
+      <td>0.2.0</td>
+      <td>through common</td>
+    </tr>
+    <tr>
+      <td>insurance peril</td>
+      <td>0.1.0</td>
+      <td>0.2.0</td>
+      <td>directly</td>
+    </tr>
+    <tr>
+      <td>insurance peril-vocab</td>
+      <td>0.1.0</td>
+      <td>0.2.0</td>
+      <td>directly</td>
+    </tr>
+    <tr>
+      <td>applied capacity execution</td>
+      <td>0.10.0</td>
+      <td>0.11.0</td>
+      <td>directly</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Twenty-five documents, each with a release row and a tag. MORK’s governance example
+(<code class="language-plaintext highlighter-rouge">ontology/mork/examples/Governance/GovernanceAndVersioning.ttl</code>) pins <code class="language-plaintext highlighter-rouge">foundation/0.3.0</code> without a
+version of its own: it re-pins with no tag. Shapes and projections import nothing and are unchanged.</p>
+
+<p><strong>C2. Instrument’s version.</strong> The cascade gives Instrument 0.8.0, which C6 had planned for its
+rewrite. Options: C6 takes 0.9.0 and C7a to C9 each shift by one MINOR (0.10.0 to 0.13.0), or the
+cascade leaves Instrument’s re-pin to C6, which is not possible, since Instrument’s closure must
+resolve once <code class="language-plaintext highlighter-rouge">foundation/0.3.0</code> leaves the catalog. <strong>Recommended:</strong> shift C6 to C9 by one, in the
+plan and ADR-A104’s Consequences.</p>
+
+<p><strong>C3. MORK’s teaching pack.</strong> <code class="language-plaintext highlighter-rouge">ontology/mork/mtp/data/pins.lock.json</code> pins a hash of the MORK
+ontology, which the re-pin changes. <code class="language-plaintext highlighter-rouge">mise run build:mtp</code> regenerates the lock, and <code class="language-plaintext highlighter-rouge">check:mtp</code>
+verifies it, in the same change.</p>
+
+<p><strong>C4. Version names in code and tests.</strong> <code class="language-plaintext highlighter-rouge">tools/import_guard.py</code>, <code class="language-plaintext highlighter-rouge">tools/surface/.../namespaces.py</code>
+(S4), and the test modules <code class="language-plaintext highlighter-rouge">test_applied_shared_contracts.py</code>, <code class="language-plaintext highlighter-rouge">test_behaviour_nested.py</code>,
+<code class="language-plaintext highlighter-rouge">test_behaviour_records.py</code>, <code class="language-plaintext highlighter-rouge">test_behaviour_split.py</code>, <code class="language-plaintext highlighter-rouge">test_import_guard.py</code>,
+<code class="language-plaintext highlighter-rouge">test_ontology_releases.py</code>, <code class="language-plaintext highlighter-rouge">test_peril_vocabulary.py</code> and <code class="language-plaintext highlighter-rouge">test_wording.py</code> name cascaded versions,
+and update with it. A test that only names a version to find a document keeps its assertions.</p>
+
+<p><strong>C5. Branches.</strong> Every branch that would edit a document in the table waits for F1 to merge. On
+2026-10-03 the AIR branches <code class="language-plaintext highlighter-rouge">air/2.2-characteristics</code>, <code class="language-plaintext highlighter-rouge">air/3.3-readings-swrl-owl</code> and
+<code class="language-plaintext highlighter-rouge">air/4.1-exposure-core</code> have no commits and start from the merged <code class="language-plaintext highlighter-rouge">main</code>.</p>
+
+<h2 id="5-what-f1-then-contains">5. What F1 then contains</h2>
+
+<ol>
+  <li>Foundation 0.4.0 with ADR-A114’s terms and shapes, and a README section on keys.</li>
+  <li><code class="language-plaintext highlighter-rouge">persistent-foundation</code> 0.1.0 (P2, P3, P5, P6), with its example and a Persistence README section
+recommending it.</li>
+  <li>Surface’s example promotion contract (S2), and the compiler constant (S4).</li>
+  <li>The cascade (C1 to C5).</li>
+  <li>ADR-A114 corrected: 25 documents, not 17. Under G3, ADR-A104 and the plan’s version numbers for
+C6 to C9.</li>
+</ol>
+
+<p>Follow-up, not F1: an exact normalisation pipeline (P1, FU-F1a) and the derived constraint (P7,
+FU-F1b), each when a deployment needs it. Both are in the CCS plan’s F1 follow-ups table.</p>
+
+<h2 id="6-questions-for-the-gate">6. Questions for the gate</h2>
+
+<ul>
+  <li><strong>G1 (P2).</strong> One key class per scheme, linked by <code class="language-plaintext highlighter-rouge">dal:keyClassFor</code>. Recommended. <strong>Revised at the
+gate:</strong> linked instead by an OWL restriction on the scheme, with the shapes of P2. Awaiting
+confirmation.</li>
+  <li><strong>G2 (S3).</strong> Add <code class="language-plaintext highlighter-rouge">fnd:externalKey owl:propertyChainAxiom ( fnd:hasIdentity fnd:externalKey )</code> to
+Foundation, so versions locate by their identity’s keys for reasoners, with Surface’s promotion for
+everyone else. Recommended: yes, for the same reason <code class="language-plaintext highlighter-rouge">fnd:MergedOnNaturalKey</code> exists.
+<strong>Accepted</strong> 2026-10-03.</li>
+  <li><strong>G3 (C2).</strong> C6 takes Instrument 0.9.0, and C7a to C9 shift by one MINOR. Recommended.
+<strong>Accepted</strong> 2026-10-03.</li>
+  <li><strong>The gate itself:</strong> accept this analysis and ADR-A114.</li>
+</ul>

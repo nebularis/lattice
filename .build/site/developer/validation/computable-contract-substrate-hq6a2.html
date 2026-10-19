@@ -1,0 +1,275 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-ccs-hq-6a2-closures-in-the-compilers">Validation Pack: CCS HQ-6a.2, closures in the compilers</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/computable-contract-substrate.html"><code class="language-plaintext highlighter-rouge">computable-contract-substrate</code></a>
+<strong>Machine:</strong> R. <strong>Branch:</strong> <code class="language-plaintext highlighter-rouge">ccs/hq6a2-closures-compilers</code>, examples first (ADR-A-C2, commit <code class="language-plaintext highlighter-rouge">0869d43b</code>)
+<strong>Plan:</strong> <a href="/developer/plans/computable-contract-substrate.html">CCS plan</a>, “What HQ-6a.2 builds”
+<strong>Decisions:</strong> HQ6a2-Q1 (1), Q2 (i) and Q3, answered 2026-10-12.
+<a href="/architecture/decisions/ADR-A105-closure-declarations.html">ADR-A105</a> and its 2026-10-12 addendum</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>The compilers decide as the reference semantics does (HQ-6a.1). A set reading decides on
+completeness, <code class="language-plaintext highlighter-rouge">elg:SomeValue</code> Denied and <code class="language-plaintext highlighter-rouge">elg:EveryValue</code> Permitted, the empty case included, only
+when its binding names a closure in force at the resolution instant. Without one, such an outcome
+is Undetermined with <code class="language-plaintext highlighter-rouge">exe:NoClosureLicence</code>, or the diagnostic of an undetermined value, or
+<code class="language-plaintext highlighter-rouge">exe:MissingCandidate</code> for no value. A binding naming something that is not a closure, or a closure
+with no source, is refused at compile time. A SPARQL row names the closure exactly when
+completeness decided it, before negation, and a profile row names the union of its conditions’
+closures. The compilers mint no decision records. SWRL and OWL output is unchanged.</p>
+
+<h2 id="test-cases">Test cases</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>HQ6a2-01</td>
+      <td><code class="language-plaintext highlighter-rouge">SomeValue</code> over the readings fixture, open and closed / SPARQL / open decides only a Permitted value, closed Denies every value Denied, the empty case included</td>
+      <td>L2</td>
+      <td>+ −</td>
+    </tr>
+    <tr>
+      <td>HQ6a2-02</td>
+      <td><code class="language-plaintext highlighter-rouge">EveryValue</code>, open and closed / SPARQL / open decides only a Denied value, closed Permits every value Permitted, the empty case included</td>
+      <td>L2</td>
+      <td>+ −</td>
+    </tr>
+    <tr>
+      <td>HQ6a2-03</td>
+      <td>a subject with no value / SPARQL, under a closure / Denied under some value, Permitted under every value, no diagnostic</td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>HQ6a2-04</td>
+      <td>the admissions, trial, usage, facility and reinsurance examples, with and without their closures / SPARQL, and the compiled reinsurance claims in <code class="language-plaintext highlighter-rouge">test_legal_acts.py</code> / each example’s two tables, as the reference gives them (HQ6a1-04 to 09)</td>
+      <td>L2</td>
+      <td>+ −</td>
+    </tr>
+    <tr>
+      <td>HQ6a2-05</td>
+      <td>the same examples / SHACL / agrees with SPARQL on every subject, with and without the closure</td>
+      <td>L2</td>
+      <td>+ −</td>
+    </tr>
+    <tr>
+      <td>HQ6a2-06</td>
+      <td>the admissions conditions / SPARQL’s <code class="language-plaintext highlighter-rouge">?closure</code> / named only where completeness decided, before negation</td>
+      <td>L2</td>
+      <td>+ −</td>
+    </tr>
+    <tr>
+      <td>HQ6a2-07</td>
+      <td>a binding naming a node that is not a closure, and a closure with no source / compile / refused, <code class="language-plaintext highlighter-rouge">exe:NoClosureLicence</code></td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>HQ6a2-08</td>
+      <td>the admissions profile / SPARQL’s <code class="language-plaintext highlighter-rouge">?closures</code> / ada, ben and cai name the registry’s closure, dee none (HQ6a2-Q2 (i))</td>
+      <td>L2</td>
+      <td>+ −</td>
+    </tr>
+    <tr>
+      <td>HQ6a2-09</td>
+      <td>the reference semantics / <code class="language-plaintext highlighter-rouge">decide_condition_with_reliance</code> / the admissions reliance table, and no reliance without a closure (HQ6a2-Q3)</td>
+      <td>L2</td>
+      <td>+ −</td>
+    </tr>
+    <tr>
+      <td>HQ6a2-10</td>
+      <td>SWRL and OWL / set readings and negation / still refused</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>HQ6a2-11</td>
+      <td>Executable 0.7.0 / versioning, catalog, release register, <code class="language-plaintext highlighter-rouge">build:mtp</code> and <code class="language-plaintext highlighter-rouge">check:mtp</code>, <code class="language-plaintext highlighter-rouge">check:full-sweep</code> / pass</td>
+      <td>L0</td>
+      <td>+</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="one-command">One command</h2>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:full-sweep
+</code></pre></div></div>
+
+<p>The sweep runs <code class="language-plaintext highlighter-rouge">check:mork-compilers</code> (rows 01 to 08 and 10, in <code class="language-plaintext highlighter-rouge">test_set_readings.py</code> and
+<code class="language-plaintext highlighter-rouge">test_closure_readings.py</code>), <code class="language-plaintext highlighter-rouge">check:reference-eligibility</code> (row 09), <code class="language-plaintext highlighter-rouge">check:ontology-catalog</code> with
+<code class="language-plaintext highlighter-rouge">test_legal_acts.py</code> (row 04’s compiled claims), and <code class="language-plaintext highlighter-rouge">build:mtp</code>, <code class="language-plaintext highlighter-rouge">check:mtp</code> and the versioning
+checks (row 11). The 15 example tests red before the model phase are the first to look at:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise <span class="nb">exec</span> <span class="nt">--</span> python <span class="nt">-m</span> pytest tools/mork_compilers/src/mork_compilers/test_closure_readings.py tools/mork_compilers/src/mork_compilers/test_set_readings.py tools/reference/eligibility/tests/test_denotation.py tools/test_legal_acts.py <span class="nt">-q</span>
+</code></pre></div></div>
+
+<h2 id="artefacts-to-inspect">Artefacts to inspect</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">ontology/mork/spec/Executable.ttl</code>: <code class="language-plaintext highlighter-rouge">exe:NoClosureLicence</code>, version 0.7.0</li>
+  <li><code class="language-plaintext highlighter-rouge">tools/mork_compilers/src/mork_compilers/eligibility_ir.py</code>: <code class="language-plaintext highlighter-rouge">EvidencePath.closure</code> and <code class="language-plaintext highlighter-rouge">_closure</code></li>
+  <li><code class="language-plaintext highlighter-rouge">tools/mork_compilers/src/mork_compilers/sparql_backend.py</code>: the module docstring’s <code class="language-plaintext highlighter-rouge">?closure</code>
+contract, <code class="language-plaintext highlighter-rouge">_read_set</code>, <code class="language-plaintext highlighter-rouge">_negate</code> and <code class="language-plaintext highlighter-rouge">profile_select</code></li>
+  <li><code class="language-plaintext highlighter-rouge">tools/reference/eligibility/src/reference_eligibility/denotation.py</code>: <code class="language-plaintext highlighter-rouge">decide_condition_with_reliance</code></li>
+  <li><code class="language-plaintext highlighter-rouge">tools/mork_compilers/src/mork_compilers/test_closure_readings.py</code>: <code class="language-plaintext highlighter-rouge">sparql_profile</code></li>
+  <li><code class="language-plaintext highlighter-rouge">ontology/catalog-v001.xml</code> and <code class="language-plaintext highlighter-rouge">docs/architecture/ontology-releases.md</code></li>
+</ul>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<ul>
+  <li><strong>Minting the decision record</strong>, its cut and identity, and copying <code class="language-plaintext highlighter-rouge">?closure</code> into
+<code class="language-plaintext highlighter-rouge">elg:closureReliedOn</code>: C12.</li>
+  <li><strong>SHACL reliance.</strong> SHACL reports violations only, so it agrees on decisions and names no closure
+(HQ6a2-Q1).</li>
+  <li><strong>The differential harness</strong> does not yet check the <code class="language-plaintext highlighter-rouge">?closure</code> column. It reads single-value
+readings only, and takes reliance up when it covers bound conditions (track B).</li>
+  <li><strong>Closures over a period</strong>, anchors, supersession by a late fact and a closure’s binding to the
+store: HQ-6b. Set comparisons over closures: C9b3.</li>
+</ul>
+
+<h2 id="handoff">Handoff</h2>
+
+<p><strong>Built</strong> (commit <code class="language-plaintext highlighter-rouge">349ccfa2</code>, after the examples commit <code class="language-plaintext highlighter-rouge">0869d43b</code>, then fixed at verification as below):</p>
+
+<ul>
+  <li>Executable 0.7.0 with <code class="language-plaintext highlighter-rouge">exe:NoClosureLicence</code>. Only the catalog imports Executable, so there is
+no cascade. The catalog and release register regenerated, adding only Executable’s rows.</li>
+  <li>The IR: an evidence path carries its binding’s closure. A binding naming a non-closure, or a
+closure with no <code class="language-plaintext highlighter-rouge">elg:licensedBy</code>, is refused. A closure on a single-value reading is ignored. A
+closure whose source states <code class="language-plaintext highlighter-rouge">fnd:validFrom</code> is in force only from it, and compiling then needs
+an explicit resolution instant. <code class="language-plaintext highlighter-rouge">namespaces.py</code> gains <code class="language-plaintext highlighter-rouge">FND</code>.</li>
+  <li>SPARQL: every condition query projects <code class="language-plaintext highlighter-rouge">?closure</code>. <code class="language-plaintext highlighter-rouge">_read_set</code> decides on completeness only under
+a closure, counts a subject’s <code class="language-plaintext highlighter-rouge">exe:MissingCandidate</code> row as no value, and reports
+<code class="language-plaintext highlighter-rouge">exe:NoClosureLicence</code> when an open binding cannot decide. Negation carries the column. Profile
+rows project <code class="language-plaintext highlighter-rouge">?closures</code>, the space-separated union.</li>
+  <li>SHACL: unchanged in code. Its decided shapes wrap the SPARQL backend’s condition select, so they
+take up closures with it.</li>
+  <li>The reference: <code class="language-plaintext highlighter-rouge">decide_condition_with_reliance</code>, with <code class="language-plaintext highlighter-rouge">decide_condition</code> now delegating to it,
+its behaviour unchanged. The package README names it.</li>
+  <li><code class="language-plaintext highlighter-rouge">test_closure_readings.py</code>: HQ6a2-08 reads <code class="language-plaintext highlighter-rouge">?closures</code> through a new <code class="language-plaintext highlighter-rouge">sparql_profile</code> helper,
+comparing sets. Its expected closures are unchanged.</li>
+</ul>
+
+<p><strong>Deviations from the plan:</strong></p>
+
+<ul>
+  <li><strong><code class="language-plaintext highlighter-rouge">build:mtp</code> moves no pins.</strong> The MTP pins hash MORK’s own terms (<code class="language-plaintext highlighter-rouge">Mork.ttl</code>), and Executable
+is not among them. The build reported the pinned graph hash unchanged, and <code class="language-plaintext highlighter-rouge">pins.lock.json</code> did
+not change.</li>
+  <li><strong>No SHACL backend change</strong>, for the reason above.</li>
+  <li><strong>Three fixes found at verification</strong>, after the maintainer accepted <code class="language-plaintext highlighter-rouge">349ccfa2</code>:
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">profile_select</code> had an unterminated string, so <code class="language-plaintext highlighter-rouge">sparql_backend.py</code> did not import. The quote
+is corrected.</li>
+      <li>AIR32-08 (<code class="language-plaintext highlighter-rouge">test_set_readings.py</code>, an interval read <code class="language-plaintext highlighter-rouge">EveryValue</code>) still expected an open binding
+with every value Permitted to be Permitted, which L15 as restated (ADR-A105, HQ6a1-07) makes
+Undetermined. Its binding now names a closure, as the examples phase did for the other
+AIR-3.2 tests, so its expected outcomes stand, and a second assertion checks the open reading:
+Undetermined, with a Denied value still Denied. This strengthens the test. It is listed here
+under the non-weakening rule for the maintainer to countersign.</li>
+      <li><code class="language-plaintext highlighter-rouge">test_concept_backends.py</code> pins the set of declared diagnostics. <code class="language-plaintext highlighter-rouge">exe:NoClosureLicence</code> joins it.</li>
+    </ul>
+  </li>
+</ul>
+
+<p><strong>What to check first:</strong> <code class="language-plaintext highlighter-rouge">_read_set</code>’s decision and diagnostic expressions in <code class="language-plaintext highlighter-rouge">sparql_backend.py</code>,
+then <code class="language-plaintext highlighter-rouge">_closure</code> in <code class="language-plaintext highlighter-rouge">eligibility_ir.py</code>, then the module docstring’s statement of the <code class="language-plaintext highlighter-rouge">?closure</code>
+contract against ADR-A105’s addendum.</p>
+
+<p><strong>Checked while writing the pack.</strong> <code class="language-plaintext highlighter-rouge">_read_set</code> treats every per-value Undetermined row with
+<code class="language-plaintext highlighter-rouge">exe:MissingCandidate</code> as “no value”. That is sound for both plan kinds. Grouped per value, a
+present value always counts one candidate, so the diagnostic arises only for a subject with no
+value. A present interval value that cannot be read reports <code class="language-plaintext highlighter-rouge">exe:ValueSpaceMismatch</code> and stays
+undetermined under a closure.</p>
+
+<h2 id="results">Results</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>HQ6a2-01 to 08, 10</td>
+      <td><code class="language-plaintext highlighter-rouge">check:mork-compilers</code>: 126 passed, including <code class="language-plaintext highlighter-rouge">test_closure_readings.py</code> and <code class="language-plaintext highlighter-rouge">test_set_readings.py</code> (16)</td>
+    </tr>
+    <tr>
+      <td>HQ6a2-04</td>
+      <td>also <code class="language-plaintext highlighter-rouge">test_legal_acts.py</code>, in <code class="language-plaintext highlighter-rouge">check:ontology-catalog</code>: pass</td>
+    </tr>
+    <tr>
+      <td>HQ6a2-09</td>
+      <td><code class="language-plaintext highlighter-rouge">check:reference-eligibility</code>: 60 passed</td>
+    </tr>
+    <tr>
+      <td>HQ6a2-11</td>
+      <td><code class="language-plaintext highlighter-rouge">check:full-sweep</code> against <code class="language-plaintext highlighter-rouge">main</code>: all 14 checks passed, <code class="language-plaintext highlighter-rouge">check:ontology-catalog</code> 750 passed, <code class="language-plaintext highlighter-rouge">build:mtp</code> and <code class="language-plaintext highlighter-rouge">check:mtp</code> pass</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The 15 tests red after the examples phase pass. The first sweep found two failures, the stale
+AIR32-08 expectation and the pinned diagnostic set, fixed as above, and a versions check that
+could not run because the clone had no local <code class="language-plaintext highlighter-rouge">main</code>. The second sweep passed.</p>
+
+<h2 id="adversarial-probes">Adversarial probes</h2>
+
+<p>Our pick, as the maintainer asked us to complete the slice autonomously (2026-10-12). Each broke
+one file, ran the tests that guard it, and restored the file from a copy, after which the same
+tests passed again (50 passed).</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Artefact</th>
+      <th>Defect introduced</th>
+      <th>Caught by</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>SPARQL <code class="language-plaintext highlighter-rouge">_read_set</code></td>
+      <td>every binding read as closed</td>
+      <td>5 fail: HQ6a2-04’s open tables, HQ6a2-01, 02 and 03’s open cases, AIR32-08’s open case</td>
+    </tr>
+    <tr>
+      <td>IR <code class="language-plaintext highlighter-rouge">_closure</code></td>
+      <td>a closure with no source accepted</td>
+      <td>1 fails: HQ6a2-07’s no-source case</td>
+    </tr>
+    <tr>
+      <td>SPARQL <code class="language-plaintext highlighter-rouge">profile_select</code></td>
+      <td>a profile row drops its conditions’ closures</td>
+      <td>1 fails: HQ6a2-08</td>
+    </tr>
+    <tr>
+      <td>reference <code class="language-plaintext highlighter-rouge">decide_condition_with_reliance</code></td>
+      <td>reliance decided after negation</td>
+      <td>1 fails: <code class="language-plaintext highlighter-rouge">TestReliance</code>’s admissions table</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>A first probe of the reference, reliance reported without a closure, survived. It is an equivalent
+mutant: an open <code class="language-plaintext highlighter-rouge">SomeValue</code> reading is never Denied and an open <code class="language-plaintext highlighter-rouge">EveryValue</code> never Permitted, so
+the <code class="language-plaintext highlighter-rouge">closed</code> guard on reliance is redundant, and removing it changes no outcome. We kept the guard,
+since it states the rule, and replaced the probe with the one above.</p>
+
+<h2 id="acceptance">Acceptance</h2>
+
+<p>Accepted by the maintainer on 2026-10-12 (commit <code class="language-plaintext highlighter-rouge">349ccfa2</code>), with the three verification fixes and
+the probes above recorded after. The maintainer’s merge into <code class="language-plaintext highlighter-rouge">main</code> is the sign-off.</p>

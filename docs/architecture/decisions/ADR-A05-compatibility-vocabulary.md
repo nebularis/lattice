@@ -1,10 +1,12 @@
+---
+published: true
+---
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
 # ADR A-05: Compatibility operation vocabulary
 
-## Status
-
-Accepted
+**Status:** Published, 2026-10-19. Accepted 2026-09-17.
+**Described in:** [Eligibility README](../../../ontology/eligibility/README.md)
 
 ## Context
 
@@ -37,3 +39,7 @@ precondition rather than a way of composing outcomes, and no compiler could eval
 `elg:AllRequired` and `elg:AnySufficient`. A downstream ontology may still add an operation, and the compilers
 refuse one they cannot evaluate.
 
+
+## Provenance
+
+Accepted when Eligibility was first specified, 2026-09-17. The 2026-10-19 addendum answers question OD6-Q7 of the [`improved-ontology-documentation`](../../developer/plans/improved-ontology-documentation.md) plan.

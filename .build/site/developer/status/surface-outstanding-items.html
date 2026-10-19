@@ -1,0 +1,381 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="surface-layer--outstanding-items">Surface Layer — Outstanding Items</h1>
+
+<p><strong>Source:</strong> Consolidated from <code class="language-plaintext highlighter-rouge">ontology/surface/docs/OUTSTANDING-ITEMS.md</code> (2026-09-18)<br />
+<strong>Status:</strong> Living reference document; all items tracked in <a href="/developer/status/surface-mork-unified-projection.html">surface-mork-unified-projection.md</a><br />
+<strong>Last updated:</strong> 2026-09-22</p>
+
+<hr />
+
+<h2 id="overview">Overview</h2>
+
+<p>This document tracks specific outstanding items, design decisions, deferred work, and findings that emerged during Surface-MORK unified projection implementation (Phases 0–8). For phase-level status, see <a href="/developer/status/surface-mork-unified-projection.html">surface-mork-unified-projection.md</a>.</p>
+
+<p>All items listed here are <strong>deliberately not in shipped artefacts</strong> — no README annotations, OWL declarations, shape messages, or generated modules carry these items.</p>
+
+<hr />
+
+<h2 id="1-decisions-taken-during-implementation">1. Decisions Taken During Implementation</h2>
+
+<h3 id="11-signature-scope-and-law-x6---closed">1.1 Signature scope and law X6 — ✅ Closed</h3>
+
+<p><strong>Rationale:</strong> The design note stated conservativity (X1) unconditionally: a surface never extends source-signature consequence set. This holds for indexing (mints own terms) but NOT for promotion (restates values onto <code class="language-plaintext highlighter-rouge">srf:promotesTo</code>). When <code class="language-plaintext highlighter-rouge">srf:promotesTo</code> is an authored property, emitted triples are over the authored signature and indistinguishable from authored facts.</p>
+
+<p><strong>The MERIDIAN CSO→FBO case:</strong> <code class="language-plaintext highlighter-rouge">fbo:hasLineOfBusiness</code> is authored, so <code class="language-plaintext highlighter-rouge">DimensionSourcing</code> is producing authored-signature A-box, not an index.</p>
+
+<p><strong>Solution implemented:</strong></p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">srf:signatureScope</code> on every <code class="language-plaintext highlighter-rouge">srf:GeneratedSurface</code> (values: <code class="language-plaintext highlighter-rouge">srf:LocalSignature</code> or <code class="language-plaintext highlighter-rouge">srf:SourceSignature</code>)</li>
+  <li>X1 restated to apply to local-signature surfaces only</li>
+  <li>Law <strong>X6:</strong> promotion onto a property outside the contract’s target namespace declares exact or crosswalk-exact fidelity and is materialised rather than definitional</li>
+</ul>
+
+<p><strong>Sign-off:</strong> <a href="../../architecture/decisions/ADR-A16-surface-projection-mechanism.md#addendumdecision-x6-stands-as-designed-sign-off">ADR-A16 addendum</a> + <a href="../../architecture/decisions/ADR-A21-signature-scope-composition-for-stacked-surfaces.md">ADR-A21</a> (composition rule across stacked surfaces).</p>
+
+<hr />
+
+<h3 id="12-read-paths-as-indexed-step-lists-not-shacl-paths---done">1.2 Read paths as indexed step lists, not SHACL paths — ✅ Done</h3>
+
+<p><strong>Decision:</strong> Use <code class="language-plaintext highlighter-rouge">srf:PathStep</code> individuals with <code class="language-plaintext highlighter-rouge">srf:stepIndex</code> and <code class="language-plaintext highlighter-rouge">srf:stepDirection</code> instead of SHACL path nodes.</p>
+
+<p><strong>Why:</strong> SHACL path syntax nests blank nodes; labels don’t survive canonicalisation without normalisation. Would have made read paths the only part of contract needing special handling.</p>
+
+<p><strong>Result:</strong> <code class="language-plaintext highlighter-rouge">srf:PathStep</code> gives sequence-and-inverse expressivity with a form that hashes directly, following <code class="language-plaintext highlighter-rouge">qnt:OrderingComponent</code> pattern. No SHACL engine needed. Alternation and zero-or-more remain out of scope.</p>
+
+<p><strong>Tradeoff:</strong> Contract cannot be handed to SHACL engine as path expression; compiler must synthesise one. Nothing currently needs that.</p>
+
+<hr />
+
+<h3 id="13-derivation-contract-location---closed-2026-09-25">1.3 Derivation contract location — ✅ Closed (2026-09-25)</h3>
+
+<p><strong>Resolution:</strong> Foundation declares <code class="language-plaintext highlighter-rouge">fnd:DerivedArtefact</code>, <code class="language-plaintext highlighter-rouge">fnd:DerivationRun</code> and <code class="language-plaintext highlighter-rouge">fnd:DerivationKind</code>, and <code class="language-plaintext highlighter-rouge">srf:DerivedArtefact</code> subclasses it (<a href="../../architecture/decisions/ADR-A92-derived-artefact-contract-and-prov-o-alignment.md">ADR-A92</a>, AOR-12).</p>
+
+<p><strong>Question:</strong> Does derived-artefact contract eventually move to Foundation per ADR-A12, or does each generating layer declare its own?</p>
+
+<p><strong>Current state:</strong> <code class="language-plaintext highlighter-rouge">srf:DerivedArtefact</code>, <code class="language-plaintext highlighter-rouge">srf:GeneratedSurface</code>, <code class="language-plaintext highlighter-rouge">srf:ReadSetEntry</code>, <code class="language-plaintext highlighter-rouge">srf:LawDischarge</code>, <code class="language-plaintext highlighter-rouge">srf:derivationAuthority</code>, and hash properties all declared in Surface, not Foundation.</p>
+
+<p><strong>Why it matters:</strong> ADR-A12 anticipates Foundation-level <code class="language-plaintext highlighter-rouge">fnd:DerivedArtefact</code>; Quantification §12 and Behaviour both name it as a blocking gap. Validation reports, entailment sets, and materialised bins want the same contract.</p>
+
+<p><strong>Implication:</strong> When Foundation gains it, Surface’s classes should become subclasses, not restructured. Classes are shaped to allow this, but migration is unplanned and duplication is real in the meantime.</p>
+
+<p><strong>Related:</strong> <a href="../../architecture/decisions/ADR-A22-mork-governance-and-versioning-foundation-alignment.md">ADR-A22</a> resolves ontology/governance/versioning alignment for MORK; this broader Foundation question is unaffected.</p>
+
+<hr />
+
+<h3 id="14-generated-term-markers-are-parentage-not-types---done">1.4 Generated-term markers are parentage, not types — ✅ Done</h3>
+
+<p><strong>Design:</strong> Every generated class is <code class="language-plaintext highlighter-rouge">rdfs:subClassOf srf:GeneratedClass</code>; every generated relation is <code class="language-plaintext highlighter-rouge">rdfs:subPropertyOf srf:generatedRelation</code>.</p>
+
+<p><strong>Why:</strong> MERIDIAN’s approach (asserting <code class="language-plaintext highlighter-rouge">owl:Class</code> with RDF properties, creating punning) causes OWL-API toolchain issues. Parentage avoids this.</p>
+
+<p><strong>Result:</strong> Enumerating a surface inventory is a subclass query; no punning. Provenance lives on <code class="language-plaintext highlighter-rouge">srf:GeneratedSymbol</code> records in manifest.</p>
+
+<hr />
+
+<h3 id="15-contract-and-example-locations---done">1.5 Contract and example locations — ✅ Done</h3>
+
+<p><strong>Layout:</strong></p>
+<ul>
+  <li>Generated packages: <code class="language-plaintext highlighter-rouge">ontology/surface/execution/&lt;contractKey&gt;/</code></li>
+  <li>Example contracts: <code class="language-plaintext highlighter-rouge">ontology/surface/examples/</code></li>
+  <li>Root ontology examples: <code class="language-plaintext highlighter-rouge">ontology/examples/</code> (for cross-layer composition, not single-layer worked examples)</li>
+</ul>
+
+<p><strong>Status:</strong> Accepted; no open action.</p>
+
+<hr />
+
+<h2 id="2-deferred-with-planned-approach">2. Deferred with Planned Approach</h2>
+
+<h3 id="21-srfrangepartitionpopulation--deferred-planned">2.1 <code class="language-plaintext highlighter-rouge">srf:RangePartitionPopulation</code> — Deferred, planned</h3>
+
+<p><strong>What it is:</strong> Bucketing law X7; creates nominal bucket classes for ranges within a dimension.</p>
+
+<p><strong>Blocker:</strong> Depends on Quantification partition semantics first.</p>
+
+<p><strong>Five-step unblocking path:</strong></p>
+
+<ol>
+  <li><strong>State the partition precondition</strong> (Quantification work): <code class="language-plaintext highlighter-rouge">qnt:PartitionRangeSet</code> subclass or <code class="language-plaintext highlighter-rouge">qnt:isPartition</code> flag with shape checking disjointness and coverage</li>
+  <li><strong>Settle boundary behaviour under each closure</strong> (Quantification): ranges meeting at <code class="language-plaintext highlighter-rouge">b</code> must be non-overlapping and complete</li>
+  <li><strong>Decide what the symbol denotes</strong> (Quantification + Surface): nominal bucket class needs <code class="language-plaintext highlighter-rouge">owl:onDatatype</code> with facets; profile declares <code class="language-plaintext highlighter-rouge">srf:OWL2DLEntailment</code> or materialises</li>
+  <li><strong>Naming policy</strong> (Surface): ranges need labels, or use <code class="language-plaintext highlighter-rouge">DigestLocalName</code>, or mint from bounds (<code class="language-plaintext highlighter-rouge">bucket_0_100</code>, etc.)</li>
+  <li><strong>Invalidation</strong> (Surface): read-set entry under existing freshness rule; no new machinery</li>
+</ol>
+
+<p><strong>Effort:</strong> Most work is steps 1–2 (Quantification). Surface’s part is small once partition guarantee exists.</p>
+
+<hr />
+
+<h3 id="22-stacking-beyond-depth-1--deferred-planned">2.2 Stacking beyond depth 1 — Deferred, planned</h3>
+
+<p><strong>Current limit:</strong> <code class="language-plaintext highlighter-rouge">srf:StackDepthReleaseCeilingShape</code> caps at depth 1; deleting it lifts the cap.</p>
+
+<p><strong>What exists:</strong> <code class="language-plaintext highlighter-rouge">srf:permittedStackDepth</code>, <code class="language-plaintext highlighter-rouge">srf:stackDepth</code>, <code class="language-plaintext highlighter-rouge">srf:SurfaceSource</code> read-set entries, <code class="language-plaintext highlighter-rouge">srf:S10</code> check.</p>
+
+<p><strong>What must exist first:</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Item</th>
+      <th>Status</th>
+      <th>Detail</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Read set becomes a DAG</td>
+      <td>Not yet</td>
+      <td>At depth <em>n</em>, surface semantic hash must incorporate <em>artefact</em> hashes of input surfaces for three-level-deep changes to propagate</td>
+    </tr>
+    <tr>
+      <td>X1 composition law</td>
+      <td>✅ Done</td>
+      <td><a href="../../architecture/decisions/ADR-A21-signature-scope-composition-for-stacked-surfaces.md">ADR-A21</a>: <code class="language-plaintext highlighter-rouge">signatureScope</code> is <code class="language-plaintext highlighter-rouge">SourceSignature</code> if any input is</td>
+    </tr>
+    <tr>
+      <td>R1 composition law</td>
+      <td>✅ Done</td>
+      <td>ADR-A21: every surface in stack shares one profile identity, checked statically</td>
+    </tr>
+    <tr>
+      <td>Cycle detection</td>
+      <td>Not yet</td>
+      <td>Needed before depth cap lifts</td>
+    </tr>
+    <tr>
+      <td>Invalidation cost</td>
+      <td>Not yet</td>
+      <td>Not measured on FBO chain; impact table has no stacked-regeneration row; tracked under <a href="../../architecture/decisions/ADR-A27-invalidation-and-minimal-scope-regeneration-policy.md">ADR-A27</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Current use:</strong> FBO chain (CSO → promoted dimension → nominal index) is depth 1; works today.</p>
+
+<hr />
+
+<h3 id="23-srfexternalindex-admission-criteria--deferred">2.3 <code class="language-plaintext highlighter-rouge">srf:ExternalIndex</code> admission criteria — Deferred</h3>
+
+<p><strong>What it is:</strong> Index over an external store without materialisation into the core graph.</p>
+
+<p><strong>Status:</strong> Declared and rejected (per <code class="language-plaintext highlighter-rouge">bhv:Proportional</code> precedent — visibly unavailable rather than silently absent).</p>
+
+<p><strong>What’s needed:</strong></p>
+<ul>
+  <li>Way to name the store and index without substrate depending on specific store</li>
+  <li>Statement of what “surface is fresh” means when index cannot be hashed</li>
+  <li>Decision about whether store-native index can discharge parity (R2) at all</li>
+</ul>
+
+<p><strong>Timeline:</strong> Left until a deployment actually needs it.</p>
+
+<hr />
+
+<h2 id="3-known-gaps">3. Known Gaps</h2>
+
+<h3 id="31-foundation-migration-for-derived-artefact-contract---closed-2026-09-25">3.1 Foundation migration for derived-artefact contract — ✅ Closed (2026-09-25)</h3>
+
+<p>See §1.3 above. Resolved by <a href="../../architecture/decisions/ADR-A92-derived-artefact-contract-and-prov-o-alignment.md">ADR-A92</a>: <code class="language-plaintext highlighter-rouge">srf:DerivedArtefact ⊑ fnd:DerivedArtefact</code> (<code class="language-plaintext highlighter-rouge">applied-ontology-readiness</code> AOR-12). §3.3 (profile identity) is no longer blocked on it.</p>
+
+<hr />
+
+<h3 id="32-adr-a01-convention-conflict---closed">3.2 ADR-A01 convention conflict — ✅ Closed</h3>
+
+<p><strong>Resolution:</strong> Ontology header is authored in README’s <code class="language-plaintext highlighter-rouge">turtle-spec</code> fence, per <a href="../../architecture/decisions/ADR-A01-layer-dependency-order.md#decision">ADR-A01</a>. Matches Eligibility, Behaviour, and Surface practice. Foundation, Vocabulary, and Party are outliers to correct.</p>
+
+<hr />
+
+<h3 id="33-profile-identity-is-computed-not-modelled---unblocked-not-started">3.3 Profile identity is computed, not modelled — ⏳ Unblocked, not started</h3>
+
+<p><strong>Current state:</strong> <code class="language-plaintext highlighter-rouge">Profile.identity()</code> in compiler concatenates profile IRI, generator version, canonicalisation version, entailment regime, naming normalisation, symbol mode, and permitted stack depth. Pure computation, not represented in graph.</p>
+
+<p><strong>Missing:</strong> <code class="language-plaintext highlighter-rouge">srf:profileIdentityHash</code> asserted on generated surface would close this.</p>
+
+<p><strong>Blocker:</strong> None since §3.1 closed (2026-09-25). A Surface change adding <code class="language-plaintext highlighter-rouge">srf:profileIdentityHash</code> remains to be scheduled.</p>
+
+<hr />
+
+<h3 id="34-partial-implementations">3.4 Partial implementations</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Item</th>
+      <th>Status</th>
+      <th>What’s left</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>R2 parity harness</td>
+      <td>Partial</td>
+      <td><code class="language-plaintext highlighter-rouge">tools/surface/parity.py</code> implements comparison; wiring to shared conformance corpus remains (tracked under <a href="../../architecture/decisions/ADR-A28-parity-and-conformance-release-gate.md">ADR-A28</a>)</td>
+    </tr>
+    <tr>
+      <td>MORK <code class="language-plaintext highlighter-rouge">mrk:ProjectionMapping</code></td>
+      <td>✅ Done</td>
+      <td>Implemented in <code class="language-plaintext highlighter-rouge">tools/surface/mork.py</code> bidirectionally against <code class="language-plaintext highlighter-rouge">ontology/mork/spec/Mork.ttl</code>; see <a href="../../architecture/decisions/ADR-A18-surface-to-mork-lowering-boundary.md">ADR-A18</a></td>
+    </tr>
+    <tr>
+      <td>insure-o port</td>
+      <td>Blocked</td>
+      <td>Correctly deferred: insure-o dropping in favour of CSO/FBO port; three non-domain examples exercise every mechanism except range partitions</td>
+    </tr>
+    <tr>
+      <td>SHACL validation of Surface shapes</td>
+      <td>Blocked</td>
+      <td>No SHACL engine in authoring environment; syntactically checked but not executed. Compiler agreement not shape validation. Mandatory CI gate under <a href="../../architecture/decisions/ADR-A28-parity-and-conformance-release-gate.md">ADR-A28</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h3 id="35-compiler-limitations">3.5 Compiler Limitations</h3>
+
+<h4 id="entailment-regimes-recorded-but-not-acted-on--deferred">Entailment regimes recorded but not acted on — Deferred</h4>
+
+<p><strong>Current:</strong> Compiler always reads asserted triples. Correct for <code class="language-plaintext highlighter-rouge">srf:NoEntailment</code>, gap for others.</p>
+
+<p><strong>Implementation:</strong> <code class="language-plaintext highlighter-rouge">tools/surface/compile.py::check_entailment_regime()</code> now refuses to compile under anything but NoEntailment, closing the <em>silent</em> gap. Reasoner integration for other regimes still not started.</p>
+
+<p><strong>Decision needed:</strong> Choose a reasoner (owlrl for RDFS/OWL 2 RL, external EL reasoner for nominal form) and decide whether compiler materialises entailments before reading or requires caller to.</p>
+
+<h4 id="parity-cannot-check-definitiononly-forms--deferred">Parity cannot check <code class="language-plaintext highlighter-rouge">DefinitionOnly</code> forms — Deferred</h4>
+
+<p><strong>Why:</strong> Parity compares assertions; <code class="language-plaintext highlighter-rouge">DefinitionOnly</code> surfaces assert nothing. Reports as skipped with regime named rather than silently passed.</p>
+
+<p><strong>Dependency:</strong> Same as entailment regimes item above.</p>
+
+<h4 id="blank-node-labels-visible-in-emitted-modules---accepted-tradeoff">Blank-node labels visible in emitted modules — ✅ Accepted Tradeoff</h4>
+
+<p><strong>Design:</strong> Minted from the term they belong to (<code class="language-plaintext highlighter-rouge">_:RoleAssignment_job-family_Sales_def_l0</code>).</p>
+
+<p><strong>Why kept:</strong> Stable diffs for regenerated modules. Hashing no longer depends on this (canonical form relabels blank nodes by position), so this is a style choice per law <code class="language-plaintext highlighter-rouge">srf:R3</code>.</p>
+
+<h4 id="canonicalisation-performance--watch-item">Canonicalisation performance — Watch item</h4>
+
+<p><strong>Status:</strong> <code class="language-plaintext highlighter-rouge">to_canonical_graph</code> is superlinear on blank-node-bearing graphs. Read-set inputs are almost always blank-node-free (cost is sort). Large <code class="language-plaintext highlighter-rouge">core.ttl</code> with one blank-node per population member is the case to watch.</p>
+
+<p><strong>Action if triggered:</strong> Hash per-subject and fold rather than abandoning canonical form.</p>
+
+<hr />
+
+<h3 id="36-canonicalisation-contract-srf-canon1--srf-canon2---closed">3.6 Canonicalisation contract <code class="language-plaintext highlighter-rouge">srf-canon/1</code> → <code class="language-plaintext highlighter-rouge">srf-canon/2</code> — ✅ Closed</h3>
+
+<p><strong>Change:</strong> Switched from sorted rendering to <code class="language-plaintext highlighter-rouge">rdflib.compare</code>’s canonical graph. Blank-node-label independent; graph read from anywhere hashes stably.</p>
+
+<p><strong>Impact:</strong> All previously recorded hashes are stale by design. Three committed example packages regenerated per <code class="language-plaintext highlighter-rouge">ontology/surface/execution/README.md</code>.</p>
+
+<p><strong>Status:</strong> Examples and fixtures declare <code class="language-plaintext highlighter-rouge">srf-canon/2</code> and generator <code class="language-plaintext highlighter-rouge">0.2.0</code>. Runbook for future cutovers tracked under <a href="../../architecture/decisions/ADR-A27-invalidation-and-minimal-scope-regeneration-policy.md">ADR-A27</a>.</p>
+
+<hr />
+
+<h3 id="37-surface-to-mork-lowering-engine-adr-a18---verified">3.7 Surface-to-MORK lowering engine (ADR-A18) — ✅ Verified</h3>
+
+<p><strong>Implementation:</strong> <code class="language-plaintext highlighter-rouge">tools/surface/lowering.py</code> implements deterministic lowering:</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">lower_projection</code> — for ProjectionContract (no direct-emit form)</li>
+  <li><code class="language-plaintext highlighter-rouge">lower_contract</code> — for Promotion/Index (when deployment mirrors to MORK)</li>
+  <li><code class="language-plaintext highlighter-rouge">lower_all</code>/<code class="language-plaintext highlighter-rouge">link_dependencies</code> — one mapping graph per batch with dependency edges</li>
+</ul>
+
+<p><strong>Verification:</strong> <code class="language-plaintext highlighter-rouge">python -m unittest surface.test_surface -v</code> passes 61/61 including:</p>
+<ul>
+  <li>ContractLoweringTests</li>
+  <li>LoweringDependencyTests</li>
+  <li>Projection lowering</li>
+  <li>Determinism checks</li>
+  <li>MORK interop</li>
+</ul>
+
+<p><strong>Note on goldens:</strong> No committed lowering output; regenerate with <code class="language-plaintext highlighter-rouge">python -m surface lower --contracts ontology/surface/examples/saas-subscription-arr-projection.ttl</code> and commit result under <code class="language-plaintext highlighter-rouge">ontology/surface/execution/</code>.</p>
+
+<hr />
+
+<h2 id="4-findings-151155">4. Findings 15.1–15.5</h2>
+
+<h3 id="41-elgboundscheme-did-not-exist---closed">4.1 <code class="language-plaintext highlighter-rouge">elg:boundScheme</code> did not exist — ✅ Closed</h3>
+
+<p><strong>Fix:</strong> Implemented as option (c), <code class="language-plaintext highlighter-rouge">elg:constrainedByContract</code>.</p>
+
+<p><strong>Location:</strong> <code class="language-plaintext highlighter-rouge">ontology/eligibility/spec/eligibility.ttl</code>, <code class="language-plaintext highlighter-rouge">ontology/eligibility/README.md</code>, <code class="language-plaintext highlighter-rouge">ontology/eligibility/shapes/rules.ttl</code>.</p>
+
+<hr />
+
+<h3 id="42-elghierarchicalclosurerule-unscoped---closed">4.2 <code class="language-plaintext highlighter-rouge">elg:HierarchicalClosureRule</code> unscoped — ✅ Closed</h3>
+
+<p><strong>Fix:</strong> Removed from <code class="language-plaintext highlighter-rouge">ontology/eligibility/shapes/</code> per <a href="../../surface/docs/eligibility-L9-replacement.md">eligibility-L9-replacement.md</a>.</p>
+
+<p><strong>Status:</strong> No remaining reference in Eligibility layer.</p>
+
+<hr />
+
+<h3 id="43-ins-vs-ino-properties---closed">4.3 <code class="language-plaintext highlighter-rouge">ins:</code> vs <code class="language-plaintext highlighter-rouge">ino:</code> properties — ✅ Closed</h3>
+
+<p><strong>Status:</strong> Dropped; insure-o is being phased out. CSO scopes peril via <code class="language-plaintext highlighter-rouge">hasPerilScope</code> on <code class="language-plaintext highlighter-rouge">TermApplication</code>.</p>
+
+<hr />
+
+<h3 id="44-fndgovernancestate-individuals-undeclared---closed">4.4 <code class="language-plaintext highlighter-rouge">fnd:GovernanceState</code> individuals undeclared — ✅ Closed</h3>
+
+<p><strong>Previous status (wrong):</strong> Marked “Done” — actually was a real gap.</p>
+
+<p><strong>Fix:</strong> Now declared in <code class="language-plaintext highlighter-rouge">ontology/foundation/vocab/foundation-vocab.ttl</code> as part of Phase 4 MORK governance work (needed them to be real).</p>
+
+<hr />
+
+<h3 id="45-bhvtargetsallowance-readmespec-drift---closed">4.5 <code class="language-plaintext highlighter-rouge">bhv:targetsAllowance</code> README⇄spec drift — ✅ Closed</h3>
+
+<p><strong>Fix:</strong> Hand-remediated. <code class="language-plaintext highlighter-rouge">tools/lattice_tooling/literate_extract.py --check</code> catches future drifts.</p>
+
+<hr />
+
+<h2 id="5-mork-toolchain-join-assumptions---decision-needed">5. MORK Toolchain Join Assumptions — ⏳ Decision Needed</h2>
+
+<p><code class="language-plaintext highlighter-rouge">tools/surface/mork.py</code> and <code class="language-plaintext highlighter-rouge">tools/mork2rml.py</code> are written against this repository’s ontologies. Before production, confirm these assumptions against a live toolchain checkout:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Assumption</th>
+      <th>Verification</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>MORK terms at <code class="language-plaintext highlighter-rouge">http://www.nebularis.org/ontologies/Mork#</code></td>
+      <td>✅ Confirmed: <code class="language-plaintext highlighter-rouge">ontology/mork/spec/Mork.ttl</code>. <code class="language-plaintext highlighter-rouge">ontology/mork/targets/insure-o-target.ttl</code> binds <code class="language-plaintext highlighter-rouge">mk:</code> to lattice namespace — both bound in <code class="language-plaintext highlighter-rouge">namespaces.py</code>; <code class="language-plaintext highlighter-rouge">MORK</code> is the one used</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">mrk:GenerativeMapping</code>, <code class="language-plaintext highlighter-rouge">DataMapping</code>, <code class="language-plaintext highlighter-rouge">TargetingSpec</code>, <code class="language-plaintext highlighter-rouge">ParameterBinding</code> (paramName/paramType/paramValue), <code class="language-plaintext highlighter-rouge">OwlClass</code>, <code class="language-plaintext highlighter-rouge">mappingScheme</code>, <code class="language-plaintext highlighter-rouge">mappingFor</code>, <code class="language-plaintext highlighter-rouge">reviewStatus</code>, <code class="language-plaintext highlighter-rouge">provenanceCreated</code> exist with those names</td>
+      <td>⏳ Use grep before first production run; silent failures if renamed</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ProjectionMapping</code>, <code class="language-plaintext highlighter-rouge">generatesClassDefinition</code>, <code class="language-plaintext highlighter-rouge">ProjectionProvenance</code>, <code class="language-plaintext highlighter-rouge">hasProjectionProvenance</code> exist</td>
+      <td>✅ Confirmed: <code class="language-plaintext highlighter-rouge">ontology/mork/spec/Mork.ttl</code></td>
+    </tr>
+    <tr>
+      <td>Compiler is sibling of <code class="language-plaintext highlighter-rouge">mork2rml.py</code> under <code class="language-plaintext highlighter-rouge">tools/</code>, not in MORK package</td>
+      <td>⏳ If toolchain has shared package, <code class="language-plaintext highlighter-rouge">serialise.py</code> and parts of <code class="language-plaintext highlighter-rouge">namespaces.py</code> may duplicate utilities</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">mork_communities/shadow.py</code> is unrelated</td>
+      <td>✅ Confirmed: builds MORK-internal <code class="language-plaintext highlighter-rouge">OwlAxiom</code> shadows; Surface shadows nothing</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Open question:</strong> Whether to reuse MORK’s <code class="language-plaintext highlighter-rouge">precedes</code> derivation ordering for Surface’s generated-module order (class definitions → memberships → closure relations) instead of <code class="language-plaintext highlighter-rouge">owl:imports</code>. Currently uses <code class="language-plaintext highlighter-rouge">owl:imports</code> (surface consumed as unit). If toolchain expects <code class="language-plaintext highlighter-rouge">precedes</code>, add to manifest.</p>
+
+<hr />
+
+<h2 id="document-status">Document Status</h2>
+
+<p>This document is a reference for items deferred, in-progress, or requiring decisions. For phase-level status and verification checklist, see <a href="/developer/status/surface-mork-unified-projection.html">surface-mork-unified-projection.md</a>.</p>
+
+<p><strong>Last updated:</strong> 2026-09-22<br />
+<strong>Next review:</strong> Upon SWRL verification completion (Phase 8 blocker) or Phase 9 authorization</p>

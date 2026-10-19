@@ -1,0 +1,165 @@
+<p>The AIR epic has been idle since 2026-09-30. Most of what is left does not depend on CCS. Only Phase 5, the claims half of Phase 6, and substrate items S2 and S7 wait on CCS or NRS. Phases 2, 3 and 4 and AIR-6.1 can all be finished now, which covers milestones M1 to M3.</p>
+
+<h2 id="where-the-epic-stands">Where the epic stands</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Phase</th>
+      <th>State</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>0 Decisions, 1 Module split</td>
+      <td>complete</td>
+    </tr>
+    <tr>
+      <td>2 Peril vocabulary</td>
+      <td>AIR-2.1 merged. AIR-2.2 briefed, not started</td>
+    </tr>
+    <tr>
+      <td>3 Readings and crosswalks</td>
+      <td>AIR-3.1 and AIR-3.2 merged. AIR-3.3 briefed, not started</td>
+    </tr>
+    <tr>
+      <td>4 Exposure</td>
+      <td>AIR-4.1 briefed, not started. <code class="language-plaintext highlighter-rouge">ontology/applied/insurance/exposure/</code> does not exist yet</td>
+    </tr>
+    <tr>
+      <td>5 Contract module</td>
+      <td>deferred until CCS C9 is merged and the Open CBAA integration is done</td>
+    </tr>
+    <tr>
+      <td>6, S</td>
+      <td>not started</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Round 3 (AIR-2.2, AIR-4.1, AIR-3.3) stopped when machine R moved to CCS. The status record was last updated 2026-09-30 and says the round-3 branches don’t exist yet. They do exist on <code class="language-plaintext highlighter-rouge">origin</code>, but they are 276 commits behind <code class="language-plaintext highlighter-rouge">main</code> and hold only their brief commits, which <code class="language-plaintext highlighter-rouge">main</code> already contains (checked 2026-10-13, every <code class="language-plaintext highlighter-rouge">air/*</code> branch is an ancestor of <code class="language-plaintext highlighter-rouge">origin/main</code>). The status record and INDEX.md were out of date, and are now updated.</p>
+
+<h2 id="what-can-run-while-ccs-continues">What can run while CCS continues</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Work</th>
+      <th>Lane</th>
+      <th>Depends on CCS?</th>
+      <th>Before branching</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>AIR-3.3</strong> (SWRL and OWL readings)</td>
+      <td>R</td>
+      <td>No. CCS needs it: C13 waits on AIR-3.3</td>
+      <td>needs a design answer first (see below)</td>
+    </tr>
+    <tr>
+      <td><strong>AIR-2.2</strong> (characteristic schemes)</td>
+      <td>S</td>
+      <td>No. Only re-pins when CCS bumps a lower layer</td>
+      <td>brief needs its version numbers updated</td>
+    </tr>
+    <tr>
+      <td><strong>AIR-4.1</strong> (exposure core)</td>
+      <td>S</td>
+      <td>No. Only re-pins</td>
+      <td>brief needs its version numbers updated</td>
+    </tr>
+    <tr>
+      <td>AIR-2.3 to 2.7, 4.2 to 4.6, 3.4, 3.5, 6.1</td>
+      <td>S, with 3.5 on R</td>
+      <td>No</td>
+      <td>rolling-wave briefs still to write. Round 4’s are AIR-2.3, 2.4, 4.2 and 4.4</td>
+    </tr>
+    <tr>
+      <td>Substrate S6, spatial guidance (text only)</td>
+      <td>S</td>
+      <td>No</td>
+      <td>brief</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Not now:</p>
+<ul>
+  <li>Phase 5 waits on CCS C9 and the C17 handoff.</li>
+  <li>AIR-6.2 (claims) follows Phase 5.</li>
+  <li>S2 is paired with CCS C9b3, and S7 with NRS N10.</li>
+  <li>S1, S4 and S5 change substrate layers that CCS is still bumping. The lanes plan merges substrate branches after AIR-6.1 anyway.</li>
+</ul>
+
+<h2 id="what-changed-under-the-briefs-since-2026-09-30">What changed under the briefs since 2026-09-30</h2>
+
+<ol>
+  <li><strong>AIR-3.3 overlaps with CCS HQ-6a.2.</strong> That branch (<code class="language-plaintext highlighter-rouge">ccs/hq6a2-closures-compilers</code>) is accepted but not merged. It changes <code class="language-plaintext highlighter-rouge">eligibility_ir.py</code>, <code class="language-plaintext highlighter-rouge">sparql_backend.py</code> and <code class="language-plaintext highlighter-rouge">test_set_readings.py</code>, and adds closed bindings to set readings. It leaves SWRL and OWL refusing set readings (HQ6a2-10), and AIR-3.3 is the slice that removes those refusals. The AIR-3.3 brief predates closures, so it has to say what SWRL and OWL do with a closed binding. HQ-6a.1 has also changed the two examples that AIR33-04 to 06 use. The design question is AIR-3.3-Q1:
+    <ul>
+      <li><strong>(a) Compile a closed binding as its open reading, with a mapping note.</strong> My hypothesis is that SWRL stays sound. Each rule it emits is fixed by one value, which still holds under a closed reading, so a closure only adds decisions that SPARQL makes and SWRL does not. OWL’s open-world reading would then also ignore the closure, which fits design-time checks.</li>
+      <li><strong>(b) Keep refusing closed bindings in SWRL and OWL.</strong> This is simpler, but closures then never reach the reasoner routes.</li>
+    </ul>
+
+    <p>Either way, HQ-6a.2 should merge first and <code class="language-plaintext highlighter-rouge">air/3.3</code> should be rebuilt from <code class="language-plaintext highlighter-rouge">main</code>.</p>
+  </li>
+  <li>
+    <p><strong>AIR-2.2 and AIR-4.1 have old version numbers.</strong> CCS cascades moved the layers these briefs pin:</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Layer</th>
+          <th>Pinned in briefs</th>
+          <th>Now</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>peril</td>
+          <td>0.1.0</td>
+          <td>0.4.0</td>
+        </tr>
+        <tr>
+          <td>common</td>
+          <td>0.1.0</td>
+          <td>0.5.0</td>
+        </tr>
+        <tr>
+          <td>Foundation</td>
+          <td>0.3.0</td>
+          <td>0.4.0</td>
+        </tr>
+        <tr>
+          <td>Vocabulary</td>
+          <td>0.3.0</td>
+          <td>0.4.0</td>
+        </tr>
+        <tr>
+          <td>Quantification</td>
+          <td>0.5.0</td>
+          <td>0.8.0</td>
+        </tr>
+        <tr>
+          <td>Party</td>
+          <td>0.5.0</td>
+          <td>0.9.0</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>No design change is needed. <code class="language-plaintext highlighter-rouge">pty:Actor</code> and <code class="language-plaintext highlighter-rouge">pty:RoleOccupancy</code> still exist, and AIR-4.1 already uses <code class="language-plaintext highlighter-rouge">fnd:Key</code>. CCS slice C16c will remove Party’s shares later. That is worth a check against <code class="language-plaintext highlighter-rouge">aeo:controlShare</code>, but it doesn’t block AIR-4.1.</p>
+  </li>
+  <li><strong>Re-pins will recur.</strong> Every CCS bump of Foundation, Vocabulary, Quantification or Party forces an in-flight AIR branch to re-pin at rebase (lanes §6 step 3). It is mechanical, but S branches should be kept short and merged promptly.</li>
+</ol>
+
+<h2 id="proposed-order">Proposed order</h2>
+
+<ol>
+  <li>On <code class="language-plaintext highlighter-rouge">main</code>, update the AIR-2.2 and AIR-4.1 briefs and their Validation Pack skeletons. Update the status record and INDEX too. I can do this now if you want.</li>
+  <li>You answer AIR-3.3-Q1. HQ-6a.2 merges, and then I amend the AIR-3.3 brief.</li>
+  <li>S builds AIR-2.2, then AIR-4.1, on one new branch from <code class="language-plaintext highlighter-rouge">main</code>, <code class="language-plaintext highlighter-rouge">air/applied-reference</code>, not on the rebuilt per-slice branches. The old branches are deleted. AIR-3.3 is rebuilt from <code class="language-plaintext highlighter-rouge">main</code> later, on its own branch (lanes §2, §3).</li>
+  <li>In parallel, R drafts the round-4 briefs (AIR-2.3, 2.4, 4.2, 4.4). The lanes plan says R verifies S bundles before continuing other work. That rule should now apply to CCS slices as well as NRS ones.</li>
+</ol>
+
+<p>🔴 PLAN FIRST: AIR-2.2 and AIR-4.1 need their briefs updated on <code class="language-plaintext highlighter-rouge">main</code>, AIR-3.3 needs AIR-3.3-Q1 answered and its brief amended after HQ-6a.2 merges, and AIR-2.3, AIR-2.4, AIR-4.2 and AIR-4.4 need briefs drafted before their branches.</p>

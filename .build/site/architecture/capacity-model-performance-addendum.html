@@ -1,0 +1,539 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="addendum-capacity-model-runtime-performance-for-financial-transactions">Addendum: Capacity Model Runtime Performance for Financial Transactions</h1>
+
+<p><strong>Status:</strong> Proposed addendum<br />
+<strong>Date:</strong> 2026-09-18<br />
+<strong>Scope:</strong> T-Box suitability and runtime-view design constraints for high-throughput financial transaction evaluation<br />
+<strong>Context:</strong> Complements <code class="language-plaintext highlighter-rouge">capacity-domain-analysis-and-design.md</code></p>
+
+<hr />
+
+<h2 id="1-purpose">1. Purpose</h2>
+
+<p>This addendum evaluates whether the current generic layering (<code class="language-plaintext highlighter-rouge">behaviour</code> + <code class="language-plaintext highlighter-rouge">quantification</code> + proposed <code class="language-plaintext highlighter-rouge">capacity</code>) is suitable for high-throughput financial transaction runtime.</p>
+
+<p>It does not replace the generic ontology design.<br />
+It defines the runtime constraints and an optimised semantic shape the projection layer should materialise for execution.</p>
+
+<p>The core principle is:</p>
+
+<blockquote>
+  <p>Keep generic source semantics rich and composable.<br />
+Execute on a compact, normalised runtime projection with bounded-hop lookups.</p>
+</blockquote>
+
+<hr />
+
+<h2 id="2-design-assumption">2. Design assumption</h2>
+
+<p>The canonical source graph remains generic, expressive, and provenance-complete.</p>
+
+<p>A deterministic projection compiles source assertions into a runtime execution graph optimised for:</p>
+
+<ul>
+  <li>low-latency admission checks,</li>
+  <li>low-latency amount arithmetic,</li>
+  <li>deterministic ordering,</li>
+  <li>bounded traversal depth,</li>
+  <li>stable key-based joins,</li>
+  <li>efficient incremental invalidation.</li>
+</ul>
+
+<p>This addendum focuses on <strong>what that runtime T-Box should look like</strong> for transaction processing.</p>
+
+<hr />
+
+<h2 id="3-why-this-is-needed">3. Why this is needed</h2>
+
+<p>The generic model is semantically correct but can be expensive at runtime if used directly.</p>
+
+<p>Typical expensive source-path patterns:</p>
+
+<ol>
+  <li>Demand → Draw → Resource → AllowanceDefinition → ValueSpace → Quantity conversion → account balance.</li>
+  <li>Resource → GuardDefinition → Eligibility profile → condition set → question set → decision.</li>
+  <li>Resource → Dependency node → source resource → source account → balance → target draw cap.</li>
+  <li>Draw decision requiring repeated compatibility checks across <code class="language-plaintext highlighter-rouge">qnt:Quantity</code>, <code class="language-plaintext highlighter-rouge">qnt:Value</code>, <code class="language-plaintext highlighter-rouge">qnt:ValueSpace</code>, optional conversions, and recurrence/reset state.</li>
+  <li>State-dependent activation requiring transition graph inspection in addition to balance checks.</li>
+</ol>
+
+<p>If executed as-is over a general RDF store at transaction time, this introduces many joins and unpredictable latency under load.</p>
+
+<p>Financial transaction systems require stable and tight latency envelopes. The runtime graph must therefore collapse multi-hop semantics into compact execution-ready structures.</p>
+
+<hr />
+
+<h2 id="4-runtime-hot-paths-to-optimise">4. Runtime hot paths to optimise</h2>
+
+<h2 id="41-admission-hot-path">4.1 Admission hot path</h2>
+
+<p>For each incoming demand and candidate capacity resource:</p>
+
+<ol>
+  <li>Read effective admission status.</li>
+  <li>Read effective activation status.</li>
+  <li>Read effective bounded cap.</li>
+  <li>Decide eligible/not eligible in deterministic order.</li>
+</ol>
+
+<h3 id="runtime-requirement">Runtime requirement</h3>
+
+<p>Admission decision should be executable in O(1) node fetch plus small bounded joins for dependency checks.</p>
+
+<h2 id="42-allocation-hot-path">4.2 Allocation hot path</h2>
+
+<p>For each admitted resource:</p>
+
+<ol>
+  <li>Read current available balance.</li>
+  <li>Read request remainder.</li>
+  <li>Compute allocable amount = min(remainder, balance, bound cap).</li>
+  <li>Write draw record and new balance.</li>
+</ol>
+
+<h3 id="runtime-requirement-1">Runtime requirement</h3>
+
+<p>No dynamic ValueSpace discovery at this stage.<br />
+All quantities in the hot path must already be canonicalised to one execution unit per arrangement.</p>
+
+<h2 id="43-governing-capacity-hot-path">4.3 Governing-capacity hot path</h2>
+
+<p>For bounded/depleting relations:</p>
+
+<ol>
+  <li>Read governing resource execution balance.</li>
+  <li>Apply cap before draw.</li>
+  <li>Apply depletion after draw.</li>
+</ol>
+
+<h3 id="runtime-requirement-2">Runtime requirement</h3>
+
+<p>Dependency semantics must be pre-typed and phase-separated, with numeric precedence available directly on the dependency edge node.</p>
+
+<h2 id="44-reset-and-recurrence-hot-path">4.4 Reset and recurrence hot path</h2>
+
+<p>At processing boundary:</p>
+
+<ol>
+  <li>Determine whether reset applies.</li>
+  <li>If yes, restore balance according to policy.</li>
+  <li>Continue processing with deterministic ordering relative to pending draws.</li>
+</ol>
+
+<h3 id="runtime-requirement-3">Runtime requirement</h3>
+
+<p>Runtime node must carry precomputed reset profile key and next-effective boundary metadata.<br />
+No recurrence model traversal in the transaction loop.</p>
+
+<h2 id="45-ordering-hot-path">4.5 Ordering hot path</h2>
+
+<p>Where multiple resources can serve a demand:</p>
+
+<ol>
+  <li>Resolve sequence deterministically.</li>
+  <li>Apply draw and dependency effects in that order.</li>
+</ol>
+
+<h3 id="runtime-requirement-4">Runtime requirement</h3>
+
+<p>Single numeric sort key per executable relation and per executable resource path.<br />
+No fallback to graph insertion order or lexical URI order.</p>
+
+<hr />
+
+<h2 id="5-performance-oriented-runtime-t-box-profile">5. Performance-oriented runtime T-Box profile</h2>
+
+<p>This section proposes a compact execution profile ontology for projection outputs.<br />
+It is intentionally narrower than the source model.</p>
+
+<p>Prefix used for illustration:</p>
+
+<div class="language-turtle highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">@prefix</span><span class="w"> </span><span class="nn">capx:</span><span class="w"> </span><span class="nl">&lt;https://www.nebularis.org/neuro-semantic/lattice/applied/capacity/execution#&gt;</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span></code></pre></div></div>
+
+<h2 id="51-core-runtime-classes">5.1 Core runtime classes</h2>
+
+<h3 id="capxexecutablearrangement"><code class="language-plaintext highlighter-rouge">capx:ExecutableArrangement</code></h3>
+
+<p>Execution root containing only transaction-time required members.</p>
+
+<h3 id="capxexecutableresource"><code class="language-plaintext highlighter-rouge">capx:ExecutableResource</code></h3>
+
+<p>Flattened runtime representation of a capacity resource, with prebound execution-space quantities and direct links to executable balances and dependency sets.</p>
+
+<h3 id="capxexecutabledemand"><code class="language-plaintext highlighter-rouge">capx:ExecutableDemand</code></h3>
+
+<p>Runtime demand record with canonical requested amount in execution space.</p>
+
+<h3 id="capxexecutabledraw"><code class="language-plaintext highlighter-rouge">capx:ExecutableDraw</code></h3>
+
+<p>Runtime draw event record with pre-normalised fields and deterministic status coding.</p>
+
+<h3 id="capxexecutabledependency"><code class="language-plaintext highlighter-rouge">capx:ExecutableDependency</code></h3>
+
+<p>Typed and phase-specific dependency between executable resources.</p>
+
+<h3 id="capxexecutablebalance"><code class="language-plaintext highlighter-rouge">capx:ExecutableBalance</code></h3>
+
+<p>Current mutable or append-only tracked balance object for one executable resource.</p>
+
+<h3 id="capxexecutableguardstate"><code class="language-plaintext highlighter-rouge">capx:ExecutableGuardState</code></h3>
+
+<p>Pre-evaluated admission/activation state snapshot used in the transaction loop.</p>
+
+<h2 id="52-required-runtime-properties-minimal-hot-path-surface">5.2 Required runtime properties (minimal hot-path surface)</h2>
+
+<h3 id="on-capxexecutableresource">On <code class="language-plaintext highlighter-rouge">capx:ExecutableResource</code></h3>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">capx:resourceKey</code> (stable string key, unique within arrangement)</li>
+  <li><code class="language-plaintext highlighter-rouge">capx:maxCapacityAmount</code> (decimal)</li>
+  <li><code class="language-plaintext highlighter-rouge">capx:balanceRef</code> (<code class="language-plaintext highlighter-rouge">capx:ExecutableBalance</code>)</li>
+  <li><code class="language-plaintext highlighter-rouge">capx:executionSpaceKey</code> (string)</li>
+  <li><code class="language-plaintext highlighter-rouge">capx:admissionStateRef</code> (<code class="language-plaintext highlighter-rouge">capx:ExecutableGuardState</code>)</li>
+  <li><code class="language-plaintext highlighter-rouge">capx:priority</code> (integer)</li>
+  <li><code class="language-plaintext highlighter-rouge">capx:phaseBucket</code> (integer or enum)</li>
+  <li><code class="language-plaintext highlighter-rouge">capx:resetProfileKey</code> (string)</li>
+  <li><code class="language-plaintext highlighter-rouge">capx:activeFlag</code> (boolean snapshot, if policy allows snapshot-based activation)</li>
+</ul>
+
+<h3 id="on-capxexecutablebalance">On <code class="language-plaintext highlighter-rouge">capx:ExecutableBalance</code></h3>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">capx:availableAmount</code> (decimal)</li>
+  <li><code class="language-plaintext highlighter-rouge">capx:lastUpdatedAt</code> (dateTime)</li>
+  <li><code class="language-plaintext highlighter-rouge">capx:balanceVersion</code> (integer or hash)</li>
+  <li><code class="language-plaintext highlighter-rouge">capx:nonNegativeInvariant</code> (implicit via shape, not necessarily stored)</li>
+</ul>
+
+<h3 id="on-capxexecutabledependency">On <code class="language-plaintext highlighter-rouge">capx:ExecutableDependency</code></h3>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">capx:dependencyKind</code> (enum: <code class="language-plaintext highlighter-rouge">DepletesTarget</code>, <code class="language-plaintext highlighter-rouge">BoundsTarget</code>, <code class="language-plaintext highlighter-rouge">GatesTarget</code>)</li>
+  <li><code class="language-plaintext highlighter-rouge">capx:sourceResourceKey</code> (string)</li>
+  <li><code class="language-plaintext highlighter-rouge">capx:targetResourceKey</code> (string)</li>
+  <li><code class="language-plaintext highlighter-rouge">capx:precedence</code> (integer)</li>
+  <li><code class="language-plaintext highlighter-rouge">capx:phase</code> (enum: pre-draw, post-draw, activation)</li>
+  <li><code class="language-plaintext highlighter-rouge">capx:enabledFlag</code> (boolean snapshot)</li>
+  <li><code class="language-plaintext highlighter-rouge">capx:conditionKey</code> (optional, if conditional dependency supported)</li>
+</ul>
+
+<h3 id="on-capxexecutabledemand">On <code class="language-plaintext highlighter-rouge">capx:ExecutableDemand</code></h3>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">capx:demandKey</code> (stable string)</li>
+  <li><code class="language-plaintext highlighter-rouge">capx:requestedAmount</code> (decimal)</li>
+  <li><code class="language-plaintext highlighter-rouge">capx:remainingAmount</code> (decimal)</li>
+  <li><code class="language-plaintext highlighter-rouge">capx:executionSpaceKey</code> (string)</li>
+  <li><code class="language-plaintext highlighter-rouge">capx:sequence</code> (integer)</li>
+  <li><code class="language-plaintext highlighter-rouge">capx:receivedAt</code> (dateTime)</li>
+</ul>
+
+<h3 id="on-capxexecutabledraw">On <code class="language-plaintext highlighter-rouge">capx:ExecutableDraw</code></h3>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">capx:drawKey</code> (stable string)</li>
+  <li><code class="language-plaintext highlighter-rouge">capx:demandKey</code></li>
+  <li><code class="language-plaintext highlighter-rouge">capx:resourceKey</code></li>
+  <li><code class="language-plaintext highlighter-rouge">capx:requestedAmount</code> (decimal)</li>
+  <li><code class="language-plaintext highlighter-rouge">capx:allocatedAmount</code> (decimal)</li>
+  <li><code class="language-plaintext highlighter-rouge">capx:unmetAmount</code> (decimal)</li>
+  <li><code class="language-plaintext highlighter-rouge">capx:statusCode</code> (compact enum)</li>
+  <li><code class="language-plaintext highlighter-rouge">capx:executedAt</code> (dateTime)</li>
+  <li><code class="language-plaintext highlighter-rouge">capx:executionOrder</code> (integer)</li>
+</ul>
+
+<h3 id="on-capxexecutableguardstate">On <code class="language-plaintext highlighter-rouge">capx:ExecutableGuardState</code></h3>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">capx:admittedFlag</code> (boolean)</li>
+  <li><code class="language-plaintext highlighter-rouge">capx:activationFlag</code> (boolean)</li>
+  <li><code class="language-plaintext highlighter-rouge">capx:guardStateVersion</code> (hash or integer)</li>
+  <li><code class="language-plaintext highlighter-rouge">capx:evaluatedAt</code> (dateTime)</li>
+</ul>
+
+<hr />
+
+<h2 id="6-normalisation-strategy-for-runtime-efficiency">6. Normalisation strategy for runtime efficiency</h2>
+
+<h2 id="61-quantity-flattening">6.1 Quantity flattening</h2>
+
+<p>For transaction-time evaluation:</p>
+
+<ul>
+  <li>materialise canonical decimal amounts directly on runtime nodes,</li>
+  <li>keep source <code class="language-plaintext highlighter-rouge">qnt:Quantity</code> objects for provenance and audit in the source graph,</li>
+  <li>maintain explicit links from runtime decimals back to source quantity IRIs where needed for trace.</li>
+</ul>
+
+<p>This avoids repeated <code class="language-plaintext highlighter-rouge">Quantity -&gt; Value -&gt; ValueSpace</code> expansion in hot loops.</p>
+
+<h2 id="62-value-space-canonicalisation">6.2 Value-space canonicalisation</h2>
+
+<p>Per executable arrangement:</p>
+
+<ul>
+  <li>define one execution space key for each compatible amount family,</li>
+  <li>precompute all conversion paths at projection time,</li>
+  <li>reject unresolved or ambiguous conversion at projection time, not runtime.</li>
+</ul>
+
+<p>Hot path must perform no semantic conversion discovery.</p>
+
+<h2 id="63-guard-state-pre-evaluation">6.3 Guard-state pre-evaluation</h2>
+
+<p>Eligibility and activation logic remain generic in source semantics.<br />
+Projection materialises a runtime guard-state snapshot.</p>
+
+<p>Transaction loop consumes booleans and versions, not full Eligibility graphs.</p>
+
+<p>Where policy requires fully live guard recalculation per demand, recalc should be confined to targeted changed resources, not global re-evaluation.</p>
+
+<h2 id="64-dependency-phase-separation">6.4 Dependency phase separation</h2>
+
+<p>Materialise phase-specific dependency sets:</p>
+
+<ul>
+  <li>pre-draw constraints (bounds),</li>
+  <li>activation transitions (gates),</li>
+  <li>post-draw depletion.</li>
+</ul>
+
+<p>Do not infer phase from dependency type at runtime.</p>
+
+<h2 id="65-key-based-joins">6.5 Key-based joins</h2>
+
+<p>All hot-path joins should be by compact stable keys (<code class="language-plaintext highlighter-rouge">resourceKey</code>, <code class="language-plaintext highlighter-rouge">demandKey</code>) rather than by long IRIs and repeated RDF term comparisons.</p>
+
+<p>IRI links remain for semantic traceability but are not the primary runtime join surface.</p>
+
+<h2 id="66-deterministic-order-fields">6.6 Deterministic order fields</h2>
+
+<p>Store explicit numeric order for:</p>
+
+<ul>
+  <li>resource traversal,</li>
+  <li>dependency traversal,</li>
+  <li>draw write ordering.</li>
+</ul>
+
+<p>Never rely on graph store iteration order.</p>
+
+<hr />
+
+<h2 id="7-runtime-graph-invariants">7. Runtime graph invariants</h2>
+
+<p>The runtime projection should enforce the following invariants by shape constraints and compile-time checks.</p>
+
+<ol>
+  <li><strong>Non-negativity</strong>
+    <ul>
+      <li>max capacity, available balance, requested, allocated, unmet all &gt;= 0.</li>
+    </ul>
+  </li>
+  <li><strong>Bounded allocation</strong>
+    <ul>
+      <li>allocated &lt;= requested</li>
+      <li>allocated &lt;= available pre-draw</li>
+      <li>allocated &lt;= effective cap after pre-draw bounds.</li>
+    </ul>
+  </li>
+  <li><strong>Conservation</strong>
+    <ul>
+      <li>requested = allocated + unmet per draw.</li>
+      <li>per-demand conservation across multi-resource sequence.</li>
+    </ul>
+  </li>
+  <li><strong>Space consistency</strong>
+    <ul>
+      <li>demand and resource execution-space keys must match.</li>
+      <li>dependencies cannot cross incompatible execution-space keys.</li>
+    </ul>
+  </li>
+  <li><strong>Deterministic ordering</strong>
+    <ul>
+      <li>precedence unique per target per phase.</li>
+      <li>execution order total for all applicable dependencies.</li>
+    </ul>
+  </li>
+  <li><strong>Acyclic phase graphs</strong>
+    <ul>
+      <li>depleting graph acyclic in its phase.</li>
+      <li>gating graph acyclic in its phase.</li>
+      <li>union may contain structural opposites when phase-safe.</li>
+    </ul>
+  </li>
+  <li><strong>Snapshot coherence</strong>
+    <ul>
+      <li>guard-state version must match arrangement execution epoch used by transaction evaluator.</li>
+    </ul>
+  </li>
+  <li><strong>Idempotency support</strong>
+    <ul>
+      <li>draw keys unique.</li>
+      <li>repeat processing of same demand key under same epoch does not create duplicate effective allocation.</li>
+    </ul>
+  </li>
+</ol>
+
+<hr />
+
+<h2 id="8-financial-transaction-suitability-assessment">8. Financial-transaction suitability assessment</h2>
+
+<h2 id="81-fit">8.1 Fit</h2>
+
+<p>The current generic model is suitable as source semantics for financial transaction processing <strong>if</strong> runtime execution uses a compact projection profile like the one above.</p>
+
+<p>Without projection, transaction throughput and latency predictability will degrade due to repeated multi-hop traversal and semantic joins.</p>
+
+<h2 id="82-strengths-already-present">8.2 Strengths already present</h2>
+
+<ul>
+  <li>Strong generic allowance/account core in Behaviour.</li>
+  <li>Explicit recurrence hooks.</li>
+  <li>Determinism-oriented policy constructs.</li>
+  <li>Eligibility composition model.</li>
+  <li>Quantification model that supports canonicalisation and conversion.</li>
+  <li>Provenance and versioning foundations for auditable transaction traces.</li>
+</ul>
+
+<h2 id="83-gaps-for-direct-runtime-use">8.3 Gaps for direct runtime use</h2>
+
+<ul>
+  <li>No compact execution-key surface.</li>
+  <li>No first-class demand/draw runtime profile.</li>
+  <li>No phase-tagged dependency execution contract.</li>
+  <li>No direct max-capacity scalar on allowance definition.</li>
+  <li>No runtime snapshot construct for guard state.</li>
+  <li>No explicit hot-path oriented shape pack.</li>
+</ul>
+
+<p>These are projection-profile gaps, not semantic-theory failures.</p>
+
+<hr />
+
+<h2 id="9-recommended-implementation-path">9. Recommended implementation path</h2>
+
+<h2 id="91-keep-source-semantics-generic">9.1 Keep source semantics generic</h2>
+
+<p>Do not simplify <code class="language-plaintext highlighter-rouge">behaviour</code> or <code class="language-plaintext highlighter-rouge">quantification</code> to chase runtime speed.<br />
+They are source-of-truth semantics and should remain expressive.</p>
+
+<h2 id="92-add-a-capacity-execution-profile">9.2 Add a Capacity Execution profile</h2>
+
+<p>Under <code class="language-plaintext highlighter-rouge">ontology/applied/capacity/execution/</code>, define:</p>
+
+<ul>
+  <li>execution T-Box (<code class="language-plaintext highlighter-rouge">capacity-execution.ttl</code>),</li>
+  <li>structural/constraint shapes,</li>
+  <li>deterministic ordering constraints,</li>
+  <li>quantity canonicalisation rules,</li>
+  <li>invalidation policy and regeneration profile.</li>
+</ul>
+
+<h2 id="93-compile-from-source-to-execution-view">9.3 Compile from source to execution view</h2>
+
+<p>Projection compiler responsibilities:</p>
+
+<ol>
+  <li>Resolve and canonicalise quantities.</li>
+  <li>Materialise executable resources, balances, demands, dependencies.</li>
+  <li>Pre-evaluate or cache guard-state booleans with version keys.</li>
+  <li>Emit deterministic order indices.</li>
+  <li>Emit provenance pointers to source IRIs.</li>
+  <li>Reject ambiguous conversions and unresolved guards.</li>
+</ol>
+
+<h2 id="94-keep-bidirectional-traceability">9.4 Keep bidirectional traceability</h2>
+
+<p>Every executable node should carry source references so transaction outcomes are auditable against source semantics.</p>
+
+<p>Runtime compactness must not break explainability.</p>
+
+<h2 id="95-test-with-transaction-benchmark-packs">9.5 Test with transaction benchmark packs</h2>
+
+<p>Create benchmark fixtures for:</p>
+
+<ul>
+  <li>high-frequency small draws,</li>
+  <li>mixed accepted and denied demands,</li>
+  <li>shared governing resource under heavy contention,</li>
+  <li>reset boundary transitions,</li>
+  <li>idempotent replay behavior.</li>
+</ul>
+
+<p>Measure:</p>
+
+<ul>
+  <li>hop count and join count per draw,</li>
+  <li>p50/p95/p99 latency,</li>
+  <li>deterministic replay equivalence,</li>
+  <li>invalidation and regeneration scope.</li>
+</ul>
+
+<hr />
+
+<h2 id="10-promotion-criteria-to-behaviour">10. Promotion criteria to Behaviour</h2>
+
+<p>A runtime construct in Capacity Execution should move into Behaviour only if:</p>
+
+<ol>
+  <li>it is generic across at least two non-financial and non-insurance domains,</li>
+  <li>it has a domain-neutral law and validation profile,</li>
+  <li>it reduces duplication in multiple applied layers,</li>
+  <li>it does not encode execution-engine-specific storage choices.</li>
+</ol>
+
+<p>Likely long-term promotion candidates:</p>
+
+<ul>
+  <li>generic executable balance snapshot pattern,</li>
+  <li>generic phase-tagged dependency execution relation,</li>
+  <li>generic demand-allocation execution record.</li>
+</ul>
+
+<p>Not candidates:</p>
+
+<ul>
+  <li>financial status codes,</li>
+  <li>lending-specific drawdown semantics,</li>
+  <li>insurance-specific admission dimensions,</li>
+  <li>market-specific ordering policies.</li>
+</ul>
+
+<hr />
+
+<h2 id="11-concrete-addendum-decisions">11. Concrete addendum decisions</h2>
+
+<ol>
+  <li><strong>Adopt projection-first runtime strategy</strong> for Capacity transaction processing.</li>
+  <li><strong>Define <code class="language-plaintext highlighter-rouge">capx:</code> runtime profile</strong> as a compact execution T-Box under <code class="language-plaintext highlighter-rouge">ontology/applied/capacity/execution</code>.</li>
+  <li><strong>Treat quantity canonicalisation as compile-time mandatory</strong> for runtime-critical flows.</li>
+  <li><strong>Require deterministic ordering and phase separation</strong> as runtime invariants.</li>
+  <li><strong>Retain source richness in Behaviour and Quantification</strong> and avoid substrate simplification.</li>
+  <li><strong>Benchmark before broadening semantics</strong> so performance decisions are evidence-led.</li>
+</ol>
+
+<hr />
+
+<h2 id="12-summary">12. Summary</h2>
+
+<p><code class="language-plaintext highlighter-rouge">behaviour</code> and <code class="language-plaintext highlighter-rouge">quantification</code> are suitable foundations for financial transaction handling, but not as direct transaction-time data shapes under load.</p>
+
+<p>The right architecture is:</p>
+
+<ul>
+  <li>rich generic source semantics,</li>
+  <li>deterministic projection,</li>
+  <li>compact normalised executable view,</li>
+  <li>strict runtime invariants,</li>
+  <li>full provenance back to source.</li>
+</ul>
+
+<p>That gives both:</p>
+
+<ul>
+  <li>semantic elegance and domain neutrality,</li>
+  <li>transaction-grade performance and operational predictability.</li>
+</ul>

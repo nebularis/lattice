@@ -1,0 +1,174 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="platform-continuation-status">Platform Continuation Status</h1>
+
+<p><strong>Unit:</strong> <code class="language-plaintext highlighter-rouge">lattice-platform-development</code>
+<strong>Plan:</strong> <a href="/developer/plans/lattice-platform-agentic-development-v0.2.html">LATTICE Platform Agentic Development Plan</a>
+<strong>Review:</strong> <a href="/developer/review/platform-continuation-review.html">Platform Continuation Review</a>
+<strong>Updated:</strong> 2026-09-20
+Working revision: <code class="language-plaintext highlighter-rouge">b19e1e7192dbb04fca1894f01908e9a11d976a2f</code><br />
+Status: accepted after the first Surface control-plane implementation slice.
+Governing ADRs: <a href="../../architecture/decisions/ADR-A30-shared-semantic-platform-cross-runtime-boundary.md">ADR-A30</a>, <a href="../../architecture/decisions/ADR-A32-surface-revision-lifecycle-and-release-candidates.md">ADR-A32</a>, <a href="../../architecture/decisions/ADR-A33-surface-revision-ledger-and-optimistic-concurrency.md">ADR-A33</a></p>
+
+<h2 id="purpose">Purpose</h2>
+
+<p>This is the authoritative current state for the platform continuation unit. It is not a plan document. Design lives in <a href="/architecture/solution-design-specification.html">solution-design-specification.md</a>, <a href="/architecture/data-architecture.html">data-architecture.md</a>, and <a href="/architecture/ux-design.html">ux-design.md</a>. What remains is verification of already-authored work, and that verification’s gaps are already documented. This file references them rather than re-deriving them:</p>
+
+<ul>
+  <li><a href="/developer/sketches/implementation-handover.html">Implementation handover</a>, phase-by-phase authoring status, outstanding validation, and the “Do Not Break” invariants.</li>
+  <li><a href="/developer/status/validation-status.html">Validation status</a>, including the rule that authoring complete does not imply validated complete.</li>
+  <li>Each phase handoff, <a href="/developer/status/phase-0-1-handoff.html">0-1</a>, <a href="/developer/status/phase-2-handoff.html">2</a>, <a href="/developer/status/phase-3-handoff.html">3</a>, <a href="/developer/status/phase-4-handoff.html">4</a>, <a href="/developer/status/phase-5-handoff.html">5</a>, <a href="/developer/status/phase-6-handoff.html">6</a>, with its own unverified-assumptions statement.</li>
+</ul>
+
+<h2 id="working-arrangement">Working Arrangement</h2>
+
+<p>Validation of implemented code follows the <a href="../../../.github/copilot-instructions.md">Agentic Development Contract</a>. Work is validated by a maintainer running the listed commands and reporting the result, not by re-running build and test suites unasked.</p>
+
+<h2 id="evidence-recorded-this-session">Evidence Recorded This Session</h2>
+
+<p>The following checks completed in this network-enabled environment, before the working arrangement above took effect:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Area</th>
+      <th>Evidence</th>
+      <th>Result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Toolchain</td>
+      <td><code class="language-plaintext highlighter-rouge">mise</code>-managed Java 21, Maven 3.9, Node 22, Python 3.11, Erlang 27, and Elixir 1.17</td>
+      <td>Passed</td>
+    </tr>
+    <tr>
+      <td>Root Python</td>
+      <td><code class="language-plaintext highlighter-rouge">python -m unittest surface.test_surface mork_compilers.test_mork_compilers -v</code></td>
+      <td>76 tests passed</td>
+    </tr>
+    <tr>
+      <td>Workers</td>
+      <td><code class="language-plaintext highlighter-rouge">python -m pytest workers/tests -q</code></td>
+      <td>38 tests passed</td>
+    </tr>
+    <tr>
+      <td>Java reactor</td>
+      <td><code class="language-plaintext highlighter-rouge">mvn -f platform/pom.xml verify</code></td>
+      <td>Passed</td>
+    </tr>
+    <tr>
+      <td>Frontend</td>
+      <td><code class="language-plaintext highlighter-rouge">yarn check</code></td>
+      <td>Passed</td>
+    </tr>
+    <tr>
+      <td>Compose</td>
+      <td>PostgreSQL, RabbitMQ, Fuseki, and workspace services started</td>
+      <td>Passed</td>
+    </tr>
+    <tr>
+      <td>PostgreSQL</td>
+      <td>All five documented migrations applied. Host connection and expected tables verified</td>
+      <td>Passed</td>
+    </tr>
+    <tr>
+      <td>RabbitMQ</td>
+      <td>Host publish and consume smoke message</td>
+      <td>Passed</td>
+    </tr>
+    <tr>
+      <td>Fuseki</td>
+      <td>Base endpoint served. <code class="language-plaintext highlighter-rouge">/$/server</code> returned <code class="language-plaintext highlighter-rouge">401</code>, consistent with its protected administration API</td>
+      <td>Passed</td>
+    </tr>
+    <tr>
+      <td>Current API slice</td>
+      <td><code class="language-plaintext highlighter-rouge">mise exec -- mvn -f platform/pom.xml -pl surface-workflow -am test</code></td>
+      <td>Passed. 9 Surface workflow tests passed</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The service smoke checks prove reachability. They do not prove the intended Java to RabbitMQ to Python worker flow, graph materialization, lifecycle persistence, release flow, or role authorization.</p>
+
+<h2 id="worktree-boundary">Worktree Boundary</h2>
+
+<p>Do not revert or remove changes outside a slice you are actively working on.</p>
+
+<ul>
+  <li>Present from earlier validation work: <code class="language-plaintext highlighter-rouge">apps/mork-review-workbench/package.json</code>, <code class="language-plaintext highlighter-rouge">apps/surface-contract-studio/package.json</code>, <code class="language-plaintext highlighter-rouge">yarn.lock</code>, <code class="language-plaintext highlighter-rouge">deployment/compose/docker-compose.yml</code> (publishes PostgreSQL as <code class="language-plaintext highlighter-rouge">5432:5432</code> for host-driven validation), and the <code class="language-plaintext highlighter-rouge">SemanticReleaseAssemblyServiceTest.java</code> fix.</li>
+  <li>A root <a href="../../../.gitignore">.gitignore</a> now excludes Node, Yarn, Maven, Python, and Mix build and dependency output repository-wide. 63 previously tracked generated files were removed from the index, not deleted locally.</li>
+  <li>Current Surface control-plane slice: <a href="../../../contracts/openapi/surface-workflow.openapi.json">Surface OpenAPI contract</a>, <a href="../../../platform/surface-workflow/src/main/java/org/nebularis/lattice/surface/SurfaceRevisionApi.java">SurfaceRevisionApi</a>, and its test. Framework-neutral, no HTTP listener, no persistence wiring, no identity.</li>
+  <li>New architecture documentation: <a href="/architecture/solution-design-specification.html">solution-design-specification.md</a>, <a href="/architecture/data-architecture.html">data-architecture.md</a>, <a href="/architecture/ux-design.html">ux-design.md</a>, and an updated <a href="/architecture/implementation-map.html">implementation-map.md</a>.</li>
+</ul>
+
+<h2 id="verification-gaps">Verification Gaps</h2>
+
+<p>Sourced from the documents in <a href="#purpose">Purpose</a>. This is a pointer table, the documents linked are authoritative, not this summary.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Phase</th>
+      <th>Handoff</th>
+      <th>Remains unverified</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>0-1</td>
+      <td><a href="/developer/status/phase-0-1-handoff.html">phase-0-1-handoff.md</a></td>
+      <td>Testcontainers integration, PostgreSQL-backed outbox persistence, end-to-end Java-to-RabbitMQ-to-Python retry test</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td><a href="/developer/status/phase-2-handoff.html">phase-2-handoff.md</a></td>
+      <td>HTTP endpoint, ledger and graph-family migrations against a live PostgreSQL, Playwright browsers, Studio E2E, Fuseki materialization, RabbitMQ retry/dead-letter/duplicate-delivery behavior</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td><a href="/developer/status/phase-3-handoff.html">phase-3-handoff.md</a></td>
+      <td>Maven/Java 21/Docker/ORAS/Cosign execution, registry push, signature verification, PostgreSQL ledger integration, RDF provenance publication, restore against a live registry</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td><a href="/developer/status/phase-4-handoff.html">phase-4-handoff.md</a></td>
+      <td>Python/Yarn/Playwright/RabbitMQ/Fuseki/compiler tests, <code class="language-plaintext highlighter-rouge">yarn.lock</code> regeneration and review</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td><a href="/developer/status/phase-5-handoff.html">phase-5-handoff.md</a></td>
+      <td>Python/Yarn/Playwright/RabbitMQ/graph-store integration commands</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td><a href="/developer/status/phase-6-handoff.html">phase-6-handoff.md</a></td>
+      <td>Python/Yarn/Playwright/PostgreSQL/RabbitMQ/graph-store integration commands</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The current <code class="language-plaintext highlighter-rouge">SurfaceRevisionApi</code> slice postdates these handoffs and has only the regression gate below, no HTTP, persistence, or identity validation.</p>
+
+<h2 id="commands-to-run">Commands to Run</h2>
+
+<p>Per the Agentic Development Contract, run these yourself and report the result back.</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cd /Users/t4/work/lattice
+mise exec -- mvn -f platform/pom.xml -pl surface-workflow -am test
+</code></pre></div></div>
+
+<p>Pass looks like: <code class="language-plaintext highlighter-rouge">Tests run: 9, Failures: 0, Errors: 0</code>, including <code class="language-plaintext highlighter-rouge">SurfaceRevisionApiTest</code>. This is a regression gate for the current slice only, it is not evidence against any row in the table above.</p>
+
+<h2 id="reference-material">Reference Material</h2>
+
+<ul>
+  <li><a href="../../../.github/prompts/plan-morkSurfaceImplementation.prompt.md">Canonical Phase 0-7 plan</a></li>
+  <li><a href="/developer/sketches/implementation-handover.html">Implementation handover</a>, including its “Do Not Break” invariants</li>
+  <li><a href="/developer/status/validation-status.html">Validation status</a></li>
+  <li><a href="/developer/status/validation-status.html">Validation status</a></li>
+  <li><a href="/architecture/solution-design-specification.html">Platform solution design specification</a>, <a href="/architecture/data-architecture.html">data architecture</a>, <a href="/architecture/ux-design.html">UX design</a></li>
+  <li>Session plan memory: <code class="language-plaintext highlighter-rouge">/memories/session/plan.md</code> (session-scoped, not durable)</li>
+</ul>
+

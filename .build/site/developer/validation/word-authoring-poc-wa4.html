@@ -1,0 +1,298 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-word-authoring-poc-wa4-api-and-http-adapter">Validation Pack: word-authoring-poc WA4, API and HTTP adapter</h1>
+
+<p><strong>Plan:</strong> <a href="/developer/plans/word-authoring-poc.html">word-authoring-poc</a> §5 WA4
+<strong>Status record:</strong> <a href="/developer/status/word-authoring-poc.html">word-authoring-poc</a> (holds the commit hash)</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>Everything the add-in will eventually talk to over HTTP must already work with no HTTP in the
+picture, so <code class="language-plaintext highlighter-rouge">AuthoringApi</code> carries every business rule and <code class="language-plaintext highlighter-rouge">http.AuthoringHttpServer</code> carries none:
+it only reads path parameters and a body, calls <code class="language-plaintext highlighter-rouge">AuthoringApi</code>, and writes the <code class="language-plaintext highlighter-rouge">ApiResponse</code> it
+gets back. This is what lets S4-01 to S4-08 and S4-13 to S4-14 exercise <code class="language-plaintext highlighter-rouge">submitSnapshot</code>,
+<code class="language-plaintext highlighter-rouge">onAnalysisResult</code>, <code class="language-plaintext highlighter-rouge">health</code> and <code class="language-plaintext highlighter-rouge">SampleSeeder</code> directly, in memory, while S4-09 to S4-12 prove the
+same behaviour survives going through Javalin, a real socket and a real JSON parse.</p>
+
+<p>Two invariants hold across that boundary. First, <strong>optimistic concurrency on <code class="language-plaintext highlighter-rouge">baseRevision</code></strong> is
+the only way two submissions of the same document can be ordered: a submission with no base
+revision against an existing document, or the wrong one, conflicts (409) rather than silently
+clobbering or silently stacking. Second, <strong>a snapshot is accepted and its job queued before
+anything asks the analysis bus to do work</strong>, and a bus that cannot publish still leaves the author
+with a 200 and a <code class="language-plaintext highlighter-rouge">failed</code> job, never a submission that vanishes. Both invariants are what makes the
+service usable from inside Word, where a drafter’s “accept” click must have one unambiguous
+outcome.</p>
+
+<h2 id="test-cases">Test cases</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>+/−</th>
+      <th>Result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>S4-01</td>
+      <td>the in-memory wiring / a new facility snapshot submitted / 200, revision 1, the wording graph stored under its IRI, registry latest 1, one request published whose graph reference and IRIs match, job <code class="language-plaintext highlighter-rouge">queued</code></td>
+      <td>L1</td>
+      <td>+</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>S4-02</td>
+      <td>revision 1 exists / submitted with base 1 / revision 2. With base null / 409. With base 5 / 409</td>
+      <td>L1</td>
+      <td>+/−</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>S4-03</td>
+      <td>path and body document ids differ / 400. A path id that is not a UUID / 400. A body with an extra property / 400 with details</td>
+      <td>L1</td>
+      <td>−</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>S4-04</td>
+      <td>a snapshot naming template <code class="language-plaintext highlighter-rouge">nope</code> / 404</td>
+      <td>L1</td>
+      <td>−</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>S4-05</td>
+      <td>the bus set to throw / submitted / 200 with job <code class="language-plaintext highlighter-rouge">failed</code></td>
+      <td>L1</td>
+      <td>−</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>S4-06</td>
+      <td>a completed result for the job / delivered / job <code class="language-plaintext highlighter-rouge">completed</code>, analysis view with conformance, and a second <code class="language-plaintext highlighter-rouge">AuthoringApi</code> over the same store serves the same view</td>
+      <td>L1</td>
+      <td>+</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>S4-07</td>
+      <td>a failed result / delivered / job <code class="language-plaintext highlighter-rouge">failed</code> with the error, analysis 404</td>
+      <td>L1</td>
+      <td>−</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>S4-08</td>
+      <td>a result for an unknown job, and an invalid result / delivered / no exception, nothing changes</td>
+      <td>L1</td>
+      <td>−</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>S4-09</td>
+      <td>the HTTP server on an ephemeral port / each route called once with valid input / the status of the table, and each JSON body validates against its response schema</td>
+      <td>L3</td>
+      <td>+</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>S4-10</td>
+      <td>a 1 MiB + 1 byte body, and a PUT with <code class="language-plaintext highlighter-rouge">text/plain</code> / 413 and 415. An unknown path / 404. POST to <code class="language-plaintext highlighter-rouge">/api/templates</code> / 405</td>
+      <td>L1</td>
+      <td>−</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>S4-11</td>
+      <td>any response / headers / <code class="language-plaintext highlighter-rouge">nosniff</code> and <code class="language-plaintext highlighter-rouge">no-store</code> present, no <code class="language-plaintext highlighter-rouge">Access-Control-Allow-Origin</code></td>
+      <td>L1</td>
+      <td>+</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>S4-12</td>
+      <td>a stored revision / graph <code class="language-plaintext highlighter-rouge">wording</code> / Turtle that parses to a model isomorphic to the stored one. Kind <code class="language-plaintext highlighter-rouge">other</code> / 400</td>
+      <td>L1</td>
+      <td>+/−</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>S4-13</td>
+      <td>a store whose ping fails / health / 503 <code class="language-plaintext highlighter-rouge">degraded</code> with <code class="language-plaintext highlighter-rouge">fuseki: down</code></td>
+      <td>L1</td>
+      <td>−</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>S4-14</td>
+      <td>an empty registry / seeded twice / three documents at revision 1 and three requests the first time, nothing the second</td>
+      <td>L1</td>
+      <td>+</td>
+      <td>pass</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Carried by five test classes: <code class="language-plaintext highlighter-rouge">SubmitSnapshotTest</code> (S4-01 to S4-05), <code class="language-plaintext highlighter-rouge">AnalysisResultTest</code> (S4-06 to
+S4-08), <code class="language-plaintext highlighter-rouge">HealthAndSeedTest</code> (S4-13, S4-14), <code class="language-plaintext highlighter-rouge">AuthoringHttpServerTest</code> (S4-09, S4-10, S4-11, S4-12,
+through a real Javalin server on an ephemeral port with Java’s built-in <code class="language-plaintext highlighter-rouge">HttpClient</code>). The module
+runs 77 tests in total: WA2’s 48, WA3’s 15, and WA4’s 14 (one test method per row above; S4-09’s
+“each route” is one method making ten calls).</p>
+
+<h2 id="one-command">One command</h2>
+
+<p>From the repository root:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:authoring-service
+</code></pre></div></div>
+
+<p>A pass prints <code class="language-plaintext highlighter-rouge">Tests run: 77, Failures: 0, Errors: 0, Skipped: 0</code> followed by <code class="language-plaintext highlighter-rouge">BUILD SUCCESS</code>.</p>
+
+<p>Re-run <code class="language-plaintext highlighter-rouge">mise run check:java</code> (9 modules) and <code class="language-plaintext highlighter-rouge">mise run check:authoring-contracts</code> (35 tests) to
+confirm nothing else moved.</p>
+
+<h2 id="artefacts-to-inspect">Artefacts to inspect</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>What</th>
+      <th>Where</th>
+      <th>Look for</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>the route table and <code class="language-plaintext highlighter-rouge">submitSnapshot</code>’s nine steps</td>
+      <td><a href="../../../platform/authoring-service/src/main/java/org/nebularis/lattice/authoring/api/AuthoringApi.java">AuthoringApi.java</a></td>
+      <td>the method order matches plan WA4’s numbered list exactly</td>
+    </tr>
+    <tr>
+      <td>every handler reads, calls, writes, nothing else</td>
+      <td><a href="../../../platform/authoring-service/src/main/java/org/nebularis/lattice/authoring/http/AuthoringHttpServer.java">AuthoringHttpServer.java</a></td>
+      <td>no business logic, no direct reference to <code class="language-plaintext highlighter-rouge">store</code>, <code class="language-plaintext highlighter-rouge">registry</code>, <code class="language-plaintext highlighter-rouge">bus</code> or <code class="language-plaintext highlighter-rouge">jobs</code></td>
+    </tr>
+    <tr>
+      <td>the registry’s triples</td>
+      <td><a href="../../../platform/authoring-service/src/main/java/org/nebularis/lattice/authoring/store/DocumentRegistry.java">DocumentRegistry.java</a></td>
+      <td>the document and revision resources match plan WA4’s class table</td>
+    </tr>
+    <tr>
+      <td>the charset defect and its fix</td>
+      <td><a href="../../../platform/authoring-service/src/main/java/org/nebularis/lattice/authoring/api/ApiResponse.java">ApiResponse.java</a></td>
+      <td><code class="language-plaintext highlighter-rouge">TEXT_TURTLE = "text/turtle; charset=utf-8"</code>, and §”Implementer choices” below</td>
+    </tr>
+    <tr>
+      <td>solution-design-specification’s new section</td>
+      <td><a href="/architecture/solution-design-specification.html">solution-design-specification.md</a> §4.7</td>
+      <td>component table, route table, the not-a-platform-contract statement</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="self-probe">Self-probe</h2>
+
+<p>The plan’s prescribed break: remove the 409 check for <code class="language-plaintext highlighter-rouge">baseRevision</code> null against an existing
+document (<code class="language-plaintext highlighter-rouge">AuthoringApi.submitSnapshot</code>’s <code class="language-plaintext highlighter-rouge">conflict</code> expression narrowed to drop its first
+disjunct). <code class="language-plaintext highlighter-rouge">mvn -f platform/pom.xml -pl authoring-service test -Dtest=SubmitSnapshotTest</code> then
+failed:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>SubmitSnapshotTest.enforcesOptimisticConcurrencyOnBaseRevision:54
+expected: &lt;409&gt; but was: &lt;200&gt;
+</code></pre></div></div>
+
+<p>exactly the case the plan names. The break was reverted and the full command re-run green at 77
+tests. Unlike WA3’s probe, this one is not vacuous: §”Deliberate non-coverage” has no note about it.</p>
+
+<h2 id="implementer-choices">Implementer choices</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Left open</th>
+      <th>Chosen</th>
+      <th>Why</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">TemplateFindings</code> and <code class="language-plaintext highlighter-rouge">ConformanceChecker</code>’s shape</td>
+      <td>changed from WA3’s static-utility classes to ordinary instantiable classes with instance <code class="language-plaintext highlighter-rouge">check</code> methods</td>
+      <td>plan WA4 lists both as constructor arguments of <code class="language-plaintext highlighter-rouge">AuthoringApi</code> (“Constructed with … <code class="language-plaintext highlighter-rouge">TemplateFindings</code>, <code class="language-plaintext highlighter-rouge">ConformanceChecker</code> …”), which only makes sense if they are held as fields. WA3’s own tests were updated to <code class="language-plaintext highlighter-rouge">new TemplateFindings().check(...)</code>; no behaviour changed</td>
+    </tr>
+    <tr>
+      <td>Jackson serialisation of <code class="language-plaintext highlighter-rouge">ValueType</code>, <code class="language-plaintext highlighter-rouge">ElementKind</code>, <code class="language-plaintext highlighter-rouge">Severity</code>, <code class="language-plaintext highlighter-rouge">TermKind</code>, <code class="language-plaintext highlighter-rouge">JobStatus</code></td>
+      <td><code class="language-plaintext highlighter-rouge">@JsonValue</code> added to each enum’s existing <code class="language-plaintext highlighter-rouge">toJson()</code>/<code class="language-plaintext highlighter-rouge">jsonValue()</code> method</td>
+      <td>WA4 is the first place these enums are written into an HTTP response body. Without it Jackson emits the Java constant name (<code class="language-plaintext highlighter-rouge">"MONEY"</code>), not the schema’s string (<code class="language-plaintext highlighter-rouge">"money"</code>), and S4-09’s schema validation would fail</td>
+    </tr>
+    <tr>
+      <td>where the per-route response types live</td>
+      <td><code class="language-plaintext highlighter-rouge">GraphRef</code>, <code class="language-plaintext highlighter-rouge">JobStatus</code> in <code class="language-plaintext highlighter-rouge">model</code> (beside the existing schema-def enums); <code class="language-plaintext highlighter-rouge">JobSummary</code> in <code class="language-plaintext highlighter-rouge">jobs</code> (beside <code class="language-plaintext highlighter-rouge">JobView</code>); <code class="language-plaintext highlighter-rouge">ApiResponse</code>, <code class="language-plaintext highlighter-rouge">ErrorBody</code>, <code class="language-plaintext highlighter-rouge">HealthView</code>, <code class="language-plaintext highlighter-rouge">AnalysisView</code>, <code class="language-plaintext highlighter-rouge">SnapshotAccepted</code>, <code class="language-plaintext highlighter-rouge">PathParams</code> in <code class="language-plaintext highlighter-rouge">api</code></td>
+      <td>each is a direct Java shape for one schema def or response, named by the package that owns the matching concept</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">AnalysisView.analysis</code>’s Java type</td>
+      <td><code class="language-plaintext highlighter-rouge">JsonNode</code>, not a Java <code class="language-plaintext highlighter-rouge">Analysis</code>/<code class="language-plaintext highlighter-rouge">ElementAnalysis</code>/<code class="language-plaintext highlighter-rouge">GraphView</code> model</td>
+      <td>building that model is WA6’s job. WA4 stores and relays the worker’s own, already schema-validated JSON unchanged, which is also strictly more faithful than re-deriving it</td>
+    </tr>
+    <tr>
+      <td>the document resource’s IRI</td>
+      <td>a new public <code class="language-plaintext highlighter-rouge">IriMinter.document(documentId)</code> wrapping the existing private <code class="language-plaintext highlighter-rouge">doc(...)</code></td>
+      <td>plan §2.3’s IRI table has no row named “document”, but <code class="language-plaintext highlighter-rouge">DocumentRegistry</code>’s own triples need one, and <code class="language-plaintext highlighter-rouge">doc(...)</code> already computes exactly that IRI</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">dcterms:created</code> on a revision record</td>
+      <td><code class="language-plaintext highlighter-rouge">Instant.now()</code>, read inside <code class="language-plaintext highlighter-rouge">DocumentRegistry.record</code>, not a parameter</td>
+      <td><code class="language-plaintext highlighter-rouge">record(...)</code>’s plan signature carries no timestamp argument. Untested exactly, since no test case asks for a specific value</td>
+    </tr>
+    <tr>
+      <td>the 1 MiB / <code class="language-plaintext highlighter-rouge">application/json</code> checks</td>
+      <td>a <code class="language-plaintext highlighter-rouge">before</code> handler reading <code class="language-plaintext highlighter-rouge">HttpServletRequest.getContentLengthLong()</code> directly, with two private marker exceptions mapped to 413 and 415</td>
+      <td>Javalin’s own <code class="language-plaintext highlighter-rouge">config.http.maxRequestSize</code> enforcement path and its exact exception type were not confirmed from the plan text alone, and the manual check is dependency-free, runs before any body parsing, and is exactly what S4-10 proves</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ApiResponse.TEXT_TURTLE</code>’s exact string</td>
+      <td><code class="language-plaintext highlighter-rouge">"text/turtle; charset=utf-8"</code>, not <code class="language-plaintext highlighter-rouge">"text/turtle"</code></td>
+      <td>found by S4-12 (below): without an explicit charset the Servlet response defaults to ISO-8859-1 when turning the Turtle string into bytes, corrupting the samples’ smart quotes. The constant is the single place this is set, so every caller gets the fix</td>
+    </tr>
+    <tr>
+      <td>S4-12’s graph comparison</td>
+      <td><code class="language-plaintext highlighter-rouge">CanonicalHash.sortedNTriplesLines</code> equality, not <code class="language-plaintext highlighter-rouge">Model.isIsomorphicWith</code></td>
+      <td><code class="language-plaintext highlighter-rouge">isIsomorphicWith</code> returned <code class="language-plaintext highlighter-rouge">false</code> for two models whose <code class="language-plaintext highlighter-rouge">Model.difference()</code> was empty in both directions once the charset defect above was fixed — a ground graph (no blank nodes, as <code class="language-plaintext highlighter-rouge">WordingMapper</code> never creates one) should never disagree between those two checks. The canonical-text comparison is the stronger, already-tested equivalence CanonicalHash exists for, and sidesteps whatever the isomorphism checker was doing</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">SampleSeeder</code>’s existence check</td>
+      <td><code class="language-plaintext highlighter-rouge">registry.documentIds().contains(documentId)</code></td>
+      <td>matches the plan’s own wording (“whose documentId the registry does not hold”) literally, though <code class="language-plaintext highlighter-rouge">latestRevision(documentId) == 0</code> would answer the same question</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<ul>
+  <li><strong>A malformed (non-parseable) JSON body on the PUT route.</strong> Falls through to the generic
+<code class="language-plaintext highlighter-rouge">exception(Exception.class)</code> handler, giving 500. Not asserted; S4-03’s “extra property” case is
+syntactically valid JSON that fails schema validation, a different path.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">GET .../graph/proposal</code>.</strong> Nothing in WA4 writes to the <code class="language-plaintext highlighter-rouge">proposalGraphIri</code> named graph: that is
+written directly to Fuseki by the WA6/WA7 worker, not relayed through <code class="language-plaintext highlighter-rouge">AuthoringApi</code>. S4-12 tests
+only <code class="language-plaintext highlighter-rouge">wording</code> and the invalid kind <code class="language-plaintext highlighter-rouge">other</code>, matching the plan. Covered end to end once a real
+worker exists, at WA5 or WA10.</li>
+  <li><strong>A real Fuseki-backed <code class="language-plaintext highlighter-rouge">AuthoringStore</code> and a real RabbitMQ-backed <code class="language-plaintext highlighter-rouge">AnalysisBus</code>.</strong> WA5.</li>
+  <li><strong>Two <code class="language-plaintext highlighter-rouge">submitSnapshot</code> calls for the same document racing each other.</strong> <code class="language-plaintext highlighter-rouge">DocumentRegistry</code>’s
+<code class="language-plaintext highlighter-rouge">synchronized</code> methods make each read-modify-write atomic, but two concurrent callers can still
+both read the same <code class="language-plaintext highlighter-rouge">latestRevision</code> before either writes, each believing their submission is
+next. Not covered by a test; a known POC-grade limitation (no request-level locking per document).</li>
+  <li><strong>CORS, authentication.</strong> No header is ever set and no credential is ever checked; S4-11 proves
+only the header’s absence.</li>
+  <li><strong>A client that lies about or omits <code class="language-plaintext highlighter-rouge">Content-Length</code> while sending an oversized or chunked body.</strong>
+The 413 check reads the header the client declares; it does not count bytes as they arrive.</li>
+</ul>
+
+<p>Unit-wide non-coverage, cited by every pack: CCS assembly, amendments, tables and versioned
+elements. LE2 parsing of the generated program. Concurrent editing. Authentication. Poison-message
+retry limits. Real Word, except through WA11’s manual checklist.</p>

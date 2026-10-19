@@ -1,0 +1,51 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-air-33-set-readings-and-negation-swrl-and-owl">Validation Pack: AIR-3.3, set readings and negation, SWRL and OWL</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/applied-insurance-reference.html"><code class="language-plaintext highlighter-rouge">applied-insurance-reference</code></a>
+<strong>Machine:</strong> R. <strong>Branch:</strong> <code class="language-plaintext highlighter-rouge">air/3.3-readings-swrl-owl</code>
+<strong>Plan and test cases:</strong> <a href="/developer/plans/applied-insurance-reference-phase-3.html">Phase 3 plan</a> (AIR-3.3 in detail)
+<strong>Decisions:</strong> ADR-A103</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>SWRL derives only what a set reading fixes from positive facts, with heads swapped under negation, and agrees with SPARQL on everything it derives. OWL compiles <code class="language-plaintext highlighter-rouge">SomeValue</code> as <code class="language-plaintext highlighter-rouge">∃</code>, <code class="language-plaintext highlighter-rouge">EveryValue</code> as <code class="language-plaintext highlighter-rouge">∀ ⊓ ∃⊤</code>, and negation as a complement, for design-time checks. Plans without either compile as before.</p>
+
+<h2 id="test-cases">Test cases</h2>
+
+<p>The table in the plan section above. Each row’s result is recorded under Results at
+verification.</p>
+
+<h2 id="one-command">One command</h2>
+
+<p>Run from the repository root on machine R, with the reasoning harness built (<code class="language-plaintext highlighter-rouge">mise run bootstrap:reasoning-testkit</code>), so the L2 rows do not skip.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:ontology-catalog
+</code></pre></div></div>
+
+<h2 id="artefacts-to-inspect">Artefacts to inspect</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">tools/mork_compilers/src/mork_compilers/swrl_backend.py</code>: which rules each reading emits, and the head swap.</li>
+  <li><code class="language-plaintext highlighter-rouge">owl_backend.py</code>: <code class="language-plaintext highlighter-rouge">_along</code> under each reading, and the negated class.</li>
+  <li><code class="language-plaintext highlighter-rouge">test_set_readings.py</code>: the soundness row, AIR33-06.</li>
+</ul>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<p>No Denied from SWRL for an interval read <code class="language-plaintext highlighter-rouge">EveryValue</code>, and no Undetermined from SWRL at all (ADR-A24). The negated OWL class holds subjects SPARQL leaves Undetermined. Correlation between conditions (ADR-A103 decision 5).</p>
+
+<h2 id="handoff">Handoff</h2>
+
+<p>Written by the building machine when the work is committed.</p>
+
+<ul>
+  <li><strong>Built:</strong></li>
+  <li><strong>Not run:</strong></li>
+  <li><strong>Check first:</strong></li>
+  <li><strong>Deviations from the plan:</strong></li>
+</ul>
+
+<h2 id="results">Results</h2>
+
+<p>Written on machine R at verification.</p>

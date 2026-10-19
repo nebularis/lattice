@@ -1,0 +1,799 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="logical-english-and-the-computable-contract-substrate">Logical English and the computable contract substrate</h1>
+
+<p>Draft for review, 2026-10-01. Unplanned: an exploration, with no plan, slice or ADR behind it. It
+asks how much of Logical English (LE) the computable contract substrate can carry, without adding
+Prolog to the stack, and whether the Wording layer’s text parts make LE a natural fit.</p>
+
+<p><strong>Inputs.</strong></p>
+<ul>
+  <li><a href="https://github.com/LogicalContractsOrg/LogicalEnglish2">LogicalEnglish2</a> (LE2, Apache 2.0), cloned
+at <code class="language-plaintext highlighter-rouge">work/LogicalEnglish2</code>: its language reference (<code class="language-plaintext highlighter-rouge">docs/user/reference/language.md</code>), the
+introductory tutorial, <code class="language-plaintext highlighter-rouge">lib/deontic.le</code>, the LPS target reference and the writer’s Migration IR
+(<code class="language-plaintext highlighter-rouge">le_writer.pl</code>, <code class="language-plaintext highlighter-rouge">docs/dev/migration.md</code>).</li>
+  <li><a href="/developer/sketches/computable-contract-substrate.html">computable-contract-substrate.md</a> (CCS), whose §14 points here.</li>
+  <li><a href="/developer/sketches/rule-layers.html">rule-layers.md</a> and <a href="/developer/sketches/rule-layers-cross-check.html">rule-layers-cross-check.md</a>,
+which deferred an LE input route until a drafter supplies LE text or rendered rules are worth
+round-tripping (cross-check §5).</li>
+  <li><a href="/architecture/ingestion-vision.html">ingestion-vision.md</a> §3, which names LE and InsurLE as the
+controlled-language route to meaning.</li>
+</ul>
+
+<p>Only core LE is considered. The constructs that need LE2’s proprietary <code class="language-plaintext highlighter-rouge">le_extensions.pl</code> (<code class="language-plaintext highlighter-rouge">which</code>
+clauses, grouped alternatives, numbered bodies, prepositional chaining) are out of scope.</p>
+
+<hr />
+
+<h2 id="1-the-question-and-a-short-answer">1. The question, and a short answer</h2>
+
+<p>Two claims are on the table. The substrate matches the semantics of stratified Datalog (CCS §8:
+the trigger and state-reading graph gives the strata). And a wording’s text parts look like LE
+sentences. If both hold, an LE program is something LATTICE can <strong>represent, render, import and
+check</strong>, but not something it should <strong>run</strong> as LE runs it.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Question</th>
+      <th>Short answer</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Is LE’s Prolog target within stratified Datalog?</td>
+      <td>Most of it. Facts, rules, <code class="language-plaintext highlighter-rouge">and</code>, <code class="language-plaintext highlighter-rouge">or</code>, <code class="language-plaintext highlighter-rouge">it is not the case that</code>, <code class="language-plaintext highlighter-rouge">for all cases in which</code>, <code class="language-plaintext highlighter-rouge">unless</code>, <code class="language-plaintext highlighter-rouge">otherwise</code>, comparisons, dates, constants, decision tables and the <code class="language-plaintext highlighter-rouge">is a</code> taxonomy are stratified Datalog with built-ins. Arithmetic and aggregates are Datalog with safe built-ins and stratified aggregation. Recursion over data, sentences as arguments and abduction go beyond what Eligibility evaluates today. Embedded <code class="language-plaintext highlighter-rouge">prolog</code> goals are out (§5)</td>
+    </tr>
+    <tr>
+      <td>Do the semantics agree?</td>
+      <td>Not by default. LE is closed-world and two-valued, LATTICE is three-valued and open-world unless a closure licence says otherwise (A-105). The two agree where every case fact LE treats as complete is given a closure licence (§4)</td>
+    </tr>
+    <tr>
+      <td>Do the text parts fit LE?</td>
+      <td>Yes. A text’s parts (literal, variable reference, object reference) are the three things an LE sentence is made of: a template’s fixed words, a slot and a constant (§2)</td>
+    </tr>
+    <tr>
+      <td>Where would LE add value?</td>
+      <td>Rendering meaning as runnable text, an authoring route for redrafted standard wording, and a large corpus of programs with expected answers for differential testing (§6)</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="2-text-parts-are-le-sentences">2. Text parts are LE sentences</h2>
+
+<p>CCS §4.1 breaks clause 4.1 of the facility wording into five text parts. Read as LE, the same
+clause is a sentence of one template:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Part</th>
+      <th>CCS §4.1</th>
+      <th>LE</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>0</td>
+      <td>literal “The”</td>
+      <td>an ignorable word (LE §9)</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>object reference to the definition of Borrower</td>
+      <td><code class="language-plaintext highlighter-rouge">the Borrower</code>, a definite description nothing introduced, so a <strong>global constant</strong> (LE §6.0)</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>literal “shall pay interest at”</td>
+      <td>the template’s fixed words</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>variable reference to <code class="language-plaintext highlighter-rouge">ex:var-margin</code></td>
+      <td>a slot, <code class="language-plaintext highlighter-rouge">*a rate*</code></td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>literal “per annum.”</td>
+      <td>the template’s fixed words</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The template is <code class="language-plaintext highlighter-rouge">*a borrower* shall pay interest at *a rate* per annum.</code> Its slots are typed by
+their head noun: <code class="language-plaintext highlighter-rouge">borrower</code>, <code class="language-plaintext highlighter-rouge">rate</code>. In LATTICE the same types come from the variable’s
+<code class="language-plaintext highlighter-rouge">wrd:valueContract</code> or <code class="language-plaintext highlighter-rouge">wrd:valueSpace</code>, and from the role the definition names.</p>
+
+<pre><code class="language-mermaid">flowchart TB
+    subgraph WRD["Wording: ex:cl-4-1 as wrd:TextParts"]
+        direction TB
+        P0["0 literal: The"]
+        P1["1 object reference&lt;br/&gt;→ ex:def-borrower"]
+        P2["2 literal: shall pay interest at"]
+        P3["3 variable reference&lt;br/&gt;→ ex:var-margin"]
+        P4["4 literal: per annum."]
+        P0 ~~~ P1 ~~~ P2 ~~~ P3 ~~~ P4
+    end
+    subgraph LE["Logical English"]
+        direction TB
+        T["template&lt;br/&gt;*a borrower* shall pay interest&lt;br/&gt;at *a rate* per annum."]
+        S["sentence&lt;br/&gt;the Borrower shall pay interest&lt;br/&gt;at 2.5 per annum."]
+        T -. "instance of" .-&gt; S
+    end
+    subgraph INS["Instrument"]
+        direction TB
+        OB["ex:pay-interest&lt;br/&gt;a ins:Obligation&lt;br/&gt;obligor ex:borrower-occ&lt;br/&gt;activity: pay interest"]
+        PB["a ins:ParameterBinding&lt;br/&gt;rate from ex:var-margin"]
+        OB --&gt; PB
+    end
+    P1 -- "constant" --&gt; S
+    P3 -- "slot" --&gt; T
+    P2 -- "fixed words" --&gt; T
+    P4 -- "fixed words" --&gt; T
+    S -- "means" --&gt; OB
+    style WRD fill:#BBDEFB
+    style INS fill:#bcdee1
+</code></pre>
+
+<p><strong>Why this matters.</strong> The hard part of reading LE is segmenting a sentence into fixed words and
+arguments. LE2 does it by matching declared templates, ignoring filler words. A <code class="language-plaintext highlighter-rouge">wrd:Text</code> already
+carries that segmentation: its parts say which words are fixed, which are arguments, and what each
+argument refers to. Matching a text to a template is then a comparison of literal sequences, modulo
+LE’s ignorable words, with no parser and no language model. Whatever produced the parts (a drafter
+in an authoring tool, an import from Open CBAA’s <code class="language-plaintext highlighter-rouge">wim:</code>, an extraction proposal reviewed at the
+gate) did the segmenting once.</p>
+
+<p><strong>Where the fit stops.</strong></p>
+<ul>
+  <li><strong>Modal words.</strong> “shall” carries the modality in the wording. In the Instrument it is the class
+(<code class="language-plaintext highlighter-rouge">ins:Obligation</code>), and the controlled rendering says “must” (CCS §8.1). An LE template either
+keeps “shall” as fixed words, typed as an obligation form, or uses <code class="language-plaintext highlighter-rouge">lib/deontic.le</code>’s
+<code class="language-plaintext highlighter-rouge">*a party* is obliged that *a sentence*</code> with “shall” mapped away. §3 compares the two.</li>
+  <li><strong>Connectives.</strong> Contract text joins conditions with “if”, “provided that”, “unless”, “save
+where”. A <code class="language-plaintext highlighter-rouge">wrd:Text</code> is flat. The logical structure of a clause lives in Instrument and
+Eligibility (scope, <code class="language-plaintext highlighter-rouge">fulfilledWhen</code>, exceptions), so an LE rule’s head and body map to a relation
+and its conditions, not to one text.</li>
+  <li><strong>Drafted English is not controlled English.</strong> Most existing clauses match no template. Their
+<code class="language-plaintext highlighter-rouge">ins:encodingStatus</code> stays <code class="language-plaintext highlighter-rouge">NotAssessed</code> or their meaning is bound by hand, as today. LE helps
+where wording is drafted or redrafted to conform (ingestion vision §3).</li>
+  <li><strong>Per-section constants.</strong> “The Coverholder” means different parties in different sections (CCS
+§5.10). In LE a global constant has one referent per program. The section-dependent referent
+needs a rule (<code class="language-plaintext highlighter-rouge">the coverholder for a risk is a party if …</code>), which is what the Instrument’s
+per-section definitions already compute.</li>
+</ul>
+
+<h3 id="21-a-sentence-form">2.1 A sentence form</h3>
+
+<p>LE’s template is two things at once: a <strong>sentence form</strong> (fixed words and typed slots) and a
+<strong>predicate</strong> (an n-ary relation the rules reason over). LATTICE holds both, in different layers:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>LE</th>
+      <th>LATTICE</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>the sentence form</td>
+      <td>a library <code class="language-plaintext highlighter-rouge">wrd:Text</code> whose variable references are unbound (a template’s wording, CCS §5.9)</td>
+    </tr>
+    <tr>
+      <td>the predicate</td>
+      <td>the bound meaning: an <code class="language-plaintext highlighter-rouge">ins:</code> relation for a clause, or an Eligibility condition’s evidence binding for a condition atom</td>
+    </tr>
+    <tr>
+      <td>the slot types</td>
+      <td><code class="language-plaintext highlighter-rouge">wrd:valueContract</code>, <code class="language-plaintext highlighter-rouge">wrd:valueSpace</code>, the role a party slot names</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">; synonym &lt;template&gt;</code></td>
+      <td>a second form for the same meaning, rendered on request</td>
+    </tr>
+    <tr>
+      <td>a fact or rule sentence</td>
+      <td>an instance text, or a rendering generated from the bound meaning</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>What LATTICE lacks is a form for a <strong>condition atom</strong>. Clauses have wording, but <code class="language-plaintext highlighter-rouge">the person is
+aged an age</code> exists only as an Eligibility evidence binding, with no words. Rendering (R5 of the
+cross-check) and import both need one form per atom kind. Where that form lives is open (LE-Q2).</p>
+
+<hr />
+
+<h2 id="3-construct-by-construct">3. Construct by construct</h2>
+
+<p><strong>Fit:</strong> ✅ direct, ⚠️ with care or partial, ❌ refused or left at the edge.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>LE construct (reference §)</th>
+      <th>LATTICE counterpart</th>
+      <th>Fit</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>template with typed slots (§2)</td>
+      <td>sentence form plus predicate (§2.1)</td>
+      <td>✅</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">; synonym</code> (§2)</td>
+      <td>another form of the same meaning</td>
+      <td>✅</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">; opposite</code>, <code class="language-plaintext highlighter-rouge">only if</code> (§2, §15.1)</td>
+      <td>a necessary condition, the classification condition precedent (CCS S14), with the opposite as its rendering</td>
+      <td>⚠️ the derived negative conclusion is not a LATTICE assertion</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">; undefined</code>, a scenario element (§2)</td>
+      <td>case data in the happened A-Box, with a closure licence scoped to the scenario (§4)</td>
+      <td>✅</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">; unknown</code>, <code class="language-plaintext highlighter-rouge">; assumable</code> (§2)</td>
+      <td>a fact family with <strong>no</strong> closure licence, so its absence is Undetermined</td>
+      <td>⚠️ LE assumes and answers conditionally, LATTICE reports Undetermined (§4)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">; judged</code> (§17.1)</td>
+      <td>a finding record with <code class="language-plaintext highlighter-rouge">fnd:assertedBy</code> (CCS §6.4), Undetermined until one exists</td>
+      <td>✅</td>
+    </tr>
+    <tr>
+      <td>fact, rule <code class="language-plaintext highlighter-rouge">Head if Body</code> (§3)</td>
+      <td>an instance relation or deeming, with an Eligibility condition as its body</td>
+      <td>✅</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">and</code>, <code class="language-plaintext highlighter-rouge">or</code> (§4)</td>
+      <td>Eligibility composition</td>
+      <td>✅</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">it is not the case that</code> (§4)</td>
+      <td>Eligibility negation (A-103), deciding on absence only under a closure licence (A-105)</td>
+      <td>✅ with a licence</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">unless</code> (§4)</td>
+      <td>an exception: a Permission or an Exclusion</td>
+      <td>⚠️ the burden differs (§4.2)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">for all cases in which … it is the case that</code> (§4)</td>
+      <td><code class="language-plaintext highlighter-rouge">¬∃ ¬</code>, stratified</td>
+      <td>✅ with a licence over the range</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">otherwise</code> cascade (§17.2)</td>
+      <td>ordered alternatives: each guarded by the failure of the earlier ones</td>
+      <td>⚠️ no ordered alternative in Eligibility. Exceptions and <code class="language-plaintext highlighter-rouge">ins:prevailsOver</code> (N10) express it with more nodes</td>
+    </tr>
+    <tr>
+      <td>decision table, first match (§17.3)</td>
+      <td>a partition of a measured value (<code class="language-plaintext highlighter-rouge">qnt:RangeSet</code>) where the rows are intervals, otherwise rows as rules with a hit policy</td>
+      <td>⚠️ the hit policy is new</td>
+    </tr>
+    <tr>
+      <td>integrity constraint <code class="language-plaintext highlighter-rouge">it must not be true that</code> (§3.3)</td>
+      <td>a SHACL shape over case data</td>
+      <td>✅ for checking. Its role in abduction does not carry</td>
+    </tr>
+    <tr>
+      <td>constants <code class="language-plaintext highlighter-rouge">the constants are:</code> (§2.2)</td>
+      <td>variable values (<code class="language-plaintext highlighter-rouge">wrd:VariableValue</code>) and parameter bindings</td>
+      <td>✅</td>
+    </tr>
+    <tr>
+      <td>functions <code class="language-plaintext highlighter-rouge">the functions are:</code> (§2.3)</td>
+      <td><code class="language-plaintext highlighter-rouge">ins:computedBy</code> (CCS §7.9)</td>
+      <td>⚠️ the expression construct is not decided</td>
+    </tr>
+    <tr>
+      <td>arithmetic <code class="language-plaintext highlighter-rouge">+ - * / // mod</code>, <code class="language-plaintext highlighter-rouge">round</code>, <code class="language-plaintext highlighter-rouge">ceiling</code> (§7)</td>
+      <td>Quantification derived values, <code class="language-plaintext highlighter-rouge">qnt:DerivedValueSpace</code>, proportional offsets</td>
+      <td>⚠️ partial until the expression decision</td>
+    </tr>
+    <tr>
+      <td>dates, <code class="language-plaintext highlighter-rouge">days after</code>, calendar <code class="language-plaintext highlighter-rouge">months after</code> (§7.1)</td>
+      <td><code class="language-plaintext highlighter-rouge">qnt:Range</code> anchored by <code class="language-plaintext highlighter-rouge">qnt:relativeToAnchor</code>, calendar units (ADR-A94)</td>
+      <td>✅</td>
+    </tr>
+    <tr>
+      <td>aggregates <code class="language-plaintext highlighter-rouge">sum</code>, <code class="language-plaintext highlighter-rouge">count</code>, <code class="language-plaintext highlighter-rouge">min</code>, <code class="language-plaintext highlighter-rouge">max</code>, <code class="language-plaintext highlighter-rouge">list</code> (§5)</td>
+      <td>allowance accounts, capacity, the contract amounts work</td>
+      <td>⚠️ no general aggregate in Eligibility</td>
+    </tr>
+    <tr>
+      <td>recursion, <code class="language-plaintext highlighter-rouge">; memorable</code> fixpoint (§2.4)</td>
+      <td>none in Eligibility, whose conditions form a tree (cross-check R4)</td>
+      <td>❌ for now</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">is a</code> taxonomy (§8)</td>
+      <td>Vocabulary schemes and hierarchical match (ADR-A87)</td>
+      <td>✅</td>
+    </tr>
+    <tr>
+      <td>meta-templates, <code class="language-plaintext highlighter-rouge">says that</code>, <code class="language-plaintext highlighter-rouge">is approved that</code> (§11)</td>
+      <td>records about a proposition: findings, exercises, deemed facts</td>
+      <td>⚠️ one level of nesting, reified</td>
+    </tr>
+    <tr>
+      <td>provenance trailers <code class="language-plaintext highlighter-rouge">according to</code>, <code class="language-plaintext highlighter-rouge">as stated in</code>, <code class="language-plaintext highlighter-rouge">confer</code>, <code class="language-plaintext highlighter-rouge">because</code> (§17.1)</td>
+      <td><code class="language-plaintext highlighter-rouge">fnd:assertedBy</code>, <code class="language-plaintext highlighter-rouge">fnd:Evidenced</code>, and the wording element a term is <code class="language-plaintext highlighter-rouge">ins:expressedIn</code></td>
+      <td>✅</td>
+    </tr>
+    <tr>
+      <td>rule label <code class="language-plaintext highlighter-rouge">with provenance …, confer "…"</code> (§15.5)</td>
+      <td><code class="language-plaintext highlighter-rouge">ins:Term</code> <code class="language-plaintext highlighter-rouge">ins:expressedIn</code> <code class="language-plaintext highlighter-rouge">wrd:Element</code>, with the text part quoted</td>
+      <td>✅</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">according to</code> in a rule, admissibility (§17.5)</td>
+      <td>evaluation restricted to evidence from admissible sources: a closure licence by source, and the burden of CCS §5.7</td>
+      <td>⚠️ needs a scoped evaluation mode</td>
+    </tr>
+    <tr>
+      <td>sections, <code class="language-plaintext highlighter-rouge">applicability</code>, <code class="language-plaintext highlighter-rouge">question</code>, <code class="language-plaintext highlighter-rouge">remedy</code> (§3.1, §17.4)</td>
+      <td>labels only in LE. LATTICE sections are wording elements with meaning (CCS §5.10)</td>
+      <td>⚠️ name clash, different concepts</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">the contract &lt;name&gt; states that:</code> (§1)</td>
+      <td><code class="language-plaintext highlighter-rouge">ins:Instrument</code></td>
+      <td>✅</td>
+    </tr>
+    <tr>
+      <td>scenario (§1)</td>
+      <td>a case in the happened A-Box</td>
+      <td>✅</td>
+    </tr>
+    <tr>
+      <td>query (§3.2)</td>
+      <td>the Decision and Explain API</td>
+      <td>✅</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">expects answers</code> (§12)</td>
+      <td>a Validation Pack’s expected-decision table (CCS C14)</td>
+      <td>✅</td>
+    </tr>
+    <tr>
+      <td>flip (§17.7)</td>
+      <td>the Explain API’s challenge sets</td>
+      <td>⚠️ tooling, not semantics</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">lib/deontic.le</code> (§14.2)</td>
+      <td>the relation classes, read without time (§5)</td>
+      <td>⚠️</td>
+    </tr>
+    <tr>
+      <td>embedded <code class="language-plaintext highlighter-rouge">prolog</code> goals (§15.6), services (§17.6)</td>
+      <td>none</td>
+      <td>❌</td>
+    </tr>
+    <tr>
+      <td>s(CASP): constraint answers, stable models, abduction (tutorial §21)</td>
+      <td>none at runtime. Constraint answers resemble design-time envelope comparison</td>
+      <td>❌</td>
+    </tr>
+    <tr>
+      <td>LE for LPS: fluents, events, reactive rules (§1)</td>
+      <td>Behaviour configuration and runtime (§5)</td>
+      <td>⚠️</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="4-semantics-who-closes-the-world">4. Semantics: who closes the world</h2>
+
+<h3 id="41-the-inversion">4.1 The inversion</h3>
+
+<p>LE is closed-world by default and opens the world on request. LATTICE is open-world by default
+and closes it on licence.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>What LE says</th>
+      <th>LE’s reading</th>
+      <th>LATTICE’s reading</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>a template with no addition</td>
+      <td>not provable means false</td>
+      <td>absent means Undetermined, unless a closure licence covers the fact family</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">; undefined</code> (a scenario element)</td>
+      <td>the scenario states every such fact</td>
+      <td>a closure licence whose authoritative source is the scenario, scoped to the case</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">; unknown</code></td>
+      <td>not provable means assumed true, and the answer lists the assumption</td>
+      <td>no closure licence: Undetermined, with the open fact in the diagnostic</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">; judged</code></td>
+      <td>assumed, shown as “judgment needed”, fixed once an outcome is recorded</td>
+      <td>Undetermined until a finding record exists (CCS §6.4)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">according to S</code></td>
+      <td>only evidence admissible under S counts</td>
+      <td>a closure licence and evidence filter whose sources are those admissible under S</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>So a translation from LE gives every <code class="language-plaintext highlighter-rouge">; undefined</code> fact family a closure licence over its scenario,
+and every other fact family none. LE’s <code class="language-plaintext highlighter-rouge">; unknown</code> answers and LATTICE’s Undetermined carry the same
+information: LE says “true, if these hold”, LATTICE says “undetermined, because these are open”.
+Neither invents an answer.</p>
+
+<p>The deeming of CCS §5.6 shows the correspondence. In LE:</p>
+
+<pre><code class="language-le">the templates are:
+    *a party* makes *a request* on *a date*; undefined.
+    *a party* provides the documents for *a request* on *a date*; undefined.
+    *a request* is deemed failed on *a date*.
+
+the knowledge base deeming includes:
+
+rule clause_3a with provenance the agreement at clause 3.A,
+        confer "deemed failed if not provided within sixty (60) days":
+a request is deemed failed on a date
+    if a requester makes the request on a first date
+    and the date is 60 days after the first date
+    and it is not the case that
+        a party provides the documents for the request on a second date
+        and the second date is before or equal to the date.
+</code></pre>
+
+<p><code class="language-plaintext highlighter-rouge">; undefined</code> on the providing template is what licenses the absence. In LATTICE that licence is
+explicit: the deeming’s instrument is the authoritative source for the fact family “acts of
+providing the documents”, over the window (CCS §5.6 diagram).</p>
+
+<h3 id="42-where-the-readings-differ">4.2 Where the readings differ</h3>
+
+<ul>
+  <li><strong>Exceptions and burden.</strong> LE’s <code class="language-plaintext highlighter-rouge">Head if Body unless C</code> concludes Head when C cannot be proved.
+LATTICE applies an exception only when it is established (law I7). For an obligation that arises
+unless an exception applies, both conclude that it arises. For a breach that would follow if the
+exception did not apply, LE derives the breach and LATTICE answers Undetermined with
+<code class="language-plaintext highlighter-rouge">exe:ExceptionNotEstablished</code>. Translating LE’s <code class="language-plaintext highlighter-rouge">unless</code> as a LATTICE exception changes this
+answer, by design.</li>
+  <li><strong>Contradiction.</strong> A case whose facts break an LE integrity constraint answers nothing. LATTICE
+reports a shape violation and still evaluates.</li>
+  <li><strong>Time.</strong> LE’s Prolog target answers one query against one scenario. LATTICE answers at a
+stimulus-log position, bitemporally, with supersession. A late fact in LE is a new scenario. In
+LATTICE it supersedes an earlier decision.</li>
+  <li><strong>Cycles through negation.</strong> LE warns and, under Prolog, may loop. s(CASP) gives stable models.
+LATTICE refuses the cycle at design time (I6, cross-check R4).</li>
+</ul>
+
+<h3 id="43-a-conjecture-to-test">4.3 A conjecture to test</h3>
+
+<blockquote>
+  <p>For a core LE program that is stratified, uses no <code class="language-plaintext highlighter-rouge">; unknown</code>, <code class="language-plaintext highlighter-rouge">; judged</code>, <code class="language-plaintext highlighter-rouge">prolog</code>, services,
+recursion or s(CASP)-only constructs, and whose scenario templates are all <code class="language-plaintext highlighter-rouge">; undefined</code>, the
+translation with a closure licence per scenario element gives Permitted exactly where LE answers
+true, Denied exactly where it answers false, and never Undetermined.</p>
+</blockquote>
+
+<p>LE2’s examples hold 426 programs and about 3,700 <code class="language-plaintext highlighter-rouge">expects</code> lines. The subset meeting the
+conjecture’s conditions is a differential test corpus, as NRS N7 uses the OASIS LegalRuleML
+examples. Each mismatch is either a translation bug or a semantic difference worth recording.</p>
+
+<hr />
+
+<h2 id="5-time-les-deontic-library-and-behaviour">5. Time: LE’s deontic library and Behaviour</h2>
+
+<p><code class="language-plaintext highlighter-rouge">lib/deontic.le</code> reads obligations without time: who is obliged, permitted or forbidden that a
+sentence holds, and whether that is violated in one case. Its own header says that deadlines and
+“the life of an obligation over time” belong to LE for LPS, where an obligation is a fluent that its
+trigger initiates and its fulfilment terminates, and that no library exists for it yet.</p>
+
+<p>That missing library is the CCS occasion model.</p>
+
+<pre><code class="language-mermaid">flowchart LR
+    subgraph LEW["Logical English"]
+        direction TB
+        D1["lib/deontic.le&lt;br/&gt;*a party* is obliged that *a sentence*&lt;br/&gt;the obligation … is violated"]
+        D2["LE for LPS&lt;br/&gt;events, fluents,&lt;br/&gt;when … then …"]
+        D3["not yet a library:&lt;br/&gt;obligation as a fluent,&lt;br/&gt;deadline as a constraint"]
+        D1 -. "timeless reading of" .-&gt; D3
+        D2 -. "would host" .-&gt; D3
+    end
+    subgraph LAT["LATTICE"]
+        direction TB
+        L1["ins:Obligation and the other&lt;br/&gt;relation classes (CCS §5.2)"]
+        L2["occasions: Pending, Arisen,&lt;br/&gt;Performed, Breached, Ended&lt;br/&gt;(CCS §7.6)"]
+        L3["legal triggers, due ranges,&lt;br/&gt;positioned stimuli, records&lt;br/&gt;(CCS §5.5, §7.5)"]
+        L1 --&gt; L2 --&gt; L3
+    end
+    D1 -- "maps to" --&gt; L1
+    D3 -- "is" --&gt; L2
+    D2 -- "events, fluents and reactive rules&lt;br/&gt;map to stimuli, state spaces&lt;br/&gt;and transitions" --&gt; L3
+    style LEW fill:#BBDEFB
+    style LAT fill:#bcdee1
+</code></pre>
+
+<table>
+  <thead>
+    <tr>
+      <th>LE</th>
+      <th>LATTICE</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">*a party* is obliged that *a sentence*</code></td>
+      <td><code class="language-plaintext highlighter-rouge">ins:Obligation</code> whose <code class="language-plaintext highlighter-rouge">ins:fulfilledWhen</code> is the sentence’s condition (ought-to-be becomes ought-to-do with a test)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">*a party* is forbidden that *a sentence*</code></td>
+      <td><code class="language-plaintext highlighter-rouge">ins:Prohibition</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">*a party* is permitted that *a sentence*</code></td>
+      <td><code class="language-plaintext highlighter-rouge">ins:Permission</code>, which in LATTICE needs a prohibition to except. A bare LE permission is weak permission, which LATTICE leaves unrepresented (CCS §8)</td>
+    </tr>
+    <tr>
+      <td>a violation</td>
+      <td>a breach record, derived as CCS §6.1 states</td>
+    </tr>
+    <tr>
+      <td>a reparation, a rule concluding a new obligation from a violation</td>
+      <td><code class="language-plaintext highlighter-rouge">ins:arisesOnBreachOf</code></td>
+    </tr>
+    <tr>
+      <td>an LPS event</td>
+      <td>a stimulus</td>
+    </tr>
+    <tr>
+      <td>an LPS fluent</td>
+      <td>a state occupancy, or a dynamic quantity in capacity (CCS §7.8)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">; 0 by default</code> on a fluent</td>
+      <td>a capacity account’s opening value</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">when … then …</code>, <code class="language-plaintext highlighter-rouge">if … then …</code></td>
+      <td>a transition with a trigger, or an effect</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>An export of LATTICE relations to LE for LPS would therefore write the obligation library that LE2
+lacks, generated from the substrate’s templates (CCS §5.11). That is a possible contribution back,
+not a dependency.</p>
+
+<hr />
+
+<h2 id="6-routes-that-keep-prolog-out-of-the-runtime">6. Routes that keep Prolog out of the runtime</h2>
+
+<p>The rule from <a href="/developer/sketches/rule-layers.html">rule-layers.md</a> holds: Prolog, if used at all, is a tool at the edge,
+never in a LATTICE runtime. Four routes respect it.</p>
+
+<pre><code class="language-mermaid">flowchart TB
+    subgraph EDGE["Edge tools (may run LE2)"]
+        LE2["LE2: parser, verifier,&lt;br/&gt;explanations, tests"]
+        MIR["Migration IR&lt;br/&gt;program(Header, Items)"]
+        LE2 &lt;--&gt; MIR
+    end
+    subgraph LATT["LATTICE"]
+        MORK["MORK structure mapping&lt;br/&gt;(a source schema, like LegalRuleML)"]
+        WIN["Wording, Instrument,&lt;br/&gt;Eligibility, Behaviour"]
+        IR["shared IR&lt;br/&gt;(tools/mork_compilers)"]
+        REN["renderer&lt;br/&gt;(cross-check R5)"]
+        EVAL["SPARQL, SHACL, SWRL lowerings"]
+        MORK --&gt; WIN --&gt; IR --&gt; EVAL
+        IR --&gt; REN
+    end
+    TXT["LE text"]
+    CORP["LE2 examples with&lt;br/&gt;expected answers"]
+    MIR -- "B import" --&gt; MORK
+    REN -- "A render" --&gt; TXT
+    TXT --&gt; LE2
+    CORP -- "C differential test" --&gt; LE2
+    CORP -- "C differential test" --&gt; MORK
+    WIN -- "D sentence forms&lt;br/&gt;match text parts" --&gt; TXT
+</code></pre>
+
+<table>
+  <thead>
+    <tr>
+      <th>Route</th>
+      <th>What</th>
+      <th>Runs LE2?</th>
+      <th>Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>A. Render</strong></td>
+      <td>generate LE text from the shared IR: one form per relation class and per condition atom (§2.1). The CCS §8.1 renderings become runnable LE</td>
+      <td>no, the output may be opened in LE2</td>
+      <td>reviewers read meaning as English, and can run it in LE2’s editor for explanations, why-not trees and flips without LATTICE building them</td>
+    </tr>
+    <tr>
+      <td><strong>B. Import</strong></td>
+      <td>read an LE program at the edge with LE2 (<code class="language-plaintext highlighter-rouge">kb_to_ir/2</code>) and map the Migration IR through MORK, as LegalRuleML is mapped</td>
+      <td>yes, at ingestion only</td>
+      <td>an authoring route for wording drafted in LE or InsurLE. The IR is a Prolog term today, so a JSON serialisation of it is the one piece of edge code needed</td>
+    </tr>
+    <tr>
+      <td><strong>C. Differential test</strong></td>
+      <td>run the conjecture’s subset of LE2’s examples through route B and LATTICE’s evaluation, and compare with their <code class="language-plaintext highlighter-rouge">expects</code> lines</td>
+      <td>yes, offline</td>
+      <td>measures the semantic match (§4.3), as NRS N7 measures LegalRuleML</td>
+    </tr>
+    <tr>
+      <td><strong>D. Wording-native</strong></td>
+      <td>match a wording’s text parts against declared sentence forms (§2), so a conforming clause is its own LE sentence and its meaning is checked against its form</td>
+      <td>no</td>
+      <td>the wording and the logic stop drifting apart: the text a party signs is the text the rules are written in</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Route D is the one the text-parts model makes possible, and the one with no counterpart in LE2.
+LE2 reads a document’s text to quote it (<code class="language-plaintext highlighter-rouge">confer</code>, the source viewer, LE §17.1), but its rules are
+written beside the document, not in it.</p>
+
+<hr />
+
+<h2 id="7-what-would-change-in-lattice">7. What would change in LATTICE</h2>
+
+<p>Nothing is proposed for a slice. If the routes are pursued, these are the candidate changes:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Change</th>
+      <th>Needed by</th>
+      <th>Note</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>a sentence form for each condition atom kind and each relation class</td>
+      <td>A, B, D</td>
+      <td>where it lives is LE-Q2</td>
+    </tr>
+    <tr>
+      <td>an ordered-alternatives construct in Eligibility, or a documented translation of <code class="language-plaintext highlighter-rouge">otherwise</code> into exceptions</td>
+      <td>B</td>
+      <td>LE-Q4</td>
+    </tr>
+    <tr>
+      <td>the expression construct for <code class="language-plaintext highlighter-rouge">ins:computedBy</code>, compatible with LE’s arithmetic subset</td>
+      <td>B, and CCS §7.9 anyway</td>
+      <td>arguments for choosing the subset LE already uses: <code class="language-plaintext highlighter-rouge">+ - * / // mod</code>, <code class="language-plaintext highlighter-rouge">round</code>, <code class="language-plaintext highlighter-rouge">ceiling</code>, <code class="language-plaintext highlighter-rouge">floor</code>, <code class="language-plaintext highlighter-rouge">min</code> and <code class="language-plaintext highlighter-rouge">max</code> as conditions</td>
+    </tr>
+    <tr>
+      <td>a scoped evaluation mode: evidence filtered by admissible source</td>
+      <td>B</td>
+      <td>generalises the closure licence by source (A-105) and the burden rule (CCS §5.7)</td>
+    </tr>
+    <tr>
+      <td>a hit policy on tables that hold rules rather than values</td>
+      <td>B</td>
+      <td>CCS’s <code class="language-plaintext highlighter-rouge">wrd:Table</code> holds values. LE’s decision tables hold rules</td>
+    </tr>
+    <tr>
+      <td>a JSON form of LE2’s Migration IR</td>
+      <td>B, C</td>
+      <td>edge code, outside LATTICE</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>None of these touches Foundation, and none changes a decision taken in CCS.</p>
+
+<hr />
+
+<h2 id="8-risks">8. Risks</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Risk</th>
+      <th>Mitigation</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>L1</td>
+      <td>LE’s two-valued answers are taken as LATTICE’s</td>
+      <td>every imported program carries its closure licences explicitly, and the §4.2 differences are listed in the import report</td>
+    </tr>
+    <tr>
+      <td>L2</td>
+      <td>Prolog drifts into a runtime</td>
+      <td>routes B and C run LE2 only at ingestion or offline, enforced by the same boundary rule that keeps reasoners out of runtime (ADR-A83)</td>
+    </tr>
+    <tr>
+      <td>L3</td>
+      <td>Sentence forms become a second, competing vocabulary</td>
+      <td>forms are words for meanings LATTICE already holds. A form never adds a predicate of its own</td>
+    </tr>
+    <tr>
+      <td>L4</td>
+      <td>Drafted wording is assumed to conform</td>
+      <td>conformance of a text to a form is checked and recorded, never assumed</td>
+    </tr>
+    <tr>
+      <td>L5</td>
+      <td>Dependence on proprietary extensions</td>
+      <td>core LE only, as stated above</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="9-open-questions">9. Open questions</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Question</th>
+      <th>First thought</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>LE-Q1</td>
+      <td>Is route D worth a construct of its own, or is a library <code class="language-plaintext highlighter-rouge">wrd:Text</code> with unbound variables already the sentence form?</td>
+      <td>the library text suffices for clauses. Condition atoms need something new</td>
+    </tr>
+    <tr>
+      <td>LE-Q2</td>
+      <td>Where does a condition atom’s sentence form live: Eligibility (beside the evidence binding), Vocabulary (as a label scheme), or a rendering profile outside the T-Box?</td>
+      <td>a rendering profile, so the T-Box gains nothing for presentation</td>
+    </tr>
+    <tr>
+      <td>LE-Q3</td>
+      <td>Should “shall” be fixed words of an obligation form, or should forms use <code class="language-plaintext highlighter-rouge">lib/deontic.le</code>’s <code class="language-plaintext highlighter-rouge">is obliged that</code>?</td>
+      <td>fixed words: the wording is the drafter’s, and the relation class carries the modality</td>
+    </tr>
+    <tr>
+      <td>LE-Q4</td>
+      <td><code class="language-plaintext highlighter-rouge">otherwise</code>: an Eligibility construct, or a translation into exceptions?</td>
+      <td>a translation first. A construct only if real wording needs it often</td>
+    </tr>
+    <tr>
+      <td>LE-Q5</td>
+      <td>Is the conjecture of §4.3 true?</td>
+      <td>measure it (route C) before relying on it</td>
+    </tr>
+    <tr>
+      <td>LE-Q6</td>
+      <td>Would an LPS obligation library generated from CCS templates be welcome upstream in LE2?</td>
+      <td>a conversation with the LE2 maintainers, not a design question</td>
+    </tr>
+  </tbody>
+</table>

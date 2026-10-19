@@ -1,0 +1,118 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-ccs-c0-adrs-a-112-and-a-113-and-the-a-01-and-a-c2-addenda">Validation Pack: CCS C0, ADRs A-112 and A-113 and the A-01 and A-C2 addenda</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/computable-contract-substrate.html"><code class="language-plaintext highlighter-rouge">computable-contract-substrate</code></a>
+<strong>Machine:</strong> R. <strong>Branch:</strong> <code class="language-plaintext highlighter-rouge">ccs/c0-adrs</code>
+<strong>Plan and test cases:</strong> <a href="/developer/plans/computable-contract-substrate.html">CCS plan</a> (C0 in detail)
+<strong>Decisions:</strong> CC-D1, CC-D2, CC-D4, CC-D7, CC-D8 (layer order). Brief questions C0-Q1 to C0-Q3</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>Paper only. A-112 and A-113 and the two addenda are <code class="language-plaintext highlighter-rouge">Proposed</code>, decide only what CC-D1, CC-D2,
+CC-D4, CC-D7 and CC-D8’s layer order decided, and cite the sketch rather than restating it. No
+ontology, tool, README or architecture document changes.</p>
+
+<h2 id="test-cases">Test cases</h2>
+
+<p>The table in the plan section above. Each row’s result is recorded under Results at
+verification.</p>
+
+<h2 id="one-command">One command</h2>
+
+<p>Run from the repository root on machine R. The check fails on the existing baseline of 427 broken
+links, so a pass is the same count with no line naming a changed file.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run topology:links 2&gt;&amp;1 | <span class="nb">grep</span> <span class="nt">-E</span> <span class="s2">"ADR-A(01|112|113|C2)|decisions/README|computable-contract-substrate-c0"</span>
+</code></pre></div></div>
+
+<p>A pass prints nothing.</p>
+
+<h2 id="artefacts-to-inspect">Artefacts to inspect</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">docs/architecture/decisions/ADR-A112-wording-layer.md</code>: the Context’s order (premise, then
+examples), and Decision 2’s import lists.</li>
+  <li><code class="language-plaintext highlighter-rouge">ADR-A01-layer-dependency-order.md</code>: the addendum’s order against the sketch §1 diagram.</li>
+  <li><code class="language-plaintext highlighter-rouge">ADR-A113-breaking-changes-at-major-version-zero.md</code>: the scope and the marking rule.</li>
+  <li><code class="language-plaintext highlighter-rouge">ADR-AC2-clean-room-authoring-procedure.md</code>: the addendum’s two conditions.</li>
+</ul>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<p>The documentation the ADRs call for (<code class="language-plaintext highlighter-rouge">ontology-versioning-policy.md</code>, <code class="language-plaintext highlighter-rouge">ontology-architecture.md</code>,
+the root README) changes after acceptance, not in C0. A-104 and A-106 are C1 and C2.</p>
+
+<h2 id="handoff">Handoff</h2>
+
+<p>Written by the building machine when the work is committed.</p>
+
+<ul>
+  <li><strong>Built:</strong> ADR-A112, ADR-A113, the addenda to ADR-A01 and ADR-A-C2, the index rows and the
+numbering sentence.</li>
+  <li><strong>Not run:</strong> nothing beyond the link and prose checks, as planned.</li>
+  <li><strong>Check first:</strong> A-113 decision 2, which creates a “Release notes” section in a layer’s README
+on its first breaking change, since no layer README has one today.</li>
+  <li><strong>Deviations from the plan:</strong> C0-10’s scope is wider, because C1 and C2 were done on the same
+branch at our instruction. The plan also gained the C1 and C2 briefs and the C10 row’s
+wording.</li>
+</ul>
+
+<h2 id="results">Results</h2>
+
+<p>Verified on machine R, 2026-10-01.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>C0-01</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>C0-02</td>
+      <td>pass: premise, facility agreement, trial protocol, then the problem</td>
+    </tr>
+    <tr>
+      <td>C0-03</td>
+      <td>pass: Wording, Behaviour and Instrument import lists match the sketch §1 diagram. No upward import</td>
+    </tr>
+    <tr>
+      <td>C0-04</td>
+      <td>pass: the split is cited as A-106’s</td>
+    </tr>
+    <tr>
+      <td>C0-05</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>C0-06</td>
+      <td>pass: CC-D7’s two conditions, measured under C0-Q2, authoring order and brand ban unchanged</td>
+    </tr>
+    <tr>
+      <td>C0-07</td>
+      <td>pass, with A-104 and A-106 rows added by C1 and C2</td>
+    </tr>
+    <tr>
+      <td>C0-08</td>
+      <td>pass: no broken link names a changed file. Repository total 427, the baseline</td>
+    </tr>
+    <tr>
+      <td>C0-09</td>
+      <td>pass: no semicolons or superlatives in new prose. The index paragraph’s two semicolons predate C0</td>
+    </tr>
+    <tr>
+      <td>C0-10</td>
+      <td>deviation, as above: the tranche’s files only, no ontology or tool change</td>
+    </tr>
+    <tr>
+      <td>C0-11</td>
+      <td>pass</td>
+    </tr>
+  </tbody>
+</table>

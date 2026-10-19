@@ -1,0 +1,602 @@
+<h1 id="uniqueness-in-rdf-the-problem-statement">Uniqueness in RDF: the problem statement</h1>
+
+<p>RDF has <em>set</em> semantics for triples, so the only thing you get for free is “no duplicate triples.” Everything people actually mean by “unique” has to be built:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Kind</th>
+      <th>Example</th>
+      <th>Difficulty</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>K1. Cardinality / functional property</strong></td>
+      <td>a <code class="language-plaintext highlighter-rouge">Person</code> has at most one <code class="language-plaintext highlighter-rouge">ex:ssn</code></td>
+      <td>Easy (<code class="language-plaintext highlighter-rouge">sh:maxCount 1</code>, upsert)</td>
+    </tr>
+    <tr>
+      <td><strong>K2. Global key (inverse-functional)</strong></td>
+      <td>no two <code class="language-plaintext highlighter-rouge">Person</code>s share an <code class="language-plaintext highlighter-rouge">ex:email</code></td>
+      <td>Hard — cross-node, needs a scan or an index</td>
+    </tr>
+    <tr>
+      <td><strong>K3. Composite / scoped key</strong></td>
+      <td><code class="language-plaintext highlighter-rouge">(tenant, orderNumber)</code> unique per tenant</td>
+      <td>Hard + normalization issues</td>
+    </tr>
+    <tr>
+      <td><strong>K4. Entity identity / de-dup on ingest</strong></td>
+      <td>don’t mint two IRIs for the same real-world thing</td>
+      <td>Hard — this is the one that actually bites in production</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Two constraints shape every solution:</p>
+
+<ol>
+  <li><strong>SPARQL 1.1 Protocol has no multi-request transactions.</strong> So either your whole check-then-write must fit in <strong>one HTTP request</strong>, or you must use a vendor transaction API. (SPARQL 1.1 Update does not mandate that a request be atomic either — most engines do treat one request as one transaction, but you must verify per engine.)</li>
+  <li><strong>Atomic ≠ serializable.</strong> <code class="language-plaintext highlighter-rouge">INSERT … WHERE NOT EXISTS</code> is a textbook <strong>write-skew</strong>: under snapshot isolation two concurrent writers can both see “no such email” and both insert. Atomicity does not save you; you need serializable isolation, a materialized write conflict, single-writer semantics, or an external lock.</li>
+</ol>
+
+<p>Also: <strong>OWL <code class="language-plaintext highlighter-rouge">InverseFunctionalProperty</code> is not a constraint.</strong> With reasoning on, two people with the same email get silently <em>merged</em> (<code class="language-plaintext highlighter-rouge">owl:sameAs</code>), which is usually worse than a duplicate. It only raises an inconsistency if you have <code class="language-plaintext highlighter-rouge">owl:differentFrom</code>/UNA asserted. Use it deliberately for record linkage, never as an integrity check.</p>
+
+<hr />
+
+<h1 id="part-1--portable-sparql-patterns">Part 1 — Portable SPARQL patterns</h1>
+
+<h2 id="p0-deterministic-hash-derived-iris--make-uniqueness-structural">P0. Deterministic (hash-derived) IRIs — make uniqueness structural</h2>
+
+<p>If the key <em>is</em> the identity, the store’s triple-set semantics enforces uniqueness for you and concurrent writers converge instead of conflicting.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>IRI = urn:ex:person:{base32(sha256("person|email|" + normalize(email)))}
+</code></pre></div></div>
+
+<ul>
+  <li>Concurrent inserts of the same entity are idempotent, not conflicting. No locks, works on Rya/Halyard/anything.</li>
+  <li><strong>Only use for immutable, natural, non-PII keys.</strong> Hashing an email into an IRI leaks PII into every dataset dump and makes “user changes email” a migration.</li>
+  <li>Keep a version/salt in the hash input (<code class="language-plaintext highlighter-rouge">"v1|person|..."</code>) so you can re-key later.</li>
+  <li>Blank nodes are the anti-pattern here: canonicalize/skolemize on ingest.</li>
+</ul>
+
+<p>For mutable keys use P0 for a <strong>key node</strong> and a separate opaque IRI (UUIDv4) for the entity — that’s P1.</p>
+
+<h2 id="p1-key-claim-registry--reduce-k2k3-to-k1-the-single-most-useful-trick">P1. Key-claim registry — reduce K2/K3 to K1 (the single most useful trick)</h2>
+
+<p>Global uniqueness is expensive and poorly supported. <strong>Per-node cardinality is cheap and universally supported.</strong> So mint a deterministic node for the <em>key value</em> and require it to have at most one owner:</p>
+
+<div class="language-turtle highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">GRAPH</span><span class="w"> </span><span class="nl">&lt;urn:keys&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+  </span><span class="nl">&lt;urn:key:person-email:JBSWY3DP…&gt;</span><span class="w">
+      </span><span class="k">a</span><span class="w">              </span><span class="nn">ex:</span><span class="n">KeyClaim</span><span class="w"> </span><span class="p">;</span><span class="w">
+      </span><span class="nn">ex:</span><span class="n">constraint</span><span class="w">  </span><span class="s">"person-email-unique"</span><span class="w"> </span><span class="p">;</span><span class="w">
+      </span><span class="nn">ex:</span><span class="n">claimedBy</span><span class="w">   </span><span class="nl">&lt;urn:ex:person/8f2c…&gt;</span><span class="w"> </span><span class="p">.</span><span class="w">   </span><span class="c1"># must be maxCount 1</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Benefits:</p>
+
+<ul>
+  <li>The constraint becomes <code class="language-plaintext highlighter-rouge">sh:maxCount 1</code> on <code class="language-plaintext highlighter-rouge">ex:claimedBy</code> for <code class="language-plaintext highlighter-rouge">ex:KeyClaim</code> → expressible in <strong>SHACL Core</strong>, validated <strong>incrementally</strong> by engines that only re-validate the changed subgraph (RDF4J <code class="language-plaintext highlighter-rouge">ShaclSail</code>, GraphDB). A cross-node <code class="language-plaintext highlighter-rouge">sh:sparql</code> uniqueness constraint often forces a full scan; this doesn’t.</li>
+  <li>It’s an <strong>index</strong>: “find the person with this email” is a single-triple lookup, no <code class="language-plaintext highlighter-rouge">?o</code> scan.</li>
+  <li>All concurrent writers for the same key touch the <strong>same subject</strong>, which is what makes conflict detection (P3), locking (P6) and sharding work.</li>
+  <li>Audit/undelete: retire claims with a tombstone instead of deleting.</li>
+</ul>
+
+<p>Encode scope into the hash input: <code class="language-plaintext highlighter-rouge">"{constraintId}|{tenant}|{graph}|{normalizedKey}"</code>.</p>
+
+<h2 id="p2-conditional-write-in-one-request-guarded-update">P2. Conditional write in one request (guarded update)</h2>
+
+<div class="language-sparql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">PREFIX</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="w"> </span><span class="nn">&lt;http://example.org/&gt;</span><span class="w">
+</span><span class="k">INSERT</span><span class="w"> </span><span class="p">{</span><span class="w">
+  </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:keys&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nv">?claim</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">KeyClaim</span><span class="w"> </span><span class="p">;</span><span class="w">
+           </span><span class="nn">ex</span><span class="o">:</span><span class="ss">constraint</span><span class="w"> </span><span class="s2">"person-email-unique"</span><span class="w"> </span><span class="p">;</span><span class="w">
+           </span><span class="nn">ex</span><span class="o">:</span><span class="ss">claimedBy</span><span class="w">  </span><span class="nn">ex</span><span class="o">:</span><span class="ss">person-42</span><span class="w"> </span><span class="p">.</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+  </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:app&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nn">ex</span><span class="o">:</span><span class="ss">person-42</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">Person</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">email</span><span class="w"> </span><span class="s2">"ada@example.org"</span><span class="w"> </span><span class="p">.</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span><span class="k">WHERE</span><span class="w"> </span><span class="p">{</span><span class="w">
+  </span><span class="k">BIND</span><span class="p">(</span><span class="nb">IRI</span><span class="p">(</span><span class="s2">"urn:key:person-email:JBSWY3DP"</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="nv">?claim</span><span class="p">)</span><span class="w">
+  </span><span class="k">FILTER</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:keys&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">?claim</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">claimedBy</span><span class="w"> </span><span class="nv">?other</span><span class="w"> </span><span class="p">.</span><span class="w"> </span><span class="k">FILTER</span><span class="p">(</span><span class="nv">?other</span><span class="w"> </span><span class="o">!</span><span class="p">=</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">person-42</span><span class="p">)</span><span class="w"> </span><span class="p">}</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Properties:</p>
+
+<ul>
+  <li>One operation → all-or-nothing: if the key is taken, <strong>neither</strong> the claim nor the payload lands.</li>
+  <li>Idempotent on retry (re-running with the same <code class="language-plaintext highlighter-rouge">?other</code> is a no-op).</li>
+  <li>
+    <p><strong>Ownership monotonicity makes the post-check race-free.</strong> Because a claim is only ever released by an explicit retire operation issued by its <em>own</em> owner, a follow-up request</p>
+
+    <div class="language-sparql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">ASK</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:keys&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nn">&lt;urn:key:person-email:JBSWY3DP&gt;</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">claimedBy</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">person-42</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span></code></pre></div>    </div>
+    <p>cannot produce a false positive. This is how you get a correct check-then-act <strong>without</strong> a transaction API — the only gap left is the write-skew of two <em>different</em> claimants (fixed by P3/P6).</p>
+  </li>
+</ul>
+
+<h2 id="p3-materialize-the-write-conflict-beat-snapshot-isolation-portably">P3. Materialize the write conflict (beat snapshot isolation portably)</h2>
+
+<p>Under MVCC, two inserts of <em>different</em> triples don’t conflict. Force them to collide on a row both must rewrite — a pre-created sentinel counter, sharded by key hash:</p>
+
+<div class="language-sparql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># bootstrap once: for i in 0..1023 -&gt; &lt;urn:keyshard:i&gt; ex:counter 0</span><span class="w">
+</span><span class="k">DELETE</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:keys&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">?shard</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">counter</span><span class="w"> </span><span class="nv">?n</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span><span class="k">INSERT</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:keys&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">?shard</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">counter</span><span class="w"> </span><span class="nv">?n1</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">...</span><span class="w"> </span><span class="p">}</span><span class="w">   </span><span class="c1"># plus P2's inserts</span><span class="w">
+</span><span class="k">WHERE</span><span class="w">  </span><span class="p">{</span><span class="w">
+  </span><span class="k">BIND</span><span class="p">(</span><span class="nn">&lt;urn:keyshard:817&gt;</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="nv">?shard</span><span class="p">)</span><span class="w">                        </span><span class="c1"># sha256(key) % 1024</span><span class="w">
+  </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:keys&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">?shard</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">counter</span><span class="w"> </span><span class="nv">?n</span><span class="w"> </span><span class="p">}</span><span class="w">
+  </span><span class="k">BIND</span><span class="p">(</span><span class="nv">?n</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="nv">?n1</span><span class="p">)</span><span class="w">
+  </span><span class="k">FILTER</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="err">…</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="err">P2</span><span class="w"> </span><span class="err">…</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Both transactions delete+insert the same statement → one gets a write-conflict abort → retry with jitter. Cost: false conflicts between unrelated keys in the same shard (tune shard count to your write rate). Use only when the engine detects write-write conflicts but not write skew.</p>
+
+<h2 id="p4-upsert-for-k1-functional-properties">P4. Upsert for K1 (functional properties)</h2>
+
+<div class="language-sparql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">DELETE</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:app&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">person-42</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">email</span><span class="w"> </span><span class="nv">?old</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span><span class="k">INSERT</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:app&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">person-42</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">email</span><span class="w"> </span><span class="s2">"ada@example.org"</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span><span class="k">WHERE</span><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="k">OPTIONAL</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:app&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">person-42</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">email</span><span class="w"> </span><span class="nv">?old</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Don’t forget: retire the old key claim and insert the new one in the <strong>same</strong> operation, or you leak claims.</p>
+
+<h2 id="p5-shacl-as-the-safety-net">P5. SHACL as the safety net</h2>
+
+<p>Core constraints that are genuinely about uniqueness:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">sh:maxCount 1</code> — functional properties <strong>and</strong> the P1 claim node.</li>
+  <li><code class="language-plaintext highlighter-rouge">sh:uniqueLang true</code> — at most one <code class="language-plaintext highlighter-rouge">rdfs:label</code> per language tag.</li>
+</ul>
+
+<p>Cross-node uniqueness needs SHACL-SPARQL:</p>
+
+<div class="language-turtle highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nn">ex:</span><span class="n">PersonEmailUnique</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">sh:</span><span class="n">NodeShape</span><span class="w"> </span><span class="p">;</span><span class="w">
+  </span><span class="nn">sh:</span><span class="n">targetClass</span><span class="w"> </span><span class="nn">ex:</span><span class="n">Person</span><span class="w"> </span><span class="p">;</span><span class="w">
+  </span><span class="nn">sh:</span><span class="n">sparql</span><span class="w"> </span><span class="p">[</span><span class="w">
+    </span><span class="nn">sh:</span><span class="n">message</span><span class="w"> </span><span class="s">"Duplicate email {?email}"</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">sh:</span><span class="n">prefixes</span><span class="w"> </span><span class="nn">ex:</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">sh:</span><span class="n">select</span><span class="w"> </span><span class="s">"""
+      SELECT $this ?email WHERE {
+        $this ex:email ?email .
+        ?other ex:email ?email .
+        FILTER (?other != $this)
+      }"""</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Use it two ways: (a) <strong>commit-time validation</strong> where the engine supports it (below) — then it’s a real constraint; (b) <strong>offline auditing</strong>, run on a schedule, results feed a quarantine queue. Check your engine’s SHACL feature matrix: several incremental validators support only a subset, and <code class="language-plaintext highlighter-rouge">sh:sparql</code> may force full-graph revalidation. This is exactly why P1 is worth the indirection.</p>
+
+<h2 id="p6-external-allocator--lock-the-boring-industrial-answer">P6. External allocator / lock (the boring industrial answer)</h2>
+
+<p>For high-contention K4 identity minting, put the uniqueness in something that has a real unique index and treat RDF as the projection:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">INSERT ... ON CONFLICT DO NOTHING RETURNING id</code> in Postgres, or DynamoDB <code class="language-plaintext highlighter-rouge">ConditionExpression: attribute_not_exists(pk)</code>, or Redis <code class="language-plaintext highlighter-rouge">SET key val NX PX ttl</code> for a lease.</li>
+  <li>Then write to RDF <strong>idempotently</strong> (P0/P2), with an outbox/CDC so the projection is retryable and at-least-once safe.</li>
+  <li>Partitioning the writer by <code class="language-plaintext highlighter-rouge">hash(key) % N</code> (Kafka key, actor per key) removes contention entirely and is often simpler than distributed locking.</li>
+</ul>
+
+<h2 id="p7-detect-and-reconcile-always-have-this-regardless">P7. Detect-and-reconcile (always have this, regardless)</h2>
+
+<p>Nightly/streaming duplicate scan → quarantine graph → merge or reject. Every pattern above has holes (bulk loads, admin <code class="language-plaintext highlighter-rouge">LOAD</code>, restores from backup, a rogue ETL job that bypasses your service).</p>
+
+<div class="language-sparql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">SELECT</span><span class="w"> </span><span class="nv">?email</span><span class="w"> </span><span class="p">(</span><span class="nb">COUNT</span><span class="p">(</span><span class="k">DISTINCT</span><span class="w"> </span><span class="nv">?p</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="nv">?n</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="nb">GROUP_CONCAT</span><span class="p">(</span><span class="nb">STR</span><span class="p">(</span><span class="nv">?p</span><span class="p">);</span><span class="nb">separator</span><span class="p">=</span><span class="s2">" "</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="nv">?dups</span><span class="p">)</span><span class="w">
+</span><span class="k">WHERE</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:app&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">?p</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">Person</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">email</span><span class="w"> </span><span class="nv">?email</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span><span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="nv">?email</span><span class="w"> </span><span class="k">HAVING</span><span class="w"> </span><span class="p">(</span><span class="nb">COUNT</span><span class="p">(</span><span class="k">DISTINCT</span><span class="w"> </span><span class="nv">?p</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Ship it as a metric and alert on <code class="language-plaintext highlighter-rouge">&gt; 0</code>. Decide policy per constraint: <code class="language-plaintext highlighter-rouge">reject | merge (sameAs + rewrite) | quarantine</code>.</p>
+
+<h2 id="normalization-where-uniqueness-actually-breaks">Normalization: where uniqueness actually breaks</h2>
+
+<p>Uniqueness is only as good as your key canonicalization. <code class="language-plaintext highlighter-rouge">"A@B.com"</code> vs <code class="language-plaintext highlighter-rouge">"a@b.com"</code>, <code class="language-plaintext highlighter-rouge">"x"</code> vs <code class="language-plaintext highlighter-rouge">"x"^^xsd:string</code> vs <code class="language-plaintext highlighter-rouge">"x"@en</code>, <code class="language-plaintext highlighter-rouge">1.0</code> vs <code class="language-plaintext highlighter-rouge">1.00</code>, NFC vs NFD, trailing whitespace, <code class="language-plaintext highlighter-rouge">http://</code> vs <code class="language-plaintext highlighter-rouge">https://</code>, IRI percent-encoding, trailing slash. Decide and <strong>freeze</strong> a normalization pipeline per constraint, version it (<code class="language-plaintext highlighter-rouge">v1|...</code> in the hash), and apply it identically in: the write path, the SHACL/audit query, and the backfill job. SPARQL’s string functions can’t do Unicode normalization or IDN handling — normalize in the application, not in the query.</p>
+
+<h2 id="portability-caveats-summary">Portability caveats summary</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Assumption</th>
+      <th>Reality</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>One SPARQL Update request is atomic</td>
+      <td>Usually yes, not guaranteed by spec — test it</td>
+    </tr>
+    <tr>
+      <td>Multiple requests can share a transaction</td>
+      <td>Never in plain SPARQL Protocol; vendor API only</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">FILTER NOT EXISTS</code> guard is safe</td>
+      <td>Only under serializable isolation, single-writer, or P3/P6</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">sh:maxCount</code> is enforced</td>
+      <td>Only if the engine validates at commit; otherwise it’s a report</td>
+    </tr>
+    <tr>
+      <td>Bulk load respects constraints</td>
+      <td>Almost never — validate after, or pre-dedup</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h1 id="part-2--vendor-extensions">Part 2 — Vendor extensions</h1>
+
+<blockquote>
+  <p>Feature sets and isolation levels change between releases; treat this as a map of <em>where to look</em>, and verify with the concurrency TCK in Part 3 rather than trusting docs (or me).</p>
+</blockquote>
+
+<p><strong>Stardog</strong></p>
+<ul>
+  <li><strong>ICV (Integrity Constraint Validation)</strong> — add constraints (OWL axioms or SHACL) to the DB; with validation enabled on the transaction, a violating commit is <strong>rejected</strong>. The closest thing in the RDF world to real DDL constraints.</li>
+  <li>Snapshot isolation with conflict detection; retry on conflict. P3 (materialized conflict) is the fallback if write-skew is possible.</li>
+  <li>Multi-statement transactions over HTTP (<code class="language-plaintext highlighter-rouge">/transaction/begin</code>, <code class="language-plaintext highlighter-rouge">/{tx}/…</code>, <code class="language-plaintext highlighter-rouge">/commit</code>) → you <em>can</em> do check-then-write across requests.</li>
+  <li>Virtual graphs let you push a key into a relational source that has a real unique index (P6 without a second datastore).</li>
+</ul>
+
+<p><strong>Ontotext GraphDB</strong></p>
+<ul>
+  <li><strong>SHACL validation at commit</strong> (ShaclSail-based); plus <code class="language-plaintext highlighter-rouge">sh:shapesGraph</code> management APIs.</li>
+  <li><strong>Custom rulesets (<code class="language-plaintext highlighter-rouge">.pie</code>) with consistency checks</strong> — a rule whose match aborts the transaction. Fast, materialization-time, good for K1-style axioms.</li>
+  <li><strong>Plugin API / <code class="language-plaintext highlighter-rouge">UpdateInterpreter</code></strong> — intercept statements or specific update patterns in-process and implement a genuine unique index (e.g. back it with Lucene or your own map). This is the highest-performance option if you’re willing to write Java.</li>
+  <li>Writes serialized per repository, which makes P2 safe in practice.</li>
+  <li>Connectors (Lucene/Elasticsearch/Solr) give you a secondary index for fast duplicate lookup.</li>
+</ul>
+
+<p><strong>Eclipse RDF4J</strong> (and everything built on it)</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">IsolationLevels.SERIALIZABLE</code> on Memory/Native store → P2 becomes correct, with <code class="language-plaintext highlighter-rouge">SailConflictException</code> on conflict.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">ShaclSail</code></strong> — validates the <em>changed</em> subgraph at commit and throws <code class="language-plaintext highlighter-rouge">ShaclSailValidationException</code>, aborting. Best-in-class for the P1 claim pattern (<code class="language-plaintext highlighter-rouge">sh:maxCount 1</code> is cheap and incremental).</li>
+  <li><code class="language-plaintext highlighter-rouge">NotifyingSail</code> / <code class="language-plaintext highlighter-rouge">SailConnectionListener</code> / a custom <code class="language-plaintext highlighter-rouge">SailWrapper</code> → roll your own commit-time uniqueness index.</li>
+  <li>Transaction REST endpoint (<code class="language-plaintext highlighter-rouge">POST /repositories/x/transactions</code>) for cross-request tx.</li>
+</ul>
+
+<p><strong>Apache Jena / Fuseki / TDB2</strong></p>
+<ul>
+  <li>TDB2 is <strong>MR+SW</strong> (multi-reader, single-writer) — writers are serialized, so P2 is effectively serializable. Big, underrated win.</li>
+  <li><code class="language-plaintext highlighter-rouge">jena-shacl</code> + Fuseki SHACL endpoint for validation; no built-in commit-time reject, but you can wrap <code class="language-plaintext highlighter-rouge">DatasetGraph</code> or add a Fuseki service/filter that validates inside the write transaction and aborts.</li>
+  <li><code class="language-plaintext highlighter-rouge">jena-text</code> for a Lucene-backed lookup index.</li>
+</ul>
+
+<p><strong>Amazon Neptune</strong></p>
+<ul>
+  <li>No constraints, no SHACL, no multi-request SPARQL transactions. Each request is one transaction.</li>
+  <li>Its conflict model takes locks on index ranges, so <code class="language-plaintext highlighter-rouge">INSERT { … } WHERE { FILTER NOT EXISTS { … } }</code> can be made safe — <em>provided the guard pattern touches the same index range as the write</em>. Consult the current “transaction semantics” doc; Neptune throws <code class="language-plaintext highlighter-rouge">ConcurrentModificationException</code> and you retry. Design the guard so it reads exactly the claim triple (P1 makes this trivially true).</li>
+  <li><strong>Neptune Streams</strong> for the P7 reconciler; Lambda consumer detects duplicates after the fact.</li>
+</ul>
+
+<p><strong>OpenLink Virtuoso</strong></p>
+<ul>
+  <li>RDF lives in a SQL engine you can program: stored procedures, triggers, and <strong>user-defined functions callable from SPARQL</strong> (<code class="language-plaintext highlighter-rouge">bif:</code>/custom). The pragmatic pattern: a SQL table with a real <code class="language-plaintext highlighter-rouge">UNIQUE</code> index for key allocation, called from a procedure that also writes the quads — one atomic SQL transaction. Full isolation levels available.</li>
+  <li>Also supports RDF Views over relational data, so the RDBMS constraint <em>is</em> the RDF constraint.</li>
+</ul>
+
+<p><strong>AllegroGraph</strong></p>
+<ul>
+  <li><strong>Duplicate suppression</strong> (<code class="language-plaintext highlighter-rouge">spo</code> or <code class="language-plaintext highlighter-rouge">spog</code>) — engine-level dedup, and quad-level semantics control.</li>
+  <li>Transactions, plus server-side Prolog/Lisp/JS functions for atomic check-then-write.</li>
+</ul>
+
+<p><strong>MarkLogic</strong> (triples inside a document store)</p>
+<ul>
+  <li>Documents are unique by URI → derive the URI from the key (P0) and the database enforces it. Multi-statement transactions, <code class="language-plaintext highlighter-rouge">xdmp:lock-for-update</code> for pessimistic locking, element range indexes for fast duplicate detection.</li>
+</ul>
+
+<p><strong>Oracle RDF / Semantic Graph</strong></p>
+<ul>
+  <li>Triples in relational tables; you can put SQL constraints/triggers and unique indexes on staging/application tables, and use <code class="language-plaintext highlighter-rouge">SEM_APIS</code> validation. Bulk load via staging table with a unique index is a clean P6.</li>
+</ul>
+
+<p><strong>Blazegraph</strong> — unisolated writes are single-writer → P2 safe; query hints for isolation.
+<strong>Oxigraph / embedded stores</strong> — single-writer transactions; do the check-then-write in-process.
+<strong>Rya / Halyard / Trino-style federations (no ACID)</strong> — you <em>must</em> use P0 + P6 + P7. Do not attempt guarded updates.</p>
+
+<hr />
+
+<h1 id="part-3--adapter-design-for-pluggable-backends">Part 3 — Adapter design for pluggable backends</h1>
+
+<h2 id="core-idea">Core idea</h2>
+
+<p>Don’t abstract over “constraints” (backends disagree too much). Abstract over <strong>capabilities</strong>, declare constraints <strong>declaratively</strong>, and let a planner pick the strongest enforcement strategy each backend can actually support — with a portable fallback and a mandatory asynchronous backstop.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Declarative constraint spec ─┐
+                             ├─&gt; Planner ──&gt; Strategy chain ──&gt; Backend adapter (capabilities)
+Normalization pipeline ──────┘                    │
+                                                  └──&gt; Reconciler (always on)
+</code></pre></div></div>
+
+<h2 id="1-constraint-spec-backend-agnostic-versioned-in-source-control">1. Constraint spec (backend-agnostic, versioned, in source control)</h2>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="pi">-</span> <span class="na">id</span><span class="pi">:</span> <span class="s">person-email-unique</span>
+  <span class="na">version</span><span class="pi">:</span> <span class="m">1</span>
+  <span class="na">kind</span><span class="pi">:</span> <span class="s">unique_key</span>            <span class="c1"># unique_key | max_cardinality | unique_lang</span>
+  <span class="na">target</span><span class="pi">:</span> <span class="pi">{</span> <span class="nv">class</span><span class="pi">:</span> <span class="nv">ex</span><span class="pi">:</span><span class="nv">Person</span><span class="pi">,</span> <span class="nv">graph</span><span class="pi">:</span> <span class="nv">urn</span><span class="pi">:</span><span class="nv">app</span> <span class="pi">}</span>
+  <span class="na">key</span><span class="pi">:</span>    <span class="pi">[</span> <span class="nv">ex</span><span class="pi">:</span><span class="nv">email</span> <span class="pi">]</span>        <span class="c1"># composite = list</span>
+  <span class="na">scope</span><span class="pi">:</span>  <span class="pi">{</span> <span class="nv">type</span><span class="pi">:</span> <span class="nv">tenant</span><span class="pi">,</span> <span class="nv">path</span><span class="pi">:</span> <span class="nv">ex</span><span class="pi">:</span><span class="nv">tenant</span> <span class="pi">}</span>   <span class="c1"># global | graph | tenant | parent</span>
+  <span class="na">normalize</span><span class="pi">:</span> <span class="pi">[</span> <span class="nv">nfkc</span><span class="pi">,</span> <span class="nv">trim</span><span class="pi">,</span> <span class="nv">lowercase</span> <span class="pi">]</span>        <span class="c1"># ordered, frozen per version</span>
+  <span class="na">missing_key</span><span class="pi">:</span> <span class="s">skip</span>           <span class="c1"># skip | treat_as_null | reject</span>
+  <span class="na">on_violation</span><span class="pi">:</span> <span class="s">reject</span>        <span class="c1"># reject | merge | quarantine</span>
+  <span class="na">enforcement</span><span class="pi">:</span>
+    <span class="na">min_level</span><span class="pi">:</span> <span class="s">transactional</span>  <span class="c1"># advisory | transactional | strong</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">min_level</code> is the contract: deployment fails fast if the configured backend can’t meet it, instead of silently degrading.</p>
+
+<h2 id="2-ports">2. Ports</h2>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">interface</span> <span class="nc">GraphStore</span> <span class="o">{</span>                       <span class="c1">// thin SPARQL port</span>
+  <span class="nc">TupleResult</span> <span class="nf">query</span><span class="o">(</span><span class="nc">String</span> <span class="n">sparql</span><span class="o">,</span> <span class="nc">Map</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">,</span><span class="nc">Value</span><span class="o">&gt;</span> <span class="n">bindings</span><span class="o">);</span>
+  <span class="kt">void</span> <span class="nf">update</span><span class="o">(</span><span class="nc">String</span> <span class="n">sparql</span><span class="o">,</span> <span class="nc">Map</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">,</span><span class="nc">Value</span><span class="o">&gt;</span> <span class="n">bindings</span><span class="o">);</span>   <span class="c1">// one request = one op-set</span>
+  <span class="nc">Optional</span><span class="o">&lt;</span><span class="nc">Tx</span><span class="o">&gt;</span> <span class="nf">begin</span><span class="o">(</span><span class="nc">IsolationLevel</span> <span class="n">requested</span><span class="o">);</span>             <span class="c1">// empty if unsupported</span>
+  <span class="nc">Capabilities</span> <span class="nf">capabilities</span><span class="o">();</span>
+<span class="o">}</span>
+
+<span class="kd">interface</span> <span class="nc">Tx</span> <span class="kd">extends</span> <span class="nc">AutoCloseable</span> <span class="o">{</span>         <span class="c1">// vendor tx, when available</span>
+  <span class="nc">TupleResult</span> <span class="nf">query</span><span class="o">(</span><span class="nc">String</span> <span class="n">sparql</span><span class="o">,</span> <span class="nc">Map</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">,</span><span class="nc">Value</span><span class="o">&gt;</span> <span class="n">b</span><span class="o">);</span>
+  <span class="kt">void</span> <span class="nf">update</span><span class="o">(</span><span class="nc">String</span> <span class="n">sparql</span><span class="o">,</span> <span class="nc">Map</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">,</span><span class="nc">Value</span><span class="o">&gt;</span> <span class="n">b</span><span class="o">);</span>
+  <span class="kt">void</span> <span class="nf">commit</span><span class="o">()</span> <span class="kd">throws</span> <span class="nc">ConflictException</span><span class="o">,</span> <span class="nc">ValidationException</span><span class="o">;</span>
+  <span class="kt">void</span> <span class="nf">rollback</span><span class="o">();</span>
+<span class="o">}</span>
+
+<span class="n">record</span> <span class="nf">Capabilities</span><span class="o">(</span>
+  <span class="kt">boolean</span> <span class="n">atomicUpdateRequest</span><span class="o">,</span>      <span class="c1">// one request == one transaction (TCK-verified)</span>
+  <span class="kt">boolean</span> <span class="n">multiRequestTx</span><span class="o">,</span>           <span class="c1">// vendor transaction API</span>
+  <span class="nc">IsolationLevel</span> <span class="n">maxIsolation</span><span class="o">,</span>      <span class="c1">// READ_COMMITTED | SNAPSHOT | SERIALIZABLE</span>
+  <span class="kt">boolean</span> <span class="n">detectsWriteWriteConflict</span><span class="o">,</span><span class="c1">// enables the materialized-conflict strategy</span>
+  <span class="kt">boolean</span> <span class="n">singleWriter</span><span class="o">,</span>             <span class="c1">// writers serialized (TDB2, GraphDB, Blazegraph)</span>
+  <span class="nc">CommitValidation</span> <span class="n">commitValidation</span><span class="o">,</span><span class="c1">// NONE | SHACL_CORE | SHACL_SPARQL | CUSTOM_RULES</span>
+  <span class="kt">boolean</span> <span class="n">bulkLoadBypassesValidation</span><span class="o">,</span>
+  <span class="kt">int</span>     <span class="n">maxSparqlRequestBytes</span><span class="o">)</span> <span class="o">{}</span>
+
+<span class="kd">interface</span> <span class="nc">LockService</span> <span class="o">{</span>              <span class="c1">// optional; Redis/ZK/Dynamo/Postgres/in-proc</span>
+  <span class="nc">Lease</span> <span class="nf">acquire</span><span class="o">(</span><span class="nc">String</span> <span class="n">key</span><span class="o">,</span> <span class="nc">Duration</span> <span class="n">ttl</span><span class="o">);</span>
+<span class="o">}</span>
+
+<span class="kd">interface</span> <span class="nc">KeyAllocator</span> <span class="o">{</span>             <span class="c1">// optional; the P6 "real unique index"</span>
+  <span class="nc">AllocationResult</span> <span class="nf">claim</span><span class="o">(</span><span class="nc">String</span> <span class="n">constraintId</span><span class="o">,</span> <span class="nc">String</span> <span class="n">normKey</span><span class="o">,</span> <span class="nc">String</span> <span class="n">ownerIri</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>Adapters may additionally implement <em>optional</em> interfaces the planner will exploit:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">interface</span> <span class="nc">ShaclProvisioner</span>  <span class="o">{</span> <span class="kt">void</span> <span class="nf">installShapes</span><span class="o">(</span><span class="nc">Model</span> <span class="n">shapes</span><span class="o">);</span> <span class="o">}</span>          <span class="c1">// RDF4J, GraphDB, Stardog</span>
+<span class="kd">interface</span> <span class="nc">ConstraintProvisioner</span> <span class="o">{</span> <span class="kt">void</span> <span class="nf">installNativeConstraints</span><span class="o">(</span><span class="nc">Spec</span> <span class="n">s</span><span class="o">);</span> <span class="o">}</span> <span class="c1">// Stardog ICV, GraphDB .pie</span>
+<span class="kd">interface</span> <span class="nc">ChangeFeed</span>        <span class="o">{</span> <span class="kt">void</span> <span class="nf">subscribe</span><span class="o">(</span><span class="nc">Consumer</span><span class="o">&lt;</span><span class="nc">ChangeEvent</span><span class="o">&gt;</span> <span class="n">c</span><span class="o">);</span> <span class="o">}</span>   <span class="c1">// Neptune Streams, RDF4J listener</span>
+</code></pre></div></div>
+
+<h2 id="3-strategy-chain">3. Strategy chain</h2>
+
+<p>Every strategy implements the same interface; the planner composes them.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">interface</span> <span class="nc">UniquenessStrategy</span> <span class="o">{</span>
+  <span class="kt">boolean</span> <span class="nf">supports</span><span class="o">(</span><span class="nc">ConstraintSpec</span> <span class="n">s</span><span class="o">,</span> <span class="nc">Capabilities</span> <span class="n">c</span><span class="o">);</span>
+  <span class="nc">EnforcementLevel</span> <span class="nf">level</span><span class="o">();</span>     <span class="c1">// ADVISORY | TRANSACTIONAL | STRONG</span>
+  <span class="nc">WriteResult</span> <span class="nf">apply</span><span class="o">(</span><span class="nc">WritePlan</span> <span class="n">plan</span><span class="o">,</span> <span class="nc">GraphStore</span> <span class="n">store</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">UniquenessViolation</span><span class="o">;</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Strategy</th>
+      <th>Requires</th>
+      <th>Level</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">DeterministicIriStrategy</code> (P0)</td>
+      <td>nothing</td>
+      <td>STRONG</td>
+      <td>only for immutable natural keys</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">NativeConstraintStrategy</code></td>
+      <td><code class="language-plaintext highlighter-rouge">ConstraintProvisioner</code></td>
+      <td>STRONG</td>
+      <td>Stardog ICV, GraphDB consistency rules</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">CommitShaclStrategy</code> (P1+P5)</td>
+      <td><code class="language-plaintext highlighter-rouge">commitValidation ≥ SHACL_CORE</code></td>
+      <td>STRONG</td>
+      <td>claim node ⇒ <code class="language-plaintext highlighter-rouge">sh:maxCount 1</code>, incremental</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">TxGuardStrategy</code> (P1+P2)</td>
+      <td><code class="language-plaintext highlighter-rouge">multiRequestTx</code> + <code class="language-plaintext highlighter-rouge">SERIALIZABLE</code></td>
+      <td>STRONG</td>
+      <td>read-check-write inside vendor tx</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">SerializedGuardStrategy</code> (P2)</td>
+      <td><code class="language-plaintext highlighter-rouge">atomicUpdateRequest</code> + (<code class="language-plaintext highlighter-rouge">singleWriter</code> ∨ <code class="language-plaintext highlighter-rouge">SERIALIZABLE</code>)</td>
+      <td>STRONG</td>
+      <td>one guarded update + post-<code class="language-plaintext highlighter-rouge">ASK</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">MaterializedConflictStrategy</code> (P2+P3)</td>
+      <td><code class="language-plaintext highlighter-rouge">atomicUpdateRequest</code> + <code class="language-plaintext highlighter-rouge">detectsWriteWriteConflict</code></td>
+      <td>TRANSACTIONAL</td>
+      <td>retry on conflict; shard tuning</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ExternalLockStrategy</code> (P6)</td>
+      <td><code class="language-plaintext highlighter-rouge">LockService</code></td>
+      <td>TRANSACTIONAL</td>
+      <td>lease + guarded update; fencing token in claim</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">AllocatorStrategy</code> (P6)</td>
+      <td><code class="language-plaintext highlighter-rouge">KeyAllocator</code></td>
+      <td>STRONG</td>
+      <td>uniqueness lives outside RDF</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">GuardOnlyStrategy</code> (P2)</td>
+      <td><code class="language-plaintext highlighter-rouge">atomicUpdateRequest</code></td>
+      <td>ADVISORY</td>
+      <td>closes the window, not the race</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ReconcilerStrategy</code> (P7)</td>
+      <td>query only</td>
+      <td>ADVISORY</td>
+      <td><strong>always installed</strong>, never the only one</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Planner:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">Strategy</span> <span class="nf">plan</span><span class="o">(</span><span class="nc">ConstraintSpec</span> <span class="n">s</span><span class="o">,</span> <span class="nc">Capabilities</span> <span class="n">c</span><span class="o">)</span> <span class="o">{</span>
+  <span class="kt">var</span> <span class="n">candidate</span> <span class="o">=</span> <span class="no">REGISTRY</span><span class="o">.</span><span class="na">stream</span><span class="o">()</span>
+      <span class="o">.</span><span class="na">filter</span><span class="o">(</span><span class="n">st</span> <span class="o">-&gt;</span> <span class="n">st</span><span class="o">.</span><span class="na">supports</span><span class="o">(</span><span class="n">s</span><span class="o">,</span> <span class="n">c</span><span class="o">))</span>
+      <span class="o">.</span><span class="na">max</span><span class="o">(</span><span class="n">comparing</span><span class="o">(</span><span class="nl">UniquenessStrategy:</span><span class="o">:</span><span class="n">level</span><span class="o">))</span>
+      <span class="o">.</span><span class="na">orElseThrow</span><span class="o">();</span>
+  <span class="k">if</span> <span class="o">(</span><span class="n">candidate</span><span class="o">.</span><span class="na">level</span><span class="o">().</span><span class="na">below</span><span class="o">(</span><span class="n">s</span><span class="o">.</span><span class="na">enforcement</span><span class="o">().</span><span class="na">minLevel</span><span class="o">()))</span>
+      <span class="k">throw</span> <span class="k">new</span> <span class="nf">UnsupportedDeployment</span><span class="o">(</span><span class="n">s</span><span class="o">.</span><span class="na">id</span><span class="o">(),</span> <span class="n">c</span><span class="o">);</span>   <span class="c1">// fail at startup, not at 3am</span>
+  <span class="k">return</span> <span class="n">candidate</span><span class="o">;</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h2 id="4-write-path">4. Write path</h2>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">WriteResult</span> <span class="nf">write</span><span class="o">(</span><span class="nc">Entity</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+  <span class="kt">var</span> <span class="n">keys</span> <span class="o">=</span> <span class="n">constraintsFor</span><span class="o">(</span><span class="n">e</span><span class="o">).</span><span class="na">stream</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">map</span><span class="o">(</span><span class="n">c</span> <span class="o">-&gt;</span> <span class="k">new</span> <span class="nc">KeyClaim</span><span class="o">(</span><span class="n">c</span><span class="o">,</span> <span class="n">normalize</span><span class="o">(</span><span class="n">c</span><span class="o">,</span> <span class="n">e</span><span class="o">),</span> <span class="n">claimIri</span><span class="o">(</span><span class="n">c</span><span class="o">,</span> <span class="n">e</span><span class="o">),</span> <span class="n">e</span><span class="o">.</span><span class="na">iri</span><span class="o">()))</span>
+        <span class="o">.</span><span class="na">toList</span><span class="o">();</span>                                  <span class="c1">// sort by claimIri =&gt; no deadlocks</span>
+  <span class="kt">var</span> <span class="n">plan</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">WritePlan</span><span class="o">(</span><span class="n">e</span><span class="o">.</span><span class="na">payloadQuads</span><span class="o">(),</span> <span class="n">keys</span><span class="o">,</span> <span class="n">retiredClaims</span><span class="o">(</span><span class="n">e</span><span class="o">));</span>
+
+  <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">attempt</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">attempt</span> <span class="o">&lt;</span> <span class="n">maxRetries</span><span class="o">;</span> <span class="n">attempt</span><span class="o">++)</span> <span class="o">{</span>
+    <span class="k">try</span> <span class="o">{</span> <span class="k">return</span> <span class="n">strategy</span><span class="o">.</span><span class="na">apply</span><span class="o">(</span><span class="n">plan</span><span class="o">,</span> <span class="n">store</span><span class="o">);</span> <span class="o">}</span>
+    <span class="k">catch</span> <span class="o">(</span><span class="nc">ConflictException</span> <span class="n">ex</span><span class="o">)</span> <span class="o">{</span> <span class="n">sleep</span><span class="o">(</span><span class="n">jitteredBackoff</span><span class="o">(</span><span class="n">attempt</span><span class="o">));</span> <span class="o">}</span>
+  <span class="o">}</span>
+  <span class="k">throw</span> <span class="k">new</span> <span class="nf">UniquenessViolation</span><span class="o">(</span><span class="n">plan</span><span class="o">);</span>              <span class="c1">// 409 to the caller</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>Non-negotiables in the implementation:</p>
+
+<ul>
+  <li><strong>Claim IRIs sorted</strong> before acquisition — multi-key entities otherwise deadlock.</li>
+  <li><strong>Key rotation is one operation</strong>: retire old claim + insert new claim + update payload, together.</li>
+  <li><strong>Idempotency key</strong> on the request so retries after an ambiguous timeout are safe (<code class="language-plaintext highlighter-rouge">ex:claimedBy</code> equality check makes P2 naturally idempotent).</li>
+  <li><strong>Fencing token</strong> when using leases: write the lease token into the claim and reject stale writes — a lock service alone is not safe under GC pauses.</li>
+</ul>
+
+<h2 id="5-per-backend-adapter-wiring">5. Per-backend adapter wiring</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Adapter</th>
+      <th>Selected strategy</th>
+      <th>Extra wiring</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Stardog</td>
+      <td><code class="language-plaintext highlighter-rouge">NativeConstraintStrategy</code> (ICV) or <code class="language-plaintext highlighter-rouge">TxGuardStrategy</code></td>
+      <td>provision constraints at migration; ICV on tx</td>
+    </tr>
+    <tr>
+      <td>GraphDB</td>
+      <td><code class="language-plaintext highlighter-rouge">CommitShaclStrategy</code> (+ <code class="language-plaintext highlighter-rouge">.pie</code> for K1)</td>
+      <td>shapes graph in migration; plugin if hot</td>
+    </tr>
+    <tr>
+      <td>RDF4J Native/Memory</td>
+      <td><code class="language-plaintext highlighter-rouge">CommitShaclStrategy</code> with <code class="language-plaintext highlighter-rouge">ShaclSail</code>, <code class="language-plaintext highlighter-rouge">SERIALIZABLE</code></td>
+      <td>wrap sail in config</td>
+    </tr>
+    <tr>
+      <td>Fuseki/TDB2</td>
+      <td><code class="language-plaintext highlighter-rouge">SerializedGuardStrategy</code> (single-writer)</td>
+      <td>SHACL audit job for P7</td>
+    </tr>
+    <tr>
+      <td>Neptune</td>
+      <td><code class="language-plaintext highlighter-rouge">SerializedGuardStrategy</code> / <code class="language-plaintext highlighter-rouge">MaterializedConflictStrategy</code></td>
+      <td>Streams → reconciler; retry <code class="language-plaintext highlighter-rouge">ConcurrentModificationException</code></td>
+    </tr>
+    <tr>
+      <td>Virtuoso</td>
+      <td><code class="language-plaintext highlighter-rouge">AllocatorStrategy</code> via SQL unique index + procedure</td>
+      <td>deploy stored proc</td>
+    </tr>
+    <tr>
+      <td>MarkLogic</td>
+      <td><code class="language-plaintext highlighter-rouge">DeterministicIriStrategy</code> (doc URI) + multi-statement tx</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>Rya / Halyard / federation</td>
+      <td><code class="language-plaintext highlighter-rouge">AllocatorStrategy</code> + <code class="language-plaintext highlighter-rouge">DeterministicIriStrategy</code> + reconciler</td>
+      <td><code class="language-plaintext highlighter-rouge">min_level</code> must be ≤ TRANSACTIONAL</td>
+    </tr>
+    <tr>
+      <td>In-memory test store</td>
+      <td><code class="language-plaintext highlighter-rouge">ExternalLockStrategy</code> with in-proc locks</td>
+      <td>—</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="6-the-part-people-skip-a-conformance-tck">6. The part people skip: a conformance TCK</h2>
+
+<p>Capability flags are claims; verify them. Run the same suite against every adapter in CI:</p>
+
+<ol>
+  <li><strong>Single-key torture</strong>: 64 threads × 500 attempts, same normalized key, distinct entity IRIs → assert <strong>exactly one</strong> claim, all others got <code class="language-plaintext highlighter-rouge">409</code>, and no orphan payload triples.</li>
+  <li><strong>Write-skew probe</strong>: two clients, deliberately interleaved, distinct keys hashing to the same shard → assert conflict detection matches <code class="language-plaintext highlighter-rouge">detectsWriteWriteConflict</code>.</li>
+  <li><strong>Atomicity probe</strong>: guarded update that must not fire; assert <em>no</em> payload triples landed → validates <code class="language-plaintext highlighter-rouge">atomicUpdateRequest</code>.</li>
+  <li><strong>Key rotation under contention</strong>: A rotates <code class="language-plaintext highlighter-rouge">k1→k2</code> while B claims <code class="language-plaintext highlighter-rouge">k2</code>; assert no lost claim, no double ownership.</li>
+  <li><strong>Crash injection</strong>: kill the client between update and post-<code class="language-plaintext highlighter-rouge">ASK</code>; assert monotonic-ownership recovery leaves a consistent state.</li>
+  <li><strong>Normalization corpus</strong>: Unicode NFC/NFD, <code class="language-plaintext highlighter-rouge">"x"</code> vs <code class="language-plaintext highlighter-rouge">"x"^^xsd:string</code> vs <code class="language-plaintext highlighter-rouge">"x"@en</code>, casing, IDN, numeric forms — identical claim IRIs across write path, SHACL query, and backfill job.</li>
+  <li><strong>Bulk-load path</strong>: load a file with duplicates, assert the post-load verification query fails the load (constraints are bypassed by design — the <em>pipeline</em> must catch it).</li>
+  <li><strong>Invariant scan</strong>: reconciler over a fuzzed dataset always reports 0 duplicates after a workload.</li>
+</ol>
+
+<p>Test 1 is what separates a design that works from one that merely looks correct.</p>
+
+<h2 id="7-bulk--backfill-path">7. Bulk / backfill path</h2>
+
+<p>Per-triple guarded writes are 2–4 orders of magnitude too slow for load. Treat it as a separate pipeline:</p>
+
+<ol>
+  <li>Normalize + dedup <strong>offline</strong> (Spark/DuckDB/<code class="language-plaintext highlighter-rouge">sort -u</code> on the key column) and emit a conflict report for humans.</li>
+  <li>Generate claim quads alongside payload quads.</li>
+  <li>Load with validation disabled (fast path).</li>
+  <li>Run the P7 verification queries as a <strong>gate</strong> before flipping the graph/version live (load into a staging named graph or a fresh repo, verify, then swap).</li>
+</ol>
+
+<hr />
+
+<h2 id="recommended-default">Recommended default</h2>
+
+<p>For a new system with a pluggable backend requirement:</p>
+
+<ol>
+  <li><strong>Opaque UUID entity IRIs</strong> + <strong>P1 key-claim registry</strong> for every unique key.</li>
+  <li><strong>Guarded single-request update</strong> (P2) as the write primitive, with post-<code class="language-plaintext highlighter-rouge">ASK</code> confirmation, relying on ownership monotonicity.</li>
+  <li><strong>Per-backend upgrade</strong> to commit-time SHACL (<code class="language-plaintext highlighter-rouge">sh:maxCount 1</code> on the claim) or native ICV where available; materialized conflict or external lease where not.</li>
+  <li><strong>Reconciler + duplicate-count metric always on</strong>, with a quarantine graph and an explicit merge policy.</li>
+  <li><strong>Normalization pipeline versioned and shared</strong> by the write path, the shapes, and the backfill job.</li>
+  <li><strong>A concurrency TCK</strong> that every adapter must pass before it’s allowed in production.</li>
+</ol>

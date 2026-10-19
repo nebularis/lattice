@@ -1,0 +1,21 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="phase-4--maturity-sketch">Phase 4 — Maturity (Sketch)</h1>
+
+<p><strong>Unit type:</strong> Phase (of Epic <code class="language-plaintext highlighter-rouge">lattice-platform-development</code>)
+<strong>Unit ID:</strong> <code class="language-plaintext highlighter-rouge">phase-4</code>
+<strong>Promotes to:</strong> <a href="/developer/plans/phase-4-plan.html">phase-4-plan.md</a>
+<strong>Status record:</strong> <a href="/developer/status/phase-4-status.html">phase-4-status.md</a>
+<strong>Depends on:</strong> <a href="/developer/sketches/phase-3-sketch.html">phase-3</a> exit gate</p>
+
+<h2 id="why-this-chunk-is-deliberately-the-lightest">Why this chunk is deliberately the lightest</h2>
+
+<p>The epic itself states Phase 4 is “deliberately lighter: each item is a sub-programme sized after Phase 3 measurement” (Part 8). There is no rolling-wave promise to expand this one at a numbered close-out slice the way Phase 2 and 3 have — Phase 4’s own items (P4.1–P4.7) are sub-programmes, not slices, and several (P4.3 second store adapter, P4.5 SPC integration) are explicitly conditional (“if adopted”). Decomposing this further than the epic already has would mean inventing sizing the epic explicitly says depends on data that does not exist yet (P3.6.3’s capacity/cost model, P3.6.1’s benchmark run).</p>
+
+<p>This chunk exists only to satisfy the Epic Decomposition Model’s requirement that every phase in the DAG has a plan/status pair, and to carry forward the one non-negotiable item in this phase: <strong>P4.7, multi-region, is explicitly a non-goal, not a deferred feature</strong> — stated with its reason, reviewed annually. That framing should survive into whatever eventually expands this phase, not get silently reinterpreted as “not done yet.”</p>
+
+<h2 id="risks-specific-to-this-phase">Risks specific to this phase</h2>
+
+<ul>
+  <li>P4.6 (commercial packaging) has its own falsifiable test embedded in the epic text: “does a commercial extension require zero patches to OSS classes? Prove with a sample adapter in a separate repo.” That test should not get diluted into a documentation-only claim when this phase is eventually staffed.</li>
+</ul>

@@ -1,0 +1,259 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="phase-0--decisions-and-non-retrofittable-foundations-plan">Phase 0 — Decisions and Non-Retrofittable Foundations (Plan)</h1>
+
+<p><strong>Unit type:</strong> Phase
+<strong>Epic:</strong> <code class="language-plaintext highlighter-rouge">lattice-platform-development</code> (<a href="/developer/plans/lattice-platform-agentic-development-v0.2.html">lattice-platform-agentic-development-v0.2.md</a>)
+<strong>Unit ID:</strong> <code class="language-plaintext highlighter-rouge">phase-0</code>
+<strong>Status:</strong> Not started — see <a href="/developer/status/phase-0-status.html">phase-0-status.md</a>
+<strong>Sketch:</strong> <a href="/developer/sketches/phase-0-sketch.html">phase-0-sketch.md</a>
+<strong>New ADR required for this plan itself:</strong> No. Phase 0’s job is to <em>ratify</em> the ADRs the epic already names (A44 amended, A50, A51, A54, A57, A59, A62, A63, A65–A69, A71, A74–A76). Decomposition adds no new decision.</p>
+
+<h2 id="1-scope">1. Scope</h2>
+
+<p>Ratify every irreversible decision (A51, A54, A63, A65, A67, A68, A74, plus the rest of P0.1), stand up build/CI/codegen, the platform ontology, canonicalisation, the graph store SPI (Core + TCK + adapters), the coordination realm, identity/policy/HTTP host, messaging foundations, and synthetic data — while proving the whole chain end to end on a volatile stack (<strong>M0</strong>) and producing a signed capability/benchmark report (<strong>M1</strong>).</p>
+
+<p><strong>Authoritative slice-level detail</strong> (scope, tests, hard orderings per slice, P0.1 through P0.10): <a href="/developer/plans/lattice-platform-agentic-development-v0.2.html#part-4--phase-0-decisions-and-non-retrofittable-foundations">epic Part 4</a>. This plan does not reproduce those ~90 rows; it adds the phase-level obligations the epic states exist but does not tabulate: <code class="language-plaintext highlighter-rouge">docs/architecture</code> deliverables, subproject READMEs, and the <code class="language-plaintext highlighter-rouge">solution-design-specification.md</code> delta.</p>
+
+<p><strong>Phase exit gate (hard, restated from the epic):</strong> all Phase 0 ADRs ratified; M0 and M1 pass; <code class="language-plaintext highlighter-rouge">docs/traceability/matrix.csv</code> has zero untested claimed requirements; <code class="language-plaintext highlighter-rouge">data-architecture.md</code> rewritten for A74 and signed off.</p>
+
+<h2 id="2-pre-execution-decision-points-resolve-before-the-named-slice-starts">2. Pre-execution decision points (resolve before the named slice starts)</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Slice blocked</th>
+      <th>Question</th>
+      <th>Options</th>
+      <th>Owner</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>P0.5.1</td>
+      <td><code class="language-plaintext highlighter-rouge">platform/graph-spi</code> relationship to existing <code class="language-plaintext highlighter-rouge">platform/semantic-dataset-spi</code>/<code class="language-plaintext highlighter-rouge">semantic-dataset-fuseki</code></td>
+      <td>(a) rename in place, (b) new modules replace the old ones with a deletion slice, (c) coexist during a stated migration window</td>
+      <td>Maintainer, before P0.5 starts</td>
+      <td><strong>Open</strong> — not resolved during the 2026-09-23 autonomous P0.1 session; execution-impacting decisions were deliberately left for the maintainer’s confirmation. See <a href="/developer/status/phase-0-status.html">phase-0-status.md</a>.</td>
+    </tr>
+    <tr>
+      <td>P1.10 (Phase 1, flagged here because it is cheap to resolve now)</td>
+      <td><code class="language-plaintext highlighter-rouge">apps/surface-studio</code>/<code class="language-plaintext highlighter-rouge">apps/mork-bench</code> vs existing <code class="language-plaintext highlighter-rouge">apps/surface-contract-studio</code>/<code class="language-plaintext highlighter-rouge">apps/mork-review-workbench</code></td>
+      <td>(a) rename, (b) epic’s Part 1 names are informal shorthand for the existing apps, no action needed</td>
+      <td>Maintainer</td>
+      <td>Open</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Additional decision point surfaced during the P0.1 session (2026-09-23):</strong> the epic’s “ADR-A44 amended” (Control Plane HTTP runtime) collides with the existing accepted ADR-A44 (MORK Teaching Pack, unrelated subject). Filed as new <strong>ADR-A81</strong> instead of amending A44. This is a mechanical renumbering, not a design decision, but is flagged for the maintainer’s confirmation alongside the ADR review — see <a href="/developer/status/phase-0-status.html">phase-0-status.md</a>.</p>
+
+<h2 id="3-documentation-obligations--docsarchitecture">3. Documentation obligations — <code class="language-plaintext highlighter-rouge">docs/architecture</code></h2>
+
+<p>Every row is a slice-level deliverable already named in the epic; this table exists so a phase-0 executor has one place to check off doc debt instead of re-reading all ten P0.x tables.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Document</th>
+      <th>New or amended</th>
+      <th>Producing slice(s)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">docs/architecture/data-architecture.md</code></td>
+      <td>Amended (§1–3, §5–7 rewritten for A74)</td>
+      <td>P0.1.1, closed out at P1.1.4</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">docs/architecture/iri-identity-patterns.md</code></td>
+      <td>New, supersedes <code class="language-plaintext highlighter-rouge">iri-policy.md</code> in scope</td>
+      <td>P0.1.3, reframed by ADR-A82</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">docs/architecture/nfr.md</code> + <code class="language-plaintext highlighter-rouge">nfr.yaml</code></td>
+      <td>New</td>
+      <td>P0.1.15</td>
+    </tr>
+    <tr>
+      <td>Threat model document (owner + control per S-1…S-12)</td>
+      <td>New — place under <code class="language-plaintext highlighter-rouge">docs/architecture/</code> alongside the other normative specs (no existing home named; confirm during P0.1.14, do not invent a new top-level <code class="language-plaintext highlighter-rouge">docs/</code> root)</td>
+      <td>P0.1.14</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">docs/architecture/decisions/ADR-A44-*.md</code></td>
+      <td>Amended, not replaced (virtual threads, minimal server, deadline propagation, role-profiled deployment)</td>
+      <td>P0.1.10</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">docs/architecture/decisions/ADR-A50</code> through <code class="language-plaintext highlighter-rouge">ADR-A76</code> (per the epic’s per-slice ADR list in P0.1)</td>
+      <td>New</td>
+      <td>P0.1.1–P0.1.13, P0.2.1</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">docs/architecture/ontology-architecture.md</code></td>
+      <td>Amended — new <code class="language-plaintext highlighter-rouge">platform/</code> layer entry, <code class="language-plaintext highlighter-rouge">fnd:GovernanceState</code> mapping table</td>
+      <td>P0.3.1, P0.3.3, P0.3.4</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ontology/platform/</code> literate spec</td>
+      <td>New (ontology subproject, not <code class="language-plaintext highlighter-rouge">docs/architecture</code>, but cross-referenced from it per the existing pattern for <code class="language-plaintext highlighter-rouge">ontology/persistence</code>)</td>
+      <td>P0.3.3</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="4-readme-obligations">4. README obligations</h2>
+
+<p>Per copilot-instructions (“any new structure/folders/projects must be documented” in the root README, and project-level READMEs for significant changes). New subprojects Phase 0 introduces, each needs its own <code class="language-plaintext highlighter-rouge">README.md</code> at creation time, not deferred:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>New subproject</th>
+      <th>Track</th>
+      <th>Introducing slice</th>
+      <th>Root <code class="language-plaintext highlighter-rouge">README.md</code> update</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">platform/lattice-bom</code></td>
+      <td>T-BUILD</td>
+      <td>P0.2.1</td>
+      <td>Add row to the module tree (root README already has a “Repository Layout” table pattern to extend, not replace)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">platform/canonical-hash</code></td>
+      <td>T-HASH</td>
+      <td>P0.4.1</td>
+      <td>Same</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">platform/graph-spi</code>, <code class="language-plaintext highlighter-rouge">graph-spi-tck</code>, <code class="language-plaintext highlighter-rouge">graph-adapter-tdb2</code>, <code class="language-plaintext highlighter-rouge">graph-adapter-fuseki</code></td>
+      <td>T-STORE</td>
+      <td>P0.5.1, P0.5.4, P0.5.3, P0.5.12</td>
+      <td>Same — contingent on resolving §2’s first decision point first</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">platform/coordination-spi</code>, <code class="language-plaintext highlighter-rouge">coordination-h2</code>, <code class="language-plaintext highlighter-rouge">coordination-postgres</code></td>
+      <td>T-STORE (coordination realm)</td>
+      <td>P0.6.1, P0.6.2, P0.6.3</td>
+      <td>Same</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">platform/partitioned-queue-spi</code>, <code class="language-plaintext highlighter-rouge">partitioned-queue-rabbit</code>, <code class="language-plaintext highlighter-rouge">partitioned-queue-pg</code></td>
+      <td>T-MSG</td>
+      <td>P0.8.1, P0.8.2, P0.8.3</td>
+      <td>Same</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">platform/runtime-host</code></td>
+      <td>T-HOST</td>
+      <td>P0.7.3</td>
+      <td>Same</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">platform/testkit</code></td>
+      <td>cross-cutting</td>
+      <td>first used at P0.7.7, formalised across P0.9</td>
+      <td>Same</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">platform/synth</code></td>
+      <td>T-DATA</td>
+      <td>P0.9.1</td>
+      <td>Same</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ontology/platform/</code></td>
+      <td>T-ONT</td>
+      <td>P0.3.3</td>
+      <td>Root README’s “Ontology Layers” table gets a new row, following the pattern already used for MORK/SPC/Persistence</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Each README follows the existing per-subproject convention (see <code class="language-plaintext highlighter-rouge">tools/persistence/README.md</code> for the most recent example): purpose, install/bootstrap command (<code class="language-plaintext highlighter-rouge">mise run bootstrap:&lt;name&gt;</code>), test command (<code class="language-plaintext highlighter-rouge">mise run check:&lt;name&gt;</code>), and a pointer to the owning ADR(s).</p>
+
+<h2 id="5-solution-design-specificationmd-delta-plan">5. <code class="language-plaintext highlighter-rouge">solution-design-specification.md</code> delta plan</h2>
+
+<p>The SDS describes the system as it exists <strong>before</strong> Phase 0. Phase 0 is the phase that invalidates the most of it. This is not a batch rewrite at phase close — per copilot-instructions’ Doc Delta rule (“if the slice contradicts or extends a normative document, the document is edited in the same slice, no docs later”), each row below is edited by its named slice, not deferred to a Phase 0 close-out pass.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>SDS section</th>
+      <th>Change</th>
+      <th>Triggering slice</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>§1 Technical Capability Catalogue</td>
+      <td>Add rows for graph-primary lifecycle capabilities that did not exist before (canonicalisation, store SPI conformance, coordination realm); mark superseded rows (e.g. “Immutable graph-family registration” via JDBC) as superseded once P1.2.2 lands, not in Phase 0</td>
+      <td>P0.4–P0.6 add rows; supersession is Phase 1</td>
+    </tr>
+    <tr>
+      <td>§3 Data Architecture Summary</td>
+      <td>Rewritten to match <code class="language-plaintext highlighter-rouge">data-architecture.md</code>’s A74 rewrite — this table currently states PostgreSQL is system of record for lifecycle state; that becomes the graph once T-GPM (Phase 1) lands, but Phase 0’s SPI and coordination-realm work already changes the “no component other than Control Plane/worker writes these stores” rule to “no component writes the RDF store except through <code class="language-plaintext highlighter-rouge">ScopedDataset</code>” (G1)</td>
+      <td>P0.5.1, cross-check at P0.1.1</td>
+    </tr>
+    <tr>
+      <td>§4.1 Component Inventory</td>
+      <td>Add every new <code class="language-plaintext highlighter-rouge">platform/*</code> module from §4 of this plan, with its technology, deployment unit, and system-of-record columns</td>
+      <td>Each introducing slice, per §4 table above</td>
+    </tr>
+    <tr>
+      <td>§4.2 Control Plane Runtime</td>
+      <td>ADR-A44 is <strong>amended</strong>, not replaced (role-profiled deployment, virtual threads already assumed) — update the section to state the amendment explicitly, do not leave the pre-role-profiled description standing</td>
+      <td>P0.1.10, P0.7.3</td>
+    </tr>
+    <tr>
+      <td>§4.5 RabbitMQ Topology</td>
+      <td>Extended, not replaced: add the ordering-class declarations (A59), poison-message policy (block-partition-and-page for strict per-key families), and priority/pool separation for runtime vs maintenance families that P0.8 introduces beyond the existing family table</td>
+      <td>P0.8.2, P0.8.4</td>
+    </tr>
+    <tr>
+      <td>§5.1 Deployment Topology</td>
+      <td>Diagram gains the coordination realm (H2/Postgres) and role-profiled process boundaries once P0.7 lands; Compose reference stack gets the corrected <code class="language-plaintext highlighter-rouge">deployment/compose</code> path</td>
+      <td>P0.7.6</td>
+    </tr>
+    <tr>
+      <td>§7 Robustness Design</td>
+      <td>§7.1’s framing (“one authoritative PostgreSQL instance, one authoritative Fuseki dataset”) is exactly what A74 changes — restate once the coordination realm (P0.6) and the CAP posture ADR (A48, already in the SDS backlog as a candidate) are ratified together</td>
+      <td>P0.6.4, cross-check against existing ADR-A48 candidate in SDS §8</td>
+    </tr>
+    <tr>
+      <td>§8 Open Decisions and ADR Backlog</td>
+      <td>SDS’s own candidate list (A44–A49) predates this epic. Confirm each candidate’s disposition against the epic’s actual ADR numbering (the epic starts new decisions at A50) before Phase 0 closes, so the backlog table does not silently drift from reality</td>
+      <td>P0.1 close-out, before phase gate</td>
+    </tr>
+    <tr>
+      <td>§9 Traceability Matrix</td>
+      <td>Add rows for every new capability from §1 above, following the existing column shape (Capability, Component(s), Data, Process map, UX surface)</td>
+      <td>Phase 0 close-out (P0.10)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="6-phase-gate-checklist">6. Phase gate checklist</h2>
+
+<p>Per <a href="/developer/plans/lattice-platform-agentic-development-v0.2.html#part-12--phase-gate-checklists">epic Part 12</a>, applied to Phase 0 specifically:</p>
+
+<ol>
+  <li>All Phase 0 slice gates signed off in <code class="language-plaintext highlighter-rouge">docs/developer/validation/LOG.md</code>.</li>
+  <li>M0 (walking skeleton) and M1 (store conformance) demoed by a maintainer against a clean-checkout compose stack.</li>
+  <li><code class="language-plaintext highlighter-rouge">docs/traceability/matrix.csv</code> — zero claimed-but-untested requirements for Phase 0’s G-nn/C-nn/A-nn set.</li>
+  <li>Every Phase 0 ADR ratified (A44 amendment through A76); every row in §5 above merged.</li>
+  <li>L7 baselines recorded (P0.4.7, P0.5.14).</li>
+  <li>L8 suites green (P0.5.8 scoping, P0.5.9 injection, P0.9.4 hostile fixtures consumed).</li>
+  <li>Non-weakening audit: N/A for Phase 0 (first phase, nothing prior to diff against).</li>
+  <li>Cold-start test: clean machine → clone → one <code class="language-plaintext highlighter-rouge">mise</code> command → stack up → seeded → E2E green, under 30 minutes.</li>
+</ol>
+
+<h2 id="7-dependencies">7. Dependencies</h2>
+
+<p>Depends on nothing (first phase). Blocks all of Phase 1–4 per the epic’s hard-ordering rule (Part 4, “Phase exit gate (hard)”).</p>

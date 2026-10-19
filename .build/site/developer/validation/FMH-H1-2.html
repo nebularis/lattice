@@ -1,0 +1,243 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-fmh-h12-witness-coverage-harness-and-audits">Validation Pack: FMH-H1.2, witness coverage (harness and audits)</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/formal-methods-track-h.html"><code class="language-plaintext highlighter-rouge">formal-methods-track-h</code></a>, slice H1.2, part a
+(<a href="/developer/plans/formal-methods-track-h.html">plan §3, H1.2</a>)
+<strong>Source finding:</strong> <a href="/developer/notes/rdf-engine/persistence-fml.html">review</a> §7.4 and the calibration defects
+D.3 A6 (a shape that could never fire) and D.1 (a constraint that silently targeted nothing).
+<strong>Decisions:</strong> none ratified. The split of H1.2 into a, b and c is recorded in the status record as
+H-D8, and the rule inventory’s source as H-D9.</p>
+
+<h2 id="scope-of-this-slice">Scope of this slice</h2>
+
+<p>H1.2 as the plan words it covers four families of rule, and the first run found 55 of 83 without a
+witness. Closing all of them in one slice would break the slice-sizing rule, so H1.2 is delivered in
+three parts.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Part</th>
+      <th>Delivers</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>H1.2a (this slice)</td>
+      <td>the harness and its report, the witnesses for all five audits, and <code class="language-plaintext highlighter-rouge">known-gaps.txt</code> recording the measured starting state</td>
+    </tr>
+    <tr>
+      <td>H1.2b</td>
+      <td>witness fixtures for the 24 unwitnessed refusals and 8 warnings. Six refusals are named by no test, so each must be triggered or reported unreachable</td>
+    </tr>
+    <tr>
+      <td>H1.2c</td>
+      <td>witness fixtures for the 23 unwitnessed shapes</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>Every rule that can refuse or warn, every SHACL shape and every always-on audit query has at least
+one fixture that <strong>triggers</strong> it, or is listed with a reason in
+<code class="language-plaintext highlighter-rouge">tools/persistence/tests/witnesses/known-gaps.txt</code>. A rule that is neither is a failure, and so is a
+listed gap that has since gained a witness, so the list can only shrink. An audit counts as
+witnessed only when a violating dataset makes it return rows <strong>and</strong> a clean dataset makes it
+return none, since a query that always fires detects nothing. The inventory is read from the
+package’s own source and shapes, so a new rule cannot be added without a witness or a gap entry.</p>
+
+<h2 id="test-cases">Test cases</h2>
+
+<p>All in <code class="language-plaintext highlighter-rouge">tools/persistence/tests/test_witness_coverage.py</code>.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>H1.2-T1</td>
+      <td>the real package / enumerate / refusals (both <code class="language-plaintext highlighter-rouge">kind</code> and class-named), warnings (both call styles), shapes and 5 audits are all present</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H1.2-T2</td>
+      <td>a source file containing a new <code class="language-plaintext highlighter-rouge">CrossAxisViolation</code>, <code class="language-plaintext highlighter-rouge">_warning</code> and <code class="language-plaintext highlighter-rouge">BoundaryConflict</code> / enumerate / all three join the inventory</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H1.2-T3</td>
+      <td>a rule with no witness and no gap entry / report / uncovered, not ok, named in the output</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>H1.2-T4</td>
+      <td>a deliberately vacuous refusal seeded into the real inventory / report against the real observation / reported uncovered</td>
+      <td>L2</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>H1.2-T5</td>
+      <td>a listed gap that has a witness / report / stale, not ok</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>H1.2-T6</td>
+      <td>a listed gap naming no rule / report / unknown, not ok</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>H1.2-T7</td>
+      <td>a listed gap with no witness / report / ok, and shown as a gap</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H1.2-T8</td>
+      <td>two shipped examples / compile / the refusal and the warning they raise are witnessed</td>
+      <td>L4</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H1.2-T9</td>
+      <td>a shipped refusal example / validate against the shapes / the shape that fires is witnessed</td>
+      <td>L4</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H1.2-T10</td>
+      <td>a property shape (a blank node) / resolve its owner / credited to the named parent</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H1.2-T11</td>
+      <td>each of the 5 audits / run its violating and clean dataset / at least one row, and none (one test per audit)</td>
+      <td>L4</td>
+      <td>+/−</td>
+    </tr>
+    <tr>
+      <td>H1.2-T12</td>
+      <td>an audit with only a violating dataset / observe / not witnessed, and a problem reported</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>H1.2-T13</td>
+      <td>an audit whose “clean” dataset is really a violating one / observe / not witnessed, and a problem reported</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>H1.2-T14</td>
+      <td>an audit slot with no <code class="language-plaintext highlighter-rouge"># bind:</code> line / run / refused, naming <code class="language-plaintext highlighter-rouge">logGraphs</code></td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>H1.2-T15</td>
+      <td>the real corpus / full check / no unlisted gap, no stale gap, no unknown gap</td>
+      <td>L4</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H1.2-T16</td>
+      <td>the real corpus, then with the gap list emptied / <code class="language-plaintext highlighter-rouge">witness</code> CLI / exit 0, then exit 1 naming <code class="language-plaintext highlighter-rouge">UNWITNESSED</code></td>
+      <td>L3</td>
+      <td>+/−</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="one-command">One command</h2>
+
+<p>Run from the repository root. A pass is <code class="language-plaintext highlighter-rouge">842 passed</code> with no failures (the 822 from before H1.2,
+plus 20 here).</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:persistence
+</code></pre></div></div>
+
+<p>The harness is also available directly, and <code class="language-plaintext highlighter-rouge">--verbose</code> lists every witnessed rule with its fixture
+and every known gap with its reason. It exits 1 on any failure.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise <span class="nb">exec</span> <span class="nt">--</span> python <span class="nt">-m</span> persistence witness <span class="nt">--verbose</span>
+</code></pre></div></div>
+
+<p>At this slice it prints <code class="language-plaintext highlighter-rouge">witness coverage: 28 of 83 rule(s) witnessed, 55 listed gap(s), 0 unlisted gap(s)</code>,
+with <code class="language-plaintext highlighter-rouge">refusal 10/34</code>, <code class="language-plaintext highlighter-rouge">warning 3/11</code>, <code class="language-plaintext highlighter-rouge">shape 10/33</code> and <code class="language-plaintext highlighter-rouge">audit 5/5</code>.</p>
+
+<h2 id="adversarial-probes">Adversarial probes</h2>
+
+<p>Run on 2026-10-09, each reverted afterwards.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Mutation</th>
+      <th>Result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">fork-detection-audit</code> threshold <code class="language-plaintext highlighter-rouge">&gt; 1</code> changed to <code class="language-plaintext highlighter-rouge">&gt; 2</code>, so a two-way fork is missed</td>
+      <td>T11 (fork), T15 and T16 fail. T13 also fails, because it borrows the violating dataset</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">key-claim-duplicate-audit</code> loses its <code class="language-plaintext highlighter-rouge">HAVING</code>, so it fires on good data</td>
+      <td>T11 (key claim), T15 and T16 fail</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">gap-scan-audit</code> stops reading the retention low-water mark</td>
+      <td>T11 (gap scan), T15 and T16 fail</td>
+    </tr>
+    <tr>
+      <td>the <code class="language-plaintext highlighter-rouge">LagWindowMissing</code> check made unreachable in <code class="language-plaintext highlighter-rouge">validator.py</code></td>
+      <td>the CLI prints <code class="language-plaintext highlighter-rouge">UNWITNESSED refusal:LagWindowMissing</code> and exits 1</td>
+    </tr>
+    <tr>
+      <td>the <code class="language-plaintext highlighter-rouge">WeakEtagCas</code> entry removed from <code class="language-plaintext highlighter-rouge">known-gaps.txt</code></td>
+      <td>the CLI prints <code class="language-plaintext highlighter-rouge">UNWITNESSED warning:WeakEtagCas</code> and exits 1</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>One probe did not detect a change, correctly. Renaming a refusal consistently in the validator keeps
+it witnessed, because the inventory and the observation both follow the new name. The maintainer is
+invited to pick another mutation, for example swapping the violating and clean datasets of one audit.</p>
+
+<h2 id="artefacts-to-inspect">Artefacts to inspect</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">tools/persistence/src/persistence/witness.py</code>, the harness (the inventory, the three observers
+and the report).</li>
+  <li><code class="language-plaintext highlighter-rouge">tools/persistence/tests/witnesses/audits/</code>, ten small TriG datasets. The <code class="language-plaintext highlighter-rouge"># bind:</code> lines fill the
+audit’s request-time slot, <code class="language-plaintext highlighter-rouge">logGraphs</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">tools/persistence/tests/witnesses/known-gaps.txt</code>, the measured starting state. Six refusals read
+“named by no test, so possibly unreachable”.</li>
+  <li><code class="language-plaintext highlighter-rouge">python -m persistence witness --verbose</code>, to see which example witnesses each rule.</li>
+</ul>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<ul>
+  <li>The 24 refusals, 8 warnings and 23 shapes listed as gaps. Parts H1.2b and H1.2c.</li>
+  <li>Whether each audit detects what the <strong>write</strong> operations produce. The witnesses use graph IRIs and
+predicates the compiler binds today, but the datasets are hand-written. Checking that the templates
+that write receipts and claims produce data these audits can see belongs with the detection work in
+H9.</li>
+  <li><code class="language-plaintext highlighter-rouge">SparqlTermError</code> and the identity digest <code class="language-plaintext highlighter-rouge">ValueError</code>, which are input-encoding failures covered by
+the injection corpus and are not compile-time rules.</li>
+  <li>Mutation testing of the compiler. Review §16.2, later.</li>
+</ul>

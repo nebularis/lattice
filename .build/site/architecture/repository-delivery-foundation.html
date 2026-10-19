@@ -1,0 +1,36 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="repository-delivery-foundation">Repository Delivery Foundation</h1>
+
+<p>Phase 0 establishes repeatable entry points without replacing language-native build systems. The configuration is deliberately thin. It selects compatible tools and exposes repository tasks, while each project retains authority over its dependencies and lockfiles.</p>
+
+<h2 id="components">Components</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">mise.toml</code> selects Java 25 (LTS), Maven 3.9, Node 22, Python 3.14, Erlang 27, and Elixir 1.17. Java 25 and Python 3.14 were chosen together on 2026-09-23 because both ship Unicode 16.0, the version the identity-minting libraries pin (<code class="language-plaintext highlighter-rouge">docs/developer/status/toolchain-jdk25-python314.md</code>). Its tasks invoke native package managers and checks.</li>
+  <li>Root <code class="language-plaintext highlighter-rouge">package.json</code>, <code class="language-plaintext highlighter-rouge">.yarnrc.yml</code>, and <code class="language-plaintext highlighter-rouge">yarn.lock</code> reserve the Yarn workspace for <code class="language-plaintext highlighter-rouge">apps/*</code> and <code class="language-plaintext highlighter-rouge">packages/*</code>.</li>
+  <li>Root <code class="language-plaintext highlighter-rouge">pyproject.toml</code> and <code class="language-plaintext highlighter-rouge">requirements-lock.txt</code> retain ontology validation dependencies. <code class="language-plaintext highlighter-rouge">workers/pyproject.toml</code> is a separate deployable Python package.</li>
+  <li><code class="language-plaintext highlighter-rouge">platform/pom.xml</code> is the Java reactor. Its modules do not change the existing ontology or Python compiler layout.</li>
+  <li><code class="language-plaintext highlighter-rouge">.devcontainer/</code> and <code class="language-plaintext highlighter-rouge">deployment/compose/docker-compose.yml</code> define the reproducible service-backed environment. PostgreSQL, RabbitMQ, and Fuseki are reference services. The OCI registry profile is optional reference tooling.</li>
+  <li><code class="language-plaintext highlighter-rouge">.github/workflows/platform.yml</code> runs native checks in CI. It is the evidence-producing validation path, not architecture documentation.</li>
+</ul>
+
+<h2 id="bootstrap-and-validation-flow">Bootstrap and Validation Flow</h2>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise install
+  -&gt; selects toolchains
+mise run bootstrap
+  -&gt; invokes native dependency installation
+mise run check
+  -&gt; invokes Python, worker, Maven, Yarn, and Mix checks
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">mise</code> does not own dependency resolution. For example, Corepack selects the pinned Yarn binary, Maven resolves its own reactor dependencies, and Python installs from the project manifests and lock constraints.</p>
+
+<h2 id="environment-boundaries">Environment Boundaries</h2>
+
+<p>Use WSL2 plus Docker Desktop for container-backed work on Windows. Store the repository in the Linux filesystem. The Compose configuration is development reference infrastructure. It does not represent production credential policy, image retention, backup, or deployment topology.</p>
+
+<h2 id="extension-rules">Extension Rules</h2>
+
+<p>New modules add a native manifest and lockfile where their ecosystem supports one, then add a scoped <code class="language-plaintext highlighter-rouge">mise</code> task and CI check. New services add an explicit Compose profile, ports, health checks, fixture needs, and teardown instructions. Any durable toolchain, CI, or environment decision requires an ADR under the plan’s documentation discipline.</p>

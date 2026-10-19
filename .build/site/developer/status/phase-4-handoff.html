@@ -1,0 +1,21 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="phase-4-validation-handoff">Phase 4 Validation Handoff</h1>
+
+<p><strong>Status:</strong> Accepted
+<strong>Governing ADRs:</strong> <a href="../../architecture/decisions/ADR-A18-surface-to-mork-lowering-boundary.md">ADR-A18</a>, <a href="../../architecture/decisions/ADR-A19-staged-compiler-architecture-and-backend-fanout.md">ADR-A19</a>, <a href="../../architecture/decisions/ADR-A25-llm-participation-and-deterministic-production-gate.md">ADR-A25</a>, <a href="../../architecture/decisions/ADR-A35-trusted-surface-worker-execution-boundary.md">ADR-A35</a>, <a href="../../architecture/decisions/ADR-A41-surface-projection-mork-staging-boundary.md">ADR-A41</a></p>
+
+<p>The Phase 4 worker contract lowers <code class="language-plaintext highlighter-rouge">ontology/surface/examples/saas-subscription-arr-projection.ttl</code> into an immutable MORK staging graph only. Validate with:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>python -m pytest workers/tests/test_projection_contract.py workers/tests/test_projection_policy.py workers/tests/test_projection_lowering.py
+python -m unittest surface.test_surface -v
+yarn check
+yarn build
+yarn test
+</code></pre></div></div>
+
+<p>Run a RabbitMQ integration that verifies the result graph is inside the requested staging namespace and a Fuseki integration that materializes the ARR contract and profile by immutable hash.</p>
+
+<p>The lower-job request must not contain active mapping targets, RDF payloads, credentials, browser tokens, or commands. The validation environment must materialize the ARR contract and profile graph by immutable hash, invoke <code class="language-plaintext highlighter-rouge">surface lower</code>, publish the staged mapping graph, and verify repeated lowering has stable identifiers and dependency order. The staged result must surface MCN status, dependencies, backend capability, and its review requirement to the Technical Inspector.</p>
+
+<p>This restricted authoring environment did not run Python, Yarn, Playwright, RabbitMQ, Fuseki, or compiler tests. <code class="language-plaintext highlighter-rouge">yarn.lock</code> must be regenerated and reviewed in the network-enabled environment before CI can use the Studio workspace dependencies.</p>

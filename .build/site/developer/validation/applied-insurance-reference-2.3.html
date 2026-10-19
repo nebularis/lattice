@@ -1,0 +1,120 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-air-23-peril-causes-n-t-and-e">Validation Pack: AIR-2.3, peril causes N, T and E</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/applied-insurance-reference.html"><code class="language-plaintext highlighter-rouge">applied-insurance-reference</code></a>
+<strong>Machine:</strong> S (Copilot Business). <strong>Branch:</strong> <code class="language-plaintext highlighter-rouge">air/applied-reference</code>, commits <code class="language-plaintext highlighter-rouge">[AIR-2.3] …</code>
+<strong>Plan and test cases:</strong> <a href="/developer/plans/applied-insurance-reference-phase-2.html">Phase 2 plan</a> (AIR-2.3 in detail, and the shared rules for AIR-2.3 and AIR-2.4)
+<strong>Decisions:</strong> ADR-A98 (namespaces, addendum), ADR-A99</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>Every concept of peril vocabulary §5.1 to §5.3 exists once, with its code, its parent link and the characteristics the shared rules give it, and the vocabulary passes every peril shape.</p>
+
+<h2 id="test-cases">Test cases</h2>
+
+<p>The table in the plan section above. Each row’s result is recorded under Results at
+verification.</p>
+
+<h2 id="one-command">One command</h2>
+
+<p>Run from the repository root. S runs it before the handoff commit. R runs it again at verification,
+after <code class="language-plaintext highlighter-rouge">mise run build:ontology-catalog</code> and <code class="language-plaintext highlighter-rouge">mise run build:ontology-releases</code>, which S cannot do.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:ontology-catalog <span class="o">&amp;&amp;</span> mise run check:ontology-versioning
+</code></pre></div></div>
+
+<h2 id="artefacts-to-inspect">Artefacts to inspect</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">vocab/peril-vocab.ttl</code>: regions <code class="language-plaintext highlighter-rouge">cause-N</code>, <code class="language-plaintext highlighter-rouge">cause-T</code>, <code class="language-plaintext highlighter-rouge">cause-E</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">README.md</code>: Sources consulted, concept counts.</li>
+  <li>Ten definitions picked at random, read against the style rules.</li>
+</ul>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<p>No links to H to L (AIR-2.4). No intensity links or thresholds (AIR-2.6). No collections (AIR-2.5).</p>
+
+<h2 id="handoff">Handoff</h2>
+
+<p>Written by S in the <code class="language-plaintext highlighter-rouge">[AIR-2.3] Handoff</code> commit. S runs the checks itself, so say which ran.</p>
+
+<ul>
+  <li><strong>Built:</strong> <code class="language-plaintext highlighter-rouge">vocab/peril-vocab.ttl</code>’s <code class="language-plaintext highlighter-rouge">cause-N</code>, <code class="language-plaintext highlighter-rouge">cause-T</code> and <code class="language-plaintext highlighter-rouge">cause-E</code> regions filled in place
+in the peril README: 90 N concepts (geophysical, hydrological, meteorological, climatological,
+biological, extraterrestrial), 71 T concepts, 15 E concepts, 176 in total. Every concept carries
+its <code class="language-plaintext highlighter-rouge">skos:notation</code> (<code class="language-plaintext highlighter-rouge">prl:ReferenceCode</code>), <code class="language-plaintext highlighter-rouge">skos:prefLabel</code>, <code class="language-plaintext highlighter-rouge">skos:definition</code>, <code class="language-plaintext highlighter-rouge">skos:note</code>
+(citing a standard where one applies, saying so plainly where none does), materialised
+<code class="language-plaintext highlighter-rouge">prl:broaderGeneric</code>/<code class="language-plaintext highlighter-rouge">prl:broaderPartitive</code> plus <code class="language-plaintext highlighter-rouge">skos:broader</code>, and the characteristics the
+family-default and override tables give it (<code class="language-plaintext highlighter-rouge">prl:typicalAgency</code>, <code class="language-plaintext highlighter-rouge">prl:onset</code>,
+<code class="language-plaintext highlighter-rouge">prl:definitionBasis</code>, <code class="language-plaintext highlighter-rouge">prl:accumulationClass</code> where the table sets one,
+<code class="language-plaintext highlighter-rouge">prl:typicalMechanism</code> where the mechanisms table names one, <code class="language-plaintext highlighter-rouge">prl:harmSubject</code>). Sixteen Oasis
+Open Exposure Data model codes added as a second, <code class="language-plaintext highlighter-rouge">prl:CatModelCode</code>-typed <code class="language-plaintext highlighter-rouge">skos:notation</code>.
+Nine in-family <code class="language-plaintext highlighter-rouge">prl:canTrigger</code>/<code class="language-plaintext highlighter-rouge">prl:overlaps</code>/<code class="language-plaintext highlighter-rouge">skos:related</code> links named in the sketch (every
+link with both ends inside N, T or E). <code class="language-plaintext highlighter-rouge">prl-voc:CauseScheme skos:hasTopConcept</code> gained its
+first three members (N, T, E); AIR-2.4 adds the remaining five. README’s Sources consulted
+section and fixture/tests section updated.</li>
+  <li><strong>Run, with the result:</strong>
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">python -m pytest tools/test_peril_vocabulary.py tools/test_peril_intensity.py
+tools/test_applied_shared_contracts.py tools/test_exposure_ontology.py
+tools/test_literate_extract.py -v</code>: 93 passed (AIR23-01 to AIR23-08, 03 and 08 split into two
+test functions each, 9 tests in total, added to <code class="language-plaintext highlighter-rouge">tools/test_peril_vocabulary.py</code>).</li>
+      <li>A standalone <code class="language-plaintext highlighter-rouge">pyshacl.validate()</code> script over <code class="language-plaintext highlighter-rouge">spec/peril.ttl</code> + <code class="language-plaintext highlighter-rouge">vocab/peril-vocab.ttl</code> +
+<code class="language-plaintext highlighter-rouge">vocab/peril-intensity.ttl</code> + <code class="language-plaintext highlighter-rouge">examples/well-formed.ttl</code> against <code class="language-plaintext highlighter-rouge">structural.ttl</code> +
+<code class="language-plaintext highlighter-rouge">constraints.ttl</code>: <code class="language-plaintext highlighter-rouge">conforms: True</code>.</li>
+      <li><code class="language-plaintext highlighter-rouge">python tools/literate_extract.py ontology/applied/insurance/peril/README.md --layer
+applied/insurance/peril --root . --shapes shapes/structural.ttl shapes/constraints.ttl
+--check</code>: 5 extracted artefacts consistent.</li>
+      <li><code class="language-plaintext highlighter-rouge">python tools/ontology_version_check.py --base-ref main</code>: one <code class="language-plaintext highlighter-rouge">UNBUMPED</code> line,
+<code class="language-plaintext highlighter-rouge">common/spec/common.ttl</code>, the same pre-existing AIR-2.0 artefact recorded in that slice’s own
+Validation Pack (a pure reformatting, not a semantic change). Nothing new from this slice:
+<code class="language-plaintext highlighter-rouge">peril/spec/peril.ttl</code> and <code class="language-plaintext highlighter-rouge">peril/vocab/peril-vocab.ttl</code> change content again without a
+further bump, correctly, since AIR-2.2 already bumped them this trip (lanes §3).</li>
+    </ul>
+  </li>
+  <li><strong>Not run, and why:</strong> <code class="language-plaintext highlighter-rouge">mise run check:ontology-catalog</code> (the full sweep). The targeted run above
+covers every test file this slice’s content could affect; the full sweep’s 7 pre-existing,
+unrelated failures (the hanging <code class="language-plaintext highlighter-rouge">reasoning-testkit</code> jar) are already recorded in earlier
+slices’ Validation Packs, not reconfirmed here.</li>
+  <li><strong>Versions used, if they differ from the plan’s snapshot:</strong> none differ. No version bump, per
+the plan’s own note (“AIR-2.2 bumped <code class="language-plaintext highlighter-rouge">peril-vocab.ttl</code> on this branch”).</li>
+  <li><strong>Check first:</strong> <code class="language-plaintext highlighter-rouge">check:ontology-versioning</code>’s one <code class="language-plaintext highlighter-rouge">UNBUMPED</code> line, the same pre-existing
+artefact as every earlier slice touching <code class="language-plaintext highlighter-rouge">insurance/common</code>.</li>
+  <li><strong>Deviations from the plan:</strong>
+    <ol>
+      <li><code class="language-plaintext highlighter-rouge">examples/well-formed.ttl</code> (AIR-2.1’s small, self-contained 6-concept fixture) re-declared
+N, T, N.MET, N.MET.TC, N.MET.TC.SRG and N.MET.TC.HUR with its own <code class="language-plaintext highlighter-rouge">skos:prefLabel</code>/
+<code class="language-plaintext highlighter-rouge">skos:definition</code> text. Now that AIR-2.3 declares these for real in <code class="language-plaintext highlighter-rouge">peril-vocab.ttl</code>, the
+fixture’s own re-declarations became a second, distinct value for the same property,
+breaking <code class="language-plaintext highlighter-rouge">LabelAndDefinitionShape</code>’s “exactly one” rule. Fixed by removing the fixture’s
+re-declarations entirely (it now has no triples of its own beyond a header comment): the
+real vocabulary already supplies the hierarchy fragment the fixture existed to exercise.
+The fixture’s placeholder threshold for <code class="language-plaintext highlighter-rouge">N.MET.TC.HUR</code> is also gone, since
+<code class="language-plaintext highlighter-rouge">tools/test_peril_vocabulary.py</code>’s and <code class="language-plaintext highlighter-rouge">tools/test_peril_intensity.py</code>’s <code class="language-plaintext highlighter-rouge">_fixture()</code>
+helpers now both load <code class="language-plaintext highlighter-rouge">vocab/peril-intensity.ttl</code> (AIR-2.6), which carries the real
+<code class="language-plaintext highlighter-rouge">prl:definingThreshold</code> for every threshold-defined concept. This matches the lanes rule’s
+own reasoning for building AIR-2.6 before AIR-2.3 (“the thresholds must exist when AIR-2.3
+assigns that basis”).</li>
+      <li>For the same reason, <code class="language-plaintext highlighter-rouge">test_air22_04_vocabulary_alone_has_no_results</code> (AIR-2.2) started
+failing: <code class="language-plaintext highlighter-rouge">vocab/peril-vocab.ttl</code> alone now contains seven threshold-basis cause concepts
+whose <code class="language-plaintext highlighter-rouge">prl:definingThreshold</code> lives in the separate <code class="language-plaintext highlighter-rouge">peril-intensity.ttl</code> document by
+design (ADR-A120 addendum). Fixed by loading both documents together for this one test;
+“vocabulary alone” now means both vocabulary documents, not <code class="language-plaintext highlighter-rouge">peril-vocab.ttl</code> in isolation.</li>
+      <li>AIR23-08’s “no definition contains cover/covered/exclude/insured/policy” needs a word-
+boundary match, not substring containment: four existing, correct definitions
+(<code class="language-plaintext highlighter-rouge">Inundation</code>’s “water covering land”, <code class="language-plaintext highlighter-rouge">CancellationCosts</code>’s “irrecoverable cost”,
+and this slice’s own <code class="language-plaintext highlighter-rouge">N.HYD.FLD</code> “water covering land” and <code class="language-plaintext highlighter-rouge">E.LAT</code> “not discoverable”)
+false-positived on a plain substring check. Fixed with a <code class="language-plaintext highlighter-rouge">\bword\b</code> regular expression.</li>
+      <li>Performance, not a defect: <code class="language-plaintext highlighter-rouge">tools/test_peril_vocabulary.py</code>’s SHACL-heavy tests slowed
+noticeably once the cause scheme held 176 real concepts (the file’s full run moved from a
+few seconds to roughly 15 minutes). Logged in repo memory as an expected, worsening cost for
+AIR-2.4 (287 concepts), not something this slice’s scope includes fixing.</li>
+    </ol>
+  </li>
+</ul>
+
+<h2 id="results">Results</h2>
+
+<p>Written on machine R at verification.</p>

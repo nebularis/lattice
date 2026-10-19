@@ -1,0 +1,188 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack---vocabulary-temporal-binding">Validation Pack - <code class="language-plaintext highlighter-rouge">vocabulary-temporal-binding</code></h1>
+
+<p><strong>Status:</strong> Closed (2026-09-25). All 14 cases passed under <code class="language-plaintext highlighter-rouge">mise run check:vocabulary</code>.
+Surface and Eligibility consumer integration (VTB-14 and beyond) verified —
+see the status record’s “Verification findings”. ADR-A85 is Accepted.
+<strong>Plan:</strong> <a href="/developer/plans/vocabulary-temporal-fixes.html">vocabulary-temporal-fixes.md</a>
+<strong>Status:</strong> <a href="/developer/status/vocabulary-temporal-binding.html">vocabulary-temporal-binding.md</a></p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>For one scheme contract, resolution is deterministic and explicit. A binding is
+eligible only when its scopes and temporal validity match the supplied context.
+A strict scope superset wins. Equal-specificity conflicts are rejected, and a
+fallback is used only when no applicable binding exists. Historical records keep
+the binding used at resolution time. Structural and SHACL validation must reject
+incomplete or contradictory graphs without turning the open-world ontology into a
+silent chooser.</p>
+
+<h2 id="test-cases">Test cases</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>Pass criterion</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>VTB-01</td>
+      <td>Given a complete binding, when structural validation runs, then it conforms</td>
+      <td>L3</td>
+      <td>Positive fixture conforms</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>VTB-02</td>
+      <td>Given a binding without <code class="language-plaintext highlighter-rouge">forContract</code>, when validation runs, then it fails</td>
+      <td>L3</td>
+      <td>Named shape violation</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>VTB-03</td>
+      <td>Given a binding without <code class="language-plaintext highlighter-rouge">bindsScheme</code>, when validation runs, then it fails</td>
+      <td>L3</td>
+      <td>Named shape violation</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>VTB-04</td>
+      <td>Given an invalid temporal interval, when validation runs, then it fails</td>
+      <td>L3</td>
+      <td><code class="language-plaintext highlighter-rouge">validTo</code> precedes <code class="language-plaintext highlighter-rouge">validFrom</code> is rejected</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>VTB-05</td>
+      <td>Given two scopes on one binding, when context matching runs, then both scopes are required</td>
+      <td>L1</td>
+      <td>Partial context does not match</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>VTB-06</td>
+      <td>Given a more specific applicable binding, when resolving, then it wins over the strict subset</td>
+      <td>L1</td>
+      <td>Specific scheme selected</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>VTB-07</td>
+      <td>Given equal-specificity applicable bindings, when resolving, then resolution fails</td>
+      <td>L1</td>
+      <td>Conflict error, no selected scheme</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>VTB-08</td>
+      <td>Given no applicable scoped binding and a fallback, when resolving, then fallback is selected</td>
+      <td>L1</td>
+      <td><code class="language-plaintext highlighter-rouge">boundScheme</code> selected</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>VTB-09</td>
+      <td>Given a scopeless binding disagreeing with <code class="language-plaintext highlighter-rouge">boundScheme</code>, when validating, then it fails</td>
+      <td>L3</td>
+      <td>Fallback agreement violation</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>VTB-10</td>
+      <td>Given an open-ended binding, when resolving after its start, then it remains eligible</td>
+      <td>L1</td>
+      <td>Binding selected</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>VTB-11</td>
+      <td>Given the same graph in permuted triple order, when resolving, then the result is identical</td>
+      <td>L2</td>
+      <td>Stable result and digest</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>VTB-12</td>
+      <td>Given a historical record with <code class="language-plaintext highlighter-rouge">resolvedUnder</code>, when current bindings change, then the recorded binding remains unchanged</td>
+      <td>L3</td>
+      <td>No retroactive re-resolution</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>VTB-13</td>
+      <td>Given a historical record whose binding is outside its valid-time “as-of” resolution point (<code class="language-plaintext highlighter-rouge">vvp:resolvedAt</code>, not a transaction-time “recorded when”), when validating, then it fails</td>
+      <td>L3</td>
+      <td>Provenance-time violation</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>VTB-14</td>
+      <td>Given a consumer concept-valued property, when the consumer resolves its contract, then it uses the selected binding before the scheme</td>
+      <td>L4</td>
+      <td>Cross-layer fixture passes</td>
+      <td>+</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="one-command-to-run-everything">One command to run everything</h2>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run bootstrap:vocabulary
+mise run check:vocabulary
+</code></pre></div></div>
+
+<p>Equivalently, without <code class="language-plaintext highlighter-rouge">mise</code>: <code class="language-plaintext highlighter-rouge">python -m pip install -e ./tools/vocabulary[test]</code>
+then <code class="language-plaintext highlighter-rouge">python -m pytest tools/vocabulary/tests -q</code>. VTB-01 through 04, 07 (the
+context-independent form), 09, and 13 run in <code class="language-plaintext highlighter-rouge">test_shacl_fixtures.py</code>; VTB-05,
+06, 07 (the context-dependent form), 08, and 10 in <code class="language-plaintext highlighter-rouge">test_resolver.py</code>; VTB-11
+in <code class="language-plaintext highlighter-rouge">test_determinism.py</code>; VTB-12 and 14 in <code class="language-plaintext highlighter-rouge">test_consumer_boundary.py</code>.</p>
+
+<h2 id="expected-artefacts">Expected artefacts</h2>
+
+<ul>
+  <li>The pytest run’s own output: SHACL <code class="language-plaintext highlighter-rouge">pyshacl.validate</code> reports embedded in
+<code class="language-plaintext highlighter-rouge">test_shacl_fixtures.py</code>’s assertion messages for every positive and
+negative fixture on failure (pyshacl’s third return value).</li>
+  <li>A resolver decision trace for any <code class="language-plaintext highlighter-rouge">Resolution</code>: <code class="language-plaintext highlighter-rouge">Resolution.describe()</code>
+(<code class="language-plaintext highlighter-rouge">tools/vocabulary/src/vocabulary/model.py</code>) prints every candidate binding
+considered, its scope match, temporal match, applicability, and the final
+outcome — naming candidate bindings, matching scopes, temporal result, and
+precedence comparison, as required below.</li>
+  <li>The determinism result: <code class="language-plaintext highlighter-rouge">test_determinism.py</code>’s assertions that resolving a
+triple-order-permuted copy of the same graph produces an identical scheme,
+winning binding, and candidate set.</li>
+  <li>The cross-layer provenance fixture: <code class="language-plaintext highlighter-rouge">test_consumer_boundary.py</code> reads
+<code class="language-plaintext highlighter-rouge">ex:consumer-record-42</code>’s <code class="language-plaintext highlighter-rouge">voc:resolvedUnder</code> directly out of the graph
+after resolving the same contract at a later time, and asserts it is
+unchanged.</li>
+  <li>Traceability rows linking VTB-01 through VTB-14 to ADR-A85 and the sketch
+invariants: see <code class="language-plaintext highlighter-rouge">docs/traceability/matrix.csv</code>.</li>
+</ul>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<p>No live RDF store, fuzzy concept resolution, scope-membership derivation,
+concept-level version alignment, or backend-specific runtime behaviour is tested.</p>
+
+<h2 id="mutation-probe">Mutation probe</h2>
+
+<p>Disable the strict-superset comparison in the resolver and rerun VTB-06. The
+specific binding must no longer be accepted as the selected result. Retarget or
+disable the equal-specificity SHACL-SPARQL constraint and rerun VTB-07. The
+fixture must become conformant only when that constraint is genuinely inactive.</p>
+
+<h2 id="sign-off">Sign-off</h2>
+
+<p>Closed 2026-09-25. All 14 cases and both consumer integrations (Surface,
+Eligibility) verified green in the working environment. A follow-up
+cross-reference against
+<a href="/architecture/rdf-sparql-patterns-guide.html">docs/architecture/rdf-sparql-patterns-guide.md</a>
+found no defects blocking closure; four hardening items are tracked under
+<code class="language-plaintext highlighter-rouge">temporal-binding-consumer-hardening</code>.</p>

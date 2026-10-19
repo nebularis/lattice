@@ -1,0 +1,144 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack--persistence-compiler-iri-sync-slice-1">Validation Pack — <code class="language-plaintext highlighter-rouge">persistence-compiler-iri-sync</code> Slice 1</h1>
+
+<p><strong>Slice:</strong> Dataset-level epoch guard (G1)
+<strong>Plan:</strong> <a href="/developer/plans/persistence-compiler-iri-sync.html">persistence-compiler-iri-sync.md</a>
+<strong>Status:</strong> <a href="/developer/status/persistence-compiler-iri-sync.html">persistence-compiler-iri-sync.md</a></p>
+
+<h2 id="what-invariant-does-this-slice-protect">What invariant does this slice protect?</h2>
+
+<p>Before this slice, every CAS-style write the compiler generates (<code class="language-plaintext highlighter-rouge">cas-replace-named-graph</code>, <code class="language-plaintext highlighter-rouge">tombstone-delete-named-graph</code>, <code class="language-plaintext highlighter-rouge">cas-replace-composite-property</code>) guarded epoch at the per-aggregate meta-graph row only — exactly the shape <code class="language-plaintext highlighter-rouge">ontology/persistence</code>’s <code class="language-plaintext highlighter-rouge">dal:RowLevelGuardOnlyWarningShape</code> now documents as unsafe: “a stale client can still match an unrestored row after a dataset-level bump that never reaches the row.” This slice makes <code class="language-plaintext highlighter-rouge">dal:EpochProfile</code>’s <code class="language-plaintext highlighter-rouge">dal:epochGuardScope</code> resolvable, gives <code class="language-plaintext highlighter-rouge">dal:DatasetLevelGuard</code> a real template variant implementing <code class="language-plaintext highlighter-rouge">rdf-sparql-patterns-guide.md</code> §19.1’s exact SPARQL shape, and — because absence of configuration must never mean the discouraged shape is generated silently — makes the Python-level warning fire on the platform baseline default exactly as it would on an explicit <code class="language-plaintext highlighter-rouge">dal:RowLevelGuardOnly</code> declaration.</p>
+
+<h2 id="test-case-table">Test case table</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>Invariant protected</th>
+      <th>Pass criterion</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>T1</td>
+      <td>Given a target with no <code class="language-plaintext highlighter-rouge">dal:EpochProfile</code>, when <code class="language-plaintext highlighter-rouge">epochGuardScope</code> is resolved, then it returns the <code class="language-plaintext highlighter-rouge">RowLevelGuardOnly</code> baseline with <code class="language-plaintext highlighter-rouge">candidate_count == 0</code></td>
+      <td>L1</td>
+      <td>Baseline default is explicit, not accidental</td>
+      <td><code class="language-plaintext highlighter-rouge">test_resolver.py::TestEpochGuardScope::test_baseline_default_is_row_level_guard_only</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T2</td>
+      <td>Given a target with <code class="language-plaintext highlighter-rouge">dal:EpochProfile</code> declaring <code class="language-plaintext highlighter-rouge">dal:DatasetLevelGuard</code> + <code class="language-plaintext highlighter-rouge">dal:ExternalHighWaterMark</code>, when resolved, then the value and <code class="language-plaintext highlighter-rouge">epochAuthority</code> extra both resolve correctly</td>
+      <td>L1</td>
+      <td>Explicit configuration is read correctly</td>
+      <td><code class="language-plaintext highlighter-rouge">test_resolver.py::TestEpochGuardScope::test_explicit_dataset_level_guard_resolves_with_authority_extra</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T3</td>
+      <td>Given a target explicitly declaring <code class="language-plaintext highlighter-rouge">dal:RowLevelGuardOnly</code> + <code class="language-plaintext highlighter-rouge">dal:StoreLocalEpoch</code>, when resolved, then both values resolve</td>
+      <td>L1</td>
+      <td>Explicit discouraged configuration still resolves (never refused, ADR-A82)</td>
+      <td><code class="language-plaintext highlighter-rouge">test_resolver.py::TestEpochGuardScope::test_explicit_row_level_guard_only_resolves</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T4</td>
+      <td>Given the baseline default (no <code class="language-plaintext highlighter-rouge">EpochProfile</code>), when cross-axis-checked, then a <code class="language-plaintext highlighter-rouge">RowLevelGuardOnly</code> WARNING diagnostic is present</td>
+      <td>L1</td>
+      <td>The discouraged shape is never generated silently — the core claim of this slice</td>
+      <td><code class="language-plaintext highlighter-rouge">test_validator.py::test_epoch_guard_scope_warns_on_baseline_default</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T5</td>
+      <td>Given explicit <code class="language-plaintext highlighter-rouge">dal:RowLevelGuardOnly</code> + <code class="language-plaintext highlighter-rouge">dal:StoreLocalEpoch</code>, when cross-axis-checked, then both warnings are present</td>
+      <td>L1</td>
+      <td>Both discouraged values are flagged together, not just one</td>
+      <td><code class="language-plaintext highlighter-rouge">test_validator.py::test_epoch_guard_scope_warns_on_explicit_unsafe_configuration</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T6</td>
+      <td>Given explicit <code class="language-plaintext highlighter-rouge">dal:DatasetLevelGuard</code> + <code class="language-plaintext highlighter-rouge">dal:ExternalHighWaterMark</code>, when cross-axis-checked, then neither warning fires</td>
+      <td>L1</td>
+      <td>No false positives on the safe configuration</td>
+      <td><code class="language-plaintext highlighter-rouge">test_validator.py::test_epoch_guard_scope_does_not_warn_on_dataset_level_guard</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T7</td>
+      <td>Given the same two fixtures, when validated against <code class="language-plaintext highlighter-rouge">ontology/persistence</code>’s own SHACL shapes, then the unsafe fixture conforms (warnings only) and names both shapes in its report, and the safe fixture’s report names neither</td>
+      <td>L4</td>
+      <td>SHACL-level defence in depth for T4–T6’s invariant</td>
+      <td><code class="language-plaintext highlighter-rouge">test_compiler_integration.py::TestShaclSelfValidation::test_epoch_unsafe_restore_warnings_fire</code>, <code class="language-plaintext highlighter-rouge">test_epoch_dataset_level_guard_has_no_warnings</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T8</td>
+      <td>Given the <code class="language-plaintext highlighter-rouge">DatasetLevelGuard</code> fixture, when compiled, then the <code class="language-plaintext highlighter-rouge">cas-replace</code> operation selects <code class="language-plaintext highlighter-rouge">cas-replace-named-graph-dataset-guard.mustache</code>, not the plain variant</td>
+      <td>L1</td>
+      <td>Resolved value actually changes which template gets selected</td>
+      <td><code class="language-plaintext highlighter-rouge">test_compiler_integration.py::TestEpochGuardScopeTemplateSelection::test_dataset_level_guard_selects_dataset_guard_templates</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T9</td>
+      <td>Given the baseline fixture, when compiled, then the <code class="language-plaintext highlighter-rouge">cas-replace</code> operation selects the original <code class="language-plaintext highlighter-rouge">cas-replace-named-graph.mustache</code>, unchanged</td>
+      <td>L1</td>
+      <td>Non-weakening: existing behaviour for unconfigured targets is untouched</td>
+      <td><code class="language-plaintext highlighter-rouge">test_compiler_integration.py::TestEpochGuardScopeTemplateSelection::test_baseline_selects_original_named_graph_template</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T10</td>
+      <td>Given the <code class="language-plaintext highlighter-rouge">DatasetLevelGuard</code> fixture, when compiled then instantiated, then the rendered <code class="language-plaintext highlighter-rouge">cas-replace</code> SPARQL contains the dataset-level guard clause and parses as valid SPARQL Update</td>
+      <td>L1/L4</td>
+      <td>The added clause is not just present in the template source but survives rendering and is syntactically valid — this compiler’s history has real bugs in exactly this category</td>
+      <td><code class="language-plaintext highlighter-rouge">test_compiler_integration.py::TestEpochGuardScopeTemplateSelection::test_dataset_level_guard_selects_dataset_guard_templates</code> (same test, second assertion)</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T11</td>
+      <td>Given every positive fixture including the two new ones, when compiled → instantiated → parsed, then every generated operation parses</td>
+      <td>L4</td>
+      <td>New fixtures are exercised by the existing generic end-to-end suite, not just their own dedicated tests</td>
+      <td><code class="language-plaintext highlighter-rouge">test_compiler_integration.py::test_end_to_end_compile_instantiate_parse</code> (parametrised, now includes <code class="language-plaintext highlighter-rouge">epoch-dataset-level-guard.ttl</code>)</td>
+      <td>+</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="one-command-to-run-everything">One command to run everything</h2>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:persistence
+</code></pre></div></div>
+
+<h2 id="expected-artifacts">Expected artifacts</h2>
+
+<ul>
+  <li>All test cases above pass, alongside the pre-existing suite: <strong>confirmed, 290 passed, 0 failed</strong> (<code class="language-plaintext highlighter-rouge">mise run check:persistence</code>, 2026-09-23).</li>
+  <li><code class="language-plaintext highlighter-rouge">python3 -c "..."</code> scratch verification (not part of the committed suite, run during authoring): compiling <code class="language-plaintext highlighter-rouge">baseline-single-class.ttl</code> yields <code class="language-plaintext highlighter-rouge">epochGuardScope -&gt; RowLevelGuardOnly</code> with a <code class="language-plaintext highlighter-rouge">RowLevelGuardOnly</code> warning present and <code class="language-plaintext highlighter-rouge">cas-replace-named-graph.mustache</code> selected; compiling <code class="language-plaintext highlighter-rouge">epoch-dataset-level-guard.ttl</code> yields <code class="language-plaintext highlighter-rouge">DatasetLevelGuard</code> with no warnings and <code class="language-plaintext highlighter-rouge">cas-replace-named-graph-dataset-guard.mustache</code> selected.</li>
+</ul>
+
+<h2 id="fixture-bug-found-by-the-first-maintainer-run-fixed-under-autonomous-mode">Fixture bug found by the first maintainer run, fixed under autonomous mode</h2>
+
+<p>The first maintainer-run pass failed T8 (<code class="language-plaintext highlighter-rouge">test_dataset_level_guard_selects_dataset_guard_templates</code>): <code class="language-plaintext highlighter-rouge">epoch-dataset-level-guard.ttl</code> declared only a <code class="language-plaintext highlighter-rouge">dal:EpochProfile</code>, no concurrency/boundary profile, so <code class="language-plaintext highlighter-rouge">concurrencyProfile</code> resolved to the platform baseline (<code class="language-plaintext highlighter-rouge">ProvidedConcurrency</code>) rather than <code class="language-plaintext highlighter-rouge">Optimistic</code>, and <code class="language-plaintext highlighter-rouge">select_operations()</code> never entered the CAS branch at all — <code class="language-plaintext highlighter-rouge">cas_ops</code> was empty. Not a defect in the epoch-guard resolution or template logic itself; the fixture was not a complete, self-contained positive example the way every other fixture in <code class="language-plaintext highlighter-rouge">ontology/persistence/examples/</code> is (each is loaded alone, never layered with another). Fixed by giving the fixture its own full <code class="language-plaintext highlighter-rouge">dal:DataAccessProfile</code> matching <code class="language-plaintext highlighter-rouge">baseline-single-class.ttl</code>’s shape. Re-run after the fix: 290/290 passing.</p>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<ul>
+  <li><strong><code class="language-plaintext highlighter-rouge">unconditional-write</code>, <code class="language-plaintext highlighter-rouge">cas-replace-value-guard</code>, <code class="language-plaintext highlighter-rouge">append-event</code></strong> do not gain a dataset-level guard variant in this slice. The first two have no per-aggregate epoch row to guard in the first place; extending them is a judgement call the plan scoped out of Slice 1 — see <code class="language-plaintext highlighter-rouge">tools/persistence/README.md</code>’s “Known limitations.”</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">dal:epochCoordinatorBinding</code>, <code class="language-plaintext highlighter-rouge">dal:erasureRegisterBinding</code>, <code class="language-plaintext highlighter-rouge">dal:erasureReplayOnRestore</code></strong> are not read or resolved. Deferred to Slice 4 per the plan.</li>
+  <li><strong>The dataset graph/node IRI (<code class="language-plaintext highlighter-rouge">urn:g:dataset</code>) is a fixed constant</strong>, not sourced from any <code class="language-plaintext highlighter-rouge">dal:</code> property, because <code class="language-plaintext highlighter-rouge">EpochProfile</code> does not declare one. Documented as a known limitation, not silently worked around.</li>
+</ul>
+
+<h2 id="adversarial-probe-for-the-validation-gate">Adversarial probe (for the validation gate)</h2>
+
+<p>Temporarily change <code class="language-plaintext highlighter-rouge">validator.py</code>’s new epoch-guard-scope check to only fire when <code class="language-plaintext highlighter-rouge">epoch_guard.candidate_count &gt; 0</code> (i.e., skip the warning on the baseline-default path) and re-run <code class="language-plaintext highlighter-rouge">test_epoch_guard_scope_warns_on_baseline_default</code>. Expected: it fails, because the whole point of this slice is that the baseline default is not exempt from the warning. This demonstrates the test is not vacuous — it would catch exactly the regression this slice exists to prevent (the compiler quietly reverting to “unsafe by default, no signal”).</p>

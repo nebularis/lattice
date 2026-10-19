@@ -1,0 +1,83 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-fmh-h20-adr-a123-drafted">Validation Pack: FMH-H2.0, ADR-A123 drafted</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/formal-methods-track-h.html"><code class="language-plaintext highlighter-rouge">formal-methods-track-h</code></a>, slice H2.0 of the
+<a href="/developer/sketches/formal-methods-track-h-typed-ir.html#7-slices">typed IR sketch §7</a>.
+<strong>Decisions needing confirmation:</strong> none. <strong>A123 accepted by the maintainer on 2026-10-10</strong>, with decision 5 corrected
+by the H2.1 review before acceptance (the guard is its own group, <a href="/developer/validation/FMH-H2-1.html">FMH-H2-1</a> F1). The ADR-A79 addendum is
+applied and dated.</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>Every decision of the typed IR brief (§1, §3, §3.1, §4, §4.3) that later slices build on is recorded in one
+ADR, with what it supersedes in ADR-A79, so a slice never rests on a decision that only exists in a sketch.</p>
+
+<h2 id="what-changed">What changed</h2>
+
+<ul>
+  <li><a href="../../architecture/decisions/ADR-A123-typed-operation-ir.md">ADR-A123</a>, <strong>Proposed</strong>. Ten decisions: the typed
+<code class="language-plaintext highlighter-rouge">Operation</code>, its type rules, derived read and write sets, declarations in the compiled profile over logical
+resources, the two-sided parameter guard, the PL-B payload with its <code class="language-plaintext highlighter-rouge">INFO</code> diagnostic, the kept form of the
+composite replace (TD-42), the retirement of Mustache behind the equivalence harness, the audit surface, and
+the list of what ADR-A79 loses.</li>
+  <li>The catalogue row in <code class="language-plaintext highlighter-rouge">docs/architecture/decisions/README.md</code>.</li>
+  <li>The ADR-A79 addendum is drafted at the foot of A123 and <strong>not</strong> applied to ADR-A79. It is added and dated
+when the maintainer accepts A123.</li>
+  <li>A123 was free: no remote branch holds an <code class="language-plaintext highlighter-rouge">ADR-A123</code> file, and the catalogue ends at A122 (checked 2026-10-10).</li>
+</ul>
+
+<h2 id="test-cases">Test cases</h2>
+
+<p>A docs slice, so the cases are reading checks.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>H2.0-T1</td>
+      <td>the sketch §6 list of superseded points / compared with A123 decision 10 / the same four points</td>
+      <td>L0</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H2.0-T2</td>
+      <td>each of H2-Q1 to H2-Q6 / looked up in A123 / each answer appears in a decision</td>
+      <td>L0</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H2.0-T3</td>
+      <td>the hazard table of sketch §3 / compared with decision 2 / every row present</td>
+      <td>L0</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H2.0-T4</td>
+      <td>the file / <code class="language-plaintext highlighter-rouge">check:deny-terms</code> and <code class="language-plaintext highlighter-rouge">check:agent-guidance</code> / pass</td>
+      <td>L0</td>
+      <td>+</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="one-command">One command</h2>
+
+<p>Run from the repository root. A pass is both tasks exiting 0.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:deny-terms <span class="o">&amp;&amp;</span> mise run check:agent-guidance
+</code></pre></div></div>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<ul>
+  <li>Acceptance. The status of A123 stays Proposed until the maintainer accepts it.</li>
+  <li>The ADR-A79 addendum text is a draft, and is applied on acceptance.</li>
+</ul>

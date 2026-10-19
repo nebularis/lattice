@@ -1,0 +1,515 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="plan-bidirectional-xslt-transformation-sidecar">Plan: Bidirectional XSLT transformation sidecar</h1>
+
+<p><strong>Unit ID:</strong> <code class="language-plaintext highlighter-rouge">xslt-sidecar</code> (XS)
+<strong>Unit type:</strong> multi-slice unit, validation gate per slice
+<strong>Status:</strong> Decisions XS-D1 to XS-D7 proposed 2026-10-02, none recorded. ADR-A119 Proposed. No
+slice may start
+<strong>Sketch:</strong> <a href="/developer/sketches/xslt-sidecar.html">xslt-sidecar.md</a> (the design, cited below as “sketch §n”)
+<strong>Status record:</strong> <a href="/developer/status/xslt-sidecar.html">xslt-sidecar.md</a>
+<strong>ADR:</strong> <a href="../../architecture/decisions/ADR-A119-xslt-transformation-sidecar.md">A-119</a>, Proposed
+<strong>Depends on:</strong> nothing merged. Builds on
+<a href="/developer/sketches/xml-egress-and-transformation-kits.html">xml-egress-and-transformation-kits.md</a> (cited
+below as “egress sketch §n”) as design input, not as a slice dependency
+<strong>Related unit:</strong> <code class="language-plaintext highlighter-rouge">word-authoring-poc</code>, unaffected by this plan and not a precondition for it</p>
+
+<p>This plan is written so the code follows from it with as few choices as possible. Where a slice’s
+design hinges on a decision (sketch §11, XS-D1 to XS-D7) not yet recorded, the slice says which one
+and does not guess at its own field names, routes or file layout in the meantime.</p>
+
+<h2 id="no-implementation-is-authorised-yet">No implementation is authorised yet</h2>
+
+<p>This plan and its sketch are a design response to a request to explore the idea. <strong>No slice may
+start until the maintainer records decisions XS-D1 to XS-D7</strong> (sketch §11), in the same way the word
+authoring proof of concept could not start before its own WA-D1 to WA-D13 were recorded. Recording
+them is our decision, on every one of the seven.</p>
+
+<hr />
+
+<h2 id="1-goal-and-acceptance">1. Goal and acceptance</h2>
+
+<p>Once the persistence compiler (and, where present, the Surface compiler) has produced artefacts for
+a target, their shape is already known. A Saxon-hosted XSLT 3.0 engine, published as both a Java
+library and a standalone sidecar process, turns that known shape into documents, reports and pages
+on the way out (egress), and turns external, non-OWL XML into the triples the persistence tier
+recognises on the way in (ingress), using kits any conformant XSLT processor can run without our
+code. A MORK compiler backend compiles a mapping graph into an ingress kit’s stylesheet, the same
+way <code class="language-plaintext highlighter-rouge">tools/mork2rml.py</code> already compiles one into RML.</p>
+
+<p>The unit is accepted when:</p>
+
+<ol>
+  <li>every slice’s one command passes and its Validation Pack is signed in
+<code class="language-plaintext highlighter-rouge">docs/developer/validation/LOG.md</code></li>
+  <li>one egress kit, sourced from a real <code class="language-plaintext highlighter-rouge">persistence instantiate</code> output where the target has a
+compiled profile, runs correctly both through the sidecar and through a bare third-party Saxon
+CLI, byte-identically (egress sketch §8.1, §15 step 8)</li>
+  <li>one ingress kit, hand-written, lifts a representative external XML document into canonical
+N-Triples, passing the same security and determinism tests as the egress direction (sketch §6.3,
+§9)</li>
+  <li>a MORK-compiled ingress kit, built from a mapping graph for the same external schema, produces
+the same triples as the hand-written kit for the same input (sketch §7.2)</li>
+  <li><code class="language-plaintext highlighter-rouge">tools/mork2rml.py</code>’s existing tests still pass, unchanged, after its DAG-walking logic is shared
+with the new backend (sketch §7.1, XS-D5)</li>
+  <li><code class="language-plaintext highlighter-rouge">mise run check:java</code>, and whichever Python checks touch <code class="language-plaintext highlighter-rouge">tools/mork2rml.py</code>’s factored module,
+pass with no existing test weakened</li>
+</ol>
+
+<hr />
+
+<h2 id="2-fixed-facts">2. Fixed facts</h2>
+
+<h3 id="21-conventions-this-plan-reuses-rather-than-reinvents">2.1 Conventions this plan reuses rather than reinvents</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Convention</th>
+      <th>Source</th>
+      <th>Applies here as</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Saxon-HE, XSLT 3.0, XPath 3.1, MPL 2.0 licence</td>
+      <td>egress sketch §7.1</td>
+      <td>the engine, unchanged</td>
+    </tr>
+    <tr>
+      <td>A kit is a versioned directory: manifest, input definition, stylesheet, schema, golden examples</td>
+      <td>egress sketch §8</td>
+      <td>both directions. An ingress kit’s “input definition” is the external schema, not a SPARQL query</td>
+    </tr>
+    <tr>
+      <td>No Saxon extension functions in a published stylesheet</td>
+      <td>egress sketch §8.2</td>
+      <td>both directions</td>
+    </tr>
+    <tr>
+      <td>Canonical form for a hash: sorted N-Triples, SHA-256 over the join</td>
+      <td>the word authoring POC’s <code class="language-plaintext highlighter-rouge">CanonicalHash</code> (an existing, unrelated precedent for the same convention)</td>
+      <td>the ingress direction’s output form (sketch §6.1, XS-D4)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">GraphReference</code> and <code class="language-plaintext highlighter-rouge">KitId</code> only, never a raw query or endpoint</td>
+      <td>egress sketch §11.4</td>
+      <td>both directions’ public interfaces (sketch §8)</td>
+    </tr>
+    <tr>
+      <td>One shared IR, several backends</td>
+      <td><code class="language-plaintext highlighter-rouge">tools/mork_compilers</code>, ADR-A23</td>
+      <td>the MORK-to-RML and MORK-to-XSLT compilers, once XS-D5’s refactor lands</td>
+    </tr>
+    <tr>
+      <td>Virtual thread-per-request, a minimal HTTP library, mandatory deadline propagation</td>
+      <td>ADR-A81</td>
+      <td>the sidecar’s HTTP runtime (XS-D2)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="22-paths">2.2 Paths</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Path</th>
+      <th>Holds</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">platform/semantic-xml-egress</code></td>
+      <td>the core Java library, both directions (named for the egress sketch’s own module, extended rather than renamed)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">platform/xslt-sidecar</code> (new module)</td>
+      <td>the standalone HTTP process wrapping the library</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">contracts/xml/</code> (new)</td>
+      <td>published kits, egress and ingress, manifest-distinguished</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">tools/mork2rml.py</code> and a new shared module beside it</td>
+      <td>the factored DAG walk (XS-D5)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">tools/mork2xslt.py</code> (new)</td>
+      <td>the new compiler backend</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="23-branch-and-commits">2.3 Branch and commits</h3>
+
+<p>As the word authoring POC’s own §2.1: one local commit per slice, message
+<code class="language-plaintext highlighter-rouge">[wap-xs] XS&lt;n&gt;: &lt;slice title&gt;</code> (<code class="language-plaintext highlighter-rouge">wap-xs</code> distinguishes this unit’s commits from <code class="language-plaintext highlighter-rouge">word-authoring-poc</code>’s
+<code class="language-plaintext highlighter-rouge">[wap]</code> ones in <code class="language-plaintext highlighter-rouge">git log</code>), no push, final push left to the maintainer.</p>
+
+<hr />
+
+<h2 id="3-decisions">3. Decisions</h2>
+
+<p>Decisions XS-D1 to XS-D7 are recorded in <a href="/developer/sketches/xslt-sidecar.html#11-decisions">sketch §11</a>, not
+duplicated here. None is taken without the maintainer. No slice below may start until the decisions its own
+precondition line names are recorded.</p>
+
+<hr />
+
+<h2 id="4-slice-overview">4. Slice overview</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Slice</th>
+      <th>Title</th>
+      <th>Paths</th>
+      <th>Decisions needed first</th>
+      <th>One command</th>
+      <th>Estimate (tokens)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>XS0</td>
+      <td>Preflight</td>
+      <td>status record only</td>
+      <td>none</td>
+      <td>the preflight script (§5 XS0)</td>
+      <td>60k</td>
+    </tr>
+    <tr>
+      <td>XS1</td>
+      <td>Core egress module</td>
+      <td><code class="language-plaintext highlighter-rouge">platform/semantic-xml-egress</code></td>
+      <td>none</td>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:xslt-sidecar</code></td>
+      <td>400k</td>
+    </tr>
+    <tr>
+      <td>XS2</td>
+      <td>First kit, grounded in a compiled profile</td>
+      <td><code class="language-plaintext highlighter-rouge">platform/semantic-xml-egress</code>, <code class="language-plaintext highlighter-rouge">contracts/xml/</code></td>
+      <td>XS-D3, XS-D6</td>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:xslt-sidecar</code></td>
+      <td>500k</td>
+    </tr>
+    <tr>
+      <td>XS3</td>
+      <td>The standalone sidecar process</td>
+      <td><code class="language-plaintext highlighter-rouge">platform/xslt-sidecar</code> (new)</td>
+      <td>XS-D1, XS-D2</td>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:xslt-sidecar-service</code></td>
+      <td>350k</td>
+    </tr>
+    <tr>
+      <td>XS4</td>
+      <td>Ingress direction, hand-written kit</td>
+      <td><code class="language-plaintext highlighter-rouge">platform/semantic-xml-egress</code>, <code class="language-plaintext highlighter-rouge">contracts/xml/</code></td>
+      <td>XS-D4, XS-D6</td>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:xslt-sidecar</code></td>
+      <td>400k</td>
+    </tr>
+    <tr>
+      <td>XS5</td>
+      <td>MORK-to-XSLT compiler</td>
+      <td><code class="language-plaintext highlighter-rouge">tools/mork2rml.py</code> (refactored), <code class="language-plaintext highlighter-rouge">tools/mork2xslt.py</code> (new)</td>
+      <td>XS-D5, XS-D6</td>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:mork-xslt</code></td>
+      <td>450k</td>
+    </tr>
+    <tr>
+      <td>XS6</td>
+      <td>Documentation and close-out</td>
+      <td>docs only</td>
+      <td>none</td>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:xslt-sidecar</code> and the XS6 checks</td>
+      <td>150k</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Total about 2.31M tokens. Record the actual per slice in the status record.</p>
+
+<pre><code class="language-mermaid">flowchart LR
+    XS0 --&gt; XS1 --&gt; XS2
+    XS1 --&gt; XS3
+    XS1 --&gt; XS4
+    XS2 &amp; XS4 --&gt; XS5
+    XS3 &amp; XS4 &amp; XS5 --&gt; XS6
+</code></pre>
+
+<p>Run XS0 to XS2 first (the egress direction, since it reuses the most already-settled design). XS3
+and XS4 may then run in either order. XS5 needs both a working ingress mechanism (XS4) to compare
+its generated kit against, and nothing from XS2 directly, but is listed after both for narrative
+order. XS6 needs everything else committed.</p>
+
+<hr />
+
+<h2 id="5-slices">5. Slices</h2>
+
+<h3 id="xs0-preflight">XS0: Preflight</h3>
+
+<p><strong>Preconditions:</strong> none.</p>
+
+<p>As the word authoring POC’s own WA0, adapted:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Check</th>
+      <th>Pass</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>P1</td>
+      <td>clean tree, branch, identity</td>
+      <td>empty <code class="language-plaintext highlighter-rouge">git status --short</code>, branch and identity set</td>
+    </tr>
+    <tr>
+      <td>P2</td>
+      <td>Java baseline</td>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:java</code> is BUILD SUCCESS</td>
+    </tr>
+    <tr>
+      <td>P3</td>
+      <td>Saxon-HE resolves from the configured Maven mirror, at the version the sketch’s §7.1 names</td>
+      <td><code class="language-plaintext highlighter-rouge">mvn dependency:get</code> exits 0</td>
+    </tr>
+    <tr>
+      <td>P4</td>
+      <td><code class="language-plaintext highlighter-rouge">tools/mork2rml.py</code>’s existing tests pass today, before any refactor</td>
+      <td>the current test command exits 0, recorded as the XS5 regression baseline</td>
+    </tr>
+    <tr>
+      <td>P5</td>
+      <td><code class="language-plaintext highlighter-rouge">persistence instantiate</code> runs against a real example and produces <code class="language-plaintext highlighter-rouge">.rq</code> files</td>
+      <td>exits 0, at least one file produced</td>
+    </tr>
+    <tr>
+      <td>P6</td>
+      <td>the reasoning isolation check does not already flag anything Saxon-related</td>
+      <td><code class="language-plaintext highlighter-rouge">tools/reasoning_isolation_check.py</code> still passes once a Saxon dependency is added in a throwaway spike, then reverted</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Output:</strong> the status record’s preflight table. Commit only if the status record changed.</p>
+
+<hr />
+
+<h3 id="xs1-core-egress-module">XS1: Core egress module</h3>
+
+<p><strong>Preconditions:</strong> XS0 done.</p>
+
+<p><strong>Paths:</strong> <code class="language-plaintext highlighter-rouge">platform/semantic-xml-egress</code> (new Maven module).</p>
+
+<p>Builds the egress sketch’s §7.2 module largely as that sketch already specifies it: the
+<code class="language-plaintext highlighter-rouge">XmlProjection</code> interface (sketch §8’s wire contract), Saxon-HE wired with
+<code class="language-plaintext highlighter-rouge">FEATURE_SECURE_PROCESSING</code>, DTD and external-entity processing disabled (egress sketch §11.1), and
+a portability check that fails the build if a published stylesheet contains a <code class="language-plaintext highlighter-rouge">saxon:</code>-namespaced
+call (egress sketch §8.2, X1). No kit exists yet. This slice proves the engine runs, securely, with
+nothing published through it.</p>
+
+<p>Test approach: as the egress sketch’s §15 steps 1 and 6, before any real kit exists — a
+minimal, throwaway stylesheet to prove the wiring, and the DOCTYPE/external-entity refusal test
+against it.</p>
+
+<p><strong>Docs:</strong> a new <code class="language-plaintext highlighter-rouge">platform/semantic-xml-egress/README.md</code>: purpose, the licence note (egress sketch
+§7.1), the portability check’s rule.</p>
+
+<hr />
+
+<h3 id="xs2-first-kit-grounded-in-a-compiled-profile">XS2: First kit, grounded in a compiled profile</h3>
+
+<p><strong>Preconditions:</strong> XS1 committed. Decisions XS-D3, XS-D6 recorded.</p>
+
+<p><strong>Paths:</strong> <code class="language-plaintext highlighter-rouge">platform/semantic-xml-egress</code>, <code class="language-plaintext highlighter-rouge">contracts/xml/</code> (new).</p>
+
+<p>The egress sketch’s own §15 “first slice,” with one change: step 2’s <code class="language-plaintext highlighter-rouge">query.rq</code> is, per XS-D3, the
+output of a real <code class="language-plaintext highlighter-rouge">persistence instantiate</code> run against a real compiled profile (or a thin,
+<code class="language-plaintext highlighter-rouge">ORDER BY</code>-adding wrapper around it), not hand-written from nothing. The kit’s manifest (sketch §5,
+§11 XS-D6) records which compiled profile it was sourced from. Every one of the egress sketch’s §15
+steps 3 to 8 applies unchanged, including the security test (step 6), the <code class="language-plaintext highlighter-rouge">@key</code>-collision embedding
+test if the chosen kit happens to carry LegalRuleML (optional for this slice, since the first kit
+need not exercise embedding), and the third-party reproduction test (step 8).</p>
+
+<p>Test approach: the egress sketch’s own test table (§15), plus one new case: regenerate the source
+compiled profile with a trivial, reversible change, and confirm the kit’s manifest mismatch is
+detected (sketch §3, §9’s drift argument) rather than silently serving the old shape.</p>
+
+<p><strong>Docs:</strong> <code class="language-plaintext highlighter-rouge">contracts/xml/README.md</code> created: what a kit is, the manifest fields, where egress and
+ingress kits differ.</p>
+
+<hr />
+
+<h3 id="xs3-the-standalone-sidecar-process">XS3: The standalone sidecar process</h3>
+
+<p><strong>Preconditions:</strong> XS1 committed. Decisions XS-D1, XS-D2 recorded.</p>
+
+<p><strong>Paths:</strong> <code class="language-plaintext highlighter-rouge">platform/xslt-sidecar</code> (new Maven module).</p>
+
+<p>Wraps <code class="language-plaintext highlighter-rouge">platform/semantic-xml-egress</code>’s library behind an HTTP boundary, aligned with ADR-A81’s
+runtime shape (XS-D2): virtual thread-per-request, a minimal library, deadline propagation, Jackson
+for the request/response envelope only, never for the XML or N-Triples body itself. Two routes,
+mirroring the library’s two interface methods (sketch §8): one for egress, one for ingress, each
+taking a kit id and an input, returning the kit’s output. A minimal example (a compose file or
+equivalent, outside <code class="language-plaintext highlighter-rouge">deployment/compose/authoring</code>) demonstrates the sidecar running against a
+generic Fuseki instance, standing in for “some other stack.”</p>
+
+<p>Test approach: an HTTP-level test per route (request in, response out, matching the library-level
+test’s expectation), a deadline-propagation test (a request whose deadline has already passed is
+refused before the engine runs, per ADR-A81), and the example deployment actually brought up and
+exercised once, not only described.</p>
+
+<p><strong>Docs:</strong> <code class="language-plaintext highlighter-rouge">platform/xslt-sidecar/README.md</code>: how to run it standalone, the two routes, the example
+deployment.</p>
+
+<hr />
+
+<h3 id="xs4-ingress-direction-hand-written-kit">XS4: Ingress direction, hand-written kit</h3>
+
+<p><strong>Preconditions:</strong> XS1 committed. Decisions XS-D4, XS-D6 recorded.</p>
+
+<p><strong>Paths:</strong> <code class="language-plaintext highlighter-rouge">platform/semantic-xml-egress</code>, <code class="language-plaintext highlighter-rouge">contracts/xml/</code>.</p>
+
+<p>The <code class="language-plaintext highlighter-rouge">XmlIngestion</code> interface (sketch §8), and one hand-written ingress kit lifting a small,
+representative external XML document (not ACORD specifically, a simpler invented schema is enough
+to exercise the mechanism, per the egress sketch’s own “exercise the mechanism, not the domain”
+framing in its §15) into canonical sorted N-Triples (XS-D4). The security controls of sketch §6.3:
+whole-document size and depth limits, schema validation before the stylesheet runs where the
+external source provides a schema, and the DOCTYPE/external-entity refusal of XS1 confirmed against
+a full untrusted document rather than only an embedded subtree.</p>
+
+<p>Test approach: a golden fixture (input document to expected N-Triples, byte-exact), a security test
+(a DOCTYPE-bearing input refused at the boundary), a determinism test (the same input compiles to
+the same output twice, and after a process restart), and the third-party reproduction test (the
+same kit run in a bare Saxon CLI).</p>
+
+<p><strong>Docs:</strong> <code class="language-plaintext highlighter-rouge">contracts/xml/README.md</code> gains the ingress kit’s shape (input definition instead of
+<code class="language-plaintext highlighter-rouge">query.rq</code>, output always N-Triples).</p>
+
+<hr />
+
+<h3 id="xs5-mork-to-xslt-compiler">XS5: MORK-to-XSLT compiler</h3>
+
+<p><strong>Preconditions:</strong> XS4 committed. Decision XS-D5 recorded.</p>
+
+<p><strong>Paths:</strong> <code class="language-plaintext highlighter-rouge">tools/mork2rml.py</code> (refactored in place), a new shared module (exact name decided in the
+slice, once XS-D5 is recorded), <code class="language-plaintext highlighter-rouge">tools/mork2xslt.py</code> (new).</p>
+
+<p>First, factor <code class="language-plaintext highlighter-rouge">mork2rml.py</code>’s DAG-walking and case-analysis logic (its own Definition 10.7) into a
+module both compilers import, with <code class="language-plaintext highlighter-rouge">mork2rml.py</code>’s existing tests run against the factored code,
+unchanged, as the regression guard (plan §1 acceptance item 5). Only once that is green does the new
+backend get added: <code class="language-plaintext highlighter-rouge">mork2xslt</code>, compiling the same MORK mapping graph into a static XSLT 3.0
+stylesheet (sketch §7.2) that emits N-Triples lines, matching XS4’s output convention exactly so the
+two ingress kits (hand-written and MORK-compiled) are interchangeable from a caller’s point of view.</p>
+
+<p>Test approach: the refactor regression (above), then a parity test proving <code class="language-plaintext highlighter-rouge">mork2xslt</code>’s generated
+kit and XS4’s hand-written kit produce identical triples for the same input document, which is the
+acceptance criterion the sketch’s §7.2 names directly. The generated stylesheet is also run through
+the portability check (XS1) and the third-party reproduction test (XS4), since a generated kit is
+published exactly as a hand-written one is (sketch §6.2).</p>
+
+<p><strong>Docs:</strong> <code class="language-plaintext highlighter-rouge">tools/mork2rml.py</code>’s own module docstring updated to note the shared module and its
+sibling. A new <code class="language-plaintext highlighter-rouge">tools/mork2xslt.py</code> docstring matching its style.</p>
+
+<hr />
+
+<h3 id="xs6-documentation-and-close-out">XS6: Documentation and close-out</h3>
+
+<p><strong>Preconditions:</strong> XS3, XS4, XS5 committed.</p>
+
+<p><strong>Paths:</strong> documentation only.</p>
+
+<p>As the word authoring POC’s own WA11/WA19: root <code class="language-plaintext highlighter-rouge">README.md</code> gains the new paths. <code class="language-plaintext highlighter-rouge">docs/developer/INDEX.md</code>
+entry updated with slice states and links to the Validation Packs. The status record set to
+“awaiting the maintainer’s validation” with actual token use per slice. <code class="language-plaintext highlighter-rouge">mise run check:java</code>,
+<code class="language-plaintext highlighter-rouge">check:mork-compilers</code> (or whichever task now covers the factored module), <code class="language-plaintext highlighter-rouge">check:ontology-catalog</code>,
+<code class="language-plaintext highlighter-rouge">topology:links</code> run and recorded. Prose check of every changed Markdown file. ADR-A119 is left
+Proposed: moving it to Accepted is our decision, not a slice output.</p>
+
+<p><strong>Commit:</strong> <code class="language-plaintext highlighter-rouge">[wap-xs] XS6: documentation and close-out</code>.</p>
+
+<hr />
+
+<h2 id="6-commands-consolidated">6. Commands, consolidated</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Task</th>
+      <th>Runs</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">check:xslt-sidecar</code></td>
+      <td>the core library’s tests (XS1, XS2, XS4)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">check:xslt-sidecar-service</code></td>
+      <td>the standalone sidecar process’s tests (XS3)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">check:mork-xslt</code></td>
+      <td>the factored <code class="language-plaintext highlighter-rouge">mork2rml</code>/<code class="language-plaintext highlighter-rouge">mork2xslt</code> compiler family’s tests (XS5), replacing whichever task runs <code class="language-plaintext highlighter-rouge">mork2rml.py</code>’s tests today</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="7-validation-pack-skeleton">7. Validation Pack skeleton</h2>
+
+<p>As the word authoring POC’s own §7: <code class="language-plaintext highlighter-rouge">docs/developer/validation/xslt-sidecar-xs&lt;n&gt;.md</code>, same shape
+(Invariant, Test cases, One command, Artefacts to inspect, Self-probe, Implementer choices,
+Deliberate non-coverage).</p>
+
+<p>Non-coverage that applies to the whole unit, cited by every pack: the LegalRuleML-specific ingress
+pipeline (sketch §1, XS-D7, out of scope by decision, not by oversight). Streaming for large result
+sets (egress sketch §12, deferred until a real caller needs it). Batching several ingress documents
+in one call (sketch open question XS-Q3).</p>
+
+<hr />
+
+<h2 id="8-risks">8. Risks</h2>
+
+<p>Risks XS-R1 to XS-R6 are recorded in
+<a href="/developer/sketches/xslt-sidecar.html#12-risks">sketch §12</a>, not duplicated here.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Risk (plan-execution specific, not already in the sketch)</th>
+      <th>Mitigation</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>P1</td>
+      <td>XS5’s refactor of <code class="language-plaintext highlighter-rouge">mork2rml.py</code> is attempted before XS4 gives it a second backend to prove itself against, so the refactor’s correctness rests on inspection alone</td>
+      <td>the slice order (§4) puts XS4 before XS5 for exactly this reason</td>
+    </tr>
+    <tr>
+      <td>P2</td>
+      <td>The sidecar (XS3) is built against ADR-A81 before <code class="language-plaintext highlighter-rouge">platform/runtime-host</code> exists, and later needs a second migration once it does</td>
+      <td>sketch open question XS-Q1 names this explicitly as a decision for the maintainer, not an assumption this plan makes</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="9-handoff">9. Handoff</h2>
+
+<p>After XS6 the agent’s last message lists, in order: the commits made (`git log –oneline</p>
+<first>^..HEAD`), the Validation Packs, any blocker or deviation, and a note that ADR-A119 remains
+Proposed pending our own review, not advanced before then. No ontology document changes in
+this unit, so no release tag is due.
+</first>

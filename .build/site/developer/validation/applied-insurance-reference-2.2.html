@@ -1,0 +1,100 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-air-22-peril-characteristics">Validation Pack: AIR-2.2, peril characteristics</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/applied-insurance-reference.html"><code class="language-plaintext highlighter-rouge">applied-insurance-reference</code></a>
+<strong>Machine:</strong> S (Copilot Business). <strong>Branch:</strong> <code class="language-plaintext highlighter-rouge">air/applied-reference</code>, commits <code class="language-plaintext highlighter-rouge">[AIR-2.2] …</code>
+<strong>Plan and test cases:</strong> <a href="/developer/plans/applied-insurance-reference-phase-2.html">Phase 2 plan</a> (AIR-2.2 in detail)
+<strong>Decisions:</strong> ADR-A98 (namespaces, addendum), ADR-A99</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>The seven characteristic schemes hold their reference concepts, the four shared characteristic properties specialise their <code class="language-plaintext highlighter-rouge">icm:</code> parents, and the <code class="language-plaintext highlighter-rouge">icm-voc:</code> contracts bind to the peril schemes.</p>
+
+<h2 id="test-cases">Test cases</h2>
+
+<p>The table in the plan section above. Each row’s result is recorded under Results at
+verification.</p>
+
+<h2 id="one-command">One command</h2>
+
+<p>Run from the repository root. S runs it before the handoff commit. R runs it again at verification,
+after <code class="language-plaintext highlighter-rouge">mise run build:ontology-catalog</code> and <code class="language-plaintext highlighter-rouge">mise run build:ontology-releases</code>, which S cannot do.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:ontology-catalog <span class="o">&amp;&amp;</span> mise run check:ontology-versioning
+</code></pre></div></div>
+
+<h2 id="artefacts-to-inspect">Artefacts to inspect</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">ontology/applied/insurance/peril/spec/peril.ttl</code>: the <code class="language-plaintext highlighter-rouge">common/</code> import and the four sub-property axioms.</li>
+  <li><code class="language-plaintext highlighter-rouge">vocab/peril-vocab.ttl</code>: the seven characteristic regions and the four <code class="language-plaintext highlighter-rouge">voc:boundScheme</code> bindings.</li>
+  <li><code class="language-plaintext highlighter-rouge">examples/well-formed.ttl</code> and <code class="language-plaintext highlighter-rouge">tools/test_peril_vocabulary.py</code>.</li>
+</ul>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<p>No cause concepts (AIR-2.3, AIR-2.4). No typical-characteristic links on cause concepts, which arrive with the causes. No shape changes.</p>
+
+<h2 id="handoff">Handoff</h2>
+
+<p>Written by S in the <code class="language-plaintext highlighter-rouge">[AIR-2.2] Handoff</code> commit. S runs the checks itself, so say which ran.</p>
+
+<ul>
+  <li><strong>Built:</strong> <code class="language-plaintext highlighter-rouge">spec/peril.ttl</code> (via the README, §5.1): the <code class="language-plaintext highlighter-rouge">insurance/common/0.5.0</code> import, and
+<code class="language-plaintext highlighter-rouge">prl:typicalAgency</code>, <code class="language-plaintext highlighter-rouge">prl:typicalMechanism</code>, <code class="language-plaintext highlighter-rouge">prl:typicalConsequence</code> and <code class="language-plaintext highlighter-rouge">prl:harmSubject</code> each
+gain <code class="language-plaintext highlighter-rouge">rdfs:subPropertyOf</code> the matching <code class="language-plaintext highlighter-rouge">icm:</code> property. <code class="language-plaintext highlighter-rouge">prl:onset</code> and <code class="language-plaintext highlighter-rouge">prl:definitionBasis</code>
+specialise nothing, as the plan requires. <code class="language-plaintext highlighter-rouge">vocab/peril-vocab.ttl</code> (§5.2, §5.3): re-pinned to
+<code class="language-plaintext highlighter-rouge">insurance/peril/0.5.0</code> and <code class="language-plaintext highlighter-rouge">insurance/common-vocab/0.5.0</code>, the seven characteristic and
+companion schemes filled (70 concepts: 10 agency, 22 mechanism, 4 onset, 6 definition-basis, 3
+accumulation-class, 19 consequence, 6 harm-subject), each with <code class="language-plaintext highlighter-rouge">skos:prefLabel</code>,
+<code class="language-plaintext highlighter-rouge">skos:definition</code> and the AIR-2.0 documentation rule’s <code class="language-plaintext highlighter-rouge">skos:note</code>, and four <code class="language-plaintext highlighter-rouge">voc:boundScheme</code>
+bindings (<code class="language-plaintext highlighter-rouge">AgencyContract</code>, <code class="language-plaintext highlighter-rouge">MechanismContract</code>, <code class="language-plaintext highlighter-rouge">ConsequenceContract</code>, <code class="language-plaintext highlighter-rouge">HarmSubjectContract</code>).
+<code class="language-plaintext highlighter-rouge">examples/well-formed.ttl</code> no longer declares local <code class="language-plaintext highlighter-rouge">Natural</code>/<code class="language-plaintext highlighter-rouge">Sudden</code>/<code class="language-plaintext highlighter-rouge">Physical</code>/<code class="language-plaintext highlighter-rouge">Threshold</code>
+placeholders, referencing the real vocabulary concepts instead. <code class="language-plaintext highlighter-rouge">tools/test_peril_vocabulary.py</code>
+gains AIR22-01 to AIR22-08.</li>
+  <li><strong>Run, with the result:</strong>
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">python -m pytest tools/test_peril_vocabulary.py tools/test_applied_shared_contracts.py
+tools/test_literate_extract.py -q</code>: 49 passed.</li>
+      <li><code class="language-plaintext highlighter-rouge">python tools/literate_extract.py ontology/applied/insurance/peril/README.md --layer
+applied/insurance/peril --root . --shapes shapes/structural.ttl shapes/constraints.ttl
+--check</code>: 4 extracted artefacts consistent, no drift.</li>
+      <li><code class="language-plaintext highlighter-rouge">mise run check:ontology-versioning</code>: <code class="language-plaintext highlighter-rouge">tools/ontology_version_check.py</code> reports “40 in-scope
+ontology document(s) checked against HEAD: no unbumped changes” (clean). <code class="language-plaintext highlighter-rouge">tools/ontology_releases.py
+check</code> reports <code class="language-plaintext highlighter-rouge">UNRELEASED</code> for <code class="language-plaintext highlighter-rouge">insurance-peril-v0.5.0</code>, <code class="language-plaintext highlighter-rouge">insurance-peril-vocab-v0.5.0</code> and
+<code class="language-plaintext highlighter-rouge">applied-insurance-peril-shapes-v0.2.0</code> (the shapes bump carried over from AIR-2.0): expected,
+since catalog and release-row regeneration stay on R (lanes §1, §6 step 2).</li>
+    </ul>
+  </li>
+  <li><strong>Not run, and why:</strong> the full <code class="language-plaintext highlighter-rouge">mise run check:ontology-catalog</code> (run once for AIR-2.0 and
+confirmed clean apart from the seven pre-existing, unrelated failures already recorded there;
+not re-run for every subsequent slice of the trip to avoid its ~2.5 minute cost each time. The
+scoped test files above exercise everything this slice changes).</li>
+  <li><strong>Versions used, if they differ from the plan’s snapshot:</strong> none differ from the brief’s own
+refreshed table (peril 0.4.0 → 0.5.0, peril-vocab 0.4.0 → 0.5.0, common 0.5.0, common-vocab
+0.5.0, Foundation 0.4.0, Vocabulary 0.4.0, Quantification 0.8.0, unchanged).</li>
+  <li><strong>Check first:</strong> nothing beyond the <code class="language-plaintext highlighter-rouge">UNRELEASED</code> catalog/release rows R regenerates at merge.</li>
+  <li><strong>Deviations from the plan:</strong>
+    <ol>
+      <li><strong>Agency, mechanism and consequence lists amended beyond the brief’s first table</strong>, per the
+brief’s own “Amended again 2026-10-13” and “Amended 2026-10-13, before S started” notes:
+<code class="language-plaintext highlighter-rouge">Intentional</code> and <code class="language-plaintext highlighter-rouge">Economic</code> agency, thirteen more mechanisms (<code class="language-plaintext highlighter-rouge">GroundFailure</code>, <code class="language-plaintext highlighter-rouge">WaterDamage</code>,
+<code class="language-plaintext highlighter-rouge">Load</code>, <code class="language-plaintext highlighter-rouge">Smoke</code>, <code class="language-plaintext highlighter-rouge">Heat</code>, <code class="language-plaintext highlighter-rouge">Freezing</code>, <code class="language-plaintext highlighter-rouge">Collapse</code>, <code class="language-plaintext highlighter-rouge">Breakdown</code>, <code class="language-plaintext highlighter-rouge">Corrosion</code>, <code class="language-plaintext highlighter-rouge">Erosion</code>,
+<code class="language-plaintext highlighter-rouge">BiologicalAgent</code>, <code class="language-plaintext highlighter-rouge">Radiation</code>, <code class="language-plaintext highlighter-rouge">Deprivation</code>), and the consequence scheme widened to its
+final list of nineteen (<code class="language-plaintext highlighter-rouge">Spoilage</code>, <code class="language-plaintext highlighter-rouge">DenialOfAccess</code>, <code class="language-plaintext highlighter-rouge">DataRestoration</code>, <code class="language-plaintext highlighter-rouge">ExtortionPayment</code>,
+<code class="language-plaintext highlighter-rouge">Delay</code>, <code class="language-plaintext highlighter-rouge">ShortageOrNonDelivery</code>, <code class="language-plaintext highlighter-rouge">GeneralAverageContribution</code>, <code class="language-plaintext highlighter-rouge">ReputationalHarm</code>,
+<code class="language-plaintext highlighter-rouge">RegulatoryPenalty</code>, <code class="language-plaintext highlighter-rouge">NotificationCosts</code>, <code class="language-plaintext highlighter-rouge">ForensicCosts</code>, <code class="language-plaintext highlighter-rouge">CancellationCosts</code> added to the
+brief’s first six). Built as the amended brief directs, not the original table.</li>
+      <li><code class="language-plaintext highlighter-rouge">prl-voc:AgencyScheme</code> through <code class="language-plaintext highlighter-rouge">prl-voc:HarmSubjectScheme</code> also gain <code class="language-plaintext highlighter-rouge">skos:hasTopConcept</code>
+listing every member, beyond what the brief’s table states, mirroring the existing fixture’s
+own pattern for the cause scheme’s top concepts (both directions materialised, since pySHACL
+validates with <code class="language-plaintext highlighter-rouge">inference="none"</code>). Not required by any shape, but consistent with house
+style and AIR22-03’s own “each a top concept of it” test.</li>
+    </ol>
+  </li>
+</ul>
+
+<h2 id="results">Results</h2>
+
+<p>Written on machine R at verification.</p>

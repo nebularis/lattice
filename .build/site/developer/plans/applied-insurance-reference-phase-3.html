@@ -1,0 +1,987 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="plan-applied-insurance-reference--phase-3-eligibility-readings-and-crosswalks">Plan: Applied Insurance Reference — Phase 3, Eligibility Readings and Crosswalks</h1>
+
+<p><strong>Unit ID:</strong> <code class="language-plaintext highlighter-rouge">applied-insurance-reference-phase-3</code>
+<strong>Epic:</strong> <a href="/developer/plans/applied-insurance-reference.html">applied-insurance-reference</a>
+<strong>Status:</strong> Rolling-wave outline. AIR-3.1 to AIR-3.3 are substrate slices, detailed when their
+ADRs are accepted. AIR-3.4 and AIR-3.5 were detailed on 2026-10-13, for the one trip (lanes §4).
+<strong>Decisions:</strong> <a href="/architecture/decisions/ADR-A100-hierarchical-match-over-flat-schemes.html">ADR-A100</a> (D11), <a href="/architecture/decisions/ADR-A103-eligibility-set-readings.html">ADR-A103</a> (D12)
+<strong>Sketches:</strong> <a href="/developer/sketches/mork-bridge.html">mork-bridge.md</a>, <a href="/developer/sketches/peril-vocabulary.html">peril-vocabulary.md</a> §6.8</p>
+
+<h2 id="scope">Scope</h2>
+
+<p>Make Eligibility decide correctly when a peril list is flat (A-100) and when a path reaches
+several values (A-103), then let reviewed crosswalks carry a flat or simply taxonomic list to the
+reference. Milestone M2 is a check across cause, agency and mechanism, run against the reference,
+a flat list and a crosswalked list.</p>
+
+<p>AIR-3.1 to AIR-3.3 change substrate. Each follows ADR-A-C2: the ADR’s non-insurance examples are
+authored as fixtures before the README prose, and no insurance term enters either layer.</p>
+
+<h2 id="slices">Slices</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Slice</th>
+      <th>Content</th>
+      <th>Modules</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AIR-3.1</td>
+      <td>A-100: the law beside L11 in the Eligibility README, its two example fixtures, <code class="language-plaintext highlighter-rouge">exe:NoHierarchy</code> (Executable PATCH), the rule in the IR’s expansion and in the SPARQL backend, and the OWL backend’s refusal</td>
+      <td><code class="language-plaintext highlighter-rouge">ontology/eligibility</code> (README, examples), <code class="language-plaintext highlighter-rouge">tools/mork_compilers</code>. <code class="language-plaintext highlighter-rouge">Executable.ttl</code> gains one individual, a stated deviation from the two-module rule</td>
+    </tr>
+    <tr>
+      <td>AIR-3.2</td>
+      <td>A-103: <code class="language-plaintext highlighter-rouge">elg:ValueReading</code>, its three individuals, <code class="language-plaintext highlighter-rouge">elg:valueReading</code> and <code class="language-plaintext highlighter-rouge">elg:negated</code> (Eligibility MINOR, cascade), fixtures, the IR, SPARQL and SHACL</td>
+      <td><code class="language-plaintext highlighter-rouge">ontology/eligibility</code>, <code class="language-plaintext highlighter-rouge">tools/mork_compilers</code></td>
+    </tr>
+    <tr>
+      <td>AIR-3.3</td>
+      <td>A-103 in the SWRL (sound subset, swapped heads under negation) and OWL (<code class="language-plaintext highlighter-rouge">∃</code>, <code class="language-plaintext highlighter-rouge">∀ ⊓ ∃</code>, complement) backends</td>
+      <td><code class="language-plaintext highlighter-rouge">tools/mork_compilers</code></td>
+    </tr>
+    <tr>
+      <td>AIR-3.4</td>
+      <td>crosswalk format: reviewed SKOS triples plus characteristic values on codes that name several things, as a <code class="language-plaintext highlighter-rouge">fnd:DerivedArtefact</code>. Crosswalks of OED’s peril codes and an example house list, and the lookup that lifts codes to reference concepts at ingestion</td>
+      <td><code class="language-plaintext highlighter-rouge">insurance/peril/crosswalk/</code> (the MORK mapping too, since MORK’s own examples stay domain-neutral)</td>
+    </tr>
+    <tr>
+      <td>AIR-3.5</td>
+      <td>lowering to a market list, list-to-list through the reference, and milestone M2</td>
+      <td>as 3.4, <code class="language-plaintext highlighter-rouge">insurance/exposure/examples/</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Tests at L1 and L2:</p>
+
+<ul>
+  <li>3.1: on a flat scheme, a required code matches, an excluded code is excluded, every other member
+is Undetermined with <code class="language-plaintext highlighter-rouge">exe:NoHierarchy</code>, and a hierarchical scheme evaluates as before. SPARQL,
+SHACL and SWRL agree. The OWL backend refuses</li>
+  <li>3.2: each reading over zero, one and several values, including an exclusion read <code class="language-plaintext highlighter-rouge">EveryValue</code>,
+and a binding without a reading behaving as today. A negated condition swaps Permitted and
+Denied and keeps Undetermined with its diagnostic. SPARQL and SHACL agree</li>
+  <li>3.3: SWRL derives only the sound subset. OWL classes stand in the expected subsumptions</li>
+  <li>3.4: a crosswalk is stale when either edition changes. An inexact mapping never decides</li>
+  <li>3.5 (M2): the cyber write-back profile of peril vocabulary §6.8 decides on the reference,
+is Undetermined with a reason on a flat list, and decides exactly mapped codes of a crosswalked
+list. A risk whose perils are all of sudden onset is Permitted under <code class="language-plaintext highlighter-rouge">EveryValue</code></li>
+</ul>
+
+<p>Order and lanes: <a href="/developer/plans/applied-insurance-reference-lanes.html">machines, branches and merges</a>. Substrate item
+S2 also changes Eligibility, and rebases onto AIR-3.2. AIR-3.3 merges before
+<a href="/developer/plans/normative-rule-substrate.html">normative-rule-substrate</a> N1, which also changes <code class="language-plaintext highlighter-rouge">tools/mork_compilers/</code>
+(epic §3b).</p>
+
+<h2 id="air-31-in-detail">AIR-3.1 in detail</h2>
+
+<p><strong>Machine:</strong> R. <strong>Branch:</strong> <code class="language-plaintext highlighter-rouge">air/3.1-flat-hierarchy</code>. <strong>Validation Pack:</strong>
+<a href="/developer/validation/applied-insurance-reference-3.1.html">applied-insurance-reference-3.1</a>.
+<strong>Decision:</strong> ADR-A100, with its implementation note.</p>
+
+<p><strong>Invariant:</strong> under <code class="language-plaintext highlighter-rouge">elg:HierarchicalMatch</code>, a resolved scheme in which no member has a
+<code class="language-plaintext highlighter-rouge">skos:broader</code> link to another member decides only the concepts a condition names. Every other
+member is Undetermined with <code class="language-plaintext highlighter-rouge">exe:NoHierarchy</code>, in every backend, and hierarchical schemes
+evaluate exactly as before.</p>
+
+<p>Authored in ADR-A-C2 order: the two example fixtures first, then the law, then the code.</p>
+
+<ol>
+  <li><strong>Examples</strong> in <code class="language-plaintext highlighter-rouge">ontology/eligibility/examples/</code>, no <code class="language-plaintext highlighter-rouge">owl:Ontology</code>, no insurance terms:
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">flat-scheme-lending.ttl</code>: a contract whose unscoped <code class="language-plaintext highlighter-rouge">voc:boundScheme</code> is a hierarchical
+industry classification (manufacturing above food processing and textiles, plus retail and
+wholesale), and a <code class="language-plaintext highlighter-rouge">voc:SchemeBinding</code> scoped to one lender that binds the lender’s flat
+sector list. The list reuses only concepts whose broader concept lies outside it (food
+processing, textiles, retail, wholesale), because <code class="language-plaintext highlighter-rouge">skos:broader</code> belongs to concepts and a
+reused parent and child would carry their link into the list. One <code class="language-plaintext highlighter-rouge">HierarchicalMatch</code>
+condition requires manufacturing or retail and excludes textiles. Recorded decisions: under
+the classification, food processing and retail Permitted, textiles and wholesale Denied.
+Under the lender’s list, retail Permitted, textiles Denied, food processing and wholesale
+Undetermined with <code class="language-plaintext highlighter-rouge">exe:NoHierarchy</code>.</li>
+      <li><code class="language-plaintext highlighter-rouge">flat-scheme-employment.ttl</code>: an exclusion-only condition (“every role except contractors”)
+over a flat job-title list. Contractors are Denied, and every other title is Undetermined,
+not Permitted, since L12’s default inclusion needs the hierarchy to know a title is not a
+kind of contractor.</li>
+    </ul>
+  </li>
+  <li><strong>The law</strong> <code class="language-plaintext highlighter-rouge">elg:L14</code> in <code class="language-plaintext highlighter-rouge">ontology/eligibility/vocab/eligibility-vocab.ttl</code> and its README
+mirror (§4 law list and the decision table, next to L11), with <code class="language-plaintext highlighter-rouge">elg:lawRegister
+elg:SemanticLaw</code>: “Hierarchy precondition. Under hierarchical match, when no member of the
+resolved scheme has a broader concept within the scheme, a candidate that is a member and is
+neither a required nor an excluded concept leaves the condition undetermined.” The README’s
+“<code class="language-plaintext highlighter-rouge">HierarchicalMatch</code> is valid when…” sentence cites L14. Eligibility vocab 0.6.0 → 0.7.0
+(MINOR, a new individual).</li>
+  <li><strong>The diagnostic</strong> <code class="language-plaintext highlighter-rouge">exe:NoHierarchy</code> in <code class="language-plaintext highlighter-rouge">ontology/mork/spec/Executable.ttl</code>, beside
+<code class="language-plaintext highlighter-rouge">exe:AboveExclusion</code>, citing <code class="language-plaintext highlighter-rouge">elg:L14</code>. Executable 0.5.0 → 0.6.0 (MINOR). No ontology imports
+either document, so the cascade is the catalog and the release register only.</li>
+  <li><strong>The IR</strong> (<code class="language-plaintext highlighter-rouge">tools/mork_compilers/src/mork_compilers/eligibility_ir.py</code>): <code class="language-plaintext highlighter-rouge">_expand</code> takes
+whether the resolved ordering has any <code class="language-plaintext highlighter-rouge">skos:broader</code> link. When the match is hierarchical and it
+has none, a member is Denied if it is an excluded concept, Permitted if it is a required
+concept, and Undetermined otherwise. <code class="language-plaintext highlighter-rouge">ConceptPlan</code> gains a derived <code class="language-plaintext highlighter-rouge">no_hierarchy</code> property
+the backends read.</li>
+  <li><strong>SPARQL</strong> (<code class="language-plaintext highlighter-rouge">sparql_backend.concept_select</code>): a plan with <code class="language-plaintext highlighter-rouge">no_hierarchy</code> uses the equality
+decision with Undetermined as its last branch, and reports <code class="language-plaintext highlighter-rouge">exe:NoHierarchy</code> as the diagnostic.
+Scheme membership still wraps it, so a non-member stays <code class="language-plaintext highlighter-rouge">exe:OutsideScheme</code>.</li>
+  <li><strong>SHACL</strong> (<code class="language-plaintext highlighter-rouge">shacl_backend</code>): reads the expansion already. Its Undetermined message names
+<code class="language-plaintext highlighter-rouge">exe:NoHierarchy</code> for such a plan.</li>
+  <li><strong>SWRL</strong>: no change. <code class="language-plaintext highlighter-rouge">concept_facts</code> reads the expansion, so Undetermined members derive nothing.</li>
+  <li><strong>OWL</strong> (<code class="language-plaintext highlighter-rouge">owl_backend</code>): refuse a plan with <code class="language-plaintext highlighter-rouge">no_hierarchy</code> with an <code class="language-plaintext highlighter-rouge">IRCompileError</code> citing
+ADR-A100, since a design-time class cannot express Undetermined.</li>
+  <li><strong>Tests</strong>: a new <code class="language-plaintext highlighter-rouge">test_flat_schemes.py</code>, reusing the SHACL and SWRL helpers of
+<code class="language-plaintext highlighter-rouge">test_concept_backends.py</code> (which already imports <code class="language-plaintext highlighter-rouge">test_hierarchical_conditions.py</code>, so new
+cases there would import in a cycle), and the two examples added to
+<code class="language-plaintext highlighter-rouge">tools/test_eligibility_examples.py</code>’s <code class="language-plaintext highlighter-rouge">EXAMPLES</code>. The one existing change registers
+<code class="language-plaintext highlighter-rouge">exe:NoHierarchy</code> in <code class="language-plaintext highlighter-rouge">test_concept_backends.py</code>’s closed set of diagnostics.</li>
+  <li><strong>Docs</strong>: <code class="language-plaintext highlighter-rouge">tools/mork_compilers/README.md</code> (L14 in each backend), and the Eligibility row of
+<code class="language-plaintext highlighter-rouge">docs/architecture/ontology-architecture.md</code> §3. Then <code class="language-plaintext highlighter-rouge">mise run build:ontology-catalog</code> and
+<code class="language-plaintext highlighter-rouge">mise run build:ontology-releases</code>.</li>
+</ol>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AIR31-01</td>
+      <td>the lending example under the classification / SPARQL / food processing and retail Permitted, textiles and wholesale Denied</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR31-02</td>
+      <td>the lending example under the lender’s list / SPARQL / retail Permitted, textiles Denied</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR31-03</td>
+      <td>the same / SPARQL / food processing and wholesale Undetermined with <code class="language-plaintext highlighter-rouge">exe:NoHierarchy</code>, plan has <code class="language-plaintext highlighter-rouge">no_hierarchy</code></td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR31-04</td>
+      <td>the employment example / expanded / contractors Denied, every other title Undetermined</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>AIR31-05</td>
+      <td>a candidate outside the lender’s list / SPARQL / Undetermined with <code class="language-plaintext highlighter-rouge">exe:OutsideScheme</code></td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>AIR31-06</td>
+      <td>the lender’s list / SPARQL / every member’s decision equals the expansion, Undetermined rows carry <code class="language-plaintext highlighter-rouge">exe:NoHierarchy</code></td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR31-07</td>
+      <td>the same / SHACL / admitted and undetermined sets equal the expansion’s</td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR31-08</td>
+      <td>the same / SWRL / derives Permitted for retail and Denied for textiles only</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR31-09</td>
+      <td>a <code class="language-plaintext highlighter-rouge">no_hierarchy</code> plan / OWL backend / <code class="language-plaintext highlighter-rouge">IRCompileError</code></td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>AIR31-10</td>
+      <td>both examples / Eligibility shapes / no result</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR31-11</td>
+      <td>the existing hierarchical tests / unchanged / pass (non-weakening)</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Adversarial probes for the gate: disabling the L14 branch in <code class="language-plaintext highlighter-rouge">_expand</code> fails AIR31-06, 07 and 08.
+Disabling it in <code class="language-plaintext highlighter-rouge">sparql_backend.concept_select</code> fails AIR31-03, 04, 06 and 07.</p>
+
+<h2 id="air-32-in-detail">AIR-3.2 in detail</h2>
+
+<p><strong>Machine:</strong> R. <strong>Branch:</strong> <code class="language-plaintext highlighter-rouge">air/3.2-set-readings</code>. <strong>Validation Pack:</strong>
+<a href="/developer/validation/applied-insurance-reference-3.2.html">applied-insurance-reference-3.2</a>.
+<strong>Decision:</strong> ADR-A103.</p>
+
+<p><strong>Invariant:</strong> a bound condition reads several values by the reading its binding declares, a
+negated condition swaps Permitted and Denied and keeps Undetermined with its diagnostic, a
+binding without a reading and a condition without negation evaluate exactly as before, and the
+SWRL and OWL backends refuse what they cannot yet compile.</p>
+
+<p>Authored in ADR-A-C2 order: examples, then laws and README, then code.</p>
+
+<ol>
+  <li><strong>Examples</strong> in <code class="language-plaintext highlighter-rouge">ontology/eligibility/examples/</code>, no insurance terms:
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">set-reading-admissions.ttl</code>: applicants bound through <code class="language-plaintext highlighter-rouge">ex:holdsQualification</code>. One
+condition, read <code class="language-plaintext highlighter-rouge">elg:SomeValue</code>, requires mathematics or physics. A second, read
+<code class="language-plaintext highlighter-rouge">elg:SomeValue</code> and <code class="language-plaintext highlighter-rouge">elg:negated true</code>, requires medicine (“holds no qualification in
+medicine”). Recorded: history and physics admitted, history alone refused, no
+qualification Undetermined, a medic refused by the negated condition.</li>
+      <li><code class="language-plaintext highlighter-rouge">set-reading-trial.ttl</code>: patients bound through <code class="language-plaintext highlighter-rouge">ex:hasDiagnosis</code>, read <code class="language-plaintext highlighter-rouge">elg:EveryValue</code>,
+over a permitted list that excludes one diagnosis. Recorded: all permitted admitted, one
+excluded refused.</li>
+    </ul>
+  </li>
+  <li><strong>Eligibility spec</strong> (<code class="language-plaintext highlighter-rouge">spec/eligibility.ttl</code> and its README mirror, 0.6.0 → 0.7.0, MINOR):
+<code class="language-plaintext highlighter-rouge">elg:ValueReading</code> (a class, added to the disjoint classes axiom), <code class="language-plaintext highlighter-rouge">elg:valueReading</code>
+(functional object property, domain <code class="language-plaintext highlighter-rouge">elg:EvidenceBinding</code>, range <code class="language-plaintext highlighter-rouge">elg:ValueReading</code>),
+<code class="language-plaintext highlighter-rouge">elg:negated</code> (functional datatype property, domain <code class="language-plaintext highlighter-rouge">elg:Condition</code>, range <code class="language-plaintext highlighter-rouge">xsd:boolean</code>).</li>
+  <li><strong>Eligibility vocabulary</strong> (0.7.0 → 0.8.0, MINOR): <code class="language-plaintext highlighter-rouge">elg:SingleValue</code>, <code class="language-plaintext highlighter-rouge">elg:SomeValue</code>,
+<code class="language-plaintext highlighter-rouge">elg:EveryValue</code>, and the laws <code class="language-plaintext highlighter-rouge">elg:L15</code> (set readings, as ADR-A103 decision 1 states them)
+and <code class="language-plaintext highlighter-rouge">elg:L16</code> (negation, decision 4). README: the evidence bindings paragraph and the law
+list.</li>
+  <li><strong>Eligibility shapes</strong> (<code class="language-plaintext highlighter-rouge">.version</code> 0.1.0 → 0.2.0, MINOR): the structural shapes gain
+<code class="language-plaintext highlighter-rouge">sh:maxCount 1</code> for <code class="language-plaintext highlighter-rouge">elg:valueReading</code> and <code class="language-plaintext highlighter-rouge">elg:negated</code>, mirroring the functional axioms.</li>
+  <li><strong>Cascade</strong> (ADR-A86 addendum item 1, each MINOR): every importer of <code class="language-plaintext highlighter-rouge">eligibility/0.6.0</code>
+re-pins, and so on through their importers: <code class="language-plaintext highlighter-rouge">eligibility-vocab</code>, Instrument 0.6.0 → 0.7.0,
+Behaviour 0.6.0 → 0.7.0 (it imports Eligibility and Instrument), and the Capacity execution
+profile 0.6.0 → 0.7.0, with their README mirrors. The list is re-derived with <code class="language-plaintext highlighter-rouge">grep</code> before and
+after editing.</li>
+  <li><strong>IR:</strong> <code class="language-plaintext highlighter-rouge">EvidencePath.reading</code> (default <code class="language-plaintext highlighter-rouge">elg:SingleValue</code>), and <code class="language-plaintext highlighter-rouge">negated</code> on concept and
+interval plans. Readings apply to bound conditions only. A question offering several
+candidates stays Undetermined (<code class="language-plaintext highlighter-rouge">exe:SeveralCandidates</code>).</li>
+  <li><strong>SPARQL:</strong> for <code class="language-plaintext highlighter-rouge">SomeValue</code> and <code class="language-plaintext highlighter-rouge">EveryValue</code>, decide each value as a single candidate is
+decided, then group by subject and aggregate by strong Kleene logic. No value is Undetermined
+with <code class="language-plaintext highlighter-rouge">exe:MissingCandidate</code>. A set that is Undetermined reports a diagnostic of one of its
+Undetermined values. Negation swaps the final decision. Profiles read the condition’s final
+decision.</li>
+  <li><strong>SHACL:</strong> the same readings and negation, through the SPARQL-based constraints.</li>
+  <li><strong>SWRL and OWL:</strong> refuse a plan with a reading other than <code class="language-plaintext highlighter-rouge">SingleValue</code>, or with negation, with
+an <code class="language-plaintext highlighter-rouge">IRCompileError</code> naming AIR-3.3, until that slice lands.</li>
+  <li><strong>Tests:</strong> <code class="language-plaintext highlighter-rouge">tools/mork_compilers/src/mork_compilers/test_set_readings.py</code>, and both examples
+in <code class="language-plaintext highlighter-rouge">tools/test_eligibility_examples.py</code>.</li>
+  <li><strong>Docs:</strong> Eligibility README, <code class="language-plaintext highlighter-rouge">tools/mork_compilers/README.md</code>, the Eligibility row of
+<code class="language-plaintext highlighter-rouge">docs/architecture/ontology-architecture.md</code> §3. (<code class="language-plaintext highlighter-rouge">solution-design-specification.md</code> does not
+cover Eligibility’s semantics, so it is unchanged.) Then <code class="language-plaintext highlighter-rouge">mise run build:ontology-catalog</code> and <code class="language-plaintext highlighter-rouge">mise run
+build:ontology-releases</code>.</li>
+</ol>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AIR32-01</td>
+      <td><code class="language-plaintext highlighter-rouge">SomeValue</code> over {Permitted, Denied}, {Denied, Denied}, {Denied, Undetermined} / SPARQL / Permitted, Denied, Undetermined</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR32-02</td>
+      <td><code class="language-plaintext highlighter-rouge">EveryValue</code> over {Permitted, Permitted}, {Permitted, Denied}, {Permitted, Undetermined} / SPARQL / Permitted, Denied, Undetermined</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR32-03</td>
+      <td>an exclusion read <code class="language-plaintext highlighter-rouge">EveryValue</code>, one value excluded / SPARQL / Denied</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>AIR32-04</td>
+      <td>a subject with no value under each reading / SPARQL / Undetermined, <code class="language-plaintext highlighter-rouge">exe:MissingCandidate</code></td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>AIR32-05</td>
+      <td>a binding without a reading, and one read <code class="language-plaintext highlighter-rouge">SingleValue</code>, reaching two values / SPARQL / Undetermined, <code class="language-plaintext highlighter-rouge">exe:SeveralCandidates</code>, as before</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>AIR32-06</td>
+      <td>a negated condition, question-based and bound / SPARQL / Permitted and Denied swap, Undetermined keeps its diagnostic</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR32-07</td>
+      <td>the negated <code class="language-plaintext highlighter-rouge">SomeValue</code> medicine condition / SPARQL / a medic Denied, a non-medic Permitted</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR32-08</td>
+      <td>an interval condition read <code class="language-plaintext highlighter-rouge">EveryValue</code> / SPARQL / Denied when one value is outside</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>AIR32-09</td>
+      <td>an <code class="language-plaintext highlighter-rouge">AllRequired</code> profile over a set-read and a negated condition / SPARQL / strong Kleene over their final decisions</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR32-10</td>
+      <td>both examples / SHACL / agrees with SPARQL for every subject</td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR32-11</td>
+      <td>a plan with a reading or negation / SWRL and OWL backends / <code class="language-plaintext highlighter-rouge">IRCompileError</code> naming AIR-3.3</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>AIR32-12</td>
+      <td>both examples / Eligibility shapes / no result</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR32-13</td>
+      <td>a binding with two readings, a condition negated twice / Eligibility shapes / violation</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>AIR32-14</td>
+      <td>the existing compiler and examples tests / unchanged / pass (non-weakening)</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR32-15</td>
+      <td>the cascade / <code class="language-plaintext highlighter-rouge">check:ontology-versioning</code> / every importer re-pinned and bumped, every version listed</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="air-33-in-detail">AIR-3.3 in detail</h2>
+
+<p><strong>Machine:</strong> R. <strong>Branch:</strong> <code class="language-plaintext highlighter-rouge">air/3.3-readings-swrl-owl</code>. <strong>Validation Pack:</strong>
+<a href="/developer/validation/applied-insurance-reference-3.3.html">applied-insurance-reference-3.3</a>.
+<strong>Decision:</strong> ADR-A103 decisions 3 and 4.</p>
+
+<p><strong>Blocked (2026-10-13).</strong> Do not start until CCS slice HQ-6a.2 (<code class="language-plaintext highlighter-rouge">ccs/hq6a2-closures-compilers</code>) has
+merged and AIR-3.3-Q1 is answered. HQ-6a.2 adds closed bindings to set readings and changes
+<code class="language-plaintext highlighter-rouge">eligibility_ir.py</code>, <code class="language-plaintext highlighter-rouge">sparql_backend.py</code> and <code class="language-plaintext highlighter-rouge">test_set_readings.py</code>, and leaves SWRL and OWL
+refusing set readings (HQ6a2-10), which this slice removes. HQ-6a.1 also changed the two examples
+AIR33-04 to AIR33-06 read. The branch is created from <code class="language-plaintext highlighter-rouge">main</code> after that merge, not reused: the old
+<code class="language-plaintext highlighter-rouge">air/3.3-readings-swrl-owl</code> held only the brief and is deleted.</p>
+
+<p><strong>AIR-3.3-Q1.</strong> What do SWRL and OWL do with a closed binding?</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Option</th>
+      <th>Consequence</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>(a) compile it as its open reading, with a mapping note</td>
+      <td>SWRL stays sound, since each rule it emits is fixed by one value and a closure only adds decisions SPARQL makes. OWL’s open-world reading also ignores the closure, which fits design-time checks. Closures reach the reasoner routes as their open readings</td>
+    </tr>
+    <tr>
+      <td>(b) keep refusing closed bindings in SWRL and OWL</td>
+      <td>simpler, but closures never reach the reasoner routes</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Option (a) is the hypothesis to test. The brief below is amended with the answer.</p>
+
+<p><strong>Invariant:</strong> the SWRL backend derives only outcomes a set reading fixes from positive facts,
+with heads swapped under negation, and every outcome it derives is the SPARQL reference’s. The
+OWL backend compiles <code class="language-plaintext highlighter-rouge">elg:SomeValue</code> as <code class="language-plaintext highlighter-rouge">∃path.C</code>, <code class="language-plaintext highlighter-rouge">elg:EveryValue</code> as <code class="language-plaintext highlighter-rouge">∀path.C ⊓ ∃path.⊤</code>,
+and negation as a complement, for design-time checks only. Plans without a reading or negation
+compile exactly as before.</p>
+
+<p>No ontology changes, so no version bumps, catalog rows or tags. The examples are AIR-3.2’s.</p>
+
+<ol>
+  <li><strong>Refusals removed.</strong> <code class="language-plaintext highlighter-rouge">compile_rules</code> and <code class="language-plaintext highlighter-rouge">compile_classes</code> stop refusing plans for which
+<code class="language-plaintext highlighter-rouge">has_readings</code> holds. The IR’s <code class="language-plaintext highlighter-rouge">has_readings</code> docstring stops naming the refusal. The other
+OWL refusals stay: unbound conditions, <code class="language-plaintext highlighter-rouge">elg:L14</code> plans (ADR-A100), and a <code class="language-plaintext highlighter-rouge">SingleValue</code> binding
+without the <code class="language-plaintext highlighter-rouge">elg:singleValued</code> claim.</li>
+  <li><strong>SWRL, concept plans.</strong> The admitted rule is emitted under <code class="language-plaintext highlighter-rouge">SingleValue</code> and <code class="language-plaintext highlighter-rouge">SomeValue</code>.
+The denied rule is emitted under <code class="language-plaintext highlighter-rouge">SingleValue</code> and <code class="language-plaintext highlighter-rouge">EveryValue</code>. Each rule fires on one value,
+and one Permitted value fixes <code class="language-plaintext highlighter-rouge">SomeValue</code>, as one Denied value fixes <code class="language-plaintext highlighter-rouge">EveryValue</code>, so each
+derivation stays sound when a subject has several values.</li>
+  <li><strong>SWRL, interval plans.</strong> The permit rules are emitted under <code class="language-plaintext highlighter-rouge">SingleValue</code> and <code class="language-plaintext highlighter-rouge">SomeValue</code>.
+Under <code class="language-plaintext highlighter-rouge">EveryValue</code> no rule is emitted: SWRL derives no Denied for an interval today, and
+Permitted needs every value. The mapping note says so, as it does for a unit-specific
+interval on a literal.</li>
+  <li><strong>SWRL, negation.</strong> A negated plan’s rules swap their heads: <code class="language-plaintext highlighter-rouge">exe:permittedUnder</code> and
+<code class="language-plaintext highlighter-rouge">exe:deniedUnder</code> for bound plans, <code class="language-plaintext highlighter-rouge">exe:impliesDecision</code> Permitted and Denied for question
+plans. Which rules are emitted is decided by the reading first (steps 2 and 3), then the heads
+are swapped. The negated medicine condition therefore derives Denied for a medic, and nothing
+else. Profile rules are unchanged: they read the condition’s final decision.</li>
+  <li><strong>SWRL mapping notes</strong> name the reading and negation. The module docstring gains a paragraph
+stating steps 2 to 4.</li>
+  <li><strong>OWL, readings.</strong> <code class="language-plaintext highlighter-rouge">_along</code> gains the reading. Under <code class="language-plaintext highlighter-rouge">SingleValue</code> it is unchanged
+(<code class="language-plaintext highlighter-rouge">≤1 p ⊓ ∃p.…</code>, with the single-valued shape). Under <code class="language-plaintext highlighter-rouge">SomeValue</code> it is <code class="language-plaintext highlighter-rouge">∃p₁.∃p₂.…filler</code>, and
+under <code class="language-plaintext highlighter-rouge">EveryValue</code> <code class="language-plaintext highlighter-rouge">∀p₁.∀p₂.…filler ⊓ ∃p₁.∃p₂.…⊤</code>, with <code class="language-plaintext highlighter-rouge">rdfs:Literal</code> in place of
+<code class="language-plaintext highlighter-rouge">owl:Thing</code> where the path ends at a literal. A set-read binding needs no <code class="language-plaintext highlighter-rouge">elg:singleValued</code>
+claim, and gets no single-valued shape (ADR-A103 decision 3 relaxes ADR-A90 for it).</li>
+  <li><strong>OWL, negation.</strong> A negated condition’s class is its subject class intersected with the
+complement of the path restriction: <code class="language-plaintext highlighter-rouge">S ⊓ ¬(…)</code>. Under the open world this class also holds
+subjects the SPARQL reference leaves Undetermined, which is acceptable for design-time checks
+and stated in the module docstring.</li>
+  <li><strong>Tests:</strong> <code class="language-plaintext highlighter-rouge">test_set_readings.py</code> loses AIR32-11’s refusal test and gains the rows below. The
+reasoner rows skip when the harness jar is not built, as <code class="language-plaintext highlighter-rouge">test_reasoner.py</code> does.</li>
+  <li><strong>Docs:</strong> <code class="language-plaintext highlighter-rouge">tools/mork_compilers/README.md</code> (the readings paragraph gains SWRL and OWL), the
+Eligibility README’s evidence bindings paragraph (the OWL backend compiles claimed paths, and
+set-read paths without a claim), and ADR-A103 gains an implementation note as ADR-A100’s.</li>
+</ol>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AIR33-01</td>
+      <td>a concept plan read <code class="language-plaintext highlighter-rouge">SomeValue</code>, and one read <code class="language-plaintext highlighter-rouge">EveryValue</code> / SWRL / the first has only the admitted rule, the second only the denied rule</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR33-02</td>
+      <td>an interval plan read <code class="language-plaintext highlighter-rouge">SomeValue</code>, and one read <code class="language-plaintext highlighter-rouge">EveryValue</code> / SWRL / permit rules, and no rule with a mapping note</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR33-03</td>
+      <td>a negated concept plan, question-based and bound / SWRL / heads swapped</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR33-04</td>
+      <td>the admissions example / SWRL through the harness / stem Permitted for ada and dee, no-medicine and the profile Denied for dee, nothing else</td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR33-05</td>
+      <td>the trial example / SWRL through the harness / none-excluded Denied for pat-2, no Permitted derived</td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR33-06</td>
+      <td>both examples, every condition and profile / SWRL and SPARQL / every SWRL derivation equals SPARQL’s decision (soundness)</td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR33-07</td>
+      <td>a <code class="language-plaintext highlighter-rouge">SomeValue</code> binding without the claim / OWL / <code class="language-plaintext highlighter-rouge">∃</code> restrictions, no <code class="language-plaintext highlighter-rouge">≤1</code>, no single-valued shape</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR33-08</td>
+      <td>an <code class="language-plaintext highlighter-rouge">EveryValue</code> binding over a two-step path, and one ending at a literal / OWL / <code class="language-plaintext highlighter-rouge">∀ ⊓ ∃⊤</code>, with <code class="language-plaintext highlighter-rouge">rdfs:Literal</code> at the literal end</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR33-09</td>
+      <td>one condition compiled under each reading / reasoner / <code class="language-plaintext highlighter-rouge">EveryValue</code> ⊑ <code class="language-plaintext highlighter-rouge">SomeValue</code>, claimed <code class="language-plaintext highlighter-rouge">SingleValue</code> ⊑ both, <code class="language-plaintext highlighter-rouge">SomeValue</code> ⋢ <code class="language-plaintext highlighter-rouge">EveryValue</code></td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR33-10</td>
+      <td>the admissions example / reasoner / stem ⊓ no-medicine satisfiable, the medicine condition ⊓ its negation unsatisfiable</td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR33-11</td>
+      <td>a <code class="language-plaintext highlighter-rouge">SingleValue</code> binding without the claim, an unbound condition, an <code class="language-plaintext highlighter-rouge">elg:L14</code> plan / OWL / refused as before</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>AIR33-12</td>
+      <td>a plan with readings / compiled twice / identical graphs</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR33-13</td>
+      <td>the existing compiler tests / unchanged / pass (non-weakening)</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="air-34-in-detail">AIR-3.4 in detail</h2>
+
+<p><strong>Machine:</strong> S (Copilot Business). <strong>Branch:</strong> <code class="language-plaintext highlighter-rouge">air/applied-reference</code>, commits <code class="language-plaintext highlighter-rouge">[AIR-3.4] …</code>, the
+last being <code class="language-plaintext highlighter-rouge">[AIR-3.4] Handoff</code>. <strong>Validation Pack:</strong>
+<a href="/developer/validation/applied-insurance-reference-3.4.html">applied-insurance-reference-3.4</a>. <strong>Decisions:</strong>
+ADR-A100 (decisions 4 and 5), ADR-A13 (MORK review). <strong>Sketch:</strong> MORK bridge §3, §4.1, §6, §7,
+peril vocabulary §9.2. <strong>Decided 2026-10-14:</strong> AIR-3.4-Q1 and AIR-3.4-Q2 (below), at their
+leanings.</p>
+
+<p><strong>Invariant:</strong> a crosswalk is a reviewed graph of SKOS mapping triples and characteristic values,
+recorded as a derived artefact whose read set is the two scheme editions. Only an exact mapping
+lifts a value to the reference, and a crosswalk is stale as soon as either edition changes.</p>
+
+<p><strong>AIR-3.4-Q1, which lists.</strong> Decided: OED’s peril codes in full, published with the reference
+because Oasis’s licence allows it (PV-O6), and AIR-2.7’s example house list, which has a code of
+every shape MORK bridge §4.1 names. The CBAA cause-of-loss list (several hundred codes, sketch
+§9.2) waits until its owner’s terms are confirmed, and its review is a person’s task (PV-O5), so it
+is not in the trip.</p>
+
+<p><strong>AIR-3.4-Q2, where a lifted value goes.</strong> Decided: a derived property, <code class="language-plaintext highlighter-rouge">aeo:liftedPeril</code>
+(<code class="language-plaintext highlighter-rouge">⊑ icm:peril</code>), written beside <code class="language-plaintext highlighter-rouge">aeo:peril</code> by the lift, never instead of it. The operative value
+stays the drafter’s (MORK bridge B1), a check written against the reference reads the lifted
+value, and an inexact mapping writes nothing (B5). The alternatives, lifting inside Eligibility at
+evaluation or replacing the recorded code, are a substrate change and a breach of B1.</p>
+
+<h3 id="files">Files</h3>
+
+<p>The module’s <code class="language-plaintext highlighter-rouge">crosswalk/</code> directory (ADR-A100 decision 4, MORK bridge §7). Each crosswalk is a
+document of its own, <code class="language-plaintext highlighter-rouge">0.1.0</code>, with an <code class="language-plaintext highlighter-rouge">owl:Ontology</code> importing the peril vocabulary at the branch
+version, and a README section in the peril module’s README with its own <code class="language-plaintext highlighter-rouge">@output-file</code>.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>File</th>
+      <th>Ontology IRI</th>
+      <th>Content</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">crosswalk/oed-perils.ttl</code></td>
+      <td><code class="language-plaintext highlighter-rouge">…/insurance/peril/crosswalk/oed</code></td>
+      <td>the OED peril code list as a scheme (<code class="language-plaintext highlighter-rouge">oed:</code> prefix, each code a concept with its code as <code class="language-plaintext highlighter-rouge">skos:notation</code>), and its crosswalk to the cause scheme</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">crosswalk/house-list.ttl</code></td>
+      <td><code class="language-plaintext highlighter-rouge">…/insurance/peril/crosswalk/house-list</code></td>
+      <td>the crosswalk of <code class="language-plaintext highlighter-rouge">ex:HouseList</code> (AIR-2.7), an example, with its note saying so</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">crosswalk/house-list-ingestion.ttl</code></td>
+      <td>as an example, no <code class="language-plaintext highlighter-rouge">owl:Ontology</code></td>
+      <td>the MORK mapping that looks codes up at ingestion</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The MORK mapping is an insurance example, so it lives here and not in <code class="language-plaintext highlighter-rouge">ontology/mork/examples/</code>,
+whose examples stay domain-neutral (ADR-A-C2). The phase table’s “<code class="language-plaintext highlighter-rouge">ontology/mork</code> examples” is
+corrected to match.</p>
+
+<h3 id="crosswalk-content">Crosswalk content</h3>
+
+<p>Each crosswalk is one <code class="language-plaintext highlighter-rouge">fnd:DerivedArtefact</code> node (the crosswalk), <code class="language-plaintext highlighter-rouge">prov:used</code> the two schemes’
+version IRIs (its read set), with <code class="language-plaintext highlighter-rouge">prov:wasAttributedTo</code> a reviewer (an example reviewer in the
+examples, and for OED the maintainer at verification) and evidence citing the source list’s
+publication. Its mapping triples, by code shape (MORK bridge §4.1):</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>House code</th>
+      <th>Crosswalk</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">FIRE</code></td>
+      <td><code class="language-plaintext highlighter-rouge">skos:exactMatch prl:T.FIR</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">FLOOD</code></td>
+      <td><code class="language-plaintext highlighter-rouge">skos:closeMatch prl:N.HYD.FLD</code>. The house definition includes surge, so it is not exact</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">STORM</code></td>
+      <td><code class="language-plaintext highlighter-rouge">skos:narrowMatch prl:N.MET.TC</code>, <code class="language-plaintext highlighter-rouge">prl:N.MET.ETC</code>, <code class="language-plaintext highlighter-rouge">prl:N.MET.SCS</code>, <code class="language-plaintext highlighter-rouge">prl:N.MET.LWS</code> (the code is broader than each)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">QUAKE</code></td>
+      <td><code class="language-plaintext highlighter-rouge">skos:exactMatch prl:N.GEO.EQ</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">THEFT</code></td>
+      <td><code class="language-plaintext highlighter-rouge">skos:exactMatch prl:H.THF</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">CYBER</code></td>
+      <td><code class="language-plaintext highlighter-rouge">skos:exactMatch prl:C</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">LIGHTNING-FIRE</code></td>
+      <td><code class="language-plaintext highlighter-rouge">skos:exactMatch prl:N.MET.SCS.LTG</code>, with <code class="language-plaintext highlighter-rouge">prl:typicalMechanism prl-voc:Fire</code> on the code</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">DELAY</code></td>
+      <td>no cause match. <code class="language-plaintext highlighter-rouge">prl:typicalConsequence prl-voc:Delay</code> on the code</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>For OED, the group codes map by membership of AIR-2.5’s model groupings (a group code’s notation is
+already on its grouping), single codes by <code class="language-plaintext highlighter-rouge">skos:exactMatch</code> where AIR-2.3’s <code class="language-plaintext highlighter-rouge">prl:CatModelCode</code>
+notation put them, and by close, broad or narrow matches otherwise, each with a note on the
+difference. The crosswalk agrees with those notations, and a test checks it.</p>
+
+<h3 id="code-toolsperil_crosswalkpy">Code (<code class="language-plaintext highlighter-rouge">tools/peril_crosswalk.py</code>)</h3>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">lift(graph, crosswalk)</code>: for each <code class="language-plaintext highlighter-rouge">aeo:peril</code> (and <code class="language-plaintext highlighter-rouge">aeo:unitPeril</code>) value with an exact mapping,
+write <code class="language-plaintext highlighter-rouge">aeo:liftedPeril</code> and one <code class="language-plaintext highlighter-rouge">fnd:DerivationRun</code>, as a separate graph. Close, broad and narrow
+mappings write nothing.</li>
+  <li><code class="language-plaintext highlighter-rouge">stale(crosswalk_graph, current)</code>: true when a scheme version the crosswalk used differs from the
+one in force.</li>
+</ul>
+
+<p>The code-level characteristic values reach a loss cause through AIR-4.4’s effective characteristics
+derivation, which reads <code class="language-plaintext highlighter-rouge">prl:typicalMechanism</code> on whatever concept <code class="language-plaintext highlighter-rouge">aeo:peril</code> names, so no second
+mechanism is needed.</p>
+
+<h3 id="ingestion-crosswalkhouse-list-ingestionttl">Ingestion (<code class="language-plaintext highlighter-rouge">crosswalk/house-list-ingestion.ttl</code>)</h3>
+
+<p>A MORK data mapping for a loss row with a cause code field: a <code class="language-plaintext highlighter-rouge">mork:Lookup</code> with
+<code class="language-plaintext highlighter-rouge">mork:referenceDataPath skos:notation</code> against <code class="language-plaintext highlighter-rouge">ex:HouseList</code>, producing the <code class="language-plaintext highlighter-rouge">aeo:LossCause</code> with
+its <code class="language-plaintext highlighter-rouge">aeo:peril</code>. The test compiles it with <code class="language-plaintext highlighter-rouge">tools/mork2rml.py</code> and checks the triples map holds the
+lookup. Running RML is not required, so the lift test starts from a graph shaped as the mapping
+produces.</p>
+
+<h3 id="shapes-peril-constraintsttl">Shapes (peril <code class="language-plaintext highlighter-rouge">constraints.ttl</code>)</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Shape</th>
+      <th>Rule</th>
+      <th>Severity</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>crosswalk targets</td>
+      <td>every mapping target resolves to a concept or a collection</td>
+      <td>violation</td>
+    </tr>
+    <tr>
+      <td>no mixed exactness</td>
+      <td>no code maps <code class="language-plaintext highlighter-rouge">skos:exactMatch</code> and <code class="language-plaintext highlighter-rouge">skos:broadMatch</code> to concepts in one <code class="language-plaintext highlighter-rouge">skos:broader</code> chain</td>
+      <td>violation</td>
+    </tr>
+    <tr>
+      <td>read set</td>
+      <td>a crosswalk names exactly two scheme versions in <code class="language-plaintext highlighter-rouge">prov:used</code></td>
+      <td>violation</td>
+    </tr>
+    <tr>
+      <td>lifted from exact</td>
+      <td>an <code class="language-plaintext highlighter-rouge">aeo:liftedPeril</code> value is the target of an exact mapping of the <code class="language-plaintext highlighter-rouge">aeo:peril</code> beside it</td>
+      <td>violation</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>This slice declares <code class="language-plaintext highlighter-rouge">aeo:liftedPeril</code> in the exposure spec’s <code class="language-plaintext highlighter-rouge">losses-requirements-cover</code> region
+(AIR-4.4 comes earlier in the trip), and the last shape goes with the exposure shapes.</p>
+
+<h3 id="tests">Tests</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AIR34-01</td>
+      <td>both crosswalks / loaded / parse, every target resolves</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR34-02</td>
+      <td>the OED crosswalk / compared with AIR-2.3’s notations / every exact match agrees</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR34-03</td>
+      <td>loss causes with <code class="language-plaintext highlighter-rouge">FIRE</code>, <code class="language-plaintext highlighter-rouge">FLOOD</code>, <code class="language-plaintext highlighter-rouge">STORM</code> / <code class="language-plaintext highlighter-rouge">lift</code> / <code class="language-plaintext highlighter-rouge">FIRE</code> lifted to T.FIR, nothing for the other two</td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR34-04</td>
+      <td>the house crosswalk with the cause scheme’s version changed / <code class="language-plaintext highlighter-rouge">stale</code> / true</td>
+      <td>L2</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>AIR34-05</td>
+      <td>a code mapped exact to N.HYD.FLD and broad to N.HYD.FLD.FLU / the shapes / violation</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>AIR34-06</td>
+      <td>a hand-written <code class="language-plaintext highlighter-rouge">aeo:liftedPeril</code> from a close mapping / the shapes / violation</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>AIR34-07</td>
+      <td>a <code class="language-plaintext highlighter-rouge">LIGHTNING-FIRE</code> cause with no recorded mechanism / AIR-4.4’s derivation / effective mechanism Fire, defaulted</td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR34-08</td>
+      <td>the ingestion mapping / <code class="language-plaintext highlighter-rouge">mork2rml</code> / compiles, with the lookup</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR34-09</td>
+      <td>every crosswalk / the documentation shape / each mapping’s code has a note where the match is not exact</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="air-35-in-detail">AIR-3.5 in detail</h2>
+
+<p><strong>Machine:</strong> S (Copilot Business, moved from R on 2026-10-13). <strong>Branch:</strong> <code class="language-plaintext highlighter-rouge">air/applied-reference</code>,
+commits <code class="language-plaintext highlighter-rouge">[AIR-3.5] …</code>, the last being <code class="language-plaintext highlighter-rouge">[AIR-3.5] Handoff</code>. <strong>Validation Pack:</strong>
+<a href="/developer/validation/applied-insurance-reference-3.5.html">applied-insurance-reference-3.5</a>. <strong>Decisions:</strong>
+ADR-A100, ADR-A103. <strong>Sketch:</strong> MORK bridge §4.2, §4.3, peril vocabulary §6.8. <strong>Milestone:</strong> M2.</p>
+
+<p><strong>Invariant:</strong> a reference concept lowers to a list’s code only through an exact mapping, a
+list-to-list correspondence through the reference is exact only when both legs are, and the cyber
+write-back check decides on the reference, is Undetermined with a reason on a flat list, and
+decides exactly mapped codes of a crosswalked list.</p>
+
+<h3 id="code-toolsperil_crosswalkpy-1">Code (<code class="language-plaintext highlighter-rouge">tools/peril_crosswalk.py</code>)</h3>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">lower(graph, crosswalk, concept)</code>: the code mapped exactly to the concept, or else the code
+nearest above it, flagged inexact. A code is above a concept when it maps exactly to one of the
+concept’s broader concepts, or by <code class="language-plaintext highlighter-rouge">skos:narrowMatch</code> to the concept or one of them (the code is
+the broader). Or else nothing, with a note. It never invents a code (MORK bridge §4.2).</li>
+  <li><code class="language-plaintext highlighter-rouge">compose(first, second)</code>: the list-to-list correspondences through the reference, each exact only
+when both legs are exact (MORK bridge §4.3), as a derived artefact whose read set is both
+crosswalks.</li>
+</ul>
+
+<h3 id="milestone-m2-insuranceexposureexamplesm2ttl">Milestone M2 (<code class="language-plaintext highlighter-rouge">insurance/exposure/examples/m2.ttl</code>)</h3>
+
+<p>The cyber write-back profile of sketch §6.8, with three changes since the sketch: it binds
+<code class="language-plaintext highlighter-rouge">aeo:effectiveAgency</code> and <code class="language-plaintext highlighter-rouge">aeo:effectiveMechanism</code> (AIR-4.4, Q11), the contracts are
+<code class="language-plaintext highlighter-rouge">icm-voc:AgencyContract</code> and <code class="language-plaintext highlighter-rouge">icm-voc:MechanismContract</code>, and a second copy binds
+<code class="language-plaintext highlighter-rouge">aeo:liftedPeril</code> for the crosswalked case. Loss causes and recorded decisions, by the SPARQL
+backend:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Case</th>
+      <th>Cause</th>
+      <th>Recorded</th>
+      <th>Decision</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>reference</td>
+      <td>C.NML.SWF</td>
+      <td>agency Accidental, mechanism Fire</td>
+      <td>Permitted</td>
+    </tr>
+    <tr>
+      <td>reference</td>
+      <td>C.MAL.RAN</td>
+      <td>agency MaliciousCriminal, mechanism Fire</td>
+      <td>Denied</td>
+    </tr>
+    <tr>
+      <td>reference</td>
+      <td>C.NML.CFG</td>
+      <td>agency Negligent, mechanism Explosion</td>
+      <td>Permitted</td>
+    </tr>
+    <tr>
+      <td>flat list, under <code class="language-plaintext highlighter-rouge">ex:london-market</code></td>
+      <td><code class="language-plaintext highlighter-rouge">CYBER</code></td>
+      <td>agency Accidental, mechanism Fire</td>
+      <td>Undetermined, <code class="language-plaintext highlighter-rouge">exe:NoHierarchy</code> on the cyber condition</td>
+    </tr>
+    <tr>
+      <td>crosswalked, lifted profile</td>
+      <td><code class="language-plaintext highlighter-rouge">CYBER</code>, lifted to C</td>
+      <td>agency Accidental, mechanism Fire</td>
+      <td>Permitted</td>
+    </tr>
+    <tr>
+      <td>crosswalked, lifted profile</td>
+      <td><code class="language-plaintext highlighter-rouge">FLOOD</code> (close match, not lifted)</td>
+      <td>none</td>
+      <td>Undetermined, <code class="language-plaintext highlighter-rouge">exe:MissingCandidate</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>And the onset check of phase 3’s test list: an existing cover whose <code class="language-plaintext highlighter-rouge">aeo:perilScope</code> is T.FIR and
+N.MET.TC.WND, a condition requiring <code class="language-plaintext highlighter-rouge">Sudden</code> on the path <code class="language-plaintext highlighter-rouge">aeo:perilScope</code> then <code class="language-plaintext highlighter-rouge">prl:onset</code>, read
+<code class="language-plaintext highlighter-rouge">elg:EveryValue</code>: Permitted, and Denied when N.CLI.DRT is added.</p>
+
+<h3 id="tests-1">Tests</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AIR35-01</td>
+      <td><code class="language-plaintext highlighter-rouge">lower</code> of T.FIR into the house list / called / <code class="language-plaintext highlighter-rouge">FIRE</code>, exact</td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR35-02</td>
+      <td><code class="language-plaintext highlighter-rouge">lower</code> of N.MET.TC.WND, and of T.NUC, into the house list / called / <code class="language-plaintext highlighter-rouge">STORM</code> flagged inexact, and no code with a note</td>
+      <td>L2</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>AIR35-03</td>
+      <td><code class="language-plaintext highlighter-rouge">lower</code> of N.GEO.EQ.SHK into the house list / called / <code class="language-plaintext highlighter-rouge">QUAKE</code>, flagged inexact</td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR35-04</td>
+      <td><code class="language-plaintext highlighter-rouge">compose</code> of the house crosswalk and the OED crosswalk / called / <code class="language-plaintext highlighter-rouge">FIRE</code> to OED’s fire code exact where both legs are, <code class="language-plaintext highlighter-rouge">FLOOD</code> inexact</td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR35-05</td>
+      <td>M2 / SPARQL / the decisions in the table, with their diagnostics</td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR35-06</td>
+      <td>M2 / SHACL / agrees with SPARQL</td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR35-07</td>
+      <td>the onset check / SPARQL / Permitted, then Denied with N.CLI.DRT</td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR35-08</td>
+      <td>the M2 file / every exposure shape / no result</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="documentation-deltas">Documentation deltas</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Document</th>
+      <th>Change</th>
+      <th>Slice</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ontology/eligibility/README.md</code>, examples</td>
+      <td>the A-100 law, the A-103 readings</td>
+      <td>3.1, 3.2</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">tools/mork_compilers/README.md</code></td>
+      <td>both laws in every backend</td>
+      <td>3.1 to 3.3</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">docs/architecture/ontology-architecture.md</code></td>
+      <td>Eligibility section, and the MORK section on proposals that end as crosswalks</td>
+      <td>3.2, 3.4</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="exit-gate">Exit gate</h2>
+
+<p>A-100 and A-103 Accepted and implemented. M2 demonstrated. MB-Q2 answered.</p>

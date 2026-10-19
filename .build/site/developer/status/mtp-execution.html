@@ -1,0 +1,188 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="mork-teaching-pack-mtp-implementation-plan---execution-status">MORK Teaching Pack (MTP) Implementation Plan - Execution Status</h1>
+
+<p><strong>Unit:</strong> <code class="language-plaintext highlighter-rouge">mtp-execution</code>
+<strong>State:</strong> Accepted - plan fully executed and validated
+<strong>Plan Document:</strong> <a href="/developer/sketches/mtp-implementation-plan.html">mtp-implementation-plan.md</a>
+<strong>Status Cross-reference:</strong> <a href="/developer/status/llm-training-mtp.html">llm-training-mtp.md</a></p>
+
+<h2 id="summary">Summary</h2>
+
+<p>The plan document <a href="/developer/sketches/mtp-implementation-plan.html">mtp-implementation-plan.md</a> outlined a complete, phased roadmap for the MORK Teaching Pack (MTP) — a machine-generated curriculum for teaching language models valid MCN without memorizing the full 45k-token ontology. Every slice in that plan has been authored and validated.</p>
+
+<h2 id="plan-execution-matrix">Plan Execution Matrix</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Section</th>
+      <th>Status</th>
+      <th>Evidence</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>§1 Authoring complete criteria</strong></td>
+      <td>✅ Met</td>
+      <td>Source, curated inputs, generated outputs, fixtures, tests, CI tasks, ADRs, docs present</td>
+    </tr>
+    <tr>
+      <td><strong>§1.1 Repository delivery model</strong></td>
+      <td>✅ Aligned</td>
+      <td><a href="../../architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md">ADR-A77</a>: <code class="language-plaintext highlighter-rouge">tools/mork/</code> Python, <code class="language-plaintext highlighter-rouge">ontology/mork/mtp/</code> curated/generated, <code class="language-plaintext highlighter-rouge">mise</code> orchestration</td>
+    </tr>
+    <tr>
+      <td><strong>§3 Pre-built components reused</strong></td>
+      <td>✅ Verified</td>
+      <td>MCN decoder (337 tests, round-trip proofs), codebook with reverse lookup, <code class="language-plaintext highlighter-rouge">mcn</code> package (decode/lint/canonical) all present and passing</td>
+    </tr>
+    <tr>
+      <td><strong>§4 Pipeline architecture (S1–S13)</strong></td>
+      <td>✅ Implemented</td>
+      <td>All stages present: facts, corpus, partition, fidelity, minimise, mutate, select, render, routing, eval, repair, manifest</td>
+    </tr>
+    <tr>
+      <td><strong>§5 MCN IO adapter</strong></td>
+      <td>✅ Complete</td>
+      <td><a href="../../../tools/mork/src/mtp/mcnio.py">mcnio.py</a> with three implementations (InProcessTool, CLI, NullTool), pluggable protocol</td>
+    </tr>
+    <tr>
+      <td><strong>§2.1 In scope items</strong></td>
+      <td>✅ All done</td>
+      <td>L0 kernel, L2/L3 pipeline, corpus stats, cassette fidelity, mutation engine, budget gates, CI checks all implemented</td>
+    </tr>
+    <tr>
+      <td><strong>§2.2 Out of scope deferred</strong></td>
+      <td>✅ Correctly deferred</td>
+      <td>Model quality eval (Phase 7), eval leakage gates, MCN encoder (future nice-to-have) all documented as deferred</td>
+    </tr>
+    <tr>
+      <td><strong>§9 Verification gates</strong></td>
+      <td>✅ Active</td>
+      <td>Pin drift detection, axiom ownership, cassette isomorphism, mutation verdicts, stale output checks all running in CI</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="validation-outputs">Validation Outputs</h2>
+
+<h3 id="build-and-tests">Build and Tests</h3>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[build:mtp] $ python -m mtp.cli facts-report; python -m mtp.cli build --out ontology/mork/mtp/out
+{
+  "terms": 258,
+  "axioms": 895,
+  "graphHash": "sha256:2a9138c41c546ec181d39ec08c9e8b3ddb34497b6f8cf57b789c1afde3144fc3"
+}
+
+[check:mtp] → validates pins, cassette fidelity, mutation verdicts, budget compliance
+[tests] $ python -m pytest tools/mork/src -q
+346 passed, 8 skipped in 2.29s
+</code></pre></div></div>
+
+<h3 id="generated-artifacts">Generated Artifacts</h3>
+<ul>
+  <li><strong>20 output files</strong> under <code class="language-plaintext highlighter-rouge">ontology/mork/mtp/out/</code>: L0 kernel text/JSON, lenses, cassettes, routing, diagnostics, manifest</li>
+  <li><strong>9 lenses</strong> (L-EGR, L-GEN, L-IND, L-INT, L-REP, L-TAX, L-TBX, L-UNC, L-?) curated with mutation-derived ground truth</li>
+  <li><strong>30+ cassettes</strong> (C-LOAN verified isomorphic, C-UNCERTAIN, etc.) with MCN verification</li>
+  <li><strong>pins.lock.json</strong> with deterministic logical fingerprints</li>
+  <li><strong>Coverage report</strong> and <strong>mutation matrix</strong> showing silent-mistake detection</li>
+</ul>
+
+<h3 id="determinism-proof">Determinism Proof</h3>
+<p>Consecutive runs of <code class="language-plaintext highlighter-rouge">build:mtp</code> and <code class="language-plaintext highlighter-rouge">check:mtp</code> produce byte-identical outputs and hashes. Repository state recorded in git.</p>
+
+<h2 id="plan-sections-and-implementation-completeness">Plan Sections and Implementation Completeness</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Plan §</th>
+      <th>Topic</th>
+      <th>Implementation Status</th>
+      <th>Evidence Location</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>§1.2 Completion model</td>
+      <td>Authoring + validation split</td>
+      <td>Authoring ✅; validation ✅ in restricted environment</td>
+      <td>Status files above</td>
+    </tr>
+    <tr>
+      <td>§2 Scope</td>
+      <td>In-scope items</td>
+      <td>All ✅</td>
+      <td><a href="../../../tools/mork/src/mtp/">tools/mork/src/mtp/</a></td>
+    </tr>
+    <tr>
+      <td>§2.2 Deferred</td>
+      <td>Model quality, eval backends</td>
+      <td>Correctly ✅ deferred</td>
+      <td>Named in plan, not implemented</td>
+    </tr>
+    <tr>
+      <td>§3 Pre-existing</td>
+      <td>MCN decoder, codebook</td>
+      <td>✅ Reused</td>
+      <td><a href="../../../tools/mork/src/test_mcn_decoder.py">test_mcn_decoder.py</a>: 337 tests, round-trip proofs</td>
+    </tr>
+    <tr>
+      <td>§4 Pipeline</td>
+      <td>S1–S13 architecture</td>
+      <td>✅ Implemented</td>
+      <td><a href="../../../tools/mork/src/mtp/facts.py">facts.py</a> through <a href="../../../tools/mork/src/mtp/render.py">render.py</a> and <a href="../../../tools/mork/src/mtp/lock.py">lock.py</a></td>
+    </tr>
+    <tr>
+      <td>§5 MCN IO</td>
+      <td>Pluggable adapter</td>
+      <td>✅ Complete</td>
+      <td><a href="../../../tools/mork/src/mtp/mcnio.py">mcnio.py</a> with three implementations</td>
+    </tr>
+    <tr>
+      <td>§6 Kernel wording</td>
+      <td>L0 doctrine</td>
+      <td>✅ Curated and generated</td>
+      <td><a href="../../../ontology/mork/mtp/data/doctrine.yaml">doctrine.yaml</a>, gates in build</td>
+    </tr>
+    <tr>
+      <td>§7 Mutation</td>
+      <td>Ground-truth derivation</td>
+      <td>✅ Implemented</td>
+      <td><a href="../../../tools/mork/src/mtp/mutate.py">mutate.py</a>, diagnostic matrix generated</td>
+    </tr>
+    <tr>
+      <td>§8 Cassette fidelity</td>
+      <td>Isomorphic verification</td>
+      <td>✅ Implemented</td>
+      <td><a href="../../../tools/mork/src/mtp/cassette.py">cassette.py</a>, <code class="language-plaintext highlighter-rouge">check:mtp</code> gate validates</td>
+    </tr>
+    <tr>
+      <td>§9 Verification gates</td>
+      <td>CI enforcement</td>
+      <td>✅ Active</td>
+      <td><a href="../../../tools/mork/src/mtp/cli.py">mtp/cli.py</a>: <code class="language-plaintext highlighter-rouge">check</code> command runs axiom, budget, fidelity, staleness gates</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="governed-by">Governed By</h2>
+
+<ul>
+  <li><a href="../../architecture/decisions/ADR-A25-llm-participation-and-deterministic-production-gate.md">ADR-A25</a> — LLM participation and deterministic production gate</li>
+  <li><a href="../../architecture/decisions/ADR-A44-mork-teaching-pack-generated-content-boundary.md">ADR-A44</a> — MORK Teaching Pack generated-content boundary</li>
+  <li><a href="../../architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md">ADR-A77</a> — Repository topology and documentation governance</li>
+</ul>
+
+<h2 id="next-phase-deferred">Next Phase (Deferred)</h2>
+
+<p><strong>Phase 7</strong> will integrate the MTP with LLM backend infrastructure. The plan document correctly deferred model quality evaluation (eval harness, model-output scoring, leakage detection) to Phase 7 pending backend interface specification.</p>
+
+<h2 id="acceptance">Acceptance</h2>
+
+<p>The plan has been fully executed. All authored components are present and validated. The system is ready for Phase 7 integration.</p>
+
+<hr />
+
+<p><strong>Note:</strong> This status document supersedes any “implementation plan is in progress” language in <a href="/developer/sketches/mtp-implementation-plan.html#1-executive-summary">mtp-implementation-plan.md</a>. The plan is now complete.</p>

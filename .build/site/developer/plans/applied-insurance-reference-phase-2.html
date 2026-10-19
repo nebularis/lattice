@@ -1,0 +1,2779 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="plan-applied-insurance-reference--phase-2-reference-peril-vocabulary">Plan: Applied Insurance Reference — Phase 2, Reference Peril Vocabulary</h1>
+
+<p><strong>Unit ID:</strong> <code class="language-plaintext highlighter-rouge">applied-insurance-reference-phase-2</code>
+<strong>Epic:</strong> <a href="/developer/plans/applied-insurance-reference.html">applied-insurance-reference</a>
+<strong>Status:</strong> Rolling-wave outline. Detailed at the Phase 1 gate.
+<strong>Sketch:</strong> <a href="/developer/sketches/peril-vocabulary.html">peril-vocabulary.md</a></p>
+
+<h2 id="scope">Scope</h2>
+
+<p><code class="language-plaintext highlighter-rouge">ontology/applied/insurance/peril/</code> (epic D9) as the sketch’s §4 lays out: <code class="language-plaintext highlighter-rouge">prl:</code> properties,
+the cause scheme, characteristic and companion schemes, collections, intensity measures and
+pools, with the §10 well-formedness shapes. Market editions are out of scope except one small
+example edition used by the binding tests.</p>
+
+<h2 id="slices">Slices</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Slice</th>
+      <th>Content</th>
+      <th>Sketch</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AIR-2.0</td>
+      <td>literate <code class="language-plaintext highlighter-rouge">insurance/common</code> and <code class="language-plaintext highlighter-rouge">insurance/peril</code>, the extractor extended to nested modules and several vocabulary documents (ADR-A120 addendum), the documentation rule and its shape</td>
+      <td>—</td>
+      <td>added 2026-10-13, first slice of the trip</td>
+    </tr>
+    <tr>
+      <td>AIR-2.1</td>
+      <td><code class="language-plaintext highlighter-rouge">prl:</code> spec: kind and part sub-properties of <code class="language-plaintext highlighter-rouge">skos:broader</code> aligned to <code class="language-plaintext highlighter-rouge">iso-thes:</code>, <code class="language-plaintext highlighter-rouge">prl:canTrigger</code> (⊑ <code class="language-plaintext highlighter-rouge">skos:semanticRelation</code>), <code class="language-plaintext highlighter-rouge">prl:overlaps</code>, characteristic properties, Quantification and exposure links. Shapes of §10. <code class="language-plaintext highlighter-rouge">vocab/peril-vocab.ttl</code> created with its regions (lanes §4)</td>
+      <td>§6, §10</td>
+      <td>unblocks Phase 4</td>
+    </tr>
+    <tr>
+      <td>AIR-2.2</td>
+      <td>characteristic schemes (mechanism, agency, onset, definition basis, accumulation class) and companion schemes (consequence, harm subject), bound to their <code class="language-plaintext highlighter-rouge">insurance/common/</code> contracts</td>
+      <td>§3, §6.3</td>
+      <td>precedes the cause families, whose concepts must carry the mandatory characteristics</td>
+    </tr>
+    <tr>
+      <td>AIR-2.3</td>
+      <td>cause scheme, families N, T and E</td>
+      <td>§5.1 to §5.3</td>
+      <td>reference codes, one primary parent per concept</td>
+    </tr>
+    <tr>
+      <td>AIR-2.4</td>
+      <td>cause scheme, families H, P, C, F and L, and every link between the two family groups</td>
+      <td>§5.4 to §5.8</td>
+      <td>parallel with 2.3, merges after it</td>
+    </tr>
+    <tr>
+      <td>AIR-2.5</td>
+      <td>collections: bundles, standard sets, model groupings. The open-perils condition example</td>
+      <td>§7</td>
+      <td>milestone M1</td>
+    </tr>
+    <tr>
+      <td>AIR-2.6</td>
+      <td>intensity measure scheme, value spaces, defining thresholds, customary event windows, all in <code class="language-plaintext highlighter-rouge">peril-intensity.ttl</code></td>
+      <td>§6.4</td>
+      <td>Quantification only, no substrate change. Built before AIR-2.3 (lanes §4)</td>
+    </tr>
+    <tr>
+      <td>AIR-2.7</td>
+      <td>pools scheme and the example market edition bound by a scoped <code class="language-plaintext highlighter-rouge">voc:SchemeBinding</code></td>
+      <td>§9.1, §9.4</td>
+      <td>precedence tests: scoped binding wins, reference is the fallback</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Branches, machines and rounds: <a href="/developer/plans/applied-insurance-reference-lanes.html">machines, branches and merges</a>.
+S slices share one branch, <code class="language-plaintext highlighter-rouge">air/applied-reference</code>, as commit ranges (lanes §2).</p>
+
+<p>Each slice’s pack includes an SKOS integrity case (no <code class="language-plaintext highlighter-rouge">skos:related</code> and no <code class="language-plaintext highlighter-rouge">prl:canTrigger</code>
+within one <code class="language-plaintext highlighter-rouge">broaderTransitive</code> chain) and a reasoner-free parse and shapes run through
+<code class="language-plaintext highlighter-rouge">check:ontology-catalog</code>.</p>
+
+<h2 id="air-21-in-detail">AIR-2.1 in detail</h2>
+
+<p><strong>Machine:</strong> S (Copilot Business). <strong>Branch:</strong> <code class="language-plaintext highlighter-rouge">air/2.1-peril-spec</code>. <strong>Validation Pack:</strong>
+<a href="/developer/validation/applied-insurance-reference-2.1.html">applied-insurance-reference-2.1</a>, whose Handoff
+section S fills in. <strong>Decisions:</strong> ADR-A98, ADR-A99. <strong>Sketch:</strong> peril vocabulary §4, §6, §10.</p>
+
+<p><strong>Invariant:</strong> the <code class="language-plaintext highlighter-rouge">prl:</code> properties exist with the characteristics ADR-A99 fixes, every peril
+scheme of the reference edition is declared, and the vocabulary’s well-formedness shapes accept
+a well-formed fixture and reject each defect they name.</p>
+
+<h3 id="namespaces">Namespaces</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Document</th>
+      <th>Ontology IRI</th>
+      <th>Version IRI</th>
+      <th>Term namespace, prefix</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">spec/peril.ttl</code></td>
+      <td><code class="language-plaintext highlighter-rouge">https://www.nebularis.org/neuro-semantic/insurance/peril</code></td>
+      <td><code class="language-plaintext highlighter-rouge">…/insurance/peril/0.1.0</code></td>
+      <td><code class="language-plaintext highlighter-rouge">https://www.nebularis.org/neuro-semantic/insurance/peril#</code>, <code class="language-plaintext highlighter-rouge">prl:</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">vocab/peril-vocab.ttl</code></td>
+      <td><code class="language-plaintext highlighter-rouge">https://www.nebularis.org/neuro-semantic/insurance/peril/vocab</code></td>
+      <td><code class="language-plaintext highlighter-rouge">…/insurance/peril-vocab/0.1.0</code></td>
+      <td><code class="language-plaintext highlighter-rouge">https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#</code>, <code class="language-plaintext highlighter-rouge">prl-voc:</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Schemes and concepts are in <code class="language-plaintext highlighter-rouge">prl-voc:</code>, following ADR-A98 decision 6 (confirmed,
+2026-09-26). The sketches’ examples write them as <code class="language-plaintext highlighter-rouge">prl:</code> (for example <code class="language-plaintext highlighter-rouge">prl:N.MET.TC</code>). Read those
+as <code class="language-plaintext highlighter-rouge">prl-voc:</code>.</p>
+
+<h3 id="files">Files</h3>
+
+<p>All under <code class="language-plaintext highlighter-rouge">ontology/applied/insurance/peril/</code>.</p>
+
+<ol>
+  <li>
+    <p><strong><code class="language-plaintext highlighter-rouge">spec/peril.ttl</code>.</strong> Imports, by exact version IRI: SKOS (<code class="language-plaintext highlighter-rouge">http://www.w3.org/2004/02/skos/core</code>),
+Foundation 0.3.0 and Quantification 0.5.0. Every term has <code class="language-plaintext highlighter-rouge">rdfs:label</code>, <code class="language-plaintext highlighter-rouge">rdfs:comment</code> and
+<code class="language-plaintext highlighter-rouge">fnd:utility</code>, as <code class="language-plaintext highlighter-rouge">ontology/vocabulary/spec/vocabulary.ttl</code> does. Declares:</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Term</th>
+          <th>Declaration</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code class="language-plaintext highlighter-rouge">prl:broaderGeneric</code>, <code class="language-plaintext highlighter-rouge">prl:broaderPartitive</code></td>
+          <td><code class="language-plaintext highlighter-rouge">owl:ObjectProperty</code>, <code class="language-plaintext highlighter-rouge">rdfs:subPropertyOf skos:broader</code>, <code class="language-plaintext highlighter-rouge">owl:equivalentProperty</code> <code class="language-plaintext highlighter-rouge">iso-thes:broaderGeneric</code> and <code class="language-plaintext highlighter-rouge">iso-thes:broaderPartitive</code> respectively. The two <code class="language-plaintext highlighter-rouge">iso-thes:</code> properties (<code class="language-plaintext highlighter-rouge">http://purl.org/iso25964/skos-thes#</code>) are declared locally as <code class="language-plaintext highlighter-rouge">owl:ObjectProperty</code> with <code class="language-plaintext highlighter-rouge">rdfs:isDefinedBy &lt;http://purl.org/iso25964/skos-thes&gt;</code>. Do not <code class="language-plaintext highlighter-rouge">owl:imports</code> the thesaurus vocabulary</td>
+        </tr>
+        <tr>
+          <td><code class="language-plaintext highlighter-rouge">prl:canTrigger</code></td>
+          <td><code class="language-plaintext highlighter-rouge">owl:ObjectProperty</code>, <code class="language-plaintext highlighter-rouge">owl:IrreflexiveProperty</code>, <code class="language-plaintext highlighter-rouge">rdfs:subPropertyOf skos:semanticRelation</code>. Not symmetric, not transitive</td>
+        </tr>
+        <tr>
+          <td><code class="language-plaintext highlighter-rouge">prl:overlaps</code></td>
+          <td><code class="language-plaintext highlighter-rouge">owl:ObjectProperty</code>, <code class="language-plaintext highlighter-rouge">owl:SymmetricProperty</code>, <code class="language-plaintext highlighter-rouge">owl:IrreflexiveProperty</code>, <code class="language-plaintext highlighter-rouge">rdfs:subPropertyOf skos:related</code></td>
+        </tr>
+        <tr>
+          <td><code class="language-plaintext highlighter-rouge">prl:typicalAgency</code>, <code class="language-plaintext highlighter-rouge">prl:onset</code>, <code class="language-plaintext highlighter-rouge">prl:definitionBasis</code>, <code class="language-plaintext highlighter-rouge">prl:typicalMechanism</code>, <code class="language-plaintext highlighter-rouge">prl:accumulationClass</code>, <code class="language-plaintext highlighter-rouge">prl:typicalConsequence</code>, <code class="language-plaintext highlighter-rouge">prl:harmSubject</code></td>
+          <td><code class="language-plaintext highlighter-rouge">owl:ObjectProperty</code>, domain and range <code class="language-plaintext highlighter-rouge">skos:Concept</code>. No <code class="language-plaintext highlighter-rouge">owl:FunctionalProperty</code>: cardinalities are the shapes’ job</td>
+        </tr>
+        <tr>
+          <td><code class="language-plaintext highlighter-rouge">prl:intensityMeasure</code>, <code class="language-plaintext highlighter-rouge">prl:relevantAttribute</code>, <code class="language-plaintext highlighter-rouge">prl:minimumGeoPrecision</code></td>
+          <td><code class="language-plaintext highlighter-rouge">owl:ObjectProperty</code>, domain and range <code class="language-plaintext highlighter-rouge">skos:Concept</code></td>
+        </tr>
+        <tr>
+          <td><code class="language-plaintext highlighter-rouge">prl:measuredOn</code></td>
+          <td><code class="language-plaintext highlighter-rouge">owl:ObjectProperty</code>, domain <code class="language-plaintext highlighter-rouge">skos:Concept</code>, range <code class="language-plaintext highlighter-rouge">qnt:ValueSpace</code></td>
+        </tr>
+        <tr>
+          <td><code class="language-plaintext highlighter-rouge">prl:definingThreshold</code></td>
+          <td><code class="language-plaintext highlighter-rouge">owl:ObjectProperty</code>, domain <code class="language-plaintext highlighter-rouge">skos:Concept</code>, range <code class="language-plaintext highlighter-rouge">qnt:RangeSet</code></td>
+        </tr>
+        <tr>
+          <td><code class="language-plaintext highlighter-rouge">prl:customaryEventWindow</code></td>
+          <td><code class="language-plaintext highlighter-rouge">owl:ObjectProperty</code>, domain <code class="language-plaintext highlighter-rouge">skos:Concept</code>, range <code class="language-plaintext highlighter-rouge">qnt:Quantity</code></td>
+        </tr>
+        <tr>
+          <td><code class="language-plaintext highlighter-rouge">prl:ReferenceCode</code></td>
+          <td><code class="language-plaintext highlighter-rouge">rdfs:Datatype</code>, <code class="language-plaintext highlighter-rouge">owl:equivalentClass</code> a restriction of <code class="language-plaintext highlighter-rouge">xsd:string</code> with an <code class="language-plaintext highlighter-rouge">xsd:pattern</code> of the family class <code class="language-plaintext highlighter-rouge">[NTEHPCFL]</code> followed by <code class="language-plaintext highlighter-rouge">(\\.[A-Z]{2,4}){0,4}</code>, written as one Turtle string. It matches all 287 codes of sketch §5</td>
+        </tr>
+        <tr>
+          <td><code class="language-plaintext highlighter-rouge">prl:CatModelCode</code></td>
+          <td><code class="language-plaintext highlighter-rouge">rdfs:Datatype</code>, <code class="language-plaintext highlighter-rouge">owl:equivalentClass</code> a restriction of <code class="language-plaintext highlighter-rouge">xsd:string</code> with <code class="language-plaintext highlighter-rouge">xsd:pattern "[A-Z0-9]{2,5}"</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>Nothing else. Collection classes arrive with AIR-2.5.</p>
+  </li>
+  <li>
+    <p><strong><code class="language-plaintext highlighter-rouge">vocab/peril-vocab.ttl</code>.</strong> Imports <code class="language-plaintext highlighter-rouge">…/insurance/peril/0.1.0</code>, Vocabulary 0.3.0 and Foundation
+0.3.0. Declares eight schemes, each <code class="language-plaintext highlighter-rouge">a voc:ConceptScheme</code> with <code class="language-plaintext highlighter-rouge">fnd:hasIdentity</code> (a
+<code class="language-plaintext highlighter-rouge">fnd:PersistentIdentity</code> node), <code class="language-plaintext highlighter-rouge">fnd:hasGovernanceState fnd:Active</code>, <code class="language-plaintext highlighter-rouge">skos:prefLabel</code> and
+<code class="language-plaintext highlighter-rouge">skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en</code>, as
+<code class="language-plaintext highlighter-rouge">ontology/vocabulary/examples/conjunctive-scopes.ttl</code> declares schemes:
+<code class="language-plaintext highlighter-rouge">prl-voc:CauseScheme</code>, <code class="language-plaintext highlighter-rouge">prl-voc:AgencyScheme</code>, <code class="language-plaintext highlighter-rouge">prl-voc:MechanismScheme</code>,
+<code class="language-plaintext highlighter-rouge">prl-voc:OnsetScheme</code>, <code class="language-plaintext highlighter-rouge">prl-voc:DefinitionBasisScheme</code>, <code class="language-plaintext highlighter-rouge">prl-voc:AccumulationClassScheme</code>,
+<code class="language-plaintext highlighter-rouge">prl-voc:ConsequenceScheme</code>, <code class="language-plaintext highlighter-rouge">prl-voc:HarmSubjectScheme</code>. No concepts.</p>
+
+    <p>After the schemes, empty regions, each opened and closed by a comment line, in this order:</p>
+
+    <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code># ==== BEGIN REGION agency (AIR-2.2) ====
+# ==== END REGION agency ====
+</code></pre></div>    </div>
+
+    <p>Regions: <code class="language-plaintext highlighter-rouge">agency</code>, <code class="language-plaintext highlighter-rouge">mechanism</code>, <code class="language-plaintext highlighter-rouge">onset</code>, <code class="language-plaintext highlighter-rouge">definition-basis</code>, <code class="language-plaintext highlighter-rouge">accumulation-class</code>,
+<code class="language-plaintext highlighter-rouge">consequence</code>, <code class="language-plaintext highlighter-rouge">harm-subject</code> (AIR-2.2). <code class="language-plaintext highlighter-rouge">cause-N</code>, <code class="language-plaintext highlighter-rouge">cause-T</code>, <code class="language-plaintext highlighter-rouge">cause-E</code> (AIR-2.3). <code class="language-plaintext highlighter-rouge">cause-H</code>,
+<code class="language-plaintext highlighter-rouge">cause-P</code>, <code class="language-plaintext highlighter-rouge">cause-C</code>, <code class="language-plaintext highlighter-rouge">cause-F</code>, <code class="language-plaintext highlighter-rouge">cause-L</code>, <code class="language-plaintext highlighter-rouge">cross-group-links</code> (AIR-2.4). Leave one blank line
+between an END line and the next BEGIN line, so later slices’ insertions merge cleanly.</p>
+  </li>
+  <li>
+    <p><strong><code class="language-plaintext highlighter-rouge">shapes/structural.ttl</code>, <code class="language-plaintext highlighter-rouge">shapes/constraints.ttl</code>, <code class="language-plaintext highlighter-rouge">shapes/.version</code></strong> (<code class="language-plaintext highlighter-rouge">0.1.0</code>). “Cause
+concept” means a concept with <code class="language-plaintext highlighter-rouge">skos:inScheme prl-voc:CauseScheme</code>. Shapes may use SHACL-SPARQL
+and SPARQL-based targets (the repository validates with pySHACL, <code class="language-plaintext highlighter-rouge">advanced=True</code>).</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Shape</th>
+          <th>Rule</th>
+          <th>Severity</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>label and definition</td>
+          <td>every concept in a <code class="language-plaintext highlighter-rouge">prl-voc:</code> scheme has exactly one <code class="language-plaintext highlighter-rouge">skos:prefLabel</code> and one <code class="language-plaintext highlighter-rouge">skos:definition</code> in <code class="language-plaintext highlighter-rouge">@en</code></td>
+          <td>Violation</td>
+        </tr>
+        <tr>
+          <td>reference code</td>
+          <td>every cause concept has exactly one <code class="language-plaintext highlighter-rouge">skos:notation</code> typed <code class="language-plaintext highlighter-rouge">prl:ReferenceCode</code>. It is unique among cause concepts, and equals its primary parent’s code plus one <code class="language-plaintext highlighter-rouge">.</code>-separated segment. A top concept’s code is its family letter</td>
+          <td>Violation</td>
+        </tr>
+        <tr>
+          <td>primary parent</td>
+          <td>every cause concept that is not a top concept of <code class="language-plaintext highlighter-rouge">prl-voc:CauseScheme</code> has exactly one value across <code class="language-plaintext highlighter-rouge">prl:broaderGeneric</code> and <code class="language-plaintext highlighter-rouge">prl:broaderPartitive</code> together. A second <code class="language-plaintext highlighter-rouge">skos:broader</code> needs a <code class="language-plaintext highlighter-rouge">skos:editorialNote</code></td>
+          <td>Violation</td>
+        </tr>
+        <tr>
+          <td>materialised broader</td>
+          <td>every <code class="language-plaintext highlighter-rouge">prl:broaderGeneric</code> or <code class="language-plaintext highlighter-rouge">prl:broaderPartitive</code> link also appears as <code class="language-plaintext highlighter-rouge">skos:broader</code></td>
+          <td>Violation</td>
+        </tr>
+        <tr>
+          <td>characteristics</td>
+          <td>every cause concept has at least one <code class="language-plaintext highlighter-rouge">prl:typicalAgency</code> in <code class="language-plaintext highlighter-rouge">prl-voc:AgencyScheme</code>, exactly one <code class="language-plaintext highlighter-rouge">prl:onset</code> in <code class="language-plaintext highlighter-rouge">prl-voc:OnsetScheme</code>, exactly one <code class="language-plaintext highlighter-rouge">prl:definitionBasis</code> in <code class="language-plaintext highlighter-rouge">prl-voc:DefinitionBasisScheme</code>, and at most one <code class="language-plaintext highlighter-rouge">prl:accumulationClass</code> in <code class="language-plaintext highlighter-rouge">prl-voc:AccumulationClassScheme</code></td>
+          <td>Violation</td>
+        </tr>
+        <tr>
+          <td>associative integrity</td>
+          <td>no <code class="language-plaintext highlighter-rouge">skos:related</code>, <code class="language-plaintext highlighter-rouge">prl:overlaps</code> or <code class="language-plaintext highlighter-rouge">prl:canTrigger</code>, in either direction, between two concepts one of which is <code class="language-plaintext highlighter-rouge">skos:broader+</code> of the other</td>
+          <td>Violation</td>
+        </tr>
+        <tr>
+          <td>acyclic</td>
+          <td>no concept is <code class="language-plaintext highlighter-rouge">skos:broader+</code> of itself</td>
+          <td>Violation</td>
+        </tr>
+        <tr>
+          <td>threshold definitions</td>
+          <td>a concept whose <code class="language-plaintext highlighter-rouge">prl:definitionBasis</code> is <code class="language-plaintext highlighter-rouge">prl-voc:Threshold</code> has a <code class="language-plaintext highlighter-rouge">prl:definingThreshold</code></td>
+          <td>Violation</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>Not in this slice: the collections shape (AIR-2.5) and the crosswalk shape (AIR-3.4). The
+sketch’s “overlap coverage on data” shape reads a consumer’s wording statements, so it is not
+LATTICE’s and is not built.</p>
+  </li>
+  <li>
+    <p><strong><code class="language-plaintext highlighter-rouge">examples/well-formed.ttl</code>.</strong> No <code class="language-plaintext highlighter-rouge">owl:Ontology</code>. A fragment that passes every shape: the
+top concepts <code class="language-plaintext highlighter-rouge">prl-voc:N</code> and <code class="language-plaintext highlighter-rouge">prl-voc:T</code>, <code class="language-plaintext highlighter-rouge">prl-voc:N.MET</code>, <code class="language-plaintext highlighter-rouge">prl-voc:N.MET.TC</code> with a part
+<code class="language-plaintext highlighter-rouge">prl-voc:N.MET.TC.SRG</code> (partitive), and <code class="language-plaintext highlighter-rouge">prl-voc:N.MET.TC.HUR</code> (generic, threshold-defined
+with a <code class="language-plaintext highlighter-rouge">prl:definingThreshold</code>). It declares the few characteristic concepts it uses
+(<code class="language-plaintext highlighter-rouge">prl-voc:Natural</code>, <code class="language-plaintext highlighter-rouge">prl-voc:Sudden</code>, <code class="language-plaintext highlighter-rouge">prl-voc:Physical</code>, <code class="language-plaintext highlighter-rouge">prl-voc:Threshold</code>) in their schemes,
+since AIR-2.2 has not landed. Reference codes follow §5 of the sketch.</p>
+  </li>
+  <li>
+    <p><strong><code class="language-plaintext highlighter-rouge">tools/test_peril_vocabulary.py</code>.</strong> Modelled on <code class="language-plaintext highlighter-rouge">tools/test_eligibility_examples.py</code>: data is
+the fixture plus <code class="language-plaintext highlighter-rouge">spec/peril.ttl</code> and <code class="language-plaintext highlighter-rouge">vocab/peril-vocab.ttl</code>, shapes are the two shape
+files, pySHACL with <code class="language-plaintext highlighter-rouge">advanced=True</code> and <code class="language-plaintext highlighter-rouge">inference="none"</code>. One test per row of the table
+below. Negative cases are small Turtle strings in the test, each breaking one rule of the
+fixture. It runs under <code class="language-plaintext highlighter-rouge">mise run check:ontology-catalog</code>, which runs every <code class="language-plaintext highlighter-rouge">tools/test_*.py</code>.</p>
+  </li>
+  <li>
+    <p><strong><code class="language-plaintext highlighter-rouge">README.md</code></strong> for the module: purpose (link ADR-A99 and the sketch), files, namespaces, the
+regions and which slice owns each, the shapes table, and the three deferred shapes.</p>
+  </li>
+</ol>
+
+<p><strong>Do not edit</strong> <code class="language-plaintext highlighter-rouge">ontology/applied/README.md</code> or <code class="language-plaintext highlighter-rouge">docs/architecture/ontology-architecture.md</code>:
+AIR-1.1 rewrites them in parallel. R adds the peril module’s rows at verification, after AIR-1.1
+has merged.</p>
+
+<p><strong>On R at verification:</strong> <code class="language-plaintext highlighter-rouge">mise run build:ontology-catalog</code> (stub catalogs for <code class="language-plaintext highlighter-rouge">spec/</code> and
+<code class="language-plaintext highlighter-rouge">vocab/</code>), and <code class="language-plaintext highlighter-rouge">mise run build:ontology-releases</code> (release rows for the two documents and the
+shapes directory).</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AIR21-01</td>
+      <td><code class="language-plaintext highlighter-rouge">spec/peril.ttl</code> and <code class="language-plaintext highlighter-rouge">vocab/peril-vocab.ttl</code> / loaded with their import closure / parse, every import resolves</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR21-02</td>
+      <td>the spec / read / <code class="language-plaintext highlighter-rouge">prl:canTrigger</code> is a sub-property of <code class="language-plaintext highlighter-rouge">skos:semanticRelation</code> and not of <code class="language-plaintext highlighter-rouge">skos:related</code>, <code class="language-plaintext highlighter-rouge">prl:overlaps</code> is declared symmetric, both irreflexive</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR21-03</td>
+      <td>the eight schemes / Vocabulary’s shapes / conform</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR21-04</td>
+      <td><code class="language-plaintext highlighter-rouge">examples/well-formed.ttl</code> / the peril shapes / no result</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR21-05</td>
+      <td>a concept without <code class="language-plaintext highlighter-rouge">skos:definition</code> / validated / label and definition violation</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>AIR21-06</td>
+      <td>two cause concepts with one code, and a code not extending its parent’s / validated / reference code violations</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>AIR21-07</td>
+      <td>a non-top cause concept with both a generic and a partitive parent / validated / primary parent violation</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>AIR21-08</td>
+      <td><code class="language-plaintext highlighter-rouge">prl:broaderGeneric</code> without <code class="language-plaintext highlighter-rouge">skos:broader</code> / validated / materialised broader violation</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>AIR21-09</td>
+      <td>a cause concept without <code class="language-plaintext highlighter-rouge">prl:onset</code> / validated / characteristics violation</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>AIR21-10</td>
+      <td><code class="language-plaintext highlighter-rouge">prl:overlaps</code> from a concept to its parent, and <code class="language-plaintext highlighter-rouge">prl:canTrigger</code> from an event to its part / validated / two associative integrity violations</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>AIR21-11</td>
+      <td>a <code class="language-plaintext highlighter-rouge">skos:broader</code> cycle / validated / acyclic violation</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>AIR21-12</td>
+      <td>a threshold-basis concept without <code class="language-plaintext highlighter-rouge">prl:definingThreshold</code> / validated / threshold violation</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="air-20-in-detail">AIR-2.0 in detail</h2>
+
+<p><strong>Machine:</strong> S. <strong>Branch:</strong> <code class="language-plaintext highlighter-rouge">air/applied-reference</code>, commits <code class="language-plaintext highlighter-rouge">[AIR-2.0] …</code>, the last being
+<code class="language-plaintext highlighter-rouge">[AIR-2.0] Handoff</code>. The first slice of the trip. <strong>Validation Pack:</strong>
+<a href="/developer/validation/applied-insurance-reference-2.0.html">applied-insurance-reference-2.0</a>.
+<strong>Decisions:</strong> ADR-A120 (literate specs with several documents), with the addendum below.</p>
+
+<p><strong>Why (decided 2026-10-13).</strong> Every AIR module the trip creates or changes is literate: its
+<code class="language-plaintext highlighter-rouge">README.md</code> is the source, and its Turtle is extracted from it, as Wording, Behaviour, Surface,
+Quantification and Instrument already are. The vocabularies are documented to the standard a
+reference vocabulary needs: every concept says which published standards, scales or sources it
+follows (the documentation rule below).</p>
+
+<p><strong>Invariant:</strong> <code class="language-plaintext highlighter-rouge">insurance/common</code> and <code class="language-plaintext highlighter-rouge">insurance/peril</code> are literate. Extracting either README
+reproduces its committed Turtle, up to formatting, and a test fails when they diverge.</p>
+
+<h3 id="the-extractor-toolsliterate_extractpy">The extractor (<code class="language-plaintext highlighter-rouge">tools/literate_extract.py</code>)</h3>
+
+<p>ADR-A120 serves top-level layers with one vocabulary document. AIR needs nested modules and
+several vocabulary documents (<code class="language-plaintext highlighter-rouge">peril-vocab.ttl</code>, <code class="language-plaintext highlighter-rouge">peril-intensity.ttl</code>, <code class="language-plaintext highlighter-rouge">peril-collections.ttl</code>).</p>
+
+<ol>
+  <li><code class="language-plaintext highlighter-rouge">--layer</code> accepts a path under <code class="language-plaintext highlighter-rouge">ontology/</code>, for example <code class="language-plaintext highlighter-rouge">applied/insurance/peril</code>. Default
+targets use its last segment: <code class="language-plaintext highlighter-rouge">spec/peril.ttl</code>, <code class="language-plaintext highlighter-rouge">vocab/peril-vocab.ttl</code>. Paths without a <code class="language-plaintext highlighter-rouge">/</code>
+behave exactly as today.</li>
+  <li>The <code class="language-plaintext highlighter-rouge"># @output-file "…"</code> directive is read on the first line of a <code class="language-plaintext highlighter-rouge">turtle-vocab</code> block as well,
+and must name a <code class="language-plaintext highlighter-rouge">.ttl</code> under the module’s <code class="language-plaintext highlighter-rouge">vocab/</code>. A redirected vocabulary document gains the
+<code class="language-plaintext highlighter-rouge">@prefix</code> lines of the default vocabulary document’s blocks, as a redirected spec document does.</li>
+  <li>A module’s vocabulary documents carry one version, as its spec documents do (ADR-A120 decision
+3). Extraction fails if their <code class="language-plaintext highlighter-rouge">owl:versionIRI</code> versions differ. A module’s spec and vocabulary
+versions remain independent of each other.</li>
+</ol>
+
+<p>Tests in <code class="language-plaintext highlighter-rouge">tools/test_literate_extract.py</code>, added to the existing ones, which stay unchanged:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AIR20-01</td>
+      <td>a README for a nested module with one spec and one vocab block / extract / <code class="language-plaintext highlighter-rouge">spec/&lt;last&gt;.ttl</code> and <code class="language-plaintext highlighter-rouge">vocab/&lt;last&gt;-vocab.ttl</code> under the nested directory</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR20-02</td>
+      <td>a <code class="language-plaintext highlighter-rouge">turtle-vocab</code> block with <code class="language-plaintext highlighter-rouge">@output-file "vocab/x-extra.ttl"</code> / extract / that file, with the default vocabulary document’s prefixes</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR20-03</td>
+      <td>two vocabulary documents at different versions / extract / fails, naming both</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>AIR20-04</td>
+      <td>a vocabulary directive naming <code class="language-plaintext highlighter-rouge">spec/x.ttl</code> or a path outside the module / extract / fails</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>AIR20-05</td>
+      <td>every literate layer of <code class="language-plaintext highlighter-rouge">main</code> / <code class="language-plaintext highlighter-rouge">--check</code> / unchanged result</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>ADR-A120 addendum.</strong> Append to the ADR, dated 2026-10-13, Proposed until the trip merges:
+“Decision 4 widens. The directive is read on <code class="language-plaintext highlighter-rouge">turtle-vocab</code> blocks too, a module’s vocabulary
+documents move in unison as its spec documents do, and <code class="language-plaintext highlighter-rouge">--layer</code> accepts a nested module path whose
+last segment names its default documents. Motivated by the applied insurance modules, which have
+several vocabulary documents and sit below <code class="language-plaintext highlighter-rouge">ontology/applied/</code>.” Update <code class="language-plaintext highlighter-rouge">tools/README.md</code>, the
+developer guide’s literate-spec section and skill <code class="language-plaintext highlighter-rouge">lattice-ontology-authoring</code> to match.</p>
+
+<h3 id="converting-insurancecommon-and-insuranceperil">Converting <code class="language-plaintext highlighter-rouge">insurance/common</code> and <code class="language-plaintext highlighter-rouge">insurance/peril</code></h3>
+
+<p>For each module, as TD-16 describes the conversion of a substrate layer:</p>
+
+<ol>
+  <li>Every Turtle construct of its spec, vocabulary and shape files goes into a fenced block of the
+right tag in its README, beside the prose that explains it. Keep every piece of the README’s
+current content.</li>
+  <li>An “Extraction contract” section names every output file and the shape targets in order.</li>
+  <li>Regenerate the files from the README and compare them with <code class="language-plaintext highlighter-rouge">HEAD</code> for isomorphism (rdflib
+<code class="language-plaintext highlighter-rouge">isomorphic</code>). Only formatting may differ. Record the comparison in the Handoff.</li>
+  <li>No version changes. The content is unchanged.</li>
+  <li>A test per module runs <code class="language-plaintext highlighter-rouge">literate_extract --check</code>, as <code class="language-plaintext highlighter-rouge">tools/test_instrument.py</code> does for its
+layer. Add the commands to the module READMEs.</li>
+</ol>
+
+<p><strong>Regions become README sections.</strong> The comment regions of <code class="language-plaintext highlighter-rouge">peril-vocab.ttl</code> and of the exposure
+documents were there to keep parallel branches from conflicting. The trip is sequential, so each
+region becomes a README section of the same name, and a later slice adds its blocks under its
+section. Read “region X” in the briefs below as “README section X”.</p>
+
+<h3 id="the-documentation-rule-for-every-slice-of-the-trip">The documentation rule, for every slice of the trip</h3>
+
+<p>Every concept in a scheme the trip publishes (<code class="language-plaintext highlighter-rouge">prl-voc:</code>, <code class="language-plaintext highlighter-rouge">aeo-voc:</code>, <code class="language-plaintext highlighter-rouge">icm-voc:</code>, units) carries:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Property</th>
+      <th>Content</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">skos:prefLabel</code>, <code class="language-plaintext highlighter-rouge">skos:definition</code> (<code class="language-plaintext highlighter-rouge">@en</code>)</td>
+      <td>as AIR-2.1 requires</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">skos:note</code> (<code class="language-plaintext highlighter-rouge">@en</code>, at least one)</td>
+      <td>which published standards, scales or sources the concept follows, how it follows them, and where it departs from them. For example: “Follows the IRDR Peril Classification’s tropical cyclone. The basin names follow the WMO regional specialised meteorological centres. Unlike the IRDR entry, storm surge and rainfall flooding are parts of this concept, not separate hazards (PV2).” A concept no standard covers says so and names the usage it follows</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">rdfs:seeAlso</code></td>
+      <td>the IRI of a standard’s own entry, where one is stable and public. Never a link to a paywalled or unofficial copy</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">skos:scopeNote</code></td>
+      <td>where the concept’s boundary needs saying</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">skos:exactMatch</code>, <code class="language-plaintext highlighter-rouge">skos:closeMatch</code></td>
+      <td>to an external concept only where AIR-3.4’s crosswalk rules allow, so not in this rule</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><code class="language-plaintext highlighter-rouge">skos:note</code> was chosen over <code class="language-plaintext highlighter-rouge">skos:editorialNote</code> because the alignment is for every reader of the
+vocabulary, while an editorial note is for its maintainers. Each module README gains a “Sources
+consulted” section listing every standard the notes cite, with its edition or date.</p>
+
+<p>A new shape, “documentation”, in <code class="language-plaintext highlighter-rouge">peril/shapes/constraints.ttl</code> (bumping the shapes <code class="language-plaintext highlighter-rouge">.version</code> to
+<code class="language-plaintext highlighter-rouge">0.2.0</code>, once on the branch): every concept in a <code class="language-plaintext highlighter-rouge">prl-voc:</code> scheme has at least one <code class="language-plaintext highlighter-rouge">skos:note</code> in
+<code class="language-plaintext highlighter-rouge">@en</code>. Violation. The exposure module’s shapes carry the same rule from AIR-4.1. This slice adds the
+shape, and the notes on the concepts <code class="language-plaintext highlighter-rouge">insurance/common</code> and AIR-2.1 already publish.</p>
+
+<h2 id="air-22-in-detail">AIR-2.2 in detail</h2>
+
+<p><strong>Machine:</strong> S (Copilot Business). <strong>Branch:</strong> <code class="language-plaintext highlighter-rouge">air/applied-reference</code>, commits <code class="language-plaintext highlighter-rouge">[AIR-2.2] …</code>, the
+last being <code class="language-plaintext highlighter-rouge">[AIR-2.2] Handoff</code>. <strong>Validation Pack:</strong>
+<a href="/developer/validation/applied-insurance-reference-2.2.html">applied-insurance-reference-2.2</a>, whose Handoff
+section S fills in. <strong>Decisions:</strong> ADR-A98 (decision 5), ADR-A99. <strong>Sketch:</strong> peril vocabulary §3,
+§6.3.</p>
+
+<p><strong>Invariant:</strong> every characteristic and companion scheme holds its reference concepts, the four
+schemes <code class="language-plaintext highlighter-rouge">insurance/common/</code> has contracts for are bound to them, and the characteristic
+properties specialise <code class="language-plaintext highlighter-rouge">common/</code>’s properties so those contracts govern their values.</p>
+
+<h3 id="versions-refreshed-2026-10-13">Versions (refreshed 2026-10-13)</h3>
+
+<p>CCS cascades moved every layer this slice pins since the brief was first written. The table is a
+snapshot of <code class="language-plaintext highlighter-rouge">main</code> at <code class="language-plaintext highlighter-rouge">69cb7675</code>. At the start of the slice, read the live <code class="language-plaintext highlighter-rouge">owl:versionIRI</code> of each
+document below and use those. If one differs from the table, use the live one and say so in the
+Handoff.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Document</th>
+      <th>Brief first pinned</th>
+      <th>Snapshot</th>
+      <th>Use</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Foundation</td>
+      <td>0.3.0</td>
+      <td>0.4.0</td>
+      <td>already imported by <code class="language-plaintext highlighter-rouge">peril.ttl</code> and <code class="language-plaintext highlighter-rouge">peril-vocab.ttl</code>, no change</td>
+    </tr>
+    <tr>
+      <td>Vocabulary</td>
+      <td>0.3.0</td>
+      <td>0.4.0</td>
+      <td>already imported by <code class="language-plaintext highlighter-rouge">peril-vocab.ttl</code>, no change</td>
+    </tr>
+    <tr>
+      <td>Quantification</td>
+      <td>0.5.0</td>
+      <td>0.8.0</td>
+      <td>already imported by <code class="language-plaintext highlighter-rouge">peril.ttl</code>, no change</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">insurance/common</code></td>
+      <td>0.1.0</td>
+      <td>0.5.0</td>
+      <td>new import of <code class="language-plaintext highlighter-rouge">peril.ttl</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">insurance/common-vocab</code></td>
+      <td>0.1.0</td>
+      <td>0.5.0</td>
+      <td>new import of <code class="language-plaintext highlighter-rouge">peril-vocab.ttl</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">insurance/peril</code></td>
+      <td>0.1.0</td>
+      <td>0.4.0</td>
+      <td>bumped here to 0.5.0</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">insurance/peril-vocab</code></td>
+      <td>0.1.0</td>
+      <td>0.4.0</td>
+      <td>bumped here to 0.5.0</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">insurance/peril</code> shapes</td>
+      <td>0.1.0</td>
+      <td>0.1.0</td>
+      <td>unchanged</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><code class="language-plaintext highlighter-rouge">peril.ttl</code> and <code class="language-plaintext highlighter-rouge">peril-vocab.ttl</code> were re-pinned by the CCS cascades without a slice of this epic
+touching them, so they sit at 0.4.0 although AIR-2.1 released 0.1.0. The designs below are
+unchanged. Only the numbers moved.</p>
+
+<h3 id="spec-changes-specperilttl-040--050-minor">Spec changes (<code class="language-plaintext highlighter-rouge">spec/peril.ttl</code>, 0.4.0 → 0.5.0, MINOR)</h3>
+
+<ol>
+  <li>Import <code class="language-plaintext highlighter-rouge">…/insurance/common/0.5.0</code> as well. ADR-A98 decision 5 has <code class="language-plaintext highlighter-rouge">peril/</code> import <code class="language-plaintext highlighter-rouge">common/</code>,
+and AIR-2.1 was built before <code class="language-plaintext highlighter-rouge">common/</code> existed (flagged at AIR-1.2).</li>
+  <li>Four sub-property axioms, so a check on a <code class="language-plaintext highlighter-rouge">common/</code> property also reads the peril vocabulary:
+<code class="language-plaintext highlighter-rouge">prl:typicalAgency ⊑ icm:agency</code>, <code class="language-plaintext highlighter-rouge">prl:typicalMechanism ⊑ icm:mechanism</code>,
+<code class="language-plaintext highlighter-rouge">prl:typicalConsequence ⊑ icm:consequence</code>, <code class="language-plaintext highlighter-rouge">prl:harmSubject ⊑ icm:harmSubject</code>.
+<code class="language-plaintext highlighter-rouge">prl:onset</code>, <code class="language-plaintext highlighter-rouge">prl:definitionBasis</code> and <code class="language-plaintext highlighter-rouge">prl:accumulationClass</code> stay as they are: <code class="language-plaintext highlighter-rouge">common/</code> has
+no property for them, because only the peril vocabulary uses those axes.</li>
+</ol>
+
+<h3 id="vocabulary-changes-vocabperil-vocabttl-040--050-minor">Vocabulary changes (<code class="language-plaintext highlighter-rouge">vocab/peril-vocab.ttl</code>, 0.4.0 → 0.5.0, MINOR)</h3>
+
+<ol>
+  <li>Re-pin the spec import to <code class="language-plaintext highlighter-rouge">…/insurance/peril/0.5.0</code>, and add <code class="language-plaintext highlighter-rouge">…/insurance/common-vocab/0.5.0</code>
+(the contracts the bindings name).</li>
+  <li>
+    <p>Fill the seven characteristic and companion regions, and no other region. Every concept is
+<code class="language-plaintext highlighter-rouge">skos:Concept</code>, <code class="language-plaintext highlighter-rouge">skos:inScheme</code> its scheme, <code class="language-plaintext highlighter-rouge">skos:topConceptOf</code> its scheme (each scheme is flat),
+with one <code class="language-plaintext highlighter-rouge">skos:prefLabel</code> and one <code class="language-plaintext highlighter-rouge">skos:definition</code> in <code class="language-plaintext highlighter-rouge">@en</code>. Local names in UpperCamelCase:</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Region</th>
+          <th>Scheme</th>
+          <th>Concepts</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code class="language-plaintext highlighter-rouge">agency</code></td>
+          <td><code class="language-plaintext highlighter-rouge">prl-voc:AgencyScheme</code></td>
+          <td><code class="language-plaintext highlighter-rouge">Natural</code>, <code class="language-plaintext highlighter-rouge">Accidental</code>, <code class="language-plaintext highlighter-rouge">Negligent</code>, <code class="language-plaintext highlighter-rouge">Intentional</code>, <code class="language-plaintext highlighter-rouge">MaliciousCriminal</code>, <code class="language-plaintext highlighter-rouge">MaliciousPolitical</code>, <code class="language-plaintext highlighter-rouge">Sovereign</code>, <code class="language-plaintext highlighter-rouge">Belligerent</code>, <code class="language-plaintext highlighter-rouge">Economic</code>, <code class="language-plaintext highlighter-rouge">UndeterminedAgency</code></td>
+        </tr>
+        <tr>
+          <td><code class="language-plaintext highlighter-rouge">mechanism</code></td>
+          <td><code class="language-plaintext highlighter-rouge">prl-voc:MechanismScheme</code></td>
+          <td><code class="language-plaintext highlighter-rouge">Shaking</code>, <code class="language-plaintext highlighter-rouge">GroundFailure</code>, <code class="language-plaintext highlighter-rouge">Inundation</code>, <code class="language-plaintext highlighter-rouge">WaterDamage</code>, <code class="language-plaintext highlighter-rouge">WindLoad</code>, <code class="language-plaintext highlighter-rouge">Load</code>, <code class="language-plaintext highlighter-rouge">Fire</code>, <code class="language-plaintext highlighter-rouge">Smoke</code>, <code class="language-plaintext highlighter-rouge">Heat</code>, <code class="language-plaintext highlighter-rouge">Freezing</code>, <code class="language-plaintext highlighter-rouge">Explosion</code>, <code class="language-plaintext highlighter-rouge">Impact</code>, <code class="language-plaintext highlighter-rouge">Collapse</code>, <code class="language-plaintext highlighter-rouge">Breakdown</code>, <code class="language-plaintext highlighter-rouge">Corrosion</code>, <code class="language-plaintext highlighter-rouge">Erosion</code>, <code class="language-plaintext highlighter-rouge">Contamination</code>, <code class="language-plaintext highlighter-rouge">BiologicalAgent</code>, <code class="language-plaintext highlighter-rouge">Radiation</code>, <code class="language-plaintext highlighter-rouge">ElectricalOverstress</code>, <code class="language-plaintext highlighter-rouge">DataEncryption</code>, <code class="language-plaintext highlighter-rouge">Deprivation</code></td>
+        </tr>
+        <tr>
+          <td><code class="language-plaintext highlighter-rouge">onset</code></td>
+          <td><code class="language-plaintext highlighter-rouge">prl-voc:OnsetScheme</code></td>
+          <td><code class="language-plaintext highlighter-rouge">Sudden</code>, <code class="language-plaintext highlighter-rouge">Gradual</code>, <code class="language-plaintext highlighter-rouge">Latent</code>, <code class="language-plaintext highlighter-rouge">Recurrent</code></td>
+        </tr>
+        <tr>
+          <td><code class="language-plaintext highlighter-rouge">definition-basis</code></td>
+          <td><code class="language-plaintext highlighter-rouge">prl-voc:DefinitionBasisScheme</code></td>
+          <td><code class="language-plaintext highlighter-rouge">Physical</code>, <code class="language-plaintext highlighter-rouge">Designation</code>, <code class="language-plaintext highlighter-rouge">Threshold</code>, <code class="language-plaintext highlighter-rouge">WordingDefined</code>, <code class="language-plaintext highlighter-rouge">Statutory</code>, <code class="language-plaintext highlighter-rouge">Index</code></td>
+        </tr>
+        <tr>
+          <td><code class="language-plaintext highlighter-rouge">accumulation-class</code></td>
+          <td><code class="language-plaintext highlighter-rouge">prl-voc:AccumulationClassScheme</code></td>
+          <td><code class="language-plaintext highlighter-rouge">Catastrophe</code>, <code class="language-plaintext highlighter-rouge">Systemic</code>, <code class="language-plaintext highlighter-rouge">Attritional</code></td>
+        </tr>
+        <tr>
+          <td><code class="language-plaintext highlighter-rouge">consequence</code></td>
+          <td><code class="language-plaintext highlighter-rouge">prl-voc:ConsequenceScheme</code></td>
+          <td><code class="language-plaintext highlighter-rouge">DirectPhysicalDamage</code>, <code class="language-plaintext highlighter-rouge">BusinessInterruption</code>, <code class="language-plaintext highlighter-rouge">ExtraExpense</code>, <code class="language-plaintext highlighter-rouge">Spoilage</code>, <code class="language-plaintext highlighter-rouge">DenialOfAccess</code>, <code class="language-plaintext highlighter-rouge">Recall</code>, <code class="language-plaintext highlighter-rouge">CleanUp</code>, <code class="language-plaintext highlighter-rouge">DataRestoration</code>, <code class="language-plaintext highlighter-rouge">ExtortionPayment</code>, <code class="language-plaintext highlighter-rouge">LiabilityToOthers</code>, <code class="language-plaintext highlighter-rouge">DefenceCosts</code>, <code class="language-plaintext highlighter-rouge">Delay</code>, <code class="language-plaintext highlighter-rouge">ShortageOrNonDelivery</code>, <code class="language-plaintext highlighter-rouge">GeneralAverageContribution</code>, <code class="language-plaintext highlighter-rouge">ReputationalHarm</code>, <code class="language-plaintext highlighter-rouge">RegulatoryPenalty</code>, <code class="language-plaintext highlighter-rouge">NotificationCosts</code>, <code class="language-plaintext highlighter-rouge">ForensicCosts</code>, <code class="language-plaintext highlighter-rouge">CancellationCosts</code></td>
+        </tr>
+        <tr>
+          <td><code class="language-plaintext highlighter-rouge">harm-subject</code></td>
+          <td><code class="language-plaintext highlighter-rouge">prl-voc:HarmSubjectScheme</code></td>
+          <td><code class="language-plaintext highlighter-rouge">Property</code>, <code class="language-plaintext highlighter-rouge">Persons</code>, <code class="language-plaintext highlighter-rouge">FinancialInterest</code>, <code class="language-plaintext highlighter-rouge">DataAndSystems</code>, <code class="language-plaintext highlighter-rouge">Environment</code>, <code class="language-plaintext highlighter-rouge">Reputation</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p><code class="language-plaintext highlighter-rouge">Explosion</code> is added to the sketch’s mechanism list because peril vocabulary §6.8’s cyber
+write-back names it. <code class="language-plaintext highlighter-rouge">UndeterminedAgency</code> avoids a clash with Eligibility’s <code class="language-plaintext highlighter-rouge">Undetermined</code>.</p>
+
+    <p><strong>Amended again 2026-10-13, after the review of earlier designs.</strong> Eight consequences added,
+the heads of loss that marine, construction, event and cyber covers name. <code class="language-plaintext highlighter-rouge">Delay</code> covers delay
+in start-up and transit delay (the notes cite the advance loss of profits and delay in start-up
+covers of the construction and marine markets). <code class="language-plaintext highlighter-rouge">ShortageOrNonDelivery</code> is cargo that does not
+arrive. <code class="language-plaintext highlighter-rouge">GeneralAverageContribution</code> is a cargo or hull owner’s share of a general average
+sacrifice (notes cite the York-Antwerp Rules 2016). <code class="language-plaintext highlighter-rouge">ReputationalHarm</code> is the cost of
+responding to harm to reputation. <code class="language-plaintext highlighter-rouge">RegulatoryPenalty</code>, <code class="language-plaintext highlighter-rouge">NotificationCosts</code> and <code class="language-plaintext highlighter-rouge">ForensicCosts</code>
+are the first-party cyber and privacy heads of loss (notes cite the GDPR’s Articles 33, 34 and
+83). <code class="language-plaintext highlighter-rouge">CancellationCosts</code> is the irrecoverable cost of a cancelled or abandoned event or
+journey. Whether a penalty is insurable is a matter of law, so its note says the consequence
+names a loss and not that cover for it is lawful.</p>
+
+    <p><strong>Amended 2026-10-13, before S started.</strong> The cause scheme’s notes name mechanisms and
+consequences the first lists lacked (ground failure, burial and load, blast, deprivation,
+spoilage, extortion payment, data restoration, denial of access), and two kinds of agency had no
+value. Decided 2026-10-13: two agency values, <code class="language-plaintext highlighter-rouge">Intentional</code> (a deliberate act that is not a
+crime, such as a lawful strike or most employment wrongful acts) and <code class="language-plaintext highlighter-rouge">Economic</code> (the failure of
+a commercial counterparty, or market forces), thirteen mechanisms and four consequences. The
+lists are a first edition, to be refined after the trip.</p>
+
+    <p>Definitions follow the style rules and sources of AIR-2.3 (“Definitions”). Each mechanism is
+how harm is done, not the event that does it (for example <code class="language-plaintext highlighter-rouge">Load</code> is “the weight of material
+bearing on a structure or object beyond what it was built to carry”, and <code class="language-plaintext highlighter-rouge">WaterDamage</code> is “harm
+from water escaping from, or entering, a structure other than by flood”). <code class="language-plaintext highlighter-rouge">Breakdown</code> is the
+internal failure of machinery or electrical equipment. <code class="language-plaintext highlighter-rouge">Collapse</code> is the loss of a structure’s
+ability to stand.</p>
+  </li>
+  <li>Four bindings, after the scheme declarations: <code class="language-plaintext highlighter-rouge">icm-voc:AgencyContract voc:boundScheme
+prl-voc:AgencyScheme</code>, and likewise Mechanism, Consequence and HarmSubject. They are the
+reference fallback (ADR-A99 decision 1). A deployment binds its own editions by scope.</li>
+</ol>
+
+<h3 id="fixture-and-tests">Fixture and tests</h3>
+
+<ol>
+  <li><code class="language-plaintext highlighter-rouge">examples/well-formed.ttl</code> stops declaring <code class="language-plaintext highlighter-rouge">Natural</code>, <code class="language-plaintext highlighter-rouge">Sudden</code>, <code class="language-plaintext highlighter-rouge">Physical</code> and <code class="language-plaintext highlighter-rouge">Threshold</code>: the
+vocabulary now does. The test already loads the vocabulary with the fixture.</li>
+  <li><code class="language-plaintext highlighter-rouge">tools/test_peril_vocabulary.py</code> gains AIR22-01 to AIR22-08 below. The existing tests stay
+unchanged.</li>
+</ol>
+
+<p><strong>On R at verification:</strong> catalogs, release rows and tags for <code class="language-plaintext highlighter-rouge">insurance-peril-v0.5.0</code> and
+<code class="language-plaintext highlighter-rouge">insurance-peril-vocab-v0.5.0</code>. The shapes directory does not change.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AIR22-01</td>
+      <td>the spec and vocabulary / loaded with their import closures / parse, every import resolves, the spec imports <code class="language-plaintext highlighter-rouge">common/</code></td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR22-02</td>
+      <td>the spec / read / the four sub-property axioms hold, and <code class="language-plaintext highlighter-rouge">prl:onset</code> specialises nothing</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR22-03</td>
+      <td>each of the seven schemes / read / holds exactly the concepts in the table, each a top concept of it</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR22-04</td>
+      <td>the vocabulary alone / the peril shapes / no result</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR22-05</td>
+      <td>the four contracts with the peril vocabulary / Vocabulary’s shapes / conform, each bound to its scheme</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR22-06</td>
+      <td>the well-formed fixture, now without local characteristic concepts / the peril shapes / no result</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR22-07</td>
+      <td>a characteristic concept without <code class="language-plaintext highlighter-rouge">skos:definition</code> / the peril shapes / violation</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>AIR22-08</td>
+      <td>a cause concept whose <code class="language-plaintext highlighter-rouge">prl:onset</code> is a mechanism concept / the peril shapes / characteristics violation</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="shared-rules-for-air-23-and-air-24">Shared rules for AIR-2.3 and AIR-2.4</h2>
+
+<p>Both slices fill the cause scheme from sketch §5, one region per family, with nothing invented
+beyond the rules below. Decided 2026-10-13 (characteristics Q1 to Q6 in the status record’s
+history).</p>
+
+<h3 id="what-each-table-row-of-sketch-5-becomes">What each table row of sketch §5 becomes</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Sketch column or note</th>
+      <th>Turtle</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Code</td>
+      <td>the local name, with dots kept (<code class="language-plaintext highlighter-rouge">prl-voc:N.MET.TC</code>), and <code class="language-plaintext highlighter-rouge">skos:notation "N.MET.TC"^^prl:ReferenceCode</code></td>
+    </tr>
+    <tr>
+      <td>Concept</td>
+      <td><code class="language-plaintext highlighter-rouge">skos:prefLabel</code> in <code class="language-plaintext highlighter-rouge">@en</code></td>
+    </tr>
+    <tr>
+      <td>Link K or P</td>
+      <td><code class="language-plaintext highlighter-rouge">prl:broaderGeneric</code> or <code class="language-plaintext highlighter-rouge">prl:broaderPartitive</code> to the primary parent, and the same as <code class="language-plaintext highlighter-rouge">skos:broader</code>. A top concept has <code class="language-plaintext highlighter-rouge">skos:topConceptOf prl-voc:CauseScheme</code> instead</td>
+    </tr>
+    <tr>
+      <td>model code in the last column (three capital letters, for example <code class="language-plaintext highlighter-rouge">QEQ</code>, <code class="language-plaintext highlighter-rouge">WTC</code>)</td>
+      <td>a second <code class="language-plaintext highlighter-rouge">skos:notation</code> typed <code class="language-plaintext highlighter-rouge">prl:CatModelCode</code>. These are Oasis Open Exposure Data peril codes</td>
+    </tr>
+    <tr>
+      <td>“alt label X”</td>
+      <td><code class="language-plaintext highlighter-rouge">skos:altLabel "X"@en</code></td>
+    </tr>
+    <tr>
+      <td>“<code class="language-plaintext highlighter-rouge">prl:overlaps</code> X”</td>
+      <td><code class="language-plaintext highlighter-rouge">prl:overlaps prl-voc:X</code>, stated once, on the concept with the lower code in sort order. The property is symmetric</td>
+    </tr>
+    <tr>
+      <td>“<code class="language-plaintext highlighter-rouge">prl:canTrigger</code> from X”</td>
+      <td><code class="language-plaintext highlighter-rouge">prl-voc:X prl:canTrigger</code> the row’s concept, written on X</td>
+    </tr>
+    <tr>
+      <td>“<code class="language-plaintext highlighter-rouge">prl:canTrigger</code> X”</td>
+      <td>the row’s concept <code class="language-plaintext highlighter-rouge">prl:canTrigger prl-voc:X</code></td>
+    </tr>
+    <tr>
+      <td>“related X”</td>
+      <td><code class="language-plaintext highlighter-rouge">skos:related prl-voc:X</code>, stated once, as for overlaps</td>
+    </tr>
+    <tr>
+      <td>“Mechanism: …”, “agency …”, “onset …”, “definition basis …”, “accumulation class …”, “<code class="language-plaintext highlighter-rouge">prl:typicalConsequence</code> …”</td>
+      <td>superseded by the characteristic tables below, which already include them</td>
+    </tr>
+    <tr>
+      <td>every other note</td>
+      <td>a <code class="language-plaintext highlighter-rouge">skos:scopeNote</code> in <code class="language-plaintext highlighter-rouge">@en</code>, reworded as a statement about the concept, not about the sketch</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Every concept is <code class="language-plaintext highlighter-rouge">a skos:Concept</code> with <code class="language-plaintext highlighter-rouge">skos:inScheme prl-voc:CauseScheme</code>.</p>
+
+<h3 id="characteristics-inheritance-and-overrides">Characteristics: inheritance and overrides</h3>
+
+<p>A concept takes each characteristic from the nearest concept on its primary-parent chain (itself
+first) that the tables assign it, starting from the family default. S writes the resulting values
+onto every concept: the shapes check each concept, and no reasoner fills them in. “None” in an
+override means the concept, and those below it, carry no value for that optional characteristic.
+Mechanism, consequence and harm subject inherit the same way, and a list replaces the inherited
+list, it does not add to it.</p>
+
+<h3 id="definitions">Definitions</h3>
+
+<p>The <a href="/developer/sketches/peril-vocabulary.html">peril vocabulary sketch</a> fixes the concepts. Their definitions are guided by published
+standards, consulted and paraphrased, never copied:</p>
+
+<ul>
+  <li>the IRDR Peril Classification and Hazard Glossary (2014), whose natural-hazard families (geophysical,
+hydrological, meteorological, climatological, biological, extraterrestrial) are the N groups</li>
+  <li>the UNDRR and ISC Hazard Information Profiles</li>
+  <li>WMO definitions for tropical cyclone classes and the regional naming authorities</li>
+  <li>the EM-DAT disaster classification</li>
+  <li>the Oasis Open Exposure Data peril codes, for the model-code notations</li>
+  <li>for T, E, H, P, C, F and L, which those sources do not cover, common legal and market usage,
+stated neutrally</li>
+</ul>
+
+<p>Rules for every <code class="language-plaintext highlighter-rouge">skos:definition</code>:</p>
+
+<ol>
+  <li>One sentence, genus then difference (“A tropical cyclone whose …”).</li>
+  <li>What the event or condition is. Never what a policy does with it: no “covered”, “excluded”,
+“insured”, “loss” in the coverage sense, or market meaning (PV8).</li>
+  <li>A threshold is named, not numbered (“hurricane strength”). The numbers live in
+<code class="language-plaintext highlighter-rouge">peril-intensity.ttl</code> (AIR-2.6).</li>
+  <li>A part (link P) is defined as a part of its parent event (“the damaging wind field of a
+tropical cyclone”).</li>
+  <li>No text longer than a short phrase from any source. If a source’s wording is the only
+natural one, reword it.</li>
+</ol>
+
+<p>The module README gains a “Sources consulted” section listing the standards above.</p>
+
+<p><strong>Sample, the N.MET group (drafted 2026-10-13, reviewed and accepted by the maintainer the same day).</strong> S drafts every other definition in this style, and changes the sample only as the review directs.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Code</th>
+      <th>Definition</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>N.MET</td>
+      <td>A hazard arising from atmospheric processes lasting minutes to days.</td>
+    </tr>
+    <tr>
+      <td>N.MET.TC</td>
+      <td>A warm-core, non-frontal low-pressure system of organised convection and closed surface wind circulation that forms over tropical or subtropical waters.</td>
+    </tr>
+    <tr>
+      <td>N.MET.TC.WND</td>
+      <td>The damaging wind field of a tropical cyclone, including its gusts.</td>
+    </tr>
+    <tr>
+      <td>N.MET.TC.SRG</td>
+      <td>An abnormal rise of the sea above the predicted astronomical tide, driven by a tropical cyclone’s wind and low pressure, together with the coastal inundation it causes.</td>
+    </tr>
+    <tr>
+      <td>N.MET.TC.RFL</td>
+      <td>Flooding caused by the rainfall of a tropical cyclone, apart from its storm surge.</td>
+    </tr>
+    <tr>
+      <td>N.MET.TC.TOR</td>
+      <td>A tornado formed within the circulation of a tropical cyclone, usually in its outer rainbands.</td>
+    </tr>
+    <tr>
+      <td>N.MET.TC.HUR</td>
+      <td>A tropical cyclone whose maximum sustained wind reaches hurricane strength in the North Atlantic or the central or eastern North Pacific basin.</td>
+    </tr>
+    <tr>
+      <td>N.MET.TC.TYP</td>
+      <td>A tropical cyclone whose maximum sustained wind reaches hurricane strength in the western North Pacific basin.</td>
+    </tr>
+    <tr>
+      <td>N.MET.TC.SEV</td>
+      <td>A tropical cyclone whose maximum sustained wind reaches hurricane strength in the South Pacific or Indian Ocean basins.</td>
+    </tr>
+    <tr>
+      <td>N.MET.TC.TST</td>
+      <td>A tropical cyclone whose maximum sustained wind is above tropical depression strength and below hurricane strength.</td>
+    </tr>
+    <tr>
+      <td>N.MET.TC.TDP</td>
+      <td>A tropical cyclone whose maximum sustained wind is below tropical storm strength.</td>
+    </tr>
+    <tr>
+      <td>N.MET.NS</td>
+      <td>A storm given a name by a recognised meteorological authority, whatever its type.</td>
+    </tr>
+    <tr>
+      <td>N.MET.ETC</td>
+      <td>A low-pressure system of the middle or high latitudes that draws its energy from horizontal temperature contrasts, typically along fronts.</td>
+    </tr>
+    <tr>
+      <td>N.MET.ETC.WND</td>
+      <td>The damaging wind field of an extratropical cyclone.</td>
+    </tr>
+    <tr>
+      <td>N.MET.ETC.SRG</td>
+      <td>A rise of the sea above the predicted tide driven by an extratropical cyclone’s wind and low pressure, together with the coastal inundation it causes.</td>
+    </tr>
+    <tr>
+      <td>N.MET.SCS</td>
+      <td>A thunderstorm or system of thunderstorms intense enough to produce tornadoes, large hail, damaging straight-line wind or intense rainfall.</td>
+    </tr>
+    <tr>
+      <td>N.MET.SCS.TOR</td>
+      <td>A violently rotating column of air extending from a thunderstorm to the ground.</td>
+    </tr>
+    <tr>
+      <td>N.MET.SCS.HAI</td>
+      <td>Ice precipitation from a convective storm, in stones large enough to cause damage.</td>
+    </tr>
+    <tr>
+      <td>N.MET.SCS.SLW</td>
+      <td>Damaging non-rotating wind from a thunderstorm, such as a downburst or gust front.</td>
+    </tr>
+    <tr>
+      <td>N.MET.SCS.SLW.DER</td>
+      <td>A widespread, long-lived straight-line windstorm produced by a fast-moving band of thunderstorms, meeting stated criteria of path length and gust speed.</td>
+    </tr>
+    <tr>
+      <td>N.MET.SCS.LTG</td>
+      <td>An electrical discharge between a cloud and the ground, or within the atmosphere, together with its direct effects.</td>
+    </tr>
+    <tr>
+      <td>N.MET.SCS.HVR</td>
+      <td>Intense rainfall of short duration from convective storms.</td>
+    </tr>
+    <tr>
+      <td>N.MET.WIN</td>
+      <td>A cold-season storm or period of cold bringing snow, ice, freezing rain or low temperature.</td>
+    </tr>
+    <tr>
+      <td>N.MET.WIN.SNL</td>
+      <td>The weight of accumulated snow bearing on structures and objects.</td>
+    </tr>
+    <tr>
+      <td>N.MET.WIN.ICE</td>
+      <td>Rain or drizzle that freezes on contact with surfaces, building a coating of ice.</td>
+    </tr>
+    <tr>
+      <td>N.MET.WIN.BLZ</td>
+      <td>A winter storm combining strong wind with falling or blowing snow that reduces visibility for a sustained period.</td>
+    </tr>
+    <tr>
+      <td>N.MET.WIN.FRZ</td>
+      <td>Air temperature below the freezing point of water for long enough to freeze water in pipes, tanks or the ground.</td>
+    </tr>
+    <tr>
+      <td>N.MET.WIN.FRS</td>
+      <td>Ice formation on surfaces, or air temperature below freezing near the ground, harming crops and plants.</td>
+    </tr>
+    <tr>
+      <td>N.MET.LWS</td>
+      <td>A strong wind produced neither by a tropical or extratropical cyclone nor by a thunderstorm, such as a downslope or gap wind.</td>
+    </tr>
+    <tr>
+      <td>N.MET.DST</td>
+      <td>Strong wind lifting large amounts of sand or dust, reducing visibility and depositing particles.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="notes">Notes</h3>
+
+<p>Every concept also follows AIR-2.0’s documentation rule: at least one <code class="language-plaintext highlighter-rouge">skos:note</code> naming the
+standards it follows and where it departs, <code class="language-plaintext highlighter-rouge">rdfs:seeAlso</code> to a standard’s stable entry where one
+exists. For a cause concept the note names the IRDR or HIP entry it follows (N), or the usage it
+follows (T to L), and states any difference in placement, such as a part kept under its event
+family (PV2) where a standard lists it as a separate hazard. The N.MET sample’s notes are written by
+S with the rest.</p>
+
+<h3 id="links-between-slices">Links between slices</h3>
+
+<p>A <code class="language-plaintext highlighter-rouge">prl:canTrigger</code>, <code class="language-plaintext highlighter-rouge">prl:overlaps</code> or <code class="language-plaintext highlighter-rouge">skos:related</code> link whose two ends are both in N, T or E is
+written by AIR-2.3, on the concept the mapping table names. A link with one end in N, T or E and
+the other in H, P, C, F or L is written by AIR-2.4 in the <code class="language-plaintext highlighter-rouge">cross-group-links</code> region. A link
+within H to L is written by AIR-2.4 in its family’s region. <code class="language-plaintext highlighter-rouge">prl:definingThreshold</code> and
+<code class="language-plaintext highlighter-rouge">prl:intensityMeasure</code> are not written here: AIR-2.6, which now precedes both slices, writes them in
+<code class="language-plaintext highlighter-rouge">peril-intensity.ttl</code>.</p>
+
+<h2 id="air-23-in-detail">AIR-2.3 in detail</h2>
+
+<p><strong>Machine:</strong> S. <strong>Branch:</strong> <code class="language-plaintext highlighter-rouge">air/applied-reference</code>, commits <code class="language-plaintext highlighter-rouge">[AIR-2.3] …</code>, the last being
+<code class="language-plaintext highlighter-rouge">[AIR-2.3] Handoff</code>. <strong>Validation Pack:</strong>
+<a href="/developer/validation/applied-insurance-reference-2.3.html">applied-insurance-reference-2.3</a>.
+<strong>Decisions:</strong> ADR-A99, the shared rules above. <strong>Sketch:</strong> peril vocabulary §5.1 to §5.3.</p>
+
+<p><strong>Invariant:</strong> every concept of sketch §5.1 to §5.3 exists once, with its code, its links to its
+parent, and the characteristics the rules give it, and the vocabulary passes every peril shape.</p>
+
+<p><strong>Versions.</strong> No bump. AIR-2.2 bumped <code class="language-plaintext highlighter-rouge">peril-vocab.ttl</code> on this branch (lanes §1).</p>
+
+<h3 id="family-defaults">Family defaults</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Family</th>
+      <th>Agency</th>
+      <th>Onset</th>
+      <th>Basis</th>
+      <th>Accumulation</th>
+      <th>Mechanism</th>
+      <th>Harm subject</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>N</td>
+      <td>Natural</td>
+      <td>Sudden</td>
+      <td>Physical</td>
+      <td>none</td>
+      <td>none</td>
+      <td>Property</td>
+    </tr>
+    <tr>
+      <td>T</td>
+      <td>Accidental</td>
+      <td>Sudden</td>
+      <td>Physical</td>
+      <td>Attritional</td>
+      <td>none</td>
+      <td>Property</td>
+    </tr>
+    <tr>
+      <td>E</td>
+      <td>Negligent, Accidental</td>
+      <td>Latent</td>
+      <td>Physical</td>
+      <td>Attritional</td>
+      <td>none</td>
+      <td>Property</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="overrides">Overrides</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Concept (and those below it)</th>
+      <th>Characteristic</th>
+      <th>Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>N.GEO.EQ, N.GEO.TSU, N.GEO.VOL, N.MET.TC, N.MET.NS, N.MET.ETC, N.MET.SCS, N.MET.WIN, N.HYD.FLD, N.CLI.WF, N.CLI.DRT</td>
+      <td>accumulation</td>
+      <td>Catastrophe</td>
+    </tr>
+    <tr>
+      <td>N.BIO.OUT.PAN, N.EXT.GMS</td>
+      <td>accumulation</td>
+      <td>Systemic</td>
+    </tr>
+    <tr>
+      <td>N.GEO.MM.SUB, N.GEO.MM.HVE, N.HYD.ERS, N.CLI.DRT, N.BIO.OUT, N.BIO.INF, N.BIO.CRD, N.BIO.ANI, N.BIO.MLD, N.BIO.ALG</td>
+      <td>onset</td>
+      <td>Gradual</td>
+    </tr>
+    <tr>
+      <td>N.CLI.WF</td>
+      <td>agency</td>
+      <td>UndeterminedAgency</td>
+    </tr>
+    <tr>
+      <td>N.MET.TC.HUR, N.MET.TC.TYP, N.MET.TC.SEV, N.MET.TC.TST, N.MET.TC.TDP, N.MET.SCS.SLW.DER, N.MET.WIN.BLZ</td>
+      <td>basis</td>
+      <td>Threshold</td>
+    </tr>
+    <tr>
+      <td>N.CLI.DRT, N.CLI.HTW, N.CLI.CLD</td>
+      <td>basis</td>
+      <td>Index</td>
+    </tr>
+    <tr>
+      <td>N.MET.NS, N.BIO.OUT.PAN</td>
+      <td>basis</td>
+      <td>Designation</td>
+    </tr>
+    <tr>
+      <td>N.BIO.OUT, N.CLI.HTW</td>
+      <td>harm subject</td>
+      <td>Persons</td>
+    </tr>
+    <tr>
+      <td>T.REL.ASB</td>
+      <td>onset</td>
+      <td>Latent</td>
+    </tr>
+    <tr>
+      <td>T.NUC</td>
+      <td>accumulation</td>
+      <td>Catastrophe</td>
+    </tr>
+    <tr>
+      <td>T.UTL</td>
+      <td>accumulation</td>
+      <td>Systemic</td>
+    </tr>
+    <tr>
+      <td>T.UTL</td>
+      <td>consequence</td>
+      <td>BusinessInterruption</td>
+    </tr>
+    <tr>
+      <td>T.EQB.TCF</td>
+      <td>consequence</td>
+      <td>Spoilage</td>
+    </tr>
+    <tr>
+      <td>E.DET</td>
+      <td>agency, onset</td>
+      <td>Natural, Gradual</td>
+    </tr>
+    <tr>
+      <td>E.HUM, E.TST</td>
+      <td>onset</td>
+      <td>Sudden</td>
+    </tr>
+    <tr>
+      <td>E.PRO</td>
+      <td>basis, harm subject</td>
+      <td>WordingDefined, FinancialInterest</td>
+    </tr>
+    <tr>
+      <td>E.PRD</td>
+      <td>harm subject</td>
+      <td>Property, Persons</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="mechanisms">Mechanisms</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Concept (and those below it)</th>
+      <th>Mechanism</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>N.GEO.EQ, N.GEO.EQ.SHK, N.GEO.EQ.AFT</td>
+      <td>Shaking</td>
+    </tr>
+    <tr>
+      <td>N.GEO.EQ.FFE</td>
+      <td>Fire</td>
+    </tr>
+    <tr>
+      <td>N.GEO.EQ.LIQ, N.GEO.EQ.LSD, N.GEO.MM</td>
+      <td>GroundFailure</td>
+    </tr>
+    <tr>
+      <td>N.GEO.EQ.SPL</td>
+      <td>WaterDamage</td>
+    </tr>
+    <tr>
+      <td>N.GEO.TSU</td>
+      <td>Inundation, Impact</td>
+    </tr>
+    <tr>
+      <td>N.GEO.VOL.ASH</td>
+      <td>Load, Contamination</td>
+    </tr>
+    <tr>
+      <td>N.GEO.VOL.LAV</td>
+      <td>Fire, Heat</td>
+    </tr>
+    <tr>
+      <td>N.GEO.VOL.PYR</td>
+      <td>Heat, Impact</td>
+    </tr>
+    <tr>
+      <td>N.GEO.VOL.LAH, N.GEO.MM.LS</td>
+      <td>Impact, GroundFailure</td>
+    </tr>
+    <tr>
+      <td>N.GEO.VOL.GAS</td>
+      <td>Contamination</td>
+    </tr>
+    <tr>
+      <td>N.GEO.MM.AVL</td>
+      <td>Impact, Load</td>
+    </tr>
+    <tr>
+      <td>N.MET.TC</td>
+      <td>WindLoad, Inundation</td>
+    </tr>
+    <tr>
+      <td>N.MET.TC.WND, N.MET.TC.TOR, N.MET.NS, N.MET.ETC, N.MET.SCS, N.MET.LWS</td>
+      <td>WindLoad</td>
+    </tr>
+    <tr>
+      <td>N.MET.TC.SRG, N.MET.TC.RFL, N.MET.ETC.SRG, N.MET.SCS.HVR, N.HYD.FLD</td>
+      <td>Inundation</td>
+    </tr>
+    <tr>
+      <td>N.MET.SCS.HAI</td>
+      <td>Impact</td>
+    </tr>
+    <tr>
+      <td>N.MET.SCS.LTG</td>
+      <td>ElectricalOverstress, Fire</td>
+    </tr>
+    <tr>
+      <td>N.MET.WIN, N.MET.WIN.BLZ</td>
+      <td>Load, WindLoad, Freezing</td>
+    </tr>
+    <tr>
+      <td>N.MET.WIN.SNL, N.MET.WIN.ICE</td>
+      <td>Load</td>
+    </tr>
+    <tr>
+      <td>N.MET.WIN.FRZ, N.MET.WIN.FRS, N.CLI.CLD</td>
+      <td>Freezing</td>
+    </tr>
+    <tr>
+      <td>N.MET.DST</td>
+      <td>Impact, Contamination</td>
+    </tr>
+    <tr>
+      <td>N.HYD.ERS</td>
+      <td>Erosion</td>
+    </tr>
+    <tr>
+      <td>N.HYD.WAV</td>
+      <td>Impact</td>
+    </tr>
+    <tr>
+      <td>N.CLI.HTW</td>
+      <td>Heat</td>
+    </tr>
+    <tr>
+      <td>N.CLI.WF</td>
+      <td>Fire, Smoke</td>
+    </tr>
+    <tr>
+      <td>N.BIO</td>
+      <td>BiologicalAgent</td>
+    </tr>
+    <tr>
+      <td>N.EXT.GMS</td>
+      <td>ElectricalOverstress</td>
+    </tr>
+    <tr>
+      <td>N.EXT.SRS</td>
+      <td>Radiation</td>
+    </tr>
+    <tr>
+      <td>N.EXT.MET</td>
+      <td>Impact</td>
+    </tr>
+    <tr>
+      <td>T.FIR</td>
+      <td>Fire, Smoke</td>
+    </tr>
+    <tr>
+      <td>T.EXP</td>
+      <td>Explosion</td>
+    </tr>
+    <tr>
+      <td>T.EQB</td>
+      <td>Breakdown</td>
+    </tr>
+    <tr>
+      <td>T.EQB.ELC</td>
+      <td>Breakdown, ElectricalOverstress</td>
+    </tr>
+    <tr>
+      <td>T.STR</td>
+      <td>Collapse</td>
+    </tr>
+    <tr>
+      <td>T.EOW</td>
+      <td>WaterDamage</td>
+    </tr>
+    <tr>
+      <td>T.REL</td>
+      <td>Contamination</td>
+    </tr>
+    <tr>
+      <td>T.REL.RAD, T.NUC</td>
+      <td>Radiation, Contamination</td>
+    </tr>
+    <tr>
+      <td>T.TRN, T.IMP, T.HND</td>
+      <td>Impact</td>
+    </tr>
+    <tr>
+      <td>T.TRN.MAR.SNK</td>
+      <td>Inundation</td>
+    </tr>
+    <tr>
+      <td>E.DET.COR</td>
+      <td>Corrosion</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="files-1">Files</h3>
+
+<p><code class="language-plaintext highlighter-rouge">vocab/peril-vocab.ttl</code>, regions <code class="language-plaintext highlighter-rouge">cause-N</code>, <code class="language-plaintext highlighter-rouge">cause-T</code> and <code class="language-plaintext highlighter-rouge">cause-E</code> only. <code class="language-plaintext highlighter-rouge">README.md</code>: the
+“Sources consulted” section and a concept count per family. No spec, shape or fixture change.</p>
+
+<h3 id="tests-toolstest_peril_vocabularypy">Tests (<code class="language-plaintext highlighter-rouge">tools/test_peril_vocabulary.py</code>)</h3>
+
+<p>The data graph is the spec, the vocabulary and <code class="language-plaintext highlighter-rouge">peril-intensity.ttl</code> (AIR-2.6).</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AIR23-01</td>
+      <td>the vocabulary / read / N has 90 concepts, T 71 and E 15 (sketch §5.1 to §5.3), and every code is present once</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR23-02</td>
+      <td>the vocabulary with <code class="language-plaintext highlighter-rouge">peril-intensity.ttl</code> / the peril shapes / no result</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR23-03</td>
+      <td>every N, T and E concept / read / has exactly one onset and one basis and at least one agency, each the value the rules give. Check five: N.CLI.WF.FOR UndeterminedAgency, N.MET.TC.HUR Threshold, E.DET.COR Natural and Gradual, T.REL.ASB Latent, N.BIO.OUT.PAN Designation and Systemic</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR23-04</td>
+      <td>N.GEO.EQ.FFE and N.MET.TC.SRG / read / partitive links and mechanisms Fire and Inundation</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR23-05</td>
+      <td>the vocabulary / read / every model code of §5.1 is a <code class="language-plaintext highlighter-rouge">prl:CatModelCode</code> notation on its concept</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR23-06</td>
+      <td>N.GEO.EQ / read / <code class="language-plaintext highlighter-rouge">prl:canTrigger</code> N.GEO.TSU.EQT, and N.MET.TC.SRG <code class="language-plaintext highlighter-rouge">prl:overlaps</code> N.HYD.FLD.CST</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR23-07</td>
+      <td>the vocabulary with N.MET.TC.HUR’s onset removed / the peril shapes / characteristics violation</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>AIR23-08</td>
+      <td>every definition / read / none contains “cover”, “covered”, “exclude”, “insured” or “policy”</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The counts were taken from the sketch on 2026-10-13. If the sketch has changed since, use its counts and record the difference in the Handoff.</p>
+
+<h2 id="air-24-in-detail">AIR-2.4 in detail</h2>
+
+<p><strong>Machine:</strong> S. <strong>Branch:</strong> <code class="language-plaintext highlighter-rouge">air/applied-reference</code>, commits <code class="language-plaintext highlighter-rouge">[AIR-2.4] …</code>.
+<strong>Validation Pack:</strong> <a href="/developer/validation/applied-insurance-reference-2.4.html">applied-insurance-reference-2.4</a>.
+<strong>Decisions:</strong> ADR-A99, the shared rules above. <strong>Sketch:</strong> peril vocabulary §5.4 to §5.8, §8.1.</p>
+
+<p><strong>Invariant:</strong> as AIR-2.3, for H, P, C, F and L, and every link between the two family groups
+exists once in <code class="language-plaintext highlighter-rouge">cross-group-links</code>.</p>
+
+<p><strong>Versions.</strong> No bump.</p>
+
+<h3 id="family-defaults-1">Family defaults</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Family</th>
+      <th>Agency</th>
+      <th>Onset</th>
+      <th>Basis</th>
+      <th>Accumulation</th>
+      <th>Mechanism</th>
+      <th>Harm subject</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>H</td>
+      <td>MaliciousCriminal</td>
+      <td>Sudden</td>
+      <td>Physical</td>
+      <td>Attritional</td>
+      <td>none</td>
+      <td>Property</td>
+    </tr>
+    <tr>
+      <td>P</td>
+      <td>Belligerent, MaliciousPolitical, Sovereign</td>
+      <td>Sudden</td>
+      <td>WordingDefined</td>
+      <td>Catastrophe</td>
+      <td>none</td>
+      <td>Property</td>
+    </tr>
+    <tr>
+      <td>C</td>
+      <td>UndeterminedAgency</td>
+      <td>Sudden</td>
+      <td>WordingDefined</td>
+      <td>none</td>
+      <td>none</td>
+      <td>DataAndSystems</td>
+    </tr>
+    <tr>
+      <td>F</td>
+      <td>Economic</td>
+      <td>Sudden</td>
+      <td>WordingDefined</td>
+      <td>none</td>
+      <td>none</td>
+      <td>FinancialInterest</td>
+    </tr>
+    <tr>
+      <td>L</td>
+      <td>Natural</td>
+      <td>Gradual</td>
+      <td>Physical</td>
+      <td>none</td>
+      <td>none</td>
+      <td>Persons</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>P is wording-defined throughout: the market decides these events by the war, terrorism, strike
+riot and civil commotion, and political risk definitions in the wording. A statutory definition,
+such as one a terrorism pool certifies, comes in through a market edition (decided 2026-10-13).</p>
+
+<h3 id="overrides-1">Overrides</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Concept (and those below it)</th>
+      <th>Characteristic</th>
+      <th>Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>H.FRD, H.EXT</td>
+      <td>harm subject</td>
+      <td>FinancialInterest</td>
+    </tr>
+    <tr>
+      <td>H.FRD.EMD</td>
+      <td>onset</td>
+      <td>Gradual</td>
+    </tr>
+    <tr>
+      <td>H.EXT.KID, H.VIO</td>
+      <td>harm subject</td>
+      <td>Persons</td>
+    </tr>
+    <tr>
+      <td>H.VIO.ABS</td>
+      <td>onset</td>
+      <td>Latent</td>
+    </tr>
+    <tr>
+      <td>H.WRA</td>
+      <td>agency, onset, basis, harm subject</td>
+      <td>Negligent and Intentional, Latent, WordingDefined, FinancialInterest</td>
+    </tr>
+    <tr>
+      <td>H.WRA.EMP</td>
+      <td>agency</td>
+      <td>Intentional</td>
+    </tr>
+    <tr>
+      <td>H.WRA.DEF</td>
+      <td>harm subject</td>
+      <td>Reputation</td>
+    </tr>
+    <tr>
+      <td>P.WAR</td>
+      <td>agency</td>
+      <td>Belligerent</td>
+    </tr>
+    <tr>
+      <td>P.WAR.CYW</td>
+      <td>agency, harm subject</td>
+      <td>Sovereign and Belligerent, DataAndSystems</td>
+    </tr>
+    <tr>
+      <td>P.TER</td>
+      <td>agency</td>
+      <td>MaliciousPolitical</td>
+    </tr>
+    <tr>
+      <td>P.TER.CYT</td>
+      <td>harm subject</td>
+      <td>DataAndSystems</td>
+    </tr>
+    <tr>
+      <td>P.PV</td>
+      <td>agency</td>
+      <td>MaliciousPolitical</td>
+    </tr>
+    <tr>
+      <td>P.PV.STK</td>
+      <td>agency</td>
+      <td>Intentional</td>
+    </tr>
+    <tr>
+      <td>P.GOV</td>
+      <td>agency, accumulation, harm subject</td>
+      <td>Sovereign, none, FinancialInterest</td>
+    </tr>
+    <tr>
+      <td>P.GOV.DEP</td>
+      <td>onset</td>
+      <td>Gradual</td>
+    </tr>
+    <tr>
+      <td>P.GOV.ACA</td>
+      <td>harm subject, consequence</td>
+      <td>Property, DenialOfAccess</td>
+    </tr>
+    <tr>
+      <td>C.MAL</td>
+      <td>agency</td>
+      <td>MaliciousCriminal, MaliciousPolitical, Sovereign</td>
+    </tr>
+    <tr>
+      <td>C.NML</td>
+      <td>agency</td>
+      <td>Accidental, Negligent</td>
+    </tr>
+    <tr>
+      <td>C.MAL.SUP, C.NML.SVC</td>
+      <td>accumulation</td>
+      <td>Systemic</td>
+    </tr>
+    <tr>
+      <td>C.MAL.RAN</td>
+      <td>consequence</td>
+      <td>ExtortionPayment, DataRestoration</td>
+    </tr>
+    <tr>
+      <td>C.MAL.OTA, C.NML.OTF</td>
+      <td>harm subject</td>
+      <td>Property, DataAndSystems</td>
+    </tr>
+    <tr>
+      <td>F.DEF.SOV</td>
+      <td>agency, accumulation</td>
+      <td>Sovereign, Systemic</td>
+    </tr>
+    <tr>
+      <td>F.DEF.NPY</td>
+      <td>onset</td>
+      <td>Gradual</td>
+    </tr>
+    <tr>
+      <td>F.INS</td>
+      <td>basis</td>
+      <td>Statutory</td>
+    </tr>
+    <tr>
+      <td>F.MKT</td>
+      <td>onset, basis, accumulation</td>
+      <td>Gradual, Index, Systemic</td>
+    </tr>
+    <tr>
+      <td>L.MOR</td>
+      <td>agency, onset</td>
+      <td>Natural and Accidental, Sudden</td>
+    </tr>
+    <tr>
+      <td>L.ACC</td>
+      <td>agency, onset</td>
+      <td>Accidental, Sudden</td>
+    </tr>
+    <tr>
+      <td>L.MED</td>
+      <td>agency, onset</td>
+      <td>Negligent, Sudden</td>
+    </tr>
+    <tr>
+      <td>L.OCD</td>
+      <td>agency, onset, basis</td>
+      <td>Negligent, Latent, Statutory</td>
+    </tr>
+    <tr>
+      <td>L.LNG</td>
+      <td>basis, accumulation</td>
+      <td>Index, Systemic</td>
+    </tr>
+    <tr>
+      <td>L.MRB.CRI, L.MRB.DIS, L.MRB.LTC</td>
+      <td>basis</td>
+      <td>WordingDefined</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="mechanisms-1">Mechanisms</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Concept (and those below it)</th>
+      <th>Mechanism</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>H.THF, H.FRD, H.EXT</td>
+      <td>Deprivation</td>
+    </tr>
+    <tr>
+      <td>H.MAL.VAN, H.VIO</td>
+      <td>Impact</td>
+    </tr>
+    <tr>
+      <td>H.MAL.ARS</td>
+      <td>Fire</td>
+    </tr>
+    <tr>
+      <td>H.MAL.TMP</td>
+      <td>Contamination</td>
+    </tr>
+    <tr>
+      <td>P.WAR</td>
+      <td>Explosion, Fire, Impact</td>
+    </tr>
+    <tr>
+      <td>P.WAR.SZR</td>
+      <td>Deprivation</td>
+    </tr>
+    <tr>
+      <td>P.WAR.CYW, P.TER.CYT</td>
+      <td>none</td>
+    </tr>
+    <tr>
+      <td>P.TER.CNV</td>
+      <td>Explosion, Fire</td>
+    </tr>
+    <tr>
+      <td>P.TER.CBR.CHM</td>
+      <td>Contamination</td>
+    </tr>
+    <tr>
+      <td>P.TER.CBR.BIO</td>
+      <td>BiologicalAgent</td>
+    </tr>
+    <tr>
+      <td>P.TER.CBR.RAD</td>
+      <td>Radiation, Contamination</td>
+    </tr>
+    <tr>
+      <td>P.TER.CBR.NUC</td>
+      <td>Radiation, Explosion</td>
+    </tr>
+    <tr>
+      <td>P.PV</td>
+      <td>Fire, Impact</td>
+    </tr>
+    <tr>
+      <td>P.PV.STK</td>
+      <td>none</td>
+    </tr>
+    <tr>
+      <td>P.GOV.EXP, P.GOV.CNF, P.GOV.NAT, P.GOV.DEP</td>
+      <td>Deprivation</td>
+    </tr>
+    <tr>
+      <td>C.MAL.RAN</td>
+      <td>DataEncryption</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="files-2">Files</h3>
+
+<p><code class="language-plaintext highlighter-rouge">vocab/peril-vocab.ttl</code>, regions <code class="language-plaintext highlighter-rouge">cause-H</code> to <code class="language-plaintext highlighter-rouge">cause-L</code> and <code class="language-plaintext highlighter-rouge">cross-group-links</code>. <code class="language-plaintext highlighter-rouge">README.md</code>:
+the concept counts.</p>
+
+<h3 id="tests">Tests</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AIR24-01</td>
+      <td>the vocabulary / read / H has 37 concepts, P 36, C 17, F 10 and L 11 (sketch §5.4 to §5.8), 287 in the whole scheme, and every code is present once</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR24-02</td>
+      <td>the whole cause scheme with <code class="language-plaintext highlighter-rouge">peril-intensity.ttl</code> / the peril shapes / no result</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR24-03</td>
+      <td>the rules / read / H.WRA.EMP.DIS Intentional, P.PV.STK Intentional, F.INS Economic and Statutory, L.OCD Negligent, Latent and Statutory, C.NML.SWF Accidental and Negligent</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR24-04</td>
+      <td>the scheme / read / eight top concepts, N to L</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR24-05</td>
+      <td><code class="language-plaintext highlighter-rouge">cross-group-links</code> / read / holds T.EQB.CTL overlaps C.NML.OTF, T.UTL.TEL overlaps C.NML.SVC, T.REL.RAD related P.TER.CBR.RAD, C.NML.CFG related E.HUM, L.MED related E.PRO, and C.MAL.OTA canTrigger T.FIR, T.EXP and T.EQB, and no link with both ends in one group</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR24-06</td>
+      <td>the scheme / a hierarchical condition requiring N to L and excluding N.HYD.FLD, evaluated as <code class="language-plaintext highlighter-rouge">tools/test_eligibility_examples.py</code> evaluates its examples / N.HYD.FLD.FLU Denied, P.TER.CNV Permitted</td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR24-07</td>
+      <td>P.TER.CNV given <code class="language-plaintext highlighter-rouge">skos:related</code> to P.TER / the peril shapes / associative integrity violation</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="air-26-in-detail">AIR-2.6 in detail</h2>
+
+<p><strong>Machine:</strong> S. <strong>Branch:</strong> <code class="language-plaintext highlighter-rouge">air/applied-reference</code>, commits <code class="language-plaintext highlighter-rouge">[AIR-2.6] …</code>. Built after AIR-2.2
+and before AIR-2.3 (lanes §4). <strong>Validation Pack:</strong>
+<a href="/developer/validation/applied-insurance-reference-2.6.html">applied-insurance-reference-2.6</a>.
+<strong>Decisions:</strong> ADR-A99, Q7 to Q10 of 2026-10-13. <strong>Sketch:</strong> peril vocabulary §6.4, §11.</p>
+
+<p><strong>Invariant:</strong> each intensity measure has its own value space with a unit contract, the
+threshold-defined cause concepts point at range sets on the spaces of their measures, and units are
+declared once, aligned to QUDT.</p>
+
+<h3 id="units-in-insurancecommon-q10">Units, in <code class="language-plaintext highlighter-rouge">insurance/common</code> (Q10)</h3>
+
+<p>Quantification ships no unit inventory. The units go in <code class="language-plaintext highlighter-rouge">common/</code>’s vocabulary, the lowest level
+that covers peril and exposure (ADR-A98, D5), and move to a cross-domain module when a second
+domain needs them. <code class="language-plaintext highlighter-rouge">common-vocab.ttl</code> is bumped once on the branch (MINOR).</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Unit family</th>
+      <th>Units (canonical first), each <code class="language-plaintext highlighter-rouge">skos:exactMatch</code> its QUDT unit</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>acceleration</td>
+      <td>standard gravity <code class="language-plaintext highlighter-rouge">unit:G</code>, <code class="language-plaintext highlighter-rouge">unit:M-PER-SEC2</code></td>
+    </tr>
+    <tr>
+      <td>speed</td>
+      <td><code class="language-plaintext highlighter-rouge">unit:M-PER-SEC</code>, <code class="language-plaintext highlighter-rouge">unit:KN</code>, <code class="language-plaintext highlighter-rouge">unit:MI-PER-HR</code>, <code class="language-plaintext highlighter-rouge">unit:KiloM-PER-HR</code></td>
+    </tr>
+    <tr>
+      <td>pressure</td>
+      <td><code class="language-plaintext highlighter-rouge">unit:KiloPA</code>, <code class="language-plaintext highlighter-rouge">unit:HectoPA</code></td>
+    </tr>
+    <tr>
+      <td>length</td>
+      <td><code class="language-plaintext highlighter-rouge">unit:M</code>, <code class="language-plaintext highlighter-rouge">unit:MilliM</code>, <code class="language-plaintext highlighter-rouge">unit:KiloM</code>, <code class="language-plaintext highlighter-rouge">unit:FT</code>, <code class="language-plaintext highlighter-rouge">unit:MI</code></td>
+    </tr>
+    <tr>
+      <td>area</td>
+      <td><code class="language-plaintext highlighter-rouge">unit:M2</code>, <code class="language-plaintext highlighter-rouge">unit:FT2</code></td>
+    </tr>
+    <tr>
+      <td>mass per area</td>
+      <td><code class="language-plaintext highlighter-rouge">unit:KiloGM-PER-M2</code></td>
+    </tr>
+    <tr>
+      <td>power per length</td>
+      <td><code class="language-plaintext highlighter-rouge">unit:KiloW-PER-M</code></td>
+    </tr>
+    <tr>
+      <td>temperature</td>
+      <td><code class="language-plaintext highlighter-rouge">unit:DEG_C</code></td>
+    </tr>
+    <tr>
+      <td>duration</td>
+      <td><code class="language-plaintext highlighter-rouge">unit:HR</code>, <code class="language-plaintext highlighter-rouge">unit:DAY</code>, <code class="language-plaintext highlighter-rouge">unit:MO</code>, <code class="language-plaintext highlighter-rouge">unit:YR</code></td>
+    </tr>
+    <tr>
+      <td>currency</td>
+      <td>every currency in ISO 4217 List One, each <code class="language-plaintext highlighter-rouge">skos:exactMatch</code> its QUDT currency unit (<code class="language-plaintext highlighter-rouge">http://qudt.org/vocab/currency/</code>)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>QUDT is <code class="language-plaintext highlighter-rouge">http://qudt.org/vocab/unit/</code>. Check each IRI against QUDT’s published unit vocabulary at
+the start of the slice, and record any that does not resolve. Each conversion is a <code class="language-plaintext highlighter-rouge">qnt:Conversion</code>
+with its exact factor (1 kn = 1852/3600 m/s, 1 mph = 0.44704 m/s, 1 g = 9.80665 m/s², 1 hPa =
+0.1 kPa). Every unit carries a <code class="language-plaintext highlighter-rouge">skos:note</code> naming the SI definition or the convention it follows.</p>
+
+<p><strong>Currencies (decided 2026-10-13, Q14).</strong> Exposure, loss and requirement amounts need money units,
+so <code class="language-plaintext highlighter-rouge">common/</code> declares every active currency of ISO 4217 List One as a <code class="language-plaintext highlighter-rouge">qnt:Unit</code> on one money
+space, <code class="language-plaintext highlighter-rouge">icm-voc:Money</code>. Each has its alphabetic code as local name (<code class="language-plaintext highlighter-rouge">icm-voc:USD</code>), its numeric code
+as <code class="language-plaintext highlighter-rouge">skos:notation</code>, its English name as <code class="language-plaintext highlighter-rouge">skos:prefLabel</code>, and a note citing ISO 4217 and giving its
+minor unit (2 for USD, 0 for JPY, 3 for KWD). Funds codes and precious metals (<code class="language-plaintext highlighter-rouge">XAU</code>, <code class="language-plaintext highlighter-rouge">XDR</code> and the
+like) are left out, and the note on the space says so. No conversion is declared between currencies:
+a rate depends on a date and a source, so it is a <code class="language-plaintext highlighter-rouge">qnt:Conversion</code> under a <code class="language-plaintext highlighter-rouge">qnt:ConversionContext</code>
+(Quantification’s pattern), authored by whoever converts. S drafts the list from the standard. R
+checks it against the maintenance agency’s published List One at verification and records the
+edition date in the README’s “Sources consulted”. The month and year are <code class="language-plaintext highlighter-rouge">qnt:CalendarUnit</code>s (ADR-A94),
+for horizons and indemnity periods: their length in days depends on the calendar and the date
+counted from, so any conversion to days is contextual and none is declared.</p>
+
+<h3 id="measures-and-their-spaces-vocabperil-intensityttl">Measures and their spaces (<code class="language-plaintext highlighter-rouge">vocab/peril-intensity.ttl</code>)</h3>
+
+<p>A new document, the intensity measure scheme <code class="language-plaintext highlighter-rouge">prl-voc:IntensityMeasureScheme</code> (flat) and one
+<code class="language-plaintext highlighter-rouge">qnt:ValueSpace</code> per measure, linked by <code class="language-plaintext highlighter-rouge">prl:measuredOn</code>. A measure’s averaging period or scale is
+part of the measure, never of its unit (sketch §6.4).</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Measure</th>
+      <th>Space, canonical unit</th>
+      <th>Standard named in its note</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">PeakGroundAcceleration</code></td>
+      <td>g</td>
+      <td>USGS ShakeMap</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">SpectralAcceleration</code></td>
+      <td>g. The period is stated in the observation</td>
+      <td>USGS ShakeMap</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ModifiedMercalliIntensity</code></td>
+      <td>ordinal, I to XII</td>
+      <td>the Modified Mercalli scale</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">MomentMagnitude</code></td>
+      <td>dimensionless</td>
+      <td>the moment magnitude scale</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">SustainedWind1Min</code></td>
+      <td>m/s</td>
+      <td>NHC, WMO averaging conventions</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">MeanWind10Min</code></td>
+      <td>m/s</td>
+      <td>WMO standard averaging</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">WindGust3s</code></td>
+      <td>m/s</td>
+      <td>WMO gust definition</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">CentralPressure</code></td>
+      <td>hPa</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">SaffirSimpsonCategory</code></td>
+      <td>ordinal, 1 to 5</td>
+      <td>Saffir–Simpson Hurricane Wind Scale</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">EnhancedFujitaRating</code></td>
+      <td>ordinal, EF0 to EF5</td>
+      <td>NWS Enhanced Fujita scale</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">FloodDepth</code></td>
+      <td>m</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">FlowVelocity</code></td>
+      <td>m/s</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">SurgeHeight</code></td>
+      <td>m, above the predicted astronomical tide</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">RainfallDepth</code></td>
+      <td>mm. The duration is stated in the observation</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">HailDiameter</code></td>
+      <td>mm</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">IceAccretion</code></td>
+      <td>mm, radial</td>
+      <td>the ASCE 7 ice-load convention</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">SnowLoad</code></td>
+      <td>kPa</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">AshLoad</code></td>
+      <td>kg/m²</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">FirelineIntensity</code></td>
+      <td>kW/m</td>
+      <td>Byram’s fireline intensity</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">StandardisedPrecipitationIndex</code></td>
+      <td>dimensionless</td>
+      <td>the WMO-recommended drought index</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">WarmSpellDurationIndex</code>, <code class="language-plaintext highlighter-rouge">ColdSpellDurationIndex</code></td>
+      <td>days</td>
+      <td>the ETCCDI climate indices (Q8)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">Visibility</code></td>
+      <td>m</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">PathLength</code></td>
+      <td>km</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">EventDuration</code></td>
+      <td>h</td>
+      <td> </td>
+    </tr>
+  </tbody>
+</table>
+
+<p>An ordinal measure’s space is a <code class="language-plaintext highlighter-rouge">qnt:ValueSpace</code> with ordered ordinal concepts in a small scheme of
+its own in the same document, each with a definition and a note.</p>
+
+<h3 id="threshold-defined-concepts-q7">Threshold-defined concepts (Q7)</h3>
+
+<p>A concept with several defining thresholds meets all of them. AIR-2.6 adds that sentence to
+<code class="language-plaintext highlighter-rouge">prl:definingThreshold</code>’s <code class="language-plaintext highlighter-rouge">rdfs:comment</code> in the spec (already bumped by AIR-2.2). Each threshold is
+a <code class="language-plaintext highlighter-rouge">qnt:RangeSet</code> on the space of one of the concept’s intensity measures.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Concept</th>
+      <th>Intensity measures</th>
+      <th>Defining thresholds</th>
+      <th>Notes cite</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>N.MET.TC.HUR</td>
+      <td><code class="language-plaintext highlighter-rouge">SustainedWind1Min</code></td>
+      <td>≥ 64 kn</td>
+      <td>NHC, Saffir–Simpson</td>
+    </tr>
+    <tr>
+      <td>N.MET.TC.TST</td>
+      <td><code class="language-plaintext highlighter-rouge">SustainedWind1Min</code></td>
+      <td>≥ 34 kn and &lt; 64 kn</td>
+      <td>NHC</td>
+    </tr>
+    <tr>
+      <td>N.MET.TC.TDP</td>
+      <td><code class="language-plaintext highlighter-rouge">SustainedWind1Min</code></td>
+      <td>&lt; 34 kn</td>
+      <td>NHC, WMO tropical cyclone classification. The note says a depression is numbered but not named in the North Atlantic, so it is not a named storm (N.MET.NS)</td>
+    </tr>
+    <tr>
+      <td>N.MET.TC.TYP</td>
+      <td><code class="language-plaintext highlighter-rouge">MeanWind10Min</code></td>
+      <td>≥ 64 kn</td>
+      <td>RSMC Tokyo (JMA). The note says JTWC’s 1-minute figures belong in a market edition</td>
+    </tr>
+    <tr>
+      <td>N.MET.TC.SEV</td>
+      <td><code class="language-plaintext highlighter-rouge">MeanWind10Min</code></td>
+      <td>≥ 64 kn</td>
+      <td>Australian Bureau of Meteorology (category 3 and above), RSMC La Réunion. The note says IMD’s 3-minute convention belongs in a market edition</td>
+    </tr>
+    <tr>
+      <td>N.MET.SCS.SLW.DER</td>
+      <td><code class="language-plaintext highlighter-rouge">WindGust3s</code>, <code class="language-plaintext highlighter-rouge">PathLength</code></td>
+      <td>gusts ≥ 26 m/s, path ≥ 400 km</td>
+      <td>NOAA Storm Prediction Center</td>
+    </tr>
+    <tr>
+      <td>N.MET.WIN.BLZ</td>
+      <td><code class="language-plaintext highlighter-rouge">SustainedWind1Min</code>, <code class="language-plaintext highlighter-rouge">Visibility</code>, <code class="language-plaintext highlighter-rouge">EventDuration</code></td>
+      <td>wind ≥ 15.6 m/s, visibility &lt; 400 m, ≥ 3 h</td>
+      <td>US National Weather Service. The note says other national definitions belong in market editions</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>N.CLI.HTW and N.CLI.CLD are index-based (Q8), with <code class="language-plaintext highlighter-rouge">WarmSpellDurationIndex</code> and
+<code class="language-plaintext highlighter-rouge">ColdSpellDurationIndex</code>, and N.CLI.DRT with <code class="language-plaintext highlighter-rouge">StandardisedPrecipitationIndex</code>. None has a defining
+threshold. AIR-2.3’s overrides table is amended to match.</p>
+
+<h3 id="other-intensity-links">Other intensity links</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Concept</th>
+      <th>Intensity measures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>N.GEO.EQ</td>
+      <td><code class="language-plaintext highlighter-rouge">MomentMagnitude</code></td>
+    </tr>
+    <tr>
+      <td>N.GEO.EQ.SHK</td>
+      <td><code class="language-plaintext highlighter-rouge">PeakGroundAcceleration</code>, <code class="language-plaintext highlighter-rouge">SpectralAcceleration</code>, <code class="language-plaintext highlighter-rouge">ModifiedMercalliIntensity</code></td>
+    </tr>
+    <tr>
+      <td>N.MET.TC.WND</td>
+      <td><code class="language-plaintext highlighter-rouge">SustainedWind1Min</code>, <code class="language-plaintext highlighter-rouge">MeanWind10Min</code>, <code class="language-plaintext highlighter-rouge">WindGust3s</code>, <code class="language-plaintext highlighter-rouge">CentralPressure</code>, <code class="language-plaintext highlighter-rouge">SaffirSimpsonCategory</code></td>
+    </tr>
+    <tr>
+      <td>N.MET.TC.SRG, N.MET.ETC.SRG, N.HYD.FLD.CST</td>
+      <td><code class="language-plaintext highlighter-rouge">SurgeHeight</code>, <code class="language-plaintext highlighter-rouge">FloodDepth</code></td>
+    </tr>
+    <tr>
+      <td>N.MET.TC.RFL, N.HYD.FLD</td>
+      <td><code class="language-plaintext highlighter-rouge">FloodDepth</code>, <code class="language-plaintext highlighter-rouge">FlowVelocity</code></td>
+    </tr>
+    <tr>
+      <td>N.HYD.FLD.PLU, N.MET.SCS.HVR</td>
+      <td><code class="language-plaintext highlighter-rouge">RainfallDepth</code>, <code class="language-plaintext highlighter-rouge">FloodDepth</code></td>
+    </tr>
+    <tr>
+      <td>N.MET.ETC.WND, N.MET.LWS, N.MET.SCS.SLW</td>
+      <td><code class="language-plaintext highlighter-rouge">WindGust3s</code>, <code class="language-plaintext highlighter-rouge">MeanWind10Min</code></td>
+    </tr>
+    <tr>
+      <td>N.MET.SCS.TOR, N.MET.TC.TOR</td>
+      <td><code class="language-plaintext highlighter-rouge">EnhancedFujitaRating</code>, <code class="language-plaintext highlighter-rouge">WindGust3s</code></td>
+    </tr>
+    <tr>
+      <td>N.MET.SCS.HAI</td>
+      <td><code class="language-plaintext highlighter-rouge">HailDiameter</code></td>
+    </tr>
+    <tr>
+      <td>N.MET.WIN.SNL</td>
+      <td><code class="language-plaintext highlighter-rouge">SnowLoad</code></td>
+    </tr>
+    <tr>
+      <td>N.MET.WIN.ICE</td>
+      <td><code class="language-plaintext highlighter-rouge">IceAccretion</code></td>
+    </tr>
+    <tr>
+      <td>N.GEO.VOL.ASH</td>
+      <td><code class="language-plaintext highlighter-rouge">AshLoad</code></td>
+    </tr>
+    <tr>
+      <td>N.CLI.WF</td>
+      <td><code class="language-plaintext highlighter-rouge">FirelineIntensity</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="customary-event-windows-q9-informative-pv8">Customary event windows (Q9, informative, PV8)</h3>
+
+<p><code class="language-plaintext highlighter-rouge">prl:customaryEventWindow</code>, a <code class="language-plaintext highlighter-rouge">qnt:Quantity</code> on the duration space, on these concepts only. Each
+carries a note saying the figure is the one hours clauses commonly use, and that the window that
+applies is a contract term.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Window</th>
+      <th>Concepts</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>72 h</td>
+      <td>N.MET.TC, N.MET.NS, N.MET.ETC, N.MET.SCS, N.MET.LWS, P.PV.RIO, P.PV.CCM</td>
+    </tr>
+    <tr>
+      <td>168 h</td>
+      <td>N.GEO.EQ, N.GEO.TSU, N.GEO.VOL, N.HYD.FLD</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="files-3">Files</h3>
+
+<p><code class="language-plaintext highlighter-rouge">vocab/peril-intensity.ttl</code> (new, carrying the version of <code class="language-plaintext highlighter-rouge">peril-vocab.ttl</code>, AIR-2.0), its README
+sections, and the units section of <code class="language-plaintext highlighter-rouge">common/</code>’s README. Links from cause concepts name them by IRI:
+AIR-2.3 and AIR-2.4 declare them later in the trip.</p>
+
+<h3 id="tests-1">Tests</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AIR26-01</td>
+      <td>the intensity document and <code class="language-plaintext highlighter-rouge">common/</code>’s vocabulary / loaded with their imports / parse, every import resolves</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR26-02</td>
+      <td>every measure / read / one <code class="language-plaintext highlighter-rouge">prl:measuredOn</code> space with a unit contract, or an ordinal scheme</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR26-03</td>
+      <td>every unit / read / one <code class="language-plaintext highlighter-rouge">skos:exactMatch</code> into QUDT, and each conversion’s factor as listed</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR26-04</td>
+      <td>N.MET.TC.TYP / read / its threshold is on <code class="language-plaintext highlighter-rouge">MeanWind10Min</code>’s space, and HUR’s on <code class="language-plaintext highlighter-rouge">SustainedWind1Min</code>’s</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR26-05</td>
+      <td>30 m/s on the 10-minute space, and 34 m/s / compared with TYP’s range / outside, inside</td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR26-06</td>
+      <td>a value in knots / converted to m/s through the declared conversion / 64 kn is 32.92 m/s to two places</td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR26-07</td>
+      <td>a threshold of HUR placed on <code class="language-plaintext highlighter-rouge">WindGust3s</code>’s space / the threshold shape / violation, the space is not one of HUR’s measures</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>AIR26-08</td>
+      <td>every measure, unit and ordinal concept / the documentation shape / each has a note</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR26-09</td>
+      <td>the currency units / read / every one is on <code class="language-plaintext highlighter-rouge">icm-voc:Money</code>, with a three-digit notation and a QUDT match, <code class="language-plaintext highlighter-rouge">USD</code>, <code class="language-plaintext highlighter-rouge">EUR</code>, <code class="language-plaintext highlighter-rouge">GBP</code> and <code class="language-plaintext highlighter-rouge">JPY</code> are present, and no conversion links two currencies</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="air-27-in-detail">AIR-2.7 in detail</h2>
+
+<p><strong>Machine:</strong> S (Copilot Business). <strong>Branch:</strong> <code class="language-plaintext highlighter-rouge">air/applied-reference</code>, commits <code class="language-plaintext highlighter-rouge">[AIR-2.7] …</code>, the
+last being <code class="language-plaintext highlighter-rouge">[AIR-2.7] Handoff</code>. <strong>Validation Pack:</strong>
+<a href="/developer/validation/applied-insurance-reference-2.7.html">applied-insurance-reference-2.7</a>. <strong>Decisions:</strong>
+ADR-A99 (decision 1, reference editions as fallback), ADR-A100. <strong>Sketch:</strong> peril vocabulary §9.1,
+§9.4, MORK bridge §2.</p>
+
+<p><strong>Invariant:</strong> the reference cause scheme is the unscoped fallback of the peril contract, a pool
+scheme exists with an empty reference edition, and an example market edition, an example house list
+and an example pool edition resolve by LATTICE’s precedence rule with no insurance logic.</p>
+
+<h3 id="versions">Versions</h3>
+
+<p>No bump. <code class="language-plaintext highlighter-rouge">peril/spec</code> and <code class="language-plaintext highlighter-rouge">peril-vocab</code> were bumped by AIR-2.2 and change here without another
+bump (lanes §2). <code class="language-plaintext highlighter-rouge">common-vocab</code> was bumped by AIR-2.6.</p>
+
+<h3 id="spec-additions-specperilttl">Spec additions (<code class="language-plaintext highlighter-rouge">spec/peril.ttl</code>)</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Term</th>
+      <th>Definition</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">prl:coversPeril</code></td>
+      <td>object property, pool concept to a cause concept or a collection (AIR-2.5). A pool covers what is below a covered concept too</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">prl:poolTerritory</code></td>
+      <td>object property, <code class="language-plaintext highlighter-rouge">⊑ cls:territory</code>, pool concept to the territory it operates in</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="vocabulary-vocabperil-vocabttl-new-readme-section-pools-and-bindings">Vocabulary (<code class="language-plaintext highlighter-rouge">vocab/peril-vocab.ttl</code>, new README section <code class="language-plaintext highlighter-rouge">pools-and-bindings</code>)</h3>
+
+<ol>
+  <li><code class="language-plaintext highlighter-rouge">prl-voc:PoolScheme</code>, a <code class="language-plaintext highlighter-rouge">skos:ConceptScheme</code> with no concepts. Its note says pools and residual
+mechanisms are not perils, that they are created by statute or by market agreement in one
+jurisdiction, and that a deployment binds its own edition by territory scope.</li>
+  <li>The fallback bindings missing until now: <code class="language-plaintext highlighter-rouge">icm-voc:PerilContract voc:boundScheme
+prl-voc:CauseScheme</code> and <code class="language-plaintext highlighter-rouge">icm-voc:PoolContract voc:boundScheme prl-voc:PoolScheme</code>. Check the
+live <code class="language-plaintext highlighter-rouge">common-vocab</code> first: if either contract already has a <code class="language-plaintext highlighter-rouge">voc:boundScheme</code>, stop and record
+it in the Handoff.</li>
+</ol>
+
+<h3 id="examples">Examples</h3>
+
+<p>All in <code class="language-plaintext highlighter-rouge">examples/</code>, no <code class="language-plaintext highlighter-rouge">owl:Ontology</code>, IRIs under <code class="language-plaintext highlighter-rouge">https://example.org/insurance/peril/</code>
+(<code class="language-plaintext highlighter-rouge">ex:</code>), each concept with a definition and a note, so the examples model the documentation rule.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>File</th>
+      <th>Content</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">scopes.ttl</code></td>
+      <td>three <code class="language-plaintext highlighter-rouge">voc:BindingScope</code>s: <code class="language-plaintext highlighter-rouge">ex:london-market</code>, <code class="language-plaintext highlighter-rouge">ex:us-market</code>, <code class="language-plaintext highlighter-rouge">ex:us-risk-regime</code>, and a small territory scheme (<code class="language-plaintext highlighter-rouge">ex:GB</code>, <code class="language-plaintext highlighter-rouge">ex:FR</code>, <code class="language-plaintext highlighter-rouge">ex:ES</code>, <code class="language-plaintext highlighter-rouge">ex:TR</code>, <code class="language-plaintext highlighter-rouge">ex:US</code>, <code class="language-plaintext highlighter-rouge">ex:US-CA</code>, <code class="language-plaintext highlighter-rouge">ex:US-TX</code>, with <code class="language-plaintext highlighter-rouge">skos:broader</code> from the states to <code class="language-plaintext highlighter-rouge">ex:US</code>), each with its ISO 3166 code as <code class="language-plaintext highlighter-rouge">skos:notation</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">house-list.ttl</code></td>
+      <td><code class="language-plaintext highlighter-rouge">ex:HouseList</code>, a flat scheme of eight codes a London house might use, no <code class="language-plaintext highlighter-rouge">skos:broader</code>, each with its code as <code class="language-plaintext highlighter-rouge">skos:notation</code> and a house definition: <code class="language-plaintext highlighter-rouge">FIRE</code>, <code class="language-plaintext highlighter-rouge">FLOOD</code>, <code class="language-plaintext highlighter-rouge">STORM</code> (any storm), <code class="language-plaintext highlighter-rouge">QUAKE</code>, <code class="language-plaintext highlighter-rouge">THEFT</code>, <code class="language-plaintext highlighter-rouge">CYBER</code> (any cyber event), <code class="language-plaintext highlighter-rouge">LIGHTNING-FIRE</code> (fire caused by lightning, a code naming a cause and a mechanism) and <code class="language-plaintext highlighter-rouge">DELAY</code> (a consequence with no cause). AIR-3.4 crosswalks it and AIR-3.5 uses it as the flat list</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">market-us.ttl</code></td>
+      <td><code class="language-plaintext highlighter-rouge">ex:UsMarketEdition</code>, a market edition that extends the reference: one concept <code class="language-plaintext highlighter-rouge">ex:us-NamedStorm</code>, a storm named by the US National Hurricane Center, <code class="language-plaintext highlighter-rouge">prl:broaderGeneric</code> and <code class="language-plaintext highlighter-rouge">skos:broader</code> <code class="language-plaintext highlighter-rouge">prl:N.MET.NS</code>, basis <code class="language-plaintext highlighter-rouge">Designation</code>, a customary event window of 72 hours (AIR-2.6’s measure), and the characteristics the shapes require. AIR-2.5 adds its bundles</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">pools.ttl</code></td>
+      <td><code class="language-plaintext highlighter-rouge">ex:PoolEdition</code>, populated, one concept per pool below, each with <code class="language-plaintext highlighter-rouge">prl:coversPeril</code> and <code class="language-plaintext highlighter-rouge">prl:poolTerritory</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">bindings.ttl</code></td>
+      <td><code class="language-plaintext highlighter-rouge">voc:SchemeBinding</code>s for <code class="language-plaintext highlighter-rouge">icm-voc:PerilContract</code>: house list scoped to <code class="language-plaintext highlighter-rouge">ex:london-market</code>, US edition scoped to <code class="language-plaintext highlighter-rouge">ex:london-market</code> and <code class="language-plaintext highlighter-rouge">ex:us-risk-regime</code> together, US edition scoped to <code class="language-plaintext highlighter-rouge">ex:us-market</code>. For <code class="language-plaintext highlighter-rouge">icm-voc:PoolContract</code>: the pool edition, unscoped, from 2026-01-01</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Example pools, each note citing the statute or scheme that creates it:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Pool</th>
+      <th>Covers</th>
+      <th>Territory</th>
+      <th>Notes cite</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Flood Re</td>
+      <td>N.HYD.FLD</td>
+      <td>GB</td>
+      <td>Water Act 2014, Part 4</td>
+    </tr>
+    <tr>
+      <td>Pool Re</td>
+      <td>P.TER</td>
+      <td>GB</td>
+      <td>Reinsurance (Acts of Terrorism) Act 1993</td>
+    </tr>
+    <tr>
+      <td>Caisse Centrale de Réassurance, natural catastrophe scheme</td>
+      <td>N</td>
+      <td>FR</td>
+      <td>Code des assurances, art. L125-1</td>
+    </tr>
+    <tr>
+      <td>Consorcio de Compensación de Seguros</td>
+      <td>N, P.TER, P.PV</td>
+      <td>ES</td>
+      <td>its statute, Real Decreto Legislativo 7/2004</td>
+    </tr>
+    <tr>
+      <td>Turkish Catastrophe Insurance Pool</td>
+      <td>N.GEO.EQ, N.GEO.TSU.EQT</td>
+      <td>TR</td>
+      <td>Law No. 6305</td>
+    </tr>
+    <tr>
+      <td>California Earthquake Authority</td>
+      <td>N.GEO.EQ</td>
+      <td>US-CA</td>
+      <td>California Insurance Code §10089.5 onwards</td>
+    </tr>
+    <tr>
+      <td>Texas Windstorm Insurance Association</td>
+      <td>N.MET.TC.WND, N.MET.SCS.HAI</td>
+      <td>US-TX</td>
+      <td>Texas Insurance Code, Chapter 2210</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The pools’ covers are simplified, and each note says so: a pool’s actual cover is its scheme’s
+wording. The national flood programme in the US is existing cover, not a pool (asset exposure
+sketch §10), so it is not in the list. S writes the citations from the table. R checks them at
+verification.</p>
+
+<h3 id="shapes">Shapes</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Shape</th>
+      <th>Rule</th>
+      <th>Severity</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>pool concept</td>
+      <td>a concept in a scheme bound to <code class="language-plaintext highlighter-rouge">icm-voc:PoolContract</code> has at least one <code class="language-plaintext highlighter-rouge">prl:coversPeril</code> and at least one <code class="language-plaintext highlighter-rouge">prl:poolTerritory</code></td>
+      <td>violation</td>
+    </tr>
+    <tr>
+      <td>covered peril</td>
+      <td>each <code class="language-plaintext highlighter-rouge">prl:coversPeril</code> value is a cause concept or a collection</td>
+      <td>violation</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="tests-toolstest_peril_vocabularypy-1">Tests (<code class="language-plaintext highlighter-rouge">tools/test_peril_vocabulary.py</code>)</h3>
+
+<p>Resolution uses <code class="language-plaintext highlighter-rouge">vocabulary.resolver.resolve</code> (<code class="language-plaintext highlighter-rouge">tools/vocabulary/src/vocabulary/resolver.py</code>).</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AIR27-01</td>
+      <td>the vocabulary / read / the peril contract’s fallback is the cause scheme, the pool contract’s the empty pool scheme</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR27-02</td>
+      <td>the bindings / resolved with no scope / the cause scheme</td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR27-03</td>
+      <td>the same / with <code class="language-plaintext highlighter-rouge">ex:london-market</code> / the house list</td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR27-04</td>
+      <td>the same / with <code class="language-plaintext highlighter-rouge">ex:london-market</code> and <code class="language-plaintext highlighter-rouge">ex:us-risk-regime</code> / the US edition, the strict superset winning</td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR27-05</td>
+      <td>a second binding added for <code class="language-plaintext highlighter-rouge">ex:london-market</code> alone, naming another scheme / resolved with <code class="language-plaintext highlighter-rouge">ex:london-market</code> / <code class="language-plaintext highlighter-rouge">BindingConflictError</code></td>
+      <td>L2</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>AIR27-06</td>
+      <td>the pool binding / resolved at 2025-12-31 and at 2026-06-01 / the empty reference edition, then the pool edition</td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR27-07</td>
+      <td>every example file with the vocabulary / the peril shapes / no result</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR27-08</td>
+      <td>a pool with no territory / the peril shapes / violation</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>AIR27-09</td>
+      <td><code class="language-plaintext highlighter-rouge">ex:us-NamedStorm</code> / read / its <code class="language-plaintext highlighter-rouge">skos:broader</code> is <code class="language-plaintext highlighter-rouge">prl:N.MET.NS</code>, and it passes the cause shapes as an extension concept</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="air-25-in-detail">AIR-2.5 in detail</h2>
+
+<p><strong>Machine:</strong> S (Copilot Business). <strong>Branch:</strong> <code class="language-plaintext highlighter-rouge">air/applied-reference</code>, commits <code class="language-plaintext highlighter-rouge">[AIR-2.5] …</code>, the
+last being <code class="language-plaintext highlighter-rouge">[AIR-2.5] Handoff</code>. <strong>Validation Pack:</strong>
+<a href="/developer/validation/applied-insurance-reference-2.5.html">applied-insurance-reference-2.5</a>. <strong>Decisions:</strong>
+ADR-A87 (wildcards), ADR-A99, ADR-A100. <strong>Sketch:</strong> peril vocabulary §7, §9.2, §9.3. <strong>Milestone:</strong> M1.</p>
+
+<p><strong>Invariant:</strong> collections are editioned with the vocabulary, a collection used in a scope is
+expanded into concepts when the scope is bound, and an open-perils grant with exclusions admits
+and denies perils as sketch §7.2 states, with no Eligibility change.</p>
+
+<h3 id="spec-additions-specperilttl-1">Spec additions (<code class="language-plaintext highlighter-rouge">spec/peril.ttl</code>)</h3>
+
+<p><code class="language-plaintext highlighter-rouge">prl:ModelGrouping</code>, <code class="language-plaintext highlighter-rouge">prl:PerilBundle</code> and <code class="language-plaintext highlighter-rouge">prl:StandardSet</code>, each <code class="language-plaintext highlighter-rouge">⊑ skos:Collection</code>, disjoint
+with one another. A collection’s <code class="language-plaintext highlighter-rouge">rdfs:comment</code> says membership includes the concepts below each
+member.</p>
+
+<h3 id="vocabulary-vocabperil-collectionsttl-new-010">Vocabulary (<code class="language-plaintext highlighter-rouge">vocab/peril-collections.ttl</code>, new, <code class="language-plaintext highlighter-rouge">0.1.0</code>)</h3>
+
+<p>A third vocabulary document of the module (AIR-2.0 allows several), with its own README section
+and <code class="language-plaintext highlighter-rouge">@output-file</code> directive. It imports <code class="language-plaintext highlighter-rouge">peril-vocab</code> at the branch version. Ontology IRI
+<code class="language-plaintext highlighter-rouge">…/insurance/peril/collections</code>, version IRI <code class="language-plaintext highlighter-rouge">…/insurance/peril-collections/0.1.0</code>.</p>
+
+<ol>
+  <li>The eight reference collections of sketch §7.3, with the members and notes the table gives,
+each typed by its kind: <code class="language-plaintext highlighter-rouge">prl:AllWind</code>, <code class="language-plaintext highlighter-rouge">prl:WindWithSurge</code>, <code class="language-plaintext highlighter-rouge">prl:AllFlood</code> and
+<code class="language-plaintext highlighter-rouge">prl:AllEarthquake</code> are model groupings, <code class="language-plaintext highlighter-rouge">prl:FireAndExtendedPerils</code>,
+<code class="language-plaintext highlighter-rouge">prl:VandalismAndMaliciousMischief</code> and <code class="language-plaintext highlighter-rouge">prl:StrikeRiotCivilCommotion</code> bundles,
+<code class="language-plaintext highlighter-rouge">prl:CBAAStandardExclusions</code> a standard set.</li>
+  <li>Model groupings for OED’s group peril codes, each with its code as <code class="language-plaintext highlighter-rouge">skos:notation</code> typed
+<code class="language-plaintext highlighter-rouge">prl:CatModelCode</code> and members from the cause scheme, for the group codes S is sure of (for
+example the all-flood and wind-with-surge groups). A model grouping whose members equal one of
+step 1’s carries the code on that collection, not a second one. R checks the codes against the
+OED specification, as for AIR-2.3’s notations.</li>
+  <li>Every collection has a <code class="language-plaintext highlighter-rouge">skos:prefLabel</code>, a <code class="language-plaintext highlighter-rouge">skos:definition</code> and a note, which cites the
+market practice or model convention it follows (for example the fire and extended perils
+bundle follows the London market’s FLEXA and the US extended coverage endorsement, and its
+note says a market edition overrides it).</li>
+</ol>
+
+<h3 id="the-us-example-editions-bundles-examplesmarket-usttl">The US example edition’s bundles (<code class="language-plaintext highlighter-rouge">examples/market-us.ttl</code>)</h3>
+
+<p><code class="language-plaintext highlighter-rouge">ex:BasicCausesOfLoss</code> and <code class="language-plaintext highlighter-rouge">ex:BroadCausesOfLoss</code>, <code class="language-plaintext highlighter-rouge">prl:PerilBundle</code>s whose notes cite the ISO
+commercial property causes of loss forms (CP 10 10 basic, CP 10 20 broad), naming the forms and
+not quoting them:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Bundle</th>
+      <th>Members</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>basic</td>
+      <td>T.FIR, N.MET.SCS.LTG, T.EXP, N.MET.LWS, N.MET.SCS.HAI, T.IMP.ACR, T.IMP.VEH, P.PV.RIO, P.PV.CCM, H.MAL.VAN, T.EOW.SPR, N.GEO.MM.SNK, N.GEO.VOL</td>
+    </tr>
+    <tr>
+      <td>broad</td>
+      <td>the basic members, plus T.IMP.FOB, N.MET.WIN.SNL, N.MET.WIN.ICE, T.EOW</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Smoke, a peril of both forms, is a mechanism (<code class="language-plaintext highlighter-rouge">Smoke</code>), so the basic bundle’s note says the form’s
+smoke peril is read through the mechanism and not as a member. Windstorm is <code class="language-plaintext highlighter-rouge">N.MET.LWS</code> here
+because the forms’ windstorm is any wind, and the note says a market edition may prefer a
+wider set. The special form is open perils with exclusions (sketch §9.3) and is not a bundle.</p>
+
+<h3 id="binding-time-expansion-toolsperil_bindingpy">Binding-time expansion (<code class="language-plaintext highlighter-rouge">tools/peril_binding.py</code>)</h3>
+
+<p>Two functions, the code that executes what the vocabulary states:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">members(graph, collection)</code>: the collection’s members, following nested collections. Not their
+narrower concepts, since a hierarchical condition reaches those itself.</li>
+  <li><code class="language-plaintext highlighter-rouge">open_perils_condition(graph, scheme, condition, exclusions)</code>: the triples of a hierarchical
+condition whose required concepts are the scheme’s top concepts and whose excluded concepts are
+the members of the given collections and concepts, with <code class="language-plaintext highlighter-rouge">elg:wildcardSemantics elg:NoWildcard</code>
+(ADR-A87).</li>
+</ul>
+
+<h3 id="milestone-m1-examplesopen-perilsttl">Milestone M1 (<code class="language-plaintext highlighter-rouge">examples/open-perils.ttl</code>)</h3>
+
+<p>The sketch §7.2 condition, constrained by <code class="language-plaintext highlighter-rouge">icm-voc:PerilContract</code> rather than Open CBAA’s contract,
+generated by <code class="language-plaintext highlighter-rouge">open_perils_condition</code> from the reference scheme with exclusions N.HYD.FLD, N.GEO.EQ,
+N.MET.TC.SRG and N.MET.TC.RFL, and a second condition generated with <code class="language-plaintext highlighter-rouge">prl:CBAAStandardExclusions</code>
+as its exclusion. The file holds both generated conditions and candidate perils. A test checks the
+file equals the function’s output. Recorded decisions, evaluated with the SPARQL backend as
+<code class="language-plaintext highlighter-rouge">tools/mork_compilers/src/mork_compilers/test_evidence_bindings.py</code> builds and runs a plan:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Candidate</th>
+      <th>First condition</th>
+      <th>Second condition</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>T.FIR.ELF</td>
+      <td>Permitted</td>
+      <td>Permitted</td>
+    </tr>
+    <tr>
+      <td>N.MET.TC.WND</td>
+      <td>Permitted</td>
+      <td>Permitted</td>
+    </tr>
+    <tr>
+      <td>N.HYD.FLD.FLU</td>
+      <td>Denied</td>
+      <td>Permitted</td>
+    </tr>
+    <tr>
+      <td>N.GEO.EQ.SHK</td>
+      <td>Denied</td>
+      <td>Permitted</td>
+    </tr>
+    <tr>
+      <td>N.MET.TC.SRG</td>
+      <td>Denied</td>
+      <td>Permitted</td>
+    </tr>
+    <tr>
+      <td>P.TER.CBR.BIO</td>
+      <td>Permitted</td>
+      <td>Denied</td>
+    </tr>
+    <tr>
+      <td>T.NUC</td>
+      <td>Permitted</td>
+      <td>Denied</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="shapes-1">Shapes</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Shape</th>
+      <th>Rule</th>
+      <th>Severity</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>collection members</td>
+      <td>every member of a collection in the module, or in an edition extending it, is in a scheme of the release or of that edition, or is itself a collection</td>
+      <td>violation</td>
+    </tr>
+    <tr>
+      <td>model grouping code</td>
+      <td>a <code class="language-plaintext highlighter-rouge">prl:CatModelCode</code> notation is unique among the module’s collections</td>
+      <td>violation</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="tests-toolstest_peril_vocabularypy-2">Tests (<code class="language-plaintext highlighter-rouge">tools/test_peril_vocabulary.py</code>)</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AIR25-01</td>
+      <td>the collections document / loaded with its imports / parses, every import resolves</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR25-02</td>
+      <td>each reference collection / read / its members are the sketch table’s, and its kind</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR25-03</td>
+      <td><code class="language-plaintext highlighter-rouge">members</code> of <code class="language-plaintext highlighter-rouge">prl:WindWithSurge</code> / called / the AllWind members and the two surges</td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR25-04</td>
+      <td><code class="language-plaintext highlighter-rouge">examples/open-perils.ttl</code> / compared with the function’s output / equal</td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR25-05</td>
+      <td>the M1 conditions / SPARQL backend over the candidates / the decisions in the table</td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR25-06</td>
+      <td>the same / SHACL backend / agrees with SPARQL</td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR25-07</td>
+      <td>a bundle with a member from no scheme / the peril shapes / violation</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>AIR25-08</td>
+      <td>the US edition’s bundles / read / broad includes every basic member</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR25-09</td>
+      <td>every collection / the documentation shape / each has a note</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>On R at verification:</strong> catalogs. The collections document is new and stays at <code class="language-plaintext highlighter-rouge">0.1.0</code>.</p>
+
+<h2 id="documentation-deltas">Documentation deltas</h2>
+
+<p><code class="language-plaintext highlighter-rouge">ontology/applied/README.md</code> (module row), the module’s own README (generated tables of §5),
+<code class="language-plaintext highlighter-rouge">docs/architecture/ontology-architecture.md</code> §3 status row.</p>
+
+<h2 id="exit-gate">Exit gate</h2>
+
+<p>M1 demonstrated. PV-O1 and PV-O2 closed in the module README.</p>

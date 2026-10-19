@@ -1,0 +1,37 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="mtp-validation-handoff">MTP Validation Handoff</h1>
+
+<p><strong>Status:</strong> Closed
+<strong>Disposition:</strong> Accepted on 2026-09-20
+<strong>Governing ADR:</strong> <a href="../../architecture/decisions/ADR-A44-mork-teaching-pack-generated-content-boundary.md">ADR-A44</a></p>
+
+<h2 id="scope">Scope</h2>
+
+<p>MTP authoring establishes <code class="language-plaintext highlighter-rouge">tools/mork/src/mtp/</code>, curated inputs under <code class="language-plaintext highlighter-rouge">ontology/mork/mtp/data/</code>, generated-output ownership under <code class="language-plaintext highlighter-rouge">ontology/mork/mtp/out/</code>, structural tests, <code class="language-plaintext highlighter-rouge">mise</code> tasks, and a manual CI job. It does not implement LLM backend selection or model-quality evaluation.</p>
+
+<h2 id="commands">Commands</h2>
+
+<p>Run in a clean network-enabled checkout:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise install
+mise run bootstrap:mork
+python -m pytest tools/mork/src/test_mtp.py tools/mork/src/test_mcn_decoder.py
+mise run build:mtp
+mise run check:mtp
+git diff --exit-code ontology/mork/mtp/out/ ontology/mork/mtp/data/pins.lock.json
+</code></pre></div></div>
+
+<p>Then dispatch the <code class="language-plaintext highlighter-rouge">Platform checks</code> workflow and inspect <code class="language-plaintext highlighter-rouge">mtp-structural</code> output. It must install <code class="language-plaintext highlighter-rouge">mork</code>, run the structural test module, build, check, and reject uncommitted generated output or pin changes.</p>
+
+<h2 id="expected-artifacts">Expected Artifacts</h2>
+
+<p>The build writes L0 content, corpus statistics, lens renderings, routing, diagnostics, and manifest under <code class="language-plaintext highlighter-rouge">ontology/mork/mtp/out/</code>. It updates <code class="language-plaintext highlighter-rouge">ontology/mork/mtp/data/pins.lock.json</code> from the current ontology and logical term hashes. Generated files and pin changes must be reviewed and committed together with the curated source change that caused them.</p>
+
+<h2 id="deferred-work">Deferred Work</h2>
+
+<p>MTP Phase 7 remains deferred until the LLM backend interface exists. It owns held-out evaluation sets, model invocation, model-quality metrics, eval CI gates, retrieval indexing, SFT or LoRA corpora, and grammar/schema targets intended for backend evaluation.</p>
+
+<h2 id="restricted-environment-statement">Restricted-environment Statement</h2>
+
+<p>No Python, dependency installation, MCN decoding, YAML parsing, build, CI, or generated-output validation ran in the restricted authoring environment. Only static source inspection, editor diagnostics, link checks, metadata parsing where available, and whitespace checks were performed.</p>

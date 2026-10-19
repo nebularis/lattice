@@ -1,0 +1,383 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="phase-0--decisions-and-non-retrofittable-foundations-status">Phase 0 — Decisions and Non-Retrofittable Foundations (Status)</h1>
+
+<p><strong>Unit type:</strong> Phase
+<strong>Unit ID:</strong> <code class="language-plaintext highlighter-rouge">phase-0</code>
+<strong>Status:</strong> ⏳ In progress — P0.1 decision pack drafted, pending ratification
+<strong>Last updated:</strong> 2026-09-23
+<strong>Plan:</strong> <a href="/developer/plans/phase-0-plan.html">phase-0-plan.md</a>
+<strong>Sketch:</strong> <a href="/developer/sketches/phase-0-sketch.html">phase-0-sketch.md</a></p>
+
+<hr />
+
+<h2 id="current-state">Current state</h2>
+
+<p>P0.1 (decision pack) was executed autonomously on 2026-09-23: 17 ADRs drafted (A48, A50, A51, A54, A57, A59, A62, A63, A65 through A69, A71, A74, A75, A81), all filed with <strong>Status: Proposed</strong>, none marked Accepted. We were unavailable during this session and asked the agent to work autonomously and make good decisions for later review — no ADR here is self-ratified; ratification remains a human act per the Agentic Development Contract. ADR-A62’s namespace harmonisation (the one part of P0.1.12 that is a mechanical change, not a decision) was executed directly: <code class="language-plaintext highlighter-rouge">ontology/spc/spec/spc.ttl</code>, <code class="language-plaintext highlighter-rouge">ontology/spc/README.md</code>, and <code class="language-plaintext highlighter-rouge">tools/spc/python/src/spc/ontologies/spc.owl.ttl</code> now use the harmonised <code class="language-plaintext highlighter-rouge">nebularis.org</code> namespace, and <code class="language-plaintext highlighter-rouge">ontology-architecture.md</code> §3 was updated to match.</p>
+
+<p>No code slice (P0.2 onward) has started. The original P0.1.3 deliverable, <code class="language-plaintext highlighter-rouge">docs/architecture/iri-policy.md</code>, is now a short historical record: its body was removed on 2026-09-23 because it still read as guidance and contradicted the current catalogue. Its replacement is <code class="language-plaintext highlighter-rouge">docs/architecture/iri-identity-patterns.md</code> under ADR-A82.</p>
+
+<p><strong>2026-09-23, later same day:</strong> ADR-A51 was reviewed (<a href="/developer/review/ADR-A51-review.html">docs/developer/review/ADR-A51-review.md</a>) and found to conflict with RDF identity semantics (environment-scoped IRIs), overclaim uniqueness safety with a truncated hash, and disagree internally with <code class="language-plaintext highlighter-rouge">rdf-sparql-patterns-guide.md</code>’s own entity-identity default. An initial disposition claimed all findings resolved, but the second review (<a href="/developer/review/ADR-A51-2nd-agent-review.html">ADR-A51-2nd-agent-review.md</a>) identified unresolved grammar, hash, skolemization, scope, and lifecycle issues. Our architectural direction then reframed the concern: LATTICE is a framework and cannot mandate one identifier scheme for every adopter. <a href="../../architecture/decisions/ADR-A82-framework-neutral-identity-pattern-selection.md">ADR-A82</a> supersedes the unratified ADR-A51. <a href="/architecture/iri-identity-patterns.html">iri-identity-patterns.md</a> is now the proposed pattern catalogue. <code class="language-plaintext highlighter-rouge">iri-policy.md</code> is retained only as historical profile material.</p>
+
+<h2 id="decisions-made-autonomously-in-this-session--flagged-for-the-maintainers-explicit-confirmation">Decisions made autonomously in this session — flagged for the maintainer’s explicit confirmation</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Decision</th>
+      <th>What was assumed</th>
+      <th>Why</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Accept ADR-A74 (graph-primary)</td>
+      <td>Yes, accepted as drafted</td>
+      <td>Epic’s own stated default; rejecting it reorders ~40% of the plan. No contrary instruction was given.</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">graph-spi</code> vs <code class="language-plaintext highlighter-rouge">semantic-dataset-spi</code> (blocks P0.5.1)</td>
+      <td><strong>Not resolved</strong> — left open, no P0.5 slice attempted this session</td>
+      <td>This decision has execution consequences (module deletion or coexistence) that should not be taken without confirmation, unlike a documentation-only ADR draft</td>
+    </tr>
+    <tr>
+      <td>ADR-A44 numbering collision</td>
+      <td>Filed the epic’s “amended A44” content as new <strong>ADR-A81</strong> instead of touching the existing accepted ADR-A44</td>
+      <td>Amending A44 would have silently corrupted an unrelated, already-accepted decision (MORK Teaching Pack)</td>
+    </tr>
+    <tr>
+      <td>Scope of this session</td>
+      <td>P0.1 decision pack only (13 slices’ worth of ADRs); no build/code scaffolding (P0.2+) attempted</td>
+      <td>P0.2.1 itself requires a build-tooling decision (ADR-A76, Maven vs Gradle) and produces a running module skeleton — higher-risk to leave unreviewed than documentation-only ADR drafts</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="pre-execution-blockers">Pre-execution blockers</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Blocker</th>
+      <th>Detail</th>
+      <th>Resolution owner</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">graph-spi</code> vs <code class="language-plaintext highlighter-rouge">semantic-dataset-spi</code> relationship undecided</td>
+      <td>See <a href="/developer/plans/phase-0-plan.html#2-pre-execution-decision-points-resolve-before-the-named-slice-starts">phase-0-plan.md §2</a>. Still open — not resolved in this session.</td>
+      <td>Maintainer — must resolve before P0.5.1</td>
+    </tr>
+    <tr>
+      <td>All active P0.1 ADRs are <code class="language-plaintext highlighter-rouge">Proposed</code>, not <code class="language-plaintext highlighter-rouge">Accepted</code></td>
+      <td>Every active ADR above, including ADR-A82, needs an explicit ratification pass (Step 1–5 validation gate) before the Phase 0 exit gate can close</td>
+      <td>Maintainer</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Nothing else blocks P0.2 starting, once the maintainer has reviewed the P0.1 ADRs (or explicitly authorised proceeding before formal ratification).</p>
+
+<h2 id="slice-status">Slice status</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Slice</th>
+      <th>ADR(s)/deliverable</th>
+      <th>Status</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>P0.1.1</td>
+      <td>ADR-A74</td>
+      <td>Drafted, Proposed</td>
+      <td><code class="language-plaintext highlighter-rouge">data-architecture.md</code> §1–3, §5–7 rewrite still outstanding</td>
+    </tr>
+    <tr>
+      <td>P0.1.2</td>
+      <td>ADR-A75</td>
+      <td>Drafted, Proposed</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>P0.1.3</td>
+      <td>ADR-A82 + <code class="language-plaintext highlighter-rouge">iri-identity-patterns.md</code></td>
+      <td>Drafted, Proposed, pending review</td>
+      <td>ADR-A51’s universal policy was superseded before ratification. The new guide describes configurable identity patterns and their <code class="language-plaintext highlighter-rouge">ontology/persistence</code> configuration surface (<code class="language-plaintext highlighter-rouge">dal:IdentityProfile</code>, specified, and resolved per resource role by the compiler since <code class="language-plaintext highlighter-rouge">persistence-compiler-iri-sync</code> Slice 3). Revised on 2026-09-23 by <a href="/developer/status/iri-patterns-post-3866b21-remediation.html"><code class="language-plaintext highlighter-rouge">iri-patterns-post-3866b21-remediation</code></a> (normalization, tuple-encoded digests, key rotation, store-local epoch, revision-class alignment). Ready for review.</td>
+    </tr>
+    <tr>
+      <td>P0.1.4</td>
+      <td>ADR-A54</td>
+      <td>Drafted, Proposed</td>
+      <td>Graph-name validator (P0.3.7) not yet built</td>
+    </tr>
+    <tr>
+      <td>P0.1.5</td>
+      <td>ADR-A65</td>
+      <td>Drafted, Proposed</td>
+      <td><code class="language-plaintext highlighter-rouge">ontology/governance/shapes/provenance.ttl</code> (P0.3.6) not yet built</td>
+    </tr>
+    <tr>
+      <td>P0.1.6</td>
+      <td>ADR-A67</td>
+      <td>Drafted, Proposed</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>P0.1.7</td>
+      <td>ADR-A68</td>
+      <td>Drafted, Proposed</td>
+      <td>DPO/legal review still recommended, not performed</td>
+    </tr>
+    <tr>
+      <td>P0.1.8</td>
+      <td>ADR-A63</td>
+      <td>Drafted, Proposed</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>P0.1.9</td>
+      <td>ADR-A48</td>
+      <td>Drafted, Proposed</td>
+      <td>Replaces <code class="language-plaintext highlighter-rouge">solution-design-specification.md</code> §7.1 CAP framing — doc rewrite still outstanding</td>
+    </tr>
+    <tr>
+      <td>P0.1.10</td>
+      <td>ADR-A50 + ADR-A81 (renumbered from “A44 amended”)</td>
+      <td>Drafted, Proposed</td>
+      <td>Numbering collision — see table above</td>
+    </tr>
+    <tr>
+      <td>P0.1.11</td>
+      <td>ADR-A57</td>
+      <td>Drafted, Proposed</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>P0.1.12</td>
+      <td>ADR-A59, ADR-A66, ADR-A71, ADR-A62</td>
+      <td>Drafted, Proposed</td>
+      <td>ADR-A62’s namespace rename executed; the other three are documentation only</td>
+    </tr>
+    <tr>
+      <td>P0.1.13</td>
+      <td>ADR-A69</td>
+      <td>Drafted, Proposed</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>P0.1.14</td>
+      <td>Threat model document</td>
+      <td>Not started</td>
+      <td>Requires owner-per-control assignment; needs risk input</td>
+    </tr>
+    <tr>
+      <td>P0.1.15</td>
+      <td>NFR/SLO catalogue</td>
+      <td>Not started</td>
+      <td>Epic’s own framing: “are the numbers ones you are willing to be held to” — requires the maintainer’s sign-off on numbers, not agent invention</td>
+    </tr>
+    <tr>
+      <td>P0.2+</td>
+      <td>Build skeleton, ontology, store SPI, coordination, host, messaging, synthetic data</td>
+      <td>Not started</td>
+      <td> </td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="milestone-tracker">Milestone tracker</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Milestone</th>
+      <th>Demonstrable outcome</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>M0</td>
+      <td>Walking skeleton (browser → HTTP → domain → response, in compose, one correlation ID traceable, Playwright smoke)</td>
+      <td>Not demonstrated</td>
+    </tr>
+    <tr>
+      <td>M1</td>
+      <td>Store conformance (signed capability + benchmark report, TDB2 + Fuseki, hostile scoping suite green)</td>
+      <td>Not demonstrated</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="adr-ratification-tracker">ADR ratification tracker</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>ADR</th>
+      <th>Subject</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>A44</td>
+      <td>Control Plane HTTP runtime — <strong>renumbered to A81</strong> to avoid collision with the existing accepted A44 (MORK Teaching Pack)</td>
+      <td>Superseded by renumbering; see A81</td>
+    </tr>
+    <tr>
+      <td>A48</td>
+      <td>Transaction boundary catalogue (replaces CAP framing)</td>
+      <td><a href="../../architecture/decisions/ADR-A48-transaction-boundary-catalogue.md">Drafted, Proposed</a></td>
+    </tr>
+    <tr>
+      <td>A50</td>
+      <td>Role-profiled deployment</td>
+      <td><a href="../../architecture/decisions/ADR-A50-role-profiled-deployment.md">Drafted, Proposed</a></td>
+    </tr>
+    <tr>
+      <td>A51</td>
+      <td>IRI &amp; identity policy</td>
+      <td><a href="../../architecture/decisions/ADR-A51-iri-and-identity-policy.md">Superseded by A82</a></td>
+    </tr>
+    <tr>
+      <td>A54</td>
+      <td>Dataset topology</td>
+      <td><a href="../../architecture/decisions/ADR-A54-dataset-topology.md">Drafted, Proposed</a></td>
+    </tr>
+    <tr>
+      <td>A57</td>
+      <td>Change feed</td>
+      <td><a href="../../architecture/decisions/ADR-A57-change-feed.md">Drafted, Proposed</a></td>
+    </tr>
+    <tr>
+      <td>A59</td>
+      <td><code class="language-plaintext highlighter-rouge">PartitionedWorkQueue</code> abstraction</td>
+      <td><a href="../../architecture/decisions/ADR-A59-partitioned-work-queue-abstraction.md">Drafted, Proposed</a></td>
+    </tr>
+    <tr>
+      <td>A62</td>
+      <td>SPC namespace harmonisation</td>
+      <td><a href="../../architecture/decisions/ADR-A62-spc-namespace-harmonisation.md">Drafted, Proposed</a> — namespace rename executed</td>
+    </tr>
+    <tr>
+      <td>A63</td>
+      <td><code class="language-plaintext highlighter-rouge">projectId</code> vs <code class="language-plaintext highlighter-rouge">environmentId</code></td>
+      <td><a href="../../architecture/decisions/ADR-A63-project-vs-environment-scoping.md">Drafted, Proposed</a></td>
+    </tr>
+    <tr>
+      <td>A65</td>
+      <td>Provenance</td>
+      <td><a href="../../architecture/decisions/ADR-A65-provenance-model.md">Drafted, Proposed</a></td>
+    </tr>
+    <tr>
+      <td>A66</td>
+      <td>Principal model</td>
+      <td><a href="../../architecture/decisions/ADR-A66-principal-model.md">Drafted, Proposed</a></td>
+    </tr>
+    <tr>
+      <td>A67</td>
+      <td>Bi-temporal</td>
+      <td><a href="../../architecture/decisions/ADR-A67-bi-temporal-model.md">Drafted, Proposed</a></td>
+    </tr>
+    <tr>
+      <td>A68</td>
+      <td>PII &amp; erasure</td>
+      <td><a href="../../architecture/decisions/ADR-A68-pii-and-erasure.md">Drafted, Proposed</a></td>
+    </tr>
+    <tr>
+      <td>A69</td>
+      <td>Pack trust model / safe SPARQL subset</td>
+      <td><a href="../../architecture/decisions/ADR-A69-pack-trust-and-safe-sparql-subset.md">Drafted, Proposed</a></td>
+    </tr>
+    <tr>
+      <td>A71</td>
+      <td>Platform licence MPL-2.0 + SPI seam</td>
+      <td><a href="../../architecture/decisions/ADR-A71-platform-licence-and-spi-seam.md">Drafted, Proposed</a></td>
+    </tr>
+    <tr>
+      <td>A74</td>
+      <td>Graph-primary realm model</td>
+      <td><a href="../../architecture/decisions/ADR-A74-graph-primary-realm-model.md">Drafted, Proposed</a></td>
+    </tr>
+    <tr>
+      <td>A75</td>
+      <td>Three-tier store SPI</td>
+      <td><a href="../../architecture/decisions/ADR-A75-three-tier-store-spi.md">Drafted, Proposed</a></td>
+    </tr>
+    <tr>
+      <td>A76</td>
+      <td>Maven vs Gradle</td>
+      <td>Not drafted — deferred to P0.2.1 (build skeleton slice)</td>
+    </tr>
+    <tr>
+      <td>A81</td>
+      <td>Control Plane HTTP runtime (was “A44 amended”)</td>
+      <td><a href="../../architecture/decisions/ADR-A81-control-plane-http-runtime.md">Drafted, Proposed</a></td>
+    </tr>
+    <tr>
+      <td>A82</td>
+      <td>Framework-neutral identity pattern selection</td>
+      <td><a href="../../architecture/decisions/ADR-A82-framework-neutral-identity-pattern-selection.md">Drafted, Proposed</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="documentation-and-readme-debt-tracker">Documentation and README debt tracker</h2>
+
+<p>Tracks <a href="/developer/plans/phase-0-plan.html#3-documentation-obligations--docsarchitecture">phase-0-plan.md §3–5</a> as it is worked off.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Item</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">docs/architecture/iri-identity-patterns.md</code> (P0.1.3)</td>
+      <td>Drafted and revised (2026-09-23), pending ratification with ADR-A82. <code class="language-plaintext highlighter-rouge">iri-policy.md</code> reduced to a historical record</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">data-architecture.md</code> §1–3, §5–7 rewrite for A74 (P0.1.1)</td>
+      <td>Outstanding</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">solution-design-specification.md</code> §7 rewrite for A48 (P0.1.9)</td>
+      <td>Outstanding</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ontology-architecture.md</code> SPC section update for A62</td>
+      <td>Done</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">docs/architecture/nfr.md</code> + <code class="language-plaintext highlighter-rouge">nfr.yaml</code> (P0.1.15)</td>
+      <td>Outstanding — needs SLO sign-off</td>
+    </tr>
+    <tr>
+      <td>Threat model document (P0.1.14)</td>
+      <td>Outstanding</td>
+    </tr>
+    <tr>
+      <td>All other rows in the plan’s §3–5 tables</td>
+      <td>Outstanding</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="next-steps">Next steps</h2>
+
+<ol>
+  <li><strong>The maintainer reviews and ratifies (or rejects) the active <code class="language-plaintext highlighter-rouge">Proposed</code> ADRs above.</strong> Per the validation gate protocol, review each ADR’s Context/Decision/Consequences before anything downstream depends on it.</li>
+  <li>The maintainer resolves the <code class="language-plaintext highlighter-rouge">graph-spi</code>/<code class="language-plaintext highlighter-rouge">semantic-dataset-spi</code> decision point (still open) before P0.5.1.</li>
+  <li>The maintainer confirms or corrects the ADR-A44/A81 renumbering.</li>
+  <li>Once ratified, begin P0.2 (build skeleton) — including deciding ADR-A76 (Maven vs Gradle) as part of that slice.</li>
+  <li><code class="language-plaintext highlighter-rouge">data-architecture.md</code> and <code class="language-plaintext highlighter-rouge">solution-design-specification.md</code> rewrites (tied to A74 and A48 respectively) should follow ratification, not precede it, in case ratification changes the decision content.</li>
+</ol>
+

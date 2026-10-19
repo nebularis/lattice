@@ -1,0 +1,82 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="implemented-platform-map">Implemented Platform Map</h1>
+
+<p>This guide maps the implementation introduced by Phases 0 through 3. It is an orientation document for maintainers and coding agents. It does not replace normative ontology documentation in layer READMEs or decision rationale in ADRs.</p>
+
+<p>Read <a href="/architecture/solution-design-specification.html">solution-design-specification.md</a> first for the platform’s process, component, data, infrastructure, and robustness design. This map is a source-file index into that design, not a substitute for it.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Area</th>
+      <th>Primary implementation</th>
+      <th>Contracts and guides</th>
+      <th>Current state</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Repository orchestration</td>
+      <td><code class="language-plaintext highlighter-rouge">mise.toml</code>, <code class="language-plaintext highlighter-rouge">.devcontainer/</code>, <code class="language-plaintext highlighter-rouge">deployment/compose/</code></td>
+      <td><a href="../developer/toolchain.md">toolchain</a>, <a href="decisions/ADR-A29-repository-toolchain-and-environment-boundary.md">ADR-A29</a></td>
+      <td>Authoring complete, runtime validation pending</td>
+    </tr>
+    <tr>
+      <td>Semantic platform</td>
+      <td><code class="language-plaintext highlighter-rouge">platform/semantic-dataset-*</code>, <code class="language-plaintext highlighter-rouge">semantic-policy</code>, <code class="language-plaintext highlighter-rouge">platform-outbox</code>, <code class="language-plaintext highlighter-rouge">workers/graph_validation.py</code></td>
+      <td><code class="language-plaintext highlighter-rouge">contracts/events/graph-validation-*.schema.json</code>, <a href="/architecture/semantic-platform.html">semantic platform</a>, <a href="decisions/ADR-A30-shared-semantic-platform-cross-runtime-boundary.md">ADR-A30</a></td>
+      <td>Authoring complete, persistence and integration validation pending</td>
+    </tr>
+    <tr>
+      <td>Surface workflow</td>
+      <td><code class="language-plaintext highlighter-rouge">platform/surface-workflow</code>, <code class="language-plaintext highlighter-rouge">workers/surface_jobs.py</code></td>
+      <td><code class="language-plaintext highlighter-rouge">contracts/surface/</code>, <code class="language-plaintext highlighter-rouge">contracts/events/surface-job-*.schema.json</code>, <a href="/architecture/surface-workflow.html">Surface workflow</a>, <a href="decisions/ADR-A32-surface-revision-lifecycle-and-release-candidates.md">ADR-A32</a></td>
+      <td>In progress</td>
+    </tr>
+    <tr>
+      <td>Surface authoring UI</td>
+      <td><code class="language-plaintext highlighter-rouge">apps/surface-contract-studio</code></td>
+      <td><a href="/architecture/surface-contract-studio.html">Surface Contract Studio</a>, <code class="language-plaintext highlighter-rouge">contracts/openapi/surface-workflow.openapi.json</code>, <a href="decisions/ADR-A38-surface-output-publication-and-studio-authoring-boundary.md">ADR-A38</a></td>
+      <td>Fixture-backed, awaiting HTTP adapter validation</td>
+    </tr>
+    <tr>
+      <td>Design-time reasoning checks</td>
+      <td><code class="language-plaintext highlighter-rouge">platform/reasoning-testkit</code> (test-only), <code class="language-plaintext highlighter-rouge">tools/mork_compilers</code> OWL backend</td>
+      <td><a href="decisions/ADR-A83-test-only-reasoning-engine-isolation.md">ADR-A83</a>, <a href="/architecture/decisions/ADR-A90-eligibility-design-time-owl-class-backend.html">ADR-A90</a></td>
+      <td>Implemented, awaiting the maintainer’s validation</td>
+    </tr>
+    <tr>
+      <td>Release integration</td>
+      <td><code class="language-plaintext highlighter-rouge">platform/release-integration</code></td>
+      <td><code class="language-plaintext highlighter-rouge">contracts/release/</code>, <a href="/architecture/release-stack-integration.html">release integration</a>, <a href="decisions/ADR-A31-release-stack-neutral-integration-contract.md">ADR-A31</a></td>
+      <td>In progress</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="dependency-direction">Dependency Direction</h2>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Surface compiler and ontology assets
+        ^
+trusted graph resolver and worker adapter
+        ^
+Surface workflow control contract --&gt; Release integration contract --&gt; external release stack
+        ^                                      ^
+semantic dataset SPI, policy, outbox, and event schemas
+</code></pre></div></div>
+
+<p>The compiler and ontology assets retain semantic ownership. The new Java modules coordinate immutable references and operational lifecycle. Workers receive references, resolve them through trusted infrastructure, and call existing semantic code. External release stacks receive release intent and return receipts. None of these layers may use a browser or broker payload to establish graph authority.</p>
+
+<h2 id="reading-order">Reading Order</h2>
+
+<ol>
+  <li>Read <a href="decisions/ADR-A29-repository-toolchain-and-environment-boundary.md">ADR-A29</a> for environment and task ownership.</li>
+  <li>Read <a href="/architecture/semantic-platform.html">semantic platform</a> and <a href="decisions/ADR-A30-shared-semantic-platform-cross-runtime-boundary.md">ADR-A30</a> for graph and transport boundaries.</li>
+  <li>Read <a href="/architecture/surface-workflow.html">Surface workflow</a> and <a href="decisions/ADR-A32-surface-revision-lifecycle-and-release-candidates.md">ADR-A32</a> before changing Surface lifecycle code or worker messages.</li>
+  <li>Read <a href="/architecture/release-stack-integration.html">release integration</a> and <a href="decisions/ADR-A31-release-stack-neutral-integration-contract.md">ADR-A31</a> before implementing registry, GitOps, CI, or signing adapters.</li>
+</ol>
+
+<h2 id="validation-state">Validation State</h2>
+
+<p>The repository’s current authoring environment lacks Java 21, Maven, and a usable Python interpreter. JSON parsing, static diagnostics, and whitespace checks have run where available. Read each phase handoff before treating a component as validated.</p>

@@ -46,7 +46,7 @@ deliberate. The release slice OD-REL resolves it once, before the merge into `ma
 | OD6 Eligibility pilot | built autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD6.md) | the maintainer's review of seven decisions, 32 definitions and two changed tests |
 | OD7 Vocabulary | planned | OD6 |
 | OD8 onward, one per layer | planned | OD7, and for Foundation and Party their part of TD-16 |
-| DOC1 published decisions | briefed 2026-10-18 | OD6 preferred first |
+| DOC1 published decisions | built autonomously 2026-10-19, committed locally, [Validation Pack](../validation/DOC1.md) | the maintainer's review of the twelve published ADRs and eight decisions |
 | DOC2 site sections | planned | DOC1, RC1 |
 | DOC3 tutorial and Field Guide review | planned | DOC2, `lattice-tutorial` merged |
 | RC4 downstream extension | planned | RC3 |
@@ -199,3 +199,7 @@ None.
   removed, 42 graphs rewritten and checked graph to graph, and Instrument's warranty carve-back typed as the
   profile it is. The migration check now escapes line breaks, and TD-55 records its whole-file blank node
   labels. RC3 runs in a separate worktree.
+- 2026-10-19: DOC1 built. The published decisions list and the sources check run in `mise run check`, the
+  twelve ADRs Eligibility cites are published under the maintainer's advance approval (OD-D50), and the site
+  shows only those. The local site build showed Jekyll's `published: false` default hides nothing, so the site
+  excludes ADRs and includes each published one by name.

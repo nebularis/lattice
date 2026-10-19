@@ -1,0 +1,2186 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="triple-store-discovery">Triple-store discovery</h1>
+
+<p><strong>What this is.</strong> The project’s record of how each triple store we run actually behaves: its features, its limits, and how it
+reads the standards it implements, SPARQL 1.1 Query and Update above all. Each entry says what we were doing, how we found out,
+what the store does, why, what follows for LATTICE, and how to see it again.</p>
+
+<p><strong>Status:</strong> a living document, begun 2026-10-13 from formal-methods Track H’s persistence work (slices H2.1 to H2.4b). It is a
+source of truth for the project. Read it before relying on how a store behaves, and add to it when you find something. The
+skill <code class="language-plaintext highlighter-rouge">lattice-triple-stores</code> has the procedure.</p>
+
+<p><strong>Stores covered:</strong> rdflib 7.6.0 and Oxigraph 0.5.11 (through <code class="language-plaintext highlighter-rouge">pyoxigraph</code>). Each finding names the versions it was seen on.
+A finding holds for those versions only, until it is checked again. <strong>Tools above a store covered:</strong> pySHACL 0.40.1, which validates
+shapes on rdflib (TSD-23, TSD-24, TSD-31). TSD-22 to TSD-33 are about the cost of running queries and shapes, and
+<a href="/architecture/efficient-queries-and-shapes.html">Efficient queries and shapes</a> says which of them are properties of rdflib or pySHACL and which hold anywhere.</p>
+
+<h2 id="contents">Contents</h2>
+
+<ol>
+  <li><a href="#1-how-to-read-and-write-this-document">How to read and write this document</a></li>
+  <li><a href="#2-why-we-started-looking">Why we started looking</a></li>
+  <li><a href="#3-how-we-reach-each-store">How we reach each store</a></li>
+  <li><a href="#4-a-short-primer-on-how-sparql-evaluates-an-update">A short primer on how SPARQL evaluates an update</a></li>
+  <li><a href="#5-the-findings-at-a-glance">The findings at a glance</a></li>
+  <li><a href="#6-the-findings">The findings</a></li>
+  <li><a href="#7-corrections-and-what-they-taught-us">Corrections, and what they taught us</a></li>
+  <li><a href="#8-open-questions">Open questions</a></li>
+</ol>
+
+<h2 id="1-how-to-read-and-write-this-document">1. How to read and write this document</h2>
+
+<p>Every finding has an identifier, <code class="language-plaintext highlighter-rouge">TSD-nn</code>, that other documents cite. It is never reused. A finding that turns out wrong is
+corrected in place, with a dated note, and the story goes in §7.</p>
+
+<p>Each finding states its evidence, as one or more of these.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Evidence</th>
+      <th>Means</th>
+      <th>Example</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Source</strong></td>
+      <td>we read the store’s code, at a named version and path</td>
+      <td>rdflib’s <code class="language-plaintext highlighter-rouge">plugins/sparql/evaluate.py</code>, <code class="language-plaintext highlighter-rouge">evalJoin</code></td>
+    </tr>
+    <tr>
+      <td><strong>Observed</strong></td>
+      <td>we ran a probe and saw the result, and the probe is a test or a script named here</td>
+      <td><code class="language-plaintext highlighter-rouge">tools/persistence/tests/test_store_probes.py</code></td>
+    </tr>
+    <tr>
+      <td><strong>Documented</strong></td>
+      <td>the store’s own documentation says so</td>
+      <td>a page of the store’s manual</td>
+    </tr>
+    <tr>
+      <td><strong>Reasoned</strong></td>
+      <td>it follows from the specification or from other findings, and is not yet observed</td>
+      <td>marked as a hypothesis until it is</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>A finding is only as strong as its evidence. Source tells us the mechanism, Observed tells us it really happens on this
+version, and the two together are what we aim for. A finding built only on Documented or Reasoned evidence says so in its
+first line.</p>
+
+<p><strong>A run record</strong> goes with every Observed finding: the date, the store and its version, the Python version, and the kind of
+machine, never the machine or person (ADR-A124 decision 5). Five run records appear below.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Run</th>
+      <th>Machine</th>
+      <th>Python</th>
+      <th>Stores</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>R-A</strong></td>
+      <td>a Linux x86_64 container, 15 GB, used by an agent for H2.4b, 2026-10-12</td>
+      <td>3.14.8</td>
+      <td>rdflib 7.6.0, pyoxigraph 0.5.11</td>
+    </tr>
+    <tr>
+      <td><strong>R-B</strong></td>
+      <td>a macOS arm64 workstation, used for the H2 reviews and for this document, 2026-10-10 to 2026-10-13</td>
+      <td>3.14.7</td>
+      <td>rdflib 7.6.0, pyoxigraph 0.5.11</td>
+    </tr>
+    <tr>
+      <td><strong>R-C</strong></td>
+      <td>a Linux x86_64 container, 15 GB, used by an agent for H2.5, 2026-10-13</td>
+      <td>3.14.8</td>
+      <td>rdflib 7.6.0, pyoxigraph 0.5.11</td>
+    </tr>
+    <tr>
+      <td><strong>R-D</strong></td>
+      <td>a Linux x86_64 container, 4 logical cores, 15 GB, used by an agent for the ontology test-suite speed work, 2026-10-16 to 2026-10-17</td>
+      <td>3.14.8</td>
+      <td>rdflib 7.6.0, pyoxigraph 0.5.11, pySHACL 0.40.1</td>
+    </tr>
+    <tr>
+      <td><strong>R-E</strong></td>
+      <td>a macOS arm64 laptop with four performance and four efficiency cores and 8 GB, used by the maintainer to repeat R-D’s runs, 2026-10-16 to 2026-10-17</td>
+      <td>3.14.7</td>
+      <td>rdflib 7.6.0, pyoxigraph 0.5.11, pySHACL 0.40.1</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>How to add a finding</strong> is in §6.0 and in the skill. In short: say what you were testing, how you found it, the smallest
+SPARQL that shows it, the result on each store you have, the reason if you can find it in the source, what it means for
+LATTICE, and how to reproduce it. If reproducing it takes more than one query, write a short plan for a script.</p>
+
+<h2 id="2-why-we-started-looking">2. Why we started looking</h2>
+
+<p>LATTICE’s persistence layer (<code class="language-plaintext highlighter-rouge">ontology/persistence</code>, ADR-A78) describes how an application stores its data in an RDF store:
+which graph an aggregate lives in, how two writers are kept from overwriting each other, what receipt each write leaves. The
+persistence compiler (<code class="language-plaintext highlighter-rouge">tools/persistence</code>, ADR-A79) turns that description into SPARQL 1.1 Update operations, guarded writes
+of the kind the <a href="/architecture/rdf-sparql-patterns-guide.html">RDF and SPARQL patterns guide</a> sets out. For example, a compare-and-set replace
+deletes an aggregate’s old state and writes its new state only if the version row still says the sequence the caller read.</p>
+
+<p>Until formal-methods Track H, nothing executed those operations. Track H’s plan was to prove things about them, and proving
+things about a query means knowing what the query does. Three questions turned that into store discovery.</p>
+
+<ol>
+  <li><strong>Does the generated SPARQL do what the configuration intends?</strong> Slices H2.1 to H2.4 rebuilt the compiler’s output as a
+typed intermediate representation (<a href="decisions/ADR-A123-typed-operation-ir.md">ADR-A123</a>), and every rule of its checker is a
+claim about SPARQL. Two of those claims were wrong when first written (§7), and only running the queries showed it.</li>
+  <li><strong>What does a write cost?</strong> A composite aggregate’s replace was suspected, then shown, to cost time or memory quadratic in
+the aggregate’s size (TD-42). The cost depends on how the store applies an update, which is not fixed by the standard.</li>
+  <li><strong>What may the compiler assume about a store?</strong> The persistence layer’s later work (H5 in the <a href="../developer/plans/formal-methods-track-h.md">Track H
+plan</a>) models each store’s concurrency and gives the compiler a <em>capability
+record</em> to choose the right form of an operation for a store. The probes in this document are that record’s first
+entries.</li>
+</ol>
+
+<pre><code class="language-mermaid">flowchart LR
+  P["persistence profile&lt;br/&gt;(configuration)"] --&gt; C["compile"]
+  C --&gt; CP["compiled profile"]
+  CP --&gt; I["instantiate&lt;br/&gt;builders, typed IR"]
+  I --&gt; Q["SPARQL Update text"]
+  Q --&gt; R["rdflib 7.6.0"]
+  Q --&gt; O["Oxigraph 0.5.11"]
+  R --&gt; D["what each store did"]
+  O --&gt; D
+  D --&gt; T["this document"]
+  T --&gt; CR["H5 capability record&lt;br/&gt;and the compiler's choices"]
+</code></pre>
+
+<h2 id="3-how-we-reach-each-store">3. How we reach each store</h2>
+
+<p>The two stores are reached in different ways, and the difference matters to several findings.</p>
+
+<pre><code class="language-mermaid">flowchart TB
+  subgraph tests["tools/persistence/tests"]
+    E["engines.py&lt;br/&gt;the engine fixture&lt;br/&gt;each_engine marker"]
+  end
+  E --&gt;|"rdflib"| RD["rdflib Dataset&lt;br/&gt;in process"]
+  E --&gt;|"oxigraph"| OX["OxDataset facade&lt;br/&gt;rdflib-shaped API"]
+  OX --&gt; AD["lattice_testing_oxigraph&lt;br/&gt;OxigraphStore&lt;br/&gt;tools/testing/oxigraph"]
+  AD --&gt; PY["pyoxigraph.Store&lt;br/&gt;in memory"]
+  RD -.-&gt;|"parameters as&lt;br/&gt;initBindings"| RD
+  AD -.-&gt;|"parameters substituted&lt;br/&gt;into the text"| PY
+</code></pre>
+
+<ul>
+  <li><strong>rdflib</strong> runs in the test process. An update is <code class="language-plaintext highlighter-rouge">Dataset.update(text, initBindings={...})</code>, so a request-time parameter
+such as <code class="language-plaintext highlighter-rouge">$root</code> is an <em>initial binding</em>, a value the engine starts from, and never text.</li>
+  <li><strong>Oxigraph</strong> runs through <code class="language-plaintext highlighter-rouge">tools/testing/oxigraph</code> (<a href="decisions/ADR-A125-test-support-tooling.md">ADR-A125</a>), whose
+<code class="language-plaintext highlighter-rouge">OxigraphStore</code> wraps <code class="language-plaintext highlighter-rouge">pyoxigraph.Store</code>. Its <code class="language-plaintext highlighter-rouge">bind_parameters</code> writes each parameter into the query text as an encoded
+term, as a caller with no initial-binding API would. The tests reach it through <code class="language-plaintext highlighter-rouge">OxDataset</code> in
+<code class="language-plaintext highlighter-rouge">tools/persistence/tests/engines.py</code>, which offers the part of rdflib’s <code class="language-plaintext highlighter-rouge">Dataset</code> API the tests use.</li>
+  <li><strong>A test opts in to both engines</strong> with <code class="language-plaintext highlighter-rouge">@engines.each_engine</code>. The Oxigraph cases carry the <code class="language-plaintext highlighter-rouge">oxigraph</code> marker and skip where
+the package is absent. <code class="language-plaintext highlighter-rouge">mise run check:persistence-oxigraph</code> installs it and runs only them.</li>
+  <li><strong>The benchmark</strong> <code class="language-plaintext highlighter-rouge">benchmark/persistence-composite-cost</code> (<a href="decisions/ADR-A124-benchmark-root.md">ADR-A124</a>) runs each size in a
+child process under a memory cap, on both engines.</li>
+</ul>
+
+<p>So “the store” in a finding means the store as reached this way. A finding that depends on initial bindings, for example,
+says which mechanism it used.</p>
+
+<h2 id="4-a-short-primer-on-how-sparql-evaluates-an-update">4. A short primer on how SPARQL evaluates an update</h2>
+
+<p>Most findings below are about where a store departs from, or interprets, a part of SPARQL 1.1 that few people need to think
+about. This section sets out those parts once.</p>
+
+<h3 id="41-delete--insert--where-by-the-specification">4.1 <code class="language-plaintext highlighter-rouge">DELETE … INSERT … WHERE</code>, by the specification</h3>
+
+<p>SPARQL 1.1 Update (§3.1.3) defines <code class="language-plaintext highlighter-rouge">DELETE { D } INSERT { I } WHERE { P }</code> in three steps. Evaluate <code class="language-plaintext highlighter-rouge">P</code> once, against the
+dataset as it was before the operation, giving a sequence of solutions. Fill <code class="language-plaintext highlighter-rouge">D</code> and <code class="language-plaintext highlighter-rouge">I</code> with each solution, skipping any triple
+with an unbound variable. Remove every filled deletion, then add every filled insertion. The result does not depend on the order
+of the solutions.</p>
+
+<pre><code class="language-mermaid">flowchart LR
+  D0["dataset before"] --&gt; W["WHERE, evaluated once"]
+  W --&gt; S["solutions"]
+  S --&gt; FD["fill DELETE&lt;br/&gt;for each solution"]
+  S --&gt; FI["fill INSERT&lt;br/&gt;for each solution"]
+  FD --&gt; UD["all deletions"]
+  FI --&gt; UI["all insertions"]
+  UD --&gt; A["remove all deletions,&lt;br/&gt;then add all insertions"]
+  UI --&gt; A
+  A --&gt; D1["dataset after"]
+</code></pre>
+
+<p>We call a store that does exactly this <strong>snapshot</strong>, and the capability record will carry it as <code class="language-plaintext highlighter-rouge">snapshotUpdateSemantics</code>.
+A store may instead take the solutions one at a time and, for each, remove its deletions and add its insertions. Then a triple
+one solution inserts can be removed by a later solution, and the order of solutions decides the result. TSD-01 is about exactly
+this.</p>
+
+<h3 id="42-groups-are-evaluated-bottom-up">4.2 Groups are evaluated bottom-up</h3>
+
+<p>A <code class="language-plaintext highlighter-rouge">WHERE</code> clause is a group, and it may hold inner groups: <code class="language-plaintext highlighter-rouge">{ … }</code>, <code class="language-plaintext highlighter-rouge">OPTIONAL { … }</code>, a <code class="language-plaintext highlighter-rouge">UNION</code> branch, a <code class="language-plaintext highlighter-rouge">GRAPH g { … }</code>. The
+specification translates the query into an algebra (§18.2) in which each inner group is evaluated on its own and then joined
+with what came before it. So an inner group cannot <em>see</em> a variable bound outside it, although its result is <em>joined</em> with it.
+<code class="language-plaintext highlighter-rouge">FILTER NOT EXISTS { … }</code> is the exception. It is evaluated once per outer solution, with that solution’s values substituted.</p>
+
+<pre><code class="language-mermaid">flowchart TB
+  O["outer group&lt;br/&gt;BIND(1 AS ?a)"] --&gt; J["join, on shared variables"]
+  N["inner group, evaluated alone&lt;br/&gt;BIND(?a + 1 AS ?b)&lt;br/&gt;?a is unknown here"] --&gt; J
+  J --&gt; R["?a = 1, ?b unbound"]
+  O2["outer solution ?a = 1"] --&gt; NE["NOT EXISTS, per outer solution&lt;br/&gt;FILTER(?a = 1) sees ?a"]
+</code></pre>
+
+<p>This decides two things that matter here: what a <code class="language-plaintext highlighter-rouge">BIND</code> inside an inner group computes (TSD-03), and how much a <code class="language-plaintext highlighter-rouge">GRAPH ?g</code>
+inside an inner group reads (TSD-04).</p>
+
+<h3 id="43-a-filter-applies-to-its-whole-group">4.3 A <code class="language-plaintext highlighter-rouge">FILTER</code> applies to its whole group</h3>
+
+<p>A <code class="language-plaintext highlighter-rouge">FILTER</code> is not a step in a sequence. It applies to every solution of the group it is written in, after all the group’s
+patterns have matched, wherever in the group it is written. A filter that tests whether a variable is bound, written at the top
+of a group whose patterns also bind that variable, therefore sees it bound by the data. TSD-13 shows what this did to a guard.</p>
+
+<h3 id="44-request-time-parameters-initial-bindings-or-text">4.4 Request-time parameters: initial bindings or text</h3>
+
+<p>A generated operation leaves its request-time values as variables, written <code class="language-plaintext highlighter-rouge">$root</code>, <code class="language-plaintext highlighter-rouge">$epoch</code> and so on. A caller fills them in
+one of two ways.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Way</th>
+      <th>How</th>
+      <th>Example</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>initial bindings</td>
+      <td>the engine starts evaluation with the variable bound</td>
+      <td>rdflib’s <code class="language-plaintext highlighter-rouge">initBindings</code>, a prepared query’s parameters</td>
+    </tr>
+    <tr>
+      <td>text substitution</td>
+      <td>the caller writes the value into the query text before sending it</td>
+      <td>the SPARQL 1.1 Protocol, which has no binding parameters, and our Oxigraph adapter</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The two are not interchangeable. Some functions accept only a variable (<code class="language-plaintext highlighter-rouge">BOUND</code>), so substituted text can stop a query parsing
+(TSD-11).</p>
+
+<h2 id="5-the-findings-at-a-glance">5. The findings at a glance</h2>
+
+<p><code class="language-plaintext highlighter-rouge">✔</code> means the store does what SPARQL 1.1 says, <code class="language-plaintext highlighter-rouge">✘</code> that it departs from it, and a word where the specification leaves the choice
+to the store or where it is a matter of capacity.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Finding</th>
+      <th>Specification</th>
+      <th>rdflib 7.6.0</th>
+      <th>Oxigraph 0.5.11</th>
+      <th>Evidence</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="#tsd-01-the-order-in-which-a-delete-insert-where-is-applied">TSD-01</a></td>
+      <td>applying a <code class="language-plaintext highlighter-rouge">DELETE</code>/<code class="language-plaintext highlighter-rouge">INSERT</code></td>
+      <td>all deletions, then all insertions</td>
+      <td>✘ one solution at a time, in hash order</td>
+      <td>✘ one solution at a time, in solution order</td>
+      <td>Source, Observed</td>
+    </tr>
+    <tr>
+      <td><a href="#tsd-02-what-filling-a-template-once-per-solution-costs">TSD-02</a></td>
+      <td>filling a template once per solution</td>
+      <td>not specified</td>
+      <td>quadratic in time</td>
+      <td>quadratic in time and memory</td>
+      <td>Source, Observed</td>
+    </tr>
+    <tr>
+      <td><a href="#tsd-03-what-a-bind-inside-an-inner-group-can-see">TSD-03</a></td>
+      <td>a <code class="language-plaintext highlighter-rouge">BIND</code> in an inner group</td>
+      <td>sees only its group</td>
+      <td>✔</td>
+      <td>✔</td>
+      <td>Observed</td>
+    </tr>
+    <tr>
+      <td><a href="#tsd-04-a-graph-variable-bound-outside-an-inner-group">TSD-04</a></td>
+      <td><code class="language-plaintext highlighter-rouge">GRAPH ?g</code> inside an inner group, <code class="language-plaintext highlighter-rouge">?g</code> bound outside</td>
+      <td>joined afterwards</td>
+      <td>passes the binding in, reads one graph</td>
+      <td>passes the binding in, reads one graph</td>
+      <td>Observed</td>
+    </tr>
+    <tr>
+      <td><a href="#tsd-05-a-template-quad-whose-graph-variable-is-unbound">TSD-05</a></td>
+      <td>template quad, graph variable unbound</td>
+      <td>skipped</td>
+      <td>✘ written to a new blank-node graph</td>
+      <td>✔ skipped</td>
+      <td>Source (rdflib), Observed</td>
+    </tr>
+    <tr>
+      <td><a href="#tsd-06-a-request-whose-second-operation-fails-and-graph-management">TSD-06</a></td>
+      <td>a request whose second operation fails</td>
+      <td>should be atomic</td>
+      <td>keeps the first operation</td>
+      <td>rolls the first back</td>
+      <td>Observed</td>
+    </tr>
+    <tr>
+      <td><a href="#tsd-07-numeric-datatypes-are-not-kept-by-oxigraph">TSD-07</a></td>
+      <td><code class="language-plaintext highlighter-rouge">"1"^^xsd:long</code> stored and read</td>
+      <td>the term is kept</td>
+      <td>✔ kept</td>
+      <td>✘ becomes <code class="language-plaintext highlighter-rouge">xsd:integer</code></td>
+      <td>Observed</td>
+    </tr>
+    <tr>
+      <td><a href="#tsd-08-a-zero-length-path-from-a-term-that-is-in-no-triple">TSD-08</a></td>
+      <td>zero-length path from a term in no triple</td>
+      <td>our reading: matches the term</td>
+      <td>matches it</td>
+      <td>matches nothing</td>
+      <td>Observed</td>
+    </tr>
+    <tr>
+      <td><a href="#tsd-09-unicode-escapes-and-an-escaped-backslash">TSD-09</a></td>
+      <td><code class="language-plaintext highlighter-rouge">\u</code> escapes and an escaped backslash</td>
+      <td>processed before parsing (§19.2)</td>
+      <td>whole-text pre-pass</td>
+      <td>inside string tokens</td>
+      <td>Source (rdflib), Observed</td>
+    </tr>
+    <tr>
+      <td><a href="#tsd-10-a-result-row-whose-projected-variables-are-all-unbound">TSD-10</a></td>
+      <td>a result row with every projected variable unbound</td>
+      <td>kept</td>
+      <td>✘ dropped</td>
+      <td>✔ kept</td>
+      <td>Observed</td>
+    </tr>
+    <tr>
+      <td><a href="#tsd-11-bound-and-text-substitution">TSD-11</a></td>
+      <td><code class="language-plaintext highlighter-rouge">BOUND(&lt;iri&gt;)</code> after text substitution</td>
+      <td>a syntax error</td>
+      <td>syntax error</td>
+      <td>syntax error</td>
+      <td>Observed</td>
+    </tr>
+    <tr>
+      <td><a href="#tsd-12-initial-bindings-are-visible-inside-inner-groups-on-rdflib">TSD-12</a></td>
+      <td>initial bindings inside an inner group</td>
+      <td>not specified</td>
+      <td>visible</td>
+      <td>not tested, the adapter substitutes text</td>
+      <td>Observed</td>
+    </tr>
+    <tr>
+      <td><a href="#tsd-13-a-filter-at-the-top-of-a-group-sees-what-the-groups-patterns-bound">TSD-13</a></td>
+      <td>a top-level <code class="language-plaintext highlighter-rouge">FILTER(BOUND(?x))</code> with <code class="language-plaintext highlighter-rouge">?x</code> in the group’s patterns</td>
+      <td>sees <code class="language-plaintext highlighter-rouge">?x</code> bound by the data</td>
+      <td>✔</td>
+      <td>✔</td>
+      <td>Observed</td>
+    </tr>
+    <tr>
+      <td><a href="#tsd-14-graph-management-operations-on-rdflib">TSD-14</a></td>
+      <td><code class="language-plaintext highlighter-rouge">CREATE GRAPH</code>, <code class="language-plaintext highlighter-rouge">DROP GRAPH</code> of an absent graph</td>
+      <td>defined</td>
+      <td><code class="language-plaintext highlighter-rouge">CREATE</code> not implemented, <code class="language-plaintext highlighter-rouge">DROP</code> succeeds</td>
+      <td><code class="language-plaintext highlighter-rouge">DROP</code> fails</td>
+      <td>Observed</td>
+    </tr>
+    <tr>
+      <td><a href="#tsd-15-a-sub-select-and-the-variables-around-it">TSD-15</a></td>
+      <td>a sub-select and the variables around it</td>
+      <td>evaluated on its own, only its projections leave it</td>
+      <td>✘ an outer binding leaks in</td>
+      <td>✔</td>
+      <td>Observed</td>
+    </tr>
+    <tr>
+      <td><a href="#tsd-16-min-and-max-over-iris">TSD-16</a></td>
+      <td><code class="language-plaintext highlighter-rouge">MIN</code> and <code class="language-plaintext highlighter-rouge">MAX</code> over IRIs</td>
+      <td>the lowest or highest IRI</td>
+      <td>✘ a plain literal of the IRI text</td>
+      <td>✔ an IRI</td>
+      <td>Observed</td>
+    </tr>
+    <tr>
+      <td><a href="#tsd-17-a-chain-of-additions-and-subtractions">TSD-17</a></td>
+      <td><code class="language-plaintext highlighter-rouge">a - b + c</code> and <code class="language-plaintext highlighter-rouge">a / b / c</code></td>
+      <td>grouped from the left</td>
+      <td>✔</td>
+      <td>✘ grouped from the right</td>
+      <td>Observed</td>
+    </tr>
+    <tr>
+      <td><a href="#tsd-18-count-distinct-over-xsdlong-and-xsdinteger-terms">TSD-18</a></td>
+      <td><code class="language-plaintext highlighter-rouge">COUNT(DISTINCT)</code> over <code class="language-plaintext highlighter-rouge">xsd:long</code> and <code class="language-plaintext highlighter-rouge">xsd:integer</code></td>
+      <td>two terms, so two</td>
+      <td>counts them apart</td>
+      <td>counts them together, since it stores both as <code class="language-plaintext highlighter-rouge">xsd:integer</code></td>
+      <td>Observed</td>
+    </tr>
+    <tr>
+      <td><a href="#tsd-19-the-order-of-group_concat">TSD-19</a></td>
+      <td>the order of <code class="language-plaintext highlighter-rouge">GROUP_CONCAT</code></td>
+      <td>not specified</td>
+      <td>the order the data was stored in, whatever the hash seed (this query shape)</td>
+      <td>the order of the solutions</td>
+      <td>Observed</td>
+    </tr>
+    <tr>
+      <td><a href="#tsd-20-a-filter-inside-not-exists-and-a-parameter">TSD-20</a></td>
+      <td>a <code class="language-plaintext highlighter-rouge">FILTER</code> inside <code class="language-plaintext highlighter-rouge">NOT EXISTS</code> and a parameter or a sub-select’s projection</td>
+      <td>sees them by substitution</td>
+      <td>✔ by initial binding and by text</td>
+      <td>✔ by text</td>
+      <td>Observed</td>
+    </tr>
+    <tr>
+      <td><a href="#tsd-21-an-empty-values-block-in-an-update">TSD-21</a></td>
+      <td>an empty <code class="language-plaintext highlighter-rouge">VALUES</code> block in an update <code class="language-plaintext highlighter-rouge">WHERE</code></td>
+      <td>no solution</td>
+      <td>✘ raises <code class="language-plaintext highlighter-rouge">AttributeError</code>, before changing anything</td>
+      <td>✔ no solution, nothing written</td>
+      <td>Observed</td>
+    </tr>
+    <tr>
+      <td><a href="#tsd-22-rdflib-parses-and-translates-a-querys-text-on-every-call">TSD-22</a></td>
+      <td>parsing a query’s text</td>
+      <td>not specified</td>
+      <td>✘ costs 20 ms for a 20-line query, 0.5 ms when prepared</td>
+      <td>0.17 ms, parse and run</td>
+      <td>Source, Observed</td>
+    </tr>
+    <tr>
+      <td><a href="#tsd-23-pyshacl-runs-a-sparql-constraint-once-per-focus-node">TSD-23</a></td>
+      <td>how often a SPARQL-based constraint is run</td>
+      <td>defined per focus node</td>
+      <td>pySHACL: once per focus node</td>
+      <td>pySHACL runs on rdflib only</td>
+      <td>Source, Observed</td>
+    </tr>
+    <tr>
+      <td><a href="#tsd-24-the-prefix-block-pyshacl-writes-changes-order-between-validations">TSD-24</a></td>
+      <td>the order of the <code class="language-plaintext highlighter-rouge">PREFIX</code> lines pySHACL writes</td>
+      <td>not specified</td>
+      <td>varies between validations</td>
+      <td>not applicable</td>
+      <td>Source, Observed</td>
+    </tr>
+    <tr>
+      <td><a href="#tsd-25-rdflib-fixes-the-order-of-a-groups-patterns-before-it-knows-the-initial-bindings">TSD-25</a></td>
+      <td>the order of a group’s patterns</td>
+      <td>not specified</td>
+      <td>✘ fixed at translation, ignores initial bindings</td>
+      <td>✔ no sensitivity seen</td>
+      <td>Source, Observed</td>
+    </tr>
+    <tr>
+      <td><a href="#tsd-26-a-chain-of-three-or-more-groups-is-joined-by-evaluating-the-later-ones-whole">TSD-26</a></td>
+      <td>joining a chain of groups</td>
+      <td>not specified</td>
+      <td>evaluates the later groups whole</td>
+      <td>not tested</td>
+      <td>Source, Observed</td>
+    </tr>
+    <tr>
+      <td><a href="#tsd-27-a-filter-is-applied-after-its-groups-patterns-and-rdflib-does-not-move-it-earlier">TSD-27</a></td>
+      <td>when a <code class="language-plaintext highlighter-rouge">FILTER</code> runs</td>
+      <td>after the group’s patterns (scope)</td>
+      <td>✘ after all of them</td>
+      <td>1.3 to 1.5 times between forms</td>
+      <td>Source, Observed</td>
+    </tr>
+    <tr>
+      <td><a href="#tsd-28-presence-and-absence-tests-the-forms-differ-little">TSD-28</a></td>
+      <td>forms of a presence or absence test</td>
+      <td>equal</td>
+      <td>1.0 to 1.4 times</td>
+      <td>1.1 to 1.2 times</td>
+      <td>Observed</td>
+    </tr>
+    <tr>
+      <td><a href="#tsd-29-two-parses-of-one-document-never-give-equal-triple-sets">TSD-29</a></td>
+      <td>two parses of one document</td>
+      <td>blank nodes are fresh</td>
+      <td>fresh labels</td>
+      <td>fresh labels</td>
+      <td>Observed</td>
+    </tr>
+    <tr>
+      <td><a href="#tsd-30-a-querys-undeclared-prefixes-resolve-from-the-data-graphs-bindings">TSD-30</a></td>
+      <td>a prefix the query does not declare</td>
+      <td>an error</td>
+      <td>resolved from the graph’s bindings</td>
+      <td>not tested</td>
+      <td>Source, Observed</td>
+    </tr>
+    <tr>
+      <td><a href="#tsd-31-pyshacl-copies-the-data-graph-on-every-validation-unless-told-not-to">TSD-31</a></td>
+      <td>copying the data graph for a validation</td>
+      <td>not specified</td>
+      <td>pySHACL copies it, 0.09 s for 5,000 to 14,000 triples</td>
+      <td>not applicable</td>
+      <td>Source, Observed</td>
+    </tr>
+    <tr>
+      <td><a href="#tsd-32-a-constant-filter-whose-value-is-false-is-dropped-by-rdflib">TSD-32</a></td>
+      <td><code class="language-plaintext highlighter-rouge">FILTER (false)</code></td>
+      <td>removes every solution</td>
+      <td>✘ removes none</td>
+      <td>✔</td>
+      <td>Source, Observed</td>
+    </tr>
+    <tr>
+      <td><a href="#tsd-33-on-oxigraph-count-over-a-statically-false-filter-returns-no-row">TSD-33</a></td>
+      <td><code class="language-plaintext highlighter-rouge">COUNT(*)</code> over a filter that is statically false</td>
+      <td>one row, 0</td>
+      <td>✔ except TSD-32</td>
+      <td>✘ no row</td>
+      <td>Observed</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="6-the-findings">6. The findings</h2>
+
+<h3 id="60-the-shape-of-an-entry">6.0 The shape of an entry</h3>
+
+<p>Each entry has the same parts, so a reader can find what they need.</p>
+
+<ul>
+  <li><strong>Context.</strong> What we were building or testing when it came up, and why it mattered then.</li>
+  <li><strong>How we found it.</strong> The steps, in order, and the evidence each gave.</li>
+  <li><strong>What the store does.</strong> The smallest SPARQL that shows it, and the result on each store.</li>
+  <li><strong>Why.</strong> The mechanism, from the source where we read it.</li>
+  <li><strong>What it means for LATTICE.</strong> The decisions, debt and tests it touches.</li>
+  <li><strong>Reproduce it.</strong> A query to run, or a short plan for a script when the setup has layers.</li>
+</ul>
+
+<hr />
+
+<h3 id="tsd-01-the-order-in-which-a-deleteinsertwhere-is-applied">TSD-01. The order in which a <code class="language-plaintext highlighter-rouge">DELETE</code>/<code class="language-plaintext highlighter-rouge">INSERT</code>/<code class="language-plaintext highlighter-rouge">WHERE</code> is applied</h3>
+
+<p><strong>Evidence:</strong> Source and Observed, on both stores. Runs R-A and R-B. <strong>Corrected 2026-10-13</strong>, see §7.1.</p>
+
+<p><strong>Context.</strong> A composite aggregate’s replace, <code class="language-plaintext highlighter-rouge">cas-replace-composite-property</code>, deletes every triple of the aggregate and inserts
+the new state. A cheaper form of it (R2 in the <a href="/developer/sketches/formal-methods-track-h-typed-ir.html#43-how-a-composite-replace-is-evaluated-and-what-it-costs">typed IR sketch §4.3</a>)
+would put the payload in <code class="language-plaintext highlighter-rouge">VALUES</code> rows beside the sweep’s rows, so each payload triple is filled once. That form is right only
+if the store removes every deletion before it adds any insertion, because a payload often repeats a triple the aggregate
+already holds, an unchanged name for example. So we needed to know how each store applies an update.</p>
+
+<p><strong>How we found it.</strong></p>
+
+<ol>
+  <li><em>Source, rdflib.</em> We read <code class="language-plaintext highlighter-rouge">rdflib/plugins/sparql/update.py</code>, <code class="language-plaintext highlighter-rouge">evalModify</code>, in 7.6.0. After evaluating the <code class="language-plaintext highlighter-rouge">WHERE</code> it loops
+<code class="language-plaintext highlighter-rouge">for c in list(res):</code> and, inside the loop, does <code class="language-plaintext highlighter-rouge">dg -= _fillTemplate(u.delete.triples, c)</code> and then
+<code class="language-plaintext highlighter-rouge">dg += _fillTemplate(u.insert.triples, c)</code> (and the same for each graph’s quads). So it removes and adds per solution.</li>
+  <li><em>A first probe, H2.4b.</em> The probe P1 stores one triple, then runs an update whose two solutions, written as <code class="language-plaintext highlighter-rouge">VALUES</code> rows,
+respectively insert and delete that triple. Under the specification the triple survives in either row order. In run R-A
+rdflib kept it in both orders, and the slice concluded that rdflib is snapshot. That conclusion was wrong.</li>
+  <li><em>The contradiction.</em> In run R-B the same probe lost the triple on rdflib. A trace of the order of solutions, and then the
+same probe run with <code class="language-plaintext highlighter-rouge">PYTHONHASHSEED</code> fixed to each of 0 to 11, showed the result changing with the seed: lost in both
+orders for 6 seeds, kept in both for 4, and dependent on the row order for 2. The probe’s test, which asserted “kept”, failed
+in 2 of 3 runs of <code class="language-plaintext highlighter-rouge">check:persistence</code> with no seed set.</li>
+  <li><em>Source again.</em> rdflib translates the probe’s <code class="language-plaintext highlighter-rouge">WHERE { VALUES … }</code> to <code class="language-plaintext highlighter-rouge">Join(BGP{}, ToMultiSet(Values))</code>, and the join is
+not marked lazy. <code class="language-plaintext highlighter-rouge">evaluate.py</code>, <code class="language-plaintext highlighter-rouge">evalJoin</code>, then does <code class="language-plaintext highlighter-rouge">b = set(evalPart(ctx, join.p2))</code>. A Python <code class="language-plaintext highlighter-rouge">set</code> of solutions iterates
+in an order that follows the hash of each solution, and string hashes change with <code class="language-plaintext highlighter-rouge">PYTHONHASHSEED</code> per process. So the order
+of solutions, and with it the result of the update, can change from one process to the next.</li>
+  <li><em>Source, Oxigraph.</em> In Oxigraph 0.5.11, <code class="language-plaintext highlighter-rouge">lib/oxigraph/src/sparql/update.rs</code>, <code class="language-plaintext highlighter-rouge">eval_delete_insert</code> does
+<code class="language-plaintext highlighter-rouge">prepared.execute(...).collect::&lt;Result&lt;Vec&lt;_&gt;, _&gt;&gt;()?</code> to gather every computed <code class="language-plaintext highlighter-rouge">DeleteInsertQuad</code>, then
+<code class="language-plaintext highlighter-rouge">for mutation in mutations</code> applies each <code class="language-plaintext highlighter-rouge">Delete</code> or <code class="language-plaintext highlighter-rouge">Insert</code> in turn. The reads happen before any write. The order inside the
+<code class="language-plaintext highlighter-rouge">Vec</code> is the order of solutions, deletions then insertions for each, which the probe confirms.</li>
+  <li><em>Observed, Oxigraph.</em> P1 on Oxigraph loses the triple when the inserting row comes first and keeps it when the deleting row
+comes first, every time.</li>
+</ol>
+
+<p><strong>What the store does.</strong></p>
+
+<div class="language-sparql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># stored beforehand: GRAPH &lt;urn:g&gt; { &lt;urn:s&gt; &lt;urn:p&gt; &lt;urn:o&gt; }</span><span class="w">
+</span><span class="k">DELETE</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:g&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">?d</span><span class="w"> </span><span class="nn">&lt;urn:p&gt;</span><span class="w"> </span><span class="nn">&lt;urn:o&gt;</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span><span class="k">INSERT</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:g&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">?i</span><span class="w"> </span><span class="nn">&lt;urn:p&gt;</span><span class="w"> </span><span class="nn">&lt;urn:o&gt;</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span><span class="k">WHERE</span><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="nv">?i</span><span class="w"> </span><span class="nv">?d</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">(</span><span class="nn">&lt;urn:s&gt;</span><span class="w"> </span><span class="k">UNDEF</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="k">UNDEF</span><span class="w"> </span><span class="nn">&lt;urn:s&gt;</span><span class="p">)</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Store</th>
+      <th>Row order as written</th>
+      <th>Is <code class="language-plaintext highlighter-rouge">&lt;urn:s&gt; &lt;urn:p&gt; &lt;urn:o&gt;</code> still there?</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>specification</td>
+      <td>either</td>
+      <td>yes</td>
+    </tr>
+    <tr>
+      <td>rdflib 7.6.0</td>
+      <td>either</td>
+      <td>depends on the process’s hash seed</td>
+    </tr>
+    <tr>
+      <td>Oxigraph 0.5.11</td>
+      <td>inserting row first</td>
+      <td>no</td>
+    </tr>
+    <tr>
+      <td>Oxigraph 0.5.11</td>
+      <td>deleting row first</td>
+      <td>yes</td>
+    </tr>
+  </tbody>
+</table>
+
+<pre><code class="language-mermaid">sequenceDiagram
+  participant W as WHERE
+  participant R as rdflib evalModify
+  participant G as graph
+  W-&gt;&gt;R: solutions, from a set, in hash order
+  loop each solution in turn
+    R-&gt;&gt;G: remove this solution's deletions
+    R-&gt;&gt;G: add this solution's insertions
+  end
+  Note over R,G: insert row then delete row, the triple is lost
+  Note over R,G: delete row then insert row, the triple survives
+</code></pre>
+
+<pre><code class="language-mermaid">sequenceDiagram
+  participant W as WHERE
+  participant X as Oxigraph eval_delete_insert
+  participant G as store
+  W-&gt;&gt;X: solutions, in evaluation order
+  X-&gt;&gt;X: collect every Delete and Insert into one Vec
+  loop each mutation in the Vec
+    X-&gt;&gt;G: apply it
+  end
+  Note over X,G: the Vec keeps solution order, so the last word on a triple wins
+</code></pre>
+
+<p><strong>Why.</strong> Neither store keeps the specification’s two phases. rdflib interleaves per solution, and its solution order for a
+non-lazy join comes from a Python <code class="language-plaintext highlighter-rouge">set</code>. Oxigraph separates reading from writing, which protects the <code class="language-plaintext highlighter-rouge">WHERE</code> from the update’s
+own changes, but then applies the collected mutations in solution order rather than all deletions first.</p>
+
+<p><strong>What it means for LATTICE.</strong></p>
+
+<ul>
+  <li><strong>R0, the replace as shipped, stays right on both.</strong> It puts the whole payload in the <code class="language-plaintext highlighter-rouge">INSERT</code> template, so every solution adds
+every payload triple again, and the last solution restores anything an earlier one removed. Its redundancy is what makes it
+correct here, and that redundancy is what TSD-02 measures.</li>
+  <li><strong>R2, the linear form, is unsafe on both stores.</strong> The sketch’s §4.3 expected it to be safe where <code class="language-plaintext highlighter-rouge">snapshotUpdateSemantics</code>
+holds, and neither store has it. H5’s capability record carries <code class="language-plaintext highlighter-rouge">snapshotUpdateSemantics = false</code> for both.</li>
+  <li><strong>Any generated update must be right whatever the solution order.</strong> On rdflib a wrong assumption would not fail reliably, it
+would fail in some processes. A test of order-dependent behaviour on rdflib must fix the hash seed or sweep it.</li>
+  <li><strong>The P1 test was corrected</strong> on 2026-10-13 (<code class="language-plaintext highlighter-rouge">test_store_probes.py</code>, H2.4b-T1 and T2). On rdflib it runs the probe in child
+processes under seeds 0 to 11 and requires both outcomes to occur. On Oxigraph it keeps the row-order expectations.</li>
+</ul>
+
+<p><strong>Reproduce it.</strong></p>
+
+<p>A script, in four steps.</p>
+
+<ol>
+  <li>Write a file <code class="language-plaintext highlighter-rouge">p1.py</code> that creates an rdflib <code class="language-plaintext highlighter-rouge">Dataset</code>, adds <code class="language-plaintext highlighter-rouge">&lt;urn:s&gt; &lt;urn:p&gt; &lt;urn:o&gt;</code> to graph <code class="language-plaintext highlighter-rouge">&lt;urn:g&gt;</code>, runs the update
+above with the <code class="language-plaintext highlighter-rouge">VALUES</code> rows taken from <code class="language-plaintext highlighter-rouge">sys.argv[1]</code>, and prints whether the triple is still there.</li>
+  <li>
+    <p>Run it twelve times per row order, each with a different <code class="language-plaintext highlighter-rouge">PYTHONHASHSEED</code>:</p>
+
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">for </span>seed <span class="k">in </span>0 1 2 3 4 5 6 7 8 9 10 11<span class="p">;</span> <span class="k">do </span><span class="nv">PYTHONHASHSEED</span><span class="o">=</span><span class="nv">$seed</span> mise <span class="nb">exec</span> <span class="nt">--</span> python p1.py <span class="s1">'(&lt;urn:s&gt; UNDEF) (UNDEF &lt;urn:s&gt;)'</span><span class="p">;</span> <span class="k">done</span>
+</code></pre></div>    </div>
+  </li>
+  <li>Expect a mix of <code class="language-plaintext highlighter-rouge">True</code> and <code class="language-plaintext highlighter-rouge">False</code>. A store that applied the specification’s order would print <code class="language-plaintext highlighter-rouge">True</code> every time.</li>
+  <li>For Oxigraph, run the same update through <code class="language-plaintext highlighter-rouge">pyoxigraph.Store().update(...)</code> in both row orders. Expect <code class="language-plaintext highlighter-rouge">False</code> with the
+inserting row first and <code class="language-plaintext highlighter-rouge">True</code> with the deleting row first, whatever the seed.</li>
+</ol>
+
+<p>To see the order itself, wrap <code class="language-plaintext highlighter-rouge">rdflib.plugins.sparql.update._fillTemplate</code> with a function that records, for each call, whether
+<code class="language-plaintext highlighter-rouge">c.get(Variable("i"))</code> is bound, and then calls the original. Keep the wrapper this small. A wrapper that iterated the whole
+solution gave a misleading result in one run, which we did not explain, see §7.1.</p>
+
+<hr />
+
+<h3 id="tsd-02-what-filling-a-template-once-per-solution-costs">TSD-02. What filling a template once per solution costs</h3>
+
+<p><strong>Evidence:</strong> Source and Observed, on both stores. Run R-A for the benchmark, R-B for the first measurement.</p>
+
+<p><strong>Context.</strong> The composite replace R0 sweeps the root and every member of an aggregate in one <code class="language-plaintext highlighter-rouge">OPTIONAL</code> pattern, which gives
+one solution per stored triple, M of them. Its <code class="language-plaintext highlighter-rouge">INSERT</code> template holds the N payload triples, and none of them uses a sweep
+variable. So, by the definition in §4.1, the payload is filled M times before the union removes the copies. Whether a store
+does that literally was the question behind TD-42.</p>
+
+<div class="language-sparql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">DELETE</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;data&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">?s</span><span class="w"> </span><span class="nv">?p</span><span class="w"> </span><span class="nv">?o</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="err">…</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span><span class="k">INSERT</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;data&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="err">…N</span><span class="w"> </span><span class="err">payload</span><span class="w"> </span><span class="err">triples…</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="err">…</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span><span class="k">WHERE</span><span class="w">  </span><span class="p">{</span><span class="w">
+  </span><span class="err">…</span><span class="w"> </span><span class="err">the</span><span class="w"> </span><span class="err">version-row</span><span class="w"> </span><span class="err">guard</span><span class="p">,</span><span class="w"> </span><span class="err">one</span><span class="w"> </span><span class="err">solution</span><span class="w"> </span><span class="err">…</span><span class="w">
+  </span><span class="k">OPTIONAL</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;data&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">$root</span><span class="w"> </span><span class="nn">&lt;ownedPath&gt;</span><span class="w"> </span><span class="nv">?s</span><span class="w"> </span><span class="p">.</span><span class="w"> </span><span class="nv">?s</span><span class="w"> </span><span class="nv">?p</span><span class="w"> </span><span class="nv">?o</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w">   </span><span class="c1"># M solutions</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<pre><code class="language-mermaid">flowchart TB
+  G["guards&lt;br/&gt;1 solution"] --&gt; J["join"]
+  SW["sweep&lt;br/&gt;M stored triples"] --&gt; J
+  J --&gt; SOL["M solutions"]
+  SOL --&gt; DEL["DELETE fills: M"]
+  SOL --&gt; INS["INSERT fills: M x N&lt;br/&gt;the whole payload each time"]
+</code></pre>
+
+<p><strong>How we found it.</strong></p>
+
+<ol>
+  <li><em>Source, rdflib.</em> <code class="language-plaintext highlighter-rouge">evalModify</code>’s per-solution loop (TSD-01) calls <code class="language-plaintext highlighter-rouge">_fillTemplate</code> on the whole <code class="language-plaintext highlighter-rouge">INSERT</code> template for every
+solution, and <code class="language-plaintext highlighter-rouge">Graph.__iadd__</code> adds each filled triple.</li>
+  <li><em>Observed, rdflib, R-B.</em> A scratch script reduced the replace to its essentials and timed it at M = N: 0.007 s at 10,
+0.077 s at 100, 5.6 s at 1000. Ten times the size took about seventy times as long.</li>
+  <li><em>Source, Oxigraph.</em> <code class="language-plaintext highlighter-rouge">eval_delete_insert</code> collects every filled quad into a <code class="language-plaintext highlighter-rouge">Vec</code> before applying any (TSD-01), so the M × N
+filled quads exist in memory at once.</li>
+  <li><em>Observed, both, R-A.</em> The benchmark <code class="language-plaintext highlighter-rouge">benchmark/persistence-composite-cost</code> ran M = N from 10 to 10,000, each size in a child
+process capped at 8 GB.</li>
+</ol>
+
+<p><strong>What the store does.</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>M = N</th>
+      <th>rdflib 7.6.0</th>
+      <th>Oxigraph 0.5.11</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>10</td>
+      <td>0.03 s</td>
+      <td>0.0005 s</td>
+    </tr>
+    <tr>
+      <td>100</td>
+      <td>0.17 s</td>
+      <td>0.0056 s</td>
+    </tr>
+    <tr>
+      <td>1,000</td>
+      <td>9.2 s</td>
+      <td>0.59 s</td>
+    </tr>
+    <tr>
+      <td>3,000</td>
+      <td>83 s</td>
+      <td>14.4 s</td>
+    </tr>
+    <tr>
+      <td>10,000</td>
+      <td>983 s</td>
+      <td>did not finish</td>
+    </tr>
+    <tr>
+      <td>fitted growth k, 100 and up</td>
+      <td>1.87</td>
+      <td>2.26</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>At 10,000 Oxigraph tried to allocate about 7 GB and failed under the cap, and an uncapped run was killed at 14 GB on a 15 GB
+machine. Separately, a run at 2,000 used 1.5 GB and one at 4,000 used 5.8 GB, so memory grows as the square of the size, and
+10,000 would need about 36 GB. Every finished run left exactly the payload, the bystander aggregate untouched and the version
+row at the next sequence.</p>
+
+<p><strong>Why.</strong> Both stores fill the template once per solution, as the specification’s definition reads. rdflib pays in time,
+adding the same triples again and again. Oxigraph is fast per quad but holds every filled quad at once.</p>
+
+<p><strong>What it means for LATTICE.</strong></p>
+
+<ul>
+  <li>R0 is correct and quadratic on both, in time on rdflib and in time and memory on Oxigraph (TD-42).</li>
+  <li>R2 is unsafe on both (TSD-01). R1, two operations in one request, is safe only where a failing request rolls back (TSD-06),
+which Oxigraph does and rdflib does not. So no single linear form fits both, which is what the capability record exists to
+decide. H5 chooses.</li>
+  <li>The benchmark fails on a wrong result and never on time or memory (ADR-A124). A run that does not finish is recorded with its
+exit status.</li>
+</ul>
+
+<p><strong>Reproduce it.</strong> <code class="language-plaintext highlighter-rouge">mise run check:persistence-composite-cost</code>, about 25 minutes, most of it rdflib at 10,000.
+<code class="language-plaintext highlighter-rouge">COMPOSITE_COST_MAX=1000</code> gives a quick run. The report is written to <code class="language-plaintext highlighter-rouge">benchmark/persistence-composite-cost/report.md</code>.</p>
+
+<hr />
+
+<h3 id="tsd-03-what-a-bind-inside-an-inner-group-can-see">TSD-03. What a <code class="language-plaintext highlighter-rouge">BIND</code> inside an inner group can see</h3>
+
+<p><strong>Evidence:</strong> Observed on both stores, R-B. rdflib is also covered by tests.</p>
+
+<p><strong>Context.</strong> The typed IR’s checker tracks, for each point of a <code class="language-plaintext highlighter-rouge">WHERE</code>, which variables are bound in every solution, so it can
+refuse a template variable tagged <code class="language-plaintext highlighter-rouge">Bound</code> that might not be (ADR-A123). Its first version let an inner group see the enclosing
+group’s variables. A review then “fixed” the <code class="language-plaintext highlighter-rouge">GRAPH</code> block the same way. Both were wrong, and only running queries showed it
+(§7.2).</p>
+
+<p><strong>How we found it.</strong> We ran the same six queries on each store, each binding <code class="language-plaintext highlighter-rouge">?a</code> outside and computing <code class="language-plaintext highlighter-rouge">?b</code> from it inside.</p>
+
+<p><strong>What the store does.</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Query</th>
+      <th>rdflib</th>
+      <th>Oxigraph</th>
+      <th>Specification</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">BIND(1 AS ?a) { BIND(?a + 1 AS ?b) }</code></td>
+      <td><code class="language-plaintext highlighter-rouge">?b</code> unbound</td>
+      <td><code class="language-plaintext highlighter-rouge">?b</code> unbound</td>
+      <td>unbound</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">BIND(1 AS ?a) GRAPH &lt;g&gt; { ?s ?p ?o BIND(?a + 1 AS ?b) }</code></td>
+      <td>unbound</td>
+      <td>unbound</td>
+      <td>unbound</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">BIND(1 AS ?a) OPTIONAL { BIND(?a + 1 AS ?b) }</code></td>
+      <td>unbound</td>
+      <td>unbound</td>
+      <td>unbound</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">BIND(1 AS ?a) { BIND(?a + 1 AS ?b) } UNION { BIND(5 AS ?b) }</code></td>
+      <td>unbound and 5</td>
+      <td>not run</td>
+      <td>unbound and 5</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">BIND(1 AS ?a) BIND(?a + 1 AS ?b)</code></td>
+      <td>2</td>
+      <td>2</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">BIND(1 AS ?a) FILTER NOT EXISTS { FILTER(?a = 1) }</code></td>
+      <td>no row, so <code class="language-plaintext highlighter-rouge">?a</code> is seen</td>
+      <td>no row</td>
+      <td>no row</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Why.</strong> The algebra of §4.2. Both stores follow it.</p>
+
+<p><strong>What it means for LATTICE.</strong> The checker’s scope starts empty in a nested group, an <code class="language-plaintext highlighter-rouge">OPTIONAL</code>, a <code class="language-plaintext highlighter-rouge">UNION</code> branch and a <code class="language-plaintext highlighter-rouge">GRAPH</code>
+block, and starts from the enclosing scope only in <code class="language-plaintext highlighter-rouge">NOT EXISTS</code> (FMH-H2-1, F4, and H2.3). Tests H2.1-T29 and T29b check the rule
+against rdflib.</p>
+
+<p><strong>Reproduce it.</strong> Each row is one <code class="language-plaintext highlighter-rouge">SELECT ?a ?b WHERE { … }</code> over any dataset with one triple in <code class="language-plaintext highlighter-rouge">&lt;g&gt;</code>. Select <code class="language-plaintext highlighter-rouge">?a</code> as well as
+<code class="language-plaintext highlighter-rouge">?b</code>, or rdflib drops the row (TSD-10).</p>
+
+<hr />
+
+<h3 id="tsd-04-a-graph-variable-bound-outside-an-inner-group">TSD-04. A graph variable bound outside an inner group</h3>
+
+<p><strong>Evidence:</strong> Observed on both stores, R-A and R-B.</p>
+
+<p><strong>Context.</strong> The named-graph replace sweeps the root’s graph with <code class="language-plaintext highlighter-rouge">OPTIONAL { GRAPH ?g { ?s ?p ?o } }</code>, where <code class="language-plaintext highlighter-rouge">?g</code> is bound by a
+<code class="language-plaintext highlighter-rouge">BIND</code> at the top of the <code class="language-plaintext highlighter-rouge">WHERE</code>. By §4.2 the inner group is evaluated on its own, so <code class="language-plaintext highlighter-rouge">GRAPH ?g</code> there ranges over every graph
+until the join narrows it. The result is right either way. The question was the cost, and whether the typed IR should refuse
+the form (H2.3-Q2).</p>
+
+<p><strong>How we found it.</strong></p>
+
+<ol>
+  <li>
+    <p><em>Reasoned.</em> rdflib’s translation of the template and of the form the checker already accepted, <code class="language-plaintext highlighter-rouge">BIND(… AS ?g) GRAPH ?g { … }</code>,
+differ only in <code class="language-plaintext highlighter-rouge">LeftJoin</code> against <code class="language-plaintext highlighter-rouge">Join</code>. Both are <code class="language-plaintext highlighter-rouge">Extend[?g]</code> beside an independent <code class="language-plaintext highlighter-rouge">Graph[?g]</code>, so neither is cheaper by the
+specification.</p>
+
+    <pre><code class="language-mermaid">flowchart TB
+  subgraph accepted["same group"]
+    J1["Join"] --&gt; E1["Extend ?g"]
+    J1 --&gt; G1["Graph ?g"]
+  end
+  subgraph template["inside OPTIONAL"]
+    J2["LeftJoin"] --&gt; E2["Extend ?g"]
+    J2 --&gt; G2["Graph ?g"]
+  end
+</code></pre>
+  </li>
+  <li><em>Observed, rdflib, R-B.</em> On 50 graphs of 200 triples, both forms returned the 200 triples of the bound graph in about 10 ms,
+against 237 ms for <code class="language-plaintext highlighter-rouge">GRAPH ?g { ?s ?p ?o }</code> with nothing bound.</li>
+  <li><em>Observed, both, R-A.</em> Probe P3 timed the <code class="language-plaintext highlighter-rouge">OPTIONAL</code> form over 100 graphs of 3,000 triples against 1 graph. The ratio was 1.1
+on both stores.</li>
+</ol>
+
+<p><strong>What the store does.</strong> Both pass the outer binding of <code class="language-plaintext highlighter-rouge">?g</code> into the graph pattern, so they read one graph. A store that
+followed the algebra literally would read every graph and then discard most of what it read.</p>
+
+<p><strong>Why.</strong> Not read for either store. The timings show both pass the left side’s bindings into the right side, as an engine does
+when it evaluates a join lazily (rdflib has <code class="language-plaintext highlighter-rouge">evalLazyJoin</code> for that, and TSD-Q1 asks when it is used).</p>
+
+<p><strong>What it means for LATTICE.</strong> The scope rule accepts a <code class="language-plaintext highlighter-rouge">GRAPH ?g</code> inside an inner group when an enclosing group binds <code class="language-plaintext highlighter-rouge">?g</code> in
+every solution before it (ADR-A123, second addendum). A caller-named graph, <code class="language-plaintext highlighter-rouge">GRAPH $g</code>, is available as an override for a store
+that does scan (H2.3-Q2 (c)). H2.4b’s T4 fails if either store starts to scan.</p>
+
+<p><strong>Reproduce it.</strong> Load 100 graphs of 3,000 triples, then time
+<code class="language-plaintext highlighter-rouge">SELECT (COUNT(*) AS ?n) WHERE { BIND(&lt;urn:g:0&gt; AS ?g) OPTIONAL { GRAPH ?g { ?s ?p ?o } } }</code> against the same with one graph
+loaded. Take the best of three. A ratio near 1 means the binding is passed in.</p>
+
+<hr />
+
+<h3 id="tsd-05-a-template-quad-whose-graph-variable-is-unbound">TSD-05. A template quad whose graph variable is unbound</h3>
+
+<p><strong>Evidence:</strong> Source (rdflib) and Observed, both stores, R-A and R-B.</p>
+
+<p><strong>Context.</strong> H2.3 tested what an unguarded <code class="language-plaintext highlighter-rouge">unconditional-write</code> does when the caller leaves out <code class="language-plaintext highlighter-rouge">$root</code>. The graph name <code class="language-plaintext highlighter-rouge">?g</code> is
+computed from <code class="language-plaintext highlighter-rouge">$root</code>, so it is unbound.</p>
+
+<p><strong>How we found it.</strong> Test H2.3-T8 expected nothing to be written and found a new graph. A direct probe confirmed it, and probe
+P4 now checks both stores.</p>
+
+<p><strong>What the store does.</strong></p>
+
+<div class="language-sparql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">INSERT</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">GRAPH</span><span class="w"> </span><span class="nv">?g</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nn">&lt;urn:s&gt;</span><span class="w"> </span><span class="nn">&lt;urn:p&gt;</span><span class="w"> </span><span class="nn">&lt;urn:o&gt;</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Store</th>
+      <th>Result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>specification</td>
+      <td>skipped, since the quad has an unbound variable</td>
+    </tr>
+    <tr>
+      <td>rdflib 7.6.0</td>
+      <td>the triple is written into a new graph named by a blank node</td>
+    </tr>
+    <tr>
+      <td>Oxigraph 0.5.11</td>
+      <td>skipped, nothing written</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Why.</strong> rdflib’s <code class="language-plaintext highlighter-rouge">evalModify</code> does <code class="language-plaintext highlighter-rouge">cg = ctx.dataset.get_context(c.get(g))</code> for each graph of the template (Source). With <code class="language-plaintext highlighter-rouge">?g</code>
+unbound, <code class="language-plaintext highlighter-rouge">c.get(g)</code> is <code class="language-plaintext highlighter-rouge">None</code>, and the observed result is a graph with a fresh blank-node name, so <code class="language-plaintext highlighter-rouge">get_context(None)</code> must create
+one. We did not read <code class="language-plaintext highlighter-rouge">get_context</code> itself.</p>
+
+<p><strong>What it means for LATTICE.</strong> With the parameter guards on, a missing <code class="language-plaintext highlighter-rouge">$root</code> is refused before this point. With
+<code class="language-plaintext highlighter-rouge">--no-parameter-guards</code>, on rdflib, a missing <code class="language-plaintext highlighter-rouge">$root</code> leaves an orphan graph that no audit names (TD-44). The README’s guards
+paragraph says so.</p>
+
+<p><strong>Reproduce it.</strong> Run the update above on an empty <code class="language-plaintext highlighter-rouge">Dataset</code> and list <code class="language-plaintext highlighter-rouge">ds.graphs()</code> with at least one triple.</p>
+
+<hr />
+
+<h3 id="tsd-06-a-request-whose-second-operation-fails-and-graph-management">TSD-06. A request whose second operation fails, and graph management</h3>
+
+<p><strong>Evidence:</strong> Observed on both stores, R-A and R-B.</p>
+
+<p><strong>Context.</strong> R1, the two-operation form of the composite replace, is safe only if a request whose second operation fails leaves
+no trace of its first. SPARQL 1.1 Update says a request <em>should</em> be atomic. Probe P2 asks each store.</p>
+
+<p><strong>How we found it.</strong> P2 sends <code class="language-plaintext highlighter-rouge">INSERT DATA { … } ; &lt;a failing operation&gt;</code> and reads back. Finding a failing operation took two
+tries on rdflib (TSD-14).</p>
+
+<p><strong>What the store does.</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Store</th>
+      <th>Failing second operation</th>
+      <th>The request</th>
+      <th>The first insert</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>rdflib 7.6.0</td>
+      <td><code class="language-plaintext highlighter-rouge">LOAD &lt;urn:no-such&gt;</code></td>
+      <td>fails</td>
+      <td>kept</td>
+    </tr>
+    <tr>
+      <td>Oxigraph 0.5.11</td>
+      <td><code class="language-plaintext highlighter-rouge">DROP GRAPH &lt;urn:absent&gt;</code></td>
+      <td>fails with <code class="language-plaintext highlighter-rouge">RuntimeError</code></td>
+      <td>rolled back</td>
+    </tr>
+  </tbody>
+</table>
+
+<pre><code class="language-mermaid">sequenceDiagram
+  participant C as caller
+  participant S as store
+  C-&gt;&gt;S: INSERT DATA t, then a failing operation, in one request
+  alt rdflib
+    S--&gt;&gt;C: error
+    Note over S: t is stored
+  else Oxigraph
+    S--&gt;&gt;C: error
+    Note over S: t is not stored
+  end
+</code></pre>
+
+<p><strong>Why.</strong> We did not read either store’s transaction code. Oxigraph applies an update inside a transaction (TSD-01’s source shows
+<code class="language-plaintext highlighter-rouge">self.transaction</code>), which is consistent with the rollback.</p>
+
+<p><strong>What it means for LATTICE.</strong> R1 is a candidate on Oxigraph and not on rdflib. This is only the failure half of
+<code class="language-plaintext highlighter-rouge">atomicUpdateRequest</code>. Its isolation half, what a concurrent writer sees between the two operations, needs concurrent writers
+and is H5’s.</p>
+
+<p><strong>Other stores, from their documentation (Documented, not probed, gathered 2026-10-14).</strong> SPARQL 1.1 Update says a request
+<em>should</em> be treated atomically, a recommendation the working group chose not to make a requirement
+(<a href="https://www.w3.org/TR/2010/WD-sparql11-update-20101014/">working draft of October 2010</a>,
+<a href="https://lists.w3.org/Archives/Public/public-rdf-dawg-comments/2011May/0012.html">a comment on the list</a>). So it is each store’s choice.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Store</th>
+      <th>What its documentation says</th>
+      <th>Reading</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Apache Jena, TDB2 (which <code class="language-plaintext highlighter-rouge">platform/semantic-dataset-fuseki</code> targets)</td>
+      <td>TDB2 is transactional only, with serializable transactions that cover SPARQL Update (<a href="https://jena.apache.org/documentation/tdb/tdb_transactions.html">TDB transactions</a>, <a href="https://jena.apache.org/documentation/txn">Jena transactions</a>)</td>
+      <td>atomic per request, by inference. The documentation does not name the request as the transaction’s scope</td>
+    </tr>
+    <tr>
+      <td>Amazon Neptune</td>
+      <td>a community answer says the operations of one request run as one transaction and roll back together (<a href="https://www.repost.aws/questions/QUE09h4w48RFOW6I8RrId6SQ/are-multiple-sparl-update-queries-in-same-post-message-one-transaction">Repost</a>). The official page states strict isolation without that detail (<a href="https://docs.aws.amazon.com/neptune/latest/userguide/transactions.html">transaction semantics</a>)</td>
+      <td>atomic per request, unconfirmed</td>
+    </tr>
+    <tr>
+      <td>Virtuoso</td>
+      <td>SPARQL updates “are generally not meant to be transactional”, and the recommended mode, <code class="language-plaintext highlighter-rouge">log_enable(2)</code>, commits every operation as it is done. One mode autocommits per triple inserted or deleted (<a href="https://docs.openlinksw.com/virtuoso/virtuosotipsandtrickssparulupdatestrl">tip</a>, <a href="https://docs.openlinksw.com/virtuoso/fn_log_enable"><code class="language-plaintext highlighter-rouge">log_enable</code></a>)</td>
+      <td><strong>not atomic per request</strong> in its recommended mode, and possibly not atomic within one operation (TSD-Q13)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>So atomicity is a property of the store and, on Virtuoso, of its configuration. A generated operation that needs two operations to commit
+together cannot assume it, and H5’s capability record carries it per deployment, not per product.</p>
+
+<p><strong>Reproduce it.</strong> On each store, run the request above and then check whether <code class="language-plaintext highlighter-rouge">&lt;urn:s&gt; &lt;urn:p&gt; &lt;urn:o&gt;</code> is in <code class="language-plaintext highlighter-rouge">&lt;urn:g&gt;</code>.</p>
+
+<hr />
+
+<h3 id="tsd-07-numeric-datatypes-are-not-kept-by-oxigraph">TSD-07. Numeric datatypes are not kept by Oxigraph</h3>
+
+<p><strong>Evidence:</strong> Observed on both stores, R-A and R-B.</p>
+
+<p><strong>Context.</strong> The persistence profile pins every sequence, epoch and position to <code class="language-plaintext highlighter-rouge">xsd:long</code> (patterns guide Chapter 13), because
+<code class="language-plaintext highlighter-rouge">"1"^^xsd:long</code> and <code class="language-plaintext highlighter-rouge">"1"^^xsd:integer</code> are different RDF terms and a pattern that matches by term will not match one with the
+other. The parameter guard tests <code class="language-plaintext highlighter-rouge">DATATYPE($epoch) = xsd:long</code> for that reason (ADR-A123, first addendum). On Oxigraph every
+guarded operation wrote nothing, and probe P5 found why.</p>
+
+<p><strong>What the store does.</strong></p>
+
+<div class="language-sparql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">INSERT</span><span class="w"> </span><span class="k">DATA</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:g&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nn">&lt;urn:s&gt;</span><span class="w"> </span><span class="nn">&lt;urn:p&gt;</span><span class="w"> </span><span class="s2">"1"</span><span class="o">^^</span><span class="nn">&lt;http://www.w3.org/2001/XMLSchema#long&gt;</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span><span class="k">SELECT</span><span class="w"> </span><span class="p">(</span><span class="nb">DATATYPE</span><span class="p">(</span><span class="nv">?o</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="nv">?d</span><span class="p">)</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:g&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">?s</span><span class="w"> </span><span class="nv">?p</span><span class="w"> </span><span class="nv">?o</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Store</th>
+      <th>Stored object’s datatype</th>
+      <th><code class="language-plaintext highlighter-rouge">DATATYPE(?o)</code></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>rdflib 7.6.0</td>
+      <td><code class="language-plaintext highlighter-rouge">xsd:long</code></td>
+      <td><code class="language-plaintext highlighter-rouge">xsd:long</code></td>
+    </tr>
+    <tr>
+      <td>Oxigraph 0.5.11</td>
+      <td><code class="language-plaintext highlighter-rouge">xsd:integer</code></td>
+      <td><code class="language-plaintext highlighter-rouge">xsd:integer</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Why.</strong> Not read. The observation is that Oxigraph stores an integer-derived literal as <code class="language-plaintext highlighter-rouge">xsd:integer</code>, and reports it so in every
+expression.</p>
+
+<p><strong>What it means for LATTICE.</strong> The guard’s first datatype test, <code class="language-plaintext highlighter-rouge">DATATYPE($p) = xsd:long</code>, could never pass on Oxigraph, so every
+guarded write there wrote nothing (TD-45, FMH-H2-4b decision 1). Guard D replaced it in H2.5 with <code class="language-plaintext highlighter-rouge">DATATYPE($p) = DATATYPE("0"^^xsd:long)</code>
+(ADR-A123, addendum of 2026-10-13), which compares the parameter with what the store makes of a constant. Probe P5 now asserts that
+a constant, a substituted parameter, a <code class="language-plaintext highlighter-rouge">VALUES</code> row and a stored value report one datatype on each store
+(<code class="language-plaintext highlighter-rouge">test_h2_5_t1_p5_a_long_has_one_datatype_in_every_form_on_each_engine_so_guard_d_can_pass</code>), and that a simple literal stays
+<code class="language-plaintext highlighter-rouge">xsd:string</code> in every form. Because every number on Oxigraph is an <code class="language-plaintext highlighter-rouge">xsd:integer</code>, requests and stored rows match each other, so the
+hazard the test guards against cannot arise there. What stays is that the profile’s <code class="language-plaintext highlighter-rouge">xsd:long</code> pinning cannot be checked on Oxigraph.</p>
+
+<p><strong>Reproduce it.</strong> The two operations above, on each store.</p>
+
+<hr />
+
+<h3 id="tsd-08-a-zero-length-path-from-a-term-that-is-in-no-triple">TSD-08. A zero-length path from a term that is in no triple</h3>
+
+<p><strong>Evidence:</strong> Observed on both stores, R-A and R-B. The specification’s reading is ours and is not yet checked against the text.</p>
+
+<p><strong>Context.</strong> The composite sweep starts with <code class="language-plaintext highlighter-rouge">$root &lt;ownedPath&gt; ?s</code>, and the owned path can take zero steps, so <code class="language-plaintext highlighter-rouge">?s</code> includes the
+root itself. Test H2.4a-T6 asked what happens when the root is in no triple of the data graph.</p>
+
+<p><strong>What the store does.</strong></p>
+
+<div class="language-sparql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># the graph &lt;urn:g&gt; holds only &lt;urn:a&gt; &lt;urn:p&gt; &lt;urn:b&gt;</span><span class="w">
+</span><span class="k">SELECT</span><span class="w"> </span><span class="nv">?x</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:g&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nn">&lt;urn:lonely&gt;</span><span class="w"> </span><span class="nn">&lt;urn:p&gt;</span><span class="o">*</span><span class="w"> </span><span class="nv">?x</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Store</th>
+      <th><code class="language-plaintext highlighter-rouge">?x</code></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>rdflib 7.6.0</td>
+      <td><code class="language-plaintext highlighter-rouge">&lt;urn:lonely&gt;</code></td>
+    </tr>
+    <tr>
+      <td>Oxigraph 0.5.11</td>
+      <td>no rows</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>What it means for LATTICE.</strong> Nothing changes for the sweep, since <code class="language-plaintext highlighter-rouge">?s ?p ?o</code> must also match and a term in no triple has none.
+H2.8’s <code class="language-plaintext highlighter-rouge">payload-check</code> query starts a path at <code class="language-plaintext highlighter-rouge">$root</code> over the payload alone, so it must not depend on which reading a store
+takes. Its tests run on both.</p>
+
+<p><strong>Reproduce it.</strong> The query above on each store.</p>
+
+<hr />
+
+<h3 id="tsd-09-unicode-escapes-and-an-escaped-backslash">TSD-09. Unicode escapes and an escaped backslash</h3>
+
+<p><strong>Evidence:</strong> Observed on both stores, R-B. Found by H2.1’s property test.</p>
+
+<p><strong>Context.</strong> <code class="language-plaintext highlighter-rouge">persistence.terms.Literal.encode</code> escapes a backslash as <code class="language-plaintext highlighter-rouge">\\</code>. A value holding a backslash followed by <code class="language-plaintext highlighter-rouge">u0041</code>
+therefore became the text <code class="language-plaintext highlighter-rouge">"\\u0041"</code>. SPARQL 1.1 §19.2 says <code class="language-plaintext highlighter-rouge">\u</code> escapes are processed before the rest of the grammar.</p>
+
+<p><strong>What the store does.</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Query text</th>
+      <th>rdflib 7.6.0</th>
+      <th>Oxigraph 0.5.11</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">"\\u0041"</code></td>
+      <td>syntax error</td>
+      <td>the five characters <code class="language-plaintext highlighter-rouge">A</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">"A"</code></td>
+      <td><code class="language-plaintext highlighter-rouge">A</code></td>
+      <td><code class="language-plaintext highlighter-rouge">A</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<pre><code class="language-mermaid">flowchart LR
+  T["query text&lt;br/&gt;backslash backslash u0041"] --&gt; RP["rdflib: a pre-pass over&lt;br/&gt;the whole text replaces&lt;br/&gt;backslash u0041 first"]
+  RP --&gt; RE["leaves a lone backslash&lt;br/&gt;before A: syntax error"]
+  T --&gt; OP["Oxigraph: escapes read&lt;br/&gt;inside the string token"]
+  OP --&gt; OE["escaped backslash, then u0041:&lt;br/&gt;the value keeps them"]
+</code></pre>
+
+<p><strong>What it means for LATTICE.</strong> <code class="language-plaintext highlighter-rouge">Literal.encode</code> now writes the <code class="language-plaintext highlighter-rouge">u</code> of such a pair, and the hex digits after it, as escapes
+themselves, so neither reading changes the value (FMH-H2-1 decision 1). The literal is correct on both stores. Any code that
+writes SPARQL text must assume the stricter rdflib reading.</p>
+
+<p><strong>Reproduce it.</strong> <code class="language-plaintext highlighter-rouge">INSERT DATA { GRAPH &lt;urn:e&gt; { &lt;urn:s&gt; &lt;urn:p&gt; "\\u0041" } }</code> on each store, then read the value back.</p>
+
+<hr />
+
+<h3 id="tsd-10-a-result-row-whose-projected-variables-are-all-unbound">TSD-10. A result row whose projected variables are all unbound</h3>
+
+<p><strong>Evidence:</strong> Observed on both stores, R-A and R-B. Found while making H2.1-T29 pass.</p>
+
+<p><strong>What the store does.</strong> <code class="language-plaintext highlighter-rouge">SELECT ?b WHERE { BIND(1 AS ?a) { BIND(?a + 1 AS ?b) } }</code> has one solution, with <code class="language-plaintext highlighter-rouge">?b</code> unbound.
+Oxigraph returns one row with <code class="language-plaintext highlighter-rouge">?b</code> empty. rdflib returns no rows.</p>
+
+<p><strong>What it means for LATTICE.</strong> A test that counts rows on rdflib must project at least one variable it knows is bound. T29
+selects <code class="language-plaintext highlighter-rouge">?a ?b</code> for that reason.</p>
+
+<hr />
+
+<h3 id="tsd-11-bound-and-text-substitution">TSD-11. <code class="language-plaintext highlighter-rouge">BOUND</code> and text substitution</h3>
+
+<p><strong>Evidence:</strong> Observed on both stores, R-B.</p>
+
+<p><strong>Context.</strong> The first parameter guard was <code class="language-plaintext highlighter-rouge">FILTER(BOUND($root) &amp;&amp; …)</code>. A caller that substitutes text writes
+<code class="language-plaintext highlighter-rouge">FILTER(BOUND(&lt;urn:x&gt;) &amp;&amp; …)</code>.</p>
+
+<p><strong>What the store does.</strong> Both refuse it as a syntax error (rdflib <code class="language-plaintext highlighter-rouge">ParseException</code>, Oxigraph <code class="language-plaintext highlighter-rouge">SyntaxError</code>), as the grammar
+requires, since <code class="language-plaintext highlighter-rouge">BOUND</code> takes a variable. A type test such as <code class="language-plaintext highlighter-rouge">isIRI(&lt;urn:x&gt;)</code> parses, and <code class="language-plaintext highlighter-rouge">isIRI(?root)</code> with <code class="language-plaintext highlighter-rouge">?root</code> unbound is
+an error, which fails the filter.</p>
+
+<p><strong>What it means for LATTICE.</strong> The guard is a type test per parameter, never <code class="language-plaintext highlighter-rouge">BOUND</code> (ADR-A123, first addendum). H2.1-T28 and
+H2.3-T25 run guarded operations after text substitution.</p>
+
+<hr />
+
+<h3 id="tsd-12-initial-bindings-are-visible-inside-inner-groups-on-rdflib">TSD-12. Initial bindings are visible inside inner groups on rdflib</h3>
+
+<p><strong>Evidence:</strong> Observed on rdflib, R-B. Oxigraph not tested, since our adapter substitutes text.</p>
+
+<p><strong>What the store does.</strong> With <code class="language-plaintext highlighter-rouge">initBindings={"root": &lt;urn:a&gt;}</code>, <code class="language-plaintext highlighter-rouge">{ FILTER(isIRI(?root)) }</code> in its own inner group passes on
+rdflib, so the initial binding is seen inside the group. An engine that joined initial bindings in only at the end would make the
+guard fail every time, which would fail closed.</p>
+
+<p><strong>What it means for LATTICE.</strong> The guard in its own group works for an initial-binding caller on rdflib and for a
+text-substituting caller anywhere. Another engine’s initial-binding API must be probed before it is relied on.</p>
+
+<hr />
+
+<h3 id="tsd-13-a-filter-at-the-top-of-a-group-sees-what-the-groups-patterns-bound">TSD-13. A filter at the top of a group sees what the group’s patterns bound</h3>
+
+<p><strong>Evidence:</strong> Observed on both stores, R-B.</p>
+
+<p><strong>Context.</strong> The H2.1 review’s F1. The first guard was a <code class="language-plaintext highlighter-rouge">FILTER</code> at the top of the <code class="language-plaintext highlighter-rouge">WHERE</code>, whose patterns also matched <code class="language-plaintext highlighter-rouge">$root</code>.</p>
+
+<p><strong>What the store does.</strong></p>
+
+<div class="language-sparql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># &lt;urn:a&gt; and &lt;urn:b&gt; each have &lt;urn:seq&gt; 0 in &lt;urn:m&gt;, and ?root is not bound by the caller</span><span class="w">
+</span><span class="k">INSERT</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:m&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">?root</span><span class="w"> </span><span class="nn">&lt;urn:w&gt;</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span><span class="k">WHERE</span><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="k">FILTER</span><span class="p">(</span><span class="nb">BOUND</span><span class="p">(</span><span class="nv">?root</span><span class="p">))</span><span class="w"> </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:m&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">?root</span><span class="w"> </span><span class="nn">&lt;urn:seq&gt;</span><span class="w"> </span><span class="nv">?s</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Form</th>
+      <th>rdflib</th>
+      <th>Oxigraph</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">FILTER</code> at the top of the group</td>
+      <td>writes both <code class="language-plaintext highlighter-rouge">&lt;urn:a&gt;</code> and <code class="language-plaintext highlighter-rouge">&lt;urn:b&gt;</code></td>
+      <td>writes both</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">{ FILTER(…) }</code> as its own group</td>
+      <td>writes nothing</td>
+      <td>writes nothing</td>
+    </tr>
+  </tbody>
+</table>
+
+<pre><code class="language-mermaid">flowchart TB
+  subgraph top["FILTER at the top of the group"]
+    P1["patterns bind ?root&lt;br/&gt;from the data"] --&gt; F1["FILTER applied after,&lt;br/&gt;?root is bound"]
+    F1 --&gt; W1["every aggregate written"]
+  end
+  subgraph own["FILTER in its own group"]
+    F2["inner group alone:&lt;br/&gt;?root unbound, FILTER fails"] --&gt; J2["join with nothing"]
+    J2 --&gt; W2["nothing written"]
+  end
+</code></pre>
+
+<p><strong>What it means for LATTICE.</strong> The guard is its own group (ADR-A123 decision 5). It runs once per request, where the top-level
+form ran once per solution and cost about 60% on a 20,000-triple sweep on rdflib.</p>
+
+<hr />
+
+<h3 id="tsd-14-graph-management-operations-on-rdflib">TSD-14. Graph management operations on rdflib</h3>
+
+<p><strong>Evidence:</strong> Observed, R-A.</p>
+
+<p><strong>What the store does.</strong> On rdflib 7.6.0, <code class="language-plaintext highlighter-rouge">CREATE GRAPH</code> is not implemented, and <code class="language-plaintext highlighter-rouge">DROP GRAPH</code> of a graph that does not exist
+succeeds. On Oxigraph 0.5.11, <code class="language-plaintext highlighter-rouge">DROP GRAPH</code> of an absent graph fails, as the specification says it should without <code class="language-plaintext highlighter-rouge">SILENT</code>.</p>
+
+<p><strong>What it means for LATTICE.</strong> A probe or a test that needs an operation to fail at run time on rdflib uses <code class="language-plaintext highlighter-rouge">LOAD</code> of a source
+that does not exist.</p>
+
+<hr />
+
+<h3 id="tsd-15-a-sub-select-and-the-variables-around-it">TSD-15. A sub-select and the variables around it</h3>
+
+<p><strong>Evidence:</strong> Observed on both stores, R-C. Answers TSD-Q9.</p>
+
+<p><strong>Context.</strong> The merge and quarantine operations join a sub-select, <code class="language-plaintext highlighter-rouge">{ SELECT ?claim ... GROUP BY ?claim HAVING ... }</code>, to the
+patterns around it. The checker (H2.5) treats a sub-select as evaluated on its own, so it starts with nothing in scope and only its
+projections leave it, and it refuses an inner variable that is also used outside without being projected (<code class="language-plaintext highlighter-rouge">SubSelectLeak</code>).</p>
+
+<p><strong>What the store does.</strong></p>
+
+<div class="language-sparql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># &lt;urn:g2&gt; holds three subjects, &lt;urn:s1&gt; to &lt;urn:s3&gt;</span><span class="w">
+</span><span class="k">SELECT</span><span class="w"> </span><span class="nv">?c</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">VALUES</span><span class="w"> </span><span class="nv">?s</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nn">&lt;urn:s1&gt;</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">SELECT</span><span class="w"> </span><span class="p">(</span><span class="nb">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="nv">?c</span><span class="p">)</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:g2&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">?s</span><span class="w"> </span><span class="nn">&lt;urn:p&gt;</span><span class="w"> </span><span class="nv">?o</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span><span class="k">SELECT</span><span class="w"> </span><span class="nv">?c</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:g1&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">SELECT</span><span class="w"> </span><span class="p">(</span><span class="nb">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="nv">?c</span><span class="p">)</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">?s</span><span class="w"> </span><span class="nv">?p</span><span class="w"> </span><span class="nv">?o</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w">   </span><span class="c1"># &lt;urn:g1&gt; holds two triples</span><span class="w">
+</span></code></pre></div></div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Query</th>
+      <th>Specification</th>
+      <th>rdflib</th>
+      <th>Oxigraph</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>the count with <code class="language-plaintext highlighter-rouge">?s</code> bound outside the sub-select</td>
+      <td>3, since <code class="language-plaintext highlighter-rouge">?s</code> inside is another variable</td>
+      <td><strong>1</strong>, the outer binding is let in</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>the count inside <code class="language-plaintext highlighter-rouge">GRAPH &lt;urn:g1&gt;</code></td>
+      <td>2, the sub-select reads the active graph</td>
+      <td>2</td>
+      <td>2</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>What it means for LATTICE.</strong> A sub-select that reuses an outer variable’s name without projecting it gives different results on the
+two stores. The <code class="language-plaintext highlighter-rouge">SubSelectLeak</code> rule makes that a refusal, so no operation the IR builds can depend on it. A sub-select inside a <code class="language-plaintext highlighter-rouge">GRAPH</code>
+block reads that graph on both, so the checker passes the enclosing graph to its patterns. Tests <code class="language-plaintext highlighter-rouge">test_h2_5_t12</code> and <code class="language-plaintext highlighter-rouge">test_h2_5_t13</code>.</p>
+
+<p><strong>Reproduce it.</strong> The two queries on each store.</p>
+
+<hr />
+
+<h3 id="tsd-16-min-and-max-over-iris">TSD-16. <code class="language-plaintext highlighter-rouge">MIN</code> and <code class="language-plaintext highlighter-rouge">MAX</code> over IRIs</h3>
+
+<p><strong>Evidence:</strong> Observed on both stores, R-C. Answers TSD-Q6.</p>
+
+<p><strong>Context.</strong> Merge-rewrite picks a claim’s canonical owner with <code class="language-plaintext highlighter-rouge">MIN(?owner)</code> over the owners’ IRIs, then compares it with each owner
+and writes a link from every other owner to it.</p>
+
+<p><strong>What the store does.</strong></p>
+
+<div class="language-sparql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">INSERT</span><span class="w"> </span><span class="k">DATA</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:g&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nn">&lt;urn:c&gt;</span><span class="w"> </span><span class="nn">&lt;urn:p&gt;</span><span class="w"> </span><span class="nn">&lt;urn:o:2&gt;</span><span class="w"> </span><span class="p">,</span><span class="w"> </span><span class="nn">&lt;urn:o:10&gt;</span><span class="w"> </span><span class="p">,</span><span class="w"> </span><span class="nn">&lt;urn:o:1&gt;</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span><span class="k">SELECT</span><span class="w"> </span><span class="p">(</span><span class="nb">MIN</span><span class="p">(</span><span class="nv">?o</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="nv">?l</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="nb">MAX</span><span class="p">(</span><span class="nv">?o</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="nv">?h</span><span class="p">)</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:g&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nn">&lt;urn:c&gt;</span><span class="w"> </span><span class="nn">&lt;urn:p&gt;</span><span class="w"> </span><span class="nv">?o</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Store</th>
+      <th><code class="language-plaintext highlighter-rouge">MIN</code></th>
+      <th><code class="language-plaintext highlighter-rouge">MAX</code></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>rdflib 7.6.0</td>
+      <td>the literal <code class="language-plaintext highlighter-rouge">"urn:o:1"</code></td>
+      <td>the literal <code class="language-plaintext highlighter-rouge">"urn:o:2"</code></td>
+    </tr>
+    <tr>
+      <td>Oxigraph 0.5.11</td>
+      <td>the IRI <code class="language-plaintext highlighter-rouge">&lt;urn:o:1&gt;</code></td>
+      <td>the IRI <code class="language-plaintext highlighter-rouge">&lt;urn:o:2&gt;</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Both choose by the IRI’s text, so <code class="language-plaintext highlighter-rouge">urn:o:10</code> sorts before <code class="language-plaintext highlighter-rouge">urn:o:2</code>. <code class="language-plaintext highlighter-rouge">IRI(MIN(STR(?o)))</code> gives the IRI on both.</p>
+
+<p><strong>What it means for LATTICE.</strong> The first port of merge-rewrite equalled its template, so on rdflib it wrote a plain literal as the link’s object, and because
+an IRI is never equal to a literal, <code class="language-plaintext highlighter-rouge">?other != ?canonical</code> also held for the canonical owner, which got a link to itself. On Oxigraph it wrote IRIs and no
+self-link. Decided 2026-10-13 (FMH-H2-5, decision 1): the template and the builder project <code class="language-plaintext highlighter-rouge">IRI(MIN(STR(?owner)))</code>, which gives an IRI on both
+(<code class="language-plaintext highlighter-rouge">test_h2_5_t30</code>). The <code class="language-plaintext highlighter-rouge">MIN</code> itself is still different on the two stores and <code class="language-plaintext highlighter-rouge">test_h2_5_t41</code> keeps the probe.</p>
+
+<p><strong>Reproduce it.</strong> The two operations above on each store.</p>
+
+<hr />
+
+<h3 id="tsd-17-a-chain-of-additions-and-subtractions">TSD-17. A chain of additions and subtractions</h3>
+
+<p><strong>Evidence:</strong> Observed on Oxigraph, R-C, directly through <code class="language-plaintext highlighter-rouge">pyoxigraph</code>, and on rdflib.</p>
+
+<p><strong>Context.</strong> The gap scan compares <code class="language-plaintext highlighter-rouge">COUNT(DISTINCT ?seq)</code> with <code class="language-plaintext highlighter-rouge">?S - ?L + 1</code>. On Oxigraph every audit row for a complete stream was reported
+as a gap.</p>
+
+<p><strong>What the store does.</strong></p>
+
+<div class="language-sparql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">SELECT</span><span class="w"> </span><span class="p">(</span><span class="mi">10</span><span class="w"> </span><span class="err">-</span><span class="w"> </span><span class="mi">3</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="nv">?x</span><span class="p">)</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="p">{}</span><span class="w">      </span><span class="k">SELECT</span><span class="w"> </span><span class="p">(</span><span class="mi">10</span><span class="w"> </span><span class="err">-</span><span class="w"> </span><span class="mi">3</span><span class="w"> </span><span class="err">-</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="nv">?x</span><span class="p">)</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="p">{}</span><span class="w">      </span><span class="k">SELECT</span><span class="w"> </span><span class="p">(</span><span class="mi">8</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">4</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="nv">?x</span><span class="p">)</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="p">{}</span><span class="w">
+</span></code></pre></div></div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Query</th>
+      <th>Specification (from the left)</th>
+      <th>rdflib</th>
+      <th>Oxigraph</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">10 - 3 + 2</code></td>
+      <td>9</td>
+      <td>9</td>
+      <td><strong>5</strong>, as <code class="language-plaintext highlighter-rouge">10 - (3 + 2)</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">10 - 3 - 2</code></td>
+      <td>5</td>
+      <td>5</td>
+      <td><strong>9</strong>, as <code class="language-plaintext highlighter-rouge">10 - (3 - 2)</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">8 / 4 / 2</code></td>
+      <td>1</td>
+      <td>1</td>
+      <td><strong>4</strong>, as <code class="language-plaintext highlighter-rouge">8 / (4 / 2)</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">(10 - 3) + 2</code></td>
+      <td>9</td>
+      <td>9</td>
+      <td>9</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>What it means for LATTICE.</strong> The gap scan’s template, written as a chain, counted wrongly on Oxigraph. The renderer therefore always writes the
+parentheses of a nested arithmetic operand, and the template now says <code class="language-plaintext highlighter-rouge">(?S - ?L) + 1</code> (FMH-H2-5, decision 2), both correct on either store. Test
+<code class="language-plaintext highlighter-rouge">test_h2_5_t44</code>, and the harness mutation <code class="language-plaintext highlighter-rouge">test_h2_5_t47</code>, which fails a builder that groups the sum from the right.</p>
+
+<p><strong>Reproduce it.</strong> The three queries on each store.</p>
+
+<hr />
+
+<h3 id="tsd-18-countdistinct-over-xsdlong-and-xsdinteger-terms">TSD-18. <code class="language-plaintext highlighter-rouge">COUNT(DISTINCT)</code> over <code class="language-plaintext highlighter-rouge">xsd:long</code> and <code class="language-plaintext highlighter-rouge">xsd:integer</code> terms</h3>
+
+<p><strong>Evidence:</strong> Observed on both stores, R-C. Answers TSD-Q10 for the counts.</p>
+
+<p><strong>What the store does.</strong> Three triples with the objects <code class="language-plaintext highlighter-rouge">"1"^^xsd:long</code>, <code class="language-plaintext highlighter-rouge">"1"^^xsd:integer</code> and <code class="language-plaintext highlighter-rouge">"2"^^xsd:long</code>, counted with
+<code class="language-plaintext highlighter-rouge">COUNT(DISTINCT ?o)</code>.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Count</th>
+      <th>rdflib</th>
+      <th>Oxigraph</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>over the stored objects</td>
+      <td>3</td>
+      <td>2, since it stores both <code class="language-plaintext highlighter-rouge">1</code>s as <code class="language-plaintext highlighter-rouge">xsd:integer</code> (TSD-07)</td>
+    </tr>
+    <tr>
+      <td>over a <code class="language-plaintext highlighter-rouge">VALUES</code> row of <code class="language-plaintext highlighter-rouge">"1"^^xsd:long</code> and <code class="language-plaintext highlighter-rouge">"1"^^xsd:integer</code></td>
+      <td>2</td>
+      <td>1</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>What it means for LATTICE.</strong> The gap scan counts distinct <code class="language-plaintext highlighter-rouge">seq</code> terms. A receipt whose <code class="language-plaintext highlighter-rouge">seq</code> was written with another integer type adds a
+term on rdflib and none on Oxigraph, so a duplicate <code class="language-plaintext highlighter-rouge">seq</code> written that way is reported on rdflib only (<code class="language-plaintext highlighter-rouge">test_h2_5_t43</code>). Comparisons with <code class="language-plaintext highlighter-rouge">&gt;=</code> and
+<code class="language-plaintext highlighter-rouge">&lt;=</code> work across numeric types on both. The profile pins positions to <code class="language-plaintext highlighter-rouge">xsd:long</code>, so this arises only from data written outside the
+generated operations.</p>
+
+<hr />
+
+<h3 id="tsd-19-the-order-of-group_concat">TSD-19. The order of <code class="language-plaintext highlighter-rouge">GROUP_CONCAT</code></h3>
+
+<p><strong>Evidence:</strong> Observed on rdflib, R-C. Answers TSD-Q7 for the query shape of the duplicate audit.</p>
+
+<p><strong>What the store does.</strong> Six owners stored in a fixed order and concatenated by the duplicate audit’s query, run in child processes under
+<code class="language-plaintext highlighter-rouge">PYTHONHASHSEED</code> 0 to 5 (12 seeds in the exploration), gave the same string every time, in the order the owners were stored. Unlike the update of
+TSD-01, this query does not go through a hash-ordered join.</p>
+
+<p><strong>What it means for LATTICE.</strong> The order is the store’s scan order and no guarantee. A different query shape or store could differ, so the
+audit tests compare owners as a set. Test <code class="language-plaintext highlighter-rouge">test_h2_5_t45</code>.</p>
+
+<hr />
+
+<h3 id="tsd-20-a-filter-inside-not-exists-and-a-parameter">TSD-20. A <code class="language-plaintext highlighter-rouge">FILTER</code> inside <code class="language-plaintext highlighter-rouge">NOT EXISTS</code> and a parameter</h3>
+
+<p><strong>Evidence:</strong> Observed on both stores, R-C. Answers TSD-Q8.</p>
+
+<p><strong>What the store does.</strong> <code class="language-plaintext highlighter-rouge">FILTER NOT EXISTS { GRAPH &lt;g&gt; { ?claim &lt;claimedBy&gt; ?other . FILTER(?other != $owner) } }</code>, after a sub-select that
+projects <code class="language-plaintext highlighter-rouge">?claim</code>, keeps a claim held by the owner or by nobody and drops one held by someone else. The result is the same when <code class="language-plaintext highlighter-rouge">$owner</code> is
+put in the text and when it is an initial binding (rdflib).</p>
+
+<p><strong>What it means for LATTICE.</strong> <code class="language-plaintext highlighter-rouge">key-claim-write</code> and merge-rewrite rely on this, and it holds on both stores for both ways of binding.
+Test <code class="language-plaintext highlighter-rouge">test_h2_5_t14</code>.</p>
+
+<h3 id="tsd-21-an-empty-values-block-in-an-update">TSD-21. An empty <code class="language-plaintext highlighter-rouge">VALUES</code> block in an update</h3>
+
+<p><strong>Evidence:</strong> Observed on both stores, rdflib 7.6.0 and Oxigraph 0.5.x, probe run for H2.6b.</p>
+
+<p><strong>What the store does.</strong> <code class="language-plaintext highlighter-rouge">VALUES (?a ?b) { }</code> as the first element of an update’s <code class="language-plaintext highlighter-rouge">WHERE</code>, with a <code class="language-plaintext highlighter-rouge">DELETE</code>/<code class="language-plaintext highlighter-rouge">INSERT</code> template after it, gives no
+solution on Oxigraph, so nothing is written. rdflib raises an <code class="language-plaintext highlighter-rouge">AttributeError</code> while evaluating the block. It does so before it changes
+anything, so the store is left as it was.</p>
+
+<p><strong>What it means for LATTICE.</strong> An append with an empty <code class="language-plaintext highlighter-rouge">eventRows</code> slot writes nothing on either store, and on rdflib it raises. H2.8’s caller
+check refuses an empty slot before sending, so the generated operation never meets the difference. Test <code class="language-plaintext highlighter-rouge">test_h2_6b_t6</code>.</p>
+
+<hr />
+
+<h3 id="tsd-22-rdflib-parses-and-translates-a-querys-text-on-every-call">TSD-22. rdflib parses and translates a query’s text on every call</h3>
+
+<p><strong>Evidence:</strong> Source (rdflib 7.6.0) and Observed, R-D and R-E. A property of rdflib. Oxigraph was timed from text only.</p>
+
+<p><strong>Context.</strong> <code class="language-plaintext highlighter-rouge">check:ontology-catalog</code> validates the ontology shapes with pySHACL on rdflib, and took 427 s. One validation of the exposure fixture took 13 s, and
+we wanted to know where.</p>
+
+<p><strong>How we found it.</strong></p>
+
+<ol>
+  <li><code class="language-plaintext highlighter-rouge">cProfile</code> of that one test. Under the profiler, which inflates figures two to three times, the pySHACL call took 34 s of 36 s, and 26.6 s of it was
+<code class="language-plaintext highlighter-rouge">pyparsing</code>, the library rdflib’s SPARQL grammar is written in.</li>
+  <li>The profile’s callers table. 937 calls of <code class="language-plaintext highlighter-rouge">Processor.query</code>, each calling <code class="language-plaintext highlighter-rouge">parseQuery</code>, and <code class="language-plaintext highlighter-rouge">translateQuery</code> another 3.9 s.</li>
+  <li>A probe that counted the texts: 937 calls, 30 distinct texts.</li>
+  <li>A prototype that translated each distinct text once. The test went from 13.2 s to 1.8 s with the same result, and the whole suite from 427 s to 128 s.</li>
+</ol>
+
+<p><strong>What the store does.</strong> The same twenty-line constraint query, run for one focus node (benchmark experiment E5).</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Way of running it</th>
+      <th>Milliseconds per run</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>rdflib, text each time</td>
+      <td>20.4</td>
+    </tr>
+    <tr>
+      <td>rdflib, prepared once with <code class="language-plaintext highlighter-rouge">prepareQuery</code></td>
+      <td>0.48</td>
+    </tr>
+    <tr>
+      <td>Oxigraph, text each time (parse and run)</td>
+      <td>0.17</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Why.</strong> <code class="language-plaintext highlighter-rouge">rdflib/plugins/sparql/processor.py</code>, <code class="language-plaintext highlighter-rouge">SPARQLProcessor.query</code> (line 144). For a <code class="language-plaintext highlighter-rouge">str</code> it evaluates <code class="language-plaintext highlighter-rouge">translateQuery(parseQuery(strOrQuery), base,
+initNs)</code>, and for an already translated query it skips both. The grammar is <code class="language-plaintext highlighter-rouge">pyparsing</code>, in Python. We did not read Oxigraph’s parser. Its figure is
+consistent with a compiled one.</p>
+
+<p><strong>What it means for LATTICE.</strong> Parsing and translating is most of what a SHACL-SPARQL validation costs on rdflib (TSD-23 says why it happens so often).
+<code class="language-plaintext highlighter-rouge">tools/conftest.py</code> translates each distinct text once while <code class="language-plaintext highlighter-rouge">ValidationCache</code> runs pySHACL (<code class="language-plaintext highlighter-rouge">_sparql_translated_once</code>), keyed on the text, the base and the
+prefixes the text uses without declaring (TSD-24, TSD-30). This is not a property of SPARQL or of SHACL, and a different engine or validator may not have
+the cost. <a href="/architecture/efficient-queries-and-shapes.html">Efficient queries and shapes</a> draws the line.</p>
+
+<p><strong>Reproduce it.</strong> <code class="language-plaintext highlighter-rouge">mise run check:sparql-constraint-query-cost</code>, experiment E5.</p>
+
+<h3 id="tsd-23-pyshacl-runs-a-sparql-constraint-once-per-focus-node">TSD-23. pySHACL runs a SPARQL constraint once per focus node</h3>
+
+<p><strong>Evidence:</strong> Source (pySHACL 0.40.1) and Observed, R-D. A property of pySHACL.</p>
+
+<p><strong>Context.</strong> TSD-22 asked why a validation issued 937 queries.</p>
+
+<p><strong>What the tool does.</strong> One constraint, 40 focus nodes, a shapes graph with a single <code class="language-plaintext highlighter-rouge">sh:sparql</code> constraint: 40 calls of <code class="language-plaintext highlighter-rouge">Graph.query</code>, all with one text.</p>
+
+<p><strong>Why.</strong> <code class="language-plaintext highlighter-rouge">pyshacl/constraints/sparql/sparql_based_constraints.py</code>, <code class="language-plaintext highlighter-rouge">_evaluate_sparql_constraint</code> (line 113), loops over the focus nodes. For each it calls
+<code class="language-plaintext highlighter-rouge">sparql_query_helper.py</code>, <code class="language-plaintext highlighter-rouge">pre_bind_variables</code> (line 280), which runs <code class="language-plaintext highlighter-rouge">check_invalid_sparql</code> (a set of regular-expression checks of the text, about 0.4 ms
+a call in the profile of TSD-22) and returns <code class="language-plaintext highlighter-rouge">$this</code> as an initial binding, and then <code class="language-plaintext highlighter-rouge">_validate_sparql_query</code> (line 169) calls <code class="language-plaintext highlighter-rouge">Graph.query(text,
+initBindings=...)</code>. The SHACL specification defines a SPARQL-based constraint by its result for one focus node, with <code class="language-plaintext highlighter-rouge">$this</code> pre-bound, and says nothing
+about batching. Running once per node is pySHACL’s choice.</p>
+
+<p><strong>What it means for LATTICE.</strong> The cost of a node shape is the number of its focus nodes times the cost of one run, and a shape that targets a common class
+has one focus node per instance of that class in the data. Exposure’s documentation rule targeted <code class="language-plaintext highlighter-rouge">skos:Concept</code> and ran 15,713 times over 21 validations.
+Whether Jena SHACL or another validator also runs once per node is not tested (TSD-Q14).</p>
+
+<p><strong>Reproduce it.</strong> A shapes graph with one <code class="language-plaintext highlighter-rouge">sh:sparql</code> constraint, 40 focus nodes, and <code class="language-plaintext highlighter-rouge">Graph.query</code> wrapped to count calls. The script is in
+<a href="/architecture/efficient-queries-and-shapes.html#96-reproductions">efficient-queries-and-shapes.md</a>.</p>
+
+<h3 id="tsd-24-the-prefix-block-pyshacl-writes-changes-order-between-validations">TSD-24. The PREFIX block pySHACL writes changes order between validations</h3>
+
+<p><strong>Evidence:</strong> Source (pySHACL 0.40.1) and Observed, R-D. A property of pySHACL.</p>
+
+<p><strong>Context.</strong> After TSD-22’s cache went in, the wording tests still made 512 parses, and 511 of the texts were distinct.</p>
+
+<p><strong>What the tool does.</strong> pySHACL writes the constraint’s <code class="language-plaintext highlighter-rouge">PREFIX</code> declarations in front of its <code class="language-plaintext highlighter-rouge">sh:select</code> text. Twelve validations of one shapes document, parsed
+afresh each time, wrote the same five prefixes in two different orders (nine times and three times).</p>
+
+<p><strong>Why.</strong> <code class="language-plaintext highlighter-rouge">pyshacl/helper/sparql_query_helper.py</code>, <code class="language-plaintext highlighter-rouge">__init__</code> (line 57), starts a dict with <code class="language-plaintext highlighter-rouge">rdf</code>, <code class="language-plaintext highlighter-rouge">rdfs</code> and <code class="language-plaintext highlighter-rouge">owl</code>, and adds each <code class="language-plaintext highlighter-rouge">sh:declare</code> it finds by
+iterating the shapes graph. <code class="language-plaintext highlighter-rouge">apply_prefixes</code> (line 200) writes the dict in that order. We did not trace why the order changes. The likely cause is that
+the declarations are blank nodes, whose labels differ between parses, and that the graph yields triples in the order of its indexes (Reasoned).</p>
+
+<p><strong>What it means for LATTICE.</strong> Text is not a stable cache key. <code class="language-plaintext highlighter-rouge">_canonical_query</code> in <code class="language-plaintext highlighter-rouge">tools/conftest.py</code> sorts the leading declarations before keying, and
+leaves a text alone that declares a prefix twice, since the later declaration may be the one that applies.</p>
+
+<p><strong>Reproduce it.</strong> The script in <a href="/architecture/efficient-queries-and-shapes.html#96-reproductions">efficient-queries-and-shapes.md</a>.</p>
+
+<h3 id="tsd-25-rdflib-fixes-the-order-of-a-groups-patterns-before-it-knows-the-initial-bindings">TSD-25. rdflib fixes the order of a group’s patterns before it knows the initial bindings</h3>
+
+<p><strong>Evidence:</strong> Source (rdflib 7.6.0) and Observed on both stores, R-D. A property of rdflib’s evaluator. Oxigraph showed no sensitivity.</p>
+
+<p><strong>Context.</strong> Two shape queries cost far more than the work they did. The peril vocabulary’s reference-code uniqueness query took 2.0 s over 405 focus nodes,
+and exposure’s documentation rule spent 0.7 ms of its 1.4 ms on a single type test.</p>
+
+<p><strong>What the store does.</strong> A uniqueness test on nodes of one scheme, in two forms with the same solutions (benchmark E2). Milliseconds per focus node, with
+<code class="language-plaintext highlighter-rouge">$this</code> as the focus.</p>
+
+<div class="language-sparql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># naive: join every other node of the scheme</span><span class="w">
+</span><span class="k">SELECT</span><span class="w"> </span><span class="err">…</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">$this</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">inScheme</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">S</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">code</span><span class="w"> </span><span class="nv">?c</span><span class="w"> </span><span class="p">.</span><span class="w">
+                 </span><span class="nv">?o</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">inScheme</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">S</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">code</span><span class="w"> </span><span class="nv">?c</span><span class="w"> </span><span class="p">.</span><span class="w"> </span><span class="k">FILTER</span><span class="w"> </span><span class="p">(</span><span class="nv">?o</span><span class="w"> </span><span class="o">!</span><span class="p">=</span><span class="w"> </span><span class="nv">$this</span><span class="p">)</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span><span class="c1"># improved: look the other node up by the value, then test its scheme</span><span class="w">
+</span><span class="k">SELECT</span><span class="w"> </span><span class="err">…</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">$this</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">inScheme</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">S</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">code</span><span class="w"> </span><span class="nv">?c</span><span class="w"> </span><span class="p">.</span><span class="w">
+                 </span><span class="k">FILTER</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">?o</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">code</span><span class="w"> </span><span class="nv">?c</span><span class="w"> </span><span class="p">.</span><span class="w"> </span><span class="k">FILTER</span><span class="w"> </span><span class="p">(</span><span class="nv">?o</span><span class="w"> </span><span class="o">!</span><span class="p">=</span><span class="w"> </span><span class="nv">$this</span><span class="p">)</span><span class="w"> </span><span class="k">FILTER</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">?o</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">inScheme</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">S</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Nodes</th>
+      <th>rdflib naive</th>
+      <th>rdflib improved</th>
+      <th>Oxigraph naive</th>
+      <th>Oxigraph improved</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>200</td>
+      <td>3.5</td>
+      <td>0.21</td>
+      <td>0.058</td>
+      <td>0.063</td>
+    </tr>
+    <tr>
+      <td>400</td>
+      <td>7.2</td>
+      <td>0.21</td>
+      <td>0.052</td>
+      <td>0.067</td>
+    </tr>
+    <tr>
+      <td>800</td>
+      <td>13.8</td>
+      <td>0.22</td>
+      <td>0.058</td>
+      <td>0.065</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Doubling the nodes doubles the naive form’s cost per focus node on rdflib, so its total is quadratic. Neither the improved form nor either form on Oxigraph grows.
+A second case (E1) types a variable bound by an earlier pattern. Its cost on rdflib grows with the number of nodes of that type, and <code class="language-plaintext highlighter-rouge">FILTER EXISTS</code> removes it.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Schemes (400 focus nodes)</th>
+      <th>rdflib pattern</th>
+      <th>rdflib <code class="language-plaintext highlighter-rouge">FILTER EXISTS</code></th>
+      <th>Oxigraph pattern</th>
+      <th>Oxigraph <code class="language-plaintext highlighter-rouge">FILTER EXISTS</code></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>16</td>
+      <td>0.23</td>
+      <td>0.21</td>
+      <td>0.061</td>
+      <td>0.062</td>
+    </tr>
+    <tr>
+      <td>64</td>
+      <td>0.61</td>
+      <td>0.14</td>
+      <td>0.038</td>
+      <td>0.039</td>
+    </tr>
+    <tr>
+      <td>256</td>
+      <td>2.26</td>
+      <td>0.14</td>
+      <td>0.038</td>
+      <td>0.039</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Why.</strong> <code class="language-plaintext highlighter-rouge">rdflib/plugins/sparql/algebra.py</code>, <code class="language-plaintext highlighter-rouge">simplify</code> (line 779) calls <code class="language-plaintext highlighter-rouge">reorderTriples</code> (line 122) on each basic graph pattern when the query is translated.
+It sorts the patterns by <code class="language-plaintext highlighter-rouge">_knownTerms</code> (line 104), the number of variable terms not yet bound by the patterns before it. At translation <code class="language-plaintext highlighter-rouge">$this</code> is an ordinary
+variable, because initial bindings arrive only when the query runs, so <code class="language-plaintext highlighter-rouge">?s a ex:Scheme</code> (one unknown term) sorts before <code class="language-plaintext highlighter-rouge">$this ex:inScheme ?s</code> (two). Then
+<code class="language-plaintext highlighter-rouge">evalBGP</code> (<code class="language-plaintext highlighter-rouge">evaluate.py</code>, line 77) runs the patterns in that order as nested loops, and the first one scans every node of the type. <code class="language-plaintext highlighter-rouge">FILTER EXISTS</code> is
+evaluated for each solution of its group with that solution’s values substituted (<code class="language-plaintext highlighter-rouge">operators.py</code>, <code class="language-plaintext highlighter-rouge">Builtin_EXISTS</code>, line 580), so inside it <code class="language-plaintext highlighter-rouge">?s</code> is bound and
+the same pattern is a lookup. The two forms mean the same by the specification, which defines <code class="language-plaintext highlighter-rouge">EXISTS</code> by substitution (SPARQL 1.1 Query §8.1, and the evaluation of <code class="language-plaintext highlighter-rouge">EXISTS</code> in §18).</p>
+
+<p>SPARQL does not fix the order in which an engine matches the patterns of a group. Oxigraph, which showed no difference, orders them itself. We did not read its
+planner. That its naive forms are already fast is Observed.</p>
+
+<p><strong>What it means for LATTICE.</strong> Rule R1 of <a href="/architecture/efficient-queries-and-shapes.html">efficient-queries-and-shapes.md</a>. Three shapes changed: peril 0.3.1 (two queries, 2.0 s and
+2.3 s down to 0.11 s and 0.13 s over 405 focus nodes), exposure 0.1.1 (the documentation rule, 1.4 ms to 0.19 ms) and wording 0.4.1 (TSD-26, TSD-27). The benefit is
+specific to rdflib. The rewrite is harmless elsewhere, since it means the same, but on an optimising engine it buys nothing we measured.</p>
+
+<p><strong>Reproduce it.</strong> <code class="language-plaintext highlighter-rouge">mise run check:sparql-constraint-query-cost</code>, experiments E1 and E2.</p>
+
+<h3 id="tsd-26-a-chain-of-three-or-more-groups-is-joined-by-evaluating-the-later-ones-whole">TSD-26. A chain of three or more groups is joined by evaluating the later ones whole</h3>
+
+<p><strong>Evidence:</strong> Source (rdflib 7.6.0) and Observed, R-D. A property of rdflib’s evaluator. Not measured on Oxigraph.</p>
+
+<p><strong>Context.</strong> The peril parent-code query joined <code class="language-plaintext highlighter-rouge">?parent skos:notation ?parentCode</code> after a <code class="language-plaintext highlighter-rouge">UNION</code> group, and cost as much as the uniqueness join of TSD-25
+although it never named another node of the scheme.</p>
+
+<p><strong>What the store does.</strong> A two-part group passes the left side’s bindings into the right side. A group of three or more parts does not. Counting
+<code class="language-plaintext highlighter-rouge">Graph.triples</code> lookups over 300 <code class="language-plaintext highlighter-rouge">ex:has</code> edges:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Query</th>
+      <th>Lookups</th>
+      <th>Scans with an unbound subject</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ex:root ex:has ?a . ?a ex:name ?n . ?n ex:kind ?k</code> (one pattern)</td>
+      <td>601</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ex:root ex:has ?a . { ?a ex:name ?n . ?n ex:kind ?k }</code> (two parts)</td>
+      <td>601</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ex:root ex:has ?a . { ?a ex:name ?n } { ?n ex:kind ?k }</code> (three parts)</td>
+      <td>302</td>
+      <td>1</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Why.</strong> <code class="language-plaintext highlighter-rouge">algebra.py</code>, <code class="language-plaintext highlighter-rouge">analyse</code> (line 792) marks a <code class="language-plaintext highlighter-rouge">Join</code> lazy only when none of its operands is itself a join. <code class="language-plaintext highlighter-rouge">evaluate.py</code>, <code class="language-plaintext highlighter-rouge">evalJoin</code> (line 156) then
+either pushes the left side’s bindings into the right (<code class="language-plaintext highlighter-rouge">evalLazyJoin</code>, line 141) or evaluates the right side whole into a set and hash-joins (<code class="language-plaintext highlighter-rouge">_join</code>). A chain
+of three parts is left-deep, so its outer join has a join for an operand and is not lazy. Evaluating an operand whole is cheaper than one lookup per left row
+when the left side is large. It is expensive when the left side is one row, as it is for every constraint query, because <code class="language-plaintext highlighter-rouge">$this</code> is pre-bound: the operand’s
+whole extent (here, every notation of the scheme) is built for each focus node.</p>
+
+<p>What this does not explain. Moving W8’s identity lookup ahead of its pair enumeration took that query from 67 ms to 32 ms per wording, and by this mechanism the
+join stays non-lazy either way. We did not isolate why it helped (TSD-Q15).</p>
+
+<p><strong>What it means for LATTICE.</strong> Rule R2: keep a group to two operands, or put the dependent operand in <code class="language-plaintext highlighter-rouge">FILTER EXISTS</code>, where the substituted solution reaches it.
+TSD-Q1 asks about the order of a lazy join’s solutions, which this finding does not answer.</p>
+
+<p><strong>Reproduce it.</strong> The script in <a href="/architecture/efficient-queries-and-shapes.html#96-reproductions">efficient-queries-and-shapes.md</a>.</p>
+
+<h3 id="tsd-27-a-filter-is-applied-after-its-groups-patterns-and-rdflib-does-not-move-it-earlier">TSD-27. A <code class="language-plaintext highlighter-rouge">FILTER</code> is applied after its group’s patterns, and rdflib does not move it earlier</h3>
+
+<p><strong>Evidence:</strong> Source (rdflib 7.6.0) and Observed on both stores, R-D. The scope is the specification’s (§4.3). The cost is the evaluator’s.</p>
+
+<p><strong>Context.</strong> The wording slot-overlap query put three cheap guards (every variant has a condition, every condition is an interval condition, no variant has two)
+in the group that then enumerates candidate points. It took 266 ms per slot.</p>
+
+<p><strong>What the store does.</strong> Guards that reject 90% of the focus nodes, in the group of an enumeration or in a group of their own (benchmark E3). Milliseconds per
+focus node, 200 focus nodes.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Values per node</th>
+      <th>rdflib same group</th>
+      <th>rdflib own group</th>
+      <th>Oxigraph same group</th>
+      <th>Oxigraph own group</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>10</td>
+      <td>9.6</td>
+      <td>0.51</td>
+      <td>0.090</td>
+      <td>0.069</td>
+    </tr>
+    <tr>
+      <td>20</td>
+      <td>38.4</td>
+      <td>1.4</td>
+      <td>0.103</td>
+      <td>0.072</td>
+    </tr>
+    <tr>
+      <td>30</td>
+      <td>81.9</td>
+      <td>3.5</td>
+      <td>0.127</td>
+      <td>0.099</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>On the real wording slots the gain was 266 ms to 132 ms for overlap and 119 ms to 82 ms for coverage, smaller than the synthetic gain, which rejects 90% of the
+nodes. The gain follows the share of focus nodes the guards reject, so it is large only when they reject most.</p>
+
+<p><strong>Why.</strong> A <code class="language-plaintext highlighter-rouge">FILTER</code> applies to the whole group it is written in (§4.3). rdflib wraps the whole group in one <code class="language-plaintext highlighter-rouge">Filter</code> node (<code class="language-plaintext highlighter-rouge">algebra.py</code>,
+<code class="language-plaintext highlighter-rouge">translateGroupGraphPattern</code>, around line 343), and <code class="language-plaintext highlighter-rouge">evalFilter</code> (<code class="language-plaintext highlighter-rouge">evaluate.py</code>, line 208) tests each solution of <code class="language-plaintext highlighter-rouge">evalPart(ctx, part.p)</code>, so every solution is
+built before any guard runs. In the synthetic case a guard in its own group is the left operand of a lazy join (TSD-26), so a node it rejects never reaches the right operand. We did not
+establish that every real query meets that condition, and the wording gain is smaller. Oxigraph orders filters itself, and its two forms differ by 1.3 to 1.5 times.</p>
+
+<p><strong>What it means for LATTICE.</strong> Rule R3. The sub-group is exactly equivalent when the guards read only variables the sub-group binds, so the change is safe to
+make and to check by replay.</p>
+
+<p><strong>Reproduce it.</strong> <code class="language-plaintext highlighter-rouge">mise run check:sparql-constraint-query-cost</code>, experiment E3.</p>
+
+<h3 id="tsd-28-presence-and-absence-tests-the-forms-differ-little">TSD-28. Presence and absence tests: the forms differ little</h3>
+
+<p><strong>Evidence:</strong> Observed on both stores, R-D. Not explained from source.</p>
+
+<p><strong>Context.</strong> Exposure’s documentation rule counted English notes with <code class="language-plaintext highlighter-rouge">OPTIONAL</code>, <code class="language-plaintext highlighter-rouge">GROUP BY</code> and <code class="language-plaintext highlighter-rouge">HAVING (COUNT(DISTINCT ?n) &lt; 1)</code>. We asked whether another form
+was cheaper.</p>
+
+<p><strong>What the store does.</strong> The three forms, over 600 focus nodes with a note on five in six, in milliseconds per focus node. Only rdflib was timed, since Oxigraph rejects the
+<code class="language-plaintext highlighter-rouge">GROUP BY</code> form when the adapter substitutes <code class="language-plaintext highlighter-rouge">$this</code>.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Form</th>
+      <th>rdflib</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">OPTIONAL</code>, <code class="language-plaintext highlighter-rouge">GROUP BY</code>, <code class="language-plaintext highlighter-rouge">HAVING (COUNT(DISTINCT ?n) &lt; 1)</code></td>
+      <td>0.178</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">OPTIONAL</code>, <code class="language-plaintext highlighter-rouge">FILTER (!BOUND(?n))</code></td>
+      <td>0.130</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">FILTER NOT EXISTS</code></td>
+      <td>0.126</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Benchmark E4 compares the last two on both stores: 1.0 to 1.2 times on rdflib and 1.1 to 1.2 times on Oxigraph, which is noise. On the exposure fixture the first
+form cost 1.19 ms and <code class="language-plaintext highlighter-rouge">FILTER NOT EXISTS</code> 0.85 ms (29% less). Turning two pure existence patterns of the instrument word-use query into <code class="language-plaintext highlighter-rouge">FILTER EXISTS</code> saved 12%.</p>
+
+<p><strong>What it means for LATTICE.</strong> These are worth taking when a query is being rewritten for another reason, and not worth a shapes release alone. We reverted the
+instrument change for that reason. Choose by clarity.</p>
+
+<p><strong>Reproduce it.</strong> <code class="language-plaintext highlighter-rouge">mise run check:sparql-constraint-query-cost</code>, experiment E4.</p>
+
+<h3 id="tsd-29-two-parses-of-one-document-never-give-equal-triple-sets">TSD-29. Two parses of one document never give equal triple sets</h3>
+
+<p><strong>Evidence:</strong> Observed, R-D. Not a store property. A parser mints blank nodes (the RDF 1.1 Turtle and N-Triples specifications scope blank-node labels to a
+document), so this holds for any parser.</p>
+
+<p><strong>Context.</strong> Exposure’s test fixture is seven Turtle files, parsed afresh for each of twenty tests. Two tests that validated the same unchanged fixture never
+shared a validation, although <code class="language-plaintext highlighter-rouge">ValidationCache</code> keys on a graph’s content.</p>
+
+<p><strong>What happens.</strong> The fixture has 768 blank-node terms. Two parses compared as sets differ, and they are isomorphic. A copy of one parse (<code class="language-plaintext highlighter-rouge">Graph() + graph</code>)
+keeps the labels, so two copies compare equal as sets.</p>
+
+<p><strong>What it means for LATTICE.</strong> A cache keyed on triple content cannot hit across parses. Build a fixture once with <code class="language-plaintext highlighter-rouge">graph_cache</code> and give each test a copy
+(<code class="language-plaintext highlighter-rouge">tools/test_exposure_ontology.py</code>, <code class="language-plaintext highlighter-rouge">_fixture</code>). The copy cost 0.14 s against 0.28 s to parse.</p>
+
+<p><strong>Reproduce it.</strong> The script in <a href="/architecture/efficient-queries-and-shapes.html#96-reproductions">efficient-queries-and-shapes.md</a>.</p>
+
+<h3 id="tsd-30-a-querys-undeclared-prefixes-resolve-from-the-data-graphs-bindings">TSD-30. A query’s undeclared prefixes resolve from the data graph’s bindings</h3>
+
+<p><strong>Evidence:</strong> Source (rdflib 7.6.0) and Observed, R-D. A property of rdflib.</p>
+
+<p><strong>Context.</strong> The first version of the translation cache of TSD-22 keyed on all of a graph’s namespace bindings, and missed: 1,258 parses for 94 distinct texts in one
+test file.</p>
+
+<p><strong>What the store does.</strong> <code class="language-plaintext highlighter-rouge">g.query("SELECT ?s WHERE { ?s ex:p ?o }")</code> on a graph with <code class="language-plaintext highlighter-rouge">ex</code> bound gives its rows, and without the binding raises <code class="language-plaintext highlighter-rouge">Unknown namespace
+prefix : ex</code>.</p>
+
+<p><strong>Why.</strong> <code class="language-plaintext highlighter-rouge">rdflib/graph.py</code>, <code class="language-plaintext highlighter-rouge">Graph.query</code> (line 1716): <code class="language-plaintext highlighter-rouge">initNs = initNs or dict(self.namespaces())</code>. So a translation depends on the text and on the graph’s
+bindings for the prefixes the text uses and does not declare. A prefix the text declares itself wins over the graph’s.</p>
+
+<p><strong>What it means for LATTICE.</strong> A cache key holds the text, the base and the bindings of the undeclared prefixes the text uses (<code class="language-plaintext highlighter-rouge">_sparql_translated_once</code>). Replaying
+a recorded validation needs the data graph’s bindings restored. Whether Oxigraph has a fallback was not tested.</p>
+
+<p><strong>Reproduce it.</strong> The script in <a href="/architecture/efficient-queries-and-shapes.html#96-reproductions">efficient-queries-and-shapes.md</a>.</p>
+
+<h3 id="tsd-31-pyshacl-copies-the-data-graph-on-every-validation-unless-told-not-to">TSD-31. pySHACL copies the data graph on every validation unless told not to</h3>
+
+<p><strong>Evidence:</strong> Source (pySHACL 0.40.1) and Observed, R-D. A property of pySHACL.</p>
+
+<p><strong>What the tool does.</strong> <code class="language-plaintext highlighter-rouge">validate(..., inplace=False)</code> (<code class="language-plaintext highlighter-rouge">pyshacl/entrypoints.py</code>, line 40) clones the data graph (<code class="language-plaintext highlighter-rouge">rdfutil/load.py</code>, <code class="language-plaintext highlighter-rouge">clone_graph</code>). In a profile of
+24 validations of a 5,000 to 14,000 triple graph, the clones took 2.2 s, about 0.09 s each.</p>
+
+<p><strong>What it means for LATTICE.</strong> A fixed cost per validation that grows with the size of the data, about 9% of a validation in that profile. <code class="language-plaintext highlighter-rouge">inplace=True</code> would remove
+it, and pySHACL then may change the graph (inference, rules). Our caches share graphs between tests, and a guard fails the run when one changes
+(<code class="language-plaintext highlighter-rouge">_graph_cache_not_mutated</code>), so we did not adopt it (TSD-Q16).</p>
+
+<h3 id="tsd-32-a-constant-filter-whose-value-is-false-is-dropped-by-rdflib">TSD-32. A constant <code class="language-plaintext highlighter-rouge">FILTER</code> whose value is false is dropped by rdflib</h3>
+
+<p><strong>Evidence:</strong> Source (rdflib 7.6.0) and Observed on both stores, R-D. A defect in rdflib. Oxigraph is correct.</p>
+
+<p><strong>Context.</strong> The benchmark’s test of its own pass criterion used <code class="language-plaintext highlighter-rouge">FILTER (false)</code> for a deliberately wrong query, and the check did not fail.</p>
+
+<p><strong>What the store does.</strong> Rows returned by <code class="language-plaintext highlighter-rouge">SELECT ?s WHERE { ?s ex:p ?o FILTER (&lt;constant&gt;) }</code> over two triples.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Constant</th>
+      <th>rdflib</th>
+      <th>Oxigraph</th>
+      <th>Correct</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">false</code>, <code class="language-plaintext highlighter-rouge">0</code>, <code class="language-plaintext highlighter-rouge">""</code>, <code class="language-plaintext highlighter-rouge">0.0</code></td>
+      <td>2</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">true</code>, <code class="language-plaintext highlighter-rouge">1</code>, <code class="language-plaintext highlighter-rouge">"x"</code></td>
+      <td>2</td>
+      <td>2</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">!true</code>, <code class="language-plaintext highlighter-rouge">1 = 2</code>, <code class="language-plaintext highlighter-rouge">true &amp;&amp; false</code>, <code class="language-plaintext highlighter-rouge">false || false</code></td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The same drop occurs inside a <code class="language-plaintext highlighter-rouge">UNION</code> branch and a sub-group, and it inverts <code class="language-plaintext highlighter-rouge">EXISTS</code> and <code class="language-plaintext highlighter-rouge">NOT EXISTS</code>: <code class="language-plaintext highlighter-rouge">FILTER NOT EXISTS { ?s ex:p ?x FILTER (false) }</code> returns
+0 rows on rdflib where 2 are correct.</p>
+
+<p><strong>Why.</strong> <code class="language-plaintext highlighter-rouge">rdflib/plugins/sparql/algebra.py</code>, <code class="language-plaintext highlighter-rouge">collectAndRemoveFilters</code> (line 278) returns <code class="language-plaintext highlighter-rouge">and_(*filters)</code>, which for one filter is that filter itself
+(<code class="language-plaintext highlighter-rouge">operators.py</code>, <code class="language-plaintext highlighter-rouge">and_</code>, line 975). <code class="language-plaintext highlighter-rouge">translateGroupGraphPattern</code> then tests <code class="language-plaintext highlighter-rouge">if filters:</code> and builds the <code class="language-plaintext highlighter-rouge">Filter</code> node only when that is true. A lone constant
+whose Python truth value is false (<code class="language-plaintext highlighter-rouge">Literal(False)</code>, <code class="language-plaintext highlighter-rouge">Literal(0)</code>, <code class="language-plaintext highlighter-rouge">Literal("")</code>) fails the test, and the algebra has no <code class="language-plaintext highlighter-rouge">Filter</code> node. A compound expression is
+an object that is always true, which is why <code class="language-plaintext highlighter-rouge">true &amp;&amp; false</code> works.</p>
+
+<p><strong>What it means for LATTICE.</strong> Never write a constant false filter to make a probe fail, on any engine, since rdflib ignores it. Break a triple pattern instead.
+The authoring skill said so for pySHACL (<code class="language-plaintext highlighter-rouge">FILTER (false)</code> is reported for every focus node), and this is the reason.</p>
+
+<p><strong>Reproduce it.</strong> <code class="language-plaintext highlighter-rouge">SELECT ?s WHERE { ?s ?p ?o FILTER (false) }</code> over a graph with a triple.</p>
+
+<h3 id="tsd-33-on-oxigraph-count-over-a-statically-false-filter-returns-no-row">TSD-33. On Oxigraph, <code class="language-plaintext highlighter-rouge">COUNT(*)</code> over a statically false filter returns no row</h3>
+
+<p><strong>Evidence:</strong> Observed, R-D. Not explained from source. A probable defect in Oxigraph 0.5.11.</p>
+
+<p><strong>What the store does.</strong> <code class="language-plaintext highlighter-rouge">SELECT (COUNT(*) AS ?n) WHERE { ?s ex:p ?o FILTER (&lt;constant&gt;) }</code>.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Filter</th>
+      <th>rdflib</th>
+      <th>Oxigraph</th>
+      <th>Correct</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">FILTER (1 = 2)</code>, a pattern that matches nothing, <code class="language-plaintext highlighter-rouge">FILTER (?o = ex:zz)</code></td>
+      <td>one row, <code class="language-plaintext highlighter-rouge">n = 0</code></td>
+      <td>one row, <code class="language-plaintext highlighter-rouge">n = 0</code></td>
+      <td>one row, <code class="language-plaintext highlighter-rouge">n = 0</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">FILTER (false)</code></td>
+      <td>one row, <code class="language-plaintext highlighter-rouge">n = 2</code> (TSD-32)</td>
+      <td>no row</td>
+      <td>one row, <code class="language-plaintext highlighter-rouge">n = 0</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">FILTER (true &amp;&amp; false)</code></td>
+      <td>one row, <code class="language-plaintext highlighter-rouge">n = 0</code></td>
+      <td>no row</td>
+      <td>one row, <code class="language-plaintext highlighter-rouge">n = 0</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>An aggregate query without <code class="language-plaintext highlighter-rouge">GROUP BY</code> always has exactly one solution (SPARQL 1.1 Query §11, Aggregates), so no row is wrong. It happens when the engine can decide the
+filter is false before it runs, and not when it has to evaluate it.</p>
+
+<p><strong>What it means for LATTICE.</strong> Code that reads the first row of a <code class="language-plaintext highlighter-rouge">COUNT</code> from <code class="language-plaintext highlighter-rouge">OxigraphStore.select</code> should expect none (the benchmark’s pass criterion never
+writes such a filter). The mechanism is open (TSD-Q17).</p>
+
+<h2 id="7-corrections-and-what-they-taught-us">7. Corrections, and what they taught us</h2>
+
+<h3 id="71-rdflib-and-the-order-of-an-update-tsd-01">7.1 rdflib and the order of an update (TSD-01)</h3>
+
+<p>The typed IR sketch first said, from reading <code class="language-plaintext highlighter-rouge">evalModify</code>, that rdflib applies an update one solution at a time. H2.4b’s probe
+then reported that rdflib keeps the specification’s order, and a dated note in the sketch said the first statement was wrong.
+The first statement was right. The probe had happened to run in processes whose hash seeds put the deleting row first. While
+checking, one of our own traces, which read every binding of each solution, also gave a result we did not reproduce later. We
+note it rather than explain it.</p>
+
+<p>What we take from it. A probe on rdflib whose answer depends on the order of solutions must fix or sweep <code class="language-plaintext highlighter-rouge">PYTHONHASHSEED</code>, or it
+measures luck. A conclusion that contradicts the source needs the source re-read before it is recorded. And a trace should touch
+as little of the engine’s state as it can.</p>
+
+<h3 id="72-variable-scope-tsd-03">7.2 Variable scope (TSD-03)</h3>
+
+<p>The checker first let every inner group see the enclosing group’s variables. The H2.1 review then changed the <code class="language-plaintext highlighter-rouge">GRAPH</code> block to do
+the same, calling it a fix. A probe on rdflib showed the opposite: no inner group but <code class="language-plaintext highlighter-rouge">NOT EXISTS</code> sees them. Planning H2.3 then
+found that a pattern’s solutions <em>are</em> joined with the enclosing group, which is a different question from what a <code class="language-plaintext highlighter-rouge">BIND</code> can see.
+The checker now tracks both. Each step was a claim about SPARQL written from memory, and each was settled only by running a query.
+That is why every semantic rule the checker encodes now has an engine test (Track H plan §5.1).</p>
+
+<h3 id="73-the-retry-on-rdflib">7.3 The retry on rdflib</h3>
+
+<p>The spike <code class="language-plaintext highlighter-rouge">spikes/persistence-oxigraph</code> once reported that rdflib and Oxigraph disagreed on a retried append. The cause was two
+bugs in the first scratch scripts. rdflib does materialise the solutions of a <code class="language-plaintext highlighter-rouge">WHERE</code> before it changes anything, as its
+<code class="language-plaintext highlighter-rouge">list(res)</code> shows. That is a different property from applying the changes in the specification’s order, which TSD-01 shows it
+does not.</p>
+
+<h3 id="74-cost-claims-and-what-the-first-versions-got-wrong">7.4 Cost claims, and what the first versions got wrong</h3>
+
+<p>Four statements about cost were wrong or incomplete when first written, and a probe corrected each.</p>
+
+<ul>
+  <li>We first called a chain of groups “slower unless lazy”. A probe that counted lookups (TSD-26) showed that evaluating an operand whole can be cheaper than one
+lookup per row. It is expensive only when the left side is one row, which is the case for a constraint query, and the record now says that.</li>
+  <li>The first reproduction of the guard group (TSD-27) came out backwards, 0.6 times where we expected a gain. The guard group we wrote bound a variable with 25
+values, so it multiplied the rows. The real guard group binds one variable. A reproduction has to be checked against the thing it stands for, as the gain
+is a property of the rejection rate and the group’s cardinality.</li>
+  <li>“Move the existence check into <code class="language-plaintext highlighter-rouge">FILTER EXISTS</code>” was first measured on the exposure documentation rule as 1.4 times, from rewriting the count as <code class="language-plaintext highlighter-rouge">NOT EXISTS</code>.
+The real cost was the type pattern (TSD-25), found only by removing the query’s parts one at a time.</li>
+  <li><code class="language-plaintext highlighter-rouge">FILTER (false)</code> (TSD-32) was found because a test of the benchmark’s own pass criterion did not fail. The authoring skill had warned against it without a
+reason.</li>
+</ul>
+
+<p>What we take from it. State what a mechanism does not explain, as TSD-26 does for W8. Time the parts of a slow query separately before rewriting it. And test
+that a check can fail.</p>
+
+<h2 id="8-open-questions">8. Open questions</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Question</th>
+      <th>Why it matters</th>
+      <th>Next step</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>TSD-Q1</td>
+      <td>does rdflib order a lazy join’s solutions deterministically</td>
+      <td>only non-lazy joins go through a <code class="language-plaintext highlighter-rouge">set</code>, so some updates may have a fixed order</td>
+      <td>read <code class="language-plaintext highlighter-rouge">evalLazyJoin</code> and probe a lazy form</td>
+    </tr>
+    <tr>
+      <td>TSD-Q2</td>
+      <td>what Oxigraph does with initial bindings, if <code class="language-plaintext highlighter-rouge">pyoxigraph</code> offers them for updates</td>
+      <td>TSD-12 holds for rdflib only</td>
+      <td>probe it</td>
+    </tr>
+    <tr>
+      <td>TSD-Q3</td>
+      <td>whether the specification’s zero-length path includes a constant endpoint in no triple</td>
+      <td>TSD-08 names one store as right without checking the text</td>
+      <td>re-read SPARQL 1.1 §18.4</td>
+    </tr>
+    <tr>
+      <td>TSD-Q4</td>
+      <td>the isolation half of request atomicity, and whether inserting an identical statement conflicts</td>
+      <td>H5’s models branch on both</td>
+      <td>H5, with concurrent writers</td>
+    </tr>
+    <tr>
+      <td>TSD-Q5</td>
+      <td>why Oxigraph turns <code class="language-plaintext highlighter-rouge">xsd:long</code> into <code class="language-plaintext highlighter-rouge">xsd:integer</code></td>
+      <td>TSD-07 is observed, not explained</td>
+      <td>read Oxigraph’s literal encoding</td>
+    </tr>
+    <tr>
+      <td>TSD-Q11</td>
+      <td>whether Oxigraph groups a chain of same-precedence operators from the right in a later version, and why in 0.5.11</td>
+      <td>TSD-17 is observed, not explained, and the renderer works around it</td>
+      <td>read the parser, try the newer releases, and report it upstream if it still holds</td>
+    </tr>
+    <tr>
+      <td>TSD-Q12</td>
+      <td>whether Fuseki, which <code class="language-plaintext highlighter-rouge">platform/semantic-dataset-fuseki</code> targets, shows TSD-15 to TSD-18</td>
+      <td>they are measured on two in-process stores only</td>
+      <td>run the same probes against it</td>
+    </tr>
+    <tr>
+      <td>TSD-Q13</td>
+      <td>whether Virtuoso applies even one <code class="language-plaintext highlighter-rouge">DELETE</code>/<code class="language-plaintext highlighter-rouge">INSERT</code> atomically under <code class="language-plaintext highlighter-rouge">log_enable(2)</code> or <code class="language-plaintext highlighter-rouge">(2,1)</code>, and whether Jena TDB2 and Neptune make a multi-operation request one transaction</td>
+      <td>the guarded writes assume a single operation is atomic, and a two-operation form assumes the request is (TSD-06)</td>
+      <td>probe each store, with a failing operation and with a large update interrupted, starting with Fuseki (TSD-Q12)</td>
+    </tr>
+    <tr>
+      <td>TSD-Q14</td>
+      <td>whether Jena SHACL, TopBraid or another validator runs a SPARQL constraint once per focus node, and what a node shape costs there</td>
+      <td>TSD-23 and the choice of targets (rule R6) are measured on pySHACL only</td>
+      <td>run the same shapes on another validator</td>
+    </tr>
+    <tr>
+      <td>TSD-Q15</td>
+      <td>why moving W8’s identity lookup ahead of its pair enumeration halved its cost</td>
+      <td>TSD-26 does not explain it</td>
+      <td>trace the join order and the sizes of the operands</td>
+    </tr>
+    <tr>
+      <td>TSD-Q16</td>
+      <td>what <code class="language-plaintext highlighter-rouge">inplace=True</code> saves, and whether it is safe with shared graphs</td>
+      <td>TSD-31’s 9% is a fixed cost per validation</td>
+      <td>run the suite with a copy per test and <code class="language-plaintext highlighter-rouge">inplace=True</code>, and with the mutation guard on</td>
+    </tr>
+    <tr>
+      <td>TSD-Q17</td>
+      <td>why Oxigraph returns no row for <code class="language-plaintext highlighter-rouge">COUNT(*)</code> over a statically false filter</td>
+      <td>TSD-33 is observed, not explained</td>
+      <td>read Oxigraph’s query optimiser</td>
+    </tr>
+    <tr>
+      <td>TSD-Q18</td>
+      <td>whether Fuseki or Jena ARQ shows the sensitivity of TSD-25 to TSD-27</td>
+      <td>the rules in ADR-A128 assume only rdflib is sensitive</td>
+      <td>run benchmark <code class="language-plaintext highlighter-rouge">sparql-constraint-query-cost</code> against a Fuseki endpoint</td>
+    </tr>
+  </tbody>
+</table>

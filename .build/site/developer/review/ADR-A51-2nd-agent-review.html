@@ -1,0 +1,484 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="disposition-adr-a51-review-verification-and-soundness-assessment-by-2nd-autonomous-agent">Disposition: ADR-A51 Review Verification and Soundness Assessment By 2nd Autonomous Agent</h1>
+
+<p><strong>Superseded:</strong> ADR-A51 was superseded by ADR-A82 before ratification, so the “pending ratification alongside ADR-A51” note below no longer applies. This disposition is historical. Current state: <a href="/developer/status/phase-0-status.html">phase-0-status.md</a>, P0.1.3.</p>
+
+<p><strong>Review:</strong> <a href="/developer/review/ADR-A51-review.html">ADR-A51-review.md</a>
+<strong>Reviewed artefacts:</strong> <a href="../../architecture/decisions/ADR-A51-iri-and-identity-policy.md">ADR-A51</a>, <a href="/architecture/iri-policy.html">iri-policy.md</a>, <a href="/architecture/rdf-sparql-patterns-guide.html">rdf-sparql-patterns-guide.md</a>
+<strong>Date:</strong> 2026-09-23
+<strong>Disposed by:</strong> 2nd Agent, autonomous session. Pending ratification alongside ADR-A51 itself — see <a href="/developer/status/phase-0-status.html">phase-0-status.md</a>.</p>
+
+<h2 id="1-verdict">1. Verdict</h2>
+
+<p>The rewrite is a real improvement. The high-level structure is now right:</p>
+
+<ul>
+  <li>content identity and event identity are separate;</li>
+  <li>the environment is removed from identity;</li>
+  <li><code class="language-plaintext highlighter-rouge">surrogate-claimed</code> is the default for mutable or sensitive keys;</li>
+  <li><code class="language-plaintext highlighter-rouge">pat:current</code> is a pointer, not a graph alias;</li>
+  <li>the guide’s receipt IRIs now carry the epoch.</li>
+</ul>
+
+<p>However, the review has not been applied as thoroughly as the disposition claims. Specifically:</p>
+
+<ul>
+  <li><strong>One Critical finding (F-1) has partially regressed</strong> through <code class="language-plaintext highlighter-rouge">{scope}</code> and the worked examples.</li>
+  <li><strong>Several findings marked “Accepted/Resolved” are not actually implemented.</strong> These are F-12, F-16 and parts of F-5, F-10, F-14 and §5.</li>
+  <li><strong>The disposition misstates what the review asked for</strong> in at least three places.</li>
+  <li><strong>The two normative documents still disagree</strong> on bytes that matter: hash inputs and padding width.</li>
+</ul>
+
+<p>I would not ratify in the current state. Most fixes are editorial, but four are design decisions: <code class="language-plaintext highlighter-rouge">{base}</code>/<code class="language-plaintext highlighter-rouge">{scope}</code>, literal canonicalisation, skolem derivation, and epoch durability.</p>
+
+<hr />
+
+<h2 id="2-finding-by-finding-verification">2. Finding-by-finding verification</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Finding</th>
+      <th>Disposition says</th>
+      <th>Actual status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>F-1 environment in identity</td>
+      <td>Resolved</td>
+      <td>⚠ <strong>Partially regressed</strong> (§2.1)</td>
+    </tr>
+    <tr>
+      <td>F-2 hash width, verification</td>
+      <td>Resolved</td>
+      <td>✅ Mostly. Hash function unnamed; “at least 128” is ambiguous (§2.5)</td>
+    </tr>
+    <tr>
+      <td>F-3 lineage allocation / owner</td>
+      <td>Resolved</td>
+      <td>◑ Partial. The owner question and the <code class="language-plaintext highlighter-rouge">projectId</code>→<code class="language-plaintext highlighter-rouge">{scope}</code> mapping are unanswered</td>
+    </tr>
+    <tr>
+      <td>F-4 Rule 2 scoping</td>
+      <td>Resolved</td>
+      <td>◑ Partial. Claim-IRI <code class="language-plaintext highlighter-rouge">v1</code> salts and ULID <code class="language-plaintext highlighter-rouge">urn:txn:</code> IDs are not in the exception list</td>
+    </tr>
+    <tr>
+      <td>F-5 ULID timestamps</td>
+      <td>Resolved</td>
+      <td>⚠ <strong>Example still invalid</strong> (§2.2)</td>
+    </tr>
+    <tr>
+      <td>F-6 <code class="language-plaintext highlighter-rouge">derived-hash</code> and PII</td>
+      <td>Resolved</td>
+      <td>◑ Partial. Rotation guidance is misapplied (§2.6)</td>
+    </tr>
+    <tr>
+      <td>F-7 <code class="language-plaintext highlighter-rouge">surrogate-claimed</code></td>
+      <td>Resolved</td>
+      <td>✅</td>
+    </tr>
+    <tr>
+      <td>F-8 key mutability / merges</td>
+      <td>Resolved</td>
+      <td>◑ <code class="language-plaintext highlighter-rouge">fnd:replacedBy</code> may not exist; reference rewriting conflicts with content addressing (§4)</td>
+    </tr>
+    <tr>
+      <td>F-9 content vs event</td>
+      <td>Resolved</td>
+      <td>✅ Structure is right. Padding is inconsistent and <code class="language-plaintext highlighter-rouge">fnd:supersededBy</code> is unconstrained (§2.4)</td>
+    </tr>
+    <tr>
+      <td>F-10 <code class="language-plaintext highlighter-rouge">{class}</code> → <code class="language-plaintext highlighter-rouge">{ns}</code></td>
+      <td>Resolved</td>
+      <td>⚠ <strong>Examples still embed class names</strong> (§2.3)</td>
+    </tr>
+    <tr>
+      <td>F-11 alias mechanism</td>
+      <td>Resolved</td>
+      <td>◑ Reader semantics during promotion are not stated; <code class="language-plaintext highlighter-rouge">pat:</code> is an illustrative namespace</td>
+    </tr>
+    <tr>
+      <td>F-12 grammar / escaping</td>
+      <td>Resolved</td>
+      <td>❌ <strong>Not done</strong> (§2.5)</td>
+    </tr>
+    <tr>
+      <td>F-13 URN hygiene, <code class="language-plaintext highlighter-rouge">@base</code></td>
+      <td>Resolved / deferred</td>
+      <td>✅ for <code class="language-plaintext highlighter-rouge">@base</code> and case. The <code class="language-plaintext highlighter-rouge">owl:imports</code> catalog is not addressed</td>
+    </tr>
+    <tr>
+      <td>F-14 content hash spec</td>
+      <td>Resolved</td>
+      <td>◑ Literal canonicalisation creates a new integrity bug (§4.1)</td>
+    </tr>
+    <tr>
+      <td>F-15 tenant</td>
+      <td>Resolved</td>
+      <td>✅ The reserved tenant is not named</td>
+    </tr>
+    <tr>
+      <td>F-16 skolemization</td>
+      <td>Resolved</td>
+      <td>❌ <strong>Self-contradictory, no IRI form</strong> (§2.7)</td>
+    </tr>
+    <tr>
+      <td>F-17 risk wording</td>
+      <td>Accepted</td>
+      <td>Reasonable to drop, but it is “not carried forward”, not “accepted”</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="21-f-1-has-leaked-back-in-through-scope-and-base">2.1 F-1 has leaked back in through <code class="language-plaintext highlighter-rouge">{scope}</code> and <code class="language-plaintext highlighter-rouge">{base}</code></h3>
+
+<p><strong><code class="language-plaintext highlighter-rouge">{scope}</code> can be an environment.</strong> iri-policy §2 says <code class="language-plaintext highlighter-rouge">{scope}</code> “is a project <strong>or environment</strong> id per ADR-A63”. A lineage IRI containing an environment id is exactly what ADR Rule 3 forbids.</p>
+
+<p><strong>Cloning still re-mints.</strong> The accompanying text says cloning creates “new lineages under it”. Content copied into new lineages must have every internal reference to the old lineage rewritten. That changes its content hash, which is precisely the F-1 failure mode, just relocated.</p>
+
+<p><strong>The entity examples put the environment in the base.</strong> Every entity example in iri-policy §4 uses <code class="language-plaintext highlighter-rouge">urn:lattice:t7f3a2:prod/...</code>, with <strong><code class="language-plaintext highlighter-rouge">prod</code></strong> in the base.</p>
+
+<p><strong><code class="language-plaintext highlighter-rouge">{base}</code> is never defined</strong> in either document. This is now the most important gap in the ADR, because it determines three things:</p>
+
+<ul>
+  <li>whether entity identity is per tenant, per project or (as the examples imply) per environment;</li>
+  <li>whether the same real-world entity referenced from two projects gets two IRIs;</li>
+  <li>whether Rule 3 holds at all.</li>
+</ul>
+
+<p><strong>Fix:</strong></p>
+<ul>
+  <li>Define <code class="language-plaintext highlighter-rouge">{base}</code> explicitly (probably <code class="language-plaintext highlighter-rouge">urn:lattice:{tenantId}</code>, or <code class="language-plaintext highlighter-rouge">urn:lattice:{tenantId}:{scope}</code> with <code class="language-plaintext highlighter-rouge">{scope}</code> restricted to a project).</li>
+  <li>State that <code class="language-plaintext highlighter-rouge">{scope}</code> is never an environment.</li>
+  <li>Replace <code class="language-plaintext highlighter-rouge">prod</code> in all examples.</li>
+</ul>
+
+<h3 id="22-f-5-the-corrected-surrogate-example-is-not-a-uuid">2.2 F-5: the “corrected” surrogate example is not a UUID</h3>
+
+<p>The disposition says the iri-policy §4 example was “corrected to a UUIDv4 form”. The unclaimed <code class="language-plaintext highlighter-rouge">surrogate</code> row still reads:</p>
+
+<p><code class="language-plaintext highlighter-rouge">01j9z8q3-k4m5-n6p7-q8r9-s0t1u2v3w4x5</code></p>
+
+<p>This contains non-hex characters (<code class="language-plaintext highlighter-rouge">j z q k m n p r s t u v w x</code>) and has no version-4 nibble. It looks like a hyphenated ULID. The parenthetical beside it (“rendered as a UUIDv4, not a ULID”) is false.</p>
+
+<p>The <code class="language-plaintext highlighter-rouge">surrogate-claimed</code> example (<code class="language-plaintext highlighter-rouge">2b6f9e34-9a41-4d7a-8b2e-3f6c1a9d7e40</code>) is valid. Examples get copied into tests and fixtures, so this matters.</p>
+
+<h3 id="23-f-10-the-examples-reintroduce-class-in-iri-and-violate-lowercase">2.3 F-10: the examples reintroduce class-in-IRI and violate lowercase</h3>
+
+<p>The iri-policy §4 examples use <code class="language-plaintext highlighter-rouge">party/Policy/…</code>, <code class="language-plaintext highlighter-rouge">party/Claimant/…</code>, <code class="language-plaintext highlighter-rouge">eligibility/Claimant/…</code> and <code class="language-plaintext highlighter-rouge">eligibility/ExtractionCandidate/…</code>. These cause four problems:</p>
+
+<ul>
+  <li><strong>They reintroduce class names.</strong> These are capitalised OWL class names, the exact pattern F-10 removed. It is also ambiguous whether <code class="language-plaintext highlighter-rouge">{ns}</code> is <code class="language-plaintext highlighter-rouge">party</code> or <code class="language-plaintext highlighter-rouge">party/Policy</code>.</li>
+  <li><strong>They break the lowercase rule.</strong> Rule 7 says “the canonical lexical form is all-lowercase”. <code class="language-plaintext highlighter-rouge">Policy</code> and <code class="language-plaintext highlighter-rouge">POL-000123</code> violate it.</li>
+  <li><strong>The validator won’t catch it.</strong> iri-policy §7 only rejects mixed case in the <em>scheme/NID</em>, so it would pass these.</li>
+  <li><strong>One example models the very misuse the ADR warns against.</strong> <code class="language-plaintext highlighter-rouge">derived-hash</code> is demonstrated on <code class="language-plaintext highlighter-rouge">Claimant</code>, a person. Claimant keys are almost certainly personal data, so this is the case the ADR says <code class="language-plaintext highlighter-rouge">derived-hash</code> must never be used for.</li>
+</ul>
+
+<p><strong>Decide whether “all-lowercase” applies to the whole IRI or only to scheme/NID and hex.</strong> If it applies to the whole IRI, you also need a rule for case-significant natural keys: lowercasing may merge keys that the source system treats as distinct.</p>
+
+<h3 id="24-f-9--5-padding-width-is-inconsistent-and-the-disposition-dismisses-it">2.4 F-9 / §5: padding width is inconsistent, and the disposition dismisses it</h3>
+
+<p><strong>The review said the padding width must be fixed.</strong> Its words were: “Identity-bearing padding must be fixed in the grammar, because changing it later re-mints every IRI.”</p>
+
+<p><strong>The disposition dismisses this.</strong> It says the 16-vs-19 inconsistency “was not the defect” and leaves it.</p>
+
+<p><strong>The current state is self-contradictory.</strong> iri-policy §2 mandates <strong>19 digits</strong>, but its own event example (<code class="language-plaintext highlighter-rouge">…/evt/e3/0000000000000042</code>) is <strong>16</strong> digits. The guide uses <code class="language-plaintext highlighter-rouge">REV_WIDTH = 16</code> “(19 in production)”.</p>
+
+<p>Pick one width, put it in the grammar, make every example conform, and have the validator enforce it.</p>
+
+<p><strong>Two further F-9 gaps:</strong></p>
+
+<ul>
+  <li><strong>Nothing forbids <code class="language-plaintext highlighter-rouge">fnd:supersededBy</code> between content revisions.</strong> That is exactly the chain that cycles on revert (A→B→A). The ADR maps content revisions to <code class="language-plaintext highlighter-rouge">fnd:Version</code>, and the guide (§23.3) says <code class="language-plaintext highlighter-rouge">fnd:Version</code> carries <code class="language-plaintext highlighter-rouge">fnd:supersededBy</code>. Add a rule: supersession and history are asserted only between event IRIs, never between content revisions.</li>
+  <li><strong>The event type differs between documents.</strong> The ADR types the event IRI as <code class="language-plaintext highlighter-rouge">prov:Activity</code>. iri-policy says events are chained by <code class="language-plaintext highlighter-rouge">pat:prevRev</code> “exactly as … Part V”, which makes them <code class="language-plaintext highlighter-rouge">pat:Revision</code> (and <code class="language-plaintext highlighter-rouge">RevisionShape</code> then requires <code class="language-plaintext highlighter-rouge">pat:target</code>, <code class="language-plaintext highlighter-rouge">pat:txn</code>, etc.). State the relationship, for example <code class="language-plaintext highlighter-rouge">pat:Revision rdfs:subClassOf prov:Activity</code>.</li>
+</ul>
+
+<h3 id="25-f-12-grammar-and-escaping-are-claimed-but-absent">2.5 F-12: grammar and escaping are claimed but absent</h3>
+
+<p>The disposition says tuple encoding “is specified as length-prefixed … see <code class="language-plaintext highlighter-rouge">derived-hash</code>’s grammar row in iri-policy.md §4”. That row contains only <code class="language-plaintext highlighter-rouge">enc(keyTuple)</code>. It is undefined, and it is not length-prefixed. The following are all still missing:</p>
+
+<ul>
+  <li>the component alphabet (the review proposed <code class="language-plaintext highlighter-rouge">[a-z0-9-]</code>) and how <code class="language-plaintext highlighter-rouge">:</code>, <code class="language-plaintext highlighter-rouge">/</code>, <code class="language-plaintext highlighter-rouge">?</code>, <code class="language-plaintext highlighter-rouge">#</code> inside components are handled;</li>
+  <li>a definition of <code class="language-plaintext highlighter-rouge">urlsafe(keyTuple)</code>;</li>
+  <li>a definition of <code class="language-plaintext highlighter-rouge">enc(keyTuple)</code> and its delimiter or escaping;</li>
+  <li>a reference to the guide’s versioned normalization pipelines for key components;</li>
+  <li>the uppercase-hex rule for percent-encodings;</li>
+  <li>the hash <strong>function</strong> for <code class="language-plaintext highlighter-rouge">contentHash</code>. RDFC-1.0 canonicalises; it does not define the dataset digest you store.</li>
+</ul>
+
+<p><strong>Worse, the two normative texts produce different bytes for <code class="language-plaintext highlighter-rouge">derived-hash</code>:</strong></p>
+
+<ul>
+  <li>ADR: <code class="language-plaintext highlighter-rouge">sha256(schemeVersion|ns|enc(keyTuple))</code></li>
+  <li>iri-policy: <code class="language-plaintext highlighter-rouge">sha256(v{schemeVersion}|{ns}|enc(keyTuple))</code></li>
+</ul>
+
+<p>Two teams implementing from the two documents will mint different IRIs for the same key.</p>
+
+<p><strong>“At least 128 bits” is itself ambiguous.</strong> If implementations may choose 128 or 256, the same content has two IRIs. Fix the width exactly per <code class="language-plaintext highlighter-rouge">schemeVersion</code>.</p>
+
+<p>The ADR’s Consequences section says iri-policy contains the “full component grammar, escaping and normalization rules”. It does not yet.</p>
+
+<h3 id="26-f-6-key-rotation-guidance-is-misapplied">2.6 F-6: key rotation guidance is misapplied</h3>
+
+<p>The review’s “never rotate” warning was about <strong>keyed <code class="language-plaintext highlighter-rouge">derived-hash</code> entity IRIs</strong>, where the IRI itself depends on the key. The ADR attaches it to <code class="language-plaintext highlighter-rouge">surrogate-claimed</code> instead (“claim key must be … never rotated for existing entities”).</p>
+
+<p>This is wrong for two reasons:</p>
+
+<ul>
+  <li><strong>Rotation doesn’t touch identity here.</strong> Under <code class="language-plaintext highlighter-rouge">surrogate-claimed</code> the entity IRI is a random UUID, so rotating the HMAC key only re-derives <em>claim</em> IRIs.</li>
+  <li><strong>Never rotating is not operable.</strong> A key that can never be rotated, even after compromise, will not pass a security review.</li>
+</ul>
+
+<p>The guide already has the right answer: rotation is a re-key with a new version salt and a backfill (§6.1, Appendix E item 5).</p>
+
+<p><strong>The documents also disagree on key scope.</strong> The ADR says “per-tenant”; the guide’s docstring says “the platform key”.</p>
+
+<p><strong>GDPR erasure is also unresolved.</strong> The review’s argument for <code class="language-plaintext highlighter-rouge">surrogate-claimed</code> was that “erasure remains possible (delete the claim)”. But the guide retires claims by tombstone and says “the node is never deleted”. The tombstone keeps <code class="language-plaintext highlighter-rouge">pat:retiredBy &lt;person&gt;</code> linked to an HMAC pseudonym of the email forever.</p>
+
+<p>HMAC output is still pseudonymous personal data. You need an erasure path that actually deletes the claim node, and a note on how that interacts with ownership monotonicity.</p>
+
+<h3 id="27-f-16-skolemization-is-contradictory-and-has-no-iri-form">2.7 F-16: skolemization is contradictory and has no IRI form</h3>
+
+<p>iri-policy §5 says two incompatible things:</p>
+
+<ul>
+  <li>Without a natural key, skolemize with <code class="language-plaintext highlighter-rouge">surrogate</code> (random UUIDv4).</li>
+  <li>Skolem IRIs “are deterministic … derived from the canonical blank-node label, not randomly assigned per run.”</li>
+</ul>
+
+<p>Both cannot hold. There are also three further problems:</p>
+
+<ul>
+  <li><strong>No skolem IRI form is defined.</strong> This was the core of the review’s request: there is no <code class="language-plaintext highlighter-rouge">/.well-known/genid/</code> equivalent for URNs.</li>
+  <li><strong>Canonical labels are only unique within one graph.</strong> <code class="language-plaintext highlighter-rouge">c14n0</code> recurs in every graph, so the skolem IRI must incorporate the lineage and content hash or it collides across graphs.</li>
+  <li><strong>Labels churn across revisions.</strong> Canonical labels change whenever the surrounding graph changes, so a node’s skolem identity changes on every edit. That defeats the reason to skolemize things you intend to update later (guide §14.3).</li>
+  <li><strong>The ordering is circular and unstated.</strong> Do you canonicalise, then skolemize, then hash again?</li>
+</ul>
+
+<p>My recommendation: skolemize at ingestion from a source-local deterministic key where one exists (for example <code class="language-plaintext highlighter-rouge">source record id + path</code>), using the <code class="language-plaintext highlighter-rouge">derived-hash</code> form. Use UUIDv4 otherwise, and accept that those nodes are identity-less. After that, the stored graph has no blank nodes. RDFC-1.0 then degenerates to sorting N-Quads, which also solves most of the hashing performance problem (§4.4).</p>
+
+<hr />
+
+<h2 id="3-problems-in-the-disposition-document-itself">3. Problems in the disposition document itself</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Claim</th>
+      <th>Reality</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>“Accepted in full”</td>
+      <td>Several items are deferred, dismissed or not implemented (F-12, F-16, padding, crosswalk, <code class="language-plaintext highlighter-rouge">pat:etag</code>)</td>
+    </tr>
+    <tr>
+      <td>§3: the IRI-grammar crosswalk “was not raised as a defect by the review”</td>
+      <td>The review’s §5 table explicitly says “the guide should include a crosswalk to A51/A54 grammar”</td>
+    </tr>
+    <tr>
+      <td>§3: padding “was not the defect”</td>
+      <td>The review states the opposite (§2.4 above)</td>
+    </tr>
+    <tr>
+      <td>“Chapter 6’s <code class="language-plaintext highlighter-rouge">claim_iri(...)</code> example outputs were recomputed”</td>
+      <td>Chapter 6 shows no computed output (§5 below)</td>
+    </tr>
+    <tr>
+      <td>§1 refers to open questions in “§4 of this document”</td>
+      <td>They are in §5</td>
+    </tr>
+    <tr>
+      <td>Guide Appendix D.1 attributes the receipt-epoch bug to “the reviewer’s F9”</td>
+      <td>It was the review’s §5 cross-document finding</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Also silently skipped from review §4 and §6:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">pat:etag</code> should be declared deprecated in Appendix A.</li>
+  <li><code class="language-plaintext highlighter-rouge">ex:PersonEmailUnique</code> in guide §7.3 has the same <code class="language-plaintext highlighter-rouge">sh:prefixes ex:</code> problem; only <code class="language-plaintext highlighter-rouge">NoForkShape</code> was fixed.</li>
+  <li>The review asked for “distinct IRIs are not asserted <code class="language-plaintext highlighter-rouge">owl:differentFrom</code>” to be stated.</li>
+  <li>The review asked for the <code class="language-plaintext highlighter-rouge">owl:imports</code> catalog requirement.</li>
+  <li>The review asked for explicit link triples to be used for “all revisions of lineage X” instead of <code class="language-plaintext highlighter-rouge">STRSTARTS</code> scans.</li>
+  <li>The review asked how <code class="language-plaintext highlighter-rouge">owl:Ontology</code> headers and <code class="language-plaintext highlighter-rouge">owl:versionIRI</code> relate to the registry IRI, beyond the placeholder rule.</li>
+</ul>
+
+<p>A disposition that overstates completion is itself a risk: the maintainer ratifier will trust the table rather than re-check the diff.</p>
+
+<hr />
+
+<h2 id="4-soundness-and-production-readiness-issues-in-the-amended-adr">4. Soundness and production-readiness issues in the amended ADR</h2>
+
+<p>These are not in the original review but affect whether the design is workable at scale.</p>
+
+<h3 id="41-literal-canonicalisation-breaks-content-addressing-design-bug">4.1 Literal canonicalisation breaks content addressing (design bug)</h3>
+
+<p>iri-policy §3.4 hashes <code class="language-plaintext highlighter-rouge">"1"^^xsd:integer</code> and <code class="language-plaintext highlighter-rouge">"01"^^xsd:integer</code> identically. In RDF 1.1 these are <strong>different terms</strong>. If the store keeps the original lexical forms, two different stored graphs share one content revision IRI and pass full-hash verification.</p>
+
+<p>That is the silent aliasing F-2 was meant to prevent, now caused by design rather than by collision. Choose one:</p>
+
+<ul>
+  <li><strong>(a)</strong> Canonicalise lexical forms <strong>on write</strong>, so the stored graph <em>is</em> the hashed graph.</li>
+  <li><strong>(b)</strong> Hash exact lexical forms and drop §3.4. This is simpler, and consistent with the §3.4 statement that the hash is “not semantic equivalence”.</li>
+</ul>
+
+<p>Either way, fully specify the rules for language-tag case, <code class="language-plaintext highlighter-rouge">xsd:decimal</code>/<code class="language-plaintext highlighter-rouge">xsd:double</code>, and <code class="language-plaintext highlighter-rouge">xsd:dateTime</code> timezones. Also state whether <code class="language-plaintext highlighter-rouge">schemeVersion</code> is inside the hash input: the review asked, and it is still unanswered.</p>
+
+<h3 id="42-merges-by-reference-rewriting-do-not-scale-and-conflict-with-immutability">4.2 Merges by reference rewriting do not scale, and conflict with immutability</h3>
+
+<p>F-8’s “references are migrated to the canonical IRI” means rewriting every content revision that mentions the alias. Each rewrite changes that revision’s hash, which means a new content revision and a new event, cascading across lineages. For a large entity-resolution merge this is a platform-wide write storm.</p>
+
+<p>Recommended approach:</p>
+
+<ul>
+  <li><strong>Resolve aliases at read time</strong> via an alias index.</li>
+  <li><strong>Rewrite lazily</strong> when a lineage next revises for its own reasons.</li>
+  <li><strong>Never rewrite sealed content revisions.</strong></li>
+</ul>
+
+<p>Separately, <strong>verify that <code class="language-plaintext highlighter-rouge">fnd:replacedBy</code> exists in Foundation.</strong> The guide’s Foundation alignment (§23.3) lists <code class="language-plaintext highlighter-rouge">fnd:supersededBy</code>, not <code class="language-plaintext highlighter-rouge">fnd:replacedBy</code>. If it doesn’t exist, the ADR depends on an undefined term.</p>
+
+<h3 id="43-the-epoch-fix-depends-on-the-epoch-surviving-a-restore">4.3 The epoch fix depends on the epoch surviving a restore</h3>
+
+<p>The epoch lives in <code class="language-plaintext highlighter-rouge">urn:g:dataset</code>, <em>inside</em> the dataset being restored. A restore brings back epoch 3. Collision safety then depends entirely on an operator bumping it before the first write (runbook step 1).</p>
+
+<p>For a mechanism whose whole purpose is disaster recovery, make it fail-safe. For example:</p>
+
+<ul>
+  <li>source the epoch from outside the backed-up store (PostgreSQL, etcd or the restore tooling); or</li>
+  <li>have writers refuse to start until the epoch exceeds a durable external high-water mark.</li>
+</ul>
+
+<p>A related gap: the S6 as-of query pins a single epoch. As-of reads spanning a restore boundary (epoch-3 prefix plus epoch-4 continuation) are not handled.</p>
+
+<h3 id="44-content-hash-cost">4.4 Content-hash cost</h3>
+
+<p>RDFC-1.0 on large graphs with blank nodes is expensive. The “bounded work budget” has no value and no stated behaviour for legitimate large ontologies.</p>
+
+<p>If skolemization happens at ingestion (§2.7), canonicalisation becomes a sort-and-stream hash and the budget only matters for residual blank nodes. For very large or frequently revised graphs, consider chunked or Merkle hashing so a small edit doesn’t rehash millions of triples.</p>
+
+<h3 id="45-patcurrent-read-semantics">4.5 <code class="language-plaintext highlighter-rouge">pat:current</code> read semantics</h3>
+
+<p><strong>State the normative read pattern.</strong> Readers resolve the pointer and the payload in <strong>one query</strong>, so both come from one snapshot, for example:</p>
+
+<div class="language-sparql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;meta&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nn">&lt;lineage&gt;</span><span class="w"> </span><span class="nn">pat</span><span class="o">:</span><span class="ss">current</span><span class="w"> </span><span class="nv">?g</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span><span class="k">GRAPH</span><span class="w"> </span><span class="nv">?g</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="err">…</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Two separate requests can observe a pointer to a revision that has since been pruned.</p>
+
+<p><strong>Specify three further things:</strong></p>
+
+<ul>
+  <li>where a lineage’s version row lives, since the guide keys rows by aggregate graph IRI in <code class="language-plaintext highlighter-rouge">urn:g:meta/{shard}</code>;</li>
+  <li>that retention must never prune anything reachable from <code class="language-plaintext highlighter-rouge">pat:current</code>, or within a reader grace window;</li>
+  <li>that the “materialised <code class="language-plaintext highlighter-rouge">/current</code> projection” is a full graph copy per promotion. Recommend it only for small graphs, or not at all.</li>
+</ul>
+
+<p><strong>The <code class="language-plaintext highlighter-rouge">pat:</code> namespace is not decided.</strong> The ADR now makes <code class="language-plaintext highlighter-rouge">pat:current</code> normative, but <code class="language-plaintext highlighter-rouge">pat:</code> is explicitly an illustrative namespace (<code class="language-plaintext highlighter-rouge">https://example.org/lattice/patterns#</code>, Appendix E item 3). A normative ADR shouldn’t depend on it; either decide the namespace first or state that dependency.</p>
+
+<h3 id="46-scope-and-registries-are-undefined">4.6 Scope and registries are undefined</h3>
+
+<p><strong>Scope.</strong> iri-policy §1 says the grammar applies to “<code class="language-plaintext highlighter-rouge">urn:lattice:</code> <strong>and <code class="language-plaintext highlighter-rouge">urn:</code></strong> entity IRIs”. Taken literally, that brings <code class="language-plaintext highlighter-rouge">urn:key:</code>, <code class="language-plaintext highlighter-rouge">urn:rev:</code>, <code class="language-plaintext highlighter-rouge">urn:txn:</code> and <code class="language-plaintext highlighter-rouge">urn:g:</code> into scope. These violate the grammar: uppercase base32 claim IRIs, and ULID txn IDs versus Rule 2.</p>
+
+<p>Either narrow the scope to <code class="language-plaintext highlighter-rouge">urn:lattice:</code>, or add the crosswalk the review asked for and reconcile the forms. Right now the guide’s receipts (<code class="language-plaintext highlighter-rouge">urn:rev:{agg}/e{epoch}/{seq}</code>) and ADR events (<code class="language-plaintext highlighter-rouge">{lineage}/evt/e{epoch}/{seq}</code>) are two grammars for the same concept.</p>
+
+<p><strong>Registries.</strong> <code class="language-plaintext highlighter-rouge">{ns}</code>, <code class="language-plaintext highlighter-rouge">{family}</code>, <code class="language-plaintext highlighter-rouge">{scope}</code>, tenant IDs and the reserved shared-data tenant are all “registered”, but there is no registry artefact the validator can check against. Define one, even if it is just a versioned file in the ontology repo.</p>
+
+<h3 id="47-owner-semantics-for-lineages">4.7 Owner semantics for lineages</h3>
+
+<p>F-3’s question is still open: what happens when two producers register identical content under the same lineage? Is it a no-op, or an ownership conflict?</p>
+
+<p>Also, lineage allocation via <code class="language-plaintext highlighter-rouge">pat:KeyClaim</code> inherits P1’s write-skew caveat. On MVCC stores it needs P3, serializable isolation or a single writer. Say so. Because the lineage key is non-sensitive, you can also note that no HMAC is needed.</p>
+
+<h3 id="48-minor-points">4.8 Minor points</h3>
+
+<ul>
+  <li>The ADR says <code class="language-plaintext highlighter-rouge">surrogate</code> minting “is checked by the TCK (P0.5)”. The TCK tests stores, not ingestion plans; this needs a plan linter.</li>
+  <li>The default-ignorable strip list in the guide’s §8.1 is incomplete. The Unicode <code class="language-plaintext highlighter-rouge">Default_Ignorable_Code_Point</code> set also includes U+00AD, U+034F, U+180E, U+2061–2064, bidi controls and variation selectors. Use the property, not a hand list.</li>
+  <li><code class="language-plaintext highlighter-rouge">casefold</code> should be followed by re-normalisation (<code class="language-plaintext highlighter-rouge">NFKC(casefold(NFKC(x)))</code>).</li>
+  <li>The QP4 test’s second loop compares a function with itself. That is not “an independent computation”, despite what the disposition says.</li>
+  <li>For registration of an unregistered NID, consider <code class="language-plaintext highlighter-rouge">tag:</code> URIs (RFC 4151). They require no registration and have the same internal-only properties.</li>
+  <li>UUIDv4 IRIs have poor B-tree locality wherever they are indexed as text outside the triple store, for example in the PostgreSQL ledgers. Store them as native <code class="language-plaintext highlighter-rouge">uuid</code> columns there.</li>
+</ul>
+
+<hr />
+
+<h2 id="5-guide-side-checks">5. Guide-side checks</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Disposition claim</th>
+      <th>Verified?</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Receipt IRIs carry epoch across chapters</td>
+      <td>✅ Yes, throughout the examples checked</td>
+    </tr>
+    <tr>
+      <td>HMAC widened to 128 bits</td>
+      <td>◑ The function default changed, but <strong>every claim-IRI example is still 16 base32 chars (80 bits)</strong>. 128 bits needs 26 chars. The examples are also literally <code class="language-plaintext highlighter-rouge">base32("abcdefghij")</code> (<code class="language-plaintext highlighter-rouge">MFRGGZDFMZTWQ2LK</code>) and <code class="language-plaintext highlighter-rouge">base32("1234567890")</code> (<code class="language-plaintext highlighter-rouge">GEZDGNBVGY3TQOJQ</code>). Fine as placeholders, but label them as such and fix the length</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">deterministic_iri</code> output recomputed</td>
+      <td>◑ Length is now consistent (20 bytes → 32 chars). The value can’t be verified from the documents; generate it in a test rather than trusting prose</td>
+    </tr>
+    <tr>
+      <td>S6 corrected</td>
+      <td>✅ The logic is now correct, including re-assertion after retraction. Still uses an unbound <code class="language-plaintext highlighter-rouge">GRAPH ?log</code> (the guide’s own F6 anti-pattern) and is single-epoch</td>
+    </tr>
+    <tr>
+      <td>S3 prefix check</td>
+      <td>◑ Introduces <code class="language-plaintext highlighter-rouge">urn:g:retention</code> and <code class="language-plaintext highlighter-rouge">pat:retentionLowWaterMark</code>, neither in §2.3 nor Appendix A. §24.2, which it cites as maintaining the value, doesn’t mention it. Doesn’t detect a stream with <em>no</em> surviving receipts</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">sh:declare</code> note</td>
+      <td>✅ for <code class="language-plaintext highlighter-rouge">NoForkShape</code>. ❌ <code class="language-plaintext highlighter-rouge">ex:PersonEmailUnique</code> (§7.3) not addressed</td>
+    </tr>
+    <tr>
+      <td>Normalization strip step</td>
+      <td>✅ The QP4 inputs now converge. The list is incomplete (§4.8)</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="6-recommended-actions">6. Recommended actions</h2>
+
+<p><strong>Blocking before ratification:</strong></p>
+
+<ol>
+  <li>Define <code class="language-plaintext highlighter-rouge">{base}</code>, and restrict <code class="language-plaintext highlighter-rouge">{scope}</code> so it is never an environment. Fix all <code class="language-plaintext highlighter-rouge">prod</code> examples (§2.1).</li>
+  <li>Reconcile the <code class="language-plaintext highlighter-rouge">derived-hash</code> input bytes between the ADR and iri-policy. Name the hash function and fix the exact width (§2.5).</li>
+  <li>Fix one sequence padding width in the grammar and make all examples conform (§2.4).</li>
+  <li>Resolve literal canonicalisation: canonicalise on write, or drop it (§4.1).</li>
+  <li>Rewrite skolemization with a concrete IRI form and a non-contradictory derivation rule (§2.7).</li>
+  <li>Write the actual component grammar and escaping rules (§2.5).</li>
+  <li>Correct the examples: valid UUIDv4, lowercase <code class="language-plaintext highlighter-rouge">{ns}</code> tokens, no <code class="language-plaintext highlighter-rouge">derived-hash</code> on person-like entities (§2.2, §2.3).</li>
+  <li>Correct the disposition so it accurately reflects what was deferred.</li>
+</ol>
+
+<p><strong>Should fix before production:</strong></p>
+
+<ol>
+  <li>Make the epoch durable outside the restorable dataset (§4.3).</li>
+  <li>Adopt read-time alias resolution for merges, and confirm that <code class="language-plaintext highlighter-rouge">fnd:replacedBy</code> exists (§4.2).</li>
+  <li>Specify the <code class="language-plaintext highlighter-rouge">pat:current</code> read pattern, where the version row lives, and retention interaction; decide the <code class="language-plaintext highlighter-rouge">pat:</code> namespace (§4.5).</li>
+  <li>Correct the HMAC rotation wording, reconcile per-tenant versus platform key, and define claim erasure (§2.6).</li>
+  <li>Forbid <code class="language-plaintext highlighter-rouge">fnd:supersededBy</code> between content revisions (§2.4).</li>
+  <li>Add the scope clarification or crosswalk between the guide’s <code class="language-plaintext highlighter-rouge">urn:</code> forms and the ADR (§4.6), and create the token registries.</li>
+</ol>
+
+<p>With items 1–8 done, the ADR would be a sound, implementable identity policy. The underlying model is now the right one; what remains is making the normative text precise enough that two independent implementations mint the same bytes.</p>

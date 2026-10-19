@@ -1,0 +1,160 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-air-26-intensity-measures-thresholds-and-units">Validation Pack: AIR-2.6, intensity measures, thresholds and units</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/applied-insurance-reference.html"><code class="language-plaintext highlighter-rouge">applied-insurance-reference</code></a>
+<strong>Machine:</strong> S (Copilot Business). <strong>Branch:</strong> <code class="language-plaintext highlighter-rouge">air/applied-reference</code>, commits <code class="language-plaintext highlighter-rouge">[AIR-2.6] …</code>
+<strong>Plan and test cases:</strong> <a href="/developer/plans/applied-insurance-reference-phase-2.html">Phase 2 plan</a> (AIR-2.6 in detail)
+<strong>Decisions:</strong> ADR-A98 (namespaces, addendum), ADR-A99</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>Each intensity measure has its own value space with a unit contract, threshold-defined cause concepts point at range sets on their measures’ spaces, and units, currencies among them, are declared once in <code class="language-plaintext highlighter-rouge">insurance/common</code>, aligned to QUDT and ISO 4217.</p>
+
+<h2 id="test-cases">Test cases</h2>
+
+<p>The table in the plan section above. Each row’s result is recorded under Results at
+verification.</p>
+
+<h2 id="one-command">One command</h2>
+
+<p>Run from the repository root. S runs it before the handoff commit. R runs it again at verification,
+after <code class="language-plaintext highlighter-rouge">mise run build:ontology-catalog</code> and <code class="language-plaintext highlighter-rouge">mise run build:ontology-releases</code>, which S cannot do.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:ontology-catalog <span class="o">&amp;&amp;</span> mise run check:ontology-versioning
+</code></pre></div></div>
+
+<h2 id="artefacts-to-inspect">Artefacts to inspect</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">vocab/peril-intensity.ttl</code> and its README sections.</li>
+  <li>The units section of <code class="language-plaintext highlighter-rouge">insurance/common</code>’s README and <code class="language-plaintext highlighter-rouge">common-vocab.ttl</code>.</li>
+  <li>The seven threshold range sets, read against the plan’s table and its cited sources.</li>
+  <li>The currency list, against ISO 4217 List One as published on the day of verification.</li>
+</ul>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<p>No exposure attribute links (<code class="language-plaintext highlighter-rouge">prl:relevantAttribute</code>, <code class="language-plaintext highlighter-rouge">prl:minimumGeoPrecision</code>), which AIR-4.2 writes in the exposure vocabulary. No parametric triggers.</p>
+
+<h2 id="handoff">Handoff</h2>
+
+<p>Written by S in the <code class="language-plaintext highlighter-rouge">[AIR-2.6] Handoff</code> commit. S runs the checks itself, so say which ran.</p>
+
+<ul>
+  <li><strong>Built:</strong>
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">insurance/common</code>’s README §6 “Units and currencies”: ~25 physical units across nine families
+(acceleration, speed, pressure, length, area, mass per area, power per length, temperature,
+duration), each <code class="language-plaintext highlighter-rouge">qnt:Unit</code> with a <code class="language-plaintext highlighter-rouge">skos:exactMatch</code> into QUDT’s <code class="language-plaintext highlighter-rouge">http://qudt.org/vocab/unit/</code>
+vocabulary and a <code class="language-plaintext highlighter-rouge">skos:note</code> naming its SI definition or convention, four <code class="language-plaintext highlighter-rouge">qnt:Conversion</code>s with
+their exact factors (knot, mph, g, hPa), and every active ISO 4217 List One currency (about 39)
+as a <code class="language-plaintext highlighter-rouge">qnt:Unit</code> on one money space <code class="language-plaintext highlighter-rouge">icm-voc:Money</code>, with its numeric code as <code class="language-plaintext highlighter-rouge">skos:notation</code>, its
+English name as <code class="language-plaintext highlighter-rouge">skos:prefLabel</code>, a <code class="language-plaintext highlighter-rouge">skos:exactMatch</code> into QUDT’s currency unit vocabulary
+(<code class="language-plaintext highlighter-rouge">http://qudt.org/vocab/unit/CCY_XXX</code>, not the deprecated <code class="language-plaintext highlighter-rouge">http://qudt.org/vocab/currency/XXX</code>
+pattern, confirmed by fetching both a deprecated and a current QUDT page), and a note citing ISO
+4217 and the minor unit. <code class="language-plaintext highlighter-rouge">common-vocab</code> bumped <code class="language-plaintext highlighter-rouge">0.5.0</code> → <code class="language-plaintext highlighter-rouge">0.6.0</code>.</li>
+      <li><code class="language-plaintext highlighter-rouge">insurance/peril</code>’s README §5.5 “Intensity measures and thresholds”: a new document
+<code class="language-plaintext highlighter-rouge">vocab/peril-intensity.ttl</code> (its own ontology self-IRI
+<code class="language-plaintext highlighter-rouge">https://www.nebularis.org/neuro-semantic/insurance/peril/intensity</code>, versioned in unison with
+<code class="language-plaintext highlighter-rouge">peril-vocab</code> at <code class="language-plaintext highlighter-rouge">0.5.0</code>, per ADR-A120 addendum decision 3 and the AIR-2.0 precedent set by
+<code class="language-plaintext highlighter-rouge">behaviour-runtime.ttl</code>). Contains <code class="language-plaintext highlighter-rouge">prl-voc:IntensityMeasureScheme</code> (a <code class="language-plaintext highlighter-rouge">voc:ConceptScheme</code>) and
+24 measure concepts, each <code class="language-plaintext highlighter-rouge">skos:inScheme</code>/<code class="language-plaintext highlighter-rouge">skos:topConceptOf</code> it and <code class="language-plaintext highlighter-rouge">prl:measuredOn</code> its own
+<code class="language-plaintext highlighter-rouge">qnt:ValueSpace</code>. Three ordinal measures (<code class="language-plaintext highlighter-rouge">ModifiedMercalliIntensity</code>, <code class="language-plaintext highlighter-rouge">SaffirSimpsonCategory</code>,
+<code class="language-plaintext highlighter-rouge">EnhancedFujitaRating</code>) each point at a small ordinal scheme of their own
+(<code class="language-plaintext highlighter-rouge">prl-voc:MmiScale</code> I–XII, <code class="language-plaintext highlighter-rouge">prl-voc:SaffirSimpsonScale</code> 1–5, <code class="language-plaintext highlighter-rouge">prl-voc:EnhancedFujitaScale</code>
+EF0–EF5), also <code class="language-plaintext highlighter-rouge">voc:ConceptScheme</code>s. Seven threshold-defined cause concepts
+(N.MET.TC.HUR/TST/TDP/TYP/SEV, N.MET.SCS.SLW.DER, N.MET.WIN.BLZ) carry one or two
+<code class="language-plaintext highlighter-rouge">prl:definingThreshold</code> <code class="language-plaintext highlighter-rouge">qnt:RangeSet</code>s each, built with flat, named blank nodes rather than
+nested brackets. Thirteen other cause concepts carry <code class="language-plaintext highlighter-rouge">prl:intensityMeasure</code> links, and nine
+carry <code class="language-plaintext highlighter-rouge">prl:customaryEventWindow</code> (72 h or 168 h). <code class="language-plaintext highlighter-rouge">prl:definingThreshold</code>’s <code class="language-plaintext highlighter-rouge">rdfs:comment</code> in
+<code class="language-plaintext highlighter-rouge">spec/peril.ttl</code> gains the sentence “A concept with several defining thresholds meets all of
+them.”</li>
+      <li><code class="language-plaintext highlighter-rouge">prl:ThresholdDefinitionShape</code> (<code class="language-plaintext highlighter-rouge">shapes/constraints.ttl</code>) extended with a second <code class="language-plaintext highlighter-rouge">sh:sparql</code>
+rule: a <code class="language-plaintext highlighter-rouge">prl:definingThreshold</code>’s <code class="language-plaintext highlighter-rouge">qnt:onSpace</code> must be the <code class="language-plaintext highlighter-rouge">prl:measuredOn</code> space of one of the
+concept’s <code class="language-plaintext highlighter-rouge">prl:intensityMeasure</code>s (the plan’s AIR26-07). Shapes <code class="language-plaintext highlighter-rouge">.version</code> <code class="language-plaintext highlighter-rouge">0.2.0</code> → <code class="language-plaintext highlighter-rouge">0.3.0</code>.
+<code class="language-plaintext highlighter-rouge">examples/well-formed.ttl</code> gained a placeholder <code class="language-plaintext highlighter-rouge">prl:intensityMeasure</code> on <code class="language-plaintext highlighter-rouge">N.MET.TC.HUR</code> on the
+same placeholder space its threshold already used, so the new rule holds on the AIR-2.1/2.2
+fixture without depending on <code class="language-plaintext highlighter-rouge">peril-intensity.ttl</code>.</li>
+      <li><code class="language-plaintext highlighter-rouge">tools/test_peril_intensity.py</code> (new): AIR26-01 to AIR26-09, 11 tests.</li>
+      <li><code class="language-plaintext highlighter-rouge">tools/test_peril_vocabulary.py</code>: one line updated, the pinned <code class="language-plaintext highlighter-rouge">common-vocab</code> import now
+expected at <code class="language-plaintext highlighter-rouge">0.6.0</code>.</li>
+      <li>Documentation: the peril README’s shape table, mermaid diagram and Sources consulted list; the
+common README’s §9 fixture/tests note and new §9a Sources consulted; the domain README’s module
+table; <code class="language-plaintext highlighter-rouge">docs/architecture/ontology-architecture.md</code>’s applied insurance domain row; the status
+record’s Machine S section (this commit).</li>
+    </ul>
+  </li>
+  <li><strong>Run, with the result:</strong>
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">python -m pytest tools/test_peril_vocabulary.py tools/test_peril_intensity.py
+tools/test_applied_shared_contracts.py tools/test_exposure_ontology.py
+tools/test_literate_extract.py -q</code>: 75 passed.</li>
+      <li><code class="language-plaintext highlighter-rouge">python tools/literate_extract.py ontology/applied/insurance/common/README.md --layer
+applied/insurance/common --root . --check</code>: 2 extracted artefacts consistent.</li>
+      <li><code class="language-plaintext highlighter-rouge">python tools/literate_extract.py ontology/applied/insurance/peril/README.md --layer
+applied/insurance/peril --root . --shapes shapes/structural.ttl shapes/constraints.ttl --check</code>:
+5 extracted artefacts consistent.</li>
+      <li><code class="language-plaintext highlighter-rouge">python tools/ontology_version_check.py --base-ref main</code>: one <code class="language-plaintext highlighter-rouge">UNBUMPED</code> line,
+<code class="language-plaintext highlighter-rouge">common/spec/common.ttl</code> (version unchanged at <code class="language-plaintext highlighter-rouge">0.5.0</code> since <code class="language-plaintext highlighter-rouge">main</code>, content differs only in a
+dropped <code class="language-plaintext highlighter-rouge">@base</code> directive). This is the pre-existing AIR-2.0 artefact already recorded in
+<a href="/developer/validation/applied-insurance-reference-2.0.html">its Validation Pack</a> (a pure reformatting by the literate
+extractor, not a semantic change), not a new defect. Run against <code class="language-plaintext highlighter-rouge">main</code> rather than the default
+<code class="language-plaintext highlighter-rouge">HEAD</code> because the branch’s bump-once-per-trip rule (lanes §3) is only visible against the
+trip’s start, not the immediately prior commit: <code class="language-plaintext highlighter-rouge">peril/spec/peril.ttl</code> and
+<code class="language-plaintext highlighter-rouge">peril/vocab/peril-vocab.ttl</code> both change content again in this slice (the common-vocab re-pin
+to <code class="language-plaintext highlighter-rouge">0.6.0</code>) without a further bump, which is correct per the rule and is exactly what comparing
+against <code class="language-plaintext highlighter-rouge">main</code> confirms, but would wrongly read as a fresh defect against <code class="language-plaintext highlighter-rouge">HEAD</code>.</li>
+      <li><code class="language-plaintext highlighter-rouge">python tools/ontology_releases.py check</code>: reports <code class="language-plaintext highlighter-rouge">UNRELEASED</code> for every version this trip has
+touched so far (<code class="language-plaintext highlighter-rouge">common-vocab-v0.6.0</code>, <code class="language-plaintext highlighter-rouge">peril-v0.5.0</code>, <code class="language-plaintext highlighter-rouge">peril-vocab-v0.5.0</code>,
+<code class="language-plaintext highlighter-rouge">exposure-v0.1.0</code>, <code class="language-plaintext highlighter-rouge">exposure-vocab-v0.1.0</code>, both shapes <code class="language-plaintext highlighter-rouge">.version</code>s). Expected, R’s job at
+merge (<code class="language-plaintext highlighter-rouge">mise run build:ontology-releases</code>), not S’s.</li>
+    </ul>
+  </li>
+  <li><strong>Not run, and why:</strong> <code class="language-plaintext highlighter-rouge">mise run check:ontology-catalog</code> (the full sweep). Not needed beyond the
+targeted pytest run above: this slice touches no substrate layer and the targeted run already
+covers every test file this slice’s content could affect. The full sweep’s 7 pre-existing,
+unrelated failures (the hanging <code class="language-plaintext highlighter-rouge">reasoning-testkit</code> jar) are recorded in AIR-2.0’s and AIR-2.2’s
+Validation Packs and in repo environment memory, not reconfirmed here.</li>
+  <li><strong>Versions used, if they differ from the plan’s snapshot:</strong> none differ from the plan’s snapshot
+except as the plan itself anticipated: <code class="language-plaintext highlighter-rouge">common-vocab</code> <code class="language-plaintext highlighter-rouge">0.5.0</code> → <code class="language-plaintext highlighter-rouge">0.6.0</code> (plan: “bumped once on the
+branch, MINOR”), <code class="language-plaintext highlighter-rouge">peril-intensity.ttl</code> carries <code class="language-plaintext highlighter-rouge">peril-vocab</code>’s version, <code class="language-plaintext highlighter-rouge">0.5.0</code> (plan’s “Files”
+note), <code class="language-plaintext highlighter-rouge">peril/shapes/.version</code> <code class="language-plaintext highlighter-rouge">0.2.0</code> → <code class="language-plaintext highlighter-rouge">0.3.0</code> (not anticipated by the plan’s own text, found
+necessary while building the AIR26-07 test: the plan’s threshold-shape row implies the space
+cross-check, but the slice brief did not call out that this needs a shapes bump, an omission now
+corrected).</li>
+  <li><strong>Check first:</strong> <code class="language-plaintext highlighter-rouge">check:ontology-versioning</code>’s one <code class="language-plaintext highlighter-rouge">UNBUMPED</code> line and <code class="language-plaintext highlighter-rouge">ontology_releases.py
+check</code>’s <code class="language-plaintext highlighter-rouge">UNRELEASED</code> lines, per the notes above, both expected.</li>
+  <li><strong>Deviations from the plan:</strong>
+    <ol>
+      <li>The plan’s “Files” line says <code class="language-plaintext highlighter-rouge">vocab/peril-intensity.ttl</code> is “new, carrying the version of
+<code class="language-plaintext highlighter-rouge">peril-vocab.ttl</code>, AIR-2.0” but does not say it needs its own distinct <code class="language-plaintext highlighter-rouge">owl:Ontology</code> self-IRI.
+The first draft reused <code class="language-plaintext highlighter-rouge">peril-vocab.ttl</code>’s own ontology IRI verbatim (and its <code class="language-plaintext highlighter-rouge">owl:imports</code>
+named itself), which <code class="language-plaintext highlighter-rouge">tools/ontology_releases.py check</code> exposed (both files reporting under
+the same product name). Fixed to its own self-IRI
+<code class="language-plaintext highlighter-rouge">https://www.nebularis.org/neuro-semantic/insurance/peril/intensity</code>, following the precedent
+<code class="language-plaintext highlighter-rouge">behaviour-runtime.ttl</code> sets for a second spec document in one layer (ADR-A120 decision 2):
+own self-IRI, version number in unison with the module’s other vocab document.</li>
+      <li>The 24 measure concepts’ first draft omitted <code class="language-plaintext highlighter-rouge">skos:inScheme</code>/<code class="language-plaintext highlighter-rouge">skos:topConceptOf</code> on
+<code class="language-plaintext highlighter-rouge">prl-voc:IntensityMeasureScheme</code>, and the scheme itself, and the three ordinal scales, were
+declared <code class="language-plaintext highlighter-rouge">a owl:Class</code> rather than <code class="language-plaintext highlighter-rouge">a voc:ConceptScheme</code>. Found while writing AIR26-02 (every
+measure is read as a scheme member). Fixed: the scheme and the three scales are now
+<code class="language-plaintext highlighter-rouge">voc:ConceptScheme</code> individuals with <code class="language-plaintext highlighter-rouge">fnd:hasIdentity</code>/<code class="language-plaintext highlighter-rouge">fnd:hasGovernanceState</code>, and every
+measure concept is <code class="language-plaintext highlighter-rouge">skos:inScheme</code>/<code class="language-plaintext highlighter-rouge">skos:topConceptOf</code> the measure scheme.</li>
+      <li><code class="language-plaintext highlighter-rouge">prl:ThresholdDefinitionShape</code> did not, before this slice, check that a <code class="language-plaintext highlighter-rouge">prl:definingThreshold</code>
+is on a space one of the concept’s <code class="language-plaintext highlighter-rouge">prl:intensityMeasure</code>s actually measures, so AIR26-07 (a
+deliberate negative case placing HUR’s threshold on the wrong space) found no violation. This
+is the rule the plan’s own test row describes, so it was missing, not deliberately deferred.
+Added the second <code class="language-plaintext highlighter-rouge">sh:sparql</code> rule described above, bumped shapes <code class="language-plaintext highlighter-rouge">.version</code>, and gave
+<code class="language-plaintext highlighter-rouge">examples/well-formed.ttl</code>’s <code class="language-plaintext highlighter-rouge">N.MET.TC.HUR</code> a matching placeholder measure so the existing
+AIR-2.1/2.2 fixture still conforms.</li>
+      <li>Found a documentation gap while writing the currency list: the five last currencies (COP, VND,
+PKR, BDT, ISK) were drafted without their <code class="language-plaintext highlighter-rouge">skos:exactMatch</code>, caught and fixed before this
+Handoff, not after.</li>
+    </ol>
+  </li>
+</ul>
+
+<h2 id="results">Results</h2>
+
+<p>Written on machine R at verification.</p>

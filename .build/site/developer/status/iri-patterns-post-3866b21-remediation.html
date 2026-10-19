@@ -1,0 +1,399 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="iri-and-rdf-patterns-post-3866b21-remediation--status">IRI and RDF Patterns, Post-3866b21 Remediation — Status</h1>
+
+<p><strong>Unit ID:</strong> <code class="language-plaintext highlighter-rouge">iri-patterns-post-3866b21-remediation</code>
+<strong>Status:</strong> ✅ Complete. Every review finding is dispositioned, and the compiler templates are aligned. Follow-on work lives in other units (see “Is this unit complete?”)
+<strong>Last updated:</strong> 2026-09-23
+<strong>Review:</strong> <a href="/developer/review/iri-patterns-post-3866b21-review.html">iri-patterns-post-3866b21-review.md</a>
+<strong>Documents changed:</strong> <a href="/architecture/rdf-sparql-patterns-guide.html">rdf-sparql-patterns-guide.md</a> (summary in its Appendix D.3), <a href="/architecture/iri-identity-patterns.html">iri-identity-patterns.md</a>, <a href="/architecture/iri-policy.html">iri-policy.md</a>, <code class="language-plaintext highlighter-rouge">ontology/persistence/spec/persistence.ttl</code> (comments), <code class="language-plaintext highlighter-rouge">ontology/persistence/shapes/</code> (<code class="language-plaintext highlighter-rouge">StoreLocalEpochWarningShape</code> message)</p>
+
+<h2 id="is-this-unit-complete">Is this unit complete?</h2>
+
+<p><strong>Yes.</strong> All 47 findings of the review (A1–A7, B1–B14, C1–C9, D1–D7, E ×10) are fixed in the documents, and the compiler templates generate the corrected shapes (471 tests at the end of this unit, 526 after the follow-on Slice 2 of <code class="language-plaintext highlighter-rouge">persistence-compiler-iri-sync</code>).</p>
+
+<p>What the corrected documents specify but this unit did not build, and where it is tracked:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Follow-on</th>
+      <th>Tracked in</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Retention job (low-water marks, pinned-head copies, prefix-only drops), epoch-bump quiesce, erasure-register replay on restore</td>
+      <td>Housekeeping first cut, <a href="/developer/plans/rdf-sparql-patterns-phase-plan.html#13-slice-3--housekeeping-first-cut">rdf-sparql-patterns-phase-plan.md Slice 3</a>; erasure bindings also in <code class="language-plaintext highlighter-rouge">persistence-compiler-iri-sync</code> Slice 4</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">dal:firstWrite dal:PreCreatedRow</code> in the compiler</td>
+      <td>✅ Done in <a href="/developer/status/persistence-compiler-iri-sync.html"><code class="language-plaintext highlighter-rouge">persistence-compiler-iri-sync</code></a> Slice 2</td>
+    </tr>
+    <tr>
+      <td>Identity, privacy and claim-scheme profiles in the compiler</td>
+      <td><a href="/developer/status/persistence-compiler-iri-sync.html"><code class="language-plaintext highlighter-rouge">persistence-compiler-iri-sync</code></a>: identity ✅ Slice 3; privacy and claim schemes Slices 4–5</td>
+    </tr>
+    <tr>
+      <td>Request-time execution: <code class="language-plaintext highlighter-rouge">$requestDigest</code>, confirmation reads, outcome classification</td>
+      <td>The store SPI and the ingestion gateway (epic P2.3.1, P2.3.6). The caller contract is documented in <code class="language-plaintext highlighter-rouge">tools/persistence/README.md</code>, “Using the generated SPARQL directly”</td>
+    </tr>
+    <tr>
+      <td>TCK tests T-12 to T-17, S-suite, R-suite</td>
+      <td>Written into guide Chapter 27 as specifications. Executable tests belong to the store SPI TCK (epic P0.5.6)</td>
+    </tr>
+    <tr>
+      <td>Ratification of <code class="language-plaintext highlighter-rouge">iri-identity-patterns.md</code> and ADR-A82</td>
+      <td><a href="/developer/status/phase-0-status.html">phase-0-status.md</a>, P0.1.3</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">pat:Revision</code> alignment (<code class="language-plaintext highlighter-rouge">prov:Activity</code> or <code class="language-plaintext highlighter-rouge">fnd:Evidence</code>)</td>
+      <td>Guide Appendix E item 3</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">dal:</code> terms for the YAML-only declaration keys</td>
+      <td>Guide Appendix E item 10</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The review record <a href="/developer/review/iri-patterns-post-3866b21-review.html">iri-patterns-post-3866b21-review.md</a> is closed against this status.</p>
+
+<h2 id="design-decisions-taken-in-this-pass">Design decisions taken in this pass</h2>
+
+<p>These resolve the review’s findings where more than one fix was possible. Each is recorded once, here, and applied in the documents.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Decision</th>
+      <th>Chosen</th>
+      <th>Rejected alternative, and why</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Epoch semantics after a bump (A1)</td>
+      <td>Guard on the dataset epoch only. Rebase the row’s <code class="language-plaintext highlighter-rouge">pat:epoch</code> on its next write, continue <code class="language-plaintext highlighter-rouge">pat:seq</code>, let the receipt chain cross the epoch boundary</td>
+      <td>Bulk rewrite of every row at bump time: a long transaction over every row, not portable. Restarting <code class="language-plaintext highlighter-rouge">seq</code> per epoch: breaks the chain and S3</td>
+    </tr>
+    <tr>
+      <td>Idempotency binding (A5)</td>
+      <td><code class="language-plaintext highlighter-rouge">pat:requestDigest</code>, SHA-256 over <code class="language-plaintext highlighter-rouge">enc([operationKind, target, expected, *sorted canonical N-Triples])</code></td>
+      <td>Hashing the SPARQL text: changes with template versions and parameter rendering</td>
+    </tr>
+    <tr>
+      <td>Dormant live heads under retention (A7)</td>
+      <td>Copy into <code class="language-plaintext highlighter-rouge">urn:g:txlog/pinned</code> before a drop (recommended), or pin the bucket</td>
+      <td>Relaxing prefix-only retention: breaks the as-of floor</td>
+    </tr>
+    <tr>
+      <td>Retention low-water mark (B7)</td>
+      <td>Lowest <code class="language-plaintext highlighter-rouge">seq</code> guaranteed retained, default 1, advanced before the drop. S3 driven from version rows</td>
+      <td>Receipts-only check: misses suffix and total loss</td>
+    </tr>
+    <tr>
+      <td>Canonical text pipeline (B10)</td>
+      <td><code class="language-plaintext highlighter-rouge">trim(NFKC_Casefold(x))</code> via ICU. The non-ICU fallback is declared as its own pipeline</td>
+      <td>A hand-maintained ignorable list: incomplete (soft hyphen, variation selectors)</td>
+    </tr>
+    <tr>
+      <td>Store-local epoch (D1)</td>
+      <td>Unsafe, warned not refused, with the stated acceptance conditions</td>
+      <td>Prohibited: contradicts the SHACL warning shape and ADR-A82’s warn-not-refuse stance</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">iri-policy.md</code> (D7)</td>
+      <td>Body removed, defects listed, git pointer to the historical text</td>
+      <td>Fencing the body: still read as guidance</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">urn:g:people</code> in Part II (C5)</td>
+      <td>Kept as a flagged simplification, with the production design in guide §24.5</td>
+      <td>Rewriting every Part II example to per-subject graphs: a large diff for no pedagogical gain</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="finding-disposition">Finding disposition</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Finding</th>
+      <th>Disposition</th>
+      <th>Where</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>A1 epoch bump wedges rows</td>
+      <td>Fixed</td>
+      <td>guide §10.1, §19.1, §24.1, §24.4, T-12</td>
+    </tr>
+    <tr>
+      <td>A2 external sequencers not dense</td>
+      <td>Fixed</td>
+      <td>guide S8, §21.2, §25.4, §26.1, §26.2</td>
+    </tr>
+    <tr>
+      <td>A3 unbounded global HLC read</td>
+      <td>Fixed</td>
+      <td>guide §21.3, <code class="language-plaintext highlighter-rouge">dal:LagWindowRead</code> comment</td>
+    </tr>
+    <tr>
+      <td>A4 txn-claim TTL unsafe for append</td>
+      <td>Fixed</td>
+      <td>guide §10.1, §15.2, §24.2 (receipt-side audits), T-15</td>
+    </tr>
+    <tr>
+      <td>A5 idempotency key not bound to content</td>
+      <td>Fixed</td>
+      <td>guide §15.2, §19.1–§19.4, §30.2, Appendices A and B, T-14</td>
+    </tr>
+    <tr>
+      <td>A6 Appendix B contradicts body</td>
+      <td>Fixed</td>
+      <td>guide §19.7, Appendix B (<code class="language-plaintext highlighter-rouge">pat:TxnCardinalityShape</code>, <code class="language-plaintext highlighter-rouge">pat:VersionRow</code>, <code class="language-plaintext highlighter-rouge">pat:RetentionShape</code>)</td>
+    </tr>
+    <tr>
+      <td>A7 live head not always newest bucket</td>
+      <td>Fixed</td>
+      <td>guide §24.2, T-16</td>
+    </tr>
+    <tr>
+      <td>B1 weak ETags</td>
+      <td>Fixed</td>
+      <td>guide F3, F4, §15.4, §30.2, Glossary</td>
+    </tr>
+    <tr>
+      <td>B2 firstWrite / optional head</td>
+      <td>Fixed</td>
+      <td>guide §14.2, §19.3, §24.1</td>
+    </tr>
+    <tr>
+      <td>B3 create path unguarded</td>
+      <td>Fixed</td>
+      <td>guide §14.2, §19.3, T-13</td>
+    </tr>
+    <tr>
+      <td>B4 deadlock contradiction</td>
+      <td>Fixed</td>
+      <td>guide §25.7</td>
+    </tr>
+    <tr>
+      <td>B5 target IRIs</td>
+      <td>Fixed</td>
+      <td>guide S2, S4</td>
+    </tr>
+    <tr>
+      <td>B6 store tables disagree</td>
+      <td>Fixed</td>
+      <td>guide §21.2, §26.1, §26.2</td>
+    </tr>
+    <tr>
+      <td>B7 low-water mark semantics</td>
+      <td>Fixed</td>
+      <td>guide §2.3, S3, §24.2, Appendix A</td>
+    </tr>
+    <tr>
+      <td>B8 outcome classification</td>
+      <td>Fixed</td>
+      <td>guide §15.2, §19.4, §19.5, §25.1, §25.5, §25.7</td>
+    </tr>
+    <tr>
+      <td>B9 HLC never merged</td>
+      <td>Fixed</td>
+      <td>guide S7, §19.4</td>
+    </tr>
+    <tr>
+      <td>B10 normalization specified four ways</td>
+      <td>Fixed</td>
+      <td>guide §8.1, §25.3, §29.3, QP4, K-6; iri-identity §7.3; <code class="language-plaintext highlighter-rouge">dal:NfkcTrim*</code> comments</td>
+    </tr>
+    <tr>
+      <td>B11 delimiter concatenation</td>
+      <td>Fixed</td>
+      <td>guide Chapter 5, §6.1, §7.4; iri-identity §7.4</td>
+    </tr>
+    <tr>
+      <td>B12 placeholder example values</td>
+      <td>Fixed, recomputed by running the code</td>
+      <td>guide §2.1, §2.3, Chapters 5–7, D.1</td>
+    </tr>
+    <tr>
+      <td>B13 fence datatypes</td>
+      <td>Fixed</td>
+      <td>guide §7.4, §16.2, bootstraps in §10.1, §14.2, §19.3</td>
+    </tr>
+    <tr>
+      <td>B14 unbound graph, unpadded epochs, mixed widths</td>
+      <td>Fixed, every example IRI regenerated at 19 digits</td>
+      <td>guide §2.1, §10.1, S5, Chapter 13, §19.4</td>
+    </tr>
+    <tr>
+      <td>C1 arbitrary graph writes</td>
+      <td>Fixed</td>
+      <td>guide §25.1, S-2</td>
+    </tr>
+    <tr>
+      <td>C2 destructive TCK at registration</td>
+      <td>Fixed</td>
+      <td>guide §25.2, Chapter 27 intro</td>
+    </tr>
+    <tr>
+      <td>C3 TCK over-claimed</td>
+      <td>Fixed</td>
+      <td>guide §27.5 (R-suite), §27.6, D.2</td>
+    </tr>
+    <tr>
+      <td>C4 quiesce writers for a bump</td>
+      <td>Fixed</td>
+      <td>guide §24.4 step 1, iri-identity §10.3</td>
+    </tr>
+    <tr>
+      <td>C5 erasure conflicts</td>
+      <td>Fixed</td>
+      <td>guide §2.2, §6.1, §6.2, §24.0, §24.1, §24.4, new §24.5</td>
+    </tr>
+    <tr>
+      <td>C6 recreate path</td>
+      <td>Fixed</td>
+      <td>guide §24.1, T-17</td>
+    </tr>
+    <tr>
+      <td>C7 keys-graph access control</td>
+      <td>Fixed</td>
+      <td>guide §6.1, §25.2, S-1</td>
+    </tr>
+    <tr>
+      <td>C8 unregistered URN namespaces</td>
+      <td>Fixed</td>
+      <td>guide §2.1</td>
+    </tr>
+    <tr>
+      <td>C9 YAML versus <code class="language-plaintext highlighter-rouge">dal:</code></td>
+      <td>Fixed</td>
+      <td>guide §29.3, Appendix E item 10</td>
+    </tr>
+    <tr>
+      <td>D1 store-local epoch</td>
+      <td>Fixed</td>
+      <td>iri-identity §10.3, <code class="language-plaintext highlighter-rouge">dal:StoreLocalEpoch</code> comment, warning shape message, guide §24.4</td>
+    </tr>
+    <tr>
+      <td>D2 key rotation dual-write</td>
+      <td>Fixed</td>
+      <td>iri-identity §6.4</td>
+    </tr>
+    <tr>
+      <td>D3 revision class alignment</td>
+      <td>Fixed, left as the one open decision</td>
+      <td>iri-identity §10.1, guide Appendix E item 3</td>
+    </tr>
+    <tr>
+      <td>D4 status contradiction</td>
+      <td>Fixed</td>
+      <td>iri-identity §1</td>
+    </tr>
+    <tr>
+      <td>D5 missing ADR-A82</td>
+      <td>Fixed</td>
+      <td>iri-identity header</td>
+    </tr>
+    <tr>
+      <td>D6 rendering defect</td>
+      <td>Fixed</td>
+      <td>iri-identity §17</td>
+    </tr>
+    <tr>
+      <td>D7 iri-policy.md</td>
+      <td>Fixed, body removed</td>
+      <td>iri-policy.md</td>
+    </tr>
+    <tr>
+      <td>E (all ten)</td>
+      <td>Fixed</td>
+      <td>guide §1.3, §2.3, §6.2, §10.2, S6, F5, §24.2, §24.3, Appendix A, Appendix B, §25.2, S-3</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="compiler-and-template-alignment-phase-2">Compiler and template alignment (Phase 2)</h2>
+
+<p>Run in autonomous mode, 2026-09-23. <code class="language-plaintext highlighter-rouge">mise run check:persistence</code>: <strong>471 passed</strong> (290 before this unit. The rise is new templates multiplying the parametrized injection corpus, plus <code class="language-plaintext highlighter-rouge">tests/test_template_alignment.py</code>).</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Behaviour now generated</th>
+      <th>Templates</th>
+      <th>Review finding</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Dataset-guard variants guard on the dataset epoch only and rebase the row’s <code class="language-plaintext highlighter-rouge">pat:epoch</code> on write</td>
+      <td><code class="language-plaintext highlighter-rouge">cas-replace-named-graph-dataset-guard</code>, <code class="language-plaintext highlighter-rouge">cas-replace-composite-property-dataset-guard</code>, <code class="language-plaintext highlighter-rouge">tombstone-delete-named-graph-dataset-guard</code>, new <code class="language-plaintext highlighter-rouge">append-event-dataset-guard</code></td>
+      <td>A1</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">pat:requestDigest $requestDigest</code> on every txn claim</td>
+      <td>every row-writing template</td>
+      <td>A5</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">pat:head</code> read in <code class="language-plaintext highlighter-rouge">OPTIONAL</code></td>
+      <td>all CAS and tombstone templates</td>
+      <td>B2</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">a pat:VersionRow</code> on row creation, dataset guard on create</td>
+      <td><code class="language-plaintext highlighter-rouge">create-if-absent-named-graph</code>, new <code class="language-plaintext highlighter-rouge">create-if-absent-named-graph-dataset-guard</code>, new <code class="language-plaintext highlighter-rouge">bootstrap-version-row</code> and its dataset-guard variant</td>
+      <td>A6, B3</td>
+    </tr>
+    <tr>
+      <td>Append maintains <code class="language-plaintext highlighter-rouge">pat:head</code>/<code class="language-plaintext highlighter-rouge">pat:prevRev</code>, uses <code class="language-plaintext highlighter-rouge">STRDT</code> typing, pads <code class="language-plaintext highlighter-rouge">seq</code> to 19 digits, writes events to <code class="language-plaintext highlighter-rouge">urn:g:events/{family}/{month}</code></td>
+      <td><code class="language-plaintext highlighter-rouge">append-event</code>, <code class="language-plaintext highlighter-rouge">append-event-dataset-guard</code></td>
+      <td>B14, C1</td>
+    </tr>
+    <tr>
+      <td>Fork audit counts txn claims per revision</td>
+      <td><code class="language-plaintext highlighter-rouge">fork-detection-audit</code></td>
+      <td>A6</td>
+    </tr>
+    <tr>
+      <td>Receipt-side duplicate audits</td>
+      <td>new <code class="language-plaintext highlighter-rouge">revision-multi-txn-audit</code>, <code class="language-plaintext highlighter-rouge">txn-multi-revision-audit</code></td>
+      <td>A4</td>
+    </tr>
+    <tr>
+      <td>Row-driven, cross-epoch gap scan with low-water mark and pinned heads</td>
+      <td><code class="language-plaintext highlighter-rouge">gap-scan-audit</code></td>
+      <td>B7, A7</td>
+    </tr>
+    <tr>
+      <td>Registry-listed log buckets via a request-time slot (originally <code class="language-plaintext highlighter-rouge">#LOG_GRAPHS#</code>, now the Mustache slot <code class="language-plaintext highlighter-rouge">}</code> after <code class="language-plaintext highlighter-rouge">persistence-compiler-iri-sync</code> Slice 2), never <code class="language-plaintext highlighter-rouge">STRSTARTS</code></td>
+      <td>all audits</td>
+      <td>S3, F6</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">pat:txn</code> written as a string, not the claim IRI</td>
+      <td>all receipt-writing templates</td>
+      <td>Appendix B datatype</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>A pre-existing defect was fixed on the way: <code class="language-plaintext highlighter-rouge">key-claim-write</code> and <code class="language-plaintext highlighter-rouge">key-claim-retire</code> wrote claims into the txn graph (<code class="language-plaintext highlighter-rouge">urn:g:txn</code>). They now write <code class="language-plaintext highlighter-rouge">urn:g:keys</code>.</p>
+
+<p><strong>Tests added</strong> (<code class="language-plaintext highlighter-rouge">tools/persistence/tests/test_template_alignment.py</code>): every template parses with a complete context (the “markers unsubstituted” test was later replaced by a fail-closed test when the markers became Mustache slots); dataset-guard row writers rebase rather than guard the row epoch; heads are optional; every txn claim carries the digest; row creation is typed; key claims use the keys graph; no template scans by prefix; the gap scan is row-driven; append typing and padding; template selection for the new fixture <code class="language-plaintext highlighter-rouge">ontology/persistence/examples/append-stream-dataset-guard.ttl</code>. The injection corpus context in <code class="language-plaintext highlighter-rouge">test_terms.py</code> now binds every slot.</p>
+
+<p><strong>Adversarial probe:</strong> reverting <code class="language-plaintext highlighter-rouge">cas-replace-named-graph-dataset-guard</code> to guard the row epoch and require <code class="language-plaintext highlighter-rouge">pat:head</code> fails <code class="language-plaintext highlighter-rouge">test_dataset_guard_rebases_row_epoch_instead_of_guarding_it</code> and <code class="language-plaintext highlighter-rouge">test_head_is_read_optionally</code>. The template was restored and the full suite re-run green.</p>
+
+<p><strong>Not in scope for this unit:</strong> see “Is this unit complete?” above. <code class="language-plaintext highlighter-rouge">pat:hlc</code> on receipts and configurable infrastructure graph IRIs are recorded in <code class="language-plaintext highlighter-rouge">tools/persistence/README.md</code> “Known limitations”.</p>
+
+<h2 id="commands-to-reproduce">Commands to reproduce</h2>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:persistence
+</code></pre></div></div>

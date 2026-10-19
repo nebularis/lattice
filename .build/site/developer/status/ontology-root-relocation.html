@@ -1,0 +1,32 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="ontology-root-relocation-status">Ontology Root Relocation Status</h1>
+
+<p><strong>Unit:</strong> <code class="language-plaintext highlighter-rouge">ontology-root-relocation</code>
+<strong>State:</strong> Accepted
+<strong>Decision:</strong> <a href="../../architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md">ADR-A77</a>
+<strong>Review:</strong> <a href="/developer/review/ontology-root-relocation-review.html">Ontology Root Relocation Review</a>
+<strong>Governing ADR:</strong> <a href="../../architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md">ADR-A77</a></p>
+
+<h2 id="scope">Scope</h2>
+
+<p>Move the common LATTICE semantic roots to <code class="language-plaintext highlighter-rouge">ontology/</code>:</p>
+
+<p><code class="language-plaintext highlighter-rouge">foundation</code>, <code class="language-plaintext highlighter-rouge">vocabulary</code>, <code class="language-plaintext highlighter-rouge">quantification</code>, <code class="language-plaintext highlighter-rouge">party</code>, <code class="language-plaintext highlighter-rouge">eligibility</code>, <code class="language-plaintext highlighter-rouge">behaviour</code>, <code class="language-plaintext highlighter-rouge">instrument</code>, <code class="language-plaintext highlighter-rouge">surface</code>, <code class="language-plaintext highlighter-rouge">applied</code>, <code class="language-plaintext highlighter-rouge">governance</code>, and <code class="language-plaintext highlighter-rouge">examples</code>.</p>
+
+<p>This unit excludes MORK and SPC, which have their own semantic and executable split units.</p>
+
+<h2 id="completed">Completed</h2>
+
+<ul>
+  <li>ADR-A77 was accepted.</li>
+  <li>The decision catalogue and developer work repository have moved to their canonical locations.</li>
+  <li><code class="language-plaintext highlighter-rouge">mise run topology:preflight</code>, <code class="language-plaintext highlighter-rouge">mise run topology:ready</code>, and <code class="language-plaintext highlighter-rouge">mise run topology:links</code> completed successfully.</li>
+  <li>The topology checker exposes pre-move readiness and documentation-link checks.</li>
+  <li>Moved all common LATTICE semantic roots into <code class="language-plaintext highlighter-rouge">ontology/</code> using <code class="language-plaintext highlighter-rouge">git mv</code>.</li>
+  <li>Repointed CI extraction, conformance fixtures, root Python test discovery, and direct Surface and Eligibility fixture lookups.</li>
+</ul>
+
+<h2 id="acceptance">Acceptance</h2>
+
+<p>The common semantic roots, documentation references, and topology checks are accepted. Ecosystem validation is recorded in the dependent package and platform handoffs.</p>

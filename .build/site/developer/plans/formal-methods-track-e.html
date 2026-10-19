@@ -1,0 +1,220 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="plan-formal-methods-track-e-the-prover-programme">Plan: Formal Methods, Track E: the prover programme</h1>
+
+<p><strong>Unit ID:</strong> <code class="language-plaintext highlighter-rouge">formal-methods-track-e</code>
+<strong>Unit type:</strong> Phase (Epic Decomposition Model, <code class="language-plaintext highlighter-rouge">copilot-instructions.md</code>)
+<strong>Epic:</strong> <a href="/developer/plans/formal-methods.html">formal-methods</a>
+<strong>Sketch:</strong> <a href="/developer/sketches/formal-methods-track-e.html">formal-methods-track-e.md</a>
+<strong>Status record:</strong> <a href="/developer/status/formal-methods-track-e.html">formal-methods-track-e.md</a>
+<strong>Decided by:</strong> <a href="../../architecture/decisions/ADR-A-FM1-formal-methods-prover-choice.md">ADR-A-FM1</a>
+(FM-D1: Isabelle/HOL; FM-D10: Haskell and Scala as code-generation targets),
+<a href="../../architecture/decisions/ADR-A-FM2-formal-methods-theory-home.md">ADR-A-FM2</a>
+(FM-D2: <code class="language-plaintext highlighter-rouge">tools/proofs/</code>)
+<strong>Status:</strong> E1.0 done. E1.1 (the kernel, for real) done alongside it. E1.2 (rounding/residual)
+is retired from this track (2026-10-07): its real home is track B’s B4 and E3/E4, not E1 (see
+§3). E1.3 (binding resolution) not started; track C’s C2 is done, but the overlap-rule decision
+it surfaced is not yet made. E1.4 (hardening the gate and the kernel theory) queued 2026-10-08
+after an implementation-level review, not started; see
+<a href="/developer/notes/formal-methods-more-feedback-response.html">the review response</a> §4</p>
+
+<h2 id="1-scope">1. Scope</h2>
+
+<p>Mechanise, in Isabelle/HOL, the formal-methods programme the epic names for track E (<code class="language-plaintext highlighter-rouge">formal-
+methods.md</code> §4): the logic kernel with the rounding and residual theorem and binding resolution
+(E1), the Eligibility denotation with one proved SPARQL compiler core (E2), the combinator
+algebra (E3), the evaluation context mechanising track B4’s reference (E4), and the template
+library in rely and guarantee form (E5). This plan details E1 only; E2 to E5 stay at the epic’s
+outline level until E1 is underway, per the Epic Decomposition Model’s rolling-wave rule.</p>
+
+<p>Every artefact follows the chain track D proved out (phase-0 plan §2.1): prose, shape, formal
+statement (extracted back into the README), proof with its assumption audit, an interface one
+instantiation discharges, adequacy against a reference, the compiled backend, a claim record, a
+report and a gate. The claim schema, <code class="language-plaintext highlighter-rouge">gate.py</code> (now fixed, PF1) and the GATE-marker convention
+are reused as-is from <code class="language-plaintext highlighter-rouge">spikes/formal-prover/</code>; they move to <code class="language-plaintext highlighter-rouge">tools/proofs/</code> (ADR-A-FM2) rather
+than being rewritten.</p>
+
+<h2 id="2-what-this-plan-depends-on-and-what-blocks-it">2. What this plan depends on, and what blocks it</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Dependency</th>
+      <th>State</th>
+      <th>Blocks</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>FM-D2 (home of track E’s theories)</td>
+      <td><strong>decided and done: <code class="language-plaintext highlighter-rouge">tools/proofs/</code>, one subdirectory per layer</strong> (ADR-A-FM2)</td>
+      <td>nothing further</td>
+    </tr>
+    <tr>
+      <td>the literate-generation direction for Isabelle datatypes</td>
+      <td><strong>decided and done:</strong> <code class="language-plaintext highlighter-rouge">isabelle-spec</code> fenced blocks, extending <code class="language-plaintext highlighter-rouge">tools/literate_extract.py</code> additively (new <code class="language-plaintext highlighter-rouge">--proofs-root</code> argument; every existing Turtle invocation unaffected)</td>
+      <td>nothing further</td>
+    </tr>
+    <tr>
+      <td>track C’s C2 (binding resolution, design-time model)</td>
+      <td><strong>done</strong>, but the overlap-rule decision its own checked model surfaced (what composition does when two composed schemes disagree about a shared concept’s <code class="language-plaintext highlighter-rouge">broader</code> parent) is not yet made, and the Vocabulary ADR insurml-alignment’s IMA-D4a names is not yet drafted</td>
+      <td>E1.3 (binding resolution) specifically. E1.1 does not depend on it; E1.2 is retired (see §3)</td>
+    </tr>
+    <tr>
+      <td>track B’s B4 (the evaluation context’s combinator algebra, rounding/residual rule)</td>
+      <td>not started, waits on CCS’s C12 (<code class="language-plaintext highlighter-rouge">formal-methods-track-b.md</code> status)</td>
+      <td>the rounding/residual theorem, now retired from this plan’s E1.2 and reassigned to E3/E4 once B4 states it precisely</td>
+    </tr>
+    <tr>
+      <td>an Isabelle image</td>
+      <td>does not exist in this spike (deferred, our instruction, 2026-10-06, confirmed again for E1: native/local route only)</td>
+      <td>epic E9’s “only an image route’s verdict is recorded” rule, and gate D’s own smoke-suite criterion. Track E proceeds on native evidence; closing this before claims are recorded for gate E, not gate D, is our call to make when it is needed</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="3-slices">3. Slices</h2>
+
+<h3 id="e10-home-and-generation-tooling-prerequisite-not-in-the-epics-own-numbering--done">E1.0: home and generation tooling (prerequisite, not in the epic’s own numbering) — done</h3>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">tools/proofs/</code> scaffolded: <code class="language-plaintext highlighter-rouge">README.md</code>, <code class="language-plaintext highlighter-rouge">gate.py</code> and <code class="language-plaintext highlighter-rouge">claim-schema.json</code> carried over
+unchanged in design from <code class="language-plaintext highlighter-rouge">spikes/formal-prover/</code> (PF1’s fix included), <code class="language-plaintext highlighter-rouge">check.py</code> (builds every
+layer’s Isabelle session natively and runs the gate), and a <code class="language-plaintext highlighter-rouge">check:proofs</code> <code class="language-plaintext highlighter-rouge">mise</code> task. No
+Python package here (there is nothing to <code class="language-plaintext highlighter-rouge">pip install</code>): the native Isabelle install
+<code class="language-plaintext highlighter-rouge">bootstrap:formal-native-isabelle</code> already provides is reused as-is.</li>
+  <li>Generation direction decided and implemented: <code class="language-plaintext highlighter-rouge">tools/literate_extract.py</code> gained a new
+<code class="language-plaintext highlighter-rouge">isabelle-spec</code> fenced-block kind (parallel to <code class="language-plaintext highlighter-rouge">turtle-spec</code>), a <code class="language-plaintext highlighter-rouge">--proofs-root</code> argument, and
+an Isabelle-style SPDX header, entirely additively (every existing Turtle invocation, re-run
+unchanged, confirmed byte-for-byte identical: Surface, Wording and Behaviour’s own <code class="language-plaintext highlighter-rouge">--check</code>
+calls still pass). Proven on the smallest case first: <code class="language-plaintext highlighter-rouge">ontology/eligibility/README.md</code> §10
+(new) now carries the <code class="language-plaintext highlighter-rouge">isabelle-spec</code> block that generates
+<code class="language-plaintext highlighter-rouge">tools/proofs/eligibility/Kernel.thy</code>’s closed <code class="language-plaintext highlighter-rouge">datatype decision = Permitted | Denied |
+Undetermined</code>, nothing else. Eligibility’s own pre-existing <code class="language-plaintext highlighter-rouge">spec</code>/<code class="language-plaintext highlighter-rouge">vocab</code>/<code class="language-plaintext highlighter-rouge">shapes</code> drift
+(TD-16) was left untouched: only the new <code class="language-plaintext highlighter-rouge">@proofs-root@/…</code> output was written, not the whole
+plan() result, so this work does not silently “fix” debt that belongs to its own unit.</li>
+  <li><code class="language-plaintext highlighter-rouge">spikes/formal-prover/isabelle/{Kernel,Eligibility,Adequacy}.thy</code>’s proof <em>content</em> moved into
+<code class="language-plaintext highlighter-rouge">tools/proofs/eligibility/</code>, split so the generated file is never hand-edited: <code class="language-plaintext highlighter-rouge">Kernel.thy</code>
+(generated, datatype only), <code class="language-plaintext highlighter-rouge">KernelLaws.thy</code> (hand-written: <code class="language-plaintext highlighter-rouge">decision_leq</code>, <code class="language-plaintext highlighter-rouge">or3</code>, <code class="language-plaintext highlighter-rouge">and3</code>,
+<code class="language-plaintext highlighter-rouge">neg3</code>, TA1, TA2 — everything the spike’s <code class="language-plaintext highlighter-rouge">Kernel.thy</code> had besides the datatype declaration
+itself), <code class="language-plaintext highlighter-rouge">Eligibility.thy</code> (hand-written: <code class="language-plaintext highlighter-rouge">some_value</code>, <code class="language-plaintext highlighter-rouge">every_value</code>, TL1 to TL3, re-pointed at
+<code class="language-plaintext highlighter-rouge">KernelLaws</code> instead of a self-contained <code class="language-plaintext highlighter-rouge">Kernel</code>), <code class="language-plaintext highlighter-rouge">Adequacy.thy</code> (unchanged, 15 fixture
+checks). Claim records and digests carried over: byte-identical to the spike’s, since the
+moved content is verbatim.</li>
+  <li><strong>Validated:</strong> the generated datatype and the spike’s hand-written one are isomorphic (same
+three constructors, same names, confirmed by inspection — they are the same line of text).
+<code class="language-plaintext highlighter-rouge">isabelle build -d tools/proofs/eligibility Eligibility</code> compiles clean (native route, per our
+instruction to use native/local, not an image). <code class="language-plaintext highlighter-rouge">python tools/proofs/gate.py
+tools/proofs/eligibility</code> passes: AQ, TA1, TA2, TL1-some, TL1-every, TL2, TL3a, TL3b all
+<code class="language-plaintext highlighter-rouge">passed</code>, no digest mismatch, no banned marker.</li>
+</ul>
+
+<h3 id="e11-the-kernel-ta1-ta2-for-real--done-folded-into-e10-above">E1.1: the kernel (TA1, TA2), for real — done, folded into E1.0 above</h3>
+
+<p>Given E1.0’s and E1.1’s validation criteria turned out to need the same artefacts (the kernel’s
+proofs had to exist, against the generated datatype, for E1.0’s own “moved proofs still compile”
+criterion to mean anything), both were completed in one pass rather than two. Restated exactly as
+track D proved them, including the TA2 correction (negation is monotone, not order-reversing).
+Claim records match track D’s own evidence, not merely a close port of it: identical statement
+digests.</p>
+
+<h3 id="e12-the-rounding-and-residual-theorem--retired-from-this-track-2026-10-07">E1.2: the rounding and residual theorem — retired from this track (2026-10-07)</h3>
+
+<p>Attempted, and found blocked: neither <code class="language-plaintext highlighter-rouge">ontology/quantification/README.md</code> nor ADR-A93 to ADR-A95
+states <code class="language-plaintext highlighter-rouge">split</code>, <code class="language-plaintext highlighter-rouge">proRata</code>, or any rounding/residual-allocation rule, and neither does any other
+layer under <code class="language-plaintext highlighter-rouge">ontology/</code>, under any name (full negative-search account in the status record’s
+log, 2026-10-06). The theorem existed only in two epic sketches that did not fully agree on which
+track owns it.</p>
+
+<p><strong>Resolved, not merely left blocked</strong>, by reading track B’s own sketch (<code class="language-plaintext highlighter-rouge">formal-methods-track-b.md</code>
+§6) directly: the reference-evaluator sketch’s RE6 and RE-Q4 already state that the rounding and
+residual-allocation rule for <code class="language-plaintext highlighter-rouge">split</code>/<code class="language-plaintext highlighter-rouge">proRata</code> belongs to the evaluation context’s combinator
+algebra, with a leaning already recorded. That is track B’s <strong>B4</strong> (not yet started, waiting on
+CCS’s C12) and this track’s own <strong>E3</strong> (the combinator algebra) and <strong>E4</strong> (the evaluation
+context), mechanised once B4 states the rule precisely. There was never a Quantification-level
+theorem to prove: the rule was never Quantification’s to state. This plan’s own E1.2 heading is
+retired, not renamed — E1’s numbering now runs E1.0, E1.1, E1.3 only, and the rounding/residual
+theorem reappears in whichever later plan details E3/E4.</p>
+
+<h3 id="e13-binding-resolution">E1.3: binding resolution</h3>
+
+<ul>
+  <li><strong>Blocked, refreshed 2026-10-07</strong>: track C’s C2 is done — its Alloy model checked scheme
+composition and found that “union of membership, union of hierarchy” alone does not prevent two
+composed schemes disagreeing about a shared concept’s <code class="language-plaintext highlighter-rouge">broader</code> parent
+(<code class="language-plaintext highlighter-rouge">formal-methods-track-c.md</code> status). What remains blocking is the decision C2’s own finding
+calls for (the overlap rule: forbid, order, or allow with an acyclicity requirement) and the
+Vocabulary ADR insurml-alignment’s IMA-D4a names as shared with CCS’s HQ-4 — neither made nor
+drafted yet. Do not start this part before that ADR exists: mechanising a semantics still being
+decided at design time risks proving the wrong thing precisely, the same reason this plan
+already held E1.3 back before C2 itself existed.</li>
+  <li><strong>Validation:</strong> TBD, including differential evidence against C2’s model and whichever ADR
+accepts scheme composition, once both exist.</li>
+</ul>
+
+<h3 id="e14-harden-the-gate-and-the-kernel-theory--not-started">E1.4: harden the gate and the kernel theory — not started</h3>
+
+<p>Queued 2026-10-08 from an implementation-level review of the programme’s own evidence (full
+disposition in <a href="/developer/notes/formal-methods-more-feedback-response.html">the review response</a> §2, §4).
+Each item below is a confirmed, not merely alleged, property of the committed theories:</p>
+
+<ul>
+  <li><strong>Digest transitive definitions.</strong> <code class="language-plaintext highlighter-rouge">gate.py</code> hashes only the text between the <code class="language-plaintext highlighter-rouge">GATE:BEGIN</code> and
+<code class="language-plaintext highlighter-rouge">GATE:END</code> markers. <code class="language-plaintext highlighter-rouge">decision_leq</code>, <code class="language-plaintext highlighter-rouge">or3</code>, <code class="language-plaintext highlighter-rouge">and3</code> and <code class="language-plaintext highlighter-rouge">neg3</code> sit outside any gate, so redefining
+one of them changes what every gated lemma means without changing a single digest. Fix by having
+Isabelle emit, per gated theorem, its term plus the defining equations of every constant it
+mentions transitively, and hash that output, not the source text alone.</li>
+  <li><strong>Add characterising lemmas.</strong> TA1’s monotonicity lemmas hold of a constant function standing in
+for <code class="language-plaintext highlighter-rouge">or3</code>/<code class="language-plaintext highlighter-rouge">and3</code>; TA2’s lemmas hold of the identity function standing in for <code class="language-plaintext highlighter-rouge">neg3</code>. Neither is
+ruled out today. Add, and gate: the full truth table (or equivalently <code class="language-plaintext highlighter-rouge">neg3 Permitted = Denied</code>),
+commutativity, associativity and idempotence of <code class="language-plaintext highlighter-rouge">or3</code>/<code class="language-plaintext highlighter-rouge">and3</code>, an identity and absorbing element
+for each, and both De Morgan forms (only one direction’s negation is currently refuted, in
+<code class="language-plaintext highlighter-rouge">Eligibility.thy</code>; check whether the dual is proved or simply never stated).</li>
+  <li><strong>State and gate set-reading invariance.</strong> <code class="language-plaintext highlighter-rouge">some_value</code>/<code class="language-plaintext highlighter-rouge">every_value</code> are list folds standing in
+for a property of sets. Permutation invariance and duplication invariance (the result depends
+only on <code class="language-plaintext highlighter-rouge">set xs</code>) are neither stated nor gated, and follow once the algebraic laws above are
+proved. State and gate the empty-list base cases explicitly too (<code class="language-plaintext highlighter-rouge">some_value [] = Denied</code>,
+<code class="language-plaintext highlighter-rouge">every_value [] = Permitted</code>), checked against the README’s own wording for <code class="language-plaintext highlighter-rouge">SingleValue</code>’s
+zero-candidate case, which differs from an existential over the empty set and deserves its own
+line.</li>
+  <li><strong>Replace <code class="language-plaintext highlighter-rouge">by eval</code>.</strong> <code class="language-plaintext highlighter-rouge">Adequacy.thy</code>’s 15 fixture lemmas use Isabelle’s code-generator oracle,
+not the kernel, and are tagged accordingly rather than fully kernel-checked. For a
+three-constructor finite domain, <code class="language-plaintext highlighter-rouge">by simp</code>, <code class="language-plaintext highlighter-rouge">by code_simp</code> or <code class="language-plaintext highlighter-rouge">by normalization</code> establish the
+same facts inside the kernel at negligible extra cost. Replace throughout.</li>
+  <li><strong>Describe and implement the assumption audit.</strong> The epic sketch names “an assumption audit”
+(§3) as part of track E’s verification story; nothing in this track’s documents says what it
+checks. Implement it as a check for <code class="language-plaintext highlighter-rouge">sorry</code>, <code class="language-plaintext highlighter-rouge">oops</code>, <code class="language-plaintext highlighter-rouge">quick_and_dirty</code> and <code class="language-plaintext highlighter-rouge">axiomatization</code>, and
+for oracle tags via <code class="language-plaintext highlighter-rouge">thm_oracles</code> (which also catches the <code class="language-plaintext highlighter-rouge">by eval</code> dependency above until it is
+removed), wired into <code class="language-plaintext highlighter-rouge">gate.py</code> or <code class="language-plaintext highlighter-rouge">check.py</code>.</li>
+  <li><strong>Record the build identity a claim depends on.</strong> Each claim JSON names “the tool, version and
+outcome”: confirm this is populated from an actual build run, not hand-written, and that
+<code class="language-plaintext highlighter-rouge">gate.py</code> passing in CI is tied to that same build having actually succeeded, not run
+independently of it.</li>
+  <li><strong>Mutation-test the theory.</strong> No mutation has ever been seeded into <code class="language-plaintext highlighter-rouge">tools/proofs/eligibility</code>
+itself (B1’s Python port has been; the Isabelle theory has not). Seed at minimum: a wrong <code class="language-plaintext highlighter-rouge">or3</code>
+cell (confirm <code class="language-plaintext highlighter-rouge">Adequacy.thy</code> fails), a weakened gated statement (confirm <code class="language-plaintext highlighter-rouge">gate.py</code> fails on the
+digest), and a changed definition with an unchanged statement (confirm the digest fix above is
+what makes this case fail, since today it would not).</li>
+</ul>
+
+<p><strong>Validation:</strong> each item above gets its own before/after pair, the specific mutation or defect it
+is meant to catch, shown failing before the fix and caught after, the same discipline track D’s
+seeded defects and B1’s own seeded mutation already use. Not a new proof target: a hardening pass
+over E1.0/E1.1’s existing one.</p>
+
+<h2 id="4-test-taxonomy-and-evidence">4. Test taxonomy and evidence</h2>
+
+<p>Proof is its own evidentiary category, not a position on the <code class="language-plaintext highlighter-rouge">copilot-instructions.md</code> L0-L8
+taxonomy: a theorem’s claim record (<code class="language-plaintext highlighter-rouge">method: Proof</code>) and <code class="language-plaintext highlighter-rouge">gate.py</code>’s report are the unit of
+evidence, as track D established. Where a slice also produces compiled, running code (E2’s SPARQL
+compiler core, in particular), that code’s conformance suite does sit on the L0-L8 scale (L3
+contract tests against the fragment gate, L4/L5 against a real store), and both kinds of evidence
+are named in that slice’s own Validation Pack when it is written, not merged into one count here.</p>
+
+<h2 id="5-out-of-scope">5. Out of scope</h2>
+
+<p>Everything the epic already excludes (§10): running generated code against the live graph, Lean 4,
+timed automata, verifying third-party engines. <code class="language-plaintext highlighter-rouge">DesignEnv</code>/<code class="language-plaintext highlighter-rouge">RunEnv</code> and Behaviour’s macrostep
+(track B4, E4’s dependency, not yet built). Instrument assurance (track G). Scala’s actual
+exercise from Isabelle’s <code class="language-plaintext highlighter-rouge">export_code</code> (FM-D10 adopted it; proving it out is near-term follow-up
+work, not part of E1’s own validation).</p>

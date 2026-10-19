@@ -1,0 +1,215 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-wa8-add-in-domain">Validation Pack: WA8, Add-in domain</h1>
+
+<p><strong>Unit:</strong> <code class="language-plaintext highlighter-rouge">word-authoring-poc</code> (WAP), ADR-A118
+<strong>Plan:</strong> <a href="/developer/plans/word-authoring-poc.html">word-authoring-poc.md</a> section “WA8: Add-in domain”
+<strong>Status record:</strong> <a href="/developer/status/word-authoring-poc.html">word-authoring-poc.md</a></p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>The add-in’s domain layer is the one place that knows how a document’s Wording maps onto Word’s
+own OOXML shape (content controls, runs, paragraphs) and onto the platform’s JSON contracts. It
+must read a real Word document’s messy, Word-generated XML (tracked changes, bookmarks, proof
+marks, split runs, hyperlinks) into exactly the same element model the Java service and the
+Python worker already agree on, write that model back as OOXML Word accepts, and validate every
+JSON shape crossing the HTTP boundary against the same schemas the service and the worker use. No
+UI exists yet (WA9); this slice is pure, Office.js-free domain logic, so every rule here is
+testable under Vitest without Word.</p>
+
+<h2 id="test-case-table">Test case table</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>Invariant protected</th>
+      <th>Pass criterion</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>S8-01</td>
+      <td>the tag codec / each kind encoded and decoded, a value that fails its own pattern, an upper-case key, <code class="language-plaintext highlighter-rouge">lat:x:1</code> / round trip; throw; throw; <code class="language-plaintext highlighter-rouge">null</code></td>
+      <td>L1</td>
+      <td>a tag is never written that <code class="language-plaintext highlighter-rouge">decode</code> cannot read back, and an unrecognised tag is never mistaken for one of ours</td>
+      <td><code class="language-plaintext highlighter-rouge">tags.test.ts</code> (6 tests) passes</td>
+      <td>+/-</td>
+    </tr>
+    <tr>
+      <td>S8-02</td>
+      <td>each of the three WA1 samples (with its template’s headings) / written as OOXML, wrapped as a package, parsed, and built into a snapshot / equals the sample exactly, with no warnings</td>
+      <td>L2</td>
+      <td>the writer and parser are exact inverses for every real sample, not just a synthetic one</td>
+      <td><code class="language-plaintext highlighter-rouge">snapshot.test.ts</code>’s three parametrised cases pass</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>S8-03</td>
+      <td><code class="language-plaintext highlighter-rouge">fixtures/word-like-facility.xml</code>, hand-written in Word’s own style (<code class="language-plaintext highlighter-rouge">w:rPr</code>, <code class="language-plaintext highlighter-rouge">w:proofErr</code>, <code class="language-plaintext highlighter-rouge">w:bookmarkStart</code>, <code class="language-plaintext highlighter-rouge">w:hyperlink</code>, <code class="language-plaintext highlighter-rouge">w:ins</code>, <code class="language-plaintext highlighter-rouge">w:del</code>, <code class="language-plaintext highlighter-rouge">w:smartTag</code>, <code class="language-plaintext highlighter-rouge">w:tab</code>, split runs) / parsed / the expected model in <code class="language-plaintext highlighter-rouge">fixtures/word-like-facility.expected.json</code>, and <code class="language-plaintext highlighter-rouge">w:delText</code> never appears in the output</td>
+      <td>L1</td>
+      <td>the parser reads exactly the run-level rules of the plan against real Word artefacts, not an idealised document</td>
+      <td><code class="language-plaintext highlighter-rouge">ooxml.test.ts</code>’s two S8-03 tests pass</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>S8-04</td>
+      <td>a section with a heading, an unmarked paragraph, and an empty element, plus a paragraph outside all sections / parsed / two unmarked entries (one with a null section key), the empty element dropped with a warning</td>
+      <td>L1</td>
+      <td>the zero-parts case is handled, not silently miscounted</td>
+      <td><code class="language-plaintext highlighter-rouge">ooxml.test.ts</code>’s S8-04 test passes</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>S8-05</td>
+      <td>a variable <code class="language-plaintext highlighter-rouge">w:sdt</code> nested inside a reference <code class="language-plaintext highlighter-rouge">w:sdt</code> / parsed / the nested marker’s text folded in as literal text, with a warning</td>
+      <td>L1</td>
+      <td>only one level of inline marker is ever semantically meaningful; a nested one degrades safely instead of crashing or silently losing text</td>
+      <td><code class="language-plaintext highlighter-rouge">ooxml.test.ts</code>’s S8-05 test passes</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>S8-06</td>
+      <td>a parse with an undeclared variable key and two adjacent literal runs / built into a snapshot / the declaration added as <code class="language-plaintext highlighter-rouge">text</code> with a warning, the literals merged, the snapshot validates</td>
+      <td>L1</td>
+      <td><code class="language-plaintext highlighter-rouge">buildSnapshot</code> never produces a document with an undeclared variable reference</td>
+      <td><code class="language-plaintext highlighter-rouge">snapshot.test.ts</code>’s S8-06 test passes</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>S8-07</td>
+      <td>Ajv over the 14 schemas / the WA1 valid and invalid fixtures, and the samples and templates / the same outcomes as the Python/Java contract tests (AC-05 to AC-07)</td>
+      <td>L3</td>
+      <td>the three runtimes (Java, Python, TypeScript) agree on every schema, not just two of them</td>
+      <td><code class="language-plaintext highlighter-rouge">schemas.test.ts</code> (5 tests) passes</td>
+      <td>+/-</td>
+    </tr>
+    <tr>
+      <td>S8-08</td>
+      <td><code class="language-plaintext highlighter-rouge">occurrenceIndex</code> with repeated text past an astral character, <code class="language-plaintext highlighter-rouge">escapeWordSearch("a^b")</code></td>
+      <td>L1</td>
+      <td>a search occurrence index is never off by one around a surrogate pair</td>
+      <td><code class="language-plaintext highlighter-rouge">offsets.test.ts</code> (4 tests) passes</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>S8-09</td>
+      <td>the facility graph view golden of WA6 / <code class="language-plaintext highlighter-rouge">toMermaid</code> / deterministic text, <code class="language-plaintext highlighter-rouge">n0...</code> node ids, a quote escaped as <code class="language-plaintext highlighter-rouge">#quot;</code></td>
+      <td>L1</td>
+      <td>the Graph tab (WA9) renders the same diagram on every call, and never outputs an unescaped quote that would break the Mermaid source</td>
+      <td><code class="language-plaintext highlighter-rouge">mermaid.test.ts</code> (3 tests) passes</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>S8-10</td>
+      <td><code class="language-plaintext highlighter-rouge">HttpApiClient</code> with a fake <code class="language-plaintext highlighter-rouge">fetch</code> / a PUT, a 409 answer, a <code class="language-plaintext highlighter-rouge">fetch</code> that never settles / the right URL, method, headers and body; an <code class="language-plaintext highlighter-rouge">ApiError</code> with status 409; a timeout rejection</td>
+      <td>L1</td>
+      <td>the client never hangs forever waiting on a broker or network fault, and a non-2xx answer is always distinguishable from a successful one</td>
+      <td><code class="language-plaintext highlighter-rouge">client.test.ts</code> (3 tests) passes</td>
+      <td>+/-</td>
+    </tr>
+    <tr>
+      <td>S8-11</td>
+      <td>the manifest / parsed / a GUID <code class="language-plaintext highlighter-rouge">Id</code>, every URL under <code class="language-plaintext highlighter-rouge">https://localhost:3443/addin/</code> (except the bare <code class="language-plaintext highlighter-rouge">AppDomain</code>), <code class="language-plaintext highlighter-rouge">ReadWriteDocument</code>, <code class="language-plaintext highlighter-rouge">WordApi</code> 1.4</td>
+      <td>L1</td>
+      <td>the manifest Word actually loads matches the dev server’s own origin and API surface</td>
+      <td><code class="language-plaintext highlighter-rouge">manifest.test.ts</code> (3 tests) passes</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>S8-12</td>
+      <td><code class="language-plaintext highlighter-rouge">pollJob</code> with fake timers / completed after three polls, never completing, failed at once / resolves completed; rejects <code class="language-plaintext highlighter-rouge">timeout</code>; resolves immediately</td>
+      <td>L1</td>
+      <td>the Analyse panel (WA9) never polls forever, and never waits an interval after an already-final answer</td>
+      <td><code class="language-plaintext highlighter-rouge">poll.test.ts</code> (3 tests) passes</td>
+      <td>+/-</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>All 38 tests pass. <code class="language-plaintext highlighter-rouge">mise run check:authoring-addin</code> runs <code class="language-plaintext highlighter-rouge">tsc --noEmit</code> then <code class="language-plaintext highlighter-rouge">vitest run</code>
+(10 files, 38 tests).</p>
+
+<h2 id="one-command">One command</h2>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:authoring-addin
+</code></pre></div></div>
+
+<h2 id="artefacts-to-inspect">Artefacts to inspect</h2>
+
+<ul>
+  <li><a href="../../../apps/word-authoring-addin/src/domain/ooxml.ts"><code class="language-plaintext highlighter-rouge">apps/word-authoring-addin/src/domain/ooxml.ts</code></a></li>
+  <li><a href="../../../apps/word-authoring-addin/src/domain/tags.ts"><code class="language-plaintext highlighter-rouge">apps/word-authoring-addin/src/domain/tags.ts</code></a></li>
+  <li><a href="../../../apps/word-authoring-addin/src/domain/schemas.ts"><code class="language-plaintext highlighter-rouge">apps/word-authoring-addin/src/domain/schemas.ts</code></a></li>
+  <li><a href="../../../apps/word-authoring-addin/src/domain/fixtures/word-like-facility.xml"><code class="language-plaintext highlighter-rouge">apps/word-authoring-addin/src/domain/fixtures/word-like-facility.xml</code></a> and its <code class="language-plaintext highlighter-rouge">.expected.json</code></li>
+  <li><a href="../../../apps/word-authoring-addin/manifest/manifest.xml"><code class="language-plaintext highlighter-rouge">apps/word-authoring-addin/manifest/manifest.xml</code></a></li>
+</ul>
+
+<h2 id="self-probe">Self-probe</h2>
+
+<p>Plan: “make the parser read <code class="language-plaintext highlighter-rouge">w:delText</code>. S8-03 fails.”</p>
+
+<p>Temporarily changed <code class="language-plaintext highlighter-rouge">walkElementContent</code> so a <code class="language-plaintext highlighter-rouge">w:del</code> wrapper is descended into (instead of
+skipped) and its <code class="language-plaintext highlighter-rouge">w:delText</code> child is read as literal text. Ran <code class="language-plaintext highlighter-rouge">vitest run
+src/domain/ooxml.test.ts</code> only: both S8-03 tests failed exactly as predicted, the first on the
+golden comparison (<code class="language-plaintext highlighter-rouge">"won'tBorrower..."</code> instead of <code class="language-plaintext highlighter-rouge">"Borrower..."</code>) and the second on the explicit
+<code class="language-plaintext highlighter-rouge">not.toContain("won't")</code> assertion. Reverted; the full suite (38 tests) passes again. This is the
+second slice running (after WA7) whose prescribed self-probe bites exactly as written, with no
+replacement test needed.</p>
+
+<h2 id="implementer-choices">Implementer choices</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Choice</th>
+      <th>Reasoning</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">WritableSection</code> (the writer’s own input shape) carries <code class="language-plaintext highlighter-rouge">heading</code> and an optional <code class="language-plaintext highlighter-rouge">unmarked: string[]</code>, not just the <code class="language-plaintext highlighter-rouge">document-snapshot</code> schema’s <code class="language-plaintext highlighter-rouge">Section</code></td>
+      <td>the schema’s <code class="language-plaintext highlighter-rouge">Section</code> has no heading (that lives in the template) and no per-section unmarked text (that is a document-level array keyed by section). The writer needs both to round-trip a real sample exactly; the round-trip test looks the heading up from the matching template and groups <code class="language-plaintext highlighter-rouge">unmarked</code> entries by section key itself</td>
+    </tr>
+    <tr>
+      <td>A definition’s defined term is located inside its single literal part by <code class="language-plaintext highlighter-rouge">indexOf</code>, and wrapped in a <code class="language-plaintext highlighter-rouge">term</code> content control only at that point, leaving the surrounding quotes as literal text either side</td>
+      <td>mirrors how a real author would select just the term inside a sentence like <code class="language-plaintext highlighter-rouge">"Borrower" means ...</code>, and keeps the parts list a single merged literal part on round trip, exactly matching the WA1 samples’ own shape</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">newTemplateElementId</code> (for <code class="language-plaintext highlighter-rouge">writeTemplate</code>) is a small dependency-free UUID v4 generator, not <code class="language-plaintext highlighter-rouge">crypto.randomUUID()</code></td>
+      <td>avoids relying on a global whose availability differs slightly across the Node/Vitest/jsdom/Office.js runtimes this module runs under; the plan does not prescribe a specific generator here</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">toMermaid</code> escapes <code class="language-plaintext highlighter-rouge">"</code> as <code class="language-plaintext highlighter-rouge">#quot;</code> and uses <code class="language-plaintext highlighter-rouge">n0, n1, ...</code> aliases in the graph view’s own (already sorted) node order</td>
+      <td>satisfies S8-09’s literal wording directly; Mermaid’s own HTML-entity-style escapes (<code class="language-plaintext highlighter-rouge">#quot;</code>, <code class="language-plaintext highlighter-rouge">#35;</code>, etc.) are its documented way of getting a literal character into quoted text</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">HttpApiClient</code>’s timeout races the <code class="language-plaintext highlighter-rouge">fetch</code> call against a <code class="language-plaintext highlighter-rouge">setTimeout</code>-driven rejection, rather than relying solely on <code class="language-plaintext highlighter-rouge">AbortController</code></td>
+      <td>a fake <code class="language-plaintext highlighter-rouge">fetch</code> that never settles and ignores its abort signal (S8-10’s third case) would otherwise hang forever; racing a timeout promise works regardless of whether the underlying <code class="language-plaintext highlighter-rouge">fetch</code> implementation honours the signal</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">occurrenceIndex</code> returns a 0-based count</td>
+      <td>matches the 0-based indexing Office.js’s <code class="language-plaintext highlighter-rouge">RangeCollection.items[n]</code> uses after a <code class="language-plaintext highlighter-rouge">search()</code> call, which is <code class="language-plaintext highlighter-rouge">markOccurrence</code>’s eventual consumer (WA9)</td>
+    </tr>
+    <tr>
+      <td>Schema imports in <code class="language-plaintext highlighter-rouge">schemas.ts</code> use relative paths four directories up into <code class="language-plaintext highlighter-rouge">contracts/</code>, resolved by Vite’s built-in JSON-module support</td>
+      <td>avoids copying or symlinking the schemas into the add-in’s own tree, keeping one copy of each schema exactly as WA1 committed it</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<ul>
+  <li>No React component exists yet (<code class="language-plaintext highlighter-rouge">App.tsx</code>, the panels, <code class="language-plaintext highlighter-rouge">officePort.ts</code>, <code class="language-plaintext highlighter-rouge">fakePort.ts</code>): that is
+WA9. This slice has no Office.js dependency to mock, by design.</li>
+  <li><code class="language-plaintext highlighter-rouge">writeTemplate</code> is implemented and type-checked but has no dedicated test in this slice: it has
+no committed golden to compare against yet (the “Apply template” flow is a WA9 UI feature). It
+will be exercised indirectly once WA9’s S9-03 (“Apply template on the licence”) runs against it.</li>
+  <li>The Playwright <code class="language-plaintext highlighter-rouge">e2e/</code> harness, <code class="language-plaintext highlighter-rouge">playwright.config.ts</code> and the <code class="language-plaintext highlighter-rouge">test</code>/<code class="language-plaintext highlighter-rouge">test:stack</code> scripts are not
+exercised in this slice (no <code class="language-plaintext highlighter-rouge">.spec.ts</code> files exist yet): WA9 adds the harness and the first
+Playwright-level tests (S9-xx).</li>
+</ul>

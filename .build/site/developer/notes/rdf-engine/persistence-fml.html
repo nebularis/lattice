@@ -1,0 +1,2437 @@
+<h1 id="applying-formal-methods-to-the-persistence-layer-its-generated-sparql-and-pluggable-rdf-backends">Applying formal methods to the Persistence layer, its generated SPARQL, and pluggable RDF backends</h1>
+
+<h2 id="0-scope-sources-and-how-to-read-this">0. Scope, sources, and how to read this</h2>
+
+<p>I have read the Persistence README (the <code class="language-plaintext highlighter-rouge">dal:</code> vocabulary, its dimensions, resolution, validation and compiler outputs) and the RDF/SPARQL patterns guide (the patterns being configured, the corrected SPARQL, the store SPI, the TCK). I have <strong>not</strong> seen <code class="language-plaintext highlighter-rouge">spec/persistence.ttl</code>, <code class="language-plaintext highlighter-rouge">shapes/constraints.ttl</code>, <code class="language-plaintext highlighter-rouge">tools/persistence</code>, the template library, <code class="language-plaintext highlighter-rouge">docs/precedence-and-resolution.md</code>, the minting libraries, or your existing Isabelle/Alloy/SMT assets beyond what the SQL review describes.</p>
+
+<p>Conventions:</p>
+
+<ul>
+  <li><strong>Fact</strong> marks something that follows from the W3C specifications or from the attached documents.</li>
+  <li><strong>Judgement</strong> marks my assessment.</li>
+  <li><strong><em>(verify)</em></strong> marks something I believe but cannot confirm from the material given.</li>
+  <li>Findings about compiler internals are posed as questions, not assertions.</li>
+</ul>
+
+<p>The analysis is deliberately long because the question is “exhaustive”. §1 is the summary, §12 is the defect list, §13 answers the compiler-generation question, §18 is the prioritised plan. Everything between is the reasoning.</p>
+
+<hr />
+
+<h2 id="1-summary">1. Summary</h2>
+
+<h3 id="11-headline-judgement">1.1 Headline judgement</h3>
+
+<p>This layer is a far better formal-methods target than the SQL compilation work, for three reasons.</p>
+
+<ol>
+  <li>
+    <p><strong>The specification is already mostly written down and mostly declarative.</strong> Dimensions with enumerated values, a baseline per dimension, a precedence algorithm, a refusal/warning table, an operation-selection table, a template library, an outcome table, and a set of standing audits. Almost all of this is finite, tabular, and therefore mechanisable at low cost. The expensive part of formalisation (recovering intent from code) has largely been done by the guide.</p>
+  </li>
+  <li>
+    <p><strong>The historical defect profile is exactly what cheap formal methods catch.</strong> Appendix D records three remediation passes. Nearly every defect in D.1–D.3 is a bounded-model-checkable or decision-table property: a guard that can never match, a shape that can never fire, an audit query that cannot detect the loss it claims to detect, a fencing token that is checked but never advanced, an unbounded read that skips a committed write, a digest that is not computed, a retention rule that prunes a live head. These were found by three successive reviews over months. A model checker finds that class in hours. §1.3 makes the argument concretely.</p>
+  </li>
+  <li>
+    <p><strong>Pluggable backends force the verification to be parametric, which is a virtue.</strong> The honest statement of correctness here is not “the generated SPARQL is correct” but “<em>for this capability profile</em>, this strategy delivers this guarantee level”. That is a matrix, each cell of which is a proof, a bounded check, or a counterexample. Once that matrix exists, the planner’s <code class="language-plaintext highlighter-rouge">min_level</code> fail-fast becomes a lookup into checked evidence instead of an unchecked claim, and the TCK’s job narrows to establishing which column of the matrix a given store occupies. This is the single most valuable structural idea in this document (§4).</p>
+  </li>
+</ol>
+
+<p><strong>The principal risk the current design carries is not in the compiler.</strong> It is in three places formal methods reach well and testing reaches poorly:</p>
+
+<ul>
+  <li><strong>the gap between the resolved declaration and the generated operations</strong> (shard counts recorded but not honoured, infrastructure graph IRIs fixed, retention and epoch bumps delegated to housekeeping, composite boundaries binding only the first property): the compiled profile claims things the SPARQL does not implement, and nothing enumerates the gap;</li>
+  <li><strong>the assume-guarantee split</strong> between generated SPARQL, the caller, housekeeping and the store: every safety property in the guide depends on obligations discharged by at least two of those four parties, and none of the four has a machine-readable contract;</li>
+  <li><strong>concurrency and procedure</strong>, where the guide’s own corrections cluster.</li>
+</ul>
+
+<h3 id="12-top-findings-detail-in-12">1.2 Top findings (detail in §12)</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Finding</th>
+      <th>Severity</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td><strong>Scope matching is defined on instances; resolution is per class-and-deployment.</strong> <code class="language-plaintext highlighter-rouge">dal:NamespaceScope</code> matches “resources whose own IRI starts with…” and <code class="language-plaintext highlighter-rouge">dal:ShapeScope</code> matches “resources conforming to a shape”, but a target is a class. Either every instance of the class matches the same scopes (an unstated, undecidable-from-the-ontology side condition) or the compiled profile is unsound for some instances. <code class="language-plaintext highlighter-rouge">dal:ShapeScope</code> “resolved once at compile time” makes resolution data-dependent and therefore unstable under later data.</td>
+      <td>Major</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td><strong>Overlapping <code class="language-plaintext highlighter-rouge">dal:graphPrefix</code> makes the instance-to-target map a relation, not a function.</strong> Two <code class="language-plaintext highlighter-rouge">dal:GraphPatternScope</code>s covering one class with nested prefixes both claim an instance, and “the unscoped fallback for instances outside any of them” is only well defined if the prefixes form an antichain. No antichain or longest-prefix rule is stated.</td>
+      <td>Major</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td><strong>The cross-axis rules are specified twice</strong> (SHACL shapes, and “the compiler, which mirrors the cross-axis checks”), with no agreement proof and a known asymmetry. Two implementations of one rule set is the classic drift source.</td>
+      <td>Major</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td><strong>The capability record in <code class="language-plaintext highlighter-rouge">dal:</code> is weaker than the one the safety argument needs.</strong> <code class="language-plaintext highlighter-rouge">dal:CapabilitySpec</code> carries CAS level, reasoning and commit validation. The guide’s <code class="language-plaintext highlighter-rouge">StoreCapabilities</code> additionally needs <code class="language-plaintext highlighter-rouge">detectsWriteWriteConflict</code>, <code class="language-plaintext highlighter-rouge">statementLevelConflictDetection</code>, <code class="language-plaintext highlighter-rouge">atomicUpdateRequest</code>, <code class="language-plaintext highlighter-rouge">graphLevelAccessControl</code> and <code class="language-plaintext highlighter-rouge">shaclDataGraphScope</code>, and the dimensions that depend on them (<code class="language-plaintext highlighter-rouge">dal:firstWrite</code>, meta topology, uniqueness enforcement, key-claim placement) cannot be checked without them. The spec is also unverified and unlinked to any TCK report.</td>
+      <td>Major</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td><strong>Known-unsafe baselines.</strong> <code class="language-plaintext highlighter-rouge">dal:RowLevelGuardOnly</code> is the epoch-guard baseline and is warned whether declared or defaulted; <code class="language-plaintext highlighter-rouge">dal:AbsentRow</code> is the first-write baseline and carries the create-path write skew on MVCC backends; <code class="language-plaintext highlighter-rouge">dal:ProvidedConcurrency</code> emits an unconditional write. A warning is not a gate, and nothing records which safety property each warning forfeits.</td>
+      <td>Major</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td><strong>Infrastructure graphs that are mutable but unguarded.</strong> The dataset node, the registry graph and the retention graph are rewritten by “the epoch authority”, “bucket rotation” and “the retention job” respectively. None has a version row, a guard or a receipt. Every single-writer assumption there is unenforced, and a reader racing a registry rotation silently misses a bucket.</td>
+      <td>Major</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td><strong>The request digest and the recipe canonicalisation are under-specified.</strong> “Sorted canonical N-Triples” is not a canonicalisation: N-Triples admits choices in escaping, in <code class="language-plaintext highlighter-rouge">"x"</code> versus <code class="language-plaintext highlighter-rouge">"x"^^xsd:string</code>, and in literal lexical forms. “Canonical JSON” names no profile (RFC 8785/JCS?). Two conforming client implementations can therefore compute different digests for the same request and report spurious <code class="language-plaintext highlighter-rouge">IdempotencyKeyReuse</code>.</td>
+      <td>Major</td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td><strong>Detective controls have no proved coverage.</strong> The always-on audits (S3, F5, the §24.2 receipt-side pair, the four generated audits) are the last line of defence against bulk loads, administrative <code class="language-plaintext highlighter-rouge">LOAD</code>s, restores and non-conforming writers. Three of them have already been corrected for <em>not detecting what they claimed</em>. No artefact states which violation classes are covered by which audit, nor which are uncovered.</td>
+      <td>Major</td>
+    </tr>
+    <tr>
+      <td>9</td>
+      <td><strong>The declaration-to-operation gap is not enumerated.</strong> Declared shard counts are not honoured, infrastructure IRIs are constants, retention and epoch bumps are housekeeping, a composite boundary binds only the first property its shape reaches. The last of these is a soundness bug in the closure sweep, not just a limitation: an unswept closure member leaves exactly the dangling triple that “replace whole” exists to prevent.</td>
+      <td>Major</td>
+    </tr>
+    <tr>
+      <td>10</td>
+      <td><strong>The ETag parser does not handle the form the vocabulary offers.</strong> <code class="language-plaintext highlighter-rouge">Version.parse_etag</code> splits on <code class="language-plaintext highlighter-rouge">-</code> and integer-parses both halves; <code class="language-plaintext highlighter-rouge">dal:TaggedRepresentation</code> folds the representation into the tag (<code class="language-plaintext highlighter-rouge">"3-41.ttl"</code>), which that parser cannot read. Epoch and sequence in the tag are also unpadded, against the fixed-width discipline applied everywhere else.</td>
+      <td>Minor, but a type-level smell</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="13-the-business-case-is-already-in-the-repository">1.3 The business case is already in the repository</h3>
+
+<p>Appendix D.1–D.3 is a labelled defect corpus. Treat it as the calibration set for any formal-methods investment: a technique that cannot find these is not worth buying, and a technique that finds all of them in a day pays for itself immediately.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Recorded defect</th>
+      <th>Class</th>
+      <th>Technique that finds it</th>
+      <th>Rung</th>
+      <th>Time to find once tooling exists</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>A1: guard on dataset <strong>and</strong> row epoch wedges every row after a bump</td>
+      <td>liveness of a protocol</td>
+      <td>TLA+/Quint (no write can ever apply) or Alloy (no satisfying post-bump state)</td>
+      <td>T4/T2</td>
+      <td>minutes</td>
+    </tr>
+    <tr>
+      <td>A2: <code class="language-plaintext highlighter-rouge">nextval</code>/offsets classed as dense</td>
+      <td>definitional, allocate-then-commit</td>
+      <td>TLA+ model with pre-allocation (reader skips)</td>
+      <td>T4</td>
+      <td>minutes</td>
+    </tr>
+    <tr>
+      <td>A3: unbounded HLC read skips a committed write forever</td>
+      <td>liveness/safety under pre-commit stamping</td>
+      <td>TLA+</td>
+      <td>T4</td>
+      <td>minutes</td>
+    </tr>
+    <tr>
+      <td>A4: pruned txn claim lets an append apply twice</td>
+      <td>safety under retention</td>
+      <td>TLA+ with a TTL action</td>
+      <td>T4</td>
+      <td>minutes</td>
+    </tr>
+    <tr>
+      <td>A5: no request digest, reused id reported as applied</td>
+      <td>decision-table soundness</td>
+      <td>Isabelle totality/soundness of the outcome function against a trace model</td>
+      <td>T5/T4</td>
+      <td>hours once modelled</td>
+    </tr>
+    <tr>
+      <td>A6: <code class="language-plaintext highlighter-rouge">pat:NoForkShape</code> could never fire; row shape also targeted receipts</td>
+      <td><strong>vacuity</strong></td>
+      <td>witness obligation per constraint (exhibit a violating graph)</td>
+      <td>T0</td>
+      <td>seconds per shape</td>
+    </tr>
+    <tr>
+      <td>A7: retention drops a bucket holding a dormant live head</td>
+      <td>safety under pruning</td>
+      <td>TLA+/Alloy</td>
+      <td>T4/T2</td>
+      <td>minutes</td>
+    </tr>
+    <tr>
+      <td>B7: gap scan missed prefix, suffix and total loss</td>
+      <td><strong>completeness of detection</strong></td>
+      <td>Alloy or Isabelle: <code class="language-plaintext highlighter-rouge">audit_nonempty ⟷ ¬invariant</code> at bounded scope</td>
+      <td>T2/T5</td>
+      <td>minutes</td>
+    </tr>
+    <tr>
+      <td>B11: separator joins collide (<code class="language-plaintext highlighter-rouge">"a|b","c"</code> vs <code class="language-plaintext highlighter-rouge">"a","b|c"</code>)</td>
+      <td>injectivity of an encoding</td>
+      <td>Isabelle (prefix-free code) or SMT strings</td>
+      <td>T5/T3</td>
+      <td>minutes</td>
+    </tr>
+    <tr>
+      <td>B12/B13/B14: hand-typed example IRIs, 16 versus 19 digits, untyped literals</td>
+      <td>determinism and width</td>
+      <td>generated test vectors; LIA width check; emitter lint on the IR</td>
+      <td>T0/T3</td>
+      <td>immediate</td>
+    </tr>
+    <tr>
+      <td>S6 as-of query compared retractions against the wrong graph</td>
+      <td>query semantics</td>
+      <td>bounded evaluation of the query against a modelled store</td>
+      <td>T2</td>
+      <td>minutes</td>
+    </tr>
+    <tr>
+      <td>§16.2 fence checked but never advanced</td>
+      <td>protocol</td>
+      <td>TLA+ with a stalled lease holder</td>
+      <td>T4</td>
+      <td>minutes</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Eleven of twelve are in reach of three techniques: a bounded relational model, a protocol model checker, and a decision-table/witness discipline. <strong>Judgement:</strong> the marginal cost of the tooling is less than the cost of a fourth remediation pass, and there will be a fourth remediation pass without it.</p>
+
+<hr />
+
+<h2 id="2-the-verification-problem">2. The verification problem</h2>
+
+<h3 id="21-the-artefact-chain-and-the-laws-between-stages">2.1 The artefact chain and the laws between stages</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>applied ontology + dal: config + capability spec
+   │  (1) resolve      → one value per dimension per target
+   │  (2) validate     → refusals and warnings
+   │  (3) select        → named templates + operation set
+   │  (4) emit          → dal:CompiledProfile, ParameterBindings, MintingRecipes, CapabilityRequirement
+   │  (5) instantiate   → .rq text;   export-recipes → JSON
+   ▼
+generated operations  +  caller obligations  +  housekeeping obligations
+   │  (6) execute on a store with capability profile C
+   ▼
+store state (payload, meta, keys, txn, log, deltas, snapshots, pinned, retention, registry, dataset)
+   │  (7) read / resume / audit / erase / restore
+   ▼
+clients and consumers
+</code></pre></div></div>
+
+<p>Each arrow carries a law. These are the laws worth naming, because they are what the techniques below establish:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Law</th>
+      <th>Statement (informal)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>L1</td>
+      <td><strong>Resolution is a function</strong></td>
+      <td>Resolution depends only on (config graph, applied ontology, target, capability spec), not on triple order, blank-node labels, file order, or machine.</td>
+    </tr>
+    <tr>
+      <td>L2</td>
+      <td><strong>Resolution is local</strong></td>
+      <td>Adding a profile that matches no target leaves every target’s resolution unchanged; adding one that matches target <em>t</em> changes only <em>t</em>.</td>
+    </tr>
+    <tr>
+      <td>L3</td>
+      <td><strong>Target coverage is a partition</strong></td>
+      <td>Every instance of every configured class belongs to exactly one target.</td>
+    </tr>
+    <tr>
+      <td>L4</td>
+      <td><strong>Validation is sound and complete w.r.t. the rule table</strong></td>
+      <td>The compiler refuses exactly the combinations the table declares unworkable, and the SHACL shapes refuse a subset of those, with every difference explained.</td>
+    </tr>
+    <tr>
+      <td>L5</td>
+      <td><strong>Selection is total and disjoint</strong></td>
+      <td>For every resolved profile the operation set is defined, and no two selection rules assign different operation sets to one profile.</td>
+    </tr>
+    <tr>
+      <td>L6</td>
+      <td><strong>The compiled profile is implemented</strong></td>
+      <td>For each resolved dimension, either the generated SPARQL implements it, or it is an explicit caller obligation, housekeeping obligation, or recorded-only value. Nothing is silently unimplemented.</td>
+    </tr>
+    <tr>
+      <td>L7</td>
+      <td><strong>Instantiation is substitution</strong></td>
+      <td><code class="language-plaintext highlighter-rouge">parse(render(template, σ)) = subst(parse(template), σ)</code>, and <code class="language-plaintext highlighter-rouge">render</code> escapes and types every parameter, so no parameter value can change the query’s structure.</td>
+    </tr>
+    <tr>
+      <td>L8</td>
+      <td><strong>Operation correctness (sequential)</strong></td>
+      <td>Each generated operation, executed alone on a state satisfying the invariants, produces a state satisfying the invariants and the operation’s postcondition.</td>
+    </tr>
+    <tr>
+      <td>L9</td>
+      <td><strong>Operation correctness (concurrent, parametric)</strong></td>
+      <td>For capability profile <em>C</em>, every interleaving of the generated operations preserves the declared invariants and the family’s declared guarantee level, or else <em>C</em> is below the family’s <code class="language-plaintext highlighter-rouge">min_level</code> and the compiler refuses.</td>
+    </tr>
+    <tr>
+      <td>L10</td>
+      <td><strong>Outcome soundness</strong></td>
+      <td>The confirmation procedure’s verdict is justified by the history: <code class="language-plaintext highlighter-rouge">Applied</code> implies exactly one application of this request; <code class="language-plaintext highlighter-rouge">PreconditionFailed</code> implies no application and a moved row; and so on, totally and disjointly.</td>
+    </tr>
+    <tr>
+      <td>L11</td>
+      <td><strong>Detection completeness</strong></td>
+      <td>For each invariant and each violation class reachable by an out-of-band writer, some always-on audit returns a non-empty result, within a stated latency.</td>
+    </tr>
+    <tr>
+      <td>L12</td>
+      <td><strong>Identity laws</strong></td>
+      <td>Claim IRIs, revision IRIs, event IRIs and key IRIs are deterministic, injective on their declared domains, and their derivations are agreed by every independent implementation.</td>
+    </tr>
+    <tr>
+      <td>L13</td>
+      <td><strong>Erasure boundary</strong></td>
+      <td>After erasure plus the stated retention bound, no store in the family’s enumerated set yields the subject’s plaintext or pseudonym.</td>
+    </tr>
+    <tr>
+      <td>L14</td>
+      <td><strong>Epoch safety</strong></td>
+      <td>No position, ETag, revision IRI or consumer cursor minted under one epoch can be mistaken for one minted under another, and no backup restored twice can reuse an epoch.</td>
+    </tr>
+    <tr>
+      <td>L15</td>
+      <td><strong>Migration/rotation squares</strong></td>
+      <td>Changing shard counts, rotating a claim scheme, or bumping an epoch commutes with reading: the pre-change and post-change views agree where they must and are disjoint where they must.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Judgement:</strong> L1, L2, L4, L5, L7, L8, L10, L12 are cheap and should be settled by proof or exhaustive check. L3, L6, L11 are the ones currently missing from the design, not merely from its verification. L9, L13, L14, L15 need protocol models and will produce the findings.</p>
+
+<h2 id="22-why-verify-the-compiler-is-the-wrong-target-continued">2.2 Why “verify the compiler” is the wrong target <em>(continued)</em></h2>
+
+<p>The compiler is a resolver, a validator, a lookup table and a printer. Its code is not where the risk is. The risk is in the <em>rules</em> it applies, the <em>templates</em> it selects, the <em>protocol</em> those templates participate in, and the <em>backend</em> that executes them. Follow the same principle the SQL review states: <strong>verify the outputs and the rules, not the program.</strong> Concretely:</p>
+
+<ul>
+  <li>
+    <p><strong>The rules become machine-checked definitions and are generated into both the compiler and the shapes</strong> (§13). Today the cross-axis rules exist twice — in <code class="language-plaintext highlighter-rouge">shapes/constraints.ttl</code> and in the compiler — and the README already records an asymmetry (“the compiler also catches combinations declared on different profile nodes, which node-local shapes cannot see”). Two hand-written implementations of one rule set drift. One generated source of truth does not, and the same source feeds the Isabelle definitions, the SAT/BDD exhaustive check, the model-checker configuration and the README tables.</p>
+  </li>
+  <li>
+    <p><strong>Each compiled profile is validated against its inputs by an independent checker.</strong> Translation validation, not compiler verification: for <em>this</em> configuration graph, an independently written resolver recomputes the dimension values and the operation set, and a checker confirms the emitted <code class="language-plaintext highlighter-rouge">dal:CompiledProfile</code> agrees. The Python compiler stays unverified; its outputs do not. This is cheap because resolution is a small pure function over a finite lattice.</p>
+  </li>
+  <li>
+    <p><strong>Each generated operation is checked against a model of the protocol it participates in, parametrised by backend capability.</strong> The operation text is not verified in isolation — “is this SPARQL correct?” is not a well-posed question. The well-posed question is “does the set of operations this profile generates, under capability profile <em>C</em>, preserve the invariants and deliver the declared guarantee level?” That is a model-checking question (§10), and its answer is a matrix cell (§4).</p>
+  </li>
+  <li>
+    <p><strong>Each always-on audit is checked for the property it claims to detect.</strong> Three of them have already been corrected for failing exactly this (D.1 S3/prefix loss, D.3 A6 fork shape, D.3 B7 suffix and total loss). The obligation is <code class="language-plaintext highlighter-rouge">audit returns a row ⟺ the invariant is violated</code>, bounded (§7.4, §11).</p>
+  </li>
+  <li>
+    <p><strong>Everything the generated SPARQL cannot enforce becomes an explicit, machine-readable obligation</strong> on the caller, on housekeeping, or on the store, and each obligation is discharged by a named test, monitor or runbook check (§5, §16). An assume-guarantee argument with unwritten assumptions is not an argument.</p>
+  </li>
+</ul>
+
+<p>The one place where “verify the compiler” partially <em>is</em> the right target is the <strong>emitter</strong>, because L7 (instantiation is substitution) is a genuine program property with a genuine injection consequence. That one component is small enough to specify precisely and test exhaustively, and §13.4 argues it should be <em>generated from a typed IR</em> rather than verified as hand-written string handling.</p>
+
+<hr />
+
+<h2 id="3-what-there-is-to-formalise-the-specification-surface">3. What there is to formalise: the specification surface</h2>
+
+<h3 id="31-the-four-kinds-of-content-and-the-technique-each-wants">3.1 The four kinds of content, and the technique each wants</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Content</th>
+      <th>Character</th>
+      <th>Size</th>
+      <th>Technique</th>
+      <th>Rung</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Dimensions, values, baselines</strong></td>
+      <td>finite enumerations with a default per dimension</td>
+      <td>~20 dimensions, 2–5 values each</td>
+      <td>typed registry; totality and exhaustiveness checks</td>
+      <td>T0</td>
+    </tr>
+    <tr>
+      <td><strong>Scopes, matching, precedence</strong></td>
+      <td>a small pure function over a finite lattice, plus one reasoning-dependent case</td>
+      <td>one algorithm</td>
+      <td>Isabelle (determinism, locality, monotonicity); bounded-exhaustive differential</td>
+      <td>T5/T0</td>
+    </tr>
+    <tr>
+      <td><strong>Cross-axis validation</strong></td>
+      <td>a propositional predicate over a finite product space</td>
+      <td>~1.3 × 10⁸ combinations (§7.2)</td>
+      <td><strong>SAT/BDD/SMT — exhaustive, not sampled</strong></td>
+      <td>T3</td>
+    </tr>
+    <tr>
+      <td><strong>Operation selection</strong></td>
+      <td>a lookup table, dimension → operation set</td>
+      <td>~8 rules</td>
+      <td>totality/disjointness check; covering-array execution</td>
+      <td>T0</td>
+    </tr>
+    <tr>
+      <td><strong>Templates and their guards</strong></td>
+      <td>SPARQL text with parameters</td>
+      <td>~15 operations, 4 audits</td>
+      <td>typed IR + emitter; Alloy for state effects; TLA+ for interleavings; automata for well-designedness</td>
+      <td>T2/T3/T4</td>
+    </tr>
+    <tr>
+      <td><strong>Identity and digests</strong></td>
+      <td>string functions over Unicode and bytes</td>
+      <td>~8 derivations</td>
+      <td>Isabelle (injectivity, order), SMT strings (template injectivity), test vectors</td>
+      <td>T5/T3/T0</td>
+    </tr>
+    <tr>
+      <td><strong>Protocols</strong></td>
+      <td>concurrent, crash-prone, backend-parametric</td>
+      <td>10–14 models</td>
+      <td><strong>TLA+/Quint</strong></td>
+      <td>T4</td>
+    </tr>
+    <tr>
+      <td><strong>Detection (audits, shapes)</strong></td>
+      <td>queries claiming to detect violations</td>
+      <td>~10 artefacts</td>
+      <td>Alloy equivalence + witness obligations</td>
+      <td>T2/T0</td>
+    </tr>
+    <tr>
+      <td><strong>Housekeeping and runbooks</strong></td>
+      <td>procedures outside the compiler</td>
+      <td>5 procedures</td>
+      <td>TLA+ for the procedure, monitors for the evidence</td>
+      <td>T4/T7</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Judgement.</strong> The second and third rows are where the best value-for-money sits and where nothing currently exists. The seventh row is where the defects are. The eighth row is where false assurance is.</p>
+
+<h3 id="32-the-state-space-to-be-modelled-once-and-shared">3.2 The state space to be modelled, once, and shared</h3>
+
+<p>Every technique below needs the same abstract state. Define it once, in one place, and generate the Alloy signatures, the TLA+ variables and the Isabelle records from it (§13.3). From the README’s graph table plus the guide’s Appendix A:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Dataset       : epoch, orderModel, stableWatermark?
+VersionRow    : target ↦ (epoch, seq, head?, deleted?, fence?, lockedBy?, lockExpires?, current?)
+Receipt       : revIri ↦ (target, epoch, seq, opSeq?, prevRev?, txn, hlc?, recordedAt,
+                          occurredAt?, actor?, cause?, asserts?, retracts?)
+TxnClaim      : txnId ↦ (rev, requestDigest)
+KeyClaim      : claimIri ↦ (constraint, claimedBy?, retiredBy?, retiredAt?)
+KeyShard      : shardIri ↦ counter                         -- P3 only
+Retention     : target ↦ lowWaterMark
+Registry      : family ↦ set of (log | event | delta | txn | key) graph IRIs
+Payload       : graphIri ↦ set of triples
+Delta         : revIri ↦ (addGraph, delGraph)              -- PatchLog only
+Snapshot      : revIri ↦ sealedGraph                       -- SnapshotPerRevision only
+Pinned        : set of receipts carried out of dropped buckets
+ErasureReg    : append-only, outside the dataset
+External      : allocator rows, lock leases + fence counter, watermark, epoch high-water mark
+</code></pre></div></div>
+
+<p>Plus the <strong>environment</strong>: a capability record (§4.1), a clock model, a crash model, and a set of out-of-band writers (bulk load, administrative <code class="language-plaintext highlighter-rouge">LOAD</code>, restore, a rogue ETL).</p>
+
+<p><strong>Finding (Major).</strong> Four of these — <code class="language-plaintext highlighter-rouge">Dataset</code>, <code class="language-plaintext highlighter-rouge">Registry</code>, <code class="language-plaintext highlighter-rouge">Retention</code>, and the external stores — are <strong>mutable and unguarded</strong>. The README says the dataset node is “rewritten only by the epoch authority”, the registry “rewritten on bucket rotation”, the retention graph “rewritten by the retention job”. There is no version row, no guard, no receipt and no epoch check on any of them. Every safety argument that reads them (the epoch guard on every write, the registry-listed bucket enumeration in every audit and every resume query, the low-water mark in the gap scan) assumes a single writer and atomic replacement, and nothing enforces or detects a violation. A reader enumerating buckets concurrently with a rotation can miss a bucket, which makes the gap scan report loss that did not happen — or, worse, <em>not</em> report loss that did (if the rotation adds a bucket after the reader has computed its <code class="language-plaintext highlighter-rouge">VALUES</code> list). This is the first thing I would model (§10, model J).</p>
+
+<hr />
+
+<h2 id="4-the-organising-idea-a-strategy--capability-guarantee-matrix">4. The organising idea: a strategy × capability guarantee matrix</h2>
+
+<h3 id="41-the-capability-record-is-the-formal-environment-assumption">4.1 The capability record is the formal environment assumption</h3>
+
+<p>Everything in this layer is conditional on the backend. The guide already knows this and the planner already acts on it (<code class="language-plaintext highlighter-rouge">min_level</code> fail-fast). What is missing is that <strong>the conditions are not written as assumptions of a proof, and the conclusions are not written as guarantees of a proof.</strong> The fix is small and structural.</p>
+
+<p>Let <em>C</em> be the capability record. The guide’s <code class="language-plaintext highlighter-rouge">StoreCapabilities</code> is the right shape; the <code class="language-plaintext highlighter-rouge">dal:CapabilitySpec</code> in the ontology is a strict subset of it.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Capability flag</th>
+      <th>In <code class="language-plaintext highlighter-rouge">dal:CapabilitySpec</code>?</th>
+      <th>Which dimension’s safety depends on it</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">atomicUpdateRequest</code></td>
+      <td><strong>no</strong></td>
+      <td>everything: the whole single-request guarded-write design</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">maxIsolation</code></td>
+      <td>partially (<code class="language-plaintext highlighter-rouge">dal:providesCas</code>)</td>
+      <td>P2/P3 selection, write-skew exposure</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">singleWriter</code></td>
+      <td><strong>no</strong></td>
+      <td><code class="language-plaintext highlighter-rouge">dal:GlobalDenseCounter</code> affordability, <code class="language-plaintext highlighter-rouge">dal:AbsentRow</code> safety</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">detectsWriteWriteConflict</code></td>
+      <td><strong>no</strong></td>
+      <td>P3 viability, <code class="language-plaintext highlighter-rouge">InTxCounter</code>, <code class="language-plaintext highlighter-rouge">dal:Optimistic</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">statementLevelConflictDetection</code></td>
+      <td><strong>no</strong></td>
+      <td><code class="language-plaintext highlighter-rouge">dal:metaTopology</code>, shard counts, A6</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">multiAggregateAtomicity</code></td>
+      <td><strong>no</strong></td>
+      <td>multi-target writes, <code class="language-plaintext highlighter-rouge">dal:deadlockPolicy</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">commitValidation</code>, <code class="language-plaintext highlighter-rouge">shaclDataGraphScope</code></td>
+      <td>partially (<code class="language-plaintext highlighter-rouge">dal:providesCommitValidation</code>)</td>
+      <td><code class="language-plaintext highlighter-rouge">dal:minEnforcementLevel</code>, the SHACL trick, fork detection</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">graphLevelAccessControl</code></td>
+      <td><strong>no</strong></td>
+      <td>key-claim placement for personal data (TCK S-1 is gating)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">reportsAffectedRows</code></td>
+      <td><strong>no</strong></td>
+      <td>whether confirmation can be skipped</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">nativeChangeFeed</code>, <code class="language-plaintext highlighter-rouge">changeFeedDense</code>, <code class="language-plaintext highlighter-rouge">feedRetention</code></td>
+      <td><strong>no</strong></td>
+      <td><code class="language-plaintext highlighter-rouge">dal:DerivedFeed</code>, <code class="language-plaintext highlighter-rouge">dal:DenseFeedRead</code>, <code class="language-plaintext highlighter-rouge">CursorExpired</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">nativeSequence</code>, <code class="language-plaintext highlighter-rouge">nativeCommitPosition</code>, <code class="language-plaintext highlighter-rouge">nativeTimeTravel</code></td>
+      <td><strong>no</strong></td>
+      <td><code class="language-plaintext highlighter-rouge">dal:datasetTierModel</code>, as-of strategy</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">quadsInUpdateTemplates</code>, <code class="language-plaintext highlighter-rouge">unionDefaultGraph</code>, <code class="language-plaintext highlighter-rouge">requiresSkolemization</code>, <code class="language-plaintext highlighter-rouge">maxRequestBytes</code></td>
+      <td><strong>no</strong></td>
+      <td>whether the generated text runs at all</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">providesReasoning</code></td>
+      <td>yes</td>
+      <td><code class="language-plaintext highlighter-rouge">dal:EquivalentClassScope</code>, <code class="language-plaintext highlighter-rouge">dal:ShapeScope</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Finding (Major, #4).</strong> The capability vocabulary is too narrow to express the preconditions the generated SPARQL actually has, so the <code class="language-plaintext highlighter-rouge">dal:CapabilityRequirement</code> the compiler computes cannot be a complete precondition. Two consequences: a profile can be accepted against a spec that says nothing about the flags its safety depends on; and the compiler cannot refuse <code class="language-plaintext highlighter-rouge">quadsInUpdateTemplates</code>-dependent output for a store that lacks it, which is a <em>runtime failure</em>, not a weaker guarantee.</p>
+
+<p><strong>Recommendation (PV-D1).</strong> Extend <code class="language-plaintext highlighter-rouge">dal:CapabilitySpec</code> to the full <code class="language-plaintext highlighter-rouge">StoreCapabilities</code> record, make every flag three-valued (<code class="language-plaintext highlighter-rouge">provides</code> / <code class="language-plaintext highlighter-rouge">does-not-provide</code> / <code class="language-plaintext highlighter-rouge">unknown</code>), and make <code class="language-plaintext highlighter-rouge">unknown</code> behave as <code class="language-plaintext highlighter-rouge">does-not-provide</code> for refusals and as <code class="language-plaintext highlighter-rouge">does-not-provide</code> for warnings — i.e. never optimistic. Bind each spec to a <strong>TCK report digest</strong>, so a spec is evidence rather than a claim (§14).</p>
+
+<h3 id="42-the-matrix">4.2 The matrix</h3>
+
+<p>For each (strategy, capability profile) pair, the guarantee delivered. The guide has this implicitly in Chapter 25’s strategy tables and Chapter 26’s store table, written by hand, and Appendix D records that the hand-written version was wrong in at least five cells (A2 density, the Neptune/TDB2 rows, the P3 purpose, A6’s conflict granularity).</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>         Guarantee(strategy, C) = the strongest level the model preserves under C
+         Refuse(family, C)      ⟺ Guarantee(selected(family), C) &lt; declared min_level(family)
+</code></pre></div></div>
+
+<p>The matrix cells are produced <strong>mechanically</strong> by model-checking one parametric model per pattern family across the capability configuration space (§10.2). That is the single highest-value structural move in this analysis, because:</p>
+
+<ul>
+  <li>it replaces a hand-maintained table with generated evidence;</li>
+  <li>it makes Chapter 26’s per-store rows derived data (store → <em>C</em> via TCK, <em>C</em> → guarantees via the matrix), so a store row can no longer contradict a TCK run;</li>
+  <li>it gives the planner’s refusal a <em>reason</em> (“<code class="language-plaintext highlighter-rouge">PER_STREAM_DENSE</code> requires <code class="language-plaintext highlighter-rouge">detectsWriteWriteConflict ∨ singleWriter</code>; your TCK report says neither”), which is both a better error message and a reviewable claim;</li>
+  <li>it turns “which TCK tests gate which family” from judgement into derivation: the gating tests for a family are exactly the TCK tests that discharge the assumptions the family’s matrix cell used.</li>
+</ul>
+
+<p><strong>Counterexamples are the deliverable, not just passes.</strong> A cell whose check fails should record the counterexample trace, and that trace should become a TCK test and a Hermitage-style probe (§14.3). “The model says this store will lose a write in this interleaving; here is the probe that reproduces it” is the artefact that makes the matrix trustworthy.</p>
+
+<h3 id="43-monotonicity-properties-of-the-matrix-worth-checking">4.3 Monotonicity properties of the matrix worth checking</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Property</th>
+      <th>Statement</th>
+      <th>My expectation</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Capability monotonicity (guarantees)</strong></td>
+      <td><code class="language-plaintext highlighter-rouge">C ≤ C′ ⟹ Guarantee(s, C) ≤ Guarantee(s, C′)</code></td>
+      <td>holds; cheap to check; a violation means the model misuses a flag</td>
+    </tr>
+    <tr>
+      <td><strong>Capability monotonicity (resolution)</strong></td>
+      <td>a stronger capability spec never yields a weaker <em>resolved profile</em></td>
+      <td><strong>fails by construction</strong> (§6.4): enabling reasoning can let a reasoning-dependent scope win and declare <code class="language-plaintext highlighter-rouge">dal:ProvidedConcurrency</code> over a non-reasoning <code class="language-plaintext highlighter-rouge">dal:Optimistic</code></td>
+    </tr>
+    <tr>
+      <td><strong>Strategy dominance</strong></td>
+      <td>the planner’s “strongest strategy the backend can deliver” is a genuine maximum, not a maximal element of an incomparable set</td>
+      <td>needs checking; if the order is partial, “strongest” is ill-defined and <code class="language-plaintext highlighter-rouge">strongest(...)</code> silently picks by list order</td>
+    </tr>
+    <tr>
+      <td><strong>Declaration monotonicity</strong></td>
+      <td>strengthening a declared <code class="language-plaintext highlighter-rouge">min_level</code> never makes a previously refused deployment accepted</td>
+      <td>should hold trivially; cheap</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The second row is a real finding and a design question for the maintainer (PV-Q1): should the compiler warn when a capability <em>increase</em> weakens a resolved guarantee? I think yes, and it is a two-line check once resolution is a function you can evaluate twice.</p>
+
+<hr />
+
+<h2 id="5-the-assume-guarantee-decomposition">5. The assume-guarantee decomposition</h2>
+
+<p>Every safety property in the guide is discharged jointly by four parties. The generated SPARQL is one of them. Writing the split down is a prerequisite for any proof, and it does not currently exist in machine-readable form.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Party</th>
+      <th>What it must do</th>
+      <th>Enforced today by</th>
+      <th>Verification approach</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Generated SPARQL</strong></td>
+      <td>guards (epoch, seq/value, tombstone, txn, claim-not-held), single-statement counter rewrite, head/chain maintenance, receipt and claim insertion, closure sweep</td>
+      <td>the templates</td>
+      <td>Alloy (state effect), TLA+ (interleavings), emitter typing (§13.4)</td>
+    </tr>
+    <tr>
+      <td><strong>Caller / adapter</strong></td>
+      <td>compute positions and digests; supply <code class="language-plaintext highlighter-rouge">opSeq</code>; confirm on the primary; resend identically on <code class="language-plaintext highlighter-rouge">Unknown</code>; re-decide on <code class="language-plaintext highlighter-rouge">PreconditionFailed</code>; never write infrastructure graphs; never read the version from a replica; retry with jitter; <code class="language-plaintext highlighter-rouge">clock.receive</code> before a read-dependent write; bounded retries</td>
+      <td>prose + library code</td>
+      <td>generate the obligation set from the spec; enforce at the port boundary; property-test the client state machine; model the client as a TLA+ process</td>
+    </tr>
+    <tr>
+      <td><strong>Housekeeping</strong></td>
+      <td>txn-claim TTL ≥ redelivery horizon; prefix-only pruning with low-water-mark-first and pinned heads; bucket rotation with registry update; epoch allocation from the declared authority; quiesce; erasure register replay; reconcilers; gap/fork audits</td>
+      <td>runbooks (ADR-A80)</td>
+      <td>TLA+ models of each procedure; monitors that prove the procedure ran (§15)</td>
+    </tr>
+    <tr>
+      <td><strong>Store</strong></td>
+      <td>the capability flags</td>
+      <td>TCK</td>
+      <td>TCK as assumption discharger; history checking</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Finding (Major).</strong> The <em>caller obligations</em> are the largest unverified surface in the whole design, and they are where the guide’s own corrections concentrated (B8 outcome classification, B9 <code class="language-plaintext highlighter-rouge">clock.receive</code>, A5 digest, the resend-identically rule, the primary-only confirmation). They are also the part an adopter writes themselves if they use “only the generated SPARQL and walk away” — which the README explicitly supports. An adopter following §9’s promise (“run both once and walk away”) gets the SPARQL and none of the obligations.</p>
+
+<p><strong>Recommendation (PV-D2).</strong> Emit the obligations as <strong>data</strong>, per generated operation, in the compiled profile: for each operation, the preconditions the caller must establish, the postconditions it may assume, the outcome classification procedure, and the parameters it must compute (with their derivations). The compiler already emits reified <code class="language-plaintext highlighter-rouge">dal:ParameterBinding</code>s; this extends the same idea to obligations. Then:</p>
+
+<ul>
+  <li>the obligation set is one artefact, verified once, consumed by the Python and Java adapters and by the TLA+ client process — removing the two-implementation drift;</li>
+  <li>an adopter who takes only the <code class="language-plaintext highlighter-rouge">.rq</code> files gets a machine-readable list of what they must do, and can be told, mechanically, which guarantees they forfeit by skipping each one;</li>
+  <li><code class="language-plaintext highlighter-rouge">instantiate</code> can emit the obligations as comments in the <code class="language-plaintext highlighter-rouge">.rq</code> header, so the forfeited guarantee is visible at the point of use.</li>
+</ul>
+
+<hr />
+
+<h2 id="6-resolution-and-precedence">6. Resolution and precedence</h2>
+
+<h3 id="61-what-to-prove-isabelle-small">6.1 What to prove (Isabelle, small)</h3>
+
+<p>Model the resolution function abstractly:</p>
+
+<div class="language-isabelle highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">type_synonym</span><span class="w"> </span><span class="n">dim</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="n">string</span><span class="w">
+</span><span class="k">datatype</span><span class="w"> </span><span class="n">scope_kind</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GraphPattern</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">Namespace</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">Class</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">Shape</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">EquivalentClass</span><span class="w">
+</span><span class="k">record</span><span class="w"> </span><span class="n">cand</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">scope</span><span class="w"> </span><span class="o">::</span><span class="w"> </span><span class="n">scope_kind</span><span class="w">  </span><span class="n">priority</span><span class="w"> </span><span class="o">::</span><span class="w"> </span><span class="n">int</span><span class="w">  </span><span class="n">reasoning</span><span class="w"> </span><span class="o">::</span><span class="w"> </span><span class="n">bool</span><span class="w">  </span><span class="kt">value</span><span class="w"> </span><span class="o">::</span><span class="w"> </span><span class="n">val</span><span class="w">
+
+</span><span class="k">fun</span><span class="w"> </span><span class="n">resolve</span><span class="w"> </span><span class="o">::</span><span class="w"> </span><span class="s">"cand list ⇒ bool ⇒ val option res"</span><span class="w">   </span><span class="c">(* bool = reasoning supported *)</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Gated claims:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Claim</th>
+      <th>Statement</th>
+      <th>Why it matters</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Determinism</strong></td>
+      <td><code class="language-plaintext highlighter-rouge">resolve</code> is a function of the candidate <em>set</em>, not the list order</td>
+      <td>L1; a resolution that depends on Turtle parse order is unreproducible across machines, and the README promises “the same way every time, on any machine”</td>
+    </tr>
+    <tr>
+      <td><strong>Order independence</strong></td>
+      <td><code class="language-plaintext highlighter-rouge">resolve (xs @ ys) = resolve (ys @ xs)</code></td>
+      <td>the collection step must be a set operation</td>
+    </tr>
+    <tr>
+      <td><strong>Locality</strong></td>
+      <td>adding a candidate that does not match the target leaves the result unchanged</td>
+      <td>L2; makes configurations composable</td>
+    </tr>
+    <tr>
+      <td><strong>Winner dominance</strong></td>
+      <td>the winner’s priority is maximal among surviving candidates, and if tied, non-reasoning</td>
+      <td>matches the stated algorithm</td>
+    </tr>
+    <tr>
+      <td><strong>Totality</strong></td>
+      <td>the result is always exactly one of <code class="language-plaintext highlighter-rouge">Baseline</code>, <code class="language-plaintext highlighter-rouge">Winner v</code>, <code class="language-plaintext highlighter-rouge">Ambiguity</code></td>
+      <td>no fourth outcome, no exception path</td>
+    </tr>
+    <tr>
+      <td><strong>Ambiguity is exactly a tie</strong></td>
+      <td><code class="language-plaintext highlighter-rouge">Ambiguity ⟷ ∃ two surviving candidates with equal priority, both reasoning or both not, with different values</code></td>
+      <td>note the <em>different values</em> side condition: two candidates with the same value at the same priority should <strong>not</strong> be an ambiguity. Does the compiler treat it as one? (question) If it does, a configuration that says the same thing twice is refused, which is a usability bug; if it does not, the check must compare values, and value equality for literal-valued dimensions needs a definition (<code class="language-plaintext highlighter-rouge">xsd:long 64</code> vs <code class="language-plaintext highlighter-rouge">xsd:integer 64</code>)</td>
+    </tr>
+    <tr>
+      <td><strong>Negative lemma: capability monotonicity fails</strong></td>
+      <td><code class="language-plaintext highlighter-rouge">∃ cands. resolve cands False</code> is <em>stronger</em> than <code class="language-plaintext highlighter-rouge">resolve cands True</code> under any sensible strength order on values</td>
+      <td>§4.3; proved with a witness, so the behaviour is a recorded decision rather than a surprise</td>
+    </tr>
+    <tr>
+      <td><strong>Baseline is reachable</strong></td>
+      <td>for every dimension there is a candidate set yielding <code class="language-plaintext highlighter-rouge">Baseline</code>, and the baseline value is in the dimension’s value set</td>
+      <td>catches a baseline typo’d outside its enumeration</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>All of this is a few hundred lines of Isabelle and it settles the resolution layer permanently. The negative lemma is the valuable one, exactly as the De Morgan witness is in the SQL review.</p>
+
+<h3 id="62-target-identification-is-the-real-problem">6.2 Target identification is the real problem</h3>
+
+<p><strong>Finding (Major, #1 and #2).</strong> The README defines scope <em>matching</em> on resources and resolution on <em>targets</em>, and a target is “a class, plus a deployment”. These are reconciled only if every instance of a class matches the same set of scopes — which is false for three of the five scope kinds:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">dal:NamespaceScope</code> matches “resources whose own IRI starts with <code class="language-plaintext highlighter-rouge">dal:iriPrefix</code>”. Two instances of one class with different IRI prefixes match different scopes. One target, two profiles.</li>
+  <li><code class="language-plaintext highlighter-rouge">dal:ShapeScope</code> matches “resources conforming to a named <code class="language-plaintext highlighter-rouge">sh:NodeShape</code>”. Conformance is per-resource and data-dependent.</li>
+  <li><code class="language-plaintext highlighter-rouge">dal:GraphPatternScope</code> matches by graph prefix <em>and</em> class; the README handles this by making each graph-pattern scope its own target, plus “an unscoped fallback for instances outside any of them”. That works <strong>only if the declared graph prefixes form an antichain.</strong> With <code class="language-plaintext highlighter-rouge">urn:g:lending/</code> and <code class="language-plaintext highlighter-rouge">urn:g:lending/behaviour/</code>, an instance in the inner graph matches both, giving two targets with different profiles for one instance, and no longest-prefix rule is stated.</li>
+</ul>
+
+<p>Consequences:</p>
+
+<ol>
+  <li><strong>The instance → target map is a relation, not a function</strong> (L3 fails). At runtime, “which generated operation applies to this instance?” has no unique answer, so a writer picks, and two writers can pick differently — which means two <em>different</em> version-row conventions and guard shapes for one aggregate. That is a lost-update hole created by configuration, invisible to every current check.</li>
+  <li><strong>Non-monotone scope membership.</strong> SHACL conformance is non-monotone in the data (<code class="language-plaintext highlighter-rouge">sh:maxCount</code>, <code class="language-plaintext highlighter-rouge">sh:not</code>, <code class="language-plaintext highlighter-rouge">sh:closed</code>). A resource conforming at compile time can stop conforming after more data arrives. A profile “resolved once at compile time” is then stale, and the staleness is silent.</li>
+  <li><strong>The fallback target is not well-defined</strong> without the antichain property.</li>
+</ol>
+
+<p><strong>Recommendations.</strong></p>
+
+<ul>
+  <li><strong>PV-D3.</strong> Make target identification a declared, checkable function. Either (a) restrict profile-bearing scopes to those that are class-determined (<code class="language-plaintext highlighter-rouge">ClassScope</code>, <code class="language-plaintext highlighter-rouge">EquivalentClassScope</code>) plus <code class="language-plaintext highlighter-rouge">GraphPatternScope</code> with an enforced antichain and a longest-prefix rule; or (b) keep instance-level scopes but <em>refuse</em> any configuration in which two scopes with different resolved values can match one instance, which is a decidable check for prefix scopes (automata; §8.3) and for class scopes, and an undecidable-in-general check for shape scopes.</li>
+  <li><strong>PV-D4.</strong> Restrict <code class="language-plaintext highlighter-rouge">dal:ShapeScope</code> to a <strong>monotone SHACL fragment</strong> — no <code class="language-plaintext highlighter-rouge">sh:not</code>, <code class="language-plaintext highlighter-rouge">sh:closed</code>, <code class="language-plaintext highlighter-rouge">sh:maxCount</code>, <code class="language-plaintext highlighter-rouge">sh:qualifiedMaxCount</code>, <code class="language-plaintext highlighter-rouge">sh:lessThan</code>-family, <code class="language-plaintext highlighter-rouge">sh:sparql</code> — so that conformance, once established, cannot be lost by adding data. This is a cheap syntactic check over the shapes graph and it makes compile-time resolution sound. Otherwise refuse <code class="language-plaintext highlighter-rouge">dal:ShapeScope</code> for any dimension whose value affects the write path.</li>
+  <li><strong>PV-X1.</strong> An <strong>antichain and overlap check</strong> over all declared <code class="language-plaintext highlighter-rouge">dal:graphPrefix</code> and <code class="language-plaintext highlighter-rouge">dal:iriPrefix</code> values, with a counterexample IRI when it fails. Minutes of work; catches a class of configuration error that no current check sees.</li>
+</ul>
+
+<h3 id="63-dalequivalentclassscope-is-a-syntactic-approximation-called-reasoning">6.3 <code class="language-plaintext highlighter-rouge">dal:EquivalentClassScope</code> is a syntactic approximation called reasoning</h3>
+
+<p><strong>Finding (Moderate).</strong> The README describes this scope as matching “resources reachable through <code class="language-plaintext highlighter-rouge">owl:equivalentClass</code> and <code class="language-plaintext highlighter-rouge">owl:intersectionOf</code>”, and marks it as the one scope kind that “needs reasoning”. Those are different things. Syntactic reachability over two OWL constructs is neither sound nor complete for OWL entailment: it misses <code class="language-plaintext highlighter-rouge">owl:unionOf</code>, <code class="language-plaintext highlighter-rouge">rdfs:subClassOf</code> chains through restrictions, property-restriction equivalences and <code class="language-plaintext highlighter-rouge">owl:sameAs</code>; and it can over-reach, since <code class="language-plaintext highlighter-rouge">owl:intersectionOf</code> membership is a <em>subclass</em> relation in one direction only (a member of an intersection is a member of each conjunct; a member of each conjunct is a member of the intersection — the latter direction does hold for intersection, but reachability does not distinguish direction).</p>
+
+<p>Either:</p>
+
+<ul>
+  <li>define it syntactically, document it as a <em>syntactic</em> rule, and stop gating it on <code class="language-plaintext highlighter-rouge">dal:providesReasoning</code> (the rule needs no reasoner); or</li>
+  <li>define the entailment regime (RDFS? OWL 2 RL? OWL 2 DL?), pin it, and check two independent reasoners agree on a corpus (T1 differential).</li>
+</ul>
+
+<p>Formally, option 1 is strictly better for this layer: a syntactic rule is a decidable, implementable, provable function; an entailment regime drags in the reasoner as a trusted input and makes resolution depend on a reasoner’s version. The README elsewhere avoids exactly this dependency deliberately (ADR-A78 point 4, refusing <code class="language-plaintext highlighter-rouge">rdfs:subPropertyOf dal:isCompositeOf</code> to avoid leaking entailments).</p>
+
+<h3 id="64-per-dimension-independence-is-the-main-source-of-incoherent-profiles">6.4 Per-dimension independence is the main source of incoherent profiles</h3>
+
+<p>Resolution is per dimension, and <code class="language-plaintext highlighter-rouge">dal:DataAccessProfile</code> is sugar that decomposes. That is a clean design, and it has one consequence worth stating formally: <strong>the resolved profile is a product of independent choices, so the only thing standing between the adopter and an incoherent combination is the cross-axis table.</strong> The completeness of that table is therefore a correctness property of the layer, not a convenience. §7 treats it.</p>
+
+<p>A concrete instance the current table seems to miss (question, not assertion): <code class="language-plaintext highlighter-rouge">dal:lagWindowMillis</code> resolved from one profile node while <code class="language-plaintext highlighter-rouge">dal:globalReadStrategy</code> resolves to <code class="language-plaintext highlighter-rouge">dal:NoGlobalRead</code> from another. The table refuses the converse (lag-window read with no lag) but a dead parameter is a silent misconfiguration and the adopter believes they have a lag window. The general shape — <strong>parameter resolved, owning strategy not selected</strong> — applies to <code class="language-plaintext highlighter-rouge">dal:metaShards</code>/<code class="language-plaintext highlighter-rouge">txnShards</code>/<code class="language-plaintext highlighter-rouge">logShards</code>/<code class="language-plaintext highlighter-rouge">keyShards</code>, <code class="language-plaintext highlighter-rouge">dal:maxTraversalDepth</code> with a non-composite boundary, <code class="language-plaintext highlighter-rouge">dal:valueGuardProperty</code> with a named-graph boundary, <code class="language-plaintext highlighter-rouge">dal:opSeqRequired</code> with commit grain (this one <em>is</em> refused), <code class="language-plaintext highlighter-rouge">dal:priorMetaShards</code> without a change, <code class="language-plaintext highlighter-rouge">dal:asOfFloorSource</code> with <code class="language-plaintext highlighter-rouge">dal:PrefixOnlyRetention</code> and no as-of consumer, <code class="language-plaintext highlighter-rouge">dal:perSubjectScoped</code> with <code class="language-plaintext highlighter-rouge">dal:ReceiptOnly</code>, <code class="language-plaintext highlighter-rouge">dal:mergeRelation</code> without <code class="language-plaintext highlighter-rouge">dal:Merge</code>, <code class="language-plaintext highlighter-rouge">dal:claimsConstraint</code> on a non-claimed strategy, <code class="language-plaintext highlighter-rouge">dal:epochCoordinatorBinding</code> with <code class="language-plaintext highlighter-rouge">dal:StoreLocalEpoch</code>, <code class="language-plaintext highlighter-rouge">dal:erasureRegisterBinding</code> with <code class="language-plaintext highlighter-rouge">dal:NoErasure</code>. Each is a one-line rule; the point is that <strong>the list should be derived from the dimension registry, not hand-written</strong> (§13.2): for every parameter, declare which strategy values it belongs to, and generate both the refusal and the dead-parameter warning.</p>
+
+<hr />
+
+<h2 id="7-validation-make-it-exhaustive-because-it-can-be">7. Validation: make it exhaustive, because it can be</h2>
+
+<h3 id="71-the-key-observation">7.1 The key observation</h3>
+
+<p>The cross-axis validation predicate is <strong>propositional over finite domains</strong>. Every dimension has a small enumerated value set; the refusals and warnings are conjunctions and disjunctions of equalities over those sets, plus a handful of integer comparisons (shard counts, depth, lag) and one list-membership condition (key property inside the boundary closure). That means it can be encoded as a BDD or an SMT formula over finite sorts and <strong>checked universally</strong>, not sampled.</p>
+
+<p>This is the same point the SQL review makes about universally quantified laws, but here the quantification domain is genuinely finite and small enough that there is no excuse for example-based checking.</p>
+
+<h3 id="72-the-size-of-the-space-and-why-bdds-are-the-right-tool">7.2 The size of the space, and why BDDs are the right tool</h3>
+
+<p>Rough product over the dimensions in the README’s table (including “none” where absence is meaningful):</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>boundary 3 × firstWrite 2 × concurrency 4 × deadlock 3 × etagForm 2 × etagRep 2
+× grain 2 × datasetTier 4 × globalRead 5 × contiguity 2 × receipt 3 × retention 2
+× metaTopology 2 × epochAuthority 5 × epochGuard 2 × privacyClass 4
+× erasureStrategy 4 × erasurePrecedence 3
+≈ 1.3 × 10⁸
+</code></pre></div></div>
+
+<p>times the multiplicities for uniqueness constraints (0..n) and identity roles (8 roles × 7 strategies). Too large to enumerate, trivial for a BDD (≈60 boolean variables after one-hot or binary encoding, with the one-hot consistency constraints added).</p>
+
+<h3 id="73-the-properties-to-check-exhaustively-t3">7.3 The properties to check exhaustively (T3)</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Property</th>
+      <th>What a counterexample means</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>V1</td>
+      <td><strong>Classification totality</strong>: every combination is exactly one of refused, warned, or accepted-clean</td>
+      <td>an unclassified combination is a silent acceptance of something nobody considered</td>
+    </tr>
+    <tr>
+      <td>V2</td>
+      <td><strong>No combination is both refused and accepted</strong> by the two implementations (shapes vs compiler)</td>
+      <td>the drift in finding #3, found universally instead of by example</td>
+    </tr>
+    <tr>
+      <td>V3</td>
+      <td><strong>Shape-checkable refusals ⊆ compiler refusals</strong>, with the difference explained and enumerated</td>
+      <td>the README asserts this containment; prove it, and <em>list</em> the difference automatically so the asymmetry is reviewable</td>
+    </tr>
+    <tr>
+      <td>V4</td>
+      <td><strong>Every accepted combination has a guarantee assignment</strong> <code class="language-plaintext highlighter-rouge">Guarantee(s, C)</code> defined for every <em>C</em></td>
+      <td>an accepted profile with no guarantee statement is a profile whose safety nobody has considered</td>
+    </tr>
+    <tr>
+      <td>V5</td>
+      <td><strong>Refusal monotonicity</strong>: weakening any single dimension to its baseline never turns a refusal into an acceptance <em>unless</em> the baseline is itself the safe value</td>
+      <td>catches rules written against the wrong polarity</td>
+    </tr>
+    <tr>
+      <td>V6</td>
+      <td><strong>Operation-set totality and disjointness</strong> (L5): every accepted combination maps to exactly one operation set</td>
+      <td>the selection table in §9 of the README is a lookup; prove it is a function and that its domain is all accepted combinations. The <code class="language-plaintext highlighter-rouge">dal:AppendOnly</code> row (“or event grain with any concurrency other than <code class="language-plaintext highlighter-rouge">dal:Optimistic</code>”) overlaps the <code class="language-plaintext highlighter-rouge">dal:ProvidedConcurrency</code> row (“with commit grain”) only if grain is read correctly — exactly the kind of overlap to check mechanically</td>
+    </tr>
+    <tr>
+      <td>V7</td>
+      <td><strong>Every value of every dimension is reachable</strong> in some accepted combination</td>
+      <td>an unreachable value is dead vocabulary, or a rule is too strong</td>
+    </tr>
+    <tr>
+      <td>V8</td>
+      <td><strong>Every refusal rule is necessary</strong>: removing it admits a combination no other rule refuses</td>
+      <td>a redundant rule is harmless; a rule that is <em>entirely</em> subsumed may indicate a mis-stated condition</td>
+    </tr>
+    <tr>
+      <td>V9</td>
+      <td><strong>Every refusal rule is non-vacuous</strong>: some combination triggers it</td>
+      <td>the vacuity class (D.3 A6). A refusal that can never fire is a false sense of coverage</td>
+    </tr>
+    <tr>
+      <td>V10</td>
+      <td><strong>Warning coverage</strong>: every combination that forfeits a guarantee is at least warned</td>
+      <td>the known-unsafe baselines (finding #5) make this the most important one</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>V10 deserves its own treatment.</strong> Three baselines are known-unsafe-by-default: <code class="language-plaintext highlighter-rouge">dal:RowLevelGuardOnly</code> (epoch guard), <code class="language-plaintext highlighter-rouge">dal:AbsentRow</code> (create race on MVCC), <code class="language-plaintext highlighter-rouge">dal:ProvidedConcurrency</code> (unconditional write). The guide is explicit about each. But a warning is not a gate, and nothing associates a warning with the specific safety property it forfeits. Make that association data:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>warning  dal:RowLevelGuardOnlyWarningShape
+  forfeits  L14 (epoch safety)
+  witness   trace: stale client matches an unrebased row after a bump
+  gated-by  dal:epochGuardAcknowledged true     (proposed)
+</code></pre></div></div>
+
+<p><strong>Recommendation (PV-D5).</strong> Every warning names the law it forfeits and the counterexample trace that demonstrates it, and acknowledging a warning is an explicit property in the configuration (as <code class="language-plaintext highlighter-rouge">dal:epochBumpAcknowledged</code> and <code class="language-plaintext highlighter-rouge">dal:acknowledgedSharedClassOverride</code> already are for two cases). Then the compiled profile records, per target, exactly which laws hold — and that list, not prose, is what a consumer reads.</p>
+
+<h3 id="74-non-vacuity-and-witness-obligations-generally">7.4 Non-vacuity and witness obligations, generally</h3>
+
+<p>The single cheapest technique in this whole document, and the one that would have caught D.3 A6 and D.1’s <code class="language-plaintext highlighter-rouge">sh:prefixes</code> defect in seconds:</p>
+
+<blockquote>
+  <p><strong>For every constraint, refusal, warning, shape and audit query, produce a witness: a minimal input that triggers it, generated and checked in CI.</strong></p>
+</blockquote>
+
+<p>Applied to:</p>
+
+<ul>
+  <li>each SHACL shape in <code class="language-plaintext highlighter-rouge">shapes/constraints.ttl</code> and <code class="language-plaintext highlighter-rouge">shapes/persistent-foundation.ttl</code> → a violating fixture that it reports, plus a conforming fixture it accepts;</li>
+  <li>each refusal and warning in the compiler → a configuration fixture (the README already has many of these in <code class="language-plaintext highlighter-rouge">examples/</code>; the obligation is that <strong>every</strong> rule has one, checked by coverage, not by author diligence);</li>
+  <li>each shape in the guide’s Appendix B → a store-state fixture that violates it;</li>
+  <li>each audit query (S3 gap scan, F5 fork, the two §24.2 receipt-side audits, the four generated audits, the key-claim duplicate/merge/quarantine reconcilers) → a store state in which it returns a row;</li>
+  <li>each <code class="language-plaintext highlighter-rouge">sh:sparql</code> constraint → a check that its <code class="language-plaintext highlighter-rouge">sh:prefixes</code> target carries <code class="language-plaintext highlighter-rouge">sh:declare</code> (D.1’s finding, as a static lint).</li>
+</ul>
+
+<p>This is T0, it is a few hundred lines of harness, and it converts “we have a constraint for that” into “we have a constraint that we have seen fire”.</p>
+
+<p><strong>Note the vacuity hazard specific to this layer.</strong> The README says “every target also gets the four audits”. For a <code class="language-plaintext highlighter-rouge">dal:NoBoundary</code> target there is no version row, so the gap-scan and fork audits are vacuously green. A vacuously green audit is worse than an absent one, because the operator reads it as evidence. Either refuse the combination, or label the audit’s applicability in the compiled profile so the monitor can report “not applicable” rather than “clean”.</p>
+
+<hr />
+
+<h2 id="8-templates-and-the-generated-sparql">8. Templates and the generated SPARQL</h2>
+
+<h3 id="81-the-static-checks-that-are-worth-having-and-why">8.1 The static checks that are worth having, and why</h3>
+
+<p>These are cheap, local, fully automatic, and each corresponds to a defect class in Appendix D or to a stated SPARQL fact. Run per compile.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Check</th>
+      <th>Grounding</th>
+      <th>Consequence of failure</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>S-1</td>
+      <td><strong>Every graph is explicitly named</strong> in every guard and every template quad; no reliance on the default graph; no <code class="language-plaintext highlighter-rouge">WITH</code>/<code class="language-plaintext highlighter-rouge">USING</code></td>
+      <td>union-default-graph stores (fact)</td>
+      <td>a guard that reads every graph in the dataset</td>
+    </tr>
+    <tr>
+      <td>S-2</td>
+      <td><strong>No unbound <code class="language-plaintext highlighter-rouge">GRAPH ?g</code></strong> in any audit, resume or confirmation query; bucket sets come from the registry as <code class="language-plaintext highlighter-rouge">VALUES</code></td>
+      <td>F6, D.1</td>
+      <td>full-dataset scan; prefix-matching unrelated graphs</td>
+    </tr>
+    <tr>
+      <td>S-3</td>
+      <td><strong>Every variable in an INSERT template is bound in every solution</strong>, or is on an explicit allow-list of deliberately-optional positions (<code class="language-plaintext highlighter-rouge">pat:prevRev</code> only)</td>
+      <td>SPARQL Update skips a template triple whose variables are unbound in that solution (fact)</td>
+      <td>a silently missing triple. If <code class="language-plaintext highlighter-rouge">?digest</code> were ever unbound, the claim lands with no digest and the confirmation reports <code class="language-plaintext highlighter-rouge">Applied</code> for a different request — i.e. defect A5 reintroduced <em>silently</em></td>
+    </tr>
+    <tr>
+      <td>S-4</td>
+      <td><strong>No blank nodes in any INSERT template</strong></td>
+      <td>blank nodes in an INSERT template are fresh per solution per execution (fact); blank nodes are illegal in DELETE templates (fact)</td>
+      <td>a retry is <strong>not</strong> a no-op: it inserts a second set of fresh blank nodes. This interacts directly with the idempotency design and with the README’s own note that compiled profiles have unstable blank-node labels</td>
+    </tr>
+    <tr>
+      <td>S-5</td>
+      <td><strong>Guard functionality</strong>: the guard sub-pattern yields at most one solution for ground subject and predicate, given the <code class="language-plaintext highlighter-rouge">sh:maxCount 1</code> invariants; any non-ground template value must not vary per solution</td>
+      <td>F7, F11</td>
+      <td>duplicated receipts, multi-valued version rows</td>
+    </tr>
+    <tr>
+      <td>S-6</td>
+      <td><strong><code class="language-plaintext highlighter-rouge">NOW()</code> only on audit-only lines</strong>, never in a <code class="language-plaintext highlighter-rouge">FILTER</code>, <code class="language-plaintext highlighter-rouge">ORDER BY</code>, IRI construction or digest input</td>
+      <td>§23.4 policy</td>
+      <td>non-determinism; a guard that depends on server clock</td>
+    </tr>
+    <tr>
+      <td>S-7</td>
+      <td><strong>Datatype pinning</strong>: every <code class="language-plaintext highlighter-rouge">seq</code>, <code class="language-plaintext highlighter-rouge">epoch</code>, <code class="language-plaintext highlighter-rouge">fence</code>, <code class="language-plaintext highlighter-rouge">opSeq</code>, counter literal is <code class="language-plaintext highlighter-rouge">xsd:long</code>, in both templates and guards; arithmetic re-typed portably (<code class="language-plaintext highlighter-rouge">STRDT(STR(?n+1), xsd:long)</code>)</td>
+      <td>numeric promotion returns <code class="language-plaintext highlighter-rouge">xsd:integer</code>; BGP matching is term-based (fact)</td>
+      <td>a guard that cannot match; a shape that rejects a value a <code class="language-plaintext highlighter-rouge">FILTER</code> accepted (§8.2)</td>
+    </tr>
+    <tr>
+      <td>S-8</td>
+      <td><strong>Well-designed pattern check</strong>: no variable bound only inside an <code class="language-plaintext highlighter-rouge">OPTIONAL</code> is used outside that <code class="language-plaintext highlighter-rouge">OPTIONAL</code> within the same group graph pattern</td>
+      <td>well-designedness (Pérez/Arenas/Gutierrez; Angles &amp; Gutierrez) <strong><em>(verify exact formulation)</em></strong></td>
+      <td>non-monotone <code class="language-plaintext highlighter-rouge">OPTIONAL</code> semantics, evaluation-order dependence across engines</td>
+    </tr>
+    <tr>
+      <td>S-9</td>
+      <td><strong><code class="language-plaintext highlighter-rouge">FILTER NOT EXISTS</code> vs <code class="language-plaintext highlighter-rouge">MINUS</code> discipline</strong>: use <code class="language-plaintext highlighter-rouge">NOT EXISTS</code> where the inner pattern shares variables; never substitute <code class="language-plaintext highlighter-rouge">MINUS</code></td>
+      <td>the two differ when the patterns share no variables, and <code class="language-plaintext highlighter-rouge">MINUS</code> on disjoint variables removes nothing (fact)</td>
+      <td>a guard that removes nothing</td>
+    </tr>
+    <tr>
+      <td>S-10</td>
+      <td><strong>Delete/insert overlap</strong>: no triple appears in both templates under the same bindings unless deliberate (SPARQL deletes before inserting, so an overlapping triple survives)</td>
+      <td>fact</td>
+      <td>a “rewrite” that is a no-op; a tombstone that is immediately re-asserted</td>
+    </tr>
+    <tr>
+      <td>S-11</td>
+      <td><strong>Property paths appear only in <code class="language-plaintext highlighter-rouge">WHERE</code></strong>, never in a template</td>
+      <td>fact; the README states it for the composite boundary</td>
+      <td>parse failure</td>
+    </tr>
+    <tr>
+      <td>S-12</td>
+      <td><strong>Zero-padding and width</strong>: any position embedded in an IRI is padded to the declared width, consistently, in templates and client code</td>
+      <td>B13, §10.2</td>
+      <td>lexicographic order ≠ numeric order; two widths = two schemes</td>
+    </tr>
+    <tr>
+      <td>S-13</td>
+      <td><strong>Request-size and operation-count budget</strong> against <code class="language-plaintext highlighter-rouge">maxRequestBytes</code> for the biggest realistic payload and closure</td>
+      <td>capability flag</td>
+      <td>runtime failure under load only</td>
+    </tr>
+    <tr>
+      <td>S-14</td>
+      <td><strong>Multi-operation requests</strong>: if any generated <code class="language-plaintext highlighter-rouge">.rq</code> contains <code class="language-plaintext highlighter-rouge">;</code>-separated operations, record that intermediate states are visible to later operations and that atomicity is per <em>request</em> (SHOULD, not MUST)</td>
+      <td>SPARQL 1.1 Update (fact)</td>
+      <td>a “single guarded write” that is two writes on a store that does not honour the SHOULD</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Judgement.</strong> S-3 and S-4 are the two I would implement first. Both are unconditionally checkable from the template text plus the parameter binding list, both have severe and silent consequences, and S-4 in particular is the kind of thing that works in every test (where a retry is rare) and fails in production (where it is not).</p>
+
+<h3 id="82-a-term-equality-versus-value-equality-divergence-worth-naming">8.2 A term-equality versus value-equality divergence worth naming</h3>
+
+<p><strong>Finding (Moderate).</strong> The guide’s fencing-token guard is</p>
+
+<div class="language-sparql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:g:meta/17&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nn">&lt;urn:g:orders/1&gt;</span><span class="w"> </span><span class="nn">pat</span><span class="o">:</span><span class="ss">fence</span><span class="w"> </span><span class="nv">?f</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span><span class="k">FILTER</span><span class="p">(</span><span class="nv">?f</span><span class="w"> </span><span class="o">&lt;</span><span class="p">=</span><span class="w"> </span><span class="s2">"7184"</span><span class="o">^^</span><span class="nn">xsd</span><span class="o">:</span><span class="ss">long</span><span class="p">)</span><span class="w">
+</span></code></pre></div></div>
+
+<p>The BGP binds <code class="language-plaintext highlighter-rouge">?f</code> to whatever term is stored; the <code class="language-plaintext highlighter-rouge">FILTER</code> compares by <strong>value</strong>, so an <code class="language-plaintext highlighter-rouge">xsd:integer</code> fence satisfies the comparison. But <code class="language-plaintext highlighter-rouge">pat:VersionRowShape</code> pins <code class="language-plaintext highlighter-rouge">sh:datatype xsd:long</code>, so the same store state is a shape violation. And the <code class="language-plaintext highlighter-rouge">DELETE { ... pat:fence ?f }</code> removes the exact term, so the rewrite is correct. Net effect: a datatype-drifted fence is <em>accepted by the guard</em>, <em>rejected by the shape</em>, and <em>silently normalised by the write</em>. The same divergence applies anywhere a guard uses <code class="language-plaintext highlighter-rouge">FILTER</code> on a numeric (the fence, the keyset-pagination predicates, the gap scan’s arithmetic) rather than a ground BGP term (the <code class="language-plaintext highlighter-rouge">seq</code> guard).</p>
+
+<p>This is exactly the kind of property the SQL review’s “typed IR” recommendation addresses, transposed: <strong>give the IR distinct types for <em>term-matched</em> and <em>value-compared</em> positions</strong>, and refuse to emit a value comparison on a position whose invariant is term-based, or vice versa. A few hundred lines; removes the class rather than testing for it.</p>
+
+<h3 id="83-template-parameter-substitution-l7">8.3 Template parameter substitution (L7)</h3>
+
+<p>The emitter is the one program component where verification is proportionate, because the consequence of a bug is injection (QP1) or a structurally different query.</p>
+
+<p>Properties:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Property</th>
+      <th>Technique</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>E1</td>
+      <td><code class="language-plaintext highlighter-rouge">parse(render(t, σ)) = subst(parse(t), σ)</code> for every template and every well-typed σ</td>
+      <td>property-based over generated σ including adversarial strings; differential against a second renderer</td>
+    </tr>
+    <tr>
+      <td>E2</td>
+      <td>No σ can change the parse tree’s shape: for all adversarial σ, <code class="language-plaintext highlighter-rouge">render</code> either produces a query whose algebra differs from <code class="language-plaintext highlighter-rouge">subst</code> only in leaf terms, or refuses</td>
+      <td>fuzzing with an injection corpus (the guide’s L8 suite) plus a parse-tree-shape comparison, which is a much stronger oracle than “no exception”</td>
+    </tr>
+    <tr>
+      <td>E3</td>
+      <td>Typed rendering: <code class="language-plaintext highlighter-rouge">IRI</code> → absolute-IRI-escaped or refusal; <code class="language-plaintext highlighter-rouge">Long(n)</code> → <code class="language-plaintext highlighter-rouge">"n"^^xsd:long</code>; strings escaped per Turtle/SPARQL rules; language tags well-formed</td>
+      <td>SMT strings / automata on the escaping function; exhaustive over escape classes</td>
+    </tr>
+    <tr>
+      <td>E4</td>
+      <td>Determinism and idempotence: <code class="language-plaintext highlighter-rouge">render(t, σ)</code> is byte-identical across runs and machines</td>
+      <td>permutation/repeat test (QP4)</td>
+    </tr>
+    <tr>
+      <td>E5</td>
+      <td>Parameter completeness: every variable in <code class="language-plaintext highlighter-rouge">t</code> is either in σ’s domain or on the deliberately-optional list (S-3)</td>
+      <td>static, per compile</td>
+    </tr>
+    <tr>
+      <td>E6</td>
+      <td>Round trip on the compiled profile: <code class="language-plaintext highlighter-rouge">instantiate(emit(resolve(cfg)))</code> is a function of <code class="language-plaintext highlighter-rouge">cfg</code> alone</td>
+      <td>metamorphic</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Finding (Moderate, #10 and related).</strong> <code class="language-plaintext highlighter-rouge">Version.parse_etag</code> splits on <code class="language-plaintext highlighter-rouge">-</code> and integer-parses both halves. <code class="language-plaintext highlighter-rouge">dal:TaggedRepresentation</code> offers <code class="language-plaintext highlighter-rouge">"3-41.ttl"</code>. Also an unpadded <code class="language-plaintext highlighter-rouge">"10-3"</code> versus <code class="language-plaintext highlighter-rouge">"3-41"</code> sorts wrongly if an ETag is ever used as a sort key or a cache key, against the fixed-width discipline used everywhere else. The ETag grammar should be a declared regular language with a generated parser and a generated printer, and a proof (automata) that printer ⊆ grammar and parser ∘ printer = identity, for both representation modes. Ten lines of specification; removes a whole class of adapter bug.</p>
+
+<h3 id="84-the-composite-boundary-two-findings">8.4 The composite boundary: two findings</h3>
+
+<p><strong>Finding (Major, #9, part).</strong> “A composite boundary currently binds only the first property its shape reaches.” If the closure is swept and rewritten but only one property is bound, then members reached by the other properties are <strong>not deleted</strong>, which leaves precisely the dangling triple that whole-replace exists to prevent (the guide’s own motivating example: three line items down to two). This is not a limitation, it is unsoundness of the aggregate-replace contract for every composite-boundary family. It should be a refusal until implemented, not a known limitation.</p>
+
+<p><strong>Finding (Major, new).</strong> There are two closures and they can differ:</p>
+
+<ul>
+  <li>the <strong>compile-time</strong> closure, computed by walking <code class="language-plaintext highlighter-rouge">sh:property</code>/<code class="language-plaintext highlighter-rouge">sh:node</code> offline, with a cycle check and <code class="language-plaintext highlighter-rouge">dal:maxTraversalDepth</code>;</li>
+  <li>the <strong>runtime</strong> closure, bound in the generated <code class="language-plaintext highlighter-rouge">WHERE</code> by a SPARQL property path.</li>
+</ul>
+
+<p>SPARQL 1.1 has <code class="language-plaintext highlighter-rouge">*</code>, <code class="language-plaintext highlighter-rouge">+</code>, <code class="language-plaintext highlighter-rouge">?</code> but <strong>no bounded repetition <code class="language-plaintext highlighter-rouge">{n,m}</code></strong> (fact — it was removed from the specification before Recommendation). So a depth-bounded closure cannot be expressed as a property path. Therefore either the generated path is unbounded (and the runtime sweep can reach deeper than <code class="language-plaintext highlighter-rouge">dal:maxTraversalDepth</code>, including around cycles the compile-time walk refused), or the path is an explicit fixed-length alternation enumerated to depth <em>n</em> (and the query grows with depth, and the declared depth becomes part of the query text, so changing it is a recompile). Which it is, is a question for the compiler; either way the <em>equality of the two closures</em> is a property to state and check, by automata over the property alternation and by Alloy over small instance graphs.</p>
+
+<p><strong>Finding (Major, new).</strong> <strong>Composite closures are not guaranteed disjoint across roots.</strong> Nothing in the shape-based definition prevents a node from being reachable from two roots. Two aggregates then overlap; each root’s replace sweeps the shared node; their version rows are different, so the two writers do <strong>not</strong> collide; and the last writer wins on the shared triples while both receipts claim success. For <code class="language-plaintext highlighter-rouge">dal:NamedGraphBoundary</code> disjointness is structural (one graph per aggregate). For <code class="language-plaintext highlighter-rouge">dal:CompositePropertyBoundary</code> it is an unstated precondition.</p>
+
+<p>This is the single best Alloy target in the layer:</p>
+
+<pre><code class="language-alloy">pred overlap { some r1, r2: Root, n: Node |
+  r1 != r2 and n in closure[r1] and n in closure[r2] }
+assert ClosuresDisjoint { not overlap }
+check ClosuresDisjoint for 5
+</code></pre>
+
+<p>Expect a counterexample in seconds for any shape with a shared-reference property. The remedy is a compile-time check: for each pair of root classes reachable from the shape set, prove that no node class is reachable from both, or require an inverse-functional/ownership annotation on every closure edge, or refuse.</p>
+
+<h3 id="85-guard-composition">8.5 Guard composition</h3>
+
+<p>The port accepts <code class="language-plaintext highlighter-rouge">guards: List&lt;GuardPattern&gt;</code> — business preconditions compiled into the same atomic guard. That is the right design and it is also an open hole: arbitrary caller-supplied patterns can</p>
+
+<ul>
+  <li>bind variables that collide with template variables (<code class="language-plaintext highlighter-rouge">?s ?p ?o</code>, <code class="language-plaintext highlighter-rouge">?n</code>, <code class="language-plaintext highlighter-rouge">?prevRev</code>, <code class="language-plaintext highlighter-rouge">?rev</code>) and silently change the templates’ cardinality or bindings;</li>
+  <li>introduce unbound-variable <code class="language-plaintext highlighter-rouge">OPTIONAL</code>s, breaking S-8;</li>
+  <li>make the guard non-functional, breaking S-5 and duplicating receipts;</li>
+  <li>read graphs outside the aggregate, which is the write-skew exposure the SQL review raises for SQL guards, in exactly the same form;</li>
+  <li>contain <code class="language-plaintext highlighter-rouge">NOW()</code>, <code class="language-plaintext highlighter-rouge">UUID()</code>, <code class="language-plaintext highlighter-rouge">RAND()</code>, or a property path with surprising cost.</li>
+</ul>
+
+<p><strong>Recommendation (PV-D6).</strong> Give <code class="language-plaintext highlighter-rouge">GuardPattern</code> a typed, restricted grammar: a conjunction of ground-subject BGP triples within the aggregate’s own graph (or a declared read set), plus <code class="language-plaintext highlighter-rouge">FILTER</code>s over bound variables with a whitelisted function set, with variables drawn from a reserved namespace that cannot collide with template variables. Then S-5 and S-8 are preserved by construction, and the read set becomes a declared input to the concurrency model (§10, model A), which is what makes the write-skew question answerable at all.</p>
+
+<hr />
+
+<h2 id="9-the-query-side-resume-audit-as-of-confirmation">9. The query side: resume, audit, as-of, confirmation</h2>
+
+<p>These are read queries, and their correctness is <em>detection</em> and <em>completeness</em> rather than state change. They have already produced four recorded defects (S6’s as-of, S3’s gap scan twice, F5’s fork query, S2’s <code class="language-plaintext highlighter-rouge">COALESCE</code>), which is the strongest signal in the corpus that this is where to point a checker.</p>
+
+<h3 id="91-what-to-prove-isabelle-small-and-high-value">9.1 What to prove (Isabelle, small and high value)</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Claim</th>
+      <th>Statement</th>
+      <th>Replaces</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Keyset predicate = lexicographic order</strong></td>
+      <td><code class="language-plaintext highlighter-rouge">(seq &gt; s) ∨ (seq = s ∧ opk &gt; o)</code> ⟺ <code class="language-plaintext highlighter-rouge">(seq, opk) &gt;lex (s, o)</code>, with <code class="language-plaintext highlighter-rouge">opk = COALESCE(op, 0)</code> and the side condition <code class="language-plaintext highlighter-rouge">op ≥ 1</code> where present</td>
+      <td>S2 correctness; the <code class="language-plaintext highlighter-rouge">COALESCE</code> trap; off-by-one on resume</td>
+    </tr>
+    <tr>
+      <td><strong>Page completeness</strong></td>
+      <td>with an ordered, bounded stream and a monotone cursor, iterating pages delivers every element exactly once</td>
+      <td>“exactly-once per position” (TCK O-7) proved rather than tested</td>
+    </tr>
+    <tr>
+      <td><strong>Gap-scan soundness and completeness</strong></td>
+      <td>given <code class="language-plaintext highlighter-rouge">L ≤ S+1</code>, all receipts for a target have <code class="language-plaintext highlighter-rouge">seq ≤ S</code>, and <code class="language-plaintext highlighter-rouge">pat:seq</code> is single-valued per receipt: <code class="language-plaintext highlighter-rouge">|{seq ∈ [L,S]}| = S − L + 1</code> ⟺ the retained prefix is contiguous and complete</td>
+      <td>D.1 and D.3 B7, settled permanently, <strong>with the side conditions made explicit</strong> — the valuable part, because the side conditions are the invariants the rest of the design must maintain</td>
+    </tr>
+    <tr>
+      <td><strong>Gap-scan detects prefix, suffix and total loss</strong></td>
+      <td>three negative lemmas with witnesses</td>
+      <td>the exact three cases the README now claims; each becomes a regression-proof</td>
+    </tr>
+    <tr>
+      <td><strong>Fork detection</strong></td>
+      <td>with deterministic revision IRIs, <code class="language-plaintext highlighter-rouge">two txn claims on one revision</code> ⟺ <code class="language-plaintext highlighter-rouge">two writers committed a CAS from one prior version</code>, under the stated isolation failure</td>
+      <td>D.3 A6; proves the audit is the <em>right</em> audit, not merely a non-vacuous one</td>
+    </tr>
+    <tr>
+      <td><strong>As-of correctness</strong></td>
+      <td>the triple-level as-of <code class="language-plaintext highlighter-rouge">CONSTRUCT</code> equals the fold of asserts/retracts up to the position, given no blank nodes in deltas and per-target scoping</td>
+      <td>D.1’s S6 correction; the proof’s side conditions are exactly “skolemise deltas” and “constrain <code class="language-plaintext highlighter-rouge">?r2</code> to the same target”, which is how you know the fix is complete</td>
+    </tr>
+    <tr>
+      <td><strong>Contiguity blind spot</strong></td>
+      <td>the per-target contiguity check cannot detect a skipped <em>last</em> write; the row-driven S3 check can</td>
+      <td>the README states this; prove it, so the compensating control is justified rather than asserted</td>
+    </tr>
+    <tr>
+      <td><strong>Position order is total</strong></td>
+      <td><code class="language-plaintext highlighter-rouge">(epoch, seq, opSeq)</code> lexicographic is a total order, and the zero-padded decimal string order agrees with it at the declared width</td>
+      <td>B13</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="92-what-to-check-with-alloy-bounded-structural">9.2 What to check with Alloy (bounded, structural)</h3>
+
+<p>Model the store state (§3.2) and encode each audit query as a relational expression. Then, for each invariant <em>I</em> and its audit <em>A</em>:</p>
+
+<pre><code class="language-alloy">assert DetectionComplete_I { all s: State | violates[s, I] implies some rows[A, s] }
+assert DetectionSound_I    { all s: State | some rows[A, s] implies violates[s, I] }
+check DetectionComplete_I for 6
+</code></pre>
+
+<p>The invariants to cover (L11):</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Invariant</th>
+      <th>Audit claiming to detect it</th>
+      <th>Expected result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>per-target receipt contiguity above the low-water mark</td>
+      <td>S3 gap scan</td>
+      <td>should hold after D.3; worth proving</td>
+    </tr>
+    <tr>
+      <td>no fork (one revision, two txns)</td>
+      <td>F5 query / <code class="language-plaintext highlighter-rouge">pat:TxnCardinalityShape</code> / receipt-side audit (1)</td>
+      <td>holds only with deterministic revision IRIs — make the dependency explicit</td>
+    </tr>
+    <tr>
+      <td>no duplicate application (one txn, two revisions)</td>
+      <td>receipt-side audit (2)</td>
+      <td>holds; depends on receipts outliving claims</td>
+    </tr>
+    <tr>
+      <td>at most one owner per key claim</td>
+      <td><code class="language-plaintext highlighter-rouge">pat:KeyClaimShape</code> + reconciler</td>
+      <td>holds</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">pat:head</code> resolves to a retained receipt</td>
+      <td><strong>no audit</strong></td>
+      <td><strong>gap</strong>: the pinned-head mechanism maintains it, but nothing checks it. A dangling <code class="language-plaintext highlighter-rouge">pat:head</code> breaks S4, the chain, and the next CAS’s <code class="language-plaintext highlighter-rouge">pat:prevRev</code>. Add an audit</td>
+    </tr>
+    <tr>
+      <td>version row single-valued (<code class="language-plaintext highlighter-rouge">seq</code>, <code class="language-plaintext highlighter-rouge">epoch</code>, <code class="language-plaintext highlighter-rouge">head</code>, <code class="language-plaintext highlighter-rouge">deleted</code>)</td>
+      <td><code class="language-plaintext highlighter-rouge">pat:VersionRowShape</code> (only where commit validation exists)</td>
+      <td><strong>gap</strong> on non-validating stores: add a standing audit, since F7’s failure mode is exactly multi-valued <code class="language-plaintext highlighter-rouge">seq</code></td>
+    </tr>
+    <tr>
+      <td>chain integrity (<code class="language-plaintext highlighter-rouge">prevRev</code> forms one path per target)</td>
+      <td>TCK T-4 only</td>
+      <td><strong>gap</strong>: no standing audit. The chain is the audit trail; it should be checked in production, not only under fuzz</td>
+    </tr>
+    <tr>
+      <td>every receipt’s target has a version row</td>
+      <td><strong>no audit</strong></td>
+      <td><strong>gap</strong>: catches bulk loads that wrote receipts without rows</td>
+    </tr>
+    <tr>
+      <td>every graph in the dataset is registry-listed or declared infrastructure</td>
+      <td><strong>no audit</strong></td>
+      <td><strong>gap</strong>: catches stray graphs from administrative <code class="language-plaintext highlighter-rouge">LOAD</code>, half-finished bulk cutovers, orphaned deltas/snapshots</td>
+    </tr>
+    <tr>
+      <td>no payload graph outside its family’s declared pattern</td>
+      <td><strong>no audit</strong></td>
+      <td><strong>gap</strong></td>
+    </tr>
+    <tr>
+      <td>tombstoned rows have empty payload</td>
+      <td><strong>no audit</strong></td>
+      <td><strong>gap</strong></td>
+    </tr>
+    <tr>
+      <td>delta/snapshot graphs referenced by a retained receipt exist, and vice versa</td>
+      <td><strong>no audit</strong></td>
+      <td><strong>gap</strong>: orphaned deltas are storage leaks; missing deltas break as-of silently</td>
+    </tr>
+    <tr>
+      <td>key claims reference existing owners</td>
+      <td>reconciler (partially)</td>
+      <td>partial</td>
+    </tr>
+    <tr>
+      <td>retention low-water mark ≥ all pruned seqs and ≤ S+1</td>
+      <td><strong>no audit</strong></td>
+      <td><strong>gap</strong>: a wrong mark makes S3 lie in either direction</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Judgement.</strong> Nine gaps in detection coverage, in a design whose own stated philosophy is “the reconciler is never the only strategy, and it is never absent” and whose threat model explicitly includes bulk loads, administrative <code class="language-plaintext highlighter-rouge">LOAD</code>s and restores that bypass every guard. The audits are the only control for that threat, and their coverage has never been enumerated. <strong>This is the most under-defended part of the layer, and it is also the cheapest to fix</strong>: each gap is a SPARQL query over infrastructure graphs, each is a metric, and the Alloy obligation above tells you when you have enough of them.</p>
+
+<h3 id="93-differential-query-checking-t1">9.3 Differential query checking (T1)</h3>
+
+<p>For the read queries, run them against two or three independent engines (Jena, RDF4J, Oxigraph) on generated store states, and compare. This catches engine-dependent semantics (<code class="language-plaintext highlighter-rouge">OPTIONAL</code> ordering, <code class="language-plaintext highlighter-rouge">NOT EXISTS</code> scoping, numeric promotion in <code class="language-plaintext highlighter-rouge">FILTER</code>, <code class="language-plaintext highlighter-rouge">ORDER BY</code> on mixed types, aggregation with unbound) that no single-engine test will see, and it is the empirical arm of S-8. Generated store states should include: empty payload, empty log, pruned prefix, pinned heads, epoch-crossing streams, tombstoned rows, recreated rows, multi-valued rows (damaged state, to check the audits fire), cycles in composite closures, and mixed datatypes.</p>
+
+<hr />
+
+<h2 id="10-protocol-models-the-centrepiece">10. Protocol models: the centrepiece</h2>
+
+<p>This is where the defects are, where tests are weakest, and where the guide’s own corrections cluster. It is also what the SQL review identifies as rung T4, never attempted.</p>
+
+<h3 id="101-modelling-discipline">10.1 Modelling discipline</h3>
+
+<ul>
+  <li><strong>Model the isolation <em>contract</em>, not the engine.</strong> Read and write sets, snapshots, commit points, conflict detection granularity. Three levels (READ COMMITTED with per-statement snapshots, SNAPSHOT with and without write–write detection, SERIALIZABLE), plus flags for statement-versus-graph conflict granularity and for atomic-request semantics. Published TLA+ specifications of snapshot isolation and SSI exist and can be adapted <strong><em>(verify current sources)</em></strong>.
+    <h3 id="101-modelling-discipline-continued">10.1 Modelling discipline <em>(continued)</em></h3>
+  </li>
+  <li><strong>Parametrise by the capability record</strong>, so one model yields the §4.2 matrix row for its pattern rather than a single yes/no. One <code class="language-plaintext highlighter-rouge">.cfg</code> per capability profile, one run per cell, one recorded verdict (plus counterexample) per cell. This is what makes the models pay for themselves: a single model of the guarded write, checked across eight capability profiles, replaces eight hand-written claims in Chapter 26 and keeps them honest when a store’s TCK result changes.</li>
+  <li><strong>Model the caller as a process, not an oracle.</strong> Every recorded defect in the B-series (B8 outcomes, B9 <code class="language-plaintext highlighter-rouge">clock.receive</code>, A5 digest, resend-identically, primary-only confirmation) lives in the caller. A model whose client always does the right thing proves nothing about the system as deployed. The client process should be able to misbehave in declared ways, so that each misbehaviour’s consequence is a recorded counterexample rather than a surprise.</li>
+  <li><strong>Model crashes and transport failures explicitly</strong>, at every point the guide identifies: after send and before commit, after commit and before response, after response and before confirmation, during confirmation, between the two steps of the retention job, between quiesce and epoch allocation.</li>
+  <li><strong>Model the out-of-band writers.</strong> Bulk load, administrative <code class="language-plaintext highlighter-rouge">LOAD</code>, restore, a rogue ETL. These are in the stated threat model and they are what the audits exist for. A model without them cannot evaluate L11.</li>
+  <li><strong>Keep each model small.</strong> A few hundred lines, one concern, named safety and liveness properties, and a recorded scope. Twelve small models beat one large one: the large one will not finish, and when it does you will not know which assumption carried the proof.</li>
+  <li><strong>State the scope in the claim.</strong> Bounded model checking at 2–3 writers, 2 aggregates, 2 epochs, 3 sequence values is enough for every defect in Appendix D. Record the bound; do not let a bounded pass be read as universal (the SQL review makes the same point about Alloy).</li>
+</ul>
+
+<h3 id="102-the-models">10.2 The models</h3>
+
+<p>Fourteen models. Each lists the system, the properties (S = safety, L = liveness), and what I expect it to find. The “expected finding” column is a prediction and therefore falsifiable — which is the point: a model that finds nothing it was expected to find is evidence that either the design is sound or the model is wrong, and the grounding step (§14.3) distinguishes those.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Model</th>
+      <th>System modelled</th>
+      <th>Properties</th>
+      <th>Expected finding</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>A</strong></td>
+      <td><strong>Guarded CAS (the core)</strong></td>
+      <td>§19.1 write: dataset epoch guard, row epoch read-and-rebase, <code class="language-plaintext highlighter-rouge">seq</code> CAS, tombstone guard, txn-claim <code class="language-plaintext highlighter-rouge">NOT EXISTS</code>, <code class="language-plaintext highlighter-rouge">OPTIONAL</code> head, payload sweep, receipt insert; client computes positions and digest; confirmation on primary; retry rules</td>
+      <td>S: at most one receipt per <code class="language-plaintext highlighter-rouge">(target, epoch, seq)</code>. S: a committed write’s guard held at its commit point. S: <code class="language-plaintext highlighter-rouge">pat:head</code> always names a receipt that exists. S: <code class="language-plaintext highlighter-rouge">prevRev</code> forms one unbroken path per target. S: <code class="language-plaintext highlighter-rouge">seq</code> dense from 1 per target. L: a client that keeps retrying eventually applies or learns a definite outcome</td>
+      <td>With <code class="language-plaintext highlighter-rouge">detectsWriteWriteConflict = false</code> and <code class="language-plaintext highlighter-rouge">maxIsolation = SNAPSHOT</code>: two writers both commit, producing the <em>same</em> revision subject with two <code class="language-plaintext highlighter-rouge">pat:txn</code> values — reproducing D.3 A6’s corrected analysis as a trace, which is exactly the evidence that <code class="language-plaintext highlighter-rouge">pat:TxnCardinalityShape</code> is the right audit. With caller misbehaviour “re-issue the same delete/insert set on <code class="language-plaintext highlighter-rouge">PreconditionFailed</code>”: a lost domain decision</td>
+    </tr>
+    <tr>
+      <td><strong>B</strong></td>
+      <td><strong>Append form</strong></td>
+      <td>§10.1: server-side <code class="language-plaintext highlighter-rouge">?n+1</code> on the shared statement, <code class="language-plaintext highlighter-rouge">VALUES</code>-supplied <code class="language-plaintext highlighter-rouge">opSeq</code>, dataset guard, row rebase, txn guard, head/chain maintenance</td>
+      <td>S: allocation order = commit order. S: no <code class="language-plaintext highlighter-rouge">seq</code> consumed by an aborted transaction. S: <code class="language-plaintext highlighter-rouge">opSeq</code> distinct within a revision. S: no duplicate application while the claim is retained. L: no stall</td>
+      <td>With pre-allocation (modelling <code class="language-plaintext highlighter-rouge">nativeSequence</code> instead of the in-transaction counter): the G2/A2 reader-skip trace. With claim TTL &lt; retry horizon: the A4 double-append. <strong>Both are regression proofs for corrections already made</strong></td>
+    </tr>
+    <tr>
+      <td><strong>C</strong></td>
+      <td><strong>First write and the create race</strong></td>
+      <td><code class="language-plaintext highlighter-rouge">dal:AbsentRow</code> create-if-absent vs <code class="language-plaintext highlighter-rouge">dal:PreCreatedRow</code> bootstrap; concurrent creators; both under each isolation level</td>
+      <td>S: exactly one creator wins. S: no payload lands without a row. S: no row at <code class="language-plaintext highlighter-rouge">seq 0</code> is mistaken for a written aggregate</td>
+      <td><code class="language-plaintext highlighter-rouge">dal:AbsentRow</code> + SNAPSHOT without write–write detection: two creators both commit (P2 write skew), two payloads merged into one graph, two receipts at <code class="language-plaintext highlighter-rouge">seq 1</code> with the <strong>same</strong> revision IRI. Since <code class="language-plaintext highlighter-rouge">dal:AbsentRow</code> is the <strong>baseline</strong>, this is a default-unsafe configuration (finding #5) and the model turns it into a trace</td>
+    </tr>
+    <tr>
+      <td><strong>D</strong></td>
+      <td><strong>Key claim (P1/P2/P3)</strong></td>
+      <td>claim guard, <code class="language-plaintext highlighter-rouge">claimedBy</code> cardinality, retire, rotation (<code class="language-plaintext highlighter-rouge">dal:Dual</code> two-version write), P3 sentinel counter with sharding, external allocator (P6)</td>
+      <td>S: at most one owner per claim, per scheme version. S: rotation opens no window where a key is claimed under neither version. S: a retire is only by the owner. S: ownership monotonicity (the premise of the race-free post-<code class="language-plaintext highlighter-rouge">ASK</code>)</td>
+      <td>Write skew without P3/serialisable. <strong>Rotation under concurrent retire</strong>: during <code class="language-plaintext highlighter-rouge">dal:Dual</code>, if a retire removes only one version’s claim, the key is half-claimed — I would check this specifically, because the rotation state machine is four states and the write is “guards and inserts both versions in one update”, but the <em>retire</em> path’s dual behaviour is not described. Also: erasure under <code class="language-plaintext highlighter-rouge">dal:ErasureWins</code> physically deletes a claim, which <strong>breaks ownership monotonicity</strong>, so the post-<code class="language-plaintext highlighter-rouge">ASK</code> can now produce a false negative for a concurrent legitimate owner. The guide acknowledges the monotonicity break; the model shows its consequence for the confirmation procedure</td>
+    </tr>
+    <tr>
+      <td><strong>E</strong></td>
+      <td><strong>Outcome classification</strong></td>
+      <td>the §15.2 decision procedure: claim present/absent × digest equal/differs × epoch same/changed × tombstoned/not, plus replica reads, plus a request still in flight</td>
+      <td>S: totality (every history yields a verdict). S: disjointness. S: soundness — <code class="language-plaintext highlighter-rouge">Applied</code> ⟹ exactly one application of <em>this</em> request; <code class="language-plaintext highlighter-rouge">PreconditionFailed</code> ⟹ no application; <code class="language-plaintext highlighter-rouge">IdempotencyKeyReuse</code> ⟹ a different request used the id. L: <code class="language-plaintext highlighter-rouge">Unknown</code> is resolvable by the stated procedure</td>
+      <td>Confirmation on a replica returning <code class="language-plaintext highlighter-rouge">absent</code> for an applied write (B-series, already corrected — keep as a regression proof). A confirmation taken while the original is still executing: the guide says it is not definitive; the model should show the resend-then-confirm procedure <em>is</em> definitive, and that is a liveness property depending on the server’s maximum request duration being enforced. <strong>If the digest is unspecified (§12 finding #7), <code class="language-plaintext highlighter-rouge">IdempotencyKeyReuse</code> can fire spuriously; the model exposes that as a violation of soundness of the <code class="language-plaintext highlighter-rouge">Applied</code> verdict’s complement</strong></td>
+    </tr>
+    <tr>
+      <td><strong>F</strong></td>
+      <td><strong>Epoch bump and restore</strong></td>
+      <td>quiesce, allocation from each of the four authorities, dataset-node write, row rebase on next write, stale-ETag rejection, consumer resync, double restore of one backup, <code class="language-plaintext highlighter-rouge">dal:RowLevelGuardOnly</code> vs <code class="language-plaintext highlighter-rouge">dal:DatasetLevelGuard</code></td>
+      <td>S: no position minted under epoch <em>e</em> is accepted as epoch <em>e′</em>. S: no revision IRI reused. S: a double restore never reuses an epoch. S: no row is permanently wedged (the A1 liveness property). L: every row eventually rebases</td>
+      <td><code class="language-plaintext highlighter-rouge">dal:StoreLocalEpoch</code> + double restore: epoch reuse (warned today). <code class="language-plaintext highlighter-rouge">dal:RowLevelGuardOnly</code>: stale client matches an unrebased row — the warned baseline, as a trace. Insufficient quiesce (&lt; max transaction duration): a pre-bump CAS commits post-bump. <strong>A1 as a regression proof</strong>: guard on both epochs ⟹ no write can ever apply</td>
+    </tr>
+    <tr>
+      <td><strong>G</strong></td>
+      <td><strong>Retention and pruning</strong></td>
+      <td>bucket rotation, registry update, low-water-mark advance, pinned-head copy, drop, reader enumerating buckets, as-of floor, claim TTL prune</td>
+      <td>S: a dropped bucket contains no live head. S: the low-water mark is never below a surviving receipt (the crash-safe ordering). S: a reader never enumerates a bucket set that misses a retained bucket. S: as-of never reads across a hole. L: retention makes progress despite dormant streams</td>
+      <td>A7 (dormant head) as a regression proof. <strong>New: the registry is unguarded</strong> (§3.2 finding), so a reader computing <code class="language-plaintext highlighter-rouge">VALUES ?log { ... }</code> concurrently with rotation can miss a bucket, making the gap scan report false loss — or add a bucket mid-query, making it report false completeness. <strong>New: the pinned-head graph is itself unbounded</strong> unless entries are removed when heads move; the README says the job removes them, so the model should check that removal cannot race a CAS that moves the head</td>
+    </tr>
+    <tr>
+      <td><strong>H</strong></td>
+      <td><strong>Global read (dataset tier)</strong></td>
+      <td>HLC stamped pre-commit, each of the four <code class="language-plaintext highlighter-rouge">dal:globalReadStrategy</code> options, lag budget derived from enforced transaction duration, late-arrival audit, per-target contiguity</td>
+      <td>S: no committed receipt is permanently skipped. S: contiguity check detects any skip it can detect. L: freshness bound</td>
+      <td>A3 (unbounded read) as a regression proof. A lag budget that omits replica lag or clock skew. <code class="language-plaintext highlighter-rouge">dal:NoGlobalRead</code> declared alongside a dataset tier (warned today) producing no reader at all, so the late-arrival audit never runs. <strong>The blind spot the README names — a skipped <em>last</em> write — should be confirmed as genuinely uncoverable by the contiguity check and covered by the row-driven scan</strong></td>
+    </tr>
+    <tr>
+      <td><strong>I</strong></td>
+      <td><strong>Fencing and external locks</strong></td>
+      <td>lease acquire, GC pause, lease expiry, second acquirer, fence check-and-advance in one operation, <code class="language-plaintext highlighter-rouge">dal:LockingConcurrency</code> with no generated guard</td>
+      <td>S: a writer whose lease lapsed cannot apply. S: the fence is monotone. L: the lock is eventually acquirable</td>
+      <td>The §16.2 check-without-advance defect as a regression proof. <strong><code class="language-plaintext highlighter-rouge">dal:LockingConcurrency</code> generates no guard at all</strong>, so the model has nothing to check inside the store: the entire safety argument is external, and the model’s job is to state the external obligation precisely (mutual exclusion per aggregate, fence advance, bounded clock skew) so it can be discharged by something. This is the one dimension where the compiler’s output carries <em>no</em> safety and the obligation must therefore be explicit</td>
+    </tr>
+    <tr>
+      <td><strong>J</strong></td>
+      <td><strong>Infrastructure-graph writers</strong></td>
+      <td>the epoch authority, the bucket-rotation job, the retention job, the shard-count migration, concurrent readers and writers</td>
+      <td>S: single-writer assumptions hold or violations are detected. S: readers see a consistent registry/retention view</td>
+      <td><strong>I expect this to be the richest model</strong>, because none of these writers is guarded (finding in §3.2). Expected: lost updates between the retention job and the rotation job; a reader seeing a half-rotated registry; a shard-count migration racing an ordinary write; the dataset node rewritten by two restore attempts</td>
+    </tr>
+    <tr>
+      <td><strong>K</strong></td>
+      <td><strong>Erasure</strong></td>
+      <td>per-subject aggregate drop or crypto-shred, version-row tombstone, key-claim handling under both precedence values, decision record first, register append, restore replay, patch-log/snapshot per-subject condition, backups</td>
+      <td>S: after erasure plus the retention bound, no modelled store yields the subject’s plaintext or pseudonym. S: no other subject’s data is affected. S: a restore cannot resurrect an erased subject</td>
+      <td>Every store the guide lists, enumerated: deltas, snapshots, pinned heads, backups, replicas, the key graph, the external allocator (P6’s <code class="language-plaintext highlighter-rouge">key_claim</code> table and its <code class="language-plaintext highlighter-rouge">norm_key</code> column — <strong>personal data in PostgreSQL, outside the RDF erasure path entirely</strong>), the outbox, CDC consumers. The allocator table is the one I would expect to be missed, because P6 is described as an availability/contention choice and its privacy consequence is not stated</td>
+    </tr>
+    <tr>
+      <td><strong>L</strong></td>
+      <td><strong>Multi-aggregate writes</strong></td>
+      <td>two version rows in one request, each <code class="language-plaintext highlighter-rouge">dal:deadlockPolicy</code>, saga via outbox, <code class="language-plaintext highlighter-rouge">multiAggregateAtomicity</code> absent</td>
+      <td>S: no partial application visible as success. S: no deadlock or livelock under the declared policy. L: progress</td>
+      <td><code class="language-plaintext highlighter-rouge">dal:SortedAcquisition</code> with a single guarded update (warned today): SPARQL specifies no evaluation order, so the policy is unenforceable — the model shows the warning is really a refusal in disguise. <code class="language-plaintext highlighter-rouge">dal:EngineDetectAndRetry</code> on an engine that neither detects nor aborts: livelock</td>
+    </tr>
+    <tr>
+      <td><strong>M</strong></td>
+      <td><strong>Bulk load and cutover</strong></td>
+      <td>offline position assignment, staging graphs, the gate (P7 + S3 + F5 + shapes), batched cutover under the epoch guard with writers quiesced per affected stream, flip, re-admit</td>
+      <td>S: no acknowledged write lost across the cutover. S: version rows advance to high-water marks consistently. S: no stream is live under two position schemes</td>
+      <td>The guide already says a single transaction over every row is not portable and that batches must quiesce the affected streams. The model should establish <em>which</em> streams must be quiesced and for how long, and whether a stream touched by two batches can interleave with an ordinary write between them</td>
+    </tr>
+    <tr>
+      <td><strong>N</strong></td>
+      <td><strong>Shard-count migration</strong></td>
+      <td><code class="language-plaintext highlighter-rouge">dal:metaShards</code> change with <code class="language-plaintext highlighter-rouge">dal:priorMetaShards</code> and <code class="language-plaintext highlighter-rouge">dal:epochBumpAcknowledged</code>, version rows moving between shard graphs, readers using the old modulus</td>
+      <td>S: every row is reachable under exactly one modulus at any time. S: no row is lost or duplicated. S: the epoch bump makes stale readers resync</td>
+      <td>The README refuses the change without an acknowledged bump, which is the right gate. The model’s value is in the <em>procedure</em>: moving rows is itself a set of writes, and those writes are not guarded by anything (they rewrite version rows in a new graph while the old ones still exist). Expect a window where both copies are live</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="103-properties-that-cut-across-all-models">10.3 Properties that cut across all models</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Property</th>
+      <th>Why it belongs at the top level</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>No position is ever reused</strong> across epoch bumps, tombstone/recreate, shard migration, bulk cutover, restore</td>
+      <td>this is L14, and it is violated by composition even when each procedure is individually correct. Four of the fourteen models touch it; only a combined invariant catches the composition</td>
+    </tr>
+    <tr>
+      <td><strong>Every acknowledged write has exactly one receipt, and every receipt has at most one acknowledged write</strong></td>
+      <td>the audit pair in §24.2 checks both directions; the model should prove they are the right pair</td>
+    </tr>
+    <tr>
+      <td><strong>Receipts outlive claims</strong></td>
+      <td>the premise of the receipt-side audits. A retention policy that prunes receipts faster than claims breaks the audits silently</td>
+    </tr>
+    <tr>
+      <td><strong>Every invariant has a detector</strong> (L11)</td>
+      <td>the obligation from §9.2, checked against the model’s reachable violating states: for each reachable bad state, some audit fires</td>
+    </tr>
+    <tr>
+      <td><strong>Infrastructure writes are either guarded or single-writer-by-construction</strong></td>
+      <td>model J’s conclusion, lifted to a design rule</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="104-grounding-the-models-against-reality">10.4 Grounding the models against reality</h3>
+
+<p>A model of a store is only as good as its fidelity, so the models must be checked against the store, not merely against each other. Three mechanisms, in increasing cost:</p>
+
+<ol>
+  <li><strong>Hermitage-style isolation probes</strong> per backend, one per anomaly the models predict (dirty write, lost update, read skew, write skew, phantom). These populate the capability record’s isolation fields with evidence and are cheap.</li>
+  <li><strong>History checking.</strong> Run the generated operations under randomised concurrent workloads and check the recorded histories for the anomalies the models predict, Elle-style (Kingsbury &amp; Alvaro, VLDB 2020) <strong><em>(verify applicability to this data model — Elle’s inference relies on list-append or register semantics, and the version-row-plus-receipt structure is a natural register-with-history, which should fit, but the encoding needs design)</em></strong>. The guide’s TCK already describes most of the fault injection; history checking adds the <em>inference</em> that turns “no exception observed” into “no cycle in the dependency graph”.</li>
+  <li><strong>Predicted-anomaly reproduction.</strong> For each counterexample trace the models produce, write a TCK test that attempts to reproduce it on a real store. Two outcomes, both informative: reproduced ⟹ the model is faithful and the store is as classified; not reproduced ⟹ either the store is stronger than classified (update the capability record) or the test is too weak (strengthen it). This is the T4 analogue of seeded mutations, and it is what makes the matrix trustworthy.</li>
+</ol>
+
+<p><strong>Judgement.</strong> The TCK is already a strong artefact — stronger than most projects have. Its weakness is that its test list is hand-derived from prose, so its coverage is unmeasured, and the gating set (K-1, K-3, O-2, T-1, T-2, T-12 to T-14, the R-suite, S-1, S-2) is a judgement call. Deriving the TCK’s obligations from the models makes coverage measurable: <strong>every assumption a matrix cell uses must be discharged by a named TCK test</strong>, and every model counterexample must have a reproduction attempt. That is a mechanical completeness criterion for a suite that currently has none.</p>
+
+<hr />
+
+<h2 id="11-isabelle-what-is-worth-proving-concretely">11. Isabelle: what is worth proving, concretely</h2>
+
+<p>The SQL review’s advice applies unchanged: the theory and the gate discipline already exist, so extensions are cheap. Four theories, roughly 1.5–2k lines total.</p>
+
+<h3 id="111-resolutionthy">11.1 <code class="language-plaintext highlighter-rouge">Resolution.thy</code></h3>
+
+<p>Contents as §6.1. The negative lemma (capability monotonicity fails) is the one that pays, because it converts a surprising behaviour into a recorded decision.</p>
+
+<h3 id="112-positionsthy">11.2 <code class="language-plaintext highlighter-rouge">Positions.thy</code></h3>
+
+<div class="language-isabelle highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">type_synonym</span><span class="w"> </span><span class="n">pos</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"int × int × int"</span><span class="w">        </span><span class="c">(* epoch, seq, opSeq *)</span><span class="w">
+
+</span><span class="k">definition</span><span class="w"> </span><span class="n">pos_le</span><span class="w"> </span><span class="o">::</span><span class="w"> </span><span class="s">"pos ⇒ pos ⇒ bool"</span><span class="w"> </span><span class="kp">where</span><span class="w"> </span><span class="ow">...</span><span class="w">          </span><span class="c">(* lexicographic *)</span><span class="w">
+</span><span class="k">definition</span><span class="w"> </span><span class="n">pad</span><span class="w"> </span><span class="o">::</span><span class="w"> </span><span class="s">"nat ⇒ int ⇒ string"</span><span class="w"> </span><span class="kp">where</span><span class="w"> </span><span class="ow">...</span><span class="w">           </span><span class="c">(* fixed-width zero-pad *)</span><span class="w">
+</span><span class="k">definition</span><span class="w"> </span><span class="n">rev_iri</span><span class="w"> </span><span class="o">::</span><span class="w"> </span><span class="s">"string ⇒ int ⇒ int ⇒ string"</span><span class="w"> </span><span class="kp">where</span><span class="w"> </span><span class="ow">...</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Gated claims:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">pos_le</code> is a total order.</li>
+  <li><strong>Order agreement</strong>: for all <code class="language-plaintext highlighter-rouge">e, s &lt; 10^w</code>, <code class="language-plaintext highlighter-rouge">pad w e @ pad w s</code> is lexicographically ordered iff <code class="language-plaintext highlighter-rouge">(e,s)</code> is numerically ordered. This is the B13 defect as a theorem, and the side condition <code class="language-plaintext highlighter-rouge">&lt; 10^w</code> is exactly the width obligation the guide states and the compiler should check against the declared <code class="language-plaintext highlighter-rouge">xsd:long</code> range (SMT, §12).</li>
+  <li><strong>Injectivity of <code class="language-plaintext highlighter-rouge">rev_iri</code></strong> on <code class="language-plaintext highlighter-rouge">(target, epoch, seq)</code> given a prefix-free or fixed-width encoding, hence the F2 collision cannot recur, and hence (as a corollary) the fork signal is <code class="language-plaintext highlighter-rouge">pat:txn</code> cardinality rather than shared <code class="language-plaintext highlighter-rouge">prevRev</code> — which is D.3 A6’s analysis, proved.</li>
+  <li><strong>Width uniformity</strong>: two widths produce two schemes, stated as a negative lemma with a witness (<code class="language-plaintext highlighter-rouge">e10</code> sorts before <code class="language-plaintext highlighter-rouge">e3</code>).</li>
+  <li><strong>Keyset predicate = <code class="language-plaintext highlighter-rouge">pos_le</code></strong>, as §9.1.</li>
+</ul>
+
+<h3 id="113-encodingthy">11.3 <code class="language-plaintext highlighter-rouge">Encoding.thy</code></h3>
+
+<div class="language-isabelle highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">definition</span><span class="w"> </span><span class="n">enc</span><span class="w"> </span><span class="o">::</span><span class="w"> </span><span class="s">"string list ⇒ byte list"</span><span class="w"> </span><span class="kp">where</span><span class="w">     </span><span class="c">(* length-prefixed: len ":" bytes *)</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Gated claims:</p>
+
+<ul>
+  <li><strong><code class="language-plaintext highlighter-rouge">enc</code> is injective</strong> on lists of strings. The proof is the prefix-free-code argument, and it is the B11 defect as a theorem (<code class="language-plaintext highlighter-rouge">["a|b","c"]</code> vs <code class="language-plaintext highlighter-rouge">["a","b|c"]</code> collide under separator joining; they cannot under <code class="language-plaintext highlighter-rouge">enc</code>).</li>
+  <li><strong>Negative lemma</strong>: separator joining is not injective, with the witness. This makes the defect a proved fact, so a reverted fix fails the build.</li>
+  <li><strong>Digest determinism</strong> modulo the canonicalisation obligation: <code class="language-plaintext highlighter-rouge">digest(kind, target, expected, canon(payload))</code> is a function, <em>given</em> that <code class="language-plaintext highlighter-rouge">canon</code> is a function. Which is exactly where finding #7 bites: <code class="language-plaintext highlighter-rouge">canon</code> is currently “sorted canonical N-Triples”, which is not a function unless the lexical normalisation, the <code class="language-plaintext highlighter-rouge">xsd:string</code> question and the escaping are pinned. <strong>The proof should be stated with <code class="language-plaintext highlighter-rouge">canon</code> as a parameter and an explicit assumption, so the unproved part is visible.</strong> That is the honest way to carry an under-specified dependency: not by assuming it away, but by naming it as a hypothesis that something else must discharge.</li>
+  <li><strong>Pipeline idempotence</strong>: <code class="language-plaintext highlighter-rouge">nfkc_casefold ∘ trim</code> is idempotent. Mechanising Unicode is out of proportion; axiomatise the ICU mapping’s properties (idempotent, order-independent with trim under stated conditions) and discharge them by property test against ICU (T1). State the axioms explicitly so the trust boundary is visible.</li>
+</ul>
+
+<h3 id="114-outcomesthy">11.4 <code class="language-plaintext highlighter-rouge">Outcomes.thy</code></h3>
+
+<p>The §15.2 decision procedure as a total function from observations to outcomes, with the history as an abstract parameter.</p>
+
+<div class="language-isabelle highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">datatype</span><span class="w"> </span><span class="n">obs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Obs</span><span class="w"> </span><span class="o">(</span><span class="n">claim</span><span class="o">:</span><span class="w"> </span><span class="s">"(rev × digest) option"</span><span class="o">)</span><span class="w"> </span><span class="o">(</span><span class="n">dsEpoch</span><span class="o">:</span><span class="w"> </span><span class="n">int</span><span class="o">)</span><span class="w"> </span><span class="o">(</span><span class="n">deleted</span><span class="o">:</span><span class="w"> </span><span class="n">bool</span><span class="o">)</span><span class="w"> </span><span class="o">(</span><span class="n">reqEpoch</span><span class="o">:</span><span class="w"> </span><span class="n">int</span><span class="o">)</span><span class="w"> </span><span class="o">(</span><span class="n">reqDigest</span><span class="o">:</span><span class="w"> </span><span class="n">digest</span><span class="o">)</span><span class="w">
+</span><span class="k">datatype</span><span class="w"> </span><span class="n">outcome</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Applied</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">PreconditionFailed</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">Gone</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">EpochChanged</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">IdempotencyKeyReuse</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">Unknown</span><span class="w">
+
+</span><span class="k">fun</span><span class="w"> </span><span class="n">classify</span><span class="w"> </span><span class="o">::</span><span class="w"> </span><span class="s">"obs ⇒ outcome"</span><span class="w"> </span><span class="kp">where</span><span class="w"> </span><span class="ow">...</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Gated claims: totality, disjointness, and <strong>soundness relative to an abstract history predicate</strong> — <code class="language-plaintext highlighter-rouge">classify o = Applied ⟹ applied_once h req</code>, and so on. The soundness proofs need the history model, which means this theory is the bridge between Isabelle and the TLA+ models (model E). The practical form: prove the classification correct under stated assumptions (confirmation on the primary; monotone claim ownership; claim retained; digest is a function), and let model E check that the protocol establishes those assumptions. <strong>Each assumption is then an explicit obligation with a named discharger</strong> — which is the assume-guarantee discipline of §5 applied at the level of a proof.</p>
+
+<p>This theory also yields a lemma worth having explicitly: <strong><code class="language-plaintext highlighter-rouge">classify</code> never returns <code class="language-plaintext highlighter-rouge">Applied</code> on the basis of claim presence alone</strong>, which is the A5 defect as a type-level fact.</p>
+
+<h3 id="115-what-not-to-prove">11.5 What not to prove</h3>
+
+<ul>
+  <li>Not the Python compiler. Not SPARQL’s semantics in full. Not Unicode. Not the store.</li>
+  <li>Not the <code class="language-plaintext highlighter-rouge">dal:</code> resolution of <em>literal-valued</em> dimensions beyond type-correctness; their content is checked by the validation BDD, which is the better tool.</li>
+  <li>Not the templates’ text. Their link to the proofs is the typed IR and the differential tests (§13.4, §16).</li>
+</ul>
+
+<hr />
+
+<h2 id="12-static-and-value-level-checks-smt-automata">12. Static and value-level checks (SMT, automata)</h2>
+
+<p>Small, local, fully automatic, run per compile. Each corresponds to a stated policy or a recorded defect.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Target</th>
+      <th>Check</th>
+      <th>Tool</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>C1</td>
+      <td><strong>IRI templates</strong> (<code class="language-plaintext highlighter-rouge">dal:graphIriTemplate</code>, <code class="language-plaintext highlighter-rouge">dal:mintedIriTemplate</code>, <code class="language-plaintext highlighter-rouge">dal:claimIriTemplate</code>, revision and event templates)</td>
+      <td>injective over the declared key/position domain; no separator ambiguity; the inverse parser recovers the parameters; percent-encoding correct; the template’s own prefix cannot collide with another role’s</td>
+      <td>Z3 strings / automata</td>
+    </tr>
+    <tr>
+      <td>C2</td>
+      <td><strong>Graph-prefix and IRI-prefix sets</strong></td>
+      <td>antichain (or declared longest-prefix rule); no two scopes with different resolved values can match one IRI; the fallback’s complement is non-empty when claimed</td>
+      <td>automata (prefix languages are trivially regular)</td>
+    </tr>
+    <tr>
+      <td>C3</td>
+      <td><strong>Width adequacy</strong></td>
+      <td><code class="language-plaintext highlighter-rouge">epochWidth</code>/<code class="language-plaintext highlighter-rouge">sequenceWidth</code> ≥ digits needed for the declared datatype’s maximum (<code class="language-plaintext highlighter-rouge">xsd:long</code> ⟹ 19); all identity-bearing strings in one profile use one width per field</td>
+      <td>LIA + a registry check</td>
+    </tr>
+    <tr>
+      <td>C4</td>
+      <td><strong>Shard arithmetic</strong></td>
+      <td><code class="language-plaintext highlighter-rouge">hash mod n</code> is the same function in the compiler, the templates and every minting library; <code class="language-plaintext highlighter-rouge">n</code> consistent with <code class="language-plaintext highlighter-rouge">priorMetaShards</code> during migration; <code class="language-plaintext highlighter-rouge">n ≥ 1</code>; declared <code class="language-plaintext highlighter-rouge">n</code> versus honoured <code class="language-plaintext highlighter-rouge">n</code> (the gap in finding #9)</td>
+      <td>LIA + test vectors</td>
+    </tr>
+    <tr>
+      <td>C5</td>
+      <td><strong>Lag budget</strong></td>
+      <td><code class="language-plaintext highlighter-rouge">lagWindowMillis ≥ T_tx + skew + replicaLag + margin</code>, with each term a declared input rather than a guess</td>
+      <td>LIA; refuse if any term is undeclared</td>
+    </tr>
+    <tr>
+      <td>C6</td>
+      <td><strong>HLC field widths</strong></td>
+      <td>13-digit millis and 4-digit logical cannot overflow without the borrow; the borrow preserves monotonicity and the <code class="language-plaintext highlighter-rouge">sh:pattern</code>; the formatted string’s lexicographic order agrees with <code class="language-plaintext highlighter-rouge">(l, c, node)</code></td>
+      <td>LIA + automata on the pattern</td>
+    </tr>
+    <tr>
+      <td>C7</td>
+      <td><strong><code class="language-plaintext highlighter-rouge">sh:pattern</code> regexes</strong> in the shapes (<code class="language-plaintext highlighter-rouge">pat:hlc</code>, the digest hex pattern, claim IRI templates)</td>
+      <td>the pattern accepts exactly the generated language; anchoring is explicit (XPath patterns are anchored, POSIX are not — a mismatch here is a silently permissive constraint)</td>
+      <td>automata; Z3 regex as a second opinion</td>
+    </tr>
+    <tr>
+      <td>C8</td>
+      <td><strong>Base32/hex alphabets and digest widths</strong></td>
+      <td>declared width = emitted width; alphabet single-case (so no two key nodes fold together, which the README’s §14.1 argument depends on); no padding where unpadded is declared</td>
+      <td>enumeration</td>
+    </tr>
+    <tr>
+      <td>C9</td>
+      <td><strong>ETag grammar</strong></td>
+      <td>a declared regular language per representation mode; printer ⊆ grammar; parser ∘ printer = id; strong-validator requirement (never <code class="language-plaintext highlighter-rouge">W/</code>)</td>
+      <td>automata</td>
+    </tr>
+    <tr>
+      <td>C10</td>
+      <td><strong>Property-path closure</strong></td>
+      <td>the generated path’s language = the compile-time closure walk, to the declared depth, including the cycle policy</td>
+      <td>automata over the shape graph</td>
+    </tr>
+    <tr>
+      <td>C11</td>
+      <td><strong>Template variable discipline</strong></td>
+      <td>every INSERT-template variable bound in every solution (S-3); no blank nodes in templates (S-4); no path in a template (S-11); guard variables disjoint from caller guard variables (§8.5)</td>
+      <td>static analysis on the IR</td>
+    </tr>
+    <tr>
+      <td>C12</td>
+      <td><strong>Datatype pinning</strong></td>
+      <td>every position literal <code class="language-plaintext highlighter-rouge">xsd:long</code>; arithmetic re-typed; no <code class="language-plaintext highlighter-rouge">FILTER</code>-value comparison on a term-matched position (§8.2)</td>
+      <td>typed IR</td>
+    </tr>
+    <tr>
+      <td>C13</td>
+      <td><strong>Reserved-word and syntax hygiene</strong></td>
+      <td>generated IRIs and local names are valid; no SPARQL keyword collisions in variable names; no <code class="language-plaintext highlighter-rouge">PREFIX</code> shadowing</td>
+      <td>static</td>
+    </tr>
+    <tr>
+      <td>C14</td>
+      <td><strong>Request-size bound</strong></td>
+      <td>worst-case rendered size for the largest declared payload and closure ≤ <code class="language-plaintext highlighter-rouge">maxRequestBytes</code></td>
+      <td>LIA with declared bounds</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Judgement.</strong> C1, C2, C3 and C11 are the four I would do first: C2 and C11 catch live findings (§6.2, §8.1), C1 is the foundation of every identity law, and C3 is a one-line check that prevents the two-widths defect recurring.</p>
+
+<hr />
+
+<h2 id="13-generating-the-compiler-from-a-specification">13. Generating the compiler from a specification</h2>
+
+<p>The question was whether this has value. My answer: <strong>generate the rules, the registry, the IR and the emitter; do not generate the resolver.</strong> The reasoning follows, then the concrete proposal.</p>
+
+<h3 id="131-where-generation-pays-and-where-it-does-not">13.1 Where generation pays, and where it does not</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Component</th>
+      <th>Size</th>
+      <th>Generate?</th>
+      <th>Why</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Dimension registry</strong> (dimensions, values, baselines, owning class, parameter ownership, strength order)</td>
+      <td>small, tabular</td>
+      <td><strong>yes, emphatically</strong></td>
+      <td>it is already a table in the README, duplicated in the ontology, in the compiler, in the shapes, and in the guide’s YAML. Five copies of one table is four drift sources. One generated source eliminates them and makes §7’s exhaustive checks possible at all</td>
+    </tr>
+    <tr>
+      <td><strong>Cross-axis rules</strong> (refusals, warnings, acknowledgements, dead-parameter rules)</td>
+      <td>~40 rules</td>
+      <td><strong>yes</strong></td>
+      <td>finding #3 is exactly this duplication. Generate the SHACL shapes, the compiler predicate, the Isabelle definitions, the BDD input and the README tables from one source. The asymmetry the README notes (“node-local shapes cannot see cross-node combinations”) then becomes a <em>derived, enumerated</em> fact: the generator can label each rule as shape-checkable or compiler-only and emit the list</td>
+    </tr>
+    <tr>
+      <td><strong>Operation-selection table</strong></td>
+      <td>~8 rules</td>
+      <td><strong>yes</strong></td>
+      <td>tiny, and V6’s totality/disjointness check is trivial on generated data</td>
+    </tr>
+    <tr>
+      <td><strong>Template library</strong></td>
+      <td>~15 templates</td>
+      <td><strong>as an IR, yes</strong></td>
+      <td>§13.4</td>
+    </tr>
+    <tr>
+      <td><strong>Emitter / renderer</strong></td>
+      <td>small</td>
+      <td><strong>yes, from the IR</strong></td>
+      <td>L7’s properties are structural; a generated renderer over a typed IR satisfies most of them by construction</td>
+    </tr>
+    <tr>
+      <td><strong>Resolver</strong></td>
+      <td>small, pure</td>
+      <td><strong>no</strong></td>
+      <td>it is a hundred lines of a pure function over a finite lattice. Proving it (§11.1) is cheaper than generating it, and a hand-written resolver plus an independently generated checker gives translation validation (two implementations is a <em>feature</em> here, provided one is derived from the spec and they are diffed)</td>
+    </tr>
+    <tr>
+      <td><strong>Capability requirement computation</strong></td>
+      <td>small</td>
+      <td><strong>partly</strong></td>
+      <td>the mapping from resolved dimensions to required flags is a table; generate it. The comparison against the spec is three lines</td>
+    </tr>
+    <tr>
+      <td><strong>Minting recipes</strong></td>
+      <td>small</td>
+      <td><strong>yes</strong></td>
+      <td>they are already declared as “canonical JSON with a digest, holding everything a minter needs, missing members refused by name” — i.e. already a generated artefact from a schema. Make the schema the source and generate the recipe builder, the validator, the test vectors and the libraries’ parsers</td>
+    </tr>
+    <tr>
+      <td><strong>Audits</strong></td>
+      <td>~10 queries</td>
+      <td><strong>yes, from invariants</strong></td>
+      <td>§13.5</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="132-the-specification-artefact">13.2 The specification artefact</h3>
+
+<p>A single machine-readable specification, from which everything downstream is generated. Shape, not syntax (TOML/YAML/Turtle all work; Turtle has the advantage of being the same technology as the rest, and of being validatable by SHACL):</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>dimension concurrency
+  declared-on   dal:ConcurrencyProfile
+  property      dal:concurrencyProfile
+  values        ProvidedConcurrency, Optimistic, AppendOnly, LockingConcurrency
+  baseline      ProvidedConcurrency
+  strength      ProvidedConcurrency &lt; LockingConcurrency &lt; Optimistic ; AppendOnly incomparable
+  guarantees    Optimistic → L9(CAS) requires {atomicUpdateRequest, (singleWriter | detectsWriteWriteConflict)}
+                AppendOnly → L9(append) requires {atomicUpdateRequest, (singleWriter | detectsWriteWriteConflict)}
+                ProvidedConcurrency → forfeits L8-outcome, L9
+                LockingConcurrency → forfeits nothing in-store; obligation EXT-MUTEX, EXT-FENCE
+
+parameter metaShards
+  declared-on   dal:MetaTopologyProfile
+  belongs-to    metaTopology ∈ {SharedSharded}
+  type          xsd:long, ≥ 1
+  honoured      false                              ← the declaration/implementation gap, as data
+  warning       ShardingNotHonoured
+
+rule compositeboundary-receiptonly
+  refuse when   boundary = CompositePropertyBoundary ∧ receiptModel = ReceiptOnly
+  because       "a receipt could not say what changed inside the closure"
+  shape-checkable  false        ← cross-node
+  witness       examples/invalid-compositeboundary-receiptonly.ttl
+
+rule rowlevelguard
+  warn when     epochGuardScope = RowLevelGuardOnly
+  forfeits      L14
+  witness-trace models/F.tla#StaleClientMatchesUnrebasedRow
+  acknowledge   dal:epochGuardAcknowledged          ← proposed (PV-D5)
+
+operation-set
+  when          concurrency = Optimistic ∧ boundary = NamedGraphBoundary ∧ firstWrite = AbsentRow
+  emit          create-if-absent, cas-replace, tombstone-delete
+</code></pre></div></div>
+
+<p>Generated from this, in one build step:</p>
+
+<ol>
+  <li><code class="language-plaintext highlighter-rouge">spec/persistence.ttl</code> skeleton (classes, properties, individuals, <code class="language-plaintext highlighter-rouge">rdfs:comment</code> from <code class="language-plaintext highlighter-rouge">because</code>) — or at minimum, a check that the hand-written ontology agrees with the registry;</li>
+  <li><code class="language-plaintext highlighter-rouge">shapes/constraints.ttl</code> for every shape-checkable rule;</li>
+  <li>the compiler’s validation predicate and selection table;</li>
+  <li>the Isabelle definitions for §11.1 and the strength orders;</li>
+  <li>the BDD/SMT input for §7.3’s exhaustive checks;</li>
+  <li>the TLA+ constants and <code class="language-plaintext highlighter-rouge">.cfg</code> files per capability profile (§10.1);</li>
+  <li>the README tables (§5, §7, §9, §12) — so documentation drift becomes impossible;</li>
+  <li>the guide’s §29.3 YAML ↔ <code class="language-plaintext highlighter-rouge">dal:</code> mapping table, which currently exists by hand and already carries a list of unmapped keys;</li>
+  <li>the capability-requirement table and the <code class="language-plaintext highlighter-rouge">min_level</code> comparison;</li>
+  <li>the obligation set per operation (PV-D2);</li>
+  <li>the witness-coverage report (§7.4): every rule with no fixture fails the build;</li>
+  <li>the laws-held list per compiled target (PV-D5).</li>
+</ol>
+
+<p><strong>Value, stated plainly.</strong> The generation is worth it not because it saves code — the compiler is small — but because <strong>it makes the specification the artefact that is reviewed, verified and cited</strong>, and because several of the checks in this document are impossible without a machine-readable rule set. §7’s exhaustive validation needs the rules as data. §4’s matrix needs the guarantees as data. §5’s obligations need them as data. §7.4’s witness coverage needs them as data. The generation is the enabling move for everything else.</p>
+
+<p><strong>Cost.</strong> My estimate: the registry and generator are ~1.5–2k lines, and they <em>replace</em> roughly comparable hand-written content across the ontology, the shapes, the compiler’s validation module and the README. Net addition is small; the leverage is large.</p>
+
+<p><strong>What I would not claim.</strong> Generating the compiler does not make it correct, and a generator is itself unverified code. The mitigation is that the generator’s output is <em>checked</em> — the shapes against the predicate (V2/V3), the predicate against the BDD (V1), the tables against the README (string diff), the fixtures against the rules (witness coverage). A generator whose outputs are cross-checked against each other is far safer than four hand-written copies that are not.</p>
+
+<h3 id="133-one-stateterm-model-many-back-ends">13.3 One state/term model, many back ends</h3>
+
+<p>The same generation argument applies to the state space (§3.2) and the vocabulary (Appendix A). Generate from one declaration:</p>
+
+<ul>
+  <li>the Alloy signatures and fields;</li>
+  <li>the TLA+ variables and type invariant;</li>
+  <li>the Isabelle record types;</li>
+  <li>the SHACL shapes of Appendix B;</li>
+  <li>the <code class="language-plaintext highlighter-rouge">pat:</code> (or Foundation-aligned) vocabulary itself, with cardinalities;</li>
+  <li>the fixture generators for §9.3’s differential tests;</li>
+  <li>the audit queries’ schema assumptions.</li>
+</ul>
+
+<p>This matters because every model in §10 and every check in §9 reads the same state, and three hand-written encodings of one state space will disagree — which would silently invalidate the cross-model properties of §10.3.</p>
+
+<h3 id="134-the-typed-ir-and-the-emitter">13.4 The typed IR and the emitter</h3>
+
+<p>This is the SQL review’s “typed <code class="language-plaintext highlighter-rouge">decision3</code> IR” recommendation, transposed, and it is the highest-leverage code change in this document.</p>
+
+<p>Give the compiler an intermediate representation of a generated operation:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Operation
+  name, template-id, target-kind
+  reads      : set of (graph-role, pattern)        -- the declared read set (feeds §10's models)
+  writes     : set of (graph-role, pattern)
+  guards     : list of Guard                        -- each tagged Term | Value
+  params     : list of (name, Type)                 -- Type ∈ {IRI, Long, String, LangString, Payload, Position, Digest, ...}
+  templates  : Insert/Delete quad patterns, each variable tagged Bound | OptionalAllowed
+  obligations: caller | housekeeping | store
+  laws       : the laws this operation participates in establishing
+</code></pre></div></div>
+
+<p>Then the emitter is a renderer from IR to SPARQL text, and the following become <strong>impossible by construction</strong> rather than tested:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Hazard</th>
+      <th>How the IR removes it</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>injection (QP1)</td>
+      <td>parameters are typed terms; there is no path from a string to query structure</td>
+    </tr>
+    <tr>
+      <td>untyped position literals (S-7, B14)</td>
+      <td><code class="language-plaintext highlighter-rouge">Long</code> renders as <code class="language-plaintext highlighter-rouge">"n"^^xsd:long</code>, always</td>
+    </tr>
+    <tr>
+      <td>a variable in an INSERT template that may be unbound (S-3)</td>
+      <td><code class="language-plaintext highlighter-rouge">Bound</code> vs <code class="language-plaintext highlighter-rouge">OptionalAllowed</code> is a type; the renderer refuses an untagged variable</td>
+    </tr>
+    <tr>
+      <td>blank nodes in templates (S-4)</td>
+      <td>no blank-node constructor in the IR</td>
+    </tr>
+    <tr>
+      <td>property path in a template (S-11)</td>
+      <td>paths are a <code class="language-plaintext highlighter-rouge">reads</code>-only construct</td>
+    </tr>
+    <tr>
+      <td>unnamed graphs (S-1)</td>
+      <td>every pattern carries a graph role; there is no default-graph constructor</td>
+    </tr>
+    <tr>
+      <td>unbound <code class="language-plaintext highlighter-rouge">GRAPH ?g</code> (S-2)</td>
+      <td>bucket sets are a <code class="language-plaintext highlighter-rouge">RegistryList</code> parameter type, not a variable</td>
+    </tr>
+    <tr>
+      <td>term/value comparison confusion (§8.2)</td>
+      <td><code class="language-plaintext highlighter-rouge">Guard</code> is tagged; the renderer refuses a <code class="language-plaintext highlighter-rouge">Value</code> guard on a term-invariant position</td>
+    </tr>
+    <tr>
+      <td>caller guard variable collision (§8.5)</td>
+      <td>guard variables come from a reserved namespace by type</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">NOW()</code> in a guard (S-6)</td>
+      <td>no clock constructor except in an <code class="language-plaintext highlighter-rouge">AuditOnly</code> position</td>
+    </tr>
+    <tr>
+      <td>unpadded positions in IRIs (S-12, B13)</td>
+      <td><code class="language-plaintext highlighter-rouge">Position</code> renders through the declared width</td>
+    </tr>
+    <tr>
+      <td>a missing parameter (E5)</td>
+      <td>the IR’s <code class="language-plaintext highlighter-rouge">params</code> is the renderer’s domain; completeness is a type check</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Plus: the IR is the natural input to the Alloy and TLA+ generators (the <code class="language-plaintext highlighter-rouge">reads</code>/<code class="language-plaintext highlighter-rouge">writes</code> sets <em>are</em> the model’s read and write sets), to the obligation emitter (PV-D2), to the request-size bound (C14), and to the mutation operators (§16.2). <strong>A typed IR is a formal method costing a few hundred lines, and it removes whole classes of defect rather than testing for them</strong> — the SQL review’s phrasing, and it is equally true here.</p>
+
+<h3 id="135-generate-the-audits-from-the-invariants">13.5 Generate the audits from the invariants</h3>
+
+<p>Invert the current direction. Today the invariants are prose and the audits are hand-written queries, and three of them have been wrong. Instead:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>invariant head-retained
+  states      ∀ r ∈ VersionRow. r.head ≠ ⊥ ⟹ ∃ receipt with that IRI in a registry-listed bucket or pinned
+  detector    generated SELECT over meta ⋈ registry-listed logs ⋈ pinned
+  obligation  retention job (pinned-head copy)
+  alloy       assert HeadRetained
+  gating      S2 onwards
+</code></pre></div></div>
+
+<p>Then: the audit query is generated from the invariant; the Alloy assertion is generated from the same invariant; the detection-completeness obligation (§9.2) is checked between them; and the §9.2 coverage gaps become <em>visible as invariants with no detector</em> rather than invisible as audits nobody wrote. This closes finding #8 structurally.</p>
+
+<hr />
+
+<h2 id="14-the-capability-record-the-tck-and-evidence">14. The capability record, the TCK, and evidence</h2>
+
+<h3 id="141-capabilities-as-discharged-assumptions">14.1 Capabilities as discharged assumptions</h3>
+
+<p>Restructure the relationship so the words match the logic:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>TCK run (image, config, topology) ──► report (digest, per-test verdicts)
+                                        │
+                                        ▼
+                              capability record C      ← derived, not declared
+                                        │
+          matrix(strategy, C) ◄─────────┘        ← generated by model checking (§4.2, §10.2)
+                                        │
+                                        ▼
+       planner: Guarantee(selected(family), C) ≥ min_level(family) ?  → accept / refuse with reason
+</code></pre></div></div>
+
+<p>Two properties worth checking of this pipeline:</p>
+
+<ul>
+  <li><strong>Every flag in <em>C</em> is set by at least one TCK test</strong>, and every gating TCK test discharges at least one assumption used by some matrix cell. Unused tests and undischarged assumptions are both reportable.</li>
+  <li><strong>A capability record is only as fresh as its report.</strong> Bind the spec to the report digest and the image/config/topology identity; refuse or warn on a stale or absent binding. This is the freshness-checker discipline the SQL review describes, applied to capability claims.</li>
+</ul>
+
+<h3 id="142-the-honest-reading-of-a-tck-pass">14.2 The honest reading of a TCK pass</h3>
+
+<p>The guide already says it well: “Tests can falsify a guarantee, never prove one.” Keep that, and add the symmetric statement for models: <strong>a bounded model check can falsify a design, and can establish a guarantee only up to its scope and its assumptions.</strong> Record both scopes — the TCK’s workload/fault scope, and the model’s bound and capability assumptions — in the claim. A claim that says “no violation observed under workload W on image I” plus “no violation exists at scope ≤ 3 writers under assumption set A” is a much stronger and much more honest artefact than either alone, and the two have genuinely complementary blind spots: the model misses fidelity errors, the test misses rare interleavings.</p>
+
+<h3 id="143-closing-the-loop">14.3 Closing the loop</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Direction</th>
+      <th>Mechanism</th>
+      <th>What it establishes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>model → TCK</td>
+      <td>every counterexample becomes a reproduction test</td>
+      <td>model fidelity; store classification</td>
+    </tr>
+    <tr>
+      <td>TCK → model</td>
+      <td>any anomaly the model rules out but the store exhibits means the model’s assumptions are wrong</td>
+      <td>model correction, and a corrected capability flag</td>
+    </tr>
+    <tr>
+      <td>TCK → matrix</td>
+      <td>the report populates <em>C</em>, which selects the matrix column</td>
+      <td>the planner’s refusal becomes evidence-based</td>
+    </tr>
+    <tr>
+      <td>matrix → TCK</td>
+      <td>the assumptions used become the gating set</td>
+      <td>measurable coverage for a suite that currently has none</td>
+    </tr>
+    <tr>
+      <td>invariants → audits → production</td>
+      <td>§13.5 generation plus monitors</td>
+      <td>L11 in production, not only in CI</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="15-housekeeping-runtime-monitoring-and-the-operational-surface">15. Housekeeping, runtime monitoring and the operational surface</h2>
+
+<p>The compiler deliberately does not generate retention, epoch bumps or erasure (ADR-A80). That is a sound boundary, and it means those procedures have <em>no</em> machine-checked artefact today. Two consequences and two remedies.</p>
+
+<p><strong>Consequence 1.</strong> The safety of the generated SPARQL depends on housekeeping obligations (claim TTL, prefix-only pruning with mark-first and pinned heads, registry rotation, epoch allocation and quiesce, erasure register replay). If housekeeping is a runbook, the obligation is discharged by an operator, every time, under time pressure, during an incident.</p>
+
+<p><strong>Consequence 2.</strong> Nothing proves housekeeping <em>ran</em>. A pinned-head copy that was skipped is invisible until a dormant stream’s next CAS fails with a dangling <code class="language-plaintext highlighter-rouge">prevRev</code>, long after the bucket is gone.</p>
+
+<p><strong>Remedy 1 — model the procedures</strong> (models F, G, J, K, M, N). These are short models and they produce runbooks as a by-product: a model-checked procedure <em>is</em> a runbook with its preconditions and step ordering justified. The retention job’s “advance the mark, in its own transaction, and only then drop” ordering is exactly the kind of step whose justification is a crash-safety argument, and the argument is two lines in TLA+ and a paragraph of prose that has already been wrong once.</p>
+
+<p><strong>Remedy 2 — runtime monitors derived from the same invariants</strong> (T7, §13.5):</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Monitor</th>
+      <th>Checks</th>
+      <th>Cadence</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Invariant suite</strong></td>
+      <td>every invariant from §9.2, including the nine gaps</td>
+      <td>continuous; alert on non-zero</td>
+    </tr>
+    <tr>
+      <td><strong>Housekeeping evidence</strong></td>
+      <td>the retention job advanced marks before dropping; pinned heads were copied; the registry lists exactly the extant buckets; claim TTL ≥ the current redelivery horizon (which is a <em>live</em> quantity: it changes when a dead-letter policy changes)</td>
+      <td>per run, and continuously</td>
+    </tr>
+    <tr>
+      <td><strong>Capability drift</strong></td>
+      <td>the store’s version/config/topology still matches the TCK report the deployment was accepted against</td>
+      <td>on deploy and on a schedule</td>
+    </tr>
+    <tr>
+      <td><strong>Declaration drift</strong></td>
+      <td>the generated <code class="language-plaintext highlighter-rouge">.rq</code> in production matches the compiled profile, which matches the configuration graph (the README’s determinism guarantee makes this a byte comparison)</td>
+      <td>on deploy</td>
+    </tr>
+    <tr>
+      <td><strong>Erasure audit</strong></td>
+      <td>after each erasure, probe every store in model K’s enumerated list for the subject’s identifiers and pseudonyms, including the external allocator table and the outbox</td>
+      <td>per erasure, and after the retention bound</td>
+    </tr>
+    <tr>
+      <td><strong>Position-reuse audit</strong></td>
+      <td>no <code class="language-plaintext highlighter-rouge">(target, epoch, seq)</code> has two distinct receipt bodies; no revision IRI has two creation events</td>
+      <td>continuous</td>
+    </tr>
+    <tr>
+      <td><strong>Fork/duplicate/gap</strong></td>
+      <td>the four existing audits plus the nine gap-filling ones</td>
+      <td>continuous</td>
+    </tr>
+    <tr>
+      <td><strong>Late-arrival audit</strong></td>
+      <td>rescan a trailing window and compare with delivered (the guide’s own control for the lag budget)</td>
+      <td>scheduled</td>
+    </tr>
+    <tr>
+      <td><strong>Vacuity watch</strong></td>
+      <td>each audit reports <em>applicable / clean / violated</em>, never conflating “not applicable” with “clean” (§7.4)</td>
+      <td>continuous</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Judgement.</strong> The monitors are cheap because they are generated from the same invariants as the proofs and the models, and they are the only control that survives the threat the design explicitly names: writers that bypass every guard. I would weight this above several of the proofs.</p>
+
+<hr />
+
+<h2 id="16-testing-that-complements-the-formal-work">16. Testing that complements the formal work</h2>
+
+<p>Formal methods do not replace the TCK or live testing; they aim it. Four additions.</p>
+
+<h3 id="161-differential-and-metamorphic-testing-of-the-compiler-t0t1">16.1 Differential and metamorphic testing of the compiler (T0/T1)</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Law</th>
+      <th>Generator</th>
+      <th>Oracle</th>
+      <th>Note</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>L1 determinism</td>
+      <td>a configuration graph, permuted triple order, permuted file order, relabelled blank nodes, two machines</td>
+      <td>byte-identical compiled profile and <code class="language-plaintext highlighter-rouge">.rq</code> (modulo the README’s known blank-node caveat — which should be fixed, since an unstable artefact cannot be diffed)</td>
+      <td>the README already promises this; test it</td>
+    </tr>
+    <tr>
+      <td>L1/L2 locality</td>
+      <td>add an unrelated class, profile, target</td>
+      <td>unchanged outputs for other targets</td>
+      <td>metamorphic</td>
+    </tr>
+    <tr>
+      <td>L4 validation</td>
+      <td><strong>exhaustive</strong> over the dimension product (BDD-guided enumeration of boundary cases)</td>
+      <td>the generated predicate, the SHACL shapes, and the compiler, three ways</td>
+      <td>§7</td>
+    </tr>
+    <tr>
+      <td>L5 selection</td>
+      <td>same</td>
+      <td>generated table</td>
+      <td>§7 V6</td>
+    </tr>
+    <tr>
+      <td>L7 instantiation</td>
+      <td>adversarial parameter corpus (the injection suite)</td>
+      <td>parse-tree-shape comparison, not exception-freedom</td>
+      <td>§8.3 E2</td>
+    </tr>
+    <tr>
+      <td>L12 identity</td>
+      <td>the anchor vectors and coverage fixtures already in <code class="language-plaintext highlighter-rouge">examples/</code></td>
+      <td>the minting libraries <em>and</em> an independent reimplementation from the specification</td>
+      <td>the README already does conformance by test vectors, which is the right design; add an independent implementation so the vectors test the <em>specification</em>, not the reference</td>
+    </tr>
+    <tr>
+      <td>Rotation/migration squares (L15)</td>
+      <td>a claim-scheme rotation, a shard-count change</td>
+      <td>both paths of the commuting square</td>
+      <td>needs the data-migration leg to be defined, which it currently is not for shard changes</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="162-mutation-testing-over-the-ir-and-the-rules">16.2 Mutation testing, over the IR and the rules</h3>
+
+<p>Every mutation must fail a named check. This is the measure of whether the suite is worth anything.</p>
+
+<p>Over the <strong>IR</strong>: drop the epoch guard; drop the seq guard; drop the tombstone guard; drop the txn <code class="language-plaintext highlighter-rouge">NOT EXISTS</code>; drop the digest from the claim; drop <code class="language-plaintext highlighter-rouge">pat:head</code>; drop <code class="language-plaintext highlighter-rouge">prevRev</code>; make a <code class="language-plaintext highlighter-rouge">Bound</code> variable <code class="language-plaintext highlighter-rouge">OptionalAllowed</code>; change a <code class="language-plaintext highlighter-rouge">Long</code> to a plain literal; unpad a position; swap <code class="language-plaintext highlighter-rouge">NOT EXISTS</code> for <code class="language-plaintext highlighter-rouge">MINUS</code>; move a filter from the guard to the template; replace the in-transaction counter with a pre-read; make the fence check not advance; widen a graph role to the default graph; reorder the mark-advance and the bucket drop; omit the pinned-head copy; remove the upper bound from the global read; shorten the claim TTL below the retry horizon.</p>
+
+<p>Over the <strong>rules</strong>: delete each refusal; weaken each warning; change a baseline; remove an acknowledgement requirement.</p>
+
+<p>Over the <strong>compiler</strong>: seed a bug in the resolver’s precedence, in the tie-break, in the reasoning-drop, in the parameter binding. <strong>Seed in the implementation, not only in the reference</strong> — the SQL review’s §3.1 finding, and it applies here identically.</p>
+
+<p>Each mutation is labelled with the check that must catch it, and the labelling is generated from the specification (§13.2), so an uncaught mutation is a reportable coverage gap rather than a lucky escape.</p>
+
+<h3 id="163-property-based-testing-of-the-client-state-machine">16.3 Property-based testing of the client state machine</h3>
+
+<p>The caller obligations (§5) are a state machine: read → decide → write → classify → retry/resend/abandon. Property-test it against a model store under injected failures, with properties: never replays blindly on <code class="language-plaintext highlighter-rouge">PreconditionFailed</code>; always resends identically on <code class="language-plaintext highlighter-rouge">Unknown</code>; never reports success on <code class="language-plaintext highlighter-rouge">IdempotencyKeyReuse</code>; always confirms on the primary; calls <code class="language-plaintext highlighter-rouge">clock.receive</code> before a read-dependent write; respects the retry bound; surfaces <code class="language-plaintext highlighter-rouge">ConflictExhausted</code> with history. Each property corresponds to a recorded defect or a stated rule.</p>
+
+<h3 id="164-fixture-coverage-as-a-gate">16.4 Fixture coverage as a gate</h3>
+
+<p>The <code class="language-plaintext highlighter-rouge">examples/</code> directory is already strong — one negative fixture per refused combination, warning fixtures, identity anchor vectors, generated SPARQL per example with <code class="language-plaintext highlighter-rouge">diff -r</code> reviewability. Three additions:</p>
+
+<ul>
+  <li><strong>witness coverage</strong> (§7.4): every rule, shape, warning and audit has a fixture that triggers it, enforced by the build;</li>
+  <li><strong>store-state fixtures</strong>, not only configuration fixtures: the generated <code class="language-plaintext highlighter-rouge">.rq</code> is currently reviewed as text, never executed against a state. Add a small in-memory store (or Oxigraph), a library of store states, and assertions on the post-state of every generated operation. This turns the elegant <code class="language-plaintext highlighter-rouge">execution/</code> + <code class="language-plaintext highlighter-rouge">diff -r</code> discipline from a <em>syntactic</em> review into a <em>semantic</em> one, at low cost;</li>
+  <li><strong>stable compiled profiles</strong>: fix the blank-node labelling so compiled profiles can be committed and diffed like the SPARQL.</li>
+</ul>
+
+<hr />
+
+<h2 id="17-cost-sequencing-and-what-not-to-do">17. Cost, sequencing, and what not to do</h2>
+
+<h3 id="171-cost">17.1 Cost</h3>
+
+<p>Rough sizes, in the SQL review’s units (lines; token figures omitted since I do not have the model’s parameters).</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Item</th>
+      <th>Track</th>
+      <th>Size</th>
+      <th>Replaces</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Specification registry + generator (§13.2)</td>
+      <td>A/F</td>
+      <td>~2k</td>
+      <td>hand-written shapes, validation module, README tables, YAML mapping</td>
+    </tr>
+    <tr>
+      <td>Typed IR + emitter (§13.4)</td>
+      <td>A</td>
+      <td>~1k</td>
+      <td>hand-written template rendering</td>
+    </tr>
+    <tr>
+      <td>State/term model generator (§13.3)</td>
+      <td>A</td>
+      <td>~0.5k</td>
+      <td>three hand encodings</td>
+    </tr>
+    <tr>
+      <td>Exhaustive validation checks, BDD/SMT (§7.3)</td>
+      <td>C</td>
+      <td>~0.8k</td>
+      <td>sampled tests</td>
+    </tr>
+    <tr>
+      <td>Static/value checks, SMT + automata (§12)</td>
+      <td>C</td>
+      <td>~1.2k</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>Isabelle: Resolution, Positions, Encoding, Outcomes (§11)</td>
+      <td>E</td>
+      <td>~1.8k</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>Alloy: state model, closure disjointness, audit detection (§8.4, §9.2)</td>
+      <td>C</td>
+      <td>~1.2k</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>TLA+/Quint: models A–N (§10.2)</td>
+      <td>G</td>
+      <td>~3.5k</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>History-checking + Hermitage harness (§14.3)</td>
+      <td>G</td>
+      <td>~1k</td>
+      <td>some TCK scaffolding</td>
+    </tr>
+    <tr>
+      <td>Generated audits + monitors (§13.5, §15)</td>
+      <td>F</td>
+      <td>~1k</td>
+      <td>hand-written audits</td>
+    </tr>
+    <tr>
+      <td>Witness coverage, mutation operators, client property tests (§16)</td>
+      <td>B</td>
+      <td>~1.2k</td>
+      <td>some existing tests</td>
+    </tr>
+    <tr>
+      <td><strong>Total</strong></td>
+      <td> </td>
+      <td><strong>~15k</strong></td>
+      <td> </td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Of which the specification registry, the typed IR, the generated audits and parts of the test harness <em>replace</em> existing or planned hand-written content. My judgement on net addition: 8–10k lines, with the highest-value third (registry + IR + exhaustive validation + models A–F + witness coverage) at roughly 5k.</p>
+
+<h3 id="172-sequencing">17.2 Sequencing</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Stage</th>
+      <th>Gate: required evidence</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>0. Immediate (days)</strong></td>
+      <td>prefix antichain/overlap check (PV-X1); witness coverage for every existing rule, shape and audit, with the gaps listed; non-vacuity for every SHACL shape; the <code class="language-plaintext highlighter-rouge">sh:declare</code> lint; S-3 and S-4 static checks on the current templates; stable compiled-profile labels</td>
+    </tr>
+    <tr>
+      <td><strong>1. Specification (weeks)</strong></td>
+      <td>the registry and generator; shapes and validation predicate generated from it; V1–V10 exhaustive; dead-parameter rules derived; the laws-held and obligation lists emitted per target</td>
+    </tr>
+    <tr>
+      <td><strong>2. Typed IR (weeks)</strong></td>
+      <td>IR in place; C11/C12 by construction; read/write sets declared per operation; obligations emitted; closure disjointness check; composite boundary either fixed or refused</td>
+    </tr>
+    <tr>
+      <td><strong>3. Proofs (weeks, parallel)</strong></td>
+      <td>Resolution, Positions, Encoding, Outcomes gated; keyset/gap-scan/as-of/fork lemmas; negative lemmas with witnesses</td>
+    </tr>
+    <tr>
+      <td><strong>4. Models A–F (weeks)</strong></td>
+      <td>guarded CAS, append, first write, key claim, outcomes, epoch — each checked across the capability profiles that matter to the supported backends; counterexamples reproduced as TCK tests; the matrix’s first rows generated</td>
+    </tr>
+    <tr>
+      <td><strong>5. Models G–N + grounding</strong></td>
+      <td>retention, global read, fencing, infrastructure writers, erasure, multi-aggregate, bulk, shard migration; history checking on at least one MVCC engine (the guide’s own §30.4 point 3 — TDB2 alone cannot exercise the hazards)</td>
+    </tr>
+    <tr>
+      <td><strong>6. Production</strong></td>
+      <td>generated audits deployed as monitors; invariant coverage complete or the gaps declared; housekeeping evidence monitored; capability and declaration drift checks enforced</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Model-checking at least one MVCC engine before trusting the capability model is the guide’s own stated condition, and it applies to the models too: a model whose only grounding is a single-writer store has not been grounded.</p>
+
+<h3 id="173-what-not-to-do">17.3 What not to do</h3>
+
+<ul>
+  <li><strong>Do not mechanise SPARQL’s semantics in full.</strong> Use it selectively: the as-of query, the gap scan, the keyset predicate, the composite closure. Elsewhere use differential testing against independent engines.</li>
+  <li><strong>Do not model an engine’s implementation.</strong> Model the isolation contract; test the contract.</li>
+  <li><strong>Do not verify the resolver.</strong> Prove its properties; generate an independent checker.</li>
+  <li><strong>Do not let a bounded pass stand as universal.</strong> Record scope and assumptions in every claim.</li>
+  <li><strong>Do not formalise the Unicode pipelines.</strong> Axiomatise, then property-test against ICU, and declare the pinned version as part of the pipeline’s identity (the README already does this).</li>
+  <li><strong>Do not build a second TCK.</strong> Extend the one that exists; derive its obligations from the models.</li>
+  <li><strong>Do not generate the whole compiler.</strong> Generate the parts that are tables, and the part whose bugs are injections.</li>
+</ul>
+
+<hr />
+
+<h2 id="18-prioritised-recommendations">18. Prioritised recommendations</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Action</th>
+      <th>Addresses</th>
+      <th>Cost</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td><strong>Prefix antichain/overlap check and a declared target-identification function</strong>; refuse configurations where two scopes with different values can match one instance</td>
+      <td>§6.2, findings #1, #2</td>
+      <td>hours–days</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td><strong>Witness obligation for every rule, shape, warning and audit</strong>, with coverage as a build gate; <code class="language-plaintext highlighter-rouge">sh:declare</code> lint; non-vacuity checks</td>
+      <td>§7.4, D.3 A6 class</td>
+      <td>days</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td><strong>S-3 and S-4 static checks</strong> (unbound template variables, blank nodes in templates) on the existing templates, now</td>
+      <td>§8.1</td>
+      <td>days</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td><strong>Enumerate the declaration/implementation gap</strong> as data (shards not honoured, fixed infrastructure IRIs, housekeeping-only dimensions, first-property-only closure) and emit it per target; refuse the composite-boundary case</td>
+      <td>finding #9, L6</td>
+      <td>days</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td><strong>Specification registry + generator</strong>; generate shapes, validation predicate, selection table, README tables, obligations, laws-held</td>
+      <td>finding #3, §13</td>
+      <td>weeks</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td><strong>Exhaustive cross-axis validation (BDD/SMT)</strong>, V1–V10, including warning coverage and refusal non-vacuity</td>
+      <td>§7</td>
+      <td>small, once (5) exists</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td><strong>Typed IR + generated emitter</strong>; read/write sets per operation; guard grammar restriction</td>
+      <td>§8, §13.4</td>
+      <td>weeks</td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td><strong>Extend the capability record to the full <code class="language-plaintext highlighter-rouge">StoreCapabilities</code></strong>, three-valued, bound to a TCK report digest; make <code class="language-plaintext highlighter-rouge">unknown</code> pessimistic</td>
+      <td>finding #4, §4.1</td>
+      <td>small</td>
+    </tr>
+    <tr>
+      <td>9</td>
+      <td><strong>TLA+/Quint models A–F</strong>, parametrised by capability; generate the first matrix rows; reproduce counterexamples as TCK tests</td>
+      <td>§10, L9, L14</td>
+      <td>weeks; highest defect yield</td>
+    </tr>
+    <tr>
+      <td>10</td>
+      <td><strong>Isabelle: Positions, Encoding, Outcomes, Resolution</strong>, with the negative lemmas</td>
+      <td>§11</td>
+      <td>weeks, parallel</td>
+    </tr>
+    <tr>
+      <td>11</td>
+      <td><strong>Detection-coverage completion</strong>: the nine missing invariants, generated audits, Alloy detection obligations, applicability labelling</td>
+      <td>finding #8, §9.2, §13.5</td>
+      <td>small–medium, high value</td>
+    </tr>
+    <tr>
+      <td>12</td>
+      <td><strong>Pin the digest and recipe canonicalisations</strong> (an exact profile: literal forms, <code class="language-plaintext highlighter-rouge">xsd:string</code>, escaping, JSON profile), with an independent reimplementation checked against the vectors</td>
+      <td>finding #7, L12</td>
+      <td>small</td>
+    </tr>
+    <tr>
+      <td>13</td>
+      <td><strong>Composite closure: disjointness check, two-closure equality, depth/path reconciliation</strong></td>
+      <td>§8.4</td>
+      <td>small–medium</td>
+    </tr>
+    <tr>
+      <td>14</td>
+      <td><strong>Models G–N</strong>, especially J (unguarded infrastructure writers) and K (erasure boundary, including the P6 allocator table)</td>
+      <td>§10.2, §3.2, L13</td>
+      <td>weeks</td>
+    </tr>
+    <tr>
+      <td>15</td>
+      <td><strong>Monitors generated from invariants</strong>, plus housekeeping evidence, capability drift and declaration drift</td>
+      <td>§15, L11</td>
+      <td>small–medium</td>
+    </tr>
+    <tr>
+      <td>16</td>
+      <td><strong>ETag grammar, widths, and the two-representation parser</strong>, generated and checked</td>
+      <td>finding #10, C9</td>
+      <td>hours</td>
+    </tr>
+    <tr>
+      <td>17</td>
+      <td><strong>Store-state fixtures and semantic review of generated SPARQL</strong> (execute, don’t only diff); stable compiled-profile labels</td>
+      <td>§16.4</td>
+      <td>small</td>
+    </tr>
+    <tr>
+      <td>18</td>
+      <td><strong>Mutation operators over IR, rules and compiler</strong>, each labelled with the check that must catch it</td>
+      <td>§16.2</td>
+      <td>small–medium</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="decisions-for-the-maintainer">Decisions for the maintainer</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Decision</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>PV-D1</td>
+      <td>Full <code class="language-plaintext highlighter-rouge">StoreCapabilities</code> in <code class="language-plaintext highlighter-rouge">dal:</code>, three-valued, pessimistic on <code class="language-plaintext highlighter-rouge">unknown</code>, bound to a TCK report</td>
+    </tr>
+    <tr>
+      <td>PV-D2</td>
+      <td>Caller and housekeeping obligations emitted as data per operation, and in the <code class="language-plaintext highlighter-rouge">.rq</code> header</td>
+    </tr>
+    <tr>
+      <td>PV-D3</td>
+      <td>Target identification declared as a function: restricted scope kinds, or a refusal for ambiguous instances</td>
+    </tr>
+    <tr>
+      <td>PV-D4</td>
+      <td><code class="language-plaintext highlighter-rouge">dal:ShapeScope</code> restricted to a monotone SHACL fragment, or excluded from write-path dimensions</td>
+    </tr>
+    <tr>
+      <td>PV-D5</td>
+      <td>Every warning names the law it forfeits and its witness trace; forfeiting a law requires an explicit acknowledgement property</td>
+    </tr>
+    <tr>
+      <td>PV-D6</td>
+      <td><code class="language-plaintext highlighter-rouge">GuardPattern</code> restricted to a typed grammar with a declared read set</td>
+    </tr>
+    <tr>
+      <td>PV-D7</td>
+      <td>Known-unsafe baselines: keep (<code class="language-plaintext highlighter-rouge">dal:RowLevelGuardOnly</code>, <code class="language-plaintext highlighter-rouge">dal:AbsentRow</code>, <code class="language-plaintext highlighter-rouge">dal:ProvidedConcurrency</code>) for compatibility, or flip to safe-by-default with a declared opt-out</td>
+    </tr>
+    <tr>
+      <td>PV-D8</td>
+      <td>The specification registry is the single source of truth for dimensions, rules, selection, guarantees and obligations; the ontology, shapes, compiler and README are generated or checked against it</td>
+    </tr>
+    <tr>
+      <td>PV-Q1</td>
+      <td>Should a capability <em>increase</em> that weakens a resolved guarantee be a warning? (I think yes)</td>
+    </tr>
+    <tr>
+      <td>PV-Q2</td>
+      <td>Is <code class="language-plaintext highlighter-rouge">Ambiguity</code> raised for two tied candidates with the <em>same</em> value? (If so, it should not be; if not, literal value equality needs a definition)</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="19-bottom-line">19. Bottom line</h2>
+
+<p>The Persistence layer is unusually well suited to formal methods because its specification is already largely explicit, tabular and finite, and because its recorded defect history is dominated by exactly the classes that bounded model checking, decision-table exhaustion and witness obligations catch cheaply. Three remediation passes found eleven of twelve calibration defects by review; a model checker finds that class in an afternoon.</p>
+
+<p>The highest-value work, in order:</p>
+
+<ol>
+  <li><strong>Make the rules data</strong> (§13.2). It is the enabling move: exhaustive validation, the guarantee matrix, the obligation set, witness coverage and documentation consistency all depend on it, and it eliminates the two-implementation drift that finding #3 names.</li>
+  <li><strong>Make the operations typed</strong> (§13.4). A typed IR removes, by construction, at least eleven defect classes that are currently guarded by prose and review.</li>
+  <li><strong>Model the protocols, parametrised by capability</strong> (§10, §4.2). This is where the defects are, where tests are weakest, and where the hand-written store table has already been wrong. The output is a generated matrix that makes the planner’s refusals evidence-based and the TCK’s coverage measurable.</li>
+  <li><strong>Close the detection gap</strong> (§9.2, §13.5). The audits are the only control against the threat the design explicitly names — writers that bypass every guard — and their coverage has never been enumerated. Nine invariants currently have no detector.</li>
+  <li><strong>Prove the small, sharp things</strong> (§11): injectivity of the tuple encoding, order agreement of padded positions, totality and soundness of the outcome classification, determinism and locality of resolution, and the negative lemmas that keep each fix from being reverted.</li>
+</ol>
+
+<p>On generating the compiler: generate the registry, the rules, the IR, the emitter, the audits and the documentation; prove the resolver rather than generating it, and keep an independently generated checker so that every compiled profile is validated against its own inputs. The value is not saved code — the compiler is small — but a specification that is the reviewed artefact, and a verification story in which nothing is claimed twice in two places.</p>
+
+<p>Finally, the parametric framing is the thing I would hold onto above any individual technique. The honest claim this layer can make is not “the generated SPARQL is correct” but <strong>“for this capability profile, these operations deliver these guarantees, under these assumptions, discharged by these tests, with these obligations on the caller and these on housekeeping.”</strong> Every element of that sentence can be made machine-checked data. Once it is, pluggable backends stop being a verification obstacle and become the parameter the verification is indexed by.</p>

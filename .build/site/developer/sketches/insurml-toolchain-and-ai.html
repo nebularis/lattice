@@ -1,0 +1,773 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="from-drafting-to-reading-the-insurml-and-lattice-toolchain">From drafting to reading: the InsurML and LATTICE toolchain</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/plans/insurml-alignment.html">insurml-alignment</a> (epic). <strong>Status:</strong> sketch, 2026-10-05.
+Nothing here is ratified. New directories and apps each need an ADR.
+<strong>Reads with:</strong> <a href="/architecture/insurml-alignment-vision.html">the vision</a> (AV1 to AV10),
+<a href="/developer/sketches/insurml-bridge.html">the bridge sketch</a> (the profile, lift, lower, parity and substrate changes this
+sketch builds on), the <a href="/architecture/ingestion-vision.html">ingestion vision</a> (IV1 to IV13,
+stages S0 to S9),
+the <a href="/developer/sketches/xml-egress-and-transformation-kits.html">XML egress</a> and <a href="/developer/sketches/normative-wire-protocol.html">wire protocol</a>
+sketches, and Open DARE’s proof-of-concept notes (<code class="language-plaintext highlighter-rouge">open-dare/docs/discovery/poc-ideas.md</code>, §4 and §5).</p>
+
+<p>Examples are clean-room and use <code class="language-plaintext highlighter-rouge">.example</code> hosts (AV8).</p>
+
+<hr />
+
+<h2 id="contents">Contents</h2>
+
+<ol>
+  <li><a href="#1-premise">Premise</a></li>
+  <li><a href="#2-authoring">Authoring</a></li>
+  <li><a href="#3-the-compiler">The compiler</a></li>
+  <li><a href="#4-libraries">Libraries</a></li>
+  <li><a href="#5-placement">Placement</a></li>
+  <li><a href="#6-execution">Execution</a></li>
+  <li><a href="#7-exchange">Exchange</a></li>
+  <li><a href="#8-mixing-standards">Mixing standards</a></li>
+  <li><a href="#9-reading-documents">Reading documents</a></li>
+  <li><a href="#10-platform-placement">Platform placement</a></li>
+  <li><a href="#11-open-questions">Open questions</a></li>
+</ol>
+
+<hr />
+
+<h2 id="1-premise">1. Premise</h2>
+
+<p>The bridge makes InsurML and LATTICE data one graph. This sketch follows that graph through its
+life: drafted in Word or a web studio, compiled, kept in libraries, assembled into products,
+placed for a risk, run, exchanged, and read back from documents with AI. At each step it says what
+exists, what each standard contributes, and what is new.</p>
+
+<h2 id="2-authoring">2. Authoring</h2>
+
+<h3 id="21-word">2.1 Word</h3>
+
+<p>Market drafters work in Word. An Office.js task pane add-in, chosen in Open DARE’s notes because it
+runs on Windows, Mac and the web without an installer, keeps InsurML identity in the document:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Word construct</th>
+      <th>Carries</th>
+      <th>InsurML</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>a content control per component, with a custom XML part</td>
+      <td>component IRI, type, optionality, alternative set, dependency</td>
+      <td><code class="language-plaintext highlighter-rouge">component</code> with <code class="language-plaintext highlighter-rouge">iri</code>, metadata, markup attributes</td>
+    </tr>
+    <tr>
+      <td>a content control per fragment</td>
+      <td><code class="language-plaintext highlighter-rouge">xml:id</code>, paragraph type, printed label</td>
+      <td><code class="language-plaintext highlighter-rouge">para</code> with <code class="language-plaintext highlighter-rouge">xml:id</code>, <code class="language-plaintext highlighter-rouge">type</code>, <code class="language-plaintext highlighter-rouge">label</code></td>
+    </tr>
+    <tr>
+      <td>a content control bound to a variable IRI</td>
+      <td>an embedded variable, or its printed name</td>
+      <td><code class="language-plaintext highlighter-rouge">variable</code></td>
+    </tr>
+    <tr>
+      <td>a content control around words with a condition</td>
+      <td>optional words, or one of a set of alternatives</td>
+      <td><code class="language-plaintext highlighter-rouge">optionalPhrase</code></td>
+    </tr>
+    <tr>
+      <td>a tagged table</td>
+      <td>static or dynamic table</td>
+      <td>CALS <code class="language-plaintext highlighter-rouge">table</code>, <code class="language-plaintext highlighter-rouge">dataTable</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<pre><code class="language-mermaid">sequenceDiagram
+    participant D as Drafter in Word
+    participant A as Add-in
+    participant K as Lower and lift kits
+    participant S as Library service
+    D-&gt;&gt;A: open component
+    A-&gt;&gt;S: fetch InsurML component
+    S-&gt;&gt;K: InsurML to DOCX with content controls
+    K--&gt;&gt;A: document
+    D-&gt;&gt;A: edit and save
+    A-&gt;&gt;K: DOCX to InsurML (XSLT 3.0 over OOXML)
+    K-&gt;&gt;K: RELAX NG, Schematron
+    K--&gt;&gt;A: errors by paragraph, or a valid component
+    A-&gt;&gt;S: write intent: new component version
+    S--&gt;&gt;A: accepted, with the new version IRI
+</code></pre>
+
+<p>Numbering is never read from Word’s list numbering. Identity travels in the tags, and numbers are
+generated after assembly (DP10, W7). A tracked change in a placed contract maps naturally to a
+strike-and-substitute amendment, so the add-in can offer an endorsement as a proposed
+<code class="language-plaintext highlighter-rouge">wrd:Amendment</code> with its struck and substituted words, reviewed before it applies.</p>
+
+<h3 id="22-the-web-studio">2.2 The web studio</h3>
+
+<p>Library curators, product owners and reviewers work in a web studio over the same components:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>View</th>
+      <th>Does</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Component editor</td>
+      <td>edits a component’s XML through a structured editor, validating as it goes</td>
+    </tr>
+    <tr>
+      <td>Product editor</td>
+      <td>edits a contract form’s inclusion entries or transclusions, conditions as Eligibility profiles, alternatives, governing variables and their schemes</td>
+    </tr>
+    <tr>
+      <td>Meaning review</td>
+      <td>shows a meaning proposal beside its source fragment, with the review workbench’s six decisions (Confirm, Retarget, Reshape, Decline, Teach, Defer)</td>
+    </tr>
+    <tr>
+      <td>Release</td>
+      <td>publishes a library edition, records governance states, shows impact (§4)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="23-one-write-path">2.3 One write path</h3>
+
+<p>Both front ends send the same write intents (Open DARE notes §5.2), so validation, persistence and
+events have one code path whatever the client. Validation in the client uses the same schemas the
+compilers use. Schematron compiles to XSLT, which can run in the browser and in the add-in, so a
+drafter sees the same assertion ids as the server.</p>
+
+<h2 id="3-the-compiler">3. The compiler</h2>
+
+<p>One intermediate graph, many passes, many outputs, as ADR-A19’s staged compiler already does for
+conditions.</p>
+
+<pre><code class="language-mermaid">flowchart LR
+    subgraph FE["Front ends"]
+        F1["InsurML XML&lt;br/&gt;and manifests"]
+        F2["DOCX from the add-in"]
+        F3["LATTICE-native&lt;br/&gt;wordings"]
+    end
+    IR[("Co-typed graph&lt;br/&gt;Wording, profile,&lt;br/&gt;Instrument")]
+    subgraph PS["Passes"]
+        P1["Validate"]
+        P2["Verify"]
+        P3["Optimise"]
+    end
+    subgraph BE["Back ends"]
+        B1["Assembled InsurML,&lt;br/&gt;DOCX, PDF"]
+        B2["SPARQL, SHACL,&lt;br/&gt;OWL classes"]
+        B3["JSON skins,&lt;br/&gt;LegalRuleML"]
+        B4["Surface read paths"]
+    end
+    F1 --&gt; IR
+    F2 --&gt; F1
+    F3 --&gt; IR
+    IR --&gt; P1 --&gt; P2 --&gt; P3
+    P3 --&gt; B1
+    P3 --&gt; B2
+    P3 --&gt; B3
+    P3 --&gt; B4
+</code></pre>
+
+<table>
+  <thead>
+    <tr>
+      <th>Pass</th>
+      <th>Checks or produces</th>
+      <th>State</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Validate</strong></td>
+      <td>InsurML’s grammar, Schematron and SHACL. Wording laws. Profile shapes (bridge §14)</td>
+      <td>built on both sides, profile shapes new</td>
+    </tr>
+    <tr>
+      <td><strong>Verify</strong> alternatives</td>
+      <td>every set of alternatives exclusive and exhaustive over the governing variables’ admissible values, for every product</td>
+      <td>intervals built (CCS C5), every kind CCS C13a</td>
+    </tr>
+    <tr>
+      <td><strong>Verify</strong> dependencies</td>
+      <td>the clause dependency graph is acyclic, and every <code class="language-plaintext highlighter-rouge">dependsOn</code> target can be included</td>
+      <td>new, profile</td>
+    </tr>
+    <tr>
+      <td><strong>Verify</strong> references</td>
+      <td>every reference resolves to exactly one target in every reachable configuration</td>
+      <td>new, generalising InsurML’s per-policy check to all policies</td>
+    </tr>
+    <tr>
+      <td><strong>Verify</strong> meaning</td>
+      <td>no obligation and prohibition over overlapping scopes, and a revision’s widening or narrowing of criteria</td>
+      <td>NRS N3, ADR-A90</td>
+    </tr>
+    <tr>
+      <td><strong>Optimise</strong> questions</td>
+      <td>an order for the governing questions in which each answer removes the most undecided inclusions, as a question plan per product</td>
+      <td>new</td>
+    </tr>
+    <tr>
+      <td><strong>Optimise</strong> configurations</td>
+      <td>dead components (never included), conditions that always hold (made mandatory), alternatives never chosen</td>
+      <td>new, on C13a’s satisfiability</td>
+    </tr>
+    <tr>
+      <td><strong>Optimise</strong> specialisation</td>
+      <td>a product partially evaluated over answers fixed for a market or a programme, giving a smaller form</td>
+      <td>new</td>
+    </tr>
+    <tr>
+      <td><strong>Optimise</strong> conditions</td>
+      <td>inclusion conditions compiled to SPARQL and SHACL</td>
+      <td>built (<code class="language-plaintext highlighter-rouge">tools/mork_compilers</code>)</td>
+    </tr>
+    <tr>
+      <td><strong>Optimise</strong> read paths</td>
+      <td>inherited attributes per placed contract, a usage index from component to live placements</td>
+      <td>Surface promotions, new contracts</td>
+    </tr>
+    <tr>
+      <td><strong>Optimise</strong> rendering</td>
+      <td>a cache keyed by the component digest and the settings it reads</td>
+      <td>new</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Every pass is a pure function of hashed inputs. Each output is a derived artefact with its read set
+(ADR-A92), regenerated in the smallest scope when an input changes (ADR-A27).</p>
+
+<h2 id="4-libraries">4. Libraries</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Library</th>
+      <th>Holds</th>
+      <th>Published by</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Wording</td>
+      <td>InsurML component versions with their reviewed meaning templates</td>
+      <td>a market body, an insurer, a broker, each under its own prefix</td>
+    </tr>
+    <tr>
+      <td>Product</td>
+      <td>InsurML contract forms with governing variables and conditions</td>
+      <td>an insurer or a programme owner</td>
+    </tr>
+    <tr>
+      <td>Template</td>
+      <td>Instrument meaning templates, and regime templates for notice, suspension, non-renewal and run-off (CCS C8a)</td>
+      <td>LATTICE for neutral templates, the insurance profile for market ones</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>A library is published in editions, as a vocabulary is. Each component version carries a
+governance state (<code class="language-plaintext highlighter-rouge">fnd:GovernanceState</code>), and a withdrawn version is never reused. Questions the
+graph answers:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Question</th>
+      <th>Read path</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Which live placed contracts include this component version?</td>
+      <td>usage index, <code class="language-plaintext highlighter-rouge">wrd:includes</code></td>
+    </tr>
+    <tr>
+      <td>What would change if version 2 replaced version 1 in this product?</td>
+      <td>text difference, plus the meaning template’s difference: same relation with changed parameters, a different relation, or criteria widened or narrowed (ADR-A90)</td>
+    </tr>
+    <tr>
+      <td>Which components are near duplicates?</td>
+      <td>fingerprints from ingestion stage S1, proposed to a curator as variants or merges</td>
+    </tr>
+    <tr>
+      <td>Which components have no reviewed meaning?</td>
+      <td><code class="language-plaintext highlighter-rouge">ins:encodingStatus</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="5-placement">5. Placement</h2>
+
+<p>A placement tailors a product for a risk, a client or a scenario. Each step writes data, never a
+copy of the document.</p>
+
+<pre><code class="language-mermaid">sequenceDiagram
+    participant B as Broker
+    participant U as Underwriter
+    participant G as Graph
+    B-&gt;&gt;G: submission, governing answers
+    G--&gt;&gt;B: question plan, then the assembled draft
+    U-&gt;&gt;G: quote: values, chosen alternatives, bespoke clauses
+    G-&gt;&gt;G: verify, report deviation from the library
+    B-&gt;&gt;G: firm order
+    U-&gt;&gt;G: bind
+    G-&gt;&gt;G: assembled wording and instrument versioned, meaning bound
+    G--&gt;&gt;B: InsurML contract, contract package
+    U-&gt;&gt;G: endorsement as amendments
+    G-&gt;&gt;G: new assembled wording, amendment records, regimes re-evaluated
+</code></pre>
+
+<table>
+  <thead>
+    <tr>
+      <th>What placement records</th>
+      <th>LATTICE</th>
+      <th>InsurML</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>answers to governing questions</td>
+      <td><code class="language-plaintext highlighter-rouge">wrd:VariableValue</code> on the <code class="language-plaintext highlighter-rouge">wrd:AssembledWording</code></td>
+      <td>the instance contract’s settings</td>
+    </tr>
+    <tr>
+      <td>chosen alternatives and optional clauses</td>
+      <td><code class="language-plaintext highlighter-rouge">wrd:includes</code></td>
+      <td>the instance contract’s manifest, and its assembled contract</td>
+    </tr>
+    <tr>
+      <td>values for embedded variables and schedule tables</td>
+      <td><code class="language-plaintext highlighter-rouge">wrd:VariableValue</code>, per table entry for a table field</td>
+      <td><code class="language-plaintext highlighter-rouge">variable</code> values</td>
+    </tr>
+    <tr>
+      <td>a bespoke clause revising a library clause</td>
+      <td>a bespoke element, <code class="language-plaintext highlighter-rouge">prov:wasRevisionOf</code> the library element, which may be proposed back to the library</td>
+      <td>a component in the placement’s own publisher space</td>
+    </tr>
+    <tr>
+      <td>a manuscript clause with no library origin</td>
+      <td>a bespoke element with no derivation</td>
+      <td>the same</td>
+    </tr>
+    <tr>
+      <td>an endorsement</td>
+      <td><code class="language-plaintext highlighter-rouge">wrd:Amendment</code>s, and <code class="language-plaintext highlighter-rouge">ins:Amendment</code> for its legal effect (CCS C9)</td>
+      <td>a new version of the instance contract</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Deviation from standard wording</strong> is a derived report for every placed contract:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Category</th>
+      <th>Test</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>standard</td>
+      <td>library element version included unchanged</td>
+    </tr>
+    <tr>
+      <td>standard with values</td>
+      <td>as above, with values for its variables</td>
+    </tr>
+    <tr>
+      <td>standard alternative</td>
+      <td>one alternative of a library set chosen</td>
+    </tr>
+    <tr>
+      <td>modified</td>
+      <td>a bespoke element that revises a library element, with the text difference</td>
+    </tr>
+    <tr>
+      <td>manuscript</td>
+      <td>a bespoke element with no library origin</td>
+    </tr>
+    <tr>
+      <td>removed</td>
+      <td>a mandatory library element deleted by amendment</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Each category is paired with the meaning delta of §4: same meaning, changed parameters, changed
+relation, or meaning not yet reviewed. A renewal carries the settings forward, lists library
+components with newer versions, and shows the impact of moving to them before anyone agrees.</p>
+
+<h2 id="6-execution">6. Execution</h2>
+
+<p>Reviewed meaning is bound per instrument and run by LATTICE alone. InsurML’s component types route
+review to the likely reading (integration §8.5), and the bridge’s §13 gives limits and excesses
+their parameters.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Runs</th>
+      <th>Where</th>
+      <th>Slice</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>due ranges, windows, survival</td>
+      <td>Instrument</td>
+      <td>CCS C7b</td>
+    </tr>
+    <tr>
+      <td>definitions per section</td>
+      <td>Instrument</td>
+      <td>CCS C7c</td>
+    </tr>
+    <tr>
+      <td>schedule values into relations</td>
+      <td>parameter bindings</td>
+      <td>CCS C8</td>
+    </tr>
+    <tr>
+      <td>notice, suspension, non-renewal, run-off</td>
+      <td>regime templates</td>
+      <td>CCS C8a, AIR Phase 5</td>
+    </tr>
+    <tr>
+      <td>endorsements in law</td>
+      <td>amendments</td>
+      <td>CCS C9</td>
+    </tr>
+    <tr>
+      <td>regimes and occasions over events</td>
+      <td>runtime evaluator</td>
+      <td>CCS C12</td>
+    </tr>
+    <tr>
+      <td>obligations, permissions, exclusions, powers</td>
+      <td>relation plans</td>
+      <td>CCS C13</td>
+    </tr>
+    <tr>
+      <td>limits, retentions, aggregates</td>
+      <td>term parameters and ledgers</td>
+      <td>AIR-5.1 to AIR-5.3, evaluation context</td>
+    </tr>
+    <tr>
+      <td>authority at bind</td>
+      <td>Eligibility, capacity</td>
+      <td>AIR Phase 3, Open CBAA</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>A decision carries its explanation: the relation, the evidence, and the fragment IRI of the words
+that state it.</p>
+
+<h2 id="7-exchange">7. Exchange</h2>
+
+<h3 id="71-kits">7.1 Kits</h3>
+
+<p>Every exchange form is a published kit (AV9): a query, a stylesheet or generator, a schema and
+examples, versioned in <code class="language-plaintext highlighter-rouge">contracts/</code> as the XML egress sketch proposes.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Kit</th>
+      <th>Direction</th>
+      <th>Query or source</th>
+      <th>Output and schema</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">insurml-components</code></td>
+      <td>out</td>
+      <td>a form’s elements</td>
+      <td>component files and a manifest, InsurML’s RELAX NG and SHACL</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">insurml-assembled-contract</code></td>
+      <td>out</td>
+      <td>a placed contract</td>
+      <td>an assembled contract, InsurML’s RELAX NG</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">insurml-lift</code></td>
+      <td>in</td>
+      <td>component files and manifests</td>
+      <td>the co-typed graph, Wording laws and profile shapes</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">docx</code></td>
+      <td>both</td>
+      <td>a component, or a placed contract</td>
+      <td>DOCX with content controls</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">settings-json</code></td>
+      <td>both</td>
+      <td><code class="language-plaintext highlighter-rouge">wrd:VariableValue</code> records</td>
+      <td>JSON generated from the shapes (ingestion vision §7)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">market-profile</code></td>
+      <td>both</td>
+      <td>terms, relations, decisions</td>
+      <td>the wire protocol’s plain JSON</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">lattice-instrument</code></td>
+      <td>out</td>
+      <td>terms, relations, parties, conditions</td>
+      <td>LATTICE instrument XML (XML egress sketch)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">legalruleml</code></td>
+      <td>both</td>
+      <td>relations</td>
+      <td>LegalRuleML XML or its JSON form (§8)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>An API serves a placed contract in any of these forms by content negotiation (wire protocol §11),
+so any system that wants InsurML can have it, whatever authored the contract.</p>
+
+<h3 id="72-the-contract-package">7.2 The contract package</h3>
+
+<pre><code class="language-mermaid">flowchart TB
+    PKG["Contract package&lt;br/&gt;manifest with media types,&lt;br/&gt;digests, provenance"]
+    PKG --&gt; A["assembled contract&lt;br/&gt;InsurML XML"]
+    PKG --&gt; B["settings&lt;br/&gt;JSON or Turtle"]
+    PKG --&gt; C["instrument graph&lt;br/&gt;Turtle or JSON-LD"]
+    PKG --&gt; D["companion LegalRuleML&lt;br/&gt;optional"]
+    PKG --&gt; E["rendered document&lt;br/&gt;PDF"]
+    PKG --&gt; F["component files&lt;br/&gt;by digest, optional"]
+</code></pre>
+
+<p>A recipient takes the parts it understands and verifies the rest by digest. A package is a derived
+artefact of one placed contract version. The release assembly and OCI export of ADR-A39 and
+ADR-A40 are a candidate container format (IT-Q5).</p>
+
+<h3 id="73-ingesting-exchanged-data">7.3 Ingesting exchanged data</h3>
+
+<p>Anything that arrives in a kit’s form runs through that kit’s lift, the same validation, and the
+same execution as data authored in LATTICE. Identity is preserved. InsurML IRIs are adopted, and
+keys (a policy number, a unique market reference) resolve to existing identities rather than
+minting new ones (ADR-A114). Running a lift twice on the same input yields the same graph.</p>
+
+<h2 id="8-mixing-standards">8. Mixing standards</h2>
+
+<h3 id="81-legalruleml">8.1 LegalRuleML</h3>
+
+<p>Three ways to put LegalRuleML beside InsurML:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Option</th>
+      <th>How</th>
+      <th>For</th>
+      <th>Against</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Companion document</td>
+      <td>a LegalRuleML document whose legal sources are InsurML fragment IRIs, tied to statements by LegalRuleML’s associations</td>
+      <td>no change to InsurML. The published words are untouched. LegalRuleML’s own mechanism for source links is used as designed</td>
+      <td>two documents to keep together</td>
+    </tr>
+    <tr>
+      <td>In the contract package</td>
+      <td>the companion document inside the package</td>
+      <td>one delivery, verified by digest</td>
+      <td>needs a package reader</td>
+    </tr>
+    <tr>
+      <td>Inside InsurML</td>
+      <td>LegalRuleML within <code class="language-plaintext highlighter-rouge">foreign</code>, marked informational</td>
+      <td>one document</td>
+      <td>needs InsurML’s owner to accept it (P-14). A statement marked contractual would put meaning into the published words, which AV4 forbids</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The companion document is the default. Its legal sources are the fragments the meaning was reviewed
+against:</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;lrml:LegalRuleML</span> <span class="na">xmlns:lrml=</span><span class="s">"http://docs.oasis-open.org/legalruleml/ns/v1.0/"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;lrml:LegalSources&gt;</span>
+    <span class="nt">&lt;lrml:LegalSource</span> <span class="na">key=</span><span class="s">"src-flood"</span>
+        <span class="na">sameAs=</span><span class="s">"https://insurer.example/id/component/flood-exclusion/2026-01-01#p1"</span><span class="nt">/&gt;</span>
+  <span class="nt">&lt;/lrml:LegalSources&gt;</span>
+  <span class="nt">&lt;lrml:Associations&gt;</span>
+    <span class="nt">&lt;lrml:Association&gt;</span>
+      <span class="nt">&lt;lrml:appliesSource</span> <span class="na">keyref=</span><span class="s">"#src-flood"</span><span class="nt">/&gt;</span>
+      <span class="nt">&lt;lrml:toTarget</span> <span class="na">keyref=</span><span class="s">"#stmt-flood"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;/lrml:Association&gt;</span>
+  <span class="nt">&lt;/lrml:Associations&gt;</span>
+  <span class="c">&lt;!-- statements, including #stmt-flood, generated from the bound relations --&gt;</span>
+<span class="nt">&lt;/lrml:LegalRuleML&gt;</span>
+</code></pre></div></div>
+
+<p>The statements are generated from bound relations by the LegalRuleML mapping, and lifted back by
+the runtime pipeline, whose refiner refuses what LATTICE cannot hold. The JSON form of the wire
+protocol carries the same structure for consumers without XML.</p>
+
+<h3 id="82-other-standards">8.2 Other standards</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Standard</th>
+      <th>Attaches as</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>InsurLE and Logical English</td>
+      <td>a controlled-English rendering per component version</td>
+      <td>three views of one clause: the InsurML words, the controlled rendering and the reviewed meaning. Agreement raises confidence and disagreement goes to review (ingestion vision §3, logical English alignment sketch)</td>
+    </tr>
+    <tr>
+      <td>ODRL</td>
+      <td>a projection of duties, prohibitions and permissions</td>
+      <td>CCS sketch §8.2</td>
+    </tr>
+    <tr>
+      <td>ACORD</td>
+      <td>an egress kit from the placed contract’s values and terms</td>
+      <td>XML egress sketch §13, for policy administration systems</td>
+    </tr>
+    <tr>
+      <td>MathML</td>
+      <td>a formula inside a component, read as <code class="language-plaintext highlighter-rouge">ins:computedBy</code></td>
+      <td>the formula’s meaning waits for contract amounts (CCS C7b)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="9-reading-documents">9. Reading documents</h2>
+
+<p>The ingestion vision reads a document into LATTICE through a structure stage, recognition, fact
+extraction and meaning proposals. InsurML gives the structure stage a published target with a
+grammar, a vocabulary and validators, and gives recognition exact identifiers and digests.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Document</th>
+      <th>Structure target</th>
+      <th>Facts</th>
+      <th>Meaning</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>policy wording</td>
+      <td>InsurML components and a form</td>
+      <td>none</td>
+      <td>reused from the library, proposed for novel text</td>
+    </tr>
+    <tr>
+      <td>schedule</td>
+      <td>a schedule component and its tables</td>
+      <td>settings and table values</td>
+      <td>none, already bound to the wording</td>
+    </tr>
+    <tr>
+      <td>quote, market reform contract slip</td>
+      <td>components for its conditions, settings for its particulars</td>
+      <td>values, parties, shares</td>
+      <td>reused or proposed</td>
+    </tr>
+    <tr>
+      <td>binding authority agreement</td>
+      <td>modules and components</td>
+      <td>particulars, authority tables</td>
+      <td>authority grants and obligations, reused or proposed</td>
+    </tr>
+    <tr>
+      <td>endorsement</td>
+      <td>amendments against the placed contract</td>
+      <td>effective date, values</td>
+      <td>the amendment’s legal effect (CCS C9)</td>
+    </tr>
+    <tr>
+      <td>certificate</td>
+      <td>an assembled contract of a known form</td>
+      <td>values</td>
+      <td>none</td>
+    </tr>
+    <tr>
+      <td>bordereau</td>
+      <td>not a wording. A MORK structure mapping per layout</td>
+      <td>rows</td>
+      <td>none</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="10-platform-placement">10. Platform placement</h2>
+
+<p>Integration §8.18 places each concern. In short, component files and rendered documents live in
+the artefact realm, addressed by digest, while manifests, the lifted graph, meaning and values live
+in the semantic graph realm through the store SPI. Run records live in the operational realm.
+Lifts, assembly, rendering and compilation run as worker jobs with idempotent
+delivery (ADR-A36), and the egress kits run in the planned semantic XML egress module.</p>
+
+<h2 id="11-open-questions">11. Open questions</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Question</th>
+      <th>Leaning</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>IT-Q1</td>
+      <td>Which authoring front end first?</td>
+      <td>the Word add-in for drafters, since market wording lives in Word. The web studio follows for curation and review</td>
+    </tr>
+    <tr>
+      <td>IT-Q2</td>
+      <td>Where do the add-in and the studio live?</td>
+      <td><code class="language-plaintext highlighter-rouge">apps/</code>, each under an ADR. The studio may grow from the review workbench’s design</td>
+    </tr>
+    <tr>
+      <td>IT-Q5</td>
+      <td>What container does a contract package use?</td>
+      <td>the release assembly’s manifest and digests (ADR-A39), with OCI export where a recipient wants it (ADR-A40)</td>
+    </tr>
+    <tr>
+      <td>IT-Q6</td>
+      <td>Does a question plan belong in the profile, or in the builder?</td>
+      <td>in the compiler’s output, as a derived artefact a builder reads</td>
+    </tr>
+    <tr>
+      <td>IT-Q7</td>
+      <td>Can tracked changes in Word round-trip as amendments?</td>
+      <td>yes for strike and substitute within one fragment, which is the common endorsement. Others become a new component version</td>
+    </tr>
+  </tbody>
+</table>

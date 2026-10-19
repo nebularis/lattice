@@ -1,0 +1,143 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-ccs-c5-wording-amendments-and-law-shapes">Validation Pack: CCS C5, Wording amendments and law shapes</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/computable-contract-substrate.html"><code class="language-plaintext highlighter-rouge">computable-contract-substrate</code></a>
+<strong>Machine:</strong> R. <strong>Branch:</strong> <code class="language-plaintext highlighter-rouge">ccs/c5-wording-laws</code>. Commits are the maintainer’s
+<strong>Plan and test cases:</strong> <a href="/developer/plans/computable-contract-substrate.html">CCS plan</a> (C5 in detail)
+<strong>Decisions:</strong> ADR-A112 decision 3, ADR-A113, C4-Q2’s refinement. C5-Q1, C5-Q2a to C5-Q2d decided 2026-10-02</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>Wording gains textual amendments, and laws W1 to W6 become shapes, so a consumer without the LATTICE runtime can check a wording and an assembled instance completely. New violation-level shapes are breaking under ADR-A113.</p>
+
+<h2 id="test-cases">Test cases</h2>
+
+<p>The table in the plan section above. Each row’s result is recorded under Results at
+verification.</p>
+
+<h2 id="one-command">One command</h2>
+
+<p>Run from the repository root on machine R, with the reasoning harness built where a row is L2.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run build:ontology-catalog <span class="o">&amp;&amp;</span> mise run check:ontology-versioning <span class="o">&amp;&amp;</span> mise run check:ontology-catalog <span class="o">&amp;&amp;</span> mise run check:import-guard
+</code></pre></div></div>
+
+<h2 id="artefacts-to-inspect">Artefacts to inspect</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">ontology/wording/shapes/constraints.ttl</code>: one shape per law, the slot set check and the amendment rules.</li>
+  <li><code class="language-plaintext highlighter-rouge">ontology/wording/examples/facility-amendment.ttl</code>: the second facility version.</li>
+  <li><code class="language-plaintext highlighter-rouge">ontology/wording/README.md</code>: the laws section, the how-to and the release notes.</li>
+</ul>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<p>Evaluating inclusion conditions at assembly (Eligibility’s, in question form). Slot conditions other than intervals over one governing variable, beyond the structural check (C5-Q1): the full check by reasoner is slice C13a. The legal effect of an amendment (C9).</p>
+
+<h2 id="handoff">Handoff</h2>
+
+<p>Written by the building machine when the work is ready for the maintainer to commit.</p>
+
+<ul>
+  <li><strong>Built:</strong> wording, wording-vocab and wording-shapes 0.3.0 (README §5.10, §5.13, §6, §7, §8 to §10),
+the new <code class="language-plaintext highlighter-rouge">shapes/constraints.ttl</code>, catalog and release rows, and the C5 rows in <code class="language-plaintext highlighter-rouge">tools/test_wording.py</code>.</li>
+  <li><strong>Not run:</strong> <code class="language-plaintext highlighter-rouge">check:java</code>, <code class="language-plaintext highlighter-rouge">check:frontend</code> and the other suites C5 does not touch.</li>
+  <li><strong>Check first:</strong> the slot range check in §8 (candidate points: endpoints, a step either side,
+midpoints on dense spaces), and W5’s two exemptions.</li>
+  <li><strong>Deviations from the plan:</strong>
+    <ul>
+      <li>The laws are in a second shapes file, <code class="language-plaintext highlighter-rouge">shapes/constraints.ttl</code>, as in Behaviour and Surface.
+<code class="language-plaintext highlighter-rouge">structural.ttl</code> stays SHACL Core.</li>
+      <li>W5 does not require variables to be included (they are declarations, shown by their values,
+and no example includes them), and accepts a mandatory child removed by a delete that
+generated the assembled wording.</li>
+      <li><code class="language-plaintext highlighter-rouge">wrd:variantOf</code> is no longer functional, and the Core shape “variant of at most one slot” is
+gone: a draft release puts a variant in a second version of its slot, which W1 allows.</li>
+      <li>On a discrete space the step is the space’s granularity floor, or 1 when it declares none. A
+governing variable with no admissible values must be covered for every number.</li>
+      <li>Every amendment states exactly one <code class="language-plaintext highlighter-rouge">wrd:expressedIn</code>. Only a strike and substitute states
+struck or substituted text, and it has no replacement.</li>
+      <li>Rows C5-15 and C5-16 and <code class="language-plaintext highlighter-rouge">wrd:CellShape</code> came with the CC-D6 amendment. C4-04’s fixtures and
+C4-05 now use fields and entries, and C4-05 counts per assembled version.</li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="results">Results</h2>
+
+<p>Written on machine R at verification, 2026-10-02. <code class="language-plaintext highlighter-rouge">tools/test_wording.py</code>: 94 passed, the reasoner
+rows included. <code class="language-plaintext highlighter-rouge">check:ontology-versioning</code>, <code class="language-plaintext highlighter-rouge">check:ontology-catalog</code>, <code class="language-plaintext highlighter-rouge">check:import-guard</code>,
+<code class="language-plaintext highlighter-rouge">check:reasoning-isolation</code> and <code class="language-plaintext highlighter-rouge">check:mork-compilers</code> pass.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Test</th>
+      <th>Result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>C5-01</td>
+      <td><code class="language-plaintext highlighter-rouge">test_c4_02_c5_01_every_example_conforms</code>, <code class="language-plaintext highlighter-rouge">test_c3_14_*</code></td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>C5-02 to C5-06</td>
+      <td><code class="language-plaintext highlighter-rouge">test_c5_02_to_06_laws_w1_to_w5_are_reported</code> (12 cases, each matched on its law’s message), <code class="language-plaintext highlighter-rouge">test_c5_06_a_revision_or_a_delete_stands_for_a_mandatory_child</code></td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>C5-07</td>
+      <td><code class="language-plaintext highlighter-rouge">test_c5_07_values_must_match_their_variable</code> (4 cases)</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>C5-08</td>
+      <td><code class="language-plaintext highlighter-rouge">test_c5_08_slot_ranges_are_disjoint_and_cover</code> (7 cases), <code class="language-plaintext highlighter-rouge">test_c5_08_other_slots_*</code></td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>C5-09</td>
+      <td><code class="language-plaintext highlighter-rouge">test_c5_09_each_operation_has_what_it_needs</code> (6 cases)</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>C5-10</td>
+      <td><code class="language-plaintext highlighter-rouge">test_c5_10_the_second_facility_replaces_and_supersedes</code></td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>C5-11</td>
+      <td><code class="language-plaintext highlighter-rouge">test_c3_09_readme_blocks_equal_the_files</code>, <code class="language-plaintext highlighter-rouge">test_c5_11_release_notes_mark_0_3_0_breaking</code></td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>C5-12</td>
+      <td>the C3 and C4 rows</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>C5-13</td>
+      <td><code class="language-plaintext highlighter-rouge">test_c5_13_an_instance_never_versions_a_library_element</code></td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>C5-14</td>
+      <td><code class="language-plaintext highlighter-rouge">test_c5_14_the_draft_release_derives_from_the_bespoke_revision</code></td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>C5-15</td>
+      <td><code class="language-plaintext highlighter-rouge">test_c5_15_cells_and_orientations</code> (2 cases)</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>C5-16</td>
+      <td><code class="language-plaintext highlighter-rouge">test_c5_16_one_cell_per_declared_field_and_entry</code></td>
+      <td>pass</td>
+    </tr>
+  </tbody>
+</table>

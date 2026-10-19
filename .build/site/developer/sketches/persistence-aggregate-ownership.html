@@ -1,0 +1,974 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="persistence-aggregate-ownership-design-sketch">Persistence: aggregate ownership (design sketch)</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/formal-methods-track-h.html"><code class="language-plaintext highlighter-rouge">formal-methods-track-h</code></a>, slices HO0 to HO9
+(<a href="/developer/plans/formal-methods-track-h.html#35-ho-aggregate-ownership">plan §3.5</a>)
+<strong>Status:</strong> sketch, 2026-10-10. Decisions AO-Q1 to AO-Q12 were taken on 2026-10-10
+(H-D14), and AO-Q13 the same day, option a (H-D15, <a href="#9-named-graph-naming-ao-q13-ho8">§9</a>). The decisions are
+<a href="../../architecture/decisions/ADR-A122-aggregate-ownership.md">ADR-A122</a>, drafted 2026-10-10 and
+Proposed until the maintainer accepts the work package at its close. The slices run end to end.
+<strong>Built from:</strong> the exploration note <a href="/developer/notes/persistence-aggregate-ownership.html">persistence-aggregate-ownership.md</a>,
+its spike <a href="../../../spikes/persistence-aggregate-ownership/README.md"><code class="language-plaintext highlighter-rouge">spikes/persistence-aggregate-ownership</code></a>,
+and the review <a href="/developer/notes/persistence-aggregate-ownership-review.html">persistence-aggregate-ownership-review.md</a>,
+whose finding and decision numbers (S1 to S6, F1 to F9, AO-Q1 to AO-Q13) this sketch cites.
+<strong>Amends:</strong> <a href="../../architecture/decisions/ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md">ADR-A78</a>
+decision 4, through ADR-A122.
+<strong>Compatibility:</strong> none is kept. Nobody uses <code class="language-plaintext highlighter-rouge">persistence</code> except the formal-methods stream
+(agreed 2026-10-10). Terms are removed, not deprecated. Compiled output, examples, witnesses and
+tests change freely. No shim, alias or migration note is written.</p>
+
+<p>This sketch is normative for the HO slices. A slice that finds a rule here wrong stops and asks,
+and does not improvise.</p>
+
+<h2 id="1-the-model-in-one-paragraph">1. The model in one paragraph</h2>
+
+<p>An aggregate is a root and the nodes it owns. Its boundary shape is a SHACL node-shape graph in
+which every property shape that leads to a node is classified as <strong>owned</strong>, a <strong>reference</strong>, or
+<strong>vocabulary</strong>. The <strong>members</strong> are the nodes reached from the root by a path made only of owned
+edges, in the direction each edge declares. The <strong>delete set</strong> is every triple whose subject is the
+root or a member, whatever its predicate, so datatype values, owned edges, reference edges and
+vocabulary edges all go, while the nodes at the far end of reference and vocabulary edges stay. A
+replace, a create and a tombstone delete are generated from one compiled property path. Version
+rows stay one per root.</p>
+
+<pre><code class="language-mermaid">flowchart LR
+    R["root"] -- "owned" --&gt; M1["member"]
+    M1 -- "owned (recursive)" --&gt; M1b["member"]
+    R -- "reference" --&gt; X["entity (stays)"]
+    M1 -- "vocabulary" --&gt; V["concept (stays)"]
+    C["member"] -- "owned, inverse path:&lt;br/&gt;child points at parent" --&gt; R
+</code></pre>
+
+<h2 id="2-definitions">2. Definitions</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Term</th>
+      <th>Meaning</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>boundary shape</td>
+      <td>the <code class="language-plaintext highlighter-rouge">sh:NodeShape</code> named by <code class="language-plaintext highlighter-rouge">dal:boundaryShape</code> on a <code class="language-plaintext highlighter-rouge">dal:AggregateBoundaryProfile</code></td>
+    </tr>
+    <tr>
+      <td>root shape, root class</td>
+      <td>the boundary shape, and its <code class="language-plaintext highlighter-rouge">sh:targetClass</code></td>
+    </tr>
+    <tr>
+      <td>step</td>
+      <td>one hop, <code class="language-plaintext highlighter-rouge">&lt;p&gt;</code> forward or <code class="language-plaintext highlighter-rouge">^&lt;p&gt;</code> inverse</td>
+    </tr>
+    <tr>
+      <td>value property</td>
+      <td>a property shape with <code class="language-plaintext highlighter-rouge">sh:datatype</code>, or with <code class="language-plaintext highlighter-rouge">sh:nodeKind sh:Literal</code></td>
+    </tr>
+    <tr>
+      <td>node property</td>
+      <td>any other property shape. It must carry <code class="language-plaintext highlighter-rouge">dal:ownership</code></td>
+    </tr>
+    <tr>
+      <td>owned edge</td>
+      <td>a node property with <code class="language-plaintext highlighter-rouge">dal:ownership dal:Owned</code></td>
+    </tr>
+    <tr>
+      <td>owned shape</td>
+      <td>the root shape, or the <code class="language-plaintext highlighter-rouge">sh:node</code> of an owned edge</td>
+    </tr>
+    <tr>
+      <td>member</td>
+      <td>a node other than the root reached from the root by a non-empty sequence of owned steps</td>
+    </tr>
+    <tr>
+      <td>member class</td>
+      <td>the <code class="language-plaintext highlighter-rouge">sh:class</code> of an owned edge, else the <code class="language-plaintext highlighter-rouge">sh:targetClass</code> of its <code class="language-plaintext highlighter-rouge">sh:node</code></td>
+    </tr>
+    <tr>
+      <td>data graph</td>
+      <td>the named graph a composite family’s aggregates live in, the profile’s <code class="language-plaintext highlighter-rouge">dal:dataGraph</code></td>
+    </tr>
+    <tr>
+      <td>delete set</td>
+      <td>every triple in the data graph whose subject is the root or a member</td>
+    </tr>
+    <tr>
+      <td>reference data</td>
+      <td><code class="language-plaintext highlighter-rouge">skos:Concept</code>, <code class="language-plaintext highlighter-rouge">skos:ConceptScheme</code>, any class covered by a <code class="language-plaintext highlighter-rouge">dal:ReferenceData</code> declaration, and any class asserted <code class="language-plaintext highlighter-rouge">rdfs:subClassOf+</code> one of these in the configuration graph</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>A skolem IRI is an ordinary IRI here (F5). Payloads are skolemised before they are written, so a
+stored aggregate has no blank nodes. A list or a quantity inside an aggregate is owned only through
+owned edges, for example <code class="language-plaintext highlighter-rouge">rdf:first</code> and <code class="language-plaintext highlighter-rouge">rdf:rest</code> as owned edges of a list shape.</p>
+
+<h2 id="3-declaration-surface-ho3">3. Declaration surface (HO3)</h2>
+
+<p><code class="language-plaintext highlighter-rouge">ontology/persistence</code> goes from 0.2.1 to <strong>0.3.0</strong> (breaking, ADR-A113). Follow skill
+<code class="language-plaintext highlighter-rouge">lattice-ontology-authoring</code> for the version IRI, the catalog and the release row.</p>
+
+<h3 id="31-added-to-specpersistencettl">3.1 Added to <code class="language-plaintext highlighter-rouge">spec/persistence.ttl</code></h3>
+
+<div class="language-turtle highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nn">dal:</span><span class="n">ownership</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">owl:</span><span class="n">ObjectProperty</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">rdfs:</span><span class="n">label</span><span class="w"> </span><span class="s">"ownership"</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">rdfs:</span><span class="n">range</span><span class="w"> </span><span class="nn">dal:</span><span class="n">OwnershipKind</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">rdfs:</span><span class="n">comment</span><span class="w"> </span><span class="s">"On an sh:PropertyShape inside a dal:boundaryShape tree. Classifies the edge the property shape describes, in the context of the node shape that holds it. Mandatory on every property shape that is not a value property (sh:datatype, or sh:nodeKind sh:Literal). Forbidden on a value property."</span><span class="w"> </span><span class="p">.</span><span class="w">
+
+</span><span class="nn">dal:</span><span class="n">OwnershipKind</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">owl:</span><span class="n">Class</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">rdfs:</span><span class="n">label</span><span class="w"> </span><span class="s">"Ownership kind"</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">owl:</span><span class="n">oneOf</span><span class="w"> </span><span class="p">(</span><span class="w"> </span><span class="nn">dal:</span><span class="n">Owned</span><span class="w"> </span><span class="nn">dal:</span><span class="n">Reference</span><span class="w"> </span><span class="nn">dal:</span><span class="n">Vocabulary</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">.</span><span class="w">
+
+</span><span class="nn">dal:</span><span class="n">Owned</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">dal:</span><span class="n">OwnershipKind</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">rdfs:</span><span class="n">comment</span><span class="w"> </span><span class="s">"The node at the far end belongs to the aggregate. It is deleted with the aggregate and its own owned edges are followed."</span><span class="w"> </span><span class="p">.</span><span class="w">
+
+</span><span class="nn">dal:</span><span class="n">Reference</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">dal:</span><span class="n">OwnershipKind</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">rdfs:</span><span class="n">comment</span><span class="w"> </span><span class="s">"The node at the far end is another aggregate or an independent entity. The edge belongs to the aggregate and is deleted with it. The node is never deleted and its edges are not followed."</span><span class="w"> </span><span class="p">.</span><span class="w">
+
+</span><span class="nn">dal:</span><span class="n">Vocabulary</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">dal:</span><span class="n">OwnershipKind</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">rdfs:</span><span class="n">comment</span><span class="w"> </span><span class="s">"As dal:Reference, for an edge to reference data (a concept, a scheme, a code). Declares intent. Behaves as dal:Reference at run time."</span><span class="w"> </span><span class="p">.</span><span class="w">
+
+</span><span class="nn">dal:</span><span class="n">ReferenceData</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">owl:</span><span class="n">Class</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">rdfs:</span><span class="n">label</span><span class="w"> </span><span class="s">"Reference data declaration"</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">rdfs:</span><span class="n">comment</span><span class="w"> </span><span class="s">"Declares that the instances of each dal:coversClass are reference data. An owned edge to reference data is refused unless its profile declares dal:ownsReferenceData true. skos:Concept and skos:ConceptScheme are reference data without a declaration."</span><span class="w"> </span><span class="p">.</span><span class="w">
+
+</span><span class="nn">dal:</span><span class="n">dataGraph</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">owl:</span><span class="n">ObjectProperty</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">rdfs:</span><span class="n">comment</span><span class="w"> </span><span class="s">"On a dal:AggregateBoundaryProfile whose strategy is dal:CompositePropertyBoundary. The named graph that holds the aggregates of this family. Mandatory for that strategy. Every composite operation reads and writes this graph only (static check S-1)."</span><span class="w"> </span><span class="p">.</span><span class="w">
+
+</span><span class="nn">dal:</span><span class="n">ownsReferenceData</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">owl:</span><span class="n">DatatypeProperty</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">rdfs:</span><span class="n">range</span><span class="w"> </span><span class="nn">xsd:</span><span class="n">boolean</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">rdfs:</span><span class="n">comment</span><span class="w"> </span><span class="s">"On a dal:AggregateBoundaryProfile. True for an aggregate that manages reference data, for example a concept scheme and its concepts. Default false."</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span></code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">dal:coversClass</code> already exists and is reused on <code class="language-plaintext highlighter-rouge">dal:ReferenceData</code>. Widen its <code class="language-plaintext highlighter-rouge">rdfs:comment</code> to
+name both uses.</p>
+
+<h3 id="32-removed">3.2 Removed</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Term</th>
+      <th>Why</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">dal:maxTraversalDepth</code></td>
+      <td>recursion is compiled to a path (AO-Q9). The walk visits each shape once, so it needs no bound</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Also remove its property from <code class="language-plaintext highlighter-rouge">dal:AggregateBoundaryProfileShape</code> in <code class="language-plaintext highlighter-rouge">shapes/constraints.ttl</code> (line
+55 today), and every mention in the README, <code class="language-plaintext highlighter-rouge">docs/aggregate-boundaries.md</code> and examples.</p>
+
+<p>Reword the <code class="language-plaintext highlighter-rouge">rdfs:comment</code> of <code class="language-plaintext highlighter-rouge">dal:CompositePropertyBoundary</code> and <code class="language-plaintext highlighter-rouge">dal:boundaryShape</code> to say the
+shape is a classified tree, walked once, with <code class="language-plaintext highlighter-rouge">dal:ownership</code> on every node property.</p>
+
+<h3 id="33-shapes-added-to-shapesconstraintsttl">3.3 Shapes added to <code class="language-plaintext highlighter-rouge">shapes/constraints.ttl</code></h3>
+
+<div class="language-turtle highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nn">dal:</span><span class="n">BoundaryOwnershipShape</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">sh:</span><span class="n">NodeShape</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">sh:</span><span class="n">targetSubjectsOf</span><span class="w"> </span><span class="nn">dal:</span><span class="n">ownership</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">sh:</span><span class="n">property</span><span class="w"> </span><span class="p">[</span><span class="w">
+        </span><span class="nn">sh:</span><span class="n">path</span><span class="w"> </span><span class="nn">dal:</span><span class="n">ownership</span><span class="w"> </span><span class="p">;</span><span class="w">
+        </span><span class="nn">sh:</span><span class="n">maxCount</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="p">;</span><span class="w">
+        </span><span class="nn">sh:</span><span class="n">in</span><span class="w"> </span><span class="p">(</span><span class="w"> </span><span class="nn">dal:</span><span class="n">Owned</span><span class="w"> </span><span class="nn">dal:</span><span class="n">Reference</span><span class="w"> </span><span class="nn">dal:</span><span class="n">Vocabulary</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">;</span><span class="w">
+        </span><span class="nn">sh:</span><span class="n">message</span><span class="w"> </span><span class="s">"dal:ownership takes exactly one of dal:Owned, dal:Reference, dal:Vocabulary."</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">.</span><span class="w">
+
+</span><span class="nn">dal:</span><span class="n">ReferenceDataShape</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">sh:</span><span class="n">NodeShape</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">sh:</span><span class="n">targetClass</span><span class="w"> </span><span class="nn">dal:</span><span class="n">ReferenceData</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">sh:</span><span class="n">property</span><span class="w"> </span><span class="p">[</span><span class="w">
+        </span><span class="nn">sh:</span><span class="n">path</span><span class="w"> </span><span class="nn">dal:</span><span class="n">coversClass</span><span class="w"> </span><span class="p">;</span><span class="w">
+        </span><span class="nn">sh:</span><span class="n">minCount</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="p">;</span><span class="w">
+        </span><span class="nn">sh:</span><span class="n">nodeKind</span><span class="w"> </span><span class="nn">sh:</span><span class="n">IRI</span><span class="w"> </span><span class="p">;</span><span class="w">
+        </span><span class="nn">sh:</span><span class="n">message</span><span class="w"> </span><span class="s">"A dal:ReferenceData declaration names at least one class with dal:coversClass."</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">.</span><span class="w">
+
+</span><span class="nn">dal:</span><span class="n">CompositePropertyBoundaryRequiresDataGraphShape</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">sh:</span><span class="n">NodeShape</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">sh:</span><span class="n">targetClass</span><span class="w"> </span><span class="nn">dal:</span><span class="n">AggregateBoundaryProfile</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">sh:</span><span class="n">sparql</span><span class="w"> </span><span class="p">[</span><span class="w">
+        </span><span class="nn">sh:</span><span class="n">message</span><span class="w"> </span><span class="s">"dal:CompositePropertyBoundary requires dal:dataGraph, the named graph its aggregates live in (ADR-A122 decision 3, static check S-1)."</span><span class="w"> </span><span class="p">;</span><span class="w">
+        </span><span class="nn">sh:</span><span class="n">select</span><span class="w"> </span><span class="s">"""
+            SELECT $this WHERE {
+              $this dal:strategy dal:CompositePropertyBoundary .
+              FILTER NOT EXISTS { $this dal:dataGraph ?g }
+            }"""</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Copy the prefix declarations and <code class="language-plaintext highlighter-rouge">sh:prefixes</code> form of the existing
+<code class="language-plaintext highlighter-rouge">dal:CompositePropertyBoundaryRequiresShapeShape</code> exactly. Add
+<code class="language-plaintext highlighter-rouge">[ sh:path dal:dataGraph ; sh:maxCount 1 ; sh:nodeKind sh:IRI ]</code> to
+<code class="language-plaintext highlighter-rouge">dal:AggregateBoundaryProfileShape</code>.</p>
+
+<p>Add <code class="language-plaintext highlighter-rouge">[ sh:path dal:ownsReferenceData ; sh:maxCount 1 ; sh:datatype xsd:boolean ]</code> to
+<code class="language-plaintext highlighter-rouge">dal:AggregateBoundaryProfileShape</code>.</p>
+
+<h2 id="4-the-walk-ho4">4. The walk (HO4)</h2>
+
+<p>HO4 adds the new walk beside the old one, as a pure addition, and HO5 switches the compiler to it and deletes the old one. The new walk returns an <code class="language-plaintext highlighter-rouge">OwnershipTree</code> and raises nothing for classification
+problems. It records them, and <code class="language-plaintext highlighter-rouge">validator.py</code> raises them (§5), so every refusal kind is a string
+literal in <code class="language-plaintext highlighter-rouge">validator.py</code> where the witness harness finds it (H-D9).</p>
+
+<h3 id="41-data-model">4.1 Data model</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">@</span><span class="n">dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">Step</span><span class="p">:</span>
+    <span class="n">predicate</span><span class="p">:</span> <span class="n">URIRef</span>
+    <span class="n">inverse</span><span class="p">:</span> <span class="nb">bool</span>
+
+<span class="o">@</span><span class="n">dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">Edge</span><span class="p">:</span>
+    <span class="n">source_shape</span><span class="p">:</span> <span class="n">URIRef</span>
+    <span class="n">property_shape</span><span class="p">:</span> <span class="n">Node</span>
+    <span class="n">step</span><span class="p">:</span> <span class="n">Step</span>
+    <span class="n">kind</span><span class="p">:</span> <span class="nb">str</span>                       <span class="c1"># "Owned" | "Reference" | "Vocabulary" | "Value"
+</span>    <span class="n">target_shape</span><span class="p">:</span> <span class="n">URIRef</span> <span class="o">|</span> <span class="bp">None</span>     <span class="c1"># sh:node, or None
+</span>    <span class="n">target_class</span><span class="p">:</span> <span class="n">URIRef</span> <span class="o">|</span> <span class="bp">None</span>     <span class="c1"># sh:class, else sh:targetClass of sh:node, else None
+</span>
+<span class="o">@</span><span class="n">dataclass</span>
+<span class="k">class</span> <span class="nc">OwnershipTree</span><span class="p">:</span>
+    <span class="n">root_shape</span><span class="p">:</span> <span class="n">URIRef</span>
+    <span class="n">root_class</span><span class="p">:</span> <span class="n">URIRef</span> <span class="o">|</span> <span class="bp">None</span>
+    <span class="n">shapes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">URIRef</span><span class="p">]</span>            <span class="c1"># owned shapes in visiting order, root first
+</span>    <span class="n">edges</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Edge</span><span class="p">]</span>               <span class="c1"># every property shape of every owned shape, in walk order
+</span>    <span class="n">complex_paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">URIRef</span><span class="p">,</span> <span class="n">Node</span><span class="p">]]</span>        <span class="c1"># (shape, property shape)
+</span>    <span class="n">unclassified</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">URIRef</span><span class="p">,</span> <span class="n">Node</span><span class="p">,</span> <span class="n">URIRef</span><span class="p">]]</span> <span class="c1"># (shape, property shape, predicate)
+</span>    <span class="n">ownership_on_values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">URIRef</span><span class="p">,</span> <span class="n">Node</span><span class="p">,</span> <span class="n">URIRef</span><span class="p">]]</span>
+
+    <span class="k">def</span> <span class="nf">owned_edges</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Edge</span><span class="p">]</span>
+    <span class="k">def</span> <span class="nf">member_classes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="n">URIRef</span><span class="p">]</span>        <span class="c1"># target_class of owned edges, None dropped
+</span>    <span class="k">def</span> <span class="nf">predicates</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="n">URIRef</span><span class="p">]</span>            <span class="c1"># every step predicate on every owned shape, any kind
+</span>    <span class="k">def</span> <span class="nf">owned_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PathExpr</span> <span class="o">|</span> <span class="bp">None</span>        <span class="c1"># §6. None when there is no owned edge
+</span></code></pre></div></div>
+
+<h3 id="42-algorithm">4.2 Algorithm</h3>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>walk(graph, root_shape):
+    queue = [root_shape], visited = [] (ordered)
+    while queue:
+        shape = queue.pop(0)
+        if shape in visited: continue
+        visited.append(shape)
+        for ps in sorted(sh:property of shape, key = (str(predicate or ""), "1" if inverse else "0", str(ps))):
+            path = sh:path of ps
+            if path is an IRI:                         step = Step(path, False)
+            elif path is a node with exactly one triple (path, sh:inversePath, IRI p):
+                                                       step = Step(p, True)
+            else: record complex_paths, continue
+            kind = functional_value(ps, dal:ownership)    # IRI or None
+            value = (ps sh:datatype ?) or (ps sh:nodeKind sh:Literal)
+            if value:
+                if kind is not None: record ownership_on_values
+                edges.append(Edge(..., kind="Value", target_shape=None, target_class=None)); continue
+            if kind is None: record unclassified, continue
+            target_shape = functional_value(ps, sh:node)
+            target_class = functional_value(ps, sh:class) or (target_shape and functional_value(target_shape, sh:targetClass))
+            edges.append(Edge(..., kind=local_name(kind), target_shape, target_class))
+            if kind == dal:Owned and target_shape is not None: queue.append(target_shape)
+    return OwnershipTree(root_shape, functional_value(root_shape, sh:targetClass), visited, edges, ...)
+</code></pre></div></div>
+
+<p>Notes for the implementer:</p>
+
+<ul>
+  <li>Recursion is legal. A shape reached twice is walked once.</li>
+  <li>The sort key is total and independent of triple order (law L1). Keep H1.4a’s T7 property, now over
+the new tree.</li>
+  <li>A <code class="language-plaintext highlighter-rouge">dal:Reference</code> or <code class="language-plaintext highlighter-rouge">dal:Vocabulary</code> edge never queues its <code class="language-plaintext highlighter-rouge">sh:node</code>. That is what makes
+<code class="language-plaintext highlighter-rouge">sh:node</code> on a reference safe (F1).</li>
+  <li><code class="language-plaintext highlighter-rouge">functional_value</code> (<code class="language-plaintext highlighter-rouge">persistence.functional</code>) refuses a multi-valued <code class="language-plaintext highlighter-rouge">dal:ownership</code>. The shape
+in §3.3 also catches it.</li>
+</ul>
+
+<h3 id="43-where-the-tree-goes-ho5">4.3 Where the tree goes (HO5)</h3>
+
+<p><code class="language-plaintext highlighter-rouge">resolver.py</code> stores the tree as <code class="language-plaintext highlighter-rouge">boundary_dim.extra["ownershipTree"]</code>. It replaces the extras
+<code class="language-plaintext highlighter-rouge">compositeProperties</code>, <code class="language-plaintext highlighter-rouge">compositeEdgeProperties</code> and <code class="language-plaintext highlighter-rouge">maxTraversalDepth</code>, which are removed, and
+<code class="language-plaintext highlighter-rouge">Closure</code>, <code class="language-plaintext highlighter-rouge">walk_boundary_shape</code>’s old return type, and <code class="language-plaintext highlighter-rouge">reachable_properties</code>, which are deleted.
+<code class="language-plaintext highlighter-rouge">BoundaryCycleError</code> is deleted with its witness <code class="language-plaintext highlighter-rouge">refusal-BoundaryCycleError.ttl</code>.
+<code class="language-plaintext highlighter-rouge">MissingBoundaryShapeError</code> stays.</p>
+
+<h2 id="5-refusals-and-warnings-ho6">5. Refusals and warnings (HO6)</h2>
+
+<p>Raised in <code class="language-plaintext highlighter-rouge">validator.py</code>, in this order, so that one fixture triggers exactly one rule. Each is a
+<code class="language-plaintext highlighter-rouge">CrossAxisViolation(kind, str(target), message)</code> except the warning. Each needs a witness in
+<code class="language-plaintext highlighter-rouge">tools/persistence/tests/witnesses/</code>, named <code class="language-plaintext highlighter-rouge">refusal-&lt;Kind&gt;.ttl</code> or <code class="language-plaintext highlighter-rouge">warning-&lt;Kind&gt;.ttl</code>, in the
+slice that adds it, or <code class="language-plaintext highlighter-rouge">mise run check:persistence</code> fails (H1.2).</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Order</th>
+      <th>Kind</th>
+      <th>Condition</th>
+      <th>Message (fill the braces)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td><code class="language-plaintext highlighter-rouge">MissingBoundaryShapeError</code> (exists)</td>
+      <td>composite profile without <code class="language-plaintext highlighter-rouge">dal:boundaryShape</code></td>
+      <td>unchanged</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td><code class="language-plaintext highlighter-rouge">ComplexBoundaryPath</code></td>
+      <td><code class="language-plaintext highlighter-rouge">tree.complex_paths</code> not empty</td>
+      <td><code class="language-plaintext highlighter-rouge">property shape {ps} on {shape} has an sh:path that is neither an IRI nor [ sh:inversePath IRI ]. A boundary shape allows one step per property shape.</code></td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td><code class="language-plaintext highlighter-rouge">UnclassifiedBoundaryEdge</code></td>
+      <td><code class="language-plaintext highlighter-rouge">tree.unclassified</code> not empty</td>
+      <td><code class="language-plaintext highlighter-rouge">property shape {ps} on {shape} ({predicate}) leads to a node but declares no dal:ownership. Classify it as dal:Owned, dal:Reference or dal:Vocabulary.</code></td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td><code class="language-plaintext highlighter-rouge">OwnershipOnValueProperty</code></td>
+      <td><code class="language-plaintext highlighter-rouge">tree.ownership_on_values</code> not empty</td>
+      <td><code class="language-plaintext highlighter-rouge">property shape {ps} on {shape} ({predicate}) is a value property (sh:datatype or sh:nodeKind sh:Literal) and cannot carry dal:ownership.</code></td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td><code class="language-plaintext highlighter-rouge">CompositeBoundaryWithoutOwnedEdges</code></td>
+      <td><code class="language-plaintext highlighter-rouge">tree.owned_edges()</code> is empty</td>
+      <td><code class="language-plaintext highlighter-rouge">boundary shape {shape} owns no edge, so the aggregate is its root alone. Use dal:NamedGraphBoundary or dal:NoBoundary.</code></td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td><code class="language-plaintext highlighter-rouge">OwnedReferenceData</code></td>
+      <td>an owned edge’s <code class="language-plaintext highlighter-rouge">target_class</code> is reference data (§2), and the profile does not have <code class="language-plaintext highlighter-rouge">dal:ownsReferenceData true</code></td>
+      <td><code class="language-plaintext highlighter-rouge">property shape {ps} on {shape} owns {class}, which is reference data. Classify the edge dal:Vocabulary, or declare dal:ownsReferenceData true on the profile if this aggregate manages that vocabulary.</code></td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td><code class="language-plaintext highlighter-rouge">UniquenessOutsideBoundary</code> (exists)</td>
+      <td>a uniqueness key property is not in <code class="language-plaintext highlighter-rouge">tree.predicates()</code></td>
+      <td>unchanged, reworded to say “not a property of the root or of an owned shape”</td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td><code class="language-plaintext highlighter-rouge">BoundaryConflict</code> (exists, rewritten)</td>
+      <td>a member class at <strong>any</strong> depth declares its own boundary strategy other than <code class="language-plaintext highlighter-rouge">dal:NoBoundary</code></td>
+      <td>unchanged text. Today’s check reads only the first level (<a href="../../../tools/persistence/src/persistence/validator.py:504">validator.py:504</a>)</td>
+    </tr>
+    <tr>
+      <td>9</td>
+      <td><code class="language-plaintext highlighter-rouge">OverlappingOwnership</code></td>
+      <td>two composite profiles A and B where <code class="language-plaintext highlighter-rouge">members(A)</code> meets <code class="language-plaintext highlighter-rouge">members(B) ∪ {root(B)}</code></td>
+      <td><code class="language-plaintext highlighter-rouge">{class} is owned by both {shapeA} and {shapeB}. A node belongs to one aggregate.</code></td>
+    </tr>
+    <tr>
+      <td>W</td>
+      <td><code class="language-plaintext highlighter-rouge">ReferenceToOwnedClass</code> (warning)</td>
+      <td>a property shape anywhere in the configuration graph, not on an owned shape of tree T, has <code class="language-plaintext highlighter-rouge">sh:class X</code> or an <code class="language-plaintext highlighter-rouge">sh:node</code> targeting <code class="language-plaintext highlighter-rouge">X</code>, where <code class="language-plaintext highlighter-rouge">X</code> is a member class of T and not T’s root class</td>
+      <td><code class="language-plaintext highlighter-rouge">{ps} points at {X}, which {shapeT} owns. References from outside an aggregate should target its root ({rootClass}), since a deleted member leaves the reference dangling.</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Rules 8 and 9 are configuration-wide and run where <code class="language-plaintext highlighter-rouge">BoundaryConflict</code> runs today. The warning is a
+<code class="language-plaintext highlighter-rouge">Diagnostic(kind="ReferenceToOwnedClass", severity="WARNING", ...)</code>, emitted like
+<code class="language-plaintext highlighter-rouge">MixedReceiptModel</code> (<a href="../../../tools/persistence/src/persistence/validator.py:469">validator.py:469</a>).</p>
+
+<p>Removed in HO5, with its witness and tests: <code class="language-plaintext highlighter-rouge">CompositeBoundaryMultipleProperties</code>. Several owned
+edges are the normal case now.</p>
+
+<h2 id="6-compiling-the-tree-to-one-property-path-ho4">6. Compiling the tree to one property path (HO4)</h2>
+
+<h3 id="61-why-one-path">6.1 Why one path</h3>
+
+<p>SPARQL property paths are regular expressions over predicates. The owned edges form a finite
+automaton whose states are owned shapes, so the set of members is a regular language over steps, and
+state elimination turns it into one path expression. One <code class="language-plaintext highlighter-rouge">OPTIONAL</code> with one path then sweeps the
+aggregate in time linear in its size (F2), recursion becomes <code class="language-plaintext highlighter-rouge">*</code>, inverse edges become <code class="language-plaintext highlighter-rouge">^</code>, and
+SPARQL’s path semantics terminate on cyclic data.</p>
+
+<h3 id="62-expression-tree">6.2 Expression tree</h3>
+
+<p>A new module <code class="language-plaintext highlighter-rouge">persistence/paths.py</code>.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">PathExpr</span><span class="p">:</span> <span class="p">...</span>                          <span class="c1"># abstract
+</span><span class="o">@</span><span class="n">dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span> <span class="k">class</span> <span class="nc">Eps</span><span class="p">(</span><span class="n">PathExpr</span><span class="p">)</span>  <span class="c1"># the empty path
+</span><span class="o">@</span><span class="n">dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span> <span class="k">class</span> <span class="nc">Step</span><span class="p">(</span><span class="n">PathExpr</span><span class="p">):</span> <span class="n">predicate</span><span class="p">:</span> <span class="n">URIRef</span><span class="p">;</span> <span class="n">inverse</span><span class="p">:</span> <span class="nb">bool</span>
+<span class="o">@</span><span class="n">dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span> <span class="k">class</span> <span class="nc">Seq</span><span class="p">(</span><span class="n">PathExpr</span><span class="p">):</span> <span class="n">parts</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">PathExpr</span><span class="p">,</span> <span class="p">...]</span>
+<span class="o">@</span><span class="n">dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span> <span class="k">class</span> <span class="nc">Alt</span><span class="p">(</span><span class="n">PathExpr</span><span class="p">):</span> <span class="n">options</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">PathExpr</span><span class="p">,</span> <span class="p">...]</span>   <span class="c1"># sorted by render()
+</span><span class="o">@</span><span class="n">dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span> <span class="k">class</span> <span class="nc">Star</span><span class="p">(</span><span class="n">PathExpr</span><span class="p">):</span> <span class="n">inner</span><span class="p">:</span> <span class="n">PathExpr</span>
+<span class="o">@</span><span class="n">dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span> <span class="k">class</span> <span class="nc">Opt</span><span class="p">(</span><span class="n">PathExpr</span><span class="p">):</span> <span class="n">inner</span><span class="p">:</span> <span class="n">PathExpr</span>
+
+<span class="k">def</span> <span class="nf">render</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">Step</span><span class="p">:</span>  <span class="s">"&lt;p&gt;"</span> <span class="ow">or</span> <span class="s">"^&lt;p&gt;"</span><span class="p">,</span> <span class="k">with</span> <span class="n">p</span> <span class="n">through</span> <span class="n">terms</span><span class="p">.</span><span class="n">Iri</span><span class="p">.</span><span class="n">encode</span>
+    <span class="n">Seq</span><span class="p">:</span>   <span class="s">"/"</span><span class="p">.</span><span class="n">join</span><span class="p">(</span><span class="n">render</span><span class="p">(</span><span class="n">part</span><span class="p">),</span> <span class="n">parenthesised</span> <span class="n">when</span> <span class="n">part</span> <span class="ow">is</span> <span class="n">Alt</span><span class="p">)</span>
+    <span class="n">Alt</span><span class="p">:</span>   <span class="s">"("</span> <span class="o">+</span> <span class="s">"|"</span><span class="p">.</span><span class="n">join</span><span class="p">(</span><span class="n">render</span><span class="p">(</span><span class="n">option</span><span class="p">))</span> <span class="o">+</span> <span class="s">")"</span>
+    <span class="n">Star</span><span class="p">:</span>  <span class="s">"("</span> <span class="o">+</span> <span class="n">render</span><span class="p">(</span><span class="n">inner</span><span class="p">)</span> <span class="o">+</span> <span class="s">")*"</span>
+    <span class="n">Opt</span><span class="p">:</span>   <span class="s">"("</span> <span class="o">+</span> <span class="n">render</span><span class="p">(</span><span class="n">inner</span><span class="p">)</span> <span class="o">+</span> <span class="s">")?"</span>
+    <span class="n">Eps</span><span class="p">:</span>   <span class="n">never</span> <span class="n">rendered</span> <span class="n">on</span> <span class="n">its</span> <span class="n">own</span> <span class="p">(</span><span class="n">an</span> <span class="n">assertion</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>Smart constructors, which keep the output small and deterministic:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Constructor</th>
+      <th>Rule</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">seq(a, b)</code></td>
+      <td><code class="language-plaintext highlighter-rouge">None</code> if either is <code class="language-plaintext highlighter-rouge">None</code>. <code class="language-plaintext highlighter-rouge">Eps</code> is the identity. Nested <code class="language-plaintext highlighter-rouge">Seq</code> flattens</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">alt(a, b)</code></td>
+      <td><code class="language-plaintext highlighter-rouge">None</code> is the identity. Nested <code class="language-plaintext highlighter-rouge">Alt</code> flattens. Duplicates removed. If <code class="language-plaintext highlighter-rouge">Eps</code> is among several options, the result is <code class="language-plaintext highlighter-rouge">Opt(alt(rest))</code>. If <code class="language-plaintext highlighter-rouge">Opt(x)</code> is among the options, unwrap it to <code class="language-plaintext highlighter-rouge">x</code> and add <code class="language-plaintext highlighter-rouge">Eps</code>. Options sorted by <code class="language-plaintext highlighter-rouge">render</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">star(x)</code></td>
+      <td><code class="language-plaintext highlighter-rouge">star(Eps) = Eps</code>. <code class="language-plaintext highlighter-rouge">star(Star(y)) = Star(y)</code>. <code class="language-plaintext highlighter-rouge">star(Opt(y)) = Star(y)</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="63-state-elimination">6.3 State elimination</h3>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>owned_path(tree):
+    states = tree.shapes + [LEAF]          # LEAF: target of every owned edge with no sh:node
+    R = {}                                  # (from, to) -&gt; PathExpr
+    for e in tree.owned_edges():
+        to = e.target_shape or LEAF
+        R[(e.source_shape, to)] = alt(R.get(...), Step(e.step.predicate, e.step.inverse))
+    R[(START, tree.root_shape)] = Eps
+    for q in states: R[(q, FINAL)] = Eps
+    for q in sorted(states, key=str, with LEAF last):
+        loop = R.pop((q, q), None)
+        ins  = [(p, x) for (p, t), x in R.items() if t == q]
+        outs = [(r, y) for (f, r), y in R.items() if f == q]
+        for p, x in ins:
+            for r, y in outs:
+                R[(p, r)] = alt(R.get((p, r)), seq(seq(x, star(loop) if loop else Eps), y))
+        remove every key with q as either end
+    return R[(START, FINAL)]                # contains Eps, so it renders as "( ... )?"
+</code></pre></div></div>
+
+<p>The result matches the root itself (zero length) and every member. The templates sweep
+<code class="language-plaintext highlighter-rouge">$root &lt;path&gt; ?s . ?s ?p ?o</code>, so the root’s own triples need no separate branch.</p>
+
+<h3 id="64-the-injection-boundary">6.4 The injection boundary</h3>
+
+<p>Add <code class="language-plaintext highlighter-rouge">class PropertyPath(SparqlTerm)</code> to <code class="language-plaintext highlighter-rouge">terms.py</code>, with <code class="language-plaintext highlighter-rouge">encode(expr: PathExpr) -&gt; PropertyPath</code>,
+which renders through <code class="language-plaintext highlighter-rouge">render</code> and so through <code class="language-plaintext highlighter-rouge">Iri.encode</code> for every predicate. Operators come from a
+fixed set, so no adopter string reaches query structure except as an encoded IRI. At encode time,
+parse <code class="language-plaintext highlighter-rouge">SELECT * WHERE { ?a &lt;rendered&gt; ?b }</code> with <code class="language-plaintext highlighter-rouge">rdflib.plugins.sparql.prepareQuery</code> and raise
+<code class="language-plaintext highlighter-rouge">SparqlTermError</code> if it fails. <code class="language-plaintext highlighter-rouge">render.py</code> and <code class="language-plaintext highlighter-rouge">instantiate.py</code> need no change, since a <code class="language-plaintext highlighter-rouge">PropertyPath</code>
+is a <code class="language-plaintext highlighter-rouge">SparqlTerm</code> and <code class="language-plaintext highlighter-rouge">instantiate</code> passes every binding type except <code class="language-plaintext highlighter-rouge">Integer</code> through as encoded
+text. Add <code class="language-plaintext highlighter-rouge">"PropertyPath"</code> to the <code class="language-plaintext highlighter-rouge">param_type</code> comment in <code class="language-plaintext highlighter-rouge">operations.py</code>.</p>
+
+<h3 id="65-expected-path-for-the-reference-fixture">6.5 Expected path for the reference fixture</h3>
+
+<p>Owned edges of §10’s fixture, by source shape: <code class="language-plaintext highlighter-rouge">ProjectShape</code> (<code class="language-plaintext highlighter-rouge">hasMilestone</code> to <code class="language-plaintext highlighter-rouge">MilestoneShape</code>,
+<code class="language-plaintext highlighter-rouge">hasPlan</code> to <code class="language-plaintext highlighter-rouge">PlanShape</code>), <code class="language-plaintext highlighter-rouge">MilestoneShape</code> (<code class="language-plaintext highlighter-rouge">hasTask</code> to <code class="language-plaintext highlighter-rouge">TaskShape</code>), <code class="language-plaintext highlighter-rouge">TaskShape</code> (<code class="language-plaintext highlighter-rouge">attachment</code> to
+<code class="language-plaintext highlighter-rouge">DocumentShape</code>, <code class="language-plaintext highlighter-rouge">^onTask</code> to <code class="language-plaintext highlighter-rouge">CommentShape</code>, <code class="language-plaintext highlighter-rouge">hasSubtask</code> to <code class="language-plaintext highlighter-rouge">TaskShape</code>), and nothing owned from
+<code class="language-plaintext highlighter-rouge">PlanShape</code>, <code class="language-plaintext highlighter-rouge">DocumentShape</code> or <code class="language-plaintext highlighter-rouge">CommentShape</code>. The rendered string depends on elimination order and
+is pinned by a golden test in HO4 after the first run. Its <strong>meaning</strong> is pinned now, by the member
+set in §10.3.</p>
+
+<h2 id="7-generated-operations-ho1-ho5-ho7">7. Generated operations (HO1, HO5, HO7)</h2>
+
+<p><strong>Which graph (AO-Q14, decided 2026-10-10: option a).</strong> A composite family’s aggregates live in one
+named graph, the profile’s <code class="language-plaintext highlighter-rouge">dal:dataGraph</code>, bound as an <code class="language-plaintext highlighter-rouge">Iri</code> named <code class="language-plaintext highlighter-rouge">dataGraph</code>. Every composite
+pattern, delete template and payload from HO5 on is wrapped in <code class="language-plaintext highlighter-rouge">GRAPH }</code>, which meets
+static check S-1 (<a href="/developer/notes/persistence-aggregate-ownership-review.html#71-a-further-question-ao-q14">review F10, §7.1</a>).
+HO1 alone keeps the default graph, because it fixes today’s template before <code class="language-plaintext highlighter-rouge">dal:dataGraph</code>
+exists. A composite profile without <code class="language-plaintext highlighter-rouge">dal:dataGraph</code> is refused as <code class="language-plaintext highlighter-rouge">MissingDataGraph</code> (HO5). Version
+rows, transaction claims and revision records keep their graphs. Tests load their data into the data
+graph. The sections below show the HO1 form, and then the HO5 and HO7 forms with the graph.</p>
+
+<h3 id="71-replace-cas-replace-composite-property-and-its-dataset-guard-variant">7.1 Replace, <code class="language-plaintext highlighter-rouge">cas-replace-composite-property</code> and its dataset-guard variant</h3>
+
+<p><strong>HO1</strong> (before the path exists) changes the existing two templates only in these places:</p>
+
+<div class="language-sparql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">DELETE</span><span class="w"> </span><span class="p">{</span><span class="w">
+  </span><span class="nv">?s</span><span class="w"> </span><span class="nv">?p</span><span class="w"> </span><span class="nv">?o</span><span class="w"> </span><span class="p">.</span><span class="w">
+  </span><span class="k">GRAPH</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">...</span><span class="w"> </span><span class="err">unchanged</span><span class="w"> </span><span class="p">...</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span><span class="k">INSERT</span><span class="w"> </span><span class="p">{</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+  </span><span class="k">GRAPH</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">...</span><span class="w"> </span><span class="err">unchanged</span><span class="w"> </span><span class="p">...</span><span class="w"> </span><span class="p">}</span><span class="w">
+  </span><span class="k">GRAPH</span><span class="w"> </span><span class="p">}</span><span class="w">        </span><span class="p">{</span><span class="w"> </span><span class="p">...</span><span class="w"> </span><span class="err">unchanged</span><span class="w"> </span><span class="p">...</span><span class="w"> </span><span class="p">}</span><span class="w">
+  </span><span class="k">GRAPH</span><span class="w"> </span><span class="nv">?logGraph2</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">...</span><span class="w"> </span><span class="err">unchanged</span><span class="w"> </span><span class="err">revision</span><span class="w"> </span><span class="err">record</span><span class="w"> </span><span class="p">...</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span><span class="k">WHERE</span><span class="w"> </span><span class="p">{</span><span class="w">
+  </span><span class="p">...</span><span class="w"> </span><span class="err">unchanged</span><span class="w"> </span><span class="err">guards</span><span class="w"> </span><span class="err">and</span><span class="w"> </span><span class="err">BINDs</span><span class="w"> </span><span class="p">...</span><span class="w">
+  </span><span class="k">OPTIONAL</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">$root</span><span class="w"> </span><span class="p">}</span><span class="o">*</span><span class="w"> </span><span class="nv">?s</span><span class="w"> </span><span class="p">.</span><span class="w"> </span><span class="nv">?s</span><span class="w"> </span><span class="nv">?p</span><span class="w"> </span><span class="nv">?o</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>So <code class="language-plaintext highlighter-rouge">?root ?p1 ?o1</code> and <code class="language-plaintext highlighter-rouge">?member ?p2 ?o2</code> become one <code class="language-plaintext highlighter-rouge">?s ?p ?o</code>, the two <code class="language-plaintext highlighter-rouge">OPTIONAL</code>s become one, <code class="language-plaintext highlighter-rouge">+</code>
+becomes <code class="language-plaintext highlighter-rouge">*</code> (the zero-length step brings in the root), and the payload leaves <code class="language-plaintext highlighter-rouge">GRAPH ?logGraph</code>.
+Update the template’s header comment to match.</p>
+
+<p><strong>HO5</strong> replaces <code class="language-plaintext highlighter-rouge">}*</code> with <code class="language-plaintext highlighter-rouge">}</code>, bound as a <code class="language-plaintext highlighter-rouge">PropertyPath</code> from
+<code class="language-plaintext highlighter-rouge">tree.owned_path()</code>, and adds the data graph, so the three changed places read:</p>
+
+<div class="language-sparql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">DELETE</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">GRAPH</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">?s</span><span class="w"> </span><span class="nv">?p</span><span class="w"> </span><span class="nv">?o</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">...</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span><span class="k">INSERT</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">GRAPH</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">...</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span><span class="k">WHERE</span><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="p">...</span><span class="w"> </span><span class="k">OPTIONAL</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">GRAPH</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">$root</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="nv">?s</span><span class="w"> </span><span class="p">.</span><span class="w"> </span><span class="nv">?s</span><span class="w"> </span><span class="nv">?p</span><span class="w"> </span><span class="nv">?o</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>The <code class="language-plaintext highlighter-rouge">compositeProperty</code> binding is removed from <code class="language-plaintext highlighter-rouge">operations.py</code>.</p>
+
+<h3 id="72-create-create-if-absent-composite-and-its-dataset-guard-variant-ho7-closes-td-04">7.2 Create, <code class="language-plaintext highlighter-rouge">create-if-absent-composite</code> and its dataset-guard variant (HO7, closes TD-04)</h3>
+
+<p>Copy <code class="language-plaintext highlighter-rouge">create-if-absent-named-graph.mustache</code> and its dataset-guard variant. Then:</p>
+
+<ul>
+  <li>the payload goes to the data graph: <code class="language-plaintext highlighter-rouge">INSERT { GRAPH } { } } ... }</code></li>
+  <li>delete the <code class="language-plaintext highlighter-rouge">BIND(... AS ?g)</code> line and the <code class="language-plaintext highlighter-rouge">graphPrefix</code> binding</li>
+  <li>add a guard that nothing of the root is already in the data graph:
+<code class="language-plaintext highlighter-rouge">FILTER NOT EXISTS { GRAPH } { $root ?anyP ?anyO } }</code></li>
+</ul>
+
+<p>Generated when the boundary is composite and <code class="language-plaintext highlighter-rouge">dal:firstWrite</code> is <code class="language-plaintext highlighter-rouge">dal:AbsentRow</code>, exactly as the
+named-graph create is generated for a named-graph boundary today.</p>
+
+<h3 id="73-tombstone-delete-tombstone-delete-composite-and-its-dataset-guard-variant-ho7">7.3 Tombstone delete, <code class="language-plaintext highlighter-rouge">tombstone-delete-composite</code> and its dataset-guard variant (HO7)</h3>
+
+<p>Copy <code class="language-plaintext highlighter-rouge">tombstone-delete-named-graph.mustache</code> and its dataset-guard variant. Then:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">DELETE { GRAPH } { ?s ?p ?o } GRAPH } { ... } }</code></li>
+  <li>replace <code class="language-plaintext highlighter-rouge">OPTIONAL { GRAPH ?g { ?s ?p ?o } }</code> with
+<code class="language-plaintext highlighter-rouge">OPTIONAL { GRAPH } { $root } ?s . ?s ?p ?o } }</code></li>
+  <li>delete the <code class="language-plaintext highlighter-rouge">?g</code> <code class="language-plaintext highlighter-rouge">BIND</code> and the <code class="language-plaintext highlighter-rouge">graphPrefix</code> binding</li>
+</ul>
+
+<p>Generated wherever the named-graph tombstone is generated for a named-graph boundary.</p>
+
+<h3 id="74-every-new-or-changed-template">7.4 Every new or changed template</h3>
+
+<ul>
+  <li>appears in <code class="language-plaintext highlighter-rouge">test_template_alignment.py</code></li>
+  <li>is reached by a fixture (H1.3’s rule), adding <code class="language-plaintext highlighter-rouge">template-&lt;name&gt;.ttl</code> witnesses where no example
+reaches it</li>
+  <li>passes S-3 and S-4 (<code class="language-plaintext highlighter-rouge">python -m persistence hygiene</code>). The previous-revision allowance in
+<code class="language-plaintext highlighter-rouge">templatecheck.OPTIONAL_INSERT_VARIABLES</code> applies to the new tombstone as it does to the
+named-graph one. The new create needs none</li>
+</ul>
+
+<h3 id="75-what-is-not-generated">7.5 What is not generated</h3>
+
+<p>No partial update, no “set at a node”, no add-child or remove-child operation. Those are level
+operations, deferred with units (§11). Whole-replace stays the only edit, guarded by the root’s
+version row.</p>
+
+<h2 id="8-named-graph-strategy-and-the-shared-tree">8. Named-graph strategy and the shared tree</h2>
+
+<p>AO-Q7. A <code class="language-plaintext highlighter-rouge">dal:NamedGraphBoundary</code> profile <strong>may</strong> name a <code class="language-plaintext highlighter-rouge">dal:boundaryShape</code>. When it does, the
+compiler walks it, applies refusals 2 to 6 and the warning, and records the tree. No SPARQL changes:
+the graph is the aggregate. The tree defines which subjects a payload may contain, and H2’s IR
+enforces that as the payload check (<a href="#12-what-h2-inherits">§12</a>). Documentation recommends named
+graphs for new deployments (HO7). The compiler’s default boundary strategy does not change.</p>
+
+<h2 id="9-named-graph-naming-ao-q13-ho8">9. Named-graph naming, AO-Q13 (HO8)</h2>
+
+<p>Decided 2026-10-10, option a (H-D15). The options and the reasoning on IRI length are in the
+<a href="/developer/notes/persistence-aggregate-ownership-review.html#7-one-new-question-ao-q13">review §7</a>. HO8 does this:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">dal:graphIriTemplate</code> must contain <code class="language-plaintext highlighter-rouge">{id}</code> exactly once. Its comment says <code class="language-plaintext highlighter-rouge">{id}</code> is replaced by the
+root IRI, percent-encoded with <code class="language-plaintext highlighter-rouge">ENCODE_FOR_URI</code>. A template without <code class="language-plaintext highlighter-rouge">{id}</code> is refused as
+<code class="language-plaintext highlighter-rouge">GraphIriTemplateInvalid</code> (new, witnessed).</li>
+  <li><code class="language-plaintext highlighter-rouge">operations.py</code> splits the template at <code class="language-plaintext highlighter-rouge">{id}</code> into <code class="language-plaintext highlighter-rouge">graphPrefix</code> and <code class="language-plaintext highlighter-rouge">graphSuffix</code>, binding both.</li>
+  <li>Every named-graph template computes
+<code class="language-plaintext highlighter-rouge">BIND(IRI(CONCAT(}, ENCODE_FOR_URI(STR($root)), })) AS ?g)</code>. They are
+the six named-graph templates: create, replace, tombstone, each with its dataset-guard variant. Also
+<code class="language-plaintext highlighter-rouge">unconditional-write</code> where it names <code class="language-plaintext highlighter-rouge">?g</code>.</li>
+  <li>When a profile declares no template, the compiler uses <code class="language-plaintext highlighter-rouge">urn:g:&lt;family token&gt;/{id}</code>, the family
+token as <code class="language-plaintext highlighter-rouge">_family_token</code> computes it for event graphs today.</li>
+  <li><strong>Across families</strong> (review F11): the prefixes before <code class="language-plaintext highlighter-rouge">{id}</code> of every named-graph family in one
+configuration form an antichain, or the compile is refused as <code class="language-plaintext highlighter-rouge">GraphIriTemplateOverlap</code>, naming
+both profiles. A non-empty suffix after <code class="language-plaintext highlighter-rouge">{id}</code> begins with a character that <code class="language-plaintext highlighter-rouge">ENCODE_FOR_URI</code>
+never emits, that is, not one of <code class="language-plaintext highlighter-rouge">A-Z a-z 0-9 - . _ ~ %</code>, or the template is refused as
+<code class="language-plaintext highlighter-rouge">GraphIriTemplateInvalid</code>. With both rules, equal graph IRIs imply the same family and the same root.</li>
+  <li>Tests: two roots <code class="language-plaintext highlighter-rouge">https://example.org/a/1</code> and <code class="language-plaintext highlighter-rouge">https://example.org/b/1</code> get different graphs. A
+template <code class="language-plaintext highlighter-rouge">urn:g:orders/{id}/data</code> keeps <code class="language-plaintext highlighter-rouge">/data</code>. A template without <code class="language-plaintext highlighter-rouge">{id}</code>, and one whose suffix is
+<code class="language-plaintext highlighter-rouge">data</code> (no separator), are refused as <code class="language-plaintext highlighter-rouge">GraphIriTemplateInvalid</code>. Two families with templates
+<code class="language-plaintext highlighter-rouge">urn:g:{id}</code> and <code class="language-plaintext highlighter-rouge">urn:g:orders/{id}</code> are refused as <code class="language-plaintext highlighter-rouge">GraphIriTemplateOverlap</code>.</li>
+</ul>
+
+<h2 id="10-the-reference-fixture">10. The reference fixture</h2>
+
+<p>Domain-neutral, because substrate documentation must be (<code class="language-plaintext highlighter-rouge">AGENTS.md</code>). It has the structure of the
+placement example in the exploration note: several owned relations, a recursion, an edge that is owned in one
+context and a reference in another, an inverse edge, a reference outside, and vocabulary. HO4 adds it
+as <code class="language-plaintext highlighter-rouge">ontology/persistence/examples/composite-project-ownership.ttl</code> (configuration and shape) and
+<code class="language-plaintext highlighter-rouge">tools/persistence/tests/fixtures/project-data.ttl</code> (instance data).</p>
+
+<h3 id="101-configuration-and-boundary-shape">10.1 Configuration and boundary shape</h3>
+
+<div class="language-turtle highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">@prefix</span><span class="w"> </span><span class="nn">dal:</span><span class="w">  </span><span class="nl">&lt;https://www.nebularis.org/neuro-semantic/lattice/persistence#&gt;</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="kd">@prefix</span><span class="w"> </span><span class="nn">ex:</span><span class="w">   </span><span class="nl">&lt;https://example.org/projects#&gt;</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="kd">@prefix</span><span class="w"> </span><span class="nn">sh:</span><span class="w">   </span><span class="nl">&lt;http://www.w3.org/ns/shacl#&gt;</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="kd">@prefix</span><span class="w"> </span><span class="nn">skos:</span><span class="w"> </span><span class="nl">&lt;http://www.w3.org/2004/02/skos/core#&gt;</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="kd">@prefix</span><span class="w"> </span><span class="nn">xsd:</span><span class="w">  </span><span class="nl">&lt;http://www.w3.org/2001/XMLSchema#&gt;</span><span class="w"> </span><span class="p">.</span><span class="w">
+
+</span><span class="nn">ex:</span><span class="n">ProjectClass</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">dal:</span><span class="n">ClassScope</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">dal:</span><span class="n">targetClass</span><span class="w"> </span><span class="nn">ex:</span><span class="n">Project</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">dal:</span><span class="n">priority</span><span class="w"> </span><span class="s">"20"</span><span class="p">^^</span><span class="nn">xsd:</span><span class="n">integer</span><span class="w"> </span><span class="p">.</span><span class="w">
+
+</span><span class="nn">ex:</span><span class="n">ProjectBoundaryProfile</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">dal:</span><span class="n">AggregateBoundaryProfile</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">dal:</span><span class="n">appliesTo</span><span class="w">     </span><span class="nn">ex:</span><span class="n">ProjectClass</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">dal:</span><span class="n">strategy</span><span class="w">      </span><span class="nn">dal:</span><span class="n">CompositePropertyBoundary</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">dal:</span><span class="n">boundaryShape</span><span class="w"> </span><span class="nn">ex:</span><span class="n">ProjectShape</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">dal:</span><span class="n">dataGraph</span><span class="w">     </span><span class="nl">&lt;urn:g:projects&gt;</span><span class="w"> </span><span class="p">.</span><span class="w">
+
+</span><span class="nn">ex:</span><span class="n">ProjectConcurrencyProfile</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">dal:</span><span class="n">ConcurrencyProfile</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">dal:</span><span class="n">appliesTo</span><span class="w">           </span><span class="nn">ex:</span><span class="n">ProjectClass</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">dal:</span><span class="n">concurrencyProfile</span><span class="w">  </span><span class="nn">dal:</span><span class="n">Optimistic</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">dal:</span><span class="n">minConcurrencyLevel</span><span class="w"> </span><span class="nn">dal:</span><span class="n">Linearizable</span><span class="w"> </span><span class="p">.</span><span class="w">
+
+</span><span class="nn">ex:</span><span class="n">ProjectReceiptProfile</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">dal:</span><span class="n">ReceiptProfile</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">dal:</span><span class="n">appliesTo</span><span class="w">    </span><span class="nn">ex:</span><span class="n">ProjectClass</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">dal:</span><span class="n">receiptModel</span><span class="w"> </span><span class="nn">dal:</span><span class="n">PatchLog</span><span class="w"> </span><span class="p">.</span><span class="w">
+
+</span><span class="nn">ex:</span><span class="n">ProjectShape</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">sh:</span><span class="n">NodeShape</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">sh:</span><span class="n">targetClass</span><span class="w"> </span><span class="nn">ex:</span><span class="n">Project</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">sh:</span><span class="n">property</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="nn">sh:</span><span class="n">path</span><span class="w"> </span><span class="nn">ex:</span><span class="n">name</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">sh:</span><span class="n">datatype</span><span class="w"> </span><span class="nn">xsd:</span><span class="n">string</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">,</span><span class="w">
+                </span><span class="p">[</span><span class="w"> </span><span class="nn">sh:</span><span class="n">path</span><span class="w"> </span><span class="nn">ex:</span><span class="n">forClient</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">sh:</span><span class="n">class</span><span class="w"> </span><span class="nn">ex:</span><span class="n">Organisation</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">dal:</span><span class="n">ownership</span><span class="w"> </span><span class="nn">dal:</span><span class="n">Reference</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">,</span><span class="w">
+                </span><span class="p">[</span><span class="w"> </span><span class="nn">sh:</span><span class="n">path</span><span class="w"> </span><span class="nn">ex:</span><span class="n">hasMilestone</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">sh:</span><span class="n">node</span><span class="w"> </span><span class="nn">ex:</span><span class="n">MilestoneShape</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">dal:</span><span class="n">ownership</span><span class="w"> </span><span class="nn">dal:</span><span class="n">Owned</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">,</span><span class="w">
+                </span><span class="p">[</span><span class="w"> </span><span class="nn">sh:</span><span class="n">path</span><span class="w"> </span><span class="nn">ex:</span><span class="n">hasPlan</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">sh:</span><span class="n">node</span><span class="w"> </span><span class="nn">ex:</span><span class="n">PlanShape</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">dal:</span><span class="n">ownership</span><span class="w"> </span><span class="nn">dal:</span><span class="n">Owned</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">.</span><span class="w">
+
+</span><span class="nn">ex:</span><span class="n">MilestoneShape</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">sh:</span><span class="n">NodeShape</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">sh:</span><span class="n">targetClass</span><span class="w"> </span><span class="nn">ex:</span><span class="n">Milestone</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">sh:</span><span class="n">property</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="nn">sh:</span><span class="n">path</span><span class="w"> </span><span class="nn">ex:</span><span class="n">due</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">sh:</span><span class="n">datatype</span><span class="w"> </span><span class="nn">xsd:</span><span class="n">date</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">,</span><span class="w">
+                </span><span class="p">[</span><span class="w"> </span><span class="nn">sh:</span><span class="n">path</span><span class="w"> </span><span class="nn">ex:</span><span class="n">hasTask</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">sh:</span><span class="n">node</span><span class="w"> </span><span class="nn">ex:</span><span class="n">TaskShape</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">dal:</span><span class="n">ownership</span><span class="w"> </span><span class="nn">dal:</span><span class="n">Owned</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">.</span><span class="w">
+
+</span><span class="nn">ex:</span><span class="n">TaskShape</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">sh:</span><span class="n">NodeShape</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">sh:</span><span class="n">targetClass</span><span class="w"> </span><span class="nn">ex:</span><span class="n">Task</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">sh:</span><span class="n">property</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="nn">sh:</span><span class="n">path</span><span class="w"> </span><span class="nn">ex:</span><span class="n">status</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">sh:</span><span class="n">class</span><span class="w"> </span><span class="nn">skos:</span><span class="n">Concept</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">dal:</span><span class="n">ownership</span><span class="w"> </span><span class="nn">dal:</span><span class="n">Vocabulary</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">,</span><span class="w">
+                </span><span class="p">[</span><span class="w"> </span><span class="nn">sh:</span><span class="n">path</span><span class="w"> </span><span class="nn">ex:</span><span class="n">assignee</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">sh:</span><span class="n">class</span><span class="w"> </span><span class="nn">ex:</span><span class="n">Person</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">dal:</span><span class="n">ownership</span><span class="w"> </span><span class="nn">dal:</span><span class="n">Reference</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">,</span><span class="w">
+                </span><span class="p">[</span><span class="w"> </span><span class="nn">sh:</span><span class="n">path</span><span class="w"> </span><span class="nn">ex:</span><span class="n">hasSubtask</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">sh:</span><span class="n">node</span><span class="w"> </span><span class="nn">ex:</span><span class="n">TaskShape</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">dal:</span><span class="n">ownership</span><span class="w"> </span><span class="nn">dal:</span><span class="n">Owned</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">,</span><span class="w">
+                </span><span class="p">[</span><span class="w"> </span><span class="nn">sh:</span><span class="n">path</span><span class="w"> </span><span class="nn">ex:</span><span class="n">attachment</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">sh:</span><span class="n">node</span><span class="w"> </span><span class="nn">ex:</span><span class="n">DocumentShape</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">dal:</span><span class="n">ownership</span><span class="w"> </span><span class="nn">dal:</span><span class="n">Owned</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">,</span><span class="w">
+                </span><span class="p">[</span><span class="w"> </span><span class="nn">sh:</span><span class="n">path</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="nn">sh:</span><span class="n">inversePath</span><span class="w"> </span><span class="nn">ex:</span><span class="n">onTask</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">sh:</span><span class="n">node</span><span class="w"> </span><span class="nn">ex:</span><span class="n">CommentShape</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">dal:</span><span class="n">ownership</span><span class="w"> </span><span class="nn">dal:</span><span class="n">Owned</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">.</span><span class="w">
+
+</span><span class="nn">ex:</span><span class="n">PlanShape</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">sh:</span><span class="n">NodeShape</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">sh:</span><span class="n">targetClass</span><span class="w"> </span><span class="nn">ex:</span><span class="n">Plan</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">sh:</span><span class="n">property</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="nn">sh:</span><span class="n">path</span><span class="w"> </span><span class="nn">ex:</span><span class="n">attachment</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">sh:</span><span class="n">class</span><span class="w"> </span><span class="nn">ex:</span><span class="n">Document</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">dal:</span><span class="n">ownership</span><span class="w"> </span><span class="nn">dal:</span><span class="n">Reference</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">.</span><span class="w">
+
+</span><span class="nn">ex:</span><span class="n">DocumentShape</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">sh:</span><span class="n">NodeShape</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">sh:</span><span class="n">targetClass</span><span class="w"> </span><span class="nn">ex:</span><span class="n">Document</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">sh:</span><span class="n">property</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="nn">sh:</span><span class="n">path</span><span class="w"> </span><span class="nn">ex:</span><span class="n">title</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">sh:</span><span class="n">datatype</span><span class="w"> </span><span class="nn">xsd:</span><span class="n">string</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">.</span><span class="w">
+
+</span><span class="nn">ex:</span><span class="n">CommentShape</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">sh:</span><span class="n">NodeShape</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">sh:</span><span class="n">targetClass</span><span class="w"> </span><span class="nn">ex:</span><span class="n">Comment</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">sh:</span><span class="n">property</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="nn">sh:</span><span class="n">path</span><span class="w"> </span><span class="nn">ex:</span><span class="n">text</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">sh:</span><span class="n">datatype</span><span class="w"> </span><span class="nn">xsd:</span><span class="n">string</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">,</span><span class="w">
+                </span><span class="p">[</span><span class="w"> </span><span class="nn">sh:</span><span class="n">path</span><span class="w"> </span><span class="nn">ex:</span><span class="n">onTask</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">sh:</span><span class="n">class</span><span class="w"> </span><span class="nn">ex:</span><span class="n">Task</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">dal:</span><span class="n">ownership</span><span class="w"> </span><span class="nn">dal:</span><span class="n">Reference</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span></code></pre></div></div>
+
+<p>The scope and profiles copy the form of the shipped <code class="language-plaintext highlighter-rouge">composite-property-boundary-shacl.ttl</code>,
+without its <code class="language-plaintext highlighter-rouge">dal:maxTraversalDepth</code> (removed, §3.2).</p>
+
+<p><code class="language-plaintext highlighter-rouge">CommentShape</code>’s forward <code class="language-plaintext highlighter-rouge">onTask</code> is a <code class="language-plaintext highlighter-rouge">dal:Reference</code> from the comment’s side. Its triple is
+still deleted because the comment is a member and the triple’s subject is the comment.</p>
+
+<h3 id="102-instance-data">10.2 Instance data</h3>
+
+<p>Loaded into the data graph <code class="language-plaintext highlighter-rouge">&lt;urn:g:projects&gt;</code> from HO5 on, and into the default graph for HO4’s
+path tests, which do not involve operations.</p>
+
+<div class="language-turtle highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">@prefix</span><span class="w"> </span><span class="nn">ex:</span><span class="w">   </span><span class="nl">&lt;https://example.org/projects#&gt;</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="kd">@prefix</span><span class="w"> </span><span class="nn">skos:</span><span class="w"> </span><span class="nl">&lt;http://www.w3.org/2004/02/skos/core#&gt;</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="kd">@prefix</span><span class="w"> </span><span class="nn">xsd:</span><span class="w">  </span><span class="nl">&lt;http://www.w3.org/2001/XMLSchema#&gt;</span><span class="w"> </span><span class="p">.</span><span class="w">
+
+</span><span class="nn">ex:</span><span class="n">p1</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">ex:</span><span class="n">Project</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ex:</span><span class="n">name</span><span class="w"> </span><span class="s">"Apollo"</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ex:</span><span class="n">forClient</span><span class="w"> </span><span class="nn">ex:</span><span class="n">acme</span><span class="w"> </span><span class="p">;</span><span class="w">
+      </span><span class="nn">ex:</span><span class="n">hasMilestone</span><span class="w"> </span><span class="nn">ex:</span><span class="n">m1</span><span class="w"> </span><span class="p">,</span><span class="w"> </span><span class="nn">ex:</span><span class="n">m2</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ex:</span><span class="n">hasPlan</span><span class="w"> </span><span class="nn">ex:</span><span class="n">plan1</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="nn">ex:</span><span class="n">m1</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">ex:</span><span class="n">Milestone</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ex:</span><span class="n">due</span><span class="w"> </span><span class="s">"2026-11-01"</span><span class="p">^^</span><span class="nn">xsd:</span><span class="n">date</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ex:</span><span class="n">hasTask</span><span class="w"> </span><span class="nn">ex:</span><span class="n">t1</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="nn">ex:</span><span class="n">m2</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">ex:</span><span class="n">Milestone</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ex:</span><span class="n">due</span><span class="w"> </span><span class="s">"2026-12-01"</span><span class="p">^^</span><span class="nn">xsd:</span><span class="n">date</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="nn">ex:</span><span class="n">t1</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">ex:</span><span class="n">Task</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ex:</span><span class="n">status</span><span class="w"> </span><span class="nn">ex:</span><span class="n">InProgress</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ex:</span><span class="n">assignee</span><span class="w"> </span><span class="nn">ex:</span><span class="n">alice</span><span class="w"> </span><span class="p">;</span><span class="w">
+      </span><span class="nn">ex:</span><span class="n">hasSubtask</span><span class="w"> </span><span class="nn">ex:</span><span class="n">t2</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ex:</span><span class="n">attachment</span><span class="w"> </span><span class="nn">ex:</span><span class="n">docOwned</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="nn">ex:</span><span class="n">t2</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">ex:</span><span class="n">Task</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ex:</span><span class="n">status</span><span class="w"> </span><span class="nn">ex:</span><span class="n">Done</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ex:</span><span class="n">hasSubtask</span><span class="w"> </span><span class="nn">ex:</span><span class="n">t3</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="nn">ex:</span><span class="n">t3</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">ex:</span><span class="n">Task</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ex:</span><span class="n">status</span><span class="w"> </span><span class="nn">ex:</span><span class="n">Done</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="nn">ex:</span><span class="n">docOwned</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">ex:</span><span class="n">Document</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ex:</span><span class="n">title</span><span class="w"> </span><span class="s">"Task notes"</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="nn">ex:</span><span class="n">c1</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">ex:</span><span class="n">Comment</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ex:</span><span class="n">text</span><span class="w"> </span><span class="s">"Looks good"</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ex:</span><span class="n">onTask</span><span class="w"> </span><span class="nn">ex:</span><span class="n">t1</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="nn">ex:</span><span class="n">plan1</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">ex:</span><span class="n">Plan</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ex:</span><span class="n">attachment</span><span class="w"> </span><span class="nn">ex:</span><span class="n">docShared</span><span class="w"> </span><span class="p">.</span><span class="w">
+
+</span><span class="c1"># outside the aggregate</span><span class="w">
+</span><span class="nn">ex:</span><span class="n">acme</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">ex:</span><span class="n">Organisation</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ex:</span><span class="n">name</span><span class="w"> </span><span class="s">"Acme"</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="nn">ex:</span><span class="n">alice</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">ex:</span><span class="n">Person</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ex:</span><span class="n">name</span><span class="w"> </span><span class="s">"Alice"</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="nn">ex:</span><span class="n">docShared</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">ex:</span><span class="n">Document</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ex:</span><span class="n">title</span><span class="w"> </span><span class="s">"Shared template"</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="nn">ex:</span><span class="n">InProgress</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">skos:</span><span class="n">Concept</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">skos:</span><span class="n">inScheme</span><span class="w"> </span><span class="nn">ex:</span><span class="n">TaskStatuses</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="nn">ex:</span><span class="n">Done</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">skos:</span><span class="n">Concept</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">skos:</span><span class="n">inScheme</span><span class="w"> </span><span class="nn">ex:</span><span class="n">TaskStatuses</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="nn">ex:</span><span class="n">TaskStatuses</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">skos:</span><span class="n">ConceptScheme</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="nn">ex:</span><span class="n">report1</span><span class="w"> </span><span class="nn">ex:</span><span class="n">about</span><span class="w"> </span><span class="nn">ex:</span><span class="n">p1</span><span class="w"> </span><span class="p">.</span><span class="w">
+
+</span><span class="c1"># a second aggregate that must be untouched</span><span class="w">
+</span><span class="nn">ex:</span><span class="n">p2</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">ex:</span><span class="n">Project</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ex:</span><span class="n">name</span><span class="w"> </span><span class="s">"Gemini"</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ex:</span><span class="n">hasMilestone</span><span class="w"> </span><span class="nn">ex:</span><span class="n">m9</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="nn">ex:</span><span class="n">m9</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">ex:</span><span class="n">Milestone</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ex:</span><span class="n">due</span><span class="w"> </span><span class="s">"2027-01-01"</span><span class="p">^^</span><span class="nn">xsd:</span><span class="n">date</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span></code></pre></div></div>
+
+<h3 id="103-expected-results">10.3 Expected results</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Question</th>
+      <th>Answer</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>members of <code class="language-plaintext highlighter-rouge">ex:p1</code></td>
+      <td><code class="language-plaintext highlighter-rouge">m1, m2, t1, t2, t3, docOwned, c1, plan1</code> (8)</td>
+    </tr>
+    <tr>
+      <td>delete set</td>
+      <td>every triple whose subject is <code class="language-plaintext highlighter-rouge">p1</code> or one of the 8 members (28 triples: <code class="language-plaintext highlighter-rouge">p1</code> 6, <code class="language-plaintext highlighter-rouge">m1</code> 3, <code class="language-plaintext highlighter-rouge">m2</code> 2, <code class="language-plaintext highlighter-rouge">t1</code> 5, <code class="language-plaintext highlighter-rouge">t2</code> 3, <code class="language-plaintext highlighter-rouge">t3</code> 2, <code class="language-plaintext highlighter-rouge">docOwned</code> 2, <code class="language-plaintext highlighter-rouge">c1</code> 3, <code class="language-plaintext highlighter-rouge">plan1</code> 2)</td>
+    </tr>
+    <tr>
+      <td>left after deleting <code class="language-plaintext highlighter-rouge">p1</code>’s aggregate, by subject</td>
+      <td><code class="language-plaintext highlighter-rouge">acme, alice, docShared, InProgress, Done, TaskStatuses, report1, p2, m9</code>, every one with all its triples</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ex:report1 ex:about ex:p1</code></td>
+      <td>left, since its subject is outside</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">docShared</code></td>
+      <td>left: owned from <code class="language-plaintext highlighter-rouge">TaskShape</code>, a reference from <code class="language-plaintext highlighter-rouge">PlanShape</code>, and reached only from <code class="language-plaintext highlighter-rouge">plan1</code></td>
+    </tr>
+    <tr>
+      <td>a flat alternation of every owned predicate, for contrast</td>
+      <td>would also reach <code class="language-plaintext highlighter-rouge">docShared</code> (the context problem, note §4.1)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Assert 28 in the test. If it differs,
+recount by hand and correct this table in the same slice.</p>
+
+<h2 id="11-deferred-units-and-level-operations">11. Deferred: units and level operations</h2>
+
+<p>AO-Q5. Not built. Recorded so a later slice can start from it.</p>
+
+<ul>
+  <li><strong>Units.</strong> A unit is an owned node with its own version row. Rules, from the spike’s D2 and D4
+(note §7.3): an edit bumps the row of its nearest enclosing unit. Creating or removing a child unit
+bumps the parent unit’s row. Removing a unit also bumps and tombstones every unit below it, as
+found in the removal’s own snapshot. A declared cross-level invariant has its own row, bumped by
+every writer it covers. Sequences and receipts become per unit, and an as-of read of the whole
+aggregate then needs a rule (note §7.6).</li>
+  <li><strong>Level operations.</strong> Set at a node replaces the node’s value properties and reference and
+vocabulary edges, <strong>never its owned edges</strong> (F7). Add child inserts one owned edge and the child’s
+triples. Remove child deletes the edge and the child’s delete set.</li>
+  <li><strong>Trigger to revisit:</strong> measured contention on a root’s version row, or a domain invariant that
+needs per-level edits.</li>
+  <li><strong>Model:</strong> protocol model O in the <a href="/developer/sketches/formal-methods-track-h-protocols.html">protocols sketch</a>, seeded
+from <code class="language-plaintext highlighter-rouge">spikes/persistence-aggregate-ownership/concurrency_model.py</code>.</li>
+</ul>
+
+<h2 id="12-what-h2-inherits">12. What H2 inherits</h2>
+
+<p>H2’s typed IR (the <a href="/developer/sketches/formal-methods-track-h-specification.html#3-the-typed-intermediate-representation">specification sketch §3</a>)
+gains three things from this work, listed there:</p>
+
+<ol>
+  <li>The <code class="language-plaintext highlighter-rouge">OwnershipTree</code> and its compiled <code class="language-plaintext highlighter-rouge">PropertyPath</code> as typed IR values.</li>
+  <li>A <strong>payload check</strong>: every subject of a composite or named-graph payload is the root or a node the
+payload reaches from the root through owned steps. The IR states it, and the runtime caller
+enforces it, since a payload is a request-time slot the SPARQL cannot inspect.</li>
+  <li>The required-parameter guard of H-D12, option D (TD-34).</li>
+</ol>
+
+<h2 id="13-adr-a122-drafted-2026-10-10">13. ADR-A122, drafted 2026-10-10</h2>
+
+<p><strong>Title:</strong> Aggregate ownership: a classified boundary shape for every boundary strategy.
+<strong>Status:</strong> Proposed. <strong>Amends:</strong> ADR-A78 decision 4. <strong>Related:</strong> ADR-A79, ADR-A-FM4, this sketch,
+the note and the review.</p>
+
+<p>Context: summarise review §1 and §5, citing F1, F2, F4, F6 and TD-03, TD-04, TD-39.</p>
+
+<p>Decisions, one numbered point each:</p>
+
+<ol>
+  <li>A boundary shape is a classified tree. Every node property carries <code class="language-plaintext highlighter-rouge">dal:ownership</code>, one of
+<code class="language-plaintext highlighter-rouge">dal:Owned</code>, <code class="language-plaintext highlighter-rouge">dal:Reference</code>, <code class="language-plaintext highlighter-rouge">dal:Vocabulary</code>. <code class="language-plaintext highlighter-rouge">sh:node</code> alone no longer means ownership.</li>
+  <li>The members are the nodes reached through owned steps. The delete set is every triple whose
+subject is the root or a member. Inverse steps and recursion are allowed. Types are not checked
+at run time.</li>
+  <li>The tree compiles to one SPARQL property path, and composite operations sweep with it in one
+pattern. Replace, create and tombstone delete are generated for the composite strategy. Every
+composite operation reads and writes one named graph, the profile’s mandatory <code class="language-plaintext highlighter-rouge">dal:dataGraph</code>,
+never the default graph (AO-Q14, static check S-1).</li>
+  <li>Reference data (SKOS concepts and schemes, and declared <code class="language-plaintext highlighter-rouge">dal:ReferenceData</code> classes) is never
+owned, unless the profile declares <code class="language-plaintext highlighter-rouge">dal:ownsReferenceData true</code>.</li>
+  <li>One owner per class across composite boundaries, checked at compile time. References from outside
+should target roots, and the compiler warns otherwise.</li>
+  <li>Named-graph profiles may carry the same classified shape, which defines what a payload may
+contain. Named graphs are the recommended default for new deployments.</li>
+  <li>Version rows stay one per root. Units and level operations are deferred, with the conditions
+that would bring them back.</li>
+  <li>A named graph’s IRI is <code class="language-plaintext highlighter-rouge">dal:graphIriTemplate</code> with <code class="language-plaintext highlighter-rouge">{id}</code> replaced by the root IRI encoded with
+<code class="language-plaintext highlighter-rouge">ENCODE_FOR_URI</code>, which is injective. A template must contain <code class="language-plaintext highlighter-rouge">{id}</code> exactly once. Across
+families, template prefixes form an antichain and a non-empty suffix starts with a character the
+encoding never emits, so the mapping from (family, root) to graph is injective (review F11). No
+standard limits IRI length, and a store that refused an over-long IRI would fail the write loudly
+(review §7).</li>
+</ol>
+
+<p>Consequences: the removed terms (§3.2), refusals (§5), templates (§7), the effect on Track H (H1.4b,
+H2, model O), and that no compatibility was kept, citing the agreement of 2026-10-10.</p>
+
+<p>Add it to <code class="language-plaintext highlighter-rouge">docs/architecture/decisions/README.md</code>. Re-check the number against <code class="language-plaintext highlighter-rouge">main</code> before the
+merge (A121 is claimed by the repository-catalogue sketch).</p>
+
+<h2 id="14-non-goals">14. Non-goals</h2>
+
+<ul>
+  <li>Units, level operations, a membership index (§11, AO-Q5, AO-Q8).</li>
+  <li>Runtime type checks on members (S3).</li>
+  <li>Changing the compiler’s default boundary strategy (AO-Q7).</li>
+  <li>Checking references into an aggregate at run time (AO-Q4 makes it a static warning).</li>
+  <li>Erasure of personal data, which follows its own procedure (guide §24.5).</li>
+</ul>
+
+<h2 id="15-effect-on-the-later-track-h-slices">15. Effect on the later Track H slices</h2>
+
+<p>Traced on 2026-10-10 through the Track H plan (§4 to §7), its three sketches, the source review
+<a href="/developer/notes/rdf-engine/persistence-fml.html">persistence-fml.md</a>, and the epic’s plan, sketch and status.
+Tracks A to G concern Eligibility, the ledger and the toolchain, and none of them depends on
+Persistence’s boundary design, so none changes. Within Track H, every slice that reasons about what
+a write touches changes. Each row below is mirrored in the plan’s outline for that slice.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Slice or artefact</th>
+      <th>Before</th>
+      <th>After the ownership design</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Laws (main sketch §3)</td>
+      <td>L1 to L15, from the source review. L3 asks that targets partition instances</td>
+      <td><strong>L16, ownership is a partition of members</strong>, added to the track’s register: the compiled path denotes exactly the classified tree’s paths (soundness, review check C10), and no node is a member of two live aggregates (disjointness: class-level by <code class="language-plaintext highlighter-rouge">OverlappingOwnership</code>, instance-level by an audit, H9). L6’s gap list follows H1.4b. L15’s migrations gain two kinds: reclassifying an edge, which changes what a delete takes for data already stored, and changing <code class="language-plaintext highlighter-rouge">dal:graphIriTemplate</code>, which renames graphs</td>
+    </tr>
+    <tr>
+      <td>H1.4b</td>
+      <td>composite entries from TD-03 and the first-property binding</td>
+      <td>the entries in plan §3’s H1.4b paragraph, plus “composite operations rely on the default graph (S-1, TD-40)” until HO5</td>
+    </tr>
+    <tr>
+      <td>H2, typed IR</td>
+      <td>typed parameters, read and write sets, explicit graph roles, guard tags</td>
+      <td>adds <code class="language-plaintext highlighter-rouge">OwnershipTree</code> and <code class="language-plaintext highlighter-rouge">PropertyPath</code> as typed values, the payload check, the required-parameter guard (TD-34) (§12). A composite operation’s <strong>read set is the closure the path computes at execution</strong>, and its write set is the delete set, the payload and the version row, which H5’s models consume. The explicit-graph rule holds, since AO-Q14 chose a named data graph</td>
+    </tr>
+    <tr>
+      <td>H3, registry</td>
+      <td>cross-axis rules, selection table, README tables, obligations, laws held</td>
+      <td>the boundary rules of §5 and HO8’s two graph-naming rules join the rule inventory with their witnesses. They are structural rules over one shape or one configuration, not cross-axis predicates, so the registry records them as their own kind. The selection table gains composite create (under <code class="language-plaintext highlighter-rouge">dal:AbsentRow</code>) and composite tombstone delete, so the L5 totality check covers them</td>
+    </tr>
+    <tr>
+      <td>H4, exhaustive checks</td>
+      <td>V1 to V10 over the cross-axis space, and the static checks of the specification sketch §6</td>
+      <td>three additions. <strong>C10, path language equality:</strong> the compiled path’s language equals the set of owned-edge paths of the shape graph, checked by automata equivalence over the shape graph (it was “to the declared depth”, and depth is gone). <strong>IRI-template injectivity (Z3 strings)</strong> covers graph templates across families, verifying F11’s two rules. <strong>C14, request size:</strong> whole-replace sends the whole aggregate, so the bound uses the largest declared aggregate</td>
+    </tr>
+    <tr>
+      <td>H5, models A to D</td>
+      <td>model A, the guarded write, over named graphs</td>
+      <td><strong>model A is parametrised by boundary strategy.</strong> Under the composite strategy the delete set is read at execution, so the model checks that a writer to aggregate A never changes a triple outside A’s delete set, and that two writers to A always meet on A’s root row (the spike’s D0 result, now beyond pairs of writers). <strong>Model C, the create race, covers the composite create</strong>, whose guards are “no version row” and “no triple of the root”. Two concurrent creates insert the same version-row triple, and whether inserting an identical statement counts as a write-write conflict is a store property the capability record must carry and the model must branch on</td>
+    </tr>
+    <tr>
+      <td>H5, capability record</td>
+      <td>the full record of the main sketch §5</td>
+      <td><code class="language-plaintext highlighter-rouge">unionDefaultGraph</code> does not matter to the composite strategy, since AO-Q14 chose a named data graph. The identical-insert conflict property above is a new field</td>
+    </tr>
+    <tr>
+      <td>H6, Isabelle</td>
+      <td><code class="language-plaintext highlighter-rouge">Resolution</code>, <code class="language-plaintext highlighter-rouge">Positions</code>, <code class="language-plaintext highlighter-rouge">Encoding</code>, <code class="language-plaintext highlighter-rouge">Outcomes</code></td>
+      <td><strong><code class="language-plaintext highlighter-rouge">Encoding.thy</code> gains graph-IRI injectivity</strong>: <code class="language-plaintext highlighter-rouge">prefix · enc(r) · suffix</code> is injective in <code class="language-plaintext highlighter-rouge">(family, r)</code> under F11’s two rules, with <code class="language-plaintext highlighter-rouge">enc</code> the percent-encoding of UTF-8. A theory of state elimination (the compiled regular expression denotes the automaton’s language) is possible but not proposed: H4’s automata check and HO4’s property test cover it at lower cost</td>
+    </tr>
+    <tr>
+      <td>H7, models E to J</td>
+      <td>outcome, epoch, retention, global read, fencing, infrastructure writers</td>
+      <td>no change. None depends on what an aggregate contains</td>
+    </tr>
+    <tr>
+      <td>H8, model K (erasure)</td>
+      <td>the enumerated store list</td>
+      <td>the list includes composite members in the data graph, reached through the owned path, and erasure follows its own procedure, not the tombstone delete (ADR-A122 consequences)</td>
+    </tr>
+    <tr>
+      <td>H8, model L (multi-aggregate writes)</td>
+      <td>deadlock and livelock under <code class="language-plaintext highlighter-rouge">dal:deadlockPolicy</code></td>
+      <td>adds references across aggregates: a writer to B adding a reference into A while A is deleted. Under the roots-only rule (AO-Q4) the reference names A’s root and reads as deleted. A reference to a non-root member, which the compiler only warns about, can dangle, and the model shows when</td>
+    </tr>
+    <tr>
+      <td>H8, model M (bulk load and cutover)</td>
+      <td>offline positions, staging, cutover</td>
+      <td>an out-of-band load can make a node a member of two aggregates, which no guard sees. The H9 overlap audit is its detector</td>
+    </tr>
+    <tr>
+      <td>Protocol model O</td>
+      <td>not in the source review</td>
+      <td>units, deferred with them (§11, protocols sketch)</td>
+    </tr>
+    <tr>
+      <td>H9, detection</td>
+      <td>nine missing audits from the source review</td>
+      <td>four more invariants with an audit and a witness each: <strong>instance overlap</strong> (a node reached by the owned paths of two live roots), <strong>orphan member</strong> (a subject typed with an owned member class and reached from no live root), <strong>reference into a member</strong> (an edge from outside an aggregate to a non-root member, the run-time side of <code class="language-plaintext highlighter-rouge">ReferenceToOwnedClass</code>), and, for named-graph families with a boundary shape, <strong>payload outside the tree</strong> (a subject in the graph the tree does not reach). Each audit is applicable only to the strategies it names, labelled as the plan’s H9 requires</td>
+    </tr>
+    <tr>
+      <td>H10, monitors</td>
+      <td>monitors from H9’s invariants</td>
+      <td>the four audits above become monitors with the rest</td>
+    </tr>
+    <tr>
+      <td>Milestones</td>
+      <td>FMH1 to FMH7</td>
+      <td>FMH-O added: the composite strategy deletes exactly the declared aggregate, verified on the reference fixture, by the property test, and by the automata check once H4 lands</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="151-solvers-and-provers-in-summary">15.1 Solvers and provers, in summary</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Technique</th>
+      <th>New obligation from this design</th>
+      <th>Slice</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>automata</td>
+      <td>compiled path language equals the shape graph’s owned-path language (C10)</td>
+      <td>H4</td>
+    </tr>
+    <tr>
+      <td>SMT strings (Z3)</td>
+      <td>graph IRI injectivity across families (F11)</td>
+      <td>H4</td>
+    </tr>
+    <tr>
+      <td>linear arithmetic</td>
+      <td>request size of whole-replace with the largest aggregate (C14)</td>
+      <td>H4</td>
+    </tr>
+    <tr>
+      <td>Alloy</td>
+      <td>the source review’s <code class="language-plaintext highlighter-rouge">ClosuresDisjoint</code> model, restated over classified edges: no counterexample at class level given <code class="language-plaintext highlighter-rouge">OverlappingOwnership</code>, and the instance-level counterexample (a wrongly typed edge) that motivates H9’s overlap audit</td>
+      <td>H4 or H9</td>
+    </tr>
+    <tr>
+      <td>Isabelle</td>
+      <td><code class="language-plaintext highlighter-rouge">Encoding.thy</code>: graph IRI injectivity</td>
+      <td>H6</td>
+    </tr>
+    <tr>
+      <td>TLA+ or Quint</td>
+      <td>model A by boundary strategy, model C with composite create, models K, L, M additions, model O deferred</td>
+      <td>H5, H8</td>
+    </tr>
+  </tbody>
+</table>

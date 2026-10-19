@@ -1,12 +1,15 @@
+---
+published: true
+---
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
 # ADR-A91: Eligibility candidate evidence binding
 
-**Status:** Accepted
+**Status:** Published, 2026-10-19. Accepted 2026-09-25.
+**Described in:** [Eligibility README](../../../ontology/eligibility/README.md)
 **Date:** 2026-09-25 (proposed), 2026-09-25 (accepted)
 **Related:** ADR-A01 (layer dependency order), ADR-A17 (unified projection
 authoring), ADR-A24, ADR-A89, ADR-A90
-**Unit:** [`applied-ontology-readiness`](../../developer/plans/applied-ontology-readiness.md)
 
 ## Context
 
@@ -18,7 +21,7 @@ each fact into a question first. The copy duplicates state, detaches the
 decision from the fact it was based on, and has to be kept in step by code
 outside the graph.
 
-The `mork-eligibility-compiler` sketch identified this gap and deferred an
+Earlier design work on the Eligibility compilers identified this gap and deferred an
 "executable projection contract" layer pending an ADR. Surface already reads
 domain data through declared paths (`srf:PathStep`, an indexed step list
 chosen because it canonicalises and hashes directly), but Surface does not
@@ -61,7 +64,7 @@ Option A, with D remaining available.
   that introduces the derived-artefact contract.
 - Alternation and zero-or-more paths stay out of scope, as for Surface.
 
-## Implementation notes (2026-09-25, `applied-ontology-readiness` AOR-9)
+## Implementation notes (2026-09-25)
 
 - The compiled artefacts key their rows and shape reports by the subject
   itself and mint no question or decision record. `elg:aboutSubject` (item 3)
@@ -76,3 +79,7 @@ Option A, with D remaining available.
   individuals. A path through a blank node (an anonymous role, say) derives
   nothing, while SPARQL and SHACL still read it. Name intermediate nodes where
   SWRL must reach them.
+
+## Provenance
+
+Part of the [`applied-ontology-readiness`](../../developer/plans/applied-ontology-readiness.md) unit. The gap was identified in the `mork-eligibility-compiler` sketch, and the implementation notes record slice AOR-9.

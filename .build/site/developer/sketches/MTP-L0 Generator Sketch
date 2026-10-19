@@ -1,0 +1,1361 @@
+# MTP-L0 Generator
+
+A build tool that compiles the **L0 kernel**, **minimal-pair table** and **output contract** from `Mork.ttl` + a small curated doctrine file, with hard gates that fail the build when the ontology changes in ways the teaching no longer reflects.
+
+---
+
+## 1. Design principle: derive what you can, pin what you can't
+
+The kernel is ~60% machine-derivable and ~40% human judgement. The value of the generator is not that it writes the doctrine — it's that it **refuses to let stale doctrine ship**.
+
+| L0 element | Source | Drift behaviour |
+|---|---|---|
+| Box families (`xt/bt`, `xr/xi/br`, `xa/ba`) | derived from property local names + subproperty tree | new `*BoxCategoryMatch` property → appears automatically |
+| Uncertainty escape codes | derived from `UncertainMapping` `owl:equivalentClass` | changes if the equivalence changes |
+| Inverse-pair warning list | derived from `owl:inverseOf` | new pair → listed |
+| Generative mandatory parts (Q5) | derived from `ShapeMapping/RuleMapping/...` `rdfs:subClassOf ∃p.C` | new completeness axiom → new bullet |
+| Annotation-property codes | derived from `owl:AnnotationProperty` | automatic |
+| "Never emit" list | derived from `owl:deprecated` | automatic |
+| Invariants 1–7, decision ladder, pair *rationales* | curated `doctrine.yaml` | **anchored**: every claim cites IRIs; missing/deprecated/changed anchor fails |
+| Coverage of every GCI / disjointness / equivalence | curated `covers:` assignments | **new axiom with no owner fails the build** |
+
+Two gates do the real work:
+
+- **Logical fingerprints.** Each anchored term gets a hash over its *logical* axioms only (`subPropertyOf`, `domain`, `range`, characteristics, `inverseOf`, `equivalentClass`, `deprecated`, restriction bodies) — deliberately **not** `skos:definition`/`skos:example`, so prose edits don't cause false alarms. Hashes live in `pins.lock.json`; a mismatch fails until a human runs `--update-pins`, which prints a diff of what changed.
+- **Axiom ownership.** Every GCI (`… ⊑ ⊥`), every `AllDisjointClasses/Properties`, every mapping-class `equivalentClass`, and every completeness `subClassOf ∃p.C` must be claimed by a doctrine unit — an L0 invariant, an L0 pair, or an explicit `lens:L-GEN` deferral. Unclaimed ⇒ build fails, with the axiom rendered in MCN §10.5 syntax so the human can see exactly what they must teach.
+
+Everything is deterministic: sorted iteration, canonical hashing, no timestamps in hashed output.
+
+---
+
+## 2. Layout
+
+```
+mtp/
+  __init__.py
+  facts.py         # rdflib extraction: terms, axioms, families, fingerprints
+  ce.py            # OWL class expression -> MCN §10.5 rendering
+  codebook.py      # load codebook.yaml, validate against ontology
+  doctrine.py      # load doctrine.yaml, resolve anchors, check coverage
+  template.py      # {{slot}} substitution, fail-fast on unknown slot
+  budget.py        # token counting (tiktoken optional) + budget policy
+  render.py        # L0 text/json, pairs.md, output_contract.txt
+  lock.py          # pins.lock.json read/write/diff
+  cli.py
+data/
+  config.yaml
+  codebook.yaml        # code <-> IRI (single source for MCN §8 too)
+  doctrine.yaml        # curated doctrine, anchored
+  pins.lock.json       # generated, committed
+out/                   # generated, committed (it's the shipped artefact)
+  l0.txt  l0.json  pairs.md  output_contract.txt  manifest.json  coverage.md
+```
+
+```
+pip install "rdflib>=7" "pyyaml>=6"       # required
+pip install tiktoken                       # optional: exact o200k_base counts
+```
+
+---
+
+## 3. `mtp/facts.py` — ontology extraction
+
+```python
+"""Ontology fact extraction for the MORK Teaching Pack generator.
+
+Everything here is deterministic: iteration order is sorted, hashes are over
+canonical strings, and no wall-clock or filesystem state leaks into output.
+"""
+from __future__ import annotations
+
+import hashlib
+import re
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Iterable
+
+from rdflib import BNode, Graph, Literal, Namespace, URIRef
+from rdflib.collection import Collection
+from rdflib.namespace import OWL, RDF, RDFS, SKOS, XSD
+
+OWLX = Namespace("http://www.w3.org/2002/07/owl#")   # for terms DefinedNamespace may lack
+SH = Namespace("http://www.w3.org/ns/shacl#")
+MORK = Namespace("http://www.nebularis.org/ontologies/Mork#")
+
+# Predicates that constitute a term's *logical* meaning. Prose predicates
+# (skos:definition, skos:example, skos:scopeNote, rdfs:label, ...) are excluded
+# on purpose: editorial rewrites must not break the build.
+LOGICAL_PREDICATES = frozenset(
+    [
+        RDF.type, RDFS.subClassOf, RDFS.subPropertyOf, RDFS.domain, RDFS.range,
+        OWL.inverseOf, OWL.equivalentClass, OWL.equivalentProperty,
+        OWL.disjointWith, OWL.propertyDisjointWith, OWL.deprecated,
+        OWL.onProperty, OWL.someValuesFrom, OWL.allValuesFrom, OWL.hasValue,
+        OWL.onClass, OWL.onDataRange, OWL.cardinality, OWL.minCardinality,
+        OWL.maxCardinality, OWL.qualifiedCardinality,
+        OWL.minQualifiedCardinality, OWL.maxQualifiedCardinality,
+        OWL.intersectionOf, OWL.unionOf, OWL.complementOf, OWL.oneOf,
+        OWL.members, OWL.distinctMembers, OWL.sameAs,
+        OWL.propertyChainAxiom, OWL.hasSelf,
+    ]
+)
+
+PROSE_PREDICATES = frozenset(
+    [SKOS.definition, SKOS.example, SKOS.scopeNote, SKOS.note, SKOS.altLabel,
+     SKOS.editorialNote, SKOS.historyNote, RDFS.label, RDFS.comment]
+)
+
+TERM_TYPES = {
+    OWL.Class: "class",
+    OWL.ObjectProperty: "object_property",
+    OWL.DatatypeProperty: "data_property",
+    OWL.AnnotationProperty: "annotation_property",
+    OWL.NamedIndividual: "individual",
+}
+
+# --------------------------------------------------------------------------- #
+# canonical hashing
+# --------------------------------------------------------------------------- #
+
+def _short(s: str, n: int = 12) -> str:
+    return hashlib.sha256(s.encode("utf-8")).hexdigest()[:n]
+
+def _canon_node(g: Graph, node, predicates: frozenset, seen: frozenset) -> str:
+    """Canonical string for a node, expanding blank nodes structurally."""
+    if isinstance(node, URIRef):
+        return f"<{node}>"
+    if isinstance(node, Literal):
+        dt = f"^^{node.datatype}" if node.datatype else ""
+        lang = f"@{node.language}" if node.language else ""
+        return f'"{node}"{lang}{dt}'
+    if node in seen:                       # cycle guard
+        return "_:CYCLE"
+    seen = seen | {node}
+
+    # rdf collection?
+    if (node, RDF.first, None) in g:
+        try:
+            items = list(Collection(g, node))
+        except Exception:                  # malformed list
+            items = []
+        return "(" + " ".join(_canon_node(g, i, predicates, seen) for i in items) + ")"
+
+    parts = []
+    for p in sorted({p for p in g.predicates(node, None)}, key=str):
+        if p not in predicates:
+            continue
+        objs = sorted(
+            (_canon_node(g, o, predicates, seen) for o in g.objects(node, p))
+        )
+        parts.append(f"<{p}>[{','.join(objs)}]")
+    return "{" + ";".join(parts) + "}"
+
+def term_hash(g: Graph, term: URIRef, predicates: frozenset = LOGICAL_PREDICATES) -> str:
+    """Fingerprint of a term over the given predicate set."""
+    parts = []
+    for p in sorted({p for p in g.predicates(term, None)}, key=str):
+        if p not in predicates:
+            continue
+        objs = sorted(_canon_node(g, o, predicates, frozenset()) for o in g.objects(term, p))
+        parts.append(f"<{p}>[{','.join(objs)}]")
+    return _short(f"<{term}>|" + ";".join(parts))
+
+def axiom_id(canon: str) -> str:
+    return "ax:" + _short(canon, 8)
+
+# --------------------------------------------------------------------------- #
+# data model
+# --------------------------------------------------------------------------- #
+
+@dataclass(frozen=True)
+class Term:
+    iri: str
+    kinds: tuple[str, ...]
+    label: str | None
+    deprecated: bool
+    logical_hash: str
+    prose_hash: str
+    sub_of: tuple[str, ...]
+    inverse_of: tuple[str, ...]
+    domains: tuple[str, ...]
+    ranges: tuple[str, ...]
+    characteristics: tuple[str, ...]
+
+@dataclass(frozen=True)
+class Axiom:
+    aid: str
+    kind: str          # gci | disjoint_classes | disjoint_properties | equivalence | completeness | subprop_chain
+    subject: str | None
+    canon: str
+    mcn: str           # human-facing rendering (MCN §10.5)
+    mentions: tuple[str, ...]
+
+@dataclass
+class Facts:
+    graph: Graph
+    graph_hash: str
+    source_files: tuple[str, ...]
+    terms: dict[str, Term] = field(default_factory=dict)
+    axioms: dict[str, Axiom] = field(default_factory=dict)
+    comment_pool: tuple[str, ...] = ()     # harvested "GCI Axiom 2.14a ..." strings
+
+    # convenience indexes -------------------------------------------------- #
+    def of_kind(self, kind: str) -> list[Term]:
+        return sorted((t for t in self.terms.values() if kind in t.kinds), key=lambda t: t.iri)
+
+    def deprecated_iris(self) -> list[str]:
+        return sorted(t.iri for t in self.terms.values() if t.deprecated)
+
+    def inverse_pairs(self) -> list[tuple[str, str]]:
+        seen, out = set(), []
+        for t in sorted(self.terms.values(), key=lambda x: x.iri):
+            for inv in t.inverse_of:
+                key = tuple(sorted((t.iri, inv)))
+                if key not in seen:
+                    seen.add(key)
+                    out.append(key)                # (lexicographically lower, higher)
+        return out
+
+    def descendants(self, iri: str) -> set[str]:
+        """Transitive sub-property/sub-class closure, downward."""
+        kids = {t.iri for t in self.terms.values() if iri in t.sub_of}
+        out = set(kids)
+        for k in sorted(kids):
+            out |= self.descendants(k)
+        return out
+
+# --------------------------------------------------------------------------- #
+# loading
+# --------------------------------------------------------------------------- #
+
+CHARACTERISTIC_TYPES = {
+    OWL.FunctionalProperty: "Functional",
+    OWL.InverseFunctionalProperty: "InverseFunctional",
+    OWL.SymmetricProperty: "Symmetric",
+    OWL.AsymmetricProperty: "Asymmetric",
+    OWL.TransitiveProperty: "Transitive",
+    OWL.ReflexiveProperty: "Reflexive",
+    OWL.IrreflexiveProperty: "Irreflexive",
+}
+
+def load(paths: Iterable[Path]) -> Facts:
+    g = Graph()
+    files = []
+    for p in sorted(Path(x) for x in paths):
+        g.parse(str(p), format="turtle")
+        files.append(p.name)
+
+    # graph_hash: canonical n-triples of the whole graph, blank-node-labels
+    # excluded from the digest by hashing sorted triples with bnodes elided.
+    rows = []
+    for s, p, o in g:
+        def t(x):
+            return "_:b" if isinstance(x, BNode) else _canon_node(g, x, LOGICAL_PREDICATES | PROSE_PREDICATES, frozenset())
+        rows.append(f"{t(s)} <{p}> {t(o)}")
+    graph_hash = _short("\n".join(sorted(rows)), 16)
+
+    facts = Facts(graph=g, graph_hash=graph_hash, source_files=tuple(files))
+
+    # ---- terms ---------------------------------------------------------- #
+    for rdf_type, kind in TERM_TYPES.items():
+        for s in g.subjects(RDF.type, rdf_type):
+            if not isinstance(s, URIRef):
+                continue
+            existing = facts.terms.get(str(s))
+            kinds = set(existing.kinds) if existing else set()
+            kinds.add(kind)
+            facts.terms[str(s)] = _build_term(g, s, kinds)
+
+    # ---- axioms --------------------------------------------------------- #
+    for ax in _extract_axioms(g, facts):
+        facts.axioms[ax.aid] = ax
+
+    # ---- comment pool (for label suggestions) --------------------------- #
+    pool = []
+    for s in g.subjects(RDF.type, OWL.Axiom):
+        for c in g.objects(s, RDFS.comment):
+            if re.search(r"\bAxiom\b|\bGCI\b", str(c)):
+                pool.append(str(c).split("(")[0].strip().rstrip(":").strip())
+    facts.comment_pool = tuple(sorted(set(pool)))
+    return facts
+
+def _build_term(g: Graph, s: URIRef, kinds: set[str]) -> Term:
+    chars = sorted(
+        name for ty, name in CHARACTERISTIC_TYPES.items() if (s, RDF.type, ty) in g
+    )
+    dep = any(str(o).lower() == "true" for o in g.objects(s, OWL.deprecated))
+    lbl = next((str(o) for o in sorted(g.objects(s, RDFS.label), key=str)), None)
+    return Term(
+        iri=str(s),
+        kinds=tuple(sorted(kinds)),
+        label=lbl,
+        deprecated=dep,
+        logical_hash=term_hash(g, s, LOGICAL_PREDICATES),
+        prose_hash=term_hash(g, s, PROSE_PREDICATES),
+        sub_of=tuple(sorted(str(o) for o in g.objects(s, RDFS.subPropertyOf) if isinstance(o, URIRef))
+                     + sorted(str(o) for o in g.objects(s, RDFS.subClassOf) if isinstance(o, URIRef))),
+        inverse_of=tuple(sorted(str(o) for o in g.objects(s, OWL.inverseOf) if isinstance(o, URIRef))),
+        domains=tuple(sorted(str(o) for o in g.objects(s, RDFS.domain) if isinstance(o, URIRef))),
+        ranges=tuple(sorted(str(o) for o in g.objects(s, RDFS.range) if isinstance(o, URIRef))),
+        characteristics=tuple(chars),
+    )
+
+def _mentions(g: Graph, node, acc: set[str] | None = None, seen=None) -> set[str]:
+    acc = set() if acc is None else acc
+    seen = set() if seen is None else seen
+    if isinstance(node, URIRef):
+        acc.add(str(node))
+        return acc
+    if not isinstance(node, BNode) or node in seen:
+        return acc
+    seen.add(node)
+    for p, o in g.predicate_objects(node):
+        if p in LOGICAL_PREDICATES:
+            _mentions(g, o, acc, seen)
+    return acc
+
+def _extract_axioms(g: Graph, facts: Facts) -> list[Axiom]:
+    from .ce import ce_to_mcn                     # local import: ce imports nothing heavy
+
+    out: list[Axiom] = []
+
+    def add(kind, subject, node_for_canon, mcn, mention_nodes):
+        canon = _canon_node(g, node_for_canon, LOGICAL_PREDICATES, frozenset()) \
+            if not isinstance(node_for_canon, str) else node_for_canon
+        m = set()
+        for n in mention_nodes:
+            _mentions(g, n, m)
+        out.append(
+            Axiom(aid=axiom_id(f"{kind}|{canon}"), kind=kind,
+                  subject=str(subject) if subject is not None else None,
+                  canon=canon, mcn=mcn, mentions=tuple(sorted(m)))
+        )
+
+    # GCIs: anonymous class expression  rdfs:subClassOf  owl:Nothing
+    for s in sorted(g.subjects(RDFS.subClassOf, OWL.Nothing), key=str):
+        if isinstance(s, BNode):
+            add("gci", None, s, f"!G {ce_to_mcn(g, s)} < .N", [s])
+
+    # AllDisjointClasses / AllDisjointProperties
+    for ty, kind, prefix in (
+        (OWL.AllDisjointClasses, "disjoint_classes", "!DC"),
+        (OWLX.AllDisjointProperties, "disjoint_properties", "!DP"),
+    ):
+        for s in sorted(g.subjects(RDF.type, ty), key=str):
+            for members in g.objects(s, OWL.members):
+                items = list(Collection(g, members))
+                mcn = f"{prefix} " + ",".join(ce_to_mcn(g, i) for i in items)
+                add(kind, None, members, mcn, items)
+
+    # Named-class equivalences (definitional) and completeness subClassOf
+    for cls in sorted({s for s in g.subjects(RDF.type, OWL.Class) if isinstance(s, URIRef)}, key=str):
+        for eq in sorted(g.objects(cls, OWL.equivalentClass), key=str):
+            mcn = f"!C {ce_to_mcn(g, cls)} = {ce_to_mcn(g, eq)}"
+            add("equivalence", cls, eq, mcn, [cls, eq])
+        for sup in sorted(g.objects(cls, RDFS.subClassOf), key=str):
+            if isinstance(sup, BNode):                    # anonymous => a real constraint
+                mcn = f"!C {ce_to_mcn(g, cls)} < {ce_to_mcn(g, sup)}"
+                add("completeness", cls, sup, mcn, [cls, sup])
+
+    # Inverse-property subproperty axioms (the P1..P10 precedence pattern)
+    for s in sorted(g.subjects(OWL.inverseOf, None), key=str):
+        if not isinstance(s, BNode):
+            continue
+        for sup in sorted(g.objects(s, RDFS.subPropertyOf), key=str):
+            mcn = f"!O {ce_to_mcn(g, s)} < {ce_to_mcn(g, sup)}"
+            add("subprop_inverse", None, s, mcn, [s, sup])
+
+    return sorted(out, key=lambda a: (a.kind, a.mcn))
+```
+
+---
+
+## 4. `mtp/ce.py` — class expressions → MCN §10.5
+
+Renders axioms the way the model will be taught to write them, so error messages and the *caught by* column are in the notation the agent actually emits.
+
+```python
+from __future__ import annotations
+
+from rdflib import BNode, Graph, Literal, URIRef
+from rdflib.collection import Collection
+from rdflib.namespace import OWL, RDF, RDFS
+
+_ABBREV: dict[str, str] = {}   # iri -> short token; installed by codebook.install_abbrev()
+
+_RESERVED = {
+    str(OWL.Thing): ".T", str(OWL.Nothing): ".N",
+    str(OWL.topObjectProperty): ".top", str(OWL.topDataProperty): ".dtop",
+}
+
+_CARD = [
+    (OWL.qualifiedCardinality, "{n}", True), (OWL.cardinality, "{n}", False),
+    (OWL.minQualifiedCardinality, "{n}..", True), (OWL.minCardinality, "{n}..", False),
+    (OWL.maxQualifiedCardinality, "..{n}", True), (OWL.maxCardinality, "..{n}", False),
+]
+
+def install_abbrev(mapping: dict[str, str]) -> None:
+    _ABBREV.clear()
+    _ABBREV.update(mapping)
+
+def _name(iri: URIRef) -> str:
+    s = str(iri)
+    if s in _RESERVED:
+        return _RESERVED[s]
+    if s in _ABBREV:
+        return _ABBREV[s]
+    for sep in ("#", "/"):
+        if sep in s:
+            return s.rsplit(sep, 1)[1]
+    return s
+
+def ce_to_mcn(g: Graph, node, depth: int = 0) -> str:
+    if isinstance(node, URIRef):
+        return _name(node)
+    if isinstance(node, Literal):
+        return f'"{node}"' if node.datatype is None else str(node)
+    if not isinstance(node, BNode):
+        return "?"
+
+    inv = next(iter(g.objects(node, OWL.inverseOf)), None)
+    if inv is not None and (node, OWL.onProperty, None) not in g:
+        return "^" + ce_to_mcn(g, inv, depth + 1)
+
+    for pred, op in ((OWL.intersectionOf, " & "), (OWL.unionOf, " | ")):
+        coll = next(iter(g.objects(node, pred)), None)
+        if coll is not None:
+            parts = [ce_to_mcn(g, i, depth + 1) for i in Collection(g, coll)]
+            body = op.join(parts)
+            return f"({body})" if depth and len(parts) > 1 else body
+
+    comp = next(iter(g.objects(node, OWL.complementOf)), None)
+    if comp is not None:
+        return "~" + ce_to_mcn(g, comp, depth + 1)
+
+    one = next(iter(g.objects(node, OWL.oneOf)), None)
+    if one is not None:
+        return "{" + ",".join(ce_to_mcn(g, i, depth + 1) for i in Collection(g, one)) + "}"
+
+    prop = next(iter(g.objects(node, OWL.onProperty)), None)
+    if prop is not None:
+        p = ce_to_mcn(g, prop, depth + 1)
+        sv = next(iter(g.objects(node, OWL.someValuesFrom)), None)
+        if sv is not None:
+            return f"{p}>{ce_to_mcn(g, sv, depth + 1)}"
+        av = next(iter(g.objects(node, OWL.allValuesFrom)), None)
+        if av is not None:
+            return f"{p}<{ce_to_mcn(g, av, depth + 1)}"
+        hv = next(iter(g.objects(node, OWL.hasValue)), None)
+        if hv is not None:
+            return f"{p}={ce_to_mcn(g, hv, depth + 1)}"
+        for pred, tmpl, qualified in _CARD:
+            v = next(iter(g.objects(node, pred)), None)
+            if v is not None:
+                card = tmpl.format(n=int(v))
+                if qualified:
+                    on = next(iter(g.objects(node, OWL.onClass)), None) or \
+                         next(iter(g.objects(node, OWL.onDataRange)), None)
+                    if on is not None:
+                        return f"{p}#{card}/{ce_to_mcn(g, on, depth + 1)}"
+                return f"{p}#{card}"
+    return "?anon"
+```
+
+---
+
+## 5. `mtp/codebook.py` — the code table, validated
+
+`codebook.yaml` is the same file that generates MCN §8, so codes never diverge from the notation.
+
+```yaml
+# data/codebook.yaml  (excerpt — the real file covers every declared term)
+version: 1
+base: http://www.nebularis.org/ontologies/Mork#
+prefixes:
+  mork: http://www.nebularis.org/ontologies/Mork#
+  skos: http://www.w3.org/2004/02/skos/core#
+  sh:   http://www.w3.org/ns/shacl#
+  fnd:  https://www.nebularis.org/neuro-semantic/lattice/foundation#
+types:
+  M:  mork:DataMapping
+  MD: mork:Datum
+  MU: mork:UncertainMapping
+  MX: mork:DeferredContext
+  MW: mork:WeightedMatch
+  MS: mork:ShapeMapping
+  MR: mork:RuleMapping
+  MT: mork:TransformMapping
+  MP: mork:ProjectionMapping
+properties:
+  xt:  {term: mork:exactTBoxMatch,             kind: object}
+  bt:  {term: mork:broadTBoxCategoryMatch,     kind: object}
+  xr:  {term: mork:exactRBoxMatch,             kind: object}
+  xi:  {term: mork:inverseRBoxMatch,           kind: object}
+  ba:  {term: mork:broadABoxCategoryMatch,     kind: object}
+  ap:  {term: mork:broaderApplicative,         kind: object}
+  cb:  {term: mork:compositeBroaderMapping,    kind: object}
+  cn:  {term: mork:compositeNarrowerMapping,   kind: object}
+  df:  {term: mork:deferredMapping,            kind: object}
+  w:   {term: mork:weighting,                  kind: data, datatype: xsd:integer}
+reserved:
+  ".dci": mork:DeferredConceptIRI
+  ".T":   owl:Thing
+```
+
+```python
+from __future__ import annotations
+
+import yaml
+from dataclasses import dataclass
+from pathlib import Path
+
+from . import ce
+
+@dataclass
+class Codebook:
+    version: int
+    prefixes: dict[str, str]
+    types: dict[str, str]              # code -> iri
+    properties: dict[str, dict]        # code -> {term(iri), kind, datatype}
+    reserved: dict[str, str]           # token -> iri
+
+    def expand(self, curie: str) -> str:
+        if curie.startswith("http"):
+            return curie
+        pfx, _, local = curie.partition(":")
+        if pfx not in self.prefixes:
+            raise KeyError(f"unbound prefix in codebook: {curie}")
+        return self.prefixes[pfx] + local
+
+    def code_for(self, iri: str) -> str | None:
+        return self._rev.get(iri)
+
+    def codes_for(self, iris) -> list[str]:
+        return [c for c in (self.code_for(i) for i in iris) if c]
+
+    def __post_init__(self):
+        self._rev: dict[str, str] = {}
+        for code, curie in self.types.items():
+            self._rev.setdefault(self.expand(curie), code)
+        for code, spec in self.properties.items():
+            self._rev.setdefault(self.expand(spec["term"]), code)
+        for token, curie in self.reserved.items():
+            self._rev.setdefault(self.expand(curie), token)
+
+def load(path: Path) -> Codebook:
+    raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+    cb = Codebook(
+        version=int(raw["version"]),
+        prefixes=dict(raw.get("prefixes", {})),
+        types=dict(raw.get("types", {})),
+        properties={k: dict(v) for k, v in raw.get("properties", {}).items()},
+        reserved=dict(raw.get("reserved", {})),
+    )
+    ce.install_abbrev(dict(cb._rev))       # axioms render in MCN code form
+    return cb
+
+def validate(cb: Codebook, facts, cfg) -> list[str]:
+    """Codebook <-> ontology consistency. Returns human-readable problems."""
+    problems: list[str] = []
+    allow = set(cfg.get("allow_unresolved_prefixes", []))
+
+    for code, curie in sorted({**cb.types, **{k: v["term"] for k, v in cb.properties.items()}}.items()):
+        iri = cb.expand(curie)
+        pfx = curie.split(":", 1)[0] if ":" in curie and not curie.startswith("http") else ""
+        if iri not in facts.terms:
+            if pfx not in allow:
+                problems.append(f"codebook code '{code}' -> {curie}: term not declared in ontology")
+            continue
+        term = facts.terms[iri]
+        if term.deprecated and code not in set(cfg.get("allow_deprecated_codes", [])):
+            problems.append(f"codebook code '{code}' -> {curie}: term is owl:deprecated "
+                            f"(add to allow_deprecated_codes or drop the code)")
+
+    if cfg.get("require_full_code_coverage", True):
+        want = {"class", "object_property", "data_property", "annotation_property", "individual"}
+        ignore = {facts_iri for facts_iri in cfg.get("code_coverage_exempt", [])}
+        for t in sorted(facts.terms.values(), key=lambda x: x.iri):
+            if not t.iri.startswith(cb.prefixes["mork"]):
+                continue
+            if not (want & set(t.kinds)) or t.iri in ignore or t.deprecated:
+                continue
+            if cb.code_for(t.iri) is None:
+                problems.append(f"ontology term has no code: {t.iri}")
+    return problems
+```
+
+---
+
+## 6. `mtp/doctrine.yaml` — the curated half
+
+Every unit declares `anchors` (terms whose meaning it depends on) and `covers` (axioms it teaches). Text uses `{{slots}}` filled from derived facts.
+
+```yaml
+version: 3
+budgets:
+  l0_total: 900
+  pair_table: 300
+  output_contract: 220
+  tokenizer: o200k_base
+
+preamble: |
+  MORK records mapping INTENT as reviewable graph objects. You emit MCN (compact
+  notation); a deterministic decoder produces RDF; OWL + SHACL judge it. You are
+  not writing a script. You are proposing a mapping a human will review.
+
+invariants:
+  - id: inv.worlds
+    anchors: [mork:RepresentationScheme, mork:TaxonomyScheme, mork:OntologicalScheme, mork:MappingScheme]
+    text: >
+      Three worlds: Representation (wire format), Taxonomy (concepts), Ontology
+      (target). Mappings live in a fourth, MappingScheme. Never mix worlds on one node.
+  - id: inv.boxes
+    anchors: [mork:exactTBoxMatch, mork:exactRBoxMatch, mork:exactABoxMatch]
+    text: >
+      The target has three boxes. Class => T-Box ({{codes.tbox}}). Property or
+      relation => R-Box ({{codes.rbox}}). Named individual => A-Box ({{codes.abox}}).
+  - id: inv.order
+    anchors: [mork:deferredMapping, mork:dependentMapping, mork:compositeBroaderMapping, mork:broaderApplicative, mork:precedes]
+    text: >
+      Order is structure, not instruction. Express "X before Y" with deferral
+      ({{code.mork:deferredMapping}}/{{code.mork:dependentMapping}}), composition
+      ({{code.mork:compositeBroaderMapping}}/{{code.mork:compositeNarrowerMapping}})
+      or applicative context ({{code.mork:broaderApplicative}}). Never by line order.
+      {{code.mork:precedes}} is derived; do not assert it.
+    covers: [lens:L-IND]
+  - id: inv.one_direction
+    anchors: [mork:compositeBroaderMapping, mork:compositeNarrowerMapping]
+    text: >
+      One direction per inverse pair ({{counts.inverse_pairs}} pairs exist). Write
+      {{code.mork:compositeBroaderMapping}} from the child OR
+      {{code.mork:compositeNarrowerMapping}} from the parent, never both.
+  - id: inv.nothing_exists
+    anchors: [mork:DeferredContext, mork:yieldConcept, mork:DeferredConceptIRI]
+    text: >
+      Nothing exists until asserted. To reference an axiom you are also creating, go
+      through a DeferredContext ({{type.mork:DeferredContext}}) that yields it
+      ({{code.mork:yieldConcept}} {{reserved.mork:DeferredConceptIRI}}).
+  - id: inv.uncertainty
+    anchors: [mork:UncertainMapping, mork:hypothesisMapping, mork:mappingRecommendation, mork:weighting]
+    covers: [equivalence:mork:UncertainMapping]
+    text: >
+      Uncertainty is expressible. Unsure => {{type.mork:UncertainMapping}} plus
+      {{code.mork:weighting}} <100 plus {{code.mork:mappingRecommendation}}
+      "recommendation" and {{code.mork:mappingNote}} "evidence". Never invent a
+      target IRI to look complete.
+  - id: inv.evidence
+    anchors: [mork:mappingNote, mork:lexicalMatch]
+    text: >
+      Notes carry EVIDENCE, not restatement. `{{code.mork:lexicalMatch}} :x` already
+      says "lexical match"; the note says why you believed it, or what you rejected.
+
+ladder:
+  - "Q1 Am I describing wire shape (%R), a concept (%T), or a mapping (%M)?"
+  - "Q2 Does the target exist? yes -> exact ({{codes.exact}}). no -> category ({{codes.category}}) + name it ({{code.mork:conceptName}} \"#Name\")."
+  - "Q3 Must a datum become an individual? yes -> {{type.mork:Datum}}, and {{code.mork:deferredMapping}} to whatever establishes its class."
+  - "Q4 Part of a larger mapping? -> {{code.mork:compositeBroaderMapping}} <parent>. Operates INSIDE the parent's result? -> {{code.mork:broaderApplicative}} <parent> + {{code.mork:exactRBoxMatch}}/{{code.mork:inverseRBoxMatch}}."
+  - "Q5 Produces an artefact? {{generative.summary}} Load the Generative lens; parts are mandatory."
+  - "Q6 Confidence <100 -> {{code.mork:weighting}}; guessing -> {{type.mork:UncertainMapping}}."
+
+pairs:
+  - id: pair.xt-bt
+    priority: 1
+    a: mork:exactTBoxMatch
+    b: mork:broadTBoxCategoryMatch
+    when_a: class exists in target
+    when_b: you are minting a subclass
+  - id: pair.cb-ap
+    priority: 1
+    a: mork:compositeBroaderMapping
+    b: mork:broaderApplicative
+    when_a: this node is a PART of the parent
+    when_b: this node operates WITHIN the parent's outcome
+    covers: [gci:broaderApplicative-requires-exactRBoxMatch]
+  - id: pair.df-dp
+    priority: 1
+    a: mork:deferredMapping
+    b: mork:dependentMapping
+    when_a: you consume the parent's output as context
+    when_b: it must merely run first; you reach the result via yieldConcept
+  - id: pair.xr-xi
+    priority: 1
+    a: mork:exactRBoxMatch
+    b: mork:inverseRBoxMatch
+    when_a: property points subject -> object
+    when_b: you need the property's inverse
+  - id: pair.xa-ba
+    priority: 2
+    a: mork:exactABoxMatch
+    b: mork:broadABoxCategoryMatch
+    when_a: plain exact individual match
+    when_b: subject maps to a broader A-Box category via a relation
+    covers: [gci:broadABoxCategoryMatch-composite, gci:broadRBoxCategoryMatch-composite]
+  - id: pair.hy-df
+    priority: 2
+    a: mork:hypothesisMapping
+    b: mork:deferredMapping
+    when_a: evidential support, may be absent (soft precedence)
+    when_b: hard prerequisite
+  - id: pair.mu-mw
+    priority: 2
+    a: mork:UncertainMapping
+    b: mork:WeightedMatch
+    when_a: target missing or unknown
+    when_b: target known, confidence scored
+  - id: pair.ms-mr
+    priority: 1
+    a: mork:ShapeMapping
+    b: mork:RuleMapping
+    when_a: validation (SHACL)
+    when_b: inference (SWRL)
+    covers: [disjoint_classes:ShapeMapping-RuleMapping]
+  - id: pair.tp-cnt
+    priority: 3
+    a: mork:templateMapping
+    b: mork:compositeNarrowerTemplate
+    when_a: partial mapping used as a template
+    when_b: the template's children
+  - id: pair.kn-cn
+    priority: 1
+    a: mork:compositeNarrower
+    b: mork:compositeNarrowerMapping
+    when_a: between concepts or representations
+    when_b: between MAPPINGS
+  - id: pair.intent-mapping
+    priority: 2
+    a: mork:IntentNode
+    b: mork:DataMapping
+    when_a: pre-ontological meaning, references no target term
+    when_b: ontological commitment
+  - id: pair.mp-kb
+    priority: 3
+    a: mork:memberProperty
+    b: mork:compositeBroader
+    when_a: member of a Representation
+    when_b: generic composition
+
+output_contract: |
+  Emit only MCN: header, blocks, node lines. No commentary outside `#` comments.
+  Type once: prefer {{type.mork:Datum}} over M+{{type.mork:Datum}}; let
+  {{implied.summary}} imply their class.
+  Name nodes, don't number them; ids must be stable across runs (see profile).
+  Prefer structure over prose; notes carry evidence.
+  Annotate the assertion, not the node: `xt :Loan{{"{"}}n "..."{{"}"}}`.
+  These codes are annotations, not data: {{codes.annotation}}.
+  Never emit deprecated terms: {{codes.deprecated}}.
+  No code for what you need? Use a CURIE in code position and flag it in a note.
+  Never substitute a code that means something else.
+
+# Axioms not taught in L0 must be explicitly assigned to a lens.
+deferrals:
+  "completeness:*ShapeMapping*": lens:L-GEN
+  "completeness:*RuleMapping*": lens:L-GEN
+  "completeness:*TransformMapping*": lens:L-GEN
+  "completeness:*ProjectionMapping*": lens:L-GEN
+  "completeness:*Provenance*": lens:L-GEN
+  "completeness:*TargetingSpec*": lens:L-GEN
+  "subprop_inverse:*": lens:L-IND
+  "equivalence:*Collection*": lens:L-REP
+  "equivalence:*Objectification*": lens:L-TAX
+```
+
+---
+
+## 7. `mtp/doctrine.py` — anchors, coverage, pins
+
+```python
+from __future__ import annotations
+
+import fnmatch
+import yaml
+from dataclasses import dataclass
+from pathlib import Path
+
+@dataclass
+class Problem:
+    severity: str        # error | warn
+    code: str
+    message: str
+    hint: str = ""
+
+    def __str__(self):
+        s = f"[{self.severity.upper()}] {self.code}: {self.message}"
+        return s + (f"\n        hint: {self.hint}" if self.hint else "")
+
+def load(path: Path) -> dict:
+    return yaml.safe_load(path.read_text(encoding="utf-8"))
+
+def _units(doc: dict):
+    for inv in doc.get("invariants", []):
+        yield "invariant", inv["id"], inv
+    for p in doc.get("pairs", []):
+        yield "pair", p["id"], p
+
+def resolve_anchors(doc: dict, cb, facts, cfg) -> list[Problem]:
+    """Every anchored term must exist, not be deprecated, and match its pin."""
+    problems: list[Problem] = []
+    allow = set(cfg.get("allow_unresolved_prefixes", []))
+    for kind, uid, unit in _units(doc):
+        anchors = list(unit.get("anchors", []))
+        for a, b in (("a", "b"),):
+            for key in (a, b):
+                if key in unit:
+                    anchors.append(unit[key])
+        for curie in anchors:
+            iri = cb.expand(curie)
+            pfx = curie.split(":", 1)[0] if ":" in curie and not curie.startswith("http") else ""
+            if iri not in facts.terms:
+                if pfx in allow:
+                    continue
+                problems.append(Problem("error", "anchor.missing",
+                    f"{kind} '{uid}' anchors {curie}, absent from the ontology",
+                    "the term was renamed or removed: update doctrine.yaml"))
+                continue
+            if facts.terms[iri].deprecated:
+                problems.append(Problem("error", "anchor.deprecated",
+                    f"{kind} '{uid}' anchors {curie}, now owl:deprecated",
+                    "replace the anchor with the successor term named in skos:editorialNote"))
+    return problems
+
+def check_pins(doc: dict, cb, facts, lock: dict) -> list[Problem]:
+    problems = []
+    pinned = lock.get("terms", {})
+    for kind, uid, unit in _units(doc):
+        anchors = list(unit.get("anchors", [])) + [unit[k] for k in ("a", "b") if k in unit]
+        for curie in anchors:
+            iri = cb.expand(curie)
+            term = facts.terms.get(iri)
+            if term is None:
+                continue
+            pin = pinned.get(iri)
+            if pin is None:
+                problems.append(Problem("error", "pin.absent",
+                    f"{curie} (anchored by '{uid}') has no pin",
+                    "run `mtp update-pins` after reviewing the term"))
+            elif pin["logical_hash"] != term.logical_hash:
+                problems.append(Problem("error", "pin.changed",
+                    f"{curie} logical meaning changed "
+                    f"({pin['logical_hash']} -> {term.logical_hash}); "
+                    f"anchored by '{uid}'",
+                    "re-read the term, revise the doctrine unit, then `mtp update-pins`"))
+    return problems
+
+def check_coverage(doc: dict, facts, cb, lock: dict) -> tuple[list[Problem], dict]:
+    """Every extracted axiom must be claimed by a unit or an explicit deferral."""
+    claimed: dict[str, list[str]] = {}
+    for kind, uid, unit in _units(doc):
+        for ref in unit.get("covers", []):
+            claimed.setdefault(ref, []).append(uid)
+
+    deferrals = doc.get("deferrals", {})
+    labels = lock.get("axioms", {})
+    problems, report = [], {}
+
+    for aid, ax in sorted(facts.axioms.items(), key=lambda kv: kv[1].mcn):
+        label = labels.get(aid, {}).get("label")
+        keys = {aid, f"{ax.kind}:{label}" if label else None,
+                f"{ax.kind}:{ax.subject.rsplit('#', 1)[-1]}" if ax.subject else None}
+        keys.discard(None)
+        # also accept the label alone, e.g. "gci:broaderApplicative-requires-exactRBoxMatch"
+        if label:
+            keys.add(label)
+
+        owners = sorted({o for k in keys for o in claimed.get(k, [])})
+        if not owners:
+            pattern = f"{ax.kind}:{ax.mcn}"
+            for glob, lens in sorted(deferrals.items()):
+                if fnmatch.fnmatch(pattern, glob) or (label and fnmatch.fnmatch(f"{ax.kind}:{label}", glob)):
+                    owners = [lens]
+                    break
+
+        report[aid] = {"kind": ax.kind, "label": label, "mcn": ax.mcn, "owners": owners}
+        if not owners:
+            problems.append(Problem("error", "axiom.unowned",
+                f"{aid} ({ax.kind}) is taught nowhere:\n            {ax.mcn}",
+                "add `covers: [<id>]` to an L0 unit, or a `deferrals` entry naming a lens; "
+                f"label it in pins.lock.json (suggestions: {', '.join(facts.comment_pool[:3])})"))
+        if label is None and ax.kind in ("gci", "disjoint_classes", "disjoint_properties"):
+            problems.append(Problem("warn", "axiom.unlabelled",
+                f"{aid} has no human label in pins.lock.json ({ax.mcn})"))
+    return problems, report
+```
+
+---
+
+## 8. `mtp/template.py`, `mtp/budget.py`
+
+```python
+# template.py ------------------------------------------------------------- #
+import re
+
+_SLOT = re.compile(r"\{\{([^}]+)\}\}")
+
+def render(text: str, ctx: dict[str, str]) -> str:
+    """Substitute {{slot}}. Unknown slots are a build error, never silent."""
+    missing = []
+
+    def sub(m):
+        key = m.group(1).strip()
+        if key.startswith('"') and key.endswith('"'):   # literal escape: {{"{"}}
+            return key[1:-1]
+        if key not in ctx:
+            missing.append(key)
+            return m.group(0)
+        return ctx[key]
+
+    out = _SLOT.sub(sub, text)
+    if missing:
+        raise KeyError("unknown template slots: " + ", ".join(sorted(set(missing))))
+    return out
+```
+
+```python
+# budget.py --------------------------------------------------------------- #
+from __future__ import annotations
+
+import math
+
+def make_counter(name: str = "o200k_base"):
+    try:
+        import tiktoken
+        enc = tiktoken.get_encoding(name)
+        return (lambda s: len(enc.encode(s))), True
+    except Exception:
+        # Conservative proxy, calibrated against o200k_base on MCN-like text.
+        return (lambda s: max(1, math.ceil(len(s) / 3.6))), False
+
+def enforce(sections: dict[str, str], budgets: dict, counter, policy: str,
+            droppable: list[tuple[int, str, str]] | None = None):
+    """policy: 'fail' | 'drop-low-priority'. Returns (counts, dropped, problems)."""
+    counts = {k: counter(v) for k, v in sections.items()}
+    dropped, problems = [], []
+    total_budget = budgets.get("l0_total")
+
+    for key, limit in sorted(budgets.items()):
+        if key in ("l0_total", "tokenizer") or key not in counts:
+            continue
+        if counts[key] > limit:
+            problems.append(f"section '{key}' is {counts[key]} tokens, budget {limit}")
+
+    if total_budget and sum(counts.values()) > total_budget:
+        over = sum(counts.values()) - total_budget
+        if policy == "drop-low-priority" and droppable:
+            for prio, uid, _text in sorted(droppable, reverse=True):
+                if over <= 0:
+                    break
+                dropped.append(uid)
+                over -= 20                      # caller re-renders; see render.py
+        else:
+            problems.append(
+                f"L0 total is {sum(counts.values())} tokens, budget {total_budget} "
+                f"(over by {over}); trim doctrine.yaml or lower a pair's priority"
+            )
+    return counts, dropped, problems
+```
+
+---
+
+## 9. `mtp/render.py` — derived slots and output
+
+The `ctx` builder is where the "auto-refreshing" behaviour lives.
+
+```python
+from __future__ import annotations
+
+import json
+from rdflib.namespace import OWL, RDFS
+
+from . import template
+from .budget import enforce, make_counter
+
+def build_context(facts, cb, cfg) -> dict[str, str]:
+    M = cb.prefixes["mork"]
+    ctx: dict[str, str] = {}
+
+    # per-term slots: {{code.mork:x}}, {{type.mork:X}}, {{reserved.mork:X}}
+    for iri, term in sorted(facts.terms.items()):
+        code = cb.code_for(iri)
+        if not code:
+            continue
+        curie = "mork:" + iri[len(M):] if iri.startswith(M) else iri
+        if code.startswith("."):
+            ctx[f"reserved.{curie}"] = code
+        elif code[0].isupper():
+            ctx[f"type.{curie}"] = code
+        else:
+            ctx[f"code.{curie}"] = code
+
+    # --- box families, derived from local names + subproperty closure ----- #
+    def family(tag: str) -> list[str]:
+        hits = [t.iri for t in facts.of_kind("object_property")
+                if tag in t.iri.rsplit("#", 1)[-1] and not t.deprecated]
+        return sorted(set(cb.codes_for(hits)))
+
+    ctx["codes.tbox"] = "/".join(family("TBox")) or "-"
+    ctx["codes.rbox"] = "/".join(family("RBox")) or "-"
+    ctx["codes.abox"] = "/".join(family("ABox")) or "-"
+
+    exact = sorted(set(cb.codes_for(
+        [t.iri for t in facts.of_kind("object_property")
+         if t.iri.rsplit("#", 1)[-1].startswith("exact") or
+            t.iri.rsplit("#", 1)[-1].startswith("inverseRBox")])))
+    cat = sorted(set(cb.codes_for(
+        [t.iri for t in facts.of_kind("object_property")
+         if "CategoryMatch" in t.iri and t.iri.rsplit("#", 1)[-1].startswith(("broad", "narrow"))])))
+    ctx["codes.exact"] = "/".join(exact)
+    ctx["codes.category"] = "/".join(cat)
+
+    ctx["codes.annotation"] = " ".join(sorted(
+        c for c in (cb.code_for(t.iri) for t in facts.of_kind("annotation_property")) if c))
+    ctx["codes.deprecated"] = " ".join(sorted(
+        (cb.code_for(i) or i.rsplit("#", 1)[-1]) for i in facts.deprecated_iris())) or "(none)"
+    ctx["counts.inverse_pairs"] = str(len(facts.inverse_pairs()))
+    ctx["counts.terms"] = str(len(facts.terms))
+
+    # --- generative: mandatory parts, straight from completeness axioms --- #
+    gen_rows, implied = [], []
+    for cls in sorted(cfg.get("generative_classes", [])):
+        iri = cb.expand(cls)
+        tcode = cb.code_for(iri)
+        if not tcode:
+            continue
+        reqs = set()
+        for ax in facts.axioms.values():
+            if ax.kind == "completeness" and ax.subject == iri:
+                # "!C MS < hasTargetingSpec>TargetingSpec & ..."
+                body = ax.mcn.split("<", 1)[1].strip()
+                for conj in body.split(" & "):
+                    prop = conj.split(">")[0].split("#")[0].strip("^ ()")
+                    reqs.add(prop)
+        gen_rows.append(f"{tcode} needs {' '.join(sorted(reqs))}" if reqs else f"{tcode}")
+        for ax in facts.axioms.values():
+            if ax.kind == "equivalence" and ax.subject == iri and "generates" in ax.mcn:
+                gcode = ax.mcn.split("generates")[0]  # rendered as a code already
+                for conj in ax.mcn.split("=", 1)[1].split(" & "):
+                    p = conj.split(">")[0].strip("^ ()")
+                    if p and p != "M":
+                        implied.append(f"{p}->{tcode}")
+    ctx["generative.summary"] = "; ".join(gen_rows) or "(none declared)"
+    ctx["implied.summary"] = " ".join(sorted(set(implied))) or "(none)"
+    return ctx
+
+def render_pairs(doc, cb, facts, ctx, dropped: set[str]) -> str:
+    lines = ["A|B|use A when|use B when"]
+    for p in sorted(doc["pairs"], key=lambda x: (x.get("priority", 9), x["id"])):
+        if p["id"] in dropped:
+            continue
+        a = cb.code_for(cb.expand(p["a"])) or p["a"]
+        b = cb.code_for(cb.expand(p["b"])) or p["b"]
+        lines.append(f"{a}|{b}|{p['when_a']}|{p['when_b']}")
+    return "CONFUSABLE PAIRS (pipe-separated)\n" + "\n".join(lines)
+
+def render_l0(doc, cb, facts, cfg, dropped: set[str] | None = None):
+    dropped = dropped or set()
+    ctx = build_context(facts, cb, cfg)
+    T = lambda s: template.render(s, ctx)
+
+    sections = {
+        "preamble": T(doc["preamble"]).strip(),
+        "invariants": "INVARIANTS\n" + "\n".join(
+            f"{i}. {T(u['text']).strip()}" for i, u in enumerate(doc["invariants"], 1)),
+        "ladder": "DECISION LADDER (ask in order, stop when answered)\n" + "\n".join(
+            T(q) for q in doc["ladder"]),
+        "pair_table": render_pairs(doc, cb, facts, ctx, dropped),
+        "output_contract": "OUTPUT CONTRACT\n" + T(doc["output_contract"]).strip(),
+    }
+    return sections, ctx
+
+def write(out_dir, sections, counts, manifest, pairs_md, coverage_md):
+    out_dir.mkdir(parents=True, exist_ok=True)
+    order = ["preamble", "invariants", "ladder", "pair_table", "output_contract"]
+    l0 = "\n\n".join(sections[k] for k in order) + "\n"
+    (out_dir / "l0.txt").write_text(l0, encoding="utf-8", newline="\n")
+    (out_dir / "l0.json").write_text(
+        json.dumps({"sections": sections, "token_counts": counts}, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8", newline="\n")
+    (out_dir / "output_contract.txt").write_text(sections["output_contract"] + "\n",
+                                                 encoding="utf-8", newline="\n")
+    (out_dir / "pairs.md").write_text(pairs_md, encoding="utf-8", newline="\n")
+    (out_dir / "coverage.md").write_text(coverage_md, encoding="utf-8", newline="\n")
+    (out_dir / "manifest.json").write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
+    return l0
+```
+
+---
+
+## 10. `mtp/cli.py` — build / check / update-pins
+
+```python
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+import yaml
+
+from . import codebook as cbmod, doctrine as docmod, facts as factsmod, render
+from .budget import enforce, make_counter
+
+def _load_all(args):
+    cfg = yaml.safe_load(Path(args.config).read_text(encoding="utf-8"))
+    ont = [Path(p) for p in cfg["ontology_files"]]
+    facts = factsmod.load(ont)
+    cb = cbmod.load(Path(cfg["codebook"]))
+    doc = docmod.load(Path(cfg["doctrine"]))
+    lock_path = Path(cfg["pins"])
+    lock = json.loads(lock_path.read_text(encoding="utf-8")) if lock_path.exists() \
+        else {"mtp_lock_version": 1, "terms": {}, "axioms": {}}
+    return cfg, facts, cb, doc, lock, lock_path
+
+def _diagnose(cfg, facts, cb, doc, lock):
+    problems = []
+    problems += [docmod.Problem("error", "codebook", m) for m in cbmod.validate(cb, facts, cfg)]
+    problems += docmod.resolve_anchors(doc, cb, facts, cfg)
+    problems += docmod.check_pins(doc, cb, facts, lock)
+    cov_problems, cov_report = docmod.check_coverage(doc, facts, cb, lock)
+    problems += cov_problems
+    return problems, cov_report
+
+def cmd_build(args):
+    cfg, facts, cb, doc, lock, _ = _load_all(args)
+    problems, cov = _diagnose(cfg, facts, cb, doc, lock)
+    errors = [p for p in problems if p.severity == "error"]
+
+    counter, exact = make_counter(doc["budgets"].get("tokenizer", "o200k_base"))
+    sections, ctx = render.render_l0(doc, cb, facts, cfg)
+    droppable = [(p.get("priority", 9), p["id"], "") for p in doc["pairs"]]
+    counts, dropped, budget_problems = enforce(
+        sections, doc["budgets"], counter, args.budget_policy, droppable)
+    if dropped:
+        sections, ctx = render.render_l0(doc, cb, facts, cfg, dropped=set(dropped))
+        counts = {k: counter(v) for k, v in sections.items()}
+    problems += [docmod.Problem("error" if args.budget_policy == "fail" else "warn",
+                                "budget", m) for m in budget_problems]
+    errors = [p for p in problems if p.severity == "error"]
+
+    for p in problems:
+        print(p, file=sys.stderr)
+
+    if errors and not args.force:
+        print(f"\n{len(errors)} error(s): refusing to write a stale pack.", file=sys.stderr)
+        return 1
+
+    out = Path(args.out)
+    body_hash = hashlib.sha256(
+        "\n\n".join(sections[k] for k in sorted(sections)).encode()).hexdigest()
+    manifest = {
+        "mtp_version": args.pack_version,
+        "tier": "L0",
+        "ontology": {"files": list(facts.source_files), "graph_hash": facts.graph_hash},
+        "codebook_version": cb.version,
+        "doctrine_version": doc["version"],
+        "l0_content_hash": body_hash,
+        "token_counts": counts,
+        "token_counts_exact": exact,
+        "dropped_units": sorted(dropped),
+        "pair_count": len([p for p in doc["pairs"] if p["id"] not in set(dropped)]),
+    }
+    coverage_md = "# Axiom coverage\n\n| axiom | kind | label | taught by | MCN |\n|---|---|---|---|---|\n" + \
+        "\n".join(f"| {a} | {r['kind']} | {r['label'] or '-'} | "
+                  f"{', '.join(r['owners']) or '**UNOWNED**'} | `{r['mcn']}` |"
+                  for a, r in sorted(cov.items()))
+    l0 = render.write(out, sections, counts, manifest, sections["pair_table"], coverage_md)
+    print(f"\nwrote {out}/l0.txt  {sum(counts.values())} tokens "
+          f"({'exact' if exact else 'estimated'})  hash {body_hash[:12]}")
+    if args.print:
+        print("\n" + l0)
+    return 0
+
+def cmd_check(args):
+    """CI mode: no writes; fails on drift or on out-of-date committed output."""
+    cfg, facts, cb, doc, lock, _ = _load_all(args)
+    problems, cov = _diagnose(cfg, facts, cb, doc, lock)
+    counter, _ = make_counter(doc["budgets"].get("tokenizer", "o200k_base"))
+    sections, _ = render.render_l0(doc, cb, facts, cfg)
+    counts, _, bp = enforce(sections, doc["budgets"], counter, "fail", None)
+    problems += [docmod.Problem("error", "budget", m) for m in bp]
+
+    man = Path(args.out) / "manifest.json"
+    if man.exists():
+        expect = json.loads(man.read_text())["l0_content_hash"]
+        actual = hashlib.sha256(
+            "\n\n".join(sections[k] for k in sorted(sections)).encode()).hexdigest()
+        if expect != actual:
+            problems.append(docmod.Problem("error", "output.stale",
+                "committed out/ does not match a fresh build", "run `mtp build`"))
+    for p in problems:
+        print(p, file=sys.stderr)
+    errs = sum(1 for p in problems if p.severity == "error")
+    print(f"{errs} error(s), {len(problems)-errs} warning(s); "
+          f"{sum(counts.values())} L0 tokens")
+    return 1 if errs else 0
+
+def cmd_update_pins(args):
+    cfg, facts, cb, doc, lock, lock_path = _load_all(args)
+    old_terms = lock.get("terms", {})
+    new_terms = {}
+    anchored = set()
+    for kind, uid, unit in docmod._units(doc):
+        for c in list(unit.get("anchors", [])) + [unit[k] for k in ("a", "b") if k in unit]:
+            anchored.add(cb.expand(c))
+    for iri in sorted(anchored):
+        t = facts.terms.get(iri)
+        if t is None:
+            continue
+        new_terms[iri] = {"logical_hash": t.logical_hash, "deprecated": t.deprecated}
+        prev = old_terms.get(iri)
+        if prev and prev["logical_hash"] != t.logical_hash:
+            print(f"changed: {iri}\n  {prev['logical_hash']} -> {t.logical_hash}")
+        elif not prev:
+            print(f"new pin: {iri} = {t.logical_hash}")
+
+    axioms = dict(lock.get("axioms", {}))
+    for aid, ax in sorted(facts.axioms.items()):
+        entry = axioms.setdefault(aid, {"label": None})
+        entry["kind"] = ax.kind
+        entry["mcn"] = ax.mcn
+        if entry["label"] is None:
+            print(f"needs label: {aid}  {ax.mcn}")
+    for stale in sorted(set(axioms) - set(facts.axioms)):
+        print(f"removed axiom (dropping pin): {stale}  {axioms[stale].get('mcn')}")
+        axioms.pop(stale)
+
+    lock_path.write_text(json.dumps(
+        {"mtp_lock_version": 1,
+         "ontology_graph_hash": facts.graph_hash,
+         "terms": new_terms, "axioms": axioms},
+        indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
+    print(f"\nwrote {lock_path}")
+    return 0
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(prog="mtp", description="MORK Teaching Pack L0 generator")
+    ap.add_argument("--config", default="data/config.yaml")
+    sub = ap.add_subparsers(dest="cmd", required=True)
+
+    b = sub.add_parser("build");  b.set_defaults(fn=cmd_build)
+    b.add_argument("--out", default="out")
+    b.add_argument("--pack-version", default="0.0.0-dev")
+    b.add_argument("--budget-policy", choices=["fail", "drop-low-priority"], default="fail")
+    b.add_argument("--force", action="store_true", help="write despite errors (never in CI)")
+    b.add_argument("--print", action="store_true")
+
+    c = sub.add_parser("check");  c.set_defaults(fn=cmd_check)
+    c.add_argument("--out", default="out")
+
+    u = sub.add_parser("update-pins"); u.set_defaults(fn=cmd_update_pins)
+
+    args = ap.parse_args(argv)
+    return args.fn(args)
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+```
+
+`data/config.yaml`:
+
+```yaml
+ontology_files: [spec/Mork.ttl]
+codebook: data/codebook.yaml
+doctrine: data/doctrine.yaml
+pins: data/pins.lock.json
+allow_unresolved_prefixes: [fnd, sh, swrl, rr, rml]   # imports not vendored
+allow_deprecated_codes: [mum, dgm, dgo, swt]          # documented-as-deprecated codes
+require_full_code_coverage: true
+code_coverage_exempt: []
+generative_classes: [mork:ShapeMapping, mork:RuleMapping, mork:TransformMapping, mork:ProjectionMapping]
+```
+
+---
+
+## 11. Generated `out/l0.txt` (against the attached ontology)
+
+```
+MORK records mapping INTENT as reviewable graph objects. You emit MCN (compact
+notation); a deterministic decoder produces RDF; OWL + SHACL judge it. You are
+not writing a script. You are proposing a mapping a human will review.
+
+INVARIANTS
+1. Three worlds: Representation (wire format), Taxonomy (concepts), Ontology (target). Mappings live in a fourth, MappingScheme. Never mix worlds on one node.
+2. The target has three boxes. Class => T-Box (bt/nt/xt). Property or relation => R-Box (br/nr/xi/xr). Named individual => A-Box (ba/na/xa).
+3. Order is structure, not instruction. Express "X before Y" with deferral (df/dp), composition (cb/cn) or applicative context (ap). Never by line order. pr is derived; do not assert it.
+4. One direction per inverse pair (14 pairs exist). Write cb from the child OR cn from the parent, never both.
+5. Nothing exists until asserted. To reference an axiom you are also creating, go through a DeferredContext (MX) that yields it (y .dci).
+6. Uncertainty is expressible. Unsure => MU plus w <100 plus mr "recommendation" and n "evidence". Never invent a target IRI to look complete.
+7. Notes carry EVIDENCE, not restatement. `lx :x` already says "lexical match"; the note says why you believed it, or what you rejected.
+
+DECISION LADDER (ask in order, stop when answered)
+Q1 Am I describing wire shape (%R), a concept (%T), or a mapping (%M)?
+Q2 Does the target exist? yes -> exact (xa/xi/xm/xr/xt). no -> category (ba/br/bt/na/nr/nt) + name it (c "#Name").
+Q3 Must a datum become an individual? yes -> MD, and df to whatever establishes its class.
+Q4 Part of a larger mapping? -> cb <parent>. Operates INSIDE the parent's result? -> ap <parent> + xr/xi.
+Q5 Produces an artefact? MS needs gs pv tg pb; MR needs gr pvr tg pb; MT needs gt pvt; MP needs gc pvp tg pb. Load the Generative lens; parts are mandatory.
+Q6 Confidence <100 -> w; guessing -> MU.
+
+CONFUSABLE PAIRS (pipe-separated)
+A|B|use A when|use B when
+xt|bt|class exists in target|you are minting a subclass
+cb|ap|this node is a PART of the parent|this node operates WITHIN the parent's outcome
+df|dp|you consume the parent's output as context|it must merely run first; you reach the result via yieldConcept
+xr|xi|property points subject -> object|you need the property's inverse
+MS|MR|validation (SHACL)|inference (SWRL)
+kn|cn|between concepts or representations|between MAPPINGS
+xa|ba|plain exact individual match|subject maps to a broader A-Box category via a relation
+hy|df|evidential support, may be absent (soft precedence)|hard prerequisite
+MU|MW|target missing or unknown|target known, confidence scored
+I|M|pre-ontological meaning, references no target term|ontological commitment
+tp|cnt|partial mapping used as a template|the template's children
+mp|kb|member of a Representation|generic composition
+
+OUTPUT CONTRACT
+Emit only MCN: header, blocks, node lines. No commentary outside `#` comments.
+Type once: prefer MD over M+MD; let gc->MP gr->MR gs->MS gt->MT imply their class.
+Name nodes, don't number them; ids must be stable across runs (see profile).
+Prefer structure over prose; notes carry evidence.
+Annotate the assertion, not the node: `xt :Loan{n "..."}`.
+These codes are annotations, not data: al dcc dcd dco dct en ex hn lb n nn rc sco sd ud.
+Never emit deprecated terms: dgm dgo mum swt.
+No code for what you need? Use a CURIE in code position and flag it in a note.
+Never substitute a code that means something else.
+```
+
+**≈820 tokens (o200k_base)**, against ~45k for `Mork.ttl`. Note that the `codes.rbox`, generative requirements, deprecated list and inverse-pair count are all *read off the ontology* — none were typed by hand.
+
+---
+
+## 12. Failure modes: what a re-run does when MORK changes
+
+| Ontology change | Generator response | Exit |
+|---|---|---|
+| New `skos:definition` wording | nothing (prose excluded from logical hash) | 0 |
+| New object property, no code | `ontology term has no code: …#newProp` | 1 |
+| New `*RBoxCategoryMatch` property with a code | silently appears in invariant 2 + Q2 | 0 |
+| `broaderApplicative` gains `owl:TransitiveProperty` | `pin.changed` naming `pair.cb-ap` | 1 |
+| `exactTBoxMatch` deprecated | `anchor.deprecated` on `inv.boxes`, `pair.xt-bt` | 1 |
+| New GCI added | `axiom.unowned` + the axiom in MCN syntax + label prompt | 1 |
+| New `ShapeMapping` completeness axiom | Q5 line updates; deferral glob absorbs it | 0 |
+| New `AllDisjointClasses` | `axiom.unowned` (disjointness is doctrine, not detail) | 1 |
+| `UncertainMapping` equivalence changed | `pin.changed` on `inv.uncertainty` | 1 |
+| Doctrine edit pushes L0 to 950 tokens | `budget` error with per-section costs | 1 |
+| `out/` not regenerated after an edit | `output.stale` | 1 |
+
+CI:
+
+```yaml
+- run: python -m mtp.cli check --out out          # drift + budget + staleness
+- run: python -m mtp.cli build --pack-version ${{ github.ref_name }} --out out
+- run: git diff --exit-code out/                  # generated output is committed
+```
+
+---
+
+## 13. Hooks for the rest of the pack
+
+- `out/l0.json` is the programmatic prompt-assembly input: sections are separately addressable, so the resident prefix (`preamble`+`invariants`+`ladder`+`pair_table`+`output_contract`) can be emitted byte-identically for provider prefix caching.
+- `manifest.json.l0_content_hash` is the value to record per proposal alongside `model-id` and `profile-hash` — the §6/§7 provenance story.
+- `covers:` / `deferrals:` already names lenses (`lens:L-GEN`, `lens:L-IND`). When L2 is built, `check_coverage` needs no change: replace a deferral glob with a real lens unit and the gate tightens automatically.
+- `facts.axioms[*].mcn` is the seed for the diagnostic→doctrine table in §5 of the plan: each GCI already renders in the notation the agent writes, which is exactly the repair-fragment text.

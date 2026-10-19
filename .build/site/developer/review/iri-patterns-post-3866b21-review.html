@@ -1,0 +1,375 @@
+<h1 id="review-rdf--sparql-patterns-guide-iri-and-identity-patterns-and-iri-policy">Review: RDF &amp; SPARQL Patterns Guide, IRI and Identity Patterns, and IRI Policy</h1>
+
+<p><strong>Review state:</strong> Closed 2026-09-23. Every finding is dispositioned in <a href="/developer/status/iri-patterns-post-3866b21-remediation.html">iri-patterns-post-3866b21-remediation.md</a>, which also lists the follow-on work and where it is tracked.</p>
+
+<h2 id="summary">Summary</h2>
+
+<p>The set is unusually strong. It explains why each pattern exists, marks most portability hazards, and correctly treats the TCK as the source of truth rather than vendor documentation. The remediation passes in D.1 and D.2 fixed many real bugs.</p>
+
+<p>However, several defects remain that would cause silent data loss, a wedged system, or unenforceable guarantees if the examples were copied into production. Some are new; some were left behind when earlier text was corrected and not every copy was updated. The most serious are:</p>
+
+<ol>
+  <li><strong>Epoch bump wedges every aggregate.</strong> The procedure for what happens to version rows after an epoch bump is undefined, and with the dual epoch guards, every write fails permanently.</li>
+  <li><strong>Two “dense” sequencers are not dense.</strong> S8 recommends PostgreSQL <code class="language-plaintext highlighter-rouge">BIGSERIAL</code> and Redis <code class="language-plaintext highlighter-rouge">INCR</code>, which have the pre-allocation hole (G2) that the guide itself identifies.</li>
+  <li><strong>The global HLC read reintroduces G2.</strong> HLCs are assigned before commit, and the example read has no upper bound.</li>
+  <li><strong>TTL-pruning txn claims is not safe for appends.</strong> A late retry duplicates events.</li>
+  <li><strong>Appendix B contradicts the body.</strong> It ships a fork shape the guide proves can never fire, and a <code class="language-plaintext highlighter-rouge">sh:class</code> constraint the guide says must never be added.</li>
+  <li><strong>Idempotency keys don’t bind request content.</strong> A reused txn id with different content is reported as applied.</li>
+</ol>
+
+<p>Details follow, grouped by severity, with a suggested fix for each.</p>
+
+<hr />
+
+<h2 id="a-critical-correctness-or-data-loss-defects">A. Critical: correctness or data-loss defects</h2>
+
+<h3 id="a1-epoch-bump-leaves-version-rows-unwritable-191-101-241-244">A1. Epoch bump leaves version rows unwritable (§19.1, §10.1, §24.1, §24.4)</h3>
+
+<p>Every write guards on the same epoch value twice:</p>
+<ul>
+  <li>the dataset node: <code class="language-plaintext highlighter-rouge">&lt;urn:ds:prod&gt; pat:epoch "3"</code></li>
+  <li>the row itself: <code class="language-plaintext highlighter-rouge">&lt;urn:g:orders/1&gt; pat:epoch "3"</code></li>
+</ul>
+
+<p>The §24.4 runbook bumps only the dataset epoch. After the bump to 4:</p>
+<ul>
+  <li>A client using epoch 4 fails the row guard, because every row still says 3.</li>
+  <li>A client using epoch 3 fails the dataset guard.</li>
+</ul>
+
+<p>No write can ever succeed again. The runbook never says whether version rows are rewritten to epoch 4, whether <code class="language-plaintext highlighter-rouge">pat:seq</code> restarts at 1 or continues, or what <code class="language-plaintext highlighter-rouge">pat:prevRev</code> points at across the boundary.</p>
+
+<p>Each choice has consequences the guide doesn’t address:</p>
+<ul>
+  <li><strong>If <code class="language-plaintext highlighter-rouge">seq</code> continues,</strong> the S3 gap scan (pinned to one epoch) reports every stream as starting at 43 with no earlier receipts.</li>
+  <li><strong>If <code class="language-plaintext highlighter-rouge">seq</code> restarts,</strong> the rows must be reset in bulk.</li>
+</ul>
+
+<p><strong>Fix:</strong> specify the row-migration step (lazy per-row rebase on first write, or bulk rewrite), the <code class="language-plaintext highlighter-rouge">seq</code> policy, and the cross-epoch <code class="language-plaintext highlighter-rouge">prevRev</code> rule. Add a TCK test that performs a write after the bump, not just a rejection of a stale write (T-5 only covers the rejection).</p>
+
+<h3 id="a2-s8-external-sequencers-are-not-dense-and-have-the-g2-hole-s8-254-externalsequencerstrategy">A2. S8 external sequencers are not dense and have the G2 hole (§S8, §25.4 <code class="language-plaintext highlighter-rouge">ExternalSequencerStrategy</code>)</h3>
+
+<p><code class="language-plaintext highlighter-rouge">ExternalSequencerStrategy</code> claims <code class="language-plaintext highlighter-rouge">TOTAL_DENSE</code> / <code class="language-plaintext highlighter-rouge">PER_STREAM_DENSE</code> and lists Kafka offsets, <code class="language-plaintext highlighter-rouge">BIGSERIAL</code>, <code class="language-plaintext highlighter-rouge">nextval</code> and Redis <code class="language-plaintext highlighter-rouge">INCR</code>. This is wrong for most of them:</p>
+
+<ul>
+  <li><strong><code class="language-plaintext highlighter-rouge">BIGSERIAL</code>/<code class="language-plaintext highlighter-rouge">nextval</code> and <code class="language-plaintext highlighter-rouge">INCR</code></strong> allocate before the RDF write commits. Failed writes leave gaps, and concurrent writers can commit out of order. This is exactly G2, and the guide itself cites “the PostgreSQL sequence-versus-LSN gap.”</li>
+  <li><strong>Kafka offsets</strong> are per partition, not per stream. With <code class="language-plaintext highlighter-rouge">hash(stream) mod N</code>, a partition carries many streams, so offsets are not per-stream dense. Transaction markers and compaction also create offset gaps.</li>
+</ul>
+
+<p>Density holds only if one serialised writer per stream allocates and writes, and reuses the same number on retry.</p>
+
+<p><strong>Fix:</strong> downgrade these to <code class="language-plaintext highlighter-rouge">TOTAL_SPARSE</code> unless paired with a single writer per stream that retries with the same number. Remove the density claim for sequences and <code class="language-plaintext highlighter-rouge">INCR</code>.</p>
+
+<h3 id="a3-the-global-hlc-read-has-the-allocate-then-commit-hole-213-194">A3. The global HLC read has the allocate-then-commit hole (§21.3, §19.4)</h3>
+
+<p><code class="language-plaintext highlighter-rouge">pat:hlc</code> is taken by <code class="language-plaintext highlighter-rouge">clock.send()</code> in the client before the update is issued. A slow transaction with an earlier HLC can commit after a consumer has already read past it with <code class="language-plaintext highlighter-rouge">FILTER(?hlc &gt; …)</code>.</p>
+
+<ul>
+  <li>The example query has no watermark or lag bound, so it is exactly the G2 failure.</li>
+  <li>The per-target contiguity check only detects the skipped revision when a later revision for the same target arrives. If the skipped revision is a stream’s last write, the loss is silent indefinitely.</li>
+  <li><code class="language-plaintext highlighter-rouge">LagWindowRead</code> is only safe if the lag exceeds the maximum transaction duration plus clock skew. Neither bound is stated.</li>
+</ul>
+
+<p><strong>Fix:</strong> show the watermark or lag upper bound in the example query. State the lag-sizing rule. Mark the unbounded form as unsafe.</p>
+
+<h3 id="a4-ttl-pruning-txn-claims-is-unsafe-for-the-append-form-152-242">A4. TTL-pruning txn claims is unsafe for the append form (§15.2, §24.2)</h3>
+
+<p>§15.2 says a claim pruned too early “turns a late retry into a spurious <code class="language-plaintext highlighter-rouge">412</code>, which is safe.” That holds only for the CAS form, where the expected-version guard also fails.</p>
+
+<p>The append form (§10.1, <code class="language-plaintext highlighter-rouge">Expectation.Any</code>) has no version guard. Its only idempotency protection is the txn claim. A retry after the 72-hour TTL (for example, an outbox relay draining a backlog after an outage) appends the events again and burns a new sequence number.</p>
+
+<p>Pruning also deletes the evidence that the F5 fork-detection query depends on.</p>
+
+<p><strong>Fix:</strong></p>
+<ul>
+  <li>For append families, require TTL ≥ the maximum outbox or redelivery horizon, or make event IRIs (already txn-derived) the idempotency witness via <code class="language-plaintext highlighter-rouge">FILTER NOT EXISTS</code> on the event subject.</li>
+  <li>Add a receipt-side fork audit: any <code class="language-plaintext highlighter-rouge">pat:Revision</code> with more than one <code class="language-plaintext highlighter-rouge">pat:txn</code>. This survives txn-claim pruning.</li>
+</ul>
+
+<h3 id="a5-idempotency-keys-dont-bind-request-content-302-rule-3-192-appendix-a-patrev">A5. Idempotency keys don’t bind request content (§30.2 rule 3, §19.2, Appendix A <code class="language-plaintext highlighter-rouge">pat:rev</code>)</h3>
+
+<p>§30.2 says <code class="language-plaintext highlighter-rouge">requestDigest</code> “is what the claim records.” But the txn claim stores only <code class="language-plaintext highlighter-rouge">pat:rev</code>.</p>
+
+<p>If a client reuses a txn id with a different payload, <code class="language-plaintext highlighter-rouge">FILTER NOT EXISTS</code> makes the update a no-op, the <code class="language-plaintext highlighter-rouge">ASK</code> returns true, and the caller is told <code class="language-plaintext highlighter-rouge">Applied</code> even though its content was never written. The PostgreSQL rule this is supposed to translate explicitly rejects this case.</p>
+
+<p><strong>Fix:</strong> add <code class="language-plaintext highlighter-rouge">pat:requestDigest</code> to the txn claim. On an <code class="language-plaintext highlighter-rouge">ASK</code>-true result, compare digests and return a distinct <code class="language-plaintext highlighter-rouge">IdempotencyKeyReuse</code> error on mismatch.</p>
+
+<h3 id="a6-appendix-b-contradicts-the-body-of-the-guide">A6. Appendix B contradicts the body of the guide</h3>
+
+<p><strong><code class="language-plaintext highlighter-rouge">pat:NoForkShape</code> can never fire.</strong> It detects forks as “two revisions sharing a <code class="language-plaintext highlighter-rouge">prevRev</code>.” F5, §15.3 and the Appendix A comment all explain that deterministic revision IRIs make this impossible: colliding writers produce one subject, not two. Yet Appendix B still recommends the shape and discusses its cost, and T-11 relies on it. The effective constraint is <code class="language-plaintext highlighter-rouge">sh:maxCount 1</code> on <code class="language-plaintext highlighter-rouge">pat:txn</code>.</p>
+<ul>
+  <li><strong>Fix:</strong> delete the shape, or replace it with a <code class="language-plaintext highlighter-rouge">sh:sparql</code> check on txn-claim cardinality.</li>
+</ul>
+
+<p><strong><code class="language-plaintext highlighter-rouge">pat:RevisionShape</code> includes <code class="language-plaintext highlighter-rouge">sh:class pat:Revision</code> on <code class="language-plaintext highlighter-rouge">pat:prevRev</code>.</strong> §24.2 says this constraint “would break under pruning and must not be added,” and the §19.7 copy of the shape omits it. With monthly buckets, it also fails on validators that validate named graphs individually, because the predecessor sits in last month’s bucket.</p>
+<ul>
+  <li><strong>Fix:</strong> remove it, and align the §19.7 and Appendix B copies of the shape.</li>
+</ul>
+
+<p><strong><code class="language-plaintext highlighter-rouge">pat:EventOrderShape</code> requires <code class="language-plaintext highlighter-rouge">pat:opSeq</code> on every event.</strong> S5 says commit-grain families (<code class="language-plaintext highlighter-rouge">dal:CommitGrain</code>) legitimately lack it, so the shape rejects valid data.</p>
+
+<p><strong><code class="language-plaintext highlighter-rouge">pat:VersionRowShape</code> targets <code class="language-plaintext highlighter-rouge">sh:targetSubjectsOf pat:seq</code>.</strong> This also matches every receipt, since receipts carry <code class="language-plaintext highlighter-rouge">pat:seq</code> too. It is harmless today but fragile.</p>
+<ul>
+  <li><strong>Fix:</strong> target by an explicit class or graph.</li>
+</ul>
+
+<h3 id="a7-242-falsely-claims-the-live-head-is-always-in-the-newest-bucket">A7. §24.2 falsely claims the live head is always in the newest bucket</h3>
+
+<p>The text says “the live <code class="language-plaintext highlighter-rouge">pat:head</code> is always in the newest bucket,” and uses this to justify prefix-only retention. In fact, a stream last written 14 months ago has its head in an old bucket; S4 itself notes this case. With <code class="language-plaintext highlighter-rouge">log: 400d</code>, prefix pruning deletes the receipt that a live head points at.</p>
+
+<p><strong>Fix:</strong> pin buckets that contain any live head, or copy the head receipt forward on rotation. Add a test for this case.</p>
+
+<hr />
+
+<h2 id="b-major-misleading-or-unsafe-guidance">B. Major: misleading or unsafe guidance</h2>
+
+<p><strong>B1. The ETag form is still inconsistent.</strong> §15.4 and §19.4 correctly require strong ETags. But weak <code class="language-plaintext highlighter-rouge">W/</code> forms remain in:</p>
+<ul>
+  <li>F3 (<code class="language-plaintext highlighter-rouge">ETag: W/"42"</code>)</li>
+  <li>F4 (<code class="language-plaintext highlighter-rouge">ETag: W/"3-42"</code>)</li>
+  <li>the Glossary (<code class="language-plaintext highlighter-rouge">W/"{epoch}-{seq}"</code>)</li>
+  <li>§30.2 rule 1</li>
+</ul>
+
+<p>Readers copying the Glossary or §30.2 will produce ETags that fail every <code class="language-plaintext highlighter-rouge">If-Match</code>.</p>
+
+<p>A related point: a strong ETag asserts byte-identical representations. Turtle serialisation order can vary between two reads of the same version, so the serialiser must be deterministic, or the “strong” claim is technically false.</p>
+
+<p><strong>B2. The <code class="language-plaintext highlighter-rouge">firstWrite</code> / <code class="language-plaintext highlighter-rouge">OPTIONAL pat:head</code> logic contradicts itself.</strong></p>
+<ul>
+  <li>The inline comment in §19.1 is correct: under <code class="language-plaintext highlighter-rouge">PreCreatedRow</code>, the row has no head on its first CAS.</li>
+  <li>§14.2 and §19.3 say the opposite: that <code class="language-plaintext highlighter-rouge">PreCreatedRow</code> never needs the <code class="language-plaintext highlighter-rouge">OPTIONAL</code>, and that <code class="language-plaintext highlighter-rouge">AbsentRow</code> is why it exists. But the §19.3 create path does write <code class="language-plaintext highlighter-rouge">pat:head</code>.</li>
+  <li>Separately, the §24.1 delete makes <code class="language-plaintext highlighter-rouge">pat:head</code> mandatory, so a pre-created, never-written row cannot be deleted.</li>
+</ul>
+
+<p><strong>B3. The create path lacks the dataset-level epoch guard (§19.3, §14.2).</strong> The CAS, append and delete forms all have the B1 guard; the create path does not. A stale client can create with <code class="language-plaintext highlighter-rouge">e3</code> IRIs after a bump to 4. Add the guard and a test for it (T-9 plus a restore).</p>
+
+<p><strong>B4. The deadlock guidance contradicts itself.</strong> §10.1 and §19.6 correctly say that sorted order in query text does nothing. §25.7 lists “counters and version rows acquired in <strong>sorted order</strong>” as a non-negotiable. Reconcile §25.7 with <code class="language-plaintext highlighter-rouge">dal:deadlockPolicy</code>.</p>
+
+<p><strong>B5. Target IRIs are inconsistent in the queries.</strong> §10.1 insists that one target IRI is used everywhere (<code class="language-plaintext highlighter-rouge">&lt;urn:g:orders/1&gt;</code>, “B3”). S2 and the S4 head lookup query <code class="language-plaintext highlighter-rouge">&lt;urn:stream:orders/1&gt;</code>, which returns nothing against data written by the documented write paths.</p>
+
+<p><strong>B6. The Chapter 21 and Chapter 26 store tables contradict each other.</strong></p>
+<ul>
+  <li>§21.2 puts Virtuoso and RDF4J under “HLC only. Do not add a global counter.”</li>
+  <li>§26.1 gives Virtuoso <code class="language-plaintext highlighter-rouge">NativeSequence</code> as its dataset tier (“strongest dense option”) and gives RDF4J an <code class="language-plaintext highlighter-rouge">InTxCounter</code> dataset tier.</li>
+</ul>
+
+<p><strong>B7. S3’s low-water-mark check has undefined semantics.</strong></p>
+<ul>
+  <li>Appendix A defines <code class="language-plaintext highlighter-rouge">pat:retentionLowWaterMark</code> as “the lowest <code class="language-plaintext highlighter-rouge">pat:seq</code> the retention job has pruned up to.”</li>
+  <li>S3 treats it as “the lowest seq still present.”</li>
+</ul>
+
+<p>Under the Appendix A definition, <code class="language-plaintext highlighter-rouge">FILTER(?lo &gt; ?expectedLo)</code> fires for every pruned stream. There are further gaps:</p>
+<ul>
+  <li>Streams never pruned have no row, so a lost prefix goes undetected. Bootstrap every stream’s mark to 0 or 1.</li>
+  <li>Streams with no surviving receipts are not checked at all.</li>
+  <li><code class="language-plaintext highlighter-rouge">urn:g:retention</code> is missing from the §2.3 graph inventory.</li>
+</ul>
+
+<p><strong>B8. Outcome classification is too narrow (§19.4).</strong></p>
+<ul>
+  <li>Only <code class="language-plaintext highlighter-rouge">TimeoutError</code> routes to <code class="language-plaintext highlighter-rouge">UNKNOWN</code>. Connection resets, 5xx responses, proxy 502/504 and client crashes after sending are equally ambiguous and must also go to <code class="language-plaintext highlighter-rouge">UNKNOWN</code>.</li>
+  <li>The confirming <code class="language-plaintext highlighter-rouge">ASK</code> must go to the writer or primary. A negative <code class="language-plaintext highlighter-rouge">ASK</code> on a lagging replica gets classified as a definitive <code class="language-plaintext highlighter-rouge">CONFLICT</code>, and the caller then re-decides on top of a write that actually applied.</li>
+  <li><code class="language-plaintext highlighter-rouge">CONFLICT</code> also conflates guard failure with a tombstoned target or a changed epoch. These should map to 404/410 and resync respectively, not 412 plus retry. The §25.7 append loop retries tombstoned streams pointlessly.</li>
+  <li>For the append form, the client cannot know the revision IRI, so <code class="language-plaintext highlighter-rouge">resolve</code> must <code class="language-plaintext highlighter-rouge">ASK { &lt;txn&gt; pat:rev ?any }</code>, not the specific-rev form shown.</li>
+</ul>
+
+<p><strong>B9. The HLC is never merged across nodes (§S7, §19.4).</strong> <code class="language-plaintext highlighter-rouge">receive()</code> is defined but never called. Without it, each node’s HLC is just its own physical clock plus a counter, so the “causally consistent” claim does not hold across writers. Call <code class="language-plaintext highlighter-rouge">receive(head.hlc)</code> on the head receipt read before a CAS, or before an append that follows a read.</p>
+
+<p><strong>B10. The normalization pipeline is specified four different ways.</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Where</th>
+      <th>Pipeline</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Guide code, <code class="language-plaintext highlighter-rouge">PERSON_EMAIL_V1</code></td>
+      <td>strip(hand-picked 5 characters) → NFKC → trim → casefold</td>
+    </tr>
+    <tr>
+      <td>Guide §25.3 declaration</td>
+      <td><code class="language-plaintext highlighter-rouge">[nfkc, trim, casefold]</code> (missing the strip step)</td>
+    </tr>
+    <tr>
+      <td>iri-identity §7.3</td>
+      <td>NFKC(strip(NFKC(x)).casefold()), using the full <code class="language-plaintext highlighter-rouge">Default_Ignorable_Code_Point</code> property, not a hand-maintained subset</td>
+    </tr>
+    <tr>
+      <td>iri-policy</td>
+      <td>none; the pipeline is left unspecified</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The problems:</p>
+<ul>
+  <li><strong>Idempotence:</strong> the guide’s order does not re-normalize after <code class="language-plaintext highlighter-rouge">casefold</code>, so it is not guaranteed idempotent. Unicode’s defined <code class="language-plaintext highlighter-rouge">NFKC_Casefold</code> / <code class="language-plaintext highlighter-rouge">toNFKC_Casefold</code> should be referenced instead of ad-hoc compositions.</li>
+  <li><strong>Domain semantics:</strong> casefolding or NFKC-normalizing an entire email address changes its semantics (the local part is technically case-sensitive, and <code class="language-plaintext highlighter-rouge">ß</code> becomes <code class="language-plaintext highlighter-rouge">ss</code>). This is fine as a declared business rule, but the guide presents it as the correct generic answer.</li>
+  <li><strong>Missing coverage:</strong>
+    <ul>
+      <li>Neither document addresses confusables or homoglyphs (UTS #39), which is the realistic way K2/K4 uniqueness gets bypassed.</li>
+      <li>IDN handling is deferred to v2 while v1 claims are issued, so <code class="language-plaintext highlighter-rouge">bücher.example</code> / <code class="language-plaintext highlighter-rouge">xn--…</code> duplicates ship in v1 by design.</li>
+    </ul>
+  </li>
+</ul>
+
+<p><strong>B11. Claim and IRI derivations use delimiter concatenation.</strong> <code class="language-plaintext highlighter-rouge">claim_iri</code> and <code class="language-plaintext highlighter-rouge">deterministic_iri</code> hash <code class="language-plaintext highlighter-rouge">f"{version}|{constraint}|{scope}|{key}"</code>. iri-identity §7.2 calls delimiter concatenation “unsafe” and requires self-delimiting tuple encoding. The <code class="language-plaintext highlighter-rouge">|</code> character is legal in an email local part, and scope tokens are not guaranteed to exclude it. Use the length-prefixed encoding from §7.2.</p>
+
+<p><strong>B12. The example outputs are placeholders, not the verified values D.1 claims.</strong></p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">MFRGGZDFMZTWQ2LK</code> is base32 of the ASCII string <code class="language-plaintext highlighter-rouge">"abcdefghij"</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">GEZDGNBVGY3TQOJQ</code> is base32 of <code class="language-plaintext highlighter-rouge">"1234567890"</code>.</li>
+</ul>
+
+<p>Both are 16 characters, which corresponds to 10 bytes. With the documented <code class="language-plaintext highlighter-rouge">nbytes=16</code>, the output would be 26 characters. So D.1’s statement that example outputs are “computed and verified” is false for the claim IRIs.</p>
+
+<p>The <code class="language-plaintext highlighter-rouge">deterministic_iri</code> output has the right length for 20 bytes but cannot be checked from the text. The comment “keyed hash of <code class="language-plaintext highlighter-rouge">person-email|acme|…</code>” also doesn’t match the actual hash input (<code class="language-plaintext highlighter-rouge">v1|person-email-unique|…</code>).</p>
+
+<p>Recompute these values, or label them as placeholders.</p>
+
+<p><strong>B13. Fence datatypes drift (§7.4).</strong> §7.4 inserts <code class="language-plaintext highlighter-rouge">pat:fence 7184</code> and bootstraps <code class="language-plaintext highlighter-rouge">pat:fence 0</code> as plain <code class="language-plaintext highlighter-rouge">xsd:integer</code>. §16.2 and Appendix A use <code class="language-plaintext highlighter-rouge">xsd:long</code>. The two are different RDF terms, so a mix leaves two fence values on one node and the guard matches twice. This is exactly the F7 failure the guide warns about elsewhere. Type all fence values as <code class="language-plaintext highlighter-rouge">xsd:long</code>.</p>
+
+<p><strong>B14. S8 and S7 aside, other examples break the guide’s own rules.</strong></p>
+<ul>
+  <li>S5 uses an unbound <code class="language-plaintext highlighter-rouge">GRAPH ?log</code>, which F6 forbids.</li>
+  <li>Epochs are unpadded (<code class="language-plaintext highlighter-rouge">e3</code>) everywhere. iri-identity §10.2 explains that <code class="language-plaintext highlighter-rouge">e10</code> sorts before <code class="language-plaintext highlighter-rouge">e3</code>, and requires either padding or a declared “no cross-epoch lexical scans” rule. The guide does neither.</li>
+  <li>The 16-digit versus 19-digit width split is exactly what iri-identity §10.2 calls invalid for identity-bearing strings. D.2 acknowledges this but it remains unfixed.</li>
+</ul>
+
+<hr />
+
+<h2 id="c-safety-security-and-operations-gaps">C. Safety, security and operations gaps</h2>
+
+<p><strong>C1. The SPI allows arbitrary graph writes.</strong> <code class="language-plaintext highlighter-rouge">CasCommand.inserts</code> is a <code class="language-plaintext highlighter-rouge">List&lt;Quad&gt;</code> with no restriction on which graphs it targets. The same applies to TriG accepted by a GSP proxy. A caller could forge version rows, txn claims, key claims or receipts.</p>
+
+<p><strong>Fix:</strong> the port must reject any insert or delete outside the aggregate’s payload graph, and infrastructure quads must be generated only by the adapter.</p>
+
+<p><strong>C2. Running the TCK at registration is dangerous.</strong> It includes destructive and disruptive tests:</p>
+<ul>
+  <li>backup/restore (O-4, T-5)</li>
+  <li>stepping the wall clock back (O-6)</li>
+  <li>a 10M-triple bulk load</li>
+  <li>creating 10⁶ graphs</li>
+</ul>
+
+<p>Running these “at registration” against a production backend is unsafe. Specify a non-production instance with the identical image, configuration and topology.</p>
+
+<p><strong>C3. The TCK is over-claimed and missing coverage.</strong></p>
+<ul>
+  <li>Passing six torture tests cannot <em>prove</em> <code class="language-plaintext highlighter-rouge">LINEARIZABLE</code> behaviour. Tests can only falsify it. Call the result “no violation observed under the tested conditions.”</li>
+  <li>There are no failover, leader-change, partition or replication-lag tests (Jepsen style). This is where clustered stores such as Neptune typically violate assumptions.</li>
+  <li>O-8 is a query-modelling test, not a store property, so it is an odd gate for a CAS capability.</li>
+  <li>D.2 refers to “T-4 through T-13,” but only T-1 to T-11 exist.</li>
+</ul>
+
+<p><strong>C4. The epoch guard under snapshot isolation needs quiesced writers.</strong> A CAS only <em>reads</em> the dataset node. A concurrent epoch bump therefore does not conflict with it, and under snapshot isolation the CAS can commit under the old epoch. This is safe only if writers are stopped during the bump (<code class="language-plaintext highlighter-rouge">WriterStartRefusal</code> or a runbook step). State this explicitly.</p>
+
+<p><strong>C5. Erasure and the running example conflict.</strong></p>
+<ul>
+  <li>The §24.1 deletion example is a GDPR erasure of an order in a family declared <code class="language-plaintext highlighter-rouge">patch_log</code> (§29.3). This is precisely the combination that <code class="language-plaintext highlighter-rouge">dal:PersonalDataReceiptCompatibilityShape</code> forbids, because the payload survives in the delta graphs.</li>
+  <li>People live in one shared <code class="language-plaintext highlighter-rouge">urn:g:people</code> graph. That is incompatible with <code class="language-plaintext highlighter-rouge">PerSubjectGraphDrop</code>, and it is not an aggregate with a version row.</li>
+  <li>Retired key claims (<code class="language-plaintext highlighter-rouge">pat:retiredBy &lt;person&gt;</code>) are kept forever. With the HMAC secret, that confirms “this email was once a customer.” iri-identity §6.4 and §11.5 say claims may need physical deletion; the guide’s P1/P2 text only ever tombstones.</li>
+  <li>The §24.4 restore runbook omits the erasure-register replay required by iri-identity §11.6, so a restore silently reinstates erased data.</li>
+  <li>§24.0’s “no deletes until the Phase 0 exit gate passes” cannot override a legal erasure obligation. iri-identity §11.5 says as much; the guide should too.</li>
+</ul>
+
+<p><strong>C6. The recreate path is undocumented.</strong> “A later recreate is a CAS from 43 to 44 that removes <code class="language-plaintext highlighter-rouge">pat:deleted</code>” fails with every documented shape:</p>
+<ul>
+  <li>The §19.1 CAS guard excludes tombstoned rows.</li>
+  <li>The §19.3 create path requires that no row exists.</li>
+</ul>
+
+<p>Provide the shape.</p>
+
+<p><strong>C7. The keys graph’s access-control assumption is weak.</strong> Many SPARQL endpoints have no graph-level ACLs, and union-default-graph stores expose every graph to any query. The PII argument for P1 depends on an ACL capability that is neither in <code class="language-plaintext highlighter-rouge">StoreCapabilities</code> nor tested by the TCK.</p>
+
+<p><strong>C8. Unregistered URN namespaces.</strong> <code class="language-plaintext highlighter-rouge">urn:g:</code>, <code class="language-plaintext highlighter-rouge">urn:rev:</code>, <code class="language-plaintext highlighter-rouge">urn:key:</code>, <code class="language-plaintext highlighter-rouge">urn:txn:</code> and <code class="language-plaintext highlighter-rouge">urn:order:</code> use unregistered NIDs (see RFC 8141). They will be copied from the examples verbatim, and they collide on any dataset merge. iri-identity §17 lists this as open; the guide should flag its examples as illustrative only.</p>
+
+<p><strong>C9. The YAML declaration and the <code class="language-plaintext highlighter-rouge">dal:</code> vocabulary are two configuration surfaces that have diverged.</strong> The §29.3 YAML omits many choices the prose makes mandatory through <code class="language-plaintext highlighter-rouge">dal:</code> properties:</p>
+<ul>
+  <li>epoch authority and guard scope</li>
+  <li><code class="language-plaintext highlighter-rouge">firstWrite</code></li>
+  <li><code class="language-plaintext highlighter-rouge">deadlockPolicy</code></li>
+  <li>ETag form</li>
+  <li>retention mode and as-of floor source</li>
+  <li>global read strategy</li>
+  <li>txn/log/key sharding</li>
+  <li>privacy profile</li>
+</ul>
+
+<p>Specify which surface is authoritative and how one maps onto the other.</p>
+
+<hr />
+
+<h2 id="d-cross-document-inconsistencies-iri-identity-patterns-and-iri-policy">D. Cross-document inconsistencies (iri-identity-patterns and iri-policy)</h2>
+
+<ol>
+  <li>
+    <p><strong>Store-local epoch.</strong> iri-identity §10.3 says store-local epoch is “<strong>prohibited</strong>” for position-derived occurrence identity. iri-identity §14.1 and §15 and guide §24.4 say it is “warned, not refused.” Pick one.</p>
+  </li>
+  <li>
+    <p><strong>Key rotation (§6.4 versus §15).</strong> iri-identity §6.4 describes rotation as “write a new claim, backfill, retain a mapping.” §15 explicitly says that description is insufficient without a dual-write phase. Update §6.4 to include the phase.</p>
+  </li>
+  <li>
+    <p><strong>Revision class alignment.</strong> iri-identity §10.1 says <code class="language-plaintext highlighter-rouge">pat:Revision rdfs:subClassOf prov:Activity</code>. Guide §23.3 and Appendix E consider <code class="language-plaintext highlighter-rouge">fnd:Evidence</code>. Appendix A declares neither. This is exactly the “alternating classes” problem §10.1 warns against.</p>
+  </li>
+  <li>
+    <p><strong>Status contradiction.</strong> iri-identity §1 says the <code class="language-plaintext highlighter-rouge">ontology/persistence</code> extension is “future… until then.” §14 says an initial slice is already specified.</p>
+  </li>
+  <li>
+    <p><strong>Missing cross-reference.</strong> iri-identity “Related” omits ADR-A82, which the other two documents cite as the superseding decision.</p>
+  </li>
+  <li>
+    <p><strong>Rendering defect.</strong> In iri-identity §17, <code class="language-plaintext highlighter-rouge">\u00a714.1</code> renders as literal escape text instead of “§14.1.”</p>
+  </li>
+  <li>
+    <p><strong>iri-policy.md contradicts its own status.</strong> The header says “Historical… Not normative,” but the body still says:</p>
+    <ul>
+      <li>“Rules (normative…)”</li>
+      <li>“Recommended default”</li>
+      <li>“single source of truth” (for the validator)</li>
+    </ul>
+
+    <p>Its content also conflicts with the current guidance:</p>
+    <ul>
+      <li>§3.4 canonicalizes literals only for hashing, which iri-identity §8.2 explicitly forbids.</li>
+      <li>§5 claims skolem IRIs are deterministic while prescribing random UUIDv4 surrogates.</li>
+      <li>Rule 7 (“all-lowercase”) conflicts with its own <code class="language-plaintext highlighter-rouge">POL-000123</code> example.</li>
+      <li>The “UUIDv4” example <code class="language-plaintext highlighter-rouge">01j9z8q3-k4m5-n6p7-…</code> is not a valid UUID; it contains non-hex characters.</li>
+    </ul>
+
+    <p>Strip or clearly fence the body, so it cannot be mistaken for guidance.</p>
+  </li>
+</ol>
+
+<hr />
+
+<h2 id="e-minor-and-editorial">E. Minor and editorial</h2>
+
+<ul>
+  <li><strong>§24.2 table:</strong> a prose paragraph splits the retention table, so the “Delta graphs” and “Snapshot graphs” rows render as orphaned text.</li>
+  <li><strong>Appendix A <code class="language-plaintext highlighter-rouge">pat:opSeq</code>:</strong> refers to “§10.1’s P3 pattern,” but §10.1 is S1.</li>
+  <li><strong>F5 cross-reference:</strong> says “the F2/F3 fix below,” but F2 and F3 are above it.</li>
+  <li><strong>§2.3 inventory:</strong> says “five kinds of infrastructure graph.” Event, delta and retention graphs used later are missing from it.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">pat:stableWatermark</code>:</strong> uses an unpadded string (<code class="language-plaintext highlighter-rouge">"3:91438"</code>), so it sorts wrong lexicographically.</li>
+  <li><strong>§6.2 idempotency:</strong> “re-running is a no-op” is true only if the payload is byte-identical; it re-inserts payload.</li>
+  <li><strong>§1.3 atomicity:</strong> SPARQL 1.1 Update says each request <strong>SHOULD</strong> be treated atomically. “Does not require” is accurate, but citing the SHOULD is more precise.</li>
+  <li><strong>S6 as-of and blank nodes:</strong> triple-level as-of matching silently fails for blank nodes across delta graphs. This is covered by the skolemization rule, but worth stating at S6.</li>
+  <li><strong>SHACL validation scope:</strong> SHACL validates a data graph, not a dataset. Whether cross-graph shapes see the union of graphs is engine-specific. This affects every shape in Appendix B and belongs in <code class="language-plaintext highlighter-rouge">StoreCapabilities</code> and the TCK.</li>
+  <li><strong>§24.3 step 4:</strong> “advance the version rows… in one transaction” is infeasible at the stated 20M-aggregate scale. Specify a batched, gated cut-over instead.</li>
+</ul>
+
+<hr />
+
+<h2 id="recommended-priority">Recommended priority</h2>
+
+<ol>
+  <li><strong>Fix A1–A7.</strong> These can corrupt or wedge production.</li>
+  <li><strong>Make the copyable artefacts consistent.</strong> This covers the shapes,</li>
+</ol>
+

@@ -1,0 +1,283 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-word-authoring-poc-wa6-logical-english-reading">Validation Pack: word-authoring-poc WA6, Logical English reading</h1>
+
+<p><strong>Plan:</strong> <a href="/developer/plans/word-authoring-poc.html">word-authoring-poc</a> §5 WA6
+<strong>Status record:</strong> <a href="/developer/status/word-authoring-poc.html">word-authoring-poc</a> (holds the commit hash)</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>LE-Q2 of <a href="/developer/sketches/logical-english-alignment.html">logical-english-alignment.md</a> asks where a
+condition atom’s sentence form lives, and answers “a rendering profile, so the T-Box gains
+nothing for presentation”. This slice is that profile, made real: a clause’s text parts (CCS
+sketch §4.1) are matched against a small table of sentence forms with no parser and no language
+model, exactly as route D of the LE alignment sketch describes. Two invariants carry it.</p>
+
+<p>First, <strong>matching is total and deterministic over the sample texts</strong>: every element of the three
+samples reads as a form, a keyword class, or is honestly reported as unmatched, with the same
+answer on every run (<code class="language-plaintext highlighter-rouge">best_match</code>’s tie-break — most fixed words, then earliest in the profile —
+never leaves two equally good readings unresolved). Second, <strong>the proposal graph never invents
+meaning the tokens do not support</strong>: a party is only asserted when a constant token actually names
+a defined term, a variable binding only when a declared variable’s value type matches what the
+form’s slot requires, and <code class="language-plaintext highlighter-rouge">wap:activityText</code> is only the literal substring a slot actually
+consumed, not a paraphrase.</p>
+
+<h2 id="test-cases">Test cases</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>+/−</th>
+      <th>Result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>S6-01</td>
+      <td><code class="language-plaintext highlighter-rouge">utf16_len</code> and <code class="language-plaintext highlighter-rouge">utf16_index</code> / <code class="language-plaintext highlighter-rouge">"abc"</code>, <code class="language-plaintext highlighter-rouge">"𝑥a"</code> / 3, and index 1 → 2</td>
+      <td>L1</td>
+      <td>+</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>S6-02</td>
+      <td>facility element 06 / tokenised / constant, words, variable tokens with element-text offsets. Quotes and the final full stop give no token. A comma gives a punct token</td>
+      <td>L1</td>
+      <td>+</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>S6-03</td>
+      <td>the profile / loaded / form ids unique, classes in TermKind, each template’s slots match its items. Every form matches at least one element of the three samples</td>
+      <td>L1</td>
+      <td>+</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>S6-04</td>
+      <td><code class="language-plaintext highlighter-rouge">Borrower shall not create …</code> / <code class="language-plaintext highlighter-rouge">best_match</code> / <code class="language-plaintext highlighter-rouge">prohibition</code>, not <code class="language-plaintext highlighter-rouge">obligation</code></td>
+      <td>L1</td>
+      <td>+</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>S6-05</td>
+      <td>a party slot over a literal, a text slot with zero tokens, a rate slot over a duration variable / matched / no match each</td>
+      <td>L1</td>
+      <td>−</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>S6-06</td>
+      <td>keyword rules / a table of nine sentences, one per rule and two with competing words (<code class="language-plaintext highlighter-rouge">shall be deemed</code>, <code class="language-plaintext highlighter-rouge">shall not</code>) / the table’s classes</td>
+      <td>L1</td>
+      <td>+/−</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>S6-07</td>
+      <td>every element of the three samples / analysed / spans sorted, non-overlapping, each word token inside exactly one span</td>
+      <td>L2</td>
+      <td>+</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>S6-08</td>
+      <td>each sample / analysed / equals its committed <code class="language-plaintext highlighter-rouge">.analysis.json</code></td>
+      <td>L2</td>
+      <td>+</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>S6-09</td>
+      <td>the facility sample / LE program / equals <code class="language-plaintext highlighter-rouge">facility-agreement.le</code></td>
+      <td>L2</td>
+      <td>+</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>S6-10</td>
+      <td>the facility proposal / built / isomorphic (<code class="language-plaintext highlighter-rouge">rdflib.compare.isomorphic</code>) to the golden. Each relation has one <code class="language-plaintext highlighter-rouge">ins:expressedIn</code>. Each <code class="language-plaintext highlighter-rouge">ins:fromVariable</code> names a declared variable</td>
+      <td>L2</td>
+      <td>+</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>S6-11</td>
+      <td>each sample’s analysis / validated against <code class="language-plaintext highlighter-rouge">common</code> <code class="language-plaintext highlighter-rouge">#/$defs/Analysis</code> / passes</td>
+      <td>L3</td>
+      <td>+</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>S6-12</td>
+      <td>every IRI constant in <code class="language-plaintext highlighter-rouge">namespaces.py</code> / looked up in <code class="language-plaintext highlighter-rouge">platform/authoring-service/src/main/resources/vocab/wording-provisional.ttl</code> / declared there</td>
+      <td>L3</td>
+      <td>+</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>S6-13</td>
+      <td>a wording graph where one text has zero parts / analysed / that element has basis <code class="language-plaintext highlighter-rouge">none</code> and no spans, the rest are unaffected (zero case)</td>
+      <td>L1</td>
+      <td>−</td>
+      <td>pass</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Carried by one test file, <code class="language-plaintext highlighter-rouge">test_wording_le.py</code>, 33 test functions (some parametrised; S6-06 alone
+is three functions, S6-02 two). 67 tests run under <code class="language-plaintext highlighter-rouge">check:authoring-worker</code> in total: WA6’s own
+plus WA1’s <code class="language-plaintext highlighter-rouge">test_authoring_contracts.py</code> (35), both named by the plan’s own task.</p>
+
+<h2 id="one-command">One command</h2>
+
+<p>From the repository root:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:authoring-worker
+</code></pre></div></div>
+
+<p>prints <code class="language-plaintext highlighter-rouge">67 passed</code> with no failures.</p>
+
+<p>Re-run <code class="language-plaintext highlighter-rouge">mise run check:authoring-contracts</code> (35, a subset already included above),
+<code class="language-plaintext highlighter-rouge">mise run check:authoring-service</code> (85, confirms the shared vocabulary file still loads and
+nothing in the Java module regressed) and <code class="language-plaintext highlighter-rouge">mise run check:java</code> (9 modules) to confirm nothing
+else moved.</p>
+
+<h2 id="artefacts-to-inspect">Artefacts to inspect</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>What</th>
+      <th>Where</th>
+      <th>Look for</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>the twelve sentence forms</td>
+      <td><a href="../../../workers/src/lattice_workers/wording_le/forms/sentence-forms.json">forms/sentence-forms.json</a></td>
+      <td>matches plan WA6’s table exactly: formId, relationClass, template, items in the same order</td>
+    </tr>
+    <tr>
+      <td>the facility reading, element by element</td>
+      <td><a href="../../../workers/tests/fixtures/wording_le/facility-agreement.analysis.json">facility-agreement.analysis.json</a></td>
+      <td>each <code class="language-plaintext highlighter-rouge">objectId</code>’s <code class="language-plaintext highlighter-rouge">relationClass</code>/<code class="language-plaintext highlighter-rouge">basis</code>/<code class="language-plaintext highlighter-rouge">formId</code> against plan WA6’s “Expected facility readings”</td>
+    </tr>
+    <tr>
+      <td>the LE program a reviewer would read</td>
+      <td><a href="../../../workers/tests/fixtures/wording_le/facility-agreement.le">facility-agreement.le</a></td>
+      <td>one <code class="language-plaintext highlighter-rouge">%</code> comment and one sentence per matched clause, <code class="language-plaintext highlighter-rouge">% ... unmatched: ...</code> for any that are not</td>
+    </tr>
+    <tr>
+      <td>the proposed meaning graph</td>
+      <td><a href="../../../workers/tests/fixtures/wording_le/facility-agreement.proposal.ttl">facility-agreement.proposal.ttl</a></td>
+      <td><code class="language-plaintext highlighter-rouge">ins:obligor</code>/<code class="language-plaintext highlighter-rouge">ins:holder</code> naming the right party for each relation (e.g. element 6’s obligor is Lender, element 7’s holder is Borrower)</td>
+    </tr>
+    <tr>
+      <td>the extended provisional vocabulary</td>
+      <td><a href="../../../platform/authoring-service/src/main/resources/vocab/wording-provisional.ttl">wording-provisional.ttl</a></td>
+      <td>the new <code class="language-plaintext highlighter-rouge">ins:</code> relation classes and the <code class="language-plaintext highlighter-rouge">wap:</code> proposal-graph terms, each with a comment</td>
+    </tr>
+    <tr>
+      <td>the tie-break probe</td>
+      <td><code class="language-plaintext highlighter-rouge">test_wording_le.py</code>’s <code class="language-plaintext highlighter-rouge">test_best_match_tiebreak_prefers_most_fixed_words_not_earliest_form</code></td>
+      <td>a synthetic two-form profile, independent of the real table’s incidental ordering</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="self-probe">Self-probe</h2>
+
+<p>The plan’s prescribed break — in <code class="language-plaintext highlighter-rouge">best_match</code>, prefer the earliest form instead of the most fixed
+words — <strong>does not fail S6-04, or S6-08, or anything else in the suite.</strong> Checked directly: the
+only two forms that structurally match “Borrower shall not create any security over its assets.”
+are <code class="language-plaintext highlighter-rouge">prohibition</code> (2 fixed words, profile index 4) and <code class="language-plaintext highlighter-rouge">obligation</code> (1 fixed word, profile index
+5). Since <code class="language-plaintext highlighter-rouge">prohibition</code> already sits earlier in the profile’s own table — independently of its
+fixed-word count — “most fixed words, then earliest” and “earliest only” pick the same form. The
+same holds across all 30 elements of the three samples: nowhere does a later-indexed, more-specific
+form have to be preferred over an earlier-indexed, less-specific one, so S6-08’s golden comparison
+cannot distinguish the two implementations either. This is the third slice in this unit (after WA3
+and WA5) where the plan’s own prescribed probe turns out not to bite.</p>
+
+<p><strong>A probe that does bite was added</strong>: <code class="language-plaintext highlighter-rouge">test_best_match_tiebreak_prefers_most_fixed_words_not_earliest_form</code>
+builds two synthetic forms, deliberately ordered so the one with fewer fixed words is listed
+first, and asserts the one with more fixed words still wins. With the break applied:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>test_best_match_tiebreak_prefers_most_fixed_words_not_earliest_form FAILED
+AssertionError: assert 'few' == 'many'
+</code></pre></div></div>
+
+<p>while every other test, including S6-04 and S6-08, still passes. The break was reverted and
+<code class="language-plaintext highlighter-rouge">mise run check:authoring-worker</code> re-run green at 67 tests.</p>
+
+<h2 id="implementer-choices">Implementer choices</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Left open</th>
+      <th>Chosen</th>
+      <th>Why</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>the JSON shape of <code class="language-plaintext highlighter-rouge">forms/sentence-forms.json</code></td>
+      <td><code class="language-plaintext highlighter-rouge">{"kind": "fixed", "words": [...]}</code> or <code class="language-plaintext highlighter-rouge">{"kind": "slot", "name": ..., "type": ..., "valueTypes": [...]}</code>, forms as <code class="language-plaintext highlighter-rouge">{formId, relationClass, template, items}</code></td>
+      <td>the plan gives the twelve forms as a table of English descriptions, not a JSON encoding. This is the most direct structural translation of “Fixed(words)” and “Slot(name, type, value_types)”</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">proposal_graph</code>’s access to slot detail</td>
+      <td>re-tokenises the element and re-runs <code class="language-plaintext highlighter-rouge">matcher.match</code> against the one form <code class="language-plaintext highlighter-rouge">formId</code> names (form basis), or re-scans tokens directly for the first non-ignorable constant (keyword basis)</td>
+      <td>the plan’s own signature, <code class="language-plaintext highlighter-rouge">proposal_graph(wording, element_analyses, proposal_graph_iri, profile)</code>, takes the public <code class="language-plaintext highlighter-rouge">Analysis.elements</code> shape, which carries no slot names — only <code class="language-plaintext highlighter-rouge">formId</code> and <code class="language-plaintext highlighter-rouge">relationClass</code>. Matching is a pure function of tokens, form and declared variable types, so re-running it is deterministic and gives back the same match</td>
+    </tr>
+    <tr>
+      <td>where <code class="language-plaintext highlighter-rouge">wording-provisional.ttl</code> gets its <code class="language-plaintext highlighter-rouge">ins:</code>/<code class="language-plaintext highlighter-rouge">wap:</code> additions</td>
+      <td>extended in this slice, <code class="language-plaintext highlighter-rouge">platform/authoring-service/**</code> added to the path list</td>
+      <td>the WA4 status record’s own note: “When WA6 builds the worker that writes the proposed meaning graph … add that file to WA6’s own path list and extend it there”</td>
+    </tr>
+    <tr>
+      <td>S6-02’s comma case</td>
+      <td>a second test with a small ad-hoc literal, since facility element 06 (object id 2.1) has no bare comma — the one in “GBP 10,000,000” sits inside a variable’s display text, which is tokenised as one whole token, not split</td>
+      <td>the same pattern WA3 used for cases its own samples did not happen to contain</td>
+    </tr>
+    <tr>
+      <td>S6-12’s “every IRI constant in <code class="language-plaintext highlighter-rouge">namespaces.py</code>”</td>
+      <td>the five <code class="language-plaintext highlighter-rouge">Namespace</code> strings (<code class="language-plaintext highlighter-rouge">WRD</code>, <code class="language-plaintext highlighter-rouge">INS</code>, <code class="language-plaintext highlighter-rouge">WAP</code>, <code class="language-plaintext highlighter-rouge">PROV</code>, <code class="language-plaintext highlighter-rouge">DCTERMS</code>), each checked for a <code class="language-plaintext highlighter-rouge">@prefix</code> declaration in the vocab file</td>
+      <td><code class="language-plaintext highlighter-rouge">namespaces.py</code> defines no bare term constants, only namespace objects and IRI-minting functions, so these five are the whole of what the module calls a constant</td>
+    </tr>
+    <tr>
+      <td>the tie-break rule’s own test</td>
+      <td>added as a named test alongside S6-04, not a replacement for it</td>
+      <td>S6-04 is still correct and still run; the new test additionally isolates the one behaviour the plan’s self-probe meant to protect</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<ul>
+  <li><strong>LE2 parsing of the generated program.</strong> The program text says so itself: “Not checked by an LE
+parser.” Route B/C of the LE alignment sketch (import, differential test) are not part of this
+unit.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">software-licence</code> and <code class="language-plaintext highlighter-rouge">property-policy</code>’s LE program and proposal graph text.</strong> Only
+<code class="language-plaintext highlighter-rouge">facility-agreement</code> gets <code class="language-plaintext highlighter-rouge">.le</code>/<code class="language-plaintext highlighter-rouge">.ttl</code> goldens, matching plan WA6’s own “Goldens” section. The
+other two samples are covered by their <code class="language-plaintext highlighter-rouge">.analysis.json</code> goldens (S6-08) and the schema
+validation (S6-11), not by a line-for-line program or graph comparison.</li>
+  <li><strong>Two defined terms that overlap as substrings</strong> (e.g. “Loan” inside “Loaner”), beyond what the
+<code class="language-plaintext highlighter-rouge">term</code> slot’s exact-token-sequence match already prevents by construction. Not a scenario any
+sample exercises.</li>
+  <li><strong>Malformed or partially-written wording graphs</strong> beyond the one documented error
+(<code class="language-plaintext highlighter-rouge">load_wording</code> raises <code class="language-plaintext highlighter-rouge">ValueError</code> when the wording node is absent) and the zero-parts case
+(S6-13). The worker’s handling of a missing or unreadable graph is WA7.</li>
+  <li><strong>The worker’s RabbitMQ and Fuseki runtime.</strong> WA7.</li>
+</ul>
+
+<p>Unit-wide non-coverage, cited by every pack: CCS assembly, amendments, tables and versioned
+elements. Concurrent editing. Authentication. Poison-message retry limits. Real Word, except
+through WA11’s manual checklist.</p>

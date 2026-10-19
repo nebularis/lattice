@@ -1,0 +1,412 @@
+<h1 id="rule-layers-research-cross-check-against-lattice">Rule Layers Research: Cross-Check Against LATTICE</h1>
+
+<p><strong>Date:</strong> 2026-09-26
+<strong>Status:</strong> working note in <code class="language-plaintext highlighter-rouge">.local/</code>, not a decision and not a plan
+<strong>Input:</strong> <code class="language-plaintext highlighter-rouge">docs/developer/sketches/rule-layers.md</code> (Logical English, stratified Datalog, deontic reasoning, a normative evaluation tier)
+<strong>Checked against:</strong> <code class="language-plaintext highlighter-rouge">docs/architecture/</code> (ADRs, ingestion vision, patterns guide, solution design, conformance ladder) and <code class="language-plaintext highlighter-rouge">docs/developer/</code> (epic v0.2, phase plans, applied-insurance epic, sketches)</p>
+
+<hr />
+
+<h2 id="1-verdict">1. Verdict</h2>
+
+<p>The research is sound, and LATTICE has already taken most of its recommended decisions. Several are stated more precisely here than in the research. Four things are missing from the roadmap, and three of them are small. One is a genuine gap in the substrate: <strong>obligations in LATTICE have parties but no normative semantics</strong> (modality, deadline, fulfilment, violation, reparation). No new engine, store or language is needed now.</p>
+
+<p>Recommended additions, detailed in §4:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Addition</th>
+      <th>Size</th>
+      <th>Lands in</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>R1</td>
+      <td>Normative semantics for <code class="language-plaintext highlighter-rouge">ins:Obligation</code> (a deontic extension of Instrument)</td>
+      <td>ADR plus a MINOR Instrument bump</td>
+      <td>before applied-insurance Phase 5 (A-101)</td>
+    </tr>
+    <tr>
+      <td>R2</td>
+      <td>Closure declarations: when absence of evidence may decide an outcome</td>
+      <td>ADR across Eligibility, Behaviour and persistence</td>
+      <td>before the Phase 3 expansion of the Behaviour engine (P3.2)</td>
+    </tr>
+    <tr>
+      <td>R3</td>
+      <td>Scheduled triggers as positioned stimuli, so deadlines replay</td>
+      <td>one slice in P3.2</td>
+      <td>Phase 3 expansion</td>
+    </tr>
+    <tr>
+      <td>R4</td>
+      <td>Acyclicity of condition composition</td>
+      <td>one shape and one test</td>
+      <td><code class="language-plaintext highlighter-rouge">eligibility-compiler</code>, now</td>
+    </tr>
+    <tr>
+      <td>R5</td>
+      <td>Controlled-English rendering of compiled rules for reviewers</td>
+      <td>sketch</td>
+      <td>ingestion vision Phase 2, review workbench</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Everything else in the research is either covered (§3) or worth recording as a deferred option with a trigger (§5).</p>
+
+<h2 id="2-where-the-researchs-premises-differ-from-lattice">2. Where the research’s premises differ from LATTICE</h2>
+
+<p>The research was written for open-dare’s stack. Its recommendations mostly survive the translation, but the premises below change their weight.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Research assumes</th>
+      <th>LATTICE has</th>
+      <th>Effect</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Rules use negation as failure, so absence means false</td>
+      <td>Three-valued outcomes under strong Kleene logic. Missing evidence is <code class="language-plaintext highlighter-rouge">Undetermined</code> with a diagnostic (<code class="language-plaintext highlighter-rouge">exe:MissingCandidate</code>), never <code class="language-plaintext highlighter-rouge">Denied</code> (ADR-A24, A89, A103)</td>
+      <td>The “NAF licence” question becomes sharper: absence currently can never decide anything. See R2</td>
+    </tr>
+    <tr>
+      <td>OWL 2 DL reasoning runs at runtime</td>
+      <td>DL reasoning is design-time and test-only (ADR-A83, A90). Runtime guards use rule-based materialisation with logged firings (epic P2.2.3)</td>
+      <td>The DL/rule layering the research asks for is already in place (§3, row F)</td>
+    </tr>
+    <tr>
+      <td>Erlang runs quote and negotiation FSMs</td>
+      <td>Erlang hosts SPC, a session-type calculus, unintegrated (deferred-scope §3, epic P4.5). The Behaviour engine (C-09) is Java</td>
+      <td>The “FSM is a projection, the evaluator is authoritative” rule applies to SPC integration, not to a quote tier</td>
+    </tr>
+    <tr>
+      <td>F# or Rust hosts a parser or evaluator</td>
+      <td>Java, Python, TypeScript and Erlang. Rust appears only in a deferred sketch (<code class="language-plaintext highlighter-rouge">identity-minting-shared-core</code>)</td>
+      <td>No language addition is justified by this research</td>
+    </tr>
+    <tr>
+      <td>A rule IR still has to be designed</td>
+      <td>A shared executable IR exists (<code class="language-plaintext highlighter-rouge">tools/mork_compilers/eligibility_ir.py</code>), feeding SPARQL, SHACL, SWRL and design-time OWL</td>
+      <td>“One IR, many lowerings” is ADR-A19 and A23, built</td>
+    </tr>
+    <tr>
+      <td>Jena is the system of record</td>
+      <td>A store SPI with a TCK (ADR-A75), TDB2/Fuseki first</td>
+      <td>Any Datalog backend enters as an SPI or backend adapter, admitted by TCK</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="3-recommendation-by-recommendation">3. Recommendation-by-recommendation</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th> </th>
+      <th>Research recommendation</th>
+      <th>LATTICE today</th>
+      <th>Verdict</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>A</td>
+      <td>Logical English as a controlled-language route from text to rules</td>
+      <td>Ingestion vision §3 names Logical English and InsurLE as the controlled-language route beside machine extraction. Q6 leaves open whether it needs its own translator</td>
+      <td><strong>Covered as vision.</strong> The research’s option A (LE as the LLM’s output format) differs from the vision, which uses MCN intent nodes as the wire format (§7). Keep MCN. LE’s value here is reviewer readability, which R5 captures without changing the wire format</td>
+    </tr>
+    <tr>
+      <td>B, C</td>
+      <td>Run the LE compiler in a container, or reimplement its grammar</td>
+      <td>Not planned (Q6 open)</td>
+      <td><strong>Defer</strong> until a source drafted in a controlled language exists (§5)</td>
+    </tr>
+    <tr>
+      <td>—</td>
+      <td>Routing policy: SWRL for positive DL-safe rules, SPARQL or SHACL for the rest, refuse what cannot be expressed</td>
+      <td>ADR-A24: SWRL only for positive monotonic outcomes, never <code class="language-plaintext highlighter-rouge">Undetermined</code>, never absence. ADR-A89, A100, A103 apply it per backend. Unsupported semantics yield <code class="language-plaintext highlighter-rouge">Undetermined</code> with a diagnostic, never a silent denial</td>
+      <td><strong>Covered</strong>, and stricter than the research</td>
+    </tr>
+    <tr>
+      <td>—</td>
+      <td>Reify n-ary relations</td>
+      <td><code class="language-plaintext highlighter-rouge">pty:RoleOccupancy</code>, <code class="language-plaintext highlighter-rouge">ins:Obligation</code> with <code class="language-plaintext highlighter-rouge">ins:obligor</code>/<code class="language-plaintext highlighter-rouge">ins:obligee</code>, evidence bindings (ADR-A91)</td>
+      <td><strong>Covered</strong></td>
+    </tr>
+    <tr>
+      <td>E</td>
+      <td>Formalise stratification: dependency graph, strata, reject cycles through negation</td>
+      <td>Eligibility composes conditions as a tree (a profile is a condition, ADR-A03) with negation (ADR-A103), evaluated bottom-up. Nothing checks that composition is acyclic. Behaviour orders evaluation by stimulus position per aggregate (P3.2.2, P3.2.9), which sidesteps logical strata</td>
+      <td><strong>Small gap: R4</strong></td>
+    </tr>
+    <tr>
+      <td>F</td>
+      <td>DL results flow up into rules, rule results never flow back into DL</td>
+      <td>Reasoner test-only (A83), OWL classes design-time only (A90), every materialised triple carries its authority (P2.2.4), inference never silently becomes an authored assertion (A13)</td>
+      <td><strong>Covered.</strong> One sentence in <code class="language-plaintext highlighter-rouge">solution-design-specification.md</code> would state the rule explicitly: no DL reasoner reads rule-derived graphs</td>
+    </tr>
+    <tr>
+      <td>G</td>
+      <td>Deontic concepts: obligation, permission, prohibition, power, deadlines, violation, reparation</td>
+      <td><code class="language-plaintext highlighter-rouge">ins:Obligation</code> has direction (obligor, obligee), <code class="language-plaintext highlighter-rouge">ins:fulfilledBy</code>, <code class="language-plaintext highlighter-rouge">ins:hasCondition</code>. Behaviour supplies lifecycle machinery. No modality, deadline anchor, fulfilment test, violation state or reparation link. ADR-A07b chose a minimal shape deliberately</td>
+      <td><strong>Gap: R1</strong></td>
+    </tr>
+    <tr>
+      <td>H</td>
+      <td>NAF licence: absence decides only where the source is declared authoritative and dense</td>
+      <td>Conformance level L5 requires “closure assumptions” (ADR-A14) but no vocabulary defines one. The patterns guide provides the mechanism (dense per-stream sequences, the gap scan, receipts) but nothing connects it to Eligibility or Behaviour</td>
+      <td><strong>Gap: R2.</strong> A central idea of the research, and a bridge between two parts of LATTICE that do not yet meet</td>
+    </tr>
+    <tr>
+      <td>I</td>
+      <td>Deadlines anchored to valid time, time as an input, never the wall clock</td>
+      <td>ADR-A67 (bi-temporal, <code class="language-plaintext highlighter-rouge">decisionTime</code> on stimuli), ADR-A94 (business days as calendar units), P3.2.3 (<code class="language-plaintext highlighter-rouge">now()</code> banned in guards and effects), the <code class="language-plaintext highlighter-rouge">NOW()</code> rules in the patterns guide Chapter 28</td>
+      <td><strong>Covered for evaluation.</strong> How a scheduled deadline becomes a replayable input is not specified: <strong>R3</strong></td>
+    </tr>
+    <tr>
+      <td>J</td>
+      <td>Defeasibility and priority: exception, exception to the exception, <em>lex specialis</em></td>
+      <td>Transition priority (ADR-A09), exclusion precedence (L10, ADR-A87), term relations with “override” and an acyclicity shape (term-parameters sketch §4.3)</td>
+      <td><strong>Partial.</strong> Enough for current scope. Contract wording (“subject to…, except where…”) will need rule priority in Eligibility. Fold the question into R1 and A-101 rather than a separate unit</td>
+    </tr>
+    <tr>
+      <td>K</td>
+      <td>Evaluation is a pure function, with deterministic identity, supersession and provenance on decision records</td>
+      <td>Decision/Explain API with <code class="language-plaintext highlighter-rouge">indeterminate</code> first-class (P2.4.4), decision records with a re-derivation test (P2.4.10), idempotency by position (P3.2.8), deterministic replay including backdated claims (P3.2.11), supersession never mutation (A67, R-B7)</td>
+      <td><strong>Covered</strong>, in more detail than the research</td>
+    </tr>
+    <tr>
+      <td>L</td>
+      <td>The FSM schedules and runs side effects, the evaluator decides</td>
+      <td>C-09 is authoritative. SPC integration (P4.5) lifts documented state machines into session types</td>
+      <td><strong>Covered.</strong> Carry the research’s F4 warning into P4.5: an SPC session projects Behaviour state, never holds a second copy</td>
+    </tr>
+    <tr>
+      <td>M</td>
+      <td>A rule-backend conformance suite, the counterpart of the store TCK</td>
+      <td>Parity gate (ADR-A28), shared corpus (ADR-A15), per-rule-family SHACL and SPARQL parity (derivation-and-validation.md)</td>
+      <td><strong>Covered</strong></td>
+    </tr>
+    <tr>
+      <td>N</td>
+      <td>“Why not” explanations</td>
+      <td>Witness and challenge sets (P2.4.4), not-fired reasons as durable records (P3.2.5), diagnostics on every <code class="language-plaintext highlighter-rouge">Undetermined</code> (A89)</td>
+      <td><strong>Covered</strong></td>
+    </tr>
+    <tr>
+      <td>O</td>
+      <td>Admission constraints at ingress</td>
+      <td>Admission gate with severity policy (P2.3.5)</td>
+      <td><strong>Covered</strong></td>
+    </tr>
+    <tr>
+      <td>P</td>
+      <td>Invalidate derived decisions when a contract revision changes</td>
+      <td>Read-set-scoped invalidation (ADR-A27), <code class="language-plaintext highlighter-rouge">INVALIDATION_PLAN</code> family</td>
+      <td><strong>Covered</strong></td>
+    </tr>
+    <tr>
+      <td>Q</td>
+      <td>Compile to plans, not per-contract source code</td>
+      <td>Artefacts keyed by semantic hash and generation profile, never per-instance code (SDS compilation boundary)</td>
+      <td><strong>Covered</strong></td>
+    </tr>
+    <tr>
+      <td>D</td>
+      <td>Verbalise compiled rules into controlled English</td>
+      <td>Ingestion vision §10.1 wants stewards to see evidence, not notation. Nothing renders a rule as text</td>
+      <td><strong>Addition: R5</strong></td>
+    </tr>
+    <tr>
+      <td>—</td>
+      <td>LE scenarios as differential tests (option E)</td>
+      <td>—</td>
+      <td><strong>Defer</strong> with the LE route</td>
+    </tr>
+    <tr>
+      <td>—</td>
+      <td>A Datalog sidecar (Nemo, RDFox) or an own engine</td>
+      <td>Ingestion vision §11 already lists “graph stores with SPARQL, Datalog and explanation support” as a candidate backend under the ADR-A83 isolation rule</td>
+      <td><strong>Defer</strong> with triggers (§5)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="4-proposed-additions">4. Proposed additions</h2>
+
+<h3 id="r1-normative-semantics-for-obligations">R1. Normative semantics for obligations</h3>
+
+<p><strong>What.</strong> Extend Instrument so an obligation says what it requires and when, and so its state can be derived:</p>
+
+<ul>
+  <li><strong>Modality:</strong> obligation, permission, prohibition and power, as a small closed-by-default vocabulary. Power is the one that changes normative state (cancellation for non-payment), so it relates to Behaviour effects rather than to Eligibility outcomes. Decide whether strong permission (explicitly granted) and weak permission (nothing forbids it) both need representing. Weak permission is an absence question, so it depends on R2.</li>
+  <li><strong>Trigger and deadline:</strong> an anchor event (valid time, ADR-A67) plus a duration as a <code class="language-plaintext highlighter-rouge">qnt:Quantity</code>, including calendar units (ADR-A94).</li>
+  <li><strong>Fulfilment:</strong> an <code class="language-plaintext highlighter-rouge">elg:Condition</code> over the events that count as performance.</li>
+  <li><strong>Reparation:</strong> a link from an obligation to the obligation that becomes active when it is violated (contrary-to-duty).</li>
+  <li><strong>State:</strong> pending, active, fulfilled, violated, discharged, as a Behaviour state space whose occupancies are derived artefacts (ADR-A92), never asserted. The same pattern as liability direction in ADR-A102: derived, with a read set, and a shape that reports a state without a derivation.</li>
+</ul>
+
+<p><strong>Why now.</strong> Every LATTICE domain is regulative, not only insurance: lending covenants, trial protocols, employment terms. ADR-A07b kept Instrument minimal on purpose, and the minimal shape is now the limiting factor. Applied-insurance Phase 5 (contract module, A-101) and Phase 6 (claims) will need notification duties, cure periods and cooperation duties. If Instrument does not provide them, the insurance module will invent them locally, which ADR-A-C1’s applied-layer boundary exists to prevent.</p>
+
+<p><strong>Checklists, not dependencies.</strong> Use LegalRuleML (deontic operators, reparation chains, defeasibility, time dimensions, source provenance) and ODRL (Duty, Permission, Prohibition in RDF) to check coverage. Adopt neither syntax. Align with ODRL terms where the meaning is equal, so policies expressed in ODRL can be mapped through MORK.</p>
+
+<p><strong>First artefact.</strong> A sketch with two non-domain examples first (ADR-A-C2): a lending covenant’s reporting duty with a cure period, and a trial’s adverse-event reporting duty. Then an ADR, then Instrument 0.x MINOR. It precedes A-101, which currently expects to draft term parameters on <code class="language-plaintext highlighter-rouge">ins:Qualifier</code> without a normative model of the obligation they qualify.</p>
+
+<h3 id="r2-closure-declarations">R2. Closure declarations</h3>
+
+<p><strong>What.</strong> A declaration that a fact family is authoritative and complete for a scope up to a position, so that absence may decide an outcome. For example: “claim notifications for this policy arrive only through this stream, and the stream is complete through position (e, s)”. Without one, absence stays <code class="language-plaintext highlighter-rouge">Undetermined</code>, as today. With one, a compiled check may return <code class="language-plaintext highlighter-rouge">Denied</code>, or a violation, and its record cites the declaration and the position it relied on.</p>
+
+<p><strong>Why.</strong> R1 without R2 cannot detect a single violation. “No notification by the deadline” is always <code class="language-plaintext highlighter-rouge">Undetermined</code> under current semantics, which is correct but useless for regulative rules. Conformance level L5 already requires closure assumptions and does not define them. The patterns guide already provides the proof obligation: dense per-stream ordering and the gap scan are the only way to show nothing was missed, and a sparse clock can never show it (guide §3.3 and the gap scan). This ADR connects the persistence profile to the rule semantics.</p>
+
+<p><strong>Shape of the rule.</strong></p>
+<ul>
+  <li>A closure declaration names a fact family, an authoritative source (a stream or graph family), a scope and a required persistence profile (dense per-stream ordering, gap audit blocking).</li>
+  <li>The compiler refuses a check that decides on absence unless a closure covers the fact family. The refusal is a diagnostic, not a silent <code class="language-plaintext highlighter-rouge">Undetermined</code>.</li>
+  <li>At evaluation, the check reads the closure’s position. Absence beyond that position is still <code class="language-plaintext highlighter-rouge">Undetermined</code>.</li>
+  <li>A decision that relied on absence records the closure and position, so a late fact at an earlier valid time supersedes it (P2.4.10, A67).</li>
+</ul>
+
+<p><strong>Where it lands.</strong> An ADR across Eligibility (a new outcome path and diagnostic), Behaviour (guards and violations) and <code class="language-plaintext highlighter-rouge">ontology/persistence</code> (the declaration’s required profile, compiled by <code class="language-plaintext highlighter-rouge">tools/persistence</code>). Sequence it before the Phase 3 expansion at P2.11.4, because P3.2 guard evaluation will otherwise be specified without it.</p>
+
+<p><strong>A useful failure mode.</strong> As the research notes, if closure declarations keep being refused because streams are not authoritative for the facts contracts care about, that finding is about provenance at ingestion, and it belongs to the ingestion vision (S6 entity resolution and the admission gate).</p>
+
+<h3 id="r3-scheduled-triggers-as-positioned-stimuli">R3. Scheduled triggers as positioned stimuli</h3>
+
+<p><strong>What.</strong> Specify that <code class="language-plaintext highlighter-rouge">bhv:ScheduledTrigger</code> and <code class="language-plaintext highlighter-rouge">bhv:DeferredActivation</code> fire through stimuli written to the stimulus log by a scheduler, carrying the valid time they represent. The engine never reads a clock (P3.2.3 already requires this). A deadline passing is then an input at a position, so deterministic replay (P3.2.11) covers deadlines, and a backdated fact that arrives after a deadline stimulus is ordered by the same rules as any other.</p>
+
+<p><strong>Why.</strong> P3.2 bans <code class="language-plaintext highlighter-rouge">now()</code> but does not say where time-driven transitions come from. Without this, the first obligation deadline will reintroduce the wall clock into the engine or a side channel outside the log.</p>
+
+<p><strong>Where.</strong> One slice in the P3.2 expansion. The scheduler also covers ADR-A10’s deferred activations and allowance resets (<code class="language-plaintext highlighter-rouge">bhv:resetRecurrence</code>), which have the same problem.</p>
+
+<h3 id="r4-acyclicity-of-condition-composition">R4. Acyclicity of condition composition</h3>
+
+<p><strong>What.</strong> A SHACL shape and a compiler refusal for a cycle through <code class="language-plaintext highlighter-rouge">elg:hasCondition</code> across profiles. With negation (ADR-A103) a cycle has no well-founded outcome. Record the evaluation-order rule in the Eligibility README: a condition is evaluated after every condition it composes. That is the stratification the research asks for, and today it holds only because no fixture builds a cycle.</p>
+
+<p><strong>Where.</strong> <code class="language-plaintext highlighter-rouge">eligibility-compiler</code>, as a small slice. Hierarchical match already has an analogous acyclicity rule for scheme ordering (<code class="language-plaintext highlighter-rouge">rules.ttl</code>, elg:L9), so the shape follows an existing pattern.</p>
+
+<h3 id="r5-controlled-english-rendering-of-compiled-rules">R5. Controlled-English rendering of compiled rules</h3>
+
+<p><strong>What.</strong> Render an Eligibility plan, and later an R1 obligation, as template-filled English in the Logical English style: “a facility is admitted if its amount is between EUR 1m and EUR 25m and its borrower is incorporated in the EU but not in Cyprus”. Generated from the IR, deterministic, and marked as a rendering, never a source.</p>
+
+<p><strong>Why.</strong> The review workbench’s stewards should see meaning, not notation (ingestion vision §10.1), and the Explain API (P2.4.4) needs text for its witnesses. It also makes the controlled-language input route (ingestion vision Q6) cheaper later: once LATTICE can render rules in LE’s style, a translator in the other direction has a round-trip test.</p>
+
+<p><strong>Where.</strong> A sketch attached to ingestion vision Phase 2, consumed by the review workbench and the Explain API.</p>
+
+<h2 id="5-deferred-options-with-triggers">5. Deferred options, with triggers</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Option</th>
+      <th>Why not now</th>
+      <th>Trigger to reopen</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Logical English input route (research options B and C), LE scenarios as differential tests</td>
+      <td>No source text is drafted in a controlled language yet. Ingestion vision Q6 already holds the question</td>
+      <td>A drafter or partner supplies LE or InsurLE text, or R5 produces renderings worth round-tripping</td>
+    </tr>
+    <tr>
+      <td>Datalog sidecar (Nemo, RDFox) behind the backend interface</td>
+      <td>Rule-based materialisation over SPARQL has not been measured against the guard budget (P2.2.2)</td>
+      <td>P3.6 baseline shows guard or materialisation budgets missed, or incremental maintenance is needed for a book of obligations</td>
+    </tr>
+    <tr>
+      <td>An own evaluation engine (the research’s Tier 2)</td>
+      <td>Multi-person-year effort. Phase 3 has not measured the need</td>
+      <td>Continuous normative monitoring at scale with Tier 1 exhausted. Revisit alongside <code class="language-plaintext highlighter-rouge">identity-minting-shared-core</code>, since both argue for a Rust core</td>
+    </tr>
+    <tr>
+      <td>Well-founded or stable-model semantics for mutual exceptions</td>
+      <td>A cycle through negation in contract rules is a drafting ambiguity or an extraction error. R4 routes it to a person</td>
+      <td>Real contracts show recurring mutual exceptions that people resolve the same way each time</td>
+    </tr>
+    <tr>
+      <td>Prolog or Erlog in any runtime</td>
+      <td>Contradicts the deterministic compilation boundary and adds a second logic semantics</td>
+      <td>none</td>
+    </tr>
+    <tr>
+      <td>SWRL for anything involving absence or <code class="language-plaintext highlighter-rouge">Undetermined</code></td>
+      <td>ADR-A24 excludes it</td>
+      <td>none</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="6-sequencing-against-the-current-roadmap">6. Sequencing against the current roadmap</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>When</th>
+      <th>Addition</th>
+      <th>Blocking</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Now</td>
+      <td>R4</td>
+      <td>nothing</td>
+    </tr>
+    <tr>
+      <td>Now, as a sketch</td>
+      <td>R1 sketch with non-domain examples</td>
+      <td>nothing. The ADR must land before A-101</td>
+    </tr>
+    <tr>
+      <td>Before P2.11.4 (Phase 3 expansion)</td>
+      <td>R2 ADR, R3 slice written into the P3.2 expansion</td>
+      <td>P3.2 specification</td>
+    </tr>
+    <tr>
+      <td>Ingestion vision Phase 2</td>
+      <td>R5</td>
+      <td>review workbench design</td>
+    </tr>
+    <tr>
+      <td>Applied-insurance Phase 5 start</td>
+      <td>R1 accepted and Instrument bumped</td>
+      <td>A-101, the contract module, and claims in Phase 6</td>
+    </tr>
+    <tr>
+      <td>P3.6 measurement</td>
+      <td>decide on a Datalog sidecar</td>
+      <td>measured guard and materialisation budgets</td>
+    </tr>
+    <tr>
+      <td>P4.5</td>
+      <td>carry the F4 rule into SPC integration: SPC sessions project Behaviour state</td>
+      <td>SPC integration</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="7-questions-for-you">7. Questions for you</h2>
+
+<ol>
+  <li><strong>R1’s home.</strong> Instrument (substrate) or a new layer? My reading is Instrument, because obligations are already there and the four target domains are all regulative. A new layer would only be justified if normative state needed its own dependency position.</li>
+  <li><strong>ODRL alignment.</strong> Align R1’s terms with ODRL where meanings match, or keep LATTICE’s vocabulary independent and bridge through MORK only?</li>
+  <li><strong>R2’s default.</strong> Should a check that could decide on absence, but has no closure, be refused at compile time (my recommendation) or compiled to always return <code class="language-plaintext highlighter-rouge">Undetermined</code> with a diagnostic?</li>
+  <li><strong>Priority for Phase 5.</strong> Applied-insurance D2 defers Phase 5 until Open CBAA integration. Does R1 wait with it, or proceed as substrate work now so that Phase 5 starts with it in place?</li>
+</ol>
+
+<h2 id="appendix-sources-consulted">Appendix: sources consulted</h2>
+
+<p>Architecture: <code class="language-plaintext highlighter-rouge">ingestion-vision.md</code> (§3, §5, §8, §11, §13–§15), <code class="language-plaintext highlighter-rouge">conformance-levels.md</code>, <code class="language-plaintext highlighter-rouge">derivation-and-validation.md</code>, <code class="language-plaintext highlighter-rouge">deferred-scope-and-boundaries.md</code>, <code class="language-plaintext highlighter-rouge">semantic-platform.md</code>, <code class="language-plaintext highlighter-rouge">implementation-map.md</code>, <code class="language-plaintext highlighter-rouge">ontology-architecture.md</code>, <code class="language-plaintext highlighter-rouge">rdf-sparql-patterns-guide.md</code> (Parts III, V, Chapter 28), <code class="language-plaintext highlighter-rouge">data-architecture.md</code> (graph families), <code class="language-plaintext highlighter-rouge">solution-design-specification.md</code> (compilation boundary, components), <code class="language-plaintext highlighter-rouge">ontology/spc/docs/architecture.md</code> (the Erlang, Prolog and Logical English note).</p>
+
+<p>ADRs: A03, A07b, A08, A09, A10, A11, A13, A14, A15, A19, A23, A24, A25, A27, A28, A67, A75, A83, A87, A89, A90, A91, A92, A94, A96, A100, A102, A103, A-C1, A-C2.</p>
+
+<p>Ontology: <code class="language-plaintext highlighter-rouge">instrument/spec/instrument.ttl</code>, <code class="language-plaintext highlighter-rouge">behaviour/spec/behaviour.ttl</code> and its vocabulary, <code class="language-plaintext highlighter-rouge">party/spec/party.ttl</code>, <code class="language-plaintext highlighter-rouge">mork/spec/Executable.ttl</code> (diagnostics), <code class="language-plaintext highlighter-rouge">eligibility/shapes/rules.ttl</code>.</p>
+
+<p>Plans: <code class="language-plaintext highlighter-rouge">lattice-platform-agentic-development-v0.2.md</code> (P2.2, P2.3, P2.4, P3.2, P4), <code class="language-plaintext highlighter-rouge">applied-insurance-reference.md</code> and its Phase 5 plan, <code class="language-plaintext highlighter-rouge">sketches/term-parameters.md</code>, <code class="language-plaintext highlighter-rouge">docs/developer/INDEX.md</code>.</p>

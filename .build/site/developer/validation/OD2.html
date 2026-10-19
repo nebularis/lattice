@@ -1,0 +1,183 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-od2-sections-1-to-3-of-a-readme-in-the-layout">Validation Pack: OD2, sections 1 to 3 of a README in the layout</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/improved-ontology-documentation.html"><code class="language-plaintext highlighter-rouge">improved-ontology-documentation</code></a>, slice OD2
+(<a href="/developer/plans/improved-ontology-documentation.html#slices">plan</a>).
+<strong>Implements:</strong> <a href="/architecture/decisions/ADR-A126-literate-specification-layout-and-grammar.html">ADR-A126</a>
+decisions 1 (section 3), 10 and 13, and RC1-C5’s section 3 rule.
+<strong>Built autonomously</strong>, at the maintainer’s request of 2026-10-18. The decisions taken alone are listed below,
+for the maintainer to keep or overrule.</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>For a README in the layout, each document its section 2 header table names opens with exactly what sections
+1 and 2 state: its prefixes, its ontology header, <code class="language-plaintext highlighter-rouge">dct:description</code> from section 1 as plain text, its creators
+and contributors by IRI and never by name, and the Dublin Core terms it uses declared locally. A README not in
+the layout extracts exactly as before. A migrated README holds one catalogue entry, in section 3.</p>
+
+<h2 id="what-changed">What changed</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">tools/literate_grammar.py</code>, new, standard library only. A Turtle writer for terms, blank nodes and lists,
+with a fixed predicate order. Markdown to plain text with links at the release tag. Section 2’s three
+tables. <code class="language-plaintext highlighter-rouge">compile_layout()</code>, which returns each document’s opening text.</li>
+  <li><code class="language-plaintext highlighter-rouge">tools/literate_extract.py</code>. <code class="language-plaintext highlighter-rouge">scan()</code> also records the prose lines and where catalogue blocks open.
+<code class="language-plaintext highlighter-rouge">plan()</code> takes the compiled openings and puts each document’s blocks after them, refusing a block for a
+document the header table does not name. The version checks now read every output document. <code class="language-plaintext highlighter-rouge">main()</code>
+compiles a README in the layout, and the layout check requires its one catalogue entry in section 3.</li>
+  <li><code class="language-plaintext highlighter-rouge">tools/test_literate_grammar.py</code>, new, with tests OD2-T1 to OD2-T9.</li>
+  <li><code class="language-plaintext highlighter-rouge">tools/test_literate_extract.py</code>. OD1-T11’s README gains a header table and a catalogue entry, which a
+migrated README now needs, and the test writes instead of checking, since there is no committed file to
+check against. It tests the same thing as before, a warning on a misnumbered section and an error on a
+missing one.</li>
+  <li><code class="language-plaintext highlighter-rouge">mise.toml</code>. <code class="language-plaintext highlighter-rouge">check:ontology-catalog</code> runs <code class="language-plaintext highlighter-rouge">tools/test_literate_grammar.py</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">docs/architecture/literate-specifications.md</code>. Sections 1 to 3 describe the header table as built, the
+prefixes added, the order of a document, and the section 3 rule.</li>
+</ul>
+
+<h2 id="decisions-taken-alone-for-the-maintainer">Decisions taken alone, for the maintainer</h2>
+
+<ol>
+  <li><strong>The header table has one row per document</strong>, with the columns Document, Ontology IRI, Version IRI and
+Imports. This replaces the Field and Value table first drafted in the conventions document. A module with
+several documents (ADR-A120) needs a row each. The version IRI is written in full because it does not
+always extend the ontology IRI. For example, Eligibility’s ontology IRI is <code class="language-plaintext highlighter-rouge">.../neuro-semantic/eligibility</code>
+and its version IRI <code class="language-plaintext highlighter-rouge">.../neuro-semantic/lattice/eligibility/0.12.0</code>.</li>
+  <li><strong>Section 1 becomes the <code class="language-plaintext highlighter-rouge">dct:description</code> of every document the README generates</strong>, not only the main
+spec document, so each document describes itself.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">rdf:</code>, <code class="language-plaintext highlighter-rouge">rdfs:</code>, <code class="language-plaintext highlighter-rouge">owl:</code>, <code class="language-plaintext highlighter-rouge">xsd:</code> and <code class="language-plaintext highlighter-rouge">dct:</code> are added</strong> with their standard namespaces when the prefix
+table omits them, and a different binding for one of them is refused.</li>
+  <li><strong>Only the header table is required</strong> in section 2. The prefix and contributor tables are optional, so a
+module can migrate before its contributor table is agreed. The display name column is optional too.</li>
+  <li><strong>A document’s order</strong> is its ontology header, then every other generated statement sorted by subject,
+then anonymous statements, then the README’s blocks for it in document order. Blocks are verbatim
+Turtle, which a standard-library extractor cannot sort.</li>
+  <li><strong>The repository’s blob URL is a constant</strong> (<code class="language-plaintext highlighter-rouge">https://github.com/nebularis/lattice/blob/</code>), marked as a
+shortcut, so a downstream README’s links would point at LATTICE. It moves to the catalogue’s conventions
+when downstream catalogues exist (RC4).</li>
+  <li><strong>Link targets.</strong> The release tag comes from the main spec document’s version IRI, by the versioning
+policy’s naming rule, and a relative link with no main spec document is refused. A link to an anchor alone
+resolves to the README at that tag. A link that leaves the repository is refused. An image in section 1 is
+refused, as tables and headings are.</li>
+  <li><strong>In a migrated README, every document takes the prefix table’s prefixes.</strong> The extractor no longer copies
+the main spec document’s prefixes into its other documents, as it does for an unmigrated README.</li>
+</ol>
+
+<h2 id="test-cases">Test cases</h2>
+
+<p>In <code class="language-plaintext highlighter-rouge">tools/test_literate_grammar.py</code>.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>OD2-T1</td>
+      <td>a README in the layout / extract / the header’s type, version IRI, import, description, creator, the Dublin Core declarations and the standard prefixes are present, and the display name is not</td>
+      <td>L3</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>OD2-T2</td>
+      <td>section 1 with code, emphasis, a snake_case word, two paragraphs, list items, links into the repository, to an anchor and outside it, and an excluded sentence / extract / the exact plain text, with links at <code class="language-plaintext highlighter-rouge">x-v0.2.0</code></td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>OD2-T3</td>
+      <td>a table, a heading, an image and a link out of the repository in section 1 / compile / each refused</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>OD2-T4</td>
+      <td>every version IRI in a tracked spec or vocab document / the release tag / equal to <code class="language-plaintext highlighter-rouge">ontology_releases.release_name</code></td>
+      <td>L3</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>OD2-T5</td>
+      <td>nine malformed sections 2 (no header table, an unknown table, a path outside <code class="language-plaintext highlighter-rouge">spec/</code> and <code class="language-plaintext highlighter-rouge">vocab/</code>, an unknown role, a name for an identifier, <code class="language-plaintext highlighter-rouge">xsd:</code> rebound, a prefix twice, a version IRI with no version, two header tables) / compile / each refused</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>OD2-T6</td>
+      <td>two documents with blocks for each / extract / each opens with its own header and holds its own blocks, and different versions are refused</td>
+      <td>L1</td>
+      <td>+/−</td>
+    </tr>
+    <tr>
+      <td>OD2-T7</td>
+      <td>a block for a document the header table does not name / extract / refused</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>OD2-T8</td>
+      <td>one, none and two catalogue entries in section 3, and one outside it / the layout check / accepted, then three errors</td>
+      <td>L1</td>
+      <td>+/−</td>
+    </tr>
+    <tr>
+      <td>OD2-T9</td>
+      <td>a README in the layout / extract to a directory, then check / written, then no drift</td>
+      <td>L4</td>
+      <td>+</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="one-command">One command</h2>
+
+<p>Run from the repository root. A pass is every test passing.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise <span class="nb">exec</span> <span class="nt">--</span> python <span class="nt">-m</span> pytest tools/test_literate_grammar.py tools/test_literate_extract.py <span class="nt">-q</span>
+</code></pre></div></div>
+
+<h2 id="results">Results</h2>
+
+<p>2026-10-18, run while building, from this worktree:</p>
+
+<ul>
+  <li><strong>The grammar and extractor tests:</strong> <code class="language-plaintext highlighter-rouge">tools/test_literate_grammar.py</code> and <code class="language-plaintext highlighter-rouge">tools/test_literate_extract.py</code>
+together, 87 passed.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">tools/test_lattice_repo_catalogue.py</code>:</strong> 67 passed.</li>
+  <li><strong>The per-layer extraction tests:</strong> Instrument, Wording, Keys, Additivity, Behaviour nested and Eligibility,
+selected by name, 9 passed.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">mise run check:formal-freshness</code>:</strong> passes.</li>
+</ul>
+
+<p><code class="language-plaintext highlighter-rouge">mise run check:ontology-catalog</code> was not run. The adversarial probes were not run.</p>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<ul>
+  <li>Section 6. OD3 compiles it.</li>
+  <li>Shapes from section 6, and the generated regions. OD4 and OD5.</li>
+  <li>Any real README in the layout. The first is Eligibility, in OD6.</li>
+</ul>
+
+<h2 id="decisions-answered">Decisions answered</h2>
+
+<p>2026-10-18, by the maintainer: decisions 2, 3, 4, 6, 7 and 8 agreed.</p>
+
+<ul>
+  <li><strong>Decision 1</strong> agreed. The header table lists ontology documents only, the spec and vocab documents.
+Shape and projection files have no ontology header, and their targets are in the catalogue entry. The
+header table’s documents and the entry’s <code class="language-plaintext highlighter-rouge">extract.spec</code> and <code class="language-plaintext highlighter-rouge">extract.vocab</code> name the same files. Both
+stay, held equal by RC1-T3 now and by every extraction after RC4 (OD2-Q1, option a).</li>
+  <li><strong>Decision 5</strong> changed (OD2-Q5, option b). A document’s blocks are ordered by their own text, not their
+place in the README, and a block of a migrated README may not declare a prefix. OD-D18 then holds in full.
+ADR-A126 decision 10 is clarified in place to say so. Tests OD2-T10 and OD2-T11 were added and pass. A
+later change is planned so that the versioning check considers only a document’s graph (TD-51).</li>
+</ul>
+
+<p>The maintainer ran every test suite on 2026-10-18, before this change, and all pass.</p>

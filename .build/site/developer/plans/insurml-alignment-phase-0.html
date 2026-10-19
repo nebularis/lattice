@@ -1,0 +1,128 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="plan-insurml-alignment-phase-0-decisions-and-engagement">Plan: InsurML Alignment, Phase 0: Decisions and Engagement</h1>
+
+<p><strong>Unit ID:</strong> <code class="language-plaintext highlighter-rouge">insurml-alignment-phase-0</code>
+<strong>Epic:</strong> <a href="/developer/plans/insurml-alignment.html">insurml-alignment</a>
+<strong>Status:</strong> Proposed, awaiting the maintainer’s review
+<strong>Status record:</strong> the epic’s <a href="/developer/status/insurml-alignment.html">status record</a>, one section per phase
+<strong>Changes:</strong> paper only. No ontology, tool or app changes</p>
+
+<h2 id="scope">Scope</h2>
+
+<p>Settle what the epic needs before any file under <code class="language-plaintext highlighter-rouge">ontology/</code>, <code class="language-plaintext highlighter-rouge">tools/</code>, <code class="language-plaintext highlighter-rouge">contracts/</code> or <code class="language-plaintext highlighter-rouge">apps/</code>
+changes: the licence and publication route, the profile’s shape, the decisions of gate 0, an
+engagement brief for InsurML’s owner, and five ADRs drafted as Proposed.</p>
+
+<h2 id="slices">Slices</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Slice</th>
+      <th>Content</th>
+      <th>Output</th>
+      <th>Estimate (tokens)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>IMA-0.1</td>
+      <td>engagement brief for InsurML’s owner: Q-1 to Q-21, the <a href="/developer/notes/insurml-identity.html">identity note</a>, a summary of P-1 to P-16 and what each would give InsurML, the profile’s intent, and collaboration options (IMA-D16)</td>
+      <td>a note. The maintainer sends it</td>
+      <td>under 0.05M</td>
+    </tr>
+    <tr>
+      <td>IMA-0.2</td>
+      <td>licence, publication and edition record: the answers to Q-2, Q-3 and Q-11, IMA-D5 and its consequence for the epic’s documents on public branches</td>
+      <td>a section of the status record</td>
+      <td>under 0.02M</td>
+    </tr>
+    <tr>
+      <td>IMA-0.3</td>
+      <td>ADR: the InsurML profile. Scope of <code class="language-plaintext highlighter-rouge">applied/insurance/wording/</code>, the two documents, alignment rules (bridge §3), identity adoption and key schemes (§4), typing T1, edition pinning, builder properties, AIR-5.9 moved (IMA-D2)</td>
+      <td>ADR, Proposed</td>
+      <td>0.05M</td>
+    </tr>
+    <tr>
+      <td>IMA-0.4</td>
+      <td>ADR: bridge tooling and kits. Where the lift, lower, assembler and parity suite live, where kits are published, their versioning, and their relation to the XML egress sketch’s kits (IMA-D11, IMA-D12)</td>
+      <td>ADR, Proposed, under the topology rule</td>
+      <td>0.04M</td>
+    </tr>
+    <tr>
+      <td>IMA-0.5</td>
+      <td>ADR: transclusion in Wording (bridge §8), with law W8, the neutral cases, and the interim reference element</td>
+      <td>ADR, Proposed. Accepted before phase 3, not at gate 0</td>
+      <td>0.05M</td>
+    </tr>
+    <tr>
+      <td>IMA-0.6</td>
+      <td>ADR: inline parts in a text (bridge §9), covering optional words, inline blocks and the words of amounts</td>
+      <td>ADR, Proposed. Accepted before phase 3</td>
+      <td>0.04M</td>
+    </tr>
+    <tr>
+      <td>IMA-0.8</td>
+      <td>ADR: the Wording assembly interface (<a href="/developer/sketches/wording-assembly-interface.html">sketch</a>). Assembly models and their declarations, hooks H3 to H13, the assembly record, laws WA1 to WA7, the assembler interface. IMA-0.5 and IMA-0.6 become its structural companions (H1, H2)</td>
+      <td>ADR, Proposed. Accepted before phase 3</td>
+      <td>0.06M</td>
+    </tr>
+    <tr>
+      <td>IMA-0.7</td>
+      <td>alignment edits once gate-0 decisions are taken: AIR epic and Phase 5 plan (AIR-5.9 moved), CCS plan §6 and the C7c brief’s inputs, ingestion vision Q9 and Q11 notes, <code class="language-plaintext highlighter-rouge">INDEX.md</code></td>
+      <td>edited plans</td>
+      <td>under 0.03M</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>IMA-0.3 and IMA-0.4 may be drafted together. IMA-0.5 and IMA-0.6 are drafted now, so InsurML’s
+owner can review the substrate changes the alignment depends on before LATTICE builds them.</p>
+
+<h2 id="gate-0">Gate 0</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Criterion</th>
+      <th>Evidence</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>IMA-D1 to IMA-D5 and IMA-D16 decided</td>
+      <td>the epic’s §7, marked with dates</td>
+    </tr>
+    <tr>
+      <td>the licence and publication route recorded</td>
+      <td>IMA-0.2</td>
+    </tr>
+    <tr>
+      <td>the ADRs of IMA-0.3 and IMA-0.4 Accepted</td>
+      <td>the ADR index</td>
+    </tr>
+    <tr>
+      <td>the ADRs of IMA-0.5 and IMA-0.6 Proposed and reviewed by a maintainer</td>
+      <td>the ADR index</td>
+    </tr>
+    <tr>
+      <td>answers to Q-1 to Q-3 received, or the epic recorded as proceeding clean-room only</td>
+      <td>the status record</td>
+    </tr>
+    <tr>
+      <td>the Phase 1 plan written</td>
+      <td><code class="language-plaintext highlighter-rouge">insurml-alignment-phase-1.md</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="validation">Validation</h2>
+
+<p>Paper only: link checks and the prose rules of <code class="language-plaintext highlighter-rouge">.github/copilot-instructions.md</code>. Every ADR cites
+the sketch section it decides and names its neutral case where it changes a layer.</p>
+
+<h2 id="out-of-scope">Out of scope</h2>
+
+<p>Any file under <code class="language-plaintext highlighter-rouge">ontology/</code>, <code class="language-plaintext highlighter-rouge">tools/</code>, <code class="language-plaintext highlighter-rouge">contracts/</code> or <code class="language-plaintext highlighter-rouge">apps/</code>. Sending anything to InsurML’s owner,
+which the maintainer does.</p>

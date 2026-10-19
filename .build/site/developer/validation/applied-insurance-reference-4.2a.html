@@ -1,0 +1,173 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-air-42a-shared-exposure-members-td-49">Validation Pack: AIR-4.2a, shared exposure members (TD-49)</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/applied-insurance-reference.html"><code class="language-plaintext highlighter-rouge">applied-insurance-reference</code></a>
+<strong>Machine:</strong> R, taking over from S. <strong>Branch:</strong> <code class="language-plaintext highlighter-rouge">air/applied-reference</code>, commits <code class="language-plaintext highlighter-rouge">[AIR-4.2a] …</code>
+<strong>Plan:</strong> <a href="/developer/plans/applied-insurance-reference-phase-4.html">Phase 4 plan</a> (AIR-4.2a)
+<strong>Decisions:</strong> the maintainer’s correction of 2026-10-14 (TD-49), and its scope of 2026-10-14: every
+inverse-functional property of the module</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>An unchanged member of an exposure set is shared by every version of the set it holds for, by
+identity, and is never copied to make a new version. No property of the module says a member
+belongs to one set, one location or one assessment. A reasoner therefore never merges two schedule
+versions, two location versions or two assessments that list one node.</p>
+
+<h2 id="test-cases">Test cases</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AIR42a-01</td>
+      <td>the module’s spec / read for <code class="language-plaintext highlighter-rouge">owl:InverseFunctionalProperty</code> / none declared</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>AIR42a-02</td>
+      <td><code class="language-plaintext highlighter-rouge">examples/versions.ttl</code>, two schedule versions listing one location, one asset and one valuation / the module’s structural and cross-node shapes / conforms</td>
+      <td>L3</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR42a-03</td>
+      <td>the core fixture with a second exposure set listing its factory / the shapes / no violation (restates AIR41-09)</td>
+      <td>L3</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AIR42a-04</td>
+      <td>the spec with <code class="language-plaintext highlighter-rouge">owl:InverseFunctionalProperty</code> restored on <code class="language-plaintext highlighter-rouge">aeo:hasLocation</code>, and a reasoner over <code class="language-plaintext highlighter-rouge">versions.ttl</code> / consistency and <code class="language-plaintext highlighter-rouge">owl:sameAs</code> between the two schedule versions / the two versions merge</td>
+      <td>L4</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>AIR42a-05</td>
+      <td>the README / literate <code class="language-plaintext highlighter-rouge">--check</code> / consistent</td>
+      <td>L0</td>
+      <td>+</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Rows 01, 03 and 04 are written into the AIR-deferred-testing slice (Phase 4 plan), under the
+amendment of 2026-10-14.</p>
+
+<h2 id="one-command">One command</h2>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise <span class="nb">exec</span> <span class="nt">--</span> python tools/literate_extract.py ontology/applied/insurance/exposure/README.md <span class="nt">--layer</span> applied/insurance/exposure <span class="nt">--root</span> <span class="nb">.</span> <span class="nt">--shapes</span> shapes/structural.ttl shapes/constraints.ttl shapes/profiles/construction-protection.ttl shapes/profiles/cyber-posture.ttl <span class="nt">--check</span>
+</code></pre></div></div>
+
+<h2 id="artefacts-to-inspect">Artefacts to inspect</h2>
+
+<ul>
+  <li>The exposure README, §4.2 prose, the eight property definitions, the shapes table and §9.</li>
+  <li><code class="language-plaintext highlighter-rouge">examples/versions.ttl</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">tools/test_exposure_ontology.py</code>, where AIR41-09 is restated.</li>
+</ul>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<p>A shape that two versions of one location identity are not listed by one set at once. Whether a
+set version lists the right members is the instrument’s or the deployment’s concern. Shared
+designations and attribute values are allowed, and nothing yet says which assessment last
+restated one.</p>
+
+<h2 id="handoff">Handoff</h2>
+
+<ul>
+  <li><strong>Built:</strong> <code class="language-plaintext highlighter-rouge">aeo:hasLocation</code>, <code class="language-plaintext highlighter-rouge">hasAsset</code>, <code class="language-plaintext highlighter-rouge">hasInterest</code>, <code class="language-plaintext highlighter-rouge">hasValuation</code>, <code class="language-plaintext highlighter-rouge">hasAssessment</code>,
+<code class="language-plaintext highlighter-rouge">zoneDesignation</code>, <code class="language-plaintext highlighter-rouge">poolParticipation</code> and <code class="language-plaintext highlighter-rouge">hasAttribute</code> are plain object properties.
+<code class="language-plaintext highlighter-rouge">aeo:MembershipShape</code> is withdrawn, with its row in the shapes table and its test restated.
+§4.2’s prose no longer says a member “belongs to exactly one” set. <code class="language-plaintext highlighter-rouge">examples/versions.ttl</code> added.
+The spec and <code class="language-plaintext highlighter-rouge">constraints.ttl</code> regenerated from the README. No version bump, the module being
+new on this branch.</li>
+  <li><strong>Run, with the result:</strong> the literate extraction (spec and constraints regenerated, the other
+files unchanged). <code class="language-plaintext highlighter-rouge">examples/versions.ttl</code> validated against the structural and cross-node shapes
+with pySHACL (<code class="language-plaintext highlighter-rouge">advanced=True</code>, <code class="language-plaintext highlighter-rouge">inference="none"</code>): conforms.</li>
+  <li><strong>Not run, and why:</strong> <code class="language-plaintext highlighter-rouge">tools/test_exposure_ontology.py</code> and the catalog checks. Testing for the
+applied insurance modules is deferred (amendment of 2026-10-14).</li>
+  <li><strong>Check first:</strong> §4.2’s prose, then the two <code class="language-plaintext highlighter-rouge">utility</code> strings that replace “Inverse
+functional” on the designation and attribute properties.</li>
+  <li><strong>Deviations from the plan:</strong> none. TD-49 is removed from the technical debt register.</li>
+</ul>
+
+<h2 id="results">Results</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AIR42a-02</td>
+      <td><code class="language-plaintext highlighter-rouge">versions.ttl</code> against every exposure shape with pySHACL: conforms (run by hand)</td>
+    </tr>
+    <tr>
+      <td>AIR42a-03</td>
+      <td>AIR41-09 restated as “sharing is accepted” in <code class="language-plaintext highlighter-rouge">test_exposure_ontology.py</code>, inside <code class="language-plaintext highlighter-rouge">check:ontology-catalog</code>: pass</td>
+    </tr>
+    <tr>
+      <td>AIR42a-05</td>
+      <td>literate extraction: the generated files match the README</td>
+    </tr>
+    <tr>
+      <td>AIR42a-01, 04</td>
+      <td>not built, in AIR-deferred-testing</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><code class="language-plaintext highlighter-rouge">check:full-sweep</code> against <code class="language-plaintext highlighter-rouge">main</code> on 2026-10-14, then <code class="language-plaintext highlighter-rouge">check:ontology-catalog</code> again after one fix:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Check</th>
+      <th>Result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>ontology versions, release register, import guard, python root, deny terms</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">check:vocabulary</code></td>
+      <td>16 passed</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">check:mork-compilers</code></td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">check:reference-eligibility</code></td>
+      <td>58 passed</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">check:formal-freshness</code>, <code class="language-plaintext highlighter-rouge">build:mtp</code>, <code class="language-plaintext highlighter-rouge">check:mtp</code>, <code class="language-plaintext highlighter-rouge">check:agent-guidance</code></td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">check:persistence</code></td>
+      <td>2549 passed, 207 skipped, 1 xfailed</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">check:ontology-catalog</code></td>
+      <td>first run 772 passed and 1 failed (<code class="language-plaintext highlighter-rouge">test_applied_shared_contracts.py</code> pinned nine <code class="language-plaintext highlighter-rouge">insurance/common</code> contracts, AIR-4.4 adds a tenth, test restated in <code class="language-plaintext highlighter-rouge">5492e39</code>). Rerun: 773 passed, catalog consistent with 2 known defects in MORK example files</td>
+    </tr>
+  </tbody>
+</table>

@@ -1,0 +1,52 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="architecture-diagrams">Architecture Diagrams</h1>
+
+<p>Five views of the same system, each answering a different question. Start with whichever
+question you have:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Diagram</th>
+      <th>Answers</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td><a href="/diagrams/01-full-architecture.html">The whole architecture</a></td>
+      <td>Every axis at once: ontology layers, tools, platform services, apps, data realms, formal methods — how do they all relate?</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td><a href="/diagrams/02-development-time-toolchain.html">Development-time toolchain</a></td>
+      <td>When I change a README, a law, or a compiler, what actually runs to keep everything consistent?</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td><a href="/diagrams/03-design-time-authoring.html">Design-time authoring</a></td>
+      <td>How does someone author a contract or a template, and what checks it as they do?</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td><a href="/diagrams/04-runtime-capabilities.html">Runtime capabilities</a></td>
+      <td>Once an instrument is deployed, what runs, and on what data?</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td><a href="/diagrams/05-compiler-backends-pluggable-surfaces.html">Compiler backends and pluggable surfaces</a></td>
+      <td>How does one shared semantics reach SPARQL, SHACL, SQL, or a surface someone else builds?</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Every diagram is <a href="https://mermaid.js.org/">Mermaid</a>, rendered inline by GitHub and most Markdown
+viewers. If a diagram grows too large to read comfortably, split it rather than shrink the text —
+a diagram that needs a magnifying glass has stopped doing its job.</p>
+
+<p>These diagrams describe the architecture as documented elsewhere in <code class="language-plaintext highlighter-rouge">docs/architecture/</code> and
+<code class="language-plaintext highlighter-rouge">docs/developer/</code>; they do not introduce new decisions. Where a capability shown is planned but
+not yet built, the diagram says so explicitly (dashed edges, “planned” labels) rather than
+blurring the line between what exists and what is designed.</p>

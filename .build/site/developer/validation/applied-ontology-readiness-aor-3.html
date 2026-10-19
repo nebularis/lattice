@@ -1,0 +1,121 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-aor-3-versioning-guarantees">Validation Pack: AOR-3, versioning guarantees</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/applied-ontology-readiness.html"><code class="language-plaintext highlighter-rouge">applied-ontology-readiness</code></a>
+<strong>Plan section:</strong> <a href="/developer/plans/applied-ontology-readiness.html#aor-3-versioning-guarantees">AOR-3</a>
+<strong>Decision:</strong> <a href="../../architecture/decisions/ADR-A86-ontology-semantic-versioning.md#addendum-2026-09-25-guarantees-consumers-rely-on">ADR-A86 addendum</a>, items 1 to 3</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>A version IRI identifies one content of its document. Every published
+ontology document (under <code class="language-plaintext highlighter-rouge">spec/</code> or <code class="language-plaintext highlighter-rouge">vocab/</code>) carries one, and a content change
+never lands under an unchanged version IRI.</p>
+
+<h2 id="test-cases">Test cases</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AOR3-01</td>
+      <td>spec document content changed, version unchanged / check / flagged</td>
+      <td>L1</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>AOR3-02</td>
+      <td>content and version changed together / check / passes</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AOR3-03</td>
+      <td>untouched repository / both checks / pass</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AOR3-04</td>
+      <td>spec document without a version IRI / unversioned check / flagged</td>
+      <td>L1</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>AOR3-05</td>
+      <td>new vocab document without a version IRI / unversioned check / flagged</td>
+      <td>L1</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>AOR3-06</td>
+      <td>example document without a version IRI, content changed / both checks / pass</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AOR3-07</td>
+      <td>new spec document with a version IRI / both checks / pass</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Each test builds a throwaway git repository as its base ref.</p>
+
+<h2 id="one-command">One command</h2>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:ontology-versioning
+</code></pre></div></div>
+
+<p>Pass: <code class="language-plaintext highlighter-rouge">7 passed</code>, then <code class="language-plaintext highlighter-rouge">33 in-scope ontology document(s) checked against HEAD:
+no unbumped changes</code>.</p>
+
+<h2 id="artefacts-to-inspect">Artefacts to inspect</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">tools/ontology_version_check.py</code>: <code class="language-plaintext highlighter-rouge">requires_version_iri</code> and
+<code class="language-plaintext highlighter-rouge">check_unversioned</code>, and the <code class="language-plaintext highlighter-rouge">UNVERSIONED</code> report line.</li>
+  <li><code class="language-plaintext highlighter-rouge">.github/workflows/platform.yml</code>: full-history checkout, the two new test
+modules, and the check against <code class="language-plaintext highlighter-rouge">origin/main</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">pyproject.toml</code>: new <code class="language-plaintext highlighter-rouge">test</code> extra declaring <code class="language-plaintext highlighter-rouge">pytest</code>, installed by
+<code class="language-plaintext highlighter-rouge">bootstrap:python-root</code> and the workflow. Before this, <code class="language-plaintext highlighter-rouge">pytest</code> reached the
+root environment only through other tool packages.</li>
+  <li><code class="language-plaintext highlighter-rouge">docs/architecture/ontology-versioning-policy.md</code>: cascade for every bump,
+import-only changes take the imported level, enforcement scope.</li>
+</ul>
+
+<h2 id="adversarial-probe">Adversarial probe</h2>
+
+<p>Replacing <code class="language-plaintext highlighter-rouge">requires_version_iri</code>’s body with <code class="language-plaintext highlighter-rouge">return False</code> failed AOR3-04 and
+AOR3-05. Disabling the unchanged-version comparison failed AOR3-01. Restoring
+the file returned 7 passes.</p>
+
+<h2 id="deviations-from-the-plan">Deviations from the plan</h2>
+
+<ul>
+  <li><strong>Job-family regeneration deferred.</strong> The Surface compiler stamps every
+generated module with <code class="language-plaintext highlighter-rouge">owl:versionIRI &lt;module&gt;/0.0.1</code>
+(<code class="language-plaintext highlighter-rouge">tools/surface/src/surface/compile.py</code>, <code class="language-plaintext highlighter-rouge">_ontology_header</code>). Regenerating
+the four modules under <code class="language-plaintext highlighter-rouge">ontology/surface/execution/job-family/</code> would change
+their content under an unchanged version IRI, which this slice’s own check
+rejects. How generated documents are versioned needs a decision. See the
+status record.</li>
+  <li><strong>CI is manual-only.</strong> Both workflows run on <code class="language-plaintext highlighter-rouge">workflow_dispatch</code> only, so the
+CI step guards a dispatched branch against <code class="language-plaintext highlighter-rouge">origin/main</code>, not every change.</li>
+</ul>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<ul>
+  <li>Ontology IRIs versus the version-IRI base (addendum item 4).</li>
+  <li>Import resolution (AOR-4).</li>
+</ul>

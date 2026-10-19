@@ -1,0 +1,115 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-air-21-peril-spec-scheme-declarations-and-shapes">Validation Pack: AIR-2.1, peril spec, scheme declarations and shapes</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/applied-insurance-reference.html"><code class="language-plaintext highlighter-rouge">applied-insurance-reference</code></a>
+<strong>Machine:</strong> S (Copilot Business). <strong>Branch:</strong> <code class="language-plaintext highlighter-rouge">air/2.1-peril-spec</code>
+<strong>Plan and test cases:</strong> <a href="/developer/plans/applied-insurance-reference-phase-2.html">Phase 2 plan</a> (AIR-2.1 in detail)
+<strong>Decisions:</strong> ADR-A98 (namespaces), ADR-A99</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>The <code class="language-plaintext highlighter-rouge">prl:</code> properties exist with the characteristics ADR-A99 fixes, every peril scheme of the reference edition is declared, and the well-formedness shapes accept a well-formed fixture and reject each defect they name.</p>
+
+<h2 id="test-cases">Test cases</h2>
+
+<p>The table in the plan section above. Each row’s result is recorded under Results at
+verification.</p>
+
+<h2 id="one-command">One command</h2>
+
+<p>Run from the repository root on machine R, after <code class="language-plaintext highlighter-rouge">mise run build:ontology-catalog</code> and <code class="language-plaintext highlighter-rouge">mise run build:ontology-releases</code>.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:ontology-catalog <span class="o">&amp;&amp;</span> mise run check:ontology-versioning
+</code></pre></div></div>
+
+<h2 id="artefacts-to-inspect">Artefacts to inspect</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">ontology/applied/insurance/peril/spec/peril.ttl</code>: <code class="language-plaintext highlighter-rouge">prl:canTrigger</code> and <code class="language-plaintext highlighter-rouge">prl:overlaps</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">vocab/peril-vocab.ttl</code>: the eight schemes and the region markers.</li>
+  <li><code class="language-plaintext highlighter-rouge">examples/well-formed.ttl</code> and <code class="language-plaintext highlighter-rouge">tools/test_peril_vocabulary.py</code>.</li>
+</ul>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<p>No concepts beyond the fixture (AIR-2.2 to AIR-2.4). The collections and crosswalk shapes are AIR-2.5 and AIR-3.4. The applied README and ontology architecture rows are added by R at verification.</p>
+
+<h2 id="handoff">Handoff</h2>
+
+<p>Written by the building machine when the work is committed. S could not run the tests, so R runs them first.</p>
+
+<ul>
+  <li><strong>Built:</strong> <code class="language-plaintext highlighter-rouge">spec/peril.ttl</code> (all <code class="language-plaintext highlighter-rouge">prl:</code> properties and datatypes of the plan’s table — <code class="language-plaintext highlighter-rouge">broaderGeneric</code>/<code class="language-plaintext highlighter-rouge">broaderPartitive</code> aligned to locally-declared <code class="language-plaintext highlighter-rouge">iso-thes:</code> terms, <code class="language-plaintext highlighter-rouge">canTrigger</code>, <code class="language-plaintext highlighter-rouge">overlaps</code>, the six characteristic-link properties, the three Quantification-link properties, <code class="language-plaintext highlighter-rouge">ReferenceCode</code> and <code class="language-plaintext highlighter-rouge">CatModelCode</code> datatypes, every term with <code class="language-plaintext highlighter-rouge">rdfs:label</code>, <code class="language-plaintext highlighter-rouge">rdfs:comment</code> and <code class="language-plaintext highlighter-rouge">fnd:utility</code>). <code class="language-plaintext highlighter-rouge">vocab/peril-vocab.ttl</code> (the eight reference schemes, each with <code class="language-plaintext highlighter-rouge">fnd:hasIdentity</code>/<code class="language-plaintext highlighter-rouge">fnd:hasGovernanceState fnd:Active</code>/<code class="language-plaintext highlighter-rouge">skos:prefLabel</code>/<code class="language-plaintext highlighter-rouge">skos:editorialNote</code>, plus every empty region marker in the exact order and naming the plan specifies). <code class="language-plaintext highlighter-rouge">shapes/structural.ttl</code> (label-and-definition, characteristics) and <code class="language-plaintext highlighter-rouge">shapes/constraints.ttl</code> (reference code — as three <code class="language-plaintext highlighter-rouge">sh:sparql</code> constraints on one shape, covering cardinality, uniqueness and the parent-prefix/top-concept-letter rule — primary parent, materialised broader, associative integrity, acyclic, threshold definitions), <code class="language-plaintext highlighter-rouge">shapes/.version</code> (<code class="language-plaintext highlighter-rouge">0.1.0</code>). <code class="language-plaintext highlighter-rouge">examples/well-formed.ttl</code> (the six cause concepts and four characteristic placeholders the plan names, plus a minimal fixture-local <code class="language-plaintext highlighter-rouge">qnt:ValueSpace</code>/<code class="language-plaintext highlighter-rouge">qnt:RangeSet</code> pair for <code class="language-plaintext highlighter-rouge">N.MET.TC.HUR</code>’s threshold, kept out of the <code class="language-plaintext highlighter-rouge">prl-voc:</code> namespace since it isn’t a real Quantification link — that’s AIR-2.6). <code class="language-plaintext highlighter-rouge">tools/test_peril_vocabulary.py</code> (one test per plan row, AIR21-01 to AIR21-12, negative cases as fixture mutations rather than separate files, plus AIR21-03 validating the eight schemes against <code class="language-plaintext highlighter-rouge">ontology/vocabulary/shapes/</code>). <code class="language-plaintext highlighter-rouge">README.md</code> for the module.</li>
+  <li><strong>Not run:</strong> <code class="language-plaintext highlighter-rouge">mise run check:ontology-catalog</code> (which runs <code class="language-plaintext highlighter-rouge">tools/test_peril_vocabulary.py</code>) and <code class="language-plaintext highlighter-rouge">mise run check:ontology-versioning</code> — no runtime on this machine. Every SHACL-SPARQL query in the two shape files was checked by hand against the fixture and against each negative mutation, but none of it has actually been executed by pySHACL.</li>
+  <li><strong>Check first:</strong> the reference-code shape’s parent-prefix rule (<code class="language-plaintext highlighter-rouge">STRSTARTS</code>/<code class="language-plaintext highlighter-rouge">STRAFTER</code>/<code class="language-plaintext highlighter-rouge">CONCAT</code> over the <code class="language-plaintext highlighter-rouge">xsd:string</code> form of two <code class="language-plaintext highlighter-rouge">prl:ReferenceCode</code> literals) is the most intricate query in this pack — worth a close read before trusting it. The associative-integrity and acyclic shapes both use the <code class="language-plaintext highlighter-rouge">skos:broader+</code> property path, which needs <code class="language-plaintext highlighter-rouge">advanced=True</code> in pySHACL the same as the SPARQL targets do (already set in the test). <code class="language-plaintext highlighter-rouge">mise run build:ontology-catalog</code> and <code class="language-plaintext highlighter-rouge">mise run build:ontology-releases</code> need to run before the catalog/versioning checks, per the plan’s own note (stub catalogs for <code class="language-plaintext highlighter-rouge">spec/</code> and <code class="language-plaintext highlighter-rouge">vocab/</code>, release rows for both documents and the shapes directory). <code class="language-plaintext highlighter-rouge">ontology/applied/README.md</code> and <code class="language-plaintext highlighter-rouge">ontology-architecture.md</code> were deliberately <strong>not</strong> touched here (AIR-1.1 owns them in parallel) — R adds this module’s rows once AIR-1.1 has merged.</li>
+  <li><strong>Deviations from the plan:</strong> none identified. One judgement call, documented rather than hidden: the reference-code shape is written as three separate <code class="language-plaintext highlighter-rouge">sh:sparql</code> entries on one <code class="language-plaintext highlighter-rouge">sh:NodeShape</code> (cardinality, uniqueness, format) instead of one combined query, since a single query mixing a <code class="language-plaintext highlighter-rouge">GROUP BY</code>/<code class="language-plaintext highlighter-rouge">HAVING</code> cardinality check with a per-parent format check produced a materially harder query to review by hand, for no behavioural difference — SHACL runs every <code class="language-plaintext highlighter-rouge">sh:sparql</code> entry on a shape independently.</li>
+</ul>
+
+<h2 id="results">Results</h2>
+
+<p>Run on machine R, 2026-09-26, on <code class="language-plaintext highlighter-rouge">air/2.1-peril-spec</code> after its rebase onto <code class="language-plaintext highlighter-rouge">main</code> (AIR-3.1 and
+AIR-1.1). The rebase conflicted only in the status record’s Machine S section, resolved to the
+newest state of each row.</p>
+
+<p>S’s 13 tests passed before any change on R. Review found three defects in the shapes, all fixed:</p>
+
+<ol>
+  <li><strong><code class="language-plaintext highlighter-rouge">prl:PrimaryParentShape</code> let a non-top cause concept with no primary parent pass.</strong> It
+counted parents in a sub-query grouped by <code class="language-plaintext highlighter-rouge">$this</code>, which returns no row for a concept with
+none, so the count filter never ran. It counts one thing, so it is rewritten as a flat query:
+<code class="language-plaintext highlighter-rouge">OPTIONAL</code>, then <code class="language-plaintext highlighter-rouge">GROUP BY</code> and <code class="language-plaintext highlighter-rouge">HAVING</code>. A new test, <code class="language-plaintext highlighter-rouge">test_non_top_concept_without_a_primary_parent_is_rejected</code> (AIR21-07,
+second case), failed against the original shape and passes against the fix.</li>
+  <li><strong>Every constraint declared its prefixes with <code class="language-plaintext highlighter-rouge">sh:prefixes</code> pointing at namespace IRIs</strong>, which
+needs <code class="language-plaintext highlighter-rouge">sh:declare</code> triples. pySHACL fell back to the file’s <code class="language-plaintext highlighter-rouge">@prefix</code> lines, but other SHACL
+engines would reject the queries. Every query now carries <code class="language-plaintext highlighter-rouge">PREFIX</code> lines, as the repository’s
+other shapes do.</li>
+  <li><strong>The editorial-note rule had the same zero trap.</strong> It compares two independent counts
+(<code class="language-plaintext highlighter-rouge">skos:broader</code> links against primary parents), so one grouped sub-query per count is the right
+design. But neither sub-query anchored the concept, so a concept with no primary parent dropped
+out of the join. Each sub-query now anchors the concept and makes its counted pattern
+<code class="language-plaintext highlighter-rouge">OPTIONAL</code>. A new test, <code class="language-plaintext highlighter-rouge">test_extra_broader_without_a_primary_parent_needs_an_editorial_note</code>,
+failed against the original query and passes against the fix.</li>
+</ol>
+
+<p>The lessons are now rules in <code class="language-plaintext highlighter-rouge">.github/copilot-instructions.md</code> (“Authoring SHACL-SPARQL
+shapes”), which every agent on both machines reads.</p>
+
+<p>Also on R: the peril row of <code class="language-plaintext highlighter-rouge">insurance/domain-README.md</code> and the applied insurance row of
+<code class="language-plaintext highlighter-rouge">ontology-architecture.md</code> §3 (the latter also loses a semicolon), stub catalogs for <code class="language-plaintext highlighter-rouge">spec/</code> and
+<code class="language-plaintext highlighter-rouge">vocab/</code>, and three release rows.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Check</th>
+      <th>Result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">mise run build:ontology-catalog</code></td>
+      <td>root catalog and two stub catalogs written</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">mise run build:ontology-releases</code></td>
+      <td>three rows. Tags to create at merge: <code class="language-plaintext highlighter-rouge">applied-insurance-peril-shapes-v0.1.0</code>, <code class="language-plaintext highlighter-rouge">insurance-peril-v0.1.0</code>, <code class="language-plaintext highlighter-rouge">insurance-peril-vocab-v0.1.0</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:ontology-catalog</code></td>
+      <td>74 tool tests passed (15 peril), catalog consistent, 2 known defects</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:ontology-versioning</code></td>
+      <td>passes once the fixes are committed. The shapes stay at 0.1.0: it is unreleased, and against <code class="language-plaintext highlighter-rouge">main</code> the check reports no unbumped change</td>
+    </tr>
+    <tr>
+      <td>AIR21-01 to AIR21-12</td>
+      <td>pass, AIR21-07 with two new zero cases (primary parent, editorial note)</td>
+    </tr>
+    <tr>
+      <td>probes</td>
+      <td>both zero cases fail against S’s original <code class="language-plaintext highlighter-rouge">PrimaryParentShape</code> queries</td>
+    </tr>
+  </tbody>
+</table>

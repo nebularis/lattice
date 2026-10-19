@@ -1,0 +1,845 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="the-insurml-bridge-profile-lift-lower-and-assembly-parity">The InsurML bridge: profile, lift, lower and assembly parity</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/plans/insurml-alignment.html">insurml-alignment</a> (epic). <strong>Status:</strong> sketch, 2026-10-05.
+Nothing here is ratified. Every change to a LATTICE layer needs its own ADR.
+<strong>Reads with:</strong> <a href="/architecture/insurml-alignment-vision.html">the vision</a> (principles AV1 to AV10),
+<a href="/developer/notes/insurml-and-lattice.html">the comparison</a> and <a href="/developer/notes/insurml-integration.html">the integration analysis</a>,
+whose mapping rows (M-nn, W-nn), gaps (L-n, I-n) and proposals (P-n) are cited and not repeated, and
+the <a href="../../../ontology/wording/README.md">Wording README</a>.
+<strong>Companion:</strong> <a href="/developer/sketches/insurml-toolchain-and-ai.html">insurml-toolchain-and-ai.md</a>, which covers what is built
+on the bridge.</p>
+
+<p>Examples are clean-room. They use <code class="language-plaintext highlighter-rouge">.example</code> hosts and InsurML’s placeholder base
+<code class="language-plaintext highlighter-rouge">https://insurml.example/</code>, and quote no market wording (AV8).</p>
+
+<hr />
+
+<h2 id="contents">Contents</h2>
+
+<ol>
+  <li><a href="#1-premise">Premise</a></li>
+  <li><a href="#2-the-profile">The profile</a></li>
+  <li><a href="#3-alignment-and-co-typing">Alignment and co-typing</a></li>
+  <li><a href="#4-identity-keys-and-typing">Identity, keys and typing</a></li>
+  <li><a href="#5-lift-insurml-into-lattice">Lift: InsurML into LATTICE</a></li>
+  <li><a href="#6-lower-lattice-into-insurml">Lower: LATTICE into InsurML</a></li>
+  <li><a href="#7-assembly-parity">Assembly parity</a></li>
+  <li><a href="#8-reuse-transclusion">Reuse: transclusion</a></li>
+  <li><a href="#9-inline-parts-inside-a-text">Inline parts inside a text</a></li>
+  <li><a href="#10-clause-dependencies-and-fallback">Clause dependencies and fallback</a></li>
+  <li><a href="#11-references-by-identity-and-scope">References by identity, and scope</a></li>
+  <li><a href="#12-content-status-and-guidance">Content status and guidance</a></li>
+  <li><a href="#13-amounts-limits-and-excesses">Amounts: limits and excesses</a></li>
+  <li><a href="#14-validation-together">Validation together</a></li>
+  <li><a href="#15-proposals-to-insurml">Proposals to InsurML</a></li>
+  <li><a href="#16-open-questions">Open questions</a></li>
+</ol>
+
+<hr />
+
+<h2 id="1-premise">1. Premise</h2>
+
+<p>The bridge lets one graph hold InsurML and LATTICE data without either standard giving up its
+meaning (AV1). It has three parts: an applied profile that states how the vocabularies align, a
+lift and a lower that move data between InsurML’s XML and LATTICE’s Wording, and a parity suite
+that runs both standards’ assembly over the same inputs. Four substrate changes would raise the
+bridge’s fidelity. Each has a case outside insurance, and each is an ADR candidate (§8 to §11).</p>
+
+<pre><code class="language-mermaid">flowchart LR
+    subgraph IML["InsurML"]
+        CF["Component files"]
+        MF["Manifest graph"]
+        PROC["Processor"]
+    end
+    subgraph BR["Bridge"]
+        PRF["Profile&lt;br/&gt;alignment, bindings,&lt;br/&gt;shapes"]
+        LIFT["Lift kit"]
+        LOW["Lower kit"]
+        PAR{"Parity"}
+    end
+    subgraph LAT["LATTICE"]
+        WRD["Wording graph"]
+        ASM["Assembler"]
+        INS["Instrument"]
+    end
+    CF --&gt; LIFT
+    MF --&gt; LIFT
+    LIFT --&gt; WRD
+    PRF --&gt; WRD
+    WRD --&gt; LOW
+    LOW --&gt; CF
+    LOW --&gt; MF
+    PROC --&gt; PAR
+    ASM --&gt; PAR
+    WRD --&gt; ASM
+    WRD --&gt; INS
+</code></pre>
+
+<h2 id="2-the-profile">2. The profile</h2>
+
+<p>The profile is AIR-5.9, the LMA WIM profile, built with InsurML in view. It lives in
+<code class="language-plaintext highlighter-rouge">ontology/applied/insurance/wording/</code>, which CC-D3 chose as its home and which needs an ADR before
+the directory is created.</p>
+
+<h3 id="21-two-documents-in-one-module">2.1 Two documents in one module</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Document</th>
+      <th>Holds</th>
+      <th>Imports</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">spec/wording-profile.ttl</code></td>
+      <td>the market’s typing of Wording, as an element type scheme for contracts, groups, components and content kinds, bound to <code class="language-plaintext highlighter-rouge">wrd-voc:ElementTypeContract</code> in an insurance binding scope. Containment shapes compiled from InsurML’s rules held as data. Key schemes for component identifiers and LWR codes. The builder properties of §2.3</td>
+      <td>Wording, <code class="language-plaintext highlighter-rouge">insurance/common</code>, InsurML’s vocabularies</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">spec/insurml-alignment.ttl</code></td>
+      <td>class and property alignment with one pinned InsurML core edition (§3)</td>
+      <td>the profile, InsurML’s core ontology</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Splitting the two keeps the market’s typing usable for wordings that never pass through InsurML
+XML, and isolates the edition pin to the one document that needs InsurML’s classes. Until InsurML
+is published under a known licence, the alignment document names InsurML IRIs without importing
+them, and its tests run against clean-room fixtures (AV8, IB-Q1).</p>
+
+<h3 id="22-containment-rules">2.2 Containment rules</h3>
+
+<p>InsurML holds sub-component allow and deny lists and group placement as data on type concepts
+(<code class="language-plaintext highlighter-rouge">iml:allowsSubComponentType</code>, <code class="language-plaintext highlighter-rouge">iml:disallowsSubComponentType</code>, <code class="language-plaintext highlighter-rouge">iml:allowedWithin</code>). The profile
+compiles each into a SHACL-SPARQL shape over <code class="language-plaintext highlighter-rouge">wrd:directlyComprises</code> and the type hierarchy, with
+<code class="language-plaintext highlighter-rouge">PREFIX</code> lines inline, as the repository’s SHACL rules require. A rule on a broad type applies to
+its narrower types, so the shapes read <code class="language-plaintext highlighter-rouge">skos:broader*</code> within the bound scheme. Because the rules
+are data, the shapes are generated, never written by hand, and a change to InsurML’s vocabularies
+regenerates them.</p>
+
+<h3 id="23-builder-properties">2.3 Builder properties</h3>
+
+<p>A few InsurML properties serve a contract builder rather than the meaning of a contract. They stay
+in the profile, never in the substrate (IP1):</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Property</th>
+      <th>InsurML source</th>
+      <th>Note</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>prompt, default value</td>
+      <td><code class="language-plaintext highlighter-rouge">iml:prompt</code>, <code class="language-plaintext highlighter-rouge">iml:defaultValue</code></td>
+      <td>for a builder’s question form (L-8)</td>
+    </tr>
+    <tr>
+      <td>plain datatype of a variable</td>
+      <td><code class="language-plaintext highlighter-rouge">iml:datatype</code></td>
+      <td>where <code class="language-plaintext highlighter-rouge">wrd:valueSpace</code> does not apply: text, dates</td>
+    </tr>
+    <tr>
+      <td>treatment of Denied</td>
+      <td><code class="language-plaintext highlighter-rouge">fallback</code></td>
+      <td>§10</td>
+    </tr>
+    <tr>
+      <td>title not printed</td>
+      <td><code class="language-plaintext highlighter-rouge">displayed="false"</code></td>
+      <td>presentation</td>
+    </tr>
+    <tr>
+      <td>label style</td>
+      <td><code class="language-plaintext highlighter-rouge">labelStyle</code></td>
+      <td>presentation</td>
+    </tr>
+    <tr>
+      <td>language status</td>
+      <td><code class="language-plaintext highlighter-rouge">iml:languageStatus</code></td>
+      <td>legal or non-legal translation</td>
+    </tr>
+    <tr>
+      <td>object families, document scope</td>
+      <td><code class="language-plaintext highlighter-rouge">iml:contractObjectFamily</code>, <code class="language-plaintext highlighter-rouge">iml:componentObjectFamily</code>, <code class="language-plaintext highlighter-rouge">iml:documentScope</code></td>
+      <td>classifications</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="3-alignment-and-co-typing">3. Alignment and co-typing</h2>
+
+<p>An InsurML node is a LATTICE node with the same IRI (integration §6.1). The alignment states:</p>
+
+<div class="language-turtle highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">@prefix</span><span class="w"> </span><span class="nn">iml:</span><span class="w">  </span><span class="nl">&lt;https://insurml.example/ns/core#&gt;</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="kd">@prefix</span><span class="w"> </span><span class="nn">wrd:</span><span class="w">  </span><span class="nl">&lt;https://www.nebularis.org/neuro-semantic/lattice/wording#&gt;</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="kd">@prefix</span><span class="w"> </span><span class="nn">ins:</span><span class="w">  </span><span class="nl">&lt;https://www.nebularis.org/neuro-semantic/lattice/instrument#&gt;</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="kd">@prefix</span><span class="w"> </span><span class="nn">owl:</span><span class="w">  </span><span class="nl">&lt;http://www.w3.org/2002/07/owl#&gt;</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="kd">@prefix</span><span class="w"> </span><span class="nn">rdfs:</span><span class="w"> </span><span class="nl">&lt;http://www.w3.org/2000/01/rdf-schema#&gt;</span><span class="w"> </span><span class="p">.</span><span class="w">
+
+</span><span class="nn">iml:</span><span class="n">Contract</span><span class="w">       </span><span class="nn">rdfs:</span><span class="n">subClassOf</span><span class="w"> </span><span class="nn">wrd:</span><span class="n">Wording</span><span class="w"> </span><span class="p">;</span><span class="w">
+                   </span><span class="nn">owl:</span><span class="n">disjointWith</span><span class="w"> </span><span class="nn">ins:</span><span class="n">Instrument</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="nn">iml:</span><span class="n">ComponentGroup</span><span class="w"> </span><span class="nn">rdfs:</span><span class="n">subClassOf</span><span class="w"> </span><span class="nn">wrd:</span><span class="n">Element</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="nn">iml:</span><span class="n">Component</span><span class="w">      </span><span class="nn">rdfs:</span><span class="n">subClassOf</span><span class="w"> </span><span class="nn">wrd:</span><span class="n">Element</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="nn">iml:</span><span class="n">Variable</span><span class="w">       </span><span class="nn">rdfs:</span><span class="n">subClassOf</span><span class="w"> </span><span class="nn">wrd:</span><span class="n">Variable</span><span class="w"> </span><span class="p">.</span><span class="w">
+
+</span><span class="nn">iml:</span><span class="n">hasSubComponent</span><span class="w"> </span><span class="nn">rdfs:</span><span class="n">subPropertyOf</span><span class="w"> </span><span class="nn">wrd:</span><span class="n">directlyComprises</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="nn">iml:</span><span class="n">references</span><span class="w">      </span><span class="nn">rdfs:</span><span class="n">subPropertyOf</span><span class="w"> </span><span class="nn">wrd:</span><span class="n">refersToObject</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span></code></pre></div></div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Rule</th>
+      <th>Why</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>An InsurML contract is a wording, template or instance, never an instrument</td>
+      <td><code class="language-plaintext highlighter-rouge">owl:disjointWith ins:Instrument</code> turns a common naming error (comparison §8, “Contract”) into a reasoner finding. InsurML’s owner confirmed (2026-10-06) that a contract may be a template or an instance. A template aligns with a library form, <code class="language-plaintext highlighter-rouge">wrd:Wording</code>. An instance aligns with <code class="language-plaintext highlighter-rouge">wrd:AssembledWording</code>, under the same IRI, and the lift states <code class="language-plaintext highlighter-rouge">wrd:assembledFrom</code> its template. InsurML states neither the role nor the link today (P-15, P-16)</td>
+    </tr>
+    <tr>
+      <td>No property gains a domain or range in the alignment</td>
+      <td>a domain of <code class="language-plaintext highlighter-rouge">iml:Component</code> on a property LATTICE also uses would classify every LATTICE definition as an InsurML component (the repository’s rule on sparing domains and ranges)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">iml:hasInclusion</code> aligns with nothing</td>
+      <td>its blank-node entries become transclusions on lift (§8), not a sub-property of a tree edge</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">iml:variantOf</code> aligns with <code class="language-plaintext highlighter-rouge">prov:wasDerivedFrom</code>, never <code class="language-plaintext highlighter-rouge">wrd:variantOf</code></td>
+      <td>the words collide with different meanings (comparison §8)</td>
+    </tr>
+    <tr>
+      <td>A variable’s kind comes from its SKOS type</td>
+      <td>the lift adds <code class="language-plaintext highlighter-rouge">wrd:GoverningVariable</code> or <code class="language-plaintext highlighter-rouge">wrd:EmbeddedVariable</code> from <code class="language-plaintext highlighter-rouge">iml:hasType</code> (M-26, M-27)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The colliding words of comparison §8 become a test of the alignment. Each row is a fixture that a
+wrong alignment would accept.</p>
+
+<h2 id="4-identity-keys-and-typing">4. Identity, keys and typing</h2>
+
+<p><strong>Identity.</strong> InsurML version IRIs are adopted as LATTICE version IRIs (IP4, ADR-A82). The lift
+mints a <code class="language-plaintext highlighter-rouge">fnd:PersistentIdentity</code> per component, group, contract and variable in the deployment’s
+namespace, never under a publisher’s <code class="language-plaintext highlighter-rouge">id/</code> or <code class="language-plaintext highlighter-rouge">vocab/</code> path, so InsurML’s IRI patterns still match
+every publisher IRI (integration §6.2, R11). <code class="language-plaintext highlighter-rouge">dcterms:identifier</code> becomes a natural key under a key
+scheme per publisher and kind (ADR-A114). LWR codes become external keys under their own schemes.
+<code class="language-plaintext highlighter-rouge">iml:previousVersion</code> and <code class="language-plaintext highlighter-rouge">fnd:supersededBy</code> are both stated, one materialised from the other by a
+Surface promotion.</p>
+
+<p><strong>Typing.</strong> Explored in depth in <a href="/developer/sketches/insurml-typing.html">insurml-typing.md</a>, which recommends T1 as an interim and T4 as the target. The interim is option T1 of integration §6.3. <code class="language-plaintext highlighter-rouge">wrd:elementType</code> takes a structural type from the
+profile’s scheme (contract, module, section, sub-section, component, paragraph, numbered clause,
+nested clause, list, list item, table, title), each <code class="language-plaintext highlighter-rouge">skos:broadMatch</code> a baseline Wording type where
+one exists. InsurML’s component type (Coverage, Exclusion, Condition and the rest) becomes a
+<code class="language-plaintext highlighter-rouge">wrd:classification</code>. <code class="language-plaintext highlighter-rouge">iml:hasType</code> is kept as stated. A publisher that narrows InsurML’s types in
+its own scheme is bound to a scheme that holds both, so Eligibility’s hierarchical match reaches the
+narrower concepts (ADR-A100).</p>
+
+<pre><code class="language-mermaid">flowchart LR
+    C["Component version&lt;br/&gt;(InsurML IRI)"]
+    C -- "wrd:elementType" --&gt; T1["component&lt;br/&gt;(profile scheme)"]
+    C -- "wrd:classification" --&gt; T2["exclusion&lt;br/&gt;(InsurML scheme)"]
+    C -- "iml:hasType" --&gt; T2
+    C -- "fnd:hasIdentity" --&gt; ID["Persistent identity&lt;br/&gt;(deployment IRI)"]
+    ID -- "fnd:naturalKey" --&gt; K["identifier key&lt;br/&gt;per publisher and kind"]
+</code></pre>
+
+<h2 id="5-lift-insurml-into-lattice">5. Lift: InsurML into LATTICE</h2>
+
+<h3 id="51-stages">5.1 Stages</h3>
+
+<pre><code class="language-mermaid">flowchart TD
+    A["Component file and manifest"] --&gt; B["Validate as InsurML&lt;br/&gt;RELAX NG, Schematron, SHACL"]
+    B --&gt;|fails| X["Refuse, citing the assertion id"]
+    B --&gt; C["Normalise mixed content&lt;br/&gt;to ordered parts (XSLT 3.0)"]
+    C --&gt; D["Emit Wording triples,&lt;br/&gt;mint fragment and transclusion IRIs"]
+    D --&gt; E["Mint identities and keys"]
+    E --&gt; F["Validate as LATTICE&lt;br/&gt;Wording laws, profile shapes"]
+    F --&gt;|fails| Y["Refuse, citing the law"]
+    F --&gt; G["Record provenance&lt;br/&gt;source digest, kit version"]
+</code></pre>
+
+<p>The lift refuses input that is not valid InsurML, so it never has to repair it. Mixed content is
+the hard part. A <code class="language-plaintext highlighter-rouge">para</code> interleaves text with inline markup, and an RML mapping over XPath cannot
+keep that order. So an XSLT 3.0 stylesheet first flattens each <code class="language-plaintext highlighter-rouge">para</code> into an ordered list of parts,
+and the emission from that list is a plain structure mapping. The mapping is recorded in MORK so it
+has the review and provenance trail other mappings have (IV6), and published as a kit (AV9). The
+source file is kept, addressed by digest (IP2).</p>
+
+<h3 id="52-minted-iris">5.2 Minted IRIs</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Node</th>
+      <th>IRI</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>component, group, contract, variable</td>
+      <td>adopted from InsurML</td>
+    </tr>
+    <tr>
+      <td>fragment with an <code class="language-plaintext highlighter-rouge">xml:id</code></td>
+      <td>adopted, as the component IRI, <code class="language-plaintext highlighter-rouge">#</code> and the id</td>
+    </tr>
+    <tr>
+      <td>fragment without an <code class="language-plaintext highlighter-rouge">xml:id</code></td>
+      <td>minted in the deployment’s namespace from the component IRI and the fragment’s path. Never under the component IRI’s <code class="language-plaintext highlighter-rouge">#</code> space, which belongs to the publisher’s <code class="language-plaintext highlighter-rouge">xml:id</code>s (integration §6.2)</td>
+    </tr>
+    <tr>
+      <td>transclusion, from an inclusion entry</td>
+      <td>minted from the holder IRI and the entry’s position (§8), until InsurML gives entries IRIs (P-13)</td>
+    </tr>
+    <tr>
+      <td>assembled wording, from an instance contract</td>
+      <td>adopted: the instance contract’s version IRI. Nothing is minted</td>
+    </tr>
+    <tr>
+      <td>persistent identity, key</td>
+      <td>minted in the deployment’s namespace</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="53-fidelity">5.3 Fidelity</h3>
+
+<p>Integration §4.1 grades all 55 rows. Without substrate change, 37 are exact or by convention and 18
+are lossy or have no target. The substrate changes of §8 to §11 raise the grade of the rows below.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Rows</th>
+      <th>Today</th>
+      <th>With</th>
+      <th>After</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>M-17 one part, many holders</td>
+      <td>none</td>
+      <td>transclusion (§8)</td>
+      <td>exact</td>
+    </tr>
+    <tr>
+      <td>M-11 optional phrase, M-08 lists in a continuing sentence, M-12 limit and excess</td>
+      <td>none or lossy</td>
+      <td>inline parts (§9)</td>
+      <td>exact for structure. Label style by profile property</td>
+    </tr>
+    <tr>
+      <td>M-42 defined term resolved in scope</td>
+      <td>lossy</td>
+      <td>references by identity (§11)</td>
+      <td>exact</td>
+    </tr>
+    <tr>
+      <td>M-24 clause dependencies</td>
+      <td>lossy</td>
+      <td>derived variables, or §10’s condition</td>
+      <td>by convention</td>
+    </tr>
+    <tr>
+      <td>M-25 content status</td>
+      <td>by convention</td>
+      <td>§12</td>
+      <td>by convention, then exact if a substrate status is adopted</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Of the rows with no target, M-21 and M-30 become profile properties (§2.3, §10), and M-35, a
+variable shown by its printed name, takes the optional display text of §11. Two keep no target.
+Foreign content (M-15) stays in the source file and is rendered from it, and <code class="language-plaintext highlighter-rouge">iml:boundTo</code> (M-34)
+waits for InsurML to settle its meaning.</p>
+
+<h2 id="6-lower-lattice-into-insurml">6. Lower: LATTICE into InsurML</h2>
+
+<p>The lower writes a form as component files and a template contract’s manifest, and a placed
+contract as an instance contract, with its own IRI, its manifest, its settings and its assembled
+contract XML (integration §5.1). Two rules decide most of it:</p>
+
+<ul>
+  <li><strong>Which elements become component files.</strong> An element whose type in the profile is a component,
+or which carries stated meaning, becomes a file. Its descendants become <code class="language-plaintext highlighter-rouge">para</code>, <code class="language-plaintext highlighter-rouge">list</code> and
+<code class="language-plaintext highlighter-rouge">table</code> content inside it. Groups become manifest entries.</li>
+  <li><strong>Conditions beyond equality.</strong> InsurML tests one variable against one value. A LATTICE condition
+of any other kind is evaluated by Eligibility before assembly and handed to InsurML as a derived
+governing variable whose value is the decision (integration §5.2). The derived variable needs a
+third value for Undetermined. If InsurML adopts conditions held in RDF by IRI (P-2), the lower
+writes the profile’s IRI instead.</li>
+</ul>
+
+<p>What the lower cannot carry is meaning (W-23). It stays in the graph, linked by component IRI, and
+travels in a contract package or a companion document (toolchain sketch §7, §8).</p>
+
+<h2 id="7-assembly-parity">7. Assembly parity</h2>
+
+<p>The <a href="/developer/sketches/wording-assembly-interface.html">assembly interface sketch</a> reframes §7 to §12. Transclusion,
+inline parts, dependencies, fallback, references and content status become hooks of a
+domain-neutral assembly interface in Wording, with InsurML’s model as the insurance default. The
+designs below stand.</p>
+
+<pre><code class="language-mermaid">sequenceDiagram
+    participant F as Fixture product and settings
+    participant I as InsurML processor
+    participant L as LATTICE assembler
+    participant P as Parity suite
+    F-&gt;&gt;I: manifest, components, settings
+    F-&gt;&gt;L: lifted form, settings as variable values
+    I--&gt;&gt;P: assembled contract XML
+    L--&gt;&gt;P: assembled wording
+    P-&gt;&gt;P: compare included versions, order, chosen alternatives, resolved references, numbers
+    P--&gt;&gt;F: agree, or report the first difference with both derivations
+</code></pre>
+
+<p>The comparison is over what both standards define: the set and order of included component
+versions, the alternative chosen in each set, the target each reference resolves to, and the
+generated numbers once InsurML settles renumbering (Q32). A disagreement is a defect in an
+assembler, in the lift, or in a condition one side cannot express. It is reported, never resolved
+silently (ADR-A28). The suite starts from InsurML’s processor as the reference (integration §7.3,
+option A), and both become references once the LATTICE assembler passes every fixture (option C).</p>
+
+<h2 id="8-reuse-transclusion">8. Reuse: transclusion</h2>
+
+<h3 id="81-the-problem">8.1 The problem</h3>
+
+<p>InsurML puts position and condition on an inclusion entry, an edge, so one component version can
+be included by many groups and contracts, each time at a different position and under a different
+condition. Wording puts <code class="language-plaintext highlighter-rouge">wrd:rankKey</code>, <code class="language-plaintext highlighter-rouge">wrd:inclusionMode</code> and <code class="language-plaintext highlighter-rouge">wrd:includedWhen</code> on the element,
+and law W1 gives an element one parent up to versions. The integration analysis weighed four
+options and recommended reifying the edge (option D), a breaking change that moves three
+properties off the element (integration §4.2).</p>
+
+<h3 id="82-the-proposal">8.2 The proposal</h3>
+
+<p>A fifth option keeps every existing property where it is. A <strong>transclusion</strong> is an element whose
+only content is a reference, with assembly semantics, to an element version in another wording, so
+that the element appears in the form while it lives, and is revised, at its source. The
+transclusion carries the rank key, the inclusion mode and the inclusion condition as any element
+does. The <strong>transcluded element</strong> keeps its own tree, its own identity and its own stated meaning.
+The term is the one XInclude and DITA’s content references use for the same idea.</p>
+
+<div class="language-turtle highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">@prefix</span><span class="w"> </span><span class="nn">wrd:</span><span class="w">     </span><span class="nl">&lt;https://www.nebularis.org/neuro-semantic/lattice/wording#&gt;</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="kd">@prefix</span><span class="w"> </span><span class="nn">wrd-voc:</span><span class="w"> </span><span class="nl">&lt;https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#&gt;</span><span class="w"> </span><span class="p">.</span><span class="w">
+
+</span><span class="c1"># Hypothetical: wrd:Transclusion and wrd:transcludes do not exist today.</span><span class="w">
+
+</span><span class="nl">&lt;https://insurer.example/id/group/property-section/2026-01-01&gt;</span><span class="w">
+    </span><span class="nn">wrd:</span><span class="n">directlyComprises</span><span class="w"> </span><span class="nl">&lt;https://deployment.example/transclusion/insurer/property-section/2026-01-01/30&gt;</span><span class="w"> </span><span class="p">.</span><span class="w">
+
+</span><span class="nl">&lt;https://deployment.example/transclusion/insurer/property-section/2026-01-01/30&gt;</span><span class="w">
+    </span><span class="k">a</span><span class="w"> </span><span class="nn">wrd:</span><span class="n">Transclusion</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">wrd:</span><span class="n">rankKey</span><span class="w"> </span><span class="s">"0030"</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">wrd:</span><span class="n">inclusionMode</span><span class="w"> </span><span class="nn">wrd-voc:</span><span class="n">Conditional</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">wrd:</span><span class="n">includedWhen</span><span class="w"> </span><span class="nl">&lt;https://deployment.example/profile/flood-zone-a&gt;</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">wrd:</span><span class="n">transcludes</span><span class="w"> </span><span class="nl">&lt;https://insurer.example/id/component/flood-exclusion/2026-01-01&gt;</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span></code></pre></div></div>
+
+<pre><code class="language-mermaid">flowchart TB
+    subgraph F1["Form: property section"]
+        G1["section group"] --&gt; P1["transclusion, rank 0030&lt;br/&gt;conditional"]
+    end
+    subgraph F2["Form: contents section"]
+        G2["section group"] --&gt; P2["transclusion, rank 0010&lt;br/&gt;mandatory"]
+    end
+    subgraph LIB["Library wording"]
+        C["flood exclusion&lt;br/&gt;component version"] --&gt; T["its paragraphs"]
+    end
+    P1 -. "transcludes" .-&gt; C
+    P2 -. "transcludes" .-&gt; C
+    C -. "stated meaning,&lt;br/&gt;reviewed once" .-&gt; M["meaning template"]
+</code></pre>
+
+<table>
+  <thead>
+    <tr>
+      <th>Aspect</th>
+      <th>Rule</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Laws</td>
+      <td>W1 holds as written, since a transclusion has one parent and the transcluded element sits in its own wording’s tree. A new law W8: a transclusion transcludes exactly one element version, in another wording, and no element reaches itself through transclusions. W3 and W5 read through transclusions</td>
+    </tr>
+    <tr>
+      <td>Assembly</td>
+      <td>an assembled wording that includes a transclusion includes the transcluded element and, under W5, its mandatory descendants. <code class="language-plaintext highlighter-rouge">wrd:includes</code> lists both</td>
+    </tr>
+    <tr>
+      <td>Alternatives</td>
+      <td>a variation slot’s variants may be transclusions, so InsurML’s <code class="language-plaintext highlighter-rouge">iml:hasOption</code> lifts to a slot whose variants transclude library components</td>
+    </tr>
+    <tr>
+      <td>Meaning</td>
+      <td>stated meaning stays with the transcluded element version (CC-D12), so it is reviewed once for every form that transcludes it</td>
+    </tr>
+    <tr>
+      <td>Numbering</td>
+      <td>the transclusion takes the object id in its form. The transcluded element’s own id is irrelevant there</td>
+    </tr>
+    <tr>
+      <td>Where transcluded elements live</td>
+      <td>one library wording per component file, or one per publisher library edition (IB-Q2)</td>
+    </tr>
+    <tr>
+      <td>Versioning</td>
+      <td>a new class, a new property and two extended laws, so a MINOR, non-breaking change under ADR-A86 and ADR-A113, with the usual re-pin cascade</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The neutral case is a clause library, such as a tax gross-up clause transcluded into every facility
+form or a consent clause transcluded into every trial protocol. Transclusions also give InsurML’s blank-node inclusion
+entries an identity, so a published number, a condition’s provenance and a deviation report can
+each name the entry they come from (P-13).</p>
+
+<p><strong>Cost.</strong> Two ways now put an element in a form, comprising it directly or transcluding it. They serve
+different purposes, a form’s own text and reused text, and the ADR states which to use when. The
+change should land after CCS C9, so the Wording cascade does not cross Instrument’s rewrite
+(integration R4). Until then, the lift uses option B of integration §4.2, a reference element typed
+by the profile, linked by <code class="language-plaintext highlighter-rouge">wrd:linksTo</code>, with assembly done by InsurML’s processor alone.</p>
+
+<h2 id="9-inline-parts-inside-a-text">9. Inline parts inside a text</h2>
+
+<p>Today a <code class="language-plaintext highlighter-rouge">wrd:Text</code> holds parts in three forms: literal, variable reference and object reference.
+InsurML puts structure inside a sentence: an <code class="language-plaintext highlighter-rouge">optionalPhrase</code> whose inclusion is conditional,
+alternatives among phrases, a list after which the sentence continues, and the <code class="language-plaintext highlighter-rouge">limit</code> and
+<code class="language-plaintext highlighter-rouge">excess</code> composites whose parts carry meaning.</p>
+
+<p>One addition covers all four. A fourth part form, the <strong>inline part</strong>, puts a child element of the
+text, its <strong>inline element</strong> (<code class="language-plaintext highlighter-rouge">wrd:inlineElement</code>), at the part’s index. The inline element is an
+ordinary element with its own inclusion mode,
+condition and text parts. It is rendered at that index and nowhere else, and like a variant it has
+no rank key.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>InsurML construct</th>
+      <th>Inline element</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">optionalPhrase</code> with a condition</td>
+      <td>a text, mode Conditional, with its inclusion condition</td>
+    </tr>
+    <tr>
+      <td>phrases sharing an <code class="language-plaintext highlighter-rouge">alternativeSet</code></td>
+      <td>a variation slot, its variants texts</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">list</code> inside a continuing <code class="language-plaintext highlighter-rouge">para</code></td>
+      <td>an element of the profile’s list type, its items as children</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">limit</code>, <code class="language-plaintext highlighter-rouge">excess</code> with <code class="language-plaintext highlighter-rouge">range</code>, <code class="language-plaintext highlighter-rouge">amount</code>, <code class="language-plaintext highlighter-rouge">basis</code></td>
+      <td>an element of type limit or excess, its parts as typed child texts, the amount’s variable a variable reference</td>
+    </tr>
+  </tbody>
+</table>
+
+<pre><code class="language-mermaid">flowchart LR
+    T["Text: 'Contents ... but not more than'"] --&gt; P0["part 0, literal"]
+    T --&gt; P1["part 1, inline part"]
+    T --&gt; P2["part 2, literal 'in total value'"]
+    P1 --&gt; S["variation slot"]
+    S --&gt; V1["variant: amount for product A&lt;br/&gt;condition product = A"]
+    S --&gt; V2["variant: amount for product B&lt;br/&gt;condition product = B"]
+</code></pre>
+
+<p>The neutral case is bracketed drafting in any template, “[the Borrower] [each Obligor]”, and a
+consent form whose sentence carries an optional phrase. W2 gains a fourth form, so the change is
+MINOR and non-breaking. It also answers L-10 without an Instrument change, since a qualifier can
+be <code class="language-plaintext highlighter-rouge">ins:expressedIn</code> the limit’s child element (§13).</p>
+
+<h2 id="10-clause-dependencies-and-fallback">10. Clause dependencies and fallback</h2>
+
+<p>InsurML’s <code class="language-plaintext highlighter-rouge">includeIf</code>, <code class="language-plaintext highlighter-rouge">excludeIf</code> and <code class="language-plaintext highlighter-rouge">selectableIf</code> decide inclusion, or what is offered to a
+drafter, from another clause’s inclusion. LATTICE’s inclusion conditions read governing variables
+only.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Option</th>
+      <th>How</th>
+      <th>Change</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Derived variable</td>
+      <td>a governing variable “clause X selected”, <code class="language-plaintext highlighter-rouge">wrd-voc:DerivedByRule</code>, populated from the earlier choice. <code class="language-plaintext highlighter-rouge">includeIf</code> and <code class="language-plaintext highlighter-rouge">excludeIf</code> become ordinary conditions on it</td>
+      <td>none</td>
+    </tr>
+    <tr>
+      <td>Inclusion-reading condition</td>
+      <td>a condition that reads whether another element is included in the same assembled wording, evaluated in dependency order</td>
+      <td>Wording, possibly Eligibility</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The derived variable is enough today, and keeps the dependency visible as data. The second option
+is worth an ADR only when a neutral case needs it. <code class="language-plaintext highlighter-rouge">selectableIf</code> concerns what a builder offers,
+not what a contract says, so it is a profile property read by the builder. The dependency graph
+must be acyclic, and a profile shape rejects a cycle (U-8).</p>
+
+<p><code class="language-plaintext highlighter-rouge">fallback</code> is a consumer’s declared treatment of a Denied decision, which the ingestion vision
+already requires of every consumer (§8 there). A Denied conditional element with
+<code class="language-plaintext highlighter-rouge">fallback="userSelection"</code> is offered to the drafter. An Undetermined one, where a governing
+variable is unset, is a question for the builder to ask, a case InsurML does not model because it
+assumes every setting is supplied (integration §7.2).</p>
+
+<h2 id="11-references-by-identity-and-scope">11. References by identity, and scope</h2>
+
+<p>InsurML resolves a defined-term reference to whichever version in the contract’s scope shares the
+target’s identifier, so a clause need not be reissued when the definition it uses is revised.
+<code class="language-plaintext highlighter-rouge">wrd:refersToObject</code> names a version.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Option</th>
+      <th>Holds</th>
+      <th>Change</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Resolution record per assembled wording</td>
+      <td>the assembler records the version each reference resolved to, and a shape checks exactly one</td>
+      <td>none</td>
+    </tr>
+    <tr>
+      <td>Reference to a persistent identity</td>
+      <td><code class="language-plaintext highlighter-rouge">wrd:refersToObject</code> may name an identity, resolved within the assembled wording’s inclusions. An optional display text on object and variable references carries an inflected form (“insured persons”) or a variable’s printed name</td>
+      <td>Wording</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The record works now. The identity reference is the cleaner model and belongs with CCS C7c, whose
+per-section definitions (<code class="language-plaintext highlighter-rouge">ins:appliesWithin</code>, <code class="language-plaintext highlighter-rouge">ins:notWithin</code>) need the same resolution in law.
+A definition component included only within one section’s group is a definition that applies
+within that section, so the lift can write <code class="language-plaintext highlighter-rouge">ins:appliesWithin</code> from the group that holds it, and C7c’s overlap report
+then shows where InsurML’s scope rule and the legal reading differ (integration §8.6). This is
+input to C7c’s brief.</p>
+
+<h2 id="12-content-status-and-guidance">12. Content status and guidance</h2>
+
+<p>InsurML marks content contractual or informational, and guidance is always informational and left
+out when published. LATTICE has no such status. The profile classifies informational content, a
+profile shape refuses <code class="language-plaintext highlighter-rouge">ins:expressedIn</code> from a term to it, and the renderer leaves it out. Drafting
+notes in loan documentation and guidance in trial protocols suggest a neutral case, so a substrate
+status is worth an ADR if a second domain asks for it (IQ-9).</p>
+
+<h2 id="13-amounts-limits-and-excesses">13. Amounts: limits and excesses</h2>
+
+<p>With §9, InsurML’s <code class="language-plaintext highlighter-rouge">limit</code> and <code class="language-plaintext highlighter-rouge">excess</code> lift to typed child elements, and their meaning attaches
+where AIR Phase 5 puts it:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Words</th>
+      <th>Meaning</th>
+      <th>Source</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>the <code class="language-plaintext highlighter-rouge">limit</code> element</td>
+      <td>a limit parameter qualifying a term or relation, <code class="language-plaintext highlighter-rouge">ins:expressedIn</code> the limit’s child element</td>
+      <td>AIR-5.1, AIR-5.2</td>
+    </tr>
+    <tr>
+      <td>the <code class="language-plaintext highlighter-rouge">excess</code> element</td>
+      <td>a retention parameter</td>
+      <td>AIR-5.2</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">amount</code> with a currency</td>
+      <td>a <code class="language-plaintext highlighter-rouge">qnt:Quantity</code> on a monetary space, bound from the amount’s variable by an <code class="language-plaintext highlighter-rouge">ins:ParameterBinding</code></td>
+      <td>Quantification, CCS C8</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">basis</code></td>
+      <td>a basis concept (per occurrence, per period)</td>
+      <td>contract-amounts §1.7</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">range</code></td>
+      <td>the closure of the bound (“up to” is at most, inclusive)</td>
+      <td>Quantification bounds</td>
+    </tr>
+    <tr>
+      <td>aggregate words</td>
+      <td>an aggregate parameter and a ledger account</td>
+      <td>AIR-5.3, evaluation context sketch</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>InsurML’s publisher inline constructs could take their names from AIR’s term parameter kinds
+(sub-limit, deductible, waiting period, reinstatement), so markup and meaning share one list (P-9).</p>
+
+<h2 id="14-validation-together">14. Validation together</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Order</th>
+      <th>Check</th>
+      <th>On</th>
+      <th>From</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>RELAX NG, Schematron</td>
+      <td>component XML</td>
+      <td>InsurML</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>InsurML SHACL, with SHACL Advanced Features</td>
+      <td>manifest graph</td>
+      <td>InsurML</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>Wording laws W1 to W6 (W8 with §8)</td>
+      <td>lifted graph</td>
+      <td>LATTICE</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>profile shapes: containment, typing, content status, dependency acyclicity</td>
+      <td>lifted graph</td>
+      <td>profile</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>alignment fixtures: the collision table</td>
+      <td>lifted graph with the alignment</td>
+      <td>profile</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td>round trips: lift then lower, lower then lift, against golden files</td>
+      <td>both</td>
+      <td>bridge</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td>assembly parity</td>
+      <td>both assemblers</td>
+      <td>bridge</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Rows 1 to 5 are L1 and L2 checks. Rows 6 and 7 are L3 contract tests on fixtures and L4 on a
+store. InsurML’s shapes need SPARQL-based targets, so the suite runs them under two SHACL engines
+to catch engine differences (integration R10).</p>
+
+<h2 id="15-proposals-to-insurml">15. Proposals to InsurML</h2>
+
+<p>Integration §10.2 lists P-1 to P-12. Four more arise here:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Proposal</th>
+      <th>Answers</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>P-13</td>
+      <td>give inclusion entries IRIs, minted from holder and position, in place of blank nodes</td>
+      <td>traceability of a number, a condition or a deviation to its entry, and a one-to-one lift to placements (§8)</td>
+    </tr>
+    <tr>
+      <td>P-14</td>
+      <td>accept LegalRuleML, or any statement of meaning, as informational foreign content, never contractual</td>
+      <td>a single document for consumers who want one, without changing the published words (toolchain sketch §8)</td>
+    </tr>
+    <tr>
+      <td>P-15</td>
+      <td>a property linking an instance contract to the template version it was assembled from</td>
+      <td>the instance’s provenance, and a one-to-one lift to <code class="language-plaintext highlighter-rouge">wrd:assembledFrom</code></td>
+    </tr>
+    <tr>
+      <td>P-16</td>
+      <td>a stated way to tell a template contract from an instance, such as a contract role, or a rule that an instance has settings and no unresolved conditions</td>
+      <td>which shapes apply, since a template may hold unresolved alternatives and an instance may not</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Each proposal goes to InsurML’s owner only after a LATTICE fixture shows it working (IQ-10).</p>
+
+<h2 id="16-open-questions">16. Open questions</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Question</th>
+      <th>Leaning</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>IB-Q1</td>
+      <td>Can the alignment import InsurML’s ontology, or only name its IRIs, until publication?</td>
+      <td>name only, tested on clean-room fixtures, import once licensed</td>
+    </tr>
+    <tr>
+      <td>IB-Q2</td>
+      <td>Where do transcluded library elements live: a wording per component file, or one per publisher library edition?</td>
+      <td>per component file, since a component file is a document and the mapping stays one to one</td>
+    </tr>
+    <tr>
+      <td>IB-Q3</td>
+      <td>Is a transclusion a class or an element type?</td>
+      <td>a class, since it has its own property and law (DP2)</td>
+    </tr>
+    <tr>
+      <td>IB-Q4</td>
+      <td>Does the lift run as an XSLT kit only, or also as a compiled MORK mapping?</td>
+      <td>XSLT kit for execution, MORK record for review and provenance</td>
+    </tr>
+    <tr>
+      <td>IB-Q5</td>
+      <td>Should profile shapes check InsurML’s rules a second time, or trust InsurML’s SHACL?</td>
+      <td>generate them once from the same data, run both, report differences as defects</td>
+    </tr>
+    <tr>
+      <td>IB-Q6</td>
+      <td>Does an inline element count as included when its text is included, or need its own inclusion record?</td>
+      <td>its own, so W5 and deviation reports treat it like any element</td>
+    </tr>
+  </tbody>
+</table>

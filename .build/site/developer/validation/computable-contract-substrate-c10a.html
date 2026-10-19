@@ -1,0 +1,99 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-ccs-c10a-the-import-guard">Validation Pack: CCS C10a, the import guard</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/computable-contract-substrate.html"><code class="language-plaintext highlighter-rouge">computable-contract-substrate</code></a>
+<strong>Machine:</strong> R. <strong>Branch:</strong> <code class="language-plaintext highlighter-rouge">ccs/c10a-import-guard</code>
+<strong>Plan and test cases:</strong> <a href="/developer/plans/computable-contract-substrate.html">CCS plan</a> (C10A in detail)
+<strong>Decisions:</strong> ADR-A01 and its addendum, ADR-A106 law B7. Questions C10a-Q1, C10a-Q2 decided 2026-10-01</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>A design-time check, over the substrate layers only, fails when a layer imports a higher layer, or when any Turtle file under it names a higher or sibling layer’s namespace. Today it finds nothing.</p>
+
+<h2 id="test-cases">Test cases</h2>
+
+<p>The table in the plan section above. Each row’s result is recorded under Results at
+verification.</p>
+
+<h2 id="one-command">One command</h2>
+
+<p>Run from the repository root on machine R, with the reasoning harness built where a row is L2.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:import-guard <span class="o">&amp;&amp;</span> mise run check:ontology-catalog
+</code></pre></div></div>
+
+<h2 id="artefacts-to-inspect">Artefacts to inspect</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">tools/import_guard.py</code>: the order table and the two checks.</li>
+  <li><code class="language-plaintext highlighter-rouge">tools/fixtures/import_guard/</code>: the five failing cases.</li>
+</ul>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<p>Applied modules, MORK, SPC, Surface, Persistence and <code class="language-plaintext highlighter-rouge">ontology/examples</code> (C10a-Q2). Markdown prose naming a higher layer.</p>
+
+<h2 id="handoff">Handoff</h2>
+
+<p>Written by the building machine when the work is committed.</p>
+
+<ul>
+  <li><strong>Built:</strong> <code class="language-plaintext highlighter-rouge">tools/import_guard.py</code> (the order table, an imports check and a namespace scan),
+<code class="language-plaintext highlighter-rouge">check:import-guard</code> in <code class="language-plaintext highlighter-rouge">mise.toml</code> and in <code class="language-plaintext highlighter-rouge">check</code>’s dependencies, six fixture trees under
+<code class="language-plaintext highlighter-rouge">tools/fixtures/import_guard/</code>, <code class="language-plaintext highlighter-rouge">tools/test_import_guard.py</code> in <code class="language-plaintext highlighter-rouge">check:ontology-catalog</code>’s list,
+the check named beside the diagram in <code class="language-plaintext highlighter-rouge">ontology-architecture.md</code>, and an implementation note on
+ADR-A01.</li>
+  <li><strong>Not run:</strong> nothing skipped.</li>
+  <li><strong>Check first:</strong>
+    <ul>
+      <li>Behaviour’s configuration and runtime documents share one namespace, so the namespace scan
+treats them as one layer. The runtime document’s import of configuration is the same layer.</li>
+      <li>Namespaces outside the order (Executable, MORK, Surface, Persistence) are not judged, so a
+substrate layer naming one passes.</li>
+      <li>C10a-04 parses the diagram’s tree, including Instrument’s “also imports behaviour
+configuration”, so a change to either the diagram or the table fails the test until both agree.</li>
+    </ul>
+  </li>
+  <li><strong>Deviations from the plan:</strong> six fixture trees instead of “one passing layer and four failing
+ones”: the brief’s own list names five failing cases, and the passing tree also carries the
+projection case (C10a-03).</li>
+</ul>
+
+<h2 id="results">Results</h2>
+
+<p>Verified on machine R, 2026-10-01.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>C10a-01</td>
+      <td>pass: 0 violations across the 8 substrate layers</td>
+    </tr>
+    <tr>
+      <td>C10a-02</td>
+      <td>pass: all five failing fixtures exit 1 with file, line and namespace</td>
+    </tr>
+    <tr>
+      <td>C10a-03</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>C10a-04</td>
+      <td>pass: the diagram parses to the table, layer for layer</td>
+    </tr>
+    <tr>
+      <td>C10a-05</td>
+      <td>pass</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Also: <code class="language-plaintext highlighter-rouge">check:ontology-catalog</code> 148 tests, <code class="language-plaintext highlighter-rouge">check:ontology-versioning</code> exits 0, links at the
+baseline (427).</p>

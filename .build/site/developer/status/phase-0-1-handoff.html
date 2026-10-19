@@ -1,0 +1,41 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="phase-0-and-1-validation-handoff">Phase 0 and 1 Validation Handoff</h1>
+
+<p><strong>Status:</strong> Accepted
+<strong>Governing ADRs:</strong> <a href="../../architecture/decisions/ADR-A29-repository-toolchain-and-environment-boundary.md">ADR-A29</a>, <a href="../../architecture/decisions/ADR-A30-shared-semantic-platform-cross-runtime-boundary.md">ADR-A30</a></p>
+
+<h2 id="source-and-ownership">Source and ownership</h2>
+
+<p>This handoff covers <code class="language-plaintext highlighter-rouge">mise.toml</code>, the Dev Container and Compose configuration, <code class="language-plaintext highlighter-rouge">platform/</code>, <code class="language-plaintext highlighter-rouge">workers/</code>, <code class="language-plaintext highlighter-rouge">contracts/events/</code>, developer documentation, and CI workflows. Existing ontology layers, Surface tooling, MORK tooling, and SPC sources remain owned by their existing modules and were not moved.</p>
+
+<h2 id="validation-commands">Validation commands</h2>
+
+<p>Run from a clean network-enabled clone:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise install
+mise run bootstrap
+mise run check
+docker compose -f deployment/compose/docker-compose.yml up -d
+mvn -f platform/pom.xml verify
+python -m pytest workers/tests
+docker compose -f deployment/compose/docker-compose.yml down -v
+</code></pre></div></div>
+
+<p>Expected outcomes are successful root extraction and conformance checks, worker contract tests, Maven unit tests, and a running reference PostgreSQL, RabbitMQ, and Fuseki stack. The Phase 1 Java modules do not yet have Testcontainers integration tests or PostgreSQL-backed outbox persistence. Those remain bounded deployment gaps, not evidence of runtime integration.</p>
+
+<h2 id="environment">Environment</h2>
+
+<p>Reference services use PostgreSQL <code class="language-plaintext highlighter-rouge">5432</code> inside the Compose network, RabbitMQ <code class="language-plaintext highlighter-rouge">5672</code> and management UI <code class="language-plaintext highlighter-rouge">15672</code>, and Fuseki <code class="language-plaintext highlighter-rouge">3030</code>. Development-only credentials are <code class="language-plaintext highlighter-rouge">lattice</code> for the PostgreSQL user, database, and password, and Fuseki’s <code class="language-plaintext highlighter-rouge">ADMIN_PASSWORD</code>. Do not use these values outside the local reference environment.</p>
+
+<p>The request schema requires graph references with tenant ID, project ID, graph IRI, and revision hash. It also requires a profile ID, opaque job ID, and correlation ID. Browser tokens, credentials, and RDF payloads are prohibited.</p>
+
+<h2 id="dependency-and-compatibility-status">Dependency and compatibility status</h2>
+
+<p>The Java reactor resolves Jena 5.1.0 and JUnit 5.11.0 from Maven. The worker package resolves pytest only for its test extra. The root Yarn lockfile contains no external workspace dependencies. Docker image tags are present for the reference environment but immutable image digests must be resolved and committed by the network-enabled validation environment. No existing lockfiles were regenerated in this restricted environment.</p>
+
+<p>No ontology schema migration occurs. The new event schemas are version <code class="language-plaintext highlighter-rouge">1.0.0</code>, additive, and do not change existing graph formats. The Compose stack creates disposable state only. Roll back by stopping it with <code class="language-plaintext highlighter-rouge">docker compose -f deployment/compose/docker-compose.yml down -v</code> and reverting the platform directories together.</p>
+
+<h2 id="restricted-environment-statement">Restricted-environment statement</h2>
+
+<p>Validation was not executed in the restricted authoring environment. The local Windows host has neither Python nor the Python launcher on <code class="language-plaintext highlighter-rouge">PATH</code>, and has Java 8 but no Maven. Dependency resolution, containers, builds, tests, and CI execution therefore remain unverified.</p>

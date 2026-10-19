@@ -1,0 +1,119 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="pending-design-decisions">Pending design decisions</h1>
+
+<p><strong>Unit type:</strong> Register, not a unit. It has no status record, no slices and no completion gate.
+<strong>Sibling:</strong> the <a href="/developer/plans/technical-debt.html">technical debt register</a>.</p>
+
+<h2 id="purpose">Purpose</h2>
+
+<p>Design decisions that matter but cannot be made yet: the evidence is missing, a dependency is
+undecided, or no unit owns the question. Without a register they sit in a sketch’s open questions,
+a status line or a chat, and are lost or decided by default.</p>
+
+<p><strong>What goes in.</strong> A decision, not a defect. The question, why it matters, the options known so far
+and what would let it be made.</p>
+
+<p><strong>What does not.</strong> A shortfall in something that exists, which is technical debt. A question a
+current unit already owns, which stays in its sketch or plan. An entry is removed when an ADR,
+sketch or plan takes it on, naming that document in the commit.</p>
+
+<p>Each entry says when and where it was raised, what deferring it costs, the options known, and what
+it waits for.</p>
+
+<h2 id="register">Register</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Decision</th>
+      <th>Raised</th>
+      <th>Cost of deferring</th>
+      <th>Options known</th>
+      <th>Waits for</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>PDD-01</td>
+      <td><strong>Ownership, versioning and verification of InsurML components are not settled.</strong></td>
+      <td>2026-10-08, request. Moved from technical debt (TD-23) 2026-10-09</td>
+      <td>an assembled wording has no accountable owner or version story, so a change to one author’s component cannot be traced, attributed or re-verified, and a failing check has no one to take it</td>
+      <td>Open questions. (a) Who owns a component, and a composite built under assembly from components with several authors, including the rights each author keeps over their part and over the whole. (b) How a component, an assembly and each author’s contribution are versioned, and whether an assembly pins component versions or ranges, and what a new component version does to an assembly that used the old one. (c) Who owns the verification and validation tooling for components and assemblies, meaning the checks, the fixtures and the verdicts, and whose verdict binds when LATTICE’s checks and InsurML’s own disagree</td>
+      <td>the IMA plan’s assembly interface phase (4) and its decisions, with an ADR once the principle is chosen</td>
+    </tr>
+    <tr>
+      <td>PDD-02</td>
+      <td><strong>Where the vocabulary and definition layers, with their SHACL rules, belong is not decided.</strong></td>
+      <td>2026-10-08, request. Moved from technical debt (TD-24) 2026-10-09</td>
+      <td>a term or rule can be changed by whoever edits the file, ownership of InsurML-derived vocabulary is implied by location, and a release of one party’s layer can break another’s shapes</td>
+      <td>The vocabulary and definition layers of InsurML-facing content, including the shapes that constrain them, can sit in LATTICE’s substrate, in an applied ontology, or with InsurML’s own owner. Open questions. Who owns and releases each, who may change a SHACL rule and how a change is versioned, and whether a shape is part of the layer’s contract or an adopter’s check. Today the layers’ READMEs, specs and shapes are in this repository under <code class="language-plaintext highlighter-rouge">ontology/</code>, with no statement of ownership for InsurML-derived terms</td>
+      <td>an ADR on ownership of the vocabulary and definition layers, taken with the IMA plan’s profile phase (1). Related to TD-16, which concerns the same layers’ READMEs</td>
+    </tr>
+    <tr>
+      <td>PDD-03</td>
+      <td><strong>How InsurML maps to InsurLE, and which tool checks that wording and code agree, is not decided.</strong></td>
+      <td>2026-10-08, request. Moved from technical debt (TD-25) 2026-10-09</td>
+      <td>the three views of a clause (the InsurML words, the controlled rendering and the reviewed meaning) can disagree with no check owning the disagreement, and two tools may be built to do one job</td>
+      <td>Two candidates. MORK, which already compiles reviewed meaning to executable form, and the formal methods tooling of the <a href="/developer/plans/formal-methods.html">formal-methods epic</a>, which could check an InsurLE rendering against the logic it denotes. They overlap and neither is chosen. Open questions. Which of them is authoritative for agreement between a clause’s wording and its executable form. What the mapping from an InsurML component to its InsurLE rendering preserves. Where disagreement is recorded and who adjudicates it. Whether the formal prover choice (FM-D1) changes the answer</td>
+      <td>the <a href="/developer/sketches/logical-english-alignment.html">logical English alignment sketch</a>, then an ADR. Decided after FM-D1 and the IMA assembly phase, since both bear on it</td>
+    </tr>
+    <tr>
+      <td>PDD-04</td>
+      <td><strong>How one limit qualifies several relations.</strong> A stated qualifier qualifies exactly one term or relation (Instrument §16.5, <code class="language-plaintext highlighter-rouge">ins:QualifierShape</code>). D10 lets one stated relation, split per section, share a bound cap, but an insurance policy’s limits span distinct relations: a policy aggregate over every section’s insuring agreements, a shared limit over two sections, a separate limit over two insuring agreements and the defence costs stated in another clause. Rules such as “the highest applicable retention” read across several qualifiers</td>
+      <td>2026-10-08, mapping a management liability policy fragment onto Instrument (finding G2)</td>
+      <td>a policy’s limits cannot be stated faithfully. Each mapping picks one relation to qualify and records the rest as a gap, and amounts (the deferred contract-amounts work) will be built on a qualifier that cannot reach its targets</td>
+      <td>(a) a stated qualifier names several terms or relations. (b) It qualifies a part of the instrument, a section or a part above sections, and every relation within it. (c) It qualifies a defined group of relations, declared once and named by several qualifiers</td>
+      <td>the contract-amounts design, which must decide this before amounts attach to qualifiers</td>
+    </tr>
+    <tr>
+      <td>PDD-05</td>
+      <td><strong>How meaning stated across several clauses is owned.</strong> A relation or a regime arises under exactly one term, but contracts often state one thing in several clauses: a policy period’s regime takes its states and triggers from a declarations item, an attestation, a transaction clause, a cancellation clause and a definition, and a duty to defend takes its endings from another paragraph. The owning term gets the meaning, and the other leaves look unassessed (law I17 warns). §18.5 has only “stated meaning” and “NoMeaning”, so a leaf whose meaning lives under another term cannot be told apart from one never assessed. A clause that restates the model’s default (worldwide territory) fits neither</td>
+      <td>2026-10-08, mapping a management liability policy fragment onto Instrument (finding G11, with G12)</td>
+      <td>eleven of the fragment’s 102 leaves read as unassessed, the warnings hide real gaps among them, and reviewers cannot see which clauses contributed to a relation</td>
+      <td>(a) a new encoding status, such as “stated by another term”, naming that term. (b) A relation or regime may name several contributing terms, one owning. (c) A term may be expressed in several elements, widening <code class="language-plaintext highlighter-rouge">ins:alsoExpressedIn</code> beyond restatement. A “default restated” status covers the worldwide case under (a)</td>
+      <td>an Instrument design slice after CCS C9, with an ADR-A104 addendum</td>
+    </tr>
+    <tr>
+      <td>PDD-06</td>
+      <td><strong>Whether the persistence compiler gains a second IR that models SPARQL’s semantics, between the configuration IR and the text.</strong> Raised by the maintainer after the H2.1 review, where the checker’s scope rule was written from memory, was wrong, and was found only by running queries on an engine (FMH-H2-1 F4). The proposal: the first IR states the configuration and the intended runtime behaviour (the logical operation contract of ADR-A123 decision 4), a transformer lowers it to an IR of SPARQL’s algebra with a formal model of the specification’s semantics, that IR is checked to behave as the configuration intends, and the last step to text is mechanical and verified. The SPARQL IR might also be held as RDF, as a MORK mapping target</td>
+      <td>2026-10-12, maintainer, formal-methods track H. Plan §5.1</td>
+      <td>each semantic rule the checker encodes is a claim about SPARQL tested only against rdflib, and a misreading becomes a refusal or a silent partial write</td>
+      <td>it moves ADR-A123 decisions 1 and 9 and H2-Q5’s option (b), and the Track H sketch’s non-goal of mechanising SPARQL, for the fragment the builders use. Known options: the formal model in Isabelle (FM-D1) or as an executable reference evaluator in the manner of track B. The verified last step by extraction (Isabelle’s <code class="language-plaintext highlighter-rouge">export_code</code>, Haskell or Scala, not Python) or by translation validation (parse the text with an independent parser and compare with the IR). A relational backend then needs its own path or IR. <strong>Storage (2026-10-12, H2-Q7):</strong> whether, where and how the IR is stored is decided by this ADR, so the stored IR is the semantic one and is published once. The questions it must answer are in the <a href="/developer/sketches/formal-methods-track-h-typed-ir.html#95-what-pdd-06s-adr-has-to-decide-about-storage">typed IR sketch §9.5</a>, and the rules that keep it possible until then are §9.4</td>
+      <td>H2’s builders, which give the fragment to model, and H6’s Isabelle setup. An ADR when it is planned</td>
+    </tr>
+    <tr>
+      <td>PDD-07</td>
+      <td><strong>Who repairs Behaviour’s allowance contract, the capacity design’s Phase 0.</strong> The <a href="/architecture/capacity-domain-analysis-and-design.html">capacity design</a> §12 makes Phase 0 a precondition of authoring <code class="language-plaintext highlighter-rouge">cap:</code>: audit <code class="language-plaintext highlighter-rouge">bhv:targetsAllowance</code> against <code class="language-plaintext highlighter-rouge">bhv:usesAllowance</code>, and settle how an effect definition, its application, an allowance definition, an allowance account and the consumed quantity relate, with the exit criterion “one unambiguous Behaviour contract for consuming a declared allowance and updating a tracked balance”. The <a href="/developer/sketches/persistence-history-and-versioning.html">history and versioning sketch</a> §6.1 found the account record under-keyed: not typed a derived artefact, naming no owner and no position, so two subjects on one allowance definition write records nobody can tell apart</td>
+      <td>2026-10-14, formal-methods track H, the history and versioning sketch §6.4</td>
+      <td>no unit owns Phase 0, and AIR does not author capacity before Phase 5, so the repair falls to whichever slice first needs a keyed balance, under time pressure, and may be made twice, once for Behaviour and once for capacity</td>
+      <td>(a) a Behaviour slice of its own, before CCS C12. (b) part of CCS C12, which first runs passes that change balances. (c) part of AIR Phase 5, with capacity’s authoring. Each must agree with EC-Q2 (PDD-08)</td>
+      <td>PDD-08’s answer, and a decision on which epic owns Behaviour’s runtime changes after CCS C11a</td>
+    </tr>
+    <tr>
+      <td>PDD-08</td>
+      <td><strong>The evaluation context has no plan, though AIR Phase 5 waits on it.</strong> The <a href="/developer/sketches/evaluation-context.html">evaluation-context sketch</a>, unplanned since 2026-10-02, designs the ledger of accounts, combinators and environments, and its questions EC-Q1 to EC-Q7 are open. EC-Q2 asks whether allowances become ledger accounts, a breaking change to Behaviour. The CCS plan says it comes back at C12, C13 and AIR Phase 5, and AIR Phase 5’s plan says the phase “should not start its contract module” until it is designed. The word for an account is open too: the sketch says “ledger account”, capacity says “resource” with an “account”, and the maintainer asks for a less domain-bearing word</td>
+      <td>2026-10-14, formal-methods track H, the history and versioning sketch §6.4</td>
+      <td>CCS C12 and AIR Phase 5 each meet the ledger without a design, and may each settle EC-Q2 differently. The <a href="/developer/sketches/reference-evaluator.html">reference evaluator</a>’s laws RE2 and RE4 have nothing to check against</td>
+      <td>(a) plan it as a CCS slice before C12. (b) a unit of its own, as EC-Q7 contemplates if it becomes a layer. (c) leave it to C12 and accept that Phase 5 waits for C12</td>
+      <td>a decision on its owner. EC-Q7 (whether it is a layer) shapes which</td>
+    </tr>
+    <tr>
+      <td>PDD-09</td>
+      <td><strong>A negotiation over a placement has no model.</strong> The maintainer places a quote’s versions and history in a <code class="language-plaintext highlighter-rouge">NegotiationThread</code> aggregate that references the tower and governs the quotes, each quote attaching to the layer it is for, with a carrier quoting only against an attachment point and a limit (history and versioning sketch §4.2). A quote is structurally a contract with a different epistemic status, firming from an indication to a quote to a binding offer. Only the <a href="/developer/notes/rdf-engine/workload-modelling.html">workload note</a> §5.1 names the thread. Nearby: AIR-6.1’s <code class="language-plaintext highlighter-rouge">sbm:Approach</code> with status <code class="language-plaintext highlighter-rouge">Quoted</code>, CCS HQ-1 (a proposal arriving as data, without words), HQ-7 (several instruments covering portions of one order) and insurml-alignment Phase 5 (placement records)</td>
+      <td>2026-10-14, formal-methods track H, the history and versioning sketch §6.4</td>
+      <td>each of those four meets the negotiation from its own side, and the persistence design uses it as its worked case without a model to check against</td>
+      <td>(a) an applied insurance module, after AIR-6.1, modelling the thread, its moves and the quote’s firming. (b) a generic negotiation pattern below insurance, if a second domain needs it. (c) folded into HQ-1’s answer, since a quote is a proposal arriving as data</td>
+      <td>HQ-1’s direction, and AIR-6.1 built</td>
+    </tr>
+    <tr>
+      <td>PDD-10</td>
+      <td><strong>How LATTICE supports more than one language.</strong> Annotations are untagged strings almost everywhere, except Wording’s 73 <code class="language-plaintext highlighter-rouge">rdfs:label</code> values tagged <code class="language-plaintext highlighter-rouge">@en</code>, so literals in one graph mix tagged and untagged. Nothing says which annotations carry a language tag, how a second language is added, or how tools and the site choose one. The README grammar of <a href="/architecture/decisions/ADR-A126-literate-specification-layout-and-grammar.html">ADR-A126</a> writes untagged plain text unless an annotation is written as a Turtle literal, and the documentation and site are English only</td>
+      <td>2026-10-18, <code class="language-plaintext highlighter-rouge">improved-ontology-documentation</code>, OD3 decision 4</td>
+      <td>a consumer cannot ask for a label in a language, a SPARQL filter on <code class="language-plaintext highlighter-rouge">lang()</code> misses untagged literals, and every new layer widens the mix</td>
+      <td>open questions. (a) Whether every human-readable annotation is tagged, and with which default. (b) How a README states a second language: a column or label per language, or one README per language. (c) Whether ontology terms, the site and tool messages are translated, or only annotations. (d) How the generated views and the Axiom Index choose a language</td>
+      <td>a multilingual support sketch, across the ontologies, the grammar, the tools and the site, then an ADR</td>
+    </tr>
+  </tbody>
+</table>

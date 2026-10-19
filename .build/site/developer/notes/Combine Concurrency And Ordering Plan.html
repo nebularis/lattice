@@ -1,0 +1,352 @@
+<h1 id="rdf-design">RDF Design</h1>
+
+<p>Does the separation of meta-data in our CAS pattern help with monotonic ordering issues?</p>
+
+<h1 id="verdict">Verdict</h1>
+
+<p>Yes — and more than you may realize. Putting the version row in a separate, fixed-size, per-aggregate statement is the single change that makes CAS <em>and</em> per-stream dense ordering work on the same mechanism, and your query <strong>already gets the hard part right</strong>: because the guard reads <code class="language-plaintext highlighter-rouge">:seq ?n</code> and the update rewrites that same statement, allocation order == commit order per aggregate, densely, with no abandoned numbers. That’s the G2 reorder hole from the last round, closed structurally. Good.</p>
+
+<p>Three things are missing or wrong in ways that will hurt:</p>
+
+<ul>
+  <li><strong>You cannot tell whether the CAS succeeded.</strong> SPARQL Update returns no affected-row count. A failed guard is a silent 200 OK.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">&lt;urn:rev:E2&gt;</code> is not namespaced by target</strong> — two aggregates at revision “E2” collide into one receipt subject.</li>
+  <li><strong>No epoch</strong>, and <code class="language-plaintext highlighter-rouge">:etag</code>/<code class="language-plaintext highlighter-rouge">:seq</code> are two sources of truth for one fact.</li>
+</ul>
+
+<p>Details, then a corrected version.</p>
+
+<hr />
+
+<h1 id="part-1--what-the-separation-actually-buys-for-ordering">Part 1 — What the separation actually buys for ordering</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th> </th>
+      <th>Why it helps</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>A1. The version row is a single hot statement</strong></td>
+      <td>The counter read-modify-write and the CAS guard are the <em>same</em> operation on the <em>same</em> triple. One materialized write conflict serves both. You don’t need a separate sequence mechanism at all for the per-stream tier.</td>
+    </tr>
+    <tr>
+      <td><strong>A2. O(1) guard regardless of aggregate size</strong></td>
+      <td>If <code class="language-plaintext highlighter-rouge">:seq</code> lived inside <code class="language-plaintext highlighter-rouge">urn:g:orders/1</code>, the guard read would compete with a whole-graph scan, and counter hold-time would scale with payload size. Separation decouples contention from data volume.</td>
+    </tr>
+    <tr>
+      <td><strong>A3. Whole-graph replace can’t erase the order</strong></td>
+      <td>This is the decisive one. <code class="language-plaintext highlighter-rouge">DELETE { GRAPH &lt;urn:g:orders/1&gt; { ?s ?p ?o } }</code> deletes <em>everything</em> in that graph. If version metadata lived there, every write would destroy its own ordering evidence and re-create it — turning a compare-and-set into a delete-and-hope. Separation is what makes “replace the payload” safe.</td>
+    </tr>
+    <tr>
+      <td><strong>A4. Head pointer for free</strong></td>
+      <td><code class="language-plaintext highlighter-rouge">&lt;urn:g:orders/1&gt; :seq ?n ; :head ?rev</code> is a single-triple lookup. No <code class="language-plaintext highlighter-rouge">MAX()</code>/<code class="language-plaintext highlighter-rouge">GROUP BY</code> over the log (S4 last round), no aggregation in the hot path.</td>
+    </tr>
+    <tr>
+      <td><strong>A5. Immutable log vs mutable state</strong></td>
+      <td>Payload is mutable, meta is a mutable point, receipts are append-only. Three different retention policies, backup cadences, index strategies, and access-control rules — impossible if they’re interleaved.</td>
+    </tr>
+    <tr>
+      <td><strong>A6. Per-subject sharding is automatic</strong></td>
+      <td>Different aggregates touch different subjects in the meta graph, so concurrent writes to different streams don’t contend <em>provided the backend’s conflict detection is per-statement</em>. See the caveat in A7.</td>
+    </tr>
+    <tr>
+      <td><strong>A7. It localizes where you must be careful</strong></td>
+      <td>Exactly one statement per aggregate is contended, and it’s tiny. That’s a small enough surface to reason about and to test.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>And what it does <strong>not</strong> buy:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Not solved</th>
+      <th>Why</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Dataset-wide total order</strong></td>
+      <td><code class="language-plaintext highlighter-rouge">:seq</code> is per-aggregate. Receipts from different aggregates are mutually unordered. Needs a second tier (below).</td>
+    </tr>
+    <tr>
+      <td><strong>Intra-commit order</strong></td>
+      <td>One <code class="language-plaintext highlighter-rouge">:seq</code> per revision; if a revision emits 3 domain events they’re unordered. Needs <code class="language-plaintext highlighter-rouge">:opSeq</code>.</td>
+    </tr>
+    <tr>
+      <td><strong>Epoch safety</strong></td>
+      <td>The meta graph is destroyed/restored with everything else. Restore resets <code class="language-plaintext highlighter-rouge">:seq</code>; stale ETags silently match a <em>different</em> revision.</td>
+    </tr>
+    <tr>
+      <td><strong>Valid time</strong></td>
+      <td><code class="language-plaintext highlighter-rouge">:at</code>/<code class="language-plaintext highlighter-rouge">NOW()</code> is transaction time. Backfilled history still needs <code class="language-plaintext highlighter-rouge">:occurredAt</code>.</td>
+    </tr>
+    <tr>
+      <td><strong>Replay / as-of</strong></td>
+      <td>Your receipts record <em>that</em> a revision happened, not <em>what changed</em>. Whole-graph replace discards the diff. See F9.</td>
+    </tr>
+    <tr>
+      <td><strong>Cross-aggregate atomic invariants</strong></td>
+      <td>Two aggregates in one commit = two counters = lock-ordering discipline required.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>One trap to name explicitly: <strong>do not put a dataset-wide counter in <code class="language-plaintext highlighter-rouge">urn:g:meta</code>.</strong> The moment you add <code class="language-plaintext highlighter-rouge">&lt;urn:ds:prod&gt; :globalSeq ?n</code> next to the per-aggregate rows, every write in the dataset contends on one statement and you’ve thrown away A6.</p>
+
+<hr />
+
+<h1 id="part-2--findings-in-the-query">Part 2 — Findings in the query</h1>
+
+<p>Ordered by severity.</p>
+
+<h3 id="f1--critical-the-outcome-is-unobservable">F1 — CRITICAL: the outcome is unobservable</h3>
+
+<p>If the guard doesn’t match, the update is a legal no-op and the protocol returns success. The client cannot distinguish <em>“I won”</em> from <em>“someone else won”</em> from <em>“the aggregate doesn’t exist.”</em> Worse, on an ambiguous timeout (response lost, write applied) a retry fails the guard — and looks identical to a genuine conflict.</p>
+
+<p><strong>Fix:</strong> make the client-supplied <code class="language-plaintext highlighter-rouge">:txn</code> id a <strong>claim node in a dedicated small graph</strong> so the outcome is a single-triple <code class="language-plaintext highlighter-rouge">ASK</code>, and check it in the same operation for idempotency. This is literally the key-claim registry (P1) from the uniqueness round, reused:</p>
+
+<div class="language-sparql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">ASK</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:g:txn&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nn">&lt;urn:txn:01HX…&gt;</span><span class="w"> </span><span class="o">:</span><span class="ss">rev</span><span class="w"> </span><span class="nv">?rev</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>True ⇒ my write landed (now or on an earlier attempt) ⇒ 200/204 idempotent replay. False ⇒ genuine 412. Unambiguous, O(1), and safe across retries and crashes. <strong>This is the highest-value change in the whole design</strong>, and it’s why the receipt log is worth more than the version row.</p>
+
+<h3 id="f2--critical-urnreve2-collides-across-aggregates">F2 — CRITICAL: <code class="language-plaintext highlighter-rouge">&lt;urn:rev:E2&gt;</code> collides across aggregates</h3>
+
+<p>The revision IRI is derived from an etag that is only unique <em>within</em> an aggregate. <code class="language-plaintext highlighter-rouge">orders/1</code> and <code class="language-plaintext highlighter-rouge">orders/2</code> both reaching “E2” produce one subject carrying two <code class="language-plaintext highlighter-rouge">:target</code>s, two <code class="language-plaintext highlighter-rouge">:prev</code>s, two <code class="language-plaintext highlighter-rouge">:seq</code>s. Your log is silently corrupt and every traversal is wrong.</p>
+
+<p><strong>Fix:</strong> derive it from the full position, zero-padded:
+<code class="language-plaintext highlighter-rouge">urn:rev:orders/1/0000000000000042</code>. Padding matters — unpadded numeric strings in IRIs sort <code class="language-plaintext highlighter-rouge">"9" &gt; "10"</code> and break range scans.</p>
+
+<h3 id="f3--critical-no-epoch">F3 — CRITICAL: no epoch</h3>
+
+<p>Restore from backup → <code class="language-plaintext highlighter-rouge">:seq</code> rewinds → a client holding <code class="language-plaintext highlighter-rouge">ETag: "E5"</code>/<code class="language-plaintext highlighter-rouge">seq 5</code> compare-and-sets against a <em>different</em> revision 5 and overwrites it. Receipt IRIs are reused. Consumer cursors resume into a changed past.</p>
+
+<p><strong>Fix:</strong> <code class="language-plaintext highlighter-rouge">:epoch</code> in the guard, in the meta row, in every receipt, and in the ETag. Bump on any restore/rebuild/re-key/migration.</p>
+
+<h3 id="f4--major-etag-and-seq-are-two-sources-of-truth">F4 — MAJOR: <code class="language-plaintext highlighter-rouge">:etag</code> and <code class="language-plaintext highlighter-rouge">:seq</code> are two sources of truth</h3>
+
+<p>Nothing keeps them consistent. A partial failure or a buggy client leaves <code class="language-plaintext highlighter-rouge">:etag "E2" ; :seq 41</code> and both guards now mean different things.</p>
+
+<p><strong>Fix:</strong> <strong>derive</strong> the ETag; don’t store it. <code class="language-plaintext highlighter-rouge">ETag: W/"3-42"</code> = <code class="language-plaintext highlighter-rouge">{epoch}-{seq}</code>. <code class="language-plaintext highlighter-rouge">If-Match</code> maps mechanically onto the guard, HTTP and graph agree by construction, and you delete a whole class of bug. Store only <code class="language-plaintext highlighter-rouge">:epoch</code> + <code class="language-plaintext highlighter-rouge">:seq</code> + <code class="language-plaintext highlighter-rouge">:head</code>.</p>
+
+<h3 id="f5--major-prev-e1-is-a-string-so-the-chain-isnt-traversable">F5 — MAJOR: <code class="language-plaintext highlighter-rouge">:prev "E1"</code> is a string, so the chain isn’t traversable</h3>
+
+<p><strong>Fix:</strong> <code class="language-plaintext highlighter-rouge">:prevRev &lt;urn:rev:orders/1/0000000000000041&gt;</code> as an IRI. This upgrades the receipt log from a flat table into a <strong>verifiable chain</strong>, which gives you the strongest integrity check available:</p>
+
+<div class="language-sparql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># fork detection: must always return zero rows</span><span class="w">
+</span><span class="k">SELECT</span><span class="w"> </span><span class="nv">?prev</span><span class="w"> </span><span class="p">(</span><span class="nb">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="nv">?n</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="nb">GROUP_CONCAT</span><span class="p">(</span><span class="nb">STR</span><span class="p">(</span><span class="nv">?r</span><span class="p">);</span><span class="nb">separator</span><span class="p">=</span><span class="s2">" "</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="nv">?forks</span><span class="p">)</span><span class="w">
+</span><span class="k">WHERE</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">GRAPH</span><span class="w"> </span><span class="nv">?log</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">?r</span><span class="w"> </span><span class="o">:</span><span class="ss">prevRev</span><span class="w"> </span><span class="nv">?prev</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span><span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="nv">?prev</span><span class="w"> </span><span class="k">HAVING</span><span class="w"> </span><span class="p">(</span><span class="nb">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Two receipts with the same <code class="language-plaintext highlighter-rouge">:prevRev</code> means two writers both won a CAS against the same version — i.e. your isolation guarantee is broken, or the backend lied about its capabilities. This catches lost updates <em>after the fact</em>, independent of the counter, and it’s the test that would have caught F2 and F3 in production. Add it to the auditor.</p>
+
+<p>If you need tamper-evidence rather than just consistency, add <code class="language-plaintext highlighter-rouge">:hash = H(prevHash ‖ canonicalized-change)</code> and you have a ledger.</p>
+
+<h3 id="f6--major-idempotency-key-recorded-but-never-checked">F6 — MAJOR: idempotency key recorded but never checked</h3>
+
+<p><code class="language-plaintext highlighter-rouge">:txn</code> is written and never read. As written it’s decoration.</p>
+
+<p><strong>Fix:</strong> as in F1 — guard on it <em>and</em> make it queryable. Put it in <code class="language-plaintext highlighter-rouge">urn:g:txn</code> with the txn id as <strong>subject</strong> so the lookup is a single triple; don’t scan <code class="language-plaintext highlighter-rouge">?any :txn "…"</code> across a growing log (and never <code class="language-plaintext highlighter-rouge">GRAPH ?log { ?any :txn … }</code> with an unbound graph, which scans every graph in the dataset).</p>
+
+<h3 id="f7--moderate-unconstrained-seq-n-in-the-guard">F7 — MODERATE: unconstrained <code class="language-plaintext highlighter-rouge">:seq ?n</code> in the guard</h3>
+
+<p><code class="language-plaintext highlighter-rouge">&lt;urn:g:orders/1&gt; :etag "E1" ; :seq ?n</code> matches <em>any</em> seq. If a prior half-applied write left two <code class="language-plaintext highlighter-rouge">:seq</code> values, the guard matches twice, <code class="language-plaintext highlighter-rouge">?n2</code> takes two values, and you insert two receipts and two meta rows. Also: numeric datatype drift (<code class="language-plaintext highlighter-rouge">xsd:integer</code> vs <code class="language-plaintext highlighter-rouge">xsd:long</code>) changes term equality even where <code class="language-plaintext highlighter-rouge">ORDER BY</code> still works.</p>
+
+<p><strong>Fix:</strong> ground the expected values (the client knows them — see F8), pin one datatype, and enforce <code class="language-plaintext highlighter-rouge">sh:maxCount 1</code> on <code class="language-plaintext highlighter-rouge">:seq</code>, <code class="language-plaintext highlighter-rouge">:epoch</code>, <code class="language-plaintext highlighter-rouge">:head</code> for <code class="language-plaintext highlighter-rouge">:VersionRow</code>. On RDF4J/GraphDB/Stardog that’s a commit-time constraint, so the invariant is enforced rather than merely intended.</p>
+
+<h3 id="f8--moderate-server-side-arithmetic-is-unnecessary">F8 — MODERATE: server-side arithmetic is unnecessary</h3>
+
+<p>Because you’re doing CAS, <strong>the client already knows the expected version, therefore it knows the next one.</strong> Move <code class="language-plaintext highlighter-rouge">?n+1</code>, the revision IRI, and the padding to the client and make the whole template ground except <code class="language-plaintext highlighter-rouge">?s ?p ?o</code> and <code class="language-plaintext highlighter-rouge">?prevRev</code>. Simpler plan, no numeric-promotion hazard, no <code class="language-plaintext highlighter-rouge">SUBSTR</code>/<code class="language-plaintext highlighter-rouge">CONCAT</code> padding gymnastics in SPARQL, and the store’s job reduces to <em>verify and apply</em>.</p>
+
+<h3 id="f9--design-fork-receipts--a-replayable-log">F9 — DESIGN FORK: receipts ≠ a replayable log</h3>
+
+<p>Whole-graph replace discards the diff. You can order revisions but you cannot reconstruct state at revision 37, or feed a consumer the change. Decide, explicitly:</p>
+
+<ul>
+  <li><strong>Receipt log</strong> (what you have): audit trail + CAS outcomes + ordering. Cheap. No replay, no as-of.</li>
+  <li><strong>Patch log</strong>: add <code class="language-plaintext highlighter-rouge">:asserts &lt;urn:g:…/delta/42/add&gt;</code> and <code class="language-plaintext highlighter-rouge">:retracts &lt;urn:g:…/delta/42/del&gt;</code>, computed client-side (you already have old and new state). Enables replay, as-of, and CDC. Costs ~2× write volume.</li>
+  <li><strong>Snapshot-per-revision</strong>: never mutate <code class="language-plaintext highlighter-rouge">urn:g:orders/1</code>; write <code class="language-plaintext highlighter-rouge">urn:g:orders/1/0000…042</code> and point <code class="language-plaintext highlighter-rouge">:head</code> at it. Trivially as-of and immutable, but graph count grows without bound → bucket and prune.</li>
+</ul>
+
+<p>Don’t leave this implicit; consumers will assume replay exists.</p>
+
+<h3 id="f10--moderate-seq-deletion-resets-the-counter">F10 — MODERATE: <code class="language-plaintext highlighter-rouge">:seq</code> deletion resets the counter</h3>
+
+<p>Delete an aggregate → the meta row goes → a recreate starts at 1 → seq and receipt IRI reuse, which is F3 at the aggregate level.</p>
+
+<p><strong>Fix:</strong> tombstone. Keep <code class="language-plaintext highlighter-rouge">:epoch</code>/<code class="language-plaintext highlighter-rouge">:seq</code>/<code class="language-plaintext highlighter-rouge">:head</code>, add <code class="language-plaintext highlighter-rouge">:deleted true</code>, and guard <code class="language-plaintext highlighter-rouge">FILTER NOT EXISTS { … :deleted true }</code> on normal writes. Counters are monotonic <em>forever</em> per stream key.</p>
+
+<h3 id="f11--minor-the-optional-cross-product">F11 — MINOR: the <code class="language-plaintext highlighter-rouge">OPTIONAL</code> cross-product</h3>
+
+<p>The guard yields 1 row, the <code class="language-plaintext highlighter-rouge">OPTIONAL</code> yields N (one per payload triple), so both templates are instantiated N times. Harmless — quad insertion is set-semantics idempotent — but it’s O(N) template instantiation, and it <em>stops</em> being harmless the moment you add any non-ground element that varies per row (a <code class="language-plaintext highlighter-rouge">UUID()</code>, a computed <code class="language-plaintext highlighter-rouge">:opSeq</code>). Keep the guard’s projection separate in your head, and never add per-row derived values to this shape.</p>
+
+<p>Also: you can’t substitute <code class="language-plaintext highlighter-rouge">CLEAR GRAPH</code> here, because <code class="language-plaintext highlighter-rouge">CLEAR</code> can’t be made conditional on the guard. The <code class="language-plaintext highlighter-rouge">OPTIONAL</code> pattern is correct; just know it reads the whole graph.</p>
+
+<h3 id="f12--minor-single-meta-graph-coarse-conflict-detection">F12 — MINOR: single meta graph, coarse conflict detection</h3>
+
+<p>A6 assumes per-statement conflict detection. Some engines conflict at graph or page granularity, which produces <strong>false conflicts between unrelated aggregates</strong> and turns your nice sharded counters back into a hotspot. Shard preemptively: <code class="language-plaintext highlighter-rouge">urn:g:meta/{hash(target) % 64}</code>. Verify with the TCK, don’t assume.</p>
+
+<h3 id="f13--minor-at-now-is-the-only-time-and-its-the-wrong-one">F13 — MINOR: <code class="language-plaintext highlighter-rouge">:at NOW()</code> is the only time, and it’s the wrong one</h3>
+
+<p>Fine as transaction time. Add <code class="language-plaintext highlighter-rouge">:occurredAt</code> for valid time, and keep <code class="language-plaintext highlighter-rouge">(epoch, seq, opSeq)</code> as the deterministic tiebreak. Never <code class="language-plaintext highlighter-rouge">ORDER BY ?at</code>.</p>
+
+<hr />
+
+<h1 id="part-3--corrected-pattern">Part 3 — Corrected pattern</h1>
+
+<p>All positions client-computed; everything ground except the payload sweep and the previous head.</p>
+
+<div class="language-sparql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">PREFIX</span><span class="w"> </span><span class="o">:</span><span class="w">    </span><span class="nn">&lt;https://example.org/ns#&gt;</span><span class="w">
+</span><span class="k">PREFIX</span><span class="w"> </span><span class="nn">xsd</span><span class="o">:</span><span class="w"> </span><span class="nn">&lt;http://www.w3.org/2001/XMLSchema#&gt;</span><span class="w">
+
+</span><span class="k">DELETE</span><span class="w"> </span><span class="p">{</span><span class="w">
+  </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:g:orders/1&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">?s</span><span class="w"> </span><span class="nv">?p</span><span class="w"> </span><span class="nv">?o</span><span class="w"> </span><span class="p">}</span><span class="w">                     </span><span class="c1"># whole-graph replace</span><span class="w">
+  </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:g:meta/17&gt;</span><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nn">&lt;urn:g:orders/1&gt;</span><span class="w"> </span><span class="o">:</span><span class="ss">seq</span><span class="w">  </span><span class="s2">"41"</span><span class="o">^^</span><span class="nn">xsd</span><span class="o">:</span><span class="ss">long</span><span class="w"> </span><span class="p">;</span><span class="w">
+                                            </span><span class="o">:</span><span class="ss">head</span><span class="w"> </span><span class="nv">?prevRev</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span><span class="k">INSERT</span><span class="w"> </span><span class="p">{</span><span class="w">
+  </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:g:orders/1&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nn">&lt;urn:order:1&gt;</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="o">:</span><span class="ss">Order</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="o">:</span><span class="ss">status</span><span class="w"> </span><span class="s2">"paid"</span><span class="w"> </span><span class="p">}</span><span class="w">
+
+  </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:g:meta/17&gt;</span><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nn">&lt;urn:g:orders/1&gt;</span><span class="w"> </span><span class="o">:</span><span class="ss">epoch</span><span class="w"> </span><span class="s2">"3"</span><span class="o">^^</span><span class="nn">xsd</span><span class="o">:</span><span class="ss">long</span><span class="w"> </span><span class="p">;</span><span class="w">
+                                            </span><span class="o">:</span><span class="ss">seq</span><span class="w">   </span><span class="s2">"42"</span><span class="o">^^</span><span class="nn">xsd</span><span class="o">:</span><span class="ss">long</span><span class="w"> </span><span class="p">;</span><span class="w">
+                                            </span><span class="o">:</span><span class="ss">head</span><span class="w">  </span><span class="nn">&lt;urn:rev:orders/1/0000000000000042&gt;</span><span class="w"> </span><span class="p">}</span><span class="w">
+
+  </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:g:txn&gt;</span><span class="w">      </span><span class="p">{</span><span class="w"> </span><span class="nn">&lt;urn:txn:01HX…client-uuid&gt;</span><span class="w">
+                              </span><span class="o">:</span><span class="ss">rev</span><span class="w"> </span><span class="nn">&lt;urn:rev:orders/1/0000000000000042&gt;</span><span class="w"> </span><span class="p">}</span><span class="w">
+
+  </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:g:txlog/2024-06&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+      </span><span class="nn">&lt;urn:rev:orders/1/0000000000000042&gt;</span><span class="w">
+          </span><span class="k">a</span><span class="w">           </span><span class="o">:</span><span class="ss">Revision</span><span class="w"> </span><span class="p">;</span><span class="w">
+          </span><span class="o">:</span><span class="ss">target</span><span class="w">     </span><span class="nn">&lt;urn:g:orders/1&gt;</span><span class="w"> </span><span class="p">;</span><span class="w">
+          </span><span class="o">:</span><span class="ss">epoch</span><span class="w">      </span><span class="s2">"3"</span><span class="o">^^</span><span class="nn">xsd</span><span class="o">:</span><span class="ss">long</span><span class="w"> </span><span class="p">;</span><span class="w">
+          </span><span class="o">:</span><span class="ss">seq</span><span class="w">        </span><span class="s2">"42"</span><span class="o">^^</span><span class="nn">xsd</span><span class="o">:</span><span class="ss">long</span><span class="w"> </span><span class="p">;</span><span class="w">
+          </span><span class="o">:</span><span class="ss">opSeq</span><span class="w">      </span><span class="s2">"1"</span><span class="o">^^</span><span class="nn">xsd</span><span class="o">:</span><span class="ss">long</span><span class="w"> </span><span class="p">;</span><span class="w">
+          </span><span class="o">:</span><span class="ss">prevRev</span><span class="w">    </span><span class="nv">?prevRev</span><span class="w"> </span><span class="p">;</span><span class="w">
+          </span><span class="o">:</span><span class="ss">txn</span><span class="w">        </span><span class="s2">"01HX…client-uuid"</span><span class="w"> </span><span class="p">;</span><span class="w">
+          </span><span class="o">:</span><span class="ss">hlc</span><span class="w">        </span><span class="s2">"0001719412345678:0003:n7"</span><span class="w"> </span><span class="p">;</span><span class="w">
+          </span><span class="o">:</span><span class="ss">recordedAt</span><span class="w"> </span><span class="nv">?now</span><span class="w"> </span><span class="p">;</span><span class="w">
+          </span><span class="o">:</span><span class="ss">occurredAt</span><span class="w"> </span><span class="s2">"2024-06-26T13:58:02Z"</span><span class="o">^^</span><span class="nn">xsd</span><span class="o">:</span><span class="ss">dateTime</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span><span class="k">WHERE</span><span class="w"> </span><span class="p">{</span><span class="w">
+  </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:g:meta/17&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nn">&lt;urn:g:orders/1&gt;</span><span class="w"> </span><span class="o">:</span><span class="ss">epoch</span><span class="w"> </span><span class="s2">"3"</span><span class="o">^^</span><span class="nn">xsd</span><span class="o">:</span><span class="ss">long</span><span class="w"> </span><span class="p">;</span><span class="w">                 </span><span class="c1"># epoch guard  (F3)</span><span class="w">
+                     </span><span class="o">:</span><span class="ss">seq</span><span class="w">   </span><span class="s2">"41"</span><span class="o">^^</span><span class="nn">xsd</span><span class="o">:</span><span class="ss">long</span><span class="w"> </span><span class="p">;</span><span class="w">                </span><span class="c1"># CAS guard    (F4/F7/F8)</span><span class="w">
+                     </span><span class="o">:</span><span class="ss">head</span><span class="w">  </span><span class="nv">?prevRev</span><span class="w"> </span><span class="p">.</span><span class="w">
+    </span><span class="k">FILTER</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nn">&lt;urn:g:orders/1&gt;</span><span class="w"> </span><span class="o">:</span><span class="ss">deleted</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span><span class="w">     </span><span class="c1"># tombstone    (F10)</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+  </span><span class="k">FILTER</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="p">{</span><span class="w">                                        </span><span class="c1"># idempotency  (F6)</span><span class="w">
+    </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:g:txn&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nn">&lt;urn:txn:01HX…client-uuid&gt;</span><span class="w"> </span><span class="o">:</span><span class="ss">rev</span><span class="w"> </span><span class="nv">?any</span><span class="w"> </span><span class="p">}</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+  </span><span class="k">BIND</span><span class="p">(</span><span class="nb">NOW</span><span class="p">()</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="nv">?now</span><span class="p">)</span><span class="w">
+  </span><span class="k">OPTIONAL</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:g:orders/1&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">?s</span><span class="w"> </span><span class="nv">?p</span><span class="w"> </span><span class="nv">?o</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w">           </span><span class="c1"># (F11)</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Then, always:</p>
+
+<div class="language-sparql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">ASK</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:g:txn&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nn">&lt;urn:txn:01HX…client-uuid&gt;</span><span class="w">
+                            </span><span class="o">:</span><span class="ss">rev</span><span class="w"> </span><span class="nn">&lt;urn:rev:orders/1/0000000000000042&gt;</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>→ <code class="language-plaintext highlighter-rouge">true</code> = applied (this attempt or a previous one) → <code class="language-plaintext highlighter-rouge">204</code> + <code class="language-plaintext highlighter-rouge">ETag: W/"3-42"</code>
+→ <code class="language-plaintext highlighter-rouge">false</code> = guard failed → <code class="language-plaintext highlighter-rouge">412 Precondition Failed</code>, return current <code class="language-plaintext highlighter-rouge">ETag</code></p>
+
+<p><strong>First write / create</strong> is the same shape with the guard inverted:</p>
+
+<div class="language-sparql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">WHERE</span><span class="w"> </span><span class="p">{</span><span class="w">
+  </span><span class="k">FILTER</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:g:meta/17&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nn">&lt;urn:g:orders/1&gt;</span><span class="w"> </span><span class="o">:</span><span class="ss">seq</span><span class="w"> </span><span class="nv">?any</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w">
+  </span><span class="k">FILTER</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:g:txn&gt;</span><span class="w">     </span><span class="p">{</span><span class="w"> </span><span class="nn">&lt;urn:txn:…&gt;</span><span class="w"> </span><span class="o">:</span><span class="ss">rev</span><span class="w"> </span><span class="nv">?any</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w">
+  </span><span class="k">BIND</span><span class="p">(</span><span class="nb">NOW</span><span class="p">()</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="nv">?now</span><span class="p">)</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+<p>with <code class="language-plaintext highlighter-rouge">:seq "1"</code>, no <code class="language-plaintext highlighter-rouge">:prevRev</code>, and <code class="language-plaintext highlighter-rouge">If-None-Match: *</code> on the HTTP side. Note the create path is a <strong>uniqueness</strong> problem, not a CAS problem — it’s P2 from round one, and it needs the same isolation caveat: <code class="language-plaintext highlighter-rouge">FILTER NOT EXISTS</code> on a non-existent row is write-skew-prone unless the backend serializes writers or detects it. On MVCC backends, pre-create the meta row (<code class="language-plaintext highlighter-rouge">:seq "0"</code>) at aggregate-ID allocation time so <em>every</em> write, including the first, is a rewrite of an existing statement.</p>
+
+<hr />
+
+<h1 id="part-4--wiring-the-two-tiers-on-top-of-this">Part 4 — Wiring the two tiers on top of this</h1>
+
+<p>You now have the per-stream tier for free. The dataset tier:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Backend has</th>
+      <th>Dataset-order source</th>
+      <th>Level</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Dense change feed (Neptune Streams, Jena <code class="language-plaintext highlighter-rouge">rdf-delta</code>)</td>
+      <td>feed position; receipts carry it as a cache</td>
+      <td><code class="language-plaintext highlighter-rouge">TOTAL_DENSE</code></td>
+    </tr>
+    <tr>
+      <td>Native commit position (MarkLogic ts, Oracle SCN)</td>
+      <td>native, + <code class="language-plaintext highlighter-rouge">TimeTravel</code> for as-of</td>
+      <td><code class="language-plaintext highlighter-rouge">TOTAL_SPARSE</code></td>
+    </tr>
+    <tr>
+      <td>Single writer (TDB2, GraphDB, Oxigraph)</td>
+      <td>a global counter statement is <em>affordable here</em> — writes are already serialized</td>
+      <td><code class="language-plaintext highlighter-rouge">TOTAL_DENSE</code></td>
+    </tr>
+    <tr>
+      <td>MVCC, no feed (Stardog, RDF4J, Virtuoso)</td>
+      <td><strong><code class="language-plaintext highlighter-rouge">:hlc</code> only.</strong> Don’t add a global counter</td>
+      <td><code class="language-plaintext highlighter-rouge">PARTIAL_CAUSAL</code></td>
+    </tr>
+    <tr>
+      <td>Federated / non-ACID (Rya, Halyard)</td>
+      <td>external sequencer; CAS itself is unsafe here</td>
+      <td><code class="language-plaintext highlighter-rouge">PARTIAL_CAUSAL</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The pragmatic default that needs no extra machinery: <strong>global reads ordered by <code class="language-plaintext highlighter-rouge">:hlc</code>, completeness verified per target by <code class="language-plaintext highlighter-rouge">:seq</code> contiguity.</strong> Sparse across streams, dense within them — so a consumer can both make progress globally and <em>prove</em> it missed nothing on any given aggregate. That combination is only possible because the per-aggregate counter is dense, which is only cheap because the version row is separated out. The three decisions reinforce each other.</p>
+
+<p>Adapter delta from the last round: <code class="language-plaintext highlighter-rouge">CasStrategy</code> slots in where <code class="language-plaintext highlighter-rouge">InTxCounterStrategy</code> was, since the guard <em>is</em> the counter increment. <code class="language-plaintext highlighter-rouge">OrderCapabilities</code> gains two flags worth testing rather than assuming — <code class="language-plaintext highlighter-rouge">statementLevelConflictDetection</code> (F12) and <code class="language-plaintext highlighter-rouge">reportsAffectedRows</code> (F1, vendor-specific; if present you can skip the confirming <code class="language-plaintext highlighter-rouge">ASK</code>).</p>
+
+<hr />
+
+<h1 id="part-5--tck-additions">Part 5 — TCK additions</h1>
+
+<p>Additions to the suite from the previous rounds:</p>
+
+<ol>
+  <li><strong>Lost-update probe.</strong> N writers CAS from the same version concurrently → exactly one receipt, all others <code class="language-plaintext highlighter-rouge">412</code>, <code class="language-plaintext highlighter-rouge">:seq</code> advanced by exactly 1, <strong>fork query (F5) returns zero rows</strong>.</li>
+  <li><strong>Ambiguous-timeout replay.</strong> Kill the client after the update but before the confirming <code class="language-plaintext highlighter-rouge">ASK</code>, then retry the identical request → exactly one receipt, <code class="language-plaintext highlighter-rouge">ASK</code> returns true, caller sees success not <code class="language-plaintext highlighter-rouge">412</code>.</li>
+  <li><strong>Cross-aggregate false conflict.</strong> Concurrent writes to 64 different aggregates in the same meta graph → measure conflict rate. Non-zero ⇒ coarse conflict detection ⇒ shard the meta graph (F12).</li>
+  <li><strong>Chain integrity under fuzz.</strong> Random interleaved writes/deletes/recreates → <code class="language-plaintext highlighter-rouge">:prevRev</code> chain is a single unbroken path per target, <code class="language-plaintext highlighter-rouge">:seq</code> contiguous from 1, no reused revision IRIs.</li>
+  <li><strong>Restore safety.</strong> Snapshot → write more → restore → replay a <em>stale but structurally valid</em> ETag → must be rejected on the epoch guard, not silently applied (F3).</li>
+  <li><strong>Delete/recreate.</strong> Delete then recreate an aggregate → <code class="language-plaintext highlighter-rouge">:seq</code> continues, does not restart; old receipt IRIs are never reused (F10).</li>
+  <li><strong>Empty-graph replace.</strong> CAS against an aggregate whose payload graph is empty → <code class="language-plaintext highlighter-rouge">OPTIONAL</code> binds nothing, meta and receipt still update correctly (F11).</li>
+  <li><strong>Large-payload hold time.</strong> CAS on a 1M-triple aggregate under concurrent load → confirm counter hold time and conflict rate don’t blow up (validates A2 on this engine).</li>
+</ol>
+
+<p>Tests 1 and 2 are gating.</p>
+
+<hr />
+
+<h1 id="recommendation">Recommendation</h1>
+
+<p>Keep the architecture — meta/payload/receipt separation is right, and it’s what makes CAS and dense per-stream ordering the same mechanism. Change six things:</p>
+
+<ol>
+  <li><strong>Make the outcome readable.</strong> Idempotency key as a claim node in a small dedicated graph; confirm with one <code class="language-plaintext highlighter-rouge">ASK</code>. This is the fix that turns the pattern from “probably works” into “provably works.”</li>
+  <li><strong>Derive the ETag from <code class="language-plaintext highlighter-rouge">(epoch, seq)</code>.</strong> Delete the stored <code class="language-plaintext highlighter-rouge">:etag</code>. One source of truth.</li>
+  <li><strong>Add the epoch</strong> to the guard, the meta row, every receipt, and the ETag.</li>
+  <li><strong>Namespace and zero-pad revision IRIs</strong> by target and position.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">:prevRev</code> as an IRI</strong>, and run the fork-detection query as a standing alert — it’s your independent check that the backend’s isolation claims are true.</li>
+  <li><strong>Decide receipts vs patches vs snapshots</strong> (F9) now, and write it down, because consumers will assume replay works.</li>
+</ol>
+
+<p>Then leave the per-aggregate counter exactly as you have it, and put dataset-wide order in a separate, weaker, derived tier — sourced from the store’s change feed where one exists, HLC where it doesn’t.</p>

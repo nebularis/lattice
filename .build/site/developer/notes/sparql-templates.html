@@ -1,0 +1,109 @@
+<h2 id="option-1-standard-sparql-with-values-binding-injection-most-performant">Option 1: Standard SPARQL with VALUES Binding Injection (Most Performant)</h2>
+<p>Instead of using custom template languages, write pure, standard SPARQL. Use standard variables (e.g., ?txnId, ?status) [1] in your query logic, and declare an empty or tokenized VALUES block at the top of the query.
+Your cross-language libraries then parse the string, find the VALUES clause, and safely inject serialized, strongly-typed RDF terms.</p>
+
+<h2 id="the-template-format-standard-sparql">The Template Format (Standard SPARQL):</h2>
+
+<p>PREFIX ex:  <a href="https://example.org">https://example.org</a>
+PREFIX pat: <a href="https://example.org">https://example.org</a></p>
+
+<p>SELECT ?rev ?seq WHERE {
+  VALUES (?txn ?target) { ( %txn% %target% ) } # Target for injection
+  GRAPH &lt;urn:g:txn&gt; { ?txn pat:rev ?rev }
+  GRAPH ?log { ?rev pat:target ?target ; pat:seq ?seq }
+}</p>
+
+<h2 id="how-the-multi-language-engine-executes-safely">How the Multi-Language Engine Executes Safely:</h2>
+
+<ol>
+  <li>No String Concat on Code: The template text is strictly immutable.</li>
+  <li>RDF Lexical Serialization: The library takes the input parameters (e.g., a string or an object) and serializes them using absolute RDF literal/IRI rules.
+    <ul>
+      <li>Java: “&lt;” + uri + “&gt;” or “””” + literal + “”””^^xsd:string.</li>
+    </ul>
+    <ul>
+      <li>A malicious string like urn:x&gt; } ; DROP ALL ; … is forced into a quoted string literal (“urn:x&gt; } …”), turning an injection attack into harmless data.</li>
+    </ul>
+  </li>
+  <li>Regex Replacement: The engine replaces %txn% with the safely serialized RDF term.</li>
+</ol>
+
+<ul>
+  <li>Pros: Code remains valid SPARQL; zero dependency on syntax parsers; highly efficient.</li>
+  <li>Cons: Requires a small utility library in each language to guarantee uniform RDF literal escaping rules.</li>
+</ul>
+
+<hr />
+<h2 id="option-2-the-mustache--handlebars-ecosystem-simplest-cross-language-fit">Option 2: The Mustache / Handlebars Ecosystem (Simplest Cross-Language Fit)</h2>
+<p>Mustache is a logic-less templating format supported natively in virtually every language (Java: JMustache, Node: mustache.js, Python: pystache).
+To make Mustache secure against SPARQL injection, you must override the default HTML-escaping behavior with a custom SPARQL RDF-term encoder.</p>
+<h2 id="the-template-format">The Template Format:</h2>
+
+<p>PREFIX ex:  <a href="https://example.org">https://example.org</a>
+PREFIX pat: <a href="https://example.org">https://example.org</a></p>
+
+<p>DELETE { GRAPH } { } pat:seq } } }
+INSERT { GRAPH } { } pat:seq } } }
+WHERE  { 
+  GRAPH } { 
+    } pat:epoch } ; 
+                 pat:seq } 
+  } 
+}</p>
+
+<p>Note: Using triple braces } prevents Mustache from applying HTML escaping (&amp;), leaving your custom encoder to do the work.</p>
+<h2 id="the-security-rule">The Security Rule:</h2>
+<p>Your Java/Node/Python wrapper must not accept raw strings as inputs. It must require parameters to be passed as structured objects that enforce types:</p>
+
+<p>{
+  “metaGraph”: “urn:g:meta/17”, 
+  “stream”: “urn:stream:orders/1”,
+  “expectedSeq”: 41,
+  “nextSeq”: 42,
+  “epoch”: 3
+}</p>
+
+<p>The language-specific wrapper intercepts these types and formats them: integers become “41”^^xsd:long, strings are escaped using turtle-string rules, and IRIs are safely wrapped in brackets &lt;&gt;.</p>
+
+<ul>
+  <li>Pros: True cross-language standard; extensive tooling; completely separate template files.</li>
+  <li>Cons: If a developer accidentally uses double braces  instead of triple braces, the template engine will apply HTML escaping, corrupting the SPARQL syntax.</li>
+</ul>
+
+<hr />
+<h2 id="option-3-parameterized-sparql-string-the-enterprise-gold-standard">Option 3: Parameterized SPARQL String (The Enterprise Gold Standard)</h2>
+<p>If your architecture allows for a thin translation layer, you can adopt the syntax popularized by Apache Jena’s ParameterizedSparqlString (using SQL-like placeholders: ?param or ::param).
+While Jena provides this natively for Java, you can implement the identical behavior in Python and Node.js using basic regex parsing combined with an RDF syntax utility library (like rdflib in Python or rdf-ext in Node).</p>
+<h2 id="the-template-format-1">The Template Format:</h2>
+
+<p>PREFIX pat: <a href="https://example.org">https://example.org</a></p>
+
+<p>ASK { 
+  GRAPH ?txnGraph { ?txnId pat:rev ?rev } 
+}</p>
+
+<h2 id="multi-language-strategy">Multi-Language Strategy:</h2>
+<p>You build a micro-library in Java, Python, and Node with a uniform API contract:</p>
+
+<h1 id="python-exampletemplate--parameterizedqueryask--graph-txngraph--txnid-patrev-rev--">Python Exampletemplate = ParameterizedQuery(“ASK { GRAPH ?txnGraph { ?txnId pat:rev ?rev } }”)</h1>
+<p>template.set_iri(“txnGraph”, “urn:g:txn”)
+template.set_iri(“txnId”, f”urn:txn:{ulid}”)</p>
+<h1 id="the-library-replaces-txngraph-with-urngtxn--and-txnid-with-urntxn-using-native-rdf-sanitizationraw_sparql--templateas_string">The library replaces ‘?txnGraph’ with ‘&lt;urn:g:txn&gt;’ # and ‘?txnId’ with ‘&lt;urn:txn:…&gt;’ using native RDF sanitizationraw_sparql = template.as_string()</h1>
+
+<ul>
+  <li>Pros: Architecturally identical to prepared statements in relational databases; cleanest developer experience.</li>
+  <li>Cons: Requires you to maintain a tiny internal wrapper library across your target languages to ensure placeholders are replaced correctly.</li>
+</ul>
+
+<hr />
+<h2 id="summary-recommendation-for-your-architecture">Summary Recommendation for your Architecture</h2>
+<p>Given your plan to build a Java Semantic Persistence Layer Wrapper alongside Python/Node workers, Option A (VALUES-based Injection) or Option C (Parameterized Query Objects) are the safest bets.
+To make this rigorous, enforce these rules via your Query Discipline (QP):</p>
+
+<ol>
+  <li>Enforce at the CI/Lint Gate: Treat any template containing character operations like +, f-strings, .format(), or string interpolation as a build failure.</li>
+  <li>Abstract the Client: The database client must never accept a raw string. Its method signature must strictly require a (TemplateFile, ParameterMap), forcing parameter injection to happen behind the safety wall of your serialization engine.</li>
+</ol>
+
+<p>Would you like to see a minimal Java code snippet alongside a Node.js/Python equivalent demonstrating how to implement the strict RDF-term escaping rules for one of these options?</p>
+

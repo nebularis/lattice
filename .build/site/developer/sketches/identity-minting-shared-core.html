@@ -1,0 +1,172 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="identity-minting-a-shared-rust-core--sketch">Identity Minting: A Shared Rust Core — Sketch</h1>
+
+<p><strong>Unit ID:</strong> <code class="language-plaintext highlighter-rouge">identity-minting-shared-core</code>
+<strong>Status:</strong> Sketch, deferred. Lower priority than completing <a href="/developer/status/persistence-compiler-iri-sync.html"><code class="language-plaintext highlighter-rouge">persistence-compiler-iri-sync</code></a> through Slice 6. Not to be planned before then.
+<strong>Date:</strong> 2026-09-23
+<strong>Alternative to:</strong> §7 and §9 of <a href="/developer/sketches/identity-minting.html">identity-minting.md</a>, which propose separate pure-Java and pure-Python minters. If this sketch is adopted, it replaces those sections. Everything else in that sketch (recipes, <code class="language-plaintext highlighter-rouge">dal:claimsConstraint</code>, vectors, anchor vectors, the normative specification) stands unchanged.</p>
+
+<hr />
+
+<h2 id="1-why">1. Why</h2>
+
+<p>LATTICE will add runtimes: Erlang and Elixir already exist in <code class="language-plaintext highlighter-rouge">tools/spc</code>, and an F# project (<code class="language-plaintext highlighter-rouge">MorkSharp</code>) is expected. Under <a href="/developer/sketches/identity-minting.html">identity-minting.md</a>, every runtime reimplements the minting engine: pinned Unicode tables, trimming, case mapping, tuple encoding, digests and MACs, output encodings, and the trace of intermediate values. That is one to two thousand lines of careful code per language. It also carries the risk the conformance vectors exist to catch, two languages disagreeing on one input (§7 of that sketch). Two languages make that affordable. Five do not.</p>
+
+<p>A single minting engine in Rust, bound into each runtime, solves the hardest part once.</p>
+
+<h2 id="2-proposal">2. Proposal</h2>
+
+<ol>
+  <li><strong>One Rust core</strong> holds the whole minting engine: recipe parsing and digest checking, the pinned Unicode tables, normalization, tuple encoding, digests and MACs, output encodings, the trace, and vector generation and verification. Its interface is deliberately plain: a recipe (JSON) and inputs in, an IRI and a trace out, with named errors.</li>
+  <li><strong>Delivered as WebAssembly by default.</strong> The core compiles once to a <code class="language-plaintext highlighter-rouge">wasm32</code> module, hosted in each language by that ecosystem’s published WebAssembly runtime.</li>
+  <li><strong>Native bindings as a later option, per language,</strong> only where profiling shows WebAssembly overhead matters. The same core and interface serve both.</li>
+  <li><strong>A command-line tool from the same core</strong> (<code class="language-plaintext highlighter-rouge">lattice-mint</code>), for verifying vectors and batch minting. It gives every language, including ones never bound, a zero-interop route. <code class="language-plaintext highlighter-rouge">tools/persistence export-recipes</code> calls it to generate vectors, so the vector generator and every minter are one implementation.</li>
+</ol>
+
+<h2 id="3-why-webassembly-first">3. Why WebAssembly first</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th> </th>
+      <th>Native bindings</th>
+      <th>WebAssembly</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Build from source needs</td>
+      <td>Rust plus a system linker (Xcode CLT, <code class="language-plaintext highlighter-rouge">gcc</code>, or MSVC Build Tools), per OS and architecture</td>
+      <td>Rust only: the <code class="language-plaintext highlighter-rouge">wasm32</code> target uses Rust’s bundled linker. One artefact for every OS</td>
+    </tr>
+    <tr>
+      <td>Java</td>
+      <td>JNI on JDK 21 (the Foreign Function API is final only from JDK 22). A core bug can crash the JVM</td>
+      <td>Chicory, a pure-Java runtime: the library stays a plain jar</td>
+    </tr>
+    <tr>
+      <td>Python</td>
+      <td>PyO3 and maturin, mature</td>
+      <td><code class="language-plaintext highlighter-rouge">wasmtime-py</code>, prebuilt wheels</td>
+    </tr>
+    <tr>
+      <td>Erlang / Elixir</td>
+      <td>Rustler NIFs. Native code runs inside the VM, so calls must stay short or use dirty schedulers</td>
+      <td>Wasmex (Elixir), callable from Erlang</td>
+    </tr>
+    <tr>
+      <td>F# / .NET</td>
+      <td>P/Invoke over a C ABI</td>
+      <td><code class="language-plaintext highlighter-rouge">wasmtime-dotnet</code></td>
+    </tr>
+    <tr>
+      <td>Failure isolation</td>
+      <td>a core bug can take down the host process</td>
+      <td>sandboxed: a core bug is an error, not a crash</td>
+    </tr>
+    <tr>
+      <td>Cost of publishing prebuilt artefacts later</td>
+      <td>a build matrix of OS × architecture × language</td>
+      <td>one <code class="language-plaintext highlighter-rouge">.wasm</code> file</td>
+    </tr>
+    <tr>
+      <td>Per-call overhead</td>
+      <td>lowest</td>
+      <td>small, irrelevant at minting’s call rates</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The repository’s toolchain manager already covers what this needs: <code class="language-plaintext highlighter-rouge">mise</code> has <code class="language-plaintext highlighter-rouge">rust</code> and <code class="language-plaintext highlighter-rouge">maturin</code> as registry tools, and <code class="language-plaintext highlighter-rouge">erlang</code>, <code class="language-plaintext highlighter-rouge">elixir</code> and <code class="language-plaintext highlighter-rouge">dotnet</code> as core tools. A <code class="language-plaintext highlighter-rouge">rust-toolchain.toml</code> pins the compiler. No Makefile is involved: Cargo drives the build, and <code class="language-plaintext highlighter-rouge">mise</code> tasks wrap it, as ADR-A29 requires.</p>
+
+<h2 id="4-what-changes-relative-to-identity-mintingmd">4. What changes relative to identity-minting.md</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Area</th>
+      <th>Change</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Decision B</td>
+      <td>“No runtime dependencies” becomes “no native dependencies”: each language depends on its ecosystem’s published WebAssembly runtime</td>
+    </tr>
+    <tr>
+      <td>§7 (one pipeline, one function)</td>
+      <td>Solved once, in Rust. The pinned tables are generated there, or taken from ICU4X, the Rust-native ICU. Host Unicode versions stop mattering, so Q2’s dependency on Python 3.11’s Unicode 14.0 disappears</td>
+    </tr>
+    <tr>
+      <td>§8 (vectors)</td>
+      <td>Cross-language agreement comes for free. Vectors now guard each binding’s glue (string conversion bugs live there) and serve independent implementors. The <strong>anchor vectors</strong> become the only check that shares no code with the engine, so they matter more</td>
+    </tr>
+    <tr>
+      <td>§9 (libraries)</td>
+      <td><code class="language-plaintext highlighter-rouge">packages/minting/core</code> (Rust crate and CLI), plus thin per-language packages (<code class="language-plaintext highlighter-rouge">java</code>, <code class="language-plaintext highlighter-rouge">python</code>, later <code class="language-plaintext highlighter-rouge">elixir</code>, <code class="language-plaintext highlighter-rouge">dotnet</code>), each a few hundred lines of glue and one CI job that runs the vectors</td>
+    </tr>
+    <tr>
+      <td>§12 (ADRs)</td>
+      <td>The placement ADR widens to bring Rust into the toolchain under ADR-A29</td>
+    </tr>
+    <tr>
+      <td>Independent implementors</td>
+      <td>Unchanged: the specification and vectors alone still suffice, and anyone may reject our code</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="5-costs-stated-plainly">5. Costs, stated plainly</h2>
+
+<ul>
+  <li><strong>Rust enters the repository.</strong> A new toolchain, a new language for reviewers, and an ADR.</li>
+  <li><strong>Glue discipline.</strong> Strings cross the boundary as UTF-8 bytes. Results come back as structured data. Every binding needs care at exactly the place the vectors now guard.</li>
+  <li><strong>A runtime dependency per language.</strong> Chicory, <code class="language-plaintext highlighter-rouge">wasmtime-py</code>, Wasmex and <code class="language-plaintext highlighter-rouge">wasmtime-dotnet</code> are third-party projects. Their licences need the same compatibility check as any dependency, against MPL-2.0 distribution.</li>
+  <li><strong>One more build step for from-source users.</strong> Building the <code class="language-plaintext highlighter-rouge">.wasm</code> needs Rust, once, on any OS.</li>
+</ul>
+
+<p>Against those: each new runtime costs glue and a CI job, not a reimplementation of §7, and every minter is the same engine.</p>
+
+<h2 id="6-questions-needing-a-decision-when-this-is-picked-up">6. Questions needing a decision (when this is picked up)</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Question</th>
+      <th>Recommendation</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>R1</td>
+      <td>WebAssembly first, or native first?</td>
+      <td>WebAssembly first, native per language only on measured need</td>
+    </tr>
+    <tr>
+      <td>R2</td>
+      <td>Which languages in the first cut?</td>
+      <td>Java and Python. Erlang/Elixir and F# as later slices</td>
+    </tr>
+    <tr>
+      <td>R3</td>
+      <td>Stay on JDK 21, or move to JDK 25 LTS?</td>
+      <td>Irrelevant under WebAssembly (Chicory runs on 21). It matters only if a native Java binding is ever needed, where 22+ gives the Foreign Function API</td>
+    </tr>
+    <tr>
+      <td>R4</td>
+      <td>Pinned tables: generated in Rust from the UCD, or ICU4X?</td>
+      <td>Evaluate ICU4X’s NFKC_Casefold and case-mapping coverage first. Generated tables if it falls short</td>
+    </tr>
+    <tr>
+      <td>R5</td>
+      <td>Licence check of the four WebAssembly runtimes</td>
+      <td>Required before planning. Chicory and Wasmtime are Apache-2.0, which should be compatible, but this must be verified, not assumed</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="7-sequencing">7. Sequencing</h2>
+
+<p>Deferred until <code class="language-plaintext highlighter-rouge">persistence-compiler-iri-sync</code> Slice 6 is complete. It is best decided before <a href="/developer/sketches/identity-minting.html">identity-minting.md</a>’s slice M2 (the Python library), because adopting it after M2 and M3 would discard both pure implementations. M0 and M1 of that sketch (ADRs, schemas, anchor vectors, vocabulary, recipe emission) are unaffected either way.</p>

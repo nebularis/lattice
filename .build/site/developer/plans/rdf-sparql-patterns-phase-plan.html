@@ -1,0 +1,342 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="rdfsparql-implementation-patterns--phase-plan">RDF/SPARQL Implementation Patterns — Phase Plan</h1>
+
+<p><strong>Unit type:</strong> Plan
+<strong>Identifier:</strong> <code class="language-plaintext highlighter-rouge">rdf-sparql-patterns-phase</code>
+<strong>Status:</strong> Slice 1 complete. ADR-A78/A79/A80 ratified. Slice 2 complete (see <a href="/developer/validation/persistence-substrate-and-compiler.html">validation pack</a>), and since re-synced against the extended vocabulary by the follow-on unit <a href="/developer/status/persistence-compiler-iri-sync.html"><code class="language-plaintext highlighter-rouge">persistence-compiler-iri-sync</code></a> (in progress). Slice 3 not started. Live state: <a href="/developer/status/rdf-sparql-patterns-status.html">status record</a>.
+<strong>Blocks:</strong> <code class="language-plaintext highlighter-rouge">ontology/persistence</code> authoring, <code class="language-plaintext highlighter-rouge">tools/persistence</code> compiler, <code class="language-plaintext highlighter-rouge">platform/housekeeping</code> first cut, and (once the store SPI exists) the Request Query Mapping and Query Execution work items this plan explicitly excludes.
+<strong>Estimated scope:</strong> see <a href="#part-2--execution-plan-and-dependencies">Part 2</a> for a per-slice token estimate. These are planning estimates, not commitments, and are to be checked against actual consumption once each slice completes.</p>
+
+<p><strong>This is a rewrite.</strong> It replaces the previous version of this plan in place, at the same path and under the same unit identifier. The previous Slice 2 (“Store-specific adapters and policy”) is removed entirely: store adapter documentation is deferred to a future SPI-focused phase, not part of this plan. Its replacement Slice 2 is the ontology substrate and the compiler toolchain described below, per the commissioning conversation that produced <a href="/developer/sketches/persistence-profile-substrate.html">persistence-profile-substrate.md</a>. The previous Slice 3 (“Proposed ADRs and decision record”) is superseded because its ADRs are delivered alongside this rewrite, per the Design First rule in <code class="language-plaintext highlighter-rouge">.github/copilot-instructions.md</code>, rather than scheduled as a future slice. Slice 3 is repurposed for the housekeeping first cut.</p>
+
+<p><strong>Purpose:</strong> Turn <a href="/architecture/rdf-sparql-patterns-guide.html">rdf-sparql-patterns-guide.md</a>’s portable patterns into something an adopter of LATTICE can actually select and generate SPARQL from, at whatever granularity their own applied ontology needs, without requiring them to hand-write the guide’s SPARQL or adopt a store SPI that does not yet exist.</p>
+
+<p><strong>Entry criteria:</strong></p>
+<ul>
+  <li>Guide complete: <a href="/architecture/rdf-sparql-patterns-guide.html">rdf-sparql-patterns-guide.md</a> (fulfils Slice 1, see <a href="#11-slice-1--core-patterns-and-design-specs-complete">§1.1</a>)</li>
+  <li>Sketch complete: <a href="/developer/sketches/persistence-profile-substrate.html">persistence-profile-substrate.md</a></li>
+  <li>ADR-A78, ADR-A79, ADR-A80 ratified ✅ (see <a href="#01-proposed-adrs-delivered-with-this-rewrite">Part 0.1</a>)</li>
+</ul>
+
+<p><strong>Success criteria:</strong></p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">ontology/persistence</code> authored, validated against its own SHACL shapes, documented — ✅ done (Slice 2)</li>
+  <li><code class="language-plaintext highlighter-rouge">tools/persistence</code> compiler implemented, passing its injection corpus and its own test suite — ✅ done (Slice 2): 239 tests passing under <code class="language-plaintext highlighter-rouge">mise run check:persistence</code> at the time; 526 after the follow-on sync and remediation units (2026-09-23)</li>
+  <li><code class="language-plaintext highlighter-rouge">platform/housekeeping</code> module scaffolded with the contracts, configuration model, and generated queries described in <a href="../../architecture/decisions/ADR-A80-housekeeping-component-boundary.md">ADR-A80</a> — not started (Slice 3)</li>
+  <li><code class="language-plaintext highlighter-rouge">ontology-architecture.md</code> and the root <code class="language-plaintext highlighter-rouge">README.md</code> updated per the Design First contract’s “kept up to date” list — ✅ done (Slice 2)</li>
+  <li>Status recorded in <code class="language-plaintext highlighter-rouge">docs/developer/status/rdf-sparql-patterns-status.md</code> — ✅ done</li>
+  <li>No SPI code, no Request Query Mapping library, no Query Execution component delivered by this plan (see <a href="#part-5--explicitly-out-of-scope">Part 5</a>) — ✅ held throughout Slice 2</li>
+</ul>
+
+<hr />
+
+<h2 id="part-0--dependencies-ordering-and-governance">Part 0 — Dependencies, ordering, and governance</h2>
+
+<h3 id="01-proposed-adrs-delivered-with-this-rewrite">0.1 Proposed ADRs delivered with this rewrite</h3>
+
+<p>Per the Design First rule, a plan of this scope is preceded by a proposed ADR. Three were delivered with this rewrite and have since been ratified (Status: Accepted):</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>ADR</th>
+      <th>Decision</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="../../architecture/decisions/ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md">ADR-A78</a></td>
+      <td><code class="language-plaintext highlighter-rouge">ontology/persistence</code> substrate: six independently scopable dimensions, five scope kinds, a fixed precedence algorithm, two boundary mechanisms behind two authoring surfaces</td>
+    </tr>
+    <tr>
+      <td><a href="../../architecture/decisions/ADR-A79-persistence-compiler-toolchain.md">ADR-A79</a></td>
+      <td><code class="language-plaintext highlighter-rouge">tools/persistence</code> compiler: design-time only, template-based, injection-safe by construction, explicit exclusion of Request Query Mapping and Query Execution</td>
+    </tr>
+    <tr>
+      <td><a href="../../architecture/decisions/ADR-A80-housekeeping-component-boundary.md">ADR-A80</a></td>
+      <td><code class="language-plaintext highlighter-rouge">platform/housekeeping</code>: contracts and configuration model now, execution engine deferred alongside the SPI</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="02-hard-ordering">0.2 Hard ordering</h3>
+
+<p>No external blockers beyond ADR ratification. Slice 2 must complete before Slice 3 begins, because the housekeeping module’s generated queries are produced by the Slice 2 compiler.</p>
+
+<h3 id="03-what-this-plan-does-not-schedule">0.3 What this plan does not schedule</h3>
+
+<p>Three items depend on the store SPI (proposed A75), which this plan does not build:</p>
+
+<ol>
+  <li>The store SPI itself.</li>
+  <li>A runtime “Request Query Mapping” library binding compiled templates and live requests to an SPI.</li>
+  <li>A “Query Execution” component rewriting a compiled template’s dialect for a specific backend at request time.</li>
+</ol>
+
+<p>All three are recorded as open design questions in <a href="/developer/plans/lattice-platform-agentic-development-v0.2.html">lattice-platform-agentic-development-v0.2.md</a>, Part 13, rows 11 and 12, and Part 6 of that plan carries a note that its ingestion and query-plane slices need revision once this plan’s Slice 2 lands, because several of those slices currently assume ad hoc query construction this plan’s compiler is meant to replace.</p>
+
+<hr />
+
+<h2 id="part-1--slice-breakdown">Part 1 — Slice breakdown</h2>
+
+<h3 id="11-slice-1--core-patterns-and-design-specs-complete">1.1 Slice 1 — Core patterns and design specs (complete)</h3>
+
+<p><strong>Original objective:</strong> document each of the five core patterns (K, O, C, T, Q) as a design spec with runnable SPARQL examples.</p>
+
+<p><strong>Status: fulfilled</strong>, not by the five fragmented documents originally planned under <code class="language-plaintext highlighter-rouge">docs/architecture/design-patterns/</code>, but by the single consolidated <a href="/architecture/rdf-sparql-patterns-guide.html">rdf-sparql-patterns-guide.md</a>, which covers every sub-pattern (P0–P7, O1–O5, §1.1–1.6, A1–A7, F1–F13, QP1–QP5) with more worked Turtle and SPARQL than the original slice scoped, in one navigable document rather than five. No further work is scheduled against this slice. Its validation, a documentation review rather than a runnable test suite, is recorded in this plan’s <a href="/developer/status/rdf-sparql-patterns-status.html">status record</a>.</p>
+
+<h3 id="12-slice-2--persistence-profile-substrate-and-compiler-toolchain--complete">1.2 Slice 2 — Persistence profile substrate and compiler toolchain (✅ complete)</h3>
+
+<p><strong>Slice identifier:</strong> <code class="language-plaintext highlighter-rouge">persistence-substrate-and-compiler</code></p>
+
+<p><strong>Objective:</strong> author <code class="language-plaintext highlighter-rouge">ontology/persistence</code>, implement <code class="language-plaintext highlighter-rouge">tools/persistence</code>, and deliver the policy enforcement (lint, ArchUnit, injection corpus) that keeps both honest, per <a href="../../architecture/decisions/ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md">ADR-A78</a> and <a href="../../architecture/decisions/ADR-A79-persistence-compiler-toolchain.md">ADR-A79</a>.</p>
+
+<p><strong>Deliverables:</strong></p>
+
+<ol>
+  <li><strong><code class="language-plaintext highlighter-rouge">ontology/persistence</code></strong> (Turtle, literate spec, matching the <code class="language-plaintext highlighter-rouge">ontology/mork</code> and <code class="language-plaintext highlighter-rouge">ontology/surface</code> layout convention):
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">ontology/persistence/README.md</code> — purpose, scope, the <code class="language-plaintext highlighter-rouge">dal:</code> prefix, worked examples (at least the three from <a href="/developer/sketches/persistence-profile-substrate.html">the sketch</a>: the minimal single-class profile, the lending/credit shared-class conflict, and the <code class="language-plaintext highlighter-rouge">CompositePropertyBoundary</code> aggregate declared via a SHACL shape)</li>
+      <li><code class="language-plaintext highlighter-rouge">ontology/persistence/spec/persistence.ttl</code> — the vocabulary in <a href="/developer/sketches/persistence-profile-substrate.html#appendix-a--ontologypersistence-vocabulary-indicative">sketch Appendix A</a>, reviewed and finalised, not copied verbatim</li>
+      <li><code class="language-plaintext highlighter-rouge">ontology/persistence/shapes/constraints.ttl</code> — the self-validating SHACL shapes from <a href="/developer/sketches/persistence-profile-substrate.html#39-shacl-shapes-for-ontologypersistence-itself">sketch §3.9</a>, including the <code class="language-plaintext highlighter-rouge">SharedClassProfileWarning</code> check</li>
+      <li><code class="language-plaintext highlighter-rouge">ontology/persistence/examples/</code> — at least: a single-class baseline profile, a namespace-wide profile, the lending/credit graph-pattern-scoped pair, a <code class="language-plaintext highlighter-rouge">CompositePropertyBoundary</code> example (SHACL shape is the only authoring surface, per <a href="/developer/sketches/persistence-profile-substrate.html#41-two-authoring-surfaces-two-runtime-mechanisms">sketch §4.1</a>), a sample <code class="language-plaintext highlighter-rouge">dal:CapabilitySpec</code> and its resulting <code class="language-plaintext highlighter-rouge">dal:CapabilityCheck</code>, and one deliberately invalid configuration per row of <a href="/developer/sketches/persistence-profile-substrate.html#35-cross-axis-consistency-checks">sketch §3.5</a>’s table, used as negative fixtures</li>
+      <li><code class="language-plaintext highlighter-rouge">ontology/persistence/docs/</code> — the precedence algorithm and the boundary-strategy design, written for a reader who has not read the sketch, cross-referencing it and the guide rather than repeating them</li>
+    </ul>
+  </li>
+  <li><strong><code class="language-plaintext highlighter-rouge">tools/persistence</code></strong> (Python package, <code class="language-plaintext highlighter-rouge">mise bootstrap:persistence</code> / <code class="language-plaintext highlighter-rouge">mise check:persistence</code>, following <code class="language-plaintext highlighter-rouge">tools/surface</code>’s <code class="language-plaintext highlighter-rouge">pyproject.toml</code> and package layout), two subcommands per <a href="/developer/sketches/persistence-profile-substrate.html#52-the-compiler-pipeline">sketch §5.2</a>:
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">compile</code>: loader (parses <code class="language-plaintext highlighter-rouge">ontology/persistence</code> graphs, an adopter’s applied ontology, and an <em>optional</em> <code class="language-plaintext highlighter-rouge">dal:CapabilitySpec</code> — never a live backend connection), resolver (implements <a href="/developer/sketches/persistence-profile-substrate.html#34-precedence-and-resolution-algorithm">sketch §3.4</a>’s algorithm per dimension, per target, producing <code class="language-plaintext highlighter-rouge">ProfileAmbiguityError</code> on unresolved ties), validator (every row of <a href="/developer/sketches/persistence-profile-substrate.html#35-cross-axis-consistency-checks">sketch §3.5</a> and the two boundary-strategy checks in <a href="/developer/sketches/persistence-profile-substrate.html#46-boundary-strategy-conflicts">sketch §4.6</a>, each a named exception type), capability self-check (implements <a href="/developer/sketches/persistence-profile-substrate.html#36-reasoning-dependency-and-capability-self-checks">sketch §3.6</a>’s unconditional <code class="language-plaintext highlighter-rouge">dal:CapabilityRequirement</code> computation and the optional <code class="language-plaintext highlighter-rouge">dal:CapabilityCheck</code> against a supplied spec), and a report writer emitting the <code class="language-plaintext highlighter-rouge">dal:CompiledProfile</code> graph (Turtle) with its <code class="language-plaintext highlighter-rouge">dal:GeneratedOperation</code>s and <code class="language-plaintext highlighter-rouge">dal:ParameterBinding</code>s, per <a href="/developer/sketches/persistence-profile-substrate.html#62-compile-output-the-compiled-profile-ttl-canonical">sketch §6.2</a></li>
+      <li><code class="language-plaintext highlighter-rouge">instantiate</code>: template renderer, <code class="language-plaintext highlighter-rouge">chevron</code>-based, the <code class="language-plaintext highlighter-rouge">SparqlTerm</code>/<code class="language-plaintext highlighter-rouge">Iri</code>/<code class="language-plaintext highlighter-rouge">Literal</code>/<code class="language-plaintext highlighter-rouge">Var</code> encoder hierarchy and the type-enforced <code class="language-plaintext highlighter-rouge">render()</code> function from <a href="/developer/sketches/persistence-profile-substrate.html#53-templating-and-injection-safety-in-the-instantiate-stage">sketch §5.3</a>, never a bare string reaching a template context, reading a <code class="language-plaintext highlighter-rouge">dal:CompiledProfile</code> plus the checked-in template library and producing <code class="language-plaintext highlighter-rouge">.rq</code>/<code class="language-plaintext highlighter-rouge">.ru</code> files, per <a href="/developer/sketches/persistence-profile-substrate.html#64-instantiate-output-generic-sparql-text-optional-derived">sketch §6.4</a></li>
+      <li>templates: one <code class="language-plaintext highlighter-rouge">.mustache</code> file per generated operation, checked in under <code class="language-plaintext highlighter-rouge">tools/persistence/templates/</code>, each with a stable <code class="language-plaintext highlighter-rouge">dal:Template</code> identifier, covering at minimum create-if-absent, CAS-replace (<code class="language-plaintext highlighter-rouge">NamedGraphBoundary</code> and <code class="language-plaintext highlighter-rouge">CompositePropertyBoundary</code> variants), tombstone-delete, key-claim write and retire, append (event grain), and the two housekeeping-facing audit queries Slice 3 needs (gap-completeness scan, fork detection), reusing the guide’s own worked SPARQL from Chapters 6, 7, 10, 19, and 24 as the reference shape for each template</li>
+      <li>CLI: <code class="language-plaintext highlighter-rouge">python -m persistence compile &lt;config-dir&gt; [--capability-spec &lt;spec.ttl&gt;] --out &lt;compiled-profile.ttl&gt;</code> and <code class="language-plaintext highlighter-rouge">python -m persistence instantiate &lt;compiled-profile.ttl&gt; --template-dir &lt;dir&gt; --out &lt;dir&gt;</code></li>
+    </ul>
+  </li>
+  <li><strong>Injection corpus and property tests</strong>, scoped to <code class="language-plaintext highlighter-rouge">instantiate</code> only, since <code class="language-plaintext highlighter-rouge">compile</code> never produces SPARQL text (<code class="language-plaintext highlighter-rouge">tools/persistence/src/persistence/test_injection.py</code> or equivalent):
+    <ul>
+      <li>the adversarial corpus from <a href="/developer/sketches/persistence-profile-substrate.html#53-templating-and-injection-safety-in-the-instantiate-stage">sketch §5.3</a>: unbalanced braces, embedded SPARQL keywords, quote and backslash sequences, bidirectional-override and zero-width Unicode</li>
+      <li>a parse-count assertion using <code class="language-plaintext highlighter-rouge">rdflib.plugins.sparql.parser</code> against every rendered template for every corpus entry</li>
+      <li>a positive fixture set proving the encoder accepts every valid IRI and literal form the guide’s own examples use, so the corpus cannot be satisfied by simply rejecting everything</li>
+    </ul>
+  </li>
+  <li><strong>Policy enforcement</strong>, expanding the original plan’s Slice 2 policy section rather than discarding it:
+    <ul>
+      <li><strong>Python lint</strong>, applied to <code class="language-plaintext highlighter-rouge">tools/persistence</code> specifically: ban any <code class="language-plaintext highlighter-rouge">str</code> literal containing <code class="language-plaintext highlighter-rouge">SELECT</code>/<code class="language-plaintext highlighter-rouge">ASK</code>/<code class="language-plaintext highlighter-rouge">CONSTRUCT</code>/<code class="language-plaintext highlighter-rouge">INSERT</code>/<code class="language-plaintext highlighter-rouge">DELETE</code>/<code class="language-plaintext highlighter-rouge">PREFIX</code> from being passed to <code class="language-plaintext highlighter-rouge">chevron.render</code> except through the package’s own <code class="language-plaintext highlighter-rouge">render()</code> wrapper (an AST-level check, not a regex on file contents, so a refactor cannot silently bypass it). Ban <code class="language-plaintext highlighter-rouge">datetime.now()</code>/<code class="language-plaintext highlighter-rouge">time.time()</code> in the resolver and encoder modules, mirroring the guide’s <a href="/architecture/rdf-sparql-patterns-guide.html#chapter-28--five-rules-and-how-they-are-enforced">QP2</a> rule</li>
+      <li><strong>ArchUnit-equivalent for Python</strong> (since this slice is Python, not Java): a <code class="language-plaintext highlighter-rouge">pytest</code> collection-time check that no module under <code class="language-plaintext highlighter-rouge">persistence.resolver</code> or <code class="language-plaintext highlighter-rouge">persistence.encoder</code> imports <code class="language-plaintext highlighter-rouge">chevron</code> directly, only <code class="language-plaintext highlighter-rouge">persistence.render</code>, so the trust boundary in <a href="../../architecture/decisions/ADR-A79-persistence-compiler-toolchain.md">ADR-A79</a> is enforced by import graph, not by convention</li>
+      <li><strong>CI gates:</strong> the injection corpus (item 3) as a release gate, not merely a test that can go red without blocking, plus a determinism check (L2) that compiling the same configuration twice, with the individuals’ triples permuted, produces byte-identical output, extending the guide’s own <a href="/architecture/rdf-sparql-patterns-guide.html#chapter-28--five-rules-and-how-they-are-enforced">QP4</a> discipline to the compiler itself</li>
+    </ul>
+  </li>
+</ol>
+
+<p><strong>Doc delta (performed in this slice, per the mandatory slice shape):</strong></p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">docs/architecture/ontology-architecture.md</code> gains a section describing <code class="language-plaintext highlighter-rouge">ontology/persistence</code> as a cross-cutting substrate, per <a href="../../architecture/decisions/ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md">ADR-A78</a>’s first consequence</li>
+  <li>root <code class="language-plaintext highlighter-rouge">README.md</code> gains an entry for <code class="language-plaintext highlighter-rouge">ontology/persistence</code> and <code class="language-plaintext highlighter-rouge">tools/persistence</code></li>
+  <li><code class="language-plaintext highlighter-rouge">docs/architecture/decisions/README.md</code> entries for A78/A79 move from Proposed to Accepted once ratified</li>
+</ul>
+
+<p><strong>Validation pack:</strong></p>
+<ul>
+  <li>Test level: L1 (unit, resolver and encoder) + L2 (determinism) + L4 (SHACL validation of the example fixtures) + L8 (injection corpus)</li>
+  <li>Command: <code class="language-plaintext highlighter-rouge">mise check:persistence</code></li>
+  <li>Expected artifacts: a <code class="language-plaintext highlighter-rouge">dal:CompiledProfile</code> (the canonical artifact) for every fixture in <code class="language-plaintext highlighter-rouge">ontology/persistence/examples/</code>, plus <code class="language-plaintext highlighter-rouge">instantiate</code>d <code class="language-plaintext highlighter-rouge">.rq</code>/<code class="language-plaintext highlighter-rouge">.ru</code> files for a representative subset to prove the round trip, an injection-corpus report, a determinism report</li>
+  <li>Deliberate non-coverage: no live SPARQL execution against any store (no SPI exists to execute against), no runtime parameter binding (Request Query Mapping, deferred per <a href="#part-5--explicitly-out-of-scope">Part 5</a>), no store-specific dialect rewriting (Query Execution, deferred)</li>
+</ul>
+
+<p><strong>Traceability:</strong> <code class="language-plaintext highlighter-rouge">docs/traceability/matrix.csv</code> gains rows for ADR-A78, ADR-A79, and every guide chapter listed in <a href="/developer/sketches/persistence-profile-substrate.html#part-8--traceability">sketch Part 8</a>, each linked to the test IDs in <code class="language-plaintext highlighter-rouge">tools/persistence</code>’s test suite.</p>
+
+<p><strong>Token estimate (planning only, to be checked against actuals):</strong> ontology authoring and shapes, roughly 1.5–2.5M tokens. Compiler implementation including templates and the encoder hierarchy, roughly 4–6M tokens. Injection corpus and determinism tests, roughly 1.5–2.5M tokens. Documentation and doc delta, roughly 1–1.5M tokens. Total order of magnitude 8–12.5M tokens across the slice.</p>
+
+<h3 id="13-slice-3--housekeeping-first-cut">1.3 Slice 3 — Housekeeping first cut</h3>
+
+<p><strong>Slice identifier:</strong> <code class="language-plaintext highlighter-rouge">housekeeping-first-cut</code></p>
+
+<p><strong>Objective:</strong> deliver the contracts, configuration model, and generated queries described in <a href="../../architecture/decisions/ADR-A80-housekeeping-component-boundary.md">ADR-A80</a>, with no store-calling execution.</p>
+
+<p><strong>Changes since this slice was scoped (2026-09-23).</strong> The post-3866b21 review remediation (<a href="/developer/status/iri-patterns-post-3866b21-remediation.html">status</a>) changed what the jobs must do. Read <a href="/architecture/rdf-sparql-patterns-guide.html">rdf-sparql-patterns-guide.md</a> §24.2 and §24.4 before starting:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">ForkDetectionJob</code> runs three generated audits, not one: <code class="language-plaintext highlighter-rouge">fork-detection-audit</code> (txn claims per revision) plus the receipt-side <code class="language-plaintext highlighter-rouge">revision-multi-txn-audit</code> and <code class="language-plaintext highlighter-rouge">txn-multi-revision-audit</code>, which survive txn-claim pruning.</li>
+  <li><code class="language-plaintext highlighter-rouge">GapCompletenessScanJob</code> runs the row-driven <code class="language-plaintext highlighter-rouge">gap-scan-audit</code>, which reads the retention low-water mark.</li>
+  <li><code class="language-plaintext highlighter-rouge">RetentionSweepJob</code> must, before dropping a bucket, advance each affected target’s <code class="language-plaintext highlighter-rouge">pat:retentionLowWaterMark</code> and copy any live-head receipt into <code class="language-plaintext highlighter-rouge">urn:g:txlog/pinned</code>, and must prune only a contiguous prefix. None of this is a generated query yet: the job’s own write queries are a deliverable of this slice.</li>
+  <li>The audits’ <code class="language-plaintext highlighter-rouge">}</code> request-time slot is filled from the family’s <code class="language-plaintext highlighter-rouge">dal:registryGraph</code>, which the compiled profile carries as a binding. The job contract must include that step.</li>
+  <li>The epoch bump (with writer quiesce) and erasure-register replay are restore-runbook steps (§24.4). Decide in this slice whether they belong to housekeeping or to restore tooling, and record the answer against ADR-A80.</li>
+</ul>
+
+<p><strong>Deliverables:</strong></p>
+
+<ol>
+  <li><strong><code class="language-plaintext highlighter-rouge">platform/housekeeping</code></strong> Maven module, <code class="language-plaintext highlighter-rouge">org.nebularis.lattice.housekeeping</code>, added to <code class="language-plaintext highlighter-rouge">platform/pom.xml</code>’s <code class="language-plaintext highlighter-rouge">&lt;modules&gt;</code>:
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">HousekeepingJob</code>, <code class="language-plaintext highlighter-rouge">JobContext</code>, <code class="language-plaintext highlighter-rouge">JobResult</code> interfaces, per <a href="/developer/sketches/persistence-profile-substrate.html#56-housekeeping-first-cut">sketch §5.6</a>’s contract table, with no implementation that opens a store connection</li>
+      <li><code class="language-plaintext highlighter-rouge">JobContext</code> accepts a <code class="language-plaintext highlighter-rouge">dal:CompiledProfile</code> and <code class="language-plaintext highlighter-rouge">dal:CapabilityRequirement</code> (the Slice 2 compiler’s own output types), read-only, never re-deriving resolution</li>
+      <li>the five job types named in the sketch: <code class="language-plaintext highlighter-rouge">UniquenessReconcilerJob</code>, <code class="language-plaintext highlighter-rouge">GapCompletenessScanJob</code>, <code class="language-plaintext highlighter-rouge">ForkDetectionJob</code>, <code class="language-plaintext highlighter-rouge">RetentionSweepJob</code>, <code class="language-plaintext highlighter-rouge">BoundaryBudgetJob</code>, each as an interface implementation stub whose <code class="language-plaintext highlighter-rouge">run()</code> throws <code class="language-plaintext highlighter-rouge">UnsupportedOperationException("execution engine deferred, see ADR-A80")</code>, never a silent no-op that could be mistaken for success</li>
+      <li>the operational configuration model (cadence, batch size, dry-run/enforce, alert sink), kept in a Java-native configuration class, explicitly not RDF-backed, with a comment cross-referencing the <a href="/architecture/data-architecture.html">data-architecture.md</a> realm split this decision follows</li>
+    </ul>
+  </li>
+  <li>
+    <p><strong>Generated queries</strong>, produced by running the Slice 2 compiler’s <code class="language-plaintext highlighter-rouge">instantiate</code> stage for each job type, checked into <code class="language-plaintext highlighter-rouge">platform/housekeeping/src/main/resources/queries/</code>, never hand-written inline in Java</p>
+  </li>
+  <li><strong>Documentation:</strong>
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">platform/housekeeping/README.md</code> — configuration split, job taxonomy, the four-stage roadmap from <a href="../../architecture/decisions/ADR-A80-housekeeping-component-boundary.md">ADR-A80</a>, and an explicit statement of what <code class="language-plaintext highlighter-rouge">run()</code> does today (throws, by design) so no future reader mistakes the stub for a bug</li>
+      <li><code class="language-plaintext highlighter-rouge">docs/architecture/platform-housekeeping.md</code> — the architecture-level counterpart, covering the same ground at the level <a href="/architecture/data-architecture.html">data-architecture.md</a> and <a href="/architecture/ontology-architecture.html">ontology-architecture.md</a> are written at, including a data-flow diagram from compiled profile through <code class="language-plaintext highlighter-rouge">instantiate</code> to (future) execution engine</li>
+    </ul>
+  </li>
+</ol>
+
+<p><strong>Doc delta (performed in this slice):</strong></p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">docs/architecture/decisions/README.md</code> entry for A80 moves from Proposed to Accepted once ratified</li>
+  <li>root <code class="language-plaintext highlighter-rouge">README.md</code> gains an entry for <code class="language-plaintext highlighter-rouge">platform/housekeeping</code></li>
+  <li><code class="language-plaintext highlighter-rouge">docs/developer/plans/lattice-platform-agentic-development-v0.2.md</code> Part 6 note (already added by this rewrite’s companion edit, see <a href="#part-4--integration-with-the-epic-plan">Part 4</a>) is checked for continued accuracy once this slice’s actual module shape is known</li>
+</ul>
+
+<p><strong>Validation pack:</strong></p>
+<ul>
+  <li>Test level: L0 (module builds, one no-op test per interface) + L1 (unit tests on the configuration model’s parsing and validation) + L3 (contract: the generated query resources parse as valid SPARQL, checked the same way Slice 2’s injection corpus checks its own output)</li>
+  <li>Command: <code class="language-plaintext highlighter-rouge">mvn -pl platform/housekeeping -am verify</code></li>
+  <li>Expected artifacts: a build report, the generated query resources, the README and architecture doc</li>
+  <li>Deliberate non-coverage: no job actually runs against a store (explicit, by design, per <a href="../../architecture/decisions/ADR-A80-housekeeping-component-boundary.md">ADR-A80</a>), no scheduler, no alert-sink integration</li>
+</ul>
+
+<p><strong>Traceability:</strong> <code class="language-plaintext highlighter-rouge">docs/traceability/matrix.csv</code> gains rows for ADR-A80, linked to the guide’s P7/S3/F5 references and to the Slice 2 compiler’s generated-query test IDs for the housekeeping templates specifically.</p>
+
+<p><strong>Token estimate (planning only):</strong> Java module scaffolding and contracts, roughly 1–1.5M tokens. Configuration model and its tests, roughly 1M tokens. README and architecture document, roughly 1–1.5M tokens. Total order of magnitude 3–4M tokens.</p>
+
+<hr />
+
+<h2 id="part-2--execution-plan-and-dependencies">Part 2 — Execution plan and dependencies</h2>
+
+<h3 id="timeline">Timeline</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Slice</th>
+      <th>Identifier</th>
+      <th>Depends on</th>
+      <th>Estimated tokens</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>1. Core patterns</strong></td>
+      <td><code class="language-plaintext highlighter-rouge">rdf-sparql-core-patterns</code></td>
+      <td>—</td>
+      <td>complete (delivered as the guide)</td>
+    </tr>
+    <tr>
+      <td><strong>ADRs A78–A80</strong></td>
+      <td>—</td>
+      <td>Slice 1 (as prior art)</td>
+      <td>complete (delivered with this rewrite)</td>
+    </tr>
+    <tr>
+      <td><strong>2. Substrate and compiler</strong></td>
+      <td><code class="language-plaintext highlighter-rouge">persistence-substrate-and-compiler</code></td>
+      <td>ADR-A78, ADR-A79 ratified ✅</td>
+      <td>✅ complete</td>
+    </tr>
+    <tr>
+      <td><strong>3. Housekeeping first cut</strong></td>
+      <td><code class="language-plaintext highlighter-rouge">housekeeping-first-cut</code></td>
+      <td>Slice 2 complete ✅ (ADR-A80 already ratified ✅)</td>
+      <td>3–4M (not started)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Total remaining scope:</strong> order of magnitude 11–16.5M tokens across Slices 2 and 3. These figures are rough planning estimates. Record actual consumption per slice in the status file at completion, so future estimates in this style improve.</p>
+
+<h3 id="entry-and-exit-criteria">Entry and exit criteria</h3>
+
+<p><strong>Entry (whole plan):</strong></p>
+<ul>
+  <li>Guide complete ✅</li>
+  <li>Sketch complete ✅</li>
+  <li>ADR-A78, ADR-A79, ADR-A80 ratified ✅</li>
+</ul>
+
+<p><strong>Exit (whole plan):</strong></p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">ontology/persistence</code> authored and self-validating</li>
+  <li><code class="language-plaintext highlighter-rouge">tools/persistence</code> implemented, injection corpus and determinism tests green</li>
+  <li><code class="language-plaintext highlighter-rouge">platform/housekeeping</code> scaffolded per <a href="../../architecture/decisions/ADR-A80-housekeeping-component-boundary.md">ADR-A80</a></li>
+  <li><code class="language-plaintext highlighter-rouge">ontology-architecture.md</code>, root <code class="language-plaintext highlighter-rouge">README.md</code>, and the decisions index updated</li>
+  <li>Status record complete</li>
+  <li><code class="language-plaintext highlighter-rouge">docs/traceability/matrix.csv</code> rows present for every claimed requirement</li>
+</ul>
+
+<hr />
+
+<h2 id="part-3--success-criteria-and-validation">Part 3 — Success criteria and validation</h2>
+
+<h3 id="acceptance-criteria-5-step-gate-per-githubcopilot-instructionsmd">Acceptance criteria (5-step gate, per <code class="language-plaintext highlighter-rouge">.github/copilot-instructions.md</code>)</h3>
+
+<p><strong>Step 1: Review VPs before running.</strong> Confirm the injection corpus in Slice 2 actually attempts the failure modes named in <a href="/developer/sketches/persistence-profile-substrate.html#53-templating-and-injection-safety-in-the-instantiate-stage">sketch §5.3</a>, not a weaker substitute, and that Slice 3’s deliberate <code class="language-plaintext highlighter-rouge">UnsupportedOperationException</code> stubs are not mistaken for missing test coverage.</p>
+
+<p><strong>Step 2: Run the single command per slice.</strong></p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise check:persistence
+mvn <span class="nt">-pl</span> platform/housekeeping <span class="nt">-am</span> verify
+</code></pre></div></div>
+
+<p><strong>Step 3: Inspect named artifacts.</strong> Compiled profile reports and generated SPARQL for every example fixture, the injection-corpus and determinism reports, the housekeeping module’s generated query resources, both new architecture documents.</p>
+
+<p><strong>Step 4: Adversarial probe.</strong> Pick one injection-corpus entry and demonstrate the encoder fails open to rejection, not silent pass-through, by temporarily reverting the encoder to naive string interpolation and showing the corpus test catches it. Pick one cross-axis consistency check from <a href="/developer/sketches/persistence-profile-substrate.html#35-cross-axis-consistency-checks">sketch §3.5</a> and demonstrate the compiler accepts the invalid configuration when the check is disabled.</p>
+
+<p><strong>Step 5: Sign-off</strong> in <code class="language-plaintext highlighter-rouge">docs/developer/validation/LOG.md</code>, naming both slice IDs, and the ADR ratification decision.</p>
+
+<hr />
+
+<h2 id="part-4--integration-with-the-epic-plan">Part 4 — Integration with the epic plan</h2>
+
+<p><a href="/developer/plans/lattice-platform-agentic-development-v0.2.html">lattice-platform-agentic-development-v0.2.md</a> Part 6 (Phase 2, ingestion and query planes) is marked, in the same edit that accompanies this rewrite, as pending revision once this plan’s Slice 2 lands, because P2.1 (mapping plan compiler), P2.3 (ingestion gateway), and P2.4 (query and decision plane) currently assume SPARQL is constructed ad hoc rather than compiled from a <code class="language-plaintext highlighter-rouge">dal:</code> profile. That revision is not scoped here. Part 13 of the same document gains two new open-question rows for the Request Query Mapping and Query Execution items this plan excludes.</p>
+
+<hr />
+
+<h2 id="part-5--explicitly-out-of-scope">Part 5 — Explicitly out of scope</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Item</th>
+      <th>Why</th>
+      <th>Recorded</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Store SPI (proposed A75)</td>
+      <td>Its shape is undecided, and both excluded items below depend on it</td>
+      <td>not yet an ADR, referenced throughout the guide and this plan as pending</td>
+    </tr>
+    <tr>
+      <td>Request Query Mapping library</td>
+      <td>Needs the SPI to inject, would need redoing once the SPI exists</td>
+      <td><a href="/developer/plans/lattice-platform-agentic-development-v0.2.html">lattice-platform-agentic-development-v0.2.md</a> Part 13, row 11</td>
+    </tr>
+    <tr>
+      <td>Query Execution component</td>
+      <td>Same dependency, plus a live-request-time SPARQL rewriting concern this plan does not want to solve twice</td>
+      <td><a href="/developer/plans/lattice-platform-agentic-development-v0.2.html">lattice-platform-agentic-development-v0.2.md</a> Part 13, row 12</td>
+    </tr>
+    <tr>
+      <td>Store-specific adapter documentation</td>
+      <td>Covered conceptually by the guide’s <a href="/architecture/rdf-sparql-patterns-guide.html#chapter-26--store-by-store">Chapter 26</a> already, and concretely blocked on the SPI existing to adapt to</td>
+      <td>removed from this plan per the commissioning instruction, not rescheduled elsewhere yet</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="appendix-reference-documents">Appendix: Reference documents</h2>
+
+<ul>
+  <li><strong>Guide:</strong> <a href="/architecture/rdf-sparql-patterns-guide.html">rdf-sparql-patterns-guide.md</a></li>
+  <li><strong>Sketch:</strong> <a href="/developer/sketches/persistence-profile-substrate.html">persistence-profile-substrate.md</a></li>
+  <li><strong>ADRs:</strong> <a href="../../architecture/decisions/ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md">A78</a>, <a href="../../architecture/decisions/ADR-A79-persistence-compiler-toolchain.md">A79</a>, <a href="../../architecture/decisions/ADR-A80-housekeeping-component-boundary.md">A80</a></li>
+  <li><strong>Prior notes:</strong> <code class="language-plaintext highlighter-rouge">docs/developer/notes/</code> (Uniqueness, Ordering, Concurrency, Combined), consolidated into the guide</li>
+  <li><strong>Epic plan:</strong> <a href="/developer/plans/lattice-platform-agentic-development-v0.2.html">lattice-platform-agentic-development-v0.2.md</a></li>
+</ul>

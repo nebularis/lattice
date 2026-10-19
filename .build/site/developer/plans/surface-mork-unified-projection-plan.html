@@ -1,0 +1,391 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="surface-mork-unified-projection-program--plan">Surface-MORK Unified Projection Program — Plan</h1>
+
+<p><strong>Unit:</strong> <code class="language-plaintext highlighter-rouge">surface-mork-unified-projection</code><br />
+<strong>Type:</strong> Program/Epic<br />
+<strong>Status:</strong> Phases 0–8 complete; Phases 9–10 planned<br />
+<strong>Last updated:</strong> 2026-09-22<br />
+<strong>Owner:</strong> Surface and MORK maintainers</p>
+
+<hr />
+
+<h2 id="executive-summary">Executive Summary</h2>
+
+<p>This plan adopts a single top-level authoring approach for projection in LATTICE:</p>
+
+<ul>
+  <li>Authors write high-level <strong>Surface contracts</strong> (Promotion, Index, Projection)</li>
+  <li>System lowers those contracts <strong>deterministically into MORK mappings</strong></li>
+  <li>MORK remains <strong>provenance-rich, reviewable, versioned</strong> machine-facing mapping graph</li>
+  <li><strong>Compiler backends</strong> generate executable artefacts (SPARQL, SHACL, SWRL, RML, native IR)</li>
+</ul>
+
+<p>This avoids a third mapping language while preserving MORK’s machine contract for governance, provenance, and review.</p>
+
+<p><strong>Status:</strong> Phases 0–8 are complete and verified ✅ (see <a href="status/surface-mork-unified-projection.md">surface-mork-unified-projection.md</a>). Phases 9–10 are planned, not started.</p>
+
+<hr />
+
+<h2 id="architecture">Architecture</h2>
+
+<h3 id="core-pipeline">Core Pipeline</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Domain and substrate declarations
+        ↓
+Surface contracts (Promotion, Index, Projection)
+        ↓
+Surface validator and normaliser
+        ↓
+Surface-to-MORK lowering
+        ↓
+Validated MORK graph
+        ↓
+Target compilers
+  - MORK to SPARQL
+  - MORK to SHACL
+  - MORK to SWRL
+  - MORK to RML
+  - MORK to native IR
+        ↓
+Generated artefacts (with provenance, governance, version records)
+</code></pre></div></div>
+
+<h3 id="responsibility-split">Responsibility Split</h3>
+
+<ul>
+  <li><strong>Surface:</strong> authoring contract, semantic role binding, projection intent, profile and policy declarations</li>
+  <li><strong>MORK:</strong> machine mapping graph, dependencies, parameter bindings, compiler-ready shapes and rules, provenance and governance</li>
+  <li><strong>Compilers:</strong> deterministic lowering to executable targets, backend-specific constraints and diagnostics</li>
+</ul>
+
+<hr />
+
+<h2 id="phases-1-10-roadmap">Phases (1-10 Roadmap)</h2>
+
+<h3 id="phase-0--architecture-lock-and-adr-updates">Phase 0 — Architecture lock and ADR updates</h3>
+<p><strong>Status:</strong> ✅ Complete<br />
+<strong>Scope:</strong></p>
+<ul>
+  <li>ADR set A16–A28 (Surface Projection and MORK governance)</li>
+  <li>Glossary updates for Projection subsystem terminology</li>
+  <li>Architecture decisions signed off</li>
+</ul>
+
+<h3 id="phase-1--surface-projection-specification">Phase 1 — Surface Projection specification</h3>
+<p><strong>Status:</strong> ✅ Complete<br />
+<strong>Scope:</strong></p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">srf:ProjectionContract</code> vocabulary and shapes</li>
+  <li>Projection role-binding resources</li>
+  <li>Projection policy controls</li>
+  <li>Laws for projection fidelity and signature scope composition</li>
+  <li>Examples and defect fixtures</li>
+</ul>
+
+<h3 id="phase-2--surface-compiler-refactor-and-entailment-policy">Phase 2 — Surface compiler refactor and entailment policy</h3>
+<p><strong>Status:</strong> ✅ Complete<br />
+<strong>Scope:</strong></p>
+<ul>
+  <li>Compiler pipeline stages</li>
+  <li>Normalisation stage for all contract kinds</li>
+  <li>Lowering stage interfaces</li>
+  <li>Deterministic minting utilities</li>
+  <li>Entailment-regime handling (NoEntailment, reasoned modes)</li>
+</ul>
+
+<h3 id="phase-3--surface-to-mork-lowering-engine">Phase 3 — Surface-to-MORK lowering engine</h3>
+<p><strong>Status:</strong> ✅ Complete<br />
+<strong>Scope:</strong></p>
+<ul>
+  <li>Lowering rules from Projection contracts to MORK patterns</li>
+  <li>Lowering support for Promotion/Index to MORK (where configured)</li>
+  <li>Parameter bindings and targeting specs</li>
+  <li>Mapping provenance including source contract linkage</li>
+  <li><code class="language-plaintext highlighter-rouge">tools/surface/lowering.py</code> implementation (61/61 tests passing)</li>
+</ul>
+
+<h3 id="phase-4--mork-governance-and-versioning-enhancements">Phase 4 — MORK governance and versioning enhancements</h3>
+<p><strong>Status:</strong> ✅ Complete<br />
+<strong>Scope:</strong></p>
+<ul>
+  <li>Foundation import in MORK ontology</li>
+  <li>Governance state and review-state constraints</li>
+  <li>Mapping set versioning and supersession model</li>
+  <li>Effective time constraints for mapping applicability</li>
+  <li>Migration docs for existing MORK assets</li>
+</ul>
+
+<h3 id="phase-5--compiler-family-implementation">Phase 5 — Compiler family implementation</h3>
+<p><strong>Status:</strong> ✅ Complete<br />
+<strong>Scope:</strong></p>
+<ul>
+  <li>MORK to SPARQL compiler (✅ complete, tested)</li>
+  <li>MORK to SHACL compiler (✅ complete, tested)</li>
+  <li>MORK to SWRL compiler (✅ complete, generated)</li>
+  <li>Shared compiler core (✅ parameter resolution, precedence derivation)</li>
+  <li>MORK to native IR compiler (deferred)</li>
+  <li>Result: 15/15 focused MORK compiler tests passing</li>
+</ul>
+
+<h3 id="phase-6--eligibility-tranche">Phase 6 — Eligibility tranche</h3>
+<p><strong>Status:</strong> ✅ Complete (IntervalContainment strategy only)<br />
+<strong>Scope:</strong></p>
+<ul>
+  <li>Executable IR for Eligibility interval semantics (✅ IntervalContainment)</li>
+  <li>Lowering templates for interval containment Surface to MORK (✅ complete)</li>
+  <li>SPARQL decision backend (✅ complete, verified)</li>
+  <li>SHACL readiness backend (✅ complete, constraints shapes passing)</li>
+  <li>SWRL classification backend (✅ generated, awaiting reasoner verification)</li>
+</ul>
+
+<p><strong>Not yet built:</strong></p>
+<ul>
+  <li>Profile-level aggregate artefacts (<code class="language-plaintext highlighter-rouge">AllRequired</code>/<code class="language-plaintext highlighter-rouge">AnySufficient</code>)</li>
+  <li>Executable Projection Contract (<code class="language-plaintext highlighter-rouge">exp:</code>) domain-binding layer</li>
+  <li>Runtime result tracking (<code class="language-plaintext highlighter-rouge">exe:EvaluationRun</code>, <code class="language-plaintext highlighter-rouge">exe:ConditionResult</code>)</li>
+  <li>Other eligibility strategies (ExactCondition, SetMembership, Wildcard)</li>
+</ul>
+
+<h3 id="phase-7--provenance-and-invalidation-hardening">Phase 7 — Provenance and invalidation hardening</h3>
+<p><strong>Status:</strong> ✅ Complete (depth-1 scope)<br />
+<strong>Scope:</strong></p>
+<ul>
+  <li>Provenance chain from result to source contracts (✅ complete)</li>
+  <li>Read-set capture across Surface/MORK/generated artefacts (✅ complete)</li>
+  <li>Invalidation policy for graph/profile/mapping changes (✅ complete)</li>
+  <li>Regeneration planner for minimal rebuild (✅ tools/surface/invalidation.py)</li>
+  <li>Canonicalisation cutover runbook (✅ srf-canon/1 → srf-canon/2, complete)</li>
+</ul>
+
+<p><strong>Deferred:</strong></p>
+<ul>
+  <li>Deeper-stack freshness tracking</li>
+  <li>Cycle handling on read-set DAG</li>
+  <li>Measured impact cost for stacked regeneration</li>
+</ul>
+
+<h3 id="phase-8--conformance-and-parity-framework">Phase 8 — Conformance and parity framework</h3>
+<p><strong>Status:</strong> ✅ Complete (current Surface/Eligibility scope)<br />
+<strong>Scope:</strong></p>
+<ul>
+  <li>Shared conformance corpus extension (✅ three explicit Surface cases + Eligibility interval)</li>
+  <li>Parity harness for source vs. generated behaviour (✅ tools/surface/parity.py)</li>
+  <li>Regression gates in CI (✅ Phase 8 conformance workflow)</li>
+  <li>Defect fixtures for edge classes (✅ six defect fixtures in Surface suite)</li>
+  <li>SHACL execution and extraction-drift CI gates (✅ mandatory checks)</li>
+</ul>
+
+<p><strong>Verification checklist:</strong> 7/8 items complete; SWRL reasoner integration (item 7) pending.</p>
+
+<hr />
+
+<h3 id="phase-9--migration-and-rollout">Phase 9 — Migration and rollout</h3>
+<p><strong>Status:</strong> 🚧 Not started<br />
+<strong>Scope (planned):</strong></p>
+<ul>
+  <li>Migration guides for Surface and MORK authors</li>
+  <li>Compatibility mode and deprecation policy</li>
+  <li>Phased rollout profiles (draft → review → production)</li>
+  <li>Release checklist and change management</li>
+</ul>
+
+<p><strong>Estimated:</strong> 2–3 weeks</p>
+
+<hr />
+
+<h3 id="phase-10--scale-and-optimization">Phase 10 — Scale and optimization</h3>
+<p><strong>Status:</strong> 🚧 Not started<br />
+<strong>Scope (planned):</strong></p>
+<ul>
+  <li>Performance baselines for lowering and compilers</li>
+  <li>Caching strategy for intermediate graphs</li>
+  <li>Large-vocabulary and large-population stress tests</li>
+  <li>High-throughput generation profile</li>
+</ul>
+
+<p><strong>Estimated:</strong> Duration TBD (performance-dependent)</p>
+
+<hr />
+
+<h2 id="acceptance-criteria">Acceptance Criteria</h2>
+
+<h3 id="authoring-experience--met">Authoring experience (✅ Met)</h3>
+<ol>
+  <li>✅ Domain authors produce valid projection intent without raw MORK internals</li>
+  <li>✅ Same projection contract generates at least two backend families (SPARQL, SHACL confirmed; SWRL generated)</li>
+  <li>✅ Authoring docs sufficient for first successful compile in one session</li>
+</ol>
+
+<h3 id="correctness--met">Correctness (✅ Met)</h3>
+<ol>
+  <li>✅ Deterministic regeneration for identical inputs (verified by test suite)</li>
+  <li>✅ Parity between source and generated artefacts (tools/surface/parity.py)</li>
+  <li>✅ Traceable provenance from output to source (full chain implemented)</li>
+</ol>
+
+<h3 id="governance--met-for-current-scope">Governance (✅ Met for current scope)</h3>
+<ol>
+  <li>✅ Production compile mode rejects unapproved mappings (Phase 4 implementation)</li>
+  <li>✅ Mapping version and effective date policies enforced (Phase 4 SHACL shapes)</li>
+  <li>✅ Review state and provenance queryable (Foundation alignment complete)</li>
+</ol>
+
+<h3 id="eligibility-readiness--met-for-intervalcontainment">Eligibility readiness (✅ Met for IntervalContainment)</h3>
+<ol>
+  <li>✅ Interval containment works end-to-end</li>
+  <li>✅ Undetermined outcomes explicit with diagnostics</li>
+  <li>✅ SPARQL and native backends agree (15/15 tests + worked example verification)</li>
+</ol>
+
+<hr />
+
+<h2 id="repository-structure">Repository Structure</h2>
+
+<h3 id="surface-layer">Surface layer</h3>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">ontology/surface/README.md</code></li>
+  <li><code class="language-plaintext highlighter-rouge">ontology/surface/spec/surface.ttl</code> (Projection subsystem added)</li>
+  <li><code class="language-plaintext highlighter-rouge">ontology/surface/vocab/surface-vocab.ttl</code></li>
+  <li><code class="language-plaintext highlighter-rouge">ontology/surface/shapes/structural.ttl</code>, <code class="language-plaintext highlighter-rouge">constraints.ttl</code></li>
+  <li><code class="language-plaintext highlighter-rouge">ontology/surface/examples/</code> (Projection examples)</li>
+  <li><code class="language-plaintext highlighter-rouge">ontology/surface/execution/</code> (Generated packages)</li>
+  <li><code class="language-plaintext highlighter-rouge">tools/surface/</code> (compiler, lowering, invalidation, parity engines)</li>
+</ul>
+
+<h3 id="mork-layer">MORK layer</h3>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">ontology/mork/spec/Mork.ttl</code>, <code class="language-plaintext highlighter-rouge">Mork.owl</code></li>
+  <li><code class="language-plaintext highlighter-rouge">ontology/mork/README.md</code></li>
+  <li><code class="language-plaintext highlighter-rouge">tools/mork_compilers/</code> (SPARQL, SHACL, SWRL, RML backends)</li>
+  <li><code class="language-plaintext highlighter-rouge">tools/mork/</code> (validators)</li>
+</ul>
+
+<h3 id="eligibility-integration">Eligibility integration</h3>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">ontology/eligibility/</code> (declarative sources)</li>
+  <li><code class="language-plaintext highlighter-rouge">tools/mork_compilers/eligibility_ir.py</code> (executable semantics)</li>
+</ul>
+
+<h3 id="architecture-and-governance">Architecture and governance</h3>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">docs/architecture/decisions/ADR-A16</code> through <code class="language-plaintext highlighter-rouge">ADR-A28</code></li>
+  <li><code class="language-plaintext highlighter-rouge">docs/architecture/</code> (solution-design-specification.md includes Surface/MORK section)</li>
+  <li><code class="language-plaintext highlighter-rouge">docs/developer/status/surface-mork-unified-projection.md</code> (tracking)</li>
+  <li><code class="language-plaintext highlighter-rouge">docs/developer/status/surface-outstanding-items.md</code> (decision log)</li>
+</ul>
+
+<hr />
+
+<h2 id="risk-register-and-mitigations">Risk Register and Mitigations</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Risk</th>
+      <th>Mitigation</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Surface scope expansion causes conceptual drift</td>
+      <td>Strict subsystem boundaries (Promotion/Index/Projection), separate shapes, separate compiler modules</td>
+    </tr>
+    <tr>
+      <td>MORK governance changes break compatibility</td>
+      <td>Compatibility mode profiles, migration scripts, staged validation levels</td>
+    </tr>
+    <tr>
+      <td>Backend semantics divergence</td>
+      <td>Shared executable IR + parity tests (all 15 MORK tests pass)</td>
+    </tr>
+    <tr>
+      <td>LLM completion introduces unstable mappings</td>
+      <td>Deterministic mode default, governance gate for LLM nodes</td>
+    </tr>
+    <tr>
+      <td>Performance cost at scale</td>
+      <td>Phase 10 optimization plan with caching and incremental regeneration</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="governance-model--three-operational-modes">Governance Model — Three Operational Modes</h2>
+
+<h3 id="draft-mode">Draft mode</h3>
+<ul>
+  <li>Allows unapproved templates and optional LLM completion</li>
+  <li>For experimentation and prototyping</li>
+</ul>
+
+<h3 id="review-mode">Review mode</h3>
+<ul>
+  <li>Requires explicit review state and provenance completeness</li>
+  <li>For collaborative development</li>
+</ul>
+
+<h3 id="production-mode">Production mode</h3>
+<ul>
+  <li>Deterministic lowering only (LLM completion requires explicit permission)</li>
+  <li>Approved governance state required for mappings and templates</li>
+  <li>Release parity gates enforced: determinism ✅, parity ✅, provenance ✅, governance ✅</li>
+</ul>
+
+<p>A release cannot pass production gate without all four checks.</p>
+
+<hr />
+
+<h2 id="completed-deliverables-checklist">Completed Deliverables Checklist</h2>
+
+<ul class="task-list">
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" checked="checked" />ADR set A16–A28 (all signed)</li>
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" checked="checked" />Surface Projection subsystem spec and vocab</li>
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" checked="checked" />Structural and constraint shapes for Projection</li>
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" checked="checked" />Surface-to-MORK lowering engine (tools/surface/lowering.py)</li>
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" checked="checked" />MORK governance and versioning (Foundation import, shapes)</li>
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" checked="checked" />SPARQL, SHACL, SWRL compiler backends</li>
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" checked="checked" />Eligibility interval containment (15/15 tests)</li>
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" checked="checked" />Invalidation and parity framework</li>
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" checked="checked" />Conformance corpus (Phase 8 gates active)</li>
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" checked="checked" />Defect fixtures (6 edge cases)</li>
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" checked="checked" />Provenance chain implementation</li>
+</ul>
+
+<hr />
+
+<h2 id="next-steps-planned">Next Steps (Planned)</h2>
+
+<ol>
+  <li><strong>Phase 8 final sign-off:</strong> Resolve SWRL reasoner verification blocker (item 7 of checklist)</li>
+  <li><strong>Phase 9 decomposition:</strong> Break migration/rollout into slices; author migration guides</li>
+  <li><strong>Phase 10 planning:</strong> Characterize performance profile; identify caching opportunities</li>
+  <li><strong>Phase 9.1 Pilot:</strong> Migrate one real domain to Surface-MORK; validate compatibility</li>
+</ol>
+
+<hr />
+
+<h2 id="documentation-and-references">Documentation and References</h2>
+
+<ul>
+  <li><strong>Status tracking:</strong> <a href="status/surface-mork-unified-projection.md">surface-mork-unified-projection.md</a></li>
+  <li><strong>Outstanding items:</strong> <a href="status/surface-outstanding-items.md">surface-outstanding-items.md</a></li>
+  <li><strong>Architecture decisions:</strong> <a href="../../architecture/decisions/ADR-A16-surface-projection-mechanism.md">docs/architecture/decisions/ADR-A16</a> through <a href="../../architecture/decisions/ADR-A28-parity-and-conformance-release-gate.md">ADR-A28</a></li>
+  <li><strong>Code:</strong> <a href="../../tools/surface/">tools/surface/</a>, <a href="../../tools/mork_compilers/">tools/mork_compilers/</a></li>
+  <li><strong>Tests:</strong> 61/61 Surface tests, 15/15 MORK compiler tests</li>
+</ul>
+
+<hr />
+
+<h2 id="maintenance">Maintenance</h2>
+
+<p>This plan is updated when:</p>
+<ul>
+  <li>A phase transitions to complete or blocked status</li>
+  <li>A major architectural decision changes scope</li>
+  <li>An acceptance criterion is added or redefined</li>
+</ul>
+
+<p><strong>Last updated:</strong> 2026-09-22<br />
+<strong>Next review:</strong> Phase 8 SWRL verification complete or Phase 9 ratification</p>

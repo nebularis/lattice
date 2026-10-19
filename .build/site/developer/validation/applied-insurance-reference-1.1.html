@@ -1,0 +1,133 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-air-11-drop-the-legacy-contract-module-create-the-layout">Validation Pack: AIR-1.1, drop the legacy contract module, create the layout</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/applied-insurance-reference.html"><code class="language-plaintext highlighter-rouge">applied-insurance-reference</code></a>
+<strong>Machine:</strong> S (Copilot Business). <strong>Branch:</strong> <code class="language-plaintext highlighter-rouge">air/1.1-layout</code>
+<strong>Plan and test cases:</strong> <a href="/developer/plans/applied-insurance-reference-phase-1.html">Phase 1 plan</a> (AIR-1.1)
+<strong>Decisions:</strong> ADR-A98 (decisions 1, 5, 6, 8, and its addendum)</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>The legacy module and its known defect are gone, no ontology or tool file refers to it, and the applied layer’s READMEs describe the layout of ADR-A98.</p>
+
+<h2 id="test-cases">Test cases</h2>
+
+<p>The table in the plan section above. Each row’s result is recorded under Results at
+verification.</p>
+
+<h2 id="one-command">One command</h2>
+
+<p>Run from the repository root on machine R, after <code class="language-plaintext highlighter-rouge">mise run build:ontology-catalog</code>.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:ontology-catalog <span class="o">&amp;&amp;</span> mise run check:ontology-versioning <span class="o">&amp;&amp;</span> <span class="o">!</span> <span class="nb">grep</span> <span class="nt">-rnE</span> <span class="s1">'ontology/nsd|neuro-semantic/insurance/contract|structure-vocab'</span> ontology tools
+</code></pre></div></div>
+
+<h2 id="artefacts-to-inspect">Artefacts to inspect</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">ontology/applied/README.md</code> and <code class="language-plaintext highlighter-rouge">ontology/applied/insurance/domain-README.md</code> against ADR-A98.</li>
+  <li>The <code class="language-plaintext highlighter-rouge">KNOWN_DEFECTS</code> table in <code class="language-plaintext highlighter-rouge">tools/ontology_catalog.py</code>.</li>
+</ul>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<p>No new module is created. <code class="language-plaintext highlighter-rouge">insurance/common/</code> and <code class="language-plaintext highlighter-rouge">classification/</code> are AIR-1.2.</p>
+
+<h2 id="handoff">Handoff</h2>
+
+<p>Written by the building machine when the work is committed. S could not run the command, so R runs it first.</p>
+
+<ul>
+  <li><strong>Built:</strong> removed the legacy module (<code class="language-plaintext highlighter-rouge">git rm</code>: <code class="language-plaintext highlighter-rouge">spec/structure/{contract.ttl,README.md,catalog-v001.xml}</code>, <code class="language-plaintext highlighter-rouge">vocab/structure-vocab.ttl</code>, <code class="language-plaintext highlighter-rouge">shapes/{structural.ttl,constraints.ttl,.version}</code>). Deleted its <code class="language-plaintext highlighter-rouge">KNOWN_DEFECTS</code> entry in <code class="language-plaintext highlighter-rouge">tools/ontology_catalog.py</code>. Rewrote <code class="language-plaintext highlighter-rouge">ontology/applied/README.md</code> (three sharing levels, dependency direction, namespaces, module table). Wrote new <code class="language-plaintext highlighter-rouge">ontology/applied/insurance/domain-README.md</code> (module table, dependencies, namespaces, the dropped module’s release tags, links to the epic and sketches). Added the applied insurance domain row to <code class="language-plaintext highlighter-rouge">docs/architecture/ontology-architecture.md</code> §3. Replaced the “Still open” paragraph in <code class="language-plaintext highlighter-rouge">docs/architecture/ontology-versioning-policy.md</code> with the ADR-A98 decision 6 answer.</li>
+  <li><strong>Not run:</strong> <code class="language-plaintext highlighter-rouge">mise run check:ontology-catalog</code>, <code class="language-plaintext highlighter-rouge">mise run check:ontology-versioning</code> (no runtime on this machine). I did confirm with a plain-text search that <code class="language-plaintext highlighter-rouge">ontology/nsd</code>, <code class="language-plaintext highlighter-rouge">neuro-semantic/insurance/contract</code> and <code class="language-plaintext highlighter-rouge">structure-vocab</code> no longer appear anywhere under <code class="language-plaintext highlighter-rouge">ontology/</code> or <code class="language-plaintext highlighter-rouge">tools/</code> (AIR11-03), which is the one check in this pack’s command I could approximate without <code class="language-plaintext highlighter-rouge">mise</code>.</li>
+  <li><strong>Check first:</strong> <code class="language-plaintext highlighter-rouge">mise run build:ontology-catalog</code> needs to run before <code class="language-plaintext highlighter-rouge">check:ontology-catalog</code>, since the root catalog and any per-directory stub still name the removed <code class="language-plaintext highlighter-rouge">spec/structure/</code> and <code class="language-plaintext highlighter-rouge">vocab/</code> entries until regenerated (lanes §8: catalog regeneration is R-only). <code class="language-plaintext highlighter-rouge">tools/ontology_catalog.py</code>’s now-unused <code class="language-plaintext highlighter-rouge">_UNPARSEABLE</code> constant was left in place — the plan said nothing else in that file changes, and no other <code class="language-plaintext highlighter-rouge">KNOWN_DEFECTS</code> entry uses it, so it’s dead but harmless; remove it separately if that bothers <code class="language-plaintext highlighter-rouge">check:ontology-catalog</code>’s own tests.</li>
+  <li><strong>Deviations from the plan:</strong> none. Every file listed in the plan’s Remove/Edit tables was touched and nothing else was.</li>
+</ul>
+
+<h2 id="results">Results</h2>
+
+<p>Run on machine R, 2026-09-26, on <code class="language-plaintext highlighter-rouge">air/1.1-layout</code> before its rebase onto <code class="language-plaintext highlighter-rouge">main</code>:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Check</th>
+      <th>Result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">mise run build:ontology-catalog</code></td>
+      <td>no catalog changed: the legacy files had no root catalog entries</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:ontology-catalog</code></td>
+      <td>57 tool tests passed, catalog consistent, known defects 3 → 2 (AIR11-01)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:ontology-versioning</code></td>
+      <td>28 in-scope documents (29 before), no unbumped changes, every version listed (AIR11-02)</td>
+    </tr>
+    <tr>
+      <td>search for <code class="language-plaintext highlighter-rouge">ontology/nsd</code>, <code class="language-plaintext highlighter-rouge">neuro-semantic/insurance/contract</code>, <code class="language-plaintext highlighter-rouge">structure-vocab</code> in <code class="language-plaintext highlighter-rouge">ontology/</code> and <code class="language-plaintext highlighter-rouge">tools/</code></td>
+      <td>no match (AIR11-03)</td>
+    </tr>
+    <tr>
+      <td>both READMEs against ADR-A98</td>
+      <td>agree, after one fix below (AIR11-04)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Fixes made on R:</p>
+
+<ol>
+  <li><code class="language-plaintext highlighter-rouge">ontology/applied/README.md</code> said <code class="language-plaintext highlighter-rouge">spec/</code> and <code class="language-plaintext highlighter-rouge">vocab/</code> carry a <code class="language-plaintext highlighter-rouge">.version</code> file. They are versioned
+by <code class="language-plaintext highlighter-rouge">owl:versionIRI</code>, and only <code class="language-plaintext highlighter-rouge">shapes/</code> and <code class="language-plaintext highlighter-rouge">projection/</code> carry <code class="language-plaintext highlighter-rouge">.version</code>. Corrected.</li>
+  <li><code class="language-plaintext highlighter-rouge">tools/ontology_catalog.py</code>: the <code class="language-plaintext highlighter-rouge">_UNPARSEABLE</code> constant, unused once its only entry went, is
+removed. Its tests pass (12).</li>
+</ol>
+
+<p>After the rebase onto <code class="language-plaintext highlighter-rouge">main</code> (AIR-3.1 and the AIR-1.2 and AIR-3.2 briefs), clean, no conflicts:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Check</th>
+      <th>Result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">mise run build:ontology-catalog</code></td>
+      <td>no catalog changed</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:ontology-catalog</code></td>
+      <td>59 tool tests passed (57, plus AIR-3.1’s two examples), catalog consistent, 2 known defects</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:ontology-versioning</code></td>
+      <td>exit 0, 28 in-scope documents, no unbumped changes, every version listed</td>
+    </tr>
+    <tr>
+      <td>AIR11-03 search</td>
+      <td>no match</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Gate, run on R at our request, 2026-09-26:</p>
+
+<ol>
+  <li>Pack reviewed: AIR11-01 to 04 pin the invariant. The negative case (AIR11-03) is the one that
+matters, since a stale reference would keep the dropped namespaces alive.</li>
+  <li>The command passes (above).</li>
+  <li>Artefacts inspected: both READMEs agree with ADR-A98. The release tags the domain README cites
+(<code class="language-plaintext highlighter-rouge">insurance-contract-v0.2.0</code>, <code class="language-plaintext highlighter-rouge">applied-insurance-shapes-v0.1.0</code>) exist.</li>
+  <li>Adversarial probe: putting the removed <code class="language-plaintext highlighter-rouge">KNOWN_DEFECTS</code> entry back makes
+<code class="language-plaintext highlighter-rouge">python tools/ontology_catalog.py check</code> exit 1 (“listed in KNOWN_DEFECTS … but no longer
+defective”). Restored, it exits 0.</li>
+  <li>Sign-off in <code class="language-plaintext highlighter-rouge">LOG.md</code> is the maintainer’s.</li>
+</ol>

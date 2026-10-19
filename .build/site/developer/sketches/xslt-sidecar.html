@@ -1,0 +1,568 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="a-bidirectional-xslt-sidecar-grounded-in-compiler-generated-artefacts">A bidirectional XSLT sidecar, grounded in compiler-generated artefacts</h1>
+
+<p>Version 0.1, draft for review, 2026-10-02.</p>
+
+<p><strong>The position it argues.</strong> Once the persistence compiler (ADR-A78, ADR-A79) and, where present, the
+Surface compiler have run, LATTICE already knows the shape of the data an SPI query returns, because
+that shape is exactly what those compilers generated. A Saxon-hosted XSLT 3.0 engine, run as a
+sidecar process rather than embedded in any one platform component, turns that known shape into
+documents, reports and pages on the way out, and turns external XML on the way in into the triples
+our persistence tier recognises. The same engine, the same hosting, the same security posture serve
+both directions. A MORK compiler backend makes the inbound direction generated rather than
+hand-written, the same way <code class="language-plaintext highlighter-rouge">tools/mork2rml.py</code> already does for RML.</p>
+
+<p>This is deliberately <strong>not</strong> another vertical proof of concept. It is a utility: something another
+stack glues in, not something that owns a stack of its own.</p>
+
+<hr />
+
+<h2 id="contents">Contents</h2>
+
+<ol>
+  <li><a href="#1-relationship-to-existing-work">Relationship to existing work</a></li>
+  <li><a href="#2-what-is-actually-new-here">What is actually new here</a></li>
+  <li><a href="#3-grounding-the-known-shape-of-spi-data">Grounding: the known shape of SPI data</a></li>
+  <li><a href="#4-shape-a-sidecar-not-an-embedded-module">Shape: a sidecar, not an embedded module</a></li>
+  <li><a href="#5-direction-a-egress-sourced-from-compiled-artefacts">Direction A: egress, sourced from compiled artefacts</a></li>
+  <li><a href="#6-direction-b-ingress-a-new-capability">Direction B: ingress, a new capability</a></li>
+  <li><a href="#7-mork-as-a-compiler-target-mork2rmls-sibling">MORK as a compiler target: <code class="language-plaintext highlighter-rouge">mork2rml</code>’s sibling</a></li>
+  <li><a href="#8-the-sidecars-wire-contract">The sidecar’s wire contract</a></li>
+  <li><a href="#9-hosting-security-and-determinism-what-changes-what-does-not">Hosting, security and determinism: what changes, what does not</a></li>
+  <li><a href="#10-what-exists-today">What exists today</a></li>
+  <li><a href="#11-decisions">Decisions</a></li>
+  <li><a href="#12-risks">Risks</a></li>
+  <li><a href="#13-open-questions">Open questions</a></li>
+</ol>
+
+<hr />
+
+<h2 id="1-relationship-to-existing-work">1. Relationship to existing work</h2>
+
+<p><a href="/developer/sketches/xml-egress-and-transformation-kits.html"><code class="language-plaintext highlighter-rouge">xml-egress-and-transformation-kits.md</code></a> already argued, in
+detail, that SPARQL Query Results XML is the right transform source (its §2), that Saxon in Java is
+the right host (its §7), that a transformation kit is query plus stylesheet plus schema plus a
+manifest, published so a third party can run it without our code (its §8), and the determinism and
+security disciplines a transform needs (its §10, §11). None of that is revisited here. Where this
+sketch needs those positions it cites them, and where it departs from that sketch’s assumptions it
+says so explicitly, once, in §2.</p>
+
+<p>That sketch’s own §7.1 already anticipated reuse: “the ingress pipeline’s Route B needs an XSLT 2.0
+processor for the OASIS normaliser and triplifier. One dependency, two uses.” This sketch is the
+generalisation that observation was pointing at, except it is a third and fourth use, not a second:
+egress for any compiled shape, not only LegalRuleML-bearing instruments, and ingress for any external
+XML a MORK mapping can describe, not only the OASIS-specific LegalRuleML normalise-and-triplify
+pipeline in <a href="/developer/sketches/legalruleml-runtime-pipeline.html"><code class="language-plaintext highlighter-rouge">legalruleml-runtime-pipeline.md</code></a>. That pipeline’s
+Route B keeps its own hand-authored OASIS stylesheets and its own RML-based execution. This unit
+does not replace it. §11’s XS-D7 says so explicitly, because the overlap is easy to assume and wrong
+to assume.</p>
+
+<h2 id="2-what-is-actually-new-here">2. What is actually new here</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Existing sketch’s position</th>
+      <th>What stays</th>
+      <th>What this sketch adds</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>SPARQL Query Results XML is the transform source</td>
+      <td>unchanged, cited not re-argued</td>
+      <td>the query is, where possible, one the persistence or Surface compiler already generated, not hand-written (§3)</td>
+    </tr>
+    <tr>
+      <td>Saxon-HE in a Java module</td>
+      <td>unchanged</td>
+      <td>the module is also packaged as a standalone sidecar process, so a non-JVM stack can use it without embedding Java (§4)</td>
+    </tr>
+    <tr>
+      <td>A kit is query + stylesheet + schema + manifest</td>
+      <td>unchanged structure</td>
+      <td>a kit now has a <code class="language-plaintext highlighter-rouge">direction</code> (<code class="language-plaintext highlighter-rouge">egress</code> or <code class="language-plaintext highlighter-rouge">ingress</code>), and an ingress kit’s “query” slot is the external XML’s own schema, not a SPARQL query (§6, §8)</td>
+    </tr>
+    <tr>
+      <td>Generation prevents JSON/XML drift (its §9)</td>
+      <td>unchanged argument, same mechanism</td>
+      <td>extended to a second drift risk: an ingress stylesheet and a MORK mapping graph disagreeing, solved the same way MORK and RML cannot disagree today — by one being compiled from the other (§7)</td>
+    </tr>
+    <tr>
+      <td>“No Saxon extension functions” so any conformant processor runs the kit (its §8.2)</td>
+      <td>unchanged for egress kits</td>
+      <td>ingress kits inherit the same rule, since an ingress stylesheet is just as publishable as an egress one</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Three things are genuinely new, not extensions of something already decided: <strong>grounding</strong> (§3),
+<strong>ingress</strong> (§6), and the <strong>MORK-to-XSLT compiler</strong> (§7). The rest of this sketch is mostly about
+those three.</p>
+
+<h2 id="3-grounding-the-known-shape-of-spi-data">3. Grounding: the known shape of SPI data</h2>
+
+<p>An adopter who has run the persistence compiler’s <code class="language-plaintext highlighter-rouge">instantiate</code> subcommand already has, on disk, a
+set of generic, portable <code class="language-plaintext highlighter-rouge">.rq</code> files: SPARQL text generated from a <code class="language-plaintext highlighter-rouge">dal:CompiledProfile</code>, which was
+itself resolved from the adopter’s own <code class="language-plaintext highlighter-rouge">dal:</code> configuration against <code class="language-plaintext highlighter-rouge">ontology/persistence</code>
+(ADR-A78, ADR-A79). Two consequences follow directly.</p>
+
+<ul>
+  <li><strong>The shape of what that query returns is not a guess.</strong> It is exactly what
+<code class="language-plaintext highlighter-rouge">persistence.operations</code>’s template selection and <code class="language-plaintext highlighter-rouge">persistence.compiler</code>’s emission produced, for
+the target class, the deployment model and the selected operation. A hand-written <code class="language-plaintext highlighter-rouge">query.rq</code> in a
+kit (the existing egress sketch’s §15 step 2) risks drifting from what the compiler would actually
+produce for the same target, in the same way the existing sketch’s §9 worries about JSON and XML
+drifting from each other.</li>
+  <li><strong>Where a compiled operation already covers a kit’s target class, the kit’s <code class="language-plaintext highlighter-rouge">query.rq</code> should be
+that generated text, or a thin, declared wrapper around it</strong> (adding <code class="language-plaintext highlighter-rouge">ORDER BY</code> where the template
+does not already impose one, per the existing sketch’s §3), not an independent hand-authored query
+answering the same question a second way.</li>
+</ul>
+
+<p>Where present, the Surface compiler adds a second source of known shape. A <code class="language-plaintext highlighter-rouge">srf:Surface</code> restates
+part of a graph as a locally queryable, flattened structure precisely so a consumer can reach a
+value by direct lookup rather than by traversal (<code class="language-plaintext highlighter-rouge">ontology/surface/README.md</code>). A kit projecting a
+carrier Surface already promotes already has its read shape decided by the Surface contract, and a
+kit’s query should read the promoted property directly rather than re-deriving the traversal the
+Surface compiler was built to avoid.</p>
+
+<p>The SHACL shapes a profile’s boundary declares (<code class="language-plaintext highlighter-rouge">dal:boundaryShape</code>, the persistence sketch’s §4.3)
+are a third source: they describe what a conformant instance of the target class actually looks
+like, which is useful as a kit’s <strong>test oracle</strong> even where it is not the source of the query text
+itself. A kit’s golden fixture should validate against the same shapes the persistence profile
+already declares, not a separately maintained schema that happens to agree today.</p>
+
+<p>None of this removes hand-written queries as an option. A kit answering a question no compiled
+profile covers still needs one, exactly as the existing egress sketch assumed throughout. What
+changes is the <strong>order of preference</strong>: ask whether a compiled artefact already answers the
+question before writing a query that might silently drift from it.</p>
+
+<h2 id="4-shape-a-sidecar-not-an-embedded-module">4. Shape: a sidecar, not an embedded module</h2>
+
+<pre><code class="language-mermaid">flowchart LR
+    subgraph HOST["any stack (ours or an adopter's)"]
+        CALLER["a caller: a service,&lt;br/&gt;a batch job, a CLI"]
+    end
+    subgraph SIDECAR["xslt-sidecar process"]
+        API["HTTP boundary&lt;br/&gt;(ADR-A81 runtime shape)"]
+        ENGINE["Saxon-HE 3.0 engine&lt;br/&gt;kit resolver"]
+        API --&gt; ENGINE
+    end
+    KITS[("contracts/xml/**&lt;br/&gt;published kits, egress and ingress")]
+    SPI["an SPI endpoint&lt;br/&gt;(semantic-dataset-spi, or any&lt;br/&gt;SPARQL/GSP-speaking store)"]
+
+    CALLER -- "HTTPS, direction + kit id + input" --&gt; API
+    ENGINE &lt;-- "load" --&gt; KITS
+    CALLER -. "egress: already has SPARQL results" .-&gt; CALLER
+    ENGINE -. "ingress output: triples, loaded by the caller,&lt;br/&gt;not by the sidecar" .-&gt; CALLER
+    SPI -. "egress input source, not a sidecar dependency" .-&gt; CALLER
+</code></pre>
+
+<p>The existing egress sketch’s §7.2 framed the engine as a Java module, <code class="language-plaintext highlighter-rouge">semantic-xml-egress</code>, called
+in-process by whatever Java component needed a projection. That framing still holds as the engine’s
+<strong>core</strong>: a library with the narrow interface its §7.2 already gives. What changes is that the core
+is also wrapped in a small standalone process exposing the same two operations over HTTP, so a
+caller that is not a JVM process (a Python worker, a .NET integration, a shell script in someone
+else’s CI) can use it without embedding Java. Two artefacts, one engine, never two implementations of
+the transform logic.</p>
+
+<p><strong>The sidecar does not talk to an SPI, a triplestore or a message queue.</strong> It takes XML or XML-like
+input and a kit identifier, and returns XML or triples. Whatever produced the input (a SPARQL
+endpoint, a file, another service) and whatever consumes the output (a loader, a document store, a
+browser) are the caller’s concern, not the sidecar’s. This is the same discipline the existing
+sketch’s §11.4 already applies to the egress direction (<code class="language-plaintext highlighter-rouge">GraphReference</code> and <code class="language-plaintext highlighter-rouge">KitId</code>, never a raw
+query). Here it is stated as the sidecar’s whole shape, in both directions, so “glue into some other
+stack” cannot quietly grow into “the sidecar also talks to your database.”</p>
+
+<h2 id="5-direction-a-egress-sourced-from-compiled-artefacts">5. Direction A: egress, sourced from compiled artefacts</h2>
+
+<p>Mechanically unchanged from the existing sketch: a <code class="language-plaintext highlighter-rouge">query.rq</code> returns SPARQL Query Results XML, a
+<code class="language-plaintext highlighter-rouge">transform.xsl</code> turns the result table into a tree (its §3), a schema admits the output (its §4,
+§5), and the kit is published as a versioned directory (its §8). The delta is entirely in where
+<code class="language-plaintext highlighter-rouge">query.rq</code> comes from (§3 above): generated by <code class="language-plaintext highlighter-rouge">persistence instantiate</code> or a Surface-aware
+equivalent where a compiled profile covers the kit’s target, hand-written only where none does, and
+in both cases checked against the profile’s own boundary shapes as the kit’s test oracle.</p>
+
+<p>A kit’s manifest (the existing sketch’s §8) gains one field recording this: <code class="language-plaintext highlighter-rouge">source: generated</code> with
+the compiled profile’s own identifying hash, or <code class="language-plaintext highlighter-rouge">source: hand-written</code> with a note of which SHACL
+shapes the golden fixture was checked against. A generated-source kit that drifts from a
+regenerated profile is then a detectable manifest mismatch (the existing sketch’s §9), not a
+silent divergence.</p>
+
+<h2 id="6-direction-b-ingress-a-new-capability">6. Direction B: ingress, a new capability</h2>
+
+<p>An external document arrives as XML: an ACORD message, a market body’s filing format, a partner’s
+proprietary export, anything that is not already OWL and is not going to become OWL by anyone else’s
+effort. The sidecar’s ingress direction turns it into the triples our persistence tier recognises.</p>
+
+<h3 id="61-what-our-persistence-tier-recognises-means-here">6.1 What “our persistence tier recognises” means here</h3>
+
+<p><strong>Canonical, sorted N-Triples text</strong>, not RDF/XML and not a SPARQL <code class="language-plaintext highlighter-rouge">INSERT DATA</code> block, is the
+ingress stylesheet’s output (§11, XS-D4). Three reasons, in order of weight:</p>
+
+<ul>
+  <li>It matches the canonicalisation convention the repository already uses wherever a deterministic,
+hashable graph serialisation is needed (sorted N-Triples lines, SHA-256 over the join, as the word
+authoring POC’s <code class="language-plaintext highlighter-rouge">CanonicalHash</code> already does for an unrelated graph). A second, XML-flavoured
+convention invented here for the same purpose would be a needless third way to do a thing the
+repository already has one way to do.</li>
+  <li>N-Triples is produced by <code class="language-plaintext highlighter-rouge">&lt;xsl:output method="text"/&gt;</code> and ordinary string construction, which
+keeps the stylesheet itself simple: no namespace-prefix bookkeeping, no striped-versus-flat
+argument, none of RDF/XML’s many-equivalent-serialisations trap (the existing sketch’s §2.1) —
+except here the trap cannot spring, because we author every ingress stylesheet and so control its
+one, disciplined output form. RDF/XML was rejected as a transform <strong>source</strong> because a third
+party’s serialiser is unpredictable. It was never rejected as something we, as the sole producer,
+cannot emit predictably. N-Triples is simply the plainer way to do that.</li>
+  <li><strong>Loading the triples is explicitly not the sidecar’s job.</strong> A thin, generic, non-XSLT-specific
+loader (not part of this unit, since it already exists or is trivial wherever a store SPI write
+path exists) turns N-Triples into a SPARQL <code class="language-plaintext highlighter-rouge">INSERT DATA</code>, a Graph Store Protocol <code class="language-plaintext highlighter-rouge">PUT</code>, or
+whatever the target store’s own write path wants. Keeping that step outside the sidecar is the
+same boundary discipline as §4’s “the sidecar does not talk to an SPI.”</li>
+</ul>
+
+<h3 id="62-two-sources-for-an-ingress-stylesheet">6.2 Two sources for an ingress stylesheet</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Source</th>
+      <th>When</th>
+      <th>Mechanism</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Hand-written</td>
+      <td>a one-off external schema, or before a MORK mapping for it exists</td>
+      <td>an XSLT 3.0 stylesheet, authored once, published as a kit exactly like an egress kit, with the external XSD (or a representative sample) replacing <code class="language-plaintext highlighter-rouge">query.rq</code> in the kit’s input role</td>
+    </tr>
+    <tr>
+      <td>MORK-compiled</td>
+      <td>a MORK mapping for the external schema already exists, or is worth authoring</td>
+      <td>§7. The mapping is the source of truth, the stylesheet is its generated projection, and the two cannot disagree for the same reason a MORK mapping and its RML compilation cannot today</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Both land as the same kind of published, versioned, direction-tagged kit (§5’s manifest field
+generalises to ingress: <code class="language-plaintext highlighter-rouge">source: mork-compiled</code> names the mapping graph’s own identity).</p>
+
+<h3 id="63-security-inbound">6.3 Security, inbound</h3>
+
+<p>An ingress stylesheet parses <strong>untrusted external content by design</strong>, which is a stronger version
+of the existing sketch’s §11.3 concern. There, a <em>previously-validated</em> LegalRuleML payload is
+re-embedded. Here, the whole document is unvalidated on arrival. Every control in the existing
+sketch’s §11.1 applies without weakening: DTDs disabled, external entities refused, <code class="language-plaintext highlighter-rouge">DOCTYPE</code>
+rejected at the boundary before parsing. Additionally:</p>
+
+<ul>
+  <li><strong>Size and depth limits apply to the inbound document itself</strong>, not only to an embedded payload
+within it, since the whole document is now attacker-controlled.</li>
+  <li><strong>An ingress kit’s schema (the external XSD, where the source provides one) validates on arrival,
+before the stylesheet runs</strong>, the same ordering the existing sketch’s §11.3 already prescribes for
+LegalRuleML: validate on ingress, not only check the output on egress.</li>
+  <li><strong>A MORK-compiled stylesheet carries no more trust than a hand-written one.</strong> Compiling a mapping
+does not make its output stylesheet exempt from the portability and no-extension-functions rule
+(§8), and it does not make the external content it will eventually process any less untrusted.</li>
+</ul>
+
+<h2 id="7-mork-as-a-compiler-target-mork2rmls-sibling">7. MORK as a compiler target: <code class="language-plaintext highlighter-rouge">mork2rml</code>’s sibling</h2>
+
+<p><code class="language-plaintext highlighter-rouge">tools/mork2rml.py</code> already implements, in the module’s own words, “the compilation functor
+C: MorkDAG → RMLDAG”, a catamorphism over a MORK mapping graph that produces an RML mapping
+document: a static artefact, generated once at compile time, later executed by an RML processor
+against whatever source data arrives. <strong>The ingress direction needs exactly the same shape of
+compiler, with a different target</strong>: <code class="language-plaintext highlighter-rouge">C': MorkDAG → XSLT</code>, producing a static XSLT 3.0 stylesheet
+instead of an RML document, for the case where the source is already XML and the chosen executor is
+Saxon rather than an RML processor.</p>
+
+<p>This is not a competing way to run MORK mappings. RML remains the general case, where the source may
+be CSV, JSON, a relational table, or XML. The XSLT target is strictly narrower — it only applies
+where the source is XML — and its entire justification is that the sidecar already hosts Saxon for
+egress, so an XML-sourced ingestion needs no second runtime (no RML processor, no RMLMapper Java
+subprocess, no <code class="language-plaintext highlighter-rouge">pyrml</code>) alongside it. Where a mapping’s source is not XML, <code class="language-plaintext highlighter-rouge">mork2rml</code> is still the
+right compiler, unchanged.</p>
+
+<h3 id="71-sharing-not-duplicating-the-dag-walk">7.1 Sharing, not duplicating, the DAG walk</h3>
+
+<p><code class="language-plaintext highlighter-rouge">mork2rml.py</code> today is one file: graph loading, the case analysis of its own Definition 10.7, and
+RML term construction, all in one module. Adding a second backend by copying that file and swapping
+its emission logic would duplicate the DAG walk and let the two backends silently diverge on what a
+given MORK construct even means — the same drift risk §3 and the existing sketch’s §9 both already
+worry about, now at the compiler level instead of the data level.</p>
+
+<p><strong>Factor the DAG walk out first.</strong> A shared module parses the MORK graph and produces an
+intermediate case-classified structure (which construct, which cardinality, which join shape) that
+both <code class="language-plaintext highlighter-rouge">mork2rml</code> and the new <code class="language-plaintext highlighter-rouge">mork2xslt</code> consume, each emitting its own target from the same
+classification. This mirrors <code class="language-plaintext highlighter-rouge">tools/mork_compilers</code>’ own “one shared IR, many backends” shape for
+Eligibility conditions (ADR-A23), applied to the MORK-mapping compiler family instead. It is a
+refactor of existing, working code, done carefully, with <code class="language-plaintext highlighter-rouge">mork2rml</code>’s existing tests as the
+regression guard: every one of them must still pass, unchanged, once it runs against the factored
+module.</p>
+
+<h3 id="72-what-mork2xslt-emits">7.2 What <code class="language-plaintext highlighter-rouge">mork2xslt</code> emits</h3>
+
+<p>A static XSLT 3.0 stylesheet whose templates mirror the same subject/predicate/object construction
+<code class="language-plaintext highlighter-rouge">mork2rml</code> already derives for RML’s <code class="language-plaintext highlighter-rouge">SubjectMap</code>/<code class="language-plaintext highlighter-rouge">PredicateObjectMap</code>/<code class="language-plaintext highlighter-rouge">RefObjectMap</code>, except each
+construction emits an N-Triples line (§6.1) instead of an RDF node in an in-memory RML graph. The
+generated stylesheet is published exactly as a hand-written one would be (§6.2), with the same
+no-extension-functions constraint, so a <code class="language-plaintext highlighter-rouge">mork2xslt</code>-generated kit is indistinguishable, to a
+consumer running it, from one a person wrote by hand. That indistinguishability is the acceptance
+criterion worth testing directly: the same source document, run through the hand-written ingress
+kit of §6.2’s first row and a MORK-compiled kit built for the same external schema, produces the
+same triples.</p>
+
+<h2 id="8-the-sidecars-wire-contract">8. The sidecar’s wire contract</h2>
+
+<p>One HTTP boundary, two operations, matching §4’s two directions and the existing sketch’s §7.2
+interface almost exactly:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">XmlProjection</span> <span class="o">{</span>
+    <span class="cm">/** Egress: project one graph reference through a named, versioned egress kit. */</span>
+    <span class="nc">XmlResult</span> <span class="nf">project</span><span class="o">(</span><span class="nc">GraphReference</span> <span class="n">ref</span><span class="o">,</span> <span class="nc">KitId</span> <span class="n">kit</span><span class="o">,</span> <span class="nc">ProjectionOptions</span> <span class="n">options</span><span class="o">);</span>
+<span class="o">}</span>
+
+<span class="kd">public</span> <span class="kd">interface</span> <span class="nc">XmlIngestion</span> <span class="o">{</span>
+    <span class="cm">/** Ingress: lift one external XML document through a named, versioned ingress kit. */</span>
+    <span class="nc">TripleResult</span> <span class="nf">ingest</span><span class="o">(</span><span class="nc">InputStream</span> <span class="n">externalXml</span><span class="o">,</span> <span class="nc">KitId</span> <span class="n">kit</span><span class="o">,</span> <span class="nc">IngestionOptions</span> <span class="n">options</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>The sidecar process exposes both over HTTP, following ADR-A81’s runtime shape (virtual
+thread-per-request, a minimal library, mandatory deadline propagation, Jackson at the edge only for
+the envelope, not for the XML body itself) rather than inventing a third HTTP convention alongside
+the control plane’s and the word authoring POC’s. Where <code class="language-plaintext highlighter-rouge">platform/runtime-host</code> (ADR-A81’s own
+consequence) exists by the time this unit executes, the sidecar is built on it. Where it does not yet
+exist, the sidecar uses a minimal library directly and is migrated onto <code class="language-plaintext highlighter-rouge">runtime-host</code> once that
+exists, as a follow-up, not a blocking precondition (§11, XS-D2).</p>
+
+<h2 id="9-hosting-security-and-determinism-what-changes-what-does-not">9. Hosting, security and determinism: what changes, what does not</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Topic</th>
+      <th>Existing sketch</th>
+      <th>This sketch</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Processor</td>
+      <td>Saxon-HE, XSLT 3.0, XPath 3.1 (its §7.1)</td>
+      <td>unchanged</td>
+    </tr>
+    <tr>
+      <td>Licence</td>
+      <td>MPL 2.0, no ADR-A83 conflict (its §7.1)</td>
+      <td>unchanged, and now doubly confirmed since the module is used for two directions</td>
+    </tr>
+    <tr>
+      <td>Module placement</td>
+      <td>a new Maven module beside the seven that exist (its §7.2)</td>
+      <td>the module gains a sidecar wrapper (§4), not a second engine</td>
+    </tr>
+    <tr>
+      <td>XXE and entity controls</td>
+      <td>§11.1</td>
+      <td>unchanged for egress. Strengthened for ingress (§6.3): the whole inbound document is untrusted, not only an embedded subtree</td>
+    </tr>
+    <tr>
+      <td>No Saxon extensions in a published kit</td>
+      <td>§8.2</td>
+      <td>unchanged, now applies to ingress kits too, hand-written or MORK-compiled</td>
+    </tr>
+    <tr>
+      <td>Determinism</td>
+      <td>§10, canonical form, <code class="language-plaintext highlighter-rouge">ORDER BY</code> for egress</td>
+      <td>an ingress kit’s determinism is “the same input document always compiles to the same N-Triples lines in the same order”, checked the same way: a golden fixture, not an assumption</td>
+    </tr>
+    <tr>
+      <td>Tenant and scope boundary</td>
+      <td>§11.4, <code class="language-plaintext highlighter-rouge">GraphReference</code> and <code class="language-plaintext highlighter-rouge">KitId</code> only</td>
+      <td>generalised in §4: the sidecar accepts a direction, a kit id and an input, nothing that could act as a raw query or a raw store handle, in either direction</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="10-what-exists-today">10. What exists today</h2>
+
+<p>Extends the existing sketch’s own §14 table with what this unit additionally stands on.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Piece</th>
+      <th>State</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Everything the existing sketch’s §14 already lists</td>
+      <td>unchanged, see that sketch</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">persistence instantiate</code></td>
+      <td><strong>exists.</strong> Produces portable SPARQL text from a <code class="language-plaintext highlighter-rouge">dal:CompiledProfile</code> (ADR-A79)</td>
+    </tr>
+    <tr>
+      <td>Persistence boundary SHACL shapes</td>
+      <td><strong>exist</strong>, per resolved profile (<code class="language-plaintext highlighter-rouge">dal:boundaryShape</code>, persistence sketch §4.3)</td>
+    </tr>
+    <tr>
+      <td>A Surface compiler producing generated surfaces</td>
+      <td><strong>partially exists</strong> (<code class="language-plaintext highlighter-rouge">tools/surface</code>, <code class="language-plaintext highlighter-rouge">ontology/surface</code>). Its generated-surface shape is a second grounding source where a kit’s target is a promoted property</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">tools/mork2rml.py</code></td>
+      <td><strong>exists.</strong> <code class="language-plaintext highlighter-rouge">MorkDAG → RMLDAG</code>, one file, not yet split into a shared IR plus backend</td>
+    </tr>
+    <tr>
+      <td>A second MORK compiler backend (XSLT)</td>
+      <td><strong>does not exist</strong></td>
+    </tr>
+    <tr>
+      <td>ADR-A81 (control plane HTTP runtime)</td>
+      <td><strong>Proposed</strong>, not yet built as <code class="language-plaintext highlighter-rouge">platform/runtime-host</code></td>
+    </tr>
+    <tr>
+      <td>A standalone sidecar process anywhere in the repository</td>
+      <td><strong>none.</strong> Every existing HTTP surface is embedded in its own service</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="11-decisions">11. Decisions</h2>
+
+<p>None of these is taken without the maintainer. Recorded here as proposals, pending our decision,
+in the same spirit as the word authoring POC’s WA-D table.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Decision</th>
+      <th>Options</th>
+      <th>Recommendation</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>XS-D1</td>
+      <td>Deployment shape</td>
+      <td>(a) a core Java library plus a standalone sidecar process wrapping it over HTTP, so a non-JVM caller never embeds Java. (b) a library only, embedded per caller, as the existing egress sketch’s §7.2 originally framed it</td>
+      <td>(a): matches “glue into some other stack” literally. The library still exists underneath for a JVM caller that would rather not take a network hop</td>
+    </tr>
+    <tr>
+      <td>XS-D2</td>
+      <td>Sidecar HTTP runtime</td>
+      <td>(a) align with ADR-A81 (virtual threads, a minimal library, deadline propagation), building on <code class="language-plaintext highlighter-rouge">platform/runtime-host</code> once it exists, a minimal library directly until then. (b) a bespoke runtime for this unit alone</td>
+      <td>(a): one HTTP convention across the platform, not a second one invented here</td>
+    </tr>
+    <tr>
+      <td>XS-D3</td>
+      <td>Egress kit query sourcing</td>
+      <td>(a) prefer <code class="language-plaintext highlighter-rouge">persistence instantiate</code> output (or a Surface-generated equivalent) where a compiled profile already covers the kit’s target, hand-write only otherwise, and check golden fixtures against the profile’s own boundary shapes. (b) always hand-write, as the existing sketch assumed</td>
+      <td>(a): removes a drift risk the existing sketch’s §9 already names for a different pair of skins</td>
+    </tr>
+    <tr>
+      <td>XS-D4</td>
+      <td>Ingress output form</td>
+      <td>(a) canonical sorted N-Triples text, loaded by a caller-supplied, non-XSLT-specific step. (b) RDF/XML. (c) a SPARQL <code class="language-plaintext highlighter-rouge">INSERT DATA</code> block emitted directly</td>
+      <td>(a): matches the repository’s existing canonical-hash convention, and keeps “the sidecar does not talk to an SPI” (§4) literally true</td>
+    </tr>
+    <tr>
+      <td>XS-D5</td>
+      <td>MORK-to-XSLT compiler placement</td>
+      <td>(a) factor <code class="language-plaintext highlighter-rouge">mork2rml.py</code>’s DAG walk into a shared module first, then add the new backend against it, with <code class="language-plaintext highlighter-rouge">mork2rml</code>’s existing tests as the regression guard. (b) a separate, duplicated implementation</td>
+      <td>(a): one case analysis, two targets, the same discipline <code class="language-plaintext highlighter-rouge">tools/mork_compilers</code> already applies elsewhere (ADR-A23)</td>
+    </tr>
+    <tr>
+      <td>XS-D6</td>
+      <td>Kit model for ingress</td>
+      <td>(a) extend the existing kit concept (manifest, versioned directory, <code class="language-plaintext highlighter-rouge">contracts/xml/</code>) with a <code class="language-plaintext highlighter-rouge">direction</code> field, rather than a separate packaging convention. (b) a new, parallel packaging scheme for ingress kits</td>
+      <td>(a): one publication model, one place a consumer looks, regardless of direction</td>
+    </tr>
+    <tr>
+      <td>XS-D7</td>
+      <td>Scope boundary against the LegalRuleML ingress pipeline</td>
+      <td>(a) this unit’s ingress direction is domain-neutral and does not replace, wrap or depend on the OASIS-specific LegalRuleML normalise-and-triplify pipeline (<code class="language-plaintext highlighter-rouge">legalruleml-runtime-pipeline.md</code>’s Route B), which keeps its own stylesheets and its own RML-based execution. A later unit may choose to host Route B’s Saxon execution on this sidecar, but that is explicitly out of this unit’s scope. (b) fold Route B into this unit now</td>
+      <td>(a): keeps this unit’s acceptance criteria about a domain-neutral mechanism, not about LegalRuleML specifically</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="12-risks">12. Risks</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Risk</th>
+      <th>Mitigation</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>XS-R1</td>
+      <td>The sidecar quietly grows a raw-query or raw-store entry point “just for one caller”</td>
+      <td>§4 and §8’s interfaces take a direction, a kit id and an input only. No overload, mirroring the existing sketch’s X6</td>
+    </tr>
+    <tr>
+      <td>XS-R2</td>
+      <td>An ingress stylesheet is trusted more than a hand-written one because it was generated</td>
+      <td>§6.3 states explicitly that compiled trust is not elevated trust. Every ingress kit, however sourced, gets the same validation and the same security tests</td>
+    </tr>
+    <tr>
+      <td>XS-R3</td>
+      <td>The <code class="language-plaintext highlighter-rouge">mork2rml.py</code> refactor (XS-D5) breaks an existing, working compiler while adding a new one</td>
+      <td>its existing tests run, unchanged, against the factored module before any new backend is added, and must still pass</td>
+    </tr>
+    <tr>
+      <td>XS-R4</td>
+      <td>Grounding egress kits in compiled artefacts (XS-D3) couples this unit’s schedule to the persistence or Surface compiler’s own release cadence</td>
+      <td>a kit may still be hand-written where no compiled profile exists yet. Grounding is a preference, not a precondition</td>
+    </tr>
+    <tr>
+      <td>XS-R5</td>
+      <td>“Any stack” becomes, in practice, only the stacks this repository already has, because nobody outside the repository tries it</td>
+      <td>the existing sketch’s §8.1 third-party-reproduction test generalises here: a kit, in either direction, must be runnable by a bare Saxon CLI outside our code, proven in the first slice, not assumed</td>
+    </tr>
+    <tr>
+      <td>XS-R6</td>
+      <td>Scope creep into replacing the LegalRuleML ingress pipeline</td>
+      <td>XS-D7 states the boundary explicitly, and no slice in the plan touches <code class="language-plaintext highlighter-rouge">legalruleml-runtime-pipeline.md</code>’s own files</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="13-open-questions">13. Open questions</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Question</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>XS-Q1</td>
+      <td>Should <code class="language-plaintext highlighter-rouge">platform/runtime-host</code> (ADR-A81) be a precondition for this unit, or should the sidecar start on a minimal library and migrate later? §11’s XS-D2 recommends the latter, but it is worth the maintainer confirming rather than assuming</td>
+    </tr>
+    <tr>
+      <td>XS-Q2</td>
+      <td>Does an ingress kit’s published schema role (§6.2) need its own <code class="language-plaintext highlighter-rouge">contracts/xml/</code> subdirectory convention distinct from egress kits, or does the direction field in the manifest suffice on its own?</td>
+    </tr>
+    <tr>
+      <td>XS-Q3</td>
+      <td>Should the sidecar support batching several ingress documents in one call, or is one document per call acceptable for a first version? Scale questions are the existing sketch’s §12 concern, revisited here only if a real caller needs it</td>
+    </tr>
+    <tr>
+      <td>XS-Q4</td>
+      <td>Who maintains a MORK mapping once it exists for an external schema: the team integrating that schema, or a central MORK-mapping owner? Not a technical question, but it affects XS-D5’s long-run maintenance story</td>
+    </tr>
+  </tbody>
+</table>

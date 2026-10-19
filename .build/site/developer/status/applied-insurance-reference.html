@@ -1,0 +1,418 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="applied-insurance-reference---status">Applied Insurance Reference - Status</h1>
+
+<p><strong>Unit ID:</strong> <code class="language-plaintext highlighter-rouge">applied-insurance-reference</code> (epic)
+<strong>Plan:</strong> <a href="/developer/plans/applied-insurance-reference.html">applied-insurance-reference.md</a>
+<strong>Machines, branches and merges:</strong> <a href="/developer/plans/applied-insurance-reference-lanes.html">applied-insurance-reference-lanes.md</a>
+<strong>How to use this record:</strong> lanes §5. In short: each machine edits only its own section. Machine R
+also writes the round, the merge log and the phase table. Slice handoff notes go in the slice’s
+Validation Pack, never here.</p>
+
+<hr />
+
+<h2 id="round">Round</h2>
+
+<p><strong>Current round:</strong> 3 (machine R advances it when a trip’s merges are done). Round 1 merged
+AIR-3.1, AIR-1.1 and AIR-2.1. Round 2 merged AIR-3.2 and AIR-1.2.
+<strong>Branch:</strong> one for all of S’s slices, <code class="language-plaintext highlighter-rouge">air/applied-reference</code> (lanes §2 and §3, revised
+2026-10-13). The per-slice branches of rounds 1 to 3 were all merged into <code class="language-plaintext highlighter-rouge">main</code> and are deleted.
+<strong>One trip for machine S (lanes §4, revised 2026-10-13):</strong> AIR-2.0, 2.2, 4.1, 2.6, 2.3, 2.4, 4.2,
+4.3, 4.4, 2.7, 4.5, 2.5, 3.4, 3.5, 4.6, 6.1, then S6. The branch is created only when every brief
+is written, and comes to R once, when the trip is done.
+<strong>Briefs written:</strong> every slice of the trip, the last on 2026-10-13. Every question of the trip is
+decided (2026-10-14), so the branch can be created. AIR-3.3 has a brief that is blocked (phase 3
+plan).
+<strong>Concurrent work:</strong> from round 3, machine R also builds the normative-rule-substrate unit, and
+from 2026-09-30 the computable-contract-substrate unit (CCS), which took over NRS N4, and on
+2026-10-10 N1, N2 and N5 as well. AIR-3.3 waits for CCS HQ-6a.2 to merge and for AIR-3.3-Q1 (phase 3 plan),
+and lands before CCS’s N1 and C13. NRS N9 waits for Phase 2, substrate S2 is authored with CCS
+C9b3, and CCS C9 merges before Phase 5 (epic §3b). The trip’s imports stay pinned to <code class="language-plaintext highlighter-rouge">main</code> at the
+branch point, and R re-pins once at the merge (lanes §6 step 4).</p>
+
+<h2 id="machine-r">Machine R</h2>
+
+<p><strong>Position:</strong> round 3. Rounds 1 and 2 complete, Phase 1 complete. Every brief of the one trip
+written and every question decided (2026-10-14). Next: the maintainer creates and pushes
+<code class="language-plaintext highlighter-rouge">air/applied-reference</code> from <code class="language-plaintext highlighter-rouge">main</code>, and R verifies S’s bundle when the trip is done. AIR-3.3 waits
+on CCS HQ-6a.2. NRS N2 moved to CCS on 2026-10-10 (NRS NQ-2).
+<strong>Last updated:</strong> 2026-10-14
+<strong>Blockers:</strong> AIR-3.3 waits for CCS HQ-6a.2 to merge and for AIR-3.3-Q1.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Seq</th>
+      <th>Slice</th>
+      <th>Branch</th>
+      <th>State</th>
+      <th>Note</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>2</td>
+      <td>AIR-3.1</td>
+      <td><code class="language-plaintext highlighter-rouge">air/3.1-flat-hierarchy</code></td>
+      <td>merged</td>
+      <td>tags <code class="language-plaintext highlighter-rouge">eligibility-vocab-v0.7.0</code>, <code class="language-plaintext highlighter-rouge">executable-v0.6.0</code></td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td>AIR-3.2</td>
+      <td><code class="language-plaintext highlighter-rouge">air/3.2-set-readings</code></td>
+      <td>merged</td>
+      <td>eight tags (Validation Pack Results)</td>
+    </tr>
+    <tr>
+      <td>13</td>
+      <td>AIR-3.3</td>
+      <td><code class="language-plaintext highlighter-rouge">air/3.3-readings-swrl-owl</code>, created from <code class="language-plaintext highlighter-rouge">main</code> after HQ-6a.2 merges</td>
+      <td>waiting</td>
+      <td>brief blocked on AIR-3.3-Q1</td>
+    </tr>
+    <tr>
+      <td>23+</td>
+      <td>substrate ADRs, S1, S2, S4, S5, S7</td>
+      <td><code class="language-plaintext highlighter-rouge">air/s&lt;n&gt;-&lt;slug&gt;</code></td>
+      <td>waiting</td>
+      <td>ADRs drafted in round 4</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Verifying queue (S slices handed over and not yet merged): none.</p>
+
+<h2 id="machine-s">Machine S</h2>
+
+<p><strong>Position:</strong> round 3, the one trip. AIR-1.1, AIR-2.1, AIR-1.2, AIR-2.0, AIR-2.2, AIR-4.1, AIR-2.6,
+AIR-2.3, AIR-2.4, AIR-4.2, AIR-4.2a, AIR-4.3 and AIR-4.4 built on <code class="language-plaintext highlighter-rouge">air/applied-reference</code> (not yet
+handed to R). S became unavailable on 2026-10-14 and R built AIR-4.2a to AIR-4.4. Next: AIR-4.5.
+<strong>Last updated:</strong> 2026-10-14
+<strong>Blockers:</strong> none.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Seq</th>
+      <th>Slice</th>
+      <th>State</th>
+      <th>Note</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>3</td>
+      <td>AIR-1.1</td>
+      <td>merged</td>
+      <td>set by R. No version bumps, no tags</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>AIR-1.2</td>
+      <td>merged</td>
+      <td>set by R. Tags <code class="language-plaintext highlighter-rouge">applied-classification-v0.1.0</code>, <code class="language-plaintext highlighter-rouge">applied-classification-vocab-v0.1.0</code>, <code class="language-plaintext highlighter-rouge">insurance-common-v0.1.0</code>, <code class="language-plaintext highlighter-rouge">insurance-common-vocab-v0.1.0</code></td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>AIR-2.1</td>
+      <td>merged</td>
+      <td>set by R: three shape defects fixed at verification. Tags <code class="language-plaintext highlighter-rouge">applied-insurance-peril-shapes-v0.1.0</code>, <code class="language-plaintext highlighter-rouge">insurance-peril-v0.1.0</code>, <code class="language-plaintext highlighter-rouge">insurance-peril-vocab-v0.1.0</code></td>
+    </tr>
+    <tr>
+      <td>5a</td>
+      <td>AIR-2.0</td>
+      <td>built</td>
+      <td><code class="language-plaintext highlighter-rouge">insurance/common</code> and <code class="language-plaintext highlighter-rouge">insurance/peril</code> converted to literate READMEs, the extractor extended (nested <code class="language-plaintext highlighter-rouge">--layer</code> paths, <code class="language-plaintext highlighter-rouge">@output-file</code> on <code class="language-plaintext highlighter-rouge">turtle-vocab</code>), <code class="language-plaintext highlighter-rouge">prl:DocumentationShape</code> added (shapes <code class="language-plaintext highlighter-rouge">0.1.0</code> → <code class="language-plaintext highlighter-rouge">0.2.0</code>). No spec/vocab version change. <a href="/developer/validation/applied-insurance-reference-2.0.html">Validation Pack</a></td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td>AIR-2.2</td>
+      <td>built</td>
+      <td>peril spec <code class="language-plaintext highlighter-rouge">0.4.0</code>→<code class="language-plaintext highlighter-rouge">0.5.0</code> (common import, four sub-property axioms), peril-vocab <code class="language-plaintext highlighter-rouge">0.4.0</code>→<code class="language-plaintext highlighter-rouge">0.5.0</code> (70 characteristic/companion concepts, four <code class="language-plaintext highlighter-rouge">voc:boundScheme</code> bindings). Lists amended beyond the first brief (Intentional/Economic agency, 13 more mechanisms, consequence widened to 19). <a href="/developer/validation/applied-insurance-reference-2.2.html">Validation Pack</a></td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td>AIR-4.1</td>
+      <td>built</td>
+      <td>new module <code class="language-plaintext highlighter-rouge">ontology/applied/insurance/exposure/</code> (<code class="language-plaintext highlighter-rouge">aeo:</code>), literate from the start: exposure set, location, legal entity, control, asset, interest, valuation, seven scheme contracts, nine programme roles. <a href="/developer/validation/applied-insurance-reference-4.1.html">Validation Pack</a></td>
+    </tr>
+    <tr>
+      <td>9</td>
+      <td>AIR-2.3</td>
+      <td>built</td>
+      <td>peril-vocab’s <code class="language-plaintext highlighter-rouge">cause-N</code>, <code class="language-plaintext highlighter-rouge">cause-T</code> and <code class="language-plaintext highlighter-rouge">cause-E</code> regions filled: 90 N concepts, 71 T, 15 E, 176 in total, each with its characteristics, mechanisms, in-family cross-links and, for 16 concepts, an Oasis OED model code. No version bump (AIR-2.2 already bumped <code class="language-plaintext highlighter-rouge">peril-vocab</code> this trip). <a href="/developer/validation/applied-insurance-reference-2.3.html">Validation Pack</a></td>
+    </tr>
+    <tr>
+      <td>10</td>
+      <td>AIR-2.4</td>
+      <td>built</td>
+      <td>peril-vocab’s <code class="language-plaintext highlighter-rouge">cause-H</code> to <code class="language-plaintext highlighter-rouge">cause-L</code> regions and <code class="language-plaintext highlighter-rouge">cross-group-links</code> filled: 37 H concepts, 36 P, 17 C, 10 F, 11 L, bringing the cause scheme to 287 concepts in eight families. Eleven cross-group <code class="language-plaintext highlighter-rouge">canTrigger</code>/<code class="language-plaintext highlighter-rouge">overlaps</code>/<code class="language-plaintext highlighter-rouge">related</code> links. <code class="language-plaintext highlighter-rouge">CauseScheme skos:hasTopConcept</code> now lists all eight family tops. No version bump. <a href="/developer/validation/applied-insurance-reference-2.4.html">Validation Pack</a></td>
+    </tr>
+    <tr>
+      <td>11</td>
+      <td>AIR-4.2</td>
+      <td>built</td>
+      <td>zones, pool participation, assessments and attribute values: six zone contracts, designation source/assessment kind/profile family contracts and schemes, value forms and spaces, and an attribute type scheme across fifteen families (Construction with ten reference sub-schemes, Occupancy, Protection, External exposure, Geocoding quality, Equipment, Corporate, and seven profile-only families), with eleven peril-attribute links on <code class="language-plaintext highlighter-rouge">prl-voc:</code> cause concepts. Ten new structural shapes, two warning-severity cross-node shapes, and two new profile shape files (<code class="language-plaintext highlighter-rouge">shapes/profiles/construction-protection.ttl</code>, <code class="language-plaintext highlighter-rouge">shapes/profiles/cyber-posture.ttl</code>). No version bump (exposure already bumped to <code class="language-plaintext highlighter-rouge">0.1.0</code> this trip, at AIR-4.1). <a href="/developer/validation/applied-insurance-reference-4.2.html">Validation Pack</a></td>
+    </tr>
+    <tr>
+      <td>11a</td>
+      <td>AIR-4.2a</td>
+      <td>built</td>
+      <td>TD-49 fixed, scope widened by the maintainer to every inverse-functional property of the module: eight properties made plain, <code class="language-plaintext highlighter-rouge">aeo:MembershipShape</code> withdrawn, <code class="language-plaintext highlighter-rouge">examples/versions.ttl</code> added. No version bump. <a href="/developer/validation/applied-insurance-reference-4.2a.html">Validation Pack</a></td>
+    </tr>
+    <tr>
+      <td>12</td>
+      <td>AIR-4.4</td>
+      <td>built</td>
+      <td><code class="language-plaintext highlighter-rouge">insurance/common</code> 0.5.0→0.6.0 (loss event, class of business, GLIDE key scheme) with importers re-pinned, and the exposure module’s losses, cause chains with effective and defaulted characteristics, coverage requirements, existing cover, cover history and financial metrics: spec, ten schemes and contracts, the money share space, nineteen shapes, <code class="language-plaintext highlighter-rouge">effective_characteristics</code>, <code class="language-plaintext highlighter-rouge">examples/losses.ttl</code>. Eligibility 0.12.0 imported. Built by R. <a href="/developer/validation/applied-insurance-reference-4.4.html">Validation Pack</a></td>
+    </tr>
+    <tr>
+      <td>14</td>
+      <td>AIR-2.6</td>
+      <td>built</td>
+      <td><code class="language-plaintext highlighter-rouge">common-vocab</code> <code class="language-plaintext highlighter-rouge">0.5.0</code>→<code class="language-plaintext highlighter-rouge">0.6.0</code> (QUDT-aligned units across nine families, four exact conversions, ISO 4217 currencies on <code class="language-plaintext highlighter-rouge">icm-voc:Money</code>). New document <code class="language-plaintext highlighter-rouge">vocab/peril-intensity.ttl</code> (own ontology IRI, version in unison with <code class="language-plaintext highlighter-rouge">peril-vocab</code> <code class="language-plaintext highlighter-rouge">0.5.0</code>): the intensity measure scheme, 24 measures each with a <code class="language-plaintext highlighter-rouge">qnt:ValueSpace</code>, three ordinal sub-schemes (MMI, Saffir–Simpson, Enhanced Fujita), seven threshold-defined cause concepts’ <code class="language-plaintext highlighter-rouge">prl:definingThreshold</code> range sets, other causes’ <code class="language-plaintext highlighter-rouge">prl:intensityMeasure</code> links, and <code class="language-plaintext highlighter-rouge">prl:customaryEventWindow</code> for two groups. <code class="language-plaintext highlighter-rouge">prl:ThresholdDefinitionShape</code> extended to cross-check a threshold’s space against the concept’s own measures (peril shapes <code class="language-plaintext highlighter-rouge">0.2.0</code>→<code class="language-plaintext highlighter-rouge">0.3.0</code>). <a href="/developer/validation/applied-insurance-reference-2.6.html">Validation Pack</a></td>
+    </tr>
+    <tr>
+      <td>15</td>
+      <td>AIR-2.7</td>
+      <td>ready</td>
+      <td>brief written 2026-10-13</td>
+    </tr>
+    <tr>
+      <td>16</td>
+      <td>AIR-4.3</td>
+      <td>built</td>
+      <td>dependencies, peril metrics, metric comparisons and exposure units in the exposure module: spec, six schemes and contracts, two contracts with no reference scheme, four value spaces, nine shapes, <code class="language-plaintext highlighter-rouge">tools/exposure_derivations.py</code>, <code class="language-plaintext highlighter-rouge">examples/dependencies.ttl</code> and <code class="language-plaintext highlighter-rouge">examples/units.ttl</code> (M3, first half). <code class="language-plaintext highlighter-rouge">aeo:perilScope</code> loses its domain. Built by R. <a href="/developer/validation/applied-insurance-reference-4.3.html">Validation Pack</a></td>
+    </tr>
+    <tr>
+      <td>17</td>
+      <td>AIR-4.5</td>
+      <td>ready</td>
+      <td>brief written 2026-10-13</td>
+    </tr>
+    <tr>
+      <td>18</td>
+      <td>AIR-2.5</td>
+      <td>ready</td>
+      <td>brief written 2026-10-13</td>
+    </tr>
+    <tr>
+      <td>19</td>
+      <td>AIR-3.4</td>
+      <td>ready</td>
+      <td>brief written 2026-10-13, AIR-3.4-Q1 and Q2 decided 2026-10-14</td>
+    </tr>
+    <tr>
+      <td>20</td>
+      <td>AIR-4.6</td>
+      <td>ready</td>
+      <td>brief written 2026-10-13</td>
+    </tr>
+    <tr>
+      <td>21</td>
+      <td>AIR-3.5</td>
+      <td>ready</td>
+      <td>moved from R on 2026-10-13 (lanes §2). Brief written the same day</td>
+    </tr>
+    <tr>
+      <td>22</td>
+      <td>AIR-6.1</td>
+      <td>ready</td>
+      <td>brief written 2026-10-13, AIR-6.1-Q1 decided 2026-10-14</td>
+    </tr>
+    <tr>
+      <td>23+</td>
+      <td>S6</td>
+      <td>ready</td>
+      <td>brief written 2026-10-13 (substrate plan)</td>
+    </tr>
+    <tr>
+      <td>—</td>
+      <td>AIR-deferred-testing</td>
+      <td>planned</td>
+      <td>the tests for slices built while testing is deferred, from AIR-4.2a. Test plans collected in the <a href="/developer/plans/applied-insurance-reference-phase-4.html">Phase 4 plan</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="merge-log-machine-r-only">Merge log (machine R only)</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Seq</th>
+      <th>Slice</th>
+      <th>Round</th>
+      <th>Merged</th>
+      <th>Gate</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>AIR-0.1</td>
+      <td>—</td>
+      <td><code class="language-plaintext highlighter-rouge">3377a71</code></td>
+      <td>signed off</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>AIR-3.1</td>
+      <td>1</td>
+      <td>fast-forward to the head of <code class="language-plaintext highlighter-rouge">air/3.1-flat-hierarchy</code></td>
+      <td>signed off</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>AIR-1.1</td>
+      <td>1</td>
+      <td>fast-forward to <code class="language-plaintext highlighter-rouge">651fbfa</code></td>
+      <td>signed off</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>AIR-2.1</td>
+      <td>1</td>
+      <td>fast-forward to the head of <code class="language-plaintext highlighter-rouge">air/2.1-peril-spec</code></td>
+      <td>signed off</td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td>AIR-3.2</td>
+      <td>2</td>
+      <td>fast-forward to the head of <code class="language-plaintext highlighter-rouge">air/3.2-set-readings</code></td>
+      <td>signed off</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>AIR-1.2</td>
+      <td>2</td>
+      <td>fast-forward to the head of <code class="language-plaintext highlighter-rouge">air/1.2-shared-contracts</code></td>
+      <td>signed off</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="phases-machine-r-only">Phases (machine R only)</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Phase</th>
+      <th>Plan</th>
+      <th>State</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>0 Decisions</td>
+      <td><a href="/developer/plans/applied-insurance-reference-phase-0.html">plan</a></td>
+      <td>✅ complete</td>
+    </tr>
+    <tr>
+      <td>1 Module split</td>
+      <td><a href="/developer/plans/applied-insurance-reference-phase-1.html">plan</a></td>
+      <td>✅ AIR-1.1 and AIR-1.2 merged</td>
+    </tr>
+    <tr>
+      <td>2 Peril vocabulary</td>
+      <td><a href="/developer/plans/applied-insurance-reference-phase-2.html">plan</a></td>
+      <td>🚧 AIR-2.1 merged</td>
+    </tr>
+    <tr>
+      <td>3 Readings and crosswalks</td>
+      <td><a href="/developer/plans/applied-insurance-reference-phase-3.html">plan</a></td>
+      <td>🚧 AIR-3.1 and AIR-3.2 merged</td>
+    </tr>
+    <tr>
+      <td>4 Exposure</td>
+      <td><a href="/developer/plans/applied-insurance-reference-phase-4.html">plan</a></td>
+      <td>⏳</td>
+    </tr>
+    <tr>
+      <td>5 Contract module</td>
+      <td><a href="/developer/plans/applied-insurance-reference-phase-5.html">plan</a></td>
+      <td>🅿️ deferred until Open CBAA integration of 1 to 4 (D2)</td>
+    </tr>
+    <tr>
+      <td>6 Submission, claims</td>
+      <td><a href="/developer/plans/applied-insurance-reference-phase-6.html">plan</a></td>
+      <td>⏳</td>
+    </tr>
+    <tr>
+      <td>S Substrate track</td>
+      <td><a href="/developer/plans/applied-insurance-reference-substrate.html">plan</a></td>
+      <td>⏳</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="history">History</h2>
+
+<ul>
+  <li>2026-09-26: sketches moved into <code class="language-plaintext highlighter-rouge">docs/developer/sketches/</code>, epic and phase plans written,
+<code class="language-plaintext highlighter-rouge">prl:canTrigger</code> corrected to a sub-property of <code class="language-plaintext highlighter-rouge">skos:semanticRelation</code>.</li>
+  <li>2026-09-26: scope decisions D1 to D4 and layout decisions D5 to D9 (epic §5). D10 reversed by
+D11, D12 added after the Eligibility walkthrough.</li>
+  <li>2026-09-26: ADRs A-98 (with addendum), A-99, A-100, A-102 and A-103 Accepted. A-101 reserved for
+Phase 5.</li>
+  <li>2026-09-26: AIR-0.1 signed off and merged (<code class="language-plaintext highlighter-rouge">3377a71</code>). Plan rewritten for two machines (R:
+Claude Code, Copilot Pro+. S: Copilot Business, no runtime, pull only). Status record
+restructured into per-machine sections, one epic record replacing per-phase records.</li>
+  <li>2026-09-30: AIR-2.2, AIR-4.1 and AIR-3.3 briefs and Validation Pack skeletons written and
+merged into <code class="language-plaintext highlighter-rouge">main</code> (<code class="language-plaintext highlighter-rouge">b2afc8e</code>, <code class="language-plaintext highlighter-rouge">532aadd</code>). The round 3 branches held only those commits.</li>
+  <li>2026-10-13: epic reconvened after the pause for CCS and FML (note
+<a href="/developer/notes/air-epic-reconvene.html">air-epic-reconvene</a>). Every <code class="language-plaintext highlighter-rouge">air/*</code> branch was found to be an
+ancestor of <code class="language-plaintext highlighter-rouge">origin/main</code>, so all eight are deleted. S’s slices now share one branch,
+<code class="language-plaintext highlighter-rouge">air/applied-reference</code> (lanes revised). AIR-2.2 and AIR-4.1 briefs re-pinned to the layer
+versions of <code class="language-plaintext highlighter-rouge">main</code> at <code class="language-plaintext highlighter-rouge">69cb7675</code>. AIR-3.3 is blocked on CCS HQ-6a.2 and AIR-3.3-Q1. Trip 1 for
+S is AIR-2.2 then AIR-4.1.</li>
+  <li>2026-10-13: re-planned as one trip for S (lanes §1, §4): versioning governs <code class="language-plaintext highlighter-rouge">main</code>, not a
+branch, and the applied modules have no importer on <code class="language-plaintext highlighter-rouge">main</code> outside AIR, so S builds every slice
+that does not wait on CCS or NRS before the branch comes to R once. AIR-3.5 moves to S. Every brief
+is written on R first. Decided the same day: agency values <code class="language-plaintext highlighter-rouge">Intentional</code> and <code class="language-plaintext highlighter-rouge">Economic</code>, thirteen
+mechanisms and four consequences added to AIR-2.2 (Q1, Q2, Q5), P wording-defined (Q3), latent
+onset for wrongful acts and professional error (Q4), the cause characteristics by inheritance with
+overrides, a sample of definitions reviewed on R before S drafts the rest (Q6), 10-minute winds for
+typhoon and severe tropical cyclone (Q7), heat and cold waves index-based (Q8), the hours-clause
+windows (Q9), units in <code class="language-plaintext highlighter-rouge">insurance/common</code> aligned to QUDT (Q10). Every AIR module is literate, and
+every concept documents the standards it follows in <code class="language-plaintext highlighter-rouge">skos:note</code> (AIR-2.0, a new first slice).
+AIR-2.6 now precedes AIR-2.3.</li>
+  <li>2026-10-13: earlier private designs for exposure, catastrophe modelling and reference data
+reviewed against the plan. Decided the same day (R1 to R10): a class of business contract in
+<code class="language-plaintext highlighter-rouge">insurance/common</code>, industry, domicile and legal form on the legal entity, a loss experience
+stating period, source and completeness, cover history events and summary terms, requirement
+strength and an attachment measure, attribute types for all eight profile families with shapes
+for two, eight consequences and the tropical depression concept (287 causes), catastrophe model
+results, multi-insured portfolios and licences out of scope (epic §7), a grouping property in
+AIR-4.3, and two programme roles. Also decided: AIR-4.2 (Q13) and AIR-4.4 (Q11, Q12) proposals,
+every active ISO 4217 currency in <code class="language-plaintext highlighter-rouge">insurance/common</code> with AIR-2.6 (Q14). AIR-4.3 now precedes
+AIR-4.4. AIR-4.2 and AIR-4.4 briefs written.</li>
+  <li>2026-10-13: the N.MET sample definitions accepted. Briefs written for AIR-4.3, 2.7, 2.5, 3.4, 3.5,
+4.5, 4.6, 6.1 and S6, with their Validation Packs, so every slice of the trip has a brief. Three
+questions remain open, and the briefs follow their leanings: AIR-3.4-Q1 (crosswalk OED’s peril
+codes and an example house list, and not yet the CBAA cause-of-loss list), AIR-3.4-Q2 (a lifted
+value is a derived <code class="language-plaintext highlighter-rouge">aeo:liftedPeril</code> beside the recorded code), AIR-6.1-Q1 (requests, answers as
+assessments and derived gaps, not the rest of the earlier designs’ question bridge). AIR-2.7
+adds the peril contract’s missing fallback binding to the cause scheme.</li>
+  <li>2026-10-14: AIR-6.1-Q1 walked through and settled at its leaning. What AIR-6.1 does not build,
+with everything else the epic leaves to consumers, is collected in
+<a href="/developer/plans/air-leftovers.html">air-leftovers.md</a>.</li>
+  <li>2026-10-14: AIR-3.4-Q1 and AIR-3.4-Q2 decided at their leanings. No question of the trip remains
+open, so <code class="language-plaintext highlighter-rouge">air/applied-reference</code> can be created.</li>
+  <li>2026-10-14: TD-49 raised from formal-methods track H. AIR-4.1 and AIR-4.2 on <code class="language-plaintext highlighter-rouge">air/applied-reference</code> make exposure set membership
+inverse-functional, against the module README’s design, which the maintainer confirmed: unchanged members are shared across
+exposure set versions by identity, not duplicated by node. To fix before or with the branch’s merge, with an example of two
+schedule versions sharing an unchanged location. Phase 4 plan corrected for the planned membership properties.</li>
+  <li>2026-10-14: machine S became unavailable. Machine R (cloud) took over S’s slices on <code class="language-plaintext highlighter-rouge">air/applied-reference</code>, authorised to commit and push to that branch only. TD-49 widened to every inverse-functional property of the exposure module and built first as AIR-4.2a, then removed from the technical debt register. AIR-4.3 and AIR-4.4 follow autonomously.</li>
+  <li>2026-10-14: amendment to the development contract, for AIR slices only and until further notice. The Python tests around <code class="language-plaintext highlighter-rouge">applied/insurance</code> are heavy and slow, so they are not run or written as the ontology is built. Each slice records its test plan in its Validation Pack, collected in the AIR-deferred-testing slice of the Phase 4 plan, and the tests are built later. Cheap static checks and the literate extraction still run. The rest of the contract stands.</li>
+  <li>2026-10-14: AIR-4.3 and AIR-4.4 built by R on <code class="language-plaintext highlighter-rouge">air/applied-reference</code> under the testing amendment. Two points for the maintainer, none blocking: AIR-4.3’s metric shape asks for a perspective on a hazard score, which has none (options in the AIR-4.3 Validation Pack), and AIR-4.4’s financial metric kinds for revenue, gross profit and headcount carry a <code class="language-plaintext highlighter-rouge">Metric</code> suffix to avoid existing names. The M3 profile’s site D reads Undetermined until CCS HQ-6a.2 merges.</li>
+  <li>2026-10-14: release preparation for the merge. The maintainer’s Open Results Data check (perspective renamed, two calculation methods added) is in. Catalogs regenerated and nine release rows added. <code class="language-plaintext highlighter-rouge">check:full-sweep</code> ran: 13 of 14 checks passed, and the catalog check’s one failure (a pinned count of <code class="language-plaintext highlighter-rouge">insurance/common</code> contracts) is fixed, with the check rerun at 773 passed. Tags to create after the merge: <code class="language-plaintext highlighter-rouge">applied-insurance-exposure-shapes-v0.1.0</code>, <code class="language-plaintext highlighter-rouge">applied-insurance-peril-shapes-v0.3.0</code>, <code class="language-plaintext highlighter-rouge">insurance-common-v0.6.0</code>, <code class="language-plaintext highlighter-rouge">insurance-common-vocab-v0.6.0</code>, <code class="language-plaintext highlighter-rouge">insurance-exposure-v0.1.0</code>, <code class="language-plaintext highlighter-rouge">insurance-exposure-vocab-v0.1.0</code>, <code class="language-plaintext highlighter-rouge">insurance-peril-v0.5.0</code>, <code class="language-plaintext highlighter-rouge">insurance-peril-intensity-v0.5.0</code> and <code class="language-plaintext highlighter-rouge">insurance-peril-vocab-v0.5.0</code></li>
+  <li>2026-10-16: claims designed out of the epic’s order, on <code class="language-plaintext highlighter-rouge">air/claims-reference</code>: the <a href="/developer/sketches/insurance-claims-ontology.html">claims sketch</a>,
+its <a href="/developer/sketches/claims-sketch-references.html">references and crosswalks</a> to ACORD and the Lloyd’s claims
+bordereau, and the <a href="/developer/sketches/claims-wire-formats.html">wire formats sketch</a>. Turned into the
+<a href="/developer/plans/applied-insurance-reference-claims.html">claims plan</a>, which subsumes AIR-6.2 to AIR-6.4: slices
+AIR-6.2 to AIR-6.12 and AIR-6.W0 to AIR-6.W7, milestones M7 and M8, substrate items S8 to S10.
+Seventeen questions open (CL-Q1 to CL-Q10, WF-Q1 to WF-Q7), none answered. No slice briefed.</li>
+</ul>

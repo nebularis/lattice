@@ -1,0 +1,176 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-fmh-h11-the-prefix-antichain-and-overlap-check">Validation Pack: FMH-H1.1, the prefix antichain and overlap check</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/formal-methods-track-h.html"><code class="language-plaintext highlighter-rouge">formal-methods-track-h</code></a>, slice H1.1
+(<a href="/developer/plans/formal-methods-track-h.html">plan §3</a>)
+<strong>Source finding:</strong> <a href="/developer/notes/rdf-engine/persistence-fml.html">review</a> §6.2, finding #2 and PV-X1.
+<strong>Decisions:</strong> none ratified. Two interpretations are recorded in the status record as H-D6 and H-D7
+and need our confirmation at the gate.</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>Law L3 (target coverage is a partition) needs every instance of a class to belong to exactly one
+target. Each <code class="language-plaintext highlighter-rouge">dal:GraphPatternScope</code> compiles to its own target, so two graph-pattern scopes that
+cover one class and declare nested <code class="language-plaintext highlighter-rouge">dal:graphPrefix</code> values (one equal to, or a prefix of, the
+other) give an instance in the inner graph two targets, and the resolver has no longest-prefix rule
+to choose between them. The check refuses that configuration and names a concrete graph IRI that
+both scopes match. Nested <code class="language-plaintext highlighter-rouge">dal:iriPrefix</code> values on <code class="language-plaintext highlighter-rouge">dal:NamespaceScope</code> nodes are reported as a
+warning only, since the resolver ranks competing scopes by <code class="language-plaintext highlighter-rouge">dal:priority</code>, which is a defined rule.</p>
+
+<h2 id="test-cases">Test cases</h2>
+
+<p>All in <code class="language-plaintext highlighter-rouge">tools/persistence/tests/test_hygiene_prefixes.py</code>.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>H1.1-T1</td>
+      <td><code class="language-plaintext highlighter-rouge">urn:g:lending/</code> and <code class="language-plaintext highlighter-rouge">urn:g:lending/behaviour/</code>, one shared class / check / one violation naming both scopes, counterexample under both prefixes</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>H1.1-T2</td>
+      <td>the same prefixes, disjoint classes / check / no finding</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H1.1-T3</td>
+      <td><code class="language-plaintext highlighter-rouge">urn:g:lending/behaviour/</code> and <code class="language-plaintext highlighter-rouge">urn:g:credit/behaviour/</code> / check / no finding</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H1.1-T4</td>
+      <td>two scopes, identical prefix, shared class / check / one violation reading “equals”</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>H1.1-T5</td>
+      <td><code class="language-plaintext highlighter-rouge">urn:g:lend/</code> and <code class="language-plaintext highlighter-rouge">urn:g:lending/</code>, shared class / check / no finding (shared leading characters are not nesting)</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H1.1-T6</td>
+      <td>nested prefixes, several classes with one in common / check / violation naming only the common class</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>H1.1-T7</td>
+      <td>nested <code class="language-plaintext highlighter-rouge">dal:iriPrefix</code> values / check / one warning, not a violation, naming <code class="language-plaintext highlighter-rouge">dal:priority</code></td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>H1.1-T8</td>
+      <td>disjoint <code class="language-plaintext highlighter-rouge">dal:iriPrefix</code> values / check / no finding</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H1.1-T9</td>
+      <td>a graph-pattern scope with no <code class="language-plaintext highlighter-rouge">dal:graphPrefix</code> / check / no finding</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H1.1-T10</td>
+      <td>three nested scopes declared forwards and backwards / check / identical, sorted reports (3 findings)</td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H1.1-T11</td>
+      <td>every file in <code class="language-plaintext highlighter-rouge">ontology/persistence/examples</code> plus the spec / check / no violation (one test per file)</td>
+      <td>L4</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H1.1-T12</td>
+      <td>an overlapping configuration / <code class="language-plaintext highlighter-rouge">python -m persistence hygiene</code> / exit 1, output names both scopes and a counterexample</td>
+      <td>L3</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>H1.1-T13</td>
+      <td>a clean configuration, and a warnings-only one / <code class="language-plaintext highlighter-rouge">hygiene</code> / exit 0 in both</td>
+      <td>L3</td>
+      <td>+</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="one-command">One command</h2>
+
+<p>Run from the repository root. A pass is <code class="language-plaintext highlighter-rouge">822 passed</code> with no failures (the 778 existing tests plus
+44 new ones). The one warning in the output is pre-existing.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:persistence
+</code></pre></div></div>
+
+<p>To run only this slice, <code class="language-plaintext highlighter-rouge">mise exec -- python -m pytest tools/persistence/tests/test_hygiene_prefixes.py -q</code>
+should report <code class="language-plaintext highlighter-rouge">44 passed</code>.</p>
+
+<h2 id="adversarial-probes">Adversarial probes</h2>
+
+<p>Run on 2026-10-08 against <code class="language-plaintext highlighter-rouge">hygiene.py</code>, each reverted afterwards.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Mutation</th>
+      <th>Tests that failed</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>nesting decided by “first characters match” instead of <code class="language-plaintext highlighter-rouge">startswith</code></td>
+      <td>T3, T5, T8, T13</td>
+    </tr>
+    <tr>
+      <td>the shared-class condition removed</td>
+      <td>T2</td>
+    </tr>
+    <tr>
+      <td>graph-prefix overlaps downgraded from violation to warning</td>
+      <td>T1, T4, T6, T12</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The maintainer is invited to pick a different mutation, for example by flipping the <code class="language-plaintext highlighter-rouge">&lt;</code> in the
+outer/inner ordering, and confirm a test fails.</p>
+
+<h2 id="artefacts-to-inspect">Artefacts to inspect</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">tools/persistence/src/persistence/hygiene.py</code>, the check and its <code class="language-plaintext highlighter-rouge">Finding</code> record.</li>
+  <li><code class="language-plaintext highlighter-rouge">tools/persistence/src/persistence/cli.py</code>, the <code class="language-plaintext highlighter-rouge">hygiene</code> subcommand.</li>
+  <li>Try it by hand: <code class="language-plaintext highlighter-rouge">mise exec -- python -m persistence hygiene ontology/persistence/spec/persistence.ttl ontology/persistence/examples/lending-credit-shared-class.ttl</code>
+should print <code class="language-plaintext highlighter-rouge">hygiene: 0 violation(s), 0 warning(s)</code> and exit 0.</li>
+</ul>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<ul>
+  <li>Whether two nested iri-prefix scopes resolve to different values (review C2 asks for “no two scopes
+with different resolved values can match one IRI”). That needs resolved profiles and belongs with
+H1.4 or H2.</li>
+  <li>A longest-prefix rule. None exists, and adding one is a resolver change and a design decision.</li>
+  <li><code class="language-plaintext highlighter-rouge">dal:ShapeScope</code> monotonicity (review PV-D4), not in H1.</li>
+  <li>A dedicated <code class="language-plaintext highlighter-rouge">mise</code> task. H1’s closing slice adds one command that runs all five checks (plan §3).
+Until then the tests run under <code class="language-plaintext highlighter-rouge">check:persistence</code>.</li>
+</ul>

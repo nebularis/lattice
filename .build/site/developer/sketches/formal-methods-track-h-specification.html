@@ -1,0 +1,238 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="track-h-the-specification-registry-and-the-typed-ir-sketch">Track H: the specification registry and the typed IR (sketch)</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/plans/formal-methods.html">formal-methods</a> (epic), track H
+<strong>Status:</strong> sketch, 2026-10-08. Nothing here is ratified
+<strong>Reads with:</strong> <a href="/developer/sketches/formal-methods-track-h.html">the main track H sketch</a> (§3’s four kinds of content,
+which this sketch turns into data), <a href="/developer/notes/rdf-engine/persistence-fml.html">persistence-fml.md</a>
+§7 (exhaustive validation), §8 (templates), §12 (static/value-level checks), §13 (generation)</p>
+
+<h2 id="1-the-enabling-move-stated-once">1. The enabling move, stated once</h2>
+
+<p>Review §13.1’s own judgement, adopted here without qualification: <strong>generate the rules, the
+registry, the IR and the emitter, do not generate the resolver.</strong> The resolver is a hundred lines
+of a pure function over a finite lattice — proving it (Isabelle, H6) is cheaper than generating
+it, and keeping a hand-written resolver plus an independently generated checker gives translation
+validation for free (two implementations is a feature here, provided one is derived from a
+specification and they are diffed, never a maintenance burden). Everything <em>tabular</em> — the
+dimension registry, the cross-axis rules, the operation-selection table, the template library’s
+own structure, the minting recipes, the audits — is generated instead, because five hand-written
+copies of one table (the README, the ontology, the compiler, the shapes, the guide’s own tables)
+is four drift sources, and this is exactly the drift the review found at least once already (its
+finding #3: the cross-axis rules exist twice today, in <code class="language-plaintext highlighter-rouge">shapes/constraints.ttl</code> and in the
+compiler, with a known, undocumented asymmetry).</p>
+
+<p>This is the same direction FM-D12 already decided for the rest of this epic (“the literate README
+is the one source, generating shapes and the theory’s closed datatypes”), extended here to a
+second tool (<code class="language-plaintext highlighter-rouge">tools/persistence</code>) and a wider class of generated artefact (rules and tables, not
+only datatypes) — exactly the kind of widening the epic’s own second review recommended as FM-D17
+for the Eligibility kernel (<code class="language-plaintext highlighter-rouge">formal-methods-more-feedback-response.md</code> §6). Track H and FM-D17 are
+independent decisions about the same principle applied to two different tools; neither depends on
+the other being accepted first.</p>
+
+<h2 id="2-the-specification-artefact-proposed-shape-not-yet-built">2. The specification artefact (proposed shape, not yet built)</h2>
+
+<p>One machine-readable registry, Turtle or a validatable tabular format (the review’s own example,
+§13.2, uses a compact pseudo-syntax; the actual syntax is this slice’s own design question, not
+pre-decided here), from which are generated:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Generated</th>
+      <th>From</th>
+      <th>Replaces</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">shapes/constraints.ttl</code>’s cross-axis rules</td>
+      <td>the registry’s rule entries</td>
+      <td>hand-written SHACL, today’s second of two copies</td>
+    </tr>
+    <tr>
+      <td>the compiler’s validation predicate and selection table</td>
+      <td>the same entries</td>
+      <td>hand-written Python, today’s first of two copies</td>
+    </tr>
+    <tr>
+      <td>Isabelle definitions (H6) and the exhaustive-validation BDD/SMT input (§4 below)</td>
+      <td>the same entries</td>
+      <td>nothing today — these do not exist yet</td>
+    </tr>
+    <tr>
+      <td>the README’s own rule tables</td>
+      <td>the same entries</td>
+      <td>hand-written prose tables, a documentation-drift source today</td>
+    </tr>
+    <tr>
+      <td>the obligation set per generated operation (caller/housekeeping/store)</td>
+      <td>a new registry field</td>
+      <td>nothing today — the review’s own PV-D2, the largest unverified surface in the whole layer</td>
+    </tr>
+    <tr>
+      <td>the laws-held list per compiled target</td>
+      <td>the per-dimension <code class="language-plaintext highlighter-rouge">guarantees</code>/<code class="language-plaintext highlighter-rouge">forfeits</code> fields</td>
+      <td>nothing today</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>What is not generated:</strong> the resolver itself (§1), any ontology content, any protocol model
+(those are hand-written per family, track C’s and this track’s own §4 of the protocol-models
+sketch).</p>
+
+<h2 id="3-the-typed-intermediate-representation">3. The typed intermediate representation</h2>
+
+<p>The single highest-leverage code change the review names (§13.4), because it removes whole defect
+classes by construction rather than testing for them after the fact. Give the compiler an IR for
+a generated operation: typed parameters (<code class="language-plaintext highlighter-rouge">IRI</code>, <code class="language-plaintext highlighter-rouge">Long</code>, <code class="language-plaintext highlighter-rouge">String</code>, <code class="language-plaintext highlighter-rouge">LangString</code>, <code class="language-plaintext highlighter-rouge">Payload</code>,
+<code class="language-plaintext highlighter-rouge">Position</code>, <code class="language-plaintext highlighter-rouge">Digest</code>), a declared read set and write set (which the protocol models consume
+directly as their own read/write sets, closing the loop between this slice and H5), guards tagged
+<code class="language-plaintext highlighter-rouge">Term</code> or <code class="language-plaintext highlighter-rouge">Value</code> (closing the term-versus-value-comparison divergence the review found at §8.2),
+and template variables tagged <code class="language-plaintext highlighter-rouge">Bound</code> or <code class="language-plaintext highlighter-rouge">OptionalAllowed</code>.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Hazard the review found</th>
+      <th>How the IR removes it, by construction</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>injection (an untyped string reaching query structure)</td>
+      <td>parameters are typed terms; there is no path from a string to structure</td>
+    </tr>
+    <tr>
+      <td>untyped position literals</td>
+      <td>a <code class="language-plaintext highlighter-rouge">Position</code> parameter always renders through its declared width and datatype</td>
+    </tr>
+    <tr>
+      <td>an INSERT-template variable that may be unbound in some solution</td>
+      <td><code class="language-plaintext highlighter-rouge">Bound</code> vs <code class="language-plaintext highlighter-rouge">OptionalAllowed</code> is a type; the renderer refuses an untagged variable</td>
+    </tr>
+    <tr>
+      <td>blank nodes inside an INSERT template (a retry is not then a no-op)</td>
+      <td>no blank-node constructor in the IR at all</td>
+    </tr>
+    <tr>
+      <td>a property path inside a template (illegal; parse failure today only at render time)</td>
+      <td>paths are a read-set-only construct in the type system</td>
+    </tr>
+    <tr>
+      <td>an unnamed graph, or reliance on the default graph</td>
+      <td>every pattern carries an explicit graph role</td>
+    </tr>
+    <tr>
+      <td>unbound <code class="language-plaintext highlighter-rouge">GRAPH ?g</code> in an audit or resume query</td>
+      <td>bucket sets are a typed <code class="language-plaintext highlighter-rouge">RegistryList</code> parameter, never a free variable</td>
+    </tr>
+    <tr>
+      <td>a <code class="language-plaintext highlighter-rouge">FILTER</code>-value comparison on a term-invariant position, or the reverse</td>
+      <td><code class="language-plaintext highlighter-rouge">Guard</code> is tagged <code class="language-plaintext highlighter-rouge">Term</code>/<code class="language-plaintext highlighter-rouge">Value</code>; the renderer refuses the wrong one on the wrong position</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">NOW()</code> inside a guard</td>
+      <td>no clock constructor except in an explicitly audit-only position</td>
+    </tr>
+    <tr>
+      <td>a missing template parameter</td>
+      <td>the IR’s own parameter list is the renderer’s domain; completeness is a type check, not a runtime surprise</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="31-from-aggregate-ownership-2026-10-10">3.1 From aggregate ownership (2026-10-10)</h3>
+
+<p>The <a href="/developer/sketches/persistence-aggregate-ownership.html#12-what-h2-inherits">aggregate-ownership sketch</a> adds three
+things to the IR, decided (H-D14) after the
+<a href="/developer/notes/persistence-aggregate-ownership-review.html">review</a> of the
+<a href="/developer/notes/persistence-aggregate-ownership.html">exploration note</a> and
+<a href="../../../spikes/persistence-aggregate-ownership/README.md">its spike</a>.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Addition</th>
+      <th>Hazard it removes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>the <code class="language-plaintext highlighter-rouge">OwnershipTree</code> and its compiled <code class="language-plaintext highlighter-rouge">PropertyPath</code> as typed values. A path parameter is built only from encoded IRIs and a fixed set of operators</td>
+      <td>a closure that depends on how a shape was written, and a path assembled from strings</td>
+    </tr>
+    <tr>
+      <td>a payload check: every payload subject is the root or reached from it through owned steps. The IR states it and the runtime caller enforces it, since a payload is a request-time slot</td>
+      <td>a payload that writes into another aggregate or into reference data</td>
+    </tr>
+    <tr>
+      <td>a required-parameter guard (H-D12, option D)</td>
+      <td>TD-34, a partial write when a parameter is missing</td>
+    </tr>
+    <tr>
+      <td>a composite operation’s read set is the closure its path computes at execution, and its write set the delete set, the payload and the version row</td>
+      <td>protocol models that assume a fixed read set for a write (model A)</td>
+    </tr>
+    <tr>
+      <td>an explicit graph role for every composite pattern, the profile’s named data graph (AO-Q14, decided option a)</td>
+      <td>TD-40, composite operations that rely on the default graph against static check S-1</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>H2’s typing of the closure starts after HO5, when the tree replaces the old walk.</p>
+
+<p>H2’s design, its typed payload and its slices are in the <a href="/developer/sketches/formal-methods-track-h-typed-ir.html">typed IR sketch</a>
+(2026-10-10).</p>
+
+<h2 id="4-exhaustive-cross-axis-validation-once-the-registry-exists">4. Exhaustive cross-axis validation, once the registry exists</h2>
+
+<p>The cross-axis validation predicate is propositional over finite domains (review §7.1-§7.2):
+roughly 1.3×10⁸ combinations before shard-count and identity-role multiplicities, small for a BDD,
+too large to sample meaningfully. Ten properties to check exhaustively once the registry is data
+(review §7.3, table V1-V10), the two most important named here and the rest left at the review’s
+own level of detail until this slice starts: <strong>V2</strong> (no combination is both refused by the shapes
+and accepted by the compiler, or the reverse — the drift finding #3 found by example, checked
+universally instead) and <strong>V10</strong> (every combination that forfeits a guarantee is at least warned,
+with the warning naming the specific law it forfeits — directly closing the review’s finding #5,
+the three default-unsafe baselines that are warned but not gated).</p>
+
+<h2 id="5-non-vacuity-stated-once-applied-everywhere">5. Non-vacuity, stated once, applied everywhere</h2>
+
+<p>The single cheapest technique in the whole review (§7.4), adopted as a standing rule for every
+artefact this track touches, not only its own new ones: <strong>for every constraint, refusal, warning,
+shape and audit query, a witness fixture that triggers it, generated and checked.</strong> This would
+have caught, in seconds, two of the review’s own calibration-table defects (D.3 A6’s never-firing
+fork shape, D.1’s <code class="language-plaintext highlighter-rouge">sh:prefixes</code> defect). Applied to: every SHACL shape (a violating and a
+conforming fixture each), every compiler refusal/warning (a configuration fixture — <code class="language-plaintext highlighter-rouge">examples/</code>
+already has many, the obligation is <em>every</em> rule has one, checked by coverage), every audit query
+(a store state in which it fires). A rule or shape with no witness is a build failure, the same
+discipline <code class="language-plaintext highlighter-rouge">tools/check_formal_freshness.py</code> already applies to Eligibility’s laws, extended here
+to Persistence’s own rule set.</p>
+
+<h2 id="6-static-and-value-level-checks-smt-automata">6. Static and value-level checks (SMT, automata)</h2>
+
+<p>Small, local, fully automatic, run per compile, each tied to a named policy or a recorded defect
+(review §12, full table). The four to build first, because they catch a live finding each: the
+prefix antichain/overlap check (main sketch’s L3 gap — two scopes with different resolved values
+matching one instance), the IRI-template injectivity check (Z3 strings: a template’s inverse
+parser must recover exactly the parameters that produced it), the width-adequacy check (a
+declared <code class="language-plaintext highlighter-rouge">epochWidth</code>/<code class="language-plaintext highlighter-rouge">sequenceWidth</code> must fit the datatype’s own maximum, preventing the review’s
+own recorded two-widths defect, B13), and the template-variable-discipline check (S-3/S-4: every
+INSERT-template variable bound in every solution, no blank nodes in a template — cheap, static,
+and the single highest-severity-to-cost static check in the whole review).</p>
+
+<p>The aggregate-ownership design (2026-10-10) adds three to H4’s list: the source review’s C10 restated
+as equality of the compiled path’s language and the shape graph’s owned-path language (automata, with
+no depth bound since depth is gone), the IRI-template injectivity check extended to named-graph
+templates across families (review F11 of the ownership review), and C14’s request bound with the
+largest declared aggregate, since whole-replace sends it all (<a href="/developer/sketches/persistence-aggregate-ownership.html#151-solvers-and-provers-in-summary">ownership sketch §15.1</a>).</p>
+
+<h2 id="7-non-goals">7. Non-goals</h2>
+
+<p>Any ontology change. Any protocol model (the protocol-models sketch’s own job). The resolver’s own
+mechanisation (Isabelle, a later slice, H6, outlined in the plan only). Deciding the registry’s
+exact serialisation syntax here — left to the slice that builds it.</p>

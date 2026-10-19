@@ -1,0 +1,153 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-aor-5-flat-concept-conditions">Validation Pack: AOR-5, flat concept conditions</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/applied-ontology-readiness.html"><code class="language-plaintext highlighter-rouge">applied-ontology-readiness</code></a>
+<strong>Plan section:</strong> <a href="/developer/plans/applied-ontology-readiness.html#phase-b-executable-coverage">Phase B</a>
+<strong>Decisions:</strong> <a href="../../architecture/decisions/ADR-A89-eligibility-ir-concept-conditions-and-profile-aggregation.md">ADR-A89</a> items 1, 2 and 4 (SPARQL), <a href="/architecture/decisions/ADR-A87-eligibility-concept-inclusion-and-exclusion.html">ADR-A87</a>, both Proposed</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>A condition matching by <code class="language-plaintext highlighter-rouge">ExactMatch</code> or <code class="language-plaintext highlighter-rouge">SetMembership</code> compiles through the
+shared IR, and its SPARQL artefact decides every question as the ADR-A87
+table says. It never denies for absent evidence (ADR-A24).</p>
+
+<h2 id="test-cases">Test cases</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AOR5-01</td>
+      <td>a set condition with three required concepts, one also excluded / compiled / plan holds both sets, sorted</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AOR5-02</td>
+      <td>the condition stripped of concepts / compiled / refused</td>
+      <td>L1</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>AOR5-03</td>
+      <td>a non-default wildcard policy / compiled / refused</td>
+      <td>L1</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>AOR5-04</td>
+      <td>an interval strategy / compiled as a concept plan / refused</td>
+      <td>L1</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>AOR5-05</td>
+      <td>candidate in the required set / SPARQL executed / <code class="language-plaintext highlighter-rouge">Permitted</code></td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AOR5-06</td>
+      <td>candidate outside every required concept / executed / <code class="language-plaintext highlighter-rouge">Denied</code></td>
+      <td>L1</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>AOR5-07</td>
+      <td>candidate both required and excluded / executed / <code class="language-plaintext highlighter-rouge">Denied</code> (L10)</td>
+      <td>L1</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>AOR5-08</td>
+      <td>question with no candidate / executed / <code class="language-plaintext highlighter-rouge">Undetermined</code></td>
+      <td>L1</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>AOR5-09</td>
+      <td>question with two candidates / executed / <code class="language-plaintext highlighter-rouge">Undetermined</code></td>
+      <td>L1</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>AOR5-10</td>
+      <td>artefact / inspected / plan typed <code class="language-plaintext highlighter-rouge">exe:ConceptMatchPlan</code>, <code class="language-plaintext highlighter-rouge">exe:derivedFromVocabularyNode</code> names every concept</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AOR5-11</td>
+      <td>one plan compiled twice / compared / isomorphic</td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AOR5-12</td>
+      <td><code class="language-plaintext highlighter-rouge">condition-taxonomy.ttl</code>’s exact condition plus two questions / executed / <code class="language-plaintext highlighter-rouge">Permitted</code> and <code class="language-plaintext highlighter-rouge">Denied</code></td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Every decision case runs the generated query with rdflib’s SPARQL engine.</p>
+
+<h2 id="one-command">One command</h2>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:mork-compilers
+</code></pre></div></div>
+
+<p>Pass: <code class="language-plaintext highlighter-rouge">27 passed</code> (the 15 existing compiler tests and the 12 above). Also
+run <code class="language-plaintext highlighter-rouge">mise run check:ontology-catalog</code>, which includes the Eligibility example
+tests.</p>
+
+<h2 id="artefacts-to-inspect">Artefacts to inspect</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">elg:candidateConcept</code> in <code class="language-plaintext highlighter-rouge">ontology/eligibility/README.md</code> §5 and the spec,
+and the README §4 sentence and table row on candidates. A question with
+more than one candidate is <code class="language-plaintext highlighter-rouge">Undetermined</code>. That reading is new and flagged
+in the status record.</li>
+  <li><code class="language-plaintext highlighter-rouge">elg:UndeterminedWhenNoCandidateInput</code> in <code class="language-plaintext highlighter-rouge">shapes/rules.ttl</code> now recognises
+<code class="language-plaintext highlighter-rouge">elg:candidateConcept</code>. Without this, the migrated <code class="language-plaintext highlighter-rouge">hierarchical-match.ttl</code>
+received a second decision value and broke L6. AOR2-01 caught it.</li>
+  <li><code class="language-plaintext highlighter-rouge">exe:ConceptMatchPlan</code> and <code class="language-plaintext highlighter-rouge">exe:derivedFromVocabularyNode</code> in
+<code class="language-plaintext highlighter-rouge">ontology/mork/spec/Executable.ttl</code>.</li>
+  <li>Versions: Eligibility is MINOR, so the Eligibility cascade moves to 0.4.0
+against the committed 0.3.0, superseding AOR-2’s interim 0.3.1. Executable
+moves 0.2.0 → 0.3.0. Nothing imports Executable.</li>
+</ul>
+
+<h2 id="adversarial-probe">Adversarial probe</h2>
+
+<p>Dropping the exclusion clause failed AOR5-07. Letting two candidates through
+(<code class="language-plaintext highlighter-rouge">&lt; 1</code> for <code class="language-plaintext highlighter-rouge">!= 1</code>) failed AOR5-09.</p>
+
+<h2 id="deviations-from-the-plan">Deviations from the plan</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">exe:ConceptMatchPlan</code> lands here, not in AOR-7, because the SPARQL
+artefact’s provenance needs it. <code class="language-plaintext highlighter-rouge">exe:derivedFromVocabularyNode</code> is new, since
+concepts are neither Eligibility nor Quantification nodes.</li>
+  <li>Exclusion-only flat conditions (L12) need the bound scheme’s members, so
+they are refused here and handled with scheme resolution in AOR-6.</li>
+  <li>Conformance-corpus cases compare profile-level decisions. They land with
+profile aggregation in AOR-8.</li>
+</ul>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<ul>
+  <li>Hierarchical match and scheme resolution (AOR-6).</li>
+  <li>SHACL and SWRL for concept plans (AOR-7).</li>
+  <li>Diagnostic codes for <code class="language-plaintext highlighter-rouge">Undetermined</code> (AOR-7).</li>
+</ul>

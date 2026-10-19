@@ -1,0 +1,159 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-aor-7-shacl-swrl-and-diagnostics-for-concept-plans">Validation Pack: AOR-7, SHACL, SWRL and diagnostics for concept plans</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/applied-ontology-readiness.html"><code class="language-plaintext highlighter-rouge">applied-ontology-readiness</code></a>
+<strong>Plan section:</strong> <a href="/developer/plans/applied-ontology-readiness.html#phase-b-executable-coverage">Phase B</a>
+<strong>Decisions:</strong> <a href="../../architecture/decisions/ADR-A89-eligibility-ir-concept-conditions-and-profile-aggregation.md">ADR-A89</a> items 3, 4 and 6, <a href="../../architecture/decisions/ADR-A24-eligibility-executable-semantics-backend-strategy.md">ADR-A24</a>, <a href="../../architecture/decisions/ADR-A28-parity-and-conformance-release-gate.md">ADR-A28</a></p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>SHACL agrees with the SPARQL reference on every concept-plan case. SWRL
+derives only what SPARQL decides as <code class="language-plaintext highlighter-rouge">Permitted</code> or <code class="language-plaintext highlighter-rouge">Denied</code>, each from a
+positive fact, and never <code class="language-plaintext highlighter-rouge">Undetermined</code>. Every <code class="language-plaintext highlighter-rouge">Undetermined</code> row carries a
+declared diagnostic, and no other row carries one.</p>
+
+<h2 id="test-cases">Test cases</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AOR7-01</td>
+      <td>flat entitlement / SPARQL / no candidate → <code class="language-plaintext highlighter-rouge">MissingCandidate</code>, two → <code class="language-plaintext highlighter-rouge">SeveralCandidates</code>, decided rows none</td>
+      <td>L1</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>AOR7-02</td>
+      <td>diagnosis arm / SPARQL / above exclusion → <code class="language-plaintext highlighter-rouge">AboveExclusion</code>, unlisted → <code class="language-plaintext highlighter-rouge">OutsideScheme</code></td>
+      <td>L1</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>AOR7-03</td>
+      <td>interval example plus an empty question / SPARQL / <code class="language-plaintext highlighter-rouge">MissingCandidate</code>, the example’s question <code class="language-plaintext highlighter-rouge">Permitted</code> with none</td>
+      <td>L1</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>AOR7-04</td>
+      <td>three conditions, every member plus absent, several, outside / SPARQL / diagnostic present exactly when <code class="language-plaintext highlighter-rouge">Undetermined</code>, each one of the five declared <code class="language-plaintext highlighter-rouge">exe:Diagnostic</code> individuals</td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AOR7-05</td>
+      <td>same cases / SHACL via pySHACL, read in shape order / equals SPARQL</td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AOR7-06</td>
+      <td>flat entitlement, no scheme / SHACL / equals SPARQL</td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AOR7-07</td>
+      <td>same cases, one candidate each / SWRL applied / equals SPARQL’s <code class="language-plaintext highlighter-rouge">Permitted</code> and <code class="language-plaintext highlighter-rouge">Denied</code>, nothing for <code class="language-plaintext highlighter-rouge">Undetermined</code></td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AOR7-08</td>
+      <td>flat entitlement, no scheme / SWRL applied / <code class="language-plaintext highlighter-rouge">Permitted</code> for a required tier, <code class="language-plaintext highlighter-rouge">Denied</code> for the excluded one, nothing for a tier outside the required set</td>
+      <td>L1</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>AOR7-09</td>
+      <td>every generated concept rule / heads inspected / objects only <code class="language-plaintext highlighter-rouge">Permitted</code> or <code class="language-plaintext highlighter-rouge">Denied</code></td>
+      <td>L1</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>AOR7-10</td>
+      <td>one plan / shapes and rules compiled twice / isomorphic</td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AOR7-11</td>
+      <td>CLI on a bound contract / without then with <code class="language-plaintext highlighter-rouge">--at</code> / exit 2, then a <code class="language-plaintext highlighter-rouge">ConceptMatchPlan</code> with an <code class="language-plaintext highlighter-rouge">exe:admittedBy</code> fact</td>
+      <td>L1</td>
+      <td>+/-</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>SWRL rules are applied by <code class="language-plaintext highlighter-rouge">apply_rules</code>, which evaluates each rule body as a
+conjunctive query. That is exact for rules with class and individual-property
+atoms only, and it refuses any other atom.</p>
+
+<h2 id="one-command">One command</h2>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:mork-compilers
+</code></pre></div></div>
+
+<p>Pass: <code class="language-plaintext highlighter-rouge">53 passed</code>.</p>
+
+<h2 id="artefacts-to-inspect">Artefacts to inspect</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">ontology/mork/spec/Executable.ttl</code>: <code class="language-plaintext highlighter-rouge">exe:Diagnostic</code> and its five
+individuals, <code class="language-plaintext highlighter-rouge">exe:admittedBy</code>, <code class="language-plaintext highlighter-rouge">exe:deniedBy</code>, the revised header, and the
+revised <code class="language-plaintext highlighter-rouge">exe:impliesDecision</code> scope note.</li>
+  <li><code class="language-plaintext highlighter-rouge">shacl_backend.py</code>: <code class="language-plaintext highlighter-rouge">concept_sets</code>, <code class="language-plaintext highlighter-rouge">render_concept_selects</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">swrl_backend.py</code>: <code class="language-plaintext highlighter-rouge">concept_facts</code>, <code class="language-plaintext highlighter-rouge">_concept_rule</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">sparql_backend.py</code>: the <code class="language-plaintext highlighter-rouge">?diagnostic</code> column, which interval queries now
+carry too.</li>
+  <li>CLI: <code class="language-plaintext highlighter-rouge">compile-condition</code> accepts concept conditions, <code class="language-plaintext highlighter-rouge">--at</code> and <code class="language-plaintext highlighter-rouge">--scope</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">tools/mork_compilers/pyproject.toml</code>: a <code class="language-plaintext highlighter-rouge">test</code> extra (<code class="language-plaintext highlighter-rouge">pyshacl</code>, <code class="language-plaintext highlighter-rouge">pytest</code>),
+installed by <code class="language-plaintext highlighter-rouge">bootstrap:mork-compilers</code>.</li>
+</ul>
+
+<h2 id="adversarial-probe">Adversarial probe</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Mutation</th>
+      <th>Tests failed</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>determinacy shape not emitted</td>
+      <td>AOR7-05</td>
+    </tr>
+    <tr>
+      <td>SWRL denies every member not permitted</td>
+      <td>AOR7-07</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">OutsideScheme</code> replaced by <code class="language-plaintext highlighter-rouge">AboveExclusion</code></td>
+      <td>AOR7-02</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="known-limit">Known limit</h2>
+
+<p>SWRL cannot tell one candidate from several. A question with two candidates
+derives an outcome per candidate. AOR7-07 and AOR7-08 use one candidate per
+question. ADR-A89’s consequences record this.</p>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<ul>
+  <li>Loading the rules into an OWL reasoner (ADR-A83 harness).</li>
+  <li>Profile-level artefacts (AOR-8).</li>
+</ul>

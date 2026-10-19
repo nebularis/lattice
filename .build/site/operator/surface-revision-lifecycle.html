@@ -1,0 +1,531 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="surface-revision-lifecycle--state-machine-and-version-transitions">Surface Revision Lifecycle — State Machine and Version Transitions</h1>
+
+<p><strong>Purpose:</strong> Operational procedures for Surface package versioning, state transitions, and lifecycle events<br />
+<strong>Status:</strong> Phase 7 implementation; depth-1 scope<br />
+<strong>Last updated:</strong> 2026-09-22</p>
+
+<hr />
+
+<h2 id="overview">Overview</h2>
+
+<p>Every Surface execution package has a lifecycle state and a version record. This document defines:</p>
+
+<ol>
+  <li><strong>State machine</strong> — Valid transitions between package states</li>
+  <li><strong>Version semantics</strong> — How versions are assigned and incremented</li>
+  <li><strong>Reconciliation</strong> — How to handle state misalignment (e.g., stale package in production)</li>
+  <li><strong>Canonicalisation cutover</strong> — How to migrate between canonicalisation contracts</li>
+</ol>
+
+<hr />
+
+<h2 id="state-machine">State Machine</h2>
+
+<h3 id="states">States</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>       Draft
+         ↓
+    Validation-Ready (with lock for governance review)
+         ↓
+     Approved (signed off for production use)
+         ↓
+    Archived (superseded by newer version)
+</code></pre></div></div>
+
+<h3 id="state-definitions">State Definitions</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>State</th>
+      <th>Meaning</th>
+      <th>Governance</th>
+      <th>Use</th>
+      <th>Promotion path</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Draft</strong></td>
+      <td>Being authored or regenerated; not yet validated</td>
+      <td>None required</td>
+      <td>Internal development only</td>
+      <td>Promotion by: manual validation step</td>
+    </tr>
+    <tr>
+      <td><strong>Validation-Ready</strong></td>
+      <td>Regeneration complete; awaiting governance review</td>
+      <td>Review requested</td>
+      <td>CI/staging environments</td>
+      <td>Promotion by: maintainer sign-off</td>
+    </tr>
+    <tr>
+      <td><strong>Approved</strong></td>
+      <td>Governance approved; ready for production</td>
+      <td>Board signed-off or equivalent</td>
+      <td>Production consumption</td>
+      <td>Promotion by: release pipeline</td>
+    </tr>
+    <tr>
+      <td><strong>Archived</strong></td>
+      <td>Superseded by a newer version</td>
+      <td>Automatic on new promotion</td>
+      <td>Historical reference only</td>
+      <td>Demotion only (no promotion)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="state-transitions">State Transitions</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Draft → Validation-Ready
+  - Regeneration complete
+  - All release gates pass
+  - No manual action required (automatic on gate success)
+
+Validation-Ready → Approved
+  - Maintainer reviews governance state
+  - No outstanding exceptions
+  - Maintainer signs off
+
+Approved → Archived
+  - Newer version promoted to Approved
+  - Automatic (old version archived on new release)
+
+Archived → (terminal state)
+  - Remain queryable for provenance tracing
+  - May not be promoted back to active use
+</code></pre></div></div>
+
+<h3 id="invalid-transitions">Invalid Transitions</h3>
+
+<p>These transitions are <strong>forbidden</strong>:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">Draft → Approved</code> (must validate first)</li>
+  <li><code class="language-plaintext highlighter-rouge">Validation-Ready → Archived</code> (must be Approved first)</li>
+  <li><code class="language-plaintext highlighter-rouge">Archived → Approved</code> (no revival; create new version instead)</li>
+  <li>Direct demotion without reason audit</li>
+</ul>
+
+<hr />
+
+<h2 id="version-scheme">Version Scheme</h2>
+
+<h3 id="format-majorminorpatch-metadata">Format: MAJOR.MINOR.PATCH-METADATA</h3>
+
+<p>Example: <code class="language-plaintext highlighter-rouge">0.2.1-sha256.a7c9d2e.srf-canon/2</code></p>
+
+<h3 id="components">Components</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Part</th>
+      <th>Meaning</th>
+      <th>When incremented</th>
+      <th>Example</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>MAJOR</strong></td>
+      <td>Incompatible interface change; requires client rewrite</td>
+      <td>Rarely; architecture decision required</td>
+      <td><code class="language-plaintext highlighter-rouge">1.0.0</code> (from <code class="language-plaintext highlighter-rouge">0.x.x</code>)</td>
+    </tr>
+    <tr>
+      <td><strong>MINOR</strong></td>
+      <td>New features; backward compatible</td>
+      <td>When adding new index forms, promotion types, or policy fields</td>
+      <td><code class="language-plaintext highlighter-rouge">0.2.0</code> (added Projection subsystem)</td>
+    </tr>
+    <tr>
+      <td><strong>PATCH</strong></td>
+      <td>Bug fixes; no new features</td>
+      <td>When fixing compiler bugs or defects without spec change</td>
+      <td><code class="language-plaintext highlighter-rouge">0.2.1</code></td>
+    </tr>
+    <tr>
+      <td><strong>METADATA</strong></td>
+      <td>Content identifier + canonicalisation version</td>
+      <td>Every regeneration</td>
+      <td><code class="language-plaintext highlighter-rouge">sha256.a7c9d2e.srf-canon/2</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="version-increment-rules">Version Increment Rules</h3>
+
+<p><strong>MAJOR (rare):</strong></p>
+<ul>
+  <li>Layer dependency order changes (ADR-A01 change)</li>
+  <li>Derivation contract reshaped (Foundation migration complete)</li>
+  <li>Compiler output format changes fundamentally</li>
+</ul>
+
+<p><strong>MINOR (common during active development):</strong></p>
+<ul>
+  <li>New law added to Surface layer</li>
+  <li>New index form supported</li>
+  <li>Profile policy fields expanded</li>
+  <li>Promotion fidelity rules changed</li>
+</ul>
+
+<p><strong>PATCH (common):</strong></p>
+<ul>
+  <li>Compiler bug fix</li>
+  <li>Defect fixture closure</li>
+  <li>Output normalization improvement (internal only)</li>
+</ul>
+
+<p><strong>METADATA (every regeneration):</strong></p>
+<ul>
+  <li>Content hash of the contract and current output</li>
+  <li>Canonicalisation version (<code class="language-plaintext highlighter-rouge">srf-canon/1</code>, <code class="language-plaintext highlighter-rouge">srf-canon/2</code>, etc.)</li>
+  <li>Example: <code class="language-plaintext highlighter-rouge">sha256.a7c9d2e.srf-canon/2</code></li>
+</ul>
+
+<h3 id="version-independence">Version Independence</h3>
+
+<p>Each Surface package tracks its own version independently. The ecosystem has <strong>no global version number</strong>.</p>
+
+<p>However, all packages <strong>must</strong> use the same canonicalisation version in production to ensure hash portability.</p>
+
+<hr />
+
+<h2 id="lifecycle-events">Lifecycle Events</h2>
+
+<h3 id="event-1-regeneration-state-draft--validation-ready">Event 1: Regeneration (State: Draft → Validation-Ready)</h3>
+
+<p><strong>Trigger:</strong> Source, mapping, or profile change detected</p>
+
+<p><strong>Procedure:</strong></p>
+<ol>
+  <li>Receive change notification (manual or automatic)</li>
+  <li>Recompute read-set digests (see <a href="/operator/surface-invalidation-runbook.html">surface-invalidation-runbook.md</a>)</li>
+  <li>Regenerate Surface packages</li>
+  <li>Increment PATCH version (or MINOR if spec change)</li>
+  <li>Update METADATA: <code class="language-plaintext highlighter-rouge">sha256.&lt;new-hash&gt;.srf-canon/&lt;current-version&gt;</code></li>
+  <li>Run all release gates</li>
+  <li>On success: Automatically mark as <code class="language-plaintext highlighter-rouge">Validation-Ready</code></li>
+  <li>Create governance review request with:
+    <ul>
+      <li>Changelog (what changed and why)</li>
+      <li>Test results</li>
+      <li>Parity metrics</li>
+      <li>Outstanding items (if any)</li>
+    </ul>
+  </li>
+</ol>
+
+<p><strong>Automatic on success; manual on failure:</strong></p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Success path</span>
+python <span class="nt">-m</span> surface lower <span class="nt">--contracts</span> ontology/surface/examples/my-contract.ttl
+<span class="c"># Regeneration + gate verification → Auto-promotion to Validation-Ready</span>
+
+<span class="c"># Failure path</span>
+<span class="c"># Review logs, fix issues, retry manually</span>
+python <span class="nt">-m</span> surface lower <span class="nt">--contracts</span> ontology/surface/examples/my-contract.ttl <span class="nt">--force-draft</span>
+<span class="c"># Stays in Draft; requires manual repair</span>
+</code></pre></div></div>
+
+<p><strong>State recorded:</strong></p>
+<div class="language-turtle highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nn">ex:</span><span class="n">SurfacePackage_MyConcern_v0</span><span class="mf">.2.1</span><span class="n">_a7c9d2e
+</span><span class="w">  </span><span class="nn">rdf:</span><span class="n">type</span><span class="w"> </span><span class="nn">srf:</span><span class="n">GeneratedSurface</span><span class="w"> </span><span class="p">;</span><span class="w">
+  </span><span class="nn">srf:</span><span class="n">packageState</span><span class="w"> </span><span class="nl">&lt;ValidationReady&gt;</span><span class="w"> </span><span class="p">;</span><span class="w">
+  </span><span class="nn">srf:</span><span class="n">packageVersion</span><span class="w"> </span><span class="s">"0.2.1-sha256.a7c9d2e.srf-canon/2"</span><span class="w"> </span><span class="p">;</span><span class="w">
+  </span><span class="nn">srf:</span><span class="n">lastRegeneratedAt</span><span class="w"> </span><span class="s">"2026-09-22T15:30:00Z"</span><span class="p">^^</span><span class="nn">xsd:</span><span class="n">dateTime</span><span class="w"> </span><span class="p">;</span><span class="w">
+  </span><span class="nn">srf:</span><span class="n">regeneratedReason</span><span class="w"> </span><span class="s">"Coverage-type scheme rebound to 2026Q4 edition"</span><span class="w"> </span><span class="p">;</span><span class="w">
+  </span><span class="nn">srf:</span><span class="n">reviewRequestedAt</span><span class="w"> </span><span class="s">"2026-09-22T15:31:00Z"</span><span class="p">^^</span><span class="nn">xsd:</span><span class="n">dateTime</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span></code></pre></div></div>
+
+<hr />
+
+<h3 id="event-2-governance-review-state-validation-ready--approved">Event 2: Governance Review (State: Validation-Ready → Approved)</h3>
+
+<p><strong>Trigger:</strong> Maintainer reviews and approves the package</p>
+
+<p><strong>Procedure:</strong></p>
+<ol>
+  <li>Review release gate report (tests, parity, provenance)</li>
+  <li>Review changelog</li>
+  <li>Consult with domain owner if changes are significant</li>
+  <li>Sign off in governance system (example: form in MORK UI)</li>
+  <li>Mark state as <code class="language-plaintext highlighter-rouge">Approved</code></li>
+  <li>Record approval timestamp and approver identity</li>
+</ol>
+
+<p><strong>Gate review checklist:</strong></p>
+<ul class="task-list">
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" />All 9 release gates passed (see surface-invalidation-runbook.md)</li>
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" />Parity ratio ≥ 99%</li>
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" />No regressions in determinism checks</li>
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" />Read-set entries are fresh</li>
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" />Changelog is clear and complete</li>
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" />No outstanding “BLOCKED” items (deferred items are OK)</li>
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" />Integration with downstream consumers verified</li>
+</ul>
+
+<p><strong>State recorded:</strong></p>
+<div class="language-turtle highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nn">ex:</span><span class="n">SurfacePackage_MyConcern_v0</span><span class="mf">.2.1</span><span class="n">_a7c9d2e
+</span><span class="w">  </span><span class="nn">rdf:</span><span class="n">type</span><span class="w"> </span><span class="nn">srf:</span><span class="n">GeneratedSurface</span><span class="w"> </span><span class="p">;</span><span class="w">
+  </span><span class="nn">srf:</span><span class="n">packageState</span><span class="w"> </span><span class="nl">&lt;Approved&gt;</span><span class="w"> </span><span class="p">;</span><span class="w">
+  </span><span class="nn">srf:</span><span class="n">packageVersion</span><span class="w"> </span><span class="s">"0.2.1-sha256.a7c9d2e.srf-canon/2"</span><span class="w"> </span><span class="p">;</span><span class="w">
+  </span><span class="nn">srf:</span><span class="n">reviewRequestedAt</span><span class="w"> </span><span class="s">"2026-09-22T15:31:00Z"</span><span class="p">^^</span><span class="nn">xsd:</span><span class="n">dateTime</span><span class="w"> </span><span class="p">;</span><span class="w">
+  </span><span class="nn">srf:</span><span class="n">reviewApprovedAt</span><span class="w"> </span><span class="s">"2026-09-22T16:15:00Z"</span><span class="p">^^</span><span class="nn">xsd:</span><span class="n">dateTime</span><span class="w"> </span><span class="p">;</span><span class="w">
+  </span><span class="nn">srf:</span><span class="n">reviewApprovedBy</span><span class="w"> </span><span class="nl">&lt;person/maintainer-1&gt;</span><span class="w"> </span><span class="p">;</span><span class="w">
+  </span><span class="nn">srf:</span><span class="n">reviewNotes</span><span class="w"> </span><span class="s">"Approved for production; no outstanding issues"</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span></code></pre></div></div>
+
+<hr />
+
+<h3 id="event-3-promotion-to-production-state-approved--active">Event 3: Promotion to Production (State: Approved → Active)</h3>
+
+<p><strong>Trigger:</strong> Release pipeline deploys the package</p>
+
+<p><strong>Procedure:</strong></p>
+<ol>
+  <li>Verify package state is <code class="language-plaintext highlighter-rouge">Approved</code></li>
+  <li>Check canonicalisation version matches all other active packages (no mixing)</li>
+  <li>Perform atomic replacement:
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Blue-green or staged rollout</span>
+<span class="nb">cp</span> <span class="nt">-r</span> ontology/surface/execution/my-contract/v0.2.1-a7c9d2e <span class="se">\</span>
+      ontology/surface/execution/my-contract/current
+git add ontology/surface/execution/my-contract/current
+git commit <span class="nt">-m</span> <span class="s2">"Release: my-contract v0.2.1-a7c9d2e to production"</span>
+</code></pre></div>    </div>
+  </li>
+  <li>Record deployment timestamp</li>
+</ol>
+
+<p><strong>State recorded:</strong></p>
+<div class="language-turtle highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nn">ex:</span><span class="n">SurfacePackage_MyConcern_v0</span><span class="mf">.2.1</span><span class="n">_a7c9d2e
+</span><span class="w">  </span><span class="nn">rdf:</span><span class="n">type</span><span class="w"> </span><span class="nn">srf:</span><span class="n">GeneratedSurface</span><span class="w"> </span><span class="p">;</span><span class="w">
+  </span><span class="nn">srf:</span><span class="n">packageState</span><span class="w"> </span><span class="nl">&lt;Active&gt;</span><span class="w"> </span><span class="p">;</span><span class="w">
+  </span><span class="nn">srf:</span><span class="n">packageVersion</span><span class="w"> </span><span class="s">"0.2.1-sha256.a7c9d2e.srf-canon/2"</span><span class="w"> </span><span class="p">;</span><span class="w">
+  </span><span class="nn">srf:</span><span class="n">deployedToProductionAt</span><span class="w"> </span><span class="s">"2026-09-22T17:00:00Z"</span><span class="p">^^</span><span class="nn">xsd:</span><span class="n">dateTime</span><span class="w"> </span><span class="p">;</span><span class="w">
+  </span><span class="nn">srf:</span><span class="n">canonicalisationVersion</span><span class="w"> </span><span class="s">"srf-canon/2"</span><span class="w"> </span><span class="p">;</span><span class="w">
+  </span><span class="nn">srf:</span><span class="n">productionSupersedes</span><span class="w"> </span><span class="nl">&lt;v0.2.0-sha256.c4e1f3a.srf-canon/2&gt;</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span></code></pre></div></div>
+
+<hr />
+
+<h3 id="event-4-supersession-state-active--archived">Event 4: Supersession (State: Active → Archived)</h3>
+
+<p><strong>Trigger:</strong> A newer version is promoted to Active</p>
+
+<p><strong>Procedure:</strong></p>
+<ol>
+  <li>Automatically triggered when new version enters Active state</li>
+  <li>Old version state changes to <code class="language-plaintext highlighter-rouge">Archived</code></li>
+  <li>Maintain linkage via <code class="language-plaintext highlighter-rouge">srf:productionSupersedes</code> for provenance tracing</li>
+</ol>
+
+<p><strong>Do NOT delete archived packages.</strong> Keep them queryable for:</p>
+<ul>
+  <li>Auditing: “which package was in production on date X?”</li>
+  <li>Provenance: “this result came from package Y, what was its read-set?”</li>
+  <li>Rollback: “if we need to revert, what was the previous version?”</li>
+</ul>
+
+<p><strong>State recorded:</strong></p>
+<div class="language-turtle highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nn">ex:</span><span class="n">SurfacePackage_MyConcern_v0</span><span class="mf">.2.0</span><span class="n">_c4e1f3a
+</span><span class="w">  </span><span class="nn">rdf:</span><span class="n">type</span><span class="w"> </span><span class="nn">srf:</span><span class="n">GeneratedSurface</span><span class="w"> </span><span class="p">;</span><span class="w">
+  </span><span class="nn">srf:</span><span class="n">packageState</span><span class="w"> </span><span class="nl">&lt;Archived&gt;</span><span class="w"> </span><span class="p">;</span><span class="w">
+  </span><span class="nn">srf:</span><span class="n">packageVersion</span><span class="w"> </span><span class="s">"0.2.0-sha256.c4e1f3a.srf-canon/2"</span><span class="w"> </span><span class="p">;</span><span class="w">
+  </span><span class="nn">srf:</span><span class="n">deployedToProductionAt</span><span class="w"> </span><span class="s">"2026-09-10T08:00:00Z"</span><span class="p">^^</span><span class="nn">xsd:</span><span class="n">dateTime</span><span class="w"> </span><span class="p">;</span><span class="w">
+  </span><span class="nn">srf:</span><span class="n">archivedAt</span><span class="w"> </span><span class="s">"2026-09-22T17:00:00Z"</span><span class="p">^^</span><span class="nn">xsd:</span><span class="n">dateTime</span><span class="w"> </span><span class="p">;</span><span class="w">
+  </span><span class="nn">srf:</span><span class="n">supersededBy</span><span class="w"> </span><span class="nl">&lt;v0.2.1-sha256.a7c9d2e.srf-canon/2&gt;</span><span class="w"> </span><span class="p">.</span><span class="w">
+
+</span><span class="nn">ex:</span><span class="n">SurfacePackage_MyConcern_v0</span><span class="mf">.2.1</span><span class="n">_a7c9d2e
+</span><span class="w">  </span><span class="nn">rdf:</span><span class="n">type</span><span class="w"> </span><span class="nn">srf:</span><span class="n">GeneratedSurface</span><span class="w"> </span><span class="p">;</span><span class="w">
+  </span><span class="nn">srf:</span><span class="n">packageState</span><span class="w"> </span><span class="nl">&lt;Active&gt;</span><span class="w"> </span><span class="p">;</span><span class="w">
+  </span><span class="nn">srf:</span><span class="n">productionSupersedes</span><span class="w"> </span><span class="nl">&lt;v0.2.0-sha256.c4e1f3a.srf-canon/2&gt;</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span></code></pre></div></div>
+
+<hr />
+
+<h2 id="canonicalisation-cutover-lifecycle">Canonicalisation Cutover Lifecycle</h2>
+
+<h3 id="background">Background</h3>
+
+<p>A canonicalisation cutover (e.g., <code class="language-plaintext highlighter-rouge">srf-canon/1</code> → <code class="language-plaintext highlighter-rouge">srf-canon/2</code>) is a rare, high-impact event that invalidates all recorded hashes across the entire package estate.</p>
+
+<p>See <a href="/operator/surface-invalidation-runbook.html#scenario-4-canonicalisation-change">surface-invalidation-runbook.md § Scenario 4</a> for the technical procedure.</p>
+
+<h3 id="lifecycle-during-cutover">Lifecycle during cutover</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Old estate (srf-canon/1):
+  all packages @ Active or Archived states
+  all hashes based on srf-canon/1 algorithm
+
+  ↓↓↓ Cutover decision &amp; authorization ↓↓↓
+
+Transition period:
+  new packages regenerated with srf-canon/2
+  both versions running (carefully isolated)
+  comparison tests running to verify equivalence
+
+  ↓↓↓ Verification complete ↓↓↓
+
+Staged rollout:
+  domain-1: v0.2.0-sha256.c4e1f3a.srf-canon/1 → Archived
+            v0.2.1-sha256.a7c9d2e.srf-canon/2 → Active
+  
+  [wait 24 hours, monitoring]
+  
+  domain-2: (same)
+  domain-3: (same)
+
+  ↓↓↓ All domains transitioned ↓↓↓
+
+New estate (srf-canon/2):
+  all packages @ Active or Archived
+  all hashes based on srf-canon/2 algorithm
+  backward-compatibility monitoring complete
+</code></pre></div></div>
+
+<h3 id="version-scheme-during-cutover">Version scheme during cutover</h3>
+
+<p><strong>Before cutover:</strong></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>v0.2.0-sha256.c4e1f3a.srf-canon/1
+</code></pre></div></div>
+
+<p><strong>After cutover (same MAJOR.MINOR.PATCH, new canonicalisation):</strong></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>v0.2.0-sha256.a1b2c3d.srf-canon/2
+</code></pre></div></div>
+
+<p>Note: The PATCH version <strong>does not</strong> change because the functionality is unchanged; only the canonicalisation algorithm did. This ensures version consistency across the cutover.</p>
+
+<h3 id="communication-during-cutover">Communication during cutover</h3>
+
+<ol>
+  <li><strong>Pre-cutover (2 weeks before):</strong> Announce to all Surface consumers</li>
+  <li><strong>Cutover day:</strong> Issue change notice with dates and domain order</li>
+  <li><strong>Per-domain transition:</strong> Confirm to consumers before and after</li>
+  <li><strong>Post-cutover (1 week after):</strong> Confirm cutover complete; resume normal operations</li>
+</ol>
+
+<h3 id="rollback-procedure">Rollback procedure</h3>
+
+<p>If cutover verification fails:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>New (srf-canon/2) packages fail comparison tests
+→ Rollback: Revert to old (srf-canon/1) packages
+→ Investigate failure (compiler bug? canonicalisation mismatch?)
+→ Delay cutover by N weeks
+→ Fix root cause and retry
+</code></pre></div></div>
+
+<p>Record the incident in the operational log with:</p>
+<ul>
+  <li>Date and duration of rollback</li>
+  <li>Root cause</li>
+  <li>Fix deployed</li>
+  <li>Next cutover date</li>
+</ul>
+
+<hr />
+
+<h2 id="reconciliation-handling-state-misalignment">Reconciliation: Handling State Misalignment</h2>
+
+<h3 id="scenario-stale-package-in-production-corruption-or-deployment-error">Scenario: Stale package in production (corruption or deployment error)</h3>
+
+<p><strong>Symptoms:</strong></p>
+<ul>
+  <li>Package marked <code class="language-plaintext highlighter-rouge">Active</code> but contains old hashes</li>
+  <li>Read-set freshness check fails</li>
+  <li>Parity checks report mismatches</li>
+</ul>
+
+<p><strong>Diagnosis:</strong></p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>python tools/surface/invalidation.py <span class="nt">--check-production-state</span> <span class="se">\</span>
+  ontology/surface/execution/my-contract/current
+
+<span class="c"># Output:</span>
+<span class="c"># ❌ MISMATCH: Package metadata says v0.2.1-a7c9d2e</span>
+<span class="c">#    but filesystem contains v0.2.0-c4e1f3a</span>
+<span class="c"># ❌ Hashes are stale (created 2026-09-10, now 2026-09-22)</span>
+</code></pre></div></div>
+
+<p><strong>Recovery:</strong></p>
+<ol>
+  <li>Take package offline (do not use for queries)</li>
+  <li>Regenerate from source contract</li>
+  <li>Re-run release gates</li>
+  <li>Promote as normal (Draft → Validation-Ready → Approved → Active)</li>
+</ol>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>python <span class="nt">-m</span> surface lower <span class="nt">--contracts</span> ontology/surface/examples/my-contract.ttl <span class="nt">--regenerate-all</span>
+</code></pre></div></div>
+
+<h3 id="scenario-canonicalisation-version-mismatch-mixing-old-and-new">Scenario: Canonicalisation version mismatch (mixing old and new)</h3>
+
+<p><strong>Symptoms:</strong></p>
+<ul>
+  <li>Some packages use <code class="language-plaintext highlighter-rouge">srf-canon/1</code>, others use <code class="language-plaintext highlighter-rouge">srf-canon/2</code></li>
+  <li>Query results inconsistent across domains</li>
+  <li>Hash comparisons fail</li>
+</ul>
+
+<p><strong>Prevention (preferred):</strong></p>
+<ul>
+  <li><strong>Never mix canonicalisation versions in production</strong></li>
+  <li>Staged cutover ensures clean transition</li>
+  <li>Atomic replacement prevents mid-transition reads</li>
+</ul>
+
+<p><strong>Recovery (if mixing occurred):</strong></p>
+<ol>
+  <li>Identify which packages use which version</li>
+  <li>Revert to previous cutover point (all <code class="language-plaintext highlighter-rouge">srf-canon/1</code> or all <code class="language-plaintext highlighter-rouge">srf-canon/2</code>)</li>
+  <li>Regenerate missing packages to match estate</li>
+  <li>Re-run full conformance suite</li>
+  <li>Re-attempt cutover with stricter controls</li>
+</ol>
+
+<hr />
+
+<h2 id="operational-dashboard-example">Operational Dashboard (Example)</h2>
+
+<p>A real deployment would track this state in a dashboard:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Surface Package Lifecycle Status
+═══════════════════════════════════════════════════════════════
+
+Package                 Version              State          Updated
+─────────────────────────────────────────────────────────────────
+coverage-index          0.2.1-a7c9d2e        Active         2 hours ago
+peril-dimension         0.1.5-c4e1f3a        Active         1 week ago
+scope-closure           0.3.0-b2d8e9f        Validation-Rdy 30 mins ago
+sic-category            0.2.0-d9e1a3b        Archived       1 month ago
+
+Canonicalisation Version: srf-canon/2
+Last estate-wide cutover: 2026-08-15
+Next planned review: 2026-10-15
+
+Release Gates Summary:
+  ✅ All Surface tests: 61/61
+  ✅ All MORK tests: 15/15
+  ✅ All parity checks: 99.5%
+  ⚠️  SWRL verification: Pending (Phase 8 item 7)
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="see-also">See Also</h2>
+
+<ul>
+  <li><a href="/operator/surface-invalidation-runbook.html">Surface Invalidation Runbook</a> — Technical procedures</li>
+  <li><a href="../status/surface-mork-unified-projection.md#phase-7--provenance-and-invalidation-hardening">Phase 7 Status</a> — Implementation details</li>
+  <li><a href="../status/surface-outstanding-items.md#32-adr-a01-convention-conflict--closed">Outstanding Items</a> — Known limitations</li>
+  <li><code class="language-plaintext highlighter-rouge">tools/surface/invalidation.py</code> — API reference</li>
+</ul>
+
+<hr />
+
+<p><strong>Last updated:</strong> 2026-09-22<br />
+<strong>Related ADR:</strong> <a href="../../architecture/decisions/ADR-A12-identity-and-derivation-model.md">ADR-A12 (Identity and Derivation Model)</a>, <a href="../../architecture/decisions/ADR-A27-invalidation-and-minimal-scope-regeneration-policy.md">ADR-A27 (Invalidation and Minimal-Scope Regeneration Policy)</a></p>

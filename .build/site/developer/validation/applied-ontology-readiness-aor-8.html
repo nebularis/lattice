@@ -1,0 +1,158 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-aor-8-profile-aggregation">Validation Pack: AOR-8, profile aggregation</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/applied-ontology-readiness.html"><code class="language-plaintext highlighter-rouge">applied-ontology-readiness</code></a>
+<strong>Plan section:</strong> <a href="/developer/plans/applied-ontology-readiness.html#phase-b-executable-coverage">Phase B</a>
+<strong>Decisions:</strong> <a href="../../architecture/decisions/ADR-A89-eligibility-ir-concept-conditions-and-profile-aggregation.md">ADR-A89</a> items 5 and 7, <a href="../../architecture/decisions/ADR-A28-parity-and-conformance-release-gate.md">ADR-A28</a></p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>Every <code class="language-plaintext highlighter-rouge">elg:EligibilityDecision</code> record of a profile is decided by strong
+Kleene logic over its conditions’ outcomes, identically by SPARQL and SHACL.
+SWRL derives a sound subset. An unanswered condition counts as
+<code class="language-plaintext highlighter-rouge">Undetermined</code>. <code class="language-plaintext highlighter-rouge">DimensionConsistent</code> is refused.</p>
+
+<h2 id="test-cases">Test cases</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AOR8-01</td>
+      <td>eight records over a diagnosis and a consent condition, <code class="language-plaintext highlighter-rouge">AllRequired</code> and <code class="language-plaintext highlighter-rouge">AnySufficient</code> / SPARQL / the hand-derived Kleene table</td>
+      <td>L2</td>
+      <td>+ and -</td>
+    </tr>
+    <tr>
+      <td>AOR8-02</td>
+      <td><code class="language-plaintext highlighter-rouge">AllRequired</code> records / SPARQL / nothing answered and consent unanswered → <code class="language-plaintext highlighter-rouge">MissingCandidate</code>, diagnosis above exclusion → <code class="language-plaintext highlighter-rouge">AboveExclusion</code>, a diagnostic exactly when <code class="language-plaintext highlighter-rouge">Undetermined</code></td>
+      <td>L1</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>AOR8-03</td>
+      <td>both profiles / SHACL / the same table</td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AOR8-04</td>
+      <td>both profiles / condition and profile SWRL rules applied / every derived outcome agrees with SPARQL, and exactly the derivable subset is derived</td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AOR8-05</td>
+      <td><code class="language-plaintext highlighter-rouge">DimensionConsistent</code> / compiled / refused</td>
+      <td>L1</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>AOR8-06</td>
+      <td>profile plan / inspected / <code class="language-plaintext highlighter-rouge">exe:ProfilePlan</code> linking both condition plans and its operation</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AOR8-07</td>
+      <td>interval example’s profile / SPARQL / <code class="language-plaintext highlighter-rouge">Permitted</code>, no diagnostic</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AOR8-08</td>
+      <td>one profile / all three backends compiled twice / isomorphic</td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AOR8-09</td>
+      <td>corpus cases E1 to E4 / Phase 8 gate / SPARQL and SHACL each match every expected record</td>
+      <td>L3</td>
+      <td>+ and -</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The SWRL subset in AOR8-04 is smaller than the decided set because the consent
+condition has no scheme and no exclusion, so no positive fact denies <code class="language-plaintext highlighter-rouge">refused</code>
+(ADR-A24).</p>
+
+<h2 id="one-command">One command</h2>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:python-root
+</code></pre></div></div>
+
+<p>Pass: the unittest run, then <code class="language-plaintext highlighter-rouge">Phase 8 conformance passed: 3 Surface parity
+cases, 4 Eligibility cases (SPARQL and SHACL)</code>. <code class="language-plaintext highlighter-rouge">mise run check:mork-compilers</code>
+reports <code class="language-plaintext highlighter-rouge">61 passed</code>.</p>
+
+<h2 id="artefacts-to-inspect">Artefacts to inspect</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">sparql_backend.py</code>: <code class="language-plaintext highlighter-rouge">profile_select</code>, <code class="language-plaintext highlighter-rouge">_aggregate</code>. Condition queries are
+now SELECT blocks that nest in the profile query.</li>
+  <li><code class="language-plaintext highlighter-rouge">shacl_backend.py</code>: <code class="language-plaintext highlighter-rouge">render_profile_selects</code>. SHACL requires every nested
+SELECT in a constraint to project <code class="language-plaintext highlighter-rouge">$this</code>, so the blocks carry it.</li>
+  <li><code class="language-plaintext highlighter-rouge">swrl_backend.py</code>: <code class="language-plaintext highlighter-rouge">_profile_rule</code>, <code class="language-plaintext highlighter-rouge">_compile_profile_rules</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">ontology/mork/spec/Executable.ttl</code>: <code class="language-plaintext highlighter-rouge">exe:impliesProfileDecision</code>, and the
+<code class="language-plaintext highlighter-rouge">exe:ProfilePlan</code> comment that replaced its “no backend emits this” note.</li>
+  <li><code class="language-plaintext highlighter-rouge">tools/phase8_conformance.py</code>: <code class="language-plaintext highlighter-rouge">run_eligibility_cases</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">test/conformance/</code>: E3 (hierarchical exclusion, <code class="language-plaintext highlighter-rouge">elg:E5</code>), E4
+(any-sufficient, <code class="language-plaintext highlighter-rouge">elg:E4</code>), and E1’s condition now declares a required
+concept, with the declaration-warning comment.</li>
+</ul>
+
+<h2 id="adversarial-probe">Adversarial probe</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Mutation</th>
+      <th>Tests failed</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">AnySufficient</code> evaluated as <code class="language-plaintext highlighter-rouge">AllRequired</code></td>
+      <td>AOR8-01, AOR8-03</td>
+    </tr>
+    <tr>
+      <td>unanswered conditions ignored</td>
+      <td>AOR8-01, AOR8-02, AOR8-03</td>
+    </tr>
+    <tr>
+      <td>SWRL <code class="language-plaintext highlighter-rouge">AllRequired</code> Permitted rule checks one condition</td>
+      <td>AOR8-04</td>
+    </tr>
+    <tr>
+      <td>E4 expected record altered</td>
+      <td>AOR8-09, through both backends</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="found-while-implementing">Found while implementing</h2>
+
+<ul>
+  <li>SHACL-SPARQL constraints may not contain <code class="language-plaintext highlighter-rouge">VALUES</code>. The hierarchical query
+now uses <code class="language-plaintext highlighter-rouge">FILTER (?target IN (…))</code>.</li>
+  <li>rdflib’s <code class="language-plaintext highlighter-rouge">MIN</code> aggregate fails when it compares two unbound values. The
+profile query uses <code class="language-plaintext highlighter-rouge">MAX(COALESCE(…, ''))</code>.</li>
+</ul>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<ul>
+  <li>Several questions for one condition in one record. Each is counted, and the
+result is not defined by ADR-A89.</li>
+  <li>SWRL in the corpus gate, which needs a reasoner for interval rules (ADR-A83).</li>
+</ul>

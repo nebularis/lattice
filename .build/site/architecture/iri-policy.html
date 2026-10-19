@@ -1,0 +1,30 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="iri-and-identity-policy-historical">IRI and Identity Policy (historical)</h1>
+
+<p><strong>Status:</strong> Historical record. Not normative, not a reference profile, and not guidance.
+<strong>Superseded by:</strong> <a href="/architecture/iri-identity-patterns.html">IRI and Identity Patterns</a> and <a href="decisions/ADR-A82-framework-neutral-identity-pattern-selection.md">ADR-A82</a>, which supersedes <a href="decisions/ADR-A51-iri-and-identity-policy.md">ADR-A51</a>
+<strong>Body removed:</strong> 2026-09-23, following <a href="/developer/review/iri-patterns-post-3866b21-review.html">iri-patterns-post-3866b21-review.md</a> finding D7. The disposition is in <a href="/developer/status/iri-patterns-post-3866b21-remediation.html">iri-patterns-post-3866b21-remediation.md</a>.</p>
+
+<h2 id="what-this-document-was">What this document was</h2>
+
+<p>The P0.1.3 deliverable: one proposed platform IRI profile for LATTICE, reviewed under ADR-A51. It specified a <code class="language-plaintext highlighter-rouge">urn:lattice:{tenantId}:{scope}:{family}:{localName}</code> lineage grammar, content revision and event IRIs beneath it, four entity minting strategies (<code class="language-plaintext highlighter-rouge">natural-key</code>, <code class="language-plaintext highlighter-rouge">derived-hash</code>, <code class="language-plaintext highlighter-rouge">surrogate-claimed</code>, <code class="language-plaintext highlighter-rouge">surrogate</code>), a content-hash procedure, a skolemization rule and a graph-name validator. The review history showed that a framework cannot mandate one identifier scheme for every adopter, and ADR-A82 replaced the profile with the framework-neutral pattern catalogue in <a href="/architecture/iri-identity-patterns.html">iri-identity-patterns.md</a>.</p>
+
+<p>The body was removed rather than kept as “historical context” because it still read as guidance, and parts of it contradict the current catalogue. Section numbers cited by ADR-A51 and by the ADR-A51 review records refer to the removed body, which remains in version control:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git show 3323b85:docs/architecture/iri-policy.md
+</code></pre></div></div>
+
+<h2 id="known-defects-in-the-removed-body">Known defects in the removed body</h2>
+
+<p>Anyone reading the historical body should treat these as errors, not as options:</p>
+
+<ul>
+  <li><strong>Hash-only literal canonicalisation.</strong> Its §3 canonicalised literal lexical forms before hashing while storing the original terms. Two different stored graphs could then share one content IRI. <a href="/architecture/iri-identity-patterns.html#82-canonicalize-on-write-hashing">iri-identity-patterns.md §8.2</a> forbids this.</li>
+  <li><strong>Contradictory skolemization.</strong> Its §5 said skolem IRIs are deterministic within a content revision while prescribing random UUIDv4 <code class="language-plaintext highlighter-rouge">surrogate</code> IRIs for nodes without a natural key.</li>
+  <li><strong>Lowercase rule versus its own example.</strong> Rule 7 made the canonical lexical form all-lowercase, while the <code class="language-plaintext highlighter-rouge">natural-key</code> example <code class="language-plaintext highlighter-rouge">…/Policy/POL-000123</code> is mixed case.</li>
+  <li><strong>Invalid UUID example.</strong> The <code class="language-plaintext highlighter-rouge">surrogate</code> example <code class="language-plaintext highlighter-rouge">01j9z8q3-k4m5-n6p7-…</code> is not a UUID: it contains non-hexadecimal characters.</li>
+  <li><strong>Delimiter concatenation.</strong> The <code class="language-plaintext highlighter-rouge">derived-hash</code> form hashed <code class="language-plaintext highlighter-rouge">v{schemeVersion}|{ns}|enc(keyTuple)</code>, a separator join around an undefined <code class="language-plaintext highlighter-rouge">enc</code>. <a href="/architecture/iri-identity-patterns.html#72-tuple-encoding-pattern">iri-identity-patterns.md §7.2</a> requires a self-delimiting tuple encoding for the whole input.</li>
+  <li><strong>“At least 128 bits”.</strong> An open-ended digest width lets two implementations mint different IRIs for one key. <a href="/architecture/iri-identity-patterns.html#74-digest-derivation-pattern">iri-identity-patterns.md §7.4</a> requires an exact width.</li>
+  <li><strong>Status claims.</strong> The body described its rules as “normative”, <code class="language-plaintext highlighter-rouge">surrogate-claimed</code> as the “Recommended default”, and its validator as the “single source of truth”. None of these hold.</li>
+</ul>

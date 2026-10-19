@@ -1,0 +1,854 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="insurml-and-lattice-an-architecture-vision">InsurML and LATTICE: an architecture vision</h1>
+
+<p><strong>Status:</strong> vision, 2026-10-05. Not a decision and not a plan. Each part that becomes work needs its
+own ADR under the Design First rule. Nothing here changes an accepted ADR.</p>
+
+<p><strong>Plan:</strong> <a href="/developer/plans/insurml-alignment.html">insurml-alignment</a> (epic).
+<strong>Sketches:</strong> <a href="/developer/sketches/insurml-bridge.html">insurml-bridge.md</a> (the profile, lift, lower,
+assembly parity and the substrate changes) and
+<a href="/developer/sketches/insurml-toolchain-and-ai.html">insurml-toolchain-and-ai.md</a> (authoring,
+compilation, libraries, placement, exchange and ingestion).
+<strong>Analysis it builds on:</strong> <a href="/developer/notes/insurml-and-lattice.html">InsurML and LATTICE compared</a>
+(the comparison, cited below as “comparison §n”) and
+<a href="/developer/notes/insurml-integration.html">integrating InsurML and LATTICE</a> (cited as
+“integration §n”). Their gap numbers (L-n, I-n), mapping rows (M-nn, W-nn), proposals (P-n) and
+questions (U-n, Q-n) are reused here. §12 records where this paper departs from them.</p>
+
+<p><strong>Scope.</strong> How InsurML, an XML markup standard for commercial insurance wording owned by John
+Cummins of Axiome Partners, and LATTICE, a domain-neutral substrate for governing documents, are
+used together and apart: authoring, libraries, assembly, placement, execution, exchange, and
+AI-assisted reading of insurance documents.</p>
+
+<hr />
+
+<h2 id="contents">Contents</h2>
+
+<ol>
+  <li><a href="#1-premise">Premise</a></li>
+  <li><a href="#2-vision-statement">Vision statement</a></li>
+  <li><a href="#3-principles">Principles</a></li>
+  <li><a href="#4-the-end-state-architecture">The end-state architecture</a></li>
+  <li><a href="#5-where-insurml-sits-among-lattices-layers">Where InsurML sits among LATTICE’s layers</a></li>
+  <li><a href="#6-the-lifecycle-end-to-end">The lifecycle, end to end</a></li>
+  <li><a href="#7-using-each-with-and-without-the-other">Using each with and without the other</a></li>
+  <li><a href="#8-what-changes-and-where">What changes, and where</a></li>
+  <li><a href="#9-alignment-with-existing-work">Alignment with existing work</a></li>
+  <li><a href="#10-risks">Risks</a></li>
+  <li><a href="#11-how-success-is-measured">How success is measured</a></li>
+  <li><a href="#12-where-this-paper-departs-from-the-analysis">Where this paper departs from the analysis</a></li>
+</ol>
+
+<hr />
+
+<h2 id="1-premise">1. Premise</h2>
+
+<p>Open CBAA adopted the LMA Wording Information Model (WIM) as <code class="language-plaintext highlighter-rouge">wim:</code>. LATTICE generalised it into the domain-neutral Wording layer (ADR-A112) and reserved the market’s own typing for an LMA WIM profile in <code class="language-plaintext highlighter-rouge">ontology/applied/insurance/wording/</code> (CCS decision CC-D3, AIR slice AIR-5.9). The WIM originates with Axiome Partners, who are also developing InsurML, and working with the LMA on computable binding authority agreements within the DARE programme. LATTICE’s authors are invited to comment.</p>
+
+<p>InsurML and LATTICE’s Wording layer therefore share an ancestor (comparison §3). They grew in different directions:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th> </th>
+      <th>InsurML</th>
+      <th>LATTICE</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Answers</td>
+      <td>how an insurance contract document is built from parts, identified, checked and published</td>
+      <td>what a contract means, between whom, under which conditions, with which amounts, and in what state it is now</td>
+    </tr>
+    <tr>
+      <td>Strong on</td>
+      <td>markup, schemas, inline structure, clause dependencies, a normative assembly model, real market text</td>
+      <td>library and instance kept apart, per-instance values, a condition algebra, design-time checks, amendments, legal relations, regimes, state</td>
+    </tr>
+    <tr>
+      <td>Domain</td>
+      <td>commercial insurance</td>
+      <td>any governing document, with insurance in applied modules</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The finding this paper adopts is that AIR-5.9 is built with InsurML in view, as an InsurML profile,
+and that LATTICE does not define an insurance wording markup of its own. InsurML is the document
+standard for insurance wording. LATTICE is the substrate for its meaning, its execution and its
+governance. Each remains usable without the other.</p>
+
+<h2 id="2-vision-statement">2. Vision statement</h2>
+
+<p>Insurance wording is drafted once, in Word or in a web studio, and held as InsurML components with
+stable version IRIs down to the fragment. Compilers validate it, verify it at design time and
+optimise it for assembly. Its meaning is reviewed once per component version and stored in LATTICE.
+Libraries of components, contract forms and meaning templates are assembled into products, and
+products are tailored in placement for a risk, a client or a scenario, with every deviation from
+the library recorded. The placed contract is a publishable InsurML document and a computable LATTICE
+instrument at once. It runs deterministically, it is exchanged as XML or JSON, and anything that
+arrives in either form is lifted back by the same published transformations. Every decision cites
+the fragment of wording it rests on. Models taught both standards read legacy and incoming
+documents into InsurML structure and LATTICE proposals, which people review, so that each reviewed
+document makes the next one cheaper to read.</p>
+
+<h2 id="3-principles">3. Principles</h2>
+
+<p>The integration principles IP1 to IP11 (integration §2) apply unchanged. The principles below govern
+the architecture as a whole and are cited by number in the sketches and the plan.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Principle</th>
+      <th>Grounding</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AV1</td>
+      <td><strong>Two standards, one graph.</strong> Each standard keeps its own semantics. They meet by co-typing the same nodes and by declared alignment, never by renaming one into the other</td>
+      <td>IP4, IP6, ADR-A82</td>
+    </tr>
+    <tr>
+      <td>AV2</td>
+      <td><strong>Division of ownership.</strong> InsurML owns insurance wording markup, its vocabularies and its assembly model. LATTICE owns meaning, state, computation, identity, provenance and governance. LATTICE does not publish a competing insurance markup</td>
+      <td>AIR-5.9, CC-D3</td>
+    </tr>
+    <tr>
+      <td>AV3</td>
+      <td><strong>Bridge before change.</strong> Integration first uses what both standards already have. LATTICE’s substrate changes only for a gap with a domain-neutral case. Changes to InsurML are proposals to its owner</td>
+      <td>IP1, IP10</td>
+    </tr>
+    <tr>
+      <td>AV4</td>
+      <td><strong>The words are the contract.</strong> Meaning attaches to words by IRI and never replaces them. Embedding another standard never puts unreviewed meaning into the published words</td>
+      <td>IP2, IV1, IP7</td>
+    </tr>
+    <tr>
+      <td>AV5</td>
+      <td><strong>Traceable to the fragment.</strong> Every component, fragment, inclusion and value has an IRI, and every derived artefact has provenance back to them</td>
+      <td>ADR-A26, ADR-A92</td>
+    </tr>
+    <tr>
+      <td>AV6</td>
+      <td><strong>Deterministic after review.</strong> Lifts, lowers, assembly, compilation and rendering are pure functions of hashed inputs. Models propose and never write a compiled artefact</td>
+      <td>IV9, ADR-A19, ADR-A25</td>
+    </tr>
+    <tr>
+      <td>AV7</td>
+      <td><strong>Optional in both directions.</strong> InsurML works without LATTICE, and LATTICE works without InsurML. Neither imports the other. Only the applied profile depends on both</td>
+      <td>IP10</td>
+    </tr>
+    <tr>
+      <td>AV8</td>
+      <td><strong>Licence and clean room first.</strong> InsurML material is published with its owner’s permission (IMA-D5). Market wording quoted in InsurML’s examples keeps its owners’ terms, so fixtures are written clean-room</td>
+      <td>IP11, ADR-A-C2</td>
+    </tr>
+    <tr>
+      <td>AV9</td>
+      <td><strong>Published kits.</strong> Every transformation ships as a versioned kit (schema, query, stylesheet, shapes, examples) that a third party can run without LATTICE’s runtime</td>
+      <td>IP8, XML egress sketch §8</td>
+    </tr>
+    <tr>
+      <td>AV10</td>
+      <td><strong>Models propose, standards dispose.</strong> Model output is constrained by InsurML’s grammar and LATTICE’s shapes, and a person accepts it</td>
+      <td>IV2 to IV4, ADR-A25</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="4-the-end-state-architecture">4. The end-state architecture</h2>
+
+<pre><code class="language-mermaid">---
+config:
+  layout: elk
+---
+flowchart TB
+    subgraph AUTH["Authoring"]
+        WA["Word add-in"]
+        WS["Web studio"]
+    end
+    subgraph LIB["Libraries"]
+        CX[("Component files&lt;br/&gt;InsurML XML, digest-addressed")]
+        MF[("Manifests and Wording graph&lt;br/&gt;co-typed nodes")]
+        MT[("Meaning templates&lt;br/&gt;per component version")]
+        TL[("Regime templates&lt;br/&gt;notice, suspension, run-off")]
+    end
+    subgraph CMP["Compilers"]
+        VAL["Validate&lt;br/&gt;RELAX NG, Schematron,&lt;br/&gt;InsurML SHACL, Wording laws"]
+        VER["Verify&lt;br/&gt;alternatives, dependencies,&lt;br/&gt;references, meaning clashes"]
+        OPT["Optimise&lt;br/&gt;question plans, compiled&lt;br/&gt;conditions, read paths"]
+    end
+    subgraph PLC["Placement"]
+        PR["Product form&lt;br/&gt;(contract manifest)"]
+        PL["Placed contract&lt;br/&gt;settings, choices, bespoke text,&lt;br/&gt;amendments"]
+        IN["Instrument&lt;br/&gt;bound meaning"]
+    end
+    subgraph RUN["Execution"]
+        EV["Regimes, occasions, decisions,&lt;br/&gt;allowances, capacity"]
+    end
+    subgraph EXC["Exchange"]
+        XO["InsurML XML, DOCX, PDF"]
+        JO["JSON skins, settings"]
+        RO["LegalRuleML, Turtle, JSON-LD"]
+    end
+    subgraph AI["Reading with AI"]
+        TP["Library index"]
+        IG["Ingestion pipeline&lt;br/&gt;structure, facts, meaning"]
+        RV{"Review"}
+    end
+    WA --&gt; CX
+    WS --&gt; CX
+    CX --&gt; VAL --&gt; VER --&gt; OPT
+    MF --&gt; VAL
+    OPT --&gt; MF
+    MT --&gt; IN
+    TL --&gt; IN
+    MF --&gt; PR --&gt; PL --&gt; IN --&gt; EV
+    PL --&gt; XO
+    IN --&gt; JO
+    IN --&gt; RO
+    XO -. "lift" .-&gt; MF
+    JO -. "lift" .-&gt; PL
+    TP --&gt; IG --&gt; RV
+    RV -- "accepted" --&gt; CX
+    RV -- "accepted" --&gt; MT
+    RV -- "accepted" --&gt; PL
+    MF --&gt; TP
+    MT --&gt; TP
+</code></pre>
+
+<p>The architecture has seven parts. The sketches give each its design.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Part</th>
+      <th>Holds or does</th>
+      <th>Standard that leads</th>
+      <th>Detail</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Authoring</td>
+      <td>edits InsurML components and manifests, and attaches meaning beside the words</td>
+      <td>InsurML for the words, LATTICE for meaning</td>
+      <td>toolchain sketch §2</td>
+    </tr>
+    <tr>
+      <td>Libraries</td>
+      <td>component files, the co-typed graph, meaning templates, regime templates, product forms</td>
+      <td>both</td>
+      <td>toolchain sketch §4, bridge sketch §2</td>
+    </tr>
+    <tr>
+      <td>Compilers</td>
+      <td>validation, design-time verification and optimisation over one intermediate graph</td>
+      <td>both, with LATTICE’s compilers as the shared pipeline</td>
+      <td>toolchain sketch §3</td>
+    </tr>
+    <tr>
+      <td>Placement</td>
+      <td>a product form tailored for one risk, recorded as an assembled wording, its values and its bound instrument</td>
+      <td>InsurML for the document, LATTICE for the record</td>
+      <td>toolchain sketch §5</td>
+    </tr>
+    <tr>
+      <td>Execution</td>
+      <td>regimes, occasions, Eligibility decisions, allowances and capacity, evaluated deterministically</td>
+      <td>LATTICE</td>
+      <td>toolchain sketch §6</td>
+    </tr>
+    <tr>
+      <td>Exchange</td>
+      <td>lifts and lowers between the graph and XML, JSON and RDF forms</td>
+      <td>both</td>
+      <td>bridge sketch §5, §6, toolchain sketch §7</td>
+    </tr>
+    <tr>
+      <td>Reading with AI</td>
+      <td>a versioned library index and the ingestion pipeline, with review</td>
+      <td>both</td>
+      <td>toolchain sketch §9</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Ownership of each kind of fact follows integration §3. The component file owns its words, the
+manifest owns order and inclusion, Instrument owns meaning, Behaviour’s runtime owns state, and
+<code class="language-plaintext highlighter-rouge">wrd:VariableValue</code> owns a placed contract’s values.</p>
+
+<h2 id="5-where-insurml-sits-among-lattices-layers">5. Where InsurML sits among LATTICE’s layers</h2>
+
+<pre><code class="language-mermaid">flowchart BT
+    subgraph LT["LATTICE substrate"]
+        FND["Foundation"] --&gt; VOC["Vocabulary"] --&gt; QNT["Quantification"] --&gt; PTY["Party"] --&gt; ELG["Eligibility"]
+        ELG --&gt; WRD["Wording"]
+        ELG --&gt; BHV["Behaviour configuration"]
+        WRD --&gt; INS["Instrument"]
+        BHV --&gt; INS
+    end
+    subgraph IML["InsurML (external, pinned edition)"]
+        CORE["Core ontology, shapes,&lt;br/&gt;vocabularies"]
+        RNG["RELAX NG, Schematron"]
+    end
+    subgraph APP["LATTICE applied insurance"]
+        COM["insurance/common"]
+        PRF["insurance/wording&lt;br/&gt;InsurML profile"]
+        CTR["insurance/contract&lt;br/&gt;(AIR Phase 5)"]
+    end
+    WRD --&gt; PRF
+    CORE --&gt; PRF
+    INS --&gt; CTR
+    PRF --&gt; CTR
+    COM --&gt; CTR
+    APP --&gt; OC["Open CBAA, deployments"]
+</code></pre>
+
+<p>Three rules follow from AV2 and AV7:</p>
+
+<ul>
+  <li>InsurML’s ontology imports nothing from LATTICE, and no LATTICE layer imports InsurML. The
+profile is the only document that depends on both, and it pins one InsurML edition through the
+catalog as an external import (ADR-A88).</li>
+  <li>The profile adds alignment, scheme bindings, key schemes, containment shapes compiled from
+InsurML’s rules held as data, and the few properties a builder needs that the substrate should
+not hold. It never redefines an InsurML term.</li>
+  <li>Meaning stays in Instrument and in AIR’s contract module. A component typed Exclusion is a
+routing hint for review, not an <code class="language-plaintext highlighter-rouge">ins:Exclusion</code> (IP7, comparison §8).</li>
+</ul>
+
+<h2 id="6-the-lifecycle-end-to-end">6. The lifecycle, end to end</h2>
+
+<pre><code class="language-mermaid">flowchart LR
+    D["Draft&lt;br/&gt;Word or web"] --&gt; C["Compile&lt;br/&gt;validate, verify"]
+    C --&gt; L["Library&lt;br/&gt;components and meaning"]
+    L --&gt; P["Product&lt;br/&gt;contract form"]
+    P --&gt; Q["Placement&lt;br/&gt;quote, bind, issue"]
+    Q --&gt; X["Instrument&lt;br/&gt;bound meaning"]
+    X --&gt; R["Run&lt;br/&gt;events, decisions"]
+    Q --&gt; E["Endorse, renew"]
+    E --&gt; Q
+    Q --&gt; O["Exchange&lt;br/&gt;XML, JSON"]
+    O -. "lift" .-&gt; Q
+    G["Legacy and incoming&lt;br/&gt;documents"] --&gt; I["Read with AI&lt;br/&gt;and review"]
+    I --&gt; L
+    I --&gt; Q
+</code></pre>
+
+<h3 id="61-authoring">6.1 Authoring</h3>
+
+<p>Drafters work in Word, through an Office.js add-in that tags each component and fragment with its
+InsurML IRI, type and optionality in content controls and custom XML parts. Library curators and
+reviewers work in a web studio that edits the same components, shows their manifests, and shows
+meaning proposals beside their source text in the review workbench’s pattern. Both write InsurML
+components, and both validate as the author types with the same schemas the compilers use. Open
+DARE’s proof-of-concept notes already chose Office.js and tagged content for this reason
+(identity is not position). The change is that the add-in now writes InsurML rather than a
+private structure.</p>
+
+<h3 id="62-compilation">6.2 Compilation</h3>
+
+<p>One intermediate representation, the co-typed graph of InsurML manifests and LATTICE Wording,
+passes through three kinds of pass, as ADR-A19’s staged compiler does for conditions.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Pass</th>
+      <th>Examples</th>
+      <th>Exists today</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Validate</td>
+      <td>RELAX NG and Schematron on component XML, InsurML’s SHACL on manifests, Wording laws W1 to W6, profile shapes</td>
+      <td>InsurML’s checks, Wording’s laws</td>
+    </tr>
+    <tr>
+      <td>Verify</td>
+      <td>alternatives exclusive and exhaustive for every policy, an acyclic clause dependency graph, every reference resolving to one target in scope, no obligation and prohibition clashing over one scope, a revision’s widening or narrowing of criteria</td>
+      <td>slot checks for intervals (CCS C5), widening for criteria (ADR-A90). Every condition kind is CCS C13a, clashes NRS N3</td>
+    </tr>
+    <tr>
+      <td>Optimise</td>
+      <td>a question plan per product, dead components, compiled inclusion conditions, read paths for inherited attributes and usage, a rendering cache keyed by digest</td>
+      <td>Eligibility compilers, Surface promotions</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="63-libraries">6.3 Libraries</h3>
+
+<p>Three libraries, all versioned and governed:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Library</th>
+      <th>Unit of reuse</th>
+      <th>Reuse across</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Wording</td>
+      <td>an InsurML component version, with its reviewed meaning</td>
+      <td>every product and placement that includes it</td>
+    </tr>
+    <tr>
+      <td>Product</td>
+      <td>an InsurML contract form (a manifest) with its governing variables</td>
+      <td>every placement of the product</td>
+    </tr>
+    <tr>
+      <td>Template</td>
+      <td>an Instrument meaning template, a regime template (notice, suspension, non-renewal, run-off)</td>
+      <td>every component whose meaning uses it</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>A market body, an insurer and a broker each publish under their own InsurML prefix. Usage and
+impact are queries over the graph: which live contracts include a component version, which would
+change if a new version replaced it, and whether the change widens or narrows what the contract
+covers.</p>
+
+<h3 id="64-assembly-into-products">6.4 Assembly into products</h3>
+
+<p>A product is an InsurML contract form whose inclusion entries carry conditions on governing
+variables. InsurML’s normative processing model and a LATTICE assembler run the same inputs, and a
+parity suite compares their results, as ADR-A28 does for the Eligibility backends. Where a
+condition exceeds InsurML’s equality test, Eligibility evaluates it with three values, and the
+result reaches InsurML as a derived governing variable or, if InsurML adopts it, as a condition held
+in RDF by IRI (P-2).</p>
+
+<h3 id="65-placement">6.5 Placement</h3>
+
+<p>Placement takes a product and tailors it for a risk, a client or a scenario: answers to the
+governing questions, chosen alternatives, values for embedded variables, bespoke components, and
+later amendments. LATTICE records each as data: <code class="language-plaintext highlighter-rouge">wrd:VariableValue</code> records on a
+<code class="language-plaintext highlighter-rouge">wrd:AssembledWording</code>, bespoke elements derived from the library elements they revise, and
+<code class="language-plaintext highlighter-rouge">wrd:Amendment</code>s with PROV. The placed contract is then one record seen two ways. As InsurML it is an
+instance contract, which InsurML’s owner confirmed a contract may be, alongside the template it was
+drawn from. As LATTICE it is the <code class="language-plaintext highlighter-rouge">wrd:AssembledWording</code> under the same IRI, and the <code class="language-plaintext highlighter-rouge">ins:Instrument</code>
+expressed in it. Because every bespoke
+change names the library element it departs from, deviation from standard wording becomes a
+derived report, by component and by meaning.</p>
+
+<h3 id="66-execution">6.6 Execution</h3>
+
+<p>Reviewed meaning is bound per instrument. Limits and excesses become term parameters on
+<code class="language-plaintext highlighter-rouge">ins:Qualifier</code> (AIR-5.1 to AIR-5.3). Notice, suspension and run-off clauses become regimes from
+the template library (CCS C8a). Obligations fall due by due ranges and windows (CCS C7b). The
+runtime evaluator (CCS C12) and relation plans (CCS C13) evaluate them over events, with an
+honest Undetermined where data is missing. Running the same inputs gives the same result, and the
+result names the clause fragment it rests on.</p>
+
+<h3 id="67-exchange">6.7 Exchange</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Form</th>
+      <th>Carries</th>
+      <th>Direction</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>InsurML component and assembled contract XML</td>
+      <td>the words, structure and published numbering</td>
+      <td>out and in</td>
+    </tr>
+    <tr>
+      <td>DOCX and PDF</td>
+      <td>the rendered document</td>
+      <td>out</td>
+    </tr>
+    <tr>
+      <td>Settings, as JSON generated from the shapes, or as Turtle</td>
+      <td>a placed contract’s values</td>
+      <td>out and in</td>
+    </tr>
+    <tr>
+      <td>JSON skins of the wire protocol</td>
+      <td>terms and decisions for systems with no RDF tolerance</td>
+      <td>out and in</td>
+    </tr>
+    <tr>
+      <td>LegalRuleML, XML or JSON</td>
+      <td>normative statements, linked to their InsurML fragments</td>
+      <td>out and in</td>
+    </tr>
+    <tr>
+      <td>Turtle, JSON-LD</td>
+      <td>the graph, for RDF-native consumers</td>
+      <td>out and in</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Every form has a published kit and a deterministic lift. Data that arrives in any of them is
+lifted, validated against the same shapes, and executed exactly as data authored in LATTICE.</p>
+
+<h3 id="68-traceability">6.8 Traceability</h3>
+
+<pre><code class="language-mermaid">flowchart LR
+    A["Market component&lt;br/&gt;version"] --&gt; B["Insurer variant&lt;br/&gt;derived from it"]
+    B --&gt; C["Product form&lt;br/&gt;inclusion entry"]
+    C --&gt; D["Placed contract&lt;br/&gt;assembled wording, values"]
+    D --&gt; E["Instrument&lt;br/&gt;bound relation"]
+    E --&gt; F["Occasion and decision&lt;br/&gt;with evidence"]
+    F --&gt; G["Report, bordereau,&lt;br/&gt;claim record"]
+    A -. "meaning template&lt;br/&gt;reviewed once" .-&gt; E
+</code></pre>
+
+<p>Each arrow is an IRI-to-IRI link with PROV, so a decision about a claim can be followed back to
+the fragment of market wording, the review that gave it meaning, and the placement choice that
+included it.</p>
+
+<h3 id="69-reading-documents-with-ai">6.9 Reading documents with AI</h3>
+
+<p>The ingestion vision’s pipeline gains a published structure target. Models read a policy wording,
+schedule, quote, market reform contract slip, binding authority agreement or endorsement into
+InsurML components, which InsurML’s grammar and shapes check. Library recognition replaces
+generation wherever the text is standard. Schedules become settings. Novel text becomes meaning
+proposals in LATTICE’s terms. Reviewed results flow back into the library.</p>
+
+<h3 id="610-mixing-standards">6.10 Mixing standards</h3>
+
+<p>InsurML is the document spine, and other standards attach to it by IRI:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Standard</th>
+      <th>Attaches as</th>
+      <th>Detail</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>LegalRuleML</td>
+      <td>a companion document whose legal sources are InsurML fragment IRIs, linked by LegalRuleML’s own associations. Inside InsurML only as informational foreign content, if InsurML’s owner agrees</td>
+      <td>toolchain sketch §8</td>
+    </tr>
+    <tr>
+      <td>InsurLE and Logical English</td>
+      <td>a controlled-English rendering per component version, checked against the reviewed meaning</td>
+      <td>logical English alignment sketch</td>
+    </tr>
+    <tr>
+      <td>ODRL</td>
+      <td>a projection of the relation classes</td>
+      <td>CCS sketch §8.2</td>
+    </tr>
+    <tr>
+      <td>ACORD</td>
+      <td>an egress kit from the placed contract’s values and terms</td>
+      <td>XML egress sketch §13</td>
+    </tr>
+    <tr>
+      <td>MathML</td>
+      <td>a formula in foreign content, read as <code class="language-plaintext highlighter-rouge">ins:computedBy</code></td>
+      <td>CCS C7b</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>A contract package bundles the assembled InsurML contract, its settings, its LATTICE graph, any
+companion LegalRuleML and the rendered document, each addressed by digest, so a recipient takes
+the parts it understands and can verify the rest.</p>
+
+<h2 id="7-using-each-with-and-without-the-other">7. Using each with and without the other</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Adopter</th>
+      <th>Uses</th>
+      <th>Does not need</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>An InsurML publisher with an XML toolchain</td>
+      <td>InsurML, its schemas and processor</td>
+      <td>anything from LATTICE</td>
+    </tr>
+    <tr>
+      <td>An InsurML publisher wanting computable contracts</td>
+      <td>InsurML for wording, the profile, LATTICE for meaning and execution</td>
+      <td>a LATTICE markup</td>
+    </tr>
+    <tr>
+      <td>A LATTICE deployment in another domain</td>
+      <td>Wording and Instrument with its own schemes</td>
+      <td>InsurML</td>
+    </tr>
+    <tr>
+      <td>A LATTICE deployment publishing insurance documents</td>
+      <td>LATTICE as the record, the lower kit to InsurML for publishing</td>
+      <td>an InsurML authoring tool</td>
+    </tr>
+    <tr>
+      <td>Open CBAA</td>
+      <td>the profile in place of <code class="language-plaintext highlighter-rouge">wim:</code>, with Instrument and its own authority model</td>
+      <td>a local wording model</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The integration targets depth 5 of integration §1 (layering) for LATTICE, and offers depth 6
+(convergence on a shared core) to InsurML’s owner. Depths 0 to 2 need no change to either standard.</p>
+
+<h2 id="8-what-changes-and-where">8. What changes, and where</h2>
+
+<p>Each row is a candidate decision.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Where</th>
+      <th>Change</th>
+      <th>Why</th>
+      <th>Sketch</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>applied insurance</td>
+      <td>the InsurML profile: alignment, scheme bindings, key schemes, containment shapes, builder properties</td>
+      <td>AIR-5.9 built with InsurML in view</td>
+      <td>bridge §2</td>
+    </tr>
+    <tr>
+      <td>tools</td>
+      <td>lift, lower, assembler, renderer, parity suite, egress kits</td>
+      <td>exchange and assembly in both directions</td>
+      <td>bridge §5 to §7</td>
+    </tr>
+    <tr>
+      <td>Wording</td>
+      <td>transclusion, so one library element version serves many forms (L-1)</td>
+      <td>reuse of boilerplate is general to clause libraries</td>
+      <td>bridge §8</td>
+    </tr>
+    <tr>
+      <td>Wording</td>
+      <td>inline parts, which put a child element inside a text, for optional words and blocks mid-sentence (L-2, L-5)</td>
+      <td>general to templates in every domain</td>
+      <td>bridge §9</td>
+    </tr>
+    <tr>
+      <td>Wording</td>
+      <td>references to a persistent identity, resolved within an assembled wording (L-6)</td>
+      <td>a revised definition should not force reissue of every clause that uses it</td>
+      <td>bridge §11, with CCS C7c</td>
+    </tr>
+    <tr>
+      <td>Wording or applied</td>
+      <td>clause dependencies (L-3), content status (L-7)</td>
+      <td>profile first, substrate on a neutral case</td>
+      <td>bridge §10, §12</td>
+    </tr>
+    <tr>
+      <td>Instrument</td>
+      <td>a qualifier naming the fragment it was read from (L-10)</td>
+      <td>traceability of amounts to their words</td>
+      <td>bridge §13</td>
+    </tr>
+    <tr>
+      <td>InsurML, proposed</td>
+      <td>settings format, conditions by IRI, dynamic table structure, IRIs for inclusion entries, and the rest of P-1 to P-13</td>
+      <td>gaps LATTICE has already modelled</td>
+      <td>bridge §15</td>
+    </tr>
+    <tr>
+      <td>apps</td>
+      <td>Word add-in, web studio</td>
+      <td>authoring</td>
+      <td>toolchain §2</td>
+    </tr>
+    <tr>
+      <td>tools</td>
+      <td>library index</td>
+      <td>recognition of known components</td>
+      <td>toolchain §9</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="9-alignment-with-existing-work">9. Alignment with existing work</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Workstream</th>
+      <th>Relationship</th>
+      <th>Consequence</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="/developer/plans/computable-contract-substrate.html">CCS</a></td>
+      <td>supplies Wording, Instrument, regimes, terms in time</td>
+      <td>C7c’s brief takes InsurML’s scope-based definition resolution as input. C9’s amendments receive endorsements lifted from InsurML. C12 and C13 evaluate placed contracts. C13a verifies alternatives for every condition kind. Substrate changes wait until C9 is merged (integration R4)</td>
+    </tr>
+    <tr>
+      <td><a href="/developer/plans/applied-insurance-reference.html">AIR</a></td>
+      <td>supplies insurance modules</td>
+      <td>AIR-5.9 is built with InsurML in view, in the alignment epic. AIR-5.1 to AIR-5.4 give limits and excesses their meaning. AIR-5.8’s policy renderings gain InsurML forms. Reference vocabularies supply market, class of business and area of coverage</td>
+    </tr>
+    <tr>
+      <td><a href="/developer/plans/normative-rule-substrate.html">NRS</a> and the LegalRuleML sketches</td>
+      <td>interchange and normative statements</td>
+      <td>the companion LegalRuleML document reuses the runtime pipeline and the JSON form of LegalRuleML. N3’s clash check is a verification pass</td>
+    </tr>
+    <tr>
+      <td><a href="/architecture/ingestion-vision.html">Ingestion vision</a></td>
+      <td>the route from text to meaning</td>
+      <td>InsurML is a candidate structure target (its Q9), and component digests answer document recognition (its Q11) for marked-up text</td>
+    </tr>
+    <tr>
+      <td><a href="/developer/sketches/normative-wire-protocol.html">Wire protocol</a>, <a href="/developer/sketches/xml-egress-and-transformation-kits.html">XML egress</a></td>
+      <td>exchange</td>
+      <td>InsurML kits sit beside the LATTICE instrument kit. Settings get a JSON skin</td>
+    </tr>
+    <tr>
+      <td><a href="/developer/sketches/evaluation-context.html">Evaluation context</a></td>
+      <td>ledgers for limits and aggregates</td>
+      <td>InsurML’s limit and excess markup names the words that each ledger account is read from</td>
+    </tr>
+    <tr>
+      <td>Platform phases 2 and 3</td>
+      <td>ingestion and operation planes</td>
+      <td>component files live in the artefact realm, the graph in the semantic realm, lifts and assembly as worker jobs</td>
+    </tr>
+    <tr>
+      <td>Open CBAA and Open DARE</td>
+      <td>the first consumer</td>
+      <td><code class="language-plaintext highlighter-rouge">wim:</code> is replaced by the profile. The proof of concept’s DOCX route becomes DOCX to InsurML to Wording. Certificate assembly with territory-conditional content (DA-I2) is InsurML assembly</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="10-risks">10. Risks</h2>
+
+<p>Integration §12 lists R1 to R12. Three more arise at this scale:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Risk</th>
+      <th>Mitigation</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>R13</td>
+      <td>Two standards bodies diverge in governance or pace</td>
+      <td>one profile pinned per edition, proposals made upstream rather than forked, joint review of each profile release</td>
+    </tr>
+    <tr>
+      <td>R14</td>
+      <td>Published analysis outruns a draft that is still changing</td>
+      <td>InsurML’s owner permits publication (IMA-D5). Each document names the draft edition it read. Clean-room examples throughout</td>
+    </tr>
+    <tr>
+      <td>R15</td>
+      <td>AI results are oversold before they are measured</td>
+      <td>the measures of §11 gate any claim. Estimates are labelled as estimates</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="11-how-success-is-measured">11. How success is measured</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Capability</th>
+      <th>Measure</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Fidelity</td>
+      <td>share of mapping rows graded exact or by convention, and golden round trips with no unexplained difference</td>
+    </tr>
+    <tr>
+      <td>Assembly</td>
+      <td>parity between InsurML’s processor and LATTICE’s assembler over every fixture product and configuration</td>
+    </tr>
+    <tr>
+      <td>Reuse</td>
+      <td>share of a product’s components drawn from libraries, and meaning reviews saved by reuse</td>
+    </tr>
+    <tr>
+      <td>Placement</td>
+      <td>deviation from standard wording reported for every placed contract, by component and by meaning</td>
+    </tr>
+    <tr>
+      <td>Execution</td>
+      <td>scenario decisions equal to their expected tables, deterministic across runs</td>
+    </tr>
+    <tr>
+      <td>Exchange</td>
+      <td>each kit’s output valid against its schema, and lifted back without loss beyond its declared fidelity</td>
+    </tr>
+    <tr>
+      <td>Reading with AI</td>
+      <td>structure accuracy against gold, share of elements recognised from the library, review acceptance rate, reviewer minutes and cost per document, and the rate of confident output where uncertainty was warranted</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="12-where-this-paper-departs-from-the-analysis">12. Where this paper departs from the analysis</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Analysis</th>
+      <th>This paper</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Instances are identified only in LATTICE (comparison finding 7)</td>
+      <td>corrected 2026-10-06. An InsurML contract may be a template or an instance. LATTICE adopts an instance contract’s IRI for its assembled wording, and InsurML lacks only the link to the template and a stated way to tell the two apart (P-15, P-16)</td>
+    </tr>
+    <tr>
+      <td>Reuse by reifying inclusion as an edge node (integration §4.2, option D), a breaking Wording change</td>
+      <td>transclusion, an additive change that keeps W1 for trees and maps one to one onto InsurML’s inclusion entries (bridge sketch §8)</td>
+    </tr>
+    <tr>
+      <td>Meaning never embedded in InsurML (integration §8.17)</td>
+      <td>refined. LegalRuleML attaches as a companion document whose legal sources are InsurML fragments, or inside InsurML as informational foreign content if its owner agrees. The published words stay unchanged (AV4)</td>
+    </tr>
+    <tr>
+      <td>Optional words and blocks inside a sentence as two changes (L-2, L-5)</td>
+      <td>one change, the inline part (bridge sketch §9)</td>
+    </tr>
+    <tr>
+      <td>Wording’s law shapes would fail on other SHACL engines (comparison §5.15)</td>
+      <td>they declare their prefixes with <code class="language-plaintext highlighter-rouge">sh:declare</code>, as the standard requires. They depart from the repository’s house rule, which asks for inline <code class="language-plaintext highlighter-rouge">PREFIX</code> lines, and can be aligned with the next Wording change</td>
+    </tr>
+    <tr>
+      <td>A Word authoring add-in directory exists without source (comparison §11.2)</td>
+      <td>no such directory exists. The authoring add-in is designed in Open DARE’s proof-of-concept notes only</td>
+    </tr>
+    <tr>
+      <td>Layer versions of comparison §1</td>
+      <td>dated. Wording is at 0.5.0 and Instrument at 0.11.0 on 2026-10-05</td>
+    </tr>
+  </tbody>
+</table>

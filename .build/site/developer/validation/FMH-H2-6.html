@@ -1,0 +1,726 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-fmh-h26-the-expected-compiled-profile-and-the-paper-check">Validation Pack: FMH-H2.6, the expected compiled profile and the paper check</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/formal-methods-track-h.html"><code class="language-plaintext highlighter-rouge">formal-methods-track-h</code></a>, slice H2.6, planned in
+<a href="/developer/plans/formal-methods-track-h.html#44-h26-the-expected-compiled-profile-examples-first-and-the-paper-check-planned-2026-10-13">plan §4.4</a> and
+the <a href="/developer/sketches/formal-methods-track-h-typed-ir.html#72-the-paper-check-of-the-logical-resources-h26">typed IR sketch §7.2</a>, after
+<a href="/developer/validation/FMH-H2-5.html">H2.5</a>. Examples first (<code class="language-plaintext highlighter-rouge">lattice-lifecycle</code>): this slice stops here for your review, and for your commit of the expected
+profiles, before H2.7 is briefed against them.
+<strong>For the maintainer:</strong> the model and the proposed names (below), the paper check, and eight questions at the end. The structure is fixed, so the
+review is about names and about the questions.
+<strong>For countersignature (non-weakening rule):</strong> none. No test was removed, skipped or loosened. The only change to code that earlier slices tested is
+additive: an access now carries a mode, and the audit builders tag their result variables with kinds.</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>The compiled profile of an example, once H2.7 emits it, says for every generated operation what a caller in any language, a relational
+realisation and a model checker need, and says it without SPARQL text and without a blank node. The files that say it are held to the builders
+(so they cannot drift from the code that produces the queries) and to today’s <code class="language-plaintext highlighter-rouge">compile</code> (so they cannot drift from the profile). Where the files
+differ from the builders on purpose, the difference is listed with its reason and the slice that closes it.</p>
+
+<h2 id="what-changed">What changed</h2>
+
+<ul>
+  <li><strong><code class="language-plaintext highlighter-rouge">persistence.contract</code></strong> (production code, plan step 1). <code class="language-plaintext highlighter-rouge">contract_of(operation)</code> derives the kind of an operation, its builder version, its guard
+status, its parameters, the logical resources it accesses with the mode and key of each access, the columns of an audit, and its payload and
+request-digest contracts. Three tables are kept there and nowhere else: <code class="language-plaintext highlighter-rouge">OPERATION_KINDS</code>, <code class="language-plaintext highlighter-rouge">resource_of</code> (a graph role, and for the keys graph the
+predicate, to a logical resource) and <code class="language-plaintext highlighter-rouge">BUILDER_VERSIONS</code>. <code class="language-plaintext highlighter-rouge">HAND_DECLARED</code> holds the contract of <code class="language-plaintext highlighter-rouge">cas-replace-value-guard</code>, which has no builder (TD-43).</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">Access</code> carries a mode</strong> (<code class="language-plaintext highlighter-rouge">persistence.ir.AccessMode</code>), set by the checker: an absence read inside <code class="language-plaintext highlighter-rouge">NOT EXISTS</code>, a whole-aggregate read through a
+path or of every triple of a root’s graph, a scan, a point read, an insert, a delete. The audit builders tag their result variables with kinds.</li>
+  <li><strong>The expected profiles</strong>, nine files and one more, in <code class="language-plaintext highlighter-rouge">ontology/persistence/test/expected-profiles/</code>: the eight examples of plan H2.6-Q2
+and the variant <code class="language-plaintext highlighter-rouge">baseline-single-class.caller-named</code> (guards off, the caller names each graph), and <code class="language-plaintext highlighter-rouge">kinds.expected.ttl</code>, which declares the closed
+enumerations the others name. They are written by <code class="language-plaintext highlighter-rouge">tests/expected_profiles.py</code>, and the ontology README (§13) and the persistence README describe them.</li>
+  <li><strong>Tests</strong> (<code class="language-plaintext highlighter-rouge">test_expected_profiles.py</code>, <code class="language-plaintext highlighter-rouge">test_builder_versions.py</code>, 114 cases): parse, no blank node and no SPARQL text, the base profile, the
+agreement with the builders in three outcomes, the dataset-guard claim, the parameter names, minted IRIs, the enumerations, and the golden check on builder versions.</li>
+  <li><strong>Documents.</strong> This pack, the status record, the plan, the index. The Validation Pack of H2.5 is unchanged.</li>
+</ul>
+
+<h2 id="the-model-proposed-names">The model (proposed names)</h2>
+
+<p>The structure follows the design review (2.6) and the plan. The review settles the names.</p>
+
+<pre><code class="language-mermaid">classDiagram
+  class GeneratedOperation {
+    dal:forOperation
+    dal:operationKind
+    dal:templateId
+    dal:templateVersion
+    dal:guardStatus
+    dal:graphNaming
+    dal:declarationSource
+  }
+  class ParameterDeclaration {
+    dal:parameterName
+    dal:parameterKind
+    dal:required
+    dal:mustEqual
+    dal:mustEqualFor
+    dal:sourcedFrom
+  }
+  class ResourceAccess {
+    dal:resourceKind
+    dal:accessMode
+    dal:keyedBy
+  }
+  class ResultColumn {
+    dal:columnName
+    dal:columnPosition
+    dal:columnKind
+    dal:columnSeparator
+  }
+  class PayloadContract {
+    dal:payloadParameter
+    dal:payloadRoot
+    dal:payloadEncoding
+    dal:boundaryShape
+  }
+  class DigestContract {
+    dal:digestAlgorithm
+  }
+  class DigestPart {
+    dal:partOrder
+    dal:partRole
+    dal:partSource
+  }
+  GeneratedOperation "1" --&gt; "*" ParameterDeclaration : parameter
+  GeneratedOperation "1" --&gt; "*" ResourceAccess : access
+  GeneratedOperation "1" --&gt; "*" ResultColumn : resultColumn
+  GeneratedOperation "1" --&gt; "0..1" PayloadContract : payloadContract
+  GeneratedOperation "1" --&gt; "0..1" DigestContract : digestContract
+  DigestContract "1" --&gt; "4" DigestPart : digestPart
+  ResourceAccess --&gt; ParameterDeclaration : keyedBy
+  PayloadContract --&gt; ParameterDeclaration : payloadParameter and payloadRoot
+  DigestPart --&gt; ParameterDeclaration : partSource
+</code></pre>
+
+<p>Every declaration node has an IRI, <code class="language-plaintext highlighter-rouge">&lt;target with # as /&gt;/compiled/&lt;operation name&gt;#&lt;part&gt;</code>, for example
+<code class="language-plaintext highlighter-rouge">https://example.org/lending/LoanApplication/compiled/cas-replace#param-root</code>, with the parts <code class="language-plaintext highlighter-rouge">param-&lt;name&gt;</code>, <code class="language-plaintext highlighter-rouge">access-&lt;n&gt;</code>, <code class="language-plaintext highlighter-rouge">result-&lt;name&gt;</code>, <code class="language-plaintext highlighter-rouge">payload</code>,
+<code class="language-plaintext highlighter-rouge">digest</code> and <code class="language-plaintext highlighter-rouge">digest-part-&lt;n&gt;</code>. Nothing depends on an order the loader chose, and a test loads the example in three orders.</p>
+
+<p>The closed enumerations are individuals, not classes, declared in <code class="language-plaintext highlighter-rouge">kinds.expected.ttl</code>:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Enumeration</th>
+      <th>Members</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">dal:OperationKind</code></td>
+      <td>Create, Bootstrap, Replace, Tombstone, Append, UnconditionalWrite, ValueGuardedReplace, KeyClaimWrite, KeyClaimWriteDual, KeyClaimRetire, Quarantine, MergeRewrite, Audit</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">dal:ResourceKind</code></td>
+      <td>Aggregate, VersionRow, TransactionClaim, Receipt, Event, KeyClaim, MergeRecord, KeyQuarantine, DatasetEpoch, RetentionMark, PropertyValue</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">dal:AccessMode</code></td>
+      <td>PointRead, AbsenceRead, ScanRead, WholeAggregateRead, Insert, Delete</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">dal:ParameterKind</code></td>
+      <td>IriKind, LongKind, StringKind, LangStringKind, PositionKind, DigestKind, IriOrLiteralKind, LiteralKind, PayloadKind, RegistryListKind</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">dal:ColumnKind</code></td>
+      <td>IriColumn, PositionColumn, StringColumn, TermColumn, CountColumn, ConcatenationColumn</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">dal:GuardStatus</code></td>
+      <td>Guarded, GuardsOff, NoRequiredParameter, NotGenerated</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">dal:GraphNaming</code></td>
+      <td>QueryNamed, CallerNamed</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">dal:DeclarationSource</code></td>
+      <td>BuilderDerived, HandDeclared</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Each resource has a logical key, written in the file as <code class="language-plaintext highlighter-rouge">dal:logicalKey</code>. A bucket month is never part of a key.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Resource</th>
+      <th>Logical key</th>
+      <th>SPARQL realisation (the graph role, and for the keys graph the predicate)</th>
+      <th>Touched by</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Aggregate</td>
+      <td>root</td>
+      <td>the root’s data graph, or the owned members in the family’s data graph</td>
+      <td>create, replace, tombstone, unconditional write</td>
+    </tr>
+    <tr>
+      <td>VersionRow</td>
+      <td>root (a stream is the root of its row)</td>
+      <td>meta graph</td>
+      <td>the guarded writes, bootstrap, append, the gap scan</td>
+    </tr>
+    <tr>
+      <td>TransactionClaim</td>
+      <td>transaction id</td>
+      <td>transaction graph</td>
+      <td>every operation that takes <code class="language-plaintext highlighter-rouge">$txnId</code>, the fork audit</td>
+    </tr>
+    <tr>
+      <td>Receipt</td>
+      <td>target, epoch, seq</td>
+      <td>a log bucket, and the pinned graph for a retained head</td>
+      <td>the guarded writes, the receipt audits, the gap scan</td>
+    </tr>
+    <tr>
+      <td>Event</td>
+      <td>stream, seq</td>
+      <td>an event bucket</td>
+      <td>append</td>
+    </tr>
+    <tr>
+      <td>KeyClaim</td>
+      <td>claim</td>
+      <td>keys graph, the claim’s own predicates</td>
+      <td>key-claim write, dual, retire, quarantine, merge, duplicate audit</td>
+    </tr>
+    <tr>
+      <td>MergeRecord</td>
+      <td>owner</td>
+      <td>keys graph, any other predicate (the merge relation)</td>
+      <td>merge-rewrite</td>
+    </tr>
+    <tr>
+      <td>KeyQuarantine</td>
+      <td>claim, owner</td>
+      <td>quarantine graph</td>
+      <td>quarantine</td>
+    </tr>
+    <tr>
+      <td>DatasetEpoch</td>
+      <td>dataset</td>
+      <td>dataset graph</td>
+      <td>the dataset-guard variants</td>
+    </tr>
+    <tr>
+      <td>RetentionMark</td>
+      <td>target</td>
+      <td>retention graph</td>
+      <td>the gap scan</td>
+    </tr>
+    <tr>
+      <td>PropertyValue</td>
+      <td>root, property</td>
+      <td>the default graph today (TD-43)</td>
+      <td>the value guard</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Mapping findings</strong> (plan step 1). Checked against all 27 builders. Only the keys graph holds two resources, told apart by predicate
+(<code class="language-plaintext highlighter-rouge">MergeRecord</code> for any predicate outside the claim’s own). The meta graph holds the version row only, and that includes the stream counter of
+<code class="language-plaintext highlighter-rouge">append-event</code>, which is the stream’s version row. <code class="language-plaintext highlighter-rouge">?log</code> ranges over the log buckets and the pinned graph, and the mapping takes both as
+<code class="language-plaintext highlighter-rouge">Receipt</code> (NQ1, decided). The pinned graph is how retention is realised, and the paper check below tests that as a hypothesis.</p>
+
+<h2 id="the-expected-profiles">The expected profiles</h2>
+
+<p>Each file is today’s compiled profile of the example, without <code class="language-plaintext highlighter-rouge">dal:templatePath</code>, and for every generated operation the contract of the
+model. <code class="language-plaintext highlighter-rouge">value-based-cas</code> shows the one hand-declared operation (<code class="language-plaintext highlighter-rouge">dal:declarationSource dal:HandDeclared</code>, <code class="language-plaintext highlighter-rouge">dal:guardStatus dal:NotGenerated</code>).
+<code class="language-plaintext highlighter-rouge">baseline-single-class</code> shows a payload contract with no boundary shape explicitly (<code class="language-plaintext highlighter-rouge">dal:boundaryShape dal:NoBoundaryShape</code>), and
+<code class="language-plaintext highlighter-rouge">composite-project-ownership</code> shows a shape. The variant shows <code class="language-plaintext highlighter-rouge">dal:graphNaming dal:CallerNamed</code>, <code class="language-plaintext highlighter-rouge">dal:guardStatus dal:GuardsOff</code> and, on <code class="language-plaintext highlighter-rouge">$g</code>,
+<code class="language-plaintext highlighter-rouge">dal:mustEqual dal:GraphNameOfRoot ; dal:mustEqualFor &lt;…#param-root&gt;</code>, which refers to the family’s <code class="language-plaintext highlighter-rouge">dal:graphIriTemplate</code> and never repeats it.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>File</th>
+      <th>Operations</th>
+      <th>Shows</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">baseline-single-class</code></td>
+      <td>create, replace, tombstone, key-claim write, retire and duplicate audit, four audits</td>
+      <td>the named-graph family, a patch log, no boundary shape</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">epoch-dataset-level-guard</code></td>
+      <td>create, replace, tombstone, four audits</td>
+      <td>the dataset read in every guarded write</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">composite-project-ownership</code></td>
+      <td>create, replace, tombstone, four audits</td>
+      <td>whole-aggregate reads and deletes, a boundary shape</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">append-stream-dataset-guard</code></td>
+      <td>bootstrap, append, four audits</td>
+      <td>events, the stream’s version row, the dataset read</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">uniqueness-merge-policy</code></td>
+      <td>unconditional write, claim write, retire, merge-rewrite, four audits</td>
+      <td>merge records</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">uniqueness-quarantine-policy</code></td>
+      <td>unconditional write, claim write, retire, quarantine, four audits</td>
+      <td>quarantine</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">claim-scheme-dual-rotation</code></td>
+      <td>unconditional write, dual claim write, retire, duplicate audit, four audits</td>
+      <td>the dual scheme</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">value-based-cas</code></td>
+      <td>the value guard, four audits</td>
+      <td>a hand-declared operation</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">baseline-single-class.caller-named</code></td>
+      <td>as the first</td>
+      <td>guards off, caller-named graphs</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="intended-differences-between-the-files-and-the-builders">Intended differences between the files and the builders</h3>
+
+<p>The agreement test sorts each operation into equal, an intended difference from this table, or a failure. Every row must be used by some file,
+or the test fails, and H2.7 empties the table. There is one row.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Where</th>
+      <th>The file says</th>
+      <th>The builder says</th>
+      <th>Reason</th>
+      <th>Closed by</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">cas-replace-named-graph</code>, with and without the dataset guard, under <code class="language-plaintext highlighter-rouge">dal:PatchLog</code></td>
+      <td><code class="language-plaintext highlighter-rouge">$assertGraph</code> and <code class="language-plaintext highlighter-rouge">$retractGraph</code> are required</td>
+      <td>optional</td>
+      <td>the patch log is the receipt model that records them (H2.3-Q3). The builder declares them optional for every model</td>
+      <td>H2.7</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The composite dataset-guard variants have no file. A test asserts that each differs from its base by one extra access, a point read of the dataset
+epoch, and by nothing else (H2.6-T6).</p>
+
+<h2 id="the-paper-check">The paper check</h2>
+
+<p>Against <a href="/developer/notes/rdf-engine/lattice-sql.html">lattice-sql.md</a> §9 (the persistence dimensions) and §4.2 (the concurrency primitives). It is on paper,
+since no relational compiler exists (ADR-A-FM4 decision 1). Three outcomes: <em>logical</em> (both realisations have the resource), <em>realisation only</em> (an
+artefact of one of them), <em>gap</em> (for you). The conclusions are hypotheses for you to confirm or reject, not decisions.</p>
+
+<h3 id="per-resource">Per resource</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Resource</th>
+      <th>Relational realisation</th>
+      <th>Key matches</th>
+      <th>Modes have a relational reading</th>
+      <th>Verdict</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Aggregate</td>
+      <td>the root table and the child tables it owns, foreign keys with <code class="language-plaintext highlighter-rouge">ON DELETE CASCADE</code> (§9, M37)</td>
+      <td>the root is the primary key</td>
+      <td>insert and delete are row changes, a whole-aggregate read is a join over the owned tables, a whole-aggregate delete is the cascade, and the composite create’s absence read is an insert with conflict detection (M38)</td>
+      <td>logical</td>
+    </tr>
+    <tr>
+      <td>VersionRow</td>
+      <td>a <code class="language-plaintext highlighter-rouge">version</code> column of the root row (§9, M41), with the epoch in the comparison (M47)</td>
+      <td>the version is a column of the root’s own row, so the key is the aggregate’s</td>
+      <td>the point read is a read of the column, the guarded replace is <code class="language-plaintext highlighter-rouge">UPDATE … WHERE version = $expected</code>, and the absence read of <code class="language-plaintext highlighter-rouge">deleted</code> is a predicate on the row</td>
+      <td>logical, realised as a column</td>
+    </tr>
+    <tr>
+      <td>TransactionClaim</td>
+      <td>an idempotency table with a primary key on the client transaction id (§4.2). <strong>§9 has no row for it</strong></td>
+      <td>the transaction id is the primary key</td>
+      <td>the absence read and the insert are <code class="language-plaintext highlighter-rouge">INSERT … ON CONFLICT</code></td>
+      <td>logical, and the silence of §9 is a gap in §9</td>
+    </tr>
+    <tr>
+      <td>Receipt</td>
+      <td>a receipt table, one row per committed operation (M44), or a change table for a patch log</td>
+      <td>(target, epoch, seq) is a natural primary key. §9 does not state one</td>
+      <td>the insert is a row, the scans of the audits are queries, retention is a partition drop (M46)</td>
+      <td>logical</td>
+    </tr>
+    <tr>
+      <td>Event</td>
+      <td>an insert-only table (<code class="language-plaintext highlighter-rouge">AppendOnly</code>, M41) with a sequence per stream (M45)</td>
+      <td>(stream, seq) is the primary key</td>
+      <td>the insert</td>
+      <td>logical</td>
+    </tr>
+    <tr>
+      <td>KeyClaim</td>
+      <td><code class="language-plaintext highlighter-rouge">UNIQUE</code> or a partial unique index with the scope columns first, and the claim-scheme digest as a generated column (M48)</td>
+      <td>the claim is the unique key</td>
+      <td>the absence read plus the insert is <code class="language-plaintext highlighter-rouge">INSERT</code> with a unique violation, and retire is an update</td>
+      <td>logical</td>
+    </tr>
+    <tr>
+      <td>MergeRecord</td>
+      <td>a merge table and a reconciliation procedure (M48)</td>
+      <td>the non-canonical owner is the primary key</td>
+      <td>an absence read and an insert are <code class="language-plaintext highlighter-rouge">ON CONFLICT DO NOTHING</code></td>
+      <td>logical</td>
+    </tr>
+    <tr>
+      <td>KeyQuarantine</td>
+      <td>a quarantine table (M48)</td>
+      <td>(claim, owner) is the primary key</td>
+      <td>as the merge record</td>
+      <td>logical</td>
+    </tr>
+    <tr>
+      <td>DatasetEpoch</td>
+      <td>an epoch table (M47)</td>
+      <td>one row per dataset</td>
+      <td>the point read is a join in the version comparison</td>
+      <td>logical</td>
+    </tr>
+    <tr>
+      <td>RetentionMark</td>
+      <td>partitioning by time and detach or drop (M46) names the mechanism, <strong>not where a per-target low-water mark is recorded</strong></td>
+      <td>the target</td>
+      <td>a point read</td>
+      <td>logical, with a gap in §9 on where the mark lives</td>
+    </tr>
+    <tr>
+      <td>PropertyValue</td>
+      <td>a column with an old-value compare, <code class="language-plaintext highlighter-rouge">UPDATE … SET col = $new WHERE id = $1 AND col = $old</code></td>
+      <td>(root, property) is the row and the column</td>
+      <td>one statement for the read, delete and insert</td>
+      <td>logical, though its SPARQL realisation is the default graph (TD-43)</td>
+    </tr>
+    <tr>
+      <td>the pinned head</td>
+      <td>a foreign key from the version row to its head receipt keeps the receipt through a partition drop</td>
+      <td>none</td>
+      <td>none</td>
+      <td><strong>realisation only</strong>: pinned heads exist because monthly buckets are dropped whole (README §7.4), so the contract treats the pinned graph as part of how <code class="language-plaintext highlighter-rouge">Receipt</code> is retained (NQ1)</td>
+    </tr>
+    <tr>
+      <td>registry and buckets</td>
+      <td>none (<code class="language-plaintext highlighter-rouge">metaTopology</code>, <code class="language-plaintext highlighter-rouge">registryGraph</code> have no relational meaning, §9)</td>
+      <td>none</td>
+      <td>none</td>
+      <td><strong>realisation only</strong>, and not in the contract</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="per-operation-kind-both-ways">Per operation kind, both ways</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Operation kind</th>
+      <th>§9 counterpart</th>
+      <th>Atomicity scope</th>
+      <th>Verdict</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Create</td>
+      <td><code class="language-plaintext highlighter-rouge">INSERT</code> with conflict detection (M38)</td>
+      <td>one transaction, one aggregate</td>
+      <td>logical</td>
+    </tr>
+    <tr>
+      <td>Bootstrap</td>
+      <td><code class="language-plaintext highlighter-rouge">UPDATE</code> of a provisioned row (M38, <code class="language-plaintext highlighter-rouge">PreCreatedRow</code>)</td>
+      <td>one transaction</td>
+      <td>logical</td>
+    </tr>
+    <tr>
+      <td>Replace</td>
+      <td><code class="language-plaintext highlighter-rouge">UPDATE … WHERE version = $expected</code> with the child rows replaced (M41, M37)</td>
+      <td>one transaction, one aggregate</td>
+      <td>logical</td>
+    </tr>
+    <tr>
+      <td>Tombstone</td>
+      <td>none stated. A flag on the root row, or a delete with the cascade</td>
+      <td>one transaction, one aggregate</td>
+      <td><strong>gap in §9</strong></td>
+    </tr>
+    <tr>
+      <td>Append</td>
+      <td>insert-only table and a sequence (M41, M45)</td>
+      <td>one transaction</td>
+      <td>logical</td>
+    </tr>
+    <tr>
+      <td>UnconditionalWrite</td>
+      <td>none. <code class="language-plaintext highlighter-rouge">ProvidedConcurrency</code> has no row in §9</td>
+      <td>one transaction</td>
+      <td><strong>gap in §9</strong></td>
+    </tr>
+    <tr>
+      <td>ValueGuardedReplace</td>
+      <td><code class="language-plaintext highlighter-rouge">UPDATE … WHERE col = $old</code> (the optimistic profile, with no version row)</td>
+      <td>one statement</td>
+      <td>logical, §9 does not say it for <code class="language-plaintext highlighter-rouge">NoBoundary</code></td>
+    </tr>
+    <tr>
+      <td>KeyClaimWrite, KeyClaimWriteDual</td>
+      <td>a unique index (M48). The dual form is two unique keys in one transaction</td>
+      <td>one statement, and one transaction for the dual form</td>
+      <td>logical</td>
+    </tr>
+    <tr>
+      <td>KeyClaimRetire</td>
+      <td>an update of the claim row</td>
+      <td>one statement</td>
+      <td>logical</td>
+    </tr>
+    <tr>
+      <td>Quarantine, MergeRewrite</td>
+      <td>a quarantine table, a merge table and a reconciliation procedure (M48)</td>
+      <td>one set-based transaction</td>
+      <td>logical</td>
+    </tr>
+    <tr>
+      <td>Audit (five)</td>
+      <td>none. A primary key or a unique index makes the duplicate, fork and request-applied-twice audits impossible, and a sequence may legitimately leave gaps</td>
+      <td>a read at the isolation level the profile asks for (M43)</td>
+      <td><strong>realisation only</strong>: detective controls for what the RDF realisation cannot prevent</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Reading it the other way, §9 names two artefacts the contract has no resource or operation for.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>§9 artefact</th>
+      <th>Contract</th>
+      <th>Finding</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>a change table for <code class="language-plaintext highlighter-rouge">PatchLog</code></td>
+      <td><code class="language-plaintext highlighter-rouge">$assertGraph</code> and <code class="language-plaintext highlighter-rouge">$retractGraph</code> are recorded on the receipt, but the patch triples themselves are written outside these operations</td>
+      <td><strong>gap for you</strong>: no logical resource holds the patch content, so a relational realisation has nowhere to take its change table from</td>
+    </tr>
+    <tr>
+      <td>a history table for <code class="language-plaintext highlighter-rouge">SnapshotPerRevision</code>, erasure by cascade or key shredding, multi-aggregate lock order</td>
+      <td>no template generates a snapshot, an erasure or a multi-aggregate operation</td>
+      <td>outside the contract until a template does</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="questions-for-the-review">Questions for the review</h2>
+
+<ol>
+  <li><strong>The names.</strong> Every <code class="language-plaintext highlighter-rouge">dal:</code> term above is a proposal, in <code class="language-plaintext highlighter-rouge">kinds.expected.ttl</code> and the files. Which would you change?</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">dal:templateId</code> keeps its <code class="language-plaintext highlighter-rouge">.mustache</code> suffix</strong> in the files, so that the base-profile test stays a pure subset of <code class="language-plaintext highlighter-rouge">compile</code>. The builder’s identity is the operation id without it. Should H2.7 drop the suffix, with H2.9?</li>
+  <li><strong>The set of resource kinds.</strong> <code class="language-plaintext highlighter-rouge">Event</code>, <code class="language-plaintext highlighter-rouge">MergeRecord</code> and <code class="language-plaintext highlighter-rouge">KeyQuarantine</code> could each be folded into another (the event into the receipt, the merge record and the quarantine into the key claim). They have their own keys in both realisations, so they are kept apart. Agree?</li>
+  <li><strong>The pinned head as a realisation of <code class="language-plaintext highlighter-rouge">Receipt</code></strong> (NQ1 and the paper check). Confirm, or give the pinned graph a resource of its own.</li>
+  <li><strong>The digest of <code class="language-plaintext highlighter-rouge">append-event</code>.</strong> The contract says the digest is taken over the operation kind, the target, the expected sequence and the sorted canonical N-Triples of the payload. Append has no payload parameter and no expected sequence, so its file shows both parts as <code class="language-plaintext highlighter-rouge">dal:NoSource</code>, and what the event contributes is undeclared. H2.8 builds the algorithm. Who decides the append’s input?</li>
+  <li><strong>The patch content</strong> (the gap above). Is the patch written by a separate generated operation, by the caller, or is it a resource of the receipt?</li>
+  <li><strong>The three gaps in §9</strong> (the transaction claim, the retention mark, tombstone and <code class="language-plaintext highlighter-rouge">ProvidedConcurrency</code>). They are findings about <code class="language-plaintext highlighter-rouge">lattice-sql.md</code>, not the contract. Do you want them recorded as a review request on that note?</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">oldValue</code> and <code class="language-plaintext highlighter-rouge">newValue</code> of the value guard</strong> are declared <code class="language-plaintext highlighter-rouge">IriOrLiteral</code>, since the template says nothing about their type. TD-43 settles it. Fine for now?</li>
+</ol>
+
+<h2 id="test-cases">Test cases</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>Invariant</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>H2.6-T1</td>
+      <td>the nine files and the enumerations / parse / nine profiles, no <code class="language-plaintext highlighter-rouge">dal:templatePath</code></td>
+      <td>L1</td>
+      <td>the files are well formed</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H2.6-T2</td>
+      <td>every new part / checked / no blank node, an IRI subject, no value that is a query</td>
+      <td>L3</td>
+      <td>the two rules of the model</td>
+      <td>±</td>
+    </tr>
+    <tr>
+      <td>H2.6-T3</td>
+      <td>each file without its new terms / compared with <code class="language-plaintext highlighter-rouge">compile</code> without the template paths / isomorphic (9)</td>
+      <td>L3</td>
+      <td>the files cannot drift from <code class="language-plaintext highlighter-rouge">compile</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H2.6-T4</td>
+      <td>each operation of each file / read back and compared with the builder’s contract / equal, or exactly one listed intended difference (9)</td>
+      <td>L3</td>
+      <td>the files cannot drift from the builders</td>
+      <td>±</td>
+    </tr>
+    <tr>
+      <td>H2.6-T5</td>
+      <td>the intended-differences table and the value guard / checked / every row used, the value guard marked hand-declared</td>
+      <td>L3</td>
+      <td>the table cannot go stale</td>
+      <td>±</td>
+    </tr>
+    <tr>
+      <td>H2.6-T6</td>
+      <td>the three composite creates, replaces and tombstones / base against dataset-guard variant / one extra access, the dataset read</td>
+      <td>L3</td>
+      <td>the omission of the composite variants is safe</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H2.6-T7</td>
+      <td>every builder, with the query-named and the caller-named graph / declared names against the <code class="language-plaintext highlighter-rouge">$</code> names of the rendered query / equal (54)</td>
+      <td>L3</td>
+      <td>the declarations match the text</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H2.6-T8</td>
+      <td>the value guard / declared names against the <code class="language-plaintext highlighter-rouge">$</code> names of its template / equal</td>
+      <td>L3</td>
+      <td>as T7, for the one hand declaration</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H2.6-T9</td>
+      <td>three examples in three load orders / new triples compared / the same set, every new node an IRI</td>
+      <td>L2</td>
+      <td>minted IRIs are deterministic</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H2.6-T10</td>
+      <td>a blank node added to a declaration / the rule of T2 / caught</td>
+      <td>L2</td>
+      <td>T2 is not vacuous</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>H2.6-T11</td>
+      <td>every class and individual a profile names / checked against the enumerations file / declared</td>
+      <td>L3</td>
+      <td>the files are closed</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H2.6-T12 to T15</td>
+      <td>the builders, their record in <code class="language-plaintext highlighter-rouge">builder-goldens.json</code> / the rendered text and the versions / a changed text fails until the version is bumped, and the update refuses to record it otherwise</td>
+      <td>L3</td>
+      <td>a builder’s version follows its text</td>
+      <td>±</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="one-command">One command</h2>
+
+<p>Run from the repository root. <code class="language-plaintext highlighter-rouge">check:persistence</code> is the gate.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:persistence                   <span class="c"># 2711 passed, 1 xfailed here (2597 before this slice, and 114 new cases)</span>
+mise run check:persistence-oxigraph          <span class="c"># 5 adapter tests and 189 Oxigraph cases (no new engine case)</span>
+mise run check:persistence-expected-profiles   <span class="c"># part of check:persistence. Fails with the names of the stale files. Regenerate with mise run build:persistence-expected-profiles</span>
+</code></pre></div></div>
+
+<h2 id="artefacts-to-inspect">Artefacts to inspect</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">ontology/persistence/test/expected-profiles/</code>, starting with <code class="language-plaintext highlighter-rouge">kinds.expected.ttl</code>, then <code class="language-plaintext highlighter-rouge">baseline-single-class.expected.ttl</code> and the caller-named
+variant, <code class="language-plaintext highlighter-rouge">composite-project-ownership.expected.ttl</code> and <code class="language-plaintext highlighter-rouge">value-based-cas.expected.ttl</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">tools/persistence/src/persistence/contract.py</code> for the three tables, and <code class="language-plaintext highlighter-rouge">tools/persistence/tests/test_expected_profiles.py</code> for the intended-differences table.</li>
+  <li>This pack’s model, paper check and questions.</li>
+</ul>
+
+<h2 id="adversarial-probes">Adversarial probes</h2>
+
+<p>Run on 2026-10-13 on the staged slice, each file restored from the index afterwards.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Mutation</th>
+      <th>Result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>a parameter dropped from one expected file</td>
+      <td>H2.6-T4 fails for that file, and H2.6-T5, which needs every intended difference to be used</td>
+    </tr>
+    <tr>
+      <td>an undeclared name (<code class="language-plaintext highlighter-rouge">$newVal</code>) in the value guard’s template</td>
+      <td>H2.6-T8 fails</td>
+    </tr>
+    <tr>
+      <td>an example’s graph template changed without regenerating its file</td>
+      <td>H2.6-T3 fails for the two files of that example</td>
+    </tr>
+    <tr>
+      <td>a blank node for a parameter declaration in the emitter</td>
+      <td>H2.6-T9 fails. The first version of the test passed, because it looked only at nodes whose IRI contained <code class="language-plaintext highlighter-rouge">/compiled/</code>. It now compares every new triple across compiles, and refuses a blank node among them</td>
+    </tr>
+    <tr>
+      <td>the text a builder renders changes and its version does not</td>
+      <td>H2.6-T13 fails</td>
+    </tr>
+    <tr>
+      <td>the transaction graph mapped to the version row</td>
+      <td>9 cases fail (the agreement test, every file)</td>
+    </tr>
+    <tr>
+      <td>an absence read reported as a point read</td>
+      <td>8 cases fail</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<ul>
+  <li>The vocabulary, its shapes and the compiler’s emission (H2.7). The files are not validated against any shape, and the terms are not in the ontology.</li>
+  <li>The composite dataset-guard variants as files. H2.6-T6 asserts what makes the omission acceptable.</li>
+  <li>The relational realisation, which is on paper only (ADR-A-FM4 decision 1).</li>
+  <li>The digest algorithm beyond its declaration (H2.8), and isolation semantics (H5).</li>
+  <li>A file for each combination of receipt model and concurrency profile. The nine cover each operation kind and each resource.</li>
+</ul>

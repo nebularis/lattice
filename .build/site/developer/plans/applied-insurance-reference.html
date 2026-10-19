@@ -1,0 +1,565 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="applied-insurance-reference--epic">Applied Insurance Reference — Epic</h1>
+
+<p><strong>Unit type:</strong> Epic
+<strong>Epic:</strong> <code class="language-plaintext highlighter-rouge">applied-insurance-reference</code>
+<strong>Epic status:</strong> Proposed. Scope decisions recorded 2026-09-26 (§5). Decomposed into seven
+phase plans (below). Phases 0 and 1 are detailed to slice level. Phases 2 to 6 are rolling-wave:
+slices are outlined and detailed at the preceding phase gate.
+<strong>Trigger:</strong> request, 2026-09-26
+<strong>Status record:</strong> <a href="/developer/status/applied-insurance-reference.html">applied-insurance-reference.md</a>
+<strong>Governing model:</strong> Epic Decomposition in the <a href="../../../.claude/skills/lattice-lifecycle/SKILL.md">lattice-lifecycle skill</a></p>
+
+<p><strong>Sketches</strong> (the design this epic implements, cited by section):</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Sketch</th>
+      <th>Content</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="/developer/sketches/peril-vocabulary.html">peril-vocabulary.md</a></td>
+      <td>reference peril vocabulary <code class="language-plaintext highlighter-rouge">prl:</code>: cause scheme, kind and part links, typed relations, characteristic and companion schemes, collections, Quantification links, crosswalks</td>
+    </tr>
+    <tr>
+      <td><a href="/developer/sketches/asset-exposure-ontology.html">asset-exposure-ontology.md</a></td>
+      <td>exposure ontology <code class="language-plaintext highlighter-rouge">aeo:</code>: locations, assets, values, zones, dependencies, exposure units, loss history, requirements, liability exposure</td>
+    </tr>
+    <tr>
+      <td><a href="/developer/sketches/term-parameters.html">term-parameters.md</a></td>
+      <td>contract term parameters on <code class="language-plaintext highlighter-rouge">ins:Qualifier</code>, term relations, optional compilation, liability direction from party roles</td>
+    </tr>
+    <tr>
+      <td><a href="/developer/sketches/evaluation-context.html">evaluation-context.md</a></td>
+      <td>unplanned, shared with CCS: the ledger, combinators and environments that limits, retentions and aggregates run in. Comes back in at Phase 5</td>
+    </tr>
+    <tr>
+      <td><a href="/developer/sketches/mork-bridge.html">mork-bridge.md</a></td>
+      <td>checks against flat, taxonomic and reference-structured peril lists, and reviewed crosswalks between them</td>
+    </tr>
+    <tr>
+      <td><a href="/developer/sketches/peril-structure-whitepaper.html">peril-structure-whitepaper.md</a></td>
+      <td>why a hierarchy alone is insufficient, where each structural notion lives, inter-layer cost, upstream changes L-P1 to L-P6</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The sketches use Open CBAA, a binding-authority consumer, and its real contractual
+requirements as motivation, and describe that consumer’s modules alongside LATTICE’s. The
+motivation stays in the sketches (decision D3). LATTICE implements its own modules, and the
+consumer’s modules are implemented in Open CBAA.</p>
+
+<hr />
+
+<h2 id="1-purpose">1. Purpose</h2>
+
+<p>Give LATTICE’s applied insurance domain a reference implementation with the fullest treatment of
+perils, exposure and contract terms, while keeping it usable by consumers who bring flat or
+simply taxonomic peril lists of their own. The reference is a reference: a contract’s drafter or
+its market defines what a peril means in that contract, and LATTICE’s editions are the unscoped
+fallback.</p>
+
+<h2 id="2-principles">2. Principles</h2>
+
+<p>Each is stated once in the sketch cited, and every phase plan inherits them.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Principle</th>
+      <th>Source</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>E1</td>
+      <td>Reference editions are the unscoped fallback. Agreement, drafter and market bindings take precedence, and a market-published view (an LMA edition, for example) is welcome</td>
+      <td>mork-bridge §2</td>
+    </tr>
+    <tr>
+      <td>E2</td>
+      <td>The operative scheme is the contract’s. Checks run at the structure that scheme has, and return Undetermined when they need structure it lacks (ADR-A100, and missing evidence under ADR-A91)</td>
+      <td>mork-bridge §1, §3</td>
+    </tr>
+    <tr>
+      <td>E3</td>
+      <td>The source graph is normative. Compilation to Surface, generated classes or Capacity runtime forms is optional, parity-tested and never synchronised back</td>
+      <td>term-parameters §5</td>
+    </tr>
+    <tr>
+      <td>E4</td>
+      <td>Liability direction is derived from party roles, never recorded as a peril or characteristic</td>
+      <td>term-parameters §7</td>
+    </tr>
+    <tr>
+      <td>E5</td>
+      <td>Names: “characteristic” for peril axes, “term parameter” and “term relation” for contract terms. “Facet” is not used</td>
+      <td>term-parameters §2</td>
+    </tr>
+    <tr>
+      <td>E6</td>
+      <td>Applied content is not substrate. Every substrate change it motivates follows the clean-room procedure (ADR-A-C2) and the restatement boundary (ADR-A-C1)</td>
+      <td>whitepaper §7.2</td>
+    </tr>
+    <tr>
+      <td>E7</td>
+      <td>Every ontology change is classified under ADR-A86 and runs the import-pinning cascade</td>
+      <td>ontology-versioning-policy</td>
+    </tr>
+    <tr>
+      <td>E8</td>
+      <td>Agents do not run the git commands this plan uses for branching and merging (creating, switching, fetching, pulling, pushing, bundling, rebasing, merging). The maintainer runs them. The one exception is machine R’s agent, when we explicitly ask it to. Agents may run any other local git command their normal workflow needs</td>
+      <td>lanes §1</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="3-phase-map">3. Phase map</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Phase</th>
+      <th>Plan</th>
+      <th>Capability delivered</th>
+      <th>Depends on</th>
+      <th>Milestone</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>0</td>
+      <td><a href="/developer/plans/applied-insurance-reference-phase-0.html">phase 0</a></td>
+      <td>decisions ratified</td>
+      <td>nothing</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td><a href="/developer/plans/applied-insurance-reference-phase-1.html">phase 1</a></td>
+      <td>legacy contract module dropped, applied layout, <code class="language-plaintext highlighter-rouge">insurance/common/</code> and <code class="language-plaintext highlighter-rouge">classification/</code></td>
+      <td>0</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td><a href="/developer/plans/applied-insurance-reference-phase-2.html">phase 2</a></td>
+      <td>reference peril vocabulary</td>
+      <td>1</td>
+      <td>M1</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td><a href="/developer/plans/applied-insurance-reference-phase-3.html">phase 3</a></td>
+      <td>Eligibility over flat schemes and several values (substrate), crosswalks, a check across cause and characteristics</td>
+      <td>0 (3.1 to 3.3), 2 (3.4, 3.5), 4.4 (M2)</td>
+      <td>M2</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td><a href="/developer/plans/applied-insurance-reference-phase-4.html">phase 4</a></td>
+      <td>exposure ontology</td>
+      <td>1, and slices of 2 per the phase plan</td>
+      <td>M3</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td><a href="/developer/plans/applied-insurance-reference-phase-5.html">phase 5</a></td>
+      <td>contract module: term parameters, liability direction in contract terms, optional compilation. Deferred (D2)</td>
+      <td>1, 2, Open CBAA integration of 1 to 4</td>
+      <td>M4, M5</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td><a href="/developer/plans/applied-insurance-reference-phase-6.html">phase 6</a> and <a href="/developer/plans/applied-insurance-reference-claims.html">claims</a></td>
+      <td>submission (after 4), claims: the claims core, money and wire formats after 4, the parts that evaluate cover after CCS C12 (claims plan §3)</td>
+      <td>4, CCS, Phase 5 for term parameters</td>
+      <td>M6, M7, M8</td>
+    </tr>
+    <tr>
+      <td>S</td>
+      <td><a href="/developer/plans/applied-insurance-reference-substrate.html">substrate track</a></td>
+      <td>upstream LATTICE changes L-P1 to L-P5, spatial guidance, evidence resolution</td>
+      <td>0</td>
+      <td>none, non-blocking</td>
+    </tr>
+  </tbody>
+</table>
+
+<pre><code class="language-mermaid">flowchart LR
+    P0["0 Decisions"] --&gt; P1["1 Module split"]
+    P1 --&gt; P2["2 Peril vocabulary"]
+    P0 -- "3.1 to 3.3" --&gt; P3["3 Readings and crosswalks"]
+    P2 -- "3.4, 3.5" --&gt; P3
+    P1 --&gt; P4["4 Exposure"]
+    P2 -- "2.1 to 2.3, 2.7" --&gt; P4
+    P3 --&gt; X["Open CBAA integration of 1 to 4"]
+    P4 --&gt; X
+    X --&gt; P5["5 Contract module"]
+    P4 --&gt; P6["6 Submission, claims"]
+    P5 --&gt; P6
+    P0 --&gt; S["S Substrate track"]
+    S -. "enables, not blocking" .-&gt; P5
+    S -. "enables, not blocking" .-&gt; P6
+</code></pre>
+
+<p>Phases 2, 3 and 4 overlap. Which machine and agent builds each slice, on which branch, in which
+round, and the rules for merging are in <a href="/developer/plans/applied-insurance-reference-lanes.html">machines, branches and merges</a>.</p>
+
+<h2 id="3a-tracking-progress">3a. Tracking progress</h2>
+
+<p>Two machines build this epic (lanes §1). The <a href="/developer/status/applied-insurance-reference.html">status record</a>
+has one section per machine, and each machine’s agent edits only its own. An agent reads the
+record at the start of a session and updates its section, in the same commit as its work, at the
+end. Handoff notes for a slice go in its Validation Pack. How the sections, states and handoffs
+work is in lanes §5. There are no per-phase status records, a deliberate deviation from the
+epic model in <code class="language-plaintext highlighter-rouge">.github/copilot-instructions.md</code>, agreed on 2026-09-26.</p>
+
+<h2 id="3b-concurrent-unit-normative-rule-substrate">3b. Concurrent unit: normative rule substrate</h2>
+
+<p>From round 3, machine R also builds the <a href="/developer/plans/normative-rule-substrate.html">normative-rule-substrate</a> unit (NRS), a single-machine
+unit on R. Its §4 measures the interference with this epic. The constraints that bind this epic:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Constraint</th>
+      <th>Why</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>R verifies an S bundle before continuing an NRS slice</td>
+      <td>S carries 17 of this epic’s slices and has no runtime. A waiting bundle idles S</td>
+    </tr>
+    <tr>
+      <td>AIR-3.3 merges before NRS N1 starts</td>
+      <td>both change <code class="language-plaintext highlighter-rouge">tools/mork_compilers/</code></td>
+    </tr>
+    <tr>
+      <td>Phase 2 (AIR-2.2 to AIR-2.7) completes before NRS N9 starts</td>
+      <td>N9 changes Foundation (a MAJOR bump), re-pinning <code class="language-plaintext highlighter-rouge">insurance/peril/spec</code> and <code class="language-plaintext highlighter-rouge">vocab</code>, which Phase 2 is authoring. CCS F1 has since run on its own (ADR-A114, Foundation 0.4.0, 2026-10-03)</td>
+    </tr>
+    <tr>
+      <td><a href="/developer/plans/computable-contract-substrate.html">CCS</a> C9 (Instrument rewrite, ADR-A104, with the Wording layer, ADR-A112) is merged before Phase 5 starts. NRS N4 moved into CCS on 2026-09-30</td>
+      <td>A-101’s term parameters qualify terms and legal relations, which need the new model (ADR-A-C1)</td>
+    </tr>
+    <tr>
+      <td>CCS C10 re-pins <code class="language-plaintext highlighter-rouge">applied/capacity</code></td>
+      <td>Behaviour’s breaking MINOR cascades to its execution profile. After C10 Behaviour no longer imports Instrument, so the Instrument rewrite cascades nowhere outside Instrument. The epic does not author <code class="language-plaintext highlighter-rouge">applied/capacity</code> before Phase 5</td>
+    </tr>
+    <tr>
+      <td>Substrate S2 is authored with CCS C9b3 (NRS NQ-4, 2026-10-10), and S7 with NRS N10</td>
+      <td>both pairs change the same layer’s semantics: Eligibility well-foundedness, and precedence</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="4-milestones">4. Milestones</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Outcome, exercised end to end over example graphs</th>
+      <th>Closes in</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>M1</td>
+      <td>the reference cause scheme validates, and a hierarchical-match condition with exclusions admits and denies perils as the sketch’s open-perils example states</td>
+      <td>phase 2</td>
+    </tr>
+    <tr>
+      <td>M2</td>
+      <td>the cyber write-back profile (cause, agency and mechanism of one loss cause, peril vocabulary §6.8) decides against the reference, is Undetermined with a reason against a flat list, and decides exactly mapped codes of a crosswalked list. A risk whose perils are all of sudden onset is Permitted under an every-value reading</td>
+      <td>phase 3</td>
+    </tr>
+    <tr>
+      <td>M3</td>
+      <td>exposure units derived on demand for a location set, and a zone-and-peril requirement evaluated over them without materialising units</td>
+      <td>phase 4</td>
+    </tr>
+    <tr>
+      <td>M4</td>
+      <td>(deferred with Phase 5) a D&amp;O programme example: Side A, B and C terms, and a claim by a claimant unknown at binding whose direction (third, fourth, insured against insured) is derived from roles and the relationship graph</td>
+      <td>phase 5</td>
+    </tr>
+    <tr>
+      <td>M5</td>
+      <td>(deferred with Phase 5) one check run directly (route R1) and compiled (route R2) with equal results under the parity suite</td>
+      <td>phase 5</td>
+    </tr>
+    <tr>
+      <td>M6</td>
+      <td>a submission packages an exposure set version, and a claim records a loss cause chain against the contract that responds</td>
+      <td>phase 6 and the claims plan (AIR-6.5)</td>
+    </tr>
+    <tr>
+      <td>M7</td>
+      <td>one loss across a primary policy, an excess layer and a reinsurance: positions, movements, a settlement, a recovery and a derived loss run, each traced to the words</td>
+      <td>claims plan (AIR-6.12)</td>
+    </tr>
+    <tr>
+      <td>M8</td>
+      <td>a coverholder’s claims bordereau lifted, reconciled into movements and statuses, and emitted again for the market with its lowering report, reproducible from the stored files</td>
+      <td>claims plan (AIR-6.W3)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="5-decisions">5. Decisions</h2>
+
+<h3 id="51-scope-decisions-2026-09-26">5.1 Scope decisions (2026-09-26)</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Decision</th>
+      <th>Effect</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>D1</td>
+      <td>The existing contract module (<code class="language-plaintext highlighter-rouge">ontology/applied/insurance/spec/structure/contract.ttl</code>, its vocab and shapes) is dropped</td>
+      <td>AIR-1.1 deletes it. TP-Q2 is closed</td>
+    </tr>
+    <tr>
+      <td>D2</td>
+      <td>A new contract module is de-prioritised until Phases 1 to 4 are wired into Open CBAA</td>
+      <td>Phase 5 starts only after that integration. A-101 is drafted at Phase 5 start. Claims (Phase 6, AIR-6.2 onwards) waits with it. Revisited by the <a href="/developer/plans/applied-insurance-reference-claims.html">claims plan</a>’s CL-Q1 (2026-10-16): if claims imports Instrument directly, the slices that need only Instrument and exposure may start before Phase 5</td>
+    </tr>
+    <tr>
+      <td>D3</td>
+      <td>Open CBAA material stays in the sketches. A real-world contractual requirement is valid motivation for a LATTICE change</td>
+      <td>Phase 0 no longer separates consumer material from the sketches</td>
+    </tr>
+    <tr>
+      <td>D4</td>
+      <td>Open CBAA’s local copies of the sketches are removed, and its documents link to LATTICE</td>
+      <td>done in Open CBAA, 2026-09-26</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="52-applied-layout-2026-09-26">5.2 Applied layout (2026-09-26)</h3>
+
+<p>Input to A-98 and A-100. Sub-domains beyond the epic’s phases are illustrative and do not change
+its scope.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Decision</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>D5</td>
+      <td>Three levels of sharing. A module sits at the lowest level that covers every module using it: substrate (<code class="language-plaintext highlighter-rouge">ontology/&lt;layer&gt;</code>, reached only by clean-room promotion), shared across domains (<code class="language-plaintext highlighter-rouge">applied/&lt;module&gt;</code>, beside the domains), shared within one domain (<code class="language-plaintext highlighter-rouge">applied/&lt;domain&gt;/common/</code>)</td>
+    </tr>
+    <tr>
+      <td>D6</td>
+      <td><code class="language-plaintext highlighter-rouge">capacity</code> stays at <code class="language-plaintext highlighter-rouge">applied/capacity/</code>, a cross-domain module imported by insurance and lending, promotable into Behaviour under its CP-9</td>
+    </tr>
+    <tr>
+      <td>D7</td>
+      <td><code class="language-plaintext highlighter-rouge">insurance/common/</code> holds what means something only in insurance and is used by two or more insurance sub-domains: the insurance scheme contracts (peril, mechanism, agency, consequence, harm subject, pool), the liability role types (harmed, liable, claimant, payee), and the loss event shared by exposure and claims</td>
+    </tr>
+    <tr>
+      <td>D8</td>
+      <td>Classifications other domains also need (territory, asset class, industry) go in a cross-domain <code class="language-plaintext highlighter-rouge">applied/classification/</code> module from the start, so no IRI moves when lending arrives</td>
+    </tr>
+    <tr>
+      <td>D9</td>
+      <td>The peril vocabulary is an insurance sub-domain, <code class="language-plaintext highlighter-rouge">insurance/peril/</code>, with its own release cycle for editions and crosswalks. There is no <code class="language-plaintext highlighter-rouge">reference/</code> level. Its scheme contract stays in <code class="language-plaintext highlighter-rouge">common/</code>, so modules that only classify by peril need not import the vocabulary</td>
+    </tr>
+    <tr>
+      <td>D10</td>
+      <td>Reversed by D11. (Scheme profiles as a cross-domain applied module, <code class="language-plaintext highlighter-rouge">applied/scheme-profile/</code>.)</td>
+    </tr>
+    <tr>
+      <td>D11</td>
+      <td>Hierarchical match over a scheme without a hierarchy leaves unnamed members Undetermined, with a diagnostic, in Eligibility’s law and compilers (ADR-A100). No Vocabulary change. Crosswalks are reviewed SKOS graphs with Foundation provenance, and MORK is where proposals wait for review. Decided 2026-09-26</td>
+    </tr>
+    <tr>
+      <td>D12</td>
+      <td>Checks across cause and characteristics are Eligibility profiles with one condition per axis over one subject. Set readings (ADR-A103, formerly substrate item S3) move into Phase 3, and each link of a loss’s cause chain is its own node (<code class="language-plaintext highlighter-rouge">aeo:LossCause</code>). Decided 2026-09-26</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>applied/
+    README.md             domains, the three levels of sharing, dependency direction
+    capacity/             shapes/, spec/, README.md
+    classification/       shapes/, spec/classification.ttl, README.md
+    insurance/
+        domain-README.md  the insurance domain
+        common/           shapes/, spec/common.ttl, README.md
+        peril/            shapes/, spec/peril.ttl, vocab/, crosswalk/, README.md
+        exposure/         shapes/, spec/exposure.ttl, README.md
+        submission/       shapes/, spec/submission.ttl, README.md
+        claims/           shapes/, spec/claims.ttl, README.md
+        contract/         deferred (D2)
+</code></pre></div></div>
+
+<p>Dependencies run one way: <code class="language-plaintext highlighter-rouge">classification/</code> on the substrate only, <code class="language-plaintext highlighter-rouge">insurance/common/</code> on
+it and the substrate, <code class="language-plaintext highlighter-rouge">peril/</code> on <code class="language-plaintext highlighter-rouge">common/</code>, <code class="language-plaintext highlighter-rouge">exposure/</code> on <code class="language-plaintext highlighter-rouge">common/</code> and <code class="language-plaintext highlighter-rouge">peril/</code>,
+<code class="language-plaintext highlighter-rouge">submission/</code> on <code class="language-plaintext highlighter-rouge">exposure/</code>, <code class="language-plaintext highlighter-rouge">claims/</code> on <code class="language-plaintext highlighter-rouge">exposure/</code> and <code class="language-plaintext highlighter-rouge">contract/</code>. Namespaces follow the
+existing pattern: <code class="language-plaintext highlighter-rouge">…/neuro-semantic/lattice/applied/&lt;module&gt;</code> for cross-domain modules (as
+Capacity), <code class="language-plaintext highlighter-rouge">…/neuro-semantic/insurance/&lt;module&gt;</code> for insurance modules. Prefixes are fixed in ADR-A98 and
+ADR-A100.</p>
+
+<h3 id="53-adrs">5.3 ADRs</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>ADR</th>
+      <th>Decision</th>
+      <th>Sketch</th>
+      <th>Drafted in</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>A-98, Accepted with addendum</td>
+      <td>applied layout, the three levels of sharing and the insurance module structure (§5.2, D5 to D9, addendum for D11), one-way dependencies, one <code class="language-plaintext highlighter-rouge">.version</code> per module, LATTICE layers imported by exact version IRI</td>
+      <td>asset-exposure-ontology §3, §13</td>
+      <td>Phase 0</td>
+    </tr>
+    <tr>
+      <td>A-99, Accepted</td>
+      <td>reference vocabularies and scheme precedence: LATTICE reference editions as unscoped fallback, the peril vocabulary’s structure beyond SKOS, and the name “characteristic”</td>
+      <td>peril-vocabulary §2, §6, §9</td>
+      <td>Phase 0</td>
+    </tr>
+    <tr>
+      <td>A-100, Accepted</td>
+      <td>hierarchical match over schemes without a hierarchy, crosswalks (D11). A substrate decision under ADR-A-C2</td>
+      <td>mork-bridge §3, §8</td>
+      <td>Phase 0</td>
+    </tr>
+    <tr>
+      <td>A-103, Accepted</td>
+      <td>set readings for evidence bindings, and condition negation (D12). A substrate decision under ADR-A-C2</td>
+      <td>whitepaper L-P3</td>
+      <td>Phase 0</td>
+    </tr>
+    <tr>
+      <td>A-102, Accepted</td>
+      <td>liability direction from party roles with unfilled occupancies</td>
+      <td>term-parameters §7, asset-exposure-ontology §5.15</td>
+      <td>Phase 0</td>
+    </tr>
+    <tr>
+      <td>A-101, reserved</td>
+      <td>term parameters on <code class="language-plaintext highlighter-rouge">ins:Qualifier</code>, term relations, optional compilation routes R1 to R3</td>
+      <td>term-parameters §3 to §5</td>
+      <td>Phase 5 start (D2)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The substrate track’s ADRs are filed in that track, not here. A-100 and A-103 are substrate decisions
+filed here because Phase 3 implements them.</p>
+
+<h2 id="6-open-questions-carried-from-the-sketches">6. Open questions carried from the sketches</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Question</th>
+      <th>Decided in</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>TP-Q1 names: “characteristic” in A-99, “term parameter” and “term relation” in A-101</td>
+      <td>Phase 0, Phase 5</td>
+    </tr>
+    <tr>
+      <td>TP-Q2 rebuild the contract module now or migrate it</td>
+      <td>closed by D1 and D2</td>
+    </tr>
+    <tr>
+      <td>TP-Q3 which checks to compile by default</td>
+      <td>phase 5 gate</td>
+    </tr>
+    <tr>
+      <td>MB-Q1 agreement-scoped bindings for every agreement or only on divergence</td>
+      <td>consumer decision. LATTICE supports both</td>
+    </tr>
+    <tr>
+      <td>MB-Q2 confidence threshold and sampling rate for template mappings</td>
+      <td>phase 3 gate</td>
+    </tr>
+    <tr>
+      <td>MB-Q3 publish a crosswalk of a widely used market list with the reference edition</td>
+      <td>A-100</td>
+    </tr>
+    <tr>
+      <td>PV-O3 concept lifecycle across editions</td>
+      <td>substrate track S1</td>
+    </tr>
+    <tr>
+      <td>PV-O4 matching over generic links only</td>
+      <td>substrate track S2</td>
+    </tr>
+    <tr>
+      <td>W-Q2 causation profiles and their legal review</td>
+      <td>claims plan, gates AIR-6.4</td>
+    </tr>
+    <tr>
+      <td>W-Q3 granularity of cause of loss in claims data</td>
+      <td>claims plan §4: one code per claim in the CRS bordereau and ACORD, recorded as one cause link</td>
+    </tr>
+    <tr>
+      <td>W-Q4 binding suspension on active hazard events</td>
+      <td>consumer decision</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="7-out-of-scope">7. Out of scope</h2>
+
+<p>Every item here, and the workflow around information requests that AIR-6.1 leaves to consumers,
+is collected in <a href="/developer/plans/air-leftovers.html">leftovers</a>.</p>
+
+<p>Catastrophe model internals, pricing, a consumer’s statement modules and decision logs, market
+editions other than examples (they are published by their owners and bound by scope), and any
+runtime store or UI work.</p>
+
+<p>Added 2026-10-13, after a review of earlier designs against this plan:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Out of scope</th>
+      <th>Why, and where it would go</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>catastrophe model results: model runs, event sets, event and year loss tables, exceedance probability curves, hazard footprints</td>
+      <td>a follow-on unit, aligned with Oasis’s Open Results Data. This epic records summary peril metrics (AIR-4.3), which cite a model’s full output by IRI as evidence</td>
+    </tr>
+    <tr>
+      <td>exposure of portfolios of many insureds, as a cedent’s treaty portfolio or a binding authority’s bordereau</td>
+      <td>Open CBAA’s risks cover bordereaux. A treaty portfolio belongs with the contract module’s reinsurance structures</td>
+    </tr>
+    <tr>
+      <td>an insured’s licences and permits</td>
+      <td>they are instruments granted by an authority, modelled once the Instrument rewrite (CCS C9) has merged</td>
+    </tr>
+  </tbody>
+</table>

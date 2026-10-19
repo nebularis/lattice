@@ -1,0 +1,152 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-ccs-c10-behaviour-below-instrument-configuration-and-runtime">Validation Pack: CCS C10, Behaviour below Instrument, configuration and runtime</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/computable-contract-substrate.html"><code class="language-plaintext highlighter-rouge">computable-contract-substrate</code></a>
+<strong>Machine:</strong> R. <strong>Branch:</strong> <code class="language-plaintext highlighter-rouge">ccs/c10-behaviour-split</code>
+<strong>Plan and test cases:</strong> <a href="/developer/plans/computable-contract-substrate.html">CCS plan</a> (C10 in detail)
+<strong>Decisions:</strong> ADR-A106, ADR-A11 as amended, ADR-A01’s addendum, ADR-A113. C10-Q1, C10-Q2 decided 2026-10-01</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>Behaviour imports nothing above Eligibility and names no Instrument term. Configuration and
+runtime are two documents in one namespace, split by ADR-A08’s tiers. Effects target any
+resource, occupancies may be for any subject, a transition needs no effect, and policies stay
+required. Existing fixtures keep their meaning.</p>
+
+<h2 id="test-cases">Test cases</h2>
+
+<p>The table in the plan section above. Each row’s result is recorded under Results at
+verification.</p>
+
+<h2 id="one-command">One command</h2>
+
+<p>Run from the repository root on machine R.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run build:ontology-catalog <span class="o">&amp;&amp;</span> mise run check:ontology-versioning <span class="o">&amp;&amp;</span> mise run check:ontology-catalog <span class="o">&amp;&amp;</span> mise run check:python-root
+</code></pre></div></div>
+
+<h2 id="artefacts-to-inspect">Artefacts to inspect</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">ontology/behaviour/spec/behaviour.ttl</code> and <code class="language-plaintext highlighter-rouge">behaviour-runtime.ttl</code>: which class is in which.</li>
+  <li><code class="language-plaintext highlighter-rouge">ontology/behaviour/shapes/structural.ttl</code>: the target rule’s alternative paths.</li>
+  <li><code class="language-plaintext highlighter-rouge">tools/test_behaviour_split.py</code>: the before-and-after fixture comparison, C10-10.</li>
+</ul>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<p>Occasions, records and the evidence rule’s shapes (C11). The import guard (C10a). Instrument’s
+<code class="language-plaintext highlighter-rouge">ins:InstrumentTarget</code> (C6). Nested states and history (C11a).</p>
+
+<h2 id="handoff">Handoff</h2>
+
+<p>Written by the building machine when the work is committed.</p>
+
+<ul>
+  <li><strong>Built:</strong>
+    <ul>
+      <li>configuration <code class="language-plaintext highlighter-rouge">behaviour</code> 0.8.0 and the new <code class="language-plaintext highlighter-rouge">behaviour-runtime</code> 0.8.0, split by ADR-A08’s tiers</li>
+      <li><code class="language-plaintext highlighter-rouge">bhv:targets</code> (no range) with <code class="language-plaintext highlighter-rouge">targetsOccupancy</code> and <code class="language-plaintext highlighter-rouge">targetsAllowance</code> as sub-properties</li>
+      <li><code class="language-plaintext highlighter-rouge">bhv:forSubject</code> without a range, the <code class="language-plaintext highlighter-rouge">hasEffect</code> minimum removed, the Instrument import removed</li>
+      <li><code class="language-plaintext highlighter-rouge">behaviour-vocab</code> 0.8.0 with <code class="language-plaintext highlighter-rouge">bhv:InstrumentTarget</code> deprecated</li>
+      <li>shapes 0.2.0 with <code class="language-plaintext highlighter-rouge">EffectDefinitionShape</code>, projection 0.2.0 without <code class="language-plaintext highlighter-rouge">instrument.ttl</code></li>
+      <li>capacity’s execution profile 0.8.0, importing runtime</li>
+      <li>the three fixtures renamed, the README with a release notes section, <code class="language-plaintext highlighter-rouge">tools/test_behaviour_split.py</code></li>
+      <li>the architecture documents’ Behaviour rows</li>
+    </ul>
+  </li>
+  <li><strong>Not run:</strong> nothing skipped.</li>
+  <li><strong>Check first:</strong>
+    <ul>
+      <li>The README is again the literate source of configuration, vocab and structural shapes, which
+repairs their existing drift (a missing property, the vocab header, a missing shape). The
+runtime document is authored as a file, since the extractor writes one spec per layer.</li>
+      <li>The three fixtures that targeted <code class="language-plaintext highlighter-rouge">ins:Obligation</code> now declare their own target kind and target
+class (<code class="language-plaintext highlighter-rouge">ex:ApplicationTarget</code>, <code class="language-plaintext highlighter-rouge">ex:RecordTarget</code>), as ADR-A106 decision 2 has the owner of a
+target declare its kind. None uses the deprecated <code class="language-plaintext highlighter-rouge">bhv:InstrumentTarget</code>. Revised in review.</li>
+      <li><code class="language-plaintext highlighter-rouge">tools/test_ontology_catalog.py</code>’s closure test encoded ADR-A01’s old order. It now asserts
+the accepted one: Behaviour reaches the layers below it and not Instrument.</li>
+      <li><code class="language-plaintext highlighter-rouge">applied/capacity</code> gains a README (added in review): what is authored (the <code class="language-plaintext highlighter-rouge">capx</code> execution
+profile) and what is only designed (the <code class="language-plaintext highlighter-rouge">cap:</code> source ontology), where it sits, and release
+notes with the 0.8.0 breaking entry.</li>
+    </ul>
+  </li>
+  <li><strong>Deviations from the plan:</strong> none. C10-02 was first scoped to the layer’s documents, then
+restored to every file once the fixtures were made neutral.</li>
+  <li><strong>Tags for the maintainer:</strong> <code class="language-plaintext highlighter-rouge">behaviour-v0.8.0</code>, <code class="language-plaintext highlighter-rouge">behaviour-runtime-v0.8.0</code>, <code class="language-plaintext highlighter-rouge">behaviour-vocab-v0.8.0</code>,
+<code class="language-plaintext highlighter-rouge">behaviour-shapes-v0.2.0</code>, <code class="language-plaintext highlighter-rouge">behaviour-projection-v0.2.0</code>, <code class="language-plaintext highlighter-rouge">applied-capacity-execution-v0.8.0</code>.</li>
+</ul>
+
+<h2 id="results">Results</h2>
+
+<p>Verified on machine R, 2026-10-01.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>C10-01</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>C10-02</td>
+      <td>pass: every Behaviour file and the conformance case, no deprecated kind in a fixture</td>
+    </tr>
+    <tr>
+      <td>C10-03</td>
+      <td>pass, <code class="language-plaintext highlighter-rouge">targets</code> and <code class="language-plaintext highlighter-rouge">forSubject</code></td>
+    </tr>
+    <tr>
+      <td>C10-04</td>
+      <td>pass: 13 declaration classes in configuration, 5 runtime classes in runtime</td>
+    </tr>
+    <tr>
+      <td>C10-05</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>C10-06</td>
+      <td>pass: no selection policy, and <code class="language-plaintext highlighter-rouge">PriorityOrdered</code> without a priority, each fail</td>
+    </tr>
+    <tr>
+      <td>C10-07</td>
+      <td>pass: a target through <code class="language-plaintext highlighter-rouge">bhv:targets</code> and through <code class="language-plaintext highlighter-rouge">bhv:targetsAllowance</code></td>
+    </tr>
+    <tr>
+      <td>C10-08</td>
+      <td>pass: no target, and no target kind, each fail</td>
+    </tr>
+    <tr>
+      <td>C10-09</td>
+      <td>pass: under RDFS closure neither subject nor target gains a type</td>
+    </tr>
+    <tr>
+      <td>C10-10</td>
+      <td>pass: all five fixtures conform, as they did before the change</td>
+    </tr>
+    <tr>
+      <td>C10-11</td>
+      <td>pass: capacity reaches runtime and configuration, and no Instrument document</td>
+    </tr>
+    <tr>
+      <td>C10-12</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>C10-13</td>
+      <td>pass: six release rows. <code class="language-plaintext highlighter-rouge">check:ontology-versioning</code> exits 0</td>
+    </tr>
+    <tr>
+      <td>C10-14</td>
+      <td>pass: <code class="language-plaintext highlighter-rouge">check:ontology-catalog</code> 139, <code class="language-plaintext highlighter-rouge">check:python-root</code> 84 and Phase 8 conformance, <code class="language-plaintext highlighter-rouge">check:mork-compilers</code> 114</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><code class="language-plaintext highlighter-rouge">mise run topology:links</code>: 427 broken links, the baseline, none in a changed file.</p>

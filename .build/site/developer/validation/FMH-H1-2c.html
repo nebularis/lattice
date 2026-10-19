@@ -1,0 +1,276 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-fmh-h12c-witnesses-for-every-shacl-shape">Validation Pack: FMH-H1.2c, witnesses for every SHACL shape</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/formal-methods-track-h.html"><code class="language-plaintext highlighter-rouge">formal-methods-track-h</code></a>, slice H1.2, part c
+(<a href="/developer/plans/formal-methods-track-h.html">plan §3, H1.2</a>, split by H-D8)
+<strong>Builds on:</strong> <a href="/developer/validation/FMH-H1-2.html">FMH-H1.2a</a> and <a href="/developer/validation/FMH-H1-2b.html">FMH-H1.2b</a>.
+<strong>Decisions:</strong> none new. One finding needs a design decision from the maintainer (TD-25, below).</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>Every <code class="language-plaintext highlighter-rouge">sh:NodeShape</code> in <code class="language-plaintext highlighter-rouge">ontology/persistence/shapes/constraints.ttl</code> has a fixture that makes it
+report <strong>and</strong> a fixture whose data it applies to and accepts. A shape that reports on everything
+detects nothing, so both are required, as an audit needs a violating and a clean dataset. With
+this slice every refusal, warning, shape and audit has a witness, and <code class="language-plaintext highlighter-rouge">known-gaps.txt</code> is empty.</p>
+
+<h2 id="what-changed">What changed</h2>
+
+<ul>
+  <li><strong>13 shape witnesses</strong>, <code class="language-plaintext highlighter-rouge">shape-&lt;Name&gt;.ttl</code>, one per previously unwitnessed shape. Each violates
+exactly its shape’s constraint, and a drift check requires that it fires the shape it is named for.</li>
+  <li><strong>A conforming-side requirement for shapes.</strong> The first draft of this slice counted a shape as
+witnessed once any fixture made it report. A probe showed a new shape with <code class="language-plaintext highlighter-rouge">sh:minCount 5</code> passed
+that test by tripping over unrelated fixtures. A shape is now witnessed only if it also has a
+fixture with focus nodes where it reports nothing. This exposed that no shipped example uses a
+valid <code class="language-plaintext highlighter-rouge">dal:ShapeScope</code>, so <code class="language-plaintext highlighter-rouge">ok-ShapeScopeShape.ttl</code> was added. A file called <code class="language-plaintext highlighter-rouge">ok-X.ttl</code> is a
+fixture that shape <code class="language-plaintext highlighter-rouge">X</code> accepts.</li>
+  <li><strong>Two known defects asserted as strict expected failures</strong> in <code class="language-plaintext highlighter-rouge">tests/test_known_defects.py</code>, for
+TD-23 and TD-25. They are reported as <code class="language-plaintext highlighter-rouge">xfail</code> while the defect stands. When it is fixed the test
+passes, strict mode fails the suite, and the fixer removes the marker and the register entry.</li>
+  <li><code class="language-plaintext highlighter-rouge">known-gaps.txt</code> is empty. A new rule must arrive with its witness.</li>
+  <li>A colour fix made earlier in the session (<code class="language-plaintext highlighter-rouge">6bd91a8</code>). <code class="language-plaintext highlighter-rouge">witness --verbose</code> prints <code class="language-plaintext highlighter-rouge">WITNESSED</code> lines
+green and <code class="language-plaintext highlighter-rouge">GAP</code> lines red on a terminal.</li>
+</ul>
+
+<h2 id="measured-result">Measured result</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Family</th>
+      <th>H1.2a</th>
+      <th>H1.2b</th>
+      <th>H1.2c</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Refusals</td>
+      <td>10 of 34</td>
+      <td>36 of 36</td>
+      <td>36 of 36</td>
+    </tr>
+    <tr>
+      <td>Warnings</td>
+      <td>3 of 11</td>
+      <td>11 of 11</td>
+      <td>11 of 11</td>
+    </tr>
+    <tr>
+      <td>Shapes</td>
+      <td>10 of 33</td>
+      <td>20 of 33</td>
+      <td><strong>33 of 33</strong></td>
+    </tr>
+    <tr>
+      <td>Audits</td>
+      <td>5 of 5</td>
+      <td>5 of 5</td>
+      <td>5 of 5</td>
+    </tr>
+    <tr>
+      <td>Total</td>
+      <td>28 of 83</td>
+      <td>72 of 85</td>
+      <td><strong>85 of 85</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The witness directory holds 48 files (25 refusals, 8 warnings, 13 shapes, 1 conforming fixture and
+1 shared base) and the check compiles and validates 79 fixtures in all.</p>
+
+<h2 id="test-cases">Test cases</h2>
+
+<p>All in <code class="language-plaintext highlighter-rouge">tools/persistence/tests/</code>. The H1.2c additions continue the numbering in
+<code class="language-plaintext highlighter-rouge">test_witness_coverage.py</code>.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>H1.2-T24</td>
+      <td>a report with one witnessed rule and one gap / verbose lines with colour on / the first is green, the second red, the summary uncoloured</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H1.2-T25</td>
+      <td>the same report with colour off / lines / no escape codes</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H1.2-T26</td>
+      <td>terminals, pipes, <code class="language-plaintext highlighter-rouge">TERM=dumb</code>, <code class="language-plaintext highlighter-rouge">NO_COLOR</code>, <code class="language-plaintext highlighter-rouge">FORCE_COLOR</code> / <code class="language-plaintext highlighter-rouge">use_color</code> / the conventional outcome for each</td>
+      <td>L1</td>
+      <td>+/−</td>
+    </tr>
+    <tr>
+      <td>H1.2-T27</td>
+      <td><code class="language-plaintext highlighter-rouge">FORCE_COLOR</code> set, then unset / the CLI / coloured, then plain</td>
+      <td>L3</td>
+      <td>+/−</td>
+    </tr>
+    <tr>
+      <td>H1.2-T28</td>
+      <td>the real corpus / read the gap list / empty, and every rule covered</td>
+      <td>L4</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H1.2-T29</td>
+      <td>a <code class="language-plaintext highlighter-rouge">shape-Alpha.ttl</code> that fires <code class="language-plaintext highlighter-rouge">Beta</code> / drift check / one problem naming both</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>H1.2-T30</td>
+      <td>a shape with <code class="language-plaintext highlighter-rouge">sh:minCount 5</code> over the baseline example / observe / it fires, and has no conforming fixture</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>H1.2-T31</td>
+      <td><code class="language-plaintext highlighter-rouge">ok-ShapeScopeShape.ttl</code> / observe / it is a conforming fixture for that shape</td>
+      <td>L4</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>TD-23</td>
+      <td>a class covered only by <code class="language-plaintext highlighter-rouge">dal:coversClass</code> / compile / both classes compiled (strict xfail)</td>
+      <td>L4</td>
+      <td>expected failure</td>
+    </tr>
+    <tr>
+      <td>TD-25</td>
+      <td>a multi-valued <code class="language-plaintext highlighter-rouge">dal:priority</code> declared in either order / compile / the same resolution (strict xfail)</td>
+      <td>L2</td>
+      <td>expected failure</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="one-command">One command</h2>
+
+<p>Run from the repository root. A pass is <code class="language-plaintext highlighter-rouge">857 passed, 2 xfailed</code> with no failures. The run takes
+about 45 seconds.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:persistence
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">mise exec -- python -m persistence witness --verbose</code> shows <code class="language-plaintext highlighter-rouge">85 of 85 rule(s) witnessed, 0 listed
+gap(s), 0 unlisted gap(s)</code>, and exits 0.</p>
+
+<h2 id="adversarial-probes">Adversarial probes</h2>
+
+<p>Run on 2026-10-09, each reverted afterwards.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Mutation</th>
+      <th>Result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">NamespaceScopeShape</code> made to target a class nothing has (the review’s D.3 A6 class, a shape that cannot fire)</td>
+      <td><code class="language-plaintext highlighter-rouge">UNWITNESSED shape:NamespaceScopeShape</code>, and its witness “triggers nothing”. Exit 1</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ClassScopeShape</code> stops requiring <code class="language-plaintext highlighter-rouge">dal:targetClass</code></td>
+      <td><code class="language-plaintext highlighter-rouge">UNWITNESSED shape:ClassScopeShape</code>. Exit 1</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ProfileScopeShape</code> stops bounding <code class="language-plaintext highlighter-rouge">dal:priority</code></td>
+      <td><code class="language-plaintext highlighter-rouge">UNWITNESSED shape:ProfileScopeShape</code>, and the drift check names what its witness triggers instead. Exit 1</td>
+    </tr>
+    <tr>
+      <td>a new shape that reports on everything (<code class="language-plaintext highlighter-rouge">sh:minCount 5</code>)</td>
+      <td><code class="language-plaintext highlighter-rouge">UNWITNESSED shape:BrandNewShape</code>, “reports a result on every fixture it applies to”. Exit 1</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="findings">Findings</h2>
+
+<p><strong>TD-25, needs your decision.</strong> A scope that declares two <code class="language-plaintext highlighter-rouge">dal:priority</code> values is resolved by
+triple order. With priorities 1 and 3 on one scope and 2 on a competitor, the resolved
+<code class="language-plaintext highlighter-rouge">dal:concurrencyProfile</code> is <code class="language-plaintext highlighter-rouge">Optimistic</code> or <code class="language-plaintext highlighter-rouge">ProvidedConcurrency</code> according to the order the two
+triples were written. That breaks law L1 (resolution is a function of the configuration, not of
+triple order). <code class="language-plaintext highlighter-rouge">dal:ProfileScopeShape</code> rejects the input, but <code class="language-plaintext highlighter-rouge">compile</code> never runs the shapes and
+accepts it. The same <code class="language-plaintext highlighter-rouge">graph.value</code> reading pattern is used for every functional property (TD-15 is
+one instance). Options for the fix, none taken:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Option</th>
+      <th>Consequence</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>the resolver refuses a multi-valued functional property</td>
+      <td>closes the hole where it is read, needs an audit of every <code class="language-plaintext highlighter-rouge">graph.value</code> call, changes compiler behaviour</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">compile</code> runs the structural shapes first</td>
+      <td>one mechanism for all structural rules, adds pyshacl to the compile path (a dependency change), and the shapes then become the specification</td>
+    </tr>
+    <tr>
+      <td>a hygiene check (the H1.1 pattern)</td>
+      <td>no compiler change, but a user must run it, and <code class="language-plaintext highlighter-rouge">compile</code> stays unsafe on its own</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Where the compiler and the shapes disagree</strong>, seen for the first time because the harness
+observes both on every fixture. This is data for H4 (review §7.3, V2), not a pass or fail.</p>
+
+<ul>
+  <li>The compiler refuses 15 fixtures for which no violation-severity shape fires. For example
+<code class="language-plaintext highlighter-rouge">NoBoundaryConcurrencyConflict</code>, <code class="language-plaintext highlighter-rouge">CommitGrainOpSeqConflict</code>, <code class="language-plaintext highlighter-rouge">UniquenessOutsideBoundary</code>,
+<code class="language-plaintext highlighter-rouge">UnacknowledgedShardMigration</code>, <code class="language-plaintext highlighter-rouge">BoundaryConflict</code>, <code class="language-plaintext highlighter-rouge">ProfileAmbiguityError</code> and the recipe
+refusals such as <code class="language-plaintext highlighter-rouge">NormalizePipelineRequired</code>. Some are inherently compiler-side (a cycle, a
+capability check). Others read as rules a shape could state.</li>
+  <li>Four shape violations compile without complaint: a <code class="language-plaintext highlighter-rouge">ConcurrencyProfile</code> with no strategy, an
+<code class="language-plaintext highlighter-rouge">AggregateBoundaryProfile</code> with no strategy, a <code class="language-plaintext highlighter-rouge">PrivacyProfile</code> with no class or strategy, and a
+scope with two priorities. The first three silently fall back to the baseline, which is the
+review’s “a constraint that silently targeted nothing” in another form. The fourth is TD-25.</li>
+  <li><code class="language-plaintext highlighter-rouge">WeakEtagCasWarningShape</code> fires only when <code class="language-plaintext highlighter-rouge">dal:etagForm dal:WeakEtag</code> and
+<code class="language-plaintext highlighter-rouge">dal:concurrencyProfile dal:Optimistic</code> are on <strong>one</strong> node. The compiler’s <code class="language-plaintext highlighter-rouge">WeakEtagCas</code>
+warning fires across nodes. The shape therefore under-reports against the compiler.</li>
+</ul>
+
+<h2 id="artefacts-to-inspect">Artefacts to inspect</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">tools/persistence/tests/witnesses/shape-*.ttl</code>, 13 small files, each a single violation.
+<code class="language-plaintext highlighter-rouge">shape-WeakEtagCasWarningShape.ttl</code> and <code class="language-plaintext highlighter-rouge">ok-ShapeScopeShape.ttl</code> are the two with a story.</li>
+  <li><code class="language-plaintext highlighter-rouge">tools/persistence/src/persistence/witness.py</code>: <code class="language-plaintext highlighter-rouge">observe_shapes</code> and <code class="language-plaintext highlighter-rouge">_focus_nodes</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">tools/persistence/tests/test_known_defects.py</code>, and TD-23, TD-24 and TD-25 in
+<code class="language-plaintext highlighter-rouge">docs/developer/plans/technical-debt.md</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">python -m persistence witness --verbose</code>.</li>
+</ul>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<ul>
+  <li>That a shape’s message is right, or that it rejects every bad input it should. A witness shows a
+shape can fire and can accept, not that it is complete.</li>
+  <li>Whether each refusal has a mirror shape that agrees with it. Observed above, checked
+exhaustively by H4.</li>
+  <li><code class="language-plaintext highlighter-rouge">sh:sparql</code> constraints with several branches. A fixture reaches one branch, and which one is not
+recorded. Mutation testing (review §16.2) would show the others.</li>
+  <li>Shapes outside <code class="language-plaintext highlighter-rouge">ontology/persistence/shapes/constraints.ttl</code> (for example <code class="language-plaintext highlighter-rouge">persistent-foundation.ttl</code>).</li>
+</ul>

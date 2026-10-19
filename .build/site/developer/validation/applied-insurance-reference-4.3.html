@@ -1,0 +1,170 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-air-43-dependencies-peril-metrics-and-exposure-units">Validation Pack: AIR-4.3, dependencies, peril metrics and exposure units</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/applied-insurance-reference.html"><code class="language-plaintext highlighter-rouge">applied-insurance-reference</code></a>
+<strong>Machine:</strong> R, taking over from S. <strong>Branch:</strong> <code class="language-plaintext highlighter-rouge">air/applied-reference</code>, commits <code class="language-plaintext highlighter-rouge">[AIR-4.3] …</code>
+<strong>Plan and test cases:</strong> <a href="/developer/plans/applied-insurance-reference-phase-4.html">Phase 4 plan</a> (AIR-4.3 in detail)
+<strong>Decisions:</strong> ADR-A90, ADR-A98, epic E3, R8, R9. Milestone M3, first half</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>Dependencies between locations, assets and third parties are evidenced relations, peril metrics are derived artefacts with comparable scopes, and exposure units are computed on demand for the perils a check asks about, never asserted by hand and never required to be stored.</p>
+
+<h2 id="test-cases">Test cases</h2>
+
+<p>The table in the plan section above, AIR43-01 to 09. Under the amendment of 2026-10-14 they are
+built later, in the AIR-deferred-testing slice (Phase 4 plan), with the probes recorded in the
+Handoff below as ready-made negative cases.</p>
+
+<h2 id="one-command">One command</h2>
+
+<p>Run from the repository root. S runs it before the handoff commit. R runs it again at verification,
+after <code class="language-plaintext highlighter-rouge">mise run build:ontology-catalog</code> and <code class="language-plaintext highlighter-rouge">mise run build:ontology-releases</code>, which S cannot do.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise <span class="nb">exec</span> <span class="nt">--</span> python <span class="nt">-m</span> pytest tools/test_exposure_ontology.py <span class="nt">-q</span> <span class="o">&amp;&amp;</span> mise run check:ontology-catalog <span class="o">&amp;&amp;</span> mise run check:ontology-versioning
+</code></pre></div></div>
+
+<h2 id="artefacts-to-inspect">Artefacts to inspect</h2>
+
+<ul>
+  <li>The <code class="language-plaintext highlighter-rouge">dependencies-metrics-units</code> sections of the exposure README.</li>
+  <li><code class="language-plaintext highlighter-rouge">exposure_units</code> in <code class="language-plaintext highlighter-rouge">tools/exposure_derivations.py</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">examples/units.ttl</code> and the M3 decisions, and that the source graph holds no units afterwards.</li>
+  <li>The Open Results Data citations.</li>
+</ul>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<p>No maximum foreseeable interruption derivation. No catastrophe model results (epic §7).</p>
+
+<h2 id="handoff">Handoff</h2>
+
+<p>Written by R in the <code class="language-plaintext highlighter-rouge">[AIR-4.3] Handoff</code> commit. Testing for the applied insurance modules is
+deferred (amendment of 2026-10-14), so the heavy suites did not run. Cheap ad hoc scripts did.</p>
+
+<ul>
+  <li><strong>Built:</strong> the <code class="language-plaintext highlighter-rouge">dependencies-metrics-units</code> region of the exposure README, with the spec
+(<code class="language-plaintext highlighter-rouge">aeo:Dependency</code>, <code class="language-plaintext highlighter-rouge">aeo:PerilMetric</code>, <code class="language-plaintext highlighter-rouge">aeo:MetricComparison</code>, <code class="language-plaintext highlighter-rouge">aeo:ExposureUnit</code>,
+<code class="language-plaintext highlighter-rouge">aeo:scheduleGroup</code> and their properties), the vocabulary (six schemes with their contracts, two
+contracts with no reference scheme, and four value spaces), and nine shapes. Regenerated spec,
+vocab and both shape files. <code class="language-plaintext highlighter-rouge">tools/exposure_derivations.py</code> (<code class="language-plaintext highlighter-rouge">exposure_units</code>).
+<code class="language-plaintext highlighter-rouge">examples/dependencies.ttl</code> and <code class="language-plaintext highlighter-rouge">examples/units.ttl</code>. No version bump, the module being new on
+the branch.</li>
+  <li><strong>Run, with the result:</strong>
+    <ul>
+      <li>The literate extraction, and every generated file parses.</li>
+      <li><code class="language-plaintext highlighter-rouge">dependencies.ttl</code> with <code class="language-plaintext highlighter-rouge">core.ttl</code>, and <code class="language-plaintext highlighter-rouge">units.ttl</code>, each against every exposure shape with
+pySHACL (<code class="language-plaintext highlighter-rouge">advanced=True</code>, <code class="language-plaintext highlighter-rouge">inference="none"</code>): conform, no warning.</li>
+      <li>Ten single-change probes of the new shapes, one per shape (an exceedance metric without a
+return period and with both, a score on the wrong space and with no space, a scenario loss with
+no scenario, a metric with no peril scope, a dependency with no provider, a dependency cycle, a
+comparison of an insured with a ground-up loss, and an incomplete unit with no derivation run):
+each reported the expected shape (the metric with no scope also breaks the comparison that cites it, correctly).</li>
+      <li><code class="language-plaintext highlighter-rouge">exposure_units</code> over <code class="language-plaintext highlighter-rouge">units.ttl</code> for flood and wind: eight units, values 1, 2, 3 and 4
+million pounds, an empty report, and no triple added to the source graph.</li>
+      <li>The M3 profile over those units with this branch’s SPARQL backend: seven units decide as the
+example states. Site D’s flood unit reads Undetermined (<code class="language-plaintext highlighter-rouge">exe:MissingCandidate</code>), because this
+branch’s compilers ignore a closure. It reads Denied once CCS HQ-6a.2 merges.</li>
+    </ul>
+  </li>
+  <li><strong>Not run, and why:</strong> <code class="language-plaintext highlighter-rouge">tools/test_exposure_ontology.py</code>, the catalog and release checks, and
+<code class="language-plaintext highlighter-rouge">check:full-sweep</code>. Deferred.</li>
+  <li><strong>Versions used, if they differ from the plan’s snapshot:</strong> none. No import of <code class="language-plaintext highlighter-rouge">insurance/peril</code>’s
+spec was added, since no spec term uses it (the vocabulary already imports <code class="language-plaintext highlighter-rouge">peril-vocab</code>).</li>
+  <li><strong>Check first:</strong> §4.3’s prose and the metric shape table, then the Open Results Data citations in
+the metric kind, perspective and calculation method notes.</li>
+  <li><strong>Deviations from the plan:</strong>
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">aeo:perilScope</code> lost its <code class="language-plaintext highlighter-rouge">aeo:PoolParticipation</code> domain (AIR-4.2 had set it), because peril
+metrics reuse it and a reasoner would otherwise read each metric as a pool participation.</li>
+      <li>Two terms beyond the brief: <code class="language-plaintext highlighter-rouge">aeo:MetricComparison</code> with <code class="language-plaintext highlighter-rouge">aeo:comparedMetric</code>, which gives the
+comparability shape something to read, and <code class="language-plaintext highlighter-rouge">aeo-voc:ScenarioContract</code>, because
+<code class="language-plaintext highlighter-rouge">aeo:scenario</code> is concept-valued.</li>
+      <li>The Open Results Data names were checked against the specification by the maintainer on
+2026-10-14, which corrected the third perspective and added two calculation methods (see
+above).</li>
+      <li><code class="language-plaintext highlighter-rouge">aeo-voc:ProbabilityOfEvents</code> is described as the probability or expected number of events,
+because the brief’s wording (“names a count”) could be read either way.</li>
+      <li>The maximum foreseeable interruption is deferred, as the brief said.</li>
+    </ul>
+  </li>
+  <li><strong>Open question for the maintainer:</strong> the metric shape asks for exactly one perspective, which a
+hazard score or a probability of events does not have, so <code class="language-plaintext highlighter-rouge">dependencies.ttl</code> states ground-up for
+its score. The options are to require a perspective only for the loss kinds or to leave it as
+decided. No change was made.</li>
+</ul>
+
+<h2 id="results">Results</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AIR43-03</td>
+      <td><code class="language-plaintext highlighter-rouge">dependencies.ttl</code> with <code class="language-plaintext highlighter-rouge">core.ttl</code>, and <code class="language-plaintext highlighter-rouge">units.ttl</code>, against every exposure shape with pySHACL: conform (run by hand)</td>
+    </tr>
+    <tr>
+      <td>AIR43-04, 05</td>
+      <td><code class="language-plaintext highlighter-rouge">exposure_units</code> run by hand over <code class="language-plaintext highlighter-rouge">units.ttl</code>: eight units and an empty report. The currency case is not run</td>
+    </tr>
+    <tr>
+      <td>AIR43-06</td>
+      <td>the M3 profile run by hand with this branch’s SPARQL backend: seven of eight units decide as stated, site D’s flood unit reads Undetermined until CCS HQ-6a.2 merges. No unit triple in the source graph</td>
+    </tr>
+    <tr>
+      <td>AIR43-07, 08</td>
+      <td>one-change probes of the exceedance and comparability shapes, run by hand: reported</td>
+    </tr>
+    <tr>
+      <td>AIR43-01, 02, 09</td>
+      <td>not built, in AIR-deferred-testing</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><code class="language-plaintext highlighter-rouge">check:full-sweep</code> against <code class="language-plaintext highlighter-rouge">main</code> on 2026-10-14, then <code class="language-plaintext highlighter-rouge">check:ontology-catalog</code> again after one fix:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Check</th>
+      <th>Result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>ontology versions, release register, import guard, python root, deny terms</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">check:vocabulary</code></td>
+      <td>16 passed</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">check:mork-compilers</code></td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">check:reference-eligibility</code></td>
+      <td>58 passed</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">check:formal-freshness</code>, <code class="language-plaintext highlighter-rouge">build:mtp</code>, <code class="language-plaintext highlighter-rouge">check:mtp</code>, <code class="language-plaintext highlighter-rouge">check:agent-guidance</code></td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">check:persistence</code></td>
+      <td>2549 passed, 207 skipped, 1 xfailed</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">check:ontology-catalog</code></td>
+      <td>first run 772 passed and 1 failed (<code class="language-plaintext highlighter-rouge">test_applied_shared_contracts.py</code> pinned nine <code class="language-plaintext highlighter-rouge">insurance/common</code> contracts, AIR-4.4 adds a tenth, test restated in <code class="language-plaintext highlighter-rouge">5492e39</code>). Rerun: 773 passed, catalog consistent with 2 known defects in MORK example files</td>
+    </tr>
+  </tbody>
+</table>

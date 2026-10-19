@@ -1,0 +1,152 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-ccs-c3-the-wording-layers-spec-and-vocab">Validation Pack: CCS C3, the Wording layer’s spec and vocab</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/computable-contract-substrate.html"><code class="language-plaintext highlighter-rouge">computable-contract-substrate</code></a>
+<strong>Machine:</strong> R. <strong>Branch:</strong> <code class="language-plaintext highlighter-rouge">ccs/c3-wording-spec</code>
+<strong>Plan and test cases:</strong> <a href="/developer/plans/computable-contract-substrate.html">CCS plan</a> (C3 in detail)
+<strong>Decisions:</strong> ADR-A112, ADR-A113, ADR-A-C2 and its addendum, CC-D6, CC-D11. C3-Q1, C3-Q2 decided 2026-10-01</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p><code class="language-plaintext highlighter-rouge">ontology/wording</code> imports exactly Foundation, Vocabulary, Quantification and Eligibility, names
+no higher layer’s term, and holds structure, text parts and variables. Nothing imports it, so no
+other version moves.</p>
+
+<h2 id="test-cases">Test cases</h2>
+
+<p>The table in the plan section above. Each row’s result is recorded under Results at
+verification.</p>
+
+<h2 id="one-command">One command</h2>
+
+<p>Run from the repository root on machine R, with the reasoning harness built
+(<code class="language-plaintext highlighter-rouge">mise run bootstrap:reasoning-testkit</code>), so the L2 rows do not skip.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run build:ontology-catalog <span class="o">&amp;&amp;</span> mise run check:ontology-versioning <span class="o">&amp;&amp;</span> mise run check:ontology-catalog
+</code></pre></div></div>
+
+<h2 id="artefacts-to-inspect">Artefacts to inspect</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">ontology/wording/spec/wording.ttl</code>: the part-whole properties’ characteristics, and the text
+part properties.</li>
+  <li><code class="language-plaintext highlighter-rouge">ontology/wording/examples/facility-agreement.ttl</code>: clause 4.1’s five parts.</li>
+  <li><code class="language-plaintext highlighter-rouge">ontology/wording/README.md</code>: the examples come before the model prose.</li>
+  <li><code class="language-plaintext highlighter-rouge">docs/architecture/ontology-versioning-policy.md</code>: the major-version-zero rule.</li>
+</ul>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<p>Tables’ rows and columns, assembly and variable values (C4). Amendments, shapes for W1 to W7 and
+the how-to (C5). The LMA WIM profile (applied insurance).</p>
+
+<h2 id="handoff">Handoff</h2>
+
+<p>Written by the building machine when the work is committed.</p>
+
+<ul>
+  <li><strong>Built:</strong> <code class="language-plaintext highlighter-rouge">ontology/wording</code> (README as literate source, <code class="language-plaintext highlighter-rouge">spec/wording.ttl</code> and
+<code class="language-plaintext highlighter-rouge">vocab/wording-vocab.ttl</code> extracted from it, two examples), the major-version-zero rule in the
+versioning policy, <code class="language-plaintext highlighter-rouge">tools/test_wording.py</code> in <code class="language-plaintext highlighter-rouge">check:ontology-catalog</code>, catalogs, two release
+rows, and the layer order and Wording rows in the root README and <code class="language-plaintext highlighter-rouge">ontology-architecture.md</code>.</li>
+  <li><strong>Not run:</strong> nothing skipped. The reasoner rows ran against the built harness jar.</li>
+  <li><strong>Check first:</strong> the vocab’s baseline scheme (Section, Clause, Definition, Schedule, Annex), and
+the governing variable in the trial example, which is a count of study arms, since a
+concept-valued one needs variable values (C4) to say anything.</li>
+  <li><strong>Revised after review (2026-10-01):</strong> the unions are named once (<code class="language-plaintext highlighter-rouge">wrd:WordingNode</code>,
+<code class="language-plaintext highlighter-rouge">wrd:LinkedDocument</code>, <code class="language-plaintext highlighter-rouge">wrd:ReferenceTarget</code>), each with its members’ subclass triples asserted so
+SHACL sees what a reasoner infers. Every property’s comment states its subject and value, for
+readers. <code class="language-plaintext highlighter-rouge">shapes/structural.ttl</code> (<code class="language-plaintext highlighter-rouge">0.1.0</code>) checks the same intent in
+SHACL Core, so verification needs no reasoner. The spec stays <code class="language-plaintext highlighter-rouge">0.1.0</code>: it is not yet tagged or
+released.</li>
+  <li><strong>Deviations from the plan:</strong> the shapes directory starts here rather than in C5, which now takes
+it to <code class="language-plaintext highlighter-rouge">0.2.0</code>. The root README and <code class="language-plaintext highlighter-rouge">ontology-architecture.md</code>
+show the accepted order with a note that Behaviour’s move lands in C10.</li>
+  <li><strong>Tags for the maintainer:</strong> <code class="language-plaintext highlighter-rouge">wording-v0.1.0</code>, <code class="language-plaintext highlighter-rouge">wording-vocab-v0.1.0</code>, <code class="language-plaintext highlighter-rouge">wording-shapes-v0.1.0</code>.</li>
+</ul>
+
+<h2 id="results">Results</h2>
+
+<p>Verified on machine R, 2026-10-01, with the reasoning harness built.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>C3-01</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>C3-02</td>
+      <td>pass, spec and vocab</td>
+    </tr>
+    <tr>
+      <td>C3-03</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>C3-04</td>
+      <td>pass: every text in both examples, and clause 4.1’s five parts</td>
+    </tr>
+    <tr>
+      <td>C3-05</td>
+      <td>pass, both examples</td>
+    </tr>
+    <tr>
+      <td>C3-06</td>
+      <td>pass: a self-comprising element and a two-element cycle are inconsistent</td>
+    </tr>
+    <tr>
+      <td>C3-07</td>
+      <td>pass: Wording and Element, Text and Table, and embedded and governing variable are each inconsistent</td>
+    </tr>
+    <tr>
+      <td>C3-08</td>
+      <td>pass, and the vocab closure conforms to Vocabulary’s shapes</td>
+    </tr>
+    <tr>
+      <td>C3-09</td>
+      <td>pass (<code class="language-plaintext highlighter-rouge">literate_extract --check</code>)</td>
+    </tr>
+    <tr>
+      <td>C3-10</td>
+      <td>pass. <code class="language-plaintext highlighter-rouge">check:ontology-versioning</code> exits 0 once the revision is committed, and lists the three tags</td>
+    </tr>
+    <tr>
+      <td>C3-11</td>
+      <td>pass: <code class="language-plaintext highlighter-rouge">6a0509c</code> commits the examples alone, before the README and spec</td>
+    </tr>
+    <tr>
+      <td>C3-12</td>
+      <td>pass: <code class="language-plaintext highlighter-rouge">check:ontology-catalog</code>, 118 tests</td>
+    </tr>
+    <tr>
+      <td>C3-13</td>
+      <td>pass: the five element types the examples use are all in the baseline scheme</td>
+    </tr>
+    <tr>
+      <td>C3-14</td>
+      <td>pass, both examples</td>
+    </tr>
+    <tr>
+      <td>C3-15</td>
+      <td>pass, all ten cases reported on their focus node</td>
+    </tr>
+    <tr>
+      <td>C3-16</td>
+      <td>pass, all three unions</td>
+    </tr>
+    <tr>
+      <td>C3-17</td>
+      <td>pass, 22 properties</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><code class="language-plaintext highlighter-rouge">mise run topology:links</code>: 427 broken links, the baseline, none in a changed file.</p>

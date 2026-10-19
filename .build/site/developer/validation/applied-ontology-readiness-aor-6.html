@@ -1,0 +1,188 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-aor-6-hierarchical-match-and-scheme-resolution">Validation Pack: AOR-6, hierarchical match and scheme resolution</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/applied-ontology-readiness.html"><code class="language-plaintext highlighter-rouge">applied-ontology-readiness</code></a>
+<strong>Plan section:</strong> <a href="/developer/plans/applied-ontology-readiness.html#phase-b-executable-coverage">Phase B</a>
+<strong>Decisions:</strong> <a href="../../architecture/decisions/ADR-A89-eligibility-ir-concept-conditions-and-profile-aggregation.md">ADR-A89</a> items 2 and 3, <a href="/architecture/decisions/ADR-A87-eligibility-concept-inclusion-and-exclusion.html">ADR-A87</a> L10 to L12, <a href="/architecture/decisions/ADR-A85-vocabulary-scoped-temporal-binding-resolution.html">ADR-A85</a>, all but A-85 Proposed</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>A hierarchical or exclusion-only condition compiles only against the one
+scheme its contract resolves to, under an explicit instant and scope when the
+contract has bindings. Its SPARQL decides every member of that scheme as the
+plan’s own expansion of the ADR-A87 table does.</p>
+
+<h2 id="test-cases">Test cases</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AOR6-01</td>
+      <td>solid tumours required, CNS excluded / lung tumour asked / <code class="language-plaintext highlighter-rouge">Permitted</code></td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AOR6-02</td>
+      <td>same / CNS tumour and glioma asked / both <code class="language-plaintext highlighter-rouge">Denied</code> (L10)</td>
+      <td>L1</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>AOR6-03</td>
+      <td>same / solid tumour asked / <code class="language-plaintext highlighter-rouge">Undetermined</code> (L11)</td>
+      <td>L1</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>AOR6-04</td>
+      <td>same / neoplasm and haematological asked / both <code class="language-plaintext highlighter-rouge">Denied</code></td>
+      <td>L1</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>AOR6-05</td>
+      <td>same / a concept outside the scheme, and no candidate / both <code class="language-plaintext highlighter-rouge">Undetermined</code></td>
+      <td>L1</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>AOR6-06</td>
+      <td>same / plan inspected / scheme recorded, fallback (no binding), contract and scheme in provenance</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AOR6-07</td>
+      <td>hierarchical, haematological excluded only / four candidates / <code class="language-plaintext highlighter-rouge">Permitted</code>, <code class="language-plaintext highlighter-rouge">Denied</code>, <code class="language-plaintext highlighter-rouge">Undetermined</code> (L11), <code class="language-plaintext highlighter-rouge">Undetermined</code> (outside)</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AOR6-08</td>
+      <td>flat, haematological excluded only / three candidates / <code class="language-plaintext highlighter-rouge">Permitted</code>, <code class="language-plaintext highlighter-rouge">Denied</code>, <code class="language-plaintext highlighter-rouge">Undetermined</code></td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AOR6-09</td>
+      <td>exclusion-only with no contract / compiled / refused</td>
+      <td>L1</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>AOR6-10</td>
+      <td>three conditions / every scheme member asked through SPARQL / equals the expansion</td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AOR6-11</td>
+      <td>contract with bindings, no instant / compiled / refused</td>
+      <td>L1</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>AOR6-12</td>
+      <td>two editions, handover 2026-01-01 / compiled before and after / different scheme and binding, a concept new in 2026 <code class="language-plaintext highlighter-rouge">Undetermined</code> then <code class="language-plaintext highlighter-rouge">Permitted</code></td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AOR6-13</td>
+      <td>two equally specific applicable bindings / compiled / refused</td>
+      <td>L1</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>AOR6-14</td>
+      <td>a cycle in the scheme / compiled / refused (L9)</td>
+      <td>L1</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>AOR6-15</td>
+      <td><code class="language-plaintext highlighter-rouge">hierarchical-match.ttl</code> / compiled and executed / <code class="language-plaintext highlighter-rouge">Permitted</code>, the decision the example records</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="one-command">One command</h2>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:mork-compilers
+</code></pre></div></div>
+
+<p>Pass: <code class="language-plaintext highlighter-rouge">42 passed</code>.</p>
+
+<h2 id="artefacts-to-inspect">Artefacts to inspect</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">eligibility_ir.py</code>: <code class="language-plaintext highlighter-rouge">ResolutionContext</code>, <code class="language-plaintext highlighter-rouge">SchemeResolution</code>,
+<code class="language-plaintext highlighter-rouge">_resolve_scheme</code>, <code class="language-plaintext highlighter-rouge">_expand</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">sparql_backend.py</code>: <code class="language-plaintext highlighter-rouge">_hierarchical_decision</code> and the scheme-membership
+guard.</li>
+  <li><code class="language-plaintext highlighter-rouge">ontology/eligibility/README.md</code> §4: a candidate outside the bound scheme,
+where the decision needs that scheme, is <code class="language-plaintext highlighter-rouge">Undetermined</code>. This reading is
+new and flagged in the status record.</li>
+  <li>Dependencies: <code class="language-plaintext highlighter-rouge">tools/mork_compilers</code> now depends on
+<code class="language-plaintext highlighter-rouge">lattice-vocabulary-resolver</code>. <code class="language-plaintext highlighter-rouge">bootstrap:mork-compilers</code> and
+<code class="language-plaintext highlighter-rouge">bootstrap:surface</code> depend on <code class="language-plaintext highlighter-rouge">bootstrap:vocabulary</code>, and both workflows
+install <code class="language-plaintext highlighter-rouge">tools/vocabulary</code> first. Surface already needed this and was
+missing it.</li>
+</ul>
+
+<h2 id="adversarial-probe">Adversarial probe</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Mutation</th>
+      <th>Tests failed</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>SPARQL L11 branch replaced by <code class="language-plaintext highlighter-rouge">Permitted</code></td>
+      <td>AOR6-03, AOR6-07, AOR6-10</td>
+    </tr>
+    <tr>
+      <td>scheme-membership guard removed</td>
+      <td>AOR6-05, AOR6-07, AOR6-08, AOR6-12</td>
+    </tr>
+    <tr>
+      <td>expansion’s L11 branch replaced by <code class="language-plaintext highlighter-rouge">Permitted</code></td>
+      <td>AOR6-10</td>
+    </tr>
+    <tr>
+      <td>explicit-instant requirement disabled</td>
+      <td>AOR6-11</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="known-limit">Known limit</h2>
+
+<p>The SPARQL walk does not check that intermediate concepts belong to the
+scheme. The expansion does. The two agree whenever a scheme’s members are
+broader only than other members, which AOR6-10 exercises. A scheme that
+routes its hierarchy through a non-member would make them diverge.</p>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<ul>
+  <li>SHACL and SWRL for concept plans, which consume the expansion (AOR-7).</li>
+  <li>How Surface treats the resolution instant (<code class="language-plaintext highlighter-rouge">temporal-binding-consumer-hardening</code>
+Finding 1). This compiler already takes it explicitly, which matches that
+unit’s recommended Option B.</li>
+</ul>

@@ -1,0 +1,735 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="mork-teaching-pack-mtp-implementation-plan">MORK Teaching Pack (MTP): Implementation Plan</h1>
+
+<p>Date: 2026-09-20
+Status: Implementation in progress. Structural scaffold authored, generated pack and validation pending a working environment.
+Owner: MORK maintainers
+Decision class: Build roadmap (implements <a href="LLM%20Training.md">LLM Training.md</a>, <a href="MTP-L0%20Generator%20Sketch">MTP-L0 Generator Sketch</a>, <a href="MTP%20L2%20Generator%20Sketch.md">MTP L2 Generator Sketch.md</a>)</p>
+
+<hr />
+
+<h2 id="1-executive-summary">1. Executive summary</h2>
+
+<p>This plan turns three design documents — the “LLM Training” essay, the MTP-L0 generator sketch, and the MTP L2/L3 generator sketch — into a phased, buildable roadmap for the <strong>MORK Teaching Pack (MTP)</strong>: a versioned, hash-pinned, machine-generated curriculum that teaches an LLM to emit valid MCN, instead of asking it to hold 45k tokens of <code class="language-plaintext highlighter-rouge">Mork.ttl</code> in its head.</p>
+
+<p>The three source documents already agree with each other almost everywhere they overlap (the L2 sketch explicitly reuses <code class="language-plaintext highlighter-rouge">mtp.facts</code>/<code class="language-plaintext highlighter-rouge">mtp.codebook</code> from L0; the reconciliation section at the end of the L2 document resolves the few places it disagreed with the essay). This plan does not re-litigate those decisions. It sequences the work, fixes the repository layout, locks the interfaces the generator needs from <code class="language-plaintext highlighter-rouge">mcn_decoder.py</code>/<code class="language-plaintext highlighter-rouge">mcn_codebook.py</code> (already extended for exactly this purpose in the prior session — see §6), and states plainly what is being deferred and why.</p>
+
+<p><strong>Backend-dependent model-quality evaluation is explicitly out of scope for this plan.</strong> A separate effort is designing a configurable interface to different LLM backends, and the eval harness for <em>model output quality</em> depends on that interface existing. §2.2 draws the line precisely: structural verification that generated MCN decodes, lints, validates, round-trips, remains pinned, and fits its budget is required infrastructure; scoring what a model produces from a prompt is the deferred part.</p>
+
+<blockquote>
+  <p><strong>Repository integration update, 2026-09-20:</strong> this plan follows the repository delivery model introduced by the broader Surface and MORK programme. <code class="language-plaintext highlighter-rouge">mise</code> selects toolchains and runs repository tasks. Python, Maven, Yarn, and Mix remain dependency authorities. Work is authoring complete only when source, contracts, fixtures, tests, CI wiring, ADRs, architecture documentation, and a validation handoff are present. It is validated complete only after a network-enabled environment records command results. See <a href="../../../docs/developer/status/implementation-handover.md">the consolidated implementation handover</a>, <a href="../../../docs/developer/toolchain.md">the toolchain guide</a>, and <a href="../../../docs/developer/status/offline-phase-handoff.md">the offline handoff procedure</a>.</p>
+</blockquote>
+
+<h2 id="11-repository-delivery-and-documentation-rules">1.1 Repository delivery and documentation rules</h2>
+
+<p>MTP is a MORK subprogramme, not a standalone codebase. It preserves the existing MORK vocabulary, MCN decoder, codebook, examples, and shapes as authoritative sources. It integrates with current repository boundaries:</p>
+
+<ul>
+  <li><strong>Toolchains:</strong> root <a href="../../../mise.toml">mise.toml</a> pins Python 3.11 and will invoke scoped MTP tasks. <a href="../../../tools/mork/pyproject.toml">tools/mork/pyproject.toml</a> remains the MORK package authority. Do not introduce a second Python lock strategy without an ADR.</li>
+  <li><strong>Code:</strong> generator code belongs under <code class="language-plaintext highlighter-rouge">tools/mork/src/mtp/</code>, using the established pure-Python package style. Optional MTP worker wrappers belong under <code class="language-plaintext highlighter-rouge">workers/src/lattice_workers/</code> and accept only immutable graph or artifact references.</li>
+  <li><strong>Curated and generated content:</strong> curated MTP inputs live under <code class="language-plaintext highlighter-rouge">ontology/mork/mtp/data/</code>; generated, committed teaching-pack output lives under <code class="language-plaintext highlighter-rouge">ontology/mork/mtp/out/</code>. Do not manually edit <code class="language-plaintext highlighter-rouge">out/</code>.</li>
+  <li><strong>Contracts:</strong> only cross-runtime, UI, worker, or release-boundary payloads belong under root <code class="language-plaintext highlighter-rouge">contracts/mork/</code> or <code class="language-plaintext highlighter-rouge">contracts/events/</code>. Internal Python dataclasses remain in the package.</li>
+  <li><strong>Documentation:</strong> normative MORK and MCN semantics remain in MORK specifications and existing design documents. Durable ownership, curation, pinning, or backend boundaries require an ADR under <code class="language-plaintext highlighter-rouge">docs/architecture/decisions/</code>. Explanatory implementation material belongs under <code class="language-plaintext highlighter-rouge">docs/architecture/</code> or <code class="language-plaintext highlighter-rouge">ontology/mork/docs/</code>.</li>
+  <li><strong>Validation evidence:</strong> CI and phase handoffs record outcomes. Plans and architecture documents must distinguish authored artifacts from unrun validation.</li>
+</ul>
+
+<h2 id="12-completion-model">1.2 Completion model</h2>
+
+<p>Every MTP phase has two states:</p>
+
+<ol>
+  <li><strong>Authoring complete:</strong> source, curated inputs, generated outputs where applicable, fixtures, structural tests, CI task wiring, ADRs, architecture documentation, and a phase handoff are present and statically coherent.</li>
+  <li><strong>Validated complete:</strong> a network-enabled environment resolves dependencies, runs the command matrix, reviews generated-file and lockfile changes, and records results as CI or release evidence.</li>
+</ol>
+
+<p>MTP model-quality evaluation remains deferred to the backend-interface effort. Structural verification of generated MCN, pins, partitions, cassette fidelity, mutation reports, budgets, and stale output remains in scope and is required for authoring completion.</p>
+
+<hr />
+
+<h2 id="2-scope-and-non-goals">2. Scope and non-goals</h2>
+
+<h3 id="21-in-scope">2.1 In scope</h3>
+
+<ul>
+  <li>The full L0 kernel generator: <code class="language-plaintext highlighter-rouge">facts.py</code>, <code class="language-plaintext highlighter-rouge">ce.py</code>, <code class="language-plaintext highlighter-rouge">codebook.py</code>, <code class="language-plaintext highlighter-rouge">doctrine.py</code>, <code class="language-plaintext highlighter-rouge">template.py</code>, <code class="language-plaintext highlighter-rouge">budget.py</code>, <code class="language-plaintext highlighter-rouge">render.py</code>, <code class="language-plaintext highlighter-rouge">lock.py</code>, <code class="language-plaintext highlighter-rouge">cli.py</code>, and the curated <code class="language-plaintext highlighter-rouge">doctrine.yaml</code>.</li>
+  <li>The full L2/L3 pipeline: corpus statistics, partitioning, the mutation engine and its silent-set report, cassette fidelity/minimisation, lens rendering, routing, and the repair-loop diagnostics table.</li>
+  <li>The <code class="language-plaintext highlighter-rouge">mcnio.py</code> adapter boundary, built directly against the <code class="language-plaintext highlighter-rouge">mcn</code> package (§6) — this is verification infrastructure (does this MCN text decode, lint clean, validate against <code class="language-plaintext highlighter-rouge">constraints.ttl</code>?), not model evaluation.</li>
+  <li>The kernel-wording and doctrine changes named in the L2 document’s reconciliation section (R1, R2, R3’s kernel clause) that are pure text/doctrine content, not test design.</li>
+  <li>CI gates that check the <em>pack’s own</em> internal consistency (codebook coverage, pin drift, axiom ownership, partition completeness, cassette fidelity, silent-mutation detection, budget limits, output staleness).</li>
+</ul>
+
+<h3 id="22-out-of-scope-deferred">2.2 Out of scope (deferred)</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Deferred item</th>
+      <th>Why</th>
+      <th>Where it resumes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">mtp/evalset.py</code>, <code class="language-plaintext highlighter-rouge">out/eval/*.json</code>, the held-out task suite</td>
+      <td>Scoring model output requires invoking a model through some backend</td>
+      <td>Phase 7, gated on the backend-interface work</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">eval-report</code> CI step, <code class="language-plaintext highlighter-rouge">eval.leakage</code> / <code class="language-plaintext highlighter-rouge">eval.thin</code> gates</td>
+      <td>Same</td>
+      <td>Phase 7</td>
+    </tr>
+    <tr>
+      <td>First-pass lint-clean rate, unsafe-confidence rate, ρ(t) stratification by <code class="language-plaintext highlighter-rouge">mtp-version</code> (LLM Training.md §7, L2 reconciliation R4/R5)</td>
+      <td>These are eval metrics scored against real model runs</td>
+      <td>Phase 7</td>
+    </tr>
+    <tr>
+      <td>Any decision about <em>which</em> LLM backend(s) a generation run uses</td>
+      <td>Belongs entirely to the other effort</td>
+      <td>N/A — consumed, not designed, here</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>The one thing this plan does <em>not</em> defer, despite living next to “eval”:</strong> <code class="language-plaintext highlighter-rouge">mtp/mcnio.py</code>’s <code class="language-plaintext highlighter-rouge">MCNTool</code> adapter (decode/lint/SHACL) is required by S4 (cassette fidelity), S6 (mutation verdicts), and the L0 build’s own <code class="language-plaintext highlighter-rouge">axiom.unowned</code> gate. None of that involves a language model — it is the same decode-then-isomorphism-diff technique already proven out for <code class="language-plaintext highlighter-rouge">loan_mapping.ttl</code>/<code class="language-plaintext highlighter-rouge">UncertainMappings.ttl</code> in <code class="language-plaintext highlighter-rouge">test_mcn_decoder.py</code>. Losing it would mean shipping a pack with no way to know if its own cassettes are valid MCN, which is a correctness bar, not a test regime. §9 names the gates this plan keeps and the two it drops.</p>
+
+<hr />
+
+<h2 id="3-what-already-exists">3. What already exists</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Component</th>
+      <th>Status</th>
+      <th>Location</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>MCN decoder (spec §13, D1-D9)</td>
+      <td><strong>Built</strong></td>
+      <td><a href="../../../tools/mork/src/mcn_decoder.py">tools/mork/src/mcn_decoder.py</a></td>
+    </tr>
+    <tr>
+      <td>MCN codebook (spec §8)</td>
+      <td><strong>Built</strong>, includes <code class="language-plaintext highlighter-rouge">code_for</code>/<code class="language-plaintext highlighter-rouge">codes_for</code> reverse lookup</td>
+      <td><a href="../../../tools/mork/src/mcn_codebook.py">tools/mork/src/mcn_codebook.py</a></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">import mcn</code> package (decode/lint/canonical_ntriples)</td>
+      <td><strong>Built</strong></td>
+      <td><a href="../../../tools/mork/src/mcn/__init__.py">tools/mork/src/mcn/<strong>init</strong>.py</a></td>
+    </tr>
+    <tr>
+      <td>Stable, namespaced error/finding codes (<code class="language-plaintext highlighter-rouge">McnSyntaxError.code</code>, <code class="language-plaintext highlighter-rouge">LintFinding.code</code>/<code class="language-plaintext highlighter-rouge">.severity</code>/<code class="language-plaintext highlighter-rouge">.line</code>)</td>
+      <td><strong>Built</strong></td>
+      <td>same modules</td>
+    </tr>
+    <tr>
+      <td>Decoder test suite (337 tests, incl. round-trip proofs for <code class="language-plaintext highlighter-rouge">loan_mapping.ttl</code>/<code class="language-plaintext highlighter-rouge">UncertainMappings.ttl</code>)</td>
+      <td><strong>Built</strong></td>
+      <td><a href="../../../tools/mork/src/test_mcn_decoder.py">tools/mork/src/test_mcn_decoder.py</a></td>
+    </tr>
+    <tr>
+      <td>MCN encoder (spec §15, RDF → MCN)</td>
+      <td><strong>Not built</strong></td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>MTP package scaffold, CLI, facts, MCN adapter, corpus, partition, mutation, cassette, lens, routing, pin, and budget surfaces</td>
+      <td><strong>Authored, unvalidated</strong></td>
+      <td><a href="../../../tools/mork/src/mtp">tools/mork/src/mtp</a></td>
+    </tr>
+    <tr>
+      <td>Curated starter doctrine, partition, lenses, cassettes, routing, and configuration</td>
+      <td><strong>Authored, unvalidated</strong></td>
+      <td><a href="../mtp/data">ontology/mork/mtp/data</a></td>
+    </tr>
+    <tr>
+      <td>Generated teaching pack</td>
+      <td><strong>Not generated in this restricted environment</strong></td>
+      <td><a href="../mtp/out">ontology/mork/mtp/out</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>This matters for sequencing: the L0/L2 sketches were written assuming a decoder might not exist yet (hence <code class="language-plaintext highlighter-rouge">NullTool</code> and <code class="language-plaintext highlighter-rouge">"provisional": true</code>). It exists now. <code class="language-plaintext highlighter-rouge">NullTool</code> is retained only for the one thing still genuinely absent — <code class="language-plaintext highlighter-rouge">encode()</code>. The authored MTP scaffold uses real decoder and codebook interfaces, but its generated pack, pin file, cassette fidelity report, mutation matrix, and CI results remain unvalidated until a working environment runs the command matrix in the MTP handoff.</p>
+
+<hr />
+
+<h2 id="4-architecture-the-merged-pipeline">4. Architecture: the merged pipeline</h2>
+
+<p>The L0 and L2 pipelines are two stages of one build, not two separate tools. Merged, in dependency order:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                    Mork.ttl ─────┐
+                                  ▼
+                        S1  mtp.facts          terms, axioms, logical fingerprints
+                                  │
+              ┌───────────────────┼───────────────────┐
+              ▼                   ▼                    ▼
+        L0 doctrine.yaml   S3 partition.yaml     S2 corpus (ontology/mork/examples/**)
+        (anchors, pairs,   (term -&gt; lens,              │
+         ladder)           exhaustive/disjoint)         │ predicate frequency,
+              │                   │                     │ co-occurrence, unused codes
+              ▼                   │                     │
+        L0 render  ──► out/l0.*   │                     │
+        (kernel, pairs,           │                     │
+         output contract)        │                     │
+                                  ▼                     │
+                    S4 cassette fidelity ◄───────────────┘
+                    (real ontology/mork/examples/*.ttl → hand-written MCN,
+                     decode ≅ source, via mcn.decode + isomorphism)
+                                  │
+                                  ▼
+                    S5 minimise (ddmin to teaching core, lint-clean)
+                                  │
+                                  ▼
+                    S6 mutate (drop/swap/retype/both-directions operators)
+                                  │
+                        ┌─────────┴─────────┐
+                        ▼                   ▼
+                caught-by-decode/     silent (nothing downstream
+                lint/shacl/owl         catches it -- teaching priority)
+                        │                   │
+                        ▼                   ▼
+              S12 diagnostics.json    lens SMELLS + constraints.ttl gap report
+              (repair-loop table)             │
+                        │                     ▼
+                        │             S8 lens render ──► out/lenses/L-*.txt
+                        │                     │
+                        │                     ▼
+                        │             S9 cassette render ──► out/cassettes/C-*.txt
+                        │                     │
+                        └──────────┬──────────┘
+                                   ▼
+                         S10 routing.yaml (task/signal -&gt; lens+cassette)
+                                   │
+                                   ▼
+                         S13 manifest (hashes, budgets, mtp-version)
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">S7 select</code>, <code class="language-plaintext highlighter-rouge">S11 eval</code>, and the eval half of <code class="language-plaintext highlighter-rouge">S12</code>/<code class="language-plaintext highlighter-rouge">S13</code> from the L2 sketch’s own pipeline table are the parts this plan defers (§2.2); everything else is in scope.</p>
+
+<hr />
+
+<h2 id="5-repository-layout">5. Repository layout</h2>
+
+<p>Following the existing convention in this repository (<code class="language-plaintext highlighter-rouge">mork_communities/</code> is a pure-code package; <code class="language-plaintext highlighter-rouge">ontology/mork/test/data/</code> sits beside the code that consumes it, not inside it):</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>tools/mork/
+    src/
+    mtp/                        # pure code, mirrors mork_communities/ layout
+      __init__.py
+      facts.py
+      ce.py
+      codebook.py                # thin: imports mcn_codebook, does not parse a YAML
+      doctrine.py
+      template.py
+      budget.py
+      render.py
+      lock.py
+      corpus.py
+      partition.py
+      mcnio.py
+      mcnline.py
+      mutate.py
+      minimise.py
+      cassette.py
+      lens.py
+      routing.py
+      cli.py
+      evalset.py                 # stubbed only; real implementation is Phase 7
+  mtp/                          # generated + curated non-code artefacts
+    data/
+      config.yaml
+      doctrine.yaml               # curated
+      partition.yaml              # curated
+      lenses/L-*.yaml              # curated
+      cassettes/C-*.yaml           # curated
+      routing.yaml                 # curated (src)
+      pins.lock.json               # generated, committed
+    out/                         # generated, committed -- the shipped pack
+      l0.txt  l0.json  pairs.md  output_contract.txt
+      lenses/L-*.txt  lenses/L-*.json
+      cassettes/C-*.txt
+      routing.yaml
+      diagnostics.json
+      manifest.json  coverage.md  partition.md  stats.md
+</code></pre></div></div>
+
+<p>The current root layout adds these integration surfaces around that MORK-local layout:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>lattice/
+    mise.toml                       # tool versions, shared environment, MTP task aliases
+    .github/workflows/platform.yml  # repository CI, extended with MTP structural checks
+    workers/                        # optional graph-reference worker wrappers only
+    contracts/mork/                 # only cross-runtime MTP payload schemas, if introduced
+    docs/architecture/decisions/    # MTP boundary and curation decisions
+    docs/architecture/              # cross-programme MTP integration explanation
+    docs/developer/                 # MTP validation handoff and consolidated handover
+    ontology/mork/
+        mtp/data/                     # curated inputs
+        mtp/out/                      # generated and committed pack output
+        docs/                         # MTP domain and implementation guides
+    tools/mork/src/mtp/              # MTP generator implementation
+</code></pre></div></div>
+
+<p>Do not move existing <code class="language-plaintext highlighter-rouge">tools/mork/src/mcn_decoder.py</code>, <code class="language-plaintext highlighter-rouge">mcn_codebook.py</code>, <code class="language-plaintext highlighter-rouge">mcn/</code>, <code class="language-plaintext highlighter-rouge">Mork.ttl</code>, examples, or shapes into the MTP package. The MTP package consumes them through the interfaces named in this plan.</p>
+
+<p><strong>Decision, not open question:</strong> <code class="language-plaintext highlighter-rouge">mtp/codebook.py</code> does <strong>not</strong> parse a standalone <code class="language-plaintext highlighter-rouge">codebook.yaml</code>. The L0 sketch proposed one specifically so that “codes never diverge from the notation” — but <code class="language-plaintext highlighter-rouge">mcn_codebook.py</code> already <em>is</em> that single source of truth for the notation (it generates MCN spec §8 directly), and it was extended in the prior session with exactly the reverse-lookup surface (<code class="language-plaintext highlighter-rouge">code_for</code>, <code class="language-plaintext highlighter-rouge">codes_for</code>) the sketch’s own <code class="language-plaintext highlighter-rouge">Codebook.code_for</code>/<code class="language-plaintext highlighter-rouge">codes_for</code> re-implement. <code class="language-plaintext highlighter-rouge">mtp/codebook.py</code> becomes a thin adapter:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># mtp/codebook.py
+</span><span class="kn">import</span> <span class="nn">mcn_codebook</span> <span class="k">as</span> <span class="n">_cb</span>
+
+<span class="k">def</span> <span class="nf">code_for</span><span class="p">(</span><span class="n">iri</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="bp">None</span><span class="p">:</span> <span class="k">return</span> <span class="n">_cb</span><span class="p">.</span><span class="n">code_for</span><span class="p">(</span><span class="n">iri</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">codes_for</span><span class="p">(</span><span class="n">iris</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span> <span class="k">return</span> <span class="n">_cb</span><span class="p">.</span><span class="n">codes_for</span><span class="p">(</span><span class="n">iris</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">expand</span><span class="p">(</span><span class="n">curie</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span> <span class="k">return</span> <span class="n">_cb</span><span class="p">.</span><span class="n">_expand</span><span class="p">(</span><span class="n">curie</span><span class="p">)</span>
+<span class="n">prefixes</span> <span class="o">=</span> <span class="n">_cb</span><span class="p">.</span><span class="n">PREDECLARED_PREFIXES</span>
+</code></pre></div></div>
+
+<p>This removes one whole input (I2 in the L2 sketch’s table, and <code class="language-plaintext highlighter-rouge">data/codebook.yaml</code> in L0’s layout) and one whole class of drift (YAML vs. <code class="language-plaintext highlighter-rouge">Mork.ttl</code> vs. MCN spec — now just <code class="language-plaintext highlighter-rouge">mcn_codebook.py</code> vs. <code class="language-plaintext highlighter-rouge">Mork.ttl</code>, which <code class="language-plaintext highlighter-rouge">TestCodebookCoverage</code> already guards in the decoder’s own test suite). <code class="language-plaintext highlighter-rouge">config.yaml</code> drops its <code class="language-plaintext highlighter-rouge">codebook:</code> key accordingly.</p>
+
+<hr />
+
+<h2 id="6-interfaces-already-locked">6. Interfaces already locked</h2>
+
+<p>These were built specifically so this plan would not need to design an adapter layer. <code class="language-plaintext highlighter-rouge">mtp/mcnio.py</code>’s <code class="language-plaintext highlighter-rouge">InProcessTool</code> becomes a direct, no-impedance wrapper:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">mcn</span>
+
+<span class="k">class</span> <span class="nc">InProcessTool</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shapes_path</span><span class="p">):</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">_shapes</span> <span class="o">=</span> <span class="n">Graph</span><span class="p">().</span><span class="n">parse</span><span class="p">(</span><span class="n">shapes_path</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s">"turtle"</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">decode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DecodeResult</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">g</span> <span class="o">=</span> <span class="n">mcn</span><span class="p">.</span><span class="n">decode</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">mcn</span><span class="p">.</span><span class="n">McnSyntaxError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">DecodeResult</span><span class="p">(</span><span class="bp">False</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="p">(</span><span class="n">Diagnostic</span><span class="p">(</span><span class="s">"decode"</span><span class="p">,</span> <span class="n">e</span><span class="p">.</span><span class="n">code</span><span class="p">,</span> <span class="n">e</span><span class="p">.</span><span class="n">line_no</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)),))</span>
+        <span class="k">return</span> <span class="n">DecodeResult</span><span class="p">(</span><span class="bp">True</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">lint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">g</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Diagnostic</span><span class="p">,</span> <span class="p">...]:</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">Diagnostic</span><span class="p">(</span><span class="s">"lint"</span><span class="p">,</span> <span class="n">f</span><span class="p">.</span><span class="n">code</span><span class="p">,</span> <span class="n">f</span><span class="p">.</span><span class="n">line</span><span class="p">,</span> <span class="n">f</span><span class="p">.</span><span class="n">message</span><span class="p">,</span> <span class="n">f</span><span class="p">.</span><span class="n">severity</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">mcn</span><span class="p">.</span><span class="n">lint</span><span class="p">(</span><span class="n">g</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">shacl</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">g</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Diagnostic</span><span class="p">,</span> <span class="p">...]:</span>
+        <span class="p">...</span>  <span class="c1"># pyshacl against ontology/mork/shapes/constraints.ttl, unchanged from the sketch
+</span>
+    <span class="k">def</span> <span class="nf">encode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">hints</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">None</span>  <span class="c1"># not implemented; callers already check via getattr
+</span></code></pre></div></div>
+
+<p>No <code class="language-plaintext highlighter-rouge">_err_code(e)</code> message-sniffing (the sketch’s own placeholder for a problem that didn’t have a real answer yet): <code class="language-plaintext highlighter-rouge">McnSyntaxError.code</code> is a stable slug on every one of the decoder’s 127 raise sites, namespaced by sub-parser (<code class="language-plaintext highlighter-rouge">lex-*</code>, <code class="language-plaintext highlighter-rouge">ce-*</code>, <code class="language-plaintext highlighter-rouge">swrl-*</code>, <code class="language-plaintext highlighter-rouge">shacl-*</code>, <code class="language-plaintext highlighter-rouge">rml-*</code>, <code class="language-plaintext highlighter-rouge">expr-*</code>, <code class="language-plaintext highlighter-rouge">core-*</code>). <code class="language-plaintext highlighter-rouge">LintFinding.code</code>/<code class="language-plaintext highlighter-rouge">.severity</code>/<code class="language-plaintext highlighter-rouge">.line</code> mirror the same shape. <code class="language-plaintext highlighter-rouge">graphs_equal()</code> (the sketch’s isomorphism-modulo-<code class="language-plaintext highlighter-rouge">NamedIndividual</code> helper) is the exact technique <code class="language-plaintext highlighter-rouge">test_mcn_decoder.py</code> already uses for the two seed cassettes.</p>
+
+<p>What is <strong>not</strong> locked, because it is genuinely new surface this plan introduces:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">diagnostics.json</code>’s schema (one row per <code class="language-plaintext highlighter-rouge">code</code>, populated from <code class="language-plaintext highlighter-rouge">mcn.McnSyntaxError.code</code> and <code class="language-plaintext highlighter-rouge">mcn.LintFinding.code</code> values plus a doctrine fragment) — defined in Phase 5.</li>
+  <li>The naming-policy extension to <code class="language-plaintext highlighter-rouge">@u</code> profiles that LLM Training.md §6c asks for. <strong>Recommendation:</strong> keep this at the MTP tooling layer as a sidecar YAML keyed by profile name (<code class="language-plaintext highlighter-rouge">mtp/data/config.yaml</code> or a <code class="language-plaintext highlighter-rouge">naming-policies.yaml</code>), not as a new field on <code class="language-plaintext highlighter-rouge">mcn_decoder.Profile</code>. It is prompt-engineering metadata (id conventions, minted-name patterns) with no decode-time meaning; growing the core <code class="language-plaintext highlighter-rouge">Profile</code> dataclass for it would blur a boundary the decoder currently keeps clean. If a future need makes this awkward, revisit.</li>
+</ul>
+
+<hr />
+
+<h2 id="7-doctrine-content-carried-over-from-the-reconciliation-section">7. Doctrine content carried over from the reconciliation section</h2>
+
+<p>The L2 document’s “Verdict” section resolves five conflicts between the essay and a separate convergence-theorem design. Three are pure doctrine/kernel-wording changes with no dependency on the deferred testing work, and belong in this plan’s Phase 1:</p>
+
+<ul>
+  <li><strong>R1, confidence-channel contamination.</strong> <code class="language-plaintext highlighter-rouge">weighting</code>/<code class="language-plaintext highlighter-rouge">llmConfidence</code> stay reserved for domain confidence. Notation uncertainty (“I don’t know if this is <code class="language-plaintext highlighter-rouge">ap</code> or <code class="language-plaintext highlighter-rouge">cb</code>”) is expressed only through the CURIE escape plus a note, never by lowering <code class="language-plaintext highlighter-rouge">weighting</code>. Add this as an explicit invariant-8-style line in <code class="language-plaintext highlighter-rouge">doctrine.yaml</code>, distinct from invariant 6.</li>
+  <li><strong>R2, budget and prompt-cache ordering.</strong> The resident prefix order is <code class="language-plaintext highlighter-rouge">[frozen pack][profile][lenses][cassettes][task]</code>, retrieved context always last. This is already L0’s design; state it as a hard constraint in <code class="language-plaintext highlighter-rouge">render.py</code>’s section ordering and in <code class="language-plaintext highlighter-rouge">cli.py</code>’s output, so a future retrieval integration cannot quietly interleave.</li>
+  <li><strong>R3a, three typed emission positions.</strong> Replace the kernel’s single CURIE-escape clause with the code-position / reference-position / minting-position distinction (§ “Remediation” 3a in the sketch). This is a <code class="language-plaintext highlighter-rouge">doctrine.yaml</code> wording change only.</li>
+</ul>
+
+<p>R3b–e (retrieval manifest, the two new Meta-SHACL shapes for reference-groundedness and minting-hygiene) belong to the <em>other</em> system (the domain/community-detection side that owns retrieval), not to MTP’s build — noted here so the dependency is visible, not designed. R4 and R5 are eval-metric design and are deferred with the rest of §2.2.</p>
+
+<hr />
+
+<h2 id="8-full-implementation-plan">8. Full implementation plan</h2>
+
+<h3 id="cross-phase-delivery-requirements">Cross-phase delivery requirements</h3>
+
+<p>Apply these requirements to every phase below:</p>
+
+<ul>
+  <li>Add a concise ADR when the phase creates a durable package, ownership, curation, pinning, backend, or cross-runtime boundary.</li>
+  <li>Add or update an architecture guide explaining data flow, generated-file ownership, trust boundaries, failure modes, and deferred dependencies.</li>
+  <li>Add a phase handoff under <code class="language-plaintext highlighter-rouge">docs/developer/</code> that names sources, curated inputs, generated outputs, exact <code class="language-plaintext highlighter-rouge">mise</code>, Python, CI, and any worker commands, expected results, lockfile impact, and unverified assumptions.</li>
+  <li>Add tests that do not invoke an LLM backend. Model-output scoring remains deferred, but generator correctness and generated-pack consistency are not optional.</li>
+  <li>Preserve the repository SPDX convention for all new files.</li>
+</ul>
+
+<h3 id="phase-0-repository-integration">Phase 0 repository integration</h3>
+
+<p>Phase 0 must add scoped MTP task aliases to root <code class="language-plaintext highlighter-rouge">mise.toml</code>, for example <code class="language-plaintext highlighter-rouge">check:mtp</code> and <code class="language-plaintext highlighter-rouge">build:mtp</code>, once the package exposes a CLI. It must add a MTP CI job or step to <code class="language-plaintext highlighter-rouge">.github/workflows/platform.yml</code> after the package is importable. Do not run dependency installation, code generation, or CI commands in a restricted authoring environment and claim success.</p>
+
+<h2 id="phase-0-foundation">Phase 0, foundation</h2>
+
+<p>Deliverables:</p>
+
+<ol>
+  <li><code class="language-plaintext highlighter-rouge">tools/mork/src/mtp/</code> package scaffold (<code class="language-plaintext highlighter-rouge">__init__.py</code>, empty modules per §5).</li>
+  <li><code class="language-plaintext highlighter-rouge">mtp/facts.py</code> — ontology extraction from L0 sketch §3: <code class="language-plaintext highlighter-rouge">Term</code>/<code class="language-plaintext highlighter-rouge">Axiom</code>/<code class="language-plaintext highlighter-rouge">Facts</code> dataclasses, <code class="language-plaintext highlighter-rouge">term_hash</code> (logical-predicate fingerprinting), <code class="language-plaintext highlighter-rouge">graph_hash</code>, axiom extraction (GCIs, <code class="language-plaintext highlighter-rouge">AllDisjointClasses</code>/<code class="language-plaintext highlighter-rouge">Properties</code>, equivalences, completeness axioms, the P1–P10 inverse-subproperty pattern).</li>
+  <li><code class="language-plaintext highlighter-rouge">mtp/ce.py</code> — OWL class expression → MCN §10.5 rendering, from L0 sketch §4, with <code class="language-plaintext highlighter-rouge">install_abbrev()</code> fed by <code class="language-plaintext highlighter-rouge">mtp.codebook.code_for</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">mtp/codebook.py</code> — the thin adapter over <code class="language-plaintext highlighter-rouge">mcn_codebook</code> described in §5, <strong>not</strong> a YAML loader.</li>
+  <li><code class="language-plaintext highlighter-rouge">mtp/template.py</code>, <code class="language-plaintext highlighter-rouge">mtp/budget.py</code> — unchanged from L0 sketch §8.</li>
+  <li><code class="language-plaintext highlighter-rouge">mtp/lock.py</code> — <code class="language-plaintext highlighter-rouge">pins.lock.json</code> read/write/diff.</li>
+  <li><code class="language-plaintext highlighter-rouge">mtp/mcnio.py</code> — the adapter from §6, <code class="language-plaintext highlighter-rouge">InProcessTool</code> only (no <code class="language-plaintext highlighter-rouge">NullTool</code> fallback needed for decode/lint/shacl since the decoder is not hypothetical; retain a minimal <code class="language-plaintext highlighter-rouge">NullTool</code> shape purely for <code class="language-plaintext highlighter-rouge">encode()</code>’s absence).</li>
+  <li><code class="language-plaintext highlighter-rouge">ontology/mork/mtp/data/config.yaml</code> (no <code class="language-plaintext highlighter-rouge">codebook:</code> key; ontology file points at <code class="language-plaintext highlighter-rouge">ontology/mork/spec/Mork.ttl</code>; shapes at <code class="language-plaintext highlighter-rouge">ontology/mork/shapes/constraints.ttl</code>).</li>
+</ol>
+
+<p>Exit criteria:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">python -m mtp.cli facts-report</code> (or equivalent smoke entry point) prints term/axiom counts against the live <code class="language-plaintext highlighter-rouge">Mork.ttl</code> with no errors.</li>
+  <li><code class="language-plaintext highlighter-rouge">mtp.facts.term_hash</code> is stable across two runs and changes only when a logical predicate changes (add a fixture: touch <code class="language-plaintext highlighter-rouge">skos:definition</code> on a term, confirm the hash is unchanged; touch <code class="language-plaintext highlighter-rouge">rdfs:domain</code>, confirm it changes).</li>
+  <li><code class="language-plaintext highlighter-rouge">mtp.mcnio.InProcessTool().decode(...)</code> round-trips the loan example exactly as <code class="language-plaintext highlighter-rouge">test_mcn_decoder.py</code> already proves — this is a smoke check that the adapter is wired correctly, not new proof of decoder correctness.</li>
+  <li>Root <code class="language-plaintext highlighter-rouge">mise.toml</code>, CI, MTP architecture documentation, and the Phase 0 MTP handoff name the authoritative command path and generated-file rules.</li>
+</ul>
+
+<h2 id="phase-1-l0-kernel-generator">Phase 1, L0 kernel generator</h2>
+
+<p>Deliverables:</p>
+
+<ol>
+  <li><code class="language-plaintext highlighter-rouge">ontology/mork/mtp/data/doctrine.yaml</code> — curated: preamble, 7 essay invariants plus the R1/R3a additions from §7, the 6-question decision ladder, the 12-row minimal-pair table, the output contract (including R3a’s three emission positions), and <code class="language-plaintext highlighter-rouge">deferrals:</code> entries pointing generative/collection/objectification completeness axioms at their lenses.</li>
+  <li><code class="language-plaintext highlighter-rouge">mtp/doctrine.py</code> — anchor resolution, pin checking, axiom-coverage checking, from L0 sketch §7.</li>
+  <li><code class="language-plaintext highlighter-rouge">mtp/render.py</code> — <code class="language-plaintext highlighter-rouge">build_context</code> (derived slots: box families, exact/category code lists, annotation/deprecated code lists, inverse-pair count, generative mandatory-parts summary) and <code class="language-plaintext highlighter-rouge">render_l0</code>, from L0 sketch §9.</li>
+  <li><code class="language-plaintext highlighter-rouge">mtp/cli.py</code> commands <code class="language-plaintext highlighter-rouge">build</code>, <code class="language-plaintext highlighter-rouge">check</code>, <code class="language-plaintext highlighter-rouge">update-pins</code> (L0 sketch §10), <strong>without</strong> the <code class="language-plaintext highlighter-rouge">eval-report</code> step.</li>
+  <li>CI wiring: <code class="language-plaintext highlighter-rouge">check</code> (drift + budget + staleness) then <code class="language-plaintext highlighter-rouge">build</code> then <code class="language-plaintext highlighter-rouge">git diff --exit-code out/</code>.</li>
+  <li>ADR and architecture documentation for MTP pin ownership, doctrine curation, and generated output boundaries.</li>
+</ol>
+
+<p>Exit criteria:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">mtp build</code> produces <code class="language-plaintext highlighter-rouge">out/l0.txt</code> within the 900-token budget, byte-identical on a second run with no ontology change.</li>
+  <li>Every anchor in <code class="language-plaintext highlighter-rouge">doctrine.yaml</code> resolves and is pinned; <code class="language-plaintext highlighter-rouge">mtp check</code> exits 0 against the current <code class="language-plaintext highlighter-rouge">Mork.ttl</code>.</li>
+  <li>Every GCI, <code class="language-plaintext highlighter-rouge">AllDisjointClasses</code>/<code class="language-plaintext highlighter-rouge">Properties</code>, mapping-class equivalence, and completeness axiom in <code class="language-plaintext highlighter-rouge">Mork.ttl</code> is claimed by a <code class="language-plaintext highlighter-rouge">covers:</code> entry or a <code class="language-plaintext highlighter-rouge">deferrals:</code> glob — <code class="language-plaintext highlighter-rouge">axiom.unowned</code> produces zero findings.</li>
+  <li>Manually verify the failure-mode table in L0 sketch §12 against this repository’s actual <code class="language-plaintext highlighter-rouge">Mork.ttl</code>: pick one real term, deprecate it in a scratch copy, confirm <code class="language-plaintext highlighter-rouge">anchor.deprecated</code> fires naming the right pair.</li>
+</ul>
+
+<h2 id="phase-2-corpus-and-partition">Phase 2, corpus and partition</h2>
+
+<p>Deliverables:</p>
+
+<ol>
+  <li><code class="language-plaintext highlighter-rouge">mtp/corpus.py</code> — frequency/co-occurrence/unused-code statistics over <code class="language-plaintext highlighter-rouge">ontology/mork/examples/**/*.ttl</code>, from L2 sketch §5.3.</li>
+  <li><code class="language-plaintext highlighter-rouge">ontology/mork/mtp/data/partition.yaml</code> — curated term→lens assignment rules (subtree/glob/explicit/overrides), from L2 sketch §5.4, covering the nine lenses named in LLM Training.md §4.</li>
+  <li><code class="language-plaintext highlighter-rouge">mtp/partition.py</code> — <code class="language-plaintext highlighter-rouge">build()</code>/<code class="language-plaintext highlighter-rouge">check_pins()</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">out/stats.md</code>, <code class="language-plaintext highlighter-rouge">out/partition.md</code> generation wired into <code class="language-plaintext highlighter-rouge">cli.py</code>.</li>
+</ol>
+
+<p>Exit criteria:</p>
+
+<ul>
+  <li>Every <code class="language-plaintext highlighter-rouge">mork:</code>-namespaced term in <code class="language-plaintext highlighter-rouge">Mork.ttl</code> is assigned to exactly one lens; <code class="language-plaintext highlighter-rouge">partition.empty</code>/<code class="language-plaintext highlighter-rouge">partition.unknown-lens</code> produce zero findings.</li>
+  <li><code class="language-plaintext highlighter-rouge">stats.md</code> correctly identifies the corpus’s most- and least-frequent predicates (spot-check against a manual count on 2–3 example files).</li>
+  <li>The “never used in corpus” list is non-empty and plausible (expect entries like <code class="language-plaintext highlighter-rouge">narrowNavigableConceptRole</code>, <code class="language-plaintext highlighter-rouge">collectionElementScalarValue</code>) — this list directly drives lens/cassette budget decisions in Phase 4.</li>
+</ul>
+
+<h2 id="phase-3-mutation-derived-ground-truth">Phase 3, mutation-derived ground truth</h2>
+
+<p>Deliverables:</p>
+
+<ol>
+  <li><code class="language-plaintext highlighter-rouge">mtp/mcnline.py</code> — structural (non-semantic) tokeniser/mutator for MCN node lines, from L2 sketch §5.2. Deliberately independent of <code class="language-plaintext highlighter-rouge">mcn_decoder.py</code>’s <code class="language-plaintext highlighter-rouge">_Lexer</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">mtp/mutate.py</code> — <code class="language-plaintext highlighter-rouge">Mutation</code>/<code class="language-plaintext highlighter-rouge">MutantOutcome</code>, and the six seed operators named in L2 sketch §8 build order: <code class="language-plaintext highlighter-rouge">drop:df</code>, <code class="language-plaintext highlighter-rouge">drop:xr</code>, <code class="language-plaintext highlighter-rouge">swap:cb-&gt;ap</code>, <code class="language-plaintext highlighter-rouge">swap:df-&gt;dp</code>, <code class="language-plaintext highlighter-rouge">retype:MU-&gt;M</code>, <code class="language-plaintext highlighter-rouge">both:cb+cn</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">mtp/minimise.py</code> — ddmin-to-teaching-core, from L2 sketch §5.6.</li>
+  <li><code class="language-plaintext highlighter-rouge">mtp/cassette.py</code> — fidelity check (real corpus file → hand-written MCN → <code class="language-plaintext highlighter-rouge">mcn.decode</code> → isomorphic to source), minimisation, rendering. First three cassettes come directly from <code class="language-plaintext highlighter-rouge">ontology/mork/examples/Mork2RML/loan_mapping.ttl</code> and <code class="language-plaintext highlighter-rouge">ontology/mork/examples/Zoo/UncertainMappings.ttl</code> — files this plan already has machine-checked gold MCN for (§3), so Phase 3 starts with zero fidelity-proof debt on those two.</li>
+</ol>
+
+<p>Exit criteria:</p>
+
+<ul>
+  <li>Running the six seed operators against the three seed cassettes produces a mutation matrix with at least one <code class="language-plaintext highlighter-rouge">caught-*</code> and, per the L2 document’s own expectation, likely at least one <code class="language-plaintext highlighter-rouge">silent</code> verdict.</li>
+  <li>The silent-set report (L2 sketch: “the most valuable output in the whole design”) is generated and reviewed by a maintainer before Phase 4 starts — per L2 §8, this step alone will likely surface a real gap in <code class="language-plaintext highlighter-rouge">ontology/mork/shapes/constraints.ttl</code> and should be filed as a follow-up against that file rather than silently absorbed into a lens.</li>
+  <li><code class="language-plaintext highlighter-rouge">cassette.not-isomorphic</code> and <code class="language-plaintext highlighter-rouge">cassette.decode-failed</code> gates both produce a genuine failure when deliberately fed a broken fixture, confirming the gate actually fires.</li>
+</ul>
+
+<h2 id="phase-4-lenses">Phase 4, lenses</h2>
+
+<p>Deliverables:</p>
+
+<ol>
+  <li><code class="language-plaintext highlighter-rouge">ontology/mork/mtp/data/lenses/L-*.yaml</code> for all nine lenses (<code class="language-plaintext highlighter-rouge">L-REP</code>, <code class="language-plaintext highlighter-rouge">L-TAX</code>, <code class="language-plaintext highlighter-rouge">L-IND</code>, <code class="language-plaintext highlighter-rouge">L-GEN</code>, <code class="language-plaintext highlighter-rouge">L-TPL</code>, <code class="language-plaintext highlighter-rouge">L-INT</code>, <code class="language-plaintext highlighter-rouge">L-EGR</code>, <code class="language-plaintext highlighter-rouge">L-UNC</code>, <code class="language-plaintext highlighter-rouge">L-TBX</code>), each following the fixed template from LLM Training.md §4: Question → Rules → Mandatory co-occurrences → Smell tests → Lint codes it prevents → cassette pointer.</li>
+  <li><code class="language-plaintext highlighter-rouge">mtp/lens.py</code> — rendering, deriving <code class="language-plaintext highlighter-rouge">MUST CO-OCCUR</code> rows from completeness axioms and <code class="language-plaintext highlighter-rouge">CAUGHT</code>/<code class="language-plaintext highlighter-rouge">NOT CAUGHT</code> lines from the Phase 3 mutation matrix.</li>
+  <li>Write order: <code class="language-plaintext highlighter-rouge">L-IND</code> and <code class="language-plaintext highlighter-rouge">L-GEN</code> first (highest corpus frequency and highest error surface per L2 §8 point 6), then the remaining seven, each backed by the corpus frequency data from Phase 2.</li>
+</ol>
+
+<p>Exit criteria:</p>
+
+<ul>
+  <li>Every lens has at least one cassette (<code class="language-plaintext highlighter-rouge">lens.no-cassette</code> produces zero findings).</li>
+  <li><code class="language-plaintext highlighter-rouge">lens.silent-unaddressed</code> produces zero findings: every mutation the Phase 3 matrix marked <code class="language-plaintext highlighter-rouge">silent</code> is either addressed by a <code class="language-plaintext highlighter-rouge">SMELLS</code> entry in some lens or has a filed gap report against <code class="language-plaintext highlighter-rouge">constraints.ttl</code> (not both silently dropped).</li>
+  <li>Each lens fits its per-lens budget (300–800 tokens).</li>
+</ul>
+
+<h2 id="phase-5-routing-and-repair-table">Phase 5, routing and repair table</h2>
+
+<p>Deliverables:</p>
+
+<ol>
+  <li><code class="language-plaintext highlighter-rouge">ontology/mork/mtp/data/routing.yaml</code> (src) — the static task/signal → lens+cassette table sketched in LLM Training.md §4.</li>
+  <li><code class="language-plaintext highlighter-rouge">mtp/routing.py</code> — compiles src routing into <code class="language-plaintext highlighter-rouge">out/routing.yaml</code>, reachability check.</li>
+  <li><code class="language-plaintext highlighter-rouge">out/diagnostics.json</code> (S12) — one row per <code class="language-plaintext highlighter-rouge">code</code> value observed from <code class="language-plaintext highlighter-rouge">mcn.McnSyntaxError</code>/<code class="language-plaintext highlighter-rouge">mcn.LintFinding</code> across the Phase 3 mutation runs and the L0 axiom-coverage report, each paired with a ≤40-token doctrine fragment per LLM Training.md §5’s table.</li>
+</ol>
+
+<p>Exit criteria:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">routing.unreachable</code> produces zero findings: every lens is reachable from at least one task/signal combination.</li>
+  <li><code class="language-plaintext highlighter-rouge">diagnostics.json</code> has an entry for every lint <code class="language-plaintext highlighter-rouge">code</code> currently defined in <code class="language-plaintext highlighter-rouge">mcn_decoder.py</code> (<code class="language-plaintext highlighter-rouge">lint()</code>’s twelve rules) and for the decode-time <code class="language-plaintext highlighter-rouge">code</code>s that showed up as <code class="language-plaintext highlighter-rouge">caught-decode</code> verdicts in Phase 3 — not necessarily every one of the 127 raise-site codes, since most of those are basic well-formedness the CURIE-escape/grammar already prevents a disciplined generator from hitting; prioritise by what Phase 3’s mutations actually produced.</li>
+  <li>Hand-verify 2–3 <code class="language-plaintext highlighter-rouge">diagnostics.json</code> rows read naturally as the LLM Training.md §5 table’s own worked examples (<code class="language-plaintext highlighter-rouge">ap</code> without <code class="language-plaintext highlighter-rouge">xr</code>/<code class="language-plaintext highlighter-rouge">xi</code>, <code class="language-plaintext highlighter-rouge">MD</code> without <code class="language-plaintext highlighter-rouge">df</code>, <code class="language-plaintext highlighter-rouge">MS</code> missing <code class="language-plaintext highlighter-rouge">pv</code>).</li>
+</ul>
+
+<h2 id="phase-6-errata-pipeline-and-deployment-profile">Phase 6, errata pipeline and deployment profile</h2>
+
+<p>Deliverables:</p>
+
+<ol>
+  <li>Errata card (L4 tier) governed as its own artefact: creator/created/review-status/<code class="language-plaintext highlighter-rouge">supersedes</code>, per LLM Training.md §6d and the L2 reconciliation section’s “errata card is structurally the projection matrix” point. Format: a small MORK-shaped record (reuse <code class="language-plaintext highlighter-rouge">fnd:</code> governance vocabulary already in <code class="language-plaintext highlighter-rouge">Mork.ttl</code>’s Foundation import), capped at 600 tokens, human- or offline-LLM-compacted from lint/SHACL telemetry.</li>
+  <li>Naming-policy sidecar (§6) keyed by <code class="language-plaintext highlighter-rouge">@u</code> profile name: id conventions, minted-name patterns, chosen <code class="language-plaintext highlighter-rouge">@t</code> — the mechanism that keeps <code class="language-plaintext highlighter-rouge">Map_Loan</code> spelled <code class="language-plaintext highlighter-rouge">Map_Loan</code> across runs, which LLM Training.md §6c calls out as a real requirement no amount of model memory satisfies.</li>
+  <li>Provenance record shape: <code class="language-plaintext highlighter-rouge">mtp-version</code>, <code class="language-plaintext highlighter-rouge">profile-hash</code>, <code class="language-plaintext highlighter-rouge">model-id</code>, <code class="language-plaintext highlighter-rouge">lenses-loaded</code> — one record per proposal, per LLM Training.md §7. Defined here as a data shape; <strong>not</strong> wired into any live pipeline yet, since that requires the backend interface (§2.2).</li>
+</ol>
+
+<p>Exit criteria:</p>
+
+<ul>
+  <li>A worked example: hand-construct one errata entry from a hypothetical recurring mistake, show it renders into L4 within budget, and show it is reviewable/revertible (has a governance state, is not silently auto-applied).</li>
+  <li>The naming-policy sidecar format is documented with one example profile.</li>
+</ul>
+
+<h2 id="phase-7-deferred-not-built-now--recorded-so-the-handoff-is-clean">Phase 7, deferred (not built now — recorded so the handoff is clean)</h2>
+
+<p>This phase is intentionally left as a stub. It resumes once the LLM-backend interface exists:</p>
+
+<ol>
+  <li><code class="language-plaintext highlighter-rouge">mtp/evalset.py</code> and <code class="language-plaintext highlighter-rouge">out/eval/*.json</code> — the held-out task suite (LLM Training.md §7).</li>
+  <li><code class="language-plaintext highlighter-rouge">eval-report</code> CI step; <code class="language-plaintext highlighter-rouge">eval.leakage</code>/<code class="language-plaintext highlighter-rouge">eval.thin</code> gates.</li>
+  <li>First-pass lint-clean rate, tokens-per-decoded-triple, semantic F1, unsafe-confidence rate scoring.</li>
+  <li>ρ(t) stratification by <code class="language-plaintext highlighter-rouge">mtp-version</code> (L2 reconciliation R4) and the maintainer-Stage-5-decision companion metric for repair-loop investment (R5).</li>
+  <li>Grammar/tool-schema compilation target (GBNF or structured-output schema, generated from <code class="language-plaintext highlighter-rouge">mcn_codebook.py</code>) — technically backend-independent, but sequenced here because it is only useful once there is an eval harness to prove it “kills the syntax error class outright” (LLM Training.md §6e).</li>
+  <li>Retrieval index and SFT/LoRA corpus compilation targets (LLM Training.md §6e) — explicitly named as optional accelerants in the source design; both depend on decisions the backend-interface effort owns.</li>
+  <li>R3b–e (retrieval manifest, Meta-SHACL groundedness/minting-hygiene shapes) — owned by the domain/community-detection system, tracked here only as a dependency.</li>
+</ol>
+
+<p>No exit criteria: this phase is not started by this plan. It is scoped here purely so whoever picks it up does not have to re-derive the boundary in §2.2.</p>
+
+<hr />
+
+<h2 id="9-gates-in-scope-vs-deferred">9. Gates: in scope vs. deferred</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Gate</th>
+      <th>Phase</th>
+      <th>In scope</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">codebook</code> term-not-declared / deprecated</td>
+      <td>0</td>
+      <td>yes</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">anchor.missing</code> / <code class="language-plaintext highlighter-rouge">anchor.deprecated</code></td>
+      <td>1</td>
+      <td>yes</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">pin.absent</code> / <code class="language-plaintext highlighter-rouge">pin.changed</code></td>
+      <td>1</td>
+      <td>yes</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">axiom.unowned</code> / <code class="language-plaintext highlighter-rouge">axiom.unlabelled</code></td>
+      <td>1</td>
+      <td>yes</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">budget</code> (L0 total, per-section)</td>
+      <td>1</td>
+      <td>yes</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">output.stale</code></td>
+      <td>1</td>
+      <td>yes</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">partition.empty</code> / <code class="language-plaintext highlighter-rouge">unknown-lens</code> / <code class="language-plaintext highlighter-rouge">unpinned</code> / <code class="language-plaintext highlighter-rouge">membership-changed</code></td>
+      <td>2</td>
+      <td>yes</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">cassette.not-isomorphic</code> / <code class="language-plaintext highlighter-rouge">decode-failed</code></td>
+      <td>3</td>
+      <td>yes</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">cassette.minimise-broke-focus</code> / <code class="language-plaintext highlighter-rouge">mutation-inapplicable</code></td>
+      <td>3</td>
+      <td>yes</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">cassette.silent-mutation</code> / <code class="language-plaintext highlighter-rouge">lens.silent-unaddressed</code></td>
+      <td>3–4</td>
+      <td>yes</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">lens.no-cassette</code> / <code class="language-plaintext highlighter-rouge">cassette.claim-uncovered</code></td>
+      <td>4</td>
+      <td>yes</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">routing.unreachable</code></td>
+      <td>5</td>
+      <td>yes</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">budget.lens</code> / <code class="language-plaintext highlighter-rouge">budget.cassette</code></td>
+      <td>4</td>
+      <td>yes</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">adapter.absent</code></td>
+      <td>—</td>
+      <td>not needed; <code class="language-plaintext highlighter-rouge">InProcessTool</code> is unconditional now</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">eval.leakage</code> / <code class="language-plaintext highlighter-rouge">eval.thin</code></td>
+      <td>7</td>
+      <td><strong>deferred</strong></td>
+    </tr>
+    <tr>
+      <td>eval-report regression check</td>
+      <td>7</td>
+      <td><strong>deferred</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="10-repository-change-plan-by-area">10. Repository change plan by area</h2>
+
+<h3 id="101-toolsmorksrcmtp-new-package">10.1 <code class="language-plaintext highlighter-rouge">tools/mork/src/mtp/</code> (new package)</h3>
+
+<p>All files listed in §5 and §8. Depends on <code class="language-plaintext highlighter-rouge">mcn_decoder.py</code>/<code class="language-plaintext highlighter-rouge">mcn_codebook.py</code> only through the <code class="language-plaintext highlighter-rouge">mcn</code> package and <code class="language-plaintext highlighter-rouge">mtp/codebook.py</code>’s thin adapter — no changes to those modules are required by this plan.</p>
+
+<h3 id="102-ontologymorkmtp-generated-and-curated-mtp-artefacts">10.2 <code class="language-plaintext highlighter-rouge">ontology/mork/mtp/</code> (generated and curated MTP artefacts)</h3>
+
+<p><code class="language-plaintext highlighter-rouge">data/</code> (curated, hand-authored + generated <code class="language-plaintext highlighter-rouge">pins.lock.json</code>) and <code class="language-plaintext highlighter-rouge">out/</code> (fully generated, committed) as laid out in §5.</p>
+
+<h3 id="103-ontologymorkshapesconstraintsttl">10.3 <code class="language-plaintext highlighter-rouge">ontology/mork/shapes/constraints.ttl</code></h3>
+
+<p>Not modified by this plan directly, but Phase 3’s silent-set report is very likely to file follow-up items against it (per L2 §2’s own framing: “it will very likely surface gaps in <code class="language-plaintext highlighter-rouge">constraints.ttl</code> on first run”). Track those as separate, ordinary issues against that file — this plan does not pre-authorize changes to it.</p>
+
+<h3 id="104-ci">10.4 CI</h3>
+
+<p>Add scoped steps to the existing repository workflow <a href="../../../.github/workflows/platform.yml">platform.yml</a>, preserving the existing MORK decoder and compiler checks. The final commands are invoked through <code class="language-plaintext highlighter-rouge">mise</code> locally and may run directly in CI after Python setup:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="pi">-</span> <span class="na">run</span><span class="pi">:</span> <span class="s">python -m mtp.cli check --out ontology/mork/mtp/out</span>
+<span class="pi">-</span> <span class="na">run</span><span class="pi">:</span> <span class="s">python -m mtp.cli lens-check --out ontology/mork/mtp/out</span>
+<span class="pi">-</span> <span class="na">run</span><span class="pi">:</span> <span class="s">python -m mtp.cli build --pack-version $ --out ontology/mork/mtp/out</span>
+<span class="pi">-</span> <span class="na">run</span><span class="pi">:</span> <span class="s">git diff --exit-code ontology/mork/mtp/out/</span>
+</code></pre></div></div>
+
+<p>No <code class="language-plaintext highlighter-rouge">eval-report</code> step (§2.2).</p>
+
+<p>Add these only after the relevant MTP phase creates the command. CI must install the MORK package or set the package import path explicitly. No <code class="language-plaintext highlighter-rouge">eval-report</code> step is added (§2.2). Any dependency or generated-output lockfile change is reported and reviewed, not silently committed by CI.</p>
+
+<h3 id="105-mise-tasks">10.5 <code class="language-plaintext highlighter-rouge">mise</code> tasks</h3>
+
+<p>When the MTP CLI exists, add tasks equivalent to:</p>
+
+<div class="language-toml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nn">[tasks."check:mtp"]</span>
+<span class="py">run</span> <span class="p">=</span> <span class="s">"python -m mtp.cli check --out ontology/mork/mtp/out"</span>
+
+<span class="nn">[tasks."build:mtp"]</span>
+<span class="py">run</span> <span class="p">=</span> <span class="s">"python -m mtp.cli build --out ontology/mork/mtp/out"</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">check:mtp</code> becomes a dependency of the root <code class="language-plaintext highlighter-rouge">check</code> task only after all required curated data and generated output exist. <code class="language-plaintext highlighter-rouge">build:mtp</code> is intentionally separate from generic bootstrap because it changes committed generated content.</p>
+
+<hr />
+
+<h2 id="11-acceptance-criteria-structural-not-model-quality">11. Acceptance criteria (structural, not model-quality)</h2>
+
+<p>Per §2.2, these criteria are about the pack’s own internal consistency, not about how well a model performs against it — that is Phase 7’s concern.</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">mtp build</code> succeeds with zero errors against the current <code class="language-plaintext highlighter-rouge">Mork.ttl</code> and produces a pack within all stated token budgets.</li>
+  <li><code class="language-plaintext highlighter-rouge">mtp check</code> in CI catches: a term added to <code class="language-plaintext highlighter-rouge">Mork.ttl</code> with no code, a logical-axiom change to an anchored term with a stale pin, a new GCI with no owner, a new lens-eligible term with no partition rule, a corpus example edited such that its cassette is no longer isomorphic.</li>
+  <li>Every cassette’s MCN, decoded via <code class="language-plaintext highlighter-rouge">mcn.decode</code>, is graph-isomorphic (modulo <code class="language-plaintext highlighter-rouge">owl:NamedIndividual</code>) to its cited source.</li>
+  <li><code class="language-plaintext highlighter-rouge">diagnostics.json</code> and the lenses’ <code class="language-plaintext highlighter-rouge">CAUGHT</code>/<code class="language-plaintext highlighter-rouge">NOT CAUGHT</code> lines are derived from the same mutation matrix (no hand-maintained duplication that can drift).</li>
+</ul>
+
+<hr />
+
+<h2 id="12-risk-register">12. Risk register</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Risk</th>
+      <th>Mitigation</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">doctrine.yaml</code> curation (Phase 1) is the one genuinely human-judgement-heavy step and could stall the whole plan</td>
+      <td>Scope it to the essay’s existing draft (LLM Training.md §2) plus the three §7 additions; do not open-endedly rewrite it during Phase 1</td>
+    </tr>
+    <tr>
+      <td>Corpus (<code class="language-plaintext highlighter-rouge">ontology/mork/examples/**</code>) is small; frequency stats and “never used” lists may be noisy</td>
+      <td>Explicit in L2 §5.3 already; treat early stats as provisional, re-run once more real mapping schemes exist</td>
+    </tr>
+    <tr>
+      <td>Mutation operators (Phase 3) might find far more <code class="language-plaintext highlighter-rouge">silent</code> findings than anticipated, each implying a <code class="language-plaintext highlighter-rouge">constraints.ttl</code> follow-up</td>
+      <td>Time-box Phase 3 to the six seed operators only; do not expand the operator set until the resulting silent-set backlog is triaged</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">mtp/codebook.py</code>’s thin-adapter decision (§5) assumes <code class="language-plaintext highlighter-rouge">mcn_codebook.py</code>’s reverse index never needs per-consumer customisation</td>
+      <td>If a real need for divergent behaviour appears, revisit — but do not pre-build flexibility for a need that has not materialised</td>
+    </tr>
+    <tr>
+      <td>Phase 6 (errata governance) has no concrete deployment yet to draw real telemetry from</td>
+      <td>Deliverable is the <em>shape</em> and one worked example, not a populated card; this is intentional</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="13-sequencing-and-immediate-next-actions">13. Sequencing and immediate next actions</h2>
+
+<p>Phases 0–2 have no dependency on each other’s outputs beyond Phase 0’s shared infrastructure, and could run in parallel if more than one person is available; Phases 3–6 are strictly sequential as written (each depends on the previous phase’s output).</p>
+
+<p>Immediate next actions:</p>
+
+<ol>
+  <li>Read the <a href="../../../docs/developer/status/implementation-handover.md">consolidated repository handover</a>, <a href="../../../docs/developer/toolchain.md">toolchain guide</a>, <a href="/architecture/implementation-map.html">implementation map</a>, and the <a href="/architecture/decisions/">MORK ADR catalogue</a> before adding MTP code.</li>
+  <li>Create the Phase 0 MTP ADR, architecture guide, and validation handoff alongside the <code class="language-plaintext highlighter-rouge">tools/mork/src/mtp/</code> scaffold and <code class="language-plaintext highlighter-rouge">ontology/mork/mtp/data/config.yaml</code>.</li>
+  <li>Add scoped <code class="language-plaintext highlighter-rouge">mise</code> and CI wiring only when the first importable MTP command exists. Do not claim that <code class="language-plaintext highlighter-rouge">mise run check:mtp</code> passed until the network-enabled validation environment has installed dependencies.</li>
+  <li>Build <code class="language-plaintext highlighter-rouge">mtp/facts.py</code>, <code class="language-plaintext highlighter-rouge">mtp/ce.py</code>, and <code class="language-plaintext highlighter-rouge">mtp/mcnio.py</code> against the live MORK sources. Keep decoder and codebook changes out of scope unless a separately documented interface gap is discovered.</li>
+  <li>Confirm term and axiom counts look sane by hand, then run the loan-example round-trip through <code class="language-plaintext highlighter-rouge">mtp.mcnio.InProcessTool</code> as a smoke test.</li>
+  <li>Draft <code class="language-plaintext highlighter-rouge">doctrine.yaml</code> only after <code class="language-plaintext highlighter-rouge">facts.py</code> can resolve and fingerprint anchors. Record the curation and generated-output rules in the phase ADR and architecture guide.</li>
+</ol>
+
+<hr />
+
+<h2 id="14-definition-of-done-for-this-plans-scope">14. Definition of done for this plan’s scope</h2>
+
+<ul>
+  <li>Phases 0 through 6 complete, all exit criteria in §8 met.</li>
+  <li><code class="language-plaintext highlighter-rouge">ontology/mork/mtp/out/</code> is committed, current, and reproducible byte-for-byte from a clean <code class="language-plaintext highlighter-rouge">mtp build</code>.</li>
+  <li>Phase 7 is recorded as an explicit stub with its dependency on the backend-interface effort stated, not silently dropped or half-started.</li>
+  <li>No change made to <code class="language-plaintext highlighter-rouge">mcn_decoder.py</code> or <code class="language-plaintext highlighter-rouge">mcn_codebook.py</code> in the course of this work beyond what already exists (§6) — if Phase 0 or 1 discovers a genuine gap in that interface, it is raised as its own decision, not patched in passing.</li>
+  <li>Each implemented MTP phase has an ADR where it establishes a durable boundary, an architecture guide, a developer handoff, structural tests, CI wiring, and explicit authoring-complete versus validated-complete status.</li>
+  <li>The final MTP handover is linked from <a href="../../../docs/developer/status/implementation-handover.md">docs/developer/status/implementation-handover.md</a> and identifies Phase 7’s dependency on the LLM backend interface.</li>
+</ul>

@@ -4,3 +4,30 @@
 # theme's own assets/css/style.scss and fails to compile locally under the
 # bundled (EOL) Ruby Sass gem with an encoding error.
 theme: null
+
+
+# ADR-A127 decision 5 (OD-D37): an architecture decision is on the site only once the maintainer has published
+# it. The decisions directory is excluded, and each published decision is included by name. Jekyll's own
+# default exclusions are restated, since setting `exclude` replaces them.
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - vendor
+  - .bundle
+  - .jekyll-cache
+  - architecture/decisions/ADR-*
+# BEGIN GENERATED published-decisions. Written by `mise run build:published-decisions`. Do not edit by hand.
+include:
+  - ADR-A03-condition-taxonomy.md
+  - ADR-A05-compatibility-vocabulary.md
+  - ADR-A06-wildcard-semantics.md
+  - ADR-A100-hierarchical-match-over-flat-schemes.md
+  - ADR-A103-eligibility-set-readings.md
+  - ADR-A105-closure-declarations.md
+  - ADR-A121-repository-catalogue.md
+  - ADR-A126-literate-specification-layout-and-grammar.md
+  - ADR-A85-vocabulary-scoped-temporal-binding-resolution.md
+  - ADR-A87-eligibility-concept-inclusion-and-exclusion.md
+  - ADR-A90-eligibility-design-time-owl-class-backend.md
+  - ADR-A91-eligibility-candidate-evidence-binding.md
+# END GENERATED published-decisions

@@ -1,0 +1,175 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="plan-applied-insurance-reference--substrate-track">Plan: Applied Insurance Reference — Substrate Track</h1>
+
+<p><strong>Unit ID:</strong> <code class="language-plaintext highlighter-rouge">applied-insurance-reference-substrate</code>
+<strong>Epic:</strong> <a href="/developer/plans/applied-insurance-reference.html">applied-insurance-reference</a>
+<strong>Status:</strong> Rolling-wave outline. Each item starts with its own clean-room ADR.
+<strong>Sketch:</strong> <a href="/developer/sketches/peril-structure-whitepaper.html">peril-structure-whitepaper.md</a> §7.2,
+<a href="/developer/sketches/asset-exposure-ontology.html">asset-exposure-ontology.md</a> §13</p>
+
+<h2 id="scope">Scope</h2>
+
+<p>Substrate changes the applied work motivates. None blocks a first release of Phases 1 to 5.
+Each follows ADR-A-C2: a domain-neutral premise and two non-insurance examples before any
+mechanism prose, and no insurance vocabulary in substrate text (ADR-A-C1).</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Item</th>
+      <th>Layer</th>
+      <th>Change</th>
+      <th>Sketch ref</th>
+      <th>Enables</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>S1</td>
+      <td>Vocabulary</td>
+      <td>concept-level lifecycle: deprecation, replacement and split across editions (already a Vocabulary open item)</td>
+      <td>L-P1, PV-O3</td>
+      <td>edition upgrades of Phase 2 without breaking recorded values</td>
+    </tr>
+    <tr>
+      <td>S2</td>
+      <td>Eligibility</td>
+      <td><code class="language-plaintext highlighter-rouge">HierarchicalMatch</code> with a chosen traversal: all broader links, or one named sub-property of <code class="language-plaintext highlighter-rouge">skos:broader</code></td>
+      <td>L-P2, PV-O4</td>
+      <td>Author with CCS slice C9b3, which edits the same hierarchical-match code paths (NRS NQ-4, 2026-10-10. Previously with NRS N5, now CCS HQ-6). kind-only matching (Phase 2 and 3 checks)</td>
+    </tr>
+    <tr>
+      <td>S3</td>
+      <td>Eligibility</td>
+      <td>moved into Phase 3 as AIR-3.2 and AIR-3.3 (ADR-A103, epic D12)</td>
+      <td>L-P3, AL-2</td>
+      <td>checks across cause and characteristics (M2)</td>
+    </tr>
+    <tr>
+      <td>S4</td>
+      <td>Capacity first, then Quantification per promotion criteria</td>
+      <td>grouping occurrences into episodes by a window anchored on the first occurrence</td>
+      <td>L-P5</td>
+      <td>hours clauses, event aggregates (5.7, 6.3)</td>
+    </tr>
+    <tr>
+      <td>S5</td>
+      <td>Surface</td>
+      <td>generated classes from collections and characteristic conjunctions, optional per E3</td>
+      <td>L-P4</td>
+      <td>design-time checks over bundles and write-back scopes</td>
+    </tr>
+    <tr>
+      <td>S6</td>
+      <td>guidance only</td>
+      <td>spatial pattern: GeoSPARQL alignment, zones as concepts, spatial joins as derived artefacts</td>
+      <td>L-P6, AL-1</td>
+      <td>Phase 4 zones</td>
+    </tr>
+    <tr>
+      <td>S7</td>
+      <td>Foundation</td>
+      <td>resolution policy for conflicting evidenced assertions of one attribute</td>
+      <td>AL-3</td>
+      <td>Author with <a href="/developer/plans/normative-rule-substrate.html">NRS</a> N10 (epic §3b). several assessments of one building (Phase 4)</td>
+    </tr>
+    <tr>
+      <td>S8</td>
+      <td>Persistence</td>
+      <td>a disclosure class beside the privacy class, read by every export (legal privilege)</td>
+      <td>claims sketch S-CL2</td>
+      <td>claims plan AIR-6.10</td>
+    </tr>
+    <tr>
+      <td>S9</td>
+      <td>Persistence</td>
+      <td>retention per class after an anchoring event, and legal hold overriding retention and erasure</td>
+      <td>claims sketch S-CL3</td>
+      <td>claims plan AIR-6.10</td>
+    </tr>
+    <tr>
+      <td>S10</td>
+      <td>Persistence</td>
+      <td>erasure deferred by a duty to retain, a new <code class="language-plaintext highlighter-rouge">dal:ErasurePrecedence</code> member</td>
+      <td>claims sketch S-CL4</td>
+      <td>claims plan AIR-6.10</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="s6-in-detail">S6 in detail</h2>
+
+<p><strong>Machine:</strong> S (Copilot Business). <strong>Branch:</strong> <code class="language-plaintext highlighter-rouge">air/applied-reference</code>, commits <code class="language-plaintext highlighter-rouge">[S6] …</code>, the last
+being <code class="language-plaintext highlighter-rouge">[S6] Handoff</code>. <strong>Validation Pack:</strong>
+<a href="/developer/validation/applied-insurance-reference-s6.html">applied-insurance-reference-s6</a>. <strong>Sketch:</strong>
+peril structure whitepaper §7.2 (L-P6), asset exposure ontology §13 (AL-1).</p>
+
+<p><strong>Invariant:</strong> a guidance document states how LATTICE content records places, zones and spatial
+computations with the constructs it already has, in domain-neutral terms, and changes no layer.</p>
+
+<p>No ADR. S6 is guidance only and changes no layer, so the clean-room procedure applies to its text
+(ADR-A-C2): the premise and both worked examples are domain-neutral, and no insurance term appears.</p>
+
+<h3 id="the-document-docsarchitecturespatial-data-patternsmd">The document (<code class="language-plaintext highlighter-rouge">docs/architecture/spatial-data-patterns.md</code>)</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Section</th>
+      <th>Content</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Premise</td>
+      <td>places matter to many domains, and LATTICE has no spatial layer and needs none: geometry is an optional alignment, zones are classifications, and spatial computations are derivations</td>
+    </tr>
+    <tr>
+      <td>Geometry</td>
+      <td>align with OGC GeoSPARQL 1.1 (<code class="language-plaintext highlighter-rouge">geo:hasGeometry</code>, <code class="language-plaintext highlighter-rouge">geo:asWKT</code>), state the coordinate reference system in the WKT literal and default to WGS 84 longitude and latitude order (CRS84), keep elevation’s vertical datum with the value’s evidence. A module does not import GeoSPARQL to use a location, so the core stays independent of it</td>
+    </tr>
+    <tr>
+      <td>Zones</td>
+      <td>a zone is a concept in a scheme bound per territory by a scheme contract (Vocabulary), not a class and not a geometry. A designation of a place in a zone is an evidenced, temporally scoped node, whose temporal scope is the map edition’s validity, so a new map never rewrites history</td>
+    </tr>
+    <tr>
+      <td>Spatial joins</td>
+      <td>a zone membership or distance computed from coordinates is a <code class="language-plaintext highlighter-rouge">fnd:DerivedArtefact</code>, whose derivation run names the dataset edition and the method, and whose <code class="language-plaintext highlighter-rouge">prov:used</code> names the inputs. GeoSPARQL’s topological functions may compute it at query time, and nothing computed is asserted as an authored fact</td>
+    </tr>
+    <tr>
+      <td>Precision</td>
+      <td>how precisely a place is known is a concept from an ordered scheme, so a consumer can require a minimum</td>
+    </tr>
+    <tr>
+      <td>Distances and areas</td>
+      <td>Quantification quantities on declared spaces, in QUDT-aligned units</td>
+    </tr>
+    <tr>
+      <td>Example 1</td>
+      <td>a city’s planning zones and the parcels designated in them, with a revised zoning map</td>
+    </tr>
+    <tr>
+      <td>Example 2</td>
+      <td>a conservation charity’s monitoring sites, their distance to the nearest watercourse computed from a published river network edition</td>
+    </tr>
+    <tr>
+      <td>Where it is used</td>
+      <td>one closing line pointing at the applied exposure module, the only insurance mention, as a consumer and not as the premise</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Linked from <code class="language-plaintext highlighter-rouge">docs/architecture/ontology-architecture.md</code> (the guidance list) and from the
+developer guide’s list of architecture documents. The substrate track’s S6 row is marked done at
+the merge.</p>
+
+<h3 id="checks">Checks</h3>
+
+<p>Text only. The Validation Pack’s command is <code class="language-plaintext highlighter-rouge">mise run topology:links</code>, which checks the new
+document’s local links, and R reads the document against the clean-room rule.</p>
+
+<h2 id="documentation-deltas">Documentation deltas</h2>
+
+<p>Each item: its ADR, the layer README, <code class="language-plaintext highlighter-rouge">docs/architecture/ontology-architecture.md</code> (layer section
+and §11 open items).</p>

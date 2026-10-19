@@ -1,0 +1,2191 @@
+<h1 id="a-lock-free-rdf-and-datalog-engine-for-live-financial-systems">A lock-free RDF and Datalog engine for live financial systems</h1>
+
+<p><strong>Technology exploration, 2026-10-03.</strong> Not a LATTICE sketch and not a plan. A deep look at what
+it would take to build a high-concurrency, main-memory RDF and Datalog execution engine on the
+primitives of Motik, Nenov, Piro, Horrocks and Olteanu, <em>Parallel OWL 2 RL Materialisation in
+Centralised, Main-Memory RDF Systems</em> (cited below as “the paper”, the copy beside this file), for
+a live trading or transaction-management system whose data contract is modelled in LATTICE. It is
+written for a project that would be spun out into its own repository, so alignment with existing
+LATTICE code is deliberately not a constraint.</p>
+
+<p>Statements are graded where it matters. <strong>Fact</strong> means the paper or a primary source says so.
+<strong>Judgement</strong> means a reasoned position that a benchmark could overturn. Licence statements marked
+<em>(verify)</em> are from memory and must be checked against the upstream <code class="language-plaintext highlighter-rouge">LICENSE</code> file before anything
+is adopted.</p>
+
+<hr />
+
+<h2 id="contents">Contents</h2>
+
+<ol>
+  <li><a href="#1-executive-summary">Executive summary</a></li>
+  <li><a href="#2-what-the-paper-actually-gives-us">What the paper actually gives us</a></li>
+  <li><a href="#3-the-workload">The workload</a></li>
+  <li><a href="#4-architecture-independent-of-language">Architecture, independent of language</a></li>
+  <li><a href="#5-building-on-an-existing-stack">Building on an existing stack</a></li>
+  <li><a href="#6-language-and-platform-options">Language and platform options</a></li>
+  <li><a href="#7-decision-matrix">Decision matrix</a></li>
+  <li><a href="#8-recommendation">Recommendation</a></li>
+  <li><a href="#9-experiments-to-run-before-committing">Experiments to run before committing</a></li>
+  <li><a href="#10-risks-and-open-questions">Risks and open questions</a>
+    <ul>
+      <li><a href="#appendix-a-formal-methods">Appendix A: Formal methods</a></li>
+      <li><a href="#appendix-b-licence-summary">Appendix B: Licence summary</a></li>
+      <li><a href="#appendix-c-references">Appendix C: References</a></li>
+    </ul>
+  </li>
+</ol>
+
+<hr />
+
+<h2 id="1-executive-summary">1. Executive summary</h2>
+
+<p><strong>The paper solves one phase of the problem, and solves it well.</strong> It gives a parallel,
+fact-at-a-time semi-naïve evaluation algorithm and a hash-indexed triple store whose insertions are
+“mostly” lock-free, and shows 13.9× speedup on 16 physical cores for bulk materialisation of
+100M-to-1.5B-triple datasets. It is an insert-only, run-to-fixpoint, throughput-oriented design.
+A live trading system is update-heavy (retractions as well as assertions), latency-oriented,
+transactional, durable and audited. Everything the paper does not cover (deletion and incremental
+maintenance, isolation, durability, replication, negation, aggregation, exact arithmetic, equality
+at scale) has to be designed around its primitives, and those additions shape the technology choice
+more than the primitives themselves do.</p>
+
+<p><strong>The architectural position this document argues (judgement).</strong> Sequence the writes, parallelise
+the derivation, and make the reads wait-free. A single logical writer applies a totally ordered log
+of transactions (the pattern behind LMAX, Aeron Cluster and TigerBeetle), each transaction’s
+consequences are materialised by the paper’s algorithm generalised to incremental maintenance and
+run in parallel only when the derivation frontier is large enough to repay coordination, and any
+number of readers query immutable snapshots without blocking the writer or each other. This keeps
+the paper’s lock-free index where it pays (concurrent derivation and concurrent reads) and removes
+it from where it hurts (write-write conflicts, deterministic replay, audit).</p>
+
+<p><strong>The technology recommendation (judgement, high confidence on the core, medium on the rest).</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Layer</th>
+      <th>Recommendation</th>
+      <th>Credible alternative</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Engine core: storage, evaluation, transactions, log</td>
+      <td><strong>Rust</strong></td>
+      <td>Java with an off-heap (FFM) core, if the organisation is JVM-first</td>
+    </tr>
+    <tr>
+      <td>Rule and query compiler</td>
+      <td>Rust, generating specialised Rust at build time from the known LATTICE rule and query set</td>
+      <td>F# or OCaml if a separate compiler language is wanted</td>
+    </tr>
+    <tr>
+      <td>Specification, reference evaluator, proofs</td>
+      <td><strong>Lean 4</strong> for mechanised semantics and the test oracle, <strong>TLA+ or Quint</strong> for protocols</td>
+      <td>Rocq (Coq) or Isabelle</td>
+    </tr>
+    <tr>
+      <td>Low-latency native access</td>
+      <td><strong>Aeron + SBE</strong> (established in finance, Apache-2.0), not a bespoke TCP or UDP protocol</td>
+      <td>gRPC or Arrow Flight where microseconds do not matter</td>
+    </tr>
+    <tr>
+      <td>HTTP access</td>
+      <td><strong>SPARQL 1.1 Protocol</strong>, plus streamed deltas for subscriptions and Arrow for bulk results</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>Replication</td>
+      <td>a replicated state machine over the transaction log (Raft via <code class="language-plaintext highlighter-rouge">openraft</code>, or VSR-style)</td>
+      <td>Aeron Cluster, if the core is Java</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>On the options as posed.</strong> Erlang + Rust is a sound pairing for a distributed control plane, but
+the engine’s hot path gains nothing from BEAM and pays for an extra hop and a crash-coupling risk,
+so Erlang belongs at the edge if at all. .NET/F# + Rust is credible and has excellent concurrency
+testing (Coyote) and SIMD, but splitting the hot path across P/Invoke is a recurring tax, so it
+reduces to “Rust core, .NET for tooling and SDKs”. Pure Java is the leading single-language
+alternative because of the finance transport ecosystem (Aeron, Agrona, SBE, Disruptor) and runtime
+code generation with JIT optimisation, held back by the absence of value types and of 128-bit CAS.
+Rust + another language is the recommended shape, with the other language doing the specification
+and proof work offline rather than sharing the runtime.</p>
+
+<p><strong>There is no permissively licensed system that already does this.</strong> RDFox, the commercial
+descendant of the paper, is proprietary. The engine core must be built. Parsers, SPARQL algebra,
+transport, consensus and serialisation can be reused under permissive licences (§5).</p>
+
+<hr />
+
+<h2 id="2-what-the-paper-actually-gives-us">2. What the paper actually gives us</h2>
+
+<p>A careful reading, because several later sections depend on precisely what is and is not claimed.</p>
+
+<h3 id="21-the-evaluation-algorithm">2.1 The evaluation algorithm</h3>
+
+<p><strong>Setting (fact).</strong> OWL 2 RL axioms are translated into a datalog program P (not the fixed OWL 2
+RL/RDF rule set, though the method applies to it). Materialisation computes the fixpoint P∞(I) of
+facts I under P.</p>
+
+<p><strong>Interface the store must offer (fact).</strong> <code class="language-plaintext highlighter-rouge">I.add(F)</code> adds F if absent. An iterator <code class="language-plaintext highlighter-rouge">facts.next()</code>
+returns a not-yet-returned fact. Both must be linearisable, but need not be ACID. The store is
+viewed as a vector, so I&lt;F and I≤F denote the facts before (and up to) F. Once <code class="language-plaintext highlighter-rouge">facts.next()</code>
+returns F, later additions must not change I≤F. Returning F <strong>freezes</strong> its prefix.</p>
+
+<p><strong>Rule indexing (fact).</strong> Two hash tables map each body atom to the rules it can match: H1 keyed by
+class C for <code class="language-plaintext highlighter-rouge">⟨t, rdf:type, C⟩</code>, and H2 keyed by predicate R otherwise. <code class="language-plaintext highlighter-rouge">P.rulesFor(F)</code> returns each
+⟨rule, annotated query, substitution⟩ for which some body atom unifies with F.</p>
+
+<p><strong>Annotated queries (fact).</strong> For a rule B1 ∧ … ∧ Bn → H matched at body atom Bi, atoms before i are
+evaluated against I&lt;F and atoms after i against I≤F. This is the fact-at-a-time form of
+semi-naïve evaluation, and it guarantees (Theorem 1) that each rule instantiation is considered at
+most once, so derivations are not repeated, although the same fact may be derived by different
+instantiations.</p>
+
+<p><strong>Algorithm 1 (fact).</strong> Each of N threads loops: take an unprocessed fact F, find matching rules,
+evaluate the annotated query with index nested loops in a greedily chosen left-to-right join order
+(Algorithm 2), and add each instantiated head. A thread that finds no work increments a waiting
+counter W, enters a mutex-guarded critical section, and either declares termination when W = N or
+waits on a condition variable for new facts. W is incremented before taking the mutex so that
+termination does not depend on mutex fairness.</p>
+
+<p><strong>Why it parallelises (fact).</strong> Work is partitioned dynamically, one fact at a time as threads
+become free, rather than statically by hashing variables. The number of subqueries is proportional
+to the number of facts, so threads stay loaded despite skew.</p>
+
+<h3 id="22-the-storage-scheme">2.2 The storage scheme</h3>
+
+<p><strong>Dictionary (fact).</strong> Resources are dictionary-encoded as integers. The paper does not describe the
+dictionary’s concurrency.</p>
+
+<p><strong>Triple table (fact).</strong> Six columns per triple: Rs, Rp, Ro (encoded terms) and Nsp, Nop, Np (next
+pointers). Each triple sits in three linked lists: the <strong>sp-list</strong> (same subject, grouped but not
+sorted by predicate), the <strong>op-list</strong> (same object, grouped by predicate) and the <strong>p-list</strong> (same
+predicate). Pointers are offsets into the table, so a triple’s position is also its insertion order,
+and the I&lt;F test is a pointer comparison.</p>
+
+<p><strong>Indexes (fact).</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Index</th>
+      <th>Realisation</th>
+      <th>Matches</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Ispo</td>
+      <td>open-addressing hash table of triple pointers</td>
+      <td>⟨s,p,o⟩</td>
+    </tr>
+    <tr>
+      <td>Is, Ip, Io</td>
+      <td>arrays of list heads (Is and Io also keep list lengths)</td>
+      <td>⟨s,y,z⟩, ⟨x,p,z⟩, ⟨x,y,o⟩</td>
+    </tr>
+    <tr>
+      <td>Isp, Iop</td>
+      <td>open-addressing hash tables pointing at the first triple of each group</td>
+      <td>⟨s,p,z⟩, ⟨x,p,o⟩</td>
+    </tr>
+    <tr>
+      <td>none</td>
+      <td>scan the shorter of the s-list and o-list, filtering</td>
+      <td>⟨s,y,o⟩, judged rare in practice</td>
+    </tr>
+    <tr>
+      <td>none</td>
+      <td>scan the table</td>
+      <td>⟨x,y,z⟩</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Ios is deliberately omitted because it would approach Ispo in size.</p>
+
+<p><strong>Memory (fact, and the formula is reusable).</strong> Per triple, excluding the dictionary:
+3(r + p) + (1 + d_sp + d_op) · 2p / f, with r bytes per term, p bytes per pointer, load factor f,
+and d_sp, d_op the distinct sp- and op-groups per triple. With r = 4, p = 8, f = 0.7, d_sp = 0.5,
+d_op = 0.4 this is about 80 bytes, and about 46 bytes with p = 4 (at most 2³² triples). §4.3 reuses
+the formula for the variants this document proposes.</p>
+
+<h3 id="23-the-concurrency-primitives-catalogued">2.3 The concurrency primitives, catalogued</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Primitive</th>
+      <th>Mechanism</th>
+      <th>Progress guarantee</th>
+      <th>Depends on</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>C1</td>
+      <td>Ispo insertion (Algorithm 3)</td>
+      <td>linear probing. On an empty bucket, CAS the marker <code class="language-plaintext highlighter-rouge">INS</code> in, allocate the triple, write it, store its pointer. A prober that meets <code class="language-plaintext highlighter-rouge">INS</code> waits</td>
+      <td><strong>blocking at one bucket</strong>: a thread preempted while holding <code class="language-plaintext highlighter-rouge">INS</code> stalls others probing through that bucket. The paper calls this “mostly” lock-free</td>
+      <td>single-word CAS, release/acquire ordering of the triple’s fields before the pointer store</td>
+    </tr>
+    <tr>
+      <td>C2</td>
+      <td>Triple allocation</td>
+      <td>atomic increment of the table’s end</td>
+      <td>lock-free while the table has capacity</td>
+      <td>fetch-and-add</td>
+    </tr>
+    <tr>
+      <td>C3</td>
+      <td>List insertion (Algorithm 4)</td>
+      <td>insert after the group’s first triple T: read T.N, write Tnew.N, CAS T.N</td>
+      <td>lock-free (retry on interference)</td>
+      <td>single-word CAS. Insertion only, no deletion</td>
+    </tr>
+    <tr>
+      <td>C4</td>
+      <td>New group (empty Isp/Iop bucket)</td>
+      <td>claim the bucket with <code class="language-plaintext highlighter-rouge">INS</code>, update Is or Io, publish</td>
+      <td>blocking at one bucket, as C1</td>
+      <td>multiword update emulated by a local lock</td>
+    </tr>
+    <tr>
+      <td>C5</td>
+      <td>Cooperative resize</td>
+      <td>one thread allocates the new array and raises a flag. Every accessing thread migrates blocks of 1,024 buckets until done. The last thread frees the old array</td>
+      <td>lock-free except the allocation step</td>
+      <td>a resize flag and a migration cursor</td>
+    </tr>
+    <tr>
+      <td>C6</td>
+      <td>Per-thread reserved table blocks</td>
+      <td>each thread writes into its own block, so Tnew is known before probing and C1 can CAS Tnew straight into the bucket</td>
+      <td><strong>makes Algorithm 3 fully lock-free</strong> (the paper’s own observation)</td>
+      <td>the iterator must invalidate unused reserved rows when it reaches them, or the freeze property of §2.1 breaks</td>
+    </tr>
+    <tr>
+      <td>C7</td>
+      <td>Per-thread private insertion points</td>
+      <td>a thread keeps private (s,p) and (o,p) insertion points for subjects or objects it has inserted more than 100 times, then inserts without CAS</td>
+      <td>interference-free on hot groups</td>
+      <td>memory: it exhausted RAM on the largest LUBM tests</td>
+    </tr>
+    <tr>
+      <td>C8</td>
+      <td>Termination (Algorithm 1, lines 7–15)</td>
+      <td>waiting counter W, mutex, condition variable</td>
+      <td>blocking, but only idle threads enter</td>
+      <td>a fair-enough scheduler</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="24-measured-results-and-what-they-imply">2.4 Measured results and what they imply</h3>
+
+<p><strong>Facts.</strong> Speedup up to 13.9 on 16 physical cores and 19.5 on 32 hyperthreads. Concurrency support
+costs 10–30% against a sequential build, so parallelism pays from two threads. Parallel import is
+within about 5% of sequential import. Speedup correlates at 0.9 with the fraction of active triples
+(triples some rule was applied to), which is why DBpedia’s low active fraction gave only 6.6×.
+Hash-based index nested loops with random memory access were competitive because hyperthreading and
+a high degree of parallelism hide stalls. RDFox beat PostgreSQL and MonetDB triple-table layouts,
+which timed out on self-joins, and was competitive with MonetDB’s vertical partitioning, which was
+more compact but ran out of memory on many tests.</p>
+
+<p><strong>Implications (judgement).</strong></p>
+
+<ul>
+  <li>The headline speedups are for <strong>large</strong> materialisations. For a transaction that derives tens or
+hundreds of facts, thread wake-up and termination detection (C8 uses a condition variable, whose
+wake-up costs microseconds) can exceed the work. Parallel evaluation must be adaptive (§4.4).</li>
+  <li>Random-access hash and list traversal is memory-latency-bound. Hyperthreading hid it on the
+paper’s hardware. On a latency-sensitive system with pinned, non-hyperthreaded cores, the same
+stalls appear directly as tail latency. Huge pages, prefetching and list layout matter (§4.3).</li>
+  <li>C1 and C4 are blocking under preemption. With pinned threads and no oversubscription, preemption
+is rare. With oversubscription it is a tail-latency hazard. C6 removes it for C1.</li>
+</ul>
+
+<h3 id="25-what-the-paper-does-not-cover">2.5 What the paper does not cover</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Gap</th>
+      <th>Why it matters for trading</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Deletion and incremental maintenance</td>
+      <td>orders are cancelled, positions close, states change. The authors’ later Backward/Forward (B/F) algorithm addresses this. DRed and counting are the classical alternatives</td>
+    </tr>
+    <tr>
+      <td>Transactions and isolation</td>
+      <td>queries are answered <em>during</em> materialisation, so they can see a partial fixpoint. A trading read must see a committed fixpoint</td>
+    </tr>
+    <tr>
+      <td>Durability and replication</td>
+      <td>the paper is in-memory only and names secondary storage as future work</td>
+    </tr>
+    <tr>
+      <td>Negation and aggregation</td>
+      <td>eligibility (Undetermined vs Denied), limits and exposures need stratified negation and aggregates</td>
+    </tr>
+    <tr>
+      <td>Equality</td>
+      <td><code class="language-plaintext highlighter-rouge">owl:sameAs</code> cliques blow up quadratically, which the paper names as its main open problem. Identifier reconciliation (ISIN, CUSIP, FIGI, LEI) is exactly this workload. The authors’ later rewriting approach handles it with a representative per clique</td>
+    </tr>
+    <tr>
+      <td>Datatypes and arithmetic</td>
+      <td>money must be exact decimal, never binary floating point</td>
+    </tr>
+    <tr>
+      <td>Named graphs</td>
+      <td>LATTICE uses graphs for revisions and provenance. The scheme is triples only</td>
+    </tr>
+    <tr>
+      <td>Query planning beyond greedy left-to-right</td>
+      <td>cyclic patterns benefit from worst-case optimal joins</td>
+    </tr>
+    <tr>
+      <td>Dictionary concurrency</td>
+      <td>unspecified, and on the hot path for every new term</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="3-the-workload">3. The workload</h2>
+
+<h3 id="31-where-an-rdf-and-datalog-engine-sits">3.1 Where an RDF and Datalog engine sits</h3>
+
+<p>A frank positioning, because it changes what “extremely high performance” has to mean.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Tier</th>
+      <th>Typical latency budget</th>
+      <th>Fit for this engine</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Market-data tick-to-trade (HFT)</td>
+      <td>sub-microsecond to single-digit microseconds, often FPGA</td>
+      <td><strong>no</strong>. No general join engine belongs here</td>
+    </tr>
+    <tr>
+      <td>Pre-trade risk and eligibility checks</td>
+      <td>tens to hundreds of microseconds</td>
+      <td><strong>plausible</strong>, with prepared, compiled rule sets and small deltas</td>
+    </tr>
+    <tr>
+      <td>Order and position management, instrument lifecycle (accruals, coupons, barriers, corporate actions, margin, collateral)</td>
+      <td>sub-millisecond to milliseconds, high throughput</td>
+      <td><strong>strong fit</strong>. This is where complex instrument behaviour lives and where a declarative model pays</td>
+    </tr>
+    <tr>
+      <td>Intraday exposure, limit monitoring, regulatory reporting, as-of reconstruction</td>
+      <td>milliseconds to seconds</td>
+      <td><strong>strong fit</strong>, especially with as-of snapshots (§4.5)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Judgement.</strong> Target the second and third tiers: p99 in the tens of microseconds for a prepared
+query or a small transaction, and millions of base-fact changes per second in aggregate. Claiming
+the first tier would commit the design to constraints that the declarative model exists to avoid.</p>
+
+<h3 id="32-requirements">3.2 Requirements</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Requirement</th>
+      <th>Consequence</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>W1</td>
+      <td>Many concurrent readers, never blocked by writers</td>
+      <td>snapshot reads (MVCC), wait-free on the read path</td>
+    </tr>
+    <tr>
+      <td>W2</td>
+      <td>Writes are small deltas, assertions and retractions</td>
+      <td>incremental maintenance, fact-at-a-time evaluation (a good match for the paper’s style)</td>
+    </tr>
+    <tr>
+      <td>W3</td>
+      <td>Every committed state is a full fixpoint</td>
+      <td>commit only after materialisation and constraint checks complete</td>
+    </tr>
+    <tr>
+      <td>W4</td>
+      <td>Deterministic, replayable history for audit and recovery</td>
+      <td>a totally ordered transaction log, a canonical state hash (§4.5)</td>
+    </tr>
+    <tr>
+      <td>W5</td>
+      <td>As-of queries for reconstruction</td>
+      <td>retained versions, transaction time as a first-class axis</td>
+    </tr>
+    <tr>
+      <td>W6</td>
+      <td>Exact decimal arithmetic and nanosecond timestamps</td>
+      <td>native literal types, not strings via the dictionary</td>
+    </tr>
+    <tr>
+      <td>W7</td>
+      <td>Constraint checks can reject a transaction (limits, eligibility)</td>
+      <td>SHACL-like constraints compiled to rules whose violation facts abort the commit</td>
+    </tr>
+    <tr>
+      <td>W8</td>
+      <td>High availability</td>
+      <td>replication of the log, fast failover</td>
+    </tr>
+    <tr>
+      <td>W9</td>
+      <td>Push of changes to subscribers</td>
+      <td>delta streams from incremental maintenance</td>
+    </tr>
+    <tr>
+      <td>W10</td>
+      <td>Timestamps traceable to UTC</td>
+      <td>PTP-synchronised clocks. MiFID II RTS 25 sets tight divergence limits for high-frequency activity</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="33-what-the-lattice-contract-gives-the-engine">3.3 What the LATTICE contract gives the engine</h3>
+
+<p>Alignment with LATTICE code is not a goal, but the contract itself is an input with real
+engineering consequences.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>LATTICE element</th>
+      <th>What it tells the engine</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Persistence profiles (<code class="language-plaintext highlighter-rouge">dal:</code>)</td>
+      <td>aggregate boundaries, concurrency and ordering grain, uniqueness and identity strategy per class. These are transaction-scope and partitioning hints the engine can enforce rather than infer</td>
+    </tr>
+    <tr>
+      <td>Generated SPARQL (persistence <code class="language-plaintext highlighter-rouge">instantiate</code>)</td>
+      <td><strong>the query set is known at design time</strong>, so queries can be compiled into specialised plans and exposed as prepared operations</td>
+    </tr>
+    <tr>
+      <td>Surface contracts</td>
+      <td>which flattened, promoted properties must be cheap to read. These map to materialised indexes or views maintained incrementally</td>
+    </tr>
+    <tr>
+      <td>SHACL shapes</td>
+      <td>constraints to compile into violation rules (W7)</td>
+    </tr>
+    <tr>
+      <td>Instrument and Behaviour</td>
+      <td>state, transition, trigger and effect. Datalog derives which transitions are enabled. Applying an effect is a non-monotonic state change and therefore a transaction, which the sequenced writer performs. This split falls out of the model rather than being imposed on it</td>
+    </tr>
+    <tr>
+      <td>Eligibility (strong Kleene, Undetermined)</td>
+      <td>stratified negation with three-valued outcomes. Not expressible in positive datalog</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>The consequence that matters most (judgement).</strong> Because the rule set and query set are known in
+advance, the engine can be a <strong>compiler</strong>, in the way Soufflé compiles datalog to C++, rather than a
+general interpreter. This favours languages with a good code generation story (§6.1).</p>
+
+<hr />
+
+<h2 id="4-architecture-independent-of-language">4. Architecture, independent of language</h2>
+
+<h3 id="41-the-central-tension">4.1 The central tension</h3>
+
+<p>The request asks for lock-free access to achieve massive concurrency. Two bodies of evidence pull
+in different directions.</p>
+
+<ul>
+  <li><strong>Lock-free shared state</strong> (the paper, Silo, Hekaton) scales CPU-bound work across cores when
+conflicts are rare and work is plentiful.</li>
+  <li><strong>Single-writer sequencing</strong> (LMAX Disruptor, Aeron Cluster, TigerBeetle) is how much of the
+finance industry achieves low, predictable latency and deterministic replay. It avoids write-write
+coordination entirely, and it batches.</li>
+</ul>
+
+<p>These are not contradictory once each is applied to the part of the problem it suits:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Part</th>
+      <th>Conflict profile</th>
+      <th>Technique</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Ordering of transactions</td>
+      <td>every transaction must have one global position</td>
+      <td><strong>single sequencer</strong>. Coordination is irreducible here, so make it one thread and batch</td>
+    </tr>
+    <tr>
+      <td>Materialisation of one transaction’s consequences</td>
+      <td>many derived facts, set semantics, order-independent result</td>
+      <td><strong>parallel, lock-free</strong> (the paper), adaptive to delta size</td>
+    </tr>
+    <tr>
+      <td>Reads</td>
+      <td>read-only against committed snapshots</td>
+      <td><strong>wait-free</strong> snapshot access, any number of threads</td>
+    </tr>
+    <tr>
+      <td>Commit publication</td>
+      <td>one pointer swap per commit</td>
+      <td>a single release store of the new commit epoch</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="42-recommended-shape">4.2 Recommended shape</h3>
+
+<pre><code class="language-mermaid">flowchart LR
+    subgraph ACCESS["Access layer (thread-per-core, I/O only)"]
+        HTTP["HTTP: SPARQL 1.1 Protocol"]
+        AER["Aeron + SBE: prepared ops"]
+        FL["gRPC / Arrow Flight: bulk"]
+    end
+    SEQ["Sequencer&lt;br/&gt;assigns tx position,&lt;br/&gt;appends to log"]
+    LOG[("Replicated log&lt;br/&gt;base-fact deltas only")]
+    EXE["Transaction executor&lt;br/&gt;(single logical writer)"]
+    MAT["Incremental materialiser&lt;br/&gt;B/F + parallel fact-at-a-time,&lt;br/&gt;adaptive worker pool"]
+    CHK["Constraint rules&lt;br/&gt;(violations abort)"]
+    STORE[("MVCC triple/quad store&lt;br/&gt;lock-free indexes,&lt;br/&gt;append-only versions")]
+    PUB["Commit: publish epoch&lt;br/&gt;(one release store)"]
+    READ["Readers: wait-free&lt;br/&gt;snapshot queries,&lt;br/&gt;compiled plans"]
+    SUB["Delta streams&lt;br/&gt;to subscribers"]
+
+    HTTP &amp; AER &amp; FL -- "writes" --&gt; SEQ --&gt; LOG --&gt; EXE
+    EXE --&gt; MAT --&gt; STORE
+    MAT --&gt; CHK --&gt; PUB
+    PUB --&gt; SUB
+    HTTP &amp; AER &amp; FL -- "reads" --&gt; READ --&gt; STORE
+</code></pre>
+
+<p>The executor applies one transaction (or one batch of mutually independent transactions, §4.4) at a
+time. Inside a transaction, materialisation fans out across workers. Readers see only published
+epochs. Replicas apply the same log and converge on the same fixpoint (§4.5).</p>
+
+<h3 id="43-storage-adapting-the-paper">4.3 Storage: adapting the paper</h3>
+
+<p><strong>Versioned, append-only triples (judgement, standard MVCC).</strong> Each triple record gains
+<code class="language-plaintext highlighter-rouge">created</code> and <code class="language-plaintext highlighter-rouge">retired</code> transaction numbers. A reader at snapshot e sees a triple when
+<code class="language-plaintext highlighter-rouge">created ≤ e &lt; retired</code>. Retraction is one CAS on <code class="language-plaintext highlighter-rouge">retired</code>. Nothing is unlinked on the hot path,
+which keeps C3’s insert-only list discipline intact. The table order still provides the I&lt;F and I≤F
+annotations within a materialisation. This is the HyPer and Hekaton family of designs applied to the
+paper’s table.</p>
+
+<p><strong>Reclamation by generation, not by pointer (judgement).</strong> Fine-grained reclamation (hazard pointers,
+epoch-based reclamation per node) is among the harder parts of lock-free structures to get right and to
+verify. Because the table is append-only, reclamation can be coarse: periodically build a compacted
+table generation in the background (dropping versions retired before the oldest active snapshot and
+outside the as-of retention window), switch readers to it with one pointer swap, and free the old
+generation once no reader holds it. A single global epoch counter, as in Silo, is enough.</p>
+
+<p><strong>Tagged 64-bit terms with inline literals (judgement, a well-known technique).</strong> Most trading
+literals are numbers, timestamps, booleans and small decimals. Encode a type tag in the high bits
+and the value inline, so those terms never touch the dictionary. Decimals beyond the inline range,
+strings and IRIs go through the dictionary. Comparisons and range scans on inline numerics become
+integer operations.</p>
+
+<p><strong>Exact decimals (fact about hardware, judgement about design).</strong> Represent money as scaled i128.
+Aggregates over i128 need 128-bit atomics: <code class="language-plaintext highlighter-rouge">cmpxchg16b</code> on x86-64 and <code class="language-plaintext highlighter-rouge">CASP</code> on ARMv8.1, which Rust
+and C++ can use and the JVM and .NET cannot express directly. The portable alternative is per-thread
+partial sums combined at read time (the <code class="language-plaintext highlighter-rouge">LongAdder</code> pattern), which also scales better under
+contention.</p>
+
+<p><strong>Layout variants (computed with the formula of §2.2, f = 0.7, d_sp = 0.5, d_op = 0.4).</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Variant</th>
+      <th>r</th>
+      <th>p</th>
+      <th>MVCC stamps</th>
+      <th>Bytes per triple (approx.)</th>
+      <th>Limit</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>paper, 8-byte pointers</td>
+      <td>4</td>
+      <td>8</td>
+      <td>none</td>
+      <td>80</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>paper, 4-byte pointers</td>
+      <td>4</td>
+      <td>4</td>
+      <td>none</td>
+      <td>46</td>
+      <td>2³² triples</td>
+    </tr>
+    <tr>
+      <td>inline literals, 4-byte offsets</td>
+      <td>8</td>
+      <td>4</td>
+      <td>none</td>
+      <td>58</td>
+      <td>2³² per table generation</td>
+    </tr>
+    <tr>
+      <td>inline literals, 4-byte offsets, MVCC</td>
+      <td>8</td>
+      <td>4</td>
+      <td>2 × 4 bytes (epoch-relative)</td>
+      <td>66</td>
+      <td>as above</td>
+    </tr>
+    <tr>
+      <td>as above, quads</td>
+      <td>8</td>
+      <td>4</td>
+      <td>2 × 4 bytes</td>
+      <td>about 80 with a graph column and one graph list</td>
+      <td>as above</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>A billion live quads is therefore on the order of 80 GB before the dictionary, which fits one large
+server. The hot set of a trading book is usually far smaller.</p>
+
+<p><strong>Chunked rather than per-triple lists (judgement).</strong> The sp- and op-lists are pointer chases, one
+likely cache miss per element. Unrolled lists (a small block of triple offsets per node, appended
+with one fetch-and-add on the block’s fill count) keep insertion lock-free and cut misses by the
+block size on scans. Soufflé’s concurrent B-tree (Jordan et al., PPoPP 2019) and adaptive radix
+trees with optimistic lock coupling (Leis et al.) are the main alternatives when ordered access is
+needed. Bw-trees are not recommended: the SIGMOD 2018 replication study found them slower and far
+more complex than alternatives.</p>
+
+<p><strong>Hardware discipline (fact about hardware).</strong> Random-access hash workloads are dominated by TLB and
+cache misses. Back the table and hash arrays with 2 MB or 1 GB huge pages, allocate per NUMA node,
+pin worker threads, and batch probes with software prefetching (group prefetching or AMAC, Kocberber
+et al., VLDB 2015) inside the nested-loop join.</p>
+
+<p><strong>Dictionary (judgement).</strong> A concurrent open-addressing map from term bytes to ID, using the same
+claim-then-publish protocol as C1 with pre-allocated IDs (as C6) so it is lock-free, plus an
+append-only ID-to-term array. Hash the term bytes once and carry the hash with the term.</p>
+
+<h3 id="44-evaluation-from-bulk-materialisation-to-small-deltas">4.4 Evaluation: from bulk materialisation to small deltas</h3>
+
+<p><strong>Adaptive parallelism (judgement).</strong> The executor starts materialising a transaction’s delta on its
+own thread. When the frontier of unprocessed derived facts exceeds a threshold (calibrated by
+benchmark, plausibly in the hundreds), it releases pinned, spinning workers to join. Spinning
+workers replace C8’s condition variable, trading CPU for microseconds. Termination becomes an atomic
+count of outstanding work plus a per-round flag, checked without a mutex. Bulk loads use the paper’s
+algorithm unchanged.</p>
+
+<p><strong>The work source (judgement, with a real trade-off).</strong> The paper’s global iterator over the table is
+both its source of the no-repeated-derivation guarantee and its remaining contention point (§5 of the
+paper). Per-worker Chase-Lev deques with stealing remove the contention but lose the global order
+that the I&lt;F annotation relies on, which reintroduces some repeated derivations. For the fixpoint
+itself that costs only wasted work, since set insertion deduplicates. It becomes a <strong>correctness</strong>
+problem for any counting-based incremental maintenance scheme, which needs exact derivation counts.
+Choose B/F (no counts) with work stealing, or keep the global order with counting. Not both.</p>
+
+<p><strong>Incremental maintenance (fact for the algorithms, judgement for the choice).</strong> For retractions,
+B/F (Motik et al., AAAI 2015) checks backward whether a deleted fact still has an alternative
+derivation before propagating forward, and generally overdeletes less than DRed (Gupta, Mumick and
+Subrahmanian, SIGMOD 1993). Counting suits non-recursive rules. Differential dataflow and DBSP are a
+different family entirely, maintaining weighted collections through sorted arrangements rather than
+a hash-indexed store (§5).</p>
+
+<p><strong>Negation and aggregation (fact for semantics).</strong> Stratify. Run the parallel algorithm within a
+stratum and barrier between strata. Maintain aggregates incrementally as derived values with
+per-thread partial sums. Recursive aggregation (exposure netting up a legal-entity hierarchy) is
+handled as recursion (closure) in one stratum, then aggregation over the closure in the next.</p>
+
+<p><strong>Equality (fact for the method).</strong> Rewrite every resource to the representative of its equality
+class, with a concurrent union-find (Anderson and Woll’s wait-free union-find is the classical
+reference) instead of materialising <code class="language-plaintext highlighter-rouge">owl:sameAs</code> cliques.</p>
+
+<p><strong>Joins (judgement).</strong> Keep index nested loops for the common acyclic, selective patterns of
+prepared queries. Use a worst-case optimal join (Leapfrog Triejoin, Veldhuizen 2014) where the
+compiler detects cyclic patterns, which needs sorted access on the relevant indexes.</p>
+
+<p><strong>Compiled rules (judgement).</strong> Compile each rule body and prepared query into a specialised join
+routine at build time from the LATTICE contract, with an interpreter fallback for ad hoc SPARQL.
+This removes per-atom dispatch, lets the compiler fix join orders using persistence profile
+statistics, and is the main reason runtime code generation features in the language matrix.</p>
+
+<p><strong>Batching independent transactions (judgement, research).</strong> Transactions touching disjoint LATTICE
+aggregates, whose derivation footprints the compiler can prove disjoint, can be materialised
+concurrently and committed in sequence order. This is where the persistence profile’s aggregate
+boundaries could become a throughput multiplier. It needs a static analysis of rule dependencies per
+aggregate, and is not needed for a first version.</p>
+
+<h3 id="45-durability-replication-and-determinism">4.5 Durability, replication and determinism</h3>
+
+<p><strong>Log only base facts (judgement).</strong> Derived facts are a function of base facts and rules, so the
+log carries base-fact deltas and rule-set versions only. Recovery replays from a snapshot of base
+facts (optionally with a snapshot of the materialisation to shorten recovery).</p>
+
+<p><strong>Replicated state machine (judgement).</strong> Replicate the log with Raft or Viewstamped Replication.
+Each replica applies the same transactions in the same order. Parallel materialisation is
+nondeterministic in <em>order</em> but deterministic in <em>result</em> for stratified datalog with deterministic
+aggregates, so replicas converge on the same fixpoint without lockstep execution. That property is
+what makes the paper’s algorithm compatible with replication at all.</p>
+
+<p><strong>Canonical state hash (judgement).</strong> Dictionary IDs and table positions differ between replicas, so
+a byte-level state hash is meaningless. Use an incremental multiset hash (Clarke et al., ASIACRYPT
+2003) over canonical term encodings: add a triple’s hash on assertion, subtract it on retraction.
+Replicas can compare hashes per transaction cheaply. Audit replays can prove they reproduced the
+same state.</p>
+
+<p><strong>Transaction time is bitemporality for free (judgement).</strong> MVCC’s commit epoch is the transaction
+time axis of a bitemporal model. Retaining versions within a retention window gives as-of queries
+directly. Older history can be compacted to a columnar format (Parquet or Arrow) for reconstruction
+queries off the hot path.</p>
+
+<h3 id="46-access-protocols">4.6 Access protocols</h3>
+
+<p><strong>Do not invent a wire protocol (judgement, high confidence).</strong> A bespoke UDP protocol has to solve
+loss, ordering, flow control, congestion and fan-out, which is what Aeron already solves. A bespoke
+TCP protocol is a smaller risk but still forfeits every existing client library and tool.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Layer</th>
+      <th>Protocol</th>
+      <th>Use</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Low-latency native</td>
+      <td><strong>Aeron</strong> (reliable UDP unicast and multicast, plus shared-memory IPC) with <strong>SBE</strong> encoding</td>
+      <td>prepared operations from co-located or in-datacentre clients, multicast delta fan-out</td>
+      <td>Apache-2.0. C, C++, Java and .NET clients maintained upstream. Rust via bindings to the C client. Encryption in the open-source edition should be checked <em>(verify)</em>. Datacentre links are often protected at network level instead</td>
+    </tr>
+    <tr>
+      <td>General RPC and bulk</td>
+      <td><strong>gRPC</strong> over HTTP/2, <strong>Arrow Flight</strong> for columnar results</td>
+      <td>integration services, analytics</td>
+      <td>ubiquitous tooling, higher latency than Aeron</td>
+    </tr>
+    <tr>
+      <td>HTTP</td>
+      <td><strong>SPARQL 1.1 Protocol</strong> and Graph Store Protocol, SPARQL JSON, XML, CSV and TSV results, Arrow IPC for bulk</td>
+      <td>everyone, including tools</td>
+      <td>standard and testable against the W3C suites</td>
+    </tr>
+    <tr>
+      <td>Subscriptions</td>
+      <td>Server-Sent Events or WebSocket over HTTP, Aeron multicast natively</td>
+      <td>continuous query deltas</td>
+      <td>payloads as RDF Patch-style add and delete records</td>
+    </tr>
+    <tr>
+      <td>Optional</td>
+      <td><strong>PostgreSQL wire protocol</strong> exposing Surface-projected flat views as tables</td>
+      <td>BI tools, any language with a Postgres driver</td>
+      <td>used by many non-Postgres engines for client reach</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Prepared operations (judgement).</strong> Because the query set is known (§3.3), the native protocol
+should carry an operation ID and SBE-encoded parameters, not SPARQL text. The server executes a
+compiled plan and returns SBE-encoded rows. Parsing and planning leave the hot path entirely.</p>
+
+<hr />
+
+<h2 id="5-building-on-an-existing-stack">5. Building on an existing stack</h2>
+
+<p>Acceptable licences: anything permitting our project to be a runtime dependency of closed-source
+commercial software. Permissive licences (MIT, Apache-2.0, BSD, ISC, UPL, OpenLDAP, EDL) are fine.
+File-level weak copyleft (MPL-2.0, EPL-2.0) is usable with care. LGPL is usable with dynamic linking
+and care. GPL, AGPL, SSPL and source-available licences such as BSL are excluded.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>System</th>
+      <th>Language</th>
+      <th>Licence</th>
+      <th>Fit</th>
+      <th>Verdict</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>RDFox</td>
+      <td>C++</td>
+      <td>proprietary</td>
+      <td>the paper’s own lineage</td>
+      <td><strong>excluded</strong>, licence</td>
+    </tr>
+    <tr>
+      <td>GraphDB, Stardog, AllegroGraph</td>
+      <td>various</td>
+      <td>proprietary</td>
+      <td> </td>
+      <td><strong>excluded</strong></td>
+    </tr>
+    <tr>
+      <td>Virtuoso (open source)</td>
+      <td>C</td>
+      <td>GPL-2.0</td>
+      <td> </td>
+      <td><strong>excluded</strong></td>
+    </tr>
+    <tr>
+      <td>Blazegraph</td>
+      <td>Java</td>
+      <td>GPL-2.0, unmaintained</td>
+      <td> </td>
+      <td><strong>excluded</strong></td>
+    </tr>
+    <tr>
+      <td>Apache Jena (ARQ, RIOT, TDB2)</td>
+      <td>Java</td>
+      <td>Apache-2.0</td>
+      <td>parsers, SPARQL algebra and optimiser are reusable. TDB2 is a copy-on-write B+tree store, not this design. ARQ’s iterator-per-binding execution is too allocation-heavy for the hot path</td>
+      <td><strong>reuse parsers and algebra</strong> in a Java core</td>
+    </tr>
+    <tr>
+      <td>RDF4J</td>
+      <td>Java</td>
+      <td>EDL-1.0 (BSD-style)</td>
+      <td>the SAIL API is a clean plug-in point for a custom store. Execution model as Jena</td>
+      <td><strong>reuse</strong> in a Java core</td>
+    </tr>
+    <tr>
+      <td>Oxigraph and its crates (<code class="language-plaintext highlighter-rouge">oxrdf</code>, <code class="language-plaintext highlighter-rouge">oxttl</code>, <code class="language-plaintext highlighter-rouge">oxrdfxml</code>, <code class="language-plaintext highlighter-rouge">spargebra</code>, <code class="language-plaintext highlighter-rouge">sparopt</code>, <code class="language-plaintext highlighter-rouge">sparesults</code>)</td>
+      <td>Rust</td>
+      <td>MIT or Apache-2.0</td>
+      <td>parsers, SPARQL parser and algebra, result serialisers. Storage is RocksDB-based</td>
+      <td><strong>reuse crates</strong> in a Rust core</td>
+    </tr>
+    <tr>
+      <td>QLever</td>
+      <td>C++</td>
+      <td>Apache-2.0 <em>(verify)</em></td>
+      <td>very fast read-mostly SPARQL, limited updates</td>
+      <td>reference design for compressed read paths</td>
+    </tr>
+    <tr>
+      <td>Soufflé</td>
+      <td>C++</td>
+      <td>UPL-1.0</td>
+      <td>compiled, parallel datalog, concurrent B-tree and Brie structures. Batch, not live</td>
+      <td><strong>reference design</strong>, particularly its data structures</td>
+    </tr>
+    <tr>
+      <td>Nemo</td>
+      <td>Rust</td>
+      <td>MIT or Apache-2.0 <em>(verify)</em></td>
+      <td>rule engine, columnar tries, successor of VLog. Batch-oriented</td>
+      <td>reference, possible rule-parser reuse</td>
+    </tr>
+    <tr>
+      <td>Differential Dataflow and Timely</td>
+      <td>Rust</td>
+      <td>MIT</td>
+      <td>incremental, recursive, handles retractions, deterministic, multi-worker</td>
+      <td><strong>a genuine architectural alternative</strong> to implementing B/F over the paper’s store (experiment E5)</td>
+    </tr>
+    <tr>
+      <td>DBSP and Feldera</td>
+      <td>Rust</td>
+      <td>MIT <em>(verify)</em></td>
+      <td>incremental view maintenance with a clean algebra (Z-sets), recursion supported</td>
+      <td><strong>a second alternative</strong> in the same family</td>
+    </tr>
+    <tr>
+      <td>DDlog</td>
+      <td>Rust</td>
+      <td>MIT, archived</td>
+      <td> </td>
+      <td>excluded, unmaintained</td>
+    </tr>
+    <tr>
+      <td>Datafrog, Ascent, Crepe</td>
+      <td>Rust</td>
+      <td>MIT or Apache-2.0</td>
+      <td>embedded datalog. Ascent compiles rules via macros</td>
+      <td>reference for compile-time rule specialisation</td>
+    </tr>
+    <tr>
+      <td>DuckDB, DataFusion</td>
+      <td>C++, Rust</td>
+      <td>MIT, Apache-2.0</td>
+      <td>vectorised analytics over flat (Surface) projections</td>
+      <td>optional analytic side-path</td>
+    </tr>
+    <tr>
+      <td>RocksDB, LMDB</td>
+      <td>C++, C</td>
+      <td>Apache-2.0 (dual GPL-2.0), OpenLDAP</td>
+      <td>durable cold storage</td>
+      <td>snapshots and history, not the hot store</td>
+    </tr>
+    <tr>
+      <td>TigerBeetle</td>
+      <td>Zig</td>
+      <td>Apache-2.0</td>
+      <td>a financial transactions database, not RDF</td>
+      <td><strong>architecture reference</strong> for single-writer design and deterministic simulation testing</td>
+    </tr>
+    <tr>
+      <td>Aeron, Agrona, SBE, Disruptor, JCTools</td>
+      <td>Java (Aeron also C)</td>
+      <td>Apache-2.0</td>
+      <td>transport, buffers, encoding, sequencing</td>
+      <td><strong>reuse</strong></td>
+    </tr>
+    <tr>
+      <td>openraft</td>
+      <td>Rust</td>
+      <td>MIT or Apache-2.0</td>
+      <td>Raft</td>
+      <td><strong>reuse</strong> for replication in a Rust core</td>
+    </tr>
+    <tr>
+      <td>HDT libraries</td>
+      <td>Java, C++</td>
+      <td>LGPL <em>(verify)</em></td>
+      <td>compressed read-only RDF</td>
+      <td>avoid unless needed</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Conclusion (judgement).</strong> Nothing permissively licensed implements a live, transactional,
+parallel, incrementally materialising RDF store. Build the core. Reuse parsing, SPARQL algebra,
+transport, encoding and consensus. Treat differential dataflow and DBSP as the serious “adopt rather
+than build” alternative for the incremental layer and settle it by experiment.</p>
+
+<hr />
+
+<h2 id="6-language-and-platform-options">6. Language and platform options</h2>
+
+<h3 id="61-what-the-language-must-provide">6.1 What the language must provide</h3>
+
+<p>Derived from §2 and §4, in rough order of weight for this workload.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Need</th>
+      <th>Why</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>L1</td>
+      <td>Predictable tail latency on the hot path</td>
+      <td>GC pauses, safepoints and JIT deoptimisation show up at p99.9</td>
+    </tr>
+    <tr>
+      <td>L2</td>
+      <td>Explicit atomics with a well-defined memory model</td>
+      <td>C1 to C7 need acquire/release CAS, and ARM servers expose weak ordering that x86 hides</td>
+    </tr>
+    <tr>
+      <td>L3</td>
+      <td>Control of memory layout</td>
+      <td>structs of arrays, alignment to cache lines, huge pages, NUMA placement, no per-triple objects</td>
+    </tr>
+    <tr>
+      <td>L4</td>
+      <td>128-bit atomics</td>
+      <td>exact decimal aggregates and some ABA-safe pointer schemes</td>
+    </tr>
+    <tr>
+      <td>L5</td>
+      <td>Memory and data-race safety</td>
+      <td>a financial system’s integrity and security posture</td>
+    </tr>
+    <tr>
+      <td>L6</td>
+      <td>Concurrency verification tooling</td>
+      <td>lock-free code is where correctness arguments fail (Appendix A)</td>
+    </tr>
+    <tr>
+      <td>L7</td>
+      <td>Code generation for compiled rules and queries</td>
+      <td>§3.3 and §4.4</td>
+    </tr>
+    <tr>
+      <td>L8</td>
+      <td>RDF and SPARQL ecosystem under permissive licences</td>
+      <td>parsers, algebra, result formats, test suites</td>
+    </tr>
+    <tr>
+      <td>L9</td>
+      <td>Finance transport ecosystem</td>
+      <td>Aeron, SBE, FIX tooling</td>
+    </tr>
+    <tr>
+      <td>L10</td>
+      <td>Operational maturity and hiring in finance</td>
+      <td>someone must run and extend this</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="62-option-a-net-c-f-with-rust">6.2 Option A: .NET (C#, F#) with Rust</h3>
+
+<p><strong>Shape.</strong> Rust for the storage and evaluation core. .NET for the access layer (Kestrel), the rule
+and query compiler (F#), client SDKs and tooling. Interop over P/Invoke.</p>
+
+<p><strong>Strengths.</strong></p>
+<ul>
+  <li><strong>Low-level C# is genuinely capable.</strong> <code class="language-plaintext highlighter-rouge">Span&lt;T&gt;</code>, <code class="language-plaintext highlighter-rouge">ref struct</code>, <code class="language-plaintext highlighter-rouge">NativeMemory.AlignedAlloc</code>,
+function pointers, <code class="language-plaintext highlighter-rouge">Interlocked.CompareExchange</code> on 32- and 64-bit values and object references,
+<code class="language-plaintext highlighter-rouge">Volatile</code>, a documented memory model, and first-class hardware intrinsics
+(<code class="language-plaintext highlighter-rouge">System.Runtime.Intrinsics</code>, including AVX-512 and AdvSimd) that are more mature than the JVM’s
+incubating Vector API. A pure C# core over native memory is viable, which makes Rust optional in
+this option rather than required.</li>
+  <li><strong>F# is a strong compiler language.</strong> Discriminated unions, pattern matching and computation
+expressions suit rule rewriting, stratification and join planning.</li>
+  <li><strong>Runtime code generation.</strong> <code class="language-plaintext highlighter-rouge">DynamicMethod</code> and IL emission, compiled expression trees, tiered
+compilation with dynamic PGO. Generated query code is optimised by the JIT like hand-written code.</li>
+  <li><strong>Concurrency testing.</strong> Microsoft Coyote (MIT) gives systematic, controlled-scheduling testing of
+.NET concurrency, which is rare outside research tools. Dafny compiles to C#, and F* to F#.</li>
+  <li><strong>Interop cost is low per call.</strong> A blittable P/Invoke is nanoseconds, lower with
+<code class="language-plaintext highlighter-rouge">SuppressGCTransition</code> for short calls. Tools such as <code class="language-plaintext highlighter-rouge">csbindgen</code> generate C# bindings from Rust.</li>
+  <li>Aeron.NET and SBE for .NET exist upstream. dotNetRDF (MIT) covers parsing.</li>
+</ul>
+
+<p><strong>Weaknesses.</strong></p>
+<ul>
+  <li><strong>The boundary is a recurring tax.</strong> Every query result, every batch of parameters and every
+error crosses it. Fine-grained crossings (per binding, per triple) erase the benefit of Rust.
+The boundary must sit at whole operations, which means the engine’s whole hot path is in Rust
+anyway and .NET is a client of it.</li>
+  <li><strong>Two runtimes, two memory managers, two build systems, two debugging stories.</strong></li>
+  <li>GC pauses on the .NET side remain milliseconds-class under load, so .NET should not sit between a
+latency-critical client and the engine.</li>
+  <li>No 128-bit <code class="language-plaintext highlighter-rouge">Interlocked</code> operations.</li>
+</ul>
+
+<p><strong>Verdict (judgement).</strong> Credible, particularly for a .NET organisation. In practice it converges on
+“Rust engine, .NET for compiler, tooling and SDKs”, or on a pure C# engine if the team prefers one
+runtime and accepts weaker static safety for unsafe code than Rust offers.</p>
+
+<h3 id="63-option-b-java-pure">6.3 Option B: Java, pure</h3>
+
+<p><strong>Shape.</strong> The whole engine on the JVM, with the triple table, hash arrays and dictionary off-heap in
+<code class="language-plaintext highlighter-rouge">MemorySegment</code>s via the Foreign Function and Memory API (final since JDK 22), and Java objects only
+for control structures.</p>
+
+<p><strong>Strengths.</strong></p>
+<ul>
+  <li><strong>A precise memory model and rich atomics.</strong> <code class="language-plaintext highlighter-rouge">VarHandle</code> access modes (plain, opaque,
+acquire/release, volatile) with <code class="language-plaintext highlighter-rouge">compareAndSet</code>, <code class="language-plaintext highlighter-rouge">compareAndExchange</code> and <code class="language-plaintext highlighter-rouge">getAndAdd</code>, including on
+aligned off-heap memory through layout var handles. Lock-free algorithms in the paper’s sense
+(not lock striping) are straightforward to express. <code class="language-plaintext highlighter-rouge">sun.misc.Unsafe</code> memory access is being
+withdrawn, so new code should use FFM from the start.</li>
+  <li><strong>The finance transport ecosystem is native here.</strong> Aeron, Aeron Cluster (a Raft-based replicated
+state machine), Agrona, SBE, the Disruptor and JCTools are all Java-first and Apache-2.0. LMAX
+showed single-writer, mechanically sympathetic Java at very high throughput.</li>
+  <li><strong>Runtime code generation is the platform’s home ground.</strong> The ClassFile API (final in JDK 24)
+emits bytecode for each compiled rule or query, and HotSpot or Graal then inlines and specialises
+it with profile information that ahead-of-time compilation cannot see.</li>
+  <li><strong>The richest permissive RDF ecosystem.</strong> Jena (Apache-2.0) and RDF4J (EDL) give parsers, SPARQL
+algebra, optimisers and SHACL engines.</li>
+  <li><strong>Concurrency testing.</strong> JCStress (OpenJDK) for memory-model litmus tests, Lincheck for
+linearisability checking, Java PathFinder for model checking.</li>
+  <li>Generational ZGC keeps pauses sub-millisecond. Project Leyden’s AOT cache (JDK 24 onward) reduces
+warm-up.</li>
+</ul>
+
+<p><strong>Weaknesses.</strong></p>
+<ul>
+  <li><strong>No value types yet.</strong> Project Valhalla’s value classes are not generally available as of JDK 25.
+Anything per-triple must live in off-heap segments or primitive arrays, accessed by offset. That
+is how high-performance Java is written already, but it gives up the type system for the data
+that matters most.</li>
+  <li><strong>No 128-bit CAS.</strong> Exact decimal aggregates must use partial sums or locks.</li>
+  <li><strong>Residual JVM jitter.</strong> Safepoints, deoptimisation, JIT compilation and allocation stalls under
+pressure. Manageable with discipline and tuning, not eliminable.</li>
+  <li><strong>Static verification is weaker for concurrent code.</strong> KeY, OpenJML and VerCors exist, but none
+approaches Verus or Iris-based reasoning for lock-free structures.</li>
+</ul>
+
+<p><strong>Verdict (judgement).</strong> The leading single-language option, and the right choice if the team is
+JVM-native or if Aeron Cluster’s integrated replication is decisive. Accept the off-heap programming
+style for the core.</p>
+
+<h3 id="64-option-c-erlang-or-elixir-with-rust">6.4 Option C: Erlang or Elixir with Rust</h3>
+
+<p><strong>Shape.</strong> BEAM for network termination, sessions, supervision and distribution. Rust for the
+engine. The question is how they meet.</p>
+
+<p><strong>Integration modes (fact for the mechanisms, judgement for the ratings).</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Mode</th>
+      <th>Mechanism</th>
+      <th>Latency added</th>
+      <th>Isolation</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Plain NIF</td>
+      <td>synchronous call on a normal scheduler</td>
+      <td>lowest</td>
+      <td>none: a crash or undefined behaviour kills the VM</td>
+      <td>must return within about a millisecond or it degrades the schedulers</td>
+    </tr>
+    <tr>
+      <td>Yielding NIF</td>
+      <td><code class="language-plaintext highlighter-rouge">enif_schedule_nif</code> and <code class="language-plaintext highlighter-rouge">enif_consume_timeslice</code> to split work</td>
+      <td>low</td>
+      <td>none</td>
+      <td>engine work is not naturally resumable in slices</td>
+    </tr>
+    <tr>
+      <td>Dirty NIF</td>
+      <td>runs on a dirty CPU or I/O scheduler</td>
+      <td>low</td>
+      <td>none</td>
+      <td>dirty schedulers are few. Long engine calls tie them up</td>
+    </tr>
+    <tr>
+      <td><strong>Async NIF with a queue</strong> (the pipe described in the request)</td>
+      <td>the NIF enqueues onto a ring and returns at once. Rust worker threads, not BEAM threads, execute. Completion via <code class="language-plaintext highlighter-rouge">enif_send</code> to the calling process from a non-scheduler thread</td>
+      <td>low microseconds per round trip</td>
+      <td>none</td>
+      <td>the idiomatic pattern. Use one SPSC ring per BEAM scheduler to avoid CAS on enqueue. Complete with <code class="language-plaintext highlighter-rouge">enif_send</code>, not a polled handle, because polling burns reductions. Return large results as resource binaries to avoid copying into the process heap. Handle a full ring as back-pressure</td>
+    </tr>
+    <tr>
+      <td>Port program or separate process over a shared-memory ring</td>
+      <td>the engine is its own OS process. BEAM writes requests into a shared-memory ring and is woken by <code class="language-plaintext highlighter-rouge">eventfd</code> or a futex</td>
+      <td>low microseconds</td>
+      <td><strong>full</strong>: an engine crash does not take down BEAM</td>
+      <td>recovers Erlang’s fault-tolerance argument at modest cost</td>
+    </tr>
+    <tr>
+      <td>Network client</td>
+      <td>BEAM talks to the engine over Aeron, gRPC or TCP</td>
+      <td>tens of microseconds and up</td>
+      <td>full</td>
+      <td>simplest, and then BEAM is just another client</td>
+    </tr>
+  </tbody>
+</table>
+
+<pre><code class="language-mermaid">sequenceDiagram
+    participant P as Erlang process
+    participant N as NIF (scheduler thread)
+    participant Q as SPSC ring (per scheduler)
+    participant W as Rust worker (pinned OS thread)
+    participant S as Engine
+    P-&gt;&gt;N: call(op, params)
+    N-&gt;&gt;Q: enqueue(request, caller pid, ref)
+    N--&gt;&gt;P: {ok, Ref}
+    W-&gt;&gt;Q: dequeue
+    W-&gt;&gt;S: execute compiled op
+    S--&gt;&gt;W: result (resource binary)
+    W-&gt;&gt;P: enif_send({Ref, Result})
+    P-&gt;&gt;P: receive {Ref, Result}
+</code></pre>
+
+<p><strong>Strengths.</strong></p>
+<ul>
+  <li>Supervision trees, process isolation, distribution and hot code loading for the control plane.</li>
+  <li>Very good at many concurrent sessions and protocol state machines.</li>
+  <li>The async-NIF pipe is sound, well-trodden, and keeps engine work off BEAM schedulers.</li>
+  <li>Concuerror (systematic concurrency testing for Erlang) and property-based testing culture.</li>
+</ul>
+
+<p><strong>Weaknesses.</strong></p>
+<ul>
+  <li><strong>BEAM adds nothing to the hot path.</strong> BEAM’s model is share-nothing message passing. The paper’s
+primitives are shared-memory CAS. All engine concurrency lives in Rust regardless.</li>
+  <li><strong>An extra hop.</strong> Client → BEAM → ring → Rust → <code class="language-plaintext highlighter-rouge">enif_send</code> → BEAM → client, where a Rust access
+layer would go client → Rust → client.</li>
+  <li><strong>Crash coupling.</strong> With any in-process NIF mode, a Rust panic is contained (Rustler catches
+unwinding) but undefined behaviour or a segmentation fault kills the VM, defeating the reason for
+choosing BEAM. Only the separate-process mode avoids it.</li>
+  <li>Erlang distribution is not a low-latency transport. Numeric work is slow. Finance hiring for BEAM
+is thin.</li>
+</ul>
+
+<p><strong>Verdict (judgement).</strong> Choose it only if the deployment’s dominant problem is orchestration across
+many nodes and sessions. Then put BEAM beside the engine, as a supervising control plane and session
+gateway, using the separate-process shared-memory ring or the network. Do not put it in front of
+latency-critical reads.</p>
+
+<h3 id="65-option-d-rust-with-another-language">6.5 Option D: Rust with another language</h3>
+
+<p><strong>Shape.</strong> Rust for everything that runs in production. A second language where its strengths are
+decisive. The useful reframing is that the second language need not share the runtime.</p>
+
+<p><strong>Rust’s case for the core.</strong></p>
+<ul>
+  <li><strong>No GC, explicit layout, explicit atomics</strong> with the C++20 memory model (<code class="language-plaintext highlighter-rouge">Ordering::{Relaxed,
+Acquire, Release, AcqRel, SeqCst}</code>, <code class="language-plaintext highlighter-rouge">compare_exchange</code>, <code class="language-plaintext highlighter-rouge">compare_exchange_weak</code>, <code class="language-plaintext highlighter-rouge">fetch_add</code>).
+128-bit atomics through <code class="language-plaintext highlighter-rouge">cmpxchg16b</code> or <code class="language-plaintext highlighter-rouge">CASP</code> via the <code class="language-plaintext highlighter-rouge">portable-atomic</code> crate, since the standard
+<code class="language-plaintext highlighter-rouge">AtomicU128</code> is not yet stable.</li>
+  <li><strong>Safety where it is cheap, <code class="language-plaintext highlighter-rouge">unsafe</code> where it is needed, and tooling for the <code class="language-plaintext highlighter-rouge">unsafe</code>.</strong> The
+borrow checker and <code class="language-plaintext highlighter-rouge">Send</code>/<code class="language-plaintext highlighter-rouge">Sync</code> remove most data races statically. The lock-free structures need
+<code class="language-plaintext highlighter-rouge">unsafe</code>, and Rust has unusually strong tools for exactly that code: <code class="language-plaintext highlighter-rouge">loom</code> (exhaustive
+interleavings under the C11 memory model), <code class="language-plaintext highlighter-rouge">shuttle</code> (randomised scheduling at scale), Miri
+(undefined-behaviour detection), Kani (bounded model checking) and Verus (SMT-based deductive
+verification, including concurrent data structures). See Appendix A.</li>
+  <li><strong>Ecosystem.</strong> <code class="language-plaintext highlighter-rouge">crossbeam</code> (epoch reclamation, deques), <code class="language-plaintext highlighter-rouge">seize</code> and <code class="language-plaintext highlighter-rouge">haphazard</code> (reclamation),
+<code class="language-plaintext highlighter-rouge">io_uring</code> runtimes (<code class="language-plaintext highlighter-rouge">glommio</code>, <code class="language-plaintext highlighter-rouge">monoio</code>, <code class="language-plaintext highlighter-rouge">tokio-uring</code>), <code class="language-plaintext highlighter-rouge">hyper</code> and <code class="language-plaintext highlighter-rouge">axum</code> for HTTP, <code class="language-plaintext highlighter-rouge">tonic</code> for
+gRPC, <code class="language-plaintext highlighter-rouge">arrow-rs</code> and DataFusion, Oxigraph’s parser and algebra crates, differential dataflow,
+<code class="language-plaintext highlighter-rouge">openraft</code>.</li>
+  <li><strong>Code generation.</strong> The contract’s rules and queries compile to Rust source at build time (the
+query set is known, so compile time is acceptable), with Cranelift available for runtime JIT of ad
+hoc queries.</li>
+</ul>
+
+<p><strong>Rust’s weaknesses.</strong> Lock-free structures in Rust are still hard: reclamation, aliasing rules
+inside <code class="language-plaintext highlighter-rouge">unsafe</code>, and self-referential layouts. Compile times. Aeron is reached through bindings to
+the C client, whose quality should be checked. A smaller finance talent pool than Java or C++,
+though growing.</p>
+
+<p><strong>Candidate second languages.</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Language</th>
+      <th>Role</th>
+      <th>Strengths</th>
+      <th>Cost</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Lean 4</strong></td>
+      <td>mechanised semantics of the rule language and evaluation, proofs of the semi-naïve and incremental algorithms, an executable reference evaluator used as the test oracle</td>
+      <td>proofs and programs in one language, compiles to C, Apache-2.0. Aeneas translates safe Rust into Lean for verification</td>
+      <td>proof engineering skills are scarce</td>
+    </tr>
+    <tr>
+      <td>OCaml (or OxCaml)</td>
+      <td>rule and query compiler</td>
+      <td>proven in trading (Jane Street), algebraic data types, fast compiler. OxCaml adds unboxed types and modes</td>
+      <td>a second toolchain, and OCaml is not where the engine runs</td>
+    </tr>
+    <tr>
+      <td>Haskell</td>
+      <td>compiler and property-based specification</td>
+      <td>expressive, QuickCheck lineage, Liquid Haskell</td>
+      <td>GC and runtime make it unsuitable at runtime. Offline only</td>
+    </tr>
+    <tr>
+      <td>F#</td>
+      <td>compiler</td>
+      <td>as Option A</td>
+      <td>.NET toolchain</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Verdict (judgement).</strong> Rust in production, Lean 4 for specification and proof, with the compiler
+written in Rust unless the team strongly prefers a functional compiler language. The two never meet
+at runtime, so there is no interop tax.</p>
+
+<h3 id="66-option-e-c">6.6 Option E: C++</h3>
+
+<p><strong>Strengths.</strong> The incumbent for this exact domain: RDFox, Soufflé, QLever and VLog are C++. Full
+control, mature libraries (Folly’s hazard pointers and concurrent maps, oneTBB, libcds), <code class="language-plaintext highlighter-rouge">std::atomic</code>
+with the C++20 memory model, 128-bit atomics, GenMC and CDSChecker for weak-memory model checking,
+ThreadSanitizer, LLVM ORC for runtime JIT, Aeron’s C and C++ clients and SBE’s C++ generator.</p>
+
+<p><strong>Weaknesses.</strong> Memory and data-race safety rest entirely on discipline and tooling. For a new
+financial system in 2026 that is a security and integrity liability that Rust removes at no
+performance cost.</p>
+
+<p><strong>Verdict (judgement).</strong> Viable, and the default if the team is already a C++ shop with strong
+concurrency expertise. Otherwise Rust supersedes it for a new codebase.</p>
+
+<h3 id="67-option-f-zig">6.7 Option F: Zig</h3>
+
+<p><strong>Strengths.</strong> TigerBeetle demonstrates a financial database in Zig with static allocation, a
+single-threaded deterministic core, <code class="language-plaintext highlighter-rouge">io_uring</code>, and deterministic simulation testing. Explicit
+allocators and <code class="language-plaintext highlighter-rouge">comptime</code> suit code generation.</p>
+
+<p><strong>Weaknesses.</strong> Pre-1.0 language with breaking changes. No borrow checker, so lock-free code has no
+static help. Small ecosystem, almost no RDF tooling, little formal-methods tooling.</p>
+
+<p><strong>Verdict (judgement).</strong> Study TigerBeetle’s design. Do not adopt the language for a lock-free,
+shared-memory engine.</p>
+
+<h3 id="68-others-briefly">6.8 Others, briefly</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Option</th>
+      <th>Why not, or when</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Go</td>
+      <td>GC, limited atomics, no layout control. Unsuitable for the core</td>
+    </tr>
+    <tr>
+      <td>Pony</td>
+      <td>data-race freedom by reference capabilities and a lock-free runtime, but a very small ecosystem</td>
+    </tr>
+    <tr>
+      <td>Ada and SPARK</td>
+      <td>highly industrialised deductive verification (absence of runtime errors, Ravenscar and Jorvik tasking profiles). Small ecosystem, no RDF tooling. Worth knowing for Appendix A, not a recommendation</td>
+    </tr>
+    <tr>
+      <td>OCaml alone (OCaml 5 domains)</td>
+      <td>a credible runtime for many systems, but the GC and limited layout control make the paper’s off-heap hash structures awkward</td>
+    </tr>
+    <tr>
+      <td>Haskell alone</td>
+      <td>STM is elegant for composition, not for hot-path throughput, and GC pauses matter</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="7-decision-matrix">7. Decision matrix</h2>
+
+<p>Scores are judgements on a 1–5 scale for each option <em>as a whole</em>, with the hot path where that option
+places it. Weights reflect §6.1. They are offered to make trade-offs explicit, not as arithmetic
+truth.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Criterion</th>
+      <th>Weight</th>
+      <th>A: .NET/F# + Rust</th>
+      <th>B: Java</th>
+      <th>C: Erlang + Rust</th>
+      <th>D: Rust + Lean/OCaml</th>
+      <th>E: C++</th>
+      <th>F: Zig</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>L1 Tail latency</td>
+      <td>3</td>
+      <td>4</td>
+      <td>3</td>
+      <td>3</td>
+      <td>5</td>
+      <td>5</td>
+      <td>5</td>
+    </tr>
+    <tr>
+      <td>L2 Atomics and memory model</td>
+      <td>3</td>
+      <td>5</td>
+      <td>4</td>
+      <td>4</td>
+      <td>5</td>
+      <td>5</td>
+      <td>4</td>
+    </tr>
+    <tr>
+      <td>L3 Layout control</td>
+      <td>3</td>
+      <td>5</td>
+      <td>3</td>
+      <td>5</td>
+      <td>5</td>
+      <td>5</td>
+      <td>5</td>
+    </tr>
+    <tr>
+      <td>L4 128-bit atomics</td>
+      <td>1</td>
+      <td>4</td>
+      <td>1</td>
+      <td>4</td>
+      <td>5</td>
+      <td>5</td>
+      <td>4</td>
+    </tr>
+    <tr>
+      <td>L5 Safety</td>
+      <td>3</td>
+      <td>4</td>
+      <td>4</td>
+      <td>3</td>
+      <td>5</td>
+      <td>2</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>L6 Concurrency verification</td>
+      <td>3</td>
+      <td>4</td>
+      <td>4</td>
+      <td>4</td>
+      <td>5</td>
+      <td>4</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>L7 Code generation</td>
+      <td>2</td>
+      <td>5</td>
+      <td>5</td>
+      <td>2</td>
+      <td>4</td>
+      <td>4</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>L8 RDF ecosystem</td>
+      <td>2</td>
+      <td>3</td>
+      <td>5</td>
+      <td>3</td>
+      <td>4</td>
+      <td>3</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>L9 Finance transport</td>
+      <td>2</td>
+      <td>4</td>
+      <td>5</td>
+      <td>2</td>
+      <td>3</td>
+      <td>5</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>L10 Operations and hiring</td>
+      <td>2</td>
+      <td>4</td>
+      <td>5</td>
+      <td>2</td>
+      <td>3</td>
+      <td>4</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>Interop overhead on the hot path</td>
+      <td>3</td>
+      <td>3</td>
+      <td>5</td>
+      <td>2</td>
+      <td>5</td>
+      <td>5</td>
+      <td>5</td>
+    </tr>
+    <tr>
+      <td>Deductive verification (Appendix A)</td>
+      <td>1</td>
+      <td>4</td>
+      <td>2</td>
+      <td>3</td>
+      <td>5</td>
+      <td>2</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td><strong>Weighted total (of 140)</strong></td>
+      <td> </td>
+      <td><strong>115</strong></td>
+      <td><strong>112</strong></td>
+      <td><strong>88</strong></td>
+      <td><strong>128</strong></td>
+      <td><strong>117</strong></td>
+      <td><strong>91</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Reading the matrix: D leads on the criteria this workload weights most (latency, safety, verified
+concurrency, no interop). E, A and B form a close second group for different reasons: raw control
+and libraries for E, intrinsics and testing for A, ecosystem and code generation for B. E’s lead
+within that group comes despite its safety penalty, which a team may reasonably weight higher than
+this table does. C and F trail, C because BEAM’s strengths do not touch the hot path, F because of
+ecosystem and tooling.</p>
+
+<hr />
+
+<h2 id="8-recommendation">8. Recommendation</h2>
+
+<p><strong>Primary (judgement).</strong></p>
+
+<ol>
+  <li><strong>Engine core in Rust.</strong> Storage (§4.3), incremental parallel evaluation (§4.4), MVCC,
+compaction by generation, the transaction executor, the log and replication via <code class="language-plaintext highlighter-rouge">openraft</code>.</li>
+  <li><strong>Compiler in Rust</strong>, turning the LATTICE rule and query set into specialised Rust at build time,
+with an interpreter for ad hoc SPARQL built on Oxigraph’s <code class="language-plaintext highlighter-rouge">spargebra</code> and <code class="language-plaintext highlighter-rouge">sparopt</code>.</li>
+  <li><strong>Access</strong> with Aeron + SBE for prepared operations (bindings to the C client), <code class="language-plaintext highlighter-rouge">hyper</code>/<code class="language-plaintext highlighter-rouge">axum</code>
+for the SPARQL 1.1 Protocol, <code class="language-plaintext highlighter-rouge">tonic</code> and Arrow Flight for bulk, and optionally <code class="language-plaintext highlighter-rouge">pgwire</code> over
+Surface views.</li>
+  <li><strong>Lean 4</strong> for the mechanised semantics and the reference evaluator, <strong>TLA+ or Quint</strong> for the
+sequencer, commit, replication and termination protocols (Appendix A).</li>
+  <li><strong>Deterministic simulation testing from the first commit</strong>: time, randomness, I/O and worker
+scheduling behind interfaces, so the whole engine can be run under a seeded simulator.</li>
+</ol>
+
+<p><strong>If the organisation is JVM-first (judgement).</strong> Option B with an off-heap FFM core, Aeron Cluster
+for replication, ClassFile API code generation, Jena or RDF4J for parsing and algebra, JCStress and
+Lincheck for concurrency testing, and TLA+ for protocols. Expect more tuning effort for tail latency
+and partial sums instead of 128-bit atomics.</p>
+
+<p><strong>If Erlang is wanted for operations (judgement).</strong> Option D as above, with BEAM as a separate
+control plane and session gateway connected by a shared-memory ring between processes or by Aeron,
+never as an in-process NIF in front of the read path.</p>
+
+<hr />
+
+<h2 id="9-experiments-to-run-before-committing">9. Experiments to run before committing</h2>
+
+<p>Each experiment is small, decisive and benchmarked on the target hardware class (two-socket x86 and,
+separately, an ARM server, because weak memory ordering changes both correctness and cost).</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Experiment</th>
+      <th>Decides</th>
+      <th>Pass criterion</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>E1</td>
+      <td>Ispo plus sp/op indexes in Rust and in Java FFM. 1 to 64 threads, insert throughput and p99.9 insert latency, with and without reserved blocks (C6) and huge pages</td>
+      <td>the core language between B and D</td>
+      <td>Rust within agreed margin of the paper’s scaling. Java p99.9 within an agreed factor of Rust</td>
+    </tr>
+    <tr>
+      <td>E2</td>
+      <td>Small-delta materialisation: a transaction deriving 10, 100 and 10,000 facts, single-threaded versus adaptive parallel</td>
+      <td>the adaptive threshold (§4.4) and whether spinning workers are needed</td>
+      <td>p99 for a 100-fact delta below the tier target of §3.1</td>
+    </tr>
+    <tr>
+      <td>E3</td>
+      <td>B/F retraction versus differential dataflow versus DBSP on a LATTICE-shaped rule set (instrument lifecycle and exposure aggregation)</td>
+      <td>build versus adopt for incremental maintenance (§5)</td>
+      <td>latency, throughput and memory per live fact</td>
+    </tr>
+    <tr>
+      <td>E4</td>
+      <td>Async-NIF round trip and the shared-memory ring between BEAM and a Rust process</td>
+      <td>whether Option C’s hop is tolerable</td>
+      <td>measured round-trip p99 against the tier target</td>
+    </tr>
+    <tr>
+      <td>E5</td>
+      <td>P/Invoke per-operation overhead with realistic result marshalling</td>
+      <td>Option A’s boundary placement</td>
+      <td>overhead below an agreed fraction of operation cost</td>
+    </tr>
+    <tr>
+      <td>E6</td>
+      <td>Aeron + SBE prepared operation, end to end, versus gRPC and HTTP</td>
+      <td>protocol layering (§4.6)</td>
+      <td>quantified latency per layer</td>
+    </tr>
+    <tr>
+      <td>E7</td>
+      <td>Replicas applying the same log in parallel, comparing multiset hashes per transaction</td>
+      <td>the replication and determinism argument (§4.5)</td>
+      <td>hashes equal across 10⁶ transactions with randomised worker scheduling</td>
+    </tr>
+    <tr>
+      <td>E8</td>
+      <td><code class="language-plaintext highlighter-rouge">loom</code> and <code class="language-plaintext highlighter-rouge">shuttle</code> on the bucket and list protocols, with a deliberately weakened ordering</td>
+      <td>that the tooling catches the bugs this design invites</td>
+      <td>the weakened ordering is caught</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="10-risks-and-open-questions">10. Risks and open questions</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Risk</th>
+      <th>Mitigation</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>R1</td>
+      <td>The paper’s speedups do not transfer to small deltas</td>
+      <td>E2 and adaptive parallelism</td>
+    </tr>
+    <tr>
+      <td>R2</td>
+      <td>Lock-free code is correct on x86 and wrong on ARM</td>
+      <td>weak-memory model checking (<code class="language-plaintext highlighter-rouge">loom</code>, GenMC) and an ARM CI runner (Appendix A)</td>
+    </tr>
+    <tr>
+      <td>R3</td>
+      <td>Memory growth from versions and private insertion points (C7)</td>
+      <td>compaction by generation, a cap on private insertion points, retention windows</td>
+    </tr>
+    <tr>
+      <td>R4</td>
+      <td>The incremental algorithm is subtly wrong for some rule shape</td>
+      <td>differential testing against the Lean reference evaluator and against from-scratch recomputation on every commit in test builds</td>
+    </tr>
+    <tr>
+      <td>R5</td>
+      <td>Scope creep into a general-purpose triple store</td>
+      <td>the compiled-contract model is the product. Ad hoc SPARQL is a fallback</td>
+    </tr>
+    <tr>
+      <td>R6</td>
+      <td>Non-determinism leaks into replicated state (floating point, hash iteration order, timestamps)</td>
+      <td>exact decimals, canonical multiset hashing, time only from the log</td>
+    </tr>
+    <tr>
+      <td>R7</td>
+      <td>Licence drift in a dependency</td>
+      <td>an automated licence check in CI against Appendix B’s allow-list</td>
+    </tr>
+    <tr>
+      <td>R8</td>
+      <td>A bespoke protocol creeps in for “just one client”</td>
+      <td>§4.6. Only established protocols</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Open questions.</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Question</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Q1</td>
+      <td>Which rule language is the source: SWRL, SHACL rules, an RDFox-like datalog dialect, or a LATTICE-specific IR with several front-ends</td>
+    </tr>
+    <tr>
+      <td>Q2</td>
+      <td>Is RDF 1.2 (triple terms) needed for per-fact provenance, and at what memory cost</td>
+    </tr>
+    <tr>
+      <td>Q3</td>
+      <td>What retention window for as-of queries is required by the regulatory regime in scope</td>
+    </tr>
+    <tr>
+      <td>Q4</td>
+      <td>Should independent aggregates commit concurrently (§4.4, last point) in the first version, or only after the single-writer design is proven</td>
+    </tr>
+    <tr>
+      <td>Q5</td>
+      <td>Is multicast delta fan-out to many subscribers a requirement, which would make Aeron decisive</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="appendix-a-formal-methods">Appendix A: Formal methods</h2>
+
+<h3 id="a1-what-needs-verifying">A.1 What needs verifying</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Property</th>
+      <th>Kind</th>
+      <th>Where it lives</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>F1</td>
+      <td>Ispo <code class="language-plaintext highlighter-rouge">add</code> and <code class="language-plaintext highlighter-rouge">contains</code> are linearisable, and no triple is inserted twice</td>
+      <td>linearisability</td>
+      <td>C1, C2, C6</td>
+    </tr>
+    <tr>
+      <td>F2</td>
+      <td>Returning F freezes I≤F (§2.1), including with reserved blocks</td>
+      <td>safety invariant</td>
+      <td>C6 and the iterator</td>
+    </tr>
+    <tr>
+      <td>F3</td>
+      <td>Each rule instantiation is considered at most once (the paper’s Theorem 1)</td>
+      <td>safety</td>
+      <td>Algorithm 1</td>
+    </tr>
+    <tr>
+      <td>F4</td>
+      <td>Termination is neither premature nor lost</td>
+      <td>safety and liveness</td>
+      <td>C8 or its replacement</td>
+    </tr>
+    <tr>
+      <td>F5</td>
+      <td>Resize never loses or duplicates a bucket</td>
+      <td>safety</td>
+      <td>C5</td>
+    </tr>
+    <tr>
+      <td>F6</td>
+      <td>No use-after-free under reclamation</td>
+      <td>memory safety</td>
+      <td>§4.3 generations</td>
+    </tr>
+    <tr>
+      <td>F7</td>
+      <td>Readers see exactly the committed fixpoint at their snapshot</td>
+      <td>snapshot isolation</td>
+      <td>MVCC</td>
+    </tr>
+    <tr>
+      <td>F8</td>
+      <td>Incremental maintenance yields the same set as recomputation from scratch</td>
+      <td>functional correctness</td>
+      <td>B/F</td>
+    </tr>
+    <tr>
+      <td>F9</td>
+      <td>Replicas applying the same log reach equal canonical state</td>
+      <td>determinism</td>
+      <td>§4.5</td>
+    </tr>
+    <tr>
+      <td>F10</td>
+      <td>SPARQL results conform to the W3C semantics</td>
+      <td>conformance</td>
+      <td>query layer</td>
+    </tr>
+    <tr>
+      <td>F11</td>
+      <td>Arithmetic is exact and overflow-checked</td>
+      <td>functional correctness</td>
+      <td>literals and aggregates</td>
+    </tr>
+    <tr>
+      <td>F12</td>
+      <td>Protocol safety and liveness under failures</td>
+      <td>distributed safety</td>
+      <td>sequencer, log, replication</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="a2-techniques-from-cheap-to-expensive">A.2 Techniques, from cheap to expensive</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Technique</th>
+      <th>Finds</th>
+      <th>Cost</th>
+      <th>Applied to</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Unit and property-based tests</td>
+      <td>logic errors</td>
+      <td>low</td>
+      <td>everything</td>
+    </tr>
+    <tr>
+      <td><strong>Metamorphic tests</strong></td>
+      <td>order dependence</td>
+      <td>low</td>
+      <td>the paper’s own law: any insertion order and any thread schedule give the same fixpoint. Permute inputs and schedules and compare canonical hashes (F3, F9)</td>
+    </tr>
+    <tr>
+      <td><strong>Differential tests</strong> against a reference</td>
+      <td>semantic errors</td>
+      <td>low to medium</td>
+      <td>the engine against a naive evaluator (ideally the Lean one), B/F against recomputation (F8), SPARQL against the W3C test suites and another engine (F10)</td>
+    </tr>
+    <tr>
+      <td>Fuzzing</td>
+      <td>crashes, undefined behaviour, parser bugs</td>
+      <td>low to medium</td>
+      <td>parsers, protocol decoders, the compiler</td>
+    </tr>
+    <tr>
+      <td><strong>Systematic concurrency testing</strong> under weak memory</td>
+      <td>interleaving and ordering bugs</td>
+      <td>medium</td>
+      <td>every lock-free structure (F1, F2, F4, F5, F6)</td>
+    </tr>
+    <tr>
+      <td>Linearisability checking of recorded histories</td>
+      <td>non-linearisable behaviour at scale</td>
+      <td>medium</td>
+      <td>the store under load (F1), transactional anomalies (F7)</td>
+    </tr>
+    <tr>
+      <td><strong>Deterministic simulation testing</strong></td>
+      <td>system-level bugs under faults</td>
+      <td>medium, but must be designed in from the start</td>
+      <td>the whole engine and replication (F7, F9, F12)</td>
+    </tr>
+    <tr>
+      <td><strong>Design-level model checking</strong> (TLA+, Quint, P)</td>
+      <td>protocol design errors before code exists</td>
+      <td>medium</td>
+      <td>termination, commit, compaction switch-over, replication (F4, F6, F7, F12)</td>
+    </tr>
+    <tr>
+      <td><strong>Deductive verification</strong> of kernels</td>
+      <td>proofs for all inputs and schedules</td>
+      <td>high</td>
+      <td>the bucket protocol and list insertion (F1, F5), reclamation (F6)</td>
+    </tr>
+    <tr>
+      <td><strong>Mechanised semantics</strong></td>
+      <td>specification errors, algorithm proofs</td>
+      <td>high</td>
+      <td>semi-naïve and B/F correctness (F3, F8). Mechanised datalog engines exist as precedent, for example Benzaken, Contejean and Dumbrava’s certified standard and stratified datalog inference engines in Coq</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="a3-tooling-by-option">A.3 Tooling by option</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Technique</th>
+      <th>Rust</th>
+      <th>Java</th>
+      <th>.NET</th>
+      <th>Erlang</th>
+      <th>C++</th>
+      <th>Zig</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Weak-memory systematic testing</td>
+      <td><strong>loom</strong> (C11 model), shuttle</td>
+      <td>JCStress (litmus tests)</td>
+      <td>Coyote (controlled scheduling, not weak memory)</td>
+      <td>Concuerror (systematic, message-passing)</td>
+      <td><strong>GenMC</strong>, CDSChecker, Nidhugg</td>
+      <td>none mature</td>
+    </tr>
+    <tr>
+      <td>Linearisability checking</td>
+      <td>via history checkers (Porcupine, Elle)</td>
+      <td><strong>Lincheck</strong></td>
+      <td>via history checkers</td>
+      <td>via history checkers</td>
+      <td>via history checkers</td>
+      <td>via history checkers</td>
+    </tr>
+    <tr>
+      <td>Undefined-behaviour detection</td>
+      <td><strong>Miri</strong></td>
+      <td>n/a (memory safe)</td>
+      <td>n/a for safe code</td>
+      <td>n/a</td>
+      <td>ASan, UBSan, TSan</td>
+      <td>safety checks in debug builds</td>
+    </tr>
+    <tr>
+      <td>Bounded model checking of code</td>
+      <td><strong>Kani</strong></td>
+      <td>Java PathFinder</td>
+      <td> </td>
+      <td> </td>
+      <td>CBMC</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>Deductive verification</td>
+      <td><strong>Verus</strong> (including concurrency via tokenised state machines), Creusot, Prusti, Aeneas to Lean</td>
+      <td>KeY, OpenJML, VerCors</td>
+      <td><strong>Dafny</strong> (compiles to C#), F*</td>
+      <td>limited</td>
+      <td>VeriFast, Frama-C (C subset)</td>
+      <td>none</td>
+    </tr>
+    <tr>
+      <td>Deterministic simulation</td>
+      <td>madsim, turmoil, custom executors</td>
+      <td>custom executors</td>
+      <td><strong>Coyote</strong></td>
+      <td>not practical</td>
+      <td>custom</td>
+      <td><strong>TigerBeetle’s VOPR</strong> as a model</td>
+    </tr>
+    <tr>
+      <td>Foundations for unsafe code</td>
+      <td>RustBelt, Iris</td>
+      <td> </td>
+      <td> </td>
+      <td> </td>
+      <td> </td>
+      <td> </td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Specification languages are independent of the implementation language: TLA+ (with TLC and the
+Apalache symbolic checker), Quint, P, Lean 4, Rocq and Isabelle.</p>
+
+<h3 id="a4-a-verification-architecture">A.4 A verification architecture</h3>
+
+<p><strong>Verified kernel, model-checked protocols, tested periphery (judgement).</strong></p>
+
+<ol>
+  <li>
+    <p><strong>Before code.</strong> TLA+ or Quint models of the termination protocol (F4), the commit and epoch
+publication (F7), the compaction switch-over (F6) and replication (F12). A fragment of the
+termination model’s key invariant:</p>
+
+    <pre><code class="language-tla">NoPrematureTermination ==
+    done =&gt; /\ \A f \in Derived : processed[f]
+            /\ Closed(Derived)        \* every rule instance over Derived is already in Derived
+</code></pre>
+  </li>
+  <li>
+    <p><strong>Kernels.</strong> The bucket claim-and-publish protocol, list insertion and reclamation are small
+enough to verify deductively in Verus, and must at least pass exhaustive <code class="language-plaintext highlighter-rouge">loom</code> exploration. An
+example of the cheap tier, which already catches the classic duplicate-insert race:</p>
+
+    <div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">#[test]</span>
+<span class="k">fn</span> <span class="nf">racing_inserts_of_one_triple_create_it_once</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nn">loom</span><span class="p">::</span><span class="nf">model</span><span class="p">(||</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="n">idx</span> <span class="o">=</span> <span class="nn">Arc</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="nn">SpoIndex</span><span class="p">::</span><span class="nf">with_capacity</span><span class="p">(</span><span class="mi">4</span><span class="p">));</span>
+        <span class="k">let</span> <span class="n">handles</span><span class="p">:</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="n">_</span><span class="o">&gt;</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="mi">2</span><span class="p">)</span>
+            <span class="nf">.map</span><span class="p">(|</span><span class="n">_</span><span class="p">|</span> <span class="p">{</span>
+                <span class="k">let</span> <span class="n">idx</span> <span class="o">=</span> <span class="n">idx</span><span class="nf">.clone</span><span class="p">();</span>
+                <span class="nn">loom</span><span class="p">::</span><span class="nn">thread</span><span class="p">::</span><span class="nf">spawn</span><span class="p">(</span><span class="k">move</span> <span class="p">||</span> <span class="n">idx</span><span class="nf">.insert</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+            <span class="p">})</span>
+            <span class="nf">.collect</span><span class="p">();</span>
+        <span class="k">let</span> <span class="n">created</span> <span class="o">=</span> <span class="n">handles</span>
+            <span class="nf">.into_iter</span><span class="p">()</span>
+            <span class="nf">.map</span><span class="p">(|</span><span class="n">h</span><span class="p">|</span> <span class="n">h</span><span class="nf">.join</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">())</span>
+            <span class="nf">.filter</span><span class="p">(|</span><span class="n">r</span><span class="p">|</span> <span class="nd">matches!</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="nn">Inserted</span><span class="p">::</span><span class="nf">New</span><span class="p">(</span><span class="n">_</span><span class="p">)))</span>
+            <span class="nf">.count</span><span class="p">();</span>
+        <span class="nd">assert_eq!</span><span class="p">(</span><span class="n">created</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+    <span class="p">});</span>
+<span class="p">}</span>
+</code></pre></div>    </div>
+
+    <p>The protocol under test is the paper’s C1 with C6’s pre-allocated triple:</p>
+
+    <div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">const</span> <span class="n">EMPTY</span><span class="p">:</span> <span class="nb">u32</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>          <span class="c1">// offsets start at 1, so 0 is free to mean "empty"</span>
+<span class="k">const</span> <span class="n">CLAIMED</span><span class="p">:</span> <span class="nb">u32</span> <span class="o">=</span> <span class="nn">u32</span><span class="p">::</span><span class="n">MAX</span><span class="p">;</span> <span class="c1">// the paper's INS marker</span>
+
+<span class="k">pub</span> <span class="k">fn</span> <span class="nf">insert</span><span class="p">(</span><span class="o">&amp;</span><span class="k">self</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="n">Triple</span><span class="p">,</span> <span class="n">reserved</span><span class="p">:</span> <span class="nb">u32</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">Inserted</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">i</span> <span class="o">=</span> <span class="k">self</span><span class="nf">.slot</span><span class="p">(</span><span class="n">t</span><span class="nf">.hash</span><span class="p">());</span>
+    <span class="k">loop</span> <span class="p">{</span>
+        <span class="k">match</span> <span class="k">self</span><span class="py">.buckets</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="nf">.load</span><span class="p">(</span><span class="nn">Ordering</span><span class="p">::</span><span class="n">Acquire</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">EMPTY</span> <span class="k">=&gt;</span> <span class="p">{</span>
+                <span class="c1">// C6: the triple is already written into `reserved`, so publish it directly.</span>
+                <span class="k">if</span> <span class="k">self</span><span class="py">.buckets</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                    <span class="nf">.compare_exchange</span><span class="p">(</span><span class="n">EMPTY</span><span class="p">,</span> <span class="n">reserved</span><span class="p">,</span> <span class="nn">Ordering</span><span class="p">::</span><span class="n">AcqRel</span><span class="p">,</span> <span class="nn">Ordering</span><span class="p">::</span><span class="n">Acquire</span><span class="p">)</span>
+                    <span class="nf">.is_ok</span><span class="p">()</span>
+                <span class="p">{</span>
+                    <span class="k">return</span> <span class="nn">Inserted</span><span class="p">::</span><span class="nf">New</span><span class="p">(</span><span class="n">reserved</span><span class="p">);</span>
+                <span class="p">}</span>
+                <span class="c1">// lost the race: re-examine the same bucket, it may now hold this triple</span>
+            <span class="p">}</span>
+            <span class="n">CLAIMED</span> <span class="k">=&gt;</span> <span class="nn">std</span><span class="p">::</span><span class="nn">hint</span><span class="p">::</span><span class="nf">spin_loop</span><span class="p">(),</span> <span class="c1">// only reachable without C6</span>
+            <span class="n">found</span> <span class="k">if</span> <span class="k">self</span><span class="py">.table</span><span class="nf">.get</span><span class="p">(</span><span class="n">found</span><span class="p">)</span> <span class="o">==</span> <span class="n">t</span> <span class="k">=&gt;</span> <span class="k">return</span> <span class="nn">Inserted</span><span class="p">::</span><span class="nf">Existing</span><span class="p">(</span><span class="n">found</span><span class="p">),</span>
+            <span class="n">_</span> <span class="k">=&gt;</span> <span class="n">i</span> <span class="o">=</span> <span class="k">self</span><span class="nf">.next</span><span class="p">(</span><span class="n">i</span><span class="p">),</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>    </div>
+
+    <p>The <code class="language-plaintext highlighter-rouge">Release</code> half of the successful CAS publishes the triple’s fields written into <code class="language-plaintext highlighter-rouge">reserved</code>,
+and the <code class="language-plaintext highlighter-rouge">Acquire</code> load lets a prober read them. Weakening either to <code class="language-plaintext highlighter-rouge">Relaxed</code> is exactly the bug
+that x86 hides and ARM exposes, and that E8 checks the tooling catches.</p>
+  </li>
+  <li>
+    <p><strong>Algorithms.</strong> Lean 4 mechanisation of stratified datalog semantics, the fact-at-a-time
+semi-naïve algorithm (the paper’s Theorem 1 is a good first target, since its proof is short and
+given in the paper’s Appendix A) and B/F. The executable Lean evaluator becomes the oracle for
+differential tests.</p>
+  </li>
+  <li>
+    <p><strong>System.</strong> Deterministic simulation of the whole engine and replication under injected faults,
+with seeds recorded and replayable. Linearisability and transactional-anomaly checking (Elle-style)
+of recorded histories from load tests.</p>
+  </li>
+  <li>
+    <p><strong>Continuously.</strong> Metamorphic and differential tests in CI on x86 and ARM, Miri on the <code class="language-plaintext highlighter-rouge">unsafe</code>
+modules, fuzzing of parsers and decoders, the W3C SPARQL suites, and the licence allow-list.</p>
+  </li>
+</ol>
+
+<h3 id="a5-how-formal-methods-change-the-matrix">A.5 How formal methods change the matrix</h3>
+
+<ul>
+  <li><strong>They widen Rust’s lead.</strong> <code class="language-plaintext highlighter-rouge">loom</code>, <code class="language-plaintext highlighter-rouge">shuttle</code>, Miri, Kani and Verus target precisely the <code class="language-plaintext highlighter-rouge">unsafe</code>
+lock-free code this engine needs, and Aeneas connects Rust to Lean. No other option has comparable
+coverage of that layer.</li>
+  <li><strong>They lift .NET</strong> through Coyote (systematic testing in production code) and Dafny compiling to
+C#, which makes a pure-C# core more defensible than its raw safety score suggests.</li>
+  <li><strong>They leave Java strong on testing, weak on proof.</strong> JCStress and Lincheck are mature, but
+deductive verification of lock-free Java over off-heap memory is research territory.</li>
+  <li><strong>They do not rescue Erlang + Rust’s hot path</strong>, since the hot path is Rust either way. Concuerror
+helps the control plane only.</li>
+  <li><strong>They penalise C++ and Zig</strong> for the absence of ownership-based reasoning, though GenMC is a strong
+C++ tool for weak-memory checking.</li>
+  <li><strong>They are language-neutral at the design level.</strong> TLA+, Quint and Lean models are worth their cost
+whichever option is chosen.</li>
+</ul>
+
+<h3 id="a6-pitfalls">A.6 Pitfalls</h3>
+
+<ul>
+  <li><strong>Verifying under sequential consistency</strong> while running on weak hardware. Every model and test of
+F1 to F6 must use the C11 or RC11 model (Lahav et al., PLDI 2017) or test on ARM.</li>
+  <li><strong>The specification gap.</strong> A proved kernel with a wrong specification is wrong. Differential tests
+against an independent reference catch what proofs of the wrong property miss.</li>
+  <li><strong>Proof maintenance.</strong> Proofs of fast-changing code rot. Verify the stable kernels (buckets, lists,
+reclamation, commit) and test the rest.</li>
+  <li><strong>Determinism must be designed in.</strong> Deterministic simulation cannot be retrofitted onto code that
+reads the clock, spawns threads or does I/O directly.</li>
+</ul>
+
+<hr />
+
+<h2 id="appendix-b-licence-summary">Appendix B: Licence summary</h2>
+
+<p>Licences marked <em>(verify)</em> in the body must be confirmed upstream before adoption.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Category</th>
+      <th>Examples</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Permissive</td>
+      <td>MIT, Apache-2.0, BSD-2/3, ISC, UPL-1.0, EDL-1.0, OpenLDAP, Boost</td>
+      <td>allowed</td>
+    </tr>
+    <tr>
+      <td>File-level weak copyleft</td>
+      <td>MPL-2.0, EPL-2.0</td>
+      <td>allowed with care (modified files stay open)</td>
+    </tr>
+    <tr>
+      <td>Library copyleft</td>
+      <td>LGPL-2.1, LGPL-3.0</td>
+      <td>allowed with dynamic linking and care. Avoid in the core</td>
+    </tr>
+    <tr>
+      <td>Strong copyleft and network copyleft</td>
+      <td>GPL, AGPL, SSPL</td>
+      <td>excluded from shipped code. Acceptable for test-only tools that are not distributed (JCStress, PropEr)</td>
+    </tr>
+    <tr>
+      <td>Source-available</td>
+      <td>BSL, Commons Clause variants</td>
+      <td>excluded</td>
+    </tr>
+    <tr>
+      <td>Runtimes</td>
+      <td>OpenJDK (GPL-2.0 with Classpath Exception), .NET (MIT), Erlang/OTP (Apache-2.0), Rust (MIT or Apache-2.0), OCaml runtime (LGPL with linking exception), GHC runtime (BSD), Lean 4 (Apache-2.0)</td>
+      <td>all compatible with a closed-source dependant</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Our own licence (judgement).</strong> Apache-2.0 for the engine, for its explicit patent grant, which
+matters to financial institutions. MPL-2.0, which LATTICE uses, also permits closed-source dependants
+and keeps modifications to our files open, if that reciprocity is wanted.</p>
+
+<hr />
+
+<h2 id="appendix-c-references">Appendix C: References</h2>
+
+<ul>
+  <li>Motik, Nenov, Piro, Horrocks, Olteanu. Parallel OWL 2 RL materialisation in centralised,
+main-memory RDF systems (the paper beside this file).</li>
+  <li>Motik, Nenov, Piro, Horrocks. Incremental update of datalog materialisation: the Backward/Forward
+algorithm. AAAI 2015.</li>
+  <li>Motik, Nenov, Piro, Horrocks. Handling owl:sameAs via rewriting. AAAI 2015.</li>
+  <li>Gupta, Mumick, Subrahmanian. Maintaining views incrementally. SIGMOD 1993.</li>
+  <li>McSherry, Murray, Isaacs, Isard. Differential dataflow. CIDR 2013.</li>
+  <li>Budiu, Chajed, McSherry, Ryzhyk, Tannen. DBSP: automatic incremental view maintenance for rich
+query languages. VLDB 2023.</li>
+  <li>Jordan, Subotić, Zhao, Scholz. A specialized B-tree for concurrent Datalog evaluation. PPoPP 2019.</li>
+  <li>Veldhuizen. Leapfrog Triejoin: a simple, worst-case optimal join algorithm. ICDT 2014.</li>
+  <li>Leis, Kemper, Neumann. The adaptive radix tree. ICDE 2013. Leis, Scheibner, Kemper, Neumann. The
+ART of practical synchronization. DaMoN 2016.</li>
+  <li>Wang et al. Building a Bw-tree takes more than just buzz words. SIGMOD 2018.</li>
+  <li>Tu, Zheng, Kohler, Liskov, Madden. Speedy transactions in multicore in-memory databases (Silo).
+SOSP 2013.</li>
+  <li>Larson et al. High-performance concurrency control mechanisms for main-memory databases. VLDB 2011.</li>
+  <li>Neumann, Mühlbauer, Kemper. Fast serializable multi-version concurrency control for main-memory
+database systems. SIGMOD 2015.</li>
+  <li>Kocberber, Falsafi, Grot. Asynchronous memory access chaining. VLDB 2015.</li>
+  <li>Harris. A pragmatic implementation of non-blocking linked-lists. DISC 2001.</li>
+  <li>Michael. Hazard pointers: safe memory reclamation for lock-free objects. IEEE TPDS 2004.</li>
+  <li>Fraser. Practical lock-freedom. PhD thesis, Cambridge, 2004.</li>
+  <li>Herlihy, Wing. Linearizability: a correctness condition for concurrent objects. TOPLAS 1990.</li>
+  <li>Anderson, Woll. Wait-free parallel algorithms for the union-find problem. STOC 1991.</li>
+  <li>Clarke, Devadas, van Dijk, Gassend, Suh. Incremental multiset hash functions and their application
+to memory integrity checking. ASIACRYPT 2003.</li>
+  <li>Lahav, Vafeiadis, Kang, Hur, Dreyer. Repairing sequential consistency in C/C++11. PLDI 2017.</li>
+  <li>Jung, Jourdan, Krebbers, Dreyer. RustBelt: securing the foundations of the Rust programming
+language. POPL 2018.</li>
+  <li>Lattuada et al. Verus: verifying Rust programs using linear ghost types. OOPSLA 2023.</li>
+  <li>Benzaken, Contejean, Dumbrava. Certifying standard and stratified Datalog inference engines in
+SSReflect. ITP 2017.</li>
+  <li>Thompson, Farley, Barker, Gee, Stewart. Disruptor: high performance alternative to bounded queues
+for exchanging data between concurrent threads. LMAX technical paper, 2011.</li>
+</ul>

@@ -1,0 +1,234 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="adr-a126-literate-specification-layout-and-grammar">ADR-A126: Literate specification layout and grammar</h1>
+
+<p><strong>Status:</strong> Published, 2026-10-19. Accepted 2026-10-17.
+<strong>Described in:</strong> <a href="/architecture/literate-specifications.html">Literate specifications</a>
+<strong>Date:</strong> 2026-10-16
+<strong>Supersedes:</strong> none. Adds addenda to ADR-A120 and to ADR-A01’s convention note (2026-10-17)
+<strong>Related:</strong> <a href="https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-A01-layer-dependency-order.md">ADR-A01</a>, <a href="https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-A86-ontology-semantic-versioning.md">ADR-A86</a>
+and the <a href="/architecture/ontology-versioning-policy.html">versioning policy</a>,
+<a href="https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-A97-mork-order-relations-in-owl-2-dl.md">ADR-A97</a> (OWL 2 DL), <a href="https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-A120-literate-specs-with-several-documents.md">ADR-A120</a>,
+<a href="/architecture/decisions/ADR-A121-repository-catalogue.html">ADR-A121</a>, <a href="https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-A127-published-architecture-decisions.md">ADR-A127</a>,
+<a href="https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-AC2-clean-room-authoring-procedure.md">ADR-A-C2</a> (examples first), <a href="/architecture/literate-specifications.html">conventions document</a></p>
+
+<h2 id="context">Context</h2>
+
+<p>A layer’s <code class="language-plaintext highlighter-rouge">README.md</code> is its authoritative specification, and its Turtle is extracted from fenced blocks in
+document order. Three problems have grown with the layers.</p>
+
+<ul>
+  <li><strong>Facts are written more than once, and the copies drift.</strong> A term’s Definition and Utility are written
+in prose and again as <code class="language-plaintext highlighter-rouge">rdfs:comment</code> and <code class="language-plaintext highlighter-rouge">fnd:utility</code> strings in its block, and for <code class="language-plaintext highlighter-rouge">fnd:Version</code> the two
+already read differently. Vocabulary states <code class="language-plaintext highlighter-rouge">voc:ConceptScheme</code>’s superclass <code class="language-plaintext highlighter-rouge">skos:ConceptScheme</code> in an
+alignment block, in a Utility paragraph and in an axiom index row, and not in the class’s own block.</li>
+  <li><strong>Practice differs by layer.</strong> READMEs order and name their sections differently. Instrument checks 91
+counts in SHACL that no OWL restriction states, and Quantification asserts 50 in OWL that no shape checks.</li>
+  <li><strong>Blocks make READMEs hard to read.</strong> Many <code class="language-plaintext highlighter-rouge">turtle-spec</code> blocks exist only for the extractor, and a reader
+who wants the Turtle can open the generated file.</li>
+</ul>
+
+<p>About 2,700 axiom statements make up the literate layers’ spec and vocab documents (measured 2026-10-15).
+Fewer than 30 of them need more than a label, a short list of class expressions or a restriction table to
+state.</p>
+
+<h2 id="decision">Decision</h2>
+
+<ol>
+  <li>
+    <p><strong>One layout for every module README.</strong></p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>§</th>
+          <th>Section</th>
+          <th>Required</th>
+          <th>Normative</th>
+          <th>Extracted to</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td>Purpose and Scope</td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>the ontology’s <code class="language-plaintext highlighter-rouge">dct:description</code></td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td>Namespace and Prefixes</td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>prefixes, the ontology header, creators and contributors</td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td>Extraction Contract</td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>the module’s repository catalogue entry (ADR-A121)</td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td>Overview</td>
+          <td>yes</td>
+          <td>no</td>
+          <td>nothing. Holds a generated class diagram</td>
+        </tr>
+        <tr>
+          <td>5</td>
+          <td>Detailed Design</td>
+          <td>yes</td>
+          <td>no</td>
+          <td>nothing</td>
+        </tr>
+        <tr>
+          <td>6</td>
+          <td>Description Logic Encoding</td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>spec and vocab documents</td>
+        </tr>
+        <tr>
+          <td>7</td>
+          <td>Shapes</td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>shape files</td>
+        </tr>
+        <tr>
+          <td>8</td>
+          <td>Examples</td>
+          <td>yes</td>
+          <td>no</td>
+          <td>nothing. Examples stay hand-written files</td>
+        </tr>
+        <tr>
+          <td>9</td>
+          <td>Canonicalisation</td>
+          <td>no</td>
+          <td>yes</td>
+          <td>nothing</td>
+        </tr>
+        <tr>
+          <td>10</td>
+          <td>Formalisation</td>
+          <td>no</td>
+          <td>yes</td>
+          <td><code class="language-plaintext highlighter-rouge">isabelle-spec</code> blocks and what is generated from them</td>
+        </tr>
+        <tr>
+          <td>11</td>
+          <td>Dependencies</td>
+          <td>yes</td>
+          <td>no</td>
+          <td>nothing</td>
+        </tr>
+        <tr>
+          <td>12</td>
+          <td>Release Notes</td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>nothing. Checked</td>
+        </tr>
+        <tr>
+          <td>13</td>
+          <td>Open Issues</td>
+          <td>yes</td>
+          <td>no</td>
+          <td>nothing</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>Section 6 has the subsections 6.1 Classes, 6.2 Object Properties, 6.3 Datatype Properties, 6.4
+Individuals, 6.5 Disjointness and Keys, 6.6 Other Axioms and 6.7 Axiom Index. Numbers are fixed. An absent
+optional section keeps its heading and says “Not applicable.”, and an empty subsection says “None.” A
+layer adds no top-level section of its own. Other material goes into a subsection of Detailed Design or of
+Open Issues. The extractor finds a section by its title and warns when its number differs from the layout.</p>
+  </li>
+  <li><strong>Normative sections win.</strong> Where a non-normative section disagrees with a normative one, the normative
+section is the specification. Overview and Detailed Design never introduce an axiom.</li>
+  <li><strong>Section 6 is written in a grammar, and is the only source of a term’s axioms.</strong> An entry is a level-4
+heading holding one CURIE, followed by labelled paragraphs and tables, for example <code class="language-plaintext highlighter-rouge">**Definition.**</code> for
+<code class="language-plaintext highlighter-rouge">rdfs:comment</code>, <code class="language-plaintext highlighter-rouge">**Utility.**</code> for <code class="language-plaintext highlighter-rouge">fnd:utility</code>, <code class="language-plaintext highlighter-rouge">**Label.**</code> for <code class="language-plaintext highlighter-rouge">rdfs:label</code>, <code class="language-plaintext highlighter-rouge">**Subclass of.**</code>,
+<code class="language-plaintext highlighter-rouge">**Equivalent to.**</code>, <code class="language-plaintext highlighter-rouge">**Domain.**</code>, <code class="language-plaintext highlighter-rouge">**Range.**</code>, <code class="language-plaintext highlighter-rouge">**Characteristics.**</code>, <code class="language-plaintext highlighter-rouge">**Inverse of.**</code>,
+<code class="language-plaintext highlighter-rouge">**Subproperty of.**</code>, <code class="language-plaintext highlighter-rouge">**Key.**</code> and <code class="language-plaintext highlighter-rouge">**Restrictions.**</code>. A further label adds a further annotation, for
+example <code class="language-plaintext highlighter-rouge">**Scope note.**</code> for <code class="language-plaintext highlighter-rouge">skos:scopeNote</code>. An unknown label is an error. <code class="language-plaintext highlighter-rouge">rdfs:label</code> comes only from
+a <code class="language-plaintext highlighter-rouge">**Label.**</code> line.</li>
+  <li><strong>Class expressions are OWL Manchester syntax with CURIEs</strong>, wherever one appears: superclasses,
+equivalent classes, domains, ranges and the values of a restriction. Literals use Turtle’s forms.</li>
+  <li><strong>A restriction row states where it is asserted:</strong> in OWL and SHACL (the default), in OWL only, or in
+SHACL only. Some OWL restrictions are hints to the reasoner for design-time tooling, so an OWL restriction
+is also checked in SHACL unless the row says otherwise. SHACL is generated only for the flat forms
+(<code class="language-plaintext highlighter-rouge">exactly</code>, <code class="language-plaintext highlighter-rouge">min</code>, <code class="language-plaintext highlighter-rouge">max</code>, their qualified forms, <code class="language-plaintext highlighter-rouge">only</code>, <code class="language-plaintext highlighter-rouge">some</code> and <code class="language-plaintext highlighter-rouge">value</code>), and a nested expression is
+refused unless its row says OWL only. A qualified restriction maps to SHACL’s qualified form, never to
+<code class="language-plaintext highlighter-rouge">sh:class</code> with counts, since the two say different things. Generated SHACL goes into one shape per class
+in the module’s structural shapes file. Hand-written shapes stay in blocks in section 7.</li>
+  <li><strong>What the grammar cannot say stays a block.</strong> Section 6.6 holds <code class="language-plaintext highlighter-rouge">turtle-spec</code> blocks for the rest, for
+example property chains.</li>
+  <li><strong>Generated regions.</strong> The Axiom Index and the Overview’s class diagram are generated from section 6 into
+marked regions of the README, written in place and kept current by the extractor’s check. A hand edit
+inside a region is reported by the check and lost at the next extraction.</li>
+  <li><strong>HTML comment markers do four things.</strong> They exclude text from an extracted region, hide a fenced block
+that is still extracted, send a region of entries to another file, and mark a generated region. A region
+opens with <code class="language-plaintext highlighter-rouge">&lt;!-- start: {...} --&gt;</code> and closes with <code class="language-plaintext highlighter-rouge">&lt;!-- end --&gt;</code>, which closes the innermost open region.
+A hidden block is one comment wrapped round a fence. The keys are <code class="language-plaintext highlighter-rouge">exclude</code>, <code class="language-plaintext highlighter-rouge">output-file</code> and
+<code class="language-plaintext highlighter-rouge">generated</code>, and any other key is an error. A marker inside a fenced block is text. A hidden block may not
+contain <code class="language-plaintext highlighter-rouge">--&gt;</code>, and mermaid is never hidden.</li>
+  <li><strong>One name, <code class="language-plaintext highlighter-rouge">output-file</code>, in two forms.</strong> It is the <code class="language-plaintext highlighter-rouge"># @output-file</code> first line of a fenced block, as
+ADR-A120 defines it, or the JSON key of a marker. A block that carries both is refused. Both forms apply to
+every extracted block kind.</li>
+  <li><strong>Extraction rules.</strong>
+    <ul>
+      <li>Extracted markdown becomes plain text. Links become their text and an absolute URL at the release tag
+that the section 2 version names.</li>
+      <li>Generated Turtle is sorted by subject and then by a fixed predicate order, so reorganising a README
+changes no generated file. A document’s fenced blocks follow its generated statements, ordered by
+their own text, and declare no prefix, since section 2’s prefix table is the one source of prefixes
+(clarified 2026-10-18).</li>
+      <li>Dublin Core terms are declared in each document as annotation properties, with the <code class="language-plaintext highlighter-rouge">dct:</code> prefix, and
+never imported, so every document stays in OWL 2 DL.</li>
+      <li>Creators and contributors come from a table in section 2 that the maintainers keep. Each is
+identified by an IRI, an ORCID iD where the person has one and their GitHub profile otherwise. No legal
+name appears in a README or a generated artefact without that person’s express permission.</li>
+    </ul>
+  </li>
+  <li><strong>Release notes are checked, not extracted.</strong> Every version named in section 2, and every released
+version, has an entry. An entry says what changed and cites only published ADRs (ADR-A127).</li>
+  <li><strong>Versioning is unchanged.</strong> Generated Turtle stays tracked and versioned under ADR-A86. A layer’s first
+regeneration under this layout is one PATCH release, checked to be the same graph as before except for
+reconciliations the maintainer approves.</li>
+  <li><strong>One conventions document.</strong> <code class="language-plaintext highlighter-rouge">docs/architecture/literate-specifications.md</code> describes the layout, the
+grammar, the markers and the extraction rules. Each README’s section 3 links to it and states only what
+is specific to its module. The tool documentation, the ontology architecture document, the glossary and
+the ontology authoring skill link to it rather than restating it.</li>
+</ol>
+
+<h2 id="consequences">Consequences</h2>
+
+<ul>
+  <li>ADR-A120 has an addendum for decision 9, and ADR-A01 one for its convention note, which placed the ontology
+header in a README’s first <code class="language-plaintext highlighter-rouge">turtle-spec</code> block (both 2026-10-17).</li>
+  <li>Each layer is migrated in its own change, with its own PATCH release. Until a layer is migrated, its
+README keeps today’s conventions and <code class="language-plaintext highlighter-rouge">literate_extract.py --check</code> keeps testing it as now.</li>
+  <li>The 76 restrictions asserted in OWL with no shape today migrate as OWL only, so migration adds no shape
+and no new violation.</li>
+  <li>A layer with no release notes today gets them rebuilt from its history when it migrates. Existing notes
+that cite delivery slices are rewritten to say what changed.</li>
+  <li>Foundation, Vocabulary and Party are not yet the source of their documents. Each is reconciled before or
+during its migration, with every difference listed for the maintainer.</li>
+  <li>The extractor stays standard-library only. The grammar is line-based so that a small parser suffices,
+including a recursive-descent parser for the Manchester subset in use.</li>
+  <li>Persistence, MORK, the applied modules and Governance are not literate today. They take the layout when
+they become literate.</li>
+</ul>
+
+<h2 id="provenance">Provenance</h2>
+
+<p>Proposed in the <a href="/developer/sketches/improved-ontology-documentation.html">improved ontology documentation sketch</a>
+and settled in design discussion on 2026-10-15 and 2026-10-16, recorded as decisions OD-D1 to OD-D27 in the
+<a href="/developer/plans/improved-ontology-documentation.html"><code class="language-plaintext highlighter-rouge">improved-ontology-documentation</code> plan</a> (slices OD1
+to OD8 onward). The measurements cited in the context are in that unit’s status record.</p>

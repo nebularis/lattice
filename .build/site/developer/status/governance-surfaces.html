@@ -1,0 +1,129 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="governance-review-surfaces-mork-bench-and-surface-studio-implementation-status">Governance Review Surfaces (MORK Bench and Surface Studio) Implementation Status</h1>
+
+<p><strong>Unit:</strong> <code class="language-plaintext highlighter-rouge">governance-surfaces</code>
+<strong>State:</strong> Skeleton UIs implemented, fixture-backed, pending backend integration
+<strong>Sketches:</strong></p>
+<ul>
+  <li><a href="/developer/sketches/governance-and-versioning-migration.html">governance-and-versioning-migration.md</a> — UX design and role model</li>
+  <li>Related Phase 2 and Phase 5 handoffs for backend integration</li>
+</ul>
+
+<p><strong>Governing ADRs:</strong> <a href="../../architecture/decisions/ADR-A38-surface-output-publication-and-studio-authoring-boundary.md">ADR-A38</a>, <a href="../../architecture/decisions/ADR-A42-mork-review-snapshot-and-decision-learning-boundary.md">ADR-A42</a></p>
+
+<h2 id="what-was-built">What was built</h2>
+
+<p>Two fixture-backed UI shells that demonstrate the governance surface designs without backend integration:</p>
+
+<h3 id="surface-contract-studio">Surface Contract Studio</h3>
+<ul>
+  <li><strong>Location:</strong> <a href="../../../apps/surface-contract-studio/src/studio.tsx">apps/surface-contract-studio/src/studio.tsx</a></li>
+  <li><strong>Implements:</strong> Surface Promotion/Index/Projection contract authoring and review</li>
+  <li><strong>UI components:</strong> Contract portfolio, lifecycle state display, contract diff viewer, Technical Inspector</li>
+  <li><strong>Fixture data:</strong> 4 sample contracts showing state transitions and change impacts</li>
+  <li><strong>Design alignment:</strong> Matches <a href="../../architecture/decisions/ADR-A38-surface-output-publication-and-studio-authoring-boundary.md">ADR-A38</a> authoring boundary</li>
+</ul>
+
+<h3 id="mork-review-workbench">MORK Review Workbench</h3>
+<ul>
+  <li><strong>Location:</strong> <a href="../../../apps/mork-review-workbench/src/main.tsx">apps/mork-review-workbench/src/main.tsx</a></li>
+  <li><strong>Implements:</strong> The six MORK review decisions (Confirm, Retarget, Reshape, Decline, Teach, Defer) per <a href="../../architecture/decisions/ADR-A42-mork-review-snapshot-and-decision-learning-boundary.md">ADR-A42</a></li>
+  <li><strong>UI components:</strong> Review snapshot display, evidence ribbon (Witness/Coverage/Alternative), decision buttons, calibration state, boundary workflow sidebar</li>
+  <li><strong>Fixture data:</strong> ARR derivation example snapshot with structured evidence</li>
+  <li><strong>Role modeling:</strong> Tenant/project scoping shown; role-restricted evidence projections demonstrated</li>
+</ul>
+
+<h3 id="design-sketch-coverage">Design Sketch Coverage</h3>
+
+<p><a href="/developer/sketches/governance-and-versioning-migration.html">governance-and-versioning-migration.md</a> specifies:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Design element</th>
+      <th>Implemented</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Thesis: MORK is substrate, not interface</td>
+      <td>Yes</td>
+      <td>Both UIs hide MORK graph, show domain claims</td>
+    </tr>
+    <tr>
+      <td>Four roles with separate perimeters</td>
+      <td>Partially</td>
+      <td>Studio shown for Surface author; Bench shown for Domain Steward; perimeter enforcement incomplete</td>
+    </tr>
+    <tr>
+      <td>Six review decisions (Confirm/Retarget/Reshape/Decline/Teach/Defer)</td>
+      <td>Yes</td>
+      <td>All six buttons present in Bench</td>
+    </tr>
+    <tr>
+      <td>Section as unit of judgement</td>
+      <td>Yes</td>
+      <td>Bench shows sections in queue sidebar</td>
+    </tr>
+    <tr>
+      <td>Token ribbon evidence display</td>
+      <td>Partially</td>
+      <td>Evidence displayed (Witness/Coverage/Alternative); token granularity not yet shown</td>
+    </tr>
+    <tr>
+      <td>MCN source affordance (<code class="language-plaintext highlighter-rouge">View source</code>)</td>
+      <td>No</td>
+      <td>Not yet implemented</td>
+    </tr>
+    <tr>
+      <td>Role-restricted content (no pack internals, teaching, syntax for Steward)</td>
+      <td>Partially</td>
+      <td>Fixture demonstrates restriction; not enforced in live integration</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="gaps-and-constraints">Gaps and Constraints</h2>
+
+<ul>
+  <li><strong>Backend integration:</strong> Both UIs are fixture-backed and do not connect to Platform control plane or graph stores</li>
+  <li><strong>Permission enforcement:</strong> Role-based visibility rules demonstrated but not enforced in code</li>
+  <li><strong>Evidence projection:</strong> Evidence shown as static fixtures; not actually projected from review snapshots</li>
+  <li><strong>State persistence:</strong> No ledger integration or real lifecycle state management</li>
+  <li><strong>E2E flows:</strong> Playwright tests exist but only validate UI rendering, not workflow</li>
+</ul>
+
+<h2 id="evidence">Evidence</h2>
+
+<ul>
+  <li><strong>Build:</strong> <code class="language-plaintext highlighter-rouge">yarn check</code> and <code class="language-plaintext highlighter-rouge">yarn build</code> pass for both applications</li>
+  <li><strong>Tests:</strong> Playwright E2E specs exist (<a href="../../../apps/surface-contract-studio/e2e/studio.spec.ts">surface-contract-studio/e2e/studio.spec.ts</a>, <a href="../../../apps/mork-review-workbench/e2e/bench.spec.ts">mork-review-workbench/e2e/bench.spec.ts</a>)</li>
+  <li><strong>Repository integration:</strong> Both apps use Vite + React, follow <a href="../../architecture/decisions/ADR-A29-repository-toolchain-and-environment-boundary.md">ADR-A29</a> (root <code class="language-plaintext highlighter-rouge">package.json</code> with Yarn workspaces)</li>
+</ul>
+
+<h2 id="next-phase-work-phase-2-and-phase-5-handoffs">Next Phase Work (Phase 2 and Phase 5 handoffs)</h2>
+
+<p>To move from skeleton to integrated surfaces:</p>
+
+<ol>
+  <li><strong>Backend wiring</strong> (Phase 2): Connect Studio to <a href="../../../contracts/openapi/surface-workflow.openapi.json">Surface revision API</a>; connect Bench to <a href="../../../contracts/mork/review-snapshot.schema.json">review snapshot schema</a></li>
+  <li><strong>Permission model</strong> (Phase 2, Phase 5): Enforce role-based visibility for Steward/Engineer/Owner/Maintainer roles</li>
+  <li><strong>Evidence projection</strong> (Phase 5): Implement dynamic evidence projection per <a href="../../architecture/decisions/ADR-A42-mork-review-snapshot-and-decision-learning-boundary.md">ADR-A42</a></li>
+  <li><strong>State management</strong> (Phase 2, Phase 5): Wire lifecycle state machine and decision persistence to ledger</li>
+  <li><strong>Token ribbon rendering</strong> (Phase 5+): Detailed MCN token-level evidence display for Teaching pack integration</li>
+</ol>
+
+<h2 id="acceptance">Acceptance</h2>
+
+<p>The design sketch is well understood and the UI shells correctly demonstrate its intent. Skeleton implementation is complete. Full acceptance requires backend integration work in Phase 2 and Phase 5 validation gates.</p>
+
+<h2 id="deferred-out-of-scope-for-skeleton-phase">Deferred (out of scope for skeleton phase)</h2>
+
+<ul>
+  <li>Atlas, Boundary, and Coverage surfaces (mentioned in sketch Part 2 but not implemented)</li>
+  <li>Pack Maintainer surface and aggregated failure signatures</li>
+  <li>LLM teaching pack integration with Workbench prompts</li>
+  <li>Live ledger and permission enforcement</li>
+</ul>

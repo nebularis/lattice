@@ -1,0 +1,122 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-ccs-c4-wording-tables-assembly-and-variable-values">Validation Pack: CCS C4, Wording tables, assembly and variable values</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/computable-contract-substrate.html"><code class="language-plaintext highlighter-rouge">computable-contract-substrate</code></a>
+<strong>Machine:</strong> R. <strong>Branch:</strong> <code class="language-plaintext highlighter-rouge">ccs/c4-wording-assembly</code>
+<strong>Plan and test cases:</strong> <a href="/developer/plans/computable-contract-substrate.html">CCS plan</a> (C4 in detail)
+<strong>Decisions:</strong> ADR-A112 decision 3, CC-D6, ADR-A-C2 and its addendum. Questions C4-Q1 to C4-Q3 decided 2026-10-01</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>Wording gains tables, assembly and variable values, additively. Every new property states its subject and value and is checked by SHACL Core. Assembly is design time.</p>
+
+<h2 id="test-cases">Test cases</h2>
+
+<p>The table in the plan section above. Each row’s result is recorded under Results at
+verification.</p>
+
+<h2 id="one-command">One command</h2>
+
+<p>Run from the repository root on machine R, with the reasoning harness built where a row is L2.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run build:ontology-catalog <span class="o">&amp;&amp;</span> mise run check:ontology-versioning <span class="o">&amp;&amp;</span> mise run check:ontology-catalog
+</code></pre></div></div>
+
+<h2 id="artefacts-to-inspect">Artefacts to inspect</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">ontology/wording/spec/wording.ttl</code>: the slot under C4-Q2 and the assembled wording under C4-Q1.</li>
+  <li><code class="language-plaintext highlighter-rouge">ontology/wording/examples/facility-form.ttl</code>: the form and its assembled facility.</li>
+  <li><code class="language-plaintext highlighter-rouge">ontology/wording/examples/trial-protocol.ttl</code>: one cell per row and arm.</li>
+</ul>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<p>The laws that need SPARQL (W3 to W6) and textual amendments (C5). Evaluating inclusion conditions, which is Eligibility’s, in question form.</p>
+
+<h2 id="handoff">Handoff</h2>
+
+<p>Written by the building machine when the work is committed.</p>
+
+<ul>
+  <li><strong>Built:</strong> <code class="language-plaintext highlighter-rouge">wording</code> 0.2.0 (rows, inclusion modes, variation slots as elements, inclusion
+conditions, assembled wordings, variable values), <code class="language-plaintext highlighter-rouge">wording-vocab</code> 0.2.0 (the four inclusion modes
+and eight population methods as closed sets), <code class="language-plaintext highlighter-rouge">wording-shapes</code> 0.2.0 (a subject and a class shape
+per new property, the value rule, the column rule), the README sections §5.10 to §5.12, the
+extended trial protocol and the new facility form, and 15 tests in <code class="language-plaintext highlighter-rouge">tools/test_wording.py</code>.</li>
+  <li><strong>Not run:</strong> nothing skipped. The reasoner rows ran.</li>
+  <li><strong>Check first:</strong>
+    <ul>
+      <li>A slot asserts <code class="language-plaintext highlighter-rouge">wrd:hasVariant</code> (a sub-property of <code class="language-plaintext highlighter-rouge">wrd:directlyComprises</code>). The shapes read
+<code class="language-plaintext highlighter-rouge">hasVariant</code> directly, so no check needs the derived part-whole edge.</li>
+      <li><code class="language-plaintext highlighter-rouge">wrd:forColumn</code> is checked in SHACL Core by a sequence path: a record with a column must be for
+a variable some row declares.</li>
+      <li>The facility form’s variants carry no inclusion condition: the drafter chooses between them.
+The conditional clause shows conditions over a governing variable.</li>
+    </ul>
+  </li>
+  <li><strong>Deviations from the plan:</strong> none.</li>
+  <li><strong>Tags for the maintainer:</strong> <code class="language-plaintext highlighter-rouge">wording-v0.2.0</code>, <code class="language-plaintext highlighter-rouge">wording-vocab-v0.2.0</code>, <code class="language-plaintext highlighter-rouge">wording-shapes-v0.2.0</code>.</li>
+</ul>
+
+<h2 id="results">Results</h2>
+
+<p>Verified on machine R, 2026-10-01, with the reasoning harness built.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>C4-01</td>
+      <td>pass: imports unchanged, <code class="language-plaintext highlighter-rouge">0.2.0</code></td>
+    </tr>
+    <tr>
+      <td>C4-02</td>
+      <td>pass: all three examples conform</td>
+    </tr>
+    <tr>
+      <td>C4-03</td>
+      <td>pass: all three examples consistent (C3-05 over every example)</td>
+    </tr>
+    <tr>
+      <td>C4-04</td>
+      <td>pass: eight cases each reported on their focus node (the brief’s six, a column on a non-row variable, a value in no wording)</td>
+    </tr>
+    <tr>
+      <td>C4-05</td>
+      <td>pass: three rows by two arms, one cell each</td>
+    </tr>
+    <tr>
+      <td>C4-06</td>
+      <td>pass (C3-17, over every property)</td>
+    </tr>
+    <tr>
+      <td>C4-07</td>
+      <td>pass: four modes and eight methods, each set declared all different</td>
+    </tr>
+    <tr>
+      <td>C4-08</td>
+      <td>pass (C3-09, spec, vocab and shapes)</td>
+    </tr>
+    <tr>
+      <td>C4-09</td>
+      <td>pass: three release rows. <code class="language-plaintext highlighter-rouge">check:ontology-versioning</code> passes once committed</td>
+    </tr>
+    <tr>
+      <td>C4-10</td>
+      <td>pass: <code class="language-plaintext highlighter-rouge">3b3732b</code> commits the examples alone, before the model</td>
+    </tr>
+    <tr>
+      <td>C4-11</td>
+      <td>pass: <code class="language-plaintext highlighter-rouge">check:ontology-catalog</code>, 154 tests</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><code class="language-plaintext highlighter-rouge">mise run topology:links</code>: 427, the baseline.</p>

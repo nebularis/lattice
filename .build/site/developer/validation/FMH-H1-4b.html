@@ -1,0 +1,251 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-fmh-h14b-the-declarationimplementation-gap-report">Validation Pack: FMH-H1.4b, the declaration/implementation gap report</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/formal-methods-track-h.html"><code class="language-plaintext highlighter-rouge">formal-methods-track-h</code></a>, slice H1.4b, the second half
+of <a href="/developer/plans/formal-methods-track-h.html">plan §3, H1.4</a>, as redefined in the plan’s section “H1.4b and
+H1.5 after the aggregate-ownership review”.
+<strong>Source finding:</strong> the main sketch’s L6 gap, and the review’s findings F1, F2, F4 and F10.
+<strong>Decisions needing confirmation:</strong> the shape of the report, below. Nothing blocks.</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>A configuration can declare more than the generated SPARQL implements, and nothing said so. After this
+slice, <code class="language-plaintext highlighter-rouge">persistence gaps</code> lists each such gap per target, with whose obligation it is and the register
+row and slice that remove it, so a reader of a compiled profile is not told a dimension is honoured
+when it is not.</p>
+
+<h2 id="what-was-built">What was built</h2>
+
+<p><code class="language-plaintext highlighter-rouge">persistence/gaps.py</code>, a <code class="language-plaintext highlighter-rouge">gaps</code> subcommand (text, and <code class="language-plaintext highlighter-rouge">--json</code>), and <code class="language-plaintext highlighter-rouge">tests/test_gaps.py</code>. Eleven rules,
+each a function over one compiled target, kept in <code class="language-plaintext highlighter-rouge">persistence.gaps.RULES</code>.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Rule</th>
+      <th>Obligation</th>
+      <th>Reference</th>
+      <th>Closes in</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">CompositeOwnershipAssumed</code></td>
+      <td>unimplemented</td>
+      <td>TD-35</td>
+      <td>HO5</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">CompositeInversePathMisread</code></td>
+      <td>unimplemented</td>
+      <td>TD-37</td>
+      <td>HO5</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">CompositeUsesDefaultGraph</code></td>
+      <td>unimplemented</td>
+      <td>TD-40</td>
+      <td>HO5</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">CompositeNoLifecycleOperations</code></td>
+      <td>unimplemented</td>
+      <td>TD-04</td>
+      <td>HO7</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">NamedGraphNamedFromLocalName</code></td>
+      <td>unimplemented</td>
+      <td>TD-38</td>
+      <td>HO8</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">UnconditionalWriteNamedGraphOnly</code></td>
+      <td>unimplemented</td>
+      <td>TD-02</td>
+      <td>not planned</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ShardCountNotHonoured</code></td>
+      <td>unimplemented</td>
+      <td>TD-06</td>
+      <td>not planned</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">InfrastructureGraphsFixed</code></td>
+      <td>unimplemented</td>
+      <td>TD-05</td>
+      <td>not planned</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">RetentionAndEpochBumpNotGenerated</code></td>
+      <td>housekeeping</td>
+      <td>ADR-A80</td>
+      <td>not planned</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">RestoreRunbookBindingsUnread</code></td>
+      <td>housekeeping</td>
+      <td>TD-08</td>
+      <td>not planned</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">VersionRowCreatedByCaller</code></td>
+      <td>caller</td>
+      <td>README obligation 1</td>
+      <td>not planned</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The composite entries are the ones the plan lists, except two it said to omit after HO1: the payload in
+the log graph (TD-39) and the quadratic sweep (TD-36). Those are closed.</p>
+
+<h2 id="choices-made-for-the-maintainer">Choices made, for the maintainer</h2>
+
+<ul>
+  <li><strong>A separate subcommand, <code class="language-plaintext highlighter-rouge">gaps</code>, and not part of <code class="language-plaintext highlighter-rouge">compile</code> or <code class="language-plaintext highlighter-rouge">hygiene</code>.</strong> The plan says “generated per
+compile”. The report needs compiled targets and never fails a compile, and <code class="language-plaintext highlighter-rouge">hygiene</code> fails on
+violations, which a gap is not. If you want it on the compile output as well, it is one call to
+<code class="language-plaintext highlighter-rouge">find_gaps</code>.</li>
+  <li><strong>Informational.</strong> It exits 0 once the configuration compiles. A gap is a fact about the tool, not
+about the configuration.</li>
+  <li><strong>Declared-but-ignored dimensions are limited to those with a rule.</strong> The plan’s examples were shard
+counts, infrastructure graph IRIs, housekeeping duties and the composite binding, and each has a rule.
+Others can be added as rules.</li>
+  <li><strong>The register rows are cited, not read.</strong> A row removed from the register without its rule removed
+here goes unnoticed. Each closing slice removes both (the plan says so).</li>
+</ul>
+
+<h2 id="test-cases">Test cases</h2>
+
+<p>In <code class="language-plaintext highlighter-rouge">tools/persistence/tests/test_gaps.py</code>.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>H1.4b-T1</td>
+      <td>the shipped composite example / report / the three composite gaps and the two every-target gaps, the first naming the shape (<code class="language-plaintext highlighter-rouge">OrderAggregateShape</code>) and the property (<code class="language-plaintext highlighter-rouge">lineItem</code>)</td>
+      <td>L4</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H1.4b-T2</td>
+      <td>the baseline named-graph example / report / the graph-naming gap and no composite gap</td>
+      <td>L4</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H1.4b-T3</td>
+      <td>a graph template with text after <code class="language-plaintext highlighter-rouge">{id}</code> / report / the text is named as dropped</td>
+      <td>L3</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H1.4b-T4</td>
+      <td>a composite shape with an <code class="language-plaintext highlighter-rouge">sh:inversePath</code> property / report / <code class="language-plaintext highlighter-rouge">CompositeInversePathMisread</code></td>
+      <td>L3</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H1.4b-T5</td>
+      <td><code class="language-plaintext highlighter-rouge">dal:txnShards 4</code> / report / <code class="language-plaintext highlighter-rouge">ShardCountNotHonoured</code></td>
+      <td>L3</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H1.4b-T6</td>
+      <td><code class="language-plaintext highlighter-rouge">ProvidedConcurrency</code> on a no-boundary target / report / <code class="language-plaintext highlighter-rouge">UnconditionalWriteNamedGraphOnly</code></td>
+      <td>L3</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H1.4b-T7</td>
+      <td>an append stream, an identity and epoch profile, a baseline / report / the caller and housekeeping entries</td>
+      <td>L4</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H1.4b-T8</td>
+      <td>the fixtures above / union of the rules fired / every rule in <code class="language-plaintext highlighter-rouge">RULES</code></td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H1.4b-T9</td>
+      <td>a graph and the same graph with its triples reordered / report / identical and sorted</td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H1.4b-T10</td>
+      <td>the composite example / CLI, text and <code class="language-plaintext highlighter-rouge">--json</code> / the entries and the data fields</td>
+      <td>L5</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H1.4b-T11</td>
+      <td>a configuration that does not compile / CLI / exit 1 and a message</td>
+      <td>L5</td>
+      <td>−</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="one-command">One command</h2>
+
+<p>Run from the repository root. A pass is <code class="language-plaintext highlighter-rouge">930 passed, 1 xfailed</code> (917 before the slice plus 13 test
+items), with no new skip. The expected failure is TD-23.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:persistence
+</code></pre></div></div>
+
+<p>To see the report on the composite example:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise <span class="nb">exec</span> <span class="nt">--</span> python <span class="nt">-m</span> persistence gaps ontology/persistence/spec/persistence.ttl ontology/persistence/examples/composite-property-boundary-shacl.ttl
+</code></pre></div></div>
+
+<h2 id="adversarial-probes">Adversarial probes</h2>
+
+<p>Run on 2026-10-10, each restored afterwards.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Mutation</th>
+      <th>Result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>the <code class="language-plaintext highlighter-rouge">CompositeOwnershipAssumed</code> rule removed from <code class="language-plaintext highlighter-rouge">RULES</code></td>
+      <td>T1 and T10 fail</td>
+    </tr>
+    <tr>
+      <td>the rule’s condition made always false</td>
+      <td>T1, T8 and T10 fail</td>
+    </tr>
+    <tr>
+      <td>the dropped-suffix text removed from the graph-naming message</td>
+      <td>T3 fails</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<ul>
+  <li>A gap rule is not checked against the register, so a rule can outlive its row.</li>
+  <li>Gaps in the SPARQL that no declaration mentions. That is the audit and witness work of H1.2 and H9.</li>
+  <li>Entries for slices that change the output. HO5, HO7 and HO8 remove their rules and expectations in
+the same commit as the change.</li>
+</ul>

@@ -1,0 +1,9 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="windows-and-wsl">Windows and WSL</h1>
+
+<p>Use WSL2 with Docker Desktop’s WSL backend for service, worker, and CI-parity development. Clone the repository in the Linux filesystem, for example <code class="language-plaintext highlighter-rouge">~/src/lattice</code>, and open that directory through VS Code Remote - WSL.</p>
+
+<p>Avoid running the full stack from <code class="language-plaintext highlighter-rouge">C:\Users\...</code>. Windows-mounted worktrees have slower file watching and can cause symlink and container-mount inconsistencies.</p>
+
+<p>From the WSL shell, run <code class="language-plaintext highlighter-rouge">mise install</code>, then <code class="language-plaintext highlighter-rouge">mise run bootstrap</code>. Start reference services with <code class="language-plaintext highlighter-rouge">mise run services:up</code>.</p>

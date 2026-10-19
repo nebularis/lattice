@@ -1,0 +1,778 @@
+<h1 id="term-parameters-meeting-the-facet-designs-aims-in-lattice-and-open-cbaa">Term Parameters: Meeting the Facet Design’s Aims in LATTICE and Open CBAA</h1>
+
+<blockquote>
+  <p><strong>Note, 2026-09-30.</strong> Under <a href="/developer/sketches/computable-contract-substrate.html">computable-contract-substrate.md</a> <code class="language-plaintext highlighter-rouge">ins:Provision</code> is retired: a term is an <code class="language-plaintext highlighter-rouge">ins:Term</code>, and <code class="language-plaintext highlighter-rouge">ctr:TermParameter ⊑ ins:Qualifier</code> qualifies an <code class="language-plaintext highlighter-rouge">ins:Term</code> or a legal relation. Wording (forms, endorsements, schedules) moves to a new Wording layer, and amount semantics are catalogued in <a href="/developer/sketches/contract-amounts.html">contract-amounts.md</a>.</p>
+</blockquote>
+
+<p>Version 0.1, draft for review. Works through the contract structure and financial behaviour
+design supplied for review (its parameter carriers are called “facets”), states the aims it
+achieves, and shows how LATTICE’s applied insurance reference implementation meets every aim in
+full and how Open CBAA meets the ones a binding authority needs, pragmatically. It also answers
+how liability direction is modelled when claimants are unknown at binding. Companion to the
+<a href="/developer/sketches/mork-bridge.html">MORK bridge</a>, which connects the two treatments, and to the
+<a href="/developer/sketches/peril-structure-whitepaper.html">peril whitepaper</a>.</p>
+
+<p>Citations of <code class="language-plaintext highlighter-rouge">design-spec</code> and of codes AP, DP, D and I refer to Open CBAA’s <a href="https://github.com/nebularis/open-cbaa/blob/main/docs/design/design-spec.md">design
+specification</a> and
+<a href="https://github.com/nebularis/open-cbaa/blob/main/docs/design/lattice-integration.md">LATTICE integration
+specification</a>.
+Where this sketch and the <a href="../plans/applied-insurance-reference.md">applied insurance reference
+epic</a> or its ADRs (A-98 to A-102) differ, they take
+precedence.</p>
+
+<hr />
+
+<h2 id="1-summary">1. Summary</h2>
+
+<p>The reviewed design attaches typed parameter nodes to the node that records what a clause does
+(its function: grant, exclusion, sub-limit, condition), keeps parameters that describe one term
+apart from relations between terms, validates each parameter kind with its own shapes, and
+compiles the whole into behavioural resources (capacity, scope predicates, flows) that a
+deterministic evaluator runs.</p>
+
+<p>Every aim of that design can be met on LATTICE, with three differences of approach:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Difference</th>
+      <th>Reviewed design</th>
+      <th>LATTICE and Open CBAA</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>name</td>
+      <td>“facet”</td>
+      <td><strong>term parameter</strong> in the applied insurance contract module, <strong>statement parameter</strong> in Open CBAA. “Facet” is kept out of both (§2)</td>
+    </tr>
+    <tr>
+      <td>substrate</td>
+      <td>its own upper model</td>
+      <td>LATTICE Instrument’s <code class="language-plaintext highlighter-rouge">ins:Qualifier</code> (“a qualifier constraining or refining another element”) is the substrate class a term parameter specialises. Amounts, bounds and multiple currencies come from Quantification, scopes from Eligibility, parties from Party, finite resources from applied Capacity</td>
+    </tr>
+    <tr>
+      <td>compilation</td>
+      <td>mandatory: behaviour exists only as the compiled graph, kept in step with the structure</td>
+      <td><strong>optional</strong>: the declarative graph is always evaluable directly, and compiled forms are derived artefacts that must agree with it. Compilation is used where performance needs it (§5)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>LATTICE’s reference implementation gives the idea its fullest treatment, with every parameter
+kind, relation and compiled capacity form. Open CBAA uses the subset a binding authority’s scope
+of underwriting authority needs, as statement parameters, and can use the LATTICE forms where a
+deployment wants them, through the MORK bridge.</p>
+
+<h2 id="2-naming">2. Naming</h2>
+
+<p>“Facet” is already used for several things these designs touch: faceted classification in
+thesauri, the characteristics of a peril (which the peril vocabulary now calls
+<strong>characteristics</strong>, not facets), and search facets in any user interface. It says nothing about
+what the thing does. The replacements name the role:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Concept</th>
+      <th>Name</th>
+      <th>Why</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>a node that qualifies one contract term with a value and its basis</td>
+      <td><strong>term parameter</strong> (<code class="language-plaintext highlighter-rouge">ctr:TermParameter ⊑ ins:Qualifier</code>)</td>
+      <td>it is a parameter of a term, and LATTICE already has the qualifier concept</td>
+    </tr>
+    <tr>
+      <td>the node recording what a clause does</td>
+      <td><strong>term</strong> (the reviewed design’s “term application”)</td>
+      <td>in LATTICE a term is an <code class="language-plaintext highlighter-rouge">ins:Provision</code> or <code class="language-plaintext highlighter-rouge">ins:Obligation</code>. In Open CBAA it is a statement (<code class="language-plaintext highlighter-rouge">stm:Statement</code>)</td>
+    </tr>
+    <tr>
+      <td>a dependency between two terms (erosion, attachment, contribution)</td>
+      <td><strong>term relation</strong> (<code class="language-plaintext highlighter-rouge">ctr:TermRelation</code>)</td>
+      <td>compiled, where compilation is used, into applied Capacity dependencies</td>
+    </tr>
+    <tr>
+      <td>Open CBAA’s per-statement parameters</td>
+      <td><strong>statement parameter</strong></td>
+      <td>existing name (design-spec §3.5)</td>
+    </tr>
+    <tr>
+      <td>a governed extension parameter</td>
+      <td><strong>registered parameter kind</strong></td>
+      <td>the extension is a kind with a shape, not a free-text node</td>
+    </tr>
+    <tr>
+      <td>the characteristics of a peril</td>
+      <td><strong>peril characteristics</strong></td>
+      <td>peril vocabulary §6.3</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="3-the-aims-one-by-one">3. The Aims, One by One</h2>
+
+<p>Each aim is stated as the reviewed design achieves it, then how LATTICE’s reference and Open
+CBAA achieve it.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Aim</th>
+      <th>Reviewed design</th>
+      <th>LATTICE reference (<code class="language-plaintext highlighter-rouge">insurance/contract</code>)</th>
+      <th>Open CBAA</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>T1</td>
+      <td>a parameter inherits scope, peril and validity from the term it qualifies</td>
+      <td>parameter hangs off the term application</td>
+      <td><code class="language-plaintext highlighter-rouge">ins:qualifies</code> to the term (functional). Scope is an <code class="language-plaintext highlighter-rouge">elg:AdmissionProfile</code> on the term, validity the term’s <code class="language-plaintext highlighter-rouge">fnd:TemporalScope</code></td>
+      <td>parameters are properties and bindings of the statement, whose <code class="language-plaintext highlighter-rouge">stm:scope</code> and agreement validity apply</td>
+    </tr>
+    <tr>
+      <td>T2</td>
+      <td>each parameter states its own basis, so several limits on one term are self-describing</td>
+      <td><code class="language-plaintext highlighter-rouge">hasBasis</code> on every limit and retention</td>
+      <td><code class="language-plaintext highlighter-rouge">ctr:basis</code> exactly one on limit, retention and aggregate parameters, bound to a basis scheme contract</td>
+      <td>a scope limit binding gains <code class="language-plaintext highlighter-rouge">stm:limitBasis</code> (the SoUA “limit or sum insured basis” row). Two limits of different kinds are different parameter kinds already (per-risk sum insured, GWP income limit)</td>
+    </tr>
+    <tr>
+      <td>T3</td>
+      <td>parameter kinds are disjoint and composed in bundles on one term</td>
+      <td>disjoint facet classes, bundles by convention</td>
+      <td>disjoint <code class="language-plaintext highlighter-rouge">ctr:TermParameter</code> subclasses (§4). Bundles are checked by shapes per term function (“a coverage grant has at least one limit and exactly one claims basis”)</td>
+      <td>parameter kinds are a closed set of <code class="language-plaintext highlighter-rouge">stm:ParameterKind</code> individuals. Composition shapes per statement kind (§6)</td>
+    </tr>
+    <tr>
+      <td>T4</td>
+      <td>a basis may require companion parameters (aggregate basis needs a window, linear trigger needs floor and ceiling)</td>
+      <td>SHACL-SPARQL</td>
+      <td>same, as constraint shapes per parameter kind</td>
+      <td>same, per statement kind</td>
+    </tr>
+    <tr>
+      <td>T5</td>
+      <td>one economic quantity stated in several currencies</td>
+      <td>limit to value node to several monetary extents</td>
+      <td><code class="language-plaintext highlighter-rouge">qnt:Bound</code> with <code class="language-plaintext highlighter-rouge">qnt:alternativeBound</code> (ADR-A95): one bound, several statements in different units, compared in the candidate’s own unit, never converted</td>
+      <td>the same Quantification construct, already used in the worked agreement (GBP or EUR limit)</td>
+    </tr>
+    <tr>
+      <td>T6</td>
+      <td>intrinsic parameters are separate from relations between terms</td>
+      <td>facets against flow directives</td>
+      <td>term parameters against term relations. Relations compile into Capacity dependencies</td>
+      <td>Open CBAA has few relations: aggregate GWP accumulators (Behaviour allowances, design-spec §6.4) and precedence statements. Towers and layers are not a binding authority’s concern</td>
+    </tr>
+    <tr>
+      <td>T7</td>
+      <td>extension is governed: a new kind is admissible only with its own shape</td>
+      <td>custom facet plus registered shape</td>
+      <td>a new kind is a concept in the parameter kind scheme, <code class="language-plaintext highlighter-rouge">fnd:Governable</code>, admitted when Active and its shape exists. An unadmitted kind’s parameters are carried but excluded from evaluation and compilation</td>
+      <td>same, for statement parameter kinds</td>
+    </tr>
+    <tr>
+      <td>T8</td>
+      <td>structural and behavioural vocabularies are authoritative in their own layer, joined by explicit crosswalks</td>
+      <td>two scheme sets and crosswalks</td>
+      <td>Vocabulary scheme contracts on both sides. Exact crosswalks use <code class="language-plaintext highlighter-rouge">skos:exactMatch</code>, weaker ones are advisory (Surface source fidelity)</td>
+      <td>uses the same contracts, and the MORK bridge for anything not one-to-one</td>
+    </tr>
+    <tr>
+      <td>T9</td>
+      <td>compilation is deterministic, many-to-many and traceable</td>
+      <td>compiler with projection links</td>
+      <td>applied Capacity projection (§5): each compiled node is a <code class="language-plaintext highlighter-rouge">fnd:DerivedArtefact</code> with its read set and input hashes</td>
+      <td>not required. Available by lifting through the MORK bridge</td>
+    </tr>
+    <tr>
+      <td>T10</td>
+      <td>an unconstrained dimension means “any”, never the empty set</td>
+      <td>explicit wildcard concepts</td>
+      <td>Eligibility has no empty-set trap: a profile with no condition on a dimension does not constrain it. A shape warns when a hierarchical condition names no required concept</td>
+      <td>same</td>
+    </tr>
+    <tr>
+      <td>T11</td>
+      <td>peril membership follows the hierarchy</td>
+      <td>subsumption-aware membership</td>
+      <td><code class="language-plaintext highlighter-rouge">elg:HierarchicalMatch</code> with exclusions (ADR-A87)</td>
+      <td>same, degrading to set membership for flat editions (<a href="/developer/sketches/mork-bridge.html">MORK bridge</a> §3)</td>
+    </tr>
+    <tr>
+      <td>T12</td>
+      <td>liability direction and party roles qualify parameters</td>
+      <td>role facet, claimant and payee roles</td>
+      <td>§7 below</td>
+      <td>§7 below</td>
+    </tr>
+    <tr>
+      <td>T13</td>
+      <td>time: claims basis, waiting period, indemnity period, occurrence grouping, retroactive dates</td>
+      <td>temporal facets, some declared without properties</td>
+      <td>durations and anchored ranges from Quantification, validity from Foundation. Retroactive and continuity dates are parameters with values, not a gap</td>
+      <td>SoUA claims basis, usual and maximum duration, advance binding and quoting periods become statement parameters (§6)</td>
+    </tr>
+    <tr>
+      <td>T14</td>
+      <td>runtime tractability without hard-wiring vocabularies</td>
+      <td>generated local shadows</td>
+      <td>Surface generated classes and closures, and the Capacity runtime profile, all optional</td>
+      <td>compiled closures per pinned edition (design-spec §4.4), optional</td>
+    </tr>
+    <tr>
+      <td>T15</td>
+      <td>evaluation is deterministic on well-formed graphs</td>
+      <td>stated as a theorem</td>
+      <td>Behaviour and Capacity laws with recorded discharges</td>
+      <td>the same laws, through the same layers</td>
+    </tr>
+    <tr>
+      <td>T16</td>
+      <td>known modelling mistakes are caught</td>
+      <td>a defect catalogue</td>
+      <td>each defect becomes a shape or a law test (§8)</td>
+      <td>shapes</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="4-term-parameters-in-lattices-reference-contract-module">4. Term Parameters in LATTICE’s Reference Contract Module</h2>
+
+<h3 id="41-classes">4.1 Classes</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ctr:TermParameter ⊑ ins:Qualifier ⊓ =1 ins:qualifies.ctr:Term
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">ctr:Term</code> is the applied insurance term: an <code class="language-plaintext highlighter-rouge">ins:Provision</code> or <code class="language-plaintext highlighter-rouge">ins:Obligation</code> with a
+function concept (coverage grant, exclusion, sub-limit, condition, deductible, declaration,
+extension, write-back) from a function scheme.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Kind</th>
+      <th>Carries</th>
+      <th>Replaces</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ctr:LimitParameter</code></td>
+      <td>a <code class="language-plaintext highlighter-rouge">qnt:Bound</code> (upper, with alternative bounds), basis</td>
+      <td>limit facet</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ctr:RetentionParameter</code></td>
+      <td>a <code class="language-plaintext highlighter-rouge">qnt:Bound</code> (lower, for a retention), basis, optional coinsurance ratio</td>
+      <td>retention facet</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ctr:DefenceCostParameter</code></td>
+      <td>defence cost treatment concept</td>
+      <td>defence cost facet</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ctr:ClaimsBasisParameter</code></td>
+      <td>claims trigger basis concept, retroactive date, continuity date</td>
+      <td>claims basis facet and the unfinished temporal facet</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ctr:WaitingPeriodParameter</code></td>
+      <td>a duration <code class="language-plaintext highlighter-rouge">qnt:Quantity</code>, calendar basis</td>
+      <td>waiting period facet</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ctr:IndemnityPeriodParameter</code></td>
+      <td>a duration, basis</td>
+      <td>indemnity period facet</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ctr:ExtendedReportingParameter</code></td>
+      <td>a duration, activation condition</td>
+      <td>unfinished temporal facet</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ctr:AggregateParameter</code></td>
+      <td>aggregation window, counting basis, aggregate deductible as a <code class="language-plaintext highlighter-rouge">qnt:Bound</code></td>
+      <td>the aggregate context of the aggregation facet</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ctr:OccurrenceGroupingParameter</code></td>
+      <td>window duration, overlap rule, maximum windows, anchoring method</td>
+      <td>the hours-clause context of the aggregation facet</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ctr:ReinstatementParameter</code></td>
+      <td>count, percentage, pro rata time, pro rata amount, automatic</td>
+      <td>reinstatement facet</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ctr:TriggerParameter</code></td>
+      <td>trigger type, payout structure, thresholds as <code class="language-plaintext highlighter-rouge">qnt:RangeSet</code> on an intensity space, tiers, composition</td>
+      <td>trigger facet</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ctr:CollateralParameter</code></td>
+      <td>collateral type, minimum ratio, facility reference</td>
+      <td>collateral facet</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ctr:PoolShareParameter</code></td>
+      <td>pool, share, payout basis, cap</td>
+      <td>pool participation facet</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ctr:PremiumParameter</code></td>
+      <td>premium basis, amount, rate, minimum, deposit</td>
+      <td>premium facet</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ctr:PartyRoleParameter</code></td>
+      <td>the harm, claim, liable and payment roles it qualifies (§7)</td>
+      <td>actor facet</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ctr:DeclarationParameter</code></td>
+      <td>declared values as references to asset exposure valuations and financial metrics</td>
+      <td>the unfinished declaration facet</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>All pairwise disjoint. Two changes from the reviewed design are deliberate:</p>
+
+<ol>
+  <li><strong>The aggregation facet is split in two.</strong> It carried two unrelated property groups (an
+aggregate’s window and deductible, and an hours clause’s grouping of losses), one of which was
+always dormant. Two kinds let each shape require what its kind needs, with no “dormant group”
+rules.</li>
+  <li><strong>Declarations point at exposure data.</strong> Declared TIV and revenue are facts the asset
+exposure ontology holds (valuations, financial metrics). A declaration parameter references
+them, so a declared value and the exposure record cannot disagree silently.</li>
+</ol>
+
+<h3 id="42-values">4.2 Values</h3>
+
+<p>Amounts are <code class="language-plaintext highlighter-rouge">qnt:Quantity</code> values. A limit, retention or aggregate deductible is a <code class="language-plaintext highlighter-rouge">qnt:Bound</code>,
+so the same comparison and alternative-bound semantics apply everywhere. Durations are
+quantities on a duration space with calendar units where needed (ADR-A94). Percentages and
+ratios are quantities on a proportion space. No bare decimals, so every number carries its
+space, and a shape never needs a “currency present if amount present” rule.</p>
+
+<h3 id="43-term-relations">4.3 Term relations</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ctr:TermRelation ⊑ fnd:Version ⊓ =1 ctr:relationSource ⊓ =1 ctr:relationTarget ⊓ =1 ctr:relationKind
+</code></pre></div></div>
+
+<p>Kinds: erosion, defence erosion, aggregation, aggregate deductible feed, attachment, drop-down,
+primacy, contribution, pool distribution, collateral draw, override, follow form, scope
+expansion (write-back), scope narrowing. The reviewed design’s split between relations that
+become behaviour and relations that only reshape structure is kept: follow form, override and
+scope expansion are resolved structurally (they change which parameters a term has) before any
+evaluation.</p>
+
+<h2 id="5-compilation-is-optional">5. Compilation Is Optional</h2>
+
+<h3 id="51-three-routes-to-an-answer">5.1 Three routes to an answer</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Route</th>
+      <th>What runs</th>
+      <th>Authority</th>
+      <th>When</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>R1, direct</td>
+      <td>evaluation over the declarative graph: Eligibility’s SPARQL reference evaluation for scopes, a parameter interpreter for amounts and time</td>
+      <td>normative</td>
+      <td>always available, the specification of meaning</td>
+    </tr>
+    <tr>
+      <td>R2, compiled</td>
+      <td>applied Capacity projection (resources, accumulators, dependencies), Surface restatements and closures, OWL classes for design-time checks, the Capacity runtime profile</td>
+      <td><code class="language-plaintext highlighter-rouge">srf:CachedReproducible</code>: authoritative only because it is reproducible from R1’s inputs</td>
+      <td>where throughput or latency needs it: bind-time checks at volume, scenario runs, portfolio accumulation</td>
+    </tr>
+    <tr>
+      <td>R3, advisory</td>
+      <td>projections through inexact crosswalks, heuristic summaries</td>
+      <td><code class="language-plaintext highlighter-rouge">srf:Advisory</code></td>
+      <td>discovery, triage, dashboards</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The reviewed design had only R2: behaviour existed only once compiled, and structure and
+behaviour had to be kept in step. Here R1 always exists, so R2 is an optimisation that can be
+switched on per deployment, per term kind or per check, and switched off again without loss of
+meaning.</p>
+
+<h3 id="52-no-two-way-synchronisation">5.2 No two-way synchronisation</h3>
+
+<p>Compiled forms are derived one way from the declarative graph, never edited, and never written
+back. Each carries its read set and input hashes (Surface manifests, <code class="language-plaintext highlighter-rouge">fnd:DerivedArtefact</code>), so
+staleness is detectable by comparing hashes, and regeneration follows the hash-based invalidation
+LATTICE already defines (<a href="/architecture/ontology-architecture.html#10-hash-identities">ontology architecture</a> §10). A deployment that
+never compiles never has anything to keep in step.</p>
+
+<h3 id="53-parity">5.3 Parity</h3>
+
+<p>A compiled form must give R1’s answer. Parity is tested, not assumed: a conformance corpus of
+terms and cases runs through both routes, and a discrepancy fails the compiled form’s
+publication. Surface’s parity shapes and the Capacity runtime profile’s invariants are the
+existing mechanisms. Surface itself restates and indexes only: creating behavioural nodes
+(capacity resources, dependencies) is the Capacity projection compiler’s job, which Surface then
+accelerates.</p>
+
+<h2 id="6-statement-parameters-in-open-cbaa">6. Statement Parameters in Open CBAA</h2>
+
+<p>A binding authority’s scope of underwriting authority is a table of rows per segment (M5 SoUA
+base table). Open CBAA meets the aims those rows need without term parameter classes. Each row
+is a statement parameter: a property of the bound authority grant, or a parameter binding from
+a template to an agreement variable (design-spec §3.5, ontology README §4).</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>SoUA row</th>
+      <th>Statement parameter</th>
+      <th>Aim met</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>maximum limits of liability or sums insured</td>
+      <td>scope limit (interval condition on the case’s sum insured), alternative bounds for several currencies</td>
+      <td>T5</td>
+    </tr>
+    <tr>
+      <td>limit or sum insured basis</td>
+      <td><code class="language-plaintext highlighter-rouge">stm:limitBasis</code> on the scope limit binding, from the CBAA sum insured basis list</td>
+      <td>T2</td>
+    </tr>
+    <tr>
+      <td>claims basis</td>
+      <td>new parameter kind, claims basis concept from the CBAA list</td>
+      <td>T13</td>
+    </tr>
+    <tr>
+      <td>usual and maximum duration of policies bound</td>
+      <td>new parameter kinds, durations</td>
+      <td>T13</td>
+    </tr>
+    <tr>
+      <td>maximum advance period for binding and for quoting</td>
+      <td>new parameter kinds, durations in calendar days</td>
+      <td>T13</td>
+    </tr>
+    <tr>
+      <td>included and excluded perils</td>
+      <td>scope inclusion and exclusion over the bound peril edition</td>
+      <td>T11</td>
+    </tr>
+    <tr>
+      <td>standard exclusions</td>
+      <td>scope exclusions, compared with the standard set to flag a non-standard table</td>
+      <td>T7</td>
+    </tr>
+    <tr>
+      <td>minimum deductible and excess</td>
+      <td>new parameter kinds, bounds</td>
+      <td>T5</td>
+    </tr>
+    <tr>
+      <td>GWP income limit and period</td>
+      <td>accumulator (Behaviour allowance) with its recurrence</td>
+      <td>T6</td>
+    </tr>
+    <tr>
+      <td>level of authority</td>
+      <td><code class="language-plaintext highlighter-rouge">stm:level</code></td>
+      <td>existing</td>
+    </tr>
+    <tr>
+      <td>applicable pool schemes</td>
+      <td>new parameter kind, pool concepts</td>
+      <td>T8</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Shapes check composition per statement kind (an authority grant has a scope, a limit basis when
+it has a scope limit, a claims basis). A deployment that wants capacity behaviour (accumulators
+by peril, scenario runs) lifts the bound grant into LATTICE term parameters through the MORK
+bridge (<a href="/developer/sketches/mork-bridge.html">MORK bridge</a> §5), and gets R2 from the reference implementation without
+Open CBAA owning any of it.</p>
+
+<h2 id="7-liability-direction-and-unknown-parties">7. Liability Direction and Unknown Parties</h2>
+
+<h3 id="71-direction-is-not-a-peril-characteristic">7.1 Direction is not a peril characteristic</h3>
+
+<p>The peril vocabulary’s agency characteristic says who or what <strong>acted</strong> to cause the event
+(natural, accidental, negligent, malicious). Liability direction is a different question: who
+<strong>suffered</strong> the harm, who is <strong>alleged liable</strong>, who <strong>brings the claim</strong>, and who is <strong>paid</strong>.
+A director’s breach of duty (a cause, with agency negligent or deliberate) can reach the insurer
+along several directions, and a D&amp;O programme prices and responds differently to each.</p>
+
+<h3 id="72-four-roles">7.2 Four roles</h3>
+
+<p>Each is a <code class="language-plaintext highlighter-rouge">pty:Role</code>. Party already allows an occupancy to exist before anyone fills it (“the
+role slot can exist before anyone fills it”), which is what unknown claimants need.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Role</th>
+      <th>Question</th>
+      <th>D&amp;O example</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>harmed party</td>
+      <td>who suffered the loss</td>
+      <td>shareholders who lost value, the company itself, an employee</td>
+    </tr>
+    <tr>
+      <td>liable party</td>
+      <td>who is alleged responsible</td>
+      <td>a director, an officer, the company (entity cover)</td>
+    </tr>
+    <tr>
+      <td>claimant</td>
+      <td>who asserts the claim, possibly for another</td>
+      <td>a shareholder bringing a derivative action on the company’s behalf, a regulator</td>
+    </tr>
+    <tr>
+      <td>payee</td>
+      <td>who receives the insurer’s payment</td>
+      <td>the director (non-indemnifiable loss), the company (reimbursement of its indemnity), the claimant directly where direct action applies</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>At binding, a contract names <strong>role types and populations</strong>, not people. “Claims by
+shareholders”, “claims by the insured entity against its own directors”, “regulatory
+investigations” are conditions over the claimant role’s type and its relation to the insured.
+At claim time, occupancies are created and filled with actors. Nothing about an unknown claimant
+has to be invented at binding.</p>
+
+<h3 id="73-direction-is-derived">7.3 Direction is derived</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Direction</th>
+      <th>Condition over the roles</th>
+      <th>Example</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>first party</td>
+      <td>the harmed party is an insured</td>
+      <td>property damage to the insured’s building, the entity’s own cyber costs</td>
+    </tr>
+    <tr>
+      <td>third party</td>
+      <td>the harmed party is not an insured, and the liable party is</td>
+      <td>a customer sues the company</td>
+    </tr>
+    <tr>
+      <td>insured against insured</td>
+      <td>the claimant is an insured, and so is the liable party</td>
+      <td>the company sues its former director</td>
+    </tr>
+    <tr>
+      <td>derivative</td>
+      <td>the claimant acts for the harmed party, which is an insured</td>
+      <td>shareholders sue directors on the company’s behalf</td>
+    </tr>
+    <tr>
+      <td>fourth party</td>
+      <td>the harmed party’s relation to the insured runs through an intermediary</td>
+      <td>a customer of the insured’s customer, a supplier’s supplier whose failure the insured is blamed for</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Because direction is derived from roles and relationships, it is never asserted by hand, and a
+new direction is a new derivation rule, not a new concept on every claim. Fourth-party distance
+needs the relationship graph (who stands in what relationship to the insured, directly or
+through whom), which the asset exposure ontology holds as counterparty populations and
+dependencies (<a href="/developer/sketches/asset-exposure-ontology.html">asset exposure ontology</a> §5.15).</p>
+
+<h3 id="74-in-a-do-programme">7.4 In a D&amp;O programme</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>D&amp;O construct</th>
+      <th>Expression</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Side A (directors, non-indemnifiable loss)</td>
+      <td>payee role director, liable role director, condition: the company has not indemnified</td>
+    </tr>
+    <tr>
+      <td>Side B (company reimbursement)</td>
+      <td>payee role company, liable role director</td>
+    </tr>
+    <tr>
+      <td>Side C (entity, often securities claims only)</td>
+      <td>liable role company, claimant type securities holder</td>
+    </tr>
+    <tr>
+      <td>insured against insured exclusion</td>
+      <td>exclusion over claimant ∈ insureds, with write-backs for derivative actions, whistleblowers and insolvency practitioners as classification statements</td>
+    </tr>
+    <tr>
+      <td>order of payments (Side A first)</td>
+      <td>a precedence statement, and under compilation a priority among capacity draws</td>
+    </tr>
+    <tr>
+      <td>claims made with continuity dates</td>
+      <td>claims basis parameter with retroactive and continuity dates</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>In LATTICE’s reference this is a <code class="language-plaintext highlighter-rouge">ctr:PartyRoleParameter</code> plus Eligibility conditions over the
+role occupancies. In Open CBAA, a binding authority rarely writes D&amp;O, but the same roles serve
+its existing statements: obligations already name obligor and obligee occupancies, and claims
+authority by claimant type (M8) is a scope over the claimant role.</p>
+
+<h2 id="8-the-defect-catalogue-as-shapes">8. The Defect Catalogue as Shapes</h2>
+
+<p>Every recurring mistake the reviewed design lists becomes a check. The main ones:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Mistake</th>
+      <th>Check</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>basis on the term instead of the parameter</td>
+      <td>limit, retention and aggregate parameters require a basis, terms may not have one</td>
+    </tr>
+    <tr>
+      <td>one node as two parameter kinds</td>
+      <td>disjointness (OWL) and a shape</td>
+    </tr>
+    <tr>
+      <td>aggregate basis without a window</td>
+      <td>aggregate-basis limits require an aggregate parameter on the same term</td>
+    </tr>
+    <tr>
+      <td>deductible and excess as separate kinds</td>
+      <td>not possible: one retention kind, the difference is an attachment relation</td>
+    </tr>
+    <tr>
+      <td>amount without currency</td>
+      <td>impossible by construction: amounts are quantities in a unit</td>
+    </tr>
+    <tr>
+      <td>grouping window without overlap rule and maximum windows</td>
+      <td>occurrence grouping parameter requires all three</td>
+    </tr>
+    <tr>
+      <td>waiting period confused with occurrence grouping</td>
+      <td>different kinds with different value spaces</td>
+    </tr>
+    <tr>
+      <td>coverage grant without claims basis</td>
+      <td>required by shape per function</td>
+    </tr>
+    <tr>
+      <td>unadmitted extension kind evaluated</td>
+      <td>parameters of a kind that is not Active with a shape are excluded from R1 and R2</td>
+    </tr>
+    <tr>
+      <td>cyclic term relations</td>
+      <td>acyclicity shape over relations, as MORK does for mapping precedence (ADR-A97)</td>
+    </tr>
+    <tr>
+      <td>empty scope set</td>
+      <td>no empty-set semantics exist. A condition naming nothing is warned</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="9-where-it-lives">9. Where It Lives</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Piece</th>
+      <th>Home</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ins:Qualifier</code>, <code class="language-plaintext highlighter-rouge">ins:Provision</code>, <code class="language-plaintext highlighter-rouge">ins:Obligation</code></td>
+      <td>LATTICE Instrument (substrate, unchanged)</td>
+    </tr>
+    <tr>
+      <td>term, term parameters, term relations, function and basis schemes</td>
+      <td>LATTICE <code class="language-plaintext highlighter-rouge">applied/insurance/contract/</code></td>
+    </tr>
+    <tr>
+      <td>compiled capacity forms and runtime profile</td>
+      <td>LATTICE <code class="language-plaintext highlighter-rouge">applied/capacity/</code> and its projection profile</td>
+    </tr>
+    <tr>
+      <td>harm, liable, claimant and payee role types, direction derivation</td>
+      <td>LATTICE <code class="language-plaintext highlighter-rouge">applied/insurance/common/</code>, used by <code class="language-plaintext highlighter-rouge">contract/</code> and <code class="language-plaintext highlighter-rouge">claims/</code></td>
+    </tr>
+    <tr>
+      <td>statement parameters for SoUA rows</td>
+      <td>Open CBAA <code class="language-plaintext highlighter-rouge">statement/</code></td>
+    </tr>
+    <tr>
+      <td>lifting and lowering between them</td>
+      <td>the MORK bridge, in Open CBAA’s mapping graphs</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="10-open-questions">10. Open Questions</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Question</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>TP-Q1</td>
+      <td>Adopt “term parameter”, “term relation” and “peril characteristic” as the names?</td>
+    </tr>
+    <tr>
+      <td>TP-Q2</td>
+      <td>Should the reference contract module be rebuilt on these classes now, or migrated from its current form when the applied insurance sub-folders are created?</td>
+    </tr>
+    <tr>
+      <td>TP-Q3</td>
+      <td>Which checks, if any, should Open CBAA compile by default (bind-time authority at volume is the likely first)?</td>
+    </tr>
+  </tbody>
+</table>

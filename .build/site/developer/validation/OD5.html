@@ -1,0 +1,187 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-od5-the-generated-regions">Validation Pack: OD5, the generated regions</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/improved-ontology-documentation.html"><code class="language-plaintext highlighter-rouge">improved-ontology-documentation</code></a>, slice OD5
+(<a href="/developer/plans/improved-ontology-documentation.html#slices">plan</a>).
+<strong>Implements:</strong> <a href="/architecture/decisions/ADR-A126-literate-specification-layout-and-grammar.html">ADR-A126</a>
+decision 7, and decision 8’s <code class="language-plaintext highlighter-rouge">generated</code> marker.
+<strong>Built autonomously</strong>, at the maintainer’s request of 2026-10-18. The decisions taken alone are listed below,
+for the maintainer to keep or overrule.</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>A README in the layout holds its Axiom Index (in 6.7) and its class diagram (in section 4) in generated
+regions, written from what section 6 compiles to, and never edited by hand. Extraction rewrites them, and
+<code class="language-plaintext highlighter-rouge">--check</code> reports a README whose regions are out of date. The regions are not read as section 6, so
+refreshing twice changes nothing, and they do not depend on the order of entries.</p>
+
+<h2 id="what-changed">What changed</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">tools/literate_grammar.py</code>:
+    <ul>
+      <li><strong><code class="language-plaintext highlighter-rouge">Views</code></strong> reads the compiled statements and restriction rows and writes the Axiom Index and the class
+diagram.</li>
+      <li><strong><code class="language-plaintext highlighter-rouge">manchester()</code></strong> writes a term back in Manchester syntax.</li>
+      <li><strong><code class="language-plaintext highlighter-rouge">verbalise()</code></strong> puts a restriction in the diagram’s words.</li>
+      <li><strong><code class="language-plaintext highlighter-rouge">refresh()</code></strong> rewrites the README’s regions, each required once in its place.</li>
+      <li><strong><code class="language-plaintext highlighter-rouge">Compiled</code></strong> gains the refreshed README.</li>
+    </ul>
+  </li>
+  <li><code class="language-plaintext highlighter-rouge">tools/literate_extract.py</code>. <code class="language-plaintext highlighter-rouge">main()</code> writes the refreshed README, or reports it as drift under <code class="language-plaintext highlighter-rouge">--check</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">tools/test_literate_grammar.py</code>. Tests OD5-T1 to OD5-T7. The helpers add both regions, which a migrated
+README now needs.</li>
+  <li><code class="language-plaintext highlighter-rouge">tools/test_literate_extract.py</code>. OD1-T11’s README gains both regions.</li>
+  <li><code class="language-plaintext highlighter-rouge">docs/architecture/literate-specifications.md</code>. The generated views are described as built.</li>
+</ul>
+
+<h2 id="decisions-taken-alone-for-the-maintainer">Decisions taken alone, for the maintainer</h2>
+
+<ol>
+  <li><strong>Both regions are required</strong>, once each, the Axiom Index inside 6.7 and the diagram inside section 4. A
+region of another name is refused.</li>
+  <li><strong>The README is an output.</strong> The extractor writes the refreshed README to the path given, not under
+<code class="language-plaintext highlighter-rouge">--root</code>, and <code class="language-plaintext highlighter-rouge">--check</code> lists it as drift.</li>
+  <li><strong>The views are derived from the compiled statements</strong>, plus the restriction rows, which also carry the
+SHACL-only rows. So they show what the grammar wrote, not a second reading of the README.</li>
+  <li><strong>The Axiom Index’s columns are Term, Kind and Summary.</strong> Terms are sorted by kind (class, object
+property, datatype property, individual) and then by name. A summary is short sentences in a fixed order,
+with restrictions sorted, so reordering a table’s rows changes nothing. Annotations are left out, since
+they are in the entries.</li>
+  <li><strong>The diagram’s conventions</strong>, from the maintainer’s walkthrough of 2026-10-15:
+    <ul>
+      <li>restrictions are members in ORM-style words, with numbers to ten written out</li>
+      <li>a datatype property with a domain is a member <code class="language-plaintext highlighter-rouge">name (range)</code></li>
+      <li>an object property with named domain and range is an arrow</li>
+      <li>a property with no named domain is a box of its own</li>
+      <li>subclassing is <code class="language-plaintext highlighter-rouge">&lt;|--</code>, including to classes outside the module, which appear as empty boxes</li>
+      <li>there are no composition arrows</li>
+      <li>a domain or range that is an expression is left out of the drawing, and stays in the index</li>
+    </ul>
+  </li>
+  <li><strong>Names in the diagram</strong> are local names, qualified as <code class="language-plaintext highlighter-rouge">prefix_local</code> where two classes share one. Mermaid
+reads <code class="language-plaintext highlighter-rouge">code (xsd:string)</code> as a method, so it is drawn as <code class="language-plaintext highlighter-rouge">code(xsd:string)</code>. It still reads correctly.</li>
+</ol>
+
+<h2 id="test-cases">Test cases</h2>
+
+<p>In <code class="language-plaintext highlighter-rouge">tools/test_literate_grammar.py</code>.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>OD5-T1</td>
+      <td>classes, properties, an individual and disjointness / compile / the exact Axiom Index</td>
+      <td>L3</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>OD5-T2</td>
+      <td>the same / compile / the exact class diagram</td>
+      <td>L3</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>OD5-T3</td>
+      <td>two classes with one local name / compile / both qualified by prefix</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>OD5-T4</td>
+      <td>a README extracted, checked, edited inside a region, and checked / <code class="language-plaintext highlighter-rouge">main()</code> / regions written, no drift, then drift naming the regions</td>
+      <td>L4</td>
+      <td>+/−</td>
+    </tr>
+    <tr>
+      <td>OD5-T5</td>
+      <td>a refreshed README / compiled again / the same README, documents and shapes</td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>OD5-T6</td>
+      <td>a missing index region, a diagram region outside section 4, two diagram regions, an unknown region / compile / each refused</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>OD5-T7</td>
+      <td>the same entries in two orders / compile / identical regions</td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The generated diagram of OD5-T2 was rendered with mermaid 10.9.1 in a browser on 2026-10-18, with no error,
+the standalone property box included.</p>
+
+<h2 id="one-command">One command</h2>
+
+<p>Run from the repository root. A pass is every test passing.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise <span class="nb">exec</span> <span class="nt">--</span> python <span class="nt">-m</span> pytest tools/test_literate_grammar.py tools/test_literate_extract.py <span class="nt">-q</span>
+</code></pre></div></div>
+
+<h2 id="results">Results</h2>
+
+<p>2026-10-18, run while building, from this worktree:</p>
+
+<ul>
+  <li><strong><code class="language-plaintext highlighter-rouge">tools/test_literate_grammar.py</code>:</strong> 85 passed.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">tools/test_literate_extract.py</code> and <code class="language-plaintext highlighter-rouge">tools/test_lattice_repo_catalogue.py</code>:</strong> 131 passed.</li>
+  <li><strong>The per-layer extraction tests, selected by name:</strong> 9 passed.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">mise run check:formal-freshness</code>:</strong> passes.</li>
+  <li><strong>The diagram render check:</strong> passes.</li>
+</ul>
+
+<p><code class="language-plaintext highlighter-rouge">mise run check:ontology-catalog</code> was not run. The adversarial probes were not run.</p>
+
+<h2 id="adversarial-probes-for-the-gate">Adversarial probes, for the gate</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Mutation</th>
+      <th>Expected</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">refresh()</code> stops checking where a region sits</td>
+      <td>OD5-T6’s second case fails</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">Readme.paragraphs()</code> stops leaving out generated regions</td>
+      <td>OD5-T5 fails</td>
+    </tr>
+    <tr>
+      <td>the index keeps README order</td>
+      <td>OD5-T7 fails</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<ul>
+  <li>A real README’s regions. OD6 adds them to Eligibility, whose existing hand-drawn diagram is replaced.</li>
+  <li>Diagrams for unions in domains and ranges, and for individuals. They stay in the index only.</li>
+</ul>
+
+<h2 id="decisions-answered">Decisions answered</h2>
+
+<p>2026-10-18, by the maintainer: decisions 1 and 3 to 6 agreed. Decision 2 (the README as an output) agreed after a
+detailed explanation. Only what lies between a <code class="language-plaintext highlighter-rouge">generated</code> region’s markers is rewritten. Everything else in
+the README is its source, so a concept is added by writing its entry in section 6, and the next extraction
+writes its Turtle and its place in the Axiom Index and the class diagram.</p>

@@ -52,10 +52,10 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-42](ADR-A42-mork-review-snapshot-and-decision-learning-boundary.md) | MORK review snapshot and decision-learning boundary | Accepted |
 | [A-43](ADR-A43-mork-replayable-queue-and-calibrated-governance.md) | MORK replayable queue and calibrated governance | Accepted |
 | [A-44](ADR-A44-mork-teaching-pack-generated-content-boundary.md) | MORK Teaching Pack generated-content boundary | Accepted |
-| [A-03](ADR-A03-condition-taxonomy.md) | Eligibility condition taxonomy | Accepted |
+| [A-03](ADR-A03-condition-taxonomy.md) | Eligibility condition taxonomy | Published |
 | [A-04](ADR-A04-interval-overlap-law-split.md) | Interval containment and overlap law split | Accepted |
-| [A-05](ADR-A05-compatibility-vocabulary.md) | Compatibility operation vocabulary | Accepted |
-| [A-06](ADR-A06-wildcard-semantics.md) | Wildcard semantics and limits | Accepted |
+| [A-05](ADR-A05-compatibility-vocabulary.md) | Compatibility operation vocabulary | Published |
+| [A-06](ADR-A06-wildcard-semantics.md) | Wildcard semantics and limits | Published |
 | [A-07](ADR-A07-eligibility-authoring-direction.md) | Eligibility authoring direction and extraction contract | Accepted |
 | [A-07b](ADR-A07b-minimal-instrument-shape.md) | Minimal Instrument shape and versioning contract | Superseded by A-104 |
 | [A-08](ADR-A08-behaviour-four-tier-model.md) | Behaviour four-tier model | Accepted |
@@ -90,13 +90,13 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-81](ADR-A81-control-plane-http-runtime.md) | Control Plane HTTP runtime | Proposed |
 | [A-82](ADR-A82-framework-neutral-identity-pattern-selection.md) | Framework-neutral identity pattern selection | Proposed |
 | [A-84](ADR-A84-standalone-minting-libraries.md) | Standalone minting libraries | Proposed |
-| [A-85](ADR-A85-vocabulary-scoped-temporal-binding-resolution.md) | Vocabulary scoped and temporal binding resolution | Accepted |
+| [A-85](ADR-A85-vocabulary-scoped-temporal-binding-resolution.md) | Vocabulary scoped and temporal binding resolution | Published |
 | [A-86](ADR-A86-ontology-semantic-versioning.md) | Semantic versioning for ontology documents | Accepted |
-| [A-87](ADR-A87-eligibility-concept-inclusion-and-exclusion.md) | Eligibility concept inclusion and exclusion | Accepted |
+| [A-87](ADR-A87-eligibility-concept-inclusion-and-exclusion.md) | Eligibility concept inclusion and exclusion | Published |
 | [A-88](ADR-A88-ontology-import-resolution-for-consumers.md) | Ontology import resolution for consumers | Accepted |
 | [A-89](ADR-A89-eligibility-ir-concept-conditions-and-profile-aggregation.md) | Eligibility IR for concept conditions and profile aggregation | Accepted |
-| [A-90](ADR-A90-eligibility-design-time-owl-class-backend.md) | Design-time OWL class backend for Eligibility | Accepted |
-| [A-91](ADR-A91-eligibility-candidate-evidence-binding.md) | Eligibility candidate evidence binding | Accepted |
+| [A-90](ADR-A90-eligibility-design-time-owl-class-backend.md) | Design-time OWL class backend for Eligibility | Published |
+| [A-91](ADR-A91-eligibility-candidate-evidence-binding.md) | Eligibility candidate evidence binding | Published |
 | [A-83](ADR-A83-test-only-reasoning-engine-isolation.md) | Test-only reasoning engine isolation | Accepted |
 | [A-92](ADR-A92-derived-artefact-contract-and-prov-o-alignment.md) | Foundation derived-artefact contract and PROV-O alignment | Accepted |
 | [A-93](ADR-A93-quantification-derived-rate-spaces.md) | Quantification derived rate spaces | Accepted |
@@ -106,10 +106,10 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-97](ADR-A97-mork-order-relations-in-owl-2-dl.md) | MORK order relations in OWL 2 DL | Accepted |
 | [A-98](ADR-A98-applied-layout-and-insurance-modules.md) | Applied layout and insurance modules (with addendum) | Accepted |
 | [A-99](ADR-A99-reference-vocabularies-and-peril-structure.md) | Reference vocabularies and peril structure | Accepted |
-| [A-100](ADR-A100-hierarchical-match-over-flat-schemes.md) | Hierarchical match over schemes without a hierarchy | Accepted |
+| [A-100](ADR-A100-hierarchical-match-over-flat-schemes.md) | Hierarchical match over schemes without a hierarchy | Published |
 | [A-102](ADR-A102-liability-direction-from-party-roles.md) | Liability direction from party roles | Accepted |
-| [A-103](ADR-A103-eligibility-set-readings.md) | Eligibility set readings and negation | Accepted, with addenda |
-| [A-105](ADR-A105-closure-declarations.md) | Closure declarations | Accepted |
+| [A-103](ADR-A103-eligibility-set-readings.md) | Eligibility set readings and negation | Published |
+| [A-105](ADR-A105-closure-declarations.md) | Closure declarations | Published |
 | [A-104](ADR-A104-instrument-terms-and-legal-relations.md) | Instrument: terms and legal relations | Accepted, with addenda |
 | [A-106](ADR-A106-behaviour-configuration-runtime-occasions-and-records.md) | Behaviour configuration, runtime, occasions and records | Accepted, with addenda |
 | [A-112](ADR-A112-wording-layer.md) | Wording layer | Accepted |
@@ -121,12 +121,12 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-118](ADR-A118-word-authoring-proof-of-concept.md) | Word authoring proof of concept | Proposed |
 | [A-119](ADR-A119-xslt-transformation-sidecar.md) | Bidirectional XSLT transformation sidecar | Proposed |
 | [A-120](ADR-A120-literate-specs-with-several-documents.md) | Literate specs with several documents | Accepted, with addenda |
-| [A-121](ADR-A121-repository-catalogue.md) | The repository catalogue | Accepted, 2026-10-17 |
+| [A-121](ADR-A121-repository-catalogue.md) | The repository catalogue | Published |
 | [A-122](ADR-A122-aggregate-ownership.md) | Aggregate ownership, a classified boundary shape for every boundary strategy | Accepted, 2026-10-10 |
 | [A-123](ADR-A123-typed-operation-ir.md) | A typed operation IR for the persistence compiler | Accepted, 2026-10-10, three addenda 2026-10-12 |
 | [A-124](ADR-A124-benchmark-root.md) | A benchmark root for checks that measure, run on demand | Accepted, 2026-10-12 |
 | [A-125](ADR-A125-test-support-tooling.md) | Test-support tooling under `tools/testing/` | Accepted, 2026-10-12 |
-| [A-126](ADR-A126-literate-specification-layout-and-grammar.md) | Literate specification layout and grammar | Accepted, 2026-10-17 |
+| [A-126](ADR-A126-literate-specification-layout-and-grammar.md) | Literate specification layout and grammar | Published |
 | [A-127](ADR-A127-published-architecture-decisions.md) | Published architecture decisions | Accepted, 2026-10-17 |
 | [A-128](ADR-A128-efficient-queries-and-shapes.md) | Efficient queries and shapes | Proposed, 2026-10-17 |
 

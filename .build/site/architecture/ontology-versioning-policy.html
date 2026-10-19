@@ -1,0 +1,386 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="ontology-versioning-policy">Ontology Versioning Policy</h1>
+
+<p>Governs every <code class="language-plaintext highlighter-rouge">owl:Ontology</code> document under <code class="language-plaintext highlighter-rouge">ontology/</code> — every <code class="language-plaintext highlighter-rouge">spec/&lt;layer&gt;.ttl</code>
+and <code class="language-plaintext highlighter-rouge">vocab/&lt;layer&gt;-vocab.ttl</code>, plus the directly-authored ontologies
+(Persistence, MORK’s <code class="language-plaintext highlighter-rouge">Mork.ttl</code>/<code class="language-plaintext highlighter-rouge">Executable.ttl</code>, SPC, and applied domain
+ontologies) that carry their own <code class="language-plaintext highlighter-rouge">owl:versionIRI</code>. Decided in
+<a href="decisions/ADR-A86-ontology-semantic-versioning.md">ADR-A86</a>; read that ADR
+first for the <em>why</em>. This document is the <em>how</em>: the checklist every
+contributor applies before committing a change.</p>
+
+<p>Adopts <a href="https://semver.org/">Semantic Versioning 2.0.0</a> (<code class="language-plaintext highlighter-rouge">X.Y.Z</code> —
+MAJOR.MINOR.PATCH) unmodified. If you have not read <code class="language-plaintext highlighter-rouge">semver.md</code>’s summary,
+read it now; this document only translates its three rules into ontology
+terms.</p>
+
+<h2 id="the-versioning-unit">The versioning unit</h2>
+
+<p><strong>One <code class="language-plaintext highlighter-rouge">owl:versionIRI</code> per <code class="language-plaintext highlighter-rouge">owl:Ontology</code> document.</strong> <code class="language-plaintext highlighter-rouge">spec/&lt;layer&gt;.ttl</code> and
+<code class="language-plaintext highlighter-rouge">vocab/&lt;layer&gt;-vocab.ttl</code> are two independently versioned documents — a
+change to one never bumps the other. A layer’s <code class="language-plaintext highlighter-rouge">shapes/</code> and <code class="language-plaintext highlighter-rouge">projection/</code>
+directories declare no <code class="language-plaintext highlighter-rouge">owl:Ontology</code>, so each directory is a versioning unit
+of its own: a <code class="language-plaintext highlighter-rouge">.version</code> file in the directory holds one semantic version
+(<code class="language-plaintext highlighter-rouge">X.Y.Z</code>) shared by every file in it. A change to any of those files bumps the
+directory’s <code class="language-plaintext highlighter-rouge">.version</code>, and never the <code class="language-plaintext highlighter-rouge">spec</code> or <code class="language-plaintext highlighter-rouge">vocab</code> version IRI, which
+move only when the ontology itself changes. The table below classifies a
+shapes change exactly as it classifies one to an ontology document.</p>
+
+<h2 id="what-changes-the-number">What changes the number</h2>
+
+<p>Software semver defines API breakage in terms of function signatures. An
+ontology’s public API is what a <em>consumer’s data</em> is checked against: what a
+reasoner or a SHACL engine accepts or rejects, and what a term is documented
+to mean.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Bump</th>
+      <th>An ontology change is this kind when it…</th>
+      <th>Worked example</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>PATCH</strong> (Z)</td>
+      <td>Corrects prose or a shape so it matches what was already documented as intended, with no change to what a correctly governed consumer graph experiences.</td>
+      <td>Fixing an <code class="language-plaintext highlighter-rouge">rdfs:comment</code> or <code class="language-plaintext highlighter-rouge">fnd:utility</code> string that misdescribed a term; fixing a SHACL <code class="language-plaintext highlighter-rouge">sh:message</code>; a Turtle syntax/whitespace fix with no triple-level change; a broken cross-reference.</td>
+    </tr>
+    <tr>
+      <td><strong>MINOR</strong> (Y)</td>
+      <td>Adds something backward compatible: a consumer graph that conformed before still conforms, unchanged in meaning, after.</td>
+      <td>A new class, property, or <code class="language-plaintext highlighter-rouge">vocab/</code> individual; a new <em>optional</em> SHACL property shape (<code class="language-plaintext highlighter-rouge">sh:minCount 0</code>) or a <code class="language-plaintext highlighter-rouge">sh:Warning</code>-severity shape; widening a cardinality restriction; marking a term deprecated while it still works (<code class="language-plaintext highlighter-rouge">semver.md</code> §7 requires this one). <strong>Worked example from this repository:</strong> the <code class="language-plaintext highlighter-rouge">vocabulary-temporal-binding</code> unit’s <code class="language-plaintext highlighter-rouge">voc:SchemeBinding</code>, <code class="language-plaintext highlighter-rouge">voc:BindingScope</code>, and four binding properties (commit <code class="language-plaintext highlighter-rouge">65ac4a85e</code>) added a wholly new, optional mechanism alongside the existing <code class="language-plaintext highlighter-rouge">voc:boundScheme</code> — every graph that conformed under the old <code class="language-plaintext highlighter-rouge">voc:SchemeContract</code> shape still conforms unchanged. That is a MINOR bump of <code class="language-plaintext highlighter-rouge">vocabulary/spec/vocabulary.ttl</code>, not a PATCH (it adds real new terms) and not a MAJOR (nothing existing narrows or disappears).</td>
+    </tr>
+    <tr>
+      <td><strong>MAJOR</strong> (X)</td>
+      <td>Removes, renames, or narrows something such that a previously conformant consumer graph, or a previously valid statement’s meaning, can stop holding.</td>
+      <td>Removing/renaming a class, property, or individual; narrowing a cardinality restriction; a new <code class="language-plaintext highlighter-rouge">sh:Violation</code>-severity shape, <code class="language-plaintext highlighter-rouge">sh:closed true</code>, or <code class="language-plaintext highlighter-rouge">owl:disjointWith</code> that a real existing graph could now fail; a domain/range narrowing; changing the ontology IRI itself. <strong>Worked hypothetical:</strong> if <code class="language-plaintext highlighter-rouge">voc:SchemeContract</code>’s <code class="language-plaintext highlighter-rouge">constrainsProperty</code> were changed from <code class="language-plaintext highlighter-rouge">minCount 1</code> (optional beyond that) to <code class="language-plaintext highlighter-rouge">exactly 1</code> with a new <code class="language-plaintext highlighter-rouge">sh:maxCount 1</code>, any existing contract legitimately naming zero or several properties would newly fail — that is MAJOR, even though it looks like “just a tighter shape.”</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Two categories do not reduce to axiom-diffing:</p>
+
+<ul>
+  <li><strong>Silent semantic redefinition.</strong> The IRI and the axioms are unchanged, but
+the layer’s own “Design decisions” prose now means something different.
+This is a MAJOR change even when no SHACL shape moves. Classification here
+is a judgement call against the layer’s own README, made by whoever is
+authoring the change (human or agentic), and stated with its reasoning in
+the pull request — not inferred from a diff.</li>
+  <li><strong>Cross-layer import pinning.</strong> <code class="language-plaintext highlighter-rouge">owl:imports</code> in this repository pins an
+<em>exact</em> <code class="language-plaintext highlighter-rouge">owl:versionIRI</code>. Bumping any layer’s version obliges updating
+every importing layer’s <code class="language-plaintext highlighter-rouge">owl:imports</code> statement (and README <code class="language-plaintext highlighter-rouge">turtle-spec</code>
+source, where one mirrors it) in the <em>same</em> change, or the graph stops
+resolving.</li>
+  <li><strong>Import-only changes take the imported level.</strong> A document whose only
+change is an updated <code class="language-plaintext highlighter-rouge">owl:imports</code> takes the bump level of the change it
+imports, applied transitively, because its own consumers see that change
+through its import closure. Proposed in the
+<a href="decisions/ADR-A86-ontology-semantic-versioning.md#addendum-2026-09-25-guarantees-consumers-rely-on">ADR-A86 addendum</a>,
+item 1, and applied since the <code class="language-plaintext highlighter-rouge">applied-ontology-readiness</code> unit’s AOR-2.</li>
+</ul>
+
+<h3 id="major-version-zero">Major version zero</h3>
+
+<p>Every document is at <code class="language-plaintext highlighter-rouge">0.x</code>, and <code class="language-plaintext highlighter-rouge">1.0.0</code> is reserved for a decision declaring a layer’s interface
+stable (<a href="decisions/ADR-A113-breaking-changes-at-major-version-zero.md">ADR-A113</a>). Until then:</p>
+
+<ul>
+  <li>A change the table above classes as <strong>MAJOR</strong> takes a <strong>MINOR</strong> bump instead, for an ontology
+document, a <code class="language-plaintext highlighter-rouge">shapes/</code> directory or a <code class="language-plaintext highlighter-rouge">projection/</code> directory alike.</li>
+  <li>The change is marked breaking in the ADR that authorises it, and in a <strong>Release notes</strong> section
+of the layer’s README, one line per breaking version:
+<code class="language-plaintext highlighter-rouge">- 0.8.0 (breaking): bhv:targetsElement replaced by bhv:targets. ADR-A106.</code>
+The layer’s first breaking change creates the section. The release register is unchanged.</li>
+  <li>An importer re-pinned to a breaking <code class="language-plaintext highlighter-rouge">0.x</code> version takes a MINOR bump by the rule above, and is
+marked breaking where its own consumers are affected.</li>
+</ul>
+
+<h2 id="the-import-pinning-cascade-checklist">The import-pinning cascade checklist</h2>
+
+<p>Before bumping any layer’s version:</p>
+
+<ol>
+  <li>Enumerate every importer: <code class="language-plaintext highlighter-rouge">grep -rl "owl:imports.*&lt;old-versionIRI-substring&gt;" ontology/</code>
+(substitute the exact base, e.g. <code class="language-plaintext highlighter-rouge">neuro-semantic/lattice/foundation/</code>) across
+the whole <code class="language-plaintext highlighter-rouge">ontology/</code> tree, not just the layer’s own directory — an import
+can live in another layer’s <code class="language-plaintext highlighter-rouge">spec/*.ttl</code>, its mirrored README <code class="language-plaintext highlighter-rouge">turtle-spec</code>
+block, an unrelated example/test fixture, or (rarely) a hardcoded string in
+<code class="language-plaintext highlighter-rouge">tools/</code> reference-implementation code that stamps generated output with an
+ontology IRI (see <code class="language-plaintext highlighter-rouge">tools/surface/src/surface/namespaces.py</code>’s
+<code class="language-plaintext highlighter-rouge">SURFACE_ONTOLOGY</code> constant for a real instance of this last case).</li>
+  <li>Update every one of those references to the new <code class="language-plaintext highlighter-rouge">owl:versionIRI</code> in the
+same change. A bare, unversioned <code class="language-plaintext highlighter-rouge">owl:imports</code> target (MORK’s <code class="language-plaintext highlighter-rouge">Mork.ttl</code> is
+imported this way by several of its own example/test fixtures) is a
+deliberate, separate choice some importers make to always resolve against
+“whatever Mork currently is” rather than pin a release; leave those alone
+unless the specific file’s own convention is to pin exactly, matching its
+siblings.</li>
+  <li>Re-run the enumeration in step 1 after editing — it should return nothing
+for the old IRI.</li>
+</ol>
+
+<p>Keeping exact-IRI pinning (rather than adopting a dependency-range import
+mechanism) is this repository’s current, deliberate choice — see ADR-A86’s
+“Open questions” if the cascade cost ever becomes a real source of friction.</p>
+
+<h2 id="where-the-number-physically-lives">Where the number physically lives</h2>
+
+<p><strong>The seven literate-spec layers</strong> (Foundation, Vocabulary, Quantification,
+Party, Eligibility, Instrument, Behaviour) plus Surface: for the layers whose
+README mirrors the ontology header in its own <code class="language-plaintext highlighter-rouge">turtle-spec</code> fenced block
+(check with <code class="language-plaintext highlighter-rouge">grep -l "owl:versionIRI" ontology/&lt;layer&gt;/README.md</code> — today
+that is Eligibility, Instrument, Behaviour, and Surface), edit the version in
+<em>both</em> the README and the generated <code class="language-plaintext highlighter-rouge">spec/</code>/<code class="language-plaintext highlighter-rouge">vocab/</code> file, since
+<code class="language-plaintext highlighter-rouge">tools/literate_extract.py</code> is meant to keep them identical.</p>
+
+<p><strong>A layer with several spec documents</strong> (Behaviour’s <code class="language-plaintext highlighter-rouge">behaviour</code> and
+<code class="language-plaintext highlighter-rouge">behaviour-runtime</code>) gives them all one version, bumped together as one
+release, even when only one changed. The extractor refuses documents whose
+<code class="language-plaintext highlighter-rouge">owl:versionIRI</code> versions differ (ADR-A120).</p>
+
+<p><strong>A known, pre-existing gap this policy does not paper over:</strong>
+<code class="language-plaintext highlighter-rouge">tools/literate_extract.py --check</code> does not currently pass for any of the
+seven core layers — Foundation’s, Vocabulary’s, and Party’s committed
+<code class="language-plaintext highlighter-rouge">spec/*.ttl</code> predate the extraction tool’s own output conventions entirely
+(hand-authored/differently-generated Turtle, not a <code class="language-plaintext highlighter-rouge">turtle-spec</code> concatenation),
+and Quantification, Eligibility, Instrument, Behaviour, and Surface’s README
+<code class="language-plaintext highlighter-rouge">turtle-shapes</code> blocks do not agree with the <code class="language-plaintext highlighter-rouge">--shapes</code> arguments the tool
+needs to run without error. This was discovered, not introduced, while
+implementing ADR-A86’s baseline reset (2026-09-25): the reset edited the
+version/import lines directly, in both the README and the generated file, by
+hand, rather than by running the extraction tool, precisely because running
+it would have overwritten unrelated, already-drifted content with a full,
+differently-formatted regeneration — well outside this unit’s scope. Treat
+<code class="language-plaintext highlighter-rouge">tools/literate_extract.py --check</code> passing repository-wide as a separate,
+future remediation unit, not a promise this policy makes.</p>
+
+<p><strong>Persistence, MORK (<code class="language-plaintext highlighter-rouge">Mork.ttl</code>, <code class="language-plaintext highlighter-rouge">Executable.ttl</code>), SPC, and applied domain
+ontologies</strong> (<code class="language-plaintext highlighter-rouge">ontology/applied/*</code>) author their <code class="language-plaintext highlighter-rouge">owl:versionIRI</code> directly in
+the committed <code class="language-plaintext highlighter-rouge">.ttl</code> file — there is no README mirror to keep in sync for
+these.</p>
+
+<h2 id="the-one-time-baseline-reset-2026-09-25">The one-time baseline reset (2026-09-25)</h2>
+
+<p>Every in-scope document was reset to <strong><code class="language-plaintext highlighter-rouge">0.2.0</code></strong> in the same change that
+introduced this policy, per ADR-A86. This is an administrative
+normalisation, not a claim that any layer took seven, or three, or one MINOR
+release to get there — see the ADR’s “Consequences.” The full before/after
+table:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Document</th>
+      <th>Before</th>
+      <th>After</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">foundation/spec/foundation.ttl</code></td>
+      <td><code class="language-plaintext highlighter-rouge">neuro-semantic/foundation/0.0.7</code></td>
+      <td><code class="language-plaintext highlighter-rouge">neuro-semantic/lattice/foundation/0.2.0</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">foundation/vocab/foundation-vocab.ttl</code></td>
+      <td><code class="language-plaintext highlighter-rouge">neuro-semantic/foundation-vocab/0.0.1</code></td>
+      <td><code class="language-plaintext highlighter-rouge">neuro-semantic/lattice/foundation-vocab/0.2.0</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">vocabulary/spec/vocabulary.ttl</code></td>
+      <td><code class="language-plaintext highlighter-rouge">neuro-semantic/vocabulary/0.0.2</code></td>
+      <td><code class="language-plaintext highlighter-rouge">neuro-semantic/lattice/vocabulary/0.2.0</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">quantification/spec/quantification.ttl</code></td>
+      <td><code class="language-plaintext highlighter-rouge">neuro-semantic/quantification/0.0.1</code></td>
+      <td><code class="language-plaintext highlighter-rouge">neuro-semantic/lattice/quantification/0.2.0</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">party/spec/party.ttl</code></td>
+      <td><code class="language-plaintext highlighter-rouge">neuro-semantic/party/0.0.3</code></td>
+      <td><code class="language-plaintext highlighter-rouge">neuro-semantic/lattice/party/0.2.0</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">party/vocab/party-vocab.ttl</code></td>
+      <td><code class="language-plaintext highlighter-rouge">neuro-semantic/party-vocab/0.0.1</code></td>
+      <td><code class="language-plaintext highlighter-rouge">neuro-semantic/lattice/party-vocab/0.2.0</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">eligibility/spec/eligibility.ttl</code> (+ README mirror)</td>
+      <td><code class="language-plaintext highlighter-rouge">neuro-semantic/eligibility/0.0.1</code></td>
+      <td><code class="language-plaintext highlighter-rouge">neuro-semantic/lattice/eligibility/0.2.0</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">eligibility/vocab/eligibility-vocab.ttl</code></td>
+      <td><code class="language-plaintext highlighter-rouge">neuro-semantic/eligibility-vocab/0.0.1</code></td>
+      <td><code class="language-plaintext highlighter-rouge">neuro-semantic/lattice/eligibility-vocab/0.2.0</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">instrument/spec/instrument.ttl</code> (+ README mirror)</td>
+      <td><code class="language-plaintext highlighter-rouge">neuro-semantic/instrument/0.0.1</code></td>
+      <td><code class="language-plaintext highlighter-rouge">neuro-semantic/lattice/instrument/0.2.0</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">instrument/vocab/instrument-vocab.ttl</code> (+ README mirror)</td>
+      <td><code class="language-plaintext highlighter-rouge">neuro-semantic/instrument-vocab/0.0.1</code></td>
+      <td><code class="language-plaintext highlighter-rouge">neuro-semantic/lattice/instrument-vocab/0.2.0</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">behaviour/spec/behaviour.ttl</code> (+ README mirror)</td>
+      <td><code class="language-plaintext highlighter-rouge">neuro-semantic/behaviour/0.0.1</code></td>
+      <td><code class="language-plaintext highlighter-rouge">neuro-semantic/lattice/behaviour/0.2.0</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">behaviour/vocab/behaviour-vocab.ttl</code></td>
+      <td><code class="language-plaintext highlighter-rouge">neuro-semantic/behaviour-vocab/0.0.1</code></td>
+      <td><code class="language-plaintext highlighter-rouge">neuro-semantic/lattice/behaviour-vocab/0.2.0</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">surface/spec/surface.ttl</code> (+ README mirror + <code class="language-plaintext highlighter-rouge">tools/surface</code>’s <code class="language-plaintext highlighter-rouge">SURFACE_ONTOLOGY</code> constant)</td>
+      <td><code class="language-plaintext highlighter-rouge">neuro-semantic/surface/0.0.1</code></td>
+      <td><code class="language-plaintext highlighter-rouge">neuro-semantic/lattice/surface/0.2.0</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">surface/vocab/surface-vocab.ttl</code> (+ README mirror)</td>
+      <td><code class="language-plaintext highlighter-rouge">neuro-semantic/surface-vocab/0.0.1</code></td>
+      <td><code class="language-plaintext highlighter-rouge">neuro-semantic/lattice/surface-vocab/0.2.0</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">persistence/spec/persistence.ttl</code></td>
+      <td><code class="language-plaintext highlighter-rouge">lattice/persistence/0.1.0</code></td>
+      <td><code class="language-plaintext highlighter-rouge">lattice/persistence/0.2.0</code> (base already correct)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">mork/spec/Executable.ttl</code></td>
+      <td><code class="language-plaintext highlighter-rouge">lattice/executable/0.0.1</code></td>
+      <td><code class="language-plaintext highlighter-rouge">lattice/executable/0.2.0</code> (base already correct)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">mork/spec/Mork.ttl</code></td>
+      <td><em>(no <code class="language-plaintext highlighter-rouge">owl:versionIRI</code> at all)</em></td>
+      <td><code class="language-plaintext highlighter-rouge">http://www.nebularis.org/ontologies/Mork/0.2.0</code> — first assignment, in MORK’s own pre-existing namespace family, not migrated to <code class="language-plaintext highlighter-rouge">lattice/</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">spc/spec/spc.ttl</code></td>
+      <td><em>(no <code class="language-plaintext highlighter-rouge">owl:versionIRI</code> at all)</em></td>
+      <td><code class="language-plaintext highlighter-rouge">http://example.org/spc/0.2.0</code> — first assignment, in SPC’s current (pre-ADR-A62-harmonisation) namespace</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">applied/capacity/.../applied_capacity_execution_spec_capx_Version2.ttl</code></td>
+      <td><code class="language-plaintext highlighter-rouge">lattice/applied/capacity/execution/0.0.1</code></td>
+      <td><code class="language-plaintext highlighter-rouge">lattice/applied/capacity/execution/0.2.0</code> (base already correct)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">applied/insurance/spec/structure/contract.ttl</code></td>
+      <td><code class="language-plaintext highlighter-rouge">owl:versionIRI</code> <code class="language-plaintext highlighter-rouge">insurance/contract/0.1.1</code> <strong>and</strong> <code class="language-plaintext highlighter-rouge">owl:versionInfo "3.5.1"</code> (disagreeing)</td>
+      <td><code class="language-plaintext highlighter-rouge">owl:versionIRI</code> <code class="language-plaintext highlighter-rouge">insurance/contract/0.2.0</code>; <code class="language-plaintext highlighter-rouge">owl:priorVersion</code> updated to <code class="language-plaintext highlighter-rouge">0.1.1</code>; <code class="language-plaintext highlighter-rouge">owl:versionInfo</code> dropped — <code class="language-plaintext highlighter-rouge">owl:versionIRI</code> is now the single authoritative signal. Namespace family (<code class="language-plaintext highlighter-rouge">insurance/</code>, outside <code class="language-plaintext highlighter-rouge">lattice/</code>) deliberately left as-is; see the open question below.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Every <code class="language-plaintext highlighter-rouge">owl:imports</code> statement anywhere in <code class="language-plaintext highlighter-rouge">ontology/</code> that named one of the
+“Before” IRIs above was updated to the corresponding “After” IRI in the same
+change (the cascade checklist above), including the additional example
+fixture <code class="language-plaintext highlighter-rouge">ontology/mork/examples/Governance/GovernanceAndVersioning.ttl</code> and
+the illustrative MCN snippet in <code class="language-plaintext highlighter-rouge">docs/architecture/mork-compact-notation.md</code>.
+MORK’s own bare (unversioned) <code class="language-plaintext highlighter-rouge">owl:imports &lt;http://www.nebularis.org/ontologies/Mork&gt;</code>
+references, used by several of its example/test fixtures, were deliberately
+left unversioned — see the checklist’s step 2.</p>
+
+<p><strong>Answered, per ADR-A98 decision 6:</strong> <code class="language-plaintext highlighter-rouge">applied/insurance/contract.ttl</code>’s namespace family
+(<code class="language-plaintext highlighter-rouge">neuro-semantic/insurance/...</code>, outside the <code class="language-plaintext highlighter-rouge">lattice/</code> tree every other in-scope document uses)
+was deliberate applied-layer independence, not an oversight. Every insurance module uses the same
+<code class="language-plaintext highlighter-rouge">neuro-semantic/insurance/&lt;module&gt;</code> family; only cross-domain applied modules use the
+<code class="language-plaintext highlighter-rouge">neuro-semantic/lattice/applied/&lt;module&gt;</code> family. The legacy contract document itself was dropped
+by <code class="language-plaintext highlighter-rouge">applied-insurance-reference</code> (epic decision D1, AIR-1.1).</p>
+
+<h2 id="applying-this-to-a-new-change">Applying this to a new change</h2>
+
+<ol>
+  <li>Classify the change against the table above. If it is a silent semantic
+redefinition, say so explicitly in the PR, with the reasoning — do not
+rely on the table alone to justify a PATCH or MINOR label for a change
+that actually redefines what a term means.</li>
+  <li>Bump the correct unit(s) only — <code class="language-plaintext highlighter-rouge">spec</code>, <code class="language-plaintext highlighter-rouge">vocab</code>, and each <code class="language-plaintext highlighter-rouge">shapes/</code> or
+<code class="language-plaintext highlighter-rouge">projection/</code> directory’s <code class="language-plaintext highlighter-rouge">.version</code> are independent. Bumping one because
+another changed is itself a documentation error.</li>
+  <li>Run the import-pinning cascade checklist for every bump, PATCH included
+(see “The one subtlety,” below).</li>
+  <li>Where a README mirrors the ontology header, edit both, keeping them
+identical for that block.</li>
+  <li>Regenerate the catalogs with <code class="language-plaintext highlighter-rouge">mise run build:ontology-catalog</code>, since a new
+version IRI needs a catalog entry before any importer resolves it
+(<a href="decisions/ADR-A88-ontology-import-resolution-for-consumers.md">ADR-A88</a>).</li>
+  <li>Add release rows with <code class="language-plaintext highlighter-rouge">mise run build:ontology-releases</code>. It lists the tags
+the new versions need.</li>
+  <li>After committing, create and push those tags (next section). Only the maintainer
+creates them. Every other contributor ends their handoff with a notice listing them.</li>
+</ol>
+
+<h2 id="releasing-a-version">Releasing a version</h2>
+
+<p>Version IRIs do not dereference yet (ADR-A88 defers serving them). Until they
+do, a version is released by a git tag on the commit where it is in force, and
+fetched from GitHub at that tag.</p>
+
+<ul>
+  <li><strong>Tag name:</strong> <code class="language-plaintext highlighter-rouge">&lt;name&gt;-vX.Y.Z</code>. The name is the version IRI’s path without its
+version, with <code class="language-plaintext highlighter-rouge">neuro-semantic/lattice/</code>, <code class="language-plaintext highlighter-rouge">neuro-semantic/</code> or <code class="language-plaintext highlighter-rouge">ontologies/</code>
+dropped, segments joined by <code class="language-plaintext highlighter-rouge">-</code>, in lower case: <code class="language-plaintext highlighter-rouge">foundation-v0.3.0</code>,
+<code class="language-plaintext highlighter-rouge">foundation-vocab-v0.3.0</code>, <code class="language-plaintext highlighter-rouge">mork-v0.4.0</code>, <code class="language-plaintext highlighter-rouge">applied-capacity-execution-v0.6.0</code>.</li>
+  <li><strong>Register:</strong> <a href="/architecture/ontology-releases.html">ontology-releases.md</a>, published on the
+GitHub Pages site, has one row per released version: its name, version, tag,
+version IRI, and raw links at the tag, of the form
+<code class="language-plaintext highlighter-rouge">https://raw.githubusercontent.com/nebularis/lattice/refs/tags/&lt;tag&gt;/&lt;path&gt;</code>.
+Rows are written by <code class="language-plaintext highlighter-rouge">tools/ontology_releases.py</code> and never edited.</li>
+  <li><strong>Artefact directories</strong> are released the same way, named after the layer
+path and the directory (<code class="language-plaintext highlighter-rouge">foundation-shapes-v0.1.0</code>,
+<code class="language-plaintext highlighter-rouge">applied-insurance-shapes-v0.1.0</code>, <code class="language-plaintext highlighter-rouge">behaviour-projection-v0.1.0</code>), with a
+row linking every file in the directory and no version IRI.</li>
+  <li><strong>Who tags:</strong> a person, after committing the change that adds the rows. A
+tag names a whole commit, so the document, its artefacts, and the import
+catalog at that tag are all frozen with it. One commit may carry several tags.</li>
+  <li><strong>Why this is safe:</strong> a version IRI identifies one content only while no
+document changes without a bump. The checks below enforce that, so a tag
+never has to move.</li>
+</ul>
+
+<p>The first releases, on 2026-09-26, cover the version current at that date for
+each document, and each artefact directory’s first version, <code class="language-plaintext highlighter-rouge">0.1.0</code>. Earlier
+versions are not released.</p>
+<h3 id="the-one-subtlety-patch-still-bumps-the-version">The one subtlety: PATCH still bumps the version</h3>
+
+<p>A PATCH bump changes the <em>version number</em>, even though the change itself was
+“backward compatible with no visible axiom change” — the version number is
+what tells a consumer that <em>something</em> changed at all, distinct from the
+content-level classification of what kind of change it was. Do not confuse
+“this was a small change” with “this needs no version bump.” The narrow
+tooling check described next exists specifically to catch this confusion.</p>
+
+<h2 id="enforcement">Enforcement</h2>
+
+<p>No tool in this repository classifies a change as MAJOR/MINOR/PATCH
+automatically — that is a research problem, not a checklist, and this policy
+does not attempt it. What is enforced is narrower and purely mechanical: a
+change to an in-scope <code class="language-plaintext highlighter-rouge">.ttl</code> file’s content must be accompanied by a change to
+that file’s own <code class="language-plaintext highlighter-rouge">owl:versionIRI</code> literal, and a change to a file in a layer’s
+<code class="language-plaintext highlighter-rouge">shapes/</code> or <code class="language-plaintext highlighter-rouge">projection/</code> directory by a change to that directory’s
+<code class="language-plaintext highlighter-rouge">.version</code>. A document under a <code class="language-plaintext highlighter-rouge">spec/</code> or <code class="language-plaintext highlighter-rouge">vocab/</code> directory must also carry
+an <code class="language-plaintext highlighter-rouge">owl:versionIRI</code> at all, and every artefact directory a valid <code class="language-plaintext highlighter-rouge">.version</code>.
+Examples and test fixtures are exempt. Every current version must have a
+release row, and an existing release tag must name a commit where its
+document has that version. Missing tags are listed, not failed, since they
+are created after the commit. Both checks read only files git tracks or would
+track, so ignored build output is out of scope.</p>
+
+<p>A generated document carries a content-addressed version IRI instead of a
+semantic version: its ontology IRI followed by the first 16 hex digits of its
+canonical hash, taken without the version IRI (ADR-A86 addendum,
+item 5). The Surface compiler stamps it when it writes a module. See <code class="language-plaintext highlighter-rouge">tools/ontology_version_check.py</code>, <code class="language-plaintext highlighter-rouge">tools/ontology_releases.py</code> and
+<code class="language-plaintext highlighter-rouge">mise run check:ontology-versioning</code>. The <code class="language-plaintext highlighter-rouge">platform</code> workflow runs the same
+checks against <code class="language-plaintext highlighter-rouge">origin/main</code>.</p>

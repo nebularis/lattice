@@ -1,0 +1,675 @@
+<h1 id="expressing-logics-on-the-wire-datalog-and-the-alternatives">Expressing Logics on the Wire: Datalog and the Alternatives</h1>
+
+<p>This follows on from the LegalRuleML mapping, the runtime pipeline and the wire protocol sketches. It covers three things: a cheaper fix for the “XML in a JSON string” problem, what Datalog can and cannot give you, and how the other logic families compare.</p>
+
+<hr />
+
+<h2 id="summary">Summary</h2>
+
+<ol>
+  <li><strong>The XML-in-a-string problem has a cheap fix that keeps your LegalRuleML investment.</strong> Normalised LegalRuleML/RuleML is a strict alternation of typed nodes and role edges, which maps deterministically to plain JSON. The missing RDF rule body is a small, known gap. SWRL’s RDF syntax and the W3C <em>RIF in RDF</em> note both show how to fill it, and you only need to cover your own fragment.</li>
+  <li><strong>Datalog matches your semantics better than you fear, but only a specific dialect does.</strong> The fit comes from encoding three-valuedness as two positive predicates, not from well-founded semantics. Under that encoding the whole Eligibility fragment compiles to <strong>positive</strong> Datalog. Negation is then needed only where your R2 closure licence already says it is needed. That correspondence is the strongest argument for Datalog.</li>
+  <li><strong>The recommendation:</strong>
+    <ul>
+      <li>Use Datalog as the reference semantics of a JSON rule AST that extends your existing <code class="language-plaintext highlighter-rouge">conditions</code> form.</li>
+      <li>Keep LegalRuleML, RIF-Core, SWRL and ODRL as projections of fragments of that AST.</li>
+      <li>Reserve answer set programming (ASP) for the one thing Datalog cannot do, which is competing interpretations (G5).</li>
+    </ul>
+  </li>
+</ol>
+
+<hr />
+
+<h2 id="1-first-the-cheap-fix-for-legalruleml">1. First, the cheap fix for LegalRuleML</h2>
+
+<h3 id="11-a-json-abstract-syntax-not-embedded-xml">1.1 A JSON abstract syntax, not embedded XML</h3>
+
+<p>Normalised (“fully striped”) LegalRuleML alternates <em>Node</em> elements (capitalised: <code class="language-plaintext highlighter-rouge">Rule</code>, <code class="language-plaintext highlighter-rouge">Atom</code>, <code class="language-plaintext highlighter-rouge">Obligation</code>) with <em>edge</em> elements (lower-case roles: <code class="language-plaintext highlighter-rouge">if</code>, <code class="language-plaintext highlighter-rouge">then</code>, <code class="language-plaintext highlighter-rouge">arg</code>, <code class="language-plaintext highlighter-rouge">hasTemplate</code>). That alternation is a JSON object model already:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Normalised XML</th>
+      <th>JSON</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Node element</td>
+      <td>object with a <code class="language-plaintext highlighter-rouge">kind</code> discriminator (no <code class="language-plaintext highlighter-rouge">@type</code>)</td>
+    </tr>
+    <tr>
+      <td>edge element</td>
+      <td>property name</td>
+    </tr>
+    <tr>
+      <td>repeated edges, or <code class="language-plaintext highlighter-rouge">@index</code></td>
+      <td>array, order preserved</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">@key</code></td>
+      <td><code class="language-plaintext highlighter-rouge">key</code> (document-local, per your §9)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">@keyref</code></td>
+      <td><code class="language-plaintext highlighter-rouge">ref</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">@iri</code></td>
+      <td><code class="language-plaintext highlighter-rouge">iri</code> (a string, not an IRI node)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>For example:</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"PrescriptiveStatement"</span><span class="p">,</span><span class="w"> </span><span class="nl">"key"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ps1"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"rule"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Rule"</span><span class="p">,</span><span class="w"> </span><span class="nl">"strength"</span><span class="p">:</span><span class="w"> </span><span class="s2">"defeasible"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"if"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nl">"kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"And"</span><span class="p">,</span><span class="w"> </span><span class="nl">"formulas"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+      </span><span class="p">{</span><span class="w"> </span><span class="nl">"kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Atom"</span><span class="p">,</span><span class="w"> </span><span class="nl">"rel"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Risk"</span><span class="p">,</span><span class="w"> </span><span class="nl">"args"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nl">"var"</span><span class="p">:</span><span class="w"> </span><span class="s2">"x"</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">},</span><span class="w">
+      </span><span class="p">{</span><span class="w"> </span><span class="nl">"kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Neg"</span><span class="p">,</span><span class="w"> </span><span class="nl">"formula"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nl">"kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Atom"</span><span class="p">,</span><span class="w"> </span><span class="nl">"rel"</span><span class="p">:</span><span class="w"> </span><span class="s2">"within"</span><span class="p">,</span><span class="w">
+          </span><span class="nl">"args"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nl">"var"</span><span class="p">:</span><span class="w"> </span><span class="s2">"x"</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nl">"ind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"FR-20R"</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w">
+    </span><span class="p">]</span><span class="w"> </span><span class="p">},</span><span class="w">
+    </span><span class="nl">"then"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nl">"kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"SuborderList"</span><span class="p">,</span><span class="w"> </span><span class="nl">"items"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+      </span><span class="p">{</span><span class="w"> </span><span class="nl">"kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Permission"</span><span class="p">,</span><span class="w"> </span><span class="nl">"bearer"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nl">"ref"</span><span class="p">:</span><span class="w"> </span><span class="s2">"coverholder"</span><span class="w"> </span><span class="p">},</span><span class="w">
+        </span><span class="nl">"formula"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nl">"kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Atom"</span><span class="p">,</span><span class="w"> </span><span class="nl">"rel"</span><span class="p">:</span><span class="w"> </span><span class="s2">"bind"</span><span class="p">,</span><span class="w"> </span><span class="nl">"args"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nl">"var"</span><span class="p">:</span><span class="w"> </span><span class="s2">"x"</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w">
+    </span><span class="p">]</span><span class="w"> </span><span class="p">}</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>This works well with your existing plans:</p>
+
+<ul>
+  <li>It round-trips deterministically to normalised XML. Export and your Route B triplifier stay available: generate XML, then run the OASIS XSLTs.</li>
+  <li>It is codegen-clean as a discriminated <code class="language-plaintext highlighter-rouge">oneOf</code> on <code class="language-plaintext highlighter-rouge">kind</code>, which OpenAPI 3.1 handles.</li>
+</ul>
+
+<p>It also has one real cost. It is a faithful LegalRuleML skin, so it carries all of LegalRuleML’s generality, including joins, <code class="language-plaintext highlighter-rouge">Naf</code>, deontic bodies and <code class="language-plaintext highlighter-rouge">Alternatives</code>. Your refiner still does all the refusing. That is acceptable for an <em>interchange</em> form. It is the wrong shape for your <em>default</em> form, which §5 addresses.</p>
+
+<p>I’m not aware of a maintained normative JSON serialisation of RuleML. It is worth checking the RuleML wiki before you define your own.</p>
+
+<h3 id="12-filling-the-missing-rdf-rule-body">1.2 Filling the missing RDF rule body</h3>
+
+<p>Two existing precedents show how:</p>
+
+<ul>
+  <li><strong>SWRL’s RDF concrete syntax.</strong> It uses <code class="language-plaintext highlighter-rouge">swrl:Imp</code> with <code class="language-plaintext highlighter-rouge">swrl:body</code> and <code class="language-plaintext highlighter-rouge">swrl:head</code> as lists of <code class="language-plaintext highlighter-rouge">swrl:ClassAtom</code>, <code class="language-plaintext highlighter-rouge">swrl:IndividualPropertyAtom</code> and similar, with <code class="language-plaintext highlighter-rouge">swrl:Variable</code> nodes. You already have a SWRL backend, so this is partly known ground. It covers positive atoms only.</li>
+  <li><strong>W3C “RIF in RDF” (Working Group Note, 2012).</strong> This is a general mapping of RIF’s XML abstract syntax to RDF, including <code class="language-plaintext highlighter-rouge">And</code>, <code class="language-plaintext highlighter-rouge">Or</code>, <code class="language-plaintext highlighter-rouge">Exists</code>, <code class="language-plaintext highlighter-rouge">Frame</code> and <code class="language-plaintext highlighter-rouge">Atom</code>.</li>
+</ul>
+
+<p>Your importable fragment (mapping §7.3) is small: <code class="language-plaintext highlighter-rouge">Atom</code>, <code class="language-plaintext highlighter-rouge">Rel</code>, <code class="language-plaintext highlighter-rouge">Var</code>, <code class="language-plaintext highlighter-rouge">Ind</code>, <code class="language-plaintext highlighter-rouge">Data</code>, <code class="language-plaintext highlighter-rouge">And</code>, <code class="language-plaintext highlighter-rouge">Or</code>, <code class="language-plaintext highlighter-rouge">Neg</code>, licensed <code class="language-plaintext highlighter-rouge">Naf</code>, and range comparisons. A supplementary triplification of that fragment into a small internal vocabulary is a day or two of XSLT, sitting after <code class="language-plaintext highlighter-rouge">triplifyMerger-ids.xsl</code>. It never crosses the wire, so its aesthetics don’t matter.</p>
+
+<hr />
+
+<h2 id="2-the-yardstick-what-semantics-you-actually-need">2. The yardstick: what semantics you actually need</h2>
+
+<p>Drawn from your three documents:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Requirement</th>
+      <th>Source</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>S1</td>
+      <td>Three outcomes, with Undetermined arising from <strong>missing evidence</strong>, not only from conflict</td>
+      <td>Eligibility L-laws, mapping §16.2</td>
+    </tr>
+    <tr>
+      <td>S2</td>
+      <td>Strong Kleene AND/OR, classical negation that preserves Undetermined</td>
+      <td>L15, L16, ADR-A103</td>
+    </tr>
+    <tr>
+      <td>S3</td>
+      <td>Absence decides only under a closure licence, otherwise refuse at compile time</td>
+      <td>R2, G6, G11</td>
+    </tr>
+    <tr>
+      <td>S4</td>
+      <td>Explicit, acyclic, sceptical priority, where incomparable conflict gives Undetermined</td>
+      <td>§9.4 Option B, N6, N7</td>
+    </tr>
+    <tr>
+      <td>S5</td>
+      <td>Compensation chains, where violation derives only from Permitted activation and Denied fulfilment</td>
+      <td>N3, N5</td>
+    </tr>
+    <tr>
+      <td>S6</td>
+      <td>Deadlines as positioned stimuli, never a wall clock</td>
+      <td>R3, N10</td>
+    </tr>
+    <tr>
+      <td>S7</td>
+      <td>Deterministic, order-independent, hashable results</td>
+      <td>pipeline §9</td>
+    </tr>
+    <tr>
+      <td>S8</td>
+      <td>Explanations, i.e. <code class="language-plaintext highlighter-rouge">because</code> and <code class="language-plaintext highlighter-rouge">needs</code></td>
+      <td>wire §10</td>
+    </tr>
+    <tr>
+      <td>S9</td>
+      <td>Deterministic identity for derived nodes (violations, decisions)</td>
+      <td>ADR-A84, <code class="language-plaintext highlighter-rouge">DerivedHashIdentity</code></td>
+    </tr>
+    <tr>
+      <td>S10</td>
+      <td>Joins and aggregates available beyond the single-subject fragment, with a capability flag</td>
+      <td>mapping §4.2, the aggregate-cap example</td>
+    </tr>
+    <tr>
+      <td>S11</td>
+      <td>Modality treated as data, not as a modal operator</td>
+      <td>§18.2 reifies modality as <code class="language-plaintext highlighter-rouge">ins:DeonticSpecification</code></td>
+    </tr>
+    <tr>
+      <td>S12</td>
+      <td>Competing interpretations, deferred</td>
+      <td>G5</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>S11 matters more than it looks. Because you reify modality as a qualifier, <strong>you do not need a deontic logic.</strong> You need a logic over data that happens to describe norms. That removes the main reason to reach for modal or deontic formalisms, and it favours Datalog.</p>
+
+<hr />
+
+<h2 id="3-datalog-properly-examined">3. Datalog, properly examined</h2>
+
+<h3 id="31-why-the-worry-is-reasonable">3.1 Why the worry is reasonable</h3>
+
+<p>Plain Datalog, taken at face value, clashes with you in three ways:</p>
+
+<ul>
+  <li><strong>Its minimal-model semantics is closed-world.</strong> Anything not derived is false, which is the opposite of S1.</li>
+  <li><strong>Its three-valued semantics answers a different question.</strong> The well-founded semantics (WFS) gives three values, but its “undefined” arises from <strong>cycles through negation</strong>, not from missing evidence. Using WFS-undefined as your Undetermined would be exactly the conflation your §16.2 warns against.</li>
+  <li><strong>Negation as failure is its normal mode of negation.</strong> That is what R2 exists to prevent.</li>
+</ul>
+
+<p>These problems come from the obvious encoding. They are not inherent to Datalog.</p>
+
+<h3 id="32-the-encoding-that-fits-dual-predicates">3.2 The encoding that fits: dual predicates</h3>
+
+<p>Represent each condition or profile outcome as two independently derived facts, <code class="language-plaintext highlighter-rouge">permitted(C, X)</code> and <code class="language-plaintext highlighter-rouge">denied(C, X)</code>. This is extended logic programming with strong negation, in Gelfond and Lifschitz’s sense, equivalently Belnap’s four values.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Derived</th>
+      <th>Meaning</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">permitted</code> only</td>
+      <td>Permitted</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">denied</code> only</td>
+      <td>Denied</td>
+    </tr>
+    <tr>
+      <td>neither</td>
+      <td><strong>Undetermined</strong>, the default when evidence is absent (S1)</td>
+    </tr>
+    <tr>
+      <td>both</td>
+      <td><strong>conflict</strong>, a fourth value you get for free and can report as an integrity violation</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Strong Kleene combination under this encoding needs <strong>no negation at all</strong>:</p>
+
+<div class="language-prolog highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">% AllRequired over named conditions c1..c3</span>
+<span class="ss">permitted</span><span class="p">(</span><span class="ss">p</span><span class="p">,</span> <span class="nv">X</span><span class="p">)</span> <span class="p">:-</span> <span class="ss">permitted</span><span class="p">(</span><span class="ss">c1</span><span class="p">,</span> <span class="nv">X</span><span class="p">),</span> <span class="ss">permitted</span><span class="p">(</span><span class="ss">c2</span><span class="p">,</span> <span class="nv">X</span><span class="p">),</span> <span class="ss">permitted</span><span class="p">(</span><span class="ss">c3</span><span class="p">,</span> <span class="nv">X</span><span class="p">).</span>
+<span class="ss">denied</span><span class="p">(</span><span class="ss">p</span><span class="p">,</span> <span class="nv">X</span><span class="p">)</span>    <span class="p">:-</span> <span class="ss">denied</span><span class="p">(</span><span class="ss">c1</span><span class="p">,</span> <span class="nv">X</span><span class="p">).</span>
+<span class="ss">denied</span><span class="p">(</span><span class="ss">p</span><span class="p">,</span> <span class="nv">X</span><span class="p">)</span>    <span class="p">:-</span> <span class="ss">denied</span><span class="p">(</span><span class="ss">c2</span><span class="p">,</span> <span class="nv">X</span><span class="p">).</span>
+<span class="ss">denied</span><span class="p">(</span><span class="ss">p</span><span class="p">,</span> <span class="nv">X</span><span class="p">)</span>    <span class="p">:-</span> <span class="ss">denied</span><span class="p">(</span><span class="ss">c3</span><span class="p">,</span> <span class="nv">X</span><span class="p">).</span>
+
+<span class="c1">% AnySufficient is the dual.</span>
+
+<span class="c1">% elg:negated swaps the two predicates and so preserves Undetermined (L16).</span>
+<span class="ss">permitted</span><span class="p">(</span><span class="ss">n</span><span class="p">,</span> <span class="nv">X</span><span class="p">)</span> <span class="p">:-</span> <span class="ss">denied</span><span class="p">(</span><span class="ss">c</span><span class="p">,</span> <span class="nv">X</span><span class="p">).</span>
+<span class="ss">denied</span><span class="p">(</span><span class="ss">n</span><span class="p">,</span> <span class="nv">X</span><span class="p">)</span>    <span class="p">:-</span> <span class="ss">permitted</span><span class="p">(</span><span class="ss">c</span><span class="p">,</span> <span class="nv">X</span><span class="p">).</span>
+</code></pre></div></div>
+
+<p>Your running example, hierarchical match with exclusion, shows where negation does appear:</p>
+
+<div class="language-prolog highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">% below/2 is the reflexive-transitive closure of the territory scheme's broader relation.</span>
+<span class="ss">permitted</span><span class="p">(</span><span class="ss">loc</span><span class="p">,</span> <span class="nv">X</span><span class="p">)</span> <span class="p">:-</span> <span class="ss">riskLocation</span><span class="p">(</span><span class="nv">X</span><span class="p">,</span> <span class="nv">L</span><span class="p">),</span> <span class="ss">below</span><span class="p">(</span><span class="nv">L</span><span class="p">,</span> <span class="ss">fr</span><span class="p">),</span>
+                     <span class="ss">not</span> <span class="ss">below</span><span class="p">(</span><span class="nv">L</span><span class="p">,</span> <span class="ss">fr20r</span><span class="p">),</span> <span class="ss">not</span> <span class="ss">below</span><span class="p">(</span><span class="ss">fr20r</span><span class="p">,</span> <span class="nv">L</span><span class="p">).</span>
+<span class="ss">denied</span><span class="p">(</span><span class="ss">loc</span><span class="p">,</span> <span class="nv">X</span><span class="p">)</span>    <span class="p">:-</span> <span class="ss">riskLocation</span><span class="p">(</span><span class="nv">X</span><span class="p">,</span> <span class="nv">L</span><span class="p">),</span> <span class="ss">below</span><span class="p">(</span><span class="nv">L</span><span class="p">,</span> <span class="ss">fr20r</span><span class="p">).</span>
+<span class="ss">denied</span><span class="p">(</span><span class="ss">loc</span><span class="p">,</span> <span class="nv">X</span><span class="p">)</span>    <span class="p">:-</span> <span class="ss">riskLocation</span><span class="p">(</span><span class="nv">X</span><span class="p">,</span> <span class="nv">L</span><span class="p">),</span> <span class="ss">not</span> <span class="ss">below</span><span class="p">(</span><span class="nv">L</span><span class="p">,</span> <span class="ss">fr</span><span class="p">),</span> <span class="ss">not</span> <span class="ss">below</span><span class="p">(</span><span class="ss">fr</span><span class="p">,</span> <span class="nv">L</span><span class="p">).</span>
+</code></pre></div></div>
+
+<p>The rules give the three outcomes you expect:</p>
+
+<ul>
+  <li><strong>A risk located at <code class="language-plaintext highlighter-rouge">fr</code> itself.</strong> <code class="language-plaintext highlighter-rouge">below(fr20r, fr)</code> holds, so neither rule fires. The result is Undetermined, which is your “above exclusion” case (L11).</li>
+  <li><strong>A risk with no location at all.</strong> Nothing fires, so the result is Undetermined, which corresponds to <code class="language-plaintext highlighter-rouge">exe:MissingCandidate</code>.</li>
+  <li><strong>The negations.</strong> Every one of them is over <code class="language-plaintext highlighter-rouge">below</code>, a <strong>scheme</strong> predicate. Your bound scheme edition is authoritative and complete by construction. In R2’s terms, that is a closure declaration the vocabulary layer already implicitly holds.</li>
+</ul>
+
+<p><strong>The finding:</strong> under the dual encoding, the single-subject Eligibility fragment compiles to positive Datalog plus negation over closed predicates only. <strong>R2 becomes a syntactic check:</strong> <code class="language-plaintext highlighter-rouge">not p(...)</code> is admissible if and only if <code class="language-plaintext highlighter-rouge">p</code> is in a lower stratum <em>and</em> is either derived (an IDB predicate) or is an evidence (EDB) predicate covered by a closure declaration. That check is mechanical, compile-time and explainable. It is exactly the refusal <code class="language-plaintext highlighter-rouge">exe:NoClosureLicence</code> describes.</p>
+
+<h3 id="33-a-probe-this-surfaces">3.3 A probe this surfaces</h3>
+
+<p>Some of your existing set readings are negation in disguise:</p>
+
+<ul>
+  <li><strong><code class="language-plaintext highlighter-rouge">EveryValue</code> Permitted</strong> means “every value of the path is Permitted”. Concluding that requires knowing the value set is complete.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">SingleValue</code></strong> means “exactly one value”. Counting requires the same knowledge.</li>
+</ul>
+
+<p>Written in Datalog, both need negation or aggregation over an evidence predicate, and therefore a closure licence. Either L15’s current definition already assumes the value set is closed, or these readings should cite a closure too. The translation makes the question impossible to miss. It is worth settling in A-105 rather than discovering it in a parity test.</p>
+
+<h3 id="34-priority-s4-stratified">3.4 Priority (S4), stratified</h3>
+
+<p>If you precompute the override closure, as your <code class="language-plaintext highlighter-rouge">PriorityPlan</code> already proposes, sceptical priority is stratified:</p>
+
+<div class="language-prolog highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">% An inferior norm is blocked unless its superior is known to be inactive.</span>
+<span class="ss">blocked</span><span class="p">(</span><span class="nv">N</span><span class="p">,</span> <span class="nv">X</span><span class="p">)</span> <span class="p">:-</span> <span class="ss">overrides</span><span class="p">(</span><span class="nv">M</span><span class="p">,</span> <span class="nv">N</span><span class="p">),</span> <span class="ss">opposes</span><span class="p">(</span><span class="nv">M</span><span class="p">,</span> <span class="nv">N</span><span class="p">),</span> <span class="ss">not</span> <span class="ss">inactive</span><span class="p">(</span><span class="nv">M</span><span class="p">,</span> <span class="nv">X</span><span class="p">).</span>
+<span class="ss">applies</span><span class="p">(</span><span class="nv">N</span><span class="p">,</span> <span class="nv">X</span><span class="p">)</span> <span class="p">:-</span> <span class="ss">activated</span><span class="p">(</span><span class="nv">N</span><span class="p">,</span> <span class="nv">X</span><span class="p">),</span> <span class="ss">not</span> <span class="ss">blocked</span><span class="p">(</span><span class="nv">N</span><span class="p">,</span> <span class="nv">X</span><span class="p">).</span>
+<span class="ss">conflict</span><span class="p">(</span><span class="nv">N</span><span class="p">,</span> <span class="nv">M</span><span class="p">,</span> <span class="nv">X</span><span class="p">)</span> <span class="p">:-</span> <span class="ss">applies</span><span class="p">(</span><span class="nv">N</span><span class="p">,</span> <span class="nv">X</span><span class="p">),</span> <span class="ss">applies</span><span class="p">(</span><span class="nv">M</span><span class="p">,</span> <span class="nv">X</span><span class="p">),</span> <span class="ss">opposes</span><span class="p">(</span><span class="nv">N</span><span class="p">,</span> <span class="nv">M</span><span class="p">).</span>
+</code></pre></div></div>
+
+<p>The negation here is over <strong>derived</strong> predicates in a lower stratum, which is sound. That gives you the distinction to state in the ADR:</p>
+
+<blockquote>
+  <p>NAF over derivations is sound in a complete stratified evaluation. NAF over evidence needs a closure licence.</p>
+</blockquote>
+
+<p>Two further points:</p>
+
+<ul>
+  <li><strong>Why <code class="language-plaintext highlighter-rouge">not inactive</code> rather than <code class="language-plaintext highlighter-rouge">activated</code>.</strong> Under uncertainty about whether the superior applies, the inferior is withheld rather than applied. That is the sceptical reading. <code class="language-plaintext highlighter-rouge">conflict</code> then gives N7’s <code class="language-plaintext highlighter-rouge">exe:IncomparablePriority</code>.</li>
+  <li><strong>The general case.</strong> Full defeasible logic (team defeat, defeaters, ambiguity propagation) has known translations into logic programs, from the Antoniou, Billington, Governatori and Maher line of work. The general translations are not always stratified. Starting with the simple explicit-superiority form above, which is essentially §9.4 Option B, keeps you inside stratified Datalog.</li>
+</ul>
+
+<h3 id="35-compensation-chains-s5-and-time-s6">3.5 Compensation chains (S5) and time (S6)</h3>
+
+<div class="language-prolog highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="ss">violated</span><span class="p">(</span><span class="nv">N</span><span class="p">,</span> <span class="nv">X</span><span class="p">,</span> <span class="nv">P</span><span class="p">)</span> <span class="p">:-</span> <span class="ss">activated</span><span class="p">(</span><span class="nv">N</span><span class="p">,</span> <span class="nv">X</span><span class="p">),</span> <span class="ss">deadlinePassed</span><span class="p">(</span><span class="nv">N</span><span class="p">,</span> <span class="nv">X</span><span class="p">,</span> <span class="nv">P</span><span class="p">),</span>
+                     <span class="ss">not</span> <span class="ss">fulfilledBefore</span><span class="p">(</span><span class="nv">N</span><span class="p">,</span> <span class="nv">X</span><span class="p">,</span> <span class="nv">P</span><span class="p">).</span>        <span class="c1">% evidence, so a closure licence is required</span>
+<span class="ss">active</span><span class="p">(</span><span class="nv">M</span><span class="p">,</span> <span class="nv">X</span><span class="p">)</span>      <span class="p">:-</span> <span class="ss">violated</span><span class="p">(</span><span class="nv">N</span><span class="p">,</span> <span class="nv">X</span><span class="p">,</span> <span class="nv">_</span><span class="p">),</span> <span class="ss">compensatedBy</span><span class="p">(</span><span class="nv">N</span><span class="p">,</span> <span class="nv">M</span><span class="p">).</span>
+</code></pre></div></div>
+
+<ul>
+  <li><strong>N5 holds structurally.</strong> <code class="language-plaintext highlighter-rouge">activated</code> is the Permitted side of the activation profile, so an Undetermined activation derives nothing and cannot lead to a violation.</li>
+  <li><strong>N3 (acyclicity) is exactly the condition for stratification</strong> of this recursion through negation.</li>
+  <li><strong>Time.</strong> <code class="language-plaintext highlighter-rouge">P</code> is a stream position <code class="language-plaintext highlighter-rouge">(epoch, seq)</code>, not a timestamp. This is the <em>Dedalus</em> pattern (Alvaro, Hellerstein and others): Datalog with time as an explicit, totally ordered attribute, where state change is a rule over successor positions. It matches R3’s positioned stimuli almost exactly. DatalogMTL, a metric temporal extension, exists if you ever need interval reasoning in the logic rather than in Behaviour.</li>
+</ul>
+
+<h3 id="36-identity-aggregates-and-explanations-s7-to-s10">3.6 Identity, aggregates and explanations (S7 to S10)</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Need</th>
+      <th>Datalog mechanism</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>determinism (S7)</td>
+      <td>intrinsic. The least fixpoint is order-independent, which is ideal for hashing</td>
+    </tr>
+    <tr>
+      <td>explanations (S8)</td>
+      <td>proof trees and why-provenance are well studied, and several engines can emit them. A proof tree of the dual predicates <em>is</em> your <code class="language-plaintext highlighter-rouge">because</code> structure. <code class="language-plaintext highlighter-rouge">needs</code> falls out of the rule whose missing premise blocked a <code class="language-plaintext highlighter-rouge">permitted</code></td>
+    </tr>
+    <tr>
+      <td>derived identity (S9)</td>
+      <td>a restricted function symbol <code class="language-plaintext highlighter-rouge">h(N, X, P)</code> in rule heads, non-recursive so termination is kept, is exactly <code class="language-plaintext highlighter-rouge">DerivedHashIdentity</code></td>
+    </tr>
+    <tr>
+      <td>joins and aggregates (S10)</td>
+      <td>native joins, plus stratified aggregation (sum, count, min, max). Aggregation over evidence needs a closure licence, which is correct: “total sum insured across the insured’s policies” is meaningless without knowing you have all the policies</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="37-where-datalog-genuinely-does-not-match">3.7 Where Datalog genuinely does not match</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Gap</th>
+      <th>Why</th>
+      <th>Answer</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>competing interpretations (S12, G5)</td>
+      <td>Datalog has one model. Alternatives are several</td>
+      <td>ASP (§4)</td>
+    </tr>
+    <tr>
+      <td>unstratified defeasibility</td>
+      <td>general defeasible theories need WFS or stable models</td>
+      <td>keep priority explicit and precompiled</td>
+    </tr>
+    <tr>
+      <td>OWL/Surface backends</td>
+      <td>joins and aggregates exceed them</td>
+      <td>capability flags, per ADR-A24. The rules tier refuses on those backends</td>
+    </tr>
+    <tr>
+      <td>open-world OWL entailment in rule bodies</td>
+      <td>Datalog reads asserted and derived facts, not full DL entailment</td>
+      <td>OWL 2 RL is Datalog-implementable. Reading OWL 2 RL closure as EDB is the standard answer, and ADR-A83 keeps the reasoner out of evaluation anyway</td>
+    </tr>
+    <tr>
+      <td>deontic logic proper</td>
+      <td>none</td>
+      <td>not needed, per S11</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Verdict:</strong> the dialect that fits is <em>stratified Datalog with strong (dual) negation, evidence-NAF only under closure licence, stratified aggregation, non-recursive hash-Skolem identity, and positions as time</em>. Your <code class="language-plaintext highlighter-rouge">rule-layers.md</code> already points at stratified Datalog. This makes it precise.</p>
+
+<hr />
+
+<h2 id="4-the-other-logic-families-against-the-yardstick">4. The other logic families, against the yardstick</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Option</th>
+      <th>What it is</th>
+      <th>Semantics fit</th>
+      <th>Encoding</th>
+      <th>Role for you</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>RIF-Core / RIF-BLD</strong> (W3C)</td>
+      <td>Horn rules designed to work alongside RDF and OWL, with a formal RDF+OWL compatibility spec</td>
+      <td>Datalog-like, positive. No negation in Core or BLD</td>
+      <td>XML. RIF in RDF (note)</td>
+      <td>an interchange <strong>projection</strong> of your positive fragment. Unlikely any client wants it</td>
+    </tr>
+    <tr>
+      <td><strong>SWRL</strong></td>
+      <td>OWL plus Horn rules, DL-safe</td>
+      <td>positive only, unary/binary atoms</td>
+      <td>RDF, OWL/XML</td>
+      <td>already a backend. Its RDF syntax is a template for internal rule bodies</td>
+    </tr>
+    <tr>
+      <td><strong>SHACL-AF rules / SHACL 1.2 rules</strong></td>
+      <td>triple and SPARQL rules attached to shapes. The W3C Data Shapes WG is working on rules for SHACL 1.2, reportedly Datalog-like with stratified negation (check its status)</td>
+      <td>depends on the final spec</td>
+      <td>Turtle</td>
+      <td>watch it. If it lands as stratified Datalog over RDF, it is a standard home for your internal rule graphs</td>
+    </tr>
+    <tr>
+      <td><strong>Notation3 (N3)</strong></td>
+      <td>rules as quoted graphs, with the EYE reasoner</td>
+      <td>scoped NAF, open-ended builtins</td>
+      <td>Turtle superset. Quoted graphs do not fit JSON-LD</td>
+      <td>not suitable for the wire</td>
+    </tr>
+    <tr>
+      <td><strong>Answer Set Programming</strong> (clingo, DLV)</td>
+      <td>stable models, strong negation, choice, constraints</td>
+      <td>the dual encoding is native (<code class="language-plaintext highlighter-rouge">-p</code>). <strong>Several answer sets correspond to competing interpretations</strong></td>
+      <td>text. JSON output only</td>
+      <td>the G5 engine, when G5 is built. Also useful at design time for “is this contract self-consistent under all readings”</td>
+    </tr>
+    <tr>
+      <td><strong>s(CASP)</strong></td>
+      <td>goal-directed ASP with <strong>natural-language justifications</strong>. Used by Blawx and as a Logical English target</td>
+      <td>as ASP</td>
+      <td>Prolog-like text</td>
+      <td>worth prototyping for R5 and <code class="language-plaintext highlighter-rouge">because</code> rendering</td>
+    </tr>
+    <tr>
+      <td><strong>Defeasible deontic logic / Formal Contract Logic</strong> (Governatori), engines such as SPINdle and Turnip</td>
+      <td>the logic LegalRuleML was designed around. FCL’s ⊗ operator is the suborder list</td>
+      <td><strong>closest semantic match</strong> to LegalRuleML</td>
+      <td>engine-specific text or XML</td>
+      <td>a semantic reference and test oracle for N6 to N9, not a wire format</td>
+    </tr>
+    <tr>
+      <td><strong>Flora-2 / ErgoAI (Rulelog)</strong></td>
+      <td>higher-order logic programming with defeasibility via argumentation theories</td>
+      <td>very expressive, WFS-based</td>
+      <td>text</td>
+      <td>too powerful. Its undefined is WFS-undefined, so the §3.1 caveat applies</td>
+    </tr>
+    <tr>
+      <td><strong>Symboleo</strong></td>
+      <td>a contract specification language: obligations and powers with lifecycle states, over an event calculus</td>
+      <td>strong match for your Behaviour-side obligation <em>states</em></td>
+      <td>text</td>
+      <td>design input for A-106, not a wire format</td>
+    </tr>
+    <tr>
+      <td><strong>ODRL 2.2</strong></td>
+      <td>W3C policy language: Duty, Permission, Prohibition, constraints, consequence, remedy</td>
+      <td>deontic-as-data (S11), and constraints match your single-subject fragment</td>
+      <td><strong>JSON-LD native</strong>, and <code class="language-plaintext highlighter-rouge">@</code>-free with a good context</td>
+      <td>the natural <em>projection</em> of your <code class="language-plaintext highlighter-rouge">conditions</code> form. Consider making the Market Profile an ODRL-compatible profile, where a published context turns it into ODRL</td>
+    </tr>
+    <tr>
+      <td><strong>DMN decision tables + FEEL</strong> (OMG)</td>
+      <td>decision tables with <strong>hit policies</strong>. FEEL booleans are <strong>three-valued with <code class="language-plaintext highlighter-rouge">null</code></strong> (<code class="language-plaintext highlighter-rouge">false and null = false</code>, <code class="language-plaintext highlighter-rouge">true and null = null</code>)</td>
+      <td>a surprisingly good match for S1/S2 over the fragment. Hit policies are a fixed priority vocabulary</td>
+      <td>XML. FEEL expressions are <strong>strings</strong></td>
+      <td>recreates the string problem. Borrow the hit-policy vocabulary and FEEL’s null semantics as prior art</td>
+    </tr>
+    <tr>
+      <td><strong>Cedar</strong> (AWS)</td>
+      <td>authorisation policies: permit/forbid, forbid overrides, formally analysed</td>
+      <td>fixed deny-overrides priority. Errors cause the policy to be <strong>skipped</strong>, a silent-absence hazard</td>
+      <td><strong>official JSON policy format</strong></td>
+      <td>precedent for a JSON AST of a logic with a formal semantics. Not your semantics</td>
+    </tr>
+    <tr>
+      <td><strong>Rego / OPA</strong></td>
+      <td>Datalog-derived, JSON-native policy language</td>
+      <td>closed-world, <code class="language-plaintext highlighter-rouge">default</code> keyword, NAF</td>
+      <td>text, plus a JSON AST</td>
+      <td>proof that Datalog-over-JSON is industrially acceptable, and a warning about defaults</td>
+    </tr>
+    <tr>
+      <td><strong>CEL</strong></td>
+      <td>expression language with a protobuf AST (JSON via the protobuf mapping). Partial evaluation with <strong>unknowns</strong>, and <code class="language-plaintext highlighter-rouge">&amp;&amp;</code>/<code class="language-plaintext highlighter-rouge">\|\|</code> absorb unknowns and errors</td>
+      <td>Kleene-like over expressions, no rules</td>
+      <td>AST as JSON</td>
+      <td>prior art for Undetermined in a mainstream expression engine</td>
+    </tr>
+    <tr>
+      <td><strong>JsonLogic</strong></td>
+      <td>tiny JSON expression AST</td>
+      <td>two-valued, no variables across rules</td>
+      <td>JSON</td>
+      <td>too weak, but shows the ergonomic target</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>The pattern:</strong> everything that matches your semantics well has a text or XML syntax, and everything with a clean JSON syntax has weaker or different semantics. Cedar and CEL show the way out. <strong>Pick the semantics, then define a JSON abstract syntax for it.</strong> Don’t adopt someone else’s concrete syntax.</p>
+
+<hr />
+
+<h2 id="5-the-proposal-one-json-rule-ast-datalog-defined">5. The proposal: one JSON rule AST, Datalog-defined</h2>
+
+<h3 id="51-a-strict-superset-of-your-conditions-form">5.1 A strict superset of your <code class="language-plaintext highlighter-rouge">conditions</code> form</h3>
+
+<p>Your <code class="language-plaintext highlighter-rouge">conditions</code> form (wire §7) is already a Datalog-compilable AST over the single-subject fragment. Add a <code class="language-plaintext highlighter-rouge">rules</code> tier that introduces variables, joins and aggregates, sharing the same lift, the same refusals and the same term table:</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"key"</span><span class="p">:</span><span class="w"> </span><span class="s2">"aggregate-cap"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"form"</span><span class="p">:</span><span class="w"> </span><span class="s2">"rules"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"dialect"</span><span class="p">:</span><span class="w"> </span><span class="s2">"lattice-rules-0.1"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"modality"</span><span class="p">:</span><span class="w"> </span><span class="s2">"prohibition"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"bearer"</span><span class="p">:</span><span class="w"> </span><span class="s2">"coverholder"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"activity"</span><span class="p">:</span><span class="w"> </span><span class="s2">"bind"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"activatedBy"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"let"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nl">"i"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nl">"read"</span><span class="p">:</span><span class="w"> </span><span class="s2">"insured"</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">},</span><span class="w">
+    </span><span class="nl">"all"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+      </span><span class="p">{</span><span class="w"> </span><span class="nl">"aggregate"</span><span class="p">:</span><span class="w"> </span><span class="s2">"sum"</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"over"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nl">"var"</span><span class="p">:</span><span class="w"> </span><span class="s2">"p"</span><span class="p">,</span><span class="w"> </span><span class="nl">"read"</span><span class="p">:</span><span class="w"> </span><span class="s2">"i.policies"</span><span class="p">,</span><span class="w"> </span><span class="nl">"closure"</span><span class="p">:</span><span class="w"> </span><span class="s2">"policy-register"</span><span class="w"> </span><span class="p">},</span><span class="w">
+        </span><span class="nl">"of"</span><span class="p">:</span><span class="w"> </span><span class="s2">"p.sumInsured"</span><span class="p">,</span><span class="w"> </span><span class="nl">"as"</span><span class="p">:</span><span class="w"> </span><span class="s2">"total"</span><span class="w"> </span><span class="p">},</span><span class="w">
+      </span><span class="p">{</span><span class="w"> </span><span class="nl">"read"</span><span class="p">:</span><span class="w"> </span><span class="s2">"total"</span><span class="p">,</span><span class="w"> </span><span class="nl">"atLeast"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nl">"amount"</span><span class="p">:</span><span class="w"> </span><span class="mi">10000000</span><span class="p">,</span><span class="w"> </span><span class="nl">"unit"</span><span class="p">:</span><span class="w"> </span><span class="s2">"GBP"</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">}</span><span class="w">
+    </span><span class="p">]</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>It has these properties:</p>
+
+<ul>
+  <li><strong>No <code class="language-plaintext highlighter-rouge">@</code> keys and no strings of logic.</strong> Every node is a typed object, so codegen stays clean.</li>
+  <li><strong>Variables appear only through <code class="language-plaintext highlighter-rouge">let</code> and <code class="language-plaintext highlighter-rouge">over</code>, and are always rooted in a path from the subject or another variable.</strong> That keeps queries safe in the Datalog sense (every variable bound by a positive atom) and keeps explanations readable.</li>
+  <li>
+    <p><strong>Closure is explicit and named.</strong> <code class="language-plaintext highlighter-rouge">"closure": "policy-register"</code> names the closure declaration licensing the aggregate. Omitting it gives a submission-time refusal:</p>
+
+    <div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w"> </span><span class="nl">"key"</span><span class="p">:</span><span class="w"> </span><span class="s2">"aggregate-cap"</span><span class="p">,</span><span class="w"> </span><span class="nl">"form"</span><span class="p">:</span><span class="w"> </span><span class="s2">"rules"</span><span class="p">,</span><span class="w"> </span><span class="nl">"lifted"</span><span class="p">:</span><span class="w"> </span><span class="s2">"none"</span><span class="p">,</span><span class="w"> </span><span class="nl">"decidable"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"refusals"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nl">"diagnostic"</span><span class="p">:</span><span class="w"> </span><span class="s2">"noClosureLicence"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"message"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Aggregating over insured.policies needs a closure declaration for the policy register."</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span></code></pre></div>    </div>
+  </li>
+  <li>
+    <p><strong>Backend capability is surfaced.</strong> The disposition says a term is decidable at runtime (SPARQL, Datalog) but excluded from OWL design-time checks:</p>
+
+    <div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nl">"capabilities"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nl">"runtime"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nl">"designTime"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span></code></pre></div>    </div>
+
+    <p>This is the declared non-capability pattern from ADR-A24, made visible on the wire.</p>
+  </li>
+</ul>
+
+<h3 id="52-the-semantics-is-the-translation">5.2 The semantics is the translation</h3>
+
+<p>The ADR specifies:</p>
+
+<ul>
+  <li>the translation from the AST to the dual-predicate Datalog dialect of §3;</li>
+  <li>that Eligibility’s L-laws and N1 to N10 become <strong>property tests of the translation</strong>, for example “for every <code class="language-plaintext highlighter-rouge">conditions</code> document, the Datalog outcome equals the existing evaluator’s outcome”.</li>
+</ul>
+
+<p>That gives you a semantic reference with decades of theory behind it, without committing to a new runtime.</p>
+
+<h3 id="53-you-do-not-need-a-new-engine-to-start">5.3 You do not need a new engine to start</h3>
+
+<p>Each stratum of a stratified program without recursion is a <code class="language-plaintext highlighter-rouge">CONSTRUCT</code> (or <code class="language-plaintext highlighter-rouge">INSERT</code>) run in stratum order. That is your existing SPARQL reference backend with a scheduler. Recursion is limited to scheme closure (property paths already handle it) and compensation chains (bounded by N3’s acyclicity), so iterated <code class="language-plaintext highlighter-rouge">CONSTRUCT</code> to fixpoint is enough.</p>
+
+<p>A dedicated engine becomes worth it only if volume demands. Candidates, whose current status you should check:</p>
+
+<ul>
+  <li><strong>Soufflé:</strong> C++, stratified negation, aggregates, provenance.</li>
+  <li><strong>Nemo:</strong> Rust, from TU Dresden, RDF input and output, existential rules.</li>
+  <li><strong>RDFox:</strong> commercial, incremental Datalog over RDF.</li>
+</ul>
+
+<h3 id="54-interchange-becomes-projection">5.4 Interchange becomes projection</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Target</th>
+      <th>What projects</th>
+      <th>Losses</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>LegalRuleML (JSON AST ↔ normalised XML, §1.1)</td>
+      <td>everything in the fragment, plus modality, chains and overrides</td>
+      <td>evidence, read sets, closure licences, occupancy scoping</td>
+    </tr>
+    <tr>
+      <td>ODRL JSON-LD</td>
+      <td><code class="language-plaintext highlighter-rouge">conditions</code> form plus modality and one-step consequence</td>
+      <td>multi-step chains, priority, aggregates</td>
+    </tr>
+    <tr>
+      <td>RIF-Core / SWRL</td>
+      <td>the positive dual-predicate rules</td>
+      <td>negation, aggregates</td>
+    </tr>
+    <tr>
+      <td>s(CASP) / ASP</td>
+      <td>the entire dialect, plus alternatives later</td>
+      <td>none, for reasoning</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Import runs the other way through the same refiner. A LegalRuleML statement in the fragment lifts into the rules AST, and anything outside it is refused, as in pipeline §6.</p>
+
+<hr />
+
+<h2 id="6-decisions-and-probes-this-raises">6. Decisions and probes this raises</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Question</th>
+      <th>Why it matters</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>D1</td>
+      <td>Adopt dual-predicate Datalog as the <strong>reference semantics</strong> of the IR (an amendment to ADR-A89) rather than as a new backend?</td>
+      <td>makes the semantics precise without adding a runtime</td>
+    </tr>
+    <tr>
+      <td>D2</td>
+      <td>Does L15 (<code class="language-plaintext highlighter-rouge">EveryValue</code>, <code class="language-plaintext highlighter-rouge">SingleValue</code>) implicitly assume a closed value set? (§3.3)</td>
+      <td>the translation forces a closure citation or an Undetermined</td>
+    </tr>
+    <tr>
+      <td>D3</td>
+      <td>Is the “both derived” state a reportable integrity violation, or impossible by construction for well-formed profiles?</td>
+      <td>the fourth value is free. Decide whether to expose it</td>
+    </tr>
+    <tr>
+      <td>D4</td>
+      <td>Sceptical priority under uncertainty: should an inferior norm be withheld when its superior’s activation is Undetermined (§3.4)?</td>
+      <td>the conservative reading is proposed, and it should be a law, not an accident</td>
+    </tr>
+    <tr>
+      <td>D5</td>
+      <td>Should the rules tier be JSON-only, with LegalRuleML JSON (§1.1) as a separate interchange form? Or should the LegalRuleML JSON skin <em>be</em> the rules tier?</td>
+      <td>the recommendation is to keep them separate: your AST is the fragment, LegalRuleML is the interchange</td>
+    </tr>
+    <tr>
+      <td>D6</td>
+      <td>Should ASP be adopted for G5 when it is built, with the interpretation as the answer-set selector?</td>
+      <td>keeps Datalog stratified and puts the non-determinism where it belongs</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="7-claims-to-verify-before-relying-on-them">7. Claims to verify before relying on them</h2>
+
+<ul>
+  <li>whether a maintained JSON serialisation of RuleML exists;</li>
+  <li>the status and exact semantics of rules in SHACL 1.2;</li>
+  <li>the details of FEEL’s three-valued <code class="language-plaintext highlighter-rouge">and</code>/<code class="language-plaintext highlighter-rouge">or</code> in the DMN version you would cite;</li>
+  <li>the Cedar JSON policy format and its error semantics;</li>
+  <li>CEL partial evaluation with unknowns (behaviour varies by implementation);</li>
+  <li>the current maintenance status of Soufflé, Nemo, RDFox and s(CASP);</li>
+  <li>whether the Antoniou/Governatori logic-program translations of defeasible logic are stratified for the explicit-superiority subset you would adopt. The simple encoding in §3.4 is, but verify that it matches the defeasible semantics you intend N7 to have.</li>
+</ul>

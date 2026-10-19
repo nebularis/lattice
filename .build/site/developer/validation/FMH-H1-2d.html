@@ -1,0 +1,180 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-fmh-h12d-refuse-a-multi-valued-single-valued-property-td-25">Validation Pack: FMH-H1.2d, refuse a multi-valued single-valued property (TD-25)</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/formal-methods-track-h.html"><code class="language-plaintext highlighter-rouge">formal-methods-track-h</code></a>, a fix arising from H1.2c
+<strong>Decided by:</strong> the maintainer, 2026-10-09 (H-D10): the compiler refuses a multi-valued functional
+property in the resolver. No ADR. It changes <code class="language-plaintext highlighter-rouge">tools/persistence</code> behaviour for malformed input only.
+<strong>Finding:</strong> TD-25, see <a href="/developer/validation/FMH-H1-2c.html">FMH-H1.2c</a>.</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>Law L1: the compiler’s output is a function of the configuration and not of the order its triples
+were written in. For every <code class="language-plaintext highlighter-rouge">dal:</code> property the compiler treats as single-valued, a subject that
+declares two values is refused by name, so no value is chosen by position.</p>
+
+<h2 id="what-changed">What changed</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">persistence/functional.py</code> (new): <code class="language-plaintext highlighter-rouge">functional_value(graph, subject, predicate)</code> returns the one
+value, <code class="language-plaintext highlighter-rouge">None</code> if there is none, and raises <code class="language-plaintext highlighter-rouge">CrossAxisViolation</code> of kind
+<code class="language-plaintext highlighter-rouge">MultiValuedFunctionalProperty</code> for a second distinct value. The message names the subject, the
+property and the values.</li>
+  <li>66 reads of a <code class="language-plaintext highlighter-rouge">dal:</code> property now use it, in <code class="language-plaintext highlighter-rouge">scopes</code>, <code class="language-plaintext highlighter-rouge">resolver</code>, <code class="language-plaintext highlighter-rouge">capability</code>, <code class="language-plaintext highlighter-rouge">validator</code> and
+<code class="language-plaintext highlighter-rouge">recipes</code>. Reads of SHACL and RDF-list properties, and of the compiler’s own output, are unchanged.</li>
+  <li><code class="language-plaintext highlighter-rouge">compile_targets</code> wraps target discovery, which reads scope priorities before any target exists,
+so the refusal reaches the CLI as a <code class="language-plaintext highlighter-rouge">CompileError</code> and not a traceback.</li>
+  <li>An architecture test fails if a <code class="language-plaintext highlighter-rouge">dal:</code> property in the compile path is read with a bare
+<code class="language-plaintext highlighter-rouge">Graph.value</code> again.</li>
+  <li>The TD-25 expected-failure test is now a real test. TD-25 is removed from the register. TD-15 is
+reworded, since a uniqueness constraint naming several scopes is now refused and not silently
+narrowed.</li>
+</ul>
+
+<h2 id="scope-and-limits">Scope and limits</h2>
+
+<ul>
+  <li>A subject nothing refers to is never read, so a stray second value on an unused scope is not
+refused. Its output cannot change, so L1 holds. A reader who wants every such input rejected needs
+the structural shapes run over the whole graph, the second option in H-D10’s table.</li>
+  <li><code class="language-plaintext highlighter-rouge">dal:keyProperty</code> and the other properties that hold an RDF list are checked at the list head only.</li>
+  <li>A property that is multi-valued by design (<code class="language-plaintext highlighter-rouge">dal:coversClass</code>, <code class="language-plaintext highlighter-rouge">dal:claimScheme</code>) is not read this way
+and is unchanged.</li>
+</ul>
+
+<h2 id="test-cases">Test cases</h2>
+
+<p>In <code class="language-plaintext highlighter-rouge">tools/persistence/tests/test_functional.py</code> unless noted.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>H1.2d-T1</td>
+      <td>no value, one value, two values / the helper / <code class="language-plaintext highlighter-rouge">None</code>, the value, a refusal listing both</td>
+      <td>L1</td>
+      <td>+/−</td>
+    </tr>
+    <tr>
+      <td>H1.2d-T2</td>
+      <td>a scope with priorities 1 and 3 / compile / refused, naming the scope, the property and both values</td>
+      <td>L3</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>H1.2d-T3</td>
+      <td>the same, written 1,3 and 3,1 / compile / the same refusal both ways (before, the two orders resolved to different strategies)</td>
+      <td>L2</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>H1.2d-T4</td>
+      <td>a scope with one priority / compile / resolved as before</td>
+      <td>L3</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H1.2d-T5</td>
+      <td>a profile with two values for its own dimension / compile / refused</td>
+      <td>L3</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>H1.2d-T6</td>
+      <td>a namespace scope with two prefixes that a profile uses / compile / refused</td>
+      <td>L3</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>H1.2d-T7</td>
+      <td>a uniqueness constraint naming two scopes / compile / refused (TD-15’s old behaviour was to use one silently)</td>
+      <td>L4</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>H1.2d-T8</td>
+      <td>an identity profile with two minted templates / compile / refused</td>
+      <td>L4</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>H1.2d-T9</td>
+      <td>every shipped example / compile / none is refused for this kind</td>
+      <td>L4</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H1.2d-T10</td>
+      <td>a multi-valued configuration / <code class="language-plaintext highlighter-rouge">persistence compile</code> / exit 1 and the kind on stderr</td>
+      <td>L3</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>H1.2d-T11</td>
+      <td>the compile-path source / AST scan / no <code class="language-plaintext highlighter-rouge">dal:</code> property read with a bare <code class="language-plaintext highlighter-rouge">Graph.value</code></td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>witness</td>
+      <td><code class="language-plaintext highlighter-rouge">refusal-MultiValuedFunctionalProperty.ttl</code> / witness check / the new rule is witnessed (86 of 86)</td>
+      <td>L4</td>
+      <td>+</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="one-command">One command</h2>
+
+<p>Run from the repository root. A pass is <code class="language-plaintext highlighter-rouge">869 passed, 1 xfailed</code>. The one expected failure is TD-23.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:persistence
+</code></pre></div></div>
+
+<h2 id="adversarial-probes">Adversarial probes</h2>
+
+<p>Run on 2026-10-09, each reverted afterwards.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Mutation</th>
+      <th>Result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>the priority read in <code class="language-plaintext highlighter-rouge">scopes.py</code> reverted to <code class="language-plaintext highlighter-rouge">graph.value</code></td>
+      <td>T2, T3 (both orders), T10 and T11 fail, and the witness for the new rule fails, so 10 tests fail</td>
+    </tr>
+    <tr>
+      <td>one read in <code class="language-plaintext highlighter-rouge">recipes.py</code> (<code class="language-plaintext highlighter-rouge">mintedIriTemplate</code>) reverted to <code class="language-plaintext highlighter-rouge">graph.value</code></td>
+      <td>T8 and T11 fail, T11 naming the line</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">functional_value</code> made to return the first value without refusing</td>
+      <td>14 tests fail, including every refusal case</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="before-and-after">Before and after</h2>
+
+<p>Before, <code class="language-plaintext highlighter-rouge">ex:A dal:priority 1, 3</code> against a scope at priority 2 resolved <code class="language-plaintext highlighter-rouge">dal:concurrencyProfile</code>
+to <code class="language-plaintext highlighter-rouge">ProvidedConcurrency</code> when <code class="language-plaintext highlighter-rouge">1</code> was written first and to <code class="language-plaintext highlighter-rouge">Optimistic</code> when <code class="language-plaintext highlighter-rouge">3</code> was. After, both
+orders give <code class="language-plaintext highlighter-rouge">MultiValuedFunctionalProperty at https://example.org/lending#A</code>.</p>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<ul>
+  <li>Running the structural SHACL shapes as part of <code class="language-plaintext highlighter-rouge">compile</code> (the other option in H-D10). Not chosen.</li>
+  <li>Unused subjects (above).</li>
+  <li>TD-23, still an expected failure.</li>
+</ul>

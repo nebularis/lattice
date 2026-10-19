@@ -1,0 +1,232 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-ccs-c7a-regimes-and-gating">Validation Pack: CCS C7a, regimes and gating</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/computable-contract-substrate.html"><code class="language-plaintext highlighter-rouge">computable-contract-substrate</code></a>
+<strong>Machine:</strong> R. <strong>Branch:</strong> <code class="language-plaintext highlighter-rouge">ccs/c7a-regimes</code>. Commits are the maintainer’s, and the change is
+merged into <code class="language-plaintext highlighter-rouge">main</code> before its release tags are created
+<strong>Plan and test cases:</strong> <a href="/developer/plans/computable-contract-substrate.html">CCS plan</a> (C7a in detail)
+<strong>Decisions:</strong> ADR-A104 decisions 6, 7 and 8, ADR-A106 and its addendum (C11a-Q2, C11a-Q4), CC-D8,
+DP6, ADR-A113. C7a-Q1 to C7a-Q5 answered 2026-10-04 (Q4: <code class="language-plaintext highlighter-rouge">ins:tolledIn</code>). C7a-R1, authoring with
+or without a reasoner, decided 2026-10-04 after the examples (ADR-A104 2026-10-04 addendum,
+decision 5)</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>A contract’s regimes are Behaviour state spaces that arise under a term and gate legal relations. The same legal triggers move a regime between states and make relations arise and end. State gates evaluation and never enters a design-time comparison (DP6).</p>
+
+<h2 id="test-cases">Test cases</h2>
+
+<p>The table in the plan section above. Each row’s result is recorded under Results at
+verification.</p>
+
+<h2 id="one-command">One command</h2>
+
+<p>Run from the repository root on machine R, with the reasoning harness built where a row is L2.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run build:ontology-catalog <span class="o">&amp;&amp;</span> mise run check:ontology-versioning <span class="o">&amp;&amp;</span> mise run check:ontology-catalog <span class="o">&amp;&amp;</span> mise run check:import-guard
+</code></pre></div></div>
+
+<h2 id="artefacts-to-inspect">Artefacts to inspect</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">ontology/instrument/examples/</code>: the four regime examples, written before the model.</li>
+  <li><code class="language-plaintext highlighter-rouge">ontology/instrument/README.md</code>: regimes, legal triggers and gating, with diagrams and the worked examples.</li>
+  <li><code class="language-plaintext highlighter-rouge">ontology/instrument/shapes/</code>: the regime, trigger and gating shapes.</li>
+  <li>The ADR-A104 addendum (2026-10-04), “a regime is stated once”.</li>
+</ul>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<p>Evaluation of gating and per-occasion resolution (C12, C13). Due ranges, recurrence, survival, <code class="language-plaintext highlighter-rouge">ins:ends</code>, constitutive terms, sections and party resolution (C7b). Parameter bindings, including a regime’s durations from wording variables (C8). Threshold regimes over measured values held in capacity (applied layer, §7.8). Gates whose subject is another participant’s share or another agreement (held design question HQ-2). Instruments without wording (HQ-1). <code class="language-plaintext highlighter-rouge">owl:AllDifferent</code> over Behaviour’s policy and kind individuals (FU-C7a-a, TD-17).</p>
+
+<h2 id="handoff">Handoff</h2>
+
+<p>Written by the building machine when the work is ready for the maintainer to commit.</p>
+
+<p>Phase 1, examples first (ADR-A-C2), 2026-10-04:</p>
+
+<ul>
+  <li><strong>Built:</strong> the four examples in <code class="language-plaintext highlighter-rouge">ontology/instrument/examples/</code> (<code class="language-plaintext highlighter-rouge">licence-notice.ttl</code>,
+<code class="language-plaintext highlighter-rouge">supply-suspension.ttl</code>, <code class="language-plaintext highlighter-rouge">facility-cure-period.ttl</code>, <code class="language-plaintext highlighter-rouge">service-dispute.ttl</code>), and the ADR-A104
+addendum “a regime is stated once” (Proposed). Between them the examples use every legal trigger
+(<code class="language-plaintext highlighter-rouge">OnExercise</code>, <code class="language-plaintext highlighter-rouge">OnCondition</code>, <code class="language-plaintext highlighter-rouge">OnExpiry</code> in days and in business days, <code class="language-plaintext highlighter-rouge">OnAct</code>), <code class="language-plaintext highlighter-rouge">ins:tolledIn</code>,
+<code class="language-plaintext highlighter-rouge">ins:arisesOnBreachOf</code>, a per-occasion regime, and gates within one regime and across two.</li>
+  <li><strong>Run:</strong> each example with the C6 model, every lower layer’s vocab, and the shapes of
+Foundation, Vocabulary, Quantification, Eligibility, Wording, Behaviour and Instrument, under
+pySHACL with and without RDFS inference. All four conform without inference. With RDFS,
+<code class="language-plaintext highlighter-rouge">service-dispute.ttl</code> fails Instrument’s relation shapes on <code class="language-plaintext highlighter-rouge">tmpl:on-dispute</code>: C6’s domain on
+<code class="language-plaintext highlighter-rouge">ins:activity</code> makes the <code class="language-plaintext highlighter-rouge">ins:OnAct</code> trigger a legal relation. That is the case C7a-Q2 removes,
+and it passes once the model drops the domain. A probe with a transition’s selection policy removed
+is rejected by Behaviour’s structural shape, so the run is not vacuous.</li>
+  <li><strong>Not run:</strong> the <code class="language-plaintext highlighter-rouge">mise</code> checks, which belong to the model phase.</li>
+  <li><strong>Check first:</strong> the addendum’s decisions 1, 3 and 5, and the clause texts, which carry the
+examples’ meaning.</li>
+  <li><strong>Deviations from the plan:</strong>
+    <ul>
+      <li>Stated regimes assert Behaviour’s terms explicitly. Behaviour’s structural shapes require
+<code class="language-plaintext highlighter-rouge">bhv:selectionPolicy</code> and <code class="language-plaintext highlighter-rouge">bhv:activationPolicy</code> on every transition, and with regimes stated
+once no instantiation step asserts them. So every regime node carries its <code class="language-plaintext highlighter-rouge">bhv:</code> type, every
+regime transition its two policies, and every trigger its kind. Decided as C7a-R1 (addendum
+decision 5): the assertions are the baseline, and <code class="language-plaintext highlighter-rouge">owl:hasValue</code> restrictions plus domains on
+<code class="language-plaintext highlighter-rouge">ins:ofPower</code>, <code class="language-plaintext highlighter-rouge">ins:ofObligation</code> and <code class="language-plaintext highlighter-rouge">ins:tolledIn</code> let an OWL 2 RL reasoner supply them. A
+scratch test confirmed it: <code class="language-plaintext highlighter-rouge">licence-notice.ttl</code> with every <code class="language-plaintext highlighter-rouge">bhv:</code> type, kind and policy removed
+conforms to Behaviour’s shapes after an owlrl closure, and a trigger with only <code class="language-plaintext highlighter-rouge">ins:ofPower</code>
+gains its class, type and kind. Rows C7a-15 to C7a-18 test it in the model phase.</li>
+      <li>The value shapes use <code class="language-plaintext highlighter-rouge">sh:in</code>, not the <code class="language-plaintext highlighter-rouge">sh:hasValue</code> first proposed. The same scratch test showed
+that <code class="language-plaintext highlighter-rouge">sh:hasValue</code> rejects correct lean data on the asserted graph, and misses a wrongly stated
+<code class="language-plaintext highlighter-rouge">bhv:AllMatches</code> on the closed graph, where the reasoner has merged it with <code class="language-plaintext highlighter-rouge">bhv:SingleMatch</code>.
+<code class="language-plaintext highlighter-rouge">sh:in ( bhv:SingleMatch )</code> reports the wrong value at its transition on the asserted graph in
+both modes, and at every transition on the closed graph.</li>
+      <li>A clause that states only a regime binds no term (14.1 in <code class="language-plaintext highlighter-rouge">supply-suspension.ttl</code>, 22.1 and
+22.2 in <code class="language-plaintext highlighter-rouge">facility-cure-period.ttl</code>). Nothing requires a bound term per stated term, and binding
+an empty one would add a node no evaluation reads (addendum decision 1).</li>
+      <li>The baseline activity scheme gains six activities the examples need: <code class="language-plaintext highlighter-rouge">GrantSublicence</code>,
+<code class="language-plaintext highlighter-rouge">Deliver</code>, <code class="language-plaintext highlighter-rouge">Suspend</code>, <code class="language-plaintext highlighter-rouge">Reinstate</code>, <code class="language-plaintext highlighter-rouge">ProvideService</code> and <code class="language-plaintext highlighter-rouge">Dispute</code>. The plan’s vocab step named
+only the state kinds.</li>
+      <li><code class="language-plaintext highlighter-rouge">ins:stateKind</code> is optional. A state with no common kind (unaffected, undisputed, a settled
+dispute) has none. The kinds used are <code class="language-plaintext highlighter-rouge">InForce</code>, <code class="language-plaintext highlighter-rouge">NoticePeriod</code>, <code class="language-plaintext highlighter-rouge">Terminated</code>, <code class="language-plaintext highlighter-rouge">Suspended</code>,
+<code class="language-plaintext highlighter-rouge">ForceMajeure</code>, <code class="language-plaintext highlighter-rouge">CurePeriod</code>, <code class="language-plaintext highlighter-rouge">Default</code> and <code class="language-plaintext highlighter-rouge">Disputed</code>, the baseline scheme’s first contents.</li>
+      <li>The licence’s exit on termination for cause takes two transitions, from in force and from the
+notice period, since a transition has one source state.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>Phase 2, the model, 2026-10-04:</p>
+
+<ul>
+  <li><strong>Built:</strong> <code class="language-plaintext highlighter-rouge">instrument</code> 0.10.0 (additive), <code class="language-plaintext highlighter-rouge">instrument-vocab</code> 0.10.0, <code class="language-plaintext highlighter-rouge">instrument-shapes</code> 0.3.0,
+all generated from <code class="language-plaintext highlighter-rouge">ontology/instrument/README.md</code>, which gains:
+    <ul>
+      <li>terminology for regimes, regime transitions, the five legal triggers and twelve properties,
+with the words not used (lifecycle, status, suspended or paused, event)</li>
+      <li>§5.7 (an overview picture)</li>
+      <li>§10 Legal Triggers (kinds, expiry, tolling, arising and ending)</li>
+      <li>§11 Regimes and Gating (stated once, with the layered insurance cover as one labelled use-case
+among three, the regime kinds with state diagrams, the gating rule, whose state gates, DP6)</li>
+      <li>§12 Authoring With and Without a Reasoner (C7a-R1)</li>
+      <li>four worked examples (§16.5 to §16.8), laws and release notes</li>
+      <li>46 Mermaid diagrams, every one parsed by mermaid 11</li>
+      <li>sections 10 to 14 renumbered to 13 to 17. No document links to them by number</li>
+    </ul>
+
+    <p><code class="language-plaintext highlighter-rouge">tools/test_regimes.py</code> holds rows C7a-01 to C7a-13 and C7a-15 to C7a-18. <code class="language-plaintext highlighter-rouge">tools/test_instrument.py</code>
+now asserts the current versions, 0.10.0 and shapes 0.3.0, and keeps its release-note assertions.
+The ontology architecture’s Instrument rows, the catalog and the release table are updated.</p>
+  </li>
+  <li><strong>Check first:</strong>
+    <ul>
+      <li>§12 and the B4 finding below.</li>
+      <li>The default in <code class="language-plaintext highlighter-rouge">ins:arisesOn</code>’s comment: a relation with no arising trigger has arisen once
+its instrument takes effect. C6’s relations read that way, but no decision states it.</li>
+      <li><code class="language-plaintext highlighter-rouge">ins:Regime ⊑ bhv:StateSpace ⊑ fnd:Version</code>, so a regime is a Foundation version through
+Behaviour, while ADR-A104 decision 2 says only <code class="language-plaintext highlighter-rouge">ins:Instrument</code> is a version in this layer.
+Nothing breaks: <code class="language-plaintext highlighter-rouge">ins:Template</code> is disjoint only with <code class="language-plaintext highlighter-rouge">ins:Instrument</code>, and every example is
+consistent. What a new clause version does to a regime’s identity, and to the occupancies of
+its states, is C9’s amendment question.</li>
+    </ul>
+  </li>
+  <li><strong>Deviations from the plan:</strong>
+    <ul>
+      <li><strong>The B4 shapes check <code class="language-plaintext highlighter-rouge">rdf:type</code> itself.</strong> Written first with <code class="language-plaintext highlighter-rouge">sh:class bhv:StateSpace</code>, they
+could never fire: SHACL’s <code class="language-plaintext highlighter-rouge">sh:class</code> and <code class="language-plaintext highlighter-rouge">sh:targetClass</code> follow the <code class="language-plaintext highlighter-rouge">rdfs:subClassOf</code> triples
+in the data graph, and the data is validated with Instrument’s spec, where <code class="language-plaintext highlighter-rouge">ins:Regime ⊑
+bhv:StateSpace</code>. They now use <code class="language-plaintext highlighter-rouge">sh:path rdf:type ; sh:hasValue</code>, which no subclass axiom
+satisfies. The same fact corrects a claim in the phase 1 write-up and the addendum’s first
+draft: Behaviour’s shapes do select a node typed only <code class="language-plaintext highlighter-rouge">ins:RegimeTransition</code> when Instrument’s
+spec is in the data graph, and report its missing policies. They skip it only without the
+spec. The engine matches the literal type, which is why B4 stays. Addendum decision 5 and
+README §12.1 are corrected.</li>
+      <li><strong>Tolling is checked per state space, not per regime.</strong> The plan said a tolling state belongs to
+a different regime from the one its expiry fires in. That would also reject a sub-state of the
+period’s own state, which may meaningfully stop its clock. <code class="language-plaintext highlighter-rouge">ins:TollingShape</code> rejects only a
+state of the state space the period runs in: a sibling, or the period’s own state.</li>
+      <li><strong>The addendum’s first draft said Behaviour’s shapes require a trigger kind.</strong> They require
+only the two policies. Instrument’s trigger shapes now require the kind (<code class="language-plaintext highlighter-rouge">sh:minCount 1</code> with
+<code class="language-plaintext highlighter-rouge">sh:in</code>). Corrected in addendum decision 5.</li>
+      <li><code class="language-plaintext highlighter-rouge">ins:by</code> is optional on <code class="language-plaintext highlighter-rouge">ins:OnAct</code>: without it, an act of the kind by any party fires the
+trigger.</li>
+      <li><code class="language-plaintext highlighter-rouge">ins:stateKind</code> has no domain, under the domain rule. A shape checks that its subject is a
+state.</li>
+      <li>No threshold regime is in an example: its measured value lives in an applied layer’s capacity
+model. §11.2 draws one.</li>
+      <li>Row C7a-11 (DP6) is tested structurally: nothing reachable from a relation’s scope, activity or
+maintained condition is a state, and the licence’s grant has no gate. No design-time envelope
+comparison exists yet to run.</li>
+      <li>Row C7a-14 is the existing suites, run below. It has no test of its own.</li>
+      <li><strong>Arising and ending take four triggers, not five</strong> (found at README review, 2026-10-04). The
+shape first allowed <code class="language-plaintext highlighter-rouge">ins:OnExpiry</code> in <code class="language-plaintext highlighter-rouge">ins:arisesOn</code> and <code class="language-plaintext highlighter-rouge">ins:endsOn</code>. The sketch’s §5.5 lists
+four, and an expiry has no anchor on a relation: it counts from entering a state. Corrected in
+<code class="language-plaintext highlighter-rouge">ins:ArisingShape</code>, the two properties’ comments, the README and addendum decision 6, with a
+test in C7a-08.</li>
+      <li><strong>README review, 2026-10-04.</strong> At our request, §4.2.4 now explains arising in the legal
+sense (source and moment, Hohfeld’s operative facts, arising against falling due, ending,
+occasions), and §4.2.13 explains how regimes work: what they are for, where an instrument’s
+regimes come from, the one state per regime at every moment, what a relation’s regimes are,
+the three questions of existence, gate and scope, why a gate and not arising and ending, and
+per-occasion regimes. Our edits to §4.2.13 are kept. Thirteen diagrams are added (59 in
+all), and every one renders under mermaid 11, which a parse alone does not show: a colon in a
+gantt task name parses and fails to render.</li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="results">Results</h2>
+
+<p>Run on machine R, 2026-10-04, with every tool package importing from this checkout.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Row</th>
+      <th>Result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>C7a-01</td>
+      <td>pass: 0.10.0, imports unchanged, every new property states subject and value, <code class="language-plaintext highlighter-rouge">ins:activity</code> has no domain, the three trigger domains and no others, the fixed values are <code class="language-plaintext highlighter-rouge">owl:hasValue</code></td>
+    </tr>
+    <tr>
+      <td>C7a-02</td>
+      <td>pass: all eight examples conform to the structural and constraint shapes of Foundation, Vocabulary, Quantification, Party, Eligibility, Wording, Behaviour and Instrument. Also conform under pySHACL’s RDFS and OWL RL inference</td>
+    </tr>
+    <tr>
+      <td>C7a-03</td>
+      <td>pass: the four regime examples are consistent (reasoning harness)</td>
+    </tr>
+    <tr>
+      <td>C7a-04 to C7a-09</td>
+      <td>pass: each change reported at its node, with its message</td>
+    </tr>
+    <tr>
+      <td>C7a-10</td>
+      <td>pass: an <code class="language-plaintext highlighter-rouge">ins:OnAct</code> with an activity is consistent with not being a legal relation</td>
+    </tr>
+    <tr>
+      <td>C7a-11</td>
+      <td>pass, structurally (see deviations)</td>
+    </tr>
+    <tr>
+      <td>C7a-12</td>
+      <td>pass: the state kind contract, and every kind and activity the examples use is in the baselines</td>
+    </tr>
+    <tr>
+      <td>C7a-13</td>
+      <td>pass: the README is the source of all five files, release notes recorded, shapes <code class="language-plaintext highlighter-rouge">.version</code> 0.3.0</td>
+    </tr>
+    <tr>
+      <td>C7a-14</td>
+      <td>pass: <code class="language-plaintext highlighter-rouge">tools/test_instrument.py</code> (with its two current-version assertions moved), <code class="language-plaintext highlighter-rouge">check:python-root</code> (84), <code class="language-plaintext highlighter-rouge">check:mork-compilers</code> (114), <code class="language-plaintext highlighter-rouge">check:persistence</code> (778), <code class="language-plaintext highlighter-rouge">check:vocabulary</code> (16), <code class="language-plaintext highlighter-rouge">check:ontology-catalog</code>, <code class="language-plaintext highlighter-rouge">check:ontology-versioning</code>, <code class="language-plaintext highlighter-rouge">check:import-guard</code>, <code class="language-plaintext highlighter-rouge">build:mtp</code> (lock unchanged), <code class="language-plaintext highlighter-rouge">check:mtp</code>, and the literate check of Foundation, Wording, Behaviour, Surface and Instrument</td>
+    </tr>
+    <tr>
+      <td>C7a-15 to C7a-18</td>
+      <td>pass: the lean licence conforms after an OWL 2 RL closure, fails B4 at all eight regime nodes without one, a wrong policy is reported once where stated and at all four transitions after closure, and <code class="language-plaintext highlighter-rouge">ins:ofPower</code> alone yields the trigger’s class, type and kind</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><code class="language-plaintext highlighter-rouge">tools/test_instrument.py</code> and <code class="language-plaintext highlighter-rouge">tools/test_regimes.py</code>: 105 passed, and 106 after the README review’s arising test. Release rows added for
+<code class="language-plaintext highlighter-rouge">instrument-v0.10.0</code>, <code class="language-plaintext highlighter-rouge">instrument-shapes-v0.3.0</code> and <code class="language-plaintext highlighter-rouge">instrument-vocab-v0.10.0</code>. Nothing else
+imports Instrument, so nothing cascades.</p>

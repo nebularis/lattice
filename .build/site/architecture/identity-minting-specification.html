@@ -1,0 +1,608 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="identity-minting-specification">Identity Minting Specification</h1>
+
+<p><strong>Status:</strong> Draft, normative once <a href="decisions/ADR-A84-standalone-minting-libraries.md">ADR-A84</a> and the amended <a href="decisions/ADR-A82-framework-neutral-identity-pattern-selection.md">ADR-A82</a> are ratified. Sections marked <em>(M4)</em> are completed in slice M4 of the <a href="/developer/plans/identity-minting.html"><code class="language-plaintext highlighter-rouge">identity-minting</code></a> unit.
+<strong>Version:</strong> recipe format <code class="language-plaintext highlighter-rouge">lattice-minting-recipe/1</code>, vectors format <code class="language-plaintext highlighter-rouge">lattice-minting-vectors/1</code>, Unicode 16.0.0
+<strong>Contracts:</strong> <a href="../../contracts/identity/README.md"><code class="language-plaintext highlighter-rouge">contracts/identity/</code></a> (JSON schemas, anchor vectors, independent verifier)</p>
+
+<p>This document defines how an IRI is minted from a LATTICE minting recipe, precisely enough that two independent implementations produce the same bytes. It is written for three readers: someone using the LATTICE Java or Python minting library, someone implementing their own minter without any LATTICE code, and someone checking either against the conformance vectors. The last two need nothing but this document, the schemas and the vectors.</p>
+
+<p>“Must” is a requirement for conformance. Anything not stated here is not required.</p>
+
+<hr />
+
+<h2 id="1-where-a-recipe-comes-from-and-what-a-minter-does">1. Where a recipe comes from, and what a minter does</h2>
+
+<p>An adopter configures identity in <code class="language-plaintext highlighter-rouge">ontology/persistence</code> (<code class="language-plaintext highlighter-rouge">dal:IdentityProfile</code>, <a href="/architecture/iri-identity-patterns.html">iri-identity-patterns.md</a>). The LATTICE persistence compiler resolves that configuration per target class and resource role and emits one <strong>recipe</strong> per role: a JSON document that says everything needed to mint that role’s IRIs. <code class="language-plaintext highlighter-rouge">persistence export-recipes</code> writes the recipes along with conformance vectors.</p>
+
+<p>A <strong>minter</strong> takes a recipe and a request’s inputs, and returns an IRI (and, for claimed identity, one or two claim IRIs), or a named error.</p>
+
+<h2 id="2-recipe-documents">2. Recipe documents</h2>
+
+<p>A recipe is a JSON object validated by <a href="../../contracts/identity/recipe.schema.json"><code class="language-plaintext highlighter-rouge">recipe.schema.json</code></a>. Its members, per strategy, are listed in <a href="#6-strategies">§6</a>. Every recipe has:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Member</th>
+      <th>Meaning</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">recipeFormat</code></td>
+      <td>exactly <code class="language-plaintext highlighter-rouge">"lattice-minting-recipe/1"</code>. Any other value: <code class="language-plaintext highlighter-rouge">UnsupportedRecipeFormat</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">recipeDigest</code></td>
+      <td><code class="language-plaintext highlighter-rouge">"sha256:"</code> followed by 64 lowercase hex digits (§2.1)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">role</code></td>
+      <td>the resource role, a local name from <code class="language-plaintext highlighter-rouge">dal:ResourceRole</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">target</code></td>
+      <td><code class="language-plaintext highlighter-rouge">{ "class": IRI, "deployment": IRI or null }</code>, for traceability only. A minter does not use it</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">strategy</code></td>
+      <td>selects the algorithm in §6</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">iriTemplate</code></td>
+      <td>the minted IRI’s shape (§5)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="21-the-recipe-digest">2.1 The recipe digest</h3>
+
+<p>A minter must verify the digest before using a recipe, and refuse a mismatch with <code class="language-plaintext highlighter-rouge">RecipeDigestMismatch</code>. The digest is SHA-256 over the recipe’s <strong>canonical JSON</strong> with the <code class="language-plaintext highlighter-rouge">recipeDigest</code> member removed, written as <code class="language-plaintext highlighter-rouge">"sha256:"</code> plus lowercase hex.</p>
+
+<p>Canonical JSON is RFC 8785 (JSON Canonicalization Scheme). Recipes are restricted so that RFC 8785 needs no number formatting: they contain only strings, integers, <code class="language-plaintext highlighter-rouge">true</code>, <code class="language-plaintext highlighter-rouge">false</code>, <code class="language-plaintext highlighter-rouge">null</code>, arrays, and objects whose keys are ASCII. Under that restriction the canonical form is:</p>
+
+<ul>
+  <li>no insignificant whitespace;</li>
+  <li>object members sorted by key, comparing keys as sequences of code units (for ASCII keys, byte order);</li>
+  <li>integers written in plain decimal with no leading zeros, no exponent, no plus sign;</li>
+  <li>strings in double quotes, escaping only <code class="language-plaintext highlighter-rouge">"</code> as <code class="language-plaintext highlighter-rouge">\"</code>, <code class="language-plaintext highlighter-rouge">\</code> as <code class="language-plaintext highlighter-rouge">\\</code>, U+0008, U+0009, U+000A, U+000C and U+000D as <code class="language-plaintext highlighter-rouge">\b</code>, <code class="language-plaintext highlighter-rouge">\t</code>, <code class="language-plaintext highlighter-rouge">\n</code>, <code class="language-plaintext highlighter-rouge">\f</code>, <code class="language-plaintext highlighter-rouge">\r</code>, and every other code point below U+0020 as <code class="language-plaintext highlighter-rouge">\u</code> followed by four lowercase hex digits. Every other character, including non-ASCII, is written as itself;</li>
+  <li>the result encoded as UTF-8.</li>
+</ul>
+
+<h2 id="3-unicode">3. Unicode</h2>
+
+<h3 id="31-the-pinned-version">3.1 The pinned version</h3>
+
+<p>Every Unicode-dependent step uses the Unicode Character Database <strong>16.0.0</strong>, from <code class="language-plaintext highlighter-rouge">https://www.unicode.org/Public/16.0.0/ucd/</code>. A recipe’s pipeline states its <code class="language-plaintext highlighter-rouge">unicodeVersion</code>, and this version of the specification accepts only <code class="language-plaintext highlighter-rouge">"16.0.0"</code>. Moving to another Unicode version is a new pipeline, and so a re-key: an IRI minted under one version is never silently reinterpreted under another.</p>
+
+<p>The steps use these files: <code class="language-plaintext highlighter-rouge">UnicodeData.txt</code> (assignment, simple case mappings), <code class="language-plaintext highlighter-rouge">SpecialCasing.txt</code> (full case mappings), <code class="language-plaintext highlighter-rouge">DerivedNormalizationProps.txt</code> (the <code class="language-plaintext highlighter-rouge">NFKC_CF</code> mapping), <code class="language-plaintext highlighter-rouge">PropList.txt</code> (<code class="language-plaintext highlighter-rouge">White_Space</code>).</p>
+
+<p>NFC and NFKC may use the runtime’s own implementation, because Unicode’s normalization stability policy fixes the normalization of every assigned code point for all later versions. That is safe only if the runtime’s Unicode data is at least 16.0.0 and every code point is assigned in 16.0.0, which is why a minter must refuse to run on older Unicode data (<code class="language-plaintext highlighter-rouge">RuntimeUnicodeTooOld</code>) and why every pipeline starts with <code class="language-plaintext highlighter-rouge">reject_unassigned</code>.</p>
+
+<h3 id="32-pipeline-steps">3.2 Pipeline steps</h3>
+
+<p>A pipeline is a list of steps applied in order to one key component. The recipe lists the steps explicitly: a minter must follow the list, never infer steps from the pipeline’s <code class="language-plaintext highlighter-rouge">id</code>.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Step</th>
+      <th>Definition</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">reject_unassigned</code></td>
+      <td>If any code point’s General_Category is <code class="language-plaintext highlighter-rouge">Cn</code> in <code class="language-plaintext highlighter-rouge">UnicodeData.txt</code> 16.0.0 (that is, it is not listed, individually or in a <code class="language-plaintext highlighter-rouge">First</code>/<code class="language-plaintext highlighter-rouge">Last</code> range), fail with <code class="language-plaintext highlighter-rouge">UnassignedCodePoint</code>. Always the first step</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">nfc</code></td>
+      <td>Unicode Normalization Form C (UAX #15)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">nfkc</code></td>
+      <td>Unicode Normalization Form KC (UAX #15)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">nfkc_casefold</code></td>
+      <td>Map every code point through its <code class="language-plaintext highlighter-rouge">NFKC_CF</code> value in <code class="language-plaintext highlighter-rouge">DerivedNormalizationProps.txt</code> (a code point with no <code class="language-plaintext highlighter-rouge">NFKC_CF</code> entry maps to itself; an entry with an empty value maps to nothing), then apply NFC. This is Unicode’s <code class="language-plaintext highlighter-rouge">toNFKC_Casefold</code>. It removes every default-ignorable code point, and it is not the same as lowercasing, nor as casefolding plus NFKC in a language library</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">trim_white_space</code></td>
+      <td>Remove code points with the <code class="language-plaintext highlighter-rouge">White_Space</code> property (<code class="language-plaintext highlighter-rouge">PropList.txt</code>) from both ends. Not a language’s own notion of whitespace: see <a href="#11-pitfalls-m4">§11</a></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">uppercase_full</code></td>
+      <td>Unicode default full uppercase mapping: the unconditional mappings in <code class="language-plaintext highlighter-rouge">SpecialCasing.txt</code>, otherwise the simple uppercase in <code class="language-plaintext highlighter-rouge">UnicodeData.txt</code>, otherwise the code point itself. No language-specific (for example Turkish) mappings</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">lowercase_full</code></td>
+      <td>Unicode default full lowercase mapping, the same way, including the <code class="language-plaintext highlighter-rouge">Final_Sigma</code> context from <code class="language-plaintext highlighter-rouge">SpecialCasing.txt</code> and no language-specific mappings</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>After the last step, an empty component fails with <code class="language-plaintext highlighter-rouge">EmptyKeyComponent</code>.</p>
+
+<p>The three pipelines a recipe can name expand to:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th><code class="language-plaintext highlighter-rouge">id</code></th>
+      <th><code class="language-plaintext highlighter-rouge">steps</code></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">NfkcTrimCasefold</code></td>
+      <td><code class="language-plaintext highlighter-rouge">reject_unassigned</code>, <code class="language-plaintext highlighter-rouge">nfkc_casefold</code>, <code class="language-plaintext highlighter-rouge">trim_white_space</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">NfkcTrimUppercase</code></td>
+      <td><code class="language-plaintext highlighter-rouge">reject_unassigned</code>, <code class="language-plaintext highlighter-rouge">nfkc</code>, <code class="language-plaintext highlighter-rouge">trim_white_space</code>, <code class="language-plaintext highlighter-rouge">uppercase_full</code>, <code class="language-plaintext highlighter-rouge">nfkc</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">NfkcTrimLowercase</code></td>
+      <td><code class="language-plaintext highlighter-rouge">reject_unassigned</code>, <code class="language-plaintext highlighter-rouge">nfkc</code>, <code class="language-plaintext highlighter-rouge">trim_white_space</code>, <code class="language-plaintext highlighter-rouge">lowercase_full</code>, <code class="language-plaintext highlighter-rouge">nfkc</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Case mapping can produce a sequence that is not in NFKC, which is why the upper- and lowercase pipelines end with a second <code class="language-plaintext highlighter-rouge">nfkc</code>.</p>
+
+<h2 id="4-bytes">4. Bytes</h2>
+
+<h3 id="41-tuple-encoding-length-prefixed-utf81">4.1 Tuple encoding <code class="language-plaintext highlighter-rouge">length-prefixed-utf8/1</code></h3>
+
+<p>A tuple of strings <code class="language-plaintext highlighter-rouge">[c1, c2, …]</code> encodes as, for each component in order: the number of <strong>UTF-8 bytes</strong> in the component, written in ASCII decimal with no leading zeros (<code class="language-plaintext highlighter-rouge">0</code> for an empty component), then <code class="language-plaintext highlighter-rouge">:</code> (0x3A), then the component’s UTF-8 bytes. There is no separator between components and no terminator. The encoding is self-delimiting, so no component value can make two different tuples encode alike.</p>
+
+<p>Example: <code class="language-plaintext highlighter-rouge">["v1", "person-email-unique", "acme", "ada@example.org"]</code> encodes as the ASCII text <code class="language-plaintext highlighter-rouge">2:v119:person-email-unique4:acme15:ada@example.org</code>.</p>
+
+<h3 id="42-digests-macs-and-truncation">4.2 Digests, MACs and truncation</h3>
+
+<p><code class="language-plaintext highlighter-rouge">SHA-256</code> is FIPS 180-4. <code class="language-plaintext highlighter-rouge">HMAC-SHA-256</code> is RFC 2104 with SHA-256, keyed with the secret’s bytes exactly as supplied. A recipe’s <code class="language-plaintext highlighter-rouge">widthBits</code> is a multiple of 8, and truncation keeps the <strong>first</strong> <code class="language-plaintext highlighter-rouge">widthBits / 8</code> bytes of the digest or MAC.</p>
+
+<h3 id="43-output-encodings">4.3 Output encodings</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th><code class="language-plaintext highlighter-rouge">encoding</code></th>
+      <th>Definition</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">lowercase-hex</code></td>
+      <td>two lowercase hex digits per byte</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">base32</code></td>
+      <td>RFC 4648 §6, the standard alphabet <code class="language-plaintext highlighter-rouge">A</code>–<code class="language-plaintext highlighter-rouge">Z</code>, <code class="language-plaintext highlighter-rouge">2</code>–<code class="language-plaintext highlighter-rouge">7</code>, uppercase, with trailing <code class="language-plaintext highlighter-rouge">=</code> padding removed</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">base64url</code></td>
+      <td>RFC 4648 §5, <code class="language-plaintext highlighter-rouge">-</code> and <code class="language-plaintext highlighter-rouge">_</code>, with trailing <code class="language-plaintext highlighter-rouge">=</code> padding removed</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="5-iri-templates">5. IRI templates</h2>
+
+<p>A template is a string with named slots written <code class="language-plaintext highlighter-rouge">{name}</code>, where the name is ASCII letters. Rendering replaces each slot with its value and leaves every other character unchanged. Slot values are inserted as they are, with no further escaping, because every slot value is already restricted to IRI-safe characters by the step that produces it. The slots available depend on the strategy (§6). A template may contain a slot more than once.</p>
+
+<h2 id="6-strategies">6. Strategies</h2>
+
+<p>A request’s inputs are a JSON object, the <code class="language-plaintext highlighter-rouge">inputs</code> member of a vector. Its members:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Member</th>
+      <th>Strategies</th>
+      <th>Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">key</code></td>
+      <td>natural key, derived hash, claimed</td>
+      <td>array of strings, the values for <code class="language-plaintext highlighter-rouge">key.properties</code> in that order</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">scope</code></td>
+      <td>the same, when <code class="language-plaintext highlighter-rouge">key.scopeProperty</code> is not <code class="language-plaintext highlighter-rouge">null</code></td>
+      <td>string</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">surrogate</code></td>
+      <td>claimed, <code class="language-plaintext highlighter-rouge">CallerSuppliedSurrogate</code></td>
+      <td>string</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">randomHex</code></td>
+      <td>random, claimed <code class="language-plaintext highlighter-rouge">UuidV4Surrogate</code></td>
+      <td>32 hex digits used in place of fresh randomness. <strong>For conformance vectors only.</strong> A production minter must ignore it or refuse it</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">target</code></td>
+      <td>position-derived, <code class="language-plaintext highlighter-rouge">HashedTargetDerivation</code></td>
+      <td>the target IRI as a string</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">namespaceToken</code></td>
+      <td>position-derived, <code class="language-plaintext highlighter-rouge">RegistryTokenDerivation</code></td>
+      <td>string</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">epoch</code>, <code class="language-plaintext highlighter-rouge">seq</code></td>
+      <td>position-derived</td>
+      <td>JSON integers</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">canonicalNQuads</code></td>
+      <td>content-addressed</td>
+      <td>string, the canonical N-Quads</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">canonicalizer</code></td>
+      <td>content-addressed</td>
+      <td>string naming the RDFC-1.0 implementation that produced <code class="language-plaintext highlighter-rouge">canonicalNQuads</code> (§7)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">iri</code></td>
+      <td>adopted, external registry</td>
+      <td>string</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>In every algorithm below, a key’s components are the request’s values for the recipe’s <code class="language-plaintext highlighter-rouge">key.properties</code>, in that order. A missing value fails with <code class="language-plaintext highlighter-rouge">MissingKeyComponent</code>. Each component goes through the key’s pipeline (§3.2).</p>
+
+<p>When <code class="language-plaintext highlighter-rouge">key.scopeProperty</code> is not <code class="language-plaintext highlighter-rouge">null</code>, the request’s value for that property (its IRI, or a literal’s lexical form) is the <strong>scope value</strong>. It is placed before the normalized components, and it is used exactly as given: it is not normalized, because a scope is an identifier, not a key someone types. A missing scope value fails with <code class="language-plaintext highlighter-rouge">MissingKeyComponent</code>. Scope matters for identity: two tenants’ identical natural keys must not mint the same IRI.</p>
+
+<h3 id="61-derivedhashidentity">6.1 <code class="language-plaintext highlighter-rouge">DerivedHashIdentity</code></h3>
+
+<ol>
+  <li>Normalize each key component.</li>
+  <li>Encode the tuple <code class="language-plaintext highlighter-rouge">tuplePrefix + [scope value, if any] + normalized components</code> (§4.1).</li>
+  <li>SHA-256, truncate to <code class="language-plaintext highlighter-rouge">digest.widthBits</code>, encode with <code class="language-plaintext highlighter-rouge">digest.encoding</code>.</li>
+  <li>Render <code class="language-plaintext highlighter-rouge">iriTemplate</code> with <code class="language-plaintext highlighter-rouge">{digest}</code>.</li>
+</ol>
+
+<h3 id="62-naturalkeyidentity">6.2 <code class="language-plaintext highlighter-rouge">NaturalKeyIdentity</code></h3>
+
+<ol>
+  <li>Normalize each key component.</li>
+  <li>Percent-encode the scope value, if any, and each normalized component, from their UTF-8 bytes: the RFC 3986 unreserved characters <code class="language-plaintext highlighter-rouge">A</code>–<code class="language-plaintext highlighter-rouge">Z</code>, <code class="language-plaintext highlighter-rouge">a</code>–<code class="language-plaintext highlighter-rouge">z</code>, <code class="language-plaintext highlighter-rouge">0</code>–<code class="language-plaintext highlighter-rouge">9</code>, <code class="language-plaintext highlighter-rouge">-</code>, <code class="language-plaintext highlighter-rouge">.</code>, <code class="language-plaintext highlighter-rouge">_</code>, <code class="language-plaintext highlighter-rouge">~</code> are kept, and every other byte is written <code class="language-plaintext highlighter-rouge">%</code> followed by two <strong>uppercase</strong> hex digits. A <code class="language-plaintext highlighter-rouge">/</code> inside a component becomes <code class="language-plaintext highlighter-rouge">%2F</code>.</li>
+  <li>Join the encoded values with <code class="language-plaintext highlighter-rouge">/</code> and render <code class="language-plaintext highlighter-rouge">iriTemplate</code> with <code class="language-plaintext highlighter-rouge">{key}</code>.</li>
+</ol>
+
+<h3 id="63-surrogateclaimedidentity">6.3 <code class="language-plaintext highlighter-rouge">SurrogateClaimedIdentity</code></h3>
+
+<p>The entity IRI is a surrogate. The recipe’s <code class="language-plaintext highlighter-rouge">claims</code> are minted alongside it: one claim, or two during a claim-scheme rotation in the <code class="language-plaintext highlighter-rouge">Dual</code> state, in the order listed.</p>
+
+<ol>
+  <li><strong>Surrogate.</strong> For <code class="language-plaintext highlighter-rouge">UuidV4Surrogate</code>, generate a random version 4 UUID (RFC 9562): take 16 bytes <code class="language-plaintext highlighter-rouge">b</code> from a cryptographically secure random source, set <code class="language-plaintext highlighter-rouge">b[6] = (b[6] &amp; 0x0F) | 0x40</code> and <code class="language-plaintext highlighter-rouge">b[8] = (b[8] &amp; 0x3F) | 0x80</code>, and write the bytes as lowercase hex grouped 8-4-4-4-12 with <code class="language-plaintext highlighter-rouge">-</code>. Vectors supply the 16 bytes as <code class="language-plaintext highlighter-rouge">randomHex</code> so that this step can be tested. For <code class="language-plaintext highlighter-rouge">CallerSuppliedSurrogate</code>, take the request’s surrogate and check it matches <code class="language-plaintext highlighter-rouge">surrogate.pattern</code> in full (§6.8), or fail with <code class="language-plaintext highlighter-rouge">PatternMismatch</code>.</li>
+  <li>Render <code class="language-plaintext highlighter-rouge">iriTemplate</code> with <code class="language-plaintext highlighter-rouge">{surrogate}</code>.</li>
+  <li><strong>Each claim.</strong> Every claim in a recipe carries the same <code class="language-plaintext highlighter-rouge">key</code> (a recipe whose claims differ is refused with <code class="language-plaintext highlighter-rouge">UnsupportedRecipeFormat</code>), so the key components are normalized once, with that key’s pipeline. Encode the tuple <code class="language-plaintext highlighter-rouge">[schemeVersion, constraintId, scope value, …normalized components]</code>, where the scope value is the request’s value for <code class="language-plaintext highlighter-rouge">key.scopeProperty</code>, or the empty string when <code class="language-plaintext highlighter-rouge">scopeProperty</code> is <code class="language-plaintext highlighter-rouge">null</code>. Compute HMAC-SHA-256 with the secret identified by <code class="language-plaintext highlighter-rouge">keyId</code> (§8), or fail with <code class="language-plaintext highlighter-rouge">MissingSecret</code>. Truncate to <code class="language-plaintext highlighter-rouge">mac.widthBits</code>, encode with <code class="language-plaintext highlighter-rouge">mac.encoding</code>, and render the claim’s <code class="language-plaintext highlighter-rouge">iriTemplate</code> with <code class="language-plaintext highlighter-rouge">{constraintId}</code>, <code class="language-plaintext highlighter-rouge">{schemeVersion}</code> and <code class="language-plaintext highlighter-rouge">{mac}</code>.</li>
+</ol>
+
+<h3 id="64-randomsurrogateidentity">6.4 <code class="language-plaintext highlighter-rouge">RandomSurrogateIdentity</code></h3>
+
+<p>Generate a version 4 UUID as in §6.3 step 1 and render <code class="language-plaintext highlighter-rouge">iriTemplate</code> with <code class="language-plaintext highlighter-rouge">{surrogate}</code>. Only the IRI’s format can be conformance-tested.</p>
+
+<h3 id="65-positionderivedevent">6.5 <code class="language-plaintext highlighter-rouge">PositionDerivedEvent</code></h3>
+
+<ol>
+  <li><strong>Namespace.</strong> For <code class="language-plaintext highlighter-rouge">HashedTargetDerivation</code>, a missing target fails with <code class="language-plaintext highlighter-rouge">MissingKeyComponent</code>. Encode the tuple <code class="language-plaintext highlighter-rouge">["occurrence-namespace/1", target IRI]</code>, SHA-256 it, truncate to <code class="language-plaintext highlighter-rouge">namespace.digest.widthBits</code>, and encode with <code class="language-plaintext highlighter-rouge">namespace.digest.encoding</code>. For <code class="language-plaintext highlighter-rouge">RegistryTokenDerivation</code>, the namespace is the token the request supplies, which must match <code class="language-plaintext highlighter-rouge">^[A-Za-z0-9._~-]+$</code>, or fail with <code class="language-plaintext highlighter-rouge">PatternMismatch</code>.</li>
+  <li><strong>Position.</strong> A missing or non-integer epoch or sequence fails with <code class="language-plaintext highlighter-rouge">MissingKeyComponent</code>. Each must be from 0 to 9223372036854775807, or fail with <code class="language-plaintext highlighter-rouge">PositionOutOfRange</code>. Each is written in decimal, left-padded with zeros to <code class="language-plaintext highlighter-rouge">epochWidth</code> and <code class="language-plaintext highlighter-rouge">sequenceWidth</code>.</li>
+  <li>Render <code class="language-plaintext highlighter-rouge">iriTemplate</code> with <code class="language-plaintext highlighter-rouge">{namespace}</code>, <code class="language-plaintext highlighter-rouge">{epoch}</code> and <code class="language-plaintext highlighter-rouge">{seq}</code>.</li>
+</ol>
+
+<h3 id="66-contentaddressedidentity">6.6 <code class="language-plaintext highlighter-rouge">ContentAddressedIdentity</code></h3>
+
+<p><strong>A minter hashes bytes. It does not canonicalize RDF.</strong> The request supplies canonical N-Quads that the caller has already produced, and the correctness of the resulting identity rests on the caller’s obligations in <a href="#7-content-addressed-identity-the-callers-obligations">§7</a>.</p>
+
+<ol>
+  <li>The request must name the RDFC-1.0 implementation that produced the bytes in <code class="language-plaintext highlighter-rouge">canonicalizer</code>, a string containing at least one code point without the <code class="language-plaintext highlighter-rouge">White_Space</code> property, or the minter fails with <code class="language-plaintext highlighter-rouge">CanonicalizerNotDeclared</code>. “Blank” is judged by <code class="language-plaintext highlighter-rouge">White_Space</code>, never by a language’s own whitespace test (§11). The minter cannot check the statement. It exists so that every content-addressed call records who is answerable for CA-1, and so that no caller reaches a digest without meeting §7.</li>
+  <li>SHA-256 the UTF-8 bytes of <code class="language-plaintext highlighter-rouge">canonicalNQuads</code> (missing: <code class="language-plaintext highlighter-rouge">MissingKeyComponent</code>), truncate to <code class="language-plaintext highlighter-rouge">digest.widthBits</code>, encode with <code class="language-plaintext highlighter-rouge">digest.encoding</code>.</li>
+  <li>Render <code class="language-plaintext highlighter-rouge">iriTemplate</code> with <code class="language-plaintext highlighter-rouge">{digest}</code>.</li>
+</ol>
+
+<h3 id="67-adoptedidentity-and-externalregistryidentity">6.7 <code class="language-plaintext highlighter-rouge">AdoptedIdentity</code> and <code class="language-plaintext highlighter-rouge">ExternalRegistryIdentity</code></h3>
+
+<p>Nothing is minted. The minter validates an IRI supplied by the naming authority against <code class="language-plaintext highlighter-rouge">acceptedPattern</code> (§6.8), or fails with <code class="language-plaintext highlighter-rouge">PatternMismatch</code>.</p>
+
+<h3 id="68-patterns">6.8 Patterns</h3>
+
+<p>Patterns are ASCII regular expressions matched against the <strong>whole</strong> value. They may use literals, <code class="language-plaintext highlighter-rouge">.</code>, character classes with ranges and negation, the quantifiers <code class="language-plaintext highlighter-rouge">*</code>, <code class="language-plaintext highlighter-rouge">+</code>, <code class="language-plaintext highlighter-rouge">?</code>, <code class="language-plaintext highlighter-rouge">{n}</code>, <code class="language-plaintext highlighter-rouge">{n,m}</code>, anchors <code class="language-plaintext highlighter-rouge">^</code> and <code class="language-plaintext highlighter-rouge">$</code>, alternation and groups. They must not use <code class="language-plaintext highlighter-rouge">\d</code>, <code class="language-plaintext highlighter-rouge">\w</code>, <code class="language-plaintext highlighter-rouge">\s</code>, lookaround, backreferences or flags, because those differ between regular-expression engines (Python’s <code class="language-plaintext highlighter-rouge">\d</code> matches every Unicode digit, Java’s does not).</p>
+
+<h2 id="7-content-addressed-identity-the-callers-obligations">7. Content-addressed identity: the caller’s obligations</h2>
+
+<p>Two parties who canonicalize the same graph differently mint different IRIs for it, and no conformance vector can detect that, because the vectors start from bytes that are already canonical. Every content-addressed recipe carries these obligations in its <code class="language-plaintext highlighter-rouge">callerObligations</code> member. A caller must meet all of them:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Id</th>
+      <th>Obligation</th>
+      <th>Why</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>CA-1</td>
+      <td>The bytes are the output of an RDFC-1.0 implementation that passes the W3C RDFC-1.0 test suite, serialized as canonical N-Quads in UTF-8, one line per quad, each terminated by a single LF, with no other bytes</td>
+      <td>Any other canonicalization, or a byte-level difference such as CRLF line endings or a byte-order mark, changes the digest</td>
+    </tr>
+    <tr>
+      <td>CA-2</td>
+      <td>The recipe’s self-reference rule is applied <strong>before</strong> canonicalization</td>
+      <td>A graph that contains its own identifier cannot be hashed directly: the identifier would depend on itself (<a href="/architecture/iri-identity-patterns.html#83-self-reference-pattern">iri-identity-patterns.md §8.3</a>)</td>
+    </tr>
+    <tr>
+      <td>CA-3</td>
+      <td>Canonicalization stops at the recipe’s <code class="language-plaintext highlighter-rouge">workBudget</code>, and the graph is refused, never hashed on a best-effort basis</td>
+      <td>Adversarial blank-node structures make RDFC-1.0 expensive. A best-effort hash is a different identity (<a href="/architecture/iri-identity-patterns.html#84-complexity-and-blank-node-cost">§8.4</a>)</td>
+    </tr>
+    <tr>
+      <td>CA-4</td>
+      <td>Where <code class="language-plaintext highlighter-rouge">verifyFullDigest</code> is true, the full digest is stored and compared on every re-registration of the identifier</td>
+      <td>A truncated digest in an IRI is not collision protection on its own (<a href="/architecture/iri-identity-patterns.html#85-registration-verification">§8.5</a>)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="8-secrets">8. Secrets</h2>
+
+<p>A recipe names a claim secret by <code class="language-plaintext highlighter-rouge">keyId</code> and never contains it. A minter receives the secret’s bytes from its caller and does not return, log or persist them. A secret of zero bytes is treated as no secret (<code class="language-plaintext highlighter-rouge">MissingSecret</code>). The vectors publish a <strong>test secret</strong> (<code class="language-plaintext highlighter-rouge">testSecrets</code>), clearly labelled: it exists so that anyone can reproduce the claim vectors, and must never be used in production.</p>
+
+<h2 id="9-named-errors">9. Named errors</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Error</th>
+      <th>Raised when</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">UnsupportedRecipeFormat</code></td>
+      <td><code class="language-plaintext highlighter-rouge">recipeFormat</code> is not <code class="language-plaintext highlighter-rouge">lattice-minting-recipe/1</code>, the strategy is unknown, a pipeline’s <code class="language-plaintext highlighter-rouge">unicodeVersion</code> is not <code class="language-plaintext highlighter-rouge">16.0.0</code>, a pipeline does not start with <code class="language-plaintext highlighter-rouge">reject_unassigned</code> or names an unknown step, or a recipe’s claims carry different keys</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">RecipeDigestMismatch</code></td>
+      <td>the recomputed digest differs from <code class="language-plaintext highlighter-rouge">recipeDigest</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">RuntimeUnicodeTooOld</code></td>
+      <td>the runtime’s Unicode data is older than 16.0.0</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">MissingKeyComponent</code></td>
+      <td>a request lacks a key value, the scope value, the target IRI, an integer epoch or sequence, or the canonical N-Quads</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">UnassignedCodePoint</code></td>
+      <td>a key component contains a code point unassigned in Unicode 16.0.0</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">EmptyKeyComponent</code></td>
+      <td>a key component is empty after its pipeline</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">MissingSecret</code></td>
+      <td>no secret, or an empty one, is supplied for a claim’s <code class="language-plaintext highlighter-rouge">keyId</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">PatternMismatch</code></td>
+      <td>a caller-supplied surrogate, registry token or adopted IRI does not match its pattern</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">PositionOutOfRange</code></td>
+      <td>an epoch or sequence is negative or above 9223372036854775807</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">CanonicalizerNotDeclared</code></td>
+      <td>a content-addressed request does not name its RDFC-1.0 implementation (§6.6)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The checks run in the order of the algorithms in §6, so a request with two faults raises the first one its strategy reaches. A vector never depends on that order: each negative vector has exactly one fault.</p>
+
+<h2 id="10-conformance-vectors">10. Conformance vectors</h2>
+
+<h3 id="101-format">10.1 Format</h3>
+
+<p>A vectors document (<a href="../../contracts/identity/vectors.schema.json"><code class="language-plaintext highlighter-rouge">vectors.schema.json</code></a>) embeds the recipe it tests, any test secrets, and three lists:</p>
+
+<ul>
+  <li><strong>Positive vectors:</strong> <code class="language-plaintext highlighter-rouge">inputs</code> (§6), the final <code class="language-plaintext highlighter-rouge">iri</code> (and <code class="language-plaintext highlighter-rouge">claimIris</code> for claimed identity), and a <code class="language-plaintext highlighter-rouge">trace</code> of every intermediate value in order. Steps belonging to a claim carry its index as <code class="language-plaintext highlighter-rouge">claim</code>.</li>
+  <li><strong>Negative vectors:</strong> <code class="language-plaintext highlighter-rouge">inputs</code> and the named <code class="language-plaintext highlighter-rouge">error</code> that must be raised. An <code class="language-plaintext highlighter-rouge">inputs</code> member <code class="language-plaintext highlighter-rouge">omitSecret</code> is a directive to the test harness, not a request input: run the vector without the secret for that key id.</li>
+  <li><strong>Format vectors:</strong> for non-deterministic strategies, a pattern and example IRIs to <code class="language-plaintext highlighter-rouge">accept</code> and <code class="language-plaintext highlighter-rouge">reject</code>.</li>
+</ul>
+
+<p>Trace steps, in the order a strategy produces them:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th><code class="language-plaintext highlighter-rouge">step</code></th>
+      <th>Members</th>
+      <th>Produced by</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">normalize</code></td>
+      <td><code class="language-plaintext highlighter-rouge">component</code> (index), <code class="language-plaintext highlighter-rouge">pipeline</code> (id), <code class="language-plaintext highlighter-rouge">input</code>, <code class="language-plaintext highlighter-rouge">after</code> (<code class="language-plaintext highlighter-rouge">{step, output}</code> per pipeline step), <code class="language-plaintext highlighter-rouge">output</code>, and in anchors <code class="language-plaintext highlighter-rouge">ucd</code> (citations, not compared)</td>
+      <td>each key component</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">tuple</code></td>
+      <td><code class="language-plaintext highlighter-rouge">components</code>, <code class="language-plaintext highlighter-rouge">hex</code> (the encoded bytes)</td>
+      <td>§4.1</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">digest</code></td>
+      <td><code class="language-plaintext highlighter-rouge">function</code> (<code class="language-plaintext highlighter-rouge">SHA-256</code>), <code class="language-plaintext highlighter-rouge">hex</code> (full digest)</td>
+      <td>§4.2</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">mac</code></td>
+      <td><code class="language-plaintext highlighter-rouge">function</code> (<code class="language-plaintext highlighter-rouge">HMAC-SHA-256</code>), <code class="language-plaintext highlighter-rouge">keyId</code>, <code class="language-plaintext highlighter-rouge">hex</code> (full MAC)</td>
+      <td>§6.3</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">truncate</code></td>
+      <td><code class="language-plaintext highlighter-rouge">widthBits</code>, <code class="language-plaintext highlighter-rouge">hex</code></td>
+      <td>always after <code class="language-plaintext highlighter-rouge">digest</code> or <code class="language-plaintext highlighter-rouge">mac</code>, even when <code class="language-plaintext highlighter-rouge">widthBits</code> is 256</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">encode</code></td>
+      <td><code class="language-plaintext highlighter-rouge">encoding</code>, <code class="language-plaintext highlighter-rouge">value</code></td>
+      <td>§4.3</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">percent-encode</code></td>
+      <td><code class="language-plaintext highlighter-rouge">components</code> (encoded)</td>
+      <td>§6.2</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">validate-surrogate</code></td>
+      <td><code class="language-plaintext highlighter-rouge">pattern</code>, <code class="language-plaintext highlighter-rouge">value</code></td>
+      <td>§6.3, caller-supplied</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">generate-surrogate</code></td>
+      <td><code class="language-plaintext highlighter-rouge">randomHex</code>, <code class="language-plaintext highlighter-rouge">value</code></td>
+      <td>§6.3 and §6.4</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">validate-token</code></td>
+      <td><code class="language-plaintext highlighter-rouge">pattern</code>, <code class="language-plaintext highlighter-rouge">value</code></td>
+      <td>§6.5, registry token</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">pad</code></td>
+      <td><code class="language-plaintext highlighter-rouge">epoch</code>, <code class="language-plaintext highlighter-rouge">seq</code> (padded strings)</td>
+      <td>§6.5</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">validate-iri</code></td>
+      <td><code class="language-plaintext highlighter-rouge">pattern</code>, <code class="language-plaintext highlighter-rouge">value</code></td>
+      <td>§6.7</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">render</code></td>
+      <td><code class="language-plaintext highlighter-rouge">iri</code></td>
+      <td>every rendered template</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Test secrets in generated vectors are SHA-256 of the UTF-8 text <code class="language-plaintext highlighter-rouge">lattice-minting-test-secret/</code> followed by the key id. Vector files write every non-ASCII character as a JSON <code class="language-plaintext highlighter-rouge">\u</code> escape, so that invisible characters in the inputs can be read in review. Any JSON parser restores them.</p>
+
+<h3 id="102-anchor-vectors">10.2 Anchor vectors</h3>
+
+<p>Generated vectors cover the seven anchor recipes and four coverage recipes (<a href="../../ontology/persistence/examples/identity-minting-coverage.ttl"><code class="language-plaintext highlighter-rouge">identity-minting-coverage.ttl</code></a>) that exercise what the anchors leave out: the lowercase pipeline, base64url, a generated surrogate with two claims in rotation, a registry-token namespace and an external registry identifier. The coverage recipes have no anchors.</p>
+
+<p><a href="../../contracts/identity/anchor-vectors.json"><code class="language-plaintext highlighter-rouge">anchor-vectors.json</code></a> holds hand-authored vector sets, one per deterministic strategy, whose every byte is recomputed by <a href="../../contracts/identity/verify-anchors.py"><code class="language-plaintext highlighter-rouge">verify-anchors.py</code></a> with <code class="language-plaintext highlighter-rouge">openssl</code> and the Python standard library, sharing no code with any minting library. Vectors generated from a library can only show that other implementations agree with it; the anchors are what show that it is right. A conformant implementation passes the anchors <strong>and</strong> the generated vectors for every recipe it serves.</p>
+
+<h3 id="103-verifying-an-implementation-without-lattice-code">10.3 Verifying an implementation without LATTICE code</h3>
+
+<ol>
+  <li>Implement §2–§9 for the strategies you need.</li>
+  <li>For each vectors file: check the embedded recipe’s digest (§2.1) and confirm it is the recipe you serve.</li>
+  <li>For each positive vector, run your minter on <code class="language-plaintext highlighter-rouge">inputs</code> and compare <strong>each trace step in order</strong>, not only the final IRI. The first step that differs tells you where your implementation diverges: see <a href="#11-pitfalls-m4">§11</a> for the usual causes, by step.</li>
+  <li>For each negative vector, confirm your minter raises the named error, and produces no IRI.</li>
+  <li>For each format vector, confirm your minted or accepted IRIs match its pattern, and that the <code class="language-plaintext highlighter-rouge">reject</code> examples are rejected.</li>
+  <li>Do all of this for <code class="language-plaintext highlighter-rouge">anchor-vectors.json</code> as well as your recipes’ generated vectors.</li>
+  <li>Record conformance as: recipe digest, vectors file SHA-256, all passed.</li>
+</ol>
+
+<h2 id="11-pitfalls-m4">11. Pitfalls <em>(M4)</em></h2>
+
+<p>To be completed in M4 with an explanation and a detecting vector for each. Already known:</p>
+
+<ul>
+  <li><strong>String length is not byte length.</strong> Java’s <code class="language-plaintext highlighter-rouge">String.length()</code> counts UTF-16 code units and Python’s <code class="language-plaintext highlighter-rouge">len()</code> counts code points. The tuple encoding needs UTF-8 bytes.</li>
+  <li><strong>Language trims are not <code class="language-plaintext highlighter-rouge">White_Space</code>.</strong> Python’s <code class="language-plaintext highlighter-rouge">str.strip()</code> removes U+001C–U+001F, which are not <code class="language-plaintext highlighter-rouge">White_Space</code>. Java’s <code class="language-plaintext highlighter-rouge">String.strip()</code> keeps U+00A0 NO-BREAK SPACE, which is. The anchor <code class="language-plaintext highlighter-rouge">cl-control-not-trimmed</code> catches the first.</li>
+  <li><strong>Lowercasing is not case folding.</strong> <code class="language-plaintext highlighter-rouge">toLowerCase</code> leaves <code class="language-plaintext highlighter-rouge">ß</code> as <code class="language-plaintext highlighter-rouge">ß</code>, where <code class="language-plaintext highlighter-rouge">nfkc_casefold</code> gives <code class="language-plaintext highlighter-rouge">ss</code> (anchor <code class="language-plaintext highlighter-rouge">cl-sharp-s</code>).</li>
+  <li><strong>Default-ignorable code points survive NFKC.</strong> Zero-width space and soft hyphen are removed only by <code class="language-plaintext highlighter-rouge">nfkc_casefold</code> (anchors <code class="language-plaintext highlighter-rouge">cl-zero-width</code>, <code class="language-plaintext highlighter-rouge">cl-soft-hyphen</code>). Under <code class="language-plaintext highlighter-rouge">NfkcTrimUppercase</code> and <code class="language-plaintext highlighter-rouge">NfkcTrimLowercase</code> they stay in the key, so a key made of nothing else mints an IRI rather than failing with <code class="language-plaintext highlighter-rouge">EmptyKeyComponent</code> (generated vector <code class="language-plaintext highlighter-rouge">key-default-ignorable-only-survives</code>).</li>
+  <li><strong>base32 padding and case.</strong> Output is uppercase with no <code class="language-plaintext highlighter-rouge">=</code>.</li>
+  <li><strong>Regular-expression classes differ between engines</strong> (§6.8).</li>
+</ul>
+
+<h2 id="12-worked-example-a-derived-hash-sku">12. Worked example: a derived-hash SKU</h2>
+
+<p>The recipe (anchor set 0) derives a product IRI from its SKU: pipeline <code class="language-plaintext highlighter-rouge">NfkcTrimUppercase</code>, <code class="language-plaintext highlighter-rouge">tuplePrefix</code> <code class="language-plaintext highlighter-rouge">["iri", "v1", "sku"]</code>, SHA-256 truncated to 160 bits, base32, template <code class="language-plaintext highlighter-rouge">urn:ex:sku:{digest}</code>. Input: ` Widget-9 ` (with a leading and a trailing space).</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Step</th>
+      <th>Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">reject_unassigned</code></td>
+      <td>all assigned, unchanged</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">nfkc</code></td>
+      <td>` Widget-9 `</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">trim_white_space</code></td>
+      <td><code class="language-plaintext highlighter-rouge">Widget-9</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">uppercase_full</code></td>
+      <td><code class="language-plaintext highlighter-rouge">WIDGET-9</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">nfkc</code></td>
+      <td><code class="language-plaintext highlighter-rouge">WIDGET-9</code></td>
+    </tr>
+    <tr>
+      <td>tuple text</td>
+      <td><code class="language-plaintext highlighter-rouge">3:iri2:v13:sku8:WIDGET-9</code></td>
+    </tr>
+    <tr>
+      <td>tuple bytes (hex), one group per component</td>
+      <td><code class="language-plaintext highlighter-rouge">333a697269</code> <code class="language-plaintext highlighter-rouge">323a7631</code> <code class="language-plaintext highlighter-rouge">333a736b75</code> <code class="language-plaintext highlighter-rouge">383a5749444745542d39</code></td>
+    </tr>
+    <tr>
+      <td>SHA-256 (hex)</td>
+      <td><code class="language-plaintext highlighter-rouge">b823783f51e7dfe63cab9d45cd6958849de216ccda6bf467e5c7c753ec1bb0f5</code></td>
+    </tr>
+    <tr>
+      <td>first 20 bytes (hex)</td>
+      <td><code class="language-plaintext highlighter-rouge">b823783f51e7dfe63cab9d45cd6958849de216cc</code></td>
+    </tr>
+    <tr>
+      <td>base32</td>
+      <td><code class="language-plaintext highlighter-rouge">XARXQP2R47P6MPFLTVC422KYQSO6EFWM</code></td>
+    </tr>
+    <tr>
+      <td>IRI</td>
+      <td><code class="language-plaintext highlighter-rouge">urn:ex:sku:XARXQP2R47P6MPFLTVC422KYQSO6EFWM</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Reproduce it without any LATTICE code:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">printf</span> <span class="s1">'3:iri2:v13:sku8:WIDGET-9'</span> | openssl dgst <span class="nt">-sha256</span>
+python3 <span class="nt">-c</span> <span class="s2">"import base64; print(base64.b32encode(bytes.fromhex('b823783f51e7dfe63cab9d45cd6958849de216cc')).decode().rstrip('='))"</span>
+</code></pre></div></div>
+
+<p>A worked example for every other strategy, including a claim with its MAC, is added in M4.</p>

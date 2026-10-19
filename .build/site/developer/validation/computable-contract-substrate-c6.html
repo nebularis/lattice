@@ -1,0 +1,145 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-ccs-c6-instrument-terms-and-legal-relations">Validation Pack: CCS C6, instrument, terms and legal relations</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/computable-contract-substrate.html"><code class="language-plaintext highlighter-rouge">computable-contract-substrate</code></a>
+<strong>Machine:</strong> R. <strong>Branch:</strong> <code class="language-plaintext highlighter-rouge">ccs/c6-instrument-relations</code>. Commits are the maintainer’s
+<strong>Plan and test cases:</strong> <a href="/developer/plans/computable-contract-substrate.html">CCS plan</a> (C6 in detail)
+<strong>Decisions:</strong> ADR-A104 decisions 1 to 5 and 10, CC-D10, CC-D12, ADR-A96, ADR-A102, ADR-A113.
+C6-Q1 to C6-Q4 answered (2026-10-02 and 2026-10-03). C6-Q5 open</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>Instrument states what an agreement binds its parties to: an instrument expressed in one assembled wording, terms, and the five legal relations with their parties and content. Only <code class="language-plaintext highlighter-rouge">ins:Instrument</code> is a version. Every relation arises under exactly one term and belongs to it.</p>
+
+<h2 id="test-cases">Test cases</h2>
+
+<p>The table in the plan section above. Each row’s result is recorded under Results at
+verification.</p>
+
+<h2 id="one-command">One command</h2>
+
+<p>Run from the repository root on machine R, with the reasoning harness built where a row is L2.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run build:ontology-catalog <span class="o">&amp;&amp;</span> mise run check:ontology-versioning <span class="o">&amp;&amp;</span> mise run check:ontology-catalog <span class="o">&amp;&amp;</span> mise run check:import-guard
+</code></pre></div></div>
+
+<h2 id="artefacts-to-inspect">Artefacts to inspect</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">ontology/instrument/examples/</code>: the four instruments, written before the model.</li>
+  <li><code class="language-plaintext highlighter-rouge">ontology/instrument/README.md</code>: the model, its diagrams and the worked examples.</li>
+  <li><code class="language-plaintext highlighter-rouge">ontology/instrument/shapes/</code>: the Core shapes, I2 and I8.</li>
+</ul>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<p>Arising, due, ending, survival and constitutive terms (C7b). Legal triggers, regimes and gating (C7a). Parameter bindings, encoding status and law I17 (C8). Amendments, consent rules and incorporation (C9). Instrument keys, built in slice F1 and used by <code class="language-plaintext highlighter-rouge">facility-agreement.ttl</code>. Evaluation, including the exception burden of law I7 (C13).</p>
+
+<h2 id="open-questions">Open questions</h2>
+
+<ul>
+  <li><strong>C6-Q5. A party that depends on the case.</strong> Deferred to C7b (decided 2026-10-03): resolving a
+case-dependent party, through a definition (S58) or through the case (S20), is decided there,
+either by a path-only <code class="language-plaintext highlighter-rouge">elg:EvidenceBinding</code> or by ruling such resolution out as a way to model.
+C6 keeps the contingent occupancy and has no <code class="language-plaintext highlighter-rouge">ins:resolvedBy</code>.</li>
+</ul>
+
+<h2 id="handoff">Handoff</h2>
+
+<p>Written by the building machine when the work is ready for the maintainer to commit.</p>
+
+<ul>
+  <li><strong>Built (examples, phase 1):</strong> the four examples of the brief in <code class="language-plaintext highlighter-rouge">ontology/instrument/examples/</code>,
+each a small wording of its own, its stated meaning owned by the wording’s clauses, and the
+bound meaning of one instrument, simplified after review (the brief, “Simplified after review”).
+Each conforms to Foundation’s, Vocabulary’s, Quantification’s, Wording’s and Eligibility’s
+shapes, loaded with Foundation’s keys example (the facility’s keys use its schemes). Every bound
+relation restates its template, differing only in its parties and in the bound nodes it names.
+The activities, which the vocab’s baseline scheme must hold: <code class="language-plaintext highlighter-rouge">ins-voc:CreateSecurity</code>,
+<code class="language-plaintext highlighter-rouge">DeclareDue</code>, <code class="language-plaintext highlighter-rouge">EndParticipation</code>, <code class="language-plaintext highlighter-rouge">Enrol</code>, <code class="language-plaintext highlighter-rouge">Repair</code>, <code class="language-plaintext highlighter-rouge">Repay</code>, <code class="language-plaintext highlighter-rouge">ReportAdverseEvent</code>, <code class="language-plaintext highlighter-rouge">Terminate</code>.
+<code class="language-plaintext highlighter-rouge">ins-voc:LocationContract</code> is used by <code class="language-plaintext highlighter-rouge">software-licence.ttl</code>.</li>
+  <li><strong>Built (model, phase 2):</strong>
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">instrument</code> 0.9.0 (breaking): the instrument, terms in two tiers (<code class="language-plaintext highlighter-rouge">ins:Template</code>,
+<code class="language-plaintext highlighter-rouge">ins:expressedIn</code>, <code class="language-plaintext highlighter-rouge">ins:alsoExpressedIn</code>, <code class="language-plaintext highlighter-rouge">ins:boundIn</code> on terms only, <code class="language-plaintext highlighter-rouge">ins:boundFrom</code>,
+<code class="language-plaintext highlighter-rouge">ins:impliedBy</code>), the five relations under <code class="language-plaintext highlighter-rouge">ins:LegalRelation</code>, the party union
+<code class="language-plaintext highlighter-rouge">ins:RelationParty</code>, party details, content and qualifiers. The ADR-A07b terms are retired.</li>
+      <li><code class="language-plaintext highlighter-rouge">instrument-vocab</code> 0.9.0: the activity contract and its baseline of eight activities, the
+location contract, <code class="language-plaintext highlighter-rouge">ins:InstrumentTarget</code>.</li>
+      <li><code class="language-plaintext highlighter-rouge">instrument-shapes</code> 0.2.0 (breaking): Core shapes for I1, I2, I13 and each class’s content,
+SHACL-SPARQL for supersession and I8, the optional <code class="language-plaintext highlighter-rouge">single-expression.ttl</code>. <code class="language-plaintext highlighter-rouge">rules.ttl</code>,
+<code class="language-plaintext highlighter-rouge">single-provision.ttl</code> and the projection to Party are removed.</li>
+      <li>The README rewritten as the literate source of all five files, with the model, the two tiers,
+a worked section per example and release notes. Technical debt TD-16 is closed for Instrument.</li>
+      <li>Elsewhere: the gate-4 supersession fixture and query target <code class="language-plaintext highlighter-rouge">ins:Instrument</code>, the ADR-A96 test
+moves to <code class="language-plaintext highlighter-rouge">ins:alsoExpressedIn</code>, Party’s README and the architecture doc stop naming
+<code class="language-plaintext highlighter-rouge">ins:fulfilledBy</code>, and the architecture doc’s Instrument rows are rewritten.</li>
+      <li><code class="language-plaintext highlighter-rouge">tools/test_instrument.py</code>, C6-01 to C6-14, 41 tests, in <code class="language-plaintext highlighter-rouge">check:ontology-catalog</code>.</li>
+    </ul>
+  </li>
+  <li><strong>Not run:</strong> the Java and frontend checks of <code class="language-plaintext highlighter-rouge">mise run check</code>, which C6 does not touch, and
+<code class="language-plaintext highlighter-rouge">check:mtp</code>, since MORK is unchanged.</li>
+  <li><strong>Check first:</strong> the three tags <code class="language-plaintext highlighter-rouge">mise run check:ontology-versioning</code> lists: <code class="language-plaintext highlighter-rouge">instrument-v0.9.0</code>,
+<code class="language-plaintext highlighter-rouge">instrument-vocab-v0.9.0</code>, <code class="language-plaintext highlighter-rouge">instrument-shapes-v0.2.0</code>.</li>
+  <li><strong>Deviations from the plan:</strong> examples. The licence grants no modelled right to use: a permission
+excepts a prohibition (ADR-A104), and a bare licence to use has none to except, as the example’s
+header says. Clause 15.1 (notices) has no stated meaning, its effect being the occupancies’ party
+details. The facility agreement records its keys (C6-Q2), and a notice locates it by its market
+reference. Instrument’s README, which drifts from <code class="language-plaintext highlighter-rouge">instrument.ttl</code> today (technical debt TD-16),
+becomes the literate source when it is rewritten (step 6), closing TD-16 for Instrument.</li>
+  <li><strong>Deviations from the plan (model):</strong>
+    <ul>
+      <li>Law I13 ships in C6, as part of the two-tier shape (<code class="language-plaintext highlighter-rouge">ins:RelationTierShape</code>): stated relations
+name roles, bound ones occupancies and groups. The brief listed I2 only, and I13 reads only
+terms C6 builds.</li>
+      <li><code class="language-plaintext highlighter-rouge">ins:holder</code> and <code class="language-plaintext highlighter-rouge">ins:counterparty</code> take <code class="language-plaintext highlighter-rouge">ins:LegalRelation</code> as their domain, and
+<code class="language-plaintext highlighter-rouge">ins:expressedIn</code> and <code class="language-plaintext highlighter-rouge">ins:excepts</code> carry no domain, rather than naming further unions: the
+class shapes check which relation carries which. Only the two unions the brief names exist.</li>
+      <li>C6-15 is the existing suites passing, recorded under Results, rather than a test row.</li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="results">Results</h2>
+
+<p>Run on machine R, 2026-10-03, against this checkout’s packages.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Check</th>
+      <th>Result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">tools/test_instrument.py</code> (C6-01 to C6-14, reasoner rows included)</td>
+      <td>41 passed</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:ontology-catalog</code> (all ontology tool tests, catalog)</td>
+      <td>347 passed, catalog consistent</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:ontology-versioning</code></td>
+      <td>passed, 3 tags pending</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:import-guard</code></td>
+      <td>0 violations</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:python-root</code>, <code class="language-plaintext highlighter-rouge">check:mork-compilers</code>, <code class="language-plaintext highlighter-rouge">check:vocabulary</code>, <code class="language-plaintext highlighter-rouge">check:persistence</code></td>
+      <td>passed (84, 114, 16, 778)</td>
+    </tr>
+    <tr>
+      <td>literate check, Instrument</td>
+      <td>5 artefacts consistent</td>
+    </tr>
+    <tr>
+      <td>adversarial probes: I8’s holder query disabled, I13’s bound-party check removed</td>
+      <td>the matching C6-06 and C6-07 tests fail, as they should</td>
+    </tr>
+  </tbody>
+</table>

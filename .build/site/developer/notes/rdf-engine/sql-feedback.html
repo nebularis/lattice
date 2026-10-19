@@ -1,0 +1,1467 @@
+<h1 id="review-compiling-lattice-to-a-relational-model-paper-5-and-how-formal-methods-apply-to-it">Review: <em>Compiling LATTICE to a relational model</em> (paper 5), and how formal methods apply to it</h1>
+
+<h2 id="0-summary">0. Summary</h2>
+
+<p><strong>What I reviewed.</strong> I read the paper against two references: its own stated laws, and the formal-methods brief from earlier in this conversation. I have not seen papers 1 to 4, the <code class="language-plaintext highlighter-rouge">dal:</code> vocabulary, the Eligibility README or the compilers.</p>
+
+<ul>
+  <li>Findings that rest on PostgreSQL or W3C semantics are stated as fact. Where I am less than certain, I say so.</li>
+  <li>Findings that depend on LATTICE internals I can’t see are framed as questions.</li>
+</ul>
+
+<p><strong>Overall verdict.</strong> The direction is sound, and I think the headline judgement survives. Compiling the shape-closed part of a deployment to PostgreSQL is likely a better trade than a custom engine. Using SHACL rather than OWL as the structural input is the right central choice. Treating <code class="language-plaintext highlighter-rouge">persistence</code> as transaction scope is a genuinely clarifying reframe.</p>
+
+<p>The paper’s weakness is the one the formal-methods brief warned about. It states universally quantified laws (round trip, query, inference), says “none needs a proof assistant”, and then verifies them only by examples. Several of those laws, as stated, are <strong>false for the paper’s own rules</strong>. Examples are cheap here, and several of these failures are exactly the kind cheap techniques find in hours.</p>
+
+<p><strong>The most consequential findings:</strong></p>
+
+<ol>
+  <li><strong>The round-trip law fails on the paper’s own worked example.</strong> The R2RML template mints IRIs from the surrogate <code class="language-plaintext highlighter-rouge">id</code>, not the stored <code class="language-plaintext highlighter-rouge">iri</code> column (§10 vs M2). Appendix A also adds a <code class="language-plaintext highlighter-rouge">NOT NULL current_state_id</code> that the closed <code class="language-plaintext highlighter-rouge">LayerShape</code> cannot supply.</li>
+  <li><strong>“SHACL closes the world” is only partly true.</strong> <code class="language-plaintext highlighter-rouge">sh:closed</code> restricts the properties of <em>focus nodes</em>. Triples about nodes no shape targets still validate. So $\mathrm{Valid}(\mathcal{S})$ is not the set of graphs the encoding covers.</li>
+  <li><strong>Literal mapping breaks round trip and uniqueness.</strong>
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">timestamptz</code> discards the offset, and silently reinterprets a zone-less <code class="language-plaintext highlighter-rouge">xsd:dateTime</code> in the session time zone.</li>
+      <li><code class="language-plaintext highlighter-rouge">UNIQUE</code> on <code class="language-plaintext highlighter-rouge">numeric</code> rejects valid RDF that holds both <code class="language-plaintext highlighter-rouge">"1.0"</code> and <code class="language-plaintext highlighter-rouge">"1.00"</code>.</li>
+      <li><code class="language-plaintext highlighter-rouge">interval</code> equality makes <code class="language-plaintext highlighter-rouge">P1M = P30D</code>, which XSD treats as incomparable.</li>
+      <li>Discrete ranges canonicalise <code class="language-plaintext highlighter-rouge">[]</code> to <code class="language-plaintext highlighter-rouge">[)</code>.</li>
+    </ul>
+  </li>
+  <li><strong>The eligibility mapping covers only the Kleene kernel, not the concept-matching laws.</strong> “<code class="language-plaintext highlighter-rouge">HierarchicalMatch</code>: a join to the closure table” ignores L9 (out of scheme → Undetermined), L11 and L14, which the Track B reference had to encode carefully. The concept table also gives each concept a single <code class="language-plaintext highlighter-rouge">scheme_id</code>, contrary to SKOS and to the composition problem that Alloy and ADR-A116 just worked through.</li>
+  <li><strong>The proposed oracles repeat the circularity the formal-methods brief identified.</strong> RS-X3 checks the new SQL eligibility backend against the SPARQL backend, which shares the same IR and <code class="language-plaintext highlighter-rouge">_expand</code>. The independent oracle already exists: <code class="language-plaintext highlighter-rouge">tools/reference/eligibility</code>.</li>
+  <li><strong>Concurrency is the largest unexamined risk, and §12 has no test for it.</strong> Three examples:
+    <ul>
+      <li>Aggregate invariants enforced by deferred triggers are unsound under READ COMMITTED unless every child write serialises on the root.</li>
+      <li>The guard in <code class="language-plaintext highlighter-rouge">fire_bind</code> can read evidence from other aggregates without protection against write skew.</li>
+      <li>Ordering by sequence (M45) skips rows when commit order differs from allocation order.
+This is the protocol-level gap (rung T4) the formal-methods brief already named as open.</li>
+    </ul>
+  </li>
+  <li><strong>Several rules are wrong or incomplete as written:</strong>
+    <ul>
+      <li>M12: class-table inheritance does <em>not</em> enforce disjointness.</li>
+      <li>M14 and M17: no rule for <code class="language-plaintext highlighter-rouge">sh:minCount ≥ 1</code> or bounded <code class="language-plaintext highlighter-rouge">sh:maxCount &gt; 1</code>.</li>
+      <li>M21 excludes reflexive pairs.</li>
+      <li>M27 needs foreign keys to views, which PostgreSQL cannot do.</li>
+      <li>M30 contradicts <code class="language-plaintext highlighter-rouge">sh:closed</code>.</li>
+    </ul>
+  </li>
+</ol>
+
+<p><strong>Formal-methods answer, in one paragraph.</strong> Don’t verify the Python compiler. Verify each compiled output with small independent checkers, plus a few targeted models and proofs:</p>
+
+<ul>
+  <li><strong>Translation validation:</strong> emit an Alloy model from the relational IR. Check, at bounded scope, that it admits exactly the instances the shapes admit.</li>
+  <li><strong>Differential testing (T0):</strong> add the SQL eligibility backend as a fifth backend under the existing reference harness. Check the constraint law (SQL accepts iff a SHACL engine conforms) on mutated graphs.</li>
+  <li><strong>A small extension to the existing Isabelle theory (T5)</strong> proving the SQL three-valued encoding, aggregates included, equal to <code class="language-plaintext highlighter-rouge">every_value</code>/<code class="language-plaintext highlighter-rouge">some_value</code>.</li>
+  <li><strong>TLA+/Quint (T4)</strong> for generated operations under PostgreSQL isolation, the outbox and the projection feed.</li>
+  <li><strong>SMT and automata (T3)</strong> for regex translation, IRI-template injectivity and range-bound canonicalisation.</li>
+  <li><strong>Runtime monitors (T7)</strong> in S2/S3, built from the same invariants.</li>
+</ul>
+
+<p>This fits G5: roughly 15% on top of the paper’s estimate (§10.8), much of it replacing test effort already budgeted.</p>
+
+<hr />
+
+<h2 id="1-what-the-paper-gets-right">1. What the paper gets right</h2>
+
+<ul>
+  <li><strong>SHACL as the primary structural input (RS-D2).</strong> This is the right call, with the caveat in §2.2.</li>
+  <li><strong>Grading.</strong> The Fact / Judgement / <em>(verify)</em> grading, and the explicit statement that nothing here is a decision, are good practice.</li>
+  <li><strong>Rule IDs carried into <code class="language-plaintext highlighter-rouge">COMMENT ON</code> (M35).</strong> This makes rule coverage <em>measurable</em>, which the formal-methods work can exploit directly (§10.6).</li>
+  <li><strong>M28’s scope classification</strong> (row → <code class="language-plaintext highlighter-rouge">CHECK</code>, aggregate → deferred trigger, cross-aggregate → detective view). It is honest that cross-aggregate checks are detective only.</li>
+  <li><strong>“Untranslatable patterns are refused, never approximated” (M26)</strong> is the right default throughout.</li>
+  <li><strong>Effects split into in-transaction assignments vs outbox rows</strong>, with “no effect is ever executed outside the transaction that records it”. Correct.</li>
+  <li><strong>Staging through O2.</strong> Building the SQL as a rebuildable projection first is the correct de-risking order.</li>
+  <li><strong>Calling out <code class="language-plaintext highlighter-rouge">bool_and</code> and <code class="language-plaintext highlighter-rouge">WHERE</code>.</strong> These are real hazards, and naming them shows the right instinct, though the list is incomplete (§2.4).</li>
+  <li><strong>The token arithmetic checks out</strong> (§8.4).</li>
+</ul>
+
+<hr />
+
+<h2 id="2-foundations-the-three-laws-the-closed-world-and-three-valued-logic">2. Foundations: the three laws, the closed world and three-valued logic</h2>
+
+<h3 id="21-major-the-round-trip-law-is-necessary-but-nowhere-near-sufficient">2.1 [Major] The round-trip law is necessary but nowhere near sufficient</h3>
+
+<p>$\mathrm{dec}(\mathrm{enc}(G)) \cong G$ is satisfied by a degenerate compiler that puts every triple into one generic <code class="language-plaintext highlighter-rouge">(s, p, o)</code> table and emits a trivial R2RML mapping. Round trip shows that information is preserved. It says nothing about whether the schema <em>enforces</em> the shapes.</p>
+
+<p>The missing law is <strong>constraint preservation</strong>:</p>
+
+\[\forall G.\ \ \mathrm{load}_{SQL}(G)\ \text{succeeds} \iff \mathrm{conforms}(\mathcal{S}, G)\]
+
+<p>It must hold for <em>all</em> $G$, not just conforming ones. §12’s “Rejection” row gestures at this, using an adversarial corpus, but only in one direction. The interesting failures are in the other direction: valid graphs the SQL rejects, as with <code class="language-plaintext highlighter-rouge">numeric UNIQUE</code> (§3), or invalid graphs it accepts, as with M12 under M8 or <code class="language-plaintext highlighter-rouge">minCount</code> on child tables.</p>
+
+<p>Relevant prior art the paper omits: Sequeda, Arenas and Miranker, <em>On directly mapping relational databases to RDF and OWL</em> (WWW 2012). It formalises <em>information preservation</em> and <em>query preservation</em> for direct mappings, which are close to the paper’s round-trip and query laws. It is the natural theoretical anchor for §3.2 <em>(verify exact formulation)</em>.</p>
+
+<h3 id="22-major-shacl-closes-the-world-only-for-focus-nodes">2.2 [Major] SHACL closes the world only for focus nodes</h3>
+
+<p><code class="language-plaintext highlighter-rouge">sh:closed true</code> restricts which predicates a <strong>focus node</strong> may carry. A triple whose subject no shape targets is untouched by validation, so it validates. Such triples are in $\mathrm{Valid}(\mathcal{S})$ but no M-rule encodes them, and the round-trip law fails on them.</p>
+
+<p>The compilability contract therefore needs a <strong>coverage condition</strong>: every subject in $G$ is a focus node of some closed compiled shape, or a vocabulary concept, or the graph is rejected. Further gaps in the same family:</p>
+
+<ul>
+  <li><strong>Complex paths.</strong> The rules assume <code class="language-plaintext highlighter-rouge">sh:path</code> is a simple predicate. Inverse, sequence and alternative paths need a rule or a refusal.</li>
+  <li><strong>Logical constraints.</strong> <code class="language-plaintext highlighter-rouge">sh:or</code>, <code class="language-plaintext highlighter-rouge">sh:xone</code>, <code class="language-plaintext highlighter-rouge">sh:not</code>, <code class="language-plaintext highlighter-rouge">sh:qualifiedValueShape</code> and <code class="language-plaintext highlighter-rouge">sh:node</code> have no rules. The compilability check must name and refuse them.</li>
+  <li><strong>Severity.</strong> <code class="language-plaintext highlighter-rouge">sh:conforms</code> is false whenever <em>any</em> result exists, whatever its severity. A graph with only <code class="language-plaintext highlighter-rouge">sh:Warning</code> results is therefore non-conforming and would be rejected at load. In O2, where RDF is authoritative and may legitimately hold draft or warning-level data, the projection cannot be built for that data. A policy is needed.</li>
+  <li><strong>Targets other than <code class="language-plaintext highlighter-rouge">sh:targetClass</code></strong> (<code class="language-plaintext highlighter-rouge">sh:targetSubjectsOf</code>, <code class="language-plaintext highlighter-rouge">sh:targetNode</code>) are not discussed.</li>
+</ul>
+
+<p><strong>Unverified assumption at the heart of the verdict.</strong> The whole design presumes that LATTICE’s shapes are, in practice, closed with bounded <code class="language-plaintext highlighter-rouge">maxCount</code>. The paper never measures this. A census is cheap — a script over the shapes graphs counting <code class="language-plaintext highlighter-rouge">sh:closed</code>, path kinds, logical constraints and unbounded counts — and it determines how much of a deployment is compilable at all. It should precede RS-D1 (proposed as RS-X0, §11).</p>
+
+<h3 id="23-major-the-paper-changes-owl-semantics-without-saying-so">2.3 [Major] The paper changes OWL semantics without saying so</h3>
+
+<p>Compiling OWL axioms into constraints is a closed-world, unique-name reading. That is fine, but it is a <em>semantic change</em> and belongs in §4.4:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Axiom</th>
+      <th>OWL meaning</th>
+      <th>Compiled meaning</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">owl:FunctionalProperty</code>, two distinct values</td>
+      <td>infer the two values are <code class="language-plaintext highlighter-rouge">owl:sameAs</code></td>
+      <td>reject (<code class="language-plaintext highlighter-rouge">UNIQUE</code> / single column)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">owl:hasKey</code></td>
+      <td>infer the two individuals are the same (named individuals only)</td>
+      <td>reject (<code class="language-plaintext highlighter-rouge">UNIQUE</code>)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">rdfs:domain</code> / <code class="language-plaintext highlighter-rouge">rdfs:range</code></td>
+      <td><em>infer</em> the type of subject/object</td>
+      <td>§3.4 treats them as compile-time constraints</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">owl:someValuesFrom</code></td>
+      <td>the existence of a value, possibly unnamed</td>
+      <td>dropped (§7.6), fine, but stated</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The inference law (§3.2) has a related problem. If $P^\infty(G)$ derives triples on closed focus nodes that the shapes do not allow, then $\mathrm{enc}(P^\infty(G))$ is undefined. The law needs the precondition $P^\infty(G) \in \mathrm{Valid}(\mathcal{S})$, or must restrict $P$ to rules whose heads are compiled relations. OWL 2 RL’s equality rules (<code class="language-plaintext highlighter-rouge">eq-*</code>) cannot be views at all; they need merging.</p>
+
+<h3 id="24-major-the-null-as-undetermined-encoding-has-more-than-two-hazards-and-conflates-two-meanings">2.4 [Major] The NULL-as-Undetermined encoding has more than two hazards, and conflates two meanings</h3>
+
+<p>That SQL’s <code class="language-plaintext highlighter-rouge">AND</code>/<code class="language-plaintext highlighter-rouge">OR</code>/<code class="language-plaintext highlighter-rouge">NOT</code> follow strong Kleene logic is correct (fact). But NULL behaves non-Kleene almost everywhere else. Each of these silently turns Undetermined into something else:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Construct</th>
+      <th>Behaviour on NULL</th>
+      <th>Effect</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">WHERE</code>, <code class="language-plaintext highlighter-rouge">JOIN … ON</code></td>
+      <td>NULL treated as false</td>
+      <td>Undetermined → Denied (paper lists this)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">bool_and</code>/<code class="language-plaintext highlighter-rouge">bool_or</code></td>
+      <td>NULL ignored; <strong>empty input returns NULL</strong></td>
+      <td>paper lists the first half only</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">CASE WHEN c THEN …</code></td>
+      <td>NULL condition falls to the next branch or <code class="language-plaintext highlighter-rouge">ELSE</code></td>
+      <td>the paper’s own quantifier <code class="language-plaintext highlighter-rouge">CASE</code> is correct only because of this (see below)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">CHECK (c)</code></td>
+      <td>NULL <strong>passes</strong></td>
+      <td>an eligibility predicate in a <code class="language-plaintext highlighter-rouge">CHECK</code> accepts Undetermined</td>
+    </tr>
+    <tr>
+      <td>PL/pgSQL <code class="language-plaintext highlighter-rouge">IF c THEN</code></td>
+      <td>NULL treated as false</td>
+      <td>generated function bodies</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">NOT IN (…)</code> with a NULL element</td>
+      <td>always NULL</td>
+      <td>“not in excluded set” becomes Undetermined</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">COALESCE</code>, <code class="language-plaintext highlighter-rouge">IS DISTINCT FROM</code>, <code class="language-plaintext highlighter-rouge">GROUP BY</code>, <code class="language-plaintext highlighter-rouge">DISTINCT</code></td>
+      <td>NULLs treated as equal / replaced</td>
+      <td>grouping decisions merges Undetermined with itself (fine) but <code class="language-plaintext highlighter-rouge">COALESCE(x, false)</code> in hand-written reports is the classic error</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">STRICT</code> functions</td>
+      <td>NULL in → NULL out without running</td>
+      <td>a strict guard function never runs on missing evidence</td>
+    </tr>
+    <tr>
+      <td>BI tools, ORMs</td>
+      <td>NULL ≈ “no data”</td>
+      <td>the §13 audience will misread Undetermined</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>The quantifier <code class="language-plaintext highlighter-rouge">CASE</code> is right for a fragile reason.</strong> For the empty set, <code class="language-plaintext highlighter-rouge">bool_or(...)</code> returns NULL, both <code class="language-plaintext highlighter-rouge">WHEN</code> branches are skipped, and <code class="language-plaintext highlighter-rouge">ELSE</code> yields TRUE (EveryValue) or FALSE (SomeValue). Those are the correct empty-set answers, assuming Eligibility defines them that way. RS-X3 is right to check.</p>
+
+<p><strong>The hazard that bites in practice is <code class="language-plaintext highlighter-rouge">LEFT JOIN</code> padding.</strong> §7.5 recommends <code class="language-plaintext highlighter-rouge">LEFT JOIN</code> so that zero matches yield a row. Quantifying over a <code class="language-plaintext highlighter-rouge">LEFT JOIN</code>ed evidence set turns <em>empty evidence</em> into <em>one NULL row</em>. EveryValue then returns NULL (Undetermined) instead of TRUE. The two pieces of advice in the paper contradict each other.</p>
+
+<p><strong>Conflation of meanings.</strong> NULL also means “column has no value”, which under M13 (<code class="language-plaintext highlighter-rouge">minCount 0</code>) is a <em>closed-world known absence</em>. <code class="language-plaintext highlighter-rouge">ExactMatch</code> on such a column yields Undetermined. Whether “known to have no value” should be Undetermined or Denied is an Eligibility-law question the paper silently answers. It is exactly the open-/closed-world tension of §3.1, resurfacing.</p>
+
+<p><strong>Recommendation.</strong> Separate the <em>computation</em> encoding (boolean/NULL inside generated expressions, always consumed with <code class="language-plaintext highlighter-rouge">IS TRUE</code>/<code class="language-plaintext highlighter-rouge">IS FALSE</code>/<code class="language-plaintext highlighter-rouge">IS NULL</code>) from the <em>storage and exposure</em> encoding (a non-null <code class="language-plaintext highlighter-rouge">decision</code> column referencing the three Eligibility concepts). Stored and exposed decisions must never be NULL. This also fixes the R2RML problem in §5.3.</p>
+
+<h3 id="25-moderate-33s-normalisation-theory-is-decorative">2.5 [Moderate] §3.3’s normalisation theory is decorative</h3>
+
+<p>The paper cites Bernstein’s synthesis, but no M-rule uses it. The rules are standard ER/ORM mapping. Two options:</p>
+
+<ul>
+  <li>drop the claim to “fifty years of theory” as justification;</li>
+  <li>or actually use the FD set: check that each generated table is in 3NF/BCNF with respect to the shape-derived FDs.</li>
+</ul>
+
+<p>The second is a cheap, mechanical check (§10.5).</p>
+
+<p>Note also that <code class="language-plaintext highlighter-rouge">sh:maxCount 1</code> gives an FD <em>per target class</em>. A property shared across classes with different counts yields different FDs per table. That is fine, but it means <code class="language-plaintext highlighter-rouge">owl:FunctionalProperty</code> (“globally”) and SHACL can disagree, and the compilability check should flag the disagreement.</p>
+
+<hr />
+
+<h2 id="3-rule-level-defects">3. Rule-level defects</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Rule</th>
+      <th>Problem</th>
+      <th>Severity</th>
+      <th>Fix</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>M5</strong> <code class="language-plaintext highlighter-rouge">xsd:dateTime → timestamptz</code></td>
+      <td>the offset is lost. A zone-less <code class="language-plaintext highlighter-rouge">xsd:dateTime</code> (allowed by XSD) is <em>interpreted in the session time zone</em>, which changes its meaning, not just its lexical form</td>
+      <td>Major</td>
+      <td>require a timezone via the shape, or use <code class="language-plaintext highlighter-rouge">timestamp</code> plus an offset column. State round trip at value-space level</td>
+    </tr>
+    <tr>
+      <td><strong>M5</strong> <code class="language-plaintext highlighter-rouge">xsd:duration → interval</code></td>
+      <td>PostgreSQL compares <code class="language-plaintext highlighter-rouge">'1 mon' = '30 days'</code> as TRUE. XSD durations are only partially ordered, and <code class="language-plaintext highlighter-rouge">P1M</code>/<code class="language-plaintext highlighter-rouge">P30D</code> are incomparable. This affects <code class="language-plaintext highlighter-rouge">UNIQUE</code>, joins and equality matches</td>
+      <td>Moderate</td>
+      <td>store <code class="language-plaintext highlighter-rouge">(months, seconds)</code> separately, or refuse duration equality</td>
+    </tr>
+    <tr>
+      <td><strong>M5/M14</strong> numeric literals</td>
+      <td>RDF 1.1 literal equality is lexical, so <code class="language-plaintext highlighter-rouge">"1.0"^^xsd:decimal</code> and <code class="language-plaintext highlighter-rouge">"1.00"^^xsd:decimal</code> are distinct triples. <code class="language-plaintext highlighter-rouge">UNIQUE (owner_id, value)</code> on <code class="language-plaintext highlighter-rouge">numeric</code> treats them as equal and <strong>rejects a valid graph</strong>. <code class="language-plaintext highlighter-rouge">"01"^^xsd:integer</code> round-trips as <code class="language-plaintext highlighter-rouge">"1"</code></td>
+      <td>Major</td>
+      <td>state the round-trip law modulo canonical lexical forms (value-space equality), and decide whether non-canonical literals are rejected at load</td>
+    </tr>
+    <tr>
+      <td><strong>M10</strong> superclass = <code class="language-plaintext highlighter-rouge">UNION ALL</code> view</td>
+      <td>conflicts with M7/M8, where a parent table already exists. Under M9 (non-disjoint), <code class="language-plaintext highlighter-rouge">UNION ALL</code> yields duplicate rows, breaking set semantics. A concrete superclass with its own instances has no table</td>
+      <td>Moderate</td>
+      <td>apply M10 only to M9/abstract cases, using <code class="language-plaintext highlighter-rouge">UNION</code> or the type table</td>
+    </tr>
+    <tr>
+      <td><strong>M12</strong> “nothing needed under M8 when the hierarchy is a tree”</td>
+      <td><strong>wrong.</strong> Child primary key = parent foreign key does not stop one parent id appearing in two sibling child tables. Disjointness needs a parent discriminator plus a composite foreign key <code class="language-plaintext highlighter-rouge">(id, kind)</code> from each child, or a trigger</td>
+      <td>Major</td>
+      <td>as stated; also a good first Alloy check (§10.3)</td>
+    </tr>
+    <tr>
+      <td><strong>M13–M17</strong></td>
+      <td><code class="language-plaintext highlighter-rouge">sh:minCount ≥ 1</code> on a child or association table (M14/M17), and bounded <code class="language-plaintext highlighter-rouge">sh:maxCount n &gt; 1</code>, have no rule. Neither is expressible as <code class="language-plaintext highlighter-rouge">NOT NULL</code>/<code class="language-plaintext highlighter-rouge">UNIQUE</code>. Both need M28b deferred count triggers. Appendix A’s <code class="language-plaintext highlighter-rouge">ex:peril</code> (<code class="language-plaintext highlighter-rouge">minCount 1</code>) is exactly this case and is not enforced</td>
+      <td>Major</td>
+      <td>add explicit rules; test at zero and at n+1</td>
+    </tr>
+    <tr>
+      <td><strong>M21</strong> <code class="language-plaintext highlighter-rouge">CHECK (a_id &lt; b_id)</code></td>
+      <td>excludes reflexive symmetric pairs (<code class="language-plaintext highlighter-rouge">x p x</code>)</td>
+      <td>Minor</td>
+      <td><code class="language-plaintext highlighter-rouge">&lt;=</code></td>
+    </tr>
+    <tr>
+      <td><strong>M22</strong> recursive views</td>
+      <td>cyclic data (<code class="language-plaintext highlighter-rouge">skos:broader</code> cycles are easy, per the earlier Alloy counterexample) needs <code class="language-plaintext highlighter-rouge">UNION</code> (not <code class="language-plaintext highlighter-rouge">UNION ALL</code>) or the <code class="language-plaintext highlighter-rouge">CYCLE</code> clause. Maintaining a closure table under <em>deletes</em> is the hard case (cf. DRed), not insert</td>
+      <td>Moderate</td>
+      <td>specify the cycle policy; restrict trigger-maintained closures to insert-only or full recompute</td>
+    </tr>
+    <tr>
+      <td><strong>M24</strong> <code class="language-plaintext highlighter-rouge">sh:in</code> / scheme value → FK to concept table</td>
+      <td><code class="language-plaintext highlighter-rouge">sh:in</code> lists of <em>literals</em> need <code class="language-plaintext highlighter-rouge">CHECK … IN</code>. An FK to <code class="language-plaintext highlighter-rouge">voc.concept</code> does not restrict <em>which scheme</em>. ADR-A85 resolution is per contract per context, so the admissible set varies by row and cannot be a static FK</td>
+      <td>Major</td>
+      <td>composite FK <code class="language-plaintext highlighter-rouge">(concept_id, scheme_id)</code> for static schemes; for resolved schemes, a deferred trigger or guard calling the resolution function</td>
+    </tr>
+    <tr>
+      <td><strong>M26</strong> regex translation</td>
+      <td>right policy. Also note <code class="language-plaintext highlighter-rouge">sh:flags</code>, XPath-only classes (<code class="language-plaintext highlighter-rouge">\i</code>, <code class="language-plaintext highlighter-rouge">\c</code>, Unicode blocks) and that both <code class="language-plaintext highlighter-rouge">sh:pattern</code> and POSIX <code class="language-plaintext highlighter-rouge">~</code> are unanchored</td>
+      <td>Moderate</td>
+      <td>validate translation equivalence mechanically (§10.4)</td>
+    </tr>
+    <tr>
+      <td><strong>M27</strong> <code class="language-plaintext highlighter-rouge">sh:class</code> → FK to “the superclass view’s base table”</td>
+      <td>PostgreSQL cannot place a foreign key on a view. Under M7/M8 the target table exists; under M9/M10 polymorphic references need a supertype key table</td>
+      <td>Major</td>
+      <td>a per-hierarchy key table, or refuse</td>
+    </tr>
+    <tr>
+      <td><strong>M28</strong> SHACL-SPARQL to SQL</td>
+      <td>requires a SPARQL→SQL translator and a static scope analysis of arbitrary SPARQL. Neither is in §16’s estimate. PostgreSQL <code class="language-plaintext highlighter-rouge">CHECK</code> cannot contain subqueries, so M28a covers only queries that reduce to a row predicate</td>
+      <td>Major (cost)</td>
+      <td>budget it, or reuse Ontop’s SPARQL→SQL machinery; refuse whatever the analysis cannot classify</td>
+    </tr>
+    <tr>
+      <td><strong>M28b</strong> deferred constraint triggers</td>
+      <td>do not fire when <code class="language-plaintext highlighter-rouge">session_replication_role = replica</code>, which is the logical replication apply default. Bypassed by <code class="language-plaintext highlighter-rouge">COPY</code>/bulk paths if triggers are disabled. Unsound under concurrency unless writes serialise (§4.3)</td>
+      <td>Major</td>
+      <td>§4.3; document replica behaviour</td>
+    </tr>
+    <tr>
+      <td><strong>M30</strong> <code class="language-plaintext highlighter-rouge">extras jsonb</code></td>
+      <td><strong>contradicts <code class="language-plaintext highlighter-rouge">sh:closed</code></strong>: a closed shape rejects unknown properties, so extras cannot exist in $\mathrm{Valid}(\mathcal{S})$. Enabling M30 means the shape is not closed, which removes the §3.2 basis. “Best-effort” round trip also contradicts the round-trip law</td>
+      <td>Moderate</td>
+      <td>define M30 classes as explicitly outside the round-trip law, with shapes using <code class="language-plaintext highlighter-rouge">sh:ignoredProperties</code> or non-closed shapes</td>
+    </tr>
+    <tr>
+      <td><strong>M34</strong> truncation with hash</td>
+      <td>fine. Note §6.3 determinism and §11.2 name stability make outputs depend on the <em>previous</em> IR, so “same inputs” must include it</td>
+      <td>Minor</td>
+      <td>state it</td>
+    </tr>
+    <tr>
+      <td><strong>M48</strong> <code class="language-plaintext highlighter-rouge">UNIQUE</code> with scope columns</td>
+      <td>PostgreSQL treats NULLs as distinct by default. Nullable scope columns silently stop enforcing uniqueness</td>
+      <td>Major</td>
+      <td><code class="language-plaintext highlighter-rouge">NULLS NOT DISTINCT</code> (PG 15+) or <code class="language-plaintext highlighter-rouge">NOT NULL</code> scope columns</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="4-lattice-layer-mappings">4. LATTICE layer mappings</h2>
+
+<h3 id="41-eligibility-85">4.1 Eligibility (§8.5)</h3>
+
+<ul>
+  <li><strong>[Major] Concept matching is not a boolean expression.</strong> The Track B reference (<code class="language-plaintext highlighter-rouge">decide_concept_match</code>) shows what the SQL must encode:
+    <ul>
+      <li>L9: out of the resolved scheme → Undetermined, <em>before</em> exclusion;</li>
+      <li>L10: exclusion → Denied;</li>
+      <li>L14: a flat scheme under hierarchical matching;</li>
+      <li>L11: a candidate that is a proper ancestor of an excluded concept → Undetermined;</li>
+      <li>SingleValue: exactly one candidate, otherwise Undetermined.</li>
+    </ul>
+
+    <p>“A join to the concept closure table” captures none of these. The SQL backend must lower the <em>full</em> <code class="language-plaintext highlighter-rouge">ConceptPlan</code> semantics. It must be tested against <code class="language-plaintext highlighter-rouge">tools/reference/eligibility</code>, not against the SPARQL backend.</p>
+  </li>
+  <li><strong>[Major] Wrong oracle.</strong> RS-X3 and §12’s “Kleene” row compare against the SPARQL backend. Both backends share <code class="language-plaintext highlighter-rouge">_expand</code>, so a bug shared through it is invisible. Use the reference semantics; the harness and fixtures already exist.</li>
+  <li><strong>[Moderate] <code class="language-plaintext highlighter-rouge">ExactMatch</code> on multi-valued evidence</strong> needs a quantifier, which the table does not say. <code class="language-plaintext highlighter-rouge">= ANY ($set)</code> with a NULL element returns NULL for a non-match, as the paper notes. Under <code class="language-plaintext highlighter-rouge">NOT</code>, it stays NULL.</li>
+  <li><strong>Empty-set semantics.</strong> The paper defers to RS-X3. The Isabelle theory already <em>defines</em> <code class="language-plaintext highlighter-rouge">some_value</code>/<code class="language-plaintext highlighter-rouge">every_value</code>, including the empty list, so this can be settled by reading <code class="language-plaintext highlighter-rouge">Eligibility.thy</code>, and then proved (§10.2).</li>
+</ul>
+
+<h3 id="42-vocabulary-82">4.2 Vocabulary (§8.2)</h3>
+
+<ul>
+  <li><strong>[Major] One scheme per concept.</strong> The concept table <code class="language-plaintext highlighter-rouge">(id, scheme_id, …)</code> assigns each concept to exactly one scheme. <code class="language-plaintext highlighter-rouge">skos:inScheme</code> is many-valued, and scheme versions overlap almost entirely.</li>
+  <li><strong>[Major] A global closure table is wrong.</strong> The Alloy model in the formal-methods brief represents <code class="language-plaintext highlighter-rouge">broader</code> per scheme. A global closure table conflates hierarchies that differ by scheme, and that is exactly the disagreement Alloy found.</li>
+  <li><strong>[Moderate] It predates the composition decision.</strong> “ADR-A85 resolution precedence as a generated SQL function” predates ADR-A116 (multi-source composition, no overlapping membership). The relational design should follow ADR-A116’s rule, or wait for it.</li>
+</ul>
+
+<p><strong>Fix.</strong> Use a membership table <code class="language-plaintext highlighter-rouge">(scheme_id, concept_id)</code>, <code class="language-plaintext highlighter-rouge">broader</code> keyed by scheme, and a closure per scheme.</p>
+
+<h3 id="43-behaviour-84-and-the-example-function">4.3 Behaviour (§8.4) and the example function</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Issue</th>
+      <th>Severity</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Outcome conflation.</strong> One <code class="language-plaintext highlighter-rouge">RAISE EXCEPTION</code> covers version conflict, state not admitting the transition, guard Denied, and guard Undetermined. §12’s operation oracle compares outcomes (applied / conflict / refused), which this function cannot distinguish. It also discards the Denied/Undetermined distinction Eligibility exists to provide. Re-read with <code class="language-plaintext highlighter-rouge">FOR UPDATE</code> after a zero-row update, and raise distinct SQLSTATEs</td>
+      <td>Major</td>
+    </tr>
+    <tr>
+      <td><strong>Guard isolation.</strong> <code class="language-plaintext highlighter-rouge">elg.decide_bind_guard</code> is evaluated inside the <code class="language-plaintext highlighter-rouge">UPDATE</code>’s <code class="language-plaintext highlighter-rouge">WHERE</code>. If it reads evidence outside the aggregate, then under READ COMMITTED the evidence can change and commit concurrently (write skew). PL/pgSQL functions are <code class="language-plaintext highlighter-rouge">VOLATILE</code> by default, and in READ COMMITTED each statement inside them takes its own snapshot. The guard may therefore not even see the same state as the enclosing <code class="language-plaintext highlighter-rouge">UPDATE</code>. The precise behaviour (EvalPlanQual re-checking only the target row) is subtle, which is why it should be modelled (§10.1), not reasoned about informally</td>
+      <td>Major</td>
+    </tr>
+    <tr>
+      <td><strong>Declarations as rows vs generated code.</strong> §8.4 says transition definitions are rows, not DDL. The function hard-codes <code class="language-plaintext highlighter-rouge">'Bound'</code>, <code class="language-plaintext highlighter-rouge">'FirmQuoted'</code> and the guard name. Either generate per-transition functions (so declarations are compile-time, and a row change requires recompilation and a drift check) or write one generic interpreter over the rows. Pick one. Also, <code class="language-plaintext highlighter-rouge">bhv.state_id('Bound')</code> by label is ambiguous across state spaces</td>
+      <td>Moderate</td>
+    </tr>
+    <tr>
+      <td><strong>Missing records.</strong> No <code class="language-plaintext highlighter-rouge">bhv.StateOccupancy</code> history, no effect rows, untyped <code class="language-plaintext highlighter-rouge">jsonb</code> stimulus. No <code class="language-plaintext highlighter-rouge">SET search_path</code> on the function (a hygiene issue, and a security issue if it ever becomes <code class="language-plaintext highlighter-rouge">SECURITY DEFINER</code>)</td>
+      <td>Minor</td>
+    </tr>
+    <tr>
+      <td><strong>Outbox delivery is at-least-once.</strong> Consumer idempotency is needed and unaddressed; this is the T4 gap the formal-methods brief named</td>
+      <td>Moderate</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="44-persistence-9">4.4 Persistence (§9)</h3>
+
+<ul>
+  <li><strong>[Major] Global order by sequence (M45) is a known bug.</strong> Sequence values are assigned at insert time, not commit time. A reader polling <code class="language-plaintext highlighter-rouge">id &gt; last_seen</code> permanently skips a row whose transaction commits after a later-numbered one.
+    <ul>
+      <li>The commit LSN <em>is</em> ordered.</li>
+      <li>Workable alternatives: logical decoding, a snapshot <code class="language-plaintext highlighter-rouge">xmin</code> horizon, or a single-writer stream.</li>
+      <li>This is the textbook model-checking target (§10.1).</li>
+    </ul>
+  </li>
+  <li><strong>[Major] Aggregate invariants under concurrency.</strong> M28b triggers check at commit within one transaction’s snapshot. Two concurrent transactions changing <em>different</em> child rows of one aggregate (for example, two participation shares) can each pass the sum check and jointly break it. This is safe only if every child write also performs the root version compare-and-set (forcing a write-write conflict) or runs under SERIALIZABLE. Generated operations probably do this; ad hoc writes and other paths do not. The rule must be stated and enforced, for example by revoking direct DML on child tables.</li>
+  <li><strong>[Moderate] Combinations that must be refused.</strong> <code class="language-plaintext highlighter-rouge">AppendOnly</code> (revoked <code class="language-plaintext highlighter-rouge">DELETE</code>) combined with <code class="language-plaintext highlighter-rouge">PerSubjectGraphDrop</code> erasure is one. <code class="language-plaintext highlighter-rouge">privacyClass</code> on append-only data should force <code class="language-plaintext highlighter-rouge">CryptoShred</code>. The persistence compiler already refuses invalid combinations (§9’s table notes that it “refuses invalid combinations”), so the relational compiler should inherit that refusal list and add the combinations that only become invalid in SQL. Candidates:
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">AppendOnly</code> with any erasure strategy other than <code class="language-plaintext highlighter-rouge">CryptoShred</code>;</li>
+      <li><code class="language-plaintext highlighter-rouge">PatchLog</code> or <code class="language-plaintext highlighter-rouge">SnapshotPerRevision</code> receipts on a class with <code class="language-plaintext highlighter-rouge">privacyClass</code> set, unless the history tables are also covered by the erasure strategy (see the next bullet);</li>
+      <li><code class="language-plaintext highlighter-rouge">Optimistic</code> concurrency on a class whose aggregate invariants are M28b triggers, unless every child write performs the root version compare-and-set (§4.3 above);</li>
+      <li><code class="language-plaintext highlighter-rouge">minConcurrencyLevel</code> below SERIALIZABLE on any operation whose guard reads outside its aggregate.</li>
+    </ul>
+
+    <p>These are cheap, declarative, compile-time checks, and they belong in the compilability step (pipeline step 2).</p>
+  </li>
+  <li><strong>[Major] Erasure in SQL reaches further than the table rows.</strong> M50 deletes rows or keys. Personal data also persists in:
+    <ul>
+      <li><strong>History.</strong> PatchLog <code class="language-plaintext highlighter-rouge">delta jsonb</code>, history tables and receipt tables.</li>
+      <li><strong>The outbox.</strong> <code class="language-plaintext highlighter-rouge">fire_bind</code> copies the whole <code class="language-plaintext highlighter-rouge">p_stimulus</code> into <code class="language-plaintext highlighter-rouge">outbox.event.payload</code>.</li>
+      <li><strong>Change capture.</strong> Logical decoding slots and every downstream CDC consumer (Debezium topics are retained independently).</li>
+      <li><strong>Recovery and replication.</strong> WAL archives and PITR base backups, which by design contain deleted rows until they expire. Also streaming replicas and any O2 RDF source the projection was built from.</li>
+      <li><strong>Encryption keys.</strong> With <code class="language-plaintext highlighter-rouge">pgcrypto</code>, encryption happens <em>in the server</em>. Plaintext therefore crosses the connection and appears in statement logs if <code class="language-plaintext highlighter-rouge">log_statement</code> or <code class="language-plaintext highlighter-rouge">auto_explain</code> capture parameters. Keys stored in the same database share its backups, so shredding the live key does not shred the backed-up copy.</li>
+    </ul>
+
+    <p><code class="language-plaintext highlighter-rouge">CryptoShred</code> survives backups only if keys are held outside the database’s backup domain, and only if encryption happens in the application or with keys fetched per operation. The paper should state an erasure <em>boundary</em>: which stores erasure covers, and with what latency (for example “after backup retention expires”). This is a legal property as much as a technical one, and it is the strongest argument in the paper for an explicit model (§10.1, model F).</p>
+  </li>
+  <li>
+    <p><strong>[Moderate] Epoch fencing (M47)</strong> is described in one line. Fencing works only if <em>every</em> write path compares the epoch. That includes triggers, Surface promotions and the outbox relay, not just generated operations. This is another protocol property to check by model, not by inspection.</p>
+  </li>
+  <li><strong>[Moderate] Content-addressed identity (M49, R5)</strong> is computed in the application, so the database cannot verify it. A row with a wrong hash is accepted. Either verify at load in the loader, on the same code path as the round-trip test, or record that this identity class is <em>trusted input</em>. The round-trip test catches drift only on generated data, not on production writes.</li>
+</ul>
+
+<h3 id="45-party-and-quantification-83">4.5 Party and Quantification (§8.3)</h3>
+
+<ul>
+  <li><strong>[Major] Range canonicalisation loses information (the item flagged in the summary).</strong>
+    <ul>
+      <li><strong>Discrete ranges.</strong> PostgreSQL canonicalises discrete range types (<code class="language-plaintext highlighter-rouge">int4range</code>, <code class="language-plaintext highlighter-rouge">int8range</code>, <code class="language-plaintext highlighter-rouge">daterange</code>) to <code class="language-plaintext highlighter-rouge">[)</code>. <code class="language-plaintext highlighter-rouge">int8range(1, 5, '[]')</code> is stored and returned as <code class="language-plaintext highlighter-rouge">[1,6)</code> (fact). The <code class="language-plaintext highlighter-rouge">qnt:Bound</code> closure flags and bound values therefore do not round-trip as authored, only up to value-space equivalence.</li>
+      <li><strong>Empty ranges.</strong> Every empty range normalises to <code class="language-plaintext highlighter-rouge">empty</code> and loses its bounds (fact). A <code class="language-plaintext highlighter-rouge">qnt:Range</code> such as <code class="language-plaintext highlighter-rouge">(5,5)</code> that is semantically empty but carries authored bounds cannot be reconstructed.</li>
+      <li><strong>Continuous ranges.</strong> <code class="language-plaintext highlighter-rouge">numrange</code> and <code class="language-plaintext highlighter-rouge">tstzrange</code> keep the flags, so the problem is limited to discrete types and empty ranges.</li>
+    </ul>
+
+    <p>The round-trip law must say which equivalence it uses. Either the ontology already treats <code class="language-plaintext highlighter-rouge">[1,5]</code> and <code class="language-plaintext highlighter-rouge">[1,6)</code> over integers as the same <code class="language-plaintext highlighter-rouge">qnt:Range</code>, or it does not, and then discrete value spaces need explicit bound columns. The question is for the Quantification README. It is a good SMT target (§10.4).</p>
+  </li>
+  <li>
+    <p><strong>[Moderate] Unbounded and infinite bounds.</strong> PostgreSQL distinguishes an omitted bound from <code class="language-plaintext highlighter-rouge">infinity</code> for timestamp and numeric types, and they behave differently. The mapping from <code class="language-plaintext highlighter-rouge">qnt:</code> unboundedness needs stating.</p>
+  </li>
+  <li>
+    <p><strong>[Moderate] Party share sums (M28b).</strong> This has the concurrency problem of §4.3. It also needs a precision rule: is “sum to the declared total” exact <code class="language-plaintext highlighter-rouge">numeric</code> equality or within a tolerance? The ontology should say which, rather than leaving it to the trigger author.</p>
+  </li>
+  <li><strong>[Minor] The <code class="language-plaintext highlighter-rouge">EXCLUDE</code> constraint in the §8.1 example.</strong>
+    <ul>
+      <li>It is keyed on <code class="language-plaintext highlighter-rouge">(role_id, actor_id)</code>. It prevents the <em>same actor</em> holding the same role twice concurrently, and permits a role to have several concurrent occupants.</li>
+      <li>With <code class="language-plaintext highlighter-rouge">actor_id</code> nullable, vacant (contingent) occupancies never conflict, because <code class="language-plaintext highlighter-rouge">NULL = NULL</code> is not true. That may be intended.</li>
+      <li>The text above the example describes a different invariant (“validity periods for one identity cannot overlap”).</li>
+    </ul>
+
+    <p>Which invariant does Party actually state? A single-occupant role would need <code class="language-plaintext highlighter-rouge">EXCLUDE (role_id WITH =, valid_period WITH &amp;&amp;)</code>.</p>
+  </li>
+  <li><strong>[Minor] Temporal model.</strong> <code class="language-plaintext highlighter-rouge">fnd:Version</code> (a version table plus a <code class="language-plaintext highlighter-rouge">current_*</code> view) and <code class="language-plaintext highlighter-rouge">fnd:TemporalScope</code> (valid time) together imply a bitemporal model: transaction time from versions or history, valid time from ranges. The paper never says whether queries are bitemporal, or what “current” means when a newer version has a future validity period.</li>
+</ul>
+
+<h3 id="46-instrument-wording-surface-and-mork-8688">4.6 Instrument, Wording, Surface and MORK (§8.6–§8.8)</h3>
+
+<ul>
+  <li><strong>[Moderate] <code class="language-plaintext highlighter-rouge">ltree</code> path columns</strong> (§8.2, §8.6) need relabelling of the whole subtree whenever a node moves. Maintaining them by trigger is the same delete/move problem as M22. <code class="language-plaintext highlighter-rouge">ltree</code> labels are also restricted (alphanumerics and underscore; recent versions add hyphens <em>(verify)</em>), so encode them from ids, not names.</li>
+  <li><strong>[Moderate] Surface promotions maintained by trigger</strong> inherit the concurrency issue. Two transactions updating sources of the same promoted value can leave it stale unless they serialise on the aggregate root.
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">REFRESH MATERIALIZED VIEW CONCURRENTLY</code> needs a unique index on the view.</li>
+      <li>It is a full recomputation, not an incremental one.</li>
+      <li>The freshness rules of paper 4 §19.5 must therefore assume refresh cost proportional to the view, not to the change.</li>
+    </ul>
+  </li>
+  <li><strong>[Minor] Generated derived columns</strong> such as <code class="language-plaintext highlighter-rouge">span</code> in Appendix A are not ontology properties. The R2RML emitter must exclude them, or they appear as extra triples and break the round trip.</li>
+  <li><strong>[Minor] MORK.</strong> Deferral is reasonable. Note that <code class="language-plaintext highlighter-rouge">COPY</code> and bulk ingestion paths are where triggers are most often disabled for speed. Any relational ingestion emitter must keep M28b triggers enabled, or must re-validate afterwards.</li>
+</ul>
+
+<hr />
+
+<h2 id="5-keeping-an-rdf-view-10">5. Keeping an RDF view (§10)</h2>
+
+<h3 id="51-major-the-worked-examples-round-trip-fails">5.1 [Major] The worked example’s round trip fails</h3>
+
+<ul>
+  <li><strong>Subject IRIs.</strong> M2 stores <code class="language-plaintext highlighter-rouge">iri text UNIQUE NOT NULL</code>. The §10 R2RML maps subjects with <code class="language-plaintext highlighter-rouge">rr:template "https://example.org/contract/{id}"</code>, which mints a <em>new</em> IRI from the surrogate key. Every subject IRI in the RDF view therefore differs from the source graph, and $\mathrm{dec}(\mathrm{enc}(G)) \not\cong G$. Under M2 the subject map must be <code class="language-plaintext highlighter-rouge">rr:column "iri"</code> with <code class="language-plaintext highlighter-rouge">rr:termType rr:IRI</code>. Under M3 the template must be the identity profile’s own template, and that template must be injective (§10.4).</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">current_state_id</code>.</strong> Appendix A adds <code class="language-plaintext highlighter-rouge">current_state_id bigint NOT NULL</code>. A conforming <code class="language-plaintext highlighter-rouge">ex:Layer</code> under the <em>closed</em> <code class="language-plaintext highlighter-rouge">LayerShape</code> cannot carry a state property, so the loader has nothing to put there.
+    <ul>
+      <li>If the R2RML emits it, the view contains triples the source never had.</li>
+      <li>If the R2RML omits it, Behaviour state is invisible in RDF.</li>
+      <li>Either the shape must declare the state property (open the shape, or add the path), or the column must be documented as outside the round-trip law.</li>
+    </ul>
+
+    <p>The same applies to <code class="language-plaintext highlighter-rouge">version</code>, <code class="language-plaintext highlighter-rouge">provenance_id</code> and the <code class="language-plaintext highlighter-rouge">bhv:</code> tables.</p>
+  </li>
+</ul>
+
+<p>This is the cheapest high-value finding in the review. Running the paper’s own round-trip law on its own appendix would show the failure in minutes. It argues for running the laws mechanically from S0, not at RS-X1.</p>
+
+<h3 id="52-moderate-limits-of-r2rml">5.2 [Moderate] Limits of R2RML</h3>
+
+<ul>
+  <li><strong>Ordered values (M15).</strong> An <code class="language-plaintext highlighter-rouge">ordinal</code> child table cannot be rendered as an <code class="language-plaintext highlighter-rouge">rdf:List</code> by R2RML. R2RML has no list constructor; RML extensions and some engines add one <em>(verify)</em>. If the source data uses <code class="language-plaintext highlighter-rouge">rdf:List</code>, the round trip needs RML, a post-processing step, or a refusal.</li>
+  <li><strong>Language tags (M6).</strong> R2RML supports a constant <code class="language-plaintext highlighter-rouge">rr:language</code> only. A per-row language tag needs an RML <code class="language-plaintext highlighter-rouge">rml:languageMap</code> or one triples map per language <em>(verify)</em>. Since the paper’s own option is RML-capable tools (Morph-KGC, RMLMapper), say <strong>RML</strong> rather than R2RML wherever this matters.</li>
+  <li><strong>Literal forms.</strong> R2RML’s “natural RDF literal” for <code class="language-plaintext highlighter-rouge">numeric</code> produces the <em>canonical</em> <code class="language-plaintext highlighter-rouge">xsd:decimal</code> form. This is where the §3 lexical-form issue becomes visible: <code class="language-plaintext highlighter-rouge">"1.00"</code> comes back as <code class="language-plaintext highlighter-rouge">"1.0"</code>. It reinforces stating the round trip at value-space level.</li>
+  <li><strong>Blank nodes (M4).</strong> These need <code class="language-plaintext highlighter-rouge">rr:termType rr:BlankNode</code> with a template over the child key. That is fine up to isomorphism, which the law allows.</li>
+  <li><strong>Virtualisation of procedures.</strong> Ontop virtualises reads only. Views produced by M10, M18 and M22 can be mapped too, but Ontop’s rewriting over recursive views and <code class="language-plaintext highlighter-rouge">UNION ALL</code> views performs differently. RS-X5 should include a transitive query.</li>
+</ul>
+
+<h3 id="53-major-undetermined-vanishes-from-the-rdf-view">5.3 [Major] Undetermined vanishes from the RDF view</h3>
+
+<p>R2RML generates no triple when a column value is NULL (fact). If eligibility outcomes are ever stored or exposed as NULL, the RDF view drops the <code class="language-plaintext highlighter-rouge">elg:Undetermined</code> decision entirely. An RDF consumer then cannot tell “Undetermined” from “never evaluated”, and under the open world it is free to treat the decision as unknown. That happens to look correct here, but it is wrong as a record.</p>
+
+<p>This is the second reason for §2.4’s recommendation: store and expose decisions as non-null references to the three Eligibility concepts, and use boolean/NULL only <em>inside</em> expressions.</p>
+
+<h3 id="54-moderate-security-of-views-and-virtual-graphs">5.4 [Moderate] Security of views and virtual graphs</h3>
+
+<ul>
+  <li><strong>Row-level security and views.</strong> PostgreSQL views execute with the <em>view owner’s</em> privileges by default. Since owners typically bypass RLS, the views generated by M10, M18 and Surface would <strong>bypass row-level security</strong> unless created <code class="language-plaintext highlighter-rouge">WITH (security_invoker = true)</code> (PG 15+, fact).</li>
+  <li><strong>Other bypasses.</strong> Table owners bypass RLS unless <code class="language-plaintext highlighter-rouge">FORCE ROW LEVEL SECURITY</code> is set. <code class="language-plaintext highlighter-rouge">SECURITY DEFINER</code> functions bypass it too.</li>
+  <li><strong>Ontop.</strong> It connects as a single database user. Tenant isolation in the RDF view therefore depends on Ontop’s connection configuration, not on RLS.</li>
+</ul>
+
+<p>The §15 claim that row-level security removes ADR-A54’s objection to shared graphs holds only if these bypasses are closed and checked. That check is a catalog-level verification (§10.7).</p>
+
+<hr />
+
+<h2 id="6-schema-evolution-11">6. Schema evolution (§11)</h2>
+
+<ul>
+  <li><strong>[Major] Live migration is missing.</strong> The four change classes say whether information survives. They say nothing about <em>availability</em>.
+    <ul>
+      <li>In PostgreSQL, adding a <code class="language-plaintext highlighter-rouge">NOT NULL</code> column with a volatile default, changing a column type, adding a <code class="language-plaintext highlighter-rouge">CHECK</code> or foreign key without <code class="language-plaintext highlighter-rouge">NOT VALID</code>, or building an index without <code class="language-plaintext highlighter-rouge">CONCURRENTLY</code> all take strong locks. Some rewrite the whole table.</li>
+      <li>Restructuring from M7/M8 to M9, or folding a child table into a column, are multi-step expand/backfill/contract operations. Generated operations, triggers and the R2RML view must handle <em>both</em> shapes during the window.</li>
+      <li>The migration emitter needs a <strong>phased</strong> output, not a single file. “Use Flyway” solves running migrations, not designing them.</li>
+    </ul>
+  </li>
+  <li><strong>[Moderate] O2 does not need migrations.</strong> At S1 the SQL is a rebuildable projection, so the cheapest and safest migration is “drop and rebuild”. Generated migrations are needed only from S2. Deferring the migration emitter (4k lines, about 8.4M base tokens) to S2 shortens S0/S1 and lets RS-X4 run on real ontology releases.</li>
+  <li><strong>[Moderate] Some cells of the change table are ambiguous.</strong>
+    <ul>
+      <li>“Local name changed, IRI unchanged” cannot happen in RDF: the local name <em>is</em> part of the IRI. The row presumably means “label changed”.</li>
+      <li>“IRI changed” is a breaking ontology change under ADR-A86 in any realisation, so an R2RML alias is a compatibility shim, not a fix.</li>
+      <li>“<code class="language-plaintext highlighter-rouge">sh:maxCount</code> lowered to 1 fails on existing multi-valued data”: this is an ontology release declaring previously valid data invalid. ADR-A86 should classify that as breaking, and the migration should refuse rather than fail midway.</li>
+    </ul>
+  </li>
+  <li><strong>[Moderate] Rollback.</strong> A lossy migration cannot be reversed by a down-migration. The policy should be “restore or roll forward”, stated for S2/S3.</li>
+  <li><strong>The migration law is well formed and worth keeping.</strong> Migrating data from the old schema gives the same RDF view as loading it directly into the new one. It is a commuting square:</li>
+</ul>
+
+\[\mathrm{dec}_{\mathcal{S}'}\big(\mathrm{mig}(\mathrm{enc}_{\mathcal{S}}(G))\big) \cong \mathrm{dec}_{\mathcal{S}'}\big(\mathrm{enc}_{\mathcal{S}'}(\mathrm{up}(G))\big)\]
+
+<p>Here $\mathrm{up}$ is the RDF-level data migration implied by the ontology change. The paper omits $\mathrm{up}$: for non-additive changes, “loading that data into the new schema directly” is undefined unless the old data first conforms to $\mathcal{S}’$. The law needs it stated, and it is a natural property-test target (§10.5).</p>
+
+<hr />
+
+<h2 id="7-verification-plan-12">7. Verification plan (§12)</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Gap</th>
+      <th>Severity</th>
+      <th>Fix</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>No concurrency or isolation testing at all.</strong> Every risk in §4.3–4.4 is concurrent, and the operation oracle runs histories sequentially</td>
+      <td>Major</td>
+      <td>§10.1 models plus history checking on real PostgreSQL (Elle/Jepsen style, Hermitage-style isolation probes)</td>
+    </tr>
+    <tr>
+      <td><strong>Constraint-preservation law absent</strong> (§2.1)</td>
+      <td>Major</td>
+      <td>SHACL engine as oracle on generated <em>and mutated</em> graphs (§10.5)</td>
+    </tr>
+    <tr>
+      <td><strong>Kleene oracle is the SPARQL backend</strong> (shared <code class="language-plaintext highlighter-rouge">_expand</code>)</td>
+      <td>Major</td>
+      <td><code class="language-plaintext highlighter-rouge">tools/reference/eligibility</code> as oracle; SPARQL as a secondary comparison</td>
+    </tr>
+    <tr>
+      <td><strong>The operation oracle compares two realisations generated from the same <code class="language-plaintext highlighter-rouge">dal:</code> profile.</strong> A misreading of a dimension is shared, which is the same circularity one level up</td>
+      <td>Moderate</td>
+      <td>state each dimension’s meaning as a small TLA+/Quint model (§10.1), and use the model’s traces as a third oracle for both realisations</td>
+    </tr>
+    <tr>
+      <td><strong>Inference law needs a reference engine independent of the compiled views.</strong> “A reference Datalog or SPARQL engine” is right; it should not be the view generator’s own rule IR evaluated another way</td>
+      <td>Moderate</td>
+      <td>a naive bottom-up evaluator over the rule text, in the spirit of Track B</td>
+    </tr>
+    <tr>
+      <td><strong>No security tests.</strong> RLS bypasses (§5.4), privilege revocation for <code class="language-plaintext highlighter-rouge">AppendOnly</code>, direct DML bypassing generated operations</td>
+      <td>Major</td>
+      <td>catalog checks (§10.7) and negative tests as an unprivileged application role</td>
+    </tr>
+    <tr>
+      <td><strong>No check that the deployed database matches the relational IR</strong> (dropped trigger, disabled constraint, <code class="language-plaintext highlighter-rouge">NOT VALID</code> never validated)</td>
+      <td>Moderate</td>
+      <td>catalog-versus-IR drift check (§10.7), extending R1’s DDL drift check to the live catalog</td>
+    </tr>
+    <tr>
+      <td><strong>The levels L1–L4 are undefined in this paper</strong></td>
+      <td>Minor</td>
+      <td>cite their definition</td>
+    </tr>
+    <tr>
+      <td><strong>Mutation check is good, but three mutations is a spot check</strong>, as the formal-methods review noted for that epic</td>
+      <td>Moderate</td>
+      <td>a mutation operator set over the relational IR, run per rule (§10.5)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Most important: the “None needs a proof assistant” remark is true but answers the wrong question. The laws do not need a proof assistant. They do need <strong>universally quantified checking</strong>, bounded or proved, rather than a fixed corpus. That is what §10 provides.</p>
+
+<hr />
+
+<h2 id="8-costs-risks-staging-and-the-estimate">8. Costs, risks, staging and the estimate</h2>
+
+<h3 id="81-major-missing-risks">8.1 [Major] Missing risks</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Risk</th>
+      <th>Why it matters</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Direct SQL access bypasses the semantics.</strong> The §13 audience will write their own <code class="language-plaintext highlighter-rouge">SELECT … WHERE eligible</code>, their own <code class="language-plaintext highlighter-rouge">UPDATE</code>s and BI joins</td>
+      <td>Generated functions protect nothing if the application role can write tables directly. Revoke DML on base tables, expose only functions and <code class="language-plaintext highlighter-rouge">security_invoker</code> views, and generate reporting views that pre-render decisions as concept labels</td>
+    </tr>
+    <tr>
+      <td><strong>Concurrency anomalies</strong> (§4.3–4.4)</td>
+      <td>absent from R1–R7</td>
+    </tr>
+    <tr>
+      <td><strong>Erasure boundary</strong> (§4.4)</td>
+      <td>regulatory exposure</td>
+    </tr>
+    <tr>
+      <td><strong>Two systems of record at S2.</strong> One aggregate type is SQL-authoritative while RDF still holds vocabularies, the TBox, provenance and references <em>to</em> that aggregate</td>
+      <td>No distributed transaction spans them. Referential integrity across stores becomes eventual. Vocabulary concepts must be <em>replicated into</em> SQL for M24’s foreign keys, so the SQL copy can lag a vocabulary release. The paper never says that O3 implies a vocabulary synchronisation protocol</td>
+    </tr>
+    <tr>
+      <td><strong>The O2 feed is unspecified.</strong> How does the SQL projection stay current: full rebuild, CDC from the RDF store, or dual writes?</td>
+      <td>Freshness, staleness indicators and the “disposable” claim all depend on this</td>
+    </tr>
+    <tr>
+      <td><strong>Write-path claims may not hold</strong></td>
+      <td>A “guarded write” in Appendix A’s profile is the <code class="language-plaintext highlighter-rouge">UPDATE</code> plus a PatchLog row plus a receipt plus an outbox row plus deferred-trigger checks plus GiST <code class="language-plaintext highlighter-rouge">EXCLUDE</code> maintenance. That is far fewer operations than 20 + 3n quads, but not “one <code class="language-plaintext highlighter-rouge">UPDATE</code>”. RS-X2 should measure write latency with all compiled constraints enabled</td>
+    </tr>
+    <tr>
+      <td><strong>PostgreSQL version floor</strong></td>
+      <td>the design uses PG 14 (multirange, <code class="language-plaintext highlighter-rouge">range_agg</code>), 15 (<code class="language-plaintext highlighter-rouge">NULLS NOT DISTINCT</code>, <code class="language-plaintext highlighter-rouge">security_invoker</code>) and possibly 18 (<code class="language-plaintext highlighter-rouge">WITHOUT OVERLAPS</code>; I believe temporal primary keys and <code class="language-plaintext highlighter-rouge">PERIOD</code> foreign keys shipped in 18, <em>verify</em>). Managed services lag. State the floor explicitly</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="82-moderate-the-gap-query-87">8.2 [Moderate] The gap query (§8.7)</h3>
+
+<p>The query is essentially right:</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">range_agg</code> ignores NULL inputs from unmatched <code class="language-plaintext highlighter-rouge">LEFT JOIN</code> rows;</li>
+  <li><code class="language-plaintext highlighter-rouge">coalesce</code> covers the empty case;</li>
+  <li>multirange difference is native.</li>
+</ul>
+
+<p>Two caveats:</p>
+<ul>
+  <li><strong><code class="language-plaintext highlighter-rouge">r.required</code> must be a multirange.</strong> <code class="language-plaintext highlighter-rouge">numrange - numrange</code> raises an error when the result would be non-contiguous (fact). Declare <code class="language-plaintext highlighter-rouge">required</code> as <code class="language-plaintext highlighter-rouge">nummultirange</code>, or cast it.</li>
+  <li><strong>The scenario filter is in the <code class="language-plaintext highlighter-rouge">ON</code> clause.</strong> Keeping <code class="language-plaintext highlighter-rouge">c.in_scenario</code> there (not in <code class="language-plaintext highlighter-rouge">WHERE</code>) is correct and deliberate. Note it, since moving it to <code class="language-plaintext highlighter-rouge">WHERE</code> would silently turn the <code class="language-plaintext highlighter-rouge">LEFT JOIN</code> into an inner join and drop layers with no cover, exactly the rows a gap analysis exists to find. That makes it a good mutation-test target.</li>
+</ul>
+
+<h3 id="83-moderate-appendix-a-further-points">8.3 [Moderate] Appendix A, further points</h3>
+
+<ul>
+  <li><strong><code class="language-plaintext highlighter-rouge">ex:validity sh:class fnd:TemporalScope</code></strong> is an <em>object</em> property. Inlining it as a <code class="language-plaintext highlighter-rouge">valid_period</code> column flattens a node into a value. That is reasonable for a value object, but it needs a rule (“owned value object with <code class="language-plaintext highlighter-rouge">maxCount 1</code> → inline columns, decoded as a blank node”), and no such rule appears in M1–M36.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">ex:peril sh:minCount 1</code></strong> is not enforced (§3, M14).</li>
+  <li><strong>No scheme restriction on <code class="language-plaintext highlighter-rouge">ex:peril</code>.</strong> <code class="language-plaintext highlighter-rouge">sh:class skos:Concept</code> names no scheme, so any concept is accepted. If the real shape names a scheme, M24’s static-scheme foreign key applies.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">layer_change</code> blocks deletion.</strong> It references <code class="language-plaintext highlighter-rouge">tower.layer</code> without <code class="language-plaintext highlighter-rouge">ON DELETE CASCADE</code>, so deleting a layer fails. Whether history should survive deletion is an erasure-policy question (§4.4).</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">"limit"</code> is quoted.</strong> M33 needs a reserved-word rule.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">tower.quote</code> lacks columns.</strong> It has no <code class="language-plaintext highlighter-rouge">version</code>, no <code class="language-plaintext highlighter-rouge">provenance_id</code> and no state. It sits inside Layer’s aggregate (<code class="language-plaintext highlighter-rouge">CompositePropertyBoundary</code>), so it is versioned through the root. Then every quote write must bump the layer’s version, which is the §4.4 rule in action. Show that in the example.</li>
+</ul>
+
+<h3 id="84-the-token-estimate">8.4 The token estimate</h3>
+
+<p>The arithmetic checks:</p>
+<ul>
+  <li>38k R × 2.10 = 79.8M;</li>
+  <li>4k D × 1.02 ≈ 4.1M;</li>
+  <li>32 × 0.64 + 3 × 1.53 + 3.06 = 28.1M;</li>
+  <li>total 112.0M; ×1.5 = 168M; ×2.5 = 280M;</li>
+  <li>168/380 ≈ 44%, matching “roughly 45%”.</li>
+</ul>
+
+<p>Three issues:</p>
+<ul>
+  <li><strong>The “G” columns are not defined in this paper.</strong> The Base G / Base E ratio also differs by row (3.17, 3.0, 3.10). Either define G or drop it.</li>
+  <li><strong>Underestimated scope.</strong> M28’s SPARQL-to-SQL translation and scope analysis, a phased-migration emitter, the concurrency and security test suites, and the S2 vocabulary-synchronisation protocol are all missing or under-sized. My rough judgement is that these add 15–25% to code and tests.</li>
+  <li><strong>The excluded recurring migration cost</strong> is the paper’s own “principal ongoing cost” (§11.1). It should be estimated per ontology release, even roughly, or the 45% comparison with paper 3 is not like-for-like.</li>
+</ul>
+
+<hr />
+
+<h2 id="9-decisions-for-the-maintainer-17-proposed-changes">9. Decisions for the maintainer (§17): proposed changes</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Change</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>RS-D1</td>
+      <td>Make it conditional on RS-X0 (shape census) showing that the compilable fraction of a real deployment is large enough</td>
+    </tr>
+    <tr>
+      <td>RS-D2</td>
+      <td>Keep (a). Add: compilability requires the focus-node coverage condition of §2.2</td>
+    </tr>
+    <tr>
+      <td><strong>RS-D10 (new)</strong></td>
+      <td>Decision encoding: boolean/NULL inside expressions only; stored and exposed decisions are non-null concept references (§2.4, §5.3)</td>
+    </tr>
+    <tr>
+      <td><strong>RS-D11 (new)</strong></td>
+      <td>Default isolation and write discipline: every write to an aggregate goes through the root’s version compare-and-set; DML on base tables revoked from the application role; SERIALIZABLE for cross-aggregate guards</td>
+    </tr>
+    <tr>
+      <td><strong>RS-D12 (new)</strong></td>
+      <td>Literal policy: round trip at value-space level, with non-canonical lexical forms either accepted and canonicalised, or rejected at load</td>
+    </tr>
+    <tr>
+      <td><strong>RS-D13 (new)</strong></td>
+      <td>Vocabulary placement in O3: RDF authoritative, compiled into SQL reference tables by release, with a stated staleness bound; or SQL authoritative for vocabularies too</td>
+    </tr>
+    <tr>
+      <td><strong>RS-D14 (new)</strong></td>
+      <td>Erasure boundary: which stores, which latency, where keys live</td>
+    </tr>
+    <tr>
+      <td>RS-D9</td>
+      <td>Keep. G0 should also run the §10.1 history checks, not just performance</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="10-applying-formal-methods-to-this-work">10. Applying formal methods to this work</h2>
+
+<h3 id="100-principles">10.0 Principles</h3>
+
+<ol>
+  <li><strong>Verify each output, not the compiler.</strong> A verified compiler in the CompCert sense is out of proportion to G5. <strong>Translation validation</strong> (Pnueli et al. 1998; Necula 2000) gives most of the assurance at a fraction of the cost. For each compiled module, an independent checker confirms that <em>this</em> output satisfies the laws for <em>these</em> inputs. The Python compiler stays unverified. Its outputs do not.</li>
+  <li><strong>Each law gets the cheapest technique that can establish it universally</strong>, in bounded or proved form, as in the earlier epic’s rung ladder.</li>
+  <li><strong>Reuse what already exists:</strong>
+    <ul>
+      <li>the Eligibility reference semantics (Track B);</li>
+      <li>the Isabelle Kleene theory (Track E);</li>
+      <li>the Alloy scheme-composition model (Track C);</li>
+      <li>the claim/gate discipline and the freshness checker.</li>
+    </ul>
+  </li>
+  <li><strong>Protocols are where the unexamined risk lies.</strong> This paper is the natural trigger for rung T4, which the formal-methods brief listed as never attempted.</li>
+  <li><strong>Avoid the earlier epic’s own weaknesses.</strong> The independence of each oracle must be stated, the digests must cover definitions, and a fault must be seeded in the <em>implementation</em>, not only in the reference.</li>
+</ol>
+
+<table>
+  <thead>
+    <tr>
+      <th>Law or property</th>
+      <th>Technique</th>
+      <th>Rung</th>
+      <th>Independence of the oracle</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Kleene encoding, quantifiers, empty sets</td>
+      <td>Isabelle extension</td>
+      <td>T5</td>
+      <td>proof against <code class="language-plaintext highlighter-rouge">Eligibility.thy</code> definitions</td>
+    </tr>
+    <tr>
+      <td>Eligibility SQL backend (full concept matching)</td>
+      <td>differential, bounded-exhaustive</td>
+      <td>T0</td>
+      <td><code class="language-plaintext highlighter-rouge">tools/reference/eligibility</code>, which does not import the IR</td>
+    </tr>
+    <tr>
+      <td>Schema admits exactly the shapes’ instances</td>
+      <td>Alloy translation validation</td>
+      <td>T2</td>
+      <td>Alloy model generated from the <em>shapes</em>, separately from one generated from the <em>relational IR</em></td>
+    </tr>
+    <tr>
+      <td>Regex, IRI templates, range bounds, numeric facets</td>
+      <td>SMT / automata</td>
+      <td>T3</td>
+      <td>solver</td>
+    </tr>
+    <tr>
+      <td>Constraint preservation, round trip, query, inference, migration</td>
+      <td>property-based and metamorphic</td>
+      <td>T1</td>
+      <td>pySHACL, an independent SPARQL engine, a naive Datalog evaluator</td>
+    </tr>
+    <tr>
+      <td>Isolation, ordering, outbox, erasure, fencing, cutover</td>
+      <td>TLA+/Quint</td>
+      <td>T4</td>
+      <td>model, then history checking on real PostgreSQL</td>
+    </tr>
+    <tr>
+      <td>Deployed catalog equals relational IR; live invariants</td>
+      <td>runtime and catalog checks</td>
+      <td>T7</td>
+      <td>PostgreSQL system catalogs</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="101-t4-protocol-models-tla-or-quint">10.1 T4: protocol models (TLA+ or Quint)</h3>
+
+<p>The isolation level must be part of the model. Model PostgreSQL’s READ COMMITTED (per-statement snapshots, row re-check on update) and SERIALIZABLE (SSI) abstractly at the level of read and write sets, not SQL. Published TLA+ specifications of snapshot isolation and SSI exist and can be adapted <em>(verify current sources)</em>. Seven small models, each a few hundred lines:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Model</th>
+      <th>System</th>
+      <th>Properties (safety S, liveness L)</th>
+      <th>Expected finding</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>A. Guarded transition</strong></td>
+      <td><code class="language-plaintext highlighter-rouge">fire_bind</code>: version CAS, state check, guard over evidence possibly outside the aggregate, outbox insert</td>
+      <td>S: a committed transition’s guard was Permitted in a state consistent with the commit (no write skew). S: every committed transition has exactly one outbox row. S: failure outcomes are distinguishable</td>
+      <td>write skew under READ COMMITTED when the guard reads external evidence; confirms RS-D11</td>
+    </tr>
+    <tr>
+      <td><strong>B. Aggregate invariant</strong></td>
+      <td>concurrent writes to child rows of one aggregate with an M28b deferred check (shares summing to a total)</td>
+      <td>S: the invariant holds in every committed state</td>
+      <td>violation unless every child write also performs the root CAS, or under SERIALIZABLE</td>
+    </tr>
+    <tr>
+      <td><strong>C. Ordered stream (M45)</strong></td>
+      <td>sequence allocation, commit order, a polling reader</td>
+      <td>S: the reader never permanently skips a committed row. L: every committed row is eventually read</td>
+      <td>skip with plain sequences; passes with an LSN or <code class="language-plaintext highlighter-rouge">xmin</code>-horizon reader</td>
+    </tr>
+    <tr>
+      <td><strong>D. Outbox</strong></td>
+      <td>in-transaction outbox insert, relay, at-least-once delivery, consumer with an idempotency key</td>
+      <td>S: effects are applied at most once per event. L: every committed event is eventually applied</td>
+      <td>double application without consumer idempotency</td>
+    </tr>
+    <tr>
+      <td><strong>E. O2 projection</strong></td>
+      <td>RDF source, change feed or rebuild, SQL projection, readers</td>
+      <td>S: readers never see a state mixing two source versions within one aggregate. L: freshness bound under fair scheduling</td>
+      <td>depends on the unspecified feed; forces the paper to specify it</td>
+    </tr>
+    <tr>
+      <td><strong>F. Erasure</strong></td>
+      <td>live rows, history, outbox, CDC consumers, replicas, backups, key store</td>
+      <td>S: after erasure completes plus the retention bound, no store yields the subject’s plaintext</td>
+      <td>finds every store §4.4 lists; tests whether <code class="language-plaintext highlighter-rouge">CryptoShred</code> survives backups given key placement</td>
+    </tr>
+    <tr>
+      <td><strong>G. S2 cutover</strong></td>
+      <td>moving one aggregate type’s write path from RDF to SQL while both are live</td>
+      <td>S: no write lost or applied twice across the switch. S: no reader sees regressions</td>
+      <td>the dual-write window is the classic failure; produces the cutover runbook</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Grounding the models.</strong> A model of PostgreSQL is only as good as its fidelity, so check the model against reality:</p>
+<ul>
+  <li>Run the generated operations on real PostgreSQL under randomised concurrent histories and check the recorded histories for isolation anomalies with an Elle-style checker (Kingsbury and Alvaro, VLDB 2020).</li>
+  <li>Run Hermitage-style probes (Kleppmann’s isolation test suite) for the specific anomalies each model predicts.</li>
+</ul>
+
+<p>A predicted anomaly that appears in the history confirms the model; one the model rules out but the history shows means the model is wrong. This is the T4 analogue of the earlier epic’s seeded mutations.</p>
+
+<p><strong>Cost and payoff.</strong> These models are the highest expected value in this section: concurrency defects are where the paper is weakest, and they are the defects tests find least. Models A–D should gate S2. E gates S1. F gates any deployment holding personal data. G gates each S2 cutover.</p>
+
+<h3 id="102-t5-extend-the-isabelle-eligibility-theory">10.2 T5: extend the Isabelle Eligibility theory</h3>
+
+<p>This is cheap because the theory and its gate discipline already exist. Add a theory <code class="language-plaintext highlighter-rouge">SqlEncoding.thy</code>:</p>
+
+<div class="language-isabelle highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">type_synonym</span><span class="w"> </span><span class="n">sql3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"bool option"</span><span class="w">          </span><span class="c">(* None = SQL NULL / UNKNOWN *)</span><span class="w">
+
+</span><span class="k">fun</span><span class="w"> </span><span class="n">enc</span><span class="w"> </span><span class="o">::</span><span class="w"> </span><span class="s">"decision ⇒ sql3"</span><span class="w"> </span><span class="kp">where</span><span class="w">
+  </span><span class="s">"enc Permitted = Some True"</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s">"enc Denied = Some False"</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s">"enc Undetermined = None"</span><span class="w">
+
+</span><span class="c">(* SQL standard AND / OR / NOT on bool option, written from the standard's truth tables *)</span><span class="w">
+</span><span class="k">fun</span><span class="w"> </span><span class="n">sql_and</span><span class="w"> </span><span class="o">::</span><span class="w"> </span><span class="s">"sql3 ⇒ sql3 ⇒ sql3"</span><span class="w"> </span><span class="kp">where</span><span class="w"> </span><span class="ow">...</span><span class="w">
+</span><span class="k">fun</span><span class="w"> </span><span class="n">sql_not</span><span class="w"> </span><span class="o">::</span><span class="w"> </span><span class="s">"sql3 ⇒ sql3"</span><span class="w"> </span><span class="kp">where</span><span class="w"> </span><span class="ow">...</span><span class="w">
+
+</span><span class="c">(* bool_or: NULL-ignoring, NULL on empty or all-NULL input *)</span><span class="w">
+</span><span class="k">definition</span><span class="w"> </span><span class="n">sql_bool_or</span><span class="w"> </span><span class="o">::</span><span class="w"> </span><span class="s">"sql3 list ⇒ sql3"</span><span class="w"> </span><span class="kp">where</span><span class="w"> </span><span class="ow">...</span><span class="w">
+
+</span><span class="c">(* the paper's CASE encoding of EveryValue, with CASE skipping NULL conditions *)</span><span class="w">
+</span><span class="k">definition</span><span class="w"> </span><span class="n">every_case</span><span class="w"> </span><span class="o">::</span><span class="w"> </span><span class="s">"sql3 list ⇒ sql3"</span><span class="w"> </span><span class="kp">where</span><span class="w"> </span><span class="ow">...</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Gated claims:</p>
+<ul>
+  <li><strong>Homomorphism.</strong> <code class="language-plaintext highlighter-rouge">enc (and3 a b) = sql_and (enc a) (enc b)</code>, and the same for <code class="language-plaintext highlighter-rouge">or3</code> and <code class="language-plaintext highlighter-rouge">neg3</code>. This states, as a theorem, the paper’s “maps onto it exactly”.</li>
+  <li><strong>Quantifier correctness.</strong> <code class="language-plaintext highlighter-rouge">every_case (map enc xs) = enc (every_value xs)</code>, and the same for <code class="language-plaintext highlighter-rouge">some_value</code>, <em>including</em> <code class="language-plaintext highlighter-rouge">xs = []</code>. This settles RS-X3’s open empty-set question by proof rather than by test.</li>
+  <li><strong>Negative lemmas, mirroring the De Morgan witness.</strong>
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">∃xs. sql_bool_and (map enc xs) ≠ enc (every_value xs)</code>, with witness <code class="language-plaintext highlighter-rouge">[Permitted, Undetermined]</code>.</li>
+      <li>The <code class="language-plaintext highlighter-rouge">LEFT JOIN</code> padding lemma: <code class="language-plaintext highlighter-rouge">every_case [None] ≠ enc (every_value [])</code>.</li>
+    </ul>
+
+    <p>These make each hazard the paper names, plus the one it misses (§2.4), a proved fact, so a reverted fix fails the build.</p>
+  </li>
+  <li><strong>Consumption.</strong> <code class="language-plaintext highlighter-rouge">IS TRUE</code> / <code class="language-plaintext highlighter-rouge">IS FALSE</code> / <code class="language-plaintext highlighter-rouge">IS NULL</code> partition <code class="language-plaintext highlighter-rouge">sql3</code>. A <code class="language-plaintext highlighter-rouge">CHECK</code> predicate admits <code class="language-plaintext highlighter-rouge">None</code>, so a lemma that <code class="language-plaintext highlighter-rouge">CHECK</code> acceptance ≠ Permitted documents why decisions must not be enforced through <code class="language-plaintext highlighter-rouge">CHECK</code>.</li>
+</ul>
+
+<p><strong>Two lessons from the earlier review apply directly:</strong></p>
+<ul>
+  <li>The truth tables for <code class="language-plaintext highlighter-rouge">sql_and</code> and the others must be <strong>gated</strong>, and preferably generated from a README table, because the definitions carry the semantics (formal-methods review §2.1–2.2).</li>
+  <li>Use kernel-checked methods (<code class="language-plaintext highlighter-rouge">simp</code>, <code class="language-plaintext highlighter-rouge">cases</code>, <code class="language-plaintext highlighter-rouge">induction</code>), not <code class="language-plaintext highlighter-rouge">eval</code>.</li>
+</ul>
+
+<p><strong>Limits.</strong> This proves the <em>encoding</em>, not the generated SQL text. The link to the text is §10.5’s differential testing, which uses the same lemmas as properties. The proved lemmas thus become the test oracle for the implementation, which is the missing proof-to-implementation link the earlier review identified.</p>
+
+<p><strong>Out of scope for proof here:</strong> concept matching in SQL. Its oracle is the Python reference. Mechanising <code class="language-plaintext highlighter-rouge">decide_concept_match</code> in Isabelle is Track E’s own next step, and it would then serve both backends.</p>
+
+<h3 id="103-t2-alloy-translation-validation">10.3 T2: Alloy translation validation</h3>
+
+<p>Two uses, rule-level and deployment-level.</p>
+
+<p><strong>(a) Rule-level models, once, by hand.</strong> For each mapping rule, model the RDF side (focus nodes, properties, cardinalities, class membership) and the relational side (tables, keys, foreign keys, <code class="language-plaintext highlighter-rouge">CHECK</code>s, triggers as invariants), with $\mathrm{enc}$ as a relation between them. Then check:</p>
+
+<pre><code class="language-alloy">assert ConstraintPreservation {
+  all g: Graph | (some d: DB | enc[g, d] and d.satisfiesSchema) iff g.conformsTo[Shapes]
+}
+assert RoundTrip { all g: Graph, d: DB | enc[g, d] implies dec[d] = g }
+</code></pre>
+
+<p>Bounded at scope 4–5, this finds at once several defects this review found by hand:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Rule</th>
+      <th>Counterexample Alloy would produce</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>M12 under M8</td>
+      <td>one parent id in two sibling child tables</td>
+    </tr>
+    <tr>
+      <td>M14/M17 with <code class="language-plaintext highlighter-rouge">minCount ≥ 1</code></td>
+      <td>an owner with zero child rows accepted</td>
+    </tr>
+    <tr>
+      <td>M21</td>
+      <td>a reflexive symmetric pair rejected</td>
+    </tr>
+    <tr>
+      <td>M10 under M9</td>
+      <td>duplicate rows in the superclass view</td>
+    </tr>
+    <tr>
+      <td>M24 with ADR-A85 resolution</td>
+      <td>a concept from a non-resolved scheme accepted</td>
+    </tr>
+    <tr>
+      <td>M27 under M9</td>
+      <td>a dangling polymorphic reference</td>
+    </tr>
+    <tr>
+      <td>§8.2 concept table</td>
+      <td>a concept in two schemes cannot be represented; a global closure merges two schemes’ hierarchies</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The last item extends <code class="language-plaintext highlighter-rouge">SchemeComposition.als</code> directly. Add the relational encoding to the existing model and check that per-scheme <code class="language-plaintext highlighter-rouge">broader</code> survives encoding.</p>
+
+<p><strong>(b) Deployment-level, generated per compile.</strong> Emit two Alloy modules per compiled module: one generated from the <strong>shapes</strong>, one from the <strong>relational IR</strong>. Both modules must be generated by code paths that share nothing beyond the parsed RDF; otherwise the check is circular. Then check the equivalence assertion at bounded scope.</p>
+
+<p>This is translation validation proper. A wrong decision procedure (M7 vs M8 vs M9) or a missed constraint shows up as a counterexample for that deployment’s shapes. Datatypes are abstracted to uninterpreted atoms; their facets go to §10.4. Run it in CI on every compile, with the receipt recorded as a claim (§10.6).</p>
+
+<p><strong>Limits.</strong> Alloy is bounded and abstracts datatypes. It complements, and does not replace, the property tests over real data in §10.5.</p>
+
+<h3 id="104-t3-smt-and-automata-for-the-value-level-rules">10.4 T3: SMT and automata for the value-level rules</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Target</th>
+      <th>Check</th>
+      <th>Tool</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>M26 regex translation</strong></td>
+      <td>XPath pattern and translated POSIX pattern accept the same language. Both are regular for the supported subset, so equivalence is decidable by automata, and exact. Anchoring and <code class="language-plaintext highlighter-rouge">sh:flags</code> are included</td>
+      <td>an automata library; Z3’s string/regex theory as a second opinion</td>
+    </tr>
+    <tr>
+      <td><strong>M3 IRI templates</strong></td>
+      <td>the template is injective over the key domain, and the R2RML/RML inverse parses every generated IRI back to the same key (no separator ambiguity, correct percent-encoding)</td>
+      <td>Z3 strings</td>
+    </tr>
+    <tr>
+      <td><strong>M5 integer bounds</strong></td>
+      <td>shape bounds on <code class="language-plaintext highlighter-rouge">xsd:integer</code> fit <code class="language-plaintext highlighter-rouge">bigint</code>; otherwise <code class="language-plaintext highlighter-rouge">numeric</code></td>
+      <td>LIA</td>
+    </tr>
+    <tr>
+      <td><strong>M25 numeric facets</strong></td>
+      <td>generated <code class="language-plaintext highlighter-rouge">CHECK</code> admits exactly the shape’s interval, including exclusive bounds</td>
+      <td>LRA</td>
+    </tr>
+    <tr>
+      <td><strong>§8.3 range canonicalisation</strong></td>
+      <td>for discrete value spaces, ∀x. x ∈ qnt-range ⇔ x ∈ PG-range after canonicalisation, with empty ranges a separate case</td>
+      <td>LIA</td>
+    </tr>
+    <tr>
+      <td><strong>M34 names</strong></td>
+      <td>no collision after truncation and hashing within one schema (direct enumeration is enough; listed for completeness)</td>
+      <td>none needed</td>
+    </tr>
+    <tr>
+      <td><strong>M28a classification</strong></td>
+      <td>a SHACL-SPARQL constraint classified as row scope references only the focus row’s columns</td>
+      <td>static analysis; SMT only if the predicate needs simplifying</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Each is a small, local, fully automatic check run per compile. Together they cover the rules where “untranslatable is refused, never approximated” is the stated policy and needs enforcing.</p>
+
+<h3 id="105-t0t1-differential-property-based-and-metamorphic-testing">10.5 T0/T1: differential, property-based and metamorphic testing</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Law</th>
+      <th>Generator</th>
+      <th>Oracle</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Constraint preservation</strong> (§2.1)</td>
+      <td>shape-conforming graphs (paper 4 §11), then <em>mutated</em> by one edit each: drop a required value, add a second value, wrong datatype, unknown property, cross-type reference, cycle</td>
+      <td>pySHACL <code class="language-plaintext highlighter-rouge">conforms</code></td>
+      <td>the main test the paper lacks; each mutation is labelled with the rule it targets</td>
+    </tr>
+    <tr>
+      <td><strong>Round trip</strong></td>
+      <td>same generators</td>
+      <td>RDFC-1.0 canonicalisation after value-space normalisation of literals</td>
+      <td>the law stated at value level (§3, RS-D12)</td>
+    </tr>
+    <tr>
+      <td><strong>Query law</strong></td>
+      <td>the compiled workload’s queries over generated data</td>
+      <td>an independent SPARQL engine (Oxigraph and Jena, not the one the persistence compiler targets)</td>
+      <td>for the more complex translations, formal SQL semantics work (Guagliardo and Libkin, VLDB 2017) and SQL equivalence checkers can be used selectively <em>(verify maturity)</em></td>
+    </tr>
+    <tr>
+      <td><strong>Inference law</strong></td>
+      <td>generated ABoxes</td>
+      <td>naive bottom-up evaluator over the rule text</td>
+      <td>includes cycles, for M22</td>
+    </tr>
+    <tr>
+      <td><strong>Eligibility SQL backend</strong></td>
+      <td>bounded-exhaustive: every scheme with up to 3–4 concepts, every required and excluded subset, both match modes, inside and outside the scheme, zero, one and two candidates</td>
+      <td><code class="language-plaintext highlighter-rouge">tools/reference/eligibility</code></td>
+      <td>add the SQL backend as a fifth backend in the existing harness</td>
+    </tr>
+    <tr>
+      <td><strong>Kleene lemmas as properties</strong></td>
+      <td>random decision lists</td>
+      <td>the §10.2 lemmas evaluated against generated SQL on PostgreSQL</td>
+      <td>the proof-to-implementation link</td>
+    </tr>
+    <tr>
+      <td><strong>Migration square</strong></td>
+      <td>data under $\mathcal{S}$, a sampled ontology change</td>
+      <td>both paths of the square in §6</td>
+      <td>needs $\mathrm{up}$ to be defined</td>
+    </tr>
+    <tr>
+      <td><strong>Metamorphic</strong></td>
+      <td>any of the above</td>
+      <td>the relation itself</td>
+      <td>e.g. reordering input triples leaves outputs unchanged; adding an unrelated aggregate leaves another’s decisions unchanged; compiling twice gives byte-identical output (§6.3 determinism); renaming via M36 preserves the RDF view</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Mutation operators over the relational IR</strong>, run per rule, each of which must fail a named test:</p>
+<ul>
+  <li>drop a <code class="language-plaintext highlighter-rouge">CHECK</code>, <code class="language-plaintext highlighter-rouge">NOT NULL</code>, <code class="language-plaintext highlighter-rouge">UNIQUE</code> or foreign key;</li>
+  <li>omit <code class="language-plaintext highlighter-rouge">NULLS NOT DISTINCT</code>;</li>
+  <li>remove the version predicate;</li>
+  <li>replace the quantifier <code class="language-plaintext highlighter-rouge">CASE</code> with <code class="language-plaintext highlighter-rouge">bool_and</code>;</li>
+  <li>consume a predicate bare in <code class="language-plaintext highlighter-rouge">WHERE</code>;</li>
+  <li>move <code class="language-plaintext highlighter-rouge">in_scenario</code> from <code class="language-plaintext highlighter-rouge">ON</code> to <code class="language-plaintext highlighter-rouge">WHERE</code>;</li>
+  <li>make a view <code class="language-plaintext highlighter-rouge">security_invoker = false</code>;</li>
+  <li>disable a constraint trigger.</li>
+</ul>
+
+<p><strong>Seed faults in the compiler and IR, not only in the outputs.</strong> This is the earlier review’s §3.1 finding applied here. At least once per rule group, introduce a bug in the Python rule implementation and confirm the Alloy validation (§10.3) or a property test catches it.</p>
+
+<p><strong>Make the Kleene hazard impossible by construction.</strong> Give the relational IR a distinct <code class="language-plaintext highlighter-rouge">decision3</code> type, separate from <code class="language-plaintext highlighter-rouge">bool</code>. The emitter refuses to place a <code class="language-plaintext highlighter-rouge">decision3</code> expression in a <code class="language-plaintext highlighter-rouge">WHERE</code>, <code class="language-plaintext highlighter-rouge">ON</code>, <code class="language-plaintext highlighter-rouge">CHECK</code>, <code class="language-plaintext highlighter-rouge">IF</code> or aggregate except through <code class="language-plaintext highlighter-rouge">IS TRUE</code> / <code class="language-plaintext highlighter-rouge">IS FALSE</code> / <code class="language-plaintext highlighter-rouge">IS NULL</code> or the generated quantifier templates. A typed IR is a formal method costing a few hundred lines, and it removes a whole class of defect rather than testing for it.</p>
+
+<p><strong>Mechanical normal-form check (§2.5).</strong> From the shape- and OWL-derived functional dependencies, check that each generated table is in 3NF (or BCNF). It is a small algorithm and turns §3.3’s appeal to theory into a check.</p>
+
+<h3 id="106-claims-gates-and-coverage">10.6 Claims, gates and coverage</h3>
+
+<p>Extend the earlier epic’s discipline to the M-rules:</p>
+<ul>
+  <li><strong>One claim record per rule</strong>, <code class="language-plaintext highlighter-rouge">claims/M12.json</code> and so on. Each names the statement it guarantees, the checks establishing it (Alloy assertion, SMT check, property test, mutation operator) and the latest outcome.</li>
+  <li><strong>Digests cover definitions.</strong> The digest covers the rule’s specification <em>and</em> the generator code that implements it. A behavioural change to M12’s implementation is then a reviewable event. This is the definition-coverage fix from the earlier review’s §2.1.</li>
+  <li><strong>Rule coverage from <code class="language-plaintext highlighter-rouge">COMMENT ON</code> (M35).</strong> Every emitted object cites its producing rule. A coverage report lists, per deployment, which rules produced artefacts and which of those have green claims. A rule that produced output but has no passing check fails the gate.</li>
+  <li><strong>Freshness checker.</strong> Extend <code class="language-plaintext highlighter-rouge">check_formal_freshness.py</code> so that every M-rule ID in the paper’s catalogue appears in at least one check, or is explicitly disclaimed. Also bind each rule to a check that fails under that rule’s mutation operator, not just to a name, which addresses the textual-heuristic weakness raised in the earlier review’s answer to its Q4.</li>
+</ul>
+
+<h3 id="107-t7-runtime-and-catalog-verification">10.7 T7: runtime and catalog verification</h3>
+
+<p>From S2 onwards, the same invariants become monitors:</p>
+<ul>
+  <li><strong>Catalog equals relational IR.</strong> Query <code class="language-plaintext highlighter-rouge">pg_constraint</code>, <code class="language-plaintext highlighter-rouge">pg_trigger</code>, <code class="language-plaintext highlighter-rouge">pg_index</code>, <code class="language-plaintext highlighter-rouge">pg_class</code> and <code class="language-plaintext highlighter-rouge">pg_policy</code> and compare them with the compiled IR. The check fails on:
+    <ul>
+      <li>a disabled trigger (<code class="language-plaintext highlighter-rouge">tgenabled</code>);</li>
+      <li>a <code class="language-plaintext highlighter-rouge">NOT VALID</code> constraint never validated;</li>
+      <li>a missing index or policy;</li>
+      <li>a view without <code class="language-plaintext highlighter-rouge">security_invoker</code>;</li>
+      <li>a table without <code class="language-plaintext highlighter-rouge">FORCE ROW LEVEL SECURITY</code>;</li>
+      <li>application roles with DML on base tables or <code class="language-plaintext highlighter-rouge">BYPASSRLS</code>;</li>
+      <li><code class="language-plaintext highlighter-rouge">session_replication_role</code> misuse.</li>
+    </ul>
+
+    <p>This extends R1’s drift check from DDL text to the live database, and it is cheap.</p>
+  </li>
+  <li><strong>Detective invariants.</strong> M28c validation views already exist. Run them on a schedule and route violations to the <code class="language-plaintext highlighter-rouge">onViolation</code> handling.</li>
+  <li><strong>O2/O3 reconciliation.</strong> Periodically compute the RDF view of a sample of aggregates through R2RML and compare it with the RDF source (O2) or the RDF store’s references (O3). This is the round-trip law applied to production data.</li>
+  <li><strong>History checking in staging.</strong> Run Elle-style checks continuously against the staging workload, not only during development.</li>
+  <li><strong>Erasure audit.</strong> After each erasure, probe every store in model F’s list for the subject’s identifiers.</li>
+</ul>
+
+<h3 id="108-placement-in-the-epic-and-cost">10.8 Placement in the epic and cost</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Item</th>
+      <th>Track (from the formal-methods epic)</th>
+      <th>Rough size</th>
+      <th>Base tokens (paper’s model, class R)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Isabelle <code class="language-plaintext highlighter-rouge">SqlEncoding.thy</code> (§10.2)</td>
+      <td>E</td>
+      <td>~0.5k lines</td>
+      <td>~1.1M</td>
+    </tr>
+    <tr>
+      <td>Alloy rule-level models (§10.3a)</td>
+      <td>C</td>
+      <td>~1k lines</td>
+      <td>~2.1M</td>
+    </tr>
+    <tr>
+      <td>Alloy per-compile generator and checker (§10.3b)</td>
+      <td>C/B</td>
+      <td>~2.5k lines</td>
+      <td>~5.3M</td>
+    </tr>
+    <tr>
+      <td>SMT and automata checks (§10.4)</td>
+      <td>C (C3 already scopes SMT)</td>
+      <td>~1.5k lines</td>
+      <td>~3.2M</td>
+    </tr>
+    <tr>
+      <td>TLA+/Quint models A–G plus history harness (§10.1)</td>
+      <td>G (protocols)</td>
+      <td>~2.5k lines</td>
+      <td>~5.3M</td>
+    </tr>
+    <tr>
+      <td>Typed IR, normal-form check, catalog drift check (§10.5, §10.7)</td>
+      <td>A/F</td>
+      <td>~1k lines</td>
+      <td>~2.1M</td>
+    </tr>
+    <tr>
+      <td><strong>Total</strong></td>
+      <td> </td>
+      <td><strong>~9k lines</strong></td>
+      <td><strong>~19M base, ~28M expected</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>That is about 17% of the paper’s base estimate. Part of it replaces planned test effort rather than adding to it: the constraint-preservation and Kleene harnesses partly overlap §16’s 6k lines of test harnesses. The net addition is about 12–15%, consistent with the summary’s figure, and within G5’s “cost proportional” mandate.</p>
+
+<p><strong>Sequencing against the paper’s stages:</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Gate</th>
+      <th>Required formal evidence</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>S0</strong></td>
+      <td>§10.2 proved; §10.3a rule models green for every rule S0’s module uses; §10.4 checks for those rules; constraint-preservation and round-trip property tests green; typed IR in place</td>
+    </tr>
+    <tr>
+      <td><strong>S1 (O2)</strong></td>
+      <td>model E green; §10.3b per-compile validation in CI; reconciliation monitor running</td>
+    </tr>
+    <tr>
+      <td><strong>S2 (O3, one aggregate)</strong></td>
+      <td>models A–D and G green and confirmed by history checking on real PostgreSQL; catalog drift check enforced; model F green if the aggregate holds personal data</td>
+    </tr>
+    <tr>
+      <td><strong>S3</strong></td>
+      <td>the above per aggregate type, with rule coverage (§10.6) complete for every rule its compile uses</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="109-what-not-to-do">10.9 What not to do</h3>
+
+<ul>
+  <li><strong>Don’t mechanise the Python compiler.</strong> Translation validation gives per-output assurance at far lower cost.</li>
+  <li><strong>Don’t model PostgreSQL’s implementation.</strong> Model the isolation <em>contract</em> abstractly, and test the contract against the real system with history checking.</li>
+  <li><strong>Don’t formalise full SPARQL or full SQL semantics.</strong> Use them selectively for the query law where the translation is non-trivial (M28, M22). Otherwise use differential testing against independent engines.</li>
+  <li><strong>Don’t let Alloy’s bounded “pass” stand as a universal claim.</strong> Record its scope in the claim, as for the earlier model.</li>
+</ul>
+
+<hr />
+
+<h2 id="11-additional-experiments">11. Additional experiments</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Experiment</th>
+      <th>Decides</th>
+      <th>Pass criterion</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>RS-X0</strong></td>
+      <td>Shape census over the real shapes graphs: closed shapes, path kinds, logical constraints, unbounded counts, targets, focus-node coverage of a sample ABox</td>
+      <td>RS-D1, compilable fraction</td>
+      <td>a stated fraction of instance data falls in the compilable fragment, agreed in advance</td>
+    </tr>
+    <tr>
+      <td><strong>RS-X1′</strong></td>
+      <td>Run the round-trip law on Appendix A before anything else</td>
+      <td>§5.1</td>
+      <td>passes after the R2RML and state-column fixes</td>
+    </tr>
+    <tr>
+      <td><strong>RS-X3′</strong></td>
+      <td>Replace RS-X3’s oracle with <code class="language-plaintext highlighter-rouge">tools/reference/eligibility</code>, bounded-exhaustive; prove empty-set behaviour in Isabelle (§10.2)</td>
+      <td>§8.5</td>
+      <td>identical outputs; gated lemmas green</td>
+    </tr>
+    <tr>
+      <td><strong>RS-X7</strong></td>
+      <td>TLA+/Quint models A–D, then history checking on PostgreSQL</td>
+      <td>RS-D11</td>
+      <td>no anomalies under the chosen discipline; predicted anomalies reproduced under the weaker one</td>
+    </tr>
+    <tr>
+      <td><strong>RS-X8</strong></td>
+      <td>Constraint preservation on mutated graphs, one mutation class per rule</td>
+      <td>§2.1</td>
+      <td>zero disagreements with pySHACL</td>
+    </tr>
+    <tr>
+      <td><strong>RS-X9</strong></td>
+      <td>Erasure model F plus a probe of every store in a staging deployment</td>
+      <td>RS-D14</td>
+      <td>no plaintext reachable after the stated bound</td>
+    </tr>
+    <tr>
+      <td><strong>RS-X10</strong></td>
+      <td>RLS bypass audit: views, owners, <code class="language-plaintext highlighter-rouge">SECURITY DEFINER</code>, Ontop’s connection</td>
+      <td>§5.4, the ADR-A54 claim in §15</td>
+      <td>no cross-tenant read as any application role</td>
+    </tr>
+    <tr>
+      <td><strong>RS-X2′</strong></td>
+      <td>RS-X2 with every compiled constraint, trigger, receipt and outbox write enabled</td>
+      <td>the write-path claim</td>
+      <td>measured write latency, not a single <code class="language-plaintext highlighter-rouge">UPDATE</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="12-prioritised-recommendations">12. Prioritised recommendations</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Priority</th>
+      <th>Action</th>
+      <th>Cost</th>
+      <th>Addresses</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>Fix and then run the round-trip law on Appendix A (subject map from <code class="language-plaintext highlighter-rouge">iri</code>; state and version columns inside or outside the law)</td>
+      <td>Hours</td>
+      <td>§5.1</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>Run the RS-X0 shape census before RS-D1</td>
+      <td>Hours–days</td>
+      <td>§2.2</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>Add the constraint-preservation law and its mutated-graph test</td>
+      <td>Small</td>
+      <td>§2.1, §7</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>Introduce the typed <code class="language-plaintext highlighter-rouge">decision3</code> IR; store and expose decisions as concepts, never NULL</td>
+      <td>Small</td>
+      <td>§2.4, §5.3</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>Prove the SQL encoding and quantifiers in Isabelle, including negative lemmas</td>
+      <td>Small</td>
+      <td>§10.2</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td>Test the SQL eligibility backend against the reference semantics, with the full concept-matching laws</td>
+      <td>Small–Medium</td>
+      <td>§4.1</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td>Fix the defective rules: M12, M14/M17 counts, M21, M24, M27, M30, M48, the concept table</td>
+      <td>Small each</td>
+      <td>§3, §4.2</td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td>Literal and range policy (value-space round trip), with SMT checks for ranges, templates and regexes</td>
+      <td>Small–Medium</td>
+      <td>§3, §4.5, §10.4</td>
+    </tr>
+    <tr>
+      <td>9</td>
+      <td>TLA+/Quint models A–D and history checking; decide RS-D11</td>
+      <td>Medium</td>
+      <td>§4.3, §4.4, §10.1</td>
+    </tr>
+    <tr>
+      <td>10</td>
+      <td>Alloy rule-level models, then per-compile translation validation</td>
+      <td>Medium</td>
+      <td>§10.3</td>
+    </tr>
+    <tr>
+      <td>11</td>
+      <td>Define the erasure boundary (RS-D14); model F</td>
+      <td>Medium</td>
+      <td>§4.4</td>
+    </tr>
+    <tr>
+      <td>12</td>
+      <td>RLS hardening and catalog drift check</td>
+      <td>Small</td>
+      <td>§5.4, §10.7</td>
+    </tr>
+    <tr>
+      <td>13</td>
+      <td>Specify the O2 feed and the O3 vocabulary synchronisation; models E and G</td>
+      <td>Medium</td>
+      <td>§8.1</td>
+    </tr>
+    <tr>
+      <td>14</td>
+      <td>Phased migrations from S2; drop-and-rebuild at S1</td>
+      <td>Medium</td>
+      <td>§6</td>
+    </tr>
+    <tr>
+      <td>15</td>
+      <td>Rule claims, digests covering definitions, coverage from <code class="language-plaintext highlighter-rouge">COMMENT ON</code></td>
+      <td>Small</td>
+      <td>§10.6</td>
+    </tr>
+    <tr>
+      <td>16</td>
+      <td>Re-estimate: M28 translation, concurrency and security tests, recurring migration cost, formal methods; define or drop the G columns</td>
+      <td>Small</td>
+      <td>§8.4</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Bottom line.</strong> The paper’s architecture is right, and its strategic judgement that PostgreSQL delivers natively what paper 2 needed a custom engine for is persuasive. But it states universal laws and plans to check them with fixed examples, and several of those laws are already false for its own rules and its own appendix. The remedy is not heavyweight. It needs:</p>
+<ul>
+  <li>a typed IR;</li>
+  <li>one more law (constraint preservation);</li>
+  <li>translation validation per compile in Alloy;</li>
+  <li>a short Isabelle extension;</li>
+  <li>a handful of SMT checks;</li>
+  <li>a set of small protocol models confirmed against real PostgreSQL.</li>
+</ul>
+
+<p>All of it fits within the formal-methods epic’s existing tracks for about 15% extra. The concurrency models give the largest return, and this paper is the right occasion to finally start rung T4.</p>

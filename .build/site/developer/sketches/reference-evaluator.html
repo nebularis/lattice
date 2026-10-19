@@ -1,0 +1,304 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="the-reference-evaluator-and-its-conformance-kit">The reference evaluator and its conformance kit</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/plans/formal-methods.html">formal-methods</a>, track B, and track E for its mechanisation.
+<strong>Status:</strong> sketch, 2026-10-06, revised after review
+(<a href="/developer/notes/formal-methods-review-response.html">response</a>). Nothing here is ratified.
+<strong>Parent:</strong> <a href="/developer/sketches/formal-methods.html">formal methods</a> §9. Reads with the
+<a href="/developer/sketches/evaluation-context.html">evaluation context sketch</a>, the <a href="/developer/sketches/nested-states-and-history.html">nested states sketch</a>,
+and the CCS plan’s C11a, C12 and C13.</p>
+
+<hr />
+
+<h2 id="1-the-problem">1. The problem</h2>
+
+<p>CCS C12 builds LATTICE’s runtime evaluator, and C13 builds relation plans in SPARQL. Both interpret
+semantics stated in prose. Without a reference they can only be compared with each other, and a
+shared misreading passes the parity gate.</p>
+
+<p><strong>The reference is written by hand, now, in Python</strong> (track B), with its semantics stated precisely
+in the literate READMEs. It will be wrong in places, and differential tests against the compilers
+will find them, which is the point. It becomes the specification that any later mechanisation
+formalises (track E), which is cheaper than mechanising prose. If the prover programme is abandoned,
+LATTICE keeps the reference and the parity fixed point.</p>
+
+<pre><code class="language-mermaid">flowchart LR
+    SP["Semantics stated in&lt;br/&gt;the literate READMEs"]
+    RE["Reference evaluator&lt;br/&gt;hand-written Python"]
+    ME["Mechanised reference&lt;br/&gt;(track E, if it proceeds)"]
+    GEN["Generated event logs&lt;br/&gt;from shapes and templates"]
+    KIT[("Conformance kit&lt;br/&gt;logs, expected outcomes,&lt;br/&gt;ledgers, records")]
+    RT["C12 runtime evaluator&lt;br/&gt;platform language"]
+    PL["C13 relation plans&lt;br/&gt;SPARQL"]
+    DIFF{"Agree?"}
+    SP --&gt; RE
+    RE -. "formalised from" .-&gt; ME
+    ME -. "differential partner" .-&gt; RE
+    GEN --&gt; RE --&gt; KIT
+    KIT --&gt; RT --&gt; DIFF
+    KIT --&gt; PL --&gt; DIFF
+</code></pre>
+
+<h2 id="2-what-is-specified">2. What is specified</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Part</th>
+      <th>Specification</th>
+      <th>Source</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>outcome</td>
+      <td>a value, Undetermined with a reason, or Denied with a reason. Every partial operation (division, conversion without a context, an operation on a negative quantity) maps to a reason the diagnostics vocabulary carries, never to an exception</td>
+      <td>evaluation context §3</td>
+    </tr>
+    <tr>
+      <td>environments</td>
+      <td><strong><code class="language-plaintext highlighter-rouge">DesignEnv</code></strong> (case facts as stated, pinned scheme editions, conversion contexts, a hypothetical state for per-state comparisons) and <strong><code class="language-plaintext highlighter-rouge">RunEnv</code></strong>, which extends it with positions and records. A design-time computation receives only <code class="language-plaintext highlighter-rouge">DesignEnv</code></td>
+      <td>evaluation context §7, §8</td>
+    </tr>
+    <tr>
+      <td>ledger</td>
+      <td>accounts on a tree, balances, debits and credits by path</td>
+      <td>evaluation context §5</td>
+    </tr>
+    <tr>
+      <td>log</td>
+      <td>read sets, provenance, diagnostics</td>
+      <td>evaluation context §3</td>
+    </tr>
+    <tr>
+      <td>combinators</td>
+      <td>the closed algebra, with a denotation each, and <strong>a declared rounding rule and residual-allocation rule</strong> wherever a value is divided</td>
+      <td>evaluation context §4</td>
+    </tr>
+    <tr>
+      <td>lifting</td>
+      <td>effects as the only producers of ledger changes</td>
+      <td>evaluation context §6</td>
+    </tr>
+    <tr>
+      <td>environments of composition</td>
+      <td>sequential (bind, priority order) and parallel (applicative with a merge)</td>
+      <td>evaluation context §7</td>
+    </tr>
+    <tr>
+      <td>strata</td>
+      <td>the order inside a pass</td>
+      <td>evaluation context §8</td>
+    </tr>
+    <tr>
+      <td>macrostep</td>
+      <td>Behaviour’s step relation over configurations, with nested states and history</td>
+      <td>nested states §2 to §7</td>
+    </tr>
+    <tr>
+      <td>relations</td>
+      <td>arising, due, breach, exceptions, gating</td>
+      <td>CCS sketch §5, Instrument README</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The split of environments is checked by the architecture check: a new field added to <code class="language-plaintext highlighter-rouge">DesignEnv</code>
+that holds runtime-derived data fails CI.</p>
+
+<h2 id="3-what-must-hold">3. What must hold</h2>
+
+<p>Property tests in track B, theorems in track E where it proceeds.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Property</th>
+      <th>Gives</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>RE1</td>
+      <td>the monad laws for the stack, and the applicative laws for the parallel environment</td>
+      <td>refactoring and compilation are safe</td>
+    </tr>
+    <tr>
+      <td>RE2</td>
+      <td>a pass commits all its ledger changes or none</td>
+      <td>atomicity</td>
+    </tr>
+    <tr>
+      <td>RE3</td>
+      <td>a computation given only <code class="language-plaintext highlighter-rouge">DesignEnv</code> cannot observe a record or change the ledger</td>
+      <td>B8, by construction</td>
+    </tr>
+    <tr>
+      <td>RE4</td>
+      <td>the ledger at p+1 is a function of the ledger at p and the pass at p+1</td>
+      <td>determinism across positions (B3)</td>
+    </tr>
+    <tr>
+      <td>RE5</td>
+      <td>the sequential and parallel environments agree when no two proposals touch one account</td>
+      <td>the environment matters only under contention</td>
+    </tr>
+    <tr>
+      <td>RE6</td>
+      <td><code class="language-plaintext highlighter-rouge">split</code> and <code class="language-plaintext highlighter-rouge">proRata</code> conserve the whole under the declared rounding and residual rule, and proportional merge is order-independent and never over-draws <strong>with that rule</strong></td>
+      <td>merge safety where rounding applies, which it otherwise breaks</td>
+    </tr>
+    <tr>
+      <td>RE7</td>
+      <td>every macrostep preserves B9 to B11 and terminates under B10</td>
+      <td>Behaviour’s laws hold for every run</td>
+    </tr>
+    <tr>
+      <td>RE8</td>
+      <td>every outcome is the denotation of the instrument’s relations at that position</td>
+      <td>the evaluator means what Instrument says</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>RE6 is the property most likely to fail, and the first one track E should mechanise.</p>
+
+<h2 id="4-the-conformance-kit">4. The conformance kit</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Part</th>
+      <th>Content</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>inputs</td>
+      <td>an instrument configuration, as canonical typed JSON and as Turtle, and a stimulus log</td>
+    </tr>
+    <tr>
+      <td>expected</td>
+      <td>per position: relation outcomes, occupancies, ledger balances, records with their evidence, diagnostics</td>
+    </tr>
+    <tr>
+      <td>provenance</td>
+      <td>the semantics’ digest and the reference’s commit that produced the expectations</td>
+    </tr>
+    <tr>
+      <td>generation</td>
+      <td>event logs from the shapes and the template library, with metamorphic variants: permuted independent events, renamed identifiers, split and merged passes where the semantics allows</td>
+    </tr>
+    <tr>
+      <td>coverage</td>
+      <td>every Behaviour law, every Instrument law, every template, every combinator, listed with the logs that exercise it</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The kit is data. The runtime evaluator, whatever its language, runs it and compares. So do the C13
+relation plans, run on a store.</p>
+
+<h2 id="5-where-the-reference-runs">5. Where the reference runs</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Use</th>
+      <th>How</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>generating the kit</td>
+      <td>a job, per change to the semantics</td>
+    </tr>
+    <tr>
+      <td>bounded exploration and generated traces for instance properties</td>
+      <td>a job (<a href="/developer/sketches/instrument-assurance.html">instrument assurance sketch</a> §4, §6)</td>
+    </tr>
+    <tr>
+      <td>validating generated model-checker inputs</td>
+      <td>runs the same logs as the model (<a href="/developer/sketches/instrument-assurance.html">instrument assurance sketch</a> §4.1)</td>
+    </tr>
+    <tr>
+      <td>replaying a counterexample</td>
+      <td>a local command through <code class="language-plaintext highlighter-rouge">mise</code></td>
+    </tr>
+    <tr>
+      <td>live evaluation</td>
+      <td>never. The runtime evaluator does that</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>If track F measures the Python reference as too slow for exploration, a native build of the same
+semantics is a track F decision, held to the Python reference by the kit.</p>
+
+<h2 id="6-effect-on-ccs">6. Effect on CCS</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Slice</th>
+      <th>Change</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>C11a</td>
+      <td>its laws gain precise statements. Its worked cases become the first kit entries</td>
+    </tr>
+    <tr>
+      <td>C12</td>
+      <td>builds the runtime evaluator against the kit. Its mandatory probes (B3, B6) become kit entries that must fail when the runtime is deliberately broken</td>
+    </tr>
+    <tr>
+      <td>C13</td>
+      <td>relation plans are checked against the kit on a store</td>
+    </tr>
+    <tr>
+      <td>C13a</td>
+      <td>its satisfiability encoding is checked against the reference’s denotation</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>None of this delays CCS. Until the reference exists, C12 proceeds as planned, and the kit applies
+when it arrives.</p>
+
+<h2 id="7-open-questions">7. Open questions</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Question</th>
+      <th>Leaning</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>RE-Q1</td>
+      <td>How many positions should a generated log span?</td>
+      <td>the longest template window plus margin, recorded as the kit’s bound</td>
+    </tr>
+    <tr>
+      <td>RE-Q2</td>
+      <td>Does the kit include the Datalog backend?</td>
+      <td>yes, when it exists, under the normative semantics of FM-D11</td>
+    </tr>
+    <tr>
+      <td>RE-Q3</td>
+      <td>Who owns the kit’s expected outcomes when the semantics changes?</td>
+      <td>the semantics. The kit is regenerated and reviewed as a diff</td>
+    </tr>
+    <tr>
+      <td>RE-Q4</td>
+      <td>Which residual-allocation rule is the default?</td>
+      <td>largest remainder, with ties broken by a total order of accounts, declared per combinator use</td>
+    </tr>
+  </tbody>
+</table>

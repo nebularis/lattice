@@ -1,17 +1,21 @@
+---
+published: true
+---
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
 # ADR-A121: The repository catalogue
 
-**Status:** Accepted, 2026-10-17
+**Status:** Published, 2026-10-19. Accepted 2026-10-17.
+**Described in:** [Repository catalogue](../../../repository-catalogue.md)
 **Date:** 2026-10-16
 **Supersedes:** none
-**Related:** [ADR-A01](ADR-A01-layer-dependency-order.md) (layer order),
-[ADR-A29](ADR-A29-repository-toolchain-and-environment-boundary.md) (`mise`),
-[ADR-A77](ADR-A77-repository-topology-and-documentation-governance.md) (topology),
-[ADR-A88](ADR-A88-ontology-import-resolution-for-consumers.md) (the XML catalog),
-[ADR-A117](ADR-A117-agent-guidance-and-skill-library.md) (agent guidance),
+**Related:** [ADR-A01](https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-A01-layer-dependency-order.md) (layer order),
+[ADR-A29](https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-A29-repository-toolchain-and-environment-boundary.md) (`mise`),
+[ADR-A77](https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md) (topology),
+[ADR-A88](https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-A88-ontology-import-resolution-for-consumers.md) (the XML catalog),
+[ADR-A117](https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-A117-agent-guidance-and-skill-library.md) (agent guidance),
 [ADR-A126](ADR-A126-literate-specification-layout-and-grammar.md) (README layout),
-[ADR-A127](ADR-A127-published-architecture-decisions.md) (published decisions and the site)
+[ADR-A127](https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-A127-published-architecture-decisions.md) (published decisions and the site)
 
 ## Context
 

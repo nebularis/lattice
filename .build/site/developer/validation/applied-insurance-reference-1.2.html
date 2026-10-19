@@ -1,0 +1,99 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-air-12-shared-contracts">Validation Pack: AIR-1.2, shared contracts</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/applied-insurance-reference.html"><code class="language-plaintext highlighter-rouge">applied-insurance-reference</code></a>
+<strong>Machine:</strong> S (Copilot Business). <strong>Branch:</strong> <code class="language-plaintext highlighter-rouge">air/1.2-shared-contracts</code>
+<strong>Plan and test cases:</strong> <a href="/developer/plans/applied-insurance-reference-phase-1.html">Phase 1 plan</a> (AIR-1.2)
+<strong>Decisions:</strong> ADR-A98 (decisions 1, 5, 6), ADR-A102</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>Every classification the epic needs has one <code class="language-plaintext highlighter-rouge">voc:SchemeContract</code> at the lowest level of sharing that covers its users, the liability role types exist as <code class="language-plaintext highlighter-rouge">pty:Role</code> individuals, and the cross-domain module imports nothing from a domain.</p>
+
+<h2 id="test-cases">Test cases</h2>
+
+<p>The table in the plan section above. Each row’s result is recorded under Results at
+verification.</p>
+
+<h2 id="one-command">One command</h2>
+
+<p>Run from the repository root on machine R, after <code class="language-plaintext highlighter-rouge">mise run build:ontology-catalog</code> and <code class="language-plaintext highlighter-rouge">mise run build:ontology-releases</code>.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:ontology-catalog <span class="o">&amp;&amp;</span> mise run check:ontology-versioning
+</code></pre></div></div>
+
+<h2 id="artefacts-to-inspect">Artefacts to inspect</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">ontology/applied/classification/</code> and <code class="language-plaintext highlighter-rouge">ontology/applied/insurance/common/</code>: both documents of each, and their READMEs.</li>
+  <li><code class="language-plaintext highlighter-rouge">tools/test_applied_shared_contracts.py</code>.</li>
+</ul>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<p>No reference editions are bound (AIR-2.2 onwards). The loss event (AIR-4.4) and the liability direction scheme (Phase 5) come later.</p>
+
+<h2 id="handoff">Handoff</h2>
+
+<p>Written by the building machine when the work is committed. S could not run the tests, so R runs them first.</p>
+
+<ul>
+  <li><strong>Built:</strong> <code class="language-plaintext highlighter-rouge">ontology/applied/classification/{spec/classification.ttl,vocab/classification-vocab.ttl,README.md}</code> (three no-domain properties, three scheme contracts, no <code class="language-plaintext highlighter-rouge">voc:boundScheme</code>). <code class="language-plaintext highlighter-rouge">ontology/applied/insurance/common/{spec/common.ttl,vocab/common-vocab.ttl,README.md}</code> (six properties, six contracts, the four ADR-A102 liability roles as <code class="language-plaintext highlighter-rouge">pty:Role</code> <code class="language-plaintext highlighter-rouge">owl:NamedIndividual</code>s declared the same way <code class="language-plaintext highlighter-rouge">ontology/party/vocab/party-vocab.ttl</code> declares <code class="language-plaintext highlighter-rouge">pty:Obligor</code>/<code class="language-plaintext highlighter-rouge">pty:Obligee</code>). <code class="language-plaintext highlighter-rouge">tools/test_applied_shared_contracts.py</code> (one test per plan row, AIR12-01 to AIR12-06). Edited <code class="language-plaintext highlighter-rouge">ontology/applied/README.md</code> (<code class="language-plaintext highlighter-rouge">classification/</code> now present) and <code class="language-plaintext highlighter-rouge">ontology/applied/insurance/domain-README.md</code> (<code class="language-plaintext highlighter-rouge">common/</code> now built) and the applied-insurance row of <code class="language-plaintext highlighter-rouge">docs/architecture/ontology-architecture.md</code> §3, all per the plan’s own edit list. Neither module has a <code class="language-plaintext highlighter-rouge">shapes/</code> directory: neither has a shape of its own, per ADR-A98 decision 3 and the plan’s own note that Vocabulary’s and Party’s shapes already cover the contracts and roles.</li>
+  <li><strong>Not run:</strong> <code class="language-plaintext highlighter-rouge">mise run check:ontology-catalog</code> (which runs <code class="language-plaintext highlighter-rouge">tools/test_applied_shared_contracts.py</code>) and <code class="language-plaintext highlighter-rouge">mise run check:ontology-versioning</code> — no runtime on this machine. AIR12-01 as written asks for import-closure loading through <code class="language-plaintext highlighter-rouge">tools/ontology_catalog.py</code>; the test instead checks each document’s own <code class="language-plaintext highlighter-rouge">owl:imports</code> set against the pinned versions, the same proxy AIR-2.1’s test used before its catalog stubs existed, since the root catalog doesn’t know about these four new documents until <code class="language-plaintext highlighter-rouge">mise run build:ontology-catalog</code> runs.</li>
+  <li><strong>Check first:</strong> a sequencing gap, discovered while writing <code class="language-plaintext highlighter-rouge">common/</code>’s README, not fixed here since it’s outside this slice’s edit list: ADR-A98 decision 5 says <code class="language-plaintext highlighter-rouge">peril/</code> imports <code class="language-plaintext highlighter-rouge">common/</code>, but <code class="language-plaintext highlighter-rouge">peril/</code>’s spec was built in AIR-2.1, before <code class="language-plaintext highlighter-rouge">common/</code> existed, so it does not import it yet. Recorded as a note in <code class="language-plaintext highlighter-rouge">common/README.md</code>’s “Dependencies” section and in the applied-insurance row of <code class="language-plaintext highlighter-rouge">ontology-architecture.md</code>. Whoever builds AIR-2.2 (or an earlier fix-up slice) needs to add the import to <code class="language-plaintext highlighter-rouge">ontology/applied/insurance/peril/spec/peril.ttl</code> and decide whether any <code class="language-plaintext highlighter-rouge">icm:</code> property gets a <code class="language-plaintext highlighter-rouge">prl:</code>-prefixed specialising sub-property at that point.</li>
+  <li><strong>Deviations from the plan:</strong> none identified.</li>
+</ul>
+
+<h2 id="results">Results</h2>
+
+<p>Run on machine R, 2026-09-26, on <code class="language-plaintext highlighter-rouge">air/1.2-shared-contracts</code> after its rebase onto <code class="language-plaintext highlighter-rouge">main</code>
+(AIR-3.2), which was clean.</p>
+
+<p>S’s own AIR12-06 caught one defect, fixed on R: the classification spec’s <code class="language-plaintext highlighter-rouge">rdfs:comment</code> used
+<code class="language-plaintext highlighter-rouge">aeo:peril rdfs:subPropertyOf icm:peril</code> as its example, an insurance term in the cross-domain
+module. It now uses a lending module’s <code class="language-plaintext highlighter-rouge">collateralTerritory rdfs:subPropertyOf cls:territory</code>.
+The README’s example, which also illustrated specialisation with an <code class="language-plaintext highlighter-rouge">icm:</code> property rather than
+a <code class="language-plaintext highlighter-rouge">cls:</code> one, is replaced the same way.</p>
+
+<p>AIR12-01 checks each document’s pinned imports by name. Resolution of the full closure through
+the catalog is covered by <code class="language-plaintext highlighter-rouge">mise run check:ontology-catalog</code>, which fails on any unresolved
+import, so the test is kept as S wrote it.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Check</th>
+      <th>Result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">mise run build:ontology-catalog</code></td>
+      <td>root catalog and four stub catalogs written</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">mise run build:ontology-releases</code></td>
+      <td>four rows. Tags to create at merge: <code class="language-plaintext highlighter-rouge">applied-classification-v0.1.0</code>, <code class="language-plaintext highlighter-rouge">applied-classification-vocab-v0.1.0</code>, <code class="language-plaintext highlighter-rouge">insurance-common-v0.1.0</code>, <code class="language-plaintext highlighter-rouge">insurance-common-vocab-v0.1.0</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:ontology-catalog</code></td>
+      <td>84 tool tests passed (7 in this slice), catalog consistent, every import resolves</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:ontology-versioning</code></td>
+      <td>35 in-scope documents, no unbumped changes against HEAD or <code class="language-plaintext highlighter-rouge">main</code>, every version listed</td>
+    </tr>
+    <tr>
+      <td>AIR12-01 to AIR12-06</td>
+      <td>pass, AIR12-06 after the fix above</td>
+    </tr>
+    <tr>
+      <td>probe</td>
+      <td>removing <code class="language-plaintext highlighter-rouge">voc:constrainsProperty</code> from <code class="language-plaintext highlighter-rouge">icm-voc:PerilContract</code> fails AIR12-02</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>S’s handoff flags that <code class="language-plaintext highlighter-rouge">peril/</code> does not yet import <code class="language-plaintext highlighter-rouge">common/</code> (ADR-A98 decision 5), because it
+was built first. That is carried into the AIR-2.2 brief.</p>

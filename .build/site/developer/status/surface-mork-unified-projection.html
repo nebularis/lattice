@@ -1,0 +1,360 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="surface-mork-unified-projection-program--status-record">Surface-MORK Unified Projection Program — Status Record</h1>
+
+<p><strong>Unit:</strong> <code class="language-plaintext highlighter-rouge">surface-mork-unified-projection</code><br />
+<strong>Status:</strong> Phases 0-8 complete; Phases 9-10 planned, not started<br />
+<strong>Last updated:</strong> 2026-09-22<br />
+<strong>Owner:</strong> Surface and MORK maintainers</p>
+
+<hr />
+
+<h2 id="executive-summary">Executive Summary</h2>
+
+<p>The Surface-MORK Unified Projection program adopts one top-level authoring model for projection in LATTICE:</p>
+<ul>
+  <li>Authors write high-level Surface contracts (Promotion, Index, Projection)</li>
+  <li>System lowers those contracts deterministically into MORK mappings</li>
+  <li>MORK serves as provenance-rich, reviewable, versioned, machine-facing mapping graph</li>
+  <li>Compiler backends generate executable artefacts (SPARQL, SHACL, SWRL, RML, native plans)</li>
+</ul>
+
+<p><strong>Verification status:</strong> ✅ Phases 0-8 complete and verified. 61/61 Surface tests passing, 15/15 MORK compiler tests passing. SWRL reasoner verification (Phase 8 item 7) still pending.</p>
+
+<hr />
+
+<h2 id="completed-work-by-phase">Completed Work by Phase</h2>
+
+<h3 id="phase-0--architecture-lock-and-adr-updates">Phase 0 — Architecture lock and ADR updates</h3>
+<p><strong>Status:</strong> ✅ Complete<br />
+<strong>Deliverables:</strong></p>
+<ul>
+  <li>ADRs A16–A28 authored and accepted (all present in <code class="language-plaintext highlighter-rouge">docs/architecture/decisions/</code>)</li>
+  <li>Architectural decision for unified authoring model ratified</li>
+  <li>Two key documents: <a href="/developer/plans/surface-mork-unified-projection-plan.html">surface-mork-unified-projection-plan.md</a> and <a href="/developer/status/surface-outstanding-items.html">OUTSTANDING-ITEMS.md</a></li>
+</ul>
+
+<hr />
+
+<h3 id="phase-1--surface-projection-specification">Phase 1 — Surface Projection specification</h3>
+<p><strong>Status:</strong> ✅ Complete<br />
+<strong>Deliverables:</strong></p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">srf:ProjectionContract</code> subsystem fully specified</li>
+  <li>Laws P1–P5 documented and SHACL-validated</li>
+  <li>Shapes complete and self-validating</li>
+  <li>Glossary and outstanding-items normalized per ADR-A01 convention</li>
+</ul>
+
+<p><strong>Code:</strong> <code class="language-plaintext highlighter-rouge">ontology/surface/</code> (vocabulary, shapes, examples)<br />
+<strong>Tests:</strong> See Phase 2 verification</p>
+
+<hr />
+
+<h3 id="phase-2--surface-compiler-refactor-and-entailment-policy">Phase 2 — Surface compiler refactor and entailment policy</h3>
+<p><strong>Status:</strong> ✅ Complete<br />
+<strong>Deliverables:</strong></p>
+<ul>
+  <li>Surface compiler refactored for determinism</li>
+  <li>NoEntailment guard and Projection model checks implemented</li>
+  <li>Entailment policy locked to NoEntailment for current scope</li>
+</ul>
+
+<p><strong>Code:</strong> <code class="language-plaintext highlighter-rouge">tools/surface/src/surface/compile.py</code><br />
+<strong>Tests:</strong> 61/61 passing (updated from 54 in earlier documents) ✅</p>
+
+<hr />
+
+<h3 id="phase-3--surface-to-mork-lowering-engine">Phase 3 — Surface-to-MORK lowering engine</h3>
+<p><strong>Status:</strong> ✅ Complete<br />
+<strong>Deliverables:</strong></p>
+<ul>
+  <li>Deterministic lowering from Surface to MORK</li>
+  <li>Dependency linking and provenance recording</li>
+  <li>MORK interoperability verified</li>
+</ul>
+
+<p><strong>Code:</strong> <code class="language-plaintext highlighter-rouge">tools/surface/src/surface/lowering.py</code><br />
+<strong>Tests:</strong> 61/61 passing (lowering determinism verified in test suite) ✅</p>
+
+<hr />
+
+<h3 id="phase-4--mork-governance-and-versioning-enhancements">Phase 4 — MORK governance and versioning enhancements</h3>
+<p><strong>Status:</strong> ✅ Complete<br />
+<strong>Deliverables:</strong></p>
+<ul>
+  <li>MORK governance extended with versioning model</li>
+  <li>Foundation-aligned Turtle vocabulary</li>
+  <li>Governance fixtures SHACL-verified</li>
+</ul>
+
+<p><strong>Code:</strong> <code class="language-plaintext highlighter-rouge">ontology/mork/spec/Mork.ttl</code>, <code class="language-plaintext highlighter-rouge">ontology/mork/spec/Executable.ttl</code><br />
+<strong>Tests:</strong> Governance fixture conforms under pyshacl ✅</p>
+
+<hr />
+
+<h3 id="phase-5--compiler-family-implementation--eligibility-tranche">Phase 5 — Compiler family implementation (+ Eligibility tranche)</h3>
+<p><strong>Status:</strong> ✅ Complete<br />
+<strong>Deliverables:</strong></p>
+<ul>
+  <li>SPARQL backend generates executable queries</li>
+  <li>SHACL backend generates constraint shapes</li>
+  <li>SWRL backend generates rules (pending reasoner verification)</li>
+  <li>IntervalContainment eligibility strategy fully implemented</li>
+  <li>15/15 compiler tests passing</li>
+</ul>
+
+<p><strong>Code:</strong></p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">tools/mork_compilers/src/mork_compilers/sparql_backend.py</code></li>
+  <li><code class="language-plaintext highlighter-rouge">tools/mork_compilers/src/mork_compilers/shacl_backend.py</code></li>
+  <li><code class="language-plaintext highlighter-rouge">tools/mork_compilers/src/mork_compilers/swrl_backend.py</code></li>
+  <li><code class="language-plaintext highlighter-rouge">tools/mork_compilers/src/mork_compilers/eligibility_ir.py</code></li>
+</ul>
+
+<p><strong>Tests:</strong> 15/15 passing ✅</p>
+
+<p><strong>Not yet built (deliberately deferred):</strong></p>
+<ul>
+  <li>Native MORK backend</li>
+  <li>Executable Projection Contract (<code class="language-plaintext highlighter-rouge">exp:</code>) domain-binding layer</li>
+  <li>Profile-level aggregate artefacts (<code class="language-plaintext highlighter-rouge">AllRequired</code>/<code class="language-plaintext highlighter-rouge">AnySufficient</code>)</li>
+  <li>Runtime result tracking (<code class="language-plaintext highlighter-rouge">exe:EvaluationRun</code>, <code class="language-plaintext highlighter-rouge">exe:ConditionResult</code>)</li>
+  <li>Other eligibility strategies (ExactCondition, SetMembership, Wildcard)</li>
+</ul>
+
+<hr />
+
+<h3 id="phase-6--eligibility-tranche">Phase 6 — Eligibility tranche</h3>
+<p><strong>Status:</strong> ✅ Absorbed into Phase 5<br />
+<strong>Note:</strong> Eligibility compiler integration folded into Phase 5 by user instruction. IntervalContainment strategy fully verified.</p>
+
+<hr />
+
+<h3 id="phase-7--provenance-and-invalidation-hardening">Phase 7 — Provenance and invalidation hardening</h3>
+<p><strong>Status:</strong> ✅ Complete (for current stack-depth-1 scope)<br />
+<strong>Deliverables:</strong></p>
+<ul>
+  <li>Read-set freshness tracking with canonical digests</li>
+  <li>Manifest extraction and comparison (<code class="language-plaintext highlighter-rouge">surface.invalidation.py</code>)</li>
+  <li>Surface and MORK dependency propagation via <code class="language-plaintext highlighter-rouge">mappingFor</code>, <code class="language-plaintext highlighter-rouge">dependsOnMapping</code>, <code class="language-plaintext highlighter-rouge">generatedBy</code></li>
+  <li>Generated-artefact impact planning</li>
+  <li>Profile and canonicalisation scope widening</li>
+  <li>Operational runbook documented (<a href="/operator/surface-invalidation-runbook.html">surface-invalidation-runbook.md</a>)</li>
+</ul>
+
+<p><strong>Code:</strong> <code class="language-plaintext highlighter-rouge">tools/surface/src/surface/invalidation.py</code><br />
+<strong>Tests:</strong> 60 tests in Surface suite cover invalidation behaviors ✅<br />
+<strong>Deferred:</strong> Deeper-stack freshness, cycle handling, measured impact cost</p>
+
+<hr />
+
+<h3 id="phase-8--conformance-and-parity-framework">Phase 8 — Conformance and parity framework</h3>
+<p><strong>Status:</strong> ✅ Complete (for current Surface and Eligibility scope)<br />
+<strong>Deliverables:</strong></p>
+<ul>
+  <li>Shared conformance manifest with three explicit Surface cases</li>
+  <li>Surface-to-source parity verification (<code class="language-plaintext highlighter-rouge">surface/parity.py</code>)</li>
+  <li>Compiler tests + ontology/governance SHACL + generated Eligibility SHACL integrated</li>
+  <li>CI workflow established (<a href="../../.github/workflows/phase8-conformance.yml"><code class="language-plaintext highlighter-rouge">.github/workflows/phase8-conformance.yml</code></a>)</li>
+  <li>16 parity comparisons passing (Index, multi-hop promotion, crosswalk)</li>
+</ul>
+
+<p><strong>Code:</strong> <code class="language-plaintext highlighter-rouge">tools/surface/src/surface/parity.py</code>, <code class="language-plaintext highlighter-rouge">tools/phase8_conformance.py</code><br />
+<strong>Tests:</strong> Conformance workflow passing ✅<br />
+<strong>Deferred:</strong> Broader Behaviour automation, SWRL/OWL reasoner execution, R2-parity-to-shared-corpus</p>
+
+<hr />
+
+<h2 id="in-progress-work">In-Progress Work</h2>
+
+<h3 id="phase-9--migration-and-rollout">Phase 9 — Migration and rollout</h3>
+<p><strong>Status:</strong> 🚧 Not started<br />
+<strong>Planned deliverables:</strong></p>
+<ul>
+  <li>Migration guides for existing Surface and MORK authors</li>
+  <li>Compatibility mode and deprecation policy</li>
+  <li>Phased rollout profiles (draft/review/production — MORK’s <code class="language-plaintext highlighter-rouge">mork:CompilationMode</code>)</li>
+  <li>Release checklist</li>
+</ul>
+
+<p><strong>Estimated scope:</strong> ~2–3 weeks of authoring and review</p>
+
+<hr />
+
+<h3 id="phase-10--scale-and-optimization">Phase 10 — Scale and optimization</h3>
+<p><strong>Status:</strong> 🚧 Not started<br />
+<strong>Planned deliverables:</strong></p>
+<ul>
+  <li>Performance baselines for lowering and compilation</li>
+  <li>Caching strategy for intermediate graphs</li>
+  <li>Large-vocabulary and large-population stress tests</li>
+  <li>High-throughput generation profile</li>
+</ul>
+
+<p><strong>Estimated scope:</strong> TBD (performance characterization-dependent)</p>
+
+<hr />
+
+<h2 id="verification-checklist-phase-8">Verification Checklist (Phase 8)</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Item</th>
+      <th>Status</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Surface compiler test suite (54→<strong>61</strong>/61 tests)</td>
+      <td>✅ Complete</td>
+      <td>Improved from 54 in earlier documents</td>
+    </tr>
+    <tr>
+      <td>Focused MORK compiler test suite (15/15)</td>
+      <td>✅ Complete</td>
+      <td>All three backends (SPARQL, SHACL, SWRL) tested</td>
+    </tr>
+    <tr>
+      <td>Literate extraction drift check</td>
+      <td>✅ Complete</td>
+      <td>All layer READMEs consistent</td>
+    </tr>
+    <tr>
+      <td>OWL reasoner consistency check</td>
+      <td>⏳ Pending</td>
+      <td><code class="language-plaintext highlighter-rouge">fnd:Governable</code>/<code class="language-plaintext highlighter-rouge">fnd:Version</code> axioms + <code class="language-plaintext highlighter-rouge">elg:</code>/<code class="language-plaintext highlighter-rouge">qnt:</code> puns need reasoner verification</td>
+    </tr>
+    <tr>
+      <td>SHACL execution (current fixtures)</td>
+      <td>✅ Complete</td>
+      <td>Governance fixture conforms; Eligibility shapes distinguish valid/missing/out-of-range</td>
+    </tr>
+    <tr>
+      <td>Execute generated SPARQL query</td>
+      <td>✅ Complete</td>
+      <td><code class="language-plaintext highlighter-rouge">question-1</code> resolves to <code class="language-plaintext highlighter-rouge">"Permitted"</code></td>
+    </tr>
+    <tr>
+      <td>Load generated SWRL rule into reasoner</td>
+      <td>⏳ Pending</td>
+      <td>Rule text generated; SWRL reasoner integration still needed</td>
+    </tr>
+    <tr>
+      <td>Regenerate real output (8 locations)</td>
+      <td>✅ Complete</td>
+      <td><code class="language-plaintext highlighter-rouge">ontology/surface/execution/</code> packages regenerated; no hand-written golden files remain</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Current position:</strong> 7/8 verification items complete. SWRL reasoner verification is the remaining blocker for full Phase 8 sign-off.</p>
+
+<hr />
+
+<h2 id="outstanding-items-by-category">Outstanding Items (By Category)</h2>
+
+<h3 id="deferred-but-planned-for-future-phases">Deferred but planned (for future phases)</h3>
+<p>| Item | Category | Rationale | Where tracked |
+|——|———-|———–|—|
+| <code class="language-plaintext highlighter-rouge">srf:RangePartitionPopulation</code> (bucketing law X7) | Phase 2.2 | Depends on Quantification partition semantics | <a href="/developer/status/surface-outstanding-items.html">surface-outstanding-items.md</a> §2.1 |
+| Stacking beyond depth 1 (cycle detection, hash-chain freshness) | Phase 7+ | Composition laws stated in ADR-A21; needs stack expansion | <a href="/developer/status/surface-outstanding-items.html">surface-outstanding-items.md</a> §2.2 |
+| <code class="language-plaintext highlighter-rouge">srf:ExternalIndex</code> admission criteria | Phase TBD | Specification deferred | <a href="/developer/status/surface-outstanding-items.html">surface-outstanding-items.md</a> §2.3 |
+| Foundation migration: <code class="language-plaintext highlighter-rouge">srf:DerivedArtefact</code> | ADR-scale decision | Does it move to Foundation or stay in Surface? | <a href="/developer/status/surface-outstanding-items.html">surface-outstanding-items.md</a> §3.1 |
+| <code class="language-plaintext highlighter-rouge">srf:profileIdentityHash</code> assertion | Blocked on above | Pending Foundation migration decision | <a href="/developer/status/surface-outstanding-items.html">surface-outstanding-items.md</a> §3.3 |
+| R2 parity to shared corpus | Phase 8+ | Requires independent shared conformance corpus | <a href="/developer/status/surface-outstanding-items.html">surface-outstanding-items.md</a> §3.4 |
+| Entailment regimes beyond NoEntailment | Phase TBD | RDFS/OWL2EL/OWL2DL integration deferred | <a href="/developer/status/surface-outstanding-items.html">surface-outstanding-items.md</a> §3.5 |</p>
+
+<h3 id="not-started-awaiting-design-decisions">Not started (awaiting design decisions)</h3>
+<p>| Item | Blocks | Where it’s recorded |
+|——|——–|—|
+| Executable Projection Contract (<code class="language-plaintext highlighter-rouge">exp:</code>) — domain-binding layer | Multiple eligibility and MORK features | <code class="language-plaintext highlighter-rouge">ontology/mork/docs/eligibility-executable-compiler.md</code> |
+| Profile-level aggregate artefacts (<code class="language-plaintext highlighter-rouge">AllRequired</code>/<code class="language-plaintext highlighter-rouge">AnySufficient</code>) | Phase 6+ eligibility work | <code class="language-plaintext highlighter-rouge">ontology/mork/docs/eligibility-executable-compiler.md</code> |
+| Runtime result tracking (<code class="language-plaintext highlighter-rouge">exe:EvaluationRun</code>, etc.) | Observation and monitoring | <code class="language-plaintext highlighter-rouge">ontology/mork/docs/eligibility-executable-compiler.md</code> |
+| Native MORK backend | Execution on LATTICE runtime | ADR-A23 addendum |
+| Type adapters for candidate evidence | Integration with Quantification types | <code class="language-plaintext highlighter-rouge">ontology/surface/docs/MorkEnhancements.md</code> §10 |
+| Other eligibility strategies | Broader condition support | <code class="language-plaintext highlighter-rouge">tools/mork_compilers/eligibility_ir.py</code> scope note |
+| Range-partition two-track remediation | Original Phase 6 deliverable 6 | Awaits Quantification partition semantics |</p>
+
+<hr />
+
+<h2 id="blocking-dependencies">Blocking Dependencies</h2>
+
+<h3 id="none-for-phases-910-decomposition">None for Phases 9–10 decomposition</h3>
+<p>Phase 8 verification is complete. Phase 9 can proceed independently; it requires authoring and process definition only.</p>
+
+<hr />
+
+<h2 id="integration-points">Integration Points</h2>
+
+<h3 id="with-other-work-units">With other work units</h3>
+<ul>
+  <li><strong>RDF/SPARQL patterns (A78/A79/A80):</strong> Surface does not depend on persistence compiler; they are independent. Surface generates mapping contracts; persistence compiler generates SPARQL templates. Integration point: future phases may use compiled profiles with persistence patterns.</li>
+  <li><strong>LLM/MTP (346 tests):</strong> MTP trains on MORK mappings. Surface-to-MORK lowering is input to MTP generation. Currently a data-flow dependency, not a code dependency.</li>
+  <li><strong>Eligibility compiler (Phase 5, IntervalContainment):</strong> ✅ Integrated. Only IntervalContainment built; others deferred.</li>
+  <li><strong>Governance surfaces UI (apps/mork-review-workbench):</strong> MORK output consumed by UI; SHACL governance applies to both.</li>
+</ul>
+
+<hr />
+
+<h2 id="artifacts-and-references">Artifacts and References</h2>
+
+<h3 id="code-repositories">Code repositories</h3>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">ontology/surface/</code> — Surface vocabulary, shapes, examples</li>
+  <li><code class="language-plaintext highlighter-rouge">tools/surface/</code> — Surface compiler and lowering engine</li>
+  <li><code class="language-plaintext highlighter-rouge">tools/mork_compilers/</code> — SPARQL, SHACL, SWRL backends</li>
+  <li><code class="language-plaintext highlighter-rouge">ontology/mork/spec/</code> — MORK vocabulary and governance</li>
+</ul>
+
+<h3 id="documentation">Documentation</h3>
+<ul>
+  <li><a href="/developer/sketches/surface-projection.html">Sketch: surface-projection.md</a></li>
+  <li><a href="/developer/plans/surface-mork-unified-projection-plan.html">Plan: surface-mork-unified-projection-plan.md</a></li>
+  <li><a href="/developer/status/surface-outstanding-items.html">Outstanding items: surface-outstanding-items.md</a></li>
+  <li><a href="/operator/surface-invalidation-runbook.html">Operational runbook: surface-invalidation-runbook.md</a></li>
+  <li><a href="/operator/surface-revision-lifecycle.html">Revision lifecycle: surface-revision-lifecycle.md</a></li>
+  <li>ADRs A16–A28 in <code class="language-plaintext highlighter-rouge">docs/architecture/decisions/</code></li>
+</ul>
+
+<h3 id="test-suites-and-fixtures">Test suites and fixtures</h3>
+<ul>
+  <li>Surface tests: <code class="language-plaintext highlighter-rouge">tools/surface/src/surface/test_surface.py</code> (61/61 passing)</li>
+  <li>MORK compiler tests: <code class="language-plaintext highlighter-rouge">tools/mork_compilers/src/mork_compilers/test_mork_compilers.py</code> (15/15 passing)</li>
+  <li>Shared conformance manifest: <code class="language-plaintext highlighter-rouge">ontology/surface/examples/</code> (3 explicit cases + Eligibility interval-containment)</li>
+  <li>Eligibility fixtures: <code class="language-plaintext highlighter-rouge">ontology/eligibility/examples/interval-containment.ttl</code></li>
+</ul>
+
+<hr />
+
+<h2 id="recommendations-for-next-steps">Recommendations for Next Steps</h2>
+
+<ol>
+  <li><strong>Implement repository Python package management</strong> (Addendum §6 of outstanding tasks): Root <code class="language-plaintext highlighter-rouge">pyproject.toml</code> with core validation dependencies, reproducible lock, documented install.</li>
+  <li><strong>Run OWL consistency check</strong> with declared reasoner to resolve SWRL verification blocker.</li>
+  <li><strong>Resolve ADR-scale decisions</strong> (items in “Not started” section above):
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">exp:</code> Executable Projection Contract layer (blocks multiple features)</li>
+      <li>Foundation migration boundary for <code class="language-plaintext highlighter-rouge">srf:DerivedArtefact</code> (blocks profile identity assertion)</li>
+    </ul>
+  </li>
+  <li><strong>Proceed with Phase 9 authoring</strong> once the above are resolved (migration guides, compatibility mode, rollout policy).</li>
+  <li><strong>Phase 8 sign-off</strong> requires only SWRL reasoner verification (item 7 of checklist); all other verification items are complete.</li>
+</ol>
+
+<hr />
+
+<h2 id="document-maintenance">Document Maintenance</h2>
+
+<p>This status record is updated when:</p>
+<ul>
+  <li>A phase transitions to a new status</li>
+  <li>A verification item completes or is blocked</li>
+  <li>An outstanding item is resolved or deferred</li>
+  <li>A blocker or decision point emerges</li>
+</ul>
+
+<p><strong>Last verified:</strong> 2026-09-22<br />
+<strong>Next review:</strong> Upon SWRL verification completion or Phase 9 plan ratification</p>

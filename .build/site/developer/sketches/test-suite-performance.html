@@ -1,0 +1,115 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="test-suite-performance">Test suite performance</h1>
+
+<p><strong>Unit:</strong> none yet. <strong>Status:</strong> unplanned sketch, 2026-10-05. Registered as technical debt TD-18.
+<strong>Planned in:</strong> <a href="/developer/plans/python-test-melting.html">python-test-melting</a>, which uses this sketch’s measuring commands and fixes.
+<strong>Reads with:</strong> <a href="/developer/plans/technical-debt.html">technical-debt.md</a>, <code class="language-plaintext highlighter-rouge">mise.toml</code>.</p>
+
+<hr />
+
+<h2 id="1-premise">1. Premise</h2>
+
+<p>The Python test suites under <code class="language-plaintext highlighter-rouge">tools/</code> now take minutes to run. Ten of the ontology test modules
+together took 129 seconds for 383 tests during CCS C7b (2026-10-05). <code class="language-plaintext highlighter-rouge">tools/test_regimes.py</code> alone
+takes about 18 seconds for 61 tests, and <code class="language-plaintext highlighter-rouge">tools/test_terms_in_time.py</code> about 12 seconds for 30. Most
+of that time appears to go to repeated setup, not to what each test checks. This sketch records how
+to measure where the time goes, the likely causes, and the fixes worth trying once the measurements
+confirm them. Nothing here has been measured with a profiler yet.</p>
+
+<h2 id="2-measuring">2. Measuring</h2>
+
+<p>Each command below writes nothing to the repository. <code class="language-plaintext highlighter-rouge">cProfile</code>’s output goes to <code class="language-plaintext highlighter-rouge">/tmp</code>.</p>
+
+<p><strong>The slowest tests.</strong> pytest reports the setup, call and teardown time of each test:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>python <span class="nt">-m</span> pytest tools <span class="nt">-q</span> <span class="nt">-p</span> no:cacheprovider <span class="nt">--durations</span><span class="o">=</span>30 <span class="nt">--durations-min</span><span class="o">=</span>1.0
+</code></pre></div></div>
+
+<p><strong>Collection.</strong> The test modules parse the ontology stack at import time (<code class="language-plaintext highlighter-rouge">MODEL = _graph(...)</code> at
+module level), so that cost lands in collection, which <code class="language-plaintext highlighter-rouge">--durations</code> does not show:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">time </span>python <span class="nt">-m</span> pytest tools <span class="nt">--collect-only</span> <span class="nt">-q</span> <span class="nt">-p</span> no:cacheprovider
+</code></pre></div></div>
+
+<p><strong>Each module on its own</strong>, slowest first:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">for </span>f <span class="k">in </span>tools/test_<span class="k">*</span>.py<span class="p">;</span> <span class="k">do</span> /usr/bin/time <span class="nt">-p</span> python <span class="nt">-m</span> pytest <span class="s2">"</span><span class="nv">$f</span><span class="s2">"</span> <span class="nt">-q</span> <span class="nt">-p</span> no:cacheprovider 2&gt;&amp;1 | <span class="nb">awk</span> <span class="nt">-v</span> <span class="nv">f</span><span class="o">=</span><span class="s2">"</span><span class="nv">$f</span><span class="s2">"</span> <span class="s1">'/^real/ {print $2, f}'</span><span class="p">;</span> <span class="k">done</span> | <span class="nb">sort</span> <span class="nt">-rn</span> | <span class="nb">head</span> <span class="nt">-20</span>
+</code></pre></div></div>
+
+<p><strong>Inside a test.</strong> <code class="language-plaintext highlighter-rouge">cProfile</code> is in the standard library. Sorted by cumulative time, it shows whether
+a run is dominated by rdflib parsing, pySHACL validation, owlrl closure or waiting on a subprocess:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>python <span class="nt">-m</span> cProfile <span class="nt">-o</span> /tmp/pytest.prof <span class="nt">-m</span> pytest tools/test_regimes.py <span class="nt">-q</span> <span class="nt">-p</span> no:cacheprovider
+</code></pre></div></div>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>python <span class="nt">-c</span> <span class="s2">"import pstats; pstats.Stats('/tmp/pytest.prof').sort_stats('cumulative').print_stats(30)"</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">pyinstrument</code> gives a more readable call tree, but is a new dependency, worth adding only if
+<code class="language-plaintext highlighter-rouge">cProfile</code>’s output proves too noisy.</p>
+
+<h2 id="3-likely-causes">3. Likely causes</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Suspect</th>
+      <th>Why it is slow</th>
+      <th>Where</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Parsing the ontology stack at import</strong></td>
+      <td>each module parses about 13 spec and vocab files with rdflib, and many modules do so separately</td>
+      <td>every <code class="language-plaintext highlighter-rouge">tools/test_*.py</code> with a module-level <code class="language-plaintext highlighter-rouge">MODEL</code></td>
+    </tr>
+    <tr>
+      <td><strong>pySHACL against every layer’s shapes</strong></td>
+      <td><code class="language-plaintext highlighter-rouge">EVERY_SHAPE</code> with <code class="language-plaintext highlighter-rouge">advanced=True</code> runs every SHACL-SPARQL constraint over the model and an example, once per example</td>
+      <td>rows C7a-02 and C7b-02</td>
+    </tr>
+    <tr>
+      <td><strong>Reasoner consistency tests</strong></td>
+      <td>each test starts a Java subprocess, paying JVM start-up and an OWL API parse every time</td>
+      <td>rows C6-03, C7a-03, C7b-03 and others</td>
+    </tr>
+    <tr>
+      <td><strong>OWL RL closures</strong></td>
+      <td>owlrl closes a full graph in pure Python</td>
+      <td>rows C7a-15 to C7a-18 and C7b-11</td>
+    </tr>
+    <tr>
+      <td><strong><code class="language-plaintext highlighter-rouge">git grep</code> and subprocess checks</strong></td>
+      <td>cheap one at a time, but they add up</td>
+      <td>rows C6-10, C7b-17, the import guard test</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="4-fixes-to-try-once-measured">4. Fixes to try, once measured</h2>
+
+<ol>
+  <li><strong>Parse the stack once per session.</strong> A shared <code class="language-plaintext highlighter-rouge">tools/conftest.py</code> with a session-scoped fixture
+holding the parsed model and shapes, in place of each module parsing its own. If parsing
+dominates, this is likely the largest single gain.</li>
+  <li><strong>Batch the reasoner.</strong> One Java run that checks every example’s consistency, in place of one
+JVM per example.</li>
+  <li><strong>Narrow the shapes.</strong> Run each negative test against the shapes it exercises. Keep validation
+against every layer’s shapes for the conformance rows only.</li>
+  <li><strong>Run in parallel.</strong> <code class="language-plaintext highlighter-rouge">pytest-xdist</code> (<code class="language-plaintext highlighter-rouge">-n auto</code>) shortens wall-clock time without removing any
+of the above. It is a new dependency.</li>
+  <li><strong>Mark the slow rows.</strong> A <code class="language-plaintext highlighter-rouge">slow</code> marker on the reasoner and OWL RL rows lets a quick local run
+skip them, with the full run kept for CI and before a merge.</li>
+</ol>
+
+<p>Each fix keeps every test’s assertion unchanged. A fix is accepted only if the suite’s results
+are identical before and after it.</p>
+
+<h2 id="5-found-while-writing-tests-no-task-ran">5. Found while writing: tests no task ran</h2>
+
+<p><code class="language-plaintext highlighter-rouge">mise run check:ontology-catalog</code> runs a fixed list of test modules. <code class="language-plaintext highlighter-rouge">tools/test_regimes.py</code> (CCS
+C7a) and <code class="language-plaintext highlighter-rouge">tools/test_terms_in_time.py</code> (CCS C7b) were not on it, so no <code class="language-plaintext highlighter-rouge">mise</code> task, and therefore no
+CI run, executed them. They were added to the task on 2026-10-05, which lengthens it and makes the
+work above more pressing.</p>

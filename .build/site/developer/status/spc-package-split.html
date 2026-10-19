@@ -1,0 +1,22 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="spc-package-split-status">SPC Package Split Status</h1>
+
+<p><strong>Unit:</strong> <code class="language-plaintext highlighter-rouge">spc-package-split</code>
+<strong>State:</strong> Accepted
+<strong>Decision:</strong> <a href="../../architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md">ADR-A77</a>
+<strong>Governing ADRs:</strong> <a href="../../architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md">ADR-A77</a>, <a href="../../architecture/decisions/ADR-A29-repository-toolchain-and-environment-boundary.md">ADR-A29</a>, <a href="../../architecture/decisions/ADR-A30-shared-semantic-platform-cross-runtime-boundary.md">ADR-A30</a></p>
+
+<h2 id="completed">Completed</h2>
+
+<ul>
+  <li>Moved SPC semantic assets to <code class="language-plaintext highlighter-rouge">ontology/spc/</code>.</li>
+  <li>Moved the Python toolchain project to <code class="language-plaintext highlighter-rouge">tools/spc/python/</code>.</li>
+  <li>Moved the Mix/Erlang runtime project to <code class="language-plaintext highlighter-rouge">tools/spc/erlang/</code>.</li>
+  <li>Updated the retained <code class="language-plaintext highlighter-rouge">mise</code> Mix dispatch path to <code class="language-plaintext highlighter-rouge">tools/spc/erlang</code>.</li>
+  <li>Preserved SPC’s semantic non-integration boundary.</li>
+</ul>
+
+<h2 id="acceptance">Acceptance</h2>
+
+<p>The semantic/executable split, canonical path rewrite, and Python/Mix validation are accepted. SPC remains semantically unintegrated with LATTICE.</p>

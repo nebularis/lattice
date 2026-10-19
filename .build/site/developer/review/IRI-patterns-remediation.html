@@ -1,0 +1,1531 @@
+<h1 id="remediation-plan--rdf-operational-patterns--identity-documentation-set">Remediation Plan — RDF Operational Patterns &amp; Identity Documentation Set</h1>
+
+<p><strong>Review state:</strong> Executed and closed 2026-09-23 as unit <code class="language-plaintext highlighter-rouge">rdf-sparql-patterns-remediation</code> (<a href="/developer/status/rdf-sparql-patterns-remediation.html">status</a>, which records the disposition and the later corrections). The “proposed remediation specification” wording below is historical.</p>
+
+<p><strong>Applies to:</strong> <code class="language-plaintext highlighter-rouge">rdf-sparql-patterns-guide.md</code>, <code class="language-plaintext highlighter-rouge">iri-identity-patterns.md</code>, <code class="language-plaintext highlighter-rouge">ADR-A82</code>, <code class="language-plaintext highlighter-rouge">ADR-A68</code>
+<strong>Inputs:</strong> <code class="language-plaintext highlighter-rouge">ADR-A68-A82-iri-patterns-review.md</code> (findings B1–B13, C1–C3; document truncated mid-C3)
+<strong>Status of this plan:</strong> proposed remediation specification. It does not rewrite the guides; it specifies the changes, their exact location, and the evidence required to close each gap.</p>
+
+<hr />
+
+<h2 id="0-summary">0. Summary</h2>
+
+<h3 id="01-disposition-of-the-review">0.1 Disposition of the review</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Review finding</th>
+      <th>Disposition</th>
+      <th>Note</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>B1 epoch guard does not protect restore</td>
+      <td><strong>Accepted, fix amended</strong></td>
+      <td>Reviewer’s “rewrite every version row” is O(aggregates) and non-atomic on most stores. Root cause is a single overloaded property name. See WP‑1.</td>
+    </tr>
+    <tr>
+      <td>B2 lost updates invisible; fork query cannot fire</td>
+      <td><strong>Accepted, fix amended</strong></td>
+      <td>Keep deterministic revision IRIs; move detection onto txn cardinality and receipt property cardinality. See WP‑2.</td>
+    </tr>
+    <tr>
+      <td>B3 revision IRI namespace collision</td>
+      <td><strong>Accepted</strong></td>
+      <td>Requires an injective, width-fixed derivation, not prefix stripping. WP‑2.</td>
+    </tr>
+    <tr>
+      <td>B4 <code class="language-plaintext highlighter-rouge">?n + 1</code> datatype promotion</td>
+      <td><strong>Accepted, fix rejected as non-portable</strong></td>
+      <td><code class="language-plaintext highlighter-rouge">xsd:long(...)</code> is not in SPARQL 1.1’s constructor-function table. Use <code class="language-plaintext highlighter-rouge">STRDT</code>. WP‑3.</td>
+    </tr>
+    <tr>
+      <td>B5 pre-created row makes first CAS impossible</td>
+      <td><strong>Accepted, scope widened</strong></td>
+      <td>Also exposes an undefined <code class="language-plaintext highlighter-rouge">Expectation.Absent</code> semantics and an undefined recreate path. WP‑4.</td>
+    </tr>
+    <tr>
+      <td>B6 append form does not maintain head/chain</td>
+      <td><strong>Accepted</strong></td>
+      <td>WP‑4.</td>
+    </tr>
+    <tr>
+      <td>B7 weak ETags never satisfy <code class="language-plaintext highlighter-rouge">If-Match</code></td>
+      <td><strong>Accepted, extended</strong></td>
+      <td>Strong tags require a representation dimension. WP‑5.</td>
+    </tr>
+    <tr>
+      <td>B8 outcome resolution after timeout</td>
+      <td><strong>Accepted, extended</strong></td>
+      <td>The defect is the conflation of <em>definite response</em> with <em>timeout</em>. WP‑6.</td>
+    </tr>
+    <tr>
+      <td>B9 retention pruning breaks quiet aggregates</td>
+      <td><strong>Accepted, extended</strong></td>
+      <td>§24.2 is also self-contradictory about <code class="language-plaintext highlighter-rouge">pat:head</code>. WP‑7.</td>
+    </tr>
+    <tr>
+      <td>B10 fencing tokens never advanced</td>
+      <td><strong>Accepted</strong></td>
+      <td>WP‑8.</td>
+    </tr>
+    <tr>
+      <td>B11 global HLC pagination reintroduces G2</td>
+      <td><strong>Accepted, extended</strong></td>
+      <td>Requires a concrete watermark mechanism, not just a rule. WP‑9.</td>
+    </tr>
+    <tr>
+      <td>B12 contention sharded for meta only</td>
+      <td><strong>Accepted, extended</strong></td>
+      <td>Sharding the keys graph has an access-control consequence. WP‑10.</td>
+    </tr>
+    <tr>
+      <td>B13 lock ordering via <code class="language-plaintext highlighter-rouge">WHERE</code> order</td>
+      <td><strong>Accepted, partially retained</strong></td>
+      <td>The sorted-acquisition rule remains valid for the multi-request transaction strategies. WP‑11.</td>
+    </tr>
+    <tr>
+      <td>C1 A51 treated as live</td>
+      <td><strong>Accepted</strong></td>
+      <td>WP‑14.</td>
+    </tr>
+    <tr>
+      <td>C2 <code class="language-plaintext highlighter-rouge">fnd:replacedBy</code> undefined</td>
+      <td><strong>Accepted</strong></td>
+      <td>WP‑14.</td>
+    </tr>
+    <tr>
+      <td>C3 identifier widths not fixed</td>
+      <td><strong>Accepted; completed here</strong></td>
+      <td>The review is truncated. Completed as A‑1/A‑2 below. WP‑0, WP‑14.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="02-additional-gaps-found-in-this-review-of-the-review">0.2 Additional gaps found in this review of the review</h3>
+
+<p>Fifteen further defects, four of them blocking. The review’s focus on the write path missed an entire class: <strong>privacy and erasure interact with every history model in the guide, and neither document set closes that loop.</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Gap</th>
+      <th>Severity</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>A‑1</td>
+      <td>Padding widths still unfixed (<code class="language-plaintext highlighter-rouge">REV_WIDTH = 16 … 19 in production</code>; claim <code class="language-plaintext highlighter-rouge">nbytes=16</code> vs 80-bit examples), violating catalogue §10.2 verbatim. Completes review C3.</td>
+      <td>Blocking</td>
+    </tr>
+    <tr>
+      <td>A‑2</td>
+      <td>The epoch component of a revision IRI is <strong>unpadded</strong> (<code class="language-plaintext highlighter-rouge">e3</code>), so any cross-epoch lexical scan misorders (<code class="language-plaintext highlighter-rouge">e10 &lt; e3</code>). Catalogue §10.2 requires one exact width per identity-bearing position.</td>
+      <td>Blocking</td>
+    </tr>
+    <tr>
+      <td>A‑3</td>
+      <td><strong>Restore resurrects erased personal data.</strong> A graph drop under ADR‑A68 is not recorded anywhere outside the dataset, so the §24.4 restore runbook reinstates erased payload. The epoch bump does not help.</td>
+      <td>Blocking</td>
+    </tr>
+    <tr>
+      <td>A‑4</td>
+      <td><strong>Patch-log and snapshot-per-revision receipt models make ADR‑A68 erasure impossible</strong> for any family containing personal data: the delta/snapshot graphs are a second, immutable copy. No document notices the interaction.</td>
+      <td>Blocking</td>
+    </tr>
+    <tr>
+      <td>A‑5</td>
+      <td>Claim-scheme (HMAC secret) rotation is described as “a new version salt and a backfill”, but <strong>uniqueness is not enforced across scheme versions during the migration window</strong>. Two owners can hold <code class="language-plaintext highlighter-rouge">v1</code> and <code class="language-plaintext highlighter-rouge">v2</code> claims for the same key.</td>
+      <td>Major</td>
+    </tr>
+    <tr>
+      <td>A‑6</td>
+      <td>§6.2’s “ownership monotonicity” is asserted unconditionally; catalogue §6.4 states erasure breaks it. The post-<code class="language-plaintext highlighter-rouge">ASK</code> correctness argument therefore has an undeclared exception.</td>
+      <td>Major</td>
+    </tr>
+    <tr>
+      <td>A‑7</td>
+      <td>The guide’s own S3 gap scan, S4 head query and F5 fork query use <code class="language-plaintext highlighter-rouge">GRAPH ?log</code> with a <code class="language-plaintext highlighter-rouge">STRSTARTS</code> prefix filter — forbidden by F6 (its own rule) and by catalogue §12.3. S4 additionally hard-codes one month bucket, so it returns the wrong head for any stream last written in an earlier bucket.</td>
+      <td>Major</td>
+    </tr>
+    <tr>
+      <td>A‑8</td>
+      <td>The P7 reconciler and the <code class="language-plaintext highlighter-rouge">ex:PersonEmailUnique</code> SHACL query group on the <strong>raw</strong> literal, so they cannot detect the normalization-variant duplicate that §4’s own K4 example shows. Data that bypassed the claim path is undetectable.</td>
+      <td>Major</td>
+    </tr>
+    <tr>
+      <td>A‑9</td>
+      <td>S5’s valid-time query orders on a possibly-unbound <code class="language-plaintext highlighter-rouge">?op</code> — the exact failure §13 forbids and S2 guards with <code class="language-plaintext highlighter-rouge">COALESCE</code>.</td>
+      <td>Moderate</td>
+    </tr>
+    <tr>
+      <td>A‑10</td>
+      <td>Recreate-after-tombstone is not an executable operation: the CAS shape’s <code class="language-plaintext highlighter-rouge">FILTER NOT EXISTS { pat:deleted true }</code> blocks it and the create path’s <code class="language-plaintext highlighter-rouge">FILTER NOT EXISTS { pat:seq ?any }</code> cannot match.</td>
+      <td>Moderate</td>
+    </tr>
+    <tr>
+      <td>A‑11</td>
+      <td>HLC <code class="language-plaintext highlighter-rouge">send()</code> has no bound on the logical counter; past 9999 it breaks both the <code class="language-plaintext highlighter-rouge">pat:hlc</code> shape pattern and lexical order. <code class="language-plaintext highlighter-rouge">receive()</code> is likewise unclamped.</td>
+      <td>Moderate</td>
+    </tr>
+    <tr>
+      <td>A‑12</td>
+      <td><code class="language-plaintext highlighter-rouge">pat:opSeq</code> appears on a <code class="language-plaintext highlighter-rouge">pat:Revision</code> in §19.1, but Appendix A defines it as an ordinal <em>of an event within a revision</em>, and <code class="language-plaintext highlighter-rouge">pat:EventOrderShape</code> targets event subjects. Undefined semantics on the receipt.</td>
+      <td>Moderate</td>
+    </tr>
+    <tr>
+      <td>A‑13</td>
+      <td>Three names are used for valid time (<code class="language-plaintext highlighter-rouge">ex:occurredAt</code>, <code class="language-plaintext highlighter-rouge">pat:occurredAt</code>, declaration key <code class="language-plaintext highlighter-rouge">valid_time.property</code>).</td>
+      <td>Moderate</td>
+    </tr>
+    <tr>
+      <td>A‑14</td>
+      <td>Vocabulary incompleteness: <code class="language-plaintext highlighter-rouge">pat:retentionLowWaterMark</code> is used in S3 and absent from Appendix A; <code class="language-plaintext highlighter-rouge">pat:etag</code> is constrained by <code class="language-plaintext highlighter-rouge">VersionRowShape</code> and absent from Appendix A; <code class="language-plaintext highlighter-rouge">pat:stableWatermark</code>’s <code class="language-plaintext highlighter-rouge">{epoch}:{seq}</code> string is delimited concatenation with no declared widths or parse rule (catalogue §7.2, §10.2).</td>
+      <td>Moderate</td>
+    </tr>
+    <tr>
+      <td>A‑15</td>
+      <td>Port/client contradiction: §25.1 declares <code class="language-plaintext highlighter-rouge">Version</code> opaque with “never do arithmetic on it”, while §19.4’s Python client is built entirely on arithmetic over <code class="language-plaintext highlighter-rouge">(epoch, seq)</code>.</td>
+      <td>Moderate</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="03-overall-judgement">0.3 Overall judgement</h3>
+
+<p>The review’s verdict stands and is strengthened: <strong>the patterns guide must not be implemented, and no production data may be written, until Gate 1 and Gate 2 below are passed.</strong> The identity catalogue and ADR‑A82 are structurally sound; they need six targeted additions (WP‑15), most of which exist because the catalogue’s rules were correct and the guide silently broke them — the catalogue’s own refusal table did not require the compiler to <em>detect</em> those breaks.</p>
+
+<hr />
+
+<h2 id="1-root-cause-remedy-applied-first-separate-the-profile-from-the-narrative">1. Root-cause remedy applied first: separate the profile from the narrative</h2>
+
+<p>Eleven of the twenty-eight findings (C3, A‑1, A‑2, A‑12, A‑13, A‑14, B3, B7’s representation dimension, and the illustrative-value drift in Chapters 2, 5, 6, 7) share one cause: <strong>the patterns guide carries identity-bearing grammar inside narrative prose and hand-typed examples.</strong> Catalogue §7 and §14.3 already forbid this; Appendix E item 9 already flags it as open. Patching each occurrence leaves the mechanism that produced them.</p>
+
+<p><strong>WP‑0 — Extract a normative reference profile.</strong></p>
+
+<p>Create two new artefacts:</p>
+
+<ol>
+  <li><code class="language-plaintext highlighter-rouge">docs/architecture/profiles/reference-urn-profile-v1.md</code> — a concrete, versioned, opt-in identity profile in the sense of ADR‑A82 §6, containing <strong>only</strong> normative grammar:
+    <ul>
+      <li>every base (<code class="language-plaintext highlighter-rouge">urn:g:</code>, <code class="language-plaintext highlighter-rouge">urn:rev:</code>, <code class="language-plaintext highlighter-rouge">urn:key:</code>, <code class="language-plaintext highlighter-rouge">urn:txn:</code>, <code class="language-plaintext highlighter-rouge">urn:ev:</code>, <code class="language-plaintext highlighter-rouge">urn:stream:</code>, <code class="language-plaintext highlighter-rouge">urn:ds:</code>) with its owner and stability class;</li>
+      <li>exact widths: sequence <strong>19</strong> decimal digits, epoch <strong>10</strong> decimal digits, <code class="language-plaintext highlighter-rouge">opSeq</code> <strong>5</strong> decimal digits, claim digest <strong>128 bits / 26 unpadded base32 characters</strong>, P0 digest <strong>160 bits / 32 characters</strong>;</li>
+      <li>the digest schemes in catalogue §7.4 form (function, input literal, tuple encoder, encoding, exact width, verification-digest policy);</li>
+      <li>the tuple encoder (catalogue §7.2 length-prefixed UTF‑8) and each frozen normalization pipeline with its version;</li>
+      <li>the target-token derivation for revision namespaces (WP‑2);</li>
+      <li>the graph-locator templates including all shard dimensions (WP‑10).</li>
+    </ul>
+  </li>
+  <li><code class="language-plaintext highlighter-rouge">fixtures/identity/reference-urn-profile-v1/</code> — golden test vectors for every derived identifier, satisfying catalogue §14.3.</li>
+</ol>
+
+<p><strong>Then, in the patterns guide:</strong> replace every inline grammar statement and every hand-typed identifier with (a) a reference to the profile section, and (b) an example drawn from the fixture file by the documentation build. Add a build check that fails if any IRI literal in the guide is not present in the fixtures.</p>
+
+<p><em>Where:</em> new files; guide Chapter 2 (§2.1–2.3), Chapter 5, Chapter 6 (§6.1), §7.1–7.2, §10.1–10.2, §19.1, §19.4 (<code class="language-plaintext highlighter-rouge">REV_WIDTH</code>), §20.2–20.3, Chapter 13’s padding row, Appendix A preamble, Appendix E item 9.</p>
+
+<p><em>Rationale to record in the guide:</em> <code class="language-plaintext highlighter-rouge">REV_WIDTH = 16</code> with a comment saying 19 in production is the exact anti-pattern catalogue §10.2 names. <code class="language-plaintext highlighter-rouge">MFRGGZDFMZTWQ2LK</code> and <code class="language-plaintext highlighter-rouge">GEZDGNBVGY3TQOJQ</code> are base32 of <code class="language-plaintext highlighter-rouge">abcdefghij</code> and <code class="language-plaintext highlighter-rouge">1234567890</code>; they are 80 bits where <code class="language-plaintext highlighter-rouge">claim_iri</code> defaults to 128, and they are presented as HMAC outputs. Appendix D.1 claims this class of drift was fixed; it was not.</p>
+
+<hr />
+
+<h2 id="2-work-packages">2. Work packages</h2>
+
+<p>Each package states the change, the exact location, and the evidence that closes it.</p>
+
+<h3 id="wp1--epoch-integrity-and-restore-safety-b1-a2-a3">WP‑1 — Epoch integrity and restore safety (B1, A‑2, A‑3)</h3>
+
+<p><strong>Root cause of B1:</strong> <code class="language-plaintext highlighter-rouge">pat:epoch</code> names two different things — the dataset generation and the epoch a version row’s <code class="language-plaintext highlighter-rouge">pat:seq</code> was allocated under — so a guard on the second looks like a guard on the first.</p>
+
+<p><strong>Changes.</strong></p>
+
+<ol>
+  <li><strong>Split the property.</strong> In Appendix A:
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">pat:epoch</code> — domain restricted to the dataset node. “The dataset generation. Allocated by an external authority (§24.4). The only epoch a write may guard on.”</li>
+      <li><strong>new</strong> <code class="language-plaintext highlighter-rouge">pat:seqEpoch</code> — version row. “The dataset epoch in which this row’s current <code class="language-plaintext highlighter-rouge">pat:seq</code> was allocated. Informational and diagnostic. <strong>Never a guard target.</strong>” Add <code class="language-plaintext highlighter-rouge">sh:minCount 1; sh:maxCount 1; sh:datatype xsd:long</code> to <code class="language-plaintext highlighter-rouge">pat:VersionRowShape</code> and remove <code class="language-plaintext highlighter-rouge">pat:epoch</code> from that shape.</li>
+      <li>Receipts keep <code class="language-plaintext highlighter-rouge">pat:epoch</code> (the epoch the write was made under); add to <code class="language-plaintext highlighter-rouge">pat:RevisionShape</code> a note that its value must equal the dataset epoch at commit.</li>
+    </ul>
+  </li>
+  <li><strong>Add a dataset-epoch guard to every write</strong> — CAS (§19.1), append (§10.1), create (§19.3), delete (§24.1), key claim (§6.2, §7.1, §7.2), P3 (§7.1), pre-creation of version rows:</li>
+</ol>
+
+<div class="language-sparql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">WHERE</span><span class="w"> </span><span class="p">{</span><span class="w">
+  </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:g:dataset&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nn">&lt;urn:ds:prod&gt;</span><span class="w"> </span><span class="nn">pat</span><span class="o">:</span><span class="ss">epoch</span><span class="w"> </span><span class="s2">"4"</span><span class="o">^^</span><span class="nn">xsd</span><span class="o">:</span><span class="ss">long</span><span class="w"> </span><span class="p">}</span><span class="w">   </span><span class="c1"># client's expected epoch; O(1) read</span><span class="w">
+  </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:g:meta/17&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nn">&lt;urn:g:orders/1&gt;</span><span class="w"> </span><span class="nn">pat</span><span class="o">:</span><span class="ss">seq</span><span class="w"> </span><span class="s2">"41"</span><span class="o">^^</span><span class="nn">xsd</span><span class="o">:</span><span class="ss">long</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">pat</span><span class="o">:</span><span class="ss">seqEpoch</span><span class="w"> </span><span class="nv">?rowEpoch</span><span class="w"> </span><span class="p">.</span><span class="w">
+    </span><span class="k">OPTIONAL</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nn">&lt;urn:g:orders/1&gt;</span><span class="w"> </span><span class="nn">pat</span><span class="o">:</span><span class="ss">head</span><span class="w"> </span><span class="nv">?prevRev</span><span class="w"> </span><span class="p">}</span><span class="w">                  </span><span class="c1"># B5</span><span class="w">
+    </span><span class="k">FILTER</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nn">&lt;urn:g:orders/1&gt;</span><span class="w"> </span><span class="nn">pat</span><span class="o">:</span><span class="ss">deleted</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+  </span><span class="p">...</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>State the invariants explicitly in a new §19.1.1 <em>Epoch invariants</em>:</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">pat:seq</code> is monotonic <strong>forever per stream key, across epochs</strong> (this is F10 generalised);</li>
+  <li>a new epoch does not reset or rewrite any <code class="language-plaintext highlighter-rouge">pat:seq</code>;</li>
+  <li>the revision IRI uses the <strong>dataset</strong> epoch, so a post-restore write with a rewound <code class="language-plaintext highlighter-rouge">seq</code> cannot collide with a pre-restore IRI;</li>
+  <li>the ETag is <code class="language-plaintext highlighter-rouge">{datasetEpoch}-{seq}</code>, so every ETag issued before the bump fails the dataset guard. This is the intended fail-safe.</li>
+</ul>
+
+<p>This replaces the reviewer’s “rewrite every version row” step: it is O(1) per write, needs no bulk maintenance transaction, and cannot be partially applied.</p>
+
+<ol>
+  <li><strong>External epoch allocation.</strong> Rewrite §24.4 to name catalogue §10.3 strategies explicitly and adopt two of them:
+    <ul>
+      <li><strong>External high-water mark</strong> — the new epoch is allocated from a coordination store outside the restored dataset, strictly greater than any epoch ever issued for that dataset. Restoring the same backup twice therefore cannot reuse an epoch (the second hazard in B1).</li>
+      <li><strong>Writer-start refusal</strong> — a writer refuses to start, and fails in-flight writes, unless its cached dataset epoch equals the coordinator’s current epoch. Cached epochs are revalidated on conflict, on a declared TTL, and on <code class="language-plaintext highlighter-rouge">EpochChanged</code>.</li>
+      <li>Add an explicit prohibition: <strong>“Store-local epoch only” must not be selected</strong> (catalogue §10.3 already classifies it unsafe; the current runbook implements exactly it).</li>
+      <li>Add a new capability/requirement <code class="language-plaintext highlighter-rouge">epoch_source: external_high_water_mark</code> to the family declaration and a planner refusal when no coordinator is bound (WP‑17).</li>
+    </ul>
+  </li>
+  <li>
+    <p><strong>Fixed-width epoch (A‑2).</strong> In the reference profile: epoch is 10 decimal digits, zero-padded, so <code class="language-plaintext highlighter-rouge">e0000000003 &lt; e0000000010</code>. Update every example IRI. Alternatively, if unpadded epochs are retained, the guide must state that cross-epoch lexical range scans are unsupported and every prefix scan is epoch-pinned — but the padded form is cheaper than the caveat.</p>
+  </li>
+  <li><strong>Restore must replay erasures (A‑3).</strong> Add step 0 to §24.4 and a new subsection §24.6 <em>Erasure register</em>:
+    <ul>
+      <li>every ADR‑A68 erasure appends an entry to an <strong>erasure register held outside the dataset</strong> (the same coordination store as the epoch high-water mark), recording the pseudonymous subject reference, the dropped graph locators, the legal basis reference, and the epoch at erasure;</li>
+      <li>restore tooling <strong>must replay the register — dropping the listed graphs and re-asserting tombstones — before writers or readers are admitted</strong>;</li>
+      <li>the register itself must contain no personal data (ADR‑A68 rule 3);</li>
+      <li>backups taken before an erasure remain a copy; the runbook must state the backup expiry window that bounds it, and that window must be part of the erasure response the DPO review assesses.</li>
+    </ul>
+  </li>
+</ol>
+
+<p><strong>Evidence:</strong> TCK T‑5 rewritten to bump the dataset epoch only, then replay a structurally valid stale ETag (must be rejected); new T‑14 “restore the same backup twice, assert no epoch reuse”; new T‑15 “erase, restore, assert the erased graph is absent and the tombstone present”.</p>
+
+<p><em>Where:</em> guide §2.3, §10.1, §10.2, §14.1, §19.1 (+ new §19.1.1), §19.3, §19.5, §24.1, §24.4 (+ new §24.6), §25.7, Appendix A, Appendix B, Appendix C (“Epoch”), Chapter 27; catalogue §10.3 (WP‑15); ADR‑A68 consequences (WP‑13).</p>
+
+<hr />
+
+<h3 id="wp2--occurrence-identity-and-corruption-detection-b2-b3-a12">WP‑2 — Occurrence identity and corruption detection (B2, B3, A‑12)</h3>
+
+<p><strong>Decision on B2:</strong> keep deterministic revision IRIs. They are required for the client-side ground template (F8), for lexical range scans, and for the O(1) <code class="language-plaintext highlighter-rouge">pat:head</code> lookup. The defect is not the determinism; it is that <strong>every detection mechanism in the guide was built on the assumption that a fork produces two subjects.</strong> Under a deterministic scheme the collision merges into one subject, and set semantics destroy the evidence exactly as in §1.1. Record that reasoning in a new §15.5 <em>Why fork detection moved</em>.</p>
+
+<p><strong>Changes.</strong></p>
+
+<ol>
+  <li><strong>Replace the primary corruption signal.</strong> Detection now rests on three things, in this order:
+    <ul>
+      <li><strong>Commit-time (SHACL Core):</strong> <code class="language-plaintext highlighter-rouge">pat:RevisionShape</code>’s <code class="language-plaintext highlighter-rouge">pat:txn sh:maxCount 1</code> is the effective constraint — a merged receipt carries two <code class="language-plaintext highlighter-rouge">pat:txn</code> literals. Add the same reasoning for <code class="language-plaintext highlighter-rouge">pat:hlc</code>, <code class="language-plaintext highlighter-rouge">pat:recordedAt</code>, <code class="language-plaintext highlighter-rouge">pat:actor</code>. Promote this from an incidental property constraint to a documented invariant with an <code class="language-plaintext highlighter-rouge">sh:message</code> naming it as a lost-update signal.</li>
+      <li><strong>Standing audit (portable):</strong>
+        <div class="language-sparql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">SELECT</span><span class="w"> </span><span class="nv">?rev</span><span class="w"> </span><span class="p">(</span><span class="nb">COUNT</span><span class="p">(</span><span class="k">DISTINCT</span><span class="w"> </span><span class="nv">?t</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="nv">?n</span><span class="p">)</span><span class="w">
+</span><span class="k">WHERE</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">GRAPH</span><span class="w"> </span><span class="nv">?txn</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">?t</span><span class="w"> </span><span class="nn">pat</span><span class="o">:</span><span class="ss">rev</span><span class="w"> </span><span class="nv">?rev</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w">      </span><span class="c1"># ?txn from the shard registry, not a prefix scan</span><span class="w">
+</span><span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="nv">?rev</span><span class="w"> </span><span class="k">HAVING</span><span class="w"> </span><span class="p">(</span><span class="nb">COUNT</span><span class="p">(</span><span class="k">DISTINCT</span><span class="w"> </span><span class="nv">?t</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w">
+</span></code></pre></div>        </div>
+        <p>Must return zero rows. Ship as a metric and alert.</p>
+      </li>
+      <li><strong>Strengthened confirmation (§19.2, §15.2, F1):</strong>
+        <div class="language-sparql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">ASK</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:g:txlog/…&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+        </span><span class="nn">&lt;urn:rev:…&gt;</span><span class="w"> </span><span class="nn">pat</span><span class="o">:</span><span class="ss">txn</span><span class="w"> </span><span class="s2">"01J8Q5B2…"</span><span class="w">
+        </span><span class="k">FILTER</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nn">&lt;urn:rev:…&gt;</span><span class="w"> </span><span class="nn">pat</span><span class="o">:</span><span class="ss">txn</span><span class="w"> </span><span class="nv">?o</span><span class="w"> </span><span class="k">FILTER</span><span class="p">(</span><span class="nv">?o</span><span class="w"> </span><span class="o">!</span><span class="p">=</span><span class="w"> </span><span class="s2">"01J8Q5B2…"</span><span class="p">)</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span></code></pre></div>        </div>
+        <p>A racing winner now learns the write is corrupt instead of being told <code class="language-plaintext highlighter-rouge">APPLIED</code>.</p>
+      </li>
+    </ul>
+  </li>
+  <li><strong>Retain <code class="language-plaintext highlighter-rouge">pat:NoForkShape</code> and the F5 query only for non-deterministic revision schemes</strong>, and say so. Delete the <code class="language-plaintext highlighter-rouge">…0042-b</code> example fork from F5: <code class="language-plaintext highlighter-rouge">rev_iri()</code> can never produce it, and leaving it implies a detection path that does not exist.</li>
+  <li><strong>Rewrite TCK T‑1’s assertions.</strong> “Exactly one receipt” and “fork query returns zero rows” currently pass while the system is corrupt. Replace with: exactly one txn claim for the winning revision; exactly one <code class="language-plaintext highlighter-rouge">pat:txn</code> on that revision; exactly one payload state; the losing client received <code class="language-plaintext highlighter-rouge">CONFLICT</code>, not <code class="language-plaintext highlighter-rouge">APPLIED</code>.</li>
+  <li><strong>One target IRI per stream (B3).</strong> Add a new §10.4 <em>Target identity</em>:
+    <ul>
+      <li>each stream/aggregate has exactly one <strong>target IRI</strong>, which is the version-row subject, the <code class="language-plaintext highlighter-rouge">pat:target</code> value, the stream key for delta graph names, and the input to the revision namespace;</li>
+      <li>if that IRI is also the payload graph locator, this is a <strong>declared punning</strong> under catalogue §2 and must appear in the topology profile; it is not automatic;</li>
+      <li>the revision namespace token is derived <strong>injectively and at fixed width</strong> from the target IRI — either a registry-allocated token (catalogue §12.4) or <code class="language-plaintext highlighter-rouge">base32(sha256(targetIri))</code> truncated to the profile width — <strong>never</strong> by stripping a <code class="language-plaintext highlighter-rouge">urn:g:</code> prefix;</li>
+      <li>reconcile every example: §2.3, §10.1–10.2, §19.1, §20.2–20.3 and S6 currently mix <code class="language-plaintext highlighter-rouge">urn:stream:orders/1</code> and <code class="language-plaintext highlighter-rouge">urn:g:orders/1</code> as <code class="language-plaintext highlighter-rouge">pat:target</code>.</li>
+    </ul>
+  </li>
+  <li><strong>Chapter 22</strong> must state that the append and CAS forms share a mechanism <strong>only because they share one version row and one target IRI</strong>; otherwise they are two counters in one namespace (F2 reintroduced).</li>
+  <li><strong>A‑12:</strong> remove <code class="language-plaintext highlighter-rouge">pat:opSeq</code> from the §19.1 receipt, or define <code class="language-plaintext highlighter-rouge">pat:opSeq 0</code> on a revision as “no event grain” and add it to <code class="language-plaintext highlighter-rouge">pat:RevisionShape</code> with that meaning. Align <code class="language-plaintext highlighter-rouge">Position</code>’s <code class="language-plaintext highlighter-rouge">opSeq</code> default with the choice and with S2’s <code class="language-plaintext highlighter-rouge">COALESCE(?op, 0)</code>.</li>
+</ol>
+
+<p><em>Where:</em> guide §2.3, §10.1–10.2, new §10.4, §15.2, §15.3, new §15.5, §19.1–19.2, §19.4, §20.2–20.3, F2, F5, Chapter 22, Chapter 27 (T‑1, new T‑16 “deterministic-IRI collision under forced weak isolation is detected”), Appendix A (<code class="language-plaintext highlighter-rouge">pat:opSeq</code>), Appendix B; reference profile (target token).</p>
+
+<hr />
+
+<h3 id="wp3--datatype-and-arithmetic-portability-b4">WP‑3 — Datatype and arithmetic portability (B4)</h3>
+
+<p><strong>The reviewer’s finding is correct and the reviewer’s fix is not portable.</strong> SPARQL 1.1 §17.5’s constructor-function table covers <code class="language-plaintext highlighter-rouge">xsd:integer</code>, <code class="language-plaintext highlighter-rouge">xsd:decimal</code>, <code class="language-plaintext highlighter-rouge">xsd:float</code>, <code class="language-plaintext highlighter-rouge">xsd:double</code>, <code class="language-plaintext highlighter-rouge">xsd:string</code>, <code class="language-plaintext highlighter-rouge">xsd:boolean</code>, <code class="language-plaintext highlighter-rouge">xsd:dateTime</code>. <code class="language-plaintext highlighter-rouge">xsd:long(...)</code> is a vendor extension. Using it would make the guide’s own portability claim false on a conforming engine.</p>
+
+<p><strong>Changes.</strong></p>
+
+<ol>
+  <li><strong>Prefer eliminating server-side arithmetic.</strong> State the rule in F8 and §10.1: server arithmetic is used <strong>only</strong> in the append form, where the client genuinely does not know <code class="language-plaintext highlighter-rouge">?n</code>.</li>
+  <li><strong>Where it is unavoidable</strong>, use the portable re-typing:
+    <div class="language-sparql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">BIND</span><span class="p">(</span><span class="nb">STRDT</span><span class="p">(</span><span class="nb">STR</span><span class="p">(</span><span class="nv">?n</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">),</span><span class="w"> </span><span class="nn">xsd</span><span class="o">:</span><span class="ss">long</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="nv">?n1</span><span class="p">)</span><span class="w">
+</span></code></pre></div>    </div>
+    <p>Apply in §10.1 (<code class="language-plaintext highlighter-rouge">?n1</code>), §7.1 (P3 <code class="language-plaintext highlighter-rouge">?n1</code>), and anywhere else a counter is incremented. Add a note that the input must be in <code class="language-plaintext highlighter-rouge">xsd:long</code> range, enforced by <code class="language-plaintext highlighter-rouge">pat:VersionRowShape</code>’s bounds, and that <code class="language-plaintext highlighter-rouge">xsd:long(...)</code> is non-portable.</p>
+  </li>
+  <li><strong>Add the hazard to Chapter 13.</strong> The existing “Mixed <code class="language-plaintext highlighter-rouge">xsd:integer</code>/<code class="language-plaintext highlighter-rouge">xsd:long</code>/<code class="language-plaintext highlighter-rouge">xsd:decimal</code>” row describes the failure without noting that the guide’s own queries cause it. Add: “<code class="language-plaintext highlighter-rouge">?n + 1</code> on an <code class="language-plaintext highlighter-rouge">xsd:long</code> returns <code class="language-plaintext highlighter-rouge">xsd:integer</code> per XPath F&amp;O numeric promotion; pinning the operand does not pin the result.”</li>
+  <li><strong>Pin <code class="language-plaintext highlighter-rouge">pat:counter</code></strong> (P3 sentinel) to <code class="language-plaintext highlighter-rouge">xsd:long</code> in a new shape, and apply the same <code class="language-plaintext highlighter-rouge">STRDT</code> treatment.</li>
+</ol>
+
+<p><strong>Evidence:</strong> new TCK test O‑13 <em>datatype round-trip</em>: increment a counter, read it back, assert the term matches <code class="language-plaintext highlighter-rouge">"n"^^xsd:long</code>, and assert <code class="language-plaintext highlighter-rouge">VersionRowShape</code> validates. Add a QP4 determinism case.</p>
+
+<p><em>Where:</em> guide §7.1, §10.1, Chapter 13, F8, Appendix A (<code class="language-plaintext highlighter-rouge">pat:counter</code>), Appendix B (new <code class="language-plaintext highlighter-rouge">pat:KeyShardShape</code>), Chapter 27.</p>
+
+<hr />
+
+<h3 id="wp4--write-path-completeness-b5-b6-a10">WP‑4 — Write-path completeness (B5, B6, A‑10)</h3>
+
+<p><strong>Changes.</strong></p>
+
+<ol>
+  <li><strong>Optional head (B5).</strong> In §19.1, move <code class="language-plaintext highlighter-rouge">pat:head ?prevRev</code> into an <code class="language-plaintext highlighter-rouge">OPTIONAL</code> inside the meta <code class="language-plaintext highlighter-rouge">GRAPH</code> block (see the WP‑1 snippet). Unbound <code class="language-plaintext highlighter-rouge">?prevRev</code> drops from both templates per SPARQL 1.1 Update template instantiation. Add a sentence: this is safe only because <code class="language-plaintext highlighter-rouge">pat:head sh:maxCount 1</code> is enforced or audited (F7); a two-valued head would match twice and double-instantiate.</li>
+  <li><strong>Define the first-write policy (B5, widened).</strong> Add to §14.2 and §19.3, and to the family declaration:
+<code class="language-plaintext highlighter-rouge">first_write: pre_created_row | absent_row</code>.
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">pre_created_row</code> — a row with <code class="language-plaintext highlighter-rouge">pat:seq "0"</code>, <code class="language-plaintext highlighter-rouge">pat:seqEpoch</code>, no head is created when the aggregate id is allocated (itself an idempotent, epoch-guarded write). The CAS shape is then the only shape ever used; <code class="language-plaintext highlighter-rouge">Expectation.Absent</code> is <strong>not available</strong> and <code class="language-plaintext highlighter-rouge">§19.3</code>’s create path is dead code for that family.</li>
+      <li><code class="language-plaintext highlighter-rouge">absent_row</code> — <code class="language-plaintext highlighter-rouge">Expectation.Absent</code> and the §19.3 shape apply, with P2’s write-skew caveat.
+Amend §25.1’s <code class="language-plaintext highlighter-rouge">Expectation</code> doc comment accordingly. Today the two recommendations coexist and contradict each other.</li>
+    </ul>
+  </li>
+  <li><strong>Append form maintains head and chain (B6).</strong> In §10.1: read <code class="language-plaintext highlighter-rouge">OPTIONAL { ?stream pat:head ?prev }</code>, delete it, insert the new head, and emit <code class="language-plaintext highlighter-rouge">pat:prevRev ?prev</code> on the receipt. State that a stream written by both forms must share one version row (WP‑2) or T‑4 cannot pass.</li>
+  <li><strong>Define recreate/undelete (A‑10).</strong> Add §24.1.1 <em>Recreate</em>: a distinct operation whose guard requires <code class="language-plaintext highlighter-rouge">pat:deleted true</code> and whose templates remove the tombstone, advance <code class="language-plaintext highlighter-rouge">pat:seq</code>, set a new head, and write a receipt typed <code class="language-plaintext highlighter-rouge">pat:Revision</code> (not <code class="language-plaintext highlighter-rouge">pat:Deletion</code>). The ordinary CAS guard (<code class="language-plaintext highlighter-rouge">FILTER NOT EXISTS { pat:deleted true }</code>) intentionally excludes it, and the create path cannot match an existing row.</li>
+  <li><strong>Forbid <code class="language-plaintext highlighter-rouge">pat:deleted false</code>.</strong> Add <code class="language-plaintext highlighter-rouge">sh:hasValue true</code> alongside <code class="language-plaintext highlighter-rouge">sh:maxCount 1</code> on <code class="language-plaintext highlighter-rouge">pat:deleted</code> in <code class="language-plaintext highlighter-rouge">pat:VersionRowShape</code>; presence-and-true is the intended encoding, and a <code class="language-plaintext highlighter-rouge">false</code> triple would pass every <code class="language-plaintext highlighter-rouge">FILTER NOT EXISTS</code> guard in the guide.</li>
+  <li><strong>Bulk path completeness (A‑24 in §0.2 terms).</strong> §24.3 assigns positions offline but writes no txn claims, no heads and no <code class="language-plaintext highlighter-rouge">prevRev</code>. Add: the offline assignment emits a chain-consistent receipt set and the final head per stream; step 3’s gate adds the T‑4 chain-integrity check and a head-correctness check.</li>
+</ol>
+
+<p><em>Where:</em> guide §10.1, §14.2, §19.1, new §19.1.1, §19.3, §24.1 (+ new §24.1.1), §24.3, §25.1, Appendix B, Chapter 27 (new T‑17 “first CAS on a pre-created row”, T‑4 extended to mixed append/CAS streams).</p>
+
+<hr />
+
+<h3 id="wp5--http-conditional-semantics-b7">WP‑5 — HTTP conditional semantics (B7)</h3>
+
+<p><strong>Changes.</strong></p>
+
+<ol>
+  <li>Replace every weak tag with a <strong>strong</strong> tag: <code class="language-plaintext highlighter-rouge">ETag: "3-41"</code>, <code class="language-plaintext highlighter-rouge">If-Match: "3-41"</code>. RFC 9110 §13.1.1 requires strong comparison for <code class="language-plaintext highlighter-rouge">If-Match</code>; a weak validator never matches, so the current mapping returns <code class="language-plaintext highlighter-rouge">412</code> unconditionally on a conforming server or intermediary.</li>
+  <li>Add a representation dimension, because a strong validator is per-representation: either serve exactly one serialisation for conditional requests, or include a representation token in the tag (<code class="language-plaintext highlighter-rouge">"3-41.ttl"</code>) and emit <code class="language-plaintext highlighter-rouge">Vary: Accept</code>. State the choice in the family declaration (<code class="language-plaintext highlighter-rouge">http.etag_form</code>).</li>
+  <li>Fix the Python <code class="language-plaintext highlighter-rouge">Version.etag</code> / <code class="language-plaintext highlighter-rouge">Version.parse_etag</code> in §19.4 and the §19.5 mapping table. Keep <code class="language-plaintext highlighter-rouge">If-None-Match: *</code> for create (correct as written) and <code class="language-plaintext highlighter-rouge">428</code> for unconditional writes (RFC 6585, correct).</li>
+  <li>Note that <code class="language-plaintext highlighter-rouge">W/</code> remains acceptable for <code class="language-plaintext highlighter-rouge">If-None-Match</code> caching, and that only the CAS path requires strong tags. This is the one place the distinction matters.</li>
+</ol>
+
+<p><strong>Evidence:</strong> new TCK test T‑18 <em>conditional round-trip through a conforming intermediary</em>: <code class="language-plaintext highlighter-rouge">GET</code> → <code class="language-plaintext highlighter-rouge">PUT</code> with the returned tag → must be <code class="language-plaintext highlighter-rouge">204</code>, not <code class="language-plaintext highlighter-rouge">412</code>.</p>
+
+<p><em>Where:</em> guide §15.4, §19.2, §19.4, §19.5, §29.3/WP‑17 declaration, Appendix C (“ETag”).</p>
+
+<hr />
+
+<h3 id="wp6--outcome-resolution-b8-a15">WP‑6 — Outcome resolution (B8, A‑15)</h3>
+
+<p><strong>Changes.</strong></p>
+
+<ol>
+  <li><strong>Separate the two paths</strong> in §19.4 and §25.5. The defect is that <code class="language-plaintext highlighter-rouge">resolve()</code> is called identically after a definite response and after a timeout, and <code class="language-plaintext highlighter-rouge">ASK == false</code> is mapped to <code class="language-plaintext highlighter-rouge">CONFLICT</code> in both.
+    <ul>
+      <li><strong>Definite response</strong> (HTTP status received, request completed): <code class="language-plaintext highlighter-rouge">ASK</code> false ⇒ <code class="language-plaintext highlighter-rouge">CONFLICT</code>. Sound, because the update finished.</li>
+      <li><strong>Timeout / lost connection</strong>: <code class="language-plaintext highlighter-rouge">ASK</code> false ⇒ <strong><code class="language-plaintext highlighter-rouge">UNKNOWN</code></strong>. The request may still be executing. Never <code class="language-plaintext highlighter-rouge">CONFLICT</code>.</li>
+    </ul>
+  </li>
+  <li><strong>Define the <code class="language-plaintext highlighter-rouge">UNKNOWN</code> protocol.</strong>
+    <ul>
+      <li>Re-submit the <strong>identical</strong> request with the <strong>same</strong> txn id — this is safe precisely because the in-update <code class="language-plaintext highlighter-rouge">FILTER NOT EXISTS</code> on the txn claim makes it idempotent — with bounded retries and jitter; or</li>
+      <li>poll <code class="language-plaintext highlighter-rouge">resolve()</code> until it returns a definite answer or a declared deadline expires, then surface <code class="language-plaintext highlighter-rouge">UNKNOWN</code> to the caller.</li>
+    </ul>
+  </li>
+</ol>
+
+<p>Delete the <code class="language-plaintext highlighter-rouge">except TimeoutError: return resolve(...)</code> branch in §19.4 as written — it is the code that produces the defect.</p>
+
+<ol>
+  <li><strong>Make <code class="language-plaintext highlighter-rouge">UNKNOWN</code> reachable.</strong> <code class="language-plaintext highlighter-rouge">Outcome.UNKNOWN</code> is defined and never returned, which contradicts <code class="language-plaintext highlighter-rouge">CasResult.Unknown</code> in §25.1 and retry rule 3 in §25.5. Add the return path and state the caller’s obligation: an <code class="language-plaintext highlighter-rouge">UNKNOWN</code> may not be converted to a retry, a <code class="language-plaintext highlighter-rouge">412</code>, or a <code class="language-plaintext highlighter-rouge">500</code> without first calling <code class="language-plaintext highlighter-rouge">resolve()</code>.</li>
+  <li><strong>Append-form specific warning.</strong> Add to §10.1 and Chapter 22: a timeout on the append form must <strong>never</strong> be retried under a new txn id. The txn claim is the only thing preventing duplicate events, and a new id defeats it. This is the failure mode the current client code produces.</li>
+  <li><strong>Resolve <code class="language-plaintext highlighter-rouge">Version</code> opacity (A‑15).</strong> §25.1 declares <code class="language-plaintext highlighter-rouge">Version</code> opaque with “never do arithmetic on it”; §19.4’s client is arithmetic over <code class="language-plaintext highlighter-rouge">(epoch, seq)</code>. Fix by layering explicitly:
+    <ul>
+      <li>the <strong>port</strong> exposes opaque <code class="language-plaintext highlighter-rouge">Version</code> tokens and <code class="language-plaintext highlighter-rouge">Expectation</code>;</li>
+      <li>the <strong>strong-profile strategy</strong> owns the <code class="language-plaintext highlighter-rouge">(datasetEpoch, seq)</code> structure, the ETag form, the revision-IRI formatter and the increment;</li>
+      <li>application code never parses a <code class="language-plaintext highlighter-rouge">Version</code>.
+Move the §19.4 client code into a documented “strategy-internal” subsection and say so, or make <code class="language-plaintext highlighter-rouge">Version</code> a sealed hierarchy with a <code class="language-plaintext highlighter-rouge">VersionedPosition</code> variant the strategy may destructure. Either is acceptable; the current silent contradiction is not.</li>
+    </ul>
+  </li>
+</ol>
+
+<p><strong>Evidence:</strong> TCK T‑2 extended — inject a timeout <em>while the update is still executing</em> (not after it commits) and assert the client reports <code class="language-plaintext highlighter-rouge">UNKNOWN</code>, not <code class="language-plaintext highlighter-rouge">CONFLICT</code>; then assert that resubmission under the same txn id yields exactly one receipt and one event set. New T‑20: append form under injected timeout, assert no duplicate events.</p>
+
+<p><em>Where:</em> guide §10.1, §15.2, §19.2, §19.4, §22, §25.1, §25.5, §25.7, Chapter 27 (T‑2, new T‑20).</p>
+
+<hr />
+
+<h3 id="wp7--retention-pruning-and-chain-integrity-b9-plus-one-further-defect">WP‑7 — Retention, pruning and chain integrity (B9, plus one further defect)</h3>
+
+<p><strong>Changes.</strong></p>
+
+<ol>
+  <li><strong>Pin stream heads (B9).</strong> Retention must never prune a receipt that is the current <code class="language-plaintext highlighter-rouge">pat:head</code> of any live stream, nor any receipt reachable from a still-valid reader grace window (catalogue §10.4 already requires exactly this for pointers; §24.2 ignores it). Implement as: the retention job resolves every <code class="language-plaintext highlighter-rouge">pat:head</code> before selecting buckets, and copies or retains pinned receipts rather than dropping a bucket wholesale.</li>
+  <li><strong>Then relax the shape.</strong> Even with pinning, a mid-chain predecessor may legitimately be gone. Change <code class="language-plaintext highlighter-rouge">pat:RevisionShape</code>’s <code class="language-plaintext highlighter-rouge">pat:prevRev</code> from <code class="language-plaintext highlighter-rouge">sh:class pat:Revision</code> to <code class="language-plaintext highlighter-rouge">sh:nodeKind sh:IRI</code>, and add <code class="language-plaintext highlighter-rouge">pat:prevRevPruned</code> (boolean) or require the chain-integrity audit to consult <code class="language-plaintext highlighter-rouge">pat:retentionLowWaterMark</code> before reporting a break. Keep <code class="language-plaintext highlighter-rouge">sh:class</code> only where a family declares <code class="language-plaintext highlighter-rouge">retention.log: forever</code>.</li>
+  <li><strong>Resolve §24.2’s internal contradiction.</strong> The table says receipts are dropped by bucket and simultaneously that <code class="language-plaintext highlighter-rouge">pat:head</code> never points at a pruned graph. These cannot both hold without step 1. Rewrite the row and cross-reference §24.1.</li>
+  <li><strong>Maintain <code class="language-plaintext highlighter-rouge">pat:retentionLowWaterMark</code> where S3 expects it.</strong> S3’s corrected gap scan reads it from <code class="language-plaintext highlighter-rouge">urn:g:retention</code>; nothing in the guide writes it. Add the write to the retention job, define the property in Appendix A (see WP‑14), and add a shape.</li>
+</ol>
+
+<p><strong>A‑16 (further defect, surfaced while specifying this package — extends §0.2; severity: blocking for patch-log families).</strong>
+Pruning a patch-log bucket does not make as-of reads <em>unavailable</em>; it makes them <strong>silently wrong</strong>. S6 reconstructs state by taking assertions at or before a position and excluding those a later revision retracted. If the bucket holding the <em>retraction</em> is pruned while the bucket holding the <em>assertion</em> survives, S6 returns a triple that was deleted. The result is a plausible state that never existed, with no error.</p>
+
+<p><strong>Fix:</strong></p>
+<ul>
+  <li>Every family declares an <strong>as-of floor</strong>: the earliest position for which as-of reconstruction is supported. The floor is advanced by the retention job <strong>before</strong> any delta graph is dropped, and every as-of query is rejected below it (<code class="language-plaintext highlighter-rouge">AsOfFloorExceeded</code>), not answered approximately.</li>
+  <li>Retention over a patch log must prune <strong>only a contiguous prefix</strong> and must advance the floor past it atomically with the drop. Random or per-bucket pruning of a patch log is prohibited.</li>
+  <li>Alternatively, compact: materialise a snapshot at the new floor, then prune below it. Document compaction as the supported way to shorten a patch log.</li>
+  <li>Add <code class="language-plaintext highlighter-rouge">temporal.as_of_floor_source</code> to the family declaration and a planner refusal when <code class="language-plaintext highlighter-rouge">as_of_strategy: log_replay</code> is combined with non-prefix retention.</li>
+</ul>
+
+<p><strong>Evidence:</strong> new TCK O‑14 <em>prune-then-as-of</em>: assert/retract, prune the retraction’s bucket, assert the as-of read is <strong>refused</strong>, not answered. New O‑15: retention run with a quiet aggregate older than the window; assert the next write to it succeeds under commit-time SHACL.</p>
+
+<p><em>Where:</em> guide §20.2, §20.4, §24.2, §24.3, S3, S6, §29.3 declaration, §29.4 table, Appendix A, Appendix B, Chapter 27; catalogue §5.8 and §10.4 (WP‑15).</p>
+
+<hr />
+
+<h3 id="wp8--leases-and-fencing-tokens-b10">WP‑8 — Leases and fencing tokens (B10)</h3>
+
+<p><strong>Changes.</strong></p>
+
+<ol>
+  <li><strong>Advance the token.</strong> In §7.4 and §16.2, every fenced write must both compare and rewrite the token in the same operation:
+    <div class="language-sparql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">DELETE</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:g:meta/17&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nn">&lt;urn:g:orders/1&gt;</span><span class="w"> </span><span class="nn">pat</span><span class="o">:</span><span class="ss">fence</span><span class="w"> </span><span class="nv">?f</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span><span class="k">INSERT</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:g:meta/17&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nn">&lt;urn:g:orders/1&gt;</span><span class="w"> </span><span class="nn">pat</span><span class="o">:</span><span class="ss">fence</span><span class="w"> </span><span class="s2">"7184"</span><span class="o">^^</span><span class="nn">xsd</span><span class="o">:</span><span class="ss">long</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span><span class="k">WHERE</span><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:g:meta/17&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nn">&lt;urn:g:orders/1&gt;</span><span class="w"> </span><span class="nn">pat</span><span class="o">:</span><span class="ss">fence</span><span class="w"> </span><span class="nv">?f</span><span class="w"> </span><span class="p">}</span><span class="w">
+         </span><span class="k">FILTER</span><span class="p">(</span><span class="nv">?f</span><span class="w"> </span><span class="o">&lt;</span><span class="p">=</span><span class="w"> </span><span class="mi">7184</span><span class="p">)</span><span class="w"> </span><span class="p">...</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span></code></pre></div>    </div>
+    <p><code class="language-plaintext highlighter-rouge">&lt;=</code> admits the legitimate holder’s second write (the current strict <code class="language-plaintext highlighter-rouge">&lt;</code> rejects it); the rewrite is what actually fences a lapsed holder. The present form does neither.</p>
+  </li>
+  <li><strong>Bootstrap the token eagerly</strong> with <code class="language-plaintext highlighter-rouge">pat:fence "0"</code>, for the same reason P3 counters and version rows are pre-created: a lazy <code class="language-plaintext highlighter-rouge">OPTIONAL</code> reintroduces the race on first use.</li>
+  <li><strong>Bind the token to the lease authority.</strong> State that tokens must be monotonic across lease-service restarts (the same durability problem as the epoch, WP‑1), and name the mechanism. A token allocated from volatile state is not a fence.</li>
+  <li><strong>Fix §16.3’s editorial lease.</strong> It has no fencing token at all; §23.5 permits the expiry comparison <em>only if</em> a token is present. Add <code class="language-plaintext highlighter-rouge">pat:fence</code> to the lease example, and make the client-injected comparison value explicit rather than <code class="language-plaintext highlighter-rouge">NOW()</code>.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">pat:fence</code> typing.</strong> Pin to <code class="language-plaintext highlighter-rouge">xsd:long</code> (already in <code class="language-plaintext highlighter-rouge">VersionRowShape</code>), and apply WP‑3’s <code class="language-plaintext highlighter-rouge">STRDT</code> rule if the token is ever incremented in SPARQL.</li>
+</ol>
+
+<p><strong>Evidence:</strong> new TCK T‑21 <em>stale lease</em>: acquire, pause past expiry, let a second writer acquire and write, then let the first writer attempt its write; assert it fails the guard.</p>
+
+<p><em>Where:</em> guide §7.4, §16.2, §16.3, §23.5, §25.4 (<code class="language-plaintext highlighter-rouge">ExternalLockStrategy</code>, <code class="language-plaintext highlighter-rouge">SerializingProxy</code>), Appendix A (<code class="language-plaintext highlighter-rouge">pat:fence</code>), Chapter 27.</p>
+
+<hr />
+
+<h3 id="wp9--global-order-watermarks-and-the-hlc-b11-a11">WP‑9 — Global order, watermarks and the HLC (B11, A‑11)</h3>
+
+<p><strong>Changes.</strong></p>
+
+<ol>
+  <li><strong>Forbid the naive global HLC page.</strong> §21.3’s <code class="language-plaintext highlighter-rouge">FILTER(?hlc &gt; last) ORDER BY ?hlc LIMIT 500</code> is a pre-commit position read, which is precisely the G2 hole Part III closed for the dense tier. Because the HLC is stamped client-side before commit, a receipt with a lower HLC can commit after a higher one has been read, and the consumer’s watermark has already advanced past it. Per-target contiguity (S3) detects this only <em>after</em> the loss.</li>
+  <li><strong>Require one of three safe global-read patterns</strong>, declared per family:
+    <ul>
+      <li><strong>Watermarked sparse read</strong> — read only below a stable watermark, computed as <code class="language-plaintext highlighter-rouge">min(active writers' in-flight HLC) − safety margin</code> and published as structured triples (see A‑14 fix in WP‑14). This requires writer registration and heartbeats; state that dependency honestly rather than implying the watermark is free.</li>
+      <li><strong>Lag-window read</strong> — read only below <code class="language-plaintext highlighter-rouge">observed_max_hlc − lagWindow</code>, where <code class="language-plaintext highlighter-rouge">lagWindow ≥ max clock skew + max commit duration + max client stamp-to-commit delay</code>, all declared and monitored, with a <strong>late-arrival alarm</strong>: any receipt whose HLC is below the consumer’s last committed watermark is a declared incident, not a silent skip.</li>
+      <li><strong>Dense feed</strong> — use <code class="language-plaintext highlighter-rouge">NativeFeed</code> where <code class="language-plaintext highlighter-rouge">changeFeedDense</code> is true (Neptune Streams, rdf-delta) and treat the feed position as the dataset tier. Preferred where available.</li>
+    </ul>
+  </li>
+  <li><strong>Make the per-target contiguity check blocking, not advisory.</strong> §21.3 currently says the consumer “then asserts” contiguity. Specify the action: on a contiguity failure, the consumer must rescan from the affected stream’s last known-good position before advancing the global watermark. A failed contiguity check that only raises a metric is a data-loss path.</li>
+  <li><strong>Clamp the HLC (A‑11).</strong> <code class="language-plaintext highlighter-rouge">Hlc.send()</code> increments <code class="language-plaintext highlighter-rouge">c</code> without bound; past 9999 the <code class="language-plaintext highlighter-rouge">{logical:04}</code> format overflows, breaking both <code class="language-plaintext highlighter-rouge">pat:hlc</code>’s <code class="language-plaintext highlighter-rouge">sh:pattern</code> and lexical ordering. <code class="language-plaintext highlighter-rouge">receive()</code> is likewise unclamped. Fix: on <code class="language-plaintext highlighter-rouge">c &gt; 9999</code>, advance <code class="language-plaintext highlighter-rouge">l</code> by 1 and reset <code class="language-plaintext highlighter-rouge">c</code> to 0 (borrowing from the physical component), or widen the field in the profile and the shape. Add the same clamp to <code class="language-plaintext highlighter-rouge">receive()</code>. Add a unit test that drives 10⁵ same-millisecond stamps and asserts monotone lexical order and shape validity.</li>
+  <li><strong>Node-id grammar.</strong> <code class="language-plaintext highlighter-rouge">pat:hlc</code>’s pattern admits <code class="language-plaintext highlighter-rouge">[A-Za-z0-9-]+</code> of any length, so two node ids of different lengths sort by prefix and can interleave incorrectly at equal <code class="language-plaintext highlighter-rouge">(l, c)</code>. Fix the node-id width in the reference profile, or state that equal-<code class="language-plaintext highlighter-rouge">(l,c)</code> ordering across nodes is arbitrary-but-stable and never load-bearing.</li>
+</ol>
+
+<p><strong>Evidence:</strong> new TCK O‑16 <em>HLC reorder probe</em> — the ordering analogue of O‑2, run against the global reader: inject delay between HLC stamp and commit and assert the consumer never permanently skips a receipt. O‑17 <em>counter overflow</em>.</p>
+
+<p><em>Where:</em> guide S7, §21.2, §21.3, §25.7, §29.3, §29.4, Appendix A (<code class="language-plaintext highlighter-rouge">pat:hlc</code>, <code class="language-plaintext highlighter-rouge">pat:stableWatermark</code>), Appendix B (<code class="language-plaintext highlighter-rouge">RevisionShape</code>), Chapter 27.</p>
+
+<hr />
+
+<h3 id="wp10--contention-topology-beyond-the-meta-graph-b12">WP‑10 — Contention topology beyond the meta graph (B12)</h3>
+
+<p><strong>Changes.</strong></p>
+
+<ol>
+  <li><strong>Shard or bucket every hot graph, not just meta.</strong> F12 and T‑3 shard the version rows; every write in the dataset still inserts into single <code class="language-plaintext highlighter-rouge">urn:g:txn</code> and <code class="language-plaintext highlighter-rouge">urn:g:txlog/{month}</code> graphs, and every P3 claim into <code class="language-plaintext highlighter-rouge">urn:g:keys</code>. On an engine whose conflict detection is graph- or page-granular, A6 is lost regardless of meta sharding. Add to §17.3 and §25.2:
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">urn:g:txn/{hash(txnId) mod N}</code></li>
+      <li><code class="language-plaintext highlighter-rouge">urn:g:txlog/{month}/{hash(target) mod N}</code> — shard <em>within</em> the time bucket so that both bucket rotation (retention) and shard isolation (contention) are preserved</li>
+      <li><code class="language-plaintext highlighter-rouge">urn:g:keys/{hash(claimIri) mod N}</code></li>
+      <li>the P3 sentinel nodes distributed across key shards</li>
+    </ul>
+  </li>
+  <li><strong>Make the shard dimensions part of the topology profile</strong> (catalogue §5.8, §12.1), not hard-coded strings. Every query that enumerates them must resolve them from the bucket/shard registry introduced in WP‑12, not from a prefix scan.</li>
+  <li><strong>Extend T‑3</strong> to measure conflict rate on the txn, log and keys graphs independently, and record each in the capability report. <code class="language-plaintext highlighter-rouge">statementLevelConflictDetection</code> is currently populated from the meta graph only, which under-reports.</li>
+  <li><strong>Two consequences to state explicitly:</strong>
+    <ul>
+      <li><strong>Access control (catalogue §5.9, §13.3).</strong> The keys graph is restricted. Sharding multiplies the number of graphs that must carry the restricted ACL, and a missed shard is a silent PII disclosure. Require that the ACL be expressed over the shard <em>template</em>, that the profile declare the shard count, and that a conformance check assert every shard graph is covered.</li>
+      <li><strong>Graph-name visibility.</strong> Graph names are frequently listable even where contents are not; catalogue §13.3 already warns that a graph name is not a security boundary. Shard membership therefore leaks bucket-level count metadata. This is low severity because shard membership derives from the keyed claim IRI, but it must be an accepted, recorded consequence rather than an unexamined one.</li>
+    </ul>
+  </li>
+  <li><strong>Graph-count budget.</strong> Sharding the txn, log and keys graphs multiplies graph count against the G6 proliferation limit and TCK O‑12. Add the combined graph-count budget to §29.3 and require O‑12 to run against the <em>full</em> topology, not the payload graphs alone.</li>
+</ol>
+
+<p><em>Where:</em> guide §2.3, §6.1, §7.1, §17.3, §19.1, §24.2, §25.2, §29.3, §29.4, Chapter 27 (T‑3, O‑12), Appendix A (<code class="language-plaintext highlighter-rouge">pat:counter</code>); catalogue §5.8, §5.9, §12.1 (WP‑15).</p>
+
+<hr />
+
+<h3 id="wp11--multi-target-writes-and-lock-ordering-b13">WP‑11 — Multi-target writes and lock ordering (B13)</h3>
+
+<p><strong>Changes.</strong></p>
+
+<ol>
+  <li><strong>Withdraw the claim as stated.</strong> §10.1 and §19.6 instruct the writer to “acquire version rows in sorted IRI order” by listing them in that order in <code class="language-plaintext highlighter-rouge">WHERE</code>. SPARQL specifies no evaluation order and no lock order; the optimiser may reorder freely. Replace with a scoped statement:
+    <ul>
+      <li><strong>Single-request updates:</strong> deadlock avoidance is the engine’s responsibility. The adapter must treat deadlock/abort as <code class="language-plaintext highlighter-rouge">Conflict</code>, retry with jitter, and expose a deadlock-rate metric. Sorted ordering in the query text is a readability convention with no guarantee, and must be labelled as such.</li>
+      <li><strong>Multi-request transaction strategies</strong> (<code class="language-plaintext highlighter-rouge">ExplicitTransaction</code>, <code class="language-plaintext highlighter-rouge">NativePromote</code>, vendor APIs) and <strong>external lock strategies</strong>: sorted acquisition <em>is</em> effective, because the client controls statement order. Retain the rule there and say so.</li>
+      <li><strong>Partitioned writers:</strong> the partition key must cover all targets of a multi-target write, or the write must be a saga. Cross-partition multi-target writes are not orderable by convention.</li>
+    </ul>
+  </li>
+  <li><strong>Bound the exposure.</strong> <code class="language-plaintext highlighter-rouge">beginUnitOfWork()</code> remains gated on <code class="language-plaintext highlighter-rouge">multiAggregateAtomicity</code> (§25.6, correct as written). Add that a family declaring <code class="language-plaintext highlighter-rouge">multi_aggregate: unit_of_work</code> must also declare a deadlock policy, and that the planner refuses <code class="language-plaintext highlighter-rouge">unit_of_work</code> when the capability report shows deadlock aborts but the family declares no retry budget.</li>
+  <li><strong>Cross-target epoch consistency.</strong> A multi-target write must read the dataset epoch once and guard all targets against that one value (WP‑1), so that an epoch bump mid-write cannot half-apply.</li>
+</ol>
+
+<p><strong>Evidence:</strong> new TCK T‑19 <em>opposite-order two-stream write</em>: two clients write targets A,B and B,A concurrently; assert forward progress and that aborts are reported as <code class="language-plaintext highlighter-rouge">Conflict</code>, not <code class="language-plaintext highlighter-rouge">Unknown</code> or success.</p>
+
+<p><em>Where:</em> guide §10.1, §19.6, §25.4 (<code class="language-plaintext highlighter-rouge">ExplicitTransaction</code>, <code class="language-plaintext highlighter-rouge">SerializingProxy</code>), §25.6, §29.3, Chapter 27.</p>
+
+<hr />
+
+<h3 id="wp12--query-hygiene-and-detection-correctness-a7-a8-a9">WP‑12 — Query hygiene and detection correctness (A‑7, A‑8, A‑9)</h3>
+
+<p>The guide’s <em>detection</em> queries — the ones it relies on to prove the whole design safe — break the guide’s own rules. Every one is in the “standing alert” set.</p>
+
+<p><strong>Changes.</strong></p>
+
+<ol>
+  <li><strong>Introduce a bucket/shard registry and stop prefix-scanning (A‑7).</strong> Add a small <code class="language-plaintext highlighter-rouge">urn:g:catalog</code> graph listing every log bucket, txn shard, keys shard and delta bucket with its role, target-shard range and <code class="language-plaintext highlighter-rouge">(epoch, seq)</code> coverage. Then rewrite to enumerate from the registry via <code class="language-plaintext highlighter-rouge">VALUES</code>:
+    <ul>
+      <li><strong>S3 gap scan</strong> — currently <code class="language-plaintext highlighter-rouge">GRAPH ?log { … } FILTER(STRSTARTS(STR(?log), "urn:g:txlog/"))</code>. This is forbidden by F6 (unbound <code class="language-plaintext highlighter-rouge">GRAPH ?log</code> scans every graph in the dataset) and by catalogue §12.3 (prefix scans are diagnostics, not integrity mechanisms). It is also unsound: it scans <em>nothing</em> if a bucket is renamed and <em>everything</em> if another graph shares the prefix.</li>
+      <li><strong>F5 fork query</strong> — same defect.</li>
+      <li><strong>The txn-cardinality query</strong> introduced in WP‑2 — must be registry-driven from the outset.</li>
+      <li><strong>S6 as-of</strong> — <code class="language-plaintext highlighter-rouge">GRAPH ?log</code> / <code class="language-plaintext highlighter-rouge">GRAPH ?log2</code> unbound; must be bounded to registry buckets within the as-of range.</li>
+    </ul>
+  </li>
+  <li><strong>Fix S4 (A‑7, second half).</strong> S4 hard-codes <code class="language-plaintext highlighter-rouge">urn:g:txlog/2026-09</code>, so it returns the wrong “latest revision” for any stream last written in an earlier bucket — silently, with a plausible answer. Changes:
+    <ul>
+      <li>the normative head lookup is <code class="language-plaintext highlighter-rouge">pat:head</code> on the version row (single triple, already benefit A4);</li>
+      <li>the <code class="language-plaintext highlighter-rouge">MAX(?seq)</code> form is demoted to a <strong>repair/audit</strong> query, registry-driven, with the <code class="language-plaintext highlighter-rouge">pat:epoch</code> pinned and all buckets enumerated;</li>
+      <li>add a head-consistency audit: <code class="language-plaintext highlighter-rouge">pat:head</code> must equal the max-<code class="language-plaintext highlighter-rouge">seq</code> receipt per target per epoch.</li>
+    </ul>
+  </li>
+  <li><strong>Fix the duplicate scans (A‑8).</strong> §7.5’s P7 reconciler and §7.3’s <code class="language-plaintext highlighter-rouge">ex:PersonEmailUnique</code> group on the <strong>raw</strong> literal, so neither can detect the normalization-variant duplicate that §4’s own K4 example uses (<code class="language-plaintext highlighter-rouge">ada@example.org</code> vs <code class="language-plaintext highlighter-rouge">Ada@Example.org</code>). §8.1 already states SPARQL cannot normalize; the two sections contradict each other.
+    <ul>
+      <li>Replace the primary reconciler with an <strong>application-side</strong> job that reads the payload, applies the frozen pipeline, recomputes the claim IRI, and groups on that. This is the only form that matches the write path.</li>
+      <li>Keep the SPARQL exact-match query as a cheap first pass, labelled as such — it catches byte-identical duplicates only.</li>
+      <li>Replace <code class="language-plaintext highlighter-rouge">ex:PersonEmailUnique</code> (<code class="language-plaintext highlighter-rouge">sh:sparql</code>, full-scan, raw-literal) with the claim-based <code class="language-plaintext highlighter-rouge">sh:maxCount 1</code> check the guide already argues for in §6.1, plus an audit rule that every <code class="language-plaintext highlighter-rouge">ex:Person</code> with an <code class="language-plaintext highlighter-rouge">ex:email</code> has a corresponding owned claim. Cross-node <code class="language-plaintext highlighter-rouge">sh:sparql</code> uniqueness on a raw literal is the worst of both worlds: expensive <em>and</em> incorrect.</li>
+      <li>Add the same treatment to the <code class="language-plaintext highlighter-rouge">order-number-per-tenant</code> example in §29.3.</li>
+    </ul>
+  </li>
+  <li><strong>Fix S5 (A‑9).</strong> S5 orders on <code class="language-plaintext highlighter-rouge">?op</code> from an <code class="language-plaintext highlighter-rouge">OPTIONAL</code>-adjacent pattern without <code class="language-plaintext highlighter-rouge">COALESCE</code>, which is the exact failure Chapter 13 forbids and S2 already guards. Change to <code class="language-plaintext highlighter-rouge">ORDER BY ?occurred ?epoch ?seq ?opk</code> with <code class="language-plaintext highlighter-rouge">BIND(COALESCE(?op, 0) AS ?opk)</code>. Reconcile with the A‑12 decision on receipt-level <code class="language-plaintext highlighter-rouge">pat:opSeq</code>.</li>
+  <li><strong>Add a review-checklist item and a lint rule.</strong> Chapter 28’s checklist already requires named graphs; add: “no <code class="language-plaintext highlighter-rouge">STRSTARTS</code> over graph names in any integrity, ordering or as-of query; enumerate from the registry.” Enforce in the lint suite (WP‑18).</li>
+  <li><strong>Re-verify every remaining query in the guide</strong> against the Chapter 28 checklist as a closing task, and record the audit in a table. The four defects above were found by applying the guide’s own rules to the guide; the remaining queries have not been audited that way.</li>
+</ol>
+
+<p><em>Where:</em> guide §6.1, §7.3, §7.5, S3, S4, S5, S6, F5, F6, §21.3, §24.2, §29.3, Chapter 28 (checklist), Appendix B (<code class="language-plaintext highlighter-rouge">ex:PersonEmailUnique</code> replacement), new §2.3 registry row; catalogue §12.3, §12.4 (WP‑15).</p>
+
+<hr />
+
+<h3 id="wp13--privacy-erasure-and-the-history-models-a3-a4-a5-a6">WP‑13 — Privacy, erasure and the history models (A‑3, A‑4, A‑5, A‑6)</h3>
+
+<p>This is the largest unclosed area and the one the review did not reach. ADR‑A68 decides <em>how</em> erasure works; the patterns guide decides <em>what history is kept</em>; <strong>no document reconciles them</strong>, and the combinations the guide recommends most strongly are the ones that make erasure impossible.</p>
+
+<p><strong>Changes.</strong></p>
+
+<ol>
+  <li><strong>Erasure register and restore replay (A‑3).</strong> Specified in WP‑1 step 5. Add the corresponding consequence to ADR‑A68: “Erasure is durable only if it survives restore. A deployment must maintain an erasure register outside the dataset and replay it before admitting readers or writers after any restore, rebuild, or environment clone.”</li>
+  <li>
+    <p><strong>Receipt-model / privacy-class compatibility (A‑4).</strong> State the matrix and make it a planner refusal:</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Receipt model</th>
+          <th>Family contains personal data</th>
+          <th>Verdict</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code class="language-plaintext highlighter-rouge">receipt_only</code></td>
+          <td>yes</td>
+          <td><strong>Permitted.</strong> Receipts carry pseudonymous references only (ADR‑A68 rule 3). Erasure = drop the per-subject payload graph + tombstone.</td>
+        </tr>
+        <tr>
+          <td><code class="language-plaintext highlighter-rouge">patch_log</code></td>
+          <td>yes</td>
+          <td><strong>Refused</strong> unless (a) delta graphs are per-subject and enumerable from the erasure register, <strong>or</strong> (b) delta payloads are crypto-shredded per subject. Otherwise the delta graphs are a second immutable copy of the personal data and the graph-drop mechanism cannot reach them.</td>
+        </tr>
+        <tr>
+          <td><code class="language-plaintext highlighter-rouge">snapshot_per_revision</code></td>
+          <td>yes</td>
+          <td><strong>Refused</strong> unless snapshots are per-subject and enumerable, or crypto-shredded. Same reasoning.</td>
+        </tr>
+        <tr>
+          <td>any</td>
+          <td>no</td>
+          <td>Permitted.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>Note the sharp edge this creates: §20.4 and §30.1 currently require decision records to be <code class="language-plaintext highlighter-rouge">patch_log</code> or <code class="language-plaintext highlighter-rouge">snapshot_per_revision</code> (“never receipt-only”), and MORK decision records plausibly reference data subjects. The resolution is that a decision record may reference a subject <strong>only pseudonymously</strong>; any personal payload must live in the per-subject graph the decision <em>points at</em>, never inside the decision or its deltas. Add this as an explicit rule in §20.4 and §30.1, and as a shape in <code class="language-plaintext highlighter-rouge">ontology/governance/shapes/</code> per ADR‑A68’s existing consequence.</p>
+  </li>
+  <li><strong>Crypto-shredding, if selected, must be specified (catalogue §11.5 names it; nothing defines it).</strong> Add a new §24.5 <em>Crypto-shredding</em> covering: per-subject key derivation and custody, what is encrypted (payload triples? object literals? whole graph serialisation?), how encrypted content interacts with RDFC‑1.0 canonicalisation and content-addressed revision IRIs (a re-encryption changes bytes and therefore changes content identity — this must be designed, not discovered), key-destruction durability across backups, and the resulting as-of behaviour (a shredded revision is <em>unreadable</em>, so as-of reads must fail cleanly, not return partial state). If the deployment cannot specify these, it must select per-subject graph drop instead.</li>
+  <li><strong>Claim-scheme rotation must preserve uniqueness (A‑5).</strong> §6.1’s docstring and catalogue §6.4 both describe rotation as “a new version salt and a backfill”, which leaves a window where writer W1 (on <code class="language-plaintext highlighter-rouge">v1</code>) and writer W2 (on <code class="language-plaintext highlighter-rouge">v2</code>) each successfully claim the same normalized key. Specify a three-phase protocol:
+    <ul>
+      <li><strong>Phase A (dual-write):</strong> every claim acquisition guards and inserts <strong>both</strong> the <code class="language-plaintext highlighter-rouge">v1</code> and <code class="language-plaintext highlighter-rouge">v2</code> claim IRIs in one operation; reads resolve either. Uniqueness holds because any two writers collide on at least one claim node.</li>
+      <li><strong>Phase B (backfill):</strong> existing <code class="language-plaintext highlighter-rouge">v1</code>-only claims gain their <code class="language-plaintext highlighter-rouge">v2</code> counterpart, idempotently, under the same dual-write guard.</li>
+      <li><strong>Phase C (retire):</strong> once no writer accepts <code class="language-plaintext highlighter-rouge">v1</code> (enforced by a scheme registry state machine, not by deployment order), <code class="language-plaintext highlighter-rouge">v1</code> claims are tombstoned or — under an erasure policy — deleted.
+Add <code class="language-plaintext highlighter-rouge">pat:claimScheme</code> to claim nodes, a scheme registry with states <code class="language-plaintext highlighter-rouge">accepting | dual | retiring | retired</code>, and a refusal if a writer’s scheme state does not match the registry.
+<strong>Evidence:</strong> new TCK K‑9 <em>rotation under contention</em>: two writers on different scheme versions race for the same normalized key; assert exactly one owner.</li>
+    </ul>
+  </li>
+  <li><strong>Declare the ownership-monotonicity exception (A‑6).</strong> §6.2’s post-<code class="language-plaintext highlighter-rouge">ASK</code> correctness argument rests on “a claim is only ever released by an explicit retire operation issued by its own owner”. Catalogue §6.4 states erasure may physically delete a claim, which breaks that premise. Add to §6.2, §8.4 and Appendix C:
+    <ul>
+      <li>monotonicity holds <strong>except</strong> where an erasure policy permits physical claim deletion;</li>
+      <li>in such families, the post-<code class="language-plaintext highlighter-rouge">ASK</code> is valid only in the absence of a concurrent erasure of that claim, and erasure must be serialised against claim allocation for the same key (via the shard sentinel, the external allocator, or a declared lock);</li>
+      <li>the family declares <code class="language-plaintext highlighter-rouge">erasure_precedence</code> (catalogue §11.5 already demands it) naming which of erasure and monotonicity wins and how reconciliation behaves.</li>
+    </ul>
+  </li>
+  <li><strong>Audit records must not reintroduce personal data.</strong> §24.1’s deletion receipt carries <code class="language-plaintext highlighter-rouge">pat:cause &lt;urn:decision:gdpr-erasure/2026-09-21/7&gt;</code>. Add a rule: a decision IRI, a receipt, a tombstone, a ledger entry and a graph <em>name</em> must contain no personal data or reversible derivative of a personal key (ADR‑A68 rules 3 and 5, catalogue §5.9). Add this to the PII data-model shape ADR‑A68 already requires at P0.3.8, and add an L1 fixture that fails a ledger containing personal data (already promised by ADR‑A68; not yet specified).</li>
+  <li><strong>Environment clones.</strong> Catalogue §4.4 requires synthetic data to use a distinct tenant or namespace rather than an environment substitution. Add to §24.4: cloning production into a lower environment is a restore for erasure purposes and must replay the erasure register; a clone that has not replayed it is a personal-data breach surface, not a test fixture.</li>
+</ol>
+
+<p><em>Where:</em> guide §6.1, §6.2, §8.4, §20.4, §24.0, §24.1, §24.2, §24.4, new §24.5, §29.3, §30.1, Appendix C, Chapter 27 (K‑9, T‑15, new T‑22 “clone replays erasure register”), Appendix E items 5 and 7; ADR‑A68 (Decision and Consequences, see WP‑15); catalogue §6.4, §11.5, §13.7 (WP‑15).</p>
+
+<hr />
+
+<h3 id="wp14--vocabulary-terminology-and-cross-document-consistency-c1-c2-c3-a12-a13-a14">WP‑14 — Vocabulary, terminology and cross-document consistency (C1, C2, C3, A‑12, A‑13, A‑14)</h3>
+
+<p><strong>Changes.</strong></p>
+
+<ol>
+  <li>
+    <p><strong>Repoint every ADR‑A51 citation (C1).</strong> Exact sites and targets:</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Site</th>
+          <th>Current</th>
+          <th>Repoint to</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Status line</td>
+          <td>“identity-related corrections applied… ADR‑A51 review disposition”</td>
+          <td>Retain the historical reference; add “ADR‑A51 is superseded by ADR‑A82; identity grammar is now governed by the reference profile (WP‑0).”</td>
+        </tr>
+        <tr>
+          <td><code class="language-plaintext highlighter-rouge">claim_iri</code> docstring</td>
+          <td>“matches ADR‑A51’s minimum content-hash width”</td>
+          <td>reference profile §digest schemes; catalogue §7.4</td>
+        </tr>
+        <tr>
+          <td>§7.5</td>
+          <td>“<code class="language-plaintext highlighter-rouge">fnd:replacedBy</code> … (ADR‑A51)”</td>
+          <td>catalogue §11.3–11.4 plus the C2 resolution</td>
+        </tr>
+        <tr>
+          <td>§8.4 item 1</td>
+          <td>“what ADR‑A51 names <code class="language-plaintext highlighter-rouge">surrogate-claimed</code>”</td>
+          <td>catalogue §6.4</td>
+        </tr>
+        <tr>
+          <td>§19.4 ULID note</td>
+          <td>“ADR‑A51 rule 2”</td>
+          <td>catalogue §6.3 (Prohibition) and §6.4</td>
+        </tr>
+        <tr>
+          <td>Appendix D.1</td>
+          <td>table of A51-review corrections</td>
+          <td>retain as history; add a row-by-row status column recording which corrections this plan finds <strong>incomplete</strong> (revision IRI epoch → B1/A‑2; claim width → A‑1; illustrative-value drift → WP‑0; S6 → A‑16; S3 → A‑7)</td>
+        </tr>
+        <tr>
+          <td>Appendix E item 9</td>
+          <td>“a later split remains open”</td>
+          <td>now closed by WP‑0; update</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>Also amend ADR‑A51’s header: “Superseded by ADR‑A82” asserts a completed action while A82 is <code class="language-plaintext highlighter-rouge">Proposed</code>. Change to “To be superseded on ratification of ADR‑A82”, or record both as proposals. Mirror in ADR‑A82’s Consequences.</p>
+  </li>
+  <li><strong>Resolve <code class="language-plaintext highlighter-rouge">fnd:replacedBy</code> (C2).</strong> It is prescribed by P7 and §30.2, absent from the guide’s own Foundation-term list (§23.3), and catalogue §11.4 forbids writing a relation the selected ontology does not define. Do one of:
+    <ul>
+      <li>confirm the term exists in Foundation and add it to §23.3 with its domain, range, transitivity and revocability; or</li>
+      <li>replace it with a profile-declared <code class="language-plaintext highlighter-rouge">merge_relation</code> in the family declaration, defaulting to unset, with the planner refusing <code class="language-plaintext highlighter-rouge">on_violation: merge</code> when no relation is declared.
+In either case, keep the existing prohibition on <code class="language-plaintext highlighter-rouge">owl:sameAs</code> as the default merge mechanism (catalogue §11.3), and state that the relation must be revocable — a merge later found wrong must be retractable without reasoner side effects.</li>
+    </ul>
+  </li>
+  <li><strong>Fix the valid-time naming (A‑13).</strong> Three names for one role: <code class="language-plaintext highlighter-rouge">ex:occurredAt</code> (events), <code class="language-plaintext highlighter-rouge">pat:occurredAt</code> (receipts, §19.1 and Appendix A), <code class="language-plaintext highlighter-rouge">valid_time.property</code> (declaration). Decide and apply uniformly:
+    <ul>
+      <li>domain valid time is a <strong>domain</strong> property, declared per family (<code class="language-plaintext highlighter-rouge">valid_time.property</code>), illustrated as <code class="language-plaintext highlighter-rouge">ex:occurredAt</code>;</li>
+      <li><code class="language-plaintext highlighter-rouge">pat:occurredAt</code> on a receipt is permitted <strong>only</strong> where the write itself has a valid time distinct from its events, and must be declared; otherwise remove it from §19.1;</li>
+      <li><code class="language-plaintext highlighter-rouge">fnd:TemporalScope</code> remains the mechanism for interval-scoped domain facts (§23.3), not for point events.
+Update §3.2, §10.2, §19.1, §23.2, §23.3, §29.3, Appendix A, Appendix C.</li>
+    </ul>
+  </li>
+  <li>
+    <p><strong>Complete the vocabulary (A‑14).</strong> Appendix A must define every term any query or shape in the guide uses. Missing or wrong today:</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Term</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code class="language-plaintext highlighter-rouge">pat:retentionLowWaterMark</code></td>
+          <td>Add (used in S3, written by the retention job per WP‑7). Range <code class="language-plaintext highlighter-rouge">xsd:long</code>, per target, per epoch.</td>
+        </tr>
+        <tr>
+          <td><code class="language-plaintext highlighter-rouge">pat:etag</code></td>
+          <td>Add as <strong>prohibited/deprecated</strong> with the F4 rationale, since <code class="language-plaintext highlighter-rouge">VersionRowShape</code> constrains it with <code class="language-plaintext highlighter-rouge">sh:maxCount 0</code>. A shape may not reference an undefined term.</td>
+        </tr>
+        <tr>
+          <td><code class="language-plaintext highlighter-rouge">pat:stableWatermark</code></td>
+          <td>Replace the <code class="language-plaintext highlighter-rouge">{epoch}:{seq}</code> delimited string with <code class="language-plaintext highlighter-rouge">pat:watermarkEpoch</code> + <code class="language-plaintext highlighter-rouge">pat:watermarkSeq</code> (both <code class="language-plaintext highlighter-rouge">xsd:long</code>). A delimited concatenation with no declared widths or parse rule violates catalogue §7.2 and §10.2 and cannot be compared numerically.</td>
+        </tr>
+        <tr>
+          <td><code class="language-plaintext highlighter-rouge">pat:seqEpoch</code></td>
+          <td>Add (WP‑1).</td>
+        </tr>
+        <tr>
+          <td><code class="language-plaintext highlighter-rouge">pat:claimScheme</code></td>
+          <td>Add (WP‑13).</td>
+        </tr>
+        <tr>
+          <td><code class="language-plaintext highlighter-rouge">pat:prevRevPruned</code> or equivalent</td>
+          <td>Add if selected in WP‑7.</td>
+        </tr>
+        <tr>
+          <td><code class="language-plaintext highlighter-rouge">pat:opSeq</code></td>
+          <td>Resolve the A‑12 contradiction: it is defined as an ordinal of an event within a revision, <code class="language-plaintext highlighter-rouge">pat:EventOrderShape</code> targets event subjects, and §19.1 writes it on a receipt. Either scope it to events and remove it from §19.1, or define <code class="language-plaintext highlighter-rouge">pat:opSeq 0</code> on a revision as “no event grain” and add it to <code class="language-plaintext highlighter-rouge">RevisionShape</code>. Align <code class="language-plaintext highlighter-rouge">Position.opSeq</code> and S2’s <code class="language-plaintext highlighter-rouge">COALESCE(?op, 0)</code>.</td>
+        </tr>
+        <tr>
+          <td><code class="language-plaintext highlighter-rouge">pat:counter</code></td>
+          <td>Pin datatype and add a shape (WP‑3).</td>
+        </tr>
+        <tr>
+          <td>Registry terms</td>
+          <td>Add the bucket/shard registry vocabulary from WP‑12.</td>
+        </tr>
+      </tbody>
+    </table>
+  </li>
+  <li>
+    <p><strong>Add the <code class="language-plaintext highlighter-rouge">sh:declare</code> requirement wherever <code class="language-plaintext highlighter-rouge">sh:prefixes</code> is used.</strong> Appendix B states it for <code class="language-plaintext highlighter-rouge">pat:</code>; <code class="language-plaintext highlighter-rouge">ex:PersonEmailUnique</code> in §7.3 uses <code class="language-plaintext highlighter-rouge">sh:prefixes ex:</code> without it. Fix or remove with the WP‑12 replacement.</p>
+  </li>
+  <li><strong>Terminology.</strong> Appendix C must gain <code class="language-plaintext highlighter-rouge">Target IRI</code>, <code class="language-plaintext highlighter-rouge">As-of floor</code>, <code class="language-plaintext highlighter-rouge">Erasure register</code>, <code class="language-plaintext highlighter-rouge">Claim scheme</code>, <code class="language-plaintext highlighter-rouge">Dataset epoch</code> vs <code class="language-plaintext highlighter-rouge">Row epoch</code>, and must correct <code class="language-plaintext highlighter-rouge">Epoch</code> and <code class="language-plaintext highlighter-rouge">ETag</code> per WP‑1 and WP‑5.</li>
+</ol>
+
+<p><em>Where:</em> as tabulated; plus ADR‑A51 header, ADR‑A82 Consequences, catalogue §11.4 cross-reference.</p>
+
+<hr />
+
+<h3 id="wp15--amendments-to-the-catalogue-adra82-and-adra68">WP‑15 — Amendments to the catalogue, ADR‑A82 and ADR‑A68</h3>
+
+<p>The catalogue was mostly right; its gap is that it stated rules without requiring anyone to <em>detect</em> violations. Six additions.</p>
+
+<p><strong><code class="language-plaintext highlighter-rouge">iri-identity-patterns.md</code>:</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>§</th>
+      <th>Addition</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>§10.3 (Epoch durability)</td>
+      <td>Add the requirement that <strong>every write guards on the current dataset epoch</strong>, and that a version-row or receipt epoch is not a substitute. Restate “store-local epoch only” as <strong>prohibited</strong>, not merely “unsafe by itself”, for any position-derived occurrence identity. Add the double-restore reuse hazard.</td>
+    </tr>
+    <tr>
+      <td>§10.2 (Fixed-width positions)</td>
+      <td>Extend to <strong>every</strong> identity-bearing component of an occurrence IRI, naming the epoch explicitly. Add: a variable-width epoch makes cross-epoch lexical scans wrong even when the sequence is padded.</td>
+    </tr>
+    <tr>
+      <td>§5.10 / §10.6 (Event occurrences)</td>
+      <td>Add: where an occurrence IRI is derived deterministically from <code class="language-plaintext highlighter-rouge">(target, epoch, position)</code>, a broken isolation guarantee produces one <em>merged</em> subject rather than two, so <strong>fork-style detection by subject count cannot fire</strong>. A deterministic occurrence profile must declare a per-occurrence uniqueness witness (a transaction claim or equivalent) and a cardinality constraint on it. Also require the target→namespace derivation to be <strong>injective and fixed-width</strong>.</td>
+    </tr>
+    <tr>
+      <td>New §11.6 (Erasure and history models)</td>
+      <td>The compatibility matrix from WP‑13 item 2, plus the rule that an erasure mechanism must reach every derived copy — deltas, snapshots, projections, caches, exports, backups — and that an erasure register replayed on restore is the mechanism.</td>
+    </tr>
+    <tr>
+      <td>§15 (Refusal conditions)</td>
+      <td>New rows: deterministic occurrence IRI without a uniqueness witness; <code class="language-plaintext highlighter-rouge">patch_log</code>/<code class="language-plaintext highlighter-rouge">snapshot_per_revision</code> with personal data and no per-subject scoping or crypto-shred; claim scheme without a dual-write rotation protocol; position-derived event without an external epoch authority; conditional HTTP without a strong ETag and representation policy; patch-log retention that is not prefix-only when as-of is supported.</td>
+    </tr>
+    <tr>
+      <td>§14.1 / §14.3</td>
+      <td>Candidate concepts: <code class="language-plaintext highlighter-rouge">dal:EpochAuthority</code>, <code class="language-plaintext highlighter-rouge">dal:OccurrenceNamespaceDerivation</code>, <code class="language-plaintext highlighter-rouge">dal:ClaimSchemeVersion</code>, <code class="language-plaintext highlighter-rouge">dal:PrivacyClass</code>, <code class="language-plaintext highlighter-rouge">dal:ErasureRegister</code>, <code class="language-plaintext highlighter-rouge">dal:AsOfFloorPolicy</code>. Validation requirements: cross-epoch lexical ordering test; numeric datatype round-trip test; erasure-replay-after-restore test; claim-rotation concurrency test.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong><code class="language-plaintext highlighter-rouge">ADR-A82</code>:</strong> add to Consequences — (a) the patterns guide and any other implementation document is a <strong>consumer</strong> of a selected profile and must not restate identifier grammar inline (closing the root cause in WP‑0); (b) the new reference URN profile is published under §6 as opt-in and versioned; (c) the refusal conditions added to catalogue §15 are compiler obligations, not prose.</p>
+
+<p><strong><code class="language-plaintext highlighter-rouge">ADR-A68</code>:</strong> add to Decision/Consequences —</p>
+<ul>
+  <li>(6) <strong>Erasure register.</strong> Erasure is recorded outside the dataset and replayed before any restored, rebuilt or cloned dataset admits traffic.</li>
+  <li>(7) <strong>History-model restriction.</strong> A family containing personal data may not select a history model that duplicates personal payload into immutable derived graphs unless those graphs are per-subject and enumerable, or crypto-shredded.</li>
+  <li>(8) <strong>Claim rotation and erasure precedence.</strong> Claim-scheme rotation follows the dual-write protocol; the family declares erasure precedence against ownership monotonicity.</li>
+  <li>(9) <strong>Backup window.</strong> The residual exposure window is the backup retention period; it must be stated and accepted as part of the DPO review, which ADR‑A68 already requires before the Phase 0 exit gate.</li>
+  <li>Note that ADR‑A68’s existing exception to ADR‑A65/A67 (graph drop is not a superseding version) now also needs an exception for <strong>derived</strong> graphs, which contradicts ADR‑A68 rule 4’s “write-back never writes to a derived graph” only in the erasure direction. State that erasure may <em>delete</em> from derived layers even though normal writes may not <em>write</em> there.</li>
+</ul>
+
+<hr />
+
+<h3 id="wp16--tck-and-capability-evidence">WP‑16 — TCK and capability evidence</h3>
+
+<p>Consolidate every test named above into Chapter 27, and correct the “what a pass means” set in §27.4.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Test</th>
+      <th>Status</th>
+      <th>Asserts</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>K‑1, K‑3</td>
+      <td>unchanged</td>
+      <td>gating</td>
+    </tr>
+    <tr>
+      <td><strong>K‑9</strong></td>
+      <td>new</td>
+      <td>claim-scheme rotation under contention yields one owner</td>
+    </tr>
+    <tr>
+      <td>O‑2, O‑8</td>
+      <td>unchanged</td>
+      <td>gating</td>
+    </tr>
+    <tr>
+      <td><strong>O‑13</strong></td>
+      <td>new</td>
+      <td>counter datatype round-trip is <code class="language-plaintext highlighter-rouge">xsd:long</code>; shape validates</td>
+    </tr>
+    <tr>
+      <td><strong>O‑14</strong></td>
+      <td>new</td>
+      <td>prune-then-as-of is <strong>refused</strong>, not answered</td>
+    </tr>
+    <tr>
+      <td><strong>O‑15</strong></td>
+      <td>new</td>
+      <td>write to an aggregate older than the log retention window succeeds under commit-time SHACL</td>
+    </tr>
+    <tr>
+      <td><strong>O‑16</strong></td>
+      <td>new, <strong>gating</strong></td>
+      <td>global HLC reader never permanently skips a receipt (the sparse-tier analogue of O‑2)</td>
+    </tr>
+    <tr>
+      <td><strong>O‑17</strong></td>
+      <td>new</td>
+      <td>HLC logical-counter overflow preserves order and shape</td>
+    </tr>
+    <tr>
+      <td>T‑1</td>
+      <td>rewritten</td>
+      <td>one txn claim per revision; one <code class="language-plaintext highlighter-rouge">pat:txn</code> per revision; loser sees <code class="language-plaintext highlighter-rouge">CONFLICT</code></td>
+    </tr>
+    <tr>
+      <td>T‑2</td>
+      <td>extended, gating</td>
+      <td>timeout <em>during</em> execution yields <code class="language-plaintext highlighter-rouge">UNKNOWN</code>, then exactly-once on resubmission</td>
+    </tr>
+    <tr>
+      <td>T‑3</td>
+      <td>extended</td>
+      <td>conflict rate measured on meta <strong>and</strong> txn, log, keys graphs</td>
+    </tr>
+    <tr>
+      <td>T‑4</td>
+      <td>extended</td>
+      <td>chain integrity across mixed append/CAS streams</td>
+    </tr>
+    <tr>
+      <td>T‑5</td>
+      <td>rewritten, gating</td>
+      <td>stale ETag rejected on the <strong>dataset</strong> epoch guard</td>
+    </tr>
+    <tr>
+      <td><strong>T‑14</strong></td>
+      <td>new, gating</td>
+      <td>restoring the same backup twice does not reuse an epoch</td>
+    </tr>
+    <tr>
+      <td><strong>T‑15</strong></td>
+      <td>new, gating</td>
+      <td>erase → restore → erased graph absent, tombstone present</td>
+    </tr>
+    <tr>
+      <td><strong>T‑16</strong></td>
+      <td>new</td>
+      <td>deterministic-IRI collision under forced weak isolation is detected</td>
+    </tr>
+    <tr>
+      <td><strong>T‑17</strong></td>
+      <td>new</td>
+      <td>first CAS against a pre-created row succeeds</td>
+    </tr>
+    <tr>
+      <td><strong>T‑18</strong></td>
+      <td>new</td>
+      <td>conditional <code class="language-plaintext highlighter-rouge">PUT</code> round-trip through a conforming intermediary returns <code class="language-plaintext highlighter-rouge">204</code></td>
+    </tr>
+    <tr>
+      <td><strong>T‑19</strong></td>
+      <td>new</td>
+      <td>opposite-order two-target writes make progress; aborts reported as <code class="language-plaintext highlighter-rouge">Conflict</code></td>
+    </tr>
+    <tr>
+      <td><strong>T‑20</strong></td>
+      <td>new</td>
+      <td>append form under timeout produces no duplicate events</td>
+    </tr>
+    <tr>
+      <td><strong>T‑21</strong></td>
+      <td>new</td>
+      <td>lapsed lease holder’s write fails the fence</td>
+    </tr>
+    <tr>
+      <td><strong>T‑22</strong></td>
+      <td>new</td>
+      <td>environment clone replays the erasure register</td>
+    </tr>
+    <tr>
+      <td>O‑12</td>
+      <td>extended</td>
+      <td>graph-count budget measured over the full sharded topology</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>§27.4 correction.</strong> The current pass set (K‑1, K‑3, O‑2, O‑8, T‑1, T‑2) cannot be trusted because T‑1 passes while the system is corrupt (B2) and T‑5 cannot fail (B1). New gating set: <strong>K‑1, K‑3, O‑2, O‑8, O‑16, T‑1 (rewritten), T‑2 (extended), T‑5 (rewritten), T‑14, T‑15.</strong> Add: capability flags are populated from a TCK report bound to an exact image, configuration and <strong>isolation setting</strong>; a report older than the current configuration hash is not evidence.</p>
+
+<p><strong>Chapter 30.4 correction.</strong> The existing sequencing note is still right in shape but incomplete: add that the TCK must run against at least one MVCC engine <em>and</em> one engine with coarse (graph- or page-granular) conflict detection before <code class="language-plaintext highlighter-rouge">statementLevelConflictDetection</code> means anything, and that the epoch coordinator must exist before T‑5, T‑14 or T‑15 can run at all.</p>
+
+<hr />
+
+<h3 id="wp17--family-declaration-and-planner-refusals">WP‑17 — Family declaration and planner refusals</h3>
+
+<p>Extend §29.3’s declaration and §25.3’s planner. Every remediation above that depends on a deployment choice must be declarable and refusable; a rule that lives only in prose is the failure mode this whole set already demonstrated.</p>
+
+<p><strong>New or changed declaration keys:</strong></p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">identity</span><span class="pi">:</span>
+  <span class="na">profile</span><span class="pi">:</span> <span class="s">reference-urn-profile-v1</span>          <span class="c1"># WP-0; required</span>
+  <span class="na">target_iri</span><span class="pi">:</span> <span class="s2">"</span><span class="s">urn:g:{family}/{id}"</span>          <span class="c1"># WP-2; the version-row subject</span>
+  <span class="na">occurrence_namespace</span><span class="pi">:</span> <span class="s">hashed_target</span>        <span class="c1"># registry_token | hashed_target</span>
+<span class="na">epoch</span><span class="pi">:</span>
+  <span class="na">authority</span><span class="pi">:</span> <span class="s">external_high_water_mark</span>        <span class="c1"># WP-1; store_local is refused</span>
+  <span class="na">coordinator</span><span class="pi">:</span> <span class="s">&lt;binding&gt;</span>
+  <span class="na">guard</span><span class="pi">:</span> <span class="s">dataset</span>                             <span class="c1"># WP-1; row is refused</span>
+<span class="na">privacy</span><span class="pi">:</span>
+  <span class="na">class</span><span class="pi">:</span> <span class="s">personal_data | internal | public</span>   <span class="c1"># WP-13</span>
+  <span class="na">erasure</span><span class="pi">:</span> <span class="s">per_subject_graph_drop | crypto_shred | none</span>
+  <span class="na">erasure_precedence</span><span class="pi">:</span> <span class="s">erasure_wins | monotonicity_wins</span>    <span class="c1"># catalogue §11.5</span>
+  <span class="na">erasure_register</span><span class="pi">:</span> <span class="s">&lt;binding&gt;</span>
+<span class="na">first_write</span><span class="pi">:</span> <span class="s">pre_created_row | absent_row</span>    <span class="c1"># WP-4</span>
+<span class="na">http</span><span class="pi">:</span>
+  <span class="na">etag_form</span><span class="pi">:</span> <span class="s">strong</span>                          <span class="c1"># WP-5</span>
+  <span class="na">etag_representation</span><span class="pi">:</span> <span class="s">single | tagged</span>
+<span class="na">receipts</span><span class="pi">:</span>
+  <span class="na">model</span><span class="pi">:</span> <span class="s">receipt_only | patch_log | snapshot_per_revision</span>
+  <span class="na">retention_mode</span><span class="pi">:</span> <span class="s">prefix_only | bucket_any</span>   <span class="c1"># WP-7 (A-16)</span>
+<span class="na">temporal</span><span class="pi">:</span>
+  <span class="na">as_of_floor_source</span><span class="pi">:</span> <span class="s">retention_job</span>          <span class="c1"># WP-7</span>
+<span class="na">order</span><span class="pi">:</span>
+  <span class="na">global_read</span><span class="pi">:</span> <span class="s">watermark | lag_window | dense_feed | none</span>   <span class="c1"># WP-9</span>
+  <span class="na">lag_window</span><span class="pi">:</span> <span class="s">&lt;duration&gt;</span>
+<span class="na">topology</span><span class="pi">:</span>
+  <span class="na">meta_shards</span><span class="pi">:</span> <span class="m">64</span>                            <span class="c1"># WP-10</span>
+  <span class="na">txn_shards</span><span class="pi">:</span> <span class="m">16</span>
+  <span class="na">log_shards</span><span class="pi">:</span> <span class="m">16</span>
+  <span class="na">keys_shards</span><span class="pi">:</span> <span class="m">1024</span>
+  <span class="na">registry_graph</span><span class="pi">:</span> <span class="s">urn:g:catalog</span>              <span class="c1"># WP-12</span>
+<span class="na">merge</span><span class="pi">:</span>
+  <span class="na">relation</span><span class="pi">:</span> <span class="s">&lt;declared or unset&gt;</span>              <span class="c1"># WP-14 / C2</span>
+<span class="na">claims</span><span class="pi">:</span>
+  <span class="na">scheme_version</span><span class="pi">:</span> <span class="s">v2</span>
+  <span class="na">scheme_state</span><span class="pi">:</span> <span class="s">dual</span>                         <span class="c1"># accepting | dual | retiring | retired</span>
+<span class="na">concurrency</span><span class="pi">:</span>
+  <span class="na">deadlock_policy</span><span class="pi">:</span> <span class="s">engine_detect_and_retry | sorted_acquisition | partitioned</span>
+</code></pre></div></div>
+
+<p><strong>New planner refusals (fail at startup, never silently downgrade):</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Refuse when</th>
+      <th>Because</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">epoch.authority: store_local</code> with position-derived occurrence identity</td>
+      <td>B1, catalogue §10.3</td>
+    </tr>
+    <tr>
+      <td>No epoch coordinator bound</td>
+      <td>WP‑1</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">privacy.class: personal_data</code> with <code class="language-plaintext highlighter-rouge">receipts.model</code> ∈ {<code class="language-plaintext highlighter-rouge">patch_log</code>, <code class="language-plaintext highlighter-rouge">snapshot_per_revision</code>} and no per-subject scoping or crypto-shred</td>
+      <td>A‑4</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">privacy.erasure: crypto_shred</code> without key custody, as-of failure semantics and backup-destruction policy</td>
+      <td>WP‑13 §24.5</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">as_of_strategy: log_replay</code> with <code class="language-plaintext highlighter-rouge">retention_mode: bucket_any</code></td>
+      <td>A‑16</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">claims.scheme_state</code> mismatch between writer and registry</td>
+      <td>A‑5</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">order.global_read: none</code> while the family advertises a dataset tier</td>
+      <td>B11</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">http.etag_form: weak</code> with conditional writes</td>
+      <td>B7</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">on_violation: merge</code> with <code class="language-plaintext highlighter-rouge">merge.relation</code> unset</td>
+      <td>C2</td>
+    </tr>
+    <tr>
+      <td>Any <code class="language-plaintext highlighter-rouge">min_level</code> unsupported by a current, configuration-bound TCK report</td>
+      <td>existing rule, now with the corrected gating set</td>
+    </tr>
+    <tr>
+      <td>Identity profile absent, or a grammar restated in the family declaration</td>
+      <td>WP‑0, ADR‑A82 §5</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h3 id="wp18--enforcement">WP‑18 — Enforcement</h3>
+
+<p>Rules in prose decayed into the twenty-eight defects above. Each remediation gets a mechanical check.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Check</th>
+      <th>Enforces</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Documentation build fails if any IRI-shaped literal in the guide is absent from the fixture set</td>
+      <td>WP‑0, A‑1, A‑2, illustrative drift</td>
+    </tr>
+    <tr>
+      <td>Lint: no <code class="language-plaintext highlighter-rouge">STRSTARTS</code> on a graph name in any integrity/ordering/as-of query</td>
+      <td>A‑7</td>
+    </tr>
+    <tr>
+      <td>Lint: no unbound <code class="language-plaintext highlighter-rouge">GRAPH ?g</code> in any guide example or shipped query</td>
+      <td>F6, A‑7</td>
+    </tr>
+    <tr>
+      <td>Lint: any <code class="language-plaintext highlighter-rouge">?x + 1</code> written to a typed property must be wrapped in <code class="language-plaintext highlighter-rouge">STRDT(..., xsd:long)</code></td>
+      <td>B4</td>
+    </tr>
+    <tr>
+      <td>Lint: <code class="language-plaintext highlighter-rouge">W/"</code> may not appear in an <code class="language-plaintext highlighter-rouge">If-Match</code> code path</td>
+      <td>B7</td>
+    </tr>
+    <tr>
+      <td>Lint: every write template must contain a dataset-epoch guard</td>
+      <td>B1</td>
+    </tr>
+    <tr>
+      <td>Lint: every shape term must exist in Appendix A</td>
+      <td>A‑14</td>
+    </tr>
+    <tr>
+      <td>Lint: <code class="language-plaintext highlighter-rouge">sh:prefixes X</code> requires a <code class="language-plaintext highlighter-rouge">sh:declare</code> on <code class="language-plaintext highlighter-rouge">X</code></td>
+      <td>Appendix B, §7.3</td>
+    </tr>
+    <tr>
+      <td>ArchUnit: no caller outside the strong-profile strategy destructures <code class="language-plaintext highlighter-rouge">Version</code></td>
+      <td>A‑15</td>
+    </tr>
+    <tr>
+      <td>ArchUnit: no <code class="language-plaintext highlighter-rouge">Collection&lt;Row&gt;</code> return from the SPI or callers</td>
+      <td>existing QP3</td>
+    </tr>
+    <tr>
+      <td>CI gate: adapter not deployable without a TCK report bound to image + config + isolation hash</td>
+      <td>QP5, §27.4</td>
+    </tr>
+    <tr>
+      <td>CI gate: planner refusal matrix has a test per row</td>
+      <td>WP‑17</td>
+    </tr>
+    <tr>
+      <td>Fixture gate: golden vectors exist for every derived identifier in the profile</td>
+      <td>catalogue §14.3</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="3-gates">3. Gates</h2>
+
+<p>No work downstream of a gate may proceed until the gate’s evidence exists.</p>
+
+<p><strong>Gate 0 — Immediate (documentation state).</strong>
+Mark <code class="language-plaintext highlighter-rouge">rdf-sparql-patterns-guide.md</code> <strong>“Not implementable — under remediation”</strong> at the head, listing B1–B13 and A‑1 to A‑16 with links to this plan. Today it is labelled “Authoritative architectural guide”, and it is being read as such. Freeze any code generated from it. No production data is written under any circumstance before Gate 3.</p>
+
+<p><strong>Gate 1 — Identity frozen.</strong> <em>Required before any component mints an identifier.</em>
+WP‑0, WP‑1 (items 1–4), WP‑2, WP‑3, WP‑5, WP‑14, WP‑15 (catalogue §10.2/§10.3/§5.10 items), WP‑18 (fixture and lint checks).
+Evidence: published reference profile; golden vectors; every guide example drawn from fixtures; cross-epoch and cross-target ordering tests; datatype round-trip test; O‑13, T‑18.</p>
+
+<p><strong>Gate 2 — Write path safe.</strong> <em>Required before any multi-writer or non-development deployment.</em>
+WP‑4, WP‑6, WP‑7, WP‑8, WP‑9, WP‑10, WP‑11, WP‑12, WP‑16, WP‑17.
+Evidence: full gating TCK set green on (a) one single-writer engine, (b) one MVCC engine, (c) one engine with coarse conflict detection; epoch coordinator operating; registry-driven integrity queries running as alerts with zero rows; planner refusal matrix tested.</p>
+
+<p><strong>Gate 3 — Production data admitted.</strong> <em>ADR‑A68’s own precondition, now specified.</em>
+WP‑1 item 5, WP‑13, WP‑15 (ADR‑A68 amendments), T‑15, T‑22.
+Evidence: erasure register operating and replayed in a rehearsed restore; PII data-model shape and L1 failing fixture in <code class="language-plaintext highlighter-rouge">ontology/governance/shapes/</code>; receipt-model/privacy-class refusal enforced; claim-rotation protocol tested (K‑9); erasure precedence declared; <strong>DPO/legal review completed against this mechanism, including the backup exposure window</strong> — ADR‑A68 already requires this review and explicitly does not substitute for it.</p>
+
+<hr />
+
+<h2 id="4-sequencing">4. Sequencing</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Order</th>
+      <th>Packages</th>
+      <th>Depends on</th>
+      <th>Note</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>WP‑0</td>
+      <td>—</td>
+      <td>Unblocks everything; every later fix writes into the profile rather than the prose</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>WP‑1, WP‑2, WP‑3</td>
+      <td>WP‑0</td>
+      <td>Identity and epoch are the irreversible decisions</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>WP‑14, WP‑15</td>
+      <td>WP‑1, WP‑2</td>
+      <td>Consistency and upstream rules, once the decisions exist</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>WP‑5, WP‑4, WP‑6</td>
+      <td>WP‑1</td>
+      <td>Write-path correctness</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>WP‑12, WP‑7</td>
+      <td>WP‑2 (registry), WP‑1</td>
+      <td>Detection must be correct before it is trusted; A‑16 depends on the registry</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td>WP‑8, WP‑9, WP‑10, WP‑11</td>
+      <td>WP‑1, WP‑12</td>
+      <td>Contention, ordering and leases</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td>WP‑13</td>
+      <td>WP‑1 item 5, WP‑7, WP‑15</td>
+      <td>Erasure depends on the history-model and retention decisions</td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td>WP‑16, WP‑17, WP‑18</td>
+      <td>all</td>
+      <td>Evidence and enforcement close each package rather than following it — write the test with the fix, not after</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Chapter 30.4’s existing Phase‑0 correction remains valid and is amended: the epoch coordinator (WP‑1) is now a Phase 0.2 prerequisite, because T‑5, T‑14 and T‑15 cannot run without it.</p>
+
+<hr />
+
+<h2 id="5-traceability">5. Traceability</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Finding</th>
+      <th>Package</th>
+      <th>Primary location</th>
+      <th>Gate</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>B1</td>
+      <td>WP‑1</td>
+      <td>§19.1, §24.4, Appendix A/B</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>B2</td>
+      <td>WP‑2</td>
+      <td>§15.2–15.3, F5, T‑1</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>B3</td>
+      <td>WP‑2</td>
+      <td>new §10.4, §2.3, §19.1, §20.2</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>B4</td>
+      <td>WP‑3</td>
+      <td>§10.1, §7.1, Chapter 13</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>B5</td>
+      <td>WP‑4</td>
+      <td>§19.1, §19.3, §14.2, §25.1</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>B6</td>
+      <td>WP‑4</td>
+      <td>§10.1</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>B7</td>
+      <td>WP‑5</td>
+      <td>§15.4, §19.4–19.5</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>B8</td>
+      <td>WP‑6</td>
+      <td>§19.4, §25.5</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>B9</td>
+      <td>WP‑7</td>
+      <td>§24.2, Appendix B</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>B10</td>
+      <td>WP‑8</td>
+      <td>§7.4, §16.2–16.3</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>B11</td>
+      <td>WP‑9</td>
+      <td>§21.3, §25.7</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>B12</td>
+      <td>WP‑10</td>
+      <td>§17.3, §25.2, T‑3</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>B13</td>
+      <td>WP‑11</td>
+      <td>§10.1, §19.6</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>C1</td>
+      <td>WP‑14</td>
+      <td>Status line, §7.5, §8.4, §19.4, Appendix D.1</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>C2</td>
+      <td>WP‑14</td>
+      <td>§7.5, §23.3, §29.3</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>C3 / A‑1 / A‑2</td>
+      <td>WP‑0, WP‑1, WP‑14</td>
+      <td>reference profile; §19.4; all examples</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>A‑3</td>
+      <td>WP‑1, WP‑13</td>
+      <td>§24.4, new §24.6, ADR‑A68</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>A‑4</td>
+      <td>WP‑13</td>
+      <td>§20.4, §30.1, catalogue §11.6</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>A‑5</td>
+      <td>WP‑13</td>
+      <td>§6.1, catalogue §6.4</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>A‑6</td>
+      <td>WP‑13</td>
+      <td>§6.2, §8.4, Appendix C</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>A‑7</td>
+      <td>WP‑12</td>
+      <td>S3, S4, S6, F5</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>A‑8</td>
+      <td>WP‑12</td>
+      <td>§7.3, §7.5, §29.3</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>A‑9</td>
+      <td>WP‑12</td>
+      <td>S5</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>A‑10</td>
+      <td>WP‑4</td>
+      <td>new §24.1.1</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>A‑11</td>
+      <td>WP‑9</td>
+      <td>S7, Appendix B</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>A‑12</td>
+      <td>WP‑2, WP‑14</td>
+      <td>§19.1, Appendix A/B</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>A‑13</td>
+      <td>WP‑14</td>
+      <td>§3.2, §10.2, §19.1, §23.2</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>A‑14</td>
+      <td>WP‑14</td>
+      <td>Appendix A</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>A‑15</td>
+      <td>WP‑6</td>
+      <td>§19.4, §25.1</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>A‑16</td>
+      <td>WP‑7</td>
+      <td>§20.2, §24.2, S6</td>
+      <td>2</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="6-decisions-required-from-humans">6. Decisions required from humans</h2>
+
+<p>This plan specifies mechanisms; seven choices are the maintainer’s to make.</p>
+
+<ol>
+  <li><strong>Epoch coordinator.</strong> Which external store holds the epoch high-water mark and the erasure register, and who operates it. Everything in Gate 1 and Gate 3 depends on this existing.</li>
+  <li><strong>Occurrence IRI determinism.</strong> This plan recommends keeping deterministic revision IRIs and moving detection to txn cardinality (WP‑2). The alternative — random occurrence surrogates with position properties (catalogue §10.6) — restores subject-count fork detection but forfeits lexical range scans and the ground client template. A one-way decision.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">fnd:replacedBy</code>.</strong> Does Foundation define it? If not, the merge relation becomes profile-declared (C2).</li>
+  <li><strong>Erasure mechanism per family.</strong> Per-subject graph drop or crypto-shredding. Crypto-shredding requires the §24.5 specification and interacts with content-addressed identity; graph drop requires per-subject modelling discipline from every domain author.</li>
+  <li><strong>Strong-ETag representation policy.</strong> One serialisation for conditional requests, or tagged representations plus <code class="language-plaintext highlighter-rouge">Vary</code> (WP‑5).</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">recordedAt</code> source.</strong> Server <code class="language-plaintext highlighter-rouge">NOW()</code> (audit-only, lint-warned) or client-injected. Must be uniform; still open in Appendix E item 4.</li>
+  <li><strong>Shard counts.</strong> 64/16/16/1024 above are placeholders pending T‑3, K‑2 and O‑12 on the actual engines (Appendix E item 6).</li>
+</ol>
+
+<hr />
+
+<h2 id="7-residual-risk-after-remediation">7. Residual risk after remediation</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Risk</th>
+      <th>Residual state</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Backup copies of erased personal data</td>
+      <td>Bounded by backup retention, not eliminated. Must be stated and accepted in the DPO review (Gate 3).</td>
+    </tr>
+    <tr>
+      <td>Coarse-conflict-detection engines</td>
+      <td>Detected and labelled, not fixed. Such deployments fall back to <code class="language-plaintext highlighter-rouge">SerializingProxy</code> or external sequencers; A6 does not hold for them.</td>
+    </tr>
+    <tr>
+      <td>Cross-epoch as-of reads</td>
+      <td>Explicitly unsupported or reported non-reproducible (catalogue §10.3). Not solved; declared.</td>
+    </tr>
+    <tr>
+      <td>Deadlock on multi-target single-request writes</td>
+      <td>Mitigated by retry and metrics; not eliminated (WP‑11).</td>
+    </tr>
+    <tr>
+      <td>Sparse global tier completeness</td>
+      <td>Detectable per stream, never provable globally. This is inherent to HLC (§3.3) and now declared rather than implied.</td>
+    </tr>
+    <tr>
+      <td>Guide length and coupling</td>
+      <td>WP‑0 extracts the grammar; the narrative/normative split for the <em>remaining</em> content (Appendix E item 9) stays open. The fixture-binding build check is what prevents recurrence in the interim.</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="8-what-this-plan-deliberately-does-not-change">8. What this plan deliberately does not change</h2>
+
+<ul>
+  <li><strong>The core insights stand and must be preserved verbatim:</strong> the three clocks; dense-per-stream/sparse-across-streams; the in-transaction counter closing G2; the txn claim as the outcome mechanism; A1–A7’s case for separating the version row; P0–P7 as a stack; capability discovery over declaration; <code class="language-plaintext highlighter-rouge">min_level</code> fail-fast; deletion as policy with audit; bi-temporality as configurable.</li>
+  <li><strong>The catalogue’s framework-neutral stance (ADR‑A82)</strong> is not weakened. The reference profile added in WP‑0 is opt-in under ADR‑A82 §6 and does not become adopter policy.</li>
+  <li><strong>ADR‑A68’s mechanism</strong> — per-subject graphs, graph drop plus tombstone, pseudonymous ledger references — is not replaced. WP‑13 closes the paths by which the rest of the architecture would have defeated it.</li>
+</ul>

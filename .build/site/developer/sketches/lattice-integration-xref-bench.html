@@ -1,0 +1,377 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="local-test-bed-comparing-lattice-to-knwler-trustgraph-and-semantica-on-document-ingestion">Local Test Bed: Comparing Lattice to Knwler, TrustGraph, and Semantica on Document Ingestion</h1>
+
+<p><strong>Status:</strong> Draft manual test script — not yet an ADR. This is a testing procedure document, intended to sit alongside (not replace) the architectural decision that should be recorded before Lattice’s roadmap is influenced by these results.</p>
+
+<hr />
+
+<h2 id="1-purpose-and-scope">1. Purpose and Scope</h2>
+
+<p>Compare document ingestion quality across four tools using the same working document set, run entirely on a local machine:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Tool</th>
+      <th>Ingestion Model</th>
+      <th>Backend Graph Type</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Lattice</strong> (ours)</td>
+      <td>—</td>
+      <td>— (fill in from internal docs)</td>
+    </tr>
+    <tr>
+      <td><strong>Knwler</strong></td>
+      <td>Chunk → LLM extract (entities/relations/topics) → consolidate</td>
+      <td>JSON graph; exportable to GML/GraphML/JSON-LD/RDF, Neo4j, SurrealDB, Neptune, GraphDB</td>
+    </tr>
+    <tr>
+      <td><strong>TrustGraph</strong></td>
+      <td>PDF/DOCX/XLSX/PPTX/HTML/MD/CSV/image ingest → ontology-grounded extraction</td>
+      <td>RDF 1.2 named graphs (quads) in Cassandra + Qdrant vectors, deployed via Docker</td>
+    </tr>
+    <tr>
+      <td><strong>Semantica</strong></td>
+      <td><code class="language-plaintext highlighter-rouge">FileIngestor</code> → NER/relation/event extraction → <code class="language-plaintext highlighter-rouge">GraphBuilder</code></td>
+      <td>Polyglot: RDF (Oxigraph/Blazegraph/Jena/RDF4J) or LPG (Neo4j/FalkorDB/AGE/Neptune)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Because backends differ (LPG vs RDF quads vs JSON graph), <strong>raw outputs are not directly comparable</strong>. Section 5 defines a harmonized intermediate schema all four tools’ outputs will be converted into before scoring.</p>
+
+<hr />
+
+<h2 id="2-test-bed-directory-layout">2. Test Bed Directory Layout</h2>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>lattice-ingestion-bench/
+├── documents/                      # the shared working set (read-only, checksummed)
+│   ├── manifest.csv                # filename, sha256, page_count, language, domain
+│   └── *.pdf / *.docx / *.html ...
+├── ground-truth/
+│   ├── entities.csv                # hand/curated gold entities per document
+│   ├── relations.csv               # hand/curated gold relations per document
+│   └── notes.md                    # known ambiguous cases, adjudication rules
+├── runs/
+│   ├── lattice/&lt;doc-id&gt;/raw/...
+│   ├── knwler/&lt;doc-id&gt;/raw/graph.json
+│   ├── trustgraph/&lt;doc-id&gt;/raw/export.ttl
+│   ├── semantica/&lt;doc-id&gt;/raw/kg.json
+│   └── */&lt;doc-id&gt;/harmonized.json   # output of Section 5 normalizer
+├── scoring/
+│   ├── harmonize.py                 # tool-specific adapters → common schema
+│   ├── score.py                     # precision/recall/F1 vs ground truth
+│   └── results/&lt;date&gt;-&lt;tool&gt;.json
+└── run-log.md                       # manual log: command run, timestamp, wall-clock time, errors
+</code></pre></div></div>
+
+<p>Create <code class="language-plaintext highlighter-rouge">documents/manifest.csv</code> first and freeze the working set (checksum) before any tool run, so all four tools ingest byte-identical inputs.</p>
+
+<hr />
+
+<h2 id="3-per-tool-setup-and-ingestion-procedure">3. Per-Tool Setup and Ingestion Procedure</h2>
+
+<h3 id="31-knwler-orbifoldknwler">3.1 Knwler (<code class="language-plaintext highlighter-rouge">Orbifold/knwler</code>)</h3>
+
+<p><strong>Install (local, air-gapped-capable):</strong></p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Python 3.12 required</span>
+uv <span class="nb">sync</span>                       <span class="c"># or: pip install knwler / pipx install knwler</span>
+</code></pre></div></div>
+
+<p><strong>Local LLM backend (keeps comparison “fully local”):</strong></p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ollama pull llama3.2:latest
+<span class="nv">OLLAMA_NUM_PARALLEL</span><span class="o">=</span>8 ollama serve
+</code></pre></div></div>
+
+<p><strong>Run per document:</strong></p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>uv run main.py extract <span class="nt">-f</span> documents/&lt;doc&gt;.pdf <span class="se">\</span>
+  <span class="nt">--backend</span> ollama <span class="se">\</span>
+  <span class="nt">--output</span> runs/knwler/&lt;doc-id&gt;/raw/
+</code></pre></div></div>
+<p>Or batch the whole set:</p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>uv run main.py extract <span class="nt">--directory</span> documents/ <span class="nt">--backend</span> ollama
+</code></pre></div></div>
+
+<p><strong>Output artifact:</strong> <code class="language-plaintext highlighter-rouge">graph.json</code> (entities, relations, topics/clusters). Convert with:</p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>uv run main.py graph convert <span class="nt">--format</span> jsonld   <span class="c"># optional, for RDF-based comparison</span>
+</code></pre></div></div>
+
+<p><strong>Notes for the log:</strong></p>
+<ul>
+  <li>Record model used (<code class="language-plaintext highlighter-rouge">--extraction-model</code> override if changed from default).</li>
+  <li>Note cache hits — reruns are near-instant and free; log first-run wall-clock time only.</li>
+  <li>Knwler auto-discovers entity/relation schema per run; log the discovered schema (<code class="language-plaintext highlighter-rouge">schema.entity_types</code>/<code class="language-plaintext highlighter-rouge">relation_types</code>) since it varies by document and affects comparability.</li>
+</ul>
+
+<h3 id="32-trustgraph-trustgraph-aitrustgraph">3.2 TrustGraph (<code class="language-plaintext highlighter-rouge">trustgraph-ai/trustgraph</code>)</h3>
+
+<p><strong>Install (Docker-based, heavier footprint):</strong></p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>npx @trustgraph/config
+<span class="c"># interactive config wizard produces deploy.zip</span>
+unzip deploy.zip <span class="nt">-d</span> trustgraph-deploy
+<span class="nb">cd </span>trustgraph-deploy
+docker compose up <span class="nt">-d</span>
+</code></pre></div></div>
+<p>This provisions Cassandra (graph store), Qdrant (vectors), Pulsar/RabbitMQ (messaging), and the inference stack (vLLM/TGI/Ollama depending on config choice — choose a <strong>local</strong> LLM option in the wizard to keep this comparable to Knwler’s local run).</p>
+
+<p>UI available at <code class="language-plaintext highlighter-rouge">http://localhost:8888</code> once containers are healthy.</p>
+
+<p><strong>Ingestion:</strong></p>
+<ul>
+  <li>Use the <strong>Document Ingestion</strong> UI panel (upload workflow with chunk/page inspection), or the CLI/API (<code class="language-plaintext highlighter-rouge">docs.trustgraph.ai/reference</code>) to submit each file in <code class="language-plaintext highlighter-rouge">documents/</code>.</li>
+  <li>TrustGraph requires selecting a <strong>Flow</strong> and <strong>Collection</strong> before ingest — create one collection per test run so results don’t bleed across documents.</li>
+</ul>
+
+<p><strong>Export for comparison:</strong></p>
+<ul>
+  <li>TrustGraph natively stores RDF 1.2 named graphs. Export via the Ontology Workbench or API as Turtle (<code class="language-plaintext highlighter-rouge">.ttl</code>) per collection.</li>
+  <li>Record provenance separately if available (PROV-O) — useful bonus signal but not required for the harmonized schema.</li>
+</ul>
+
+<p><strong>Notes for the log:</strong></p>
+<ul>
+  <li>This is the heaviest deployment (multiple containers) — log container startup time separately from ingestion time so setup cost doesn’t pollute the per-document ingestion metric.</li>
+  <li>Log which LLM/OCR backend was configured (affects extraction quality independent of the graph engine itself).</li>
+</ul>
+
+<h3 id="33-semantica-semantica-agisemantica">3.3 Semantica (<code class="language-plaintext highlighter-rouge">semantica-agi/semantica</code>)</h3>
+
+<p><strong>Install:</strong></p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>pip <span class="nb">install </span>semantica
+semantica doctor      <span class="c"># verify install</span>
+</code></pre></div></div>
+
+<p><strong>Ingest + extract + build KG (scriptable, no UI required):</strong></p>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">semantica.ingest</span> <span class="kn">import</span> <span class="n">FileIngestor</span>
+<span class="kn">from</span> <span class="nn">semantica.semantic_extract</span> <span class="kn">import</span> <span class="n">NamedEntityRecognizer</span><span class="p">,</span> <span class="n">RelationExtractor</span>
+<span class="kn">from</span> <span class="nn">semantica.kg</span> <span class="kn">import</span> <span class="n">GraphBuilder</span>
+<span class="kn">from</span> <span class="nn">semantica.export</span> <span class="kn">import</span> <span class="n">RDFExporter</span>
+
+<span class="n">docs</span> <span class="o">=</span> <span class="n">FileIngestor</span><span class="p">().</span><span class="n">ingest_directory</span><span class="p">(</span><span class="s">"documents/"</span><span class="p">,</span> <span class="n">recursive</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+<span class="n">ner</span> <span class="o">=</span> <span class="n">NamedEntityRecognizer</span><span class="p">(</span><span class="n">confidence_threshold</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+<span class="n">rel</span> <span class="o">=</span> <span class="n">RelationExtractor</span><span class="p">(</span><span class="n">confidence_threshold</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">bidirectional</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+<span class="n">kg</span> <span class="o">=</span> <span class="n">GraphBuilder</span><span class="p">(</span><span class="n">merge_entities</span><span class="o">=</span><span class="bp">True</span><span class="p">).</span><span class="n">build</span><span class="p">(</span><span class="n">docs</span><span class="p">)</span>   <span class="c1"># or wire ner/rel explicitly per module docs
+</span>
+<span class="n">RDFExporter</span><span class="p">().</span><span class="n">export</span><span class="p">(</span><span class="n">kg</span><span class="p">.</span><span class="n">to_kg_dict</span><span class="p">(),</span> <span class="s">"runs/semantica/&lt;doc-id&gt;/raw/kg.ttl"</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s">"turtle"</span><span class="p">)</span>
+</code></pre></div></div>
+<p>Save a script per document (or looped over <code class="language-plaintext highlighter-rouge">manifest.csv</code>) under <code class="language-plaintext highlighter-rouge">runs/semantica/scripts/</code> so the exact extraction call is reproducible.</p>
+
+<p><strong>Notes for the log:</strong></p>
+<ul>
+  <li>Semantica’s extraction is not purely LLM-driven by default (NER/relation extractors can be classical or LLM-backed depending on config) — record which extractor backend was used, since this materially affects the “apples to apples” claim vs Knwler/TrustGraph’s LLM-first approach.</li>
+  <li>Optionally launch the Knowledge Explorer (<code class="language-plaintext highlighter-rouge">semantica-explorer --graph kg.json</code>) for visual spot-checking during the qualitative review pass (Section 6).</li>
+</ul>
+
+<h3 id="34-lattice">3.4 Lattice</h3>
+
+<p>Fill in from Lattice’s own CLI/API docs — keep the same structure: install command, local LLM/backend config, per-document ingestion command, and the raw output location. Since Lattice is 82.8% Python/7.8% Erlang, confirm whether ingestion is invoked via the Python tooling in <code class="language-plaintext highlighter-rouge">tools/</code> per the repo topology rule, and log that path here.</p>
+
+<hr />
+
+<h2 id="4-manual-run-log-template">4. Manual Run Log Template</h2>
+
+<p>For every <code class="language-plaintext highlighter-rouge">(tool, document)</code> pair, record in <code class="language-plaintext highlighter-rouge">run-log.md</code>:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Field</th>
+      <th>Example</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Tool + version</td>
+      <td>knwler 1.1.0</td>
+    </tr>
+    <tr>
+      <td>Document ID</td>
+      <td>doc-003</td>
+    </tr>
+    <tr>
+      <td>LLM/backend used</td>
+      <td>ollama / llama3.2:latest</td>
+    </tr>
+    <tr>
+      <td>Command run</td>
+      <td><code class="language-plaintext highlighter-rouge">uv run main.py extract -f ...</code></td>
+    </tr>
+    <tr>
+      <td>Start / end timestamp</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>Wall-clock duration</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>Exit status / errors</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>Output path</td>
+      <td><code class="language-plaintext highlighter-rouge">runs/knwler/doc-003/raw/graph.json</code></td>
+    </tr>
+    <tr>
+      <td>Anomalies observed</td>
+      <td>e.g. truncated output, schema drift, OOM</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>This is manual, not automated — one row per run, filled in as you go.</p>
+
+<hr />
+
+<h2 id="5-harmonizing-outputs-for-comparison">5. Harmonizing Outputs for Comparison</h2>
+
+<p>Since Knwler emits a JSON property graph, TrustGraph emits RDF quads, and Semantica emits either RDF or LPG depending on config, define one <strong>common intermediate schema</strong> and write a small adapter per tool (<code class="language-plaintext highlighter-rouge">scoring/harmonize.py</code>):</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"document_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"doc-003"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"entities"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+    </span><span class="p">{</span><span class="nl">"id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"..."</span><span class="p">,</span><span class="w"> </span><span class="nl">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"..."</span><span class="p">,</span><span class="w"> </span><span class="nl">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"..."</span><span class="p">,</span><span class="w"> </span><span class="nl">"source_span"</span><span class="p">:</span><span class="w"> </span><span class="s2">"..."</span><span class="p">,</span><span class="w"> </span><span class="nl">"confidence"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.0</span><span class="p">}</span><span class="w">
+  </span><span class="p">],</span><span class="w">
+  </span><span class="nl">"relations"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+    </span><span class="p">{</span><span class="nl">"source"</span><span class="p">:</span><span class="w"> </span><span class="s2">"..."</span><span class="p">,</span><span class="w"> </span><span class="nl">"predicate"</span><span class="p">:</span><span class="w"> </span><span class="s2">"..."</span><span class="p">,</span><span class="w"> </span><span class="nl">"target"</span><span class="p">:</span><span class="w"> </span><span class="s2">"..."</span><span class="p">,</span><span class="w"> </span><span class="nl">"confidence"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.0</span><span class="p">}</span><span class="w">
+  </span><span class="p">]</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Adapter responsibilities:</p>
+<ul>
+  <li><strong>Knwler → harmonized:</strong> direct mapping from <code class="language-plaintext highlighter-rouge">graph.json</code> entities/relations; types come from the auto-discovered schema.</li>
+  <li><strong>TrustGraph → harmonized:</strong> parse Turtle, map RDF classes/predicates to <code class="language-plaintext highlighter-rouge">type</code>/<code class="language-plaintext highlighter-rouge">predicate</code>, resolve blank nodes to stable IDs.</li>
+  <li><strong>Semantica → harmonized:</strong> <code class="language-plaintext highlighter-rouge">kg.to_kg_dict()</code> already close to this shape; map directly.</li>
+  <li><strong>Lattice → harmonized:</strong> define once Lattice’s native output format is confirmed.</li>
+</ul>
+
+<p>Normalize entity names (casing, whitespace) before comparison but keep an <code class="language-plaintext highlighter-rouge">original_name</code> field for audit.</p>
+
+<hr />
+
+<h2 id="6-quality-evaluation-procedure">6. Quality Evaluation Procedure</h2>
+
+<h3 id="61-quantitative-against-ground-truth">6.1 Quantitative (against ground truth)</h3>
+<ol>
+  <li>Build <code class="language-plaintext highlighter-rouge">ground-truth/entities.csv</code> and <code class="language-plaintext highlighter-rouge">relations.csv</code> once, manually, per document (small working set — accept the manual cost).</li>
+  <li>Run <code class="language-plaintext highlighter-rouge">scoring/score.py</code> per tool’s harmonized output:
+    <ul>
+      <li><strong>Entity precision/recall/F1</strong> — fuzzy-match on normalized name + type.</li>
+      <li><strong>Relation precision/recall/F1</strong> — match on (source, predicate, target) triple after entity alignment.</li>
+    </ul>
+  </li>
+  <li>Record per-document and aggregate scores in <code class="language-plaintext highlighter-rouge">scoring/results/&lt;date&gt;-&lt;tool&gt;.json</code>.</li>
+</ol>
+
+<h3 id="62-qualitative-spot-check-since-automated-matching-wont-catch-everything">6.2 Qualitative (spot-check, since automated matching won’t catch everything)</h3>
+<p>For a sample of 3–5 documents per tool, manually review:</p>
+<ul>
+  <li><strong>Entity disambiguation</strong> — does the tool separate “Apple the company” from “apple the fruit” correctly? (Knwler explicitly claims this; check if TrustGraph/Semantica/Lattice do too.)</li>
+  <li><strong>Relation plausibility</strong> — spot-check relations for hallucination vs. text grounding.</li>
+  <li><strong>Coverage</strong> — does the tool miss whole sections (e.g. tables, footnotes)?</li>
+  <li><strong>Provenance</strong> — can you trace an extracted fact back to a source span/page? (TrustGraph and Semantica both advertise provenance; Knwler ties chunks to entities but check granularity.)</li>
+</ul>
+
+<h3 id="63-cost--performance-metrics-from-the-run-log">6.3 Cost / Performance Metrics (from the run log)</h3>
+<ul>
+  <li>Wall-clock time per document (excluding one-time setup like Docker startup or model download).</li>
+  <li>Peak memory (if easily observable, e.g. <code class="language-plaintext highlighter-rouge">docker stats</code> for TrustGraph, <code class="language-plaintext highlighter-rouge">Activity Monitor</code>/<code class="language-plaintext highlighter-rouge">htop</code> for the others).</li>
+  <li>Whether re-runs are cached/free (Knwler explicitly caches; check others).</li>
+</ul>
+
+<hr />
+
+<h2 id="7-comparison-summary-table-fill-in-after-runs">7. Comparison Summary Table (fill in after runs)</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Metric</th>
+      <th>Lattice</th>
+      <th>Knwler</th>
+      <th>TrustGraph</th>
+      <th>Semantica</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Setup time / complexity</td>
+      <td> </td>
+      <td>pip/uv, single process</td>
+      <td>Docker multi-container</td>
+      <td>pip, single process</td>
+    </tr>
+    <tr>
+      <td>Local LLM support</td>
+      <td> </td>
+      <td>Ollama / LM Studio</td>
+      <td>vLLM/TGI/Ollama (self-hosted)</td>
+      <td>configurable extractor backends</td>
+    </tr>
+    <tr>
+      <td>Entity F1</td>
+      <td> </td>
+      <td> </td>
+      <td> </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>Relation F1</td>
+      <td> </td>
+      <td> </td>
+      <td> </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>Entity disambiguation quality (qual.)</td>
+      <td> </td>
+      <td> </td>
+      <td> </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>Provenance granularity</td>
+      <td> </td>
+      <td>chunk-level</td>
+      <td>PROV-O (fact-level)</td>
+      <td>PROV-O (fact-level)</td>
+    </tr>
+    <tr>
+      <td>Native graph model</td>
+      <td> </td>
+      <td>JSON property graph</td>
+      <td>RDF 1.2 quads</td>
+      <td>RDF or LPG (config)</td>
+    </tr>
+    <tr>
+      <td>Wall-clock (20-page PDF, local LLM)</td>
+      <td> </td>
+      <td>~20–40 min (Ollama, per project’s own benchmark)</td>
+      <td> </td>
+      <td> </td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="8-open-questions-to-raise-before-running-this">8. Open Questions to Raise Before Running This</h2>
+
+<p>Per the Agentic Development Contract, these are architectural questions, not implementation details — flag for discussion before treating results as decision-grade:</p>
+<ol>
+  <li>Should this comparison itself be the subject of an ADR (proposing it as a formal input to Lattice’s ingestion design), or is it exploratory only?</li>
+  <li>Where should <code class="language-plaintext highlighter-rouge">lattice-ingestion-bench/</code> live — a new top-level dir, under <code class="language-plaintext highlighter-rouge">tools/</code>, or a separate repo entirely (given it’s not a semantic asset per the <code class="language-plaintext highlighter-rouge">ontology/</code> vs <code class="language-plaintext highlighter-rouge">tools/</code> split)?</li>
+  <li>Is TrustGraph’s Docker Compose footprint acceptable for “runs locally,” or does its multi-container weight disqualify it from a fair head-to-head against the lightweight Knwler/Semantica installs?</li>
+  <li>What counts as “ground truth” authority — do we need a second reviewer to adjudicate the gold entity/relation set to avoid single-annotator bias?</li>
+</ol>
+
+<hr />
+
+<p><strong>Next step suggestion:</strong> I have not created any files or ADRs — this is presented for your review per the Design First rule. If you’d like, I can draft the accompanying ADR stub and commit this document (and the directory skeleton) to the Lattice repo once you confirm the target path and that an ADR should precede it.</p>

@@ -1,0 +1,298 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="design-sketches-validation-summary">Design Sketches Validation Summary</h1>
+
+<p><strong>Date:</strong> 2026-09-20<br />
+<strong>Scope:</strong> 7 design sketches in <code class="language-plaintext highlighter-rouge">/docs/developer/sketches/</code><br />
+<strong>Assessment:</strong> Implementation extent and status for each design</p>
+
+<hr />
+
+<h2 id="overview">Overview</h2>
+
+<p>All seven design sketches have been validated against the codebase, accepted ADRs, and existing documentation. Three are fully implemented and validated, one is implemented and awaiting validation, one is partially implemented (skeleton shells), one is superseded/archived, and one is a plan document now complete.</p>
+
+<h2 id="sketch-validation-results">Sketch Validation Results</h2>
+
+<h3 id="1--complete-and-validated-llm-trainingmd">1. ✅ COMPLETE AND VALIDATED: llm-training.md</h3>
+
+<p><strong>Sketch:</strong> <a href="/developer/sketches/llm-training.html">llm-training.md</a><br />
+<strong>Status Document:</strong> <a href="/developer/status/llm-training-mtp.html">llm-training-mtp.md</a><br />
+<strong>What it describes:</strong> Teaching MORK to LLMs via a compiled curriculum (L0-L5 tiers)</p>
+
+<p><strong>Implementation:</strong></p>
+<ul>
+  <li>L0 kernel generator: <code class="language-plaintext highlighter-rouge">tools/mork/src/mtp/facts.py</code>, <code class="language-plaintext highlighter-rouge">doctrine.py</code>, <code class="language-plaintext highlighter-rouge">render.py</code></li>
+  <li>L2/L3 pipeline (S1–S13): complete toolchain from corpus to cassettes</li>
+  <li>MCN codebook and decoder with 337 passing tests</li>
+  <li>Curated inputs: <code class="language-plaintext highlighter-rouge">doctrine.yaml</code>, <code class="language-plaintext highlighter-rouge">partition.yaml</code>, <code class="language-plaintext highlighter-rouge">lenses/L-*.yaml</code>, <code class="language-plaintext highlighter-rouge">cassettes/C-*.yaml</code></li>
+  <li>Generated artifacts: 20 output files including L0 kernel, 9 lenses, 30+ cassettes</li>
+</ul>
+
+<p><strong>Validation:</strong></p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">mise run build:mtp</code> produces deterministic outputs</li>
+  <li><code class="language-plaintext highlighter-rouge">mise run check:mtp</code> validates logical consistency, pin stability, cassette fidelity, mutation verdicts</li>
+  <li><code class="language-plaintext highlighter-rouge">pytest</code> suite: 346 passed, 8 skipped</li>
+  <li>Governing ADRs: A25, A44</li>
+</ul>
+
+<p><strong>Status:</strong> Fully accepted. Ready for Phase 7 LLM backend integration.</p>
+
+<hr />
+
+<h3 id="2--complete-and-validated-mtp-l0-generator-sketch">2. ✅ COMPLETE AND VALIDATED: MTP-L0 Generator Sketch</h3>
+
+<p><strong>Sketch:</strong> <a href="../sketches/MTP-L0%20Generator%20Sketch">MTP-L0 Generator Sketch</a><br />
+<strong>Status Document:</strong> <a href="/developer/status/llm-training-mtp.html">llm-training-mtp.md</a><br />
+<strong>What it describes:</strong> The facts extractor and kernel generator architecture</p>
+
+<p><strong>Implementation:</strong></p>
+<ul>
+  <li>All design elements present: box families, uncertainty codes, inverse pairs, generative mandatory parts</li>
+  <li>Logical fingerprinting gates: every axiom ownership tracked in <code class="language-plaintext highlighter-rouge">pins.lock.json</code></li>
+  <li>Build failure on unclaimed axioms, unknown box families, or logical drift</li>
+</ul>
+
+<p><strong>Validation:</strong> Included in llm-training-mtp.md suite</p>
+
+<p><strong>Status:</strong> Fully accepted.</p>
+
+<hr />
+
+<h3 id="3--complete-and-validated-mtp-l2-generator-sketchmd">3. ✅ COMPLETE AND VALIDATED: MTP L2 Generator Sketch.md</h3>
+
+<p><strong>Sketch:</strong> <a href="../sketches/MTP%20L2%20Generator%20Sketch.md">MTP L2 Generator Sketch.md</a><br />
+<strong>Status Document:</strong> <a href="/developer/status/llm-training-mtp.html">llm-training-mtp.md</a><br />
+<strong>What it describes:</strong> The lenses and cassettes pipeline (S1–S13), mutation-derived ground truth</p>
+
+<p><strong>Implementation:</strong></p>
+<ul>
+  <li>All 13 pipeline stages (S1–S13) implemented in corresponding modules</li>
+  <li>Mutation-derived ground truth: <code class="language-plaintext highlighter-rouge">mutate.py</code> breaks valid examples, records what’s caught</li>
+  <li>Cassette fidelity verified via isomorphic MCN comparison</li>
+  <li>Evidence-driven teaching budget: assertions caught by lint get one line; undetected mistakes get lens entries</li>
+</ul>
+
+<p><strong>Validation:</strong> Included in llm-training-mtp.md suite</p>
+
+<p><strong>Status:</strong> Fully accepted.</p>
+
+<hr />
+
+<h3 id="4--implemented-awaiting-validation-mork-eligibility-compilermd">4. ⏳ IMPLEMENTED, AWAITING VALIDATION: mork-eligibility-compiler.md</h3>
+
+<p><strong>Sketch:</strong> <a href="/developer/sketches/mork-eligibility-compiler.html">mork-eligibility-compiler.md</a><br />
+<strong>Status Document:</strong> <a href="/developer/status/eligibility-compiler.html">eligibility-compiler.md</a><br />
+<strong>What it describes:</strong> Eligibility executable compiler (Phase 5, three backends)</p>
+
+<p><strong>Implementation:</strong></p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">tools/mork_compilers/</code> package complete with:
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">eligibility_ir.py</code> — shared IR for <code class="language-plaintext highlighter-rouge">elg:IntervalCondition</code></li>
+      <li><code class="language-plaintext highlighter-rouge">sparql_backend.py</code>, <code class="language-plaintext highlighter-rouge">shacl_backend.py</code>, <code class="language-plaintext highlighter-rouge">swrl_backend.py</code> — three backends</li>
+      <li><code class="language-plaintext highlighter-rouge">test_mork_compilers.py</code> — test suite present</li>
+    </ul>
+  </li>
+  <li><code class="language-plaintext highlighter-rouge">ontology/mork/spec/Executable.ttl</code> — vocabulary with <code class="language-plaintext highlighter-rouge">exe:IntervalContainmentPlan</code>, <code class="language-plaintext highlighter-rouge">exe:SparqlArtefact</code>, etc.</li>
+  <li>Provenance model: artefacts linked to conditions and quantification nodes</li>
+</ul>
+
+<p><strong>Validation:</strong> Verification plan authored but not executed (authoring environment lacked Python interpreter, SHACL/SWRL engines)</p>
+
+<p><strong>What was deliberately left out (documented, not silent):</strong></p>
+<ul>
+  <li>No native backend</li>
+  <li>No Executable Projection Contract layer</li>
+  <li>No profile-level aggregate artefact</li>
+  <li>Only <code class="language-plaintext highlighter-rouge">elg:IntervalContainment</code> compiled</li>
+  <li>SWRL: positive-only per ADR-A24</li>
+</ul>
+
+<p><strong>Status:</strong> Code is complete and coherent. Requires network-enabled environment to run unit tests, parse ontology, execute backends.</p>
+
+<hr />
+
+<h3 id="5--partially-implemented-skeleton-governance-and-versioning-migrationmd">5. 🟡 PARTIALLY IMPLEMENTED (SKELETON): governance-and-versioning-migration.md</h3>
+
+<p><strong>Sketch:</strong> <a href="/developer/sketches/governance-and-versioning-migration.html">governance-and-versioning-migration.md</a><br />
+<strong>Status Document:</strong> <a href="/developer/status/governance-surfaces.html">governance-surfaces.md</a><br />
+<strong>Plan Document:</strong> <a href="./governance-surfaces-integration.md">governance-surfaces-integration.md</a><br />
+<strong>What it describes:</strong> UX design for MORK review and Surface authoring (role model, evidence rendering, decision units)</p>
+
+<p><strong>Implementation (Skeleton):</strong></p>
+<ul>
+  <li><strong>Surface Contract Studio</strong> (<code class="language-plaintext highlighter-rouge">apps/surface-contract-studio/src/studio.tsx</code>): Renders fixture contracts, lifecycle states, diff viewer</li>
+  <li><strong>MORK Review Workbench</strong> (<code class="language-plaintext highlighter-rouge">apps/mork-review-workbench/src/main.tsx</code>): Renders six review decisions, evidence ribbon (Witness/Coverage/Alternative), calibration state</li>
+  <li>Demonstrates intent, role separation, and unit-of-judgement concept</li>
+  <li>Both fixture-backed (no backend connection)</li>
+</ul>
+
+<p><strong>Coverage of sketch design elements:</strong></p>
+<ul>
+  <li>✅ MORK as substrate, not interface</li>
+  <li>✅ Six review decisions</li>
+  <li>✅ Section as unit of judgement</li>
+  <li>✅ Role perimeters demonstrated (not enforced)</li>
+  <li>⚠️ Token ribbon evidence partially shown (not token-granular)</li>
+  <li>❌ MCN source affordance not implemented</li>
+  <li>❌ Permission enforcement incomplete</li>
+</ul>
+
+<p><strong>Status:</strong> Design is well understood and UI shells are correct. Three integration slices needed (Phase 2, Phase 5) to wire backends, enforce permissions, project evidence live.</p>
+
+<hr />
+
+<h3 id="6--plan-fully-executed-mtp-implementation-planmd">6. ✅ PLAN FULLY EXECUTED: mtp-implementation-plan.md</h3>
+
+<p><strong>Sketch:</strong> <a href="/developer/sketches/mtp-implementation-plan.html">mtp-implementation-plan.md</a><br />
+<strong>Status Document:</strong> <a href="/developer/status/mtp-execution.html">mtp-execution.md</a><br />
+<strong>What it is:</strong> Not a design to implement, but the roadmap that drove MTP implementation</p>
+
+<p><strong>Status:</strong></p>
+<ul>
+  <li>Every slice in the plan has been authored and validated ✅</li>
+  <li>All pre-existing components (MCN decoder, codebook) verified and reused ✅</li>
+  <li>All pipeline stages (S1–S13) implemented ✅</li>
+  <li>All verification gates active in CI ✅</li>
+  <li>Deferred items correctly identified (Phase 7 backend eval) ✅</li>
+</ul>
+
+<p><strong>Acceptance:</strong> Plan is fully executed. MTP ready for Phase 7 integration.</p>
+
+<hr />
+
+<h3 id="7-️-supersededarchived-implementation-handovermd">7. 🗄️ SUPERSEDED/ARCHIVED: implementation-handover.md</h3>
+
+<p><strong>Sketch:</strong> <a href="/developer/sketches/implementation-handover.html">implementation-handover.md</a><br />
+<strong>Status Document:</strong> <a href="/developer/status/implementation-handover-historical.html">implementation-handover-historical.md</a><br />
+<strong>What it was:</strong> Consolidated Phase 0–6 handover (now archived)</p>
+
+<p><strong>Status:</strong> Marked <strong>DEAD</strong> and superseded by:</p>
+<ul>
+  <li>Individual phase handoffs: phase-0-1, phase-2, phase-3, phase-4, phase-5, phase-6</li>
+  <li>Live status: platform-continuation.md</li>
+  <li>Acceptance records: repository-topology-a77, ontology-root-relocation, package splits</li>
+</ul>
+
+<p><strong>Reason for archival:</strong> No new information; its scope is redundantly covered by phase-specific records. Kept as historical reference only.</p>
+
+<hr />
+
+<h2 id="summary-table">Summary Table</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Sketch</th>
+      <th>State</th>
+      <th>Status Doc</th>
+      <th>Plan Doc</th>
+      <th>Readiness</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>llm-training.md</td>
+      <td>✅ Complete</td>
+      <td><a href="/developer/status/llm-training-mtp.html">llm-training-mtp.md</a></td>
+      <td>—</td>
+      <td>Production ready for Phase 7</td>
+    </tr>
+    <tr>
+      <td>MTP-L0 Generator Sketch</td>
+      <td>✅ Complete</td>
+      <td><a href="/developer/status/llm-training-mtp.html">llm-training-mtp.md</a></td>
+      <td>—</td>
+      <td>Integrated into Phase 1 build</td>
+    </tr>
+    <tr>
+      <td>MTP L2 Generator Sketch.md</td>
+      <td>✅ Complete</td>
+      <td><a href="/developer/status/llm-training-mtp.html">llm-training-mtp.md</a></td>
+      <td>—</td>
+      <td>Integrated into Phase 1 build</td>
+    </tr>
+    <tr>
+      <td>mork-eligibility-compiler.md</td>
+      <td>⏳ Implemented, awaiting validation</td>
+      <td><a href="/developer/status/eligibility-compiler.html">eligibility-compiler.md</a></td>
+      <td>—</td>
+      <td>Requires network env for test run</td>
+    </tr>
+    <tr>
+      <td>governance-and-versioning-migration.md</td>
+      <td>🟡 Skeleton UI</td>
+      <td><a href="/developer/status/governance-surfaces.html">governance-surfaces.md</a></td>
+      <td><a href="./governance-surfaces-integration.md">governance-surfaces-integration.md</a></td>
+      <td>Phase 2 &amp; 5 integration plan</td>
+    </tr>
+    <tr>
+      <td>mtp-implementation-plan.md</td>
+      <td>✅ Executed</td>
+      <td><a href="/developer/status/mtp-execution.html">mtp-execution.md</a></td>
+      <td>—</td>
+      <td>Plan complete, roadmap now closed</td>
+    </tr>
+    <tr>
+      <td>implementation-handover.md</td>
+      <td>🗄️ Archived</td>
+      <td><a href="/developer/status/implementation-handover-historical.html">implementation-handover-historical.md</a></td>
+      <td>—</td>
+      <td>Historical reference only</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="validation-completeness-by-environment">Validation Completeness by Environment</h2>
+
+<h3 id="-authoring-environment-completed-in-restricted-host">✅ Authoring Environment (Completed in Restricted Host)</h3>
+<ul>
+  <li>Source code present and coherent ✅</li>
+  <li>Curated inputs authored and version-controlled ✅</li>
+  <li>Generated artifacts committed (no manual edits) ✅</li>
+  <li>Test suites written ✅</li>
+  <li>CI task wiring in place ✅</li>
+  <li>Architecture docs and ADRs linked ✅</li>
+  <li>Static diagnostics (linting, JSON parse, link checks) ✅</li>
+</ul>
+
+<h3 id="-validation-environment-requires-network-enabled-host">⏳ Validation Environment (Requires Network-Enabled Host)</h3>
+<ul>
+  <li>Python environment setup (3.11 canonical)</li>
+  <li>Java environment (21 canonical) for Eligibility compiler SPARQL/SHACL validation</li>
+  <li>Docker for Testcontainers (PostgreSQL, RabbitMQ)</li>
+  <li>Yarn for frontend app build and E2E</li>
+  <li>Test execution and result recording</li>
+  <li>Generated-file and lockfile review</li>
+</ul>
+
+<hr />
+
+<h2 id="next-actions">Next Actions</h2>
+
+<ol>
+  <li>
+    <p><strong>Phase 7 (LLM backend integration):</strong> LLM Training status is production-ready. Backend interface specification is the blocker.</p>
+  </li>
+  <li>
+    <p><strong>Network-enabled validation:</strong> Run the <code class="language-plaintext highlighter-rouge">eligibility-compiler</code> test matrix in Phase 5 gate environment. Expected pass: all tests pass, SHACL/SWRL artefacts execute correctly.</p>
+  </li>
+  <li><strong>Phase 2 &amp; 5 integration:</strong> Three slices to wire governance surfaces to control plane:
+    <ul>
+      <li>S1: Surface Studio backend integration</li>
+      <li>S2: Bench permission model enforcement</li>
+      <li>S3: Evidence projection and snapshot state persistence</li>
+    </ul>
+  </li>
+  <li><strong>Maintenance:</strong> Keep <code class="language-plaintext highlighter-rouge">governance-and-versioning-migration.md</code> in sketches as reference during Phases 2 and 5 work. Remove <code class="language-plaintext highlighter-rouge">implementation-handover.md</code> from active consideration.</li>
+</ol>
+
+<hr />
+
+<p><strong>Validation date:</strong> 2026-09-20<br />
+<strong>Validated by:</strong> Architectural review and codebase scan<br />
+<strong>Governing decisions:</strong> ADRs A25, A29, A38, A42, A44, A77</p>

@@ -1,0 +1,408 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="identity-and-versions-in-insurml-and-lattice">Identity and versions in InsurML and LATTICE</h1>
+
+<p><strong>For:</strong> the InsurML team at Axiome Partners, and LATTICE’s authors. <strong>Status:</strong> note, 2026-10-05.
+Not a decision. <strong>Reads with:</strong> the InsurML specification (Draft 1.0), chapter 5 and §4.3, and
+LATTICE’s <a href="/architecture/insurml-alignment-vision.html">InsurML alignment vision</a>.</p>
+
+<hr />
+
+<h2 id="contents">Contents</h2>
+
+<ol>
+  <li><a href="#1-summary">Summary</a></li>
+  <li><a href="#2-what-the-two-standards-agree-on">What the two standards agree on</a></li>
+  <li><a href="#3-where-they-differ">Where they differ</a></li>
+  <li><a href="#4-why-lattice-cannot-mint-identities-under-a-publishers-prefix">Why LATTICE cannot mint identities under a publisher’s prefix</a></li>
+  <li><a href="#5-what-an-identity-resource-does-in-a-live-system">What an identity resource does in a live system</a></li>
+  <li><a href="#6-contracts-that-identify-issued-policies">Contracts that identify issued policies</a></li>
+  <li><a href="#7-how-it-looks-in-different-stores">How it looks in different stores</a></li>
+  <li><a href="#8-a-proposal">A proposal</a></li>
+</ol>
+
+<hr />
+
+<h2 id="1-summary">1. Summary</h2>
+
+<p>InsurML gives every version of a contract, group and component its own IRI, and links the versions
+of one thing by a shared literal, <code class="language-plaintext highlighter-rouge">dcterms:identifier</code>. LATTICE gives the versions IRIs too, and
+also gives the thing that has the versions an IRI of its own, a persistent identity, to which
+identifiers, approvals, usage and other facts about the thing as a whole attach.</p>
+
+<p>LATTICE adopts InsurML’s version IRIs as they are. It needs the persistent identity as well, and
+InsurML’s IRI policy leaves no room to mint one under a publisher’s prefix, so today LATTICE mints
+it in a deployment’s own namespace. A small addition to InsurML’s IRI policy, an unversioned pattern
+for contracts, groups and components, would let both standards use the same identity IRI (§8).</p>
+
+<h2 id="2-what-the-two-standards-agree-on">2. What the two standards agree on</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Rule</th>
+      <th>InsurML</th>
+      <th>LATTICE</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>A version is immutable. New text means a new version</td>
+      <td>every contract, group and component IRI is a version (D67)</td>
+      <td>every wording and element is a version (<code class="language-plaintext highlighter-rouge">fnd:Version</code>)</td>
+    </tr>
+    <tr>
+      <td>A contract includes exact versions, never “the latest”</td>
+      <td>D80</td>
+      <td>an assembled wording records the versions it includes (<code class="language-plaintext highlighter-rouge">wrd:includes</code>)</td>
+    </tr>
+    <tr>
+      <td>A retired IRI is never reused</td>
+      <td>§5.4</td>
+      <td>identities and keys are never reassigned</td>
+    </tr>
+    <tr>
+      <td>Tools read data, not IRIs</td>
+      <td>identifier and version are stated as data so tools need not parse IRIs (D67)</td>
+      <td>identity is not position, and nothing is inferred from an IRI’s shape</td>
+    </tr>
+    <tr>
+      <td>Numbers are generated, not identity</td>
+      <td>D93</td>
+      <td>object ids are derived after assembly (W7)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="3-where-they-differ">3. Where they differ</h2>
+
+<pre><code class="language-mermaid">---
+config:
+  layout: elk
+---
+flowchart TB
+    subgraph IML["InsurML"]
+        V1["component/flood-exclusion/2025-06-01"]
+        V2["component/flood-exclusion/2026-01-01"]
+        L["'flood-exclusion'&lt;br/&gt;(a literal)"]
+        V2 -- "iml:previousVersion" --&gt; V1
+        V1 -- "dcterms:identifier" --&gt; L
+        V2 -- "dcterms:identifier" --&gt; L
+    end
+    subgraph LAT["LATTICE"]
+        W1["component/flood-exclusion/2025-06-01"]
+        W2["component/flood-exclusion/2026-01-01"]
+        ID["persistent identity&lt;br/&gt;(an IRI)"]
+        K1["key: insurer identifier&lt;br/&gt;'flood-exclusion'"]
+        K2["key: LWR code"]
+        W1 -- "fnd:supersededBy" --&gt; W2
+        W1 -- "fnd:hasIdentity" --&gt; ID
+        W2 -- "fnd:hasIdentity" --&gt; ID
+        ID -- "fnd:naturalKey" --&gt; K1
+        ID -- "fnd:externalKey" --&gt; K2
+    end
+</code></pre>
+
+<table>
+  <thead>
+    <tr>
+      <th> </th>
+      <th>InsurML</th>
+      <th>LATTICE</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>The thing with versions</td>
+      <td>a literal shared by its versions</td>
+      <td>a resource, <code class="language-plaintext highlighter-rouge">fnd:PersistentIdentity</code></td>
+    </tr>
+    <tr>
+      <td>Identifiers</td>
+      <td>one slug, frozen once chosen. LWR codes as properties</td>
+      <td>keys, each under a key scheme that says whether values are reissued and what they look like. A thing may have several, and a key may be corrected</td>
+    </tr>
+    <tr>
+      <td>Order of versions</td>
+      <td><code class="language-plaintext highlighter-rouge">iml:previousVersion</code>, and the date in the IRI</td>
+      <td><code class="language-plaintext highlighter-rouge">fnd:supersededBy</code></td>
+    </tr>
+    <tr>
+      <td>Facts about the thing as a whole</td>
+      <td>stated on each version, or not stated</td>
+      <td>stated once, on the identity</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>LATTICE does not choose one IRI form for identities. A deployment picks a pattern per kind of
+identity (entities, aggregates, lineages, content revisions, key claims), and the same model
+works with any of them.</p>
+
+<h2 id="4-why-lattice-cannot-mint-identities-under-a-publishers-prefix">4. Why LATTICE cannot mint identities under a publisher’s prefix</h2>
+
+<p>InsurML’s IRI policy says every IRI under a publisher’s prefix must match exactly one pattern
+(§5.6), and the kinds under <code class="language-plaintext highlighter-rouge">id/</code> are a closed list: contract, group, component and variable
+(§5.3). The contract, group and component patterns all end in a date, so each names a version. The
+only unversioned pattern is the variable’s.</p>
+
+<p>So an IRI such as <code class="language-plaintext highlighter-rouge">https://insurer.example/id/component/flood-exclusion</code>, the natural IRI for the
+clause as a whole, matches no pattern. If LATTICE minted it, every InsurML validator would reject
+the graph. LATTICE therefore mints the identity elsewhere, in the deployment’s own namespace or
+as a <code class="language-plaintext highlighter-rouge">urn:uuid:</code>, and records the publisher’s slug as a key on it. This is a consequence of the IRI
+policy, not a preference.</p>
+
+<h2 id="5-what-an-identity-resource-does-in-a-live-system">5. What an identity resource does in a live system</h2>
+
+<p>Each case below arises in a running library or policy system, and each needs something to point
+at that is not one version.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Need</th>
+      <th>With a literal only</th>
+      <th>With an identity resource</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Facts about the thing as a whole</strong>: approved for a market, owned by a team, superseded as a whole, its meaning reviewed and carried forward to a new version</td>
+      <td>repeated on every version, or attached to nothing, since a literal cannot be the subject of a statement</td>
+      <td>stated once on the identity</td>
+    </tr>
+    <tr>
+      <td><strong>Several identifiers</strong>: the publisher’s slug, an LMA code, a market reference, a policy number</td>
+      <td>one slug, and other codes as unrelated properties</td>
+      <td>keys under schemes. A lookup by any key finds the identity, and a mistyped key is corrected without changing the identity</td>
+    </tr>
+    <tr>
+      <td><strong>The current version</strong></td>
+      <td>the latest date in the IRI. As strings, <code class="language-plaintext highlighter-rouge">2026-01-01-10</code> sorts before <code class="language-plaintext highlighter-rouge">2026-01-01-2</code>, so ordering needs the <code class="language-plaintext highlighter-rouge">previousVersion</code> chain</td>
+      <td>the version with no successor, or a head pointer the store maintains</td>
+    </tr>
+    <tr>
+      <td><strong>Two editors revising one component on the same day</strong></td>
+      <td>both mint <code class="language-plaintext highlighter-rouge">…/2026-01-01-2</code>. Nothing in the data serialises them</td>
+      <td>the identity’s head pointer carries a revision number. The second write fails a compare-and-set and retries with <code class="language-plaintext highlighter-rouge">-3</code></td>
+    </tr>
+    <tr>
+      <td><strong>References resolved by shared identifier</strong> (D84)</td>
+      <td>a join on a literal</td>
+      <td>a reference names the identity and resolves to the version the contract includes</td>
+    </tr>
+    <tr>
+      <td><strong>Merging and splitting</strong>: two slugs found to be one clause, or one slug that drifted into two clauses</td>
+      <td>rewrite the literals on old versions, which are immutable</td>
+      <td>record the relation between identities. Old versions stay as they are</td>
+    </tr>
+    <tr>
+      <td><strong>Erasure and correction of personal data</strong> in issued policies</td>
+      <td>spread across versions</td>
+      <td>acted on once, at the identity</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>None of these changes InsurML’s version IRIs. They need a node beside them.</p>
+
+<h2 id="6-contracts-that-identify-issued-policies">6. Contracts that identify issued policies</h2>
+
+<p>InsurML’s owner confirmed on 2026-10-06 that an <code class="language-plaintext highlighter-rouge">iml:Contract</code> may be a template, such as a generic
+directors and officers wording that underwriters tailor case by case, or an instance, such as one
+client’s bound policy in force. Its endorsements are new versions of the instance contract (D87).
+So a contract IRI can identify one policy, and identity matters more still:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Question</th>
+      <th>Why it matters for a policy</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Which version does a record refer to?</td>
+      <td>the version in force at the record’s relevant time, reached through the policy’s identity (§6.1)</td>
+    </tr>
+    <tr>
+      <td>Is a renewal a new version?</td>
+      <td>in law a renewal is usually a new contract for a new period, so a new identity linked to the one it renews, not a version of it (§6.2)</td>
+    </tr>
+    <tr>
+      <td>Which identifiers does it carry?</td>
+      <td>a unique market reference, a policy number, certificate numbers, each under a different authority</td>
+    </tr>
+    <tr>
+      <td>What does the date in the IRI mean?</td>
+      <td>an endorsement has an effective date and a date it was recorded, and they differ when it is backdated. A version IRI with one date cannot carry both. LATTICE records both times as data on the version</td>
+    </tr>
+    <tr>
+      <td>How is a policy related to its product?</td>
+      <td>a policy assembled from a product form should name the form and the version of it. InsurML has no property for this today. LATTICE uses <code class="language-plaintext highlighter-rouge">wrd:assembledFrom</code></td>
+    </tr>
+    <tr>
+      <td>Where are a policy’s settings?</td>
+      <td>per policy version, which makes InsurML’s open question on the settings format (Q33) central</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="61-which-version-a-record-refers-to">6.1 Which version a record refers to</h3>
+
+<p>A claim, a premium or a payment is decided under the terms in force at a relevant time: the date of
+loss, the date a claim is first made, the date a premium falls due. So each is governed by one
+version. Each record also outlives that version. A claim notified in month three is still handled
+after an endorsement in month six, and a later endorsement backdated to month two may change which
+version governed it. A record therefore holds two references:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Reference</th>
+      <th>Holds</th>
+      <th>Stable when</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>to the policy’s identity, by a key such as the policy number</td>
+      <td>which policy the record belongs to</td>
+      <td>the policy is endorsed</td>
+    </tr>
+    <tr>
+      <td>to the version in force at the relevant time</td>
+      <td>which terms decide it</td>
+      <td>nothing is backdated. A backdated endorsement can change it, and the record keeps both the version it was decided under and the version now known to govern</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Some records arise from one version itself. An additional premium arises from the endorsement that
+creates it, so it refers to that version directly. LATTICE records this as an occasion of the
+version’s relation, whose parties and terms are fixed when it arises.</p>
+
+<h3 id="62-endorsements-and-renewals">6.2 Endorsements and renewals</h3>
+
+<pre><code class="language-mermaid">flowchart LR
+    F["Product form&lt;br/&gt;Property Pro, v3"]
+    subgraph P1["Policy 2026 to 2027 (one identity)"]
+        A1["v1 issued"] --&gt; A2["v2 endorsed&lt;br/&gt;mid-term"]
+    end
+    subgraph P2["Policy 2027 to 2028 (a new identity)"]
+        B1["v1 issued"]
+    end
+    F -. "assembled from" .-&gt; A1
+    F -. "assembled from" .-&gt; B1
+    P2 -- "renews" --&gt; P1
+    C["Claim, loss in month 4"] -- "governed by" --&gt; A1
+    C -- "belongs to" --&gt; P1
+</code></pre>
+
+<p>An endorsement changes a contract during its period, so it makes a new version of the same
+identity. A renewal usually makes a new contract for a new period, with its own terms, premium and
+often its own market reference. It is a new identity, linked to the one it renews and assembled
+from the product form as it then stands. A claim on the 2026 policy is never governed by the 2027
+terms, which is what a single identity running across renewals would allow by mistake.</p>
+
+<p>Practice varies. Some insurers keep one policy number across renewals. The number is then a key
+of a series of policies, a policy account, rather than of one contract. In InsurML’s terms, a
+renewal under the same identifier slug and a new date would look exactly like an endorsement,
+which is why InsurML needs a rule for renewals (Q-20).</p>
+
+<h2 id="7-how-it-looks-in-different-stores">7. How it looks in different stores</h2>
+
+<p>The model is the same in every store: an identity, its versions, its keys, and a head that says
+which version is current. What differs is where uniqueness and concurrency are enforced.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Store</th>
+      <th>Identity, versions, keys</th>
+      <th>Current version</th>
+      <th>Uniqueness and concurrency</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>RDF store, Apache Jena (TDB2, Fuseki)</td>
+      <td>IRIs and triples as above, often one named graph per identity holding its head</td>
+      <td>a head triple, written in the same transaction as the new version</td>
+      <td>a SPARQL update that checks the head’s revision before writing, inside a serialisable transaction. Key uniqueness by the same guarded update</td>
+    </tr>
+    <tr>
+      <td>Datalog store, RDFox</td>
+      <td>the same triples</td>
+      <td>derived by a rule: a version of an identity with no successor. Kept up to date incrementally as versions are added</td>
+      <td>integrity rules derive a violation fact when two identities share a key or a version has two successors. Identities are linked by recorded relations, never by <code class="language-plaintext highlighter-rouge">owl:sameAs</code>, whose equality reasoning would merge everything about both</td>
+    </tr>
+    <tr>
+      <td>SQL, for example PostgreSQL</td>
+      <td>an identity table with a surrogate key, a version table with the version IRI unique and a foreign key to its identity, a key table with scheme, value and validity period</td>
+      <td>a head column on the identity, or the version with no successor</td>
+      <td>a row version on the identity for optimistic concurrency. A uniqueness constraint on scheme and value, or an exclusion constraint so that validity periods for one value never overlap</td>
+    </tr>
+    <tr>
+      <td>Labelled property graph, Neo4j</td>
+      <td><code class="language-plaintext highlighter-rouge">(:Identity)&lt;-[:VERSION_OF]-(:Version)</code>, <code class="language-plaintext highlighter-rouge">(:Version)-[:SUPERSEDED_BY]-&gt;(:Version)</code>, keys as <code class="language-plaintext highlighter-rouge">(:Key {scheme, value})</code> nodes or properties</td>
+      <td>a <code class="language-plaintext highlighter-rouge">[:CURRENT]</code> relationship from the identity, moved in the write transaction</td>
+      <td>uniqueness constraints on version IRIs and on key scheme and value. Optimistic concurrency by a revision property on the identity, checked in the transaction</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>With a literal only, each store can still group versions by the identifier, as a column, a
+property or a literal-valued triple. What it cannot do is hang anything off the group. Every
+system that needs to does it by creating a node or a row for the thing as a whole, which is what lattice’s
+persistent identity is doing.</p>
+
+<p>A short SQL sketch shows the shape:</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">create</span> <span class="k">table</span> <span class="k">identity</span> <span class="p">(</span>
+  <span class="n">id</span>        <span class="n">uuid</span> <span class="k">primary</span> <span class="k">key</span><span class="p">,</span>
+  <span class="n">head</span>      <span class="nb">text</span><span class="p">,</span>             <span class="c1">-- version IRI of the current version</span>
+  <span class="n">revision</span>  <span class="nb">bigint</span> <span class="k">not</span> <span class="k">null</span>    <span class="c1">-- optimistic concurrency</span>
+<span class="p">);</span>
+<span class="k">create</span> <span class="k">table</span> <span class="k">version</span> <span class="p">(</span>
+  <span class="n">iri</span>            <span class="nb">text</span> <span class="k">primary</span> <span class="k">key</span><span class="p">,</span>      <span class="c1">-- InsurML's version IRI, adopted as is</span>
+  <span class="n">identity_id</span>    <span class="n">uuid</span> <span class="k">not</span> <span class="k">null</span> <span class="k">references</span> <span class="k">identity</span> <span class="p">(</span><span class="n">id</span><span class="p">),</span>
+  <span class="n">superseded_by</span>  <span class="nb">text</span> <span class="k">references</span> <span class="k">version</span> <span class="p">(</span><span class="n">iri</span><span class="p">),</span>
+  <span class="n">valid_from</span>     <span class="n">timestamptz</span><span class="p">,</span>           <span class="c1">-- effective time</span>
+  <span class="n">recorded_at</span>    <span class="n">timestamptz</span> <span class="k">not</span> <span class="k">null</span>   <span class="c1">-- when the system learned of it</span>
+<span class="p">);</span>
+<span class="k">create</span> <span class="k">table</span> <span class="k">key</span> <span class="p">(</span>
+  <span class="n">scheme</span>       <span class="nb">text</span> <span class="k">not</span> <span class="k">null</span><span class="p">,</span>           <span class="c1">-- for example the insurer's component identifiers</span>
+  <span class="n">value</span>        <span class="nb">text</span> <span class="k">not</span> <span class="k">null</span><span class="p">,</span>           <span class="c1">-- for example 'flood-exclusion'</span>
+  <span class="n">identity_id</span>  <span class="n">uuid</span> <span class="k">not</span> <span class="k">null</span> <span class="k">references</span> <span class="k">identity</span> <span class="p">(</span><span class="n">id</span><span class="p">),</span>
+  <span class="k">unique</span> <span class="p">(</span><span class="n">scheme</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+<span class="p">);</span>
+</code></pre></div></div>
+
+<h2 id="8-a-proposal">8. A proposal</h2>
+
+<p>Add one pattern to InsurML’s IRI policy for the identity of a contract, group or component, the
+version IRI without its date:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>What</th>
+      <th>Pattern</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>R13, proposed</td>
+      <td>the persistent identity of a contract, group or component</td>
+      <td><code class="language-plaintext highlighter-rouge">P id/{kind}/{id}</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The slug InsurML already shares between versions becomes the identity’s IRI, as R12 already does
+for variables. A version then states its identity as a resource, and an identity may dereference to
+its current version or its list of versions. LATTICE would adopt R13 identities as its persistent
+identities and stop minting its own. Nothing else in InsurML’s IRI policy changes, and no existing
+IRI changes meaning.</p>

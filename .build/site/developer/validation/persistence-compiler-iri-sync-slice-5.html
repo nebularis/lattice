@@ -1,0 +1,239 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack--persistence-compiler-iri-sync-slice-5">Validation Pack — <code class="language-plaintext highlighter-rouge">persistence-compiler-iri-sync</code> Slice 5</h1>
+
+<p><strong>Slice:</strong> Uniqueness <code class="language-plaintext highlighter-rouge">onViolation</code> reconciler operations, <code class="language-plaintext highlighter-rouge">mergeRelation</code>, <code class="language-plaintext highlighter-rouge">dal:ClaimScheme</code> <code class="language-plaintext highlighter-rouge">dal:Dual</code> rotation, registry-token digest-scheme relaxation (G7)
+<strong>Plan:</strong> <a href="/developer/plans/persistence-compiler-iri-sync.html#slice-5--uniqueness-onviolation-branching-mergerelation-claimscheme-rotation-g7">persistence-compiler-iri-sync.md</a>
+<strong>Status:</strong> <a href="/developer/status/persistence-compiler-iri-sync.html">persistence-compiler-iri-sync.md</a>
+<strong>Mode:</strong> fully autonomous (granted 2026-09-25)
+<strong>Decisions:</strong> taken 2026-09-25, recorded in the status record’s “Slice 5 decisions” section — Option A for <code class="language-plaintext highlighter-rouge">dal:onViolation</code> semantics, the registry-token digest relaxation, and autonomous mode with no install/test-run this tranche.</p>
+
+<h2 id="validated-2026-09-25">Validated (2026-09-25)</h2>
+
+<p>We ran the suite and confirmed <strong>774 passed</strong>, after one fix found by the run itself (see “Found on the way” below). This slice is <strong>complete</strong>.</p>
+
+<h2 id="what-invariants-does-this-slice-protect">What invariants does this slice protect?</h2>
+
+<ol>
+  <li><strong>The guarded write never branches on <code class="language-plaintext highlighter-rouge">dal:onViolation</code>.</strong> <code class="language-plaintext highlighter-rouge">key-claim-write</code>/<code class="language-plaintext highlighter-rouge">key-claim-write-dual</code> guard and insert identically regardless of policy; only the reconciler operation generated alongside them differs (Decision 1, Option A — guide §7.5, not §6).</li>
+  <li><strong>Every uniqueness constraint gets exactly one reconciler operation</strong>, selected by <code class="language-plaintext highlighter-rouge">dal:onViolation</code>, defaulting to <code class="language-plaintext highlighter-rouge">dal:Reject</code> when undeclared (the same explicit-baseline-default convention as every other dimension in this compiler).</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">dal:onViolation dal:Merge</code> always has a relation to write.</strong> Mirrors <code class="language-plaintext highlighter-rouge">dal:MergeRelationRequiredShape</code>: a merge policy naming no relation is refused, never silently generated with an undefined term.</li>
+  <li><strong>A claim-secret rotation in <code class="language-plaintext highlighter-rouge">dal:Dual</code> state guards both scheme versions in one operation.</strong> <code class="language-plaintext highlighter-rouge">dualClaimScheme</code> mirrors <code class="language-plaintext highlighter-rouge">persistence.recipes</code>’ own active-scheme filter (<code class="language-plaintext highlighter-rouge">Accepting</code>/<code class="language-plaintext highlighter-rouge">Dual</code>) rather than introducing a second, potentially divergent rule.</li>
+  <li><strong>A digest scheme is required exactly where one is used.</strong> <code class="language-plaintext highlighter-rouge">dal:PositionDerivedEvent</code> + <code class="language-plaintext highlighter-rouge">dal:RegistryTokenDerivation</code> is the sole exemption from <code class="language-plaintext highlighter-rouge">dal:DigestSchemeRequiredShape</code>, narrowly scoped: <code class="language-plaintext highlighter-rouge">dal:HashedTargetDerivation</code> still requires one, and a scheme declared anyway under the exemption is still checked for well-formedness, never merely ignored.</li>
+</ol>
+
+<h2 id="test-case-table">Test case table</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>Invariant</th>
+      <th>Pass criterion</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>T1</td>
+      <td><code class="language-plaintext highlighter-rouge">dal:onViolation</code>/<code class="language-plaintext highlighter-rouge">dal:mergeRelation</code> are read by <code class="language-plaintext highlighter-rouge">resolve_uniqueness()</code></td>
+      <td>L1</td>
+      <td>1, 2, 3</td>
+      <td><code class="language-plaintext highlighter-rouge">test_slice_5_uniqueness.py::test_on_violation_and_merge_relation_are_read</code>, <code class="language-plaintext highlighter-rouge">::test_merge_relation_is_none_when_undeclared</code>, <code class="language-plaintext highlighter-rouge">::test_on_violation_is_none_when_undeclared</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T2</td>
+      <td><code class="language-plaintext highlighter-rouge">dualClaimScheme</code> is true only when exactly two <code class="language-plaintext highlighter-rouge">dal:claimScheme</code>s are <code class="language-plaintext highlighter-rouge">Accepting</code>/<code class="language-plaintext highlighter-rouge">Dual</code></td>
+      <td>L1</td>
+      <td>4</td>
+      <td><code class="language-plaintext highlighter-rouge">::test_dual_claim_scheme_mirrors_recipes_active_scheme_count</code> (4 cases), <code class="language-plaintext highlighter-rouge">::test_no_claim_scheme_is_not_dual</code></td>
+      <td>+/-</td>
+    </tr>
+    <tr>
+      <td>T3</td>
+      <td><code class="language-plaintext highlighter-rouge">dal:onViolation dal:Merge</code> without <code class="language-plaintext highlighter-rouge">dal:mergeRelation</code> is refused; with it, passes</td>
+      <td>L1</td>
+      <td>3</td>
+      <td><code class="language-plaintext highlighter-rouge">::test_merge_without_relation_is_refused</code>, <code class="language-plaintext highlighter-rouge">::test_merge_with_relation_passes</code></td>
+      <td>+/-</td>
+    </tr>
+    <tr>
+      <td>T4</td>
+      <td><code class="language-plaintext highlighter-rouge">dal:Reject</code> and undeclared <code class="language-plaintext highlighter-rouge">dal:onViolation</code> need no <code class="language-plaintext highlighter-rouge">dal:mergeRelation</code></td>
+      <td>L1</td>
+      <td>2, 3</td>
+      <td><code class="language-plaintext highlighter-rouge">::test_reject_needs_no_merge_relation</code>, <code class="language-plaintext highlighter-rouge">::test_undeclared_on_violation_needs_no_merge_relation</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T5</td>
+      <td>A <code class="language-plaintext highlighter-rouge">dal:PositionDerivedEvent</code> + <code class="language-plaintext highlighter-rouge">dal:RegistryTokenDerivation</code> profile needs no <code class="language-plaintext highlighter-rouge">dal:digestScheme</code></td>
+      <td>L1</td>
+      <td>5</td>
+      <td><code class="language-plaintext highlighter-rouge">::test_registry_token_position_event_needs_no_digest_scheme</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T6</td>
+      <td>The same profile with <code class="language-plaintext highlighter-rouge">dal:HashedTargetDerivation</code> still requires one</td>
+      <td>L1</td>
+      <td>5</td>
+      <td><code class="language-plaintext highlighter-rouge">::test_hashed_target_position_event_still_needs_a_digest_scheme</code></td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>T7</td>
+      <td>A <code class="language-plaintext highlighter-rouge">dal:RegistryTokenDerivation</code> profile that declares a digest scheme anyway is still checked for well-formedness</td>
+      <td>L1</td>
+      <td>5</td>
+      <td><code class="language-plaintext highlighter-rouge">::test_registry_token_position_event_with_a_declared_digest_is_still_checked_for_well_formedness</code>, <code class="language-plaintext highlighter-rouge">::test_registry_token_position_event_with_a_well_formed_declared_digest_passes</code></td>
+      <td>+/-</td>
+    </tr>
+    <tr>
+      <td>T8</td>
+      <td>Explicit <code class="language-plaintext highlighter-rouge">dal:Reject</code> and entirely undeclared <code class="language-plaintext highlighter-rouge">dal:onViolation</code> both generate <code class="language-plaintext highlighter-rouge">key-claim-duplicate-audit</code>, end to end</td>
+      <td>L1/L4</td>
+      <td>1, 2</td>
+      <td><code class="language-plaintext highlighter-rouge">::test_explicit_reject_generates_the_duplicate_audit</code>, <code class="language-plaintext highlighter-rouge">::test_undeclared_on_violation_also_defaults_to_the_duplicate_audit</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T9</td>
+      <td><code class="language-plaintext highlighter-rouge">dal:Merge</code> generates <code class="language-plaintext highlighter-rouge">key-claim-merge-rewrite</code> with <code class="language-plaintext highlighter-rouge">mergeRelation</code> bound as an <code class="language-plaintext highlighter-rouge">Iri</code>, end to end</td>
+      <td>L4</td>
+      <td>1, 3</td>
+      <td><code class="language-plaintext highlighter-rouge">::test_merge_policy_generates_the_merge_rewrite_operation_with_the_relation_bound</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T10</td>
+      <td><code class="language-plaintext highlighter-rouge">dal:Quarantine</code> generates <code class="language-plaintext highlighter-rouge">key-claim-quarantine</code>, end to end</td>
+      <td>L4</td>
+      <td>1</td>
+      <td><code class="language-plaintext highlighter-rouge">::test_quarantine_policy_generates_the_quarantine_operation</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T11</td>
+      <td>Two active claim schemes select <code class="language-plaintext highlighter-rouge">key-claim-write-dual</code>; one selects the plain write, end to end</td>
+      <td>L4</td>
+      <td>4</td>
+      <td><code class="language-plaintext highlighter-rouge">::test_dual_claim_scheme_selects_the_dual_write_template</code>, <code class="language-plaintext highlighter-rouge">::test_single_claim_scheme_selects_the_plain_write_template</code></td>
+      <td>+/-</td>
+    </tr>
+    <tr>
+      <td>T12</td>
+      <td>The merge-rewrite template uses <code class="language-plaintext highlighter-rouge">MIN(?owner)</code> for the canonical choice and guards idempotently</td>
+      <td>L1</td>
+      <td>3</td>
+      <td><code class="language-plaintext highlighter-rouge">::test_merge_rewrite_uses_min_owner_as_canonical_and_guards_idempotently</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T13</td>
+      <td>The quarantine template writes only to the quarantine graph and deletes nothing</td>
+      <td>L1</td>
+      <td>1</td>
+      <td><code class="language-plaintext highlighter-rouge">::test_quarantine_writes_to_the_quarantine_graph_and_deletes_nothing</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T14</td>
+      <td>The dual-write template guards both claim IRIs independently</td>
+      <td>L1</td>
+      <td>4</td>
+      <td><code class="language-plaintext highlighter-rouge">::test_dual_write_guards_both_claim_iris_independently</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T15</td>
+      <td>Every new template parses with a complete context, and the four new key-claim templates all read from <code class="language-plaintext highlighter-rouge">keysGraph</code>, never <code class="language-plaintext highlighter-rouge">txnGraph</code></td>
+      <td>L1</td>
+      <td>1, 3, 4</td>
+      <td><code class="language-plaintext highlighter-rouge">test_template_alignment.py::test_every_template_parses_with_a_complete_context</code>, <code class="language-plaintext highlighter-rouge">::test_key_claims_live_in_the_keys_graph</code> (extended list)</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T16</td>
+      <td>The four new example fixtures compile/parse/instantiate (positive) or fail compilation (negative), and conform/fail SHACL as expected</td>
+      <td>L4</td>
+      <td>1–5</td>
+      <td><code class="language-plaintext highlighter-rouge">test_compiler_integration.py</code>’s <code class="language-plaintext highlighter-rouge">POSITIVE_FIXTURES</code>, <code class="language-plaintext highlighter-rouge">NEGATIVE_FIXTURES</code>, <code class="language-plaintext highlighter-rouge">SHACL_NEGATIVE_FIXTURES</code>, <code class="language-plaintext highlighter-rouge">test_every_fixture_parses_as_turtle</code></td>
+      <td>+/-</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="one-command-to-run-everything">One command to run everything</h2>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:persistence
+</code></pre></div></div>
+
+<h2 id="expected-artifacts">Expected artifacts</h2>
+
+<p>Confirmed: <strong>774 passed</strong> (2026-09-25 run). All previously-passing tests still pass, plus the new cases in <code class="language-plaintext highlighter-rouge">test_slice_5_uniqueness.py</code> and the extended parametrisations in <code class="language-plaintext highlighter-rouge">test_template_alignment.py</code> and <code class="language-plaintext highlighter-rouge">test_compiler_integration.py</code>.</p>
+
+<h2 id="found-on-the-way">Found on the way</h2>
+
+<p><code class="language-plaintext highlighter-rouge">key-claim-merge-rewrite.mustache</code>’s `` header comment originally repeated the literal tag text <code class="language-plaintext highlighter-rouge">}</code> inline, as prose, inside the comment. Mustache comments do not suppress tag parsing of their own content in this compiler’s rendering path (<code class="language-plaintext highlighter-rouge">chevron</code>), so the literal braces inside the comment were treated as a second, spurious tag occurrence and failed to render/parse correctly. Fixed by rephrasing the comment to describe the slot in words (“the merge relation is the adopter-named relation…”) rather than quoting its Mustache syntax. This is the same class of gotcha already recorded for this compiler in <code class="language-plaintext highlighter-rouge">docs/developer/INDEX.md</code>’s Key Findings (“Mustache parsing gotcha: Comments cannot contain bare <code class="language-plaintext highlighter-rouge">}}</code> without breaking parsing”) — confirmed here to extend to a full <code class="language-plaintext highlighter-rouge">}</code> tag quoted inside a comment, not only a bare <code class="language-plaintext highlighter-rouge">}}</code>.</p>
+
+<h2 id="artefacts-to-inspect">Artefacts to inspect</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">tools/persistence/src/persistence/resolver.py</code>: <code class="language-plaintext highlighter-rouge">_MINTING_ACTIVE_STATES</code>, <code class="language-plaintext highlighter-rouge">resolve_uniqueness()</code>’s <code class="language-plaintext highlighter-rouge">mergeRelation</code>/<code class="language-plaintext highlighter-rouge">dualClaimScheme</code> fields.</li>
+  <li><code class="language-plaintext highlighter-rouge">tools/persistence/src/persistence/validator.py</code>: <code class="language-plaintext highlighter-rouge">_check_slice_5</code>, and <code class="language-plaintext highlighter-rouge">check_identity</code>’s <code class="language-plaintext highlighter-rouge">digest_unused</code> exemption.</li>
+  <li><code class="language-plaintext highlighter-rouge">tools/persistence/src/persistence/operations.py</code>: the rewritten uniqueness loop, <code class="language-plaintext highlighter-rouge">keyQuarantineGraph</code>.</li>
+  <li>The four new templates under <code class="language-plaintext highlighter-rouge">tools/persistence/src/persistence/templates/</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">ontology/persistence/shapes/constraints.ttl</code>’s narrowed <code class="language-plaintext highlighter-rouge">dal:DigestSchemeRequiredShape</code>, and <code class="language-plaintext highlighter-rouge">spec/persistence.ttl</code>’s <code class="language-plaintext highlighter-rouge">dal:DigestScheme</code> comment and version bump (0.2.0 → 0.2.1).</li>
+  <li><code class="language-plaintext highlighter-rouge">ontology/persistence/examples/identity-minting-coverage.ttl</code>’s <code class="language-plaintext highlighter-rouge">ex:ShipmentEvents</code>, now without <code class="language-plaintext highlighter-rouge">dal:digestScheme</code>/<code class="language-plaintext highlighter-rouge">ex:ShipmentDigest</code>.</li>
+</ul>
+
+<h2 id="adversarial-probes-designed-ready-for-a-mutation-check-pass">Adversarial probes (designed, ready for a mutation-check pass)</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Probe</th>
+      <th>Mutation</th>
+      <th>Expected failure</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Make the guarded write branch on policy after all</td>
+      <td>In <code class="language-plaintext highlighter-rouge">operations.py</code>, change the <code class="language-plaintext highlighter-rouge">write_template</code> selection to also vary by <code class="language-plaintext highlighter-rouge">on_violation</code></td>
+      <td>No test currently pins this negatively (by design, Decision 1 says it must <em>not</em> vary by policy); a reviewer should confirm <code class="language-plaintext highlighter-rouge">test_single_claim_scheme_selects_the_plain_write_template</code> and <code class="language-plaintext highlighter-rouge">test_explicit_reject_generates_the_duplicate_audit</code> still name <code class="language-plaintext highlighter-rouge">key-claim-write.mustache</code>, unaffected by policy</td>
+    </tr>
+    <tr>
+      <td>Disable <code class="language-plaintext highlighter-rouge">MergeRelationRequired</code></td>
+      <td>In <code class="language-plaintext highlighter-rouge">validator._check_slice_5</code>, change the <code class="language-plaintext highlighter-rouge">if</code> condition to <code class="language-plaintext highlighter-rouge">if False:</code></td>
+      <td><code class="language-plaintext highlighter-rouge">test_merge_without_relation_is_refused</code> and the <code class="language-plaintext highlighter-rouge">test_negative_fixture_fails_compile[invalid-merge-policy-no-relation.ttl]</code> case fail; <code class="language-plaintext highlighter-rouge">TestShaclSelfValidation::test_does_not_conform[invalid-merge-policy-no-relation.ttl]</code> still fails independently (SHACL is unaffected), confirming the Python check is the one broken</td>
+    </tr>
+    <tr>
+      <td>Remove the digest exemption</td>
+      <td>In <code class="language-plaintext highlighter-rouge">validator.check_identity</code>, change <code class="language-plaintext highlighter-rouge">digest_unused = (...)</code> to <code class="language-plaintext highlighter-rouge">digest_unused = False</code></td>
+      <td><code class="language-plaintext highlighter-rouge">test_registry_token_position_event_needs_no_digest_scheme</code> fails, and the positive fixture <code class="language-plaintext highlighter-rouge">identity-minting-coverage.ttl</code> fails compilation (breaking <code class="language-plaintext highlighter-rouge">test_end_to_end_compile_instantiate_parse[identity-minting-coverage.ttl-...]</code>)</td>
+    </tr>
+    <tr>
+      <td>Widen the exemption to any position-derived event</td>
+      <td>Drop the <code class="language-plaintext highlighter-rouge">occurrenceNamespaceDerivation</code> condition from <code class="language-plaintext highlighter-rouge">digest_unused</code></td>
+      <td><code class="language-plaintext highlighter-rouge">test_hashed_target_position_event_still_needs_a_digest_scheme</code> fails</td>
+    </tr>
+    <tr>
+      <td>Break the dual-scheme count rule</td>
+      <td>In <code class="language-plaintext highlighter-rouge">resolver.resolve_uniqueness</code>, change <code class="language-plaintext highlighter-rouge">len(active_schemes) == 2</code> to <code class="language-plaintext highlighter-rouge">len(active_schemes) &gt;= 1</code></td>
+      <td><code class="language-plaintext highlighter-rouge">test_dual_claim_scheme_mirrors_recipes_active_scheme_count[dal:Accepting-None-False]</code> fails, and <code class="language-plaintext highlighter-rouge">test_single_claim_scheme_selects_the_plain_write_template</code> fails</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<ul>
+  <li><strong><code class="language-plaintext highlighter-rouge">key-claim-merge-rewrite</code> never retires the losing claim or rewrites payload references.</strong> It records the merge relation only, per Decision 1’s framing: a background reconciler cannot legitimately act with a claim owner’s authority (guide §6.2), and rewriting arbitrary payload references needs domain knowledge this compiler does not have.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">urn:g:key-quarantine</code> is a fixed constant</strong>, matching every other infrastructure graph IRI this compiler already treats as fixed (<code class="language-plaintext highlighter-rouge">tools/persistence/README.md</code> “Known limitations”). No <code class="language-plaintext highlighter-rouge">dal:</code> property names it yet.</li>
+  <li><strong>Declared shard counts (<code class="language-plaintext highlighter-rouge">dal:keyShards</code>) are still not honoured</strong> by any key-claim template, including the four new ones, unchanged from Slice 2’s own non-coverage.</li>
+</ul>

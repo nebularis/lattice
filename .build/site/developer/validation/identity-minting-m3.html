@@ -1,0 +1,192 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack--identity-minting-m3">Validation Pack — <code class="language-plaintext highlighter-rouge">identity-minting</code> M3</h1>
+
+<p><strong>Slice:</strong> The Java library, and vector coverage of every recipe feature
+<strong>Plan:</strong> <a href="/developer/plans/identity-minting.html#m3--java-library">identity-minting.md</a>
+<strong>Status:</strong> <a href="/developer/status/identity-minting.html">identity-minting.md</a>
+<strong>Mode:</strong> autonomous (granted 2026-09-23)</p>
+
+<h2 id="what-invariants-does-this-slice-protect">What invariants does this slice protect?</h2>
+
+<ol>
+  <li><strong>Two independent implementations agree byte for byte.</strong> The Java library passes every anchor and every vector the Python library generates, compared trace step by trace step.</li>
+  <li><strong>Every recipe feature has vectors.</strong> Each pipeline, output encoding, surrogate kind, namespace derivation, rotation state and strategy appears in at least one generated vectors file.</li>
+  <li><strong>The Java library takes nothing from the JDK that differs from the specification.</strong> Case mapping, whitespace and assignment come from the shared tables, lengths are UTF-8 bytes, and the JDK’s Unicode version is checked.</li>
+  <li><strong>The Java library stands alone.</strong> Its own <code class="language-plaintext highlighter-rouge">pom.xml</code>, JDK 25 only, JUnit at test scope.</li>
+</ol>
+
+<h2 id="test-case-table">Test case table</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>Pass criterion</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>T1</td>
+      <td>All seven anchor sets</td>
+      <td>L3</td>
+      <td><code class="language-plaintext highlighter-rouge">ConformanceTest.anchorsPass</code></td>
+      <td>+/-</td>
+    </tr>
+    <tr>
+      <td>T2</td>
+      <td>All eleven generated vectors files</td>
+      <td>L3</td>
+      <td><code class="language-plaintext highlighter-rouge">ConformanceTest.generatedVectorsPass</code> (11), <code class="language-plaintext highlighter-rouge">elevenGeneratedVectorFiles</code></td>
+      <td>+/-</td>
+    </tr>
+    <tr>
+      <td>T3</td>
+      <td>A changed trace step is reported by step number</td>
+      <td>L1</td>
+      <td><code class="language-plaintext highlighter-rouge">ConformanceTest.aChangedTraceStepIsNamed</code></td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>T4</td>
+      <td>The command line exits 0, 2 on bad usage, 1 on a failing file</td>
+      <td>L4</td>
+      <td><code class="language-plaintext highlighter-rouge">ConformanceTest.cli</code></td>
+      <td>+/-</td>
+    </tr>
+    <tr>
+      <td>T5</td>
+      <td>Java and Python table copies are byte-identical</td>
+      <td>L1</td>
+      <td><code class="language-plaintext highlighter-rouge">UcdTest.tablesAreTheCopiesThePythonLibraryReads</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T6</td>
+      <td>Assigned set equals <code class="language-plaintext highlighter-rouge">Character.isDefined</code> over every code point</td>
+      <td>L2</td>
+      <td><code class="language-plaintext highlighter-rouge">UcdTest.assignedMatchesTheJdk</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T7</td>
+      <td>Full case mappings equal the JDK’s under <code class="language-plaintext highlighter-rouge">Locale.ROOT</code> for every assigned code point, and <code class="language-plaintext highlighter-rouge">Final_Sigma</code> in context</td>
+      <td>L2</td>
+      <td><code class="language-plaintext highlighter-rouge">UcdTest.fullCaseMappingsMatchTheJdkRootLocale</code>, <code class="language-plaintext highlighter-rouge">finalSigmaInContext</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T8</td>
+      <td><code class="language-plaintext highlighter-rouge">White_Space</code> differs from <code class="language-plaintext highlighter-rouge">Character.isWhitespace</code> at exactly U+001C–U+001F, U+0085, U+00A0, U+2007, U+202F</td>
+      <td>L2</td>
+      <td><code class="language-plaintext highlighter-rouge">UcdTest.whiteSpaceIsNotJavaWhitespace</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T9</td>
+      <td>Recipes use the specification’s pipelines, and all three are idempotent on every assigned code point</td>
+      <td>L2</td>
+      <td><code class="language-plaintext highlighter-rouge">UcdTest.recipesUseThePipelinesOfTheSpecification</code>, <code class="language-plaintext highlighter-rouge">everyPipelineIsIdempotent</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T10</td>
+      <td>UTF-8 byte counts, percent-encoding and base32 (RFC 4648 §10)</td>
+      <td>L1</td>
+      <td><code class="language-plaintext highlighter-rouge">UcdTest.tupleLengthsAreUtf8Bytes</code>, <code class="language-plaintext highlighter-rouge">percentEncodingIsPerUtf8Byte</code>, <code class="language-plaintext highlighter-rouge">base32MatchesRfc4648</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T11</td>
+      <td>JSON: canonical form, exact large integers, surrogate pairs, nine refused inputs</td>
+      <td>L1</td>
+      <td><code class="language-plaintext highlighter-rouge">JsonTest</code> (6)</td>
+      <td>+/-</td>
+    </tr>
+    <tr>
+      <td>T12</td>
+      <td>Recipe, runtime, secret, canonicalizer and randomness refusals</td>
+      <td>L1</td>
+      <td><code class="language-plaintext highlighter-rouge">RefusalTest</code> (11)</td>
+      <td>+/-</td>
+    </tr>
+    <tr>
+      <td>T13</td>
+      <td>Python: the two parity cases below, and all three pipelines from the specification</td>
+      <td>L1</td>
+      <td><code class="language-plaintext highlighter-rouge">test_refusals.py::test_an_empty_secret_is_no_secret</code>, <code class="language-plaintext highlighter-rouge">::test_a_blank_canonicalizer_is_judged_by_white_space</code>, <code class="language-plaintext highlighter-rouge">test_unicode.py::test_recipes_use_the_pipelines_of_the_specification</code></td>
+      <td>+/-</td>
+    </tr>
+    <tr>
+      <td>T14</td>
+      <td>The coverage fixture compiles, instantiates and conforms to SHACL</td>
+      <td>L4</td>
+      <td><code class="language-plaintext highlighter-rouge">test_compiler_integration.py</code> suites</td>
+      <td>+</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="commands">Commands</h2>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:minting            <span class="c"># anchors 187 checks, Python 66 passed, Java 43 passed</span>
+mise run check:persistence        <span class="c"># 669 passed</span>
+mise run check:minting-tables     <span class="c"># 16 tables current</span>
+</code></pre></div></div>
+
+<p>All green on 2026-09-24: JDK 25.0.2, Maven 3.9.16, Python 3.14.7.</p>
+
+<h2 id="adversarial-probes-java">Adversarial probes (Java)</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Probe</th>
+      <th>Result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">Final_Sigma</code> disabled</td>
+      <td>1 failure before the coverage vectors, 3 after</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">String.strip()</code> in place of <code class="language-plaintext highlighter-rouge">trimWhiteSpace</code></td>
+      <td>6 failures</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">String.length()</code> in the tuple encoding</td>
+      <td>6 failures</td>
+    </tr>
+    <tr>
+      <td>Truncation keeps the last bytes</td>
+      <td>5 failures</td>
+    </tr>
+    <tr>
+      <td>Lowercase hex in percent-encoding</td>
+      <td>4 failures</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>All restored, suite green.</p>
+
+<h2 id="contract-changes-non-weakening-rule">Contract changes (non-weakening rule)</h2>
+
+<ul>
+  <li><strong>An empty secret is refused</strong> with <code class="language-plaintext highlighter-rouge">MissingSecret</code>, in both libraries (specification §8, §9). Python accepted it and Java’s <code class="language-plaintext highlighter-rouge">SecretKeySpec</code> cannot represent it, so the two would otherwise have differed.</li>
+  <li><strong>A blank canonicalizer is judged by <code class="language-plaintext highlighter-rouge">White_Space</code></strong> in both libraries (§6.6). Python used <code class="language-plaintext highlighter-rouge">str.strip()</code> and Java would have used <code class="language-plaintext highlighter-rouge">isBlank()</code>, which disagree on U+00A0 and U+001C–U+001F.</li>
+  <li><strong>Four coverage recipes</strong> from the new positive fixture <code class="language-plaintext highlighter-rouge">identity-minting-coverage.ttl</code> join the testdata: eleven vectors files, up from seven. The anchor tests now check that the anchor recipes are a subset of the compiled ones.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">check</code> runs <code class="language-plaintext highlighter-rouge">check:minting</code></strong>, which aggregates the anchors, Python and Java checks.</li>
+</ul>
+
+<h2 id="found-on-the-way">Found on the way</h2>
+
+<ul>
+  <li><strong>No vector exercised <code class="language-plaintext highlighter-rouge">lowercase_full</code>, base64url, <code class="language-plaintext highlighter-rouge">validate-token</code>, a generated claimed surrogate, a <code class="language-plaintext highlighter-rouge">Dual</code> rotation or <code class="language-plaintext highlighter-rouge">ExternalRegistryIdentity</code>.</strong> The anchor fixture needs only one recipe per strategy, and the M2 idempotence test read its pipelines from the testdata, so it missed the lowercase pipeline too. The Java final-sigma probe exposed the gap. Fixed by the coverage fixture and by taking the pipelines from the specification’s table.</li>
+  <li><strong>A registry-token event profile must declare a digest scheme it never uses.</strong> The Slice 3 identity check requires <code class="language-plaintext highlighter-rouge">dal:digestScheme</code> on every <code class="language-plaintext highlighter-rouge">dal:DerivedHashIdentity</code> profile, including position-derived events whose namespace is a registry token. The coverage fixture carries an unused scheme with a comment. Recorded in the status record for <code class="language-plaintext highlighter-rouge">persistence-compiler-iri-sync</code>.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">AdoptedIdentity</code> and <code class="language-plaintext highlighter-rouge">ExternalRegistryIdentity</code> vectors are negative only.</strong> The generator cannot invent an identifier that matches an arbitrary pattern. The adopted anchor set holds positive vectors for <code class="language-plaintext highlighter-rouge">validate-iri</code>.</li>
+</ul>

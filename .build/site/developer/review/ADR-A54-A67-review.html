@@ -1,0 +1,879 @@
+<h1 id="review-adr-a54-dataset-topology-and-adr-a67-bi-temporal-model">Review: ADR-A54 (Dataset Topology) and ADR-A67 (Bi-Temporal Model)</h1>
+
+<p>This review uses the same lenses as the A51 review: internal soundness, fit with RDF, OWL and triple-store expectations, and consistency with the patterns guide and ADR-A51.</p>
+
+<h2 id="1-verdict">1. Verdict</h2>
+
+<p><strong>ADR-A54 chooses sensibly, but its grammar doesn’t compose with anything else.</strong> Dataset-per-tenant is a defensible default. Content-addressed TBox graphs and generation-based projections are good ideas. As written, though, it has four problems:</p>
+
+<ul>
+  <li><strong>Its graph-name grammar collides with A51’s.</strong> It cannot be the “shared grammar” the ADR claims.</li>
+  <li><strong>It omits every infrastructure graph the patterns guide needs</strong>, including the meta shards, keys, txn claims, log buckets and dataset/epoch graph.</li>
+  <li><strong>Its <code class="language-plaintext highlighter-rouge">rtstate:{aggregateType}:{gen}</code> layout is incompatible with the guide’s aggregate-per-graph CAS model.</strong></li>
+  <li><strong>It makes an undefined mechanism (alias graphs) the <em>sole</em> promotion path.</strong> It then forbids consumers from naming generations, which A67’s as-of queries and every reproducibility guarantee require.</li>
+</ul>
+
+<p>It also re-introduces the environment into identity. This time the environment appears <em>inside</em> a tenant dataset, which weakens the isolation argument the ADR uses to reject graph-per-tenant.</p>
+
+<p><strong>ADR-A67 states the right intent, but the mechanism is not correct as specified.</strong> Two time axes, time as an input to guards, decision records carrying both times, and an explicit hot/analytic split are all right. The problems are these:</p>
+
+<ul>
+  <li><strong>Transaction time is a wall-clock instant claimed to be “monotone per dataset”.</strong> That is not achievable in general. It also has the allocate-then-commit reorder hole (G2) from the guide, so as-of-transaction-time answers can change retroactively. This breaks rule 5’s reproducibility promise.</li>
+  <li><strong>The unit of supersession is undefined</strong> (graph? entity? fact?), and there is no retraction model (G5).</li>
+  <li><strong>Valid time is attached to subject nodes, but valid time belongs to facts.</strong></li>
+  <li><strong>“No in-place correction” is mandated globally.</strong> This contradicts the guide’s “configurable, not mandated” position (Chapter 23) and its deletion policy (Chapter 24). It also collides with erasure obligations.</li>
+  <li><strong>There is no epoch</strong>, so restores silently change “what the system believed.”</li>
+</ul>
+
+<p>Neither ADR conflicts with RDF or OWL at the level of first principles. Both need explicit rules to stay within what triple stores, SPARQL and OWL reasoners actually do:</p>
+
+<ul>
+  <li>no graph aliasing</li>
+  <li>no temporal semantics in OWL</li>
+  <li>SHACL and OWL evaluate over a single data graph</li>
+</ul>
+
+<hr />
+
+<h1 id="part-a--adr-a54-dataset-topology-and-named-graph-layout">Part A — ADR-A54: Dataset Topology and Named-Graph Layout</h1>
+
+<h2 id="a1-what-it-gets-right">A.1 What it gets right</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Decision</th>
+      <th>Why it is good</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Dataset-per-tenant as default</strong></td>
+      <td>Isolation is enforced by <em>which endpoint or dataset a query runs against</em>, which is store-level structure rather than a filter every query must remember. <br />It also gives you: &lt;ul&gt;&lt;li&gt;per-tenant backup and restore&lt;/li&gt;&lt;li&gt;per-tenant erasure (drop the dataset)&lt;/li&gt;&lt;li&gt;per-tenant epochs (restoring one tenant need not disturb others)&lt;/li&gt;&lt;li&gt;per-tenant write parallelism&lt;/li&gt;&lt;/ul&gt; Per-tenant write parallelism is a real win on single-writer stores. TDB2’s writer lock is per dataset, so tenants stop serialising behind each other.</td>
+    </tr>
+    <tr>
+      <td><strong>Store-per-tenant tier with an unchanged grammar</strong></td>
+      <td>The right escape hatch for regulated tenants. Keeping the grammar tier-independent avoids a migration when a tenant moves tiers.</td>
+    </tr>
+    <tr>
+      <td><strong>Content-addressed TBox and shapes graphs (<code class="language-plaintext highlighter-rouge">:{revHash}</code>)</strong></td>
+      <td>Pinning ontology and shapes revisions per tenant makes validation and inference reproducible, and allows staggered upgrades across tenants.</td>
+    </tr>
+    <tr>
+      <td><strong>Generations for projections</strong></td>
+      <td>This is the guide’s snapshot-per-revision model (§20.3) applied to derived data. Rollback becomes a pointer move.</td>
+    </tr>
+    <tr>
+      <td><strong>A separate staging category</strong></td>
+      <td>Correctly separates unadmitted data from belief-bearing data, which matters for A67.</td>
+    </tr>
+    <tr>
+      <td><strong>Tenant in graph names even inside a tenant dataset</strong></td>
+      <td>Deliberate redundancy that keeps graph names globally unique. That matters for exports, federation, the PostgreSQL <code class="language-plaintext highlighter-rouge">GraphReference</code>, and merging dumps during migration.</td>
+    </tr>
+    <tr>
+      <td><strong>One validator shared with <code class="language-plaintext highlighter-rouge">dal:graphIriTemplate</code></strong></td>
+      <td>Correct. Graph names generated from ontology templates must satisfy the same grammar.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="a2-findings">A.2 Findings</h2>
+
+<h3 id="a54-1--critical-the-a51-and-a54-grammars-collide">A54-1 — CRITICAL: the A51 and A54 grammars collide</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>ADR</th>
+      <th>Form</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>A51 lineage</td>
+      <td><code class="language-plaintext highlighter-rouge">urn:lattice:{tenant}:{scope}:{family}:{localName}</code></td>
+    </tr>
+    <tr>
+      <td>A54 graph</td>
+      <td><code class="language-plaintext highlighter-rouge">urn:lattice:{tenant}:{env}:{category}:{…}</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The second segment is <code class="language-plaintext highlighter-rouge">{scope}</code> in one and <code class="language-plaintext highlighter-rouge">{env}</code> in the other. <code class="language-plaintext highlighter-rouge">urn:lattice:acme:prod:tbox:core:ab12…</code> is ambiguous:</p>
+
+<ul>
+  <li>Is <code class="language-plaintext highlighter-rouge">prod</code> an environment or a scope?</li>
+  <li>Is <code class="language-plaintext highlighter-rouge">tbox</code> a family or a category?</li>
+</ul>
+
+<p>A validator can only tell them apart with reserved words, and neither ADR defines any.</p>
+
+<p>The revision encodings also differ:</p>
+
+<ul>
+  <li>A51 uses <code class="language-plaintext highlighter-rouge">{lineage}/rev/{profileVersion}-{hash}</code>, with slash, <code class="language-plaintext highlighter-rouge">rev</code> and the profile version.</li>
+  <li>A54 uses <code class="language-plaintext highlighter-rouge">…:tbox:{layer}:{revHash}</code>, with colon, no marker and no profile version.</li>
+</ul>
+
+<p>A TBox revision would therefore have two candidate names. The consequence “sharing its grammar with ADR-A51” is currently false.</p>
+
+<p><strong>Recommendation:</strong> Write one ABNF grammar covering both ADRs, e.g. <code class="language-plaintext highlighter-rouge">urn:lattice:{tenant}:{kind}:{…}</code>, with a closed, reserved set of <code class="language-plaintext highlighter-rouge">kind</code> tokens:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">tbox</code>, <code class="language-plaintext highlighter-rouge">shapes</code>, <code class="language-plaintext highlighter-rouge">abox</code>, <code class="language-plaintext highlighter-rouge">stage</code>, <code class="language-plaintext highlighter-rouge">proj</code>, <code class="language-plaintext highlighter-rouge">prov</code>, <code class="language-plaintext highlighter-rouge">rtstate</code>, <code class="language-plaintext highlighter-rouge">writeback</code></li>
+  <li><code class="language-plaintext highlighter-rouge">meta</code>, <code class="language-plaintext highlighter-rouge">keys</code>, <code class="language-plaintext highlighter-rouge">txn</code>, <code class="language-plaintext highlighter-rouge">log</code>, <code class="language-plaintext highlighter-rouge">ds</code></li>
+  <li><code class="language-plaintext highlighter-rouge">lin</code> for A51 lineages</li>
+</ul>
+
+<p>For every variable segment, define:</p>
+
+<ul>
+  <li>the alphabet (no <code class="language-plaintext highlighter-rouge">:</code>, <code class="language-plaintext highlighter-rouge">/</code>, <code class="language-plaintext highlighter-rouge">?</code>, <code class="language-plaintext highlighter-rouge">#</code>)</li>
+  <li>the maximum length</li>
+  <li>whether it is opaque</li>
+</ul>
+
+<p>Pick one revision encoding.</p>
+
+<h3 id="a54-2--critical-the-grammar-omits-the-guides-infrastructure-graphs">A54-2 — CRITICAL: the grammar omits the guide’s infrastructure graphs</h3>
+
+<p>The patterns guide’s strong profile requires these graphs (§2.3):</p>
+
+<ul>
+  <li>meta shards (<code class="language-plaintext highlighter-rouge">urn:g:meta/{n}</code>)</li>
+  <li>the key-claim graph</li>
+  <li>the txn-claim graph</li>
+  <li>monthly log buckets</li>
+  <li>delta graphs</li>
+  <li>event buckets</li>
+  <li>the dataset/epoch graph</li>
+</ul>
+
+<p>None of these appear in A54. A validator built to this ADR (P0.3.7, “before any dataset is created”) will reject them. Alternatively, they get invented ad hoc, which is the outcome A54 exists to prevent.</p>
+
+<p><strong>Recommendation:</strong> Add categories with their mutability, retention and access class:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Category</th>
+      <th>Mutability</th>
+      <th>Access</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ds</code></td>
+      <td>epoch, order model</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">meta:{shard}</code></td>
+      <td>mutable point</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">keys</code></td>
+      <td>append + tombstone</td>
+      <td>restricted, since it indexes PII-derived keys</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">txn</code></td>
+      <td>TTL</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">log:{yyyy-MM}</code></td>
+      <td>append-only</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">delta:{target}:{pos}:{add\|del}</code></td>
+      <td>append-only</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">events:{streamFamily}:{yyyy-MM}</code></td>
+      <td>append-only</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">inf:{…}</code></td>
+      <td>materialised inferences (see A54-9)</td>
+      <td>—</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="a54-3--major-rtstateaggregatetypegen-is-incompatible-with-aggregate-level-cas">A54-3 — MAJOR: <code class="language-plaintext highlighter-rouge">rtstate:{aggregateType}:{gen}</code> is incompatible with aggregate-level CAS</h3>
+
+<p>The guide’s whole concurrency design rests on <strong>aggregate = named graph</strong> (§14.1, §30.3):</p>
+
+<ul>
+  <li>whole-graph replace</li>
+  <li>a version row keyed by the graph IRI</li>
+  <li>receipts targeting the graph</li>
+</ul>
+
+<p>A54 puts <em>all aggregates of a type</em> into one graph per generation. Two consequences follow:</p>
+
+<ul>
+  <li><strong>Whole-graph replace no longer works.</strong> Replacing one order’s state would replace every order’s state. You are left with triple-level value CAS (§14.2), which the guide says “cannot detect someone else changed a different field.”</li>
+  <li><strong>Generations of a whole type are copy-on-write at type granularity.</strong> Behaviour runtime state is the highest-churn data in the platform. A new generation per state change is untenable. A generation per batch of changes means runtime state is only as fresh as the last promotion.</li>
+</ul>
+
+<p><strong>Recommendation:</strong> Make runtime state <code class="language-plaintext highlighter-rouge">rtstate:{aggregateType}:{aggregateId}</code>, governed by the guide’s version row and CAS. Use generations only for <em>projections derived from</em> runtime state. If this depends on the open A-Aggregate decision (guide §30.3), say so, and mark <code class="language-plaintext highlighter-rouge">rtstate</code> as blocked on it.</p>
+
+<h3 id="a54-4--major-alias-graphs-are-undefined-yet-made-the-sole-promotion-mechanism">A54-4 — MAJOR: alias graphs are undefined, yet made the <em>sole</em> promotion mechanism</h3>
+
+<p>This repeats the A51 finding F-11, with higher stakes. SPARQL 1.1 and RDF 1.1 datasets have no graph aliasing, and “repoints the alias atomically” has no portable meaning. Each option has a cost here:</p>
+
+<ul>
+  <li><strong>Materialised copy.</strong> Promoting a large <code class="language-plaintext highlighter-rouge">abox:{appOntology}:current</code> means copying the entire ABox inside one write transaction. On TDB2 this blocks all other writers in the tenant for the duration.</li>
+  <li><strong>Pointer triple</strong> (the guide’s <code class="language-plaintext highlighter-rouge">pat:current</code>). <code class="language-plaintext highlighter-rouge">:current</code> stops being a graph that clients can name in <code class="language-plaintext highlighter-rouge">GRAPH &lt;…&gt;</code> or <code class="language-plaintext highlighter-rouge">FROM &lt;…&gt;</code>. The query component (C-12) must resolve the pointer and rewrite the query. That is fine, but it must be stated, because it makes C-12 mandatory for every reader.</li>
+  <li><strong>Store-native aliasing.</strong> Some stores offer named-graph aliases (Stardog does in recent versions). Most in the SPI list (TDB2, RDF4J, Neptune, Virtuoso) do not. This needs to be a capability flag, not an assumption.</li>
+</ul>
+
+<p>There is also a consistency issue. A query touching <code class="language-plaintext highlighter-rouge">tbox:…</code>, <code class="language-plaintext highlighter-rouge">shapes:…</code> and <code class="language-plaintext highlighter-rouge">abox:…:current</code> needs all three resolved <strong>from one consistent pointer state</strong>. Otherwise a promotion mid-query mixes generations. The resolution must be read in the same transaction or snapshot as the data.</p>
+
+<p><strong>Recommendation:</strong> Make the pointer normative:</p>
+
+<ul>
+  <li>Protect it with the guide’s version row and CAS.</li>
+  <li>Resolve all aliases once per query, in one snapshot.</li>
+  <li>Allow an optional materialised projection for tools that must name a graph literally.</li>
+  <li>Add a <code class="language-plaintext highlighter-rouge">graphAliases</code> capability to the A75 SPI.</li>
+</ul>
+
+<h3 id="a54-5--major-no-consumer-names-a-generation-directly-conflicts-with-reproducibility-and-with-a67">A54-5 — MAJOR: “No consumer names a generation directly” conflicts with reproducibility and with A67</h3>
+
+<p>Several mechanisms need concrete generation or revision names:</p>
+
+<ul>
+  <li><strong>Provenance and decision records.</strong> Decisions must cite exactly what they read: the guide’s value-based CAS on <code class="language-plaintext highlighter-rouge">snapshotHash</code> (data-architecture §5.4), and A67 rule 5. A decision that records “<code class="language-plaintext highlighter-rouge">…:current</code>” cannot be re-derived.</li>
+  <li><strong>A67’s analytic as-of path.</strong> It must read prior generations, but it is forbidden to name them.</li>
+  <li><strong>Rollback.</strong> Repointing to generation <em>n−1</em> requires naming it.</li>
+  <li><strong>Promotion history is lost.</strong> Repointing overwrites the only record of which generation was current when. A67’s “what did the system believe at <em>T</em>” depends on the TBox, shapes and projection generations that were current at <em>T</em>, not just the ABox data.</li>
+</ul>
+
+<p><strong>Recommendation:</strong> Reword as follows:</p>
+
+<ul>
+  <li><em>Hot-path consumers read through aliases.</em> Every alias resolution is recorded, and every decision or provenance record stores the <strong>resolved</strong> generation or revision IRIs.</li>
+  <li><em>Every repoint is an event.</em> Record it as a receipt with <code class="language-plaintext highlighter-rouge">(epoch, seq)</code>, the previous target, the new target and the transaction time. This is the guide’s version row, receipt chain and <code class="language-plaintext highlighter-rouge">pat:head</code> applied to aliases.</li>
+  <li><em>The analytic path resolves “current at T” through that promotion log.</em></li>
+</ul>
+
+<p>This is also the event-identity versus content-identity split recommended for A51 (F-9).</p>
+
+<h3 id="a54-6--major-the-environment-inside-a-tenant-dataset-weakens-the-isolation-argument">A54-6 — MAJOR: the environment inside a tenant dataset weakens the isolation argument</h3>
+
+<p>Every graph name carries <code class="language-plaintext highlighter-rouge">{env}</code> <em>inside the tenant dataset</em>. That implies one of two things:</p>
+
+<ul>
+  <li><strong>Several environments share one dataset.</strong> Then dev/test/prod isolation is “app layer only”, which is exactly why the ADR rejects graph-per-tenant. Prod data would also be one mistaken <code class="language-plaintext highlighter-rouge">GRAPH ?g</code> away from test fixtures.</li>
+  <li><strong>Datasets are per (tenant, env).</strong> Then the segment is redundant and only costs you. Every graph name changes on environment clone, so every stored reference to a graph name changes too:
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">pat:target</code></li>
+      <li>provenance</li>
+      <li>receipts</li>
+      <li><code class="language-plaintext highlighter-rouge">GraphReference</code></li>
+      <li>any content hash that covers those references (the same failure as A51 F-1)</li>
+    </ul>
+  </li>
+</ul>
+
+<p><strong>Recommendation:</strong> Make the dataset boundary <code class="language-plaintext highlighter-rouge">(tenant, env)</code> and drop <code class="language-plaintext highlighter-rouge">{env}</code> from graph names. Record the environment as dataset metadata in the <code class="language-plaintext highlighter-rouge">ds</code> graph. If the segment is kept for operational legibility, exclude it from all content hashes and state that clones do not rewrite it.</p>
+
+<h3 id="a54-7--major-the-isolation-claim-needs-conditions-and-the-graph-per-tenant-rejection-is-mis-argued">A54-7 — MAJOR: the isolation claim needs conditions, and the graph-per-tenant rejection is mis-argued</h3>
+
+<p><strong>Isolation.</strong> “Strong at query scope” holds only if all of the following are true:</p>
+
+<ul>
+  <li><strong>Principal-to-dataset binding happens server-side.</strong> It must be at the gateway or C-12, never chosen by the client.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">SERVICE</code> is disabled or allow-listed for tenant queries.</strong> In a shared Fuseki process, <code class="language-plaintext highlighter-rouge">SERVICE &lt;http://localhost:3030/{otherTenant}/sparql&gt;</code> is a cross-tenant federation you didn’t intend. Jena has context settings controlling <code class="language-plaintext highlighter-rouge">SERVICE</code>; verify the behaviour for the version you deploy.</li>
+  <li><strong>Admin, upload and GSP endpoints are not exposed per tenant.</strong></li>
+  <li><strong>Resource isolation exists.</strong> There must be query timeouts, result limits and per-dataset memory bounds. In one JVM, a pathological tenant query can exhaust shared heap and take every tenant down. That is an availability failure, even though confidentiality holds.</li>
+</ul>
+
+<p><strong>Graph-per-tenant.</strong> It is not inherently “client-side security.” GraphDB, Stardog, Virtuoso and MarkLogic all have server-side graph- or document-level access control. Rejecting it for the reference stack (Fuseki, which lacks that) is reasonable, but the stated reason is wrong and will mislead the store-by-store analysis.</p>
+
+<h3 id="a54-8--major-dataset-per-tenant-is-not-portable-across-the-spi">A54-8 — MAJOR: dataset-per-tenant is not portable across the SPI</h3>
+
+<p>The concept of a “dataset” varies widely across stores:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Store</th>
+      <th>What “dataset per tenant” means</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Fuseki/TDB2</td>
+      <td>Directory per dataset, one JVM hosts many. A per-dataset overhead (node-table caches, file handles) limits tenants per process.</td>
+    </tr>
+    <tr>
+      <td>RDF4J Server, GraphDB</td>
+      <td>A repository per tenant, each with its own memory footprint. Fine at tens to hundreds of tenants; needs pooling beyond that.</td>
+    </tr>
+    <tr>
+      <td>Stardog</td>
+      <td>A database per tenant.</td>
+    </tr>
+    <tr>
+      <td>MarkLogic</td>
+      <td>A database per tenant, or collections with permissions.</td>
+    </tr>
+    <tr>
+      <td><strong>Neptune</strong></td>
+      <td><strong>One graph store per cluster.</strong> Dataset-per-tenant <em>is</em> store-per-tenant, which is the tier the ADR calls expensive.</td>
+    </tr>
+    <tr>
+      <td><strong>Virtuoso</strong></td>
+      <td>One quad store per instance. Separation is by graph-level security, i.e. graph-per-tenant.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Recommendation:</strong> Add an <code class="language-plaintext highlighter-rouge">isolationUnit</code> capability to the SPI (<code class="language-plaintext highlighter-rouge">DATASET | GRAPH_ACL | STORE</code>). The planner then refuses a deployment that cannot meet the tenant-isolation requirement, following the guide’s fail-fast <code class="language-plaintext highlighter-rouge">min_level</code> principle. Also define <em>tenant sharding across store processes</em> (N tenants per process, placement recorded), because thousands of tenants cannot share one JVM.</p>
+
+<h3 id="a54-9--major-the-adr-doesnt-say-what-owl-reasoning-and-shacl-validation-run-over">A54-9 — MAJOR: the ADR doesn’t say what OWL reasoning and SHACL validation run over</h3>
+
+<p>OWL has no notion of named graphs, and SHACL validates <em>a</em> data graph against <em>a</em> shapes graph. Once state is split across <code class="language-plaintext highlighter-rouge">tbox</code>, <code class="language-plaintext highlighter-rouge">shapes</code>, <code class="language-plaintext highlighter-rouge">abox:*:current</code>, <code class="language-plaintext highlighter-rouge">abox:ingest:*</code>, <code class="language-plaintext highlighter-rouge">stage:*</code> and <code class="language-plaintext highlighter-rouge">proj:*</code>, the ADR must define the <strong>evaluation closure</strong>: which graphs are unioned for inference and validation.</p>
+
+<ul>
+  <li><strong>Union-default-graph settings leak data.</strong> Settings like TDB2 <code class="language-plaintext highlighter-rouge">unionDefaultGraph</code> are common. Without an explicit closure, <code class="language-plaintext highlighter-rouge">stage:*</code> graphs (meant to be “never queried”) and superseded A67 versions flow into inference. You get spurious cardinality violations, <code class="language-plaintext highlighter-rouge">owl:sameAs</code> merges via inverse-functional properties (guide §1.4), or outright inconsistency.</li>
+  <li><strong>Materialised inferences have no home.</strong> GraphDB puts them in an implicit graph, and Jena and RDF4J do it differently. You need an <code class="language-plaintext highlighter-rouge">inf:{…}</code> category, keyed to the TBox revision and ABox generation they derive from, invalidated when either changes.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">owl:imports</code> resolves ontology IRIs, not graph names.</strong> A mapping is needed from ontology or version IRI (<code class="language-plaintext highlighter-rouge">https://www.nebularis.org/…foundation</code>) to <code class="language-plaintext highlighter-rouge">tbox:{layer}:{revHash}</code>: a catalog graph or the registry. Otherwise imports can’t be resolved inside the store.</li>
+</ul>
+
+<p><strong>Recommendation:</strong> Add a “closure” section:</p>
+
+<ul>
+  <li><strong>Default graph policy:</strong> empty, with union mode disabled on every store.</li>
+  <li><strong>The inference closure:</strong> <code class="language-plaintext highlighter-rouge">tbox</code> pinned revisions plus <code class="language-plaintext highlighter-rouge">abox:current</code>.</li>
+  <li><strong>The validation closure.</strong></li>
+  <li><strong>“Never queried” is enforced</strong>, by C-12 rejecting unbound <code class="language-plaintext highlighter-rouge">GRAPH ?g</code> and union-default-graph queries against tenant datasets, or by placing staging in a separate dataset.</li>
+</ul>
+
+<h3 id="a54-10--minor-other-gaps">A54-10 — MINOR: other gaps</h3>
+
+<ul>
+  <li><strong>ABox generations are missing from the grammar.</strong> There is <code class="language-plaintext highlighter-rouge">abox:{appOntology}:current</code> but no <code class="language-plaintext highlighter-rouge">abox:{appOntology}:{gen}</code>.
+    <ul>
+      <li>Is <code class="language-plaintext highlighter-rouge">current</code> a pointer to a merged generation, or a union of <code class="language-plaintext highlighter-rouge">ingest:{batchId}</code> graphs?</li>
+      <li>These are very different models for promotion cost and for A67 supersession.</li>
+    </ul>
+  </li>
+  <li><strong>Graph proliferation (guide G6) and retention are unaddressed.</strong> <code class="language-plaintext highlighter-rouge">ingest:{batchId}</code>, <code class="language-plaintext highlighter-rouge">proj:*:{gen}</code> and <code class="language-plaintext highlighter-rouge">prov:{scope}</code> all grow without bound. Define:
+    <ul>
+      <li>bucketing for <code class="language-plaintext highlighter-rouge">prov</code></li>
+      <li>rollback depth (how many generations are retained)</li>
+      <li>pruning rules that never prune a generation still cited by a decision record</li>
+    </ul>
+  </li>
+  <li><strong>Cross-dataset operations are never atomic.</strong> Examples are platform-wide TBox upgrades, cross-tenant reference data, the reconciler (P7) and metrics. State that these are sagas.</li>
+  <li><strong>Shared reference data</strong> (Foundation TBox, code lists) is duplicated into every tenant dataset. That is acceptable and even desirable for pinning, but upgrade fan-out needs a runbook. The ADR should also say explicitly that <strong>vocabulary IRIs inside those graphs are never tenant-scoped</strong>, even though the graph names are.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">GraphReference</code> must now locate a dataset.</strong> A graph IRI alone doesn’t locate data under dataset- or store-per-tenant. A tenant→endpoint resolver is required, and tenant tier moves are migrations that bump the epoch (guide §24.4).</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">abox:ingest:{batchId}</code> as “provenance carrier” is ambiguous.</strong> It needs a rule on whether the batch graph is sealed after admission (see A67-3).</li>
+</ul>
+
+<hr />
+
+<h1 id="part-b--adr-a67-bi-temporal-model">Part B — ADR-A67: Bi-Temporal Model</h1>
+
+<h2 id="b1-what-it-gets-right">B.1 What it gets right</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Decision</th>
+      <th>Why it is good</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Two independent axes</strong></td>
+      <td>Correct and standard (Snodgrass-style bitemporal). It matches the guide’s valid versus transaction time split (§3.2).</td>
+    </tr>
+    <tr>
+      <td><strong>Time as an input to guards (rule 4)</strong></td>
+      <td>Exactly right. <code class="language-plaintext highlighter-rouge">decisionTime</code> is a stimulus field, and the guard never reads a clock. This is what makes behaviour replay deterministic, and it matches QP2 and §23.4 of the guide.</td>
+    </tr>
+    <tr>
+      <td><strong>Decision records store both times (rule 5)</strong></td>
+      <td>Correct direction. It enables re-derivation without freezing the graph (but see B67-6: times alone are not enough).</td>
+    </tr>
+    <tr>
+      <td><strong>Corrections as new versions with <code class="language-plaintext highlighter-rouge">fnd:Evidence</code> naming the cause</strong></td>
+      <td>Matches the guide’s <code class="language-plaintext highlighter-rouge">pat:cause</code> on deletions, and its rule that decision records are never receipt-only (§20.4).</td>
+    </tr>
+    <tr>
+      <td><strong>Explicit two-path design</strong></td>
+      <td>A materialised current path plus a separate analytic as-of path with relaxed SLOs is honest, and it matches the guide’s S6 preference order. Stating it up front is good practice.</td>
+    </tr>
+    <tr>
+      <td><strong>One field for A65 provenance and transaction time</strong></td>
+      <td>Avoids two write paths disagreeing.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="b2-findings">B.2 Findings</h2>
+
+<h3 id="a67-1--critical-a-wall-clock-commit-instant-cannot-be-monotone-and-as-of-answers-can-change-retroactively">A67-1 — CRITICAL: a wall-clock “commit instant” cannot be monotone, and as-of answers can change retroactively</h3>
+
+<p><code class="language-plaintext highlighter-rouge">lattice:transactionTime</code> is “the commit instant, monotone per dataset.” This fails in three ways.</p>
+
+<p><strong>1. The value cannot be the commit instant.</strong> A triple written <em>inside</em> a transaction must be computed before that transaction commits:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">NOW()</code> gives execution start time.</li>
+  <li>A client or engine value gives the time the value was chosen.</li>
+</ul>
+
+<p>Either way, this is the guide’s <strong>G2 allocate-then-commit reorder hole</strong> applied to time:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>t=100  Tx A stamps transactionTime=100
+t=101  Tx B stamps transactionTime=101, commits
+t=102  Query "as of transaction time 101" -&gt; sees B, not A
+t=103  Tx A commits with transactionTime=100
+t=104  Same query "as of transaction time 101" -&gt; now sees A as well
+</code></pre></div></div>
+
+<p>The past changed. An as-of-transaction-time answer isn’t stable, which is exactly what rule 5 (“re-derive this decision exactly”) depends on.</p>
+
+<p><strong>2. Monotonicity needs a serialisation point.</strong> Wall clocks step back (NTP, VM migration), and two writers can stamp the same millisecond (guide Ch. 13, TCK O-6). Achieving “monotone per dataset” requires either:</p>
+
+<ul>
+  <li>a single writer, as in TDB2, where you can compute <code class="language-plaintext highlighter-rouge">max(prev + 1, now)</code> inside the serialised write, or</li>
+  <li>a dataset-wide hot statement, which the guide warns against on MVCC stores (G3, §17.2).</li>
+</ul>
+
+<p><strong>3. It contradicts the guide’s <code class="language-plaintext highlighter-rouge">NOW()</code> policy.</strong> The guide allows <code class="language-plaintext highlighter-rouge">NOW()</code> only for audit-only <code class="language-plaintext highlighter-rouge">recordedAt</code> and forbids it as an ordering key (§23.4, QP2). A67 uses transaction time as the as-of axis, which <em>is</em> an ordering key.</p>
+
+<p><strong>Recommendation:</strong> Define transaction time as a <strong>position</strong>:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">(epoch, seq)</code> from the guide’s per-dataset or per-stream ordering, with the instant carried as a human-facing label.</li>
+  <li>As-of-transaction-time queries resolve an instant to a position through the log.</li>
+  <li>They are only answered up to a <strong>stable watermark</strong>: the highest position below which no commit can still land (guide <code class="language-plaintext highlighter-rouge">pat:stableWatermark</code>).</li>
+  <li>A query for “as of T” where T is above the watermark is either refused or answered as of the watermark, and the response says which.</li>
+</ul>
+
+<p>On a single-writer store, an in-transaction counter gives this for free.</p>
+
+<h3 id="a67-2--critical-no-epoch-so-restores-rewrite-belief-history-silently">A67-2 — CRITICAL: no epoch, so restores rewrite belief history silently</h3>
+
+<p>Restoring a tenant dataset from backup discards every transaction between backup and restore. Wall-clock transaction times don’t rewind, so nothing reveals that “what the system believed at <em>T</em>” for <em>T</em> in the lost window has changed. Consider a decision record from that window that says “re-derive against transaction time <em>T</em>”:</p>
+
+<ul>
+  <li>It will re-derive against different data.</li>
+  <li>It will produce a different answer.</li>
+  <li>There will be no error.</li>
+</ul>
+
+<p><strong>Recommendation:</strong> Adopt the guide’s epoch (G4, F3, §24.4). A restore bumps the epoch, and as-of queries and decision re-derivation compare epochs. A decision recorded under an earlier epoch whose position exceeds the restore point is reported as <strong>not reproducible</strong>, not silently re-derived.</p>
+
+<h3 id="a67-3--major-the-unit-of-versioning-and-supersession-is-undefined-and-there-is-no-retraction">A67-3 — MAJOR: the unit of versioning and supersession is undefined, and there is no retraction</h3>
+
+<p>Rule 1 stamps <em>graphs</em>. Rule 2 supersedes <em>versions</em>. The ADR never says what a version is.</p>
+
+<ul>
+  <li><strong>If the unit is a graph</strong> (e.g., A54’s <code class="language-plaintext highlighter-rouge">abox:ingest:{batchId}</code>):
+    <ul>
+      <li>Correcting one fact in a million-triple batch means a new version of the whole batch, or a partial supersession the model cannot express.</li>
+      <li>“Carries <code class="language-plaintext highlighter-rouge">lattice:transactionTime</code>” in the singular also implies assertion graphs are <strong>write-once</strong>. Any graph written by more than one commit (<code class="language-plaintext highlighter-rouge">prov:{scope}</code>, <code class="language-plaintext highlighter-rouge">rtstate</code>) would have several commit times.</li>
+    </ul>
+  </li>
+  <li><strong>If the unit is an entity or a fact</strong>, graph-level stamping is not enough. You need per-version nodes, which is the guide’s patch-log or snapshot model.</li>
+  <li><strong>There is no retraction.</strong> A correction that <em>removes</em> a fact (“this claim never existed”) has no successor to supersede with. This is the guide’s G5: additions are ordered, retractions are not.</li>
+</ul>
+
+<p><strong>Recommendation:</strong></p>
+
+<ul>
+  <li>Declare the versioning unit per family (entity or aggregate recommended), using the guide’s receipt models (§20).</li>
+  <li>State that transaction-time-stamped assertion graphs are <strong>sealed</strong> once committed.</li>
+  <li>Add an explicit retraction: a tombstone version or <code class="language-plaintext highlighter-rouge">pat:retracts</code>, carrying evidence.</li>
+  <li>Define transaction-time end as derived: the successor’s transaction position, never stored and mutated.</li>
+</ul>
+
+<h3 id="a67-4--major-valid-time-on-subject-nodes-misrepresents-facts">A67-4 — MAJOR: valid time on subject nodes misrepresents facts</h3>
+
+<p>“Subject nodes also carry <code class="language-plaintext highlighter-rouge">fnd:TemporalScope</code>” attaches valid time to <em>entities</em>. Valid time is a property of <em>facts</em>, not of subjects. Take a person with two addresses over time:</p>
+
+<div class="language-turtle highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nn">ex:</span><span class="n">p</span><span class="w"> </span><span class="nn">ex:</span><span class="n">address</span><span class="w"> </span><span class="nn">ex:</span><span class="n">addrA</span><span class="w"> </span><span class="p">,</span><span class="w"> </span><span class="nn">ex:</span><span class="n">addrB</span><span class="w"> </span><span class="p">;</span><span class="w">
+     </span><span class="nn">fnd:</span><span class="n">hasTemporalScope</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="nn">fnd:</span><span class="n">validFrom</span><span class="w"> </span><span class="s">"2020-01-01"</span><span class="p">^^</span><span class="nn">xsd:</span><span class="n">date</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Nothing says which address held when. With a single scope per subject, you cannot represent an entity whose facts have different validity. The model has to be one of these:</p>
+
+<ul>
+  <li><strong>N-ary relation nodes.</strong> For example, <code class="language-plaintext highlighter-rouge">ex:Residence</code> with <code class="language-plaintext highlighter-rouge">ex:of</code>, <code class="language-plaintext highlighter-rouge">ex:address</code> and a <code class="language-plaintext highlighter-rouge">fnd:TemporalScope</code>. This is the standard OWL-compatible pattern, and it is what <code class="language-plaintext highlighter-rouge">fnd:TemporallyScoped</code> as a mixin for “time-bound domain facts” implies.</li>
+  <li><strong>RDF 1.2 triple terms or annotations</strong> on the asserted triple, if the target stores support them.</li>
+  <li><strong>Named graph per validity context.</strong> This conflicts with A54’s layout and proliferates graphs.</li>
+</ul>
+
+<p><strong>Recommendation:</strong> Mandate the n-ary pattern for temporally scoped facts. List RDF 1.2 annotation as a future option gated on store capability. Say explicitly that a temporal scope on an entity node means “the entity existed,” not “its properties held.”</p>
+
+<h3 id="a67-5--major-owl-and-shacl-over-history-produce-false-inconsistencies">A67-5 — MAJOR: OWL and SHACL over history produce false inconsistencies</h3>
+
+<p>OWL and SHACL have no temporal semantics. If superseded and current versions sit in the same evaluation closure (“the prior version remains queryable”), the following things break:</p>
+
+<ul>
+  <li>Functional properties see two values, which produces an inconsistency, or <code class="language-plaintext highlighter-rouge">owl:sameAs</code> inference between the two objects.</li>
+  <li><code class="language-plaintext highlighter-rouge">sh:maxCount 1</code> fails on every corrected entity.</li>
+  <li>Inverse-functional properties merge past and present individuals (guide §1.4).</li>
+  <li>Disjointness axioms fire across versions (a thing that <em>was</em> a <code class="language-plaintext highlighter-rouge">Prospect</code> and <em>is</em> a <code class="language-plaintext highlighter-rouge">Customer</code>).</li>
+</ul>
+
+<p><strong>Recommendation:</strong> Add the rule that <strong>reasoning and validation are only ever performed over a snapshot</strong>:</p>
+
+<ul>
+  <li>the materialised current, or</li>
+  <li>an as-of materialisation.</li>
+</ul>
+
+<p>They are never performed over the union of history. This is the A67 half of A54-9, and it should be stated in both ADRs.</p>
+
+<h3 id="a67-6--major-decision-records-need-read-positions-not-just-times">A67-6 — MAJOR: decision records need read positions, not just times</h3>
+
+<p>Rule 5 stores valid time and transaction time. Re-derivation also needs to know <strong>exactly what was read</strong>:</p>
+
+<ul>
+  <li>which TBox and shapes revision, and</li>
+  <li>which projection generation.</li>
+</ul>
+
+<p>The hot path reads materialised projections, which lag the authoritative layer. The guard may have read generation <em>g</em> even though transaction time <em>T</em> implies <em>g+1</em>. Re-deriving “as of <em>T</em>” against the authoritative layer then produces a different input than the one actually used.</p>
+
+<p><strong>Recommendation:</strong> Decision records store:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">decisionTime</code></li>
+  <li>the transaction position <code class="language-plaintext highlighter-rouge">(epoch, seq)</code></li>
+  <li>the <strong>resolved</strong> revision and generation IRIs of every graph read (see A54-5)</li>
+  <li>optionally a snapshot hash</li>
+</ul>
+
+<p>This is the guide’s value-based CAS on <code class="language-plaintext highlighter-rouge">snapshotHash</code> (data-architecture §5.4). It makes re-derivation exact without depending on the analytic path.</p>
+
+<p>It also resolves a hidden problem in rule 4: “replay supplies both [times]”. If replay must query as of the pinned transaction time, deterministic replay depends on the slow analytic path. Replaying from recorded read positions avoids that.</p>
+
+<h3 id="a67-7--major-the-global-no-in-place-correction-conflicts-with-the-guide-and-with-erasure">A67-7 — MAJOR: the global “no in-place correction” conflicts with the guide and with erasure</h3>
+
+<ul>
+  <li><strong>The guide conflicts.</strong> Chapter 23 argues that bi-temporality should be <em>configurable, not mandated</em>, citing data explosion and domain variety. Its Appendix D records “in-place update is configurable only with a per-family declaration.” A67 mandates immutability for all “runtime A-Box assertion graphs” without addressing that argument. One of the two documents has to change.</li>
+  <li><strong>Scope is undefined.</strong> Does “runtime A-Box” include <code class="language-plaintext highlighter-rouge">rtstate</code> (high-churn behaviour state), <code class="language-plaintext highlighter-rouge">proj</code> (derived) and <code class="language-plaintext highlighter-rouge">writeback</code>? Applied to <code class="language-plaintext highlighter-rouge">rtstate</code>, it means snapshot-per-revision for the most frequently written data in the platform.</li>
+  <li><strong>Correction versus update is undefined.</strong> A change <em>in the world</em> (the address changed) is a valid-time event. A <em>correction</em> (the address was always wrong) is a transaction-time event. The ADR forbids in-place correction but is silent on in-place update. The storage layer cannot distinguish the two unless the write API does.</li>
+  <li><strong>Erasure conflicts.</strong> “The prior version remains queryable” is incompatible with GDPR Article 17 and with the guide’s §24.0 (“deletes are a valid and sometimes necessary policy”). You need an erasure exception such as:
+    <ul>
+      <li>redaction with a tombstone and evidence, or</li>
+      <li>crypto-shredding of payload with retained structural provenance.</li>
+    </ul>
+
+    <p>Otherwise the ADR mandates a compliance violation.</p>
+  </li>
+</ul>
+
+<p><strong>Recommendation:</strong></p>
+
+<ul>
+  <li>Make “no in-place correction” mandatory for <strong>belief-bearing families</strong>: admitted A-Box facts, decision records, provenance.</li>
+  <li>Leave other families (<code class="language-plaintext highlighter-rouge">rtstate</code>, operational state) to the guide’s per-family declaration.</li>
+  <li>Define update and correction as distinct write operations.</li>
+  <li>Add an erasure clause that overrides retention and immutability, leaving evidence behind.</li>
+</ul>
+
+<h3 id="a67-8--minor-other-gaps">A67-8 — MINOR: other gaps</h3>
+
+<ul>
+  <li><strong>Interval semantics.</strong> Specify half-open <code class="language-plaintext highlighter-rouge">[validFrom, validTo)</code>, open-ended <code class="language-plaintext highlighter-rouge">validTo</code>, and how untimed facts behave (always valid). “Omitting both means current beliefs about now” means results depend on query execution time. The response must echo the resolved <code class="language-plaintext highlighter-rouge">asOf</code> values so results can be reproduced.</li>
+  <li><strong>Datatypes.</strong>
+    <ul>
+      <li>Use <code class="language-plaintext highlighter-rouge">xsd:dateTimeStamp</code> (timezone mandatory) for transaction time.</li>
+      <li>Fix the valid-time datatype per property. SPARQL 1.1 defines comparison only for <code class="language-plaintext highlighter-rouge">xsd:dateTime</code>. Comparing <code class="language-plaintext highlighter-rouge">xsd:date</code> to <code class="language-plaintext highlighter-rouge">xsd:dateTime</code> is a type error in standard SPARQL, so the filter silently evaluates false. Several engines extend this differently.</li>
+      <li>Mixed date and dateTime valid times will silently drop rows from as-of queries.</li>
+    </ul>
+  </li>
+  <li><strong>Vocabulary proliferation.</strong> There are now three properties for one concept:
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">lattice:transactionTime</code> (A67)</li>
+      <li><code class="language-plaintext highlighter-rouge">pat:recordedAt</code> (guide)</li>
+      <li><code class="language-plaintext highlighter-rouge">fnd:recordedAt</code> (Foundation, domain <code class="language-plaintext highlighter-rouge">fnd:Evidence</code>)</li>
+    </ul>
+
+    <p>Pick one. Guide Appendix E item 3 is where this decision belongs.</p>
+  </li>
+  <li><strong><code class="language-plaintext highlighter-rouge">fnd:supersededBy</code> with content-addressed revisions has the revert-cycle problem</strong> from A51 F-9 (A → B → A). Supersession must chain version <em>events</em>, not content revisions.</li>
+  <li><strong>Identifier collision.</strong> A67’s “G6 (no <code class="language-plaintext highlighter-rouge">now()</code> …)” is a different G6 from the guide’s G6 (graph proliferation). A51 has a G9 as well. These are three identifier namespaces with overlapping labels, the same class of problem as the guide’s <em>cursor</em> versus <em>Position</em> collision. Prefix them (e.g., <code class="language-plaintext highlighter-rouge">AR-G6</code> for Architecture Review gaps).</li>
+  <li><strong>Freshness of the materialised current.</strong> Is the current projection updated in the same transaction as the authoritative write, or asynchronously?
+    <ul>
+      <li>If asynchronously, it violates read-your-writes and needs a staleness SLO.</li>
+      <li>CAS guards (guide Ch. 19) must read the authoritative layer, never the projection. Say so.</li>
+    </ul>
+  </li>
+</ul>
+
+<hr />
+
+<h1 id="part-c--conformance-with-rdf-owl-and-store-expectations">Part C — Conformance with RDF, OWL and store expectations</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Expectation</th>
+      <th>A54</th>
+      <th>A67</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Graph names are IRIs; their denotation is open (RDF 1.1)</td>
+      <td>✅</td>
+      <td>—</td>
+      <td>URN graph names are fine. Document that graph IRIs denote graphs, not ontologies.</td>
+    </tr>
+    <tr>
+      <td>No graph aliasing in SPARQL or RDF datasets</td>
+      <td>⚠ Conflict</td>
+      <td>⚠ via as-of</td>
+      <td>A54-4</td>
+    </tr>
+    <tr>
+      <td>Default graph and union-default-graph behaviour varies by store</td>
+      <td>⚠ Gap</td>
+      <td>⚠ Gap</td>
+      <td>A54-9. Must be pinned per store.</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">owl:imports</code> resolves ontology IRIs</td>
+      <td>⚠ Gap</td>
+      <td>—</td>
+      <td>Needs a catalog to graph names.</td>
+    </tr>
+    <tr>
+      <td>OWL has no named graphs and no time</td>
+      <td>⚠ Gap</td>
+      <td>⚠ Conflict</td>
+      <td>Reason and validate over snapshots only (A54-9, A67-5).</td>
+    </tr>
+    <tr>
+      <td>SHACL validates one data graph</td>
+      <td>⚠ Gap</td>
+      <td>⚠ Conflict</td>
+      <td>Define the validation closure.</td>
+    </tr>
+    <tr>
+      <td>Valid time is a property of statements</td>
+      <td>—</td>
+      <td>⚠ Conflict</td>
+      <td>A67-4. Use the n-ary pattern or RDF 1.2 annotations.</td>
+    </tr>
+    <tr>
+      <td>SPARQL temporal comparison defined for <code class="language-plaintext highlighter-rouge">xsd:dateTime</code> only</td>
+      <td>—</td>
+      <td>⚠ Gap</td>
+      <td>A67-8</td>
+    </tr>
+    <tr>
+      <td>Multi-dataset support is store-dependent</td>
+      <td>⚠ Conflict</td>
+      <td>—</td>
+      <td>Neptune, Virtuoso (A54-8)</td>
+    </tr>
+    <tr>
+      <td>Transactions are per dataset</td>
+      <td>✅ with caveat</td>
+      <td>—</td>
+      <td>Cross-tenant operations are sagas.</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">SERVICE</code> federation within one process</td>
+      <td>⚠ Risk</td>
+      <td>—</td>
+      <td>Disable or allow-list for tenant queries.</td>
+    </tr>
+    <tr>
+      <td>GDPR erasure</td>
+      <td>✅ (drop dataset)</td>
+      <td>⚠ Conflict</td>
+      <td>A67-7</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h1 id="part-d--cross-document-consistency">Part D — Cross-document consistency</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Topic</th>
+      <th>A51</th>
+      <th>A54</th>
+      <th>A67</th>
+      <th>Patterns guide</th>
+      <th>Resolution</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Second URN segment</td>
+      <td><code class="language-plaintext highlighter-rouge">{scope}</code></td>
+      <td><code class="language-plaintext highlighter-rouge">{env}</code></td>
+      <td>—</td>
+      <td><code class="language-plaintext highlighter-rouge">urn:g:</code> examples</td>
+      <td>One ABNF grammar with a reserved <code class="language-plaintext highlighter-rouge">kind</code> token (A54-1)</td>
+    </tr>
+    <tr>
+      <td>Environment in identity</td>
+      <td>Entity base rewritten on clone</td>
+      <td>In every graph name</td>
+      <td>—</td>
+      <td>Absent</td>
+      <td>Dataset per <code class="language-plaintext highlighter-rouge">(tenant, env)</code>; no env in any identifier (A51 F-1, A54-6)</td>
+    </tr>
+    <tr>
+      <td>Revision encoding</td>
+      <td><code class="language-plaintext highlighter-rouge">/rev/{pv}-{hash}</code></td>
+      <td><code class="language-plaintext highlighter-rouge">:{revHash}</code></td>
+      <td>“new version”</td>
+      <td><code class="language-plaintext highlighter-rouge">urn:rev:{agg}/{seq}</code> (no epoch)</td>
+      <td>Content revision versus event receipt, both named in the grammar, epoch in receipts</td>
+    </tr>
+    <tr>
+      <td>Alias / current</td>
+      <td>“repointed atomically”</td>
+      <td>“sole mechanism, never name generations”</td>
+      <td>as-of must read prior versions</td>
+      <td><code class="language-plaintext highlighter-rouge">pat:current</code> pointer plus CAS</td>
+      <td>Normative pointer; every repoint a receipt; records store resolved IRIs (A54-4, A54-5)</td>
+    </tr>
+    <tr>
+      <td>Aggregate granularity</td>
+      <td>—</td>
+      <td><code class="language-plaintext highlighter-rouge">rtstate:{type}:{gen}</code></td>
+      <td>versioning unit undefined</td>
+      <td>aggregate = named graph</td>
+      <td>Per-aggregate graphs (A54-3, A67-3); resolve A-Aggregate first</td>
+    </tr>
+    <tr>
+      <td>Transaction time</td>
+      <td>—</td>
+      <td>—</td>
+      <td>wall-clock instant, monotone</td>
+      <td><code class="language-plaintext highlighter-rouge">(epoch, seq)</code> position; <code class="language-plaintext highlighter-rouge">recordedAt</code> audit-only</td>
+      <td>Position is the axis, instant is the label (A67-1)</td>
+    </tr>
+    <tr>
+      <td>Epoch</td>
+      <td>—</td>
+      <td>absent (no <code class="language-plaintext highlighter-rouge">ds</code> graph)</td>
+      <td>absent</td>
+      <td>mandatory in strong profile</td>
+      <td>Add to grammar and to A67 (A67-2)</td>
+    </tr>
+    <tr>
+      <td>In-place update</td>
+      <td>—</td>
+      <td>—</td>
+      <td>forbidden globally</td>
+      <td>configurable per family</td>
+      <td>Mandatory for belief-bearing families only (A67-7)</td>
+    </tr>
+    <tr>
+      <td>Deletion / erasure</td>
+      <td>Rule 1 (no PII in IRIs)</td>
+      <td>drop dataset</td>
+      <td>“prior versions remain queryable”</td>
+      <td>policy with audit and tombstones</td>
+      <td>Erasure clause in A67</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">NOW()</code></td>
+      <td>—</td>
+      <td>—</td>
+      <td>“engine pins at commit”</td>
+      <td>audit-only</td>
+      <td>Consistent once A67-1 is fixed</td>
+    </tr>
+    <tr>
+      <td>Infrastructure graphs</td>
+      <td>—</td>
+      <td>missing</td>
+      <td>—</td>
+      <td>seven kinds</td>
+      <td>Add to grammar (A54-2)</td>
+    </tr>
+    <tr>
+      <td>Time vocabulary</td>
+      <td><code class="language-plaintext highlighter-rouge">fnd:Version</code></td>
+      <td>—</td>
+      <td><code class="language-plaintext highlighter-rouge">lattice:transactionTime</code></td>
+      <td><code class="language-plaintext highlighter-rouge">pat:recordedAt</code> / <code class="language-plaintext highlighter-rouge">fnd:recordedAt</code></td>
+      <td>One property</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Positive interaction:</strong> dataset-per-tenant plus the guide’s dataset-level epoch gives per-tenant epochs. Restoring one tenant invalidates only that tenant’s ETags and consumer positions. That is a real operational advantage and worth stating in A54.</p>
+
+<hr />
+
+<h1 id="part-e--suggested-amendments-sketch">Part E — Suggested amendments (sketch)</h1>
+
+<h3 id="adr-a54">ADR-A54</h3>
+
+<ol>
+  <li><strong>Dataset boundary:</strong> <code class="language-plaintext highlighter-rouge">(tenant, env)</code>. <code class="language-plaintext highlighter-rouge">isolationUnit</code> becomes an SPI capability, and the planner fails fast when isolation can’t be met. <code class="language-plaintext highlighter-rouge">SERVICE</code>, admin and upload endpoints are disabled for tenant principals. Per-dataset query timeouts and memory limits are required.</li>
+  <li><strong>One grammar with A51:</strong> <code class="language-plaintext highlighter-rouge">urn:lattice:{tenantId}:{kind}:{…}</code>, with a reserved <code class="language-plaintext highlighter-rouge">kind</code> set:
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">lin</code>, <code class="language-plaintext highlighter-rouge">tbox</code>, <code class="language-plaintext highlighter-rouge">shapes</code>, <code class="language-plaintext highlighter-rouge">abox</code>, <code class="language-plaintext highlighter-rouge">stage</code>, <code class="language-plaintext highlighter-rouge">proj</code>, <code class="language-plaintext highlighter-rouge">inf</code>, <code class="language-plaintext highlighter-rouge">prov</code></li>
+      <li><code class="language-plaintext highlighter-rouge">rtstate</code>, <code class="language-plaintext highlighter-rouge">writeback</code></li>
+      <li><code class="language-plaintext highlighter-rouge">ds</code>, <code class="language-plaintext highlighter-rouge">meta</code>, <code class="language-plaintext highlighter-rouge">keys</code>, <code class="language-plaintext highlighter-rouge">txn</code>, <code class="language-plaintext highlighter-rouge">log</code>, <code class="language-plaintext highlighter-rouge">delta</code>, <code class="language-plaintext highlighter-rouge">events</code></li>
+    </ul>
+
+    <p>Segment alphabet <code class="language-plaintext highlighter-rouge">[a-z0-9-]</code>. No environment segment.</p>
+  </li>
+  <li><strong>Aliases:</strong>
+    <ul>
+      <li>The <code class="language-plaintext highlighter-rouge">pat:current</code> pointer, protected by CAS, is normative.</li>
+      <li>Every repoint is a receipt.</li>
+      <li>Resolution happens once per query, in one snapshot.</li>
+      <li>Records cite resolved IRIs.</li>
+      <li>An optional materialised projection is allowed where a literal graph is required.</li>
+    </ul>
+  </li>
+  <li><strong>Runtime state:</strong> <code class="language-plaintext highlighter-rouge">rtstate:{aggregateType}:{aggregateId}</code> under the version row and CAS. Generations only for projections.</li>
+  <li><strong>Closures:</strong>
+    <ul>
+      <li>The default graph is empty, with union mode off.</li>
+      <li>Inference and validation closures are named explicitly and are always snapshots.</li>
+      <li>Staging lives in a separate dataset, or C-12 enforces “never queried.”</li>
+    </ul>
+  </li>
+  <li><strong>Retention:</strong> rollback depth, pruning that respects citations, and <code class="language-plaintext highlighter-rouge">prov</code> bucketing.</li>
+</ol>
+
+<h3 id="adr-a67">ADR-A67</h3>
+
+<ol>
+  <li><strong>Transaction time</strong> is the position <code class="language-plaintext highlighter-rouge">(epoch, seq)</code>, with an <code class="language-plaintext highlighter-rouge">xsd:dateTimeStamp</code> label. As-of queries are answered only up to the stable watermark, and the response echoes what was resolved.</li>
+  <li><strong>Epoch is mandatory.</strong> Decisions recorded past a restore point are reported as non-reproducible.</li>
+  <li><strong>The versioning unit is declared per family</strong> (entity or aggregate). Assertion graphs are sealed. Retraction is explicit. Transaction-time end is derived.</li>
+  <li><strong>Valid time uses the n-ary fact pattern</strong> with half-open intervals and one datatype per property.</li>
+  <li><strong>Reasoning and validation run over snapshots only.</strong></li>
+  <li><strong>Decision records store</strong> <code class="language-plaintext highlighter-rouge">decisionTime</code>, the read position, resolved revision and generation IRIs, and optionally a snapshot hash. Replay uses these, not the analytic path.</li>
+  <li><strong>Immutability</strong> is mandatory for belief-bearing families and per-family for everything else, with distinct update and correction operations and an erasure clause.</li>
+  <li><strong>One transaction-time property</strong>, shared with A65 and aligned with <code class="language-plaintext highlighter-rouge">fnd:recordedAt</code>.</li>
+</ol>
+
+<p>With these changes, A51, A54 and A67 would describe a single identity, topology and time model that the patterns guide can implement directly. As it stands, each ADR is individually plausible, but the three do not yet fit together.</p>

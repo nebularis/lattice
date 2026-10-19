@@ -1,0 +1,948 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="persistence-aggregate-ownership-deletion-updates-and-concurrency">Persistence: aggregate ownership, deletion, updates and concurrency</h1>
+
+<p><strong>Reviewed 2026-10-10:</strong> <a href="/developer/notes/persistence-aggregate-ownership-review.html">persistence-aggregate-ownership-review.md</a>
+corrects and extends this note, and records our answers to the questions of §11. The design
+is the sketch <a href="/developer/sketches/persistence-aggregate-ownership.html">persistence-aggregate-ownership.md</a>.
+Where this note and the review disagree, the review holds. Slice HO0 corrects the body.</p>
+
+<p><strong>Status:</strong> note, 2026-10-10. Exploration only. Nothing here is decided, no tool is changed, and no
+ADR is proposed yet. Hypotheses are marked as such. <strong>Prompted by:</strong> our observation that
+<code class="language-plaintext highlighter-rouge">persistence</code> handles aggregates wrongly, with a placement example of a size the order and line item
+example never reached. <strong>Experiments:</strong> <a href="../../../spikes/persistence-aggregate-ownership/README.md"><code class="language-plaintext highlighter-rouge">spikes/persistence-aggregate-ownership</code></a>,
+read-only, rdflib only. <strong>Tracks affected:</strong> formal-methods Track H, slices H1.4b, H1.5, H2 and the
+protocol models of H5 onward (<a href="#10-what-this-does-to-track-h">§10</a>).</p>
+
+<h2 id="1-summary">1. Summary</h2>
+
+<ol>
+  <li><strong>The composite boundary does not fit the model.</strong> It follows one property from the root, writes
+no create or tombstone operation, and treats <code class="language-plaintext highlighter-rouge">sh:node</code> as the sole sign of ownership. The placement
+example needs several owned relations, owned relations that differ by context, references that must
+survive, and vocabulary nodes that must never be touched (<a href="#3-fit-against-the-model">§3</a>). Since
+H1.4a the compiler refuses a shape with several node properties (<code class="language-plaintext highlighter-rouge">CompositeBoundaryMultipleProperties</code>),
+so the placement shape is refused and not partly swept (review S1).</li>
+  <li><strong>Our instinct on ownership is right, and two refinements are proposed.</strong> Ownership is a
+property of an edge in its context, so a flat list of properties is not enough. And listing the
+references (a deny-list) is the more ergonomic declaration but the more dangerous one, because
+forgetting an entry deletes someone else’s data. The proposal is to classify every edge as owned,
+reference or vocabulary, with a compile-time check that none is left unclassified (<a href="#4-ownership">§4</a>).</li>
+  <li><strong>Vocabulary nodes can be detected only in part.</strong> <code class="language-plaintext highlighter-rouge">skos:Concept</code> typing and <code class="language-plaintext highlighter-rouge">skos:inScheme</code> find
+them in data, and a declared property range finds them at compile time. Neither finds an ordinary
+entity such as a carrier. That needs configuration (<a href="#44-can-vocabulary-nodes-be-detected">§4.4</a>).</li>
+  <li><strong>SHACL is the right vehicle for the structure, and needs one addition.</strong> A shape tree is already
+context sensitive. But <code class="language-plaintext highlighter-rouge">sh:node</code> also appears on references in validation shapes, so reading it as
+ownership is unsafe. An explicit ownership marker on the property shape fixes that (<a href="#45-should-the-boundary-be-a-shacl-shape">§4.5</a>).</li>
+  <li><strong>Our two concurrency claims hold for additive edits and fail for removals.</strong> Edits at
+different levels need not contend, and today they do (a false conflict by design). But a removal of
+a subtree conflicts with a concurrent write beneath it, and under snapshot isolation nothing makes
+them meet unless the design makes them meet. The experiment loses data in exactly that case
+(<a href="#7-concurrency">§7</a>).</li>
+  <li><strong>A cross-level invariant overrides the “immediate level only” rule</strong> for the writers it covers
+(<a href="#74-cross-level-invariants">§7.4</a>).</li>
+  <li><strong>Two defects found on the way.</strong> The composite replace writes the new payload to the receipt log
+graph and not to the graph it deleted from (<a href="#23-a-defect-the-composite-replace-writes-the-payload-to-the-log-graph">§2.3</a>).
+And the composite boundary has no create or tombstone-delete (TD-04, known).</li>
+  <li><strong>Recommendation, as written.</strong> Hold H-D13, H1.4b and H1.5. Keep the H1.4a refusal as a stop-gap.
+Settle the questions in <a href="#11-questions-for-the-maintainer">§11</a> before H2 types the closure.
+Superseded by the review (§6, §8). H-D13 is decided, H1.4b and H1.5 proceed, and H2 waits only for the typing of the closure.</li>
+</ol>
+
+<h2 id="2-what-persistence-does-today">2. What persistence does today</h2>
+
+<h3 id="21-the-three-strategies">2.1 The three strategies</h3>
+
+<p><a href="../../architecture/decisions/ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md">ADR-A78</a>
+and <a href="/developer/sketches/persistence-profile-substrate.html">sketch §4</a> give an aggregate three mechanisms.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Strategy</th>
+      <th>Where the aggregate is</th>
+      <th>Operations generated</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">NamedGraphBoundary</code></td>
+      <td>one graph per root, named by <code class="language-plaintext highlighter-rouge">dal:graphIriTemplate</code></td>
+      <td>create, replace, tombstone delete</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">CompositePropertyBoundary</code></td>
+      <td>the root plus nodes found by walking a SHACL shape</td>
+      <td>replace, and a bootstrap row if the version row is pre-created</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">NoBoundary</code></td>
+      <td>none</td>
+      <td>value-guard compare and set</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Every strategy keeps one version row per root in a metadata graph (<code class="language-plaintext highlighter-rouge">pat:epoch</code>, <code class="language-plaintext highlighter-rouge">pat:seq</code>,
+<code class="language-plaintext highlighter-rouge">pat:head</code>, and <code class="language-plaintext highlighter-rouge">pat:deleted</code> as the tombstone). A write is a guarded <code class="language-plaintext highlighter-rouge">DELETE/INSERT ... WHERE</code> that
+checks the expected sequence, so two writers on one root collide on one statement
+(<a href="/architecture/rdf-sparql-patterns-guide.html#chapter-17--what-separating-metadata-from-payload-buys-and-what-it-does-not">guide ch. 17</a>).
+A delete does not remove the row. It sets the tombstone, so counters never restart
+(<a href="/architecture/rdf-sparql-patterns-guide.html#241-tombstones-f10">guide §24.1</a>).</p>
+
+<h3 id="22-how-the-composite-boundary-works">2.2 How the composite boundary works</h3>
+
+<p><code class="language-plaintext highlighter-rouge">tools/persistence/src/persistence/boundary.py</code> walks <code class="language-plaintext highlighter-rouge">sh:property</code>/<code class="language-plaintext highlighter-rouge">sh:node</code> from the boundary
+shape and records which paths were reached (<code class="language-plaintext highlighter-rouge">composite_properties</code>) and which led to another node
+(<code class="language-plaintext highlighter-rouge">node_properties</code>). <code class="language-plaintext highlighter-rouge">operations.py</code> binds the first node property, in path order, into
+<code class="language-plaintext highlighter-rouge">cas-replace-composite-property.mustache</code>, whose sweep is</p>
+
+<div class="language-sparql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">OPTIONAL</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">$root</span><span class="w"> </span><span class="nv">?p1</span><span class="w"> </span><span class="nv">?o1</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span><span class="k">OPTIONAL</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">$root</span><span class="w"> </span><span class="p">}</span><span class="o">+</span><span class="w"> </span><span class="nv">?member</span><span class="w"> </span><span class="p">.</span><span class="w"> </span><span class="nv">?member</span><span class="w"> </span><span class="nv">?p2</span><span class="w"> </span><span class="nv">?o2</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>and whose <code class="language-plaintext highlighter-rouge">DELETE</code> removes <code class="language-plaintext highlighter-rouge">?root ?p1 ?o1</code> and <code class="language-plaintext highlighter-rouge">?member ?p2 ?o2</code>. The caller supplies the whole new
+payload, so every write is a replace of the root and of everything reached. The version row is
+keyed by the root, and nothing else has one.</p>
+
+<p>Related facts, all from the code and documents named.</p>
+
+<ul>
+  <li>The sketch’s own query used <code class="language-plaintext highlighter-rouge">ex:lineItem*</code> with a depth bound of the form <code class="language-plaintext highlighter-rouge">{0,8}</code>. SPARQL 1.1 has
+no bounded repetition, so the compile-time depth and the run-time path can differ
+(<a href="/developer/notes/rdf-engine/persistence-fml.html">persistence-fml §8.4</a>). The template relies on the compile-time
+cycle check alone.</li>
+  <li><code class="language-plaintext highlighter-rouge">validator.py</code> refuses a class that is both a composite member and a boundary in its own right
+(<code class="language-plaintext highlighter-rouge">BoundaryConflict</code>, nested boundaries). It does not, as far as I can read, compare two
+composite roots whose shapes reach the same class, which persistence-fml §8.4 named as an unstated
+precondition (closures are disjoint).</li>
+  <li>Several node properties are refused (<code class="language-plaintext highlighter-rouge">CompositeBoundaryMultipleProperties</code>, H1.4a), because a
+replace that follows one of them leaves the others’ members behind. This is a stop-gap and not a
+capability.</li>
+  <li>There is no create-if-absent and no tombstone delete for this strategy (TD-04). A composite
+aggregate has no operation that deletes it as a whole.</li>
+</ul>
+
+<h3 id="23-a-defect-the-composite-replace-writes-the-payload-to-the-log-graph">2.3 A defect: the composite replace writes the payload to the log graph</h3>
+
+<p>The template inserts the caller’s payload into <code class="language-plaintext highlighter-rouge">GRAPH ?logGraph { ... }</code>, which is the monthly
+receipt graph (<code class="language-plaintext highlighter-rouge">urn:g:txlog/YYYY-MM</code>). The sweep deletes from the default graph. After one replace
+on rdflib, the old <code class="language-plaintext highlighter-rouge">status "open"</code> is gone from the default graph and the new <code class="language-plaintext highlighter-rouge">status "paid"</code> is
+found only in <code class="language-plaintext highlighter-rouge">urn:g:txlog/2026-10</code>. A reader of the default graph sees the aggregate disappear.
+The named-graph template writes the payload to <code class="language-plaintext highlighter-rouge">GRAPH ?g</code>, the aggregate’s own graph, which is
+what the composite one should do for its destination. Run <code class="language-plaintext highlighter-rouge">spikes/persistence-aggregate-ownership/payload_graph.py</code>.
+This went unseen because the H1.4a tests inspect what is left behind, and not where the new
+payload lands. Registered as TD-39 on 2026-10-10. Fixed in HO1.</p>
+
+<h2 id="3-fit-against-the-model">3. Fit against the model</h2>
+
+<p>The model, in our terms. The aggregate root is the entry point. Every object property
+assertion inside the aggregate is part of it, so deleting the root deletes the assertions from the
+root to its children. Whether a child node is deleted too depends on whether the aggregate owns it.
+Three kinds of node are reachable.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Kind</th>
+      <th>Example</th>
+      <th>On delete of the root</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Owned</td>
+      <td>contacted market record, tower, layer, binding, share</td>
+      <td>the node’s triples go</td>
+    </tr>
+    <tr>
+      <td>Referenced entity</td>
+      <td>client, carrier (<code class="language-plaintext highlighter-rouge">Axa</code>), the shared library wording</td>
+      <td>the edge to it goes, the node stays</td>
+    </tr>
+    <tr>
+      <td>Vocabulary</td>
+      <td>market type, policy status</td>
+      <td>the edge to it goes, the node stays, and no configuration may say otherwise</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>For any node in scope, every datatype property is deleted, every object property assertion is
+deleted, and the node at the far end is deleted only if owned.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Requirement</th>
+      <th>Today</th>
+      <th>Verdict</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Delete the outgoing triples of the root and of every owned node</td>
+      <td>the root, and members reached along one property</td>
+      <td>partial before H1.4a. On the placement graph the update then reached only the tower node itself, since <code class="language-plaintext highlighter-rouge">definedProgramme</code> sorts first and <code class="language-plaintext highlighter-rouge">hasLayer</code> is not followed (<a href="../../../spikes/persistence-aggregate-ownership/README.md">spike</a>). Since H1.4a the placement shape is refused as <code class="language-plaintext highlighter-rouge">CompositeBoundaryMultipleProperties</code> (review S1)</td>
+    </tr>
+    <tr>
+      <td>Follow several owned relations</td>
+      <td>refused since H1.4a</td>
+      <td>not supported</td>
+    </tr>
+    <tr>
+      <td>Ownership differs by context</td>
+      <td>the shape tree can express it, the walk flattens it to a list of paths, the template follows one</td>
+      <td>not supported</td>
+    </tr>
+    <tr>
+      <td>Never delete a vocabulary node</td>
+      <td>nothing</td>
+      <td>not supported, and not guarded</td>
+    </tr>
+    <tr>
+      <td>Never delete a referenced entity</td>
+      <td>a reference is swept when it is the shape’s only <code class="language-plaintext highlighter-rouge">sh:node</code> (review F1, TD-35)</td>
+      <td>not supported, and a live hazard</td>
+    </tr>
+    <tr>
+      <td>One owner per node</td>
+      <td>class-level refusal for nested boundaries only</td>
+      <td>partial</td>
+    </tr>
+    <tr>
+      <td>Delete the aggregate as a whole</td>
+      <td>none (TD-04)</td>
+      <td>not supported</td>
+    </tr>
+    <tr>
+      <td>Handle references into the aggregate from outside</td>
+      <td>nothing</td>
+      <td>not supported</td>
+    </tr>
+    <tr>
+      <td>Independent edits at different levels do not contend</td>
+      <td>one version row per root, whole-replace payload</td>
+      <td>not supported, by design</td>
+    </tr>
+    <tr>
+      <td>New payload lands where the old one was removed</td>
+      <td>lands in the log graph</td>
+      <td>defect (<a href="#23-a-defect-the-composite-replace-writes-the-payload-to-the-log-graph">§2.3</a>)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>So the answer to “is persistence designed properly for this” is no, for the composite strategy.
+The named-graph strategy is a different case and is taken up in <a href="#9-alternative-designs">§9</a>.</p>
+
+<h2 id="4-ownership">4. Ownership</h2>
+
+<h3 id="41-ownership-belongs-to-an-edge-in-its-context">4.1 Ownership belongs to an edge in its context</h3>
+
+<p>Our example has the same word doing two jobs. In the spike graph, <code class="language-plaintext highlighter-rouge">attachment</code> is owned from
+a <code class="language-plaintext highlighter-rouge">Layer</code> (a layer slip) and a reference from a <code class="language-plaintext highlighter-rouge">LayerContractBinding</code> (library wording shared across
+placements). A flat list of owned properties cannot hold both. It takes the shared wording with the
+tower (the spike’s flat alternation deletes <code class="language-plaintext highlighter-rouge">DocShared</code>), or leaves the layer slip behind.</p>
+
+<p>The same holds one level up. A <code class="language-plaintext highlighter-rouge">Policy</code> is owned by its binding in the example, yet a policy often has its
+own lifecycle. Whether <code class="language-plaintext highlighter-rouge">connectsPolicy</code> is an owned edge or a reference to
+a separate aggregate is a modelling question the sketch does not answer (<a href="#11-questions-for-the-maintainer">§11</a>, Q1).</p>
+
+<p>The structure that fits is a tree from class to the edges it owns, which is what a SHACL shape tree
+is. The spike’s <code class="language-plaintext highlighter-rouge">OWNED_TREE</code> is that tree, and walking it gives 11 nodes, since a policy is a
+reference (AO-Q1). The same tree written as SPARQL sequence paths (a <code class="language-plaintext highlighter-rouge">UNION</code> of
+<code class="language-plaintext highlighter-rouge">placement/definedProgramme/hasLayer/...</code>) returns the same 11. The tree form needs no <code class="language-plaintext highlighter-rouge">+</code> and so no cycle problem, at the price of query size growing with
+the number of paths.</p>
+
+<h3 id="42-an-allow-list-or-a-deny-list">4.2 An allow-list or a deny-list</h3>
+
+<p>Our guess is that it is easier to name the external references than every owned node.
+That is likely true as authoring effort, and the two failure modes differ in cost.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th> </th>
+      <th>Forget an entry in an allow-list of owned edges</th>
+      <th>Forget an entry in a deny-list of references</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Effect on a delete</td>
+      <td>owned data is left behind</td>
+      <td>shared data is deleted</td>
+    </tr>
+    <tr>
+      <td>Recoverable</td>
+      <td>yes, orphans can be found by an audit and removed</td>
+      <td>no</td>
+    </tr>
+    <tr>
+      <td>Visible</td>
+      <td>an audit finds them</td>
+      <td>nothing flags it</td>
+    </tr>
+    <tr>
+      <td>Spike</td>
+      <td>the flat list and the tree both leave nothing important behind</td>
+      <td>forgetting <code class="language-plaintext highlighter-rouge">contactedMarket</code> adds <code class="language-plaintext highlighter-rouge">Axa</code> and <code class="language-plaintext highlighter-rouge">Chubb</code> to the delete set</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>With the deny-list, a new property added to an owned class is owned by default, so a future
+modelling change silently widens deletes. The spike also shows a forgotten vocabulary link reaching
+the concept and then its scheme (15 nodes).</p>
+
+<p><strong>Hypothesis.</strong> Require both lists and make them exhaustive. Every object property that can leave an
+owned class is classified as <code class="language-plaintext highlighter-rouge">owned</code>, <code class="language-plaintext highlighter-rouge">reference</code> or <code class="language-plaintext highlighter-rouge">vocabulary</code>, and the compiler refuses a
+boundary with an unclassified property. This keeps the allow-list’s safety and gives the authoring
+we want, since “these are external” is still a short statement. The class-to-property
+relation can come from the shape’s <code class="language-plaintext highlighter-rouge">sh:property</code> entries and from the applied ontology’s domains. The
+exhaustiveness check would need a decision on which source is authoritative (Q3).</p>
+
+<h3 id="43-one-owner-per-node-and-references-into-the-aggregate">4.3 One owner per node, and references into the aggregate</h3>
+
+<p>Two statements are checkable.</p>
+
+<ul>
+  <li><strong>Single owner (compile time).</strong> For every pair of roots, the classes owned in their trees are
+disjoint. This is the check persistence-fml §8.4 recommended, and it can be a refusal.</li>
+  <li><strong>Single owner (run time).</strong> A node is in at most one closure. The spike builds a second placement
+whose layer attaches the first placement’s owned document and finds the document in both closures.
+Without a check, the later writer’s replace sweeps the document while the other aggregate still
+points at it, and the version rows differ, so the two writers never collide.</li>
+</ul>
+
+<p>Separately, an owned node can be referenced from outside, as with that second placement’s layer
+pointing at the document. Deleting the first placement removes the document’s triples and leaves the
+layer’s edge dangling. What a delete does about such an edge is a policy choice. Options are refuse,
+accept the dangling edge, or require the referencing aggregate to drop it first. Q4. The review
+(AO-Q4) answers it with a rule that references from outside target an aggregate’s root only, and the
+compiler warns (<code class="language-plaintext highlighter-rouge">ReferenceToOwnedClass</code>) when a shape points at a non-root owned class.</p>
+
+<h3 id="44-can-vocabulary-nodes-be-detected">4.4 Can vocabulary nodes be detected</h3>
+
+<p>Three signals exist, with different reach.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Signal</th>
+      <th>Available</th>
+      <th>Finds</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Node typed <code class="language-plaintext highlighter-rouge">skos:Concept</code>, or <code class="language-plaintext highlighter-rouge">skos:inScheme</code> present</td>
+      <td>at run time, in data</td>
+      <td>concepts and schemes, and nothing else</td>
+    </tr>
+    <tr>
+      <td>Declared range of the property is a concept class, for example <code class="language-plaintext highlighter-rouge">sh:class skos:Concept</code> or an <code class="language-plaintext highlighter-rouge">rdfs:range</code> that is a <code class="language-plaintext highlighter-rouge">skos:Concept</code> subclass</td>
+      <td>at compile time, in the ontology and shapes</td>
+      <td>every edge to a concept, without reading data</td>
+    </tr>
+    <tr>
+      <td>Node lives in a vocabulary graph</td>
+      <td>at run time, if the deployment separates them</td>
+      <td>whatever the deployment placed there</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The Vocabulary layer already builds on SKOS (<code class="language-plaintext highlighter-rouge">voc:ConceptScheme</code> is a <code class="language-plaintext highlighter-rouge">skos:ConceptScheme</code>), so the
+first two signals cover LATTICE’s own vocabularies. They do not cover <code class="language-plaintext highlighter-rouge">Axa</code>, <code class="language-plaintext highlighter-rouge">Chubb</code> or the client,
+which are ordinary entities and not vocabulary. Our own example makes that distinction:
+carrier types are vocabulary, carriers are entities. The latter must be classified <code class="language-plaintext highlighter-rouge">reference</code> by
+hand.</p>
+
+<p><strong>Hypothesis.</strong> Use the compile-time signal to refuse an <code class="language-plaintext highlighter-rouge">owned</code> classification on any edge whose
+range is a concept class, and use the run-time signal as a guard on the computed delete set, refusing
+if it contains a concept or scheme. The spike’s guard catches both forgotten vocabulary links in a
+deny-list and has no effect on <code class="language-plaintext highlighter-rouge">Axa</code>, as it should not. Reference data that is not SKOS (currency
+codes as individuals, say) is outside both signals. Q10.</p>
+
+<h3 id="45-should-the-boundary-be-a-shacl-shape">4.5 Should the boundary be a SHACL shape</h3>
+
+<p>Yes for the structure, and the shape needs one addition. The reasons for a shape are the ones the
+sketch gave (<a href="/developer/sketches/persistence-profile-substrate.html">§4.1</a>). It points at domain properties by
+IRI, adds nothing to the domain ontology, and a shape tree is already a tree from class to the edges
+that leave it, which is the structure <a href="#41-ownership-belongs-to-an-edge-in-its-context">§4.1</a> needs. The
+alternative, a bespoke path vocabulary, would reinvent a subset of SHACL.</p>
+
+<p>The addition is needed because of what the compiler reads today. <code class="language-plaintext highlighter-rouge">boundary.py</code> treats every
+<code class="language-plaintext highlighter-rouge">sh:node</code> as a child to sweep. In SHACL, <code class="language-plaintext highlighter-rouge">sh:node</code> says a value must conform to a shape. It is
+common on references in validation shapes, for example <code class="language-plaintext highlighter-rouge">forClient</code> with <code class="language-plaintext highlighter-rouge">sh:node ex:ClientShape</code>
+so the client is checked. If an adopter points <code class="language-plaintext highlighter-rouge">dal:boundaryShape</code> at such a shape, which the sketch
+explicitly allows (<a href="/developer/sketches/persistence-profile-substrate.html">§4.4</a>), the client becomes a
+member and the replace sweeps the client’s triples. This already happens when a shape’s only <code class="language-plaintext highlighter-rouge">sh:node</code>
+is a reference (review F1, TD-35).</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Option</th>
+      <th>Description</th>
+      <th>Consequence</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>a. Annotate the property shape</td>
+      <td><code class="language-plaintext highlighter-rouge">sh:property [ sh:path ex:attachment ; sh:node ex:DocShape ; dal:ownership dal:Owned ]</code>, with <code class="language-plaintext highlighter-rouge">dal:Reference</code> and <code class="language-plaintext highlighter-rouge">dal:Vocabulary</code> as the other values</td>
+      <td>structure stays in SHACL, ownership is explicit, the shape remains valid SHACL because extra triples are allowed</td>
+    </tr>
+    <tr>
+      <td>b. A dedicated boundary shape</td>
+      <td>a shape used only for the boundary, with <code class="language-plaintext highlighter-rouge">sh:node</code> meaning owned</td>
+      <td>no annotation, but a validation shape can no longer double as the boundary, which the sketch valued</td>
+    </tr>
+    <tr>
+      <td>c. Keep <code class="language-plaintext highlighter-rouge">sh:node</code> as ownership</td>
+      <td>as today</td>
+      <td>unsafe, as above</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Recommended as a hypothesis, option a. A shape also cannot say “every property except these”, so the
+deny-list reading of our suggestion has no natural SHACL form. This is a further reason to
+keep the allow-list as the definition and the exhaustiveness check as the aid.</p>
+
+<h2 id="5-deleting">5. Deleting</h2>
+
+<h3 id="51-what-a-delete-removes">5.1 What a delete removes</h3>
+
+<p>For the root and every owned node, all outgoing triples. That covers datatype properties, edges to
+owned children, and edges to references and vocabulary. The nodes at the ends of reference and
+vocabulary edges are not subjects of any removed triple, so they stay. The spike’s delete set for the
+placement contains <code class="language-plaintext highlighter-rouge">P forClient C</code> and no triple with <code class="language-plaintext highlighter-rouge">C</code>, <code class="language-plaintext highlighter-rouge">Axa</code>, <code class="language-plaintext highlighter-rouge">TypeCarrier</code> or <code class="language-plaintext highlighter-rouge">PolBound</code> as
+subject.</p>
+
+<p>Triples whose subject is outside and whose object is inside (inbound edges, <a href="#43-one-owner-per-node-and-references-into-the-aggregate">§4.3</a>)
+are not in this set, which is why they need a policy.</p>
+
+<h3 id="52-how-the-owned-set-is-computed">5.2 How the owned set is computed</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Approach</th>
+      <th>How</th>
+      <th>Cost</th>
+      <th>Weakness</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>A. Flat alternation</td>
+      <td><code class="language-plaintext highlighter-rouge">$root (p1\|p2\|...)+ ?m</code></td>
+      <td>one query</td>
+      <td>cannot express context (<a href="#41-ownership-belongs-to-an-edge-in-its-context">§4.1</a>)</td>
+    </tr>
+    <tr>
+      <td>B. Per-class sequence paths</td>
+      <td>a <code class="language-plaintext highlighter-rouge">UNION</code> of explicit paths from the tree</td>
+      <td>one query, size grows with the tree</td>
+      <td>recursion needs <code class="language-plaintext highlighter-rouge">*</code> and a bound the language cannot state</td>
+    </tr>
+    <tr>
+      <td>C. Typed walk by the caller or SPI</td>
+      <td>read the closure, then delete that exact set</td>
+      <td>several round trips</td>
+      <td>the set can go stale between read and write, so it needs the version row to guard it</td>
+    </tr>
+    <tr>
+      <td>D. Membership index</td>
+      <td>at write time, record <code class="language-plaintext highlighter-rouge">node pat:ownedBy root</code> (or in the meta graph)</td>
+      <td>O(1) lookup per delete, extra triples per node</td>
+      <td>the index can drift, and every owned insert must maintain it</td>
+    </tr>
+    <tr>
+      <td>E. Graph per aggregate</td>
+      <td>members are the graph’s contents</td>
+      <td>no computation</td>
+      <td>needs data laid out in graphs (<a href="#9-alternative-designs">§9</a>)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>D deserves attention beyond cost. If <code class="language-plaintext highlighter-rouge">ownedBy</code> is a single-valued property per node, two roots
+claiming one node make two writers insert different values of a functional property, and
+statement-level conflict detection can turn the single-owner rule into a run-time guarantee. This is
+the key-claim pattern (<a href="/architecture/rdf-sparql-patterns-guide.html#chapter-6--p1-and-p2-the-key-claim-registry-and-the-guarded-write">guide ch. 6</a>)
+applied to ownership. It costs write amplification and a second source of truth, which the guide’s
+finding F4 warned about for the etag and sequence.</p>
+
+<h3 id="53-tombstone-and-purge">5.3 Tombstone and purge</h3>
+
+<p>The version row survives a delete (<a href="/architecture/rdf-sparql-patterns-guide.html#241-tombstones-f10">guide §24.1</a>).
+For the composite strategy a delete would need to: check the expected sequence, remove the owned
+triples, set <code class="language-plaintext highlighter-rouge">pat:deleted</code>, and write a receipt. None of that exists (TD-04). Erasure of personal
+data is a different procedure and can include references, so it should not reuse this path
+(<a href="/architecture/rdf-sparql-patterns-guide.html#245-erasure-of-personal-data">guide §24.5</a>).</p>
+
+<h2 id="6-updating">6. Updating</h2>
+
+<p>Today an update is a replace of the root’s closure with a caller-supplied payload. In the placement
+model that has four consequences.</p>
+
+<ol>
+  <li><strong>Every edit rewrites the tower.</strong> Adding one policy to one binding deletes and reinserts every
+owned triple. The receipt model records assert and retract graphs (<a href="/architecture/rdf-sparql-patterns-guide.html#chapter-20--receipts-patches-or-snapshots-f9">guide ch. 20</a>),
+so each receipt is the size of the aggregate.</li>
+  <li><strong>The payload must be the whole owned set.</strong> An omitted owned node is deleted. That is how a
+removal is expressed, and also how a stale client silently removes nodes it never loaded.</li>
+  <li><strong>The payload must stay inside the boundary.</strong> A payload with triples about <code class="language-plaintext highlighter-rouge">Axa</code> writes outside
+the aggregate, since the sweep never deletes <code class="language-plaintext highlighter-rouge">Axa</code>’s triples and the insert adds to them. A payload
+check is needed, such as “every payload subject is the root or an owned node”. It is a run-time
+check, and the IR of H2 is the place to state it.</li>
+  <li><strong>A replace needs a rule for dropped owned edges.</strong> If the new payload drops <code class="language-plaintext highlighter-rouge">L1 hasPolicyBinding
+LCB3</code>, then <code class="language-plaintext highlighter-rouge">LCB3</code> and everything it owns must go too. Whole-replace gets this by deleting the
+whole closure and writing the new one. A level operation has to compute it.</li>
+</ol>
+
+<p>Our view is that deeper levels do not matter to an update. I think that holds for edits that
+add or change values at one level, and the proposal below is built on it. A level operation would be</p>
+
+<ul>
+  <li><strong>set at a node</strong>, replacing that node’s own outgoing triples, with children left alone,</li>
+  <li><strong>add child</strong>, inserting an owned edge and the child’s triples,</li>
+  <li><strong>remove child</strong>, deleting the edge and the child’s closure (the delete of <a href="#5-deleting">§5</a> applied to a subtree).</li>
+</ul>
+
+<p>Remove child is where depth matters again, since it takes everything below. <a href="#7-concurrency">§7</a>
+shows why that matters for concurrency. Level operations also shrink the receipts to the size of the
+change, which suits the assert and retract model.</p>
+
+<h2 id="7-concurrency">7. Concurrency</h2>
+
+<h3 id="71-two-relations-that-the-word-aggregate-joins">7.1 Two relations that the word “aggregate” joins</h3>
+
+<p>Domain-driven design uses the aggregate for two things. One is the lifecycle, meaning what is created
+and deleted together. The other is the consistency boundary, meaning what a single transaction
+protects. The sketch and the code join them. The root’s version row protects the whole closure.</p>
+
+<p>Our model separates them. The tower is owned by the placement for deletion. Whether the
+tower must be consistent with the placement under concurrent edits is a separate question, answered
+by which invariants span them. The rest of this section keeps the two apart. The ownership tree
+decides what a delete takes. A set of <strong>units</strong>, nodes that carry a version row, decides what a
+writer contends with. Units sit inside the ownership tree and are chosen by the author.</p>
+
+<h3 id="72-what-our-claims-need">7.2 What our claims need</h3>
+
+<blockquote>
+  <p>only the immediate level needs to be protected, and an edit at the root level need not contend with
+an edit at a lower level.</p>
+</blockquote>
+
+<p>Under snapshot isolation with first-committer-wins at statement level (capabilities
+<code class="language-plaintext highlighter-rouge">detectsWriteWriteConflict</code> and <code class="language-plaintext highlighter-rouge">statementLevelConflictDetection</code>), two transactions conflict only if
+they write the same statement. A version row is the statement they are made to share. So the claim
+reduces to which operations should share a row.</p>
+
+<ul>
+  <li>Two additive or value edits at different units share nothing and need not conflict. The claim holds.</li>
+  <li>A removal of a subtree reads, in its snapshot, the set of nodes below. A concurrent writer adds a
+triple about a node in that set. Their write sets do not overlap, both commit, and a triple about a
+removed node remains. The claim fails here unless something forces a shared statement.</li>
+</ul>
+
+<h3 id="73-the-experiment">7.3 The experiment</h3>
+
+<p><a href="../../../spikes/persistence-aggregate-ownership/concurrency_model.py"><code class="language-plaintext highlighter-rouge">concurrency_model.py</code></a> models
+two overlapping writers, each taking a snapshot before either commits, in both commit orders, and
+reports the worse. The aggregate has units <code class="language-plaintext highlighter-rouge">P</code>, <code class="language-plaintext highlighter-rouge">L1</code>, <code class="language-plaintext highlighter-rouge">L2</code> and <code class="language-plaintext highlighter-rouge">B1</code> (<code class="language-plaintext highlighter-rouge">L1</code>’s binding), and five
+disciplines.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Discipline</th>
+      <th>Version rows</th>
+      <th>Removal</th>
+      <th>Writers</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>D0</td>
+      <td>one at the root (today)</td>
+      <td>bumps the root row</td>
+      <td>bump the root row</td>
+    </tr>
+    <tr>
+      <td>D1</td>
+      <td>one per unit</td>
+      <td>bumps its own and its parent’s row, sets its tombstone</td>
+      <td>bump their own row</td>
+    </tr>
+    <tr>
+      <td>D2</td>
+      <td>as D1</td>
+      <td>also bumps and tombstones every unit below</td>
+      <td>as D1</td>
+    </tr>
+    <tr>
+      <td>D3</td>
+      <td>as D1</td>
+      <td>as D1</td>
+      <td>also bump every ancestor</td>
+    </tr>
+    <tr>
+      <td>D4</td>
+      <td>as D2</td>
+      <td>as D2</td>
+      <td>as D2, plus bump a row for a declared cross-level invariant</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Result. “False” marks a conflict between operations that are logically independent.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Pair</th>
+      <th>D0</th>
+      <th>D1</th>
+      <th>D2</th>
+      <th>D3</th>
+      <th>D4</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>root edit and deep edit</td>
+      <td>conflict (false)</td>
+      <td>both commit</td>
+      <td>both commit</td>
+      <td>conflict (false)</td>
+      <td>both commit</td>
+    </tr>
+    <tr>
+      <td>deep edits, different branches</td>
+      <td>conflict (false)</td>
+      <td>both commit</td>
+      <td>both commit</td>
+      <td>conflict (false)</td>
+      <td>both commit</td>
+    </tr>
+    <tr>
+      <td>deep edits, same unit</td>
+      <td>conflict</td>
+      <td>conflict</td>
+      <td>conflict</td>
+      <td>conflict</td>
+      <td>conflict</td>
+    </tr>
+    <tr>
+      <td>remove <code class="language-plaintext highlighter-rouge">L1</code> and edit in <code class="language-plaintext highlighter-rouge">L2</code></td>
+      <td>conflict (false)</td>
+      <td>both commit</td>
+      <td>both commit</td>
+      <td>conflict (false)</td>
+      <td>both commit</td>
+    </tr>
+    <tr>
+      <td>remove <code class="language-plaintext highlighter-rouge">L1</code> and edit below <code class="language-plaintext highlighter-rouge">L1</code></td>
+      <td>conflict</td>
+      <td><strong>orphan data</strong></td>
+      <td>conflict</td>
+      <td>conflict</td>
+      <td>conflict</td>
+    </tr>
+    <tr>
+      <td>delete root and deep edit</td>
+      <td>conflict</td>
+      <td><strong>orphan data</strong></td>
+      <td>conflict</td>
+      <td>conflict</td>
+      <td>conflict</td>
+    </tr>
+    <tr>
+      <td>remove <code class="language-plaintext highlighter-rouge">L1</code> and add a binding under <code class="language-plaintext highlighter-rouge">L1</code></td>
+      <td>conflict</td>
+      <td>conflict</td>
+      <td>conflict</td>
+      <td>conflict</td>
+      <td>conflict</td>
+    </tr>
+    <tr>
+      <td>two bindings with a limit of three</td>
+      <td>conflict</td>
+      <td><strong>limit broken</strong></td>
+      <td><strong>limit broken</strong></td>
+      <td>conflict</td>
+      <td>conflict</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Reading it.</p>
+
+<ul>
+  <li><strong>D0 is today’s design.</strong> Every pair meets on the root row, so the independent pairs conflict. We
+were right that this contention is unnecessary. It follows from whole-replace and one row, not
+from the data.</li>
+  <li><strong>D1 is our proposal taken literally.</strong> The independent pairs commit. The removal pairs lose
+data, because nothing makes a removal and a writer beneath it share a statement.</li>
+  <li><strong>D3 repairs D1 by making every pair meet at the root.</strong> That recreates D0’s false conflicts, so it
+defeats the purpose.</li>
+  <li><strong>D2 repairs D1 where it fails and nowhere else.</strong> The removal writes to the rows of the units below
+it, so a writer beneath meets it on its own row. Independent pairs stay free.</li>
+  <li><strong>D4 adds a row for a cross-level invariant</strong> (<a href="#74-cross-level-invariants">§7.4</a>).</li>
+</ul>
+
+<p>A removal under D2 writes one row per unit below, so its cost is the number of units and not the
+number of nodes. A unit created concurrently with a removal would be missing from the removal’s
+snapshot. The model handles it by having the creator also bump its parent’s row, which the removal
+bumps too, and the “add a binding under <code class="language-plaintext highlighter-rouge">L1</code>” row is that case. So the rule is: <strong>creating
+or removing a child unit is a write at the parent’s level.</strong> That is the immediate-level rule we
+described, applied to structure.</p>
+
+<h3 id="74-cross-level-invariants">7.4 Cross-level invariants</h3>
+
+<p>Some rules span units. In the placement, shares across the layers of a tower summing to one, or a
+programme limit at least equal to the sum of its layer limits, are of this kind. A writer at one layer
+reads the other layers to check the rule and writes only its own. Under snapshot isolation that is
+write skew. Two such writers each pass the check and together break the rule (the last row of the
+table, D1 and D2).</p>
+
+<p>The pattern for this is already in the guide, which calls it materialising the write conflict (P3).
+The invariant gets a row, and each writer the invariant covers bumps it (D4). Only those writers
+contend. D4’s other pairs still commit freely.</p>
+
+<p>So the claim “only the immediate level” is accurate for operations that carry no cross-level
+invariant, and a covered writer’s read set is wider than its level. This is a property of the domain
+model and cannot be derived from the ontology. The author has to declare the invariants and the
+levels they read. Q5.</p>
+
+<h3 id="75-dependence-on-the-store">7.5 Dependence on the store</h3>
+
+<p>D1 to D4 all rely on conflict detection on the shared statement, so the capability record’s claim is
+load-bearing and the TCK must verify it (guide QP5). On a store that detects conflicts per graph or
+page, as guide F12 warns, the unit rows should live in separate graphs or the conflicts coarsen
+(more false conflicts, still correct). On a serializable store, D1 would suffice, since the removal’s
+read of the subtree would conflict with the concurrent write. The model does not distinguish those
+cases and cannot show them.</p>
+
+<h3 id="76-effect-on-ordering-and-receipts">7.6 Effect on ordering and receipts</h3>
+
+<p>With version rows per unit, <code class="language-plaintext highlighter-rouge">pat:seq</code> is per unit and so are the receipt chains. There is no single
+sequence for the placement. A reader who wants the placement as of a moment reads several streams,
+and the as-of read needs a rule for that. The guide’s cross-aggregate section
+(<a href="/architecture/rdf-sparql-patterns-guide.html#196-multi-aggregate-writes">§19.6</a>) already asks
+for lock-ordering discipline whenever a write bumps more than one row, and a removal under D2 does.
+Q6.</p>
+
+<h2 id="8-does-the-pattern-set-suit-the-model">8. Does the pattern set suit the model</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Pattern</th>
+      <th>Verdict</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Version row with epoch, sequence and head</td>
+      <td>suits, and moves from “per root” to “per unit”</td>
+    </tr>
+    <tr>
+      <td>Guarded <code class="language-plaintext highlighter-rouge">DELETE/INSERT ... WHERE</code></td>
+      <td>suits, with guards on the unit’s row</td>
+    </tr>
+    <tr>
+      <td>Tombstone, so counters never restart</td>
+      <td>suits, one per unit, and a removed unit keeps its row</td>
+    </tr>
+    <tr>
+      <td>Whole-graph or whole-closure replace</td>
+      <td>does not suit deep aggregates (<a href="#6-updating">§6</a>), and is the source of D0’s false conflicts</td>
+    </tr>
+    <tr>
+      <td>Receipts with asserts and retracts graphs</td>
+      <td>suits, and improves under level operations</td>
+    </tr>
+    <tr>
+      <td>Key-claim registry for uniqueness</td>
+      <td>unaffected, claims are scoped to a class, though a unit moves under a new root only by an explicit operation</td>
+    </tr>
+    <tr>
+      <td>Dense per-stream sequence and gap scan</td>
+      <td>needs a decision on stream identity per unit (Q6)</td>
+    </tr>
+    <tr>
+      <td>Value-guard compare and set (<code class="language-plaintext highlighter-rouge">NoBoundary</code>)</td>
+      <td>suits attribute-level state changes inside a unit</td>
+    </tr>
+    <tr>
+      <td>Property-path sweep of a closure</td>
+      <td>does not suit, because of context (<a href="#41-ownership-belongs-to-an-edge-in-its-context">§4.1</a>) and the missing bounded repetition</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The patterns hold at the level of a unit. What does not hold is the assumption that a unit equals an
+aggregate equals a closure.</p>
+
+<h2 id="9-alternative-designs">9. Alternative designs</h2>
+
+<p>These differ in where ownership comes from. They are not exclusive of the concurrency structure in
+<a href="#7-concurrency">§7</a>, which applies to any of them.</p>
+
+<h3 id="91-named-graph-placement-as-ownership">9.1 Named-graph placement as ownership</h3>
+
+<p>Each owned node’s triples live in the aggregate’s graph. A delete clears the graph. Referenced
+entities and vocabulary live elsewhere, so they cannot be deleted by accident, and no closure is
+computed. <code class="language-plaintext highlighter-rouge">NamedGraphBoundary</code> already has create, replace and tombstone delete, and its
+payload lands where the delete happens.</p>
+
+<p>For the placement example the units become graphs: one for the placement, one per tower or layer as
+the author chooses. Prefix nesting, which H1.1 refuses for scopes that share a class, is then the
+natural shape of the layout, so the antichain check would need to distinguish a graph that is
+deliberately nested under another from an overlap.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Pro</th>
+      <th>Con</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>ownership by construction, no closure query, vocabulary and references outside by placement, though a writer still needs the classified tree to decide what goes in the graph (review F6)</td>
+      <td>graph proliferation, the cost sketch §4.1 names</td>
+    </tr>
+    <tr>
+      <td>existing operations cover it</td>
+      <td>an adopter with one large shared graph has to move data</td>
+    </tr>
+    <tr>
+      <td>delete is one operation</td>
+      <td>a node in two graphs is a duplicate and not a share, so the single-owner rule becomes a data layout rule that nothing enforces</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="92-declared-ownership-tree-over-a-shared-graph">9.2 Declared ownership tree over a shared graph</h3>
+
+<p>The design of <a href="#4-ownership">§4</a> to <a href="#7-concurrency">§7</a> on the composite strategy: classified shape
+tree, delete set by sequence paths or typed walk, units with version rows, the vocabulary guard and
+the single-owner check. This is the work that makes the composite strategy fit the model.</p>
+
+<h3 id="93-ownership-recorded-as-data">9.3 Ownership recorded as data</h3>
+
+<p>The membership index of <a href="#52-how-the-owned-set-is-computed">§5.2</a>, approach D. The shape tree is then
+a validator of the index and not the thing a delete executes. It trades write cost and a second
+source of truth for a delete that does not depend on the ontology’s shape at all, and for a run-time
+single-owner guarantee.</p>
+
+<h3 id="94-leave-the-composite-strategy-as-it-is-and-add-a-rule">9.4 Leave the composite strategy as it is and add a rule</h3>
+
+<p>Refuse any composite boundary deeper than one level, and send deep aggregates to named graphs. It is
+the cheapest option and it keeps the strategy honest about what it can do. It does not serve an
+adopter who cannot repartition.</p>
+
+<p><strong>Hypothesis on a combination.</strong> Named graphs are the default for deep aggregates, as the sketch
+already says. The composite strategy is rebuilt as 9.2, with 9.3 as an option when delete cost or the
+run-time single-owner guarantee matters. Q7 and Q8 decide this.</p>
+
+<h2 id="10-what-this-does-to-track-h">10. What this does to Track H</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Item</th>
+      <th>Effect</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>H1.4a refusal</td>
+      <td>stays as a stop-gap. It stops a silent partial delete today, and is superseded if 9.2 is adopted</td>
+    </tr>
+    <tr>
+      <td>H-D13 (what the compiler binds, and how)</td>
+      <td>mostly moot. The “first property” binding disappears under 9.2, and what remains is how the closure is stated in the IR</td>
+    </tr>
+    <tr>
+      <td>H1.4b (declaration and implementation gap report)</td>
+      <td>hold. It would report today’s closure as the implementation, and the gap list should include ownership, units and the vocabulary guard</td>
+    </tr>
+    <tr>
+      <td>H1.5 (stable labels for compiled profiles)</td>
+      <td>hold. The compiled profile’s shape changes if boundaries carry classified edges and units</td>
+    </tr>
+    <tr>
+      <td>H2 (typed IR)</td>
+      <td>the closure becomes a tree of classified edges and the units a set of nodes in it. The payload check (<a href="#6-updating">§6</a>) and the required-parameter guard of TD-34 belong in the same IR</td>
+    </tr>
+    <tr>
+      <td>H5 and later (protocol models, Isabelle theories)</td>
+      <td>the models of the version row and of conflict detection should be extended with units, the removal rule and the invariant row. The spike’s table is a small candidate for the first model</td>
+    </tr>
+    <tr>
+      <td>Static checks</td>
+      <td>new ones follow: every edge classified, no <code class="language-plaintext highlighter-rouge">owned</code> edge to a concept class, owned trees disjoint across roots</td>
+    </tr>
+    <tr>
+      <td>Witnesses</td>
+      <td>each new refusal and warning needs a fixture, per the H1.2 harness</td>
+    </tr>
+    <tr>
+      <td>Technical debt</td>
+      <td>TD-39, the payload-graph defect (<a href="#23-a-defect-the-composite-replace-writes-the-payload-to-the-log-graph">§2.3</a>), added 2026-10-10</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="11-questions-for-the-maintainer">11. Questions for the maintainer</h2>
+
+<p>Answered 2026-10-10. See the review §6.</p>
+
+<ol>
+  <li><strong><code class="language-plaintext highlighter-rouge">Pol1</code>.</strong> In the placement, is a policy owned by its binding, or a referenced aggregate with its
+own lifecycle? The answer changes what a tower delete takes, and it recurs for every
+“connects to a thing that also exists on its own” edge.</li>
+  <li><strong>Declaration surface.</strong> Annotated SHACL shape (option a of <a href="#45-should-the-boundary-be-a-shacl-shape">§4.5</a>),
+a dedicated boundary shape (b), or something else?</li>
+  <li><strong>Exhaustive classification.</strong> Is it acceptable that every edge leaving an owned class must be
+classified as owned, reference or vocabulary, with an unclassified edge a compile error? Which source says what
+edges exist, the shape or the applied ontology’s domains?</li>
+  <li><strong>Inbound references.</strong> When something outside points at an owned node, should a delete refuse,
+leave the edge dangling, or require it to be cleared first? Per class or global?</li>
+  <li><strong>Units and invariants.</strong> Which nodes in the placement need their own version row, and which
+rules span levels (shares summing to one, programme limits)? Can the list be made now, or does it
+come from real usage?</li>
+  <li><strong>Streams.</strong> Should receipts and sequences be per unit, per root, or both? What is the as-of read
+of a whole placement to return?</li>
+  <li><strong>Role of named graphs.</strong> Should named-graph placement be the recommended default for deep
+aggregates, with the composite strategy kept for adopters who cannot repartition?</li>
+  <li><strong>Computed or recorded membership.</strong> Are expected aggregate sizes small enough for sequence paths
+(a placement of a few hundred nodes), or is a membership index worth its cost?</li>
+  <li><strong>Recursion.</strong> Do real structures recurse (a layer containing layers, a clause amending a clause)?
+If so, closure needs <code class="language-plaintext highlighter-rouge">*</code> and the cycle check has to become a runtime guard.</li>
+  <li><strong>Reference data that is not SKOS.</strong> Are there such sets (currency codes, country codes as
+individuals) that need the same protection as concepts?</li>
+  <li><strong>Track H.</strong> Do you agree to hold H-D13, H1.4b and H1.5 until the above is settled, and to keep
+H1.4a as it stands?</li>
+  <li><strong>ADR.</strong> The sketch and ADR-A78 describe the composite strategy as it is built. A change of this
+size probably needs an ADR amending A78. Do you want that drafted once Q1 to Q8 are answered?</li>
+</ol>
+
+<h2 id="appendix-what-the-experiments-do-and-do-not-show">Appendix. What the experiments do and do not show</h2>
+
+<p>The spike prints the closure comparison, the two-writer table and the payload location. Eighteen
+checks in <code class="language-plaintext highlighter-rouge">test_spike.py</code> assert the figures quoted above. The limits are in the
+<a href="../../../spikes/persistence-aggregate-ownership/README.md">spike README</a>. In short, the concurrency
+table is a model of a rule and not a store, it covers pairs and not larger sets of writers, and every
+experiment runs on rdflib alone. The closure experiments use one hand-built graph, so they show that
+a strategy can fail, and nothing about how often.</p>

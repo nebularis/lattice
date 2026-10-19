@@ -1,0 +1,52 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="repository-topology-a77-review">Repository Topology A77 Review</h1>
+
+<p><strong>Unit:</strong> <code class="language-plaintext highlighter-rouge">repository-topology-a77</code>
+<strong>Status:</strong> Closed
+<strong>Disposition:</strong> Accepted on 2026-09-20
+<strong>Status record:</strong> <a href="/developer/status/repository-topology-a77.html">Repository Topology A77 Status</a>
+<strong>Decision:</strong> <a href="../../architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md">ADR-A77</a></p>
+
+<h2 id="review-request">Review Request</h2>
+
+<p>Approved. This record preserves the decision request and its acceptance evidence. Follow-on relocation units receive their own review records.</p>
+
+<h2 id="decisions-requested">Decisions Requested</h2>
+
+<ol>
+  <li>Semantic assets move under <code class="language-plaintext highlighter-rouge">ontology/</code>.</li>
+  <li>MORK and SPC separate semantic assets from executable implementations.</li>
+  <li><code class="language-plaintext highlighter-rouge">workers/</code> remains top-level as a deployable runtime package.</li>
+  <li>ADRs move from <code class="language-plaintext highlighter-rouge">docs/adr/</code> to <code class="language-plaintext highlighter-rouge">docs/architecture/decisions/</code>, with every link and website entry point repointed in the same relocation unit.</li>
+  <li><code class="language-plaintext highlighter-rouge">docs/developer/plans</code>, <code class="language-plaintext highlighter-rouge">status</code>, and <code class="language-plaintext highlighter-rouge">review</code> become the required unit-of-work structure. <code class="language-plaintext highlighter-rouge">docs/developer/current</code> is removed after migration.</li>
+  <li><code class="language-plaintext highlighter-rouge">.github/copilot-instructions.md</code> remains the active repository instruction file.</li>
+</ol>
+
+<h2 id="artifacts-to-inspect">Artifacts To Inspect</h2>
+
+<ul>
+  <li><a href="../../architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md">ADR-A77</a></li>
+  <li><a href="../../architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md">ADR-A77</a></li>
+  <li><a href="../../../.github/copilot-instructions.md">Repository instructions</a></li>
+</ul>
+
+<h2 id="commands-to-run">Commands To Run</h2>
+
+<p>No build or test command is required for this documentation-only decision gate.</p>
+
+<h2 id="pass-criteria">Pass Criteria</h2>
+
+<ul>
+  <li>The target topology assigns every moved asset to one canonical owner.</li>
+  <li>The semantic versus executable split is clear for MORK and SPC.</li>
+  <li>No toolchain authority changes are introduced.</li>
+  <li>The documentation lifecycle supplies exactly one authoritative status path for each active unit.</li>
+  <li>The ADR relocation is explicitly immediate and repository-wide, including the website.</li>
+</ul>
+
+<h2 id="open-questions">Open Questions</h2>
+
+<ul>
+  <li>None. Amend ADR-A77 if a later decision changes the accepted topology.</li>
+</ul>

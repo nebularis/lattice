@@ -1,0 +1,119 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="loading-lattice-in-protégé">Loading LATTICE in Protégé</h1>
+
+<p>How to open any LATTICE ontology in Protégé with its import closure resolved
+from the checkout, and how to confirm the generated catalogs are what
+resolved it (<a href="../architecture/decisions/ADR-A88-ontology-import-resolution-for-consumers.md">ADR-A88</a>).
+This is the manual step in the AOR-4 Validation Pack.</p>
+
+<h2 id="why-a-successful-load-is-evidence">Why a successful load is evidence</h2>
+
+<p>LATTICE imports its layers by version IRI, for example
+<code class="language-plaintext highlighter-rouge">https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0</code>. None of
+these IRIs is served on the web. If Protégé loads a layer’s imports, it found
+them through a catalog. Protégé reads the <code class="language-plaintext highlighter-rouge">catalog-v001.xml</code> beside the file it
+opens. In every <code class="language-plaintext highlighter-rouge">spec/</code> and <code class="language-plaintext highlighter-rouge">vocab/</code> directory that file is a stub with one
+<code class="language-plaintext highlighter-rouge">nextCatalog</code> entry pointing at <code class="language-plaintext highlighter-rouge">ontology/catalog-v001.xml</code>, which maps every
+LATTICE IRI to a file.</p>
+
+<h2 id="before-you-start">Before you start</h2>
+
+<ul>
+  <li>Protégé 5.6 (desktop).</li>
+  <li>
+    <p>From the repository root, confirm the catalogs are current:</p>
+
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:ontology-catalog
+</code></pre></div>    </div>
+  </li>
+  <li>Note the output of <code class="language-plaintext highlighter-rouge">git status --short ontology</code>, so you can tell afterwards
+whether Protégé rewrote anything.</li>
+</ul>
+
+<h2 id="test-1-a-layer-with-a-deep-import-closure">Test 1: a layer with a deep import closure</h2>
+
+<ol>
+  <li>Start Protégé. Choose <strong>File → Open…</strong> and select
+<code class="language-plaintext highlighter-rouge">ontology/behaviour/spec/behaviour.ttl</code>. Open the file, not a recent-files
+entry or a URL.</li>
+  <li>Expected: the ontology opens with no “missing imports” or “could not load
+import” dialog. Loading may take a few seconds while Protégé fetches the
+external imports (PROV-O and SKOS) from the W3C, which the root catalog
+maps to their published locations.</li>
+  <li>Open the ontology selector (the drop-down naming the active ontology at the
+top of the window). Expected: it lists Behaviour together with Foundation,
+Vocabulary, Quantification, Party, Eligibility and Instrument, plus PROV-O
+and SKOS.</li>
+  <li>Select Foundation in that selector. The window title shows the active
+ontology’s IRI and its physical location. Expected: a file path ending in
+<code class="language-plaintext highlighter-rouge">ontology/foundation/spec/foundation.ttl</code> in your checkout.</li>
+  <li>In the <strong>Entities</strong> tab, find <code class="language-plaintext highlighter-rouge">fnd:DerivedArtefact</code>. Expected: present, with
+superclass <code class="language-plaintext highlighter-rouge">prov:Entity</code>. That confirms both the local Foundation file and
+the external PROV-O loaded.</li>
+</ol>
+
+<h2 id="test-2-remove-the-root-catalog-negative-control">Test 2: remove the root catalog (negative control)</h2>
+
+<ol>
+  <li>Close the ontology in Protégé without saving.</li>
+  <li>
+    <p>Temporarily rename the root catalog:</p>
+
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">mv </span>ontology/catalog-v001.xml ontology/catalog-v001.xml.off
+</code></pre></div>    </div>
+  </li>
+  <li>Open <code class="language-plaintext highlighter-rouge">ontology/behaviour/spec/behaviour.ttl</code> again.</li>
+  <li>Expected: Protégé reports the LATTICE imports it cannot load. This shows
+that Test 1 depended on the stub chaining to the root catalog.</li>
+  <li>
+    <p>Cancel or skip the missing imports, close without saving, and restore the
+catalog:</p>
+
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">mv </span>ontology/catalog-v001.xml.off ontology/catalog-v001.xml
+</code></pre></div>    </div>
+  </li>
+</ol>
+
+<h2 id="test-3-a-mork-family-document">Test 3: a MORK-family document</h2>
+
+<ol>
+  <li>Open <code class="language-plaintext highlighter-rouge">ontology/mork/spec/Executable.ttl</code>.</li>
+  <li>Expected: no missing-import dialog. It imports MORK by its unversioned
+ontology IRI, and MORK imports Foundation by version IRI, so this exercises
+both kinds of catalog entry.</li>
+</ol>
+
+<h2 id="afterwards">Afterwards</h2>
+
+<ol>
+  <li>Quit Protégé without saving any ontology.</li>
+  <li>
+    <p>Run:</p>
+
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git status <span class="nt">--short</span> ontology
+</code></pre></div>    </div>
+
+    <p>Expected: the same output as before you started. Protégé can add entries to
+a catalog when you use its import wizard or save. If a <code class="language-plaintext highlighter-rouge">catalog-v001.xml</code>
+changed, restore the generated version:</p>
+
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run build:ontology-catalog
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>Confirm:</p>
+
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:ontology-catalog
+</code></pre></div>    </div>
+  </li>
+</ol>
+
+<h2 id="reporting">Reporting</h2>
+
+<p>Record the result in the status record of the unit that runs the walkthrough.</p>
+
+<p>If Test 1 shows missing LATTICE imports, Protégé did not follow the stub’s
+relative <code class="language-plaintext highlighter-rouge">nextCatalog</code>. That is the open question in ADR-A88. Report which
+imports were missing. The fallback is to generate full catalogs in every
+directory instead of stubs.</p>

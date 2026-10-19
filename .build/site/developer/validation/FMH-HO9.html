@@ -1,0 +1,52 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-fmh-ho9-documentation-and-close-out">Validation Pack: FMH-HO9, documentation and close-out</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/formal-methods-track-h.html"><code class="language-plaintext highlighter-rouge">formal-methods-track-h</code></a>, slice HO9
+(<a href="/developer/plans/formal-methods-track-h.html#ho9-documentation-and-close-out">plan §3.5</a>). Documents only.
+<strong>Decisions needing confirmation:</strong> accepting ADR-A122, which is the maintainer’s.</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>The documents describe the aggregate model that is built, and say nothing about the model it replaced.</p>
+
+<h2 id="what-changed">What changed</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">ontology/persistence/docs/aggregate-boundaries.md</code> is rewritten from the sketch (§1, §2, §5, §7, §8, §11). It
+explains the three kinds of node, ownership as a property of an edge in its context, the classified shape, the
+delete set, every refusal and the warning, reference data, what the composite strategy generates, graph naming
+and concurrency. It recommends a named graph per aggregate for new deployments. Its examples are domain-neutral
+(projects, milestones, tasks, documents and comments), as substrate documentation must be.</li>
+  <li><code class="language-plaintext highlighter-rouge">ontology/persistence/README.md</code>: §7.1 says what is in an aggregate, which strategy to prefer and why a shape,
+§9’s operation table and §11.3’s worked example use the classified shape, and the example list names the larger
+fixture. The composite example file gains a reference edge, <code class="language-plaintext highlighter-rouge">ex:customer</code>, so the worked example is the file, and <code class="language-plaintext highlighter-rouge">test_boundary.py</code> asserts that the customer is declared and not owned.</li>
+  <li><code class="language-plaintext highlighter-rouge">tools/persistence/README.md</code>: the <code class="language-plaintext highlighter-rouge">gaps</code> subcommand, the owned path and data graph slots, the composite
+limitation entry (rewritten), graph naming, and the new test files.</li>
+  <li><code class="language-plaintext highlighter-rouge">docs/developer/sketches/persistence-profile-substrate.md</code>: Part 4 now begins with a note that ADR-A122
+supersedes it in part. It is not rewritten.</li>
+  <li><code class="language-plaintext highlighter-rouge">docs/developer/INDEX.md</code> and the status record: every HO row is closed, with its pack.</li>
+  <li><code class="language-plaintext highlighter-rouge">persistence gaps</code> over the composite and named-graph examples lists no composite and no graph-naming entry.
+What it still lists is not part of this work: fixed infrastructure graph IRIs, the housekeeping duties, and the
+caller’s version row.</li>
+  <li>ADR-A122’s number was rechecked against <code class="language-plaintext highlighter-rouge">origin/main</code> and every remote branch. It is the same file on <code class="language-plaintext highlighter-rouge">main</code>, and no
+other branch has an A121 or A122. <code class="language-plaintext highlighter-rouge">docs/traceability/matrix.csv</code> names no removed term.</li>
+</ul>
+
+<h2 id="one-command">One command</h2>
+
+<p>Run from the repository root.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:persistence <span class="o">&amp;&amp;</span> mise <span class="nb">exec</span> <span class="nt">--</span> python <span class="nt">-m</span> pytest spikes/persistence-aggregate-ownership <span class="nt">-q</span>
+</code></pre></div></div>
+
+<p>A pass is <code class="language-plaintext highlighter-rouge">1356 passed, 1 xfailed</code> and <code class="language-plaintext highlighter-rouge">18 passed</code>. <code class="language-plaintext highlighter-rouge">mise run check:full-sweep</code> runs the other checks.</p>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<ul>
+  <li>That a reader finds the explanation clear. That is the maintainer’s reading.</li>
+  <li><code class="language-plaintext highlighter-rouge">docs/developer/notes/persistence-aggregate-ownership.md</code> and the review stay as the record of how the design
+was reached, and are not rewritten.</li>
+  <li>ADR-A122’s status. It stays Proposed until the maintainer accepts it with the work package.</li>
+</ul>

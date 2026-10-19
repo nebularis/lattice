@@ -1,0 +1,331 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-od6-the-eligibility-pilot">Validation Pack: OD6, the Eligibility pilot</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/improved-ontology-documentation.html"><code class="language-plaintext highlighter-rouge">improved-ontology-documentation</code></a>, slice OD6
+(<a href="/developer/plans/improved-ontology-documentation.html#od6-the-eligibility-pilot">plan</a>).
+<strong>Implements:</strong> <a href="/architecture/decisions/ADR-A126-literate-specification-layout-and-grammar.html">ADR-A126</a>
+for its first module, with OD-D33 to OD-D36, OD-D42 and OD-D43.
+<strong>Built autonomously</strong>, at the maintainer’s request of 2026-10-18. The decisions taken alone are listed below,
+for the maintainer to keep or overrule, with the 32 drafted definitions.</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>Eligibility’s README is in the 13-section layout, and every file it generates is the same graph as at
+<code class="language-plaintext highlighter-rouge">dab1c790</code> except for the 40 differences in <a href="/developer/validation/OD6-reconciliations.txt">OD6-reconciliations.txt</a>: 32 new
+definitions, and each document’s <code class="language-plaintext highlighter-rouge">dct:description</code> and <code class="language-plaintext highlighter-rouge">dct:creator</code> with their declarations. No axiom, shape
+or individual changed. The Kernel and its Python rendering are unchanged byte for byte.</p>
+
+<h2 id="what-changed">What changed</h2>
+
+<p>Enumeration and the migration check were committed earlier in this slice (<code class="language-plaintext highlighter-rouge">6bb8c4f2</code>). This part adds:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">ontology/eligibility/README.md</code>, migrated:
+    <ul>
+      <li><strong>§2:</strong> the header, prefix and creator tables (OD-D36).</li>
+      <li><strong>§3:</strong> the extraction contract rewritten for the layout, with the catalogue entry unchanged.</li>
+      <li><strong>§4 Overview:</strong> the Core Model introduction and its flowchart, and the generated class diagram, which
+replaces the hand-drawn one.</li>
+      <li><strong>§5 Detailed Design:</strong> the strategy algebra, conditions, questions, the mechanism types, properties,
+evidence bindings, closures and laws, in eight subsections. Prose about the vocabulary (wildcards, decision
+order, directions, operational profiles, value readings) joined the subsection it explains.</li>
+      <li><strong>§6:</strong> 52 entries, 10 individuals tables, the one <code class="language-plaintext highlighter-rouge">All disjoint</code> paragraph, two 6.6 blocks
+(<code class="language-plaintext highlighter-rouge">rdf:Property a owl:Class</code>, and L9 to L17 whole, OD-D35), and the Axiom Index.</li>
+      <li><strong>§7:</strong> the structural shapes generated, and the constraints and rules as hidden blocks naming their files.</li>
+      <li><strong>§8 to §13:</strong> examples, canonicalisation and formalisation as before, dependencies (from §1), release notes
+without slice references, and three open issues.</li>
+    </ul>
+  </li>
+  <li><code class="language-plaintext highlighter-rouge">ontology/eligibility/spec/</code>, <code class="language-plaintext highlighter-rouge">vocab/</code> and <code class="language-plaintext highlighter-rouge">shapes/structural.ttl</code>, regenerated. <code class="language-plaintext highlighter-rouge">constraints.ttl</code>, <code class="language-plaintext highlighter-rouge">rules.ttl</code>,
+<code class="language-plaintext highlighter-rouge">Kernel.thy</code> and <code class="language-plaintext highlighter-rouge">_kernel_defs.py</code> came out byte for byte the same.</li>
+  <li><code class="language-plaintext highlighter-rouge">tools/check_formal_freshness.py</code>. It passed every block to <code class="language-plaintext highlighter-rouge">plan()</code> with the catalogue’s shape files, which a
+README in the layout refuses, since its blocks need section 6 compiled. It reads only the Isabelle outputs, so
+it now passes only the <code class="language-plaintext highlighter-rouge">isabelle-spec</code> blocks.</li>
+  <li><code class="language-plaintext highlighter-rouge">docs/architecture/literate-specifications.md</code>. The status names Eligibility as migrated, enumeration is
+described, 6.6 takes <code class="language-plaintext highlighter-rouge">turtle-vocab</code> blocks, and the migration check is named.</li>
+  <li><code class="language-plaintext highlighter-rouge">docs/developer/validation/OD6-reconciliations.txt</code>, the approved differences.</li>
+</ul>
+
+<h2 id="tests-changed-for-countersigning">Tests changed, for countersigning</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Test</th>
+      <th>Change</th>
+      <th>Why</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>OD1-T1, <code class="language-plaintext highlighter-rouge">tools/test_literate_extract.py</code></td>
+      <td>still asserts every README’s blocks scan as the legacy scanner found them, and asserts no regions or hidden blocks only for a README not in the layout</td>
+      <td>a migrated README has regions and hidden blocks by design</td>
+    </tr>
+    <tr>
+      <td>RC1-T3, <code class="language-plaintext highlighter-rouge">tools/test_lattice_repo_catalogue.py</code></td>
+      <td>compiles a README in the layout before planning, as <code class="language-plaintext highlighter-rouge">main()</code> does, with the shape files from <code class="language-plaintext highlighter-rouge">contract_shapes()</code></td>
+      <td>calling <code class="language-plaintext highlighter-rouge">plan()</code> alone refuses a migrated README, so the test could not check Eligibility’s contract</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Neither test is weakened for an unmigrated README.</p>
+
+<h2 id="decisions-taken-alone-for-the-maintainer">Decisions taken alone, for the maintainer</h2>
+
+<ol>
+  <li><strong>The 32 definitions</strong> (OD-D42), drafted from the README’s prose, are in the table below.</li>
+  <li><strong>The 14 individuals with no comment keep none</strong>: the five match strategies, three compatibility
+operations, three wildcard policies and three decisions. OD-Q5’s answer covered the 32 classes and
+properties. They are listed as an open issue in the README’s §13, and are a short addition if wanted.</li>
+  <li><strong>L1 to L8 name no register</strong>, though the laws diagram places them under <code class="language-plaintext highlighter-rouge">elg:StaticConstraint</code>. We kept the
+graph as it is and recorded this in §13. Adding <code class="language-plaintext highlighter-rouge">elg:lawRegister elg:StaticConstraint</code> to each is a vocab
+change for OD-REL or a later slice.</li>
+  <li><strong>Section 1 stays one sentence</strong>, today’s, so the <code class="language-plaintext highlighter-rouge">dct:description</code> says what Eligibility models and nothing
+more. The imports sentence moved to §11.</li>
+  <li><strong>§10 names no tool.</strong> The paragraph on how the block is extracted, and which files hold the hand-written
+proofs, moved to §3, where the generation is described. The truth tables and the L15 readings stay.</li>
+  <li><strong>One release note, “Not yet released”,</strong> describes the migration, for OD-REL to turn into a version. The
+older notes lost their slice references (CCS, FM-EP, B2.2) and kept their ADRs.</li>
+  <li><strong>No individual or law changed text.</strong> L9’s comment keeps its semicolon, since rewording it changes the
+graph.</li>
+</ol>
+
+<h3 id="the-drafted-definitions">The drafted definitions</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Term</th>
+      <th>Definition</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">elg:ExactCondition</code></td>
+      <td>A condition that admits a candidate equal to one of its required concepts (ExactMatch).</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">elg:SetMembershipCondition</code></td>
+      <td>A condition that admits a candidate that is a member of the set of its required concepts (SetMembership).</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">elg:IntervalCondition</code></td>
+      <td>A condition that admits a candidate whose value lies within its required range set (IntervalContainment).</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">elg:WildcardCondition</code></td>
+      <td>A condition that stands in for one or more dimensions of a match, as its wildcard policy allows (Wildcard).</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">elg:MatchStrategy</code></td>
+      <td>How a condition matches its candidate, one of a closed set of named strategies.</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">elg:CompatibilityOperation</code></td>
+      <td>How a condition’s requirements combine when it states several, one of a closed set of named operations.</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">elg:WildcardSemantics</code></td>
+      <td>The wildcard policy a condition declares, one of a closed set of named policies.</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">elg:Decision</code></td>
+      <td>The three-valued outcome of an admissibility decision: Permitted, Denied or Undetermined.</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">elg:OperationalProfile</code></td>
+      <td>A reference conformance profile that a compiler backend is checked against. Versioned, since the profiles are themselves subject to change control.</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">elg:Law</code></td>
+      <td>A logical law of the Eligibility layer, a property its declarations or decisions must satisfy, not a law in the legal sense. A law may name how it is discharged (elg:lawRegister).</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">elg:LawRegister</code></td>
+      <td>How a logical law of the Eligibility layer is discharged, by formal argument or by a static check of declarations.</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">elg:StepDirection</code></td>
+      <td>The direction in which an evidence step traverses its property.</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">elg:hasCondition</code></td>
+      <td>A condition an admission profile composes.</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">elg:forCondition</code></td>
+      <td>The one condition a question is posed against.</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">elg:requiredRangeSet</code></td>
+      <td>The range set a candidate’s value must lie within, for a condition matching by IntervalContainment.</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">elg:candidateRangeSet</code></td>
+      <td>The range set a question offers as its candidate to a condition matching by IntervalContainment.</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">elg:candidateValue</code></td>
+      <td>The value a question offers as its candidate.</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">elg:matchStrategy</code></td>
+      <td>The one match strategy a condition declares.</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">elg:constrainedByContract</code></td>
+      <td>The scheme contract whose resolved scheme a condition’s candidates are matched against (ADR-A85).</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">elg:compatibilityOperation</code></td>
+      <td>The one compatibility operation a condition declares.</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">elg:wildcardSemantics</code></td>
+      <td>The one wildcard policy a condition declares.</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">elg:forProfile</code></td>
+      <td>The one admission profile a decision is for.</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">elg:hasQuestion</code></td>
+      <td>A question a decision answers.</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">elg:decisionValue</code></td>
+      <td>The one outcome a decision records: Permitted, Denied or Undetermined.</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">elg:lawRegister</code></td>
+      <td>How a logical law of the Eligibility layer is discharged.</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">elg:usesOperationalProfile</code></td>
+      <td>The one operational profile a decision is made under.</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">elg:subjectRoleOccupancy</code></td>
+      <td>The role occupancy of the subject a question is asked about.</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">elg:conditionKey</code></td>
+      <td>The canonical identifier of a condition declaration, for comparison, caching and replay.</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">elg:bindsCondition</code></td>
+      <td>The one condition an evidence binding supplies candidates to.</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">elg:evidenceStep</code></td>
+      <td>A step of an evidence binding’s path.</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">elg:stepProperty</code></td>
+      <td>The one property an evidence step traverses.</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">elg:stepDirection</code></td>
+      <td>The one direction in which an evidence step traverses its property.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="test-cases">Test cases</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>OD6-T1</td>
+      <td>the migrated README / <code class="language-plaintext highlighter-rouge">check:literate-migration -- eligibility dab1c790</code> with the reconciliations / passes with 40 reconciled differences</td>
+      <td>L5</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>OD6-T2</td>
+      <td>the README with <code class="language-plaintext highlighter-rouge">elg:hasQuestion</code> changed to <code class="language-plaintext highlighter-rouge">min 2</code> / the same check / fails with 14 unreconciled differences, in the spec’s restriction and the structural shape</td>
+      <td>L5</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>OD6-T3</td>
+      <td>the migrated README / the extractor with <code class="language-plaintext highlighter-rouge">--check</code> / every generated file and the README’s regions consistent</td>
+      <td>L4</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>OD6-T4</td>
+      <td>the Eligibility, catalogue, extraction and grammar suites, the reference semantics, the compilers and the freshness check / run / pass unchanged, but for the two tests above</td>
+      <td>L3</td>
+      <td>+</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The enumeration and migration-check tests of the slice’s first part are in <code class="language-plaintext highlighter-rouge">tools/test_literate_grammar.py</code>
+and <code class="language-plaintext highlighter-rouge">tools/test_literate_migration_check.py</code>.</p>
+
+<h2 id="commands">Commands</h2>
+
+<p>Run from the repository root. A pass is each command exiting 0, except the last, which reports the three
+unbumped files of OD-D43 and nothing else.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:literate-migration <span class="nt">--</span> eligibility dab1c790 <span class="nt">--reconciliations</span> docs/developer/validation/OD6-reconciliations.txt
+</code></pre></div></div>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise <span class="nb">exec</span> <span class="nt">--</span> python tools/literate_extract.py ontology/eligibility/README.md <span class="nt">--layer</span> eligibility <span class="nt">--root</span> <span class="nb">.</span> <span class="nt">--proofs-root</span> tools/proofs <span class="nt">--reference-root</span> tools/reference <span class="nt">--check</span>
+</code></pre></div></div>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise <span class="nb">exec</span> <span class="nt">--</span> python <span class="nt">-m</span> pytest tools/test_literate_grammar.py tools/test_literate_extract.py tools/test_literate_migration_check.py tools/test_lattice_repo_catalogue.py tools/test_eligibility_examples.py tools/test_parameter_bindings.py <span class="nt">-q</span>
+</code></pre></div></div>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:full-sweep
+</code></pre></div></div>
+
+<h2 id="results">Results</h2>
+
+<p>2026-10-18, run while building, from this worktree:</p>
+
+<ul>
+  <li><strong>OD6-T1:</strong> passes, 40 reconciled differences.</li>
+  <li><strong>OD6-T2:</strong> fails as expected, 14 problems. The README was restored and regenerated, and OD6-T1 passed again.</li>
+  <li><strong>OD6-T3:</strong> 7 extracted artefacts consistent.</li>
+  <li><strong>The six suites above:</strong> 294 passed.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">mise run check:full-sweep</code>:</strong> 13 of 14 checks pass, among them <code class="language-plaintext highlighter-rouge">check:ontology-catalog</code> (1078 passed), <code class="language-plaintext highlighter-rouge">check:persistence</code>, <code class="language-plaintext highlighter-rouge">check:mork-compilers</code>, <code class="language-plaintext highlighter-rouge">check:reference-eligibility</code> (60 passed) and <code class="language-plaintext highlighter-rouge">check:formal-freshness</code>. The ontology versions check fails on exactly the three unbumped Eligibility files OD-D43 expects.</li>
+</ul>
+
+<p>The adversarial probes were not run beyond OD6-T2.</p>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<ul>
+  <li>Version bumps and re-pins. OD-REL (OD-D43).</li>
+  <li>The class diagram was not rendered in a browser for this README. OD5’s render check covered the same
+constructs.</li>
+  <li>Vocabulary’s migration. OD7.</li>
+</ul>
+
+<h2 id="decisions-answered">Decisions answered</h2>
+
+<p>2026-10-18, by the maintainer:</p>
+
+<ul>
+  <li><strong>The definitions</strong> are agreed, with three changes. The first three condition classes say what they admit
+rather than what they match. <code class="language-plaintext highlighter-rouge">elg:LawRegister</code> makes clear that the laws are logical laws of the layer, not
+laws in the legal sense, and <code class="language-plaintext highlighter-rouge">elg:Law</code> and <code class="language-plaintext highlighter-rouge">elg:lawRegister</code> say the same for consistency.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">elg:CompatibilityOperation</code>’s name</strong> is questioned, since what it describes is a composition. Answered
+2026-10-19 as OD-D44 (renamed, and declared on profiles only) and OD-D45 (<code class="language-plaintext highlighter-rouge">elg:DimensionConsistent</code> and
+<code class="language-plaintext highlighter-rouge">elg:E6</code> retired), for slice ELC.</li>
+  <li><strong>Decision 3</strong> (L1 to L8 name no register). OD-REL adds the register.</li>
+</ul>

@@ -1,0 +1,52 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-aor-17-provision-attachment">Validation Pack: AOR-17, provision attachment</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/applied-ontology-readiness.html"><code class="language-plaintext highlighter-rouge">applied-ontology-readiness</code></a>
+<strong>Decision:</strong> <a href="../../architecture/decisions/ADR-A96-instrument-provision-attachment.md">ADR-A96</a>, Accepted</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>An obligation may be expressed by several provisions without a reasoner
+equating them. A deployment can still require single attachment.</p>
+
+<h2 id="test-cases">Test cases</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AOR17-01</td>
+      <td>Instrument spec / parsed / <code class="language-plaintext highlighter-rouge">ins:inProvision</code> is not functional</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AOR17-02</td>
+      <td>an obligation in two provisions / optional <code class="language-plaintext highlighter-rouge">ins:SingleProvisionShape</code> / violation</td>
+      <td>L1</td>
+      <td>-</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="one-command">One command</h2>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:ontology-catalog
+</code></pre></div></div>
+
+<h2 id="artefacts-to-inspect">Artefacts to inspect</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">ontology/instrument/README.md</code> §4 and §7, <code class="language-plaintext highlighter-rouge">spec/instrument.ttl</code>, and the
+optional <code class="language-plaintext highlighter-rouge">shapes/single-provision.ttl</code>.</li>
+  <li>ADR-A07b’s disjointness text, corrected in the same change.</li>
+  <li>Instrument 0.5.0 → 0.6.0 (MINOR, a widened cardinality).</li>
+</ul>

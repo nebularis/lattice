@@ -1,0 +1,722 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="evaluation-context-ledger-combinators-and-environments">Evaluation context: ledger, combinators and environments</h1>
+
+<p><strong>Status:</strong> unplanned sketch, 2026-10-02. No plan owns it yet.
+<strong>Comes back in with:</strong> the <a href="/developer/plans/computable-contract-substrate.html">computable contract substrate</a>
+(<code class="language-plaintext highlighter-rouge">[ccs]</code>: C7b, C8a, C12, C13) and the
+<a href="/developer/plans/applied-insurance-reference.html">applied insurance reference</a> epic (<code class="language-plaintext highlighter-rouge">[air]</code>: Phase 5).
+§13 lists exactly when.
+<strong>Reads with:</strong> <a href="/developer/sketches/contract-amounts.html">contract-amounts.md</a> (the requirements catalogue this answers
+in outline), <a href="/developer/sketches/nested-states-and-history.html">nested-states-and-history.md</a> (the pass this runs in),
+the CCS sketch §6.2 (stratification) and §7.9 (calculated values), and the note
+<a href="/developer/notes/logic-encodings.html">logic-encodings.md</a> (the Datalog dialect of §9).</p>
+
+<hr />
+
+<h2 id="1-premise">1. Premise</h2>
+
+<p>Contracts compute. A licence fee is charged per seat per year. A facility’s drawings may not exceed
+its commitment, and a commitment fee accrues on the undrawn part. An insurance policy pays loss up
+to a sublimit that is part of a section limit that is part of an aggregate, in a stated order, and
+recoveries restore what was paid. A binding authority’s income limit sums premium over every policy
+bound under it.</p>
+
+<p>Each of these has three ingredients that today live in different places or nowhere:</p>
+
+<ul>
+  <li><strong>pure computation over amounts</strong>: the highest of several retentions, a 50% coinsurance split, a
+percentage of a base, a period of three months plus a week per year of service</li>
+  <li><strong>a running record that computation changes</strong>: what has been drawn, paid, earned or exhausted,
+and what a recovery gives back</li>
+  <li><strong>a discipline for running both</strong>: in what order, against which snapshot, with what happens when
+a value is missing, and with a record of what was read</li>
+</ul>
+
+<p>The CCS plan has so far kept computation out of Behaviour, rightly. This sketch proposes where it
+goes: an <strong>evaluation context</strong> that every runtime pass runs in, carrying the running record as
+its state, into which side-effecting computation must be lifted. The name and the shape are
+borrowed from functional programming, where this is a stack of monads. Behaviour’s states stay
+discrete and declared. The evaluation context is what flows through them.</p>
+
+<p>The fixed set of axioms defined in this sketch would have known, documented semantics, that lattice software packages would provide a reference implementation of. Implementors/deployments could extend these axioms, however the semantics (and therefore runtime behaviour) of any extensions would be entirely dependent upon the extender to document and implement. Lattice is NOT attempting to build a general purpose programming language syntax in RDF.</p>
+
+<h2 id="2-what-exists-and-what-is-missing">2. What exists, and what is missing</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Piece</th>
+      <th>Where today</th>
+      <th>Gap</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>quantities, ranges, several currencies, percentages of a base</td>
+      <td>Quantification (ADR-A93, ADR-A95)</td>
+      <td>no operations that combine them</td>
+    </tr>
+    <tr>
+      <td>caps consumed over a period</td>
+      <td>Behaviour <code class="language-plaintext highlighter-rouge">AllowanceDefinition</code>, <code class="language-plaintext highlighter-rouge">AllowanceAccount</code>, <code class="language-plaintext highlighter-rouge">absorptionPolicy</code></td>
+      <td>flat: no “part of and not in addition to”, no credits, no scope wider than one subject</td>
+    </tr>
+    <tr>
+      <td>calculated durations and amounts</td>
+      <td><code class="language-plaintext highlighter-rouge">ins:computedBy</code>, target undefined (CCS sketch §7.9)</td>
+      <td>no target</td>
+    </tr>
+    <tr>
+      <td>order of payment, conditional draws</td>
+      <td><code class="language-plaintext highlighter-rouge">AllMatches</code> over internal transitions in sequence (C11a-Q3, decided 2026-10-02)</td>
+      <td>the computation each draw runs</td>
+    </tr>
+    <tr>
+      <td>Undetermined with a reason</td>
+      <td>each evaluator in its own way (Eligibility, the relation plans)</td>
+      <td>no shared rule for how it passes through a computation</td>
+    </tr>
+    <tr>
+      <td>provenance of a derived value</td>
+      <td>ADR-A92 derived artefacts, read sets</td>
+      <td>per evaluator</td>
+    </tr>
+    <tr>
+      <td>the requirements</td>
+      <td>contract-amounts §1 (58 constructs) and §3 (eight design questions)</td>
+      <td>the design</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="3-the-evaluation-context">3. The evaluation context</h2>
+
+<p>One context, four parts. Each part answers one question about a computation.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Part</th>
+      <th>Functional name</th>
+      <th>Holds</th>
+      <th>Question it answers</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>environment</strong></td>
+      <td>Reader</td>
+      <td>the case’s facts, the stimulus position, the pinned scheme and vocabulary editions, the conversion context at a date</td>
+      <td>what may this computation read?</td>
+    </tr>
+    <tr>
+      <td><strong>ledger</strong></td>
+      <td>State</td>
+      <td>accounts and their balances (§5)</td>
+      <td>what does it change?</td>
+    </tr>
+    <tr>
+      <td><strong>log</strong></td>
+      <td>Writer</td>
+      <td>read sets, PROV records, diagnostics</td>
+      <td>what did it rely on, and why did it decide as it did?</td>
+    </tr>
+    <tr>
+      <td><strong>outcome</strong></td>
+      <td>three-valued failure</td>
+      <td>a value, or Undetermined with a reason, or Denied</td>
+      <td>can it be decided at all?</td>
+    </tr>
+  </tbody>
+</table>
+
+<pre><code class="language-mermaid">flowchart LR
+    subgraph PASS["One pass: one positioned stimulus (nested states sketch §7)"]
+        direction LR
+        ENV["environment&lt;br/&gt;case facts, position p,&lt;br/&gt;scheme editions,&lt;br/&gt;conversion context"]
+        L0["ledger at p"]
+        C["lifted computations&lt;br/&gt;draws, credits, accruals&lt;br/&gt;run in an environment (§7)"]
+        L1["ledger at p, after the pass"]
+        LOG["log&lt;br/&gt;read set, PROV,&lt;br/&gt;diagnostics"]
+        ENV --&gt; C
+        L0 --&gt; C
+        C --&gt; L1
+        C --&gt; LOG
+    end
+    R["regime transitions&lt;br/&gt;(discrete states)"]
+    D["derived triggers&lt;br/&gt;read the new ledger"]
+    L1 --&gt; D --&gt; R
+</code></pre>
+
+<p><strong>A pass is one run of the context.</strong> It commits all its ledger changes with one read set, or
+none of them. That is the unit nested-states §7 already defines: one macrostep per positioned
+stimulus. The context gives it a value semantics: what went in, what came out, what was read.</p>
+
+<p><strong>The context is carried, not owned.</strong> Regimes are finite state machines whose states are declared.
+A ledger holds quantities, which range over infinitely many values. Neither becomes the other. The
+bridge is the threshold regime (CCS sketch §7.4): its states partition a ledger value with a
+<code class="language-plaintext highlighter-rouge">qnt:RangeSet</code>, and its transitions are derived triggers that read the ledger after the pass.</p>
+
+<h2 id="4-pure-computations-combinators">4. Pure computations: combinators</h2>
+
+<p>A <strong>combinator</strong> is a named operation over values with no effect. It reads the environment and,
+where the computation is lifted (§6), the ledger snapshot, and returns a value or Undetermined.
+The set is closed, and every member is data, never code: contract-amounts §3.2 already asks for
+“named, declared operations over accounts, not code”.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Combinator</th>
+      <th>Reads</th>
+      <th>Catalogue</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">sum</code>, <code class="language-plaintext highlighter-rouge">count</code> over a declared population</td>
+      <td>values in one unit</td>
+      <td>A30 income, A32 exposure</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">max</code>, <code class="language-plaintext highlighter-rouge">min</code> of several</td>
+      <td>values in one unit</td>
+      <td>A9 highest limit, A16 and A18 highest retention</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">cap(v, limit)</code>, <code class="language-plaintext highlighter-rouge">floor(v, f)</code>, <code class="language-plaintext highlighter-rouge">excessOver(v, r)</code></td>
+      <td>values in one unit</td>
+      <td>A15 retention, A20 above a retention</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">percentOf(base, rate)</code></td>
+      <td>a value and a rate</td>
+      <td>A35 commission, A42 leader fee, A46 discovery premium (via ADR-A93)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">split(v, shares)</code></td>
+      <td>a value, a share set that sums to the whole</td>
+      <td>A20 coinsurance, A47 several shares</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">proRata(v, part, whole)</code></td>
+      <td>a value and two measures</td>
+      <td>A29 public cap shares, A45 return premium, A56 reinstatement pro rata</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">convert(v, unit, at)</code></td>
+      <td>a value, a conversion context at a date</td>
+      <td>A48 payment currency</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">duration(base, per, count)</code></td>
+      <td>quantities of time</td>
+      <td>CCS §7.9 “three months plus one week per year of service”</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">basis(v, unit, window, grouping)</code></td>
+      <td>a value with its counting unit, window and grouping rule</td>
+      <td>A51 to A55 (contract-amounts §1.7)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Rules every combinator keeps:</strong></p>
+
+<ul>
+  <li><strong>Units never change silently.</strong> Values in different units are not combined without <code class="language-plaintext highlighter-rouge">convert</code>,
+which needs a conversion context. Without one the result is Undetermined (ADR-A95).</li>
+  <li><strong>Undetermined absorbs, except where the answer is already decided.</strong> <code class="language-plaintext highlighter-rouge">max(5M, Undetermined)</code> is
+Undetermined. <code class="language-plaintext highlighter-rouge">cap(v, 0)</code> is 0 whatever <code class="language-plaintext highlighter-rouge">v</code> is. This is Strong Kleene lifted to values, as CEL
+does for expressions (logic-encodings §4).</li>
+  <li><strong>Exact arithmetic.</strong> Decimal, never binary floating point. A rounding rule is a combinator
+argument, never an engine default.</li>
+</ul>
+
+<h2 id="5-the-ledger">5. The ledger</h2>
+
+<p>The ledger generalises Behaviour’s allowances. Its design answers contract-amounts §3.1 (nested
+accounts) without a workaround.</p>
+
+<p><strong>Accounts form a tree.</strong> “Part of and not in addition to” is the parent edge. A draw on an account
+debits that account and every ancestor, as one operation that succeeds or fails as a whole. A
+sublimit inside a section limit inside an aggregate is three accounts on one path.</p>
+
+<pre><code class="language-mermaid">flowchart TB
+    AGG["aggregate&lt;br/&gt;GBP 10M"]
+    SA["Side A&lt;br/&gt;GBP 10M"]
+    SB["Side B&lt;br/&gt;GBP 5M"]
+    REG["regulatory sublimit&lt;br/&gt;GBP 1M"]
+    AGG --&gt; SA
+    AGG --&gt; SB
+    SB --&gt; REG
+    D["draw GBP 400K&lt;br/&gt;on the regulatory sublimit"] -.-&gt; REG
+    REG -. "debits" .-&gt; SB
+    SB -. "debits" .-&gt; AGG
+</code></pre>
+
+<table>
+  <thead>
+    <tr>
+      <th>Construct</th>
+      <th>Ledger form</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>A1, A2, A4, A5 nested sublimits</td>
+      <td>a path of accounts. A draw debits the path</td>
+    </tr>
+    <tr>
+      <td>A3 a lesser cap for one section under a shared limit, reduced by prior payments</td>
+      <td>the section is a child of the shared account with its own smaller balance. Its availability is <code class="language-plaintext highlighter-rouge">min(own, parent's)</code>, a combinator, not a second account</td>
+    </tr>
+    <tr>
+      <td>A6 an excess limit that drops down when the section and other insurance are exhausted</td>
+      <td>a second account, drawn only by a draw whose guard reads the section’s balance as zero (sequential environment)</td>
+    </tr>
+    <tr>
+      <td>A8 a limit shared with another section for one purpose</td>
+      <td>one account with two parents is not a tree. Raised as EC-Q3</td>
+    </tr>
+    <tr>
+      <td>A25 recoveries reinstate limits, less recovery costs</td>
+      <td>a credit: the inverse of a draw, along the same path, of <code class="language-plaintext highlighter-rouge">excessOver(recovery, costs)</code></td>
+    </tr>
+    <tr>
+      <td>A30 to A33 aggregates over bound business</td>
+      <td>a ledger scoped to the authority, not to one instrument: every instrument bound under the power draws on it</td>
+    </tr>
+    <tr>
+      <td>A56 reinstatements</td>
+      <td>a credit, with its premium as a second lifted computation</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Scope.</strong> A ledger belongs to a persistent identity (an instrument, an authority, a programme), as
+regime state does (ADR-A106 decision 5), so it outlives a new version of what it belongs to.</p>
+
+<p><strong>Relation to allowances.</strong> An <code class="language-plaintext highlighter-rouge">AllowanceDefinition</code> is a one-account ledger with a reset
+recurrence. Whether allowances become ledger accounts or stay beside them is EC-Q2.</p>
+
+<h2 id="6-lifting">6. Lifting</h2>
+
+<p>A combinator has no effect. An <strong>effect</strong> in Behaviour changes something. Lifting joins them: an
+effect definition names a computation, and applies its result to the ledger.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Effect</th>
+      <th>Lifts</th>
+      <th>Into</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>draw</td>
+      <td>a computation of the amount</td>
+      <td>a debit on an account path</td>
+    </tr>
+    <tr>
+      <td>credit</td>
+      <td>a computation of the amount</td>
+      <td>a credit on an account path</td>
+    </tr>
+    <tr>
+      <td>accrue</td>
+      <td>a computation over a period (a fee per annum, interest)</td>
+      <td>a debit or credit at each recurrence position</td>
+    </tr>
+    <tr>
+      <td>record a derived value</td>
+      <td>a computation</td>
+      <td>a derived artefact (ADR-A92) with its read set, no ledger change</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Guards stay Eligibility profiles. A guard that reads the ledger reads it through the environment:
+in the sequential environment, as the previous draw left it, and in the parallel one, as the pass
+found it (§7).</p>
+
+<p>Nothing outside a lifted effect changes the ledger. That is the discipline: a computation that has
+not been lifted can be run anywhere, including at design time, because it cannot change anything.</p>
+
+<h2 id="7-environments">7. Environments</h2>
+
+<p>How several lifted computations in one pass compose is a choice of <strong>environment</strong>. Each is a
+different evaluation context, not a flag on one.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Environment</th>
+      <th>Functional reading</th>
+      <th>Each guard reads</th>
+      <th>Ledger changes</th>
+      <th>Needs</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>sequential</strong></td>
+      <td>State threaded through bind (<code class="language-plaintext highlighter-rouge">&gt;&gt;=</code>)</td>
+      <td>the ledger the previous computation left</td>
+      <td>applied one after another, in <code class="language-plaintext highlighter-rouge">bhv:priority</code> order</td>
+      <td>distinct priorities among the competitors</td>
+    </tr>
+    <tr>
+      <td><strong>parallel</strong></td>
+      <td>Reader over a snapshot, Writer of proposed changes, then a merge (applicative <code class="language-plaintext highlighter-rouge">&lt;*&gt;</code>)</td>
+      <td>the ledger as the pass found it</td>
+      <td>proposed together, then merged</td>
+      <td>a merge rule for proposals that touch one account</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Sequential</strong> is order of payment: “Side A first, then B and C only if limits remain” (A24). Each
+draw’s guard sees what the one before it left.</p>
+
+<p><strong>Parallel</strong> is shares: every participant’s draw is computed from the same loss, and a merge decides
+what happens when together they exceed an account. Merge rules, as data:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Merge</th>
+      <th>Effect on an over-subscribed account</th>
+      <th>Catalogue</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>proportional</td>
+      <td>each proposal scaled by <code class="language-plaintext highlighter-rouge">proRata</code> to the balance</td>
+      <td>A29 public cap, pro rata below the statutory aggregate</td>
+    </tr>
+    <tr>
+      <td>in priority order</td>
+      <td>proposals applied by priority until the balance runs out</td>
+      <td>the existing <code class="language-plaintext highlighter-rouge">bhv:Sequential</code> absorption</td>
+    </tr>
+    <tr>
+      <td>refuse</td>
+      <td>no proposal applied, Undetermined with a reason</td>
+      <td>a strict cap with no allocation rule</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Behaviour’s <code class="language-plaintext highlighter-rouge">bhv:absorptionPolicy</code> (Sequential, Proportional) is the first two merge rules, on one
+account. The parallel environment generalises it to a pass.</p>
+
+<p><strong>Decided for C11a (2026-10-02):</strong> <code class="language-plaintext highlighter-rouge">AllMatches</code> over internal transitions ships with the sequential
+environment only. Parallel and its merge rules arrive with this design, without changing C11a.</p>
+
+<p><strong>Not an environment:</strong> taking the highest of several retentions (A16, A18) is <code class="language-plaintext highlighter-rouge">max</code>, a combinator.
+An environment decides how effects compose. A combinator decides a value.</p>
+
+<h2 id="8-stratification-and-time">8. Stratification and time</h2>
+
+<p>Two layers of order, both already in LATTICE, fit together without a new idea.</p>
+
+<p><strong>Within a position: strata.</strong> Relations depend on each other only through explicit edges (CCS
+§6.2, I6, I12), so evaluation runs stratum by stratum. Lifted computations add one kind of edge: a
+guard or a computation that reads an account depends on every effect that writes it earlier in the
+pass. In the sequential environment that is the priority order. In the parallel one, the merge is a
+stratum of its own, after every proposal and before any derived trigger reads the ledger.</p>
+
+<pre><code class="language-mermaid">flowchart TB
+    S0["stratum 0&lt;br/&gt;case facts, records up to p"]
+    S1["stratum 1&lt;br/&gt;relation outcomes, guards"]
+    S2["stratum 2&lt;br/&gt;lifted computations:&lt;br/&gt;proposals, or draws in priority order"]
+    S3["stratum 3&lt;br/&gt;merge (parallel only)&lt;br/&gt;ledger at p"]
+    S4["stratum 4&lt;br/&gt;derived triggers:&lt;br/&gt;threshold regimes, OnBreach"]
+    S0 --&gt; S1 --&gt; S2 --&gt; S3 --&gt; S4
+    S4 -. "transitions enable&lt;br/&gt;further passes at p&lt;br/&gt;(B10: no cycle)" .-&gt; S1
+</code></pre>
+
+<p><strong>Across positions: time.</strong> Positions come from the stimulus log (B3: the engine never reads a
+clock), so the ledger at position p+1 is a function of the ledger at p and the pass at p+1. This is
+the Dedalus pattern the logic-encodings note names (§3.5): Datalog with time as a totally ordered
+attribute, and state change as a rule over successor positions. In the sequential environment the
+priority order is a micro-position inside p: (p, 1), (p, 2) and so on.</p>
+
+<p><strong>Design time is the environment alone.</strong> B8 and DP6 say design-time comparisons never read
+runtime records. In this model that becomes a property of the computation: one that reads only the
+environment can run at design time, and one that reads or changes the ledger cannot. A per-state
+comparison (CCS §6.3) is a computation with a state fixed in its environment. The rule is enforced
+by what a computation is allowed to read, not by a separate check.</p>
+
+<h2 id="9-a-stratified-datalog-backend">9. A stratified Datalog backend</h2>
+
+<p>The configuration this sketch describes (declared states and transitions, closed combinators,
+lifted effects, declared environments, explicit strata, positions as time) is a program in the
+dialect the logic-encodings note recommends: <strong>stratified Datalog with dual predicates for the
+three values, negation over evidence only under a closure licence, stratified aggregation, and
+positions as time</strong> (§3.7 of the note). A configuration written once could then be evaluated by
+any engine for that dialect.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Construct</th>
+      <th>Datalog form</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>environment at p</td>
+      <td>EDB facts: case facts, records with positions up to p, scheme closure (<code class="language-plaintext highlighter-rouge">below/2</code>)</td>
+    </tr>
+    <tr>
+      <td>Permitted, Denied, Undetermined</td>
+      <td>the dual predicates <code class="language-plaintext highlighter-rouge">permitted/2</code>, <code class="language-plaintext highlighter-rouge">denied/2</code>, Undetermined as neither (note §3.2)</td>
+    </tr>
+    <tr>
+      <td>a combinator</td>
+      <td>a rule with arithmetic in its body. <code class="language-plaintext highlighter-rouge">max</code>, <code class="language-plaintext highlighter-rouge">sum</code>, <code class="language-plaintext highlighter-rouge">count</code> as stratified aggregates</td>
+    </tr>
+    <tr>
+      <td>a regime transition at p</td>
+      <td>a rule deriving <code class="language-plaintext highlighter-rouge">occupies(S, State, p')</code> from <code class="language-plaintext highlighter-rouge">occupies(S, From, p)</code>, a matching stimulus and a permitted guard</td>
+    </tr>
+    <tr>
+      <td>the ledger at p</td>
+      <td><code class="language-plaintext highlighter-rouge">balance(Account, V, p)</code>, derived from the balance at the previous position and the pass</td>
+    </tr>
+    <tr>
+      <td>a draw on a path</td>
+      <td><code class="language-plaintext highlighter-rouge">debit(A, X, p)</code> for the account and each ancestor (a recursive closure over the account tree, which is finite)</td>
+    </tr>
+    <tr>
+      <td>sequential environment</td>
+      <td>micro-positions <code class="language-plaintext highlighter-rouge">(p, i)</code> by priority: each draw’s guard reads <code class="language-plaintext highlighter-rouge">balance</code> at <code class="language-plaintext highlighter-rouge">(p, i−1)</code></td>
+    </tr>
+    <tr>
+      <td>parallel environment</td>
+      <td>proposals at p, then a merge rule aggregating them per account in a later stratum</td>
+    </tr>
+    <tr>
+      <td>the log</td>
+      <td>provenance: engines that explain derivations give it directly. Otherwise derivation facts recorded with their premises</td>
+    </tr>
+    <tr>
+      <td>closure licences (ADR-A105)</td>
+      <td>the admissibility check for <code class="language-plaintext highlighter-rouge">not p(...)</code> over evidence (note §3.2)</td>
+    </tr>
+    <tr>
+      <td>B10 (no cycle of derived triggers)</td>
+      <td>the stratification condition itself</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Why this matters.</strong></p>
+
+<ul>
+  <li><strong>One model, several engines.</strong> The SPARQL reference plans (C13) stay the conformance oracle. A
+Datalog engine evaluates the same configuration, compared under the parity suite (ADR-A28), as the
+compiled Eligibility backends are today.</li>
+  <li><strong>Incremental evaluation.</strong> The stimulus log only grows. An engine that maintains derived facts
+incrementally recomputes only what a new position affects, which is exactly the cost profile of a
+contract over its life: many positions, each touching little.</li>
+  <li><strong>Explanations.</strong> A proof tree over the dual predicates is the golden thread (from a decision back
+to the wording version and scheme edition that caused it), produced by the engine, not
+reconstructed after it.</li>
+  <li><strong>Scale.</strong> Aggregates over every policy bound under an authority (A30 to A33) are where SPARQL
+plans strain and Datalog engines are built to perform.</li>
+</ul>
+
+<p><strong>Engines.</strong> RDFox is the natural first candidate: RDF-native, Datalog with stratified negation and
+aggregation, incremental maintenance, explanations, and the transaction support the platform’s
+optimistic concurrency notes already list. Open-source Datalog engines (Nemo among those that read
+RDF, Soufflé among those that do not) are the comparison set. No choice is made here.</p>
+
+<p><strong>Constraints to respect.</strong></p>
+
+<ul>
+  <li><strong>ADR-A83 isolates every rules engine to the test-only harness.</strong> A Datalog engine behind
+LATTICE at runtime needs a decision of its own, beside A83, through the platform’s SPI seam
+(ADR-A71), which also governs licences. RDFox is commercial. EC-Q6.</li>
+  <li><strong>Arithmetic in recursive rules can invent values without end.</strong> Here recursion runs only over
+the account tree and over positions, both finite (positions come from the log), and arithmetic
+stays out of any other recursion. A configuration that breaks this is refused at compile time.</li>
+  <li><strong>Datalog has one model.</strong> Competing interpretations of a clause (logic-encodings G5) stay
+outside it, as the note says.</li>
+  <li><strong>OWL entailment is not read in rule bodies.</strong> Design-time classes stay in the OWL backend
+(ADR-A90). The Datalog program reads asserted and derived facts.</li>
+</ul>
+
+<h2 id="10-what-else-the-context-settles">10. What else the context settles</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Challenge</th>
+      <th>How</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>calculated values (CCS §7.9)</td>
+      <td><code class="language-plaintext highlighter-rouge">ins:computedBy</code> names a combinator expression. Its target is defined</td>
+    </tr>
+    <tr>
+      <td>Undetermined through arithmetic</td>
+      <td>the outcome part of the context, one rule for every evaluator</td>
+    </tr>
+    <tr>
+      <td>atomic passes</td>
+      <td>one run of the context, one commit, one read set</td>
+    </tr>
+    <tr>
+      <td>provenance per pass</td>
+      <td>the log part, a derived artefact per pass (ADR-A92, B1)</td>
+    </tr>
+    <tr>
+      <td>B8 and DP6</td>
+      <td>design-time computations read the environment only (§8)</td>
+    </tr>
+    <tr>
+      <td>currency at a date (A48)</td>
+      <td><code class="language-plaintext highlighter-rouge">convert</code> reads the conversion context from the environment</td>
+    </tr>
+    <tr>
+      <td>aggregates across instruments (A30 to A33)</td>
+      <td>a ledger scoped to the authority</td>
+    </tr>
+    <tr>
+      <td>reinstatement (A25, A56)</td>
+      <td>credits along a path</td>
+    </tr>
+    <tr>
+      <td>conditional and ordered draws</td>
+      <td>lifted computations in the sequential environment</td>
+    </tr>
+    <tr>
+      <td>shares and pro rata (A29, A47)</td>
+      <td>the parallel environment with a proportional merge</td>
+    </tr>
+    <tr>
+      <td>bases (contract-amounts §1.7)</td>
+      <td><code class="language-plaintext highlighter-rouge">basis</code> as a combinator over a counting unit, a window and a grouping rule</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="11-what-c11a-and-c12-must-leave-room-for">11. What C11a and C12 must leave room for</h2>
+
+<p>Decided or to be kept so nothing here is foreclosed:</p>
+
+<ol>
+  <li><strong>A pass is the unit of commit</strong> (nested states §7). C12 commits a pass whole.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">AllMatches</code> composes the effects of every enabled internal transition</strong> into one computation,
+run in the sequential environment, in priority order. Distinct priorities among the competitors.</li>
+  <li><strong>Effects name what they change</strong>, so a later design can type them as lifted computations
+without changing the transitions that carry them.</li>
+  <li><strong>Guards read through the evaluation’s view</strong> of the ledger, never around it, so the parallel
+environment can later give them the snapshot.</li>
+</ol>
+
+<h2 id="12-questions">12. Questions</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Question</th>
+      <th>First thoughts</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>EC-Q1</td>
+      <td>Where combinators live</td>
+      <td>pure operations over quantities fit Quantification, which owns quantities, derived spaces and conversion. Instrument would name them, never define them</td>
+    </tr>
+    <tr>
+      <td>EC-Q2</td>
+      <td>Ledger and allowances</td>
+      <td>an allowance is a one-account ledger with a reset. Generalising allowances into ledger accounts avoids two mechanisms for one idea, at the cost of a breaking change to Behaviour</td>
+    </tr>
+    <tr>
+      <td>EC-Q3</td>
+      <td>Shared limits that are not a tree (A8)</td>
+      <td>an account with two parents, or a single account with two draw purposes. The second keeps the tree</td>
+    </tr>
+    <tr>
+      <td>EC-Q4</td>
+      <td>How a combinator expression is written</td>
+      <td>an RDF expression IR like Eligibility’s compiled IR in <code class="language-plaintext highlighter-rouge">tools/mork_compilers</code>, or the JSON abstract syntax the logic-encodings note proposes (§1, §4), with RDF as its projection</td>
+    </tr>
+    <tr>
+      <td>EC-Q5</td>
+      <td>How fine the log is</td>
+      <td>one derived artefact per pass, or per lifted computation. Per pass is cheaper. Per computation explains more</td>
+    </tr>
+    <tr>
+      <td>EC-Q6</td>
+      <td>A Datalog backend at runtime</td>
+      <td>an ADR beside A83 and under A71, choosing whether the platform may run a rules engine in production, and on what licence terms</td>
+    </tr>
+    <tr>
+      <td>EC-Q7</td>
+      <td>Whether this is a layer</td>
+      <td>the context is evaluation semantics, held by the evaluators. What it needs in the ontology (combinators, ledger, environments, merge rules) may be small enough to sit in Quantification and Behaviour, or may justify a substrate layer of its own</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="13-when-it-comes-back-in">13. When it comes back in</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Unit</th>
+      <th>Slice or phase</th>
+      <th>What it needs from here</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">[ccs]</code></td>
+      <td>C11a phase 2</td>
+      <td>nothing new: §11 is already decided there</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">[ccs]</code></td>
+      <td>C7b</td>
+      <td>the target of <code class="language-plaintext highlighter-rouge">ins:computedBy</code> (§4, §10). If this is not designed by then, C7b keeps <code class="language-plaintext highlighter-rouge">ins:computedBy</code> with an undefined target and Undetermined evaluation, as CCS §7.9 says</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">[ccs]</code></td>
+      <td>C8a</td>
+      <td>term and qualifier templates wait on bases (contract-amounts §1.7, <code class="language-plaintext highlighter-rouge">basis</code> here)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">[ccs]</code></td>
+      <td>C12</td>
+      <td>the pass as a run of the context (§3, §11). The sequential environment</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">[ccs]</code></td>
+      <td>C13</td>
+      <td>relation plans whose scopes read computed values. The Datalog form of §9 as a candidate backend beside the SPARQL reference</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">[air]</code></td>
+      <td>Phase 5</td>
+      <td>A-101 term parameters: limits, retentions, aggregates, reinstatements and bases are ledger accounts, combinators and environments. Phase 5 should not start its contract module without this designed</td>
+    </tr>
+    <tr>
+      <td>contract-amounts</td>
+      <td>its design</td>
+      <td>§3 items 1 to 8 answered in outline here, to be tested against all 58 constructs</td>
+    </tr>
+  </tbody>
+</table>

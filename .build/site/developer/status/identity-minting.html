@@ -1,0 +1,110 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="identity-minting--status">Identity Minting — Status</h1>
+
+<p><strong>Unit ID:</strong> <code class="language-plaintext highlighter-rouge">identity-minting</code>
+<strong>Status:</strong> 🚧 In progress, M0–M3 complete (M2 and M3 on 2026-09-24), M4 next
+<strong>Plan:</strong> <a href="/developer/plans/identity-minting.html">identity-minting.md</a>
+<strong>Sketch:</strong> <a href="/developer/sketches/identity-minting.html">identity-minting.md</a></p>
+
+<h2 id="is-this-unit-complete">Is this unit complete?</h2>
+
+<p><strong>No.</strong> Slices M0–M4 are planned. M4 ends with a walk-through done by hand, from the specification alone.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Slice</th>
+      <th>Scope</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>M0</td>
+      <td>ADR-A82 amendment, ADR-A84, licence tracking, contracts and schemas, anchor vectors, specification skeleton</td>
+      <td>✅ Complete — see <a href="/developer/validation/identity-minting-m0.html">VP</a></td>
+    </tr>
+    <tr>
+      <td>M1</td>
+      <td>Vocabulary, compiler recipe emission, <code class="language-plaintext highlighter-rouge">dal:claimsConstraint</code> checks, <code class="language-plaintext highlighter-rouge">export-recipes</code></td>
+      <td>✅ Complete, 629/629 <code class="language-plaintext highlighter-rouge">tools/persistence</code> tests — see <a href="/developer/validation/identity-minting-m1.html">VP</a></td>
+    </tr>
+    <tr>
+      <td>M2</td>
+      <td>Pinned Unicode 16.0 tables, Python library, vector generation</td>
+      <td>✅ Complete, 51/51 library tests, 7 generated vectors files — see <a href="/developer/validation/identity-minting-m2.html">VP</a></td>
+    </tr>
+    <tr>
+      <td>M3</td>
+      <td>Java library, vector coverage of every recipe feature</td>
+      <td>✅ Complete, 43/43 Java tests, 66/66 Python, 11 vectors files — see <a href="/developer/validation/identity-minting-m3.html">VP</a></td>
+    </tr>
+    <tr>
+      <td>M4</td>
+      <td>Specification completion, READMEs, human walk-through</td>
+      <td>⏳ Not started</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="decisions-awaiting-the-maintainers-review">Decisions awaiting the maintainer’s review</h2>
+
+<p>The plan records six agent design decisions (P1–P6): recipe stored as canonical JSON inside the compiled TTL, <code class="language-plaintext highlighter-rouge">dal:tuplePrefix</code> as a list, position widths as vocabulary, natural-key rendering, the JSON restrictions that make the recipe digest simple, and (taken in M1) <code class="language-plaintext highlighter-rouge">dal:keyConstraint</code> as the source of a derived or natural key, with its scope value first. P1–P6 are now built on; reversing one means reworking M1.</p>
+
+<h2 id="open-question-for-the-maintainer">Open question for the maintainer</h2>
+
+<p><strong>Should <code class="language-plaintext highlighter-rouge">NfkcTrimUppercase</code> and <code class="language-plaintext highlighter-rouge">NfkcTrimLowercase</code> remove default-ignorable code points?</strong> Today they do not, because NFKC keeps them. A SKU typed with a zero-width space therefore mints a different IRI from the same SKU without one, and a key of nothing but default-ignorables mints rather than failing with <code class="language-plaintext highlighter-rouge">EmptyKeyComponent</code>. <code class="language-plaintext highlighter-rouge">NfkcTrimCasefold</code> removes them. Options: (a) keep this, documented as specification §11 pitfall and vector <code class="language-plaintext highlighter-rouge">key-default-ignorable-only-survives</code>, (b) add a <code class="language-plaintext highlighter-rouge">remove_default_ignorable</code> step to both pipelines, which changes every recipe digest using them and needs a Default_Ignorable_Code_Point table. My recommendation is (b), before any adopter mints with these pipelines, since changing it later is a re-key. Both libraries implement the current definition, and the change would touch the tables, both libraries, the anchors and the specification together.</p>
+
+<h2 id="decisions-taken-in-m3-for-the-maintainers-review">Decisions taken in M3 (for the maintainer’s review)</h2>
+
+<ul>
+  <li><strong>An empty secret is no secret</strong> (<code class="language-plaintext highlighter-rouge">MissingSecret</code>), in both libraries.</li>
+  <li><strong>“Blank” means <code class="language-plaintext highlighter-rouge">White_Space</code> only</strong> for the content-addressed <code class="language-plaintext highlighter-rouge">canonicalizer</code> input.</li>
+  <li><strong>Coverage fixture:</strong> <code class="language-plaintext highlighter-rouge">identity-minting-coverage.ttl</code> adds four recipes with generated vectors but no anchors. Anchoring them would need a further hand-authored set per recipe.</li>
+</ul>
+
+<h2 id="found-in-m3-for-persistence-compiler-iri-sync">Found in M3, for <code class="language-plaintext highlighter-rouge">persistence-compiler-iri-sync</code></h2>
+
+<p>A position-derived event profile using <code class="language-plaintext highlighter-rouge">dal:RegistryTokenDerivation</code> must still declare a <code class="language-plaintext highlighter-rouge">dal:digestScheme</code>, because the Slice 3 check requires one on every <code class="language-plaintext highlighter-rouge">dal:DerivedHashIdentity</code> profile. The scheme is unused. Relaxing the check for registry-token events is a small validator change, left for that unit.</p>
+
+<h2 id="m0-delivery-detail">M0 delivery detail</h2>
+
+<ul>
+  <li><strong>ADRs:</strong> ADR-A82 point 5 amended in place, with an amendment note. ADR-A84 (Proposed) written and indexed. ADR numbers A83 (eligibility, renumbered from A81) and A84 recorded in the decisions index.</li>
+  <li><strong>Licence tracking:</strong> <code class="language-plaintext highlighter-rouge">REUSE.toml</code> declares <code class="language-plaintext highlighter-rouge">contracts/**/*.json</code> MPL-2.0. <code class="language-plaintext highlighter-rouge">README.md</code> and <code class="language-plaintext highlighter-rouge">CONTRIBUTING.md</code> now cover <code class="language-plaintext highlighter-rouge">contracts/</code>, <code class="language-plaintext highlighter-rouge">packages/</code>, <code class="language-plaintext highlighter-rouge">platform/</code> and <code class="language-plaintext highlighter-rouge">workers/</code> (MPL-2.0; <code class="language-plaintext highlighter-rouge">platform/</code> per ADR-A71, <code class="language-plaintext highlighter-rouge">workers/</code> as platform code under the same ADR).</li>
+  <li><strong>Contracts:</strong> <code class="language-plaintext highlighter-rouge">contracts/identity/</code> with three schemas, the anchor file (6 sets), <code class="language-plaintext highlighter-rouge">verify-anchors.py</code>, and a README. <code class="language-plaintext highlighter-rouge">mise run check:minting-anchors</code>, included in the aggregate <code class="language-plaintext highlighter-rouge">check</code>.</li>
+  <li><strong>Specification:</strong> <code class="language-plaintext highlighter-rouge">docs/architecture/identity-minting-specification.md</code>, normative for recipes, the digest, Unicode steps, bytes, templates, every strategy, content-addressed caller obligations, secrets, named errors, vectors and verification without LATTICE code. One worked example (derived hash). Pitfalls and the remaining worked examples are M4.</li>
+  <li><strong>Found on the way:</strong> the plan’s list of named errors lacked <code class="language-plaintext highlighter-rouge">PositionOutOfRange</code>, needed for negative positions; added. My first draft of the worked example had a wrongly grouped tuple and a digest I had not computed; both were replaced with computed values before this record was written.</li>
+</ul>
+
+<h2 id="m1-delivery-detail">M1 delivery detail</h2>
+
+<ul>
+  <li><strong>Vocabulary</strong> (<code class="language-plaintext highlighter-rouge">persistence.ttl</code> §12a, §11, <code class="language-plaintext highlighter-rouge">dal:ClaimScheme</code>): <code class="language-plaintext highlighter-rouge">dal:mintedIriTemplate</code>, <code class="language-plaintext highlighter-rouge">dal:keyConstraint</code>, <code class="language-plaintext highlighter-rouge">dal:claimsConstraint</code>, <code class="language-plaintext highlighter-rouge">dal:tuplePrefix</code>, <code class="language-plaintext highlighter-rouge">dal:surrogateKind</code> with <code class="language-plaintext highlighter-rouge">dal:UuidV4Surrogate</code> and <code class="language-plaintext highlighter-rouge">dal:CallerSuppliedSurrogate</code>, <code class="language-plaintext highlighter-rouge">dal:callerSuppliedPattern</code>, <code class="language-plaintext highlighter-rouge">dal:acceptedIriPattern</code>, <code class="language-plaintext highlighter-rouge">dal:epochWidth</code>, <code class="language-plaintext highlighter-rouge">dal:sequenceWidth</code>, <code class="language-plaintext highlighter-rouge">dal:selfReferenceRule</code> with three rules, <code class="language-plaintext highlighter-rouge">dal:canonicalizationWorkBudget</code>, <code class="language-plaintext highlighter-rouge">dal:unicodeVersion</code> (all three pipelines at <code class="language-plaintext highlighter-rouge">16.0.0</code>), <code class="language-plaintext highlighter-rouge">dal:claimKeyId</code>, <code class="language-plaintext highlighter-rouge">dal:claimDigestScheme</code>, <code class="language-plaintext highlighter-rouge">dal:claimIriTemplate</code>, and compiled output <code class="language-plaintext highlighter-rouge">dal:MintingRecipe</code>, <code class="language-plaintext highlighter-rouge">dal:mintingRecipe</code>, <code class="language-plaintext highlighter-rouge">dal:recipeDocument</code>, <code class="language-plaintext highlighter-rouge">dal:recipeDigest</code>, <code class="language-plaintext highlighter-rouge">dal:forRole</code>, <code class="language-plaintext highlighter-rouge">dal:recipeStrategy</code>. The <code class="language-plaintext highlighter-rouge">dal:ContentAddressedIdentity</code> comment states the caller obligations.</li>
+  <li><strong>Shapes:</strong> <code class="language-plaintext highlighter-rouge">dal:MintingRecipeMembersShape</code> (seven constraints), <code class="language-plaintext highlighter-rouge">dal:AcceptedIriPatternRequiredShape</code>, <code class="language-plaintext highlighter-rouge">dal:ClaimSchemeCompletenessShape</code>.</li>
+  <li><strong>Compiler:</strong> new <code class="language-plaintext highlighter-rouge">persistence.recipes</code> (build, seal, export); recipes built after the identity checks and emitted per compiled target; the <code class="language-plaintext highlighter-rouge">ContentAddressedCallerObligations</code> warning; <code class="language-plaintext highlighter-rouge">persistence export-recipes</code>.</li>
+  <li><strong>Fixture:</strong> <code class="language-plaintext highlighter-rouge">identity-minting-anchors.ttl</code>, compiling to the six anchor recipes.</li>
+  <li><strong>Tests:</strong> <code class="language-plaintext highlighter-rouge">test_identity_minting_m1.py</code> (35 cases), the SHACL engine-error guard, and the Slice 3 contract changes listed in the VP.</li>
+</ul>
+
+<h2 id="m2-delivery-detail">M2 delivery detail</h2>
+
+<ul>
+  <li><strong>Tables:</strong> <code class="language-plaintext highlighter-rouge">packages/minting/tools/generate_ucd_tables.py</code> writes eight files per library (assigned, white_space, nfkc_cf, upper, lower, cased, case_ignorable, SOURCES) from the UCD 16.0.0 files. <code class="language-plaintext highlighter-rouge">mise run check:minting-tables</code> regenerates and compares.</li>
+  <li><strong>Library:</strong> <code class="language-plaintext highlighter-rouge">packages/minting/python</code> (<code class="language-plaintext highlighter-rouge">lattice-minting</code>, standard library only): recipe parsing and digest check, the seven pipeline steps, every strategy with a full trace, <code class="language-plaintext highlighter-rouge">verify</code> and the <code class="language-plaintext highlighter-rouge">lattice-mint verify</code> command, and <code class="language-plaintext highlighter-rouge">vectors.generate</code>. Recipes whose claims carry different keys are refused.</li>
+  <li><strong>Anchors:</strong> a seventh set, random surrogates with <code class="language-plaintext highlighter-rouge">randomHex</code>, and the content-addressed <code class="language-plaintext highlighter-rouge">CanonicalizerNotDeclared</code> negative. The file now escapes non-ASCII. 187 independent checks.</li>
+  <li><strong>Vectors:</strong> <code class="language-plaintext highlighter-rouge">mise run build:minting-vectors</code> compiles <code class="language-plaintext highlighter-rouge">identity-minting-anchors.ttl</code> and writes seven recipes and seven vectors files to <code class="language-plaintext highlighter-rouge">packages/minting/testdata</code>, annotated MPL-2.0 in <code class="language-plaintext highlighter-rouge">REUSE.toml</code>.</li>
+  <li><strong>Docs:</strong> specification §6, §6.3–§6.6, §9, §10.1, §11 updated; <code class="language-plaintext highlighter-rouge">packages/minting/README.md</code> and <code class="language-plaintext highlighter-rouge">python/README.md</code>; root README layout and check list.</li>
+  <li><strong>Tasks:</strong> <code class="language-plaintext highlighter-rouge">bootstrap:minting-python</code> and <code class="language-plaintext highlighter-rouge">check:minting-python</code>, both in the aggregates.</li>
+</ul>
+
+<h2 id="m3-delivery-detail">M3 delivery detail</h2>
+
+<ul>
+  <li><strong>Library:</strong> <code class="language-plaintext highlighter-rouge">packages/minting/java</code>, standalone <code class="language-plaintext highlighter-rouge">pom.xml</code> (JDK 25, JUnit 5.11 at test scope), package <code class="language-plaintext highlighter-rouge">org.nebularis.lattice.minting</code>: <code class="language-plaintext highlighter-rouge">Recipe</code>, <code class="language-plaintext highlighter-rouge">Minter</code>, <code class="language-plaintext highlighter-rouge">Minted</code>, <code class="language-plaintext highlighter-rouge">MintException</code> with <code class="language-plaintext highlighter-rouge">MintError</code>, <code class="language-plaintext highlighter-rouge">Ucd</code> (tables from the shared resources, runtime check on U+1C89), <code class="language-plaintext highlighter-rouge">Canonical</code>, a restricted <code class="language-plaintext highlighter-rouge">Json</code> reader and canonical writer, <code class="language-plaintext highlighter-rouge">Conformance</code>, and <code class="language-plaintext highlighter-rouge">Main</code> (<code class="language-plaintext highlighter-rouge">verify</code>).</li>
+  <li><strong>Coverage:</strong> <code class="language-plaintext highlighter-rouge">ontology/persistence/examples/identity-minting-coverage.ttl</code> (lowercase scoped derived hash with base64url, UUID-surrogate claims in <code class="language-plaintext highlighter-rouge">Dual</code> rotation, registry-token events, external registry), compiled with the anchor fixture by <code class="language-plaintext highlighter-rouge">build:minting-vectors</code>. Added to the persistence positive fixtures.</li>
+  <li><strong>Parity:</strong> empty secrets and blank canonicalizers handled the same way in both libraries, and the specification says so.</li>
+  <li><strong>Docs:</strong> <code class="language-plaintext highlighter-rouge">java/README.md</code> (including what the library does not borrow from the JDK), <code class="language-plaintext highlighter-rouge">packages/minting/README.md</code>, specification §6.6, §8, §9, §10.2, <code class="language-plaintext highlighter-rouge">ontology/persistence/README.md</code>, root README.</li>
+  <li><strong>Tasks:</strong> <code class="language-plaintext highlighter-rouge">check:minting-java</code>, and <code class="language-plaintext highlighter-rouge">check:minting</code> (anchors, Python, Java) in the aggregate <code class="language-plaintext highlighter-rouge">check</code>.</li>
+</ul>

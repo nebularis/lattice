@@ -1,0 +1,160 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="track-e-the-prover-programme-sketch">Track E: the prover programme (sketch)</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/plans/formal-methods.html">formal-methods</a> (epic), track E
+<strong>Status:</strong> sketch, 2026-10-06. FM-D2 decided (ADR-A-FM2) and acted on: E1.0 and E1.1 are done,
+see the plan
+<strong>Follows:</strong> track D’s spike, closed by <a href="../../architecture/decisions/ADR-A-FM1-formal-methods-prover-choice.md">ADR-A-FM1</a>
+(Isabelle/HOL), evidenced by <a href="/developer/notes/formal-prover-experiment.html">formal-prover-experiment.md</a>.
+Theory home decided by <a href="../../architecture/decisions/ADR-A-FM2-formal-methods-theory-home.md">ADR-A-FM2</a>
+(<code class="language-plaintext highlighter-rouge">tools/proofs/</code>)
+<strong>Prover:</strong> Isabelle2025-2/HOL (FM-D1)
+<strong>Reads with:</strong> <a href="/developer/sketches/formal-methods.html">formal-methods.md</a> §4 “Track E” and §7 (FM-D2, FM-D4), the
+<a href="/developer/sketches/formal-adequacy-and-architecture.html">adequacy and architecture sketch</a></p>
+
+<h2 id="1-what-changes-from-the-spike">1. What changes from the spike</h2>
+
+<p>Track D’s theories (<code class="language-plaintext highlighter-rouge">spikes/formal-prover/isabelle/Kernel.thy</code>, <code class="language-plaintext highlighter-rouge">Eligibility.thy</code>) hand-restate
+the kernel and Eligibility’s set readings directly in Isabelle syntax, built to compare two
+provers, not to be the normative theory. Track E mechanises the real thing, under two rules the
+epic already states and the spike did not need to follow:</p>
+
+<ul>
+  <li><strong>E1 (epic principle):</strong> “the theory’s closed datatypes are generated from [the literate
+README]. Laws in the theory are hand-written, with their statements extracted back into it.”
+The spike’s <code class="language-plaintext highlighter-rouge">datatype decision = Permitted | Denied | Undetermined</code> was hand-written both ways.
+Track E needs the generation direction working before its proofs can be called the real thing
+rather than a second hand copy of the README’s prose, same as the spike’s.</li>
+  <li><strong>FM-D2 (decided, ADR-A-FM2):</strong> where track E’s theories and build project live. Not <code class="language-plaintext highlighter-rouge">spikes/</code>,
+which this epic’s plan (§7.1) and the repository topology rules (<code class="language-plaintext highlighter-rouge">copilot-instructions.md</code>)
+only allow for an unmerged spike branch. Decided: a new <code class="language-plaintext highlighter-rouge">tools/proofs/</code>, one subdirectory per
+layer, mirroring <code class="language-plaintext highlighter-rouge">ontology/&lt;layer&gt;/</code>’s own names.</li>
+</ul>
+
+<p>The generation direction (which tool, not yet decided, see §4) remains the open question this
+sketch exists to narrow, closed by the plan that follows this sketch, not here.</p>
+
+<h2 id="2-scope-restated-from-the-epic-plan-4">2. Scope, restated from the epic plan (§4)</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Slice</th>
+      <th>Target</th>
+      <th>Depends on</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>E1</td>
+      <td>the kernel (TA1, TA2, as the spike proved them, now README-sourced), the rounding and residual theorem (Quantification), and binding resolution</td>
+      <td>the generation direction (§1), and binding resolution’s design-time model (track C, C2), which does not exist yet</td>
+    </tr>
+    <tr>
+      <td>E2</td>
+      <td>the Eligibility denotation and one SPARQL compiler core, “not a value” mapping to Undetermined as its first theorem, a fragment gate, a cross-store conformance suite</td>
+      <td>E1, track B’s reference (B1, B2) for differential evidence</td>
+    </tr>
+    <tr>
+      <td>E3</td>
+      <td>the combinator algebra</td>
+      <td>E1, E2</td>
+    </tr>
+    <tr>
+      <td>E4</td>
+      <td>the evaluation context, mechanising track B4’s reference</td>
+      <td>B4</td>
+    </tr>
+    <tr>
+      <td>E5</td>
+      <td>the template library in rely and guarantee form</td>
+      <td>E1 to E4, track G’s property language (FM-D7)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>E1 is the first slice to plan in detail (this sketch’s §4). E2 to E5 stay at the epic’s existing
+outline level until E1 is underway.</p>
+
+<h2 id="3-what-the-rounding-and-residual-theorem-and-binding-resolution-need-that-the-spike-did-not">3. What “the rounding and residual theorem” and “binding resolution” need, that the spike did not</h2>
+
+<p>Both are named in the epic plan’s E1 outline without restating their content here, deliberately:</p>
+
+<ul>
+  <li><strong>The rounding and residual theorem</strong> is Quantification’s. Its precise statement needs sourcing
+from <code class="language-plaintext highlighter-rouge">ontology/quantification/README.md</code> and ADR-A93 to ADR-A95 (derived rate spaces, calendar
+binding, alternative bounds) before it can be formalised, not guessed at in a sketch.</li>
+  <li><strong>Binding resolution</strong> is the subject of CCS’s HQ-4 and IMA-D4a, and the epic’s own track C (C2)
+models it at design time, ahead of CCS C8, before track E mechanises it. Track C has not started.
+E1’s binding-resolution theorem should not be drafted ahead of C2’s model: a proof assistant
+mechanising a semantics that is still being decided at design time risks proving the wrong
+thing precisely, which is a worse outcome than not proving it yet.</li>
+</ul>
+
+<p><strong>Consequence for sequencing:</strong> E1 splits into parts with different readiness, not one slice
+started all at once (the plan, §4, below).</p>
+
+<h2 id="4-open-questions-for-the-plan">4. Open questions, for the plan</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Question</th>
+      <th>Candidates</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>generation direction</td>
+      <td>extend <code class="language-plaintext highlighter-rouge">tools/literate_extract.py</code> with an Isabelle-datatype fenced-block kind (parallel to its <code class="language-plaintext highlighter-rouge">turtle-spec</code>/<code class="language-plaintext highlighter-rouge">turtle-vocab</code>/<code class="language-plaintext highlighter-rouge">turtle-shapes</code> blocks), or a separate generator</td>
+      <td><code class="language-plaintext highlighter-rouge">literate_extract.py</code>’s existing block/file-count contract (one block per generated file, in document order) is proven infrastructure; reusing its shape is the lower-risk default unless Isabelle’s datatype syntax does not fit it</td>
+    </tr>
+    <tr>
+      <td>image route</td>
+      <td>Isabelle has no container image in this spike (deferred, our instruction, 2026-10-06, to conserve tokens)</td>
+      <td>build one before E1’s claims are recorded, per epic E9’s “only an image route’s verdict is recorded”, or accept native-only evidence for E1 specifically and revisit before gate E</td>
+    </tr>
+    <tr>
+      <td>binding resolution’s timing</td>
+      <td>start E1’s kernel and rounding/residual parts now, defer binding resolution until track C’s C2 model exists</td>
+      <td>do the two independent parts first (§3), track C’s timing decides the third</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="5-compatibility-with-the-improved-ontology-documentation-sketch">5. Compatibility with the improved-ontology-documentation sketch</h2>
+
+<p>A separate, unplanned sketch (<code class="language-plaintext highlighter-rouge">docs/developer/sketches/improved-ontology-documentation.md</code>,
+2026-10-02) proposes injecting README narrative into generated <code class="language-plaintext highlighter-rouge">.ttl</code> files’ own annotation
+properties, via a new pair of HTML-comment markers, and floats removing generated <code class="language-plaintext highlighter-rouge">.ttl</code> from git
+entirely, generating it at bootstrap instead. Track E is not adopting it (out of scope, not this
+epic’s decision to make), but ADR-A-FM2 confirms the two are compatible, not competing:</p>
+
+<ul>
+  <li>The comment-marker mechanism is <strong>orthogonal</strong> to the fenced-code-block mechanism
+<code class="language-plaintext highlighter-rouge">literate_extract.py</code> already uses and that track E’s own generation direction (§4, above) will
+extend or parallel: one demarcates narrative prose for an annotation property, the other
+demarcates a block of normative syntax (Turtle today, Isabelle once E1.0 decides how). Adopting
+one does not require touching the other, and nothing E1.0 does should assume README prose
+<strong>outside</strong> fenced blocks is free of such markers later: an Isabelle-block generator should skip
+HTML comments the same way a Turtle-block generator would need to, not choke on them.</li>
+  <li>If the “remove generated <code class="language-plaintext highlighter-rouge">.ttl</code> from git” idea is ever taken up, it is a repository-wide
+reproducibility change far larger than track E and deserves its own ADR regardless; track E’s
+own generated <code class="language-plaintext highlighter-rouge">tools/proofs/&lt;layer&gt;/*.thy</code> should be designed to tolerate that outcome without
+rework (generated from the README on demand, not hand-maintained), which E1.0’s generation
+direction already requires for its own reasons (epic principle E1).</li>
+  <li>The sketch’s own nested-marker example has a real ambiguity worth fixing before anyone
+implements it (an inner <code class="language-plaintext highlighter-rouge">exclude</code> block reuses its enclosing block’s <code class="language-plaintext highlighter-rouge">id</code> rather than a distinct
+one, relying on the end marker’s proximity to resolve which block closes): not a reason to avoid
+the idea, a reason its own eventual implementation should settle on stack-based nesting (no id
+matching needed to close the innermost open marker) rather than id-matched pairs once ids can
+repeat.</li>
+</ul>
+
+<h2 id="6-non-goals-unchanged-from-the-epic">6. Non-goals, unchanged from the epic</h2>
+
+<p><code class="language-plaintext highlighter-rouge">DesignEnv</code>/<code class="language-plaintext highlighter-rouge">RunEnv</code> and Behaviour’s macrostep (track B4, not yet built). Instrument assurance
+(track G). Any native-tooling decision (track F). Binding resolution’s own design-time model
+(track C’s job, not track E’s, though E1 consumes its output).</p>

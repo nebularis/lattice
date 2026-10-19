@@ -1,0 +1,234 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="identity-minting--plan">Identity Minting — Plan</h1>
+
+<p><strong>Unit ID:</strong> <code class="language-plaintext highlighter-rouge">identity-minting</code>
+<strong>Status record:</strong> <a href="/developer/status/identity-minting.html">identity-minting.md</a>
+<strong>Sketch:</strong> <a href="/developer/sketches/identity-minting.html">identity-minting.md</a> (decisions A–E, Q1–Q7, all settled 2026-09-23)
+<strong>Governing ADRs:</strong> ADR-A82 (point 5 amended by M0), ADR-A84 (new, M0), ADR-A79, ADR-A78, ADR-A77, ADR-A71, ADR-A29
+<strong>Depends on:</strong> <a href="/developer/status/toolchain-jdk25-python314.html"><code class="language-plaintext highlighter-rouge">toolchain-jdk25-python314</code></a> (✅ done), <code class="language-plaintext highlighter-rouge">persistence-compiler-iri-sync</code> Slice 3 (✅ done)
+<strong>Mode:</strong> autonomous (granted 2026-09-23), pausing only for genuinely new design decisions</p>
+
+<h2 id="scope">Scope</h2>
+
+<p>Turn a resolved <code class="language-plaintext highlighter-rouge">dal:IdentityProfile</code> into a self-contained minting recipe, publish conformance vectors for it, and provide pure Java and Python minting libraries that pass those vectors, together with a normative specification thorough enough for an implementor who uses neither library. Out of scope: publishing artefacts, RDF canonicalization inside the libraries, key management, the shared Rust core (deferred, <a href="/developer/sketches/identity-minting-shared-core.html">sketch</a>).</p>
+
+<h2 id="design-decisions-taken-in-writing-this-plan-for-the-maintainers-review">Design decisions taken in writing this plan (for the maintainer’s review)</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Decision</th>
+      <th>Why</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>P1</td>
+      <td>The compiled profile stores each recipe as its <strong>canonical JSON document</strong>, a literal of datatype <code class="language-plaintext highlighter-rouge">rdf:JSON</code> on a <code class="language-plaintext highlighter-rouge">dal:MintingRecipe</code> node, alongside a few queryable properties (<code class="language-plaintext highlighter-rouge">dal:forRole</code>, <code class="language-plaintext highlighter-rouge">dal:recipeStrategy</code>, <code class="language-plaintext highlighter-rouge">dal:recipeDigest</code>). The sketch’s §5.3 proposed mirroring every recipe field as RDF properties</td>
+      <td>One serialization instead of two that must be kept in step by hand. The TTL stays canonical and self-contained (decision C), and <code class="language-plaintext highlighter-rouge">export-recipes</code> becomes extraction plus vector generation</td>
+    </tr>
+    <tr>
+      <td>P2</td>
+      <td><code class="language-plaintext highlighter-rouge">dal:tuplePrefix</code> (an <code class="language-plaintext highlighter-rouge">rdf:List</code> of strings) replaces the sketch’s single <code class="language-plaintext highlighter-rouge">dal:domainSeparationLabel</code></td>
+      <td>The guide’s own derived-hash example prefixes three literal components (<code class="language-plaintext highlighter-rouge">"iri"</code>, <code class="language-plaintext highlighter-rouge">"v1"</code>, <code class="language-plaintext highlighter-rouge">"sku"</code>). A list is the general form</td>
+    </tr>
+    <tr>
+      <td>P3</td>
+      <td>New terms <code class="language-plaintext highlighter-rouge">dal:epochWidth</code> and <code class="language-plaintext highlighter-rouge">dal:sequenceWidth</code> on <code class="language-plaintext highlighter-rouge">dal:IdentityProfile</code>, both required for <code class="language-plaintext highlighter-rouge">dal:PositionDerivedEvent</code></td>
+      <td><code class="language-plaintext highlighter-rouge">iri-identity-patterns.md</code> §10.2 requires one exact width per profile, and the vocabulary has no term for it</td>
+    </tr>
+    <tr>
+      <td>P4</td>
+      <td>A natural key renders into its IRI template’s <code class="language-plaintext highlighter-rouge">{key}</code> slot as its normalized components, each percent-encoded (RFC 3986 unreserved characters kept, everything else <code class="language-plaintext highlighter-rouge">%XX</code> in uppercase hex, from UTF-8), joined by <code class="language-plaintext highlighter-rouge">/</code></td>
+      <td>Reversible and unambiguous: a <code class="language-plaintext highlighter-rouge">/</code> inside a component is itself percent-encoded (<code class="language-plaintext highlighter-rouge">iri-identity-patterns.md</code> §7.2)</td>
+    </tr>
+    <tr>
+      <td>P6</td>
+      <td><em>(taken in M1)</em> Derived-hash and natural-key identities name their key through <strong><code class="language-plaintext highlighter-rouge">dal:keyConstraint</code></strong>, pointing at the <code class="language-plaintext highlighter-rouge">dal:UniquenessConstraint</code> whose key properties, scope and pipeline they use, just as a claimed identity uses <code class="language-plaintext highlighter-rouge">dal:claimsConstraint</code>. A key with a scope property puts the scope value first, as given</td>
+      <td>The plan listed “key properties” in the recipe without saying where they come from. Reusing the constraint makes the derived IRI and the uniqueness check normalize the key identically, and including the scope stops two tenants’ identical natural keys minting one IRI</td>
+    </tr>
+    <tr>
+      <td>P5</td>
+      <td>Recipes contain only strings, integers, booleans, <code class="language-plaintext highlighter-rouge">null</code>, arrays and objects with ASCII keys. The recipe digest is SHA-256 over RFC 8785 (JCS) canonical JSON of the recipe with <code class="language-plaintext highlighter-rouge">recipeDigest</code> removed</td>
+      <td>Under those restrictions JCS needs no number-formatting code, so every implementation, including one written from the specification alone, can compute it</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="recipe-format-normative-content-fixed-in-m0-schema-contractsidentityrecipeschemajson">Recipe format (normative content fixed in M0, schema <code class="language-plaintext highlighter-rouge">contracts/identity/recipe.schema.json</code>)</h2>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>recipe = {
+  recipeFormat:   "lattice-minting-recipe/1",
+  recipeDigest:   "sha256:" + lowercase hex,
+  role:           a dal:ResourceRole local name,
+  target:         { class: IRI, deployment: IRI | null },
+  strategy:       a dal:IdentityStrategy local name,
+  iriTemplate:    string with named slots,
+  ... strategy-specific members (below) ...,
+  callerObligations: [ { id, text } ]      (content-addressed only)
+}
+pipeline = { id: "NfkcTrimCasefold" | "NfkcTrimUppercase" | "NfkcTrimLowercase",
+             unicodeVersion: "16.0.0",
+             steps: [ "reject_unassigned", ... ] }   explicit, never implied by the id
+digest   = { function: "SHA-256", widthBits: positive multiple of 8, encoding: "lowercase-hex" | "base32" | "base64url" }
+mac      = { function: "HMAC-SHA-256", widthBits, encoding }
+</code></pre></div></div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Strategy</th>
+      <th>Strategy-specific members</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>NaturalKeyIdentity</td>
+      <td><code class="language-plaintext highlighter-rouge">key: { properties: [IRI…], scopeProperty: IRI \| null, pipeline }</code> from <code class="language-plaintext highlighter-rouge">dal:keyConstraint</code> (P6), slot <code class="language-plaintext highlighter-rouge">{key}</code> rendered per P4</td>
+    </tr>
+    <tr>
+      <td>DerivedHashIdentity</td>
+      <td><code class="language-plaintext highlighter-rouge">key</code>, <code class="language-plaintext highlighter-rouge">tuplePrefix: [string…]</code>, <code class="language-plaintext highlighter-rouge">tupleEncoding: "length-prefixed-utf8/1"</code>, <code class="language-plaintext highlighter-rouge">digest</code>, slot <code class="language-plaintext highlighter-rouge">{digest}</code></td>
+    </tr>
+    <tr>
+      <td>SurrogateClaimedIdentity</td>
+      <td><code class="language-plaintext highlighter-rouge">surrogate: { kind: "UuidV4Surrogate" } \| { kind: "CallerSuppliedSurrogate", pattern }</code>, slot <code class="language-plaintext highlighter-rouge">{surrogate}</code>, and <code class="language-plaintext highlighter-rouge">claims: [claimRecipe…]</code> (two during a <code class="language-plaintext highlighter-rouge">dal:Dual</code> rotation)</td>
+    </tr>
+    <tr>
+      <td>claimRecipe</td>
+      <td><code class="language-plaintext highlighter-rouge">constraintId</code>, <code class="language-plaintext highlighter-rouge">schemeVersion</code>, <code class="language-plaintext highlighter-rouge">keyId</code>, <code class="language-plaintext highlighter-rouge">schemeState</code>, <code class="language-plaintext highlighter-rouge">key: { properties, scopeProperty \| null, pipeline }</code>, <code class="language-plaintext highlighter-rouge">tupleEncoding</code>, <code class="language-plaintext highlighter-rouge">mac</code>, <code class="language-plaintext highlighter-rouge">iriTemplate</code> with slots <code class="language-plaintext highlighter-rouge">{constraintId}</code>, <code class="language-plaintext highlighter-rouge">{schemeVersion}</code>, <code class="language-plaintext highlighter-rouge">{mac}</code>. MAC input: <code class="language-plaintext highlighter-rouge">enc([schemeVersion, constraintId, scopeValue or "", ...normalized key components])</code></td>
+    </tr>
+    <tr>
+      <td>RandomSurrogateIdentity</td>
+      <td><code class="language-plaintext highlighter-rouge">surrogate: { kind: "UuidV4Surrogate" }</code>, slot <code class="language-plaintext highlighter-rouge">{surrogate}</code></td>
+    </tr>
+    <tr>
+      <td>PositionDerivedEvent (event strategy on any role)</td>
+      <td><code class="language-plaintext highlighter-rouge">namespace: { derivation: "HashedTargetDerivation", digest } \| { derivation: "RegistryTokenDerivation" }</code>, <code class="language-plaintext highlighter-rouge">epochWidth</code>, <code class="language-plaintext highlighter-rouge">sequenceWidth</code>, slots <code class="language-plaintext highlighter-rouge">{namespace}</code>, <code class="language-plaintext highlighter-rouge">{epoch}</code>, <code class="language-plaintext highlighter-rouge">{seq}</code></td>
+    </tr>
+    <tr>
+      <td>ContentAddressedIdentity</td>
+      <td><code class="language-plaintext highlighter-rouge">digest</code>, <code class="language-plaintext highlighter-rouge">canonicalization: { algorithm: "RDFC-1.0", serialization: "canonical-n-quads-utf8" }</code>, <code class="language-plaintext highlighter-rouge">selfReference</code>, <code class="language-plaintext highlighter-rouge">workBudget</code>, <code class="language-plaintext highlighter-rouge">verifyFullDigest</code>, <code class="language-plaintext highlighter-rouge">callerObligations</code>, slot <code class="language-plaintext highlighter-rouge">{digest}</code></td>
+    </tr>
+    <tr>
+      <td>AdoptedIdentity, ExternalRegistryIdentity</td>
+      <td><code class="language-plaintext highlighter-rouge">namingAuthority</code>, <code class="language-plaintext highlighter-rouge">acceptedPattern</code> (validation only, never minted)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Pipeline steps: <code class="language-plaintext highlighter-rouge">reject_unassigned</code> (always first), <code class="language-plaintext highlighter-rouge">nfc</code>, <code class="language-plaintext highlighter-rouge">nfkc</code>, <code class="language-plaintext highlighter-rouge">nfkc_casefold</code>, <code class="language-plaintext highlighter-rouge">trim_white_space</code> (the Unicode <code class="language-plaintext highlighter-rouge">White_Space</code> property, not a language’s own notion), <code class="language-plaintext highlighter-rouge">uppercase_full</code>, <code class="language-plaintext highlighter-rouge">lowercase_full</code>. The three pipeline ids expand to: <code class="language-plaintext highlighter-rouge">NfkcTrimCasefold</code> = reject_unassigned, nfkc_casefold, trim_white_space; <code class="language-plaintext highlighter-rouge">NfkcTrimUppercase</code> = reject_unassigned, nfkc, trim_white_space, uppercase_full, nfkc; <code class="language-plaintext highlighter-rouge">NfkcTrimLowercase</code> = reject_unassigned, nfkc, trim_white_space, lowercase_full, nfkc.</p>
+
+<p>Tuple encoding <code class="language-plaintext highlighter-rouge">length-prefixed-utf8/1</code>: for each component, the decimal count of its UTF-8 <strong>bytes</strong> in ASCII, <code class="language-plaintext highlighter-rouge">:</code>, then the bytes. Output encodings: <code class="language-plaintext highlighter-rouge">lowercase-hex</code>, RFC 4648 <code class="language-plaintext highlighter-rouge">base32</code> in its standard uppercase alphabet with padding removed, RFC 4648 <code class="language-plaintext highlighter-rouge">base64url</code> with padding removed. Truncation keeps the first <code class="language-plaintext highlighter-rouge">widthBits / 8</code> bytes. UUIDv4 renders lowercase, 8-4-4-4-12.</p>
+
+<p>Named errors (the negative vectors use them): <code class="language-plaintext highlighter-rouge">UnassignedCodePoint</code>, <code class="language-plaintext highlighter-rouge">EmptyKeyComponent</code>, <code class="language-plaintext highlighter-rouge">MissingKeyComponent</code>, <code class="language-plaintext highlighter-rouge">MissingSecret</code>, <code class="language-plaintext highlighter-rouge">PatternMismatch</code>, <code class="language-plaintext highlighter-rouge">PositionOutOfRange</code>, <code class="language-plaintext highlighter-rouge">RecipeDigestMismatch</code>, <code class="language-plaintext highlighter-rouge">UnsupportedRecipeFormat</code>, <code class="language-plaintext highlighter-rouge">RuntimeUnicodeTooOld</code>.</p>
+
+<h2 id="slices">Slices</h2>
+
+<h3 id="m0--decisions-contracts-and-anchors">M0 — Decisions, contracts and anchors</h3>
+
+<ol>
+  <li><strong>ADR-A82</strong>: amend point 5 in place, with a dated amendment note: “compiles them to minting recipes, conformance vectors, validation and runtime requirements. Executing a recipe is a runtime concern, served by the standalone minting libraries (ADR-A84) and by the normative specification for implementors who use neither.”</li>
+  <li><strong>ADR-A84</strong> (Proposed): standalone minting libraries. Placement <code class="language-plaintext highlighter-rouge">packages/minting/{java,python}</code>. Standalone builds with no runtime dependency beyond JDK 25 or the Python 3.14 standard library. Pinned Unicode 16.0 tables. MPL-2.0. Conformance by vectors and anchors. Recipes as the only input. The shared-core alternative recorded as deferred.</li>
+  <li><strong>Licence tracking</strong>: <code class="language-plaintext highlighter-rouge">REUSE.toml</code> annotating <code class="language-plaintext highlighter-rouge">contracts/**</code> as MPL-2.0 (JSON files cannot carry comment headers); <code class="language-plaintext highlighter-rouge">README.md</code> Licensing and <code class="language-plaintext highlighter-rouge">CONTRIBUTING.md</code>’s licence table extended to cover <code class="language-plaintext highlighter-rouge">contracts/</code>, <code class="language-plaintext highlighter-rouge">packages/</code> and <code class="language-plaintext highlighter-rouge">platform/</code> (MPL-2.0, the last per ADR-A71).</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">contracts/identity/</code></strong>: <code class="language-plaintext highlighter-rouge">README.md</code>; <code class="language-plaintext highlighter-rouge">recipe.schema.json</code> and <code class="language-plaintext highlighter-rouge">vectors.schema.json</code> (JSON Schema 2020-12, following <code class="language-plaintext highlighter-rouge">contracts/events</code> conventions); <code class="language-plaintext highlighter-rouge">anchors.schema.json</code>; <code class="language-plaintext highlighter-rouge">anchor-vectors.json</code>; <code class="language-plaintext highlighter-rouge">verify-anchors.py</code> (Python standard library plus the <code class="language-plaintext highlighter-rouge">openssl</code> command line tool), which recomputes every anchor byte and reports each failure, sharing no code with the libraries.</li>
+  <li><strong>Anchor corpus</strong>: one recipe per deterministic strategy (derived hash, claim, natural key, position-derived event, content-addressed on given bytes), plus pipeline anchors whose expected normalized strings each cite the UCD 16.0 line that justifies them (for example <code class="language-plaintext highlighter-rouge">FB01; NFKC_CF; 0066 0069</code>).</li>
+  <li><strong>Specification skeleton</strong>: <code class="language-plaintext highlighter-rouge">docs/architecture/identity-minting-specification.md</code> with the normative sections M0 can already fix (recipe format, pipelines and steps, tuple encoding, output encodings, templates, named errors, vector format, verification procedure, caller obligations for content-addressed identity). The worked example and pitfalls are completed in M4.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">mise</code> task</strong> <code class="language-plaintext highlighter-rouge">check:minting-anchors</code> running <code class="language-plaintext highlighter-rouge">verify-anchors.py</code>, included in the aggregate <code class="language-plaintext highlighter-rouge">check</code> task.</li>
+</ol>
+
+<p>Validation: the schemas validate the anchor file; <code class="language-plaintext highlighter-rouge">verify-anchors.py</code> passes with OpenSSL 3 and with LibreSSL; corrupted anchors fail it (probes).</p>
+
+<h3 id="m1--vocabulary-and-compiler-emission">M1 — Vocabulary and compiler emission</h3>
+
+<ol>
+  <li><strong>Vocabulary</strong> (<code class="language-plaintext highlighter-rouge">ontology/persistence/spec/persistence.ttl</code> §12 and §11): <code class="language-plaintext highlighter-rouge">dal:mintedIriTemplate</code>, <code class="language-plaintext highlighter-rouge">dal:claimsConstraint</code>, <code class="language-plaintext highlighter-rouge">dal:tuplePrefix</code>, <code class="language-plaintext highlighter-rouge">dal:surrogateKind</code> with <code class="language-plaintext highlighter-rouge">dal:UuidV4Surrogate</code> and <code class="language-plaintext highlighter-rouge">dal:CallerSuppliedSurrogate</code>, <code class="language-plaintext highlighter-rouge">dal:callerSuppliedPattern</code>, <code class="language-plaintext highlighter-rouge">dal:acceptedIriPattern</code>, <code class="language-plaintext highlighter-rouge">dal:epochWidth</code>, <code class="language-plaintext highlighter-rouge">dal:sequenceWidth</code>, <code class="language-plaintext highlighter-rouge">dal:unicodeVersion</code> on the three pipeline individuals (all <code class="language-plaintext highlighter-rouge">"16.0.0"</code>), and on <code class="language-plaintext highlighter-rouge">dal:ClaimScheme</code>: <code class="language-plaintext highlighter-rouge">dal:claimKeyId</code>, <code class="language-plaintext highlighter-rouge">dal:claimDigestScheme</code>, <code class="language-plaintext highlighter-rouge">dal:claimIriTemplate</code>. Compiled output: <code class="language-plaintext highlighter-rouge">dal:MintingRecipe</code>, <code class="language-plaintext highlighter-rouge">dal:mintingRecipe</code>, <code class="language-plaintext highlighter-rouge">dal:recipeDocument</code>, <code class="language-plaintext highlighter-rouge">dal:recipeDigest</code>, <code class="language-plaintext highlighter-rouge">dal:forRole</code>, <code class="language-plaintext highlighter-rouge">dal:recipeStrategy</code>. The <code class="language-plaintext highlighter-rouge">dal:ContentAddressedIdentity</code> comment states the caller obligations.</li>
+  <li><strong>Shapes</strong>: required members per strategy (template; tuple prefix and digest for derived hash; surrogate kind for claimed; pattern for caller-supplied; widths for position-derived; claim scheme completeness).</li>
+  <li><strong>Compiler</strong>: build a recipe per resolved identity role; compute its JCS digest; emit <code class="language-plaintext highlighter-rouge">dal:MintingRecipe</code>. <code class="language-plaintext highlighter-rouge">dal:claimsConstraint</code> checks replace Slice 3’s interim “at least one constraint” check (named constraint exists, applies to the same target, has a complete claim scheme). A <code class="language-plaintext highlighter-rouge">ContentAddressedCallerObligations</code> warning on every target resolving that strategy.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">persistence export-recipes &lt;compiled.ttl&gt; --out &lt;dir&gt;</code></strong>: writes one JSON recipe per <code class="language-plaintext highlighter-rouge">dal:MintingRecipe</code>. Vector generation is added in M2.</li>
+  <li><strong>Fixtures and tests</strong>: one positive fixture per strategy; negatives for each new refusal; recipe JSON validated against <code class="language-plaintext highlighter-rouge">contracts/identity/recipe.schema.json</code>; recipe digest recomputed independently in the test; determinism under triple reordering.</li>
+</ol>
+
+<h3 id="m2--python-library-and-vector-generation">M2 — Python library and vector generation</h3>
+
+<ol>
+  <li><strong><code class="language-plaintext highlighter-rouge">packages/minting/python</code></strong>: <code class="language-plaintext highlighter-rouge">pyproject.toml</code> with no dependencies, package <code class="language-plaintext highlighter-rouge">lattice_minting</code>: recipe parsing and digest check, the steps, tuple encoding, digest and MAC, output encodings, templates, <code class="language-plaintext highlighter-rouge">mint</code>, <code class="language-plaintext highlighter-rouge">trace</code>, <code class="language-plaintext highlighter-rouge">Conformance.verify</code>, a start-up check that the runtime’s <code class="language-plaintext highlighter-rouge">unicodedata</code> is at least 16.0.0 (<code class="language-plaintext highlighter-rouge">RuntimeUnicodeTooOld</code>).</li>
+  <li><strong>Pinned tables</strong>: a generator script fetching UCD 16.0.0 (<code class="language-plaintext highlighter-rouge">DerivedNormalizationProps.txt</code>, <code class="language-plaintext highlighter-rouge">UnicodeData.txt</code>, <code class="language-plaintext highlighter-rouge">SpecialCasing.txt</code>, <code class="language-plaintext highlighter-rouge">PropList.txt</code>, <code class="language-plaintext highlighter-rouge">DerivedAge.txt</code> or equivalent for assignment), recording source URLs and SHA-256 of each file, and emitting data modules for Python and data resources for Java from the same run.</li>
+  <li><strong>Vectors</strong>: <code class="language-plaintext highlighter-rouge">export-recipes</code> gains vector generation, using <code class="language-plaintext highlighter-rouge">lattice_minting</code> as the reference implementation, covering the sketch’s §8.2 corpus per recipe.</li>
+  <li><strong>Tests</strong>: anchors, generated vectors, negative vectors, and a property test that every pipeline is idempotent.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">mise</code> tasks</strong> <code class="language-plaintext highlighter-rouge">bootstrap:minting-python</code>, <code class="language-plaintext highlighter-rouge">check:minting-python</code>.</li>
+</ol>
+
+<h3 id="m3--java-library">M3 — Java library</h3>
+
+<ol>
+  <li><strong><code class="language-plaintext highlighter-rouge">packages/minting/java</code></strong>: standalone <code class="language-plaintext highlighter-rouge">pom.xml</code> (not a child of <code class="language-plaintext highlighter-rouge">platform/pom.xml</code>), JDK 25, no runtime dependencies, JUnit test-scope only. Package <code class="language-plaintext highlighter-rouge">org.nebularis.lattice.minting</code>, same concepts and names as Python. Tables loaded from the resources M2 generated. A minimal JSON reader inside the library, since there is no JDK JSON API.</li>
+  <li><strong>Tests</strong>: the same anchor and generated vector files, run through a JUnit harness, and UTF-8 byte-length tests with non-BMP input.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">mise</code> tasks</strong> <code class="language-plaintext highlighter-rouge">check:minting-java</code>; an aggregate <code class="language-plaintext highlighter-rouge">check:minting</code>.</li>
+  <li><strong>Coverage fixture</strong> (added during M3): <code class="language-plaintext highlighter-rouge">identity-minting-coverage.ttl</code>, so that the generated vectors exercise every pipeline, encoding, surrogate kind, namespace derivation and rotation state, not only one recipe per strategy.</li>
+</ol>
+
+<h3 id="m4--specification-completion-and-walk-through">M4 — Specification completion and walk-through</h3>
+
+<ol>
+  <li>Complete <code class="language-plaintext highlighter-rouge">identity-minting-specification.md</code>: a fully worked example per deterministic strategy with every intermediate byte, the pitfalls section (UTF-16 lengths, whitespace sets, <code class="language-plaintext highlighter-rouge">toLowerCase</code> is not case folding, NFC versus NFKC, base32 padding and case, secrets in vectors, canonicalization obligations), and “implementing without our code” as a step-by-step procedure.</li>
+  <li>READMEs: <code class="language-plaintext highlighter-rouge">packages/minting/README.md</code>, one per library, <code class="language-plaintext highlighter-rouge">contracts/identity/README.md</code>, each with the content-addressed obligations section before the API.</li>
+  <li><code class="language-plaintext highlighter-rouge">iri-identity-patterns.md</code> §14.2 and <code class="language-plaintext highlighter-rouge">tools/persistence/README.md</code> updated.</li>
+  <li><strong>Manual walk-through</strong>: someone follows the specification alone, with a hex editor and an SHA-256 tool, and reproduces one derived-hash IRI and one claim IRI from the anchor file. Findings feed a final revision.</li>
+</ol>
+
+<h2 id="deferred-items">Deferred items</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Item</th>
+      <th>Raised by</th>
+      <th>When</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>FU-F1a</td>
+      <td>an exact normalisation pipeline, with no case folding or compatibility mapping (identity or NFC only, decided then), for key components that are already-minted IRIs (a uniqueness constraint on <code class="language-plaintext highlighter-rouge">fnd:naturalKey</code>). A fourth pipeline in the specification, both libraries and the vectors. The three existing pipelines are harmless on such IRIs</td>
+      <td>CCS F1 (<a href="/developer/sketches/keys-impact.html">keys impact</a> P1, CCS plan F1 follow-ups)</td>
+      <td>when a scheme needs it, or with M4</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="validation-approach">Validation approach</h2>
+
+<p>Each slice has a validation pack at <code class="language-plaintext highlighter-rouge">docs/developer/validation/identity-minting-&lt;slice&gt;.md</code>, with positive and negative cases, the <code class="language-plaintext highlighter-rouge">mise</code> command, and at least one adversarial probe. <code class="language-plaintext highlighter-rouge">mise run check:persistence</code> stays green throughout.</p>
+
+<h2 id="risks">Risks</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Risk</th>
+      <th>Mitigation</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Both libraries share a mistake because vectors come from one of them</td>
+      <td>Anchors verified with <code class="language-plaintext highlighter-rouge">openssl</code> and UCD citations (M0)</td>
+    </tr>
+    <tr>
+      <td>Platform NFC differs from the pinned tables for a newly assigned code point</td>
+      <td>Unicode 16.0 pinned, runtimes verified at 16.0; unassigned code points rejected; start-up version check</td>
+    </tr>
+    <tr>
+      <td>A hand-written JSON reader in Java mis-parses a recipe</td>
+      <td>Recipes are schema-restricted (P5); the reader is tested against every recipe the compiler emits, and the digest check catches any change</td>
+    </tr>
+    <tr>
+      <td>Content-addressed callers canonicalize differently</td>
+      <td>Obligations surfaced in seven places (sketch §6a); vectors labelled as already canonical</td>
+    </tr>
+  </tbody>
+</table>

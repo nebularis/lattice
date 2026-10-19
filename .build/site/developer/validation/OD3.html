@@ -1,0 +1,202 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-od3-section-6-to-owl">Validation Pack: OD3, section 6 to OWL</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/improved-ontology-documentation.html"><code class="language-plaintext highlighter-rouge">improved-ontology-documentation</code></a>, slice OD3
+(<a href="/developer/plans/improved-ontology-documentation.html#slices">plan</a>).
+<strong>Implements:</strong> <a href="/architecture/decisions/ADR-A126-literate-specification-layout-and-grammar.html">ADR-A126</a>
+decisions 3 to 6, and the OWL half of decision 5 (the SHACL half is OD4).
+<strong>Built autonomously</strong>, at the maintainer’s request of 2026-10-18. The decisions taken alone are listed below,
+for the maintainer to keep or overrule.</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>For a README in the layout, every axiom of section 6 is written once, in its entry, in the 6.4 tables or in
+6.5, and compiles to the OWL that ADR-A126 assigns it, in the document its region or default names. The
+output does not depend on the order of entries. An expression the grammar cannot read, a label it does not
+know or a paragraph it cannot place is refused, never ignored. A README not in the layout extracts as before.</p>
+
+<h2 id="what-changed">What changed</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">tools/literate_grammar.py</code>:
+    <ul>
+      <li><strong><code class="language-plaintext highlighter-rouge">Manchester</code>:</strong> a recursive-descent parser for the subset in use (<code class="language-plaintext highlighter-rouge">or</code>, <code class="language-plaintext highlighter-rouge">and</code>, <code class="language-plaintext highlighter-rouge">not</code>, parentheses,
+names, <code class="language-plaintext highlighter-rouge">some</code>, <code class="language-plaintext highlighter-rouge">only</code>, <code class="language-plaintext highlighter-rouge">value</code>, and <code class="language-plaintext highlighter-rouge">min</code>, <code class="language-plaintext highlighter-rouge">max</code> and <code class="language-plaintext highlighter-rouge">exactly</code>, qualified or not).</li>
+      <li><strong><code class="language-plaintext highlighter-rouge">Section6</code>:</strong> compiles the entries of 6.1 to 6.3, the individuals tables of 6.4, and the disjointness
+of 6.5.</li>
+      <li><strong>Kept for OD4:</strong> each restriction row is recorded with its Asserted in and Message.</li>
+    </ul>
+  </li>
+  <li><code class="language-plaintext highlighter-rouge">tools/test_literate_grammar.py</code>. Tests OD3-T1 to OD3-T10, and OD2’s helper now builds section 6’s seven
+subsections, which a migrated README needs.</li>
+  <li><code class="language-plaintext highlighter-rouge">tools/test_literate_extract.py</code>. OD1-T11’s README gains the seven subsections.</li>
+  <li><code class="language-plaintext highlighter-rouge">docs/architecture/literate-specifications.md</code>. Section 6 describes the grammar as built.</li>
+</ul>
+
+<h2 id="decisions-taken-alone-for-the-maintainer">Decisions taken alone, for the maintainer</h2>
+
+<ol>
+  <li><strong>Every paragraph of an entry starts with a label.</strong> An unlabelled paragraph inside an entry is refused,
+so no prose sits in a normative entry unextracted. Prose before a subsection’s first entry or table is
+allowed and not extracted.</li>
+  <li><strong>All seven subsections are required</strong>, an empty one saying “None.”, and an eighth is refused. Their
+numbers are not checked, only their titles.</li>
+  <li><strong>Where section 6 writes.</strong> Entries and 6.5 go to the main spec document and 6.4’s individuals to the main
+vocab document, unless an <code class="language-plaintext highlighter-rouge">output-file</code> region says otherwise. Either document must be a row of section 2’s
+header table.</li>
+  <li><strong>An annotation written as a Turtle literal is used as written</strong>, for example <code class="language-plaintext highlighter-rouge">"Wording node"@en</code>.
+Otherwise its text becomes plain text. This is how Wording’s 73 language-tagged labels can migrate.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">**Preferred label.**</code></strong> (<code class="language-plaintext highlighter-rouge">skos:prefLabel</code>) joins the annotation labels, since the vocabularies use it
+(77 times in spec and vocab files). The individuals tables take the same annotation columns.</li>
+  <li><strong>6.5 takes <code class="language-plaintext highlighter-rouge">**Disjoint.**</code> beside <code class="language-plaintext highlighter-rouge">**All disjoint.**</code>.</strong> The layers state 34 <code class="language-plaintext highlighter-rouge">owl:disjointWith</code> and 22
+<code class="language-plaintext highlighter-rouge">owl:AllDisjointClasses</code>. Writing both forms keeps a migrated layer’s graph the same as before (OD-D9).
+<code class="language-plaintext highlighter-rouge">**All disjoint.**</code> keeps its members in the order written, as an RDF list does.</li>
+  <li><strong>Unions, intersections and complements are written with <code class="language-plaintext highlighter-rouge">a owl:Class</code></strong>, as the layers write them, so a
+migrated graph matches. OD3-T7 checks two of SPC’s axioms come out as SPC states them.</li>
+  <li><strong>Order.</strong> The objects of one predicate are sorted by their text, so reordering a list of superclasses
+changes nothing. A key, a union and an <code class="language-plaintext highlighter-rouge">All disjoint</code> keep the order written, since RDF lists are ordered.</li>
+  <li><strong>One restriction per row.</strong> Values must make a restriction on the row’s property. A row asserted in SHACL
+alone writes no OWL and is kept for OD4, which also refuses a nested expression asserted in SHACL.</li>
+  <li><strong>Not supported, since nothing in the layers uses them:</strong> a union of datatypes (it would be written as a
+class union), the property characteristics asymmetric, reflexive and irreflexive, and <code class="language-plaintext highlighter-rouge">oneOf</code>. Each is a
+small addition when a layer needs it.</li>
+</ol>
+
+<h2 id="test-cases">Test cases</h2>
+
+<p>In <code class="language-plaintext highlighter-rouge">tools/test_literate_grammar.py</code>.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>OD3-T1</td>
+      <td>a class entry with every class label and a restriction table, and an equivalence / extract / the same graph as the expected Turtle, with no OWL for the SHACL-only rows</td>
+      <td>L3</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>OD3-T2</td>
+      <td>ten expressions: precedence, parentheses, complement, a nested restriction, <code class="language-plaintext highlighter-rouge">only</code> a datatype, qualified and unqualified cardinality, three kinds of value / parse / the expected OWL structures</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>OD3-T3</td>
+      <td>seven malformed expressions / parse / each refused with its message</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>OD3-T4</td>
+      <td>an object property and a datatype property with every property label / extract / the expected graph</td>
+      <td>L3</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>OD3-T5</td>
+      <td>an individuals table and an entry inside an <code class="language-plaintext highlighter-rouge">output-file</code> region / extract / the individual in the vocab document, the entry in the region’s document only</td>
+      <td>L3</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>OD3-T6</td>
+      <td><code class="language-plaintext highlighter-rouge">**All disjoint.**</code> and <code class="language-plaintext highlighter-rouge">**Disjoint.**</code> / extract / one <code class="language-plaintext highlighter-rouge">AllDisjointClasses</code> with its members in order, and one <code class="language-plaintext highlighter-rouge">disjointWith</code></td>
+      <td>L3</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>OD3-T7</td>
+      <td>two of SPC’s axioms written in the grammar / parse / isomorphic to the same axioms in <code class="language-plaintext highlighter-rouge">spec/spc.ttl</code></td>
+      <td>L3</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>OD3-T8</td>
+      <td>16 malformed sections 6, each wrong in one way: an unknown label, labels on the wrong kind, no Definition, an unlabelled paragraph, a heading with no CURIE, a second entry, a wrong table, Restrictions with no table, a bad Asserted in, values that are no restriction, an undeclared prefix, a wrong individuals table, and three wrong 6.5 paragraphs / compile / each refused</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>OD3-T9</td>
+      <td>a missing subsection, an eighth, and a Utility with no <code class="language-plaintext highlighter-rouge">fnd:</code> prefix / compile / each refused</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>OD3-T10</td>
+      <td>the same entries in two orders / extract / identical outputs</td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="one-command">One command</h2>
+
+<p>Run from the repository root. A pass is every test passing.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise <span class="nb">exec</span> <span class="nt">--</span> python <span class="nt">-m</span> pytest tools/test_literate_grammar.py tools/test_literate_extract.py <span class="nt">-q</span>
+</code></pre></div></div>
+
+<h2 id="results">Results</h2>
+
+<p>2026-10-18, run while building, from this worktree:</p>
+
+<ul>
+  <li><strong><code class="language-plaintext highlighter-rouge">tools/test_literate_grammar.py</code>:</strong> 64 passed.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">tools/test_literate_extract.py</code> and <code class="language-plaintext highlighter-rouge">tools/test_lattice_repo_catalogue.py</code>:</strong> 131 passed.</li>
+  <li><strong>The per-layer extraction tests, selected by name:</strong> 9 passed.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">mise run check:formal-freshness</code> and <code class="language-plaintext highlighter-rouge">mise run check:catalogue</code>:</strong> both pass.</li>
+</ul>
+
+<p><code class="language-plaintext highlighter-rouge">mise run check:ontology-catalog</code> was not run. The adversarial probes were not run.</p>
+
+<h2 id="adversarial-probes-for-the-gate">Adversarial probes, for the gate</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Mutation</th>
+      <th>Expected</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">or</code> binds tighter than <code class="language-plaintext highlighter-rouge">and</code> (swap the two loops in <code class="language-plaintext highlighter-rouge">Manchester</code>)</td>
+      <td>OD3-T2’s first two cases fail</td>
+    </tr>
+    <tr>
+      <td>SHACL-only rows also write OWL</td>
+      <td>OD3-T1 fails</td>
+    </tr>
+    <tr>
+      <td>statements keep README order (drop the sort in <code class="language-plaintext highlighter-rouge">Document.turtle</code>)</td>
+      <td>OD3-T10 fails</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<ul>
+  <li>SHACL from the restriction tables, and refusing a nested expression asserted in SHACL. OD4.</li>
+  <li>The Axiom Index and the class diagram. OD5.</li>
+  <li>A real README in the layout, and the graph-isomorphism check against today’s files. OD6, with Eligibility.</li>
+</ul>
+
+<h2 id="decisions-answered">Decisions answered</h2>
+
+<p>2026-10-18, by the maintainer: all ten agreed. Decision 4 raised multilingual support, recorded as PDD-10 in the
+<a href="/developer/plans/pending-design-decisions.html">pending design decisions</a>. Decision 10’s unsupported forms are in the plan’s
+unplanned backlog.</p>
+
+<p>The maintainer ran every test suite on 2026-10-18, and all pass.</p>

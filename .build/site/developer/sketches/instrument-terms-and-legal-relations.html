@@ -1,0 +1,902 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="instrument-structure-terms-and-legal-relations">Instrument: structure, terms and legal relations</h1>
+
+<blockquote>
+  <p><strong>Superseded as the working design on 2026-09-30</strong> by <a href="/developer/sketches/computable-contract-substrate.html">computable-contract-substrate.md</a>, which keeps everything here and adds the thirteen fixes found by testing it against a package policy, an IUA binding authority and the Lloyd’s CBAA, the Wording layer, and the scenario catalogue. Kept as the record of the answer to NRS D2.</p>
+</blockquote>
+
+<p>Draft for review, 2026-09-30. A from-scratch design for <code class="language-plaintext highlighter-rouge">ontology/instrument</code>, answering
+<a href="/developer/plans/normative-rule-substrate.html">normative-rule-substrate</a> decision D2 and replacing the
+design in <a href="/developer/sketches/legalruleml-mapping.html">legalruleml-mapping.md</a> §6.3’s resolution, §18.2 and §18.3.
+Nothing here is ratified. It becomes ADR-A104 and slice N4.</p>
+
+<p>Three tests govern every choice, in this order:</p>
+
+<ol>
+  <li><strong>Reads right.</strong> A contract lawyer or an engineer surveying the T-box recognises each name and
+meets no word used in two senses.</li>
+  <li><strong>Reasons right.</strong> Every class has one evaluation algorithm, total over the class, that runs on
+the A-box at runtime without a reasoner.</li>
+  <li><strong>Sits right.</strong> The design maps cleanly onto the logics LATTICE must meet: Hohfeld’s legal
+relations, standard deontic logic, defeasible logic, strong Kleene decisions, OWL DL, SHACL,
+SWRL and controlled English. External standards (LegalRuleML, ODRL) are mapped through MORK
+where they differ, and aligned only where it costs nothing.</li>
+</ol>
+
+<hr />
+
+<h2 id="1-the-answer-to-d2-in-one-paragraph">1. The answer to D2, in one paragraph</h2>
+
+<p><code class="language-plaintext highlighter-rouge">ins:Obligation</code> is deontic. It is the legal bond by which an obligor owes an obligee some conduct,
+which is what the word has meant since Roman law’s <em>obligatio</em>. It stops being a document element.
+The document’s structure moves to <code class="language-plaintext highlighter-rouge">ins:Element</code>, and the agreed content moves to <code class="language-plaintext highlighter-rouge">ins:Term</code>. A term
+gives rise to legal relations, and an obligation is one kind of legal relation. The D2 walkthrough
+posed “structural or deontic” as a choice about one class. The better answer splits the class’s
+two jobs between three classes, each named in contract English.</p>
+
+<h2 id="2-reading-the-words">2. Reading the words</h2>
+
+<p>Contract English is dense with words used in several senses. The design names each sense once and
+gives no class to a word that stays ambiguous.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Word</th>
+      <th>Its senses in contracts</th>
+      <th>Where each sense lands</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>term</strong></td>
+      <td>(a) a provision the parties are bound by, express or implied. (b) a duration (“the policy term is 12 months”)</td>
+      <td>(a) <code class="language-plaintext highlighter-rouge">ins:Term</code>. (b) <code class="language-plaintext highlighter-rouge">fnd:TemporalScope</code>. The class comment says so</td>
+    </tr>
+    <tr>
+      <td><strong>condition</strong></td>
+      <td>(a) a heading (“General Conditions”). (b) a class of term by breach consequence (condition, warranty, innominate term, and in insurance condition precedent, warranty, bare condition). (c) a contingency (“condition precedent to liability”)</td>
+      <td>(a) an element type concept. (b) an applied classification of terms, as open-cbaa’s <code class="language-plaintext highlighter-rouge">stm:breachTreatment</code> already does. Its legal effect is modelled explicitly (§5.4). (c) <code class="language-plaintext highlighter-rouge">elg:Condition</code>. <strong>No <code class="language-plaintext highlighter-rouge">ins:</code> class is named Condition</strong></td>
+    </tr>
+    <tr>
+      <td><strong>provision</strong></td>
+      <td>both the clause (text) and what it provides (content)</td>
+      <td>retired. <code class="language-plaintext highlighter-rouge">ins:Element</code> and <code class="language-plaintext highlighter-rouge">ins:Term</code> replace it</td>
+    </tr>
+    <tr>
+      <td><strong>obligation</strong>, <strong>duty</strong></td>
+      <td>the bond (obligation) and the obligor’s end of it (duty)</td>
+      <td><code class="language-plaintext highlighter-rouge">ins:Obligation</code>. “Duty” is the obligor’s view and gets no class</td>
+    </tr>
+    <tr>
+      <td><strong>right</strong></td>
+      <td>(a) the obligee’s end of an obligation (a claim). (b) a power (“right to terminate”). (c) a liberty (“right to use”)</td>
+      <td>(a) <code class="language-plaintext highlighter-rouge">ins:obligee</code>. (b) <code class="language-plaintext highlighter-rouge">ins:Power</code>. (c) <code class="language-plaintext highlighter-rouge">ins:Permission</code>. <strong>No class is named Right</strong>, because Hohfeld showed the word covers four things</td>
+    </tr>
+    <tr>
+      <td><strong>may</strong></td>
+      <td>a liberty (“may use the premises”) or a power (“may cancel”)</td>
+      <td><code class="language-plaintext highlighter-rouge">ins:Permission</code> if it only frees the holder from a restriction. <code class="language-plaintext highlighter-rouge">ins:Power</code> if it changes someone else’s position. The ontology forces the choice the drafting leaves open</td>
+    </tr>
+    <tr>
+      <td><strong>must not</strong>, <strong>shall not</strong></td>
+      <td>a negative obligation</td>
+      <td><code class="language-plaintext highlighter-rouge">ins:Prohibition</code>, a kind of obligation (“an obligation not to sublet” is idiomatic)</td>
+    </tr>
+    <tr>
+      <td><strong>breach</strong>, <strong>violation</strong></td>
+      <td>the same, in contract and deontic-logic vocabularies</td>
+      <td>“breach”, the contract word</td>
+    </tr>
+    <tr>
+      <td><strong>liability</strong></td>
+      <td>the insurer’s liability to pay, and Hohfeld’s correlative of a power</td>
+      <td>never used as a name. The power’s other end is <code class="language-plaintext highlighter-rouge">ins:counterparty</code></td>
+    </tr>
+    <tr>
+      <td><strong>norm</strong></td>
+      <td>legal theory, rare in contracts</td>
+      <td>not used</td>
+    </tr>
+    <tr>
+      <td><strong>permission</strong>, <strong>Permitted</strong></td>
+      <td>a legal relation (<code class="language-plaintext highlighter-rouge">ins:Permission</code>) and an Eligibility decision value (<code class="language-plaintext highlighter-rouge">elg:Permitted</code>)</td>
+      <td>kept, with a disambiguating comment on both. A risk can be <code class="language-plaintext highlighter-rouge">elg:Permitted</code> by a scope while no <code class="language-plaintext highlighter-rouge">ins:Permission</code> to bind it exists</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="3-the-model">3. The model</h2>
+
+<p>Four strata, pairwise disjoint, each a <code class="language-plaintext highlighter-rouge">fnd:Version</code> under ADR-A07b’s versioning contract (never
+updated in place, superseded within one identity).</p>
+
+<pre><code class="language-mermaid">flowchart LR
+    subgraph S["structure: what the document is"]
+        I["ins:Instrument"] --&gt;|"⊑"| E["ins:Element"]
+        E --&gt;|"ins:partOf"| E
+    end
+    subgraph M["content: what was agreed"]
+        T["ins:Term"]
+    end
+    subgraph R["legal relations: who owes, may or can what"]
+        LR["ins:LegalRelation"]
+        O["ins:Obligation"] --&gt; LR
+        CO["ins:ContinuingObligation"] --&gt; O
+        PR["ins:Prohibition"] --&gt; O
+        PE["ins:Permission"] --&gt; LR
+        PO["ins:Power"] --&gt; LR
+    end
+    Q["ins:Qualifier"]
+    T --&gt;|"ins:expressedIn"| E
+    T --&gt;|"ins:termOf"| I
+    LR --&gt;|"ins:arisesUnder"| T
+    Q --&gt;|"ins:qualifies"| T
+    Q --&gt;|"ins:qualifies"| LR
+</code></pre>
+
+<p><strong>Structure.</strong> <code class="language-plaintext highlighter-rouge">ins:Element</code> is a recursive structural unit: a section, clause, schedule,
+endorsement or definitions page, told apart by an element type concept rather than by subclass, as
+MERIDIAN CSO’s <code class="language-plaintext highlighter-rouge">ctr:ContractElement</code> and open-cbaa’s <code class="language-plaintext highlighter-rouge">wim:</code> levels do. <code class="language-plaintext highlighter-rouge">ins:Instrument</code> is the root
+element: a contract, policy, agreement, deed, licence or protocol. Making it an element lets an
+ancillary agreement sit inside a binder’s structure, as CSO’s dual classification allows.
+Ordering among siblings is the wording model’s concern (<code class="language-plaintext highlighter-rouge">wim:rankKey</code>) and is not in the substrate.</p>
+
+<p><strong>Content.</strong> <code class="language-plaintext highlighter-rouge">ins:Term</code> is what the parties are bound by. It is expressed in one or more elements
+(a bilingual agreement, a restatement in a schedule), or implied by a source with no element at
+all: a statute, custom or course of dealing. An implied term is the reason a term cannot be a
+structural element. ADR-A96’s “one obligation in several provisions” becomes “one term expressed in
+several elements”, where it always belonged.</p>
+
+<p><strong>Legal relations.</strong> Every legal relation arises under exactly one term, holds between two parties,
+and concerns one kind of conduct (an activity) over some cases (a scope). That uniform shape is
+Hohfeld’s: each relation is a two-ended bond about an act. It is also the shape open-cbaa’s <code class="language-plaintext highlighter-rouge">stm:</code>
+arrived at independently, with <code class="language-plaintext highlighter-rouge">stm:activity</code>, <code class="language-plaintext highlighter-rouge">stm:scope</code>, <code class="language-plaintext highlighter-rouge">stm:bearer</code> and <code class="language-plaintext highlighter-rouge">stm:counterparty</code>
+on every kind.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Class</th>
+      <th>Reads as</th>
+      <th>Parties</th>
+      <th>Required content</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ins:Obligation</code></td>
+      <td>the obligor must perform the activity for the obligee by the due time</td>
+      <td><code class="language-plaintext highlighter-rouge">ins:obligor</code>, <code class="language-plaintext highlighter-rouge">ins:obligee</code></td>
+      <td>activity, due</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ins:ContinuingObligation</code></td>
+      <td>the obligor must ensure a state holds throughout</td>
+      <td>same</td>
+      <td><code class="language-plaintext highlighter-rouge">ins:maintains</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ins:Prohibition</code></td>
+      <td>the obligor must not perform the activity within the scope</td>
+      <td>same</td>
+      <td>activity</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ins:Permission</code></td>
+      <td>the holder may perform the activity within the scope, despite a prohibition</td>
+      <td><code class="language-plaintext highlighter-rouge">ins:holder</code>, <code class="language-plaintext highlighter-rouge">ins:counterparty</code></td>
+      <td>activity</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ins:Power</code></td>
+      <td>the holder may, by performing the activity, change the counterparty’s legal relations</td>
+      <td><code class="language-plaintext highlighter-rouge">ins:holder</code>, <code class="language-plaintext highlighter-rouge">ins:counterparty</code></td>
+      <td>activity</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><code class="language-plaintext highlighter-rouge">ins:obligor</code> accepts a <code class="language-plaintext highlighter-rouge">pty:ParticipationGroup</code> as well as a <code class="language-plaintext highlighter-rouge">pty:RoleOccupancy</code>, so a duty owed
+severally by a syndicate names the syndicate as obligor. <code class="language-plaintext highlighter-rouge">ins:fulfilledBy</code> is retired: it said the
+same thing a second way.</p>
+
+<p><strong>What a term gives rise to can arise later.</strong> A relation arises when its term is in force, and
+optionally on a trigger:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">ins:arisesOn</code>: an occurrence matching a condition (receipt of a report, a financial year end).</li>
+  <li><code class="language-plaintext highlighter-rouge">ins:arisesOnBreachOf</code>: breach of a named obligation (a cure period, a late fee, a right to
+terminate for breach of a condition).</li>
+  <li><code class="language-plaintext highlighter-rouge">ins:arisesOnExerciseOf</code>: exercise of a named power (an acceleration creates a duty to repay).</li>
+</ul>
+
+<p>A power that ends things names them with <code class="language-plaintext highlighter-rouge">ins:ends</code> (a power to cancel ends the instrument).
+Creation points from the created relation to its trigger, and ending points from the power to what
+it ends, because a created relation needs its own description anyway and an ended one already has
+it.</p>
+
+<p><strong>Constitutive terms create no relation.</strong> A definition, a classification or an interpretation
+clause is a term with no legal relations. Its meaning lives where LATTICE already puts constitutive
+content: Vocabulary schemes, Eligibility conditions and Surface contracts (legalruleml-mapping §5.2).</p>
+
+<p><strong>Qualifier.</strong> <code class="language-plaintext highlighter-rouge">ins:Qualifier</code> stays, for A-101’s term parameters (limits, retentions, levels). It
+qualifies a term or a legal relation, and is in force exactly when that is.</p>
+
+<h2 id="4-the-t-box-sketched">4. The T-box, sketched</h2>
+
+<p>Imports are unchanged: Foundation, Vocabulary, Quantification, Party and Eligibility. Instrument
+still imports nothing from Behaviour. The earlier design’s <code class="language-plaintext highlighter-rouge">ins:deadlineAnchor</code> ranged over
+<code class="language-plaintext highlighter-rouge">bhv:TriggerDefinition</code>, which would have made Instrument import Behaviour and closed a cycle,
+since Behaviour imports Instrument. Deadlines here are Quantification ranges anchored on the
+arising, so no cycle exists.</p>
+
+<div class="language-turtle highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># --- strata ------------------------------------------------------------------</span><span class="w">
+</span><span class="nn">ins:</span><span class="n">Element</span><span class="w">        </span><span class="k">a</span><span class="w"> </span><span class="nn">owl:</span><span class="n">Class</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">rdfs:</span><span class="n">subClassOf</span><span class="w"> </span><span class="nn">fnd:</span><span class="n">Version</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="nn">ins:</span><span class="n">Instrument</span><span class="w">     </span><span class="k">a</span><span class="w"> </span><span class="nn">owl:</span><span class="n">Class</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">rdfs:</span><span class="n">subClassOf</span><span class="w"> </span><span class="nn">ins:</span><span class="n">Element</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="nn">ins:</span><span class="n">Term</span><span class="w">           </span><span class="k">a</span><span class="w"> </span><span class="nn">owl:</span><span class="n">Class</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">rdfs:</span><span class="n">subClassOf</span><span class="w"> </span><span class="nn">fnd:</span><span class="n">Version</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="nn">ins:</span><span class="n">LegalRelation</span><span class="w">  </span><span class="k">a</span><span class="w"> </span><span class="nn">owl:</span><span class="n">Class</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">rdfs:</span><span class="n">subClassOf</span><span class="w"> </span><span class="nn">fnd:</span><span class="n">Version</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">owl:</span><span class="n">equivalentClass</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">owl:</span><span class="n">Class</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">owl:</span><span class="n">unionOf</span><span class="w"> </span><span class="p">(</span><span class="w"> </span><span class="nn">ins:</span><span class="n">Obligation</span><span class="w"> </span><span class="nn">ins:</span><span class="n">Permission</span><span class="w"> </span><span class="nn">ins:</span><span class="n">Power</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">rdfs:</span><span class="n">subClassOf</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">owl:</span><span class="n">Restriction</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">owl:</span><span class="n">onProperty</span><span class="w"> </span><span class="nn">ins:</span><span class="n">arisesUnder</span><span class="w"> </span><span class="p">;</span><span class="w">
+                      </span><span class="nn">owl:</span><span class="n">qualifiedCardinality</span><span class="w"> </span><span class="s">"1"</span><span class="p">^^</span><span class="nn">xsd:</span><span class="n">nonNegativeInteger</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">owl:</span><span class="n">onClass</span><span class="w"> </span><span class="nn">ins:</span><span class="n">Term</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="nn">ins:</span><span class="n">Qualifier</span><span class="w">      </span><span class="k">a</span><span class="w"> </span><span class="nn">owl:</span><span class="n">Class</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">rdfs:</span><span class="n">subClassOf</span><span class="w"> </span><span class="nn">fnd:</span><span class="n">Version</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="p">[]</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">owl:</span><span class="n">AllDisjointClasses</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">owl:</span><span class="n">members</span><span class="w"> </span><span class="p">(</span><span class="w"> </span><span class="nn">ins:</span><span class="n">Element</span><span class="w"> </span><span class="nn">ins:</span><span class="n">Term</span><span class="w"> </span><span class="nn">ins:</span><span class="n">LegalRelation</span><span class="w"> </span><span class="nn">ins:</span><span class="n">Qualifier</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">.</span><span class="w">
+
+</span><span class="c1"># --- legal relations ---------------------------------------------------------</span><span class="w">
+</span><span class="nn">ins:</span><span class="n">Obligation</span><span class="w">            </span><span class="k">a</span><span class="w"> </span><span class="nn">owl:</span><span class="n">Class</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">rdfs:</span><span class="n">subClassOf</span><span class="w"> </span><span class="nn">ins:</span><span class="n">LegalRelation</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="nn">ins:</span><span class="n">ContinuingObligation</span><span class="w">  </span><span class="k">a</span><span class="w"> </span><span class="nn">owl:</span><span class="n">Class</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">rdfs:</span><span class="n">subClassOf</span><span class="w"> </span><span class="nn">ins:</span><span class="n">Obligation</span><span class="w"> </span><span class="p">,</span><span class="w">
+    </span><span class="p">[</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">owl:</span><span class="n">Restriction</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">owl:</span><span class="n">onProperty</span><span class="w"> </span><span class="nn">ins:</span><span class="n">due</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">owl:</span><span class="n">maxCardinality</span><span class="w"> </span><span class="s">"0"</span><span class="p">^^</span><span class="nn">xsd:</span><span class="n">nonNegativeInteger</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">,</span><span class="w">
+    </span><span class="p">[</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">owl:</span><span class="n">Restriction</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">owl:</span><span class="n">onProperty</span><span class="w"> </span><span class="nn">ins:</span><span class="n">maintains</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">owl:</span><span class="n">cardinality</span><span class="w"> </span><span class="s">"1"</span><span class="p">^^</span><span class="nn">xsd:</span><span class="n">nonNegativeInteger</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="nn">ins:</span><span class="n">Prohibition</span><span class="w">           </span><span class="k">a</span><span class="w"> </span><span class="nn">owl:</span><span class="n">Class</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">rdfs:</span><span class="n">subClassOf</span><span class="w"> </span><span class="nn">ins:</span><span class="n">Obligation</span><span class="w"> </span><span class="p">,</span><span class="w">
+    </span><span class="p">[</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">owl:</span><span class="n">Restriction</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">owl:</span><span class="n">onProperty</span><span class="w"> </span><span class="nn">ins:</span><span class="n">due</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">owl:</span><span class="n">maxCardinality</span><span class="w"> </span><span class="s">"0"</span><span class="p">^^</span><span class="nn">xsd:</span><span class="n">nonNegativeInteger</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">,</span><span class="w">
+    </span><span class="p">[</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">owl:</span><span class="n">Restriction</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">owl:</span><span class="n">onProperty</span><span class="w"> </span><span class="nn">ins:</span><span class="n">activity</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">owl:</span><span class="n">cardinality</span><span class="w"> </span><span class="s">"1"</span><span class="p">^^</span><span class="nn">xsd:</span><span class="n">nonNegativeInteger</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="nn">ins:</span><span class="n">Permission</span><span class="w">            </span><span class="k">a</span><span class="w"> </span><span class="nn">owl:</span><span class="n">Class</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">rdfs:</span><span class="n">subClassOf</span><span class="w"> </span><span class="nn">ins:</span><span class="n">LegalRelation</span><span class="w"> </span><span class="p">,</span><span class="w">
+    </span><span class="p">[</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">owl:</span><span class="n">Restriction</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">owl:</span><span class="n">onProperty</span><span class="w"> </span><span class="nn">ins:</span><span class="n">activity</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">owl:</span><span class="n">cardinality</span><span class="w"> </span><span class="s">"1"</span><span class="p">^^</span><span class="nn">xsd:</span><span class="n">nonNegativeInteger</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="nn">ins:</span><span class="n">Power</span><span class="w">                 </span><span class="k">a</span><span class="w"> </span><span class="nn">owl:</span><span class="n">Class</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">rdfs:</span><span class="n">subClassOf</span><span class="w"> </span><span class="nn">ins:</span><span class="n">LegalRelation</span><span class="w"> </span><span class="p">,</span><span class="w">
+    </span><span class="p">[</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">owl:</span><span class="n">Restriction</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">owl:</span><span class="n">onProperty</span><span class="w"> </span><span class="nn">ins:</span><span class="n">activity</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">owl:</span><span class="n">cardinality</span><span class="w"> </span><span class="s">"1"</span><span class="p">^^</span><span class="nn">xsd:</span><span class="n">nonNegativeInteger</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="p">[]</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">owl:</span><span class="n">AllDisjointClasses</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">owl:</span><span class="n">members</span><span class="w"> </span><span class="p">(</span><span class="w"> </span><span class="nn">ins:</span><span class="n">Obligation</span><span class="w"> </span><span class="nn">ins:</span><span class="n">Permission</span><span class="w"> </span><span class="nn">ins:</span><span class="n">Power</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="p">[]</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">owl:</span><span class="n">AllDisjointClasses</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">owl:</span><span class="n">members</span><span class="w"> </span><span class="p">(</span><span class="w"> </span><span class="nn">ins:</span><span class="n">ContinuingObligation</span><span class="w"> </span><span class="nn">ins:</span><span class="n">Prohibition</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">.</span><span class="w">
+
+</span><span class="c1"># --- structure and content ---------------------------------------------------</span><span class="w">
+</span><span class="nn">ins:</span><span class="n">partOf</span><span class="w">       </span><span class="n">Element</span><span class="w"> </span><span class="n">→</span><span class="w"> </span><span class="n">Element</span><span class="w">            </span><span class="n">functional,</span><span class="w"> </span><span class="n">irreflexive,</span><span class="w"> </span><span class="n">asymmetric</span><span class="p">.</span><span class="w"> </span><span class="n">Acyclic</span><span class="w"> </span><span class="n">by</span><span class="w"> </span><span class="nn">shape
+ins:</span><span class="n">elementType</span><span class="w">  </span><span class="n">Element</span><span class="w"> </span><span class="n">→</span><span class="w"> </span><span class="nn">skos:</span><span class="n">Concept</span><span class="w">       </span><span class="n">bound</span><span class="w"> </span><span class="n">by</span><span class="w"> </span><span class="nn">ins-voc:ElementTypeContract
+ins:</span><span class="n">party</span><span class="w">        </span><span class="n">Instrument</span><span class="w"> </span><span class="n">→</span><span class="w"> </span><span class="nn">pty:RoleOccupancy
+ins:</span><span class="n">termOf</span><span class="w">       </span><span class="n">Term</span><span class="w"> </span><span class="n">→</span><span class="w"> </span><span class="n">Instrument</span><span class="w">            </span><span class="n">exactly</span><span class="w"> </span><span class="nn">one
+ins:</span><span class="n">expressedIn</span><span class="w">  </span><span class="n">Term</span><span class="w"> </span><span class="n">→</span><span class="w"> </span><span class="n">Element</span><span class="w">               </span><span class="n">the</span><span class="w"> </span><span class="n">clause</span><span class="w"> </span><span class="n">or</span><span class="w"> </span><span class="n">clauses</span><span class="w"> </span><span class="n">stating</span><span class="w"> </span><span class="nn">it
+ins:</span><span class="n">impliedBy</span><span class="w">    </span><span class="n">Term</span><span class="w"> </span><span class="n">→</span><span class="w"> </span><span class="n">any</span><span class="w">                   </span><span class="k">a</span><span class="w"> </span><span class="n">statute,</span><span class="w"> </span><span class="n">custom</span><span class="w"> </span><span class="n">or</span><span class="w"> </span><span class="n">course</span><span class="w"> </span><span class="n">of</span><span class="w"> </span><span class="n">dealing</span><span class="w"> </span><span class="p">(</span><span class="n">an</span><span class="w"> </span><span class="n">ELI</span><span class="w"> </span><span class="n">IRI,</span><span class="w"> </span><span class="n">say</span><span class="p">)</span><span class="w">
+</span><span class="nn">ins:</span><span class="n">arisesUnder</span><span class="w">  </span><span class="n">LegalRelation</span><span class="w"> </span><span class="n">→</span><span class="w"> </span><span class="n">Term</span><span class="w">         </span><span class="n">exactly</span><span class="w"> </span><span class="n">one
+
+</span><span class="c1"># --- parties -----------------------------------------------------------------</span><span class="w">
+</span><span class="nn">ins:</span><span class="n">obligor</span><span class="w">       </span><span class="n">Obligation</span><span class="w"> </span><span class="n">→</span><span class="w"> </span><span class="n">RoleOccupancy</span><span class="w"> </span><span class="n">⊔</span><span class="w"> </span><span class="n">ParticipationGroup</span><span class="w">   </span><span class="n">exactly</span><span class="w"> </span><span class="nn">one
+ins:</span><span class="n">obligee</span><span class="w">       </span><span class="n">Obligation</span><span class="w"> </span><span class="n">→</span><span class="w"> </span><span class="n">RoleOccupancy</span><span class="w">                        </span><span class="n">at</span><span class="w"> </span><span class="n">least</span><span class="w"> </span><span class="nn">one
+ins:</span><span class="n">holder</span><span class="w">        </span><span class="n">Permission</span><span class="w"> </span><span class="n">⊔</span><span class="w"> </span><span class="n">Power</span><span class="w"> </span><span class="n">→</span><span class="w"> </span><span class="n">RoleOccupancy</span><span class="w">                </span><span class="n">exactly</span><span class="w"> </span><span class="nn">one
+ins:</span><span class="n">counterparty</span><span class="w">  </span><span class="n">Permission</span><span class="w"> </span><span class="n">⊔</span><span class="w"> </span><span class="n">Power</span><span class="w"> </span><span class="n">→</span><span class="w"> </span><span class="n">RoleOccupancy</span><span class="w">                </span><span class="n">at</span><span class="w"> </span><span class="n">least</span><span class="w"> </span><span class="n">one</span><span class="w"> </span><span class="n">for</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="n">power
+
+</span><span class="c1"># --- content and time --------------------------------------------------------</span><span class="w">
+</span><span class="nn">ins:</span><span class="n">activity</span><span class="w">               </span><span class="n">LegalRelation</span><span class="w"> </span><span class="n">→</span><span class="w"> </span><span class="nn">skos:</span><span class="n">Concept</span><span class="w">    </span><span class="n">bound</span><span class="w"> </span><span class="n">by</span><span class="w"> </span><span class="nn">ins-voc:ActivityContract
+ins:</span><span class="n">scope</span><span class="w">                  </span><span class="n">LegalRelation</span><span class="w"> </span><span class="n">→</span><span class="w"> </span><span class="nn">elg:</span><span class="n">Condition</span><span class="w">   </span><span class="n">at</span><span class="w"> </span><span class="n">most</span><span class="w"> </span><span class="n">one</span><span class="p">.</span><span class="w"> </span><span class="n">The</span><span class="w"> </span><span class="n">cases</span><span class="w"> </span><span class="n">it</span><span class="w"> </span><span class="n">applies</span><span class="w"> </span><span class="nn">to
+ins:</span><span class="n">maintains</span><span class="w">              </span><span class="n">ContinuingObligation</span><span class="w"> </span><span class="n">→</span><span class="w"> </span><span class="nn">elg:Condition
+ins:</span><span class="n">arisesOn</span><span class="w">               </span><span class="n">LegalRelation</span><span class="w"> </span><span class="n">→</span><span class="w"> </span><span class="nn">elg:Condition
+ins:</span><span class="n">arisesOnBreachOf</span><span class="w">       </span><span class="n">LegalRelation</span><span class="w"> </span><span class="n">→</span><span class="w"> </span><span class="nn">ins:Obligation
+ins:</span><span class="n">arisesOnExerciseOf</span><span class="w">     </span><span class="n">LegalRelation</span><span class="w"> </span><span class="n">→</span><span class="w"> </span><span class="nn">ins:Power
+ins:</span><span class="n">due</span><span class="w">                    </span><span class="n">Obligation</span><span class="w"> </span><span class="n">→</span><span class="w"> </span><span class="nn">qnt:</span><span class="n">Range</span><span class="w">          </span><span class="n">relative</span><span class="w"> </span><span class="n">to</span><span class="w"> </span><span class="n">an</span><span class="w"> </span><span class="n">anchor</span><span class="w"> </span><span class="p">(</span><span class="nn">qnt:</span><span class="n">relativeToAnchor</span><span class="p">)</span><span class="w">
+</span><span class="nn">ins:</span><span class="n">recurrence</span><span class="w">             </span><span class="n">Obligation</span><span class="w"> </span><span class="n">→</span><span class="w"> </span><span class="nn">qnt:</span><span class="n">Recurrence</span><span class="w">     </span><span class="n">monthly</span><span class="w"> </span><span class="n">reporting,</span><span class="w"> </span><span class="n">quarterly</span><span class="w"> </span><span class="n">test</span><span class="w"> </span><span class="nn">dates
+ins:</span><span class="n">excepts</span><span class="w">                </span><span class="n">Permission</span><span class="w"> </span><span class="n">→</span><span class="w"> </span><span class="nn">ins:Prohibition
+ins:</span><span class="n">ends</span><span class="w">                   </span><span class="n">Power</span><span class="w"> </span><span class="n">→</span><span class="w"> </span><span class="nn">ins:</span><span class="n">Instrument</span><span class="w"> </span><span class="n">⊔</span><span class="w"> </span><span class="nn">ins:</span><span class="n">Term</span><span class="w"> </span><span class="n">⊔</span><span class="w"> </span><span class="nn">ins:LegalRelation
+ins:</span><span class="n">qualifies</span><span class="w">              </span><span class="n">Qualifier</span><span class="w"> </span><span class="n">→</span><span class="w"> </span><span class="nn">ins:</span><span class="n">Term</span><span class="w"> </span><span class="n">⊔</span><span class="w"> </span><span class="nn">ins:</span><span class="n">LegalRelation</span><span class="w">   </span><span class="n">functional
+</span></code></pre></div></div>
+
+<p>One rule needs SHACL rather than OWL. An obligation that is neither continuing nor a prohibition has
+exactly one activity and exactly one due range:</p>
+
+<div class="language-turtle highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nn">ins:</span><span class="n">ObligationShape</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">sh:</span><span class="n">NodeShape</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">sh:</span><span class="n">targetClass</span><span class="w"> </span><span class="nn">ins:</span><span class="n">Obligation</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">sh:</span><span class="n">or</span><span class="w"> </span><span class="p">(</span><span class="w">
+        </span><span class="p">[</span><span class="w"> </span><span class="nn">sh:</span><span class="n">class</span><span class="w"> </span><span class="nn">ins:</span><span class="n">ContinuingObligation</span><span class="w"> </span><span class="p">]</span><span class="w">
+        </span><span class="p">[</span><span class="w"> </span><span class="nn">sh:</span><span class="n">class</span><span class="w"> </span><span class="nn">ins:</span><span class="n">Prohibition</span><span class="w"> </span><span class="p">]</span><span class="w">
+        </span><span class="p">[</span><span class="w"> </span><span class="nn">sh:</span><span class="n">property</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="nn">sh:</span><span class="n">path</span><span class="w"> </span><span class="nn">ins:</span><span class="n">activity</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">sh:</span><span class="n">minCount</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">sh:</span><span class="n">maxCount</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">;</span><span class="w">
+          </span><span class="nn">sh:</span><span class="n">property</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="nn">sh:</span><span class="n">path</span><span class="w"> </span><span class="nn">ins:</span><span class="n">due</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">sh:</span><span class="n">minCount</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">sh:</span><span class="n">maxCount</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">]</span><span class="w">
+    </span><span class="p">)</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span></code></pre></div></div>
+
+<p>About 10 classes and 22 properties, against today’s 4 and 11. Every addition carries a name a
+reader already knows.</p>
+
+<h2 id="5-reasoning-at-runtime">5. Reasoning at runtime</h2>
+
+<h3 id="51-relations-are-general-their-occasions-are-not">5.1 Relations are general, their occasions are not</h3>
+
+<p>“The borrower must deliver accounts within 120 days of each year end” is one <code class="language-plaintext highlighter-rouge">ins:Obligation</code>. Each
+year end is an occasion. The case is the subject the relation’s conditions evaluate: the financial
+year, the report, the risk. Occasions are never minted in the instrument. Behaviour holds them as
+state occupancies keyed by (relation, case), derived per ADR-A102’s pattern, with the states
+<strong>pending, arisen, performed, breached, ended</strong>.</p>
+
+<p>This keeps the T-box and the instrument A-box finite and reviewable, and puts everything that grows
+with time where time is already handled.</p>
+
+<p><strong>One case per relation.</strong> Every condition on a relation (<code class="language-plaintext highlighter-rouge">scope</code>, <code class="language-plaintext highlighter-rouge">arisesOn</code>, <code class="language-plaintext highlighter-rouge">maintains</code>) binds
+the same subject class, the single-subject fragment of A-109. A relation over two cases is two
+relations, or a projection.</p>
+
+<h3 id="52-one-algorithm-per-class">5.2 One algorithm per class</h3>
+
+<p>Each is evaluated for a case at a stimulus-log position, with Eligibility’s three values.
+“Breach” means a breach record is derived. Undetermined never yields breach (law I7).</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Class</th>
+      <th>Arises</th>
+      <th>Breached when</th>
+      <th>Needs a closure licence (A-105)</th>
+      <th>Monotone</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">Obligation</code></td>
+      <td>term in force, and trigger Permitted at position p</td>
+      <td>the due range, anchored at p, has passed with no act of the activity by the obligor for the case</td>
+      <td><strong>yes</strong>. “No act” is absence</td>
+      <td>no</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ContinuingObligation</code></td>
+      <td>as above</td>
+      <td><code class="language-plaintext highlighter-rouge">maintains</code> is Denied at a position while arisen, or at a recurrence test date</td>
+      <td>only where <code class="language-plaintext highlighter-rouge">maintains</code> itself reads absence</td>
+      <td>yes, on the positions evaluated</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">Prohibition</code></td>
+      <td>as above</td>
+      <td>an act of the activity by the obligor, for a case Permitted in <code class="language-plaintext highlighter-rouge">scope</code>, and the scope of every excepting permission for that case is Denied</td>
+      <td><strong>no</strong>. Breach is a positive act</td>
+      <td><strong>yes</strong></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">Permission</code></td>
+      <td>as above</td>
+      <td>never</td>
+      <td>no</td>
+      <td>yes</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">Power</code></td>
+      <td>as above</td>
+      <td>never. Exercise is an act of the activity by the holder. It takes effect only if <code class="language-plaintext highlighter-rouge">scope</code> is Permitted at the exercise position. Undetermined means no effect, recorded as such</td>
+      <td>no</td>
+      <td>yes</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Three consequences follow directly from the table.</p>
+
+<ul>
+  <li><strong>Prohibitions need no closure and SWRL can derive their breaches.</strong> A breach is a positive fact,
+so ADR-A24’s positive-only SWRL derives it. An achievement obligation’s breach is an absence and
+needs A-105’s licence. The difference between “must” and “must not” is therefore a difference in
+evidence, which is why they are separate classes and not one class with a polarity flag.</li>
+  <li><strong>Exceptions are Eligibility, not defeasible logic.</strong> A permission that excepts a prohibition
+narrows the prohibition’s breach test to “in scope, and not in any exception’s scope”. Strong
+Kleene gives the right answer when an exception is Undetermined: the act is not a breach. The
+compiler builds this as a nested profile with negation (ADR-A03, ADR-A103), so no new evaluator
+is needed.</li>
+  <li><strong>Contrary-to-duty chains stratify.</strong> <code class="language-plaintext highlighter-rouge">arisesOnBreachOf</code> and <code class="language-plaintext highlighter-rouge">arisesOnExerciseOf</code> read breach
+and exercise <em>records</em>, which are facts, never deontic formulas. Kept acyclic by shape (law I6),
+they give an evaluation order: primary relations first, then their records, then the relations
+those records trigger. Chisholm’s contrary-to-duty paradox needs a deontic formula in a condition,
+which A-109’s fragment already refuses.</li>
+</ul>
+
+<h3 id="53-what-the-a-box-answers">5.3 What the A-box answers</h3>
+
+<p>The relations are the index, so the questions reviewers ask are one pattern each:</p>
+
+<div class="language-sparql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># What does the borrower owe, and under which clause?</span><span class="w">
+</span><span class="k">SELECT</span><span class="w"> </span><span class="nv">?duty</span><span class="w"> </span><span class="nv">?activity</span><span class="w"> </span><span class="nv">?clause</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="p">{</span><span class="w">
+  </span><span class="nv">?duty</span><span class="w"> </span><span class="nn">ins</span><span class="o">:</span><span class="ss">obligor</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">borrower-occ</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ins</span><span class="o">:</span><span class="ss">activity</span><span class="w"> </span><span class="nv">?activity</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ins</span><span class="o">:</span><span class="ss">arisesUnder</span><span class="o">/</span><span class="nn">ins</span><span class="o">:</span><span class="ss">expressedIn</span><span class="w"> </span><span class="nv">?clause</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span><span class="c1"># What can the lender do to the borrower?</span><span class="w">
+</span><span class="k">SELECT</span><span class="w"> </span><span class="nv">?power</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">?power</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">ins</span><span class="o">:</span><span class="ss">Power</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ins</span><span class="o">:</span><span class="ss">holder</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">lender-occ</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ins</span><span class="o">:</span><span class="ss">counterparty</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">borrower-occ</span><span class="w"> </span><span class="p">.</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span><span class="c1"># What follows if this obligation is breached?</span><span class="w">
+</span><span class="k">SELECT</span><span class="w"> </span><span class="nv">?next</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">?next</span><span class="w"> </span><span class="nn">ins</span><span class="o">:</span><span class="ss">arisesOnBreachOf</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">deliver-accounts</span><span class="w"> </span><span class="p">.</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h3 id="54-breach-consequences-are-relations-and-their-classification-is-applied">5.4 Breach consequences are relations, and their classification is applied</h3>
+
+<p>English law’s condition, warranty and innominate term, and insurance’s condition precedent and
+warranty, classify a term by what its breach allows. The allowance itself is a relation:</p>
+
+<ul>
+  <li>breach of a condition gives the other party a <code class="language-plaintext highlighter-rouge">Power</code> to terminate, <code class="language-plaintext highlighter-rouge">arisesOnBreachOf</code> the
+obligation</li>
+  <li>breach of a warranty gives damages, an <code class="language-plaintext highlighter-rouge">Obligation</code> to pay, <code class="language-plaintext highlighter-rouge">arisesOnBreachOf</code> it</li>
+  <li>an insurance condition precedent to liability is not an obligation at all. It is part of the
+indemnity obligation’s <code class="language-plaintext highlighter-rouge">arisesOn</code>: no notice in time, no liability</li>
+</ul>
+
+<p>The classification stays applied (open-cbaa’s <code class="language-plaintext highlighter-rouge">stm:breachTreatment</code>), as a reading aid over
+relations that carry the effect.</p>
+
+<h2 id="6-where-it-sits">6. Where it sits</h2>
+
+<h3 id="61-hohfeld">6.1 Hohfeld</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Hohfeld</th>
+      <th>Correlative</th>
+      <th>This design</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>duty</td>
+      <td>claim-right</td>
+      <td><code class="language-plaintext highlighter-rouge">ins:Obligation</code>: <code class="language-plaintext highlighter-rouge">obligor</code> holds the duty, <code class="language-plaintext highlighter-rouge">obligee</code> the claim</td>
+    </tr>
+    <tr>
+      <td>privilege (liberty)</td>
+      <td>no-right</td>
+      <td><code class="language-plaintext highlighter-rouge">ins:Permission</code>: <code class="language-plaintext highlighter-rouge">holder</code> has the privilege, <code class="language-plaintext highlighter-rouge">counterparty</code> the no-right</td>
+    </tr>
+    <tr>
+      <td>power</td>
+      <td>liability</td>
+      <td><code class="language-plaintext highlighter-rouge">ins:Power</code>: <code class="language-plaintext highlighter-rouge">holder</code>, <code class="language-plaintext highlighter-rouge">counterparty</code></td>
+    </tr>
+    <tr>
+      <td>immunity</td>
+      <td>disability</td>
+      <td>not modelled. It is the absence of a power, and an absent power already has no effect</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Correlatives are the two ends of one node, so no consistency algorithm is needed between a duty and
+its right. Hohfeld defines a privilege as the negation of a duty to the contrary, which is exactly
+what <code class="language-plaintext highlighter-rouge">ins:excepts</code> records.</p>
+
+<h3 id="62-deontic-and-defeasible-logic">6.2 Deontic and defeasible logic</h3>
+
+<ul>
+  <li><strong>Standard deontic logic.</strong> O is <code class="language-plaintext highlighter-rouge">Obligation</code>. F p ≡ O ¬p is <code class="language-plaintext highlighter-rouge">Prohibition</code>, a kind of
+obligation. P is strong permission only, as an exception to a prohibition. Weak permission (no
+contrary duty exists) is an absence and stays unrepresented, which is LATTICE’s position on
+absence everywhere (legalruleml-mapping §6.4).</li>
+  <li><strong>Achievement and maintenance</strong> (Governatori) are <code class="language-plaintext highlighter-rouge">Obligation</code> and <code class="language-plaintext highlighter-rouge">ContinuingObligation</code>.
+LegalRuleML leaves this neutral. LATTICE cannot, because the two compile differently (§5.2).</li>
+  <li><strong>Defeasible logic.</strong> A defeater is a <code class="language-plaintext highlighter-rouge">Permission</code> with <code class="language-plaintext highlighter-rouge">excepts</code>. A superiority relation is
+<code class="language-plaintext highlighter-rouge">ins:prevailsOver</code> between terms, reserved for N10 and gated by D5. Rule strength (strict,
+defeasible, defeater) is not modelled. An unexcepted prohibition is strict in effect.</li>
+</ul>
+
+<h3 id="63-lattices-own-logics">6.3 LATTICE’s own logics</h3>
+
+<ul>
+  <li><strong>Strong Kleene.</strong> Every decision is an Eligibility decision. Breach is three-valued in effect:
+breached, not breached, or undetermined with a diagnostic.</li>
+  <li><strong>OWL DL.</strong> Classes, covering and disjointness axioms, and cardinalities are in OWL. The
+“neither continuing nor prohibition” rule is SHACL, since OWL cannot state it under the open world.</li>
+  <li><strong>SWRL.</strong> Derives prohibition breaches and power exercise effects, which are positive. Refuses
+achievement-obligation breach, which reads absence (A-105, D7).</li>
+  <li><strong>Stratified Datalog.</strong> The arising graph gives the strata (§5.2).</li>
+</ul>
+
+<h3 id="64-controlled-english-r5">6.4 Controlled English (R5)</h3>
+
+<p>One modal verb per class, so a rendering never has to guess:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Class</th>
+      <th>Rendering</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">Obligation</code></td>
+      <td><em>{obligor} must {activity} for {obligee} within {due} of {arisesOn}, where {scope}.</em></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ContinuingObligation</code></td>
+      <td><em>{obligor} must ensure that {maintains}, while {term} is in force.</em></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">Prohibition</code></td>
+      <td><em>{obligor} must not {activity} where {scope}.</em></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">Permission</code></td>
+      <td><em>{holder} may {activity} where {scope}, despite {excepts}.</em></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">Power</code></td>
+      <td><em>{holder} may {activity} where {scope}, which ends {ends}.</em></td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="65-external-standards-for-free-where-it-is-free">6.5 External standards, for free where it is free</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Standard</th>
+      <th>Maps to</th>
+      <th>Cost</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>ODRL <code class="language-plaintext highlighter-rouge">Duty</code>, <code class="language-plaintext highlighter-rouge">Prohibition</code>, <code class="language-plaintext highlighter-rouge">Permission</code></td>
+      <td>the classes of the same meaning</td>
+      <td>free</td>
+    </tr>
+    <tr>
+      <td>ODRL <code class="language-plaintext highlighter-rouge">action</code>, <code class="language-plaintext highlighter-rouge">constraint</code>, <code class="language-plaintext highlighter-rouge">assignee</code>, <code class="language-plaintext highlighter-rouge">assigner</code></td>
+      <td><code class="language-plaintext highlighter-rouge">activity</code>, <code class="language-plaintext highlighter-rouge">scope</code>, obligor or holder, obligee or counterparty</td>
+      <td>free</td>
+    </tr>
+    <tr>
+      <td>ODRL <code class="language-plaintext highlighter-rouge">consequence</code></td>
+      <td><code class="language-plaintext highlighter-rouge">arisesOnBreachOf</code>, read in the opposite direction</td>
+      <td>a MORK inversion</td>
+    </tr>
+    <tr>
+      <td>LegalRuleML Obligation, Prohibition, Permission</td>
+      <td>the same classes</td>
+      <td>free</td>
+    </tr>
+    <tr>
+      <td>LegalRuleML Right</td>
+      <td>the obligee end, or a Power</td>
+      <td>a MORK mapping per use</td>
+    </tr>
+    <tr>
+      <td>LegalRuleML suborder list</td>
+      <td>a linear chain of <code class="language-plaintext highlighter-rouge">arisesOnBreachOf</code></td>
+      <td>free one way. The chain generalises to fan-out, which the list cannot express</td>
+    </tr>
+    <tr>
+      <td>LegalRuleML Bearer, AuxiliaryParty</td>
+      <td>obligor or holder, obligee or counterparty</td>
+      <td>free</td>
+    </tr>
+    <tr>
+      <td>LegalRuleML Override</td>
+      <td><code class="language-plaintext highlighter-rouge">ins:prevailsOver</code>, reserved</td>
+      <td>D5</td>
+    </tr>
+    <tr>
+      <td>LegalRuleML strength</td>
+      <td>not modelled</td>
+      <td>lossy import, recorded</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="7-worked-examples">7. Worked examples</h2>
+
+<p>Clean room first (ADR-A-C2): lending and a clinical trial. The open-cbaa mapping in §8 checks the
+design against a real consumer and did not drive it.</p>
+
+<h3 id="71-a-facility-agreements-reporting-covenant-cure-period-and-acceleration">7.1 A facility agreement’s reporting covenant, cure period and acceleration</h3>
+
+<div class="language-turtle highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nn">ex:</span><span class="n">facility</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">ins:</span><span class="n">Instrument</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ins:</span><span class="n">party</span><span class="w"> </span><span class="nn">ex:</span><span class="n">borrower-occ</span><span class="w"> </span><span class="p">,</span><span class="w"> </span><span class="nn">ex:</span><span class="n">lender-occ</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="nn">ex:</span><span class="n">clause-21-1</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">ins:</span><span class="n">Element</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ins:</span><span class="n">partOf</span><span class="w"> </span><span class="nn">ex:</span><span class="n">facility</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ins:</span><span class="n">elementType</span><span class="w"> </span><span class="nn">ex-voc:</span><span class="n">Clause</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="nn">ex:</span><span class="n">clause-23-1</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">ins:</span><span class="n">Element</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ins:</span><span class="n">partOf</span><span class="w"> </span><span class="nn">ex:</span><span class="n">facility</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ins:</span><span class="n">elementType</span><span class="w"> </span><span class="nn">ex-voc:</span><span class="n">Clause</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="nn">ex:</span><span class="n">clause-25-1</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">ins:</span><span class="n">Element</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ins:</span><span class="n">partOf</span><span class="w"> </span><span class="nn">ex:</span><span class="n">facility</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ins:</span><span class="n">elementType</span><span class="w"> </span><span class="nn">ex-voc:</span><span class="n">Clause</span><span class="w"> </span><span class="p">.</span><span class="w">
+
+</span><span class="nn">ex:</span><span class="n">reporting</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">ins:</span><span class="n">Term</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ins:</span><span class="n">termOf</span><span class="w"> </span><span class="nn">ex:</span><span class="n">facility</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ins:</span><span class="n">expressedIn</span><span class="w"> </span><span class="nn">ex:</span><span class="n">clause-21-1</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="nn">ex:</span><span class="n">deliver-accounts</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">ins:</span><span class="n">Obligation</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">ins:</span><span class="n">arisesUnder</span><span class="w"> </span><span class="nn">ex:</span><span class="n">reporting</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">ins:</span><span class="n">obligor</span><span class="w"> </span><span class="nn">ex:</span><span class="n">borrower-occ</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ins:</span><span class="n">obligee</span><span class="w"> </span><span class="nn">ex:</span><span class="n">lender-occ</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">ins:</span><span class="n">activity</span><span class="w"> </span><span class="nn">ex-voc:</span><span class="n">DeliverAnnualAccounts</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">ins:</span><span class="n">arisesOn</span><span class="w"> </span><span class="nn">ex:</span><span class="n">financial-year-ended</span><span class="w"> </span><span class="p">;</span><span class="w">       </span><span class="c1"># elg condition over the financial year</span><span class="w">
+    </span><span class="nn">ins:</span><span class="n">due</span><span class="w"> </span><span class="nn">ex:</span><span class="n">within-120-days</span><span class="w"> </span><span class="p">.</span><span class="w">                 </span><span class="c1"># qnt:Range relative to the arising</span><span class="w">
+
+</span><span class="nn">ex:</span><span class="n">leverage</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">ins:</span><span class="n">Term</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ins:</span><span class="n">termOf</span><span class="w"> </span><span class="nn">ex:</span><span class="n">facility</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ins:</span><span class="n">expressedIn</span><span class="w"> </span><span class="nn">ex:</span><span class="n">clause-21-1</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="nn">ex:</span><span class="n">keep-leverage</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">ins:</span><span class="n">ContinuingObligation</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">ins:</span><span class="n">arisesUnder</span><span class="w"> </span><span class="nn">ex:</span><span class="n">leverage</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">ins:</span><span class="n">obligor</span><span class="w"> </span><span class="nn">ex:</span><span class="n">borrower-occ</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ins:</span><span class="n">obligee</span><span class="w"> </span><span class="nn">ex:</span><span class="n">lender-occ</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">ins:</span><span class="n">maintains</span><span class="w"> </span><span class="nn">ex:</span><span class="n">leverage-at-most-3x</span><span class="w"> </span><span class="p">;</span><span class="w">       </span><span class="c1"># elg interval condition</span><span class="w">
+    </span><span class="nn">ins:</span><span class="n">recurrence</span><span class="w"> </span><span class="nn">ex:</span><span class="n">quarter-ends</span><span class="w"> </span><span class="p">.</span><span class="w">
+
+</span><span class="nn">ex:</span><span class="n">negative-pledge-term</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">ins:</span><span class="n">Term</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ins:</span><span class="n">termOf</span><span class="w"> </span><span class="nn">ex:</span><span class="n">facility</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ins:</span><span class="n">expressedIn</span><span class="w"> </span><span class="nn">ex:</span><span class="n">clause-21-1</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="nn">ex:</span><span class="n">negative-pledge</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">ins:</span><span class="n">Prohibition</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">ins:</span><span class="n">arisesUnder</span><span class="w"> </span><span class="nn">ex:</span><span class="n">negative-pledge-term</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">ins:</span><span class="n">obligor</span><span class="w"> </span><span class="nn">ex:</span><span class="n">borrower-occ</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ins:</span><span class="n">obligee</span><span class="w"> </span><span class="nn">ex:</span><span class="n">lender-occ</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">ins:</span><span class="n">activity</span><span class="w"> </span><span class="nn">ex-voc:</span><span class="n">CreateSecurity</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">ins:</span><span class="n">scope</span><span class="w"> </span><span class="nn">ex:</span><span class="n">over-borrower-assets</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="nn">ex:</span><span class="n">liens-by-law</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">ins:</span><span class="n">Permission</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">ins:</span><span class="n">arisesUnder</span><span class="w"> </span><span class="nn">ex:</span><span class="n">negative-pledge-term</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">ins:</span><span class="n">holder</span><span class="w"> </span><span class="nn">ex:</span><span class="n">borrower-occ</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ins:</span><span class="n">counterparty</span><span class="w"> </span><span class="nn">ex:</span><span class="n">lender-occ</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">ins:</span><span class="n">activity</span><span class="w"> </span><span class="nn">ex-voc:</span><span class="n">CreateSecurity</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">ins:</span><span class="n">scope</span><span class="w"> </span><span class="nn">ex:</span><span class="n">arising-by-operation-of-law</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">ins:</span><span class="n">excepts</span><span class="w"> </span><span class="nn">ex:</span><span class="n">negative-pledge</span><span class="w"> </span><span class="p">.</span><span class="w">
+
+</span><span class="nn">ex:</span><span class="n">cure</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">ins:</span><span class="n">Term</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ins:</span><span class="n">termOf</span><span class="w"> </span><span class="nn">ex:</span><span class="n">facility</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ins:</span><span class="n">expressedIn</span><span class="w"> </span><span class="nn">ex:</span><span class="n">clause-23-1</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="nn">ex:</span><span class="n">cure-accounts</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">ins:</span><span class="n">Obligation</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">ins:</span><span class="n">arisesUnder</span><span class="w"> </span><span class="nn">ex:</span><span class="n">cure</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">ins:</span><span class="n">arisesOnBreachOf</span><span class="w"> </span><span class="nn">ex:</span><span class="n">deliver-accounts</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">ins:</span><span class="n">obligor</span><span class="w"> </span><span class="nn">ex:</span><span class="n">borrower-occ</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ins:</span><span class="n">obligee</span><span class="w"> </span><span class="nn">ex:</span><span class="n">lender-occ</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">ins:</span><span class="n">activity</span><span class="w"> </span><span class="nn">ex-voc:</span><span class="n">DeliverAnnualAccounts</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">ins:</span><span class="n">due</span><span class="w"> </span><span class="nn">ex:</span><span class="n">within-30-days</span><span class="w"> </span><span class="p">.</span><span class="w">
+
+</span><span class="nn">ex:</span><span class="n">acceleration</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">ins:</span><span class="n">Term</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ins:</span><span class="n">termOf</span><span class="w"> </span><span class="nn">ex:</span><span class="n">facility</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ins:</span><span class="n">expressedIn</span><span class="w"> </span><span class="nn">ex:</span><span class="n">clause-25-1</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="nn">ex:</span><span class="n">accelerate</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">ins:</span><span class="n">Power</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">ins:</span><span class="n">arisesUnder</span><span class="w"> </span><span class="nn">ex:</span><span class="n">acceleration</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">ins:</span><span class="n">arisesOnBreachOf</span><span class="w"> </span><span class="nn">ex:</span><span class="n">cure-accounts</span><span class="w"> </span><span class="p">,</span><span class="w"> </span><span class="nn">ex:</span><span class="n">keep-leverage</span><span class="w"> </span><span class="p">,</span><span class="w"> </span><span class="nn">ex:</span><span class="n">negative-pledge</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">ins:</span><span class="n">holder</span><span class="w"> </span><span class="nn">ex:</span><span class="n">lender-occ</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ins:</span><span class="n">counterparty</span><span class="w"> </span><span class="nn">ex:</span><span class="n">borrower-occ</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">ins:</span><span class="n">activity</span><span class="w"> </span><span class="nn">ex-voc:</span><span class="n">DeclareLoansDue</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span><span class="nn">ex:</span><span class="n">repay-now</span><span class="w"> </span><span class="k">a</span><span class="w"> </span><span class="nn">ins:</span><span class="n">Obligation</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">ins:</span><span class="n">arisesUnder</span><span class="w"> </span><span class="nn">ex:</span><span class="n">acceleration</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">ins:</span><span class="n">arisesOnExerciseOf</span><span class="w"> </span><span class="nn">ex:</span><span class="n">accelerate</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">ins:</span><span class="n">obligor</span><span class="w"> </span><span class="nn">ex:</span><span class="n">borrower-occ</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ins:</span><span class="n">obligee</span><span class="w"> </span><span class="nn">ex:</span><span class="n">lender-occ</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">ins:</span><span class="n">activity</span><span class="w"> </span><span class="nn">ex-voc:</span><span class="n">RepayAllLoans</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">ins:</span><span class="n">due</span><span class="w"> </span><span class="nn">ex:</span><span class="n">within-3-business-days</span><span class="w"> </span><span class="p">.</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Several <code class="language-plaintext highlighter-rouge">arisesOnBreachOf</code> values need a reading, since the acceleration power arises on
+breach of any one of them. Values of a multi-valued trigger are alternatives, as <code class="language-plaintext highlighter-rouge">elg:requiredConcept</code>
+values are. That is law I6’s companion and belongs in A-104.</p>
+
+<p>What the evaluator does, per financial year: <code class="language-plaintext highlighter-rouge">deliver-accounts</code> arises at year end. With no delivery
+act by day 120, and a closure over the lender’s inbox, it is breached. <code class="language-plaintext highlighter-rouge">cure-accounts</code> arises on
+that breach record. With no delivery by day 30 it is breached, which gives rise to <code class="language-plaintext highlighter-rouge">accelerate</code>.
+The lender’s <code class="language-plaintext highlighter-rouge">DeclareLoansDue</code> act exercises it, and <code class="language-plaintext highlighter-rouge">repay-now</code> arises. A security interest
+created by operation of law is not a breach of the negative pledge, and one whose origin is
+unknown is Undetermined and is not a breach either.</p>
+
+<h3 id="72-a-trial-protocol">7.2 A trial protocol</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Clause</th>
+      <th>Relation</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>The investigator must report a serious adverse event to the sponsor within 24 hours of becoming aware of it</td>
+      <td><code class="language-plaintext highlighter-rouge">Obligation</code>, activity ReportSAE, arises on awareness, due 24 hours</td>
+    </tr>
+    <tr>
+      <td>The investigator must not enrol a patient meeting an exclusion criterion</td>
+      <td><code class="language-plaintext highlighter-rouge">Prohibition</code>, activity Enrol, scope the exclusion criteria (an Eligibility profile)</td>
+    </tr>
+    <tr>
+      <td>unless the sponsor has granted a written waiver for that patient</td>
+      <td><code class="language-plaintext highlighter-rouge">Permission</code>, activity Enrol, scope “waiver granted for this patient”, excepts the prohibition</td>
+    </tr>
+    <tr>
+      <td>The sponsor may suspend a site that fails to report</td>
+      <td><code class="language-plaintext highlighter-rouge">Power</code>, arises on breach of the reporting obligation, activity SuspendSite, ends the term under which the site may enrol</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="8-consequences">8. Consequences</h2>
+
+<h3 id="81-versioning">8.1 Versioning</h3>
+
+<p>SemVer 2.0.0 already allows this. Its item 4 says of major version zero that “anything MAY change
+at any time”. ADR-A86’s own closing paragraph says major version zero keeps “its ordinary SemVer
+meaning”. What conflicts is A-86’s bump table, which classifies breaking changes as MAJOR without
+excepting 0.x.</p>
+
+<p>So the proposal needs a short ADR (or an A-86 addendum), not a break with SemVer. It would say that
+while a layer is at 0.x, a breaking change takes a MINOR bump and is marked breaking in its release
+row and ADR. It can name Instrument alone, as proposed, or every 0.x layer. That choice is yours.
+Instrument 0.7.0 then goes to 0.8.0, breaking. Behaviour re-pins, and so do <code class="language-plaintext highlighter-rouge">behaviour-vocab</code> and
+<code class="language-plaintext highlighter-rouge">applied/capacity</code>, as the plan’s N4 cascade already lists.</p>
+
+<h3 id="82-lattice">8.2 LATTICE</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Artefact</th>
+      <th>Change</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ontology/instrument</code> spec, vocab, shapes, README</td>
+      <td>rewritten. The vocab gains <code class="language-plaintext highlighter-rouge">ins-voc:ElementTypeContract</code> and <code class="language-plaintext highlighter-rouge">ins-voc:ActivityContract</code></td>
+    </tr>
+    <tr>
+      <td>ADR-A07b</td>
+      <td>superseded by A-104. Its versioning contract carries over unchanged</td>
+    </tr>
+    <tr>
+      <td>ADR-A96</td>
+      <td>carries over onto terms. <code class="language-plaintext highlighter-rouge">ins:SingleProvisionShape</code> becomes a single-element shape on <code class="language-plaintext highlighter-rouge">ins:expressedIn</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">behaviour/spec</code></td>
+      <td>re-pin. <code class="language-plaintext highlighter-rouge">bhv:targetsElement</code>’s range widens to elements, terms and legal relations, since effects end relations</td>
+    </tr>
+    <tr>
+      <td>Behaviour fixtures, <code class="language-plaintext highlighter-rouge">tools/test_substrate_extensions.py</code></td>
+      <td>retyped</td>
+    </tr>
+    <tr>
+      <td>Foundation README, ontology architecture §3 and §4</td>
+      <td>illustrations use <code class="language-plaintext highlighter-rouge">ins:Obligation ⊑ fnd:Version</code> still, and remain true</td>
+    </tr>
+    <tr>
+      <td>NRS plan: N4, §18.2 and §18.3 of the mapping sketch</td>
+      <td>superseded by this sketch. The laws are I1 to I10 below. N8’s <code class="language-plaintext highlighter-rouge">compensatedBy</code> chain becomes <code class="language-plaintext highlighter-rouge">arisesOnBreachOf</code></td>
+    </tr>
+    <tr>
+      <td>NRS decisions</td>
+      <td>D2 answered here. D3 answered by your ruling: align where free, map through MORK otherwise</td>
+    </tr>
+    <tr>
+      <td>AIR Phase 5, A-101</td>
+      <td><code class="language-plaintext highlighter-rouge">ctr:TermParameter ⊑ ins:Qualifier</code> still holds. It qualifies a term or a relation</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="83-open-cbaa">8.3 Open-cbaa</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Today</th>
+      <th>Becomes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">agr:Agreement ⊑ wim:Contract, ins:Element</code></td>
+      <td><code class="language-plaintext highlighter-rouge">agr:Agreement ⊑ wim:Contract, ins:Instrument</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">wim:</code> components</td>
+      <td><code class="language-plaintext highlighter-rouge">⊑ ins:Element</code>, with <code class="language-plaintext highlighter-rouge">wim:isDirectlyComprisedBy ⊑ ins:partOf</code></td>
+    </tr>
+    <tr>
+      <td>bound <code class="language-plaintext highlighter-rouge">stm:Obligation ⊑ ins:Obligation</code>, the other kinds on <code class="language-plaintext highlighter-rouge">stm:bearerOccupancy</code></td>
+      <td>every bound prescriptive kind is an <code class="language-plaintext highlighter-rouge">ins:</code> relation. <code class="language-plaintext highlighter-rouge">stm:bearerOccupancy</code> becomes <code class="language-plaintext highlighter-rouge">ins:holder</code> or <code class="language-plaintext highlighter-rouge">ins:obligor</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">stm:activity</code>, <code class="language-plaintext highlighter-rouge">stm:scope</code>, <code class="language-plaintext highlighter-rouge">stm:trigger</code>, <code class="language-plaintext highlighter-rouge">stm:deadline</code>, <code class="language-plaintext highlighter-rouge">stm:recurrence</code></td>
+      <td><code class="language-plaintext highlighter-rouge">ins:activity</code>, <code class="language-plaintext highlighter-rouge">ins:scope</code>, <code class="language-plaintext highlighter-rouge">ins:arisesOn</code>, <code class="language-plaintext highlighter-rouge">ins:due</code>, <code class="language-plaintext highlighter-rouge">ins:recurrence</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">stm:AuthorityGrant</code></td>
+      <td>stays applied: an <code class="language-plaintext highlighter-rouge">ins:Power</code> to bind within the scope, with its level and limits as qualifiers, plus a <code class="language-plaintext highlighter-rouge">Prohibition</code> on binding outside it where the wording says so</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">stm:Definition</code>, <code class="language-plaintext highlighter-rouge">stm:Classification</code></td>
+      <td>stay applied, as terms that create no relation</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">stm:Precedence</code></td>
+      <td>waits for <code class="language-plaintext highlighter-rouge">ins:prevailsOver</code> (D5)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">stm:StatementTemplate</code></td>
+      <td>stays applied. Templates name roles, so they are not <code class="language-plaintext highlighter-rouge">ins:</code> relations, as today</td>
+    </tr>
+    <tr>
+      <td>wording and meaning disjoint (open-cbaa DP3)</td>
+      <td>kept, as the structure and content strata</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="9-laws-for-a-104">9. Laws for A-104</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Law</th>
+      <th>Statement</th>
+      <th>Register</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>I1</td>
+      <td><code class="language-plaintext highlighter-rouge">ins:partOf</code> forms a tree. Every element reaches exactly one root instrument</td>
+      <td>static, SHACL</td>
+    </tr>
+    <tr>
+      <td>I2</td>
+      <td>A term is expressed in at least one element or implied by at least one source</td>
+      <td>static, SHACL</td>
+    </tr>
+    <tr>
+      <td>I3</td>
+      <td>A legal relation arises under exactly one term, and is in force only while that term is</td>
+      <td>static, OWL and semantic</td>
+    </tr>
+    <tr>
+      <td>I4</td>
+      <td>All conditions on one relation bind one subject class (one case)</td>
+      <td>static, SHACL</td>
+    </tr>
+    <tr>
+      <td>I5</td>
+      <td>An obligation has exactly one due range unless it is continuing or a prohibition, which have none</td>
+      <td>static, SHACL and OWL</td>
+    </tr>
+    <tr>
+      <td>I6</td>
+      <td>The graph of <code class="language-plaintext highlighter-rouge">arisesOnBreachOf</code> and <code class="language-plaintext highlighter-rouge">arisesOnExerciseOf</code> is acyclic. Its values are alternatives</td>
+      <td>static, SHACL</td>
+    </tr>
+    <tr>
+      <td>I7</td>
+      <td>Breach is derived only as §5.2 states. <strong>Undetermined never yields breach.</strong> An absence-based breach cites its closure and position</td>
+      <td>semantic, the mandatory adversarial probe</td>
+    </tr>
+    <tr>
+      <td>I8</td>
+      <td>A permission’s holder is the excepted prohibition’s obligor, and its activity is the prohibition’s</td>
+      <td>static, SHACL</td>
+    </tr>
+    <tr>
+      <td>I9</td>
+      <td>A due range is anchored at the valid time of the arising, never at evaluation time. Expiry enters as a positioned stimulus (R3)</td>
+      <td>static and semantic</td>
+    </tr>
+    <tr>
+      <td>I10</td>
+      <td>A power’s exercise takes effect only when its scope is Permitted at the exercise position</td>
+      <td>semantic</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="10-open-questions">10. Open questions</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Question</th>
+      <th>Default if unanswered</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Q1</td>
+      <td>Does the 0.x breaking-MINOR ADR cover Instrument only, or every 0.x layer?</td>
+      <td>Instrument only, as proposed</td>
+    </tr>
+    <tr>
+      <td>Q2</td>
+      <td>Should <code class="language-plaintext highlighter-rouge">ins:party</code> gain a privity shape (an obligor is a party to the term’s instrument)?</td>
+      <td>no. Third-party beneficiaries make it an applied choice</td>
+    </tr>
+    <tr>
+      <td>Q3</td>
+      <td>Is <code class="language-plaintext highlighter-rouge">ins:obligee</code> required, given regulatory duties owed to no party to the instrument?</td>
+      <td>required, with the regulator as a contingent occupancy (ADR-A102’s pattern)</td>
+    </tr>
+    <tr>
+      <td>Q4</td>
+      <td>Should a relation name the case class explicitly, rather than reading it from its conditions’ bindings?</td>
+      <td>read it from the bindings, checked by I4</td>
+    </tr>
+    <tr>
+      <td>Q5</td>
+      <td>Does a fixed calendar date need <code class="language-plaintext highlighter-rouge">ins:dueOn</code>, or do <code class="language-plaintext highlighter-rouge">ins:recurrence</code> and anchored ranges cover every example?</td>
+      <td>add <code class="language-plaintext highlighter-rouge">ins:dueOn</code> when an example needs it</td>
+    </tr>
+  </tbody>
+</table>

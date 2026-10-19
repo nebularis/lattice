@@ -1,0 +1,10 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="phase-5-validation-handoff">Phase 5 Validation Handoff</h1>
+
+<p><strong>Status:</strong> Accepted
+<strong>Governing ADRs:</strong> <a href="../../architecture/decisions/ADR-A22-mork-governance-and-versioning-foundation-alignment.md">ADR-A22</a>, <a href="../../architecture/decisions/ADR-A25-llm-participation-and-deterministic-production-gate.md">ADR-A25</a>, <a href="../../architecture/decisions/ADR-A42-mork-review-snapshot-and-decision-learning-boundary.md">ADR-A42</a></p>
+
+<p>Run <code class="language-plaintext highlighter-rouge">python -m pytest workers/tests/test_mork_review.py workers/tests/test_mork_review_lifecycle.py workers/tests/test_mork_analysis_worker.py</code>, then <code class="language-plaintext highlighter-rouge">yarn check</code>, <code class="language-plaintext highlighter-rouge">yarn build</code>, and <code class="language-plaintext highlighter-rouge">yarn test</code>. Apply <code class="language-plaintext highlighter-rouge">workers/sql/V2__mork_review_ledger.sql</code> to PostgreSQL. Validate that each of Confirm, Retarget, Reshape, Decline, Teach, and Defer has its defined effect, stale snapshots conflict, and Domain Stewards cannot receive MCN, lint diagnostics, pack internals, or cross-tenant evidence.</p>
+
+<p>The network-enabled environment must connect scope-restricted worker wrappers to existing MORK validation and community-analysis modules. It must seed immutable mapping snapshots and demonstrate evidence projection through the Review Bench without returning restricted content. This authoring environment did not run Python, Yarn, Playwright, RabbitMQ, or graph-store integration commands.</p>

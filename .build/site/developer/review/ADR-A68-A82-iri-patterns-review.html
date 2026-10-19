@@ -1,0 +1,256 @@
+<h1 id="review-rdf-operational-patterns-documentation-set">Review: RDF operational-patterns documentation set</h1>
+
+<p><strong>Review state:</strong> Closed 2026-09-23. Dispositioned through the remediation specification <a href="/developer/review/IRI-patterns-remediation.html">IRI-patterns-remediation.md</a> and executed as unit <code class="language-plaintext highlighter-rouge">rdf-sparql-patterns-remediation</code> (<a href="/developer/status/rdf-sparql-patterns-remediation.html">status</a>). Several fixes were later corrected by <a href="/developer/status/iri-patterns-post-3866b21-remediation.html"><code class="language-plaintext highlighter-rouge">iri-patterns-post-3866b21-remediation</code></a>.</p>
+
+<h2 id="scope-and-limits">Scope and limits</h2>
+
+<p>I reviewed all five documents against each other, against the standards they cite (SPARQL 1.1, SHACL, RFC 9110, RFC 4648, XPath F&amp;O numeric semantics, GDPR Recital 26), and against the rules the documents set for themselves.</p>
+
+<p>Several referenced documents were not provided, so I could not check agreement with them:</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">data-architecture.md</code>, <code class="language-plaintext highlighter-rouge">iri-policy.md</code>, the ADR-A51 review and disposition documents</li>
+  <li>ADR-A54, ADR-A63, ADR-A67, ADR-A74, ADR-A75, ADR-A78</li>
+</ul>
+
+<p>I also could not execute the Python examples.</p>
+
+<p><strong>Verdict:</strong> the set is not safe to apply to production as written.</p>
+<ul>
+  <li>The identity catalogue (<code class="language-plaintext highlighter-rouge">iri-identity-patterns.md</code>) and ADR-A82 are broadly sound. They are the stricter documents.</li>
+  <li>Most problems are in <code class="language-plaintext highlighter-rouge">rdf-sparql-patterns-guide.md</code>. It still treats the superseded ADR-A51 as live and breaks several of the catalogue’s rules.</li>
+  <li>More seriously, the “corrected” CAS pattern has defects that defeat the guarantees the guide claims for it: epoch safety, fork detection and outcome resolution.</li>
+</ul>
+
+<p>The findings below are ordered by severity. Section numbers refer to the patterns guide unless stated otherwise.</p>
+
+<hr />
+
+<h2 id="1-blocking-defects-production-unsafe">1. Blocking defects (production-unsafe)</h2>
+
+<h3 id="b1-the-epoch-guard-does-not-protect-against-restore-f3-is-not-actually-fixed">B1. The epoch guard does not protect against restore (F3 is not actually fixed)</h3>
+
+<p>The write path never reads the dataset epoch.</p>
+<ul>
+  <li>§19.1 guards on the version row’s own <code class="language-plaintext highlighter-rouge">pat:epoch "3"</code>.</li>
+  <li>The Python client takes the epoch from the caller’s ETag (<code class="language-plaintext highlighter-rouge">expected.epoch</code>).</li>
+  <li>The §24.4 runbook bumps only <code class="language-plaintext highlighter-rouge">&lt;urn:ds:prod&gt; pat:epoch</code>, which the write path never reads.</li>
+</ul>
+
+<p>After a restore, every version row still says epoch 3. A stale client holding <code class="language-plaintext highlighter-rouge">W/"3-42"</code> therefore matches the restored row. It succeeds against a different history and mints <code class="language-plaintext highlighter-rouge">urn:rev:orders/1/e3/0000000000000043</code>. That IRI may already exist in exports, CDC sinks and <code class="language-plaintext highlighter-rouge">prevRev</code> references taken before the restore. This is exactly the aliasing F3 and Appendix D.1 claim to have fixed. TCK T-5 would fail.</p>
+
+<p>There is a second hazard. §24.4 says “bump <code class="language-plaintext highlighter-rouge">pat:epoch</code>”, but the value being bumped is itself restored data. Suppose you restore twice from the same backup. Epoch 3 is bumped to 4 both times, and epoch 4 is reused. The catalogue (§10.3) already classifies a store-local epoch as unsafe. The guide ignores this.</p>
+
+<p><strong>Fix:</strong></p>
+<ol>
+  <li>Allocate each new epoch from an external high-water mark (the highest epoch ever issued, plus one).</li>
+  <li>In the same maintenance transaction, before writers start, rewrite every version row’s <code class="language-plaintext highlighter-rouge">pat:epoch</code> to the new value.</li>
+  <li>Add a dataset-epoch guard to every write (CAS, append, create, delete):
+    <div class="language-sparql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:g:dataset&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nn">&lt;urn:ds:prod&gt;</span><span class="w"> </span><span class="nn">pat</span><span class="o">:</span><span class="ss">epoch</span><span class="w"> </span><span class="s2">"4"</span><span class="o">^^</span><span class="nn">xsd</span><span class="o">:</span><span class="ss">long</span><span class="w"> </span><span class="p">}</span><span class="w">   </span><span class="c1"># client's expected epoch == current</span><span class="w">
+</span></code></pre></div>    </div>
+  </li>
+  <li>Adopt one of catalogue §10.3’s fail-safe strategies by name in §24.4.</li>
+</ol>
+
+<h3 id="b2-lost-updates-are-invisible-under-the-corrected-design-the-fork-query-cannot-fire">B2. Lost updates are invisible under the corrected design; the fork query cannot fire</h3>
+
+<p>Revision IRIs are deterministic from <code class="language-plaintext highlighter-rouge">(aggregate, epoch, seq)</code>. So when two writers both win a CAS from 41 under broken isolation, they both mint the <em>same</em> subject, <code class="language-plaintext highlighter-rouge">…/e3/0000000000000042</code>, with the same <code class="language-plaintext highlighter-rouge">pat:prevRev</code>.</p>
+
+<p>Set semantics then collapse the evidence:</p>
+<ul>
+  <li>There is one receipt carrying two <code class="language-plaintext highlighter-rouge">pat:txn</code> values.</li>
+  <li>There are two txn claims, both pointing at it.</li>
+</ul>
+
+<p>As a result:</p>
+<ul>
+  <li>The F5 fork query (<code class="language-plaintext highlighter-rouge">GROUP BY ?prev HAVING COUNT(*) &gt; 1</code>) and <code class="language-plaintext highlighter-rouge">pat:NoForkShape</code> return nothing.</li>
+  <li>T-1’s “exactly one receipt” and “fork query returns zero rows” both <strong>pass while the system is corrupt</strong>.</li>
+  <li>Both clients’ <code class="language-plaintext highlighter-rouge">ASK</code> returns true, so both are told <code class="language-plaintext highlighter-rouge">APPLIED</code>.</li>
+</ul>
+
+<p>This is the §1.1 counter problem again, one level up. The example fork (<code class="language-plaintext highlighter-rouge">…0042-b</code>) can never be produced by <code class="language-plaintext highlighter-rouge">rev_iri()</code>.</p>
+
+<p><strong>Fix:</strong></p>
+<ul>
+  <li>Rewrite §15.3, F5 and T-1 so detection rests on “more than one txn per revision”:
+    <div class="language-sparql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">SELECT</span><span class="w"> </span><span class="nv">?rev</span><span class="w"> </span><span class="p">(</span><span class="nb">COUNT</span><span class="p">(</span><span class="k">DISTINCT</span><span class="w"> </span><span class="nv">?t</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="nv">?n</span><span class="p">)</span><span class="w">
+</span><span class="k">WHERE</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:g:txn&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">?t</span><span class="w"> </span><span class="nn">pat</span><span class="o">:</span><span class="ss">rev</span><span class="w"> </span><span class="nv">?rev</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span><span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="nv">?rev</span><span class="w"> </span><span class="k">HAVING</span><span class="w"> </span><span class="p">(</span><span class="nb">COUNT</span><span class="p">(</span><span class="k">DISTINCT</span><span class="w"> </span><span class="nv">?t</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w">
+</span></code></pre></div>    </div>
+  </li>
+  <li>At commit time, the effective shape is <code class="language-plaintext highlighter-rouge">RevisionShape</code>’s <code class="language-plaintext highlighter-rouge">pat:txn sh:maxCount 1</code>, which is SHACL Core. An inverse-path <code class="language-plaintext highlighter-rouge">[sh:inversePath pat:rev] sh:maxCount 1</code> also works where the validator’s data graph spans both graphs. Keep <code class="language-plaintext highlighter-rouge">NoForkShape</code> only for non-deterministic revision schemes.</li>
+  <li>Strengthen the confirming <code class="language-plaintext highlighter-rouge">ASK</code> so a racing winner learns about corruption:
+    <div class="language-sparql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">ASK</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:g:txlog/…&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nn">&lt;rev&gt;</span><span class="w"> </span><span class="nn">pat</span><span class="o">:</span><span class="ss">txn</span><span class="w"> </span><span class="s2">"mine"</span><span class="w">
+      </span><span class="k">FILTER</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nn">&lt;rev&gt;</span><span class="w"> </span><span class="nn">pat</span><span class="o">:</span><span class="ss">txn</span><span class="w"> </span><span class="nv">?o</span><span class="w"> </span><span class="k">FILTER</span><span class="p">(</span><span class="nv">?o</span><span class="w"> </span><span class="o">!</span><span class="p">=</span><span class="w"> </span><span class="s2">"mine"</span><span class="p">)</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span></code></pre></div>    </div>
+  </li>
+</ul>
+
+<h3 id="b3-revision-iris-collide-between-the-stream-form-and-the-aggregate-form">B3. Revision IRIs collide between the stream form and the aggregate form</h3>
+
+<p>Two different version rows mint revisions into the same namespace:</p>
+<ul>
+  <li>The append form (§10.1) keys its row on <code class="language-plaintext highlighter-rouge">&lt;urn:stream:orders/1&gt;</code> and mints <code class="language-plaintext highlighter-rouge">urn:rev:orders/1/e3/…</code>.</li>
+  <li>The CAS form (§19) keys its row on <code class="language-plaintext highlighter-rouge">&lt;urn:g:orders/1&gt;</code> and mints <code class="language-plaintext highlighter-rouge">urn:rev:orders/1/e3/…</code> via <code class="language-plaintext highlighter-rouge">rev_iri("orders/1", …)</code>.</li>
+</ul>
+
+<p>These are two independent counters sharing one IRI namespace, which is F2 reintroduced. The §2.3 and §10.2 examples already show <code class="language-plaintext highlighter-rouge">urn:rev:orders/1/e3/…</code> receipts with two different <code class="language-plaintext highlighter-rouge">pat:target</code> values. S6 (<code class="language-plaintext highlighter-rouge">urn:stream:</code>) and §20.2 (<code class="language-plaintext highlighter-rouge">urn:g:</code>) disagree in the same way.</p>
+
+<p>Chapter 22’s claim that “a stream can be appended to … and compare-and-set … without two mechanisms” requires a single version row.</p>
+
+<p><strong>Fix:</strong></p>
+<ul>
+  <li>Make one target IRI the version-row subject for each stream.</li>
+  <li>Derive the revision namespace injectively from that exact IRI (for example, an encoded or hashed target), rather than by stripping a <code class="language-plaintext highlighter-rouge">urn:g:</code> prefix.</li>
+</ul>
+
+<h3 id="b4-n--1-silently-changes-datatype-from-xsdlong-to-xsdinteger">B4. <code class="language-plaintext highlighter-rouge">?n + 1</code> silently changes datatype from <code class="language-plaintext highlighter-rouge">xsd:long</code> to <code class="language-plaintext highlighter-rouge">xsd:integer</code></h3>
+
+<p>Under SPARQL 1.1 §17.3 and XPath F&amp;O, <code class="language-plaintext highlighter-rouge">op:numeric-add</code> on integer-derived types returns <code class="language-plaintext highlighter-rouge">xsd:integer</code>. Pinning the input to <code class="language-plaintext highlighter-rouge">xsd:long</code> does not prevent this, contrary to the claim in §10.1.</p>
+
+<p>S1 and P3 therefore write counters typed <code class="language-plaintext highlighter-rouge">xsd:integer</code>, with three consequences:</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">VersionRowShape</code> (<code class="language-plaintext highlighter-rouge">sh:datatype xsd:long</code>) rejects the commit on SHACL-validating stores.</li>
+  <li>On non-validating stores, the next guard on <code class="language-plaintext highlighter-rouge">"n"^^xsd:long</code> stops term-matching, and the stream wedges.</li>
+  <li>The Chapter 13 gotcha row describes this exact hazard without noticing that the guide’s own queries trigger it.</li>
+</ul>
+
+<p><strong>Fix:</strong> <code class="language-plaintext highlighter-rouge">BIND(xsd:long(?n + 1) AS ?n1)</code> in S1 and P3. Add a datatype round-trip test to the TCK.</p>
+
+<h3 id="b5-the-recommended-pre-created-version-row-makes-the-first-cas-impossible">B5. The recommended pre-created version row makes the first CAS impossible</h3>
+
+<p>§14.2 and §19.3 recommend pre-creating <code class="language-plaintext highlighter-rouge">pat:seq "0"</code> with no head, so that “the CAS shape above is the only shape ever used”. But §19.1’s <code class="language-plaintext highlighter-rouge">WHERE</code> requires <code class="language-plaintext highlighter-rouge">pat:head ?prevRev</code> as a mandatory triple. With no head, nothing matches, and every first write returns <code class="language-plaintext highlighter-rouge">412</code>.</p>
+
+<p><strong>Fix:</strong> make the head optional:</p>
+<div class="language-sparql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">OPTIONAL</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:g:meta/17&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nn">&lt;urn:g:orders/1&gt;</span><span class="w"> </span><span class="nn">pat</span><span class="o">:</span><span class="ss">head</span><span class="w"> </span><span class="nv">?prevRev</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+<p>Unbound <code class="language-plaintext highlighter-rouge">?prevRev</code> then drops harmlessly from both templates.</p>
+
+<h3 id="b6-the-append-form-does-not-maintain-the-head-or-the-chain">B6. The append form does not maintain the head or the chain</h3>
+
+<p>S1 increments <code class="language-plaintext highlighter-rouge">pat:seq</code> but never updates <code class="language-plaintext highlighter-rouge">pat:head</code> and never writes <code class="language-plaintext highlighter-rouge">pat:prevRev</code>, yet the §10.2 receipt shows one. On a stream written by both forms:</p>
+<ul>
+  <li>The CAS form reads a stale head.</li>
+  <li>The receipt chain has holes.</li>
+  <li>T-4 (“single unbroken path”) fails.</li>
+</ul>
+
+<p><strong>Fix:</strong> in the append update:</p>
+<ul>
+  <li>Read <code class="language-plaintext highlighter-rouge">pat:head ?prev</code> (optionally).</li>
+  <li>Delete it and insert the new head.</li>
+  <li>Emit <code class="language-plaintext highlighter-rouge">pat:prevRev ?prev</code>.</li>
+</ul>
+
+<h3 id="b7-weak-etags-never-satisfy-if-match">B7. Weak ETags never satisfy <code class="language-plaintext highlighter-rouge">If-Match</code></h3>
+
+<p>RFC 9110 §13.1.1 requires <code class="language-plaintext highlighter-rouge">If-Match</code> to use strong comparison, and a weak tag never matches under strong comparison. With <code class="language-plaintext highlighter-rouge">W/"3-41"</code>, a compliant server or proxy returns <code class="language-plaintext highlighter-rouge">412</code> on every conditional <code class="language-plaintext highlighter-rouge">PUT</code>. §15.4 and §19.5 (and the Python <code class="language-plaintext highlighter-rouge">Version.etag</code>) are therefore non-functional over standard HTTP.</p>
+
+<p><strong>Fix:</strong></p>
+<ul>
+  <li>Use a strong tag, <code class="language-plaintext highlighter-rouge">"3-41"</code>.</li>
+  <li>If multiple serialisations are served for one version, include the format in the tag or document <code class="language-plaintext highlighter-rouge">Vary</code> handling.</li>
+</ul>
+
+<h3 id="b8-outcome-resolution-after-a-timeout-is-wrong">B8. Outcome resolution after a timeout is wrong</h3>
+
+<p>§19.4 <code class="language-plaintext highlighter-rouge">compare_and_set</code> calls <code class="language-plaintext highlighter-rouge">resolve()</code> after a <code class="language-plaintext highlighter-rouge">TimeoutError</code> and maps <code class="language-plaintext highlighter-rouge">ASK == false</code> to <code class="language-plaintext highlighter-rouge">CONFLICT</code>. But a false answer during a timeout can simply mean the original request is still executing.</p>
+<ul>
+  <li><strong>Append form:</strong> the caller retries under a new txn id, and duplicate events land when the original commits.</li>
+  <li><strong>CAS form:</strong> the caller is told “412, re-decide” while its original write may still apply.</li>
+</ul>
+
+<p><code class="language-plaintext highlighter-rouge">Outcome.UNKNOWN</code> is defined but never returned, which contradicts the Java port (§25.1) and retry rule 3 (§25.5).</p>
+
+<p><strong>Fix:</strong> after a timeout, either:</p>
+<ul>
+  <li>re-submit the <em>identical</em> request with the <em>same</em> txn id until a definitive answer arrives (this is safe because it is idempotent), or</li>
+  <li>return <code class="language-plaintext highlighter-rouge">UNKNOWN</code>.</li>
+</ul>
+
+<p>Never map “not yet visible” to <code class="language-plaintext highlighter-rouge">CONFLICT</code>.</p>
+
+<h3 id="b9-retention-pruning-breaks-every-quiet-aggregate-on-shacl-validating-stores">B9. Retention pruning breaks every quiet aggregate on SHACL-validating stores</h3>
+
+<p>§24.2 drops whole month buckets after 400 days, but <code class="language-plaintext highlighter-rouge">pat:head</code> on an aggregate untouched for longer than that points at a pruned receipt. On the next write:</p>
+<ul>
+  <li>The new receipt’s <code class="language-plaintext highlighter-rouge">pat:prevRev</code> targets an untyped IRI.</li>
+  <li><code class="language-plaintext highlighter-rouge">RevisionShape</code>’s <code class="language-plaintext highlighter-rouge">sh:class pat:Revision</code> fails.</li>
+  <li>With commit-time SHACL (the recommended upgrade path), <strong>every write to an old aggregate is rejected</strong>.</li>
+</ul>
+
+<p><strong>Fix, either:</strong></p>
+<ul>
+  <li>retention always preserves each stream’s head receipt, or</li>
+  <li>drop <code class="language-plaintext highlighter-rouge">sh:class</code> from <code class="language-plaintext highlighter-rouge">pat:prevRev</code> and treat pruned predecessors explicitly, recording the retention low-water mark.</li>
+</ul>
+
+<h3 id="b10-fencing-tokens-are-checked-but-never-advanced">B10. Fencing tokens are checked but never advanced</h3>
+
+<p>§7.4 and §16.2 guard with <code class="language-plaintext highlighter-rouge">FILTER(?f &lt; mytoken)</code> and never write the new token. This has two effects:</p>
+<ul>
+  <li>A stale holder with any token above the <em>stored</em> value still passes, so there is no fencing.</li>
+  <li>The legitimate holder’s second write with the same token fails, because the comparison is strict.</li>
+</ul>
+
+<p><strong>Fix:</strong> guard with <code class="language-plaintext highlighter-rouge">?f &lt;= mytoken</code>, and in the same update <code class="language-plaintext highlighter-rouge">DELETE ?f</code> / <code class="language-plaintext highlighter-rouge">INSERT mytoken</code>.</p>
+
+<h3 id="b11-global-hlc-pagination-reintroduces-the-g2-reorder-hole">B11. Global HLC pagination reintroduces the G2 reorder hole</h3>
+
+<p>The client stamps the HLC before commit. §21.3’s <code class="language-plaintext highlighter-rouge">FILTER(?hlc &gt; last) ORDER BY ?hlc</code> can therefore permanently skip a receipt with a lower HLC that commits after a higher one.</p>
+
+<p>Per-target contiguity (S3) detects the loss only <em>after</em> the consumer has advanced. This is the pre-commit case that §25.7’s stable watermark exists for, but §21.3 does not apply it.</p>
+
+<p><strong>Fix:</strong> a global HLC reader must do one of the following:</p>
+<ul>
+  <li>read only below a stable watermark or lag window, or</li>
+  <li>rescan from the stream position whenever the contiguity check fails.</li>
+</ul>
+
+<h3 id="b12-contention-is-sharded-for-the-meta-graph-only">B12. Contention is sharded for the meta graph only</h3>
+
+<p>F12 and T-3 shard the version rows, but every write also inserts into the single graphs <code class="language-plaintext highlighter-rouge">urn:g:txn</code> and <code class="language-plaintext highlighter-rouge">urn:g:txlog/2026-09</code>. P3 claims all live in <code class="language-plaintext highlighter-rouge">urn:g:keys</code>. On an engine with graph- or page-granular conflict detection, every write in the dataset conflicts on these graphs, so A6 is lost anyway.</p>
+
+<p><strong>Fix:</strong></p>
+<ul>
+  <li>Extend T-3 to measure contention on the txn, log and keys graphs.</li>
+  <li>Make their sharding part of the topology declaration.</li>
+</ul>
+
+<h3 id="b13-lock-ordering-cannot-be-controlled-through-the-order-of-where-patterns">B13. Lock ordering cannot be controlled through the order of <code class="language-plaintext highlighter-rouge">WHERE</code> patterns</h3>
+
+<p>§10.1 and §19.6 say to “acquire version rows in sorted IRI order” by listing them that way in <code class="language-plaintext highlighter-rouge">WHERE</code>. SPARQL gives no control over evaluation or lock order; the optimiser reorders patterns freely.</p>
+
+<p><strong>Fix:</strong></p>
+<ul>
+  <li>State that deadlock avoidance depends on engine deadlock detection plus retry, or on an external ordering mechanism (a lock service or partitioned writer).</li>
+  <li>Add a two-stream opposite-order TCK test.</li>
+</ul>
+
+<hr />
+
+<h2 id="2-cross-document-inconsistencies">2. Cross-document inconsistencies</h2>
+
+<h3 id="c1-the-guide-still-treats-superseded-adr-a51-as-authoritative">C1. The guide still treats superseded ADR-A51 as authoritative</h3>
+<p>The guide cites A51 as the live authority in:</p>
+<ul>
+  <li>the Status line</li>
+  <li>the <code class="language-plaintext highlighter-rouge">claim_iri</code> docstring (“ADR-A51’s minimum content-hash width”)</li>
+  <li>§7.5 (<code class="language-plaintext highlighter-rouge">fnd:replacedBy</code> “(ADR-A51)”)</li>
+  <li>§8.4 (“what ADR-A51 names <code class="language-plaintext highlighter-rouge">surrogate-claimed</code> and adopts…”)</li>
+  <li>the §19.4 ULID note (“ADR-A51 rule 2”)</li>
+  <li>Appendix D.1</li>
+</ul>
+
+<p><strong>Fix:</strong> repoint each to the relevant section of the catalogue (§6.4, §7.4, §11) or to ADR-A82.</p>
+
+<p>ADR-A51’s header also says “Superseded by ADR-A82” while ADR-A82 is still Proposed. Word it as “to be superseded on ratification of A82”, or record both as proposals.</p>
+
+<h3 id="c2-fndreplacedby-is-used-but-not-defined">C2. <code class="language-plaintext highlighter-rouge">fnd:replacedBy</code> is used but not defined</h3>
+<p>P7 prescribes <code class="language-plaintext highlighter-rouge">fnd:replacedBy</code>, but the guide’s own list of Foundation terms (§23.3) does not include it. Catalogue §11.4 forbids writing a relation that the selected ontology does not define.</p>
+<ul>
+  <li><strong>Fix:</strong> either confirm the term exists in Foundation, or make the merge relation a profile-declared property.</li>
+</ul>
+
+<h3 id="c3-identifier-widths-are-not-fixed-which-the-catalogue-forbids">C3. Identifier widths are not fixed, which the catalogue forbids</h3>
+<p>Catalogue §7.4 and §10.2 both reject variable widths. The guide has</p>

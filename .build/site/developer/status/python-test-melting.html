@@ -1,0 +1,165 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="python-test-speed---status">Python Test Speed - Status</h1>
+
+<p><strong>Unit ID:</strong> <code class="language-plaintext highlighter-rouge">python-test-melting</code>
+<strong>Status:</strong> Done, 2026-10-09, branch <code class="language-plaintext highlighter-rouge">test/slow-py</code>. TM0, TM1, TM2, TM3a/b/c, TM6, TM7 and TM8 built
+and validated. TM4 and TM5 deferred, with reasoning recorded below.
+<strong>Last updated:</strong> 2026-10-09
+<strong>Plan:</strong> <a href="/developer/plans/python-test-melting.html">python-test-melting.md</a>
+<strong>Sketch:</strong> <a href="/developer/sketches/python-test-melting.html">python-test-melting.md</a></p>
+
+<h2 id="current-position">Current position</h2>
+
+<p>Done. TM0 measured a real baseline on this machine, serial: 456.09s, 9 failed (pre-existing,
+unrelated to this plan), 560 passed, 67 skipped, for the 25 top-level <code class="language-plaintext highlighter-rouge">tools/test_*.py</code> modules
+(the 22 of <code class="language-plaintext highlighter-rouge">check:ontology-catalog</code> plus <code class="language-plaintext highlighter-rouge">test_agent_guidance.py</code>, <code class="language-plaintext highlighter-rouge">test_authoring_stage.py</code> and
+<code class="language-plaintext highlighter-rouge">test_literate_extract.py</code>). We answered TM-Q1 to TM-Q5 the same session (below). Every
+slice but TM4 and TM5 (deferred, with reasoning, see “Final result”) is built, tested and rolled
+out to all 16 modules with a <code class="language-plaintext highlighter-rouge">validate()</code> call site. Full detail in “Final result” below.</p>
+
+<h2 id="decisions-2026-10-09">Decisions (2026-10-09)</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Decision</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>TM-Q1</td>
+      <td>Any speedup is beneficial; target 3-4 minutes or under, otherwise split long/short runs for CI</td>
+    </tr>
+    <tr>
+      <td>TM-Q2</td>
+      <td>Option B (session-scoped fixtures in <code class="language-plaintext highlighter-rouge">tools/conftest.py</code> only). See “Final result” for how a module adopts it without a full call-site rewrite</td>
+    </tr>
+    <tr>
+      <td>TM-Q3</td>
+      <td>The agent’s choice. Batches of four to six modules (the plan’s own TM3a/b/c split), one commit per batch</td>
+    </tr>
+    <tr>
+      <td>TM-Q4</td>
+      <td>Option A: walk the tree from given roots, skipping build/dependency directories</td>
+    </tr>
+    <tr>
+      <td>TM-Q5</td>
+      <td>Yes, if it can be made to work in this environment. Confirmed working (see “Final result”)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="next-action">Next action</h2>
+
+<p>None for this unit; it is done. Review and merge <code class="language-plaintext highlighter-rouge">test/slow-py</code> to <code class="language-plaintext highlighter-rouge">main</code> (the maintainer’s). The two
+superseded sketches (<code class="language-plaintext highlighter-rouge">python-test-melting.md</code>, <code class="language-plaintext highlighter-rouge">test-suite-performance.md</code>) stay until the maintainer
+decides whether to delete them, per TM8’s own text.</p>
+
+<h2 id="final-result">Final result</h2>
+
+<p>All 16 modules with a <code class="language-plaintext highlighter-rouge">validate()</code> call site adopted the shared cache (TM1/TM2/TM3), all five
+<code class="language-plaintext highlighter-rouge">git grep</code> call sites were replaced (TM6), and <code class="language-plaintext highlighter-rouge">pytest-xdist</code> is wired into <code class="language-plaintext highlighter-rouge">check:ontology-catalog</code>
+(TM7). Full 27-file suite (25 original <code class="language-plaintext highlighter-rouge">tools/test_*.py</code> plus the two new cache test files),
+<code class="language-plaintext highlighter-rouge">pytest-xdist</code> (<code class="language-plaintext highlighter-rouge">-n auto --dist loadfile</code>): <strong>123.6s</strong> (126.2s wall including setup), down from the
+TM0 baseline’s 456.09s serial, about 3.6x. 9 failed, identical to the TM0 baseline (one,
+<code class="language-plaintext highlighter-rouge">test_c6_10</code>, now fails for its real, pre-existing reason instead of a Windows-only crash – see
+TM6 below). 585 passed (560 original + 25 new: 16 <code class="language-plaintext highlighter-rouge">test_graph_cache.py</code>, 9 <code class="language-plaintext highlighter-rouge">test_repo_files.py</code>),
+67 skipped. A sorted <code class="language-plaintext highlighter-rouge">PASSED</code>/<code class="language-plaintext highlighter-rouge">FAILED</code>/<code class="language-plaintext highlighter-rouge">SKIPPED</code> diff against the TM0 baseline is identical except
+for SKIPPED-message line numbers (shifted by the fixture lines this plan added to each file) –
+confirmed with <code class="language-plaintext highlighter-rouge">Compare-Object</code>, not assumed.</p>
+
+<p><strong>How a module adopts the cache (TM-Q2, option B’s implementation).</strong> The cache itself is the
+fixture: <code class="language-plaintext highlighter-rouge">graph_cache</code> and <code class="language-plaintext highlighter-rouge">validated</code> in <code class="language-plaintext highlighter-rouge">tools/conftest.py</code>, both session-scoped. Each adopting
+module declares its own <code class="language-plaintext highlighter-rouge">@pytest.fixture(scope="module", autouse=True)</code> (module-scoped, not
+session-scoped: <code class="language-plaintext highlighter-rouge">request.module</code> is only available at function, class or module scope) that
+fetches its own <code class="language-plaintext highlighter-rouge">MODEL</code>/<code class="language-plaintext highlighter-rouge">SHAPES</code>/<code class="language-plaintext highlighter-rouge">EVERY_SHAPE</code>-style names from <code class="language-plaintext highlighter-rouge">graph_cache</code> and assigns them onto
+<code class="language-plaintext highlighter-rouge">request.module</code>, and substitutes <code class="language-plaintext highlighter-rouge">module.validate = validated</code> (<code class="language-plaintext highlighter-rouge">ValidationCache</code> is callable with
+exactly <code class="language-plaintext highlighter-rouge">pyshacl.validate</code>’s own signature, so every existing <code class="language-plaintext highlighter-rouge">validate(data, shacl_graph=..., ...)</code>
+call site gains the cache with no change of its own). A handful of helper functions whose default
+argument read one of those names directly (evaluated at import time, before any fixture runs) were
+changed to look the name up inside the function body instead. This keeps the caching mechanism
+centralised, fixture-based and session-scoped (option B’s substance) without rewriting every one of
+the several hundred call sites across 16 modules to take explicit fixture parameters (option B’s
+literal cost, which the plan’s own table flagged). Recorded as the considered implementation of our
+decision, not a reversion to option A: there is no sibling support module, and nothing
+outside <code class="language-plaintext highlighter-rouge">conftest.py</code> defines the cache.</p>
+
+<p><strong>A real correctness bug found and fixed during the roll-out</strong> (not anticipated by the plan):
+<code class="language-plaintext highlighter-rouge">test_eligibility_examples.py::test_two_readings_and_a_double_negation_are_rejected</code> mutates its
+own data graph in place (<code class="language-plaintext highlighter-rouge">data.remove(...)</code>) and validates the SAME Python object again, expecting
+a different result. <code class="language-plaintext highlighter-rouge">ValidationCache</code>’s first design, keyed on <code class="language-plaintext highlighter-rouge">(id(data), id(shapes), options)</code>,
+would have returned the first, now-stale report – caught immediately because this test failed for
+real under it. Fixed by keying on graph <em>content</em> (<code class="language-plaintext highlighter-rouge">hash(frozenset(graph))</code>) instead of identity: a
+mutated-in-place graph is correctly a new cache entry, and as a side benefit two different graph
+objects built with identical triples now correctly share one cache entry too. A regression test
+(<code class="language-plaintext highlighter-rouge">test_a_graph_mutated_in_place_and_revalidated_is_not_served_stale</code>) locks this in.</p>
+
+<p><strong>TM4 and TM5, deferred, with reasoning:</strong></p>
+
+<ul>
+  <li><strong>TM4</strong> (narrow shapes in one-triple mutation tests): TM3’s own measurement shows the dominant
+remaining cost is validate() call volume itself (SHACL-SPARQL evaluation over necessarily-distinct
+mutated graphs, which no cache can collapse), which TM4 would help. But TM-Q1’s target is already
+met by a wide margin through TM7, and TM4 carries the real, stated correctness risk the plan itself
+flagged (a narrowed shape set silently missing a message another shape file would add). Not worth
+that risk without a stronger forcing need.</li>
+  <li><strong>TM5</strong> (reasoner rows): step 1 (the skip condition) already holds – <code class="language-plaintext highlighter-rouge">reasoning.available()</code> skips
+cleanly without starting a JVM when the harness jar is not built, confirmed by every run in this
+environment (the jar is never built here, so steps 2 and 3’s benefit is unmeasurable in this
+sandbox). Step 3 is explicitly its own slice, briefed on <code class="language-plaintext highlighter-rouge">main</code>, crossing into Java
+(<code class="language-plaintext highlighter-rouge">platform/reasoning-testkit</code>). Left for a session with the jar built.</li>
+</ul>
+
+<p><strong>Evidence for the above, measured not assumed:</strong> a combined serial run of the whole Instrument
+family (6 modules, cross-module cache sharing possible within one process) took 289.33s, against
+292.64s for the same six run as separate subprocesses with no sharing at all – a 1.1% difference,
+within noise. The full-suite xdist time before and after the complete TM3 roll-out (130.24s vs
+128.67s) shows the same: TM1/TM2’s redundant-parsing and repeated-validation elimination is real
+(confirmed directly: <code class="language-plaintext highlighter-rouge">test_behaviour_split.py</code>, which used to rebuild its whole <code class="language-plaintext highlighter-rouge">MODEL</code> composite
+on every <code class="language-plaintext highlighter-rouge">_conforms()</code> call, dropped to 21 tests in 1.00s) but is not what the wall-clock total is
+mostly made of once the suite is already parallelised. TM7 (<code class="language-plaintext highlighter-rouge">pytest-xdist</code>) is the slice that moved
+the number.</p>
+
+<p>TD-18 and TD-29 removed from the technical debt register (TM8). The <code class="language-plaintext highlighter-rouge">formal-methods</code> plan’s TD-18
+citation repointed to a plain cross-cutting note, since TD-18 no longer exists. The developer guide
+now documents <code class="language-plaintext highlighter-rouge">tools/conftest.py</code> and <code class="language-plaintext highlighter-rouge">mise run dev:time-ontology-tests</code>. A skill,
+<code class="language-plaintext highlighter-rouge">.claude/skills/lattice-testing</code>, records the diagnosis pattern and the caching convention for
+future test suites in this repository and projects built on LATTICE.</p>
+
+<h2 id="decisions-2026-10-09-1">Decisions (2026-10-09)</h2>
+
+<p>All of TM-Q1 to TM-Q5 are decided (above).</p>
+
+<h2 id="blockers">Blockers</h2>
+
+<p>None for TM0.</p>
+
+<h2 id="history">History</h2>
+
+<ul>
+  <li>2026-10-09. Plan written from the sketch. The sketch’s call-site and module counts were re-checked
+against the code and match (27 <code class="language-plaintext highlighter-rouge">validate</code> call sites in 16 modules, 16 shape files in <code class="language-plaintext highlighter-rouge">EVERY_SHAPE</code>, 40
+<code class="language-plaintext highlighter-rouge">sh:sparql</code> constraints in Instrument). Found while planning: three test modules import constants from
+<code class="language-plaintext highlighter-rouge">test_parameter_bindings</code>, five tests shell out to <code class="language-plaintext highlighter-rouge">git grep</code>, and the work in common with the repository
+catalogue is recorded in that sketch’s §8.1.</li>
+  <li>2026-10-17. Follow-up measured on a four-core x86 machine and a laptop with four performance and four
+efficiency cores. Suite time on the first: 427s to about 100s with all 784 tests passing. pySHACL runs
+one query per focus node and rdflib parsed the text again each time, about 90% of a validation, so
+<code class="language-plaintext highlighter-rouge">ValidationCache</code> now translates each distinct query text once (<code class="language-plaintext highlighter-rouge">tools/conftest.py</code>, keyed on the text,
+the base and the prefixes the text uses without declaring). The reasoner JVM starts with a class-data
+archive that the JVM builds beside the jar (<code class="language-plaintext highlighter-rouge">mork_compilers/reasoning.py</code>, 51.8s to 29.9s over 41
+closures). Two <code class="language-plaintext highlighter-rouge">prl:ReferenceCodeShape</code> queries read the same rows without scanning every concept
+per focus node (peril shapes 0.3.1). <code class="language-plaintext highlighter-rouge">check:ontology-catalog</code> moved from <code class="language-plaintext highlighter-rouge">--dist loadfile</code> to
+<code class="language-plaintext highlighter-rouge">--dist worksteal</code>, 9 to 11 percent faster on both machines. <code class="language-plaintext highlighter-rouge">dev:time-ontology-tests</code> reports worker
+finish times and memory. <code class="language-plaintext highlighter-rouge">tools/test_peril_vocabulary.py</code> alone now takes about 27s on four cores, so
+TD-45 can be reviewed.</li>
+  <li>2026-10-17 (later). The reasoner now runs in one long-running JVM per Python process (<code class="language-plaintext highlighter-rouge">reasoning-testkit serve</code>, ADR-A83
+addendum). 41 closures took 37.7s with a JVM per call and 6.3s through the server, and the suite on four
+workers went from about 82s to about 55s. <code class="language-plaintext highlighter-rouge">dev:record-validations</code> and <code class="language-plaintext highlighter-rouge">dev:replay-validations</code> record every
+validation the suite makes and replay them against changed shapes (<code class="language-plaintext highlighter-rouge">tools/validation_replay.py</code>).</li>
+  <li>2026-10-17 (later still). <code class="language-plaintext highlighter-rouge">tools/test_peril_vocabulary.py</code> is back in <code class="language-plaintext highlighter-rouge">check:ontology-catalog</code> (39 tests). Under <code class="language-plaintext highlighter-rouge">--dist worksteal</code> it adds
+about 22s on four cores (about 80s with it and about 58s without) and no longer queues on one worker. The register’s second TD-45 row,
+which recorded its exclusion, is removed. The cost it named, per-concept shape evaluation, was cut by peril shapes 0.3.1.</li>
+</ul>

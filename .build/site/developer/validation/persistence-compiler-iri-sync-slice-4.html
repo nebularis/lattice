@@ -1,0 +1,236 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack--persistence-compiler-iri-sync-slice-4">Validation Pack — <code class="language-plaintext highlighter-rouge">persistence-compiler-iri-sync</code> Slice 4</h1>
+
+<p><strong>Slice:</strong> Privacy/erasure profile + cross-profile compatibility (G3 partial, G4)
+<strong>Plan:</strong> <a href="/developer/plans/persistence-compiler-iri-sync.html#slice-4--privacyerasure-profile-and-cross-profile-compatibility-g3-partial-g4">persistence-compiler-iri-sync.md</a>
+<strong>Status:</strong> <a href="/developer/status/persistence-compiler-iri-sync.html">persistence-compiler-iri-sync.md</a>
+<strong>Mode:</strong> autonomous (granted 2026-09-23)</p>
+
+<h2 id="validated-2026-09-25">Validated (2026-09-25)</h2>
+
+<p>We ran the suite and confirmed every row below, and performed the validation gate’s adversarial-probe step. This slice is <strong>complete</strong>.</p>
+
+<h2 id="what-invariants-does-this-slice-protect">What invariants does this slice protect?</h2>
+
+<ol>
+  <li><strong><code class="language-plaintext highlighter-rouge">dal:epochAuthority</code> resolves like every other extension property</strong> (Slice 2’s own rule): a value declared on a node other than the one that wins <code class="language-plaintext highlighter-rouge">dal:epochGuardScope</code> is still resolved, not silently dropped. This is a correctness fix to Slice 1’s original design, not new functionality.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">dal:PrivacyProfile</code>’s three properties, and <code class="language-plaintext highlighter-rouge">dal:ReceiptProfile</code>’s <code class="language-plaintext highlighter-rouge">dal:perSubjectScoped</code>, each resolve independently</strong>, matching the extension-property model rather than identity’s whole-node-wins model, because this is a new profile class in the same shape as <code class="language-plaintext highlighter-rouge">dal:EpochProfile</code>, not a resource-role situation.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">dal:PersonalData</code> always has a lawful erasure path.</strong> <code class="language-plaintext highlighter-rouge">dal:NoErasure</code> combined with <code class="language-plaintext highlighter-rouge">dal:PersonalData</code> is refused outright, mirroring <code class="language-plaintext highlighter-rouge">dal:PersonalDataRequiresErasureShape</code>’s default (unmarked) <code class="language-plaintext highlighter-rouge">sh:Violation</code> severity.</li>
+  <li><strong>A replay-capable receipt model never defeats per-subject erasure silently.</strong> <code class="language-plaintext highlighter-rouge">dal:PatchLog</code>/<code class="language-plaintext highlighter-rouge">dal:SnapshotPerRevision</code> combined with <code class="language-plaintext highlighter-rouge">dal:PersonalData</code> requires <code class="language-plaintext highlighter-rouge">dal:perSubjectScoped true</code> or <code class="language-plaintext highlighter-rouge">dal:erasureStrategy dal:CryptoShred</code>, mirroring <code class="language-plaintext highlighter-rouge">dal:PersonalDataReceiptCompatibilityShape</code>, and the check runs on resolved values so it also catches the two profile classes declared on separate individuals that only share a <code class="language-plaintext highlighter-rouge">dal:appliesTo</code> scope.</li>
+  <li><strong>No privacy dimension defaults silently.</strong> An undeclared <code class="language-plaintext highlighter-rouge">dal:PrivacyProfile</code> means “this scope makes no privacy declaration”, not <code class="language-plaintext highlighter-rouge">dal:PublicData</code> by default, so nothing is checked unless a profile actually exists.</li>
+</ol>
+
+<h2 id="test-case-table">Test case table</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>Invariant</th>
+      <th>Pass criterion</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>T1</td>
+      <td><code class="language-plaintext highlighter-rouge">dal:epochAuthority</code> resolves from its own <code class="language-plaintext highlighter-rouge">dal:EpochProfile</code> node, independently of <code class="language-plaintext highlighter-rouge">dal:epochGuardScope</code></td>
+      <td>L1</td>
+      <td>1</td>
+      <td><code class="language-plaintext highlighter-rouge">test_slice_4_privacy.py::test_epoch_authority_resolves_from_its_own_epoch_profile_node</code>, <code class="language-plaintext highlighter-rouge">::test_epoch_authority_and_epoch_guard_scope_resolve_independently</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T2</td>
+      <td><code class="language-plaintext highlighter-rouge">dal:epochAuthority</code> has no default when undeclared</td>
+      <td>L1</td>
+      <td>1, 5</td>
+      <td><code class="language-plaintext highlighter-rouge">::test_epoch_authority_is_absent_with_no_default_when_undeclared</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T3</td>
+      <td>The two rewritten <code class="language-plaintext highlighter-rouge">test_resolver.py</code> epoch tests assert the promoted dimension, not the old extra</td>
+      <td>L1</td>
+      <td>1</td>
+      <td><code class="language-plaintext highlighter-rouge">test_resolver.py::TestEpochGuardScope::test_explicit_dataset_level_guard_resolves_with_authority_extra</code>, <code class="language-plaintext highlighter-rouge">::test_explicit_row_level_guard_only_resolves</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T4</td>
+      <td>Each of <code class="language-plaintext highlighter-rouge">privacyClass</code>, <code class="language-plaintext highlighter-rouge">erasureStrategy</code>, <code class="language-plaintext highlighter-rouge">erasurePrecedence</code> resolves on its own <code class="language-plaintext highlighter-rouge">dal:PrivacyProfile</code> node</td>
+      <td>L1</td>
+      <td>2</td>
+      <td><code class="language-plaintext highlighter-rouge">test_slice_4_privacy.py::test_privacy_property_resolves_on_its_own_node</code> (3 cases)</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T5</td>
+      <td><code class="language-plaintext highlighter-rouge">perSubjectScoped</code> resolves from a <code class="language-plaintext highlighter-rouge">dal:ReceiptProfile</code> node</td>
+      <td>L1</td>
+      <td>2</td>
+      <td><code class="language-plaintext highlighter-rouge">::test_per_subject_scoped_resolves_from_receipt_profile_node</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T6</td>
+      <td>A privacy property declared on a lower-priority node than the node winning an unrelated dimension is still resolved</td>
+      <td>L1</td>
+      <td>2</td>
+      <td><code class="language-plaintext highlighter-rouge">::test_privacy_property_on_a_lower_priority_node_is_still_resolved</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T7</td>
+      <td>None of the five Slice 4 dimensions has a baseline default</td>
+      <td>L1</td>
+      <td>5</td>
+      <td><code class="language-plaintext highlighter-rouge">::test_no_default_for_any_slice_4_privacy_dimension</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T8</td>
+      <td><code class="language-plaintext highlighter-rouge">dal:PersonalData</code> + <code class="language-plaintext highlighter-rouge">dal:NoErasure</code> is refused; <code class="language-plaintext highlighter-rouge">dal:PerSubjectGraphDrop</code>/<code class="language-plaintext highlighter-rouge">dal:CryptoShred</code> pass</td>
+      <td>L1</td>
+      <td>3</td>
+      <td><code class="language-plaintext highlighter-rouge">::test_personal_data_with_no_erasure_is_refused</code>, <code class="language-plaintext highlighter-rouge">::test_personal_data_with_a_lawful_erasure_strategy_passes</code> (2 cases)</td>
+      <td>+/-</td>
+    </tr>
+    <tr>
+      <td>T9</td>
+      <td><code class="language-plaintext highlighter-rouge">dal:NoErasure</code> is not checked without <code class="language-plaintext highlighter-rouge">dal:PersonalData</code></td>
+      <td>L1</td>
+      <td>3, 5</td>
+      <td><code class="language-plaintext highlighter-rouge">::test_no_erasure_is_not_checked_without_personal_data</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T10</td>
+      <td><code class="language-plaintext highlighter-rouge">dal:PersonalData</code> + <code class="language-plaintext highlighter-rouge">dal:PatchLog</code>/<code class="language-plaintext highlighter-rouge">dal:SnapshotPerRevision</code> with neither scoping nor shred is refused</td>
+      <td>L1</td>
+      <td>4</td>
+      <td><code class="language-plaintext highlighter-rouge">::test_personal_data_with_replay_receipts_and_no_scoping_or_shred_is_refused</code> (2 cases)</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>T11</td>
+      <td>The same combination with <code class="language-plaintext highlighter-rouge">dal:perSubjectScoped true</code>, or with <code class="language-plaintext highlighter-rouge">dal:CryptoShred</code>, passes</td>
+      <td>L1</td>
+      <td>4</td>
+      <td><code class="language-plaintext highlighter-rouge">::test_personal_data_with_replay_receipts_and_per_subject_scoping_passes</code>, <code class="language-plaintext highlighter-rouge">::test_personal_data_with_replay_receipts_and_crypto_shred_passes</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T12</td>
+      <td><code class="language-plaintext highlighter-rouge">dal:ReceiptOnly</code> is never checked by the receipt-compatibility rule</td>
+      <td>L1</td>
+      <td>4, 5</td>
+      <td><code class="language-plaintext highlighter-rouge">::test_personal_data_with_receipt_only_model_is_never_checked</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T13</td>
+      <td>The privacy and receipt profiles declared on two separate individuals sharing one scope are still joined</td>
+      <td>L1</td>
+      <td>4</td>
+      <td><code class="language-plaintext highlighter-rouge">::test_privacy_and_receipts_declared_on_separate_nodes_are_still_joined</code></td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>T14</td>
+      <td>The two new negative fixtures fail compilation for their named <code class="language-plaintext highlighter-rouge">CrossAxisViolation.kind</code></td>
+      <td>L1</td>
+      <td>3, 4</td>
+      <td><code class="language-plaintext highlighter-rouge">::test_negative_fixtures_fail_for_the_right_reason</code> (2 cases)</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>T15</td>
+      <td>The positive fixture compiles with neither privacy diagnostic present</td>
+      <td>L1</td>
+      <td>3, 4</td>
+      <td><code class="language-plaintext highlighter-rouge">::test_positive_fixture_compiles_cleanly</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T16</td>
+      <td><code class="language-plaintext highlighter-rouge">perSubjectScoped</code> is emitted with <code class="language-plaintext highlighter-rouge">dal:resolvedLiteral</code>, never <code class="language-plaintext highlighter-rouge">dal:resolvedValue</code></td>
+      <td>L1</td>
+      <td>2</td>
+      <td><code class="language-plaintext highlighter-rouge">::test_per_subject_scoped_is_emitted_with_resolved_literal</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T17</td>
+      <td>Worked example 4’s privacy profile resolves and is emitted with no diagnostics</td>
+      <td>L1</td>
+      <td>2, 3, 4</td>
+      <td><code class="language-plaintext highlighter-rouge">::test_worked_example_4_privacy_profile_resolves_and_is_emitted</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T18</td>
+      <td>The three new fixtures compile/parse/instantiate (positive) or fail compilation (negative), and conform/fail SHACL as expected</td>
+      <td>L4</td>
+      <td>3, 4</td>
+      <td><code class="language-plaintext highlighter-rouge">test_compiler_integration.py</code>’s <code class="language-plaintext highlighter-rouge">POSITIVE_FIXTURES</code>, <code class="language-plaintext highlighter-rouge">NEGATIVE_FIXTURES</code>, <code class="language-plaintext highlighter-rouge">SHACL_NEGATIVE_FIXTURES</code>, <code class="language-plaintext highlighter-rouge">test_every_fixture_parses_as_turtle</code></td>
+      <td>+/-</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="one-command-to-run-everything">One command to run everything</h2>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:persistence
+</code></pre></div></div>
+
+<h2 id="expected-artifacts">Expected artifacts</h2>
+
+<p>Confirmed: 669 tests passing (2026-09-24 run, <code class="language-plaintext highlighter-rouge">identity-minting</code> M3 session), all of Slice 3’s 570 tests still passing, plus 24 new dedicated cases in <code class="language-plaintext highlighter-rouge">test_slice_4_privacy.py</code> (counting parametrisation) and the additional parametrised cases the three new fixtures add to <code class="language-plaintext highlighter-rouge">test_compiler_integration.py</code>’s existing suites.</p>
+
+<h2 id="adversarial-probes-run-and-confirmed-2026-09-25">Adversarial probes (run and confirmed, 2026-09-25)</h2>
+
+<p>These are the exact, minimal, one-line mutations that should make the named test fail. The maintainer applied at least one of these, confirmed the named test (and only that test, or that test plus its direct dependents) failed, then reverted it, per the validation gate’s mutation-check step.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Probe</th>
+      <th>Mutation</th>
+      <th>Expected failure</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Disable the <code class="language-plaintext highlighter-rouge">NoErasure</code> refusal</td>
+      <td>In <code class="language-plaintext highlighter-rouge">validator._check_slice_4</code>, change <code class="language-plaintext highlighter-rouge">if erasure_strategy == "NoErasure":</code> to <code class="language-plaintext highlighter-rouge">if False:</code></td>
+      <td><code class="language-plaintext highlighter-rouge">test_personal_data_with_no_erasure_is_refused</code> and <code class="language-plaintext highlighter-rouge">test_negative_fixtures_fail_for_the_right_reason[invalid-personaldata-no-erasure.ttl-...]</code> fail; <code class="language-plaintext highlighter-rouge">TestShaclSelfValidation::test_does_not_conform[invalid-personaldata-no-erasure.ttl]</code> still fails independently (SHACL is unaffected by a Python bug), confirming the Python check is the one actually broken</td>
+    </tr>
+    <tr>
+      <td>Disable the receipt-conflict refusal</td>
+      <td>In the same function, change <code class="language-plaintext highlighter-rouge">if not per_subject_scoped and erasure_strategy != "CryptoShred":</code> to <code class="language-plaintext highlighter-rouge">if False:</code></td>
+      <td><code class="language-plaintext highlighter-rouge">test_personal_data_with_replay_receipts_and_no_scoping_or_shred_is_refused</code> (both parametrised cases), <code class="language-plaintext highlighter-rouge">test_privacy_and_receipts_declared_on_separate_nodes_are_still_joined</code>, and the matching <code class="language-plaintext highlighter-rouge">test_negative_fixtures_fail_for_the_right_reason</code> case fail</td>
+    </tr>
+    <tr>
+      <td>Reintroduce <code class="language-plaintext highlighter-rouge">epochAuthority</code> as an extra instead of its own dimension</td>
+      <td>In <code class="language-plaintext highlighter-rouge">resolver._DIMENSION_SPEC</code>, move <code class="language-plaintext highlighter-rouge">DAL.epochAuthority</code> back into <code class="language-plaintext highlighter-rouge">epochGuardScope</code>’s extras tuple and delete the <code class="language-plaintext highlighter-rouge">"epochAuthority"</code> entry</td>
+      <td><code class="language-plaintext highlighter-rouge">test_epoch_authority_resolves_from_its_own_epoch_profile_node</code> and both rewritten <code class="language-plaintext highlighter-rouge">test_resolver.py</code> cases raise <code class="language-plaintext highlighter-rouge">KeyError</code> (missing dimension)</td>
+    </tr>
+    <tr>
+      <td>Give <code class="language-plaintext highlighter-rouge">perSubjectScoped</code> a baseline default of <code class="language-plaintext highlighter-rouge">False</code></td>
+      <td>Add <code class="language-plaintext highlighter-rouge">"perSubjectScoped": False</code> to <code class="language-plaintext highlighter-rouge">model.BASELINE_DEFAULTS</code></td>
+      <td><code class="language-plaintext highlighter-rouge">test_no_default_for_any_slice_4_privacy_dimension</code> fails (<code class="language-plaintext highlighter-rouge">candidate_count == 0</code> still holds, but <code class="language-plaintext highlighter-rouge">value is None</code> no longer does)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<ul>
+  <li><strong><code class="language-plaintext highlighter-rouge">dal:erasurePrecedence</code> has no dedicated cross-axis check.</strong> It resolves and is emitted, matching <code class="language-plaintext highlighter-rouge">dal:namingAuthority</code>’s treatment in Slice 3: a declared, adopter-facing choice a runtime component reads, not something this compiler validates. The plan named only the two SHACL-mirrored checks; it did not ask for a new rule joining <code class="language-plaintext highlighter-rouge">erasurePrecedence</code> with identity’s claimed-surrogate strategy, and none was added.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">dal:epochCoordinatorBinding</code>, <code class="language-plaintext highlighter-rouge">dal:erasureRegisterBinding</code>, <code class="language-plaintext highlighter-rouge">dal:erasureReplayOnRestore</code></strong> resolve as extras of <code class="language-plaintext highlighter-rouge">dal:epochAuthority</code> and are emitted, but carry no check. They describe the restore runbook (guide §24.4) and housekeeping (ADR-A80), which this compiler does not generate or execute.</li>
+  <li><strong>No SPARQL is generated from any Slice 4 dimension</strong>, matching Slice 3’s identity precedent: this is adopter-facing configuration a runtime component reads from the compiled profile, not a template input.</li>
+</ul>

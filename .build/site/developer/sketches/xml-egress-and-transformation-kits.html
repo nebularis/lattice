@@ -1,0 +1,1117 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="xml-egress-sparql-results-xslt-and-embedded-legalruleml">XML egress: SPARQL results, XSLT, and embedded LegalRuleML</h1>
+
+<p>Version 0.1, draft for review. Explores how LATTICE and applied modules such as Open CBAA emit XML
+for consumers who want it, using SPARQL results as the source and XSLT as the transform, with the
+transformation kit published so an adopter can run it without our code.</p>
+
+<p>Third in a set. <a href="/developer/sketches/legalruleml-mapping.html">legalruleml-mapping.md</a> is the construct analysis,
+<a href="/developer/sketches/legalruleml-runtime-pipeline.html">legalruleml-runtime-pipeline.md</a> covers ingress, and
+<a href="/developer/sketches/normative-wire-protocol.html">normative-wire-protocol.md</a> covers JSON egress. This sketch covers XML
+egress and does not revisit the others.</p>
+
+<p><strong>The position it argues.</strong> SPARQL Query Results XML is the source, not RDF/XML. XSLT 3.0 on Saxon
+is the transform, hosted in a new Java module and published as an artefact. LegalRuleML payloads
+are embedded as real element subtrees rather than escaped text, using <code class="language-plaintext highlighter-rouge">fn:parse-xml()</code> to lift a
+stored literal and <code class="language-plaintext highlighter-rouge">xs:any processContents="lax"</code> to admit the foreign schema. The entire
+transformation kit — query, stylesheet, schema — is a versioned public artefact, so a consumer who
+distrusts or cannot run our runtime gets the same output from any conformant XSLT processor.</p>
+
+<hr />
+
+<h2 id="contents">Contents</h2>
+
+<ol>
+  <li><a href="#1-why-xml-and-for-whom">Why XML, and for whom</a></li>
+  <li><a href="#2-the-source-format-decision">The source format decision</a></li>
+  <li><a href="#3-tabular-to-tree">Tabular to tree</a></li>
+  <li><a href="#4-the-schema">The schema</a></li>
+  <li><a href="#5-embedding-legalruleml-without-cdata">Embedding LegalRuleML without CDATA</a></li>
+  <li><a href="#6-the-xsid-collision-and-other-embedding-hazards">The <code class="language-plaintext highlighter-rouge">xs:ID</code> collision, and other embedding hazards</a></li>
+  <li><a href="#7-hosting-saxon-in-java">Hosting: Saxon in Java</a></li>
+  <li><a href="#8-publishing-the-transformation-kit">Publishing the transformation kit</a></li>
+  <li><a href="#9-generation-and-the-drift-question">Generation, and the drift question</a></li>
+  <li><a href="#10-determinism-and-canonical-xml">Determinism and canonical XML</a></li>
+  <li><a href="#11-security">Security</a></li>
+  <li><a href="#12-scale-and-streaming">Scale and streaming</a></li>
+  <li><a href="#13-acord-and-what-this-kit-could-also-serve">ACORD, and what this kit could also serve</a></li>
+  <li><a href="#14-what-exists-today">What exists today</a></li>
+  <li><a href="#15-a-first-slice">A first slice</a></li>
+  <li><a href="#16-risks-and-open-questions">Risks and open questions</a></li>
+</ol>
+
+<hr />
+
+<h2 id="1-why-xml-and-for-whom">1. Why XML, and for whom</h2>
+
+<p>The JSON sketch’s audience table has a gap. Two consumer classes want XML and will not take JSON.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Consumer</th>
+      <th>Why XML</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Established market platforms</td>
+      <td>ACORD is XML. A policy administration system bought in 2011 has an XML ingest and no JSON path</td>
+    </tr>
+    <tr>
+      <td>Regulatory and market-body filings</td>
+      <td>submission formats are XSD-defined, and validation against a published schema is the acceptance criterion</td>
+    </tr>
+    <tr>
+      <td>LegalRuleML-native partners</td>
+      <td>the standard is XML, and a partner with an XSD-driven toolchain wants the element tree their tooling already binds</td>
+    </tr>
+    <tr>
+      <td>Document toolchains</td>
+      <td>XSLT to PDF, XSL-FO, and print pipelines are XML-native and will not change</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="11-a-correction-to-an-earlier-argument">1.1 A correction to an earlier argument</h3>
+
+<p>An earlier draft of this sketch claimed XML was <strong>the only skin</strong> where an embedded LegalRuleML
+statement stays a first-class parsed subtree end to end, because the JSON skin carried it as an
+escaped string. That claim is now false and the argument is withdrawn.</p>
+
+<p>The <a href="/developer/notes/logic-encodings.html">logic encodings note</a> showed that normalised LegalRuleML is a
+strict alternation of typed nodes and role edges, so it maps deterministically to plain JSON with a
+<code class="language-plaintext highlighter-rouge">kind</code> discriminator. The wire-protocol sketch §8.0 has adopted that, and the escaped string is
+gone. <strong>Both skins now carry LegalRuleML as structure.</strong></p>
+
+<p>So XML’s case rests on the other three rows of the table above, which are enough on their own:</p>
+
+<ul>
+  <li><strong>XSD validation as an acceptance criterion.</strong> A filing accepted because it validates against a
+published schema is an XML workflow. JSON Schema does not occupy that role in these markets.</li>
+  <li><strong>Existing binding toolchains.</strong> JAXB and <code class="language-plaintext highlighter-rouge">xsd.exe</code> against the OASIS schema give a partner typed
+LegalRuleML classes today, with no work from us.</li>
+  <li><strong>Document pipelines.</strong> XSL-FO to PDF for a filing or a policy document is XML end to end.</li>
+</ul>
+
+<p>That is a weaker case than “only skin”, and it is the honest one. It still justifies the work for
+the consumers who need it, and it removes the argument that XML is <em>necessary</em> for correctness.</p>
+
+<hr />
+
+<h2 id="2-the-source-format-decision">2. The source format decision</h2>
+
+<p>Two candidate sources, and the choice matters more than it appears.</p>
+
+<h3 id="21-rdfxml-is-a-trap">2.1 RDF/XML is a trap</h3>
+
+<p>RDF/XML is a serialisation of a graph, and <strong>the same graph has many valid RDF/XML documents</strong>. A
+serialiser may choose striped or flat form, may abbreviate a typed node
+(<code class="language-plaintext highlighter-rouge">&lt;foo:Thing rdf:about="…"&gt;</code> rather than <code class="language-plaintext highlighter-rouge">&lt;rdf:Description&gt;</code> plus <code class="language-plaintext highlighter-rouge">rdf:type</code>), may use
+<code class="language-plaintext highlighter-rouge">rdf:parseType="Resource"</code> for anonymous nodes or expand them, may emit <code class="language-plaintext highlighter-rouge">rdf:nodeID</code> or nest, and
+may order properties freely.</p>
+
+<p>An XSLT written against one serialiser’s output breaks when the serialiser is upgraded, the store
+is swapped, or a blank node appears where an IRI used to be. There is no fix short of writing an
+XSLT that handles every RDF/XML production, which is a project rather than a stylesheet.</p>
+
+<p><strong>RDF/XML is rejected as the transform source.</strong> It stays available as a raw egress format for
+consumers who want the graph and will parse it with an RDF library, which is a different use case.</p>
+
+<h3 id="22-sparql-query-results-xml-is-regular-by-construction">2.2 SPARQL Query Results XML is regular by construction</h3>
+
+<p>The <a href="https://www.w3.org/TR/rdf-sparql-XMLres/">W3C SPARQL Query Results XML Format</a> is a table, in
+namespace <code class="language-plaintext highlighter-rouge">http://www.w3.org/2005/sparql-results#</code>:</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;sparql</span> <span class="na">xmlns=</span><span class="s">"http://www.w3.org/2005/sparql-results#"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;head&gt;</span>
+    <span class="nt">&lt;variable</span> <span class="na">name=</span><span class="s">"termKey"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;variable</span> <span class="na">name=</span><span class="s">"modality"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;variable</span> <span class="na">name=</span><span class="s">"bearerKey"</span><span class="nt">/&gt;</span>
+  <span class="nt">&lt;/head&gt;</span>
+  <span class="nt">&lt;results&gt;</span>
+    <span class="nt">&lt;result&gt;</span>
+      <span class="nt">&lt;binding</span> <span class="na">name=</span><span class="s">"termKey"</span><span class="nt">&gt;&lt;literal&gt;</span>uw-authority<span class="nt">&lt;/literal&gt;&lt;/binding&gt;</span>
+      <span class="nt">&lt;binding</span> <span class="na">name=</span><span class="s">"modality"</span><span class="nt">&gt;&lt;uri&gt;</span>https://…/instrument#PermissionModality<span class="nt">&lt;/uri&gt;&lt;/binding&gt;</span>
+      <span class="nt">&lt;binding</span> <span class="na">name=</span><span class="s">"bearerKey"</span><span class="nt">&gt;&lt;literal&gt;</span>coverholder<span class="nt">&lt;/literal&gt;&lt;/binding&gt;</span>
+    <span class="nt">&lt;/result&gt;</span>
+  <span class="nt">&lt;/results&gt;</span>
+<span class="nt">&lt;/sparql&gt;</span>
+</code></pre></div></div>
+
+<p>Five element names, one optional <code class="language-plaintext highlighter-rouge">xml:lang</code>, one optional <code class="language-plaintext highlighter-rouge">datatype</code>. That is the whole grammar.
+An XSLT written against it cannot be surprised.</p>
+
+<p>The trade is that a table is flat and the output is a tree, which §3 addresses, and that the query
+now carries part of the contract, which §8 turns into a feature rather than a cost.</p>
+
+<h3 id="23-the-rejected-third-option">2.3 The rejected third option</h3>
+
+<p>Deriving XML from the Market Profile JSON via XSLT 3.0’s <code class="language-plaintext highlighter-rouge">fn:json-to-xml()</code> would guarantee the two
+skins never diverge, and it is genuinely tempting.</p>
+
+<p>An earlier draft rejected it on the grounds that the Market Profile carried LegalRuleML as an
+escaped string, so XML derived from it would lose the element tree. <strong>That objection has gone</strong>,
+because the JSON skin now carries a LegalRuleML JSON AST (§1.1). <code class="language-plaintext highlighter-rouge">json-to-xml()</code> over that AST
+produces XPath-navigable structure, and a second template could rebuild LegalRuleML XML from it.</p>
+
+<p>The option is therefore <strong>reopened, and still not recommended</strong>, for two remaining reasons:</p>
+
+<ul>
+  <li><strong>Two lossy hops instead of one.</strong> The Market Profile is a deliberate projection that omits
+provenance, read sets and graph identity. Anything XML wants that JSON omits would have to be
+added to JSON first, distorting the JSON skin to serve XML.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">json-to-xml()</code> output is not the target vocabulary.</strong> It produces the XPath 3.1 JSON-to-XML
+vocabulary (<code class="language-plaintext highlighter-rouge">&lt;map&gt;</code>, <code class="language-plaintext highlighter-rouge">&lt;array&gt;</code>, <code class="language-plaintext highlighter-rouge">&lt;string&gt;</code>), so a second transform is needed anyway. Two
+transforms from JSON is not simpler than one from SPARQL results.</li>
+</ul>
+
+<p><strong>XML stays projected from the graph.</strong> §9 addresses the drift this creates, and §9’s answer
+(generate both skins from one term table) is what actually prevents divergence, rather than
+chaining one skin off the other.</p>
+
+<hr />
+
+<h2 id="3-tabular-to-tree">3. Tabular to tree</h2>
+
+<p>A denormalised result set plus <code class="language-plaintext highlighter-rouge">xsl:for-each-group</code> is the standard XSLT 2.0-and-later answer, and
+it is well suited here.</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;xsl:template</span> <span class="na">match=</span><span class="s">"sr:sparql"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;instrument</span> <span class="na">key=</span><span class="s">"{sr:results/sr:result[1]/sr:binding[@name='instrumentKey']/sr:literal}"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;terms&gt;</span>
+      <span class="nt">&lt;xsl:for-each-group</span> <span class="na">select=</span><span class="s">"sr:results/sr:result"</span>
+                          <span class="na">group-by=</span><span class="s">"sr:binding[@name='termKey']/sr:literal"</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;term</span> <span class="na">key=</span><span class="s">"{current-grouping-key()}"</span>
+              <span class="na">modality=</span><span class="s">"{lat:localName(current-group()[1]/sr:binding[@name='modality']/sr:uri)}"</span><span class="nt">&gt;</span>
+          <span class="nt">&lt;xsl:for-each-group</span> <span class="na">select=</span><span class="s">"current-group()"</span>
+                              <span class="na">group-by=</span><span class="s">"sr:binding[@name='conditionKey']/sr:literal"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;condition</span> <span class="na">read=</span><span class="s">"{current-group()[1]/sr:binding[@name='readPath']/sr:literal}"</span><span class="nt">&gt;</span>
+              <span class="nt">&lt;xsl:for-each</span> <span class="na">select=</span><span class="s">"current-group()"</span><span class="nt">&gt;</span>
+                <span class="nt">&lt;within&gt;&lt;xsl:value-of</span> <span class="na">select=</span><span class="s">"lat:localName(sr:binding[@name='within']/sr:uri)"</span><span class="nt">/&gt;&lt;/within&gt;</span>
+              <span class="nt">&lt;/xsl:for-each&gt;</span>
+            <span class="nt">&lt;/condition&gt;</span>
+          <span class="nt">&lt;/xsl:for-each-group&gt;</span>
+        <span class="nt">&lt;/term&gt;</span>
+      <span class="nt">&lt;/xsl:for-each-group&gt;</span>
+    <span class="nt">&lt;/terms&gt;</span>
+  <span class="nt">&lt;/instrument&gt;</span>
+<span class="nt">&lt;/xsl:template&gt;</span>
+</code></pre></div></div>
+
+<p>Three practical notes.</p>
+
+<ul>
+  <li><strong>One query per aggregate, not per level.</strong> A single denormalised SELECT with nested grouping
+beats several queries joined in the stylesheet, because it removes the ordering dependency
+between documents and keeps the whole transform a pure function of one input.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">ORDER BY</code> in the query is mandatory</strong>, not cosmetic. Grouping is order-sensitive for output
+determinism (§10), and SPARQL results are unordered unless the query says otherwise.</li>
+  <li><strong>IRI shortening happens in the stylesheet</strong>, not the query. A <code class="language-plaintext highlighter-rouge">lat:localName()</code> function keeps
+the mapping from <code class="language-plaintext highlighter-rouge">…/instrument#PermissionModality</code> to <code class="language-plaintext highlighter-rouge">permission</code> in one declared place, and it
+is generated from the same term table as the JSON skins (§9).</li>
+</ul>
+
+<p>Where a genuinely recursive structure appears — nested profiles under
+<code class="language-plaintext highlighter-rouge">elg:hasCondition</code>, which do nest (ADR-A03) — grouping is insufficient and the query must emit a
+path or depth column so the stylesheet can rebuild the tree. That is the one place this approach
+gets awkward, and it is worth pinning the maximum nesting depth in the query rather than pretending
+SPARQL will express arbitrary recursion comfortably.</p>
+
+<hr />
+
+<h2 id="4-the-schema">4. The schema</h2>
+
+<p>Mirroring the Market Profile of the JSON sketch, so the two skins carry the same information under
+the same names.</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;instrument</span> <span class="na">xmlns=</span><span class="s">"https://schemas.nebularis.org/lattice/xml/1.0"</span>
+            <span class="na">key=</span><span class="s">"BA-2026-001"</span> <span class="na">version=</span><span class="s">"1"</span><span class="nt">&gt;</span>
+
+  <span class="nt">&lt;parties&gt;</span>
+    <span class="nt">&lt;party</span> <span class="na">key=</span><span class="s">"coverholder"</span>   <span class="na">role=</span><span class="s">"coverholder"</span> <span class="na">actor=</span><span class="s">"harbour-underwriting-ltd"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;party</span> <span class="na">key=</span><span class="s">"leadInsurer"</span>   <span class="na">role=</span><span class="s">"insurer"</span>     <span class="na">actor=</span><span class="s">"insurer-a"</span>   <span class="na">share=</span><span class="s">"0.6"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;party</span> <span class="na">key=</span><span class="s">"followInsurer"</span> <span class="na">role=</span><span class="s">"insurer"</span>     <span class="na">actor=</span><span class="s">"insurer-b"</span>   <span class="na">share=</span><span class="s">"0.4"</span><span class="nt">/&gt;</span>
+  <span class="nt">&lt;/parties&gt;</span>
+
+  <span class="nt">&lt;participation</span> <span class="na">key=</span><span class="s">"insurers"</span> <span class="na">rule=</span><span class="s">"several"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;member</span> <span class="na">ref=</span><span class="s">"leadInsurer"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;member</span> <span class="na">ref=</span><span class="s">"followInsurer"</span><span class="nt">/&gt;</span>
+  <span class="nt">&lt;/participation&gt;</span>
+
+  <span class="nt">&lt;terms&gt;</span>
+    <span class="nt">&lt;term</span> <span class="na">key=</span><span class="s">"uw-authority"</span> <span class="na">form=</span><span class="s">"conditions"</span> <span class="na">modality=</span><span class="s">"permission"</span>
+          <span class="na">bearer=</span><span class="s">"coverholder"</span> <span class="na">activity=</span><span class="s">"bind"</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;activatedBy&gt;</span>
+        <span class="nt">&lt;all&gt;</span>
+          <span class="nt">&lt;condition</span> <span class="na">read=</span><span class="s">"policy.contractType"</span> <span class="na">scheme=</span><span class="s">"contract-type"</span> <span class="na">match=</span><span class="s">"exact"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;oneOf&gt;</span>insurance<span class="nt">&lt;/oneOf&gt;</span>
+          <span class="nt">&lt;/condition&gt;</span>
+          <span class="nt">&lt;condition</span> <span class="na">read=</span><span class="s">"riskLocation"</span> <span class="na">scheme=</span><span class="s">"territory"</span> <span class="na">match=</span><span class="s">"hierarchical"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;within&gt;</span>FR<span class="nt">&lt;/within&gt;</span>
+            <span class="nt">&lt;except&gt;</span>FR-20R<span class="nt">&lt;/except&gt;</span>
+          <span class="nt">&lt;/condition&gt;</span>
+          <span class="nt">&lt;condition</span> <span class="na">read=</span><span class="s">"sumInsured"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;atMost</span> <span class="na">amount=</span><span class="s">"5000000"</span> <span class="na">unit=</span><span class="s">"GBP"</span><span class="nt">/&gt;</span>
+            <span class="nt">&lt;atMost</span> <span class="na">amount=</span><span class="s">"5750000"</span> <span class="na">unit=</span><span class="s">"EUR"</span><span class="nt">/&gt;</span>
+          <span class="nt">&lt;/condition&gt;</span>
+        <span class="nt">&lt;/all&gt;</span>
+      <span class="nt">&lt;/activatedBy&gt;</span>
+    <span class="nt">&lt;/term&gt;</span>
+  <span class="nt">&lt;/terms&gt;</span>
+
+  <span class="nt">&lt;bindings&gt;</span>
+    <span class="nt">&lt;binding</span> <span class="na">scheme=</span><span class="s">"territory"</span>     <span class="na">edition=</span><span class="s">"iso-3166:2026"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;binding</span> <span class="na">scheme=</span><span class="s">"contract-type"</span> <span class="na">edition=</span><span class="s">"lma-contract-type:2025"</span><span class="nt">/&gt;</span>
+  <span class="nt">&lt;/bindings&gt;</span>
+<span class="nt">&lt;/instrument&gt;</span>
+</code></pre></div></div>
+
+<h3 id="41-design-rules">4.1 Design rules</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Rule</th>
+      <th>Reason</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Scalars are attributes, structure is elements</strong></td>
+      <td>conventional XML, and it keeps the document readable. <code class="language-plaintext highlighter-rouge">amount</code> and <code class="language-plaintext highlighter-rouge">unit</code> on <code class="language-plaintext highlighter-rouge">&lt;atMost&gt;</code> rather than child elements</td>
+    </tr>
+    <tr>
+      <td><strong>Repetition is a repeated element, never a delimited attribute</strong></td>
+      <td><code class="language-plaintext highlighter-rouge">&lt;within&gt;FR&lt;/within&gt;&lt;within&gt;BE&lt;/within&gt;</code>, so a schema can constrain each and a consumer can iterate</td>
+    </tr>
+    <tr>
+      <td><strong>Keys are document-local, matching the JSON skin</strong></td>
+      <td>§9 of the wire-protocol sketch. <code class="language-plaintext highlighter-rouge">ref="leadInsurer"</code> is an <code class="language-plaintext highlighter-rouge">xs:IDREF</code>-shaped reference, though see §6 before making it a real <code class="language-plaintext highlighter-rouge">xs:IDREF</code></td>
+    </tr>
+    <tr>
+      <td><strong>No IRIs in ordinary documents</strong></td>
+      <td>an optional <code class="language-plaintext highlighter-rouge">&lt;provenance&gt;</code> block carries them for consumers that want the graph</td>
+    </tr>
+    <tr>
+      <td><strong>Element-qualified, attribute-unqualified</strong></td>
+      <td><code class="language-plaintext highlighter-rouge">elementFormDefault="qualified"</code>, <code class="language-plaintext highlighter-rouge">attributeFormDefault="unqualified"</code>. Standard, and keeps attributes free of prefixes</td>
+    </tr>
+    <tr>
+      <td><strong>No mixed content anywhere except <code class="language-plaintext highlighter-rouge">&lt;text&gt;</code></strong></td>
+      <td>mixed content defeats most binding tools. Prose lives in one designated element</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="5-embedding-legalruleml-without-cdata">5. Embedding LegalRuleML without CDATA</h2>
+
+<p>The requirement is that a LegalRuleML statement appears inside <code class="language-plaintext highlighter-rouge">&lt;payload&gt;</code> as a real element
+subtree that a validator and a binding tool can see, not as escaped text or CDATA.</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;term</span> <span class="na">key=</span><span class="s">"notice-2"</span> <span class="na">form=</span><span class="s">"legalruleml"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;payload</span> <span class="na">dialect=</span><span class="s">"oasis-lrml-1.0-normalised"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;lrml:PrescriptiveStatement</span> <span class="na">xmlns:lrml=</span><span class="s">"http://docs.oasis-open.org/legalruleml/ns/v1.0/"</span>
+                                <span class="na">xmlns:ruleml=</span><span class="s">"http://ruleml.org/spec"</span>
+                                <span class="na">key=</span><span class="s">"ps2"</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;lrml:hasTemplate&gt;</span>
+        <span class="nt">&lt;ruleml:Rule</span> <span class="na">closure=</span><span class="s">"universal"</span><span class="nt">&gt;</span>
+          <span class="nt">&lt;ruleml:if&gt;</span>…<span class="nt">&lt;/ruleml:if&gt;</span>
+          <span class="nt">&lt;ruleml:then&gt;</span>
+            <span class="nt">&lt;lrml:SuborderList&gt;</span>
+              <span class="nt">&lt;lrml:Obligation&gt;</span>…<span class="nt">&lt;/lrml:Obligation&gt;</span>
+            <span class="nt">&lt;/lrml:SuborderList&gt;</span>
+          <span class="nt">&lt;/ruleml:then&gt;</span>
+        <span class="nt">&lt;/ruleml:Rule&gt;</span>
+      <span class="nt">&lt;/lrml:hasTemplate&gt;</span>
+    <span class="nt">&lt;/lrml:PrescriptiveStatement&gt;</span>
+  <span class="nt">&lt;/payload&gt;</span>
+<span class="nt">&lt;/term&gt;</span>
+</code></pre></div></div>
+
+<p>Two problems to solve: getting it out of the graph as nodes, and admitting it in the schema.</p>
+
+<h3 id="51-getting-it-out-fnparse-xml">5.1 Getting it out: <code class="language-plaintext highlighter-rouge">fn:parse-xml()</code></h3>
+
+<p>The ingress pipeline stores an unliftable payload verbatim, which means it sits in the graph as an
+<code class="language-plaintext highlighter-rouge">xsd:string</code> literal containing XML. XPath 3.0 supplies the inverse:</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;xsl:template</span> <span class="na">match=</span><span class="s">"sr:binding[@name='payload']"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;payload</span> <span class="na">dialect=</span><span class="s">"{../sr:binding[@name='dialect']/sr:literal}"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;xsl:copy-of</span> <span class="na">select=</span><span class="s">"parse-xml(sr:literal)/*"</span><span class="nt">/&gt;</span>
+  <span class="nt">&lt;/payload&gt;</span>
+<span class="nt">&lt;/xsl:template&gt;</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">fn:parse-xml($arg as xs:string?) as document-node()?</code> is standard XPath 3.0 and implemented by
+Saxon-HE. <code class="language-plaintext highlighter-rouge">fn:parse-xml-fragment()</code> handles a payload with several top-level statements and no
+single root. <code class="language-plaintext highlighter-rouge">xsl:copy-of</code> carries the subtree including its namespace nodes, so the output declares
+<code class="language-plaintext highlighter-rouge">lrml:</code> and <code class="language-plaintext highlighter-rouge">ruleml:</code> correctly without any manual namespace fixing.</p>
+
+<p>This is the whole mechanism. No CDATA, no escaping, no string concatenation, and no custom
+extension function.</p>
+
+<p><strong>Which storage form the payload has is now a live question.</strong> Since the wire-protocol sketch
+adopted a LegalRuleML JSON AST, a payload may be stored either as a verbatim XML literal (what a
+caller sent as XML) or as a lifted AST in the graph (what a caller sent as JSON). The stylesheet
+needs both paths:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Stored as</th>
+      <th>Egress route</th>
+      <th>Note</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>verbatim XML literal</td>
+      <td><code class="language-plaintext highlighter-rouge">parse-xml()</code>, as above</td>
+      <td>faithful to what arrived. Re-serialisation is not byte-preserving (§10)</td>
+    </tr>
+    <tr>
+      <td>lifted AST in the graph</td>
+      <td>reconstruct XML from the AST by ordinary templates</td>
+      <td>deterministic by construction, and normalised by definition</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The second route is the better one where both are available, because it needs no parsing of stored
+text at egress time and so removes an entire class of security exposure (§11.1). <strong>Prefer the AST
+where it exists, fall back to <code class="language-plaintext highlighter-rouge">parse-xml()</code> where only the verbatim literal was retained.</strong> Which
+form the ingress pipeline should store, or whether it should store both, is
+<a href="/developer/sketches/logic-encoding-research.html">research item R6</a>.</p>
+
+<h3 id="52-admitting-it-two-schema-strategies">5.2 Admitting it: two schema strategies</h3>
+
+<p><strong>Strategy 1, lax wildcard.</strong> The base schema admits any foreign-namespace content and validates it
+when a schema for that namespace is available to the processor.</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;xs:element</span> <span class="na">name=</span><span class="s">"payload"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;xs:complexType&gt;</span>
+    <span class="nt">&lt;xs:sequence&gt;</span>
+      <span class="nt">&lt;xs:any</span> <span class="na">namespace=</span><span class="s">"##other"</span> <span class="na">processContents=</span><span class="s">"lax"</span>
+              <span class="na">minOccurs=</span><span class="s">"1"</span> <span class="na">maxOccurs=</span><span class="s">"unbounded"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;/xs:sequence&gt;</span>
+    <span class="nt">&lt;xs:attribute</span> <span class="na">name=</span><span class="s">"dialect"</span> <span class="na">type=</span><span class="s">"lat:DialectName"</span> <span class="na">use=</span><span class="s">"required"</span><span class="nt">/&gt;</span>
+  <span class="nt">&lt;/xs:complexType&gt;</span>
+<span class="nt">&lt;/xs:element&gt;</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">lax</code> is the operative choice and is frequently misread. It means: <em>if the validator can find a
+schema for the element’s namespace, validate strictly against it, and if it cannot, accept
+well-formed content</em>. So a consumer who adds the LegalRuleML XSD to their catalog gets full
+validation of the payload with no change to our schema or their instance documents, and a consumer
+who does not still validates everything outside the payload.</p>
+
+<p><strong>Strategy 2, explicit import and reference.</strong> A strict profile imports LegalRuleML and names the
+permitted elements.</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;xs:import</span> <span class="na">namespace=</span><span class="s">"http://docs.oasis-open.org/legalruleml/ns/v1.0/"</span>
+           <span class="na">schemaLocation=</span><span class="s">"oasis/lrml-normal.xsd"</span><span class="nt">/&gt;</span>
+
+<span class="nt">&lt;xs:element</span> <span class="na">name=</span><span class="s">"payload"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;xs:complexType&gt;</span>
+    <span class="nt">&lt;xs:choice</span> <span class="na">minOccurs=</span><span class="s">"1"</span> <span class="na">maxOccurs=</span><span class="s">"unbounded"</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;xs:element</span> <span class="na">ref=</span><span class="s">"lrml:Statements"</span><span class="nt">/&gt;</span>
+      <span class="nt">&lt;xs:element</span> <span class="na">ref=</span><span class="s">"lrml:PrescriptiveStatement"</span><span class="nt">/&gt;</span>
+      <span class="nt">&lt;xs:element</span> <span class="na">ref=</span><span class="s">"lrml:ConstitutiveStatement"</span><span class="nt">/&gt;</span>
+      <span class="nt">&lt;xs:element</span> <span class="na">ref=</span><span class="s">"lrml:PenaltyStatement"</span><span class="nt">/&gt;</span>
+      <span class="nt">&lt;xs:element</span> <span class="na">ref=</span><span class="s">"lrml:ReparationStatement"</span><span class="nt">/&gt;</span>
+      <span class="nt">&lt;xs:element</span> <span class="na">ref=</span><span class="s">"lrml:OverrideStatement"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;/xs:choice&gt;</span>
+    <span class="nt">&lt;xs:attribute</span> <span class="na">name=</span><span class="s">"dialect"</span> <span class="na">type=</span><span class="s">"lat:DialectName"</span> <span class="na">use=</span><span class="s">"required"</span><span class="nt">/&gt;</span>
+  <span class="nt">&lt;/xs:complexType&gt;</span>
+<span class="nt">&lt;/xs:element&gt;</span>
+</code></pre></div></div>
+
+<p>This is the most literal reading of “their schema embedded within ours”, and it buys real typed
+bindings: JAXB, <code class="language-plaintext highlighter-rouge">xsd.exe</code> or XMLSpy generate <code class="language-plaintext highlighter-rouge">PrescriptiveStatement</code> classes rather than
+<code class="language-plaintext highlighter-rouge">org.w3c.dom.Element</code>.</p>
+
+<p><strong>The cost is not small.</strong> LegalRuleML’s XSD is large, ships in three variants (basic, compact,
+normalised), and importing it means every consumer’s generated model gains the entire LegalRuleML
+object graph whether or not they use it. A binding-platform team that never touches LegalRuleML
+should not have to compile it.</p>
+
+<h3 id="53-recommendation">5.3 Recommendation</h3>
+
+<p><strong>Ship both, as two schema documents over one instance format.</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Schema</th>
+      <th>Content</th>
+      <th>For</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">lattice-1.0.xsd</code></td>
+      <td>the base, with <code class="language-plaintext highlighter-rouge">xs:any processContents="lax"</code></td>
+      <td>every consumer. No LegalRuleML dependency</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">lattice-1.0-lrml.xsd</code></td>
+      <td>imports the base and the OASIS normalised XSD, narrowing <code class="language-plaintext highlighter-rouge">&lt;payload&gt;</code> by reference</td>
+      <td>consumers wanting typed LegalRuleML bindings</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The same instance document validates against both, so the choice is the consumer’s and costs us one
+extra schema file. <strong>Pin the normalised serialisation.</strong> Accepting all three variants triples the
+test surface for no benefit, and the ingress pipeline already normalises, so a payload we emit is
+normalised by construction. A caller who sends compact gets it back normalised, and the <code class="language-plaintext highlighter-rouge">dialect</code>
+attribute says so honestly rather than lying about what was stored.</p>
+
+<hr />
+
+<h2 id="6-the-xsid-collision-and-other-embedding-hazards">6. The <code class="language-plaintext highlighter-rouge">xs:ID</code> collision, and other embedding hazards</h2>
+
+<p>Four hazards that only appear once foreign content is embedded. Each is subtle and each produces an
+invalid or wrong document rather than an obvious failure.</p>
+
+<h3 id="61-key-is-xsid-and-ids-are-document-scoped">6.1 <code class="language-plaintext highlighter-rouge">@key</code> is <code class="language-plaintext highlighter-rouge">xs:ID</code>, and IDs are document-scoped</h3>
+
+<p>LegalRuleML’s <code class="language-plaintext highlighter-rouge">@key</code> has type <code class="language-plaintext highlighter-rouge">xs:ID</code>, and the specification’s own conformance rule requires each
+<code class="language-plaintext highlighter-rouge">@key</code> to be <em>unique within that document</em>. Embedding statements drawn from several source
+documents into one response <strong>can collide</strong>, producing a document that is not schema-valid and that
+some parsers reject outright.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Option</th>
+      <th>Assessment</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Rewrite keys on embedding, prefixing with the term key</td>
+      <td>preserves validity. <strong>Breaks <code class="language-plaintext highlighter-rouge">@keyref</code> integrity</strong> unless every reference is rewritten consistently, which the stylesheet can do since both are in scope</td>
+    </tr>
+    <tr>
+      <td>Emit at most one source document’s statements per response</td>
+      <td>simple, and unacceptably limiting for an instrument assembled from several wordings</td>
+    </tr>
+    <tr>
+      <td>Wrap each payload in <code class="language-plaintext highlighter-rouge">&lt;lrml:LegalRuleML&gt;</code> with <code class="language-plaintext highlighter-rouge">xml:base</code></td>
+      <td>does <strong>not</strong> help. <code class="language-plaintext highlighter-rouge">xs:ID</code> uniqueness is per XML document, not per subtree or base URI</td>
+    </tr>
+    <tr>
+      <td>Declare the collision out of scope and let it fail</td>
+      <td>dishonest</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Rewrite, consistently, in the stylesheet.</strong> A named template rewrites <code class="language-plaintext highlighter-rouge">@key</code> and every <code class="language-plaintext highlighter-rouge">@keyref</code>
+within one payload by a deterministic prefix derived from the term key, and the original value is
+preserved in a <code class="language-plaintext highlighter-rouge">lat:sourceKey</code> attribute so the link back to the source document survives. The
+rewrite is a pure function of the term key, which keeps §10’s determinism.</p>
+
+<h3 id="62-namespace-prefix-collisions">6.2 Namespace prefix collisions</h3>
+
+<p>Two payloads may bind the same prefix to different namespaces, or the host document may bind
+<code class="language-plaintext highlighter-rouge">lrml:</code> differently. <code class="language-plaintext highlighter-rouge">xsl:copy-of</code> preserves each subtree’s own namespace nodes, so XML semantics
+are safe, but the serialised output can carry several prefix declarations for the same URI. Harmless
+and untidy. Declaring the common namespaces once on the root and letting Saxon’s serialiser
+consolidate keeps output clean.</p>
+
+<h3 id="63-xsidref-on-our-own-references">6.3 <code class="language-plaintext highlighter-rouge">xs:IDREF</code> on our own references</h3>
+
+<p>§4’s <code class="language-plaintext highlighter-rouge">&lt;member ref="leadInsurer"/&gt;</code> is tempting to type as <code class="language-plaintext highlighter-rouge">xs:IDREF</code>, which would let a validator
+check referential integrity. Doing so puts our keys into the same document-wide ID space as the
+embedded LegalRuleML keys, so a collision between one of our keys and a LegalRuleML <code class="language-plaintext highlighter-rouge">@key</code> becomes
+possible.</p>
+
+<p><strong>Keep our references as <code class="language-plaintext highlighter-rouge">xs:NCName</code>, not <code class="language-plaintext highlighter-rouge">xs:IDREF</code></strong>, and check referential integrity with
+Schematron or <code class="language-plaintext highlighter-rouge">xs:key</code>/<code class="language-plaintext highlighter-rouge">xs:keyref</code> scoped to our own elements. <code class="language-plaintext highlighter-rouge">xs:key</code> is scoped to a declared
+selector, so it does not share the global ID space and is the right tool.</p>
+
+<h3 id="64-the-payload-is-untrusted-content">6.4 The payload is untrusted content</h3>
+
+<p>It arrived from a caller. §11 covers this.</p>
+
+<hr />
+
+<h2 id="7-hosting-saxon-in-java">7. Hosting: Saxon in Java</h2>
+
+<h3 id="71-why-saxon-and-why-java">7.1 Why Saxon, and why Java</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Requirement</th>
+      <th>Saxon-HE</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>XSLT 3.0 and XPath 3.1, for <code class="language-plaintext highlighter-rouge">parse-xml()</code>, <code class="language-plaintext highlighter-rouge">for-each-group</code>, streaming</td>
+      <td>yes. Saxon-HE is the reference implementation</td>
+    </tr>
+    <tr>
+      <td>Java 25, which the platform already pins</td>
+      <td>yes</td>
+    </tr>
+    <tr>
+      <td>Swappable through a standard interface</td>
+      <td>yes, via JAXP <code class="language-plaintext highlighter-rouge">TransformerFactory</code>, so no hard coupling</td>
+    </tr>
+    <tr>
+      <td>Licence compatible</td>
+      <td><strong>MPL 2.0</strong>, the same licence as this repository’s own tooling. Unlike the reasoner, which is AGPL and needs the ADR-A83 isolation treatment, Saxon needs none</td>
+    </tr>
+    <tr>
+      <td>Already needed elsewhere</td>
+      <td><strong>yes.</strong> The ingress pipeline’s Route B needs an XSLT 2.0 processor for the OASIS normaliser and triplifier. One dependency, two uses</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The last row matters for the cost case. Saxon is not a dependency this capability introduces alone.</p>
+
+<p>The reasoning isolation check (<code class="language-plaintext highlighter-rouge">tools/reasoning_isolation_check.py</code>) matches
+<code class="language-plaintext highlighter-rouge">hermit|openllet|pellet|drools|owlapi|owlready|jpype|py4j|pyjnius</code>. Saxon is not a reasoner or a
+rules engine and does not match, so no ADR-A83 conflict arises. Worth confirming in the slice rather
+than assuming.</p>
+
+<h3 id="72-module-placement">7.2 Module placement</h3>
+
+<p>A new Maven module beside the seven that exist, since none of them fits.</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>platform/
+  semantic-dataset-spi/        graph references, snapshots, capabilities
+  semantic-dataset-fuseki/     named-graph read adapter          ← supplies SPARQL results
+  semantic-xml-egress/         NEW: query + stylesheet + serialiser
+  semantic-policy/
+  platform-outbox/
+  release-integration/
+  surface-workflow/
+  reasoning-testkit/
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">semantic-xml-egress</code> depends on <code class="language-plaintext highlighter-rouge">semantic-dataset-spi</code> for graph references and on Saxon. It does
+<strong>not</strong> depend on <code class="language-plaintext highlighter-rouge">semantic-dataset-fuseki</code>, so any conforming store adapter can feed it. Its public
+surface is narrow:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">XmlProjection</span> <span class="o">{</span>
+    <span class="cm">/** Project one graph reference through a named, versioned transformation kit. */</span>
+    <span class="nc">XmlResult</span> <span class="nf">project</span><span class="o">(</span><span class="nc">GraphReference</span> <span class="n">ref</span><span class="o">,</span> <span class="nc">KitId</span> <span class="n">kit</span><span class="o">,</span> <span class="nc">ProjectionOptions</span> <span class="n">options</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">KitId</code> names a published kit version (§8), so the caller selects a contract rather than a
+stylesheet path, and the module resolves which query and stylesheet that implies.</p>
+
+<hr />
+
+<h2 id="8-publishing-the-transformation-kit">8. Publishing the transformation kit</h2>
+
+<p>This is the part with the most leverage, and it needs one correction to be workable.</p>
+
+<p><strong>An XSLT alone is not publishable, because it has no defined input.</strong> A stylesheet that consumes
+SPARQL results is meaningless without the query that produced them. So the published unit is a
+<strong>kit</strong> of three artefacts plus a manifest:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>contracts/xml/lattice-instrument/1.0/
+    manifest.json          kit id, version, checksums, compatible ontology versions
+    query.rq               the SPARQL SELECT, with ORDER BY, that defines the input
+    transform.xsl          XSLT 3.0, consumes sparql-results, emits lattice XML
+    lattice-1.0.xsd        base schema, lax payload
+    lattice-1.0-lrml.xsd   strict profile importing the OASIS schema
+    examples/
+        input.srx          a captured SPARQL result set
+        expected.xml       the exact expected output
+</code></pre></div></div>
+
+<h3 id="81-what-publishing-buys">8.1 What publishing buys</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Benefit</th>
+      <th>Detail</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Runtime independence</strong></td>
+      <td>a consumer points any SPARQL endpoint at <code class="language-plaintext highlighter-rouge">query.rq</code>, runs <code class="language-plaintext highlighter-rouge">transform.xsl</code> in Saxon, .NET’s Saxon port, or a commercial processor, and gets byte-identical output. No LATTICE code</td>
+    </tr>
+    <tr>
+      <td><strong>Auditability</strong></td>
+      <td>a regulator can verify our output is what our published transform produces, rather than trusting an opaque service</td>
+    </tr>
+    <tr>
+      <td><strong>A conformance test for us</strong></td>
+      <td><code class="language-plaintext highlighter-rouge">examples/input.srx</code> plus <code class="language-plaintext highlighter-rouge">expected.xml</code> is a golden-file test. Our runtime must produce <code class="language-plaintext highlighter-rouge">expected.xml</code>, and so must any third party</td>
+    </tr>
+    <tr>
+      <td><strong>Vendor neutrality</strong></td>
+      <td>a market body can adopt the kit without adopting us, which is the strongest adoption argument available</td>
+    </tr>
+    <tr>
+      <td><strong>Versioning falls out</strong></td>
+      <td>a kit is a directory with a version. Deprecating a kit is deprecating a directory</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="82-what-it-constrains">8.2 What it constrains</h3>
+
+<p>Publishing a transform makes the <strong>query</strong> part of the public contract, which means the query’s
+variable names and result shape are now compatibility surface. That is a real cost and it is worth
+paying, because the alternative is a published stylesheet whose input nobody can reproduce.</p>
+
+<p>It also means <strong>no Saxon extension functions</strong>. The stylesheet must be pure XSLT 3.0 so that any
+conformant processor runs it. Convenience functions like <code class="language-plaintext highlighter-rouge">lat:localName()</code> are declared in the
+stylesheet with <code class="language-plaintext highlighter-rouge">xsl:function</code>, not imported from a vendor namespace. That is a constraint worth
+enforcing with a check rather than a convention, since a single <code class="language-plaintext highlighter-rouge">saxon:</code> call silently makes the kit
+unportable.</p>
+
+<hr />
+
+<h2 id="9-generation-and-the-drift-question">9. Generation, and the drift question</h2>
+
+<p>The JSON sketch argues that all skins are generated from one term table so they cannot drift. XML
+projected independently from the graph reopens that risk: a term renamed in the term table changes
+the JSON and leaves the XSLT emitting the old name.</p>
+
+<p>Three options.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Option</th>
+      <th>Drift</th>
+      <th>Readability of the published artefact</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Hand-write query and stylesheet</td>
+      <td><strong>yes, unbounded</strong></td>
+      <td>best</td>
+    </tr>
+    <tr>
+      <td>Generate both from the term table</td>
+      <td>none</td>
+      <td>generated XSLT is unusual to publish and read</td>
+    </tr>
+    <tr>
+      <td>Hand-write, and check against the term table in CI</td>
+      <td>caught, not prevented</td>
+      <td>best</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Generate, and generate legibly.</strong> The repository already treats generated artefacts as first-class
+(<code class="language-plaintext highlighter-rouge">fnd:DerivedArtefact</code>, deterministic output, golden files), and a generated stylesheet fits that
+pattern. The unusual part is that this generated artefact is <em>meant to be read by outsiders</em>, which
+means the generator must emit comments, stable ordering and sensible whitespace rather than the
+densest correct output. That is a small extra requirement on the generator and it removes an entire
+class of divergence.</p>
+
+<p>The kit’s <code class="language-plaintext highlighter-rouge">manifest.json</code> records the term-table version it was generated from, so a kit and a JSON
+schema that disagree are detectable rather than merely unlikely.</p>
+
+<hr />
+
+<h2 id="10-determinism-and-canonical-xml">10. Determinism and canonical XML</h2>
+
+<p>XML egress must be reproducible, because the output may be filed, hashed, signed or compared.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Source of nondeterminism</th>
+      <th>Control</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>SPARQL result order</td>
+      <td><code class="language-plaintext highlighter-rouge">ORDER BY</code> in <code class="language-plaintext highlighter-rouge">query.rq</code>, on every grouping key. Not optional</td>
+    </tr>
+    <tr>
+      <td>Attribute order</td>
+      <td>XSLT does not guarantee it. Fix by emitting attributes in a declared order in the template, and by canonicalising if a hash is required</td>
+    </tr>
+    <tr>
+      <td>Namespace prefix choice</td>
+      <td>declare all prefixes on the root with <code class="language-plaintext highlighter-rouge">xsl:namespace-alias</code> or explicit declarations</td>
+    </tr>
+    <tr>
+      <td>Whitespace</td>
+      <td><code class="language-plaintext highlighter-rouge">&lt;xsl:output indent="no"/&gt;</code> for the canonical form. An indented form is a separate, non-canonical convenience output</td>
+    </tr>
+    <tr>
+      <td>Embedded payload</td>
+      <td>already normalised at ingress. Re-serialising a parsed subtree is stable in Saxon, but a hash should be taken over the C14N form</td>
+    </tr>
+    <tr>
+      <td>Timestamps</td>
+      <td>none in the document body. Generation time belongs in a transport header or an optional <code class="language-plaintext highlighter-rouge">&lt;provenance&gt;</code> block that is excluded from the hash</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Where a hash is needed, <strong>Canonical XML 1.1 (C14N11)</strong> over the output, with a note that C14N and
+the <code class="language-plaintext highlighter-rouge">&lt;payload&gt;</code> subtree interact: C14N will re-serialise the embedded LegalRuleML too, which is
+correct but means the payload’s byte form in our output may differ from the byte form the caller
+sent. <strong>The stored literal remains the authoritative copy of what was received</strong>, and the emitted
+form is a faithful re-serialisation, not a byte-preserving echo. That distinction should be stated
+in the schema documentation, because a caller comparing bytes will otherwise think we altered their
+document.</p>
+
+<hr />
+
+<h2 id="11-security">11. Security</h2>
+
+<p>XML processing is a well-known source of the OWASP Top 10’s A05 misconfiguration class, and this
+design both parses untrusted XML and re-emits it. Four controls, none optional.</p>
+
+<h3 id="111-xxe-and-entity-expansion-on-inbound-payloads">11.1 XXE and entity expansion on inbound payloads</h3>
+
+<p><code class="language-plaintext highlighter-rouge">fn:parse-xml()</code> parses caller-supplied content. An external entity reference can read local files
+or make network requests, and nested entity definitions produce the billion-laughs expansion.</p>
+
+<p><strong>Controls:</strong></p>
+<ul>
+  <li>Disable DTD processing entirely on the parser Saxon uses:
+<code class="language-plaintext highlighter-rouge">http://apache.org/xml/features/disallow-doctype-decl</code> set true, and
+<code class="language-plaintext highlighter-rouge">XMLConstants.FEATURE_SECURE_PROCESSING</code> set true on the <code class="language-plaintext highlighter-rouge">TransformerFactory</code>.</li>
+  <li>Set Saxon’s <code class="language-plaintext highlighter-rouge">ALLOW_EXTERNAL_FUNCTIONS</code> to false and <code class="language-plaintext highlighter-rouge">XML_PARSER_FEATURE</code> overrides to reject
+external DTDs and external parameter entities.</li>
+  <li>Reject a payload containing a <code class="language-plaintext highlighter-rouge">&lt;!DOCTYPE</code> declaration at the boundary, before parsing, rather than
+relying only on parser configuration. Defence in depth, and it produces a clearer refusal.</li>
+</ul>
+
+<h3 id="112-xslt-is-code">11.2 XSLT is code</h3>
+
+<p>A stylesheet can read documents (<code class="language-plaintext highlighter-rouge">fn:doc</code>, <code class="language-plaintext highlighter-rouge">fn:unparsed-text</code>) and, with extensions enabled, invoke
+Java. <strong>Only kit stylesheets from <code class="language-plaintext highlighter-rouge">contracts/xml/</code> are ever loaded</strong>, never a caller-supplied one,
+and they are loaded from the classpath with their checksums verified against the manifest. A
+caller-supplied stylesheet is not a feature and should not become one.</p>
+
+<p>Set <code class="language-plaintext highlighter-rouge">FEATURE_SECURE_PROCESSING</code>, disable extension functions, and supply a <code class="language-plaintext highlighter-rouge">URIResolver</code> that
+refuses every URI not in the kit. A stylesheet that needs to resolve an external document is a
+stylesheet that is not publishable anyway (§8.2), so the restriction costs nothing.</p>
+
+<h3 id="113-the-payload-is-untrusted-content-echoed">11.3 The payload is untrusted content, echoed</h3>
+
+<p>A LegalRuleML payload accepted from caller A and returned to caller B carries A’s content into B’s
+parser. Three consequences:</p>
+
+<ul>
+  <li><strong>Validate on ingress, not only on egress.</strong> The runtime pipeline already validates against the
+OASIS XSD at the boundary, which is the right place.</li>
+  <li><strong>Size and depth limits</strong> on both parse and emit. A deeply nested payload is a parser
+denial-of-service even without entities.</li>
+  <li><strong>Never render a payload as HTML without escaping.</strong> The review workbench displays payloads, and
+an XML subtree injected into a DOM is a script-injection vector. That is the workbench’s
+responsibility and belongs in its own review, but it originates here and should be flagged to
+whoever builds it.</li>
+</ul>
+
+<h3 id="114-tenant-isolation">11.4 Tenant isolation</h3>
+
+<p>The projection runs a SPARQL query against a graph reference. The reference carries tenant and
+project, and <code class="language-plaintext highlighter-rouge">semantic-policy</code> already enforces scope at the control boundary. The XML module must
+<strong>not</strong> accept a raw query or a raw endpoint from a caller, only a <code class="language-plaintext highlighter-rouge">GraphReference</code> plus a <code class="language-plaintext highlighter-rouge">KitId</code>,
+which is why §7.2’s interface takes exactly those two. Accepting a query string would turn this
+module into an unrestricted SPARQL endpoint with an XML serialiser attached.</p>
+
+<hr />
+
+<h2 id="12-scale-and-streaming">12. Scale and streaming</h2>
+
+<p>An instrument is small. A bordereau projection or a portfolio-wide filing is not.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Size</th>
+      <th>Approach</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>one instrument, hundreds of elements</td>
+      <td>ordinary tree transform. No special handling</td>
+    </tr>
+    <tr>
+      <td>thousands of cases</td>
+      <td><strong>XSLT 3.0 streaming.</strong> <code class="language-plaintext highlighter-rouge">xsl:mode streamable="yes"</code>, <code class="language-plaintext highlighter-rouge">xsl:stream</code>. Saxon-HE supports a useful subset, Saxon-EE supports more</td>
+    </tr>
+    <tr>
+      <td>very large filings</td>
+      <td>chunk by aggregate and emit several documents with a manifest, rather than one enormous one</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Streaming and grouping conflict.</strong> <code class="language-plaintext highlighter-rouge">xsl:for-each-group</code> with <code class="language-plaintext highlighter-rouge">group-by</code> is not streamable in
+general. Where streaming is needed, the query must return results pre-grouped and ordered so the
+stylesheet can use <code class="language-plaintext highlighter-rouge">group-adjacent</code>, which is streamable. That is a query design constraint driven
+by the output, and it is another reason the query belongs in the published kit.</p>
+
+<p>For the first kit, <strong>do not stream.</strong> Establish correctness, then measure, then stream only the kits
+that need it.</p>
+
+<hr />
+
+<h2 id="13-acord-and-what-this-kit-could-also-serve">13. ACORD, and what this kit could also serve</h2>
+
+<p>The insurance market’s XML standard is ACORD, and any XML egress conversation in this domain ends up
+there. Worth stating the relationship rather than leaving it implied.</p>
+
+<p><strong>Our schema is not ACORD and should not pretend to be.</strong> ACORD models transactions and messages.
+This schema models a contract’s terms and their meaning, which ACORD does not carry. Conflating them
+would produce a schema that is bad at both.</p>
+
+<p><strong>The kit mechanism is how ACORD gets served.</strong> An ACORD projection is another kit: a different
+query, a different stylesheet, a different schema, the same module and the same publication model.
+Nothing about §7 or §8 changes. That is the argument for building the kit abstraction rather than a
+single hard-coded transform, and it generalises beyond ACORD to any market body’s submission format.</p>
+
+<p>An intermediate worth considering later: emit our schema, then publish a <strong>second-stage XSLT</strong> from
+our schema to ACORD. Two hops, but it means the market-specific transform is pure XML-to-XML with no
+SPARQL knowledge, which is exactly the kind of artefact a market body can own and maintain itself.</p>
+
+<hr />
+
+<h2 id="14-what-exists-today">14. What exists today</h2>
+
+<p>Measured, not assumed.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Piece</th>
+      <th>State</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>XSLT or Saxon anywhere in code</td>
+      <td><strong>none.</strong> Zero references in <code class="language-plaintext highlighter-rouge">.java</code> or <code class="language-plaintext highlighter-rouge">.py</code></td>
+    </tr>
+    <tr>
+      <td>Java platform</td>
+      <td>Java 25, Maven, seven modules</td>
+    </tr>
+    <tr>
+      <td>SPARQL results source</td>
+      <td><code class="language-plaintext highlighter-rouge">semantic-dataset-fuseki</code> is the named-graph read adapter</td>
+    </tr>
+    <tr>
+      <td>Graph reference contract</td>
+      <td>exists, in <code class="language-plaintext highlighter-rouge">semantic-dataset-spi</code></td>
+    </tr>
+    <tr>
+      <td>Policy enforcement at the boundary</td>
+      <td><code class="language-plaintext highlighter-rouge">semantic-policy</code> exists</td>
+    </tr>
+    <tr>
+      <td>RDF/XML output</td>
+      <td><code class="language-plaintext highlighter-rouge">mork2rml.py</code> has <code class="language-plaintext highlighter-rouge">--format xml</code>, for RML output only. Not related</td>
+    </tr>
+    <tr>
+      <td>JSON-LD framing precedent</td>
+      <td>SPC’s egress formatter frames results. Different skin, same architectural idea</td>
+    </tr>
+    <tr>
+      <td>An XML contract directory</td>
+      <td><code class="language-plaintext highlighter-rouge">contracts/</code> has <code class="language-plaintext highlighter-rouge">events</code>, <code class="language-plaintext highlighter-rouge">identity</code>, <code class="language-plaintext highlighter-rouge">mork</code>, <code class="language-plaintext highlighter-rouge">openapi</code>, <code class="language-plaintext highlighter-rouge">release</code>, <code class="language-plaintext highlighter-rouge">surface</code>. No <code class="language-plaintext highlighter-rouge">xml</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>So this is a genuinely new capability with one new third-party dependency, sitting on foundations
+that already exist.</p>
+
+<hr />
+
+<h2 id="15-a-first-slice">15. A first slice</h2>
+
+<p>One kit, end to end, chosen to exercise the mechanism rather than the domain.</p>
+
+<p><strong>Kit:</strong> <code class="language-plaintext highlighter-rouge">lattice-instrument/1.0</code>, projecting one instrument with conditions-form terms only.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Step</th>
+      <th>Deliverable</th>
+      <th>Pass criterion</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td><code class="language-plaintext highlighter-rouge">platform/semantic-xml-egress</code> module with Saxon-HE and <code class="language-plaintext highlighter-rouge">FEATURE_SECURE_PROCESSING</code></td>
+      <td>builds, and <code class="language-plaintext highlighter-rouge">check:reasoning-isolation</code> still passes</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td><code class="language-plaintext highlighter-rouge">query.rq</code> with full <code class="language-plaintext highlighter-rouge">ORDER BY</code></td>
+      <td>returns a stable denormalised result set</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td><code class="language-plaintext highlighter-rouge">transform.xsl</code>, pure XSLT 3.0, no extensions</td>
+      <td>a portability check confirms no <code class="language-plaintext highlighter-rouge">saxon:</code> namespace appears</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td><code class="language-plaintext highlighter-rouge">lattice-1.0.xsd</code> with lax payload</td>
+      <td>output validates</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>Golden test: <code class="language-plaintext highlighter-rouge">input.srx</code> → <code class="language-plaintext highlighter-rouge">expected.xml</code>, byte-exact</td>
+      <td>passes twice in a row and after a JVM restart</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td><strong>Security test: a payload containing a DOCTYPE and an external entity</strong></td>
+      <td><strong>refused at the boundary, and the entity is never resolved</strong></td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td><strong>Embedding test: two payloads with colliding <code class="language-plaintext highlighter-rouge">@key</code></strong></td>
+      <td>both embedded, keys rewritten deterministically, <code class="language-plaintext highlighter-rouge">@keyref</code> integrity preserved, document schema-valid</td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td>Third-party reproduction: run the kit in a plain Saxon CLI outside our code</td>
+      <td>byte-identical to step 5</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Steps 6, 7 and 8 are the slice.</strong> Steps 1 to 5 are ordinary work that will go fine. Step 6 is the
+security property, step 7 is the embedding hazard that a naive implementation gets wrong and
+discovers in production, and step 8 is the entire publication claim. A slice that delivers 1 to 5
+and defers the rest has not tested anything that was in doubt.</p>
+
+<p>The strict schema profile (<code class="language-plaintext highlighter-rouge">lattice-1.0-lrml.xsd</code>) and the <code class="language-plaintext highlighter-rouge">legalruleml</code> form can follow in a second
+slice, since step 7 already proves the embedding mechanism with the lax schema.</p>
+
+<hr />
+
+<h2 id="16-risks-and-open-questions">16. Risks and open questions</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Risk</th>
+      <th>Likelihood</th>
+      <th>Impact</th>
+      <th>Mitigation</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>X1</td>
+      <td>A <code class="language-plaintext highlighter-rouge">saxon:</code> extension creeps into a published stylesheet, silently making the kit unportable</td>
+      <td><strong>high</strong></td>
+      <td>high</td>
+      <td>Automated portability check in CI, not a convention. Step 3 above</td>
+    </tr>
+    <tr>
+      <td>X2</td>
+      <td>XXE or entity expansion through <code class="language-plaintext highlighter-rouge">parse-xml()</code> on caller content</td>
+      <td>medium</td>
+      <td><strong>severe</strong></td>
+      <td>§11.1, defence in depth, and step 6 as a standing test</td>
+    </tr>
+    <tr>
+      <td>X3</td>
+      <td><code class="language-plaintext highlighter-rouge">@key</code> collisions produce invalid documents under load, after passing single-payload tests</td>
+      <td><strong>high</strong></td>
+      <td>medium</td>
+      <td>§6.1 rewrite, and step 7</td>
+    </tr>
+    <tr>
+      <td>X4</td>
+      <td>The published query becomes a compatibility millstone</td>
+      <td>medium</td>
+      <td>medium</td>
+      <td>Version the kit as a whole. A query change is a new kit version, never an edit</td>
+    </tr>
+    <tr>
+      <td>X5</td>
+      <td>XML and JSON skins diverge</td>
+      <td>medium</td>
+      <td>high</td>
+      <td>§9 generation from the term table, and the manifest records which version</td>
+    </tr>
+    <tr>
+      <td>X6</td>
+      <td>The module is given a raw-query entry point “just for testing” and becomes an open SPARQL endpoint</td>
+      <td>medium</td>
+      <td><strong>severe</strong></td>
+      <td>§11.4. The interface takes <code class="language-plaintext highlighter-rouge">GraphReference</code> and <code class="language-plaintext highlighter-rouge">KitId</code> only. No overload</td>
+    </tr>
+    <tr>
+      <td>X7</td>
+      <td>Effort is spent before a consumer asks</td>
+      <td><strong>high</strong></td>
+      <td>medium</td>
+      <td>Same ruling as the interchange work. This sketch says how, not whether</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="open-questions">Open questions</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Question</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>X-Q1</td>
+      <td>Is the XML schema a LATTICE artefact or an applied one? §4’s example mixes substrate structure with insurance naming, the same tension as the JSON sketch’s W1</td>
+    </tr>
+    <tr>
+      <td>X-Q2</td>
+      <td>Does the kit ship inside <code class="language-plaintext highlighter-rouge">contracts/xml/</code>, or as a separately released package a market body can consume without cloning the repository?</td>
+    </tr>
+    <tr>
+      <td>X-Q3</td>
+      <td>Should the canonical output be C14N11 by default, or is that only for consumers who hash and sign? C14N output is less readable</td>
+    </tr>
+    <tr>
+      <td>X-Q4</td>
+      <td>Do we support compact-serialisation LegalRuleML payloads on egress, or always normalise? §5.3 recommends always normalise, which means the caller’s exact bytes are not echoed</td>
+    </tr>
+    <tr>
+      <td>X-Q5</td>
+      <td>Is a second-stage schema-to-ACORD stylesheet ours to write, or the market body’s? §13 suggests theirs, which is an adoption question rather than a technical one</td>
+    </tr>
+    <tr>
+      <td>X-Q6</td>
+      <td>Does the optional <code class="language-plaintext highlighter-rouge">&lt;provenance&gt;</code> block expose graph IRIs and revision hashes to every consumer, or only privileged ones? Related to the JSON sketch’s W8</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>X-Q6 and the JSON sketch’s W8 are the same question in two skins and should be answered once, for
+both, rather than separately.</p>

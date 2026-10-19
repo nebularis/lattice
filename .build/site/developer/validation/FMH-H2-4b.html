@@ -1,0 +1,363 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-fmh-h24b-a-second-engine-the-store-probes-and-the-benchmark">Validation Pack: FMH-H2.4b, a second engine, the store probes and the benchmark</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/formal-methods-track-h.html"><code class="language-plaintext highlighter-rouge">formal-methods-track-h</code></a>, slice H2.4b, planned in
+<a href="/developer/plans/formal-methods-track-h.html#42-h24-the-composite-family-and-what-each-store-does-planned-2026-10-12">plan §4.2</a> under
+<a href="../../architecture/decisions/ADR-A124-benchmark-root.md">ADR-A124</a> and
+<a href="../../architecture/decisions/ADR-A125-test-support-tooling.md">ADR-A125</a>.
+<strong>For the maintainer:</strong> one open decision (decision 1) and four findings that change what earlier documents say.
+<strong>For countersignature (non-weakening rule):</strong> one, added 2026-10-13, below, <strong>countersigned by the maintainer on 2026-10-13</strong>. No test was removed or loosened, and the spike’s own checks, which had been
+failing since H2.2, were repaired (below).</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>What each engine does with the generated SPARQL is stated by a test that fails when the engine changes. The composite replace (R0)
+leaves exactly the payload on every engine and at every size where a run finishes, and the benchmark fails on a wrong result and on
+nothing else.</p>
+
+<h2 id="what-changed">What changed</h2>
+
+<ul>
+  <li><strong><code class="language-plaintext highlighter-rouge">tools/testing/oxigraph</code></strong> (ADR-A125), package <code class="language-plaintext highlighter-rouge">lattice-testing-oxigraph</code>: <code class="language-plaintext highlighter-rouge">OxigraphStore</code>, taken from the spike, with <code class="language-plaintext highlighter-rouge">bootstrap:testing-oxigraph</code>
+and its own tests (OX-T1 to T5). <code class="language-plaintext highlighter-rouge">pyoxigraph&gt;=0.5.11,&lt;0.6</code>, which has a Python 3.14 wheel, so the checkout’s <code class="language-plaintext highlighter-rouge">.venv</code> is enough. The spike’s
+<code class="language-plaintext highlighter-rouge">oxigraph_backend.py</code> re-exports it, and the spike’s README no longer has the Python-version caveat.</li>
+  <li><strong>The engine seam in the persistence tests</strong> (<code class="language-plaintext highlighter-rouge">tests/engines.py</code>, the <code class="language-plaintext highlighter-rouge">engine</code> fixture and the <code class="language-plaintext highlighter-rouge">oxigraph</code> marker). A test that executes an
+update opts in with <code class="language-plaintext highlighter-rouge">@engines.each_engine</code>, and runs on rdflib and on Oxigraph, which skips where the package is absent. <code class="language-plaintext highlighter-rouge">OxDataset</code> has the
+part of rdflib’s <code class="language-plaintext highlighter-rouge">Dataset</code> API the tests use and answers in rdflib terms. <strong>Six modules now run on both engines, and the probes are per engine:</strong> H2.2’s and H2.3’s
+behaviour tests, H2.4a’s, and the composite lifecycle, boundary and sweep tests of HO1, HO5 and HO7. 56 cases ran on Oxigraph at first
+(66 now with the probes), <code class="language-plaintext highlighter-rouge">mise run check:persistence-oxigraph</code>.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">benchmark/persistence-composite-cost</code></strong> (ADR-A124), <code class="language-plaintext highlighter-rouge">mise run check:persistence-composite-cost</code>, not part of <code class="language-plaintext highlighter-rouge">check</code>.</li>
+  <li><strong>The probes</strong> P1 to P5 in <code class="language-plaintext highlighter-rouge">test_store_probes.py</code>, per engine, below.</li>
+  <li><strong>Small changes elsewhere.</strong> <code class="language-plaintext highlighter-rouge">templatecheck.operations(compiled, guards)</code> takes the guards flag. <code class="language-plaintext highlighter-rouge">.gitignore</code> ignores the benchmark reports.
+The root README and the developer guide describe the two directories.</li>
+  <li><strong>The spike was failing, and now passes.</strong> Since H2.2 the spike’s scenarios ran the guarded updates with <code class="language-plaintext highlighter-rouge">xsd:integer</code> epochs, and the IR
+renders <code class="language-plaintext highlighter-rouge">DELETE {</code> across lines. They now run unguarded (the spike studies what the update does) and the regular expressions allow it.
+<code class="language-plaintext highlighter-rouge">mise run check</code> does not run the spike, which is why nothing showed it.</li>
+</ul>
+
+<h3 id="for-countersignature-added-2026-10-13-countersigned-2026-10-13">For countersignature (added 2026-10-13, countersigned 2026-10-13)</h3>
+
+<ol>
+  <li><strong>H2.4b-T1 and T2 changed their rdflib expectation.</strong> They asserted that rdflib keeps the triple in both row orders, which held only for
+some hash seeds, so the default check failed at random. On rdflib T1 now runs the probe in child processes under <code class="language-plaintext highlighter-rouge">PYTHONHASHSEED</code> 0 to
+11 and requires both outcomes to occur, and T2 asserts that neither engine is snapshot. The Oxigraph expectations are unchanged. The
+tests are no weaker. They now assert what the source shows and pass on every run (three runs, both engines, 2026-10-13).</li>
+</ol>
+
+<h2 id="findings-by-probe">Findings, by probe</h2>
+
+<p>rdflib 7.6.0 and Oxigraph 0.5.11, on 2026-10-12, Python 3.14.8, Linux x86_64.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Probe</th>
+      <th>rdflib</th>
+      <th>Oxigraph</th>
+      <th>Feeds</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>P1 <code class="language-plaintext highlighter-rouge">snapshotUpdateSemantics</code>: a <code class="language-plaintext highlighter-rouge">DELETE</code>/<code class="language-plaintext highlighter-rouge">INSERT</code> of one triple in two solutions, in both row orders</td>
+      <td><strong>corrected 2026-10-13: False.</strong> rdflib applies one solution at a time, in an order that follows <code class="language-plaintext highlighter-rouge">PYTHONHASHSEED</code>, so the triple survives or is lost by process. The first reading, True, held only for some seeds (<a href="/architecture/triple-store-discovery.html#tsd-01-the-order-in-which-a-delete-insert-where-is-applied">TSD-01</a>)</td>
+      <td>lost when the inserting row comes first. <strong>False</strong></td>
+      <td>TD-42’s linear form R2</td>
+    </tr>
+    <tr>
+      <td>P2 request failure atomicity: <code class="language-plaintext highlighter-rouge">INSERT DATA</code> then a failing operation</td>
+      <td><code class="language-plaintext highlighter-rouge">CREATE GRAPH</code> is not implemented and <code class="language-plaintext highlighter-rouge">DROP GRAPH</code> of an absent graph does not fail. A failing <code class="language-plaintext highlighter-rouge">LOAD</code> leaves the first insert in place. <strong>Not atomic</strong></td>
+      <td>a failing <code class="language-plaintext highlighter-rouge">DROP GRAPH</code> (an error at run time) rolls the insert back. <strong>Atomic</strong></td>
+      <td>R1, two operations in one request</td>
+    </tr>
+    <tr>
+      <td>P3 correlated <code class="language-plaintext highlighter-rouge">GRAPH ?g</code>: 100 graphs of 3000 triples against 1</td>
+      <td>ratio 1.1</td>
+      <td>ratio 1.1</td>
+      <td>the cost note of H2.3-Q2. Neither scans every graph</td>
+    </tr>
+    <tr>
+      <td>P4 unbound graph variable in a template</td>
+      <td>writes into a fresh blank-node graph</td>
+      <td>skips the quad, as the specification says</td>
+      <td>TD-44</td>
+    </tr>
+    <tr>
+      <td>P5 numeric datatypes: <code class="language-plaintext highlighter-rouge">"1"^^xsd:long</code> stored and <code class="language-plaintext highlighter-rouge">DATATYPE</code>d</td>
+      <td><code class="language-plaintext highlighter-rouge">xsd:long</code> both</td>
+      <td><strong><code class="language-plaintext highlighter-rouge">xsd:integer</code> both</strong></td>
+      <td>TD-45, and decision 1</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Two more were found on the way, and are tests: a zero-length path from a term that is in no triple of the graph matches itself on rdflib
+and nothing on Oxigraph (H2.4a-T6, now per engine), and <code class="language-plaintext highlighter-rouge">CREATE GRAPH</code> does not exist on rdflib.</p>
+
+<p><strong>Corrected 2026-10-13.</strong> This paragraph first said P1 corrects the typed IR sketch §4.3 and that rdflib passes. It does not. rdflib’s
+<code class="language-plaintext highlighter-rouge">evalModify</code> deletes and inserts one solution at a time, and <code class="language-plaintext highlighter-rouge">evalJoin</code> puts the solutions of this <code class="language-plaintext highlighter-rouge">WHERE</code> in a Python <code class="language-plaintext highlighter-rouge">set</code>, so their order,
+and the probe’s answer, follow the process’s hash seed. Swept over seeds 0 to 11 the triple was lost in both orders for 6, kept for 4 and
+lost in one order for 2, and the test that asserted rdflib keeps it failed in 2 of 3 runs. The sketch’s §4.3 was right. Neither engine is
+snapshot. <a href="/architecture/triple-store-discovery.html#tsd-01-the-order-in-which-a-delete-insert-where-is-applied">TSD-01</a> has the detail.</p>
+
+<h3 id="r0-on-oxigraph">R0 on Oxigraph</h3>
+
+<p>R0 is <strong>right</strong> wherever it finishes: the replace leaves exactly the payload, the bystander aggregate and references untouched, and the row at
+the next sequence, at M = N of 10, 100, 1000 and 3000 on both engines, and the six modules above pass on Oxigraph. So the plan’s stop
+condition, R0 wrong and not slow, did not arise. R0 is superlinear in <strong>memory</strong> on Oxigraph, which the plan did not anticipate.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>M = N</th>
+      <th>rdflib</th>
+      <th>Oxigraph</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>10</td>
+      <td>0.03 s</td>
+      <td>0.0005 s</td>
+    </tr>
+    <tr>
+      <td>100</td>
+      <td>0.17 s</td>
+      <td>0.0056 s</td>
+    </tr>
+    <tr>
+      <td>1000</td>
+      <td>9.2 s</td>
+      <td>0.59 s</td>
+    </tr>
+    <tr>
+      <td>3000</td>
+      <td>83 s</td>
+      <td>14.4 s</td>
+    </tr>
+    <tr>
+      <td>10,000</td>
+      <td>983 s</td>
+      <td><strong>did not finish</strong></td>
+    </tr>
+    <tr>
+      <td>fitted k, 100 and up</td>
+      <td>1.87</td>
+      <td>2.26</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Run on 2026-10-12, Python 3.14.8, rdflib 7.6.0, pyoxigraph 0.5.11, a Linux x86_64 container with 15 GB, each run capped at 8 GB, guards off.
+At 10,000 Oxigraph’s <code class="language-plaintext highlighter-rouge">DeleteInsertIter</code> collects the M x N quads in a <code class="language-plaintext highlighter-rouge">Vec</code> and an allocation of 7 GB failed under the cap. An earlier uncapped run was
+killed by the container at 14 GB. Measured separately, a run at 2000 used 1.5 GB and at 4000 used 5.8 GB, so memory is quadratic and 10,000 would need about
+36 GB. Timings vary between runs of one machine (Oxigraph at 1000 took 0.56 to 1.9 s), which is why the check does not fail on time.</p>
+
+<h2 id="decisions-needing-confirmation">Decisions needing confirmation</h2>
+
+<ol>
+  <li>
+    <p><strong>Decided 2026-10-13: option D, built in H2.5.</strong> The parameter guard’s datatype test cannot pass on Oxigraph (P5, TD-45). Oxigraph stores any integer-derived literal as <code class="language-plaintext highlighter-rouge">xsd:integer</code>
+and <code class="language-plaintext highlighter-rouge">DATATYPE</code> reports it, in every expression and at any parse. So <code class="language-plaintext highlighter-rouge">DATATYPE($epoch) = xsd:long</code>, which ADR-A123’s addendum names, is false for
+every request there, and an operation with the guard on writes nothing on Oxigraph. Every position there is an <code class="language-plaintext highlighter-rouge">xsd:integer</code>, so requests and
+stored rows still match each other, and the integer-versus-long hazard the test guards against cannot arise. I did not change the guard. The Oxigraph
+runs of the behaviour tests use the guards off (<code class="language-plaintext highlighter-rouge">engines.guards()</code>), and the tests about the guard itself run on rdflib only. Options:</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Option</th>
+          <th>Consequence</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>A. Leave it. Document that a deployment on Oxigraph runs <code class="language-plaintext highlighter-rouge">--no-parameter-guards</code></td>
+          <td>Nothing to build. That deployment loses the protection against a missing or mistyped parameter, which is the guard’s main value and does not depend on the datatype</td>
+        </tr>
+        <tr>
+          <td>B. Choose the datatype test by what the store keeps. An option on <code class="language-plaintext highlighter-rouge">instantiate</code> now (and on <code class="language-plaintext highlighter-rouge">compile</code>, recorded in the profile, from H2.7): <code class="language-plaintext highlighter-rouge">exact</code> as today, or <code class="language-plaintext highlighter-rouge">integer</code>, which tests <code class="language-plaintext highlighter-rouge">DATATYPE($p) = xsd:integer</code> and so accepts any integer-derived literal</td>
+          <td>Oxigraph keeps its guard, minus the long-versus-integer distinction it cannot make anyway. A second value of an option to maintain, and H5’s capability record gets a field (whether a store keeps numeric datatypes)</td>
+        </tr>
+        <tr>
+          <td>C. Weaken the test everywhere to <code class="language-plaintext highlighter-rouge">isNumeric($p)</code> for <code class="language-plaintext highlighter-rouge">Long</code> and <code class="language-plaintext highlighter-rouge">Position</code></td>
+          <td>One form that runs on both. On a store that keeps datatypes it no longer catches an <code class="language-plaintext highlighter-rouge">xsd:integer</code> epoch, which a template that only writes the epoch (bootstrap, create) would store</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>My leaning was B. <strong>The maintainer chose a fourth option, D, on 2026-10-13: a self-calibrating test,
+<code class="language-plaintext highlighter-rouge">DATATYPE($p) = DATATYPE("0"^^xsd:long)</code></strong>, which compares the parameter’s datatype with what the store makes of an <code class="language-plaintext highlighter-rouge">xsd:long</code>
+constant. On rdflib only <code class="language-plaintext highlighter-rouge">xsd:long</code> passes, exactly today’s guard. On Oxigraph any integer-derived literal passes, which is
+harmless there since all of them become <code class="language-plaintext highlighter-rouge">xsd:integer</code>. A missing or non-numeric value is refused on both, and no option or capability
+field is needed. Measured on both engines on 2026-10-13 against <code class="language-plaintext highlighter-rouge">xsd:long</code>, <code class="language-plaintext highlighter-rouge">xsd:integer</code>, a plain integer, <code class="language-plaintext highlighter-rouge">xsd:int</code>, a string and an
+unbound parameter. It assumes a store treats a constant, a parameter and a stored value alike, which P5 is extended to assert. Recorded
+as ADR-A123’s fourth addendum, and built in H2.5.</p>
+  </li>
+  <li><strong>R0 needs memory quadratic in the aggregate on Oxigraph</strong> (TD-42’s row has the figures). The record of the plan is that H5 selects R2 (one
+operation, linear) by <code class="language-plaintext highlighter-rouge">snapshotUpdateSemantics</code>. P1 now says R2 is <strong>unsafe on Oxigraph</strong> (it applies in turn) and safe on rdflib, which is the
+reverse of what the sketch assumed. R1 (two operations in one request) is safe on Oxigraph (P2) and not on rdflib. So no single linear form fits
+both engines, which is what the capability record is for. Nothing is built here, per the plan.</li>
+  <li><strong>The <code class="language-plaintext highlighter-rouge">oxigraph</code> cases are in <code class="language-plaintext highlighter-rouge">check:persistence</code> where the package is installed.</strong> <code class="language-plaintext highlighter-rouge">bootstrap</code> does not install it (ADR-A125 decision 4), so CI
+skips them, and <code class="language-plaintext highlighter-rouge">check:persistence-oxigraph</code> installs it and runs only them. A developer who ran <code class="language-plaintext highlighter-rouge">bootstrap:testing-oxigraph</code> sees them in
+<code class="language-plaintext highlighter-rouge">check:persistence</code> too.</li>
+  <li><strong>The benchmark’s 10,000 point never finishes on Oxigraph, so it records “did not finish”.</strong> Each run is a child process under a memory cap
+(default 8 GB, <code class="language-plaintext highlighter-rouge">COMPOSITE_COST_MEMORY_GB</code>), a run that dies without a result is recorded with its exit status, and that is not a wrong result.
+The check still fails on a wrong result. If you would rather it fail on an engine that cannot finish, say so.</li>
+</ol>
+
+<h2 id="test-cases">Test cases</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>Invariant</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>OX-T1 to T5 (<code class="language-plaintext highlighter-rouge">tools/testing/oxigraph/tests</code>)</td>
+      <td>the adapter / <code class="language-plaintext highlighter-rouge">bind_parameters</code>, an update with parameters, a parameter left out, a select, <code class="language-plaintext highlighter-rouge">remove_graph</code> / as described</td>
+      <td>L1</td>
+      <td>the adapter</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H2.4b-T1, T2</td>
+      <td>P1 / both row orders / the answers above</td>
+      <td>L4</td>
+      <td><code class="language-plaintext highlighter-rouge">snapshotUpdateSemantics</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H2.4b-T3</td>
+      <td>P2 / a failing second operation / the answers above</td>
+      <td>L4</td>
+      <td>request failure atomicity</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H2.4b-T4</td>
+      <td>P3 / 100 graphs against 1 / a ratio under 8</td>
+      <td>L7</td>
+      <td>no scan of every graph</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H2.4b-T5</td>
+      <td>P4 / an unbound graph variable / skipped, or a blank-node graph</td>
+      <td>L4</td>
+      <td>TD-44</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H2.4b-T6, T7</td>
+      <td>P5 / a long literal stored and <code class="language-plaintext highlighter-rouge">DATATYPE</code>d, and a bootstrap with the guard on / <code class="language-plaintext highlighter-rouge">xsd:long</code> and a row on rdflib, <code class="language-plaintext highlighter-rouge">xsd:integer</code> and no row on Oxigraph</td>
+      <td>L4</td>
+      <td>TD-45</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H2.4b-T8 to T10</td>
+      <td>the facade / terms round-trip, wildcards, the default graph, parameters as text / unchanged</td>
+      <td>L1</td>
+      <td>the facade is faithful</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H2.4b-T11</td>
+      <td><code class="language-plaintext highlighter-rouge">canon</code> / a long literal / unchanged on rdflib, <code class="language-plaintext highlighter-rouge">xsd:integer</code> on Oxigraph</td>
+      <td>L1</td>
+      <td>as T6</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H2.4b-T12</td>
+      <td>the Oxigraph cases in a process that cannot import the package / run / skipped, not failed</td>
+      <td>L1</td>
+      <td>ADR-A125 decision 4</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H2.2-T7 to T19, H2.3-T3 to T32, H2.4a-T4 to T7, HO1, HO5, HO7</td>
+      <td>the behaviour tests, now <code class="language-plaintext highlighter-rouge">[rdflib]</code> and <code class="language-plaintext highlighter-rouge">[oxigraph]</code> / run / pass on both</td>
+      <td>L4</td>
+      <td>the engines agree on what the operations do, with the guards off on Oxigraph</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>BENCH-T1 to T9 (<code class="language-plaintext highlighter-rouge">benchmark/persistence-composite-cost/test_check.py</code>)</td>
+      <td>the benchmark / small sizes, a no-op engine, an engine that keeps an old triple, a clock a million seconds slow, a memory cap, a child that did not finish, a quadratic series / passes, fails on the wrong result, does not fail on time or memory, records a run that did not finish and leaves it out of the fit</td>
+      <td>L2</td>
+      <td>the pass criterion of H2.4-Q3</td>
+      <td>±</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="one-command">One command</h2>
+
+<p>Run from the repository root. <code class="language-plaintext highlighter-rouge">check:persistence</code> is the gate: <code class="language-plaintext highlighter-rouge">2111 passed, 1 xfailed</code> here, the 2035 of H2.4a and 76 new cases. The others are
+on demand.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:persistence
+mise run check:persistence-oxigraph          <span class="c"># 5 adapter tests and the 66 Oxigraph cases, about 15 s</span>
+mise run check:persistence-composite-cost    <span class="c"># about 25 minutes, most of it rdflib at 10,000. COMPOSITE_COST_MAX=1000 for a quick run</span>
+</code></pre></div></div>
+
+<h2 id="artefacts-to-inspect">Artefacts to inspect</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">tests/test_store_probes.py</code>, beside the table above.</li>
+  <li><code class="language-plaintext highlighter-rouge">benchmark/persistence-composite-cost/check.py</code> and, after a run, its <code class="language-plaintext highlighter-rouge">report.md</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">tools/persistence/tests/engines.py</code>, the facade.</li>
+</ul>
+
+<h2 id="adversarial-probe">Adversarial probe</h2>
+
+<p>Run on 2026-10-12, restored afterwards.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Mutation</th>
+      <th>Result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>every engine is rdflib (one engine’s answer hard-coded)</td>
+      <td>8 probe and lifecycle cases fail</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">canon</code> is the identity</td>
+      <td>3 fail</td>
+    </tr>
+    <tr>
+      <td>a literal loses its datatype on the way into Oxigraph</td>
+      <td>6 fail</td>
+    </tr>
+    <tr>
+      <td>the benchmark stops checking the data graph</td>
+      <td>BENCH-T3 fails</td>
+    </tr>
+    <tr>
+      <td>the adapter’s strict parameter check removed</td>
+      <td>OX-T2 fails</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<ul>
+  <li>Isolation between concurrent writers, and the identical-insert conflict of the ownership sketch §15 (H5).</li>
+  <li>A form of the replace other than R0, and the choice between forms (H5).</li>
+  <li>Recording any of the probe answers in the compiled profile (H2.7), or a capability record (H5).</li>
+  <li>A third engine, and other versions of these two.</li>
+</ul>

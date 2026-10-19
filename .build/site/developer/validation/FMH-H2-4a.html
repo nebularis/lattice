@@ -1,0 +1,199 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-fmh-h24a-the-composite-familys-builders">Validation Pack: FMH-H2.4a, the composite family’s builders</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/formal-methods-track-h.html"><code class="language-plaintext highlighter-rouge">formal-methods-track-h</code></a>, slice H2.4a, planned in
+<a href="/developer/plans/formal-methods-track-h.html#42-h24-the-composite-family-and-what-each-store-does-planned-2026-10-12">plan §4.2</a>
+under <a href="../../architecture/decisions/ADR-A123-typed-operation-ir.md">ADR-A123</a> and its addenda.
+<strong>For countersignature (non-weakening rule):</strong> one item, below. <strong>Open decisions:</strong> none.</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>The six composite templates render the query their builders do, apart from the guard. A replace or tombstone with no <code class="language-plaintext highlighter-rouge">$root</code>
+writes nothing. Every ported operation of every family can be encoded structurally and decoded to an equal value, builds
+equal twice, and builds without reading a file, the clock or the environment (SI-1, SI-2), so a stored IR stays possible
+(PDD-06).</p>
+
+<h2 id="what-changed">What changed</h2>
+
+<ul>
+  <li><strong>Six templates ported</strong> in <code class="language-plaintext highlighter-rouge">builders.py</code>: <code class="language-plaintext highlighter-rouge">create-if-absent-composite</code>, <code class="language-plaintext highlighter-rouge">cas-replace-composite-property</code> and
+<code class="language-plaintext highlighter-rouge">tombstone-delete-composite</code>, each with its dataset-guard variant. The path is read with <code class="language-plaintext highlighter-rouge">Bindings.path</code>, the data graph
+with <code class="language-plaintext highlighter-rouge">b.graph("dataGraph")</code>, and the receipt’s <code class="language-plaintext highlighter-rouge">?logGraph2</code> is kept (plan §4.2, fact 4). The replace and tombstone share
+their <code class="language-plaintext highlighter-rouge">WHERE</code> with the named-graph writers through <code class="language-plaintext highlighter-rouge">_row_where</code>, which now takes the sweep as an argument. The harness
+covers the new stems, and the harness, binding, guard and role cases (H2.2-T1 to T6, H2.3-T32) run over them.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">test_composite_builders.py</code></strong>, 14 cases, below.</li>
+  <li>Nothing in <code class="language-plaintext highlighter-rouge">instantiate</code>, the CLI or the IR changed.</li>
+</ul>
+
+<h3 id="for-countersignature">For countersignature</h3>
+
+<p><strong>Test inputs changed in three files</strong> (<code class="language-plaintext highlighter-rouge">test_composite_boundary.py</code>, <code class="language-plaintext highlighter-rouge">test_composite_lifecycle.py</code>,
+<code class="language-plaintext highlighter-rouge">test_composite_sweep.py</code>). They bound <code class="language-plaintext highlighter-rouge">$epoch</code> as an <code class="language-plaintext highlighter-rouge">xsd:integer</code>, and stored the row’s and the dataset graph’s epoch the
+same way, so the request matched the store by term. The composite operations now carry the parameter guard, which refuses an
+<code class="language-plaintext highlighter-rouge">xsd:integer</code> epoch (the README says it is a different term and never matches), so the request and the stored epochs are
+<code class="language-plaintext highlighter-rouge">xsd:long</code>. The assertions are unchanged. This is the same change as FMH-H2-3’s second countersignature item, now for the
+composite tests.</p>
+
+<h2 id="test-cases">Test cases</h2>
+
+<p>In <code class="language-plaintext highlighter-rouge">test_composite_builders.py</code>, with the harness cases of H2.2 and the lifecycle tests of HO1, HO5 and HO7, which run on
+the builders.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>Invariant</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>H2.4a-T1</td>
+      <td>a replace / its derived sets / the sweep is a <code class="language-plaintext highlighter-rouge">closure</code> read with the path’s text, the writes are the data graph’s <code class="language-plaintext highlighter-rouge">?s ?p ?o</code>, the payload and the row</td>
+      <td>L3</td>
+      <td>the sets H5 reads</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H2.4a-T2</td>
+      <td>a tombstone, and a create / their sets / no payload write, no closure, and the create reads the root’s triples</td>
+      <td>L3</td>
+      <td>as T1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H2.4a-T3</td>
+      <td>a replace with no <code class="language-plaintext highlighter-rouge">$root</code> over two stored aggregates / executed with and without the guard / guarded writes nothing, unguarded sweeps both aggregates, writes the payload once and moves both rows</td>
+      <td>L4</td>
+      <td>the guard before any pattern binds <code class="language-plaintext highlighter-rouge">$root</code> (F1)</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>H2.4a-T4</td>
+      <td>a replay of a replace and of a tombstone / executed / nothing changes</td>
+      <td>L4</td>
+      <td>retry is a no-op</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H2.4a-T5</td>
+      <td>a row whose aggregate has no triples / replaced / the payload is written and the row moves</td>
+      <td>L4</td>
+      <td>the sweep is optional</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H2.4a-T6</td>
+      <td>a path that may match no steps, and an inverse step / executed on rdflib / the root is reached, and a node is reached against the edge</td>
+      <td>L4</td>
+      <td>the engine rules the sweep relies on</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H2.4a-T7</td>
+      <td>a payload keeping a triple the aggregate has / executed on rdflib, which applies each solution in turn / the triple survives</td>
+      <td>L4</td>
+      <td>R0 is right whatever order an engine applies a result in</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H2.4a-T8</td>
+      <td>every ported operation, guards on and off, both graph-naming forms / encoded structurally and decoded / equal to itself</td>
+      <td>L2</td>
+      <td>SI-1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H2.4a-T9</td>
+      <td>every ported operation / built twice / equal</td>
+      <td>L2</td>
+      <td>SI-2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H2.4a-T10</td>
+      <td>every ported operation / built with <code class="language-plaintext highlighter-rouge">open</code>, <code class="language-plaintext highlighter-rouge">time.time</code>, <code class="language-plaintext highlighter-rouge">os.getenv</code> and <code class="language-plaintext highlighter-rouge">os.environ</code> refused / built and equal</td>
+      <td>L2</td>
+      <td>SI-2: no file, clock or environment</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>H2.4a-T11</td>
+      <td>an operation holding a callable, a list, an rdflib node or a dict / encoded / <code class="language-plaintext highlighter-rouge">TypeError</code></td>
+      <td>L2</td>
+      <td>SI-1 is enforced</td>
+      <td>−</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The behaviour of a composite create, replace and tombstone on the ADR-A122 fixture is covered by HO1-T1 to T7, HO5-T1 to T10
+and HO7-T2 to T7, unchanged apart from the epoch type. They now run on the builders.</p>
+
+<h2 id="one-command">One command</h2>
+
+<p>Run from the repository root. A pass is <code class="language-plaintext highlighter-rouge">2035 passed, 1 xfailed</code>, the 2003 of H2.3 and 32 new cases. The harness now compares
+more operations, and 14 of the new cases are in <code class="language-plaintext highlighter-rouge">test_composite_builders.py</code>.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:persistence
+</code></pre></div></div>
+
+<h2 id="artefacts-to-inspect">Artefacts to inspect</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">builders.py</code>, <code class="language-plaintext highlighter-rouge">_composite_create</code>, <code class="language-plaintext highlighter-rouge">_composite_replace</code> and <code class="language-plaintext highlighter-rouge">_composite_tombstone</code>, beside their templates.</li>
+  <li><code class="language-plaintext highlighter-rouge">test_composite_builders.py</code>, <code class="language-plaintext highlighter-rouge">encode</code> and <code class="language-plaintext highlighter-rouge">decode</code>, the structural encoding that SI-1 and SI-2 use.</li>
+</ul>
+
+<h2 id="adversarial-probe">Adversarial probe</h2>
+
+<p>Run on 2026-10-12, restored afterwards.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Mutation</th>
+      <th>Result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>the path replaced by one that matches nothing</td>
+      <td>the harness fails (10 cases)</td>
+    </tr>
+    <tr>
+      <td>the sweep moved out of its <code class="language-plaintext highlighter-rouge">OPTIONAL</code></td>
+      <td>the harness fails (25 cases)</td>
+    </tr>
+    <tr>
+      <td>the guard at the top level of <code class="language-plaintext highlighter-rouge">WHERE</code></td>
+      <td>37 cases fail, T3 among them</td>
+    </tr>
+    <tr>
+      <td>a builder reads the clock</td>
+      <td>T10 fails</td>
+    </tr>
+    <tr>
+      <td>a builder keeps a list</td>
+      <td>T8 fails</td>
+    </tr>
+    <tr>
+      <td>the create’s check that the root has no triples removed</td>
+      <td>the harness fails</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<ul>
+  <li>The measurements, Oxigraph and the benchmark, H2.4b.</li>
+  <li>The payload check against the boundary shape, H2.8.</li>
+  <li>Recording the path or the read set in the compiled profile, H2.7.</li>
+  <li>A stored IR itself. SI-5 (paths hold text) is open until PDD-06.</li>
+  <li>Removing <code class="language-plaintext highlighter-rouge">?logGraph2</code>, a change for later.</li>
+</ul>

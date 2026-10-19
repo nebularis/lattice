@@ -1,0 +1,538 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="contract-amounts-limits-retentions-shares-and-accumulations">Contract amounts: limits, retentions, shares and accumulations</h1>
+
+<p>Draft for review, 2026-09-30. A requirements catalogue, not yet a design. The deontic model of
+<a href="/developer/sketches/computable-contract-substrate.html">computable-contract-substrate.md</a> says <em>that</em> a party must pay
+or may not exceed something. This sketch collects every construct in the tested instruments that
+decides <em>how much</em>, so that none is lost before the design is written. It feeds AIR Phase 5
+(ADR-A101, term parameters) and Open CBAA’s binding authority capacity. The unplanned
+<a href="/developer/sketches/evaluation-context.html">evaluation context</a> sketch outlines a design for §3: a ledger of accounts,
+combinators and environments.</p>
+
+<p>Sources use the codes of the substrate sketch: PKG (package policy), IUA (IUA 09-069 BAA2018),
+CBAA (Lloyd’s computable binding authority collateral).</p>
+
+<h2 id="1-catalogue">1. Catalogue</h2>
+
+<h3 id="11-limits">1.1 Limits</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Construct</th>
+      <th>Source</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>A1</td>
+      <td>a policy aggregate: maximum for all loss under all sections combined</td>
+      <td>PKG Declarations item 5, GTC 3</td>
+    </tr>
+    <tr>
+      <td>A2</td>
+      <td>a separate limit per section, part of and not in addition to the aggregate</td>
+      <td>PKG GTC 3, Declarations item 6</td>
+    </tr>
+    <tr>
+      <td>A3</td>
+      <td>a shared limit across named sections, with a lesser amount stated for one section serving as that section’s cap, reduced by prior payments under the shared limit</td>
+      <td>PKG GTC 3</td>
+    </tr>
+    <tr>
+      <td>A4</td>
+      <td>sublimits, part of and not in addition to every enclosing limit</td>
+      <td>PKG GTC 3, D&amp;O 6, End. 8 H (EMTALA, governmental fraud defence costs, HIPAA penalties), End. 23 regulatory sublimit</td>
+    </tr>
+    <tr>
+      <td>A5</td>
+      <td>per-person sublimits nested inside aggregate sublimits</td>
+      <td>PKG D&amp;O 2.A(3), (4) personal reputation and asset protection, D&amp;O 6</td>
+    </tr>
+    <tr>
+      <td>A6</td>
+      <td>an excess limit available only after the section limit and any other valid insurance are exhausted, then primary</td>
+      <td>PKG D&amp;O 2.C, 6 Excess Limit for Executives</td>
+    </tr>
+    <tr>
+      <td>A7</td>
+      <td>discovery period limits part of the policy period limits</td>
+      <td>PKG GTC 3</td>
+    </tr>
+    <tr>
+      <td>A8</td>
+      <td>a limit shared with another section’s limit for one purpose</td>
+      <td>PKG CrisisFund 3, End. 12 item I</td>
+    </tr>
+    <tr>
+      <td>A9</td>
+      <td>the highest limit across several policies from the same insurer applies, never their sum</td>
+      <td>PKG CrisisFund 2</td>
+    </tr>
+    <tr>
+      <td>A10</td>
+      <td>continuity dates that differ by limit layer (first 2,000,000 against the excess 2,000,000)</td>
+      <td>PKG End. 6, End. 7</td>
+    </tr>
+    <tr>
+      <td>A11</td>
+      <td>limits and sums insured an authority may bind up to, per segment, in several currencies</td>
+      <td>IUA 10, CBAA SoUA rows 20, 21, 42</td>
+    </tr>
+    <tr>
+      <td>A12</td>
+      <td>claims settlement authority per claim, and a claims loss fund with drawdowns and top-ups</td>
+      <td>IUA 21.1.1, CBAA M8 8.7D.3.2</td>
+    </tr>
+    <tr>
+      <td>A13</td>
+      <td>redress authority up to an amount “or equivalent in other currencies”</td>
+      <td>CBAA M9 9.1.3</td>
+    </tr>
+    <tr>
+      <td>A14</td>
+      <td>minimum limits the agent’s own insurance must carry</td>
+      <td>CBAA M14 14.13.4 to 14.16</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="12-retentions-and-coinsurance">1.2 Retentions and coinsurance</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Construct</th>
+      <th>Source</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>A15</td>
+      <td>one retention per claim or group of related claims</td>
+      <td>PKG GTC 2</td>
+    </tr>
+    <tr>
+      <td>A16</td>
+      <td>the highest applicable retention when a claim triggers several sections under a shared limit</td>
+      <td>PKG GTC 2</td>
+    </tr>
+    <tr>
+      <td>A17</td>
+      <td>separate retentions per section under separate limits, not satisfied by payments towards another section’s retention</td>
+      <td>PKG GTC 2</td>
+    </tr>
+    <tr>
+      <td>A18</td>
+      <td>retentions that vary by claim kind, the highest applying when several are triggered</td>
+      <td>PKG End. 3 California, End. 17 class action, End. 23 regulatory, End. 24 highly compensated employees, End. 29 and 30 a named individual</td>
+    </tr>
+    <tr>
+      <td>A19</td>
+      <td>no retention for some loss: non-indemnifiable loss, crisis loss, the first 25,000 of e-discovery consultant costs</td>
+      <td>PKG D&amp;O 2.B, 5, CrisisFund 4</td>
+    </tr>
+    <tr>
+      <td>A20</td>
+      <td>coinsurance: 50% of loss above a retention up to a sublimit, the remainder uninsured “as a condition of this insurance”</td>
+      <td>PKG End. 8 H, End. 23 CA-1</td>
+    </tr>
+    <tr>
+      <td>A21</td>
+      <td>amounts within a retention remain uninsured, and an advance within the retention counts towards exhaustion</td>
+      <td>PKG GTC 2, D&amp;O 3.A</td>
+    </tr>
+    <tr>
+      <td>A22</td>
+      <td>minimum deductibles and excesses an agent must impose</td>
+      <td>IUA 11.2, CBAA SoUA rows 39, 40</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="13-erosion-order-and-reinstatement">1.3 Erosion, order and reinstatement</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Construct</th>
+      <th>Source</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>A23</td>
+      <td>defence costs part of loss, eroding limits</td>
+      <td>PKG notice page, GTC 3</td>
+    </tr>
+    <tr>
+      <td>A24</td>
+      <td>order of payments: Side A first, then B and C only if limits remain, at a named officer’s direction</td>
+      <td>PKG D&amp;O 3.B</td>
+    </tr>
+    <tr>
+      <td>A25</td>
+      <td>recovery of paid amounts reinstates limits, less recovery costs</td>
+      <td>PKG GTC 8</td>
+    </tr>
+    <tr>
+      <td>A26</td>
+      <td>a limit reduced by amounts recoverable under another policy from an affiliate</td>
+      <td>PKG D&amp;O 12.B</td>
+    </tr>
+    <tr>
+      <td>A27</td>
+      <td>excess over other valid and collectible insurance, primary to personal umbrella cover</td>
+      <td>PKG D&amp;O 12.B</td>
+    </tr>
+    <tr>
+      <td>A28</td>
+      <td>related claims treated as one, deemed made when the first was</td>
+      <td>PKG D&amp;O 7(b), GTC 2</td>
+    </tr>
+    <tr>
+      <td>A29</td>
+      <td>a public cap: an insurer not liable above a statutory aggregate, and pro rata shares below it</td>
+      <td>PKG End. 32 TRIA</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="14-aggregates-over-bound-business">1.4 Aggregates over bound business</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Construct</th>
+      <th>Source</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>A30</td>
+      <td>a gross premium income limit over all business bound, with its definition (premiums less returns, before commission, excluding taxes)</td>
+      <td>IUA 12.1, 12.3, CBAA SoUA rows 41 to 45</td>
+    </tr>
+    <tr>
+      <td>A31</td>
+      <td>notification when income is likely to exceed a percentage of the limit</td>
+      <td>IUA 12.2, SoUA row 47</td>
+    </tr>
+    <tr>
+      <td>A32</td>
+      <td>aggregate exposure limits, and their monitoring basis</td>
+      <td>IUA 23.2, CBAA M5 5.13</td>
+    </tr>
+    <tr>
+      <td>A33</td>
+      <td>a loss ratio threshold as a condition (“gross loss ratio … less than 50%”)</td>
+      <td>CBAA M12 12.24.2.4.2</td>
+    </tr>
+    <tr>
+      <td>A34</td>
+      <td>estimated premium income stated for information, not binding</td>
+      <td>CBAA M5 5.1.3</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="15-remuneration-and-fees">1.5 Remuneration and fees</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Construct</th>
+      <th>Source</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>A35</td>
+      <td>commission as a percentage of each gross written premium, or of the total, “equal to” or “not exceeding”</td>
+      <td>IUA 16.1, CBAA M6 6.1B</td>
+    </tr>
+    <tr>
+      <td>A36</td>
+      <td>commission as a fixed amount per policy, certificate, risk or endorsement</td>
+      <td>CBAA M6 6.1B.2</td>
+    </tr>
+    <tr>
+      <td>A37</td>
+      <td>a single fixed amount payable within a period of inception</td>
+      <td>CBAA M6 6.1A</td>
+    </tr>
+    <tr>
+      <td>A38</td>
+      <td>profit commission by formula</td>
+      <td>IUA 16.2, CBAA M6 6.3B</td>
+    </tr>
+    <tr>
+      <td>A39</td>
+      <td>refund of unearned commission on cancellations and return premiums at the original rates</td>
+      <td>IUA 17.1</td>
+    </tr>
+    <tr>
+      <td>A40</td>
+      <td>intermediary commission within or in addition to the agent’s</td>
+      <td>CBAA M6 6.2</td>
+    </tr>
+    <tr>
+      <td>A41</td>
+      <td>brokerage in instalments</td>
+      <td>CBAA M6 6.7</td>
+    </tr>
+    <tr>
+      <td>A42</td>
+      <td>a leader fee as a percentage of premium, adjusted with premium, borne proportionally by participants or by the agent</td>
+      <td>CBAA M6 6.8</td>
+    </tr>
+    <tr>
+      <td>A43</td>
+      <td>fees charged to policyholders, disclosed and shown separately</td>
+      <td>IUA 29, CBAA M6 6.4</td>
+    </tr>
+    <tr>
+      <td>A44</td>
+      <td>fees and charges deducted from premium</td>
+      <td>IUA 24.7, CBAA M6 6.6</td>
+    </tr>
+    <tr>
+      <td>A45</td>
+      <td>premium and additional premium, pro rata return on cancellation, non-refundable additional premium</td>
+      <td>PKG GTC 4, 7(c), Declarations</td>
+    </tr>
+    <tr>
+      <td>A46</td>
+      <td>a discovery premium of up to 125% of the full annual premium for one year, or to be determined</td>
+      <td>PKG D&amp;O 8, End. 19</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="16-shares-and-currencies">1.6 Shares and currencies</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Construct</th>
+      <th>Source</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>A47</td>
+      <td>several shares: signed, written, order, broker share, participation basis (percentage or amount, of whole or of order), line to stand</td>
+      <td>CBAA Insurer Capacity Table rows 10 to 26, IUA 41</td>
+    </tr>
+    <tr>
+      <td>A48</td>
+      <td>payment in the instrument currency, or another at the payer’s option, at a published rate on the date the obligation is established</td>
+      <td>PKG GTC 14</td>
+    </tr>
+    <tr>
+      <td>A49</td>
+      <td>one limit stated in several currencies, each read in its own unit</td>
+      <td>CBAA SoUA row 42, ADR-A95</td>
+    </tr>
+    <tr>
+      <td>A50</td>
+      <td>taxes shown separately and not concealed</td>
+      <td>IUA 28.2</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="17-bases-aggregation-and-grouping">1.7 Bases, aggregation and grouping</h3>
+
+<p>An amount rarely stands alone. A limit or a retention applies <strong>on a basis</strong>: per occurrence, per
+claim, any one event, per policy year. An aggregate applies over a <strong>window</strong>, counting by a
+<strong>counting basis</strong>. An hours clause <strong>groups</strong> losses into events. The idea is general, not
+insurance-specific: a facility’s commitment fee per annum, a licence fee per seat per year, a
+notice period extended per year of service, a drawing limit per drawing.</p>
+
+<p>The machinery a basis needs, independent of any domain:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Part</th>
+      <th>What it says</th>
+      <th>Insurance example</th>
+      <th>Other domains</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>counting unit</td>
+      <td>what one application of the amount is measured against</td>
+      <td>occurrence, claim, event, risk, location</td>
+      <td>drawing, seat, employee, shipment</td>
+    </tr>
+    <tr>
+      <td>accumulation window</td>
+      <td>the period over which applications sum against an aggregate</td>
+      <td>policy year, calendar year, per event, custom</td>
+      <td>per annum, per quarter, per contract year</td>
+    </tr>
+    <tr>
+      <td>grouping rule</td>
+      <td>how separate happenings count as one unit</td>
+      <td>hours clause: 72 hours, selection by the insured, no overlap, maximum windows</td>
+      <td>related claims as one, a series of drawings as one</td>
+    </tr>
+    <tr>
+      <td>companion parameters</td>
+      <td>what a basis requires beside the amount</td>
+      <td>an aggregate basis needs a window. A linear payout needs a floor and a ceiling</td>
+      <td>an annual fee needs an anniversary</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Construct</th>
+      <th>Source</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>A51</td>
+      <td>a limit or retention on a basis: per occurrence, per claim (“any one claim”), per event, per risk, per location</td>
+      <td>PKG D&amp;O 6 per-executive sublimits, GTC 2 “each Claim or group of Related Claims”, CBAA SoUA row 21 limit or sum insured basis</td>
+    </tr>
+    <tr>
+      <td>A52</td>
+      <td>an aggregate limit over a window: policy year, calendar year, per event, custom</td>
+      <td>PKG GTC 3, CBAA SoUA row 45 GWP income limit period</td>
+    </tr>
+    <tr>
+      <td>A53</td>
+      <td>an aggregate deductible (annual aggregate deductible), distinct from the aggregate limit, with its own window and counting basis</td>
+      <td>term-parameters <code class="language-plaintext highlighter-rouge">ctr:AggregateParameter</code></td>
+    </tr>
+    <tr>
+      <td>A54</td>
+      <td>an aggregate counting basis: per occurrence, per claim, per event</td>
+      <td>term-parameters T2 (basis on aggregate parameters)</td>
+    </tr>
+    <tr>
+      <td>A55</td>
+      <td>an hours clause: window duration, selection method (insured’s choice, largest loss, first event), non-overlap, maximum windows</td>
+      <td>term-parameters <code class="language-plaintext highlighter-rouge">ctr:OccurrenceGroupingParameter</code></td>
+    </tr>
+    <tr>
+      <td>A56</td>
+      <td>reinstatements: count, percentage, automatic or optional, pro rata as to time, pro rata as to amount (independent elections, multiplicative when both apply)</td>
+      <td>term-parameters <code class="language-plaintext highlighter-rouge">ctr:ReinstatementParameter</code></td>
+    </tr>
+    <tr>
+      <td>A57</td>
+      <td>a parametric payout structure: binary, linear between a floor and a ceiling, graduated by tiers</td>
+      <td>parametric covers in general, no tested instrument</td>
+    </tr>
+    <tr>
+      <td>A58</td>
+      <td>a premium basis: flat, rate on line, adjustable, minimum and deposit</td>
+      <td>term-parameters <code class="language-plaintext highlighter-rouge">ctr:PremiumParameter</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>What exists.</strong> The term-parameters sketch (A-101, applied insurance) already designs most of
+this as insurance term parameters: a basis on every limit, retention and aggregate parameter (its
+T2), companion parameters required by basis (T4), <code class="language-plaintext highlighter-rouge">ctr:AggregateParameter</code>,
+<code class="language-plaintext highlighter-rouge">ctr:OccurrenceGroupingParameter</code> with maximum windows, and <code class="language-plaintext highlighter-rouge">ctr:ReinstatementParameter</code> with both
+pro rata elections.</p>
+
+<p><strong>What is missing.</strong> The substrate has no general notion of a basis. Every domain would otherwise
+restate the counting unit, window and grouping rule. The design of this catalogue should decide
+whether the four parts above are a substrate qualifier pattern (a basis node with a counting unit
+concept, a <code class="language-plaintext highlighter-rouge">qnt:Recurrence</code> or anchored window, and a grouping rule tied to substrate S4’s
+occurrence grouping), with insurance’s bases as applied schemes. The CCS template library
+(computable-contract-substrate §5.11) needs the answer for its term and qualifier templates.</p>
+
+<h2 id="2-what-lattice-already-has">2. What LATTICE already has</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Need</th>
+      <th>Existing construct</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>amounts, bounds, ranges in a unit, several currencies</td>
+      <td>Quantification <code class="language-plaintext highlighter-rouge">Quantity</code>, <code class="language-plaintext highlighter-rouge">Bound</code>, <code class="language-plaintext highlighter-rouge">Range</code>, <code class="language-plaintext highlighter-rouge">alternativeBound</code> (ADR-A95)</td>
+    </tr>
+    <tr>
+      <td>percentages of a base</td>
+      <td><code class="language-plaintext highlighter-rouge">qnt:DerivedValueSpace</code> (ADR-A93)</td>
+    </tr>
+    <tr>
+      <td>relative changes (“more than 10%”)</td>
+      <td><code class="language-plaintext highlighter-rouge">qnt:AnchorBinding</code> with a proportional offset</td>
+    </tr>
+    <tr>
+      <td>conversion at a date</td>
+      <td><code class="language-plaintext highlighter-rouge">qnt:Conversion</code> of kind contextual</td>
+    </tr>
+    <tr>
+      <td>caps consumed over a period, reset by recurrence</td>
+      <td>Behaviour <code class="language-plaintext highlighter-rouge">AllowanceDefinition</code>, <code class="language-plaintext highlighter-rouge">AllowanceAccount</code></td>
+    </tr>
+    <tr>
+      <td>ordering between competing draws</td>
+      <td><code class="language-plaintext highlighter-rouge">bhv:priority</code>, <code class="language-plaintext highlighter-rouge">bhv:PriorityOrdered</code></td>
+    </tr>
+    <tr>
+      <td>grouping occurrences into one event</td>
+      <td>AIR substrate item S4 (occurrence grouping)</td>
+    </tr>
+    <tr>
+      <td>parameters attached to terms</td>
+      <td>A-101 term parameters, <code class="language-plaintext highlighter-rouge">ins:Qualifier</code></td>
+    </tr>
+    <tr>
+      <td>shares of a group</td>
+      <td>Party <code class="language-plaintext highlighter-rouge">ParticipationGroup</code>, <code class="language-plaintext highlighter-rouge">GroupMembership</code>, <code class="language-plaintext highlighter-rouge">pty:share</code></td>
+    </tr>
+    <tr>
+      <td>capacity accounting in insurance</td>
+      <td><code class="language-plaintext highlighter-rouge">applied/capacity</code> and the MERIDIAN FBO capacity tank</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="3-what-a-design-must-decide">3. What a design must decide</h2>
+
+<ol>
+  <li><strong>Nested accounts.</strong> Whether “part of and not in addition to” is a tree of allowance accounts
+where each draw debits every ancestor (A1 to A5, A8), and how a lesser section cap under a
+shared limit (A3) and an excess layer that drops down (A6) fit it.</li>
+  <li><strong>Combinators.</strong> The highest of several retentions (A16, A18), the highest of several limits
+(A9), coinsurance splits (A20), and order of payment (A24) as named, declared operations over
+accounts, not code.</li>
+  <li><strong>Grouping.</strong> Related claims as one (A15, A28) through substrate S4.</li>
+  <li><strong>Reinstatement and reduction.</strong> Recoveries crediting accounts (A25), and reductions for amounts
+recoverable elsewhere (A26, A27).</li>
+  <li><strong>Aggregates over bound instruments.</strong> Income and exposure limits (A30 to A33) summing over the
+instruments <code class="language-plaintext highlighter-rouge">ins:boundUnder</code> a power, with the notification threshold as a derived trigger.</li>
+  <li><strong>Remuneration formulas.</strong> Commission, fees and profit commission (A35 to A46) as derived
+amounts with a declared basis, adjustable with the premium they derive from.</li>
+  <li><strong>Bases.</strong> The general basis pattern of §1.7, and whether it belongs in the substrate.</li>
+  <li><strong>Where each lives.</strong> Which parts are substrate (accounts, combinators, derived amounts) and
+which applied (insurance limit kinds, capacity).</li>
+</ol>
+
+<p>Each row above becomes a test case when the design is written.</p>

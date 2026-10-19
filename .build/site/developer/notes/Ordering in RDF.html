@@ -1,0 +1,731 @@
+
+<h1 id="verdict-up-front">Verdict up front</h1>
+
+<p>Your pattern is <strong>the right shape and the wrong grain, with one correctness hole that will bite you.</strong> Specifically:</p>
+
+<ol>
+  <li><strong>It doesn’t solve your stated problem.</strong> You said <code class="language-plaintext highlighter-rouge">recordedAt</code> can’t order events written in the same instant. A <em>per-commit</em> sequence doesn’t order two events written in the <strong>same commit</strong> either. You need either an event-level sequence or <code class="language-plaintext highlighter-rouge">(commitSeq, opSeq)</code>.</li>
+  <li><strong>“Assigned at commit” + “written onto the graph as a triple” are in tension.</strong> If the value is a triple, it is part of the commit, so it must be chosen <em>before</em> commit completes. Under concurrent writers that means <code class="language-plaintext highlighter-rouge">commitSeq</code> can be assigned in one order and become visible in another → <strong>readers using <code class="language-plaintext highlighter-rouge">commitSeq &gt; watermark</code> silently skip events.</strong> This is the Postgres-sequence/LSN gap problem, and it is the classic way changefeeds lose data.</li>
+  <li><strong>A single per-dataset counter is a global serialization point.</strong> That’s either your throughput ceiling or, on a distributed store, unobtainable.</li>
+  <li><strong>A store-log-derived value is not stable across backup/restore/migration</strong>, which invalidates every consumer watermark you’ve ever handed out.</li>
+</ol>
+
+<p>The fix is small and mostly additive: make the sequence <strong>per-stream and allocated inside the writing transaction</strong> (which makes it dense and order-preserving <em>by construction</em>), add an <strong>epoch</strong> prefix, add an <strong>intra-commit <code class="language-plaintext highlighter-rouge">opSeq</code></strong>, and keep the dataset-level position as a <em>separate, optional, derived</em> concern sourced from the store’s change feed. Details below.</p>
+
+<hr />
+
+<h1 id="part-0--what-ordering-actually-means">Part 0 — What “ordering” actually means</h1>
+
+<p>Five different requirements get bundled under “ordering,” and they have different solutions. Conflating them is the root cause of most of the pain.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th> </th>
+      <th>Requirement</th>
+      <th>Example</th>
+      <th>Needs</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>O1</strong></td>
+      <td><strong>Total order for replay/sync</strong></td>
+      <td>“give me everything after where I left off”</td>
+      <td>dense, gap-detectable, order-preserving position</td>
+    </tr>
+    <tr>
+      <td><strong>O2</strong></td>
+      <td><strong>Causal / per-entity order</strong></td>
+      <td>version 3 of this contract supersedes version 2</td>
+      <td>per-stream monotonic counter or version pointers</td>
+    </tr>
+    <tr>
+      <td><strong>O3</strong></td>
+      <td><strong>Domain (valid-time) order</strong></td>
+      <td>events sorted by when they happened</td>
+      <td><code class="language-plaintext highlighter-rouge">occurredAt</code> + a deterministic tiebreak — <strong>not</strong> commit order</td>
+    </tr>
+    <tr>
+      <td><strong>O4</strong></td>
+      <td><strong>Point-in-time / bitemporal read</strong></td>
+      <td>“state as of last Tuesday” / “as of seq 91,438”</td>
+      <td>validFrom/validTo, or store-native time-travel</td>
+    </tr>
+    <tr>
+      <td><strong>O5</strong></td>
+      <td><strong>Ordered collections in the data</strong></td>
+      <td>steps 1..n of a procedure, a ranked list</td>
+      <td>index property or RDF collection; a different problem entirely</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="the-three-clocks">The three clocks</h3>
+
+<p>Keep these physically separate in the model and never let one impersonate another:</p>
+
+<ul>
+  <li><strong>Valid time</strong> (<code class="language-plaintext highlighter-rouge">ex:occurredAt</code>) — when it happened in the world. Late/backfilled data is <em>normal</em>; sorting by commit order here is a bug.</li>
+  <li><strong>Transaction time</strong> (<code class="language-plaintext highlighter-rouge">ex:recordedAt</code> + <code class="language-plaintext highlighter-rouge">commitSeq</code>) — when the store learned it. Monotonic, never backdated, used for audit, replay, incremental sync.</li>
+  <li><strong>Logical/causal time</strong> (per-stream <code class="language-plaintext highlighter-rouge">seq</code>, <code class="language-plaintext highlighter-rouge">ex:supersedes</code>, version vectors) — happened-before, independent of wall clocks.</li>
+</ul>
+
+<p>Your proposal addresses transaction time and <em>proxies</em> causal order. It does not address O3, and if anyone ever writes <code class="language-plaintext highlighter-rouge">ORDER BY ?commitSeq</code> to answer a domain question, you’ll get wrong answers the first time someone backfills history.</p>
+
+<h3 id="the-central-tradeoff-pick-deliberately">The central tradeoff (pick deliberately)</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Property</th>
+      <th><strong>Dense</strong> (in-transaction counter)</th>
+      <th><strong>Sparse</strong> (HLC / store LSN / timestamps)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Gap-free → “did I miss anything?” detectable</td>
+      <td>✅</td>
+      <td>❌</td>
+    </tr>
+    <tr>
+      <td>Allocation order == commit order</td>
+      <td>✅ (by construction)</td>
+      <td>⚠️ needs watermark machinery</td>
+    </tr>
+    <tr>
+      <td>Contention</td>
+      <td>one writer at a time <strong>per counter</strong></td>
+      <td>none</td>
+    </tr>
+    <tr>
+      <td>Distributed / multi-region</td>
+      <td>poor</td>
+      <td>good</td>
+    </tr>
+    <tr>
+      <td>Comparable across nodes without coordination</td>
+      <td>n/a</td>
+      <td>✅</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>You cannot have both gap-freedom and contention-freedom.</strong> Dense sequences give you completeness detection; sparse clocks give you scalability. The usable middle is <em>dense per-stream, sparse across streams</em> — which is why grain is the most important decision here, not the encoding.</p>
+
+<hr />
+
+<h1 id="part-1--critique-of-the-proposed-pattern-with-fixes">Part 1 — Critique of the proposed pattern, with fixes</h1>
+
+<h3 id="g1-per-commit-granularity-doesnt-order-intra-commit-events">G1. Per-commit granularity doesn’t order intra-commit events</h3>
+
+<p>If a transaction writes three events, all three carry the same <code class="language-plaintext highlighter-rouge">commitSeq</code>. RDF’s set semantics mean the triples inside that graph have no intrinsic order, so the events are unordered — exactly the failure you set out to fix.</p>
+
+<p><strong>Fix:</strong> <code class="language-plaintext highlighter-rouge">(epoch, commitSeq, opSeq)</code> where <code class="language-plaintext highlighter-rouge">opSeq</code> is a client-supplied ordinal within the commit, or promote the sequence to <strong>event level</strong> (each event gets its own position). Neptune Streams’ <code class="language-plaintext highlighter-rouge">commitNum</code>/<code class="language-plaintext highlighter-rouge">opNum</code> pair is precisely this design, and it’s the right one.</p>
+
+<p>Note a hard SPARQL constraint here: <strong>you cannot generate distinct ordinals inside one update.</strong> <code class="language-plaintext highlighter-rouge">NOW()</code> returns the <em>same</em> value for every solution in a query execution (per spec), and <code class="language-plaintext highlighter-rouge">UUID()</code>/<code class="language-plaintext highlighter-rouge">RAND()</code> are per-solution but unordered. The <code class="language-plaintext highlighter-rouge">opSeq</code> must come from the client, typically via <code class="language-plaintext highlighter-rouge">VALUES</code>.</p>
+
+<h3 id="g2-the-allocate-then-commit-reorder-hole">G2. The allocate-then-commit reorder hole</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>t0  Tx A reads counter=4, takes seq=5
+t1  Tx B reads counter=4… or 5, takes seq=6
+t2  B commits          → reader sees seq 6, advances watermark to 6
+t3  A commits (seq 5)  → reader never sees it
+</code></pre></div></div>
+
+<p>Any consumer doing <code class="language-plaintext highlighter-rouge">FILTER(?seq &gt; ?lastSeen)</code> loses event 5 forever. This is not hypothetical; it is the default behaviour of every pre-allocation scheme under concurrency.</p>
+
+<p><strong>Fix (and the key insight):</strong> put the counter read-and-increment <strong>in the same transaction as the payload write</strong>, on a single shared statement:</p>
+
+<div class="language-sparql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">DELETE</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:meta&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">?ctr</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">next</span><span class="w"> </span><span class="nv">?n</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span><span class="k">INSERT</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:meta&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">?ctr</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">next</span><span class="w"> </span><span class="nv">?n1</span><span class="w"> </span><span class="p">}</span><span class="w">
+         </span><span class="k">GRAPH</span><span class="w"> </span><span class="nv">?cg</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="err">…</span><span class="w"> </span><span class="err">payload</span><span class="w"> </span><span class="err">…</span><span class="w"> </span><span class="p">}</span><span class="w">
+         </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:log&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">?cg</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">epoch</span><span class="w"> </span><span class="mi">3</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">commitSeq</span><span class="w"> </span><span class="nv">?n</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">recordedAt</span><span class="w"> </span><span class="nv">?ts</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span><span class="k">WHERE</span><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="k">BIND</span><span class="p">(</span><span class="nn">&lt;urn:ctr:stream:orders&gt;</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="nv">?ctr</span><span class="p">)</span><span class="w">
+         </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:meta&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">?ctr</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">next</span><span class="w"> </span><span class="nv">?n</span><span class="w"> </span><span class="p">}</span><span class="w">
+         </span><span class="k">BIND</span><span class="p">(</span><span class="nv">?n</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="nv">?n1</span><span class="p">)</span><span class="w"> </span><span class="err">…</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Because every successful commit had to rewrite the <em>same</em> statement, successful commits form a chain: the transaction holding seq <em>n+1</em> necessarily read a value committed by the holder of <em>n</em>. Therefore <strong>allocation order == commit order, and the sequence is dense with no abandoned values.</strong> Aborted transactions consume nothing. No watermark machinery, no gap-filling tombstones, no stalled consumers.</p>
+
+<p>This is the same materialized-write-conflict trick from the uniqueness design, reused — and here it isn’t a workaround, it’s the mechanism.</p>
+
+<p>Cost: writers to one counter are serialized. Which leads directly to:</p>
+
+<h3 id="g3-per-dataset-grain-is-the-wrong-default">G3. Per-dataset grain is the wrong default</h3>
+
+<p>A single global counter means every write in the dataset contends on one statement. On a single-writer store (TDB2, GraphDB) that costs nothing extra — writes are already serialized. On a clustered or MVCC store it’s a hotspot, and on a distributed store (Neptune, Rya, federations) a globally monotonic dense counter may be unimplementable at acceptable cost.</p>
+
+<p>Meanwhile, <strong>most consumers don’t need a global total order.</strong> They need per-entity or per-topic order plus the ability to resume.</p>
+
+<p><strong>Fix:</strong> two-tier.</p>
+
+<ul>
+  <li><strong>Per-stream dense sequence</strong> (required) — stream = entity, aggregate, tenant, or topic. Cheap, shardable, gap-free, gives O1 <em>within a stream</em> and O2 for free. Concurrent writers to different streams never contend.</li>
+  <li><strong>Dataset position</strong> (optional, for global replay) — do <strong>not</strong> mint it in the write transaction. <strong>Derive</strong> it from the store’s change feed / patch log, or accept a <em>sparse partial</em> order (HLC) across streams, and let consumers reconstruct completeness per stream.</li>
+</ul>
+
+<p>Also decide the <strong>stream key normalization and versioning</strong> now (same discipline as key normalization in the uniqueness design), because re-keying streams later breaks every stored watermark.</p>
+
+<h3 id="g4-no-epoch--restoremigration-corrupts-consumer-state">G4. No epoch → restore/migration corrupts consumer state</h3>
+
+<p>Restore from backup, reload into a fresh repo, or migrate vendors, and a store-log-derived position resets or diverges. Consumers holding <code class="language-plaintext highlighter-rouge">lastSeen = 91438</code> will either skip or double-process, with no way to tell.</p>
+
+<p><strong>Fix:</strong> a mandatory <strong>epoch</strong> (generation) integer in dataset metadata, bumped on <em>any</em> rebuild, restore, re-key, or vendor migration. Order on the lexicographic pair <code class="language-plaintext highlighter-rouge">(epoch, seq)</code>. Consumers persist and compare both; an epoch change is a hard signal to resynchronize rather than resume. This is Kafka leader epochs / Raft terms, and it is the detail that separates a design that survives its first disaster recovery from one that doesn’t. It is also the argument that “value from the store’s txn log” cannot stand alone.</p>
+
+<h3 id="g5-additions-are-ordered-retractions-are-not">G5. Additions are ordered; retractions are not</h3>
+
+<p>An append-a-graph-with-a-seq design orders <em>assertions</em>. Deletions have no natural home: if you <code class="language-plaintext highlighter-rouge">DELETE</code> triples from an older graph, that mutation carries no sequence and is invisible to replay.</p>
+
+<p><strong>Fix:</strong> make the log explicitly change-oriented — <code class="language-plaintext highlighter-rouge">?cg ex:asserts ?g1 ; ex:retracts ?g2</code> (an RDF-Patch-shaped model), or go append-only with tombstones plus <code class="language-plaintext highlighter-rouge">validFrom</code>/<code class="language-plaintext highlighter-rouge">validTo</code>, and never mutate a sealed assertion graph. Pick one and enforce it; half-measures make O4 unanswerable.</p>
+
+<h3 id="g6-commitseq-on-the-graph-is-correct-but-has-a-query-and-scale-cost">G6. <code class="language-plaintext highlighter-rouge">commitSeq</code> on the graph is correct, but has a query and scale cost</h3>
+
+<p>Annotating the <strong>graph</strong> rather than each triple is the right call — one metadata triple per commit, not per statement, and it aligns with “named graph = atomic changeset.” Two consequences to plan for:</p>
+
+<ul>
+  <li><strong>Graph proliferation.</strong> Millions of tiny named graphs degrade several stores (graph dictionary bloat, expensive <code class="language-plaintext highlighter-rouge">GRAPH ?g</code> enumeration, slow management ops). Mitigate by bucketing (one graph per stream per time window / per N commits) rather than per commit, and keep the log in a small number of large metadata graphs.</li>
+  <li><strong>Filtering by seq requires a join</strong> through the log graph, which many optimizers won’t push down; a “changes since S” query can degrade to scanning the log then probing. Measure it. If you need <em>per-triple</em> seq filtering at speed, the options are RDF-star annotation (verbose, uneven support, per-triple cost) or denormalizing <code class="language-plaintext highlighter-rouge">ex:commitSeq</code> into the data graph. Both are expensive; prefer bucketed graphs plus keyset pagination first.</li>
+</ul>
+
+<h3 id="the-amended-spec">The amended spec</h3>
+
+<div class="language-turtle highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># dataset metadata</span><span class="w">
+</span><span class="nl">&lt;urn:ds:prod&gt;</span><span class="w">  </span><span class="nn">ex:</span><span class="n">epoch</span><span class="w"> </span><span class="mi">3</span><span class="w"> </span><span class="p">;</span><span class="w">
+               </span><span class="nn">ex:</span><span class="n">orderModel</span><span class="w"> </span><span class="s">"per-stream-dense+hlc-global"</span><span class="w"> </span><span class="p">;</span><span class="w">
+               </span><span class="nn">ex:</span><span class="n">stableWatermark</span><span class="w"> </span><span class="s">"3:91438"</span><span class="p">^^</span><span class="nn">xsd:</span><span class="n">string</span><span class="w"> </span><span class="p">.</span><span class="w">   </span><span class="c1"># only if a sparse tier exists</span><span class="w">
+
+</span><span class="c1"># one entry per commit, in a small number of log graphs</span><span class="w">
+</span><span class="nl">&lt;urn:commit:0000000000091439&gt;</span><span class="w">
+    </span><span class="k">a</span><span class="w">             </span><span class="nn">ex:</span><span class="n">Commit</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">ex:</span><span class="n">epoch</span><span class="w">      </span><span class="mi">3</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">ex:</span><span class="n">stream</span><span class="w">     </span><span class="nl">&lt;urn:stream:orders/42&gt;</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">ex:</span><span class="n">streamSeq</span><span class="w">  </span><span class="s">"17"</span><span class="p">^^</span><span class="nn">xsd:</span><span class="n">long</span><span class="w"> </span><span class="p">;</span><span class="w">        </span><span class="c1"># dense per stream, in-tx allocated</span><span class="w">
+    </span><span class="nn">ex:</span><span class="n">hlc</span><span class="w">        </span><span class="s">"1719412345678:0003:n7"</span><span class="w"> </span><span class="p">;</span><span class="w">  </span><span class="c1"># sparse, globally comparable</span><span class="w">
+    </span><span class="nn">ex:</span><span class="n">recordedAt</span><span class="w"> </span><span class="s">"2024-06-26T14:12:25.678Z"</span><span class="p">^^</span><span class="nn">xsd:</span><span class="n">dateTime</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">ex:</span><span class="n">asserts</span><span class="w">    </span><span class="nl">&lt;urn:g:orders/42/017&gt;</span><span class="w"> </span><span class="p">;</span><span class="w">
+    </span><span class="nn">ex:</span><span class="n">retracts</span><span class="w">   </span><span class="nl">&lt;urn:g:orders/42/016&gt;</span><span class="w"> </span><span class="p">.</span><span class="w">
+
+</span><span class="c1"># events carry their own ordinal within the commit</span><span class="w">
+</span><span class="nl">&lt;urn:ev:…&gt;</span><span class="w"> </span><span class="nn">ex:</span><span class="n">commit</span><span class="w"> </span><span class="nl">&lt;urn:commit:0000000000091439&gt;</span><span class="w"> </span><span class="p">;</span><span class="w">
+           </span><span class="nn">ex:</span><span class="n">opSeq</span><span class="w">  </span><span class="s">"2"</span><span class="p">^^</span><span class="nn">xsd:</span><span class="n">long</span><span class="w"> </span><span class="p">;</span><span class="w">
+           </span><span class="nn">ex:</span><span class="n">occurredAt</span><span class="w"> </span><span class="s">"2024-06-20T09:00:00Z"</span><span class="p">^^</span><span class="nn">xsd:</span><span class="n">dateTime</span><span class="w"> </span><span class="p">.</span><span class="w">   </span><span class="c1"># valid time, separate</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Sort key for O1/O2: <code class="language-plaintext highlighter-rouge">(epoch, streamSeq, opSeq)</code>. Sort key for O3: <code class="language-plaintext highlighter-rouge">(occurredAt, epoch, streamSeq, opSeq)</code> — valid time first, transaction time only as a deterministic tiebreak.</p>
+
+<hr />
+
+<h1 id="part-2--portable-sparql-patterns">Part 2 — Portable SPARQL patterns</h1>
+
+<h3 id="s1-in-transaction-counter-dense-order-preserving--the-workhorse">S1. In-transaction counter (dense, order-preserving) — the workhorse</h3>
+
+<p>As in G2. Requirements and caveats:</p>
+
+<ul>
+  <li>Requires the engine to either serialize writers or detect write–write conflicts. Verify with the TCK, don’t trust docs.</li>
+  <li>Bootstrap counters eagerly (<code class="language-plaintext highlighter-rouge">?ctr ex:next 1</code>); an <code class="language-plaintext highlighter-rouge">OPTIONAL</code>-based lazy init reintroduces a race on first write.</li>
+  <li>Retry on conflict with jittered backoff; the operation is idempotent if you include an idempotency guard (<code class="language-plaintext highlighter-rouge">FILTER NOT EXISTS { ?anyCommit ex:idempotencyKey "…" }</code>).</li>
+  <li>Acquire multiple counters in sorted order if one commit touches several streams, or you will deadlock.</li>
+</ul>
+
+<h3 id="s2-keyset-seek-pagination--never-offset">S2. Keyset (seek) pagination — never <code class="language-plaintext highlighter-rouge">OFFSET</code></h3>
+
+<p><code class="language-plaintext highlighter-rouge">ORDER BY ?seq LIMIT 100 OFFSET 500000</code> is O(offset) on most engines and unstable under concurrent writes.</p>
+
+<div class="language-sparql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">SELECT</span><span class="w"> </span><span class="nv">?commit</span><span class="w"> </span><span class="nv">?seq</span><span class="w"> </span><span class="nv">?op</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="p">{</span><span class="w">
+  </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:log&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nv">?commit</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">epoch</span><span class="w"> </span><span class="mi">3</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">stream</span><span class="w"> </span><span class="nn">&lt;urn:stream:orders/42&gt;</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">streamSeq</span><span class="w"> </span><span class="nv">?seq</span><span class="w"> </span><span class="p">.</span><span class="w">
+    </span><span class="k">OPTIONAL</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">?commit</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">opSeq</span><span class="w"> </span><span class="nv">?op</span><span class="w"> </span><span class="p">}</span><span class="w">
+    </span><span class="k">FILTER</span><span class="w"> </span><span class="p">(</span><span class="nv">?seq</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">17</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="p">(</span><span class="nv">?seq</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="mi">17</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nv">?op</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">2</span><span class="p">))</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w"> </span><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="nv">?seq</span><span class="w"> </span><span class="nv">?op</span><span class="w"> </span><span class="k">LIMIT</span><span class="w"> </span><span class="mi">100</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Always carry the full composite cursor <code class="language-plaintext highlighter-rouge">(epoch, seq, opSeq)</code>, and make the client reject a response whose epoch differs from its cursor’s.</p>
+
+<h3 id="s3-gap--completeness-check-the-payoff-of-density">S3. Gap / completeness check (the payoff of density)</h3>
+
+<div class="language-sparql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">SELECT</span><span class="w"> </span><span class="p">(</span><span class="nb">MIN</span><span class="p">(</span><span class="nv">?seq</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="nv">?lo</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="nb">MAX</span><span class="p">(</span><span class="nv">?seq</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="nv">?hi</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="nb">COUNT</span><span class="p">(</span><span class="k">DISTINCT</span><span class="w"> </span><span class="nv">?seq</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="nv">?n</span><span class="p">)</span><span class="w">
+</span><span class="k">WHERE</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:log&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">?c</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">epoch</span><span class="w"> </span><span class="mi">3</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">stream</span><span class="w"> </span><span class="nv">?s</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">streamSeq</span><span class="w"> </span><span class="nv">?seq</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span><span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="nv">?s</span><span class="w">
+</span><span class="k">HAVING</span><span class="w"> </span><span class="p">(</span><span class="nb">COUNT</span><span class="p">(</span><span class="k">DISTINCT</span><span class="w"> </span><span class="nv">?seq</span><span class="p">)</span><span class="w"> </span><span class="o">!</span><span class="p">=</span><span class="w"> </span><span class="nb">MAX</span><span class="p">(</span><span class="nv">?seq</span><span class="p">)</span><span class="w"> </span><span class="err">-</span><span class="w"> </span><span class="nb">MIN</span><span class="p">(</span><span class="nv">?seq</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Ship as a metric; alert on any row. This is the single best argument for dense over sparse: with HLC or store LSNs this query is impossible, and you can never prove you haven’t lost an event.</p>
+
+<h3 id="s4-latest-version-per-stream">S4. Latest-version-per-stream</h3>
+
+<div class="language-sparql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">SELECT</span><span class="w"> </span><span class="nv">?stream</span><span class="w"> </span><span class="nv">?commit</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="p">{</span><span class="w">
+  </span><span class="p">{</span><span class="w"> </span><span class="k">SELECT</span><span class="w"> </span><span class="nv">?stream</span><span class="w"> </span><span class="p">(</span><span class="nb">MAX</span><span class="p">(</span><span class="nv">?seq</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="nv">?max</span><span class="p">)</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="p">{</span><span class="w">
+      </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:log&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">?c</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">stream</span><span class="w"> </span><span class="nv">?stream</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">epoch</span><span class="w"> </span><span class="mi">3</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">streamSeq</span><span class="w"> </span><span class="nv">?seq</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w">
+    </span><span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="nv">?stream</span><span class="w"> </span><span class="p">}</span><span class="w">
+  </span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:log&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">?commit</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">stream</span><span class="w"> </span><span class="nv">?stream</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">epoch</span><span class="w"> </span><span class="mi">3</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">streamSeq</span><span class="w"> </span><span class="nv">?max</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Portable and index-friendly. Prefer this to <code class="language-plaintext highlighter-rouge">ORDER BY … LIMIT 1</code> inside a correlated subquery, which several optimizers handle badly. An even cheaper option: maintain a materialized <code class="language-plaintext highlighter-rouge">?stream ex:head ?commit</code> pointer, upserted in the same transaction (functional property, <code class="language-plaintext highlighter-rouge">sh:maxCount 1</code> — reuses the uniqueness machinery).</p>
+
+<h3 id="s5-valid-time-ordering-with-deterministic-tiebreak">S5. Valid-time ordering with deterministic tiebreak</h3>
+
+<div class="language-sparql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="nv">?occurredAt</span><span class="w"> </span><span class="nv">?epoch</span><span class="w"> </span><span class="nv">?streamSeq</span><span class="w"> </span><span class="nv">?opSeq</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Never <code class="language-plaintext highlighter-rouge">ORDER BY ?recordedAt</code> alone (ties, clock skew) and never <code class="language-plaintext highlighter-rouge">ORDER BY ?commitSeq</code> for a domain question. If <code class="language-plaintext highlighter-rouge">occurredAt</code> genuinely ties and the domain has no tiebreak, the transaction-time suffix at least gives you <strong>stable, reproducible</strong> results — which is what makes pagination and diffs sane.</p>
+
+<h3 id="s6-bitemporal--as-of-reads">S6. Bitemporal / as-of reads</h3>
+
+<div class="language-sparql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># state as of a transaction position</span><span class="w">
+</span><span class="k">GRAPH</span><span class="w"> </span><span class="nn">&lt;urn:log&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">?c</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">epoch</span><span class="w"> </span><span class="mi">3</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">streamSeq</span><span class="w"> </span><span class="nv">?seq</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">asserts</span><span class="w"> </span><span class="nv">?g</span><span class="w"> </span><span class="k">FILTER</span><span class="p">(</span><span class="nv">?seq</span><span class="w"> </span><span class="nn">&lt;= 17) }
+GRAPH ?g { ?s ?p ?o }
+FILTER NOT EXISTS {
+  GRAPH &lt;urn:log&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">?c2</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">epoch</span><span class="w"> </span><span class="mi">3</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">streamSeq</span><span class="w"> </span><span class="nv">?s2</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="nn">ex</span><span class="o">:</span><span class="ss">retracts</span><span class="w"> </span><span class="nv">?g</span><span class="w"> </span><span class="k">FILTER</span><span class="p">(</span><span class="nv">?s2</span><span class="w"> </span><span class="o">&lt;</span><span class="p">=</span><span class="w"> </span><span class="mi">17</span><span class="p">)</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>This is expensive and gets worse with history depth. Realistic options in order of preference: (a) store-native time travel (MarkLogic/Oracle/Stardog — Part 3); (b) <code class="language-plaintext highlighter-rouge">validFrom</code>/<code class="language-plaintext highlighter-rouge">validTo</code> intervals materialized on the data, which makes as-of a simple range filter at the cost of a rewrite on every update; (c) this log-replay form, reserved for audit rather than serving traffic.</p>
+
+<h3 id="s7-hlc-for-the-sparse-tier-multi-writer--multi-region">S7. HLC for the sparse tier (multi-writer / multi-region)</h3>
+
+<p>Compute in the application, store as a single lexicographically-sortable string: <code class="language-plaintext highlighter-rouge">{physicalMillis:013}:{logical:04}:{nodeId}</code>.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>on send/commit:  l = max(prev.l, now_ms);  c = (l == prev.l) ? prev.c+1 : 0
+on receive(m):   l = max(prev.l, m.l, now_ms);  c = …
+</code></pre></div></div>
+
+<p>Gives a globally comparable, causally consistent, contention-free order that stays close to wall-clock and <strong>survives NTP step-backs</strong> (unlike raw timestamps). Does not give completeness detection — which is exactly why it pairs with, rather than replaces, S1.</p>
+
+<h3 id="s8-external-sequencer--partitioned-single-writer">S8. External sequencer / partitioned single writer</h3>
+
+<p>Put ordering where ordering is solved: Kafka partition offsets, a Postgres <code class="language-plaintext highlighter-rouge">BIGSERIAL</code>/<code class="language-plaintext highlighter-rouge">nextval</code>, Redis <code class="language-plaintext highlighter-rouge">INCR</code>, an actor-per-stream. Partition the writer by <code class="language-plaintext highlighter-rouge">hash(stream) % N</code> and allocation order == commit order by construction, with zero RDF-side contention. Write to RDF idempotently via an outbox, carrying <code class="language-plaintext highlighter-rouge">(epoch, offset)</code> through.</p>
+
+<p>This is frequently the correct answer and shouldn’t be treated as a fallback. It also composes with S1 (use the external value, skip the counter statement).</p>
+
+<h3 id="aside-o5-ordered-collections">Aside: O5, ordered collections</h3>
+
+<p>Different problem, worth stating so it doesn’t get solved with <code class="language-plaintext highlighter-rouge">commitSeq</code>:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">rdf:List</code> — recursive, needs property paths to traverse, O(n) rewrite to insert in the middle, painful in SPARQL. Avoid for anything mutable.</li>
+  <li><strong>Integer index property</strong> (<code class="language-plaintext highlighter-rouge">ex:position 3</code>) — simple, sortable, pushdown-friendly; renumbering on insert is the cost.</li>
+  <li><strong>Fractional / lexicographic ranking keys</strong> (LexoRank-style: insert between <code class="language-plaintext highlighter-rouge">"n"</code> and <code class="language-plaintext highlighter-rouge">"p"</code> as <code class="language-plaintext highlighter-rouge">"o"</code>) — O(1) insertion with no renumbering, <code class="language-plaintext highlighter-rouge">ORDER BY</code> on a plain string. Best default for user-reorderable lists; occasionally needs a rebalance pass.</li>
+  <li><code class="language-plaintext highlighter-rouge">sh:order</code> for shape/UI ordering, <code class="language-plaintext highlighter-rouge">olo:</code> if you want a vocabulary off the shelf.</li>
+</ul>
+
+<h3 id="sparql-gotchas-that-break-ordering-schemes">SPARQL gotchas that break ordering schemes</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Gotcha</th>
+      <th>Consequence</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">NOW()</code> is constant across a query execution</td>
+      <td>Can’t generate distinct ordinals in one update; supply <code class="language-plaintext highlighter-rouge">opSeq</code> via <code class="language-plaintext highlighter-rouge">VALUES</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">UUID()</code>/<code class="language-plaintext highlighter-rouge">RAND()</code> are per-solution but unordered</td>
+      <td>Usable as a tiebreak, useless as an order</td>
+    </tr>
+    <tr>
+      <td>Ordering of <strong>IRIs</strong> in <code class="language-plaintext highlighter-rouge">ORDER BY</code> is not reliably specified across engines</td>
+      <td>Sort on a numeric/string <strong>literal</strong>, never on the IRI</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">xsd:dateTime</code> precision is often truncated to ms; timezone handling and leap smearing vary</td>
+      <td>Never use wall-clock as the monotonic source</td>
+    </tr>
+    <tr>
+      <td>Unpadded numeric <strong>strings</strong> sort lexicographically wrong (<code class="language-plaintext highlighter-rouge">"9" &gt; "10"</code>)</td>
+      <td>Zero-pad to fixed width (19 digits for int64) if the value is ever a string or embedded in an IRI</td>
+    </tr>
+    <tr>
+      <td>Mixed <code class="language-plaintext highlighter-rouge">xsd:integer</code>/<code class="language-plaintext highlighter-rouge">xsd:long</code>/<code class="language-plaintext highlighter-rouge">xsd:decimal</code></td>
+      <td>Numeric promotion works for <code class="language-plaintext highlighter-rouge">ORDER BY</code>/comparison but term equality differs; pick <strong>one</strong> datatype and enforce it in shapes</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ORDER BY</code> with unbound variables</td>
+      <td>Unbound sorts before everything; an <code class="language-plaintext highlighter-rouge">OPTIONAL ?opSeq</code> silently reorders — default it with <code class="language-plaintext highlighter-rouge">COALESCE(?op, 0)</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ORDER BY</code> in a subquery without <code class="language-plaintext highlighter-rouge">LIMIT</code></td>
+      <td>Not guaranteed to survive into the outer query</td>
+    </tr>
+    <tr>
+      <td>Bulk load bypasses everything</td>
+      <td>No counters advanced, no log entries; needs its own path (Part 3)</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h1 id="part-3--vendor-extensions">Part 3 — Vendor extensions</h1>
+
+<blockquote>
+  <p>Same caveat as before: these features and their guarantees move between releases. Use this as a map of where to look, and let the TCK be the source of truth.</p>
+</blockquote>
+
+<p><strong>Apache Jena / Fuseki / TDB2</strong> — Best-in-class fit. TDB2 is <strong>MR+SW</strong>: writers are serialized, so S1 is trivially correct and dense with no conflict retries. More importantly, <strong>RDF Patch + <code class="language-plaintext highlighter-rouge">rdf-delta</code></strong> gives you a <em>versioned patch log</em> — each patch has a monotonic version, which is exactly O1 done properly, at the storage layer, with replay and gap detection built in. If you want a durable dataset-level position, this is the reference implementation. <code class="language-plaintext highlighter-rouge">DatasetChanges</code> hooks let you emit patches from custom code.</p>
+
+<p><strong>Eclipse RDF4J</strong> (and derivatives) — <code class="language-plaintext highlighter-rouge">IsolationLevels.SERIALIZABLE</code> makes S1 correct on Memory/Native; <code class="language-plaintext highlighter-rouge">SailConflictException</code> on conflict. <code class="language-plaintext highlighter-rouge">SailConnectionListener</code> / <code class="language-plaintext highlighter-rouge">NotifyingSail</code> / a <code class="language-plaintext highlighter-rouge">SailWrapper</code> lets you assign the sequence <em>inside</em> the commit in-process — the cleanest place to put it, since you can stamp the value after conflict resolution but before durability. No built-in durable log; you build it.</p>
+
+<p><strong>Amazon Neptune</strong> — <strong>Neptune Streams</strong> is the model answer: each change carries <code class="language-plaintext highlighter-rouge">(commitNum, opNum)</code>, monotonic, ordered, gap-detectable, with <code class="language-plaintext highlighter-rouge">eventId</code> for resumption. Don’t mint your own dataset counter; consume the stream and let <code class="language-plaintext highlighter-rouge">commitNum</code> be your dataset position. Note the stream has a retention window, so consumers must handle falling off the end (→ full resync, treat like an epoch change). No multi-request transactions; per-request conflict detection means S1 works for per-stream counters, with <code class="language-plaintext highlighter-rouge">ConcurrentModificationException</code> retries.</p>
+
+<p><strong>Ontotext GraphDB</strong> — Writes are serialized per repository, so S1 is safe without conflict handling. No exposed global commit counter; use a counter statement. Plugin API / <code class="language-plaintext highlighter-rouge">UpdateInterpreter</code> can assign sequences server-side in-process; <code class="language-plaintext highlighter-rouge">.pie</code> consistency rules can <em>enforce</em> monotonicity (reject a commit whose seq isn’t <code class="language-plaintext highlighter-rouge">prev+1</code>), which is a genuinely useful guardrail. Connectors give you an external index for fast range scans over the log.</p>
+
+<p><strong>Stardog</strong> — Multi-request transactions let you read-then-stamp within one transaction. Snapshot isolation with conflict detection → S1 with retries. <strong>Versioning / graph history</strong> features give transaction-time tracking and as-of style queries without hand-rolling S6; check the current feature set and its cost model. Virtual graphs let you source the sequence from a relational <code class="language-plaintext highlighter-rouge">nextval</code> (S8 without a second datastore).</p>
+
+<p><strong>OpenLink Virtuoso</strong> — Has <strong>native SQL sequences</strong> (<code class="language-plaintext highlighter-rouge">sequence_next</code>/<code class="language-plaintext highlighter-rouge">sequence_set</code>) callable from procedures, plus real isolation levels, triggers, and a transaction log. The strongest option for “give me a correct dense sequence without contention pathologies”: allocate in SQL, write quads, one atomic SQL transaction. Also exposes UDFs to SPARQL.</p>
+
+<p><strong>MarkLogic</strong> — Every transaction has a <strong>system timestamp</strong> (MVCC), and point-in-time queries against it are native. This makes O1 and O4 essentially free and correct; you don’t need <code class="language-plaintext highlighter-rouge">commitSeq</code> at all for transaction-time ordering. Multi-statement transactions, <code class="language-plaintext highlighter-rouge">xdmp:lock-for-update</code> for pessimistic ordering, range indexes for log scans.</p>
+
+<p><strong>Oracle RDF / Semantic Graph</strong> — Triples in relational tables: SQL sequences, <code class="language-plaintext highlighter-rouge">SCN</code>, and <strong>Flashback</strong> give you dense positions and true as-of reads with no modelling effort. Bulk load through a staging table with a sequence is a clean high-throughput path.</p>
+
+<p><strong>AllegroGraph</strong> — Triple ids are assigned monotonically at insert and are exposed, which gives a natural insertion order; plus audit/transaction log features and server-side Prolog/Lisp/JS for atomic allocate-and-write.</p>
+
+<p><strong>Blazegraph</strong> — Unisolated writes are single-writer → S1 safe; has commit-time/revision metadata but it’s not a great public contract.</p>
+
+<p><strong>Oxigraph / embedded stores</strong> — Single-writer transactions; do allocate-and-write in-process. Simplest correct implementation of all.</p>
+
+<p><strong>Rya / Halyard / federated or non-ACID backends</strong> — No usable dense sequence. Use S8 (external sequencer) + S7 (HLC) and accept <code class="language-plaintext highlighter-rouge">PER_STREAM_DENSE</code> at best, with a mandatory reconciler. Do not attempt S1.</p>
+
+<hr />
+
+<h1 id="part-4--adapter-design-for-pluggable-backends">Part 4 — Adapter design for pluggable backends</h1>
+
+<p>Same philosophy as the uniqueness adapter: abstract over <strong>capabilities</strong>, declare the <strong>order model</strong> you need, let a planner choose the strongest strategy each backend can actually deliver, and fail at startup if it can’t.</p>
+
+<h2 id="1-declarative-order-spec">1. Declarative order spec</h2>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="pi">-</span> <span class="na">id</span><span class="pi">:</span> <span class="s">orders-stream-order</span>
+  <span class="na">version</span><span class="pi">:</span> <span class="m">1</span>
+  <span class="na">epoch_source</span><span class="pi">:</span> <span class="s">dataset_metadata</span>        <span class="c1"># required, bumped on any rebuild</span>
+  <span class="na">stream</span><span class="pi">:</span>
+    <span class="na">key</span><span class="pi">:</span> <span class="pi">[</span> <span class="nv">ex</span><span class="pi">:</span><span class="nv">tenant</span><span class="pi">,</span> <span class="nv">ex</span><span class="pi">:</span><span class="nv">aggregateId</span> <span class="pi">]</span>  <span class="c1"># composite; normalized + frozen per version</span>
+    <span class="na">normalize</span><span class="pi">:</span> <span class="pi">[</span> <span class="nv">nfkc</span><span class="pi">,</span> <span class="nv">trim</span> <span class="pi">]</span>
+  <span class="na">grain</span><span class="pi">:</span> <span class="s">event</span>                          <span class="c1"># commit | event  (event =&gt; opSeq required)</span>
+  <span class="na">tiers</span><span class="pi">:</span>
+    <span class="na">stream</span><span class="pi">:</span>  <span class="pi">{</span> <span class="nv">model</span><span class="pi">:</span> <span class="nv">dense</span><span class="pi">,</span> <span class="nv">min_level</span><span class="pi">:</span> <span class="nv">TOTAL_DENSE</span> <span class="pi">}</span>       <span class="c1"># O1 within stream, O2</span>
+    <span class="na">dataset</span><span class="pi">:</span> <span class="pi">{</span> <span class="nv">model</span><span class="pi">:</span> <span class="nv">derived_or_sparse</span><span class="pi">,</span> <span class="nv">min_level</span><span class="pi">:</span> <span class="nv">PARTIAL_CAUSAL</span> <span class="pi">}</span>
+  <span class="na">valid_time</span><span class="pi">:</span>
+    <span class="na">property</span><span class="pi">:</span> <span class="s">ex:occurredAt</span>
+    <span class="na">tiebreak</span><span class="pi">:</span> <span class="pi">[</span> <span class="nv">epoch</span><span class="pi">,</span> <span class="nv">streamSeq</span><span class="pi">,</span> <span class="nv">opSeq</span> <span class="pi">]</span>
+  <span class="na">retention</span><span class="pi">:</span>
+    <span class="na">log</span><span class="pi">:</span> <span class="s">400d</span>
+    <span class="na">on_cursor_expired</span><span class="pi">:</span> <span class="s">force_resync</span>     <span class="c1"># treat like epoch change</span>
+  <span class="na">change_model</span><span class="pi">:</span> <span class="s">assert_retract</span>          <span class="c1"># assert_retract | append_only_tombstone</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">min_level</code> is the contract. If the configured backend can’t reach it, deployment fails — you never silently degrade from “gap-free” to “probably fine.”</p>
+
+<h2 id="2-order-levels">2. Order levels</h2>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>TOTAL_DENSE       gap-free, order-preserving, completeness detectable
+TOTAL_SPARSE      total order, gaps expected (store LSN, HLC w/ single sequencer)
+PER_STREAM_DENSE  dense within stream, partial across streams   ← recommended default
+PARTIAL_CAUSAL    causal order only (HLC / version vectors)
+BEST_EFFORT_TIME  wall-clock + tiebreak; no guarantees          ← audit-only
+</code></pre></div></div>
+
+<h2 id="3-ports">3. Ports</h2>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">interface</span> <span class="nc">SequenceService</span> <span class="o">{</span>
+  <span class="cm">/** Allocated inside `tx` if the backend supports it; otherwise externally. */</span>
+  <span class="nc">Position</span> <span class="nf">allocate</span><span class="o">(</span><span class="nc">Tx</span> <span class="n">tx</span><span class="o">,</span> <span class="nc">StreamKey</span> <span class="n">stream</span><span class="o">,</span> <span class="kt">int</span> <span class="n">opCount</span><span class="o">);</span>
+  <span class="nc">AllocationSemantics</span> <span class="nf">semantics</span><span class="o">();</span>   <span class="c1">// IN_TRANSACTION | PRE_COMMIT | POST_COMMIT_DERIVED</span>
+<span class="o">}</span>
+
+<span class="n">record</span> <span class="nf">Position</span><span class="o">(</span><span class="kt">long</span> <span class="n">epoch</span><span class="o">,</span> <span class="kt">long</span> <span class="n">seq</span><span class="o">,</span> <span class="kt">int</span> <span class="n">opSeq</span><span class="o">)</span> <span class="kd">implements</span> <span class="nc">Comparable</span><span class="o">&lt;</span><span class="nc">Position</span><span class="o">&gt;</span> <span class="o">{}</span>
+
+<span class="kd">interface</span> <span class="nc">ChangeFeed</span> <span class="o">{</span>                       <span class="c1">// Neptune Streams, rdf-delta, MarkLogic ts, listeners</span>
+  <span class="nc">Iterator</span><span class="o">&lt;</span><span class="nc">ChangeEvent</span><span class="o">&gt;</span> <span class="nf">from</span><span class="o">(</span><span class="nc">Cursor</span> <span class="n">c</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">CursorExpiredException</span><span class="o">;</span>
+  <span class="kt">boolean</span> <span class="nf">dense</span><span class="o">();</span>                           <span class="c1">// can we detect gaps?</span>
+  <span class="nc">Duration</span> <span class="nf">retention</span><span class="o">();</span>
+<span class="o">}</span>
+
+<span class="kd">interface</span> <span class="nc">WatermarkService</span> <span class="o">{</span>                 <span class="c1">// only needed when semantics() == PRE_COMMIT</span>
+  <span class="nc">Position</span> <span class="nf">stable</span><span class="o">();</span>                         <span class="c1">// highest fully-committed contiguous position</span>
+  <span class="kt">void</span> <span class="nf">publish</span><span class="o">(</span><span class="nc">Position</span> <span class="n">p</span><span class="o">);</span>
+<span class="o">}</span>
+
+<span class="kd">interface</span> <span class="nc">TimeTravel</span> <span class="o">{</span>                       <span class="c1">// MarkLogic, Oracle, Stardog versioning</span>
+  <span class="nc">TupleResult</span> <span class="nf">asOf</span><span class="o">(</span><span class="nc">String</span> <span class="n">sparql</span><span class="o">,</span> <span class="nc">Position</span> <span class="n">p</span><span class="o">);</span>
+<span class="o">}</span>
+
+<span class="n">record</span> <span class="nf">OrderCapabilities</span><span class="o">(</span>
+  <span class="kt">boolean</span> <span class="n">singleWriter</span><span class="o">,</span>                 <span class="c1">// allocation order == commit order for free</span>
+  <span class="kt">boolean</span> <span class="n">detectsWriteWriteConflict</span><span class="o">,</span>    <span class="c1">// enables in-transaction counter</span>
+  <span class="nc">IsolationLevel</span> <span class="n">maxIsolation</span><span class="o">,</span>
+  <span class="kt">boolean</span> <span class="n">multiRequestTx</span><span class="o">,</span>               <span class="c1">// read-then-stamp across requests</span>
+  <span class="kt">boolean</span> <span class="n">nativeSequence</span><span class="o">,</span>               <span class="c1">// Virtuoso sequence_next, SQL nextval</span>
+  <span class="kt">boolean</span> <span class="n">nativeCommitPosition</span><span class="o">,</span>         <span class="c1">// exposed, queryable, monotonic</span>
+  <span class="kt">boolean</span> <span class="n">nativeChangeFeed</span><span class="o">,</span> <span class="kt">boolean</span> <span class="n">changeFeedDense</span><span class="o">,</span> <span class="nc">Duration</span> <span class="n">feedRetention</span><span class="o">,</span>
+  <span class="kt">boolean</span> <span class="n">nativeTimeTravel</span><span class="o">,</span>
+  <span class="kt">boolean</span> <span class="n">insertOrderObservable</span><span class="o">,</span>        <span class="c1">// AllegroGraph triple ids etc.</span>
+  <span class="kt">boolean</span> <span class="n">bulkLoadBypassesHooks</span><span class="o">,</span>
+  <span class="kt">int</span>     <span class="n">maxGraphsAdvisory</span><span class="o">)</span> <span class="o">{}</span>
+</code></pre></div></div>
+
+<h2 id="4-strategies">4. Strategies</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Strategy</th>
+      <th>Requires</th>
+      <th>Provides</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">SingleWriterCounterStrategy</code> (S1)</td>
+      <td><code class="language-plaintext highlighter-rouge">singleWriter</code></td>
+      <td><code class="language-plaintext highlighter-rouge">TOTAL_DENSE</code></td>
+      <td>TDB2, GraphDB, Blazegraph, Oxigraph. Simplest correct option</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">InTxCounterStrategy</code> (S1)</td>
+      <td><code class="language-plaintext highlighter-rouge">detectsWriteWriteConflict</code> ∨ <code class="language-plaintext highlighter-rouge">SERIALIZABLE</code></td>
+      <td><code class="language-plaintext highlighter-rouge">TOTAL_DENSE</code> / <code class="language-plaintext highlighter-rouge">PER_STREAM_DENSE</code></td>
+      <td>retry on conflict; shard counters by stream</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">NativeSequenceStrategy</code></td>
+      <td><code class="language-plaintext highlighter-rouge">nativeSequence</code></td>
+      <td><code class="language-plaintext highlighter-rouge">TOTAL_DENSE</code></td>
+      <td>Virtuoso, Oracle; allocate in SQL inside the same tx</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">NativeFeedStrategy</code></td>
+      <td><code class="language-plaintext highlighter-rouge">nativeChangeFeed &amp;&amp; changeFeedDense</code></td>
+      <td><code class="language-plaintext highlighter-rouge">TOTAL_DENSE</code> (dataset tier)</td>
+      <td>Neptune Streams, rdf-delta. <strong>Log is the order</strong>; the triple is a cache</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">NativePositionStrategy</code></td>
+      <td><code class="language-plaintext highlighter-rouge">nativeCommitPosition</code></td>
+      <td><code class="language-plaintext highlighter-rouge">TOTAL_SPARSE</code></td>
+      <td>MarkLogic system ts, Oracle SCN; pairs with <code class="language-plaintext highlighter-rouge">TimeTravel</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ExternalSequencerStrategy</code> (S8)</td>
+      <td><code class="language-plaintext highlighter-rouge">SequenceService</code> external</td>
+      <td><code class="language-plaintext highlighter-rouge">TOTAL_DENSE</code> / <code class="language-plaintext highlighter-rouge">PER_STREAM_DENSE</code></td>
+      <td>Kafka offsets, Postgres nextval, actor-per-stream</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">HlcStrategy</code> (S7)</td>
+      <td>nothing</td>
+      <td><code class="language-plaintext highlighter-rouge">PARTIAL_CAUSAL</code></td>
+      <td>multi-region; no completeness detection</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">PreAllocateWatermarkStrategy</code></td>
+      <td><code class="language-plaintext highlighter-rouge">WatermarkService</code></td>
+      <td><code class="language-plaintext highlighter-rouge">TOTAL_SPARSE</code></td>
+      <td><strong>last resort.</strong> Needs lease + tombstone gap-filling or the watermark stalls forever</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ClockTiebreakStrategy</code></td>
+      <td>nothing</td>
+      <td><code class="language-plaintext highlighter-rouge">BEST_EFFORT_TIME</code></td>
+      <td>audit only; never the primary</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">OrderAuditStrategy</code></td>
+      <td>query only</td>
+      <td>—</td>
+      <td><strong>always installed</strong>: S3 gap scan, monotonicity scan, watermark-lag metric</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Planner, as before: pick the highest-level supported strategy per tier, reject at startup if it’s below <code class="language-plaintext highlighter-rouge">min_level</code>, always append the auditor.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">Plan</span> <span class="nf">plan</span><span class="o">(</span><span class="nc">OrderSpec</span> <span class="n">s</span><span class="o">,</span> <span class="nc">OrderCapabilities</span> <span class="n">c</span><span class="o">)</span> <span class="o">{</span>
+  <span class="kt">var</span> <span class="n">stream</span>  <span class="o">=</span> <span class="n">strongest</span><span class="o">(</span><span class="n">s</span><span class="o">.</span><span class="na">tiers</span><span class="o">().</span><span class="na">stream</span><span class="o">(),</span>  <span class="n">c</span><span class="o">);</span>
+  <span class="kt">var</span> <span class="n">dataset</span> <span class="o">=</span> <span class="n">strongest</span><span class="o">(</span><span class="n">s</span><span class="o">.</span><span class="na">tiers</span><span class="o">().</span><span class="na">dataset</span><span class="o">(),</span> <span class="n">c</span><span class="o">);</span>
+  <span class="n">requireAtLeast</span><span class="o">(</span><span class="n">stream</span><span class="o">,</span>  <span class="n">s</span><span class="o">.</span><span class="na">tiers</span><span class="o">().</span><span class="na">stream</span><span class="o">().</span><span class="na">minLevel</span><span class="o">());</span>
+  <span class="n">requireAtLeast</span><span class="o">(</span><span class="n">dataset</span><span class="o">,</span> <span class="n">s</span><span class="o">.</span><span class="na">tiers</span><span class="o">().</span><span class="na">dataset</span><span class="o">().</span><span class="na">minLevel</span><span class="o">());</span>
+  <span class="k">return</span> <span class="k">new</span> <span class="nf">Plan</span><span class="o">(</span><span class="n">stream</span><span class="o">,</span> <span class="n">dataset</span><span class="o">,</span> <span class="no">ALWAYS</span><span class="o">.</span><span class="na">orderAudit</span><span class="o">());</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h2 id="5-write-path">5. Write path</h2>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">WriteResult</span> <span class="nf">append</span><span class="o">(</span><span class="nc">StreamKey</span> <span class="n">stream</span><span class="o">,</span> <span class="nc">List</span><span class="o">&lt;</span><span class="nc">Event</span><span class="o">&gt;</span> <span class="n">events</span><span class="o">)</span> <span class="o">{</span>
+  <span class="kt">var</span> <span class="n">streamId</span> <span class="o">=</span> <span class="n">normalize</span><span class="o">(</span><span class="n">stream</span><span class="o">);</span>                      <span class="c1">// frozen pipeline, versioned</span>
+  <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">attempt</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">attempt</span> <span class="o">&lt;</span> <span class="n">maxRetries</span><span class="o">;</span> <span class="n">attempt</span><span class="o">++)</span> <span class="o">{</span>
+    <span class="k">try</span> <span class="o">(</span><span class="kt">var</span> <span class="n">tx</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="na">begin</span><span class="o">(</span><span class="n">required</span><span class="o">(</span><span class="n">isolation</span><span class="o">)))</span> <span class="o">{</span>
+      <span class="kt">var</span> <span class="n">pos</span> <span class="o">=</span> <span class="n">sequences</span><span class="o">.</span><span class="na">allocate</span><span class="o">(</span><span class="n">tx</span><span class="o">,</span> <span class="n">streamId</span><span class="o">,</span> <span class="n">events</span><span class="o">.</span><span class="na">size</span><span class="o">());</span>   <span class="c1">// epoch + seq + opSeq base</span>
+      <span class="kt">var</span> <span class="n">cg</span>  <span class="o">=</span> <span class="n">commitGraphIri</span><span class="o">(</span><span class="n">pos</span><span class="o">);</span>                               <span class="c1">// bucketed, zero-padded</span>
+      <span class="n">tx</span><span class="o">.</span><span class="na">update</span><span class="o">(</span><span class="no">APPEND</span><span class="o">,</span> <span class="n">bindings</span><span class="o">(</span><span class="n">pos</span><span class="o">,</span> <span class="n">cg</span><span class="o">,</span> <span class="n">events</span><span class="o">,</span> <span class="n">idempotencyKey</span><span class="o">));</span> <span class="c1">// counter + log + payload</span>
+      <span class="n">tx</span><span class="o">.</span><span class="na">commit</span><span class="o">();</span>
+      <span class="k">return</span> <span class="k">new</span> <span class="nf">WriteResult</span><span class="o">(</span><span class="n">pos</span><span class="o">);</span>
+    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="nc">ConflictException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span> <span class="n">sleep</span><span class="o">(</span><span class="n">jitter</span><span class="o">(</span><span class="n">attempt</span><span class="o">));</span> <span class="o">}</span>
+  <span class="o">}</span>
+  <span class="k">throw</span> <span class="k">new</span> <span class="nf">OrderingUnavailable</span><span class="o">(</span><span class="n">streamId</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>Non-negotiables:</p>
+
+<ul>
+  <li><strong>Counters acquired in sorted order</strong> across streams in one commit, or deadlock.</li>
+  <li><strong>Idempotency key</strong> in the log, checked with <code class="language-plaintext highlighter-rouge">FILTER NOT EXISTS</code> in the same operation — retries after an ambiguous timeout must not burn a sequence number or duplicate an event.</li>
+  <li><strong>Epoch read from metadata at connection open and re-validated on conflict</strong>; a changed epoch aborts rather than continues.</li>
+  <li><strong>Zero-padded, fixed-width</strong> seq in any IRI you mint (<code class="language-plaintext highlighter-rouge">urn:commit:0000000000091439</code>) so IRI range scans and lexicographic sorts behave.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">opSeq</code> supplied by the client via <code class="language-plaintext highlighter-rouge">VALUES</code></strong> — the store cannot generate it (see the <code class="language-plaintext highlighter-rouge">NOW()</code> gotcha).</li>
+  <li><strong>One datatype for seq everywhere</strong> (<code class="language-plaintext highlighter-rouge">xsd:long</code>), enforced by a shape.</li>
+</ul>
+
+<h2 id="6-reader-path">6. Reader path</h2>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">Batch</span> <span class="nf">read</span><span class="o">(</span><span class="nc">Cursor</span> <span class="n">cursor</span><span class="o">,</span> <span class="kt">int</span> <span class="n">limit</span><span class="o">)</span> <span class="o">{</span>
+  <span class="n">requireSameEpoch</span><span class="o">(</span><span class="n">cursor</span><span class="o">);</span>                  <span class="c1">// else throw EpochChanged -&gt; resync</span>
+  <span class="kt">var</span> <span class="n">upper</span> <span class="o">=</span> <span class="n">semantics</span> <span class="o">==</span> <span class="no">PRE_COMMIT</span> <span class="o">?</span> <span class="n">watermarks</span><span class="o">.</span><span class="na">stable</span><span class="o">()</span> <span class="o">:</span> <span class="nc">Position</span><span class="o">.</span><span class="na">MAX</span><span class="o">;</span>
+  <span class="kt">var</span> <span class="n">batch</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="na">query</span><span class="o">(</span><span class="no">KEYSET_PAGE</span><span class="o">,</span> <span class="n">bind</span><span class="o">(</span><span class="n">cursor</span><span class="o">,</span> <span class="n">upper</span><span class="o">,</span> <span class="n">limit</span><span class="o">));</span>
+  <span class="n">auditor</span><span class="o">.</span><span class="na">recordContiguity</span><span class="o">(</span><span class="n">batch</span><span class="o">);</span>           <span class="c1">// dense tiers: assert seq == prev+1</span>
+  <span class="k">return</span> <span class="n">batch</span><span class="o">;</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>Consumers must: persist <code class="language-plaintext highlighter-rouge">(epoch, seq, opSeq)</code>, be idempotent (at-least-once), treat <code class="language-plaintext highlighter-rouge">EpochChanged</code> and <code class="language-plaintext highlighter-rouge">CursorExpired</code> as full-resync signals, and <strong>never</strong> advance past the stable watermark on a <code class="language-plaintext highlighter-rouge">PRE_COMMIT</code> backend.</p>
+
+<h2 id="7-per-backend-wiring">7. Per-backend wiring</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Adapter</th>
+      <th>Stream tier</th>
+      <th>Dataset tier</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Fuseki/TDB2</td>
+      <td><code class="language-plaintext highlighter-rouge">SingleWriterCounter</code> → <code class="language-plaintext highlighter-rouge">TOTAL_DENSE</code></td>
+      <td><code class="language-plaintext highlighter-rouge">NativeFeed</code> (rdf-delta patch versions)</td>
+      <td>best overall fit</td>
+    </tr>
+    <tr>
+      <td>RDF4J Native/Memory</td>
+      <td><code class="language-plaintext highlighter-rouge">InTxCounter</code> @ SERIALIZABLE</td>
+      <td><code class="language-plaintext highlighter-rouge">InTxCounter</code> or listener-built log</td>
+      <td>stamp inside a <code class="language-plaintext highlighter-rouge">SailWrapper</code></td>
+    </tr>
+    <tr>
+      <td>GraphDB</td>
+      <td><code class="language-plaintext highlighter-rouge">SingleWriterCounter</code></td>
+      <td>counter statement; <code class="language-plaintext highlighter-rouge">.pie</code> rule to enforce <code class="language-plaintext highlighter-rouge">prev+1</code></td>
+      <td>plugin API if hot</td>
+    </tr>
+    <tr>
+      <td>Neptune</td>
+      <td><code class="language-plaintext highlighter-rouge">InTxCounter</code> (retry <code class="language-plaintext highlighter-rouge">ConcurrentModificationException</code>)</td>
+      <td><strong><code class="language-plaintext highlighter-rouge">NativeFeed</code></strong> (<code class="language-plaintext highlighter-rouge">commitNum</code>/<code class="language-plaintext highlighter-rouge">opNum</code>)</td>
+      <td>don’t mint a global counter; watch retention</td>
+    </tr>
+    <tr>
+      <td>Stardog</td>
+      <td><code class="language-plaintext highlighter-rouge">InTxCounter</code> w/ multi-request tx</td>
+      <td>versioning / virtual-graph <code class="language-plaintext highlighter-rouge">nextval</code></td>
+      <td>ICV-style rule to enforce monotonicity</td>
+    </tr>
+    <tr>
+      <td>Virtuoso</td>
+      <td><code class="language-plaintext highlighter-rouge">NativeSequence</code> in stored proc</td>
+      <td><code class="language-plaintext highlighter-rouge">NativeSequence</code></td>
+      <td>strongest dense option</td>
+    </tr>
+    <tr>
+      <td>MarkLogic</td>
+      <td><code class="language-plaintext highlighter-rouge">InTxCounter</code> (or skip)</td>
+      <td><code class="language-plaintext highlighter-rouge">NativePosition</code> + <code class="language-plaintext highlighter-rouge">TimeTravel</code></td>
+      <td>as-of reads are native; O4 nearly free</td>
+    </tr>
+    <tr>
+      <td>Oracle RDF</td>
+      <td><code class="language-plaintext highlighter-rouge">NativeSequence</code></td>
+      <td>SCN + Flashback</td>
+      <td>staging table for bulk</td>
+    </tr>
+    <tr>
+      <td>AllegroGraph</td>
+      <td><code class="language-plaintext highlighter-rouge">InTxCounter</code></td>
+      <td><code class="language-plaintext highlighter-rouge">insertOrderObservable</code> as a cross-check</td>
+      <td>server-side fn for atomic stamp</td>
+    </tr>
+    <tr>
+      <td>Rya / Halyard / federation</td>
+      <td><code class="language-plaintext highlighter-rouge">ExternalSequencer</code></td>
+      <td><code class="language-plaintext highlighter-rouge">Hlc</code> → <code class="language-plaintext highlighter-rouge">PARTIAL_CAUSAL</code></td>
+      <td><code class="language-plaintext highlighter-rouge">min_level</code> must be ≤ <code class="language-plaintext highlighter-rouge">PARTIAL_CAUSAL</code></td>
+    </tr>
+    <tr>
+      <td>In-memory test store</td>
+      <td><code class="language-plaintext highlighter-rouge">InTxCounter</code> w/ in-proc lock</td>
+      <td>same</td>
+      <td>—</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="8-conformance-tck">8. Conformance TCK</h2>
+
+<p>Capability flags are claims. Run against every adapter in CI.</p>
+
+<ol>
+  <li><strong>Density under contention</strong> — 64 threads × 500 appends to one stream; assert the observed seqs are exactly <code class="language-plaintext highlighter-rouge">1..N</code> with no gaps, no duplicates, and every <code class="language-plaintext highlighter-rouge">409</code>/conflict consumed no number.</li>
+  <li><strong>Reorder probe (the G2 test)</strong> — concurrent writers with injected delay between allocate and commit; a reader polling <code class="language-plaintext highlighter-rouge">seq &gt; watermark</code> must observe a strictly increasing, contiguous sequence and <strong>never miss</strong> a committed event. This is the test that either validates or kills your design.</li>
+  <li><strong>Intra-commit order</strong> — write 3 events in one transaction; assert a deterministic, documented total order across repeated reads and across engines.</li>
+  <li><strong>Epoch transition</strong> — backup → restore → assert epoch bumped, stale cursor rejected with <code class="language-plaintext highlighter-rouge">EpochChanged</code>, consumer resyncs without duplicates or loss.</li>
+  <li><strong>Crash injection</strong> — kill the writer between allocate and commit; assert (dense strategies) no number consumed and no stall; (pre-allocate strategies) the watermark recovers within the lease TTL.</li>
+  <li><strong>Clock hostility</strong> — step the wall clock backwards 5 minutes mid-run; assert monotonicity holds (catches anyone sneaking <code class="language-plaintext highlighter-rouge">NOW()</code> into the order key) and HLC still advances.</li>
+  <li><strong>Keyset pagination stability</strong> — paginate while appending; assert exactly-once delivery per cursor, no skips, no repeats.</li>
+  <li><strong>Valid-time vs transaction-time</strong> — backfill an old <code class="language-plaintext highlighter-rouge">occurredAt</code> after newer events; assert the valid-time query orders it <em>early</em> and the replay query orders it <em>late</em>. Catches the most common modelling bug.</li>
+  <li><strong>Retraction ordering</strong> — assert/retract interleaving; assert as-of reads at each position return the correct state.</li>
+  <li><strong>Bulk load</strong> — load 10M triples; assert counters/log are consistent afterwards (or that the load path fails loudly), and the gap scan reports zero.</li>
+  <li><strong>Feed retention expiry</strong> — force <code class="language-plaintext highlighter-rouge">CursorExpired</code>; assert it surfaces as a resync signal rather than a silent skip.</li>
+  <li><strong>Graph proliferation</strong> — create 10⁶ commit graphs; assert <code class="language-plaintext highlighter-rouge">GRAPH ?g</code> enumeration, backup, and management ops stay within budget (this is what tells you whether to bucket).</li>
+</ol>
+
+<p>Tests 2 and 8 are the ones that distinguish a design that works from one that looks correct.</p>
+
+<h2 id="9-bulk--backfill-path">9. Bulk / backfill path</h2>
+
+<p>Per-event counter contention is wrong by orders of magnitude for load. Treat as a separate pipeline:</p>
+
+<ol>
+  <li>Assign <code class="language-plaintext highlighter-rouge">(epoch, seq, opSeq)</code> <strong>offline</strong> per stream (deterministic, sorted), emitting the log entries alongside the payload.</li>
+  <li>Load with hooks/validation off into a staging graph set.</li>
+  <li>Run the gap scan + monotonicity scan + shape validation as a <strong>gate</strong>.</li>
+  <li>Advance the counters to the high-water mark <strong>in one transaction</strong>, then flip the staging graphs live.</li>
+  <li>Bump the epoch if the backfill rewrote history, so consumers resync instead of resuming into a changed past.</li>
+</ol>
+
+<hr />
+
+<h1 id="recommended-default">Recommended default</h1>
+
+<ol>
+  <li><strong>Grain = event</strong>, ordered by <strong><code class="language-plaintext highlighter-rouge">(epoch, streamSeq, opSeq)</code></strong>. Don’t rely on per-commit granularity; it doesn’t answer your original question.</li>
+  <li><strong>Per-stream dense counter, incremented in the same transaction as the write.</strong> This makes allocation order equal commit order by construction — no watermark service, no gap-filling, no stalled consumers — and gives you the gap scan, which is the only way to <em>prove</em> a consumer hasn’t lost data.</li>
+  <li><strong>Epoch in dataset metadata</strong>, bumped on every rebuild/restore/migration/re-key, part of every cursor. Non-optional.</li>
+  <li><strong>Dataset-level order is a second, weaker tier</strong>: derive it from the store’s change feed (Neptune Streams, rdf-delta) where one exists; otherwise HLC for a contention-free partial order. Do not force a globally dense counter unless you’ve measured that you can afford the serialization.</li>
+  <li><strong>Keep valid time (<code class="language-plaintext highlighter-rouge">occurredAt</code>) strictly separate</strong> from transaction time, and use the transaction-time triple only as a deterministic tiebreak in valid-time queries.</li>
+  <li><strong>Explicit assert/retract change model</strong>, append-only assertion graphs, bucketed rather than one graph per commit.</li>
+  <li><strong>Keyset pagination</strong> on the composite cursor; <code class="language-plaintext highlighter-rouge">OFFSET</code> never appears in the codebase.</li>
+  <li><strong>Order auditor always on</strong>: gap scan, monotonicity scan, watermark-lag and feed-retention-headroom metrics, alerting on non-zero.</li>
+  <li><strong>A concurrency TCK</strong> every adapter must pass — with the reorder probe and the valid-time/transaction-time test as gating cases.</li>
+</ol>
+
+<p>So: keep <code class="language-plaintext highlighter-rouge">commitSeq</code>, but make it <code class="language-plaintext highlighter-rouge">(epoch, streamSeq, opSeq)</code>, allocate it inside the transaction, shard it by stream, and stop asking it to also be the dataset-wide replay position. That version of your pattern is, I think, about as good as RDF allows.</p>

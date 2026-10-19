@@ -1,0 +1,217 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack--identity-minting-m2">Validation Pack — <code class="language-plaintext highlighter-rouge">identity-minting</code> M2</h1>
+
+<p><strong>Slice:</strong> Pinned Unicode 16.0.0 tables, the Python library, vector generation
+<strong>Plan:</strong> <a href="/developer/plans/identity-minting.html">identity-minting.md</a>
+<strong>Status:</strong> <a href="/developer/status/identity-minting.html">identity-minting.md</a>
+<strong>Mode:</strong> autonomous (granted 2026-09-23)</p>
+
+<h2 id="what-invariants-does-this-slice-protect">What invariants does this slice protect?</h2>
+
+<ol>
+  <li><strong>The library mints what the anchors say.</strong> Every anchor vector, verified independently with <code class="language-plaintext highlighter-rouge">openssl</code>, passes trace step by trace step.</li>
+  <li><strong>The committed vectors are what the library generates today.</strong> A behaviour change cannot land without regenerating <code class="language-plaintext highlighter-rouge">packages/minting/testdata</code> and showing the diff.</li>
+  <li><strong>Unicode behaviour comes from the pinned tables, and the tables are right.</strong> Both libraries carry byte-identical tables, the tables match the UCD 16.0.0 files, and over every code point they agree with CPython’s own 16.0.0 data wherever the two define the same thing.</li>
+  <li><strong>Every refusal is named.</strong> Recipe faults, runtime faults and request faults each raise their §9 error.</li>
+  <li><strong>The library stands alone.</strong> No dependency outside the Python standard library, and no import of any other LATTICE package.</li>
+</ol>
+
+<h2 id="test-case-table">Test case table</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>Pass criterion</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>T1</td>
+      <td>All seven anchor sets</td>
+      <td>L3</td>
+      <td><code class="language-plaintext highlighter-rouge">test_conformance.py::test_anchors_pass</code></td>
+      <td>+/-</td>
+    </tr>
+    <tr>
+      <td>T2</td>
+      <td>All seven generated vectors files</td>
+      <td>L3</td>
+      <td><code class="language-plaintext highlighter-rouge">::test_generated_vectors_pass</code> (7)</td>
+      <td>+/-</td>
+    </tr>
+    <tr>
+      <td>T3</td>
+      <td>Regenerating each file’s vectors from its embedded recipe gives the committed document</td>
+      <td>L2</td>
+      <td><code class="language-plaintext highlighter-rouge">::test_generated_vectors_are_current</code> (7)</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T4</td>
+      <td>Each <code class="language-plaintext highlighter-rouge">.recipe.json</code> equals the recipe embedded in its vectors, and parses</td>
+      <td>L1</td>
+      <td><code class="language-plaintext highlighter-rouge">::test_recipe_files_match_vectors</code> (7)</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T5</td>
+      <td>The compiled recipes are the anchor recipes</td>
+      <td>L2</td>
+      <td><code class="language-plaintext highlighter-rouge">::test_anchor_recipes_equal_compiled_recipes</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T6</td>
+      <td>A key of default-ignorables only is refused under <code class="language-plaintext highlighter-rouge">NfkcTrimCasefold</code> and mints under <code class="language-plaintext highlighter-rouge">NfkcTrimUppercase</code></td>
+      <td>L1</td>
+      <td><code class="language-plaintext highlighter-rouge">::test_default_ignorable_only_depends_on_pipeline</code></td>
+      <td>+/-</td>
+    </tr>
+    <tr>
+      <td>T7</td>
+      <td>A changed expected IRI, and a changed trace step, are reported, the second by step number</td>
+      <td>L1</td>
+      <td><code class="language-plaintext highlighter-rouge">::test_a_changed_expectation_is_reported</code>, <code class="language-plaintext highlighter-rouge">::test_a_changed_trace_step_names_the_step</code></td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>T8</td>
+      <td><code class="language-plaintext highlighter-rouge">lattice-mint verify</code> exits 0, 2 on bad usage, 1 on a failing file</td>
+      <td>L4</td>
+      <td><code class="language-plaintext highlighter-rouge">::test_cli</code></td>
+      <td>+/-</td>
+    </tr>
+    <tr>
+      <td>T9</td>
+      <td>Python and Java table copies are byte-identical</td>
+      <td>L1</td>
+      <td><code class="language-plaintext highlighter-rouge">test_unicode.py::test_both_libraries_carry_identical_tables</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T10</td>
+      <td>Assigned set equals General_Category not <code class="language-plaintext highlighter-rouge">Cn</code>, over all 1,114,112 code points</td>
+      <td>L2</td>
+      <td><code class="language-plaintext highlighter-rouge">::test_assigned_matches_general_category</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T11</td>
+      <td>Full upper and lower mappings equal <code class="language-plaintext highlighter-rouge">str.upper</code> and <code class="language-plaintext highlighter-rouge">str.lower</code> for every assigned code point, and <code class="language-plaintext highlighter-rouge">Final_Sigma</code> in context</td>
+      <td>L2</td>
+      <td><code class="language-plaintext highlighter-rouge">::test_full_case_mappings_match_python</code>, <code class="language-plaintext highlighter-rouge">::test_final_sigma_matches_python</code> (7)</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T12</td>
+      <td><code class="language-plaintext highlighter-rouge">nfkc_casefold</code> equals the NFKC and case folding composition where it keeps a character, and removes only format, mark, letter-other or control characters</td>
+      <td>L2</td>
+      <td><code class="language-plaintext highlighter-rouge">::test_nfkc_casefold_agrees_with_the_casefold_composition</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T13</td>
+      <td><code class="language-plaintext highlighter-rouge">White_Space</code> differs from <code class="language-plaintext highlighter-rouge">str.isspace</code> only at U+001C–U+001F</td>
+      <td>L2</td>
+      <td><code class="language-plaintext highlighter-rouge">::test_white_space_differs_from_isspace_only_at_the_information_separators</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T14</td>
+      <td>All three pipelines are idempotent on every assigned code point</td>
+      <td>L2</td>
+      <td><code class="language-plaintext highlighter-rouge">::test_every_pipeline_is_idempotent</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T15</td>
+      <td>Wrong format, unknown strategy, changed content, another Unicode version, claims with different keys</td>
+      <td>L1</td>
+      <td><code class="language-plaintext highlighter-rouge">test_refusals.py</code> (5 cases)</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>T16</td>
+      <td>Digest ignores whitespace and member order</td>
+      <td>L1</td>
+      <td><code class="language-plaintext highlighter-rouge">::test_whitespace_and_member_order_do_not_affect_the_digest</code></td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>T17</td>
+      <td>Unicode data older than 16.0.0 is refused</td>
+      <td>L1</td>
+      <td><code class="language-plaintext highlighter-rouge">::test_older_runtime_unicode_is_refused</code></td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>T18</td>
+      <td>Error kinds are closed, random surrogates use the supplied source and are well formed, secrets are copied</td>
+      <td>L1</td>
+      <td><code class="language-plaintext highlighter-rouge">::test_error_kinds_are_closed</code>, <code class="language-plaintext highlighter-rouge">::test_random_surrogates_use_the_supplied_source</code>, <code class="language-plaintext highlighter-rouge">::test_minter_does_not_share_secrets_with_the_caller</code></td>
+      <td>+/-</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="commands">Commands</h2>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run bootstrap:minting-python
+mise run check:minting-python     <span class="c"># 51 passed</span>
+mise run check:minting-anchors    <span class="c"># 187 checks passed</span>
+mise run check:minting-tables     <span class="c"># 16 tables current</span>
+mise run check:persistence        <span class="c"># 629 passed</span>
+</code></pre></div></div>
+
+<p>All four green on 2026-09-24, Python 3.14.7 (Unicode data 16.0.0).</p>
+
+<h2 id="adversarial-probes">Adversarial probes</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Probe</th>
+      <th>Result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">Final_Sigma</code> disabled</td>
+      <td>5 failures</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">str.strip()</code> in place of <code class="language-plaintext highlighter-rouge">trim_white_space</code></td>
+      <td>8 failures</td>
+    </tr>
+    <tr>
+      <td>Truncation keeps the last bytes</td>
+      <td>8 failures</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">NFKC(casefold(s))</code> in place of <code class="language-plaintext highlighter-rouge">nfkc_casefold</code></td>
+      <td>5 failures</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>All restored, suite green.</p>
+
+<h2 id="contract-changes-non-weakening-rule">Contract changes (non-weakening rule)</h2>
+
+<ul>
+  <li><strong>Generated vector files escape non-ASCII.</strong> <code class="language-plaintext highlighter-rouge">export-recipes --vectors</code> writes JSON with <code class="language-plaintext highlighter-rouge">\u</code> escapes, and <code class="language-plaintext highlighter-rouge">anchor-vectors.json</code> was rewritten the same way, so invisible characters in inputs can be read in review. The parsed content is unchanged (the anchor verifier and both suites pass unchanged).</li>
+  <li><strong>A recipe’s claims must share one key</strong> (<code class="language-plaintext highlighter-rouge">UnsupportedRecipeFormat</code> otherwise, specification §6.3). The compiler has always emitted them that way.</li>
+  <li><strong>Specification brought up to the library:</strong> request inputs table (§6), <code class="language-plaintext highlighter-rouge">randomHex</code>, <code class="language-plaintext highlighter-rouge">validate-token</code>, <code class="language-plaintext highlighter-rouge">generate-surrogate</code>, <code class="language-plaintext highlighter-rouge">validate-iri</code>, <code class="language-plaintext highlighter-rouge">CanonicalizerNotDeclared</code>, which faults raise <code class="language-plaintext highlighter-rouge">MissingKeyComponent</code>, <code class="language-plaintext highlighter-rouge">truncate</code> present even at full width, the <code class="language-plaintext highlighter-rouge">omitSecret</code> harness directive, and the test secret derivation (§10.1).</li>
+</ul>
+
+<h2 id="found-on-the-way">Found on the way</h2>
+
+<ul>
+  <li><strong>Default-ignorable code points under the upper- and lowercase pipelines.</strong> NFKC keeps zero-width space and soft hyphen, and only <code class="language-plaintext highlighter-rouge">nfkc_casefold</code> removes them. A key made of nothing else is refused as empty under <code class="language-plaintext highlighter-rouge">NfkcTrimCasefold</code> but mints under the other two pipelines. The generator now emits the vector each pipeline actually implies. Whether those pipelines should remove default-ignorables is a design question, recorded in the status record.</li>
+  <li><strong>Tool input turned <code class="language-plaintext highlighter-rouge">\u</code> escapes into real characters.</strong> Invisible characters reached <code class="language-plaintext highlighter-rouge">vectors.py</code>. Every non-ASCII literal in the library source is now written with <code class="language-plaintext highlighter-rouge">chr()</code>, and all changed files were scanned for format, control and non-ASCII space characters.</li>
+</ul>

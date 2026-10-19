@@ -1,0 +1,107 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="adr-a103-eligibility-set-readings-and-negation">ADR-A103: Eligibility set readings and negation</h1>
+
+<p><strong>Status:</strong> Published, 2026-10-19. Accepted 2026-09-26.
+<strong>Described in:</strong> <a href="../../../ontology/eligibility/README.md">Eligibility README</a>
+<strong>Date:</strong> 2026-09-26 (proposed), 2026-09-26 (accepted, with negation added)
+<strong>Related:</strong> ADR-A87 (concept exclusion), ADR-A89 (profile aggregation), ADR-A90 (design-time OWL classes), ADR-A91 (evidence binding), ADR-A100, ADR-A-C2</p>
+
+<h2 id="context">Context</h2>
+
+<p><strong>Premise.</strong> An evidence binding reads a subject’s candidate along a path (ADR-A91). Many paths
+reach several values: a person holds several qualifications, a record carries several codes, and
+a path through a many-valued step multiplies what follows it. Today a binding that reaches more
+than one value is Undetermined (<code class="language-plaintext highlighter-rouge">exe:SeveralCandidates</code>, “no reading of several is defined”). A
+rule that means “some value qualifies” or “every value qualifies” cannot be stated.</p>
+
+<p><strong>Examples.</strong></p>
+
+<ol>
+  <li><em>Admissions.</em> An applicant qualifies for an engineering course when some qualification they
+hold is in mathematics or physics. An applicant with a history and a physics qualification is
+admitted.</li>
+  <li><em>Clinical trials.</em> A patient is eligible when every recorded diagnosis is on the trial’s
+permitted list. A patient with one permitted and one excluded diagnosis is not eligible.</li>
+</ol>
+
+<h2 id="decision">Decision</h2>
+
+<ol>
+  <li>
+    <p><strong>A reading on the binding.</strong> <code class="language-plaintext highlighter-rouge">elg:valueReading</code> on an <code class="language-plaintext highlighter-rouge">elg:EvidenceBinding</code> takes one of three
+individuals of <code class="language-plaintext highlighter-rouge">elg:ValueReading</code>:</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Reading</th>
+          <th>Outcome over the values the path reaches</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code class="language-plaintext highlighter-rouge">elg:SingleValue</code> (default when absent)</td>
+          <td>one value: its outcome. None: Undetermined (<code class="language-plaintext highlighter-rouge">exe:MissingCandidate</code>). Several: Undetermined (<code class="language-plaintext highlighter-rouge">exe:SeveralCandidates</code>). Unchanged from today</td>
+        </tr>
+        <tr>
+          <td><code class="language-plaintext highlighter-rouge">elg:SomeValue</code></td>
+          <td>Permitted when any value is Permitted. Denied when every value is Denied. Otherwise, or when there is no value, Undetermined</td>
+        </tr>
+        <tr>
+          <td><code class="language-plaintext highlighter-rouge">elg:EveryValue</code></td>
+          <td>Denied when any value is Denied. Permitted when every value is Permitted. Otherwise, or when there is no value, Undetermined</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>Each value is decided by the condition as a single candidate would be, including ADR-A87’s
+exclusions and ADR-A100’s law. The readings are strong Kleene quantifiers over those outcomes,
+as profile aggregation is over conditions (ADR-A89).</p>
+  </li>
+  <li><strong>Exclusion over a set.</strong> An exclusion that must deny when any value is excluded is a condition
+with the exclusion, read <code class="language-plaintext highlighter-rouge">elg:EveryValue</code>.</li>
+  <li><strong>The compilers.</strong> The IR carries the reading. SPARQL and SHACL aggregate each subject’s value
+outcomes by counting, as profile aggregation does. SWRL, being DL-safe and monotonic, derives
+only the outcomes a sound subset allows: Permitted under <code class="language-plaintext highlighter-rouge">SomeValue</code>, Denied under
+<code class="language-plaintext highlighter-rouge">EveryValue</code>. The OWL backend compiles <code class="language-plaintext highlighter-rouge">SomeValue</code> as <code class="language-plaintext highlighter-rouge">∃path.C</code> and <code class="language-plaintext highlighter-rouge">EveryValue</code> as
+<code class="language-plaintext highlighter-rouge">∀path.C ⊓ ∃path.⊤</code>, for design-time checks only, relaxing ADR-A90’s single-valued claim for
+bindings that declare a reading.</li>
+  <li><strong>Negation.</strong> <code class="language-plaintext highlighter-rouge">elg:negated true</code> on a condition evaluates the condition as it stands, including
+its value reading, and then swaps Permitted and Denied. Undetermined stays Undetermined, with
+its diagnostic. The compilers apply the swap to the condition’s outcome: the IR’s expansion,
+the SPARQL and SHACL decisions, the SWRL rule heads (a rule that derived Permitted derives
+Denied), and the OWL class (its complement, for design-time checks only). “An applicant who
+holds no qualification in medicine” is the medicine condition read <code class="language-plaintext highlighter-rouge">elg:SomeValue</code> and
+negated, without enumerating every other qualification.</li>
+  <li><strong>Correlation is out of scope.</strong> Each condition in a profile reads its own path. A rule that
+needs two values to come from the same intermediate node binds its subject to that node.</li>
+</ol>
+
+<h2 id="consequences">Consequences</h2>
+
+<ul>
+  <li>Eligibility takes a MINOR bump: a class, three individuals and two properties are added. A
+binding without a reading, and a condition without <code class="language-plaintext highlighter-rouge">elg:negated</code>, behave as today. The
+import-pinning cascade runs.</li>
+  <li>Examples and README text follow ADR-A-C2: the two examples above are authored as fixtures before
+the law’s prose.</li>
+  <li>Every backend changes, the IR, SPARQL and SHACL in one change and SWRL and OWL in another.</li>
+</ul>
+
+<h2 id="addendum-2026-10-12-completeness-needs-a-closure">Addendum (2026-10-12): completeness needs a closure</h2>
+
+<p><strong>Status:</strong> Accepted 2026-10-12, proposed the same day. Narrows decision 1.
+<a href="/architecture/decisions/ADR-A105-closure-declarations.html">ADR-A105</a> holds the reasoning.</p>
+
+<p><code class="language-plaintext highlighter-rouge">elg:SomeValue</code> is Denied when every value is Denied, and <code class="language-plaintext highlighter-rouge">elg:EveryValue</code> Permitted when every value
+is Permitted, only for a binding that names a closure in force (<code class="language-plaintext highlighter-rouge">elg:closedUnder</code>). The empty case
+then decides too. Without a closure, some value decides only Permitted and every value only Denied,
+the outcomes a record proves, and the rest is Undetermined. Decision 3’s SWRL backend already derives
+only those outcomes. The examples of this ADR name a closure: the admissions registry’s, licensed by
+an operational profile, and the trial protocol’s full-history clause. Negation (decision 4) is
+unchanged.</p>
+
+<h2 id="provenance">Provenance</h2>
+
+<p>Part of the <a href="/developer/plans/applied-insurance-reference.html"><code class="language-plaintext highlighter-rouge">applied-insurance-reference</code></a> unit (Phase 3, epic decision D12). The 2026-10-12 addendum was slice HQ-6a.1 of the <a href="/developer/plans/computable-contract-substrate.html">computable contract substrate</a> plan (CCS), question HQ6a-Q1.</p>

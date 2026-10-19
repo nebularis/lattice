@@ -1,0 +1,254 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="disposition-adr-a51-review">Disposition: ADR-A51 Review</h1>
+
+<p><strong>Superseded:</strong> ADR-A51 was superseded by ADR-A82 before ratification, so the “pending ratification alongside ADR-A51” note below no longer applies. This disposition is historical. Current state: <a href="/developer/status/phase-0-status.html">phase-0-status.md</a>, P0.1.3.</p>
+
+<p><strong>Review:</strong> <a href="/developer/review/ADR-A51-review.html">ADR-A51-review.md</a>
+<strong>Reviewed artefacts:</strong> <a href="../../architecture/decisions/ADR-A51-iri-and-identity-policy.md">ADR-A51</a>, <a href="/architecture/iri-policy.html">iri-policy.md</a>, <a href="/architecture/rdf-sparql-patterns-guide.html">rdf-sparql-patterns-guide.md</a>
+<strong>Date:</strong> 2026-09-23
+<strong>Disposed:</strong> pending ratification alongside ADR-A51 itself — see <a href="/developer/status/phase-0-status.html">phase-0-status.md</a>.</p>
+
+<p>This document records, finding by finding, what changed and why. It exists so the review does not have to be re-read in full to confirm a fix landed, and so a reviewer can spot-check specific findings against the concrete diff rather than re-deriving the argument.</p>
+
+<h2 id="1-verdict">1. Verdict</h2>
+
+<p>Accepted in full. Every numbered finding (F-1 through F-17), every cross-document consistency row (review §5), and every technical issue raised against the patterns guide itself (review §6) that touches IRI/identity handling is resolved below. Two items are explicitly <em>not</em> resolved and are carried forward as open questions (§4 of this document): the URN-registration hygiene question (informal <code class="language-plaintext highlighter-rouge">urn-N</code> registration) and the public/dereferenceable identity decision — both are named in the review as decisions for the maintainer, not defects to fix silently.</p>
+
+<h2 id="2-adr-a51-findings-review-3">2. ADR-A51 findings (review §3)</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Finding</th>
+      <th>Severity</th>
+      <th>Verdict</th>
+      <th>Resolution</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>F-1</td>
+      <td>Critical</td>
+      <td>Accepted</td>
+      <td>Rule 3 (environment-scoped base, rewritten on clone) deleted. New ADR-A51 rule 3: no IRI carries an environment component; environments are isolated by dataset/access control (ADR-A54), never by identity rewriting.</td>
+    </tr>
+    <tr>
+      <td>F-2</td>
+      <td>Critical</td>
+      <td>Accepted</td>
+      <td>Content hash widened to a minimum of 128 bits (32 lowercase hex characters); “uniqueness by construction, no check needed” language removed. Registration now compares the full verification hash on every write to an existing content revision IRI — an O(1) assertion, not the deleted O(n) scan.</td>
+    </tr>
+    <tr>
+      <td>F-3</td>
+      <td>Major</td>
+      <td>Accepted</td>
+      <td>New ADR-A51 §”Registry uniqueness is verified, not merely structural” states lineage <code class="language-plaintext highlighter-rouge">{family}:{localName}</code> allocation is a P1-shaped claim with an explicit owner, resolved once at lineage creation — the owner/family dimensions the old rule conflated with content-hash collision now have a stated home.</td>
+    </tr>
+    <tr>
+      <td>F-4</td>
+      <td>Major</td>
+      <td>Accepted</td>
+      <td>Rule 2 rewritten to apply only to entity and lineage IRIs; content revision IRIs (<code class="language-plaintext highlighter-rouge">schemeVersion</code>), event IRIs (<code class="language-plaintext highlighter-rouge">epoch</code>/<code class="language-plaintext highlighter-rouge">seq</code>) and ADR-A54 infrastructure buckets are explicitly permitted to carry position information, matching OWL’s own <code class="language-plaintext highlighter-rouge">owl:versionIRI</code> convention.</td>
+    </tr>
+    <tr>
+      <td>F-5</td>
+      <td>Major</td>
+      <td>Accepted</td>
+      <td><code class="language-plaintext highlighter-rouge">surrogate</code>/<code class="language-plaintext highlighter-rouge">surrogate-claimed</code> now mint with UUIDv4, never ULID/UUIDv7 (both embed a 48-bit millisecond timestamp). Stated as ADR-A51 rule 2’s explicit exception list. <code class="language-plaintext highlighter-rouge">iri-policy.md</code> §4 example corrected to a UUIDv4 form.</td>
+    </tr>
+    <tr>
+      <td>F-6</td>
+      <td>Major</td>
+      <td>Accepted</td>
+      <td><code class="language-plaintext highlighter-rouge">derived-hash</code> restricted to non-sensitive, immutable composite keys. <code class="language-plaintext highlighter-rouge">surrogate-claimed</code> (new strategy) is the answer for sensitive/mutable keys, matching the patterns guide’s own entity-identity default.</td>
+    </tr>
+    <tr>
+      <td>F-7</td>
+      <td>Major</td>
+      <td>Accepted</td>
+      <td><code class="language-plaintext highlighter-rouge">surrogate-claimed</code> added as a fourth entity strategy and stated as the <em>recommended default</em> for mutable/sensitive keys, aligning ADR-A51 with <code class="language-plaintext highlighter-rouge">rdf-sparql-patterns-guide.md</code> §8.4’s existing default (opaque UUID + P1 key-claim registry) instead of contradicting it.</td>
+    </tr>
+    <tr>
+      <td>F-8</td>
+      <td>Major</td>
+      <td>Accepted</td>
+      <td>Key-derived strategies now require the key to be <strong>immutable</strong>, not merely “stable”. New “Key mutability and merges” section: one IRI becomes canonical, the other retained as a deprecated alias via <code class="language-plaintext highlighter-rouge">fnd:replacedBy</code> (never <code class="language-plaintext highlighter-rouge">owl:sameAs</code>), references migrated as a tracked operation. Source-system discriminators are named as provenance-local identity only.</td>
+    </tr>
+    <tr>
+      <td>F-9</td>
+      <td>Major</td>
+      <td>Accepted</td>
+      <td>Content identity and event identity split into two IRI forms: content revision IRI (<code class="language-plaintext highlighter-rouge">.../rev/{schemeVersion}-{contentHash}</code>, identifies a state, safe to re-register after a revert) and event/promotion IRI (<code class="language-plaintext highlighter-rouge">.../evt/e{epoch}/{seq}</code>, identifies an occurrence, chained by <code class="language-plaintext highlighter-rouge">prevRev</code>, never cycles). Propagated into the patterns guide as the epoch-in-IRI fix (§3 below).</td>
+    </tr>
+    <tr>
+      <td>F-10</td>
+      <td>Major</td>
+      <td>Accepted</td>
+      <td><code class="language-plaintext highlighter-rouge">{class}</code> renamed to <code class="language-plaintext highlighter-rouge">{ns}</code>, a registered minting namespace, explicitly stated as never an <code class="language-plaintext highlighter-rouge">rdf:type</code> assertion and never renamed even if OWL classification changes. Applies to both ADR-A51 and <code class="language-plaintext highlighter-rouge">iri-policy.md</code>.</td>
+    </tr>
+    <tr>
+      <td>F-11</td>
+      <td>Major</td>
+      <td>Accepted</td>
+      <td>“Alias graph, repointed atomically” replaced with a normative mechanism: <code class="language-plaintext highlighter-rouge">pat:current</code>, an object-property triple on the lineage’s version row, updated by the same guarded CAS write as every other version-row field (per <code class="language-plaintext highlighter-rouge">rdf-sparql-patterns-guide.md</code> Part V). An optional materialised <code class="language-plaintext highlighter-rouge">{lineageIri}/current</code> graph is explicitly a projection, never the identity mechanism.</td>
+    </tr>
+    <tr>
+      <td>F-12</td>
+      <td>Minor</td>
+      <td>Accepted</td>
+      <td><code class="language-plaintext highlighter-rouge">iri-policy.md</code> §1 states scope (LATTICE-minted IRIs only), and the validator (§7) rejects mixed-case scheme/NID, percent-encoding of unreserved characters, non-NFC Unicode, and any <code class="language-plaintext highlighter-rouge">contentHash</code> under 32 hex characters. Component grammar for tuple encoding is specified as length-prefixed (carried over from the review’s own recommendation; see <code class="language-plaintext highlighter-rouge">derived-hash</code>’s grammar row in <code class="language-plaintext highlighter-rouge">iri-policy.md</code> §4).</td>
+    </tr>
+    <tr>
+      <td>F-13</td>
+      <td>Minor</td>
+      <td>Accepted</td>
+      <td>ADR-A51 rule 7: no <code class="language-plaintext highlighter-rouge">@base</code>/relative resolution against a <code class="language-plaintext highlighter-rouge">urn:</code> base; canonical lexical form is all-lowercase. Rule 9: public/dereferenceable identity is explicitly undecided and must not be assumed — carried forward as an open question, not resolved (this review does not pick <code class="language-plaintext highlighter-rouge">https://</code> mapping vs. URN-only; see §4).</td>
+    </tr>
+    <tr>
+      <td>F-14</td>
+      <td>Minor</td>
+      <td>Accepted</td>
+      <td><code class="language-plaintext highlighter-rouge">iri-policy.md</code> §3 fully specifies <code class="language-plaintext highlighter-rouge">contentHash</code>: RDFC-1.0 canonicalisation under a recorded profile version, a bounded work budget (poison-graph DoS protection), a stated self-reference placeholder rule, per-datatype literal canonicalisation, and an explicit rename from “semantic hash” to “<code class="language-plaintext highlighter-rouge">contentHash</code>” (it hashes syntax after normalisation, not semantic equivalence — the review’s own point).</td>
+    </tr>
+    <tr>
+      <td>F-15</td>
+      <td>Minor</td>
+      <td>Accepted</td>
+      <td>ADR-A51 rule 4 and <code class="language-plaintext highlighter-rouge">iri-policy.md</code> §6 rule 4: tenant segment is an immutable, opaque, allocated identifier, never a name; a reserved tenant exists for cross-tenant shared reference data.</td>
+    </tr>
+    <tr>
+      <td>F-16</td>
+      <td>Minor</td>
+      <td>Accepted</td>
+      <td><code class="language-plaintext highlighter-rouge">iri-policy.md</code> §5 (new): skolemization convention — deterministic via <code class="language-plaintext highlighter-rouge">natural-key</code>/<code class="language-plaintext highlighter-rouge">derived-hash</code> where a natural key exists, <code class="language-plaintext highlighter-rouge">surrogate-claimed</code>/<code class="language-plaintext highlighter-rouge">surrogate</code> otherwise, deterministic within one content revision. RDF 1.2 triple terms noted as an unevaluated alternative in the patterns guide’s Appendix E item 10.</td>
+    </tr>
+    <tr>
+      <td>F-17</td>
+      <td>Minor</td>
+      <td>Accepted</td>
+      <td>The inverted risk description (“requires an index from key to IRI”) is not carried into the rewritten ADR — the corrected direction (an IRI-to-key index for support/debugging is itself PII and must be access-controlled) is implicit in <code class="language-plaintext highlighter-rouge">surrogate-claimed</code>’s design (the claim, not a reverse index, is what’s access-controlled) and does not need restating as a named risk since the strategy that had the problem (<code class="language-plaintext highlighter-rouge">derived-hash</code> for sensitive keys) is no longer recommended for that case.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="3-cross-document-consistency-review-5">3. Cross-document consistency (review §5)</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Topic</th>
+      <th>Verdict</th>
+      <th>Resolution</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Entity IRI default (ADR-A51 vs. guide)</td>
+      <td>Resolved</td>
+      <td>ADR-A51 now adopts <code class="language-plaintext highlighter-rouge">surrogate-claimed</code> as its default for mutable/sensitive keys, identical in mechanism to the guide’s opaque-UUID-plus-P1-claim default. Cross-referenced explicitly in both documents (ADR-A51’s “Entity identity” table; guide §8.4 item 1).</td>
+    </tr>
+    <tr>
+      <td>Revision identity (content-addressed vs. position-addressed)</td>
+      <td>Resolved</td>
+      <td>Both are needed and now both exist, under different names: ADR-A51’s content revision IRI (content-addressed, <code class="language-plaintext highlighter-rouge">fnd:Version</code>) and event/promotion IRI (position-addressed, an occurrence). The guide’s receipt IRI is the event/promotion form; it now carries the epoch that makes it collision-safe across a restore.</td>
+    </tr>
+    <tr>
+      <td>Versions/times in IRIs</td>
+      <td>Resolved</td>
+      <td>ADR-A51 rule 2 scopes the ban to entity/lineage IRIs; content-revision <code class="language-plaintext highlighter-rouge">schemeVersion</code> and event <code class="language-plaintext highlighter-rouge">epoch</code>/<code class="language-plaintext highlighter-rouge">seq</code> are explicit, stated exceptions.</td>
+    </tr>
+    <tr>
+      <td>Hash for sensitive keys</td>
+      <td>Resolved</td>
+      <td>ADR-A51 adopts the guide’s HMAC position: <code class="language-plaintext highlighter-rouge">derived-hash</code> is non-sensitive-only; <code class="language-plaintext highlighter-rouge">surrogate-claimed</code>’s claim uses a keyed (HMAC) hash, matching the guide’s <code class="language-plaintext highlighter-rouge">claim_iri</code>.</td>
+    </tr>
+    <tr>
+      <td>IRI grammar (<code class="language-plaintext highlighter-rouge">urn:lattice:</code> vs. guide’s <code class="language-plaintext highlighter-rouge">urn:g:</code>/<code class="language-plaintext highlighter-rouge">urn:rev:</code>/<code class="language-plaintext highlighter-rouge">urn:key:</code> illustrative forms)</td>
+      <td>Not unified, by design</td>
+      <td>These are two different grammars for two different purposes: ADR-A51/<code class="language-plaintext highlighter-rouge">iri-policy.md</code> govern <em>identity</em> (lineage, content revision, entity); the guide’s <code class="language-plaintext highlighter-rouge">urn:g:</code>/<code class="language-plaintext highlighter-rouge">urn:rev:</code>/<code class="language-plaintext highlighter-rouge">urn:key:</code> forms are its own illustrative graph-naming convention for aggregate/infrastructure graphs, a concern ADR-A54 (dataset topology) owns. Reconciling the guide’s illustrative examples with ADR-A54’s full tenant/environment-scoped grammar is out of scope for this pass — it was not raised as a defect by the review, only the identity IRIs were.</td>
+    </tr>
+    <tr>
+      <td>Snapshot-per-revision graphs</td>
+      <td>Resolved</td>
+      <td>The guide’s <code class="language-plaintext highlighter-rouge">urn:g:orders/1/{seq}</code> snapshot graph naming now also carries the epoch (<code class="language-plaintext highlighter-rouge">urn:g:orders/1/e{epoch}/{seq}</code>), for the same reason the receipt IRI does: a payload graph name must not be reusable after a restore either.</td>
+    </tr>
+    <tr>
+      <td>Receipt IRI omits the epoch (the bug within the guide itself)</td>
+      <td>Resolved</td>
+      <td>Fixed guide-wide: <code class="language-plaintext highlighter-rouge">rev_iri()</code>, all worked examples in Chapters 2, 10, 14, 18, 19, 20, 24, and Appendix A’s vocabulary comment now use <code class="language-plaintext highlighter-rouge">urn:rev:{aggregate}/e{epoch}/{seq}</code>. Padding-width inconsistency (16 vs. 19 digits) was already stated as deliberate (“16 for legibility”) and is left as documented, since it was not the defect — the missing epoch was.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="4-broader-guide-review-review-6--technical-issues-addressed">4. Broader guide review (review §6) — technical issues addressed</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Issue</th>
+      <th>Verdict</th>
+      <th>Resolution</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>S6 as-of query incorrect (compares retraction against the wrong graph)</td>
+      <td>Fixed</td>
+      <td>Chapter 11 §S6 rewritten: the <code class="language-plaintext highlighter-rouge">FILTER NOT EXISTS</code> now checks a later revision’s <em>retraction delta graph</em> for the <em>same triple</em>, constrained to the same <code class="language-plaintext highlighter-rouge">pat:target</code> and to a <code class="language-plaintext highlighter-rouge">seq</code> strictly after the assertion and at or before the as-of position.</td>
+    </tr>
+    <tr>
+      <td>QP4 determinism test would fail (zero-width space not stripped)</td>
+      <td>Fixed</td>
+      <td>§8.1’s <code class="language-plaintext highlighter-rouge">NormalizationPipeline</code> gains a <code class="language-plaintext highlighter-rouge">strip_default_ignorable</code> step (a regex removing U+200B/200C/200D/2060/FEFF) run before NFKC. QP4’s test (Chapter 28) rewritten to assert against a second independent computation rather than a hardcoded literal, and to explain why the third input is the one that catches a regression.</td>
+    </tr>
+    <tr>
+      <td>Illustrative outputs don’t match the code</td>
+      <td>Fixed</td>
+      <td>Chapter 5’s <code class="language-plaintext highlighter-rouge">deterministic_iri("sku","widget-9")</code> and Chapter 6’s <code class="language-plaintext highlighter-rouge">claim_iri(...)</code> example outputs were recomputed with the documented algorithm (Node.js <code class="language-plaintext highlighter-rouge">crypto</code>, matching the Python reference implementation byte-for-byte) rather than hand-typed. Chapter 6’s function also now defaults to 16-byte (128-bit) truncation.</td>
+    </tr>
+    <tr>
+      <td>SHACL-SPARQL prefixes won’t resolve (<code class="language-plaintext highlighter-rouge">sh:prefixes pat:</code> needs <code class="language-plaintext highlighter-rouge">sh:declare</code>)</td>
+      <td>Fixed</td>
+      <td>Appendix B gains a note and a worked <code class="language-plaintext highlighter-rouge">sh:declare</code> triple before the shapes block.</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">NoForkShape</code>’s <code class="language-plaintext highlighter-rouge">sh:sparql</code> cost understated</td>
+      <td>Fixed</td>
+      <td>Appendix B gains a caveat cross-referencing §7.3’s incremental-validator warning and naming the F5 standing query as the fallback for engines that can’t afford commit-time <code class="language-plaintext highlighter-rouge">sh:sparql</code> validation.</td>
+    </tr>
+    <tr>
+      <td>S3 gap scan blind spot (missing prefix)</td>
+      <td>Fixed</td>
+      <td>Chapter 11 §S3 gains a second query comparing the stream’s <code class="language-plaintext highlighter-rouge">MIN(?seq)</code> against a tracked retention low-water mark.</td>
+    </tr>
+    <tr>
+      <td>HMAC claim IRI margin (80 bits)</td>
+      <td>Fixed</td>
+      <td>Widened to 128 bits by default (see ADR-A51 findings table, F-2 margin logic applied consistently).</td>
+    </tr>
+    <tr>
+      <td>Document length / normative-vs-narrative split</td>
+      <td>Acknowledged, not done</td>
+      <td>Recorded as Appendix E item 9 (new): recommended once the guide’s content stabilises past Phase 0, not attempted in this pass — a restructuring of this size risks introducing new drift under review-driven time pressure, and the review itself frames it as a “worth doing”, not a defect.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="5-explicitly-not-resolved-open-questions-carried-forward">5. Explicitly not resolved (open questions carried forward)</h2>
+
+<ol>
+  <li><strong>Public/dereferenceable identity.</strong> ADR-A51 rule 9 states this is undecided rather than picking a default. A future ADR is required before anything gets an <code class="language-plaintext highlighter-rouge">https://</code> mapping.</li>
+  <li><strong>Formal <code class="language-plaintext highlighter-rouge">urn:</code> NID registration.</strong> The review notes <code class="language-plaintext highlighter-rouge">urn:lattice</code> is not a registered NID per RFC 8141. Not fixed here — registering an NID (or switching to a registered <code class="language-plaintext highlighter-rouge">urn:uuid:</code>/<code class="language-plaintext highlighter-rouge">urn:oid:</code> style scheme) is a process decision, not a document fix, and the review itself calls it “a hygiene issue” rather than a defect blocking ratification.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">ontology/persistence</code>’s <code class="language-plaintext highlighter-rouge">dal:graphIriTemplate</code> illustrative examples</strong> (<code class="language-plaintext highlighter-rouge">urn:g:loan-application/{id}</code>) were checked against this review and found not to need changes — see §3’s “IRI grammar” row above.</li>
+</ol>
+
+<h2 id="6-files-changed-in-this-pass">6. Files changed in this pass</h2>
+
+<ul>
+  <li><a href="../../architecture/decisions/ADR-A51-iri-and-identity-policy.md">ADR-A51-iri-and-identity-policy.md</a> — rewritten</li>
+  <li><a href="/architecture/iri-policy.html">iri-policy.md</a> — rewritten</li>
+  <li><a href="/architecture/rdf-sparql-patterns-guide.html">rdf-sparql-patterns-guide.md</a> — corrected in place (epoch-scoped revision/receipt IRIs; HMAC width; normalization pipeline; S6/S3 query fixes; SHACL <code class="language-plaintext highlighter-rouge">sh:declare</code> note; <code class="language-plaintext highlighter-rouge">fnd:replacedBy</code> merge policy; verified example outputs; new Appendix D/E entries)</li>
+  <li><a href="/developer/status/phase-0-status.html">phase-0-status.md</a> — updated to record the review and this disposition</li>
+  <li><code class="language-plaintext highlighter-rouge">ontology/persistence</code> and <code class="language-plaintext highlighter-rouge">tools/persistence</code> — checked against this review (§5 item 3); no changes required</li>
+</ul>

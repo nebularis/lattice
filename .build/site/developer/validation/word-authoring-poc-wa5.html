@@ -1,0 +1,268 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-word-authoring-poc-wa5-fuseki-rabbitmq-and-the-runnable-service">Validation Pack: word-authoring-poc WA5, Fuseki, RabbitMQ and the runnable service</h1>
+
+<p><strong>Plan:</strong> <a href="/developer/plans/word-authoring-poc.html">word-authoring-poc</a> §5 WA5
+<strong>Status record:</strong> <a href="/developer/status/word-authoring-poc.html">word-authoring-poc</a> (holds the commit hash)</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>WA4 proved the service’s logic against in-memory test seams. This slice proves the same logic
+survives contact with the two real backing services it will actually run against, and gives it an
+entry point that can start, stop and be probed like any other container in the compose stack
+(WA10). Three invariants carry it.</p>
+
+<p>First, <strong>the service recovers from its dependencies starting in any order.</strong> <code class="language-plaintext highlighter-rouge">FusekiAuthoringStore</code>
+and <code class="language-plaintext highlighter-rouge">RabbitMqAnalysisBus</code> both retry their connection (up to 30 attempts, 2 seconds apart) rather
+than fail fast on construction, because <code class="language-plaintext highlighter-rouge">docker compose up</code> gives no ordering guarantee between
+containers. Second, <strong>a result the worker cannot produce never jams the queue.</strong> Rejecting a
+delivery with <code class="language-plaintext highlighter-rouge">basicNack(tag, false, false)</code> relies on the dead-letter exchange named in
+<code class="language-plaintext highlighter-rouge">amqp-topology.json</code>: lose that wiring and a malformed message would either requeue forever or
+vanish silently. <code class="language-plaintext highlighter-rouge">Topology</code> is the single place that wiring is declared, so it can be checked
+against the committed file by comparison rather than by trusting two hand-maintained copies agree.
+Third, <strong>the shaded jar is a faithful standalone artefact</strong>, not merely “the classes compile”: Jena
+registers its RDF, SPARQL, SHACL and RDFS subsystems through <code class="language-plaintext highlighter-rouge">META-INF/services</code> files that five
+different <code class="language-plaintext highlighter-rouge">jena-*</code> jars each contribute one line to, and a plain shade (last file wins) silently
+drops four of those five lines.</p>
+
+<h2 id="test-cases">Test cases</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>+/−</th>
+      <th>Result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>S5-01</td>
+      <td><code class="language-plaintext highlighter-rouge">AuthoringConfig</code> / defaults, overrides, port <code class="language-plaintext highlighter-rouge">abc</code>, base without <code class="language-plaintext highlighter-rouge">/</code>, missing password / values, then three exceptions naming the variable, none containing the password value</td>
+      <td>L1</td>
+      <td>+/−</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>S5-02</td>
+      <td>Fuseki container / <code class="language-plaintext highlighter-rouge">ensureReady</code> twice, put then get a graph, get an absent graph / no error, isomorphic, empty</td>
+      <td>L4</td>
+      <td>+</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>S5-03</td>
+      <td>RabbitMQ container / declare twice, publish a request / no error, the message on the requested queue with the four properties</td>
+      <td>L4</td>
+      <td>+</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>S5-04</td>
+      <td>RabbitMQ container / a valid result and a malformed one on the completed queue / the handler gets the first, the second lands on <code class="language-plaintext highlighter-rouge">lattice.authoring.dead</code></td>
+      <td>L4</td>
+      <td>+/−</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>S5-05</td>
+      <td>both containers, the real store, bus and API, and an in-test consumer that answers each request with a completed result from a fixture / a sample submitted / the job completes within 10 seconds and the analysis view and the wording Turtle are served</td>
+      <td>L4</td>
+      <td>+</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>S5-06</td>
+      <td><code class="language-plaintext highlighter-rouge">HealthProbe</code> against a stub server answering 200, then 503, then a closed port / exit codes 0, 1, 1</td>
+      <td>L1</td>
+      <td>+/−</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>S5-07</td>
+      <td>the shaded jar / <code class="language-plaintext highlighter-rouge">java -jar target/authoring-service.jar --self-check</code> run from an IT / exit 0 and <code class="language-plaintext highlighter-rouge">self-check ok</code> (proves Jena initialises from the jar)</td>
+      <td>L4</td>
+      <td>+</td>
+      <td>pass</td>
+    </tr>
+    <tr>
+      <td>S5-08</td>
+      <td><code class="language-plaintext highlighter-rouge">Topology</code> / compared with <code class="language-plaintext highlighter-rouge">amqp-topology.json</code> / equal</td>
+      <td>L3</td>
+      <td>+</td>
+      <td>pass</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Carried by seven test classes: <code class="language-plaintext highlighter-rouge">AuthoringConfigTest</code> (S5-01, 6 cases), <code class="language-plaintext highlighter-rouge">HealthProbeTest</code> (S5-06),
+<code class="language-plaintext highlighter-rouge">TopologyTest</code> (S5-08) run under the regular unit-test command; <code class="language-plaintext highlighter-rouge">FusekiAuthoringStoreIT</code> (S5-02),
+<code class="language-plaintext highlighter-rouge">RabbitMqAnalysisBusIT</code> (S5-03, S5-04), <code class="language-plaintext highlighter-rouge">AuthoringServiceStackIT</code> (S5-05) and <code class="language-plaintext highlighter-rouge">SelfCheckIT</code> (S5-07,
+plus the self-probe’s own test, below) run under the <code class="language-plaintext highlighter-rouge">authoring-it</code> profile. The module runs 85
+tests under the regular command (WA2’s 48, WA3’s 15, WA4’s 14, WA5’s 8) and a further 6 under the
+IT profile, 91 in total.</p>
+
+<h2 id="one-command">One command</h2>
+
+<p>From the repository root:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:authoring-service
+</code></pre></div></div>
+
+<p>prints <code class="language-plaintext highlighter-rouge">Tests run: 85, Failures: 0, Errors: 0, Skipped: 0</code> and <code class="language-plaintext highlighter-rouge">BUILD SUCCESS</code> with no containers
+needed. Then, with Docker running:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:authoring-service-it
+</code></pre></div></div>
+
+<p>prints <code class="language-plaintext highlighter-rouge">Tests run: 6, Failures: 0, Errors: 0, Skipped: 0</code> and <code class="language-plaintext highlighter-rouge">BUILD SUCCESS</code>. Expect this to take
+about a minute (container pulls, if not already cached, plus two container startups).</p>
+
+<p>Re-run <code class="language-plaintext highlighter-rouge">mise run check:java</code> and <code class="language-plaintext highlighter-rouge">mise run check:authoring-contracts</code> to confirm nothing else moved.</p>
+
+<h2 id="artefacts-to-inspect">Artefacts to inspect</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>What</th>
+      <th>Where</th>
+      <th>Look for</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>retry loops</td>
+      <td><a href="../../../platform/authoring-service/src/main/java/org/nebularis/lattice/authoring/store/FusekiAuthoringStore.java">FusekiAuthoringStore.java</a>, <a href="../../../platform/authoring-service/src/main/java/org/nebularis/lattice/authoring/messaging/RabbitMqAnalysisBus.java">RabbitMqAnalysisBus.java</a></td>
+      <td>30 attempts, 2 seconds apart, in <code class="language-plaintext highlighter-rouge">ensureReady</code>/the constructor</td>
+    </tr>
+    <tr>
+      <td>the topology, once</td>
+      <td><a href="../../../platform/authoring-service/src/main/java/org/nebularis/lattice/authoring/messaging/Topology.java">Topology.java</a> and <a href="../../../contracts/authoring/amqp-topology.json">amqp-topology.json</a></td>
+      <td>the same three queues, the same dead-letter wiring</td>
+    </tr>
+    <tr>
+      <td>the entry point</td>
+      <td><a href="../../../platform/authoring-service/src/main/java/org/nebularis/lattice/authoring/app/AuthoringServiceMain.java">AuthoringServiceMain.java</a></td>
+      <td><code class="language-plaintext highlighter-rouge">--self-check</code> needs no network; <code class="language-plaintext highlighter-rouge">run()</code> builds exactly WA4’s collaborators plus the WA5 store and bus</td>
+    </tr>
+    <tr>
+      <td>the merge defect and the probe that actually finds it</td>
+      <td><a href="../../../platform/authoring-service/src/test/java/org/nebularis/lattice/authoring/app/SelfCheckIT.java">SelfCheckIT.java</a></td>
+      <td><code class="language-plaintext highlighter-rouge">theShadedJarMergesEveryJenaSubsystemRegistration</code>, and “Self-probe” below</td>
+    </tr>
+    <tr>
+      <td>configuration and the IT command</td>
+      <td><a href="../../../platform/authoring-service/README.md">README.md</a></td>
+      <td>the eight environment variables, <code class="language-plaintext highlighter-rouge">mise run check:authoring-service-it</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="self-probe">Self-probe</h2>
+
+<p>The plan’s prescribed break — remove <code class="language-plaintext highlighter-rouge">ServicesResourceTransformer</code> from the shade configuration —
+was made, and <strong><code class="language-plaintext highlighter-rouge">SelfCheckIT.theShadedJarsSelfCheckExitsZero</code> (the test the plan names) still
+passes.</strong> Run directly, to rule out a test-harness artefact:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>java -jar platform/authoring-service/target/authoring-service.jar --self-check
+</code></pre></div></div>
+
+<p>prints <code class="language-plaintext highlighter-rouge">self-check ok</code> and exits 0 whether or not the transformer is present. The reason is
+checkable directly. With the transformer removed, the shaded jar’s
+<code class="language-plaintext highlighter-rouge">META-INF/services/org.apache.jena.sys.JenaSubsystemLifecycle</code> holds only:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>org.apache.jena.riot.system.InitRIOT
+org.apache.jena.sparql.system.InitARQ
+org.apache.jena.rdfs.sys.InitRDFS
+</code></pre></div></div>
+
+<p>against five lines with it restored (<code class="language-plaintext highlighter-rouge">org.apache.jena.sys.InitJenaCore</code> and
+<code class="language-plaintext highlighter-rouge">org.apache.jena.shacl.sys.InitShacl</code> are also present). The self-check’s own code path — loading
+the vocabulary, shapes, schemas, templates and samples, then validating each with
+<code class="language-plaintext highlighter-rouge">ShaclValidator.get().validate(...)</code> called directly — evidently does not exercise anything that
+needs those two subsystems’ registrations, so nothing observably breaks. This is WA3’s finding
+repeated: a plan-prescribed probe can be non-vacuous in general and still miss the one code path a
+given test happens to exercise.</p>
+
+<p><strong>A probe that does bite was added instead</strong>, as a second test in the same class,
+<code class="language-plaintext highlighter-rouge">theShadedJarMergesEveryJenaSubsystemRegistration</code>, which opens the built jar and asserts its
+<code class="language-plaintext highlighter-rouge">JenaSubsystemLifecycle</code> services file contains all five expected provider class names — the actual
+thing the transformer is responsible for, checked directly rather than through a side effect that
+may or may not depend on it. With the transformer removed:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>SelfCheckIT.theShadedJarMergesEveryJenaSubsystemRegistration:61
+expected [org.apache.jena.sys.InitJenaCore, org.apache.jena.riot.system.InitRIOT,
+org.apache.jena.sparql.system.InitARQ, org.apache.jena.shacl.sys.InitShacl,
+org.apache.jena.rdfs.sys.InitRDFS] but the merged jar only has
+[org.apache.jena.riot.system.InitRIOT, org.apache.jena.sparql.system.InitARQ,
+org.apache.jena.rdfs.sys.InitRDFS]
+</code></pre></div></div>
+
+<p>The transformer was restored and <code class="language-plaintext highlighter-rouge">mise run check:authoring-service-it</code> re-run green at 6 tests.</p>
+
+<h2 id="implementer-choices">Implementer choices</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Left open</th>
+      <th>Chosen</th>
+      <th>Why</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">FusekiAuthoringStore</code>’s exact 404-handling API</td>
+      <td>catch <code class="language-plaintext highlighter-rouge">org.apache.jena.atlas.web.HttpException</code>, compare <code class="language-plaintext highlighter-rouge">getStatusCode()</code> to <code class="language-plaintext highlighter-rouge">HttpSC.NOT_FOUND_404</code></td>
+      <td>confirmed against Jena 5.1.0 by compiling, not guessed from documentation</td>
+    </tr>
+    <tr>
+      <td>the shared <code class="language-plaintext highlighter-rouge">HttpClient</code>’s <code class="language-plaintext highlighter-rouge">Authenticator</code></td>
+      <td>one instance, used both by <code class="language-plaintext highlighter-rouge">RDFConnectionRemote</code>’s internal requests and this class’s own admin GET/POST calls</td>
+      <td>matches the plan’s wording exactly (“an HttpClient whose java.net.Authenticator answers with the admin credentials … Uses java.net.http.HttpClient for the admin calls”), and Java’s <code class="language-plaintext highlighter-rouge">HttpClient</code> Authenticator responds automatically to Fuseki’s 401 challenge, so no header is built by hand</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">RabbitMqAnalysisBus</code>’s exchange type</td>
+      <td>the string literal <code class="language-plaintext highlighter-rouge">"topic"</code>, not <code class="language-plaintext highlighter-rouge">BuiltinExchangeType.TOPIC</code></td>
+      <td>matches the existing convention in <code class="language-plaintext highlighter-rouge">platform-outbox</code>’s <code class="language-plaintext highlighter-rouge">RabbitMqEventPublisher</code></td>
+    </tr>
+    <tr>
+      <td>the dead-letter queue’s binding</td>
+      <td>bound to <code class="language-plaintext highlighter-rouge">DEAD_LETTER_EXCHANGE</code> with routing key <code class="language-plaintext highlighter-rouge">#</code>, not to the main exchange</td>
+      <td>a dead-lettered message is republished to the configured dead-letter exchange under its original routing key, so the catch-all queue has to listen there, not on the main exchange</td>
+    </tr>
+    <tr>
+      <td>S5-05’s “in-test consumer”</td>
+      <td>a raw RabbitMQ consumer (not an <code class="language-plaintext highlighter-rouge">AnalysisBus</code>) that reads <code class="language-plaintext highlighter-rouge">REQUESTED_QUEUE</code>, copies the three job fields and the <code class="language-plaintext highlighter-rouge">proposalGraphIri</code> into the <code class="language-plaintext highlighter-rouge">wording-analysis-result--completed-minimal.json</code> fixture, and publishes it</td>
+      <td>stands in for the WA6/WA7 worker, which does not exist yet. Using the real fixture, not a hand-built object, keeps this test honest about the real event shape</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">AuthoringConfig</code>’s secret-safety test</td>
+      <td>asserted on all three exception paths that can fire while a password is present (port, base IRI, missing AMQP URI with the password supplied), not only the “missing password” case</td>
+      <td>the plan’s “none containing the password value” reads as a property of every exception the type can throw, not of one case</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<ul>
+  <li><strong>The S5-07 probe’s non-bite</strong>, covered in full under Self-probe above, with a second test added
+to give the slice a probe that actually fails on the regression it targets.</li>
+  <li><strong>Fuseki or RabbitMQ going down after the service has started</strong> (mid-run reconnection). The retry
+loops run once, at construction; <code class="language-plaintext highlighter-rouge">ping()</code>/<code class="language-plaintext highlighter-rouge">health()</code> report the failure but nothing reconnects
+automatically. A POC-grade limitation, consistent with ADR-A118’s scope.</li>
+  <li><strong>The admin dataset-creation path when a dataset of the same name already exists with a different
+type</strong> (e.g. <code class="language-plaintext highlighter-rouge">mem</code> instead of <code class="language-plaintext highlighter-rouge">tdb2</code>). <code class="language-plaintext highlighter-rouge">ensureReady</code> only distinguishes “exists” from “absent”.</li>
+  <li><strong>Message redelivery after a worker crash mid-processing</strong> (RabbitMQ’s own redelivery-on-requeue
+semantics for an unacked, disconnected consumer). Not exercised; S5-04 only covers the
+reject-and-dead-letter path.</li>
+  <li><strong>Running the compose stack itself.</strong> WA10.</li>
+</ul>
+
+<p>Unit-wide non-coverage, cited by every pack: CCS assembly, amendments, tables and versioned
+elements. LE2 parsing of the generated program. Concurrent editing. Authentication. Poison-message
+retry limits. Real Word, except through WA11’s manual checklist.</p>

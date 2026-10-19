@@ -1,0 +1,386 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="ontology-semantic-versioning---design-sketch">Ontology Semantic Versioning - Design Sketch</h1>
+
+<p><strong>Unit ID:</strong> <code class="language-plaintext highlighter-rouge">ontology-semantic-versioning</code>
+<strong>Status:</strong> Design sketch for the maintainer’s review. No implementation is claimed.
+<strong>Trigger:</strong> request, 2026-09-25 — “we currently update our ontologies
+regularly, without any thought to a versioning approach.”
+<strong>Source of truth for the proposal:</strong> <a href="https://semver.org/">Semantic Versioning 2.0.0</a>.</p>
+
+<h2 id="problem">Problem</h2>
+
+<p>Every layer under <code class="language-plaintext highlighter-rouge">ontology/</code> that declares <code class="language-plaintext highlighter-rouge">owl:Ontology</code> also declares
+<code class="language-plaintext highlighter-rouge">owl:versionIRI</code>, or fails to, or declares something adjacent that does not
+agree with it. There is no documented rule anywhere in this repository for
+when that number changes, so it has drifted into an inventory that tells a
+reviewer nothing:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Artefact</th>
+      <th>Current <code class="language-plaintext highlighter-rouge">owl:versionIRI</code></th>
+      <th>Base URI matches the layer’s own hash namespace (<code class="language-plaintext highlighter-rouge">ontology-architecture.md</code> §2)?</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">foundation/spec/foundation.ttl</code></td>
+      <td><code class="language-plaintext highlighter-rouge">.../neuro-semantic/foundation/0.0.7</code></td>
+      <td>No — missing <code class="language-plaintext highlighter-rouge">lattice/</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">foundation/vocab/foundation-vocab.ttl</code></td>
+      <td><code class="language-plaintext highlighter-rouge">.../neuro-semantic/foundation-vocab/0.0.1</code></td>
+      <td>No — missing <code class="language-plaintext highlighter-rouge">lattice/</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">vocabulary/spec/vocabulary.ttl</code></td>
+      <td><code class="language-plaintext highlighter-rouge">.../neuro-semantic/vocabulary/0.0.2</code></td>
+      <td>No — missing <code class="language-plaintext highlighter-rouge">lattice/</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">quantification/spec/quantification.ttl</code></td>
+      <td><code class="language-plaintext highlighter-rouge">.../neuro-semantic/quantification/0.0.1</code></td>
+      <td>No — missing <code class="language-plaintext highlighter-rouge">lattice/</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">party/spec/party.ttl</code></td>
+      <td><code class="language-plaintext highlighter-rouge">.../neuro-semantic/party/0.0.3</code></td>
+      <td>No — missing <code class="language-plaintext highlighter-rouge">lattice/</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">party/vocab/party-vocab.ttl</code></td>
+      <td><code class="language-plaintext highlighter-rouge">.../neuro-semantic/party-vocab/0.0.1</code></td>
+      <td>No — missing <code class="language-plaintext highlighter-rouge">lattice/</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">eligibility/spec/eligibility.ttl</code></td>
+      <td><code class="language-plaintext highlighter-rouge">.../neuro-semantic/eligibility/0.0.1</code></td>
+      <td>No — missing <code class="language-plaintext highlighter-rouge">lattice/</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">eligibility/vocab/eligibility-vocab.ttl</code></td>
+      <td><code class="language-plaintext highlighter-rouge">.../neuro-semantic/eligibility-vocab/0.0.1</code></td>
+      <td>No — missing <code class="language-plaintext highlighter-rouge">lattice/</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">instrument/spec/instrument.ttl</code></td>
+      <td><code class="language-plaintext highlighter-rouge">.../neuro-semantic/instrument/0.0.1</code></td>
+      <td>No — missing <code class="language-plaintext highlighter-rouge">lattice/</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">instrument/vocab/instrument-vocab.ttl</code></td>
+      <td><code class="language-plaintext highlighter-rouge">.../neuro-semantic/instrument-vocab/0.0.1</code></td>
+      <td>No — missing <code class="language-plaintext highlighter-rouge">lattice/</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">behaviour/spec/behaviour.ttl</code></td>
+      <td><code class="language-plaintext highlighter-rouge">.../neuro-semantic/behaviour/0.0.1</code></td>
+      <td>No — missing <code class="language-plaintext highlighter-rouge">lattice/</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">behaviour/vocab/behaviour-vocab.ttl</code></td>
+      <td><code class="language-plaintext highlighter-rouge">.../neuro-semantic/behaviour-vocab/0.0.1</code></td>
+      <td>No — missing <code class="language-plaintext highlighter-rouge">lattice/</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">surface/spec/surface.ttl</code></td>
+      <td><code class="language-plaintext highlighter-rouge">.../neuro-semantic/surface/0.0.1</code></td>
+      <td>No — missing <code class="language-plaintext highlighter-rouge">lattice/</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">surface/vocab/surface-vocab.ttl</code></td>
+      <td><code class="language-plaintext highlighter-rouge">.../neuro-semantic/surface-vocab/0.0.1</code></td>
+      <td>No — missing <code class="language-plaintext highlighter-rouge">lattice/</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">persistence/spec/persistence.ttl</code></td>
+      <td><code class="language-plaintext highlighter-rouge">.../neuro-semantic/lattice/persistence/0.1.0</code></td>
+      <td>Yes</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">mork/spec/Executable.ttl</code></td>
+      <td><code class="language-plaintext highlighter-rouge">.../neuro-semantic/lattice/executable/0.0.1</code></td>
+      <td>Yes</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">mork/spec/Mork.ttl</code></td>
+      <td><strong>none</strong> — <code class="language-plaintext highlighter-rouge">owl:Ontology</code> declared, no <code class="language-plaintext highlighter-rouge">owl:versionIRI</code> at all</td>
+      <td>n/a</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">spc/spec/spc.ttl</code></td>
+      <td><strong>none</strong> — <code class="language-plaintext highlighter-rouge">owl:Ontology</code> declared, no <code class="language-plaintext highlighter-rouge">owl:versionIRI</code> at all</td>
+      <td>n/a</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">applied/capacity/.../applied_capacity_execution_spec_capx_Version2.ttl</code></td>
+      <td><code class="language-plaintext highlighter-rouge">.../neuro-semantic/lattice/applied/capacity/execution/0.0.1</code></td>
+      <td>Yes</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">applied/insurance/spec/structure/contract.ttl</code></td>
+      <td><code class="language-plaintext highlighter-rouge">.../neuro-semantic/insurance/contract/0.1.1</code> <strong>and separately</strong> <code class="language-plaintext highlighter-rouge">owl:versionInfo "3.5.1"</code></td>
+      <td>No — different namespace family entirely, and carries two disagreeing version signals on the same ontology</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Four distinct problems sit inside that one table, and the proposal below has
+to answer all four, not just “add a number”:</p>
+
+<ol>
+  <li><strong>No rule exists for what changes the number.</strong> Every bump so far —
+<code class="language-plaintext highlighter-rouge">0.0.1</code> here, <code class="language-plaintext highlighter-rouge">0.0.7</code> there, <code class="language-plaintext highlighter-rouge">0.1.0</code>/<code class="language-plaintext highlighter-rouge">0.1.1</code> elsewhere — reflects however
+many times someone happened to touch the file, not a classification of
+what the change actually was. <code class="language-plaintext highlighter-rouge">vocabulary/README.md</code>’s own §”Version” note
+(“the additions are backward compatible… has not been advanced”) is the
+<em>only</em> place in the repository that reasons about this at all, and it
+reasons about it ad hoc, once, for one layer.</li>
+  <li><strong>The versioning unit is inconsistent.</strong> <code class="language-plaintext highlighter-rouge">spec/*.ttl</code> and <code class="language-plaintext highlighter-rouge">vocab/*.ttl</code>
+are separately versioned artefacts today (each is its own <code class="language-plaintext highlighter-rouge">owl:Ontology</code>
+document with its own IRI), and <code class="language-plaintext highlighter-rouge">foundation</code>’s two artefacts have already
+drifted apart (<code class="language-plaintext highlighter-rouge">0.0.7</code> vs <code class="language-plaintext highlighter-rouge">0.0.1</code>) with no record of why. <code class="language-plaintext highlighter-rouge">shapes/*.ttl</code>
+and <code class="language-plaintext highlighter-rouge">projection/*.ttl</code> declare no <code class="language-plaintext highlighter-rouge">owl:Ontology</code> at all and carry no
+version identity of their own, even though they change just as often.</li>
+  <li><strong>Two ontologies (MORK, SPC) have no version identity at all</strong>, and one
+(<code class="language-plaintext highlighter-rouge">applied/insurance/contract.ttl</code>) has two disagreeing ones on the same
+document.</li>
+  <li><strong>The <code class="language-plaintext highlighter-rouge">owl:versionIRI</code> base URI silently disagrees with the namespace
+convention</strong> <code class="language-plaintext highlighter-rouge">ontology-architecture.md</code> §2 already documents (one hash
+namespace per layer under <code class="language-plaintext highlighter-rouge">https://www.nebularis.org/neuro-semantic/lattice/</code>)
+for every one of the seven core literate-spec layers plus Surface. This
+predates this proposal and is a pre-existing defect this proposal’s
+baseline-reset step is well placed to fix in the same pass, since every
+one of those files has to be touched anyway.</li>
+</ol>
+
+<p>None of this is a new gap the project introduced carelessly — <code class="language-plaintext highlighter-rouge">foundation</code>
+alone went to seven patch-shaped bumps and <code class="language-plaintext highlighter-rouge">party</code> to three without a rule
+existing to check them against, which is exactly the working-without-a-plan
+pattern semantic versioning exists to replace.</p>
+
+<h2 id="what-the-public-api-means-for-an-owlshaclskos-ontology">What “the public API” means for an OWL/SHACL/SKOS ontology</h2>
+
+<p>Software semver (<code class="language-plaintext highlighter-rouge">semver.md</code>, attached to this request) defines API breakage
+in terms of function signatures. An ontology’s public API is what a
+<em>consumer’s data</em> is checked against: what a reasoner or a SHACL engine will
+accept or reject, and what a term is documented to mean. Translating
+<code class="language-plaintext highlighter-rouge">semver.md</code>’s three rules (§6–8) into that vocabulary:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Bump</th>
+      <th>An ontology change is this kind when it…</th>
+      <th>Examples from this repository’s own history</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>PATCH</strong> (Z)</td>
+      <td>Corrects prose or a shape so that it now matches what was already documented as intended, with no change to what a <em>correctly governed</em> consumer graph experiences.</td>
+      <td>Fixing an <code class="language-plaintext highlighter-rouge">rdfs:comment</code> or <code class="language-plaintext highlighter-rouge">fnd:utility</code> string that misdescribed a term; fixing a SHACL <code class="language-plaintext highlighter-rouge">sh:message</code>; a Turtle whitespace/syntax fix with no triple-level change; a broken cross-reference.</td>
+    </tr>
+    <tr>
+      <td><strong>MINOR</strong> (Y)</td>
+      <td>Adds something backward compatible: a consumer graph that conformed before still conforms, unchanged in meaning, after.</td>
+      <td>A new class, property, or <code class="language-plaintext highlighter-rouge">vocab/</code> individual; a new <em>optional</em> SHACL property shape (<code class="language-plaintext highlighter-rouge">sh:minCount 0</code>) or a <code class="language-plaintext highlighter-rouge">sh:Warning</code>-severity shape; widening a cardinality restriction; marking a term deprecated while it still works (<code class="language-plaintext highlighter-rouge">semver.md</code> §7 requires this one). Foundation’s <code class="language-plaintext highlighter-rouge">voc:SchemeBinding</code> addition (commit <code class="language-plaintext highlighter-rouge">65ac4a85e</code>, <code class="language-plaintext highlighter-rouge">vocabulary-temporal-binding</code>) is exactly this shape.</td>
+    </tr>
+    <tr>
+      <td><strong>MAJOR</strong> (X)</td>
+      <td>Removes, renames, or narrows something such that a previously conformant consumer graph can stop conforming, or a previously valid statement can stop meaning what it meant.</td>
+      <td>Removing/renaming a class, property, or individual; narrowing a cardinality restriction; a new <code class="language-plaintext highlighter-rouge">sh:Violation</code>-severity shape, <code class="language-plaintext highlighter-rouge">sh:closed true</code>, or <code class="language-plaintext highlighter-rouge">owl:disjointWith</code> that a real existing graph could now fail; a domain/range narrowing; changing the ontology IRI itself.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Two categories do not reduce to axiom-diffing and need a documented rationale
+in the PR rather than an automated check:</p>
+
+<ul>
+  <li><strong>Silent semantic redefinition</strong> — the IRI and the axioms are unchanged,
+but the layer’s own “Design decisions” prose now means something different.
+This is a MAJOR change even when no SHACL shape moves, and it is the one
+case where classification is a judgement call, for the contributor to
+make against the layer’s own README, not a mechanical diff.</li>
+  <li><strong>Cross-layer import pinning.</strong> <code class="language-plaintext highlighter-rouge">owl:imports</code> in this repository pins an
+<em>exact</em> <code class="language-plaintext highlighter-rouge">owl:versionIRI</code> (<code class="language-plaintext highlighter-rouge">vocabulary/README.md</code>: “Quantification and
+Instrument import <code class="language-plaintext highlighter-rouge">vocabulary/0.0.2</code> by exact IRI”). Bumping any layer’s
+version therefore obliges updating every importing layer’s <code class="language-plaintext highlighter-rouge">owl:imports</code>
+statement (and its README <code class="language-plaintext highlighter-rouge">turtle-spec</code> source) in the <em>same</em> change, or
+the graph stops resolving. This is unlike a software dependency range —
+there is no “compatible with ^0.2” import statement available today. The
+ADR needs to either accept this cascade cost as the standing discipline, or
+propose a resolution mechanism; see “Open questions” below.</li>
+</ul>
+
+<h2 id="invariants-to-protect">Invariants to protect</h2>
+
+<ol>
+  <li>Every <code class="language-plaintext highlighter-rouge">owl:Ontology</code> document under <code class="language-plaintext highlighter-rouge">ontology/</code> that this proposal brings
+into scope carries exactly one unambiguous <code class="language-plaintext highlighter-rouge">owl:versionIRI</code>, in a base URI
+consistent with <code class="language-plaintext highlighter-rouge">ontology-architecture.md</code> §2’s namespace convention.</li>
+  <li>A version number changes only according to a documented, checkable rule —
+never “because the file was touched.”</li>
+  <li>The versioning <em>unit</em> (which files share one version number) is stated
+explicitly per artefact kind, not left to accumulate by precedent the way
+<code class="language-plaintext highlighter-rouge">spec/*.ttl</code> vs <code class="language-plaintext highlighter-rouge">vocab/*.ttl</code> already has.</li>
+  <li><code class="language-plaintext highlighter-rouge">owl:imports</code> continues to resolve after every bump: no layer is bumped
+without its importers being updated in the same change.</li>
+  <li>The one-time baseline reset this request asks for is clearly marked as an
+administrative normalisation, not a claim that any layer just became
+“0.2.0 stable” in the SemVer sense — <code class="language-plaintext highlighter-rouge">semver.md</code> §4 (“major version zero
+… is for initial development. Anything MAY change at any time.”) keeps
+applying after the reset exactly as it did before.</li>
+  <li>The documentation this unit produces is usable by any contributor
+mid-PR, as a checklist it can apply
+without external judgement calls beyond the one flagged exception above.</li>
+</ol>
+
+<h2 id="proposed-deliverables">Proposed deliverables</h2>
+
+<h3 id="adr">ADR</h3>
+
+<p>Author ADR-A86 (Proposed) recording: SemVer 2.0.0 adopted for ontology
+documents; the MAJOR/MINOR/PATCH mapping table above; the versioning unit
+(one version per <code class="language-plaintext highlighter-rouge">owl:Ontology</code> document — <code class="language-plaintext highlighter-rouge">spec/*.ttl</code> and <code class="language-plaintext highlighter-rouge">vocab/*.ttl</code>
+remain separately versioned, exactly as today, rather than merging or further
+subdividing); the import-pinning cascade rule retained as-is; and the
+baseline-reset target number.</p>
+
+<h3 id="baseline-reset">Baseline reset</h3>
+
+<p>A single mechanical pass, gated on ADR ratification, that:</p>
+
+<ul>
+  <li>Assigns every ontology document currently missing <code class="language-plaintext highlighter-rouge">owl:versionIRI</code> (MORK’s
+<code class="language-plaintext highlighter-rouge">Mork.ttl</code>, SPC’s <code class="language-plaintext highlighter-rouge">spc.ttl</code>) its first one.</li>
+  <li>Reconciles <code class="language-plaintext highlighter-rouge">applied/insurance/contract.ttl</code>’s two disagreeing version
+signals (<code class="language-plaintext highlighter-rouge">owl:versionIRI 0.1.1</code> vs <code class="language-plaintext highlighter-rouge">owl:versionInfo "3.5.1"</code>) into one.</li>
+  <li>Normalises every core-layer <code class="language-plaintext highlighter-rouge">owl:versionIRI</code> base URI to match its own
+namespace convention (adds the missing <code class="language-plaintext highlighter-rouge">lattice/</code> segment) — <strong>except</strong>
+<code class="language-plaintext highlighter-rouge">applied/insurance/contract.ttl</code>’s namespace family, which is a separate,
+applied-layer-specific question (see “Open questions”).</li>
+  <li>Resets every in-scope document to one common version number. Recommended:
+<strong><code class="language-plaintext highlighter-rouge">0.2.0</code></strong> — safely above every current value (the highest today is
+<code class="language-plaintext highlighter-rouge">0.1.1</code>), and, per <code class="language-plaintext highlighter-rouge">semver.md</code>’s own FAQ (“the simplest thing to do is
+start your initial development release at 0.1.0 and then increment the
+minor version for each subsequent release”), leaves the entire <code class="language-plaintext highlighter-rouge">0.3.0</code>
+through <code class="language-plaintext highlighter-rouge">0.99.0</code> minor-version range — effectively unlimited — as room to
+grow before any layer’s API is asserted stable enough for <code class="language-plaintext highlighter-rouge">1.0.0</code>. This one
+number is the proposal’s single open numeric parameter; the ADR states it
+as Proposed pending the maintainer’s confirmation, not as settled.</li>
+  <li>Records the reset itself as one entry in each affected layer’s own
+“Open items”/changelog note, so a future reader does not mistake the jump
+from, say, <code class="language-plaintext highlighter-rouge">0.0.7</code> to <code class="language-plaintext highlighter-rouge">0.2.0</code> for seven MINOR releases that never happened.</li>
+</ul>
+
+<h3 id="developer-and-agent-guidance">Developer and agent guidance</h3>
+
+<p>A new document, <code class="language-plaintext highlighter-rouge">docs/architecture/ontology-versioning-policy.md</code>, holding:
+the MAJOR/MINOR/PATCH table; the versioning-unit rule; the import-pinning
+cascade checklist (enumerate every importer via <code class="language-plaintext highlighter-rouge">grep owl:imports</code> before
+bumping, update all in the same change); where the number physically lives
+for the seven literate-spec layers (the README’s own <code class="language-plaintext highlighter-rouge">turtle-spec</code> block,
+propagated by <code class="language-plaintext highlighter-rouge">tools/literate_extract.py</code>, never edited directly in the
+generated <code class="language-plaintext highlighter-rouge">spec/*.ttl</code>); and a short worked example of classifying a real
+past change (the <code class="language-plaintext highlighter-rouge">vocabulary-temporal-binding</code> unit’s own MINOR addition is a
+ready-made one). Cross-referenced from <code class="language-plaintext highlighter-rouge">CONTRIBUTING.md</code>’s “Where new content
+belongs” section and from <code class="language-plaintext highlighter-rouge">docs/architecture/ontology-architecture.md</code> §2.</p>
+
+<h3 id="tooling-deliberately-narrow-for-this-unit">Tooling (deliberately narrow for this unit)</h3>
+
+<p>Automatically <em>classifying</em> a change as MAJOR/MINOR/PATCH is not proposed —
+that is a research problem, not a checklist. What is proposed is a narrow,
+mechanical nudge: a check (in the spirit of <code class="language-plaintext highlighter-rouge">tools/repository_topology_check.py</code>
+and <code class="language-plaintext highlighter-rouge">literate_extract.py --check</code>) that fails when an in-scope <code class="language-plaintext highlighter-rouge">.ttl</code> file’s
+content differs from its last committed state but its <code class="language-plaintext highlighter-rouge">owl:versionIRI</code>
+literal did not change at all. This catches “forgot to bump,” not “bumped the
+wrong amount” — classification stays a judgement call against the
+documented table.</p>
+
+<h2 id="proposed-slice-boundaries">Proposed slice boundaries</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Slice</th>
+      <th>Scope</th>
+      <th>Validation level</th>
+      <th>Completion gate</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>ADR-A86, this sketch, plan, status record, traceability skeleton</td>
+      <td>L0</td>
+      <td>Review of the mapping table, versioning unit, and baseline number</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td><code class="language-plaintext highlighter-rouge">docs/architecture/ontology-versioning-policy.md</code>, <code class="language-plaintext highlighter-rouge">CONTRIBUTING.md</code> and <code class="language-plaintext highlighter-rouge">ontology-architecture.md</code> §2 cross-references</td>
+      <td>L0</td>
+      <td>Docs read coherently end to end; no dangling cross-reference (<code class="language-plaintext highlighter-rouge">mise run topology:links</code>)</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>Baseline reset across every in-scope <code class="language-plaintext highlighter-rouge">.ttl</code> file, plus every importer’s <code class="language-plaintext highlighter-rouge">owl:imports</code> update in the same change</td>
+      <td>L0, L3 (<code class="language-plaintext highlighter-rouge">literate_extract.py --check</code> where applicable; <code class="language-plaintext highlighter-rouge">reuse lint</code>)</td>
+      <td>Every in-scope ontology parses, every import resolves, no version left unreconciled</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>The narrow “changed but not bumped” check, wired into <code class="language-plaintext highlighter-rouge">mise</code></td>
+      <td>L0</td>
+      <td>The check fires on a deliberately-mutated fixture and stays silent on an untouched one (mutation probe)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<ul>
+  <li>Automatic MAJOR/MINOR/PATCH classification of a change (a research problem,
+not this unit’s job — the table is a checklist, not a linter).</li>
+  <li>A dependency-range import mechanism replacing exact-IRI <code class="language-plaintext highlighter-rouge">owl:imports</code>
+pinning (see “Open questions” — a real option, not decided here).</li>
+  <li>Re-versioning <code class="language-plaintext highlighter-rouge">shapes/*.ttl</code> or <code class="language-plaintext highlighter-rouge">projection/*.ttl</code> as independent
+<code class="language-plaintext highlighter-rouge">owl:Ontology</code> documents with their own <code class="language-plaintext highlighter-rouge">owl:versionIRI</code> — this proposal
+keeps today’s asymmetry (spec and vocab carry version identity; shapes and
+projection changes are covered by whichever of those two artefacts’ bump
+they motivate) rather than adding a third or fourth independently-versioned
+artefact per layer.</li>
+  <li>Any change to what a layer’s ontology <em>says</em> — this is a versioning-process
+unit, not an occasion to also fix unrelated content.</li>
+  <li>MORK and SPC’s own internal versioning conventions beyond assigning them a
+first <code class="language-plaintext highlighter-rouge">owl:versionIRI</code> consistent with the rest of the repository — MORK in
+particular is flagged elsewhere in this repository as “pre-existing/
+independent… richer and older in style,” and this unit does not propose
+changing how MORK is otherwise governed.</li>
+</ul>
+
+<h2 id="open-questions">Open questions</h2>
+
+<ul>
+  <li><strong>Import-pinning cost.</strong> Exact-IRI <code class="language-plaintext highlighter-rouge">owl:imports</code> pinning is precise and
+reproducible but means every MINOR/PATCH bump of a widely-imported layer
+(Foundation, Vocabulary) cascades into an edit of every importer’s
+<code class="language-plaintext highlighter-rouge">owl:imports</code> statement in the same change. Keep this discipline as-is
+(recommended default — matches current practice, and the import graph is
+still small), or invest in a “latest-within-major” import IRI convention
+now, before the cascade cost grows with the graph? This sketch recommends
+keeping exact pinning and revisiting only if the cascade becomes a real
+source of friction.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">applied/insurance/contract.ttl</code>’s namespace family.</strong> Its <code class="language-plaintext highlighter-rouge">owl:versionIRI</code>
+base (<code class="language-plaintext highlighter-rouge">.../neuro-semantic/insurance/...</code>) sits entirely outside the
+<code class="language-plaintext highlighter-rouge">lattice/</code> namespace tree, unlike <code class="language-plaintext highlighter-rouge">applied/capacity</code>’s. Is this deliberate —
+an applied ontology may legitimately choose its own namespace family,
+independent of the framework’s own — or an oversight to correct alongside
+the version reset? This sketch does not assume an answer.</li>
+  <li><strong>The baseline number itself.</strong> <code class="language-plaintext highlighter-rouge">0.2.0</code> is recommended, not decided — see
+“Baseline reset” above.</li>
+</ul>

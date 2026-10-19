@@ -1,0 +1,155 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-fmh-ho7-composite-create-and-tombstone-delete">Validation Pack: FMH-HO7, composite create and tombstone delete</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/formal-methods-track-h.html"><code class="language-plaintext highlighter-rouge">formal-methods-track-h</code></a>, slice HO7
+(<a href="/developer/plans/formal-methods-track-h.html#ho7-composite-create-and-tombstone-delete-td-04">plan §3.5</a>).
+<strong>Source:</strong> <a href="../../architecture/decisions/ADR-A122-aggregate-ownership.md">ADR-A122</a> decision 3 and
+<a href="/developer/sketches/persistence-aggregate-ownership.html">sketch §7.2 and §7.3</a>. <strong>Closes:</strong> TD-04 (removed from the register).
+<strong>Decisions needing confirmation:</strong> none. One deviation from the plan’s wording, below.</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>A composite aggregate can be created exactly once and deleted as a whole. A create writes the payload to the
+data graph and a version row, and does nothing if the row exists or if anything of the root is already in the
+data graph. A tombstone delete removes the root and every member the owned path reaches, keeps the version row
+and tombstones it, and writes a deletion revision. Neither touches the default graph.</p>
+
+<h2 id="what-changed">What changed</h2>
+
+<ul>
+  <li>Four templates: <code class="language-plaintext highlighter-rouge">create-if-absent-composite</code> and <code class="language-plaintext highlighter-rouge">tombstone-delete-composite</code>, each with a <code class="language-plaintext highlighter-rouge">-dataset-guard</code>
+variant. They are the named-graph templates with <code class="language-plaintext highlighter-rouge">GRAPH ?g</code> replaced by <code class="language-plaintext highlighter-rouge">GRAPH }</code> and the
+<code class="language-plaintext highlighter-rouge">?g</code> binding removed. The create adds the guard <code class="language-plaintext highlighter-rouge">FILTER NOT EXISTS { GRAPH } { $root ?anyP ?anyO } }</code>.
+The tombstone sweeps with <code class="language-plaintext highlighter-rouge">$root } ?s . ?s ?p ?o</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">operations.py</code>: a composite family with <code class="language-plaintext highlighter-rouge">dal:firstWrite dal:AbsentRow</code> (the default) generates
+<code class="language-plaintext highlighter-rouge">create-if-absent</code>. Every optimistic composite family generates <code class="language-plaintext highlighter-rouge">tombstone-delete</code>. A pre-created row gets a
+bootstrap and no create, as for a named graph.</li>
+  <li><code class="language-plaintext highlighter-rouge">templatecheck.py</code>: the tombstone’s <code class="language-plaintext highlighter-rouge">prevRev</code>, left unbound for a pre-created row, joins the reviewed allowances.</li>
+  <li><code class="language-plaintext highlighter-rouge">gaps.py</code>: the rule <code class="language-plaintext highlighter-rouge">CompositeNoLifecycleOperations</code> is removed, and the composite example now reports no
+composite gap.</li>
+  <li>Register and README: TD-04 and the <code class="language-plaintext highlighter-rouge">AbsentRow</code> limitation removed.</li>
+  <li>The Oxigraph spike gains two scenarios, a composite tombstone and a create run twice. rdflib and Oxigraph agree.</li>
+</ul>
+
+<h2 id="deviation-from-the-plan-for-the-maintainer">Deviation from the plan, for the maintainer</h2>
+
+<p>The plan’s tests read “the payload in the default graph” (T2) and “everything outside unchanged”. After AO-Q14
+the aggregate lives in the data graph, so the tests look there and assert the default graph holds nothing.
+HO7-T7b adds a check the plan did not list: a tombstone leaves a copy of the data in the default graph alone.</p>
+
+<h2 id="test-cases">Test cases</h2>
+
+<p>In <code class="language-plaintext highlighter-rouge">tools/persistence/tests/test_composite_lifecycle.py</code>, on rdflib’s <code class="language-plaintext highlighter-rouge">Dataset</code> with the project fixture.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>HO7-T1</td>
+      <td>the project config, and the dataset-guard config, with <code class="language-plaintext highlighter-rouge">AbsentRow</code> / compile / the create and tombstone templates of each variant</td>
+      <td>L4</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>HO7-T1b</td>
+      <td>the same with <code class="language-plaintext highlighter-rouge">PreCreatedRow</code> / compile / a bootstrap and a tombstone, and no create</td>
+      <td>L4</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>HO7-T2</td>
+      <td>an empty dataset / create <code class="language-plaintext highlighter-rouge">p1</code> with its aggregate as the payload / the payload in the data graph, a version row at sequence 1, one revision, nothing in the default graph</td>
+      <td>L5</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>HO7-T3</td>
+      <td>as T2, run twice with different transaction ids / the second create / changes nothing</td>
+      <td>L5</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>HO7-T4</td>
+      <td>the root has triples in the data graph but no version row / create / changes nothing</td>
+      <td>L5</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>HO7-T5</td>
+      <td>the project data and a version row at sequence 1 / tombstone delete / the 28 delete-set triples gone, <code class="language-plaintext highlighter-rouge">pat:deleted true</code>, sequence 2, one <code class="language-plaintext highlighter-rouge">pat:Deletion</code>, everything outside unchanged</td>
+      <td>L5</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>HO7-T6</td>
+      <td>as T5 with <code class="language-plaintext highlighter-rouge">expectedSeq</code> 7 / tombstone / nothing changes</td>
+      <td>L5</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>HO7-T7</td>
+      <td>after T5 / replace / refused by the tombstone guard, nothing changes</td>
+      <td>L5</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>HO7-T7b</td>
+      <td>a copy of the data in the default graph / tombstone / the copy is untouched</td>
+      <td>L5</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>HO7-T8</td>
+      <td>both configurations / S-3 and S-4 over the compiled profile / no finding</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="one-command">One command</h2>
+
+<p>Run from the repository root. A pass is <code class="language-plaintext highlighter-rouge">1333 passed, 1 xfailed</code>, with no new skip. The expected failure is TD-23.
+The Oxigraph spike, if <code class="language-plaintext highlighter-rouge">pyoxigraph</code> is installed, passes with <code class="language-plaintext highlighter-rouge">8 passed</code>.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:persistence
+</code></pre></div></div>
+
+<h2 id="adversarial-probes">Adversarial probes</h2>
+
+<p>Run on 2026-10-10, each restored afterwards.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Mutation</th>
+      <th>Result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>the data-graph guard removed from the create</td>
+      <td>T4 fails</td>
+    </tr>
+    <tr>
+      <td>the tombstone no longer sets <code class="language-plaintext highlighter-rouge">pat:deleted</code></td>
+      <td>T5 and T7 fail</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<ul>
+  <li>A tombstone followed by an explicit recreate, which the guide’s section 24.1 describes as a distinct operation
+that requires the tombstone. It is not generated for either strategy.</li>
+  <li>Erasure of personal data, which follows its own procedure (ADR-A122 consequences).</li>
+</ul>

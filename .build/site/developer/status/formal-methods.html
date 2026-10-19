@@ -1,0 +1,242 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="formal-methods-status">Formal Methods: Status</h1>
+
+<p><strong>Unit ID:</strong> <code class="language-plaintext highlighter-rouge">formal-methods</code> (epic)
+<strong>Status:</strong> ✅ Track D complete on <code class="language-plaintext highlighter-rouge">fm/phase-0-prover-spike</code> (D0-D4, plus the PF1/PF4 fixes from the
+macOS reproduction). <strong>FM-D1 decided 2026-10-06: Isabelle.</strong> FM-D10 decided:
+Haskell and Scala both adopted as code-generation targets. The maintainer has also decided to
+continue track E’s work on this same branch rather than cutting a fresh one, deferring the merge
+to <code class="language-plaintext highlighter-rouge">main</code> until track E work is ready (a deviation from plan §7.1’s “brief, report and status
+record reach <code class="language-plaintext highlighter-rouge">main</code> regardless”, recorded here, not yet actioned). Gate D is not yet fully
+closed: two criteria remain open, see §Gate D below
+<strong>Last updated:</strong> 2026-10-10
+<strong>Plan:</strong> <a href="/developer/plans/formal-methods.html">formal-methods.md</a>, <a href="/developer/plans/formal-methods-phase-0.html">the prover spike</a>
+<strong>Review response:</strong> <a href="/developer/notes/formal-methods-review-response.html">formal-methods-review-response.md</a>
+<strong>Sketches:</strong> <a href="/developer/sketches/formal-methods.html">formal-methods.md</a>,
+<a href="/developer/sketches/formal-adequacy-and-architecture.html">adequacy and architecture</a>,
+<a href="/developer/sketches/assurance-records.html">assurance records</a>,
+<a href="/developer/sketches/instrument-assurance.html">instrument assurance</a>,
+<a href="/developer/sketches/reference-evaluator.html">reference evaluator</a>,
+<a href="/developer/sketches/formal-toolchain-workers.html">toolchain workers</a></p>
+
+<h2 id="current-position">Current position</h2>
+
+<p>Track D is complete. FM-D1 is decided: Isabelle/HOL is the prover for track E. The tracks remain
+staggered as planned: C1, C2, B1 and B2 alongside the spike, A1 to A4 after gate D, B4 with C11a
+and C12, C3 with C13a. CCS remains the active unit, with C7c branched. Track E has its own plan,
+sketch and status record now (<a href="/developer/status/formal-methods-track-e.html">formal-methods-track-e.md</a>). FM-D2 is
+decided too (ADR-A-FM2: <code class="language-plaintext highlighter-rouge">tools/proofs/</code>), and E1.0/E1.1 are done: <code class="language-plaintext highlighter-rouge">tools/proofs/eligibility/</code>
+compiles and gates clean, natively, matching track D’s spike evidence exactly. E1.2 was attempted
+and found blocked on a missing normative source (its own status record), not merely unstarted.
+Track C has its own plan, sketch and status record now too
+(<a href="/developer/status/formal-methods-track-c.html">formal-methods-track-c.md</a>): C1 (an Alloy skeleton) and C2 (binding
+resolution with scheme composition, ahead of CCS’s HQ-4 and insurml-alignment’s IMA-D4a, both read
+directly from <code class="language-plaintext highlighter-rouge">main</code> and confirmed genuinely unresolved) are both <strong>done</strong>. C2’s checked model
+found that “union of membership, union of hierarchy” does not by itself prevent two composed
+schemes disagreeing about a shared concept’s <code class="language-plaintext highlighter-rouge">broader</code> parent — a counterexample, read and
+recorded in full, not a reinvented worry. That finding is now answered: <code class="language-plaintext highlighter-rouge">ADR-A116</code> (Vocabulary
+scheme composition), drafted 2026-10-07 at our request, cites C2’s evidence directly,
+decides the overlap rule (forbidden, by a new static shape) and the composition construct
+(<code class="language-plaintext highlighter-rouge">voc:BindingAspect</code>/<code class="language-plaintext highlighter-rouge">voc:forAspect</code>), and is shared with CCS’s HQ-4 and insurml-alignment’s
+IMA-D4a as one ADR, per IMA-D4a’s own recommendation. Filed as plain <code class="language-plaintext highlighter-rouge">A116</code>, not the epic’s own
+<code class="language-plaintext highlighter-rouge">A-FM</code> block, since it is a shared Vocabulary-layer decision. Track B now has its own plan, sketch and status record
+too (<a href="/developer/status/formal-methods-track-b.html">formal-methods-track-b.md</a>): B1, B2 and B3 are all <strong>done</strong>
+(<code class="language-plaintext highlighter-rouge">tools/reference/eligibility/</code>, <code class="language-plaintext highlighter-rouge">ADR-A-FM3</code> <strong>Accepted</strong>), the logic kernel and Eligibility’s
+denotation (L9-L16) ported from and verified against <code class="language-plaintext highlighter-rouge">tools/proofs/eligibility/</code>’s Isabelle
+statements, differentially tested against <code class="language-plaintext highlighter-rouge">tools/mork_compilers</code>’ SPARQL and SHACL (63 tests,
+finding and fixing two real defects in the reference itself), and Surface’s ADR-A27
+regeneration-as-naturality property test (72 tests, no regression). B1’s own scoping work
+resolved E1.2 (below): the rounding/residual
+theorem belongs to B4/E3-E4, not Quantification; track E’s plan and status are corrected.</p>
+
+<p><strong>FM-EP, the Eligibility pass, before CCS C9b3 (decided 2026-10-09). Done, 2026-10-09.</strong> On
+machine S, branch <code class="language-plaintext highlighter-rouge">fm/eligibility-pass</code>: FM-D17 decided (A+B hybrid) and built, E1.4 built,
+B2.2 and B2.1 built, B5 attempted and blocked (mirror gap, deferred). Full detail in track E’s
+and track B’s own status records. Merged to <code class="language-plaintext highlighter-rouge">main</code> on 2026-10-09 (<code class="language-plaintext highlighter-rouge">2a438b15</code>). Its one hand-off to CCS, law L9’s amendment in the Eligibility README, is released by CCS slice C9b0. Cost: 1969.4 AI credits for the whole work unit (see Estimates and actuals).</p>
+
+<p><strong>Next action, for the maintainer:</strong> review and accept (or revise) <code class="language-plaintext highlighter-rouge">ADR-A116</code>. FM-EP is merged (2026-10-09). Track B’s B1-B3 are complete; B4 waits on CCS’s C12. The two remaining Gate D
+gaps (below) are deliberately deferred, not blocking. Also decide when and where the spike
+branch, <code class="language-plaintext highlighter-rouge">fm/phase-0-prover-spike</code>, is created, and approve the image builds and any native
+installs.</p>
+
+<p><strong>2026-10-08, a second review.</strong> An implementation-level review of the programme’s actual
+evidence (not just its sketches), disposed in
+<a href="/developer/notes/formal-methods-more-feedback-response.html">formal-methods-more-feedback-response.md</a>,
+found two real defects beyond wording: <code class="language-plaintext highlighter-rouge">tools/proofs/eligibility/gate.py</code>’s statement digest does
+not cover the definitions a gated statement depends on, and the Alloy model’s first
+<code class="language-plaintext highlighter-rouge">NoOverlapDisagreement</code> counterexample relied on a degenerate self-loop. The second was fixed and
+re-checked the same session — the finding survives under well-formedness facts, with a new,
+non-degenerate witness (<code class="language-plaintext highlighter-rouge">tools/models/vocabulary-scheme-composition/</code>). The first, and several
+smaller hardening items, are queued as new slices (track E’s E1.4, track B’s B2.1/B2.2/B5, track
+C’s C2.2/C2.3), none blocking. A new open decision, FM-D17, asks whether to generate the kernel’s
+truth-table equations (not just its closed datatype) from one README source into both Isabelle and
+Python, closing the “one hand-written table, two consumers” risk the review raised. <strong>A new
+track, H (Persistence), is also added this session</strong> (§Track board), drafted from
+<code class="language-plaintext highlighter-rouge">docs/developer/notes/rdf-engine/persistence-fml.md</code> and connected to, but independently
+runnable from, tracks A, B, C and E — see <code class="language-plaintext highlighter-rouge">formal-methods-track-h.md</code>’s own plan, sketch and
+status record.</p>
+
+<h2 id="track-board">Track board</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Track</th>
+      <th>State</th>
+      <th>Blocked on</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>D Prover spike</td>
+      <td>done. FM-D1 decided: Isabelle</td>
+      <td>the two open Gate D criteria above</td>
+    </tr>
+    <tr>
+      <td>A Ledger and harness</td>
+      <td>not started</td>
+      <td>gate D’s remaining criteria, then its ADR (A1). A5 runs with track C</td>
+    </tr>
+    <tr>
+      <td>B Reference semantics and oracle</td>
+      <td>B1, B2, B3, B2.1, B2.2 done. B5 attempted, blocked (mirror gap). <a href="/developer/status/formal-methods-track-b.html">Its own plan, sketch and status</a></td>
+      <td>B4 waits on CCS’s C11a (done) and C12 (not done)</td>
+    </tr>
+    <tr>
+      <td>C Design-time models</td>
+      <td>C1 and C2 done 2026-10-06. <a href="/developer/status/formal-methods-track-c.html">Its own plan, sketch and status</a></td>
+      <td>C3 (slot exclusivity, SMT) not started, waits on nothing but is next in this track’s own numbering</td>
+    </tr>
+    <tr>
+      <td>E Prover programme</td>
+      <td>E1.0/E1.1/E1.4 done. FM-D17 built. E1.2 retired (its real home is B4/E3-E4, not Quantification)</td>
+      <td>E1.3 waits on track C2’s overlap-rule ADR, not on C2 itself (done)</td>
+    </tr>
+    <tr>
+      <td>F Native tooling</td>
+      <td>not started</td>
+      <td>its ADR, then a Python baseline per family</td>
+    </tr>
+    <tr>
+      <td>G Instrument assurance</td>
+      <td>not started</td>
+      <td>B4, C3</td>
+    </tr>
+    <tr>
+      <td>H Persistence</td>
+      <td>in progress. H1 and the aggregate-ownership slices HO0 to HO9 merged and signed off 2026-10-10, ADR-A-FM4 and ADR-A122 accepted. H2, the typed IR, briefed 2026-10-10, ADR-A123 accepted, H2.0 to H2.3 merged and signed off (2026-10-12), H2.4 built and reviewed, H2.5 and H2.6 built, H2.6 approved with three design questions open (2026-10-13), H2.6b event half built, approved and complete (2026-10-14). <a href="/developer/status/formal-methods-track-h.html">Its own plan, sketch and status</a></td>
+      <td>nothing from tracks A-G; it reuses their methods but needs none of them to start</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="track-d">Track D</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Slice</th>
+      <th>State</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>D0 environments</td>
+      <td>done (commit <code class="language-plaintext highlighter-rouge">efa2469</code>): image and native routes, driver, network probe, smoke suite</td>
+    </tr>
+    <tr>
+      <td>D1 brief</td>
+      <td>done (commit <code class="language-plaintext highlighter-rouge">bb86f17</code>): written semantics, seeded defects S1-S5, MINOR change spec, measures</td>
+    </tr>
+    <tr>
+      <td>D2 Rocq track</td>
+      <td>done (commits <code class="language-plaintext highlighter-rouge">f4a6db4</code>, <code class="language-plaintext highlighter-rouge">17f05d9</code>, <code class="language-plaintext highlighter-rouge">57fea56</code>, <code class="language-plaintext highlighter-rouge">ca6fbc0</code>): Kernel.v (TA1, TA2), Eligibility.v (TL1-TL3), Adequacy.v (13 fixture-matching theorems, all via <code class="language-plaintext highlighter-rouge">reflexivity</code>), defects S1-S5 (each a compiled, positive detection, not a narrative), Reading.v (the MINOR change, M3 measured at +21/-7 lines for adding <code class="language-plaintext highlighter-rouge">MostValueR</code>), Interface.v (M6’s <code class="language-plaintext highlighter-rouge">MonotoneReading</code> record, rejects non-monotone candidates at construction), Extraction.v (M4, extracted OCaml kernel checked against all 15 reference fixtures outside Rocq), 12 claim records, <code class="language-plaintext highlighter-rouge">gate.py rocq</code> passes clean</td>
+    </tr>
+    <tr>
+      <td>D3 Isabelle track</td>
+      <td>done (commits <code class="language-plaintext highlighter-rouge">c7b399a</code>, <code class="language-plaintext highlighter-rouge">2a115b1</code>, <code class="language-plaintext highlighter-rouge">5dd63ad</code>): Kernel.thy (TA1, TA2), Eligibility.thy (TL1-TL3), Adequacy.thy (15 lemmas via <code class="language-plaintext highlighter-rouge">eval</code>), defects S1-S5 (S4 needs <code class="language-plaintext highlighter-rouge">quick_and_dirty</code>, since Isabelle refuses bare <code class="language-plaintext highlighter-rouge">sorry</code>), Reading.thy (the MINOR change, M3 measured at +18/-6 lines for <code class="language-plaintext highlighter-rouge">MostValueR</code>), Interface.thy (M6’s <code class="language-plaintext highlighter-rouge">monotone_reading</code> locale), Export.thy (M4/M5: OCaml and Haskell, both checked against all 15 reference fixtures, Haskell compiled with GHC), 13 claim records, <code class="language-plaintext highlighter-rouge">gate.py isabelle</code> passes clean</td>
+    </tr>
+    <tr>
+      <td>D4 report</td>
+      <td>done: <a href="/developer/notes/formal-prover-experiment.html">formal-prover-experiment.md</a>, M0-M8 scored for both provers after our corrections (Rocq 62.0, Isabelle 68.0 of 100; M9 removed, M5 reweighted 5→10 and rescored for Scala/Rust/Python, M6 corrected after a tested <code class="language-plaintext highlighter-rouge">can</code>/<code class="language-plaintext highlighter-rouge">Goal.prove</code> equivalent of Rocq’s <code class="language-plaintext highlighter-rouge">Fail</code> was found and folded into <code class="language-plaintext highlighter-rouge">Interface.thy</code>). <strong>FM-D1 and FM-D10 decided</strong></td>
+    </tr>
+    <tr>
+      <td>PF1/PF4 fixes</td>
+      <td>done (commit <code class="language-plaintext highlighter-rouge">c4075a6</code>), found by the macOS reproduction (<code class="language-plaintext highlighter-rouge">formal-prover-macos-portability.md</code>): <code class="language-plaintext highlighter-rouge">gate.py</code>’s <code class="language-plaintext highlighter-rouge">extract_statements</code> now excludes <code class="language-plaintext highlighter-rouge">defects/</code>, matching <code class="language-plaintext highlighter-rouge">scan_for_banned</code>, so the gate’s digest check no longer depends on filesystem sort order (it previously passed only because Windows’ case-insensitive sort happened to read the real statement last). <code class="language-plaintext highlighter-rouge">.gitignore</code> covers a stray staged CA file</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="decisions">Decisions</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>State</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>FM-D1</td>
+      <td><strong>decided 2026-10-06: Isabelle.</strong> The report’s first draft scored a 1.0-point Rocq tiebreak, carried by M9 (the engine notes’ prior choice for an RDF/Datalog engine that was never built). We removed M9 and reweighted M5 to match M6; a follow-up question also corrected M6 (Isabelle has a tested <code class="language-plaintext highlighter-rouge">can</code>/<code class="language-plaintext highlighter-rouge">Goal.prove</code> equivalent of Rocq’s <code class="language-plaintext highlighter-rouge">Fail</code>). The corrected total favours Isabelle by 6.0 points outright, and we confirmed it: both provers were fully capable, and Isabelle showed real, measured advantages, not just a narrow tiebreak. See <a href="/developer/notes/formal-prover-experiment.html">formal-prover-experiment.md</a> §1, §3, §5 and <a href="../../architecture/decisions/ADR-A-FM1-formal-methods-prover-choice.md">ADR-A-FM1</a></td>
+    </tr>
+    <tr>
+      <td>FM-D10</td>
+      <td><strong>decided 2026-10-06: Haskell and Scala both adopted.</strong> Isabelle’s <code class="language-plaintext highlighter-rouge">export_code</code> demonstrated working Haskell (GHC-compiled, all fixtures matched); Scala is in the same code-generator family (documented, not yet exercised – a near-term follow-up, not a blocker). Scala specifically opens a route to running generated algorithms directly in a JVM-based service layer</td>
+    </tr>
+    <tr>
+      <td>FM-D5, FM-D7, FM-D9</td>
+      <td>revised 2026-10-06 after review</td>
+    </tr>
+    <tr>
+      <td>FM-D11, FM-D12, FM-D13</td>
+      <td>decided 2026-10-06, as recommended</td>
+    </tr>
+    <tr>
+      <td>FM-D15</td>
+      <td>decided 2026-10-06: stale on a tool change, suspect on a known soundness fix, invalid on a semantic change. Needs an ADR-A27 addendum</td>
+    </tr>
+    <tr>
+      <td>FM-D14</td>
+      <td>open</td>
+    </tr>
+    <tr>
+      <td>FM-D16</td>
+      <td>decided 2026-10-06: the image route everywhere for recorded work, native installs for authoring only. The spike remains blocked on Isabelle’s image route for Gate D’s smoke-suite criterion until that path is built</td>
+    </tr>
+    <tr>
+      <td>the rest</td>
+      <td>open</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="log">Log</h2>
+
+<ul>
+  <li>2026-10-06: epic, sketches and the prover experiment drafted.</li>
+  <li>2026-10-06: reviewed. Five headline findings accepted. The epic re-sequenced into tracks A to G with
+metrics and abandonment conditions. The spike narrowed to the kernel and L15 and L16 carried end to
+end. Six points rebutted or refined in the review response, four of them for the maintainer’s decision.</li>
+  <li>2026-10-06: FM-D11 (stratified Datalog), FM-D12 (generation from the README) and FM-D13 (L15 and L16 in the spike) decided as recommended. FM-D15’s addendum belongs to ADR-A27, the invalidation rule, with the read-set kinds in ADR-A92’s terms</li>
+  <li>2026-10-06: FM-D15 decided: a semantic input change invalidates, a tool identity change marks claims stale and schedules re-verification, and a known soundness fix marks them suspect, failing the gate until re-verified</li>
+  <li>2026-10-06: tracks staggered: C1, C2, B1 and B2 alongside the spike, A1 to A4 after gate D (A5 with C), B4 with C11a and C12, C3 with C13a</li>
+  <li>2026-10-06: a toolchain spike on a Windows host without administrator rights, behind a TLS-re-signing proxy, ran both stacks natively and in Linux containers: proofs, code generation, compilation, AST reading and cross-compilation all passed. The plans now run on macOS, Windows and Linux: an image route for every recorded check and job, slim, multi-arch, pinned and capped, native installs for authoring only (epic E9, §4 Environments, FM-D16), and slice D0 for environments in track D</li>
+  <li>2026-10-06: FM-D16 decided as recommended: the image route everywhere for recorded work, native installs for authoring only.</li>
+  <li>2026-10-06: track D (D0-D4) completed on <code class="language-plaintext highlighter-rouge">fm/phase-0-prover-spike</code>. A brief defect found during D2 (TA2 mis-stated as order-reversing; it is monotone) corrected before D3 began. D4’s first draft scored a 1.0-point Rocq tiebreak. The maintainer then corrected the scoring: M9 (prior-choice consistency, evidenced by an RDF/Datalog engine that was sketched but never built) removed as worthless-than-nothing, M5 (other code-generation targets) reweighted from 5 to 10 to match M6 and rescored for production-toolchain relevance (Scala, Rust, Python). The corrected total (100 points) favours Isabelle by 5.0, an outright win under the plan’s tie rule, not a tiebreak. FM-D1 and FM-D10 reopened rather than re-decided unilaterally; see <a href="/developer/notes/formal-prover-experiment.html">formal-prover-experiment.md</a>.</li>
+  <li>2026-10-06: Machine R reproduced the branch on macOS (Apple silicon), native installs only, unmodified: everything passed except <code class="language-plaintext highlighter-rouge">gate.py</code>, found to depend on filesystem sort order (PF1). Fixed here: <code class="language-plaintext highlighter-rouge">extract_statements</code> now excludes <code class="language-plaintext highlighter-rouge">defects/</code>, matching <code class="language-plaintext highlighter-rouge">scan_for_banned</code> (commit <code class="language-plaintext highlighter-rouge">c4075a6</code>). A follow-up question on the M6 finding confirmed Isabelle’s <code class="language-plaintext highlighter-rouge">can</code>/<code class="language-plaintext highlighter-rouge">Goal.prove</code> is a tested, working equivalent of Rocq’s <code class="language-plaintext highlighter-rouge">Fail</code>, not a gap; the correction raised Isabelle’s total to a 6.0-point win. The maintainer then decided FM-D1 (Isabelle) and FM-D10 (Haskell and Scala both adopted) on that evidence, and decided to continue track E’s work on this branch rather than cutting a new one, deferring <code class="language-plaintext highlighter-rouge">main</code> until that work is ready. Gate D itself is not yet fully closed: the epic’s abandonment thresholds are not yet revised with the measurements, and Isabelle has no image route in this spike to satisfy the smoke-suite criterion with (both open, see Gate D above).</li>
+</ul>
+
+<h2 id="estimates-and-actuals">Estimates and actuals</h2>
+
+<p>| Track | Estimate (tokens) | Actual |
+|—|—|—|
+| D | 0.3M to 0.6M | |
+| sketches, plans and the review response (2026-10-06) | not estimated | not recorded |
+| FM-EP, the Eligibility pass (2026-10-09, machine S, <code class="language-plaintext highlighter-rouge">fm/eligibility-pass</code>) | not estimated | 1969.4 AI credits |</p>
+<ul>
+  <li>2026-10-09: an Eligibility pass scheduled before CCS C9b3, which extends Eligibility with set comparisons and aggregate bindings: FM-D17, E1.4, B2.2 and B2.1 on this epic’s own branch, merged to <code class="language-plaintext highlighter-rouge">main</code> first</li>
+  <li>2026-10-09: FM-EP merged to <code class="language-plaintext highlighter-rouge">main</code> (<code class="language-plaintext highlighter-rouge">2a438b15</code>). L9’s README amendment handed to CCS slice C9b0 for release</li>
+</ul>

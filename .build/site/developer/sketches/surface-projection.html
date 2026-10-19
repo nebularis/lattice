@@ -1,0 +1,598 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="surface-projection-mechanism--design-sketch">Surface Projection Mechanism — Design Sketch</h1>
+
+<p><strong>Generic promotion and shadow-indexing for LATTICE</strong></p>
+
+<p><strong>Status:</strong> Sketch (design archived; implementation moved to plan and status documents)<br />
+<strong>Related plan:</strong> <a href="/developer/plans/surface-mork-unified-projection-plan.html">surface-mork-unified-projection-plan.md</a><br />
+<strong>Related status:</strong> <a href="/developer/status/surface-mork-unified-projection.html">surface-mork-unified-projection.md</a><br />
+<strong>Source:</strong> Distilled from <code class="language-plaintext highlighter-rouge">ontology/surface/docs/surface-projection-design-sketch.md</code> (2026-09-18)</p>
+
+<hr />
+
+<h2 id="overview">Overview</h2>
+
+<p>The Surface layer provides a generic mechanism for promotion (restating values as direct properties) and indexing (generating lookup symbols for values). Both operations unify under a single abstraction:</p>
+
+<blockquote>
+  <p>A <strong>surface contract</strong> declares a <strong>read path</strong> from a <strong>carrier</strong> to a <strong>value</strong>, and a <strong>surface form</strong> in which that relationship is restated locally.</p>
+</blockquote>
+
+<p>This sketch designs the mechanism; implementation details are in <a href="/developer/plans/surface-mork-unified-projection-plan.html">surface-mork-unified-projection-plan.md</a> (Phases 0–8 complete) and <a href="/developer/status/surface-mork-unified-projection.html">surface-mork-unified-projection.md</a>.</p>
+
+<hr />
+
+<h2 id="core-abstraction--read-path--surface-form">Core Abstraction — Read Path + Surface Form</h2>
+
+<h3 id="read-path">Read Path</h3>
+
+<p>A property or sequence of properties traversed from a carrier class to a value. Uses SHACL property-path syntax (<code class="language-plaintext highlighter-rouge">sh:path</code>), supporting:</p>
+<ul>
+  <li><strong>Sequence paths:</strong> <code class="language-plaintext highlighter-rouge">prop1 / prop2 / prop3</code></li>
+  <li><strong>Inverse paths:</strong> <code class="language-plaintext highlighter-rouge">^prop</code></li>
+  <li><strong>Object and datatype properties</strong></li>
+</ul>
+
+<p>First slice excludes:</p>
+<ul>
+  <li>Alternation (<code class="language-plaintext highlighter-rouge">prop1 | prop2</code>)</li>
+  <li>Zero-or-more (<code class="language-plaintext highlighter-rouge">prop*</code>)</li>
+</ul>
+
+<h3 id="surface-forms">Surface Forms</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Form</th>
+      <th>Mechanism</th>
+      <th>Example</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Promotion</strong></td>
+      <td>Restate read-path value as direct property on carrier</td>
+      <td><code class="language-plaintext highlighter-rouge">CSO:CoverageType</code> → <code class="language-plaintext highlighter-rouge">FBO:hasLocallySourcingCoverageType</code></td>
+    </tr>
+    <tr>
+      <td><strong>Nominal Indexing</strong></td>
+      <td>Emit one named class per value under a family class</td>
+      <td><code class="language-plaintext highlighter-rouge">ScopeCoverageType_Cyber</code>, subclass of <code class="language-plaintext highlighter-rouge">ScopeCoverageTypeFamily</code></td>
+    </tr>
+    <tr>
+      <td><strong>Membership Assertion</strong></td>
+      <td>Materialize assertions directly without definitions</td>
+      <td><code class="language-plaintext highlighter-rouge">x rdf:type ScopeCoverageType_Cyber</code></td>
+    </tr>
+    <tr>
+      <td><strong>Closure Relation</strong></td>
+      <td>Emit relation with ancestor-closed values</td>
+      <td><code class="language-plaintext highlighter-rouge">matchesLineOfBusiness(x, a)</code> for all <code class="language-plaintext highlighter-rouge">a ≥ concept</code></td>
+    </tr>
+    <tr>
+      <td><strong>Direct Property</strong></td>
+      <td>Generate derived property accessible at query time</td>
+      <td>Like Promotion but without requiring enumeration</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="contract-model">Contract Model</h2>
+
+<h3 id="surfacecontract">SurfaceContract</h3>
+
+<p>Base abstraction for all surface declarations:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>srf:SurfaceContract
+  - carrier: rdfs:Class (the subject type)
+  - readPath: SHACL property-path (traversal to value)
+  - surfaceProfile: SurfaceProfile (generation policy)
+  - populationBudget: xsd:nonNegativeInteger (optional bound)
+  - (inherits from fnd:Version, fnd:Governable)
+</code></pre></div></div>
+
+<h3 id="promotioncontract">PromotionContract</h3>
+
+<p>Restates a read-path value as direct property:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>srf:PromotionContract ⊑ srf:SurfaceContract
+  - promotesTo: rdf:Property (local dimension property)
+  - sourceFidelity: {ExactSource, DerivedSource, CrosswalkExact, CrosswalkInexact}
+  - viaMatchRelation: rdf:Property (optional, for scheme-based promotion)
+</code></pre></div></div>
+
+<p><strong>Example:</strong> CSO→FBO sourcing (row 1 of V2 §11.2):</p>
+<ul>
+  <li>Carrier: <code class="language-plaintext highlighter-rouge">FBO:ProvisionalPolicy</code></li>
+  <li>Read path: <code class="language-plaintext highlighter-rouge">CSO:coverageId / CSO:hazardClass</code></li>
+  <li>Promotes to: <code class="language-plaintext highlighter-rouge">FBO:hasHazardClassDirect</code></li>
+  <li>Source fidelity: <code class="language-plaintext highlighter-rouge">ExactSource</code> (hazard classes are authored, not transformed)</li>
+</ul>
+
+<h3 id="indexcontract">IndexContract</h3>
+
+<p>Generates lookup symbols from value populations:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>srf:IndexContract ⊑ srf:SurfaceContract
+  - discriminator: rdf:Property (the distinguished value property)
+  - valuePopulation: ValuePopulation (what to index)
+  - indexForm: IndexForm (symbol type(s))
+  - realisationMode: {DefinitionOnly, Materialised, DefinitionAndMaterialised}
+  - namingPolicy: {LocalNameFromValue, QualifiedLocalName, DigestLocalName}
+  - closureBasis: rdf:Property (optional; for ClosureRelation form)
+  - closureScope: ValuePopulation (optional; bounds the closure)
+</code></pre></div></div>
+
+<p><strong>Example:</strong> Coverage type shadow index (FBO execution):</p>
+<ul>
+  <li>Carrier: <code class="language-plaintext highlighter-rouge">FBO:PolicyScope</code></li>
+  <li>Read path: <code class="language-plaintext highlighter-rouge">FBO:hasCoverageType</code></li>
+  <li>Discriminator: <code class="language-plaintext highlighter-rouge">FBO:hasCoverageType</code> (same property)</li>
+  <li>Value population: <code class="language-plaintext highlighter-rouge">fbo:CoverageScheme</code> (bound scheme)</li>
+  <li>Index forms: <code class="language-plaintext highlighter-rouge">NominalClass</code>, <code class="language-plaintext highlighter-rouge">ClosureRelation</code></li>
+  <li>Realisation: <code class="language-plaintext highlighter-rouge">Materialised</code></li>
+  <li>Naming: <code class="language-plaintext highlighter-rouge">LocalNameFromValue</code> with ASCII normalisation</li>
+  <li>Closure basis: <code class="language-plaintext highlighter-rouge">skos:broader</code></li>
+  <li>Closure scope: the same coverage scheme</li>
+</ul>
+
+<h3 id="valuepopulation">ValuePopulation</h3>
+
+<p>Abstract type with four implementations:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Kind</th>
+      <th>Source</th>
+      <th>Scope</th>
+      <th>Example</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ContractBoundPopulation</code></td>
+      <td><code class="language-plaintext highlighter-rouge">voc:SchemeContract</code></td>
+      <td>Whatever is currently bound</td>
+      <td>Coverage types (live with scheme rebinding)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ClassExtentPopulation</code></td>
+      <td><code class="language-plaintext highlighter-rouge">rdfs:Class</code></td>
+      <td>Named individuals, direct subclasses, or transitive</td>
+      <td>CSO concepts matching a criterion</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">EnumeratedPopulation</code></td>
+      <td>Explicit members</td>
+      <td>Finite list</td>
+      <td>Predefined status values</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">RangePartitionPopulation</code></td>
+      <td><code class="language-plaintext highlighter-rouge">qnt:RangeSet</code></td>
+      <td>Continuous range</td>
+      <td>Monetary brackets (⏳ deferred)</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="derived-tier-artefacts">Derived Tier (Artefacts)</h2>
+
+<h3 id="generatedsurface">GeneratedSurface</h3>
+
+<p>The output of compilation; one per contract:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>srf:GeneratedSurface ⊑ fnd:DerivedArtefact
+  - coversContract: SurfaceContract
+  - readSetEntry: {ReadSetEntry}+ (what was read)
+  - symbolCount: {NominalClasses: N, Assertions: M, …}
+  - (inherits hash, authority, generation profile)
+</code></pre></div></div>
+
+<h3 id="generatedsymbol">GeneratedSymbol</h3>
+
+<p>Provenance for each emitted symbol:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>srf:GeneratedSymbol ⊑ fnd:DerivedArtefact
+  - inSurface: GeneratedSurface
+  - symbolForm: IndexForm
+  - fromValue: (omitted for DirectProperty form)
+  - denotes: Class or Property (wrapper, avoiding punning)
+</code></pre></div></div>
+
+<h3 id="read-set">Read Set</h3>
+
+<p>Tracks what was read during generation:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>srf:ReadSetEntry
+  - readSource: (DeclarationSource | PopulationMemberSource | HierarchyBasisSource | …)
+  - readVersion: xsd:string
+  - readHash: xsd:string
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="key-design-decisions">Key Design Decisions</h2>
+
+<h3 id="1-stack-position">1. Stack Position</h3>
+
+<p>Surface sits low in the substrate, importing Quantification:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Foundation
+  → Vocabulary
+    → Quantification
+      ├→ Party, Eligibility, Instrument, Behaviour
+      └→ Surface (generic, domain-neutral)
+</code></pre></div></div>
+
+<p><strong>Why low:</strong> Domain-neutral mechanism avoids conceptual overlap with higher layers; ability to name any property via vocabulary punning.</p>
+
+<h3 id="2-conservativity-invariant">2. Conservativity Invariant</h3>
+
+<p><strong>Non-negotiable property:</strong> A surface adds nothing to what the source already means.</p>
+
+<ul>
+  <li>Adding a surface entails no new consequences about source terms</li>
+  <li>Removing a surface loses no authored facts</li>
+  <li>Surfaces are <code class="language-plaintext highlighter-rouge">Advisory</code> or <code class="language-plaintext highlighter-rouge">CachedReproducible</code> authority, never <code class="language-plaintext highlighter-rouge">OperationallyAuthoritative</code></li>
+  <li>Enables safe regeneration, safe discarding, and correct governance classification</li>
+</ul>
+
+<h3 id="3-authority-ceiling">3. Authority Ceiling</h3>
+
+<p>Generated surfaces may declare only:</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">Advisory</code> — optional, use at discretion</li>
+  <li><code class="language-plaintext highlighter-rouge">CachedReproducible</code> — derived and verifiable</li>
+</ul>
+
+<p><strong>Excluded:</strong> <code class="language-plaintext highlighter-rouge">OperationallyAuthoritative</code> (would mean index outranks its declaration, violating ADR-A12)</p>
+
+<h3 id="4-no-stacking-first-slice">4. No Stacking (First Slice)</h3>
+
+<p>A surface may not read from another surface. Restriction enforced in shapes.</p>
+
+<p><strong>Rationale:</strong> Stacked surfaces multiply invalidation scope, make hash provenance a graph rather than a tree, require composition laws for conservativity. Opened only with an explicit ADR-grade decision.</p>
+
+<h3 id="5-determinism-via-minting-policy">5. Determinism via Minting Policy</h3>
+
+<p>IRI generation must be deterministic and verifiable:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Policy</th>
+      <th>Rule</th>
+      <th>Injective</th>
+      <th>Readable</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">LocalNameFromValue</code></td>
+      <td><code class="language-plaintext highlighter-rouge">&lt;ns&gt;&lt;Carrier&gt;_&lt;Prop&gt;_&lt;ValueLocal&gt;</code></td>
+      <td>Conditional (depends on value uniqueness)</td>
+      <td>Yes</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">QualifiedLocalName</code></td>
+      <td>Add scheme-specific prefix token</td>
+      <td>Yes</td>
+      <td>Mostly</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">DigestLocalName</code></td>
+      <td><code class="language-plaintext highlighter-rouge">&lt;ns&gt;&lt;Carrier&gt;_&lt;Prop&gt;_&lt;digest(ValueIRI)&gt;</code></td>
+      <td>Yes (always)</td>
+      <td>No</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Default:</strong> <code class="language-plaintext highlighter-rouge">LocalNameFromValue</code> with explicit declared normalisation (case, separator, character class, truncation).</p>
+
+<p><strong>Collision handling:</strong> Hard static failure (law <code class="language-plaintext highlighter-rouge">X-S6</code>), not warning. Escape hatch: <code class="language-plaintext highlighter-rouge">DigestLocalName</code>.</p>
+
+<h3 id="6-hierarchy-closure-is-scoped-and-declared">6. Hierarchy Closure is Scoped and Declared</h3>
+
+<p>Closure basis and scope are explicit contract fields:</p>
+
+<ul>
+  <li><strong>Basis:</strong> Declared (e.g., <code class="language-plaintext highlighter-rouge">skos:broader</code>), not assumed</li>
+  <li><strong>Reflexivity:</strong> Closure includes the value itself (<code class="language-plaintext highlighter-rouge">c ≤ c</code>)</li>
+  <li><strong>Scope:</strong> Bounded to declared population (not applied universe-wide)</li>
+</ul>
+
+<p>Replaces ad-hoc hierarchy rules with a provenance-bearing mechanism.</p>
+
+<hr />
+
+<h2 id="signature-scope-and-fidelity-law-x6">Signature Scope and Fidelity (Law X6)</h2>
+
+<h3 id="signature-scope">Signature Scope</h3>
+
+<p>Two cases:</p>
+
+<ol>
+  <li><strong>LocalSignature:</strong> Target namespace wholly under the contract’s control; conservativity guaranteed</li>
+  <li><strong>SourceSignature:</strong> Target namespace already authored; emitted triples join authored facts</li>
+</ol>
+
+<p><strong>Law X1 (revised):</strong> Conservativity applies to <code class="language-plaintext highlighter-rouge">LocalSignature</code> surfaces only.</p>
+
+<p><strong>Law X6:</strong> A promotion onto a property outside the contract’s target namespace declares its fidelity level:</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">ExactSource</code> — value is restated unmodified</li>
+  <li><code class="language-plaintext highlighter-rouge">DerivedSource</code> — value is transformed</li>
+  <li><code class="language-plaintext highlighter-rouge">CrosswalkExact</code> — value maps to authored property via deterministic scheme</li>
+  <li><code class="language-plaintext highlighter-rouge">CrosswalkInexact</code> — value maps with potential ambiguity</li>
+</ul>
+
+<p>Source-signature promotions are materialized, not definitional, and require governance review.</p>
+
+<p><strong>Example:</strong> <code class="language-plaintext highlighter-rouge">DimensionSourcing</code> in MERIDIAN restates FBO authored properties; it declares <code class="language-plaintext highlighter-rouge">SourceSignature</code> and <code class="language-plaintext highlighter-rouge">ExactSource</code>, so the emission is materially an assertion, not a derived triple.</p>
+
+<hr />
+
+<h2 id="entailment-regimes">Entailment Regimes</h2>
+
+<p>Surface contracts declare their entailment requirement:</p>
+
+<ul>
+  <li><strong><code class="language-plaintext highlighter-rouge">NoEntailment</code>:</strong> Read only asserted triples (current default)</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">RDFS</code>:</strong> Include RDFS entailments</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">OWL2EL</code>:</strong> Include OWL 2 EL entailments</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">OWL2DL</code>:</strong> Full OWL 2 DL (limited automation, manual review required)</li>
+</ul>
+
+<p>Compiler refuses to proceed for regimes other than <code class="language-plaintext highlighter-rouge">NoEntailment</code> in the first slice.</p>
+
+<hr />
+
+<h2 id="naming-determinism">Naming Determinism</h2>
+
+<p>Three policy levels:</p>
+
+<h3 id="localnamefromvalue">LocalNameFromValue</h3>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>SurfaceNamespace + Carrier.localName + Property.localName + Value.localName
+  → srf:ScopeCoverageType_Coverage_Cyber
+</code></pre></div></div>
+
+<p>Requires:</p>
+<ul>
+  <li>Value local names unique across population</li>
+  <li>Declared normalisation function (ASCII, case, separator rules)</li>
+  <li>Static collision detection</li>
+</ul>
+
+<h3 id="qualifiedlocalname">QualifiedLocalName</h3>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>LocalNameFromValue + PerSchemePrefix
+  → srf:ScopeCoverageType_ANSI_Coverage_Cyber
+</code></pre></div></div>
+
+<p>Better disambiguation for multi-source populations; slightly less readable.</p>
+
+<h3 id="digestlocalname">DigestLocalName</h3>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>SurfaceNamespace + Carrier.localName + Property.localName + Digest(Value.IRI)
+  → srf:ScopeCoverageType_Coverage_a7c9d2e
+</code></pre></div></div>
+
+<p>Always injective. Use when <code class="language-plaintext highlighter-rouge">LocalNameFromValue</code> collision occurs.</p>
+
+<p><strong>Minting is part of <code class="language-plaintext highlighter-rouge">SurfaceProfile</code>:</strong> Normalisation function, collision policy, and digest algorithm are versioned together.</p>
+
+<hr />
+
+<h2 id="deferred-items">Deferred Items</h2>
+
+<h3 id="explicitly-out-of-scope-first-slice">Explicitly Out of Scope (First Slice)</h3>
+
+<ol>
+  <li><strong><code class="language-plaintext highlighter-rouge">srf:RangePartitionPopulation</code></strong> — Bucketing law X7 blocked on Quantification partition semantics</li>
+  <li><strong>Stacking beyond depth 1</strong> — Composition laws drafted (ADR-A21); full support deferred</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">srf:ExternalIndex</code></strong> — Declared and rejected; no admission criteria yet</li>
+  <li><strong>Entailment regimes beyond NoEntailment</strong> — Reasoner integration deferred</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">DefinitionOnly</code> parity</strong> — Same dependency as entailment regimes</li>
+</ol>
+
+<h3 id="open-decisions">Open Decisions</h3>
+
+<ol>
+  <li><strong>Foundation migration:</strong> Does <code class="language-plaintext highlighter-rouge">fnd:DerivedArtefact</code> expand to Surface or stay Surface-specific? (§3.1 of current plan)</li>
+  <li><strong>Profile identity assertion:</strong> Should <code class="language-plaintext highlighter-rouge">srf:profileIdentityHash</code> be asserted or computed-only? (Blocked on Foundation migration)</li>
+  <li><strong>MORK toolchain join:</strong> Confirm namespace assumptions and term names before production (§5 of outstanding items)</li>
+</ol>
+
+<hr />
+
+<h2 id="example-csofbo-sourcing">Example: CSO→FBO Sourcing</h2>
+
+<p><strong>Carrier:</strong> <code class="language-plaintext highlighter-rouge">FBO:ProvisionalPolicy</code><br />
+<strong>Read path:</strong> <code class="language-plaintext highlighter-rouge">CSO:CoverageId / CSO:HazardClass</code><br />
+<strong>Promotion contract:</strong></p>
+<ul>
+  <li>Promotes to: <code class="language-plaintext highlighter-rouge">FBO:hasLocallySourcedHazardClass</code></li>
+  <li>Source fidelity: <code class="language-plaintext highlighter-rouge">ExactSource</code></li>
+  <li>Signature scope: <code class="language-plaintext highlighter-rouge">SourceSignature</code></li>
+</ul>
+
+<p><strong>Outcome:</strong> One assertion per policy instance:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>fbo:policy_P001 fbo:hasLocallySourcedHazardClass cso:HazardClass_Wind .
+</code></pre></div></div>
+
+<p>No new symbol; no index; pure promotion, materialized into the authored property.</p>
+
+<hr />
+
+<h2 id="example-coverage-type-index">Example: Coverage Type Index</h2>
+
+<p><strong>Carrier:</strong> <code class="language-plaintext highlighter-rouge">FBO:PolicyScope</code><br />
+<strong>Read path:</strong> <code class="language-plaintext highlighter-rouge">FBO:hasCoverageType</code><br />
+<strong>Index contract:</strong></p>
+<ul>
+  <li>Discriminator: <code class="language-plaintext highlighter-rouge">FBO:hasCoverageType</code></li>
+  <li>Value population: <code class="language-plaintext highlighter-rouge">ContractBoundPopulation(fbo:CoverageTypeSchemeContract)</code></li>
+  <li>Index forms: <code class="language-plaintext highlighter-rouge">NominalClass</code>, <code class="language-plaintext highlighter-rouge">ClosureRelation</code></li>
+  <li>Realisation: <code class="language-plaintext highlighter-rouge">Materialised</code></li>
+  <li>Naming: <code class="language-plaintext highlighter-rouge">LocalNameFromValue</code></li>
+  <li>Closure basis: <code class="language-plaintext highlighter-rouge">skos:broader</code> (only <code class="language-plaintext highlighter-rouge">Auto</code>, <code class="language-plaintext highlighter-rouge">Commercial</code> hierarchy)</li>
+  <li>Closure scope: Same as value population</li>
+</ul>
+
+<p><strong>Outcomes:</strong></p>
+
+<ol>
+  <li><strong>Nominal classes:</strong>
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>srf:ScopeCoverageType_Cyber ≡ FBO:PolicyScope ⊓ ∃FBO:hasCoverageType.{cso:Coverage_Cyber}
+srf:ScopeCoverageType_Auto ≡ FBO:PolicyScope ⊓ ∃FBO:hasCoverageType.{cso:Coverage_Auto}
+…
+</code></pre></div>    </div>
+  </li>
+  <li><strong>Materialized membership:</strong>
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>fbo:scope_S001 rdf:type srf:ScopeCoverageType_Cyber .
+fbo:scope_S002 rdf:type srf:ScopeCoverageType_Auto .
+</code></pre></div>    </div>
+  </li>
+  <li><strong>Closure relation (Auto family only):</strong>
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>fbo:scope_S002 srf:matchesCoverageTypeAncestor cso:Coverage_Auto .
+fbo:scope_S002 srf:matchesCoverageTypeAncestor cso:Coverage_Commercial .
+</code></pre></div>    </div>
+  </li>
+</ol>
+
+<p>Queries against this surface:</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">?s rdf:type srf:ScopeCoverageType_Cyber</code> → direct lookup</li>
+  <li><code class="language-plaintext highlighter-rouge">?s srf:matchesCoverageTypeAncestor cso:Coverage_Commercial</code> → ancestry closure, materialized</li>
+</ul>
+
+<hr />
+
+<h2 id="relationship-to-promotion-and-index-subsystems">Relationship to Promotion and Index Subsystems</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Aspect</th>
+      <th>Promotion</th>
+      <th>Index</th>
+      <th>Unified</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Read path</strong></td>
+      <td>Any length ≥ 1</td>
+      <td>Length 1 (to discriminator)</td>
+      <td>Generalized</td>
+    </tr>
+    <tr>
+      <td><strong>Output form</strong></td>
+      <td>Direct property</td>
+      <td>Symbol (class, relation, etc.)</td>
+      <td><code class="language-plaintext highlighter-rouge">indexForm</code> choice</td>
+    </tr>
+    <tr>
+      <td><strong>Population</strong></td>
+      <td>Implicit (read-path targets)</td>
+      <td>Explicit (enumerated)</td>
+      <td>Explicit <code class="language-plaintext highlighter-rouge">ValuePopulation</code></td>
+    </tr>
+    <tr>
+      <td><strong>Governance</strong></td>
+      <td>Source-fidelity dependent</td>
+      <td>All are <code class="language-plaintext highlighter-rouge">Advisory</code> or <code class="language-plaintext highlighter-rouge">CachedReproducible</code></td>
+      <td>Authority ceiling enforced</td>
+    </tr>
+    <tr>
+      <td><strong>Namespace</strong></td>
+      <td>Local (target-defined) or source (existing property)</td>
+      <td>Local (generated symbols)</td>
+      <td><code class="language-plaintext highlighter-rouge">signatureScope</code> choice</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Both operations are instances of the same abstraction.</p>
+
+<hr />
+
+<h2 id="downstream-surface-to-mork">Downstream: Surface to MORK</h2>
+
+<p>Once a surface contract is authored and validated in this model, the Surface-to-MORK lowering engine (Phases 3+) transforms it into:</p>
+
+<ul>
+  <li><strong><code class="language-plaintext highlighter-rouge">mork:DataMapping</code></strong> for semantic linkage</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">mork:ShapeMapping</code></strong> for validation artefacts (Promotion shapes, Index constraints)</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">mork:RuleMapping</code></strong> for inference artefacts (Closure rules)</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">mork:ProjectionMapping</code></strong> for class generation (Index nominal forms)</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">mork:QueryTemplate</code></strong> for SPARQL evaluation (Index queries)</li>
+</ul>
+
+<p>The MORK output is deterministic, version-tracked, and governance-reviewable. Compiler backends (SPARQL, SHACL, SWRL) then lower MORK mappings to executable artefacts.</p>
+
+<hr />
+
+<h2 id="testing-and-validation">Testing and Validation</h2>
+
+<p>Surface validation requires:</p>
+
+<ol>
+  <li><strong>Structural shapes</strong> (ontology/surface/shapes/structural.ttl)
+    <ul>
+      <li>Contract well-formedness</li>
+      <li>Cardinality and type constraints</li>
+      <li>Profile identity consistency</li>
+    </ul>
+  </li>
+  <li><strong>Constraint shapes</strong> (ontology/surface/shapes/constraints.ttl)
+    <ul>
+      <li>Collision detection for nominal names</li>
+      <li>Population enumeration validity</li>
+      <li>Read-path reachability</li>
+    </ul>
+  </li>
+  <li><strong>Defect fixtures</strong> (six edge cases in test suite)
+    <ul>
+      <li>Missing evaluation subject role</li>
+      <li>Duplicate singleton role</li>
+      <li>Cyclic closure basis</li>
+      <li>Lossy promotion onto authored property</li>
+      <li>Population over budget</li>
+      <li>Naming collision</li>
+    </ul>
+  </li>
+  <li><strong>Conformance corpus</strong> (ontology/surface/examples/)
+    <ul>
+      <li>Three worked examples (CSO→FBO, dimension index, closure surface)</li>
+      <li>Eligibility interval-containment projection</li>
+    </ul>
+  </li>
+</ol>
+
+<hr />
+
+<h2 id="documentation-and-references">Documentation and References</h2>
+
+<ul>
+  <li><strong>Plan (Phases 0–8 complete):</strong> <a href="/developer/plans/surface-mork-unified-projection-plan.html">surface-mork-unified-projection-plan.md</a></li>
+  <li><strong>Status (tracking):</strong> <a href="/developer/status/surface-mork-unified-projection.html">surface-mork-unified-projection.md</a></li>
+  <li><strong>Outstanding items:</strong> <a href="/developer/status/surface-outstanding-items.html">surface-outstanding-items.md</a></li>
+  <li><strong>ADRs:</strong> A16 (mechanism), A17 (authoring model), A18 (lowering), A19 (compiler), A20 (semantics), A21 (composition), A22–A28 (MORK/governance/conformance)</li>
+  <li><strong>Code:</strong> <a href="../../tools/surface/">tools/surface/</a> (61/61 tests passing), <a href="../../ontology/surface/">ontology/surface/</a> (vocab, shapes, examples)</li>
+</ul>
+
+<hr />
+
+<h2 id="status">Status</h2>
+
+<p>This sketch documents the design principles. Implementation is tracked in the plan and status documents above. See status document for test results and verification checklist.</p>
+
+<p><strong>Last updated:</strong> 2026-09-22</p>

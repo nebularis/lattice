@@ -1,0 +1,1062 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="plan-normative-rule-substrate">Plan: Normative rule substrate</h1>
+
+<p><strong>Unit ID:</strong> <code class="language-plaintext highlighter-rouge">normative-rule-substrate</code>
+<strong>Unit type:</strong> Multi-slice unit, single machine. Deliberately not an epic (§3)
+<strong>Status:</strong> Proposed, awaiting the maintainer’s review. No slice may start until §9’s decisions are taken.
+Aligned with CCS on 2026-10-10: N1, N2, N4, N5 and the Behaviour part of N8 are CCS’s, N6 and N8 are
+absorbed by CCS C12 and C13, and this unit keeps integration with other rule languages (N3, N7, N9,
+N10 to N13), with its own formal-methods treatment when we reach it (status record, NQ-1 to NQ-4)
+<strong>Trigger:</strong> request, 2026-09-29, following the LegalRuleML mapping analysis
+<strong>Sketches:</strong> <a href="/developer/sketches/legalruleml-mapping.html">legalruleml-mapping.md</a> (the construct-level analysis),
+<a href="/developer/sketches/rule-layers.html">rule-layers.md</a> and
+<a href="/developer/sketches/rule-layers-cross-check.html">rule-layers-cross-check.md</a> (the R1 to R5 findings this unit delivers)
+<strong>Status record:</strong> <a href="/developer/status/normative-rule-substrate.html">normative-rule-substrate.md</a>
+<strong>ADRs:</strong> A-104 to A-111 reserved. A-104 and A-106 are retitled, drafted in
+<a href="/developer/plans/computable-contract-substrate.html">computable-contract-substrate</a> (CCS), which absorbs slice N4 and
+the Behaviour part of N8 (2026-09-30), and accepted at CCS Gate A (2026-10-01). A-105 moved to CCS
+with N5 (2026-10-10). A-107 to A-111 are not drafted
+<strong>Runs alongside:</strong> <a href="/developer/plans/applied-insurance-reference.html">applied-insurance-reference</a> epic, currently at round 3.
+See §4 for the dependency analysis and the ordering verdict</p>
+
+<hr />
+
+<h2 id="1-problem">1. Problem</h2>
+
+<p>LATTICE models admissibility well and normativity not at all. <code class="language-plaintext highlighter-rouge">ins:Obligation</code> is a structural
+document element with an obligor and an obligee. It has no modality, no deadline, no fulfilment
+test, no violation state and no link to what happens when it is breached. Every domain LATTICE
+targets is regulative, not only insurance: lending covenants, trial protocols, employment terms,
+licence conditions.</p>
+
+<p>Three consequences follow, and they compound.</p>
+
+<ul>
+  <li><strong>Applied modules will invent it locally.</strong> Applied-insurance A-101 currently expects to draft
+term parameters on <code class="language-plaintext highlighter-rouge">ins:Qualifier</code> without a normative model of the obligation being qualified.
+The restatement boundary (ADR-AC1) exists to prevent exactly this.</li>
+  <li><strong>Absence cannot decide anything.</strong> “No notification arrived by the deadline” is permanently
+<code class="language-plaintext highlighter-rouge">Undetermined</code> under current semantics, which is correct and useless. Conformance level L5
+(ADR-A14) already requires closure assumptions that no vocabulary defines.</li>
+  <li><strong>Deadlines have no replayable form.</strong> The Phase 3 plan bans <code class="language-plaintext highlighter-rouge">now()</code> in guards and effects but
+does not say where time-driven transitions come from. The first obligation deadline will
+reintroduce a wall clock into the engine or a side channel outside the log.</li>
+</ul>
+
+<h2 id="2-scope">2. Scope</h2>
+
+<p><strong>In scope.</strong> The cross-check’s R1 to R5, plus three items the LegalRuleML analysis added: the
+importable rule-body fragment, multi-axis temporal scope, and norm priority.</p>
+
+<p><strong>Out of scope.</strong> A native evaluation engine, a Datalog sidecar, a controlled-language input
+route, and any new runtime language. All are deferred in the cross-check §5 with triggers, and
+nothing in this unit changes those triggers.</p>
+
+<p><strong>Deliberately conditional.</strong> LegalRuleML and ODRL interchange (N12) is built only if a trigger
+fires. The standing ruling is that both are coverage checklists, not dependencies, and neither
+syntax is adopted.</p>
+
+<h2 id="3-why-this-is-a-unit-and-not-an-epic">3. Why this is a unit and not an epic</h2>
+
+<p>The repository’s epic model (Epic ⇒ Phase ⇒ Slice ⇒ Milestone) exists to coordinate several
+machines and teams across quarters. This unit runs on one machine with one agent. Phase plans and
+per-phase status records would add ceremony without adding coordination.</p>
+
+<p>The unit is nevertheless epic-sized in content: thirteen slices, five ADRs on substrate layers,
+and one change that cascades to fourteen files. Two safeguards replace the epic ceremony:</p>
+
+<ul>
+  <li><strong>Tranche gates.</strong> The slices group into five tranches (§7). Each tranche ends with a
+validation gate, and the Foundation tranche additionally requires a quiet window in the
+applied-insurance epic.</li>
+  <li><strong>One status record, updated per slice</strong>, in the style of <code class="language-plaintext highlighter-rouge">ontology-semantic-versioning</code> rather
+than the per-machine sections of the applied-insurance epic.</li>
+</ul>
+
+<p>This is a deliberate deviation from the epic decomposition model (now in skill <code class="language-plaintext highlighter-rouge">lattice-lifecycle</code>)
+and needs agreement before slice N1 starts. It is listed in §9 as decision D1.</p>
+
+<hr />
+
+<h2 id="4-dependency-check-against-the-applied-insurance-epic">4. Dependency check against the applied-insurance epic</h2>
+
+<p><strong>Note, 2026-10-10.</strong> This section was measured on 2026-09-29 and is kept as that record. Since
+then: CCS C10 flipped the layer order, so Behaviour no longer imports Instrument and nothing outside
+Instrument imports it (ADR-A104 Consequences). N4, N5 and the Behaviour part of N8 moved to CCS.
+CCS F1 changed Foundation in its own window, not N9’s (ADR-A114, CCS risk R6). The applied-insurance
+epic is still in round 3: AIR-3.3 is unmerged, Phase 2 is incomplete, and substrate S2 and S7 have
+not started, so the constraints on N1, N3, N7, N9 and N10 stand.</p>
+
+<p>This section answers the question directly: can this tranche proceed without interfering with the
+applied-insurance epic, and if not, which goes first.</p>
+
+<h3 id="41-method">4.1 Method</h3>
+
+<p>Interference between two ontology work streams takes three forms, and each was checked separately.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Form</th>
+      <th>How it bites</th>
+      <th>How it was measured</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Version cascade</strong></td>
+      <td>Bumping a layer forces every importer to re-pin its <code class="language-plaintext highlighter-rouge">owl:imports</code> in the same change (ADR-A98, ontology-versioning-policy). If the epic is concurrently authoring an importer, every one of its branches rebases dirty</td>
+      <td>Enumerated external importers per layer across the whole <code class="language-plaintext highlighter-rouge">ontology/</code> tree</td>
+    </tr>
+    <tr>
+      <td><strong>File contention</strong></td>
+      <td>Two slices editing the same file produce rebase conflicts, and a delimited-region file is worse because regions move</td>
+      <td>Read the remaining slice definitions in the epic’s Phase 2, 3, 4 and substrate plans, and listed the files each touches</td>
+    </tr>
+    <tr>
+      <td><strong>Conceptual overlap</strong></td>
+      <td>Two slices deciding the same semantic question differently</td>
+      <td>Compared this unit’s decisions against the epic’s substrate track items S1 to S7</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="42-cascade-blast-radius-measured">4.2 Cascade blast radius, measured</h3>
+
+<p>Counted by enumerating every <code class="language-plaintext highlighter-rouge">.ttl</code> under <code class="language-plaintext highlighter-rouge">ontology/</code> referencing each layer’s version IRI, then
+excluding the layer’s own directory. “Applied modules hit” is the number of those importers that
+sit under <code class="language-plaintext highlighter-rouge">ontology/applied/</code>, because those are the files the epic is actively authoring.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Layer</th>
+      <th>External importers</th>
+      <th>Applied modules hit</th>
+      <th>Cascade risk while the epic runs</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>foundation</strong></td>
+      <td><strong>14</strong></td>
+      <td><strong>5</strong> — capacity, classification, insurance/common, insurance/peril spec and vocab</td>
+      <td><strong>severe</strong></td>
+    </tr>
+    <tr>
+      <td>vocabulary</td>
+      <td>8</td>
+      <td>3 — classification, common, peril-vocab</td>
+      <td>high</td>
+    </tr>
+    <tr>
+      <td>quantification</td>
+      <td>7</td>
+      <td>2 — capacity, peril</td>
+      <td>high</td>
+    </tr>
+    <tr>
+      <td>party</td>
+      <td>4</td>
+      <td>1 — insurance/common</td>
+      <td>moderate</td>
+    </tr>
+    <tr>
+      <td>eligibility</td>
+      <td>3</td>
+      <td>1 — applied/capacity</td>
+      <td>moderate</td>
+    </tr>
+    <tr>
+      <td><strong>instrument</strong></td>
+      <td><strong>1</strong></td>
+      <td><strong>0</strong> — only <code class="language-plaintext highlighter-rouge">behaviour/spec/behaviour.ttl</code></td>
+      <td><strong>negligible</strong></td>
+    </tr>
+    <tr>
+      <td>behaviour</td>
+      <td>1</td>
+      <td>1 — applied/capacity</td>
+      <td>low</td>
+    </tr>
+    <tr>
+      <td>surface</td>
+      <td>0</td>
+      <td>0</td>
+      <td>none</td>
+    </tr>
+    <tr>
+      <td>persistence</td>
+      <td>0</td>
+      <td>0</td>
+      <td>none</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Two readings matter.</p>
+
+<p><strong>Instrument is the safest layer in the repository to change right now.</strong> One external importer,
+no applied module, and the epic does not touch it until Phase 5, which decision D2 defers until
+Open CBAA integration of Phases 1 to 4. The unit’s largest deliverable, the deontic extension, is
+also its least disruptive.</p>
+
+<p><strong>Foundation is the most dangerous, and the danger is currently at its peak.</strong> Of its five applied
+importers, <code class="language-plaintext highlighter-rouge">insurance/peril/spec/peril.ttl</code> and <code class="language-plaintext highlighter-rouge">insurance/peril/vocab/peril-vocab.ttl</code> are the
+two files that AIR-2.2 through AIR-2.7 author region by region across the whole of Phase 2. A
+Foundation bump during Phase 2 forces every one of those six slice branches to re-pin a file it is
+simultaneously rewriting.</p>
+
+<h3 id="43-file-contention-slice-by-slice">4.3 File contention, slice by slice</h3>
+
+<p>Remaining epic slices and the files they touch, against this unit’s slices.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Epic slice</th>
+      <th>Touches</th>
+      <th>Contends with</th>
+      <th>Severity</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AIR-2.2 to AIR-2.7</td>
+      <td><code class="language-plaintext highlighter-rouge">applied/insurance/peril/**</code> only, plus reads Quantification</td>
+      <td>nothing in this unit</td>
+      <td>none</td>
+    </tr>
+    <tr>
+      <td>AIR-3.3</td>
+      <td><code class="language-plaintext highlighter-rouge">tools/mork_compilers/</code> only, SWRL and OWL backends. No ontology change</td>
+      <td><strong>N1</strong> (acyclicity shape and compiler refusal) and <strong>N3</strong> (design-time check) both touch <code class="language-plaintext highlighter-rouge">tools/mork_compilers/</code></td>
+      <td><strong>moderate</strong></td>
+    </tr>
+    <tr>
+      <td>AIR-3.4, AIR-3.5</td>
+      <td><code class="language-plaintext highlighter-rouge">peril/crosswalk/</code>, <code class="language-plaintext highlighter-rouge">exposure/examples/</code>, <code class="language-plaintext highlighter-rouge">mork/examples/</code></td>
+      <td>nothing</td>
+      <td>none</td>
+    </tr>
+    <tr>
+      <td>AIR-4.1 to AIR-4.6</td>
+      <td><code class="language-plaintext highlighter-rouge">applied/insurance/exposure/**</code> only</td>
+      <td>nothing</td>
+      <td>none</td>
+    </tr>
+    <tr>
+      <td>AIR-6.1</td>
+      <td><code class="language-plaintext highlighter-rouge">applied/insurance/submission/**</code></td>
+      <td>nothing</td>
+      <td>none</td>
+    </tr>
+    <tr>
+      <td>Substrate S1</td>
+      <td>Vocabulary, concept lifecycle</td>
+      <td>nothing</td>
+      <td>none</td>
+    </tr>
+    <tr>
+      <td>Substrate <strong>S2</strong></td>
+      <td><strong>Eligibility spec</strong>, HierarchicalMatch traversal choice</td>
+      <td><strong>N1</strong> (Eligibility shapes), <strong>N5</strong> (Eligibility outcome path)</td>
+      <td><strong>moderate</strong></td>
+    </tr>
+    <tr>
+      <td>Substrate S4</td>
+      <td>Quantification, occurrence grouping</td>
+      <td>nothing</td>
+      <td>none</td>
+    </tr>
+    <tr>
+      <td>Substrate S5</td>
+      <td>Surface, generated classes from conjunctions</td>
+      <td>nothing directly. Conceptual note in §4.4</td>
+      <td>low</td>
+    </tr>
+    <tr>
+      <td>Substrate S6</td>
+      <td>Guidance text only</td>
+      <td>nothing</td>
+      <td>none</td>
+    </tr>
+    <tr>
+      <td>Substrate <strong>S7</strong></td>
+      <td><strong>Foundation</strong>, conflicting evidenced assertions of one attribute</td>
+      <td><strong>N9</strong> (multi-axis temporal scope) shares the file. Conceptually adjacent to <strong>N10</strong> (priority)</td>
+      <td><strong>high</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="44-conceptual-overlap">4.4 Conceptual overlap</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Epic item</th>
+      <th>This unit</th>
+      <th>Relationship</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>ADR-A103 set readings and negation (merged as AIR-3.2)</td>
+      <td>N5 closure declarations</td>
+      <td><strong>Complementary, not conflicting.</strong> A103 gives classical negation over a value set. N5 gives a licence for absence to decide. They answer different questions and compose: a set reading says how to read several values, a closure says whether “no values” may mean “false”</td>
+    </tr>
+    <tr>
+      <td>S2 HierarchicalMatch traversal choice</td>
+      <td>N1 composition acyclicity</td>
+      <td>Both are Eligibility well-foundedness. S2 is acyclicity of scheme ordering, N1 is acyclicity of condition composition. Same shape, different graph. Worth authoring by the same hand</td>
+    </tr>
+    <tr>
+      <td>S5 Surface generated classes from conjunctions</td>
+      <td>N4 modality, N8 chains</td>
+      <td>Low. Surface materialises conjunctions of characteristics. This unit uses conjunction as a profile combination, which Eligibility already owns. No shared decision</td>
+    </tr>
+    <tr>
+      <td><strong>S7 Foundation assertion conflict resolution</strong></td>
+      <td><strong>N10 norm priority</strong></td>
+      <td><strong>Genuine adjacency.</strong> S7 resolves conflict between two evidenced assertions of one attribute. N10 resolves conflict between two norms with opposing modality. Both are precedence models on Foundation-adjacent data. They should be designed by one hand or explicitly separated, or the repository acquires two precedence vocabularies that do not compose</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="45-verdict">4.5 Verdict</h3>
+
+<p><strong>This unit can proceed now, in parallel, for most of its content. One slice must wait, and one
+epic item must be coordinated.</strong></p>
+
+<p>The ordering is not “rules first” or “insurance first” as a whole. It is per slice, and the
+determining factor is cascade blast radius rather than subject matter.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Verdict</th>
+      <th>Slices</th>
+      <th>Reason</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Proceed now, in parallel</strong></td>
+      <td>N2, N4 (now CCS), N6, N8</td>
+      <td>Instrument and Behaviour only. One external importer, no applied module, no epic slice touches them until deferred Phase 5</td>
+    </tr>
+    <tr>
+      <td><strong>Proceed now, sequenced behind AIR-3.3</strong></td>
+      <td>N1, N3, N7</td>
+      <td>Share <code class="language-plaintext highlighter-rouge">tools/mork_compilers/</code> with AIR-3.3. AIR-3.3 is a round-3 slice and small. Waiting for its merge costs one round</td>
+    </tr>
+    <tr>
+      <td><strong>Coordinate with substrate S2</strong></td>
+      <td>N5</td>
+      <td>Both touch Eligibility. Either author S2 and N5 together, or land S2 first and rebase N5</td>
+    </tr>
+    <tr>
+      <td><strong>Serialise into a quiet window</strong></td>
+      <td><strong>N9</strong></td>
+      <td>Foundation, 14 importers, 5 applied. Must not run while Phase 2 authors the peril files</td>
+    </tr>
+    <tr>
+      <td><strong>Deferred, decision-gated</strong></td>
+      <td>N10, N11, N12, N13</td>
+      <td>Depend on decisions in §9 and on earlier slices</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Which goes first, stated plainly.</strong> The rule work goes first, and specifically the Instrument
+deontic extension (N4) goes first, for three independent reasons:</p>
+
+<ol>
+  <li><strong>It is the cheapest change available.</strong> Its cascade reaches Behaviour, Behaviour’s vocabulary
+and <code class="language-plaintext highlighter-rouge">applied/capacity</code>, none of which this epic is authoring (N4, version impact).</li>
+  <li><strong>The epic needs it.</strong> The cross-check’s sequencing constraint is that R1 must be accepted and
+Instrument bumped <strong>before applied-insurance Phase 5 starts</strong>, because A-101 expects to draft
+term parameters on <code class="language-plaintext highlighter-rouge">ins:Qualifier</code> without a normative model of the obligation they qualify.
+Doing it after Phase 5 means either reworking Phase 5 or accepting a local invention the
+restatement boundary forbids.</li>
+  <li><strong>The window is open now and closes later.</strong> Phase 5 is deferred by D2 until Open CBAA
+integration of Phases 1 to 4. That deferral is precisely the window in which Instrument can be
+changed without touching anything the epic is building.</li>
+</ol>
+
+<p><strong>The one hard ordering constraint in the other direction:</strong> N9 (Foundation multi-axis time) must
+come <strong>after Phase 2 completes</strong>, or it forces six actively-authored slice branches to re-pin a
+file they are rewriting. Phase 2 has AIR-2.2 through AIR-2.7 outstanding. If multi-axis time is
+needed sooner than that, the cost is a coordinated freeze across the epic, and that trade is the
+maintainer’s to make. It is decision D4 in §9.</p>
+
+<h3 id="46-what-would-change-this-verdict">4.6 What would change this verdict</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>If</th>
+      <th>Then</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Phase 5 is un-deferred and starts early</td>
+      <td>N4 becomes urgent and blocking rather than merely first</td>
+    </tr>
+    <tr>
+      <td>S7 is pulled forward from the substrate track</td>
+      <td>N10 must merge with it, or one of the two must be abandoned</td>
+    </tr>
+    <tr>
+      <td>A Foundation change is found necessary inside N4, N5 or N8</td>
+      <td>Those slices inherit N9’s quiet-window constraint, and the parallel-safe verdict collapses. This is the single largest risk in the plan, and N4’s first task is to confirm it is avoidable</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="5-governing-decisions">5. Governing decisions</h2>
+
+<p>None of these existed on 2026-09-29. Each is drafted inside the slice that needs it and must be Accepted before
+that slice’s implementation begins. Numbering starts at A-104 because A-103 is the highest
+existing ADR and A-101 is reserved by the applied-insurance epic for term parameters.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>ADR</th>
+      <th>Title</th>
+      <th>Drafted in</th>
+      <th>Delivers</th>
+      <th> </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>ADR</td>
+      <td>Title</td>
+      <td>Drafted in</td>
+      <td>Delivers</td>
+      <td>State (2026-10-10)</td>
+    </tr>
+  </tbody>
+  <tbody>
+    <tr>
+      <td>A-104</td>
+      <td>Instrument: terms and legal relations (retitled from “Deontic extension of Instrument”)</td>
+      <td>CCS C1</td>
+      <td>cross-check R1, and the CCS sketch</td>
+      <td>accepted 2026-10-01, with addenda</td>
+    </tr>
+    <tr>
+      <td>A-105</td>
+      <td>Closure declarations and the licence for absence</td>
+      <td>CCS HQ-6a (moved from N5, 2026-10-10)</td>
+      <td>cross-check R2</td>
+      <td>not drafted</td>
+    </tr>
+    <tr>
+      <td>A-106</td>
+      <td>Behaviour configuration, runtime, occasions and records (retitled from “Compensation chains and violation records”)</td>
+      <td>CCS C2</td>
+      <td>extends R1. Breach chains are <code class="language-plaintext highlighter-rouge">ins:arisesOnBreachOf</code>, violation is “breach”</td>
+      <td>accepted 2026-10-01, with addenda</td>
+    </tr>
+    <tr>
+      <td>A-107</td>
+      <td>Norm priority and defeasibility</td>
+      <td>N10</td>
+      <td>extends R1</td>
+      <td>not drafted</td>
+    </tr>
+    <tr>
+      <td>A-108</td>
+      <td>Multi-axis temporal scope</td>
+      <td>N9</td>
+      <td>new, from the LegalRuleML analysis</td>
+      <td>not drafted</td>
+    </tr>
+    <tr>
+      <td>A-109</td>
+      <td>The importable rule-body fragment</td>
+      <td>N2</td>
+      <td>new</td>
+      <td>not drafted. ADR-A104 decision 15 states its revision (stratified state reads)</td>
+    </tr>
+    <tr>
+      <td>A-110</td>
+      <td>Interpretation contexts</td>
+      <td>not scheduled. Recorded only</td>
+      <td>new, deferred</td>
+      <td>not drafted</td>
+    </tr>
+    <tr>
+      <td>A-111</td>
+      <td>LegalRuleML and ODRL interchange</td>
+      <td>N12, conditional</td>
+      <td>new</td>
+      <td>not drafted</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>A-104 amends ADR-A07b, which chose Instrument’s minimal shape deliberately. That amendment is the
+substantive architectural act of this unit and must be argued in A-104 rather than assumed.
+(2026-10-10: A-104 supersedes ADR-A07b, accepted in CCS.)</p>
+
+<hr />
+
+<h2 id="6-slices">6. Slices</h2>
+
+<p>Sizing follows the repository rule (skill <code class="language-plaintext highlighter-rouge">lattice-lifecycle</code>): one or two modules, and a Validation
+Pack of roughly 3 to 15 test cases. Estimates are in tokens.</p>
+
+<h3 id="tranche-a--groundwork-no-ontology-version-change">Tranche A — Groundwork, no ontology version change</h3>
+
+<h4 id="n1-condition-composition-acyclicity-r4-moved-to-ccs-nq-2">N1. Condition composition acyclicity (R4). Moved to CCS (NQ-2)</h4>
+
+<p><strong>Delivers</strong> the cross-check’s R4. <strong>Touches</strong> <code class="language-plaintext highlighter-rouge">ontology/eligibility/shapes/</code>, <code class="language-plaintext highlighter-rouge">tools/mork_compilers/</code>.</p>
+
+<p>A SHACL shape and a compiler refusal for a cycle through <code class="language-plaintext highlighter-rouge">elg:hasCondition</code> across nested
+profiles. ADR-A03 makes <code class="language-plaintext highlighter-rouge">elg:AdmissionProfile</code> a subclass of <code class="language-plaintext highlighter-rouge">elg:Condition</code>, so profiles nest and
+a cycle is constructible. With negation (ADR-A103) a cycle has no well-founded outcome. Today
+nothing prevents one, and the absence of one holds only because no fixture builds it.</p>
+
+<p>Follows the existing <code class="language-plaintext highlighter-rouge">elg:HierarchyWellFoundednessShape</code> pattern, which discharges elg:L9 for
+scheme ordering. Records the evaluation-order rule in the Eligibility README: a condition is
+evaluated after every condition it composes.</p>
+
+<p><strong>Version impact:</strong> <code class="language-plaintext highlighter-rouge">eligibility/shapes/.version</code> MINOR, 0.2.0 to 0.3.0. Shapes are not imported,
+so no cascade. No spec bump.</p>
+
+<p><strong>Diagnostic added:</strong> <code class="language-plaintext highlighter-rouge">exe:CompositionCycle</code>.</p>
+
+<p><strong>Note, 2026-10-10.</strong> Eligibility’s README is again its literate source (CCS C9b0, merged 2026-10-10),
+so the shape is authored in the README and the shapes files regenerated from it. Eligibility shapes
+are still 0.2.0. CCS C13 and C13a wait on N1, so N1 is on CCS’s critical path (status record, NQ-3).</p>
+
+<h4 id="n2-declare-the-importable-rule-body-fragment-a-109-moved-to-ccs-nq-2">N2. Declare the importable rule-body fragment (A-109). Moved to CCS (NQ-2)</h4>
+
+<p><strong>Delivers</strong> a decision, no code. <strong>Touches</strong> <code class="language-plaintext highlighter-rouge">docs/architecture/decisions/</code>.</p>
+
+<p>Declares which rule bodies LATTICE can represent: tree-shaped, single-subject, no joins, no
+deontic formulas in bodies, connectives as nested profiles. Names the refusals for everything
+else. Independent of LegalRuleML and worth having regardless of whether the rest of this unit
+proceeds.</p>
+
+<p><strong>Revised 2026-09-30 (CCS sketch §6.2).</strong> A condition may read the recorded state of another
+relation’s occasion, which is a fact, when the graph of breach, exercise and state-read edges is
+acyclic. Deontic formulas stay refused. Needed for Side A D&amp;O cover (“Non-Indemnifiable Loss”, the
+sample D&amp;O policy, clause 14), guarantees, and authority that depends on a regime’s state.
+ADR-A104 decision 15 (accepted 2026-10-01) states this revision and law I6. The Instrument README
+assigns I6’s check to CCS C13, which builds stratified state reading.</p>
+
+<h4 id="n3-self-contradiction-design-time-check">N3. Self-contradiction design-time check</h4>
+
+<p><strong>Delivers</strong> a genuinely new capability on existing machinery. <strong>Touches</strong>
+<code class="language-plaintext highlighter-rouge">tools/mork_compilers/</code>, <code class="language-plaintext highlighter-rouge">platform/reasoning-testkit/</code>.</p>
+
+<p>Answers: does any pair of norms in a contract impose opposing modalities over overlapping
+activation conditions? This is satisfiability of the conjunction of two activation profiles where
+the modalities are duals, and the existing reasoning harness (ADR-A83) can answer it. Detects a
+contract that contradicts itself, which is a real and expensive drafting error.</p>
+
+<p>Depends on N4 for the modality vocabulary, so it is sequenced after N4 despite sitting in
+tranche A conceptually. Under the CCS design the pairs compared are an Obligation and a Prohibition
+over the same activity, and an exception (Permission or Exclusion) that excepts nothing in scope. Listed here because it needs no gap closed beyond N4.</p>
+
+<p><strong>Prerequisite added 2026-10-02: CCS C13a.</strong> The OWL backend compiles only conditions bound to
+the case by an evidence path. CCS slice C13a teaches it question-form conditions and builds the
+joint-satisfiability task (<code class="language-plaintext highlighter-rouge">P ⊓ Q</code>) for variation slots. N3 uses the same task for clashes, so it
+follows C13a or is built with it. The <a href="/developer/plans/insurml-alignment.html">insurml-alignment</a> plan reuses N3’s
+clash check as a verification pass.</p>
+
+<h3 id="tranche-b--instrument-and-behaviour-parallel-safe">Tranche B — Instrument and Behaviour, parallel-safe</h3>
+
+<h4 id="n4-deontic-extension-of-instrument-a-104-r1-moved-to-ccs">N4. Deontic extension of Instrument (A-104, R1). Moved to CCS</h4>
+
+<p><strong>Delivered by <a href="/developer/plans/computable-contract-substrate.html">CCS</a> C1 and C6 to C9 (2026-09-30).</strong> D2 was
+answered by the redesign in <a href="/developer/sketches/instrument-terms-and-legal-relations.html">instrument-terms-and-legal-relations.md</a>
+and consolidated in <a href="/developer/sketches/computable-contract-substrate.html">computable-contract-substrate.md</a>:
+<code class="language-plaintext highlighter-rouge">ins:Obligation</code> is deontic, the document’s structure moves to a new Wording layer, and the
+qualifier-based <code class="language-plaintext highlighter-rouge">DeonticSpecification</code> below is superseded. The text below is the original slice,
+kept as the record.</p>
+
+<p><strong>The keystone slice.</strong> <strong>Touches</strong> <code class="language-plaintext highlighter-rouge">ontology/instrument/spec/</code>, <code class="language-plaintext highlighter-rouge">vocab/</code>, <code class="language-plaintext highlighter-rouge">shapes/</code>,
+<code class="language-plaintext highlighter-rouge">ontology/behaviour/spec/behaviour.ttl</code> (re-pin only), <code class="language-plaintext highlighter-rouge">ontology/instrument/examples/</code>.</p>
+
+<p>Per the cross-check’s R1 and the sketch §18, deontic modality enters Instrument rather than a new
+layer. Terms: <code class="language-plaintext highlighter-rouge">ins:DeonticSpecification ⊑ ins:Qualifier</code> with four modality subtypes, bearer and
+auxiliary party, activation and fulfilment profiles, deadline anchor and offset, strength, and the
+achievement versus maintenance distinction. Obligation <strong>state</strong> is deliberately not declared here:
+it is a Behaviour state space whose occupancies are derived artefacts following ADR-A102’s pattern
+exactly.</p>
+
+<p><strong>First task, before any authoring:</strong> confirm no Foundation change is required. If one is, this
+slice inherits N9’s quiet-window constraint and the plan’s parallel-safe verdict collapses (§4.6).</p>
+
+<p><strong>Clean-room requirement (ADR-AC2):</strong> two non-domain worked examples first, a lending covenant
+reporting duty with a cure period and a trial adverse-event reporting duty. Insurance examples
+come later and must not drive the design.</p>
+
+<p><strong>Version impact:</strong> <code class="language-plaintext highlighter-rouge">instrument/spec</code> MINOR 0.7.0 to 0.8.0, vocab mirrored, shapes MINOR. The re-pin
+in <code class="language-plaintext highlighter-rouge">behaviour/spec/behaviour.ttl</code> bumps Behaviour too (an import-only change takes the imported
+bump level, ADR-A86 addendum item 1), which re-pins <code class="language-plaintext highlighter-rouge">behaviour-vocab</code> and
+<code class="language-plaintext highlighter-rouge">applied/capacity</code>’s execution profile. No applied insurance module is affected. AIR-3.2 ran this
+exact cascade.</p>
+
+<p><strong>Laws:</strong> N1, N2, N4, N10 from the sketch §18.3.</p>
+
+<h4 id="n6-scheduled-triggers-as-positioned-stimuli-r3-absorbed-by-ccs-c12-nq-3">N6. Scheduled triggers as positioned stimuli (R3). Absorbed by CCS C12 (NQ-3)</h4>
+
+<p><strong>Touches</strong> <code class="language-plaintext highlighter-rouge">ontology/behaviour/spec/</code>, <code class="language-plaintext highlighter-rouge">vocab/</code>, and the Phase 3 plan text.</p>
+
+<p><code class="language-plaintext highlighter-rouge">bhv:ScheduledTrigger</code> and <code class="language-plaintext highlighter-rouge">bhv:DeferredActivation</code> fire through stimuli written to the stimulus
+log by a scheduler, each carrying the valid time it represents. The engine never reads a clock.
+Deadline expiry becomes an input at a position, so deterministic replay covers deadlines and a
+backdated fact is ordered by the same rules as any other input. Allowance resets
+(<code class="language-plaintext highlighter-rouge">bhv:resetRecurrence</code>) share the mechanism.</p>
+
+<p><strong>Version impact:</strong> <code class="language-plaintext highlighter-rouge">behaviour/spec</code> MINOR. One re-pin in <code class="language-plaintext highlighter-rouge">applied/capacity</code>.</p>
+
+<p><strong>Built with CCS C12 (2026-09-30, revised 2026-10-01).</strong> The legal triggers are Behaviour triggers (<code class="language-plaintext highlighter-rouge">ins:OnExpiry ⊑ bhv:TriggerDefinition</code>, CCS CC-D8), so nothing is compiled from <code class="language-plaintext highlighter-rouge">ins:arisesOn</code> or <code class="language-plaintext highlighter-rouge">ins:due</code>. C12’s runtime evaluator turns each scheduled trigger into a positioned stimulus.
+Whether anything of N6 remains outside C12 is open (status record, NQ-3).</p>
+
+<h4 id="n8-compensation-chains-and-violation-records-a-106-moved-to-ccs-behaviour-part-to-c11-and-c12-the-chain-checks-absorbed-by-c13-nq-3">N8. Compensation chains and violation records (A-106). Moved to CCS: Behaviour part to C11 and C12, the chain checks absorbed by C13 (NQ-3)</h4>
+
+<p><strong>Touches</strong> <code class="language-plaintext highlighter-rouge">ontology/instrument/spec/</code>, <code class="language-plaintext highlighter-rouge">shapes/</code>, <code class="language-plaintext highlighter-rouge">ontology/behaviour/</code>, <code class="language-plaintext highlighter-rouge">tools/mork_compilers/</code>.</p>
+
+<p>An ordered, acyclic <code class="language-plaintext highlighter-rouge">ins:compensatedBy</code> chain, from which the Behaviour wiring is compiled rather
+than hand-built. Violation and compliance as <code class="language-plaintext highlighter-rouge">fnd:DecisionRecord</code> derived artefacts per ADR-A92,
+supporting both derived breach (a deadline passing) and asserted breach (an adjudicator’s finding,
+carrying <code class="language-plaintext highlighter-rouge">fnd:assertedBy</code>).</p>
+
+<p><strong>Blocked on N5</strong> (since 2026-10-12, CCS HQ-6b, since a breach is an absence over a period). Without a closure licence a violation can never be derived and the whole chain
+is inert.</p>
+
+<p><strong>Revised 2026-09-30.</strong> The chain is <code class="language-plaintext highlighter-rouge">ins:arisesOnBreachOf</code> on the secondary relation (it fans out,
+where a <code class="language-plaintext highlighter-rouge">compensatedBy</code> list cannot), the Behaviour records are CCS C11 and the runtime evaluator
+C12. Revised 2026-10-01: <code class="language-plaintext highlighter-rouge">ins:arisesOn</code> takes an <code class="language-plaintext highlighter-rouge">ins:OnBreach</code> trigger, a Behaviour trigger, so
+there is no compiled wiring. N8 keeps the chain checks: acyclicity, and a permission, exclusion or power never breached.</p>
+
+<p><strong>Note, 2026-10-10.</strong> Both checks now have a CCS home in part. <code class="language-plaintext highlighter-rouge">ins:OnBreach</code> names exactly one
+obligation through <code class="language-plaintext highlighter-rouge">ins:ofObligation</code> (range <code class="language-plaintext highlighter-rouge">ins:Obligation</code>, Instrument 0.16.0). Law I6, the acyclic
+graph of breach, exercise and state reading, is checked with CCS C13 (Instrument README §21). Whether
+N8 keeps any work is open (status record, NQ-3).</p>
+
+<p><strong>Laws:</strong> N3, N5, N9.</p>
+
+<h3 id="tranche-c--eligibility-and-persistence-coordinated">Tranche C — Eligibility and persistence, coordinated</h3>
+
+<h4 id="n5-closure-declarations-a-105-r2-moved-to-ccs">N5. Closure declarations (A-105, R2). Moved to CCS</h4>
+
+<p><strong>Moved to <a href="/developer/plans/computable-contract-substrate.html">CCS</a> on 2026-10-10</strong> (HQ6-Q1). CCS’s held
+question HQ-6 is this slice, and it runs as CCS work, as N4 and N8 did. Split by HQ6-Q2:</p>
+
+<ul>
+  <li><strong>HQ-6a, before CCS C9b3:</strong> ADR-A105, an untimed closure declaration, complete as of the deciding
+record’s recording time, its sources (a deeming among them), compile-time refusal of an unlicensed
+binding (D7, consistent with CCS C9b0-Q2), and decisions recording the closure they relied on.
+Closures over a period moved to HQ-6b on 2026-10-12 (CCS HQ6a-Q4)</li>
+  <li><strong>HQ-6b, before CCS C12:</strong> closures over a period anchored per subject, rebuttal and supersession, the precedence of a conclusive deeming,
+deemings for one purpose only, deemed receipt counted in business days (CCS HQ-3), the deemed-fact
+record’s link to its deeming and closure, and the persistence profile’s dense ordering and gap audit</li>
+</ul>
+
+<p>The text below is the original slice and its 2026-09-30 revision, kept as the record.</p>
+
+<p><strong>Touches</strong> <code class="language-plaintext highlighter-rouge">ontology/persistence/</code>, <code class="language-plaintext highlighter-rouge">ontology/eligibility/</code>, <code class="language-plaintext highlighter-rouge">ontology/behaviour/</code>,
+<code class="language-plaintext highlighter-rouge">tools/persistence/</code>.</p>
+
+<p>A declaration that a fact family is authoritative and complete for a scope up to a position, so
+absence may decide. Names the fact family, the authoritative source, the scope and the required
+persistence profile of dense per-stream ordering with a blocking gap audit. The compiler refuses a
+check that decides on absence unless a closure covers the fact family, and the refusal is a
+diagnostic rather than a silent <code class="language-plaintext highlighter-rouge">Undetermined</code>. A decision that relied on absence records the
+closure and the position, so a late fact at an earlier valid time supersedes it.</p>
+
+<p>Fills the hole ADR-A14’s level L5 leaves, where closure assumptions are required and undefined.</p>
+
+<p><strong>Coordinate with substrate S2</strong>, which also touches Eligibility.</p>
+
+<p><strong>Diagnostic added:</strong> <code class="language-plaintext highlighter-rouge">exe:NoClosureLicence</code>.</p>
+
+<p><strong>Revised 2026-09-30 (CCS sketch §5.6, §5.7, §6.4).</strong> Three additions:</p>
+<ul>
+  <li>A contract’s own deeming is a closure source: “deemed failed if … not provided within sixty days”
+licenses absence for that fact family (the sample D&amp;O policy 3.A, CBAA M12 12.37.2).</li>
+  <li>Determinations by a named party are decisive records, not evidence.</li>
+  <li>The party relying on an exception bears the burden of establishing it. The diagnostic
+<code class="language-plaintext highlighter-rouge">exe:ExceptionNotEstablished</code> names that party.</li>
+</ul>
+
+<h4 id="n7-measure-the-oasis-conformance-corpus">N7. Measure the OASIS conformance corpus</h4>
+
+<p><strong>Touches</strong> <code class="language-plaintext highlighter-rouge">test/conformance/</code> or a new fixture directory.</p>
+
+<p>Runs the three OASIS worked examples against whatever exists after tranches A and B, and records
+what imports, what refuses and why. Turns the gap list from an argument into a measurement, and
+gives every later slice a baseline. Cheap, and the highest-information slice in the plan.</p>
+
+<h3 id="tranche-d--foundation-serialised">Tranche D — Foundation, serialised</h3>
+
+<h4 id="n9-multi-axis-temporal-scope-a-108">N9. Multi-axis temporal scope (A-108)</h4>
+
+<p><strong>Must not start while applied-insurance Phase 2 is live.</strong> See §4.5.</p>
+
+<p><strong>Shares its cascade with CCS slice F1 (2026-09-30),</strong> which adds <code class="language-plaintext highlighter-rouge">fnd:identifier</code>. Both Foundation
+changes land in one window and one re-pin of the 14 importers. (Overtaken: F1 ran on its
+own as ADR-A114’s external and natural keys, merged and tagged while no AIR branch edited a Foundation
+importer. N9 keeps its own later window, CCS risk R6. Foundation is now 0.4.0.)</p>
+
+<p><strong>Touches</strong> <code class="language-plaintext highlighter-rouge">ontology/foundation/spec/</code>, <code class="language-plaintext highlighter-rouge">shapes/</code>, <code class="language-plaintext highlighter-rouge">vocab/</code>, plus a re-pin in all 14 importers.</p>
+
+<p>Norms need several time axes. LegalRuleML names in-force, efficacy and applicability. Open CBAA
+independently names transaction time, valid time, agreed date and operational date.
+<code class="language-plaintext highlighter-rouge">fnd:TemporalScope</code> provides one interval and <code class="language-plaintext highlighter-rouge">fnd:hasTemporalScope</code> is functional. The proposal
+is to relax it, with each scope carrying an axis concept bound by a <code class="language-plaintext highlighter-rouge">voc:SchemeContract</code>, so the
+axis set is adopter-chosen.</p>
+
+<p><strong>Version impact: MAJOR on Foundation</strong>, cascading to 14 files including 5 applied modules. This
+is the most expensive change the repository can make and the reason this slice is serialised.</p>
+
+<h3 id="tranche-e--deferred-decision-gated">Tranche E — Deferred, decision-gated</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Slice</th>
+      <th>Content</th>
+      <th>Gate</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>N10</strong></td>
+      <td>Norm priority and defeasibility (A-107)</td>
+      <td>D5. The cross-check’s row J judges it “enough for current scope” and folds it into Phase 5. The sketch §22.3 offers evidence against. Also adjacent to substrate S7. CCS declared <code class="language-plaintext highlighter-rouge">ins:prevailsOver</code> between definitions only (C7c D13, 2026-10-06), the planned C9c widens it to an incorporated document, and terms are left to N10</td>
+    </tr>
+    <tr>
+      <td><strong>N11</strong></td>
+      <td>Controlled-English rendering (R5)</td>
+      <td>Ingestion vision Phase 2 and review workbench design</td>
+    </tr>
+    <tr>
+      <td><strong>N12</strong></td>
+      <td>LegalRuleML and ODRL interchange (A-111)</td>
+      <td>A trigger from §2. Not built speculatively</td>
+    </tr>
+    <tr>
+      <td><strong>N13</strong></td>
+      <td>US Code §504 as acceptance milestone</td>
+      <td>All of the above</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="7-sequencing">7. Sequencing</h2>
+
+<pre><code class="language-mermaid">flowchart TB
+    subgraph TA["Tranche A"]
+        N2["N2 fragment ADR"]
+        N1["N1 acyclicity"]
+    end
+    subgraph TB["Tranche B — Instrument, parallel-safe"]
+        N4["N4 deontic extension&lt;br/&gt;KEYSTONE"]
+        N6["N6 positioned stimuli"]
+        N3["N3 contradiction check"]
+        N8["N8 compensation chains"]
+    end
+    subgraph TC["Tranche C — coordinated"]
+        N5["N5 closure declarations"]
+        N7["N7 corpus measurement"]
+    end
+    subgraph TD["Tranche D — serialised"]
+        N9["N9 multi-axis time"]
+    end
+    AIR33["AIR-3.3 merges"] --&gt; N1
+    S2["substrate S2"] -.coordinate.-&gt; N5
+    P2["Phase 2 completes"] --&gt; N9
+    N2 --&gt; N4
+    N4 --&gt; N3
+    N4 --&gt; N6
+    N4 --&gt; N5
+    N5 --&gt; N8
+    N6 --&gt; N8
+    N4 --&gt; N7
+    N1 --&gt; N7
+</code></pre>
+
+<table>
+  <thead>
+    <tr>
+      <th>Order</th>
+      <th>Slice</th>
+      <th>Gate before starting</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>N2</td>
+      <td>D1, D2</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>N4</td>
+      <td>delivered by CCS. No Foundation change needed (CCS sketch §12.1)</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>N1</td>
+      <td>AIR-3.3 merged</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>N6</td>
+      <td>N4 signed off</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>N3</td>
+      <td>N4 signed off</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td>N5</td>
+      <td>moved to CCS 2026-10-10: HQ-6a before C9b3, HQ-6b before C12</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td>N7</td>
+      <td>N4, N1 signed off</td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td>N8</td>
+      <td>N5, N6 signed off. Since 2026-10-10: CCS HQ-6a and C12, and NQ-3</td>
+    </tr>
+    <tr>
+      <td>9</td>
+      <td>N9</td>
+      <td><strong>D4. Phase 2 complete</strong></td>
+    </tr>
+    <tr>
+      <td>10+</td>
+      <td>N10 to N13</td>
+      <td>D5 and later gates</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>N2 and N4 can begin immediately once §9’s decisions are taken. Nothing in the applied-insurance
+epic blocks them. (2026-10-10: the diagram and table are the 2026-09-29 sequencing. N4 and N5 are
+CCS’s, and CCS C13 and C13a wait on N1.)</p>
+
+<hr />
+
+<h2 id="8-validation">8. Validation</h2>
+
+<p>Every slice delivers a Validation Pack at <code class="language-plaintext highlighter-rouge">docs/developer/validation/normative-rule-substrate-&lt;slice&gt;.md</code>
+following the house structure. (The sign-off row in <code class="language-plaintext highlighter-rouge">docs/developer/validation/LOG.md</code> is gone: the
+log was retired on 2026-10-10, probes are recorded in the status record and the merge is the
+sign-off.)</p>
+
+<p><strong>Test levels</strong> (repository taxonomy L0 to L8) expected per slice:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Slice</th>
+      <th>Levels</th>
+      <th>One command</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>N1</td>
+      <td>L1, L2, L3</td>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:mork-compilers</code></td>
+    </tr>
+    <tr>
+      <td>N2</td>
+      <td>none, paper only</td>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:ontology-catalog</code></td>
+    </tr>
+    <tr>
+      <td>N3</td>
+      <td>L1, L4</td>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:reasoning-testkit</code></td>
+    </tr>
+    <tr>
+      <td>N4</td>
+      <td>L1, L2, L3</td>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:ontology-versioning &amp;&amp; mise run check:ontology-catalog</code></td>
+    </tr>
+    <tr>
+      <td>N5</td>
+      <td>L1, L2, L3</td>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:persistence</code></td>
+    </tr>
+    <tr>
+      <td>N6</td>
+      <td>L1, L2</td>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:ontology-catalog</code></td>
+    </tr>
+    <tr>
+      <td>N7</td>
+      <td>L3</td>
+      <td>to be defined by the slice</td>
+    </tr>
+    <tr>
+      <td>N8</td>
+      <td>L1, L2, L3, L4</td>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:mork-compilers</code></td>
+    </tr>
+    <tr>
+      <td>N9</td>
+      <td>L0 to L3, full cascade</td>
+      <td><code class="language-plaintext highlighter-rouge">mise run check</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Non-weakening rule applies.</strong> No slice may delete, skip or loosen a test from a previous slice
+without an ADR-grade justification in its Validation Pack, countersigned at the gate.</p>
+
+<p><strong>Mandatory adversarial probe for N4 and N8</strong> (CCS’s since they moved, with N5): law N5 (a specification is violated only when
+activation is Permitted and fulfilment is Denied, and <code class="language-plaintext highlighter-rouge">Undetermined</code> never yields violation) must
+be shown to fail when deliberately broken. Getting N5 wrong makes the system accuse parties of
+breaching duties never established to apply to them, and it is the single most dangerous defect
+this unit can ship.</p>
+
+<p><strong>After every ontology change:</strong> <code class="language-plaintext highlighter-rouge">mise run build:ontology-catalog</code>, then
+<code class="language-plaintext highlighter-rouge">mise run check:ontology-versioning</code> and <code class="language-plaintext highlighter-rouge">mise run check:ontology-catalog</code>. Release rows via
+<code class="language-plaintext highlighter-rouge">mise run build:ontology-releases</code>. Tags are the maintainer’s to create.</p>
+
+<hr />
+
+<h2 id="9-decisions-owed-before-slice-n1-starts">9. Decisions owed before slice N1 starts</h2>
+
+<p>None of these is taken without the maintainer.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Decision</th>
+      <th>Bears on</th>
+      <th>Recommendation offered</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>D1</strong></td>
+      <td>Unit rather than epic, with tranche gates replacing phase gates (§3)</td>
+      <td>the whole plan</td>
+      <td>unit. One machine, no coordination benefit from phases</td>
+    </tr>
+    <tr>
+      <td><strong>D2</strong></td>
+      <td>Is <code class="language-plaintext highlighter-rouge">ins:Obligation</code> a deontic operator or a structural document element? ADR-A07b treats it structurally without deciding</td>
+      <td>N4, and therefore everything</td>
+      <td><strong>answered 2026-09-30</strong>: deontic, with structure in a new Wording layer and content in <code class="language-plaintext highlighter-rouge">ins:Term</code> (CCS sketch §1, §5)</td>
+    </tr>
+    <tr>
+      <td><strong>D3</strong></td>
+      <td>How far should ODRL alignment go? Naming the Instrument terms for a one-to-one ODRL mapping costs nothing now and is expensive to retrofit</td>
+      <td>N4</td>
+      <td><strong>answered 2026-09-30</strong>: design for LATTICE first, align where it costs nothing, map through MORK otherwise</td>
+    </tr>
+    <tr>
+      <td><strong>D4</strong></td>
+      <td>Does N9 wait for Phase 2 to complete, or does the epic accept a coordinated freeze?</td>
+      <td>N9, and the epic</td>
+      <td>wait. The freeze cost is higher than the delay cost</td>
+    </tr>
+    <tr>
+      <td><strong>D5</strong></td>
+      <td>Does priority (N10) wait for Phase 5 as the cross-check’s row J suggests, or proceed on the audit-provenance evidence in the sketch §22.3?</td>
+      <td>N10, and adjacency with S7</td>
+      <td>no recommendation. The evidence cuts both ways. Added 2026-09-30: every tested instrument asserts precedence (CBAA M1 1.2.1, M12 12.7.1, the sample package policy’s End. 13 “whether such endorsement precedes or follows”). Most resolves when endorsements are consolidated, so a narrow <code class="language-plaintext highlighter-rouge">ins:prevailsOver</code> as consolidation provenance could come early (CCS sketch §10.7, S70). 2026-10-06: CCS C7c declared <code class="language-plaintext highlighter-rouge">ins:prevailsOver</code> between definitions only, leaving terms to N10</td>
+    </tr>
+    <tr>
+      <td><strong>D6</strong></td>
+      <td>Is substrate S2 authored together with N5, or landed first?</td>
+      <td>N5</td>
+      <td>together. Both are Eligibility well-foundedness by the same hand. Overtaken 2026-10-10: N5 is CCS HQ-6, and whether S2 still pairs with it is open (status record, NQ-4)</td>
+    </tr>
+    <tr>
+      <td><strong>D7</strong></td>
+      <td>Should an unlicensed absence-dependent check be refused at compile time, or compiled to a permanent <code class="language-plaintext highlighter-rouge">Undetermined</code> with a diagnostic?</td>
+      <td>N5</td>
+      <td>refuse. A permanent <code class="language-plaintext highlighter-rouge">Undetermined</code> hides a data-provenance problem behind a logic outcome. <strong>Answered 2026-10-10</strong>: refuse, in CCS HQ-6a (HQ6-Q2), consistent with CCS C9b0-Q2</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="10-risks">10. Risks</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Risk</th>
+      <th>Likelihood</th>
+      <th>Impact</th>
+      <th>Mitigation</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>R1</td>
+      <td>N4 turns out to need a Foundation change, collapsing the parallel-safe verdict</td>
+      <td>medium</td>
+      <td>high</td>
+      <td>N4’s first task is to confirm it is avoidable. If not, stop and re-plan rather than proceeding. Retired 2026-10-10: N4 delivered in CCS with no Foundation change (CCS sketch §12.1)</td>
+    </tr>
+    <tr>
+      <td>R2</td>
+      <td>N9’s cascade lands mid-Phase-2 despite the gate, through an unnoticed transitive dependency</td>
+      <td>low</td>
+      <td>high</td>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:ontology-versioning</code> before every handoff. The cascade checklist enumerates importers rather than assuming them</td>
+    </tr>
+    <tr>
+      <td>R3</td>
+      <td>N10 and substrate S7 produce two incompatible precedence vocabularies</td>
+      <td>medium</td>
+      <td>medium</td>
+      <td>D5 and §4.4. Design by one hand or separate explicitly</td>
+    </tr>
+    <tr>
+      <td>R4</td>
+      <td>Law N5 ships subtly wrong, so <code class="language-plaintext highlighter-rouge">Undetermined</code> becomes breach</td>
+      <td>low</td>
+      <td><strong>severe</strong></td>
+      <td>Mandatory adversarial probe at the N4 and N8 gates, now CCS’s, with HQ-6</td>
+    </tr>
+    <tr>
+      <td>R5</td>
+      <td>The unit’s scope grows to include an evaluation engine</td>
+      <td>medium</td>
+      <td>high</td>
+      <td>§2 scope exclusions, and the cross-check’s deferral triggers are unchanged by this plan</td>
+    </tr>
+    <tr>
+      <td>R6</td>
+      <td>Applied-insurance Phase 5 is un-deferred while this unit is mid-flight</td>
+      <td>low</td>
+      <td>medium</td>
+      <td>N4 first means the thing Phase 5 needs exists earliest</td>
+    </tr>
+  </tbody>
+</table>

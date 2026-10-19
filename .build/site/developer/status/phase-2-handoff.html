@@ -1,0 +1,53 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="phase-2-validation-handoff">Phase 2 Validation Handoff</h1>
+
+<p><strong>Status:</strong> Accepted
+<strong>Governing ADRs:</strong> <a href="../../architecture/decisions/ADR-A30-shared-semantic-platform-cross-runtime-boundary.md">ADR-A30</a>, <a href="../../architecture/decisions/ADR-A32-surface-revision-lifecycle-and-release-candidates.md">ADR-A32</a>, <a href="../../architecture/decisions/ADR-A33-surface-revision-ledger-and-optimistic-concurrency.md">ADR-A33</a>, <a href="../../architecture/decisions/ADR-A34-surface-graph-family-registry-and-immutable-identity.md">ADR-A34</a>, <a href="../../architecture/decisions/ADR-A35-trusted-surface-worker-execution-boundary.md">ADR-A35</a>, <a href="../../architecture/decisions/ADR-A36-surface-worker-idempotent-delivery-boundary.md">ADR-A36</a>, <a href="../../architecture/decisions/ADR-A37-surface-worker-durable-processing-and-rabbitmq-acknowledgement.md">ADR-A37</a>, <a href="../../architecture/decisions/ADR-A38-surface-output-publication-and-studio-authoring-boundary.md">ADR-A38</a></p>
+
+<h2 id="scope">Scope</h2>
+
+<p>This in-progress Phase 2 slice adds the Surface revision lifecycle, immutable release candidates, Surface worker job schemas, and graph-reference dispatch. It preserves <code class="language-plaintext highlighter-rouge">tools/surface</code>, the literate Surface specification, extraction rules, and existing fixtures.</p>
+
+<p>It also adds the <code class="language-plaintext highlighter-rouge">SurfaceRevisionRepository</code> ledger port, an in-memory concurrency test adapter, a PostgreSQL JDBC adapter and migration, typed transition commands, a framework-neutral OpenAPI contract, and an in-memory immutable graph-family registry. No HTTP endpoint, migration runner, durable graph-family registry, or physical graph-store adapter is included yet.</p>
+
+<h2 id="commands">Commands</h2>
+
+<p>Run from a clean network-enabled clone:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise install
+mise run bootstrap
+mvn -f platform/pom.xml -pl surface-workflow test
+python -m pytest workers/tests/test_surface_jobs.py
+python -m pytest workers/tests/test_surface_executor.py workers/tests/test_surface_consumer.py workers/tests/test_rabbitmq_surface_worker.py
+python -m unittest surface.test_surface -v
+python -m tools.phase8_conformance
+yarn install
+yarn check
+yarn build
+yarn test
+</code></pre></div></div>
+
+<p>Expected results are valid Surface schemas, lifecycle tests proving approval precedes generation, stale-write tests rejecting optimistic-concurrency conflicts, graph-family tests rejecting graph-IRI reuse with a different revision hash, worker tests rejecting RDF and command payloads, and existing compiler conformance results unchanged.</p>
+
+<p>The command service must report a stale-version conflict before evaluating an action against a newer revision. It must report an invalid lifecycle transition only when the expected version matches the current revision.</p>
+
+<p>Surface consumer tests must prove that an exact job retry republishes its cached result without re-running the executor, a job ID reused with different request content is rejected, and a failed publish does not mark a job as processed. The integration environment must then test the same behavior using a durable store and RabbitMQ acknowledgement semantics.</p>
+
+<h2 id="inputs-and-preconditions">Inputs and Preconditions</h2>
+
+<p>The worker integration must resolve graph references to isolated copies of the SaaS subscription currency, clinical trial crosswalk, and employment job-family fixture graphs. It must submit generation, parity, and invalidation work with distinct opaque job IDs and a propagated correlation ID. Invalidation supplies its generated manifest through <code class="language-plaintext highlighter-rouge">manifestGraph</code>, never by source-graph order.</p>
+
+<p>RabbitMQ, PostgreSQL, and Fuseki are needed for end-to-end worker-path testing. Apply <code class="language-plaintext highlighter-rouge">platform/surface-workflow/src/main/resources/db/migration/V1__surface_revision_ledger.sql</code> through the selected migration runner before exercising revision updates. Seed the reference tenant and project consistently across contract, profile, manifest, and source graphs. The job handler must invoke compiler operations through a trusted graph resolver and execution adapter, never from request fields. Materialize each graph in the canonical byte form used to calculate its revision hash, verify the SHA-256 value, and reject paths outside the worker directory before compiler invocation.</p>
+
+<p>Apply <code class="language-plaintext highlighter-rouge">workers/sql/V1__processed_surface_jobs.sql</code> before starting a durable worker. Exercise a successful acknowledgement, malformed-message dead lettering without requeue, transient publish failure with requeue, exact duplicate delivery, and job-ID reuse with a different request digest. Verify that result publishing and the receiving control-plane result handler are idempotent by opaque job ID.</p>
+
+<h2 id="outstanding-phase-2-work">Outstanding Phase 2 Work</h2>
+
+<p>Phase 2 is authoring complete. The Surface Contract Studio, OpenAPI contract, lifecycle and graph-family persistence ports, trusted compiler executor, durable worker store, RabbitMQ adapter, worker tests, E2E browser definitions, existing Surface fixtures, CI tasks, ADRs, and architecture documentation are present.</p>
+
+<p>Validation remains outstanding. The validation environment must run the ledger and graph-family migrations against PostgreSQL, regenerate and review <code class="language-plaintext highlighter-rouge">yarn.lock</code>, install Playwright browsers, execute Studio E2E tests, exercise real Fuseki materialization and output publication, and verify RabbitMQ retry, dead-letter, duplicate-delivery, and result-recording behavior. The current authoring environment did not run these commands.</p>
+
+<h2 id="restricted-environment-statement">Restricted-environment Statement</h2>
+
+<p>This authoring environment has no usable Python interpreter, Maven, or Java 21 toolchain on <code class="language-plaintext highlighter-rouge">PATH</code>. The commands above were not run locally. JSON parsing and editor diagnostics were the available static checks.</p>

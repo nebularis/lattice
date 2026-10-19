@@ -1,0 +1,137 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-aor-4-consumer-catalog-and-import-resolution">Validation Pack: AOR-4, consumer catalog and import resolution</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/applied-ontology-readiness.html"><code class="language-plaintext highlighter-rouge">applied-ontology-readiness</code></a>
+<strong>Plan section:</strong> <a href="/developer/plans/applied-ontology-readiness.html#aor-4-consumer-catalog-and-import-resolution">AOR-4</a>
+<strong>Decision:</strong> <a href="../../architecture/decisions/ADR-A88-ontology-import-resolution-for-consumers.md">ADR-A88</a>, Proposed</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>Every LATTICE document loads with its import closure from a checkout, with no
+machine-specific configuration, and an applied ontology can reach LATTICE by
+chaining its own catalog to LATTICE’s.</p>
+
+<h2 id="test-cases">Test cases</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AOR4-01</td>
+      <td>this repository / check / no problems</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AOR4-02</td>
+      <td>fixture tree, a imports b / generate, check, load a’s closure from a’s stub / consistent, b’s term present</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AOR4-03</td>
+      <td>root catalog with b’s entry removed / check, load / drift reported, closure raises</td>
+      <td>L1</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>AOR4-04</td>
+      <td>entry mapping b’s IRI to a’s file / check / “does not declare it”</td>
+      <td>L1</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>AOR4-05</td>
+      <td>stub hand-edited / check / exactly one drift problem</td>
+      <td>L1</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>AOR4-06</td>
+      <td>a imports an IRI nothing declares / check / exactly one unresolved-import problem</td>
+      <td>L1</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>AOR4-07</td>
+      <td>two files declare one IRI / scan / refused</td>
+      <td>L1</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>AOR4-08</td>
+      <td>a known-defect entry for a file with no problem / check / stale-entry problem</td>
+      <td>L1</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>AOR4-09</td>
+      <td>generation run twice / compared / identical</td>
+      <td>L2</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AOR4-10</td>
+      <td>Behaviour spec closure through the root catalog / loaded / terms from Foundation, Vocabulary, Quantification, Party, Eligibility, Instrument and Behaviour present</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AOR4-11</td>
+      <td>an applied ontology in a temporary directory, its own catalog chaining to LATTICE’s by relative path / closure loaded / <code class="language-plaintext highlighter-rouge">elg:Condition</code> present</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="one-command">One command</h2>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:ontology-catalog
+</code></pre></div></div>
+
+<p>Pass: <code class="language-plaintext highlighter-rouge">11 passed</code>, then <code class="language-plaintext highlighter-rouge">ontology catalog consistent, 7 known defect(s)
+reported</code>.</p>
+
+<h2 id="artefacts-to-inspect">Artefacts to inspect</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">ontology/catalog-v001.xml</code>: 55 in-tree entries and 5 external ones.</li>
+  <li>The 19 stub catalogs, each a single <code class="language-plaintext highlighter-rouge">nextCatalog</code>. Six replace the earlier
+hand-made catalogs, which named pre-reset IRIs and absolute paths on one
+machine. The MORK stub replaces a mapping of the Mork IRI to <code class="language-plaintext highlighter-rouge">Mork.owl</code>. The
+root catalog maps it to <code class="language-plaintext highlighter-rouge">Mork.ttl</code>, the maintained source.</li>
+  <li><code class="language-plaintext highlighter-rouge">KNOWN_DEFECTS</code> in <code class="language-plaintext highlighter-rouge">tools/ontology_catalog.py</code>: seven pre-existing defects
+(status record).</li>
+  <li><code class="language-plaintext highlighter-rouge">docs/architecture/ontology-architecture.md</code> §2, the consumer paragraph.</li>
+</ul>
+
+<h2 id="adversarial-probe">Adversarial probe</h2>
+
+<p>Making <code class="language-plaintext highlighter-rouge">Catalog.lookup</code> ignore <code class="language-plaintext highlighter-rouge">nextCatalog</code> failed AOR4-02 and AOR4-11.
+Disabling the entry-declares-IRI comparison failed AOR4-04. Restoring the file
+returned 11 passes.</p>
+
+<h2 id="manual-step-for-the-maintainer">Manual step for the maintainer</h2>
+
+<p>Follow <a href="/developer/protege-import-walkthrough.html">Loading LATTICE in Protégé</a>: open
+<code class="language-plaintext highlighter-rouge">ontology/behaviour/spec/behaviour.ttl</code> and confirm the import closure loads
+with no missing-import prompt, then run the negative control. This settles ADR-A88’s open
+question on relative <code class="language-plaintext highlighter-rouge">nextCatalog</code> support. If it fails, the fallback is full
+per-directory catalogs, generated by the same tool.</p>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<ul>
+  <li>External locations are listed, not fetched.</li>
+  <li>Documents that do not parse are reported, not catalogued.</li>
+  <li>Serving documents at their IRIs (ADR-A88 item 5).</li>
+</ul>

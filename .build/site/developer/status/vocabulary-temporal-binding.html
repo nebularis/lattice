@@ -1,0 +1,201 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="vocabulary-temporal-binding---status">Vocabulary Temporal Binding - Status</h1>
+
+<p><strong>Unit ID:</strong> <code class="language-plaintext highlighter-rouge">vocabulary-temporal-binding</code>
+<strong>Status:</strong> Closed (2026-09-25). Vocabulary package, SHACL, and both real consumers (Surface, Eligibility) verified green. ADR-A85 Accepted.
+<strong>Last updated:</strong> 2026-09-25
+<strong>Trigger:</strong> <code class="language-plaintext highlighter-rouge">65ac4a85e11cc1f8616e3e0c24efd59bf4ca410d</code>
+<strong>Plan:</strong> <a href="/developer/plans/vocabulary-temporal-fixes.html">vocabulary-temporal-fixes.md</a>
+<strong>Sketch:</strong> <a href="/developer/sketches/vocabulary-temporal-binding.html">vocabulary-temporal-binding.md</a></p>
+
+<h2 id="current-position">Current position</h2>
+
+<p>Slices 1-4 are now authored and have been executed in the working Python
+environment. <code class="language-plaintext highlighter-rouge">mise run check:vocabulary</code> passes all 14 tests. The existing
+Surface compiler suite passes all 61 tests. The focused consumer-boundary suite
+passes 3 tests, but it is intentionally diagnostic and does not modify either
+consumer.</p>
+
+<p>What exists now:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">ontology/vocabulary/shapes/structural.ttl</code> and <code class="language-plaintext highlighter-rouge">constraints.ttl</code> are
+populated. <code class="language-plaintext highlighter-rouge">rules.ttl</code> deliberately documents why no SHACL rule is defined
+(ADR-A85: no rule may silently choose a winning binding).</li>
+  <li><code class="language-plaintext highlighter-rouge">ontology/vocabulary/examples/</code> holds 12 fixtures: the 11 the sketch listed,
+plus <code class="language-plaintext highlighter-rouge">consumer-boundary.ttl</code> for the Slice 4 cross-layer check.</li>
+  <li><code class="language-plaintext highlighter-rouge">tools/vocabulary/</code> is a new Python package (<code class="language-plaintext highlighter-rouge">vocabulary.resolver.resolve</code>)
+implementing the precedence law, with a pytest suite: <code class="language-plaintext highlighter-rouge">test_shacl_fixtures.py</code>
+(SHACL conformance of every fixture), <code class="language-plaintext highlighter-rouge">test_resolver.py</code> (conjunctive
+scopes, strict-superset precedence, fallback, conflict, temporal handover),
+<code class="language-plaintext highlighter-rouge">test_determinism.py</code> (triple-order permutation), and
+<code class="language-plaintext highlighter-rouge">test_consumer_boundary.py</code> (Slice 4). The suite passes 14/14.</li>
+  <li><code class="language-plaintext highlighter-rouge">mise.toml</code> gained <code class="language-plaintext highlighter-rouge">bootstrap:vocabulary</code> and <code class="language-plaintext highlighter-rouge">check:vocabulary</code>, wired into
+the aggregate <code class="language-plaintext highlighter-rouge">bootstrap</code>/<code class="language-plaintext highlighter-rouge">check</code> tasks.</li>
+  <li><code class="language-plaintext highlighter-rouge">docs/architecture/ontology-architecture.md</code> §5.6 and the implementation
+status table are synced to this position.</li>
+  <li>Root <code class="language-plaintext highlighter-rouge">README.md</code> and <code class="language-plaintext highlighter-rouge">tools/README.md</code> document the new <code class="language-plaintext highlighter-rouge">tools/vocabulary/</code>
+package.</li>
+</ul>
+
+<p>Two decisions were made without a further checkpoint, because the sketch
+and plan explicitly permitted them (see “Decisions made during implementation”
+below), and are flagged here for review rather than silently assumed correct:
+the resolver’s location/language, and the validation-context representation
+for the two SHACL checks that need one.</p>
+
+<h2 id="planned-slices">Planned slices</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Slice</th>
+      <th>Status</th>
+      <th>Scope</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1. Decision and documentation foundation</td>
+      <td>Done (prior session)</td>
+      <td>ADR-A85 proposal, architecture mirror, fixture/test/traceability skeleton</td>
+    </tr>
+    <tr>
+      <td>2. Examples and SHACL constraints</td>
+      <td>Verified, 14/14 package tests pass</td>
+      <td>12 fixtures (11 positive/negative + 1 consumer), <code class="language-plaintext highlighter-rouge">structural.ttl</code>, <code class="language-plaintext highlighter-rouge">constraints.ttl</code></td>
+    </tr>
+    <tr>
+      <td>3. Resolution reference implementation</td>
+      <td>Verified, included in 14/14 package tests</td>
+      <td><code class="language-plaintext highlighter-rouge">tools/vocabulary</code> resolver + determinism/precedence/conflict tests</td>
+    </tr>
+    <tr>
+      <td>4. Consumer/provenance integration</td>
+      <td>Complete, verified</td>
+      <td>Surface resolves scoped bindings via <code class="language-plaintext highlighter-rouge">vocabulary.resolve</code> (<code class="language-plaintext highlighter-rouge">tools/surface/src/surface/compile.py</code>); Eligibility’s <code class="language-plaintext highlighter-rouge">HierarchyWellFoundednessShape</code> checks every scheme a contract could resolve to; both proven against dedicated fixtures</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="decisions-made-during-implementation-flagged-for-the-maintainers-review">Decisions made during implementation (flagged for the maintainer’s review)</h2>
+
+<ul>
+  <li><strong>Resolver location and language:</strong> <code class="language-plaintext highlighter-rouge">tools/vocabulary/</code>, a Python package
+mirroring <code class="language-plaintext highlighter-rouge">tools/persistence/</code>’s <code class="language-plaintext highlighter-rouge">pyproject.toml</code> + <code class="language-plaintext highlighter-rouge">src/&lt;pkg&gt;/</code> + <code class="language-plaintext highlighter-rouge">tests/</code>
+shape. Matches the plan’s assumption of “the existing Python tooling
+boundary.”</li>
+  <li><strong>SHACL validation-context representation:</strong> four of the sketch’s checks
+(temporal interval order, the context-independent form of an
+equal-specificity conflict, scopeless/<code class="language-plaintext highlighter-rouge">boundScheme</code> agreement, historical
+provenance time) are checkable from the graph alone or via one small,
+explicitly non-normative validation-profile term, <code class="language-plaintext highlighter-rouge">vvp:resolvedAt</code>
+(documented in <code class="language-plaintext highlighter-rouge">constraints.ttl</code>’s header). Strict-superset precedence
+genuinely needs a caller-supplied context and time, so it is not a SHACL
+shape at all — it lives only in the resolver.</li>
+  <li><strong>Consumer integration (this pass):</strong> Surface’s <code class="language-plaintext highlighter-rouge">enumerate_population</code>
+(<code class="language-plaintext highlighter-rouge">tools/surface/src/surface/compile.py</code>) now resolves a contract-bound
+population’s scheme via <code class="language-plaintext highlighter-rouge">vocabulary.resolve</code>, given a new optional
+<code class="language-plaintext highlighter-rouge">srf:activeBindingScope</code> on <code class="language-plaintext highlighter-rouge">srf:ContractBoundPopulation</code> and the
+compiler’s existing <code class="language-plaintext highlighter-rouge">produced_at</code> as resolution time. Surface’s static
+shapes (<code class="language-plaintext highlighter-rouge">BoundSchemePresentShape</code>, <code class="language-plaintext highlighter-rouge">BoundSchemeGovernanceShape</code>) and its
+parity shapes (<code class="language-plaintext highlighter-rouge">SurfaceCoverageParityShape</code>, <code class="language-plaintext highlighter-rouge">SurfaceOrphanSymbolShape</code>)
+are broadened/repointed accordingly (see “Verification findings” below).
+Eligibility’s <code class="language-plaintext highlighter-rouge">elg:HierarchyWellFoundednessShape</code>
+(<code class="language-plaintext highlighter-rouge">ontology/eligibility/shapes/rules.ttl</code>) now checks every scheme the
+contract could resolve to (<code class="language-plaintext highlighter-rouge">boundScheme</code> or any <code class="language-plaintext highlighter-rouge">SchemeBinding</code>), staying
+pure SHACL since well-foundedness is scope-invariant and needs no runtime
+context. <code class="language-plaintext highlighter-rouge">tools/surface/pyproject.toml</code> depends on
+<code class="language-plaintext highlighter-rouge">lattice-vocabulary-resolver</code>, and <code class="language-plaintext highlighter-rouge">mise.toml</code>’s <code class="language-plaintext highlighter-rouge">bootstrap</code> task now
+installs <code class="language-plaintext highlighter-rouge">bootstrap:vocabulary</code> before <code class="language-plaintext highlighter-rouge">bootstrap:surface</code>.</li>
+  <li><strong>ADR-A85 status:</strong> left as Proposed. Ratifying it is the maintainer’s decision, not
+an automatic consequence of authoring the artefacts it called for.</li>
+  <li><strong>Ontology version IRI:</strong> left at <code class="language-plaintext highlighter-rouge">0.0.2</code>, unchanged, per the plan.</li>
+</ul>
+
+<h2 id="verification-findings">Verification findings</h2>
+
+<h3 id="shacl-and-resolution-rules">SHACL and resolution rules</h3>
+
+<p>The SHACL package now checks structural completeness, temporal interval order,
+scopeless binding agreement with <code class="language-plaintext highlighter-rouge">boundScheme</code>, context-independent equal-scope
+overlap conflicts, and historical provenance time. The resolver checks
+caller-dependent scope applicability, strict-superset precedence, incomparable
+or equal-specificity conflicts, temporal applicability, and fallback selection.</p>
+
+<p>Strict-superset precedence cannot be enforced by the current SHACL shapes
+because SHACL receives no caller-supplied active context or resolution time. It
+is covered by the resolver and its tests instead. This is a deliberate
+boundary, not a complete SHACL enforcement of every README rule.</p>
+
+<h3 id="consumer-integration">Consumer integration</h3>
+
+<p>Both real consumers now honour scoped bindings, verified in the working
+environment:</p>
+
+<ul>
+  <li><strong>Surface.</strong> <code class="language-plaintext highlighter-rouge">enumerate_population</code> (<code class="language-plaintext highlighter-rouge">tools/surface/src/surface/compile.py</code>)
+resolves a contract-bound population’s scheme via <code class="language-plaintext highlighter-rouge">vocabulary.resolve</code>,
+using the population’s declared <code class="language-plaintext highlighter-rouge">srf:activeBindingScope</code> values and the
+compiler’s <code class="language-plaintext highlighter-rouge">produced_at</code> as resolution time, instead of reading
+<code class="language-plaintext highlighter-rouge">voc:boundScheme</code> directly. A new fixture,
+<code class="language-plaintext highlighter-rouge">ontology/surface/examples/employment-job-family-scoped.ttl</code>, and test,
+<code class="language-plaintext highlighter-rouge">test_contract_bound_population_resolves_the_scoped_binding</code> in
+<code class="language-plaintext highlighter-rouge">tools/surface/src/surface/test_surface.py</code>, prove the compiler mints
+symbols from the scoped scheme’s members, not the fallback’s — confirmed
+independently by comparing a raw <code class="language-plaintext highlighter-rouge">boundScheme</code> read against <code class="language-plaintext highlighter-rouge">resolve()</code>
+against the same fixture (they diverge, as expected). Surface’s own static
+shapes (<code class="language-plaintext highlighter-rouge">BoundSchemePresentShape</code>, <code class="language-plaintext highlighter-rouge">BoundSchemeGovernanceShape</code> in
+<code class="language-plaintext highlighter-rouge">ontology/surface/README.md</code> / <code class="language-plaintext highlighter-rouge">shapes/constraints.ttl</code>, mechanically kept
+in sync via <code class="language-plaintext highlighter-rouge">tools/literate_extract.py</code>) now check every scheme the
+contract could resolve to (<code class="language-plaintext highlighter-rouge">boundScheme</code> or any <code class="language-plaintext highlighter-rouge">SchemeBinding</code>), the same
+way Eligibility’s shape does, since these are declaration-time checks with
+no runtime context. The parity shapes
+(<code class="language-plaintext highlighter-rouge">SurfaceCoverageParityShape</code>, <code class="language-plaintext highlighter-rouge">SurfaceOrphanSymbolShape</code> in
+<code class="language-plaintext highlighter-rouge">shapes/surface-parity.ttl</code>) now pivot on the generated surface’s own
+<code class="language-plaintext highlighter-rouge">srf:hasReadSetEntry</code>/<code class="language-plaintext highlighter-rouge">srf:readsSource</code> provenance — whichever scheme was
+actually resolved at generation time — rather than recomputing
+<code class="language-plaintext highlighter-rouge">boundScheme</code>, which is correct regardless of scoped or unscoped
+resolution. <code class="language-plaintext highlighter-rouge">tools/surface/pyproject.toml</code> depends on
+<code class="language-plaintext highlighter-rouge">lattice-vocabulary-resolver</code>, and <code class="language-plaintext highlighter-rouge">mise.toml</code>’s <code class="language-plaintext highlighter-rouge">bootstrap</code> task installs
+<code class="language-plaintext highlighter-rouge">bootstrap:vocabulary</code> before <code class="language-plaintext highlighter-rouge">bootstrap:surface</code> so the dependency resolves
+from the already-installed local package rather than PyPI.</li>
+  <li><strong>Eligibility.</strong> <code class="language-plaintext highlighter-rouge">elg:HierarchyWellFoundednessShape</code>
+(<code class="language-plaintext highlighter-rouge">ontology/eligibility/shapes/rules.ttl</code>) now unions <code class="language-plaintext highlighter-rouge">boundScheme</code> with
+every scheme bound via a <code class="language-plaintext highlighter-rouge">SchemeBinding</code> naming the same contract, so a
+cycle reachable only through a scoped binding is caught. This stays pure
+SHACL — no runtime context needed — because well-foundedness must hold for
+every scheme the contract could ever resolve to, not only whichever is
+currently in force. Verified with an isolated pyshacl run against a
+synthetic scoped-only cyclic scheme: the broadened shape catches it; the
+old shape (checking <code class="language-plaintext highlighter-rouge">boundScheme</code> only) would have missed it, since the
+fixture declares no <code class="language-plaintext highlighter-rouge">boundScheme</code> at all.</li>
+</ul>
+
+<p>All of the above ran in the working Python environment: <code class="language-plaintext highlighter-rouge">mise run
+check:vocabulary</code> (14/14), <code class="language-plaintext highlighter-rouge">python -m unittest surface.test_surface -q</code>
+(62/62, including the new scoped-binding test), and <code class="language-plaintext highlighter-rouge">mise run
+check:python-root</code> (77/77 plus Phase 8 conformance), none of which existed or
+passed with the resolver wired in before this pass.</p>
+
+<h2 id="validation-gate">Validation gate</h2>
+
+<p>Closed 2026-09-25:</p>
+
+<ol>
+  <li>Reviewed against the plan, ADR-A85, and the sketch’s invariants.</li>
+  <li>Automated checks ran green: <code class="language-plaintext highlighter-rouge">mise run check:vocabulary</code> (14/14),
+<code class="language-plaintext highlighter-rouge">python -m unittest surface.test_surface -q</code> (62/62), and <code class="language-plaintext highlighter-rouge">mise run
+check:python-root</code> (77/77 plus Phase 8 conformance).</li>
+  <li>Perform the validation pack’s mutation probe (disable strict-superset
+precedence in the resolver and rerun VTB-06; disable the equal-specificity
+SHACL-SPARQL constraint and rerun VTB-07) to confirm the tests are not
+vacuous.</li>
+  <li>Ratify ADR-A85, currently left as Proposed.</li>
+</ol>
+
+<h2 id="blockers">Blockers</h2>
+
+<p>Review and ADR-A85 ratification. All authored artefacts, including the
+Surface and Eligibility consumer integration, are executed and green.</p>

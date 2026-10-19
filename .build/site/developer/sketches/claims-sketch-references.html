@@ -1,0 +1,1745 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="claims-sketch-references-definitions-and-crosswalks">Claims sketch: references, definitions and crosswalks</h1>
+
+<p>Companion to <a href="/developer/sketches/insurance-claims-ontology.html">insurance-claims-ontology.md</a> (the claims sketch), draft
+for review, 2026-10-16. It records what the claims sketch took from each source, LATTICE’s own and
+external, the definitions it relies on, and two crosswalks: to ACORD’s P&amp;C claims messages and to
+the claims fields of Lloyd’s Coverholder Reporting Standards v5.2. The wire formats themselves are
+explored in <a href="/developer/sketches/claims-wire-formats.html">claims-wire-formats.md</a>.</p>
+
+<p><strong>How each source relates</strong>, in the terms the peril and exposure work used:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Relation</th>
+      <th>Meaning</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>conformed</strong></td>
+      <td>the data is built on it</td>
+    </tr>
+    <tr>
+      <td><strong>mapped</strong></td>
+      <td>its codes are carried, or crosswalked, or used as a key scheme</td>
+    </tr>
+    <tr>
+      <td><strong>followed</strong></td>
+      <td>its definitions or rules are cited in notes, and shape the model</td>
+    </tr>
+    <tr>
+      <td><strong>exchanged</strong></td>
+      <td>it is a format MORK maps in or out</td>
+    </tr>
+    <tr>
+      <td><strong>influenced</strong></td>
+      <td>it shaped a design choice, and nothing in the model names it</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Verification status.</strong> Every external fact below carries one of three marks. <strong>Checked</strong> means
+read from the publisher or a published schema on 2026-10-16. <strong>Recalled</strong> means cited from general
+knowledge and not checked against the source in this session, so it must be checked before it goes
+into a concept’s note. <strong>Counsel</strong> means a legal proposition stated as background, to be confirmed
+by counsel before any rule is encoded (claims sketch §2).</p>
+
+<hr />
+
+<h2 id="contents">Contents</h2>
+
+<ol>
+  <li><a href="#1-lattices-own-sources">LATTICE’s own sources</a></li>
+  <li><a href="#2-law-and-regulation">Law and regulation</a></li>
+  <li><a href="#3-standards-and-identifiers">Standards and identifiers</a></li>
+  <li><a href="#4-market-practice">Market practice</a></li>
+  <li><a href="#5-definitions-used-by-the-claims-sketch">Definitions used by the claims sketch</a></li>
+  <li><a href="#6-crosswalk-acord-pc-claims-messages">Crosswalk: ACORD P&amp;C claims messages</a></li>
+  <li><a href="#7-crosswalk-lloyds-claims-bordereau-crs-v52">Crosswalk: Lloyd’s claims bordereau (CRS v5.2)</a></li>
+  <li><a href="#8-what-the-crosswalks-show">What the crosswalks show</a></li>
+  <li><a href="#9-corrections-to-the-claims-sketch">Corrections to the claims sketch</a></li>
+</ol>
+
+<hr />
+
+<h2 id="1-lattices-own-sources">1. LATTICE’s own sources</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Source</th>
+      <th>What the claims sketch took</th>
+      <th>Where in the sketch</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="/developer/sketches/computable-contract-substrate.html">computable-contract-substrate.md</a> §1</td>
+      <td>the three strata (wording, instrument, behaviour), so a claim reads the contract’s meaning and state and never restates its cover</td>
+      <td>§1, CL2</td>
+    </tr>
+    <tr>
+      <td>CCS §5.2 to §5.7</td>
+      <td>the five legal relation classes, parties fixed at arising (law I11), the notice-duty chain, deemings as the licence for absence, the burden on the party relying on an exception (law I7)</td>
+      <td>§2, §7.3, §11.2</td>
+    </tr>
+    <tr>
+      <td>CCS §6.3, §6.4</td>
+      <td>structure and state kept apart (DP6), and the three kinds of judgement: findings, determinations by a party, deemings</td>
+      <td>§7.7, §11.1</td>
+    </tr>
+    <tr>
+      <td>CCS §7.4, §7.4.1</td>
+      <td>regimes stated once with occupancies per subject, which makes “one claim, many instruments” and what-if erosion over proposals possible without copying</td>
+      <td>§7.5, §10.2</td>
+    </tr>
+    <tr>
+      <td>CCS §7.6</td>
+      <td>occasions per case and their core states, roles filled later by new occupancy versions</td>
+      <td>§7.4, §8.2</td>
+    </tr>
+    <tr>
+      <td>CCS §7.8, §7.9</td>
+      <td>static parameters in Instrument and dynamic quantities elsewhere, <code class="language-plaintext highlighter-rouge">ins:computedBy</code> for computed amounts</td>
+      <td>§7.6.1, §9.3</td>
+    </tr>
+    <tr>
+      <td>CCS §10 scenario catalogue (S1, S7, S14, S15, S25, S27, S30, S34, S46, S58)</td>
+      <td>notice and advancement deadlines, breach chains, conditions precedent, classification of terms, relation back, procedural conditions on powers, consent to settle, subrogation as a deeming, delegated claims authority, role tables per segment</td>
+      <td>§2, §7.3, §7.10, §10.1</td>
+    </tr>
+    <tr>
+      <td><a href="/developer/plans/computable-contract-substrate.html">CCS plan</a> C9b and <code class="language-plaintext highlighter-rouge">reinsurance-claims-cooperation.ttl</code></td>
+      <td>follow the settlements and claims co-operation as a consent rule on the reinsured’s power to settle</td>
+      <td>§2.1, §10.3</td>
+    </tr>
+    <tr>
+      <td><a href="../../../ontology/instrument/README.md">Instrument README</a> §6.4</td>
+      <td>legal acts: declarations, proposals, exercises, <code class="language-plaintext highlighter-rouge">ins:forCase</code>, <code class="language-plaintext highlighter-rouge">ins:pursuantTo</code>, “juristic acts only”</td>
+      <td>§7.3, §7.7, §7.10</td>
+    </tr>
+    <tr>
+      <td>Instrument README §10, §13</td>
+      <td>the six legal triggers and their kinds, anchored due ranges, tolling</td>
+      <td>§8.2</td>
+    </tr>
+    <tr>
+      <td><a href="../../../ontology/behaviour/README.md">Behaviour README</a> and <code class="language-plaintext highlighter-rouge">occasion-refinement.ttl</code></td>
+      <td>handling stages as a deployment’s refinement of <code class="language-plaintext highlighter-rouge">bhv:Arisen</code>, deep history on reinstatement, law B9</td>
+      <td>§8.2, CL-Q2</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">disputed-occasion.ttl</code>, <code class="language-plaintext highlighter-rouge">run-off.ttl</code></td>
+      <td>a per-occasion dispute regime, claims servicing as a region of run-off</td>
+      <td>§4, §8.4</td>
+    </tr>
+    <tr>
+      <td><a href="/developer/sketches/nested-states-and-history.html">nested-states-and-history.md</a></td>
+      <td>composite states, history, concurrent regimes</td>
+      <td>§8.2</td>
+    </tr>
+    <tr>
+      <td><a href="/developer/sketches/terms-in-time.html">terms-in-time.md</a></td>
+      <td>anchored time and ending</td>
+      <td>§8</td>
+    </tr>
+    <tr>
+      <td><a href="/developer/sketches/consent-and-group-powers.html">consent-and-group-powers.md</a> §4.2, §4.3</td>
+      <td>consent of a group, consent delegated to a lead, the reinsurance case</td>
+      <td>§7.5, §10.3</td>
+    </tr>
+    <tr>
+      <td><a href="/developer/sketches/contract-amounts.html">contract-amounts.md</a> A1 to A58</td>
+      <td>the catalogue of limits, retentions, erosion, order of payment, reinstatement, aggregation bases, parametric payouts</td>
+      <td>§9.3, §7.11, §14</td>
+    </tr>
+    <tr>
+      <td><a href="/developer/sketches/evaluation-context.html">evaluation-context.md</a> §3 to §5</td>
+      <td>the ledger of nested accounts, combinators (<code class="language-plaintext highlighter-rouge">sum</code>, <code class="language-plaintext highlighter-rouge">max</code>, <code class="language-plaintext highlighter-rouge">proRata</code>, <code class="language-plaintext highlighter-rouge">split</code>, <code class="language-plaintext highlighter-rouge">convert</code>), Undetermined absorbing</td>
+      <td>§7.9, §9.3</td>
+    </tr>
+    <tr>
+      <td><a href="/developer/sketches/term-parameters.html">term-parameters.md</a> §7</td>
+      <td>four roles, direction derived, Sides A, B and C</td>
+      <td>§7.8, §14.2</td>
+    </tr>
+    <tr>
+      <td><a href="../../architecture/decisions/ADR-A102-liability-direction-from-party-roles.md">ADR-A102</a></td>
+      <td>the role individuals in <code class="language-plaintext highlighter-rouge">insurance/common</code>, contracts naming populations not people, direction as a derived artefact</td>
+      <td>§7.2, §7.8</td>
+    </tr>
+    <tr>
+      <td><a href="/developer/sketches/asset-exposure-ontology.html">asset-exposure-ontology.md</a> and the exposure module (AIR-4.1 to AIR-4.5)</td>
+      <td><code class="language-plaintext highlighter-rouge">aeo:LossCause</code> with recorded and effective characteristics, loss experience and loss record, assets, interests, valuations with rate and horizon, programme roles, counterparty populations</td>
+      <td>§7.1, §7.6, §13.3</td>
+    </tr>
+    <tr>
+      <td><a href="/developer/sketches/peril-vocabulary.html">peril-vocabulary.md</a> §6.8, §8</td>
+      <td>the cyber write-back profile over one cause link, what the vocabulary leaves to wording</td>
+      <td>§7.1, §14.1</td>
+    </tr>
+    <tr>
+      <td><a href="/developer/sketches/peril-structure-whitepaper.html">peril-structure-whitepaper.md</a> §3.8, §3.11, N7, N10, W-Q2, W-Q3</td>
+      <td>causation by governing law, occurrence grouping by peril window, the open legal review</td>
+      <td>§2.3, §2.4, §7.12</td>
+    </tr>
+    <tr>
+      <td><a href="/developer/sketches/mork-bridge.html">mork-bridge.md</a> B1 to B6, §4, §6</td>
+      <td>the operative scheme is the contract’s, never guess, mapping is data, exactness sets authority, lowering never invents codes, bordereau ingestion as MORK mappings</td>
+      <td>CL7, CL8, §13</td>
+    </tr>
+    <tr>
+      <td><a href="/developer/sketches/robustness-testing-approach.html">robustness-testing-approach.md</a> §4</td>
+      <td>the claims workload: about 64,000 open claims market-wide, a catastrophe burst of about 130,000 claims and 2 to 3 first notices a second at peak</td>
+      <td>§14.3</td>
+    </tr>
+    <tr>
+      <td><a href="../../../ontology/persistence/README.md">Persistence README</a> §7.1, §7.4, §7.9</td>
+      <td>aggregate boundaries, receipt pruning, privacy profiles and <code class="language-plaintext highlighter-rouge">dal:ErasurePrecedence</code></td>
+      <td>§12</td>
+    </tr>
+    <tr>
+      <td><a href="../../architecture/decisions/ADR-A114-external-and-natural-keys.md">ADR-A114</a></td>
+      <td>keys and key schemes for claim references</td>
+      <td>§7.4</td>
+    </tr>
+    <tr>
+      <td><a href="/developer/sketches/assurance-records.html">assurance-records.md</a></td>
+      <td>the EARL and PROV-O profile for what was checked</td>
+      <td>§16</td>
+    </tr>
+    <tr>
+      <td><a href="/developer/plans/air-leftovers.html">air-leftovers.md</a> §1</td>
+      <td>workflow around requests stays with consumers</td>
+      <td>§8.3</td>
+    </tr>
+    <tr>
+      <td><a href="/developer/plans/applied-insurance-reference-phase-6.html">AIR phase 6 plan</a></td>
+      <td>the original AIR-6.2 to AIR-6.4 slices, which §18 proposes to replace</td>
+      <td>§18</td>
+    </tr>
+    <tr>
+      <td><a href="../../architecture/decisions/ADR-A98-applied-layout-and-insurance-modules.md">ADR-A98</a></td>
+      <td>module layout, the claims prefix left to be fixed, claims importing exposure and contract</td>
+      <td>§6, CL-Q1, CL-Q7</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="2-law-and-regulation">2. Law and regulation</h2>
+
+<p>Each row: the proposition the claims sketch used, as it understood it, and its mark.</p>
+
+<h3 id="21-case-law">2.1 Case law</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Authority</th>
+      <th>Proposition used</th>
+      <th>Sketch</th>
+      <th>Mark</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><em>Leyland Shipping v Norwich Union Fire Insurance Society</em> [1918] AC 350 (HL)</td>
+      <td>the proximate cause is the dominant or effective cause, not the last in time</td>
+      <td>§2.4</td>
+      <td>Counsel</td>
+    </tr>
+    <tr>
+      <td><em>Wayne Tank and Pump Co v Employers Liability Assurance Corp</em> [1974] QB 57 (CA)</td>
+      <td>where two concurrent proximate causes operate and one is excluded, the exclusion generally prevails</td>
+      <td>§2.4</td>
+      <td>Counsel</td>
+    </tr>
+    <tr>
+      <td><em>Ventouris v Mountain (The Italia Express) (No 2)</em> [1992] 2 Lloyd’s Rep 281</td>
+      <td>an indemnity insurer is in breach when the loss occurs, so the insured’s claim is for damages</td>
+      <td>§2.1</td>
+      <td>Counsel</td>
+    </tr>
+    <tr>
+      <td><em>Sprung v Royal Insurance (UK) Ltd</em> [1999] Lloyd’s Rep IR 111 (CA)</td>
+      <td>no damages for late payment beyond the indemnity under the law as it then stood, which s.13A later changed</td>
+      <td>§2.1</td>
+      <td>Counsel</td>
+    </tr>
+    <tr>
+      <td><em>Post Office v Norwich Union Fire Insurance Society</em> [1967] 2 QB 363 (CA)</td>
+      <td>a liability insured’s right against its insurer arises when its liability is established and quantified</td>
+      <td>§2.1</td>
+      <td>Counsel. Corrected in the sketch (§9)</td>
+    </tr>
+    <tr>
+      <td><em>Bradley v Eagle Star Insurance</em> [1989] AC 957 (HL)</td>
+      <td>the same rule, applied to the 1930 Act’s transfer of rights</td>
+      <td>§2.1</td>
+      <td>Counsel</td>
+    </tr>
+    <tr>
+      <td><em>Gray v Zurich Insurance Co</em> (1966) 65 Cal.2d 263</td>
+      <td>the duty to defend is broader than the duty to indemnify and arises on a potential for cover</td>
+      <td>§2.1</td>
+      <td>Counsel</td>
+    </tr>
+    <tr>
+      <td><em>Gruenberg v Aetna Insurance Co</em> (1973) 9 Cal.3d 566</td>
+      <td>tort liability for bad faith refusal to pay</td>
+      <td>§2.1</td>
+      <td>Counsel</td>
+    </tr>
+    <tr>
+      <td><em>Insurance Co of Africa v SCOR (UK) Reinsurance</em> [1985] 1 Lloyd’s Rep 312 (CA)</td>
+      <td>follow the settlements, where the reinsured acted honestly and in a proper and businesslike way</td>
+      <td>§2.1</td>
+      <td>Counsel, already cited by <code class="language-plaintext highlighter-rouge">reinsurance-claims-cooperation.ttl</code></td>
+    </tr>
+    <tr>
+      <td><em>Hill v Mercantile and General Reinsurance</em> [1996] 1 WLR 1239 (HL)</td>
+      <td>the limits of follow the settlements</td>
+      <td>§2.1</td>
+      <td>Counsel. Corrected in the sketch (§9)</td>
+    </tr>
+    <tr>
+      <td><em>Scor v Eras International (No 2)</em> [1995] 2 All ER 278</td>
+      <td>a claims co-operation condition precedent stops the reinsurer’s liability arising</td>
+      <td>§2.1</td>
+      <td>Counsel</td>
+    </tr>
+    <tr>
+      <td><em>Keene Corp v Insurance Co of North America</em> 667 F.2d 1034 (D.C. Cir. 1981)</td>
+      <td>continuous trigger for long-tail injury</td>
+      <td>§2.2</td>
+      <td>Counsel</td>
+    </tr>
+    <tr>
+      <td><em>Montrose Chemical Corp v Admiral Insurance Co</em> (1995) 10 Cal.4th 645</td>
+      <td>continuous injury trigger for occurrence policies in California</td>
+      <td>§2.2</td>
+      <td>Counsel</td>
+    </tr>
+    <tr>
+      <td><em>Durham v BAI (Run Off) Ltd</em> (the Trigger litigation) [2012] UKSC 14</td>
+      <td>for employers’ liability mesothelioma cover, injury is “sustained” at exposure</td>
+      <td>§2.2</td>
+      <td>Counsel</td>
+    </tr>
+    <tr>
+      <td><em>Axa Reinsurance (UK) v Field</em> [1996] 1 WLR 1026 (HL)</td>
+      <td>“event” is narrower than “originating cause”</td>
+      <td>§2.3</td>
+      <td>Counsel</td>
+    </tr>
+    <tr>
+      <td><em>AIG Europe v Woodman</em> [2017] UKSC 18</td>
+      <td>aggregation of related matters by a unifying factor</td>
+      <td>§2.3</td>
+      <td>Counsel</td>
+    </tr>
+    <tr>
+      <td><em>Lloyds TSB General Insurance Holdings v Lloyds Bank Group Insurance</em> [2003] UKHL 48</td>
+      <td>aggregation on a related series of acts or omissions looks to the acts, not their consequences</td>
+      <td>§2.3</td>
+      <td>Counsel</td>
+    </tr>
+    <tr>
+      <td><em>Versloot Dredging v HDI Gerling</em> [2016] UKSC 45</td>
+      <td>a collateral lie is not a fraudulent claim</td>
+      <td>§2.5, §11.2</td>
+      <td>Counsel</td>
+    </tr>
+    <tr>
+      <td><em>Castellain v Preston</em> (1883) 11 QBD 380 (CA)</td>
+      <td>the indemnity principle and the insurer’s subrogation</td>
+      <td>§2.5, §10.1</td>
+      <td>Counsel</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="22-statutes-and-rules">2.2 Statutes and rules</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Instrument</th>
+      <th>Provision used</th>
+      <th>Sketch</th>
+      <th>Mark</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Insurance Act 2015 (UK)</td>
+      <td>s.12 remedies for fraudulent claims. s.13A implied term to pay sums due within a reasonable time</td>
+      <td>§2.5, §2.1</td>
+      <td>Recalled</td>
+    </tr>
+    <tr>
+      <td>Enterprise Act 2016 (UK)</td>
+      <td>s.28 inserted s.13A</td>
+      <td>§2.1</td>
+      <td>Recalled</td>
+    </tr>
+    <tr>
+      <td>Marine Insurance Act 1906 (UK)</td>
+      <td>s.79 subrogation, s.80 contribution, s.81 underinsurance</td>
+      <td>§2.5, §10.1</td>
+      <td>Recalled</td>
+    </tr>
+    <tr>
+      <td>Third Parties (Rights against Insurers) Act 2010 (UK)</td>
+      <td>a third party’s rights against the insurer of an insolvent insured</td>
+      <td>§2.1</td>
+      <td>Recalled</td>
+    </tr>
+    <tr>
+      <td>Road Traffic Act 1988 (UK)</td>
+      <td>s.151 insurer’s duty to satisfy judgments against insured persons</td>
+      <td>§2.1</td>
+      <td>Recalled</td>
+    </tr>
+    <tr>
+      <td>Directive 2009/103/EC (EU Motor Insurance Directive)</td>
+      <td>art. 18, a direct right of action against the insurer</td>
+      <td>§2.1</td>
+      <td>Recalled</td>
+    </tr>
+    <tr>
+      <td>Damages Act 1996 (UK)</td>
+      <td>s.2 periodical payments</td>
+      <td>§7.6.1</td>
+      <td>Recalled</td>
+    </tr>
+    <tr>
+      <td>Civil Procedure Rules (England and Wales)</td>
+      <td>Part 36 offers to settle and their costs consequences</td>
+      <td>§7.10</td>
+      <td>Recalled</td>
+    </tr>
+    <tr>
+      <td>FCA Handbook</td>
+      <td>ICOBS 8.1 claims handling, PRIN 2A Consumer Duty, DISP complaints</td>
+      <td>§2.6</td>
+      <td>Recalled</td>
+    </tr>
+    <tr>
+      <td>NAIC model laws (US)</td>
+      <td>Unfair Claims Settlement Practices Act (Model #900), Unfair Property/Casualty Claims Settlement Practices Model Regulation (#902), enacted variously by states</td>
+      <td>§2.6</td>
+      <td>Recalled</td>
+    </tr>
+    <tr>
+      <td>IAIS Insurance Core Principles</td>
+      <td>ICP 19, conduct of business</td>
+      <td>§2.6</td>
+      <td>Recalled</td>
+    </tr>
+    <tr>
+      <td>GDPR (EU) 2016/679 and UK GDPR</td>
+      <td>art. 9 special categories, art. 10 criminal offence data, art. 17 erasure and its exceptions in 17(3)</td>
+      <td>§12</td>
+      <td>Recalled</td>
+    </tr>
+    <tr>
+      <td>Data Protection Act 2018 (UK)</td>
+      <td>Sch. 1 para. 20, the insurance condition for special category data</td>
+      <td>§2.6</td>
+      <td>Recalled</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="3-standards-and-identifiers">3. Standards and identifiers</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Standard</th>
+      <th>Publisher</th>
+      <th>What it is</th>
+      <th>What the sketch took, and its definition</th>
+      <th>Relation</th>
+      <th>Mark</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>SKOS, OWL 2, SHACL, PROV-O</td>
+      <td>W3C</td>
+      <td>the semantic web stack LATTICE is built on</td>
+      <td>nothing new: claims inherits it</td>
+      <td>conformed</td>
+      <td>Checked (LATTICE)</td>
+    </tr>
+    <tr>
+      <td>Data Privacy Vocabulary (DPV)</td>
+      <td>W3C Data Privacy Vocabularies and Controls Community Group</td>
+      <td>open terms for personal data categories, special categories, purposes and legal bases</td>
+      <td>concepts to align the claims privacy classes with (<code class="language-plaintext highlighter-rouge">skos:exactMatch</code> where they coincide). A Community Group output, not a W3C Recommendation</td>
+      <td>mapped</td>
+      <td>Recalled</td>
+    </tr>
+    <tr>
+      <td>EARL</td>
+      <td>W3C (Working Group Note)</td>
+      <td>the evaluation and report language</td>
+      <td>via LATTICE’s assurance records profile</td>
+      <td>conformed</td>
+      <td>Checked (LATTICE)</td>
+    </tr>
+    <tr>
+      <td>ISO 4217</td>
+      <td>ISO</td>
+      <td>currency codes</td>
+      <td>every money amount’s unit, through <code class="language-plaintext highlighter-rouge">insurance/common</code></td>
+      <td>conformed</td>
+      <td>Checked (LATTICE)</td>
+    </tr>
+    <tr>
+      <td>QUDT</td>
+      <td>QUDT.org</td>
+      <td>units of measure</td>
+      <td>physical quantities, through <code class="language-plaintext highlighter-rouge">insurance/common</code></td>
+      <td>conformed</td>
+      <td>Checked (LATTICE)</td>
+    </tr>
+    <tr>
+      <td>ISO 17442 (LEI)</td>
+      <td>ISO, operated by GLEIF</td>
+      <td>legal entity identifiers</td>
+      <td>keys for insurers, insureds and organisations on a claim</td>
+      <td>conformed (exposure)</td>
+      <td>Checked (LATTICE)</td>
+    </tr>
+    <tr>
+      <td>ISO 20275</td>
+      <td>ISO</td>
+      <td>entity legal forms</td>
+      <td>legal form of organisations</td>
+      <td>mapped (exposure)</td>
+      <td>Checked (LATTICE)</td>
+    </tr>
+    <tr>
+      <td>ISO 3779</td>
+      <td>ISO</td>
+      <td>vehicle identification number (VIN)</td>
+      <td>a key scheme for vehicles in motor claims</td>
+      <td>mapped</td>
+      <td>Recalled</td>
+    </tr>
+    <tr>
+      <td>ISO 20022</td>
+      <td>ISO</td>
+      <td>financial messaging. pain.001 is customer credit transfer initiation, pacs.008 is FI-to-FI customer credit transfer</td>
+      <td>the payment instruction and confirmation formats a claims payment travels in</td>
+      <td>exchanged</td>
+      <td>Recalled</td>
+    </tr>
+    <tr>
+      <td>ICD-11</td>
+      <td>WHO</td>
+      <td>the International Classification of Diseases, 11th revision</td>
+      <td>coding of injury and diagnosis on medical evidence, special category data. ACORD carries an ICD code (<code class="language-plaintext highlighter-rouge">ICDDiagnosticCd</code>, §6)</td>
+      <td>mapped</td>
+      <td>Recalled for ICD-11, Checked for the ACORD element</td>
+    </tr>
+    <tr>
+      <td>SNOMED CT</td>
+      <td>SNOMED International, licensed</td>
+      <td>clinical terminology</td>
+      <td>an alternative clinical coding where a deployment holds a licence</td>
+      <td>mapped</td>
+      <td>Recalled</td>
+    </tr>
+    <tr>
+      <td>HL7 FHIR financial module</td>
+      <td>HL7</td>
+      <td>resources for health claims: <code class="language-plaintext highlighter-rouge">Claim</code> (a provider’s list of services for payment), <code class="language-plaintext highlighter-rouge">ClaimResponse</code> (the adjudication), <code class="language-plaintext highlighter-rouge">ExplanationOfBenefit</code> (claim, adjudication and balances for the member), <code class="language-plaintext highlighter-rouge">Coverage</code>, <code class="language-plaintext highlighter-rouge">CoverageEligibilityRequest</code></td>
+      <td>the shape “a claim against a coverage, answered by an adjudication per item”, which converges with the sketch’s response per instrument and quanta per loss item</td>
+      <td>influenced, and mapped for health claims</td>
+      <td>Checked</td>
+    </tr>
+    <tr>
+      <td>ECLI</td>
+      <td>the Council of the European Union (2011 conclusions)</td>
+      <td>the European Case Law Identifier</td>
+      <td>a key scheme for judgments</td>
+      <td>mapped</td>
+      <td>Recalled</td>
+    </tr>
+    <tr>
+      <td>OASIS LegalDocML (Akoma Ntoso)</td>
+      <td>OASIS</td>
+      <td>an XML vocabulary for legal documents</td>
+      <td>a format for judgments and legal texts held as evidence</td>
+      <td>mapped</td>
+      <td>Recalled</td>
+    </tr>
+    <tr>
+      <td>CMMN, BPMN, DMN</td>
+      <td>OMG</td>
+      <td>case management, process and decision notations</td>
+      <td>how a consumer’s claims workflow might be expressed, calling the reference (sketch §8.3)</td>
+      <td>influenced</td>
+      <td>Recalled</td>
+    </tr>
+    <tr>
+      <td>IFRS 17</td>
+      <td>IFRS Foundation</td>
+      <td>insurance contracts accounting. The liability for incurred claims (LIC) is measured from fulfilment cash flows with a risk adjustment</td>
+      <td>the claims module supplies cash flow facts. Measurement is the insurer’s</td>
+      <td>followed</td>
+      <td>Recalled</td>
+    </tr>
+    <tr>
+      <td>Solvency II QRT S.19.01</td>
+      <td>EIOPA</td>
+      <td>non-life insurance claims information, development triangles, reported in the EIOPA XBRL taxonomy</td>
+      <td>a reporting projection over movements</td>
+      <td>followed</td>
+      <td>Recalled</td>
+    </tr>
+    <tr>
+      <td>NAIC Annual Statement Schedule P</td>
+      <td>NAIC</td>
+      <td>US statutory loss development triangles by line</td>
+      <td>a reporting projection</td>
+      <td>followed</td>
+      <td>Recalled</td>
+    </tr>
+    <tr>
+      <td>GLIDE</td>
+      <td>Asian Disaster Reduction Center</td>
+      <td>the GLobal IDEntifier for disasters</td>
+      <td>the open key scheme for <code class="language-plaintext highlighter-rouge">icm:LossEvent</code></td>
+      <td>mapped</td>
+      <td>Checked (AIR-4.4)</td>
+    </tr>
+    <tr>
+      <td>PCS catastrophe serial numbers</td>
+      <td>Verisk Property Claim Services</td>
+      <td>US industry catastrophe identifiers and industry loss estimates</td>
+      <td>a key scheme for loss events, and an industry loss index (parametric, sketch §7.11). Also carried by the Lloyd’s bordereau as “PCS Code” (§7)</td>
+      <td>mapped</td>
+      <td>Recalled for PCS, Checked for the bordereau field</td>
+    </tr>
+    <tr>
+      <td>PERILS event identifiers</td>
+      <td>PERILS AG</td>
+      <td>industry loss data for non-US events</td>
+      <td>as PCS, outside the US</td>
+      <td>mapped</td>
+      <td>Recalled</td>
+    </tr>
+    <tr>
+      <td>Oasis Open Exposure Data and Open Results Data</td>
+      <td>Oasis LMF</td>
+      <td>exposure and modelled loss formats</td>
+      <td>through the peril and exposure modules</td>
+      <td>mapped</td>
+      <td>Checked (AIR)</td>
+    </tr>
+    <tr>
+      <td>ACORD P&amp;C XML, the P&amp;C/Surety claims service messages</td>
+      <td>ACORD, licensed to members</td>
+      <td>message formats for first notice, claim updates, payments, loss runs</td>
+      <td>the crosswalk of §6 and the wire formats sketch</td>
+      <td>exchanged</td>
+      <td>Checked through a published model viewer, version not stated there</td>
+    </tr>
+    <tr>
+      <td>ACORD Global Reinsurance and Large Commercial (GRLC) standards</td>
+      <td>ACORD</td>
+      <td>the messaging behind the London market’s electronic claims file</td>
+      <td>named only. No element was checked</td>
+      <td>exchanged</td>
+      <td>Recalled</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="4-market-practice">4. Market practice</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Source</th>
+      <th>What it is</th>
+      <th>What the sketch took</th>
+      <th>Mark</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Lloyd’s Claims Lead Arrangements</td>
+      <td>the Lloyd’s requirement, in force from 1 June 2023 and replacing the Lloyd’s Claims Scheme, under which a lead (and, for complex claims, a second lead) agrees claims for the following syndicates</td>
+      <td>a delegated power under a consent rule, stated in the placement’s terms (sketch §7.5)</td>
+      <td>Checked</td>
+    </tr>
+    <tr>
+      <td>Lloyd’s Coverholder Reporting Standards v5.2</td>
+      <td>the field set for delegated authority bordereaux, including the claims bordereau, whose fields carry codes CR0001 onwards</td>
+      <td>the crosswalk of §7 and the wire formats sketch</td>
+      <td>Checked for the version and the code scheme, field list read from a third-party rendering of the standard (§7)</td>
+    </tr>
+    <tr>
+      <td>Lloyd’s Delegated Data Manager</td>
+      <td>Lloyd’s platform for bordereaux submission and transformation into standard fields</td>
+      <td>a consumer of egress (wire formats sketch)</td>
+      <td>Checked</td>
+    </tr>
+    <tr>
+      <td>London market unique claim reference (UCR)</td>
+      <td>a market-wide claim reference used in the London market’s claims processing</td>
+      <td>named as a key scheme in sketch §7.4 and §14.1</td>
+      <td>Recalled. The CRS claims bordereau’s own identifier is Claim Reference (CR0104) with the UMR (CR0005), see §9</td>
+    </tr>
+    <tr>
+      <td>Unique Market Reference (UMR)</td>
+      <td>the London market’s identifier for a placed contract</td>
+      <td>the contract key a claims bordereau row carries</td>
+      <td>Checked (field CR0005)</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="5-definitions-used-by-the-claims-sketch">5. Definitions used by the claims sketch</h2>
+
+<p>Working definitions, each with its source. “Ours” means the sketch’s own definition, made to give
+the word one sense (CCS’s first test).</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Term</th>
+      <th>Definition</th>
+      <th>Source</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>loss</td>
+      <td>something that happened to someone or something, causing harm, dated, located and caused</td>
+      <td>ours, after the exposure ontology’s loss cause and the peril vocabulary</td>
+    </tr>
+    <tr>
+      <td>loss event</td>
+      <td>one occurrence in the world many losses share</td>
+      <td><code class="language-plaintext highlighter-rouge">icm:LossEvent</code> (AIR-4.4)</td>
+    </tr>
+    <tr>
+      <td>occurrence (in a wording)</td>
+      <td>a happening at a particular time, place and in a particular way, the unit a limit or retention applies to</td>
+      <td><em>Axa v Field</em> (Counsel), contract amounts A51</td>
+    </tr>
+    <tr>
+      <td>originating cause</td>
+      <td>a cause to which losses can be traced, wider than an event</td>
+      <td><em>Axa v Field</em> (Counsel)</td>
+    </tr>
+    <tr>
+      <td>demand</td>
+      <td>an assertion by a claimant that someone owes them something</td>
+      <td>ours. Close to “claim” in D&amp;O and E&amp;O wordings, which usually define it as a written demand for monetary or non-monetary relief, a suit or a proceeding</td>
+    </tr>
+    <tr>
+      <td>circumstance</td>
+      <td>a situation that may give rise to a demand, notified under a claims-made cover</td>
+      <td>ours, after market wordings</td>
+    </tr>
+    <tr>
+      <td>notification</td>
+      <td>a legal act telling an insurer of a loss, demand or circumstance</td>
+      <td>ours, an <code class="language-plaintext highlighter-rouge">ins:Declaration</code> (Instrument §6.4)</td>
+    </tr>
+    <tr>
+      <td>claim (the matter)</td>
+      <td>the matter an insurer handles for one or more related notifications, and the case its policy’s relations are evaluated for</td>
+      <td>ours. ACORD and the Lloyd’s bordereau both use “claim” in this sense (§6, §7)</td>
+    </tr>
+    <tr>
+      <td>response</td>
+      <td>how one instrument version responds to a claim</td>
+      <td>ours. Converges with FHIR’s <code class="language-plaintext highlighter-rouge">ClaimResponse</code></td>
+    </tr>
+    <tr>
+      <td>coverage position</td>
+      <td>an insurer’s communicated stance on cover</td>
+      <td>ours</td>
+    </tr>
+    <tr>
+      <td>reservation of rights</td>
+      <td>a position accepting a claim for handling while reserving the right to decline on stated grounds</td>
+      <td>market usage (US especially)</td>
+    </tr>
+    <tr>
+      <td>quantum</td>
+      <td>an amount claimed, assessed, agreed, offered or determined for a loss item</td>
+      <td>English legal usage</td>
+    </tr>
+    <tr>
+      <td>reserve (case reserve)</td>
+      <td>an estimate of what will be paid on a claim</td>
+      <td>market usage, and the bordereau’s “Reserve” fields</td>
+    </tr>
+    <tr>
+      <td>IBNR</td>
+      <td>incurred but not reported, a portfolio estimate out of the claims module’s scope</td>
+      <td>actuarial usage</td>
+    </tr>
+    <tr>
+      <td>incurred</td>
+      <td>paid plus outstanding reserve</td>
+      <td>market usage, and the bordereau’s “Total Incurred” (§7)</td>
+    </tr>
+    <tr>
+      <td>ALAE, ULAE</td>
+      <td>allocated and unallocated loss adjustment expense, a US statutory split of claims expenses</td>
+      <td>NAIC usage (Recalled)</td>
+    </tr>
+    <tr>
+      <td>movement</td>
+      <td>a dated money fact on a claim</td>
+      <td>ours</td>
+    </tr>
+    <tr>
+      <td>settlement</td>
+      <td>an agreement ending all or part of a claim or demand</td>
+      <td>English legal usage</td>
+    </tr>
+    <tr>
+      <td>Part 36 offer</td>
+      <td>an offer to settle under CPR Part 36, with costs consequences</td>
+      <td>CPR (Recalled)</td>
+    </tr>
+    <tr>
+      <td>subrogation</td>
+      <td>the paying insurer’s right to stand in the insured’s place against third parties</td>
+      <td><em>Castellain v Preston</em>, MIA 1906 s.79 (Counsel)</td>
+    </tr>
+    <tr>
+      <td>contribution</td>
+      <td>sharing between insurers covering the same loss</td>
+      <td>MIA 1906 s.80 (Counsel)</td>
+    </tr>
+    <tr>
+      <td>average</td>
+      <td>the insured bears the uninsured proportion of a loss when underinsured</td>
+      <td>MIA 1906 s.81 (Counsel)</td>
+    </tr>
+    <tr>
+      <td>salvage</td>
+      <td>the value of damaged property the insurer takes over</td>
+      <td>market usage</td>
+    </tr>
+    <tr>
+      <td>follow the settlements</td>
+      <td>a reinsurer bound by the reinsured’s proper settlements</td>
+      <td><em>Insurance Co of Africa v SCOR</em> (Counsel)</td>
+    </tr>
+    <tr>
+      <td>claims co-operation</td>
+      <td>a reinsurer’s approval of a settlement made a condition of its liability</td>
+      <td><em>Scor v Eras</em> (Counsel), CCS C9b</td>
+    </tr>
+    <tr>
+      <td>claims-made</td>
+      <td>cover triggered by a demand first made against the insured in the period</td>
+      <td>market usage</td>
+    </tr>
+    <tr>
+      <td>claims made and notified</td>
+      <td>as claims-made, also requiring notification in the period</td>
+      <td>market usage</td>
+    </tr>
+    <tr>
+      <td>losses occurring, occurrence, losses discovered, risks attaching</td>
+      <td>the other trigger bases</td>
+      <td>market usage, sketch §2.2</td>
+    </tr>
+    <tr>
+      <td>extended reporting period</td>
+      <td>a period after expiry in which claims may still be made or notified</td>
+      <td>market usage, ACORD <code class="language-plaintext highlighter-rouge">ExtendedReptDt</code> (§6)</td>
+    </tr>
+    <tr>
+      <td>relation back</td>
+      <td>a deeming that a later claim was made at the time of an earlier notice</td>
+      <td>CCS S25</td>
+    </tr>
+    <tr>
+      <td>finding</td>
+      <td>an outcome established by a court, arbitrator, expert or ombudsman</td>
+      <td>CCS §6.4</td>
+    </tr>
+    <tr>
+      <td>determination</td>
+      <td>the exercise of a party’s power to decide a standard</td>
+      <td>CCS §6.4</td>
+    </tr>
+    <tr>
+      <td>parametric cover</td>
+      <td>cover paying on a measured index crossing a threshold, with no loss to prove</td>
+      <td>contract amounts A57</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="6-crosswalk-acord-pc-claims-messages">6. Crosswalk: ACORD P&amp;C claims messages</h2>
+
+<p><strong>Source.</strong> ACORD P&amp;C/Surety claims service request messages, read through a published model viewer
+(Checked, version not stated by the viewer). Five request messages: <code class="language-plaintext highlighter-rouge">ClaimsNotificationAddRq</code> (first
+notice of loss and attachments), <code class="language-plaintext highlighter-rouge">ClaimActivityNotify</code> (claim activity, usually from an MGA or TPA),
+<code class="language-plaintext highlighter-rouge">ClaimDownloadNotify</code> (a current image of one claim, including changes and payments),
+<code class="language-plaintext highlighter-rouge">ClaimStatusInqRq</code> (payment information for one claim) and <code class="language-plaintext highlighter-rouge">LossRunInqRq</code> (historical loss data).</p>
+
+<p><strong>Fit</strong>, for every row: <strong>exact</strong> (one-to-one), <strong>derived</strong> (computed from several of ours or several
+of theirs), <strong>lossy</strong> (one side carries less), <strong>gap</strong> (no counterpart).</p>
+
+<h3 id="61-message-and-notice">6.1 Message and notice</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>ACORD</th>
+      <th>Meaning</th>
+      <th>Claims sketch</th>
+      <th>Fit</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ClaimsNotificationAddRq</code></td>
+      <td>submits a first notice of loss</td>
+      <td><code class="language-plaintext highlighter-rouge">clm:Notification</code> of kind notice of loss or notice of demand, opening a <code class="language-plaintext highlighter-rouge">clm:Claim</code></td>
+      <td>exact for the act. Ingress creates the notification, the claim and the loss</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">BusinessPurposeTypeCd</code></td>
+      <td>the business event of the message</td>
+      <td>the message’s role in ingestion (new, change), held as evidence</td>
+      <td>lossy</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ClaimsOccurrence/ClaimNoticeCd</code></td>
+      <td>notice of occurrence or claim</td>
+      <td><code class="language-plaintext highlighter-rouge">clm:notificationKind</code> (notice of loss or circumstance, or notice of demand)</td>
+      <td>derived, the code list must be crosswalked</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ClaimsOccurrence/ClaimsReported</code></td>
+      <td>when, by whom and to whom reported</td>
+      <td>the notification’s valid time, <code class="language-plaintext highlighter-rouge">ins:actBy</code>, <code class="language-plaintext highlighter-rouge">clm:notifiedTo</code></td>
+      <td>exact</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ClaimsOccurrence/PreviouslyReportedInd</code></td>
+      <td>a follow-up to an earlier report</td>
+      <td>a link to the earlier notification, or the claim it opened</td>
+      <td>derived, needs identity resolution</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">FileAttachmentInfo</code></td>
+      <td>an attachment, attached or forthcoming</td>
+      <td><code class="language-plaintext highlighter-rouge">fnd:Evidence</code> by external key</td>
+      <td>exact for a document, lossy for “forthcoming” (an open request)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">RemarkText</code></td>
+      <td>free text</td>
+      <td>evidence text</td>
+      <td>lossy</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">Policy</code>, <code class="language-plaintext highlighter-rouge">PolicyTypeCd</code></td>
+      <td>the policy and its type</td>
+      <td><code class="language-plaintext highlighter-rouge">clm:Response</code> <code class="language-plaintext highlighter-rouge">clm:underInstrument</code>, resolved by the policy number key</td>
+      <td>derived: a policy number names an instrument identity, the version is chosen by the trigger date (sketch §7.9)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">Producer</code></td>
+      <td>the agency producing the business</td>
+      <td>the broker’s role occupancy</td>
+      <td>exact</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">InsuredOrPrincipal</code></td>
+      <td>the insured or principal</td>
+      <td>the named insured occupancy (AIR-4.1 roles)</td>
+      <td>exact</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="62-occurrence-and-loss">6.2 Occurrence and loss</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>ACORD <code class="language-plaintext highlighter-rouge">ClaimsOccurrence</code> element</th>
+      <th>Claims sketch</th>
+      <th>Fit</th>
+      <th> </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">LOSSDATE_CHOICE</code> (a loss date and time, or a loss period)</td>
+      <td><code class="language-plaintext highlighter-rouge">clm:occurredAt</code>, or a span for a continuing loss</td>
+      <td>exact for occurrence. ACORD has no separate manifestation, discovery or exposure dates, so triggers that read them have no source here</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">EventInfo</code></td>
+      <td>when a specific event occurred</td>
+      <td><code class="language-plaintext highlighter-rouge">clm:occurredAt</code>, or the loss event’s span</td>
+      <td>derived</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">IncidentDesc</code>, <code class="language-plaintext highlighter-rouge">DamageDesc</code>, <code class="language-plaintext highlighter-rouge">IncidentClaimTypeDesc</code></td>
+      <td>evidence text on the loss</td>
+      <td>lossy</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">LossCauseCd</code></td>
+      <td><code class="language-plaintext highlighter-rouge">aeo:peril</code> on one <code class="language-plaintext highlighter-rouge">aeo:LossCause</code>, coded in the ACORD list and lifted to the reference through a crosswalk (AIR-3.4)</td>
+      <td>lossy: one code, no chain, no position, no mechanism or agency</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ClaimTypeCd</code>, <code class="language-plaintext highlighter-rouge">IncidentClaimTypeCd</code> (from the LineOfBusiness list)</td>
+      <td><code class="language-plaintext highlighter-rouge">icm:classOfBusiness</code> on the claim or response</td>
+      <td>derived, crosswalked</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">Catastrophe</code>, <code class="language-plaintext highlighter-rouge">CatastropheLossInd</code></td>
+      <td><code class="language-plaintext highlighter-rouge">clm:inLossEvent</code> an <code class="language-plaintext highlighter-rouge">icm:LossEvent</code>, keyed by its catastrophe identifier</td>
+      <td>exact where the catastrophe carries an identifier of a known key scheme</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">Addr</code>, <code class="language-plaintext highlighter-rouge">LocationCd</code>, <code class="language-plaintext highlighter-rouge">SiteCd</code>, <code class="language-plaintext highlighter-rouge">CountyTownCd</code>, <code class="language-plaintext highlighter-rouge">WhereOccurredDesc</code></td>
+      <td><code class="language-plaintext highlighter-rouge">clm:lossAt</code> an <code class="language-plaintext highlighter-rouge">aeo:Location</code>, matched to the exposure set’s location by address or key</td>
+      <td>derived, needs location matching</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ClaimsMadeInd</code>, <code class="language-plaintext highlighter-rouge">CurrentRetroactiveDt</code>, <code class="language-plaintext highlighter-rouge">ExtendedReptDt</code>, <code class="language-plaintext highlighter-rouge">FullTailInd</code></td>
+      <td>the instrument’s claims basis and its dates</td>
+      <td>gap on our side by design: these are contract terms, read from the instrument, not stated on the claim (CL2). Ingress checks them against the instrument and reports a disagreement</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ClaimStatusCd</code>, <code class="language-plaintext highlighter-rouge">ClaimStatusDt</code>, <code class="language-plaintext highlighter-rouge">ClaimStatusExplanation</code>, <code class="language-plaintext highlighter-rouge">ClaimSubStatusCd</code></td>
+      <td>mixes three things the sketch keeps apart: the record’s governance state (open, closed, reopened), the occasions’ legal state (paid, breached), and the deployment’s handling stage</td>
+      <td>derived on egress, and on ingress an asserted status from the source, never our occasion state (wire formats sketch, gap G4)</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">LitigationInd</code>, <code class="language-plaintext highlighter-rouge">LitigationStatusCd</code></td>
+      <td>a <code class="language-plaintext highlighter-rouge">clm:Proceedings</code> and its litigation regime state</td>
+      <td>derived</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ProbableIncurredAmt</code></td>
+      <td>the sender’s estimate of incurred</td>
+      <td>a <code class="language-plaintext highlighter-rouge">clm:Quantum</code> of stage assessed, asserted by the sender, or a reserve movement</td>
+      <td>lossy</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">TotalLossInd</code></td>
+      <td>a loss item adjustment or a valuation basis outcome</td>
+      <td>derived</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">SalvageInd</code></td>
+      <td>a recovery of kind salvage expected</td>
+      <td>derived</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">QuestionableClaimInfo</code></td>
+      <td>a fraud indicator from the source, never a finding (sketch §11.2)</td>
+      <td>exact as an indicator</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">PoliceFireContactedInd</code>, <code class="language-plaintext highlighter-rouge">ViolationsCitationsInd</code></td>
+      <td>evidence attributes</td>
+      <td>lossy</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">OutsideAuthorityConditionCd</code></td>
+      <td>a claim beyond the handler’s delegated authority, a referral</td>
+      <td>derived from the authority power’s scope (CCS S46)</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ResponsibleDept</code></td>
+      <td>the deployment’s internal routing</td>
+      <td>gap by design: workflow (CL9)</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">AdditionalClaimInd</code></td>
+      <td>other loss types from the same incident</td>
+      <td>derived: other loss items or claims on the same loss</td>
+      <td> </td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="63-parties">6.3 Parties</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>ACORD <code class="language-plaintext highlighter-rouge">ClaimsParty</code> element</th>
+      <th>Claims sketch</th>
+      <th>Fit</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ClaimsPartyRoleCd</code></td>
+      <td>a role occupancy in one of <code class="language-plaintext highlighter-rouge">icm-voc:Claimant</code>, <code class="language-plaintext highlighter-rouge">HarmedParty</code>, <code class="language-plaintext highlighter-rouge">LiableParty</code>, <code class="language-plaintext highlighter-rouge">Payee</code>, or a <code class="language-plaintext highlighter-rouge">clm-voc:</code> handling role</td>
+      <td>derived: the ACORD role list must be crosswalked, and one ACORD role may need two of ours (an injured claimant is both claimant and harmed party)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">GeneralPartyInfo</code>, <code class="language-plaintext highlighter-rouge">PersonInfo</code>, <code class="language-plaintext highlighter-rouge">Age</code></td>
+      <td>the actor, personal data under a privacy profile (sketch §12.2)</td>
+      <td>exact, special handling</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ClaimsInjury</code>, <code class="language-plaintext highlighter-rouge">ClaimsInjuredInfo</code>, <code class="language-plaintext highlighter-rouge">ICDDiagnosticCd</code>, <code class="language-plaintext highlighter-rouge">MedicalTreatment</code>, <code class="language-plaintext highlighter-rouge">SurgeryInd</code>, <code class="language-plaintext highlighter-rouge">FatalityInd</code>, <code class="language-plaintext highlighter-rouge">PreExistingDisabilityCd</code></td>
+      <td>bodily injury loss items and medical evidence, special category data</td>
+      <td>derived, special handling</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">LossDt</code>, <code class="language-plaintext highlighter-rouge">LossTime</code> (per party)</td>
+      <td>the injury’s own date, distinct from the occurrence’s</td>
+      <td>exact</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">AtFaultPct</code>, <code class="language-plaintext highlighter-rouge">OperatorAtFaultInd</code></td>
+      <td>an apportionment of liability, a finding or an assessment by its source</td>
+      <td>derived</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">SuitFiledInd</code></td>
+      <td>a <code class="language-plaintext highlighter-rouge">clm:Demand</code> of form suit, or <code class="language-plaintext highlighter-rouge">clm:Proceedings</code></td>
+      <td>derived</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">GrossTPARecoveriesReceivedAmt</code>, <code class="language-plaintext highlighter-rouge">GrossTPARecoveriesOutstandingAmt</code></td>
+      <td>recovery receipts and recovery reserves</td>
+      <td>derived from movements on egress, cumulative figures on ingress (gap G1)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">OtherOrPriorPolicy</code></td>
+      <td>other insurance, a further response (sketch §7.5)</td>
+      <td>derived</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">AuthorizedRepInd</code>, <code class="language-plaintext highlighter-rouge">Relationship</code></td>
+      <td>a representative’s occupancy under delegation</td>
+      <td>exact</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">WitnessInfo</code>, <code class="language-plaintext highlighter-rouge">WitnessIncidentInd</code></td>
+      <td>evidence, and a witness occupancy</td>
+      <td>exact</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">PartyInvestigationInfo</code></td>
+      <td>investigation evidence</td>
+      <td>lossy</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">SSNValidationCd</code>, <code class="language-plaintext highlighter-rouge">TINValidationCd</code>, <code class="language-plaintext highlighter-rouge">SuppressMatchInd</code></td>
+      <td>US identity validation and industry matching controls</td>
+      <td>gap by design: a deployment’s processing, outside the model</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="64-payments-and-reserves">6.4 Payments and reserves</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>ACORD <code class="language-plaintext highlighter-rouge">ClaimsPayment</code> element</th>
+      <th>Claims sketch</th>
+      <th>Fit</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">PaymentTypeCd</code></td>
+      <td><code class="language-plaintext highlighter-rouge">clm:movementKind</code> (reserve set or change, payment, reversal, recovery receipt) and <code class="language-plaintext highlighter-rouge">clm:costClass</code></td>
+      <td>derived: one ACORD code carries both axes, which the sketch keeps apart</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">TotalPaymentAmt</code>, <code class="language-plaintext highlighter-rouge">TotalPaymentDetails</code></td>
+      <td><code class="language-plaintext highlighter-rouge">clm:amount</code> on the movement, split into items</td>
+      <td>exact</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ClaimsPaymentCovInfo</code></td>
+      <td>amounts by coverage</td>
+      <td>derived: a coverage code names a section or relation of the instrument, resolved through the response</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ReserveChangeInfo</code></td>
+      <td>a reserve change movement</td>
+      <td>exact</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">PaymentDt</code></td>
+      <td>the movement’s valid time</td>
+      <td>exact. Its record time comes from the message’s own time, not this element</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">CheckNumber</code>, <code class="language-plaintext highlighter-rouge">ReferenceNumber</code>, <code class="language-plaintext highlighter-rouge">MethodPaymentCd</code></td>
+      <td>the payment’s external key and method (and the ISO 20022 message where the payment travels that way)</td>
+      <td>exact</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">LossKindCd</code>, <code class="language-plaintext highlighter-rouge">LossCauseCd</code> (on a payment)</td>
+      <td>the loss item’s head of loss and cause</td>
+      <td>derived</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ServiceDuration</code></td>
+      <td>the period a payment covers, for periodical or medical payments</td>
+      <td>exact</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">TotalClaimLossPaidAmt</code></td>
+      <td>paid to date, sent only on a closed claim</td>
+      <td>derived on egress from movements</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ClaimsPartyRef</code> (attribute)</td>
+      <td><code class="language-plaintext highlighter-rouge">clm:payee</code></td>
+      <td>exact</td>
+    </tr>
+    <tr>
+      <td>void “with a negative amount”</td>
+      <td>a reversing movement</td>
+      <td>exact</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="65-handling-parties">6.5 Handling parties</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>ACORD</th>
+      <th>Claims sketch</th>
+      <th>Fit</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">AdjusterParty</code></td>
+      <td>the loss adjuster’s occupancy under delegation, on the response</td>
+      <td>exact</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ClaimActivityNotify</code></td>
+      <td>activity by an MGA or TPA: the facts and acts it carries, each landing on its own term</td>
+      <td>derived, one message to many records</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ClaimDownloadNotify</code></td>
+      <td>a full image of one claim</td>
+      <td>derived: compared with the claim as known, and only the differences become new facts or versions (wire formats sketch, gap G1)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">LossRunInqRq</code></td>
+      <td>a request for loss history</td>
+      <td>egress: the derived loss run of sketch §13.3</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ClaimStatusInqRq</code></td>
+      <td>a request for payment information</td>
+      <td>egress: derived balances</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="7-crosswalk-lloyds-claims-bordereau-crs-v52">7. Crosswalk: Lloyd’s claims bordereau (CRS v5.2)</h2>
+
+<p><strong>Source.</strong> Lloyd’s Coverholder Reporting Standards v5.2 (user guide dated 20 August 2019) and the
+Lloyd’s claims bordereaux standard operating procedure, which maps submissions against the standard’s
+mandatory and conditionally mandatory fields (Checked). The field codes and names below were read
+from a third-party rendering of the standard (bdxflow’s CRS reference), since the Lloyd’s PDF’s text
+did not extract. Every code and name must be confirmed against the v5.2 user guide’s Appendix One
+before a mapping graph is authored. Which fields are mandatory is in the guide, and not recorded
+here.</p>
+
+<p><strong>The bordereau’s shape</strong> decides most of the fit: one row per claim per reporting period, carrying
+cumulative and period figures (paid this month, previously paid, reserve, change this month, total
+incurred), split into indemnity, fees and expense heads, in an original and a settlement currency.</p>
+
+<h3 id="71-references-and-identity">7.1 References and identity</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>CRS</th>
+      <th>Field</th>
+      <th>Claims sketch</th>
+      <th>Fit</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>CR0005</td>
+      <td>Unique Market Reference (UMR)</td>
+      <td>the contract key of the placement or binding authority (<code class="language-plaintext highlighter-rouge">fnd:naturalKey</code> on the instrument identity)</td>
+      <td>exact</td>
+    </tr>
+    <tr>
+      <td>CR0006</td>
+      <td>Agreement No</td>
+      <td>the binding authority agreement’s key</td>
+      <td>exact</td>
+    </tr>
+    <tr>
+      <td>CR0007</td>
+      <td>Section No</td>
+      <td><code class="language-plaintext highlighter-rouge">clm:underSection</code>, the agreement section (CCS §5.10)</td>
+      <td>exact</td>
+    </tr>
+    <tr>
+      <td>CR0029</td>
+      <td>Certificate Ref</td>
+      <td>the bound policy’s key under the authority, resolving <code class="language-plaintext highlighter-rouge">clm:underInstrument</code></td>
+      <td>exact</td>
+    </tr>
+    <tr>
+      <td>CR0104</td>
+      <td>Claim Reference</td>
+      <td>the coverholder’s claim key on <code class="language-plaintext highlighter-rouge">clm:ClaimIdentity</code></td>
+      <td>exact</td>
+    </tr>
+    <tr>
+      <td>CR0122</td>
+      <td>Claimant Name</td>
+      <td>the claimant occupancy’s actor, personal data</td>
+      <td>exact, special handling, minimised on egress where the recipient does not need it</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="72-status-decisions-and-dates">7.2 Status, decisions and dates</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>CRS</th>
+      <th>Field</th>
+      <th>Claims sketch</th>
+      <th>Fit</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>CR0105</td>
+      <td>Claim Status</td>
+      <td>an asserted status from the coverholder (gap G4 of the wire formats sketch). On egress, derived from the claim’s governance state and its occasions</td>
+      <td>derived</td>
+    </tr>
+    <tr>
+      <td>CR0106</td>
+      <td>Refer Claim to Underwriters</td>
+      <td>an obligation to refer above authority (CCS S46), its occasion arisen</td>
+      <td>derived</td>
+    </tr>
+    <tr>
+      <td>CR0107</td>
+      <td>Denial</td>
+      <td>a <code class="language-plaintext highlighter-rouge">clm:CoveragePosition</code> of kind declinature</td>
+      <td>exact for the act</td>
+    </tr>
+    <tr>
+      <td>CR0312</td>
+      <td>Reason for Denial</td>
+      <td><code class="language-plaintext highlighter-rouge">clm:citesTerm</code> on that position, free text on ingress</td>
+      <td>lossy</td>
+    </tr>
+    <tr>
+      <td>CR0311</td>
+      <td>Date Claim Denied</td>
+      <td>the position’s valid time</td>
+      <td>exact</td>
+    </tr>
+    <tr>
+      <td>CR0316</td>
+      <td>Date Claim Withdrawn</td>
+      <td>a <code class="language-plaintext highlighter-rouge">ins:Withdrawal</code> of the notification, or the claim’s closure with reason</td>
+      <td>derived</td>
+    </tr>
+    <tr>
+      <td>CR0317</td>
+      <td>Ex Gratia Payment</td>
+      <td>a payment movement not performing any occasion (no obligation), marked ex gratia</td>
+      <td>exact. A shape reports an ex gratia payment where the coverholder’s authority excludes them (CCS S46)</td>
+    </tr>
+    <tr>
+      <td>CR0119, CR0120</td>
+      <td>Date of Loss (From), (To)</td>
+      <td><code class="language-plaintext highlighter-rouge">clm:occurredAt</code> as a span</td>
+      <td>exact for occurrence. No manifestation, discovery or exposure dates</td>
+    </tr>
+    <tr>
+      <td>CR0136</td>
+      <td>Date First Advised</td>
+      <td>the first notification’s valid time</td>
+      <td>exact</td>
+    </tr>
+    <tr>
+      <td>CR0372</td>
+      <td>Claim Notification Acknowledgement Date</td>
+      <td>the occasion of an acknowledgement duty performed (a conduct duty, sketch §11.4)</td>
+      <td>derived</td>
+    </tr>
+    <tr>
+      <td>CR0300</td>
+      <td>Date Claim Opened</td>
+      <td>the claim identity’s first version’s record time</td>
+      <td>exact</td>
+    </tr>
+    <tr>
+      <td>CR0301</td>
+      <td>Date Coverage Confirmed</td>
+      <td>a <code class="language-plaintext highlighter-rouge">clm:CoveragePosition</code> of kind acceptance, its valid time</td>
+      <td>exact</td>
+    </tr>
+    <tr>
+      <td>CR0302</td>
+      <td>Date Claim Amount Agreed</td>
+      <td>a <code class="language-plaintext highlighter-rouge">clm:Quantum</code> of stage agreed, or a settlement’s assent</td>
+      <td>derived</td>
+    </tr>
+    <tr>
+      <td>CR0303, CR0304</td>
+      <td>Date Claims Paid (Final), Date Fees Paid (Final)</td>
+      <td>the last payment movement of each cost class, with the occasion Performed</td>
+      <td>derived</td>
+    </tr>
+    <tr>
+      <td>CR0137</td>
+      <td>Date Closed</td>
+      <td>the claim’s governance state closed, its version’s valid time</td>
+      <td>exact</td>
+    </tr>
+    <tr>
+      <td>CR0306</td>
+      <td>Date Reopened</td>
+      <td>a new claim version, governance state reopened</td>
+      <td>exact</td>
+    </tr>
+    <tr>
+      <td>CR0307</td>
+      <td>Date of Subrogation</td>
+      <td>a recovery <code class="language-plaintext highlighter-rouge">clm:Demand</code> made (sketch §10.1)</td>
+      <td>exact</td>
+    </tr>
+    <tr>
+      <td>CR0371</td>
+      <td>Date First Reserve Established</td>
+      <td>the first reserve movement’s valid time</td>
+      <td>derived</td>
+    </tr>
+    <tr>
+      <td>CR0369</td>
+      <td>Diary Date</td>
+      <td>workflow (CL9)</td>
+      <td>gap by design</td>
+    </tr>
+    <tr>
+      <td>CR0370</td>
+      <td>Peer Review Date</td>
+      <td>workflow</td>
+      <td>gap by design</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="73-cause-nature-and-location">7.3 Cause, nature and location</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>CRS</th>
+      <th>Field</th>
+      <th>Claims sketch</th>
+      <th>Fit</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>CR0117</td>
+      <td>Cause of Loss Code</td>
+      <td><code class="language-plaintext highlighter-rouge">aeo:peril</code> on one cause link, in the coverholder’s list, lifted through a crosswalk where exact (AIR-3.4, peril whitepaper W-Q3)</td>
+      <td>lossy: one code, no chain</td>
+    </tr>
+    <tr>
+      <td>CR0118</td>
+      <td>Loss Description</td>
+      <td>evidence text</td>
+      <td>lossy</td>
+    </tr>
+    <tr>
+      <td>CR0364</td>
+      <td>General Nature of Loss</td>
+      <td><code class="language-plaintext highlighter-rouge">clm:headOfLoss</code> or the harm subject, crosswalked</td>
+      <td>derived</td>
+    </tr>
+    <tr>
+      <td>CR1273</td>
+      <td>Nature of Claim</td>
+      <td><code class="language-plaintext highlighter-rouge">clm:headOfLoss</code> or demand form, crosswalked</td>
+      <td>derived</td>
+    </tr>
+    <tr>
+      <td>CR0367</td>
+      <td>Severity of Loss</td>
+      <td>an assessment of the claim by the coverholder</td>
+      <td>lossy</td>
+    </tr>
+    <tr>
+      <td>CR0368</td>
+      <td>Litigation Status</td>
+      <td>the litigation regime’s state on <code class="language-plaintext highlighter-rouge">clm:Proceedings</code></td>
+      <td>derived</td>
+    </tr>
+    <tr>
+      <td>CR0138, CR0139</td>
+      <td>Catastrophe Code, Catastrophe Name</td>
+      <td><code class="language-plaintext highlighter-rouge">clm:inLossEvent</code>, an <code class="language-plaintext highlighter-rouge">icm:LossEvent</code> keyed in the market’s catastrophe code scheme</td>
+      <td>exact where the code scheme is declared</td>
+    </tr>
+    <tr>
+      <td>CR0108</td>
+      <td>PCS Code</td>
+      <td>a second key of the same <code class="language-plaintext highlighter-rouge">icm:LossEvent</code>, in the PCS scheme</td>
+      <td>exact</td>
+    </tr>
+    <tr>
+      <td>CR0112 to CR0116</td>
+      <td>Location of Loss: Address, County, Sub-division, Postcode, Country</td>
+      <td><code class="language-plaintext highlighter-rouge">clm:lossAt</code>, matched to an exposure location or a new <code class="language-plaintext highlighter-rouge">aeo:Location</code> with <code class="language-plaintext highlighter-rouge">aeo:Address</code></td>
+      <td>derived</td>
+    </tr>
+    <tr>
+      <td>CR0103</td>
+      <td>Claim - Sum Insured Amount</td>
+      <td>the instrument’s sum insured, a contract term (CL2)</td>
+      <td>gap by design: read from the instrument, compared, a disagreement reported</td>
+    </tr>
+    <tr>
+      <td>CR0313</td>
+      <td>Amount Claimed</td>
+      <td>a <code class="language-plaintext highlighter-rouge">clm:Quantum</code> of stage claimed</td>
+      <td>exact</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="74-money">7.4 Money</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>CRS</th>
+      <th>Field</th>
+      <th>Claims sketch</th>
+      <th>Fit</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>CR0109</td>
+      <td>Claim - Original Currency</td>
+      <td>the currency of the movement amounts as recorded</td>
+      <td>exact</td>
+    </tr>
+    <tr>
+      <td>CR0110</td>
+      <td>Claim - Settlement Currency</td>
+      <td>the currency of settlement, and the <code class="language-plaintext highlighter-rouge">qnt:Conversion</code> target</td>
+      <td>exact</td>
+    </tr>
+    <tr>
+      <td>CR0111</td>
+      <td>Claim - Rate of Exchange</td>
+      <td>the conversion’s rate, under a context at the reporting date</td>
+      <td>exact, with a date the field does not carry (gap G8)</td>
+    </tr>
+    <tr>
+      <td>CR0126, CR0127</td>
+      <td>Paid This Month: Indemnity, Fees</td>
+      <td>on egress, <code class="language-plaintext highlighter-rouge">sum</code> of payment movements with record time in the month, by cost class. On ingress, payment movements inferred for the month</td>
+      <td>derived (gap G1)</td>
+    </tr>
+    <tr>
+      <td>CR0140 to CR0144</td>
+      <td>Paid This Month: Expenses, Attorney Coverage Fees, Adjusters Fees, Defence Fees, TPA Fees</td>
+      <td>as above, each a <code class="language-plaintext highlighter-rouge">clm:costClass</code> value</td>
+      <td>derived</td>
+    </tr>
+    <tr>
+      <td>CR0128, CR0129, CR0145 to CR0149</td>
+      <td>Previously Paid, by head</td>
+      <td>paid to date before the month</td>
+      <td>derived</td>
+    </tr>
+    <tr>
+      <td>CR0130, CR0131, CR0150 to CR0154</td>
+      <td>Reserve, by head</td>
+      <td>outstanding reserve at the month end</td>
+      <td>derived</td>
+    </tr>
+    <tr>
+      <td>CR0132, CR0133</td>
+      <td>Change This Month: Indemnity, Fees</td>
+      <td>the net of the month’s movements</td>
+      <td>derived</td>
+    </tr>
+    <tr>
+      <td>CR0134, CR0135, CR0155</td>
+      <td>Total Incurred: Indemnity, Fees, All</td>
+      <td>paid plus outstanding</td>
+      <td>derived</td>
+    </tr>
+    <tr>
+      <td>CR0375, CR0376</td>
+      <td>Gross Third-Party Recoveries Received, Outstanding</td>
+      <td>recovery receipts and recovery reserves</td>
+      <td>derived</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The cost classes of the bordereau (indemnity, fees, expenses, attorney coverage fees, adjusters fees,
+defence fees, TPA fees) are a finer split than the sketch’s first draft of <code class="language-plaintext highlighter-rouge">clm:costClass</code>
+(indemnity, defence, adjusting expense, other expense). §9 asks that the reference scheme follow the
+bordereau’s heads, which a coarser scheme can then group.</p>
+
+<hr />
+
+<h2 id="8-what-the-crosswalks-show">8. What the crosswalks show</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Finding</th>
+      <th>Consequence for the model</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Both formats report claims, neither carries a cause chain.</strong> One cause code per claim (ACORD <code class="language-plaintext highlighter-rouge">LossCauseCd</code>, CRS CR0117)</td>
+      <td>ingress lands one <code class="language-plaintext highlighter-rouge">aeo:LossCause</code> link, position unknown, mechanism and agency defaulted where the code allows (AIR-4.4). Checks that need the chain are Undetermined until a person adds it (CL8)</td>
+    </tr>
+    <tr>
+      <td><strong>Status codes merge three things the model keeps apart</strong></td>
+      <td>ingress records a status as the source’s assertion. Egress derives it from governance state, occasions and handling stage by a declared rule per format</td>
+    </tr>
+    <tr>
+      <td><strong>Money is reported as balances, not movements</strong> (CRS cumulative and period columns, ACORD totals beside payment records)</td>
+      <td>ingress infers movements from successive snapshots, egress derives balances from movements. The wire formats sketch designs both (gap G1)</td>
+    </tr>
+    <tr>
+      <td><strong>Contract terms appear on the claim</strong> (ACORD claims-made and retroactive dates, CRS sum insured)</td>
+      <td>read, not stored as claim facts. A disagreement with the instrument is reported, which turns a reporting field into a data quality check</td>
+    </tr>
+    <tr>
+      <td><strong>Workflow appears on the claim</strong> (CRS diary and peer review dates, ACORD responsible department)</td>
+      <td>carried as the source’s workflow data, outside the reference, if a deployment keeps it at all</td>
+    </tr>
+    <tr>
+      <td><strong>Trigger dates beyond occurrence are absent</strong> (no manifestation, discovery, exposure dates in either)</td>
+      <td>claims-made and long-tail triggers need dates neither format supplies on the claim. ACORD’s claims-made indicator and the CRS dates of loss are not enough. Those claims need data from the documents or a person</td>
+    </tr>
+    <tr>
+      <td><strong>Personal and special category data is rich in ACORD</strong> (injuries, ICD codes, medical treatment) <strong>and thin in the bordereau</strong> (claimant name)</td>
+      <td>the privacy profile matters most for ACORD ingress, and minimisation matters most for bordereau egress</td>
+    </tr>
+    <tr>
+      <td><strong>Per-insurer figures are absent.</strong> A bordereau row is for the coverholder’s claim under one section, with the syndicates’ shares on the agreement</td>
+      <td>egress per insurer is a <code class="language-plaintext highlighter-rouge">split</code> by the placement’s shares, ingress lands on one response for the authority’s group</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="9-corrections-to-the-claims-sketch">9. Corrections to the claims sketch</h2>
+
+<p>Found while writing this companion, and made in <a href="/developer/sketches/insurance-claims-ontology.html">insurance-claims-ontology.md</a>
+on 2026-10-16.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Where</th>
+      <th>Correction</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>§2.1</td>
+      <td><em>Post Office v Norwich Union</em> is reported at [1967] 2 QB 363 (CA). The sketch gave [1968] 1 QB 363</td>
+    </tr>
+    <tr>
+      <td>§2.1</td>
+      <td><em>Hill v M &amp; G Re</em> is cited from the House of Lords report, [1996] 1 WLR 1239. The sketch gave [1996] LRLR 341. Both reports to be checked by counsel with the rest</td>
+    </tr>
+    <tr>
+      <td>§7.4, §14.1, §15</td>
+      <td>the London market unique claim reference is Recalled, not Checked. The claims bordereau identifies a claim by Claim Reference (CR0104) with the UMR (CR0005) and the certificate (CR0029), and the sketch’s key text and example now use a lead’s claim reference</td>
+    </tr>
+    <tr>
+      <td>§9.1</td>
+      <td><code class="language-plaintext highlighter-rouge">clm:costClass</code>’s reference scheme now follows the bordereau’s heads (indemnity, fees, expenses, attorney coverage fees, adjusters fees, defence fees, TPA fees), with ALAE and ULAE as a grouping for US statutory reporting</td>
+    </tr>
+    <tr>
+      <td>§15</td>
+      <td>the ACORD row now names its source as a published model viewer of the P&amp;C/Surety specification, version not stated, and the messages as the five listed in §6</td>
+    </tr>
+    <tr>
+      <td>§7.1</td>
+      <td>the loss’s dates beyond occurrence (manifested, discovered, exposure) have no source in either format. The sketch now says they come from documents or a person, and that the claim stays Undetermined until they do</td>
+    </tr>
+  </tbody>
+</table>

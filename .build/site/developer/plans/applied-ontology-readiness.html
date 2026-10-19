@@ -1,0 +1,566 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="plan-applied-ontology-readiness">Plan: Applied ontology readiness</h1>
+
+<p><strong>Unit ID:</strong> <code class="language-plaintext highlighter-rouge">applied-ontology-readiness</code>
+<strong>Status:</strong> Proposed, awaiting the maintainer’s review before implementation
+<strong>Trigger:</strong> request, 2026-09-25
+<strong>Sketch:</strong> <a href="/developer/sketches/applied-ontology-readiness.html">applied-ontology-readiness.md</a>
+<strong>Status record:</strong> <a href="/developer/status/applied-ontology-readiness.html">applied-ontology-readiness.md</a>
+<strong>ADRs:</strong> <a href="/architecture/decisions/ADR-A87-eligibility-concept-inclusion-and-exclusion.html">A-87</a>,
+<a href="../../architecture/decisions/ADR-A88-ontology-import-resolution-for-consumers.md">A-88</a>,
+<a href="../../architecture/decisions/ADR-A89-eligibility-ir-concept-conditions-and-profile-aggregation.md">A-89</a>,
+<a href="/architecture/decisions/ADR-A90-eligibility-design-time-owl-class-backend.html">A-90</a>,
+<a href="/architecture/decisions/ADR-A91-eligibility-candidate-evidence-binding.html">A-91</a>,
+<a href="../../architecture/decisions/ADR-A92-derived-artefact-contract-and-prov-o-alignment.md">A-92</a>,
+and the <a href="../../architecture/decisions/ADR-A86-ontology-semantic-versioning.md#addendum-2026-09-25-guarantees-consumers-rely-on">ADR-A86 addendum</a>.
+All Proposed.</p>
+
+<h2 id="scope">Scope</h2>
+
+<p>Close gaps AO1 to AO13 from the sketch, in three phases. Phase A changes no
+semantics. Phase B extends the Eligibility compilers. Phase C extends
+Foundation, Surface, Executable, Quantification and Instrument. No slice
+starts before the ADR it names is ratified. Phase A slices AOR-2 and AOR-3 are
+detailed to implementation level. Phase B slices are detailed to module, file
+and test-case level. Phase C slices are outlined and are detailed when their
+ADRs are drafted.</p>
+
+<h2 id="conventions-for-every-slice">Conventions for every slice</h2>
+
+<ul>
+  <li>Default execution mode. Write, then hand off a “Commands to run”
+block. The maintainer runs it.</li>
+  <li>Each slice delivers its Validation Pack at
+<code class="language-plaintext highlighter-rouge">docs/developer/validation/applied-ontology-readiness-&lt;slice&gt;.md</code>, updates
+the status record and <code class="language-plaintext highlighter-rouge">docs/developer/INDEX.md</code>, and edits any normative
+document it contradicts in the same slice.</li>
+  <li>Every ontology change is classified under ADR-A86 and runs the
+import-pinning cascade checklist. The classification of import-only changes
+follows addendum item 1 once ratified. Until then the slice states its
+classification and asks.</li>
+  <li>SHACL validation in tests uses the union of the example and the layer’s
+<code class="language-plaintext highlighter-rouge">spec/*.ttl</code> as data, so <code class="language-plaintext highlighter-rouge">sh:targetClass</code> reaches subclass instances, with
+pySHACL <code class="language-plaintext highlighter-rouge">advanced=True</code> and <code class="language-plaintext highlighter-rouge">inference="none"</code>.</li>
+  <li>Substrate text and examples stay domain-neutral (ADR-A-C2).</li>
+</ul>
+
+<h2 id="phase-a-consumable-baseline">Phase A: Consumable baseline</h2>
+
+<h3 id="aor-1-governance-records-this-slice">AOR-1: Governance records (this slice)</h3>
+
+<p>ADRs A-87 to A-92 (Proposed), the ADR-A86 addendum, the sketch, this
+plan, the status record, the ADR catalogue rows, and <code class="language-plaintext highlighter-rouge">INDEX.md</code> entries. L0.
+Gate: review of the ADRs and of the open questions in the sketch.</p>
+
+<h3 id="aor-2-eligibility-examples-and-the-declaration-warning">AOR-2: Eligibility examples and the declaration warning</h3>
+
+<p><strong>Invariant:</strong> every Eligibility example validates with no violation and no
+warning. The declaration warning targets conditions that match candidates
+directly (ADR-A87 item 4).</p>
+
+<p><strong>Depends on:</strong> ADR-A87 ratified. Sketch open questions 1 and 2 answered.</p>
+
+<p><strong>Changes:</strong></p>
+
+<ol>
+  <li><code class="language-plaintext highlighter-rouge">ontology/eligibility/examples/hierarchical-match.ttl</code>
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">ex:hierarchical-condition</code> gains <code class="language-plaintext highlighter-rouge">elg:requiredConcept ex:fire</code>, preceded
+by a comment: <code class="language-plaintext highlighter-rouge"># Removing elg:requiredConcept raises
+elg:ConceptConditionDeclarationShape (sh:Warning), because the condition
+would state nothing to match against.</code></li>
+      <li><code class="language-plaintext highlighter-rouge">ex:hierarchical-profile</code> declares <code class="language-plaintext highlighter-rouge">elg:matchStrategy
+elg:HierarchicalMatch</code>, <code class="language-plaintext highlighter-rouge">elg:compatibilityOperation elg:AllRequired</code> and <code class="language-plaintext highlighter-rouge">elg:wildcardSemantics
+elg:NoWildcard</code>, following the interval example’s convention (open
+question 1). This clears three pre-existing <code class="language-plaintext highlighter-rouge">elg:ConditionShape</code>
+violations.</li>
+      <li><code class="language-plaintext highlighter-rouge">ex:decision</code> gains <code class="language-plaintext highlighter-rouge">elg:usesOperationalProfile ex:reference-profile</code>,
+with <code class="language-plaintext highlighter-rouge">ex:reference-profile a elg:OperationalProfile</code>. This clears the
+pre-existing L8 violation.</li>
+      <li>If open question 2 is accepted, the condition gains
+<code class="language-plaintext highlighter-rouge">elg:constrainedByContract</code> to a <code class="language-plaintext highlighter-rouge">voc:SchemeContract</code> bound to a
+<code class="language-plaintext highlighter-rouge">voc:ConceptScheme</code> holding the three concepts.</li>
+      <li>The candidate keeps <code class="language-plaintext highlighter-rouge">elg:candidateValue</code> until AOR-5 introduces
+<code class="language-plaintext highlighter-rouge">elg:candidateConcept</code>.</li>
+    </ul>
+  </li>
+  <li><code class="language-plaintext highlighter-rouge">ontology/eligibility/examples/condition-taxonomy.ttl</code>
+    <ul>
+      <li>Adds the <code class="language-plaintext highlighter-rouge">skos:</code> prefix and four concepts: <code class="language-plaintext highlighter-rouge">ex:full-time</code>,
+<code class="language-plaintext highlighter-rouge">ex:part-time</code> (an employment basis), <code class="language-plaintext highlighter-rouge">ex:tier-standard</code>,
+<code class="language-plaintext highlighter-rouge">ex:tier-premium</code> (a subscription tier).</li>
+      <li><code class="language-plaintext highlighter-rouge">ex:exact-condition</code> gains <code class="language-plaintext highlighter-rouge">elg:requiredConcept ex:full-time</code>.
+<code class="language-plaintext highlighter-rouge">ex:set-condition</code> gains <code class="language-plaintext highlighter-rouge">elg:requiredConcept ex:tier-standard,
+ex:tier-premium</code>. Each carries the comment from change 1.</li>
+    </ul>
+  </li>
+  <li><code class="language-plaintext highlighter-rouge">ontology/eligibility/examples/interval-containment.ttl</code>
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">ex:decision-1</code> gains <code class="language-plaintext highlighter-rouge">elg:usesOperationalProfile</code> as in change 1. Its
+declaration warning on <code class="language-plaintext highlighter-rouge">ex:profile-a</code> is cleared by change 4, not by
+giving the profile a concept.</li>
+    </ul>
+  </li>
+  <li><code class="language-plaintext highlighter-rouge">ontology/eligibility/shapes/constraints.ttl</code> and its mirror in
+<code class="language-plaintext highlighter-rouge">ontology/eligibility/README.md</code> §7: the first <code class="language-plaintext highlighter-rouge">sh:sparql</code> of
+<code class="language-plaintext highlighter-rouge">elg:ConceptConditionDeclarationShape</code> adds
+<code class="language-plaintext highlighter-rouge">FILTER NOT EXISTS { $this elg:hasCondition ?member }</code>. The two blocks stay
+identical.</li>
+  <li>Version: <code class="language-plaintext highlighter-rouge">eligibility/spec</code> 0.3.0 → 0.3.1 (PATCH, a shape brought into line
+with documented intent), in <code class="language-plaintext highlighter-rouge">spec/eligibility.ttl</code> and the README header.
+Cascade to every importer of <code class="language-plaintext highlighter-rouge">lattice/eligibility/0.3.0</code>:
+<code class="language-plaintext highlighter-rouge">eligibility/vocab/eligibility-vocab.ttl</code>, <code class="language-plaintext highlighter-rouge">instrument/spec/instrument.ttl</code>
+and README, <code class="language-plaintext highlighter-rouge">behaviour/spec/behaviour.ttl</code> and README,
+<code class="language-plaintext highlighter-rouge">applied/capacity/spec/applied_capacity_execution_spec_capx_Version2.ttl</code>.
+The enumeration is re-run before and after editing.</li>
+  <li>New <code class="language-plaintext highlighter-rouge">tools/test_eligibility_examples.py</code> (pytest, rdflib and pySHACL, both
+existing root dependencies).</li>
+  <li><code class="language-plaintext highlighter-rouge">mise.toml</code>: new task <code class="language-plaintext highlighter-rouge">check:eligibility-examples</code> (folded into
+<code class="language-plaintext highlighter-rouge">check:ontology-catalog</code> on 2026-09-25, which runs every <code class="language-plaintext highlighter-rouge">tools/test_*.py</code>)
+(<code class="language-plaintext highlighter-rouge">python -m pytest tools/test_eligibility_examples.py -q</code>), added to the
+aggregate <code class="language-plaintext highlighter-rouge">check</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">tools/README.md</code> lists the new test.</li>
+</ol>
+
+<p>Examples declare no <code class="language-plaintext highlighter-rouge">owl:Ontology</code>, so changes 1 to 3 carry no version impact.</p>
+
+<p><strong>Test cases:</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AOR2-01</td>
+      <td><code class="language-plaintext highlighter-rouge">hierarchical-match.ttl</code> / validated / no results</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AOR2-02</td>
+      <td><code class="language-plaintext highlighter-rouge">condition-taxonomy.ttl</code> / validated / no results</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AOR2-03</td>
+      <td><code class="language-plaintext highlighter-rouge">interval-containment.ttl</code> / validated / no results</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AOR2-04</td>
+      <td><code class="language-plaintext highlighter-rouge">hierarchical-match.ttl</code> without <code class="language-plaintext highlighter-rouge">ex:hierarchical-condition</code>’s required concept / validated / exactly one declaration warning, focused on that condition</td>
+      <td>L1</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>AOR2-05</td>
+      <td>as AOR2-04 for <code class="language-plaintext highlighter-rouge">ex:exact-condition</code></td>
+      <td>L1</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>AOR2-06</td>
+      <td>as AOR2-04 for <code class="language-plaintext highlighter-rouge">ex:set-condition</code></td>
+      <td>L1</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>AOR2-07</td>
+      <td>a profile with <code class="language-plaintext highlighter-rouge">elg:hasCondition</code> and a concept match strategy, no concepts / validated / no declaration warning</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>AOR2-08</td>
+      <td>a condition with <code class="language-plaintext highlighter-rouge">SetMembership</code>, no concepts, no <code class="language-plaintext highlighter-rouge">elg:hasCondition</code> / validated / one declaration warning</td>
+      <td>L1</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>AOR2-09</td>
+      <td>a condition whose excluded concept lies outside every required concept / validated / one <code class="language-plaintext highlighter-rouge">elg:ReachableExclusionShape</code> warning</td>
+      <td>L1</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>AOR2-10</td>
+      <td>the shape in <code class="language-plaintext highlighter-rouge">constraints.ttl</code> and the README §7 block / parsed / isomorphic</td>
+      <td>L3</td>
+      <td>+</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>One command:</strong> <code class="language-plaintext highlighter-rouge">mise run check:ontology-catalog</code> (originally <code class="language-plaintext highlighter-rouge">check:eligibility-examples</code>).
+<strong>Also run:</strong> <code class="language-plaintext highlighter-rouge">mise run check:ontology-versioning</code>, and
+<code class="language-plaintext highlighter-rouge">grep -rl 'lattice/eligibility/0.3.0' ontology tools</code> returns nothing.
+<strong>Artefacts to inspect:</strong> the three example diffs and their comments.
+<strong>Adversarial probe:</strong> revert change 4 and show AOR2-03 and AOR2-07 fail.
+<strong>Non-coverage:</strong> other layers’ examples (a repository-wide example check is a
+candidate follow-up), and compiled evaluation of the examples (AOR-5, AOR-6).
+<strong>Estimate:</strong> 80k tokens.</p>
+
+<h3 id="aor-3-versioning-guarantees">AOR-3: Versioning guarantees</h3>
+
+<p><strong>Invariant:</strong> a version IRI identifies one content, and CI enforces it.</p>
+
+<p><strong>Depends on:</strong> ADR-A86 and its addendum ratified.</p>
+
+<p><strong>Changes:</strong></p>
+
+<ol>
+  <li><code class="language-plaintext highlighter-rouge">tools/ontology_version_check.py</code> fails for a document under a <code class="language-plaintext highlighter-rouge">spec/</code> or
+<code class="language-plaintext highlighter-rouge">vocab/</code> directory, or under <code class="language-plaintext highlighter-rouge">ontology/applied/*/spec/</code>, that declares
+<code class="language-plaintext highlighter-rouge">owl:Ontology</code> without <code class="language-plaintext highlighter-rouge">owl:versionIRI</code>. Examples and test fixtures stay
+exempt (nine MORK example and test documents today).</li>
+  <li>New <code class="language-plaintext highlighter-rouge">tools/test_ontology_version_check.py</code> turns the manual mutation probe
+recorded by <code class="language-plaintext highlighter-rouge">ontology-semantic-versioning</code> into tests.</li>
+  <li><code class="language-plaintext highlighter-rouge">.github/workflows/platform.yml</code>: the Python job checks out with
+<code class="language-plaintext highlighter-rouge">fetch-depth: 0</code> and runs
+<code class="language-plaintext highlighter-rouge">python tools/ontology_version_check.py --base-ref origin/main</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">docs/architecture/ontology-versioning-policy.md</code>: the cascade checklist
+applies to every bump, and the propagation rule from addendum item 1 is
+added to “What changes the number”.</li>
+  <li>The four modules under <code class="language-plaintext highlighter-rouge">ontology/surface/execution/job-family/</code> are
+regenerated with the Surface CLI from <code class="language-plaintext highlighter-rouge">ontology/surface/examples/employment-job-family.ttl</code>,
+with the <code class="language-plaintext highlighter-rouge">produced_at</code> recorded in their manifest, so they import
+<code class="language-plaintext highlighter-rouge">lattice/surface/0.3.0</code>. The regeneration command is recorded in the status
+record.</li>
+</ol>
+
+<p><strong>Test cases:</strong> content changed with version unchanged is flagged (-).
+Content and version changed together pass (+). An untouched file passes (+).
+A <code class="language-plaintext highlighter-rouge">spec/</code> document without a version IRI is flagged (-). An example document
+without one passes (+). A document that gains <code class="language-plaintext highlighter-rouge">owl:Ontology</code> in the change
+without a version IRI is flagged (-). The job-family modules import only IRIs
+declared in the tree (+, checked by AOR-4’s tool once it exists, by grep until
+then). All L1.</p>
+
+<p><strong>One command:</strong> <code class="language-plaintext highlighter-rouge">python -m pytest tools/test_ontology_version_check.py -q</code>.
+<strong>Non-coverage:</strong> changing ontology IRIs (addendum item 4).
+<strong>Estimate:</strong> 90k tokens.</p>
+
+<h3 id="aor-4-consumer-catalog-and-import-resolution">AOR-4: Consumer catalog and import resolution</h3>
+
+<p><strong>Invariant:</strong> every LATTICE document loads with its import closure from a
+checkout, with no machine-specific configuration (ADR-A88).</p>
+
+<p><strong>Depends on:</strong> ADR-A88 ratified. AOR-3 (job-family imports fixed).</p>
+
+<p><strong>Changes:</strong></p>
+
+<ol>
+  <li>New <code class="language-plaintext highlighter-rouge">tools/ontology_catalog.py</code> with three commands. <code class="language-plaintext highlighter-rouge">write</code> generates
+<code class="language-plaintext highlighter-rouge">ontology/catalog-v001.xml</code> (every ontology IRI and version IRI declared
+under <code class="language-plaintext highlighter-rouge">ontology/</code>, relative paths, external imports listed explicitly) and
+the directory stubs. <code class="language-plaintext highlighter-rouge">check</code> fails on drift, on an import target with no
+entry, and on an entry whose file does not declare its IRI. <code class="language-plaintext highlighter-rouge">closure</code> loads
+a document’s import closure into an <code class="language-plaintext highlighter-rouge">rdflib</code> graph through the catalog.</li>
+  <li>The six existing <code class="language-plaintext highlighter-rouge">catalog-v001.xml</code> files are replaced by generated stubs.
+The <code class="language-plaintext highlighter-rouge">mork/spec</code> catalog’s <code class="language-plaintext highlighter-rouge">Mork.owl</code> mapping is kept as an entry if
+<code class="language-plaintext highlighter-rouge">Mork.owl</code> still exists.</li>
+  <li>New <code class="language-plaintext highlighter-rouge">tools/test_ontology_catalog.py</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">mise.toml</code>: <code class="language-plaintext highlighter-rouge">build:ontology-catalog</code> and <code class="language-plaintext highlighter-rouge">check:ontology-catalog</code>, the
+latter added to the aggregate <code class="language-plaintext highlighter-rouge">check</code>. CI runs the check.</li>
+  <li><code class="language-plaintext highlighter-rouge">docs/architecture/ontology-architecture.md</code> §2 gains a “Consuming LATTICE
+from an applied ontology” paragraph: pin a commit, chain the catalog with
+<code class="language-plaintext highlighter-rouge">nextCatalog</code>, upgrade by the ADR-A86 cascade checklist, treat every bump as
+potentially breaking at major version zero, run the consumer’s own gate.</li>
+  <li><code class="language-plaintext highlighter-rouge">docs/architecture/ontology-versioning-policy.md</code>: regenerating the catalog
+is a step of every bump.</li>
+</ol>
+
+<p><strong>Test cases:</strong> every import in the tree resolves (+). A removed catalog entry
+is reported (-). An entry pointing at a file that declares a different IRI is
+reported (-). A hand edit to the catalog is reported as drift (-). The closure
+of <code class="language-plaintext highlighter-rouge">behaviour/spec/behaviour.ttl</code> loads and contains a term from each of its
+transitive imports (+). A fixture applied ontology in a temporary directory,
+with its own catalog chaining to LATTICE’s by relative path, loads its closure
+(+). Generation is byte-identical across two runs (L2, +). A Protégé load of
+one spec document through its stub (manual, recorded in the VP, and the
+ADR-A88 open question).</p>
+
+<p><strong>One command:</strong> <code class="language-plaintext highlighter-rouge">mise run check:ontology-catalog</code>.
+<strong>Non-coverage:</strong> serving documents at their IRIs.
+<strong>Estimate:</strong> 140k tokens.</p>
+
+<h2 id="phase-b-executable-coverage">Phase B: Executable coverage</h2>
+
+<p>All Phase B slices touch <code class="language-plaintext highlighter-rouge">tools/mork_compilers</code> and at most one ontology
+layer. Each adds cases to <code class="language-plaintext highlighter-rouge">test/conformance/</code> so ADR-A28 parity covers them.
+Each depends on AOR-2 and on the ADRs named.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Slice</th>
+      <th>Scope</th>
+      <th>Modules</th>
+      <th>Depends on</th>
+      <th>Level</th>
+      <th>Estimate</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AOR-5</td>
+      <td><code class="language-plaintext highlighter-rouge">elg:candidateConcept</code>. IR concept plan for <code class="language-plaintext highlighter-rouge">ExactMatch</code> and <code class="language-plaintext highlighter-rouge">SetMembership</code> with required and excluded concepts. SPARQL backend. Examples migrated from <code class="language-plaintext highlighter-rouge">candidateValue</code>. Eligibility MINOR with cascade</td>
+      <td><code class="language-plaintext highlighter-rouge">ontology/eligibility</code>, <code class="language-plaintext highlighter-rouge">tools/mork_compilers</code></td>
+      <td>A-89</td>
+      <td>L1, L2</td>
+      <td>150k</td>
+    </tr>
+    <tr>
+      <td>AOR-6</td>
+      <td><code class="language-plaintext highlighter-rouge">HierarchicalMatch</code> in the IR. Scheme resolution through <code class="language-plaintext highlighter-rouge">tools/vocabulary</code> with explicit instant and scope. <code class="language-plaintext highlighter-rouge">QueryTime</code> closure in SPARQL. The ADR-A87 decision table, including L11</td>
+      <td><code class="language-plaintext highlighter-rouge">tools/mork_compilers</code></td>
+      <td>AOR-5, and the <code class="language-plaintext highlighter-rouge">temporal-binding-consumer-hardening</code> Finding 1 decision</td>
+      <td>L1, L2</td>
+      <td>180k</td>
+    </tr>
+    <tr>
+      <td>AOR-7</td>
+      <td><code class="language-plaintext highlighter-rouge">Expanded</code> closure. SHACL and SWRL backends for concept plans. <code class="language-plaintext highlighter-rouge">exe:ConceptMatchPlan</code> and the diagnostic vocabulary. Executable MINOR</td>
+      <td><code class="language-plaintext highlighter-rouge">tools/mork_compilers</code>, <code class="language-plaintext highlighter-rouge">ontology/mork</code></td>
+      <td>AOR-6</td>
+      <td>L1, L2</td>
+      <td>180k</td>
+    </tr>
+    <tr>
+      <td>AOR-8</td>
+      <td>Profile aggregation for <code class="language-plaintext highlighter-rouge">AllRequired</code> and <code class="language-plaintext highlighter-rouge">AnySufficient</code> on all three backends. <code class="language-plaintext highlighter-rouge">DimensionConsistent</code> refused with a diagnostic</td>
+      <td><code class="language-plaintext highlighter-rouge">tools/mork_compilers</code></td>
+      <td>AOR-7</td>
+      <td>L1, L2</td>
+      <td>130k</td>
+    </tr>
+    <tr>
+      <td>AOR-9</td>
+      <td><code class="language-plaintext highlighter-rouge">elg:EvidenceBinding</code>, <code class="language-plaintext highlighter-rouge">elg:EvidenceStep</code>, <code class="language-plaintext highlighter-rouge">elg:aboutSubject</code>. The IR reads candidates through bindings. Eligibility MINOR with cascade</td>
+      <td><code class="language-plaintext highlighter-rouge">ontology/eligibility</code>, <code class="language-plaintext highlighter-rouge">tools/mork_compilers</code></td>
+      <td>A-91, AOR-8</td>
+      <td>L1, L2</td>
+      <td>180k</td>
+    </tr>
+    <tr>
+      <td>AOR-10</td>
+      <td>OWL backend: hierarchy and condition classes, <code class="language-plaintext highlighter-rouge">exe:OwlArtefact</code>, sibling-disjointness option</td>
+      <td><code class="language-plaintext highlighter-rouge">tools/mork_compilers</code>, <code class="language-plaintext highlighter-rouge">ontology/mork</code></td>
+      <td>A-90, AOR-9, the path encoding decision, and the ADR-A83 harness</td>
+      <td>L1, L4</td>
+      <td>170k</td>
+    </tr>
+    <tr>
+      <td>AOR-11</td>
+      <td>Profile classes and the subsumption, satisfiability and overlap checks through the harness CLI</td>
+      <td><code class="language-plaintext highlighter-rouge">tools/mork_compilers</code></td>
+      <td>AOR-10</td>
+      <td>L4</td>
+      <td>150k</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Test-case outline for Phase B.</strong> Each slice’s VP carries, as applicable:</p>
+
+<ul>
+  <li>one positive case per decision-table row (Permitted, Denied, Undetermined)
+per strategy</li>
+  <li>exclusion precedence (L10), a candidate above an exclusion (L11), and an
+exclusion-only condition (L12)</li>
+  <li>a scheme with a scoped binding resolved at two instants either side of its
+handover, giving different plans, and a refusal when the instant is missing</li>
+  <li>SPARQL and each other backend agreeing on every shared corpus case
+(ADR-A28)</li>
+  <li>no SWRL rule deriving <code class="language-plaintext highlighter-rouge">Undetermined</code>, checked over the generated rules (-)</li>
+  <li>every <code class="language-plaintext highlighter-rouge">Undetermined</code> carrying a diagnostic</li>
+  <li>determinism: two compilations of the same inputs give identical artefact
+hashes (L2)</li>
+  <li>for AOR-10 and AOR-11: a revised profile that admits a new concept is
+reported as not subsumed (-), a profile with an exclusion covering its only
+inclusion is unsatisfiable (-), two profiles with disjoint required concepts
+do not overlap only when the disjointness option is set (+ and -)</li>
+</ul>
+
+<p>Each Phase B slice’s single command is <code class="language-plaintext highlighter-rouge">mise run check:python-root</code> until a
+<code class="language-plaintext highlighter-rouge">check:mork-compilers</code> task exists. AOR-5 adds that task (running
+<code class="language-plaintext highlighter-rouge">python -m pytest tools/mork_compilers -q</code>) and wires it into <code class="language-plaintext highlighter-rouge">check</code>.</p>
+
+<h2 id="phase-c-substrate-extensions">Phase C: Substrate extensions</h2>
+
+<p>Each slice is gated on the ADR named, drafted 2026-09-25. Each is
+an ontology change with the ADR-A86 cascade. Test cases are fixed when the ADR
+is ratified.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Slice</th>
+      <th>Scope</th>
+      <th>Decision</th>
+      <th>Version impact</th>
+      <th>Estimate</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AOR-12</td>
+      <td><code class="language-plaintext highlighter-rouge">fnd:DerivedArtefact</code>, <code class="language-plaintext highlighter-rouge">fnd:DerivationRun</code>, derivation kinds in Foundation vocab. <code class="language-plaintext highlighter-rouge">srf:DerivedArtefact</code> alignment. Carries the ADR-A91 step-list lift if accepted by then</td>
+      <td>A-92</td>
+      <td>Foundation, Surface MINOR. Foundation cascades to every layer</td>
+      <td>200k</td>
+    </tr>
+    <tr>
+      <td>AOR-13</td>
+      <td>Executable aligned directly to PROV-O, without importing Foundation (ADR-A92 item 3 as rewritten)</td>
+      <td>A-92</td>
+      <td>Executable MINOR</td>
+      <td>90k</td>
+    </tr>
+    <tr>
+      <td>AOR-14</td>
+      <td>Derived rate spaces (sketch AO10)</td>
+      <td><a href="../../architecture/decisions/ADR-A93-quantification-derived-rate-spaces.md">A-93</a></td>
+      <td>Quantification MINOR, cascades</td>
+      <td>150k</td>
+    </tr>
+    <tr>
+      <td>AOR-15</td>
+      <td>Calendar binding through <code class="language-plaintext highlighter-rouge">qnt:UnitContract</code> (AO11)</td>
+      <td><a href="../../architecture/decisions/ADR-A94-quantification-calendar-binding.md">A-94</a></td>
+      <td>Quantification MINOR, cascades</td>
+      <td>150k</td>
+    </tr>
+    <tr>
+      <td>AOR-16</td>
+      <td>Alternative bounds stated per unit (AO12)</td>
+      <td><a href="../../architecture/decisions/ADR-A95-quantification-alternative-bounds.md">A-95</a></td>
+      <td>Quantification MINOR, cascades</td>
+      <td>120k</td>
+    </tr>
+    <tr>
+      <td>AOR-17</td>
+      <td><code class="language-plaintext highlighter-rouge">ins:inProvision</code> no longer functional (AO13)</td>
+      <td><a href="../../architecture/decisions/ADR-A96-instrument-provision-attachment.md">A-96</a></td>
+      <td>Instrument MINOR, cascades</td>
+      <td>60k</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>AOR-14 to AOR-16 land as one Quantification change, cascading once (decided
+2026-09-25). AOR-16 includes the compiler work that selects required
+intervals by the candidate’s unit.</p>
+
+<h2 id="documentation-obligations">Documentation obligations</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Document</th>
+      <th>Change</th>
+      <th>Slice</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">docs/architecture/decisions/</code></td>
+      <td>A-87 to A-92, A-86 addendum, catalogue</td>
+      <td>AOR-1</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">docs/architecture/decisions/</code></td>
+      <td>Phase C ADRs</td>
+      <td>AOR-14 to AOR-17</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ontology/eligibility/README.md</code></td>
+      <td>shape mirror and version (AOR-2), new terms (AOR-5, AOR-9)</td>
+      <td>AOR-2, AOR-5, AOR-9</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">docs/architecture/ontology-versioning-policy.md</code></td>
+      <td>propagation rule, catalog step</td>
+      <td>AOR-3, AOR-4</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">docs/architecture/ontology-architecture.md</code></td>
+      <td>§2 consumer paragraph (AOR-4), §3 status rows, §11 items</td>
+      <td>AOR-4 onwards</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ontology/mork/README.md</code>, <code class="language-plaintext highlighter-rouge">tools/mork_compilers</code> docs</td>
+      <td>new plans, backends, closure modes</td>
+      <td>AOR-5 to AOR-11</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ontology/foundation/README.md</code>, <code class="language-plaintext highlighter-rouge">ontology/surface/README.md</code></td>
+      <td>new and aligned terms</td>
+      <td>AOR-12</td>
+    </tr>
+    <tr>
+      <td><a href="/developer/status/eligibility-compiler.html">eligibility-compiler status</a></td>
+      <td>deferred items marked as carried here</td>
+      <td>AOR-5</td>
+    </tr>
+    <tr>
+      <td><a href="/developer/status/surface-outstanding-items.html">surface outstanding items</a> §1.3, §3.1</td>
+      <td>closed on AOR-12</td>
+      <td>AOR-12</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">docs/developer/INDEX.md</code>, status record</td>
+      <td>every slice</td>
+      <td>all</td>
+    </tr>
+    <tr>
+      <td>Root <code class="language-plaintext highlighter-rouge">README.md</code>, <code class="language-plaintext highlighter-rouge">docs/architecture/solution-design-specification.md</code>, <code class="language-plaintext highlighter-rouge">data-architecture.md</code>, <code class="language-plaintext highlighter-rouge">ux-design.md</code></td>
+      <td>checked, no change planned. No new directory is introduced</td>
+      <td>none</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="acceptance">Acceptance</h2>
+
+<p>Phase A closes when AOR-2 to AOR-4 are signed off and <code class="language-plaintext highlighter-rouge">mise run check</code> is
+green with the new tasks included. Phase B closes when AOR-5 to AOR-11 are
+signed off and the shared conformance corpus covers every concept strategy and
+both evaluable compatibility operations. Phase C slices close individually.</p>
+
+<h2 id="token-budget">Token budget</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Phase</th>
+      <th>Estimate</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>A (AOR-1 to AOR-4)</td>
+      <td>460k, of which AOR-1 about 150k</td>
+    </tr>
+    <tr>
+      <td>B (AOR-5 to AOR-11)</td>
+      <td>1.14M</td>
+    </tr>
+    <tr>
+      <td>C (AOR-12 to AOR-17)</td>
+      <td>770k plus ADR drafting, about 40k per ADR</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Estimates cover agent input and output for authoring and one round of fixes
+from reported failures. Actuals are recorded in the status record.</p>

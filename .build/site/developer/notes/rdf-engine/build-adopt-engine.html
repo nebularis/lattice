@@ -1,0 +1,2093 @@
+<h1 id="build-adopt-or-build-on-the-engine-decision">Build, adopt, or build on: the engine decision</h1>
+
+<p><strong>Technology exploration, 2026-10-03.</strong> The third paper on the RDF and Datalog engine. The first,
+<a href="rdf-datalog-engine-technology-exploration.md">rdf-datalog-engine-technology-exploration.md</a>
+(“paper 1”), designed an engine and chose its languages. The second,
+<a href="compiled-persistence-physical-planning.md">compiled-persistence-physical-planning.md</a> (“paper 2”),
+compiled persistence profiles into that engine’s physical structures. Both assumed the engine would
+be built. This paper tests that assumption against the existing database landscape, using the
+“lazy senior developer” ladder in <code class="language-plaintext highlighter-rouge">.github/prompts/ponytail.md</code> as its standard, and then costs the
+two build options in tokens.</p>
+
+<p>Grading is as in the earlier papers. <strong>Fact</strong> means a cited source says so. <strong>Judgement</strong> means a
+reasoned position that a measurement could overturn. <em>(verify)</em> marks product or licence details
+from memory that must be checked upstream before any decision rests on them. Nothing here is a
+LATTICE decision.</p>
+
+<hr />
+
+<h2 id="contents">Contents</h2>
+
+<ol>
+  <li><a href="#1-verdict">Verdict</a></li>
+  <li><a href="#2-what-the-question-actually-is">What the question actually is</a></li>
+  <li><a href="#3-the-ladder-applied">The ladder, applied</a></li>
+  <li><a href="#4-requirements-used-for-the-survey">Requirements used for the survey</a></li>
+  <li><a href="#5-the-landscape">The landscape</a></li>
+  <li><a href="#6-rdfox-the-adopt-option-in-detail">RDFox, the adopt option, in detail</a></li>
+  <li><a href="#7-what-our-own-engine-would-add-claim-by-claim">What our own engine would add, claim by claim</a></li>
+  <li><a href="#8-build-on-candidates-compared">Build-on candidates compared</a></li>
+  <li><a href="#9-what-the-earlier-papers-got-wrong-and-what-survives">What the earlier papers got wrong, and what survives</a></li>
+  <li><a href="#10-recommendation-and-triggers">Recommendation and triggers</a></li>
+  <li><a href="#11-token-cost-of-the-two-build-options">Token cost of the two build options</a></li>
+  <li><a href="#12-decisions-for-the-maintainer">Decisions for the maintainer</a>
+    <ul>
+      <li><a href="#appendix-a-calibration-data">Appendix A: Calibration data</a></li>
+      <li><a href="#appendix-b-references">Appendix B: References</a></li>
+    </ul>
+  </li>
+</ol>
+
+<hr />
+
+<h2 id="1-verdict">1. Verdict</h2>
+
+<p><strong>Do not build an engine now (judgement, high confidence).</strong> There is no measured workload that an
+existing engine fails, and LATTICE was designed so that it never needs one: ADR-A75’s three-tier
+Store SPI makes the store an adopter’s choice, and the persistence compiler already realises every
+profile as portable SPARQL. Paper 1’s recommended architecture (one sequenced writer, parallel
+incremental materialisation, wait-free snapshot readers) is close to what RDFox already ships. A
+from-scratch build would reproduce a commercial product’s core before it could add anything of its
+own.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Option</th>
+      <th>Verdict</th>
+      <th>Expected token cost (input-equivalent, §11)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Adopt</strong> RDFox (commercial), or GraphDB, behind the ADR-A75 SPI, with Fuseki remaining the open default</td>
+      <td><strong>Do this first</strong>, after a measurement gate (G0)</td>
+      <td>not costed, by request. G0 alone is about 14M</td>
+    </tr>
+    <tr>
+      <td><strong>Build on</strong> existing open-source layers: Oxigraph’s crates for RDF and SPARQL, DBSP for incremental rules, <code class="language-plaintext highlighter-rouge">openraft</code>, an embedded key-value store</td>
+      <td><strong>Only on a named trigger</strong> (§10.2): a measured shortfall, or a contractual need for an engine LATTICE owns</td>
+      <td>about <strong>0.38B</strong> (range 0.25B to 0.63B)</td>
+    </tr>
+    <tr>
+      <td><strong>Build from scratch</strong> as papers 1 and 2 describe</td>
+      <td><strong>Do not do this.</strong> Reconsider one component at a time, and only if the build-on option fails a specific experiment</td>
+      <td>about <strong>1.42B</strong> (range 0.95B to 2.37B), 3.7 times the build-on option</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Paper 2 should be shelved (judgement).</strong> Its native infrastructure cuts a guarded write
+from about 20 + 3<em>n</em> quad operations to about 5 atomic operations. In memory, both are microseconds.
+At the target latency tiers (paper 1 §3.1: sub-millisecond to milliseconds) the difference is
+unlikely to be visible, and nobody has measured it. It optimises a cost before establishing that the
+cost matters.</p>
+
+<p><strong>The deciding questions are commercial.</strong> Whether to build depends on four answers
+only the maintainer and adopters can give (§2.2). Until they are answered, any engine work is ponytail
+rung 1 failing.</p>
+
+<hr />
+
+<h2 id="2-what-the-question-actually-is">2. What the question actually is</h2>
+
+<h3 id="21-two-different-needs">2.1 Two different needs</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Need</th>
+      <th>Who has it</th>
+      <th>Does it require an engine of our own</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>LATTICE needs a store</strong> for its own platform and proofs of concept</td>
+      <td>LATTICE</td>
+      <td><strong>No.</strong> Fuseki runs today (<code class="language-plaintext highlighter-rouge">platform/semantic-dataset-fuseki</code>, the authoring compose stack). ADR-A75 already anticipates further adapters with declared capabilities, including native reasoning, change feeds and CAS primitives</td>
+    </tr>
+    <tr>
+      <td><strong>An adopter needs a live transactional reasoning store</strong> for trading or transaction management, with a LATTICE-modelled contract</td>
+      <td>a hypothetical adopter, the motivation for paper 1</td>
+      <td><strong>Only if</strong> no available engine meets its measured requirements at an acceptable licence</td>
+    </tr>
+    <tr>
+      <td><strong>Someone wants to sell or own an engine</strong> as a product</td>
+      <td>a possible spin-out</td>
+      <td>this is a business decision. Tokens are then a minor input next to support, maintenance, sales and review, and YAGNI does not apply in the same way</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The earlier papers blurred the second and third rows. This paper treats the second row as the
+default question and names the third explicitly, because they lead to different answers.</p>
+
+<h3 id="22-the-questions-that-decide-it">2.2 The questions that decide it</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Question</th>
+      <th>If yes</th>
+      <th>If no</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Q1</td>
+      <td>Is there a named adopter with a stated latency and throughput target on a LATTICE-shaped workload</td>
+      <td>run G0 against that target</td>
+      <td>build nothing, keep Fuseki</td>
+    </tr>
+    <tr>
+      <td>Q2</td>
+      <td>Is a commercial engine licence acceptable to that adopter</td>
+      <td>adopt RDFox if G0 passes</td>
+      <td>build-on becomes a candidate</td>
+    </tr>
+    <tr>
+      <td>Q3</td>
+      <td>Must the engine be open source or owned outright (contract, regulation, escrow, sovereignty)</td>
+      <td>build-on becomes a candidate</td>
+      <td>adopt</td>
+    </tr>
+    <tr>
+      <td>Q4</td>
+      <td>Is the engine itself intended as a product</td>
+      <td>business case decides, §11 gives the build cost input</td>
+      <td>the build options need a trigger from §10.2</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="3-the-ladder-applied">3. The ladder, applied</h2>
+
+<p>The ponytail ladder stops at the first rung that holds. Applied to “build a lock-free RDF and Datalog
+engine”:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Rung</th>
+      <th>Test</th>
+      <th>Finding</th>
+      <th>Holds</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>Does this need building at all (YAGNI)</td>
+      <td>no measured requirement, no named adopter target, no benchmark of any existing engine on LATTICE’s workload</td>
+      <td><strong>yes, for now</strong>. Stop here until G0 produces a number</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>Does it exist in this codebase</td>
+      <td>the Store SPI design (ADR-A75), the Fuseki adapter, the persistence compiler’s SPARQL realisation, the compose stack</td>
+      <td>yes for functional semantics. Not for live incremental reasoning</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>Does the standard library cover it</td>
+      <td>n/a</td>
+      <td>no</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>Does a native platform feature cover it</td>
+      <td>RDFox provides parallel incremental materialisation with transactions. A relational database provides CAS, uniqueness and idempotency natively, which is paper 2’s “infrastructure collapses” argument without a new engine</td>
+      <td><strong>yes, commercially</strong></td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>Does an existing dependency solve it</td>
+      <td>Oxigraph’s crates (RDF, SPARQL parsing, algebra, evaluation), DBSP (incremental computation with retraction and recursion), <code class="language-plaintext highlighter-rouge">openraft</code>, <code class="language-plaintext highlighter-rouge">fjall</code> or <code class="language-plaintext highlighter-rouge">redb</code></td>
+      <td><strong>yes, in parts</strong>. This is the build-on option</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td>Can it be one line</td>
+      <td>no</td>
+      <td>no</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td>Minimum code</td>
+      <td>the build-on option’s core scope (§11.4), without the optional add-ons</td>
+      <td>only after rungs 1, 4 and 5 have been tested and failed</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Reading (judgement).</strong> Rung 1 holds today. If G0 overturns it, rung 4 probably holds (RDFox). Rung 5
+is the fallback when rung 4 is excluded by licence. Rung 7 is a from-scratch build only for whatever
+rung 5 cannot supply, component by component.</p>
+
+<hr />
+
+<h2 id="4-requirements-used-for-the-survey">4. Requirements used for the survey</h2>
+
+<p>Taken from paper 1 §3.2 and from what LATTICE’s own contracts require.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Requirement</th>
+      <th>Source</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>R1</td>
+      <td>SPARQL 1.1 Query and Update, named graphs, Graph Store Protocol</td>
+      <td>ADR-A75 Core tier</td>
+    </tr>
+    <tr>
+      <td>R2</td>
+      <td>Datalog with recursion, stratified negation and aggregation</td>
+      <td>paper 1 §3.3: eligibility, exposures, instrument lifecycle</td>
+    </tr>
+    <tr>
+      <td>R3</td>
+      <td>Incremental maintenance at commit, including retraction</td>
+      <td>paper 1 W2, W3</td>
+    </tr>
+    <tr>
+      <td>R4</td>
+      <td>ACID transactions with snapshot reads</td>
+      <td>paper 1 W1, W3</td>
+    </tr>
+    <tr>
+      <td>R5</td>
+      <td>Durability and high-availability replication</td>
+      <td>paper 1 W4, W8</td>
+    </tr>
+    <tr>
+      <td>R6</td>
+      <td>In-memory latency at tiers 2 and 3 (tens of microseconds to milliseconds)</td>
+      <td>paper 1 §3.1</td>
+    </tr>
+    <tr>
+      <td>R7</td>
+      <td>Exact decimal arithmetic</td>
+      <td>paper 1 W6</td>
+    </tr>
+    <tr>
+      <td>R8</td>
+      <td>As-of (transaction-time) queries</td>
+      <td>paper 1 W5</td>
+    </tr>
+    <tr>
+      <td>R9</td>
+      <td>Change subscriptions or delta streams</td>
+      <td>paper 1 W9</td>
+    </tr>
+    <tr>
+      <td>R10</td>
+      <td>Licence permits closed-source dependants, or a commercial licence is acceptable</td>
+      <td>paper 1 §5</td>
+    </tr>
+    <tr>
+      <td>R11</td>
+      <td>Active maintenance and a viable steward</td>
+      <td>operational</td>
+    </tr>
+    <tr>
+      <td>R12</td>
+      <td>Runs LATTICE’s persistence SPARQL realisation unchanged</td>
+      <td>ADR-A78, ADR-A79</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="5-the-landscape">5. The landscape</h2>
+
+<h3 id="51-commercial-rdf-and-reasoning-engines">5.1 Commercial RDF and reasoning engines</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Engine</th>
+      <th>Language</th>
+      <th>Reasoning</th>
+      <th>Fit and notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>RDFox</strong> (Oxford Semantic Technologies, owned by Samsung Electronics since 2024 <em>(verify)</em>)</td>
+      <td>C++</td>
+      <td>materialisation, parallel, incremental with retraction (Backward/Forward), Datalog with stratified negation, aggregation and built-in functions, OWL 2 RL, SWRL, SHACL, <code class="language-plaintext highlighter-rouge">owl:sameAs</code> by rewriting</td>
+      <td><strong>a closer fit than any other engine surveyed</strong>. It is the commercial line of the paper that paper 1 builds on. In-memory with persistence to disk. Transactions with concurrent readers and one writer per data store <em>(verify)</em>. Detail in §6</td>
+    </tr>
+    <tr>
+      <td><strong>GraphDB</strong> (Ontotext, now Graphwise <em>(verify)</em>)</td>
+      <td>Java (RDF4J based)</td>
+      <td>forward-chaining materialisation with custom rule sets, incremental retraction</td>
+      <td>close fit for R1, R3, R4, R5. Rules have no aggregation <em>(verify)</em>. Disk-based, so latency is JVM and page-cache bound. Free edition has limits, cluster is commercial</td>
+    </tr>
+    <tr>
+      <td><strong>Stardog</strong></td>
+      <td>Java</td>
+      <td>query-time reasoning (rewriting), no materialisation</td>
+      <td>reasoning cost moves to every query, which suits analytics, not low-latency reads of derived state</td>
+    </tr>
+    <tr>
+      <td><strong>AllegroGraph</strong> (Franz)</td>
+      <td>Common Lisp</td>
+      <td>Prolog rules, RDFS++, materialiser</td>
+      <td>niche, small ecosystem</td>
+    </tr>
+    <tr>
+      <td><strong>Amazon Neptune</strong></td>
+      <td>managed</td>
+      <td>none beyond query</td>
+      <td>no reasoning, cloud-only</td>
+    </tr>
+    <tr>
+      <td><strong>Oracle RDF Graph</strong>, <strong>MarkLogic</strong>, <strong>AnzoGraph</strong></td>
+      <td>various</td>
+      <td>entailment indexes or rule sets</td>
+      <td>tied to larger platforms, not a low-latency embedded engine</td>
+    </tr>
+    <tr>
+      <td><strong>RelationalAI</strong>, <strong>LogicBlox</strong></td>
+      <td>proprietary</td>
+      <td>relational Datalog</td>
+      <td>RelationalAI is cloud-hosted inside Snowflake <em>(verify)</em>. LogicBlox is legacy</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="52-open-source-rdf-stores">5.2 Open-source RDF stores</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Engine</th>
+      <th>Language, licence</th>
+      <th>Fit and notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Apache Jena</strong> (TDB2, Fuseki, rule engine)</td>
+      <td>Java, Apache-2.0</td>
+      <td>already in LATTICE. SPARQL complete, transactions, <code class="language-plaintext highlighter-rouge">BigDecimal</code> decimals. Rule engines (RETE forward, backward, hybrid) work on in-memory models and are not incremental for retraction over a transactional store. HA needs RDF Delta <em>(verify)</em></td>
+    </tr>
+    <tr>
+      <td><strong>RDF4J</strong></td>
+      <td>Java, EDL-1.0</td>
+      <td>SPARQL, SHACL, LMDB store. Inference limited to RDFS. The SAIL API is a clean plug-in point</td>
+    </tr>
+    <tr>
+      <td><strong>Oxigraph</strong></td>
+      <td>Rust, MIT or Apache-2.0</td>
+      <td>SPARQL 1.1 Query and Update, RocksDB or in-memory storage, transactions, an HTTP server. No reasoning. Small maintainer team <em>(verify)</em>. Published as reusable crates: <code class="language-plaintext highlighter-rouge">oxrdf</code>, <code class="language-plaintext highlighter-rouge">oxttl</code>, <code class="language-plaintext highlighter-rouge">oxrdfxml</code>, <code class="language-plaintext highlighter-rouge">oxjsonld</code>, <code class="language-plaintext highlighter-rouge">spargebra</code>, <code class="language-plaintext highlighter-rouge">sparopt</code>, <code class="language-plaintext highlighter-rouge">spareval</code>, <code class="language-plaintext highlighter-rouge">sparesults</code> <em>(verify <code class="language-plaintext highlighter-rouge">spareval</code>’s dataset trait and its stability)</em></td>
+    </tr>
+    <tr>
+      <td><strong>QLever</strong></td>
+      <td>C++, Apache-2.0 <em>(verify)</em></td>
+      <td>very fast reads over large, mostly static graphs (Wikidata scale). Update support is recent <em>(verify)</em>. Not a transactional reasoning engine</td>
+    </tr>
+    <tr>
+      <td><strong>MillenniumDB</strong></td>
+      <td>C++, GPL-2.0 <em>(verify)</em></td>
+      <td>research engine with worst-case optimal joins. Excluded if GPL</td>
+    </tr>
+    <tr>
+      <td><strong>Corese</strong></td>
+      <td>Java, CeCILL-C</td>
+      <td>SPARQL, rules, SHACL. Research-grade operations</td>
+    </tr>
+    <tr>
+      <td><strong>Ontop</strong></td>
+      <td>Java, Apache-2.0</td>
+      <td>a virtual knowledge graph: SPARQL rewritten to SQL over a relational database. Read-only <em>(verify)</em>, OWL 2 QL reasoning by rewriting</td>
+    </tr>
+    <tr>
+      <td><strong>Virtuoso open source</strong></td>
+      <td>C, GPL-2.0</td>
+      <td>excluded by licence</td>
+    </tr>
+    <tr>
+      <td><strong>Blazegraph</strong></td>
+      <td>Java, GPL-2.0</td>
+      <td>excluded, unmaintained</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="53-datalog-and-incremental-computation-engines">5.3 Datalog and incremental computation engines</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Engine</th>
+      <th>Language, licence</th>
+      <th>Fit and notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>DBSP</strong> (the <code class="language-plaintext highlighter-rouge">dbsp</code> crate) and <strong>Feldera</strong></td>
+      <td>Rust, MIT for the core <em>(verify)</em></td>
+      <td>incremental view maintenance on Z-sets, with retraction, aggregation and recursion <em>(verify recursion support in the current release)</em>. Feldera adds a SQL front end (Calcite, Java) and a streaming pipeline runtime. Funded company. <strong>The leading open-source candidate for R2, R3 and R9.</strong> Small-delta commit latency is unmeasured for this workload (experiment B-X1)</td>
+    </tr>
+    <tr>
+      <td><strong>Differential Dataflow</strong> and <strong>Timely</strong></td>
+      <td>Rust, MIT</td>
+      <td>the same capability family as DBSP, older and more general, with a steeper API</td>
+    </tr>
+    <tr>
+      <td><strong>Nemo</strong></td>
+      <td>Rust, MIT or Apache-2.0 <em>(verify)</em></td>
+      <td>existential rules, columnar tries, batch materialisation. No transactions, no incremental retraction</td>
+    </tr>
+    <tr>
+      <td><strong>Soufflé</strong></td>
+      <td>C++, UPL-1.0</td>
+      <td>compiled parallel Datalog, batch. Its index selection and concurrent B-tree are reference designs</td>
+    </tr>
+    <tr>
+      <td><strong>egglog</strong></td>
+      <td>Rust, MIT</td>
+      <td>Datalog with equality saturation and a native union-find. Batch. A reference for <code class="language-plaintext highlighter-rouge">owl:sameAs</code> handling</td>
+    </tr>
+    <tr>
+      <td><strong>Ascent</strong>, <strong>Crepe</strong>, <strong>Datafrog</strong></td>
+      <td>Rust, MIT or Apache-2.0</td>
+      <td>embedded Datalog compiled by macros. Batch, no retraction</td>
+    </tr>
+    <tr>
+      <td><strong>reasonable</strong>, <strong>whelk-rs</strong></td>
+      <td>Rust, permissive <em>(verify)</em></td>
+      <td>an OWL 2 RL reasoner on Datafrog, and an OWL EL reasoner. Batch. References only</td>
+    </tr>
+    <tr>
+      <td><strong>Materialize</strong></td>
+      <td>Rust, BSL</td>
+      <td>excluded by licence</td>
+    </tr>
+    <tr>
+      <td><strong>RisingWave</strong></td>
+      <td>Rust, Apache-2.0</td>
+      <td>streaming SQL with incremental materialised views. No recursive views <em>(verify)</em>. Not an OLTP store</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="54-adjacent-databases-datalog-temporal-typed-graph">5.4 Adjacent databases: Datalog, temporal, typed graph</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Engine</th>
+      <th>Language, licence</th>
+      <th>Fit and notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>CozoDB</strong></td>
+      <td>Rust, MPL-2.0</td>
+      <td>Datalog queries with recursion and aggregation, transactions, time travel, several storage back ends. Rules evaluate per query, not incrementally. Development appears stalled since about 2023 <em>(verify)</em>. Forking it means owning it</td>
+    </tr>
+    <tr>
+      <td><strong>TypeDB 3</strong></td>
+      <td>Rust, MPL-2.0</td>
+      <td>typed hypergraph, rewritten in Rust, with functions in place of the earlier rules <em>(verify)</em>. Not RDF</td>
+    </tr>
+    <tr>
+      <td><strong>TerminusDB</strong></td>
+      <td>Prolog with a Rust store, Apache-2.0</td>
+      <td>immutable layered store with git-like history. WOQL and GraphQL, not SPARQL</td>
+    </tr>
+    <tr>
+      <td><strong>XTDB 2</strong></td>
+      <td>Kotlin and Clojure, MPL-2.0</td>
+      <td>bitemporal SQL over immutable storage. Strong on R8, no rules</td>
+    </tr>
+    <tr>
+      <td><strong>Datomic</strong></td>
+      <td>proprietary binaries, free of charge <em>(verify)</em></td>
+      <td>Datalog queries, immutable history with native as-of, a single transactor (the same single-writer design as paper 1). Rules evaluate at query time</td>
+    </tr>
+    <tr>
+      <td><strong>DataScript</strong>, <strong>Datahike</strong></td>
+      <td>Clojure, EPL</td>
+      <td>embedded Datomic-style stores</td>
+    </tr>
+    <tr>
+      <td><strong>Kùzu</strong></td>
+      <td>C++, MIT</td>
+      <td>embedded property graph, archived by its maintainers in 2025 <em>(verify)</em></td>
+    </tr>
+    <tr>
+      <td><strong>SurrealDB</strong></td>
+      <td>Rust, BSL</td>
+      <td>excluded by licence</td>
+    </tr>
+    <tr>
+      <td><strong>Neo4j</strong>, <strong>Memgraph</strong>, <strong>TigerGraph</strong></td>
+      <td>various</td>
+      <td>property graph, GPL or BSL or proprietary. No RDF Datalog</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="55-substrates-and-domain-specific-engines">5.5 Substrates and domain-specific engines</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Engine</th>
+      <th>Language, licence</th>
+      <th>Relevance</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>TigerBeetle</strong></td>
+      <td>Zig, Apache-2.0</td>
+      <td>a double-entry ledger only. If a trading adopter’s hottest path is balances and transfers, that path belongs in a ledger, not an RDF engine (§7, D9)</td>
+    </tr>
+    <tr>
+      <td><strong>PostgreSQL</strong></td>
+      <td>C, PostgreSQL licence</td>
+      <td>CAS, uniqueness, idempotency and serialisable transactions are native. Recursive SQL, no incremental recursive views <em>(verify <code class="language-plaintext highlighter-rouge">pg_ivm</code> scope)</em></td>
+    </tr>
+    <tr>
+      <td><strong>FoundationDB</strong></td>
+      <td>C++, Apache-2.0</td>
+      <td>ordered key-value store with strict serialisability and deterministic simulation. A substrate for layers, with network round trips on every access</td>
+    </tr>
+    <tr>
+      <td><strong>TiKV</strong></td>
+      <td>Rust, Apache-2.0</td>
+      <td>distributed key-value store. Network latency</td>
+    </tr>
+    <tr>
+      <td><strong>fjall</strong>, <strong>redb</strong>, <strong>RocksDB</strong>, <strong>LMDB</strong></td>
+      <td>Rust, Rust, C++, C (permissive)</td>
+      <td>embedded durable storage for logs and snapshots</td>
+    </tr>
+    <tr>
+      <td><strong>openraft</strong></td>
+      <td>Rust, MIT or Apache-2.0</td>
+      <td>Raft for a replicated log</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="56-the-capability-matrix">5.6 The capability matrix</h3>
+
+<p>● meets, ◐ partly, ○ no, ? unverified.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th> </th>
+      <th>R1 SPARQL</th>
+      <th>R2 Datalog</th>
+      <th>R3 incremental</th>
+      <th>R4 ACID</th>
+      <th>R5 HA</th>
+      <th>R6 latency</th>
+      <th>R7 decimal</th>
+      <th>R8 as-of</th>
+      <th>R9 deltas</th>
+      <th>R10 licence</th>
+      <th>R11 steward</th>
+      <th>R12 LATTICE SPARQL</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>RDFox</td>
+      <td>●</td>
+      <td>●</td>
+      <td>●</td>
+      <td>●</td>
+      <td>◐?</td>
+      <td>●</td>
+      <td>?</td>
+      <td>○</td>
+      <td>◐?</td>
+      <td>commercial</td>
+      <td>◐ (new owner)</td>
+      <td>●</td>
+    </tr>
+    <tr>
+      <td>GraphDB</td>
+      <td>●</td>
+      <td>◐</td>
+      <td>●</td>
+      <td>●</td>
+      <td>●</td>
+      <td>◐</td>
+      <td>●</td>
+      <td>○</td>
+      <td>◐?</td>
+      <td>commercial</td>
+      <td>●</td>
+      <td>●</td>
+    </tr>
+    <tr>
+      <td>Stardog</td>
+      <td>●</td>
+      <td>◐</td>
+      <td>○</td>
+      <td>●</td>
+      <td>●</td>
+      <td>◐</td>
+      <td>●</td>
+      <td>○</td>
+      <td>○</td>
+      <td>commercial</td>
+      <td>●</td>
+      <td>●</td>
+    </tr>
+    <tr>
+      <td>Jena / Fuseki</td>
+      <td>●</td>
+      <td>◐</td>
+      <td>○</td>
+      <td>●</td>
+      <td>◐</td>
+      <td>◐</td>
+      <td>●</td>
+      <td>○</td>
+      <td>○</td>
+      <td>●</td>
+      <td>●</td>
+      <td>●</td>
+    </tr>
+    <tr>
+      <td>Oxigraph</td>
+      <td>●</td>
+      <td>○</td>
+      <td>○</td>
+      <td>●</td>
+      <td>○</td>
+      <td>◐</td>
+      <td>◐?</td>
+      <td>○</td>
+      <td>○</td>
+      <td>●</td>
+      <td>◐</td>
+      <td>●</td>
+    </tr>
+    <tr>
+      <td>DBSP / Feldera</td>
+      <td>○</td>
+      <td>●</td>
+      <td>●</td>
+      <td>◐</td>
+      <td>◐</td>
+      <td>?</td>
+      <td>●</td>
+      <td>○</td>
+      <td>●</td>
+      <td>●</td>
+      <td>●</td>
+      <td>○</td>
+    </tr>
+    <tr>
+      <td>Differential Dataflow</td>
+      <td>○</td>
+      <td>●</td>
+      <td>●</td>
+      <td>○</td>
+      <td>○</td>
+      <td>?</td>
+      <td>◐</td>
+      <td>○</td>
+      <td>●</td>
+      <td>●</td>
+      <td>◐</td>
+      <td>○</td>
+    </tr>
+    <tr>
+      <td>CozoDB</td>
+      <td>○</td>
+      <td>●</td>
+      <td>○</td>
+      <td>●</td>
+      <td>○</td>
+      <td>◐</td>
+      <td>?</td>
+      <td>●</td>
+      <td>○</td>
+      <td>◐</td>
+      <td>○</td>
+      <td>○</td>
+    </tr>
+    <tr>
+      <td>Datomic</td>
+      <td>○</td>
+      <td>◐</td>
+      <td>○</td>
+      <td>●</td>
+      <td>●</td>
+      <td>◐</td>
+      <td>●</td>
+      <td>●</td>
+      <td>◐</td>
+      <td>◐</td>
+      <td>●</td>
+      <td>○</td>
+    </tr>
+    <tr>
+      <td>PostgreSQL + Ontop</td>
+      <td>◐</td>
+      <td>○</td>
+      <td>○</td>
+      <td>●</td>
+      <td>●</td>
+      <td>◐</td>
+      <td>●</td>
+      <td>◐</td>
+      <td>◐</td>
+      <td>●</td>
+      <td>●</td>
+      <td>○</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Facts the matrix establishes (judgement on the readings).</strong></p>
+
+<ol>
+  <li><strong>Only RDFox meets R1 to R6 together</strong>, with GraphDB close behind on R2 and R6.</li>
+  <li><strong>No open-source engine meets R1 to R4 together.</strong> The gap is incremental Datalog over a
+transactional SPARQL store.</li>
+  <li><strong>That gap is covered by two open-source parts that do not yet meet</strong>: Oxigraph for R1, R4 and
+R12, and DBSP for R2, R3 and R9. Joining them is the build-on option.</li>
+  <li><strong>R8 (as-of) is met by none of the RDF engines.</strong> LATTICE’s persistence receipt models
+(<code class="language-plaintext highlighter-rouge">PatchLog</code>, <code class="language-plaintext highlighter-rouge">SnapshotPerRevision</code>) already provide as-of through the SPARQL realisation on any
+store, so R8 does not by itself justify an engine.</li>
+</ol>
+
+<hr />
+
+<h2 id="6-rdfox-the-adopt-option-in-detail">6. RDFox, the adopt option, in detail</h2>
+
+<h3 id="61-fit">6.1 Fit</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Need</th>
+      <th>RDFox <em>(verify each against current documentation)</em></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Incremental reasoning on commit</td>
+      <td>yes, the core feature. Updates are materialised incrementally inside the transaction</td>
+    </tr>
+    <tr>
+      <td>Parallelism</td>
+      <td>parallel materialisation across cores, the paper’s algorithm and its successors</td>
+    </tr>
+    <tr>
+      <td>Transactions</td>
+      <td>ACID. Read-only transactions run concurrently. Writers are serialised per data store, which is the single-writer shape paper 1 recommends</td>
+    </tr>
+    <tr>
+      <td>Rules</td>
+      <td>Datalog with stratified negation, aggregation, built-in functions, plus OWL 2 RL and SWRL import, and SHACL</td>
+    </tr>
+    <tr>
+      <td>Equality</td>
+      <td><code class="language-plaintext highlighter-rouge">owl:sameAs</code> by rewriting, which paper 1 listed as the paper’s main open problem</td>
+    </tr>
+    <tr>
+      <td>Persistence and HA</td>
+      <td>persistence to a change log, with replicas following it</td>
+    </tr>
+    <tr>
+      <td>Access</td>
+      <td>SPARQL 1.1 over HTTP, a Java API, a command shell</td>
+    </tr>
+    <tr>
+      <td>Change notification</td>
+      <td>delta queries in recent versions <em>(verify)</em></td>
+    </tr>
+    <tr>
+      <td>Explanation</td>
+      <td>derivation explanation, useful for eligibility audit</td>
+    </tr>
+    <tr>
+      <td>Data sources</td>
+      <td>virtual tables over external relational and CSV data <em>(verify)</em></td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="62-gaps">6.2 Gaps</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Gap</th>
+      <th>How LATTICE covers it without an engine</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>As-of queries</td>
+      <td>the persistence receipt models, through the SPARQL realisation</td>
+    </tr>
+    <tr>
+      <td>Exact decimal precision <em>(verify RDFox’s <code class="language-plaintext highlighter-rouge">xsd:decimal</code> range)</em></td>
+      <td>scaled-integer representation in the domain ontology where precision exceeds the store’s</td>
+    </tr>
+    <tr>
+      <td>Low-latency binary protocol</td>
+      <td>a thin gateway service in front of RDFox, if a measured need appears. It does not require owning the engine</td>
+    </tr>
+    <tr>
+      <td>Open source, inspectability</td>
+      <td>not coverable. This is the only gap that a contract or regulation could make decisive (Q3)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="63-risks">6.3 Risks</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Risk</th>
+      <th>Mitigation</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Licence cost</td>
+      <td>obtain a quote. Compare it with §11’s build cost plus maintenance (trigger T3)</td>
+    </tr>
+    <tr>
+      <td>Vendor and roadmap risk after the change of ownership</td>
+      <td>ADR-A75 keeps the store replaceable. Fuseki remains the open default. Source escrow in the licence</td>
+    </tr>
+    <tr>
+      <td>Proprietary rule dialect</td>
+      <td>keep LATTICE’s rules in a LATTICE-owned form and translate to RDFox Datalog at activation, so the rules are portable</td>
+    </tr>
+    <tr>
+      <td>Extended-tier lock-in</td>
+      <td>ADR-A75’s rule: every Extended capability used in the domain layer has a Core fallback or an activation gate</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="64-how-lattice-adopts-it">6.4 How LATTICE adopts it</h3>
+
+<p>An RDFox adapter behind the ADR-A75 Store SPI, publishing a <code class="language-plaintext highlighter-rouge">Capabilities</code> report that declares
+native reasoning, change feed and multi-request transactions. The persistence compiler’s SPARQL runs
+unchanged (R12). Rule translation from LATTICE’s rule form into RDFox Datalog is the only new
+compiler work. This is the adaptation path, not costed here by request.</p>
+
+<hr />
+
+<h2 id="7-what-our-own-engine-would-add-claim-by-claim">7. What our own engine would add, claim by claim</h2>
+
+<p>Each claimed benefit of an owned engine, tested against “can an adopter get it without one”.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Claimed benefit</th>
+      <th>Available without building</th>
+      <th>Verdict (judgement)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>D1</td>
+      <td>Open source, owned, inspectable</td>
+      <td>no commercial engine offers it. The build-on option does</td>
+      <td><strong>the only benefit that can be decisive</strong>, and only if Q3 is answered yes</td>
+    </tr>
+    <tr>
+      <td>D2</td>
+      <td>Performance beyond RDFox</td>
+      <td>unproven. Paper 1’s design converges on RDFox’s architecture. Its additions (compiled rules, native persistence) target microseconds inside millisecond budgets</td>
+      <td><strong>burden of proof is on the build</strong>. G0 first</td>
+    </tr>
+    <tr>
+      <td>D3</td>
+      <td>Native persistence infrastructure (paper 2)</td>
+      <td>a relational store gives CAS, uniqueness and idempotency natively. RDFox executes the SPARQL realisation in memory</td>
+      <td><strong>shelve</strong> until G0 shows guarded writes dominate latency</td>
+    </tr>
+    <tr>
+      <td>D4</td>
+      <td>Formal verification of the core</td>
+      <td>no RDF engine has published proofs. Regulators audit controls and outcomes, not database internals <em>(judgement)</em></td>
+      <td>an aspiration. Oracle differential testing (§9) gives most of the assurance at a fraction of the cost</td>
+    </tr>
+    <tr>
+      <td>D5</td>
+      <td>Aeron and SBE prepared operations</td>
+      <td>a gateway in front of any engine</td>
+      <td><strong>not a reason to own the engine</strong></td>
+    </tr>
+    <tr>
+      <td>D6</td>
+      <td>Deterministic replication with state hashes</td>
+      <td>RDFox replication from its log <em>(verify)</em></td>
+      <td>not decisive</td>
+    </tr>
+    <tr>
+      <td>D7</td>
+      <td>As-of history</td>
+      <td>LATTICE receipt models on any store</td>
+      <td>not decisive</td>
+    </tr>
+    <tr>
+      <td>D8</td>
+      <td>Rust throughout, no C++ dependency</td>
+      <td>RDFox is a separate server process reached over HTTP or an API</td>
+      <td>a preference</td>
+    </tr>
+    <tr>
+      <td>D9</td>
+      <td>One engine for reasoning and the hot ledger</td>
+      <td>a ledger (TigerBeetle, PostgreSQL) for balances, a reasoning store for contract semantics and eligibility</td>
+      <td><strong>splitting is the conventional design</strong>. An RDF engine should not be the ledger</td>
+    </tr>
+    <tr>
+      <td>D10</td>
+      <td>Control of the roadmap</td>
+      <td>real, and paid for with permanent maintenance</td>
+      <td>real only with Q3 or Q4</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Reading (judgement).</strong> Everything except D1 and D10 is either available without building or
+unmeasured. D1 and D10 matter only if the answers to Q3 or Q4 are yes. So the case for building
+rests on a commercial answer.</p>
+
+<hr />
+
+<h2 id="8-build-on-candidates-compared">8. Build-on candidates compared</h2>
+
+<p>If Q3 or Q4 forces an owned engine, the question becomes which existing code to stand on.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Candidate</th>
+      <th>What it supplies</th>
+      <th>What we would still build</th>
+      <th>Risk</th>
+      <th>Verdict (judgement)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Oxigraph crates + DBSP + <code class="language-plaintext highlighter-rouge">openraft</code> + <code class="language-plaintext highlighter-rouge">fjall</code> or <code class="language-plaintext highlighter-rouge">redb</code></strong> (depend, do not fork)</td>
+      <td>RDF model and parsers, SPARQL parsing, algebra, optimiser and evaluator, results formats, incremental Datalog with retraction and recursion, consensus, durable storage</td>
+      <td>an in-memory MVCC quad store behind <code class="language-plaintext highlighter-rouge">spareval</code>’s dataset interface, the LATTICE rule IR to DBSP circuit translation, the transaction executor and log, replication glue, HTTP access, the conformance and oracle harness</td>
+      <td><code class="language-plaintext highlighter-rouge">spareval</code> and <code class="language-plaintext highlighter-rouge">dbsp</code> are 0.x and may change APIs. Two upstreams to track. Unmeasured small-delta latency of DBSP</td>
+      <td><strong>recommended build-on base</strong></td>
+    </tr>
+    <tr>
+      <td>Fork Oxigraph and add reasoning inside it</td>
+      <td>a complete server</td>
+      <td>incremental reasoning, a new storage model, and permanent divergence from upstream</td>
+      <td>owning a large fork. Upstream fixes stop flowing</td>
+      <td>no. Depend on crates instead</td>
+    </tr>
+    <tr>
+      <td>Fork CozoDB</td>
+      <td>Datalog engine, storage, time travel</td>
+      <td>SPARQL, incremental maintenance, RDF model</td>
+      <td>stalled upstream, different data model, MPL file-level obligations</td>
+      <td>no</td>
+    </tr>
+    <tr>
+      <td>Nemo, Soufflé, Ascent</td>
+      <td>batch Datalog</td>
+      <td>transactions, retraction, a store</td>
+      <td>batch evaluation does not become live incremental maintenance without a rewrite</td>
+      <td>no, keep as references</td>
+    </tr>
+    <tr>
+      <td>Jena or RDF4J with an incremental rule layer</td>
+      <td>mature SPARQL, transactions, SHACL</td>
+      <td>an incremental Datalog engine on the JVM</td>
+      <td>JVM tail latency (paper 1 §6.3), and the hard part is still built</td>
+      <td>no, unless the organisation is JVM-first</td>
+    </tr>
+    <tr>
+      <td>PostgreSQL + Ontop + DBSP</td>
+      <td>relational transactions with native CAS and uniqueness, SPARQL reads by rewriting, incremental rules</td>
+      <td>SPARQL Update, a second realisation of the persistence profile in SQL, synchronisation between three systems</td>
+      <td>three systems, read-only SPARQL, LATTICE’s SPARQL realisation unused</td>
+      <td>no, too many moving parts</td>
+    </tr>
+    <tr>
+      <td>RDFox + an owned Rust gateway</td>
+      <td>the whole engine</td>
+      <td>the gateway (protocols, as-of helpers)</td>
+      <td>proprietary core</td>
+      <td>this is the adopt option, with a gateway added only if measured need appears</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Ponytail on the recommended base.</strong> Use the single sequenced writer from paper 1 and publish
+immutable snapshots for readers. That removes the lock-free hash store (paper 1 C1 to C7), its
+verification, and paper 2’s structure catalogue from the initial scope. Mark it in code with a
+<code class="language-plaintext highlighter-rouge">ponytail:</code> comment naming the ceiling (one writer thread) and the upgrade path (parallel
+materialisation inside DBSP’s own workers, then partitioned writers). Paper 1’s single writer already
+accepted that ceiling for ordering, so this costs no guarantee the design wanted.</p>
+
+<p><strong>The functional compiler toolchain falls away in this option (judgement, a reversal for the maintainer
+to confirm).</strong> DBSP circuits are constructed through a Rust API at start-up. The rule compiler
+shrinks to a translation from the LATTICE rule IR into circuit construction calls, which is ordinary
+Rust. OCaml, Rocq, extraction and the Rust emitter (paper 2 §3 and §11) are not needed unless
+compiled physical planning returns (decision BA-D4).</p>
+
+<hr />
+
+<h2 id="9-what-the-earlier-papers-got-wrong-and-what-survives">9. What the earlier papers got wrong, and what survives</h2>
+
+<h3 id="91-errors">9.1 Errors</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Paper</th>
+      <th>Error</th>
+      <th>Consequence</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>Concluded “build the core” from “nothing permissively licensed does this”. That conflates “no open-source option” with “must build”, and set aside the commercial option it had itself identified (RDFox) on licence grounds without asking whether a commercial licence was acceptable</td>
+      <td>the build was assumed rather than justified</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>Compared languages for a build before comparing building with adopting</td>
+      <td>a decision matrix for the wrong question</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>Optimised the guarded write’s operation count without measuring whether it is a material share of latency at the target tier</td>
+      <td>a large planner, a proof pipeline and a structure catalogue justified by an unmeasured cost</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>Added a second language, a proof assistant and a code generator before any version of the engine existed</td>
+      <td>three toolchains of cost ahead of the first measurement</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="92-what-survives-and-is-worth-doing-regardless">9.2 What survives, and is worth doing regardless</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Idea</th>
+      <th>Origin</th>
+      <th>Why it survives</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Oracle differential testing</strong> of a store against the persistence compiler’s SPARQL semantics</td>
+      <td>paper 2 §14.3</td>
+      <td>tests any adapter, including RDFox and Fuseki, and is the core of G0’s correctness half. Cheap</td>
+    </tr>
+    <tr>
+      <td><strong>A conformance kit over operations and infrastructure state</strong></td>
+      <td>paper 2 §10.2, the guide’s Chapter 27</td>
+      <td>becomes the ADR-A75 TCK’s persistence section</td>
+    </tr>
+    <tr>
+      <td><strong>Splitting the hot ledger from the reasoning store</strong></td>
+      <td>§7, D9</td>
+      <td>a modelling choice for adopters, no engine needed</td>
+    </tr>
+    <tr>
+      <td>A logical transaction log, semantic versus physical plan, hints that cannot change meaning</td>
+      <td>paper 2 §8.4, §12.3</td>
+      <td>correct design principles to keep on file if building ever starts</td>
+    </tr>
+    <tr>
+      <td>Deterministic simulation from the first commit, metamorphic tests</td>
+      <td>paper 1 Appendix A</td>
+      <td>apply to the build-on option if triggered</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="10-recommendation-and-triggers">10. Recommendation and triggers</h2>
+
+<h3 id="101-sequence">10.1 Sequence</h3>
+
+<pre><code class="language-mermaid">flowchart TD
+    Q1{"Q1: named adopter&lt;br/&gt;with a measured target?"}
+    NONE["Build nothing.&lt;br/&gt;Fuseki remains the default"]
+    G0["G0: benchmark LATTICE's workload&lt;br/&gt;on Fuseki, Oxigraph, RDFox,&lt;br/&gt;optionally GraphDB"]
+    PASS{"Does a commercial engine&lt;br/&gt;meet the target?"}
+    Q3{"Q3 or Q4: owned or&lt;br/&gt;open engine required?"}
+    ADOPT["Adopt via an ADR-A75 adapter"]
+    BX["Build-on experiments B-X1 to B-X3"]
+    BXOK{"Experiments pass?"}
+    BUILD["Build on: Oxigraph crates + DBSP"]
+    COMP["Build from scratch only the&lt;br/&gt;component that failed"]
+
+    Q1 -- no --&gt; NONE
+    Q1 -- yes --&gt; G0 --&gt; PASS
+    PASS -- yes --&gt; Q3
+    PASS -- no --&gt; BX
+    Q3 -- no --&gt; ADOPT
+    Q3 -- yes --&gt; BX
+    BX --&gt; BXOK
+    BXOK -- yes --&gt; BUILD
+    BXOK -- no --&gt; COMP
+</code></pre>
+
+<p><strong>G0, the measurement gate (judgement on scope).</strong> A harness that drives the persistence compiler’s
+generated operations (create, CAS replace, tombstone, key claim, retire) and a LATTICE-shaped rule
+set (eligibility with negation, an exposure aggregation over a hierarchy, an instrument lifecycle)
+against each store, under the adopter’s concurrency profile. It reports p50, p99 and p99.9 latency
+and throughput per operation, and runs the oracle differential tests for correctness. Its rough cost
+is about 14M input-equivalent tokens (about 42M gross) using §11’s model, which is about 4% of the
+build-on option. It is outside the two costings the request asked for and is listed only because
+both build options should wait for it.</p>
+
+<h3 id="102-triggers-for-building">10.2 Triggers for building</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Trigger</th>
+      <th>Leads to</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>T1</td>
+      <td>G0 shows no available engine meets the adopter’s target after reasonable configuration</td>
+      <td>build-on experiments</td>
+    </tr>
+    <tr>
+      <td>T2</td>
+      <td>An adopter’s contract or regulator requires an open-source or owned engine</td>
+      <td>build-on experiments</td>
+    </tr>
+    <tr>
+      <td>T3</td>
+      <td>The commercial licence cost over the planning horizon exceeds the build-on cost plus its maintenance</td>
+      <td>build-on experiments</td>
+    </tr>
+    <tr>
+      <td>T4</td>
+      <td>The engine is to be a product (Q4)</td>
+      <td>business case, with §11 as an input</td>
+    </tr>
+    <tr>
+      <td>T5</td>
+      <td>A build-on experiment fails</td>
+      <td>a from-scratch build of that component only</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Build-on experiments (each small, each decisive).</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Experiment</th>
+      <th>Pass criterion</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>B-X1</td>
+      <td>DBSP commit latency for deltas of 10, 100 and 10,000 facts on the G0 rule set</td>
+      <td>p99 within the adopter’s tier target</td>
+    </tr>
+    <tr>
+      <td>B-X2</td>
+      <td><code class="language-plaintext highlighter-rouge">spareval</code> over a custom in-memory snapshot store, on G0’s prepared queries</td>
+      <td>latency within target, and the dataset interface is sufficient without patching upstream</td>
+    </tr>
+    <tr>
+      <td>B-X3</td>
+      <td>Translation of the G0 rule set into DBSP circuits, including stratified negation and recursive aggregation</td>
+      <td>all rules expressible, results equal to the oracle</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="11-token-cost-of-the-two-build-options">11. Token cost of the two build options</h2>
+
+<h3 id="111-units">11.1 Units</h3>
+
+<p>A token figure means nothing without saying which tokens. Three are counted.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Symbol</th>
+      <th>Meaning</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><em>F</em></td>
+      <td>fresh input tokens, not served from the prompt cache</td>
+    </tr>
+    <tr>
+      <td><em>C</em></td>
+      <td>cached input tokens, re-read from the prompt cache on every call</td>
+    </tr>
+    <tr>
+      <td><em>O</em></td>
+      <td>output tokens</td>
+    </tr>
+    <tr>
+      <td><strong>G</strong></td>
+      <td><strong>gross tokens</strong> = <em>F</em> + <em>C</em> + <em>O</em>. What a raw token meter shows</td>
+    </tr>
+    <tr>
+      <td><strong>E</strong></td>
+      <td><strong>input-equivalent tokens</strong> = <em>F</em> + 0.1 <em>C</em> + 5 <em>O</em>. Weights a cached read at a tenth of a fresh input token and an output token at five, which matches current Anthropic list-price ratios <em>(verify against the plan in use)</em>. Multiply E by the price of one fresh input token, or by the plan’s credit rate, to get money or AI credits</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Every agent call re-reads its whole context.</strong> Gross tokens therefore grow with the number of calls
+times the context size, and output is a small fraction. In the measurements below, output is under
+1% of gross.</p>
+
+<h3 id="112-calibration-from-this-session">11.2 Calibration from this session</h3>
+
+<p>This session’s debug log retains the last 59 main-agent calls and one subagent run. Earlier slices
+(WA10, WA11) fell outside it and cannot be measured. Full data in Appendix A.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Work</th>
+      <th>Calls</th>
+      <th>Mean context</th>
+      <th>G</th>
+      <th>E</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>XSLT sidecar documents, closing portion (Sonnet 5)</td>
+      <td>32</td>
+      <td>about 630k</td>
+      <td>20.1M</td>
+      <td>2.1M</td>
+    </tr>
+    <tr>
+      <td>Paper 1 (Opus 5.5)</td>
+      <td>6</td>
+      <td>about 590k</td>
+      <td>3.6M</td>
+      <td>2.3M</td>
+    </tr>
+    <tr>
+      <td>Paper 2 (Opus 5.5)</td>
+      <td>16</td>
+      <td>about 650k</td>
+      <td>10.5M</td>
+      <td>1.9M</td>
+    </tr>
+    <tr>
+      <td>An Explore subagent (Haiku 4.5)</td>
+      <td>7</td>
+      <td>about 35k</td>
+      <td>0.25M</td>
+      <td>0.08M</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Two findings (fact for the numbers, judgement for the reading).</strong></p>
+
+<ol>
+  <li><strong>Session length is the dominant cost driver.</strong> By the time these documents were written, the
+session context had grown to 600k–690k tokens, so each call re-read about 600k. The same work
+in a fresh session would re-read about 50k–150k per call.</li>
+  <li><strong>The fixed floor is about 29k tokens per call</strong> in this workspace: the system prompt (about 41 kB)
+plus tool schemas (about 75 kB), before any repository file is read.</li>
+</ol>
+
+<h3 id="113-the-model">11.3 The model</h3>
+
+<p>Cost per delivered line, by work class. “Delivered lines” include tests. Parameters are judgements,
+anchored on §11.2 and on the floor above.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Class</th>
+      <th>Covers</th>
+      <th>Calls per 100 lines</th>
+      <th>Mean context</th>
+      <th>Output per call</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>D</td>
+      <td>documentation and site content</td>
+      <td>2</td>
+      <td>150k</td>
+      <td>4k</td>
+    </tr>
+    <tr>
+      <td>W</td>
+      <td>web UI, Python tooling, configuration, CI</td>
+      <td>3</td>
+      <td>110k</td>
+      <td>3k</td>
+    </tr>
+    <tr>
+      <td>R</td>
+      <td>ordinary Rust, OCaml</td>
+      <td>5</td>
+      <td>130k</td>
+      <td>3k</td>
+    </tr>
+    <tr>
+      <td>C</td>
+      <td>concurrent, <code class="language-plaintext highlighter-rouge">unsafe</code> or storage-engine Rust, replication and commit protocols</td>
+      <td>10</td>
+      <td>150k</td>
+      <td>2.5k</td>
+    </tr>
+    <tr>
+      <td>P</td>
+      <td>proofs and models: Rocq, Verus, TLA+ or Quint</td>
+      <td>20</td>
+      <td>150k</td>
+      <td>2k</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>With a fresh-input share of 12% (so 88% cached), E per call is 0.208 × context + 5 × output.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Class</th>
+      <th>E per 1,000 lines</th>
+      <th>G per 1,000 lines</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>D</td>
+      <td>1.02M</td>
+      <td>3.08M</td>
+    </tr>
+    <tr>
+      <td>W</td>
+      <td>1.14M</td>
+      <td>3.39M</td>
+    </tr>
+    <tr>
+      <td>R</td>
+      <td>2.10M</td>
+      <td>6.65M</td>
+    </tr>
+    <tr>
+      <td>C</td>
+      <td>4.37M</td>
+      <td>15.25M</td>
+    </tr>
+    <tr>
+      <td>P</td>
+      <td>8.24M</td>
+      <td>30.40M</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Governance, per the repository’s process.</strong> Each slice delivers code, a Validation Pack, a status
+update, a review request, an INDEX row, and a mutation probe at the validation gate. Budgeted at 16 calls
+at 120k context, which is <strong>0.64M E and 2.0M G per slice</strong>, with slices averaging 1,200 delivered
+lines (the 15-test, two-module slice rule). Each phase adds a plan, status, review and about three
+ADRs, about 1,500 lines of class D (<strong>1.53M E, 4.6M G</strong>). The epic sketch, plan and initial ADR set
+add about 3,000 lines of class D (<strong>3.06M E, 9.2M G</strong>).</p>
+
+<p><strong>Rework.</strong> Integration failures, review rounds and Rust compile-fix loops are applied as a
+multiplier on everything: <strong>low ×1.0, expected ×1.5, high ×2.5</strong>.</p>
+
+<h3 id="114-option-b-build-on-existing-codebases">11.4 Option B: build on existing codebases</h3>
+
+<p>Oxigraph crates, DBSP, <code class="language-plaintext highlighter-rouge">openraft</code>, <code class="language-plaintext highlighter-rouge">fjall</code> or <code class="language-plaintext highlighter-rouge">redb</code>, <code class="language-plaintext highlighter-rouge">axum</code>. Single sequenced writer with snapshot
+readers. Persistence runs through the existing SPARQL realisation. No proof assistant, no
+functional-language toolchain.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Component</th>
+      <th>Lines</th>
+      <th>Class</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>In-memory MVCC quad store over persistent structures, behind <code class="language-plaintext highlighter-rouge">spareval</code>’s dataset interface</td>
+      <td>8k</td>
+      <td>R</td>
+    </tr>
+    <tr>
+      <td>Term encoding with inline literals and exact decimals</td>
+      <td>3k</td>
+      <td>R</td>
+    </tr>
+    <tr>
+      <td>LATTICE rule IR to DBSP circuits: stratification, negation, aggregation, write-back of derived deltas</td>
+      <td>12k</td>
+      <td>R</td>
+    </tr>
+    <tr>
+      <td>Equality handling by representative rewriting</td>
+      <td>3k</td>
+      <td>R</td>
+    </tr>
+    <tr>
+      <td>Transaction executor, sequencer, log, snapshots, recovery</td>
+      <td>6k + 2k</td>
+      <td>R + C</td>
+    </tr>
+    <tr>
+      <td>Replication with <code class="language-plaintext highlighter-rouge">openraft</code>, canonical state hash</td>
+      <td>6k</td>
+      <td>R</td>
+    </tr>
+    <tr>
+      <td>Commit and replication protocol model</td>
+      <td>1.5k</td>
+      <td>P</td>
+    </tr>
+    <tr>
+      <td>Deterministic simulation harness</td>
+      <td>5k</td>
+      <td>R</td>
+    </tr>
+    <tr>
+      <td>SPARQL 1.1 Protocol, Graph Store Protocol, change subscriptions over SSE</td>
+      <td>6k</td>
+      <td>R</td>
+    </tr>
+    <tr>
+      <td>Conformance kit and oracle differential harness</td>
+      <td>6k</td>
+      <td>R</td>
+    </tr>
+    <tr>
+      <td>Benchmarks</td>
+      <td>4k</td>
+      <td>R</td>
+    </tr>
+    <tr>
+      <td>Upstream patches and adapters for <code class="language-plaintext highlighter-rouge">spareval</code> and <code class="language-plaintext highlighter-rouge">dbsp</code> gaps</td>
+      <td>3k</td>
+      <td>R</td>
+    </tr>
+    <tr>
+      <td>Operations: configuration, CLI, metrics, backup and restore, packaging, CI on x86 and ARM</td>
+      <td>5k</td>
+      <td>W</td>
+    </tr>
+    <tr>
+      <td>Admin web tools (budget only, no design): health, transaction and log browser, rule and profile viewer, query console, users and roles. Plus their admin API</td>
+      <td>12k + 3k</td>
+      <td>W + R</td>
+    </tr>
+    <tr>
+      <td>Developer documentation: architecture, ADRs, module READMEs, contributor guide</td>
+      <td>6k</td>
+      <td>D</td>
+    </tr>
+    <tr>
+      <td>User documentation: operator guide, configuration reference, protocol reference, tutorials</td>
+      <td>8k</td>
+      <td>D</td>
+    </tr>
+    <tr>
+      <td>GitHub Pages site: generator, theme, navigation, <code class="language-plaintext highlighter-rouge">rustdoc</code> integration, versioned docs, search, deployment workflow</td>
+      <td>3k</td>
+      <td>W</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Optional, only if measured need appears:</strong> Aeron and SBE prepared operations (5k R), and native
+idempotency, uniqueness and version headers from paper 2 with virtual graphs (10k R + 4k C).</p>
+
+<h3 id="115-option-a-build-from-scratch">11.5 Option A: build from scratch</h3>
+
+<p>Papers 1 and 2 as written: lock-free store, own incremental engine, OCaml compiler with a Rocq-proved
+planner, the S1 to S11 catalogue, Aeron access, Verus kernels.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Component</th>
+      <th>Lines</th>
+      <th>Class</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Dictionary and term encoding, lock-free</td>
+      <td>6k</td>
+      <td>C</td>
+    </tr>
+    <tr>
+      <td>Quad table with lock-free indexes (paper 1 C1 to C7), MVCC, compaction by generation</td>
+      <td>20k</td>
+      <td>C</td>
+    </tr>
+    <tr>
+      <td>Parallel semi-naïve evaluation, stratification, negation, aggregation, termination</td>
+      <td>14k</td>
+      <td>C</td>
+    </tr>
+    <tr>
+      <td>Incremental maintenance (Backward/Forward) and equality by union-find</td>
+      <td>12k</td>
+      <td>C</td>
+    </tr>
+    <tr>
+      <td>SPARQL evaluation over the store (parsers and algebra reused from Oxigraph)</td>
+      <td>16k</td>
+      <td>R</td>
+    </tr>
+    <tr>
+      <td>Transactions: sequencer, executor, log, durability, snapshots, recovery</td>
+      <td>12k</td>
+      <td>C</td>
+    </tr>
+    <tr>
+      <td>Replication, determinism, state hash, failover</td>
+      <td>10k</td>
+      <td>C</td>
+    </tr>
+    <tr>
+      <td>Deterministic simulation harness</td>
+      <td>8k</td>
+      <td>R</td>
+    </tr>
+    <tr>
+      <td>Access: SPARQL protocols and subscriptions, Aeron and SBE, gRPC and Arrow Flight</td>
+      <td>18k</td>
+      <td>R</td>
+    </tr>
+    <tr>
+      <td>Rule and query compiler in OCaml with the Rust emitter</td>
+      <td>20k</td>
+      <td>R</td>
+    </tr>
+    <tr>
+      <td>Physical planner, diff compiler, migration generator (OCaml)</td>
+      <td>14k</td>
+      <td>R</td>
+    </tr>
+    <tr>
+      <td>Structure catalogue S2 to S11</td>
+      <td>18k</td>
+      <td>C</td>
+    </tr>
+    <tr>
+      <td>Virtual infrastructure graphs</td>
+      <td>5k</td>
+      <td>R</td>
+    </tr>
+    <tr>
+      <td>Compiled-profile interchange in <code class="language-plaintext highlighter-rouge">tools/persistence</code></td>
+      <td>2k</td>
+      <td>W</td>
+    </tr>
+    <tr>
+      <td>Proofs and models: Rocq planner composition, coverage and diff soundness (12k), Verus kernels (4k), TLA+ or Quint (3k)</td>
+      <td>19k</td>
+      <td>P</td>
+    </tr>
+    <tr>
+      <td>Conformance kit and oracle differential harness</td>
+      <td>6k</td>
+      <td>R</td>
+    </tr>
+    <tr>
+      <td>Benchmarks</td>
+      <td>5k</td>
+      <td>R</td>
+    </tr>
+    <tr>
+      <td>Operations</td>
+      <td>6k</td>
+      <td>W</td>
+    </tr>
+    <tr>
+      <td>Admin web tools and their admin API (budget only), with plan and migration consoles</td>
+      <td>14k + 3k</td>
+      <td>W + R</td>
+    </tr>
+    <tr>
+      <td>Developer documentation</td>
+      <td>8k</td>
+      <td>D</td>
+    </tr>
+    <tr>
+      <td>User documentation</td>
+      <td>10k</td>
+      <td>D</td>
+    </tr>
+    <tr>
+      <td>GitHub Pages site</td>
+      <td>3k</td>
+      <td>W</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="116-totals">11.6 Totals</h3>
+
+<p>All figures in millions of tokens. Base is before the rework multiplier. Expected is base × 1.5.</p>
+
+<p><strong>Option B, build on (74 slices, 5 phases).</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Category</th>
+      <th>Base E</th>
+      <th>Base G</th>
+      <th>Expected E</th>
+      <th>Expected G</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Engine code and tests</td>
+      <td>144.6</td>
+      <td>459.8</td>
+      <td>217.0</td>
+      <td>689.6</td>
+    </tr>
+    <tr>
+      <td>Protocol model</td>
+      <td>12.4</td>
+      <td>45.6</td>
+      <td>18.5</td>
+      <td>68.4</td>
+    </tr>
+    <tr>
+      <td>Admin web tools</td>
+      <td>20.0</td>
+      <td>60.6</td>
+      <td>30.0</td>
+      <td>90.9</td>
+    </tr>
+    <tr>
+      <td>Developer documentation</td>
+      <td>6.1</td>
+      <td>18.5</td>
+      <td>9.2</td>
+      <td>27.7</td>
+    </tr>
+    <tr>
+      <td>User documentation</td>
+      <td>8.2</td>
+      <td>24.6</td>
+      <td>12.2</td>
+      <td>37.0</td>
+    </tr>
+    <tr>
+      <td>GitHub Pages site</td>
+      <td>3.4</td>
+      <td>10.2</td>
+      <td>5.1</td>
+      <td>15.3</td>
+    </tr>
+    <tr>
+      <td>Planning and governance: epic sketch and plan, phase plans, status, Validation Packs, reviews, ADRs, mutation probes</td>
+      <td>58.1</td>
+      <td>180.2</td>
+      <td>87.1</td>
+      <td>270.4</td>
+    </tr>
+    <tr>
+      <td><strong>Total</strong></td>
+      <td><strong>252.8</strong></td>
+      <td><strong>799.5</strong></td>
+      <td><strong>379.1</strong></td>
+      <td><strong>1,199.3</strong></td>
+    </tr>
+    <tr>
+      <td>Optional add-ons (Aeron, native persistence, 16 more slices)</td>
+      <td>59.2</td>
+      <td>192.8</td>
+      <td>88.8</td>
+      <td>289.1</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Option A, from scratch (193 slices, 10 phases).</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Category</th>
+      <th>Base E</th>
+      <th>Base G</th>
+      <th>Expected E</th>
+      <th>Expected G</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Engine code and tests</td>
+      <td>604.4</td>
+      <td>2,041.9</td>
+      <td>906.5</td>
+      <td>3,062.9</td>
+    </tr>
+    <tr>
+      <td>Proofs and models</td>
+      <td>156.6</td>
+      <td>577.6</td>
+      <td>234.8</td>
+      <td>866.4</td>
+    </tr>
+    <tr>
+      <td>Admin web tools</td>
+      <td>22.3</td>
+      <td>67.4</td>
+      <td>33.4</td>
+      <td>101.1</td>
+    </tr>
+    <tr>
+      <td>Developer documentation</td>
+      <td>8.2</td>
+      <td>24.6</td>
+      <td>12.2</td>
+      <td>37.0</td>
+    </tr>
+    <tr>
+      <td>User documentation</td>
+      <td>10.2</td>
+      <td>30.8</td>
+      <td>15.3</td>
+      <td>46.2</td>
+    </tr>
+    <tr>
+      <td>GitHub Pages site</td>
+      <td>3.4</td>
+      <td>10.2</td>
+      <td>5.1</td>
+      <td>15.3</td>
+    </tr>
+    <tr>
+      <td>Planning and governance</td>
+      <td>141.9</td>
+      <td>441.2</td>
+      <td>212.8</td>
+      <td>661.9</td>
+    </tr>
+    <tr>
+      <td><strong>Total</strong></td>
+      <td><strong>946.8</strong></td>
+      <td><strong>3,193.8</strong></td>
+      <td><strong>1,420.3</strong></td>
+      <td><strong>4,790.7</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Ranges.</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th> </th>
+      <th>Low E</th>
+      <th>Expected E</th>
+      <th>High E</th>
+      <th>Low G</th>
+      <th>Expected G</th>
+      <th>High G</th>
+      <th>Validation gates</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>B, build on</td>
+      <td>0.25B</td>
+      <td>0.38B</td>
+      <td>0.63B</td>
+      <td>0.80B</td>
+      <td>1.20B</td>
+      <td>2.00B</td>
+      <td>74 slices, 5 phases</td>
+    </tr>
+    <tr>
+      <td>A, from scratch</td>
+      <td>0.95B</td>
+      <td>1.42B</td>
+      <td>2.37B</td>
+      <td>3.19B</td>
+      <td>4.79B</td>
+      <td>7.98B</td>
+      <td>193 slices, 10 phases</td>
+    </tr>
+    <tr>
+      <td>A ÷ B</td>
+      <td>3.7</td>
+      <td>3.7</td>
+      <td>3.7</td>
+      <td>4.0</td>
+      <td>4.0</td>
+      <td>4.0</td>
+      <td>2.6</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Where A’s extra cost goes (judgement).</strong> About 60% of the difference is concurrent storage and
+evaluation code (class C) that DBSP and the single-writer design remove, and about 20% is proofs.
+Governance is 15% of A and 23% of B, and documentation, site and admin tools together are about 15%
+of B.</p>
+
+<h3 id="117-sensitivity">11.7 Sensitivity</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Lever</th>
+      <th>Effect on E</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Fresh session per slice, trimmed instruction files (mean context halved)</td>
+      <td>about −31%</td>
+    </tr>
+    <tr>
+      <td>Running long sessions at the measured 600k mean context</td>
+      <td>about ×3.3</td>
+    </tr>
+    <tr>
+      <td>Fresh-input share 5% instead of 12% (stable cached prefix)</td>
+      <td>about −19%</td>
+    </tr>
+    <tr>
+      <td>Fresh-input share 25% (frequent cache misses, model switches)</td>
+      <td>about +36%</td>
+    </tr>
+    <tr>
+      <td>Calls per line ±50%</td>
+      <td>±50%, linear</td>
+    </tr>
+    <tr>
+      <td>A cheaper model for documentation and routine slices</td>
+      <td>same tokens, fewer credits</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Context size per call outweighs every other controllable lever in the table</strong>, through fresh sessions per slice and
+compact instruction files. It is worth more than any choice between the build options’ components.</p>
+
+<h3 id="118-what-the-totals-exclude">11.8 What the totals exclude</h3>
+
+<ul>
+  <li>Adapting a commercial engine (by request), including the RDFox adapter and rule translation.</li>
+  <li>G0 and the build-on experiments B-X1 to B-X3 (G0 is about 14M E, §10.1).</li>
+  <li>Maintenance after delivery: upstream tracking for B, everything for A.</li>
+  <li>Review time at each gate, which the slice counts indicate but this paper does not convert to
+hours.</li>
+  <li>Licence fees, infrastructure and hardware for benchmarks.</li>
+</ul>
+
+<h3 id="119-re-basing-the-repositorys-existing-estimates">11.9 Re-basing the repository’s existing estimates</h3>
+
+<p>The WA and XS plans estimate about 330k–400k tokens per slice. Under this model a typical 1,200-line
+class W slice costs about 2.0M E and 6.1M G before rework, so the existing estimates are about 5
+times below E and about 17 times below G. They appear to count something close to output plus fresh
+input. No slice has recorded actuals. <strong>Recommendation:</strong> record <em>F</em>, <em>C</em>, <em>O</em> and calls per slice in
+the status file from the session debug log (Appendix A gives the method), and recalibrate the class
+parameters after five slices.</p>
+
+<hr />
+
+<h2 id="12-decisions-for-the-maintainer">12. Decisions for the maintainer</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Decision</th>
+      <th>Options</th>
+      <th>Recommendation (judgement)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>BA-D1</td>
+      <td>Engine strategy</td>
+      <td>(a) adopt, gated by G0. (b) build on. (c) build from scratch</td>
+      <td>(a). (b) only on a trigger from §10.2. Not (c)</td>
+    </tr>
+    <tr>
+      <td>BA-D2</td>
+      <td>Answers to Q1 to Q4</td>
+      <td>named adopter, licence acceptability, ownership requirement, product intent</td>
+      <td>needed before any engine work, including G0</td>
+    </tr>
+    <tr>
+      <td>BA-D3</td>
+      <td>Status of paper 2</td>
+      <td>(a) shelve. (b) pursue</td>
+      <td>(a). Its oracle and conformance ideas move to the ADR-A75 TCK</td>
+    </tr>
+    <tr>
+      <td>BA-D4</td>
+      <td>Functional compiler language and proof assistant decisions of 2026-10-03</td>
+      <td>(a) keep, for use only if compiled planning returns. (b) apply now</td>
+      <td>(a). Option B needs neither</td>
+    </tr>
+    <tr>
+      <td>BA-D5</td>
+      <td>RDFox evaluation</td>
+      <td>(a) request an evaluation licence and a quote for G0. (b) do not</td>
+      <td>(a), if Q1 is yes</td>
+    </tr>
+    <tr>
+      <td>BA-D6</td>
+      <td>Token accounting</td>
+      <td>(a) adopt the E and G units and per-slice actuals. (b) keep the current estimates</td>
+      <td>(a)</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="appendix-a-calibration-data">Appendix A: Calibration data</h2>
+
+<p>From this session’s debug log (<code class="language-plaintext highlighter-rouge">main.jsonl</code>, <code class="language-plaintext highlighter-rouge">llm_request</code> events). Tokens as recorded by the client.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Segment</th>
+      <th>Model</th>
+      <th>Calls</th>
+      <th>Input</th>
+      <th>of which cached</th>
+      <th>Output</th>
+      <th>Max context</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>XSLT sidecar documents, closing portion</td>
+      <td>claude-sonnet-5</td>
+      <td>32</td>
+      <td>20,097,326</td>
+      <td>20,074,707</td>
+      <td>18,586</td>
+      <td>about 630k</td>
+    </tr>
+    <tr>
+      <td>Paper 1</td>
+      <td>claude-opus-5.5</td>
+      <td>6</td>
+      <td>3,564,898</td>
+      <td>1,812,872</td>
+      <td>66,954</td>
+      <td>617,172</td>
+    </tr>
+    <tr>
+      <td>Paper 2</td>
+      <td>claude-opus-5.5</td>
+      <td>16</td>
+      <td>10,469,974</td>
+      <td>9,781,379</td>
+      <td>55,033</td>
+      <td>687,796</td>
+    </tr>
+    <tr>
+      <td>Explore subagent</td>
+      <td>claude-haiku-4.5</td>
+      <td>7</td>
+      <td>244,229</td>
+      <td>203,593</td>
+      <td>3,842</td>
+      <td>45,829</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Method.</strong> Each <code class="language-plaintext highlighter-rouge">llm_request</code> line carries <code class="language-plaintext highlighter-rouge">inputTokens</code>, <code class="language-plaintext highlighter-rouge">outputTokens</code> and <code class="language-plaintext highlighter-rouge">cachedTokens</code>. Sum
+them over the calls between two <code class="language-plaintext highlighter-rouge">user_message</code> events. A PowerShell sketch:</p>
+
+<div class="language-powershell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$rx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'"type":"llm_request".*?"inputTokens":(\d+),"outputTokens":(\d+),"cachedTokens":(\d+)'</span><span class="w">
+</span><span class="kr">foreach</span><span class="w"> </span><span class="p">(</span><span class="nv">$l</span><span class="w"> </span><span class="kr">in</span><span class="w"> </span><span class="p">[</span><span class="n">IO.File</span><span class="p">]::</span><span class="n">ReadLines</span><span class="p">(</span><span class="nv">$log</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nv">$m</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="n">regex</span><span class="p">]::</span><span class="n">Match</span><span class="p">(</span><span class="nv">$l</span><span class="p">,</span><span class="w"> </span><span class="nv">$rx</span><span class="p">)</span><span class="w">
+    </span><span class="kr">if</span><span class="w"> </span><span class="p">(</span><span class="nv">$m</span><span class="o">.</span><span class="nf">Success</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">$in</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="p">[</span><span class="n">int64</span><span class="p">]</span><span class="nv">$m</span><span class="o">.</span><span class="n">Groups</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="nf">Value</span><span class="p">;</span><span class="w"> </span><span class="nv">$out</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="p">[</span><span class="n">int64</span><span class="p">]</span><span class="nv">$m</span><span class="o">.</span><span class="n">Groups</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="nf">Value</span><span class="p">;</span><span class="w"> </span><span class="nv">$c</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="p">[</span><span class="n">int64</span><span class="p">]</span><span class="nv">$m</span><span class="o">.</span><span class="n">Groups</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="nf">Value</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>The log is bounded, so record actuals at the end of each slice rather than at the end of a phase.</p>
+
+<hr />
+
+<h2 id="appendix-b-references">Appendix B: References</h2>
+
+<ul>
+  <li>Motik, Nenov, Piro, Horrocks, Olteanu. Parallel OWL 2 RL materialisation in centralised,
+main-memory RDF systems (beside this file), and the references of papers 1 and 2.</li>
+  <li>Nenov, Piro, Motik, Horrocks, Wu, Banerjee. RDFox: a highly-scalable RDF store. ISWC 2015.</li>
+  <li>Budiu, Chajed, McSherry, Ryzhyk, Tannen. DBSP: automatic incremental view maintenance for rich
+query languages. VLDB 2023.</li>
+  <li>McSherry, Murray, Isaacs, Isard. Differential dataflow. CIDR 2013.</li>
+  <li>Xiao, Calvanese, Kontchakov et al. The virtual knowledge graph system Ontop. ISWC 2020.</li>
+  <li>LATTICE: ADR-A74, ADR-A75, ADR-A78, ADR-A79, <code class="language-plaintext highlighter-rouge">.github/prompts/ponytail.md</code>,
+<code class="language-plaintext highlighter-rouge">.github/copilot-instructions.md</code> (planning and governance model).</li>
+  <li>Upstream documentation and licences of each product in §5, to be checked where marked <em>(verify)</em>.</li>
+</ul>

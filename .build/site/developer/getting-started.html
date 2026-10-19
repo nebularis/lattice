@@ -1,0 +1,118 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="getting-started">Getting Started</h1>
+
+<p>From a clean clone to a passing <code class="language-plaintext highlighter-rouge">mise run check</code>. For what each tool actually does, see the
+<a href="/developer/developer-guide.html">Developer Guide</a>. For how formal methods fits in, see
+<a href="/developer/formal-methods-lifecycle.html">Formal Methods in the Development Lifecycle</a>.</p>
+
+<h2 id="1-prerequisites">1. Prerequisites</h2>
+
+<ul>
+  <li>
+    <p><strong><code class="language-plaintext highlighter-rouge">mise</code></strong> — the one task-orchestration entry point (ADR-A29). Install it from
+<a href="https://mise.jdx.dev">mise.jdx.dev</a>, then activate it for your shell.</p>
+
+    <p><strong>PowerShell (Windows):</strong> add <code class="language-plaintext highlighter-rouge">mise activate pwsh | Out-String | Invoke-Expression</code> to
+<code class="language-plaintext highlighter-rouge">$PROFILE</code>. On Windows PowerShell 5.1 (not PowerShell 7+), also set
+<code class="language-plaintext highlighter-rouge">$env:MISE_PWSH_CHPWD_WARNING = "0"</code> first in your profile, to silence an unsupported-feature
+warning that otherwise prints on every new session.</p>
+
+    <p><strong>bash/zsh:</strong> add <code class="language-plaintext highlighter-rouge">eval "$(mise activate bash)"</code> (or <code class="language-plaintext highlighter-rouge">zsh</code>) to your shell’s rc file.</p>
+
+    <p>Verify with a <strong>brand-new shell</strong>, not the one you installed <code class="language-plaintext highlighter-rouge">mise</code> in — that proves the
+profile change actually works, rather than relying on a PATH edit that only applies to the
+current session.</p>
+  </li>
+  <li><strong>Docker</strong> (optional), only if you plan to run <code class="language-plaintext highlighter-rouge">deployment/compose</code> or build the formal-methods
+toolchain spike’s portable images (<code class="language-plaintext highlighter-rouge">mise run bootstrap:formal-images</code>).</li>
+  <li><strong>An extra root CA</strong>, if your network intercepts TLS: several tools need it set
+explicitly rather than relying on the OS trust store (Node via <code class="language-plaintext highlighter-rouge">NODE_EXTRA_CA_CERTS</code>, <code class="language-plaintext highlighter-rouge">pip</code> via
+its own <code class="language-plaintext highlighter-rouge">pip.ini</code>/<code class="language-plaintext highlighter-rouge">pip.conf</code> pointed at an approved internal mirror). This is environment-
+specific — ask whoever administers your network’s egress policy, never hard-code a mirror URL
+into a file this repository tracks.</li>
+</ul>
+
+<p>Everything else — Java 25, Maven 3.9, Node 22, Python 3.14, Erlang 27, Elixir 1.17 — is pinned in
+<code class="language-plaintext highlighter-rouge">mise.toml</code>’s <code class="language-plaintext highlighter-rouge">[tools]</code> section and installed by <code class="language-plaintext highlighter-rouge">mise install</code>, not by you.</p>
+
+<h2 id="2-clone-and-install-the-pinned-toolchain">2. Clone and install the pinned toolchain</h2>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone https://github.com/nebularis/lattice.git
+<span class="nb">cd </span>lattice
+mise <span class="nb">install</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">mise install</code> reads <code class="language-plaintext highlighter-rouge">mise.toml</code>’s <code class="language-plaintext highlighter-rouge">[tools]</code> section and installs exactly those versions,
+independent of whatever else is on your machine. If a shim reports “program not found”
+immediately after installing <code class="language-plaintext highlighter-rouge">mise</code> itself, the real <code class="language-plaintext highlighter-rouge">mise</code> binary likely isn’t on <code class="language-plaintext highlighter-rouge">PATH</code> yet in
+your current shell — open a new one (see §1).</p>
+
+<h2 id="3-bootstrap-every-packages-dependencies">3. Bootstrap every package’s dependencies</h2>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run bootstrap
+</code></pre></div></div>
+
+<p>This runs every <code class="language-plaintext highlighter-rouge">bootstrap:*</code> task: the root ontology-validation dependencies, every <code class="language-plaintext highlighter-rouge">tools/*</code>
+Python package (editable installs, so an edit takes effect immediately with no reinstall), the
+worker package, and the Yarn workspace via Corepack. It does <strong>not</strong> install the formal-methods
+toolchains (Isabelle, Rocq, Alloy) or Jekyll — those are optional, heavy, and bootstrapped
+separately (§5).</p>
+
+<p><strong>If a <code class="language-plaintext highlighter-rouge">pip install</code> fails with a hash mismatch you didn’t ask for</strong> (no <code class="language-plaintext highlighter-rouge">-c</code> hash-pinned
+requirements file given, yet pip reports “THESE PACKAGES DO NOT MATCH THE HASHES”), this is very
+likely a network policy block substituting a notice page for the real wheel, not a corrupted
+download — confirm by fetching the failing wheel URL directly and inspecting the response body.
+Fix it at the package-manager configuration level (an approved internal mirror), never by editing
+a file this repository tracks.</p>
+
+<h2 id="4-validate-the-install">4. Validate the install</h2>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check
+</code></pre></div></div>
+
+<p>Runs every validation task that does not need a heavy, optional toolchain (§5): every <code class="language-plaintext highlighter-rouge">tools/*</code>
+package’s own tests, the Maven reactor, the frontend workspace, the Erlang/Elixir SPC suite, every
+repository-wide ontology gate (catalog, versioning, import guard, reasoning isolation), and the
+formal-methods freshness check. A clean run here is the first-time-install’s acceptance test.</p>
+
+<p>Run one piece instead of everything with <code class="language-plaintext highlighter-rouge">mise run check:&lt;name&gt;</code> — <code class="language-plaintext highlighter-rouge">mise tasks</code> lists every task
+with its own description. <code class="language-plaintext highlighter-rouge">mise run check:python-root</code> alone, for instance, runs Surface and
+MORK’s own compiler test suites plus the shared Phase 8 conformance corpus.</p>
+
+<h2 id="5-optional-the-formal-methods-toolchains">5. Optional: the formal-methods toolchains</h2>
+
+<p>Not part of <code class="language-plaintext highlighter-rouge">bootstrap</code>/<code class="language-plaintext highlighter-rouge">check</code> by default — large, native, and only needed if you are working on
+formal-methods track C, D or E (see the <a href="/developer/formal-methods-lifecycle.html">lifecycle guide</a>):</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Track E: Isabelle/HOL, native install on macOS, Linux or Windows (about 1.2 GB, prebuilt HOL</span>
+<span class="c"># heap included). Installs under LATTICE_FORMAL_ROOT, default ~/.local/share/lattice-formal</span>
+<span class="c"># (C:/fmx on Windows, where a short path avoids path-length limits)</span>
+mise run bootstrap:formal-native-isabelle
+mise run check:proofs
+
+<span class="c"># Track C: Alloy Analyzer, a single MIT-licensed JAR, any OS with a JDK</span>
+<span class="c"># (download org.alloytools.alloy.dist.jar from the AlloyTools GitHub releases; see</span>
+<span class="c"># tools/models/README.md for the exact command)</span>
+
+<span class="c"># Track D: the prover spike's portable route (Docker required)</span>
+mise run check:formal-network    <span class="c"># confirm the toolchain's own sources are reachable first</span>
+mise run bootstrap:formal-images
+mise run check:formal-smoke
+</code></pre></div></div>
+
+<h2 id="6-where-to-go-next">6. Where to go next</h2>
+
+<ul>
+  <li><a href="/developer/developer-guide.html">Developer Guide</a> — every tool, what it is for, how the pieces fit together.</li>
+  <li><a href="../../AGENTS.md">AGENTS.md</a> — the rules AI agents follow here, and the skills they load (Developer Guide §8).</li>
+  <li><a href="/developer/formal-methods-lifecycle.html">Formal Methods in the Development Lifecycle</a> — how sketch, plan
+and implementation each use formal methods, for an ontology change, a tools change, or a
+platform service change alike.</li>
+  <li><a href="/diagrams/"><code class="language-plaintext highlighter-rouge">docs/diagrams/</code></a> — the whole architecture, pictured, across five views.</li>
+  <li><a href="/developer/INDEX.html"><code class="language-plaintext highlighter-rouge">docs/developer/INDEX.md</code></a> — every active unit of work, its sketch, plan, status and
+validation pack.</li>
+  <li><a href="/architecture/solution-design-specification.html"><code class="language-plaintext highlighter-rouge">docs/architecture/solution-design-specification.md</code></a> —
+the platform’s own architecture, the primary entry point for understanding the codebase beyond
+the ontology layers.</li>
+</ul>

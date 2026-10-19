@@ -1,0 +1,235 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="eligibility-executable-compiler--verification-and-test-infrastructure-plan">Eligibility Executable Compiler — Verification and Test-Infrastructure Plan</h1>
+
+<p><strong>Unit ID:</strong> <code class="language-plaintext highlighter-rouge">eligibility-compiler</code>
+<strong>Status record:</strong> <a href="/developer/status/eligibility-compiler.html">eligibility-compiler.md</a>
+<strong>Sketch:</strong> <a href="/developer/sketches/mork-eligibility-compiler.html">mork-eligibility-compiler.md</a>
+<strong>Governing ADRs:</strong> <a href="../../architecture/decisions/ADR-A23-mork-compiler-family-completion-policy.md">ADR-A23</a> (compiler family completion policy), <a href="../../architecture/decisions/ADR-A24-eligibility-executable-semantics-backend-strategy.md">ADR-A24</a> (backend strategy — SPARQL/SHACL native-and-first, SHACL readiness second, SWRL positive-only third)
+<strong>New ADR proposed by this plan:</strong> ADR-A83 (below). Renumbered from A81 on 2026-09-23: A81 is the Control Plane HTTP runtime ADR, filed first</p>
+
+<h2 id="0-why-this-plan-exists">0. Why this plan exists</h2>
+
+<p>The status record’s “Verification Plan (not yet executed)” lists five steps. Steps 1–4 are ordinary test execution against dependencies the repository already has (<code class="language-plaintext highlighter-rouge">rdflib</code>, <code class="language-plaintext highlighter-rouge">pyshacl</code>) or none at all. Step 5 is not:</p>
+
+<blockquote>
+  <ol>
+    <li>Load generated SWRL into Drools/Pellet and confirm inference</li>
+  </ol>
+</blockquote>
+
+<p>Pulling a JVM-based OWL/SWRL reasoner (Pellet) and a JVM rules engine (Drools) onto the path anyone runs to build or test the eligibility compiler — or worse, onto the path anyone runs to build or test <em>anything</em> in this repository — is not acceptable. Neither tool is needed to compile a SWRL artefact, only to independently verify one, and that verification need is legitimate and recurring: this is the first compiler backend that emits SWRL, but ADR-A19’s staged-compiler-architecture and ADR-A23’s completion policy both anticipate more backends across more compiler families, and the platform epic’s own P2.2.5 (“SHACL report equivalence across engines”) names exactly this kind of cross-engine verification need again in a completely different component.</p>
+
+<p>This plan therefore has two parts, not one. <strong>Part A</strong> executes the five-step verification plan as slices. <strong>Part B</strong> — the important part — designs a shared, test-only, reasoning/rules-engine dependency so Part A’s step 5 (and every future need like it) never touches the main dependency graph.</p>
+
+<h2 id="part-a--execute-the-verification-plan">Part A — Execute the verification plan</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Slice</th>
+      <th>Scope</th>
+      <th>Depends on</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>A1</strong></td>
+      <td>Run <code class="language-plaintext highlighter-rouge">python -m unittest mork_compilers.test_mork_compilers -v</code> in a real Python 3.14 environment (the repository floor since 2026-09-23); fix anything that fails</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td><strong>A2</strong></td>
+      <td>Parse <code class="language-plaintext highlighter-rouge">ontology/mork/spec/Executable.ttl</code> with Eligibility imported, under plain <code class="language-plaintext highlighter-rouge">rdflib</code>/<code class="language-plaintext highlighter-rouge">riot</code>-equivalent parsing first (syntax), then under an OWL DL reasoner for consistency (semantics) — see Part B for which reasoner</td>
+      <td>Part B’s reasoner choice (for the DL-consistency half only; plain parsing has no dependency)</td>
+    </tr>
+    <tr>
+      <td><strong>A3</strong></td>
+      <td>Execute <code class="language-plaintext highlighter-rouge">sparql_backend.compile_query_template()</code>’s generated SPARQL against <code class="language-plaintext highlighter-rouge">ontology/eligibility/examples/interval-containment.ttl</code> using <code class="language-plaintext highlighter-rouge">rdflib</code>’s own SPARQL engine (already a normal dependency of <code class="language-plaintext highlighter-rouge">tools/mork_compilers</code>, no new dependency of any kind)</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td><strong>A4</strong></td>
+      <td>Validate generated SHACL with <code class="language-plaintext highlighter-rouge">pyshacl</code> (already precedented as a <code class="language-plaintext highlighter-rouge">test</code>-extra dependency in <code class="language-plaintext highlighter-rouge">tools/persistence</code>, pure Python, no licensing or JVM concern) against two new fixtures this slice authors: a missing-candidate case and an out-of-range-candidate case</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td><strong>A5</strong></td>
+      <td>Load generated SWRL into the chosen reasoner (Part B) and confirm inference fires for a positive case and correctly does <em>not</em> fire for a case outside the required interval</td>
+      <td>Part B complete</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Each slice follows the mandatory shape from copilot-instructions: code (or in A1–A4’s case, fixtures and a fixed/confirmed test run), a Validation Pack at <code class="language-plaintext highlighter-rouge">docs/developer/validation/eligibility-compiler-&lt;slice&gt;.md</code>, a traceability update in <code class="language-plaintext highlighter-rouge">docs/developer/INDEX.md</code>, and a doc delta to <a href="/developer/status/eligibility-compiler.html">eligibility-compiler.md</a> recording the result.</p>
+
+<p>A2’s OWL-reasoner half and A5 do not start until Part B’s shared harness exists and its engine choice is ratified.</p>
+
+<h2 id="part-b--test-only-reasoningrules-engine-dependency-strategy">Part B — Test-only reasoning/rules-engine dependency strategy</h2>
+
+<h3 id="b1-constraints">B.1 Constraints</h3>
+
+<ol>
+  <li>No product package (<code class="language-plaintext highlighter-rouge">tools/mork_compilers</code>, any future compiler family, any <code class="language-plaintext highlighter-rouge">platform/*</code> module) may declare a runtime or default dependency on an OWL/SWRL reasoner or a rules engine.</li>
+  <li>The dependency must be <strong>shared</strong>, not re-solved per compiler family. The user has flagged that other units will need reasoning/rules engines for testing — building a second bespoke Pellet-wrangling harness the next time this comes up is the failure mode this part exists to prevent.</li>
+  <li>It must be usable from Python test suites (<code class="language-plaintext highlighter-rouge">tools/mork_compilers</code> today) and from Java test suites (the platform epic’s <code class="language-plaintext highlighter-rouge">platform/reasoning-validation</code>, <code class="language-plaintext highlighter-rouge">P2.2.5</code>’s SHACL-engine-equivalence work, tomorrow) without forcing either ecosystem to adopt the other’s package manager.</li>
+  <li>It must respect “own dependency authority per ecosystem” (copilot-instructions: “Maven, Yarn 4, Python project tooling… remain their own dependency authorities”) — so the shared piece cannot be a Python package that vendors a JVM under the hood as its only integration method, which is what libraries like <code class="language-plaintext highlighter-rouge">owlready2</code> do (they bundle or silently fetch a Java reasoner at import time, outside Maven’s or <code class="language-plaintext highlighter-rouge">mise</code>’s visibility).</li>
+</ol>
+
+<h3 id="b2-why-this-needs-an-adr-not-just-a-plan-decision">B.2 Why this needs an ADR, not just a plan decision</h3>
+
+<p>This establishes a repeatable pattern for how the repository isolates any future test-only dependency with licensing, weight, or ecosystem-crossing concerns, not just this one. That is exactly the kind of decision the Design First rule reserves for an ADR. <strong>ADR-A83 (proposed, drafted as Slice B1 below)</strong> — working title: “Test-only reasoning and rules engine isolation.” A81 is free (A45–A76 are reserved by the platform epic’s own decision slate per its Part 4 P0.1, A77–A80 are filed).</p>
+
+<h3 id="b3-design">B.3 Design</h3>
+
+<p><strong>A new Maven module, <code class="language-plaintext highlighter-rouge">platform/reasoning-testkit</code>, Java 25, <code class="language-plaintext highlighter-rouge">&lt;scope&gt;test&lt;/scope&gt;</code>-only dependencies.</strong> JVM-native tools belong with JVM tooling — Pellet (or its actively maintained fork, see B.4) and Drools are both Java libraries; wrapping them in a thin Java module, rather than reaching for them through a Python-side JVM bridge, keeps the engine versions pinned in exactly one <code class="language-plaintext highlighter-rouge">pom.xml</code>, keeps them declared with Maven’s own <code class="language-plaintext highlighter-rouge">&lt;scope&gt;test&lt;/scope&gt;</code> (so <code class="language-plaintext highlighter-rouge">mvn package</code> for any real artifact never pulls them in), and gives Java test suites (present and future) a direct, ordinary test-scope dependency with no extra indirection.</p>
+
+<p>The module ships two things:</p>
+
+<ol>
+  <li><strong>A library JAR</strong> any Java test suite can add as a <code class="language-plaintext highlighter-rouge">&lt;scope&gt;test&lt;/scope&gt;</code> Maven dependency directly — e.g. a future <code class="language-plaintext highlighter-rouge">platform/reasoning-validation</code> (C-13, per the platform epic) or <code class="language-plaintext highlighter-rouge">platform/reasoning-testkit</code>’s own self-tests.</li>
+  <li><strong>A packaged CLI</strong> (<code class="language-plaintext highlighter-rouge">reasoning-testkit infer --ontology &lt;ttl&gt; [--rules &lt;swrl-or-drl&gt;] --format json</code>, <code class="language-plaintext highlighter-rouge">reasoning-testkit shacl-check ...</code>) built as a shaded/executable JAR, so any <em>non-JVM</em> test suite — <code class="language-plaintext highlighter-rouge">tools/mork_compilers</code> today — invokes it as a subprocess and parses JSON off stdout. This is the only integration path Python needs: no Python package ever declares a dependency on Pellet, Drools, or a JVM bridge library. It only needs a JVM on the machine (already true — this repository’s own <code class="language-plaintext highlighter-rouge">mise.toml</code> already pins <code class="language-plaintext highlighter-rouge">java = "21"</code>) and the built CLI jar.</li>
+</ol>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>platform/reasoning-testkit/
+├── README.md              # states plainly: test-only, never a runtime dependency, see ADR-A83
+├── pom.xml                 # Pellet/Openllet + Drools declared &lt;scope&gt;test&lt;/scope&gt;, nowhere else
+└── src/
+    ├── main/java/.../      # the CLI + library surface itself has NO dependency on the reasoners —
+    │                       # see B.5, the reasoners are wired in as pluggable engine adapters so the
+    │                       # CLI's own compile-scope stays clean and only its test/runtime classpath,
+    │                       # assembled at package time for the shaded CLI jar, pulls them in
+    └── test/java/.../      # the module's own self-tests, which DO exercise real Pellet/Drools calls
+</code></pre></div></div>
+
+<h3 id="b4-engine-choice-and-licence-compatibility-researched-2026-09-23-confirm-at-the-adr-a83-slice">B.4 Engine choice and licence compatibility (researched 2026-09-23, confirm at the ADR-A83 slice)</h3>
+
+<p>Per “Pause for Architectural Guidance,” the specific engine choice is still a decision for the ADR-A83 slice, not something this plan pre-empts — but the licence question below was resolved by checking primary sources (Openllet’s own <code class="language-plaintext highlighter-rouge">LICENSE.txt</code>, its README, and its published Maven Central POM metadata), not assumed, since an assumption here was wrong in an earlier draft of this plan.</p>
+
+<ul>
+  <li><strong>Openllet’s actual licence is AGPL-3.0</strong>, with a commercial-alternative option, inherited unchanged from Pellet — Openllet is a maintenance fork of Pellet, not a relicense, and carries the identical dual-licence text forward. An earlier draft of this plan stated Openllet was “Apache-2.0-licensed”; that was incorrect and is corrected here.</li>
+  <li><strong>AGPL-3.0 is not directly compatible with MPL-2.0 for a combined/distributed work.</strong> MPL-2.0 §3.3’s secondary-licence mechanism reaches GPL/LGPL/AGPL only where the licensor marks a file “Not Incompatible With Secondary Licenses,” and that does not change what AGPL itself requires once code is linked or distributed together — including AGPL §13’s network-use clause, which extends the copyleft obligation to running the program as a network-accessible service, not just to distributing it.</li>
+  <li><strong>The isolation design in B.3 is what makes Openllet usable here, not incidental to it.</strong> Because Openllet is confined to <code class="language-plaintext highlighter-rouge">platform/reasoning-testkit</code>, declared in a scope no other module may reference, and reached by every other component (Python or Java) only through an out-of-process CLI subprocess — never linked, compiled against, or bundled into any released artifact — no combined or derivative work is created, and the subprocess/pipe boundary is the paradigm case the FSF’s own GPL-family compatibility guidance treats as separate programs. AGPL §13 does not trigger, because nothing here runs Openllet as a network-facing service. <strong>Conclusion: Openllet is usable, conditional on the B.5 guardrail actually being enforced</strong> — the licence leaves no margin for a module quietly acquiring a direct dependency on it later.</li>
+  <li><strong>Lower-risk alternative for the OWL/SWRL half: HermiT (LGPL-3.0).</strong> LGPL is materially weaker copyleft than AGPL — it permits linking from differently-licensed code without extending copyleft to the caller, so HermiT would not strictly need the subprocess-isolation boundary at all. HermiT supports <strong>DL-safe SWRL rules only</strong>, not the full SWRL language. Before choosing between Openllet and HermiT, confirm whether ADR-A24’s positive-only, monotonic SWRL subset (the only subset the eligibility compiler ever emits) is DL-safe — if it is, HermiT removes the AGPL question entirely for A2/A5; if it is not, Openllet under the B.3 isolation design is the correct choice.</li>
+  <li><strong>Drools is Apache-2.0.</strong> No compatibility question of any kind. The question of whether Drools is needed at all (a general rules engine, not an OWL/SWRL reasoner) is unchanged from the original assessment: defer its adapter until a real second consumer exists, per YAGNI.</li>
+</ul>
+
+<h3 id="b5-guardrail">B.5 Guardrail</h3>
+
+<p><strong>New rule, enforced the same way the platform epic enforces its G-series guardrails:</strong> no <code class="language-plaintext highlighter-rouge">pom.xml</code> outside <code class="language-plaintext highlighter-rouge">platform/reasoning-testkit</code> itself may declare a dependency on it in any scope other than <code class="language-plaintext highlighter-rouge">test</code>, and no <code class="language-plaintext highlighter-rouge">pyproject.toml</code> anywhere may declare a dependency on an OWL/SWRL/rules-engine package directly (Python test suites reach <code class="language-plaintext highlighter-rouge">reasoning-testkit</code> only through its CLI subprocess, per B.3, so this is enforceable by grep, not just convention). A CI check (Slice B2, below) makes this real rather than aspirational, following the same “positive fixture / violating fixture, build fails” pattern copilot-instructions already mandates for guardrail slices.</p>
+
+<h3 id="b6-slices">B.6 Slices</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Slice</th>
+      <th>Scope</th>
+      <th>Depends on</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>B1</strong></td>
+      <td>Draft and ratify ADR-A83 (engine choice, licence check, isolation pattern). Validation focus: is the isolation boundary (test-scope Maven + subprocess CLI for non-JVM consumers) actually sufficient, or does some future consumer need direct in-process access this design does not offer?</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td><strong>B2</strong></td>
+      <td><code class="language-plaintext highlighter-rouge">platform/reasoning-testkit</code> module skeleton: <code class="language-plaintext highlighter-rouge">pom.xml</code> with the ratified engine(s) at <code class="language-plaintext highlighter-rouge">&lt;scope&gt;test&lt;/scope&gt;</code>, CLI entry point, no-op self-test, plus the guardrail CI check (grep-based: no other <code class="language-plaintext highlighter-rouge">pom.xml</code>/<code class="language-plaintext highlighter-rouge">pyproject.toml</code> may reference the chosen engine artifacts)</td>
+      <td>B1</td>
+    </tr>
+    <tr>
+      <td><strong>B3</strong></td>
+      <td>Wire the OWL/SWRL engine adapter behind the CLI’s <code class="language-plaintext highlighter-rouge">infer</code> command; self-tests using a trivial fixture ontology, not yet the eligibility compiler’s own output</td>
+      <td>B2</td>
+    </tr>
+    <tr>
+      <td><strong>B4</strong></td>
+      <td><code class="language-plaintext highlighter-rouge">tools/mork_compilers</code> test suite calls the CLI as a subprocess for A2 (OWL-reasoner consistency half) and A5 (SWRL inference); document the subprocess-invocation pattern in <code class="language-plaintext highlighter-rouge">tools/mork_compilers/README.md</code> so the next Python package needing this copies a documented pattern, not a bespoke one</td>
+      <td>B3, A1–A4</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="documentation-obligations">Documentation obligations</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Document</th>
+      <th>Change</th>
+      <th>Producing slice</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">docs/architecture/decisions/ADR-A83-*.md</code></td>
+      <td>New</td>
+      <td>B1</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">platform/reasoning-testkit/README.md</code></td>
+      <td>New — states test-only status prominently, per B.5</td>
+      <td>B2</td>
+    </tr>
+    <tr>
+      <td>Root <code class="language-plaintext highlighter-rouge">README.md</code></td>
+      <td>New row/mention for <code class="language-plaintext highlighter-rouge">platform/reasoning-testkit</code> under whatever module-tree listing already documents <code class="language-plaintext highlighter-rouge">platform/*</code>, explicit “test-only, not a runtime dependency” note</td>
+      <td>B2</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">tools/mork_compilers/README.md</code></td>
+      <td>New — did not exist as a documented convention before; add install/test commands (<code class="language-plaintext highlighter-rouge">mise run bootstrap:mork-compilers</code>, <code class="language-plaintext highlighter-rouge">mise run check:mork-compilers</code> — both proposed new <code class="language-plaintext highlighter-rouge">mise.toml</code> tasks, mirroring the <code class="language-plaintext highlighter-rouge">tools/persistence</code> precedent) and the subprocess-invocation pattern from B4</td>
+      <td>B4</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">mise.toml</code></td>
+      <td>New tasks: <code class="language-plaintext highlighter-rouge">bootstrap:reasoning-testkit</code> (builds the shaded CLI jar), <code class="language-plaintext highlighter-rouge">check:reasoning-testkit</code> (module self-tests), <code class="language-plaintext highlighter-rouge">bootstrap:mork-compilers</code> / <code class="language-plaintext highlighter-rouge">check:mork-compilers</code> (did not exist before this plan)</td>
+      <td>B2, B4</td>
+    </tr>
+    <tr>
+      <td><a href="/developer/status/eligibility-compiler.html">eligibility-compiler.md</a> status record</td>
+      <td>Updated per-slice as A1–A5 and B1–B4 land, per the Doc Delta rule (edited in the same slice, not deferred)</td>
+      <td>Each slice</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">docs/developer/INDEX.md</code></td>
+      <td>Traceability rows for each slice; unit 4’s entry updated as Part A/B complete</td>
+      <td>Each slice, batch-updated now for the plan’s existence (see below)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="test-taxonomy">Test taxonomy</h2>
+
+<p>Per copilot-instructions’ L0–L8 table: A1 (L1, unit), A2 syntax half (L1), A2 semantic half and A5 (<strong>L4</strong>, component integration with real infrastructure — the reasoner is exactly the kind of “real infrastructure” Testcontainers-style tests already model elsewhere in this repository, so these run in CI, not on every local fast pass), A3 (L1, <code class="language-plaintext highlighter-rouge">rdflib</code> in-process), A4 (L1, <code class="language-plaintext highlighter-rouge">pyshacl</code> in-process), B2’s guardrail check (L1, lint-style). None of Part B’s slices are L0 build-smoke only — the module’s own self-tests genuinely exercise the chosen reasoner.</p>
+
+<h2 id="phase-gate--acceptance">Phase gate / acceptance</h2>
+
+<p>This unit closes when: all of A1–A5 pass with their VPs signed off; ADR-A83 is ratified; the guardrail check (B2) is green and has a demonstrated violating fixture that fails, per copilot-instructions’ adversarial-probe step; <a href="/developer/status/eligibility-compiler.html">eligibility-compiler.md</a>’s state line changes from “awaiting validation” to a dated, evidenced “Verified.”</p>
+
+<h2 id="progress-2026-09-25">Progress (2026-09-25)</h2>
+
+<p>B1 to B4 are done. ADR-A83 is Accepted with HermiT as the first engine, and
+Drools and Openllet deferred. A2’s reasoner half passes after the Mork repairs of
+ADR-A97. A5 is verified for the builtin-free rules
+(<a href="/developer/validation/eligibility-compiler-part-b.html">VP</a>). Interval rules wait on
+an Openllet adapter. The CLI commands differ from B.3’s sketch: see the
+<a href="../../../platform/reasoning-testkit/README.md">module README</a>.</p>
+
+<h2 id="open-questions-requiring-a-decision-summary">Open questions requiring a decision (summary)</h2>
+
+<ol>
+  <li><del>Openllet vs. HermiT</del>: HermiT first (ADR-A83).</li>
+  <li><del>Drools now or later</del>: deferred (ADR-A83).</li>
+  <li>If Openllet is chosen: confirm the B.5 guardrail is treated as load-bearing, not advisory, given AGPL leaves no margin for a module quietly acquiring a direct dependency later (B.4).</li>
+</ol>
+
+<h2 id="next-steps">Next steps</h2>
+
+<ol>
+  <li>The maintainer resolves the three open questions above, or delegates that resolution to the ADR-A83 slice (B1) itself.</li>
+  <li>Begin A1–A4 in parallel with B1 — none of the four depend on Part B.</li>
+  <li>B2–B4 and A2/A5 follow once B1 is ratified.</li>
+</ol>

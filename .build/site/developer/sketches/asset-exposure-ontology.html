@@ -1,0 +1,1300 @@
+<h1 id="asset-exposure-ontology-aeo-design-sketch">Asset Exposure Ontology (<code class="language-plaintext highlighter-rouge">aeo:</code>): Design Sketch</h1>
+
+<p>Version 0.2, draft for review. A sketch of the asset exposure ontology for a reference build of
+LATTICE’s applied insurance domain (<code class="language-plaintext highlighter-rouge">lattice/ontology/applied/insurance</code>). It describes what an
+insured owns, uses or depends on, where it is, what it is worth, how it is built and protected,
+what it is exposed to, what has happened to it, and what cover its owners require. It maps every
+construct onto LATTICE, and it is the main consumer of the
+<a href="/developer/sketches/peril-vocabulary.html">reference peril vocabulary</a> outside the contract. The
+<a href="/developer/sketches/peril-structure-whitepaper.html">whitepaper</a> covers the structural questions the two share.</p>
+
+<p>Citations of <code class="language-plaintext highlighter-rouge">design-spec</code> and of codes AP, DP, D and I refer to Open CBAA’s <a href="https://github.com/nebularis/open-cbaa/blob/main/docs/design/design-spec.md">design
+specification</a> and
+<a href="https://github.com/nebularis/open-cbaa/blob/main/docs/design/lattice-integration.md">LATTICE integration
+specification</a>.
+Where this sketch and the <a href="../plans/applied-insurance-reference.md">applied insurance reference
+epic</a> or its ADRs (A-98 to A-102) differ, they take
+precedence.</p>
+
+<hr />
+
+<h2 id="1-purpose-and-position">1. Purpose and Position</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Question</th>
+      <th>Answer</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>What it describes</td>
+      <td>the demand side: parties, assets, locations, interests, values, hazard attributes, dependencies, modelled peril metrics, loss history and coverage requirements</td>
+    </tr>
+    <tr>
+      <td>What it does not describe</td>
+      <td>contracts, coverage grants, layers, terms, claims handling, catastrophe model internals. It supplies the operands those need and never computes cover, gaps or eligibility itself</td>
+    </tr>
+    <tr>
+      <td>How it relates to submission</td>
+      <td><code class="language-plaintext highlighter-rouge">submission/</code> packages an exposure set version, requirements and existing cover for one placement, with its own lifecycle. The facts themselves are defined here, independent of any one submission</td>
+    </tr>
+    <tr>
+      <td>Where it lives</td>
+      <td><code class="language-plaintext highlighter-rouge">ontology/applied/insurance/exposure/</code>, one of the applied insurance domain’s sub-folders (§3), in the applied layer. Nothing here is substrate, so LATTICE’s clean-room rule (ADR-A-C2) does not constrain its naming, but any substrate change it motivates must follow that rule (§13)</td>
+    </tr>
+    <tr>
+      <td>Who consumes it</td>
+      <td>the applied contract module (schedules, scopes, percentage deductibles), catastrophe analytics, placement and gap analysis, and Open CBAA, whose <code class="language-plaintext highlighter-rouge">rsk:Risk</code> is an exposure unit seen from a binding authority (§11)</td>
+    </tr>
+    <tr>
+      <td>What it is built on</td>
+      <td>Foundation (identity, versions, valid time, evidence, derived artefacts), Vocabulary (every classification), Quantification (every amount, rate, duration and intensity), Party (actors, roles, occupancies), Instrument (obligations to maintain insurance), Eligibility (requirement scopes), MORK (ingestion mappings), Persistence (boundaries, privacy)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="2-principles">2. Principles</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Principle</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>A1</td>
+      <td><strong>Facts about the world, not about cover.</strong> A valuation is not a limit, a flood zone is not a flood sub-limit, exposure to a peril is not cover for it</td>
+    </tr>
+    <tr>
+      <td>A2</td>
+      <td><strong>LATTICE first.</strong> No AEO class re-invents identity, versioning, validity, evidence, quantities or roles. An AEO class exists only where insurance needs a structure LATTICE does not have</td>
+    </tr>
+    <tr>
+      <td>A3</td>
+      <td><strong>Thin T-Box.</strong> A class only where instances need different properties or constraints (DP2). Everything that differs only by classification is a concept under a scheme contract. Profile questions are typed assessments, not classes (§5.8)</td>
+    </tr>
+    <tr>
+      <td>A4</td>
+      <td><strong>Two times.</strong> Valid time (when a fact holds in the world) is <code class="language-plaintext highlighter-rouge">fnd:TemporalScope</code>. Record time (when it was known) is <code class="language-plaintext highlighter-rouge">fnd:recordedAt</code> on evidence and the persistence layer’s transaction time</td>
+    </tr>
+    <tr>
+      <td>A5</td>
+      <td><strong>Derived is not asserted.</strong> Normalised currency values, aggregated TIV, zone memberships computed from coordinates and modelled metrics are <code class="language-plaintext highlighter-rouge">fnd:DerivedArtefact</code>s with a derivation run, never plain facts</td>
+    </tr>
+    <tr>
+      <td>A6</td>
+      <td><strong>Market-neutral core, market profiles.</strong> London and US framings differ in what must be present and how it is classified (§10). The core is shared, and each market adds scheme bindings and shapes, never classes</td>
+    </tr>
+    <tr>
+      <td>A7</td>
+      <td><strong>Exposure units are the case.</strong> Eligibility, authority and gap analysis evaluate single-valued paths from a case (ADR-A90 option B). The ontology offers exposure units shaped for that (§5.11)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="3-namespaces-layout-and-versions">3. Namespaces, Layout and Versions</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Prefix</th>
+      <th>IRI</th>
+      <th>Content</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:</code></td>
+      <td><code class="language-plaintext highlighter-rouge">https://www.nebularis.org/neuro-semantic/insurance/exposure#</code></td>
+      <td>T-Box</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo-voc:</code></td>
+      <td><code class="language-plaintext highlighter-rouge">https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#</code></td>
+      <td>V1 individuals, scheme contracts, value spaces</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">geo:</code></td>
+      <td><code class="language-plaintext highlighter-rouge">http://www.opengis.net/ont/geosparql#</code></td>
+      <td>optional alignment for geometry</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ontology/applied/
+    capacity/           cross-domain: finite resources and their allocation
+    classification/     cross-domain: territory, asset class and industry contracts (§7)
+    insurance/
+        common/         insurance scheme contracts, liability role types, loss event (§7)
+        peril/          the reference peril vocabulary (peril vocabulary §4)
+        exposure/       this module
+            spec/exposure.ttl           owl:versionIRI …/insurance/exposure/0.1.0
+            vocab/exposure-vocab.ttl    owl:versionIRI …/insurance/exposure-vocab/0.1.0
+            shapes/structural.ttl, constraints.ttl, profiles/*.ttl, .version
+            examples/
+        submission/     placement packages over exposure (§1)
+        claims/         claims, loss cause chains, claimant roles
+        contract/       coverage, layers, term parameters (term parameters §9), deferred
+</code></pre></div></div>
+
+<p>The applied insurance directory today holds one module whose shapes and vocab sit in shared
+<code class="language-plaintext highlighter-rouge">shapes/</code> and <code class="language-plaintext highlighter-rouge">vocab/</code> directories. Under LATTICE’s versioning policy (ADR-A86 and its addendum)
+a shapes directory is versioned by its <code class="language-plaintext highlighter-rouge">.version</code> file, so two modules sharing one directory
+would bump each other. Each sub-folder above is therefore a module with its own spec, vocab,
+shapes and <code class="language-plaintext highlighter-rouge">.version</code>. A module sits at the lowest level of sharing that covers its users:
+cross-domain modules beside the domains, insurance-only shared content in <code class="language-plaintext highlighter-rouge">insurance/common/</code>.
+Scheme structural capabilities are part of Vocabulary, not an applied module (ADR-A100).
+Dependencies run one way: <code class="language-plaintext highlighter-rouge">classification/</code> on the substrate only, <code class="language-plaintext highlighter-rouge">insurance/common/</code> on it and
+the substrate, <code class="language-plaintext highlighter-rouge">peril/</code> on <code class="language-plaintext highlighter-rouge">common/</code>, <code class="language-plaintext highlighter-rouge">exposure/</code> on <code class="language-plaintext highlighter-rouge">common/</code> and <code class="language-plaintext highlighter-rouge">peril/</code>,
+<code class="language-plaintext highlighter-rouge">submission/</code> on <code class="language-plaintext highlighter-rouge">exposure/</code>, <code class="language-plaintext highlighter-rouge">claims/</code> on <code class="language-plaintext highlighter-rouge">exposure/</code> and <code class="language-plaintext highlighter-rouge">contract/</code>.</p>
+
+<h2 id="4-dependencies">4. Dependencies</h2>
+
+<pre><code class="language-mermaid">flowchart BT
+    fnd[Foundation] --- voc[Vocabulary] --- qnt[Quantification]
+    pty[Party] --- ins[Instrument] --- elg[Eligibility]
+    common["insurance/common&lt;br/&gt;shared scheme contracts"] --&gt; voc
+    aeo["insurance/exposure (aeo:)"] --&gt; fnd &amp; voc &amp; qnt &amp; pty &amp; ins &amp; elg &amp; common
+    ctr["insurance/contract (ctr:)"] --&gt; common
+    ctr -. "references exposure units, never imported by aeo" .-&gt; aeo
+    cbaa["Open CBAA rsk:, agr:"] -. "exposure units as cases (§11)" .-&gt; aeo
+    peril["peril editions (Open CBAA reference or market)"] -. "bound by scheme contract, not imported" .-&gt; common
+</code></pre>
+
+<p><code class="language-plaintext highlighter-rouge">aeo:</code> imports the LATTICE layers it uses by exact version IRI, each explicitly (layers import only
+Foundation). It never imports the contract module: links from contracts to exposure are the
+contract module’s properties. Peril, territory and asset class editions are bound, not imported
+(DP8).</p>
+
+<h2 id="5-core-model">5. Core Model</h2>
+
+<pre><code class="language-mermaid">flowchart LR
+    ES["aeo:ExposureSet&lt;br/&gt;fnd:Version"] --&gt;|aeo:hasLocation| L["aeo:Location"]
+    ES --&gt;|aeo:hasAsset| A["aeo:Asset"]
+    A --&gt;|aeo:locatedAt| L
+    A --&gt;|aeo:partOf| A
+    I["aeo:Interest"] --&gt;|aeo:interestIn| A
+    I --&gt;|aeo:interestHolder| RO["pty:RoleOccupancy"]
+    V["aeo:Valuation"] --&gt;|aeo:valueOf| A
+    V --&gt;|aeo:amount| Q["qnt:Quantity"]
+    AS["aeo:Assessment"] --&gt;|aeo:assesses| A
+    AS --&gt;|aeo:assesses| L
+    AS --&gt;|aeo:hasAttribute| AV["aeo:AttributeValue"]
+    L --&gt;|aeo:zoneDesignation| Z["aeo:ZoneDesignation"]
+    D["aeo:Dependency"] --&gt;|aeo:dependent| L
+    D --&gt;|aeo:provider| L
+    PM["aeo:PerilMetric&lt;br/&gt;fnd:DerivedArtefact"] --&gt;|aeo:perilScope| P["peril concept"]
+    PM --&gt;|aeo:metricSubject| ES
+    LR["aeo:LossRecord"] --&gt;|aeo:lossAt| L
+    R["aeo:CoverageRequirement"] --&gt;|aeo:requirementScope| E["elg:AdmissionProfile"]
+    R --&gt;|aeo:arisesFrom| OB["ins:Obligation"]
+    EU["aeo:ExposureUnit"] --&gt;|aeo:unitLocation| L
+</code></pre>
+
+<h3 id="51-parties-roles-and-control">5.1 Parties, roles and control</h3>
+
+<p>The insured is a <code class="language-plaintext highlighter-rouge">pty:Actor</code>. AEO adds <code class="language-plaintext highlighter-rouge">aeo:LegalEntity ⊑ pty:Actor</code> for organisations with
+identifiers (<code class="language-plaintext highlighter-rouge">aeo:identifier</code> to an <code class="language-plaintext highlighter-rouge">aeo:Identifier</code> node carrying scheme and value, since LEIs,
+registration and tax numbers are several schemes) and uses <code class="language-plaintext highlighter-rouge">pty:Actor</code> directly for persons.</p>
+
+<p>Roles in the insured’s programme are <code class="language-plaintext highlighter-rouge">pty:Role</code> individuals in <code class="language-plaintext highlighter-rouge">aeo-voc:</code> (named insured, first
+named insured, additional insured, loss payee, mortgagee, lessor, bailor), filled by
+<code class="language-plaintext highlighter-rouge">pty:RoleOccupancy</code>s. An occupancy is time-scoped and evidenced by Party, which is what an
+additional-insured or mortgagee clause needs. Parties who might claim against the insured are
+not named here. They are described as populations (§5.15).</p>
+
+<p>Control between legal entities is <code class="language-plaintext highlighter-rouge">aeo:ControlRelation ⊑ fnd:TemporallyScoped ⊓ fnd:Evidenced</code>,
+with exactly one <code class="language-plaintext highlighter-rouge">aeo:controller</code> and one <code class="language-plaintext highlighter-rouge">aeo:controlled</code>, a <code class="language-plaintext highlighter-rouge">aeo:controlKind</code> (subsidiary,
+affiliate, joint venture, branch, franchise) and an optional <code class="language-plaintext highlighter-rouge">aeo:controlShare</code> (a
+<code class="language-plaintext highlighter-rouge">qnt:Quantity</code> on the proportion space). Reified because ownership has a share and a period. A
+transitive shortcut (<code class="language-plaintext highlighter-rouge">aeo:withinGroupOf</code>) is generated as a derived artefact for consolidated
+queries, never asserted, and a shape rejects cycles.</p>
+
+<h3 id="52-exposure-set">5.2 Exposure set</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>aeo:ExposureSet ⊑ fnd:Version ⊓ fnd:Governable ⊓ fnd:TemporallyScoped ⊓ fnd:Evidenced
+               ⊓ =1 fnd:hasIdentity.aeo:ExposureIdentity
+               ⊓ =1 aeo:reportingUnit.qnt:Unit
+</code></pre></div></div>
+
+<p>A versioned snapshot of one insured’s schedule. The identity follows the schedule across
+renewals, each version is a schedule at an as-of date (its temporal scope starts there), and its
+governance state is the record’s (Draft while being assembled, Active when submitted, Superseded
+by the next). Members are linked by <code class="language-plaintext highlighter-rouge">aeo:hasLocation</code>, <code class="language-plaintext highlighter-rouge">aeo:hasAsset</code>, <code class="language-plaintext highlighter-rouge">aeo:hasInterest</code>,
+<code class="language-plaintext highlighter-rouge">aeo:hasValuation</code>, <code class="language-plaintext highlighter-rouge">aeo:hasAssessment</code>, <code class="language-plaintext highlighter-rouge">aeo:hasDependency</code>, <code class="language-plaintext highlighter-rouge">aeo:hasPerilMetric</code>,
+<code class="language-plaintext highlighter-rouge">aeo:hasLossRecord</code>, <code class="language-plaintext highlighter-rouge">aeo:hasRequirement</code> and <code class="language-plaintext highlighter-rouge">aeo:hasExistingCover</code>, all inverse functional, so
+a member node belongs to one version. Unchanged locations and assets are shared across versions
+by identity (§5.3), not by node.</p>
+
+<p>Persistence: each exposure set version is an aggregate boundary (<code class="language-plaintext highlighter-rouge">dal:AggregateBoundaryProfile</code>,
+one named graph per version), written by compare-and-set, as Open CBAA does for agreement
+versions.</p>
+
+<h3 id="53-location">5.3 Location</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>aeo:Location ⊑ fnd:Version ⊓ =1 fnd:hasIdentity.aeo:LocationIdentity
+</code></pre></div></div>
+
+<p>A place where exposure sits: a site, a building footprint, a pipeline segment, a port. A version
+per change of address or geometry, one identity across schedules, so a location’s loss history
+and zone designations follow it.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Property</th>
+      <th>Range</th>
+      <th>Card.</th>
+      <th>Note</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:address</code></td>
+      <td><code class="language-plaintext highlighter-rouge">aeo:Address</code></td>
+      <td>0..1</td>
+      <td>structured components, a node so it can be versioned and geocoded as a unit</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:geometry</code></td>
+      <td><code class="language-plaintext highlighter-rouge">geo:Geometry</code></td>
+      <td>0..1</td>
+      <td>point, footprint or line, via GeoSPARQL <code class="language-plaintext highlighter-rouge">geo:asWKT</code>. Optional alignment, so the core does not depend on GeoSPARQL</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:geoPrecision</code></td>
+      <td>concept</td>
+      <td>0..1</td>
+      <td>rooftop, parcel, street, postcode, city, zone centroid. Scheme contract <code class="language-plaintext highlighter-rouge">aeo-voc:GeoPrecisionContract</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:territory</code></td>
+      <td>concept</td>
+      <td>1..*</td>
+      <td>the territory concepts the location falls in, at the finest level known. Scheme contract shared with Open CBAA’s territory contract (§7)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:zoneDesignation</code></td>
+      <td><code class="language-plaintext highlighter-rouge">aeo:ZoneDesignation</code></td>
+      <td>0..*</td>
+      <td>regulatory and model hazard zones (§5.4)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:poolParticipation</code></td>
+      <td><code class="language-plaintext highlighter-rouge">aeo:PoolParticipation</code></td>
+      <td>0..*</td>
+      <td>participation in a risk pool or residual mechanism for a peril (§5.4)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:occupancyState</code></td>
+      <td>concept</td>
+      <td>0..1</td>
+      <td>occupied, partly vacant, vacant, under construction, with a temporal scope on the assessment that records it</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="54-zones-and-pools">5.4 Zones and pools</h3>
+
+<p>A hazard zone is not a territory and not a peril. A flood zone from a national map, a seismic
+design category, a wind-borne debris region or a wildfire interface class is a designation of a
+location under a published zoning scheme:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>aeo:ZoneDesignation ⊑ fnd:Evidenced ⊓ fnd:TemporallyScoped
+    ⊓ =1 aeo:zone.skos:Concept ⊓ =1 aeo:designationSource.skos:Concept
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">aeo:zone</code> is bound per jurisdiction by a scheme contract with territory-scoped bindings (one
+flood zone scheme per national programme). The designation’s temporal scope is the map’s
+effective period, so a map revision does not rewrite history. A designation computed from
+coordinates is a derived artefact of a spatial join, with its derivation run.</p>
+
+<p><code class="language-plaintext highlighter-rouge">aeo:PoolParticipation</code> records that a location’s exposure to a peril is ceded to, or insured by,
+a pool or residual mechanism, with the pool concept (the peril vocabulary’s pool scheme), the
+peril scope and the temporal scope. The CBAA SoUA “applicable pool schemes” row reads it.</p>
+
+<h3 id="55-asset-and-interest">5.5 Asset and interest</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>aeo:Asset ⊑ fnd:Version ⊓ =1 fnd:hasIdentity.aeo:AssetIdentity ⊓ =1 aeo:assetClass.skos:Concept
+          ⊓ ≤1 aeo:locatedAt.aeo:Location
+</code></pre></div></div>
+
+<p>Anything of value exposed to loss: a building, contents, stock, machinery, a vessel, a fleet, a
+crop, a data estate, an income stream (business income is an asset of the income kind, so it
+can have a location, dependencies and values like anything else). <code class="language-plaintext highlighter-rouge">aeo:partOf</code> (asymmetric,
+irreflexive) composes assets: critical equipment in a building, a building in a campus.
+<code class="language-plaintext highlighter-rouge">aeo:locatedAt</code> is functional for fixed assets. Mobile assets have <code class="language-plaintext highlighter-rouge">aeo:Presence</code> nodes
+(location, temporal scope, share of time or value) instead, which a shape enforces by asset
+class.</p>
+
+<p><code class="language-plaintext highlighter-rouge">aeo:assetClass</code> is bound to the insurance asset class scheme, crosswalked to the CBAA
+insurable interest hierarchy (Energy, Events and Intangibles, Fixed Property, Insured Persons,
+Movable Property, Occupations or Industries, Transport, with sub-groups and additional grain).
+The CBAA hierarchy classifies what a policy insures (an insurable interest) and the asset class
+classifies what exists, so the mapping is <code class="language-plaintext highlighter-rouge">skos:broadMatch</code> and <code class="language-plaintext highlighter-rouge">skos:closeMatch</code>, not identity.</p>
+
+<p>An interest is a party’s stake in an asset:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>aeo:Interest ⊑ fnd:TemporallyScoped ⊓ fnd:Evidenced
+    ⊓ =1 aeo:interestHolder.pty:RoleOccupancy ⊓ =1 aeo:interestIn.aeo:Asset
+    ⊓ =1 aeo:interestKind.skos:Concept
+</code></pre></div></div>
+
+<p>Kinds: owner, lessee, lessor, secured lender, bailee or custodian, beneficiary. <code class="language-plaintext highlighter-rouge">aeo:extent</code> is a
+<code class="language-plaintext highlighter-rouge">qnt:Quantity</code> (an allocated principal for a lender, a share for a co-owner). Interests carry
+what US lender covenants turn on (§10) and what “property of others in care, custody or control”
+and “tenants’ improvements” mean, without new asset classes.</p>
+
+<h3 id="56-valuation">5.6 Valuation</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>aeo:Valuation ⊑ fnd:Evidenced ⊓ fnd:TemporallyScoped
+    ⊓ =1 aeo:valueOf.(aeo:Asset ⊔ aeo:Location) ⊓ =1 aeo:valueType.skos:Concept
+    ⊓ =1 aeo:valuationBasis.skos:Concept
+    ⊓ ((=1 aeo:amount.qnt:Quantity) ⊔ (=1 aeo:rate.qnt:Quantity ⊓ =1 aeo:horizon.qnt:Quantity))
+</code></pre></div></div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Property</th>
+      <th>Meaning</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:valueType</code></td>
+      <td>building, contents, stock, machinery, business income (gross profit, revenue, rental), extra expense, other. Bound per market, since breakdowns differ</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:valuationBasis</code></td>
+      <td>the settlement measure: replacement cost, actual cash value, agreed value, market value, functional replacement, reinstatement</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:valuationMethod</code></td>
+      <td>how the figure was obtained: declared, appraised, indexed, modelled, audited. A separate scheme from the basis, since the two vary independently</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:amount</code></td>
+      <td>a money <code class="language-plaintext highlighter-rouge">qnt:Quantity</code> in one currency</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:rate</code> and <code class="language-plaintext highlighter-rouge">aeo:horizon</code></td>
+      <td>for income: a rate on a derived money-per-period space (Quantification derived rates) and the horizon it is stated for. A business income value “for 12 months” and one “for 24 months” are one rate and two horizons, so a requirement for a 24-month indemnity period can be tested against the same data</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Currency is never normalised in place. A value in another currency than the reporting unit is
+converted by a <code class="language-plaintext highlighter-rouge">qnt:Conversion</code> under a <code class="language-plaintext highlighter-rouge">qnt:ConversionContext</code> (the as-of date), and the
+converted figure is a derived artefact. A shape checks that any aggregation the set publishes
+(total TIV) is a derived artefact whose read set covers every contributing valuation.</p>
+
+<h3 id="57-hazard-attributes">5.7 Hazard attributes</h3>
+
+<p>Construction, occupancy, protection and external exposure (COPE) and every peril-specific
+secondary modifier are attribute values:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>aeo:AttributeValue ⊑ =1 aeo:attributeType.skos:Concept
+    ⊓ =1 (aeo:conceptValue ⊔ aeo:quantityValue ⊔ aeo:literalValue)
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">aeo:attributeType</code> is a concept in the attribute type scheme (construction class, year built,
+year of major renovation, storeys, roof geometry, roof covering, opening protection, first-floor
+height, basement, soft storey, sprinkler type and coverage, detection, fire brigade response,
+distance to coast, defensible space, and so on), each with its COPE category as a classification and, for
+quantity-valued types, the <code class="language-plaintext highlighter-rouge">qnt:ValueSpace</code> its values are on. Concept-valued types name the
+scheme contract their values are drawn under (construction class schemes differ by market).</p>
+
+<p>The peril vocabulary’s <code class="language-plaintext highlighter-rouge">prl:relevantAttribute</code> links perils to attribute types. A completeness
+shape reads it: for every peril in an exposure set’s requirement or metric scope, each asset of
+a relevant class should have the relevant attributes, and each missing one is a warning that a
+data request can be generated from.</p>
+
+<h3 id="58-assessments-and-profiles">5.8 Assessments and profiles</h3>
+
+<p>Attribute values are not attached to assets one by one. They come in assessments:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>aeo:Assessment ⊑ fnd:Evidenced ⊓ fnd:TemporallyScoped
+    ⊓ ≥1 aeo:assesses.(aeo:Asset ⊔ aeo:Location ⊔ pty:Actor ⊔ aeo:ExposureSet)
+    ⊓ =1 aeo:assessmentKind.skos:Concept ⊓ ≥1 aeo:hasAttribute.aeo:AttributeValue
+</code></pre></div></div>
+
+<p>An assessment is one source’s account of one subject at one time: a survey report, a schedule
+row, a questionnaire answer set, an engineering inspection, a geocoder run. Profile families
+that carrier questions ask about (construction and protection, cyber posture, business
+continuity, environmental, fleet, compliance, operations and workforce, supply chain) are
+assessment kinds, not classes. Each kind has a shapes file in <code class="language-plaintext highlighter-rouge">shapes/profiles/</code> stating which
+attribute types it requires and allows. A new question family is a new kind, attribute types
+and a shape, with no T-Box change (A3). A kind is promoted to a class only when its instances
+need properties an attribute value cannot carry, which none of the families above do.</p>
+
+<p>Conflicting assessments of one attribute are kept, each with its evidence. Which one a consumer
+uses is a resolution policy (latest, highest precision, surveyed over declared), applied by the
+consumer and recorded as a derived artefact, never by overwriting.</p>
+
+<h3 id="59-dependencies">5.9 Dependencies</h3>
+
+<p>Business interruption and contingent business interruption turn on how locations depend on each
+other and on third parties, which a flat supplier count cannot express:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>aeo:Dependency ⊑ fnd:TemporallyScoped ⊓ fnd:Evidenced
+    ⊓ =1 aeo:dependent.(aeo:Location ⊔ aeo:Asset)
+    ⊓ =1 aeo:provider.(aeo:Location ⊔ aeo:Asset ⊔ pty:Actor)
+    ⊓ =1 aeo:dependencyKind.skos:Concept
+</code></pre></div></div>
+
+<p>Kinds: supply of goods, utility, IT service, logistics, customer. Optional: <code class="language-plaintext highlighter-rouge">aeo:shareAtRisk</code>
+(proportion of the dependent’s output lost without the provider), <code class="language-plaintext highlighter-rouge">aeo:recoveryLeadTime</code>
+(duration to restore or replace, a <code class="language-plaintext highlighter-rouge">qnt:Quantity</code>), <code class="language-plaintext highlighter-rouge">aeo:substitutability</code> (concept: none,
+partial, full) and <code class="language-plaintext highlighter-rouge">aeo:singleSource</code>. Critical equipment is an asset with <code class="language-plaintext highlighter-rouge">aeo:partOf</code> its
+building and a replacement lead time on its assessment. Bottlenecks and maximum foreseeable
+interruption are derived from the graph, as derived artefacts, and are what a 24-month or
+18-month indemnity period requirement is tested against.</p>
+
+<h3 id="510-peril-metrics">5.10 Peril metrics</h3>
+
+<p>A modelled or scored measure of exposure to perils:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>aeo:PerilMetric ⊑ fnd:DerivedArtefact ⊓ fnd:Evidenced
+    ⊓ ≥1 aeo:perilScope.skos:Concept ⊓ =1 aeo:metricSubject.(aeo:ExposureSet ⊔ aeo:Location ⊔ aeo:Asset)
+    ⊓ =1 aeo:metricKind.skos:Concept ⊓ =1 aeo:perspective.skos:Concept ⊓ =1 aeo:metricValue.qnt:Value
+</code></pre></div></div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Property</th>
+      <th>Note</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:perilScope</code></td>
+      <td>one or more cause concepts, or a model grouping. Models report “wind and surge combined”, “surge only” and “inland flood excluding surge” as separate metrics, so the scope is a set, and a shape checks that metrics compared with one another have compatible scopes</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:regionScope</code></td>
+      <td>territory concepts the metric is restricted to (“European windstorm”, “Taiwan earthquake”)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:metricKind</code></td>
+      <td>average annual loss, occurrence exceedance loss, aggregate exceedance loss, tail value at risk, probability of at least k events in a year, hazard score</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:returnPeriod</code> or <code class="language-plaintext highlighter-rouge">aeo:exceedanceProbability</code></td>
+      <td>for exceedance metrics</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:perspective</code></td>
+      <td>ground-up, gross, net</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:modelOption</code></td>
+      <td>secondary uncertainty, demand surge, surge included, event set</td>
+    </tr>
+    <tr>
+      <td>provenance</td>
+      <td>the model and version are the <code class="language-plaintext highlighter-rouge">fnd:DerivationRun</code>’s, the model output file is evidence. Full curves and event tables stay in a catastrophe analytics module, referenced by IRI</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Hazard scores are metrics too (kind hazard score, value an ordinal or a quantity on a declared
+score space), so a vendor’s 1 to 10 and another’s A to F never share a space by accident.</p>
+
+<h3 id="511-exposure-units">5.11 Exposure units</h3>
+
+<p>Eligibility, authority checks and gap analysis evaluate a case with single-valued paths (ADR-A90
+option B, Open CBAA D24). A location has many perils, many values and many assets, so it is a
+poor case. The exposure unit is the case:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>aeo:ExposureUnit ⊑ fnd:DerivedArtefact
+    ⊓ =1 aeo:unitLocation.aeo:Location ⊓ =1 aeo:unitAssetClass.skos:Concept
+    ⊓ =1 aeo:unitPeril.skos:Concept ⊓ ≤1 aeo:unitValue.qnt:Quantity
+</code></pre></div></div>
+
+<p>One unit per location, asset class and peril in scope, with the value exposed. Units are
+generated (a derived artefact, reproducible from the exposure set and the peril edition), so the
+graph never asserts them by hand. Generation is lazy: a check may compute the units it needs from
+the source graph on the fly (route R1, term parameters §5), and only a deployment that profiles
+a need materialises them. The peril is read in the operative scheme of the contract being
+checked, and peril-dependent checks require only the capabilities that scheme’s profile has
+(MORK bridge §3, §6). They are what “flood cover for every property in a special
+flood hazard area with TIV over a threshold” is evaluated against, and what a percentage-of-TIV
+deductible reads its base from. Open CBAA’s <code class="language-plaintext highlighter-rouge">rsk:Risk</code> is the bound counterpart: one location,
+one deemed peril set, one sum insured (§11).</p>
+
+<h3 id="512-loss-history">5.12 Loss history</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>aeo:LossRecord ⊑ fnd:Evidenced ⊓ =1 aeo:lossDate ⊓ ≤1 aeo:lossAt.aeo:Location
+</code></pre></div></div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Property</th>
+      <th>Note</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:hasCause</code></td>
+      <td>one <code class="language-plaintext highlighter-rouge">aeo:LossCause</code> per link of the cause chain (below)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:consequence</code></td>
+      <td>heads of loss (physical damage, business interruption)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:paid</code>, <code class="language-plaintext highlighter-rouge">aeo:reserved</code>, <code class="language-plaintext highlighter-rouge">aeo:incurred</code></td>
+      <td>money quantities in one unit. A shape checks incurred equals paid plus reserved when all three are present</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:lossStatus</code></td>
+      <td>open, closed, reopened, in litigation</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:lossEvent</code></td>
+      <td>an optional shared event node, so losses from one catastrophe group together</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The chain is recorded because London and US causation rules read different elements of it
+(whitepaper §3.8). Each link is a node, so that a check across cause and characteristics reads
+values that belong together:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>aeo:LossCause ⊑ fnd:Evidenced
+    ⊓ =1 aeo:peril.skos:Concept ⊓ =1 aeo:causePosition.skos:Concept
+    ⊓ ≤1 aeo:agency.skos:Concept
+</code></pre></div></div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Property</th>
+      <th>Note</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:peril</code></td>
+      <td>the cause concept of this link, in the operative scheme</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:causePosition</code></td>
+      <td>initiating, intermediate or proximate</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:mechanism</code></td>
+      <td>how this link did harm (fire, inundation). Several are allowed, read by a set reading (ADR-A103)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:agency</code></td>
+      <td>who or what acted in this link</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>An Eligibility profile whose subject class is <code class="language-plaintext highlighter-rouge">aeo:LossCause</code> then evaluates one link at a time
+(peril vocabulary §6.8). Where the source records no agency or mechanism, an effective value is
+filled from the cause concept’s <code class="language-plaintext highlighter-rouge">prl:typicalAgency</code> or <code class="language-plaintext highlighter-rouge">prl:typicalMechanism</code> as a
+<code class="language-plaintext highlighter-rouge">fnd:DerivedArtefact</code>, so a reviewer can see it was defaulted. A drafter’s code that carries no
+typical values leaves the link without one, and a check reading it is Undetermined.</p>
+
+<h3 id="513-coverage-requirements">5.13 Coverage requirements</h3>
+
+<p>Requirements arrive from different sources with different force:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Source kind</th>
+      <th>Example</th>
+      <th>Force</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>risk appetite</td>
+      <td>net loss at 1-in-100 not above 10% of equity</td>
+      <td>internal governance</td>
+    </tr>
+    <tr>
+      <td>lender covenant</td>
+      <td>flood cover for properties in special flood hazard areas, business income for 18 months</td>
+      <td>contractual obligation to a lender</td>
+    </tr>
+    <tr>
+      <td>regulation</td>
+      <td>compulsory classes, natural catastrophe cover where fire cover is given (CBAA M5 5.15.1)</td>
+      <td>statutory</td>
+    </tr>
+    <tr>
+      <td>lease or contract</td>
+      <td>landlord’s insurance clause, additional insured requirement</td>
+      <td>contractual</td>
+    </tr>
+    <tr>
+      <td>board mandate</td>
+      <td>affirmative cyber-physical cover</td>
+      <td>internal governance</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>aeo:CoverageRequirement ⊑ fnd:Version ⊓ fnd:Evidenced
+    ⊓ =1 aeo:requirementSource.skos:Concept
+    ⊓ ≥1 aeo:requiredMeasure.aeo:MeasureConstraint
+</code></pre></div></div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Part</th>
+      <th>LATTICE construct</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>where it applies: which exposure units</td>
+      <td><code class="language-plaintext highlighter-rouge">aeo:requirementScope</code>, an <code class="language-plaintext highlighter-rouge">elg:AdmissionProfile</code> over <code class="language-plaintext highlighter-rouge">aeo:ExposureUnit</code> (peril, territory, zone, asset class, value band)</td>
+    </tr>
+    <tr>
+      <td>what must hold</td>
+      <td><code class="language-plaintext highlighter-rouge">aeo:MeasureConstraint</code>: a measure concept (limit, sub-limit, retention, indemnity period, waiting period, capacity share, net retained loss at a return period) and a <code class="language-plaintext highlighter-rouge">qnt:RangeSet</code> on the measure’s space</td>
+    </tr>
+    <tr>
+      <td>relative bounds</td>
+      <td>a bound stated relative to a financial metric (10% of equity) uses a Quantification derived rate, with the metric as operand</td>
+    </tr>
+    <tr>
+      <td>who it is owed to</td>
+      <td><code class="language-plaintext highlighter-rouge">aeo:arisesFrom</code>, an <code class="language-plaintext highlighter-rouge">ins:Obligation</code> with the insured’s occupancy as obligor and the lender’s as obligee, when the source is a covenant, lease or regulation</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The ontology stops there. Whether a programme meets a requirement is gap analysis, computed by
+the contract side from these operands, and each gap is a derived artefact that cites the
+requirement and the coverage it compared.</p>
+
+<h3 id="514-existing-cover-and-financial-metrics">5.14 Existing cover and financial metrics</h3>
+
+<p><code class="language-plaintext highlighter-rouge">aeo:ExistingCover</code> records cover the insured already has or must have: an expiring programme, a
+national flood scheme policy that sits primary, a pool participation. It carries a reference to
+the contract (an IRI, the contract module owns the term), a peril scope, and its relation to the
+programme being placed (underlying, alongside, replaced).</p>
+
+<p><code class="language-plaintext highlighter-rouge">aeo:FinancialMetric ⊑ fnd:Evidenced ⊓ fnd:TemporallyScoped</code> carries revenue, gross profit,
+equity, payroll and headcount, each a <code class="language-plaintext highlighter-rouge">qnt:Quantity</code> with its period, and whether audited. Liability
+lines add market capitalisation, fees, turnover by territory and records held (§5.15).</p>
+
+<h3 id="515-liability-exposure">5.15 Liability exposure</h3>
+
+<p>Liability, D&amp;O and E&amp;O cover respond to claims by parties who are mostly unknown when the
+contract is bound. Exposure to them is described by who could claim, how they relate to the
+insured and how many there are, never by named claimants:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>aeo:CounterpartyPopulation ⊑ fnd:Evidenced ⊓ fnd:TemporallyScoped
+    ⊓ =1 aeo:populationOf.pty:Actor
+    ⊓ =1 aeo:populationKind.skos:Concept
+    ⊓ =1 aeo:relationshipDepth.skos:Concept
+    ⊓ ≤1 aeo:populationSize.qnt:Quantity
+</code></pre></div></div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Property</th>
+      <th>Note</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:populationOf</code></td>
+      <td>the insured entity the population relates to</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:populationKind</code></td>
+      <td>shareholders, securities holders, creditors, employees, customers, patients, data subjects, regulators, the public, customers’ customers</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:relationshipDepth</code></td>
+      <td>direct, through one intermediary, further. Sets the third or fourth party reading of term parameters §7.3</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:populationSize</code></td>
+      <td>a count, or a basis quantity where counts are unknown (records held, units sold)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:populationTerritory</code></td>
+      <td>where the population is, which selects the legal regimes a claim could arise under</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:exposureBasis</code></td>
+      <td>the financial metric the population’s exposure scales with (market capitalisation for securities holders, payroll for employees, fees for professional clients)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Securities listings are attribute values on the legal entity (exchange, listing kind, since),
+because securities claims turn on them and they differ in nothing else. Control relations (§5.1)
+say who is an insured when a group is covered, and dependencies (§5.9) with kind customer or
+supply give the intermediaries through which fourth parties reach the insured. Together they are
+the relationship graph from which a claim’s direction is derived when its roles are filled
+(term parameters §7). The contract names populations in its scopes, the claim fills the roles.</p>
+
+<h2 id="6-property-characteristics-and-axioms">6. Property Characteristics and Axioms</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Property</th>
+      <th>Characteristics</th>
+      <th>Why</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:locatedAt</code></td>
+      <td>functional</td>
+      <td>a fixed asset has one location per version. Mobile assets use presences</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:partOf</code></td>
+      <td>irreflexive, asymmetric, simple</td>
+      <td>composition. Transitive closure is a derived shortcut, so the edge stays simple (OWL 2 DL)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:hasLocation</code>, <code class="language-plaintext highlighter-rouge">aeo:hasAsset</code>, and every exposure set membership</td>
+      <td>inverse functional</td>
+      <td>a member belongs to one version</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:controller</code>, <code class="language-plaintext highlighter-rouge">aeo:controlled</code>, <code class="language-plaintext highlighter-rouge">aeo:dependent</code>, <code class="language-plaintext highlighter-rouge">aeo:provider</code>, <code class="language-plaintext highlighter-rouge">aeo:interestHolder</code>, <code class="language-plaintext highlighter-rouge">aeo:interestIn</code>, <code class="language-plaintext highlighter-rouge">aeo:valueOf</code></td>
+      <td>functional on their reified node</td>
+      <td>one of each per relation node</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:territory</code></td>
+      <td>not functional</td>
+      <td>a location is in a country, a region and a regulatory grouping at once</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:perilScope</code></td>
+      <td>not functional</td>
+      <td>metrics cover peril sets</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Disjointness: exposure set, location, asset, interest, valuation, assessment, attribute value,
+dependency, peril metric, exposure unit, loss record, loss cause, requirement, existing cover, counterparty population and control
+relation are pairwise disjoint, and disjoint with <code class="language-plaintext highlighter-rouge">pty:Actor</code>.</p>
+
+<p>Chains are not declared in the T-Box. The shortcuts consumers want (an insured exposed in a
+territory, an asset’s territory, a party’s consolidated exposure) are computed from the source
+graph on demand, or, where a deployment opts in, generated by Surface as derived relations, which keeps the ontology in OWL 2 RL-friendly territory for runtime
+materialisation and puts every shortcut under provenance.</p>
+
+<h2 id="7-vocabularies-and-scheme-contracts">7. Vocabularies and Scheme Contracts</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Property</th>
+      <th>Scheme contract</th>
+      <th>Tier</th>
+      <th>Binding</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:assetClass</code></td>
+      <td><code class="language-plaintext highlighter-rouge">cls:AssetClassContract</code></td>
+      <td>V2 plus V3</td>
+      <td>crosswalked to the CBAA insurable interest hierarchy</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:territory</code></td>
+      <td><code class="language-plaintext highlighter-rouge">cls:TerritoryContract</code></td>
+      <td>V2 plus V3</td>
+      <td>same edition Open CBAA binds for <code class="language-plaintext highlighter-rouge">rsk:riskLocation</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:zone</code></td>
+      <td><code class="language-plaintext highlighter-rouge">aeo-voc:HazardZoneContract</code></td>
+      <td>V2 per jurisdiction</td>
+      <td>territory-scoped bindings</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:peril</code> (on a loss cause), <code class="language-plaintext highlighter-rouge">aeo:perilScope</code>, <code class="language-plaintext highlighter-rouge">aeo:unitPeril</code></td>
+      <td><code class="language-plaintext highlighter-rouge">icm:PerilContract</code></td>
+      <td>reference, market or drafter</td>
+      <td>the <code class="language-plaintext highlighter-rouge">insurance/peril</code> edition as unscoped fallback, drafter and market editions by scope (peril vocabulary §9)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:mechanism</code>, <code class="language-plaintext highlighter-rouge">aeo:agency</code></td>
+      <td><code class="language-plaintext highlighter-rouge">icm:PerilMechanismContract</code>, <code class="language-plaintext highlighter-rouge">icm:PerilAgencyContract</code></td>
+      <td>reference</td>
+      <td>peril vocabulary characteristic schemes</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:populationKind</code>, <code class="language-plaintext highlighter-rouge">aeo:relationshipDepth</code></td>
+      <td><code class="language-plaintext highlighter-rouge">aeo-voc:</code> contracts</td>
+      <td>V1 plus V3</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:consequence</code></td>
+      <td><code class="language-plaintext highlighter-rouge">icm:ConsequenceContract</code></td>
+      <td>reference</td>
+      <td>peril vocabulary consequence scheme</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:attributeType</code></td>
+      <td><code class="language-plaintext highlighter-rouge">aeo-voc:AttributeTypeContract</code></td>
+      <td>V1 core plus V3</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>construction class, occupancy class values</td>
+      <td>per attribute type</td>
+      <td>V2, market-scoped</td>
+      <td>London and US schemes differ</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:valueType</code>, <code class="language-plaintext highlighter-rouge">aeo:valuationBasis</code>, <code class="language-plaintext highlighter-rouge">aeo:valuationMethod</code></td>
+      <td><code class="language-plaintext highlighter-rouge">aeo-voc:</code> contracts</td>
+      <td>V1</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">aeo:geoPrecision</code>, <code class="language-plaintext highlighter-rouge">aeo:assessmentKind</code>, <code class="language-plaintext highlighter-rouge">aeo:dependencyKind</code>, <code class="language-plaintext highlighter-rouge">aeo:interestKind</code>, <code class="language-plaintext highlighter-rouge">aeo:controlKind</code>, <code class="language-plaintext highlighter-rouge">aeo:requirementSource</code>, <code class="language-plaintext highlighter-rouge">aeo:metricKind</code>, <code class="language-plaintext highlighter-rouge">aeo:perspective</code>, <code class="language-plaintext highlighter-rouge">aeo:lossStatus</code></td>
+      <td><code class="language-plaintext highlighter-rouge">aeo-voc:</code> contracts</td>
+      <td>V1</td>
+      <td>closed sets</td>
+    </tr>
+    <tr>
+      <td>pool</td>
+      <td><code class="language-plaintext highlighter-rouge">icm:PoolContract</code></td>
+      <td>V2 per territory</td>
+      <td>peril vocabulary pool scheme</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><code class="language-plaintext highlighter-rouge">icm:</code> is <code class="language-plaintext highlighter-rouge">insurance/common/</code> and <code class="language-plaintext highlighter-rouge">cls:</code> is the cross-domain <code class="language-plaintext highlighter-rouge">classification/</code> module (§3).
+Prefixes are fixed by ADR-A98. One set of scheme contracts, on
+<code class="language-plaintext highlighter-rouge">voc:SchemeContract</code>, serves every insurance module and Open CBAA’s bindings, replacing the
+private governance vocabulary and duplicate schemes of the legacy contract module, which is
+dropped.</p>
+
+<p>Value spaces declared in <code class="language-plaintext highlighter-rouge">aeo-voc:</code>: proportion, count, area, length (distance to coast and
+water, elevation, first-floor height), money per period (derived), and the intensity spaces the
+peril vocabulary declares, reused rather than redeclared.</p>
+
+<h2 id="8-shapes">8. Shapes</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Shape</th>
+      <th>Rule</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>exposure set</td>
+      <td>one identity, one reporting unit, one temporal scope, governance state</td>
+    </tr>
+    <tr>
+      <td>location</td>
+      <td>one identity, at least one territory, geometry or address, geo precision when geometry is present</td>
+    </tr>
+    <tr>
+      <td>asset</td>
+      <td>one identity, one asset class. Fixed classes have one location, mobile classes have presences instead</td>
+    </tr>
+    <tr>
+      <td>valuation</td>
+      <td>one value type and basis. Amount, or rate with horizon. Money in one currency</td>
+    </tr>
+    <tr>
+      <td>currency</td>
+      <td>an aggregate in the reporting unit is a derived artefact whose read set covers its inputs</td>
+    </tr>
+    <tr>
+      <td>zone designation</td>
+      <td>the zone is in a scheme bound for one of the location’s territories</td>
+    </tr>
+    <tr>
+      <td>attribute value</td>
+      <td>exactly one value form, matching the attribute type’s declared form and space</td>
+    </tr>
+    <tr>
+      <td>profiles</td>
+      <td>per assessment kind, the attribute types required and allowed (<code class="language-plaintext highlighter-rouge">shapes/profiles/</code>)</td>
+    </tr>
+    <tr>
+      <td>peril completeness</td>
+      <td>warning when a relevant attribute (<code class="language-plaintext highlighter-rouge">prl:relevantAttribute</code>) is missing for a peril in scope</td>
+    </tr>
+    <tr>
+      <td>geo precision for peril</td>
+      <td>warning when a location’s precision is coarser than <code class="language-plaintext highlighter-rouge">prl:minimumGeoPrecision</code> for a peril in scope</td>
+    </tr>
+    <tr>
+      <td>control and dependency</td>
+      <td>no cycles in control. Dependency cycles allowed but reported</td>
+    </tr>
+    <tr>
+      <td>loss record</td>
+      <td>incurred equals paid plus reserved when all present, one unit</td>
+    </tr>
+    <tr>
+      <td>requirement</td>
+      <td>scope profile well-formed (Eligibility shapes), each measure constraint’s range on the measure’s space</td>
+    </tr>
+    <tr>
+      <td>peril metric comparability</td>
+      <td>two metrics compared by a derived artefact have equal peril scope, region scope and perspective</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="9-mapping-to-lattice">9. Mapping to LATTICE</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>AEO element</th>
+      <th>LATTICE construct</th>
+      <th>Layer</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>exposure set, location, asset identities and versions</td>
+      <td><code class="language-plaintext highlighter-rouge">fnd:Version</code>, <code class="language-plaintext highlighter-rouge">fnd:PersistentIdentity</code>, <code class="language-plaintext highlighter-rouge">fnd:supersededBy</code></td>
+      <td>Foundation</td>
+    </tr>
+    <tr>
+      <td>exposure set review state</td>
+      <td><code class="language-plaintext highlighter-rouge">fnd:Governable</code></td>
+      <td>Foundation</td>
+    </tr>
+    <tr>
+      <td>valid time of any fact</td>
+      <td><code class="language-plaintext highlighter-rouge">fnd:TemporallyScoped</code></td>
+      <td>Foundation</td>
+    </tr>
+    <tr>
+      <td>source documents, surveys, questionnaires, geocoders</td>
+      <td><code class="language-plaintext highlighter-rouge">fnd:Evidence</code>, <code class="language-plaintext highlighter-rouge">fnd:hasEvidence</code></td>
+      <td>Foundation</td>
+    </tr>
+    <tr>
+      <td>normalised values, totals, zone joins, exposure units, peril metrics, bottlenecks</td>
+      <td><code class="language-plaintext highlighter-rouge">fnd:DerivedArtefact</code>, <code class="language-plaintext highlighter-rouge">fnd:DerivationRun</code></td>
+      <td>Foundation</td>
+    </tr>
+    <tr>
+      <td>every classification</td>
+      <td><code class="language-plaintext highlighter-rouge">voc:SchemeContract</code>, <code class="language-plaintext highlighter-rouge">voc:SchemeBinding</code>, <code class="language-plaintext highlighter-rouge">voc:resolvedUnder</code></td>
+      <td>Vocabulary</td>
+    </tr>
+    <tr>
+      <td>amounts, rates, horizons, distances, intensities, scores</td>
+      <td><code class="language-plaintext highlighter-rouge">qnt:Quantity</code>, <code class="language-plaintext highlighter-rouge">qnt:DerivedValueSpace</code>, <code class="language-plaintext highlighter-rouge">qnt:OrdinalValue</code></td>
+      <td>Quantification</td>
+    </tr>
+    <tr>
+      <td>currency conversion</td>
+      <td><code class="language-plaintext highlighter-rouge">qnt:Conversion</code>, <code class="language-plaintext highlighter-rouge">qnt:ConversionContext</code></td>
+      <td>Quantification</td>
+    </tr>
+    <tr>
+      <td>requirement bounds</td>
+      <td><code class="language-plaintext highlighter-rouge">qnt:RangeSet</code>, <code class="language-plaintext highlighter-rouge">qnt:alternativeBound</code> for multi-currency</td>
+      <td>Quantification</td>
+    </tr>
+    <tr>
+      <td>insureds, lenders, landlords</td>
+      <td><code class="language-plaintext highlighter-rouge">pty:Actor</code>, <code class="language-plaintext highlighter-rouge">pty:Role</code>, <code class="language-plaintext highlighter-rouge">pty:RoleOccupancy</code></td>
+      <td>Party</td>
+    </tr>
+    <tr>
+      <td>co-insured groups</td>
+      <td><code class="language-plaintext highlighter-rouge">pty:ParticipationGroup</code></td>
+      <td>Party</td>
+    </tr>
+    <tr>
+      <td>covenant to maintain insurance</td>
+      <td><code class="language-plaintext highlighter-rouge">ins:Obligation</code></td>
+      <td>Instrument</td>
+    </tr>
+    <tr>
+      <td>requirement scope, zone and peril conditions</td>
+      <td><code class="language-plaintext highlighter-rouge">elg:AdmissionProfile</code>, <code class="language-plaintext highlighter-rouge">elg:EvidenceBinding</code> over exposure units</td>
+      <td>Eligibility</td>
+    </tr>
+    <tr>
+      <td>design-time classes (all SFHA flood units), optional</td>
+      <td><code class="language-plaintext highlighter-rouge">srf:GeneratedClass</code></td>
+      <td>Surface</td>
+    </tr>
+    <tr>
+      <td>counterparty populations, claimant and harmed roles filled at claim time</td>
+      <td><code class="language-plaintext highlighter-rouge">pty:Role</code>, <code class="language-plaintext highlighter-rouge">pty:RoleOccupancy</code></td>
+      <td>Party</td>
+    </tr>
+    <tr>
+      <td>schedule and open exposure data ingestion</td>
+      <td>MORK mapping graphs, with the mapping as evidence</td>
+      <td>MORK</td>
+    </tr>
+    <tr>
+      <td>per-version named graphs, personal data of individual insureds</td>
+      <td><code class="language-plaintext highlighter-rouge">dal:AggregateBoundaryProfile</code>, <code class="language-plaintext highlighter-rouge">dal:PrivacyProfile</code></td>
+      <td>Persistence</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="10-market-profiles-london-and-us">10. Market Profiles: London and US</h2>
+
+<p>The core does not change between markets. A profile is a set of scheme bindings (scoped by
+market and legal regime) and a set of shapes that make market-required data mandatory.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Topic</th>
+      <th>London profile</th>
+      <th>US profile</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>grant being placed</td>
+      <td>open perils, peril sub-limits, subscription layers following form</td>
+      <td>standard causes-of-loss forms, admitted primary, surplus lines excess, residual markets</td>
+    </tr>
+    <tr>
+      <td>values needed</td>
+      <td>location TIV and business income, often in several currencies against one reporting currency</td>
+      <td>TIV by location and value type, because wind and earthquake deductibles are a percentage of location TIV</td>
+    </tr>
+    <tr>
+      <td>deductible operands</td>
+      <td>flat per occurrence, hours for business interruption</td>
+      <td>percentage of location value, per location, and hours for windstorm</td>
+    </tr>
+    <tr>
+      <td>zones</td>
+      <td>model hazard zones, accumulation zones</td>
+      <td>national flood programme zones (special flood hazard areas), wind pool eligibility, seismic zones</td>
+    </tr>
+    <tr>
+      <td>pools</td>
+      <td>terrorism and flood pools by territory, as the CBAA SoUA lists</td>
+      <td>state residual wind pools, the national flood scheme as primary cover (existing cover, §5.14)</td>
+    </tr>
+    <tr>
+      <td>construction and occupancy</td>
+      <td>international construction class schemes</td>
+      <td>construction classes 1 to 6 of the US scheme. Year built and year of major renovation both matter (historic buildings)</td>
+    </tr>
+    <tr>
+      <td>requirements</td>
+      <td>board risk appetite as a share of equity at return periods</td>
+      <td>lender covenants by peril, zone and value, with the lender as obligee</td>
+    </tr>
+    <tr>
+      <td>dependencies</td>
+      <td>inter-site supply chains and critical equipment lead times drive indemnity period requirements</td>
+      <td>same, plus residual market eligibility per location</td>
+    </tr>
+    <tr>
+      <td>peril metrics</td>
+      <td>model perils per region (European windstorm, European flood, Taiwan earthquake)</td>
+      <td>wind and surge combined, surge only, inland flood excluding surge, per basin</td>
+    </tr>
+    <tr>
+      <td>loss records</td>
+      <td>proximate cause under English law</td>
+      <td>initiating and proximate causes both, because the causation rule varies by state</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>For a CBAA binding authority, both profiles can apply at once: a London binding authority writing US risks
+binds the US profile’s schemes under a binding scoped to the London market and the US regime
+(peril vocabulary §9.1).</p>
+
+<h2 id="11-integration-with-open-cbaa">11. Integration with Open CBAA</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Open CBAA</th>
+      <th>AEO</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">rsk:Risk</code> (one deemed location, sum insured, covered perils)</td>
+      <td>an exposure unit (or a set of units for one location) at bind time. A bordereau row can populate both, with the risk citing the units as evidence</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">rsk:riskLocation</code>, <code class="language-plaintext highlighter-rouge">rsk:territorialLimit</code></td>
+      <td><code class="language-plaintext highlighter-rouge">aeo:territory</code> under the same territory contract and edition</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">rsk:peril</code> (covered perils)</td>
+      <td>not <code class="language-plaintext highlighter-rouge">aeo:unitPeril</code> (exposed perils). Same contract, different meaning (peril vocabulary PV-O2)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">rsk:insurableInterest</code></td>
+      <td>crosswalked from <code class="language-plaintext highlighter-rouge">aeo:assetClass</code> and <code class="language-plaintext highlighter-rouge">aeo:interestKind</code></td>
+    </tr>
+    <tr>
+      <td>SoUA included and excluded perils per segment</td>
+      <td>exposure units’ perils evaluated against the segment’s scope</td>
+    </tr>
+    <tr>
+      <td>SoUA applicable pool schemes</td>
+      <td><code class="language-plaintext highlighter-rouge">aeo:PoolParticipation</code></td>
+    </tr>
+    <tr>
+      <td>a drafter’s flat or taxonomic peril list</td>
+      <td>exposure units carry perils in that list’s scheme, and peril-dependent exposure checks run where that scheme’s profile has the capabilities they require (MORK bridge §3, §6)</td>
+    </tr>
+    <tr>
+      <td>SoUA vacant property segments</td>
+      <td><code class="language-plaintext highlighter-rouge">aeo:occupancyState</code> on the location’s assessment</td>
+    </tr>
+    <tr>
+      <td>M5 5.15.1 (natural catastrophe cover must be offered in France with fire cover)</td>
+      <td>a requirement of source regulation, scope French locations, triggered by the fire peril in the bound policy’s scope</td>
+    </tr>
+    <tr>
+      <td>aggregate GWP limits and catastrophe accumulation</td>
+      <td>peril metrics and exposure units summed per territory and peril grouping, as derived artefacts feeding the accumulators of design-spec §6.4</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="12-worked-example">12. Worked Example</h2>
+
+<p>Two fragments, one per profile. Names are fictional.</p>
+
+<pre><code class="language-turtle-example"># London profile: a fabrication site with critical equipment and a supply dependency.
+ex:site-a a aeo:Location ;
+    fnd:hasIdentity ex:site-a-id ;
+    aeo:territory ex:GB-England ;
+    aeo:geoPrecision aeo-voc:Rooftop .
+ex:fab-a a aeo:Asset ; fnd:hasIdentity ex:fab-a-id ;
+    aeo:assetClass ex:SemiconductorFab ; aeo:locatedAt ex:site-a .
+ex:litho-a a aeo:Asset ; fnd:hasIdentity ex:litho-a-id ;
+    aeo:assetClass ex:ProcessMachinery ; aeo:partOf ex:fab-a .
+ex:litho-a-survey a aeo:Assessment ;
+    aeo:assesses ex:litho-a ; aeo:assessmentKind aeo-voc:EquipmentInspection ;
+    aeo:hasAttribute [ aeo:attributeType aeo-voc:ReplacementLeadTime ;
+                       aeo:quantityValue [ a qnt:Quantity ; qnt:onSpace aeo-voc:DurationSpace ;
+                                           qnt:numericValue 24.0 ; qnt:inUnit aeo-voc:Month ] ] .
+ex:bi-a a aeo:Valuation ;
+    aeo:valueOf ex:income-a ; aeo:valueType aeo-voc:GrossProfit ; aeo:valuationBasis aeo-voc:Declared ;
+    aeo:rate [ a qnt:Quantity ; qnt:onSpace aeo-voc:MoneyPerMonth ; qnt:numericValue 12000000.0 ; qnt:inUnit ex:GBPPerMonth ] ;
+    aeo:horizon [ a qnt:Quantity ; qnt:numericValue 12.0 ; qnt:inUnit aeo-voc:Month ] .
+ex:dep-a-b a aeo:Dependency ;
+    aeo:dependent ex:site-b ; aeo:provider ex:site-a ; aeo:dependencyKind aeo-voc:SupplyOfGoods ;
+    aeo:singleSource true ;
+    aeo:shareAtRisk [ a qnt:Quantity ; qnt:onSpace aeo-voc:Proportion ; qnt:numericValue 0.6 ] .
+
+# US profile: a coastal hotel in a flood zone with a secured lender.
+ex:hotel-c a aeo:Location ; fnd:hasIdentity ex:hotel-c-id ;
+    aeo:territory ex:US-FL ;
+    aeo:zoneDesignation [ a aeo:ZoneDesignation ; aeo:zone ex:FloodZoneVE ;
+                          aeo:designationSource ex:NationalFloodMap ;
+                          fnd:hasTemporalScope [ fnd:validFrom "2024-06-01T00:00:00Z"^^xsd:dateTime ] ] ;
+    aeo:poolParticipation [ a aeo:PoolParticipation ; aeo:pool ex:StateWindPool ; aeo:perilScope prl:N.MET.NS ] .
+ex:lender-interest a aeo:Interest ;
+    aeo:interestHolder ex:lender-as-mortgagee ; aeo:interestIn ex:hotel-c-building ;
+    aeo:interestKind aeo-voc:SecuredLender ;
+    aeo:extent [ a qnt:Quantity ; qnt:numericValue 95000000.0 ; qnt:inUnit ex:USD ] .
+ex:covenant-flood a aeo:CoverageRequirement ;
+    aeo:requirementSource aeo-voc:LenderCovenant ;
+    aeo:arisesFrom ex:covenant-obligation ;           # ins:Obligation, obligor insured, obligee lender
+    aeo:requirementScope ex:sfha-flood-units ;        # elg:AdmissionProfile: zone in SFHA, peril in AllFlood
+    aeo:requiredMeasure [ a aeo:MeasureConstraint ; aeo:measure aeo-voc:Limit ; aeo:bound ex:at-least-principal ] .
+</code></pre>
+
+<h2 id="13-recommendations">13. Recommendations</h2>
+
+<p>For LATTICE’s applied insurance domain:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Recommendation</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AI-1</td>
+      <td>One directory per applied module (§3), each with its own shapes <code class="language-plaintext highlighter-rouge">.version</code>, at the lowest level of sharing that covers its users</td>
+    </tr>
+    <tr>
+      <td>AI-2</td>
+      <td>An <code class="language-plaintext highlighter-rouge">insurance/common/</code> module with the insurance scheme contracts on <code class="language-plaintext highlighter-rouge">voc:SchemeContract</code>, and a cross-domain <code class="language-plaintext highlighter-rouge">classification/</code> module for territory, asset class and industry, replacing the legacy contract module’s private governance vocabulary and duplicate schemes</td>
+    </tr>
+    <tr>
+      <td>AI-3</td>
+      <td>The contract module imports LATTICE’s layers by exact version IRI, as <code class="language-plaintext highlighter-rouge">aeo:</code> does</td>
+    </tr>
+    <tr>
+      <td>AI-4</td>
+      <td>A prefix other than <code class="language-plaintext highlighter-rouge">ins:</code> for applied insurance terms: Instrument owns <code class="language-plaintext highlighter-rouge">ins:</code>, and the capacity architecture’s <code class="language-plaintext highlighter-rouge">ins:LossDemand</code> collides with it</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>For LATTICE’s substrate, each subject to the clean-room procedure (a domain-neutral premise and
+two non-insurance examples first):</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Recommendation</th>
+      <th>Why AEO needs it</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AL-1</td>
+      <td>A spatial guidance note: geometry by GeoSPARQL alignment, zone membership as concepts, spatial joins as derived artefacts</td>
+      <td>locations, zones, footprints</td>
+    </tr>
+    <tr>
+      <td>AL-2</td>
+      <td>Every-value and some-value readings for evidence bindings (already open as Open CBAA I7)</td>
+      <td>an exposure set is exposed to many perils. Requirements say “every property in the zone”</td>
+    </tr>
+    <tr>
+      <td>AL-3</td>
+      <td>A resolution-policy pattern for conflicting evidenced assertions of one attribute</td>
+      <td>several assessments of one building</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The whitepaper’s §7 lists these with costs, together with the peril vocabulary’s needs.</p>

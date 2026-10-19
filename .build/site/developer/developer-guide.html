@@ -1,0 +1,632 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="developer-guide">Developer Guide</h1>
+
+<p>What every tool and script in this repository is for, when to reach for it, and how the pieces
+fit together. For first-time setup, read <a href="/developer/getting-started.html">Getting Started</a> first. For how
+formal methods specifically hooks into the development lifecycle, read
+<a href="/developer/formal-methods-lifecycle.html">Formal Methods in the Development Lifecycle</a>. For pictures of all
+of this, see <a href="/diagrams/"><code class="language-plaintext highlighter-rouge">docs/diagrams/</code></a>.</p>
+
+<h2 id="1-how-this-repository-is-organised">1. How this repository is organised</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Root</th>
+      <th>Owns</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ontology/</code></td>
+      <td>Semantic assets only: normative sources, shapes, vocabularies, projections, examples, semantic documentation. One directory per layer (<code class="language-plaintext highlighter-rouge">foundation</code>, <code class="language-plaintext highlighter-rouge">vocabulary</code>, <code class="language-plaintext highlighter-rouge">quantification</code>, <code class="language-plaintext highlighter-rouge">party</code>, <code class="language-plaintext highlighter-rouge">eligibility</code>, <code class="language-plaintext highlighter-rouge">behaviour</code>, <code class="language-plaintext highlighter-rouge">wording</code>, <code class="language-plaintext highlighter-rouge">instrument</code>, <code class="language-plaintext highlighter-rouge">surface</code>, <code class="language-plaintext highlighter-rouge">mork</code>, <code class="language-plaintext highlighter-rouge">persistence</code>, <code class="language-plaintext highlighter-rouge">governance</code>, <code class="language-plaintext highlighter-rouge">spc</code>) plus <code class="language-plaintext highlighter-rouge">applied/</code> domain ontologies and <code class="language-plaintext highlighter-rouge">examples/</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">tools/</code></td>
+      <td>Executable reference implementations and developer-facing toolchains: compilers, resolvers, validators, formal-methods artefacts. <code class="language-plaintext highlighter-rouge">tools/testing/</code> holds test-support packages, used only by tests, checks and benchmarks (ADR-A125)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">benchmark/</code></td>
+      <td>Checks that measure, run on demand and never part of <code class="language-plaintext highlighter-rouge">check</code>. They fail on a wrong result, never on time (ADR-A124)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">platform/</code></td>
+      <td>Runtime platform services (Java/Maven): authoring, Surface workflow, release integration, the semantic dataset SPI and Fuseki backend, policy, the test-only reasoning harness</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">apps/</code></td>
+      <td>User-facing web applications (TypeScript/React, Yarn workspace): the MORK Review Workbench, Surface Contract Studio, the Word authoring add-in</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">packages/</code></td>
+      <td>Standalone libraries with no LATTICE dependency (identity minting, Python and Java)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">contracts/</code></td>
+      <td>Inter-component data contracts (JSON Schema): events, identity, MORK, release, Surface</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">deployment/</code></td>
+      <td>Local reference environment (Docker Compose)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">workers/</code></td>
+      <td>The asynchronous worker runtime</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">test/</code></td>
+      <td>End-to-end conformance suites</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">spikes/</code></td>
+      <td>Experimental feasibility work, not production (today: the formal-prover toolchain spike, track D, and <code class="language-plaintext highlighter-rouge">persistence-oxigraph</code>, which runs the persistence compiler’s updates on a second SPARQL engine and defines no SPI (its adapter now lives in <code class="language-plaintext highlighter-rouge">tools/testing/oxigraph</code>), and <code class="language-plaintext highlighter-rouge">persistence-aggregate-ownership</code>, experiments for the aggregate ownership note)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">docs/</code></td>
+      <td>Architecture, ADRs, developer process (sketches/plans/status/validation), and the diagrams this guide links to</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>A layer under <code class="language-plaintext highlighter-rouge">ontology/</code> follows one shape: <code class="language-plaintext highlighter-rouge">README.md</code> (the one normative, literate source),
+<code class="language-plaintext highlighter-rouge">spec/&lt;layer&gt;.ttl</code>, <code class="language-plaintext highlighter-rouge">vocab/&lt;layer&gt;-vocab.ttl</code>, <code class="language-plaintext highlighter-rouge">shapes/structural.ttl</code> and <code class="language-plaintext highlighter-rouge">shapes/constraints.ttl</code>,
+<code class="language-plaintext highlighter-rouge">projection/</code> where it applies, <code class="language-plaintext highlighter-rouge">examples/</code>. §3 explains how the generated files relate to the
+README.</p>
+
+<h2 id="2-mise-the-one-task-entry-point">2. <code class="language-plaintext highlighter-rouge">mise</code>: the one task entry point</h2>
+
+<p>Every build, test and validation step runs through <code class="language-plaintext highlighter-rouge">mise</code> (ADR-A29). Do not invoke <code class="language-plaintext highlighter-rouge">pip</code>,
+<code class="language-plaintext highlighter-rouge">pytest</code>, <code class="language-plaintext highlighter-rouge">mvn</code> or <code class="language-plaintext highlighter-rouge">yarn</code> directly except when iterating inside one package — <code class="language-plaintext highlighter-rouge">mise.toml</code> is the
+record of what actually needs to run and in what order, and CI runs the exact same tasks (§6).</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise <span class="nb">install</span>            <span class="c"># pin the toolchain versions mise.toml declares (Java, Python, Node, Erlang, Elixir)</span>
+mise run bootstrap       <span class="c"># install every package's dependencies</span>
+mise run check           <span class="c"># run every validation task</span>
+mise tasks               <span class="c"># list every task mise.toml declares, with its description</span>
+</code></pre></div></div>
+
+<h3 id="task-families">Task families</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Family</th>
+      <th>Does</th>
+      <th>Run</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">bootstrap:*</code></td>
+      <td>Installs one package’s dependencies (<code class="language-plaintext highlighter-rouge">pip install -e</code>, <code class="language-plaintext highlighter-rouge">yarn install</code>, …). <code class="language-plaintext highlighter-rouge">bootstrap:python</code> installs every Python package in one pip resolve</td>
+      <td>Once per clone, again after a dependency changes</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">check:*</code></td>
+      <td>Validates one package or gate (tests, shape conformance, catalog/version checks)</td>
+      <td>Before every commit touching that package; <code class="language-plaintext highlighter-rouge">mise run check</code> runs all of them</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">build:*</code></td>
+      <td>Regenerates a derived artefact (the ontology catalog, release rows, the MORK Teaching Pack, Persistence’s compiled examples, minting vectors)</td>
+      <td>When the source it derives from changes</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">clean:*</code></td>
+      <td>Removes build output and caches</td>
+      <td>When something looks stale</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">topology:*</code></td>
+      <td>Checks the repository’s own structure against ADR-A77</td>
+      <td>Rarely, mostly for the topology migration itself</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="what-check-does-not-include-and-why">What <code class="language-plaintext highlighter-rouge">check</code> does <strong>not</strong> include, and why</h3>
+
+<p>A handful of <code class="language-plaintext highlighter-rouge">check:*</code> tasks are deliberately <strong>not</strong> part of the default <code class="language-plaintext highlighter-rouge">check</code> aggregate,
+because their toolchain is large, native, or otherwise too heavy to run on every commit:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Task</th>
+      <th>Needs</th>
+      <th>Why manual</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">check:formal-network</code></td>
+      <td>network access</td>
+      <td>probes whether track D’s prover sources are reachable at all, not a correctness check</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">check:formal-smoke</code></td>
+      <td>Docker, or a native Rocq/Isabelle install</td>
+      <td>confirms a prover toolchain runs end to end, minutes to build</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">check:proofs</code></td>
+      <td>a native Isabelle install</td>
+      <td>builds every <code class="language-plaintext highlighter-rouge">tools/proofs/&lt;layer&gt;/</code> Isabelle session and runs the proof gate (ADR-A-FM2)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">check:minting-tables</code></td>
+      <td>network access (Unicode Character Database)</td>
+      <td>regenerates pinned tables and diffs them; only needed when Unicode itself updates</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Everything else, including the formal-methods reference semantics (<code class="language-plaintext highlighter-rouge">check:reference-eligibility</code>)
+and the formal-artefact freshness check (<code class="language-plaintext highlighter-rouge">check:formal-freshness</code>, §4), <strong>is</strong> in <code class="language-plaintext highlighter-rouge">check</code>, because
+those are ordinary Python and do not need a heavy toolchain.</p>
+
+<h2 id="3-the-literate-source-discipline">3. The literate-source discipline</h2>
+
+<p>A layer’s <code class="language-plaintext highlighter-rouge">README.md</code> is the one normative source (epic principle E1). Its own fenced code
+blocks — <code class="language-plaintext highlighter-rouge">```turtle-spec</code>, <code class="language-plaintext highlighter-rouge">```turtle-vocab</code>, <code class="language-plaintext highlighter-rouge">```turtle-shapes</code>,
+<code class="language-plaintext highlighter-rouge">```turtle-example</code> (illustrative only, never extracted), and <code class="language-plaintext highlighter-rouge">```isabelle-spec</code>
+for a formalised layer’s closed datatype — are mechanically extracted by
+<a href="../../tools/literate_extract.py"><code class="language-plaintext highlighter-rouge">tools/literate_extract.py</code></a> into <code class="language-plaintext highlighter-rouge">spec/</code>, <code class="language-plaintext highlighter-rouge">vocab/</code>, <code class="language-plaintext highlighter-rouge">shapes/</code>
+and (for formalised layers) <code class="language-plaintext highlighter-rouge">tools/proofs/&lt;layer&gt;/Kernel.thy</code>. Never hand-edit a generated file:
+edit the README’s own fenced block and re-run the extractor.</p>
+
+<p>A layer with a second spec document, such as Behaviour’s runtime document, writes it from the same
+README (<a href="../architecture/decisions/ADR-A120-literate-specs-with-several-documents.md">ADR-A120</a>). A
+<code class="language-plaintext highlighter-rouge">turtle-spec</code> block whose first line is <code class="language-plaintext highlighter-rouge"># @output-file "spec/&lt;file&gt;.ttl"</code> goes to that file, which
+gains <code class="language-plaintext highlighter-rouge">spec/&lt;layer&gt;.ttl</code>’s <code class="language-plaintext highlighter-rouge">@prefix</code> lines. The directive counts only on the first line. Each such
+block states its own ontology header. All of a layer’s spec documents carry one version and are
+bumped together. The extractor refuses them otherwise. The same directive works on a
+<code class="language-plaintext highlighter-rouge">turtle-vocab</code> block, for a module with several vocabulary documents (a module’s own version for
+its vocabulary, independent of its spec version). <code class="language-plaintext highlighter-rouge">--layer</code> may itself be a nested module path
+below <code class="language-plaintext highlighter-rouge">ontology/</code>, such as <code class="language-plaintext highlighter-rouge">applied/insurance/peril</code>, whose last segment names the default
+documents (ADR-A120 addendum, AIR-2.0).</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Check a layer's generated files still match its README (writes nothing, exits non-zero on drift)</span>
+mise <span class="nb">exec</span> <span class="nt">--</span> python tools/literate_extract.py ontology/surface/README.md <span class="nt">--layer</span> surface <span class="nt">--root</span> <span class="nb">.</span> <span class="nt">--check</span>
+
+<span class="c"># Regenerate them (same command, without --check)</span>
+mise <span class="nb">exec</span> <span class="nt">--</span> python tools/literate_extract.py ontology/surface/README.md <span class="nt">--layer</span> surface <span class="nt">--root</span> <span class="nb">.</span>
+
+<span class="c"># Extract a formalised layer's Isabelle datatype too</span>
+mise <span class="nb">exec</span> <span class="nt">--</span> python tools/literate_extract.py ontology/eligibility/README.md <span class="nt">--layer</span> eligibility <span class="nt">--root</span> <span class="nb">.</span> <span class="se">\</span>
+  <span class="nt">--proofs-root</span> tools/proofs <span class="nt">--reference-root</span> tools/reference <span class="nt">--check</span>
+
+<span class="c"># A nested applied-insurance module, with several vocabulary documents</span>
+mise <span class="nb">exec</span> <span class="nt">--</span> python tools/literate_extract.py ontology/applied/insurance/peril/README.md <span class="se">\</span>
+  <span class="nt">--layer</span> applied/insurance/peril <span class="nt">--root</span> <span class="nb">.</span> <span class="nt">--check</span>
+</code></pre></div></div>
+
+<p>Each module’s extraction contract is also stated in its README’s entry in the
+<a href="../../repository-catalogue.md">repository catalogue</a>
+(<a href="/architecture/decisions/ADR-A121-repository-catalogue.html">ADR-A121</a>), read by
+<code class="language-plaintext highlighter-rouge">tools/lattice_repo_catalogue.py</code>, the one module that finds the repository root and says where a
+module’s artefacts are. <code class="language-plaintext highlighter-rouge">mise run check:catalogue</code>, part of <code class="language-plaintext highlighter-rouge">check</code>, fails when the catalogue and the
+tree disagree.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># The files a module's README generates for one role, in extraction order</span>
+mise <span class="nb">exec</span> <span class="nt">--</span> python tools/lattice_repo_catalogue.py paths instrument shapes
+
+<span class="c"># A role's directory, and the whole catalogue as JSON for other runtimes</span>
+mise <span class="nb">exec</span> <span class="nt">--</span> python tools/lattice_repo_catalogue.py path party projection
+mise <span class="nb">exec</span> <span class="nt">--</span> python tools/lattice_repo_catalogue.py dump <span class="nt">--json</span>
+</code></pre></div></div>
+
+<p><strong>Not every layer passes <code class="language-plaintext highlighter-rouge">--check</code> today.</strong> Vocabulary, Party and Eligibility’s own <code class="language-plaintext highlighter-rouge">spec</code>/<code class="language-plaintext highlighter-rouge">vocab</code>/
+<code class="language-plaintext highlighter-rouge">shapes</code> predate the extractor (TD-16, <code class="language-plaintext highlighter-rouge">docs/developer/plans/technical-debt.md</code>) and currently
+drift from their README’s blocks. Surface, Wording, Behaviour, Quantification and Instrument are
+clean. Before hand-editing a layer’s generated file, run <code class="language-plaintext highlighter-rouge">--check</code> first and read the diff — on a
+layer that already drifts, a <code class="language-plaintext highlighter-rouge">--check</code>-clean regeneration could silently discard unrelated
+hand-maintained content.</p>
+
+<h2 id="4-formal-methods-artefacts-stay-in-sync-too">4. Formal-methods artefacts stay in sync too</h2>
+
+<p>Three further kinds of artefact extend a layer’s literate README, each checked its own way (full
+account in <a href="/developer/formal-methods-lifecycle.html">Formal Methods in the Development Lifecycle</a>):</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Kind</th>
+      <th>Home</th>
+      <th>Relationship to the README</th>
+      <th>Checked by</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Mechanised theory</td>
+      <td><code class="language-plaintext highlighter-rouge">tools/proofs/&lt;layer&gt;/</code></td>
+      <td><code class="language-plaintext highlighter-rouge">Kernel.thy</code>’s datatype is <strong>generated</strong> from <code class="language-plaintext highlighter-rouge">isabelle-spec</code> blocks; the laws proved on top are hand-written</td>
+      <td><code class="language-plaintext highlighter-rouge">check:proofs</code> (native Isabelle, manual) for the proofs themselves; <code class="language-plaintext highlighter-rouge">check:formal-freshness</code> (always on, §2) for whether <code class="language-plaintext highlighter-rouge">Kernel.thy</code> still matches the README</td>
+    </tr>
+    <tr>
+      <td>Design-time model</td>
+      <td><code class="language-plaintext highlighter-rouge">tools/models/&lt;name&gt;/</code></td>
+      <td>Hand-written, evidence for an ADR not yet accepted — no literate relationship at all</td>
+      <td>Re-run manually with Alloy/SMT when the ADR it informs is revisited</td>
+    </tr>
+    <tr>
+      <td>Reference semantics</td>
+      <td><code class="language-plaintext highlighter-rouge">tools/reference/&lt;layer&gt;/</code></td>
+      <td>Hand-written, restates an <strong>already-accepted</strong> law independently of any compiler, so a shared compiler mistake has something else to disagree with</td>
+      <td><code class="language-plaintext highlighter-rouge">check:reference-eligibility</code> (differential tests against the real compilers) plus <code class="language-plaintext highlighter-rouge">check:formal-freshness</code>’s law-coverage check: every law the README declares <code class="language-plaintext highlighter-rouge">elg:lawRegister elg:SemanticLaw</code> must be named somewhere in the reference, covered or explicitly out of scope</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><code class="language-plaintext highlighter-rouge">mise run check:formal-freshness</code> (<code class="language-plaintext highlighter-rouge">tools/check_formal_freshness.py</code>) is the one command that
+checks both relationships across every layer that has them, the same “never let the generated
+artefact silently drift from its source” discipline <code class="language-plaintext highlighter-rouge">literate_extract.py --check</code> already gives
+ordinary Turtle.</p>
+
+<h2 id="5-tool-by-tool-reference">5. Tool-by-tool reference</h2>
+
+<h3 id="ontology-compilers-and-resolvers-python-tools">Ontology compilers and resolvers (Python, <code class="language-plaintext highlighter-rouge">tools/</code>)</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Package</th>
+      <th>What it does</th>
+      <th>Key command</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="../../tools/mork_compilers/README.md"><code class="language-plaintext highlighter-rouge">tools/mork_compilers/</code></a></td>
+      <td>Compiles Eligibility conditions into SPARQL, SHACL, SWRL and an OWL design-time-checking backend, through one shared IR (ADR-A23, ADR-A24, ADR-A89)</td>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:mork-compilers</code></td>
+    </tr>
+    <tr>
+      <td><a href="../../tools/vocabulary/README.md"><code class="language-plaintext highlighter-rouge">tools/vocabulary/</code></a></td>
+      <td>The scoped and temporal concept-scheme binding resolver (ADR-A85)</td>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:vocabulary</code></td>
+    </tr>
+    <tr>
+      <td><a href="../../tools/surface/README.md"><code class="language-plaintext highlighter-rouge">tools/surface/</code></a></td>
+      <td>Compiles Surface promotion/projection contracts into generated module packages, with minimal-scope regeneration planning (ADR-A27)</td>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:python-root</code> (its tests run under <code class="language-plaintext highlighter-rouge">surface.test_surface</code>)</td>
+    </tr>
+    <tr>
+      <td><a href="../../tools/persistence/README.md"><code class="language-plaintext highlighter-rouge">tools/persistence/</code></a></td>
+      <td>Compiles Persistence profiles into SPARQL plans (ADR-A78/A79)</td>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:persistence</code></td>
+    </tr>
+    <tr>
+      <td><a href="../../tools/mork/README.md"><code class="language-plaintext highlighter-rouge">tools/mork/</code></a></td>
+      <td>The MORK package and the MORK Teaching Pack generator</td>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:mtp</code>, <code class="language-plaintext highlighter-rouge">mise run build:mtp</code></td>
+    </tr>
+    <tr>
+      <td><a href="../../tools/testing/oxigraph/README.md"><code class="language-plaintext highlighter-rouge">tools/testing/oxigraph/</code></a></td>
+      <td>An in-memory Oxigraph engine for the persistence tests and benchmark (ADR-A125). Not a store SPI</td>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:persistence-oxigraph</code></td>
+    </tr>
+    <tr>
+      <td><a href="../../benchmark/persistence-composite-cost/README.md"><code class="language-plaintext highlighter-rouge">benchmark/persistence-composite-cost/</code></a></td>
+      <td>The cost of a composite replace on rdflib and Oxigraph (ADR-A124, TD-42)</td>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:persistence-composite-cost</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="formal-methods-toolchains-tools">Formal-methods toolchains (<code class="language-plaintext highlighter-rouge">tools/</code>)</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Package</th>
+      <th>What it does</th>
+      <th>Key command</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="../../tools/proofs/README.md"><code class="language-plaintext highlighter-rouge">tools/proofs/</code></a></td>
+      <td>Mechanised Isabelle/HOL theories, one subdirectory per formalised layer (track E, ADR-A-FM1/A-FM2)</td>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:proofs</code> (native, manual)</td>
+    </tr>
+    <tr>
+      <td><a href="../../tools/models/README.md"><code class="language-plaintext highlighter-rouge">tools/models/</code></a></td>
+      <td>Alloy/SMT design-time models, evidence for an ADR before it is accepted (track C)</td>
+      <td>run directly with the Alloy Analyzer JAR, see that README</td>
+    </tr>
+    <tr>
+      <td><a href="../../tools/reference/README.md"><code class="language-plaintext highlighter-rouge">tools/reference/</code></a></td>
+      <td>Hand-written reference semantics, differentially tested against the real compilers (track B, ADR-A-FM3)</td>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:reference-eligibility</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="repository-wide-gates-toolspy">Repository-wide gates (<code class="language-plaintext highlighter-rouge">tools/*.py</code>)</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Script</th>
+      <th>Checks</th>
+      <th>Command</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">literate_extract.py</code></td>
+      <td>README ⇄ generated-artefact drift (§3)</td>
+      <td>see §3</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">full_sweep.py</code></td>
+      <td>Runs every check an ontology change needs, one line each, failures in red, logs in <code class="language-plaintext highlighter-rouge">.build/full-sweep</code>. Uses this checkout’s tool packages, and compares versions with <code class="language-plaintext highlighter-rouge">main</code></td>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:full-sweep</code>, or <code class="language-plaintext highlighter-rouge">-- --base-ref REF</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">check_formal_freshness.py</code></td>
+      <td>Formal artefact ⇄ README drift (§4)</td>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:formal-freshness</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ontology_catalog.py</code></td>
+      <td>The import catalog (<code class="language-plaintext highlighter-rouge">ontology/catalog-v001.xml</code>) is complete and consistent (ADR-A88)</td>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:ontology-catalog</code> / <code class="language-plaintext highlighter-rouge">mise run build:ontology-catalog</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ontology_version_check.py</code></td>
+      <td>Every changed ontology document bumped its version, with a release row (ADR-A86)</td>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:ontology-versioning</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ontology_releases.py</code></td>
+      <td>Release rows exist for every version, tags are named correctly</td>
+      <td><code class="language-plaintext highlighter-rouge">mise run build:ontology-releases</code> / <code class="language-plaintext highlighter-rouge">check</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">import_guard.py</code></td>
+      <td>No substrate layer imports upward (ADR-A01 addendum, law B7)</td>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:import-guard</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">reasoning_isolation_check.py</code></td>
+      <td>A reasoner is declared only in <code class="language-plaintext highlighter-rouge">platform/reasoning-testkit</code> (ADR-A83)</td>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:reasoning-isolation</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">repository_topology_check.py</code></td>
+      <td>The repository’s own structure matches ADR-A77</td>
+      <td><code class="language-plaintext highlighter-rouge">mise run topology:preflight</code> / <code class="language-plaintext highlighter-rouge">topology:ready</code> / <code class="language-plaintext highlighter-rouge">topology:links</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">phase8_conformance.py</code></td>
+      <td>A shared conformance corpus runs clean across Surface and Eligibility’s compiled backends</td>
+      <td>part of <code class="language-plaintext highlighter-rouge">mise run check:python-root</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">conftest.py</code></td>
+      <td>Shared, session-scoped caching for the <code class="language-plaintext highlighter-rouge">tools/test_*.py</code> suite (<code class="language-plaintext highlighter-rouge">graph_cache</code>, <code class="language-plaintext highlighter-rouge">validated</code>, <code class="language-plaintext highlighter-rouge">repo_files</code>; <code class="language-plaintext highlighter-rouge">python-test-melting</code>). A module that benefits declares one module-scoped autouse fixture fetching its own graphs from <code class="language-plaintext highlighter-rouge">graph_cache</code> and assigning <code class="language-plaintext highlighter-rouge">module.validate = validated</code>; see the module’s own docstring. <code class="language-plaintext highlighter-rouge">mise run dev:time-ontology-tests</code> times <code class="language-plaintext highlighter-rouge">check:ontology-catalog</code>’s test files separately, slowest first. <code class="language-plaintext highlighter-rouge">-- --workers N --dist MODE</code> reruns it with other xdist settings and reports when each worker finished, which files it ran, and peak memory (macOS and Linux), for comparing worker counts and scheduling modes on one machine</td>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:ontology-catalog</code> runs the whole suite with <code class="language-plaintext highlighter-rouge">pytest-xdist</code> (<code class="language-plaintext highlighter-rouge">-n auto --dist worksteal</code>, so the largest file does not set a floor on the run). <code class="language-plaintext highlighter-rouge">PYTEST_XDIST_AUTO_NUM_WORKERS</code> sets what <code class="language-plaintext highlighter-rouge">auto</code> means, e.g. on a laptop with efficiency cores that add nothing. <code class="language-plaintext highlighter-rouge">tools/test_peril_vocabulary.py</code> is part of the run again (it was excluded as the second TD-45 while it set a floor under file-level distribution) and <code class="language-plaintext highlighter-rouge">mise run check:peril-vocabulary</code> runs it alone</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">validation_replay.py</code></td>
+      <td>Records every SHACL validation the ontology suite makes (shapes’ source files, data graph, full report) and replays them against the shapes in the working tree, blank nodes masked, to show that a rewrite of a constraint query, or an upgrade of the validator, changed no report (docs/architecture/efficient-queries-and-shapes.md, R7). Tested by <code class="language-plaintext highlighter-rouge">tools/test_validation_replay.py</code></td>
+      <td><code class="language-plaintext highlighter-rouge">mise run dev:record-validations -- --out DIR</code> at the commit before a change, then <code class="language-plaintext highlighter-rouge">mise run dev:replay-validations -- DIR --write-baseline FILE</code> there and <code class="language-plaintext highlighter-rouge">mise run dev:replay-validations -- DIR --baseline FILE</code> after it. Exit status 1 when a validation outside the baseline differs</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="platform-services-javamaven-platform">Platform services (Java/Maven, <code class="language-plaintext highlighter-rouge">platform/</code>)</h3>
+
+<p>Authoring service (design-time control plane), Surface workflow (revision lifecycle and worker
+coordination), release integration, the semantic dataset SPI and its Fuseki backend, the semantic
+policy module, and the test-only reasoning harness (<code class="language-plaintext highlighter-rouge">reasoning-testkit</code>, never a runtime
+dependency, ADR-A83). <code class="language-plaintext highlighter-rouge">mise run check:java</code> runs the whole Maven reactor.</p>
+
+<h3 id="frontend-applications-apps">Frontend applications (<code class="language-plaintext highlighter-rouge">apps/</code>)</h3>
+
+<p>The MORK Review Workbench and Surface Contract Studio (React, Vite, Playwright). <code class="language-plaintext highlighter-rouge">mise run
+check:frontend</code> (lint/typecheck), <code class="language-plaintext highlighter-rouge">mise exec -- yarn build</code>, <code class="language-plaintext highlighter-rouge">mise exec -- yarn test</code> (Playwright
+end-to-end, after <code class="language-plaintext highlighter-rouge">yarn playwright install</code>).</p>
+
+<h3 id="identity-minting-packagesminting">Identity minting (<code class="language-plaintext highlighter-rouge">packages/minting/</code>)</h3>
+
+<p>Framework-neutral identity-pattern libraries, Python and Java, with no LATTICE dependency
+(ADR-A84). <code class="language-plaintext highlighter-rouge">mise run check:minting</code> (anchors, Python, Java together).</p>
+
+<h2 id="6-continuous-integration">6. Continuous integration</h2>
+
+<p><code class="language-plaintext highlighter-rouge">.github/workflows/platform.yml</code>, <code class="language-plaintext highlighter-rouge">phase8-conformance.yml</code> and <code class="language-plaintext highlighter-rouge">formal-methods.yml</code> run the same
+<code class="language-plaintext highlighter-rouge">mise run check:*</code> tasks described above — nothing is reimplemented in YAML. All three are
+<strong>manual-dispatch only</strong> (<code class="language-plaintext highlighter-rouge">workflow_dispatch</code>), a deliberate cost-control choice, not a readiness
+gap: every job is written and ready, so switching to automatic triggering on push/PR is a one-line
+change (see the commented-out trigger block at the top of <code class="language-plaintext highlighter-rouge">platform.yml</code>), made when the maintainer
+chooses to activate it.</p>
+
+<p><code class="language-plaintext highlighter-rouge">formal-methods.yml</code> is split out deliberately: its two jobs (<code class="language-plaintext highlighter-rouge">proofs</code>, native Isabelle; <code class="language-plaintext highlighter-rouge">models</code>,
+Alloy) each install a full native toolchain from scratch, making them slower and more toolchain-
+fragile than everything else — kept out of the main <code class="language-plaintext highlighter-rouge">platform.yml</code> run so a toolchain hiccup there
+never blocks the rest of CI.</p>
+
+<h2 id="7-validation-packs-and-the-epic-decomposition-model">7. Validation packs and the Epic Decomposition Model</h2>
+
+<p>Any unit of work beyond a small fix follows the model in the <a href="../../.claude/skills/lattice-lifecycle/SKILL.md">lattice-lifecycle skill</a> and
+<a href="/developer/INDEX.html"><code class="language-plaintext highlighter-rouge">docs/developer/INDEX.md</code></a>: a sketch, a plan, a status record updated live, and (for a
+slice) a Validation Pack under <code class="language-plaintext highlighter-rouge">docs/developer/validation/</code> naming its test cases, the one command
+that runs them, and what a maintainer should inspect before merging, which is the sign-off. Read that model before starting a new unit — this guide
+covers the tools; INDEX.md and that skill cover the
+process those tools are run under.</p>
+
+<h2 id="8-agent-guidance">8. Agent guidance</h2>
+
+<p>AI agents work here under <a href="../../AGENTS.md">AGENTS.md</a>, always loaded, and six skills in
+<a href="../../.claude/skills"><code class="language-plaintext highlighter-rouge">.claude/skills/</code></a>, loaded by task (ADR-A117). <code class="language-plaintext highlighter-rouge">.github/copilot-instructions.md</code>
+is generated from <code class="language-plaintext highlighter-rouge">AGENTS.md</code>, never edited by hand.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Task</th>
+      <th>Does</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">build:agent-guidance</code></td>
+      <td>writes Copilot’s file from <code class="language-plaintext highlighter-rouge">AGENTS.md</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">check:agent-guidance</code></td>
+      <td>checks that file, every skill’s name and description, <code class="language-plaintext highlighter-rouge">AGENTS.md</code>’s skill table, the plugin marketplace and every link (in <code class="language-plaintext highlighter-rouge">check</code>)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">skills:link</code></td>
+      <td>links the skills into <code class="language-plaintext highlighter-rouge">~/.copilot/skills/</code> for Copilot in other projects, copying on Windows</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">check:deny-terms</code></td>
+      <td>checks staged changes against your personal, never published, list of terms (skill <code class="language-plaintext highlighter-rouge">lattice-publication-hygiene</code>)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">hooks:install</code></td>
+      <td>adds an opt-in pre-commit hook running <code class="language-plaintext highlighter-rouge">check:deny-terms</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Claude Code users elsewhere install the skills with <code class="language-plaintext highlighter-rouge">/plugin marketplace add nebularis/lattice</code> and
+<code class="language-plaintext highlighter-rouge">/plugin install lattice@nebularis</code>. Do not install the plugin inside this repository, where the
+skills already load, or each appears twice.</p>
+
+<p><strong>Cloud sessions.</strong> A Claude Code cloud environment prepares itself with
+<a href="../../tools/claude-cloud-setup.sh"><code class="language-plaintext highlighter-rouge">tools/claude-cloud-setup.sh</code></a>. Paste the two lines from its header
+into the environment’s <strong>Setup script</strong> field, and set its network access to <strong>Custom</strong>, with the
+default list of package managers included, plus <code class="language-plaintext highlighter-rouge">mise.jdx.dev</code> and <code class="language-plaintext highlighter-rouge">www.cl.cam.ac.uk</code>. It installs
+mise, Java 25 from Ubuntu’s archive, Python 3.14 from the deadsnakes PPA and Isabelle2025-2, with its
+prebuilt HOL heap, from the Cambridge mirror. It links those and the image’s Node and Maven into mise,
+and runs <code class="language-plaintext highlighter-rouge">mise run bootstrap</code>. GitHub serves a cloud session only its own repositories, so nothing is
+fetched from GitHub. The script always exits 0, as a cloud setup script must, and its last lines
+report how long setup took, which must stay under about five minutes for the environment to be
+cached.</p>
+
+<h2 id="9-several-checkouts-side-by-side">9. Several checkouts side by side</h2>
+
+<p>We often run several workstreams at once: a slice on one branch, a review of another, a bundle from
+a machine that cannot push. Each needs its own working files and its own installed tool packages,
+without containers. Two things give that: a virtual environment per checkout, and git worktrees.</p>
+
+<h3 id="a-virtual-environment-per-checkout">A virtual environment per checkout</h3>
+
+<p><code class="language-plaintext highlighter-rouge">mise.toml</code> declares <code class="language-plaintext highlighter-rouge">_.python.venv = { path = ".venv", create = true }</code>. Every checkout, worktrees
+included, gets its own <code class="language-plaintext highlighter-rouge">.venv</code> (ignored by git), which mise activates in an activated shell inside the
+checkout and for every <code class="language-plaintext highlighter-rouge">mise run</code> and <code class="language-plaintext highlighter-rouge">mise exec</code>. Editable installs (<code class="language-plaintext highlighter-rouge">pip install -e</code>, which the
+<code class="language-plaintext highlighter-rouge">bootstrap:*</code> tasks use) then point at that checkout’s own <code class="language-plaintext highlighter-rouge">tools/</code> and never at another’s.</p>
+
+<ul>
+  <li>Run <code class="language-plaintext highlighter-rouge">mise run bootstrap</code> once in each new checkout. With pip’s shared cache it takes a minute or two.</li>
+  <li><code class="language-plaintext highlighter-rouge">mise run bootstrap</code> installs every Python package in one pip resolve (<code class="language-plaintext highlighter-rouge">bootstrap:python</code>), so
+packages that need incompatible versions of a shared dependency fail at once and visibly. Keep
+<code class="language-plaintext highlighter-rouge">pytest</code> and <code class="language-plaintext highlighter-rouge">pytest-xdist</code> specifiers identical in every <code class="language-plaintext highlighter-rouge">pyproject.toml</code>
+(<code class="language-plaintext highlighter-rouge">tools/test_python_requirements.py</code> checks it).</li>
+  <li><code class="language-plaintext highlighter-rouge">mise</code> creates the <code class="language-plaintext highlighter-rouge">.venv</code> with <code class="language-plaintext highlighter-rouge">uv</code> where <code class="language-plaintext highlighter-rouge">uv</code> is installed, and <code class="language-plaintext highlighter-rouge">uv</code> leaves out pip. Every Python
+<code class="language-plaintext highlighter-rouge">bootstrap:*</code> task depends on <code class="language-plaintext highlighter-rouge">bootstrap:pip</code>, which runs <code class="language-plaintext highlighter-rouge">ensurepip</code>.</li>
+  <li>Run individual <code class="language-plaintext highlighter-rouge">bootstrap:&lt;package&gt;</code> tasks one at a time (<code class="language-plaintext highlighter-rouge">mise run --jobs 1 bootstrap:a bootstrap:b</code>).
+Parallel pip runs into one <code class="language-plaintext highlighter-rouge">.venv</code> interleave files of different versions of the same package and
+leave it unimportable. If that has happened, run <code class="language-plaintext highlighter-rouge">rm -rf .venv &amp;&amp; mise run bootstrap</code>.</li>
+  <li>In a shell where mise is not activated, a bare <code class="language-plaintext highlighter-rouge">python</code> is mise’s global interpreter, not the
+checkout’s. Use <code class="language-plaintext highlighter-rouge">mise run &lt;task&gt;</code> or <code class="language-plaintext highlighter-rouge">mise exec -- python ...</code>, or activate mise in the shell.</li>
+  <li>Check which code a test imports: <code class="language-plaintext highlighter-rouge">mise exec -- python -c "import persistence; print(persistence.__file__)"</code>
+must print a path inside the checkout.</li>
+</ul>
+
+<h3 id="git-worktrees">Git worktrees</h3>
+
+<p>A git repository can have several working trees. Each has its own files, index and checked-out
+<code class="language-plaintext highlighter-rouge">HEAD</code>, and all share one object store, one set of branches and tags, and one set of remotes. So a
+<code class="language-plaintext highlighter-rouge">git fetch</code> in any of them is seen by all, and a commit made in one is visible from the others at
+once. Git refuses to check out the same branch in two worktrees, which protects a branch from two
+workstreams editing it at the same time.</p>
+
+<p>We keep the primary checkout at <code class="language-plaintext highlighter-rouge">~/work/lattice</code> and put its worktrees in <code class="language-plaintext highlighter-rouge">~/work/lattice-wt/</code>:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">cd</span> ~/work/lattice
+git fetch origin-ssh
+git worktree add ../lattice-wt/fm-review fm/some-branch                          <span class="c"># a local branch that exists: the worktree is on it</span>
+git worktree add <span class="nt">--track</span> <span class="nt">-b</span> fm/some-branch ../lattice-wt/fm-review origin-ssh/fm/some-branch   <span class="c"># no local branch yet: create one tracking origin-ssh</span>
+git worktree add <span class="nt">-b</span> ccs/c9b3-sets ../lattice-wt/c9b3 main                       <span class="c"># a new branch, started from main</span>
+git worktree add <span class="nt">--detach</span> ../lattice-wt/look origin-ssh/fm/some-branch          <span class="c"># a read-only look at a commit, on no branch</span>
+git worktree list                                                                <span class="c"># every worktree and what it has checked out</span>
+git worktree remove ../lattice-wt/fm-review                                      <span class="c"># when done: refuses if there are uncommitted changes</span>
+git worktree prune                                                               <span class="c"># forget worktrees deleted by hand</span>
+</code></pre></div></div>
+
+<p>Name a <strong>branch</strong>, not a remote-tracking ref such as <code class="language-plaintext highlighter-rouge">origin-ssh/fm/some-branch</code>. Given a
+remote-tracking ref, <code class="language-plaintext highlighter-rouge">git worktree add</code> checks out its commit with no branch (a detached <code class="language-plaintext highlighter-rouge">HEAD</code>),
+where a commit belongs to no branch and a <code class="language-plaintext highlighter-rouge">git pull</code> has nothing to update. With no local branch of
+that name, git creates one tracking the remote only when exactly one remote has it. We have two,
+<code class="language-plaintext highlighter-rouge">origin</code> and <code class="language-plaintext highlighter-rouge">origin-ssh</code>, so create it explicitly with <code class="language-plaintext highlighter-rouge">--track -b</code> as above. A worktree already
+detached joins its branch with <code class="language-plaintext highlighter-rouge">git switch fm/some-branch</code>, and <code class="language-plaintext highlighter-rouge">git branch
+--set-upstream-to=origin-ssh/fm/some-branch</code> changes which remote it tracks.</p>
+
+<p>Then, in each new worktree:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">cd</span> ~/work/lattice-wt/c9b3
+mise trust          <span class="c"># once per worktree, since its mise.toml is a new file to mise</span>
+mise run bootstrap  <span class="c"># its own .venv, node_modules and builds</span>
+</code></pre></div></div>
+
+<p>To avoid <code class="language-plaintext highlighter-rouge">mise trust</code> per worktree, add <code class="language-plaintext highlighter-rouge">~/work</code> to <code class="language-plaintext highlighter-rouge">trusted_config_paths</code> in
+<code class="language-plaintext highlighter-rouge">~/.config/mise/config.toml</code>.</p>
+
+<p><strong>What stays separate:</strong> the working files, <code class="language-plaintext highlighter-rouge">.venv</code>, <code class="language-plaintext highlighter-rouge">node_modules</code>, <code class="language-plaintext highlighter-rouge">target/</code> (so the reasoner jar),
+<code class="language-plaintext highlighter-rouge">.build/</code> (sweep logs, pytest cache) and the checked-out branch. <strong>What is shared:</strong> commits,
+branches, tags, remotes and stashes (so set work aside with a commit, not a bare <code class="language-plaintext highlighter-rouge">git stash</code>), and
+outside git, Maven’s <code class="language-plaintext highlighter-rouge">~/.m2</code> and pip’s cache, which are safe to share. Two worktrees running the
+authoring stack’s dev servers at once collide on ports, so run one at a time.</p>
+
+<p>An agent session works in one worktree and stays there. Several sessions can run at once, one per
+worktree, as long as no two share a branch.</p>
+
+<h3 id="integrating-work-from-a-machine-that-cannot-push">Integrating work from a machine that cannot push</h3>
+
+<p>A machine with no route to the remote sends its commits as a git bundle: one file holding commits
+and the branches that name them, which another clone can fetch from as if it were a remote.</p>
+
+<p><strong>On the machine that cannot push (machine S):</strong></p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git bundle create ../fm-2026-10-10.bundle main..fm/some-branch   <span class="c"># only the commits main lacks</span>
+git bundle verify ../fm-2026-10-10.bundle                        <span class="c"># checks it is complete</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">main..fm/some-branch</code> sends only the commits that are not on <code class="language-plaintext highlighter-rouge">main</code>, so the bundle is small, and the
+receiving clone must already have <code class="language-plaintext highlighter-rouge">main</code> up to that point, which <code class="language-plaintext highlighter-rouge">verify</code> on the receiving side
+confirms. For a first bundle, or when unsure what the receiver has, bundle the whole branch:
+<code class="language-plaintext highlighter-rouge">git bundle create ../fm.bundle fm/some-branch</code>. For later bundles, send everything since the last
+one by tagging what was sent:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git bundle create ../fm-2026-10-11.bundle bundle/last-sent..fm/some-branch
+git tag <span class="nt">-f</span> bundle/last-sent fm/some-branch
+</code></pre></div></div>
+
+<p>Copy the file to the receiving machine by any means.</p>
+
+<p><strong>On the machine that can push (machine R):</strong></p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">cd</span> ~/work/lattice
+git bundle verify ~/Downloads/fm-2026-10-10.bundle                              <span class="c"># lists its heads, and says if a prerequisite commit is missing</span>
+git fetch ~/Downloads/fm-2026-10-10.bundle <span class="s1">'refs/heads/*:refs/remotes/machine-s/*'</span>
+git log <span class="nt">--oneline</span> main..machine-s/fm/some-branch                                 <span class="c"># what arrived</span>
+git worktree add <span class="nt">--detach</span> ../lattice-wt/machine-s machine-s/fm/some-branch       <span class="c"># review it in its own worktree, on no branch</span>
+</code></pre></div></div>
+
+<p>The fetch puts the bundle’s branches under <code class="language-plaintext highlighter-rouge">machine-s/</code>, beside <code class="language-plaintext highlighter-rouge">origin-ssh/</code>, and every worktree
+sees them. Review and run the checks in the <code class="language-plaintext highlighter-rouge">machine-s</code> worktree. To accept the work, push it from
+any worktree with <code class="language-plaintext highlighter-rouge">git push origin-ssh machine-s/fm/some-branch:fm/some-branch</code> and merge it as any
+branch, or merge <code class="language-plaintext highlighter-rouge">machine-s/fm/some-branch</code> into <code class="language-plaintext highlighter-rouge">main</code> directly.</p>
+
+<p><strong>Sending updates back to machine S</strong> works the same way in reverse: on R,
+<code class="language-plaintext highlighter-rouge">git bundle create ../r-main.bundle main</code>, and on S, <code class="language-plaintext highlighter-rouge">git fetch ../r-main.bundle main:refs/remotes/r/main</code>
+followed by a merge or rebase of <code class="language-plaintext highlighter-rouge">r/main</code> into its branch.</p>

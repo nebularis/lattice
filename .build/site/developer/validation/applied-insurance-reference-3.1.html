@@ -1,0 +1,111 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-air-31-hierarchical-match-over-flat-schemes">Validation Pack: AIR-3.1, hierarchical match over flat schemes</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/applied-insurance-reference.html"><code class="language-plaintext highlighter-rouge">applied-insurance-reference</code></a>
+<strong>Machine:</strong> R. <strong>Branch:</strong> <code class="language-plaintext highlighter-rouge">air/3.1-flat-hierarchy</code>
+<strong>Plan and test cases:</strong> <a href="/developer/plans/applied-insurance-reference-phase-3.html">Phase 3 plan</a> (AIR-3.1 in detail)
+<strong>Decisions:</strong> ADR-A100 and its implementation note</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>Under <code class="language-plaintext highlighter-rouge">elg:HierarchicalMatch</code>, a resolved scheme in which no member has a <code class="language-plaintext highlighter-rouge">skos:broader</code> link to another member decides only the concepts a condition names. Every other member is Undetermined with <code class="language-plaintext highlighter-rouge">exe:NoHierarchy</code> in every backend, and hierarchical schemes evaluate as before.</p>
+
+<h2 id="test-cases">Test cases</h2>
+
+<p>The table in the plan section above. Each row’s result is recorded under Results at
+verification.</p>
+
+<h2 id="one-command">One command</h2>
+
+<p>Run from the repository root on machine R, after <code class="language-plaintext highlighter-rouge">mise run build:ontology-catalog</code> and <code class="language-plaintext highlighter-rouge">mise run build:ontology-releases</code>.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:mork-compilers <span class="o">&amp;&amp;</span> mise run check:ontology-catalog <span class="o">&amp;&amp;</span> mise run check:ontology-versioning
+</code></pre></div></div>
+
+<h2 id="artefacts-to-inspect">Artefacts to inspect</h2>
+
+<ul>
+  <li>The two examples in <code class="language-plaintext highlighter-rouge">ontology/eligibility/examples/</code> and their recorded decisions.</li>
+  <li><code class="language-plaintext highlighter-rouge">elg:L14</code> in the vocabulary and README, and <code class="language-plaintext highlighter-rouge">exe:NoHierarchy</code>.</li>
+  <li>The flat branch in <code class="language-plaintext highlighter-rouge">eligibility_ir._expand</code> and <code class="language-plaintext highlighter-rouge">sparql_backend.concept_select</code>.</li>
+</ul>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<p>Set readings and negation (AIR-3.2, AIR-3.3). Kind-only matching (substrate S2).</p>
+
+<h2 id="handoff">Handoff</h2>
+
+<p>Written by the building machine when the work is committed. R ran the command before handing over.</p>
+
+<ul>
+  <li><strong>Built:</strong> the two examples (<code class="language-plaintext highlighter-rouge">flat-scheme-lending.ttl</code>, <code class="language-plaintext highlighter-rouge">flat-scheme-employment.ttl</code>),
+<code class="language-plaintext highlighter-rouge">elg:L14</code> in the Eligibility vocabulary and README (vocabulary 0.6.0 → 0.7.0),
+<code class="language-plaintext highlighter-rouge">exe:NoHierarchy</code> (Executable 0.5.0 → 0.6.0), <code class="language-plaintext highlighter-rouge">ConceptPlan.no_hierarchy</code> and the L14 branch of
+<code class="language-plaintext highlighter-rouge">_expand</code>, the SPARQL branch and diagnostic, the SHACL message, the OWL refusal,
+<code class="language-plaintext highlighter-rouge">test_flat_schemes.py</code>, the examples in <code class="language-plaintext highlighter-rouge">tools/test_eligibility_examples.py</code>, the compilers
+README, the Eligibility row of ontology architecture §3, the catalog and two release rows.</li>
+  <li><strong>Not run:</strong> nothing. Every check below was run on R.</li>
+  <li><strong>Check first:</strong> the lending example’s comment table, which is the argument for L14 in one
+place, and the rule that the lender’s list reuses only concepts whose parents lie outside it.</li>
+  <li><strong>Deviations from the plan:</strong> the plan section now matches what was built.
+    <ol>
+      <li>The lending example’s recorded decisions changed. A list reusing both a parent and its child
+would carry their <code class="language-plaintext highlighter-rouge">skos:broader</code> link, so the list holds only concepts whose parent lies
+outside it, and the condition requires manufacturing or retail.</li>
+      <li>The new tests are in <code class="language-plaintext highlighter-rouge">test_flat_schemes.py</code>, not <code class="language-plaintext highlighter-rouge">test_hierarchical_conditions.py</code>, to avoid
+an import cycle with <code class="language-plaintext highlighter-rouge">test_concept_backends.py</code>.</li>
+      <li>One existing test changed: <code class="language-plaintext highlighter-rouge">test_concept_backends.py</code>’s closed set of diagnostics gains
+<code class="language-plaintext highlighter-rouge">exe:NoHierarchy</code>. The test fails whenever <code class="language-plaintext highlighter-rouge">Executable.ttl</code> declares a diagnostic it does not
+list, so this extends it and weakens nothing.</li>
+    </ol>
+  </li>
+</ul>
+
+<h2 id="results">Results</h2>
+
+<p>Run on machine R, 2026-09-26, on <code class="language-plaintext highlighter-rouge">air/3.1-flat-hierarchy</code>:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Check</th>
+      <th>Result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:mork-compilers</code></td>
+      <td>101 passed (92 before, plus 9 in <code class="language-plaintext highlighter-rouge">test_flat_schemes.py</code>)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:ontology-catalog</code></td>
+      <td>59 tool tests passed, catalog consistent, 3 known defects (unchanged)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:ontology-versioning</code></td>
+      <td>no unbumped changes, every version listed. Tags to create: <code class="language-plaintext highlighter-rouge">eligibility-vocab-v0.7.0</code>, <code class="language-plaintext highlighter-rouge">executable-v0.6.0</code></td>
+    </tr>
+    <tr>
+      <td>AIR31-01 to AIR31-09</td>
+      <td>pass (<code class="language-plaintext highlighter-rouge">test_flat_schemes.py</code>)</td>
+    </tr>
+    <tr>
+      <td>AIR31-10</td>
+      <td>pass (<code class="language-plaintext highlighter-rouge">tools/test_eligibility_examples.py</code>)</td>
+    </tr>
+    <tr>
+      <td>AIR31-11</td>
+      <td>pass: no existing hierarchical test changed</td>
+    </tr>
+    <tr>
+      <td>probe: L14 branch removed from <code class="language-plaintext highlighter-rouge">_expand</code></td>
+      <td>AIR31-06, 07 and 08 fail</td>
+    </tr>
+    <tr>
+      <td>probe: L14 branch removed from <code class="language-plaintext highlighter-rouge">concept_select</code></td>
+      <td>AIR31-03, 04, 06 and 07 fail</td>
+    </tr>
+  </tbody>
+</table>

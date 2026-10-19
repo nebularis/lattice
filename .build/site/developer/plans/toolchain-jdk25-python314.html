@@ -1,0 +1,26 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="toolchain-jdk-25-lts-and-python-314--plan">Toolchain: JDK 25 LTS and Python 3.14 — Plan</h1>
+
+<p><strong>Unit ID:</strong> <code class="language-plaintext highlighter-rouge">toolchain-jdk25-python314</code>
+<strong>Status:</strong> Executed — see <a href="/developer/status/toolchain-jdk25-python314.html">status</a>
+<strong>Decided:</strong> 2026-09-23, while scoping <a href="/developer/sketches/identity-minting.html"><code class="language-plaintext highlighter-rouge">identity-minting</code></a></p>
+
+<h2 id="why">Why</h2>
+
+<p>The identity-minting libraries pin their Unicode data to one version, and rely on each runtime’s built-in NFC for code points assigned in that version. The pinned version is therefore capped by the oldest Unicode any supported runtime ships. On JDK 21 and Python 3.11 that was Unicode 14.0. JDK 25 (LTS) and Python 3.14 both ship Unicode 16.0, so the pair moves together. Newer JDKs (26, 27) would add nothing, because Python 3.14 sets the ceiling, and neither is LTS.</p>
+
+<h2 id="scope">Scope</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">mise.toml</code>: <code class="language-plaintext highlighter-rouge">java = "25"</code>, <code class="language-plaintext highlighter-rouge">python = "3.14"</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">platform/pom.xml</code>: <code class="language-plaintext highlighter-rouge">maven.compiler.release</code> 25.</li>
+  <li><code class="language-plaintext highlighter-rouge">.github/workflows/*.yml</code>: <code class="language-plaintext highlighter-rouge">python-version</code> and <code class="language-plaintext highlighter-rouge">java-version</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">requires-python = "&gt;=3.14"</code> in every <code class="language-plaintext highlighter-rouge">pyproject.toml</code> (root, <code class="language-plaintext highlighter-rouge">tools/*</code>, <code class="language-plaintext highlighter-rouge">workers</code>).</li>
+  <li><code class="language-plaintext highlighter-rouge">requirements-lock.txt</code>: re-resolve under 3.14 and regenerate if needed.</li>
+  <li>Current-state documentation that names the versions. Historical records (status, handoff, review, prompt records) are left as written.</li>
+</ul>
+
+<h2 id="validation">Validation</h2>
+
+<p>Baseline every check on the old toolchain, then re-run the same set on the new one and compare: <code class="language-plaintext highlighter-rouge">check:python-root</code>, <code class="language-plaintext highlighter-rouge">check:workers</code>, <code class="language-plaintext highlighter-rouge">check:persistence</code>, <code class="language-plaintext highlighter-rouge">build:mtp</code> then <code class="language-plaintext highlighter-rouge">check:mtp</code>, <code class="language-plaintext highlighter-rouge">check:spc</code>, <code class="language-plaintext highlighter-rouge">check:java</code> (including a clean build), plus a direct check that each runtime defines Unicode 16.0 characters. <code class="language-plaintext highlighter-rouge">check:frontend</code> is unaffected (Node is unchanged).</p>

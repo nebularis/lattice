@@ -1,0 +1,89 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="shared-semantic-platform">Shared Semantic Platform</h1>
+
+<p>The Phase 1 platform separates semantic graph access, authorization, operational state, and worker execution.</p>
+
+<p><code class="language-plaintext highlighter-rouge">platform/semantic-dataset-spi</code> owns portable graph references, capability discovery, and dataset snapshots. A graph reference includes tenant, project, graph IRI, and immutable revision hash. Job payloads carry only these references. They do not carry RDF, credentials, browser tokens, or unrestricted endpoint details.</p>
+
+<p><code class="language-plaintext highlighter-rouge">platform/semantic-dataset-fuseki</code> is the initial adapter. It reads a named graph from Fuseki and reports its serialized content hash. Further adapters must pass the same SPI contract tests before they are enabled.</p>
+
+<p><code class="language-plaintext highlighter-rouge">platform/semantic-policy</code> applies tenant, project, and role checks before a graph reference reaches an adapter. OIDC integration must construct <code class="language-plaintext highlighter-rouge">Principal</code> from verified claims at the HTTP boundary. It must not trust principal data sent in AMQP messages.</p>
+
+<p><code class="language-plaintext highlighter-rouge">platform/platform-outbox</code> captures CloudEvents with an idempotency key and relays pending records through a RabbitMQ publisher. Publisher failure leaves a record pending for retry. The publisher declares a durable topic exchange and a dead-letter exchange. The initial outbox storage is in memory for unit tests. A PostgreSQL-backed implementation is required before the platform can be deployed.</p>
+
+<p>The Python <code class="language-plaintext highlighter-rouge">workers/</code> package is the initial worker boundary. Its validation handler verifies the version-one request contract and calls a supplied graph-reference validator. AMQP transport, retry scheduling, dead-letter queues, and PostgreSQL persistence are deployment adapters to be added with the corresponding integration tests.</p>
+
+<h2 id="component-ownership">Component Ownership</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Component</th>
+      <th>Owns</th>
+      <th>Does not own</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">semantic-dataset-spi</code></td>
+      <td>Graph references, snapshots, and capability vocabulary</td>
+      <td>Storage-provider configuration or authorization policy</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">semantic-dataset-fuseki</code></td>
+      <td>Named-graph read adapter for Fuseki</td>
+      <td>Generic SPARQL and RDF4J support</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">semantic-policy</code></td>
+      <td>Tenant, project, and role checks at the control boundary</td>
+      <td>OIDC token parsing or identity-provider configuration</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">platform-outbox</code></td>
+      <td>Idempotency key, CloudEvent representation, pending-record relay semantics</td>
+      <td>Durable SQL persistence and broker lifecycle</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">workers</code></td>
+      <td>Validation of untrusted graph-reference job envelopes</td>
+      <td>Caller identity, graph authorization, or broker connection lifecycle</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="graph-reference-contract">Graph Reference Contract</h2>
+
+<p>A graph reference is the only portable description of semantic input across runtimes:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>tenant ID + project ID + absolute graph IRI + immutable revision hash
+</code></pre></div></div>
+
+<p>The control plane authorizes the tenant and project before it asks a dataset adapter to resolve the IRI. The revision hash identifies the required immutable content. A worker must verify the received reference shape and scope, then ask a trusted resolver for the content. It does not resolve an arbitrary user-provided endpoint and it does not accept an RDF document in the event payload.</p>
+
+<h2 id="job-and-event-flow">Job and Event Flow</h2>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>browser or API command
+	-&gt; authenticated control boundary
+	-&gt; graph policy check
+	-&gt; transactional outbox record with idempotency key and correlation ID
+	-&gt; RabbitMQ publisher
+	-&gt; Python worker job envelope
+	-&gt; trusted graph resolver and semantic implementation
+	-&gt; result event and correlated operational record
+</code></pre></div></div>
+
+<p>The source of semantic truth remains RDF. PostgreSQL is intended to retain operational facts such as jobs, outbox rows, retries, and lifecycle records. RabbitMQ carries commands and results, not graph payloads. Correlation IDs must flow from request to outbox, event, worker result, and later release receipt.</p>
+
+<h2 id="failure-and-retry-behavior">Failure and Retry Behavior</h2>
+
+<p>The outbox returns the same record for repeated enqueue requests with the same idempotency key. A publisher error leaves the record pending. The RabbitMQ publisher declares durable topic and dead-letter exchanges, while queue topology and retry policy are deployment concerns. A worker result must be idempotently recorded by its consumer before a retry can be treated as complete.</p>
+
+<p>The present in-memory outbox and unit tests establish the contract. A production implementation still needs PostgreSQL transactional storage, message acknowledgement policy, retry schedule, dead-letter replay procedure, and Testcontainers validation across PostgreSQL, RabbitMQ, and Fuseki.</p>
+
+<h2 id="trust-and-extension-rules">Trust and Extension Rules</h2>
+
+<p>OIDC-derived identity must be converted to <code class="language-plaintext highlighter-rouge">Principal</code> at an authenticated boundary. AMQP messages cannot construct or modify a principal. New dataset adapters must declare their capabilities and pass the same contract tests as Fuseki. An unsupported capability is an explicit failure, not an adapter-specific fallback.</p>
+
+<p>See <a href="decisions/ADR-A30-shared-semantic-platform-cross-runtime-boundary.md">ADR-A30</a> for the durable decision and <a href="/architecture/implementation-map.html">the implementation map</a> for the cross-phase dependency map.</p>

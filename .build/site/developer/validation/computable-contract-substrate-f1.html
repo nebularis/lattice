@@ -1,0 +1,155 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-ccs-f1-external-and-natural-keys">Validation Pack: CCS F1, external and natural keys</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/computable-contract-substrate.html"><code class="language-plaintext highlighter-rouge">computable-contract-substrate</code></a>
+<strong>Machine:</strong> R. <strong>Branch:</strong> <code class="language-plaintext highlighter-rouge">ccs/f1-keys</code>. Commits are the maintainer’s
+<strong>Plan and test cases:</strong> <a href="/developer/plans/computable-contract-substrate.html">CCS plan</a> (F1 in detail)
+<strong>Decisions:</strong> <a href="../../architecture/decisions/ADR-A114-external-and-natural-keys.md">ADR-A114</a> (Accepted 2026-10-03, at the phase 0 gate), CC-D9, ADR-A51, ADR-A84, ADR-A86, ADR-A113</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>Any thing in a LATTICE graph can carry the names the world gives it, as key nodes with a scheme and a value, either locating it (<code class="language-plaintext highlighter-rouge">fnd:externalKey</code>) or identifying it (<code class="language-plaintext highlighter-rouge">fnd:naturalKey</code>). A natural key identifies one thing: checked by SHACL everywhere, merged by OWL only under <code class="language-plaintext highlighter-rouge">fnd:MergedOnNaturalKey</code>, enforced at write time by Persistence under <code class="language-plaintext highlighter-rouge">dal:PersistenceKeyed</code>. Identity stays ADR-A51’s.</p>
+
+<h2 id="test-cases">Test cases</h2>
+
+<p>The table in the plan section above. Each row’s result is recorded under Results at
+verification.</p>
+
+<h2 id="one-command">One command</h2>
+
+<p>Run from the repository root on machine R, with the reasoning harness built where a row is L2.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run build:ontology-catalog <span class="o">&amp;&amp;</span> mise run check:ontology-versioning <span class="o">&amp;&amp;</span> mise run check:ontology-catalog <span class="o">&amp;&amp;</span> mise run check:import-guard <span class="o">&amp;&amp;</span> mise run check:persistence <span class="o">&amp;&amp;</span> mise run check:minting
+</code></pre></div></div>
+
+<h2 id="artefacts-to-inspect">Artefacts to inspect</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">docs/developer/sketches/keys-impact.md</code>: the phase 0 analysis of Persistence, Surface and the cascade, reviewed at the gate.</li>
+  <li><code class="language-plaintext highlighter-rouge">ontology/foundation/examples/keys.ttl</code>, <code class="language-plaintext highlighter-rouge">ontology/persistence/examples/persistent-foundation-keys.ttl</code>, <code class="language-plaintext highlighter-rouge">ontology/surface/examples/keys.ttl</code>: written before the model.</li>
+  <li>Foundation’s spec, shapes and README section on keys. Persistence’s <code class="language-plaintext highlighter-rouge">persistent-foundation</code> and its README section.</li>
+  <li>The cascade: every re-pinned document, its release row and tag.</li>
+</ul>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<p>Normalisations outside the minting specification’s three pipelines (a change to that specification), including the exact pipeline of follow-up FU-F1a. The compiler deriving the natural-key constraint from <code class="language-plaintext highlighter-rouge">dal:PersistenceKeyed</code> (FU-F1b). Both are in the plan’s F1 follow-ups table. Keys on instruments, made in C6. Revising AIR-4.1’s rows that name <code class="language-plaintext highlighter-rouge">aeo:Identifier</code>, done when F1 merges. Open CBAA’s migration of <code class="language-plaintext highlighter-rouge">agr:umr</code>. NRS N9’s Foundation change, which keeps its own window.</p>
+
+<h2 id="open-questions">Open questions</h2>
+
+<ul>
+  <li><strong>F1-Q1. Foundation’s uniqueness shape and <code class="language-plaintext highlighter-rouge">fnd:MergedOnNaturalKey</code>.</strong> Answered 2026-10-03:
+(b). Two different things sharing a natural key are a violation, unless both are
+<code class="language-plaintext highlighter-rouge">fnd:MergedOnNaturalKey</code>, when the pair is a warning (<code class="language-plaintext highlighter-rouge">fnd:MergedNaturalKeyShape</code>) whose message
+says a reasoner will infer <code class="language-plaintext highlighter-rouge">owl:sameAs</code> and that, if they are different things, the data is wrong.
+Foundation README §8.7 tells a reader how to interpret both severities.</li>
+</ul>
+
+<h2 id="handoff">Handoff</h2>
+
+<p>Written by the building machine when the work is ready for the maintainer to commit.</p>
+
+<ul>
+  <li><strong>Built:</strong>
+    <ul>
+      <li>Foundation 0.4.0: the keys of ADR-A114 and the G2 property chain (README §8), and Foundation’s
+first shapes, <code class="language-plaintext highlighter-rouge">shapes/constraints.ttl</code> 0.2.0, with F1-Q1’s warning. The README is again the
+literate source of <code class="language-plaintext highlighter-rouge">spec/foundation.ttl</code>: its ontology header became a block in §2, and the spec
+is regenerated from it (semantically unchanged before F1, two <code class="language-plaintext highlighter-rouge">owl:disjointWith</code> axioms now stated
+from the other side).</li>
+      <li><code class="language-plaintext highlighter-rouge">persistent-foundation</code> 0.1.0 (<code class="language-plaintext highlighter-rouge">spec/persistent-foundation.ttl</code>, importing Foundation 0.4.0 and
+Persistence 0.2.1) and <code class="language-plaintext highlighter-rouge">shapes/persistent-foundation.ttl</code> (persistence-shapes 0.2.0): the key
+class shapes of G1, the sensitive and personal-data shapes of P5, normalisation agreement (P3),
+keys typed by their class, and natural-key constraints on every <code class="language-plaintext highlighter-rouge">dal:PersistenceKeyed</code> class.
+Persistence README §14.</li>
+      <li>The cascade: 24 importers re-pinned, each a MINOR, with the catalog and 28 release rows. Surface’s
+compiler constant moved to 0.6.0 (S4). Tests naming a current version updated, history
+assertions kept. Release notes in the Foundation, Wording, Behaviour and capacity READMEs.</li>
+      <li><code class="language-plaintext highlighter-rouge">tools/test_keys.py</code>, F1-01 to F1-15 and F1-Q1, 30 tests, added to <code class="language-plaintext highlighter-rouge">check:ontology-catalog</code>.</li>
+      <li>Elsewhere: the architecture doc’s Foundation section, AIR-4.1’s <code class="language-plaintext highlighter-rouge">aeo:LegalEntity</code> row, C6-Q2
+and the plan’s Open CBAA <code class="language-plaintext highlighter-rouge">agr</code> row.</li>
+    </ul>
+  </li>
+  <li><strong>Not run:</strong> the Java and frontend checks of <code class="language-plaintext highlighter-rouge">mise run check</code>, which F1 does not touch.</li>
+  <li><strong>Check first:</strong> the 28 tags <code class="language-plaintext highlighter-rouge">mise run check:ontology-versioning</code> lists, created after commit.
+The Foundation spec diff is large because it is now generated from the README.</li>
+  <li><strong>Deviations from the plan:</strong>
+    <ul>
+      <li>Examples (phase 1). The Foundation example locates the agreement from drawdown requests and a
+transfer certificate in place of declarations and a claim, keeping to a neutral domain
+(ADR-A-C2). The Surface example has no index contract, since the analysis found an index adds
+nothing (S1). It has two promotion contracts, not one: under <code class="language-plaintext highlighter-rouge">srf:NoEntailment</code> a step follows
+asserted triples only, so one contract ends in <code class="language-plaintext highlighter-rouge">fnd:naturalKey</code> and the other in
+<code class="language-plaintext highlighter-rouge">fnd:externalKey</code>. The Foundation example’s agreement identity gains the payout account as an
+external key, so the second contract has something to promote. F1-15 added for it.</li>
+      <li>No default <code class="language-plaintext highlighter-rouge">dal:UniquenessConstraint</code> ships in <code class="language-plaintext highlighter-rouge">persistent-foundation</code>: the compiler reads one
+<code class="language-plaintext highlighter-rouge">dal:appliesTo</code> per constraint, so a shipped constraint could serve one class only. A shape
+requires one per <code class="language-plaintext highlighter-rouge">dal:PersistenceKeyed</code> class instead. ADR-A114’s Consequences and the plan
+record it, and technical debt TD-15 the compiler’s silent choice of one scope.</li>
+      <li><code class="language-plaintext highlighter-rouge">persistent-foundation</code> imports Persistence as well as Foundation, since it uses <code class="language-plaintext highlighter-rouge">dal:</code> terms.
+The <code class="language-plaintext highlighter-rouge">dal:</code> ontology itself still imports nothing.</li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="results">Results</h2>
+
+<p>Run on machine R, 2026-10-03, against this checkout’s packages. <code class="language-plaintext highlighter-rouge">surface</code>, <code class="language-plaintext highlighter-rouge">mork_compilers</code> and <code class="language-plaintext highlighter-rouge">mtp</code>
+were installed from another clone on this machine, so they ran with this checkout’s sources first on
+<code class="language-plaintext highlighter-rouge">PYTHONPATH</code> (procedure step 8 in <code class="language-plaintext highlighter-rouge">.github/copilot-instructions.md</code>).</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Check</th>
+      <th>Result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">tools/test_keys.py</code> (F1-01 to F1-15, F1-Q1, reasoner rows included)</td>
+      <td>30 passed</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:ontology-catalog</code> (all ontology tool tests, <code class="language-plaintext highlighter-rouge">test_keys.py</code> included, catalog)</td>
+      <td>306 passed, catalog consistent</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:ontology-versioning</code></td>
+      <td>passed, 28 tags pending</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:import-guard</code></td>
+      <td>0 violations</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:persistence</code></td>
+      <td>778 passed</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:python-root</code> (Surface, Phase 8 conformance)</td>
+      <td>84 passed</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">mise run check:vocabulary</code>, <code class="language-plaintext highlighter-rouge">check:mork-compilers</code>, <code class="language-plaintext highlighter-rouge">check:reasoning-isolation</code></td>
+      <td>16, 114 passed, isolated</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">mise run build:mtp</code>, <code class="language-plaintext highlighter-rouge">check:mtp</code></td>
+      <td>passed. <code class="language-plaintext highlighter-rouge">pins.lock.json</code>’s ontology hash regenerated for MORK 0.5.0 (C3), every term hash unchanged</td>
+    </tr>
+    <tr>
+      <td>literate checks: Foundation, Wording, Behaviour, Surface</td>
+      <td>consistent</td>
+    </tr>
+    <tr>
+      <td>Mermaid: the new diagrams in Foundation §8 and Persistence §14</td>
+      <td>parse</td>
+    </tr>
+    <tr>
+      <td>adversarial probe: F1-Q1’s warning severity removed</td>
+      <td><code class="language-plaintext highlighter-rouge">test_f1_q1</code> fails, as it should</td>
+    </tr>
+  </tbody>
+</table>

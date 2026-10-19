@@ -1,0 +1,189 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-od1-a-fence-aware-scanner-markers-and-the-layout-check">Validation Pack: OD1, a fence-aware scanner, markers and the layout check</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/improved-ontology-documentation.html"><code class="language-plaintext highlighter-rouge">improved-ontology-documentation</code></a>, slice OD1
+(<a href="/developer/plans/improved-ontology-documentation.html#slices">plan</a>).
+<strong>Implements:</strong> <a href="/architecture/decisions/ADR-A126-literate-specification-layout-and-grammar.html">ADR-A126</a>
+decisions 1, 8 and 9, and <a href="../../architecture/decisions/ADR-A120-literate-specs-with-several-documents.md">ADR-A120</a>’s
+2026-10-17 addendum.
+<strong>Decisions needing confirmation:</strong> three implementation choices, below.</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>Every README under <code class="language-plaintext highlighter-rouge">ontology/</code> yields exactly the blocks it yielded before, with the same tags, bodies and
+line numbers, so no generated file changes. What is new applies only to markers and to READMEs in the new
+layout, and none exist yet. A tagged block or a marker shown inside another fence or inside an ordinary HTML
+comment is text. A malformed marker is refused, never ignored.</p>
+
+<h2 id="what-changed">What changed</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">tools/literate_extract.py</code>. <code class="language-plaintext highlighter-rouge">scan()</code> reads a README once and returns its blocks, its marker regions and
+its top-level sections. <code class="language-plaintext highlighter-rouge">parse_blocks()</code> keeps its signature and returns <code class="language-plaintext highlighter-rouge">scan().blocks</code>, so
+<code class="language-plaintext highlighter-rouge">check_formal_freshness.py</code> is unaffected. <code class="language-plaintext highlighter-rouge">Block</code> gains <code class="language-plaintext highlighter-rouge">output_file</code> (the JSON form) and <code class="language-plaintext highlighter-rouge">hidden</code>, both
+defaulted. One <code class="language-plaintext highlighter-rouge">_target()</code> replaces <code class="language-plaintext highlighter-rouge">_spec_target()</code> and <code class="language-plaintext highlighter-rouge">_vocab_target()</code>, with the same error messages,
+and handles both <code class="language-plaintext highlighter-rouge">output-file</code> forms for spec, vocab and shape blocks. A shape block that names its file
+takes no <code class="language-plaintext highlighter-rouge">--shapes</code> target. <code class="language-plaintext highlighter-rouge">layout_problems()</code> checks a README in the layout by section title, and
+<code class="language-plaintext highlighter-rouge">main()</code> prints its warnings, in yellow on a terminal, and fails on its errors.</li>
+  <li><code class="language-plaintext highlighter-rouge">tools/test_literate_extract.py</code>. Tests OD1-T1 to OD1-T11.</li>
+  <li><code class="language-plaintext highlighter-rouge">mise.toml</code>. <code class="language-plaintext highlighter-rouge">check:ontology-catalog</code> now runs <code class="language-plaintext highlighter-rouge">tools/test_literate_extract.py</code>, which no task ran before
+(see deviation 1).</li>
+  <li>Documentation. <code class="language-plaintext highlighter-rouge">tools/README.md</code> describes the markers and the layout check, and links the conventions
+document. Its commands, and the ontology authoring skill’s, now go through <code class="language-plaintext highlighter-rouge">mise exec</code>. The ontology
+architecture document, the glossary and the skill link to <code class="language-plaintext highlighter-rouge">literate-specifications.md</code>.</li>
+</ul>
+
+<h2 id="implementation-choices-for-the-maintainer">Implementation choices, for the maintainer</h2>
+
+<ol>
+  <li><strong>A README uses the layout when it has a “Description Logic Encoding” section.</strong> Only then are its
+sections checked. Any other README is left alone, so the check cannot fail an unmigrated layer. The
+alternative, a flag in the catalogue entry, waits for RC1.</li>
+  <li><strong>A region holds exactly one key.</strong> None of <code class="language-plaintext highlighter-rouge">exclude</code>, <code class="language-plaintext highlighter-rouge">output-file</code> and <code class="language-plaintext highlighter-rouge">generated</code> combines
+meaningfully with another, so a second key is refused.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">output-file</code> from a region applies only to blocks that are extracted into <code class="language-plaintext highlighter-rouge">ontology/</code></strong> (spec, vocab
+and shapes). An example or <code class="language-plaintext highlighter-rouge">isabelle-spec</code> block inside such a region is unaffected. Given explicitly on a
+hidden example or <code class="language-plaintext highlighter-rouge">isabelle-spec</code> block, it is refused, since examples are never extracted (OD-D6) and an
+Isabelle theory has its own root.</li>
+</ol>
+
+<h2 id="deviations-from-the-plan">Deviations from the plan</h2>
+
+<ol>
+  <li><strong><code class="language-plaintext highlighter-rouge">tools/test_literate_extract.py</code> joins <code class="language-plaintext highlighter-rouge">check:ontology-catalog</code>.</strong> It held the ADR-A120 and AIR-2.0
+tests, but no task ran it, so <code class="language-plaintext highlighter-rouge">mise run check</code> never did. It belongs with the other ontology tool tests.</li>
+</ol>
+
+<h2 id="test-cases">Test cases</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Given / When / Then</th>
+      <th>Level</th>
+      <th>+/-</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>OD1-T1</td>
+      <td>every <code class="language-plaintext highlighter-rouge">README.md</code> under <code class="language-plaintext highlighter-rouge">ontology/</code> / scan / the same blocks as the scanner before OD1, and no region</td>
+      <td>L3</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>OD1-T2</td>
+      <td>a tagged block and a marker inside a four-backtick <code class="language-plaintext highlighter-rouge">markdown</code> fence / scan / no block and no region</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>OD1-T3</td>
+      <td>ordinary comments, including “end of a table”, and a tagged block inside a comment / scan / no region, and only the block outside is extracted</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>OD1-T4</td>
+      <td>a hidden spec block with a JSON <code class="language-plaintext highlighter-rouge">output-file</code> / plan / it is marked hidden and goes to that file only</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>OD1-T5</td>
+      <td>three regions, two nested / scan / each <code class="language-plaintext highlighter-rouge">end</code> closes the innermost, with the right lines</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>OD1-T6</td>
+      <td>a spec block inside an <code class="language-plaintext highlighter-rouge">output-file</code> region and one after it / plan / the first goes to the region’s file, the second to the default</td>
+      <td>L1</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td>OD1-T7</td>
+      <td>a shape block with a first-line <code class="language-plaintext highlighter-rouge">output-file</code> and one without / plan / one <code class="language-plaintext highlighter-rouge">--shapes</code> target suffices, and two are refused</td>
+      <td>L1</td>
+      <td>+/−</td>
+    </tr>
+    <tr>
+      <td>OD1-T8</td>
+      <td>15 malformed READMEs: an unclosed region, a stray <code class="language-plaintext highlighter-rouge">end</code>, an unknown key, two keys, a wrong type, bad JSON, a bare <code class="language-plaintext highlighter-rouge">start</code>, <code class="language-plaintext highlighter-rouge">--&gt;</code> inside a hidden block, a hidden mermaid diagram, a hidden block of text, a hidden block not closed by <code class="language-plaintext highlighter-rouge">--&gt;</code>, <code class="language-plaintext highlighter-rouge">output-file</code> from both a region and a hidden block, <code class="language-plaintext highlighter-rouge">output-file</code> on a hidden example, an unclosed fence, an unclosed comment / scan / each refused with its own message</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>OD1-T9</td>
+      <td>a block with both <code class="language-plaintext highlighter-rouge">output-file</code> forms / plan / refused</td>
+      <td>L1</td>
+      <td>−</td>
+    </tr>
+    <tr>
+      <td>OD1-T10</td>
+      <td>a README in the layout, one misnumbered, one with a missing and an extra section, and one not migrated / layout check / nothing, a warning, two errors, nothing</td>
+      <td>L1</td>
+      <td>+/−</td>
+    </tr>
+    <tr>
+      <td>OD1-T11</td>
+      <td>the same through <code class="language-plaintext highlighter-rouge">main()</code> / <code class="language-plaintext highlighter-rouge">--check</code> / exit 0 with a warning, then exit 1 with the errors</td>
+      <td>L4</td>
+      <td>+/−</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="one-command">One command</h2>
+
+<p>Run from the repository root. A pass is every test in the module passing, with no skip.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise <span class="nb">exec</span> <span class="nt">--</span> python <span class="nt">-m</span> pytest tools/test_literate_extract.py <span class="nt">-q</span>
+</code></pre></div></div>
+
+<p>Then the whole ontology tool suite, which now includes it, and every per-layer <code class="language-plaintext highlighter-rouge">--check</code> test. A pass is the
+suite passing as it did before OD1, and the XML catalog check passing after it.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run check:ontology-catalog
+</code></pre></div></div>
+
+<h2 id="adversarial-probes-for-the-gate">Adversarial probes, for the gate</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Mutation</th>
+      <th>Expected</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">scan()</code> stops skipping other fences (remove the <code class="language-plaintext highlighter-rouge">ANY_FENCE_RE</code> branch)</td>
+      <td>OD1-T2 fails</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">&lt;!-- end --&gt;</code> closes the outermost region (<code class="language-plaintext highlighter-rouge">open_regions.pop(0)</code>)</td>
+      <td>OD1-T5 fails</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">_target()</code> stops refusing the second form</td>
+      <td>OD1-T9 fails</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<ul>
+  <li>What an <code class="language-plaintext highlighter-rouge">exclude</code> or <code class="language-plaintext highlighter-rouge">generated</code> region does to output. Nothing reads them until OD2 (section 1) and OD5
+(generated regions). OD1 parses and checks them.</li>
+  <li>Subsection checks inside section 6. They come with the grammar, in OD3.</li>
+  <li>Any README migrated to the layout. The first is Eligibility, in OD6.</li>
+</ul>
+
+<h2 id="results">Results</h2>
+
+<p>2026-10-17: the maintainer ran the commands above, and the tests pass. The three implementation choices are
+agreed. The adversarial probes were not run.</p>

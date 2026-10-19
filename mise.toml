@@ -83,7 +83,7 @@ run = "corepack enable && yarn install --immutable"
 
 [tasks.check]
 description = "Run all repository validation tasks"
-depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:reasoning-isolation", "check:minting", "check:formal-freshness", "check:catalogue", "check:agent-guidance", "build:mtp", "check:mtp", "check:authoring-tools"]
+depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:reasoning-isolation", "check:minting", "check:formal-freshness", "check:catalogue", "check:agent-guidance", "build:mtp", "check:mtp", "check:authoring-tools", "check:published-decisions"]
 
 [tasks.test]
 description = "Run the repository test suites"
@@ -253,6 +253,14 @@ run = "python tools/agent_guidance.py build"
 [tasks."check:literate-migration"]
 description = "Check a module's README migration to the ADR-A126 layout left every generated graph as it was at a git ref: mise run check:literate-migration -- <module> <ref> [--reconciliations <file>] (OD-D9)"
 run = "python tools/literate_migration_check.py"
+
+[tasks."build:published-decisions"]
+description = "Write docs/architecture/published-architecture-decisions.md from the ADRs' Status and Described in lines (ADR-A127)"
+run = "python tools/published_decisions.py build"
+
+[tasks."check:published-decisions"]
+description = "Check the published decisions list is current, every published ADR meets ADR-A127, and user-facing documents cite only published decisions and no working document"
+run = "python tools/published_decisions.py check && python tools/sources_check.py --quiet && python -m pytest tools/test_published_decisions.py -q"
 
 [tasks."check:catalogue"]
 description = "Check the repository catalogue against the tree: every listed module's entry, roles and extracted files, and every module on disk listed (ADR-A121)"

@@ -1,0 +1,200 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="validation-pack-ccs-c8b-references-by-identity">Validation Pack: CCS C8b, references by identity</h1>
+
+<p><strong>Unit:</strong> <a href="/developer/status/computable-contract-substrate.html"><code class="language-plaintext highlighter-rouge">computable-contract-substrate</code></a>
+<strong>Machine:</strong> R. <strong>Branch:</strong> <code class="language-plaintext highlighter-rouge">ccs/c8b-references-by-identity</code>. Commits are the maintainer’s,
+and the change is merged into <code class="language-plaintext highlighter-rouge">main</code> before its release tags are created
+<strong>Plan and test cases:</strong> <a href="/developer/plans/computable-contract-substrate.html">CCS plan</a> (C8b in detail)
+<strong>Decisions:</strong> ADR-A104 and its 2026-10-06 addenda, ADR-A51, the Wording ADRs behind laws W1 to W7.
+C8b-Q1 to C8b-Q4. Takes over insurml-alignment IMA-3.3</p>
+
+<h2 id="invariant">Invariant</h2>
+
+<p>A clause’s text names what it refers to the way its stated meaning does. A reference to another part of the wording, or to a variable, names a persistent identity, resolved within the wording that holds the clause, so a clause reused under another schedule or beside a revised definition needs no new version. Nothing here changes what a wording means.</p>
+
+<h2 id="test-cases">Test cases</h2>
+
+<p>The table in the plan section above. Each row’s result is recorded under Results at
+verification.</p>
+
+<h2 id="one-command">One command</h2>
+
+<p>Run from the repository root on machine R.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mise run build:ontology-catalog <span class="o">&amp;&amp;</span> mise run check:ontology-versioning <span class="o">&amp;&amp;</span> mise run check:ontology-catalog <span class="o">&amp;&amp;</span> mise run check:import-guard
+</code></pre></div></div>
+
+<h2 id="artefacts-to-inspect">Artefacts to inspect</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">ontology/wording/examples/</code>: the reworked examples and <code class="language-plaintext highlighter-rouge">reused-clause.ttl</code>, written before the
+model.</li>
+  <li><code class="language-plaintext highlighter-rouge">ontology/instrument/examples/</code>: the three C8 examples, their text references by identity.</li>
+  <li><code class="language-plaintext highlighter-rouge">ontology/wording/README.md</code>: references by identity, resolution at each tier, display text, W8.</li>
+  <li><code class="language-plaintext highlighter-rouge">ontology/wording/shapes/</code>: W8 and the reference ranges.</li>
+</ul>
+
+<h2 id="deliberate-non-coverage">Deliberate non-coverage</h2>
+
+<p>A renderer (insurml-alignment IMA-4.1). Resolution records for policies that cannot be derived from the graph (assembly interface sketch H5). Transclusion and inline parts (IMA-3.1, IMA-3.2).</p>
+
+<h2 id="handoff">Handoff</h2>
+
+<p>Written by the building machine when the work is ready for the maintainer to commit.</p>
+
+<p>Phase 1, examples first (ADR-A-C2), 2026-10-06:</p>
+
+<ul>
+  <li><strong>Built:</strong>
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">ontology/wording/examples/reused-clause.ttl</code> (new): an equipment lease form in two editions.
+Clause 5.1 is one element version in both, though the definition it mentions is revised, the
+schedule variable it shows is redeclared, and a regulation it cites is relied on at a newer
+edition. An inflected display text (“Lessee’s”). One regulation relied on statically, one as
+amended, and a scanned attachment at one edition. A lease assembled from edition 2, with each
+reference’s resolution tabulated in the header</li>
+      <li><code class="language-plaintext highlighter-rouge">facility-agreement.ttl</code>, <code class="language-plaintext highlighter-rouge">facility-form.ttl</code> and <code class="language-plaintext highlighter-rouge">trial-protocol.ttl</code> (Wording), and
+<code class="language-plaintext highlighter-rouge">facility-parameters.ttl</code>, <code class="language-plaintext highlighter-rouge">framework-lots.ttl</code> and <code class="language-plaintext highlighter-rouge">services-schedule.ttl</code> (Instrument),
+reworked: every reference names an identity. The attachment and the regulation they cite gain
+identities, and their wordings a static and an ambulatory reliance</li>
+      <li>the ADR-A112 addendum “references by identity” (Proposed)</li>
+    </ul>
+  </li>
+  <li><strong>Run:</strong> every Wording example and the three Instrument examples against the current
+model and every layer’s shapes, without inference. The only new failures are the ones the model
+phase changes: Wording’s shapes require a reference’s value to be a <code class="language-plaintext highlighter-rouge">wrd:Variable</code> or a
+<code class="language-plaintext highlighter-rouge">wrd:ReferenceTarget</code>, a version, where each now names an identity. <code class="language-plaintext highlighter-rouge">facility-amendment.ttl</code>’s
+results, read alone, are unchanged from before, since its tests read it with the form it amends.
+The Instrument examples’ warnings are C8’s.</li>
+  <li><strong>Not run:</strong> the tool tests, which fail on those shapes until the model phase.</li>
+  <li><strong>Check first:</strong> the deviations.</li>
+  <li><strong>Deviations from the plan:</strong>
+    <ul>
+      <li><strong>One clause in two editions of one form, not in two forms.</strong> Wording’s law W1 places an element
+version in versions of one wording only, so one version in two different forms needs
+transclusion (insurml-alignment IMA-3.1). The example shows the problem C8b solves, revisions
+rippling through every clause that mentions what changed, which needs no transclusion. A
+form’s sections that contain a revised definition still take new versions, since containment
+names versions: references by identity remove the ripple through references, not through
+containment</li>
+      <li><strong>Two properties for reliance, and no reliance node.</strong> <code class="language-plaintext highlighter-rouge">wrd:reliesOnEdition</code> names an edition,
+and <code class="language-plaintext highlighter-rouge">wrd:reliesAsAmended</code> names an identity. A node per reliance would carry the mode as data,
+at the cost of a node per citation in every wording, with nothing else to say about it today.
+If a reliance later needs more (a date, a jurisdiction), a node can replace the two</li>
+      <li><strong>An outside document’s editions</strong> carry <code class="language-plaintext highlighter-rouge">fnd:hasIdentity</code>, <code class="language-plaintext highlighter-rouge">fnd:hasTemporalScope</code> (in force
+from) and <code class="language-plaintext highlighter-rouge">fnd:supersededBy</code>. External documents and document objects are <code class="language-plaintext highlighter-rouge">prov:Entity</code> today,
+not <code class="language-plaintext highlighter-rouge">fnd:Version</code>: the model phase makes them versions</li>
+      <li><strong>A reliance is stated on the form</strong>, and an assembled wording inherits it through
+<code class="language-plaintext highlighter-rouge">wrd:assembledFrom</code>. An assembled wording may state its own, which W8 reads first</li>
+    </ul>
+  </li>
+</ul>
+
+<p>Phase 2, the model, 2026-10-06:</p>
+
+<ul>
+  <li><strong>Built:</strong>
+    <ul>
+      <li>Wording 0.7.0 and <code class="language-plaintext highlighter-rouge">wording-vocab</code> 0.7.0 (breaking), shapes 0.4.0. <code class="language-plaintext highlighter-rouge">wrd:refersToObject</code>,
+<code class="language-plaintext highlighter-rouge">wrd:refersToVariable</code> and <code class="language-plaintext highlighter-rouge">wrd:linksTo</code> range over <code class="language-plaintext highlighter-rouge">fnd:PersistentIdentity</code>.
+<code class="language-plaintext highlighter-rouge">wrd:displayText</code> is new. <code class="language-plaintext highlighter-rouge">wrd:DocumentObject</code> and <code class="language-plaintext highlighter-rouge">wrd:ExternalDocument</code> are <code class="language-plaintext highlighter-rouge">fnd:Version</code>s
+(editions), relied on through <code class="language-plaintext highlighter-rouge">wrd:reliesOnEdition</code> (static) or <code class="language-plaintext highlighter-rouge">wrd:reliesAsAmended</code>
+(ambulatory). §5.7 and §5.8 rewritten, with a resolution diagram in §5.8</li>
+      <li>law W8 in the constraints shapes: in a form, an identity a reference names has exactly one
+comprised version. In an assembled wording, one included or declared through an included
+element. An outside document is relied on exactly once, by the wording or the form it is
+assembled from</li>
+      <li>Instrument 0.14.0 and <code class="language-plaintext highlighter-rouge">instrument-vocab</code> 0.14.0 (breaking, a re-pin). Shapes unchanged (0.6.0)</li>
+      <li>C8b tests in <code class="language-plaintext highlighter-rouge">tools/test_wording.py</code>, already in <code class="language-plaintext highlighter-rouge">check:ontology-catalog</code>. Version pins moved in
+five other test modules. The release register, the catalog and the ontology architecture
+updated</li>
+    </ul>
+  </li>
+  <li><strong>Run:</strong> every check listed under Results.</li>
+  <li><strong>Check first:</strong> the deviations, then the W8 messages in <code class="language-plaintext highlighter-rouge">ontology/wording/README.md</code>.</li>
+  <li><strong>Deviations from the plan:</strong>
+    <ul>
+      <li><strong>The binder is unchanged.</strong> It reads placeholders, not text references, and W8 covers forms,
+so the lookup the plan expected (C8b-Q4) had nothing to change. C8’s regeneration tests pass
+unchanged (C8b-07)</li>
+      <li><strong>No hash.</strong> Wording has no content hash, so C8b-05 reads “its hash unchanged” as the clause
+being one node in both editions</li>
+      <li><strong>Messages on the referring shapes.</strong> pySHACL does not carry a node shape’s message through
+<code class="language-plaintext highlighter-rouge">sh:node</code>, so each property shape that uses <code class="language-plaintext highlighter-rouge">wrd:VariableIdentityShape</code>,
+<code class="language-plaintext highlighter-rouge">wrd:TargetIdentityShape</code> or the ambulatory reliance check carries its own message</li>
+      <li><strong>Existing tests corrected.</strong> C3-04 expects identities, and C4-02 counts five examples</li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="results">Results</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Row</th>
+      <th>Result</th>
+      <th>Evidence</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>C8b-01</td>
+      <td>pass</td>
+      <td><code class="language-plaintext highlighter-rouge">test_c8b_01_spec_version_ranges_and_display_text</code>, <code class="language-plaintext highlighter-rouge">test_c8b_01_display_text_only_on_a_reference_part</code></td>
+    </tr>
+    <tr>
+      <td>C8b-02</td>
+      <td>pass</td>
+      <td><code class="language-plaintext highlighter-rouge">test_c8b_02_examples_conform</code> (eight Wording and Instrument examples)</td>
+    </tr>
+    <tr>
+      <td>C8b-03</td>
+      <td>pass</td>
+      <td><code class="language-plaintext highlighter-rouge">test_c8b_03_a_reference_naming_a_version_is_reported</code></td>
+    </tr>
+    <tr>
+      <td>C8b-04</td>
+      <td>pass</td>
+      <td><code class="language-plaintext highlighter-rouge">test_c8b_04_an_identity_finding_no_version_or_two_is_reported</code></td>
+    </tr>
+    <tr>
+      <td>C8b-05</td>
+      <td>pass</td>
+      <td><code class="language-plaintext highlighter-rouge">test_c8b_05_one_clause_version_in_both_editions_resolving_differently</code>, see the hash deviation</td>
+    </tr>
+    <tr>
+      <td>C8b-06</td>
+      <td>pass</td>
+      <td>the three <code class="language-plaintext highlighter-rouge">test_c8b_06_</code> tests, including reliance inherited by an assembled wording</td>
+    </tr>
+    <tr>
+      <td>C8b-06a</td>
+      <td>pass</td>
+      <td><code class="language-plaintext highlighter-rouge">test_c8b_06a_a_revised_definition_leaves_the_clause_mentioning_it_alone</code></td>
+    </tr>
+    <tr>
+      <td>C8b-07</td>
+      <td>pass</td>
+      <td><code class="language-plaintext highlighter-rouge">tools/test_parameter_bindings.py</code> C8-10 to C8-13, unchanged</td>
+    </tr>
+    <tr>
+      <td>C8b-08</td>
+      <td>pass</td>
+      <td><code class="language-plaintext highlighter-rouge">test_c8b_08_instrument_imports_wording_0_7_0_and_nothing_names_0_6_0</code></td>
+    </tr>
+    <tr>
+      <td>C8b-09</td>
+      <td>pass</td>
+      <td><code class="language-plaintext highlighter-rouge">test_c8b_09_readme_release_notes</code>, both literate checks</td>
+    </tr>
+    <tr>
+      <td>C8b-10</td>
+      <td>pass</td>
+      <td><code class="language-plaintext highlighter-rouge">check:ontology-catalog</code> (587 passed), <code class="language-plaintext highlighter-rouge">check:ontology-versioning</code>, <code class="language-plaintext highlighter-rouge">check:import-guard</code>, <code class="language-plaintext highlighter-rouge">check:python-root</code>, <code class="language-plaintext highlighter-rouge">check:mork-compilers</code> (114), <code class="language-plaintext highlighter-rouge">check:vocabulary</code> (16), <code class="language-plaintext highlighter-rouge">check:persistence</code> (778), <code class="language-plaintext highlighter-rouge">build:mtp</code>, <code class="language-plaintext highlighter-rouge">check:mtp</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The §5.8 diagram renders in a browser.</p>
