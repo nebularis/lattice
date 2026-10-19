@@ -17,6 +17,7 @@
 .build/word-authoring-addin-test-results/*
 !.build/word-authoring-addin-test-results/.gitkeep
 .build/authoring/
+.build/site/
 workers/build/
 
 # Formal-methods toolchains, build outputs and caches (formal-methods-phase-0, epic E6)

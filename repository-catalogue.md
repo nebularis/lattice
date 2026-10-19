@@ -288,3 +288,130 @@ paths = [
     "platform/reasoning-testkit/target/reasoning-testkit.jar",
 ]
 ```
+
+## Site
+
+The documentation site is the sections below, in order. A section has a `title`, a `page` that opens it, a
+`layout` (a file of `docs/_layouts`, or `none` for a page that carries its own HTML) and the `sources` it
+shows, files or directories from the repository root. `mise run build:site-sections` copies each source
+that lies outside `docs/` into `docs/_includes/<name>/`, and writes the pages' layouts and titles into
+`docs/_config.yml` as Jekyll `defaults`. `mise run check:site-sections` fails when a copy or the
+`defaults` are stale, a page does not show one of its sources, or a page, layout or source is missing.
+Only a source in a migrated layout is published here, since a site page is user-facing
+([ADR-A127](docs/architecture/decisions/ADR-A127-published-architecture-decisions.md)). The Tutorial section
+takes order 2 once the tutorial exists. Section orders need not be consecutive.
+
+```toml repository-catalogue
+[[site]]
+name = "home"
+title = "Home"
+page = "docs/index.html"
+layout = "none"
+order = 1
+
+[[site]]
+name = "field-guide"
+title = "Field Guide"
+page = "docs/book.html"
+layout = "none"
+order = 3
+
+[[site]]
+name = "theory"
+title = "Theoretical Foundations"
+page = "docs/theory.md"
+layout = "theory"
+order = 4
+sources = ["docs/_includes/theory"]
+
+[[site]]
+name = "layers"
+title = "Layer specifications"
+page = "docs/layer-specifications.md"
+layout = "architecture"
+order = 5
+sources = ["ontology/eligibility/README.md"]
+
+[[site]]
+name = "architecture"
+title = "Architecture"
+page = "docs/architecture/index.md"
+layout = "architecture"
+order = 6
+sources = [
+    "docs/architecture/capacity-domain-analysis-and-design.md",
+    "docs/architecture/capacity-model-performance-addendum.md",
+    "docs/architecture/conformance-levels.md",
+    "docs/architecture/data-architecture.md",
+    "docs/architecture/deferred-scope-and-boundaries.md",
+    "docs/architecture/derivation-and-validation.md",
+    "docs/architecture/efficient-queries-and-shapes.md",
+    "docs/architecture/identity-minting-specification.md",
+    "docs/architecture/implementation-map.md",
+    "docs/architecture/ingestion-vision.md",
+    "docs/architecture/insure-o-application-validation.md",
+    "docs/architecture/insurml-alignment-vision.md",
+    "docs/architecture/iri-identity-patterns.md",
+    "docs/architecture/iri-policy.md",
+    "docs/architecture/literate-specifications.md",
+    "docs/architecture/mork-compact-notation.md",
+    "docs/architecture/mork-queue-calibration-governance.md",
+    "docs/architecture/mork-review-workbench.md",
+    "docs/architecture/mork-teaching-pack.md",
+    "docs/architecture/ontology-architecture.md",
+    "docs/architecture/ontology-releases.md",
+    "docs/architecture/ontology-versioning-policy.md",
+    "docs/architecture/optimistic-concurrency-in-rdf.md",
+    "docs/architecture/rdf-sparql-patterns-guide.md",
+    "docs/architecture/release-stack-integration.md",
+    "docs/architecture/repository-delivery-foundation.md",
+    "docs/architecture/repository-topology-migration.md",
+    "docs/architecture/semantic-platform.md",
+    "docs/architecture/solution-design-specification.md",
+    "docs/architecture/surface-contract-studio.md",
+    "docs/architecture/surface-projection-mork.md",
+    "docs/architecture/surface-workflow.md",
+    "docs/architecture/technology-options.md",
+    "docs/architecture/triple-store-discovery.md",
+    "docs/architecture/ux-design.md"
+]
+
+[[site]]
+name = "decisions"
+title = "Published architecture decisions"
+page = "docs/architecture/published-architecture-decisions.md"
+layout = "architecture"
+order = 7
+
+[[site]]
+name = "operations"
+title = "Operations"
+page = "docs/operations.md"
+layout = "architecture"
+order = 8
+sources = [
+    "docs/operational-guidance.md",
+    "docs/operator/release-stack-reference.md",
+    "docs/operator/surface-invalidation-runbook.md",
+    "docs/operator/surface-revision-lifecycle.md",
+]
+
+[[site]]
+name = "glossary"
+title = "Glossary"
+page = "docs/glossary.md"
+layout = "architecture"
+order = 9
+
+[[site]]
+name = "contributing"
+title = "Contributing"
+page = "docs/contribute.md"
+layout = "architecture"
+order = 10
+sources = [
+    "docs/developer/getting-started.md",
+    "docs/developer/windows-wsl.md",
+    "docs/developer/protege-import-walkthrough.md",
+]
+```
