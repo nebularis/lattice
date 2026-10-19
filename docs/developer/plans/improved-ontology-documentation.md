@@ -85,6 +85,14 @@ Decided by the maintainer on 2026-10-15 and 2026-10-16. The status record's log 
 | OD-D43 | Versions are not bumped or re-pinned per migration. On this branch, migrated layers' documents change without new version IRIs and their importers stay pinned to the old ones, so the branch's versions are knowingly inconsistent. Before the merge into `main`, one release slice bumps every changed document once, re-pins every importer once, and adds the release rows and notes (OD6-Q6, option b) |
 | OD-D44 | `elg:CompatibilityOperation` becomes `elg:CompositionOperation`, and `elg:compatibilityOperation` becomes `elg:compositionOperation`. It is declared on admission profiles only, where it says how a profile combines its conditions' outcomes, and no longer on every condition, where it had no effect. L2 and `elg:ConditionShape` change to match (OD6-Q7a, option c, and OD6-Q7b) |
 | OD-D45 | `elg:DimensionConsistent` is retired, with the operational profile `elg:E6` that tested it. It was meant to check that conditions on different dimensions are compatible before they are combined, which is a precondition, not a way of composing outcomes. It has no evaluable definition and every compiler refuses it. A downstream ontology that needs such a check adds its own operation, as ADR-A05 allows (OD6-Q7c) |
+| OD-D46 | A shape refuses a composition operation on a condition that is not an `elg:AdmissionProfile`, and a match strategy or wildcard policy on a profile. L1 and L3 apply to conditions that are not profiles, L2 to profiles. No new class names a condition that is not a profile (ELC-Q1, ELC-Q2) |
+| OD-D47 | A published ADR may cite an Accepted one. Its link then points at the ADR on GitHub at the release tag, since the site hides unpublished ADRs. READMEs and site pages still cite only published ADRs. ADR-A127 decision 4 is amended (DOC1-Q4, option a) |
+| OD-D48 | A layer README counts as an architecture document in a published ADR's Described in field (DOC1-Q5) |
+| OD-D49 | A published ADR's status line reads `**Status:** Published, YYYY-MM-DD. Accepted YYYY-MM-DD.`, and an ADR written with a Status section moves to the header form when published (DOC1-Q6) |
+| OD-D50 | We prepare the ADRs to publish, and the maintainer approves the list. For DOC1 the maintainer approved in advance on 2026-10-19, subject to review before the branch is pushed (DOC1-Q7, option a) |
+| OD-D51 | The bypass scan covers tools under `tools/` and not their tests until after RC4. ADR-A121 decision 5 is clarified to say so (RC3-Q3, option c) |
+| OD-D52 | Each `roots` and `docs` entry in the root file carries its row's text for AGENTS.md and an optional group. The table is generated between region markers in AGENTS.md, and `build:agent-guidance` then writes Copilot's file as before (RC3-Q4) |
+| OD-D53 | The `generated` block lists paths a check may find missing, for example `.build/`, `docs/_site/` and the reasoner jar. Files a README generates stay under `extract` (RC3-Q5) |
 
 ## The README layout
 
@@ -298,9 +306,8 @@ The order is OD6, then DOC1 and RC3 in either order. This branch is merged into 
 every Eligibility, Instrument and compiler suite, and `check:full-sweep` with only OD-D43's unbumped files
 failing.
 
-**ELC-Q1. Does a shape refuse a composition operation on a condition that is not a profile?** (a) Yes, a
-violation, so a stale declaration is found. (b) A warning. (c) No, the open world allows it and it is ignored.
-Leaning (a), since the term means nothing there.
+ELC-Q1 and ELC-Q2 are answered as OD-D46, so a profile also stops declaring a match strategy and a wildcard
+policy, and L1 and L3 are restated for conditions that are not profiles.
 
 ### DOC1, published decisions
 

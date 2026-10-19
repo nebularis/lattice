@@ -193,3 +193,5 @@ None.
 - 2026-10-19: OD6-Q7 answered. `elg:CompatibilityOperation` becomes `elg:CompositionOperation`, declared on
   admission profiles only (OD-D44), and `elg:DimensionConsistent` is retired with `elg:E6` (OD-D45). Slice ELC
   briefed, to land before OD-REL.
+- 2026-10-19: ELC-Q1 and Q2, DOC1-Q4 to Q7 and RC3-Q3 to Q5 answered (OD-D46 to OD-D53). The maintainer
+  authorised ELC, DOC1 and RC3 to be built autonomously, committed locally and not pushed.
