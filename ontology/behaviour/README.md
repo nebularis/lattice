@@ -699,8 +699,7 @@ bhv:Arisen a bhv:State ; bhv:inStateSpace bhv:LiveStates ;
 ## 7. Extent profile
 
 The allowance extent profile is how an allowance is measured and drawn down. It was set by the
-delivery gates of the first Eligibility and Behaviour build
-([validation and test plan](../../docs/validation-and-test-plan.md)). The profile binds directly to Quantification:
+delivery gates of the first Eligibility and Behaviour build. The profile binds directly to Quantification:
 
 - `bhv:AllowanceDefinition` binds to one `qnt:ValueSpace`.
 - `bhv:AllowanceAccount` carries one current `qnt:Quantity` balance.

@@ -20,8 +20,9 @@ ontology file has changed.
 
 ## Next action
 
-1. The maintainer reviews MC1, OD7, VER1, DOC2 and OD-REL, accepts ADR-A129, and creates the release tags.
-2. The branch is then ready to merge into `main` (OD-D54).
+1. The maintainer squash-merges the branch into `main`.
+2. On `main`, the maintainer creates the tags `mise exec -- python tools/ontology_releases.py check` lists:
+   `ontologies-v0.18.0` and the applied modules' ten.
 3. The [release bundles sketch](../sketches/release-bundles.md) is discussed.
 
 **Versions are consistent again.** Release 0.18.0 brought every substrate and standalone document to one number,
@@ -235,3 +236,6 @@ and the versioning check passes against `main`.
   that TD-60's cleaning happens before the merge.
 - 2026-10-20: DOC2b built, the stray notes moved or retired as the maintainer decided, and ADR-A129 published,
   so the 0.18.0 release notes cite it. The full sweep passes all 17 checks.
+- 2026-10-20: `docs/GOVERNANCE.md` and `docs/validation-and-test-plan.md` retired at the maintainer's decision. The
+  order of authority moves to the ontology architecture's §2, and every link is repointed. The branch is ready for
+  the maintainer's squash merge into `main`, after which the maintainer creates the release tags.

@@ -45,7 +45,7 @@ Concretely:
 - `ontology/quantification/spec/quantification.ttl` gains an `owl:Ontology` header importing Foundation and Vocabulary, matching what its own README already claimed.
 - `ontology/party/spec/party.ttl` gains an `owl:imports` of Quantification.
 - The root README and `docs/architecture/ontology-architecture.md` are corrected to state this same seven-link order, so the layer table, the dependency diagram, and the compiled imports agree.
-- A future CI check (documented in [../../validation-and-test-plan.md](../../validation-and-test-plan.md), not yet built) can verify import closure mechanically once Eligibility, Instrument, and Behaviour exist and declare their own imports.
+- The import guard (`mise run check:import-guard`) verifies import closure mechanically for every layer.
 
   **Implementation note (2026-10-01):** built as `mise run check:import-guard`
   (`tools/import_guard.py`, computable contract substrate slice C10a), part of `mise run check`. It
