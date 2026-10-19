@@ -114,7 +114,7 @@ def test_air20_04_vocab_directive_stays_in_the_modules_vocab(path: str) -> None:
 
 # The literate layers whose README is the source of every file it generates. The shape files
 # each takes come from its repository catalogue entry (ADR-A121).
-LITERATE_LAYERS = ["foundation", "quantification", "wording", "behaviour", "instrument", "eligibility"]
+LITERATE_LAYERS = ["foundation", "vocabulary", "quantification", "wording", "behaviour", "instrument", "eligibility"]
 
 
 @pytest.mark.parametrize("layer", LITERATE_LAYERS)

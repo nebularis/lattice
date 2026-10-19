@@ -41,7 +41,7 @@ deliberate. The release slice OD-REL resolves it once, before the merge into `ma
 | OD4 section 6 to SHACL | built autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD4.md) | the maintainer's review of six decisions taken alone |
 | OD5 generated regions | built autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD5.md) | the maintainer's review of six decisions taken alone |
 | OD6 Eligibility pilot | built autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD6.md) | the maintainer's review of seven decisions, 32 definitions and two changed tests |
-| OD7 Vocabulary | planned | OD6 |
+| OD7 Vocabulary | built autonomously 2026-10-19, committed locally, [Validation Pack](../validation/OD7.md) | |
 | OD8 onward, one per layer | planned | OD7, and for Foundation and Party their part of TD-16 |
 | DOC1 published decisions | approved 2026-10-19, committed locally, [Validation Pack](../validation/DOC1.md) | |
 | DOC2 site sections | planned | DOC1, RC1 |
@@ -219,3 +219,5 @@ deliberate. The release slice OD-REL resolves it once, before the merge into `ma
 - 2026-10-19: REL-Q2a answered (a), OD-D63. The maintainer authorised the slices to run autonomously.
 - 2026-10-19: MC1 built. Blank nodes are labelled by their subtree, ELC's reconciliations shrink from 126 to 102,
   and TD-55 is closed. DOC2 runs in its own worktree, `docs/literate-v2-doc2`.
+- 2026-10-19: OD7 built. Vocabulary's README is the source of its spec and three shape files, the same graphs
+  but for four Dublin Core triples, and its part of TD-16 is closed.
