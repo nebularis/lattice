@@ -3,8 +3,8 @@
 # Getting Started
 
 From a clean clone to a passing `mise run check`. For what each tool actually does, see the
-[Developer Guide](developer-guide.md). For how formal methods fits in, see
-[Formal Methods in the Development Lifecycle](formal-methods-lifecycle.md).
+[Developer Guide](https://github.com/nebularis/lattice/blob/main/docs/developer/developer-guide.md). For how formal methods fits in, see
+[Formal Methods in the Development Lifecycle](https://github.com/nebularis/lattice/blob/main/docs/developer/formal-methods-lifecycle.md).
 
 ## 1. Prerequisites
 
@@ -83,7 +83,7 @@ MORK's own compiler test suites plus the shared Phase 8 conformance corpus.
 ## 5. Optional: the formal-methods toolchains
 
 Not part of `bootstrap`/`check` by default — large, native, and only needed if you are working on
-formal-methods track C, D or E (see the [lifecycle guide](formal-methods-lifecycle.md)):
+formal-methods track C, D or E (see the [lifecycle guide](https://github.com/nebularis/lattice/blob/main/docs/developer/formal-methods-lifecycle.md)):
 
 ```bash
 # Track E: Isabelle/HOL, native install on macOS, Linux or Windows (about 1.2 GB, prebuilt HOL
@@ -104,14 +104,12 @@ mise run check:formal-smoke
 
 ## 6. Where to go next
 
-- [Developer Guide](developer-guide.md) — every tool, what it is for, how the pieces fit together.
+- [Developer Guide](https://github.com/nebularis/lattice/blob/main/docs/developer/developer-guide.md) — every tool, what it is for, how the pieces fit together.
 - [AGENTS.md](../../AGENTS.md) — the rules AI agents follow here, and the skills they load (Developer Guide §8).
-- [Formal Methods in the Development Lifecycle](formal-methods-lifecycle.md) — how sketch, plan
+- [Formal Methods in the Development Lifecycle](https://github.com/nebularis/lattice/blob/main/docs/developer/formal-methods-lifecycle.md) — how sketch, plan
   and implementation each use formal methods, for an ontology change, a tools change, or a
   platform service change alike.
 - [`docs/diagrams/`](../diagrams/README.md) — the whole architecture, pictured, across five views.
-- [`docs/developer/INDEX.md`](INDEX.md) — every active unit of work, its sketch, plan, status and
-  validation pack.
 - [`docs/architecture/solution-design-specification.md`](../architecture/solution-design-specification.md) —
   the platform's own architecture, the primary entry point for understanding the codebase beyond
   the ontology layers.

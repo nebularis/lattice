@@ -3,7 +3,7 @@
 
 """Check that user-facing documents cite only published decisions and never a working document (ADR-A127 decision 4).
 
-User-facing documents are the module READMEs the repository catalogue lists, the files a literate README
+User-facing documents are the module READMEs the repository catalogue lists, the pages and sources of the site's sections (a page fails on a working document, and a source not yet reviewed is reported), the files a literate README
 generates, published ADRs outside their Provenance section, and the published decisions list. Every line is
 read, HTML comments and hidden blocks included. The check fails on:
 
@@ -36,6 +36,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import lattice_repo_catalogue  # noqa: E402
 import literate_extract  # noqa: E402
 import published_decisions as pd  # noqa: E402
+import site_sections  # noqa: E402
 
 WORKING_RE = re.compile(r"developer/(?:sketches|plans|status|reviews|validation|notes)/|developer/INDEX\.md")
 CITATION_RE = re.compile(r"ADR[- ]?(A-?[A-Z]*-?\d+)\b")
@@ -65,6 +66,18 @@ def documents(root: Path) -> List[Tuple[Path, str, str]]:
     for decision in pd.load(root).values():
         if decision.is_published:
             found.append((decision.path, "decision", decision.body()))
+    seen = {p for p, _, _ in found}
+    for section in catalogue.site:
+        page = root / section.page
+        if page.suffix == ".md" and page not in seen and page.is_file():
+            found.append((page, "page", page.read_text(encoding="utf-8")))
+            seen.add(page)
+        for source in section.sources:
+            for file in site_sections.expand(root, source):
+                path = root / file
+                if path.suffix == ".md" and path not in seen and path.is_file():
+                    found.append((path, "unmigrated", path.read_text(encoding="utf-8")))
+                    seen.add(path)
     listing = root / pd.locations(root).listing
     if listing.is_file():
         found.append((listing, "decision", listing.read_text(encoding="utf-8")))

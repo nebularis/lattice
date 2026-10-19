@@ -16,6 +16,23 @@ exclude:
   - .bundle
   - .jekyll-cache
   - architecture/decisions/ADR-*
+# OD-D30, OD-D31, TD-53: the site publishes its declared sections only (repository-catalogue.md, "Site"). Working
+# documents and every directory no section uses are excluded. A section page that shows a file with
+# include_relative reads it from disk, so the file is excluded here and appears only inside that page.
+  - developer
+  - diagrams
+  - operator
+  - operational-guidance.md
+  - security
+  - traceability
+# The decisions directory's index lists every ADR, published or not. The decisions section's page is
+# architecture/published-architecture-decisions.md, which lists published decisions only.
+  - architecture/decisions/README.md
+# Working notes outside docs/developer/, kept in place until the maintainer decides on each.
+  - proposed-readme-updates.md
+  - architecture/updated-plan-*.md
+  - "architecture/Architecture Review.md"
+  - architecture/repository-topology-migration.json
 # BEGIN GENERATED published-decisions. Written by `mise run build:published-decisions`. Do not edit by hand.
 include:
   - ADR-A03-condition-taxonomy.md
@@ -31,3 +48,41 @@ include:
   - ADR-A90-eligibility-design-time-owl-class-backend.md
   - ADR-A91-eligibility-candidate-evidence-binding.md
 # END GENERATED published-decisions
+# BEGIN GENERATED site-sections. Written by `mise run build:site-sections`. Do not edit by hand.
+defaults:
+  - scope:
+      path: "theory.md"
+    values:
+      layout: theory
+      title: "Theoretical Foundations"
+  - scope:
+      path: "layer-specifications.md"
+    values:
+      layout: architecture
+      title: "Layer specifications"
+  - scope:
+      path: "architecture/index.md"
+    values:
+      layout: architecture
+      title: "Architecture"
+  - scope:
+      path: "architecture/published-architecture-decisions.md"
+    values:
+      layout: architecture
+      title: "Published architecture decisions"
+  - scope:
+      path: "operations.md"
+    values:
+      layout: architecture
+      title: "Operations"
+  - scope:
+      path: "glossary.md"
+    values:
+      layout: architecture
+      title: "Glossary"
+  - scope:
+      path: "contribute.md"
+    values:
+      layout: architecture
+      title: "Contributing"
+# END GENERATED site-sections

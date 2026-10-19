@@ -83,7 +83,7 @@ run = "corepack enable && yarn install --immutable"
 
 [tasks.check]
 description = "Run all repository validation tasks"
-depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:reasoning-isolation", "check:minting", "check:formal-freshness", "check:catalogue", "check:agent-guidance", "build:mtp", "check:mtp", "check:authoring-tools", "check:published-decisions"]
+depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:reasoning-isolation", "check:minting", "check:formal-freshness", "check:catalogue", "check:agent-guidance", "build:mtp", "check:mtp", "check:authoring-tools", "check:published-decisions", "check:site-sections"]
 
 [tasks.test]
 description = "Run the repository test suites"
@@ -261,6 +261,14 @@ run = "python tools/published_decisions.py build"
 [tasks."check:published-decisions"]
 description = "Check the published decisions list is current, every published ADR meets ADR-A127, and user-facing documents cite only published decisions and no working document"
 run = "python tools/published_decisions.py check && python tools/sources_check.py --quiet && python -m pytest tools/test_published_decisions.py -q"
+
+[tasks."build:site-sections"]
+description = "Copy each site section's sources from outside docs/ into docs/_includes/<section>/ and write the sections' layouts into docs/_config.yml (OD-D29, TD-50)"
+run = "python tools/site_sections.py build"
+
+[tasks."check:site-sections"]
+description = "Check the site's section copies and layouts are current, every section page exists and shows its sources, and the tests (OD-D29)"
+run = "python tools/site_sections.py check && python -m pytest tools/test_site_sections.py -q"
 
 [tasks."check:catalogue"]
 description = "Check the repository catalogue against the tree: every listed module's entry, roles and extracted files, every module on disk listed, the roots, documentation areas and tool packages declared, and the bypass scan of tools (ADR-A121)"

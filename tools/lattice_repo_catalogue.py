@@ -53,6 +53,7 @@ ENTRY_KEYS = {
     "roots": {"path", "owns", "adrs", "row", "group"},
     "docs": {"path", "owns", "adrs", "row", "group"},
     "tools": {"name", "path", "import-names", "reaches"},
+    "site": {"name", "title", "page", "layout", "order", "sources"},
 }
 MODULE_KEYS = {"kind", "roles", "imports", "extract"}
 EXTRACT_KEYS = ("spec", "vocab", "shapes")
@@ -111,6 +112,18 @@ class ToolPackage:
 
 
 @dataclass(frozen=True)
+class Section:
+    """A section of the documentation site (OD-D29). ``page`` and ``sources`` are paths from the repository root.
+    ``layout`` is a file of ``docs/_layouts`` without its suffix, or ``none`` for a page that carries its own HTML."""
+    name: str
+    title: str
+    page: str
+    layout: str
+    order: int
+    sources: Tuple[str, ...]
+
+
+@dataclass(frozen=True)
 class Catalogue:
     root: Path
     conventions: Dict[str, Any]
@@ -119,6 +132,7 @@ class Catalogue:
     docs: Tuple[Area, ...] = ()
     tools: Tuple[ToolPackage, ...] = ()
     generated: Tuple[str, ...] = ()
+    site: Tuple[Section, ...] = ()
 
     def is_generated(self, path: str) -> bool:
         """Whether a path is, or lies under, a generated path that a check may find missing."""
@@ -225,7 +239,7 @@ def _entries(value: Any, key: str, required: Sequence[str]) -> List[Dict[str, An
             if name not in entry:
                 raise CatalogueError(f"{where}: needs {name!r}")
         for name, item in entry.items():
-            if name not in ("adrs", "import-names", "reaches") and not isinstance(item, str):
+            if name not in ("adrs", "import-names", "reaches", "sources", "order") and not isinstance(item, str):
                 raise CatalogueError(f"{where}: {name!r} must be a string")
     return value
 
@@ -254,6 +268,44 @@ def _tools(value: Any) -> Tuple[ToolPackage, ...]:
         )
         for e in _entries(value, "tools", ("name", "path", "import-names"))
     )
+
+
+SECTION_NAME_RE = re.compile(r"^[a-z][a-z0-9-]*$")
+
+
+def _site(value: Any) -> Tuple[Section, ...]:
+    sections = []
+    for entry in _entries(value, "site", ("name", "title", "page", "layout", "order")):
+        where = f"{CATALOGUE_FILE}: site {entry['name']}"
+        if not SECTION_NAME_RE.match(entry["name"]):
+            raise CatalogueError(f"{where}: the name must be lower case words joined by hyphens")
+        if isinstance(entry["order"], bool) or not isinstance(entry["order"], int) or entry["order"] < 1:
+            raise CatalogueError(f"{where}: 'order' must be a whole number from 1")
+        if not entry["page"].startswith("docs/") or ".." in entry["page"].split("/"):
+            raise CatalogueError(f"{where}: the page must be a path under docs/")
+        sources = _strings(entry.get("sources", []), f"{where}: sources")
+        if any(s.startswith("/") or ".." in s.split("/") for s in sources):
+            raise CatalogueError(f"{where}: a source is a path from the repository root, never absolute or upward")
+        sections.append(Section(entry["name"], entry["title"], entry["page"], entry["layout"], entry["order"], sources))
+    for field_name in ("name", "title", "page", "order"):
+        values = [getattr(s, field_name) for s in sections]
+        if len(set(values)) != len(values):
+            raise CatalogueError(f"{CATALOGUE_FILE}: two site sections have the same {field_name}")
+    return tuple(sorted(sections, key=lambda s: s.order))
+
+
+def _site_problems(catalogue: Catalogue) -> List[str]:
+    """Problems between the site's sections and the tree: a missing page, layout or source."""
+    problems = []
+    for s in catalogue.site:
+        if not (catalogue.root / s.page).is_file():
+            problems.append(f"site {s.name}: page {s.page} does not exist")
+        if s.layout != "none" and not (catalogue.root / "docs" / "_layouts" / f"{s.layout}.html").is_file():
+            problems.append(f"site {s.name}: layout {s.layout!r} is not a file of docs/_layouts")
+        for source in s.sources:
+            if not (catalogue.root / source).exists():
+                problems.append(f"site {s.name}: source {source} does not exist")
+    return problems
 
 
 def load(root: Path | str | None = None) -> Catalogue:
@@ -307,6 +359,7 @@ def load(root: Path | str | None = None) -> Catalogue:
         base, conventions, modules,
         _areas(data.get("roots", []), "roots"), _areas(data.get("docs", []), "docs"), _tools(data.get("tools", [])),
         _strings(generated.get("paths", []), f"{CATALOGUE_FILE}: [generated] paths"),
+        _site(data.get("site", [])),
     )
 
 
@@ -373,7 +426,7 @@ def check(catalogue: Catalogue, scan: Optional["Scan"] = None) -> List[str]:
             continue
         if any((directory / role).is_dir() for role in known_roles):
             problems.append(f"{directory.relative_to(root).as_posix()} holds a module, but is not in the catalogue")
-    return problems + _path_problems(catalogue) + (scan if scan is not None else bypass_scan(catalogue)).problems
+    return problems + _path_problems(catalogue) + _site_problems(catalogue) + (scan if scan is not None else bypass_scan(catalogue)).problems
 
 
 @dataclass(frozen=True)
@@ -489,6 +542,7 @@ def _dump(catalogue: Catalogue) -> Dict[str, Any]:
         "docs": [vars(a) for a in catalogue.docs],
         "tools": [vars(t) for t in catalogue.tools],
         "generated": list(catalogue.generated),
+        "site": [vars(s) | {"sources": list(s.sources)} for s in catalogue.site],
     }
 
 
