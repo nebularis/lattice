@@ -37,7 +37,7 @@ deliberate. The release slice OD-REL resolves it once, before the merge into `ma
 | OD0 ADRs, the AGENTS.md rule, the conventions document | accepted 2026-10-17, committed, [Validation Pack](../validation/OD0.md) | |
 | RC1 catalogue and reader | committed 2026-10-17, tests pass, choices agreed 2026-10-18, [Validation Pack](../validation/RC1.md) | |
 | RC2 consumers use the reader | passed and committed 2026-10-18, [Validation Pack](../validation/RC2.md) | |
-| RC3 roots, AGENTS.md table, bypass scan | briefed 2026-10-18 | |
+| RC3 roots, AGENTS.md table, bypass scan | built autonomously 2026-10-19, committed locally, [Validation Pack](../validation/RC3.md) | the maintainer's review of its decisions taken alone |
 | OD1 scanner and markers | passed 2026-10-17, choices agreed, [Validation Pack](../validation/OD1.md) | the maintainer's merge |
 | OD2 sections 1 to 3 | built autonomously 2026-10-18, committed locally (`8947e696`), [Validation Pack](../validation/OD2.md) | |
 | OD3 section 6 to OWL | built autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD3.md) | |
@@ -203,3 +203,6 @@ None.
   twelve ADRs Eligibility cites are published under the maintainer's advance approval (OD-D50), and the site
   shows only those. The local site build showed Jekyll's `published: false` default hides nothing, so the site
   excludes ADRs and includes each published one by name.
+- 2026-10-19: RC3 built in a separate worktree and cherry-picked onto this branch, without the main checkout's own
+  commit it was cut from. Its bypass scan found DOC1's new list tool building `docs/` paths, which now asks the
+  reader for the architecture area instead. ADR-A121's addendum keeps its slice reference in Provenance.

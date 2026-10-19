@@ -29,9 +29,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import lattice_repo_catalogue  # noqa: E402
 
-DECISIONS = Path("docs/architecture/decisions")
-LIST = Path("docs/architecture/published-architecture-decisions.md")
-CONFIG = Path("docs/_config.yml")
+LIST_NAME = "published-architecture-decisions.md"
 CONFIG_RE = re.compile(r"(?ms)^# BEGIN GENERATED published-decisions\..*?\n# END GENERATED published-decisions\n")
 FILENAME_RE = re.compile(r"^ADR-(?P<id>A[\w-]*?\d+)-[\w.-]+\.md$")
 HEADER_STATUS_RE = re.compile(r"^\*\*Status:\*\*\s*(?P<status>.+?)\s*$")
@@ -41,6 +39,24 @@ DESCRIBED_RE = re.compile(r"^\*\*Described in:\*\*\s*(?P<docs>.+?)\s*$")
 LINK_RE = re.compile(r"\[(?P<text>[^\]]+)\]\((?P<href>[^)\s]+)\)")
 TITLE_RE = re.compile(r"^#\s+ADR[- ]?A[\w-]*?\d+:\s*(?P<title>.+?)\s*$")
 FRONT_RE = re.compile(r"\A---\n(?P<body>.*?)\n---\n", re.S)
+
+
+@dataclass(frozen=True)
+class Locations:
+    """Where the decisions, their list and the site's configuration are, relative to the repository root,
+    found from the repository catalogue's ``docs/architecture/`` area (ADR-A121)."""
+
+    decisions: Path
+    listing: Path
+    config: Path
+
+
+def locations(root: Path) -> Locations:
+    areas = [Path(a.path) for a in lattice_repo_catalogue.load(root).docs if a.path.rstrip("/").endswith("/architecture")]
+    if len(areas) != 1:
+        raise lattice_repo_catalogue.CatalogueError("declare the architecture documents, docs/architecture/, as one [[docs]] area")
+    architecture = areas[0]
+    return Locations(architecture / "decisions", architecture / LIST_NAME, architecture.parent / "_config.yml")
 
 
 def normalise(identifier: str) -> str:
@@ -109,7 +125,7 @@ def read(path: Path) -> Decision:
 
 def load(root: Path) -> Dict[str, Decision]:
     """Every ADR by its normalised identifier."""
-    return {d.identifier: d for d in (read(p) for p in sorted((root / DECISIONS).glob("ADR-A*.md"))
+    return {d.identifier: d for d in (read(p) for p in sorted((root / locations(root).decisions).glob("ADR-A*.md"))
                                       if FILENAME_RE.match(p.name))}
 
 
@@ -184,6 +200,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     decisions = load(root)
     found = problems(decisions)
     expected = render(decisions)
+    where = locations(root)
+    LIST, CONFIG = where.listing, where.config
     target = root / LIST
     config = (root / CONFIG).read_text(encoding="utf-8")
     if not CONFIG_RE.search(config):

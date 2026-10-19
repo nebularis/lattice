@@ -65,7 +65,7 @@ def documents(root: Path) -> List[Tuple[Path, str, str]]:
     for decision in pd.load(root).values():
         if decision.is_published:
             found.append((decision.path, "decision", decision.body()))
-    listing = root / pd.LIST
+    listing = root / pd.locations(root).listing
     if listing.is_file():
         found.append((listing, "decision", listing.read_text(encoding="utf-8")))
     return found

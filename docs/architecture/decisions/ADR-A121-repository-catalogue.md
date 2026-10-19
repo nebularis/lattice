@@ -108,7 +108,7 @@ This catalogue answers a different question, where the artefact with a given rol
 ## Addendum (2026-10-19): what the bypass scan covers
 
 Agreed by the maintainer. The scan of decision 5 covers the Python of the tools, and not their tests, until
-after slice RC4. A test (`test_*.py`, a `tests/` directory or `conftest.py`) may still build a path to a
+downstream projects extend the catalogue (decision 7). A test (`test_*.py`, a `tests/` directory or `conftest.py`) may still build a path to a
 catalogued root. Its paths move to the reader when the tools have, and the scan then widens to cover tests.
 The known exceptions are listed in `tools/lattice_repo_catalogue_exceptions.txt`, one file per line with a
 reason, and the scan fails on a file that builds such a path and is not listed.
@@ -118,4 +118,4 @@ reason, and the scan fails on a file that builds such a path and is not listed.
 Proposed in the [repository catalogue sketch](../../developer/sketches/repository-catalogue.md), whose
 questions RC-Q1 to RC-Q8 were answered on 2026-10-16, and planned in the
 [`improved-ontology-documentation` plan](../../developer/plans/improved-ontology-documentation.md)
-(slices RC1 to RC6, decisions OD-D14, OD-D16 and the RC rows).
+(slices RC1 to RC6, decisions OD-D14, OD-D16 and the RC rows). The 2026-10-19 addendum answers question RC3-Q3, and "until downstream projects extend the catalogue" is the plan's slice RC4.
