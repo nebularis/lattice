@@ -102,6 +102,7 @@ Decided by the maintainer on 2026-10-15 and 2026-10-16. The status record's log 
 | OD-D60 | Vocabulary's README takes its spec file's graph where the two disagree: the ontology header, `rdf:Property a owl:Class`, the order of one disjointness list and the direction of one `disjointWith` (NX-Q3) |
 | OD-D61 | Later migrations, on later branches, take the order Foundation, Party (closing TD-16), Quantification, Wording, Behaviour, then Instrument in two slices, one per spec document. Each includes the publication pass for the ADRs its README cites. Surface and the other literate standalone modules follow. Amends OD-D23's order (NX-Q4) |
 | OD-D62 | MC1, OD7, VER1, DOC2 and OD-REL are built autonomously with local commits, using Sonnet sub-agents where a slice is mechanical or separate (NX-Q5) |
+| OD-D63 | MORK, SPC, Surface and Persistence join the substrate's release, since they are tested at the same commit. MORK's `Executable.ttl` imports Eligibility explicitly, rather than using its terms undeclared (REL-Q2a, option a) |
 
 ## The README layout
 
@@ -282,7 +283,7 @@ extraction test.
 1. **An ADR**, Proposed, superseding ADR-A86's per-document versioning and amending ADR-A113 to apply to the set
    (OD-D55 to OD-D59). The maintainer accepts it.
 2. **The release number** in the catalogue's conventions, read through the reader. The substrate's modules are
-   the release's members. The standalone modules join or not by REL-Q2a's answer.
+   the release's members. The standalone modules MORK, SPC, Surface and Persistence are members too (OD-D63), and `Executable.ttl` gains its import of Eligibility.
 3. **`tools/ontology_version_check.py`** fails when any member's content changed and the release number did not,
    and when a member's version IRI or import names another number.
 4. **`tools/ontology_releases.py`** writes one register row per release with its documents. The existing rows
