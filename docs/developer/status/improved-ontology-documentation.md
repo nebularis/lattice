@@ -50,7 +50,7 @@ deliberate. The release slice OD-REL resolves it once, before the merge into `ma
 | RC5 package promotion | planned | RC4 |
 | RC6 XML catalogue folded in | planned | RC5, a new ADR on ADR-A88 |
 | ELC composition operation | approved 2026-10-19, committed locally, [Validation Pack](../validation/ELC.md) | |
-| MC1 migration check labels | briefed 2026-10-19 | |
+| MC1 migration check labels | built autonomously 2026-10-19, committed locally, [Validation Pack](../validation/MC1.md) | |
 | VER1 one release for the substrate | briefed 2026-10-19 | |
 | OD-REL first release, 0.18.0 | planned | every migration on the branch |
 
@@ -217,3 +217,5 @@ deliberate. The release slice OD-REL resolves it once, before the merge into `ma
   and OD-REL. The check REL-Q2 asked for found three standalone modules depending on the substrate (REL-Q2a). The
   release bundles sketch opened BUN-Q1 to BUN-Q7.
 - 2026-10-19: REL-Q2a answered (a), OD-D63. The maintainer authorised the slices to run autonomously.
+- 2026-10-19: MC1 built. Blank nodes are labelled by their subtree, ELC's reconciliations shrink from 126 to 102,
+  and TD-55 is closed. DOC2 runs in its own worktree, `docs/literate-v2-doc2`.

@@ -69,3 +69,25 @@ def test_elc_t1_a_multi_line_literal_is_one_difference_on_one_line() -> None:
     query = '@prefix ex: <https://example.org/x#> .\nex:S ex:select """\nSELECT $this\nWHERE { }\n""" .\n'
     changed = mc.differences("f.ttl", query, query.replace("WHERE", "where"))
     assert len(changed) == 2 and all("\n" not in line and "\\n" in line for line in changed)
+
+
+SHAPES = """@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix ex: <https://example.org/x#> .
+ex:A a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:minCount 1 ] .
+ex:B a sh:NodeShape ; sh:sparql [ sh:select \"\"\"SELECT $this WHERE { }\"\"\" ] .
+"""
+
+
+def test_mc1_t1_adding_a_shape_lists_only_that_shapes_triples() -> None:
+    added = SHAPES + "ex:C a sh:NodeShape ; sh:property [ sh:path ex:q ; sh:maxCount 1 ] .\n"
+    changed = mc.differences("f.ttl", SHAPES, added)
+    assert len(changed) == 4 and all("only-in-tree" in line for line in changed)
+    assert not any("x#A>" in line or "x#B>" in line or "SELECT" in line for line in changed)
+
+
+def test_mc1_t2_a_blank_node_keeps_its_label_wherever_it_is_reached() -> None:
+    shared = "@prefix ex: <https://example.org/x#> .\n_:n ex:q 1 .\nex:A ex:p _:n .\nex:B ex:p _:n .\n"
+    labels = {o for _, _, o in mc.labelled(mc._graph(shared)) if o.startswith("_:")}
+    assert len(labels) == 1
+    assert mc.differences("f.ttl", shared, shared.replace("ex:B ex:p _:n .", "ex:B ex:p [ ex:q 1 ] .")) == []
+

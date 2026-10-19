@@ -18,13 +18,13 @@ Usage, from the repository root::
 from __future__ import annotations
 
 import argparse
+import hashlib
 import subprocess
 import sys
 from pathlib import Path
-from typing import List, Optional, Sequence, Set
+from typing import Dict, List, Optional, Sequence, Set, Tuple
 
-from rdflib import Graph
-from rdflib.compare import graph_diff, to_isomorphic
+from rdflib import BNode, Graph
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -35,13 +35,34 @@ def _graph(text: str) -> Graph:
     return Graph().parse(data=text, format="turtle")
 
 
+def labelled(graph: Graph) -> Set[Tuple[str, str, str]]:
+    """The graph's triples in N3, each blank node written as ``_:`` and a digest of its own subtree, the
+    triples reachable from it (TD-55). A change to one blank node's subtree leaves every other label alone,
+    which a whole-graph canonical labelling does not. Two blank nodes with the same subtree share a label."""
+    labels: Dict[BNode, str] = {}
+
+    def label(node: BNode, path: frozenset) -> str:
+        if node in labels:
+            return labels[node]
+        if node in path:
+            return "_:cycle"
+        parts = sorted(f"{p.n3()} {term(o, path | {node})}" for p, o in graph.predicate_objects(node))
+        labels[node] = "_:b" + hashlib.sha256("\n".join(parts).encode("utf-8")).hexdigest()[:16]
+        return labels[node]
+
+    def term(node, path: frozenset = frozenset()) -> str:
+        return label(node, path) if isinstance(node, BNode) else node.n3()
+
+    return {(term(s), term(p), term(o)) for s, p, o in graph}
+
+
 def differences(path: str, at_ref: Optional[str], in_tree: Optional[str]) -> List[str]:
     """The lines describing how one file's graph differs between a ref and the tree, sorted."""
     if at_ref is None or in_tree is None:
         return [f"{path} {'added in the tree' if at_ref is None else 'removed from the tree'}"]
-    _, only_ref, only_tree = graph_diff(to_isomorphic(_graph(at_ref)), to_isomorphic(_graph(in_tree)))
-    lines = [f"{path} only-at-ref {s.n3()} {p.n3()} {o.n3()} ." for s, p, o in only_ref]
-    lines += [f"{path} only-in-tree {s.n3()} {p.n3()} {o.n3()} ." for s, p, o in only_tree]
+    before, after = labelled(_graph(at_ref)), labelled(_graph(in_tree))
+    lines = [f"{path} only-at-ref {s} {p} {o} ." for s, p, o in before - after]
+    lines += [f"{path} only-in-tree {s} {p} {o} ." for s, p, o in after - before]
     # One difference per line, so a literal's line breaks, for example in a SPARQL query, are escaped.
     return sorted(line.replace("\r", "\\r").replace("\n", "\\n") for line in lines)
 
