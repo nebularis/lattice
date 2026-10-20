@@ -94,6 +94,8 @@ _DIMENSION_SPEC: dict[str, tuple[URIRef, URIRef, tuple[URIRef, ...]]] = {
     "erasureStrategy": (DAL.PrivacyProfile, DAL.erasureStrategy, ()),
     "erasurePrecedence": (DAL.PrivacyProfile, DAL.erasurePrecedence, ()),
     "perSubjectScoped": (DAL.ReceiptProfile, DAL.perSubjectScoped, ()),
+    # H2.6c (2026-10-20).
+    "writeDiscipline": (DAL.WriteDisciplineProfile, DAL.writeDiscipline, ()),
 }
 
 

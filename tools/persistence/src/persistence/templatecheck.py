@@ -63,6 +63,10 @@ _FIRST_APPEND = (
     "a new stream has no pat:head before its first append, so its first revision has no previous "
     "revision and the pat:prevRev triple is correctly absent (guide §14.2)"
 )
+_FIRST_VERSION = (
+    "the first version of an identity has no current version before it, so no version is superseded and the "
+    "fnd:supersededBy triple is correctly absent (H2.6c)"
+)
 OPTIONAL_INSERT_VARIABLES: dict[str, dict[str, str]] = {
     "cas-replace-named-graph": {"prevRev": _FIRST_CAS},
     "cas-replace-named-graph-dataset-guard": {"prevRev": _FIRST_CAS},
@@ -72,6 +76,8 @@ OPTIONAL_INSERT_VARIABLES: dict[str, dict[str, str]] = {
     "tombstone-delete-composite-dataset-guard": {"prevRev": _FIRST_CAS},
     "tombstone-delete-named-graph": {"prevRev": _FIRST_CAS},
     "tombstone-delete-named-graph-dataset-guard": {"prevRev": _FIRST_CAS},
+    "append-version": {"prevRev": _FIRST_CAS, "priorVersion": _FIRST_VERSION},
+    "append-version-dataset-guard": {"prevRev": _FIRST_CAS, "priorVersion": _FIRST_VERSION},
     "append-event": {"prev": _FIRST_APPEND},
     "append-event-dataset-guard": {"prev": _FIRST_APPEND},
 }

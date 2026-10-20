@@ -357,6 +357,7 @@ declares it, its values, and the platform baseline default the compiler uses whe
 |---|---|---|---|---|
 | Aggregate boundary | `dal:AggregateBoundaryProfile` (`dal:strategy`) | `dal:NamedGraphBoundary`, `dal:CompositePropertyBoundary`, `dal:NoBoundary` | named graph | 7.1 |
 | First write | `dal:AggregateBoundaryProfile` (`dal:firstWrite`) | `dal:AbsentRow`, `dal:PreCreatedRow` | absent row | 7.1 |
+| Write discipline | `dal:WriteDisciplineProfile` (`dal:writeDiscipline`) | `dal:InPlace`, `dal:AppendVersions`, `dal:AppendRecords` | in place | 7.10 |
 | Concurrency | `dal:ConcurrencyProfile` (`dal:concurrencyProfile`) | `dal:ProvidedConcurrency`, `dal:Optimistic`, `dal:AppendOnly`, `dal:LockingConcurrency` (marker only) | provided | 7.2 |
 | Deadlock policy | `dal:ConcurrencyProfile` | `dal:EngineDetectAndRetry`, `dal:SortedAcquisition`, `dal:PartitionedWriter` | engine detect and retry | 7.2 |
 | ETag form and representation | `dal:ConcurrencyProfile` | `dal:StrongEtag`/`dal:WeakEtag`, `dal:SingleRepresentation`/`dal:TaggedRepresentation` | strong, single | 7.2 |
@@ -686,7 +687,8 @@ flowchart LR
 Decision records (eligibility decisions, behaviour state changes, MORK outcomes) are always
 append-only, so for them a receipt-only model with whole replace is not an option. A composite
 boundary with receipts only is refused: a closure sweep is not a single graph replace, and a receipt
-could not say what changed inside it. A graph family whose targets resolve to different receipt
+could not say what changed inside it. A family that appends versions or records (§7.10) is not refused,
+since its history is in the data and nothing is swept. A graph family whose targets resolve to different receipt
 models raises a warning, so a consumer is told rather than left to assume uniformity.
 
 **Retention.** History that is kept forever grows forever, so receipts are pruned (guide §24.2):
@@ -1004,6 +1006,68 @@ admitted (`dal:erasureReplayOnRestore true`).
 
 ---
 
+### 7.10 Write discipline
+
+**The question.** When a family writes a new state, does the old one go?
+
+`dal:writeDiscipline`, declared on a `dal:WriteDisciplineProfile` (or any profile of the family) and resolved like any dimension, picks
+one of three. Absent, it is `dal:InPlace`, so a configuration that declares none compiles as before. The discipline is the draft of
+H2.6c, decided at our leanings for the maintainer's review (history and versioning sketch, VH-Q1 to VH-Q6).
+
+| Discipline | A write | Operations | History is | Applies to |
+|---|---|---|---|---|
+| `dal:InPlace` (baseline) | replaces the old state and deletes it | `create-if-absent` or `bootstrap-version-row`, `cas-replace`, `tombstone-delete` | the receipt model's (§7.4) | every family |
+| `dal:AppendVersions` | adds a new version beside the old and links them with `fnd:supersededBy`. Nothing is swept or deleted | `bootstrap-version-row` and `append-version` | in the data, as versions | `dal:CompositePropertyBoundary`, and `dal:NoBoundary` with a `dal:dataGraph`, under `dal:Optimistic` |
+| `dal:AppendRecords` | adds records, each an immutable occurrence | `bootstrap-version-row` and `append` | in the data, as records | any family. The discipline selects the append form whatever the concurrency |
+
+```mermaid
+flowchart LR
+  subgraph inplace["InPlace: v1 is replaced"]
+    A1["state v1"] -- "sweep and delete" --> A2["state v2"]
+  end
+  subgraph versions["AppendVersions: v1 stays"]
+    B1["version v1"] -- "fnd:supersededBy" --> B2["version v2"]
+    B2 -. "shares by reference" .-> M["members not restated"]
+    B1 -.-> M
+  end
+```
+
+**What `append-version` does,** in one update. It guards the identity's version row at the expected seq and the transaction claim. It
+inserts the new version's own triples from the payload slot, and `$priorVersion fnd:supersededBy $newVersion` when the row names a current
+version. It moves the row's seq and head and sets its current version to the new one, writes the receipt, and links the version to its
+receipt with `pat:revision`. The current version is the latest one written (VH-D1). Which version is in force, or agreed, is evaluated
+from other facts and never stored here. The first version is written at seq 0 onto a row `bootstrap-version-row` created, whatever
+`dal:firstWrite` says, so a family that appends versions is never given `create-if-absent`. A family that appends versions has no
+`tombstone-delete`, which would sweep the history. Removing one is housekeeping and erasure (ADR-A80), not a write of this family.
+
+A caller restates only what changed. A member the new version does not restate is shared by reference (VH-Q2), so the payload holds the
+new version's own triples and a pointer to each unchanged member. A node a new version points at must already be in the data graph.
+
+**Warned.** `compile` warns `VersionedClassWrittenInPlace` when a target class is a subclass of `fnd:Version`, by IRI in the loaded graphs
+with no import of Foundation, and the discipline is `dal:InPlace`. A replace deletes the version before it, which `fnd:supersededBy`
+and ADR-A67 keep. Declare `dal:AppendVersions`, or `dal:InPlace` deliberately for a working draft that nothing cites.
+
+**Refused.** `AppendVersionsUnsupported`, for `dal:AppendVersions` on a named-graph family (a graph per version is not built), under a
+concurrency that is not `dal:Optimistic` (the guard is the version row), or with no boundary and no `dal:dataGraph` (the default graph is
+never written).
+
+**What works best when.**
+
+| The records are | Declare | Because |
+|---|---|---|
+| a working draft that people edit, nothing cites a state of it | `dal:InPlace`, `dal:ReceiptOnly` | one current state, the cheapest write, history needs no storage |
+| edited in place, and a replayable change history is wanted | `dal:InPlace`, `dal:PatchLog` | the log keeps what changed. Not yet built (TD-46) |
+| things a party assents to, relies on or cites, and later changes make a new thing | `dal:AppendVersions`, `dal:ReceiptOnly` | each version stays and is reachable. A change costs the changed triples, one link and a receipt, with no sweep |
+| occurrences that never change, such as drawdowns or deliveries | `dal:AppendRecords` | each record is written once and never reopened |
+| derived from the rest | none of these. Compute it | storing it makes a second source for one fact |
+| a hot record that many writers revise at once | `dal:AppendVersions`, and expect contention | writers race on one version row, as two replaces of one record do |
+
+A family may be split to mix, for example an instrument's versions appended while a working draft beside it is edited in place. A
+retention policy decides when a superseded version may be pruned, never one that a retained version references (VH-Q6). That is
+housekeeping and is not generated (ADR-A80, TD-47).
+
+---
+
 ## 8. Capability self-checks
 
 The compiler builds no store interface and consults no live backend. For each target it computes an
@@ -1056,6 +1120,8 @@ is ever run, and an adopter who wants only the generated SPARQL can run both onc
 | `dal:Optimistic` with a named-graph boundary | `create-if-absent` (or `bootstrap-version-row` under `dal:PreCreatedRow`), `cas-replace`, `tombstone-delete` |
 | `dal:Optimistic` with a composite boundary | `create-if-absent` (or `bootstrap-version-row` under `dal:PreCreatedRow`), `cas-replace` and `tombstone-delete`, each sweeping the aggregate with one property path inside the family's `dal:dataGraph` |
 | `dal:Optimistic` with no boundary | `cas-replace` guarded on `dal:valueGuardProperty` |
+| `dal:AppendVersions` (composite boundary, or no boundary with a `dal:dataGraph`, under `dal:Optimistic`) | `bootstrap-version-row` and `append-version`, whatever `dal:firstWrite` says, and no `tombstone-delete` (§7.10) |
+| `dal:AppendRecords` | `bootstrap-version-row` and `append`, whatever the concurrency |
 | `dal:AppendOnly`, or event grain with any concurrency other than `dal:Optimistic` | `bootstrap-version-row` and `append` |
 | `dal:ProvidedConcurrency` or `dal:LockingConcurrency`, with commit grain | `unconditional-write` |
 | each uniqueness constraint | `key-claim-write` (or its dual form during rotation), `key-claim-retire`, and the reconciler of §7.6 |
@@ -1382,6 +1448,8 @@ target also gets the four audits (`gap-scan-audit`, `fork-detection-audit`,
 | composite-property aggregate by SHACL shape | [`composite-property-boundary-shacl`](examples/composite-property-boundary-shacl.ttl) and [`composite-project-ownership`](examples/composite-project-ownership.ttl) | `sparql/Order/cas-replace.rq`, the aggregate swept by one property path in `WHERE`, with `create-if-absent` and `tombstone-delete` beside it |
 | no boundary, value-based guard | [`value-based-cas`](examples/value-based-cas.ttl) | `sparql/Order/cas-replace.rq`, guarded on the property's old value |
 | append-only stream under the dataset guard | [`append-stream-dataset-guard`](examples/append-stream-dataset-guard.ttl) | `sparql/DecisionStream/bootstrap-version-row.rq`, `sparql/DecisionStream/append.rq` |
+| composite family that appends versions, under the dataset-level guard (§7.10) | [`write-discipline-composite-append-versions`](examples/write-discipline-composite-append-versions.ttl) | `sparql/Quote/bootstrap-version-row.rq`, `sparql/Quote/append-version.rq`, and no create, replace or tombstone |
+| family with no boundary that appends versions (§7.10) | [`write-discipline-noboundary-append-versions`](examples/write-discipline-noboundary-append-versions.ttl) | `sparql/Offer/bootstrap-version-row.rq`, `sparql/Offer/append-version.rq` |
 | one shared class, two deployments and a fallback | [`lending-credit-shared-class`](examples/lending-credit-shared-class.ttl) | three target directories: `sparql/Behaviour.LendingBehaviourGraphs/` (compare-and-set), `sparql/Behaviour.CreditBehaviourGraphs/` (unconditional), `sparql/Behaviour/` (baseline) |
 | a namespace-wide baseline | [`namespace-wide`](examples/namespace-wide.ttl) | `sparql/CreditDecision/unconditional-write.rq` |
 | uniqueness: reject (the baseline policy) | [`baseline-single-class`](examples/baseline-single-class.ttl) | `sparql/LoanApplication/key-claim-duplicate-audit_loan-application-number-per-branch.rq` |
@@ -1421,7 +1489,8 @@ profile nodes, which node-local shapes cannot see.
 | Check | Why |
 |---|---|
 | no boundary with compare-and-set and no value guard | there is nothing to replace whole |
-| composite boundary with receipts only | a receipt could not say what changed inside the closure |
+| composite boundary with receipts only, unless the family appends versions or records | a receipt could not say what changed inside the closure |
+| `dal:AppendVersions` on a named-graph family, without `dal:Optimistic`, or with no boundary and no data graph | the write has no variant, or no version row to guard, or no graph to hold the versions |
 | commit grain with `opSeq` required | the two contradict each other |
 | a key property outside a composite boundary | the key would not belong to the aggregate |
 | `dal:metaShards` changed without an acknowledged epoch bump | moving version rows is a migration |
@@ -1435,8 +1504,8 @@ profile nodes, which node-local shapes cannot see.
 **Warned**, because the configuration works and its trade-off should be a conscious one: the
 store-local epoch, the row-level epoch guard, a weak ETag with compare-and-set, no global read where
 a dataset tier is declared, an advisory contiguity check, sorted acquisition with a single guarded
-update, declared shard counts not yet honoured, mixed receipt models in one graph family, and a
-profile scoped to a bare class from another namespace.
+update, declared shard counts not yet honoured, mixed receipt models in one graph family, a
+profile scoped to a bare class from another namespace, and a subclass of `fnd:Version` written in place.
 
 ---
 

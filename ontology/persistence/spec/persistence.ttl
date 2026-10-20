@@ -786,6 +786,28 @@ dal:deadlockPolicy a owl:ObjectProperty ;
     rdfs:domain dal:ConcurrencyProfile ; rdfs:range dal:DeadlockPolicy .
 
 #################################################################
+#    §16a. Write discipline (formal-methods H2.6c, 2026-10-20; DRAFT,
+#    for the maintainer's review with VH-Q1 to VH-Q6). How a family
+#    writes a new state: by replacing the old one, by adding a new
+#    version beside the old, or by adding records. Versioning is not
+#    reflected in the version IRI on this branch (TD-64).
+#################################################################
+
+dal:WriteDisciplineProfile a owl:Class .
+
+dal:WriteDiscipline a owl:Class .
+dal:InPlace a dal:WriteDiscipline ;
+    rdfs:comment "The default. A write replaces the old state, as the replace, create and tombstone operations always have. The family's receipt model says what history the log keeps (dal:ReceiptOnly, or dal:PatchLog once H2.6d builds it)." .
+dal:AppendVersions a dal:WriteDiscipline ;
+    rdfs:comment "A write adds a new version beside the old and links them with fnd:supersededBy. Nothing is swept or deleted. The version row keeps the latest version written as its current version. Applies to dal:CompositePropertyBoundary families and to dal:NoBoundary families with a dal:dataGraph, under dal:Optimistic. The first version is written onto a row created by bootstrap-version-row. History is in the data, so dal:CompositePropertyBoundary is allowed with dal:ReceiptOnly." .
+dal:AppendRecords a dal:WriteDiscipline ;
+    rdfs:comment "A write appends records (events), each an immutable occurrence, with the append operation. History is in the data, so dal:CompositePropertyBoundary is allowed with dal:ReceiptOnly." .
+
+dal:writeDiscipline a owl:ObjectProperty ;
+    rdfs:domain dal:WriteDisciplineProfile ; rdfs:range dal:WriteDiscipline ;
+    rdfs:comment "How the family writes. Absent means dal:InPlace. compile warns VersionedClassWrittenInPlace when a target class is a subclass of fnd:Version (by IRI, with no import) and the discipline is dal:InPlace." .
+
+#################################################################
 #    §17. Merge relation and claim-scheme rotation. Extends
 #    dal:UniquenessConstraint so that dal:onViolation dal:Merge names
 #    an actual relation instead of assuming one exists in the

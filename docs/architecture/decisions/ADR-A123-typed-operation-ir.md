@@ -245,3 +245,28 @@ request-time slots.
    which the store mints. This slice declares the part in the contract. H2.8 computes it.
 4. **`compile` warns `ReceiptModelNotHonoured`** for a target whose receipt model is `dal:PatchLog` or `dal:SnapshotPerRevision`, as it warns
    for `ShardingNotHonoured` (TD-46).
+
+
+## Addendum, 2026-10-20: the write disciplines and `append-version` (draft)
+
+Drafted in slice H2.6c (Track H plan §4.9) for the maintainer to accept or change. It is decided at our leanings, with the history and
+versioning sketch's VH-Q1 to VH-Q6, and extends the builders of decision 1.
+
+1. **`dal:writeDiscipline` selects the write of a family.** `dal:InPlace` (absent means this) keeps every operation as it was.
+   `dal:AppendVersions` selects `bootstrap-version-row` and `append-version`. `dal:AppendRecords` selects the append form of H2.6b. The
+   discipline is a resolved dimension like any other, so every compiled profile now carries it.
+2. **`append-version` is a builder with a dataset-guard variant,** kind `AppendVersion`, version 1. One update guards the identity's version
+   row at the expected seq and the transaction claim, inserts the new version's own triples from the payload slot, inserts
+   `$priorVersion fnd:supersededBy $newVersion` when the row names a current version, moves the row's seq, head and current version
+   (`pat:currentVersion`), writes the receipt, and links the version to its receipt with `pat:revision`. It reads and writes the data graph
+   but never deletes from it, so it has no sweep. Its parameters are those of the compare-and-set and `$newVersion`. It reads `fnd:supersededBy`
+   by IRI and imports nothing from Foundation (ADR-A78).
+3. **Which families.** A composite family, and a family with no boundary that declares a `dal:dataGraph`, under `dal:Optimistic`. Any other
+   is refused with `AppendVersionsUnsupported`. A named-graph family, which would append one graph per version named from the version, is
+   not built. A family that appends versions has no create, replace or tombstone.
+4. **`compile` warns `VersionedClassWrittenInPlace`** when a target class is a subclass of `fnd:Version` in the loaded graphs and its
+   discipline is `dal:InPlace`.
+5. **`CompositeBoundaryReceiptConflict` does not apply to a family that appends versions or records,** where the history is in the data
+   (VH-Q5). It still refuses `dal:InPlace` with `dal:ReceiptOnly`.
+6. **The contract gains one operation kind,** `AppendVersion`. Its resources are the version row, the version (the aggregate resource, in
+   the data graph), the receipt and the claim. Its digest parts are the usual four, with the payload as the content part.

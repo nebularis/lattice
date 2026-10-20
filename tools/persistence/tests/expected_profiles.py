@@ -41,7 +41,7 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 EXAMPLES = REPO_ROOT / "ontology" / "persistence" / "examples"
 OUT_DIR = REPO_ROOT / "ontology" / "persistence" / "test" / "expected-profiles"
 
-# The nine files: eight examples, and a variant of the first with the guards off and the caller naming each graph.
+# The eleven files: ten examples, and a variant of the first with the guards off and the caller naming each graph.
 CONFIGURATIONS: list[tuple[str, str, dict]] = [
     ("baseline-single-class", "baseline-single-class", {}),
     ("epoch-dataset-level-guard", "epoch-dataset-level-guard", {}),
@@ -52,6 +52,9 @@ CONFIGURATIONS: list[tuple[str, str, dict]] = [
     ("claim-scheme-dual-rotation", "claim-scheme-dual-rotation", {}),
     ("value-based-cas", "value-based-cas", {}),
     ("baseline-single-class.caller-named", "baseline-single-class", {"guards": False, "graph_names": "caller"}),
+    # H2.6c: the two families that append versions, a composite one and one with no boundary under the dataset-level guard.
+    ("write-discipline-composite-append-versions", "write-discipline-composite-append-versions", {}),
+    ("write-discipline-noboundary-append-versions", "write-discipline-noboundary-append-versions", {}),
 ]
 KINDS_FILE = "kinds"
 

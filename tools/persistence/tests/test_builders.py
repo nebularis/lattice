@@ -55,7 +55,7 @@ def _first(stem: str):
 
 def test_h2_2_t1_the_ported_operations_are_the_templates_listed_and_every_one_is_generated_by_a_fixture():
     assert PORTED == sorted([
-        "append-event", "append-event-dataset-guard", "bootstrap-version-row", "bootstrap-version-row-dataset-guard",
+        "append-event", "append-event-dataset-guard", "append-version", "append-version-dataset-guard", "bootstrap-version-row", "bootstrap-version-row-dataset-guard",
         "cas-replace-composite-property", "cas-replace-composite-property-dataset-guard",
         "cas-replace-named-graph", "cas-replace-named-graph-dataset-guard",
         "create-if-absent-composite", "create-if-absent-composite-dataset-guard",

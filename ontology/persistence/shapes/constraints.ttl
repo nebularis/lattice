@@ -136,7 +136,7 @@ dal:CapabilitySpecShape
 dal:SharedClassProfileWarningShape
     a sh:NodeShape ;
     sh:targetClass dal:DataAccessProfile , dal:ConcurrencyProfile , dal:OrderingProfile ,
-                   dal:ReceiptProfile , dal:MetaTopologyProfile , dal:AggregateBoundaryProfile ;
+                   dal:ReceiptProfile , dal:MetaTopologyProfile , dal:AggregateBoundaryProfile , dal:WriteDisciplineProfile ;
     sh:severity sh:Warning ;
     sh:sparql [
         sh:message "This profile's only scope is a bare ClassScope targeting a class outside its own namespace. Per ADR-A78 point 5, authority over a shared substrate class belongs to the deploying application, expressed via a GraphPatternScope or NamespaceScope, not a bare ClassScope. If this override is deliberate, acknowledge it explicitly." ;

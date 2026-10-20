@@ -21,7 +21,7 @@ from .ir import (
     A, Bind, Binding, Compare, Const, Filter, Func, Graph, GraphBlock, GraphRole, Group, Kind, NotExists, Op, Operation,
     Optional_, Param, ParamRef, PayloadSlot, Path, Projected, RegistrySlot, RowsSlot, RowValues, Select, SubSelect, Triple, ValueGuard, Values, Var,
 )
-from .namespaces import PAT
+from .namespaces import FND, PAT
 from .terms import Integer, Iri, Literal, PropertyPath
 
 XSD_LONG = "http://www.w3.org/2001/XMLSchema#long"
@@ -519,6 +519,57 @@ def _composite_tombstone(b: Bindings, *, guards: bool, dataset_guard: bool) -> O
     )
 
 
+def _append_version(b: Bindings, *, guards: bool, dataset_guard: bool) -> Operation:
+    """The write of a family that appends versions (formal-methods H2.6c, `dal:AppendVersions`). The guard is the version row of the
+    identity at the expected seq, and the txn claim. Nothing is swept or deleted. The new version's own triples come from the payload
+    slot, the prior current version is marked superseded by it, the row moves its seq, head and current version, and the receipt is
+    written. The version names its receipt with `pat:revision`, as an event does. A member the caller does not restate stays where it
+    is and is reached from the new version by reference (VH-Q2), so the payload holds only the new version's own triples."""
+    meta = b.graph("metaGraphPrefix")
+    root, epoch, new_rev, new_version = ParamRef("root"), ParamRef("epoch"), ParamRef("newRev"), ParamRef("newVersion")
+    row_epoch = Var("rowEpoch") if dataset_guard else epoch
+    where = (
+        *_log_binds(b),
+        *(_dataset_guard(b) if dataset_guard else ()),
+        GraphBlock(meta, (
+            Triple(root, _pat("epoch"), row_epoch),
+            Triple(root, _pat("seq"), ParamRef("expectedSeq")),
+            Optional_(Group((Triple(root, _pat("head"), Var("prevRev")),))),
+            Optional_(Group((Triple(root, _pat("currentVersion"), Var("priorVersion")),))),
+            NotExists(Group((Triple(root, _pat("deleted"), _TRUE),))),
+        )),
+        NotExists(Group((GraphBlock(b.graph("txnGraph"), (Triple(ParamRef("txnId"), _pat("rev"), _ANY),)),))),
+        *_claim_binds(),
+    )
+    row = (Triple(root, _pat("epoch"), _bound("rowEpoch")),) if dataset_guard else ()
+    delete = (GraphBlock(meta, (
+        *row, Triple(root, _pat("seq"), ParamRef("expectedSeq")), Triple(root, _pat("head"), _optional("prevRev")),
+        Triple(root, _pat("currentVersion"), _optional("priorVersion")),
+    )),)
+    insert = (
+        GraphBlock(b.graph("dataGraph"), (
+            Triple(new_version, _pat("revision"), new_rev),
+            Triple(_optional("priorVersion"), Const(Iri.encode(str(FND.supersededBy))), new_version),
+            PayloadSlot("payloadTriples"),
+        )),
+        GraphBlock(meta, (
+            Triple(root, _pat("epoch"), epoch), Triple(root, _pat("seq"), ParamRef("nextSeq")), Triple(root, _pat("head"), new_rev),
+            Triple(root, _pat("currentVersion"), new_version),
+        )),
+        _claim_block(b),
+        GraphBlock(graph_var("logGraph", Binding.BOUND), (
+            Triple(new_rev, A, _pat("Revision")), Triple(new_rev, _pat("target"), root), Triple(new_rev, _pat("epoch"), epoch),
+            Triple(new_rev, _pat("seq"), ParamRef("nextSeq")), Triple(new_rev, _pat("prevRev"), _optional("prevRev")),
+            Triple(new_rev, _pat("txn"), _bound("txnKey")), Triple(new_rev, _pat("recordedAt"), _bound("now")),
+        )),
+    )
+    return Operation.build(
+        "append-version" + ("-dataset-guard" if dataset_guard else ""),
+        (*_CAS_PARAMS, Param("newVersion", Kind.IRI), Param("payloadTriples", Kind.PAYLOAD)),
+        Group(where), guards=guards, insert=insert, delete=delete,
+    )
+
+
 # ---- the key claims
 
 _KEY_CLAIM = "KeyClaim"
@@ -762,6 +813,8 @@ BUILDERS: dict[str, Builder] = {
     "create-if-absent-composite-dataset-guard": lambda b, guards, names: _composite_create(b, guards=guards, dataset_guard=True),
     "cas-replace-composite-property": lambda b, guards, names: _composite_replace(b, guards=guards, dataset_guard=False),
     "cas-replace-composite-property-dataset-guard": lambda b, guards, names: _composite_replace(b, guards=guards, dataset_guard=True),
+    "append-version": lambda b, guards, names: _append_version(b, guards=guards, dataset_guard=False),
+    "append-version-dataset-guard": lambda b, guards, names: _append_version(b, guards=guards, dataset_guard=True),
     "tombstone-delete-composite": lambda b, guards, names: _composite_tombstone(b, guards=guards, dataset_guard=False),
     "tombstone-delete-composite-dataset-guard": lambda b, guards, names: _composite_tombstone(b, guards=guards, dataset_guard=True),
     "key-claim-write": lambda b, guards, names: _key_claim_write(b, guards=guards),

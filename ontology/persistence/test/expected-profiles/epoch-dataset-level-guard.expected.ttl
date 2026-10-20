@@ -1030,5 +1030,8 @@
             dal:dimension "retentionMode" ;
             dal:resolvedValue dal:PrefixOnlyRetention ],
         [ dal:candidateCount 0 ;
-            dal:dimension "txnShards" ] .
+            dal:dimension "txnShards" ],
+        [ dal:candidateCount 0 ;
+            dal:dimension "writeDiscipline" ;
+            dal:resolvedValue dal:InPlace ] .
 

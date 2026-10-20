@@ -18,7 +18,7 @@ from .functional import functional_value
 from .boundary import MissingBoundaryShapeError, walk_ownership
 from .capability import CapabilityCheckResult
 from .model import BoundaryConflict, CrossAxisViolation, Diagnostic, ResolvedDimension
-from .namespaces import DAL, SH
+from .namespaces import DAL, FND, SH
 from .scopes import Target
 
 
@@ -45,9 +45,45 @@ def check_cross_axis(
 
     boundary_local = _local(boundary.value) if boundary else None
     concurrency_local = _local(concurrency.value) if concurrency else None
+    discipline = _local(_value(dimensions, "writeDiscipline"))
+    appends = discipline in ("AppendVersions", "AppendRecords")
 
-    # Row 1: NoBoundary + Optimistic with no value guard.
-    if boundary_local == "NoBoundary" and concurrency_local == "Optimistic":
+    # H2.6c, VH-Q3 and H2.6c-Q4: a class the loaded graphs make a subclass of fnd:Version, written by replace. Foundation is not
+    # imported, the class is found by its IRI. A replace deletes the version before it, which fnd:supersededBy and ADR-A67 keep.
+    if discipline == "InPlace" and FND.Version in set(graph.transitive_objects(target.cls, RDFS.subClassOf)):
+        diagnostics.append(
+            Diagnostic(
+                kind="VersionedClassWrittenInPlace",
+                severity="WARNING",
+                target=str(target),
+                message=(
+                    "this target's class is a subclass of fnd:Version and dal:writeDiscipline is dal:InPlace, so every write "
+                    "replaces the version before it and deletes it. Declare dal:AppendVersions to keep each version, or "
+                    "dal:InPlace deliberately for a working draft that is not cited (H2.6c, VH-Q3)."
+                ),
+            )
+        )
+
+    # H2.6c: appending versions has no variant for a named-graph family (a graph per version is not built), writes under a
+    # version row and so needs optimistic concurrency, and with no boundary needs a graph to hold the versions.
+    if discipline == "AppendVersions":
+        problem = None
+        if boundary_local == "NamedGraphBoundary":
+            problem = "a named-graph family would append one graph per version, which is not built"
+        elif concurrency_local != "Optimistic":
+            problem = f"the write is guarded by the identity's version row, so it needs dal:Optimistic and not dal:{concurrency_local}"
+        elif boundary_local == "NoBoundary" and (boundary is None or boundary.extra.get("dataGraph") is None):
+            problem = "a family with no boundary declares no dal:dataGraph to hold its versions, and the default graph is never written"
+        if problem is not None:
+            raise CrossAxisViolation(
+                "AppendVersionsUnsupported",
+                str(target),
+                f"dal:AppendVersions is declared, and {problem}. Use dal:CompositePropertyBoundary, or dal:NoBoundary with a "
+                "dal:dataGraph, under dal:Optimistic, or write in place.",
+            )
+
+    # Row 1: NoBoundary + Optimistic with no value guard. Appending versions guards on the version row instead.
+    if boundary_local == "NoBoundary" and concurrency_local == "Optimistic" and discipline != "AppendVersions":
         if not concurrency.extra.get("valueGuardProperty"):
             raise CrossAxisViolation(
                 "NoBoundaryConcurrencyConflict",
@@ -57,8 +93,9 @@ def check_cross_axis(
                 "for a value-based guard (guide §14.2), or declare a real boundary.",
             )
 
-    # Row 2: CompositePropertyBoundary + ReceiptOnly.
-    if boundary_local == "CompositePropertyBoundary" and _local(receipts.value if receipts else None) == "ReceiptOnly":
+    # Row 2: CompositePropertyBoundary + ReceiptOnly. Not for a family that appends, where the history is in the data and a patch
+    # log would repeat it (H2.6c-Q5, VH-Q5).
+    if boundary_local == "CompositePropertyBoundary" and not appends and _local(receipts.value if receipts else None) == "ReceiptOnly":
         raise CrossAxisViolation(
             "CompositeBoundaryReceiptConflict",
             str(target),

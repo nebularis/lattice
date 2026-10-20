@@ -62,6 +62,8 @@ DIMENSIONS = (
     "erasureStrategy",
     "erasurePrecedence",
     "perSubjectScoped",
+    # H2.6c (2026-10-20): how a family writes, by replacing, by appending versions or by appending records.
+    "writeDiscipline",
 )
 
 # Dimensions whose resolved value is an RDF literal, emitted with
@@ -99,6 +101,8 @@ BASELINE_DEFAULTS: dict[str, str] = {
     "deadlockPolicy": "EngineDetectAndRetry",
     "contiguityCheckMode": "BlockingContiguityCheck",
     "retentionMode": "PrefixOnlyRetention",
+    # H2.6c: today's replace, so every example that declares no discipline compiles as before.
+    "writeDiscipline": "InPlace",
     # Slice 4 (plan decision, following Slice 2 decision 2's precedent): no
     # default for epochAuthority, privacyClass, erasureStrategy,
     # erasurePrecedence or perSubjectScoped. An undeclared dal:PrivacyProfile

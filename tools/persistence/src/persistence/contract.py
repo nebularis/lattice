@@ -37,6 +37,7 @@ class OperationKind(Enum):
     REPLACE = "Replace"
     TOMBSTONE = "Tombstone"
     APPEND = "Append"
+    APPEND_VERSION = "AppendVersion"
     UNCONDITIONAL_WRITE = "UnconditionalWrite"
     VALUE_GUARDED_REPLACE = "ValueGuardedReplace"
     KEY_CLAIM_WRITE = "KeyClaimWrite"
@@ -109,6 +110,7 @@ def resource_of(role: str, predicate: str) -> ResourceKind:
 _STEM_KIND: dict[str, OperationKind] = {
     "bootstrap-version-row": OperationKind.BOOTSTRAP,
     "append-event": OperationKind.APPEND,
+    "append-version": OperationKind.APPEND_VERSION,
     "create-if-absent-named-graph": OperationKind.CREATE,
     "create-if-absent-composite": OperationKind.CREATE,
     "cas-replace-named-graph": OperationKind.REPLACE,

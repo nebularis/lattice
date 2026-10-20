@@ -57,6 +57,8 @@ dal:Aggregate a dal:ResourceKind ;
 
 dal:Append a dal:OperationKind .
 
+dal:AppendVersion a dal:OperationKind .
+
 dal:Audit a dal:OperationKind .
 
 dal:Bootstrap a dal:OperationKind .

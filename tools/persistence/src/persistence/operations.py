@@ -74,6 +74,8 @@ def select_operations(
     boundary = _local(dimensions["aggregateBoundary"].value)
     concurrency = _local(dimensions["concurrencyProfile"].value)
     ordering = _local(dimensions["orderingGrain"].value)
+    # dal:writeDiscipline (H2.6c). The default, dal:InPlace, is every selection below that is not one of the two branches it names.
+    discipline = _local(dimensions["writeDiscipline"].value)
     meta = dimensions["metaTopology"]
     shard_count = int(meta.extra.get("metaShards", DEFAULT_META_SHARDS))
     shard = _shard_for(target, shard_count)
@@ -138,7 +140,15 @@ def select_operations(
             ParameterBinding("graphSuffix", "String", Literal.encode(graph_suffix)),
         ]
 
-    if concurrency == "Optimistic":
+    if discipline == "AppendVersions":
+        # Nothing is swept, so there is no boundary path and no tombstone, which would sweep the history. The validator has refused
+        # every configuration this cannot serve (AppendVersionsUnsupported): optimistic concurrency, and a composite family or a
+        # family with no boundary and a data graph. The first version is written at seq 0 onto a row that bootstrap-version-row
+        # created, so the version row's current version is only ever set by one operation, whatever dal:firstWrite says.
+        data_graph = ParameterBinding("dataGraph", "Iri", Iri.encode(str(dimensions["aggregateBoundary"].extra["dataGraph"])))
+        ops.append(GeneratedOperation(bootstrap_op.operation, bootstrap_op.template_id, common_bindings))
+        ops.append(GeneratedOperation("append-version", f"append-version{guard_suffix}.mustache", common_bindings + [data_graph]))
+    elif concurrency == "Optimistic" and discipline != "AppendRecords":
         if boundary == "NamedGraphBoundary":
             cas_template = (
                 "cas-replace-named-graph-dataset-guard.mustache" if dataset_level_guard
@@ -193,7 +203,7 @@ def select_operations(
                 else []
             )
             ops.append(GeneratedOperation("cas-replace", "cas-replace-value-guard.mustache", bindings))
-    elif concurrency == "AppendOnly" or ordering == "EventGrain":
+    elif concurrency == "AppendOnly" or ordering == "EventGrain" or discipline == "AppendRecords":
         # A stream's version row is bootstrapped eagerly before any append
         # (guide §10.1): a lazy first write would reintroduce the race.
         ops.append(GeneratedOperation(bootstrap_op.operation, bootstrap_op.template_id, common_bindings))

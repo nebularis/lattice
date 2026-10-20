@@ -7,6 +7,14 @@
     "sha256": "3b6388ce5eb979a59de262a61a00a2b1bdb1bf31d6ae72e985c3e9626012265a",
     "version": 2
   },
+  "append-version": {
+    "sha256": "ad2f0a2d6ffb15459072e42b4721b4bab9b7f48fd5f30aa19505e00cb542efd2",
+    "version": 1
+  },
+  "append-version-dataset-guard": {
+    "sha256": "4c5c46fb1f9b3109470254f4db9ae3e374745127b7648876313dc05262dee1f2",
+    "version": 1
+  },
   "bootstrap-version-row": {
     "sha256": "ba709a1b66aa7e324022bfa4be462a34848493df4435af842c462383c3934dc4",
     "version": 1
