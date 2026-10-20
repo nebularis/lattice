@@ -1,0 +1,50 @@
+# A composite family that appends versions and states each version's members as changes (formal-methods H2.6f, DRAFT for the
+# maintainer's review). A quote lists its lines, and a revision that changes one line writes pat:addsMember and pat:dropsMember
+# beside pat:previousVersion and does not write the lines it keeps. Every fourth version, and the first, lists every line and is
+# a checkpoint, so the generated members query never follows more than three links back. The domain's membership property is
+# named by the caller when it reads, and a domain shape runs over the query's results, never over the stored changes.
+@prefix dal:  <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:   <https://example.org/quoting#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+ex:Quote rdfs:subClassOf fnd:Version .
+
+ex:QuoteClass a dal:ClassScope ;
+    dal:targetClass ex:Quote ;
+    dal:priority "20"^^xsd:integer .
+
+ex:QuoteBoundaryProfile a dal:AggregateBoundaryProfile ;
+    dal:appliesTo     ex:QuoteClass ;
+    dal:strategy      dal:CompositePropertyBoundary ;
+    dal:boundaryShape ex:QuoteShape ;
+    dal:dataGraph     <urn:g:quotes> .
+
+ex:QuoteConcurrencyProfile a dal:ConcurrencyProfile ;
+    dal:appliesTo           ex:QuoteClass ;
+    dal:concurrencyProfile  dal:Optimistic ;
+    dal:minConcurrencyLevel dal:Linearizable .
+
+ex:QuoteReceiptProfile a dal:ReceiptProfile ;
+    dal:appliesTo    ex:QuoteClass ;
+    dal:receiptModel dal:ReceiptOnly .
+
+ex:QuoteWriteProfile a dal:WriteDisciplineProfile ;
+    dal:appliesTo      ex:QuoteClass ;
+    dal:writeDiscipline dal:AppendVersions ;
+    dal:membershipEncoding dal:DeltaMembership ;
+    dal:checkpointEvery "4"^^xsd:long .
+
+ex:QuoteEpoch a dal:EpochProfile ;
+    dal:appliesTo       ex:QuoteClass ;
+    dal:epochGuardScope dal:DatasetLevelGuard ;
+    dal:epochAuthority  dal:ExternalHighWaterMark .
+
+ex:QuoteShape a sh:NodeShape ; sh:targetClass ex:Quote ;
+    sh:property [ sh:path ex:forClient ; sh:class ex:Organisation ; dal:ownership dal:Reference ] ,
+                [ sh:path ex:hasTerms ; sh:node ex:TermsShape ; dal:ownership dal:Owned ] .
+
+ex:TermsShape a sh:NodeShape ; sh:targetClass ex:Terms ;
+    sh:property [ sh:path ex:premium ; sh:datatype xsd:decimal ] .

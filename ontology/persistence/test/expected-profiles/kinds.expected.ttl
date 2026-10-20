@@ -140,6 +140,8 @@ dal:LiteralKind a dal:ParameterKind .
 
 dal:LongKind a dal:ParameterKind .
 
+dal:MembersRead a dal:OperationKind .
+
 dal:MergeRecord a dal:ResourceKind ;
     rdfs:comment "a link from a non-canonical owner to the canonical one, in the keys graph, by the adopter's merge relation" ;
     dal:logicalKey "owner" .

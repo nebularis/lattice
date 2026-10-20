@@ -15,6 +15,14 @@
     "sha256": "014ac3263664105081bc0c6da73705a1ffccd2d5e55fc71e751aced8f25345bc",
     "version": 2
   },
+  "append-version-delta": {
+    "sha256": "3bcbc999cba2248ba264c1d3fc7f935d36a93c956e99da0d5f412e9d13cac98a",
+    "version": 1
+  },
+  "append-version-delta-dataset-guard": {
+    "sha256": "ea5ce29e8f609b9070130ba3610545f0b10535165f70690c1fb45a099ebfe3e5",
+    "version": 1
+  },
   "bootstrap-version-row": {
     "sha256": "ba709a1b66aa7e324022bfa4be462a34848493df4435af842c462383c3934dc4",
     "version": 1
@@ -149,6 +157,10 @@
   },
   "key-claim-write-dual": {
     "sha256": "0a53816e83475b82e4f2070aae7d36bae9057a561084e19f6a3b06202ab0dedb",
+    "version": 1
+  },
+  "members": {
+    "sha256": "b6c2903b018265c6a0961e898b6f8c198ecb3b083596bdd17ddd30e0ee03e88a",
     "version": 1
   },
   "revision-multi-txn-audit": {

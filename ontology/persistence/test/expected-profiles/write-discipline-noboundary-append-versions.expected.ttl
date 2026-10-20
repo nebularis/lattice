@@ -618,6 +618,9 @@
             dal:wonBy <https://example.org/offers#OfferBoundaryProfile> ],
         [ dal:candidateCount 0 ;
             dal:dimension "asOfFloorSource" ],
+        [ dal:candidateCount 0 ;
+            dal:dimension "checkpointEvery" ;
+            dal:resolvedLiteral "16"^^xsd:long ],
         [ dal:candidateCount 1 ;
             dal:dimension "concurrencyProfile" ;
             dal:resolvedValue dal:Optimistic ;
@@ -657,6 +660,9 @@
             dal:dimension "lagWindowMillis" ],
         [ dal:candidateCount 0 ;
             dal:dimension "logShards" ],
+        [ dal:candidateCount 0 ;
+            dal:dimension "membershipEncoding" ;
+            dal:resolvedValue dal:FullMembership ],
         [ dal:candidateCount 0 ;
             dal:dimension "metaTopology" ;
             dal:resolvedValue dal:SharedSharded ],

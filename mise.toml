@@ -219,6 +219,15 @@ run = "python tools/persistence/tests/expected_profiles.py --write"
 description = "Record the version and a digest of the text each persistence builder renders, after bumping BUILDER_VERSIONS in persistence/contract.py. Refuses a changed text under an unchanged version"
 run = "python tools/persistence/tests/builder_goldens.py --update"
 
+[tasks."build:persistence-membership-fixtures"]
+description = "Regenerate the TriG fixtures of E5 and E7 under each membership encoding in ontology/persistence/test/membership (formal-methods H2.6f), after a change to the append-version builders"
+run = "python tools/persistence/tests/membership_fixtures.py --write"
+
+[tasks."check:persistence-membership"]
+depends = ["bootstrap:testing-oxigraph"]
+description = "Measure full, delta and in-place-with-patch-log membership on rdflib and Oxigraph (ADR-A124, formal-methods H2.6f). Run on demand, not part of check. Fails on a wrong count, never on time. MEMBERSHIP_COST_MAX caps the versions"
+run = "python -m pytest benchmark/persistence-membership -q -p no:cacheprovider && python benchmark/persistence-membership/check.py"
+
 [tasks."check:persistence-oxigraph"]
 depends = ["bootstrap:testing-oxigraph"]
 description = "Run the persistence engine tests on Oxigraph as well as rdflib (ADR-A125). Not part of check"

@@ -17,10 +17,13 @@ from __future__ import annotations
 
 from typing import Callable, Mapping
 
+from rdflib import URIRef
+
 from .ir import (
     A, Bind, Binding, Compare, Const, Filter, Func, Graph, GraphBlock, GraphRole, Group, Kind, NotExists, Op, Operation,
-    Optional_, Param, ParamRef, PayloadSlot, Path, Projected, RegistrySlot, RowsSlot, RowValues, Select, SubSelect, Triple, ValueGuard, Values, Var,
+    Optional_, Param, ParamRef, PayloadSlot, Path, Projected, RegistrySlot, RowsSlot, RowValues, Select, SubSelect, Triple, Union_, ValueGuard, Values, Var,
 )
+from .paths import Star, Step
 from .namespaces import PAT
 from .terms import Integer, Iri, Literal, PropertyPath
 
@@ -569,7 +572,7 @@ def _composite_tombstone(b: Bindings, *, guards: bool, dataset_guard: bool, rece
     )
 
 
-def _append_version(b: Bindings, *, guards: bool, dataset_guard: bool) -> Operation:
+def _append_version(b: Bindings, *, guards: bool, dataset_guard: bool, delta: bool = False) -> Operation:
     """The write of a family that appends versions (formal-methods H2.6c, `dal:AppendVersions`). The guard is the version row of the
     identity at the expected seq, and the txn claim. Nothing is swept or deleted. The new version's own triples come from the payload
     slot, the new version is linked to the prior current one with `pat:previousVersion` (R2, never `fnd:supersededBy`), the row moves its seq, head and current version, and the receipt is
@@ -601,6 +604,7 @@ def _append_version(b: Bindings, *, guards: bool, dataset_guard: bool) -> Operat
             Triple(new_version, _pat("revision"), new_rev),
             Triple(new_version, _pat("previousVersion"), _optional("priorVersion")),
             PayloadSlot("payloadTriples"),
+            *((PayloadSlot("addedMembers"), PayloadSlot("droppedMembers")) if delta else ()),
         )),
         GraphBlock(meta, (
             Triple(root, _pat("epoch"), epoch), Triple(root, _pat("seq"), ParamRef("nextSeq")), Triple(root, _pat("head"), new_rev),
@@ -614,9 +618,50 @@ def _append_version(b: Bindings, *, guards: bool, dataset_guard: bool) -> Operat
         )),
     )
     return Operation.build(
-        "append-version" + ("-dataset-guard" if dataset_guard else ""),
-        (*_CAS_PARAMS, Param("newVersion", Kind.IRI), Param("payloadTriples", Kind.PAYLOAD)),
+        "append-version" + ("-delta" if delta else "") + ("-dataset-guard" if dataset_guard else ""),
+        (
+            *_CAS_PARAMS, Param("newVersion", Kind.IRI), Param("payloadTriples", Kind.PAYLOAD),
+            *((Param("addedMembers", Kind.PAYLOAD), Param("droppedMembers", Kind.PAYLOAD)) if delta else ()),
+        ),
         Group(where), guards=guards, insert=insert, delete=delete,
+    )
+
+
+def _members(b: Bindings, *, guards: bool) -> Operation:
+    """The members of a version of a family under `dal:DeltaMembership` (formal-methods H2.6f), from the chain back to the nearest
+    checkpoint. A member is listed by an event at a version `?w` of the chain, from `$version` back to the checkpoint `?cp`: under
+    the domain's membership property (a checkpoint's full list) or by `pat:addsMember`. It is a member of `$version` unless a later
+    version of the chain, nearer to `$version`, drops it. A member dropped and added again is listed by the later add. A version
+    that adds and drops one member lists it, since the drop must be later. The nearest checkpoint is the one with no other checkpoint
+    between it and `$version`. A step and a closure, `pat:previousVersion ?y . ?y pat:previousVersion* ?w`, is written for "strictly before", since rdflib evaluates the one path `pat:previousVersion/pat:previousVersion*` about six times slower (FMH-H2-6f). A version with no checkpoint before it has no members, so the first version of a family must be one.
+    `$membershipProperty` names the domain's membership property, for example `aeo:hasLocation`, as a parameter because a family
+    declares none. A domain shape runs over these results and never over the stored delta (H2.6f-Q4)."""
+    version, prop = ParamRef("version"), ParamRef("membershipProperty")
+    cp, later, w, x, y, z, member = Var("cp"), Var("later"), Var("w"), Var("x"), Var("y"), Var("z"), Var("member", kind=Kind.IRI)
+    previous = Step(URIRef(str(PAT["previousVersion"])))
+    before = Path(PropertyPath.encode(Star(previous)))
+    data = b.graph("dataGraph")
+    return Operation.build(
+        "members",
+        (Param("version", Kind.IRI), Param("membershipProperty", Kind.IRI)),
+        Group((GraphBlock(data, (
+            Triple(cp, _pat("checkpoint"), _TRUE),
+            Triple(version, before, cp),
+            NotExists(Group((
+                Triple(later, _pat("checkpoint"), _TRUE), Triple(later, _pat("previousVersion"), y), Triple(y, before, cp), Triple(version, before, later),
+            ))),
+            Triple(version, before, w),
+            Triple(w, before, cp),
+            Union_((
+                Group((Triple(w, prop, member),)),
+                Group((Triple(w, _pat("addsMember"), member),)),
+            )),
+            NotExists(Group((
+                Triple(x, _pat("dropsMember"), member), Triple(x, _pat("previousVersion"), z), Triple(z, before, w), Triple(version, before, x),
+            ))),
+        )),)),
+        guards=guards,
+        select=Select((member,), distinct=True),
     )
 
 
@@ -865,6 +910,9 @@ BUILDERS: dict[str, Builder] = {
     "cas-replace-composite-property-dataset-guard": lambda b, guards, names: _composite_replace(b, guards=guards, dataset_guard=True),
     "append-version": lambda b, guards, names: _append_version(b, guards=guards, dataset_guard=False),
     "append-version-dataset-guard": lambda b, guards, names: _append_version(b, guards=guards, dataset_guard=True),
+    "append-version-delta": lambda b, guards, names: _append_version(b, guards=guards, dataset_guard=False, delta=True),
+    "append-version-delta-dataset-guard": lambda b, guards, names: _append_version(b, guards=guards, dataset_guard=True, delta=True),
+    "members": lambda b, guards, names: _members(b, guards=guards),
     "tombstone-delete-composite": lambda b, guards, names: _composite_tombstone(b, guards=guards, dataset_guard=False),
     "tombstone-delete-composite-dataset-guard": lambda b, guards, names: _composite_tombstone(b, guards=guards, dataset_guard=True),
     "key-claim-write": lambda b, guards, names: _key_claim_write(b, guards=guards),

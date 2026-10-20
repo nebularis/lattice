@@ -18,6 +18,8 @@ EVENT_ROWS_SUBSTITUTE = (
 EVENT_TRIPLES_SUBSTITUTE = '<urn:example:event> <urn:example:p> "v" .'
 ASSERT_TRIPLES_SUBSTITUTE = '<urn:example:s> <urn:example:p> <urn:example:added> .'
 RETRACT_TRIPLES_SUBSTITUTE = '<urn:example:s> <urn:example:p> <urn:example:removed> .'
+ADDED_MEMBERS_SUBSTITUTE = '<urn:example:s> <urn:example:addsMember> <urn:example:added> .'
+DROPPED_MEMBERS_SUBSTITUTE = '<urn:example:s> <urn:example:dropsMember> <urn:example:removed> .'
 
 
 def fill_request_slots(text: str) -> str:
@@ -26,5 +28,6 @@ def fill_request_slots(text: str) -> str:
             "payloadTriples": PAYLOAD_SUBSTITUTE, "logGraphs": LOG_GRAPHS_SUBSTITUTE,
             "eventRows": EVENT_ROWS_SUBSTITUTE, "eventTriples": EVENT_TRIPLES_SUBSTITUTE,
             "assertTriples": ASSERT_TRIPLES_SUBSTITUTE, "retractTriples": RETRACT_TRIPLES_SUBSTITUTE,
+            "addedMembers": ADDED_MEMBERS_SUBSTITUTE, "droppedMembers": DROPPED_MEMBERS_SUBSTITUTE,
         }
     )

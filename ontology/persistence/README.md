@@ -358,6 +358,7 @@ declares it, its values, and the platform baseline default the compiler uses whe
 | Aggregate boundary | `dal:AggregateBoundaryProfile` (`dal:strategy`) | `dal:NamedGraphBoundary`, `dal:CompositePropertyBoundary`, `dal:NoBoundary` | named graph | 7.1 |
 | First write | `dal:AggregateBoundaryProfile` (`dal:firstWrite`) | `dal:AbsentRow`, `dal:PreCreatedRow` | absent row | 7.1 |
 | Write discipline | `dal:WriteDisciplineProfile` (`dal:writeDiscipline`) | `dal:InPlace`, `dal:AppendVersions`, `dal:AppendRecords` | in place | 7.10 |
+| Membership encoding | `dal:WriteDisciplineProfile` (`dal:membershipEncoding`, `dal:checkpointEvery`) | `dal:FullMembership`, `dal:DeltaMembership`, and an interval of at least 1 | full, every 16 | 7.10.1 |
 | Concurrency | `dal:ConcurrencyProfile` (`dal:concurrencyProfile`) | `dal:ProvidedConcurrency`, `dal:Optimistic`, `dal:AppendOnly`, `dal:LockingConcurrency` (marker only) | provided | 7.2 |
 | Deadlock policy | `dal:ConcurrencyProfile` | `dal:EngineDetectAndRetry`, `dal:SortedAcquisition`, `dal:PartitionedWriter` | engine detect and retry | 7.2 |
 | ETag form and representation | `dal:ConcurrencyProfile` | `dal:StrongEtag`/`dal:WeakEtag`, `dal:SingleRepresentation`/`dal:TaggedRepresentation` | strong, single | 7.2 |
@@ -1111,6 +1112,43 @@ retention policy decides when a superseded version may be pruned, never one that
 housekeeping and is not generated (ADR-A80, TD-47).
 
 ---
+
+### 7.10.1 Membership encoding
+
+**The question.** When a family appends versions and a root version lists many members, does each new version list them all?
+
+`dal:membershipEncoding`, declared beside `dal:writeDiscipline` and resolved like any dimension, picks `dal:FullMembership` (the default) or
+`dal:DeltaMembership`. It is the draft of H2.6f, for the maintainer's review. `dal:DeltaMembership` is refused unless the family declares
+`dal:AppendVersions` (`DeltaMembershipNeedsAppendVersions`), and any other value is refused (`MembershipEncodingUnknown`).
+
+| | `dal:FullMembership` | `dal:DeltaMembership` |
+|---|---|---|
+| a new version stores | every member, under the domain's membership property | `pat:previousVersion`, and `pat:addsMember` and `pat:dropsMember` for what changed |
+| the membership property | written for every version | written only for a checkpoint version |
+| one change to a set of 500 (E5) | 501 triples besides the header | 3 |
+| reading a version's members | one lookup | the generated `members` query, a chain back to the nearest checkpoint, at most `dal:checkpointEvery` versions |
+| a domain shape | runs over the stored data | runs over the `members` results (below) |
+
+`dal:checkpointEvery` is an `xsd:long`, 16 when absent, and must be at least 1 (`CheckpointEveryInvalid`). A **checkpoint** version, the
+first and every one whose seq is a multiple of the interval, lists every member under the domain's property as under full membership and
+carries `pat:checkpoint true`, so no chain is longer than the interval. The write does not decide which version is a checkpoint, since the
+caller already holds the sequence. The caller fills `{{{payloadTriples}}}` with the full list and the marker on a checkpoint, and `{{{addedMembers}}}`
+and `{{{droppedMembers}}}`, the triples `newVersion pat:addsMember m` and `newVersion pat:dropsMember m`, on any other version, leaving the
+slots it does not use empty (`persistence.members.is_checkpoint`). H2.8's caller check verifies the choice.
+
+The `members` operation (kind `MembersRead`) takes `$version` and `$membershipProperty`, since a family declares no membership property, and
+returns `?member`. A member is one listed at a version of the chain from `$version` back to the nearest checkpoint, by the property or by
+`pat:addsMember`, and not dropped by a later version of that chain. A member dropped and added again is a member. A version with no
+checkpoint before it has no members, so the first version must be a checkpoint.
+
+**Validating members.** A domain shape over the membership property cannot run over the stored delta, which does not hold the property for a
+delta version, and would pass vacuously. Run `members`, put the rows in a scratch graph with `persistence.members.materialise(version, property,
+rows)`, validate that graph with the domain's own shapes and discard it.
+
+A large set changed slightly costs a handful of triples instead of a full list, and history stays readable. Every read of members pays the
+chain, and domain shapes need the scratch graph, so the family trades read cost and validation convenience for write and storage cost. That
+is why it is a choice. The fixtures under `test/membership/` hold the stored triples of the history sketch's E5 and E7 under each encoding, and
+`benchmark/persistence-membership/` measures both against an in-place family with a patch log.
 
 ## 8. Capability self-checks
 

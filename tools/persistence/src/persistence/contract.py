@@ -46,6 +46,7 @@ class OperationKind(Enum):
     QUARANTINE = "Quarantine"
     MERGE_REWRITE = "MergeRewrite"
     AUDIT = "Audit"
+    MEMBERS_READ = "MembersRead"
 
 
 class ResourceKind(Enum):
@@ -114,6 +115,8 @@ _STEM_KIND: dict[str, OperationKind] = {
     "bootstrap-version-row": OperationKind.BOOTSTRAP,
     "append-event": OperationKind.APPEND,
     "append-version": OperationKind.APPEND_VERSION,
+    "append-version-delta": OperationKind.APPEND_VERSION,
+    "members": OperationKind.MEMBERS_READ,
     "create-if-absent-named-graph": OperationKind.CREATE,
     "create-if-absent-composite": OperationKind.CREATE,
     "cas-replace-named-graph": OperationKind.REPLACE,
@@ -235,7 +238,7 @@ class DigestContract:
     names, the sequence it expects, and the sorted canonical N-Triples of what the request asserts. That last part is one slot
     per kind of content, in a fixed order, so a triple's role is part of what is hashed (formal-methods H2.6b, Q5): the payload of
     a write, or for an append the events, which are its rows slot and its triples slot together, and for a replace that writes a patch
-    log the asserted and the retracted triples, in the order payload, add, del (formal-methods H2.6d). A part an operation does not have
+    log the asserted and the retracted triples, in the order payload, add, del (formal-methods H2.6d), and for an append of versions under delta membership the added and the dropped members in the same two parts (H2.6f). A part an operation does not have
     is ``None`` or empty. A create's add graph is its payload and a tombstone's del graph is copied from its sweep, so neither has a part
     of its own. The hash and the encoding are fixed by the contract, and the algorithm is built in H2.8."""
 
@@ -357,7 +360,8 @@ def contract_of(operation: Operation, edges: tuple = ()) -> OperationContract:
         target = next((a.keyed_by for a in sorted(accesses) if a.resource == ResourceKind.VERSION_ROW.value and a.keyed_by), None)
         digest = DigestContract(
             target, "expectedSeq" if "expectedSeq" in params else None, payload_name, event,
-            "assertTriples" if "assertTriples" in params else None, "retractTriples" if "retractTriples" in params else None,
+            "assertTriples" if "assertTriples" in params else "addedMembers" if "addedMembers" in params else None,
+            "retractTriples" if "retractTriples" in params else "droppedMembers" if "droppedMembers" in params else None,
         )
     return OperationContract(
         id=operation.id, kind=kind, version=BUILDER_VERSIONS[stem], guard_status=status, graph_naming=naming,

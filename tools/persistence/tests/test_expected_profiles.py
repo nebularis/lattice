@@ -48,7 +48,7 @@ def parsed() -> dict:
 
 
 def test_h2_6_t1_the_expected_profiles_and_the_enumerations_exist_and_parse(parsed):
-    assert len(PROFILES) == len(ep.CONFIGURATIONS) == 11 and set(parsed) == {name for name, _, _ in ep.CONFIGURATIONS} | {ep.KINDS_FILE}
+    assert len(PROFILES) == len(ep.CONFIGURATIONS) == 12 and set(parsed) == {name for name, _, _ in ep.CONFIGURATIONS} | {ep.KINDS_FILE}
     assert all(len(g) > 0 for g in parsed.values())
     assert not any(DAL.templatePath in {p for _, p, _ in g} for g in parsed.values())  # without dal:templatePath
     ids = [str(o) for g in parsed.values() for o in g.objects(None, DAL.templateId)]

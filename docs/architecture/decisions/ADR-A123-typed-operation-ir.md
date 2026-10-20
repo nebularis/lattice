@@ -353,3 +353,19 @@ Built in slice H2.6e (Track H plan §4.11). It extends the contract of decisions
    a versioned class, is refused there. Persistence refuses `dal:Pinned` on an edge whose target class is not versioned, and warns
    `EvidenceEdgeByIdentity`, at compile time.
 
+
+## Addendum, 2026-10-20: membership encoding, the delta write and the members read (accepted with the slice's plan, decisions taken alone listed in FMH-H2-6f)
+
+Built in slice H2.6f (Track H plan §4.12). It extends the operation kinds of decision 4 and the slots of decision 6.
+
+1. **`append-version-delta` and its dataset-guard variant** are the `dal:DeltaMembership` form of `append-version`, with the kind
+   `AppendVersion`. They take two more request-time payload slots, `addedMembers` and `droppedMembers`, written into the data graph beside the
+   payload. The digest contract names them as its add and del parts, in that order after the payload. The write never writes the domain's
+   membership property. The caller fills the payload with the full list and `pat:checkpoint true` on a checkpoint version.
+2. **`members` is a read operation of a new kind, `MembersRead`,** generated once per `dal:DeltaMembership` family. It takes `$version` and
+   `$membershipProperty`, reads the data graph only, writes nothing and returns one column, `?member`. The IR gains no construct, since the
+   chain is a property path in a `WHERE` pattern and the drops are a `NOT EXISTS`. The query is in the fragment of the sketch's §3, with one
+   path-valued sub-pattern per direction, and runs on rdflib and Oxigraph.
+3. **The request-time slots `addedMembers` and `droppedMembers` join `REQUEST_TIME_SLOTS`,** and the static checks fill them with stand-ins.
+   `append-version-delta` and `members` are at builder version 1.
+

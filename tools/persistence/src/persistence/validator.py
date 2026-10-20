@@ -87,6 +87,32 @@ def check_cross_axis(
                 "dal:dataGraph, under dal:Optimistic, or write in place.",
             )
 
+    # H2.6f: the membership encoding. A delta is stored against the version before it, so it needs a family that appends versions,
+    # and a checkpoint interval that makes sense.
+    encoding = _local(_value(dimensions, "membershipEncoding"))
+    if encoding not in ("FullMembership", "DeltaMembership"):
+        raise CrossAxisViolation(
+            "MembershipEncodingUnknown",
+            str(target),
+            f"dal:membershipEncoding is {encoding}, and the encodings are dal:FullMembership and dal:DeltaMembership (H2.6f).",
+        )
+    if encoding == "DeltaMembership" and discipline != "AppendVersions":
+        raise CrossAxisViolation(
+            "DeltaMembershipNeedsAppendVersions",
+            str(target),
+            "dal:DeltaMembership states a version's members as changes against the version before it, which only a family that "
+            "declares dal:AppendVersions keeps. Declare dal:AppendVersions, or dal:FullMembership (H2.6f).",
+        )
+    interval = _value(dimensions, "checkpointEvery")
+    value = interval.toPython() if hasattr(interval, "toPython") else interval
+    if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+        raise CrossAxisViolation(
+            "CheckpointEveryInvalid",
+            str(target),
+            f"dal:checkpointEvery is {interval}, and it must be an integer of at least 1, the number of versions between full "
+            "lists of members (H2.6f).",
+        )
+
     # H2.6d, VH-Q5a: a family that wants no receipt writes in place. A version or a record takes its position and its transaction time
     # from the receipt, so an append discipline cannot do without one, and a stream (an append-only or event-grain family) is such a family.
     ordering_local = _local(ordering.value) if ordering else None

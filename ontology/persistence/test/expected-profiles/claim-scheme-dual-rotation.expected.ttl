@@ -756,6 +756,9 @@
         [ dal:candidateCount 0 ;
             dal:dimension "asOfFloorSource" ],
         [ dal:candidateCount 0 ;
+            dal:dimension "checkpointEvery" ;
+            dal:resolvedLiteral "16"^^xsd:long ],
+        [ dal:candidateCount 0 ;
             dal:dimension "concurrencyProfile" ;
             dal:resolvedValue dal:ProvidedConcurrency ],
         [ dal:candidateCount 0 ;
@@ -790,6 +793,9 @@
             dal:dimension "lagWindowMillis" ],
         [ dal:candidateCount 0 ;
             dal:dimension "logShards" ],
+        [ dal:candidateCount 0 ;
+            dal:dimension "membershipEncoding" ;
+            dal:resolvedValue dal:FullMembership ],
         [ dal:candidateCount 0 ;
             dal:dimension "metaTopology" ;
             dal:resolvedValue dal:SharedSharded ],

@@ -151,7 +151,13 @@ def select_operations(
         # created, so the version row's current version is only ever set by one operation, whatever dal:firstWrite says.
         data_graph = ParameterBinding("dataGraph", "Iri", Iri.encode(str(dimensions["aggregateBoundary"].extra["dataGraph"])))
         ops.append(GeneratedOperation(bootstrap_op.operation, bootstrap_op.template_id, common_bindings))
-        ops.append(GeneratedOperation("append-version", f"append-version{guard_suffix}.mustache", common_bindings + [data_graph]))
+        # dal:membershipEncoding (H2.6f). Under dal:DeltaMembership the write states what changed, and the family gets the query that
+        # resolves a version's members from the chain, which holds the data graph and nothing else.
+        delta = _local(dimensions["membershipEncoding"].value) == "DeltaMembership"
+        delta_tag = "-delta" if delta else ""
+        ops.append(GeneratedOperation("append-version", f"append-version{delta_tag}{guard_suffix}.mustache", common_bindings + [data_graph]))
+        if delta:
+            ops.append(GeneratedOperation("members", "members.mustache", [data_graph]))
     elif concurrency == "Optimistic" and discipline != "AppendRecords":
         if boundary == "NamedGraphBoundary":
             cas_template = (

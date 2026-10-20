@@ -838,6 +838,29 @@ dal:writeDiscipline a owl:ObjectProperty ;
     rdfs:comment "How the family writes. Absent means dal:InPlace. compile warns VersionedClassWrittenInPlace when a target class is a subclass of fnd:Version (by IRI, with no import) and the discipline is dal:InPlace." .
 
 #################################################################
+#    §16b. Membership encoding (formal-methods H2.6f, 2026-10-20; DRAFT,
+#    for the maintainer's review). How a family that appends versions
+#    states the members of a new root version: the full list every time,
+#    or only what changed since the version before, with a full list
+#    again every dal:checkpointEvery versions. Versioning is not
+#    reflected in the version IRI on this branch (TD-64).
+#################################################################
+
+dal:MembershipEncoding a owl:Class .
+dal:FullMembership a dal:MembershipEncoding ;
+    rdfs:comment "The default. Each new version lists every member under the domain's own membership property, so a version is readable alone and a domain shape validates the stored data directly." .
+dal:DeltaMembership a dal:MembershipEncoding ;
+    rdfs:comment "Each new version states only what changed, as pat:addsMember and pat:dropsMember beside pat:previousVersion, and the domain's membership property is not written for it. Every dal:checkpointEvery versions the write lists every member as under dal:FullMembership and the version carries pat:checkpoint true, so a chain read is never longer than that. Members are read with the generated members query, and a domain shape runs over its results and never over the stored delta. Applies to a family that declares dal:AppendVersions only." .
+
+dal:membershipEncoding a owl:ObjectProperty ;
+    rdfs:domain dal:WriteDisciplineProfile ; rdfs:range dal:MembershipEncoding ;
+    rdfs:comment "How a family that appends versions states each version's members. Absent means dal:FullMembership. compile refuses dal:DeltaMembership for a family that does not declare dal:AppendVersions (DeltaMembershipNeedsAppendVersions) and any other value (MembershipEncodingUnknown)." .
+
+dal:checkpointEvery a owl:DatatypeProperty ;
+    rdfs:domain dal:WriteDisciplineProfile ; rdfs:range xsd:long ;
+    rdfs:comment "Under dal:DeltaMembership, the interval of full lists: a version whose seq is a multiple of it, and the first version, lists every member. Absent means 16. compile refuses a value that is not an integer of at least 1 (CheckpointEveryInvalid). The caller decides which version is a checkpoint, and H2.8's caller check verifies it." .
+
+#################################################################
 #    §17. Merge relation and claim-scheme rotation. Extends
 #    dal:UniquenessConstraint so that dal:onViolation dal:Merge names
 #    an actual relation instead of assuming one exists in the

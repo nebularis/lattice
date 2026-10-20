@@ -65,6 +65,8 @@ def test_h2_2_t1_the_ported_operations_are_the_templates_listed_and_every_one_is
         # H2.5: the key claims and the audits. Every template is ported, apart from cas-replace-value-guard (TD-43).
         "key-claim-write", "key-claim-write-dual", "key-claim-retire", "key-claim-quarantine", "key-claim-merge-rewrite",
         "key-claim-duplicate-audit", "fork-detection-audit", "gap-scan-audit", "revision-multi-txn-audit", "txn-multi-revision-audit",
+        # H2.6f: the append of versions that states its members as changes, and the query that reads them.
+        "append-version-delta", "append-version-delta-dataset-guard", "members",
         # H2.6d: the patch-log and no-receipt variants of the six in-place writes, each with its dataset-guard variant.
         *[
             f"{base}{tag}{guard}"

@@ -78,6 +78,8 @@ OPTIONAL_INSERT_VARIABLES: dict[str, dict[str, str]] = {
     "tombstone-delete-named-graph-dataset-guard": {"prevRev": _FIRST_CAS},
     "append-version": {"prevRev": _FIRST_CAS, "priorVersion": _FIRST_VERSION},
     "append-version-dataset-guard": {"prevRev": _FIRST_CAS, "priorVersion": _FIRST_VERSION},
+    "append-version-delta": {"prevRev": _FIRST_CAS, "priorVersion": _FIRST_VERSION},
+    "append-version-delta-dataset-guard": {"prevRev": _FIRST_CAS, "priorVersion": _FIRST_VERSION},
     "append-event": {"prev": _FIRST_APPEND},
     "append-event-dataset-guard": {"prev": _FIRST_APPEND},
 }
@@ -104,6 +106,8 @@ _SLOT_STAND_INS = {
     "eventTriples": "<urn:x-check:event> <urn:x-check:p> <urn:x-check:o> .",
     "assertTriples": "<urn:x-check:s> <urn:x-check:p> <urn:x-check:added> .",
     "retractTriples": "<urn:x-check:s> <urn:x-check:p> <urn:x-check:removed> .",
+    "addedMembers": "<urn:x-check:s> <urn:x-check:addsMember> <urn:x-check:added> .",
+    "droppedMembers": "<urn:x-check:s> <urn:x-check:dropsMember> <urn:x-check:removed> .",
 }
 
 _COMMENT = re.compile(r"\{\{!.*?\}\}", re.S)

@@ -1,0 +1,65 @@
+{{! append-version-delta: formal-methods H2.6c, dal:AppendVersions, dal:RowLevelGuardOnly variant.
+    The family's data graph holds every version it has written, and this
+    update only adds to it. Nothing is swept and nothing is deleted, so a
+    superseded version stays queryable (ADR-A67) and the quadratic fill of a
+    replace never applies. The guard is the identity's version row at the
+    expected seq, and the txn claim. The new version's own triples arrive in
+    the payload slot, and a member the caller does not restate is shared by
+    reference, so the payload holds only the new version (VH-Q2). The row's
+    current version is the latest one written (VH-D1), and the new version
+    is linked to the one it follows with pat:previousVersion when the row names one. Persistence
+    never writes fnd:supersededBy, which the domain asserts under its own rule. The
+    row also moves its seq and head, and the new version names its receipt
+    with pat:revision, as an event does. The first version is written at seq 0
+    onto a row bootstrap-version-row created, so it has no prior version.
+    Every pattern and the payload sit in the graph the dataGraph slot names,
+    and the default graph is never read or written (static check S-1).
+    requestDigest is computed by the caller as lower-case hex SHA-256 over
+    the tuple-encoded operation kind, target, expected seq and sorted
+    canonical N-Triples of the skolemized payload (guide §15.2), and recorded
+    on the txn claim.
+    dal:DeltaMembership (H2.6f): the new version states what changed since the
+    version before it, and does not list its members. addedMembers and
+    droppedMembers are request-time Mustache slots holding the triples
+    newVersion pat:addsMember m and newVersion pat:dropsMember m, and either may
+    be empty. On a checkpoint version, the first and every dal:checkpointEvery-th,
+    the caller writes the full list under the domain's membership property and
+    newVersion pat:checkpoint true in payloadTriples and leaves both slots empty.
+    The members query reads the result, and a domain shape runs over its results.
+    payloadTriples, addedMembers and droppedMembers are request-time Mustache slots, not SPARQL variables.
+    Note for template authors: never put a Mustache tag inside this
+    comment block. Chevron's comment parser ends at the first closing
+    double-brace it sees, which silently truncates the comment. }}
+PREFIX pat: <https://example.org/lattice/patterns#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+DELETE {
+  GRAPH {{{metaGraphPrefix}}} { $root pat:seq $expectedSeq ; pat:head ?prevRev ; pat:currentVersion ?priorVersion }
+}
+INSERT {
+  GRAPH {{{dataGraph}}} {
+      $newVersion pat:revision $newRev .
+      $newVersion pat:previousVersion ?priorVersion .
+      {{{payloadTriples}}}
+      {{{addedMembers}}}
+      {{{droppedMembers}}}
+  }
+  GRAPH {{{metaGraphPrefix}}} { $root pat:epoch $epoch ; pat:seq $nextSeq ; pat:head $newRev ; pat:currentVersion $newVersion }
+  GRAPH {{{txnGraph}}}        { $txnId pat:rev $newRev ; pat:requestDigest $requestDigest }
+  GRAPH ?logGraph {
+      $newRev a pat:Revision ; pat:target $root ; pat:epoch $epoch ; pat:seq $nextSeq ;
+              pat:prevRev ?prevRev ; pat:txn ?txnKey ; pat:recordedAt ?now
+  }
+}
+WHERE {
+  BIND(IRI(CONCAT(STR({{{logGraphPrefix}}}), SUBSTR(STR(NOW()), 1, 7))) AS ?logGraph)
+  GRAPH {{{metaGraphPrefix}}} {
+      $root pat:epoch $epoch ; pat:seq $expectedSeq .
+      OPTIONAL { $root pat:head ?prevRev }
+      OPTIONAL { $root pat:currentVersion ?priorVersion }
+      FILTER NOT EXISTS { $root pat:deleted true }
+  }
+  FILTER NOT EXISTS { GRAPH {{{txnGraph}}} { $txnId pat:rev ?any } }
+  BIND(STR($txnId) AS ?txnKey)
+  BIND(NOW() AS ?now)
+}
