@@ -737,3 +737,9 @@ For acceptance: ADR-A132, the persistence caller library (Proposed), and ADR-A12
 | D-17 | H2.6f | the member slots reuse the digest's add and del parts, and the membership property is a parameter of the members read | FMH-H2-6f |
 | D-18 | H2.6f | the members read keeps its correct but slow form (98.6 s for 100 versions on rdflib, 1.7 s on Oxigraph). A sub-select form was fast on rdflib but returned wrong results. **Corrected 2026-10-20 by TSD-34:** parameters in a sub-select are applied. The cause is rdflib evaluating a `NOT EXISTS` with no `GRAPH` against the default graph after the first solution. TD-68 to be corrected the same way | FMH-H2-6f, TD-68 |
 | D-19 | TSD-34 follow-up | every template with a `NOT EXISTS` inside a `GRAPH` block and no `GRAPH` of its own, for example the deleted-row guard, is probed over a seed sweep on rdflib (TSD-Q19) after H2.7, and given its own `GRAPH` where it can be wrong. Planned as H2.6g | TSD-34 |
+| D-20 | H2.7 | `GeneratedOperation.template_id` keeps its suffix in memory until H2.9, only the profile drops it | FMH-H2-7 |
+| D-21 | H2.7 | `dal:templateVersion` moves to the generated operation, and `dal:boundaryShape` and `dal:referenceEdge` lose their `rdfs:domain`, since the contract is a second use | FMH-H2-7 |
+| D-22 | H2.7 | `MissingDataGraph` applies only where the value guard is generated. The value guard's resource is `dal:PropertyValue`, keyed by root, builder version 2 | FMH-H2-7 |
+| D-23 | H2.7 | declaration IRIs include the deployment where there is one. `dal:HandDeclared` kept as an escape hatch | FMH-H2-7 |
+| D-24 | H2.7 | five H2.6 tests removed and two replaced by the isomorphism test, for countersignature. The `pat:` terms checked against the guide's Appendix A by hand, since a test reading `docs/architecture` breaks the catalogue's reach rule | FMH-H2-7 |
+
