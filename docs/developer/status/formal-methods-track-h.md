@@ -700,4 +700,5 @@ at the maintainer's request, and is committed on this branch, not pushed. Versio
 - 2026-10-20: the maintainer approved VH-Q5a, H2.7-Q1 (a), H2.7-Q4 (b) isomorphism, H2.8-Q1 (b) with an ADR for library code, and R10
   as amended, the persistence link named `pat:previousVersion`. H2.7-Q2, H2.7-Q3, H2.8-Q2 and H2.8-Q3 asked back. Implementation waits
   for the maintainer's rules once planning is done.
+- 2026-10-20: the maintainer decided H2.7-Q2 (a), H2.7-Q3 (a), H2.8-Q2 (c) with (b) as an optional tightening, and H2.8-Q3 (c).
 
