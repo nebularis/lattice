@@ -57,7 +57,7 @@ Decided 2026-10-20: VH-P1 (c), with TD-63 before the merge. The ADR-A123 addendu
 EX-Q2, EX-Q3 and FS-Q1 to FS-Q7 at their leanings. **This branch ignores versioning** until its changes are complete, then bumps a minor
 when it merges into `main` (H2.7-Q5, TD-64). We work autonomously, committing on the branch without pushing.
 
-1. **The examples E1 to E8** (sketch §10), drafted in parallel and merged into the sketch.
+1. ~~**The examples E1 to E8**~~ done 2026-10-20: sketch §10.1 to §10.8, open points EP-1 to EP-11 with our leanings in §10.9, TD-65, TD-66 and PDD-11.
 2. **H2.6c, the write disciplines** ([plan §4.9](../plans/formal-methods-track-h.md#49-h26c-the-write-disciplines-planned-2026-10-20)), then **H2.6d**, the patch log for in-place families (§4.10).
 3. **H2.7 and H2.8**, with VH-Q1 to VH-Q6 decided at our leanings (H-D34 met).
 4. Then H2.9. H2.10 follows the sketch's answers. Later, PDD-06.
@@ -670,4 +670,7 @@ when it merges into `main` (H2.7-Q5, TD-64). We work autonomously, committing on
   example and strategy leaning, and set this branch to ignore versioning until its merge (TD-64). TD-63 recorded.
 - 2026-10-20: the maintainer asked us to proceed at our own leanings and review at the end. VH-Q1 to VH-Q6, H2.7-Q1 to Q4 and
   H2.8-Q1 to Q3 decided at their leanings, and VH-D1 and VH-D2 from the examples' open points.
+- 2026-10-20: the examples E1 to E8 drafted by four agents in parallel, merged into the sketch (§10.1 to §10.9), every diagram
+  rendered. Their open points decided at our leanings (EP-1 to EP-11), with TD-65 (Wording values), TD-66 (AIR exposure versions) and
+  PDD-11 (entry into force per holder, the life of an offer). H2.6c planned (plan §4.9) and building, H2.6d planned (§4.10).
 
