@@ -497,11 +497,16 @@ def test_h2_5_t43_a_duplicate_seq_written_with_another_integer_type_is_reported_
 
 
 @engines.each_engine
-def test_h2_5_t44_a_chain_of_additions_and_subtractions_is_grouped_from_the_left_on_rdflib_and_from_the_right_on_oxigraph():
-    """TSD-17. The gap scan's `?S - ?L + 1` would count wrongly on Oxigraph, so the renderer writes the parentheses."""
+def test_h2_5_t44_a_chain_of_additions_and_subtractions_is_grouped_from_the_left_on_rdflib_and_on_oxigraph_from_0_5_12():
+    """TSD-17. The gap scan's `?S - ?L + 1` would count wrongly on Oxigraph 0.5.11, which groups from the right, so the renderer writes the
+    parentheses. Changed on 2026-10-20: pyoxigraph 0.5.12 groups from the left, so the expectation follows the installed version."""
     ds = engines.dataset()
     flat = [int(_scalar(ds, f"SELECT ({e} AS ?x) WHERE {{}}")[0]) for e in ("10 - 3 + 2", "10 - 3 - 2", "8 / 4 / 2")]
-    assert flat == ([9, 5, 1] if engines.CURRENT == "rdflib" else [5, 9, 4])
+    if engines.CURRENT == "rdflib":
+        from_the_left = True
+    else:
+        from lattice_testing_oxigraph import LEFT_GROUPED_ARITHMETIC as from_the_left
+    assert flat == ([9, 5, 1] if from_the_left else [5, 9, 4])
     assert [int(_scalar(ds, f"SELECT ({e} AS ?x) WHERE {{}}")[0]) for e in ("(10 - 3) + 2", "(10 - 3) - 2")] == [9, 5]
     assert "(?S - ?L) + 1" in sparql("gap-scan-audit")
 

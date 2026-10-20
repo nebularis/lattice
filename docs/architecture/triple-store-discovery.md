@@ -10,7 +10,8 @@ what the store does, why, what follows for LATTICE, and how to see it again.
 source of truth for the project. Read it before relying on how a store behaves, and add to it when you find something. The
 skill `lattice-triple-stores` has the procedure.
 
-**Stores covered:** rdflib 7.6.0 and Oxigraph 0.5.11 (through `pyoxigraph`). Each finding names the versions it was seen on.
+**Stores covered:** rdflib 7.6.0 and Oxigraph 0.5.11 (through `pyoxigraph`), and Oxigraph 0.5.12 for the findings the test suite probes, of which
+TSD-01 and TSD-17 changed (R-H). Each finding names the versions it was seen on.
 A finding holds for those versions only, until it is checked again. **Tools above a store covered:** pySHACL 0.40.1, which validates
 shapes on rdflib (TSD-23, TSD-24, TSD-31). TSD-22 to TSD-33 are about the cost of running queries and shapes, and
 [Efficient queries and shapes](efficient-queries-and-shapes.md) says which of them are properties of rdflib or pySHACL and which hold anywhere.
@@ -56,6 +57,7 @@ machine, never the machine or person (ADR-A124 decision 5). Seven run records ap
 | **R-E** | a macOS arm64 laptop with four performance and four efficiency cores and 8 GB, used by the maintainer to repeat R-D's runs, 2026-10-16 to 2026-10-17 | 3.14.7 | rdflib 7.6.0, pyoxigraph 0.5.11, pySHACL 0.40.1 |
 | **R-F** | a macOS arm64 laptop, used by an agent for H2.6f's `members` read, 2026-10-20 | 3.14.7 | rdflib 7.6.0, pyoxigraph 0.5.11 |
 | **R-G** | a macOS arm64 laptop, used by an agent for TSD-34's upstream report, 2026-10-20 | 3.14.7 | rdflib 7.6.0, rdflib `main` at `62bf240` (7.7.0a0), rdflib `next` at `0fdac39` (8.0.0a0) |
+| **R-H** | a Linux x86_64 container, 4 logical cores, used by an agent for H2.8c, 2026-10-20, where a fresh bootstrap installed pyoxigraph 0.5.12 | 3.14.8 | rdflib 7.6.0, pyoxigraph 0.5.11 and 0.5.12 |
 
 **How to add a finding** is in §6.0 and in the skill. In short: say what you were testing, how you found it, the smallest
 SPARQL that shows it, the result on each store you have, the reason if you can find it in the source, what it means for
@@ -198,9 +200,9 @@ The two are not interchangeable. Some functions accept only a variable (`BOUND`)
 `✔` means the store does what SPARQL 1.1 says, `✘` that it departs from it, and a word where the specification leaves the choice
 to the store or where it is a matter of capacity.
 
-| # | Finding | Specification | rdflib 7.6.0 | Oxigraph 0.5.11 | Evidence |
+| # | Finding | Specification | rdflib 7.6.0 | Oxigraph 0.5.11 (and 0.5.12 where it differs) | Evidence |
 |---|---|---|---|---|---|
-| [TSD-01](#tsd-01-the-order-in-which-a-delete-insert-where-is-applied) | applying a `DELETE`/`INSERT` | all deletions, then all insertions | ✘ one solution at a time, in hash order | ✘ one solution at a time, in solution order | Source, Observed |
+| [TSD-01](#tsd-01-the-order-in-which-a-delete-insert-where-is-applied) | applying a `DELETE`/`INSERT` | all deletions, then all insertions | ✘ one solution at a time, in hash order | ✘ one solution at a time, in solution order. ✔ from 0.5.12 | Source, Observed, Documented |
 | [TSD-02](#tsd-02-what-filling-a-template-once-per-solution-costs) | filling a template once per solution | not specified | quadratic in time | quadratic in time and memory | Source, Observed |
 | [TSD-03](#tsd-03-what-a-bind-inside-an-inner-group-can-see) | a `BIND` in an inner group | sees only its group | ✔ | ✔ | Observed |
 | [TSD-04](#tsd-04-a-graph-variable-bound-outside-an-inner-group) | `GRAPH ?g` inside an inner group, `?g` bound outside | joined afterwards | passes the binding in, reads one graph | passes the binding in, reads one graph | Observed |
@@ -216,7 +218,7 @@ to the store or where it is a matter of capacity.
 | [TSD-14](#tsd-14-graph-management-operations-on-rdflib) | `CREATE GRAPH`, `DROP GRAPH` of an absent graph | defined | `CREATE` not implemented, `DROP` succeeds | `DROP` fails | Observed |
 | [TSD-15](#tsd-15-a-sub-select-and-the-variables-around-it) | a sub-select and the variables around it | evaluated on its own, only its projections leave it | ✘ an outer binding leaks in | ✔ | Observed |
 | [TSD-16](#tsd-16-min-and-max-over-iris) | `MIN` and `MAX` over IRIs | the lowest or highest IRI | ✘ a plain literal of the IRI text | ✔ an IRI | Observed |
-| [TSD-17](#tsd-17-a-chain-of-additions-and-subtractions) | `a - b + c` and `a / b / c` | grouped from the left | ✔ | ✘ grouped from the right | Observed |
+| [TSD-17](#tsd-17-a-chain-of-additions-and-subtractions) | `a - b + c` and `a / b / c` | grouped from the left | ✔ | ✘ grouped from the right. ✔ from 0.5.12 | Observed, Documented |
 | [TSD-18](#tsd-18-count-distinct-over-xsdlong-and-xsdinteger-terms) | `COUNT(DISTINCT)` over `xsd:long` and `xsd:integer` | two terms, so two | counts them apart | counts them together, since it stores both as `xsd:integer` | Observed |
 | [TSD-19](#tsd-19-the-order-of-group_concat) | the order of `GROUP_CONCAT` | not specified | the order the data was stored in, whatever the hash seed (this query shape) | the order of the solutions | Observed |
 | [TSD-20](#tsd-20-a-filter-inside-not-exists-and-a-parameter) | a `FILTER` inside `NOT EXISTS` and a parameter or a sub-select's projection | sees them by substitution | ✔ by initial binding and by text | ✔ by text | Observed |
@@ -252,7 +254,8 @@ Each entry has the same parts, so a reader can find what they need.
 
 ### TSD-01. The order in which a `DELETE`/`INSERT`/`WHERE` is applied
 
-**Evidence:** Source and Observed, on both stores. Runs R-A and R-B. **Corrected 2026-10-13**, see §7.1.
+**Evidence:** Source and Observed, on both stores. Runs R-A and R-B. **Corrected 2026-10-13**, see §7.1. **Oxigraph 0.5.12 (2026-10-20, R-H):**
+Documented, Source and Observed. It applies the specification's order (step 7).
 
 **Context.** A composite aggregate's replace, `cas-replace-composite-property`, deletes every triple of the aggregate and inserts
 the new state. A cheaper form of it (R2 of the Track H typed IR design)
@@ -282,6 +285,11 @@ already holds, an unchanged name for example. So we needed to know how each stor
    `Vec` is the order of solutions, deletions then insertions for each, which the probe confirms.
 6. *Observed, Oxigraph.* P1 on Oxigraph loses the triple when the inserting row comes first and keeps it when the deleting row
    comes first, every time.
+7. *Oxigraph 0.5.12, 2026-10-20.* A fresh bootstrap installed pyoxigraph 0.5.12, which `tools/testing/oxigraph` allows
+   (`>=0.5.11,<0.6`), and the P1 tests failed on Oxigraph. P1 kept the triple in both row orders. The release notes of 0.5.12 say
+   "SPARQL Update: apply all deletions before insertions", and in `lib/oxigraph/src/sparql/update.rs` at the tag `0.5.12`,
+   `eval_delete_insert` still collects every mutation into a `Vec`, then loops over it twice, removing each `Delete` in the first loop
+   and adding each `Insert` in the second. With 0.5.11 reinstalled, P1 behaved as in step 6 again.
 
 **What the store does.**
 
@@ -298,6 +306,7 @@ WHERE  { VALUES (?i ?d) { (<urn:s> UNDEF) (UNDEF <urn:s>) } }
 | rdflib 7.6.0 | either | depends on the process's hash seed |
 | Oxigraph 0.5.11 | inserting row first | no |
 | Oxigraph 0.5.11 | deleting row first | yes |
+| Oxigraph 0.5.12 | either | yes |
 
 ```mermaid
 sequenceDiagram
@@ -326,21 +335,26 @@ sequenceDiagram
   Note over X,G: the Vec keeps solution order, so the last word on a triple wins
 ```
 
-**Why.** Neither store keeps the specification's two phases. rdflib interleaves per solution, and its solution order for a
-non-lazy join comes from a Python `set`. Oxigraph separates reading from writing, which protects the `WHERE` from the update's
-own changes, but then applies the collected mutations in solution order rather than all deletions first.
+**Why.** rdflib 7.6.0 and Oxigraph 0.5.11 do not keep the specification's two phases. rdflib interleaves per solution, and its
+solution order for a non-lazy join comes from a Python `set`. Oxigraph separates reading from writing, which protects the `WHERE` from
+the update's own changes, and 0.5.11 then applied the collected mutations in solution order rather than all deletions first. 0.5.12
+applies all the deletions and then all the insertions, which is the specification's order.
 
 **What it means for LATTICE.**
 
 - **R0, the replace as shipped, stays right on both.** It puts the whole payload in the `INSERT` template, so every solution adds
   every payload triple again, and the last solution restores anything an earlier one removed. Its redundancy is what makes it
   correct here, and that redundancy is what TSD-02 measures.
-- **R2, the linear form, is unsafe on both stores.** The sketch's §4.3 expected it to be safe where `snapshotUpdateSemantics`
-  holds, and neither store has it. H5's capability record carries `snapshotUpdateSemantics = false` for both.
+- **R2, the linear form, is unsafe on rdflib 7.6.0 and Oxigraph 0.5.11.** The sketch's §4.3 expected it to be safe where
+  `snapshotUpdateSemantics` holds, and neither has it. H5's capability record carries `snapshotUpdateSemantics = false` for both, and
+  `true` for Oxigraph 0.5.12. Since rdflib still lacks it, and an adopter may run an older Oxigraph, R2 stays unused.
 - **Any generated update must be right whatever the solution order.** On rdflib a wrong assumption would not fail reliably, it
   would fail in some processes. A test of order-dependent behaviour on rdflib must fix the hash seed or sweep it.
 - **The P1 test was corrected** on 2026-10-13 (`test_store_probes.py`, H2.4b-T1 and T2). On rdflib it runs the probe in child
-  processes under seeds 0 to 11 and requires both outcomes to occur. On Oxigraph it keeps the row-order expectations.
+  processes under seeds 0 to 11 and requires both outcomes to occur. On Oxigraph it keeps the row-order expectations up to 0.5.11
+  and expects the triple kept in both orders from 0.5.12, reading `SNAPSHOT_UPDATES` from `lattice_testing_oxigraph` (changed
+  2026-10-20). A machine that cannot install 0.5.12 still passes. `test_ox_t6` in `tools/testing/oxigraph` holds the flag to the
+  installed version's behaviour, so a later release that changes it again fails there.
 
 **Reproduce it.**
 
@@ -355,8 +369,8 @@ A script, in four steps.
    ```
 
 3. Expect a mix of `True` and `False`. A store that applied the specification's order would print `True` every time.
-4. For Oxigraph, run the same update through `pyoxigraph.Store().update(...)` in both row orders. Expect `False` with the
-   inserting row first and `True` with the deleting row first, whatever the seed.
+4. For Oxigraph, run the same update through `pyoxigraph.Store().update(...)` in both row orders. On 0.5.11 expect `False` with the
+   inserting row first and `True` with the deleting row first, whatever the seed. On 0.5.12 expect `True` in both orders.
 
 To see the order itself, wrap `rdflib.plugins.sparql.update._fillTemplate` with a function that records, for each call, whether
 `c.get(Variable("i"))` is bound, and then calls the original. Keep the wrapper this small. A wrapper that iterated the whole
@@ -849,7 +863,8 @@ self-link. Decided 2026-10-13 (FMH-H2-5, decision 1): the template and the build
 
 ### TSD-17. A chain of additions and subtractions
 
-**Evidence:** Observed on Oxigraph, R-C, directly through `pyoxigraph`, and on rdflib.
+**Evidence:** Observed on Oxigraph, R-C, directly through `pyoxigraph`, and on rdflib. **Oxigraph 0.5.12 (2026-10-20, R-H):** Observed and
+Documented. It groups from the left. The release notes of 0.5.12 say "group operators of equal precedence from left to right".
 
 **Context.** The gap scan compares `COUNT(DISTINCT ?seq)` with `?S - ?L + 1`. On Oxigraph every audit row for a complete stream was reported
 as a gap.
@@ -860,16 +875,18 @@ as a gap.
 SELECT (10 - 3 + 2 AS ?x) WHERE {}      SELECT (10 - 3 - 2 AS ?x) WHERE {}      SELECT (8 / 4 / 2 AS ?x) WHERE {}
 ```
 
-| Query | Specification (from the left) | rdflib | Oxigraph |
-|---|---|---|---|
-| `10 - 3 + 2` | 9 | 9 | **5**, as `10 - (3 + 2)` |
-| `10 - 3 - 2` | 5 | 5 | **9**, as `10 - (3 - 2)` |
-| `8 / 4 / 2` | 1 | 1 | **4**, as `8 / (4 / 2)` |
-| `(10 - 3) + 2` | 9 | 9 | 9 |
+| Query | Specification (from the left) | rdflib | Oxigraph 0.5.11 | Oxigraph 0.5.12 |
+|---|---|---|---|---|
+| `10 - 3 + 2` | 9 | 9 | **5**, as `10 - (3 + 2)` | 9 |
+| `10 - 3 - 2` | 5 | 5 | **9**, as `10 - (3 - 2)` | 5 |
+| `8 / 4 / 2` | 1 | 1 | **4**, as `8 / (4 / 2)` | 1 |
+| `(10 - 3) + 2` | 9 | 9 | 9 | 9 |
 
 **What it means for LATTICE.** The gap scan's template, written as a chain, counted wrongly on Oxigraph. The renderer therefore always writes the
 parentheses of a nested arithmetic operand, and the template now says `(?S - ?L) + 1` (FMH-H2-5, decision 2), both correct on either store. Test
-`test_h2_5_t44`, and the harness mutation `test_h2_5_t47`, which fails a builder that groups the sum from the right.
+`test_h2_5_t44`, and the harness mutation `test_h2_5_t47`, which fails a builder that groups the sum from the right. The parentheses stay,
+since an adopter may run 0.5.11. Since 2026-10-20 `test_h2_5_t44` expects the grouping of the installed version, reading
+`LEFT_GROUPED_ARITHMETIC` from `lattice_testing_oxigraph`, and `test_ox_t6` holds the flag to the installed version's behaviour.
 
 **Reproduce it.** The three queries on each store.
 

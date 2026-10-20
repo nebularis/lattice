@@ -37,6 +37,14 @@ def _pick(**by_engine):
 _ROWS = {"insert row first": "(<urn:s> UNDEF) (UNDEF <urn:s>)", "delete row first": "(UNDEF <urn:s>) (<urn:s> UNDEF)"}
 
 
+def _snapshot_updates() -> bool:
+    """Whether the installed pyoxigraph applies every deletion before any insertion (0.5.12 on, TSD-01). Imported here, since the rdflib
+    runs need no Oxigraph."""
+    from lattice_testing_oxigraph import SNAPSHOT_UPDATES
+
+    return SNAPSHOT_UPDATES
+
+
 def _p1(rows: str) -> bool:
     """Does the triple the DELETE removes and the INSERT writes survive? The specification removes every deletion and then
     adds every insertion, so it does in either order. An engine that applies each solution in turn loses it when the
@@ -83,19 +91,24 @@ def test_h2_4b_t1_p1_how_an_engine_applies_the_result_of_a_delete_insert_where(o
         # One solution at a time, in hash order: some seeds keep the triple and some lose it, in either written order.
         by_seed = _p1_rdflib_by_seed(_ROWS[order])
         assert True in by_seed and False in by_seed
+    elif _snapshot_updates():
+        # From pyoxigraph 0.5.12, every deletion and then every insertion, as the specification says, in either row order (TSD-01).
+        assert _p1(_ROWS[order]) is True
     else:
-        # One solution at a time, in the order the VALUES block gives (the mutations are collected, then applied in order).
+        # Up to 0.5.11, one solution at a time, in the order the VALUES block gives (the mutations are collected, then applied in order).
         assert _p1(_ROWS[order]) == {"insert row first": False, "delete row first": True}[order]
 
 
-def test_h2_4b_t2_p1_snapshot_update_semantics_holds_for_neither_engine():
+def test_h2_4b_t2_p1_snapshot_update_semantics_holds_on_oxigraph_from_0_5_12_and_not_on_rdflib():
     """Corrected on 2026-10-13. The first version asserted that rdflib keeps the triple in both orders, which held only
-    for some hash seeds and made the test fail at random. Neither engine applies the specification's order."""
+    for some hash seeds and made the test fail at random. Changed on 2026-10-20: pyoxigraph 0.5.12 applies the specification's order,
+    and 0.5.11 does not, so the expectation follows the installed version (TSD-01). rdflib 7.6.0 does not."""
     if _current() == "rdflib":
         snapshot = all(all(_p1_rdflib_by_seed(rows)) for rows in _ROWS.values())
+        assert snapshot is False
     else:
         snapshot = all(_p1(rows) for rows in _ROWS.values())
-    assert snapshot is False
+        assert snapshot is _snapshot_updates()
 
 
 # ---- P2 a request whose second operation fails -----------------------------------------------------------------------

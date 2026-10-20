@@ -6,9 +6,8 @@
 [plan §4.18](../plans/formal-methods-track-h.md#418-h28c-the-follow-ups-of-the-h26-and-h28-reviews-planned-2026-10-20). Authored and run in
 autonomous mode, committed locally and not pushed. Versioning is ignored on this branch (TD-64), so no version IRI moved.
 
-**For the maintainer:** the seven decisions taken alone were approved on 2026-10-20, decision 3 with TD-67 narrowed and not closed. Re-approve
-the four expected profiles that changed (below).
-**For countersignature (non-weakening rule):** no test was removed, skipped or weakened. Four existing tests changed (below).
+**Signed off 2026-10-20.** The maintainer approved the seven decisions taken alone (decision 3 with TD-67 narrowed and not closed), the four
+expected profiles and the four changed tests. No test was removed, skipped or weakened.
 
 ## Invariant
 
@@ -110,7 +109,8 @@ about 250 lines). `write-discipline-delta-membership` also has `members` at vers
 
 **The three failures predate H2.8c.** `test_store_probes::test_h2_4b_t1_p1[oxigraph-insert row first]`, `test_h2_4b_t2_p1[oxigraph]` and
 `test_key_claims_and_audits::test_h2_5_t44[oxigraph]` fail on pyoxigraph 0.5.12, which the bootstrap now installs, on this branch with H2.8c's
-changes stashed too. All three pass on 0.5.11. Recorded as TD-73 for the maintainer's choice.
+changes stashed too. All three pass on 0.5.11. Recorded as TD-73, then resolved the same day at the maintainer's choice. TSD-01 and TSD-17
+record 0.5.12, and the tests follow the installed version (the status record's log, 2026-10-20).
 
 ## Probes
 
@@ -138,7 +138,7 @@ Time never fails the check (ADR-A124). TD-68 is closed and removed from the regi
 ## What remains
 
 - A source of what is a version that the library can read (TD-67).
-- Three Oxigraph tests fail on pyoxigraph 0.5.12, before and after H2.8c (TD-73). Not fixed here.
+- Three Oxigraph tests failed on pyoxigraph 0.5.12, before and after H2.8c (TD-73). Resolved after the slice, outside it.
 - H2.9 retires the templates, including the `members` template this slice keeps equal to its builder.
 
 ## One command
