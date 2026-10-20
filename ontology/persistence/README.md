@@ -496,6 +496,32 @@ its context: a document attached to a task can be a part of the task, while the 
 points at a template many projects share. [Aggregate boundaries](docs/aggregate-boundaries.md) has the
 rules, the refusals and the reasons.
 
+**What an edge names.** `dal:referenceMode` sits on the same property shape as `dal:ownership`, one of `dal:ByIdentity` (absent
+means this) and `dal:Pinned`. Ownership says what a write sweeps, and the reference mode says what a reference names, when its
+target has versions (§7.10): the persistent identity, or one version of it. `compile` records the mode of every edge that leads to a
+node in the compiled profile and in the contract of each operation that takes a payload, so a caller's check can read it. The mode
+changes no generated operation, since a write stores what its payload contains.
+
+```turtle
+ex:OpinionShape a sh:NodeShape ; sh:targetClass ex:Opinion ;
+    sh:property [ sh:path ex:about ;  sh:class ex:Policy ;  dal:ownership dal:Reference ; dal:referenceMode dal:Pinned ] ,
+                [ sh:path ex:author ; sh:class ex:Person ;  dal:ownership dal:Reference ] .
+```
+
+| Refused or warned | When |
+|---|---|
+| `PinnedReferenceToUnversionedClass` (refusal) | an edge is `dal:Pinned` and its target class is not a subclass of `fnd:Version` (by IRI, with no import), or it has no target class, or it is a value property |
+| `ReferenceModeUnknown` (refusal) | the value is neither individual |
+| `EvidenceEdgeByIdentity` (warning) | the edge's subject class is a subclass of `fnd:Evidence` or `fnd:DerivedArtefact`, its target class is versioned, and the edge is by identity |
+
+**When to pin.** Pin an edge when the node that holds it is evidence of exactly what it saw, such as an opinion, a decision, an
+assessment or a derived figure that cites the version it was computed from. A later version of the target must not change what the
+record says it read. Leave the edge by identity when the node means the thing as it is now, such as a line item of a current quote, a
+task's assignee or a policy's insured, so a new version of the target needs no write to the node that refers to it. A caller that
+pins writes the version's IRI as the object, and one that leaves the edge by identity writes the identity's. A reader that wants the
+version in force at a date resolves an identity through the version row or the root version's membership, and no generated read does
+so yet (H2.6e-Q4). The warning is for the case that is usually a mistake, so a deliberate choice stays by identity and compiles.
+
 **Which strategy.** Prefer a named graph per aggregate for a new deployment. It is the cheapest boundary
 to reason about, and a delete is one operation. The composite strategy is for data that already lives in
 one large shared graph, which it keeps in the family's `dal:dataGraph`. LATTICE does not impose a layout.

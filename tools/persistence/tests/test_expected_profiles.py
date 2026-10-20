@@ -21,8 +21,8 @@ from persistence import witness
 from persistence.builders import BUILDERS, build
 from persistence.compiler import compile_to_graph
 from persistence.contract import (
-    DATASET_GUARD_SUFFIX, HAND_DECLARED, AccessContract, DeclarationSource, DigestContract, GraphNaming, GuardStatus,
-    OperationContract, OperationKind, ParameterContract, PayloadContract, ResultColumn, contract_of, stem_of,
+    DATASET_GUARD_SUFFIX, HAND_DECLARED, AccessContract, DeclarationSource, DigestContract, EdgeContract, GraphNaming, GuardStatus,
+    OperationContract, OperationKind, ParameterContract, PayloadContract, ResultColumn, contract_of, edge_contracts, stem_of,
 )
 from persistence.ir import SLOT_KINDS, Kind
 from persistence.namespaces import DAL
@@ -118,6 +118,7 @@ def _facts(c: OperationContract, shape: str | None) -> set:
     facts |= {("result", i, r.name, r.kind, r.separator) for i, r in enumerate(c.results, 1)}
     if c.payload:
         facts.add(("payload", c.payload.parameter, c.payload.root, shape or "NoBoundaryShape"))
+        facts |= {("edge", e) for e in c.payload.edges}
     if c.digest:
         facts.add(("digest", c.digest.target, c.digest.expected, c.digest.payload, c.digest.event, c.digest.add, c.digest.delete))
     return facts
@@ -153,7 +154,15 @@ def _read_contract(g: Graph, node) -> tuple[OperationContract, str | None]:
     pc = g.value(node, DAL.payloadContract)
     if pc is not None:
         root = g.value(pc, DAL.payloadRoot)
-        payload = PayloadContract(param_names[g.value(pc, DAL.payloadParameter)], param_names.get(root))
+        edges = tuple(sorted(
+            EdgeContract(
+                str(g.value(en, DAL.edgeSource)), str(g.value(en, DAL.edgePredicate)), bool(g.value(en, DAL.edgeInverse).toPython()),
+                _local(g.value(en, DAL.edgeOwnership)),
+                None if g.value(en, DAL.edgeTargetClass) is None else str(g.value(en, DAL.edgeTargetClass)),
+                _local(g.value(en, DAL.referenceMode)),
+            ) for en in g.objects(pc, DAL.referenceEdge)
+        ))
+        payload = PayloadContract(param_names[g.value(pc, DAL.payloadParameter)], param_names.get(root), edges)
         shape = _local(g.value(pc, DAL.boundaryShape)) if g.value(pc, DAL.boundaryShape) == DAL.NoBoundaryShape else str(g.value(pc, DAL.boundaryShape))
     digest = None
     dc = g.value(node, DAL.digestContract)
@@ -199,7 +208,7 @@ def _operations(example: str, options: dict):
         receipt_model = _local(by_target[target].dimensions["receiptModel"].value)
         shape = ep._shape_of(by_target[target])
         for node in compiled.objects(profile, DAL.generatedOperation):
-            contract = ep.contract_for(compiled, node, guards=options.get("guards", True), graph_names=options.get("graph_names", "query"))
+            contract = ep.contract_for(compiled, node, guards=options.get("guards", True), graph_names=options.get("graph_names", "query"), edges=edge_contracts(by_target[target].dimensions["aggregateBoundary"].extra.get("ownershipTree")))
             yield target, str(compiled.value(node, DAL.forOperation)), compiled.value(compiled.value(node, DAL.usesTemplate), DAL.templateId), ep.designed(contract, receipt_model), contract, shape
 
 

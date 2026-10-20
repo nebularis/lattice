@@ -15,11 +15,16 @@ from itertools import combinations
 from rdflib import RDF, RDFS, SKOS, Graph, URIRef
 
 from .functional import functional_value
-from .boundary import MissingBoundaryShapeError, walk_ownership
+from .boundary import BY_IDENTITY, PINNED, MissingBoundaryShapeError, walk_ownership
 from .capability import CapabilityCheckResult
 from .model import BoundaryConflict, CrossAxisViolation, Diagnostic, ResolvedDimension
 from .namespaces import DAL, FND, SH
 from .scopes import Target
+
+
+def _is_versioned(graph: Graph, cls) -> bool:
+    """A subclass of ``fnd:Version`` by IRI in the loaded graphs. Foundation is not imported."""
+    return cls is not None and FND.Version in set(graph.transitive_objects(cls, RDFS.subClassOf))
 
 
 def _local(value) -> str | None:
@@ -50,7 +55,7 @@ def check_cross_axis(
 
     # H2.6c, VH-Q3 and H2.6c-Q4: a class the loaded graphs make a subclass of fnd:Version, written by replace. Foundation is not
     # imported, the class is found by its IRI. A replace deletes the version before it, which fnd:supersededBy and ADR-A67 keep.
-    if discipline == "InPlace" and FND.Version in set(graph.transitive_objects(target.cls, RDFS.subClassOf)):
+    if discipline == "InPlace" and _is_versioned(graph, target.cls):
         diagnostics.append(
             Diagnostic(
                 kind="VersionedClassWrittenInPlace",
@@ -203,6 +208,7 @@ def check_cross_axis(
             )
         tree = boundary.extra["ownershipTree"]
         _check_tree(graph, target, boundary, tree, composite=True)
+        diagnostics += check_reference_modes(graph, target, tree)
         reachable = tree.predicates()
         for constraint in uniqueness:
             for key_prop in constraint["keyProperty"]:
@@ -220,6 +226,7 @@ def check_cross_axis(
         # A named-graph profile that names a boundary shape is checked by the same rules, since the
         # shape defines the subjects a payload may contain (ADR-A122 decision 6).
         _check_tree(graph, target, boundary, boundary.extra["ownershipTree"], composite=False)
+        diagnostics += check_reference_modes(graph, target, boundary.extra["ownershipTree"])
 
     # Last, so that a fixture written to isolate another row still reaches it. An unconditional write
     # (dal:ProvidedConcurrency or dal:LockingConcurrency, with a grain that is not event grain) names its graph from the root, so it needs a named-graph boundary. Any other
@@ -330,6 +337,24 @@ def _check_tree(graph: Graph, target: Target, boundary: ResolvedDimension, tree,
             f"the property shape for {predicate} on {owner} is a value property (sh:datatype or "
             "sh:nodeKind sh:Literal) and cannot carry dal:ownership.",
         )
+    if tree.unknown_modes:
+        owner, predicate, declared = tree.unknown_modes[0]
+        raise CrossAxisViolation(
+            "ReferenceModeUnknown",
+            str(target),
+            f"the property shape for {predicate} on {owner} declares dal:referenceMode {declared}. "
+            "Use dal:ByIdentity, or dal:Pinned on an edge to a versioned class.",
+        )
+    for edge in tree.edges:
+        # H2.6e-Q2: an edge pinned to a version needs a target that has versions. A value property has no target class.
+        if edge.reference_mode == PINNED and not _is_versioned(graph, edge.target_class):
+            raise CrossAxisViolation(
+                "PinnedReferenceToUnversionedClass",
+                str(target),
+                f"the property shape for {edge.step.predicate} on {edge.source_shape} is dal:Pinned, and its target class "
+                f"{edge.target_class} is not a subclass of fnd:Version, so there is no version to pin to. "
+                "Leave the edge dal:ByIdentity, or make the target class versioned.",
+            )
     if composite and not tree.owned_edges():
         raise CrossAxisViolation(
             "CompositeBoundaryWithoutOwnedEdges",
@@ -348,6 +373,34 @@ def _check_tree(graph: Graph, target: Target, boundary: ResolvedDimension, tree,
                     "which is reference data. Classify the edge dal:Vocabulary, or declare dal:ownsReferenceData true "
                     "on the profile if this aggregate manages that vocabulary.",
                 )
+
+
+def check_reference_modes(graph: Graph, target: Target, tree) -> list[Diagnostic]:
+    """The warning of H2.6e-Q3: an edge from a class that is evidence of what it saw (a subclass of ``fnd:Evidence`` or
+    ``fnd:DerivedArtefact``, by IRI) to a versioned class, and by identity. A later version of the target changes what
+    the evidence appears to have seen. A warning, so a deliberate choice compiles."""
+    out: list[Diagnostic] = []
+    for edge in tree.node_edges():
+        if edge.reference_mode != BY_IDENTITY or not _is_versioned(graph, edge.target_class):
+            continue
+        source_class = functional_value(graph, edge.source_shape, SH.targetClass)
+        ancestors = set(graph.transitive_objects(source_class, RDFS.subClassOf)) if source_class is not None else set()
+        if not ancestors & {FND.Evidence, FND.DerivedArtefact}:
+            continue
+        out.append(
+            Diagnostic(
+                kind="EvidenceEdgeByIdentity",
+                severity="WARNING",
+                target=str(target),
+                message=(
+                    f"the property shape for {edge.step.predicate} on {edge.source_shape} is by identity, its subject class "
+                    f"{source_class} is evidence (a subclass of fnd:Evidence or fnd:DerivedArtefact) and its target class "
+                    f"{edge.target_class} is versioned, so the evidence names whichever version is current and not the one it saw. "
+                    "Declare dal:referenceMode dal:Pinned, or dal:ByIdentity deliberately (H2.6e)."
+                ),
+            )
+        )
+    return out
 
 
 def check_references_to_owned(graph: Graph, target: Target, boundary: ResolvedDimension) -> list[Diagnostic]:

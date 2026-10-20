@@ -31,6 +31,8 @@ dal:GuardStatus a rdfs:Class .
 
 dal:OperationKind a rdfs:Class .
 
+dal:OwnershipKind a rdfs:Class .
+
 dal:ParameterDeclaration a rdfs:Class .
 
 dal:ParameterKind a rdfs:Class .
@@ -38,6 +40,10 @@ dal:ParameterKind a rdfs:Class .
 dal:PayloadContract a rdfs:Class .
 
 dal:PayloadEncoding a rdfs:Class .
+
+dal:ReferenceEdge a rdfs:Class .
+
+dal:ReferenceMode a rdfs:Class .
 
 dal:ResourceAccess a rdfs:Class .
 
@@ -66,6 +72,8 @@ dal:Audit a dal:OperationKind .
 dal:Bootstrap a dal:OperationKind .
 
 dal:BuilderDerived a dal:DeclarationSource .
+
+dal:ByIdentity a dal:ReferenceMode .
 
 dal:CallerNamed a dal:GraphNaming .
 
@@ -149,6 +157,8 @@ dal:NotGenerated a dal:GuardStatus .
 
 dal:OperationKindPart a dal:DigestPartRole .
 
+dal:Owned a dal:OwnershipKind .
+
 dal:PatchContent a dal:ResourceKind ;
     rdfs:comment "the triples a write added or removed, in a graph named from its receipt, newRev followed by /add or /del, one per direction" ;
     dal:logicalKey "target, epoch, seq, direction" .
@@ -156,6 +166,8 @@ dal:PatchContent a dal:ResourceKind ;
 dal:PayloadKind a dal:ParameterKind .
 
 dal:PayloadPart a dal:DigestPartRole .
+
+dal:Pinned a dal:ReferenceMode .
 
 dal:PointRead a dal:AccessMode .
 
@@ -174,6 +186,8 @@ dal:QueryNamed a dal:GraphNaming .
 dal:Receipt a dal:ResourceKind ;
     rdfs:comment "a receipt in its monthly log bucket, and in the pinned graph for a retained head. The pinned graph is how retention is realised" ;
     dal:logicalKey "target, epoch, seq" .
+
+dal:Reference a dal:OwnershipKind .
 
 dal:RegistryGraph a dal:Source ;
     rdfs:comment "the family's dal:registryGraph, a caller obligation" .
@@ -211,6 +225,8 @@ dal:ValueGuardedReplace a dal:OperationKind .
 dal:VersionRow a dal:ResourceKind ;
     rdfs:comment "the version row of a root or stream, in its meta graph" ;
     dal:logicalKey "root" .
+
+dal:Vocabulary a dal:OwnershipKind .
 
 dal:WholeAggregateRead a dal:AccessMode .
 

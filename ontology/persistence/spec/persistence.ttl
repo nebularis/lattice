@@ -139,6 +139,19 @@ dal:ownership a owl:ObjectProperty ;
     rdfs:range dal:OwnershipKind ;
     rdfs:comment "On an sh:PropertyShape inside a dal:boundaryShape tree. Classifies the edge the property shape describes, in the context of the node shape that holds it. Mandatory on every property shape that leads to a node. Forbidden on a value property (sh:datatype, or sh:nodeKind sh:Literal). No rdfs:domain is declared, so the vocabulary does not assert that a property shape is anything else." .
 
+dal:ReferenceMode a owl:Class ;
+    rdfs:comment "What an edge's reference names, when its target class is versioned (formal-methods H2.6e). One of dal:ByIdentity, dal:Pinned." .
+
+dal:ByIdentity a dal:ReferenceMode ;
+    rdfs:comment "The default. The edge names the target's persistent identity, and the version in force is read from the identity's own record, so a new version of the target needs no change to the node that refers to it." .
+
+dal:Pinned a dal:ReferenceMode ;
+    rdfs:comment "The edge names one version of the target. For a record that is evidence of exactly what it saw. Refused when the edge's target class is not a subclass of fnd:Version (by IRI, with no import), since there is then no version to name." .
+
+dal:referenceMode a owl:ObjectProperty ;
+    rdfs:range dal:ReferenceMode ;
+    rdfs:comment "On an sh:PropertyShape inside a dal:boundaryShape tree, beside dal:ownership. Says what the edge names, an identity (dal:ByIdentity, absent means this) or a version (dal:Pinned). Ownership says what a write sweeps, the reference mode what a reference names. compile records it for every edge that leads to a node, refuses dal:Pinned on an edge whose target class is not versioned (PinnedReferenceToUnversionedClass), and warns EvidenceEdgeByIdentity for an edge by identity from an evidence class to a versioned one. The edge compiles unchanged, whichever the mode, since a write names what the payload contains. No rdfs:domain is declared, as for dal:ownership." .
+
 dal:ReferenceData a owl:Class ;
     rdfs:comment "Declares that the instances of each dal:coversClass are reference data. An owned edge to reference data is refused unless its profile declares dal:ownsReferenceData true. skos:Concept and skos:ConceptScheme are reference data without a declaration." .
 
@@ -453,6 +466,22 @@ dal:diagnosticSeverity a owl:DatatypeProperty ; rdfs:domain dal:Diagnostic ; rdf
 
 dal:appliedUniquenessConstraint a owl:ObjectProperty ;
     rdfs:domain dal:CompiledProfile ; rdfs:range dal:UniquenessConstraint .
+
+dal:ReferenceEdge a owl:Class ;
+    rdfs:comment "One edge of a family's dal:boundaryShape tree that leads to a node, in a compiled profile: its source shape, step, ownership, target class and reference mode, in walk order." .
+
+dal:referenceEdge a owl:ObjectProperty ;
+    rdfs:domain dal:CompiledProfile ; rdfs:range dal:ReferenceEdge .
+
+dal:edgeSource a owl:ObjectProperty ; rdfs:domain dal:ReferenceEdge ;
+    rdfs:comment "The node shape that holds the edge's property shape." .
+dal:edgePredicate a owl:ObjectProperty ; rdfs:domain dal:ReferenceEdge ;
+    rdfs:comment "The predicate of the edge's one step." .
+dal:edgeInverse a owl:DatatypeProperty ; rdfs:domain dal:ReferenceEdge ; rdfs:range xsd:boolean ;
+    rdfs:comment "True when the step is [ sh:inversePath predicate ]." .
+dal:edgeOwnership a owl:ObjectProperty ; rdfs:domain dal:ReferenceEdge ; rdfs:range dal:OwnershipKind .
+dal:edgeTargetClass a owl:ObjectProperty ; rdfs:domain dal:ReferenceEdge ;
+    rdfs:comment "The sh:class of the edge, else the sh:targetClass of its sh:node. Absent when neither is declared." .
 
 dal:generatedOperation a owl:ObjectProperty ;
     rdfs:domain dal:CompiledProfile ; rdfs:range dal:GeneratedOperation .

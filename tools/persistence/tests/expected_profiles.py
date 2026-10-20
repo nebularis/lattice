@@ -28,10 +28,10 @@ from rdflib.namespace import XSD
 
 from persistence import witness
 from persistence.builders import BUILDERS, build
-from persistence.compiler import compile_to_graph
+from persistence.compiler import add_edge_facts, compile_to_graph
 from persistence.contract import (
     HAND_DECLARED, LOGICAL_KEYS, AccessMode, DeclarationSource, GraphNaming, GuardStatus, OperationContract, OperationKind,
-    ResourceKind, contract_of, stem_of,
+    ResourceKind, contract_of, edge_contracts, stem_of,
 )
 from persistence.instantiate import operation_context
 from persistence.ir import Kind
@@ -118,7 +118,7 @@ def kinds_graph() -> Graph:
     for cls in (
         "ParameterDeclaration", "ResourceAccess", "ResultColumn", "PayloadContract", "DigestContract", "DigestPart", "OperationKind",
         "ResourceKind", "AccessMode", "ParameterKind", "ColumnKind", "GuardStatus", "GraphNaming", "DeclarationSource", "DigestPartRole",
-        "Rule", "Source", "PayloadEncoding", "BoundaryShapeAbsence",
+        "Rule", "Source", "PayloadEncoding", "BoundaryShapeAbsence", "ReferenceEdge", "ReferenceMode", "OwnershipKind",
     ):
         g.add((DAL[cls], RDF.type, RDFS.Class))
     members("OperationKind", (k.value for k in OperationKind))
@@ -135,6 +135,8 @@ def kinds_graph() -> Graph:
     members("Rule", ("GraphNameOfRoot",), {"GraphNameOfRoot": "the graph IRI the family's dal:graphIriTemplate gives for the value of the root parameter"})
     members("Source", ("RegistryGraph", "NoSource"), {"RegistryGraph": "the family's dal:registryGraph, a caller obligation"})
     members("PayloadEncoding", ("GroundNTriples",))
+    members("ReferenceMode", ("ByIdentity", "Pinned"))
+    members("OwnershipKind", ("Owned", "Reference", "Vocabulary"))
     members("BoundaryShapeAbsence", ("NoBoundaryShape",), {"NoBoundaryShape": "the family names no boundary shape, so a payload is not checked against one"})
     return g
 
@@ -154,10 +156,10 @@ def designed(contract: OperationContract, receipt_model: str) -> OperationContra
     return contract
 
 
-def contract_for(compiled: Graph, node, *, guards: bool, graph_names: str) -> OperationContract | None:
+def contract_for(compiled: Graph, node, *, guards: bool, graph_names: str, edges: tuple = ()) -> OperationContract | None:
     stem = str(compiled.value(compiled.value(node, DAL.usesTemplate), DAL.templateId)).removesuffix(".mustache")
     if stem in BUILDERS:
-        return contract_of(build(stem, operation_context(compiled, node), guards=guards, graph_names=graph_names))
+        return contract_of(build(stem, operation_context(compiled, node), guards=guards, graph_names=graph_names), edges)
     return HAND_DECLARED.get(stem)
 
 
@@ -209,6 +211,11 @@ def _emit_operation(g: Graph, node, target_iri: URIRef, name: str, c: OperationC
             g.add((pc, DAL.payloadRoot, m(f"param-{c.payload.root}")))
         g.add((pc, DAL.payloadEncoding, DAL.GroundNTriples))
         g.add((pc, DAL.boundaryShape, shape if shape is not None else DAL.NoBoundaryShape))
+        for i, edge in enumerate(c.payload.edges):
+            en = m(f"edge-{i:02d}")
+            g.add((pc, DAL.referenceEdge, en))
+            g.add((en, RDF.type, DAL.ReferenceEdge))
+            add_edge_facts(g, en, edge)
     if c.digest is not None:
         dc = m("digest")
         g.add((node, DAL.digestContract, dc))
@@ -249,7 +256,7 @@ def emit(example: str, *, guards: bool = True, graph_names: str = "query", sourc
         receipt_model = str(target.dimensions["receiptModel"].value).rsplit("#", 1)[-1]
         shape = _shape_of(target)
         for node in list(compiled.objects(profile, DAL.generatedOperation)):
-            contract = contract_for(compiled, node, guards=guards, graph_names=graph_names)
+            contract = contract_for(compiled, node, guards=guards, graph_names=graph_names, edges=edge_contracts(target.dimensions["aggregateBoundary"].extra.get("ownershipTree")))
             if contract is None:
                 raise KeyError(f"{example}: no builder and no hand declaration for {compiled.value(compiled.value(node, DAL.usesTemplate), DAL.templateId)}")
             name = str(compiled.value(node, DAL.forOperation))

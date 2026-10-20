@@ -195,10 +195,38 @@ class ResultColumn:
     separator: Optional[str] = None
 
 
+@dataclass(frozen=True, order=True)
+class EdgeContract:
+    """One edge of the boundary shape that leads to a node, as a caller's check reads it (H2.6e): where it leaves, the step, its
+    ownership, the class it leads to and its reference mode (``ByIdentity`` or ``Pinned``). H2.8 refuses a payload whose object on a
+    pinned edge is not a version, and on an identity edge is a version of a versioned class."""
+
+    source_shape: str
+    predicate: str
+    inverse: bool
+    ownership: str
+    target_class: Optional[str]
+    reference_mode: str
+
+
+def edge_contracts(tree) -> tuple:
+    """The edges of an ownership tree (``persistence.boundary.OwnershipTree``) that lead to a node, as contracts, in a total order."""
+    if tree is None:
+        return ()
+    return tuple(sorted(
+        EdgeContract(
+            str(e.source_shape), str(e.step.predicate), e.step.inverse, e.kind,
+            None if e.target_class is None else str(e.target_class), e.reference_mode,
+        )
+        for e in tree.node_edges()
+    ))
+
+
 @dataclass(frozen=True)
 class PayloadContract:
     parameter: str
     root: Optional[str]
+    edges: tuple = ()
 
 
 @dataclass(frozen=True)
@@ -290,8 +318,9 @@ def _result_columns(operation: Operation) -> tuple:
     return tuple(columns)
 
 
-def contract_of(operation: Operation) -> OperationContract:
-    """The contract of ``operation``, derived from it and from the three tables of this module."""
+def contract_of(operation: Operation, edges: tuple = ()) -> OperationContract:
+    """The contract of ``operation``, derived from it and from the three tables of this module. ``edges`` is the family's
+    :func:`edge_contracts`, which an operation cannot know, and is carried on the payload contract of an operation that has one."""
     stem = stem_of(operation.id)
     params = {p.name: p for p in operation.params}
     sets = access_sets(operation)
@@ -322,7 +351,7 @@ def contract_of(operation: Operation) -> OperationContract:
     # An append's triples slot holds its events' domain triples, which are not the aggregate's payload and have no boundary shape.
     event = tuple(sorted(p.name for p in operation.params if p.kind in SLOT_KINDS and p.kind is not Kind.REGISTRY_LIST)) if kind is OperationKind.APPEND else ()
     payload_name = None if kind is OperationKind.APPEND else payload_name
-    payload = PayloadContract(payload_name, "root" if "root" in params else None) if payload_name else None
+    payload = PayloadContract(payload_name, "root" if "root" in params else None, tuple(edges)) if payload_name else None
     digest = None
     if "requestDigest" in params:
         target = next((a.keyed_by for a in sorted(accesses) if a.resource == ResourceKind.VERSION_ROW.value and a.keyed_by), None)
@@ -339,5 +368,5 @@ def contract_of(operation: Operation) -> OperationContract:
 __all__ = [
     "OperationKind", "ResourceKind", "AccessMode", "LOGICAL_KEYS", "OPERATION_KINDS", "BUILDER_VERSIONS", "GuardStatus",
     "GraphNaming", "DeclarationSource", "ParameterContract", "AccessContract", "ResultColumn", "PayloadContract",
-    "DigestContract", "OperationContract", "HAND_DECLARED", "resource_of", "stem_of", "contract_of",
+    "DigestContract", "EdgeContract", "edge_contracts", "OperationContract", "HAND_DECLARED", "resource_of", "stem_of", "contract_of",
 ]

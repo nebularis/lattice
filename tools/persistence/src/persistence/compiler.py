@@ -23,6 +23,7 @@ from .capability import (
     compute_requirement,
     load_capability_spec,
 )
+from .contract import EdgeContract, edge_contracts
 from .model import DIMENSIONS, Diagnostic, ResolvedDimension
 from .namespaces import DAL
 from .operations import GeneratedOperation, default_graph_template, select_operations
@@ -162,6 +163,18 @@ def _profile_label(compiled: CompiledTarget) -> str:
     return "p" + hashlib.sha256(key.encode("utf-8")).hexdigest()[:12]
 
 
+def add_edge_facts(out: Graph, node, edge: EdgeContract) -> None:
+    """What the compiled profile and the contract both say of one edge: where it leaves, its step, its ownership, the class it leads to
+    and its reference mode."""
+    out.add((node, DAL.edgeSource, URIRef(edge.source_shape)))
+    out.add((node, DAL.edgePredicate, URIRef(edge.predicate)))
+    out.add((node, DAL.edgeInverse, RdfLiteral(edge.inverse)))
+    out.add((node, DAL.edgeOwnership, DAL[edge.ownership]))
+    if edge.target_class is not None:
+        out.add((node, DAL.edgeTargetClass, URIRef(edge.target_class)))
+    out.add((node, DAL.referenceMode, DAL[edge.reference_mode]))
+
+
 def emit_compiled_profile(out: Graph, compiled: CompiledTarget) -> URIRef:
     """Serialise one :class:`CompiledTarget` into ``out`` as a
     ``dal:CompiledProfile`` individual. Never writes literal SPARQL text
@@ -192,6 +205,14 @@ def emit_compiled_profile(out: Graph, compiled: CompiledTarget) -> URIRef:
 
     for constraint in compiled.uniqueness:
         out.add((profile, DAL.appliedUniquenessConstraint, URIRef(constraint["constraint"])))
+
+    # H2.6e: each edge of the boundary shape that leads to a node, with its ownership and its reference mode, in walk order.
+    tree = compiled.dimensions["aggregateBoundary"].extra.get("ownershipTree")
+    for index, edge in enumerate(edge_contracts(tree)):
+        node = BNode(f"{stem}-edge-{index:02d}")
+        out.add((node, RDF.type, DAL.ReferenceEdge))
+        add_edge_facts(out, node, edge)
+        out.add((profile, DAL.referenceEdge, node))
 
     for recipe in compiled.recipes:
         node = BNode(f"{stem}-recipe-{recipe['role']}")

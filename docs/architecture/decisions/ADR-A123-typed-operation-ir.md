@@ -339,3 +339,17 @@ disciplines).
    `fnd:supersededBy`, which the domain asserts under its own rule (R2). Builder version 2. This is the code of the amendment to the addendum
    of 2026-10-20, point 2.
 5. **`ReceiptModelNotHonoured` warns for `dal:SnapshotPerRevision` alone.** It amends point 4 of the addendum of 2026-10-14.
+
+
+## Addendum, 2026-10-20: reference modes in the contract (accepted with the slice's plan, decisions taken alone listed in FMH-H2-6e)
+
+Built in slice H2.6e (Track H plan §4.11). It extends the contract of decisions 4 and 6.
+
+1. **The payload contract carries the edges of the family's boundary shape,** as `EdgeContract` values: the source shape, the step, its
+   ownership, the target class and the reference mode (`dal:ByIdentity` or `dal:Pinned`), for every edge that leads to a node. An operation
+   cannot know them, so `contract_of` takes them as a second argument, the family's `edge_contracts`, and the compiler's profile records the
+   same edges. The mode changes no builder and no rendered query.
+2. **The caller check of H2.8 reads them.** A payload whose object on a pinned edge is not a version, or on an identity edge is a version of
+   a versioned class, is refused there. Persistence refuses `dal:Pinned` on an edge whose target class is not versioned, and warns
+   `EvidenceEdgeByIdentity`, at compile time.
+
