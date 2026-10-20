@@ -2,7 +2,7 @@
 
 # ADR-A79: Persistence compiler toolchain and template-based SPARQL generation
 
-**Status:** Accepted, with an addendum (2026-10-10)
+**Status:** Accepted, with two addenda (2026-10-10 and 2026-10-20)
 **Date:** 2026-09-22
 **Supersedes:** none
 **Related:** ADR-A78, ADR-A80, [rdf-sparql-patterns-guide.md](../rdf-sparql-patterns-guide.md) Chapter 25, [persistence-profile-substrate sketch](../../developer/sketches/persistence-profile-substrate.md)
@@ -43,3 +43,11 @@ The compiler's output must also remain distinct from two runtime concerns this A
 decision 4's renderer clause, the consequence that templates stay auditable by inspection, and `dal:templatePath`
 in decision 1. Everything else here stands. The templates stay in use until the last slice of formal-methods
 track H's H2 retires them.
+
+## Addendum, 2026-10-20: `dal:templatePath` is gone (accepted with the slice's plan, decisions taken alone listed in FMH-H2-7)
+
+The addendum of 2026-10-10 said `dal:templatePath` is superseded. Slice H2.7 removes it from the vocabulary and from every compiled profile.
+`dal:templateId` is the identity of a builder, the operation id with no `.mustache` suffix, and `instantiate` finds the builder by it. Until the
+templates are retired, a template library that overrides the built-in one is read from the file named by that id and the suffix. The compiled
+profile also carries the contract of each operation and the run's choices ([ADR-A123](ADR-A123-typed-operation-ir.md), addendum of 2026-10-20),
+and `compile` takes `--no-parameter-guards` and `--caller-graph-names`, which `instantiate` took before. Everything else in this ADR stands.

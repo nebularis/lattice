@@ -11,7 +11,9 @@
 
 ``instantiate``
     Read a compiled profile and the checked-in template library, and
-    write one ``.rq`` file per generated operation. Entirely optional.
+    write one ``.rq`` file per generated operation, with the guards and
+    graph naming the profile records (``compile --no-parameter-guards``
+    and ``--caller-graph-names``). Entirely optional.
 
 ``export-recipes``
     Read a compiled profile and write one JSON minting recipe per
@@ -73,7 +75,12 @@ def _load_graph(config_paths: list[str], capability_spec: str | None) -> Graph:
 def cmd_compile(args: argparse.Namespace) -> int:
     graph = _load_graph(args.config, args.capability_spec)
     try:
-        out, compiled = compile_to_graph(graph, fail_on_capability_mismatch=not args.no_fail_on_capability)
+        out, compiled = compile_to_graph(
+            graph,
+            fail_on_capability_mismatch=not args.no_fail_on_capability,
+            guards=not args.no_parameter_guards,
+            graph_names="caller" if args.caller_graph_names else "query",
+        )
     except CompileError as e:
         print(f"compile failed: {e}", file=sys.stderr)
         return 1
@@ -92,13 +99,7 @@ def cmd_instantiate(args: argparse.Namespace) -> int:
     profile = Graph()
     profile.parse(args.compiled_profile, format="turtle")
     template_dir = Path(args.template_dir) if args.template_dir else None
-    written = instantiate_to_directory(
-        profile,
-        Path(args.out),
-        template_dir,
-        guards=not args.no_parameter_guards,
-        graph_names="caller" if args.caller_graph_names else "query",
-    )
+    written = instantiate_to_directory(profile, Path(args.out), template_dir)
     for path in written:
         print(f"wrote {path}", file=sys.stderr)
     return 0
@@ -172,23 +173,24 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="do not fail the compile when a supplied CapabilitySpec's check fails (report only)",
     )
+    p_compile.add_argument(
+        "--no-parameter-guards",
+        action="store_true",
+        help="leave the required-parameter guards out of every operation, for a caller whose own code checks every parameter. "
+        "The profile records it (dal:guardStatus) and instantiate follows it",
+    )
+    p_compile.add_argument(
+        "--caller-graph-names",
+        action="store_true",
+        help="have the caller name each root's graph as $g, checked against the naming rule while guards are on, "
+        "for the operations that name a graph. The profile records it (dal:graphNaming) and instantiate follows it",
+    )
     p_compile.set_defaults(func=cmd_compile)
 
     p_instantiate = sub.add_parser("instantiate", help="render a compiled profile's operations to SPARQL text")
     p_instantiate.add_argument("compiled_profile", help="a dal:CompiledProfile Turtle file")
     p_instantiate.add_argument("--template-dir", help="override the built-in template library directory")
     p_instantiate.add_argument("--out", required=True, help="output directory for generated .rq files")
-    p_instantiate.add_argument(
-        "--no-parameter-guards",
-        action="store_true",
-        help="leave the required-parameter guards out of operations that have a builder, for a caller whose own code checks every parameter",
-    )
-    p_instantiate.add_argument(
-        "--caller-graph-names",
-        action="store_true",
-        help="have the caller name each root's graph as $g, checked against the naming rule while guards are on, "
-        "for the operations that name a graph",
-    )
     p_instantiate.set_defaults(func=cmd_instantiate)
 
     p_export = sub.add_parser("export-recipes", help="write each dal:MintingRecipe in a compiled profile as a JSON recipe")

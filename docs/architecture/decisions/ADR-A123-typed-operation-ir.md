@@ -2,7 +2,7 @@
 
 # ADR-A123: A typed operation IR for the persistence compiler
 
-**Status:** Accepted, 2026-10-10, with the ADR-A79 addendum applied the same day, and eight addenda of its own (2026-10-12 to 2026-10-20)
+**Status:** Accepted, 2026-10-10, with the ADR-A79 addendum applied the same day, and twelve addenda of its own (2026-10-12 to 2026-10-20)
 **Date:** 2026-10-10
 **Supersedes:** parts of [ADR-A79](ADR-A79-persistence-compiler-toolchain.md), listed under Decision 10. ADR-A79 stays Accepted for the rest
 **Related:** [ADR-A78](ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md),
@@ -369,3 +369,35 @@ Built in slice H2.6f (Track H plan §4.12). It extends the operation kinds of de
 3. **The request-time slots `addedMembers` and `droppedMembers` join `REQUEST_TIME_SLOTS`,** and the static checks fill them with stand-ins.
    `append-version-delta` and `members` are at builder version 1.
 
+## Addendum, 2026-10-20: the vocabulary, the contract in the profile and the run choices (accepted with the slice's plan, decisions taken alone listed in FMH-H2-7)
+
+Built in slice H2.7 (Track H plan §4.7, questions H2.7-Q1 to Q4). It carries out decisions 4, 6 and 10, and amends the addenda of 2026-10-12 on
+the run choices.
+
+1. **The vocabulary is published.** Every class and property the contract uses, and the enumerations the expected profiles had declared in a
+   test file (operation kinds, resource kinds, access modes, parameter kinds, column kinds, guard status, graph naming, declaration source,
+   digest part roles, rules, sources, payload encodings), are in the persistence specification as classes and individuals, each documented, beside
+   what the disciplines and reference modes added. `dal:templatePath` is gone, as decision 10 said. `dal:templateId` is the builder's identity, the
+   operation id with no `.mustache` suffix, and `instantiate` finds the builder by it. `dal:templateVersion` is declared on the generated operation,
+   where the profile writes it. The `pat:` terms of the append-version operations are in the pattern vocabulary of the patterns guide.
+2. **`compile` writes the contract of every operation,** from its builder, with a minted IRI for every declaration node (the target, the
+   deployment where there is one, the operation and the part), so a profile has no blank node in a declaration and no SPARQL text in a value. The
+   compiled profile and the reviewed expected profiles are compared by graph isomorphism, so an editor may lay a file out as it likes. A test of
+   byte equality would tie the files to one serialiser (H2.7-Q4).
+3. **The run choices are in the profile (H2.7-Q2).** `compile --no-parameter-guards` and `compile --caller-graph-names` record `dal:guardStatus` and
+   `dal:graphNaming` on each operation, and `instantiate` renders what the profile says. Its own flags and the `guards` and `graph_names`
+   arguments of its functions are removed, since no compatibility is owed. This amends the addenda of 2026-10-12, whose flags were on
+   `instantiate`, and a rendering can no longer disagree with its profile.
+4. **`PayloadCheck` is an operation kind (H2.7-Q3).** H2.7 adds the kind to the vocabulary, and H2.8 emits one operation of it for each family that
+   has a payload, so a caller in another language gets the query from `instantiate` (decision 6).
+5. **A family with no boundary keeps its values in a data graph (H2.7-Q1, TD-43).** `dal:dataGraph` is mandatory for a `dal:NoBoundary` family that
+   guards a value, refused without one as `MissingDataGraph`, as for a composite family. The value-based compare-and-set is the builder
+   `cas-replace-value-guard`, with every pattern in that graph, so no operation reads or writes the default graph, and no operation is declared
+   by hand. It is a change and not a port: the query now names the graph, its builder version is 2, and its template changed with it, so the
+   equivalence harness still holds the two together until the templates go.
+6. **Shapes check a compiled profile.** The structure of each declaration, every enumeration closed with `sh:in`, no blank node in a declaration, no
+   SPARQL text in a value (a declaration holds the properties of its class, and a name is a word), and a required parameter guarded unless
+   `dal:guardStatus` says otherwise. The expected profiles are the positive fixtures, and each rule has a negative witness. A test holds each
+   `sh:in` list to the individuals of the specification.
+
+The decisions taken alone are listed in the Validation Pack FMH-H2-7. No version IRI moves on this branch (TD-64).

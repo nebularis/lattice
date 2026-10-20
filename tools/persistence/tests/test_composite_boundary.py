@@ -67,8 +67,8 @@ def _refusal(graph: Graph):
 
 @lru_cache(maxsize=None)
 def _project_text_for(guards: bool) -> str:
-    compiled, _ = compile_to_graph(receipt_only(PROJECT_EXAMPLE))
-    return next(o for o in templatecheck.operations(compiled, guards) if o.template == TEMPLATE).text
+    compiled, _ = compile_to_graph(receipt_only(PROJECT_EXAMPLE), guards=guards)
+    return next(o for o in templatecheck.operations(compiled) if o.template == TEMPLATE).text
 
 
 def _project_text() -> str:
@@ -76,8 +76,8 @@ def _project_text() -> str:
 
 
 def _text(graph: Graph) -> str:
-    compiled, _ = compile_to_graph(graph)
-    return next(o for o in templatecheck.operations(compiled, engines.guards()) if o.template == TEMPLATE).text
+    compiled, _ = compile_to_graph(graph, guards=engines.guards())
+    return next(o for o in templatecheck.operations(compiled) if o.template == TEMPLATE).text
 
 
 def _values() -> dict:

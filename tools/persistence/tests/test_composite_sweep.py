@@ -49,8 +49,8 @@ PAYLOAD = (
 
 @lru_cache(maxsize=None)
 def _text_for(template: str, guards: bool) -> str:
-    compiled, _ = compile_to_graph(receipt_only(FIXTURES[template]))
-    return next(o for o in templatecheck.operations(compiled, guards) if o.template == template).text
+    compiled, _ = compile_to_graph(receipt_only(FIXTURES[template]), guards=guards)
+    return next(o for o in templatecheck.operations(compiled) if o.template == template).text
 
 
 def _text(template: str) -> str:

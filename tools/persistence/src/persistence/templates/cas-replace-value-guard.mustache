@@ -1,5 +1,6 @@
 {{! cas-replace-value-guard: guide section 14.2's value-based CAS for
-    NoBoundary targets. Guards on the OLD value of the guard property
+    NoBoundary targets, whose values live in the family's dal:dataGraph
+    (H2.7, TD-43). Guards on the OLD value of the guard property
     (compile-time Mustache slot guardProperty), not on a version row: no
     aggregate exists to whole-graph replace here.
 
@@ -10,6 +11,6 @@
     caught by this template's own render-and-parse test. }}
 PREFIX pat: <https://example.org/lattice/patterns#>
 
-DELETE { $root {{{guardProperty}}} $oldValue }
-INSERT { $root {{{guardProperty}}} $newValue }
-WHERE  { $root {{{guardProperty}}} $oldValue }
+DELETE { GRAPH {{{dataGraph}}} { $root {{{guardProperty}}} $oldValue } }
+INSERT { GRAPH {{{dataGraph}}} { $root {{{guardProperty}}} $newValue } }
+WHERE  { GRAPH {{{dataGraph}}} { $root {{{guardProperty}}} $oldValue } }

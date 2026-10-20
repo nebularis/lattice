@@ -206,12 +206,13 @@ def select_operations(
             ops.append(GeneratedOperation("cas-replace", composite_template, bindings))
             ops.append(GeneratedOperation("tombstone-delete", tombstone_template, bindings))
         elif boundary == "NoBoundary":
-            guard_prop = dimensions["concurrencyProfile"].extra.get("valueGuardProperty")
-            bindings = common_bindings + (
-                [ParameterBinding("guardProperty", "Iri", Iri.encode(str(guard_prop)))]
-                if guard_prop is not None
-                else []
-            )
+            # The values live in the family's data graph, which the validator has required (MissingDataGraph, H2.7-Q1), and the
+            # value guard property, which it has required too (NoBoundaryConcurrencyConflict).
+            guard_prop = dimensions["concurrencyProfile"].extra["valueGuardProperty"]
+            bindings = common_bindings + [
+                ParameterBinding("guardProperty", "Iri", Iri.encode(str(guard_prop))),
+                ParameterBinding("dataGraph", "Iri", Iri.encode(str(dimensions["aggregateBoundary"].extra["dataGraph"]))),
+            ]
             ops.append(GeneratedOperation("cas-replace", "cas-replace-value-guard.mustache", bindings))
     elif concurrency == "AppendOnly" or ordering == "EventGrain" or discipline == "AppendRecords":
         # A stream's version row is bootstrapped eagerly before any append

@@ -104,8 +104,8 @@ def _in_place_operation() -> str:
     from persistence.compiler import compile_to_graph
     from persistence.instantiate import instantiate_by_target
 
-    compiled, _ = compile_to_graph(witness._load_fixture(Path(witness.EXAMPLES_DIR) / "composite-project-ownership.ttl"))
-    (by_target,) = instantiate_by_target(compiled, guards=False).values()
+    compiled, _ = compile_to_graph(witness._load_fixture(Path(witness.EXAMPLES_DIR) / "composite-project-ownership.ttl"), guards=False)
+    (by_target,) = instantiate_by_target(compiled).values()
     text = by_target["cas-replace"]
     return text, re.search(r"GRAPH <(urn:g:meta/\d+)>", text).group(1)
 

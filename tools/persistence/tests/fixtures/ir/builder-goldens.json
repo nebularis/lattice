@@ -79,6 +79,10 @@
     "sha256": "f3ed328564f6172396dd1a97dbffb2fbf908baa636d37f05980939d29b9107fb",
     "version": 1
   },
+  "cas-replace-value-guard": {
+    "sha256": "7d9c9887f519aa9cc5dcbddebf2b9e36c370f7811b03c64de3737a469fb8faa0",
+    "version": 2
+  },
   "create-if-absent-composite": {
     "sha256": "86818e3fe91cf91459935cbff5c1ba146d99743650ec4b84c72ff0e3a236dd4f",
     "version": 1

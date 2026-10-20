@@ -45,8 +45,8 @@ _OPERATION = {"create-if-absent-composite": "create-if-absent", "cas-replace-com
 
 @lru_cache(maxsize=None)
 def _text_for(template: str, guards: bool) -> str:
-    compiled, _ = compile_to_graph(receipt_only(PROJECT_EXAMPLE))
-    (by_target,) = instantiate_by_target(compiled, guards=guards).values()
+    compiled, _ = compile_to_graph(receipt_only(PROJECT_EXAMPLE), guards=guards)
+    (by_target,) = instantiate_by_target(compiled).values()
     return by_target[_OPERATION[template]].replace("{{{payloadTriples}}}", templatecheck._SLOT_STAND_INS["payloadTriples"])
 
 

@@ -15,7 +15,9 @@ import pytest
 import engines
 from rdflib import RDF, XSD, Dataset, Literal as RdfLiteral, URIRef
 
+from persistence import witness
 from persistence.builders import build
+from persistence.compiler import compile_to_graph
 from persistence.ir import Kind, ParamRef, TermGuard
 from persistence.ir_render import _Out, render
 from persistence.terms import Iri, Literal
@@ -390,11 +392,11 @@ def test_h2_3_t29_the_default_and_caller_named_forms_of_a_replace_are_pinned_and
     ])
 
 
-def _compiled_with(stem: str):
-    from test_builders import _corpus
-
+def _compiled_with(stem: str, **choices):
+    """The profile of the first fixture that generates ``stem``, compiled with the run's choices (``guards``, ``graph_names``)."""
     name = _first(stem)[0]
-    return next(c for n, c in _corpus() if n == name)
+    path = next(p for p in witness.compile_fixtures() if p.name == name)
+    return compile_to_graph(witness._load_fixture(path), **choices)[0]
 
 
 def test_h2_3_t30_instantiate_renders_the_caller_named_form_on_request():
@@ -402,19 +404,20 @@ def test_h2_3_t30_instantiate_renders_the_caller_named_form_on_request():
 
     stem = "unconditional-write"
     default = next(iter(instantiate_by_target(_compiled_with(stem)).values()))
-    caller = next(iter(instantiate_by_target(_compiled_with(stem), graph_names="caller").values()))
+    caller = next(iter(instantiate_by_target(_compiled_with(stem, graph_names="caller")).values()))
     assert default != caller
     text = next(t for t in caller.values() if "GRAPH $g" in t)
     assert "sameTerm($g" in text
 
 
-def test_h2_3_t31_the_command_line_flag_gives_the_caller_named_form(tmp_path):
+def test_h2_3_t31_the_command_line_flag_of_compile_gives_the_caller_named_form(tmp_path):
     from persistence.cli import main
 
-    compiled = tmp_path / "compiled.ttl"
+    compiled, caller_profile = tmp_path / "compiled.ttl", tmp_path / "caller.ttl"
     _compiled_with("unconditional-write").serialize(compiled, format="turtle")
+    _compiled_with("unconditional-write", graph_names="caller").serialize(caller_profile, format="turtle")
     assert main(["instantiate", str(compiled), "--out", str(tmp_path / "default")]) == 0
-    assert main(["instantiate", str(compiled), "--out", str(tmp_path / "caller"), "--caller-graph-names"]) == 0
+    assert main(["instantiate", str(caller_profile), "--out", str(tmp_path / "caller")]) == 0
     default = "".join(p.read_text(encoding="utf-8") for p in (tmp_path / "default").rglob("*.rq"))
     caller = "".join(p.read_text(encoding="utf-8") for p in (tmp_path / "caller").rglob("*.rq"))
     assert "GRAPH $g" not in default and "GRAPH $g" in caller

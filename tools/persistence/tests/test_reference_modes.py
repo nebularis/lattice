@@ -8,7 +8,7 @@ contract. Validation Pack: docs/developer/validation/FMH-H2-6e.md. Test IDs are 
 from __future__ import annotations
 
 import pytest
-from rdflib import RDF, URIRef
+from rdflib import RDF, BNode, URIRef
 
 from persistence import witness
 from persistence.boundary import BY_IDENTITY, PINNED, walk_ownership
@@ -75,8 +75,10 @@ def test_h2_6e_t2_an_edge_with_no_mode_is_by_identity_and_a_declared_one_is_read
 
 def test_h2_6e_t3_the_compiled_profile_records_each_edge_with_its_mode():
     out, _ = compile_to_graph(_config(_edge("referee", "Versioned", "; dal:referenceMode dal:Pinned") + "ex:Versioned rdfs:subClassOf fnd:Version ."))
-    nodes = list(out.subjects(RDF.type, DAL.ReferenceEdge))
-    assert len(nodes) == len(list(out.objects(None, DAL.referenceEdge))) == 3  # the base's two (an owned edge and a reference) and the pinned one
+    (profile,) = out.subjects(RDF.type, DAL.CompiledProfile)
+    nodes = list(out.objects(profile, DAL.referenceEdge))  # the profile's own, apart from the copies a payload contract carries (H2.7)
+    assert len(nodes) == 3  # the base's two (an owned edge and a reference) and the pinned one
+    assert all(isinstance(n, BNode) for n in nodes)
     by_predicate = {str(out.value(n, DAL.edgePredicate)).rsplit("#", 1)[-1]: n for n in nodes}
     assert out.value(by_predicate["referee"], DAL.referenceMode) == DAL.Pinned
     assert out.value(by_predicate["referee"], DAL.edgeOwnership) == DAL.Reference

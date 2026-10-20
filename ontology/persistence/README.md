@@ -480,7 +480,7 @@ entities it refers to, is a fact about their domain
 |---|---|---|---|
 | `dal:NamedGraphBoundary` | everything in one named graph per aggregate root | `dal:graphIriTemplate` | the whole graph is replaced |
 | `dal:CompositePropertyBoundary` | the nodes reached from the root along the owned edges of a classified shape, in one named graph | `dal:boundaryShape`, an `sh:NodeShape` whose node properties carry `dal:ownership`, and `dal:dataGraph` | the closure is swept and rewritten |
-| `dal:NoBoundary` | no aggregate: one property's value | `dal:valueGuardProperty` on the concurrency profile | a value-based guard on that property |
+| `dal:NoBoundary` | no aggregate: one property's value | `dal:valueGuardProperty` on the concurrency profile, and `dal:dataGraph` | a value-based guard on that property, in the data graph |
 
 **Why replace whole.** If the previous version of an order had three line items and the new one has
 two, a patch that forgets the third leaves a dangling triple. Replacing the aggregate makes each write
@@ -589,7 +589,10 @@ conditional requests (`dal:SingleRepresentation`) or folds the representation in
 
 **Value-based guards.** With `dal:NoBoundary`, compare-and-set guards on the old value of one property
 (`dal:valueGuardProperty`) instead of a version row. It suits a status field in a state machine, and it
-cannot detect a concurrent change to any other field.
+cannot detect a concurrent change to any other field. The values live in the family's `dal:dataGraph`, as a
+composite family's aggregates do, and a family with no boundary that guards a value and declares none is
+refused (`MissingDataGraph`). Every pattern of the guard is inside that graph, never in the default graph, whose
+contents differ between stores.
 
 ### 7.3 Ordering
 
@@ -1187,13 +1190,40 @@ isolation should be, and only the tests say what it is.
 | Load | one graph: this ontology, the adopter's configuration and applied ontology | malformed Turtle |
 | Resolve | one value per dimension per target, each with the profile that won and how many candidates there were (`dal:ResolvedDimension`) | `ProfileAmbiguityError` |
 | Validate | diagnostics: refusals and warnings (§12) | `CrossAxisViolation`, `BoundaryConflict`, `MissingBoundaryShapeError` |
-| Select | one named template per generated operation | none: a lookup table |
-| Emit | `dal:GeneratedOperation`s with reified `dal:ParameterBinding`s, minting recipes, the capability requirement | an encoder rejection |
+| Select | one named builder per generated operation | none: a lookup table |
+| Emit | `dal:GeneratedOperation`s with reified `dal:ParameterBinding`s and the contract of each (§9.1), minting recipes, the capability requirement | an encoder rejection |
 
-The compiled profile names templates and parameters. It never embeds SPARQL text, so it is the same
-whatever store will run it. `instantiate` mixes the parameters into the template library to produce
-portable `.rq` files, and `export-recipes` writes the minting recipes as JSON. Neither assumes the other
+The compiled profile names builders and parameters. It never embeds SPARQL text, so it is the same
+whatever store will run it. `instantiate` finds each builder by its `dal:templateId`, the operation's id with
+no suffix, and renders portable `.rq` files, and `export-recipes` writes the minting recipes as JSON. Neither assumes the other
 is ever run, and an adopter who wants only the generated SPARQL can run both once and walk away.
+
+**The run's choices are in the profile.** `compile --no-parameter-guards` leaves the required-parameter guard out of
+every operation, for a caller whose own code checks every parameter, and `compile --caller-graph-names` has the caller
+name each root's graph as `$g`. The profile records both on each operation (`dal:guardStatus`, `dal:graphNaming`)
+and `instantiate` renders what the profile says. It has no flags of its own, so a profile cannot say its queries are
+guarded while the rendered queries are not.
+
+### 9.1 The contract of a generated operation
+
+Each `dal:GeneratedOperation` also states what a caller in any language, a relational realisation and a model checker need, with no
+SPARQL text and no blank node. Every node of it has an IRI minted from the target (and the deployment, where there is one), the operation and the part,
+for example `<…/compiled/LoanApplication/cas-replace#param-root>`, so two compiles give the same IRIs.
+
+| Part | Holds |
+|---|---|
+| `dal:operationKind` | an individual of the closed `dal:OperationKind`, for example `dal:Create`, `dal:Replace`, `dal:Audit`, `dal:MembersRead`, and `dal:PayloadCheck`, which no operation has yet |
+| `dal:templateVersion` | the builder's version, bumped by any change to the text it renders |
+| `dal:parameter` | each parameter's name, kind (`dal:ParameterKind`) and whether it is required. A caller-named graph's rule is `dal:GraphNameOfRoot`, which refers to `dal:graphIriTemplate`, and a registry list says it is sourced from the family's `dal:registryGraph` |
+| `dal:access` | each logical resource the operation touches (`dal:ResourceKind`, such as `dal:VersionRow` or `dal:Receipt`), the mode (`dal:PointRead`, `dal:AbsenceRead`, `dal:ScanRead`, `dal:WholeAggregateRead`, `dal:Insert`, `dal:Delete`) and the parameter that keys it |
+| `dal:resultColumn` | each column of an audit or of the members query, with its kind and a separator |
+| `dal:payloadContract` | the payload slot, its root, its encoding (`dal:GroundNTriples`), the boundary shape or `dal:NoBoundaryShape`, and the edges of the shape |
+| `dal:digestContract` | what the request digest is hashed over, in order: the operation kind, the target, the expected seq, and the payload, the events, or the added and dropped triples |
+| `dal:guardStatus`, `dal:graphNaming` | the run's choices, above |
+| `dal:declarationSource` | `dal:BuilderDerived`, read from the builder. `dal:HandDeclared` is kept for an operation with no builder, and none has since the value guard was given one |
+
+The kinds, modes and resources are individuals of `spec/persistence.ttl` §10a, each with its logical key and realisation. Shapes
+in `shapes/constraints.ttl` check a compiled profile (§12), and the files of `test/expected-profiles/` are their positive fixtures.
 
 **Which operations a target gets** follows from its dimensions:
 
@@ -1201,7 +1231,7 @@ is ever run, and an adopter who wants only the generated SPARQL can run both onc
 |---|---|
 | `dal:Optimistic` with a named-graph boundary | `create-if-absent` (or `bootstrap-version-row` under `dal:PreCreatedRow`), `cas-replace`, `tombstone-delete` |
 | `dal:Optimistic` with a composite boundary | `create-if-absent` (or `bootstrap-version-row` under `dal:PreCreatedRow`), `cas-replace` and `tombstone-delete`, each sweeping the aggregate with one property path inside the family's `dal:dataGraph` |
-| `dal:Optimistic` with no boundary | `cas-replace` guarded on `dal:valueGuardProperty` |
+| `dal:Optimistic` with no boundary | `cas-replace` guarded on `dal:valueGuardProperty`, inside the family's `dal:dataGraph` |
 | `dal:AppendVersions` (composite boundary, or no boundary with a `dal:dataGraph`, under `dal:Optimistic`) | `bootstrap-version-row` and `append-version`, whatever `dal:firstWrite` says, and no `tombstone-delete` (§7.10) |
 | `dal:AppendRecords` | `bootstrap-version-row` and `append`, whatever the concurrency |
 | `dal:AppendOnly`, or event grain with any concurrency other than `dal:Optimistic` | `bootstrap-version-row` and `append` |
@@ -1555,7 +1585,7 @@ it, so regenerate after such a change, and before reading the output against thi
 replaces `execution/` whole. Its output is deterministic, so a copy taken before the change and
 `diff -r` show exactly what the change did to the generated SPARQL. Compiled profiles are not
 written here. Their blank-node labels are stable since formal-methods H1.5, so a compiled profile is byte-identical between runs
-(`tools/persistence/tests/test_compiled_profile_stable.py`), and H2.6 keeps expected compiled profiles under `test/expected-profiles/`.
+(`tools/persistence/tests/test_compiled_profile_stable.py`), and `test/expected-profiles/` keeps the reviewed compiled profile of each example, which `compile` must emit up to graph isomorphism.
 
 ---
 
@@ -1571,6 +1601,7 @@ profile nodes, which node-local shapes cannot see.
 | Check | Why |
 |---|---|
 | no boundary with compare-and-set and no value guard | there is nothing to replace whole |
+| no boundary with a value guard and no `dal:dataGraph` | the guard would read and write the default graph, whose contents differ between stores |
 | composite boundary with receipts only, unless the family appends versions or records | a receipt could not say what changed inside the closure |
 | `dal:AppendVersions` on a named-graph family, without `dal:Optimistic`, or with no boundary and no data graph | the write has no variant, or no version row to guard, or no graph to hold the versions |
 | commit grain with `opSeq` required | the two contradict each other |
@@ -1589,6 +1620,15 @@ a dataset tier is declared, an advisory contiguity check, sorted acquisition wit
 update, declared shard counts not yet honoured, mixed receipt models in one graph family, a
 profile scoped to a bare class from another namespace, and a subclass of `fnd:Version` written in place.
 
+**Shapes over a compiled profile.** The contract of §9.1 is held to its structure by one shape per declaration
+(`dal:OperationContractShape`, `dal:ParameterDeclarationShape`, `dal:ResourceAccessShape`, `dal:ResultColumnShape`,
+`dal:PayloadContractShape`, `dal:DigestContractShape`, `dal:DigestPartShape`), and to three rules that cross them. Every enumeration
+value is closed with `sh:in`, so a kind, mode or resource outside the spec fails. A declaration is an IRI and never a blank node
+(`dal:ContractDeclarationIsIriShape`). No value is SPARQL text, since a declaration holds the properties of its class and a name or a
+separator is a short word (`dal:ContractHoldsNoSparqlTextShape`). A required parameter is guarded unless `dal:guardStatus` says otherwise
+(`dal:RequiredParametersGuardedShape`). The write discipline, the receipt model, the membership encoding and the reference mode are closed the same way
+(`dal:WriteDisciplineProfileShape`, `dal:ReceiptProfileShape`, `dal:ReferenceModeShape`).
+
 ---
 
 ## 13. Repository layout
@@ -1606,10 +1646,11 @@ ontology/persistence/
   execution/                 the SPARQL and recipes each example compiles to: generated by
                              mise run build:persistence-execution, ignored by git (§11.5)
   docs/                      the precedence algorithm and the aggregate-boundary design
-  test/expected-profiles/    the compiled profile each example is expected to give once the compiler emits the
-                             contract of every generated operation (formal-methods H2.6). The terms in these
-                             files are proposals and are not in spec/ yet. Not validated against the shapes.
+  test/expected-profiles/    the compiled profile each example gives, with the contract of every generated
+                             operation (§9.1). Compared with the output of compile by graph isomorphism, and the
+                             positive fixtures of the shapes over a compiled profile (§12).
                              Regenerate with mise run build:persistence-expected-profiles
+  test/membership/           the stored triples of a set of members under each membership encoding (§7.10.1)
 ```
 
 The compiler that consumes this ontology lives in [`tools/persistence`](../../tools/persistence/README.md),

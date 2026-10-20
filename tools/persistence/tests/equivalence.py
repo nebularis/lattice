@@ -82,8 +82,8 @@ def ported_operations(compiled_corpus):
     for fixture, compiled in compiled_corpus:
         for profile in sorted(compiled.subjects(RDF.type, DAL.CompiledProfile), key=str):
             for node in sorted(compiled.objects(profile, DAL.generatedOperation), key=str):
-                path = str(compiled.value(compiled.value(node, DAL.usesTemplate), DAL.templatePath))
-                stem = path.removesuffix(".mustache")
+                path = str(compiled.value(compiled.value(node, DAL.usesTemplate), DAL.templateId))
+                stem = path.removesuffix(".mustache")  # a templateId has no suffix since H2.7
                 if stem in BUILDERS:
                     out.append((fixture, str(compiled.value(node, DAL.forOperation)), stem, operation_context(compiled, node)))
     return out

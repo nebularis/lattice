@@ -23,7 +23,10 @@ from .capability import (
     compute_requirement,
     load_capability_spec,
 )
-from .contract import EdgeContract, edge_contracts
+from .builders import _check_graph_names
+from .contract import edge_contracts
+from .contract_emit import add_edge_facts, contract_for, emit_contract
+from .instantiate import TEMPLATE_SUFFIX
 from .model import DIMENSIONS, Diagnostic, ResolvedDimension
 from .namespaces import DAL
 from .operations import GeneratedOperation, default_graph_template, select_operations
@@ -163,23 +166,14 @@ def _profile_label(compiled: CompiledTarget) -> str:
     return "p" + hashlib.sha256(key.encode("utf-8")).hexdigest()[:12]
 
 
-def add_edge_facts(out: Graph, node, edge: EdgeContract) -> None:
-    """What the compiled profile and the contract both say of one edge: where it leaves, its step, its ownership, the class it leads to
-    and its reference mode."""
-    out.add((node, DAL.edgeSource, URIRef(edge.source_shape)))
-    out.add((node, DAL.edgePredicate, URIRef(edge.predicate)))
-    out.add((node, DAL.edgeInverse, RdfLiteral(edge.inverse)))
-    out.add((node, DAL.edgeOwnership, DAL[edge.ownership]))
-    if edge.target_class is not None:
-        out.add((node, DAL.edgeTargetClass, URIRef(edge.target_class)))
-    out.add((node, DAL.referenceMode, DAL[edge.reference_mode]))
-
-
-def emit_compiled_profile(out: Graph, compiled: CompiledTarget) -> URIRef:
+def emit_compiled_profile(out: Graph, compiled: CompiledTarget, guards: bool = True, graph_names: str = "query") -> URIRef:
     """Serialise one :class:`CompiledTarget` into ``out`` as a
     ``dal:CompiledProfile`` individual. Never writes literal SPARQL text
     (ADR-A79 point 2): only resolved values, provenance, template
-    identifiers, and reified parameter bindings."""
+    identifiers, reified parameter bindings, and the contract of each
+    operation (H2.7). ``guards`` and ``graph_names`` are the run's choices,
+    which the contract records (``dal:guardStatus``, ``dal:graphNaming``) and
+    ``instantiate`` follows."""
     stem = _profile_label(compiled)
     profile = BNode(stem)
     out.add((profile, RDF.type, DAL.CompiledProfile))
@@ -232,8 +226,7 @@ def emit_compiled_profile(out: Graph, compiled: CompiledTarget) -> URIRef:
         out.add((op_node, DAL.forOperation, RdfLiteral(op.operation)))
         template_node = BNode(f"{op_stem}-template")
         out.add((template_node, RDF.type, DAL.Template))
-        out.add((template_node, DAL.templateId, RdfLiteral(op.template_id)))
-        out.add((template_node, DAL.templatePath, RdfLiteral(op.template_id)))
+        out.add((template_node, DAL.templateId, RdfLiteral(op.template_id.removesuffix(TEMPLATE_SUFFIX))))
         out.add((op_node, DAL.usesTemplate, template_node))
         for binding in op.bindings:
             binding_node = BNode(f"{op_stem}-binding-{binding.name}")
@@ -243,6 +236,16 @@ def emit_compiled_profile(out: Graph, compiled: CompiledTarget) -> URIRef:
             out.add((binding_node, DAL.paramValue, RdfLiteral(str(binding.value))))
             out.add((op_node, DAL.hasParameterBinding, binding_node))
         out.add((profile, DAL.generatedOperation, op_node))
+        # H2.7: the contract of the operation, from its builder, under the run's choices. Every operation has a builder.
+        edges = edge_contracts(compiled.dimensions["aggregateBoundary"].extra.get("ownershipTree"))
+        contract = contract_for(out, op_node, guards=guards, graph_names=graph_names, edges=edges)
+        if contract is None:
+            raise KeyError(f"no builder and no hand declaration for the operation {op.operation} ({op.template_id})")
+        shape = compiled.dimensions["aggregateBoundary"].extra.get("boundaryShape")
+        emit_contract(
+            out, op_node, compiled.target.cls, op.operation, contract, URIRef(str(shape)) if shape is not None else None,
+            compiled.target.deployment,
+        )
 
     req_node = BNode(f"{stem}-requirement")
     out.add((req_node, RDF.type, DAL.CapabilityRequirement))
@@ -288,12 +291,18 @@ def compile_to_graph(
     graph: Graph,
     classes: set[URIRef] | None = None,
     fail_on_capability_mismatch: bool = True,
+    guards: bool = True,
+    graph_names: str = "query",
 ) -> tuple[Graph, list[CompiledTarget]]:
+    """Compile ``graph`` and emit the profile. ``guards`` is false for a caller whose own code checks every parameter, and ``graph_names``
+    is ``caller`` to have the caller name each root's graph as ``$g`` (ADR-A123 addenda of 2026-10-12). The profile records both, and
+    ``instantiate`` renders what the profile says (H2.7-Q2)."""
+    _check_graph_names(graph_names)
     compiled = compile_targets(graph, classes, fail_on_capability_mismatch)
     out = Graph()
     out.bind("dal", DAL)
     for ct in compiled:
-        emit_compiled_profile(out, ct)
+        emit_compiled_profile(out, ct, guards, graph_names)
     return out, compiled
 
 

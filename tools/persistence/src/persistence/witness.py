@@ -15,7 +15,8 @@ rule in four families and requires, for each, at least one fixture that
     a named ``Diagnostic`` of severity WARNING.
 ``shape``
     a ``sh:NodeShape`` in ``ontology/persistence/shapes/constraints.ttl``.
-    It is witnessed when validating a fixture reports a result from it.
+    It is witnessed when validating a fixture reports a result from it, and
+    another fixture, which may be an expected compiled profile, conforms.
 ``audit``
     an always-on audit query template. It is witnessed by a dataset that
     makes it return at least one row, and a clean dataset that makes it
@@ -56,6 +57,7 @@ REPO_ROOT = PACKAGE_DIR.parents[3]
 SPEC_TTL = REPO_ROOT / "ontology" / "persistence" / "spec" / "persistence.ttl"
 SHAPES_TTL = REPO_ROOT / "ontology" / "persistence" / "shapes" / "constraints.ttl"
 EXAMPLES_DIR = REPO_ROOT / "ontology" / "persistence" / "examples"
+EXPECTED_PROFILES_DIR = REPO_ROOT / "ontology" / "persistence" / "test" / "expected-profiles"
 WITNESS_DIR = REPO_ROOT / "tools" / "persistence" / "tests" / "witnesses"
 KNOWN_GAPS = WITNESS_DIR / "known-gaps.txt"
 TEMPLATE_DIR = PACKAGE_DIR / "templates"
@@ -576,7 +578,8 @@ def _observations() -> tuple[Observed, tuple[str, ...]]:
     fixture, and run every audit witness."""
     fixtures = list(compile_fixtures())
     observed = observe_compile(fixtures)
-    fired, conforming = observe_shapes(fixtures)
+    # The expected compiled profiles are the positive fixtures of the shapes over a compiled profile (H2.7). They are not compiled.
+    fired, conforming = observe_shapes([*fixtures, *sorted(EXPECTED_PROFILES_DIR.glob("*.expected.ttl"))])
     problems_shapes: list[str] = []
     for rule, witnesses in fired.items():
         if rule in conforming:

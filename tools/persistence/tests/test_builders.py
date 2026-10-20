@@ -62,7 +62,8 @@ def test_h2_2_t1_the_ported_operations_are_the_templates_listed_and_every_one_is
         "create-if-absent-named-graph", "create-if-absent-named-graph-dataset-guard",
         "tombstone-delete-composite", "tombstone-delete-composite-dataset-guard",
         "tombstone-delete-named-graph", "tombstone-delete-named-graph-dataset-guard", "unconditional-write",
-        # H2.5: the key claims and the audits. Every template is ported, apart from cas-replace-value-guard (TD-43).
+        # H2.5: the key claims and the audits. H2.7 ported the last template, cas-replace-value-guard (TD-43).
+        "cas-replace-value-guard",
         "key-claim-write", "key-claim-write-dual", "key-claim-retire", "key-claim-quarantine", "key-claim-merge-rewrite",
         "key-claim-duplicate-audit", "fork-detection-audit", "gap-scan-audit", "revision-multi-txn-audit", "txn-multi-revision-audit",
         # H2.6f: the append of versions that states its members as changes, and the query that reads them.
@@ -336,10 +337,11 @@ def test_h2_2_t16_a_missing_stream_is_not_bound_from_the_data():
 # ---- instantiate renders the ported operations from their builders --------------------------------------------
 
 
-def _instantiate(**kwargs) -> dict:
+def _instantiate(*, guards: bool = True, graph_names: str = "query", **kwargs) -> dict:
+    """The operations of the append-event fixture as `instantiate` renders them from a profile compiled with the run's choices (H2.7-Q2)."""
     from persistence.instantiate import instantiate_by_target
 
-    name, compiled = next((n, c) for n, c in _corpus() if n == "template-append-event.ttl")
+    compiled, _ = compile_to_graph(witness._load_fixture(witness.WITNESS_DIR / "template-append-event.ttl"), guards=guards, graph_names=graph_names)
     return instantiate_by_target(compiled, **kwargs)
 
 
@@ -359,14 +361,15 @@ def test_h2_2_t18_an_overriding_template_library_is_still_rendered_by_mustache(t
     assert "ISIRI" not in text and "{{" not in text.replace("{{{payloadTriples}}}", "").replace("{{{eventRows}}}", "").replace("{{{eventTriples}}}", "")
 
 
-def test_h2_2_t19_the_command_line_flag_leaves_the_guards_out(tmp_path):
+def test_h2_2_t19_the_command_line_flag_of_compile_leaves_the_guards_out_and_instantiate_follows_the_profile(tmp_path):
     from persistence.cli import main
 
-    compiled = tmp_path / "compiled.ttl"
-    _, graph = next((n, c) for n, c in _corpus() if n == "template-append-event.ttl")
-    graph.serialize(compiled, format="turtle")
-    assert main(["instantiate", str(compiled), "--out", str(tmp_path / "on")]) == 0
-    assert main(["instantiate", str(compiled), "--out", str(tmp_path / "off"), "--no-parameter-guards"]) == 0
+    config = [str(witness.SPEC_TTL), str(witness.EXAMPLES_DIR / "append-stream-dataset-guard.ttl")]
+    on_profile, off_profile = tmp_path / "on.ttl", tmp_path / "off.ttl"
+    assert main(["compile", *config, "--out", str(on_profile)]) == 0
+    assert main(["compile", *config, "--out", str(off_profile), "--no-parameter-guards"]) == 0
+    assert main(["instantiate", str(on_profile), "--out", str(tmp_path / "on")]) == 0
+    assert main(["instantiate", str(off_profile), "--out", str(tmp_path / "off")]) == 0
     on = next((tmp_path / "on").rglob("append.rq")).read_text(encoding="utf-8")
     off = next((tmp_path / "off").rglob("append.rq")).read_text(encoding="utf-8")
     assert "ISIRI($stream)" in on and "ISIRI($stream)" not in off

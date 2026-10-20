@@ -49,7 +49,7 @@ The shape is the authority on which edges exist, and an edge it does not declare
 
 | Refusal | When |
 |---|---|
-| `MissingDataGraph` | a composite profile names no `dal:dataGraph` |
+| `MissingDataGraph` | a composite profile names no `dal:dataGraph`, or a `dal:NoBoundary` profile with `dal:Optimistic` and a `dal:valueGuardProperty` names none, so its values would be read and written in the default graph |
 | `MissingBoundaryShapeError` | a composite profile names no `dal:boundaryShape` |
 | `ComplexBoundaryPath` | a property shape's `sh:path` is neither an IRI nor `[ sh:inversePath IRI ]` |
 | `UnclassifiedBoundaryEdge` | an edge leads to a node and carries no `dal:ownership` |

@@ -890,6 +890,22 @@ def _gap_scan_audit(b: Bindings, *, guards: bool) -> Operation:
     )
 
 
+def _value_guard(b: Bindings, *, guards: bool) -> Operation:
+    """The value-based compare-and-set of a ``dal:NoBoundary`` target (guide §14.2, TD-43): replace the old value of one property of a
+    root with a new one, only if the old value is still there. Every pattern sits in the family's ``dal:dataGraph``, which a family with
+    no boundary must declare (H2.7-Q1), so the write no longer depends on what a store's default graph holds."""
+    pattern = (Triple(ParamRef("root"), b.const("guardProperty"), ParamRef("oldValue")),)
+    data = b.graph("dataGraph")
+    return Operation.build(
+        "cas-replace-value-guard",
+        (Param("root", Kind.IRI), Param("oldValue", Kind.IRI_OR_LITERAL), Param("newValue", Kind.IRI_OR_LITERAL)),
+        Group((GraphBlock(data, pattern),)),
+        guards=guards,
+        delete=(GraphBlock(data, pattern),),
+        insert=(GraphBlock(data, (Triple(ParamRef("root"), b.const("guardProperty"), ParamRef("newValue")),)),),
+    )
+
+
 Builder = Callable[[Bindings, bool, str], Operation]
 
 BUILDERS: dict[str, Builder] = {
@@ -904,6 +920,7 @@ BUILDERS: dict[str, Builder] = {
     "tombstone-delete-named-graph": lambda b, guards, names: _tombstone(b, guards=guards, dataset_guard=False, graph_names=names),
     "tombstone-delete-named-graph-dataset-guard": lambda b, guards, names: _tombstone(b, guards=guards, dataset_guard=True, graph_names=names),
     "unconditional-write": lambda b, guards, names: _unconditional(b, guards=guards, graph_names=names),
+    "cas-replace-value-guard": lambda b, guards, names: _value_guard(b, guards=guards),
     "create-if-absent-composite": lambda b, guards, names: _composite_create(b, guards=guards, dataset_guard=False),
     "create-if-absent-composite-dataset-guard": lambda b, guards, names: _composite_create(b, guards=guards, dataset_guard=True),
     "cas-replace-composite-property": lambda b, guards, names: _composite_replace(b, guards=guards, dataset_guard=False),

@@ -77,7 +77,7 @@ def test_h2_4a_t2_a_tombstone_has_no_payload_and_a_create_reads_the_roots_triple
 
 
 def _text_without_guard(operation: str) -> str:
-    (by_target,) = instantiate_by_target(_compiled(), guards=False).values()
+    (by_target,) = instantiate_by_target(compile_to_graph(receipt_only(PROJECT_EXAMPLE), guards=False)[0]).values()
     return by_target[operation]
 
 

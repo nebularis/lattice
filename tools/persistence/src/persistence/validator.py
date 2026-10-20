@@ -137,6 +137,16 @@ def check_cross_axis(
                 "there is no aggregate to whole-graph replace. Declare a dal:valueGuardProperty "
                 "for a value-based guard (guide §14.2), or declare a real boundary.",
             )
+        # The values the guard reads and writes live in one named graph, never in the default graph, whose contents differ between
+        # stores (static check S-1, H2.7-Q1, TD-43).
+        if discipline != "AppendRecords" and (boundary is None or boundary.extra.get("dataGraph") is None):
+            raise CrossAxisViolation(
+                "MissingDataGraph",
+                str(target),
+                "dal:NoBoundary combined with dal:Optimistic and a dal:valueGuardProperty declares no dal:dataGraph. The value-based "
+                "guard reads and writes the values of one named graph and never the default graph, since stores differ on what the "
+                "default graph holds. Declare dal:dataGraph on the profile.",
+            )
 
     # Row 2: CompositePropertyBoundary + ReceiptOnly. Not for a family that appends, where the history is in the data and a patch
     # log would repeat it (H2.6c-Q5, VH-Q5).

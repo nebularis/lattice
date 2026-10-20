@@ -3278,6 +3278,19 @@ pat:retracts   a owl:ObjectProperty ;   rdfs:comment "Patch-log model: the graph
 
 pat:revision   a owl:ObjectProperty ; rdfs:range pat:Revision ; rdfs:comment "The revision that wrote this event." .
 
+# ---- Versions (formal-methods H2.6c to H2.6f; the append-version operations of tools/persistence) ----
+
+pat:currentVersion  a owl:ObjectProperty ;
+    rdfs:comment "On a version row: the version written last for this identity, the one a read resolves to. Rewritten by every append of a version, and absent before the first." .
+pat:previousVersion a owl:ObjectProperty ;
+    rdfs:comment "On a version: the version of the same identity that was current when this one was written. Links the chain of versions, which a version of a family that states its members as changes is read back along. The domain's own supersession term, for example fnd:supersededBy, is asserted under the domain's rule and never by the write." .
+pat:addsMember      a owl:ObjectProperty ;
+    rdfs:comment "On a version that states its members as changes: a member the version adds to those of the version before it." .
+pat:dropsMember     a owl:ObjectProperty ;
+    rdfs:comment "On a version that states its members as changes: a member of the version before it that this version does not have. A member dropped by a version is out of every version from it on until a later one adds it again." .
+pat:checkpoint      a owl:DatatypeProperty ; rdfs:range xsd:boolean ;
+    rdfs:comment "True on a version that lists every member, under the domain's membership property, the first version and every dal:checkpointEvery versions after it, so that a read of members never follows a chain back further than the nearest checkpoint." .
+
 # ---- Txn claim (subject = urn:txn:{id}; lives in urn:g:txn) ----
 
 pat:rev        a owl:ObjectProperty ; rdfs:range pat:Revision ;
@@ -3291,6 +3304,10 @@ pat:constraint a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:comment "Th
 pat:claimedBy  a owl:ObjectProperty ;   rdfs:comment "The entity that owns this key value. At most one (P1). Released only by its owner, or on the owner's behalf by erasure (§24.5)." .
 pat:retiredBy  a owl:ObjectProperty ;   rdfs:comment "The former owner that retired this claim. Tombstone; the node is kept, unless the family's erasure policy deletes it (§24.5)." .
 pat:retiredAt  a owl:DatatypeProperty ; rdfs:range xsd:dateTime ; rdfs:comment "Audit only." .
+pat:quarantinedOwner a owl:ObjectProperty ;
+    rdfs:comment "In the quarantine graph, on a claim: an owner of a duplicated claim that the quarantine operation recorded (P7). The claim itself is not touched." .
+pat:quarantinedAt a owl:DatatypeProperty ; rdfs:range xsd:dateTime ;
+    rdfs:comment "In the quarantine graph, on a claim: when the operation recorded the owner. Audit only." .
 pat:counter    a owl:DatatypeProperty ; rdfs:range xsd:long ;
     rdfs:comment "P3 sentinel counter on a key shard node. Rewritten by every claim in the shard to materialise a write conflict." .
 

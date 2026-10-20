@@ -40,8 +40,8 @@ def _template_dir_default() -> Path:
 def load_template(template_path: str, template_dir: Path | None = None) -> str:
     """Read a template file's raw Mustache text.
 
-    ``template_path`` is the value of a ``dal:Template``'s ``dal:templatePath``,
-    a path relative to the template library, never a literal query body
+    ``template_path`` is a path relative to the template library, a ``dal:Template``'s
+    ``dal:templateId`` and the ``.mustache`` suffix, never a literal query body
     (ADR-A79 point 2).
     """
     base = template_dir or _template_dir_default()

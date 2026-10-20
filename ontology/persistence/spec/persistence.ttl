@@ -102,7 +102,7 @@ dal:NamedGraphBoundary        a dal:AggregateBoundaryStrategy ;
 dal:CompositePropertyBoundary a dal:AggregateBoundaryStrategy ;
     rdfs:comment "The aggregate lives in the named graph dal:dataGraph, among other aggregates. Its members are the nodes reached from the root along the owned edges of dal:boundaryShape, a classified tree walked once at compile time. Mandatory: dal:boundaryShape and dal:dataGraph." .
 dal:NoBoundary                a dal:AggregateBoundaryStrategy ;
-    rdfs:comment "No coherent aggregate. Concurrency, if any, is value-based CAS on individual properties." .
+    rdfs:comment "No coherent aggregate. Concurrency, if any, is value-based CAS on individual properties, which live in the profile's dal:dataGraph, mandatory for a family that has one (H2.7-Q1)." .
 
 dal:strategy a owl:ObjectProperty ;
     rdfs:domain dal:AggregateBoundaryProfile ; rdfs:range dal:AggregateBoundaryStrategy .
@@ -112,12 +112,11 @@ dal:graphIriTemplate a owl:DatatypeProperty ;
     rdfs:comment "How to derive the aggregate's graph IRI from its root instance's identity, e.g. \"urn:g:orders/{id}\". Meaningful only for dal:NamedGraphBoundary. It holds {id} exactly once, replaced by the whole root IRI percent-encoded as SPARQL's ENCODE_FOR_URI does, so distinct roots name distinct graphs. Text after {id} is kept and begins with a character the encoding never emits (not a letter, a digit, or one of - . _ ~ %). Across families the text before {id} is not a prefix of another family's. Undeclared, the template is urn:g:<family token>/{id}." .
 
 dal:boundaryShape a owl:ObjectProperty ;
-    rdfs:domain dal:AggregateBoundaryProfile ;
-    rdfs:comment "An sh:NodeShape, the root of a classified tree: every property shape in it that leads to a node carries dal:ownership. Mandatory when dal:strategy is dal:CompositePropertyBoundary. A dal:NamedGraphBoundary profile may name one too, to define the subjects a payload may contain. The compiler walks the tree once, offline. No target backend ever executes it." .
+    rdfs:comment "On a dal:AggregateBoundaryProfile, an sh:NodeShape, the root of a classified tree: every property shape in it that leads to a node carries dal:ownership. Mandatory when dal:strategy is dal:CompositePropertyBoundary. A dal:NamedGraphBoundary profile may name one too, to define the subjects a payload may contain. The compiler walks the tree once, offline. No target backend ever executes it. On a dal:PayloadContract of a compiled profile, the shape the payload is checked against, or dal:NoBoundaryShape. No rdfs:domain is declared, since the property has two." .
 
 dal:dataGraph a owl:ObjectProperty ;
     rdfs:domain dal:AggregateBoundaryProfile ;
-    rdfs:comment "The named graph that holds the aggregates of a dal:CompositePropertyBoundary family. Mandatory for that strategy. Every composite operation reads and writes this graph only, never the default graph, whose contents differ between stores (static check S-1)." .
+    rdfs:comment "The named graph that holds the aggregates of a dal:CompositePropertyBoundary family, and the values of a dal:NoBoundary family. Mandatory for the composite strategy, for dal:NoBoundary under dal:Optimistic with a dal:valueGuardProperty (the refusal is MissingDataGraph, H2.7-Q1, TD-43), and for dal:AppendVersions. Every operation of such a family reads and writes this graph only, never the default graph, whose contents differ between stores (static check S-1)." .
 
 dal:ownsReferenceData a owl:DatatypeProperty ;
     rdfs:domain dal:AggregateBoundaryProfile ; rdfs:range xsd:boolean ;
@@ -218,7 +217,8 @@ dal:datasetTierModel a owl:ObjectProperty ;
 
 dal:ReceiptProfile a owl:Class .
 
-dal:ReceiptModel a owl:Class .
+dal:ReceiptModel a owl:Class ;
+    rdfs:comment "What history a family's writes leave in the receipt log. One of dal:ReceiptOnly, dal:PatchLog, dal:SnapshotPerRevision, dal:NoReceipt." .
 dal:ReceiptOnly         a dal:ReceiptModel ; rdfs:comment "Audit breadcrumbs and CAS outcomes. No replay, no as-of." .
 dal:PatchLog            a dal:ReceiptModel ; rdfs:comment "asserts/retracts delta graphs alongside each receipt, written in the same update as the write (formal-methods H2.6d). A create's add graph holds its payload, a replace's add and del graphs hold the delta the caller computed, and a tombstone's del graph holds what the sweep removed. The graphs are named from the receipt. Enables replay and CDC, and an as-of read backward from the current state. Honoured for the in-place writes of dal:NamedGraphBoundary and dal:CompositePropertyBoundary families." .
 dal:SnapshotPerRevision a dal:ReceiptModel ; rdfs:comment "A sealed payload graph per revision. Trivially as-of, highest storage cost." .
@@ -360,20 +360,14 @@ dal:verdict a owl:DatatypeProperty ;
 #################################################################
 
 dal:Template a owl:Class ;
-    rdfs:comment "A reusable, versioned Mustache SPARQL template, shared across every target resolving to the same dimension combination." .
+    rdfs:comment "The builder that renders a generated operation, shared across every target resolving to the same dimension combination. Its dal:templateId is the builder's identity, the operation id without a suffix. Until H2.9 retires Mustache, a template library file of that name and the suffix .mustache is what an overriding library replaces." .
 
 dal:templateId a owl:DatatypeProperty ;
-    rdfs:domain dal:Template ; rdfs:range xsd:string .
-
-dal:templateVersion a owl:DatatypeProperty ;
-    rdfs:domain dal:Template ; rdfs:range xsd:string .
-
-dal:templatePath a owl:DatatypeProperty ;
     rdfs:domain dal:Template ; rdfs:range xsd:string ;
-    rdfs:comment "Path within the checked-in template library, resolved only by the instantiate stage." .
+    rdfs:comment "The builder's identity, for example cas-replace-composite-property-dataset-guard, with no .mustache suffix. instantiate finds the builder by it." .
 
 dal:GeneratedOperation a owl:Class ;
-    rdfs:comment "One operation (create, cas-replace, tombstone, ...) selected for a target: which template, and which parameters to mix into it." .
+    rdfs:comment "One operation (create, cas-replace, tombstone, ...) selected for a target: which template, which parameters to mix into it, and its contract (§10a)." .
 
 dal:forOperation a owl:DatatypeProperty ;
     rdfs:domain dal:GeneratedOperation ; rdfs:range xsd:string .
@@ -396,6 +390,308 @@ dal:paramType a owl:DatatypeProperty ;
 
 dal:paramValue a owl:DatatypeProperty ;
     rdfs:domain dal:ParameterBinding .
+
+#################################################################
+#    §10a. The contract of a generated operation (formal-methods
+#    H2.7, 2026-10-20). What `persistence compile` records for each
+#    dal:GeneratedOperation, so a caller in any language, a
+#    relational realisation and a model checker need not read the
+#    SPARQL: its kind, its parameters, the logical resources it
+#    touches and how, the columns it returns, the payload and the
+#    request digest it takes, whether its parameter guard is on, and
+#    who names a graph. Two rules hold for every value (shapes/
+#    constraints.ttl enforces both). No declaration is a blank node,
+#    since every declaration node has an IRI minted from the target,
+#    the operation and the part. No value is SPARQL text, since kinds,
+#    modes and resources are the individuals below. Versioning is not
+#    reflected in the version IRI on this branch (TD-64).
+#################################################################
+
+dal:operationKind a owl:ObjectProperty ;
+    rdfs:domain dal:GeneratedOperation ; rdfs:range dal:OperationKind ;
+    rdfs:comment "The logical kind of the operation, one individual of dal:OperationKind. A relational realisation and a model compare operations by kind and not by the SPARQL a builder writes. A dataset-guard variant has the kind of its base operation." .
+
+dal:templateVersion a owl:DatatypeProperty ;
+    rdfs:domain dal:GeneratedOperation ; rdfs:range xsd:integer ;
+    rdfs:comment "The version of the builder that renders the operation, bumped by any change to the text the builder renders, which a golden check in tools/persistence enforces. Not the version of the ontology." .
+
+dal:guardStatus a owl:ObjectProperty ;
+    rdfs:domain dal:GeneratedOperation ; rdfs:range dal:GuardStatus ;
+    rdfs:comment "Whether the operation's required-parameter guard is in the query, as the compile run chose (persistence compile --no-parameter-guards). instantiate renders what this says, so a rendering cannot disagree with its profile." .
+
+dal:graphNaming a owl:ObjectProperty ;
+    rdfs:domain dal:GeneratedOperation ; rdfs:range dal:GraphNaming ;
+    rdfs:comment "Who names the named graph the operation writes, as the compile run chose (persistence compile --caller-graph-names). Absent for an operation that names no graph by a root." .
+
+dal:declarationSource a owl:ObjectProperty ;
+    rdfs:domain dal:GeneratedOperation ; rdfs:range dal:DeclarationSource ;
+    rdfs:comment "Where the contract comes from, derived from the operation's builder or written by hand." .
+
+dal:parameter a owl:ObjectProperty ;
+    rdfs:domain dal:GeneratedOperation ; rdfs:range dal:ParameterDeclaration ;
+    rdfs:comment "A request-time parameter of the operation, one declaration for each $name of its query and each slot a caller fills with text." .
+
+dal:access a owl:ObjectProperty ;
+    rdfs:domain dal:GeneratedOperation ; rdfs:range dal:ResourceAccess ;
+    rdfs:comment "A logical resource the operation touches, one declaration for each resource, mode and key." .
+
+dal:resultColumn a owl:ObjectProperty ;
+    rdfs:domain dal:GeneratedOperation ; rdfs:range dal:ResultColumn ;
+    rdfs:comment "A column of the result of an operation that selects, an audit or the members query, in dal:columnPosition order." .
+
+dal:payloadContract a owl:ObjectProperty ;
+    rdfs:domain dal:GeneratedOperation ; rdfs:range dal:PayloadContract ;
+    rdfs:comment "What the operation takes as the aggregate's triples. Absent for an operation with no payload." .
+
+dal:digestContract a owl:ObjectProperty ;
+    rdfs:domain dal:GeneratedOperation ; rdfs:range dal:DigestContract ;
+    rdfs:comment "What the request digest of an operation that takes $requestDigest is taken over, so a caller in another language can compute it." .
+
+# ---- parameters -------------------------------------------------------------------------------------------------
+
+dal:ParameterDeclaration a owl:Class ;
+    rdfs:comment "One request-time parameter of a generated operation: its name, its kind and whether it is required. Its IRI is minted from the target, the operation and the name." .
+
+dal:parameterName a owl:DatatypeProperty ;
+    rdfs:domain dal:ParameterDeclaration ; rdfs:range xsd:string ;
+    rdfs:comment "The name of the parameter without its $, the name the golden query uses." .
+
+dal:parameterKind a owl:ObjectProperty ;
+    rdfs:domain dal:ParameterDeclaration ; rdfs:range dal:ParameterKind ;
+    rdfs:comment "What the parameter holds, one individual of dal:ParameterKind." .
+
+dal:required a owl:DatatypeProperty ;
+    rdfs:domain dal:ParameterDeclaration ; rdfs:range xsd:boolean ;
+    rdfs:comment "True when the operation does nothing useful without the parameter. A required parameter that is not a request-time slot is guarded unless dal:guardStatus says otherwise." .
+
+dal:mustEqual a owl:ObjectProperty ;
+    rdfs:domain dal:ParameterDeclaration ; rdfs:range dal:Rule ;
+    rdfs:comment "A rule the parameter's value must satisfy, checked by the guard. dal:GraphNameOfRoot, for a graph the caller names." .
+
+dal:mustEqualFor a owl:ObjectProperty ;
+    rdfs:domain dal:ParameterDeclaration ; rdfs:range dal:ParameterDeclaration ;
+    rdfs:comment "The parameter the rule of dal:mustEqual is applied to, the root." .
+
+dal:sourcedFrom a owl:ObjectProperty ;
+    rdfs:domain dal:ParameterDeclaration ; rdfs:range dal:Source ;
+    rdfs:comment "Where a caller obtains the parameter's value, when it is not the caller's own. A caller obligation." .
+
+dal:ParameterKind a owl:Class ;
+    rdfs:comment "What a parameter holds. The first nine are SPARQL terms, and dal:PayloadKind, dal:RowsKind and dal:RegistryListKind are request-time slots, text the caller fills in because a set of triples, of rows or of graph IRIs is not one RDF term." .
+dal:IriKind          a dal:ParameterKind ; rdfs:comment "An IRI." .
+dal:LongKind         a dal:ParameterKind ; rdfs:comment "An xsd:long." .
+dal:StringKind       a dal:ParameterKind ; rdfs:comment "A plain string literal." .
+dal:LangStringKind   a dal:ParameterKind ; rdfs:comment "A language-tagged string." .
+dal:PositionKind     a dal:ParameterKind ; rdfs:comment "A stored position (an epoch or a seq), an xsd:long compared by term." .
+dal:DigestKind       a dal:ParameterKind ; rdfs:comment "A request digest, a lower-case hexadecimal string." .
+dal:IriOrLiteralKind a dal:ParameterKind ; rdfs:comment "An IRI or a literal, a value of a property." .
+dal:LiteralKind      a dal:ParameterKind ; rdfs:comment "A literal." .
+dal:PayloadKind      a dal:ParameterKind ; rdfs:comment "A request-time slot for a set of ground triples." .
+dal:RowsKind         a dal:ParameterKind ; rdfs:comment "A request-time slot for rows of a VALUES clause." .
+dal:RegistryListKind a dal:ParameterKind ; rdfs:comment "A request-time slot for the graph IRIs of the family's registry, which the caller lists." .
+
+dal:Rule a owl:Class ;
+    rdfs:comment "A rule a parameter's value must satisfy, named and never written as a SPARQL expression." .
+dal:GraphNameOfRoot a dal:Rule ;
+    rdfs:comment "The graph IRI the family's dal:graphIriTemplate gives for the value of the root parameter." .
+
+dal:Source a owl:Class ;
+    rdfs:comment "Where a caller obtains a value, or the statement that there is no source." .
+dal:RegistryGraph a dal:Source ;
+    rdfs:comment "The family's dal:registryGraph, a caller obligation." .
+dal:NoSource a dal:Source ;
+    rdfs:comment "No parameter, for a part of a digest that takes none, such as the operation kind." .
+
+# ---- resource accesses --------------------------------------------------------------------------------------------
+
+dal:ResourceAccess a owl:Class ;
+    rdfs:comment "One logical resource an operation touches, with the mode of the access and the parameter that keys it. Its IRI is minted from the target, the operation and the position of the access." .
+
+dal:resourceKind a owl:ObjectProperty ;
+    rdfs:domain dal:ResourceAccess ; rdfs:range dal:ResourceKind ;
+    rdfs:comment "The logical resource, one individual of dal:ResourceKind." .
+
+dal:accessMode a owl:ObjectProperty ;
+    rdfs:domain dal:ResourceAccess ; rdfs:range dal:AccessMode ;
+    rdfs:comment "How the operation touches the resource, one individual of dal:AccessMode." .
+
+dal:keyedBy a owl:ObjectProperty ;
+    rdfs:domain dal:ResourceAccess ; rdfs:range dal:ParameterDeclaration ;
+    rdfs:comment "The parameter whose value is the key of the resource, when the access is about one given subject. Absent for a computed or minted subject, such as a receipt, and for a scan." .
+
+dal:AccessMode a owl:Class ;
+    rdfs:comment "How an operation touches a logical resource. An absence read is named apart from a point read, since write skew turns on it." .
+dal:PointRead          a dal:AccessMode ; rdfs:comment "A read of one resource by its key." .
+dal:AbsenceRead        a dal:AccessMode ; rdfs:comment "A test that a resource is not there, inside NOT EXISTS. What write skew turns on." .
+dal:ScanRead           a dal:AccessMode ; rdfs:comment "A read of every resource of the kind, with no key." .
+dal:WholeAggregateRead a dal:AccessMode ; rdfs:comment "A read of an aggregate's every triple, through the owned path or of the root's graph." .
+dal:Insert             a dal:AccessMode ; rdfs:comment "An insertion of a resource or of its triples." .
+dal:Delete             a dal:AccessMode ; rdfs:comment "A deletion of a resource or of its triples." .
+
+dal:ResourceKind a owl:Class ;
+    rdfs:comment "A logical resource an operation reads or writes, with its logical key and its realisation in SPARQL. The relational realisation of each is in the paper check of the formal-methods H2.6 Validation Pack." .
+
+dal:logicalKey a owl:DatatypeProperty ;
+    rdfs:domain dal:ResourceKind ; rdfs:range xsd:string ;
+    rdfs:comment "The parts of the resource's logical key, comma separated. A bucket month is a realisation and never part of a key." .
+
+dal:Aggregate        a dal:ResourceKind ; dal:logicalKey "root" ;
+    rdfs:comment "The root's data graph (named-graph family) or the owned members in the family's data graph (composite)." .
+dal:VersionRow       a dal:ResourceKind ; dal:logicalKey "root" ;
+    rdfs:comment "The version row of a root or stream, in its meta graph." .
+dal:TransactionClaim a dal:ResourceKind ; dal:logicalKey "transaction id" ;
+    rdfs:comment "The claim recorded for a transaction id, in the transaction graph." .
+dal:Receipt          a dal:ResourceKind ; dal:logicalKey "target, epoch, seq" ;
+    rdfs:comment "A receipt in its monthly log bucket, and in the pinned graph for a retained head. The pinned graph is how retention is realised." .
+dal:Event            a dal:ResourceKind ; dal:logicalKey "stream, seq" ;
+    rdfs:comment "An event in its monthly event bucket." .
+dal:KeyClaim         a dal:ResourceKind ; dal:logicalKey "claim" ;
+    rdfs:comment "The claim node and its owner, constraint and retirement, in the keys graph." .
+dal:MergeRecord      a dal:ResourceKind ; dal:logicalKey "owner" ;
+    rdfs:comment "A link from a non-canonical owner to the canonical one, in the keys graph, by the adopter's merge relation." .
+dal:KeyQuarantine    a dal:ResourceKind ; dal:logicalKey "claim, owner" ;
+    rdfs:comment "An owner recorded against a duplicated claim, in the quarantine graph." .
+dal:DatasetEpoch     a dal:ResourceKind ; dal:logicalKey "dataset" ;
+    rdfs:comment "The dataset's epoch, in the dataset graph." .
+dal:RetentionMark    a dal:ResourceKind ; dal:logicalKey "target" ;
+    rdfs:comment "A target's retention low-water mark, in the retention graph." .
+dal:PropertyValue    a dal:ResourceKind ; dal:logicalKey "root, property" ;
+    rdfs:comment "The value of one property of a root, in the data graph of a family with no boundary (H2.7, TD-43). Read and written by the value-based guard." .
+dal:PatchContent     a dal:ResourceKind ; dal:logicalKey "target, epoch, seq, direction" ;
+    rdfs:comment "The triples a write added or removed, in a graph named from its receipt, newRev followed by /add or /del, one per direction." .
+
+# ---- the kinds of operation ----------------------------------------------------------------------------------------
+
+dal:OperationKind a owl:Class ;
+    rdfs:comment "The logical kind of a generated operation, closed. A dataset-guard variant, a patch-log variant and a no-receipt variant have the kind of their base operation." .
+dal:Create             a dal:OperationKind ; rdfs:comment "Writes an aggregate that does not exist yet, with its version row, receipt and claim." .
+dal:Bootstrap          a dal:OperationKind ; rdfs:comment "Creates a version row at seq 0, when the id is allocated." .
+dal:Replace            a dal:OperationKind ; rdfs:comment "Replaces an aggregate if the version row is at the expected seq." .
+dal:Tombstone          a dal:OperationKind ; rdfs:comment "Deletes an aggregate's triples and marks its version row deleted." .
+dal:Append             a dal:OperationKind ; rdfs:comment "Appends events to a stream (dal:AppendRecords or an append-only family)." .
+dal:AppendVersion      a dal:OperationKind ; rdfs:comment "Adds a new version beside the old one (dal:AppendVersions), in full or as a delta (dal:DeltaMembership)." .
+dal:UnconditionalWrite a dal:OperationKind ; rdfs:comment "Writes into a named graph with no guard on a version row." .
+dal:ValueGuardedReplace a dal:OperationKind ; rdfs:comment "Replaces the value of one property if its old value is still there, for a dal:NoBoundary family." .
+dal:KeyClaimWrite      a dal:OperationKind ; rdfs:comment "Acquires a uniqueness claim with a guarded write." .
+dal:KeyClaimWriteDual  a dal:OperationKind ; rdfs:comment "Acquires the claims of two scheme versions in one operation, during a rotation." .
+dal:KeyClaimRetire     a dal:OperationKind ; rdfs:comment "Retires a uniqueness claim." .
+dal:Quarantine         a dal:OperationKind ; rdfs:comment "Records the owners of a duplicated claim in the quarantine graph." .
+dal:MergeRewrite       a dal:OperationKind ; rdfs:comment "Rewrites the claims of a merged owner onto the canonical one." .
+dal:Audit              a dal:OperationKind ; rdfs:comment "A read-only query that returns the rows that violate an invariant. Returns none on a clean dataset." .
+dal:MembersRead        a dal:OperationKind ; rdfs:comment "Resolves the members of a version from a chain of deltas back to the nearest checkpoint (dal:DeltaMembership)." .
+dal:PayloadCheck       a dal:OperationKind ; rdfs:comment "Checks a payload against the family's boundary shape, as a query a caller in any language gets from instantiate (ADR-A123 decision 6). H2.7 adds the kind and H2.8 emits the operation, so no operation has it yet." .
+
+# ---- guard status and graph naming --------------------------------------------------------------------------------
+
+dal:GuardStatus a owl:Class ;
+    rdfs:comment "Whether an operation's required-parameter guard is in its query, and why not when it is not." .
+dal:Guarded             a dal:GuardStatus ; rdfs:comment "The query starts with one group of type tests, one for each required parameter that is not a slot." .
+dal:GuardsOff           a dal:GuardStatus ; rdfs:comment "The compile run chose no guards (--no-parameter-guards). The caller's own code must check every parameter." .
+dal:NoRequiredParameter a dal:GuardStatus ; rdfs:comment "The operation has no required parameter that is not a slot, so there is nothing to guard." .
+dal:NotGenerated        a dal:GuardStatus ; rdfs:comment "The operation's query is not generated from a builder, so no guard is generated for it. For a hand declaration." .
+
+dal:GraphNaming a owl:Class ;
+    rdfs:comment "Who names the named graph of a root." .
+dal:QueryNamed  a dal:GraphNaming ; rdfs:comment "The query computes the graph from $root by the rule of the family's dal:graphIriTemplate (ADR-A122 decision 8)." .
+dal:CallerNamed a dal:GraphNaming ; rdfs:comment "The caller passes the graph as $g, which the guard checks against the naming rule unless guards are off, so a caller that substitutes text puts a constant graph in the query." .
+
+dal:DeclarationSource a owl:Class ;
+    rdfs:comment "Where an operation's contract comes from." .
+dal:BuilderDerived a dal:DeclarationSource ; rdfs:comment "Read from the operation's builder by persistence.contract, so it cannot drift from the query." .
+dal:HandDeclared   a dal:DeclarationSource ; rdfs:comment "Written by hand, for an operation that has no builder. None has, since H2.7 gave the value-based guard a builder (TD-43)." .
+
+# ---- results ----------------------------------------------------------------------------------------------------
+
+dal:ResultColumn a owl:Class ;
+    rdfs:comment "One column of the result of an operation that selects. Its IRI is minted from the target, the operation and the column's name." .
+
+dal:columnName a owl:DatatypeProperty ;
+    rdfs:domain dal:ResultColumn ; rdfs:range xsd:string ;
+    rdfs:comment "The name of the projected variable, without its ?." .
+
+dal:columnPosition a owl:DatatypeProperty ;
+    rdfs:domain dal:ResultColumn ; rdfs:range xsd:integer ;
+    rdfs:comment "The column's position in the projection, from 1." .
+
+dal:columnKind a owl:ObjectProperty ;
+    rdfs:domain dal:ResultColumn ; rdfs:range dal:ColumnKind ;
+    rdfs:comment "What the column holds, one individual of dal:ColumnKind." .
+
+dal:columnSeparator a owl:DatatypeProperty ;
+    rdfs:domain dal:ResultColumn ; rdfs:range xsd:string ;
+    rdfs:comment "The separator of a dal:ConcatenationColumn, the argument of GROUP_CONCAT, which a caller splits on." .
+
+dal:ColumnKind a owl:Class ;
+    rdfs:comment "What a result column holds." .
+dal:IriColumn           a dal:ColumnKind ; rdfs:comment "An IRI." .
+dal:PositionColumn      a dal:ColumnKind ; rdfs:comment "A stored position, an xsd:long." .
+dal:StringColumn        a dal:ColumnKind ; rdfs:comment "A string." .
+dal:TermColumn          a dal:ColumnKind ; rdfs:comment "Any RDF term." .
+dal:CountColumn         a dal:ColumnKind ; rdfs:comment "The result of COUNT, an xsd:integer." .
+dal:ConcatenationColumn a dal:ColumnKind ; rdfs:comment "The result of GROUP_CONCAT, split on dal:columnSeparator." .
+
+# ---- payload and digest -------------------------------------------------------------------------------------------
+
+dal:PayloadContract a owl:Class ;
+    rdfs:comment "What an operation takes as the aggregate's triples: the slot, the root, the encoding, the boundary shape the payload is checked against, and the edges of that shape that lead to a node. Its IRI is minted from the target and the operation." .
+
+dal:payloadParameter a owl:ObjectProperty ;
+    rdfs:domain dal:PayloadContract ; rdfs:range dal:ParameterDeclaration ;
+    rdfs:comment "The slot the payload is written into." .
+
+dal:payloadRoot a owl:ObjectProperty ;
+    rdfs:domain dal:PayloadContract ; rdfs:range dal:ParameterDeclaration ;
+    rdfs:comment "The parameter that names the root of the payload. Absent for an operation with no root." .
+
+dal:payloadEncoding a owl:ObjectProperty ;
+    rdfs:domain dal:PayloadContract ; rdfs:range dal:PayloadEncoding ;
+    rdfs:comment "How the payload is written into its slot." .
+
+dal:PayloadEncoding a owl:Class ;
+    rdfs:comment "How a payload is written into its slot." .
+dal:GroundNTriples a dal:PayloadEncoding ;
+    rdfs:comment "Ground N-Triples, with no blank node and no variable, as the caller's slot text. A blank node is skolemized before it is sent." .
+
+dal:BoundaryShapeAbsence a owl:Class ;
+    rdfs:comment "The statement that a family names no boundary shape." .
+dal:NoBoundaryShape a dal:BoundaryShapeAbsence ;
+    rdfs:comment "The family names no boundary shape, so a payload is not checked against one. The value of dal:boundaryShape on a dal:PayloadContract in that case." .
+
+dal:DigestContract a owl:Class ;
+    rdfs:comment "What the request digest of an operation is taken over. Its IRI is minted from the target and the operation. The algorithm and the encoding are fixed here, and the code that computes it is H2.8's." .
+
+dal:digestAlgorithm a owl:DatatypeProperty ;
+    rdfs:domain dal:DigestContract ; rdfs:range xsd:string ;
+    rdfs:comment "The hash, SHA-256, over the parts in dal:partOrder, encoded as the patterns guide §15.2 says. The code that computes it is H2.8's." .
+
+dal:digestPart a owl:ObjectProperty ;
+    rdfs:domain dal:DigestContract ; rdfs:range dal:DigestPart ;
+    rdfs:comment "A part of the digest, in dal:partOrder order." .
+
+dal:DigestPart a owl:Class ;
+    rdfs:comment "One part of a digest: its role, its position and the parameters that fill it." .
+
+dal:partOrder a owl:DatatypeProperty ;
+    rdfs:domain dal:DigestPart ; rdfs:range xsd:integer ;
+    rdfs:comment "The part's position in the digest, from 1." .
+
+dal:partRole a owl:ObjectProperty ;
+    rdfs:domain dal:DigestPart ; rdfs:range dal:DigestPartRole ;
+    rdfs:comment "What the part holds, one individual of dal:DigestPartRole." .
+
+dal:partSource a owl:ObjectProperty ;
+    rdfs:domain dal:DigestPart ;
+    rdfs:comment "A parameter declaration that fills the part, or dal:NoSource for a part that takes none." .
+
+dal:DigestPartRole a owl:Class ;
+    rdfs:comment "What a part of a digest holds." .
+dal:OperationKindPart a dal:DigestPartRole ; rdfs:comment "The operation's kind." .
+dal:TargetPart        a dal:DigestPartRole ; rdfs:comment "The target the operation names, the key of its version row." .
+dal:ExpectedSeqPart   a dal:DigestPartRole ; rdfs:comment "The seq the operation expects the version row to be at." .
+dal:PayloadPart       a dal:DigestPartRole ; rdfs:comment "The sorted canonical N-Triples of the payload." .
+dal:EventPart         a dal:DigestPartRole ; rdfs:comment "The events of an append, its rows slot and its triples slot, in place of the payload." .
+dal:AddPart           a dal:DigestPartRole ; rdfs:comment "The triples a write added, under a patch log or as the members a delta added." .
+dal:DelPart           a dal:DigestPartRole ; rdfs:comment "The triples a write removed, under a patch log or as the members a delta dropped." .
 
 #################################################################
 #    §11. Compiled output (generated by tools/persistence, never
@@ -471,7 +767,8 @@ dal:ReferenceEdge a owl:Class ;
     rdfs:comment "One edge of a family's dal:boundaryShape tree that leads to a node, in a compiled profile: its source shape, step, ownership, target class and reference mode, in walk order." .
 
 dal:referenceEdge a owl:ObjectProperty ;
-    rdfs:domain dal:CompiledProfile ; rdfs:range dal:ReferenceEdge .
+    rdfs:range dal:ReferenceEdge ;
+    rdfs:comment "On a dal:CompiledProfile, an edge of the family's boundary shape. On a dal:PayloadContract, the same edges as the payload's caller check reads them. No rdfs:domain is declared, since the property has two." .
 
 dal:edgeSource a owl:ObjectProperty ; rdfs:domain dal:ReferenceEdge ;
     rdfs:comment "The node shape that holds the edge's property shape." .
@@ -823,9 +1120,11 @@ dal:deadlockPolicy a owl:ObjectProperty ;
 #    reflected in the version IRI on this branch (TD-64).
 #################################################################
 
-dal:WriteDisciplineProfile a owl:Class .
+dal:WriteDisciplineProfile a owl:Class ;
+    rdfs:comment "Declares how a scope's families write a new state (dal:writeDiscipline), and for a family that appends versions how a version states its members (dal:membershipEncoding, dal:checkpointEvery). Resolved like any dimension." .
 
-dal:WriteDiscipline a owl:Class .
+dal:WriteDiscipline a owl:Class ;
+    rdfs:comment "How a family writes a new state. One of dal:InPlace, dal:AppendVersions, dal:AppendRecords." .
 dal:InPlace a dal:WriteDiscipline ;
     rdfs:comment "The default. A write replaces the old state, as the replace, create and tombstone operations always have. The family's receipt model says what history the log keeps (dal:ReceiptOnly, dal:PatchLog or dal:NoReceipt)." .
 dal:AppendVersions a dal:WriteDiscipline ;
@@ -846,7 +1145,8 @@ dal:writeDiscipline a owl:ObjectProperty ;
 #    reflected in the version IRI on this branch (TD-64).
 #################################################################
 
-dal:MembershipEncoding a owl:Class .
+dal:MembershipEncoding a owl:Class ;
+    rdfs:comment "How a version of a root states its members. One of dal:FullMembership, dal:DeltaMembership." .
 dal:FullMembership a dal:MembershipEncoding ;
     rdfs:comment "The default. Each new version lists every member under the domain's own membership property, so a version is readable alone and a domain shape validates the stored data directly." .
 dal:DeltaMembership a dal:MembershipEncoding ;

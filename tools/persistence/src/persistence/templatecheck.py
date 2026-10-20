@@ -125,9 +125,9 @@ class Operation:
     text: str  # rendered, request-time slots filled with stand-ins
 
 
-def operations(compiled: Graph, guards: bool = True) -> list[Operation]:
+def operations(compiled: Graph) -> list[Operation]:
     """Every generated operation of every target in a compiled profile,
-    rendered as ``instantiate`` renders it."""
+    rendered as ``instantiate`` renders it, with the guards and graph naming its contract records."""
     out: list[Operation] = []
     for profile in sorted(compiled.subjects(RDF.type, DAL.CompiledProfile), key=str):
         target = str(compiled.value(profile, DAL.forTarget)).rsplit("#", 1)[-1]
@@ -135,8 +135,8 @@ def operations(compiled: Graph, guards: bool = True) -> list[Operation]:
         if deployment is not None:
             target += "@" + str(deployment).rsplit("#", 1)[-1]
         for node in sorted(compiled.objects(profile, DAL.generatedOperation), key=str):
-            name, text = _render_operation(compiled, node, None, guards)
-            path = str(compiled.value(compiled.value(node, DAL.usesTemplate), DAL.templatePath))
+            name, text = _render_operation(compiled, node, None)
+            path = str(compiled.value(compiled.value(node, DAL.usesTemplate), DAL.templateId))
             for slot in REQUEST_TIME_SLOTS:
                 text = text.replace("{{{" + slot + "}}}", _SLOT_STAND_INS[slot])
             out.append(Operation(target, name, path.removesuffix(".mustache"), text))

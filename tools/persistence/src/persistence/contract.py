@@ -47,6 +47,9 @@ class OperationKind(Enum):
     MERGE_REWRITE = "MergeRewrite"
     AUDIT = "Audit"
     MEMBERS_READ = "MembersRead"
+    PAYLOAD_CHECK = "PayloadCheck"
+    """The check of a payload against the family's boundary shape, as a query a caller in any language gets from ``instantiate`` (ADR-A123
+    decision 6, H2.7-Q3). H2.7 adds the kind and H2.8 emits the operation, so no builder has this kind yet."""
 
 
 class ResourceKind(Enum):
@@ -150,12 +153,15 @@ def stem_of(operation_id: str) -> str:
     return operation_id.removesuffix(DATASET_GUARD_SUFFIX)
 
 
-BUILDER_VERSIONS: dict[str, int] = {**{stem: 1 for stem in sorted(_STEM_KIND)}, "append-event": 2, "append-version": 2, "cas-replace-named-graph": 2}
+BUILDER_VERSIONS: dict[str, int] = {
+    **{stem: 1 for stem in sorted(_STEM_KIND)}, "append-event": 2, "append-version": 2, "cas-replace-named-graph": 2, "cas-replace-value-guard": 2,
+}
 """The version of each builder, which any change to the text it renders must bump. A golden check
 (`tests/test_builder_versions.py`) holds the version to the text, and it is a number kept here, never computed, so that a
 change to a builder is a change a reviewer sees. A dataset-guard variant shares its base operation's version. `append-event` is at 2
 since its events became request-time slots (formal-methods H2.6b). `append-version` is at 2 since it links versions with `pat:previousVersion`
-(R2, H2.6d), and `cas-replace-named-graph` since it no longer names delta graphs from caller parameters, which a patch-log variant now writes."""
+(R2, H2.6d), and `cas-replace-named-graph` since it no longer names delta graphs from caller parameters, which a patch-log variant now writes.
+`cas-replace-value-guard` is at 2 since its patterns moved from the default graph into the family's data graph (H2.7, TD-43)."""
 
 
 class GuardStatus(Enum):
@@ -265,25 +271,10 @@ class OperationContract:
     source: DeclarationSource = DeclarationSource.BUILDER_DERIVED
 
 
-HAND_DECLARED: dict[str, OperationContract] = {
-    # The value-based compare-and-set of a dal:NoBoundary target. It reads and writes the default graph and the typed IR cannot
-    # express it (TD-43), so it has no builder and its contract is written here. It has no generated parameter guard.
-    "cas-replace-value-guard": OperationContract(
-        id="cas-replace-value-guard", kind=OperationKind.VALUE_GUARDED_REPLACE, version=1, guard_status=GuardStatus.NOT_GENERATED,
-        graph_naming=None,
-        parameters=(
-            ParameterContract("newValue", Kind.IRI_OR_LITERAL.value, True),
-            ParameterContract("oldValue", Kind.IRI_OR_LITERAL.value, True),
-            ParameterContract("root", Kind.IRI.value, True),
-        ),
-        accesses=(
-            AccessContract(ResourceKind.PROPERTY_VALUE.value, AccessMode.DELETE.value, "root"),
-            AccessContract(ResourceKind.PROPERTY_VALUE.value, AccessMode.INSERT.value, "root"),
-            AccessContract(ResourceKind.PROPERTY_VALUE.value, AccessMode.POINT_READ.value, "root"),
-        ),
-        results=(), payload=None, digest=None, source=DeclarationSource.HAND_DECLARED,
-    ),
-}
+HAND_DECLARED: dict[str, OperationContract] = {}
+"""The contracts of operations that have no builder, written by hand and marked ``dal:HandDeclared``. Empty since H2.7, which gave the one
+operation that had none, the value-based compare-and-set of a ``dal:NoBoundary`` family, a builder (TD-43). A new entry needs a reason a
+builder cannot express the operation, and the vocabulary keeps ``dal:HandDeclared`` for it."""
 
 
 def _keyed_by(access: Access, resource: ResourceKind, params: dict) -> Optional[str]:
@@ -330,6 +321,8 @@ def contract_of(operation: Operation, edges: tuple = ()) -> OperationContract:
     accesses = set()
     for access in sets.reads | sets.writes:
         resource = resource_of(access.role, access.predicate)
+        if stem == "cas-replace-value-guard" and resource is ResourceKind.AGGREGATE:
+            resource = ResourceKind.PROPERTY_VALUE  # a family with no boundary has no aggregate. Its data graph holds one value per (root, property)
         accesses.add(AccessContract(resource.value, access.mode, _keyed_by(access, resource, params)))
     graph_texts = {a.graph for a in sets.reads | sets.writes}
     naming = (

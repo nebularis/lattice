@@ -202,8 +202,8 @@ def replace_operation() -> tuple[str, dict[str, str]]:
     from persistence.namespaces import DAL
 
     example = Path(witness.EXAMPLES_DIR) / "composite-project-ownership.ttl"
-    compiled, _ = compile_to_graph(witness._load_fixture(example))
-    (by_target,) = instantiate_by_target(compiled, guards=False).values()
+    compiled, _ = compile_to_graph(witness._load_fixture(example), guards=False)
+    (by_target,) = instantiate_by_target(compiled).values()
     text = by_target["cas-replace"]
     import re
 

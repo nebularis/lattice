@@ -17,7 +17,7 @@ from persistence.contract import BUILDER_VERSIONS, OPERATION_KINDS, stem_of
 
 def test_h2_6_t12_every_builder_has_a_version_and_a_logical_kind():
     stems = {stem_of(key) for key in BUILDERS}
-    assert set(BUILDER_VERSIONS) == set(OPERATION_KINDS) == stems | {"cas-replace-value-guard"}  # the value guard has no builder (TD-43)
+    assert set(BUILDER_VERSIONS) == set(OPERATION_KINDS) == stems  # every operation has a builder since H2.7 ported the value guard (TD-43)
 
 
 @pytest.mark.parametrize("key", sorted(BUILDERS))
