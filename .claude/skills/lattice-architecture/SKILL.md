@@ -40,7 +40,7 @@ foundation
 |---|---|---|
 | LATTICE is a framework | offer options and configuration, impose nothing correctness does not need | the design skill |
 | Identity and versions | a versioned thing keeps one persistent identity across immutable versions, linked by `fnd:supersededBy`. A version is never edited | Foundation, ADR-A07b, ADR-A51 |
-| Semantic versioning of ontologies | every changed document bumps its version, and importers re-pin in a cascade. Breaking changes at 0.x are MINOR, marked breaking | ADR-A86, ADR-A113 |
+| Versioning of ontologies | the substrate and standalone modules are one release with one number and one tag, `ontologies-vX.Y.Z`. Applied modules and examples keep their own versions and pin a release. Breaking changes at 0.x are MINOR, marked breaking | ADR-A129, ADR-A86, ADR-A113 |
 | The words are the contract | an instrument version is expressed in exactly one assembled wording, and binds exactly the stated meaning of what that wording includes | ADR-A104, ADR-A112 |
 | Stated and bound meaning | a clause states meaning once, with roles, words and placeholders. Bound meaning, with parties and values, is generated per instrument, never stored with it | ADR-A104 and its addenda |
 | References by identity | text names what it refers to by persistent identity, and the wording fixes the version | ADR-A112 addendum |

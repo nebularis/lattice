@@ -91,6 +91,13 @@ justification in its Validation Pack, countersigned at the gate.
   `main`, then tag. A tag on an unmerged branch can name a commit that never reaches `main`.
 - **Branch from `main`**, so a branch starts from every merged release, unless the maintainer has said
   parallel work is under way.
+- **One release tag.** The substrate and standalone modules are tagged once per release, as
+  `ontologies-vX.Y.Z` (ADR-A129). An applied module takes its own tag for each new version
+  (ADR-A86). The per-module tags from before release 0.18.0 are history.
+- **Versions on a working branch.** Where the maintainer has agreed that a branch defers versioning,
+  the branch makes no bump, its status record says so, and `check:ontology-versioning`'s `UNBUMPED`
+  is expected there. The release moves once, by `mise run release:prepare`, before the merge into
+  `main`, and the tag follows the merge.
 - **Release tags are the maintainer's.** Whenever `mise run build:ontology-releases` adds a row, or
   `mise run check:ontology-versioning` lists pending tags, end the handoff with a notice headed
   `🔴 RELEASE TAGS REQUIRED`, listing each tag as a, b, c with the commands to create and push them
