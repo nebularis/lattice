@@ -745,3 +745,6 @@ For acceptance: ADR-A132, the persistence caller library (Proposed), and ADR-A12
 
 | D-25 | H2.6g | all 29 operations with the shape name their graph, not only those the defect could affect (none could), so the checker rule has no exception. 15 builder versions bumped | FMH-H2-6g |
 | D-26 | H2.6g | a test asserts rdflib's context sharing still holds, so an rdflib change prompts a TSD-34 review. No seed-sweep test fails on removing a `GRAPH`, since no outcome depends on it: the text scan, the harness and the checker are the guards | FMH-H2-6g |
+| D-27 | H2.8a | the digest hashes each content part as one component, `enc([kind, target, expected, enc(part 1), enc(part 2), ...])`, where guide §15.2 has one flat list, which cannot tell the parts apart. The guide's text is TD-69 | FMH-H2-8a, TD-69 |
+| D-28 | H2.8a | canonical N-Triples: lines sorted by UTF-8 bytes, duplicates dropped, four characters escaped, `xsd:string` plain, language tags lower-cased. The kind is `dal:operationKind`, the target hashed without angle brackets | FMH-H2-8a |
+| D-29 | H2.8a | a payload has two texts, canonical N-Triples for the digest and SPARQL-encoded for the slot. `bootstrap:persistence` installs the library, which is on no index | FMH-H2-8a |
