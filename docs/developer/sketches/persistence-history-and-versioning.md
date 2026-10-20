@@ -1463,7 +1463,7 @@ Two points the examples raised, decided the same way:
 | R2 | (a): `append-version` links versions with a persistence term of its own, never `fnd:supersededBy`, which the domain asserts under its own rule (Instrument once a version is agreed) |
 | R4 to R8 | accepted: the examples and EP-1 to EP-11, TD-63 to TD-66 and PDD-11, H2.6c's eight decisions taken alone, its twelve expected profiles, its two changed tests |
 
-**VH-Q5a, open.** Which families need no receipt. The version row's seq decides a race without one, and the transaction claim, which
+**VH-Q5a, approved 2026-10-20 at the leaning below.** Which families need no receipt. The version row's seq decides a race without one, and the transaction claim, which
 is separate, confirms an outcome after a lost reply. A receipt gives order, the head chain, gap and fork audits, transaction time for a
 version, and change capture. Families that need none: an unconditional write and a value-guarded write, which already write none, and
 derived artefacts and projections, which can be regenerated. Leaning: a `dal:NoReceipt` model for an in-place family that wants no

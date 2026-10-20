@@ -697,4 +697,7 @@ at the maintainer's request, and is committed on this branch, not pushed. Versio
   default with a per-edge override. VH-Q5 (2) and (3) yes, (1) became VH-Q5a. VH-D2 revised into a per-family choice. R9 and R10 put
   to the maintainer in full. Follow-ups: H2.6c's link to the prior version moves off `fnd:supersededBy` (R2), TD-65 fixed for VH-Q1's
   shared cost.
+- 2026-10-20: the maintainer approved VH-Q5a, H2.7-Q1 (a), H2.7-Q4 (b) isomorphism, H2.8-Q1 (b) with an ADR for library code, and R10
+  as amended, the persistence link named `pat:previousVersion`. H2.7-Q2, H2.7-Q3, H2.8-Q2 and H2.8-Q3 asked back. Implementation waits
+  for the maintainer's rules once planning is done.
 

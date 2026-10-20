@@ -247,7 +247,7 @@ request-time slots.
    for `ShardingNotHonoured` (TD-46).
 
 
-## Addendum, 2026-10-20: the write disciplines and `append-version` (draft)
+## Addendum, 2026-10-20: the write disciplines and `append-version` (accepted 2026-10-20)
 
 Drafted in slice H2.6c (Track H plan §4.9) for the maintainer to accept or change. It is decided at our leanings, with the history and
 versioning sketch's VH-Q1 to VH-Q6, and extends the builders of decision 1.
@@ -256,11 +256,12 @@ versioning sketch's VH-Q1 to VH-Q6, and extends the builders of decision 1.
    `dal:AppendVersions` selects `bootstrap-version-row` and `append-version`. `dal:AppendRecords` selects the append form of H2.6b. The
    discipline is a resolved dimension like any other, so every compiled profile now carries it.
 2. **`append-version` is a builder with a dataset-guard variant,** kind `AppendVersion`, version 1. One update guards the identity's version
-   row at the expected seq and the transaction claim, inserts the new version's own triples from the payload slot, inserts
-   `$priorVersion fnd:supersededBy $newVersion` when the row names a current version, moves the row's seq, head and current version
+   row at the expected seq and the transaction claim, inserts the new version's own triples from the payload slot, links
+   it to the version the row names as current with `pat:previousVersion`, never `fnd:supersededBy`, which the domain asserts under its
+   own rule (amended 2026-10-20, the code follows), moves the row's seq, head and current version
    (`pat:currentVersion`), writes the receipt, and links the version to its receipt with `pat:revision`. It reads and writes the data graph
-   but never deletes from it, so it has no sweep. Its parameters are those of the compare-and-set and `$newVersion`. It reads `fnd:supersededBy`
-   by IRI and imports nothing from Foundation (ADR-A78).
+   but never deletes from it, so it has no sweep. Its parameters are those of the compare-and-set and `$newVersion`. It imports nothing
+   from Foundation (ADR-A78).
 3. **Which families.** A composite family, and a family with no boundary that declares a `dal:dataGraph`, under `dal:Optimistic`. Any other
    is refused with `AppendVersionsUnsupported`. A named-graph family, which would append one graph per version named from the version, is
    not built. A family that appends versions has no create, replace or tombstone.
