@@ -356,7 +356,7 @@ Persistence needs three write disciplines, not two, which VH-Q4 and VH-Q5 should
 | VH-Q4 | the write for a versioned family (§5.4) | (a), append and move a current pointer on the identity's row |
 | VH-Q5 | what remains of the receipt models (§5.5) | the table in §5.5 |
 | VH-Q6 | retention of superseded versions (§5.6) | never prune a version a retained version references |
-| VH-Q7 | Behaviour's versioning (§6) | researched 2026-10-14 (§6.1, §6.4). Behaviour's three disciplines are right. The keying of a balance is EC-Q2's, at CCS C12 and AIR Phase 5, so no change to Behaviour here |
+| VH-Q7 | Behaviour's versioning (§6) | **decided 2026-10-20**: Behaviour's three disciplines are right, and no change to Behaviour here. The keying of a balance is the ledger plan's |
 
 Answers decide whether the patch log is built as planned in H2.6b's held half, rebuilt as an append write for versioned families, or
 narrowed to in-place data, and what H2.10 builds. An ADR follows the answers, since VH-Q1 and VH-Q3 change how persistence relates to
@@ -469,3 +469,42 @@ on worked cases:
 
 A family declares its strategy, as it declares its receipt model today. That the declaration belongs
 to persistence or to the domain layer is VH-Q3.
+
+## 10. Questions for the examples and the strategy menu (2026-10-20)
+
+The examples come in ADR-A-C2's order: the generic premise in writing, at least two worked examples from unrelated fields, then the
+mechanism. Applied cases test the mechanism afterwards. Each example states its writes, what is kept, what is shared, what is generated,
+and its cost in triples per write and per read, with diagrams (skill `lattice-design`).
+
+**The generic premise, a draft.** A record that people act on changes over time. Some changes make a new thing a reader must be able to
+cite as it was, some correct or refine a working draft, some record that something happened, and some are computed from the rest. Each
+kind needs a different write, a different history and a different retention, and most of a record's content is shared with its earlier
+states or with other records.
+
+| # | Example | Field | Exercises (§9.4) |
+|---|---|---|---|
+| E1 | a software licence: a plan change mid-term, seats drawn and restored | software | S3 instrument versions, S4 records, S5 balances |
+| E2 | a lending facility: an amendment, drawdowns and repayments | lending | S3 with shared wording, S4, S5 |
+| E3 | a purchase order: lines revised before acceptance, partial deliveries after | procurement | S1 and S2 for the draft, S3 once accepted, S4 for deliveries |
+| E4 | a trial protocol: an amendment in force at some sites before others | clinical research | S3 with valid time per site, references by identity |
+| E5 | an exposure schedule: one location of 500 changes mid-term | insurance, applied | S3 with shared members (AIR-4.2a) |
+| E6 | an offer revised, then accepted by assent, with no copy at acceptance | insurance, applied | S4 acts, S2 or S3 for the offer, S5 for state |
+| E7 | an endorsement mid-term | insurance, applied | Wording's amendments as the history of the words |
+| E8 | insurances bound under a delegated authority, declared against an income limit | insurance, applied | S4 at volume, S5 for the limit's balance |
+
+| # | Question | Options | Leaning |
+|---|---|---|---|
+| EX-Q1 | which examples, in which order | (a) E1, E2 and E3 as the generic set, then E5, E6 and E8 as applied tests, E4 and E7 if they add a case the others miss. (b) all eight. (c) a smaller set, E1, E3, E5 | (a) |
+| EX-Q2 | how deep each example goes | (a) on paper: a section per example, with diagrams and counts. (b) also fixtures, a TriG file per example with its stored triples, checked by a test. (c) also measured on both engines, as a benchmark (ADR-A124) that fails on a wrong count, never on time | (a) for all, (b) for the strategies we choose, (c) for S2 against S3 |
+| EX-Q3 | how cost is counted | (a) triples per write, per read and kept per year, store-independent. (b) also bytes, which depend on the store | (a) |
+| FS-Q1 | is the menu S1 to S8 right | (a) as listed. (b) S1 and S2 merged into one strategy with a receipt model, since they differ only in that. (c) others added once the examples show a gap | (b), then (c) |
+| FS-Q2 | what declares a strategy | (a) a family, as a receipt model is declared today. (b) a class. (c) an edge of a boundary shape, as ownership is (§5.2) | (a), with (c) for what is shared (VH-Q2) |
+| FS-Q3 | whether one record mixes strategies | (a) yes, by splitting it into families, for example an instrument's versions appended while a working draft beside it is edited in place. (b) one strategy per aggregate | (a) |
+| FS-Q4 | how guidance on "what works best when" is given | (a) a decision table in the Persistence README. (b) compile-time advice, a warning where a declaration fits badly, for example a versioned class written by replace. (c) both | (c) |
+| FS-Q5 | where an outgoing event stream (S8) is declared | (a) in the persistence profile. (b) in the platform, with work queues (ADR-A59) and housekeeping (ADR-A80), persistence recording only what each commit changed | (b) |
+| FS-Q6 | which projections (S7) LATTICE ships | (a) none, a deployment declares its own in Surface. (b) a generic current view for each versioned family | (a) |
+| FS-Q7 | where retention is declared (TD-47) | (a) per family, in the persistence profile. (b) in deployment configuration, ADR-A80's "how aggressively" | (a) for what may be pruned, (b) for when |
+
+**Decided 2026-10-20.** EX-Q1 (b), all eight examples. EX-Q2 (a) for all, (b) for the chosen strategies, (c) for S2 against S3.
+EX-Q3 (a). FS-Q1 to FS-Q7 at their leanings.
+

@@ -1053,7 +1053,7 @@ Each slice starts from `main` after the previous one merges, reads this plan sec
 
 **Extended 2026-10-14.** After H2.6, the order continues **H2.6b (§4.6), H2.7 (§4.7), H2.8 (§4.8)**, one at a time on the cloud agent, each from
 `main` after the previous one merges. H2.6b comes before H2.7 because it changes two operations and adds slots, so the vocabulary is published
-once, at 0.4.0, against the final slots, and the approved expected profiles are regenerated once. H2.9 (retiring Mustache) follows H2.8.
+once (in the next substrate release since ADR-A129, 2026-10-20, earlier 0.4.0), against the final slots, and the approved expected profiles are regenerated once. H2.9 (retiring Mustache) follows H2.8.
 
 ### 4.6 H2.6b: the event and patch-content slots (planned 2026-10-14)
 
@@ -1249,13 +1249,16 @@ of H2.6, as H2.6b leaves them, into vocabulary, shapes and `compile` output. Que
 | H2.7-Q1 | where a `dal:NoBoundary` target's data lives (TD-43) | (a) **a mandatory `dal:dataGraph`, as for a composite family**, refused without one (`MissingDataGraph`), and the value guard ported with every pattern in that graph, a change and not a port. (b) the target's own named graph through `dal:graphIriTemplate`, which makes each value its own aggregate graph. (c) leave TD-43 open and keep the hand declaration | (a). It is the composite precedent (AO-Q14), one graph per family, and it ends the last default-graph pattern and the last hand declaration |
 | H2.7-Q2 | where the run choices live | (a) **`compile` takes `--no-parameter-guards` and `--caller-graph-names`, records them in the profile (`dal:guardStatus`, `dal:graphNaming`), and `instantiate` follows the profile**, with its flags removed, since no compatibility is owed (H-D14). (b) keep the `instantiate` flags as an override, which lets a rendering disagree with its profile | (a) |
 | H2.7-Q3 | whether the payload check is a generated operation | (a) **yes, one `payload-check` operation per family that has a payload, of kind `PayloadCheck`, with its result columns**, so a caller in another language gets the query from `instantiate` (ADR-A123 decision 6). H2.7 adds the kind, H2.8 emits it. (b) no, a caller derives it from the payload contract | (a) |
+| H2.7-Q5 | how H2.7's vocabulary change is released, now that the substrate and standalone ontologies are one release (ADR-A129, added 2026-10-20) | (a) **H2.7 moves the release number itself** with `mise run release:prepare -- <next>`, so the versioning check passes on its branch, and the maintainer tags `ontologies-v<next>` after the merge. (b) H2.7 waits for a release that other units' changes also take, which leaves the versioning check failing on its branch until then | (a). The versioning check fails on a changed member whose number did not move (ADR-A129 decision 7) **Decided 2026-10-20, neither:** this branch ignores versioning until all its changes are complete, then bumps a minor when it merges into `main` (TD-64) |
 | H2.7-Q4 | how strictly the profile is compared once it is emitted | (a) **byte equality of `compile` output with the expected files**, replacing H2.6's base-profile and agreement tests, so the files become the golden output (H1.5's stable labels allow it). (b) isomorphism | (a) |
 
 #### Steps
 
 1. **The vocabulary**, in `ontology/persistence/spec/persistence.ttl`: the classes and properties of the model, and the enumerations moved from
-   `kinds.expected.ttl` into the spec as individuals. `dal:templatePath` removed. `persistence` and its shapes at **0.4.0** (ADR-A86).
-2. **The shapes**, in `shapes/constraints.ttl`: the structure of a generated operation's contract, every enumeration value closed, no blank node
+   `kinds.expected.ttl` into the spec as individuals. `dal:templatePath` removed. ~~`persistence` and its shapes at **0.4.0** (ADR-A86).~~
+   Revised 2026-10-20: Persistence is a member of the one substrate release (ADR-A129), at 0.18.0 on `main`, with no shapes `.version`.
+   The change takes the next release number, per Q5.
+2. **The shapes**, in `shapes/constraints.ttl`, written to [efficient queries and shapes](../../architecture/efficient-queries-and-shapes.md) (ADR-A128, Proposed): the structure of a generated operation's contract, every enumeration value closed, no blank node
    in a declaration and no SPARQL text in a value (SI-5), a required parameter guarded unless `dal:guardStatus` says otherwise. The expected
    profiles are their positive fixtures, and each rule gets a negative witness.
 3. **The emission.** `compile` writes `contract_of` for every operation, with minted IRIs (NQ4), and the run choices of Q2. `dal:templateId` is
@@ -1264,7 +1267,7 @@ of H2.6, as H2.6b leaves them, into vocabulary, shapes and `compile` output. Que
 5. **The tests.** Byte equality with the expected files (Q4). The intended-differences table is empty and the test that keeps it non-stale is
    removed (FMH-H2-6 T5), which is listed for countersignature. Every witness.
 6. **Documents.** Both READMEs, ADR-A79's addendum (`dal:templatePath` gone, as ADR-A123 decision 10 said), the catalogue's release table
-   (`mise run build:ontology-releases`), and 🔴 release tags owed for `persistence` and `persistence-shapes` 0.4.0.
+   (`mise run build:ontology-releases`), and 🔴 the release tag `ontologies-v<next>` owed (ADR-A129, Q5). Revised 2026-10-20.
 
 #### Planned validation
 
@@ -1314,7 +1317,8 @@ H2.8-Q1 to Q3 are for the maintainer before a branch.
 3. **The payload checks.** For the payload slot, every subject is the root or reached from it by the owned
    path within the slot. For the event slots, Q2, each row's `opSeq` an `xsd:long`, distinct within the batch, each event IRI distinct, no `UNDEF`
    in any row, and at least one row. `instantiate` emits a `payload-check` query per family (H2.7-Q3) that runs over a local graph
-   and returns the subjects outside the bound. The Python type runs the same query.
+   and returns the subjects outside the bound. The Python type runs the same query. The query follows
+   [efficient queries and shapes](../../architecture/efficient-queries-and-shapes.md) (ADR-A128, added 2026-10-20).
 4. **The caller check** (H2-Q4 (c), NQ6): every declared parameter present and of its kind, a `Long` or `Position` exactly `xsd:long` on any
    store, a `Literal` not an IRI, `logGraphs` non-empty (Q3) and every member an IRI, a caller-named `$g` equal to the naming rule. It refuses
    before sending and says why, since a failed guard reads as a lost race.

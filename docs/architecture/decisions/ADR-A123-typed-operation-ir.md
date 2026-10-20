@@ -2,7 +2,7 @@
 
 # ADR-A123: A typed operation IR for the persistence compiler
 
-**Status:** Accepted, 2026-10-10, with the ADR-A79 addendum applied the same day, and five addenda of its own (2026-10-12 and 2026-10-13)
+**Status:** Accepted, 2026-10-10, with the ADR-A79 addendum applied the same day, and six addenda of its own (2026-10-12, 2026-10-13 and 2026-10-14, the last accepted 2026-10-20)
 **Date:** 2026-10-10
 **Supersedes:** parts of [ADR-A79](ADR-A79-persistence-compiler-toolchain.md), listed under Decision 10. ADR-A79 stays Accepted for the rest
 **Related:** [ADR-A78](ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md),
@@ -227,7 +227,7 @@ H2.5-Q1 and Q2). It extends decision 2.
    `Literal`, guarded by `isLiteral($p) && LANG($p) = ""`, which accepts any timestamp datatype and refuses an IRI or a missing value.
 
 
-## Addendum, 2026-10-14: the event slots and the digest parts (draft for the maintainer's acceptance)
+## Addendum, 2026-10-14: the event slots and the digest parts (accepted 2026-10-20)
 
 Drafted in slice H2.6b (Track H plan §4.6, H-D30 and H-D32) for the maintainer to accept. It extends decision 2 and the H2.4a addendum on
 request-time slots.
