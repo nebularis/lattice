@@ -733,3 +733,6 @@ For acceptance: ADR-A132, the persistence caller library (Proposed), and ADR-A12
 | D-13 | H2.6e | the profile records every node-leading edge, the default mode stated, and the payload contract carries them too, so they are stated twice | FMH-H2-6e |
 | D-14 | H2.6e | a pinned value property is refused, and an unknown mode is refused at compile, not by a shape | FMH-H2-6e |
 | D-15 | H2.6e | the evidence warning reads the source shape's target class. "A class the profile names as a record" is not built, since a profile cannot name one (TD-67) | FMH-H2-6e, TD-67 |
+| D-16 | H2.6f | the caller passes the full list and `pat:checkpoint true` on the first version and every `checkpointEvery`th, and the member slots otherwise. A version with no checkpoint before it has no members. Checkpoints found by their marker, not by seq | FMH-H2-6f |
+| D-17 | H2.6f | the member slots reuse the digest's add and del parts, and the membership property is a parameter of the members read | FMH-H2-6f |
+| D-18 | H2.6f | the members read keeps its correct but slow form (98.6 s for 100 versions on rdflib, 1.7 s on Oxigraph). A sub-select form was fast on rdflib but ignored initial bindings inside it, to record in the triple-store record (TD-68) | FMH-H2-6f, TD-68 |
