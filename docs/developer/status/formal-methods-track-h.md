@@ -74,16 +74,16 @@ at the maintainer's request, and is committed on this branch, not pushed. Versio
 
 ### After the review
 
-Planned 2026-10-20 (plan §4.10 to §4.16), for the maintainer's review before implementation:
+Built and committed 2026-10-20: H2.6c, H2.6d, H2.6e, H2.6f, H2.6g, W-65, AIR-66, H2.7, H2.8a, H2.8b. Planned, for the next session:
 
-1. H2.6d, the patch log for in-place families, `pat:previousVersion` (R2), `dal:NoReceipt` (VH-Q5a).
-2. H2.6e, reference modes per edge. H2.6f, membership encoding per family, with fixtures and the benchmark.
-3. W-65, Wording's shared values (TD-65), and AIR-66, exposure versions (TD-66), beside them.
-4. H2.7 with all the new vocabulary, compared by isomorphism. H2.8 once ADR-A132 is accepted. H2.9, Mustache retired.
-5. H2.10 dropped. Before the merge: TD-63, one minor version bump (TD-64).
-
-For acceptance: ADR-A132, the persistence caller library (Proposed), and ADR-A123's addendum on the subjects of an event append
-(proposed).
+1. **H2.8c** ([plan §4.18](../plans/formal-methods-track-h.md#418-h28c-the-follow-ups-of-the-h26-and-h28-reviews-planned-2026-10-20)):
+   each edge stated once, the faster `members` form adopted if it proves correct (TD-68), `dal:recordClass` (D-15, D-9), the member
+   parts documented (H2.6f (8)).
+2. **H2.9** ([plan §4.15](../plans/formal-methods-track-h.md#415-h29-mustache-retired-planned-2026-10-20)): Mustache retired, with D-12,
+   the goldens keyed by operation, and the template id's suffix gone.
+3. **Before the merge into `main`:** TD-63, one minor version bump (TD-64), the maintainer's re-approval of the expected profiles and
+   countersignature of the changed tests listed in each Validation Pack.
+4. **Owed later:** the idealised in-place benchmark once TD-42 is fixed (recorded on TD-42).
 
 ## Slices
 
@@ -760,3 +760,7 @@ For acceptance: ADR-A132, the persistence caller library (Proposed), and ADR-A12
   profile term naming record classes, and D-12 (a), the receipt-only composite templates deleted in H2.9 and `dal:SnapshotPerRevision`
   refused on in-place composites. Approved H2.6d's twelve, H2.6e's except (2), asked back, H2.6f's except (1), (8), (11) and (12),
   asked back, and H2.7's fifteen, (12) explained. Paused after H2.8b, at the maintainer's request.
+- 2026-10-20: the maintainer took the middle ground for H2.6e (2), agreed H2.6f (1), accepted the reused part names with good documentation
+  (H2.6f (8)), deferred the idealised in-place benchmark to TD-42's fix, asked to adopt the faster members form if it proves correct
+  (H2.6f (12)), and approved H2.7 (12). Planned H2.8c (plan §4.18) and added D-12, the goldens and the template id to H2.9. Paused.
+

@@ -1515,6 +1515,29 @@ Pros: a mid-term change to one location writes one version, not three, and no ve
 location at a date resolves the identity through the set version, a join it did not need before, and a breaking change to AIR's exposure
 module at 0.x. `FMH-AIR-66`. About 80k tokens.
 
+### 4.18 H2.8c: the follow-ups of the H2.6 and H2.8 reviews (planned 2026-10-20)
+
+Decided by the maintainer on 2026-10-20 in the review of FMH-H2-6d to FMH-H2-8b. Runs after H2.8b and before H2.9, since H2.9 deletes the
+templates these steps would otherwise change twice.
+
+1. **Each edge stated once (H2.6e (2), the middle ground).** The payload contract names its boundary shape (H2.8b, D-31) and points at
+   the profile's `dal:ReferenceEdge` nodes instead of restating them. `contract_of` and the emission stop copying the edges, the
+   library's reader follows the reference, and a shape holds every pointer to an existing edge of the same profile. The expected profiles
+   and the library's fixtures are regenerated, and the vectors that read edges follow.
+2. **The faster `members` form (H2.6f (12), TD-68).** The sub-select form, which read version 100 of a 500-member set in about 0.15 s on
+   rdflib against 98.6 s, rewritten with a `GRAPH` inside each `NOT EXISTS` (TSD-34, H2.6g's checker rule), then run against the random
+   histories of `test_tsd_34_builders.py` over at least 16 hash seeds in child processes on rdflib and once on Oxigraph, and against the
+   fixtures and the benchmark. If every run is right on both engines, it replaces the slow form, its builder version moves, the benchmark
+   is re-run and TD-68 closes. If any run is wrong, the slow form stays, the failing case joins TSD-34, and TD-68 records why.
+3. **Record classes (D-15 (b), D-9).** `dal:recordClass` on a profile, naming classes whose instances are evidence of what they saw. The
+   warning `EvidenceEdgeByIdentity` reads it beside `fnd:Evidence` and `fnd:DerivedArtefact`, and `dal:NoReceipt` on a family whose target is
+   versioned or a record class warns. The caller check (H2.8b) reads it where it reads reference modes. TD-67 closes.
+4. **The documentation of the member parts (H2.6f (8)).** The Persistence README, the library README and the contracts README say, in one
+   place each, that under `dal:DeltaMembership` the digest's add and del parts hold the added and dropped members, and under a patch log
+   the added and removed triples, with an example of each. The contract's part declarations carry the same note.
+
+`FMH-H2-8c`. About 150k tokens.
+
 ### 4.15 H2.9: Mustache retired (planned 2026-10-20)
 
 The typed IR sketch's §7 slice: the templates, `render.py`, `chevron` and the equivalence harness go, and every generated operation is
@@ -1525,6 +1548,14 @@ rendered from its builder. It runs after H2.8, so every operation has its final 
 | H2.9-Q1 | how a request-time slot is marked once Mustache is gone | keep the `{{{name}}}` marker as a plain-text convention the library (ADR-A132) and any caller fill by substitution. It needs no dependency and every rendered query keeps its shape. The alternative, a SPARQL-native form, cannot carry a set of triples |
 | H2.9-Q2 | what replaces the harness's assurance | the recorded builder outputs (`builder-goldens.json`), the expected profiles, the behaviour tests on both engines, and the static checks S-3 and S-4 over the builders' output. The goldens' order dependence that H2.6c found is fixed here by keying them on the operation, not on the first fixture that produces it |
 | H2.9-Q3 | the injection corpus | runs over the builders and over the library's slot filling, since a slot is where untyped text enters |
+
+Added 2026-10-20 by the maintainer's decisions:
+
+- **D-12 (a).** The receipt-only composite create, replace and tombstone, reached only through the snapshot model, are deleted with the
+  templates, and `dal:SnapshotPerRevision` on an in-place composite family is refused until snapshots are built (TD-46), with a witness.
+  The tests that reached them through `receipt_only.py` are removed with them, listed for countersignature.
+- **The recorded builder outputs keyed by operation** (H2.6c's finding), so a new fixture never moves another builder's golden.
+- **`GeneratedOperation.template_id`** loses its suffix with the templates (H2.7, D-20), and `BUILDER_ONLY` (H2.8b) empties.
 
 Steps: remove the templates and their check, `render.py` and the `chevron` dependency, and the harness tests (listed for countersignature,
 since they are removed, ADR-grade justification: their subject no longer exists). S-3 reads the parameter declarations instead of the
@@ -1550,7 +1581,7 @@ a `GRAPH` block, for example the deleted-row guard `FILTER NOT EXISTS { $root pa
 ### 4.16 Order, from 2026-10-20
 
 H2.6d, then H2.6e, then H2.6f, one at a time since they touch the same code. W-65 and AIR-66 touch other modules and may run beside them.
-Then H2.7, H2.6g (TSD-34), H2.8, H2.9. Before the merge into `main`: TD-63, and one minor version bump (TD-64).
+Then H2.7, H2.6g (TSD-34), H2.8a, H2.8b, H2.8c, H2.9. Before the merge into `main`: TD-63, and one minor version bump (TD-64).
 
 ## 5. H4 onward, outline only
 
