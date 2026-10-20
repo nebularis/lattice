@@ -730,3 +730,6 @@ For acceptance: ADR-A132, the persistence caller library (Proposed), and ADR-A12
 | D-10 | H2.6d | a patch log declared on a family that never writes one (an append discipline, an append-only concurrency, an unconditional or value-guarded write) has no warning, following the brief. A warning is a small follow-up if wanted | FMH-H2-6d, TD-46 |
 | D-11 | H2.6d | a no-receipt family needs its own meta shard, since another family's gap scan would read its rows. Documented, not checked | FMH-H2-6d |
 | D-12 | H2.6d | the receipt-only composite templates are reachable only through the snapshot model, candidates for removal in H2.9 | FMH-H2-6d |
+| D-13 | H2.6e | the profile records every node-leading edge, the default mode stated, and the payload contract carries them too, so they are stated twice | FMH-H2-6e |
+| D-14 | H2.6e | a pinned value property is refused, and an unknown mode is refused at compile, not by a shape | FMH-H2-6e |
+| D-15 | H2.6e | the evidence warning reads the source shape's target class. "A class the profile names as a record" is not built, since a profile cannot name one (TD-67) | FMH-H2-6e, TD-67 |
