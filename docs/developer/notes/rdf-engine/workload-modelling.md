@@ -161,6 +161,10 @@ requests/second for the entire Lloyd's delegated authority market**. The high-vo
 case (13.1M binds/year) scales this to about 53 requests/second at peak. Both are modest for any
 store surveyed in paper 3.
 
+> **Note, 2026-10-20.** The history and versioning sketch's example E8 counts about 300 triples a bound risk once its wording
+> and meaning are counted under Instrument's rules (C7c D1 to D5), against about 150 here. The figures above should be re-based
+> once those counts are agreed (sketch EP-11).
+
 ### 3.3 What this means for testing
 
 The number worth testing is not "can it sustain 50 requests per second" (trivial for any candidate
