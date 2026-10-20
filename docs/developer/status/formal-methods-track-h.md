@@ -721,3 +721,6 @@ For acceptance: ADR-A132, the persistence caller library (Proposed), and ADR-A12
 | D-1 | AIR-66 | `tools/exposure_derivations.py` follows the identity ranges (resolves through the set's own versions). Not exercised by a test | FMH-AIR-66 |
 | D-2 | AIR-66 | the set-level shapes are violations, and also refuse a set listing two versions of one identity, which AIR-4.2a had left uncovered | FMH-AIR-66 |
 | D-3 | AIR-66 | `aeo:presenceLocation`, `aeo:assesses`, `aeo:interestIn`, `aeo:partOf` and the zone and loss links still name versions, deliberate non-coverage | FMH-AIR-66 |
+| D-4 | W-65 | a value still belongs to at least one assembled wording (minimum kept), so a value in no wording is reported | FMH-W65 |
+| D-5 | W-65 | the endorsement example asserts `ex:sec-2 fnd:supersededBy ex:sec-2-v2`, and the new section version repeats `ex:sec-2`'s object id and rank key | FMH-W65 |
+| D-6 | W-65 | one changed test, the Wording example count, for countersignature. No law yet checks that two wordings sharing a value are versions of one identity | FMH-W65 |
