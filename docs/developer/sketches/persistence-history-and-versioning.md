@@ -1448,3 +1448,25 @@ Two points the examples raised, decided the same way:
 | VH-D1 | which version the current pointer names when several proposals are pending against one version | the pointer is persistence's: the latest version written for the identity, its head. Which version is in force, or agreed, is evaluated from the assents (Instrument §6.3), never stored. `fnd:supersededBy` is asserted when an amendment is agreed, as `ins:AgreedChainShape` already expects |
 | VH-D2 | whether a new root version lists every member or only what changed | every member, as `wrd:includes` and AIR-4.2a's membership do today. A manifest stored as changes waits for E5's benchmark (EX-Q2 (c)) |
 
+**Maintainer's review, 2026-10-20.**
+
+| # | Decision |
+|---|---|
+| VH-Q1 | approved. The shared cost needs TD-65 fixed, since Wording restates every inclusion and value today |
+| VH-Q2 | (a) by default, (b) where a record is evidence of exactly what it saw, unless (c) an edge-specific reference is declared. Our reading: pinned is one value of the per-edge declaration, so nothing overrides anything. A warning, not a rule, where an edge from a record or evidence to a versioned class is declared by identity |
+| VH-Q3 | (b) |
+| VH-Q4 | (a) |
+| VH-Q5 | (2) the refusal relaxed for the append disciplines, (3) the snapshot model retired for appending families. (1) asked back: a receipt is not needed for every family (VH-Q5a below) |
+| VH-Q6 | agreed |
+| VH-D1 | agreed: agreement is evaluated, not stored |
+| VH-D2 | **revised: a choice per family.** A full membership list per root version (fast reads) or one stored as changes against the last (small writes, a chain to resolve on read), declared by the family. The full list stays the default |
+| R2 | (a): `append-version` links versions with a persistence term of its own, never `fnd:supersededBy`, which the domain asserts under its own rule (Instrument once a version is agreed) |
+| R4 to R8 | accepted: the examples and EP-1 to EP-11, TD-63 to TD-66 and PDD-11, H2.6c's eight decisions taken alone, its twelve expected profiles, its two changed tests |
+
+**VH-Q5a, open.** Which families need no receipt. The version row's seq decides a race without one, and the transaction claim, which
+is separate, confirms an outcome after a lost reply. A receipt gives order, the head chain, gap and fork audits, transaction time for a
+version, and change capture. Families that need none: an unconditional write and a value-guarded write, which already write none, and
+derived artefacts and projections, which can be regenerated. Leaning: a `dal:NoReceipt` model for an in-place family that wants no
+history, refused for the append disciplines, whose versions and records take their position and transaction time from the receipt. The
+claim stays wherever a retry can happen.
+

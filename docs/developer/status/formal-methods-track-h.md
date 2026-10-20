@@ -693,4 +693,8 @@ at the maintainer's request, and is committed on this branch, not pushed. Versio
   PDD-11 (entry into force per holder, the life of an offer). H2.6c planned (plan §4.9) and building, H2.6d planned (§4.10).
 - 2026-10-20: H2.6c built by an agent, reviewed, checks re-run (2869 passed, 1 xfailed, Oxigraph 225 passed) and committed. Paused
   for the maintainer's review of the tranche R1 to R10.
+- 2026-10-20: the maintainer reviewed the tranche. Approved VH-Q1, VH-Q3, VH-Q4, VH-Q6, VH-D1, R2 (a), R4 to R8. VH-Q2 settled as a
+  default with a per-edge override. VH-Q5 (2) and (3) yes, (1) became VH-Q5a. VH-D2 revised into a per-family choice. R9 and R10 put
+  to the maintainer in full. Follow-ups: H2.6c's link to the prior version moves off `fnd:supersededBy` (R2), TD-65 fixed for VH-Q1's
+  shared cost.
 
