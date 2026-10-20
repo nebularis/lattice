@@ -37,7 +37,7 @@ def _baseline(template: str | None = "urn:g:loan-application/{id}") -> Graph:
     return graph
 
 
-def _create(graph: Graph, template: str = "create-if-absent-named-graph") -> str:
+def _create(graph: Graph, template: str = "create-if-absent-named-graph-patch-log") -> str:
     compiled, _ = compile_to_graph(graph)
     return next(o for o in templatecheck.operations(compiled) if o.template == template).text
 
@@ -163,7 +163,7 @@ def test_ho8_t7_the_shipped_examples_all_keep_compiling_or_keep_their_refusal():
 
 def test_ho8_t8_every_template_that_names_a_graph_from_a_root_encodes_the_whole_root_and_keeps_the_suffix():
     templates = sorted(p for p in witness.TEMPLATE_DIR.glob("*.mustache") if "graphPrefix" in p.read_text(encoding="utf-8"))
-    assert len(templates) == 7
+    assert len(templates) == 19  # the receipt-only writes and the unconditional write, and the patch-log and no-receipt variants of the six (H2.6d)
     for path in templates:
         text = path.read_text(encoding="utf-8")
         body = text[text.index("}}") + 2:]

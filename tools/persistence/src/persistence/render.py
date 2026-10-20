@@ -22,7 +22,7 @@ ContextValue = Union[SparqlTerm, int, Sequence[SparqlTerm]]
 
 # Request-time slots: Mustache tags whose values exist only when a request
 # is made (the payload triples, the registry-listed log buckets, the rows and
-# triples of an append's events), so they
+# triples of an append's events, the asserted and retracted triples of a patch log), so they
 # cannot be compile-time bindings and cannot be SPARQL variables either (a
 # set of triples or a list of graph IRIs is not one RDF term). The
 # instantiate stage passes them through verbatim, so the instantiated
@@ -30,7 +30,7 @@ ContextValue = Union[SparqlTerm, int, Sequence[SparqlTerm]]
 # library can render. Always triple-brace (no HTML escaping). The values
 # are trusted, already-serialised SPARQL text supplied by the caller, see
 # tools/persistence/README.md "Using the generated SPARQL directly".
-REQUEST_TIME_SLOTS: tuple[str, ...] = ("payloadTriples", "logGraphs", "eventRows", "eventTriples")
+REQUEST_TIME_SLOTS: tuple[str, ...] = ("payloadTriples", "logGraphs", "eventRows", "eventTriples", "assertTriples", "retractTriples")
 
 
 def _template_dir_default() -> Path:

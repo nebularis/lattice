@@ -21,6 +21,7 @@ from functools import lru_cache
 import pytest
 
 import engines
+from receipt_only import receipt_only
 from rdflib import RDF, Dataset, Literal, URIRef, Variable
 from rdflib.namespace import XSD
 
@@ -48,7 +49,7 @@ PAYLOAD = (
 
 @lru_cache(maxsize=None)
 def _text_for(template: str, guards: bool) -> str:
-    compiled, _ = compile_to_graph(witness._load_fixture(FIXTURES[template]))
+    compiled, _ = compile_to_graph(receipt_only(FIXTURES[template]))
     return next(o for o in templatecheck.operations(compiled, guards) if o.template == template).text
 
 
@@ -167,6 +168,6 @@ def test_ho1_t6_a_stale_sequence_changes_nothing():
 
 @pytest.mark.parametrize("template", [PLAIN, DATASET_GUARD])
 def test_ho1_t7_the_changed_templates_pass_the_static_checks(template):
-    compiled, _ = compile_to_graph(witness._load_fixture(FIXTURES[template]))
+    compiled, _ = compile_to_graph(receipt_only(FIXTURES[template]))
     assert templatecheck.check_compiled(compiled) == []
     assert main(["hygiene", str(FIXTURES[PLAIN])]) == 0

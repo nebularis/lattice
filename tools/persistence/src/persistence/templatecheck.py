@@ -64,8 +64,8 @@ _FIRST_APPEND = (
     "revision and the pat:prevRev triple is correctly absent (guide §14.2)"
 )
 _FIRST_VERSION = (
-    "the first version of an identity has no current version before it, so no version is superseded and the "
-    "fnd:supersededBy triple is correctly absent (H2.6c)"
+    "the first version of an identity has no current version before it, so no version precedes it and the "
+    "pat:previousVersion triple is correctly absent (H2.6c, R2)"
 )
 OPTIONAL_INSERT_VARIABLES: dict[str, dict[str, str]] = {
     "cas-replace-named-graph": {"prevRev": _FIRST_CAS},
@@ -81,6 +81,19 @@ OPTIONAL_INSERT_VARIABLES: dict[str, dict[str, str]] = {
     "append-event": {"prev": _FIRST_APPEND},
     "append-event-dataset-guard": {"prev": _FIRST_APPEND},
 }
+_NOTHING_SWEPT = (
+    "an aggregate with nothing in it has nothing for the sweep to find, so a patch-log tombstone copies nothing into its del graph "
+    "and its own receipt still names that graph (H2.6d)"
+)
+# The patch-log variants (H2.6d) have the receipt allowances of their base operation. Their tombstones also copy the sweep.
+for _base in (
+    "cas-replace-named-graph", "cas-replace-composite-property", "tombstone-delete-named-graph", "tombstone-delete-composite",
+):
+    for _guard in ("", "-dataset-guard"):
+        OPTIONAL_INSERT_VARIABLES[f"{_base}-patch-log{_guard}"] = {
+            "prevRev": _FIRST_CAS,
+            **({"s": _NOTHING_SWEPT, "p": _NOTHING_SWEPT, "o": _NOTHING_SWEPT} if _base.startswith("tombstone") else {}),
+        }
 
 # Stand-ins for the request-time slots, so the text parses as SPARQL. The
 # payload is a ground triple. A real payload is skolemized by the caller.
@@ -89,6 +102,8 @@ _SLOT_STAND_INS = {
     "logGraphs": "<urn:x-check:log>",
     "eventRows": '(<urn:x-check:event> <urn:x-check:type> "1"^^<http://www.w3.org/2001/XMLSchema#long> "2026-01-01T00:00:00Z"^^<http://www.w3.org/2001/XMLSchema#dateTime>)',
     "eventTriples": "<urn:x-check:event> <urn:x-check:p> <urn:x-check:o> .",
+    "assertTriples": "<urn:x-check:s> <urn:x-check:p> <urn:x-check:added> .",
+    "retractTriples": "<urn:x-check:s> <urn:x-check:p> <urn:x-check:removed> .",
 }
 
 _COMMENT = re.compile(r"\{\{!.*?\}\}", re.S)

@@ -273,9 +273,8 @@ class _Checker:
         for name, param in self.params.items():
             if name not in self.used_params:
                 raise IrError("UnusedParameter", f"{self.op.id}: parameter {name!r} is declared and never used")
-        payloads = [n for n in self.slot_uses if self.params[n].kind is Kind.PAYLOAD]
-        if len(payloads) > 1:
-            raise IrError("SlotMisuse", f"{self.op.id}: more than one payload slot")
+        # No limit on payload slots (H2.6d). A patch-log create writes its payload slot into the data graph and into its add graph, and a
+        # patch-log replace has a slot for each of its payload, add and del content.
 
     # ---- terms
 

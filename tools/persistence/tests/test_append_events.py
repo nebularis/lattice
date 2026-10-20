@@ -168,13 +168,17 @@ def test_h2_6b_t9_with_the_guard_on_a_batch_missing_any_parameter_writes_nothing
 # ---- the warning for the receipt models that are declared and not honoured (TD-46) -------------------------------------------
 
 
-@pytest.mark.parametrize(("fixture", "model"), [("warning-ReceiptModelNotHonoured.ttl", "PatchLog"), ("snapshot-ReceiptModelNotHonoured.ttl", "SnapshotPerRevision")])
-def test_h2_6b_t11_each_unhonoured_receipt_model_warns_and_names_itself(fixture, model):
+def test_h2_6b_t11_a_snapshot_per_revision_warns_and_names_itself_and_a_patch_log_no_longer_does():
+    """Since H2.6d the in-place writes honour dal:PatchLog, so only the snapshot, which no template writes, is reported."""
     from persistence import witness
     from persistence.compiler import compile_targets
 
-    messages = [d.message for t in compile_targets(witness._load_fixture(witness.WITNESS_DIR / fixture)) for d in t.diagnostics if d.kind == "ReceiptModelNotHonoured"]
-    assert len(messages) == 1 and f"dal:{model}" in messages[0] and "TD-46" in messages[0]
+    def messages(graph):
+        return [d.message for t in compile_targets(graph) for d in t.diagnostics if d.kind == "ReceiptModelNotHonoured"]
+
+    (message,) = messages(witness._load_fixture(witness.WITNESS_DIR / "warning-ReceiptModelNotHonoured.ttl"))
+    assert "dal:SnapshotPerRevision" in message and "TD-46" in message
+    assert not messages(witness._load_fixture(witness.WITNESS_DIR / "_base-thing.ttl"))  # the base declares dal:PatchLog
 
 
 def test_h2_6b_t12_a_receipt_only_profile_does_not_warn():

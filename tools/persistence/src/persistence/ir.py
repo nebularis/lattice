@@ -243,6 +243,7 @@ class GraphRole(Enum):
     RETENTION = "retention"
     PINNED = "pinned"
     DATASET = "dataset"
+    PATCH = "patch"
 
 
 @dataclass(frozen=True)

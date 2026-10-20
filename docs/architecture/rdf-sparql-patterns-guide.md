@@ -1259,6 +1259,17 @@ The as-of query is still expensive and gets worse with history depth. Realistic 
 2. **`validFrom`/`validTo` intervals materialised on the data**, which makes as-of a range filter at the cost of a rewrite on every update. This is where `fnd:TemporalScope` fits ([Chapter 23](#chapter-23--bi-temporal-modelling-configurable-not-mandated)).
 3. **Log replay**, as above, reserved for audit rather than serving traffic.
 
+> **Note, 2026-10-20 (formal-methods H2.6d, TD-48).** The query above replays forward from the start of the log, so it needs every add graph
+> from the first revision. Under the prefix-only retention of [§24.2](#242-retention-and-pruning) the oldest buckets are dropped with their delta
+> graphs, and a triple that was added in a dropped bucket and never changed since is then missing from the result, though it is in the current
+> graph. The result is wrong and nothing says so. A read that goes **backward from the current state** needs only the log after the position `r`,
+> and its rule, which the patch invariants of the plan make sound (`del` is a subset of the old state, `add` is disjoint from it, so each
+> revision's change to a triple is the opposite of the one before), is as follows. For each triple, the first revision after `r` that touches it,
+> in its add or its del graph, decides. If that revision added it, the triple was absent at `r`. If that revision retracted it, the triple was
+> present at `r`. If no revision after `r` touches it, it is present at `r` exactly when it is in the current state. The state at `r` is the
+> triples the current state holds that no later revision added, plus those that a later revision first retracted. A generated as-of read is not
+> built (TD-48), and the form above stays correct for a family that has never pruned its log.
+
 ### S7 — Hybrid logical clocks for the sparse tier
 
 For the cross-stream tier on multi-writer or multi-region deployments, compute an HLC in the application and store it as one lexicographically sortable string, `{physicalMillis:013}:{logical:04}:{nodeId}`:
@@ -2398,6 +2409,11 @@ Key claims are retired the same way by default ([§6.2](#62-p2-the-guarded-write
 | Snapshot graphs | policy per family | prune sealed snapshots older than the window. `pat:head` and `pat:current` never point at a pruned graph |
 
 **Why prefix-only.** The as-of floor is one number per family, the oldest position that as-of replay (S6) can reconstruct. Dropping a bucket from the middle leaves a hole above the floor that replay would read across silently. Prefix-only pruning also keeps each target's retained receipts contiguous above its low-water mark, which is what S3 checks. `dal:BucketAnyRetention` is incompatible with as-of log replay and is flagged by `dal:AsOfFloorRetentionCompatibilityShape`. `dal:asOfFloorSource` declares which job advances the floor.
+
+> **Note, 2026-10-20 (H2.6d, TD-48).** S6 as written replays forward and breaks under this prefix retention, since it needs every add graph
+> from the start of the log and not only those above the low-water mark. A backward read from the current state needs only the
+> receipts above the low-water mark. The first revision after the as-of position that touches a triple decides it, so a triple the retained log
+> never touches is read from the current state and is not lost with a dropped bucket. The rule is in the note at S6.
 
 **Live heads are not always in the newest bucket.** A stream written once in March and never since has its head receipt in the March bucket. Dropping that bucket would leave `pat:head` pointing at nothing and break S4, the chain and the confirmation of the stream's next CAS. Before dropping a bucket, the retention job copies every receipt in it that is still some target's `pat:head` into `urn:g:txlog/pinned`, with the same IRI and triples. The simpler alternative, keeping any bucket that holds a live head, is valid but can stall retention indefinitely behind one dormant stream.
 

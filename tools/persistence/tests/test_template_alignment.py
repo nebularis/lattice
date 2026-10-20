@@ -253,7 +253,7 @@ def test_append_stream_under_dataset_guard_selects_guarded_variants():
 def test_named_graph_under_dataset_guard_selects_guarded_create():
     _, compiled = _compile("epoch-dataset-level-guard.ttl", "https://example.org/lending#LoanApplication")
     by_op = {o.operation: o.template_id for o in compiled[0].operations}
-    assert by_op["create-if-absent"] == "create-if-absent-named-graph-dataset-guard.mustache"
+    assert by_op["create-if-absent"] == "create-if-absent-named-graph-patch-log-dataset-guard.mustache"  # dal:PatchLog (H2.6d)
 
 
 def test_every_profile_gets_the_receipt_side_audits():

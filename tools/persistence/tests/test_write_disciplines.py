@@ -25,6 +25,7 @@ from persistence.terms import Iri
 
 U = URIRef
 PAT = str(PAT_NS)
+PREVIOUS = U(PAT + "previousVersion")
 SUPERSEDED_BY = U(str(FND.supersededBy))
 EXAMPLES = witness.EXAMPLES_DIR
 COMPOSITE = EXAMPLES / "write-discipline-composite-append-versions.ttl"
@@ -102,25 +103,26 @@ def row(ds) -> dict:
 
 
 @engines.each_engine_and_guards
-def test_h2_6c_t1_a_second_version_leaves_the_first_in_place_and_linked_by_superseded_by():
+def test_h2_6c_t1_a_second_version_leaves_the_first_in_place_and_the_second_links_to_it_by_previous_version():
     ds = second(first(store()))
     data = triples(ds, DATA)
     assert (V1, RDF.type, _p("Quote")) in data and (V1, _p("hasTerms"), TERMS) in data  # the first version is whole
     assert (V2, RDF.type, _p("Quote")) in data and (V2, _p("note"), RdfLiteral("revised")) in data
-    assert (V1, SUPERSEDED_BY, V2) in data
-    assert not any(p == SUPERSEDED_BY and s == V2 for s, p, o in data)  # the new version supersedes nothing yet
+    assert (V2, PREVIOUS, V1) in data
+    assert not any(p == PREVIOUS and s == V1 for s, p, o in data)  # the first version follows nothing
+    assert not any(p == SUPERSEDED_BY for s, p, o in data)  # persistence never writes fnd:supersededBy, the domain does (R2)
 
 
 @engines.each_engine_and_guards
-def test_h2_6c_t2_the_first_version_supersedes_nothing_and_the_row_names_the_latest_version_written():
+def test_h2_6c_t2_the_first_version_follows_nothing_and_the_row_names_the_latest_version_written():
     ds = first(store())
-    assert not any(p == SUPERSEDED_BY for s, p, o in triples(ds, DATA))
+    assert not any(p in (PREVIOUS, SUPERSEDED_BY) for s, p, o in triples(ds, DATA))
     assert row(ds)["currentVersion"] == V1 and row(ds)["head"] == U("urn:rev:quote/1/1") and row(ds)["seq"].toPython() == 1
     ds = second(ds)
     assert row(ds)["currentVersion"] == V2 and row(ds)["head"] == U("urn:rev:quote/1/2") and row(ds)["seq"].toPython() == 2
     ds = append(ds, 2, 3, V3, [(V3, RDF.type, _p("Quote"))])
     data = triples(ds, DATA)
-    assert (V1, SUPERSEDED_BY, V2) in data and (V2, SUPERSEDED_BY, V3) in data and (V1, SUPERSEDED_BY, V3) not in data  # a chain
+    assert (V2, PREVIOUS, V1) in data and (V3, PREVIOUS, V2) in data and (V3, PREVIOUS, V1) not in data  # a chain
 
 
 @engines.each_engine_and_guards
@@ -184,7 +186,7 @@ def test_h2_6c_t8_the_dataset_guard_variant_writes_only_while_the_dataset_epoch_
     assert not triples(ds, DATA)
     ds = store(dataset_epoch=1)
     second(first(ds, stem=stem), stem=stem)
-    assert (V1, SUPERSEDED_BY, V2) in triples(ds, DATA) and row(ds)["currentVersion"] == V2
+    assert (V2, PREVIOUS, V1) in triples(ds, DATA) and row(ds)["currentVersion"] == V2
     ds = store(dataset_epoch=1)
     ds.graph(META).remove((IDENTITY, U(PAT + "epoch"), LONG(1)))
     ds.graph(META).add((IDENTITY, U(PAT + "epoch"), LONG(0)))  # a row behind the dataset is rebased by the write
@@ -210,7 +212,7 @@ def test_h2_6c_t10_append_version_never_deletes_from_the_data_graph_and_reads_an
     sets = access_sets(operation)
     assert not any(a.mode == "Delete" and a.role == "data" for a in sets.writes), "no sweep and no delete"
     c = contract_of(operation)
-    assert c.kind is OperationKind.APPEND_VERSION and c.version == 1
+    assert c.kind is OperationKind.APPEND_VERSION and c.version == 2  # 2 since R2 (pat:previousVersion, H2.6d)
     by_resource = {(a.resource, a.mode) for a in c.accesses}
     assert (ResourceKind.AGGREGATE.value, "Insert") in by_resource  # the version
     assert (ResourceKind.AGGREGATE.value, "Delete") not in by_resource

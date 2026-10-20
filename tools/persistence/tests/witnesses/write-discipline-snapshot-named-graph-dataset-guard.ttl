@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# The dataset-guard variants of the receipt-only writes of a named-graph family, reached through dal:SnapshotPerRevision.
+# base: epoch-dataset-level-guard.ttl
+# remove: ex:LoanApplicationProfile dal:receiptModel
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:LoanApplicationProfile dal:receiptModel dal:SnapshotPerRevision .

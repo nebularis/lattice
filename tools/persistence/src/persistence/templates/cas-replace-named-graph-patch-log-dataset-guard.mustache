@@ -1,0 +1,59 @@
+{{! cas-replace-named-graph-patch-log-dataset-guard:
+    Patch-log variant (dal:PatchLog, formal-methods H2.6d). The same update also writes the caller's delta into two graphs named from the
+    receipt, newRev followed by /add and by /del. assertTriples holds the triples the replace adds, and retractTriples the triples it
+    removes, both computed by the caller from the aggregate it read before the compare-and-set, and the receipt names the graphs with
+    pat:asserts and pat:retracts. Both slots are request-time Mustache slots, and an unrendered one is a syntax error, so a request that
+    gives neither fails closed. An empty slot gives an empty graph.
+    guide §19.1's corrected pattern, dal:DatasetLevelGuard
+    variant. Writes guard on the dataset node's epoch only. The row's own
+    pat:epoch is read and rewritten to the current epoch (a lazy rebase
+    after an epoch bump, guide §10.1), and pat:seq continues.
+    pat:head is OPTIONAL: a pre-created row has no head on its first CAS
+    (guide §14.2). requestDigest is computed by the caller as lower-case
+    hex SHA-256 over the tuple-encoded operation kind, target, expected
+    seq and sorted canonical N-Triples of the skolemized payload (guide
+    §15.2), and recorded on the txn claim so a confirmation can tell a
+    replay from a different request reusing the txn id.
+    payloadTriples is a request-time Mustache slot, not a
+    SPARQL variable: a set of triples cannot be bound through one variable.
+    Instantiate leaves it in place, and the caller renders it with the
+    already-serialised, trusted payload triples before submission (see
+    tools/persistence/README.md, "Using the generated SPARQL directly").
+    Note for template authors: never put a Mustache tag inside this
+    comment block. Chevron's comment parser ends at the first closing
+    double-brace it sees, which silently truncates the comment. }}
+PREFIX pat: <https://example.org/lattice/patterns#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+DELETE {
+  GRAPH ?g { ?s ?p ?o }
+  GRAPH {{{metaGraphPrefix}}} { $root pat:epoch ?rowEpoch ; pat:seq $expectedSeq ; pat:head ?prevRev }
+}
+INSERT {
+  GRAPH ?g { {{{payloadTriples}}} }
+  GRAPH ?addGraph { {{{assertTriples}}} }
+  GRAPH ?delGraph { {{{retractTriples}}} }
+  GRAPH {{{metaGraphPrefix}}} { $root pat:epoch $epoch ; pat:seq $nextSeq ; pat:head $newRev }
+  GRAPH {{{txnGraph}}}        { $txnId pat:rev $newRev ; pat:requestDigest $requestDigest }
+  GRAPH ?logGraph {
+      $newRev a pat:Revision ; pat:target $root ; pat:epoch $epoch ; pat:seq $nextSeq ;
+              pat:prevRev ?prevRev ; pat:txn ?txnKey ; pat:recordedAt ?now ;
+              pat:asserts ?addGraph ; pat:retracts ?delGraph
+  }
+}
+WHERE {
+  BIND(IRI(CONCAT({{{graphPrefix}}}, ENCODE_FOR_URI(STR($root)), {{{graphSuffix}}})) AS ?g)
+  BIND(IRI(CONCAT(STR({{{logGraphPrefix}}}), SUBSTR(STR(NOW()), 1, 7))) AS ?logGraph)
+  BIND(IRI(CONCAT(STR($newRev), "/add")) AS ?addGraph)
+  BIND(IRI(CONCAT(STR($newRev), "/del")) AS ?delGraph)
+  GRAPH {{{datasetGraph}}} { {{{datasetNode}}} pat:epoch $epoch }
+  GRAPH {{{metaGraphPrefix}}} {
+      $root pat:epoch ?rowEpoch ; pat:seq $expectedSeq .
+      OPTIONAL { $root pat:head ?prevRev }
+      FILTER NOT EXISTS { $root pat:deleted true }
+  }
+  FILTER NOT EXISTS { GRAPH {{{txnGraph}}} { $txnId pat:rev ?any } }
+  BIND(STR($txnId) AS ?txnKey)
+  BIND(NOW() AS ?now)
+  OPTIONAL { GRAPH ?g { ?s ?p ?o } }
+}

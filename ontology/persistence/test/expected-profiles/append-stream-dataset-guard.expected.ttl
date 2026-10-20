@@ -234,10 +234,6 @@
 
 [] a dal:CompiledProfile ;
     dal:capabilityRequirement [ a dal:CapabilityRequirement ] ;
-    dal:diagnostic [ a dal:Diagnostic ;
-            dal:diagnosticKind "ReceiptModelNotHonoured" ;
-            dal:diagnosticMessage "dal:receiptModel dal:PatchLog declares asserts and retracts delta graphs alongside each receipt, but no generated operation writes it. The compiled profile records the declaration and the operations write a receipt only (TD-46). Do not rely on replay, as-of reads or change capture from this profile." ;
-            dal:diagnosticSeverity "WARNING" ] ;
     dal:forTarget <https://example.org/lending#DecisionStream> ;
     dal:generatedOperation [ a dal:GeneratedOperation ;
             dal:access <https://example.org/lending/DecisionStream/compiled/bootstrap-version-row#access-1>,

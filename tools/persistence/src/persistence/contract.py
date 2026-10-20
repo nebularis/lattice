@@ -63,6 +63,7 @@ class ResourceKind(Enum):
     DATASET_EPOCH = "DatasetEpoch"
     RETENTION_MARK = "RetentionMark"
     PROPERTY_VALUE = "PropertyValue"
+    PATCH_CONTENT = "PatchContent"
 
 
 LOGICAL_KEYS: dict[ResourceKind, tuple[str, ...]] = {
@@ -77,6 +78,7 @@ LOGICAL_KEYS: dict[ResourceKind, tuple[str, ...]] = {
     ResourceKind.DATASET_EPOCH: ("dataset",),
     ResourceKind.RETENTION_MARK: ("target",),
     ResourceKind.PROPERTY_VALUE: ("root", "property"),
+    ResourceKind.PATCH_CONTENT: ("target", "epoch", "seq", "direction"),
 }
 """The logical key of each resource, as the names of its parts. A stream is the root of its version row, and a bucket month is a
 realisation and never part of a key (design review 2.2)."""
@@ -95,6 +97,7 @@ _ROLE_RESOURCE: dict[str, ResourceKind] = {
     "quarantine": ResourceKind.KEY_QUARANTINE,
     "retention": ResourceKind.RETENTION_MARK,
     "dataset": ResourceKind.DATASET_EPOCH,
+    "patch": ResourceKind.PATCH_CONTENT,  # the add and del graphs of a patch log, named from the receipt (H2.6d)
 }
 
 
@@ -130,6 +133,11 @@ _STEM_KIND: dict[str, OperationKind] = {
     "revision-multi-txn-audit": OperationKind.AUDIT,
     "txn-multi-revision-audit": OperationKind.AUDIT,
 }
+# The patch-log and no-receipt variants of the in-place writes (H2.6d) have the kind of their base operation.
+for _stem, _kind in tuple(_STEM_KIND.items()):
+    if _stem.startswith(("create-if-absent-", "cas-replace-named", "cas-replace-composite", "tombstone-delete-")):
+        _STEM_KIND[_stem + "-patch-log"] = _kind
+        _STEM_KIND[_stem + "-no-receipt"] = _kind
 OPERATION_KINDS = _STEM_KIND
 DATASET_GUARD_SUFFIX = "-dataset-guard"
 
@@ -139,11 +147,12 @@ def stem_of(operation_id: str) -> str:
     return operation_id.removesuffix(DATASET_GUARD_SUFFIX)
 
 
-BUILDER_VERSIONS: dict[str, int] = {**{stem: 1 for stem in sorted(_STEM_KIND)}, "append-event": 2}
+BUILDER_VERSIONS: dict[str, int] = {**{stem: 1 for stem in sorted(_STEM_KIND)}, "append-event": 2, "append-version": 2, "cas-replace-named-graph": 2}
 """The version of each builder, which any change to the text it renders must bump. A golden check
 (`tests/test_builder_versions.py`) holds the version to the text, and it is a number kept here, never computed, so that a
 change to a builder is a change a reviewer sees. A dataset-guard variant shares its base operation's version. `append-event` is at 2
-since its events became request-time slots (formal-methods H2.6b)."""
+since its events became request-time slots (formal-methods H2.6b). `append-version` is at 2 since it links versions with `pat:previousVersion`
+(R2, H2.6d), and `cas-replace-named-graph` since it no longer names delta graphs from caller parameters, which a patch-log variant now writes."""
 
 
 class GuardStatus(Enum):
@@ -197,13 +206,17 @@ class DigestContract:
     """What the request digest is taken over (the patterns guide, remediation A5): the kind of the operation, the target it
     names, the sequence it expects, and the sorted canonical N-Triples of what the request asserts. That last part is one slot
     per kind of content, in a fixed order, so a triple's role is part of what is hashed (formal-methods H2.6b, Q5): the payload of
-    a write, or for an append the events, which are its rows slot and its triples slot together. A part an operation does not
-    have is ``None`` or empty. The hash and the encoding are fixed by the contract, and the algorithm is built in H2.8."""
+    a write, or for an append the events, which are its rows slot and its triples slot together, and for a replace that writes a patch
+    log the asserted and the retracted triples, in the order payload, add, del (formal-methods H2.6d). A part an operation does not have
+    is ``None`` or empty. A create's add graph is its payload and a tombstone's del graph is copied from its sweep, so neither has a part
+    of its own. The hash and the encoding are fixed by the contract, and the algorithm is built in H2.8."""
 
     target: Optional[str]
     expected: Optional[str]
     payload: Optional[str]
     event: tuple = ()
+    add: Optional[str] = None
+    delete: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -313,7 +326,10 @@ def contract_of(operation: Operation) -> OperationContract:
     digest = None
     if "requestDigest" in params:
         target = next((a.keyed_by for a in sorted(accesses) if a.resource == ResourceKind.VERSION_ROW.value and a.keyed_by), None)
-        digest = DigestContract(target, "expectedSeq" if "expectedSeq" in params else None, payload_name, event)
+        digest = DigestContract(
+            target, "expectedSeq" if "expectedSeq" in params else None, payload_name, event,
+            "assertTriples" if "assertTriples" in params else None, "retractTriples" if "retractTriples" in params else None,
+        )
     return OperationContract(
         id=operation.id, kind=kind, version=BUILDER_VERSIONS[stem], guard_status=status, graph_naming=naming,
         parameters=parameters, accesses=tuple(sorted(accesses)), results=_result_columns(operation), payload=payload, digest=digest,

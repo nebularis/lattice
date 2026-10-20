@@ -16,6 +16,7 @@ import warnings
 import pytest
 
 import engines
+from receipt_only import receipt_only
 from rdflib import Dataset, Literal, URIRef, Variable
 from rdflib.namespace import XSD
 
@@ -39,7 +40,7 @@ COMPOSITE = [s for s in sorted(BUILDERS) if "composite" in s]
 
 
 def _compiled():
-    return compile_to_graph(witness._load_fixture(PROJECT_EXAMPLE))[0]
+    return compile_to_graph(receipt_only(PROJECT_EXAMPLE))[0]
 
 
 def _context(stem: str) -> dict:

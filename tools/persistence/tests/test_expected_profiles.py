@@ -119,7 +119,7 @@ def _facts(c: OperationContract, shape: str | None) -> set:
     if c.payload:
         facts.add(("payload", c.payload.parameter, c.payload.root, shape or "NoBoundaryShape"))
     if c.digest:
-        facts.add(("digest", c.digest.target, c.digest.expected, c.digest.payload, c.digest.event))
+        facts.add(("digest", c.digest.target, c.digest.expected, c.digest.payload, c.digest.event, c.digest.add, c.digest.delete))
     return facts
 
 
@@ -164,7 +164,7 @@ def _read_contract(g: Graph, node) -> tuple[OperationContract, str | None]:
             return tuple(sorted(param_names[o] for o in parts.get(role, ()) if o != DAL.NoSource))
 
         single = lambda role: (names(role) or (None,))[0]
-        digest = DigestContract(single("TargetPart"), single("ExpectedSeqPart"), single("PayloadPart"), names("EventPart"))
+        digest = DigestContract(single("TargetPart"), single("ExpectedSeqPart"), single("PayloadPart"), names("EventPart"), single("AddPart"), single("DelPart"))
     contract = OperationContract(
         id=str(g.value(node, DAL.forOperation)), kind=OperationKind(_local(g.value(node, DAL.operationKind))),
         version=int(g.value(node, DAL.templateVersion)), guard_status=GuardStatus(_local(g.value(node, DAL.guardStatus))),
@@ -186,15 +186,8 @@ class Intended:
     closes: str
 
 
-INTENDED = (
-    Intended(
-        frozenset({"cas-replace-named-graph"}),
-        frozenset({("param", "assertGraph", "required", True), ("param", "retractGraph", "required", True)}),
-        frozenset({("param", "assertGraph", "required", False), ("param", "retractGraph", "required", False)}),
-        "$assertGraph and $retractGraph are required under dal:PatchLog (H2.3-Q3), and the builder declares them optional for every receipt model",
-        "H2.7",
-    ),
-)
+INTENDED: tuple = ()
+"""Empty since H2.6d, which closed the last intended difference (`$assertGraph` and `$retractGraph` under `dal:PatchLog`)."""
 
 
 def _operations(example: str, options: dict):

@@ -18,6 +18,7 @@ from pathlib import Path
 import pytest
 
 import engines
+from receipt_only import receipt_only
 from rdflib import RDF, Dataset, Graph, Literal, URIRef, Variable
 from rdflib.graph import DATASET_DEFAULT_GRAPH_ID
 from rdflib.namespace import XSD
@@ -44,7 +45,7 @@ _OPERATION = {"create-if-absent-composite": "create-if-absent", "cas-replace-com
 
 @lru_cache(maxsize=None)
 def _text_for(template: str, guards: bool) -> str:
-    compiled, _ = compile_to_graph(witness._load_fixture(PROJECT_EXAMPLE))
+    compiled, _ = compile_to_graph(receipt_only(PROJECT_EXAMPLE))
     (by_target,) = instantiate_by_target(compiled, guards=guards).values()
     return by_target[_OPERATION[template]].replace("{{{payloadTriples}}}", templatecheck._SLOT_STAND_INS["payloadTriples"])
 
@@ -122,7 +123,7 @@ def _revisions(ds: Dataset) -> list:
 
 def test_ho7_t1_a_composite_family_with_an_absent_row_gets_both_create_templates_and_a_tombstone():
     for fixture, suffix in ((PROJECT_EXAMPLE, ""), (DATASET_GUARD_FIXTURE, "-dataset-guard")):
-        (compiled,) = compile_targets(witness._load_fixture(fixture))
+        (compiled,) = compile_targets(receipt_only(fixture))
         templates = {o.operation: o.template_id for o in compiled.operations}
         assert templates["create-if-absent"] == f"create-if-absent-composite{suffix}.mustache"
         assert templates["tombstone-delete"] == f"tombstone-delete-composite{suffix}.mustache"
@@ -130,7 +131,7 @@ def test_ho7_t1_a_composite_family_with_an_absent_row_gets_both_create_templates
 
 
 def test_ho7_t1b_a_pre_created_row_gets_no_create_and_still_a_tombstone():
-    graph = witness._load_fixture(PROJECT_EXAMPLE)
+    graph = receipt_only(PROJECT_EXAMPLE)
     graph.parse(
         data="@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> . "
              "@prefix px: <https://example.org/projects#> . px:ProjectBoundaryProfile dal:firstWrite dal:PreCreatedRow .",
@@ -225,5 +226,5 @@ def test_ho7_t7b_a_tombstone_leaves_a_copy_of_the_data_in_the_default_graph_alon
 
 @pytest.mark.parametrize("fixture", [PROJECT_EXAMPLE, DATASET_GUARD_FIXTURE])
 def test_ho7_t8_the_new_templates_pass_the_static_checks(fixture):
-    compiled, _ = compile_to_graph(witness._load_fixture(fixture))
+    compiled, _ = compile_to_graph(receipt_only(fixture))
     assert templatecheck.check_compiled(compiled) == []

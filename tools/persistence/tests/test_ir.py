@@ -162,7 +162,6 @@ def _refusals() -> list[tuple[str, str, object]]:
         ("ParameterGuardNotDerived", "a stray parameter", lambda: replace(valid(), guard=ParameterGuard(PARAMS[:6] + (Param("extra", Kind.IRI),)))),
         ("SlotMisuse", "payload in WHERE", lambda: valid(where_=(*where(), GraphBlock(META, (PayloadSlot("payloadTriples"),))))),
         ("SlotMisuse", "payload in DELETE", lambda: valid(delete_=(*delete(), GraphBlock(DATA, (PayloadSlot("payloadTriples"),))))),
-        ("SlotMisuse", "two payload slots", lambda: valid(insert_=(*insert(), GraphBlock(META, (PayloadSlot("payloadTriples"),))))),
         ("SlotMisuse", "slot naming a non-payload parameter", lambda: valid(insert_=(*insert(), GraphBlock(META, (PayloadSlot("root"),))))),
         ("SlotMisuse", "slot bound as a term", lambda: valid(where_=(*where(), GraphBlock(META, (Triple(ROOT, pat("p"), ParamRef("payloadTriples")),))))),
         ("SlotMisuse", "registry slot naming a payload", lambda: valid(where_=(*where(), Values(Var("log"), (RegistrySlot("payloadTriples"),))))),

@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# A named-graph family that declares dal:SnapshotPerRevision, which no template honours (TD-46), so it writes the receipt-only form of create,
+# replace and tombstone and compile warns ReceiptModelNotHonoured. The builder goldens take the context of the receipt-only named-graph writes
+# from this fixture, which has the target the baseline example always gave them (the goldens are pinned to it in builder_goldens.py).
+# base: baseline-single-class.ttl
+# remove: ex:LoanApplicationStrongProfile dal:receiptModel
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:LoanApplicationStrongProfile dal:receiptModel dal:SnapshotPerRevision .

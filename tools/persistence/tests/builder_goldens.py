@@ -24,12 +24,24 @@ from persistence.ir_render import render
 GOLDEN = Path(__file__).parent / "fixtures" / "ir" / "builder-goldens.json"
 
 
+# The context a builder is rendered with is that of the first fixture that generates it, so a change in which fixtures generate it moves the
+# recorded text with no change to the builder. Since H2.6d a named-graph family that declares dal:PatchLog selects the patch-log variants, so the
+# baseline example no longer generates the receipt-only writes. These three are pinned to the fixture that gives them the baseline's target.
+PINNED = {
+    stem: "write-discipline-snapshot-named-graph.ttl"
+    for stem in ("create-if-absent-named-graph", "cas-replace-named-graph", "tombstone-delete-named-graph")
+}
+
+
 def current() -> dict:
-    from test_builders import _first
+    from test_builders import _first, _ported
 
     out = {}
     for key in sorted(BUILDERS):
-        _, _, _, context = _first(key)
+        if key in PINNED:
+            _, _, _, context = next(op for op in _ported() if op[2] == key and op[0] == PINNED[key])
+        else:
+            _, _, _, context = _first(key)
         text = render(build(key, context))
         out[key] = {"version": BUILDER_VERSIONS[stem_of(key)], "sha256": hashlib.sha256(text.encode("utf-8")).hexdigest()}
     return out

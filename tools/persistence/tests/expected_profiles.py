@@ -66,11 +66,6 @@ NEW_PREDICATES = {
 }
 """The predicates a generated operation gains. The base-profile test removes them (and the declaration nodes) to compare with `compile`."""
 
-# What the files describe that the builders do not yet give, each with the reason and the slice that closes it (agreement test).
-# A row names the receipt model it applies to. H2.7 empties this table.
-PATCH_LOG_REQUIRED = {"assertGraph", "retractGraph"}
-
-
 def mint(target: URIRef, operation: str, part: str) -> URIRef:
     """The IRI of a declaration node: derived from the target, the operation's name and the part, never from an order."""
     base = str(target).replace("#", "/")
@@ -96,6 +91,7 @@ _REALISATION = {
     ResourceKind.DATASET_EPOCH: "the dataset's epoch, in the dataset graph",
     ResourceKind.RETENTION_MARK: "a target's retention low-water mark, in the retention graph",
     ResourceKind.PROPERTY_VALUE: "the value of one property of a root, in the default graph today (TD-43)",
+    ResourceKind.PATCH_CONTENT: "the triples a write added or removed, in a graph named from its receipt, newRev followed by /add or /del, one per direction",
 }
 
 
@@ -135,7 +131,7 @@ def kinds_graph() -> Graph:
     members("GuardStatus", (s.value for s in GuardStatus))
     members("GraphNaming", (n.value for n in GraphNaming))
     members("DeclarationSource", (s.value for s in DeclarationSource))
-    members("DigestPartRole", ("OperationKindPart", "TargetPart", "ExpectedSeqPart", "PayloadPart", "EventPart"))
+    members("DigestPartRole", ("OperationKindPart", "TargetPart", "ExpectedSeqPart", "PayloadPart", "EventPart", "AddPart", "DelPart"))
     members("Rule", ("GraphNameOfRoot",), {"GraphNameOfRoot": "the graph IRI the family's dal:graphIriTemplate gives for the value of the root parameter"})
     members("Source", ("RegistryGraph", "NoSource"), {"RegistryGraph": "the family's dal:registryGraph, a caller obligation"})
     members("PayloadEncoding", ("GroundNTriples",))
@@ -153,14 +149,8 @@ def _shape_of(target) -> URIRef | None:
 
 
 def designed(contract: OperationContract, receipt_model: str) -> OperationContract:
-    """What the expected profile says for an operation: the builder's contract, with the differences that are H2.7's design."""
-    if receipt_model == "PatchLog" and contract.kind is OperationKind.REPLACE:
-        import dataclasses
-
-        parameters = tuple(
-            dataclasses.replace(p, required=True) if p.name in PATCH_LOG_REQUIRED else p for p in contract.parameters
-        )
-        return dataclasses.replace(contract, parameters=parameters)
+    """What the expected profile says for an operation: the builder's contract. H2.6d closed the one difference there was, that
+    `$assertGraph` and `$retractGraph` are required under `dal:PatchLog`, by having the patch-log variants name their delta graphs from the receipt."""
     return contract
 
 
@@ -230,6 +220,9 @@ def _emit_operation(g: Graph, node, target_iri: URIRef, name: str, c: OperationC
             ("ExpectedSeqPart", (c.digest.expected,) if c.digest.expected else ()),
             # the content of the request, one part: the payload of a write, or the events of an append (H2.6b, Q5)
             ("EventPart", c.digest.event) if c.digest.event else ("PayloadPart", (c.digest.payload,) if c.digest.payload else ()),
+            # a replace under a patch log adds the asserted and the retracted triples, in that order (H2.6d)
+            *((("AddPart", (c.digest.add,)),) if c.digest.add else ()),
+            *((("DelPart", (c.digest.delete,)),) if c.digest.delete else ()),
         ]
         for i, (role, sources) in enumerate(parts, 1):
             dp = m(f"digest-part-{i}")

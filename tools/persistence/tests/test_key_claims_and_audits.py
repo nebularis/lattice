@@ -448,6 +448,7 @@ def test_h2_5_t40_the_role_table_gained_no_entry_in_this_slice():
     assert set(GRAPH_ROLES) == {
         "metaGraphPrefix", "txnGraph", "datasetGraph", "dataGraph", "keysGraph", "keyQuarantineGraph", "retentionGraph", "pinnedGraph",
         "g", "log", "logGraph", "logGraph2", "eventGraph",
+        "addGraph", "delGraph",  # the delta graphs of a patch log (H2.6d)
     }
 
 

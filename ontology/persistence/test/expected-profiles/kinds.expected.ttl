@@ -51,6 +51,8 @@ dal:Source a rdfs:Class .
 
 dal:AbsenceRead a dal:AccessMode .
 
+dal:AddPart a dal:DigestPartRole .
+
 dal:Aggregate a dal:ResourceKind ;
     rdfs:comment "the root's data graph (named-graph family) or the owned members in the family's data graph (composite)" ;
     dal:logicalKey "root" .
@@ -76,6 +78,8 @@ dal:Create a dal:OperationKind .
 dal:DatasetEpoch a dal:ResourceKind ;
     rdfs:comment "the dataset's epoch, in the dataset graph" ;
     dal:logicalKey "dataset" .
+
+dal:DelPart a dal:DigestPartRole .
 
 dal:Delete a dal:AccessMode .
 
@@ -144,6 +148,10 @@ dal:NoSource a dal:Source .
 dal:NotGenerated a dal:GuardStatus .
 
 dal:OperationKindPart a dal:DigestPartRole .
+
+dal:PatchContent a dal:ResourceKind ;
+    rdfs:comment "the triples a write added or removed, in a graph named from its receipt, newRev followed by /add or /del, one per direction" ;
+    dal:logicalKey "target, epoch, seq, direction" .
 
 dal:PayloadKind a dal:ParameterKind .
 

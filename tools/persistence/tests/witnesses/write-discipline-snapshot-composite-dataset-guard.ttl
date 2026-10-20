@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# The dataset-guard variants of the receipt-only writes of a composite family, reached through dal:SnapshotPerRevision as above.
+# base: composite-property-boundary-shacl.ttl
+# remove: ex:OrderReceiptProfile dal:receiptModel
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:OrderReceiptProfile dal:receiptModel dal:SnapshotPerRevision .
+
+ex:OrderEpoch a dal:EpochProfile ;
+    dal:appliesTo       ex:OrderClass ;
+    dal:epochGuardScope dal:DatasetLevelGuard ;
+    dal:epochAuthority  dal:ExternalHighWaterMark .

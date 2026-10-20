@@ -82,6 +82,20 @@ def check_cross_axis(
                 "dal:dataGraph, under dal:Optimistic, or write in place.",
             )
 
+    # H2.6d, VH-Q5a: a family that wants no receipt writes in place. A version or a record takes its position and its transaction time
+    # from the receipt, so an append discipline cannot do without one, and a stream (an append-only or event-grain family) is such a family.
+    ordering_local = _local(ordering.value) if ordering else None
+    if _local(receipts.value if receipts else None) == "NoReceipt" and (
+        appends or concurrency_local == "AppendOnly" or (ordering_local == "EventGrain" and concurrency_local != "Optimistic")
+    ):
+        raise CrossAxisViolation(
+            "NoReceiptWithAppendDiscipline",
+            str(target),
+            "dal:receiptModel dal:NoReceipt writes no receipt and no head, and this family appends (dal:AppendVersions, "
+            "dal:AppendRecords, an append-only concurrency or a stream), where a version or a record takes its position and its "
+            "transaction time from the receipt. Use dal:ReceiptOnly, or write in place (H2.6d, VH-Q5a).",
+        )
+
     # Row 1: NoBoundary + Optimistic with no value guard. Appending versions guards on the version row instead.
     if boundary_local == "NoBoundary" and concurrency_local == "Optimistic" and discipline != "AppendVersions":
         if not concurrency.extra.get("valueGuardProperty"):
@@ -468,21 +482,16 @@ def _check_slice_2(target: Target, dimensions: dict[str, ResolvedDimension]) -> 
                 "The declaration is recorded in the compiled profile and not yet applied.",
             ))
 
-    # TD-46: the receipt models that no template honours. A patch log names delta graphs and a snapshot copies the aggregate per
-    # revision, and no template writes either, so a profile that chooses one still records a receipt only. H1.4c: a declaration the
-    # compiler cannot honour is a warning or a refusal, never silent. CompositeBoundaryReceiptOnly still demands a patch log of a
-    # composite family, so the examples keep compiling, with this warning.
+    # TD-46: the receipt model that no template honours. A snapshot copies the aggregate per revision and no template writes one, so a
+    # profile that chooses it still records a receipt only. H1.4c: a declaration the compiler cannot honour is a warning or a refusal,
+    # never silent. dal:PatchLog is honoured by the in-place writes since H2.6d, and dal:NoReceipt is a model of its own.
     receipt_model = _local(_value(dimensions, "receiptModel"))
-    if receipt_model in ("PatchLog", "SnapshotPerRevision"):
-        what = (
-            "asserts and retracts delta graphs alongside each receipt" if receipt_model == "PatchLog"
-            else "a snapshot of the aggregate per revision"
-        )
+    if receipt_model == "SnapshotPerRevision":
         out.append(_warning(
             "ReceiptModelNotHonoured", target,
-            f"dal:receiptModel dal:{receipt_model} declares {what}, but no generated operation writes it. "
-            "The compiled profile records the declaration and the operations write a receipt only (TD-46). "
-            "Do not rely on replay, as-of reads or change capture from this profile.",
+            "dal:receiptModel dal:SnapshotPerRevision declares a snapshot of the aggregate per revision, but no generated operation "
+            "writes it. The compiled profile records the declaration and the operations write a receipt only (TD-46). "
+            "Do not rely on as-of reads from this profile.",
         ))
     return out
 

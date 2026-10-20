@@ -76,6 +76,10 @@ def select_operations(
     ordering = _local(dimensions["orderingGrain"].value)
     # dal:writeDiscipline (H2.6c). The default, dal:InPlace, is every selection below that is not one of the two branches it names.
     discipline = _local(dimensions["writeDiscipline"].value)
+    # dal:receiptModel (H2.6d). dal:PatchLog selects the variants that write delta graphs, and dal:NoReceipt the variants that write no
+    # receipt. The validator has refused dal:NoReceipt with an append discipline. Any other model writes the receipt, as it always has.
+    receipt_model = _local(dimensions["receiptModel"].value)
+    receipt_tag = {"PatchLog": "-patch-log", "NoReceipt": "-no-receipt"}.get(receipt_model, "")
     meta = dimensions["metaTopology"]
     shard_count = int(meta.extra.get("metaShards", DEFAULT_META_SHARDS))
     shard = _shard_for(target, shard_count)
@@ -151,18 +155,18 @@ def select_operations(
     elif concurrency == "Optimistic" and discipline != "AppendRecords":
         if boundary == "NamedGraphBoundary":
             cas_template = (
-                "cas-replace-named-graph-dataset-guard.mustache" if dataset_level_guard
-                else "cas-replace-named-graph.mustache"
+                f"cas-replace-named-graph{receipt_tag}-dataset-guard.mustache" if dataset_level_guard
+                else f"cas-replace-named-graph{receipt_tag}.mustache"
             )
             tombstone_template = (
-                "tombstone-delete-named-graph-dataset-guard.mustache" if dataset_level_guard
-                else "tombstone-delete-named-graph.mustache"
+                f"tombstone-delete-named-graph{receipt_tag}-dataset-guard.mustache" if dataset_level_guard
+                else f"tombstone-delete-named-graph{receipt_tag}.mustache"
             )
             if pre_created_row:
                 ops.append(GeneratedOperation(bootstrap_op.operation, bootstrap_op.template_id, common_bindings))
             else:
                 ops.append(GeneratedOperation(
-                    "create-if-absent", f"create-if-absent-named-graph{guard_suffix}.mustache", common_bindings
+                    "create-if-absent", f"create-if-absent-named-graph{receipt_tag}{guard_suffix}.mustache", common_bindings
                 ))
             ops.append(GeneratedOperation("cas-replace", cas_template, common_bindings))
             ops.append(GeneratedOperation("tombstone-delete", tombstone_template, common_bindings))
@@ -178,12 +182,12 @@ def select_operations(
             data_graph = ParameterBinding("dataGraph", "Iri", Iri.encode(str(boundary_dim.extra["dataGraph"])))
             bindings = common_bindings + [ParameterBinding("ownedPath", "PropertyPath", PropertyPath.encode(owned_path)), data_graph]
             composite_template = (
-                "cas-replace-composite-property-dataset-guard.mustache" if dataset_level_guard
-                else "cas-replace-composite-property.mustache"
+                f"cas-replace-composite-property{receipt_tag}-dataset-guard.mustache" if dataset_level_guard
+                else f"cas-replace-composite-property{receipt_tag}.mustache"
             )
             tombstone_template = (
-                "tombstone-delete-composite-dataset-guard.mustache" if dataset_level_guard
-                else "tombstone-delete-composite.mustache"
+                f"tombstone-delete-composite{receipt_tag}-dataset-guard.mustache" if dataset_level_guard
+                else f"tombstone-delete-composite{receipt_tag}.mustache"
             )
             if pre_created_row:
                 ops.append(GeneratedOperation(bootstrap_op.operation, bootstrap_op.template_id, bindings))
@@ -191,7 +195,7 @@ def select_operations(
                 # a create sweeps nothing, so it needs the data graph and no path
                 create_bindings = common_bindings + [data_graph]
                 ops.append(GeneratedOperation(
-                    "create-if-absent", f"create-if-absent-composite{guard_suffix}.mustache", create_bindings
+                    "create-if-absent", f"create-if-absent-composite{receipt_tag}{guard_suffix}.mustache", create_bindings
                 ))
             ops.append(GeneratedOperation("cas-replace", composite_template, bindings))
             ops.append(GeneratedOperation("tombstone-delete", tombstone_template, bindings))
@@ -273,12 +277,17 @@ def select_operations(
     registry = dimensions["registryGraph"].value
     if registry is not None:
         audit_bindings.append(ParameterBinding("registryGraph", "Iri", Iri.encode(str(registry))))
-    ops.append(GeneratedOperation("gap-scan-audit", "gap-scan-audit.mustache", audit_bindings))
+    # The audits that read receipts have nothing to read for a family that writes none (dal:NoReceipt), and the gap scan would report every
+    # one of its version rows as a gap. The fork audit reads the claims, which such a family still writes.
+    has_receipts = receipt_model != "NoReceipt"
+    if has_receipts:
+        ops.append(GeneratedOperation("gap-scan-audit", "gap-scan-audit.mustache", audit_bindings))
     ops.append(GeneratedOperation("fork-detection-audit", "fork-detection-audit.mustache", audit_bindings))
-    # Receipt-side forms of the fork audit, which survive txn-claim pruning
-    # (guide §24.2).
-    ops.append(GeneratedOperation("revision-multi-txn-audit", "revision-multi-txn-audit.mustache", audit_bindings))
-    ops.append(GeneratedOperation("txn-multi-revision-audit", "txn-multi-revision-audit.mustache", audit_bindings))
+    if has_receipts:
+        # Receipt-side forms of the fork audit, which survive txn-claim pruning
+        # (guide §24.2).
+        ops.append(GeneratedOperation("revision-multi-txn-audit", "revision-multi-txn-audit.mustache", audit_bindings))
+        ops.append(GeneratedOperation("txn-multi-revision-audit", "txn-multi-revision-audit.mustache", audit_bindings))
 
     return ops
 

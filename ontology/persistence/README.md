@@ -365,7 +365,7 @@ declares it, its values, and the platform baseline default the compiler uses whe
 | Dataset tier | `dal:OrderingProfile` (`dal:datasetTierModel`) | `dal:DerivedFeed`, `dal:GlobalDenseCounter`, `dal:HybridLogicalClock` | none | 7.3 |
 | Global read | `dal:OrderingProfile` | `dal:WatermarkedRead`, `dal:LagWindowRead` (with `dal:lagWindowMillis`), `dal:DenseFeedRead`, `dal:NoGlobalRead` | none | 7.3 |
 | Contiguity check | `dal:OrderingProfile` | `dal:BlockingContiguityCheck`, `dal:AdvisoryContiguityCheck` | blocking | 7.3 |
-| Receipt model | `dal:ReceiptProfile` (`dal:receiptModel`) | `dal:ReceiptOnly`, `dal:PatchLog`, `dal:SnapshotPerRevision` | receipt only | 7.4 |
+| Receipt model | `dal:ReceiptProfile` (`dal:receiptModel`) | `dal:ReceiptOnly`, `dal:PatchLog`, `dal:SnapshotPerRevision`, `dal:NoReceipt` | receipt only | 7.4 |
 | Retention | `dal:ReceiptProfile` | `dal:PrefixOnlyRetention`, `dal:BucketAnyRetention`, plus `dal:asOfFloorSource` | prefix only | 7.4 |
 | Meta topology | `dal:MetaTopologyProfile` (`dal:metaTopology`) | `dal:SharedSharded`, `dal:PerAggregate`, plus `dal:metaShards`, `dal:txnShards`, `dal:logShards`, `dal:keyShards`, `dal:registryGraph` | shared, sharded | 7.5 |
 | Uniqueness | `dal:UniquenessConstraint` | many-valued: zero, one or several keyed constraints per target | none | 7.6 |
@@ -661,13 +661,30 @@ downstream reconciliation re-derives completeness independently, and is warned.
 **The question.** What does the log remember about each write, and for how long?
 
 Replacing an aggregate whole discards the difference between versions, so receipts alone order and
-audit writes but cannot replay them. A family declares one of three models (guide Chapter 20):
+audit writes but cannot replay them. A family declares one of four models (guide Chapter 20):
 
 | Model | Records | Gives | Costs | Use when |
 |---|---|---|---|---|
 | `dal:ReceiptOnly` (baseline) | that a write happened, where, and by which transaction | outcome, audit, order | lowest | compare-and-set outcomes and light audit are enough |
 | `dal:PatchLog` | plus the triples each write added and removed, in delta graphs | replay, change data capture, as-of reads | about twice the write volume | downstream replay or deterministic history is needed |
-| `dal:SnapshotPerRevision` | a sealed payload graph per revision | point-in-time reads without replay, immutable evidence | the most storage and graphs | compliance, forensics, data already addressed by revision |
+| `dal:SnapshotPerRevision` | a sealed payload graph per revision (not built, `compile` warns `ReceiptModelNotHonoured`, TD-46) | point-in-time reads without replay, immutable evidence | the most storage and graphs | compliance, forensics, data already addressed by revision |
+| `dal:NoReceipt` | nothing about the write beyond its transaction claim: no receipt, no log bucket, no head | a retry after a lost reply is confirmed, and the seq still decides a race | the lowest, and no audit, order or history | a family that is derived and can be regenerated, or that keeps no history. Refused with an append discipline (VH-Q5a) |
+
+**The patch log is written by the in-place writes** of a `dal:NamedGraphBoundary` or `dal:CompositePropertyBoundary` family that declares
+`dal:PatchLog` (H2.6d). `compile` then selects a patch-log variant of `create-if-absent`, `cas-replace` and `tombstone-delete`, which writes the
+delta graphs in the same update as the write, named from the receipt, `newRev` followed by `/add` and `/del`, so a caller cannot name one wrongly.
+A create's add graph holds its payload. A replace's add and del graphs hold the delta the caller computed from the aggregate it read before the
+compare-and-set, in the request-time slots `{{{assertTriples}}}` and `{{{retractTriples}}}`. A tombstone's del graph holds what its sweep removed,
+at no cost to the caller. The receipt names a graph with `pat:asserts` or `pat:retracts` wherever the write puts content in it. An unrendered slot is
+a syntax error, so a request that leaves one out writes nothing. Each delta must satisfy the patch rules of the plan (the del triples were in the
+old state, the add triples were not, and the new state is the old less del plus add), which the caller checks before it submits (H2.8). The
+guard that loses a race writes none of it. A backward as-of read over these graphs is described in the patterns guide, S6.
+
+**Refused.** `NoReceiptWithAppendDiscipline`, for `dal:NoReceipt` with `dal:AppendVersions`, `dal:AppendRecords`, an append-only
+concurrency or a stream. A version or a record takes its position and its transaction time from the receipt. A composite family may declare
+`dal:NoReceipt`, where `dal:ReceiptOnly` is refused, since it has asked for no history and not for a history it cannot audit. The audits that
+read receipts (the gap scan and the two receipt-side fork audits) are not generated for such a family. A gap scan generated for another family of the same meta graph
+would report this family's version rows as gaps, so such a family belongs in a shard of its own. Nothing checks that yet.
 
 ```mermaid
 flowchart LR
@@ -1017,7 +1034,7 @@ H2.6c, decided at our leanings for the maintainer's review (history and versioni
 | Discipline | A write | Operations | History is | Applies to |
 |---|---|---|---|---|
 | `dal:InPlace` (baseline) | replaces the old state and deletes it | `create-if-absent` or `bootstrap-version-row`, `cas-replace`, `tombstone-delete` | the receipt model's (§7.4) | every family |
-| `dal:AppendVersions` | adds a new version beside the old and links them with `fnd:supersededBy`. Nothing is swept or deleted | `bootstrap-version-row` and `append-version` | in the data, as versions | `dal:CompositePropertyBoundary`, and `dal:NoBoundary` with a `dal:dataGraph`, under `dal:Optimistic` |
+| `dal:AppendVersions` | adds a new version beside the old and links it to the one before with `pat:previousVersion`. Nothing is swept or deleted | `bootstrap-version-row` and `append-version` | in the data, as versions | `dal:CompositePropertyBoundary`, and `dal:NoBoundary` with a `dal:dataGraph`, under `dal:Optimistic` |
 | `dal:AppendRecords` | adds records, each an immutable occurrence | `bootstrap-version-row` and `append` | in the data, as records | any family. The discipline selects the append form whatever the concurrency |
 
 ```mermaid
@@ -1026,15 +1043,15 @@ flowchart LR
     A1["state v1"] -- "sweep and delete" --> A2["state v2"]
   end
   subgraph versions["AppendVersions: v1 stays"]
-    B1["version v1"] -- "fnd:supersededBy" --> B2["version v2"]
+    B2["version v2"] -- "pat:previousVersion" --> B1["version v1"]
     B2 -. "shares by reference" .-> M["members not restated"]
     B1 -.-> M
   end
 ```
 
 **What `append-version` does,** in one update. It guards the identity's version row at the expected seq and the transaction claim. It
-inserts the new version's own triples from the payload slot, and `$priorVersion fnd:supersededBy $newVersion` when the row names a current
-version. It moves the row's seq and head and sets its current version to the new one, writes the receipt, and links the version to its
+inserts the new version's own triples from the payload slot, and `$newVersion pat:previousVersion $priorVersion` when the row names a current
+version. Persistence never writes `fnd:supersededBy`, which the domain asserts under its own rule (R2). It moves the row's seq and head and sets its current version to the new one, writes the receipt, and links the version to its
 receipt with `pat:revision`. The current version is the latest one written (VH-D1). Which version is in force, or agreed, is evaluated
 from other facts and never stored here. The first version is written at seq 0 onto a row `bootstrap-version-row` created, whatever
 `dal:firstWrite` says, so a family that appends versions is never given `create-if-absent`. A family that appends versions has no
@@ -1044,7 +1061,7 @@ A caller restates only what changed. A member the new version does not restate i
 new version's own triples and a pointer to each unchanged member. A node a new version points at must already be in the data graph.
 
 **Warned.** `compile` warns `VersionedClassWrittenInPlace` when a target class is a subclass of `fnd:Version`, by IRI in the loaded graphs
-with no import of Foundation, and the discipline is `dal:InPlace`. A replace deletes the version before it, which `fnd:supersededBy`
+with no import of Foundation, and the discipline is `dal:InPlace`. A replace deletes the version before it, which `pat:previousVersion`
 and ADR-A67 keep. Declare `dal:AppendVersions`, or `dal:InPlace` deliberately for a working draft that nothing cites.
 
 **Refused.** `AppendVersionsUnsupported`, for `dal:AppendVersions` on a named-graph family (a graph per version is not built), under a
@@ -1056,7 +1073,8 @@ never written).
 | The records are | Declare | Because |
 |---|---|---|
 | a working draft that people edit, nothing cites a state of it | `dal:InPlace`, `dal:ReceiptOnly` | one current state, the cheapest write, history needs no storage |
-| edited in place, and a replayable change history is wanted | `dal:InPlace`, `dal:PatchLog` | the log keeps what changed. Not yet built (TD-46) |
+| edited in place, and a replayable change history is wanted | `dal:InPlace`, `dal:PatchLog` | the log keeps what changed, for each write. The caller computes a replace's delta |
+| derived, can be regenerated, and needs no history | `dal:InPlace`, `dal:NoReceipt` | no receipt and no log bucket, and the claim still confirms a retry |
 | things a party assents to, relies on or cites, and later changes make a new thing | `dal:AppendVersions`, `dal:ReceiptOnly` | each version stays and is reachable. A change costs the changed triples, one link and a receipt, with no sweep |
 | occurrences that never change, such as drawdowns or deliveries | `dal:AppendRecords` | each record is written once and never reopened |
 | derived from the rest | none of these. Compute it | storing it makes a second source for one fact |

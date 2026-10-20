@@ -207,8 +207,9 @@ dal:ReceiptProfile a owl:Class .
 
 dal:ReceiptModel a owl:Class .
 dal:ReceiptOnly         a dal:ReceiptModel ; rdfs:comment "Audit breadcrumbs and CAS outcomes. No replay, no as-of." .
-dal:PatchLog            a dal:ReceiptModel ; rdfs:comment "asserts/retracts delta graphs alongside each receipt. Enables replay and CDC." .
+dal:PatchLog            a dal:ReceiptModel ; rdfs:comment "asserts/retracts delta graphs alongside each receipt, written in the same update as the write (formal-methods H2.6d). A create's add graph holds its payload, a replace's add and del graphs hold the delta the caller computed, and a tombstone's del graph holds what the sweep removed. The graphs are named from the receipt. Enables replay and CDC, and an as-of read backward from the current state. Honoured for the in-place writes of dal:NamedGraphBoundary and dal:CompositePropertyBoundary families." .
 dal:SnapshotPerRevision a dal:ReceiptModel ; rdfs:comment "A sealed payload graph per revision. Trivially as-of, highest storage cost." .
+dal:NoReceipt a dal:ReceiptModel ; rdfs:comment "No receipt and no head for a write, which still records its transaction claim, so a retry after a lost reply is confirmed. For a dal:InPlace family that wants no history, such as a derived artefact that can be regenerated (formal-methods H2.6d, VH-Q5a). Refused with dal:AppendVersions, dal:AppendRecords and a stream, whose versions and records take their position and transaction time from the receipt." .
 
 dal:receiptModel a owl:ObjectProperty ;
     rdfs:domain dal:ReceiptProfile ; rdfs:range dal:ReceiptModel .
@@ -797,9 +798,9 @@ dal:WriteDisciplineProfile a owl:Class .
 
 dal:WriteDiscipline a owl:Class .
 dal:InPlace a dal:WriteDiscipline ;
-    rdfs:comment "The default. A write replaces the old state, as the replace, create and tombstone operations always have. The family's receipt model says what history the log keeps (dal:ReceiptOnly, or dal:PatchLog once H2.6d builds it)." .
+    rdfs:comment "The default. A write replaces the old state, as the replace, create and tombstone operations always have. The family's receipt model says what history the log keeps (dal:ReceiptOnly, dal:PatchLog or dal:NoReceipt)." .
 dal:AppendVersions a dal:WriteDiscipline ;
-    rdfs:comment "A write adds a new version beside the old and links them with fnd:supersededBy. Nothing is swept or deleted. The version row keeps the latest version written as its current version. Applies to dal:CompositePropertyBoundary families and to dal:NoBoundary families with a dal:dataGraph, under dal:Optimistic. The first version is written onto a row created by bootstrap-version-row. History is in the data, so dal:CompositePropertyBoundary is allowed with dal:ReceiptOnly." .
+    rdfs:comment "A write adds a new version beside the old and links the new version to the one before it with pat:previousVersion, never fnd:supersededBy, which the domain asserts under its own rule. Nothing is swept or deleted. The version row keeps the latest version written as its current version. Applies to dal:CompositePropertyBoundary families and to dal:NoBoundary families with a dal:dataGraph, under dal:Optimistic. The first version is written onto a row created by bootstrap-version-row. History is in the data, so dal:CompositePropertyBoundary is allowed with dal:ReceiptOnly." .
 dal:AppendRecords a dal:WriteDiscipline ;
     rdfs:comment "A write appends records (events), each an immutable occurrence, with the append operation. History is in the data, so dal:CompositePropertyBoundary is allowed with dal:ReceiptOnly." .
 

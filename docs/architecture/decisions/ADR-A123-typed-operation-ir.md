@@ -314,3 +314,28 @@ occurrence ([iri-identity-patterns](../iri-identity-patterns.md) §5.10). It rec
 - An event cannot be corrected by an append that describes it from outside. A correction is a new event that names the first as an object.
 - Existing events with blank-node parts are skolemised under the event IRI, which ADR-A51 already requires.
 - A reader may rely on the rule. Every triple of an event graph is about an event or a part of one.
+
+
+## Addendum, 2026-10-20: the patch log, no receipt and the link between versions (accepted with the slice's plan, decisions taken alone listed in FMH-H2-6d)
+
+Built in slice H2.6d (Track H plan §4.10). It extends the builders of decision 1 and the addenda of 2026-10-14 and 2026-10-20 (the write
+disciplines).
+
+1. **`dal:PatchLog` selects patch-log variants** of create, replace and tombstone, for a `dal:NamedGraphBoundary` and a
+   `dal:CompositePropertyBoundary` family under `dal:InPlace` and `dal:Optimistic`, each with its dataset-guard variant. The update writes two
+   delta graphs, named from the receipt by `IRI(CONCAT(STR($newRev), "/add"))` and `"/del"` (H2.6b-Q2), so no parameter names one. The receipt
+   names a graph with `pat:asserts` or `pat:retracts` where the write puts content in it. A create's add graph holds its payload, which the
+   payload slot fills twice. A replace's add and del graphs hold the caller's delta in two new request-time slots, `{{{assertTriples}}}` and
+   `{{{retractTriples}}}`. A tombstone's del graph is copied from its own sweep and has no slot. `$assertGraph` and `$retractGraph` are removed,
+   so `cas-replace-named-graph` is at builder version 2.
+2. **The contract names the patch content.** A `PatchContent` resource, keyed by (target, epoch, seq, direction), is realised by the delta
+   graphs, and the IR has a graph role `patch` for the two graph variables. A replace under a patch log has a digest of the operation kind,
+   the target, the expected seq, the payload, the asserted triples and the retracted triples, in that order (H2.6b, Q5 (a)). A create and a
+   tombstone have no part of their own for what they assert or retract. The IR no longer limits an operation to one payload slot.
+3. **`dal:NoReceipt` selects variants that write no receipt,** no log bucket and no head, and keep the transaction claim, which a retry needs.
+   The audits that read receipts are not generated for such a family. It is refused with an append discipline, an append-only concurrency
+   or a stream (`NoReceiptWithAppendDiscipline`), whose versions and records take their position and transaction time from the receipt.
+4. **`append-version` links versions with `pat:previousVersion`,** from the new version to the one the row names as current, and never writes
+   `fnd:supersededBy`, which the domain asserts under its own rule (R2). Builder version 2. This is the code of the amendment to the addendum
+   of 2026-10-20, point 2.
+5. **`ReceiptModelNotHonoured` warns for `dal:SnapshotPerRevision` alone.** It amends point 4 of the addendum of 2026-10-14.

@@ -6,8 +6,9 @@
     expected seq, and the txn claim. The new version's own triples arrive in
     the payload slot, and a member the caller does not restate is shared by
     reference, so the payload holds only the new version (VH-Q2). The row's
-    current version is the latest one written (VH-D1), and the version it
-    replaces is marked superseded by the new one when the row names one. The
+    current version is the latest one written (VH-D1), and the new version
+    is linked to the one it follows with pat:previousVersion when the row names one. Persistence
+    never writes fnd:supersededBy, which the domain asserts under its own rule. The
     row also moves its seq and head, and the new version names its receipt
     with pat:revision, as an event does. The first version is written at seq 0
     onto a row bootstrap-version-row created, so it has no prior version.
@@ -30,7 +31,7 @@ DELETE {
 INSERT {
   GRAPH {{{dataGraph}}} {
       $newVersion pat:revision $newRev .
-      ?priorVersion <https://www.nebularis.org/neuro-semantic/lattice/foundation#supersededBy> $newVersion .
+      $newVersion pat:previousVersion ?priorVersion .
       {{{payloadTriples}}}
   }
   GRAPH {{{metaGraphPrefix}}} { $root pat:epoch $epoch ; pat:seq $nextSeq ; pat:head $newRev ; pat:currentVersion $newVersion }

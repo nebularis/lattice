@@ -28,8 +28,7 @@ INSERT {
   GRAPH {{{txnGraph}}}        { $txnId pat:rev $newRev ; pat:requestDigest $requestDigest }
   GRAPH ?logGraph {
       $newRev a pat:Revision ; pat:target $root ; pat:epoch $epoch ; pat:seq $nextSeq ;
-              pat:prevRev ?prevRev ; pat:txn ?txnKey ; pat:recordedAt ?now ;
-              pat:asserts $assertGraph ; pat:retracts $retractGraph
+              pat:prevRev ?prevRev ; pat:txn ?txnKey ; pat:recordedAt ?now
   }
 }
 WHERE {
