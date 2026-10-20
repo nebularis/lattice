@@ -67,7 +67,7 @@ def test_h2_6g_t1_no_rendered_operation_and_no_template_has_a_not_exists_without
     assert set(rendered) == set(BUILDERS)
     assert {stem: found for stem, text in rendered.items() if (found := exposed_in(text))} == {}
     templates = sorted(TEMPLATES.glob("*.mustache"))
-    assert len(templates) >= len(BUILDERS)
+    assert len(templates) >= len(BUILDERS) - 1  # payload-check (H2.8b) has no template
     assert {path.name: found for path in templates if (found := exposed_in(path.read_text(encoding="utf-8")))} == {}
 
 

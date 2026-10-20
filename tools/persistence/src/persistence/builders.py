@@ -21,7 +21,7 @@ from rdflib import URIRef
 
 from .ir import (
     A, Bind, Binding, Compare, Const, Filter, Func, Graph, GraphBlock, GraphRole, Group, Kind, NotExists, Op, Operation,
-    Optional_, Param, ParamRef, PayloadSlot, Path, Projected, RegistrySlot, RowsSlot, RowValues, Select, SubSelect, Triple, Union_, ValueGuard, Values, Var,
+    Optional_, Param, ParamRef, PayloadSlot, Path, Projected, RegistrySlot, RowsSlot, RowValues, Select, SubSelect, TermGuard, Triple, Union_, ValueGuard, Values, Var,
 )
 from .paths import Star, Step
 from .namespaces import PAT
@@ -37,6 +37,7 @@ GRAPH_ROLES: dict[str, GraphRole] = {
     "txnGraph": GraphRole.TXN,
     "datasetGraph": GraphRole.DATASET,
     "dataGraph": GraphRole.DATA,
+    "payloadGraph": GraphRole.DATA,  # the caller's local copy of the payload, which is the aggregate's new state (H2.8b)
     "keysGraph": GraphRole.KEYS,
     "keyQuarantineGraph": GraphRole.QUARANTINE,
     "retentionGraph": GraphRole.RETENTION,
@@ -84,6 +85,10 @@ class Bindings:
     def path(self, name: str) -> Path:
         """A ``PropertyPath`` binding, such as a composite family's owned path."""
         return Path(self._value(name))
+
+    def has(self, name: str) -> bool:
+        """Whether the operation has the binding. Reading it with :meth:`const` or :meth:`path` records the read."""
+        return name in self._context
 
     def graph(self, name: str) -> Graph:
         """The graph a binding names, with its role from :data:`GRAPH_ROLES`."""
@@ -666,6 +671,27 @@ def _members(b: Bindings, *, guards: bool) -> Operation:
     )
 
 
+def _payload_check(b: Bindings, *, guards: bool) -> Operation:
+    """The subjects of a payload outside the aggregate (formal-methods H2.8b, ADR-A123 decision 6, PL-B). A caller loads its payload into a local
+    graph, binds `$root` to the node the payload starts at, and runs this. Every subject must be the root or be reached from it by the owned
+    path, which can take no steps, so a family that owns nothing admits the root alone. An empty result passes. The path is walked over the
+    payload alone, from a node that is the subject of a triple, so the result does not depend on how a store reads a zero-length path from a
+    term in no triple (TSD-08). It reads no store."""
+    graph = b.graph("payloadGraph")
+    s, root = Var("s", kind=Kind.IRI), ParamRef("root")
+    outside = (
+        NotExists(Group((GraphBlock(graph, (Triple(root, b.path("ownedPath"), s),)),)))
+        if b.has("ownedPath") else Filter(TermGuard(s, root, negated=True))
+    )
+    return Operation.build(
+        "payload-check",
+        (Param("root", Kind.IRI),),
+        Group((GraphBlock(graph, (Triple(s, Var("p"), Var("o")), outside)),)),
+        guards=guards,
+        select=Select((s,), distinct=True),
+    )
+
+
 # ---- the key claims
 
 _KEY_CLAIM = "KeyClaim"
@@ -931,6 +957,7 @@ BUILDERS: dict[str, Builder] = {
     "append-version-delta": lambda b, guards, names: _append_version(b, guards=guards, dataset_guard=False, delta=True),
     "append-version-delta-dataset-guard": lambda b, guards, names: _append_version(b, guards=guards, dataset_guard=True, delta=True),
     "members": lambda b, guards, names: _members(b, guards=guards),
+    "payload-check": lambda b, guards, names: _payload_check(b, guards=guards),
     "tombstone-delete-composite": lambda b, guards, names: _composite_tombstone(b, guards=guards, dataset_guard=False),
     "tombstone-delete-composite-dataset-guard": lambda b, guards, names: _composite_tombstone(b, guards=guards, dataset_guard=True),
     "key-claim-write": lambda b, guards, names: _key_claim_write(b, guards=guards),

@@ -1212,12 +1212,13 @@ for example `<…/compiled/LoanApplication/cas-replace#param-root>`, so two comp
 
 | Part | Holds |
 |---|---|
-| `dal:operationKind` | an individual of the closed `dal:OperationKind`, for example `dal:Create`, `dal:Replace`, `dal:Audit`, `dal:MembersRead`, and `dal:PayloadCheck`, which no operation has yet |
+| `dal:operationKind` | an individual of the closed `dal:OperationKind`, for example `dal:Create`, `dal:Replace`, `dal:Audit`, `dal:MembersRead`, and `dal:PayloadCheck`, which returns the subjects of a payload outside the aggregate |
 | `dal:templateVersion` | the builder's version, bumped by any change to the text it renders |
 | `dal:parameter` | each parameter's name, kind (`dal:ParameterKind`) and whether it is required. A caller-named graph's rule is `dal:GraphNameOfRoot`, which refers to `dal:graphIriTemplate`, and a registry list says it is sourced from the family's `dal:registryGraph` |
 | `dal:access` | each logical resource the operation touches (`dal:ResourceKind`, such as `dal:VersionRow` or `dal:Receipt`), the mode (`dal:PointRead`, `dal:AbsenceRead`, `dal:ScanRead`, `dal:WholeAggregateRead`, `dal:Insert`, `dal:Delete`) and the parameter that keys it |
 | `dal:resultColumn` | each column of an audit or of the members query, with its kind and a separator |
-| `dal:payloadContract` | the payload slot, its root, its encoding (`dal:GroundNTriples`), the boundary shape or `dal:NoBoundaryShape`, and the edges of the shape |
+| `dal:payloadContract` | the payload slot, its root (the new version, for an append of versions), its encoding (`dal:GroundNTriples`), the boundary shape or `dal:NoBoundaryShape`, and the edges of the shape, each with the shape it leads to (`dal:edgeTargetShape`), so that a caller can walk the owned edges |
+| `dal:reportsOutcome`, `dal:examinedParameter` | on an audit, the outcomes it can report (`dal:Clean`, `dal:Failed`, `dal:NothingExamined`) and the parameter that lists the graphs it reads (H2.8b) |
 | `dal:digestContract` | what the request digest is hashed over, in order: the operation kind, the target, the expected seq, and the payload, the events, or the added and dropped triples |
 | `dal:guardStatus`, `dal:graphNaming` | the run's choices, above |
 | `dal:declarationSource` | `dal:BuilderDerived`, read from the builder. `dal:HandDeclared` is kept for an operation with no builder, and none has since the value guard was given one |
@@ -1237,6 +1238,7 @@ in `shapes/constraints.ttl` check a compiled profile (§12), and the files of `t
 | `dal:AppendOnly`, or event grain with any concurrency other than `dal:Optimistic` | `bootstrap-version-row` and `append` |
 | `dal:ProvidedConcurrency` or `dal:LockingConcurrency`, with commit grain | `unconditional-write` |
 | each uniqueness constraint | `key-claim-write` (or its dual form during rotation), `key-claim-retire`, and the reconciler of §7.6 |
+| a payload operation and a `dal:boundaryShape` | `payload-check`, the query that returns the subjects of a payload that no owned edge reaches from the root. A caller runs it over a local copy of its payload (H2.8b) |
 | every target | the audits: `gap-scan-audit`, `fork-detection-audit`, `revision-multi-txn-audit`, `txn-multi-revision-audit` |
 
 Under `dal:DatasetLevelGuard`, the create, bootstrap, compare-and-set, tombstone and append operations

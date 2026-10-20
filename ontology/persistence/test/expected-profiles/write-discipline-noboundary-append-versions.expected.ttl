@@ -90,11 +90,6 @@
     dal:parameterName "newRev" ;
     dal:required true .
 
-<https://example.org/offers/Offer/compiled/append-version#param-newVersion> a dal:ParameterDeclaration ;
-    dal:parameterKind dal:IriKind ;
-    dal:parameterName "newVersion" ;
-    dal:required true .
-
 <https://example.org/offers/Offer/compiled/append-version#param-nextSeq> a dal:ParameterDeclaration ;
     dal:parameterKind dal:PositionKind ;
     dal:parameterName "nextSeq" ;
@@ -109,7 +104,7 @@
     dal:boundaryShape dal:NoBoundaryShape ;
     dal:payloadEncoding dal:GroundNTriples ;
     dal:payloadParameter <https://example.org/offers/Offer/compiled/append-version#param-payloadTriples> ;
-    dal:payloadRoot <https://example.org/offers/Offer/compiled/append-version#param-root> .
+    dal:payloadRoot <https://example.org/offers/Offer/compiled/append-version#param-newVersion> .
 
 <https://example.org/offers/Offer/compiled/bootstrap-version-row#access-1> a dal:ResourceAccess ;
     dal:accessMode dal:PointRead ;
@@ -156,12 +151,6 @@
     dal:accessMode dal:ScanRead ;
     dal:resourceKind dal:VersionRow .
 
-<https://example.org/offers/Offer/compiled/gap-scan-audit#param-logGraphs> a dal:ParameterDeclaration ;
-    dal:parameterKind dal:RegistryListKind ;
-    dal:parameterName "logGraphs" ;
-    dal:required true ;
-    dal:sourcedFrom dal:RegistryGraph .
-
 <https://example.org/offers/Offer/compiled/gap-scan-audit#result-L> a dal:ResultColumn ;
     dal:columnKind dal:PositionColumn ;
     dal:columnName "L" ;
@@ -186,12 +175,6 @@
     dal:accessMode dal:ScanRead ;
     dal:resourceKind dal:Receipt .
 
-<https://example.org/offers/Offer/compiled/revision-multi-txn-audit#param-logGraphs> a dal:ParameterDeclaration ;
-    dal:parameterKind dal:RegistryListKind ;
-    dal:parameterName "logGraphs" ;
-    dal:required true ;
-    dal:sourcedFrom dal:RegistryGraph .
-
 <https://example.org/offers/Offer/compiled/revision-multi-txn-audit#result-n> a dal:ResultColumn ;
     dal:columnKind dal:CountColumn ;
     dal:columnName "n" ;
@@ -205,12 +188,6 @@
 <https://example.org/offers/Offer/compiled/txn-multi-revision-audit#access-1> a dal:ResourceAccess ;
     dal:accessMode dal:ScanRead ;
     dal:resourceKind dal:Receipt .
-
-<https://example.org/offers/Offer/compiled/txn-multi-revision-audit#param-logGraphs> a dal:ParameterDeclaration ;
-    dal:parameterKind dal:RegistryListKind ;
-    dal:parameterName "logGraphs" ;
-    dal:required true ;
-    dal:sourcedFrom dal:RegistryGraph .
 
 <https://example.org/offers/Offer/compiled/txn-multi-revision-audit#result-n> a dal:ResultColumn ;
     dal:columnKind dal:CountColumn ;
@@ -226,6 +203,29 @@
     dal:parameterKind dal:PositionKind ;
     dal:parameterName "expectedSeq" ;
     dal:required true .
+
+<https://example.org/offers/Offer/compiled/append-version#param-newVersion> a dal:ParameterDeclaration ;
+    dal:parameterKind dal:IriKind ;
+    dal:parameterName "newVersion" ;
+    dal:required true .
+
+<https://example.org/offers/Offer/compiled/gap-scan-audit#param-logGraphs> a dal:ParameterDeclaration ;
+    dal:parameterKind dal:RegistryListKind ;
+    dal:parameterName "logGraphs" ;
+    dal:required true ;
+    dal:sourcedFrom dal:RegistryGraph .
+
+<https://example.org/offers/Offer/compiled/revision-multi-txn-audit#param-logGraphs> a dal:ParameterDeclaration ;
+    dal:parameterKind dal:RegistryListKind ;
+    dal:parameterName "logGraphs" ;
+    dal:required true ;
+    dal:sourcedFrom dal:RegistryGraph .
+
+<https://example.org/offers/Offer/compiled/txn-multi-revision-audit#param-logGraphs> a dal:ParameterDeclaration ;
+    dal:parameterKind dal:RegistryListKind ;
+    dal:parameterName "logGraphs" ;
+    dal:required true ;
+    dal:sourcedFrom dal:RegistryGraph .
 
 <https://example.org/offers/Offer/compiled/append-version#param-payloadTriples> a dal:ParameterDeclaration ;
     dal:parameterKind dal:PayloadKind ;
@@ -389,6 +389,7 @@
                 <https://example.org/offers/Offer/compiled/gap-scan-audit#access-2>,
                 <https://example.org/offers/Offer/compiled/gap-scan-audit#access-3> ;
             dal:declarationSource dal:BuilderDerived ;
+            dal:examinedParameter <https://example.org/offers/Offer/compiled/gap-scan-audit#param-logGraphs> ;
             dal:forOperation "gap-scan-audit" ;
             dal:guardStatus dal:NoRequiredParameter ;
             dal:hasParameterBinding [ a dal:ParameterBinding ;
@@ -437,6 +438,9 @@
                     dal:paramValue "<urn:g:txn>" ] ;
             dal:operationKind dal:Audit ;
             dal:parameter <https://example.org/offers/Offer/compiled/gap-scan-audit#param-logGraphs> ;
+            dal:reportsOutcome dal:Clean,
+                dal:Failed,
+                dal:NothingExamined ;
             dal:resultColumn <https://example.org/offers/Offer/compiled/gap-scan-audit#result-L>,
                 <https://example.org/offers/Offer/compiled/gap-scan-audit#result-S>,
                 <https://example.org/offers/Offer/compiled/gap-scan-audit#result-n>,
@@ -494,6 +498,9 @@
                     dal:paramType "Iri" ;
                     dal:paramValue "<urn:g:txn>" ] ;
             dal:operationKind dal:Audit ;
+            dal:reportsOutcome dal:Clean,
+                dal:Failed,
+                dal:NothingExamined ;
             dal:resultColumn <https://example.org/offers/Offer/compiled/fork-detection-audit#result-n>,
                 <https://example.org/offers/Offer/compiled/fork-detection-audit#result-rev> ;
             dal:templateVersion 1 ;
@@ -502,6 +509,7 @@
         [ a dal:GeneratedOperation ;
             dal:access <https://example.org/offers/Offer/compiled/revision-multi-txn-audit#access-1> ;
             dal:declarationSource dal:BuilderDerived ;
+            dal:examinedParameter <https://example.org/offers/Offer/compiled/revision-multi-txn-audit#param-logGraphs> ;
             dal:forOperation "revision-multi-txn-audit" ;
             dal:guardStatus dal:NoRequiredParameter ;
             dal:hasParameterBinding [ a dal:ParameterBinding ;
@@ -550,6 +558,9 @@
                     dal:paramValue "<urn:g:txn>" ] ;
             dal:operationKind dal:Audit ;
             dal:parameter <https://example.org/offers/Offer/compiled/revision-multi-txn-audit#param-logGraphs> ;
+            dal:reportsOutcome dal:Clean,
+                dal:Failed,
+                dal:NothingExamined ;
             dal:resultColumn <https://example.org/offers/Offer/compiled/revision-multi-txn-audit#result-n>,
                 <https://example.org/offers/Offer/compiled/revision-multi-txn-audit#result-rev> ;
             dal:templateVersion 1 ;
@@ -558,6 +569,7 @@
         [ a dal:GeneratedOperation ;
             dal:access <https://example.org/offers/Offer/compiled/txn-multi-revision-audit#access-1> ;
             dal:declarationSource dal:BuilderDerived ;
+            dal:examinedParameter <https://example.org/offers/Offer/compiled/txn-multi-revision-audit#param-logGraphs> ;
             dal:forOperation "txn-multi-revision-audit" ;
             dal:guardStatus dal:NoRequiredParameter ;
             dal:hasParameterBinding [ a dal:ParameterBinding ;
@@ -606,6 +618,9 @@
                     dal:paramValue "<urn:g:txn>" ] ;
             dal:operationKind dal:Audit ;
             dal:parameter <https://example.org/offers/Offer/compiled/txn-multi-revision-audit#param-logGraphs> ;
+            dal:reportsOutcome dal:Clean,
+                dal:Failed,
+                dal:NothingExamined ;
             dal:resultColumn <https://example.org/offers/Offer/compiled/txn-multi-revision-audit#result-n>,
                 <https://example.org/offers/Offer/compiled/txn-multi-revision-audit#result-t> ;
             dal:templateVersion 1 ;

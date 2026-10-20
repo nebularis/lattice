@@ -80,6 +80,7 @@ def cmd_compile(args: argparse.Namespace) -> int:
             fail_on_capability_mismatch=not args.no_fail_on_capability,
             guards=not args.no_parameter_guards,
             graph_names="caller" if args.caller_graph_names else "query",
+            warn_unbounded_payload=args.warn_unbounded_payload,
         )
     except CompileError as e:
         print(f"compile failed: {e}", file=sys.stderr)
@@ -184,6 +185,12 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="have the caller name each root's graph as $g, checked against the naming rule while guards are on, "
         "for the operations that name a graph. The profile records it (dal:graphNaming) and instantiate follows it",
+    )
+    p_compile.add_argument(
+        "--warn-unbounded-payload",
+        action="store_true",
+        help="report a named-graph family with payload operations and no dal:boundaryShape as a warning and not as information, "
+        "since a caller can then check the form of its payload and not that every subject belongs to the aggregate",
     )
     p_compile.set_defaults(func=cmd_compile)
 

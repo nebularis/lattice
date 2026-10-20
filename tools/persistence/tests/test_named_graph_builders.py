@@ -428,7 +428,8 @@ def test_h2_3_t31_the_command_line_flag_of_compile_gives_the_caller_named_form(t
 # probe that swapped the roles of the metadata and transaction graphs). This one says what each graph is.
 
 _BINDING_ROLES = {"metaGraphPrefix": "meta", "txnGraph": "txn", "datasetGraph": "dataset", "dataGraph": "data",
-                  "keysGraph": "keys", "keyQuarantineGraph": "quarantine", "retentionGraph": "retention", "pinnedGraph": "pinned"}
+                  "keysGraph": "keys", "keyQuarantineGraph": "quarantine", "retentionGraph": "retention", "pinnedGraph": "pinned",
+                  "payloadGraph": "data"}  # the caller's local copy of a payload is the aggregate's new state (H2.8b)
 _VARIABLE_ROLES = {"?g": "data", "$g": "data", "?logGraph": "log", "?logGraph2": "log", "?log": "log", "?eventGraph": "event",
                    "?addGraph": "patch", "?delGraph": "patch"}
 

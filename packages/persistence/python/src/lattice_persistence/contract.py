@@ -63,13 +63,18 @@ class EdgeContract:
     ownership: str
     target_class: Optional[str]
     reference_mode: str
+    target_shape: Optional[str] = None
 
 
 @dataclass(frozen=True)
 class PayloadContract:
+    """What an operation takes as the aggregate's triples. ``root`` names the parameter whose value the payload's walk starts at, and
+    ``shape`` is the family's boundary shape, ``None`` where it names none (H2.8b: then only the payload's form is checked)."""
+
     parameter: str
     root: Optional[str]
     edges: tuple = ()
+    shape: Optional[str] = None
 
 
 # The digest's content parts, in the fixed order of the contract: the payload of a write, or for an append the events, then for a
@@ -133,6 +138,13 @@ class ProfileOperation:
     parameters: tuple
     payload: Optional[PayloadContract]
     digest: Optional[DigestSpec]
+    bindings: tuple = ()
+    examines: Optional[str] = None
+    outcomes: tuple = ()
+
+    def binding(self, name: str) -> Optional[str]:
+        """The text of a compile-time binding of the operation, such as ``graphPrefix``. ``None`` where it has none."""
+        return next((value for key, value in self.bindings if key == name), None)
 
     def parameter(self, name: str) -> Optional[ParameterContract]:
         return next((p for p in self.parameters if p.name == name), None)
@@ -178,10 +190,20 @@ def _payload(g: Graph, node) -> PayloadContract:
             str(_one(g, e, DAL.edgeSource)), str(_one(g, e, DAL.edgePredicate)), bool(_one(g, e, DAL.edgeInverse).toPython()),
             _local(_one(g, e, DAL.edgeOwnership)), None if (t := next(iter(g.objects(e, DAL.edgeTargetClass)), None)) is None else str(t),
             _local(_one(g, e, DAL.referenceMode)),
+            None if (ts := next(iter(g.objects(e, DAL.edgeTargetShape)), None)) is None else str(ts),
         )
         for e in g.objects(node, DAL.referenceEdge)
     ))
-    return PayloadContract(_param_name(g, _one(g, node, DAL.payloadParameter)), None if root is None else _param_name(g, root), edges)
+    shape = _one(g, node, DAL.boundaryShape)
+    return PayloadContract(
+        _param_name(g, _one(g, node, DAL.payloadParameter)), None if root is None else _param_name(g, root), edges,
+        None if shape == DAL.NoBoundaryShape else str(shape),
+    )
+
+
+def _bindings(g: Graph, node) -> tuple:
+    """``(name, text)`` for each compile-time binding of an operation, the text as the compile encoded it."""
+    return tuple(sorted((str(_one(g, b, DAL.paramName)), str(_one(g, b, DAL.paramValue))) for b in g.objects(node, DAL.hasParameterBinding)))
 
 
 def read_contracts(g: Graph) -> tuple:
@@ -201,7 +223,9 @@ def read_contracts(g: Graph) -> tuple:
         out.append(ProfileOperation(
             node, str(_one(g, template, DAL.templateId)), OperationKind(_local(_one(g, node, DAL.operationKind))),
             int(_one(g, node, DAL.templateVersion)), tuple(sorted(parameters)),
-            None if pc is None else _payload(g, pc), None if dc is None else _digest(g, dc),
+            None if pc is None else _payload(g, pc), None if dc is None else _digest(g, dc), _bindings(g, node),
+            None if (ex := next(iter(g.objects(node, DAL.examinedParameter)), None)) is None else _param_name(g, ex),
+            tuple(sorted(_local(o) for o in g.objects(node, DAL.reportsOutcome))),
         ))
     return tuple(sorted(out, key=lambda o: (o.template_id, o.kind.value, tuple(p.name for p in o.parameters), str(o.node))))
 

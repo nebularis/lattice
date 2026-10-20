@@ -30,6 +30,10 @@ from .namespaces import DAL
 from .render import load_template, render
 from .terms import Iri, Literal, PropertyPath
 
+BUILDER_ONLY = frozenset({"payload-check"})
+"""The builders that never had a Mustache template (H2.8b), so the equivalence harness has nothing to compare them with and a template
+directory cannot supply them."""
+
 TEMPLATE_SUFFIX = ".mustache"
 """What `dal:templateId` no longer carries (H2.7). Until H2.9 retires the templates, the file of a template is its id and this suffix."""
 
@@ -76,7 +80,7 @@ def _render_operation(compiled_profile: Graph, op_node, template_dir: Path | Non
     template_node = compiled_profile.value(op_node, DAL.usesTemplate)
     stem = str(compiled_profile.value(template_node, DAL.templateId)).removesuffix(TEMPLATE_SUFFIX)
     context = operation_context(compiled_profile, op_node)
-    if template_dir is None and stem in BUILDERS:
+    if (template_dir is None or stem in BUILDER_ONLY) and stem in BUILDERS:
         guards, graph_names = run_choices(compiled_profile, op_node)
         return operation_name, render_operation(build(stem, context, guards=guards, graph_names=graph_names))
     return operation_name, render(load_template(stem + TEMPLATE_SUFFIX, template_dir), context)

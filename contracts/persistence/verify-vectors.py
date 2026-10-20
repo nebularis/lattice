@@ -11,6 +11,12 @@ The vectors it checks, per entry:
   - "ntriples": the canonical lines of a set of triples, sorted and without duplicates
   - "refusals": that a payload with the named fault really has it (a blank node, a literal subject, an IRI with a forbidden character)
   - "digests": the canonical lines of each content part, the exact bytes that are hashed (as hex) and their SHA-256
+  - "payloadChecks": the subjects of a payload that are neither the root nor reached from it by the owned edges of the shape
+  - "eventChecks": the refusals of an append's rows and of its event triples
+  - "callerChecks": the refusals of a request's parameters, of an xsd:long that is not exactly one, of a caller-named graph and of the log graphs
+  - "auditOutcomes": clean, failed or nothing examined
+  - "referenceChecks": an object on a pinned edge is a version and on an identity edge is not
+  - "checkpointChecks": a checkpoint version lists every member
 
 Usage: python3 verify-vectors.py [vectors.json] [--openssl PATH] [--emit]
 Exit status 0 when every check passes. --emit prints the computed expectations as JSON, for authoring a new vector.
@@ -103,6 +109,163 @@ def digest_input(v: dict) -> tuple:
     return lines, data
 
 
+# ---- the payload checks (H2.8b). Each is written here from the rules of ADR-A123 and its addenda, and shares nothing with the library.
+
+
+def spo(t: dict) -> tuple:
+    """(subject, predicate, object) as plain IRI strings, the object None where it is a literal."""
+    return t["s"]["iri"], t["p"]["iri"], t["o"].get("iri")
+
+
+def walk(v: dict, owned_only: bool = True) -> set:
+    """The (node, shape) states reached from the root, following edges from the shape a state is in, forward or inverse, over the payload alone."""
+    if v["shape"] is None:
+        return set()
+    triples = [spo(t) for t in v["triples"]]
+    edges = [e for e in v["edges"] if e["ownership"] == "Owned" or not owned_only]
+    seen, todo = {(v["root"], v["shape"])}, [(v["root"], v["shape"])]
+    while todo:
+        node, shape = todo.pop()
+        for e in edges:
+            if e["source"] != shape:
+                continue
+            for s, p, o in triples:
+                if p != e["predicate"] or o is None:
+                    continue
+                if e["inverse"]:
+                    nxt = s if o == node else None
+                else:
+                    nxt = o if s == node else None
+                if nxt is not None and (nxt, e["targetShape"]) not in seen:
+                    seen.add((nxt, e["targetShape"]))
+                    todo.append((nxt, e["targetShape"]))
+    return seen
+
+
+def outside(v: dict) -> list:
+    if v["shape"] is None:
+        return []
+    reached = {n for n, _ in walk(v)}
+    return sorted({s for s, _, _ in (spo(t) for t in v["triples"])} - reached)
+
+
+def event_refusals(v: dict) -> list:
+    out = set()
+    rows = v["events"]
+    if any(r["event"] is None or r["type"] is None or r["opSeq"] is None or r["occurredAt"] is None for r in rows):
+        out.add("UndefInRow")
+    rows = [r for r in rows if r["event"] is not None]
+    if not rows:
+        out.add("NoEvents")
+    names = [r["event"] for r in rows]
+    if len(set(names)) != len(names):
+        out.add("DuplicateEvent")
+    seqs = [r["opSeq"] for r in rows]
+    if len(set(seqs)) != len(seqs):
+        out.add("DuplicateOpSeq")
+    for s, _, _ in (spo(t) for t in v["triples"]):
+        if not any(s == n or s.startswith(n + "/part/") for n in names):
+            out.add("EventOutsideBound")
+    return sorted(out)
+
+
+def encode_for_uri(text: str) -> str:
+    return "".join(chr(b) if (chr(b).isascii() and (chr(b).isalnum() or chr(b) in "-_.~")) else f"%{b:02X}" for b in text.encode("utf-8"))
+
+
+LONG_MIN, LONG_MAX = -(2 ** 63), 2 ** 63 - 1
+
+
+def kind_refusal(kind: str, value: dict) -> str | None:
+    """The refusal code for a value of the wrong kind, or None."""
+    form = next(iter(value))
+    if kind == "Iri":
+        return None if form == "iri" and value["iri"] and not (FORBIDDEN_IRI & set(value["iri"])) else "WrongKind"
+    if kind in ("Long", "Position"):
+        if form == "int":
+            return None if LONG_MIN <= value["int"] <= LONG_MAX else "IllTypedLiteral"
+        if form != "literal":
+            return "WrongKind"
+        if value.get("datatype") != XSD_LONG:
+            return "NotXsdLong"
+        text = value["literal"]
+        digits = text[1:] if text[:1] in "+-" else text
+        return None if digits.isascii() and digits.isdigit() and LONG_MIN <= int(text) <= LONG_MAX else "IllTypedLiteral"
+    if kind == "Digest":
+        t = value.get("string")
+        return None if t is not None and len(t) == 64 and all(c in "0123456789abcdef" for c in t) else "WrongKind"
+    if kind == "RegistryList":
+        return None if form == "strings" else "WrongKind"
+    return "WrongKind"
+
+
+def caller_refusals(v: dict) -> list:
+    op, values, out = v["operation"], v["values"], set()
+    declared = {p["name"]: p for p in op["parameters"]}
+    for name in values:
+        if name not in declared:
+            out.add("UnknownParameter")
+    for name, p in declared.items():
+        if name not in values:
+            if p["required"]:
+                out.add("MissingParameter")
+            continue
+        bad = kind_refusal(p["kind"], values[name])
+        if bad:
+            out.add(bad)
+        elif p["kind"] == "RegistryList":
+            members = values[name]["strings"]
+            if not members and not v.get("allowEmptyLogGraphs"):
+                out.add("EmptyLogGraphs")
+            if any(not m or FORBIDDEN_IRI & set(m) for m in members):
+                out.add("LogGraphNotIri")
+        if p.get("equalsGraphName") and "root" in values and kind_refusal("Iri", values["root"]) is None and bad is None:
+            expected = op["graphPrefix"] + encode_for_uri(values["root"]["iri"]) + op["graphSuffix"]
+            if values[name]["iri"] != expected:
+                out.add("GraphNameMismatch")
+    return sorted(out)
+
+
+def audit_outcome(v: dict) -> str:
+    if v["rows"] > 0:
+        return "Failed"
+    if (v["logGraphs"] is not None and len(v["logGraphs"]) == 0) or v["examined"] == 0:
+        return "NothingExamined"
+    return "Clean"
+
+
+def reference_refusals(v: dict) -> list:
+    versions, out = set(v["versions"]), set()
+    triples = [spo(t) for t in v["triples"]]
+    for node, shape in walk(v):
+        for e in v["edges"]:
+            if e["source"] != shape:
+                continue
+            for s, p, o in triples:
+                if p != e["predicate"] or o is None:
+                    continue
+                if e["inverse"]:
+                    target = s if o == node else None
+                else:
+                    target = o if s == node else None
+                if target is None:
+                    continue
+                if e["mode"] == "Pinned" and target not in versions:
+                    out.add("ReferenceModeViolation")
+                if e["mode"] == "ByIdentity" and target in versions:
+                    out.add("ReferenceModeViolation")
+    return sorted(out)
+
+
+def checkpoint_refusals(v: dict) -> list:
+    version, prop = v["version"], v["membershipProperty"]
+    listed = {o for s, p, o in map(spo, v["triples"]) if s == version and p == prop and o is not None}
+    marked = any(t["s"]["iri"] == version and t["p"]["iri"] == PAT + "checkpoint" and t["o"].get("literal") == "true" for t in v["triples"])
+    if v["checkpoint"]:
+        return [] if marked and listed == set(v["members"]) else ["CheckpointNotFull"]
+    return ["UnexpectedFullList"] if marked or listed else []
+
+
 class Openssl:
     def __init__(self, exe: str):
         self.exe = exe
@@ -140,6 +303,18 @@ def check(path: Path, ossl: Openssl, emit: bool) -> int:
         ok(lines == v["canonicalParts"], f"{v['id']}: canonical parts differ")
         ok(data.hex() == v["encodedHex"], f"{v['id']}: digest input differs\n  expected {v['encodedHex']}\n  computed {data.hex()}")
         ok(sha == v["sha256"], f"{v['id']}: sha256 {sha} != {v['sha256']}")
+    for v in doc["payloadChecks"]:
+        ok(outside(v) == v["outside"], f"{v['id']}: outside {outside(v)}, expected {v['outside']}")
+    for v in doc["eventChecks"]:
+        ok(event_refusals(v) == v["refusals"], f"{v['id']}: {event_refusals(v)}, expected {v['refusals']}")
+    for v in doc["callerChecks"]:
+        ok(caller_refusals(v) == v["refusals"], f"{v['id']}: {caller_refusals(v)}, expected {v['refusals']}")
+    for v in doc["auditOutcomes"]:
+        ok(audit_outcome(v) == v["outcome"], f"{v['id']}: {audit_outcome(v)}, expected {v['outcome']}")
+    for v in doc["referenceChecks"]:
+        ok(reference_refusals(v) == v["refusals"], f"{v['id']}: {reference_refusals(v)}, expected {v['refusals']}")
+    for v in doc["checkpointChecks"]:
+        ok(checkpoint_refusals(v) == v["refusals"], f"{v['id']}: {checkpoint_refusals(v)}, expected {v['refusals']}")
     if emit:
         print(json.dumps(emitted, ensure_ascii=False, indent=1))
     for f in failures:

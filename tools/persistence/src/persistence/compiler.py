@@ -69,6 +69,8 @@ def compile_targets(
     graph: Graph,
     classes: set[URIRef] | None = None,
     fail_on_capability_mismatch: bool = True,
+    guards: bool = True,
+    warn_unbounded_payload: bool = False,
 ) -> list[CompiledTarget]:
     """Resolve, validate, and select operations for every discovered
     target. Raises :class:`CompileError` on the first hard failure,
@@ -107,6 +109,10 @@ def compile_targets(
                 validator.check_capability(check)
 
             operations = select_operations(target, dimensions, uniqueness)
+            diagnostics += validator.check_patch_log_written(target, dimensions, operations)
+            diagnostics += validator.check_payload_bound(target, dimensions, operations, warn=warn_unbounded_payload)
+            if not guards:
+                diagnostics += validator.check_guards_off(target)
 
             compiled.append(
                 CompiledTarget(
@@ -137,6 +143,11 @@ def compile_targets(
         validator.check_graph_naming(families)
     except Exception as e:  # GraphIriTemplateOverlap
         raise CompileError(Target(cls=URIRef("urn:x-persistence:whole-graph")), e) from e
+
+    try:
+        validator.check_no_receipt_meta_shards(compiled)
+    except Exception as e:  # NoReceiptSharesMetaShard
+        raise CompileError(next(ct.target for ct in compiled), e) from e
 
     for ct in compiled:
         boundary = ct.dimensions["aggregateBoundary"]
@@ -238,10 +249,12 @@ def emit_compiled_profile(out: Graph, compiled: CompiledTarget, guards: bool = T
         out.add((profile, DAL.generatedOperation, op_node))
         # H2.7: the contract of the operation, from its builder, under the run's choices. Every operation has a builder.
         edges = edge_contracts(compiled.dimensions["aggregateBoundary"].extra.get("ownershipTree"))
-        contract = contract_for(out, op_node, guards=guards, graph_names=graph_names, edges=edges)
+        shape = compiled.dimensions["aggregateBoundary"].extra.get("boundaryShape")
+        contract = contract_for(
+            out, op_node, guards=guards, graph_names=graph_names, edges=edges, shape=URIRef(str(shape)) if shape is not None else None
+        )
         if contract is None:
             raise KeyError(f"no builder and no hand declaration for the operation {op.operation} ({op.template_id})")
-        shape = compiled.dimensions["aggregateBoundary"].extra.get("boundaryShape")
         emit_contract(
             out, op_node, compiled.target.cls, op.operation, contract, URIRef(str(shape)) if shape is not None else None,
             compiled.target.deployment,
@@ -293,12 +306,14 @@ def compile_to_graph(
     fail_on_capability_mismatch: bool = True,
     guards: bool = True,
     graph_names: str = "query",
+    warn_unbounded_payload: bool = False,
 ) -> tuple[Graph, list[CompiledTarget]]:
     """Compile ``graph`` and emit the profile. ``guards`` is false for a caller whose own code checks every parameter, and ``graph_names``
     is ``caller`` to have the caller name each root's graph as ``$g`` (ADR-A123 addenda of 2026-10-12). The profile records both, and
-    ``instantiate`` renders what the profile says (H2.7-Q2)."""
+    ``instantiate`` renders what the profile says (H2.7-Q2). ``warn_unbounded_payload`` raises the ``INFO`` diagnostic of a named-graph family with
+    payload operations and no boundary shape to a warning."""
     _check_graph_names(graph_names)
-    compiled = compile_targets(graph, classes, fail_on_capability_mismatch)
+    compiled = compile_targets(graph, classes, fail_on_capability_mismatch, guards=guards, warn_unbounded_payload=warn_unbounded_payload)
     out = Graph()
     out.bind("dal", DAL)
     for ct in compiled:

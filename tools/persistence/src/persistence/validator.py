@@ -19,6 +19,7 @@ from .boundary import BY_IDENTITY, PINNED, MissingBoundaryShapeError, walk_owner
 from .capability import CapabilityCheckResult
 from .model import BoundaryConflict, CrossAxisViolation, Diagnostic, ResolvedDimension
 from .namespaces import DAL, FND, SH
+from .operations import PAYLOAD_TEMPLATES
 from .scopes import Target
 
 
@@ -761,6 +762,77 @@ def check_identity(
                 "different IRIs for one graph, and no conformance vector can detect it.",
             ))
     return out
+
+
+def check_patch_log_written(target: Target, dimensions: dict[str, ResolvedDimension], operations) -> list[Diagnostic]:
+    """D-10 (H2.8b): a family that declares dal:PatchLog but has no generated operation that writes a patch log. Only the in-place writes of
+    an optimistic named-graph or composite family do. An append discipline, an append-only concurrency, an unconditional write and a value-guarded
+    write record a receipt at most, so the declaration is recorded and not honoured (TD-46)."""
+    if _local(_value(dimensions, "receiptModel")) != "PatchLog" or any("-patch-log" in op.template_id for op in operations):
+        return []
+    return [_warning(
+        "PatchLogNotWritten", target,
+        "dal:receiptModel dal:PatchLog declares that each change is recorded as added and retracted triples, but no generated operation of this "
+        "family writes a patch log. Only the create, replace and tombstone of an optimistic named-graph or composite family do. An append "
+        "discipline, an append-only concurrency, an unconditional write and a value-guarded write do not. The declaration is recorded in the "
+        "compiled profile and not applied.",
+    )]
+
+
+def check_payload_bound(
+    target: Target, dimensions: dict[str, ResolvedDimension], operations, *, warn: bool, graph_names: str = ""
+) -> list[Diagnostic]:
+    """H2.8b (ADR-A123 decision 6, H2-Q2): a named-graph family with a payload operation and no ``dal:boundaryShape`` has the form checks of
+    a payload and not the check that every subject belongs to the aggregate. ``INFO`` by default, ``WARNING`` under
+    ``compile --warn-unbounded-payload``."""
+    boundary = dimensions["aggregateBoundary"]
+    if not str(boundary.value).endswith("NamedGraphBoundary") or boundary.extra.get("ownershipTree") is not None:
+        return []
+    if not any(op.template_id.startswith(PAYLOAD_TEMPLATES) for op in operations):
+        return []
+    message = (
+        f"{target} is a named-graph family with payload operations and no dal:boundaryShape, so a caller can check the form of a payload and "
+        "not that every subject belongs to the aggregate. Declare a dal:boundaryShape to have the payload-check query generated."
+    )
+    if warn:
+        return [Diagnostic(kind="UnboundedPayload", severity="WARNING", target=str(target), message=message)]
+    return [Diagnostic(kind="UnboundedPayload", severity="INFO", target=str(target), message=message)]
+
+
+def check_guards_off(target: Target) -> list[Diagnostic]:
+    """H2.8b (ADR-A123, addendum of 2026-10-12): a run with the parameter guards off names the caller's obligation."""
+    return [Diagnostic(
+        kind="ParameterGuardsOff", severity="INFO", target=str(target),
+        message=(
+            "compiled with --no-parameter-guards, so no generated operation tests its parameters. The caller must check every one before "
+            "sending: each present and of its declared kind, an xsd:long exactly, a literal and not an IRI where the contract says so, and a "
+            "caller-named graph equal to the naming rule. A request that leaves out $root can write every aggregate whose version row matches. "
+            "The caller library (lattice_persistence.check) does these checks (TD-34, TD-44)."
+        ),
+    )]
+
+
+def check_no_receipt_meta_shards(compiled) -> None:
+    """D-11 (H2.8b): a dal:NoReceipt family keeps its version row in a meta graph and writes no receipt for it. The gap scan of another
+    family that shares the meta graph reads every version row there and counts receipts for it, so it reports each row of the NoReceipt family as
+    a gap. Refused, since the audit would fail on every run."""
+    by_graph: dict[str, list] = {}
+    for ct in compiled:
+        for op in ct.operations:
+            binding = next((b for b in op.bindings if b.name == "metaGraphPrefix"), None)
+            if binding is not None:
+                by_graph.setdefault(str(binding.value), []).append(ct)
+                break
+    for graph_name, targets in sorted(by_graph.items()):
+        quiet = [t for t in targets if _local(t.dimensions["receiptModel"].value) == "NoReceipt"]
+        scanned = [t for t in targets if t not in quiet and any(op.template_id.startswith("gap-scan-audit") for op in t.operations)]
+        if quiet and scanned:
+            raise CrossAxisViolation(
+                "NoReceiptSharesMetaShard", str(quiet[0].target),
+                f"the family writes no receipt (dal:NoReceipt) and shares the meta graph {graph_name} with {scanned[0].target}, whose gap scan reads every "
+                "version row of that graph and would report each row of this family as a gap. Give them different meta shards (dal:metaShards) or the "
+                "same receipt model.",
+            )
 
 
 def check_mixed_receipt_model(graph: Graph, resolved_by_target: dict[Target, dict[str, ResolvedDimension]]) -> list[Diagnostic]:

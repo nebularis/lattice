@@ -9,10 +9,9 @@ Everything here is usable without any LATTICE code.
 | File | What it is |
 |---|---|
 | [`vectors.schema.json`](vectors.schema.json) | JSON Schema (2020-12) for the vectors document |
-| [`vectors.json`](vectors.json) | Conformance vectors for the canonical N-Triples of a payload, the payloads that are refused, and the request digest of several kinds of operation |
-| [`verify-vectors.py`](verify-vectors.py) | Recomputes every line, every digest input and every digest with `openssl` and the Python standard library. Shares no code with any library |
+| [`vectors.json`](vectors.json) | Conformance vectors for the canonical N-Triples of a payload, the payloads that are refused, the request digest of several kinds of operation, the payload check, the events of an append, the caller check, the audit outcome, the reference modes and the checkpoint list |
+| [`verify-vectors.py`](verify-vectors.py) | Recomputes every line, every digest input and every digest with `openssl`, and decides every check with its own code, on the Python standard library. Shares no code with any library |
 
-The payload checks, the caller check and the audit outcome have their vectors here when H2.8b adds them.
 
 ## What the vectors fix
 
@@ -37,6 +36,23 @@ requestDigest = hex(SHA-256(enc([kind, target, expected, part1, part2, ...])))
   part is still a component, so a triple in the add part and the same triple in the del part give different digests.
 * The event part is the lines of each row's `rdf:type`, `pat:opSeq` (`xsd:long`) and `pat:occurredAt` triples together with the event triples,
   sorted and de-duplicated as one list. It leaves out `pat:revision`, which the store mints.
+
+**The payload check.** A vector gives the root, the boundary shape, the edges of the shape and the payload, and states the subjects that are outside.
+Start at the state (root, shape). From a state (node, shape), follow each edge whose source is the shape and whose ownership is `Owned`, forward
+from the node (`s p o` with the node as `s`) or backward for an inverse edge, to the state (the other end, the edge's target shape). The root and
+every node of a reached state are inside. A subject that is not inside is outside. An edge that names no target shape leads to a member that owns
+nothing further. A family with a null shape bounds nothing. Reference and vocabulary edges are not followed, so a node reached only by one is
+outside. The shape of the source matters, so `hasSubtask` owned from a task does not make a milestone own a subtask.
+
+**The events of an append.** Every subject of the event triples is an event of the batch or starts with `{event}/part/`. The batch has at least one event, each event IRI and each `opSeq` are distinct, and a row has all four values. The codes are `EventOutsideBound`, `NoEvents`, `DuplicateEvent`, `DuplicateOpSeq` and `UndefInRow`.
+
+**The caller check.** The codes are `MissingParameter`, `UnknownParameter`, `WrongKind`, `NotXsdLong` (a literal whose datatype is not exactly `xsd:long`, including `xsd:integer` and no datatype), `IllTypedLiteral` (`xsd:long` with a lexical form that is not an integer in range), `GraphNameMismatch` (a caller-named graph is not the prefix, the root encoded as `ENCODE_FOR_URI` does, and the suffix), `EmptyLogGraphs` and `LogGraphNotIri`. Each vector states the full set of codes for its request, sorted.
+
+**The audit outcome.** `Failed` if the audit returned a row. Otherwise `NothingExamined` if the caller listed no graph for an audit that lists graphs, or counted no receipt in the graphs it listed. Otherwise `Clean`.
+
+**Reference modes.** For every node the owned walk reaches, every edge of its shape, owned or not, is read. An object on a `Pinned` edge must be a version, and an object on a `ByIdentity` edge must not be one. What the caller does not know to be a version is not one.
+
+**A checkpoint.** A version that is a checkpoint states `pat:checkpoint true` and lists exactly its members under the domain's membership property. A version that is not lists none and states no mark.
 
 ## Checking
 

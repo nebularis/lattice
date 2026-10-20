@@ -579,7 +579,23 @@ dal:Quarantine         a dal:OperationKind ; rdfs:comment "Records the owners of
 dal:MergeRewrite       a dal:OperationKind ; rdfs:comment "Rewrites the claims of a merged owner onto the canonical one." .
 dal:Audit              a dal:OperationKind ; rdfs:comment "A read-only query that returns the rows that violate an invariant. Returns none on a clean dataset." .
 dal:MembersRead        a dal:OperationKind ; rdfs:comment "Resolves the members of a version from a chain of deltas back to the nearest checkpoint (dal:DeltaMembership)." .
-dal:PayloadCheck       a dal:OperationKind ; rdfs:comment "Checks a payload against the family's boundary shape, as a query a caller in any language gets from instantiate (ADR-A123 decision 6). H2.7 adds the kind and H2.8 emits the operation, so no operation has it yet." .
+dal:PayloadCheck       a dal:OperationKind ; rdfs:comment "Returns the subjects of a payload that are neither the root nor reached from it by the family's owned edges, as a query a caller in any language gets from instantiate (ADR-A123 decision 6). The caller runs it over a local graph holding its payload and never over the store. Generated for a family that names a dal:boundaryShape." .
+
+# ---- the outcome of an audit ------------------------------------------------------------------------------------------
+
+dal:AuditOutcome a owl:Class ;
+    rdfs:comment "What an audit reports. A query returns the rows that violate an invariant, so a caller derives the outcome from the rows and from whether the audit read anything." .
+dal:Clean a dal:AuditOutcome ; rdfs:comment "The audit read the graphs it examines and found no violation." .
+dal:Failed a dal:AuditOutcome ; rdfs:comment "The audit returned at least one row." .
+dal:NothingExamined a dal:AuditOutcome ; rdfs:comment "The audit returned no row and read nothing: the graphs it examines are not listed, or hold no receipt. This is not a clean result (FMH-H2-5, non-coverage)." .
+
+dal:reportsOutcome a owl:ObjectProperty ;
+    rdfs:domain dal:GeneratedOperation ; rdfs:range dal:AuditOutcome ;
+    rdfs:comment "An outcome an audit can report. Every audit declares all three." .
+
+dal:examinedParameter a owl:ObjectProperty ;
+    rdfs:domain dal:GeneratedOperation ; rdfs:range dal:ParameterDeclaration ;
+    rdfs:comment "On an audit that reads the graphs a caller lists, the parameter that lists them. When it lists none, the audit examines nothing and reports dal:NothingExamined." .
 
 # ---- guard status and graph naming --------------------------------------------------------------------------------
 
@@ -758,7 +774,7 @@ dal:Diagnostic a owl:Class .
 dal:diagnosticKind    a owl:DatatypeProperty ; rdfs:domain dal:Diagnostic ; rdfs:range xsd:string .
 dal:diagnosticMessage a owl:DatatypeProperty ; rdfs:domain dal:Diagnostic ; rdfs:range xsd:string .
 dal:diagnosticSeverity a owl:DatatypeProperty ; rdfs:domain dal:Diagnostic ; rdfs:range xsd:string ;
-    rdfs:comment "WARNING or ERROR." .
+    rdfs:comment "INFO, WARNING or ERROR." .
 
 dal:appliedUniquenessConstraint a owl:ObjectProperty ;
     rdfs:domain dal:CompiledProfile ; rdfs:range dal:UniquenessConstraint .
@@ -779,6 +795,9 @@ dal:edgeInverse a owl:DatatypeProperty ; rdfs:domain dal:ReferenceEdge ; rdfs:ra
 dal:edgeOwnership a owl:ObjectProperty ; rdfs:domain dal:ReferenceEdge ; rdfs:range dal:OwnershipKind .
 dal:edgeTargetClass a owl:ObjectProperty ; rdfs:domain dal:ReferenceEdge ;
     rdfs:comment "The sh:class of the edge, else the sh:targetClass of its sh:node. Absent when neither is declared." .
+
+dal:edgeTargetShape a owl:ObjectProperty ; rdfs:domain dal:ReferenceEdge ;
+    rdfs:comment "The sh:node of the edge, the node shape of what it leads to. Absent when it names none, so a node reached by it owns nothing further. A caller's payload check walks owned edges by it." .
 
 dal:generatedOperation a owl:ObjectProperty ;
     rdfs:domain dal:CompiledProfile ; rdfs:range dal:GeneratedOperation .

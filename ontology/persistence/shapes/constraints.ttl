@@ -518,7 +518,11 @@ dal:OperationContractShape
     sh:property [ sh:path dal:payloadContract ; sh:maxCount 1 ; sh:nodeKind sh:IRI ; sh:class dal:PayloadContract ;
                   sh:message "An operation has at most one dal:payloadContract, an IRI and never a blank node." ] ;
     sh:property [ sh:path dal:digestContract ; sh:maxCount 1 ; sh:nodeKind sh:IRI ; sh:class dal:DigestContract ;
-                  sh:message "An operation has at most one dal:digestContract, an IRI and never a blank node." ] .
+                  sh:message "An operation has at most one dal:digestContract, an IRI and never a blank node." ] ;
+    sh:property [ sh:path dal:reportsOutcome ; sh:nodeKind sh:IRI ; sh:in ( dal:Clean dal:Failed dal:NothingExamined ) ;
+                  sh:message "dal:reportsOutcome names an individual of dal:AuditOutcome." ] ;
+    sh:property [ sh:path dal:examinedParameter ; sh:maxCount 1 ; sh:nodeKind sh:IRI ; sh:class dal:ParameterDeclaration ;
+                  sh:message "dal:examinedParameter names a parameter declaration by its IRI, once." ] .
 
 dal:ParameterDeclarationShape
     a sh:NodeShape ;

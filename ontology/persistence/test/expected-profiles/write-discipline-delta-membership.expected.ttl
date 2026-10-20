@@ -106,6 +106,7 @@
     dal:edgePredicate <https://example.org/quoting#hasTerms> ;
     dal:edgeSource <https://example.org/quoting#QuoteShape> ;
     dal:edgeTargetClass <https://example.org/quoting#Terms> ;
+    dal:edgeTargetShape <https://example.org/quoting#TermsShape> ;
     dal:referenceMode dal:ByIdentity .
 
 <https://example.org/quoting/Quote/compiled/append-version#param-epoch> a dal:ParameterDeclaration ;
@@ -116,11 +117,6 @@
 <https://example.org/quoting/Quote/compiled/append-version#param-newRev> a dal:ParameterDeclaration ;
     dal:parameterKind dal:IriKind ;
     dal:parameterName "newRev" ;
-    dal:required true .
-
-<https://example.org/quoting/Quote/compiled/append-version#param-newVersion> a dal:ParameterDeclaration ;
-    dal:parameterKind dal:IriKind ;
-    dal:parameterName "newVersion" ;
     dal:required true .
 
 <https://example.org/quoting/Quote/compiled/append-version#param-nextSeq> a dal:ParameterDeclaration ;
@@ -137,7 +133,7 @@
     dal:boundaryShape <https://example.org/quoting#QuoteShape> ;
     dal:payloadEncoding dal:GroundNTriples ;
     dal:payloadParameter <https://example.org/quoting/Quote/compiled/append-version#param-payloadTriples> ;
-    dal:payloadRoot <https://example.org/quoting/Quote/compiled/append-version#param-root> ;
+    dal:payloadRoot <https://example.org/quoting/Quote/compiled/append-version#param-newVersion> ;
     dal:referenceEdge <https://example.org/quoting/Quote/compiled/append-version#edge-00>,
         <https://example.org/quoting/Quote/compiled/append-version#edge-01> .
 
@@ -186,12 +182,6 @@
     dal:accessMode dal:ScanRead ;
     dal:resourceKind dal:VersionRow .
 
-<https://example.org/quoting/Quote/compiled/gap-scan-audit#param-logGraphs> a dal:ParameterDeclaration ;
-    dal:parameterKind dal:RegistryListKind ;
-    dal:parameterName "logGraphs" ;
-    dal:required true ;
-    dal:sourcedFrom dal:RegistryGraph .
-
 <https://example.org/quoting/Quote/compiled/gap-scan-audit#result-L> a dal:ResultColumn ;
     dal:columnKind dal:PositionColumn ;
     dal:columnName "L" ;
@@ -239,15 +229,24 @@
     dal:columnName "member" ;
     dal:columnPosition 1 .
 
+<https://example.org/quoting/Quote/compiled/payload-check#access-1> a dal:ResourceAccess ;
+    dal:accessMode dal:AbsenceRead ;
+    dal:keyedBy <https://example.org/quoting/Quote/compiled/payload-check#param-root> ;
+    dal:resourceKind dal:Aggregate .
+
+<https://example.org/quoting/Quote/compiled/payload-check#access-2> a dal:ResourceAccess ;
+    dal:accessMode dal:WholeAggregateRead ;
+    dal:keyedBy <https://example.org/quoting/Quote/compiled/payload-check#param-root> ;
+    dal:resourceKind dal:Aggregate .
+
+<https://example.org/quoting/Quote/compiled/payload-check#result-s> a dal:ResultColumn ;
+    dal:columnKind dal:IriColumn ;
+    dal:columnName "s" ;
+    dal:columnPosition 1 .
+
 <https://example.org/quoting/Quote/compiled/revision-multi-txn-audit#access-1> a dal:ResourceAccess ;
     dal:accessMode dal:ScanRead ;
     dal:resourceKind dal:Receipt .
-
-<https://example.org/quoting/Quote/compiled/revision-multi-txn-audit#param-logGraphs> a dal:ParameterDeclaration ;
-    dal:parameterKind dal:RegistryListKind ;
-    dal:parameterName "logGraphs" ;
-    dal:required true ;
-    dal:sourcedFrom dal:RegistryGraph .
 
 <https://example.org/quoting/Quote/compiled/revision-multi-txn-audit#result-n> a dal:ResultColumn ;
     dal:columnKind dal:CountColumn ;
@@ -262,12 +261,6 @@
 <https://example.org/quoting/Quote/compiled/txn-multi-revision-audit#access-1> a dal:ResourceAccess ;
     dal:accessMode dal:ScanRead ;
     dal:resourceKind dal:Receipt .
-
-<https://example.org/quoting/Quote/compiled/txn-multi-revision-audit#param-logGraphs> a dal:ParameterDeclaration ;
-    dal:parameterKind dal:RegistryListKind ;
-    dal:parameterName "logGraphs" ;
-    dal:required true ;
-    dal:sourcedFrom dal:RegistryGraph .
 
 <https://example.org/quoting/Quote/compiled/txn-multi-revision-audit#result-n> a dal:ResultColumn ;
     dal:columnKind dal:CountColumn ;
@@ -294,6 +287,29 @@
     dal:parameterName "expectedSeq" ;
     dal:required true .
 
+<https://example.org/quoting/Quote/compiled/append-version#param-newVersion> a dal:ParameterDeclaration ;
+    dal:parameterKind dal:IriKind ;
+    dal:parameterName "newVersion" ;
+    dal:required true .
+
+<https://example.org/quoting/Quote/compiled/gap-scan-audit#param-logGraphs> a dal:ParameterDeclaration ;
+    dal:parameterKind dal:RegistryListKind ;
+    dal:parameterName "logGraphs" ;
+    dal:required true ;
+    dal:sourcedFrom dal:RegistryGraph .
+
+<https://example.org/quoting/Quote/compiled/revision-multi-txn-audit#param-logGraphs> a dal:ParameterDeclaration ;
+    dal:parameterKind dal:RegistryListKind ;
+    dal:parameterName "logGraphs" ;
+    dal:required true ;
+    dal:sourcedFrom dal:RegistryGraph .
+
+<https://example.org/quoting/Quote/compiled/txn-multi-revision-audit#param-logGraphs> a dal:ParameterDeclaration ;
+    dal:parameterKind dal:RegistryListKind ;
+    dal:parameterName "logGraphs" ;
+    dal:required true ;
+    dal:sourcedFrom dal:RegistryGraph .
+
 <https://example.org/quoting/Quote/compiled/append-version#param-payloadTriples> a dal:ParameterDeclaration ;
     dal:parameterKind dal:PayloadKind ;
     dal:parameterName "payloadTriples" ;
@@ -307,6 +323,11 @@
 <https://example.org/quoting/Quote/compiled/bootstrap-version-row#param-target> a dal:ParameterDeclaration ;
     dal:parameterKind dal:IriKind ;
     dal:parameterName "target" ;
+    dal:required true .
+
+<https://example.org/quoting/Quote/compiled/payload-check#param-root> a dal:ParameterDeclaration ;
+    dal:parameterKind dal:IriKind ;
+    dal:parameterName "root" ;
     dal:required true .
 
 <https://example.org/quoting/Quote/compiled/append-version#param-root> a dal:ParameterDeclaration ;
@@ -476,6 +497,7 @@
                 <https://example.org/quoting/Quote/compiled/gap-scan-audit#access-2>,
                 <https://example.org/quoting/Quote/compiled/gap-scan-audit#access-3> ;
             dal:declarationSource dal:BuilderDerived ;
+            dal:examinedParameter <https://example.org/quoting/Quote/compiled/gap-scan-audit#param-logGraphs> ;
             dal:forOperation "gap-scan-audit" ;
             dal:guardStatus dal:NoRequiredParameter ;
             dal:hasParameterBinding [ a dal:ParameterBinding ;
@@ -524,6 +546,9 @@
                     dal:paramValue "<urn:g:txn>" ] ;
             dal:operationKind dal:Audit ;
             dal:parameter <https://example.org/quoting/Quote/compiled/gap-scan-audit#param-logGraphs> ;
+            dal:reportsOutcome dal:Clean,
+                dal:Failed,
+                dal:NothingExamined ;
             dal:resultColumn <https://example.org/quoting/Quote/compiled/gap-scan-audit#result-L>,
                 <https://example.org/quoting/Quote/compiled/gap-scan-audit#result-S>,
                 <https://example.org/quoting/Quote/compiled/gap-scan-audit#result-n>,
@@ -581,6 +606,9 @@
                     dal:paramType "Iri" ;
                     dal:paramValue "<urn:g:txn>" ] ;
             dal:operationKind dal:Audit ;
+            dal:reportsOutcome dal:Clean,
+                dal:Failed,
+                dal:NothingExamined ;
             dal:resultColumn <https://example.org/quoting/Quote/compiled/fork-detection-audit#result-n>,
                 <https://example.org/quoting/Quote/compiled/fork-detection-audit#result-rev> ;
             dal:templateVersion 1 ;
@@ -589,6 +617,7 @@
         [ a dal:GeneratedOperation ;
             dal:access <https://example.org/quoting/Quote/compiled/revision-multi-txn-audit#access-1> ;
             dal:declarationSource dal:BuilderDerived ;
+            dal:examinedParameter <https://example.org/quoting/Quote/compiled/revision-multi-txn-audit#param-logGraphs> ;
             dal:forOperation "revision-multi-txn-audit" ;
             dal:guardStatus dal:NoRequiredParameter ;
             dal:hasParameterBinding [ a dal:ParameterBinding ;
@@ -637,6 +666,9 @@
                     dal:paramValue "<urn:g:txn>" ] ;
             dal:operationKind dal:Audit ;
             dal:parameter <https://example.org/quoting/Quote/compiled/revision-multi-txn-audit#param-logGraphs> ;
+            dal:reportsOutcome dal:Clean,
+                dal:Failed,
+                dal:NothingExamined ;
             dal:resultColumn <https://example.org/quoting/Quote/compiled/revision-multi-txn-audit#result-n>,
                 <https://example.org/quoting/Quote/compiled/revision-multi-txn-audit#result-rev> ;
             dal:templateVersion 1 ;
@@ -645,6 +677,7 @@
         [ a dal:GeneratedOperation ;
             dal:access <https://example.org/quoting/Quote/compiled/txn-multi-revision-audit#access-1> ;
             dal:declarationSource dal:BuilderDerived ;
+            dal:examinedParameter <https://example.org/quoting/Quote/compiled/txn-multi-revision-audit#param-logGraphs> ;
             dal:forOperation "txn-multi-revision-audit" ;
             dal:guardStatus dal:NoRequiredParameter ;
             dal:hasParameterBinding [ a dal:ParameterBinding ;
@@ -693,11 +726,34 @@
                     dal:paramValue "<urn:g:txn>" ] ;
             dal:operationKind dal:Audit ;
             dal:parameter <https://example.org/quoting/Quote/compiled/txn-multi-revision-audit#param-logGraphs> ;
+            dal:reportsOutcome dal:Clean,
+                dal:Failed,
+                dal:NothingExamined ;
             dal:resultColumn <https://example.org/quoting/Quote/compiled/txn-multi-revision-audit#result-n>,
                 <https://example.org/quoting/Quote/compiled/txn-multi-revision-audit#result-t> ;
             dal:templateVersion 1 ;
             dal:usesTemplate [ a dal:Template ;
-                    dal:templateId "txn-multi-revision-audit" ] ] ;
+                    dal:templateId "txn-multi-revision-audit" ] ],
+        [ a dal:GeneratedOperation ;
+            dal:access <https://example.org/quoting/Quote/compiled/payload-check#access-1>,
+                <https://example.org/quoting/Quote/compiled/payload-check#access-2> ;
+            dal:declarationSource dal:BuilderDerived ;
+            dal:forOperation "payload-check" ;
+            dal:guardStatus dal:Guarded ;
+            dal:hasParameterBinding [ a dal:ParameterBinding ;
+                    dal:paramName "ownedPath" ;
+                    dal:paramType "PropertyPath" ;
+                    dal:paramValue "(<https://example.org/quoting#hasTerms>)?" ],
+                [ a dal:ParameterBinding ;
+                    dal:paramName "payloadGraph" ;
+                    dal:paramType "Iri" ;
+                    dal:paramValue "<urn:g:payload>" ] ;
+            dal:operationKind dal:PayloadCheck ;
+            dal:parameter <https://example.org/quoting/Quote/compiled/payload-check#param-root> ;
+            dal:resultColumn <https://example.org/quoting/Quote/compiled/payload-check#result-s> ;
+            dal:templateVersion 1 ;
+            dal:usesTemplate [ a dal:Template ;
+                    dal:templateId "payload-check" ] ] ;
     dal:referenceEdge [ a dal:ReferenceEdge ;
             dal:edgeInverse false ;
             dal:edgeOwnership dal:Reference ;
@@ -711,6 +767,7 @@
             dal:edgePredicate <https://example.org/quoting#hasTerms> ;
             dal:edgeSource <https://example.org/quoting#QuoteShape> ;
             dal:edgeTargetClass <https://example.org/quoting#Terms> ;
+            dal:edgeTargetShape <https://example.org/quoting#TermsShape> ;
             dal:referenceMode dal:ByIdentity ] ;
     dal:resolvedDimension [ dal:candidateCount 1 ;
             dal:dimension "aggregateBoundary" ;

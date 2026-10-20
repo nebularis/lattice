@@ -111,7 +111,43 @@ A class alone cannot distinguish "`beh:Behaviour` as lending deploys it" from "`
 
 ## Using the generated SPARQL directly
 
-This section is for a caller that runs the instantiated `.rq` files without LATTICE's query layer. Everything the query layer would otherwise do for you is listed here.
+This section is for a caller that runs the instantiated `.rq` files. The checks a store cannot make, and the digest, are done by the caller library ([`lattice-persistence`](../../packages/persistence/README.md), [ADR-A132](../../docs/architecture/decisions/ADR-A132-persistence-caller-library.md)). A caller in another language does the same steps itself, held to the vectors in [`contracts/persistence`](../../contracts/persistence/README.md). What follows names each step, then lists the values of each operation.
+
+### With the caller library
+
+```python
+from rdflib import Graph
+from lattice_persistence import Iri, Lit, Payload, Triple, check_request, read_contracts, request_digest
+
+profile = Graph().parse("compiled-profile.ttl")
+replace = next(o for o in read_contracts(profile) if o.template_id == "cas-replace-composite-property-patch-log")
+payload = Payload.of(Triple(Iri.encode("urn:ex:p1"), Iri.encode("urn:ex:name"), Lit("Alpha")))
+values = {"root": Iri.encode("urn:ex:p1"), "epoch": 1, "expectedSeq": 3, "nextSeq": 4, "newRev": Iri.encode("urn:rev:4"),
+          "txnId": Iri.encode("urn:txn:1"), "payloadTriples": payload, "assertTriples": Payload.of(), "retractTriples": Payload.of()}
+values["requestDigest"] = request_digest(replace, values)
+check_request(replace, values)           # raises CallerCheckError, naming every reason, before anything is sent
+text = payload.sparql()                  # the value of {{{payloadTriples}}}
+```
+
+`check_request` refuses a request, with the operation and parameter named, since a guard that fails in the store reads as a lost race.
+
+| Step | What the library does | Without the library |
+|---|---|---|
+| The payload | `Payload` holds ground triples of typed terms, with no blank node, and renders the slot text from the encoders. A literal holding `} } ; DROP ALL` stays one literal | Encode every term as `persistence.terms` does. Never build the slot from a string |
+| The digest | `request_digest` follows the profile's digest contract. Each content part is one component | The vectors in `contracts/persistence` are the definition |
+| Every parameter | present, and of its kind. A `Long` or `Position` is exactly `xsd:long`, on any store, so an `xsd:integer` epoch is refused where a store's guard might pass it. A literal is not an IRI | The contract of the operation in the compiled profile lists each parameter and its kind |
+| A caller-named `$g` | equal to the naming rule (prefix, `ENCODE_FOR_URI` of the root, suffix) | The `graphPrefix` and `graphSuffix` bindings of the operation |
+| `logGraphs` | non-empty and every member an IRI. An audit over no graph examines nothing | An audit reports `NothingExamined` and never clean (below) |
+| The payload's subjects | every subject is the root or reached from it by the owned edges. A family that names no boundary shape has the form checks only (`UnboundedPayload`) | Run the `payload-check` operation of the profile over a local graph holding the payload |
+| The events of an append | at least one row, each event IRI and each `opSeq` distinct, and every subject of the event triples an event of the batch or a node minted under one (`{event}/part/...`), so an event may name an aggregate and never describe it | the vectors `eventChecks` |
+| Reference modes | with `version_of`, an object on a pinned edge is a version and an object on an identity edge is not (H2.6e). Without it the modes are not checked | the vectors `referenceChecks` |
+| A checkpoint | with `membership`, a checkpoint version of a family under `dal:DeltaMembership` states `pat:checkpoint true` and lists every member | the vectors `checkpointChecks` |
+
+**The payload-check query.** `instantiate` writes `payload-check.rq` for each family that has a payload operation and a `dal:boundaryShape`. It returns the subjects outside the aggregate. Load the payload into the graph `urn:g:payload` of a store of your own, substitute `$root` (for a new version, `$newVersion`, the contract's `dal:payloadRoot`), and run it. An empty result passes. It never goes to the store that holds the data. The library runs the same walk without an engine, and the tests hold the two equal on rdflib and Oxigraph.
+
+**The outcome of an audit.** An audit selects the rows that violate an invariant, so no row cannot say whether it read anything. The contract of an audit declares the outcomes `dal:Clean`, `dal:Failed` and `dal:NothingExamined`, and the parameter it examines (`dal:examinedParameter`). `run_audit(client, operation, query, log_graphs)` fills the `logGraphs` slot, runs the query through the `select` method of your client (the one thing the library asks of it), counts the receipts the listed graphs hold when no row came back, and reports one of the three.
+
+**With the guards off.** `compile --no-parameter-guards` reports `ParameterGuardsOff` as information, naming the obligation. The library does every test the guard would. A request that leaves out `$root` can otherwise write every aggregate whose version row matches. `compile --warn-unbounded-payload` raises `UnboundedPayload` to a warning.
 
 ### Three kinds of value
 
@@ -155,10 +191,11 @@ This section is for a caller that runs the instantiated `.rq` files without LATT
 ### Obligations the SPARQL cannot enforce for you
 
 1. **Create the version row before the first write** where the compiled profile contains `bootstrap-version-row`. That is every append stream, every aggregate declared `dal:firstWrite dal:PreCreatedRow`, which gets no `create-if-absent`, and every family declared `dal:writeDiscipline dal:AppendVersions`, whose first version is an `append-version` at seq 0. Run `bootstrap-version-row` when you allocate the aggregate or stream id, binding `$target` to the IRI you will later bind as `$root` or `$stream`. The first `cas-replace` then expects `seq 0`, and finds no head. Skipping this step makes every write a no-op that looks like a lost race.
-2. **Confirm every write** with a read of the txn claim's `pat:rev` and `pat:requestDigest` on the primary, and classify the outcome as guide §15.2 describes. A `204` from the endpoint does not mean the guard matched.
-3. **Treat every transport failure as unknown**: resend the identical request with the same `$txnId` and payload, then confirm.
-4. **Keep txn claims at least as long as the longest redelivery horizon** before pruning them (guide §24.2).
-5. **Quiesce writers when you bump the dataset epoch** (guide §24.4).
+2. **Check every request** with the caller library, or the steps of its table, before it is sent.
+3. **Confirm every write** with a read of the txn claim's `pat:rev` and `pat:requestDigest` on the primary, and classify the outcome as guide §15.2 describes. A `204` from the endpoint does not mean the guard matched.
+4. **Treat every transport failure as unknown**: resend the identical request with the same `$txnId` and payload, then confirm.
+5. **Keep txn claims at least as long as the longest redelivery horizon** before pruning them (guide §24.2).
+6. **Quiesce writers when you bump the dataset epoch** (guide §24.4).
 
 ## The typed operation IR (in progress, ADR-A123)
 

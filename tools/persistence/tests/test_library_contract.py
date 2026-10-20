@@ -20,7 +20,7 @@ from lattice_persistence import read_contracts
 from persistence.contract_emit import contract_for
 
 LIBRARY_DATA = Path(__file__).resolve().parents[3] / "packages" / "persistence" / "python" / "tests" / "data"
-LIBRARY_FIXTURES = ("baseline-single-class", "append-stream-dataset-guard", "write-discipline-delta-membership")
+LIBRARY_FIXTURES = ("baseline-single-class", "append-stream-dataset-guard", "write-discipline-delta-membership", "composite-project-ownership")
 
 
 @pytest.mark.parametrize("name,example,options", CONFIGURATIONS, ids=[c[0] for c in CONFIGURATIONS])

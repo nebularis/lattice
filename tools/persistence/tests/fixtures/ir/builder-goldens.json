@@ -167,6 +167,10 @@
     "sha256": "a227fc7fd3632a59929ddf0d293e41afd68c99491241c21d95298d6cce97409c",
     "version": 2
   },
+  "payload-check": {
+    "sha256": "7df0e82d40280b0e1089402e05ee84bf2f7bffbe0edddf3ea876bb4842e6abc5",
+    "version": 1
+  },
   "revision-multi-txn-audit": {
     "sha256": "901c4f46c0e43d81b530aebae44d7b35da7b77075876b2ebe0612e0e5be37235",
     "version": 1

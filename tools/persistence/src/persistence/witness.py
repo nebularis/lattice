@@ -13,6 +13,9 @@ rule in four families and requires, for each, at least one fixture that
     kind, or the class name of another raised exception.
 ``warning``
     a named ``Diagnostic`` of severity WARNING.
+``info``
+    a named ``Diagnostic`` of severity INFO (H2.8b), which reports a fact about a configuration or a run and fails nothing. A fixture may
+    set a compile option with a ``# option: warn-unbounded-payload`` or ``# option: no-parameter-guards`` line.
 ``shape``
     a ``sh:NodeShape`` in ``ontology/persistence/shapes/constraints.ttl``.
     It is witnessed when validating a fixture reports a result from it, and
@@ -49,8 +52,8 @@ from .instantiate import instantiate_by_target
 
 SH = Namespace("http://www.w3.org/ns/shacl#")
 
-REFUSAL, WARNING, SHAPE, AUDIT = "refusal", "warning", "shape", "audit"
-FAMILIES = (REFUSAL, WARNING, SHAPE, AUDIT)
+REFUSAL, WARNING, SHAPE, AUDIT, INFO = "refusal", "warning", "shape", "audit", "info"
+FAMILIES = (REFUSAL, WARNING, INFO, SHAPE, AUDIT)
 
 PACKAGE_DIR = Path(__file__).resolve().parent
 REPO_ROOT = PACKAGE_DIR.parents[3]
@@ -169,6 +172,8 @@ def scan_source(source_dir: Path = PACKAGE_DIR) -> tuple[set[Rule], list[str]]:
         if name not in _REFUSAL_CALLS and name not in _WARNING_CALLS:
             continue
         family = REFUSAL if name in _REFUSAL_CALLS else WARNING
+        if name == "Diagnostic" and any(k.arg == "severity" and isinstance(k.value, ast.Constant) and k.value.value == "INFO" for k in call.keywords):
+            family = INFO
         kinds = source.kinds(_kind_node(call), owner)
         if kinds is None:
             problems.append(f"{filename}:{call.lineno}: cannot determine the kind passed to {name}()")
@@ -284,16 +289,19 @@ def observe_compile(fixtures: Iterable[Path]) -> Observed:
     it emits."""
     observed: Observed = {}
     for path in fixtures:
+        options = set(re.findall(r"^#\s*option:\s*(\S+)", path.read_text(encoding="utf-8"), re.M))
         try:
-            compiled = compile_targets(_load_fixture(path))
+            compiled = compile_targets(
+                _load_fixture(path), guards="no-parameter-guards" not in options, warn_unbounded_payload="warn-unbounded-payload" in options
+            )
         except CompileError as error:
             cause = error.cause
             _record(observed, Rule(REFUSAL, getattr(cause, "kind", None) or type(cause).__name__), path.name)
             continue
         for target in compiled:
             for diagnostic in target.diagnostics:
-                if diagnostic.severity == "WARNING":
-                    _record(observed, Rule(WARNING, diagnostic.kind), path.name)
+                if diagnostic.severity in ("WARNING", "INFO"):
+                    _record(observed, Rule(WARNING if diagnostic.severity == "WARNING" else INFO, diagnostic.kind), path.name)
     return observed
 
 
@@ -564,7 +572,7 @@ def named_witness_problems(observed: Observed, witness_dir: Path = WITNESS_DIR) 
         return problems
     for path in sorted(witness_dir.glob("*.ttl")):
         family, _, name = path.name.removesuffix(".ttl").partition("-")
-        if family not in (REFUSAL, WARNING, SHAPE) or not name:
+        if family not in (REFUSAL, WARNING, INFO, SHAPE) or not name:
             continue
         if path.name not in observed.get(Rule(family, name), set()):
             seen = sorted(str(r) for r, files in observed.items() if path.name in files)
@@ -599,6 +607,7 @@ def check_witness_coverage() -> Report:
 __all__ = [
     "AUDIT",
     "AuditWitness",
+    "INFO",
     "REFUSAL",
     "Report",
     "Rule",

@@ -36,12 +36,6 @@
     dal:accessMode dal:ScanRead ;
     dal:resourceKind dal:VersionRow .
 
-<https://example.org/lending/Member/compiled/gap-scan-audit#param-logGraphs> a dal:ParameterDeclaration ;
-    dal:parameterKind dal:RegistryListKind ;
-    dal:parameterName "logGraphs" ;
-    dal:required true ;
-    dal:sourcedFrom dal:RegistryGraph .
-
 <https://example.org/lending/Member/compiled/gap-scan-audit#result-L> a dal:ResultColumn ;
     dal:columnKind dal:PositionColumn ;
     dal:columnName "L" ;
@@ -136,12 +130,6 @@
     dal:accessMode dal:ScanRead ;
     dal:resourceKind dal:Receipt .
 
-<https://example.org/lending/Member/compiled/revision-multi-txn-audit#param-logGraphs> a dal:ParameterDeclaration ;
-    dal:parameterKind dal:RegistryListKind ;
-    dal:parameterName "logGraphs" ;
-    dal:required true ;
-    dal:sourcedFrom dal:RegistryGraph .
-
 <https://example.org/lending/Member/compiled/revision-multi-txn-audit#result-n> a dal:ResultColumn ;
     dal:columnKind dal:CountColumn ;
     dal:columnName "n" ;
@@ -155,12 +143,6 @@
 <https://example.org/lending/Member/compiled/txn-multi-revision-audit#access-1> a dal:ResourceAccess ;
     dal:accessMode dal:ScanRead ;
     dal:resourceKind dal:Receipt .
-
-<https://example.org/lending/Member/compiled/txn-multi-revision-audit#param-logGraphs> a dal:ParameterDeclaration ;
-    dal:parameterKind dal:RegistryListKind ;
-    dal:parameterName "logGraphs" ;
-    dal:required true ;
-    dal:sourcedFrom dal:RegistryGraph .
 
 <https://example.org/lending/Member/compiled/txn-multi-revision-audit#result-n> a dal:ResultColumn ;
     dal:columnKind dal:CountColumn ;
@@ -182,6 +164,24 @@
     dal:payloadEncoding dal:GroundNTriples ;
     dal:payloadParameter <https://example.org/lending/Member/compiled/unconditional-write#param-payloadTriples> ;
     dal:payloadRoot <https://example.org/lending/Member/compiled/unconditional-write#param-root> .
+
+<https://example.org/lending/Member/compiled/gap-scan-audit#param-logGraphs> a dal:ParameterDeclaration ;
+    dal:parameterKind dal:RegistryListKind ;
+    dal:parameterName "logGraphs" ;
+    dal:required true ;
+    dal:sourcedFrom dal:RegistryGraph .
+
+<https://example.org/lending/Member/compiled/revision-multi-txn-audit#param-logGraphs> a dal:ParameterDeclaration ;
+    dal:parameterKind dal:RegistryListKind ;
+    dal:parameterName "logGraphs" ;
+    dal:required true ;
+    dal:sourcedFrom dal:RegistryGraph .
+
+<https://example.org/lending/Member/compiled/txn-multi-revision-audit#param-logGraphs> a dal:ParameterDeclaration ;
+    dal:parameterKind dal:RegistryListKind ;
+    dal:parameterName "logGraphs" ;
+    dal:required true ;
+    dal:sourcedFrom dal:RegistryGraph .
 
 <https://example.org/lending/Member/compiled/unconditional-write#param-payloadTriples> a dal:ParameterDeclaration ;
     dal:parameterKind dal:PayloadKind ;
@@ -214,7 +214,11 @@
     dal:diagnostic [ a dal:Diagnostic ;
             dal:diagnosticKind "RowLevelGuardOnly" ;
             dal:diagnosticMessage "dal:epochGuardScope is dal:RowLevelGuardOnly (either explicitly declared or the platform baseline default): a write guarded only on the version row's own epoch can still match an unrestored row after a dataset-level bump that never reaches that row. dal:DatasetLevelGuard is required for restore safety to actually hold (iri-identity-patterns.md §10.3)." ;
-            dal:diagnosticSeverity "WARNING" ] ;
+            dal:diagnosticSeverity "WARNING" ],
+        [ a dal:Diagnostic ;
+            dal:diagnosticKind "UnboundedPayload" ;
+            dal:diagnosticMessage "https://example.org/lending#Member is a named-graph family with payload operations and no dal:boundaryShape, so a caller can check the form of a payload and not that every subject belongs to the aggregate. Declare a dal:boundaryShape to have the payload-check query generated." ;
+            dal:diagnosticSeverity "INFO" ] ;
     dal:forTarget <https://example.org/lending#Member> ;
     dal:generatedOperation [ a dal:GeneratedOperation ;
             dal:access <https://example.org/lending/Member/compiled/unconditional-write#access-1> ;
@@ -484,6 +488,9 @@
                     dal:paramType "Iri" ;
                     dal:paramValue "<urn:g:txn>" ] ;
             dal:operationKind dal:Audit ;
+            dal:reportsOutcome dal:Clean,
+                dal:Failed,
+                dal:NothingExamined ;
             dal:resultColumn <https://example.org/lending/Member/compiled/key-claim-duplicate-audit-member-handle-unique#result-claim>,
                 <https://example.org/lending/Member/compiled/key-claim-duplicate-audit-member-handle-unique#result-n>,
                 <https://example.org/lending/Member/compiled/key-claim-duplicate-audit-member-handle-unique#result-owners> ;
@@ -495,6 +502,7 @@
                 <https://example.org/lending/Member/compiled/gap-scan-audit#access-2>,
                 <https://example.org/lending/Member/compiled/gap-scan-audit#access-3> ;
             dal:declarationSource dal:BuilderDerived ;
+            dal:examinedParameter <https://example.org/lending/Member/compiled/gap-scan-audit#param-logGraphs> ;
             dal:forOperation "gap-scan-audit" ;
             dal:guardStatus dal:NoRequiredParameter ;
             dal:hasParameterBinding [ a dal:ParameterBinding ;
@@ -551,6 +559,9 @@
                     dal:paramValue "<urn:g:txn>" ] ;
             dal:operationKind dal:Audit ;
             dal:parameter <https://example.org/lending/Member/compiled/gap-scan-audit#param-logGraphs> ;
+            dal:reportsOutcome dal:Clean,
+                dal:Failed,
+                dal:NothingExamined ;
             dal:resultColumn <https://example.org/lending/Member/compiled/gap-scan-audit#result-L>,
                 <https://example.org/lending/Member/compiled/gap-scan-audit#result-S>,
                 <https://example.org/lending/Member/compiled/gap-scan-audit#result-n>,
@@ -616,6 +627,9 @@
                     dal:paramType "Iri" ;
                     dal:paramValue "<urn:g:txn>" ] ;
             dal:operationKind dal:Audit ;
+            dal:reportsOutcome dal:Clean,
+                dal:Failed,
+                dal:NothingExamined ;
             dal:resultColumn <https://example.org/lending/Member/compiled/fork-detection-audit#result-n>,
                 <https://example.org/lending/Member/compiled/fork-detection-audit#result-rev> ;
             dal:templateVersion 1 ;
@@ -624,6 +638,7 @@
         [ a dal:GeneratedOperation ;
             dal:access <https://example.org/lending/Member/compiled/revision-multi-txn-audit#access-1> ;
             dal:declarationSource dal:BuilderDerived ;
+            dal:examinedParameter <https://example.org/lending/Member/compiled/revision-multi-txn-audit#param-logGraphs> ;
             dal:forOperation "revision-multi-txn-audit" ;
             dal:guardStatus dal:NoRequiredParameter ;
             dal:hasParameterBinding [ a dal:ParameterBinding ;
@@ -680,6 +695,9 @@
                     dal:paramValue "<urn:g:txn>" ] ;
             dal:operationKind dal:Audit ;
             dal:parameter <https://example.org/lending/Member/compiled/revision-multi-txn-audit#param-logGraphs> ;
+            dal:reportsOutcome dal:Clean,
+                dal:Failed,
+                dal:NothingExamined ;
             dal:resultColumn <https://example.org/lending/Member/compiled/revision-multi-txn-audit#result-n>,
                 <https://example.org/lending/Member/compiled/revision-multi-txn-audit#result-rev> ;
             dal:templateVersion 1 ;
@@ -688,6 +706,7 @@
         [ a dal:GeneratedOperation ;
             dal:access <https://example.org/lending/Member/compiled/txn-multi-revision-audit#access-1> ;
             dal:declarationSource dal:BuilderDerived ;
+            dal:examinedParameter <https://example.org/lending/Member/compiled/txn-multi-revision-audit#param-logGraphs> ;
             dal:forOperation "txn-multi-revision-audit" ;
             dal:guardStatus dal:NoRequiredParameter ;
             dal:hasParameterBinding [ a dal:ParameterBinding ;
@@ -744,6 +763,9 @@
                     dal:paramValue "<urn:g:txn>" ] ;
             dal:operationKind dal:Audit ;
             dal:parameter <https://example.org/lending/Member/compiled/txn-multi-revision-audit#param-logGraphs> ;
+            dal:reportsOutcome dal:Clean,
+                dal:Failed,
+                dal:NothingExamined ;
             dal:resultColumn <https://example.org/lending/Member/compiled/txn-multi-revision-audit#result-n>,
                 <https://example.org/lending/Member/compiled/txn-multi-revision-audit#result-t> ;
             dal:templateVersion 1 ;

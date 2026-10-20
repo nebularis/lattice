@@ -21,6 +21,7 @@ from rdflib.plugins.sparql.parser import parseQuery, parseUpdate
 from rdflib.plugins.sparql.parserutils import CompValue
 
 from persistence.builders import BUILDERS, build_recording
+from persistence.instantiate import BUILDER_ONLY
 from persistence.instantiate import operation_context
 from persistence.ir_render import render
 from persistence.namespaces import DAL
@@ -76,6 +77,11 @@ def template_tags(template_text: str) -> set[str]:
     return {m.group(1) for m in _TAG.finditer(_COMMENT.sub("", template_text))} - set(REQUEST_TIME_SLOTS)
 
 
+def templated(operations):
+    """The operations that have a Mustache template to be compared with. A builder with none (H2.8b) is held by its own tests."""
+    return [op for op in operations if op[2] not in BUILDER_ONLY]
+
+
 def ported_operations(compiled_corpus):
     """(fixture, operation name, template stem, context) for every generated operation a builder ports."""
     out = []
@@ -98,7 +104,7 @@ def require_compared(compared: int, ported: int) -> None:
 def compare_all(operations) -> int:
     """Compare the template and the builder (guards off) of each operation. Returns how many were compared."""
     compared = 0
-    for fixture, name, stem, context in operations:
+    for fixture, name, stem, context in templated(operations):
         template_text = load_template(stem + ".mustache")
         mustache = fill_request_slots(mustache_render(template_text, context))
         built, read = build_recording(stem, context, guards=False)

@@ -22,10 +22,14 @@ from rdflib import RDF, Graph, Literal, URIRef
 from rdflib.namespace import XSD
 
 from .builders import BUILDERS, build
-from .contract import HAND_DECLARED, OperationContract, contract_of
+from .contract import HAND_DECLARED, OperationContract, OperationKind, contract_of
 from .instantiate import TEMPLATE_SUFFIX, operation_context
 from .namespaces import DAL
 
+
+
+AUDIT_OUTCOMES = ("Clean", "Failed", "NothingExamined")
+"""What an audit can report (H2.8b, ADR-A123 addendum). A query returns the rows that violate, so a caller derives the outcome from them."""
 
 
 def mint(target: URIRef, operation: str, part: str, deployment: URIRef | None = None) -> URIRef:
@@ -50,12 +54,16 @@ def column_name(kind: str) -> str:
     return f"{kind}Column"
 
 
-def contract_for(compiled: Graph, node, *, guards: bool, graph_names: str, edges: tuple = ()) -> OperationContract | None:
+def contract_for(
+    compiled: Graph, node, *, guards: bool, graph_names: str, edges: tuple = (), shape: URIRef | None = None
+) -> OperationContract | None:
     """The contract of the operation ``node`` of ``compiled``, from its builder, or from the hand declarations of operations that have
     none. ``None`` when there is neither."""
     stem = str(compiled.value(compiled.value(node, DAL.usesTemplate), DAL.templateId)).removesuffix(TEMPLATE_SUFFIX)
     if stem in BUILDERS:
-        return contract_of(build(stem, operation_context(compiled, node), guards=guards, graph_names=graph_names), edges)
+        return contract_of(
+            build(stem, operation_context(compiled, node), guards=guards, graph_names=graph_names), edges, None if shape is None else str(shape)
+        )
     return HAND_DECLARED.get(stem)
 
 
@@ -102,6 +110,11 @@ def emit_contract(
         g.add((cn, DAL.columnKind, DAL[column_name(col.kind)]))
         if col.separator is not None:
             g.add((cn, DAL.columnSeparator, Literal(col.separator)))
+    if c.kind is OperationKind.AUDIT:
+        for outcome in AUDIT_OUTCOMES:
+            g.add((node, DAL.reportsOutcome, DAL[outcome]))
+        if c.examines:
+            g.add((node, DAL.examinedParameter, m(f"param-{c.examines}")))
     if c.payload is not None:
         pc = m("payload")
         g.add((node, DAL.payloadContract, pc))
@@ -144,6 +157,8 @@ def add_edge_facts(out: Graph, node, edge) -> None:
     out.add((node, DAL.edgeOwnership, DAL[edge.ownership]))
     if edge.target_class is not None:
         out.add((node, DAL.edgeTargetClass, URIRef(edge.target_class)))
+    if edge.target_shape is not None:
+        out.add((node, DAL.edgeTargetShape, URIRef(edge.target_shape)))
     out.add((node, DAL.referenceMode, DAL[edge.reference_mode]))
 
 

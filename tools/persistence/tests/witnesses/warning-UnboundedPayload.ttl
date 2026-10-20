@@ -1,0 +1,5 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# The same family, compiled with --warn-unbounded-payload, which raises the information to a warning.
+# base: baseline-single-class.ttl
+# option: warn-unbounded-payload

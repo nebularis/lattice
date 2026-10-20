@@ -97,6 +97,7 @@ ENUMERATIONS = {
     "OwnershipKind": {"Owned", "Reference", "Vocabulary"},
     "WriteDiscipline": {"InPlace", "AppendVersions", "AppendRecords"},
     "MembershipEncoding": {"FullMembership", "DeltaMembership"},
+    "AuditOutcome": {"Clean", "Failed", "NothingExamined"},
     "ReceiptModel": {"ReceiptOnly", "PatchLog", "SnapshotPerRevision", "NoReceipt"},
 }
 
@@ -148,6 +149,8 @@ CONTRACT_TERMS = [
     # H2.6c to H2.6f
     "WriteDisciplineProfile", "writeDiscipline", "WriteDiscipline", "membershipEncoding", "MembershipEncoding", "checkpointEvery",
     "referenceMode", "ReferenceMode", "ReceiptModel",
+    # H2.8b
+    "edgeTargetShape", "AuditOutcome", "reportsOutcome", "examinedParameter",
 ]
 
 
@@ -163,13 +166,13 @@ def test_h2_7_t6_every_term_of_the_contract_and_of_the_disciplines_is_documented
 # ---- the payload check kind (Q3) --------------------------------------------------------------------------------------------
 
 
-def test_h2_7_t8_payload_check_is_a_kind_that_no_builder_emits_yet():
+def test_h2_7_t8_payload_check_is_a_kind_and_h2_8b_emits_the_operation():
     assert OperationKind.PAYLOAD_CHECK.value == "PayloadCheck" and "PayloadCheck" in _individuals("OperationKind")
     from persistence.contract import OPERATION_KINDS
 
-    assert OperationKind.PAYLOAD_CHECK not in set(OPERATION_KINDS.values())  # H2.8 emits the operation
+    assert OperationKind.PAYLOAD_CHECK in set(OPERATION_KINDS.values())  # H2.8b emits the operation
     kinds = {_local(o) for _, compiled in _corpus() for o in compiled.objects(None, DAL.operationKind)}
-    assert "PayloadCheck" not in kinds and kinds
+    assert "PayloadCheck" in kinds
 
 
 # ---- minted IRIs ------------------------------------------------------------------------------------------------------------

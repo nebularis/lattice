@@ -19,6 +19,7 @@ nothing here is SPARQL, so the contract stays valid for a realisation that is no
 
 from __future__ import annotations
 
+import dataclasses
 from dataclasses import dataclass
 from enum import Enum
 from typing import Optional
@@ -100,6 +101,7 @@ _STEM_KIND: dict[str, OperationKind] = {
     "append-version": OperationKind.APPEND_VERSION,
     "append-version-delta": OperationKind.APPEND_VERSION,
     "members": OperationKind.MEMBERS_READ,
+    "payload-check": OperationKind.PAYLOAD_CHECK,
     "create-if-absent-named-graph": OperationKind.CREATE,
     "create-if-absent-composite": OperationKind.CREATE,
     "cas-replace-named-graph": OperationKind.REPLACE,
@@ -189,11 +191,15 @@ def edge_contracts(tree) -> tuple:
     if tree is None:
         return ()
     return tuple(sorted(
-        EdgeContract(
-            str(e.source_shape), str(e.step.predicate), e.step.inverse, e.kind,
-            None if e.target_class is None else str(e.target_class), e.reference_mode,
-        )
-        for e in tree.node_edges()
+        (
+            EdgeContract(
+                str(e.source_shape), str(e.step.predicate), e.step.inverse, e.kind,
+                None if e.target_class is None else str(e.target_class), e.reference_mode,
+                None if e.target_shape is None else str(e.target_shape),
+            )
+            for e in tree.node_edges()
+        ),
+        key=lambda c: tuple("" if v is None else str(v) for v in dataclasses.astuple(c)),
     ))
 
 
@@ -210,6 +216,8 @@ class OperationContract:
     payload: Optional[PayloadContract]
     digest: Optional[DigestContract]
     source: DeclarationSource = DeclarationSource.BUILDER_DERIVED
+    examines: Optional[str] = None
+    """For an audit that reads the graphs a caller lists, the parameter that lists them (H2.8b). An audit that examines nothing when it is empty."""
 
 
 HAND_DECLARED: dict[str, OperationContract] = {}
@@ -253,9 +261,10 @@ def _result_columns(operation: Operation) -> tuple:
     return tuple(columns)
 
 
-def contract_of(operation: Operation, edges: tuple = ()) -> OperationContract:
+def contract_of(operation: Operation, edges: tuple = (), shape: Optional[str] = None) -> OperationContract:
     """The contract of ``operation``, derived from it and from the three tables of this module. ``edges`` is the family's
-    :func:`edge_contracts`, which an operation cannot know, and is carried on the payload contract of an operation that has one."""
+    :func:`edge_contracts`, and ``shape`` is the family's boundary shape, which an operation cannot know either. Both are carried on the payload
+    contract of an operation that has one."""
     stem = stem_of(operation.id)
     params = {p.name: p for p in operation.params}
     sets = access_sets(operation)
@@ -288,7 +297,9 @@ def contract_of(operation: Operation, edges: tuple = ()) -> OperationContract:
     # An append's triples slot holds its events' domain triples, which are not the aggregate's payload and have no boundary shape.
     event = tuple(sorted(p.name for p in operation.params if p.kind in SLOT_KINDS and p.kind is not Kind.REGISTRY_LIST)) if kind is OperationKind.APPEND else ()
     payload_name = None if kind is OperationKind.APPEND else payload_name
-    payload = PayloadContract(payload_name, "root" if "root" in params else None, tuple(edges)) if payload_name else None
+    # The payload of a new version is rooted at the version, whose own triples it holds, and not at the identity (H2.8b).
+    root_name = "newVersion" if kind is OperationKind.APPEND_VERSION else "root" if "root" in params else None
+    payload = PayloadContract(payload_name, root_name, tuple(edges), shape) if payload_name else None
     digest = None
     if "requestDigest" in params:
         target = next((a.keyed_by for a in sorted(accesses) if a.resource == ResourceKind.VERSION_ROW.value and a.keyed_by), None)
@@ -300,6 +311,7 @@ def contract_of(operation: Operation, edges: tuple = ()) -> OperationContract:
     return OperationContract(
         id=operation.id, kind=kind, version=BUILDER_VERSIONS[stem], guard_status=status, graph_naming=naming,
         parameters=parameters, accesses=tuple(sorted(accesses)), results=_result_columns(operation), payload=payload, digest=digest,
+        examines=next((p.name for p in operation.params if p.kind is Kind.REGISTRY_LIST), None) if kind is OperationKind.AUDIT else None,
     )
 
 

@@ -220,7 +220,7 @@ reaches = ["ontology/eligibility", "ontology/mork", "ontology/quantification", "
 name = "persistence"
 path = "tools/persistence"
 import-names = ["persistence"]
-reaches = ["ontology/persistence", "contracts/identity", "packages/persistence"]
+reaches = ["ontology/persistence", "contracts/identity", "packages/persistence", "docs/architecture"]
 
 [[tools]]
 name = "reference/eligibility"

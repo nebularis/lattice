@@ -296,7 +296,25 @@ def select_operations(
         ops.append(GeneratedOperation("revision-multi-txn-audit", "revision-multi-txn-audit.mustache", audit_bindings))
         ops.append(GeneratedOperation("txn-multi-revision-audit", "txn-multi-revision-audit.mustache", audit_bindings))
 
+    # H2.8b: a family with a payload operation and a boundary shape gets the query that checks a payload against the shape, which a caller in
+    # any language runs over a local copy of its payload (ADR-A123 decision 6). A shape that owns nothing gives no path, and the query then
+    # admits the root alone. A family with no shape gets none, and the compiler reports it (UnboundedPayload).
+    tree = dimensions["aggregateBoundary"].extra.get("ownershipTree")
+    if tree is not None and any(op.template_id.startswith(PAYLOAD_TEMPLATES) for op in ops):
+        owned_path = tree.owned_path()
+        check_bindings = [ParameterBinding("payloadGraph", "Iri", Iri.encode(PAYLOAD_GRAPH))]
+        if owned_path is not None:
+            check_bindings.append(ParameterBinding("ownedPath", "PropertyPath", PropertyPath.encode(owned_path)))
+        ops.append(GeneratedOperation("payload-check", "payload-check", check_bindings))
+
     return ops
+
+
+PAYLOAD_GRAPH = "urn:g:payload"
+"""The graph a caller loads its payload into for the payload check, in a local store of its own."""
+
+PAYLOAD_TEMPLATES = ("create-if-absent", "cas-replace-named-graph", "cas-replace-composite", "append-version", "unconditional-write")
+"""The templates of the operations that take a payload for the aggregate (not the events of an append, and not a value)."""
 
 
 __all__ = ["ParameterBinding", "GeneratedOperation", "select_operations", "DEFAULT_META_SHARDS"]

@@ -2,7 +2,7 @@
 
 # ADR-A123: A typed operation IR for the persistence compiler
 
-**Status:** Accepted, 2026-10-10, with the ADR-A79 addendum applied the same day, and thirteen addenda of its own (2026-10-12 to 2026-10-20)
+**Status:** Accepted, 2026-10-10, with the ADR-A79 addendum applied the same day, and fourteen addenda of its own (2026-10-12 to 2026-10-20)
 **Date:** 2026-10-10
 **Supersedes:** parts of [ADR-A79](ADR-A79-persistence-compiler-toolchain.md), listed under Decision 10. ADR-A79 stays Accepted for the rest
 **Related:** [ADR-A78](ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md),
@@ -418,3 +418,24 @@ Built in slice H2.6g (Track H plan §4.17). It adds one rule to the checker of d
    is made for the rule to have no exception and for `members`, whose bodies depend on solution variables. The evidence is in TSD-34 and the Validation Pack FMH-H2-6g.
 
 The decisions taken alone are listed in the Validation Pack FMH-H2-6g.
+
+## Addendum, 2026-10-20: the payload check, the caller check, the audit outcome and the diagnostics (accepted with the slice's plan, decisions taken alone listed in FMH-H2-8b)
+
+Built in slice H2.8b (Track H plan §4.8). It carries out decisions 5 and 6 and the addenda of 2026-10-12 and 2026-10-14, and the addendum on the subjects of an event append.
+
+1. **`payload-check` is an operation of kind `PayloadCheck`.** A family with a payload operation and a `dal:boundaryShape` gets it. It selects the subjects of a payload
+   graph, `urn:g:payload`, that `$root` does not reach by the owned path, or that are not `$root` where the shape owns nothing. A caller loads its payload into a local store, binds `$root` and runs it. It
+   is a builder with no template. The payload contract of an append of versions is rooted at the new version, whose own triples the payload holds.
+2. **The contract carries what a walk needs.** Each edge names the shape it leads to (`dal:edgeTargetShape`), and the payload contract names the boundary shape. A caller walks the owned edges
+   from the root without an engine, and the library does. Tests hold its result equal to the query's on rdflib and Oxigraph.
+3. **The caller check is in the library.** It refuses before sending, with every reason named: a missing, unknown or mistyped parameter, an `xsd:long` that is not exactly one, a caller-named graph
+   that is not the naming rule's, an empty or non-IRI `logGraphs`, a payload or an event triple outside its bound, an object of the wrong kind on a pinned or an identity edge where the caller says what a version is, and a
+   checkpoint that does not list every member.
+4. **An audit has three outcomes.** The contract declares `dal:Clean`, `dal:Failed` and `dal:NothingExamined` on every audit, and `dal:examinedParameter` where it reads the graphs a caller lists. A query returns the
+   violations only, so the caller derives the outcome from the rows and from a count of the receipts in the listed graphs.
+5. **The diagnostic model gains `INFO`.** `UnboundedPayload` is information for a named-graph family with payload operations and no boundary shape, and a warning under `compile --warn-unbounded-payload`.
+   `ParameterGuardsOff` is information for a run with the guards off and names the caller's obligation. Two compile checks join them. `PatchLogNotWritten` warns when a family declares
+   `dal:PatchLog` and no operation writes one, and `NoReceiptSharesMetaShard` refuses a `dal:NoReceipt` family that shares a meta graph with a family whose gap scan reads receipts.
+
+The decisions taken alone are listed in the Validation Pack FMH-H2-8b.
+

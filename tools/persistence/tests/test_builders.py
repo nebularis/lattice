@@ -18,6 +18,7 @@ from rdflib import RDF, XSD, Dataset, Literal as RdfLiteral, URIRef
 
 from persistence import witness
 from persistence.builders import BUILDERS, GRAPH_ROLES, Bindings, build, build_recording
+from persistence.instantiate import BUILDER_ONLY
 from persistence.compiler import CompileError, compile_to_graph
 from persistence.ir import GUARDS_OFF, SLOT_KINDS, Const, Graph, GraphBlock, GraphRole, Kind, ParamRef, Path, TermGuard, Var
 from persistence.ir_render import _Out, render
@@ -68,6 +69,8 @@ def test_h2_2_t1_the_ported_operations_are_the_templates_listed_and_every_one_is
         "key-claim-duplicate-audit", "fork-detection-audit", "gap-scan-audit", "revision-multi-txn-audit", "txn-multi-revision-audit",
         # H2.6f: the append of versions that states its members as changes, and the query that reads them.
         "append-version-delta", "append-version-delta-dataset-guard", "members",
+        # H2.8b: the query that checks a payload against the boundary shape. It has no template.
+        "payload-check",
         # H2.6d: the patch-log and no-receipt variants of the six in-place writes, each with its dataset-guard variant.
         *[
             f"{base}{tag}{guard}"
@@ -84,10 +87,10 @@ def test_h2_2_t1_the_ported_operations_are_the_templates_listed_and_every_one_is
 
 def test_h2_2_t2_every_builder_equals_its_template_on_every_fixture_binding_apart_from_the_guard():
     operations = _ported()
-    assert eq.compare_all(operations) == len(operations) >= len(PORTED)
+    assert eq.compare_all(operations) == len(eq.templated(operations)) >= len(PORTED) - len(BUILDER_ONLY)
 
 
-@pytest.mark.parametrize("stem", PORTED)
+@pytest.mark.parametrize("stem", [s for s in PORTED if s not in BUILDER_ONLY])
 def test_h2_2_t3_a_builder_reads_exactly_the_bindings_its_template_uses(stem):
     _, _, _, context = _first(stem)
     _, read = build_recording(stem, context, guards=False)
@@ -95,7 +98,7 @@ def test_h2_2_t3_a_builder_reads_exactly_the_bindings_its_template_uses(stem):
 
 
 def test_h2_2_t4_the_harness_fails_when_it_compares_fewer_operations_than_were_ported():
-    operations = _ported()
+    operations = eq.templated(_ported())
     with pytest.raises(eq.Mismatch, match="compared"):
         eq.require_compared(eq.compare_all(operations[:-1]), len(operations))
     with pytest.raises(eq.Mismatch, match="compared"):
