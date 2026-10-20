@@ -4,7 +4,7 @@
 
 **Unit ID:** `formal-methods-track-h` (phase, within the `formal-methods` epic)
 **Status:** In progress. H1 (H1.1 to H1.5, with H1.4c), the aggregate-ownership slices HO0 to HO9 and H2.0 to H2.3 are merged to `main` and signed off (H1 and HO 2026-10-10, H2.0 to H2.3 2026-10-12). H2.4a and H2.4b are built and reviewed, and every decision in their Validation Packs is taken (2026-10-13), awaiting the maintainer's merge with the triple-store record. ADR-A123 is accepted with five addenda, ADR-A124 and ADR-A125 are accepted. H2.5 and H2.6 are built (2026-10-13). Every decision of H2.5 is taken, and the maintainer approved H2.6 on 2026-10-13 with three design questions open (RQ4 to RQ6), awaiting the merge. H2.6b's event half is built, approved and merged to `main` (2026-10-14), with its six regenerated expected profiles re-approved and the change to `test_ho6_t14` countersigned. Its ADR-A123 addendum is a draft. Its patch-log half is held (H-D33).
-**Last updated:** 2026-10-20 (H2.8c built)
+**Last updated:** 2026-10-21 (H2.9 built)
 **Plan:** [formal-methods-track-h.md](../plans/formal-methods-track-h.md)
 **Sketches:** [formal-methods-track-h.md](../sketches/formal-methods-track-h.md) (main),
 [formal-methods-track-h-protocols.md](../sketches/formal-methods-track-h-protocols.md),
@@ -79,8 +79,10 @@ Built and committed 2026-10-20: H2.6c, H2.6d, H2.6e, H2.6f, H2.6g, W-65, AIR-66,
 by the maintainer. pyoxigraph 0.5.12's changes are recorded in TSD-01 and TSD-17, and the tests follow the installed version (TD-73, closed
 the same day). **Paused 2026-10-20 at the maintainer's request.** Next:
 
-1. **H2.9** ([plan §4.15](../plans/formal-methods-track-h.md#415-h29-mustache-retired-planned-2026-10-20)): Mustache retired, with D-12,
-   the goldens keyed by operation, and the template id's suffix gone.
+1. **H2.9, built 2026-10-21, awaiting the maintainer's review** ([FMH-H2-9](../validation/FMH-H2-9.md),
+   [plan §4.15](../plans/formal-methods-track-h.md#415-h29-mustache-retired-planned-2026-10-20)): Mustache retired, with D-12,
+   the goldens keyed by operation, and the template id's suffix gone. Eight decisions taken alone (D-42 to D-49), no expected profile changed,
+   the changed and removed tests listed in the Pack for countersignature.
 2. **H2.11a and H2.11b** ([plan §4.19](../plans/formal-methods-track-h.md#419-h211-the-persistence-readme-as-a-literate-specification-planned-2026-10-20),
    [sketch](../sketches/persistence-readme-literate.md)): the Persistence README in the ADR-A126 layout, graph for graph, then its
    narrative, pictures and gotchas. RL-Q1 to RL-Q7 decided 2026-10-20. Its prerequisite (RL-Q3) is met: the maintainer had
@@ -126,6 +128,7 @@ the same day). **Paused 2026-10-20 at the maintainer's request.** Next:
 | H2.6c (write disciplines) | **built 2026-10-20, awaiting the maintainer's review.** [Validation Pack](../validation/FMH-H2-6c.md), [plan §4.9](../plans/formal-methods-track-h.md#49-h26c-the-write-disciplines-planned-2026-10-20). `check:persistence` 2869 passed, 1 xfailed. `check:persistence-oxigraph` 225 passed | the review tranche below |
 | H2.6d (patch log for in-place families) | planned 2026-10-20, [plan §4.10](../plans/formal-methods-track-h.md#410-h26d-the-patch-log-for-in-place-families-planned-2026-10-20) | H2.6c's review |
 | H2.8c (edges once, faster `members`, record classes, member parts) | **signed off 2026-10-20**, with decisions, expected profiles and changed tests approved. [Validation Pack](../validation/FMH-H2-8c.md), [plan §4.18](../plans/formal-methods-track-h.md#418-h28c-the-follow-ups-of-the-h26-and-h28-reviews-planned-2026-10-20). TD-68 closed, TD-67 narrowed | the merge |
+| H2.9 (Mustache retired, D-12 (a), goldens keyed by operation) | **built 2026-10-21, awaiting the maintainer's review.** [Validation Pack](../validation/FMH-H2-9.md), [plan §4.15](../plans/formal-methods-track-h.md#415-h29-mustache-retired-planned-2026-10-20). No expected profile changed. D-42 to D-49 for ratification | the review |
 | H2.7 (vocabulary and emission) | **planned** 2026-10-14, [plan §4.7](../plans/formal-methods-track-h.md#47-h27-the-vocabulary-and-the-compilers-emission-planned-2026-10-14) | H2.7-Q1 to Q4, and H2.6b's merge |
 | H2.8 (typed payload, caller checks) | **planned** 2026-10-14, [plan §4.8](../plans/formal-methods-track-h.md#48-h28-the-typed-payload-and-the-caller-side-checks-planned-2026-10-14) | H2.8-Q1 to Q3, and H2.7's merge |
 | H3 (specification registry) | not started, outlined in the plan | H2 preferred first (smaller, more self-contained), not a hard blocker |
@@ -792,3 +795,16 @@ the same day). **Paused 2026-10-20 at the maintainer's request.** Next:
   notes, its source and our probes, run R-H). TSD-01 and TSD-17 record both, with 0.5.11's behaviour kept. `lattice_testing_oxigraph` gains
   `VERSION`, `SNAPSHOT_UPDATES` and `LEFT_GROUPED_ARITHMETIC`, held to the installed version's behaviour by `test_ox_t6`, and the three tests
   that failed read them, so they pass on 0.5.11 and on 0.5.12. Two were renamed, for countersignature. TD-73 closed. Paused.
+| D-42 | H2.9 | the tests that reached the receipt-only composite writes through `receipt_only.py` are ported to the patch-log variants with every assertion unchanged, not removed, since their subject is the sweep, the lifecycle and the guard. The helper and the snapshot witnesses are removed | FMH-H2-9 |
+| D-43 | H2.9 | `CompositeBoundarySnapshotNotBuilt` is raised for a composite boundary with `dal:SnapshotPerRevision`, optimistic concurrency and no append discipline, the configurations that selected the deleted writes | FMH-H2-9 |
+| D-44 | H2.9 | the builder goldens use one canonical context. 48 of 52 digests changed once and were re-recorded by a one-time run that skipped the changed-text refusal, after the old keying was shown to match the old record for all 52 | FMH-H2-9 |
+| D-45 | H2.9 | `fill_slots` and `slot_marker` live in `ir_render`, one pass, and `REQUEST_TIME_SLOTS` is gone | FMH-H2-9 |
+| D-46 | H2.9 | `instantiate` and the command line lose the template library override, with no deprecation | FMH-H2-9 |
+| D-47 | H2.9 | the `hygiene` message still says `templates:`, since two existing tests assert it | FMH-H2-9 |
+| D-48 | H2.9 | the injection corpus counts the operations a value yields, where it asserted `True` after a parse, and adds a literal corpus | FMH-H2-9 |
+| D-49 | H2.9 | the caller library gets its own slot-filling corpus, which reads the values back from a store | FMH-H2-9 |
+- 2026-10-21: H2.9 built autonomously ([FMH-H2-9](../validation/FMH-H2-9.md)). The templates, `render.py`, `chevron` and the equivalence harness are gone, every
+  operation is rendered from its builder, the template id has no suffix in memory, the goldens are keyed by operation, the receipt-only composite writes are
+  deleted and `dal:SnapshotPerRevision` is refused on an in-place composite family (TD-46 narrowed), S-3 reads the declared parameters, and the injection corpus
+  runs over the builders and the library's slot filling. ADR-A123 has an addendum and ADR-A79's addenda are updated. No expected profile changed. D-42 to D-49
+  and the changed and removed tests are for the maintainer. Paused.

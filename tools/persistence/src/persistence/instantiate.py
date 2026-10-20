@@ -2,9 +2,9 @@
 # NB: This module has been produced using GenAI
 
 """The ``instantiate`` stage (sketch §5.2, §5.3): reads a ``dal:CompiledProfile``
-graph and the checked-in template library, and mixes each
-``dal:GeneratedOperation``'s parameter bindings into its named template to
-produce generic, portable SPARQL text. Entirely optional, and still needs
+graph and builds each ``dal:GeneratedOperation`` from its builder
+(:mod:`persistence.builders`, named by ``dal:templateId``), with the operation's parameter
+bindings, to produce generic, portable SPARQL text. Entirely optional, and still needs
 no live backend (ADR-A79 point 1).
 
 A ``dal:ParameterBinding``'s ``dal:paramValue`` already holds fully-encoded
@@ -25,18 +25,10 @@ from pathlib import Path
 from rdflib import RDF, Graph
 
 from .builders import BUILDERS, build
+from .ir import Operation
 from .ir_render import render as render_operation
 from .namespaces import DAL
-from .render import load_template, render
 from .terms import Iri, Literal, PropertyPath
-
-BUILDER_ONLY = frozenset({"payload-check"})
-"""The builders that never had a Mustache template (H2.8b), so the equivalence harness has nothing to compare them with and a template
-directory cannot supply them."""
-
-TEMPLATE_SUFFIX = ".mustache"
-"""What `dal:templateId` no longer carries (H2.7). Until H2.9 retires the templates, the file of a template is its id and this suffix."""
-
 
 # The term type each declared dal:paramType is re-wrapped as. Wrapping by the declared type, not by the text's
 # first character, keeps a property path from being read as an IRI.
@@ -71,26 +63,28 @@ def run_choices(compiled_profile: Graph, op_node) -> tuple[bool, str]:
     return guards, graph_names
 
 
-def _render_operation(compiled_profile: Graph, op_node, template_dir: Path | None) -> tuple[str, str]:
-    """An operation's name and SPARQL text, found by its ``dal:templateId``, which is the builder's identity. An operation
-    with a builder (:mod:`persistence.builders`) is rendered from its typed value, with the guard and the graph naming
-    its contract records. Any operation under an overriding template library is rendered by Mustache as before,
-    from the file named by its id and the ``.mustache`` suffix, until H2.9 retires the templates."""
+def build_operation(compiled_profile: Graph, op_node) -> tuple[str, Operation]:
+    """An operation's name and its typed value, built by the builder its ``dal:templateId`` names, with the guard and the graph naming
+    its contract records."""
     operation_name = str(compiled_profile.value(op_node, DAL.forOperation))
-    template_node = compiled_profile.value(op_node, DAL.usesTemplate)
-    stem = str(compiled_profile.value(template_node, DAL.templateId)).removesuffix(TEMPLATE_SUFFIX)
-    context = operation_context(compiled_profile, op_node)
-    if (template_dir is None or stem in BUILDER_ONLY) and stem in BUILDERS:
-        guards, graph_names = run_choices(compiled_profile, op_node)
-        return operation_name, render_operation(build(stem, context, guards=guards, graph_names=graph_names))
-    return operation_name, render(load_template(stem + TEMPLATE_SUFFIX, template_dir), context)
+    builder = str(compiled_profile.value(compiled_profile.value(op_node, DAL.usesTemplate), DAL.templateId))
+    if builder not in BUILDERS:
+        raise ValueError(f"operation {operation_name!r} names the builder {builder!r}, which does not exist")
+    guards, graph_names = run_choices(compiled_profile, op_node)
+    return operation_name, build(builder, operation_context(compiled_profile, op_node), guards=guards, graph_names=graph_names)
+
+
+def _render_operation(compiled_profile: Graph, op_node) -> tuple[str, str]:
+    """An operation's name and SPARQL text, rendered from the operation :func:`build_operation` builds."""
+    name, operation = build_operation(compiled_profile, op_node)
+    return name, render_operation(operation)
 
 
 def _local(iri) -> str:
     return str(iri).rstrip("/#").rsplit("#", 1)[-1].rsplit("/", 1)[-1]
 
 
-def instantiate_by_target(compiled_profile: Graph, template_dir: Path | None = None) -> dict[str, dict[str, str]]:
+def instantiate_by_target(compiled_profile: Graph) -> dict[str, dict[str, str]]:
     """Returns ``{target_name: {operation_name: rendered_sparql_text}}``, one
     entry per ``dal:CompiledProfile``. A target's name is its class's local
     name, followed by its deployment's local name where it has one
@@ -105,27 +99,27 @@ def instantiate_by_target(compiled_profile: Graph, template_dir: Path | None = N
         if name in out:
             raise ValueError(f"two compiled targets share the name {name!r}")
         out[name] = dict(
-            _render_operation(compiled_profile, op_node, template_dir)
+            _render_operation(compiled_profile, op_node)
             for op_node in compiled_profile.objects(profile, DAL.generatedOperation)
         )
     return out
 
 
-def instantiate_profile(compiled_profile: Graph, template_dir: Path | None = None) -> dict[str, str]:
+def instantiate_profile(compiled_profile: Graph) -> dict[str, str]:
     """Returns ``{operation_name: rendered_sparql_text}`` for a compiled
     profile with one target. Refuses a profile with several, whose
     operations share names: use :func:`instantiate_by_target`."""
-    by_target = instantiate_by_target(compiled_profile, template_dir)
+    by_target = instantiate_by_target(compiled_profile)
     if len(by_target) > 1:
         raise ValueError(f"{len(by_target)} targets: operation names repeat per target, use instantiate_by_target")
     return next(iter(by_target.values()), {})
 
 
-def instantiate_to_directory(compiled_profile: Graph, out_dir: Path, template_dir: Path | None = None) -> list[Path]:
+def instantiate_to_directory(compiled_profile: Graph, out_dir: Path) -> list[Path]:
     """Writes ``<out_dir>/<target_name>/<operation_name>.rq`` for every
     generated operation of every target."""
     written: list[Path] = []
-    for target_name, rendered in instantiate_by_target(compiled_profile, template_dir).items():
+    for target_name, rendered in instantiate_by_target(compiled_profile).items():
         target_dir = out_dir / target_name
         target_dir.mkdir(parents=True, exist_ok=True)
         for operation_name, text in rendered.items():
@@ -135,4 +129,4 @@ def instantiate_to_directory(compiled_profile: Graph, out_dir: Path, template_di
     return written
 
 
-__all__ = ["run_choices", "instantiate_by_target", "instantiate_profile", "instantiate_to_directory"]
+__all__ = ["build_operation", "run_choices", "instantiate_by_target", "instantiate_profile", "instantiate_to_directory"]

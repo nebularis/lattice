@@ -18,7 +18,6 @@ from pathlib import Path
 import pytest
 
 import engines
-from receipt_only import receipt_only
 from rdflib import RDF, Dataset, Graph, Literal, URIRef, Variable
 from rdflib.graph import DATASET_DEFAULT_GRAPH_ID
 from rdflib.namespace import XSD
@@ -26,6 +25,7 @@ from rdflib.namespace import XSD
 from persistence import templatecheck, witness
 from persistence.compiler import compile_targets, compile_to_graph
 from persistence.instantiate import instantiate_by_target
+from persistence.ir_render import fill_slots
 
 from conftest import EXAMPLES_DIR
 
@@ -37,17 +37,19 @@ DATASET_GUARD_FIXTURE = witness.WITNESS_DIR / "template-cas-replace-composite-pr
 DATA_GRAPH = URIRef("urn:g:projects")
 ROOT = URIRef(PX + "p1")
 MEMBERS = {"m1", "m2", "plan1", "t1", "t2", "t3", "docOwned", "c1"}
-CREATE, TOMBSTONE, REPLACE = "create-if-absent-composite", "tombstone-delete-composite", "cas-replace-composite-property"
+CREATE, TOMBSTONE, REPLACE = (
+    "create-if-absent-composite-patch-log", "tombstone-delete-composite-patch-log", "cas-replace-composite-property-patch-log"
+)
 
 
-_OPERATION = {"create-if-absent-composite": "create-if-absent", "cas-replace-composite-property": "cas-replace", "tombstone-delete-composite": "tombstone-delete"}
+_OPERATION = {CREATE: "create-if-absent", REPLACE: "cas-replace", TOMBSTONE: "tombstone-delete"}
 
 
 @lru_cache(maxsize=None)
 def _text_for(template: str, guards: bool) -> str:
-    compiled, _ = compile_to_graph(receipt_only(PROJECT_EXAMPLE), guards=guards)
+    compiled, _ = compile_to_graph(witness._load_fixture(PROJECT_EXAMPLE), guards=guards)
     (by_target,) = instantiate_by_target(compiled).values()
-    return by_target[_OPERATION[template]].replace("{{{payloadTriples}}}", templatecheck._SLOT_STAND_INS["payloadTriples"])
+    return fill_slots(by_target[_OPERATION[template]], templatecheck._SLOT_STAND_INS)
 
 
 def _text(template: str) -> str:
@@ -123,15 +125,15 @@ def _revisions(ds: Dataset) -> list:
 
 def test_ho7_t1_a_composite_family_with_an_absent_row_gets_both_create_templates_and_a_tombstone():
     for fixture, suffix in ((PROJECT_EXAMPLE, ""), (DATASET_GUARD_FIXTURE, "-dataset-guard")):
-        (compiled,) = compile_targets(receipt_only(fixture))
+        (compiled,) = compile_targets(witness._load_fixture(fixture))
         templates = {o.operation: o.template_id for o in compiled.operations}
-        assert templates["create-if-absent"] == f"create-if-absent-composite{suffix}.mustache"
-        assert templates["tombstone-delete"] == f"tombstone-delete-composite{suffix}.mustache"
+        assert templates["create-if-absent"] == f"create-if-absent-composite-patch-log{suffix}"
+        assert templates["tombstone-delete"] == f"tombstone-delete-composite-patch-log{suffix}"
         assert templates["cas-replace"].startswith("cas-replace-composite-property")
 
 
 def test_ho7_t1b_a_pre_created_row_gets_no_create_and_still_a_tombstone():
-    graph = receipt_only(PROJECT_EXAMPLE)
+    graph = witness._load_fixture(PROJECT_EXAMPLE)
     graph.parse(
         data="@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> . "
              "@prefix px: <https://example.org/projects#> . px:ProjectBoundaryProfile dal:firstWrite dal:PreCreatedRow .",
@@ -226,5 +228,5 @@ def test_ho7_t7b_a_tombstone_leaves_a_copy_of_the_data_in_the_default_graph_alon
 
 @pytest.mark.parametrize("fixture", [PROJECT_EXAMPLE, DATASET_GUARD_FIXTURE])
 def test_ho7_t8_the_new_templates_pass_the_static_checks(fixture):
-    compiled, _ = compile_to_graph(receipt_only(fixture))
+    compiled, _ = compile_to_graph(witness._load_fixture(fixture))
     assert templatecheck.check_compiled(compiled) == []

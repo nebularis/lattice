@@ -171,7 +171,7 @@ def test_h2_6e_t13_each_edge_is_stated_once_by_the_profile_and_every_payload_con
     pointers = [set(compiled.objects(pc, DAL.referenceEdge)) for pc in compiled.subjects(RDF.type, DAL.PayloadContract)]
     assert pointers and all(p == stated for p in pointers)
     for node in compiled.objects(None, DAL.generatedOperation):
-        stem = str(compiled.value(compiled.value(node, DAL.usesTemplate), DAL.templateId)).removesuffix(".mustache")
+        stem = str(compiled.value(compiled.value(node, DAL.usesTemplate), DAL.templateId))
         c = contract_of(build(stem, operation_context(compiled, node)))
         assert c.payload is None or c.payload.edges == ()
 

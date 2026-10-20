@@ -3,10 +3,11 @@
 
 """The injection corpus (ADR-A79 point 5, sketch §5.3): a release gate for
 the ``instantiate`` stage, not an aspiration. Every adversarial value is
-fed through the encoders and, where it is accepted, through the full
-render pipeline against every template, and the rendered output is parsed
+fed through the encoders and, where it is accepted, through every builder
+(H2.9-Q3) and the slot filling, and the rendered output is parsed
 by an independent SPARQL parser to assert it contains exactly the one
-intended operation.
+intended operation. The library's own slot filling is run over the same
+kind of corpus in packages/persistence/python/tests/test_slot_injection.py.
 
 A corpus entry that produces a rejection (``SparqlTermError``) is a PASS:
 the encoder correctly refused a hostile value. A corpus entry that is
@@ -16,19 +17,17 @@ operation is the failure this whole module exists to prevent.
 
 from __future__ import annotations
 
-import glob
-from pathlib import Path
-
 import pytest
 from rdflib.plugins.sparql import prepareQuery, prepareUpdate
+from rdflib.plugins.sparql.algebra import translateUpdate
+from rdflib.plugins.sparql.parser import parseUpdate
 
 from rdflib import URIRef
 
-from persistence.paths import Opt, Step
-from persistence.render import load_template, render
-from persistence.terms import Integer, Iri, Literal, PropertyPath, SparqlTermError, Var
-
-TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "src" / "persistence" / "templates"
+from builder_goldens import CANONICAL_CONTEXT
+from persistence.builders import BUILDERS, build, build_recording
+from persistence.ir_render import fill_slots, render
+from persistence.terms import Integer, Iri, Literal, SparqlTermError, Var
 from request_slots import fill_request_slots
 
 # Adversarial IRI values: unbalanced braces, embedded SPARQL keywords,
@@ -75,10 +74,7 @@ class TestIriEncoder:
             return  # rejection is a pass
         # If it wasn't rejected, using it in a template must never produce
         # more than the one intended triple/operation.
-        text = render(
-            "GRAPH {{{g}}} { ?s ?p ?o }",
-            {"g": encoded},
-        )
+        text = f"GRAPH {encoded} {{ ?s ?p ?o }}"
         # a bare GroupGraphPattern isn't a full query; wrap it minimally
         query = f"SELECT * WHERE {{ {text} }}"
         parsed = prepareQuery(query)
@@ -146,71 +142,67 @@ class TestIntegerEncoder:
         assert Integer.encode(0) == "0"
 
 
-class TestFullTemplateInjectionCorpus:
-    """The full corpus, run against every checked-in template with a
-    representative valid context, substituting one adversarial value at a
-    time into whichever slot each template actually uses."""
+def _operations(text: str) -> int | None:
+    """How many operations the text parses as, or None when it does not parse. A query is one."""
+    try:
+        return len(translateUpdate(parseUpdate(text)).algebra)
+    except Exception:
+        try:
+            prepareQuery(text)
+            return 1
+        except Exception:
+            return None
 
-    @pytest.mark.parametrize("template_path", sorted(p.name for p in TEMPLATE_DIR.glob("*.mustache")))
+
+def _built(key: str, context: dict) -> str:
+    return fill_request_slots(render(build(key, context)))
+
+
+class TestBuilderInjectionCorpus:
+    """The full corpus, run against every builder with the canonical context, substituting one adversarial value at a time into each
+    binding the builder reads (H2.9-Q3). A value the encoder refuses is a pass. One it accepts must leave the text parsing as exactly the
+    operations the unmodified builder gives, or not parse at all. What must never happen is a successful parse with more operations."""
+
+    @pytest.mark.parametrize("key", sorted(BUILDERS))
+    def test_the_unmodified_builder_is_one_operation(self, key):
+        assert _operations(_built(key, dict(CANONICAL_CONTEXT))) == 1
+
+    @pytest.mark.parametrize("key", sorted(BUILDERS))
     @pytest.mark.parametrize("adversarial", ADVERSARIAL_IRIS)
-    def test_template_survives_adversarial_iri_in_every_iri_slot(self, template_path, adversarial):
-        text = load_template(template_path)
-        base_ctx = _valid_context_for(template_path)
-        for slot in list(base_ctx.keys()):
-            if not isinstance(base_ctx[slot], type(Iri.encode("urn:x"))):
+    def test_builder_survives_adversarial_iri_in_every_iri_binding(self, key, adversarial):
+        _, read = build_recording(key, dict(CANONICAL_CONTEXT))
+        for name in sorted(read):
+            if not isinstance(CANONICAL_CONTEXT[name], Iri):
                 continue
-            ctx = dict(base_ctx)
             try:
-                ctx[slot] = Iri.encode(adversarial)
+                encoded = Iri.encode(adversarial)
             except SparqlTermError:
                 continue  # rejection is a pass, nothing to render
-            rendered = render(text, ctx)
-            testable = fill_request_slots(rendered)
-            # Parsing must either fail outright (safe: the hostile value
-            # broke syntax in a way that produces no operation at all) or
-            # succeed as exactly one update/query. What must never happen
-            # is a successful parse that yields a *different* number of
-            # top-level operations than the unmodified template.
-            _assert_single_operation_or_parse_failure(testable)
+            found = _operations(_built(key, {**CANONICAL_CONTEXT, name: encoded}))
+            assert found in (None, 1), (key, name, found)
+
+    @pytest.mark.parametrize("key", sorted(BUILDERS))
+    @pytest.mark.parametrize("adversarial", ADVERSARIAL_LITERALS)
+    def test_builder_survives_adversarial_literal_in_every_literal_binding(self, key, adversarial):
+        _, read = build_recording(key, dict(CANONICAL_CONTEXT))
+        for name in sorted(read):
+            if not isinstance(CANONICAL_CONTEXT[name], Literal):
+                continue
+            found = _operations(_built(key, {**CANONICAL_CONTEXT, name: Literal.encode(adversarial)}))
+            assert found in (None, 1), (key, name, found)
+
+    @pytest.mark.parametrize("adversarial", ADVERSARIAL_IRIS + ADVERSARIAL_LITERALS)
+    def test_a_value_that_holds_a_slot_marker_is_not_filled_again(self, adversarial):
+        """Slot filling is one pass (H2.9-Q1). A filled value that spells another slot's marker stays as text."""
+        marker = "{{{eventRows}}}"
+        text = fill_slots("INSERT DATA { GRAPH <urn:g> { {{{payloadTriples}}} } } # {{{eventRows}}}", {"payloadTriples": marker + adversarial, "eventRows": "ROWS"})
+        assert text.count(marker) == 1 and text.endswith("# ROWS")
 
 
-def _valid_context_for(template_name: str) -> dict:
-    common = {
-        "shard": 17,
-        "logGraphPrefix": Iri.encode("urn:g:txlog/"),
-        "txnGraph": Iri.encode("urn:g:txn"),
-        "keysGraph": Iri.encode("urn:g:keys"),
-        "retentionGraph": Iri.encode("urn:g:retention"),
-        "pinnedGraph": Iri.encode("urn:g:txlog/pinned"),
-        "eventGraphPrefix": Iri.encode("urn:g:events/order/"),
-        "datasetGraph": Iri.encode("urn:g:dataset"),
-        "datasetNode": Iri.encode("urn:g:dataset"),
-        "metaGraphPrefix": Iri.encode("urn:g:meta/17"),
-        "graphPrefix": Literal.encode("urn:g:orders/"),
-        "graphSuffix": Literal.encode("/data"),
-        "guardProperty": Iri.encode("https://example.org/lending#status"),
-        "ownedPath": PropertyPath.encode(Opt(Step(URIRef("https://example.org/lending#lineItem")))),
-        "dataGraph": Iri.encode("urn:g:orders"),
-        "constraintId": Literal.encode("example-constraint"),
-    }
-    return common
-
-
-def _assert_single_operation_or_parse_failure(text: str) -> None:
-    try:
-        if any(k in text for k in ["INSERT", "DELETE"]):
-            prepareUpdate(text)
-        else:
-            prepareQuery(text)
-    except Exception:
-        return  # a parse failure is a safe outcome: nothing was injected
-    # It parsed. Assert there is exactly one DELETE/INSERT/SELECT/ASK/
-    # CONSTRUCT keyword sequence at the top level by checking the parser
-    # did not need to recover from embedded garbage: prepareUpdate/
-    # prepareQuery would already have raised on trailing content (verified
-    # empirically throughout this module's development), so reaching here
-    # means the whole string was consumed as a single operation.
-    assert True
+def test_h2_9_t5_an_unfilled_slot_is_left_as_a_marker_and_the_query_does_not_parse():
+    text = render(build("cas-replace-named-graph", dict(CANONICAL_CONTEXT)))
+    assert "{{{payloadTriples}}}" in text and _operations(text) is None
+    assert _operations(fill_request_slots(text)) == 1
 
 
 # ---- H2.1: a backslash before u or U ----------------------------------------------------------------------

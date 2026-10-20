@@ -22,7 +22,6 @@ from pathlib import Path
 import pytest
 
 import engines
-from receipt_only import receipt_only
 from rdflib import BNode, Dataset, Graph, Literal, URIRef, Variable
 from rdflib.namespace import RDF, XSD
 
@@ -39,7 +38,7 @@ PX = "https://example.org/projects#"
 PROJECT_EXAMPLE = EXAMPLES_DIR / "composite-project-ownership.ttl"
 PROJECT_DATA = Path(__file__).resolve().parent / "fixtures" / "project-data.ttl"
 ORDER_EXAMPLE = EXAMPLES_DIR / "composite-property-boundary-shacl.ttl"
-TEMPLATE = "cas-replace-composite-property"
+TEMPLATE = "cas-replace-composite-property-patch-log"
 ROOT = URIRef(PX + "p1")
 MEMBERS = {"m1", "m2", "plan1", "t1", "t2", "t3", "docOwned", "c1"}
 OUTSIDE = {"acme", "alice", "docShared", "InProgress", "Done", "TaskStatuses", "report1", "p2", "m9"}
@@ -67,7 +66,7 @@ def _refusal(graph: Graph):
 
 @lru_cache(maxsize=None)
 def _project_text_for(guards: bool) -> str:
-    compiled, _ = compile_to_graph(receipt_only(PROJECT_EXAMPLE), guards=guards)
+    compiled, _ = compile_to_graph(witness._load_fixture(PROJECT_EXAMPLE), guards=guards)
     return next(o for o in templatecheck.operations(compiled) if o.template == TEMPLATE).text
 
 
@@ -139,7 +138,7 @@ def test_ho5_t0_the_reference_fixture_has_the_sketch_delete_set():
 
 def test_ho5_t1a_the_shipped_composite_example_binds_its_owned_path_and_data_graph():
     """Rewrites H1.4a-T1, which asserted the single bound property."""
-    compiled = _compile(receipt_only(ORDER_EXAMPLE))
+    compiled = _compile(witness._load_fixture(ORDER_EXAMPLE))
     assert _binding(compiled, "ownedPath") == f"(<{EX}lineItem>)?"
     assert _binding(compiled, "dataGraph") == "<urn:g:orders>"
     assert all(b.name != "compositeProperty" for o in compiled.operations for b in o.bindings)
@@ -148,7 +147,7 @@ def test_ho5_t1a_the_shipped_composite_example_binds_its_owned_path_and_data_gra
 @pytest.mark.parametrize("seed", range(6))
 def test_ho5_t7_the_owned_path_does_not_depend_on_the_order_the_shape_was_written_in(seed):
     """Rewrites H1.4a-T7, which compared the closures of every declaration order."""
-    base = receipt_only(PROJECT_EXAMPLE)
+    base = witness._load_fixture(PROJECT_EXAMPLE)
     triples = sorted(base, key=str)
     random.Random(seed).shuffle(triples)
     shuffled = Graph()
@@ -163,7 +162,7 @@ def test_ho5_t7_the_owned_path_does_not_depend_on_the_order_the_shape_was_writte
 
 def test_ho5_t2a_a_value_property_declared_first_is_not_followed():
     """Rewrites H1.4a-T2, which asserted that a plain property that sorts first is not the bound property."""
-    graph = receipt_only(ORDER_EXAMPLE)
+    graph = witness._load_fixture(ORDER_EXAMPLE)
     shape = URIRef(EX + "OrderAggregateShape")
     audit = BNode()
     graph.add((shape, URIRef(SH + "property"), audit))
@@ -177,7 +176,7 @@ def test_ho5_t1_a_replace_removes_exactly_the_delete_set_and_writes_the_payload(
     data = _project_data()
     payload = {t for t in _delete_set(data) if t[1] != _px("status") or t[0] != _px("t3")}
     payload.add((_px("t3"), _px("status"), _px("InProgress")))
-    graph = receipt_only(PROJECT_EXAMPLE)
+    graph = witness._load_fixture(PROJECT_EXAMPLE)
     ds = _replace(graph, _project_text(), data, "urn:g:projects", payload=payload)
     expected = (set(data) - _delete_set(data)) | payload
     assert _graph_triples(ds, "urn:g:projects") == expected
@@ -188,7 +187,7 @@ def test_ho5_t1_a_replace_removes_exactly_the_delete_set_and_writes_the_payload(
 @engines.each_engine_and_guards
 def test_ho5_t2_an_empty_payload_leaves_no_triple_of_the_project_or_its_members():
     data = _project_data()
-    ds = _replace(receipt_only(PROJECT_EXAMPLE), _project_text(), data, "urn:g:projects")
+    ds = _replace(witness._load_fixture(PROJECT_EXAMPLE), _project_text(), data, "urn:g:projects")
     left = _graph_triples(ds, "urn:g:projects")
     gone_subjects = {ROOT, *(_px(m) for m in MEMBERS)}
     assert not any(s in gone_subjects for s, _, _ in left)
@@ -198,7 +197,7 @@ def test_ho5_t2_an_empty_payload_leaves_no_triple_of_the_project_or_its_members(
 @engines.each_engine_and_guards
 def test_ho5_t3_a_reference_given_sh_node_is_not_swept():
     """Review F1. A validation shape puts sh:node on a reference, which the old walk read as ownership."""
-    graph = receipt_only(ORDER_EXAMPLE)
+    graph = witness._load_fixture(ORDER_EXAMPLE)
     shape = URIRef(EX + "OrderAggregateShape")
     placed = BNode()
     graph.add((shape, URIRef(SH + "property"), placed))
@@ -227,7 +226,7 @@ def test_ho5_t4_a_comment_linked_by_an_inverse_edge_goes_with_the_project():
     """Review F4. The comment points at its task, and the path reaches it with an inverse step."""
     data = _project_data()
     payload = {t for t in _delete_set(data) if t[0] != _px("c1")}
-    ds = _replace(receipt_only(PROJECT_EXAMPLE), _project_text(), data, "urn:g:projects", payload=payload)
+    ds = _replace(witness._load_fixture(PROJECT_EXAMPLE), _project_text(), data, "urn:g:projects", payload=payload)
     left = _graph_triples(ds, "urn:g:projects")
     assert not any(s == _px("c1") for s, _, _ in left)
     assert (_px("c1"), _px("onTask"), _px("t1")) not in left
@@ -236,7 +235,7 @@ def test_ho5_t4_a_comment_linked_by_an_inverse_edge_goes_with_the_project():
 @engines.each_engine_and_guards
 def test_ho5_t5_the_shipped_composite_example_leaves_nothing_behind():
     """Rewrites H1.4a-T10."""
-    graph = receipt_only(ORDER_EXAMPLE)
+    graph = witness._load_fixture(ORDER_EXAMPLE)
     order = URIRef("urn:order:1")
     data = Graph()
     for triple in (
@@ -251,7 +250,7 @@ def test_ho5_t5_the_shipped_composite_example_leaves_nothing_behind():
 @engines.each_engine_and_guards
 def test_ho5_t6_two_owned_edges_from_the_root_both_sweep():
     """Rewrites H1.4a-T11, which showed the other member left behind and is now refused no longer."""
-    graph = receipt_only(ORDER_EXAMPLE)
+    graph = witness._load_fixture(ORDER_EXAMPLE)
     shape = URIRef(EX + "OrderAggregateShape")
     payment = BNode()
     graph.add((shape, URIRef(SH + "property"), payment))
@@ -276,7 +275,7 @@ def test_ho5_t6_two_owned_edges_from_the_root_both_sweep():
 
 
 def _project_with(extra_ttl: str, removing: tuple = ()) -> Graph:
-    graph = receipt_only(PROJECT_EXAMPLE)
+    graph = witness._load_fixture(PROJECT_EXAMPLE)
     for triple in removing:
         graph.remove(triple)
     graph.parse(
@@ -309,7 +308,7 @@ def test_ho5_t9_a_member_class_at_depth_three_that_declares_its_own_boundary_is_
 
 
 def test_ho5_t10a_a_composite_profile_without_a_data_graph_is_refused():
-    graph = receipt_only(PROJECT_EXAMPLE)
+    graph = witness._load_fixture(PROJECT_EXAMPLE)
     graph.remove((URIRef(PX + "ProjectBoundaryProfile"), URIRef(DAL + "dataGraph"), None))
     assert _refusal(graph).kind == "MissingDataGraph"
 
@@ -317,7 +316,7 @@ def test_ho5_t10a_a_composite_profile_without_a_data_graph_is_refused():
 @engines.each_engine_and_guards
 def test_ho5_t10_the_default_graph_copy_of_the_data_is_untouched_by_a_replace():
     data = _project_data()
-    ds = _replace(receipt_only(PROJECT_EXAMPLE), _project_text(), data, "urn:g:projects", copy_to_default=True)
+    ds = _replace(witness._load_fixture(PROJECT_EXAMPLE), _project_text(), data, "urn:g:projects", copy_to_default=True)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", DeprecationWarning)
         assert set(ds.default_context) == set(data)
@@ -326,7 +325,7 @@ def test_ho5_t10_the_default_graph_copy_of_the_data_is_untouched_by_a_replace():
 
 def test_ho5_t11_a_shape_that_owns_no_edge_is_refused():
     """Rewrites H1.4a-T6, which asserted that a shape with only plain properties compiled."""
-    graph = receipt_only(ORDER_EXAMPLE)
+    graph = witness._load_fixture(ORDER_EXAMPLE)
     for ps in list(graph.objects(URIRef(EX + "OrderAggregateShape"), URIRef(SH + "property"))):
         graph.remove((URIRef(EX + "OrderAggregateShape"), URIRef(SH + "property"), ps))
     audit = BNode()

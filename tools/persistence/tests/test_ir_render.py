@@ -140,7 +140,7 @@ def test_h2_1_t11_the_forms_cover_every_function_and_aggregate():
 # ---- the shape of the text ------------------------------------------------------------------------
 
 
-def test_h2_1_t12_slots_render_as_mustache_tags_and_variables_as_dollar_names():
+def test_h2_1_t12_slots_render_as_plain_text_markers_and_variables_as_dollar_names():
     text = render(valid())
     assert "{{{payloadTriples}}}" in text
     assert "$root" in text and "?root" not in text

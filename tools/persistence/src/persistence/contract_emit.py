@@ -23,7 +23,7 @@ from rdflib.namespace import XSD
 
 from .builders import BUILDERS, build
 from .contract import HAND_DECLARED, OperationContract, OperationKind, contract_of
-from .instantiate import TEMPLATE_SUFFIX, operation_context
+from .instantiate import operation_context
 from .namespaces import DAL
 
 
@@ -67,7 +67,7 @@ def column_name(kind: str) -> str:
 def contract_for(compiled: Graph, node, *, guards: bool, graph_names: str, shape: URIRef | None = None) -> OperationContract | None:
     """The contract of the operation ``node`` of ``compiled``, from its builder, or from the hand declarations of operations that have
     none. ``None`` when there is neither."""
-    stem = str(compiled.value(compiled.value(node, DAL.usesTemplate), DAL.templateId)).removesuffix(TEMPLATE_SUFFIX)
+    stem = str(compiled.value(compiled.value(node, DAL.usesTemplate), DAL.templateId))
     if stem in BUILDERS:
         return contract_of(build(stem, operation_context(compiled, node), guards=guards, graph_names=graph_names), None if shape is None else str(shape))
     return HAND_DECLARED.get(stem)
@@ -167,4 +167,4 @@ def add_edge_facts(out: Graph, node, edge) -> None:
     out.add((node, DAL.referenceMode, DAL[edge.reference_mode]))
 
 
-__all__ = ["TEMPLATE_SUFFIX", "PROFILE_PART", "mint", "mint_edge", "is_declaration", "kind_name", "column_name", "contract_for", "emit_contract", "add_edge_facts"]
+__all__ = ["PROFILE_PART", "mint", "mint_edge", "is_declaration", "kind_name", "column_name", "contract_for", "emit_contract", "add_edge_facts"]

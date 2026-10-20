@@ -126,6 +126,9 @@ for _stem, _kind in tuple(_STEM_KIND.items()):
     if _stem.startswith(("create-if-absent-", "cas-replace-named", "cas-replace-composite", "tombstone-delete-")):
         _STEM_KIND[_stem + "-patch-log"] = _kind
         _STEM_KIND[_stem + "-no-receipt"] = _kind
+# A composite family written in place has no receipt-only write (H2.9, D-12 (a)), so only its two variants are builders.
+for _stem in ("create-if-absent-composite", "cas-replace-composite-property", "tombstone-delete-composite"):
+    del _STEM_KIND[_stem]
 OPERATION_KINDS = _STEM_KIND
 DATASET_GUARD_SUFFIX = "-dataset-guard"
 
@@ -137,8 +140,8 @@ def stem_of(operation_id: str) -> str:
 
 _NOT_EXISTS_NAMES_ITS_GRAPH = (
     "append-version", "append-version-delta", "members",
-    *(f"{base}{tag}" for base in ("cas-replace-composite-property", "cas-replace-named-graph", "tombstone-delete-composite", "tombstone-delete-named-graph")
-      for tag in ("", "-no-receipt", "-patch-log")),
+    *(f"{base}{tag}" for base in ("cas-replace-named-graph", "tombstone-delete-named-graph") for tag in ("", "-no-receipt", "-patch-log")),
+    *(f"{base}{tag}" for base in ("cas-replace-composite-property", "tombstone-delete-composite") for tag in ("-no-receipt", "-patch-log")),
 )
 """The builders whose `NOT EXISTS` inside a `GRAPH` block gained a `GRAPH` of its own in H2.6g (TSD-34). Each is one version above where it was."""
 

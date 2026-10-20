@@ -543,29 +543,3 @@ def test_h2_5_t46_now_never_binds_the_name_of_a_declared_parameter():
     with pytest.raises(IrError) as caught:
         check(clash)
     assert caught.value.rule == "NameCollision"
-
-
-# ---- the harness catches a changed query -----------------------------------------------------------------------------------
-
-
-@pytest.mark.parametrize("stem, old, new", [
-    ("key-claim-duplicate-audit", "HAVING (COUNT(?owner) > 1)", "HAVING (COUNT(?owner) >= 1)"),
-    ("fork-detection-audit", "COUNT(DISTINCT ?t) AS ?n", "COUNT(?t) AS ?n"),
-    ("gap-scan-audit", "FILTER(", "FILTER(!"),
-    ("gap-scan-audit", "(?S - ?L) + 1", "?S - (?L + 1)"),
-    ("key-claim-merge-rewrite", "MIN(STR(?owner))", "MAX(STR(?owner))"),
-    ("key-claim-quarantine", "SELECT ?claim", "SELECT ?claim ?owner"),
-    ("key-claim-merge-rewrite", "GROUP BY ?claim", "GROUP BY ?claim ?owner"),
-])
-def test_h2_5_t47_the_harness_fails_when_a_query_or_a_sub_select_is_changed(stem, old, new):
-    import equivalence as eq
-    from test_builders import _first
-
-    _, _, _, context = _first(stem)
-    template = eq.load_template(stem + ".mustache")
-    mustache = eq.fill_request_slots(eq.mustache_render(template, context))
-    built = eq.fill_request_slots(render(build(stem, context, guards=False)))
-    assert old in built, (old, built)
-    eq.compare(mustache, built, "unchanged")
-    with pytest.raises(eq.Mismatch):
-        eq.compare(mustache, built.replace(old, new, 1), "changed")

@@ -60,7 +60,7 @@ class Kind(Enum):
 
 
 SLOT_KINDS = frozenset({Kind.PAYLOAD, Kind.REGISTRY_LIST, Kind.ROWS})
-"""Kinds that are Mustache-style request-time slots and not SPARQL variables. A set of triples, of graph
+"""Kinds that are request-time slots, marked ``{{{name}}}`` in the text, and not SPARQL variables. A set of triples, of graph
 IRIs or of ``VALUES`` rows is not one RDF term, so the caller fills the slot with text before sending."""
 
 
@@ -207,7 +207,7 @@ class Triple:
 @dataclass(frozen=True)
 class PayloadSlot:
     """Where the caller's payload triples go. It names a declared parameter of kind ``Payload``, and is
-    rendered as the Mustache tag ``{{{name}}}``, so an unrendered slot is a syntax error and fails closed."""
+    rendered as the plain-text marker ``{{{name}}}``, so an unfilled slot is a syntax error and fails closed."""
 
     param: str
 
@@ -222,7 +222,7 @@ class RegistrySlot:
 @dataclass(frozen=True)
 class RowsSlot:
     """Where the caller's rows of a multi-variable ``VALUES`` block go, such as the events of an append. It names a declared
-    parameter of kind ``Rows`` and is rendered as the Mustache tag ``{{{name}}}``."""
+    parameter of kind ``Rows`` and is rendered as the plain-text marker ``{{{name}}}``."""
 
     param: str
 

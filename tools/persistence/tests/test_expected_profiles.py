@@ -88,7 +88,10 @@ def test_h2_7_t2_no_operation_is_declared_by_hand_since_every_operation_has_a_bu
     assert "cas-replace" in ops
 
 
-@pytest.mark.parametrize("stem", ["create-if-absent-composite", "cas-replace-composite-property", "tombstone-delete-composite"])
+@pytest.mark.parametrize("stem", [
+    f"{base}{variant}" for base in ("create-if-absent-composite", "cas-replace-composite-property", "tombstone-delete-composite")
+    for variant in ("-patch-log", "-no-receipt")
+])
 def test_h2_6_t6_a_composite_dataset_guard_variant_differs_from_its_base_by_the_dataset_read_alone(stem):
     """The expected profiles have no composite dataset-guard variant, so this is the claim that makes the omission acceptable."""
     _, _, _, context = _first(stem)

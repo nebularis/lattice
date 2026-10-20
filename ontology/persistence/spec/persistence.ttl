@@ -364,11 +364,11 @@ dal:verdict a owl:DatatypeProperty ;
 #################################################################
 
 dal:Template a owl:Class ;
-    rdfs:comment "The builder that renders a generated operation, shared across every target resolving to the same dimension combination. Its dal:templateId is the builder's identity, the operation id without a suffix. Until H2.9 retires Mustache, a template library file of that name and the suffix .mustache is what an overriding library replaces." .
+    rdfs:comment "The builder that renders a generated operation, shared across every target resolving to the same dimension combination. Its dal:templateId is the builder's identity, the operation id without a suffix." .
 
 dal:templateId a owl:DatatypeProperty ;
     rdfs:domain dal:Template ; rdfs:range xsd:string ;
-    rdfs:comment "The builder's identity, for example cas-replace-composite-property-dataset-guard, with no .mustache suffix. instantiate finds the builder by it." .
+    rdfs:comment "The builder's identity, for example cas-replace-named-graph-dataset-guard. instantiate finds the builder by it." .
 
 dal:GeneratedOperation a owl:Class ;
     rdfs:comment "One operation (create, cas-replace, tombstone, ...) selected for a target: which template, which parameters to mix into it, and its contract (§10a)." .

@@ -311,13 +311,13 @@ def test_h2_6f_t15_a_delta_family_resolves_its_declarations_and_selects_the_delt
     assert str(ct.dimensions["membershipEncoding"].value).endswith("DeltaMembership")
     assert ct.dimensions["checkpointEvery"].value.toPython() == 4
     operations = {o.operation: o for o in ct.operations}
-    assert operations["append-version"].template_id == "append-version-delta-dataset-guard.mustache"
-    assert operations["members"].template_id == "members.mustache"
+    assert operations["append-version"].template_id == "append-version-delta-dataset-guard"
+    assert operations["members"].template_id == "members"
     assert [b.name for b in operations["members"].bindings] == ["dataGraph"]
     assert [o.operation for o in ct.operations if o.operation in ("bootstrap-version-row", "append-version", "members")] == ["bootstrap-version-row", "append-version", "members"]
     row_guard = _target(WITNESSES / "write-discipline-delta-membership-row-guard.ttl")
-    assert {o.operation: o.template_id for o in row_guard.operations}["append-version"] == "append-version-delta.mustache"
-    assert {o.operation: o.template_id for o in _target(FULL).operations}["append-version"] == "append-version-dataset-guard.mustache"
+    assert {o.operation: o.template_id for o in row_guard.operations}["append-version"] == "append-version-delta"
+    assert {o.operation: o.template_id for o in _target(FULL).operations}["append-version"] == "append-version-dataset-guard"
 
 
 def test_h2_6f_t16_the_profile_records_both_declarations_with_the_interval_as_a_literal():

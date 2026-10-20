@@ -26,7 +26,6 @@ from .capability import (
 from .builders import _check_graph_names
 from .contract import edge_contracts
 from .contract_emit import add_edge_facts, contract_for, emit_contract, mint_edge
-from .instantiate import TEMPLATE_SUFFIX
 from .model import DIMENSIONS, Diagnostic, ResolvedDimension
 from .namespaces import DAL
 from .operations import GeneratedOperation, default_graph_template, select_operations
@@ -245,7 +244,7 @@ def emit_compiled_profile(out: Graph, compiled: CompiledTarget, guards: bool = T
         out.add((op_node, DAL.forOperation, RdfLiteral(op.operation)))
         template_node = BNode(f"{op_stem}-template")
         out.add((template_node, RDF.type, DAL.Template))
-        out.add((template_node, DAL.templateId, RdfLiteral(op.template_id.removesuffix(TEMPLATE_SUFFIX))))
+        out.add((template_node, DAL.templateId, RdfLiteral(op.template_id)))
         out.add((op_node, DAL.usesTemplate, template_node))
         for binding in op.bindings:
             binding_node = BNode(f"{op_stem}-binding-{binding.name}")

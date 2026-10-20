@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: MPL-2.0
 # NB: This module has been produced using GenAI
 
-"""H2.2: the first builders, held to their Mustache templates by the equivalence harness of the typed IR sketch
-§7.1, and the required-parameter guard run on rdflib (TD-34). Validation Pack: docs/developer/validation/FMH-H2-2.md.
-Test IDs are H2.2-Tn."""
+"""H2.2: the builders and the required-parameter guard run on rdflib (TD-34). Validation Pack: docs/developer/validation/FMH-H2-2.md.
+Test IDs are H2.2-Tn. The equivalence harness that held the builders to their Mustache templates (typed IR sketch §7.1, tests t2 to t5) was
+removed with the templates in H2.9 (FMH-H2-9)."""
 
 from __future__ import annotations
 
@@ -18,13 +18,11 @@ from rdflib import RDF, XSD, Dataset, Literal as RdfLiteral, URIRef
 
 from persistence import witness
 from persistence.builders import BUILDERS, GRAPH_ROLES, Bindings, build, build_recording
-from persistence.instantiate import BUILDER_ONLY
 from persistence.compiler import CompileError, compile_to_graph
 from persistence.ir import GUARDS_OFF, SLOT_KINDS, Const, Graph, GraphBlock, GraphRole, Kind, ParamRef, Path, TermGuard, Var
 from persistence.ir_render import _Out, render
 from persistence.terms import Iri, Literal, PropertyPath
 
-import equivalence as eq
 from request_slots import fill_request_slots
 
 PORTED = sorted(BUILDERS)
@@ -42,36 +40,49 @@ def _corpus() -> tuple:
     return tuple(out)
 
 
+def ported_operations(corpus) -> list:
+    """(fixture, operation name, builder, context) for every generated operation of the compiled profiles in ``corpus``, a sequence of
+    (fixture name, compiled profile)."""
+    from persistence.instantiate import operation_context
+    from persistence.namespaces import DAL
+
+    out = []
+    for fixture, compiled in corpus:
+        for profile in sorted(compiled.subjects(RDF.type, DAL.CompiledProfile), key=str):
+            for node in sorted(compiled.objects(profile, DAL.generatedOperation), key=str):
+                stem = str(compiled.value(compiled.value(node, DAL.usesTemplate), DAL.templateId))
+                out.append((fixture, str(compiled.value(node, DAL.forOperation)), stem, operation_context(compiled, node)))
+    return out
+
+
 @functools.lru_cache(maxsize=1)
 def _ported() -> tuple:
-    return tuple(eq.ported_operations(_corpus()))
+    return tuple(ported_operations(_corpus()))
 
 
 def _first(stem: str):
     return next(op for op in _ported() if op[2] == stem)
 
 
-# ---- the harness ----------------------------------------------------------------------------------------
+# ---- the builders ----------------------------------------------------------------------------------------
 
 
-def test_h2_2_t1_the_ported_operations_are_the_templates_listed_and_every_one_is_generated_by_a_fixture():
+def test_h2_2_t1_the_builders_are_the_operations_listed_and_every_one_is_generated_by_a_fixture():
     assert PORTED == sorted([
         "append-event", "append-event-dataset-guard", "append-version", "append-version-dataset-guard", "bootstrap-version-row", "bootstrap-version-row-dataset-guard",
-        "cas-replace-composite-property", "cas-replace-composite-property-dataset-guard",
         "cas-replace-named-graph", "cas-replace-named-graph-dataset-guard",
-        "create-if-absent-composite", "create-if-absent-composite-dataset-guard",
         "create-if-absent-named-graph", "create-if-absent-named-graph-dataset-guard",
-        "tombstone-delete-composite", "tombstone-delete-composite-dataset-guard",
         "tombstone-delete-named-graph", "tombstone-delete-named-graph-dataset-guard", "unconditional-write",
-        # H2.5: the key claims and the audits. H2.7 ported the last template, cas-replace-value-guard (TD-43).
+        # H2.5: the key claims and the audits. H2.7 gave the last operation without a builder, cas-replace-value-guard, one (TD-43).
         "cas-replace-value-guard",
         "key-claim-write", "key-claim-write-dual", "key-claim-retire", "key-claim-quarantine", "key-claim-merge-rewrite",
         "key-claim-duplicate-audit", "fork-detection-audit", "gap-scan-audit", "revision-multi-txn-audit", "txn-multi-revision-audit",
         # H2.6f: the append of versions that states its members as changes, and the query that reads them.
         "append-version-delta", "append-version-delta-dataset-guard", "members",
-        # H2.8b: the query that checks a payload against the boundary shape. It has no template.
+        # H2.8b: the query that checks a payload against the boundary shape.
         "payload-check",
-        # H2.6d: the patch-log and no-receipt variants of the six in-place writes, each with its dataset-guard variant.
+        # H2.6d: the patch-log and no-receipt variants of the six in-place writes, each with its dataset-guard variant. The receipt-only
+        # create, replace and tombstone of a composite family were deleted in H2.9 (D-12 (a)), so the named-graph family keeps its plain three.
         *[
             f"{base}{tag}{guard}"
             for base in (
@@ -83,71 +94,6 @@ def test_h2_2_t1_the_ported_operations_are_the_templates_listed_and_every_one_is
         ],
     ])
     assert {stem for _, _, stem, _ in _ported()} == set(PORTED)
-
-
-def test_h2_2_t2_every_builder_equals_its_template_on_every_fixture_binding_apart_from_the_guard():
-    operations = _ported()
-    assert eq.compare_all(operations) == len(eq.templated(operations)) >= len(PORTED) - len(BUILDER_ONLY)
-
-
-@pytest.mark.parametrize("stem", [s for s in PORTED if s not in BUILDER_ONLY])
-def test_h2_2_t3_a_builder_reads_exactly_the_bindings_its_template_uses(stem):
-    _, _, _, context = _first(stem)
-    _, read = build_recording(stem, context, guards=False)
-    assert read == eq.template_tags(eq.load_template(stem + ".mustache"))
-
-
-def test_h2_2_t4_the_harness_fails_when_it_compares_fewer_operations_than_were_ported():
-    operations = eq.templated(_ported())
-    with pytest.raises(eq.Mismatch, match="compared"):
-        eq.require_compared(eq.compare_all(operations[:-1]), len(operations))
-    with pytest.raises(eq.Mismatch, match="compared"):
-        eq.require_compared(eq.compare_all([]), len(operations))
-    eq.require_compared(eq.compare_all(operations), len(operations))
-
-
-def _mutated_text(stem: str, mutate) -> tuple[str, str]:
-    _, _, _, context = _first(stem)
-    template = eq.load_template(stem + ".mustache")
-    mustache = fill_request_slots(eq.mustache_render(template, context))
-    operation, _ = build_recording(stem, context, guards=False)
-    return mustache, fill_request_slots(render(mutate(operation)))
-
-
-def _drop_a_triple(op):
-    block = op.insert[0]
-    return dataclasses.replace(op, insert=(dataclasses.replace(block, elements=block.elements[1:]), *op.insert[1:]))
-
-
-def _move_to_another_graph(op):
-    block = op.insert[0]
-    other = dataclasses.replace(block.graph, term=Const(Iri.encode("urn:g:elsewhere")))
-    return dataclasses.replace(op, insert=(dataclasses.replace(block, graph=other), *op.insert[1:]))
-
-
-def _rename(node, old: str, new: str):
-    if isinstance(node, Var):
-        return dataclasses.replace(node, name=new) if node.name == old else node
-    if dataclasses.is_dataclass(node) and not isinstance(node, type):
-        return dataclasses.replace(node, **{f.name: _rename(getattr(node, f.name), old, new) for f in dataclasses.fields(node)})
-    if isinstance(node, tuple):
-        return tuple(_rename(i, old, new) for i in node)
-    return node
-
-
-MUTATIONS = {
-    "a dropped triple": _drop_a_triple,
-    "a pattern in another graph": _move_to_another_graph,
-    "a renamed variable": lambda op: _rename(op, "any", "other"),
-}
-
-
-@pytest.mark.parametrize("stem", ["bootstrap-version-row", "append-event"])
-@pytest.mark.parametrize("name", sorted(MUTATIONS))
-def test_h2_2_t5_a_mutated_builder_is_caught(stem, name):
-    mustache, built = _mutated_text(stem, MUTATIONS[name])
-    with pytest.raises(eq.Mismatch):
-        eq.compare(mustache, built, name)
 
 
 def _expected_guard_line(params) -> str:
@@ -340,12 +286,12 @@ def test_h2_2_t16_a_missing_stream_is_not_bound_from_the_data():
 # ---- instantiate renders the ported operations from their builders --------------------------------------------
 
 
-def _instantiate(*, guards: bool = True, graph_names: str = "query", **kwargs) -> dict:
+def _instantiate(*, guards: bool = True, graph_names: str = "query") -> dict:
     """The operations of the append-event fixture as `instantiate` renders them from a profile compiled with the run's choices (H2.7-Q2)."""
     from persistence.instantiate import instantiate_by_target
 
     compiled, _ = compile_to_graph(witness._load_fixture(witness.WITNESS_DIR / "template-append-event.ttl"), guards=guards, graph_names=graph_names)
-    return instantiate_by_target(compiled, **kwargs)
+    return instantiate_by_target(compiled)
 
 
 def test_h2_2_t17_instantiate_renders_a_ported_operation_with_its_guard_and_without_it_on_request():
@@ -353,15 +299,6 @@ def test_h2_2_t17_instantiate_renders_a_ported_operation_with_its_guard_and_with
     bare = next(iter(_instantiate(guards=False).values()))["append"]
     assert "ISIRI($stream)" in guarded and "ISIRI($stream)" not in bare
     assert "FILTER(ISIRI($stream)" in guarded
-
-
-def test_h2_2_t18_an_overriding_template_library_is_still_rendered_by_mustache(tmp_path):
-    from persistence.render import _template_dir_default
-
-    for template in _template_dir_default().glob("*.mustache"):
-        (tmp_path / template.name).write_text(template.read_text(encoding="utf-8"), encoding="utf-8")
-    text = next(iter(_instantiate(template_dir=tmp_path).values()))["append"]
-    assert "ISIRI" not in text and "{{" not in text.replace("{{{payloadTriples}}}", "").replace("{{{eventRows}}}", "").replace("{{{eventTriples}}}", "")
 
 
 def test_h2_2_t19_the_command_line_flag_of_compile_leaves_the_guards_out_and_instantiate_follows_the_profile(tmp_path):
@@ -407,16 +344,14 @@ def test_h2_2_t20_every_graph_of_every_ported_operation_has_the_role_its_name_gi
     assert checked > 0
 
 
-_GRAPH_SLOT = re.compile(r"GRAPH (?:\{\{\{([A-Za-z]+)\}\}\}|\?([A-Za-z0-9]+))")
+_GRAPH_VARIABLE = re.compile(r"GRAPH \?([A-Za-z0-9]+)")
 
 
-def test_h2_2_t21_the_role_table_names_every_graph_slot_and_graph_variable_of_every_template():
+def test_h2_2_t21_the_role_table_names_every_graph_variable_of_every_builder():
     names = set()
-    from persistence.render import _template_dir_default
-
-    for template in sorted(_template_dir_default().glob("*.mustache")):
-        text = eq._COMMENT.sub("", template.read_text(encoding="utf-8"))
-        names |= {a or b for a, b in _GRAPH_SLOT.findall(text)}
+    for stem in PORTED:
+        _, _, _, context = _first(stem)
+        names |= set(_GRAPH_VARIABLE.findall(render(build(stem, context))))
     assert names and names <= set(GRAPH_ROLES), sorted(names - set(GRAPH_ROLES))
 
 

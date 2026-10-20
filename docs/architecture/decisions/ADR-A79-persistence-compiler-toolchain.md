@@ -45,13 +45,13 @@ The compiler's output must also remain distinct from two runtime concerns this A
 
 [ADR-A123](ADR-A123-typed-operation-ir.md), accepted on 2026-10-10, supersedes decision 3's Mustache layer,
 decision 4's renderer clause, the consequence that templates stay auditable by inspection, and `dal:templatePath`
-in decision 1. Everything else here stands. The templates stay in use until they are retired.
+in decision 1. Everything else here stands. The templates were retired on 2026-10-21 (ADR-A123, addendum of that date).
 
 ## Addendum, 2026-10-20: `dal:templatePath` is gone (accepted 2026-10-20)
 
 The addendum of 2026-10-10 said `dal:templatePath` is superseded. We remove it from the vocabulary and from every compiled profile.
-`dal:templateId` is the identity of a builder, the operation id with no `.mustache` suffix, and `instantiate` finds the builder by it. Until the
-templates are retired, a template library that overrides the built-in one is read from the file named by that id and the suffix. The compiled
+`dal:templateId` is the identity of a builder, the operation id with no `.mustache` suffix, and `instantiate` finds the builder by it. The templates
+were retired on 2026-10-21, so no template library, template file or Mustache renderer remains, and the id is the builder's identity in memory too. The compiled
 profile also carries the contract of each operation and the run's choices ([ADR-A123](ADR-A123-typed-operation-ir.md), addendum of 2026-10-20),
 and `compile` takes `--no-parameter-guards` and `--caller-graph-names`, which `instantiate` took before. Everything else in this ADR stands.
 
@@ -59,6 +59,6 @@ and `compile` takes `--no-parameter-guards` and `--caller-graph-names`, which `i
 
 Designed in the [persistence profile substrate sketch](../../developer/sketches/persistence-profile-substrate.md). The three runtime concerns of decision 6 are open questions of the [platform development plan](../../developer/plans/lattice-platform-agentic-development-v0.2.md), Part 13, whose Part 6 was marked
 pending revision because its ingestion and query-plane slices assumed ad hoc query construction. The store SPI is proposed decision
-A75. The addendum of 2026-10-10 follows ADR-A123. The templates are retired by slice H2.9 of the
+A75. The addendum of 2026-10-10 follows ADR-A123. The templates were retired by slice H2.9 of the
 [formal-methods Track H plan](../../developer/plans/formal-methods-track-h.md). The addendum of 2026-10-20 was built in slice H2.7,
 whose decisions taken alone are listed in [FMH-H2-7](../../developer/validation/FMH-H2-7.md). Published 2026-10-20.

@@ -9,13 +9,11 @@ template, a property IRI drawn from the loaded ontology graphs) is untrusted
 in the security sense: it may contain an adversarial or malformed string,
 whether by accident or by a compromised upstream dependency. Every such
 value must pass through exactly one of the encoders in this module before it
-is placed into a Mustache template context. The template renderer
-(``persistence.render.render`` in the compiler) refuses, by a type check rather than a
-runtime probe, any value that is a bare ``str`` rather than one of the
-wrapped types below.
+is placed into an operation. The compiler's builders accept, by a type check rather than a
+runtime probe, only values of the wrapped types below, and refuse a bare ``str``.
 
-Templates themselves are Lattice-authored, reviewed source files, and are
-treated as trusted structure. The security boundary is exactly, and only,
+The builders are Lattice-authored, reviewed source, and are treated as trusted structure. So is the text a
+caller fills into a request-time slot, which is built from these encoders. The security boundary is exactly, and only,
 the line between adopter-supplied configuration data and these encoders.
 """
 

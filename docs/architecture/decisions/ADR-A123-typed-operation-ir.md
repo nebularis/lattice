@@ -424,6 +424,26 @@ Built in slice H2.8b. It carries out decisions 5 and 6 and the addenda of 2026-1
    `ParameterGuardsOff` is information for a run with the guards off and names the caller's obligation. Two compile checks join them. `PatchLogNotWritten` warns when a family declares
    `dal:PatchLog` and no operation writes one, and `NoReceiptSharesMetaShard` refuses a `dal:NoReceipt` family that shares a meta graph with a family whose gap scan reads receipts.
 
+## Addendum, 2026-10-21: the templates are retired (accepted with the slice's plan)
+
+Built in slice H2.9. It carries out decision 8, and its clause "until then" is spent.
+
+1. **Every generated operation is rendered from its builder.** The Mustache templates, `persistence.render` and the `chevron` dependency are removed, and with them
+   the equivalence harness, the template checks and the `instantiate` option that read a template library. `dal:templateId` is the identity of the builder,
+   with no suffix, in the compiled profile and in memory. `instantiate` refuses an operation that names a builder that does not exist.
+2. **The request-time slot marker is a plain-text convention.** A slot stays the marker `{{{name}}}` in the rendered text. A caller fills it by substitution, in one pass, so
+   a value that holds another slot's marker is not filled again, and a marker with no value stays and makes the request a syntax error. The `REQUEST_TIME_SLOTS` list that the renderer kept is gone,
+   and the static checks keep a stand-in for each slot name. A set of triples cannot be a
+   SPARQL variable, so a SPARQL-native form could not replace it. The caller library fills `logGraphs` this way, and `persistence.ir_render.fill_slots` does it for tests and checks.
+3. **What holds the builders in place of the harness.** The recorded builder outputs are keyed by the operation and rendered from one canonical context, so adding or
+   changing a fixture moves no builder's record. The expected compiled profiles, the behaviour tests on both engines, and the static checks S-3 and S-4 run over the
+   builders' output. S-3 reads the parameters an operation declares, where it read the `$name` convention in the text.
+4. **The injection corpus runs over the builders and the slot filling.** Every adversarial value is put into every binding of every builder, and into the values the
+   caller library places in a slot. A value the encoders refuse is a pass. A value they accept must leave the text as the same operations, or not parse.
+5. **The receipt-only writes of a composite family are deleted.** They were reached only through `dal:SnapshotPerRevision`, which no generated operation honours.
+   That model is now refused for a composite family written in place (`CompositeBoundarySnapshotNotBuilt`) until snapshots are built. A named-graph family keeps its
+   receipt-only writes, and keeps the `ReceiptModelNotHonoured` warning for the snapshot.
+
 ## Provenance
 
 The decision was taken on 2026-10-10 from the typed IR design brief ([formal-methods-track-h-typed-ir](../../developer/sketches/formal-methods-track-h-typed-ir.md), normative detail, options and consequences) and the hazard table of the specification sketch ([formal-methods-track-h-specification, section 3](../../developer/sketches/formal-methods-track-h-specification.md#3-the-typed-intermediate-representation)). The plan is [Track H plan section 4](../../developer/plans/formal-methods-track-h.md#4-h2-h3-the-typed-ir-and-the-specification-registry). The hazard rows cite H-D11 and H-D12, the questions H2-Q1 to H2-Q6 are answered in decisions 4 to 6, and H-D14 is the no-compatibility decision. The debt rows addressed are TD-34 (the unbound request variable), TD-40 (default-graph patterns), TD-42 (the quadratic composite replace), TD-43 and TD-64 (below), and the sharding and graph-name rows TD-05, TD-06 and TD-41, which are left open. The client SDK is sketched in [persistence-client-sdk](../../developer/sketches/persistence-client-sdk.md) and is not planned. The guard that needs its own group was found in the review of slice H2.1 on 2026-10-10.
@@ -435,3 +455,5 @@ The addendum of 2026-10-13 on the datatype test was decided after slice H2.4b (F
 The addendum of 2026-10-14 on event slots was drafted in slice H2.6b (plan section 4.6, decisions H-D30 and H-D32) and accepted on 2026-10-20. The placement of the rows slot follows the review note of 2026-10-14, and TD-46 is the sharding warning. The addendum on write disciplines was drafted in slice H2.6c (plan section 4.9) with the history and versioning sketch's questions VH-Q1 to VH-Q6, and VH-Q5 is the receipt conflict rule. The addendum on the subjects of an event append applies the rule of ADR-A51 (superseded by a proposed ADR), whose Rule 8 skolemises blank nodes under their parent and whose event IRI is the parent of an event's parts. Its text is not repeated here because that ADR is not published.
 
 The addenda built in slices H2.6d (plan section 4.10, question H2.6b-Q2, and Q5 (a) of H2.6b for the digest), H2.6e (section 4.11), H2.6f (section 4.12), H2.6g (section 4.17), H2.7 (section 4.7, questions H2.7-Q1 to Q4) and H2.8b (section 4.8) were accepted with their slice plans. The decisions taken alone in each are listed in the Validation Packs [FMH-H2-6d](../../developer/validation/FMH-H2-6d.md), [FMH-H2-6e](../../developer/validation/FMH-H2-6e.md), [FMH-H2-6f](../../developer/validation/FMH-H2-6f.md), [FMH-H2-6g](../../developer/validation/FMH-H2-6g.md), [FMH-H2-7](../../developer/validation/FMH-H2-7.md) and [FMH-H2-8b](../../developer/validation/FMH-H2-8b.md). TD-43 is the data graph for a family with no boundary (H2.7), TD-64 the version IRIs that did not move, and FMH-H2-6g holds the evidence for the `NotExistsWithoutGraph` rule beside TSD-34.
+
+The addendum of 2026-10-21 on the retired templates was built in slice H2.9 (plan section 4.15, questions H2.9-Q1 to Q3, and the maintainer's decision D-12 (a)), whose decisions taken alone are listed in [FMH-H2-9](../../developer/validation/FMH-H2-9.md).

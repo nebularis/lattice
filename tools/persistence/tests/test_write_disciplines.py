@@ -275,10 +275,10 @@ def test_h2_6c_t13_the_guard_scope_picks_the_variant_of_the_write():
         (ct,) = compile_targets(witness._load_fixture(path))
         return {o.operation: o.template_id for o in ct.operations}
 
-    assert templates(COMPOSITE)["append-version"] == "append-version-dataset-guard.mustache"
-    assert templates(NO_BOUNDARY)["append-version"] == "append-version-dataset-guard.mustache"
+    assert templates(COMPOSITE)["append-version"] == "append-version-dataset-guard"
+    assert templates(NO_BOUNDARY)["append-version"] == "append-version-dataset-guard"
     (ct,) = compile_targets(witness._load_fixture(WITNESSES / "write-discipline-append-versions-row-guard.ttl"))
-    assert {o.operation: o.template_id for o in ct.operations}["append-version"] == "append-version.mustache"
+    assert {o.operation: o.template_id for o in ct.operations}["append-version"] == "append-version"
 
 
 def test_h2_6c_t14_append_records_selects_the_append_form_and_in_place_selects_the_replace_family():

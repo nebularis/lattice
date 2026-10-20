@@ -177,6 +177,21 @@ def check_cross_axis(
             "model cannot audit what changed within the closure. Require at least dal:PatchLog.",
         )
 
+    # H2.9, D-12 (a): the receipt-only writes of a composite family were reached only through dal:SnapshotPerRevision, which no
+    # generated operation honours. They are deleted, so that model is refused on a composite family written in place until snapshots
+    # are built (TD-46).
+    if (
+        boundary_local == "CompositePropertyBoundary" and not appends and concurrency_local == "Optimistic"
+        and _local(receipts.value if receipts else None) == "SnapshotPerRevision"
+    ):
+        raise CrossAxisViolation(
+            "CompositeBoundarySnapshotNotBuilt",
+            str(target),
+            "dal:CompositePropertyBoundary with dal:SnapshotPerRevision: no generated operation writes a snapshot of the aggregate per "
+            "revision, and a composite family written in place has no write that records a receipt only. Use dal:PatchLog, or "
+            "dal:NoReceipt deliberately, until snapshots are built (TD-46).",
+        )
+
     # Row 3: metaShards changed without an acknowledged epoch bump.
     meta = dimensions.get("metaTopology")
     if meta is not None:

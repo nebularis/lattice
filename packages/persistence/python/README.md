@@ -37,6 +37,10 @@ and `membership` (a checkpoint's full list).
 
 The values are keyed by the names of the operation's parameters and slots. A slot is a `Payload`, or `Rows` for `eventRows`.
 
+In the instantiated SPARQL a slot is the plain-text marker `{{{name}}}`, for example `{{{payloadTriples}}}`. The caller replaces the marker with the
+`sparql()` text of the value, by substitution and with no template engine. `run_audit` does this for `logGraphs`. An unfilled marker is a syntax
+error, so a forgotten slot fails closed. The tests in `tests/test_slot_injection.py` run an adversarial corpus through this filling.
+
 `read_contracts` follows each payload contract's `dal:referenceEdge` to the edges its profile states once, and reads the record classes the
 profile names (`dal:recordClass`) into `payload.record_classes`.
 

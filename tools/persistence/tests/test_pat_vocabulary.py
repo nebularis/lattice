@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MPL-2.0
 # NB: This module has been produced using GenAI
 
-"""D-24 (H2.8b): every `pat:` term a template or a builder uses is declared in Appendix A of the patterns guide. A term that is written and
+"""D-24 (H2.8b): every `pat:` term a builder uses is declared in Appendix A of the patterns guide. A term that is written and
 not declared has no definition for a reader or an adopter's own shapes to rely on. Test IDs are H2.8b-Tn."""
 
 from __future__ import annotations
@@ -39,25 +39,11 @@ def used_by_builders() -> dict:
     return out
 
 
-def used_by_templates() -> dict:
-    out: dict = {}
-    for path in sorted((SRC / "templates").glob("*.mustache")):
-        for term in re.findall(r"\bpat:(\w+)", path.read_text(encoding="utf-8")):
-            out.setdefault(term, set()).add(path.name)
-    return out
-
-
 def test_h2_8b_t17_the_appendix_declares_a_good_many_terms():
     assert len(declared()) > 40 and {"seq", "epoch", "checkpoint", "previousVersion"} <= declared()
 
 
 def test_h2_8b_t18_every_pat_term_a_builder_uses_is_declared_in_the_guide():
     used = used_by_builders()
-    assert len(used) > 20
-    assert {t: sorted(w) for t, w in used.items() if t not in declared()} == {}
-
-
-def test_h2_8b_t19_every_pat_term_a_template_uses_is_declared_in_the_guide():
-    used = used_by_templates()
     assert len(used) > 20
     assert {t: sorted(w) for t, w in used.items() if t not in declared()} == {}

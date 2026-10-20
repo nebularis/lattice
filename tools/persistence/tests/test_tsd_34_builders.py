@@ -22,7 +22,6 @@ from persistence.ir_render import render
 
 from test_builders import _ported
 
-TEMPLATES = Path(__file__).resolve().parents[1] / "src" / "persistence" / "templates"
 SEEDS = range(16)
 
 
@@ -62,13 +61,10 @@ def test_h2_6g_t0_the_scan_finds_the_shape_and_passes_a_body_that_names_its_grap
     assert len(exposed_in("GRAPH {{{g}}} { FILTER EXISTS { ?s ?p ?o } }")) == 1
 
 
-def test_h2_6g_t1_no_rendered_operation_and_no_template_has_a_not_exists_without_its_own_graph_inside_a_graph_block():
+def test_h2_6g_t1_no_rendered_operation_has_a_not_exists_without_its_own_graph_inside_a_graph_block():
     rendered = {stem: render(build(stem, context)) for _, _, stem, context in _ported()}
     assert set(rendered) == set(BUILDERS)
     assert {stem: found for stem, text in rendered.items() if (found := exposed_in(text))} == {}
-    templates = sorted(TEMPLATES.glob("*.mustache"))
-    assert len(templates) >= len(BUILDERS) - 1  # payload-check (H2.8b) has no template
-    assert {path.name: found for path in templates if (found := exposed_in(path.read_text(encoding="utf-8")))} == {}
 
 
 # ---- what the defect could change -------------------------------------------------------------------------------------------------------------------
@@ -124,7 +120,7 @@ def test_h2_6g_t3_the_solutions_of_a_row_block_share_one_context_on_rdflib_so_th
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", DeprecationWarning)
-            assert support.run_scenario(tombstoned[1]["cas-replace-composite-property"], Dataset())
+            assert support.run_scenario(tombstoned[1]["cas-replace-composite-property-patch-log"], Dataset())
     finally:
         evaluate.evalGraph = original
     assert max(seen.values()) >= 3, dict(seen)

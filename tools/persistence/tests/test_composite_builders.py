@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: MPL-2.0
 # NB: This module has been produced using GenAI
 
-"""H2.4a: the composite family's builders (formal-methods track H, slice H2.4a, plan 4.2). The ports are held to their
-templates by the harness of test_builders.py, and the lifecycle of an aggregate is tested in test_composite_lifecycle.py and
+"""H2.4a: the composite family's builders (formal-methods track H, slice H2.4a, plan 4.2). The ports were held to their
+templates by a harness that H2.9 removed with the templates (FMH-H2-9), and the lifecycle of an aggregate is tested in test_composite_lifecycle.py and
 test_composite_boundary.py, which now run on the builders. These tests add what the ports bring: the read and write sets,
 the guard's case for this family, the engine rules the sweep relies on, and the stored-IR rules SI-1 and SI-2
 (typed IR sketch 9.4). Validation Pack: docs/developer/validation/FMH-H2-4a.md. Test IDs are H2.4a-Tn."""
@@ -16,7 +16,6 @@ import warnings
 import pytest
 
 import engines
-from receipt_only import receipt_only
 from rdflib import Dataset, Literal, URIRef, Variable
 from rdflib.namespace import XSD
 
@@ -26,25 +25,23 @@ from persistence.builders import BUILDERS, build
 from persistence.compiler import compile_to_graph
 from persistence.instantiate import instantiate_by_target
 from persistence.ir import GUARDS_OFF
-from persistence.ir_render import access_sets
+from persistence import templatecheck
+from persistence.ir_render import access_sets, fill_slots
 from persistence.terms import Integer, Iri, Literal as EncodedLiteral, PropertyPath, SparqlTerm
 
-import equivalence as eq
-from test_builders import _ported
+from test_builders import _ported, ported_operations
 from test_composite_lifecycle import (
     CREATE, DATA_GRAPH, PAT, PROJECT_EXAMPLE, REPLACE, ROOT, TOMBSTONE, _data, _data_graph, _dataset, _delete_set, _meta,
     _nt, _px, _quads, _run, _text,
 )
 
-COMPOSITE = [s for s in sorted(BUILDERS) if "composite" in s]
-
 
 def _compiled():
-    return compile_to_graph(receipt_only(PROJECT_EXAMPLE))[0]
+    return compile_to_graph(witness._load_fixture(PROJECT_EXAMPLE))[0]
 
 
 def _context(stem: str) -> dict:
-    ops = eq.ported_operations([("project", _compiled())])
+    ops = ported_operations([("project", _compiled())])
     return next(c for _, _, s, c in ops if s == stem)
 
 
@@ -77,8 +74,8 @@ def test_h2_4a_t2_a_tombstone_has_no_payload_and_a_create_reads_the_roots_triple
 
 
 def _text_without_guard(operation: str) -> str:
-    (by_target,) = instantiate_by_target(compile_to_graph(receipt_only(PROJECT_EXAMPLE), guards=False)[0]).values()
-    return by_target[operation]
+    (by_target,) = instantiate_by_target(compile_to_graph(witness._load_fixture(PROJECT_EXAMPLE), guards=False)[0]).values()
+    return fill_slots(by_target[operation], templatecheck._SLOT_STAND_INS)
 
 
 def _second_aggregate(ds: Dataset) -> None:
@@ -108,7 +105,7 @@ def test_h2_4a_t3_a_replace_with_no_root_over_two_aggregates_writes_nothing_and_
     assert _quads(guarded) == before
     unguarded = _dataset(REPLACE, data=_data())
     _second_aggregate(unguarded)
-    _update(unguarded, _text_without_guard("cas-replace").replace("{{{payloadTriples}}}", payload), _values_without_root())
+    _update(unguarded, _text_without_guard("cas-replace").replace(_text_stand_in(), payload), _values_without_root())
     # what rdflib does, recorded: with no root the sweep reaches the nodes of every stored aggregate, so both are swept, the
     # payload is written once, and both stored version rows move. Only nodes no aggregate reaches (the references) stay.
     left = _data_graph(unguarded)

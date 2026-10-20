@@ -161,11 +161,17 @@ def test_ho8_t7_the_shipped_examples_all_keep_compiling_or_keep_their_refusal():
             assert getattr(error.cause, "kind", "") not in {"GraphIriTemplateInvalid", "GraphIriTemplateOverlap"}, path.name
 
 
-def test_ho8_t8_every_template_that_names_a_graph_from_a_root_encodes_the_whole_root_and_keeps_the_suffix():
-    templates = sorted(p for p in witness.TEMPLATE_DIR.glob("*.mustache") if "graphPrefix" in p.read_text(encoding="utf-8"))
-    assert len(templates) == 19  # the receipt-only writes and the unconditional write, and the patch-log and no-receipt variants of the six (H2.6d)
-    for path in templates:
-        text = path.read_text(encoding="utf-8")
-        body = text[text.index("}}") + 2:]
-        assert "ENCODE_FOR_URI(STR($root))" in body and "{{{graphSuffix}}}" in body, path.name
-        assert 'REPLACE(STR($root)' not in body, path.name
+def test_ho8_t8_every_builder_that_names_a_graph_from_a_root_encodes_the_whole_root_and_keeps_the_suffix():
+    from builder_goldens import CANONICAL_CONTEXT
+    from persistence.builders import BUILDERS, build_recording
+    from persistence.ir_render import render
+
+    named = []
+    for key in sorted(BUILDERS):
+        operation, read = build_recording(key, dict(CANONICAL_CONTEXT))
+        if "graphPrefix" in read:
+            named.append(key)
+            body = render(operation)
+            assert "ENCODE_FOR_URI(STR($root))" in body and '"/data"' in body, key  # graphSuffix of the canonical context
+            assert 'REPLACE(STR($root)' not in body, key
+    assert len(named) == 19  # the receipt-only writes and the unconditional write, and the patch-log and no-receipt variants of the six (H2.6d)

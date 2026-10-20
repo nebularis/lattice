@@ -1562,6 +1562,8 @@ since they are removed, ADR-grade justification: their subject no longer exists)
 `$name` convention (H-D11). The README's "Using the generated SPARQL directly" and ADR-A79's addendum follow. `FMH-H2-9`. About 250k
 tokens.
 
+**Built 2026-10-21** ([FMH-H2-9](../validation/FMH-H2-9.md)), awaiting review.
+
 ### 4.17 H2.6g: every NOT EXISTS reads the graph it means (planned 2026-10-20, TSD-34)
 
 TSD-34 found that rdflib 7.6.0 may evaluate a `FILTER NOT EXISTS` with no `GRAPH` of its own, inside a `GRAPH` block, against the

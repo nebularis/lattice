@@ -9,9 +9,9 @@ a named rule (:data:`RULES`). The same walk derives the graphs and subjects the 
 writes (:func:`access_sets`), so a read or write set is never declared by hand and cannot drift from
 the query.
 
-The text carries the request-time variables as ``$name`` and the payload and registry slots as the
-Mustache tags ``{{{name}}}``, as the templates do. Predicates in the vocabulary namespaces are written
-with prefixes, so the output reads like the templates it replaces.
+The text carries the request-time variables as ``$name`` and the payload, registry and rows slots as the plain-text markers
+``{{{name}}}`` (H2.9-Q1), which :func:`fill_slots`, or any caller's own substitution, replaces with trusted text before the query is sent.
+No template engine is involved. Predicates in the vocabulary namespaces are written with prefixes.
 """
 
 from __future__ import annotations
@@ -31,6 +31,21 @@ from .ir import (
 )
 from .namespaces import PAT
 from .terms import Iri, Literal
+
+def slot_marker(name: str) -> str:
+    """The marker of the request-time slot ``name`` in rendered text, a plain string that a caller replaces (H2.9-Q1)."""
+    return "{{{" + name + "}}}"
+
+
+_SLOT_MARKER = re.compile(r"\{\{\{([A-Za-z_][A-Za-z0-9_]*)\}\}\}")
+
+
+def fill_slots(text: str, values: dict) -> str:
+    """``text`` with the marker of each slot in ``values`` replaced by its value, which is trusted, already serialised SPARQL text.
+    One pass, so a value that holds a marker is not filled again, and a marker with no value is left as it is, which is a syntax error
+    in a query and fails closed."""
+    return _SLOT_MARKER.sub(lambda m: str(values[m.group(1)]) if m.group(1) in values else m.group(0), text)
+
 
 RULES: tuple[str, ...] = (
     "InvalidName",
@@ -949,7 +964,7 @@ class _Out:
         if isinstance(el, GraphBlock):
             return self.graph_block(el)
         if isinstance(el, PayloadSlot):
-            return ["{{{" + el.param + "}}}"]
+            return [slot_marker(el.param)]
         if isinstance(el, Optional_):
             return self.braced("OPTIONAL", self.statements(el.group.elements))
         if isinstance(el, NotExists):
@@ -960,7 +975,7 @@ class _Out:
             return [f"BIND({self.expr(el.expr)} AS ?{el.var.name})"]
         if isinstance(el, Values):
             items = " ".join(
-                ("{{{" + i.param + "}}}") if isinstance(i, RegistrySlot) else self.term(i) for i in el.items
+                slot_marker(i.param) if isinstance(i, RegistrySlot) else self.term(i) for i in el.items
             )
             return [f"VALUES ?{el.var.name} {{ {items} }}"]
         if isinstance(el, SubSelect):
@@ -969,7 +984,7 @@ class _Out:
             return block
         if isinstance(el, RowValues):
             names = " ".join(f"?{v.name}" for v in el.vars)
-            return ["VALUES (" + names + ") { {{{" + el.slot.param + "}}} }"]
+            return ["VALUES (" + names + ") { " + slot_marker(el.slot.param) + " }"]
         if isinstance(el, Union_):
             out: list[str] = []
             for i, g in enumerate(el.groups):
@@ -1077,4 +1092,4 @@ def _template_lines(out: _Out, keyword: str, blocks: Iterable[GraphBlock]) -> li
     return [f"{keyword} {{", *("  " + ln for ln in lines), "}"]
 
 
-__all__ = ["RULES", "FUNCTIONS", "AGGREGATES", "Access", "AccessSets", "check", "access_sets", "render"]
+__all__ = ["RULES", "FUNCTIONS", "AGGREGATES", "Access", "AccessSets", "check", "access_sets", "render", "slot_marker", "fill_slots"]

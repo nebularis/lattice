@@ -2,12 +2,12 @@
 # NB: This module has been produced using GenAI
 
 """Test-side stand-in for whatever fills an instantiated operation's
-request-time Mustache slots (``persistence.render.REQUEST_TIME_SLOTS``).
-Uses an ordinary Mustache renderer, as any caller in any language would."""
+request-time slots, the plain-text ``{{{name}}}`` markers (H2.9-Q1).
+Substitutes the text, as any caller in any language would."""
 
 from __future__ import annotations
 
-import chevron
+from persistence.ir_render import fill_slots
 
 PAYLOAD_SUBSTITUTE = "<urn:example:s> <urn:example:p> <urn:example:o> ."
 LOG_GRAPHS_SUBSTITUTE = "<urn:g:txlog/2026-08> <urn:g:txlog/2026-09>"
@@ -23,7 +23,7 @@ DROPPED_MEMBERS_SUBSTITUTE = '<urn:example:s> <urn:example:dropsMember> <urn:exa
 
 
 def fill_request_slots(text: str) -> str:
-    return chevron.render(
+    return fill_slots(
         text, {
             "payloadTriples": PAYLOAD_SUBSTITUTE, "logGraphs": LOG_GRAPHS_SUBSTITUTE,
             "eventRows": EVENT_ROWS_SUBSTITUTE, "eventTriples": EVENT_TRIPLES_SUBSTITUTE,

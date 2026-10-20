@@ -21,7 +21,6 @@ from functools import lru_cache
 import pytest
 
 import engines
-from receipt_only import receipt_only
 from rdflib import RDF, Dataset, Literal, URIRef, Variable
 from rdflib.namespace import XSD
 
@@ -35,8 +34,8 @@ EX = "https://example.org/lending#"
 PAT = "https://example.org/lattice/patterns#"
 ROOT = URIRef("urn:order:1")
 DATA_GRAPH = URIRef("urn:g:orders")
-PLAIN = "cas-replace-composite-property"
-DATASET_GUARD = "cas-replace-composite-property-dataset-guard"
+PLAIN = "cas-replace-composite-property-patch-log"
+DATASET_GUARD = "cas-replace-composite-property-patch-log-dataset-guard"
 FIXTURES = {
     PLAIN: EXAMPLES_DIR / "composite-property-boundary-shacl.ttl",
     DATASET_GUARD: witness.WITNESS_DIR / "template-cas-replace-composite-property-dataset-guard.ttl",
@@ -49,7 +48,7 @@ PAYLOAD = (
 
 @lru_cache(maxsize=None)
 def _text_for(template: str, guards: bool) -> str:
-    compiled, _ = compile_to_graph(receipt_only(FIXTURES[template]), guards=guards)
+    compiled, _ = compile_to_graph(witness._load_fixture(FIXTURES[template]), guards=guards)
     return next(o for o in templatecheck.operations(compiled) if o.template == template).text
 
 
@@ -168,6 +167,6 @@ def test_ho1_t6_a_stale_sequence_changes_nothing():
 
 @pytest.mark.parametrize("template", [PLAIN, DATASET_GUARD])
 def test_ho1_t7_the_changed_templates_pass_the_static_checks(template):
-    compiled, _ = compile_to_graph(receipt_only(FIXTURES[template]))
+    compiled, _ = compile_to_graph(witness._load_fixture(FIXTURES[template]))
     assert templatecheck.check_compiled(compiled) == []
     assert main(["hygiene", str(FIXTURES[PLAIN])]) == 0

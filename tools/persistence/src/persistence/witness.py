@@ -48,7 +48,9 @@ import pyshacl
 from rdflib import RDF, RDFS, Dataset, Graph, Literal, Namespace, URIRef
 
 from .compiler import CompileError, compile_targets, compile_to_graph
+from .builders import BUILDERS
 from .instantiate import instantiate_by_target
+from .ir_render import fill_slots
 
 SH = Namespace("http://www.w3.org/ns/shacl#")
 
@@ -63,7 +65,6 @@ EXAMPLES_DIR = REPO_ROOT / "ontology" / "persistence" / "examples"
 EXPECTED_PROFILES_DIR = REPO_ROOT / "ontology" / "persistence" / "test" / "expected-profiles"
 WITNESS_DIR = REPO_ROOT / "tools" / "persistence" / "tests" / "witnesses"
 KNOWN_GAPS = WITNESS_DIR / "known-gaps.txt"
-TEMPLATE_DIR = PACKAGE_DIR / "templates"
 
 # Exceptions that are refusals in their own right, keyed by class name.
 # ``CrossAxisViolation`` is keyed by its ``kind`` instead.
@@ -190,8 +191,8 @@ def shape_rules(shapes: Graph) -> set[Rule]:
     return {Rule(SHAPE, _local(s)) for s in shapes.subjects(RDF.type, SH.NodeShape) if isinstance(s, URIRef)}
 
 
-def audit_rules(template_dir: Path = TEMPLATE_DIR) -> set[Rule]:
-    return {Rule(AUDIT, p.name.removesuffix(".mustache")) for p in sorted(template_dir.glob("*-audit.mustache"))}
+def audit_rules() -> set[Rule]:
+    return {Rule(AUDIT, name) for name in sorted(BUILDERS) if name.endswith("-audit")}
 
 
 def _local(iri) -> str:
@@ -431,12 +432,8 @@ def run_audit(witness: AuditWitness) -> int:
     missing = sorted(set(_SLOT_PATTERN.findall(text)) - set(witness.bindings))
     if missing:
         raise ValueError(f"{witness.path.name}: no '# bind:' line for slot(s) {', '.join(missing)}")
-    # The caller's own step (render.REQUEST_TIME_SLOTS). A slot is a literal
-    # triple-brace tag with no escaping, so plain substitution is equivalent to
-    # a Mustache library, and keeps persistence.render the only chevron user.
-    query = text
-    for name, value in witness.bindings.items():
-        query = query.replace("{{{" + name + "}}}", value)
+    # The caller's own step: a slot is a plain-text marker, filled by substitution (H2.9-Q1).
+    query = fill_slots(text, witness.bindings)
     with _quiet_rdflib():
         return len(list(witness.dataset.query(query)))
 

@@ -367,25 +367,25 @@ def _templates(path) -> dict:
 
 def test_h2_6d_t17_compile_selects_the_patch_log_variants_under_dal_patch_log_for_both_families_and_both_guards():
     assert {k: v for k, v in _templates(EXAMPLES / "baseline-single-class.ttl").items() if k in WRITES.values()} == {
-        "create-if-absent": "create-if-absent-named-graph-patch-log.mustache", "cas-replace": "cas-replace-named-graph-patch-log.mustache",
-        "tombstone-delete": "tombstone-delete-named-graph-patch-log.mustache",
+        "create-if-absent": "create-if-absent-named-graph-patch-log", "cas-replace": "cas-replace-named-graph-patch-log",
+        "tombstone-delete": "tombstone-delete-named-graph-patch-log",
     }
-    assert _templates(EXAMPLES / "epoch-dataset-level-guard.ttl")["cas-replace"] == "cas-replace-named-graph-patch-log-dataset-guard.mustache"
+    assert _templates(EXAMPLES / "epoch-dataset-level-guard.ttl")["cas-replace"] == "cas-replace-named-graph-patch-log-dataset-guard"
     assert {k: v for k, v in _templates(EXAMPLES / "composite-project-ownership.ttl").items() if k in WRITES.values()} == {
-        "create-if-absent": "create-if-absent-composite-patch-log.mustache", "cas-replace": "cas-replace-composite-property-patch-log.mustache",
-        "tombstone-delete": "tombstone-delete-composite-patch-log.mustache",
+        "create-if-absent": "create-if-absent-composite-patch-log", "cas-replace": "cas-replace-composite-property-patch-log",
+        "tombstone-delete": "tombstone-delete-composite-patch-log",
     }
     assert _templates(WITNESSES / "template-cas-replace-composite-property-dataset-guard.ttl")["tombstone-delete"] == (
-        "tombstone-delete-composite-patch-log-dataset-guard.mustache"
+        "tombstone-delete-composite-patch-log-dataset-guard"
     )
 
 
 def test_h2_6d_t18_compile_selects_the_no_receipt_variants_and_leaves_out_the_audits_that_read_receipts():
     for fixture, expected in (
-        ("write-discipline-no-receipt-named-graph.ttl", "cas-replace-named-graph-no-receipt.mustache"),
-        ("write-discipline-no-receipt-named-graph-dataset-guard.ttl", "cas-replace-named-graph-no-receipt-dataset-guard.mustache"),
-        ("write-discipline-no-receipt-composite.ttl", "cas-replace-composite-property-no-receipt.mustache"),
-        ("write-discipline-no-receipt-composite-dataset-guard.ttl", "cas-replace-composite-property-no-receipt-dataset-guard.mustache"),
+        ("write-discipline-no-receipt-named-graph.ttl", "cas-replace-named-graph-no-receipt"),
+        ("write-discipline-no-receipt-named-graph-dataset-guard.ttl", "cas-replace-named-graph-no-receipt-dataset-guard"),
+        ("write-discipline-no-receipt-composite.ttl", "cas-replace-composite-property-no-receipt"),
+        ("write-discipline-no-receipt-composite-dataset-guard.ttl", "cas-replace-composite-property-no-receipt-dataset-guard"),
     ):
         templates = _templates(WITNESSES / fixture)
         assert templates["cas-replace"] == expected, fixture
@@ -393,13 +393,13 @@ def test_h2_6d_t18_compile_selects_the_no_receipt_variants_and_leaves_out_the_au
         assert "fork-detection-audit" in templates  # it reads the claims, which are still written
 
 
-def test_h2_6d_t19_the_other_receipt_models_keep_the_receipt_only_writes():
-    assert _templates(WITNESSES / "write-discipline-snapshot-named-graph.ttl")["cas-replace"] == "cas-replace-named-graph.mustache"
-    assert _templates(WITNESSES / "write-discipline-snapshot-composite.ttl")["cas-replace"] == "cas-replace-composite-property.mustache"
+def test_h2_6d_t19_the_other_receipt_models_keep_the_receipt_only_writes_of_a_named_graph_family_and_a_composite_family_refuses_a_snapshot():
+    assert _templates(WITNESSES / "write-discipline-snapshot-named-graph.ttl")["cas-replace"] == "cas-replace-named-graph"
+    assert _refusal(witness._load_fixture(WITNESSES / "refusal-CompositeBoundarySnapshotNotBuilt.ttl")) == "CompositeBoundarySnapshotNotBuilt"
     receipt_only = witness._load_fixture(WITNESSES / "_base-thing.ttl")
     receipt_only.set((U("https://example.org/lending#ThingProfile"), U(DAL_NS + "receiptModel"), U(DAL_NS + "ReceiptOnly")))
     (ct,) = compile_targets(receipt_only)
-    assert {o.operation: o.template_id for o in ct.operations}["tombstone-delete"] == "tombstone-delete-named-graph.mustache"
+    assert {o.operation: o.template_id for o in ct.operations}["tombstone-delete"] == "tombstone-delete-named-graph"
 
 
 def _kinds(graph) -> set:
@@ -408,7 +408,7 @@ def _kinds(graph) -> set:
 
 def test_h2_6d_t20_receipt_model_not_honoured_warns_for_the_snapshot_alone():
     assert "ReceiptModelNotHonoured" in _kinds(witness._load_fixture(WITNESSES / "warning-ReceiptModelNotHonoured.ttl"))
-    assert "ReceiptModelNotHonoured" in _kinds(witness._load_fixture(WITNESSES / "write-discipline-snapshot-composite.ttl"))
+    assert "ReceiptModelNotHonoured" in _kinds(witness._load_fixture(WITNESSES / "write-discipline-snapshot-named-graph.ttl"))
     for honoured in ("baseline-single-class.ttl", "composite-project-ownership.ttl", "epoch-dataset-level-guard.ttl"):
         assert "ReceiptModelNotHonoured" not in _kinds(witness._load_fixture(EXAMPLES / honoured)), honoured
     assert "ReceiptModelNotHonoured" not in _kinds(witness._load_fixture(WITNESSES / "write-discipline-no-receipt-composite.ttl"))

@@ -3,14 +3,12 @@
 
 """The operation builders (formal-methods track H, slice H2.2, ADR-A123 decision 1).
 
-One builder per operation id takes the compile-time bindings of a generated operation, the same values a
-template is rendered with, and returns the typed :class:`~persistence.ir.Operation` that
-:func:`persistence.ir_render.render` turns into SPARQL. A builder is a port of one Mustache template and
-changes nothing about the query. The equivalence harness of the tests holds it to that, and the templates
-stay in use until H2.9.
+One builder per operation id takes the compile-time bindings of a generated operation and returns the typed
+:class:`~persistence.ir.Operation` that :func:`persistence.ir_render.render` turns into SPARQL. The builders are the only
+source of the generated text (H2.9 retired the Mustache templates they were ported from).
 
-The ported operations are listed in :data:`BUILDERS`. Each keeps the template's variable names, so the
-two renderings can be compared as SPARQL algebra.
+The operations are listed in :data:`BUILDERS`, keyed by the builder's identity, which is the ``dal:templateId`` of the
+compiled profile.
 """
 
 from __future__ import annotations
@@ -291,6 +289,14 @@ def _check_receipt(receipt: str) -> None:
         raise ValueError(f"receipt is one of {RECEIPT_MODELS}, not {receipt!r}")
 
 
+def _check_composite_receipt(receipt: str) -> None:
+    """An in-place composite family writes a patch log or no receipt. The receipt-only writes were reached only through
+    `dal:SnapshotPerRevision`, which no generated operation honours, so they are gone, and the validator refuses that model on an
+    in-place composite family until snapshots are built (H2.9, D-12 (a), TD-46)."""
+    if receipt not in ("patch-log", "none"):
+        raise ValueError(f"an in-place composite write takes receipt 'patch-log' or 'none', not {receipt!r} (snapshots are not built, TD-46)")
+
+
 def _delta_binds(*names: str) -> tuple:
     """The delta graphs of a patch-log write, named from the receipt (H2.6b-Q2): `IRI(CONCAT(STR($newRev), "/add"))` and `"/del"`, so a
     caller cannot name one wrongly. `names` is `add`, `del` or both."""
@@ -511,15 +517,15 @@ def _composite_sweep(b: Bindings) -> Optional_:
     )),)))
 
 
-def _composite_delete(b: Bindings, *, dataset_guard: bool, receipt: str = "receipt") -> tuple:
+def _composite_delete(b: Bindings, *, dataset_guard: bool, receipt: str) -> tuple:
     return (
         GraphBlock(b.graph("dataGraph"), (Triple(_optional("s"), _optional("p"), _optional("o")),)),
         _row_delete(b, dataset_guard=dataset_guard, receipt=receipt),
     )
 
 
-def _composite_create(b: Bindings, *, guards: bool, dataset_guard: bool, receipt: str = "receipt") -> Operation:
-    _check_receipt(receipt)
+def _composite_create(b: Bindings, *, guards: bool, dataset_guard: bool, receipt: str) -> Operation:
+    _check_composite_receipt(receipt)
     meta = b.graph("metaGraphPrefix")
     root, epoch, new_rev = ParamRef("root"), ParamRef("epoch"), ParamRef("newRev")
     has_receipt, patch = receipt != "none", receipt == "patch-log"
@@ -554,8 +560,8 @@ def _composite_create(b: Bindings, *, guards: bool, dataset_guard: bool, receipt
     )
 
 
-def _composite_replace(b: Bindings, *, guards: bool, dataset_guard: bool, receipt: str = "receipt") -> Operation:
-    _check_receipt(receipt)
+def _composite_replace(b: Bindings, *, guards: bool, dataset_guard: bool, receipt: str) -> Operation:
+    _check_composite_receipt(receipt)
     # the receipt goes to ?logGraph2, a copy of ?logGraph that the templates have always had (plan 4.2, fact 4)
     binds = (*(_log_binds(b) + (Bind(Var("logGraph"), Var("logGraph2")),) if receipt != "none" else ()), *_delta_binds(*(("add", "del") if receipt == "patch-log" else ())))
     return Operation.build(
@@ -567,8 +573,8 @@ def _composite_replace(b: Bindings, *, guards: bool, dataset_guard: bool, receip
     )
 
 
-def _composite_tombstone(b: Bindings, *, guards: bool, dataset_guard: bool, receipt: str = "receipt") -> Operation:
-    _check_receipt(receipt)
+def _composite_tombstone(b: Bindings, *, guards: bool, dataset_guard: bool, receipt: str) -> Operation:
+    _check_composite_receipt(receipt)
     binds = (*(_log_binds(b) if receipt != "none" else ()), *_delta_binds(*(("del",) if receipt == "patch-log" else ())))
     return Operation.build(
         "tombstone-delete-composite" + _suffix(dataset_guard, receipt),
@@ -789,7 +795,7 @@ def _key_claim_quarantine(b: Bindings, *, guards: bool) -> Operation:
 
 def _key_claim_merge_rewrite(b: Bindings, *, guards: bool) -> Operation:
     """The canonical owner is the lowest owner IRI, taken over the IRI text and turned back into an IRI, because rdflib's `MIN` over
-    IRIs returns a plain literal (TSD-16, decided in FMH-H2-5, decision 1). The Mustache template says the same."""
+    IRIs returns a plain literal (TSD-16, decided in FMH-H2-5, decision 1)."""
     claim, owner, canonical = Var("claim"), Var("owner"), Var("canonical")
     other = Var("other", kind=Kind.IRI)
     relation = b.const("mergeRelation")
@@ -951,18 +957,12 @@ BUILDERS: dict[str, Builder] = {
     "tombstone-delete-named-graph-dataset-guard": lambda b, guards, names: _tombstone(b, guards=guards, dataset_guard=True, graph_names=names),
     "unconditional-write": lambda b, guards, names: _unconditional(b, guards=guards, graph_names=names),
     "cas-replace-value-guard": lambda b, guards, names: _value_guard(b, guards=guards),
-    "create-if-absent-composite": lambda b, guards, names: _composite_create(b, guards=guards, dataset_guard=False),
-    "create-if-absent-composite-dataset-guard": lambda b, guards, names: _composite_create(b, guards=guards, dataset_guard=True),
-    "cas-replace-composite-property": lambda b, guards, names: _composite_replace(b, guards=guards, dataset_guard=False),
-    "cas-replace-composite-property-dataset-guard": lambda b, guards, names: _composite_replace(b, guards=guards, dataset_guard=True),
     "append-version": lambda b, guards, names: _append_version(b, guards=guards, dataset_guard=False),
     "append-version-dataset-guard": lambda b, guards, names: _append_version(b, guards=guards, dataset_guard=True),
     "append-version-delta": lambda b, guards, names: _append_version(b, guards=guards, dataset_guard=False, delta=True),
     "append-version-delta-dataset-guard": lambda b, guards, names: _append_version(b, guards=guards, dataset_guard=True, delta=True),
     "members": lambda b, guards, names: _members(b, guards=guards),
     "payload-check": lambda b, guards, names: _payload_check(b, guards=guards),
-    "tombstone-delete-composite": lambda b, guards, names: _composite_tombstone(b, guards=guards, dataset_guard=False),
-    "tombstone-delete-composite-dataset-guard": lambda b, guards, names: _composite_tombstone(b, guards=guards, dataset_guard=True),
     "key-claim-write": lambda b, guards, names: _key_claim_write(b, guards=guards),
     "key-claim-write-dual": lambda b, guards, names: _key_claim_write_dual(b, guards=guards),
     "key-claim-retire": lambda b, guards, names: _key_claim_retire(b, guards=guards),
@@ -995,7 +995,7 @@ def _receipt_variants() -> dict:
 
 
 BUILDERS.update(_receipt_variants())
-"""The ported operations, keyed by template stem. A template with no entry is still rendered by Mustache."""
+"""Every generated operation, keyed by its builder identity (`dal:templateId`)."""
 
 
 def build(template: str, context: Mapping, *, guards: bool = True, graph_names: str = "query") -> Operation:

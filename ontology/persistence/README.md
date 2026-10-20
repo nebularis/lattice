@@ -707,7 +707,7 @@ audit writes but cannot replay them. A family declares one of four models (guide
 |---|---|---|---|---|
 | `dal:ReceiptOnly` (baseline) | that a write happened, where, and by which transaction | outcome, audit, order | lowest | compare-and-set outcomes and light audit are enough |
 | `dal:PatchLog` | plus the triples each write added and removed, in delta graphs | replay, change data capture, as-of reads | about twice the write volume | downstream replay or deterministic history is needed |
-| `dal:SnapshotPerRevision` | a sealed payload graph per revision (not built, `compile` warns `ReceiptModelNotHonoured`, TD-46) | point-in-time reads without replay, immutable evidence | the most storage and graphs | compliance, forensics, data already addressed by revision |
+| `dal:SnapshotPerRevision` | a sealed payload graph per revision (not built, `compile` warns `ReceiptModelNotHonoured` and refuses it on a composite family written in place, `CompositeBoundarySnapshotNotBuilt`, TD-46) | point-in-time reads without replay, immutable evidence | the most storage and graphs | compliance, forensics, data already addressed by revision |
 | `dal:NoReceipt` | nothing about the write beyond its transaction claim: no receipt, no log bucket, no head | a retry after a lost reply is confirmed, and the seq still decides a race | the lowest, and no audit, order or history | a family that is derived and can be regenerated, or that keeps no history. Refused with an append discipline (VH-Q5a) |
 
 **The patch log is written by the in-place writes** of a `dal:NamedGraphBoundary` or `dal:CompositePropertyBoundary` family that declares
@@ -779,7 +779,7 @@ Neither is better in general. Which wins depends on whether the store detects co
 statement, per graph or per page, which only a conformance test on the target store can say. Sharding
 the meta graph is not enough by itself: every write also inserts into the transaction-claim graph, the
 current log bucket and the key graph, so `dal:txnShards`, `dal:logShards` and `dal:keyShards` declare
-how those are sharded too. The current templates still write one of each, and a declared count above 1
+how those are sharded too. The generated operations still write one of each, and a declared count above 1
 raises a `ShardingNotHonoured` warning.
 
 Changing `dal:metaShards` moves every version row, which is a migration: the compiler refuses it unless
@@ -1602,7 +1602,7 @@ target also gets the four audits (`gap-scan-audit`, `fork-detection-audit`,
 Refused, each with its refusal in `refused.txt`: [`invalid-claimed-identity-without-key`](examples/invalid-claimed-identity-without-key.ttl), [`invalid-commitgrain-opseq`](examples/invalid-commitgrain-opseq.ttl), [`invalid-compositeboundary-missing-shape`](examples/invalid-compositeboundary-missing-shape.ttl), [`invalid-compositeboundary-receiptonly`](examples/invalid-compositeboundary-receiptonly.ttl), [`invalid-lagwindow-missing`](examples/invalid-lagwindow-missing.ttl), [`invalid-merge-policy-no-relation`](examples/invalid-merge-policy-no-relation.ttl), [`invalid-metashards-changed-no-ack`](examples/invalid-metashards-changed-no-ack.ttl), [`invalid-noboundary-cas`](examples/invalid-noboundary-cas.ttl), [`invalid-personaldata-no-erasure`](examples/invalid-personaldata-no-erasure.ttl), [`invalid-personaldata-receipt-conflict`](examples/invalid-personaldata-receipt-conflict.ttl), [`invalid-position-event-without-derivation`](examples/invalid-position-event-without-derivation.ttl), [`invalid-uniqueness-outside-boundary`](examples/invalid-uniqueness-outside-boundary.ttl).
 
 **Regenerating.** The output reflects the compiler and the examples at the time it was generated.
-Any change to `spec/persistence.ttl`, to an example, to the compiler or to its templates can change
+Any change to `spec/persistence.ttl`, to an example, to the compiler or to its builders can change
 it, so regenerate after such a change, and before reading the output against this table. The task
 replaces `execution/` whole. Its output is deterministic, so a copy taken before the change and
 `diff -r` show exactly what the change did to the generated SPARQL. Compiled profiles are not
