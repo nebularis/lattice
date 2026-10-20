@@ -251,3 +251,80 @@ def test_h2_5_t4_guard_d_refuses_a_missing_or_non_numeric_epoch_on_each_engine_a
     # into xsd:integer any integer passes and the mismatch cannot arise.
     assert _bootstrap_written({"target": target, "epoch": Literal(3, datatype=XSD.integer)}, guards=True) == _pick(rdflib=False, oxigraph=True)
     assert _bootstrap_written({"target": target, "epoch": LONG_TERM(3)}, guards=True)
+
+
+# ---- TSD-34 a GRAPH block, a sub-select, a UNION and a FILTER NOT EXISTS ----------------------------------------------------
+
+_TSD34_TRIPLES = [("v1", "cp", "T"), ("v1", "has", "a"), ("v1", "has", "b"), ("v2", "drops", "a"), ("v2", "prev", "v1"), ("v3", "prev", "v2"), ("v2", "adds", "c")]
+_TSD34_BODY = {
+    "with a sub-select": "{ SELECT ?cp WHERE { ?cp <urn:cp> ?t } }",
+    "without a sub-select": "?cp <urn:cp> ?t .",
+}
+
+
+def _tsd34_query(variant: str, version: str) -> str:
+    """The members of version 3 (`a` is dropped by version 2, `b` is kept, `c` is added), with the drop test as a `FILTER NOT EXISTS` that has no
+    `GRAPH` of its own. The correct answer is `b` and `c`. `version` is `<urn:v3>`, or `$v` when the caller passes it in."""
+    return (
+        f"SELECT ?m WHERE {{ GRAPH <urn:g> {{ {_TSD34_BODY[variant]} {version} <urn:prev>* ?w . ?w <urn:prev>* ?cp . "
+        "{ ?w <urn:has> ?m } UNION { ?w <urn:adds> ?m } "
+        f"FILTER NOT EXISTS {{ ?x <urn:drops> ?m ; <urn:prev> ?z . ?z <urn:prev>* ?w . {version} <urn:prev>* ?x }} }} }}"
+    )
+
+
+_TSD34_CHILD = """
+import sys
+from rdflib import Dataset, URIRef
+d = Dataset(); g = d.graph(URIRef("urn:g"))
+for s, p, o in %r: g.add((URIRef("urn:" + s), URIRef("urn:" + p), URIRef("urn:" + o)))
+rows = d.query(sys.argv[1], initBindings={"v": URIRef("urn:v3")} if "$v" in sys.argv[1] else None)
+print("".join(sorted(str(r[0])[-1] for r in rows)))
+""" % (_TSD34_TRIPLES,)
+
+
+def _tsd34_rdflib_by_seed(query: str, seeds=range(16)) -> set[str]:
+    """The answers over a sweep of hash seeds, each in a child process (TSD-01, TSD-34)."""
+    import os
+    import subprocess
+    import sys
+
+    return {
+        subprocess.run([sys.executable, "-c", _TSD34_CHILD, query], env={**os.environ, "PYTHONHASHSEED": str(seed)}, capture_output=True, text=True, check=True).stdout.strip()
+        for seed in seeds
+    }
+
+
+def _tsd34_here(query: str) -> str:
+    ds = engines.dataset()
+    for s, p, o in _TSD34_TRIPLES:
+        ds.graph(U("urn:g")).add((U("urn:" + s), U("urn:" + p), U("urn:" + o)))
+    rows = ds.query(query, initBindings={"v": U("urn:v3")} if "$v" in query else None)
+    return "".join(sorted(str(r[0])[-1] for r in rows))
+
+
+@engines.each_engine
+@pytest.mark.parametrize("version", ["<urn:v3>", "$v"], ids=["constant", "parameter"])
+def test_tsd_34_a_filter_not_exists_in_a_graph_block_with_a_sub_select_and_a_union_sees_the_graph_on_oxigraph_and_only_for_some_hash_seeds_on_rdflib(version):
+    """rdflib's `evalGraph` sets `x.ctx.graph` back to the enclosing graph after it yields each solution. Solutions that share one
+    context then evaluate a later `FILTER NOT EXISTS` against the dataset's default graph, which holds nothing, and the dropped member `a` stays.
+    Which solution comes first follows the hash seed. The same form without the sub-select is right on every seed. The behaviour is the same
+    with a constant as with a parameter, so it is not about initial bindings."""
+    with_sub = _tsd34_query("with a sub-select", version)
+    without = _tsd34_query("without a sub-select", version)
+    if _current() == "rdflib":
+        assert _tsd34_rdflib_by_seed(with_sub) == {"bc", "abc"}
+        assert _tsd34_rdflib_by_seed(without) == {"bc"}
+    else:
+        assert _tsd34_here(with_sub) == "bc"
+        assert _tsd34_here(without) == "bc"
+
+
+@engines.each_engine
+def test_tsd_34_a_variable_used_inside_a_sub_select_takes_the_caller_value_on_each_engine():
+    """What TD-68 first assumed was the fault. A parameter inside a sub-select is applied, on rdflib as an initial binding and on Oxigraph as text."""
+    ds = engines.dataset()
+    for s in ("a", "b"):
+        for m in (1, 2, 3):
+            ds.graph(U("urn:g")).add((U(f"urn:{s}"), U("urn:p"), U(f"urn:m{m}")))
+    rows = ds.query("SELECT ?m WHERE { GRAPH <urn:g> { { SELECT ?m WHERE { $v <urn:p> ?m } } } }", initBindings={"v": U("urn:a")})
+    assert len(rows if isinstance(rows, list) else list(rows)) == 3

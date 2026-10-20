@@ -45,7 +45,7 @@ version, and the two together are what we aim for. A finding built only on Docum
 first line.
 
 **A run record** goes with every Observed finding: the date, the store and its version, the Python version, and the kind of
-machine, never the machine or person (ADR-A124 decision 5). Five run records appear below.
+machine, never the machine or person (ADR-A124 decision 5). Six run records appear below.
 
 | Run | Machine | Python | Stores |
 |---|---|---|---|
@@ -54,6 +54,7 @@ machine, never the machine or person (ADR-A124 decision 5). Five run records app
 | **R-C** | a Linux x86_64 container, 15 GB, used by an agent for H2.5, 2026-10-13 | 3.14.8 | rdflib 7.6.0, pyoxigraph 0.5.11 |
 | **R-D** | a Linux x86_64 container, 4 logical cores, 15 GB, used by an agent for the ontology test-suite speed work, 2026-10-16 to 2026-10-17 | 3.14.8 | rdflib 7.6.0, pyoxigraph 0.5.11, pySHACL 0.40.1 |
 | **R-E** | a macOS arm64 laptop with four performance and four efficiency cores and 8 GB, used by the maintainer to repeat R-D's runs, 2026-10-16 to 2026-10-17 | 3.14.7 | rdflib 7.6.0, pyoxigraph 0.5.11, pySHACL 0.40.1 |
+| **R-F** | a macOS arm64 laptop, used by an agent for H2.6f's `members` read, 2026-10-20 | 3.14.7 | rdflib 7.6.0, pyoxigraph 0.5.11 |
 
 **How to add a finding** is in §6.0 and in the skill. In short: say what you were testing, how you found it, the smallest
 SPARQL that shows it, the result on each store you have, the reason if you can find it in the source, what it means for
@@ -231,6 +232,7 @@ to the store or where it is a matter of capacity.
 | [TSD-31](#tsd-31-pyshacl-copies-the-data-graph-on-every-validation-unless-told-not-to) | copying the data graph for a validation | not specified | pySHACL copies it, 0.09 s for 5,000 to 14,000 triples | not applicable | Source, Observed |
 | [TSD-32](#tsd-32-a-constant-filter-whose-value-is-false-is-dropped-by-rdflib) | `FILTER (false)` | removes every solution | ✘ removes none | ✔ | Source, Observed |
 | [TSD-33](#tsd-33-on-oxigraph-count-over-a-statically-false-filter-returns-no-row) | `COUNT(*)` over a filter that is statically false | one row, 0 | ✔ except TSD-32 | ✘ no row | Observed |
+| [TSD-34](#tsd-34-rdflib-evaluates-a-filter-not-exists-in-a-graph-block-against-the-wrong-graph-for-some-solutions) | `FILTER NOT EXISTS` without its own `GRAPH`, inside a `GRAPH` block that holds a sub-select and a `UNION` | tests the block's graph | ✘ sometimes tests the default graph, by hash seed | ✔ | Source, Observed |
 
 ## 6. The findings
 
@@ -1224,6 +1226,59 @@ filter is false before it runs, and not when it has to evaluate it.
 **What it means for LATTICE.** Code that reads the first row of a `COUNT` from `OxigraphStore.select` should expect none (the benchmark's pass criterion never
 writes such a filter). The mechanism is open (TSD-Q17).
 
+### TSD-34. rdflib evaluates a `FILTER NOT EXISTS` in a `GRAPH` block against the wrong graph for some solutions
+
+**Evidence:** Source (rdflib 7.6.0) and Observed on both stores, R-F. A defect in rdflib. Oxigraph is correct. FMH-H2-6f and TD-68 first put this down to initial bindings, which this finding corrects.
+
+**Context.** The `members` read (H2.6f) is slow on rdflib over a long chain (TD-68). A form with the nearest-checkpoint test moved into a sub-select took 0.15 s where the original took about 100 s,
+but its result kept members that a later version had dropped. We took the cause to be rdflib ignoring `initBindings` inside the sub-select, and recorded that as the reason the form was not used.
+
+**How we found it.**
+
+1. *Initial bindings in a sub-select.* We ran `SELECT ?m WHERE { GRAPH <g> { { SELECT ?m WHERE { $v <p> ?m } } } }` with `v` as an initial binding on rdflib and as text on Oxigraph, and variants with the variable projected, unprojected, under `LIMIT`,
+   under an aggregate, and inside `FILTER NOT EXISTS { SELECT ... }`. Every variant applied the value on both stores. The first cause was wrong.
+2. *The members query.* We rebuilt the sub-select form on a six version chain. rdflib kept a dropped member and Oxigraph did not, with the checkpoint test in the sub-select. Moving the drop test into a sub-select instead gave the right answer on both. Replacing the sub-select by a pattern that returns the same rows also gave the right answer.
+3. *Bisecting.* Cutting the query down, the wrong answer needed all of a sub-select, a `UNION` and a `FILTER NOT EXISTS` with no `GRAPH` of its own, in one `GRAPH` block. Dropping any one gave the right answer.
+4. *The seed.* The same query gave a different answer in different runs. Sweeping `PYTHONHASHSEED` (skill `lattice-triple-stores`) over 32 child processes gave the wrong answer for 13 seeds and the right one for 19, with a constant in place of the parameter,
+   and 15 and 17 with the parameter. So a parameter plays no part.
+5. *The graph.* We traced the `NOT EXISTS` body. For the wrong solution its context's graph was the `Dataset` and not the named graph, so the body, which has no `GRAPH`, searched the default graph and found nothing.
+6. *The line.* Replacing the two lines of `evalGraph` that reset the graph with `pass` gave the right answer for all 8 seeds we tried, where the stock code gave the wrong answer for 6 of them.
+
+**What the store does.** Data in `<g>` is a chain `v3 prev v2 prev v1` where `v1` has members `a` and `b`, `v2` drops `a` and adds `c`. The members of `v3` are `b` and `c`.
+
+```sparql
+SELECT ?m WHERE { GRAPH <g> {
+  { SELECT ?cp WHERE { ?cp <cp> ?t } }
+  <v3> <prev>* ?w . ?w <prev>* ?cp .
+  { ?w <has> ?m } UNION { ?w <adds> ?m }
+  FILTER NOT EXISTS { ?x <drops> ?m ; <prev> ?z . ?z <prev>* ?w . <v3> <prev>* ?x }
+} }
+```
+
+| Form | rdflib, over 32 seeds | Oxigraph | Correct |
+|---|---|---|---|
+| as written, constant `<v3>` | `b c` for 19 seeds, `a b c` for 13 | `b c` | `b c` |
+| as written, `$v` as an initial binding (text on Oxigraph) | `b c` for 17, `a b c` for 15 | `b c` | `b c` |
+| the sub-select replaced by `?cp <cp> ?t .` | `b c` for all 32 | `b c` | `b c` |
+| the sub-select kept, no `UNION` (`?w <has> ?m`) | `b` for every seed we tried | `b` | `b` |
+
+**Why.** `rdflib/plugins/sparql/evaluate.py`, `evalGraph` (line 220), evaluates the block's pattern in a context whose graph is the named graph, and for each solution it yields it then sets `x.ctx.graph = prev_graph` (lines 242 and 251), the enclosing graph.
+A solution's `ctx` is the context object it was made in, and solutions made without a new binding scope share one. `evalFilter` (line 208) evaluates a filter on each solution as the generator produces it, and `Builtin_EXISTS` (`operators.py`, line 580) thaws that solution's context
+and evaluates the body in it. After the first solution is yielded the shared context's graph is the dataset, which here reads the default graph (`default_union` is false), so the next `NOT EXISTS` body finds nothing and keeps the member.
+Which solution comes first decides how many are affected. A sub-select joined to a `UNION` is a non-lazy join (`evalJoin`, line 156), whose right side is built in a Python `set`, so the order follows the hash seed (TSD-01).
+`Dataset` is created with `default_union` false. A body that has a `GRAPH` of its own does not depend on the context's graph, and putting one in the body gave the right answer for all 32 seeds. We did not isolate why the sub-select matters and the `UNION` alone does not (TSD-Q19).
+
+**What it means for LATTICE.**
+
+- Initial bindings inside a sub-select work on both stores. TD-68's account of the fast form of the `members` read is wrong, and the note on it should say so and cite this finding. The form is still not usable on rdflib.
+- The `members` read as it stands has no sub-select, and its H2.6f tests pass on rdflib. We have not swept hash seeds over it. Its drop test has no `GRAPH` of its own and sits inside a `GRAPH` block, which is the shape this finding needs, so it is at risk if a join in it becomes non-lazy (TSD-Q19).
+- A fast form of `members` on rdflib should put a `GRAPH` inside each `FILTER [NOT] EXISTS` body, which the audits (`key-claim-quarantine`, `key-claim-merge-rewrite`) already do, or avoid a sub-select beside a `UNION` in one `GRAPH` block, and be tested on a sweep of hash seeds against the reference model of `test_membership.py`.
+- A test of a `FILTER [NOT] EXISTS` inside `GRAPH` on rdflib must sweep seeds in child processes, as the probe for this finding does. One run in the test process measures luck.
+- The probe is `test_tsd_34_*` in `tools/persistence/tests/test_store_probes.py`. It asserts the defect on rdflib, so a fix in rdflib fails it and this entry is then updated.
+
+**Reproduce it.** Run the query above over the data of the table's caption, once for each `PYTHONHASHSEED` from 0 to 31, in a child process with `rdflib.Dataset`, and once on Oxigraph.
+`mise exec -- python -m pytest tools/persistence/tests/test_store_probes.py -q -k tsd_34` runs it on rdflib, and `mise run check:persistence-oxigraph` on both.
+
 ## 7. Corrections, and what they taught us
 
 ### 7.1 rdflib and the order of an update (TSD-01)
@@ -1287,3 +1342,4 @@ that a check can fail.
 | TSD-Q16 | what `inplace=True` saves, and whether it is safe with shared graphs | TSD-31's 9% is a fixed cost per validation | run the suite with a copy per test and `inplace=True`, and with the mutation guard on |
 | TSD-Q17 | why Oxigraph returns no row for `COUNT(*)` over a statically false filter | TSD-33 is observed, not explained | read Oxigraph's query optimiser |
 | TSD-Q18 | whether Fuseki or Jena ARQ shows the sensitivity of TSD-25 to TSD-27 | the rules in ADR-A128 assume only rdflib is sensitive | run benchmark `sparql-constraint-query-cost` against a Fuseki endpoint |
+| TSD-Q19 | what makes a sub-select matter in TSD-34, which of the generated queries with a `FILTER [NOT] EXISTS` without its own `GRAPH` inside a `GRAPH` block (`append-version`, `cas-replace-composite-property` and the other write templates) can meet it, and whether Fuseki or Jena ARQ does | TSD-34 is isolated on a non-lazy join of a sub-select and a `UNION` only, and the read-only and write templates have the shape in other joins | trace which solutions share a context, run each template's guard on a seed sweep, and report the defect upstream if it still holds in a later rdflib |
