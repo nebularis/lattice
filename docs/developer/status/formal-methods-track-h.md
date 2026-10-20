@@ -751,3 +751,12 @@ For acceptance: ADR-A132, the persistence caller library (Proposed), and ADR-A12
 - 2026-10-20: the maintainer approved W-65's decisions (D-4 to D-6), and decided D-10 (add a warning), D-11 (a compile-time check)
   and D-24 (a test, with persistence's catalogue reach widened, coverage before narrow scope). All three are added to H2.8b. D-9, D-12
   and D-15 asked back. AIR-66 handed over into the AIR Phase 4 plan.
+| D-30 | H2.8b | the library walks the contract's edges in Python rather than running the payload-check query, held equal to it on both engines over random payloads | FMH-H2-8b |
+| D-31 | H2.8b | the contract gains `dal:edgeTargetShape` and the payload contract the boundary shape. An append of versions roots its payload at `newVersion` | FMH-H2-8b |
+| D-32 | H2.8b | an empty `logGraphs` is refused by default, with a flag that reports nothing examined. The outcome is two contract properties and a library derivation, not a result column. Fixed-graph audits report clean over an empty graph (TD-72) | FMH-H2-8b, TD-72 |
+| D-33 | H2.8b | reference modes are checked only where the caller supplies which nodes are versions (TD-67 narrowed). The delta and patch-log slots are not bounded (TD-70), and event-type shapes have no hook yet (TD-71) | FMH-H2-8b |
+| D-34 | H2.8b | the caller check is strict: an unknown parameter is refused, a digest must be 64 lower-case hex | FMH-H2-8b |
+- 2026-10-20: the maintainer decided D-9 (allow `dal:NoReceipt` on composites, with a later warning for record classes), D-15 (b), a
+  profile term naming record classes, and D-12 (a), the receipt-only composite templates deleted in H2.9 and `dal:SnapshotPerRevision`
+  refused on in-place composites. Approved H2.6d's twelve, H2.6e's except (2), asked back, H2.6f's except (1), (8), (11) and (12),
+  asked back, and H2.7's fifteen, (12) explained. Paused after H2.8b, at the maintainer's request.
