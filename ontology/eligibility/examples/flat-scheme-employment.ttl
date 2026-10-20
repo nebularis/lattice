@@ -40,7 +40,6 @@ ex:title-contract a voc:SchemeContract ;
 
 ex:benefit-roles a elg:Condition ;
     elg:matchStrategy elg:HierarchicalMatch ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:constrainedByContract ex:title-contract ;
     elg:excludedConcept ex:contractor .

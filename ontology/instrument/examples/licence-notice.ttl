@@ -106,7 +106,7 @@ ex:day a qnt:Unit ; rdfs:label "day" .
 # Placeholders: scopes stated, not yet evaluable (C7b, C13).
 ex:material-breach a elg:Condition ;
     elg:conditionKey "licensee-material-breach" ;
-    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:matchStrategy elg:ExactMatch ; 
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:materially-breached .
 ex:materially-breached a skos:Concept ; rdfs:label "the Licensee has committed a material breach" .

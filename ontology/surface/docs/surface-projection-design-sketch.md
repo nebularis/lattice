@@ -462,7 +462,7 @@ Options: (a) add `elg:boundScheme` to Eligibility with a projection to Vocabular
 
 ### 15.5 `bhv:targetsAllowance` drift
 
-`ontology/behaviour/spec/behaviour.ttl` declares `bhv:targetsAllowance`; `ontology/behaviour/README.md` §5 does not, though `ontology/behaviour/shapes/constraints.ttl` checks it and the validation plan claims it was added in Gate 3. The README is authoritative per `docs/GOVERNANCE.md`, so spec and README have drifted in the direction the drift discipline says cannot happen. Unrelated to surfaces, but it is a live README⇄spec parity failure worth logging.
+`ontology/behaviour/spec/behaviour.ttl` declares `bhv:targetsAllowance`; `ontology/behaviour/README.md` §5 does not, though `ontology/behaviour/shapes/constraints.ttl` checks it and the validation plan claims it was added in Gate 3. The README is authoritative per the order of authority in `docs/architecture/ontology-architecture.md` §2, so spec and README have drifted in the direction the drift discipline says cannot happen. Unrelated to surfaces, but it is a live README⇄spec parity failure worth logging.
 
 ---
 

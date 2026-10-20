@@ -37,7 +37,8 @@ contract resolved to and the ADR-A87 decision for each of its members, the
   ``ontology/mork/docs/eligibility-executable-compiler.md`` for why.
 - Profile aggregation (``elg:AllRequired``, ``elg:AnySufficient``) uses
   strong Kleene logic over the three outcomes (ADR-A89 item 5).
-  ``elg:DimensionConsistent`` has no evaluable definition and is refused
+  Any other composition operation, for example one a downstream ontology
+  adds, has no evaluable definition here and is refused
   (``exe:RefusedOperation``).
 - Runtime result tracking (the design note's ``exe:EvaluationRun``,
   ``exe:ConditionResult``, §6-§13) is not implemented — this module compiles
@@ -536,10 +537,10 @@ def compile_profile(
     """Compile one ``elg:AdmissionProfile`` and each of its conditions into a ``ProfilePlan``."""
     if (profile, RDF.type, ELG.AdmissionProfile) not in graph:
         raise IRCompileError(f"{profile} is not an elg:AdmissionProfile")
-    aggregation = graph.value(profile, ELG.compatibilityOperation)
+    aggregation = graph.value(profile, ELG.compositionOperation)
     if aggregation not in (ELG.AllRequired, ELG.AnySufficient):
         raise IRCompileError(
-            f"{profile} declares compatibility operation {aggregation}, which has no evaluable "
+            f"{profile} declares composition operation {aggregation}, which has no evaluable "
             f"definition here (exe:RefusedOperation); elg:AllRequired and elg:AnySufficient are supported"
         )
     conditions = sorted(graph.objects(profile, ELG.hasCondition), key=str)

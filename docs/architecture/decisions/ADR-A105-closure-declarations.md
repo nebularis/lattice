@@ -1,15 +1,18 @@
+---
+published: true
+---
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
 # ADR-A105: Closure declarations
 
-**Status:** Accepted 2026-10-12, proposed the same day
+**Status:** Published, 2026-10-19. Accepted 2026-10-12.
+**Described in:** [Eligibility README](../../../ontology/eligibility/README.md)
 **Date:** 2026-10-12
 **Related:** [ADR-A103](ADR-A103-eligibility-set-readings.md) (set readings, and its 2026-10-12
-addendum), [ADR-A14](ADR-A14-conformance-levels.md) (conformance level L5's "closure
-assumptions"), [ADR-A106](ADR-A106-behaviour-configuration-runtime-occasions-and-records.md)
-(`bhv:closureReliedOn`), [ADR-A104](ADR-A104-instrument-terms-and-legal-relations.md) (deemings),
-[ADR-A115](ADR-A115-quantification-context-values.md) (context values), the computable contract
-substrate plan's HQ-6a, questions HQ6a-Q1 to Q5
+addendum), [ADR-A14](https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-A14-conformance-levels.md) (conformance level L5's "closure
+assumptions"), [ADR-A106](https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-A106-behaviour-configuration-runtime-occasions-and-records.md)
+(`bhv:closureReliedOn`), [ADR-A104](https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-A104-instrument-terms-and-legal-relations.md) (deemings),
+[ADR-A115](https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-A115-quantification-context-values.md) (context values)
 
 ## Context
 
@@ -24,33 +27,33 @@ saying what one is. Instrument's `ins:when` and Behaviour's `bhv:closureReliedOn
 
 ## Decision
 
-1. **A set reading decides on completeness only under a closure** (HQ6a-Q1 (b)). Without one, a
+1. **A set reading decides on completeness only under a closure.** Without one, a
    binding read `elg:SomeValue` decides only Permitted, from a value that is Permitted, and one read
    `elg:EveryValue` only Denied, from a value that is Denied. Every other outcome is Undetermined.
    Under a closure, some value is Denied when every value is Denied and every value Permitted when
    every value is Permitted, the empty case included. A closure never changes `elg:SingleValue`.
    L15 is restated to say so, and ADR-A103 gains an addendum.
-2. **Eligibility declares closures** (HQ6a-Q2 (a)): `elg:Closure`, read by Eligibility's conditions
+2. **Eligibility declares closures.** `elg:Closure` is read by Eligibility's conditions
    and compilers. Behaviour and Instrument import Eligibility, so a breach record and a deeming can
    name one.
-3. **The binding names its closure** (HQ6a-Q3 (a)), with `elg:closedUnder`, where it relies on it.
-4. **A closure states only its source, and covers exactly the bindings that name it** (HQ6a-Q5
-   (b)). `elg:licensedBy` names one source and has no range: a deeming or another term, a party
+3. **The binding names its closure,** with `elg:closedUnder`, where it relies on it.
+4. **A closure states only its source, and covers exactly the bindings that name it.**
+   `elg:licensedBy` names one source and has no range: a deeming or another term, a party
    whose register is authoritative, or an operational profile by which a deployment declares its
    records complete. Several bindings share a closure by each naming it. Nothing infers which
    bindings a closure is for.
 5. **The cut is the deciding record's recording time.** A closure licenses the records as they
    stood when the decision was recorded (`fnd:Evidenced`). A decision names the closures it relied
    on with `elg:closureReliedOn`. A closure is in force from its source's effective time (L17, new).
-6. **Untimed** (HQ6a-Q4 (2)). A closure over a period, such as "within 60 days of the request",
+6. **Untimed.** A closure over a period, such as "within 60 days of the request",
    needs a window anchored per subject, resolved at evaluation (ADR-A115), and is declared later
    with the other matters of time: supersession by a late fact, conclusive and single-purpose
    deemings, business days, and a closure's binding to the store.
-7. **Refusal** (NRS D7). A compiler refuses a binding that names something which is not a closure,
+7. **Refusal.** A compiler refuses a binding that names something which is not a closure,
    or a closure with no source, with `exe:NoClosureLicence`. A binding that names no closure never
    decides on absence, so an unlicensed decision on absence cannot be compiled at all.
 8. **No Persistence content.** How a closure binds to a store, the per-root sequence and receipt
-   stream (formal-methods Track H's AO-Q6) and `dal:BlockingContiguityCheck`, is decided with the
+   stream and `dal:BlockingContiguityCheck`, is decided with the
    closure over a period.
 
 ## Consequences
@@ -63,7 +66,7 @@ saying what one is. Instrument's `ins:when` and Behaviour's `bhv:closureReliedOn
 - Examples that relied on ADR-A103's assumption name a closure: the admissions registry under an
   operational profile, a trial protocol's full-history clause, a claims file, a facility agent's
   register and a licence's reporting clause.
-- The compilers apply closures and the refusal in a following slice. Until then their SPARQL and
+- The compilers apply closures and the refusal in a following change. Until then their SPARQL and
   SHACL backends keep ADR-A103's original reading, which the reference semantics no longer shares
   for set readings.
 - Deciding on absence is always traceable to a named source. A wrong reference to a closure is
@@ -71,8 +74,7 @@ saying what one is. Instrument's `ins:when` and Behaviour's `bhv:closureReliedOn
 
 ## Addendum (2026-10-12): how a compiled decision names its closure
 
-**Status:** Accepted 2026-10-12, proposed the same day (CCS slice HQ-6a.2, HQ6a2-Q1 to Q3). The
-options, their consequences and diagrams are in the CCS plan, "HQ-6a.2's questions".
+**Status:** Accepted 2026-10-12, proposed the same day.
 
 1. **Reliance is reported per subject.** The compiled SPARQL query returns, beside `?decision` and
    `?diagnostic` (ADR-A89 item 5), a `?closure` column. It is bound only when completeness decided
@@ -80,7 +82,7 @@ options, their consequences and diagrams are in the CCS plan, "HQ-6a.2's questio
    record proved names no closure, so a late fact never needlessly reopens it.
 2. **A profile's row names the union** of the closures its conditions' rows name. It may overstate,
    never understate, what a profile relied on.
-3. **The compilers mint no decision records.** The evaluator (CCS C12) mints the
+3. **The compilers mint no decision records.** The evaluator mints the
    `elg:EligibilityDecision`, copies the row's closure into `elg:closureReliedOn`, and stamps the
    recording time, which is the cut. Identities and the clock stay out of compiled queries.
 4. **SWRL and OWL never rely on a closure,** since they derive only monotonic outcomes. The SHACL
@@ -88,3 +90,7 @@ options, their consequences and diagrams are in the CCS plan, "HQ-6a.2's questio
    SPARQL.
 5. **The reference semantics returns reliance** as well as the decision, so the differential harness
    can check the column once it covers bound conditions.
+
+## Provenance
+
+Proposed in the HQ-6a slice of the [computable contract substrate](../../developer/plans/computable-contract-substrate.md) plan (CCS), questions HQ6a-Q1 to Q5. Decisions 1 to 4 and 6 answer HQ6a-Q1 (b), Q2 (a), Q3 (a), Q5 (b) and Q4 (2) in turn. The refusal in decision 7 is decision D7 of the [normative rule substrate](../../developer/plans/normative-rule-substrate.md) plan (NRS). The pointer in decision 8 is question AO-Q6 of formal-methods Track H. The 2026-10-12 addendum is slice HQ-6a.2, questions HQ6a2-Q1 to Q3, whose options, consequences and diagrams are in the CCS plan under "HQ-6a.2's questions". The evaluator in addendum item 3 is CCS C12.

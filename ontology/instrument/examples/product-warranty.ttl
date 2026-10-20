@@ -88,21 +88,17 @@ ex:manufacturing-defect a skos:Concept ; skos:inScheme ex:causes ; rdfs:label "m
 ex:caused-by-misuse a elg:Condition ;
     elg:conditionKey "caused-by-misuse" ;
     elg:matchStrategy elg:ExactMatch ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:misuse .
 ex:caused-by-defect a elg:Condition ;
     elg:conditionKey "caused-by-manufacturing-defect" ;
     elg:matchStrategy elg:ExactMatch ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:manufacturing-defect ;
     elg:negated true .
-ex:misuse-not-defect a elg:Condition ;
+ex:misuse-not-defect a elg:AdmissionProfile ;
     elg:conditionKey "misuse-unless-manufacturing-defect" ;
-    elg:matchStrategy elg:ExactMatch ;
-    elg:compatibilityOperation elg:AllRequired ;
-    elg:wildcardSemantics elg:NoWildcard ;
+    elg:compositionOperation elg:AllRequired ;
     elg:hasCondition ex:caused-by-misuse , ex:caused-by-defect .
 
 # Both read the claim's cause, the case being a warranty claim.

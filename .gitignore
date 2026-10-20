@@ -4,6 +4,7 @@
 .vscode/
 
 # Build artifacts and caches consolidated in .build/
+.build/site/
 .build/pytest-cache/*
 !.build/pytest-cache/.gitkeep
 .build/full-sweep/*

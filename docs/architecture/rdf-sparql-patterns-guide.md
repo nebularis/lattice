@@ -11,7 +11,7 @@ note: "Comprehensive guide with running examples. Start with 'How to read this g
 
 ## Uniqueness, Ordering and Concurrency in RDF — The LATTICE Pattern Guide
 
-**Status:** Authoritative architectural guide. Identity and IRI minting is a framework-neutral pattern catalogue, not a platform mandate: see [iri-identity-patterns.md](iri-identity-patterns.md) and [ADR-A82](decisions/ADR-A82-framework-neutral-identity-pattern-selection.md). See [Appendix D](#appendix-d--traceability-to-the-source-notes) for disagreement with other documentation, [docs/developer/status/rdf-sparql-patterns-remediation.md](../developer/status/rdf-sparql-patterns-remediation.md) for the first correctness remediation (2026-09-23), and [docs/developer/status/iri-patterns-post-3866b21-remediation.md](../developer/status/iri-patterns-post-3866b21-remediation.md) for the second (epoch rebase after a bump, request-digest idempotency, retention of dormant heads, corrected sequencer density claims, and the other findings tracked there, summarised in [D.3](#d3-the-post-3866b21-remediation-pass-2026-09)).
+**Status:** Authoritative architectural guide. Identity and IRI minting is a framework-neutral pattern catalogue, not a platform mandate: see [iri-identity-patterns.md](iri-identity-patterns.md) and [ADR-A82](decisions/ADR-A82-framework-neutral-identity-pattern-selection.md). See [Appendix D](#appendix-d--traceability-to-the-source-notes) for disagreement with other documentation. The remediation passes are the first correctness remediation (2026-09-23) and the second (epoch rebase after a bump, request-digest idempotency, retention of dormant heads, corrected sequencer density claims, and the other findings, summarised in [D.3](#d3-the-post-3866b21-remediation-pass-2026-09)).
 
 **Audience:** anyone designing, implementing, reviewing or operating a LATTICE component that writes to an RDF store: the store SPI (A75), the Surface workflow, MORK governance, ingestion workers, and the ontology authors who decide where aggregate boundaries fall.
 
@@ -21,7 +21,7 @@ note: "Comprehensive guide with running examples. Start with 'How to read this g
 
 ## How to read this guide
 
-This is a long document, deliberately. The notes it consolidates were written as a sequence of increasingly hard questions ("how do I enforce a unique key?", "how do I order events?", "how do I know my write applied?", "what happens when I combine all three?"), and each answer exposed a failure mode in the previous one. The guide keeps that journey, because the *reasons* are what make the patterns safe to build; a table of solutions without the failures they answer is exactly the kind of summary that has already gone wrong once (see `docs/developer/notes/misalignment.md`).
+This is a long document, deliberately. The notes it consolidates were written as a sequence of increasingly hard questions ("how do I enforce a unique key?", "how do I order events?", "how do I know my write applied?", "what happens when I combine all three?"), and each answer exposed a failure mode in the previous one. The guide keeps that journey, because the *reasons* are what make the patterns safe to build; a table of solutions without the failures they answer is exactly the kind of summary that has already gone wrong once.
 
 Read it in one of three ways:
 
@@ -3439,7 +3439,7 @@ pat:DatasetShape
 
 ## Appendix D — Traceability to the source notes
 
-Every position this guide takes is grounded in one of the source documents; where the earlier sketch diverged from the sources, the guide follows the sources. The review in `docs/developer/notes/misalignment.md` listed the divergences; each is resolved here as follows.
+Every position this guide takes is grounded in one of the source documents; where the earlier sketch diverged from the sources, the guide follows the sources. Each divergence is resolved here as follows.
 
 | Position in this guide | Source(s) | Earlier sketch said |
 |---|---|---|
@@ -3487,11 +3487,11 @@ A review of ADR-A51 ([docs/developer/review/ADR-A51-review.md](../developer/revi
 
 ### D.2 The IRI-patterns remediation pass (2026-09)
 
-A second review ([docs/developer/review/IRI-patterns-remediation.md](../developer/review/IRI-patterns-remediation.md)), following the replacement of ADR-A51 by ADR-A82 and the framework-neutral rewrite of [iri-identity-patterns.md](iri-identity-patterns.md), found this guide had accumulated its own defects independent of the identity-policy question: non-portable datatype arithmetic, unbound-graph prefix scans, a fencing token that never advanced, a fork-detection query invalidated by the guide's own deterministic-IRI design, weak ETags, and several places where a genuine deployment trade-off was written as a single mandated answer rather than a declared choice. All mechanical defects are fixed in this pass; every trade-off is now a pointer to a `dal:` property on `ontology/persistence/spec/persistence.ttl`, never a mandated fix. Not attempted in that pass: renumbering the 16-digit worked examples, wiring the new `dal:` terms into the `tools/persistence` compiler, and TCK tests for the corrected behaviours (T-1 through T-11 remained as they were). The renumbering and the tests were done in D.3. See `docs/developer/status/rdf-sparql-patterns-remediation.md` for the itemised disposition.
+A second review, following the replacement of ADR-A51 by ADR-A82 and the framework-neutral rewrite of [iri-identity-patterns.md](iri-identity-patterns.md), found this guide had accumulated its own defects independent of the identity-policy question: non-portable datatype arithmetic, unbound-graph prefix scans, a fencing token that never advanced, a fork-detection query invalidated by the guide's own deterministic-IRI design, weak ETags, and several places where a genuine deployment trade-off was written as a single mandated answer rather than a declared choice. All mechanical defects are fixed in this pass; every trade-off is now a pointer to a `dal:` property on `ontology/persistence/spec/persistence.ttl`, never a mandated fix. Not attempted in that pass: renumbering the 16-digit worked examples, wiring the new `dal:` terms into the `tools/persistence` compiler, and TCK tests for the corrected behaviours (T-1 through T-11 remained as they were). The renumbering and the tests were done in D.3.
 
 ### D.3 The post-3866b21 remediation pass (2026-09)
 
-A third review ([docs/developer/review/iri-patterns-post-3866b21-review.md](../developer/review/iri-patterns-post-3866b21-review.md)) found that several D.2 fixes were incomplete or introduced new defects, and that some advice was unsafe for production. The itemised disposition is in [docs/developer/status/iri-patterns-post-3866b21-remediation.md](../developer/status/iri-patterns-post-3866b21-remediation.md). The substantive changes:
+A third review found that several D.2 fixes were incomplete or introduced new defects, and that some advice was unsafe for production. The substantive changes:
 
 | Position in this guide (now) | Was | Finding |
 |---|---|---|

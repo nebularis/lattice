@@ -133,7 +133,7 @@ ex:Territory a skos:Concept ; rdfs:label "Territory" .          # the concept wo
 
 ex:fault-reported a elg:Condition ;
     elg:conditionKey "fault-reported-at-a-site" ;
-    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:matchStrategy elg:ExactMatch ; 
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:fault .
 ex:fault a skos:Concept ; rdfs:label "a fault has been reported at a Site" .
@@ -155,7 +155,7 @@ tmpl:def-territory a ins:Definition , ins:Template ;
 # territories.
 ex:in-territory a elg:Condition ;
     elg:conditionKey "site-in-the-territory" ;
-    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:matchStrategy elg:ExactMatch ; 
     elg:wildcardSemantics elg:NoWildcard ;
     elg:constrainedByContract ex:territory-contract ;
     elg:requiredConcept ex:Territory .
@@ -229,7 +229,7 @@ ex:attend a ins:Obligation ;
     ins:scope ex:in-territory-northgate .
 ex:in-territory-northgate a elg:Condition ;
     elg:conditionKey "site-in-the-territory-northgate-v1" ;
-    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:matchStrategy elg:ExactMatch ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:constrainedByContract ex:territory-contract ;
     elg:requiredConcept ex:north , ex:midlands .

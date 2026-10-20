@@ -1,10 +1,12 @@
+---
+published: true
+---
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
 # ADR A-03: Eligibility condition taxonomy
 
-## Status
-
-Accepted
+**Status:** Published, 2026-10-19. Accepted 2026-09-17.
+**Described in:** [Eligibility README](../../../ontology/eligibility/README.md)
 
 ## Context
 
@@ -32,3 +34,15 @@ Each condition instance must declare:
 - Strategy selection is explicit per condition and can be validated structurally.
 - A profile can be reasoned over as a condition itself, which keeps composition uniform.
 - Interval conditions can bind directly to Quantification ranges without introducing new numeric mechanisms in Eligibility.
+
+## Addendum, 2026-10-19: what a profile declares
+
+Agreed by the maintainer. A condition that is not an admission profile declares one match strategy and one
+wildcard policy. An admission profile declares neither, since it tests no candidate itself, and declares one
+composition operation, which says how it combines its conditions' outcomes (ADR-A05's addendum of the same
+date). Laws L1 to L3 and Eligibility's shapes say so.
+
+
+## Provenance
+
+Accepted when Eligibility was first specified, 2026-09-17. The 2026-10-19 addendum answers questions OD6-Q7, ELC-Q1 and ELC-Q2 of the [`improved-ontology-documentation`](../../developer/plans/improved-ontology-documentation.md) plan.

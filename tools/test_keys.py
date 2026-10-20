@@ -17,6 +17,7 @@ from rdflib import Graph, Namespace, URIRef
 from rdflib.namespace import OWL, RDF, RDFS, SH
 
 ROOT = Path(__file__).resolve().parents[1]
+RELEASE = __import__("lattice_repo_catalogue").load(ROOT).release_version
 for source in ("tools/mork_compilers/src", "tools/persistence/src", "tools/surface/src", "packages/minting/python/src"):
     sys.path.insert(0, str(ROOT / source))
 sys.path.insert(0, str(ROOT / "tools"))
@@ -89,7 +90,7 @@ def _keyed(extra: str) -> Graph:
 
 def test_f1_01_spec_version_comments_and_layer() -> None:
     spec = _graph(SPEC)
-    assert spec.value(URIRef("https://www.nebularis.org/neuro-semantic/foundation"), OWL.versionIRI) == URIRef(LATTICE + "foundation/0.4.0")
+    assert spec.value(URIRef("https://www.nebularis.org/neuro-semantic/foundation"), OWL.versionIRI) == URIRef(LATTICE + f"foundation/{RELEASE}")
     for name in NEW_PROPERTIES:
         utility = str(spec.value(FND[name], FND.utility))
         assert utility.startswith("Subject:") and "Value:" in utility, name

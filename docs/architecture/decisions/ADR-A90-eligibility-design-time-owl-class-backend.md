@@ -1,13 +1,16 @@
+---
+published: true
+---
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
 # ADR-A90: Design-time OWL class backend for Eligibility
 
-**Status:** Accepted
+**Status:** Published, 2026-10-19. Accepted 2026-09-25.
+**Described in:** [Eligibility README](../../../ontology/eligibility/README.md)
 **Date:** 2026-09-25 (proposed), 2026-09-25 (accepted)
 **Related:** ADR-A23 (compiler family completion), ADR-A24 (backend
 strategy), ADR-A83 (test-only reasoning engine isolation, reserved), ADR-A87,
 ADR-A89, ADR-A91
-**Unit:** [`applied-ontology-readiness`](../../developer/plans/applied-ontology-readiness.md)
 
 ## Context
 
@@ -114,7 +117,7 @@ hierarchy classes of item 2, which allow several broader concepts per concept.
 The restriction concerns the path from a subject to its candidate, which
 belongs to the applied ontology, not to the concept scheme.
 
-## Implementation notes (2026-09-25, AOR-10 and AOR-11)
+## Implementation notes (2026-09-25)
 
 - `tools/mork_compilers/src/mork_compilers/owl_backend.py`. `Within(c)` is a
   class of concepts, with `{c} ⊑ Within(c)`. Item 2's `Within_R(c)` is
@@ -138,3 +141,7 @@ belongs to the applied ontology, not to the concept scheme.
   subject.
 - `check-classes` on the package CLI runs one check and prints its
   `exe:DesignTimeCheck` record.
+
+## Provenance
+
+Part of the [`applied-ontology-readiness`](../../developer/plans/applied-ontology-readiness.md) unit. The implementation notes record its slices AOR-10 and AOR-11.

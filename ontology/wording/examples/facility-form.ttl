@@ -128,16 +128,13 @@ ex:at-least-two a qnt:RangeSet ; qnt:onSpace ex:count-space ; qnt:hasRange ex:at
 
 ex:more-than-one-lender a elg:IntervalCondition ;
     elg:matchStrategy elg:IntervalContainment ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredRangeSet ex:at-least-two ;
     wrd:readsVariable ex:gv-lender-count .
 
 ex:when-syndicated a elg:AdmissionProfile ;
     elg:hasCondition ex:more-than-one-lender ;
-    elg:matchStrategy elg:SetMembership ;
-    elg:compatibilityOperation elg:AllRequired ;
-    elg:wildcardSemantics elg:NoWildcard .
+    elg:compositionOperation elg:AllRequired .
 
 # ---- The lender's jurisdictions -------------------------------------------
 

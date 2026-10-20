@@ -151,14 +151,14 @@ ex:Buyer a pty:Role ; rdfs:label "Buyer" .
 # Placeholders: conditions stated, not yet evaluable (C13).
 ex:goods-conform a elg:Condition ;
     elg:conditionKey "goods-conform-to-specification" ;
-    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:matchStrategy elg:ExactMatch ; 
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:conforming .
 ex:conforming a skos:Concept ; rdfs:label "the goods conform to the Specification" .
 
 ex:substantial-deprivation a elg:Condition ;
     elg:conditionKey "breach-deprives-buyer-of-substantially-the-whole-benefit" ;
-    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:matchStrategy elg:ExactMatch ; 
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:deprived .
 ex:deprived a skos:Concept ; rdfs:label "the breach deprives the Buyer of substantially the whole benefit of the Agreement" .

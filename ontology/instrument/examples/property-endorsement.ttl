@@ -131,14 +131,12 @@ ex:unit-9 a skos:Concept ; rdfs:label "Unit 9, Riverside Park" .
 ex:at-unit-7 a elg:Condition ;
     elg:conditionKey "loss-at-unit-7" ;
     elg:matchStrategy elg:ExactMatch ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:unit-7 .
 
 ex:at-unit-7-or-9 a elg:Condition ;
     elg:conditionKey "loss-at-unit-7-or-9" ;
     elg:matchStrategy elg:SetMembership ;
-    elg:compatibilityOperation elg:AnySufficient ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:unit-7 , ex:unit-9 .
 

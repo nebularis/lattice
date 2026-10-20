@@ -18,17 +18,14 @@
 #
 # The fourth shape (Historical provenance time) needs a resolution time that
 # belongs to whatever versioned record asserted voc:resolvedUnder, and
-# Vocabulary itself declares no such record class or timestamp property (the
-# sketch, §"SHACL validation", anticipates exactly this and permits fixture
-# metadata or a documented validation profile in its place). This file
-# therefore introduces one validation-profile-only term for that purpose:
+# Vocabulary itself declares no such record class or timestamp property. This
+# file therefore introduces one validation-profile-only term for that purpose:
 #
 #   vvp:resolvedAt — a valid-time "as-of" query point: the instant a
 #   voc:resolvedUnder-bearing record wants its binding resolved as of, on the
 #   same axis as fnd:validFrom/fnd:validTo and resolve()'s own `at` parameter.
-#   It is not a transaction-time "recorded when" timestamp (the guide's own
-#   convention for that axis is fnd:recordedAt/an ex:occurredAt-shaped
-#   property, guide §23.3) — naming it vvp:resolvedAt rather than
+#   It is not a transaction-time "recorded when" timestamp (that axis is
+#   fnd:recordedAt or an ex:occurredAt-shaped property) — naming it vvp:resolvedAt rather than
 #   vvp:recordedAt is deliberate, to avoid suggesting it answers "when was
 #   this written down" when it answers "resolved as of when." Not part of the
 #   normative Vocabulary specification (spec/vocabulary.ttl); used only by

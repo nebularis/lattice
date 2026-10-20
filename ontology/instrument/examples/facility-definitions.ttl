@@ -122,7 +122,7 @@ ex:MaterialAdverseEffect a skos:Concept ; rdfs:label "Material Adverse Effect" .
 # Placeholders: conditions stated, not yet evaluable (C13).
 ex:mae a elg:Condition ;
     elg:conditionKey "material-adverse-effect-on-the-obligors" ;
-    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:matchStrategy elg:ExactMatch ; 
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:adverse-effect .
 ex:adverse-effect a skos:Concept ;
@@ -130,14 +130,14 @@ ex:adverse-effect a skos:Concept ;
 
 ex:delivered-by-hand a elg:Condition ;
     elg:conditionKey "notice-delivered-by-hand" ;
-    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:matchStrategy elg:ExactMatch ; 
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:hand-delivery .
 ex:hand-delivery a skos:Concept ; rdfs:label "the notice has been delivered by hand to the addressee" .
 
 ex:notice-received a elg:Condition ;
     elg:conditionKey "notice-received" ;
-    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:matchStrategy elg:ExactMatch ; 
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:received .
 ex:received a skos:Concept ; rdfs:label "the notice has been received by the addressee" .

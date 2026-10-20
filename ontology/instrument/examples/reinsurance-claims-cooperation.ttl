@@ -169,7 +169,6 @@ ex:claim-2 a ex:Claim .
 ex:settled-with-approval a elg:Condition ;
     elg:conditionKey "settled-pursuant-to-an-approval" ;
     elg:matchStrategy elg:ExactMatch ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:constrainedByContract ins-voc:ActivityContract ;
     elg:requiredConcept ins-voc:Approve .
@@ -254,7 +253,6 @@ ex:arbitrary a skos:Concept ; rdfs:label "arbitrary, as determined" .
 ex:refused-arbitrarily a elg:Condition ;
     elg:conditionKey "refusal-found-arbitrary" ;
     elg:matchStrategy elg:ExactMatch ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:arbitrary .
 

@@ -171,7 +171,6 @@ ex:objections-register a elg:Closure ;
 ex:no-objection a elg:Condition ;
     elg:conditionKey "no-lender-has-objected" ;
     elg:matchStrategy elg:ExactMatch ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ins:Objection ;
     elg:negated true .

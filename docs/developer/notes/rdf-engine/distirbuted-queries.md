@@ -753,7 +753,7 @@ tier.
   heterogeneous and large data sources. ISWC 2019 *(verify)*.
 - Bancilhon, Spyratos. Update semantics of relational views. TODS 1981. Dayal, Bernstein. On the
   correct translation of update operations on relational views. TODS 1982.
-- LATTICE: ADR-A54, ADR-A75, `docs/architecture/Architecture Review.md` (G-08),
+- LATTICE: ADR-A54, ADR-A75, `docs/developer/review/Architecture Review.md` (G-08),
   `docs/developer/plans/lattice-platform-agentic-development-v0.2.md` (L8 taxonomy), papers 2 to 5
   in this directory.
 

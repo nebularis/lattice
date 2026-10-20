@@ -49,7 +49,6 @@ ex:required-tenure a qnt:RangeSet ; qnt:onSpace ex:tenure-space ; qnt:hasRange e
 # The conditions.
 ex:engineering-family a elg:Condition ;
     elg:matchStrategy elg:HierarchicalMatch ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:constrainedByContract ex:job-family-contract ;
     # Removing elg:requiredConcept raises elg:ConceptConditionDeclarationShape
@@ -59,15 +58,12 @@ ex:engineering-family a elg:Condition ;
 
 ex:minimum-tenure a elg:IntervalCondition ;
     elg:matchStrategy elg:IntervalContainment ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredRangeSet ex:required-tenure .
 
 ex:relocation-benefit a elg:AdmissionProfile ;
     elg:hasCondition ex:engineering-family , ex:minimum-tenure ;
-    elg:matchStrategy elg:HierarchicalMatch ;
-    elg:compatibilityOperation elg:AllRequired ;
-    elg:wildcardSemantics elg:NoWildcard .
+    elg:compositionOperation elg:AllRequired .
 
 # The bindings: which instances each condition evaluates, and the path to
 # each instance's candidate.

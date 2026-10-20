@@ -6,5 +6,4 @@
 ex:broken-interval-condition
     a elg:IntervalCondition ;
     elg:matchStrategy elg:IntervalContainment ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard .

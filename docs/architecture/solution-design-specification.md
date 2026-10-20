@@ -491,8 +491,7 @@ Rules that apply uniformly:
 
 **Not a platform contract.** A spike (ADR-A118, Proposed) testing whether a drafter can mark a
 contract's text parts in Microsoft Word, with no local installation, and have the marked document
-read as Logical English and a proposed meaning. See the
-[sketch](../developer/sketches/word-authoring-poc.md) for the design and
+read as Logical English and a proposed meaning. See
 [ADR-A118](decisions/ADR-A118-word-authoring-proof-of-concept.md) for the decision record. Its
 code, vocabulary and graph layout may be removed or rewritten without deprecation, and nothing
 outside `platform/authoring-service`, `workers/src/lattice_workers/wording_le`,
@@ -554,7 +553,7 @@ flowchart TB
   Browser --> CPProc
 ```
 
-The Control Plane and worker processes are not yet containerized or added to Compose, they currently run only as Maven/`pytest` test targets. Adding them as Compose services is required before the pilot in [the platform continuation status](../developer/status/platform-continuation.md) can run end to end, and is tracked there, not duplicated here.
+The Control Plane and worker processes are not yet containerized or added to Compose, they currently run only as Maven/`pytest` test targets. Adding them as Compose services is required before the pilot can run end to end.
 
 **Target shape (unchanged topology, hardened operational posture):** the same component graph, with PostgreSQL and RabbitMQ given persistent volumes and restart policies, Fuseki given a backup schedule for its dataset directory, and the Control Plane and worker tier each given their own container image with health checks. No additional component is introduced, this is an operational maturity step, not an architecture change, consistent with the single-writer, single-broker posture justified in [§7](#7-robustness-reliability-design).
 
@@ -590,7 +589,7 @@ The Control Plane and worker processes are not yet containerized or added to Com
 | Environment | Purpose | Difference from reference |
 |---|---|---|
 | Local development | Individual implementation work | Exactly the Compose stack in [§5.1](#51-deployment-topology) |
-| Pilot (seeded, local) | The author and reviewer pilot described in [the platform continuation status](../developer/status/platform-continuation.md) | Adds seeded demo identities and fixture scenarios, still single-host Compose |
+| Pilot (seeded, local) | The author and reviewer pilot | Adds seeded demo identities and fixture scenarios, still single-host Compose |
 | Future shared/production | Not yet planned in detail | Would add TLS termination, secret management, persistent volumes, and the hardening in [§5.1](#51-deployment-topology)'s target shape, deliberately deferred until the pilot proves the design |
 
 ---

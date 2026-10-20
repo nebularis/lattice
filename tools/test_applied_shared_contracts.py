@@ -17,10 +17,12 @@ from pathlib import Path
 
 import pytest
 from pyshacl import validate
+import lattice_repo_catalogue
 from rdflib import Graph, Namespace, URIRef
 from rdflib.namespace import OWL, RDF
 
 ROOT = Path(__file__).resolve().parents[1]
+RELEASE = lattice_repo_catalogue.load(ROOT).release_version
 CLASSIFICATION = ROOT / "ontology" / "applied" / "classification"
 COMMON = ROOT / "ontology" / "applied" / "insurance" / "common"
 VOCAB_SHAPES = ROOT / "ontology" / "vocabulary" / "shapes"
@@ -85,23 +87,23 @@ def _cached_validate(request: pytest.FixtureRequest, validated) -> None:
 def test_classification_documents_parse_and_import_the_pinned_versions():
     spec_imports = {str(o) for o in _classification_spec().objects(None, OWL.imports)}
     assert spec_imports == {
-        "https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0",
-        "https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0",
+        f"https://www.nebularis.org/neuro-semantic/lattice/foundation/{RELEASE}",
+        f"https://www.nebularis.org/neuro-semantic/lattice/vocabulary/{RELEASE}",
     }
     vocab_imports = {str(o) for o in _classification_vocab().objects(None, OWL.imports)}
-    assert vocab_imports == {"https://www.nebularis.org/neuro-semantic/lattice/applied/classification/0.2.0"}
+    assert vocab_imports == {"https://www.nebularis.org/neuro-semantic/lattice/applied/classification/0.3.0"}
 
 
 def test_common_documents_parse_and_import_the_pinned_versions():
     spec_imports = {str(o) for o in _common_spec().objects(None, OWL.imports)}
     assert spec_imports == {
-        "https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0",
-        "https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0",
-        "https://www.nebularis.org/neuro-semantic/lattice/party/0.9.0",
-        "https://www.nebularis.org/neuro-semantic/lattice/applied/classification/0.2.0",
+        f"https://www.nebularis.org/neuro-semantic/lattice/foundation/{RELEASE}",
+        f"https://www.nebularis.org/neuro-semantic/lattice/vocabulary/{RELEASE}",
+        f"https://www.nebularis.org/neuro-semantic/lattice/party/{RELEASE}",
+        "https://www.nebularis.org/neuro-semantic/lattice/applied/classification/0.3.0",
     }
     vocab_imports = {str(o) for o in _common_vocab().objects(None, OWL.imports)}
-    assert vocab_imports == {"https://www.nebularis.org/neuro-semantic/insurance/common/0.6.0"}
+    assert vocab_imports == {"https://www.nebularis.org/neuro-semantic/insurance/common/0.7.0"}
 
 
 # ---- AIR12-02: the ten contracts conform to Vocabulary's shapes (nine, then AIR-4.4's class of business) ---

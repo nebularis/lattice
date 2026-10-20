@@ -106,28 +106,28 @@ ex:Buyer a pty:Role ; rdfs:label "Buyer" .
 # exists (C7b, C13).
 ex:invoice-overdue a elg:Condition ;
     elg:conditionKey "invoice-unpaid-30-days-after-due" ;
-    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:matchStrategy elg:ExactMatch ; 
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:overdue .
 ex:overdue a skos:Concept ; rdfs:label "an invoice is unpaid 30 days after it is due" .
 
 ex:arrears-cleared a elg:Condition ;
     elg:conditionKey "every-overdue-invoice-paid" ;
-    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:matchStrategy elg:ExactMatch ; 
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:cleared .
 ex:cleared a skos:Concept ; rdfs:label "every overdue invoice has been paid" .
 
 ex:force-majeure-prevents a elg:Condition ;
     elg:conditionKey "force-majeure-prevents-supplier" ;
-    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:matchStrategy elg:ExactMatch ; 
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:prevented .
 ex:prevented a skos:Concept ; rdfs:label "a force majeure event prevents the Supplier from performing" .
 
 ex:force-majeure-ended a elg:Condition ;
     elg:conditionKey "force-majeure-ended" ;
-    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:matchStrategy elg:ExactMatch ; 
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:ended .
 ex:ended a skos:Concept ; rdfs:label "the force majeure event no longer prevents the Supplier from performing" .

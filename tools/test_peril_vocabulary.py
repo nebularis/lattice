@@ -17,10 +17,12 @@ from pathlib import Path
 
 import pytest
 from pyshacl import validate
+import lattice_repo_catalogue
 from rdflib import Graph, Literal, Namespace, URIRef
 from rdflib.namespace import OWL, RDF, RDFS
 
 ROOT = Path(__file__).resolve().parents[1]
+RELEASE = lattice_repo_catalogue.load(ROOT).release_version
 MODULE = ROOT / "ontology" / "applied" / "insurance" / "peril"
 VOCAB_SHAPES = ROOT / "ontology" / "vocabulary" / "shapes"
 
@@ -122,16 +124,16 @@ def test_spec_and_vocab_parse_and_import_the_pinned_versions():
     spec_imports = {str(o) for o in spec.objects(None, OWL.imports)}
     assert spec_imports == {
         "http://www.w3.org/2004/02/skos/core",
-        "https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0",
-        "https://www.nebularis.org/neuro-semantic/lattice/quantification/0.8.0",
-        "https://www.nebularis.org/neuro-semantic/insurance/common/0.6.0",
+        f"https://www.nebularis.org/neuro-semantic/lattice/foundation/{RELEASE}",
+        f"https://www.nebularis.org/neuro-semantic/lattice/quantification/{RELEASE}",
+        "https://www.nebularis.org/neuro-semantic/insurance/common/0.7.0",
     }
     vocab_imports = {str(o) for o in vocab.objects(None, OWL.imports)}
     assert vocab_imports == {
-        "https://www.nebularis.org/neuro-semantic/insurance/peril/0.5.0",
-        "https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0",
-        "https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0",
-        "https://www.nebularis.org/neuro-semantic/insurance/common-vocab/0.6.0",
+        "https://www.nebularis.org/neuro-semantic/insurance/peril/0.6.0",
+        f"https://www.nebularis.org/neuro-semantic/lattice/vocabulary/{RELEASE}",
+        f"https://www.nebularis.org/neuro-semantic/lattice/foundation/{RELEASE}",
+        "https://www.nebularis.org/neuro-semantic/insurance/common-vocab/0.7.0",
     }
 
 
@@ -281,7 +283,7 @@ def test_threshold_basis_concept_without_defining_threshold_is_rejected():
 
 def test_air22_01_spec_imports_common_and_every_import_resolves():
     spec = _spec()
-    assert "https://www.nebularis.org/neuro-semantic/insurance/common/0.6.0" in {
+    assert "https://www.nebularis.org/neuro-semantic/insurance/common/0.7.0" in {
         str(o) for o in spec.objects(None, OWL.imports)
     }
 

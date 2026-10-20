@@ -114,7 +114,7 @@ def test_air20_04_vocab_directive_stays_in_the_modules_vocab(path: str) -> None:
 
 # The literate layers whose README is the source of every file it generates. The shape files
 # each takes come from its repository catalogue entry (ADR-A121).
-LITERATE_LAYERS = ["foundation", "quantification", "wording", "behaviour", "instrument", "eligibility"]
+LITERATE_LAYERS = ["foundation", "vocabulary", "quantification", "wording", "behaviour", "instrument", "eligibility"]
 
 
 @pytest.mark.parametrize("layer", LITERATE_LAYERS)
@@ -159,7 +159,9 @@ def test_od1_t1_every_readme_scans_as_before(readme: Path) -> None:
     text = readme.read_text(encoding="utf-8")
     result = scan(text)
     assert [(b.tag, b.body, b.start_line) for b in result.blocks] == _legacy_blocks(text)
-    assert result.regions == [] and not any(b.hidden or b.output_file for b in result.blocks)
+    # A README migrated to the layout (OD6 onwards) has regions and hidden blocks by design.
+    if not literate_extract.uses_layout(result.sections):
+        assert result.regions == [] and not any(b.hidden or b.output_file for b in result.blocks)
 
 
 def test_od1_t2_a_tagged_fence_inside_another_fence_is_text() -> None:

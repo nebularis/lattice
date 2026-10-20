@@ -410,7 +410,7 @@ def _compile_profile_template(plan: ProfilePlan) -> Graph:
     template = mint(plan.profile, "sparql")
     graph.add((plan_node, RDF.type, EXE.ProfilePlan))
     graph.add((plan_node, EXE.implementsProfile, plan.profile))
-    graph.add((plan_node, EXE.usesCompatibilityOperation, plan.aggregation))
+    graph.add((plan_node, EXE.usesCompositionOperation, plan.aggregation))
     graph.add((plan_node, EXE.derivedFromEligibilityNode, plan.profile))
     graph.add((plan_node, EXE.producesArtefact, template))
     for condition in plan.conditions:

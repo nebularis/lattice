@@ -31,6 +31,7 @@ from urllib.parse import urlparse
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from ontology_version_check import (  # noqa: E402
+    RELEASE_DIRECTORIES,
     ROOT,
     VERSION_FILE,
     artefact_directories,
@@ -40,6 +41,8 @@ from ontology_version_check import (  # noqa: E402
     find_in_scope_ttl_files,
     git_lines,
     git_show,
+    is_member,
+    release,
     requires_version_iri,
 )
 
@@ -101,20 +104,34 @@ def release_name(version_iri: str) -> tuple[str, str]:
     return "-".join(segments).lower(), version
 
 
+RELEASE_NAME = "ontologies"
+
+
 def releases(root: Path) -> list[dict]:
     """The current version of every released document and artefact
     directory, with its files. ``marker`` is the file whose content at the
-    tag must hold ``marker_text``."""
+    tag must hold ``marker_text``. The modules released together (OD-D55) make
+    one release, ``ontologies-vX.Y.Z``, whose marker is the catalogue's number."""
     found = []
+    version, members = release(root)
+    if version is not None:
+        files = sorted(f for m in members for d in RELEASE_DIRECTORIES if (root / m / d).is_dir()
+                       for f in git_lines(root, "ls-files", "--cached", "--others", "--exclude-standard", "--", f"{m}/{d}")
+                       if (root / f).exists() and Path(f).name != VERSION_FILE)
+        found.append({"name": RELEASE_NAME, "version": version, "iri": None,
+                      "marker": "repository-catalogue.md", "marker_text": f'version = "{version}"',
+                      "tag": f"{RELEASE_NAME}-v{version}", "files": files})
     for path in find_in_scope_ttl_files(root):
         relative = path.relative_to(root).as_posix()
-        if not requires_version_iri(Path(relative)):
+        if not requires_version_iri(Path(relative)) or is_member(relative, members):
             continue
         for version_iri in sorted(extract_version_iris(path.read_text(encoding="utf-8"))):
             name, version = release_name(version_iri)
             found.append({"name": name, "version": version, "iri": version_iri, "marker": relative,
                           "marker_text": version_iri, "tag": f"{name}-v{version}", "files": [relative]})
     for directory in artefact_directories(root):
+        if is_member(directory + "/", members):
+            continue
         name = "-".join(Path(directory).parts[1:]).lower()
         version = artefact_version(root, directory) or ""
         found.append({"name": name, "version": version, "iri": None, "marker": f"{directory}/{VERSION_FILE}",
@@ -126,6 +143,8 @@ def label(release: dict, path: str) -> str:
     """A file's download name: ``persistence-spec-v0.2.1.ttl``,
     ``foundation-vocab-v0.3.0.ttl``, ``persistence-shapes-constraints-v0.1.0.ttl``."""
     file = Path(path)
+    if release["name"] == RELEASE_NAME:
+        return "-".join(Path(path).parts[1:-1] + (file.stem,)).lower() + f"-v{release['version']}{file.suffix}"
     if release["iri"] is None:
         return f"{release['name']}-{file.stem.lower()}-v{release['version']}{file.suffix}"
     kind = "" if release["name"].endswith("-vocab") else "-spec"

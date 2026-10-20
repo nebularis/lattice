@@ -9,7 +9,6 @@ ino:shadow-policy a elg:AdmissionProfile ;
 
 ino:shadow-peril-condition a elg:Condition ;
     elg:matchStrategy elg:HierarchicalMatch ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard .
 
 ino:shadow-capacity a bhv:AllowanceDefinition ;

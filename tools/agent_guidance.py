@@ -2,9 +2,10 @@
 # SPDX-License-Identifier: MPL-2.0
 """Agent guidance: AGENTS.md, the skill library and the plugin marketplace (ADR-A117).
 
-  build   writes .github/copilot-instructions.md from AGENTS.md
-  check   fails if that file has drifted, a skill is malformed, AGENTS.md's skill table and
-          .claude/skills/ disagree, the marketplace is wrong, or a link does not resolve
+  build   writes AGENTS.md's "Where things are" table from the repository catalogue (ADR-A121), then
+          .github/copilot-instructions.md from AGENTS.md
+  check   fails if that table is stale, that file has drifted, a skill is malformed, AGENTS.md's skill
+          table and .claude/skills/ disagree, the marketplace is wrong, or a link does not resolve
   link    links (copies on Windows) the skills into a personal skills directory, by default
           ~/.copilot/skills, for Copilot in projects other than LATTICE
 
@@ -21,14 +22,29 @@ import shutil
 import sys
 from pathlib import Path
 
+import lattice_repo_catalogue as rc
+
 ROOT = Path(__file__).resolve().parents[1]
 SKILLS = Path(".claude/skills")
 COPILOT = Path(".github/copilot-instructions.md")
 MARKETPLACE = Path(".claude-plugin/marketplace.json")
 REPO_URL = "https://github.com/nebularis/lattice/blob/main/"
 HEADER = "<!-- Generated from AGENTS.md by `mise run build:agent-guidance`. Edit AGENTS.md, not this file. -->\n\n"
+REGION_BEGIN = (
+    "<!-- BEGIN GENERATED where-things-are. Written by `mise run build:agent-guidance` from repository-catalogue.md. "
+    "Do not edit between the markers. -->"
+)
+REGION_END = "<!-- END GENERATED where-things-are -->"
 LINK = re.compile(r"\]\(([^)\s]+)\)")
 NAME = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
+
+
+def render_agents(agents: str, table: str) -> str:
+    """AGENTS.md with the text between its region markers replaced by the generated table."""
+    begin, end = agents.find(REGION_BEGIN), agents.find(REGION_END)
+    if begin < 0 or end < begin or agents.count(REGION_BEGIN) != 1 or agents.count(REGION_END) != 1:
+        raise ValueError("AGENTS.md needs its generated 'Where things are' region, once, between its two markers")
+    return agents[:begin + len(REGION_BEGIN)] + f"\n\n{table}\n\n" + agents[end:]
 
 
 def render_copilot(agents: str) -> str:
@@ -115,6 +131,12 @@ def check(root: Path) -> list[str]:
     problems = skill_problems(root) + marketplace_problems(root)
     agents = root / "AGENTS.md"
     copilot = root / COPILOT
+    text = agents.read_text(encoding="utf-8")
+    try:
+        if render_agents(text, rc.where_things_are(rc.load(root))) != text:
+            problems.append("AGENTS.md's 'Where things are' table is stale against repository-catalogue.md. Run `mise run build:agent-guidance`")
+    except (rc.CatalogueError, ValueError) as error:
+        problems.append(f"AGENTS.md's 'Where things are' table cannot be checked: {error}")
     if not copilot.is_file() or copilot.read_text(encoding="utf-8") != render_copilot(agents.read_text(encoding="utf-8")):
         problems.append(f"{COPILOT} has drifted from AGENTS.md. Run `mise run build:agent-guidance`")
     files = [agents, copilot] + sorted((root / SKILLS).rglob("*.md"))
@@ -147,8 +169,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--copy", action="store_true", help="for link: copy instead of linking (the default on Windows)")
     args = parser.parse_args(argv)
     if args.command == "build":
-        (ROOT / COPILOT).write_text(render_copilot((ROOT / "AGENTS.md").read_text(encoding="utf-8")), encoding="utf-8")
-        print(f"wrote {COPILOT}")
+        agents = render_agents((ROOT / "AGENTS.md").read_text(encoding="utf-8"), rc.where_things_are(rc.load(ROOT)))
+        (ROOT / "AGENTS.md").write_text(agents, encoding="utf-8")
+        (ROOT / COPILOT).write_text(render_copilot(agents), encoding="utf-8")
+        print(f"wrote AGENTS.md's table and {COPILOT}")
         return 0
     if args.command == "check":
         problems = check(ROOT)

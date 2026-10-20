@@ -651,3 +651,55 @@ def test_od5_t7_the_views_do_not_depend_on_the_order_of_entries() -> None:
     two = compile_readme(views_readme(PROFILE + "\n\n" + KIND + "\n\n" + DECISION)).readme
     assert region(one, "axiom-index") == region(two, "axiom-index")
     assert region(one, "class-diagram") == region(two, "class-diagram")
+
+
+# ---- OD6: enumeration (OD-D34) ----------------------------------------------------------------------
+
+
+def test_od6_t1_an_enumerated_class_is_stated_with_braces() -> None:
+    enumerated = "#### `ex:MyEnumeratedClass`\n\n**Definition.** One of two.\n\n**Equivalent to.** { `ex:MyEnum_1`, `ex:MyEnum_2` }"
+    out = extract(section6_readme(classes=enumerated))["ontology/x/spec/x.ttl"]
+    assert isomorphic(body(out), expected("""
+        ex:MyEnumeratedClass a owl:Class ; rdfs:comment "One of two." ;
+            owl:equivalentClass [ a owl:Class ; owl:oneOf ( ex:MyEnum_1 ex:MyEnum_2 ) ] .
+    """))
+
+
+@pytest.mark.parametrize("expression,turtle", [
+    ('ex:p only {"low", "high"}', '[ a owl:Restriction ; owl:onProperty ex:p ; owl:allValuesFrom [ a rdfs:Datatype ; owl:oneOf ( "low" "high" ) ] ]'),
+    ("{ex:a, ex:b} or ex:C", "[ a owl:Class ; owl:unionOf ( [ a owl:Class ; owl:oneOf ( ex:a ex:b ) ] ex:C ) ]"),
+])
+def test_od6_t2_enumerations_of_literals_and_inside_expressions(expression: str, turtle: str) -> None:
+    term = lg.class_expression(expression, {"ex": X + "#", **lg.STANDARD_PREFIXES}, "test")
+    assert isomorphic(expected(f"ex:S rdfs:subClassOf {lg.render(term)} ."), expected(f"ex:S rdfs:subClassOf {turtle} ."))
+
+
+@pytest.mark.parametrize("expression,message", [
+    ("{}", "holds names or literals, found '}'"),
+    ('{ex:a, "b"}', "names or literals, not both"),
+    ("{ex:a ex:b}", "separates its members with commas"),
+    ("{ex:a, ex:b", "separates its members with commas"),
+])
+def test_od6_t3_a_malformed_enumeration_is_refused(expression: str, message: str) -> None:
+    with pytest.raises(lg.GrammarError, match=message):
+        lg.class_expression(expression, {"ex": X + "#", **lg.STANDARD_PREFIXES}, "test")
+
+
+def test_od6_t4_only_an_enumeration_checked_in_shacl_is_sh_in_and_shows_in_the_views() -> None:
+    row = _class_with("| `ex:direction` | only { `ex:Forward`, `ex:Inverse` } | SHACL | |")
+    compiled = compile_readme(section6_readme(classes=row))
+    shapes = Graph().parse(data=compiled.shapes[STRUCTURAL], format="turtle")
+    assert isomorphic(shapes, expected(SH_PREFIX + """
+        ex:ThingShape a sh:NodeShape ; sh:targetClass ex:Thing ;
+            sh:property [ sh:path ex:direction ; sh:in ( ex:Forward ex:Inverse ) ] .
+    """))
+    assert "owl:oneOf" not in compiled.documents["ontology/x/spec/x.ttl"]
+    assert "ex:direction` only {`ex:Forward`, `ex:Inverse`} (SHACL only)" in region(compiled.readme, "axiom-index")
+    assert "direction, only one of Forward, Inverse" in region(compiled.readme, "class-diagram")
+
+
+def test_od6_t5_a_comma_list_label_splits_outside_braces_only() -> None:
+    entry = "#### `ex:Thing`\n\n**Definition.** A thing.\n\n**Subclass of.** { `ex:a`, `ex:b` }, `ex:C`"
+    out = extract(section6_readme(classes=entry))["ontology/x/spec/x.ttl"]
+    assert isomorphic(body(out), expected(
+        'ex:Thing a owl:Class ; rdfs:comment "A thing." ; rdfs:subClassOf [ a owl:Class ; owl:oneOf ( ex:a ex:b ) ], ex:C .'))

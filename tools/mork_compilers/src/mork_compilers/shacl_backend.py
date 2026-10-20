@@ -315,7 +315,7 @@ def _compile_profile_shapes(plan: ProfilePlan) -> Graph:
     mapping = mint(plan.profile, "shape-mapping")
     graph.add((plan_node, RDF.type, EXE.ProfilePlan))
     graph.add((plan_node, EXE.implementsProfile, plan.profile))
-    graph.add((plan_node, EXE.usesCompatibilityOperation, plan.aggregation))
+    graph.add((plan_node, EXE.usesCompositionOperation, plan.aggregation))
     graph.add((plan_node, EXE.compiledFromMapping, mapping))
     graph.add((plan_node, EXE.derivedFromEligibilityNode, plan.profile))
     for condition in plan.conditions:

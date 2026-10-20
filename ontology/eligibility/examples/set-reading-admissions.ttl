@@ -63,14 +63,12 @@ ex:medicine a skos:Concept ; skos:inScheme ex:subjects .
 # The conditions.
 ex:stem-qualification a elg:Condition ;
     elg:matchStrategy elg:SetMembership ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:constrainedByContract ex:subject-contract ;
     elg:requiredConcept ex:mathematics , ex:physics .
 
 ex:no-medicine a elg:Condition ;
     elg:matchStrategy elg:SetMembership ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:constrainedByContract ex:subject-contract ;
     elg:requiredConcept ex:medicine ;
@@ -84,9 +82,7 @@ ex:registry-closure a elg:Closure ;
 
 ex:engineering-admission a elg:AdmissionProfile ;
     elg:hasCondition ex:stem-qualification , ex:no-medicine ;
-    elg:matchStrategy elg:SetMembership ;
-    elg:compatibilityOperation elg:AllRequired ;
-    elg:wildcardSemantics elg:NoWildcard .
+    elg:compositionOperation elg:AllRequired .
 
 # The bindings: each reads the applicant's qualifications as a set.
 ex:stem-binding a elg:EvidenceBinding ;

@@ -236,7 +236,7 @@ def _profile(graph: Graph, plan: ProfilePlan, artefact: URIRef) -> None:
     node = mint(plan.profile, "execplan")
     graph.add((node, RDF.type, EXE.ProfilePlan))
     graph.add((node, EXE.implementsProfile, plan.profile))
-    graph.add((node, EXE.usesCompatibilityOperation, plan.aggregation))
+    graph.add((node, EXE.usesCompositionOperation, plan.aggregation))
     graph.add((node, EXE.derivedFromEligibilityNode, plan.profile))
     graph.add((node, EXE.producesArtefact, artefact))
     for condition in plan.conditions:

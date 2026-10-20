@@ -1,8 +1,12 @@
+---
+published: true
+---
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
 # ADR-A85: Vocabulary scoped and temporal binding resolution
 
-**Status:** Accepted
+**Status:** Published, 2026-10-19. Accepted 2026-09-25.
+**Described in:** [Vocabulary README](../../../ontology/vocabulary/README.md)
 **Date:** 2026-09-24 (proposed), 2026-09-25 (accepted)
 
 ## Context
@@ -48,3 +52,7 @@ implementation. No OWL axiom silently selects a binding.
   scoped bindings.
 - The ontology version IRI remains an explicit release decision, not an
   automatic consequence of adding the ADR.
+
+## Provenance
+
+Proposed 2026-09-24 and accepted 2026-09-25, with the Vocabulary change it describes.

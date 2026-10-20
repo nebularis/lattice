@@ -1,182 +1,254 @@
 # SPDX-License-Identifier: MPL-2.0
 
-@prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
-@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
-@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
-@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
-@prefix pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#> .
-@prefix owl:  <http://www.w3.org/2002/07/owl#> .
-@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix pty: <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
-@base <https://www.nebularis.org/neuro-semantic/eligibility> .
+@prefix voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-<https://www.nebularis.org/neuro-semantic/eligibility>
-	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.12.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.8.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/party/0.9.0> .
+<https://www.nebularis.org/neuro-semantic/eligibility> a owl:Ontology ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.18.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.18.0>, <https://www.nebularis.org/neuro-semantic/lattice/party/0.18.0>, <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.18.0>, <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.18.0> ;
+    dct:description "Eligibility models admissibility by declaring reusable conditions, collecting evaluation questions, and recording a three-valued decision (Permitted, Denied, Undetermined)." ;
+    dct:creator <https://github.com/hyperthunk> .
 
-elg:Condition a owl:Class ;
-	rdfs:comment "A declared admissibility condition." .
+dct:creator a owl:AnnotationProperty .
 
-elg:ExactCondition a owl:Class ; rdfs:subClassOf elg:Condition .
-elg:SetMembershipCondition a owl:Class ; rdfs:subClassOf elg:Condition .
-elg:IntervalCondition a owl:Class ; rdfs:subClassOf elg:Condition .
-elg:WildcardCondition a owl:Class ; rdfs:subClassOf elg:Condition .
+dct:description a owl:AnnotationProperty .
 
 elg:AdmissionProfile a owl:Class ;
-	rdfs:subClassOf elg:Condition, fnd:Version,
-		[ a owl:Restriction ; owl:onProperty elg:hasCondition ; owl:minCardinality "1"^^xsd:nonNegativeInteger ] ;
-	rdfs:comment "A reusable admissibility profile that composes one or more conditions." .
-
-elg:Question a owl:Class ;
-	rdfs:subClassOf fnd:Evidenced,
-		[ a owl:Restriction ; owl:onProperty elg:forCondition ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
-	rdfs:comment "An evaluation question posed against one condition." .
-
-elg:EligibilityDecision a owl:Class ;
-	rdfs:subClassOf fnd:Evidenced,
-		[ a owl:Restriction ; owl:onProperty elg:forProfile ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
-		[ a owl:Restriction ; owl:onProperty elg:hasQuestion ; owl:minCardinality "1"^^xsd:nonNegativeInteger ] ,
-		[ a owl:Restriction ; owl:onProperty elg:decisionValue ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
-	rdfs:comment "A recorded admissibility decision for one profile and one or more questions." .
-
-elg:MatchStrategy a owl:Class .
-elg:CompatibilityOperation a owl:Class .
-elg:WildcardSemantics a owl:Class .
-elg:Decision a owl:Class .
-elg:OperationalProfile a owl:Class ; rdfs:subClassOf fnd:Version .
-elg:Law a owl:Class .
-elg:LawRegister a owl:Class .
-
-elg:hasCondition a owl:ObjectProperty ;
-	rdfs:domain elg:AdmissionProfile ; rdfs:range elg:Condition .
-
-elg:forCondition a owl:ObjectProperty, owl:FunctionalProperty ;
-	rdfs:domain elg:Question ; rdfs:range elg:Condition .
-
-elg:requiredRangeSet a owl:ObjectProperty ;
-	rdfs:domain elg:Condition ; rdfs:range qnt:RangeSet .
-
-elg:requiredConcept a owl:ObjectProperty ;
-	rdfs:domain elg:Condition ; rdfs:range skos:Concept ;
-	rdfs:comment "A concept a candidate must match, under the condition's match strategy. Several required concepts are alternatives to one another." .
-
-elg:excludedConcept a owl:ObjectProperty ;
-	rdfs:domain elg:Condition ; rdfs:range skos:Concept ;
-	rdfs:comment "A concept a candidate must not match, under the condition's match strategy. Each excluded concept excludes independently of the others." .
-
-elg:candidateRangeSet a owl:ObjectProperty ;
-	rdfs:domain elg:Question ; rdfs:range qnt:RangeSet .
-
-elg:candidateValue a owl:ObjectProperty ;
-	rdfs:domain elg:Question ; rdfs:range qnt:Value .
-
-elg:candidateConcept a owl:ObjectProperty ;
-	rdfs:domain elg:Question ; rdfs:range skos:Concept ;
-	rdfs:comment "The concept a question offers to a condition matching by ExactMatch, SetMembership or HierarchicalMatch." .
-
-elg:matchStrategy a owl:ObjectProperty, owl:FunctionalProperty ;
-	rdfs:domain elg:Condition ; rdfs:range elg:MatchStrategy .
-
-elg:constrainedByContract a owl:ObjectProperty ;
-	rdfs:domain elg:Condition ; rdfs:range voc:SchemeContract .
-
-elg:compatibilityOperation a owl:ObjectProperty, owl:FunctionalProperty ;
-	rdfs:domain elg:Condition ; rdfs:range elg:CompatibilityOperation .
-
-elg:wildcardSemantics a owl:ObjectProperty, owl:FunctionalProperty ;
-	rdfs:domain elg:Condition ; rdfs:range elg:WildcardSemantics .
-
-elg:forProfile a owl:ObjectProperty, owl:FunctionalProperty ;
-	rdfs:domain elg:EligibilityDecision ; rdfs:range elg:AdmissionProfile .
-
-elg:hasQuestion a owl:ObjectProperty ;
-	rdfs:domain elg:EligibilityDecision ; rdfs:range elg:Question .
-
-elg:decisionValue a owl:ObjectProperty, owl:FunctionalProperty ;
-	rdfs:domain elg:EligibilityDecision ; rdfs:range elg:Decision .
-
-elg:lawRegister a owl:ObjectProperty, owl:FunctionalProperty ;
-	rdfs:domain elg:Law ; rdfs:range elg:LawRegister .
-
-elg:usesOperationalProfile a owl:ObjectProperty, owl:FunctionalProperty ;
-	rdfs:domain elg:EligibilityDecision ; rdfs:range elg:OperationalProfile .
-
-elg:subjectRoleOccupancy a owl:ObjectProperty ;
-	rdfs:domain elg:Question ; rdfs:range pty:RoleOccupancy .
-
-elg:conditionKey a owl:DatatypeProperty, owl:FunctionalProperty ;
-	rdfs:domain elg:Condition ; rdfs:range xsd:string .
-
-elg:EvidenceBinding a owl:Class ;
-	rdfs:comment "Binds a condition to the class of subjects it evaluates and to the path that reaches each subject's candidate on the applied ontology's own properties (ADR-A91)." .
-
-elg:EvidenceStep a owl:Class ;
-	rdfs:comment "One positioned traversal within an evidence binding's path, in a stated direction. Shaped like srf:PathStep." .
-
-elg:StepDirection a owl:Class .
-
-rdf:Property a owl:Class .
-
-elg:bindsCondition a owl:ObjectProperty, owl:FunctionalProperty ;
-	rdfs:domain elg:EvidenceBinding ; rdfs:range elg:Condition .
-
-elg:subjectClass a owl:ObjectProperty, owl:FunctionalProperty ;
-	rdfs:domain elg:EvidenceBinding ;
-	rdfs:comment "The class whose instances the bound condition evaluates." .
-
-elg:evidenceStep a owl:ObjectProperty ;
-	rdfs:domain elg:EvidenceBinding ; rdfs:range elg:EvidenceStep .
-
-elg:stepIndex a owl:DatatypeProperty, owl:FunctionalProperty ;
-	rdfs:domain elg:EvidenceStep ; rdfs:range xsd:nonNegativeInteger ;
-	rdfs:comment "Zero-based position of the step in traversal order." .
-
-elg:stepProperty a owl:ObjectProperty, owl:FunctionalProperty ;
-	rdfs:domain elg:EvidenceStep ; rdfs:range rdf:Property .
-
-elg:stepDirection a owl:ObjectProperty, owl:FunctionalProperty ;
-	rdfs:domain elg:EvidenceStep ; rdfs:range elg:StepDirection .
-
-elg:readOnSpace a owl:ObjectProperty, owl:FunctionalProperty ;
-	rdfs:domain elg:EvidenceBinding ; rdfs:range qnt:ValueSpace ;
-	rdfs:comment "The value space a literal at the end of an interval condition's path is read on. A qnt:Quantity at the end of the path states its own space." .
-
-elg:singleValued a owl:DatatypeProperty, owl:FunctionalProperty ;
-	rdfs:domain elg:EvidenceBinding ; rdfs:range xsd:boolean ;
-	rdfs:comment "The author's claim that each step of the binding's path yields at most one value. The design-time OWL backend compiles only claimed paths, and checks the claim on data with a generated shape (ADR-A90 addendum, option B)." .
-
-elg:ValueReading a owl:Class ;
-	rdfs:comment "How a bound condition reads the values its binding's path reaches: one value, some value, or every value (ADR-A103, L15)." .
-
-elg:valueReading a owl:ObjectProperty, owl:FunctionalProperty ;
-	rdfs:domain elg:EvidenceBinding ; rdfs:range elg:ValueReading ;
-	rdfs:comment "The binding's value reading. A binding without one reads a single value (elg:SingleValue)." .
-
-elg:negated a owl:DatatypeProperty, owl:FunctionalProperty ;
-	rdfs:domain elg:Condition ; rdfs:range xsd:boolean ;
-	rdfs:comment "When true, the condition is evaluated as it stands, including its value reading, and then Permitted and Denied are swapped. Undetermined stays Undetermined (ADR-A103, L16)." .
-
-[] a owl:AllDisjointClasses ;
-	owl:members ( elg:Condition elg:Question elg:EligibilityDecision elg:MatchStrategy elg:CompatibilityOperation elg:WildcardSemantics elg:Decision elg:OperationalProfile elg:Law elg:EvidenceBinding elg:EvidenceStep elg:StepDirection elg:ValueReading elg:Closure ) .
+    rdfs:comment "A reusable admissibility profile that composes one or more conditions." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty elg:hasCondition ; owl:minCardinality "1"^^xsd:nonNegativeInteger ], elg:Condition, fnd:Version .
 
 elg:Closure a owl:Class ;
-	rdfs:subClassOf [ a owl:Restriction ; owl:onProperty elg:licensedBy ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
-	rdfs:comment "A source's warrant that the records an evidence binding reads are complete, so a set reading may decide on what is absent (ADR-A105, L15, L17). It covers exactly the bindings that name it." .
+    rdfs:comment "A source's warrant that the records an evidence binding reads are complete, so a set reading may decide on what is absent (ADR-A105, L15, L17). It covers exactly the bindings that name it." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty elg:licensedBy ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
 
-elg:licensedBy a owl:ObjectProperty, owl:FunctionalProperty ;
-	rdfs:domain elg:Closure ;
-	rdfs:comment "The source that vouches for a closure: a deeming or another term, a party whose register is authoritative, or an operational profile by which a deployment declares its records complete. Deliberately has no range, so a layer above names its own source." .
+elg:CompositionOperation a owl:Class ;
+    rdfs:comment "How an admission profile combines its conditions' outcomes, one of a closed set of named operations." .
 
-elg:closedUnder a owl:ObjectProperty, owl:FunctionalProperty ;
-	rdfs:domain elg:EvidenceBinding ; rdfs:range elg:Closure ;
-	rdfs:comment "The closure an evidence binding relies on. Only a binding read elg:SomeValue or elg:EveryValue names one." .
+elg:Condition a owl:Class ;
+    rdfs:comment "A declared admissibility condition." .
+
+elg:Decision a owl:Class ;
+    rdfs:comment "The three-valued outcome of an admissibility decision: Permitted, Denied or Undetermined." .
+
+elg:EligibilityDecision a owl:Class ;
+    rdfs:comment "A recorded admissibility decision for one profile and one or more questions." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty elg:decisionValue ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty elg:forProfile ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty elg:hasQuestion ; owl:minCardinality "1"^^xsd:nonNegativeInteger ], fnd:Evidenced .
+
+elg:EvidenceBinding a owl:Class ;
+    rdfs:comment "Binds a condition to the class of subjects it evaluates and to the path that reaches each subject's candidate on the applied ontology's own properties (ADR-A91)." .
+
+elg:EvidenceStep a owl:Class ;
+    rdfs:comment "One positioned traversal within an evidence binding's path, in a stated direction. Shaped like srf:PathStep." .
+
+elg:ExactCondition a owl:Class ;
+    rdfs:comment "A condition that admits a candidate equal to one of its required concepts (ExactMatch)." ;
+    rdfs:subClassOf elg:Condition .
+
+elg:IntervalCondition a owl:Class ;
+    rdfs:comment "A condition that admits a candidate whose value lies within its required range set (IntervalContainment)." ;
+    rdfs:subClassOf elg:Condition .
+
+elg:Law a owl:Class ;
+    rdfs:comment "A logical law of the Eligibility layer, a property its declarations or decisions must satisfy, not a law in the legal sense. A law may name how it is discharged (elg:lawRegister)." .
+
+elg:LawRegister a owl:Class ;
+    rdfs:comment "How a logical law of the Eligibility layer is discharged, by formal argument or by a static check of declarations." .
+
+elg:MatchStrategy a owl:Class ;
+    rdfs:comment "How a condition matches its candidate, one of a closed set of named strategies." .
+
+elg:OperationalProfile a owl:Class ;
+    rdfs:comment "A reference conformance profile that a compiler backend is checked against. Versioned, since the profiles are themselves subject to change control." ;
+    rdfs:subClassOf fnd:Version .
+
+elg:Question a owl:Class ;
+    rdfs:comment "An evaluation question posed against one condition." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty elg:forCondition ; owl:cardinality "1"^^xsd:nonNegativeInteger ], fnd:Evidenced .
+
+elg:SetMembershipCondition a owl:Class ;
+    rdfs:comment "A condition that admits a candidate that is a member of the set of its required concepts (SetMembership)." ;
+    rdfs:subClassOf elg:Condition .
+
+elg:StepDirection a owl:Class ;
+    rdfs:comment "The direction in which an evidence step traverses its property." .
+
+elg:ValueReading a owl:Class ;
+    rdfs:comment "How a bound condition reads the values its binding's path reaches: one value, some value, or every value (ADR-A103, L15)." .
+
+elg:WildcardCondition a owl:Class ;
+    rdfs:comment "A condition that stands in for one or more dimensions of a match, as its wildcard policy allows (Wildcard)." ;
+    rdfs:subClassOf elg:Condition .
+
+elg:WildcardSemantics a owl:Class ;
+    rdfs:comment "The wildcard policy a condition declares, one of a closed set of named policies." .
+
+elg:bindsCondition a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "The one condition an evidence binding supplies candidates to." ;
+    rdfs:domain elg:EvidenceBinding ;
+    rdfs:range elg:Condition .
+
+elg:candidateConcept a owl:ObjectProperty ;
+    rdfs:comment "The concept a question offers to a condition matching by ExactMatch, SetMembership or HierarchicalMatch." ;
+    rdfs:domain elg:Question ;
+    rdfs:range skos:Concept .
+
+elg:candidateRangeSet a owl:ObjectProperty ;
+    rdfs:comment "The range set a question offers as its candidate to a condition matching by IntervalContainment." ;
+    rdfs:domain elg:Question ;
+    rdfs:range qnt:RangeSet .
+
+elg:candidateValue a owl:ObjectProperty ;
+    rdfs:comment "The value a question offers as its candidate." ;
+    rdfs:domain elg:Question ;
+    rdfs:range qnt:Value .
+
+elg:closedUnder a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "The closure an evidence binding relies on. Only a binding read elg:SomeValue or elg:EveryValue names one." ;
+    rdfs:domain elg:EvidenceBinding ;
+    rdfs:range elg:Closure .
 
 elg:closureReliedOn a owl:ObjectProperty ;
-	rdfs:domain elg:EligibilityDecision ; rdfs:range elg:Closure ;
-	rdfs:comment "A closure a decision relied on. The decision's own recording time is the cut: the closure licensed the records as they stood then." .
+    rdfs:comment "A closure a decision relied on. The decision's own recording time is the cut: the closure licensed the records as they stood then." ;
+    rdfs:domain elg:EligibilityDecision ;
+    rdfs:range elg:Closure .
+
+elg:compositionOperation a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "The one composition operation an admission profile declares." ;
+    rdfs:domain elg:AdmissionProfile ;
+    rdfs:range elg:CompositionOperation .
+
+elg:conditionKey a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "The canonical identifier of a condition declaration, for comparison, caching and replay." ;
+    rdfs:domain elg:Condition ;
+    rdfs:range xsd:string .
+
+elg:constrainedByContract a owl:ObjectProperty ;
+    rdfs:comment "The scheme contract whose resolved scheme a condition's candidates are matched against (ADR-A85)." ;
+    rdfs:domain elg:Condition ;
+    rdfs:range voc:SchemeContract .
+
+elg:decisionValue a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "The one outcome a decision records: Permitted, Denied or Undetermined." ;
+    rdfs:domain elg:EligibilityDecision ;
+    rdfs:range elg:Decision .
+
+elg:evidenceStep a owl:ObjectProperty ;
+    rdfs:comment "A step of an evidence binding's path." ;
+    rdfs:domain elg:EvidenceBinding ;
+    rdfs:range elg:EvidenceStep .
+
+elg:excludedConcept a owl:ObjectProperty ;
+    rdfs:comment "A concept a candidate must not match, under the condition's match strategy. Each excluded concept excludes independently of the others." ;
+    rdfs:domain elg:Condition ;
+    rdfs:range skos:Concept .
+
+elg:forCondition a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "The one condition a question is posed against." ;
+    rdfs:domain elg:Question ;
+    rdfs:range elg:Condition .
+
+elg:forProfile a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "The one admission profile a decision is for." ;
+    rdfs:domain elg:EligibilityDecision ;
+    rdfs:range elg:AdmissionProfile .
+
+elg:hasCondition a owl:ObjectProperty ;
+    rdfs:comment "A condition an admission profile composes." ;
+    rdfs:domain elg:AdmissionProfile ;
+    rdfs:range elg:Condition .
+
+elg:hasQuestion a owl:ObjectProperty ;
+    rdfs:comment "A question a decision answers." ;
+    rdfs:domain elg:EligibilityDecision ;
+    rdfs:range elg:Question .
+
+elg:lawRegister a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "How a logical law of the Eligibility layer is discharged." ;
+    rdfs:domain elg:Law ;
+    rdfs:range elg:LawRegister .
+
+elg:licensedBy a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "The source that vouches for a closure: a deeming or another term, a party whose register is authoritative, or an operational profile by which a deployment declares its records complete. Deliberately has no range, so a layer above names its own source." ;
+    rdfs:domain elg:Closure .
+
+elg:matchStrategy a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "The one match strategy a condition declares." ;
+    rdfs:domain elg:Condition ;
+    rdfs:range elg:MatchStrategy .
+
+elg:negated a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "When true, the condition is evaluated as it stands, including its value reading, and then Permitted and Denied are swapped. Undetermined stays Undetermined (ADR-A103, L16)." ;
+    rdfs:domain elg:Condition ;
+    rdfs:range xsd:boolean .
+
+elg:readOnSpace a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "The value space a literal at the end of an interval condition's path is read on. A qnt:Quantity at the end of the path states its own space." ;
+    rdfs:domain elg:EvidenceBinding ;
+    rdfs:range qnt:ValueSpace .
+
+elg:requiredConcept a owl:ObjectProperty ;
+    rdfs:comment "A concept a candidate must match, under the condition's match strategy. Several required concepts are alternatives to one another." ;
+    rdfs:domain elg:Condition ;
+    rdfs:range skos:Concept .
+
+elg:requiredRangeSet a owl:ObjectProperty ;
+    rdfs:comment "The range set a candidate's value must lie within, for a condition matching by IntervalContainment." ;
+    rdfs:domain elg:Condition ;
+    rdfs:range qnt:RangeSet .
+
+elg:singleValued a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "The author's claim that each step of the binding's path yields at most one value. The design-time OWL backend compiles only claimed paths, and checks the claim on data with a generated shape (ADR-A90 addendum, option B)." ;
+    rdfs:domain elg:EvidenceBinding ;
+    rdfs:range xsd:boolean .
+
+elg:stepDirection a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "The one direction in which an evidence step traverses its property." ;
+    rdfs:domain elg:EvidenceStep ;
+    rdfs:range elg:StepDirection .
+
+elg:stepIndex a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "Zero-based position of the step in traversal order." ;
+    rdfs:domain elg:EvidenceStep ;
+    rdfs:range xsd:nonNegativeInteger .
+
+elg:stepProperty a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "The one property an evidence step traverses." ;
+    rdfs:domain elg:EvidenceStep ;
+    rdfs:range rdf:Property .
+
+elg:subjectClass a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "The class whose instances the bound condition evaluates." ;
+    rdfs:domain elg:EvidenceBinding .
+
+elg:subjectRoleOccupancy a owl:ObjectProperty ;
+    rdfs:comment "The role occupancy of the subject a question is asked about." ;
+    rdfs:domain elg:Question ;
+    rdfs:range pty:RoleOccupancy .
+
+elg:usesOperationalProfile a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "The one operational profile a decision is made under." ;
+    rdfs:domain elg:EligibilityDecision ;
+    rdfs:range elg:OperationalProfile .
+
+elg:valueReading a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "The binding's value reading. A binding without one reads a single value (elg:SingleValue)." ;
+    rdfs:domain elg:EvidenceBinding ;
+    rdfs:range elg:ValueReading .
+
+elg:wildcardSemantics a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "The one wildcard policy a condition declares." ;
+    rdfs:domain elg:Condition ;
+    rdfs:range elg:WildcardSemantics .
+
+[ a owl:AllDisjointClasses ; owl:members ( elg:Condition elg:Question elg:EligibilityDecision elg:MatchStrategy elg:CompositionOperation elg:WildcardSemantics elg:Decision elg:OperationalProfile elg:Law elg:EvidenceBinding elg:EvidenceStep elg:StepDirection elg:ValueReading elg:Closure ) ] .
+
+rdf:Property a owl:Class .

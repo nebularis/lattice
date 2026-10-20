@@ -2,7 +2,7 @@
 
 # Identity Minting Specification
 
-**Status:** Draft, normative once [ADR-A84](decisions/ADR-A84-standalone-minting-libraries.md) and the amended [ADR-A82](decisions/ADR-A82-framework-neutral-identity-pattern-selection.md) are ratified. Sections marked *(M4)* are completed in slice M4 of the [`identity-minting`](../developer/plans/identity-minting.md) unit.
+**Status:** Draft, normative once [ADR-A84](decisions/ADR-A84-standalone-minting-libraries.md) and the amended [ADR-A82](decisions/ADR-A82-framework-neutral-identity-pattern-selection.md) are ratified. Sections marked *(M4)* are completed in slice M4 of the `identity-minting` unit.
 **Version:** recipe format `lattice-minting-recipe/1`, vectors format `lattice-minting-vectors/1`, Unicode 16.0.0
 **Contracts:** [`contracts/identity/`](../../contracts/identity/README.md) (JSON schemas, anchor vectors, independent verifier)
 
