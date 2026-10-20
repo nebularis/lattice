@@ -58,9 +58,9 @@ EX-Q2, EX-Q3 and FS-Q1 to FS-Q7 at their leanings. **This branch ignores version
 when it merges into `main` (H2.7-Q5, TD-64). We work autonomously, committing on the branch without pushing.
 
 1. **The examples E1 to E8** (sketch §10), drafted in parallel and merged into the sketch.
-2. **The maintainer answers VH-Q1 to VH-Q6** (sketch §8, rationale in §11).
-3. **H2.7 and H2.8** once VH-Q1, Q3 and Q5 are answered (H-D34).
-4. Then H2.9. H2.6b's held half and H2.10 wait on the sketch's answers (H-D33). Later, PDD-06.
+2. **H2.6c, the write disciplines** ([plan §4.9](../plans/formal-methods-track-h.md#49-h26c-the-write-disciplines-planned-2026-10-20)), then **H2.6d**, the patch log for in-place families (§4.10).
+3. **H2.7 and H2.8**, with VH-Q1 to VH-Q6 decided at our leanings (H-D34 met).
+4. Then H2.9. H2.10 follows the sketch's answers. Later, PDD-06.
 5. Before the merge into `main`: TD-63, and the minor version bump (TD-64).
 
 ## Slices

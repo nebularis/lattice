@@ -1357,6 +1357,65 @@ About 500k tokens.
   so the L5 totality check covers them ([ownership sketch §15](../sketches/persistence-aggregate-ownership.md#15-effect-on-the-later-track-h-slices)).
 - Also an **ADR-A79 addendum** when detailed, per ADR-A-FM4 decision 4.
 
+### 4.9 H2.6c: the write disciplines (planned 2026-10-20)
+
+**Unit:** a slice added by the history and versioning sketch's decisions of 2026-10-20 (VH-Q1 to VH-Q6, VH-D1, VH-D2, FS-Q1 to FS-Q7),
+taken at our leanings for the maintainer's review. It runs before H2.6d and H2.7, so H2.7 publishes the vocabulary with the disciplines in
+it. Versioning is ignored on this branch (TD-64).
+
+#### The scene
+
+1. Every family writes by replace, sweep and rewrite, or by append for events. Nothing writes a version without deleting the one before
+   (sketch §2 point 6).
+2. `CompositeBoundaryReceiptOnly` demands a patch log of every composite family, and nothing honours one (TD-46).
+3. Persistence imports nothing, so it cannot know a class is versioned unless it is told (VH-Q3).
+
+#### Questions, decided at our leanings 2026-10-20
+
+| # | Question | Decision |
+|---|---|---|
+| H2.6c-Q1 | the declaration | `dal:writeDiscipline` on the family's profile, one of `dal:InPlace` (the default, today's replace), `dal:AppendVersions` and `dal:AppendRecords` (FS-Q1 (b): in place with or without a patch log is one discipline, its receipt model says which) |
+| H2.6c-Q2 | which families may append versions | composite families, whose `dal:dataGraph` holds every version, and families with no boundary. A named-graph family appends versions as one graph per version, named from the version, which ADR-A51's content revision IRI already describes. The aggregate's own graph is never cleared |
+| H2.6c-Q3 | `AppendRecords` | the existing append form (`append-event`, H2.6b's batch), selected by the discipline. No new template |
+| H2.6c-Q4 | the warning | `VersionedClassWrittenInPlace`, when a target class is a subclass of `fnd:Version` by IRI in the profile's loaded graphs and its discipline is `dal:InPlace`. No import of Foundation |
+| H2.6c-Q5 | `CompositeBoundaryReceiptOnly` | relaxed for `AppendVersions` and `AppendRecords`, where the history is in the data (VH-Q5) |
+
+#### Steps
+
+1. **Vocabulary.** `dal:writeDiscipline` and its three individuals in `spec/persistence.ttl`, resolved like any dimension, `dal:InPlace` when
+   absent, so every example compiles as before.
+2. **`append-version`**, a new builder and template for each family it applies to, with dataset-guard variants. One update: guard the
+   identity's version row at the expected seq and the txn claim, insert the new version's triples from the payload slot, insert
+   `$priorHead fnd:supersededBy $newVersion` when the row has a head (VH-D1: the head is the latest written, agreement is evaluated
+   elsewhere), move the row's seq and head, write the receipt, and link the version to its receipt with `pat:revision`. No sweep, no
+   delete. Members the caller does not restate are shared by reference (VH-Q2), so the payload holds only the new version's own triples.
+3. **Selection** in `compile`: the discipline picks `append-version` for replace operations, the append form for records, and the
+   existing operations for `dal:InPlace`.
+4. **The warning** of Q4 and the relaxed refusal of Q5, each with a witness.
+5. **Contract and expected profiles.** `contract_of` covers the new operation (its resources: the version row, the version, the receipt,
+   the claim). Expected profiles regenerated for every changed example, listed for review.
+6. **Behaviour on both engines**: a second version leaves the first in place and linked by `fnd:supersededBy`, the row's head names the
+   new one, a retry writes nothing, a stale seq writes nothing, and members not restated are still reachable from the new version.
+7. **Documents.** The Persistence README §7 gains the disciplines with "what works best when" (FS-Q4), ADR-A123 a dated addendum drafted,
+   TD-46 narrowed.
+
+#### Planned validation
+
+`FMH-H2-6c`, with `mise run check:persistence` and `mise run check:persistence-oxigraph`. Probes: an `append-version` that deletes the
+prior version (the second-version test fails), one that skips `fnd:supersededBy` (the chain test fails), a versioned class compiled in
+place without the warning (its witness fails).
+
+#### Estimate
+
+About 300k tokens.
+
+### 4.10 H2.6d: the patch log for in-place families (planned 2026-10-20)
+
+The held half of H2.6b (§4.6, "Held (H-D33)"), narrowed by VH-Q5 to `dal:InPlace` families that declare `dal:PatchLog`: their replace,
+create and tombstone write delta graphs in the same update, named from the receipt (H2.6b-Q2), with H2.6b-Q1's coverage, and the guide's
+as-of read is restated to read backward from the current state (TD-48). `ReceiptModelNotHonoured` then warns only for
+`dal:SnapshotPerRevision` on in-place families. Validation Pack `FMH-H2-6d`. About 250k tokens. Runs after H2.6c.
+
 ## 5. H4 onward, outline only
 
 | Slice | Delivers | Rung | Depends on |
