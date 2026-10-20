@@ -1,3 +1,6 @@
+# Externals
+temp-ext*
+
 # Operating-system and editor state
 .DS_Store
 .idea/
