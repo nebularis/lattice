@@ -83,8 +83,8 @@ Built and committed 2026-10-20: H2.6c, H2.6d, H2.6e, H2.6f, H2.6g, W-65, AIR-66,
    the goldens keyed by operation, and the template id's suffix gone.
 3. **H2.11a and H2.11b** ([plan §4.19](../plans/formal-methods-track-h.md#419-h211-the-persistence-readme-as-a-literate-specification-planned-2026-10-20),
    [sketch](../sketches/persistence-readme-literate.md)): the Persistence README in the ADR-A126 layout, graph for graph, then its
-   narrative, pictures and gotchas. RL-Q1 to RL-Q7 decided 2026-10-20. Its prerequisite, the maintainer's, is the publication of
-   ADR-A78, A79, A80, A114, A122, A123 and A132 before H2.11a merges (RL-Q3).
+   narrative, pictures and gotchas. RL-Q1 to RL-Q7 decided 2026-10-20. Its prerequisite (RL-Q3) is met: the maintainer had
+   ADR-A78, A79, A80, A114, A122, A123 and A132 published on 2026-10-20.
 4. **Before the merge into `main`:** TD-63, one minor version bump (TD-64), the maintainer's re-approval of the expected profiles and
    countersignature of the changed tests listed in each Validation Pack.
 5. **Owed later:** the idealised in-place benchmark once TD-42 is fixed (recorded on TD-42).
@@ -772,3 +772,7 @@ Built and committed 2026-10-20: H2.6c, H2.6d, H2.6e, H2.6f, H2.6g, W-65, AIR-66,
 - 2026-10-20: RL-Q1 (a) two slices, RL-Q2 (a) the shipped examples, RL-Q3 as leaned (publish the accepted ADRs, stop citing the proposed),
   RL-Q4 (a) one README generates both documents as Behaviour's does (ADR-A120), RL-Q5 (a), RL-Q6 (b) for now with a split if it cannot be
   read, RL-Q7 (a).
+- 2026-10-20: at the maintainer's request, ADR-A78, A79, A80, A114, A122, A123 and A132 are published. Working references and the
+  citations of superseded or proposed decisions (A51, A71, A74, A75, A82, A84) moved into each ADR's Provenance section, and ADR-A51's
+  rules are cited through the IRI and identity patterns. The wording changes beyond dropped references are for the maintainer's review.
+

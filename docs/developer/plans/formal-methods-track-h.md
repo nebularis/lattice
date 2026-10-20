@@ -1589,7 +1589,7 @@ Split into two slices (RL-Q1 (a)), so the migration check judges one and a revie
 
 #### H2.11a: conformance, graph for graph
 
-1. **Prerequisite (RL-Q3), the maintainer's.** The maintainer publishes the accepted ADRs the README cites (A78, A79, A80, A114, A122, A123, A132,
+1. **Prerequisite (RL-Q3), met 2026-10-20.** The maintainer publishes the accepted ADRs the README cites (A78, A79, A80, A114, A122, A123, A132,
    A121 is already), and the text stops citing the proposed ones (A67, A82, A84, A128) and every working document, so the sources check passes on a migrated
    README.
 2. **The layout.** Sections 1 to 13 of ADR-A126: Purpose and Scope, Namespace and Prefixes with the contributors table, the Extraction

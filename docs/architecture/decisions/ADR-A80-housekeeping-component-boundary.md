@@ -1,8 +1,12 @@
+---
+published: true
+---
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
 # ADR-A80: Housekeeping component boundary
 
-**Status:** Accepted
+**Status:** Published, 2026-10-20. Accepted 2026-09-22.
+**Described in:** [Persistence](../../../ontology/persistence/README.md)
 **Date:** 2026-09-22
 **Supersedes:** none
 **Related:** ADR-A78, ADR-A79, [rdf-sparql-patterns-guide.md](../rdf-sparql-patterns-guide.md) Chapters 21, 24, 25, 27
@@ -19,7 +23,7 @@ These jobs need to know *what* to check per target (its receipt model, retention
 
 2. **In scope now:** the job contract (`HousekeepingJob`, `JobResult`, `JobContext` as Java interfaces, with no store-calling implementation), the configuration model split into two kinds that are never conflated — *what to check*, read from a `dal:CompiledProfile` (retention, receipt model, uniqueness constraints, meta topology), and *how aggressively*, a deployment-local operational configuration (cadence, batch size, dry-run vs enforce, alert sink) that is not ontological and does not belong in RDF, consistent with the [data-architecture.md](../data-architecture.md) realm split — and the SPARQL queries each job type would run, produced by running the `tools/persistence` compiler's `instantiate` stage (ADR-A79) as a second, concrete caller of it.
 
-3. **Out of scope now, and recorded as an open design question** in [lattice-platform-agentic-development-v0.2.md](../../developer/plans/lattice-platform-agentic-development-v0.2.md), Part 13: the execution engine that actually runs a generated query against a live store on a schedule. That depends on the store SPI (proposed A75) and the Query Execution component (ADR-A79's exclusion), neither of which exists yet.
+3. **Out of scope now, and an open design question:** the execution engine that actually runs a generated query against a live store on a schedule. That depends on the store SPI and the Query Execution component (ADR-A79's exclusion), neither of which exists yet.
 
 4. **The component assumes no transport of its own.** Consistent with the "do not assume an interface" principle already stated for the deferred Request Query Mapping library, `platform/housekeeping` exposes a library contract, not an HTTP endpoint or a queue consumer. A future execution engine, or an adopter's own scheduler, decides how jobs are triggered and how results are surfaced.
 
@@ -30,3 +34,8 @@ These jobs need to know *what* to check per target (its receipt model, retention
 - `platform/pom.xml` gains a `housekeeping` module entry. Its own `README.md` documents the configuration split and the roadmap in full, and a matching `docs/architecture/platform-housekeeping.md` records the same architecture at the level this ADR summarises.
 - A future SPI-focused ADR that defines the execution engine must treat this ADR's job contract as a given, not a proposal, unless it explicitly supersedes this one.
 - Because the job queries are produced by the same `instantiate` stage as any other target's operational SPARQL, a housekeeping job's queries are versioned, reviewed, and change exactly when the template library or the target's compiled profile changes, never by hand-editing a query embedded in Java.
+
+## Provenance
+
+The open design question of decision 3 is recorded in the [platform development plan](../../developer/plans/lattice-platform-agentic-development-v0.2.md), Part 13. The store SPI is proposed decision A75. Published
+2026-10-20.

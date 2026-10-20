@@ -1,11 +1,15 @@
+---
+published: true
+---
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
 # ADR-A78: Persistence profile substrate and configurable aggregate boundaries
 
-**Status:** Accepted
+**Status:** Published, 2026-10-20. Accepted 2026-09-22.
+**Described in:** [Persistence](../../../ontology/persistence/README.md)
 **Date:** 2026-09-22
 **Supersedes:** none
-**Related:** [rdf-sparql-patterns-guide.md](../rdf-sparql-patterns-guide.md), ADR-A01, ADR-A79, ADR-A80, proposed A74/A75, [persistence-profile-substrate sketch](../../developer/sketches/persistence-profile-substrate.md)
+**Related:** [rdf-sparql-patterns-guide.md](../rdf-sparql-patterns-guide.md), ADR-A01, ADR-A79, ADR-A80
 
 ## Context
 
@@ -37,4 +41,9 @@ Introduce `ontology/persistence`, a cross-cutting ontology (prefix `dal:`, for t
 - The flat per-family YAML declaration sketched in the guide's [§29.3](../rdf-sparql-patterns-guide.md#293-the-per-family-declaration) is superseded by `ontology/persistence` as the authored form. A compiled `dal:DataAccessProfile` graph can still be projected into that YAML shape for a human summary, but it is no longer the source of truth.
 - Every consumer of a resolved profile (the compiler's own `instantiate` stage in ADR-A79, the housekeeping component in ADR-A80, and any future Request Query Mapping or Query Execution layer) reads the same `dal:CompiledProfile` and `dal:CapabilityRequirement`, never a bespoke re-derivation.
 - A substrate ontology author who is tempted to bind a `DataAccessProfile` to their own class triggers a lint warning (point 5 above), enforced in the same slice that authors the shapes.
-- This ADR does not decide the store SPI's shape (deferred to proposed A75) or how a runtime library binds a compiled template to a live connection (deferred, see ADR-A79's consequences and the epic plan's open questions).
+- This ADR does not decide the store SPI's shape (deferred to a later decision) or how a runtime library binds a compiled template to a live connection (deferred, see ADR-A79's consequences).
+
+## Provenance
+
+Designed in the [persistence profile substrate sketch](../../developer/sketches/persistence-profile-substrate.md). The store SPI and the runtime binding deferred here are proposed decisions A74 and A75, and open questions
+of the [platform development plan](../../developer/plans/lattice-platform-agentic-development-v0.2.md), Part 13. Published 2026-10-20, when the citations of proposed decisions moved here.

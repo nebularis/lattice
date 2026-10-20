@@ -1,17 +1,19 @@
+---
+published: true
+---
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
 # ADR-A132: A caller library for the generated persistence operations
 
-**Status:** Accepted, 2026-10-20
+**Status:** Published, 2026-10-20. Accepted 2026-10-20.
+**Described in:** [the persistence caller library](../../../packages/persistence/python/README.md)
 **Date:** 2026-10-20
 **Supersedes:** none
 **Related:** [ADR-A123](ADR-A123-typed-operation-ir.md) (the typed IR, its contract and its addenda),
 [ADR-A122](ADR-A122-aggregate-ownership.md) (the payload check),
-[ADR-A84](ADR-A84-standalone-minting-libraries.md) (the precedent for libraries under `packages/`),
-[ADR-A77](ADR-A77-repository-topology-and-documentation-governance.md) (the `packages/` root),
+[ADR-A77](https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md) (the `packages/` root),
 [ADR-A79](ADR-A79-persistence-compiler-toolchain.md) (the injection boundary),
-[ADR-A71](ADR-A71-platform-licence-and-spi-seam.md) (MPL-2.0 for embeddable code),
-[ADR-A29](ADR-A29-repository-toolchain-and-environment-boundary.md) (`mise`)
+[ADR-A29](https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-A29-repository-toolchain-and-environment-boundary.md) (`mise`)
 
 ## Context
 
@@ -33,7 +35,7 @@ ADR-A123 fixes what the generated operations expect. It leaves the caller's half
 
 1. **Location.** The caller library lives under `packages/persistence/python`. Java follows as a sibling,
    `packages/persistence/java`, when a Java caller needs it, as `packages/minting` does. It is a library meant to be embedded, so
-   it belongs neither in `tools/` nor in `platform/` (ADR-A84 decision 1).
+   it belongs neither in `tools/` nor in `platform/`.
 2. **Shape.** The library is a runtime library with nothing generated per profile (option S-A). It reads a compiled profile (RDF)
    at start-up and offers the following.
    - **The typed `Payload`.** Ground triples, each term a typed value, rendered as sorted canonical N-Triples with no blank node.
@@ -53,9 +55,9 @@ ADR-A123 fixes what the generated operations expect. It leaves the caller's half
    library defines and does not implement.
 4. **Conformance is by vectors, not by our code.** The vectors in `contracts/persistence/` cover the canonical N-Triples, the
    digest, the payload checks and the caller check and the audit outcome. They are verified with independent tools, as
-   `contracts/identity/` is (ADR-A84 decision 5). An implementation written from the specification alone is conformant on the
+   `contracts/identity/` is. An implementation written from the specification alone is conformant on the
    same terms.
-5. **Licence and publishing.** The library is MPL-2.0 (ADR-A71). The vectors and schemas are annotated in `REUSE.toml`. Publishing
+5. **Licence and publishing.** The library is MPL-2.0, as embeddable code is. The vectors and schemas are annotated in `REUSE.toml`. Publishing
    to PyPI is out of scope until decided separately.
 6. **What it is not.** It makes no store call of its own. It does not generate bindings per language (option S-B, later). It is not
    extracted from proofs (option S-D, later). Either later option replaces the library's internals or adds to it, and neither
@@ -108,3 +110,7 @@ code under `packages/` with its own ADR (H2.8-Q1 (b)), that an event's triples a
 [the Track H plan, section 4.8](../../developer/plans/formal-methods-track-h.md#48-h28-the-typed-payload-and-the-caller-side-checks-planned-2026-10-14).
 The IR slots, digest parts and payload contract are in the
 [typed IR sketch](../../developer/sketches/formal-methods-track-h-typed-ir.md).
+
+On publication, 2026-10-20, the citations of two proposed decisions moved here. The location under `packages/` and the vectors
+verified with independent tools follow the precedent of the standalone minting libraries (proposed ADR-A84, decisions 1 and 5), and
+MPL-2.0 for embeddable code is proposed ADR-A71.
