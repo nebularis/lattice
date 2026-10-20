@@ -45,6 +45,7 @@ RULES: tuple[str, ...] = (
     "MissingGraphRole",
     "DefaultGraphPattern",
     "NestedGraph",
+    "NotExistsWithoutGraph",
     "PathOutsideWhere",
     "UnsupportedInTemplate",
     "UntaggedTemplateVariable",
@@ -356,9 +357,14 @@ class _Checker:
             scope.possible |= inner.definite - scope.definite | inner.possible
             return self._mentioned(el.group.elements)
         if isinstance(el, NotExists):
+            if graph is not None and not any(isinstance(e, GraphBlock) for e in el.group.elements):
+                # rdflib 7.6.0 can evaluate a body with no GRAPH of its own against the default graph, once the enclosing GRAPH block has
+                # yielded a solution (TSD-34). A body that names its graph does not depend on the enclosing context, on any store.
+                raise IrError("NotExistsWithoutGraph", f"{self.op.id}: a NOT EXISTS inside a GRAPH block must name its graph in its body (TSD-34)")
             inner = scope.inner(copy=True)
             self.absence += 1
-            self._group(el.group.elements, inner, graph)
+            # the body names its graph, so it is checked outside the enclosing block (a GRAPH inside a GRAPH is not a nested block here)
+            self._group(el.group.elements, inner, None)
             self.absence -= 1
             return self._mentioned(el.group.elements)
         if isinstance(el, Filter):

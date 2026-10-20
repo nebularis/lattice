@@ -2,7 +2,7 @@
 
 # ADR-A123: A typed operation IR for the persistence compiler
 
-**Status:** Accepted, 2026-10-10, with the ADR-A79 addendum applied the same day, and twelve addenda of its own (2026-10-12 to 2026-10-20)
+**Status:** Accepted, 2026-10-10, with the ADR-A79 addendum applied the same day, and thirteen addenda of its own (2026-10-12 to 2026-10-20)
 **Date:** 2026-10-10
 **Supersedes:** parts of [ADR-A79](ADR-A79-persistence-compiler-toolchain.md), listed under Decision 10. ADR-A79 stays Accepted for the rest
 **Related:** [ADR-A78](ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md),
@@ -401,3 +401,20 @@ the run choices.
    `sh:in` list to the individuals of the specification.
 
 The decisions taken alone are listed in the Validation Pack FMH-H2-7. No version IRI moves on this branch (TD-64).
+
+## Addendum, 2026-10-20: a NOT EXISTS inside a GRAPH block names its graph (accepted with the slice's plan, decisions taken alone listed in FMH-H2-6g)
+
+Built in slice H2.6g (Track H plan §4.17). It adds one rule to the checker of decision 3.
+
+1. **`NotExistsWithoutGraph`.** A `NotExists` inside a `GraphBlock` is refused unless its body holds a `GraphBlock`. rdflib 7.6.0 can evaluate a body with
+   no `GRAPH` of its own against the default graph once the enclosing block has yielded a solution, depending on the hash seed (TSD-34). A body that names
+   its graph does not depend on the enclosing context, on any store. The body is checked outside the enclosing block, so a `GRAPH` in it is not the
+   `NestedGraph` of a block in a block, and a triple beside it is still a `DefaultGraphPattern`. A `NotExists` outside a `GraphBlock` is unchanged.
+2. **Fifteen builders change,** with their dataset-guard variants: the version appends, the in-place replaces and the tombstones (each with its
+   no-receipt and patch-log variants), and `members`. Each states its graph in the body of the deleted-row guard, or of the two `members` tests, and its
+   template says the same. The builder versions move up by one and the expected profiles carry the new `dal:templateVersion`. No contract, parameter,
+   access set or result changes.
+3. **The write guards could not have been wrong.** Their body depends on `$root` only, so every solution of the block passes or every one fails. The change
+   is made for the rule to have no exception and for `members`, whose bodies depend on solution variables. The evidence is in TSD-34 and the Validation Pack FMH-H2-6g.
+
+The decisions taken alone are listed in the Validation Pack FMH-H2-6g.

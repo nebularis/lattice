@@ -830,7 +830,7 @@
                 <https://example.org/projects/Project/compiled/cas-replace#param-root>,
                 <https://example.org/projects/Project/compiled/cas-replace#param-txnId> ;
             dal:payloadContract <https://example.org/projects/Project/compiled/cas-replace#payload> ;
-            dal:templateVersion 1 ;
+            dal:templateVersion 2 ;
             dal:usesTemplate [ a dal:Template ;
                     dal:templateId "cas-replace-composite-property-patch-log" ] ],
         [ a dal:GeneratedOperation ;
@@ -910,7 +910,7 @@
                 <https://example.org/projects/Project/compiled/tombstone-delete#param-requestDigest>,
                 <https://example.org/projects/Project/compiled/tombstone-delete#param-root>,
                 <https://example.org/projects/Project/compiled/tombstone-delete#param-txnId> ;
-            dal:templateVersion 1 ;
+            dal:templateVersion 2 ;
             dal:usesTemplate [ a dal:Template ;
                     dal:templateId "tombstone-delete-composite-patch-log" ] ],
         [ a dal:GeneratedOperation ;

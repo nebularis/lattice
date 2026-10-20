@@ -1271,10 +1271,26 @@ Which solution comes first decides how many are affected. A sub-select joined to
 **What it means for LATTICE.**
 
 - Initial bindings inside a sub-select work on both stores. TD-68's account of the fast form of the `members` read is wrong, and the note on it should say so and cite this finding. The form is still not usable on rdflib.
-- The `members` read as it stands has no sub-select, and its H2.6f tests pass on rdflib. We have not swept hash seeds over it. Its drop test has no `GRAPH` of its own and sits inside a `GRAPH` block, which is the shape this finding needs, so it is at risk if a join in it becomes non-lazy (TSD-Q19).
+- The `members` read had no sub-select, and no history we built exposed the defect in it on 192 runs over 16 seeds (FMH-H2-6g). Its two `NOT EXISTS` bodies depend on solution variables, so it is the one generated operation where the defect could change an outcome. Since H2.6g each body names its graph, and a sweep holds it to the reference model.
 - A fast form of `members` on rdflib should put a `GRAPH` inside each `FILTER [NOT] EXISTS` body, which the audits (`key-claim-quarantine`, `key-claim-merge-rewrite`) already do, or avoid a sub-select beside a `UNION` in one `GRAPH` block, and be tested on a sweep of hash seeds against the reference model of `test_membership.py`.
+- Which generated operations had the shape, and what it could change (H2.6g, TSD-Q19), is in the next subsection. Every builder now states a `GRAPH` inside such a body, and the IR checker refuses a `NOT EXISTS` inside a `GRAPH` block whose body has none (`NotExistsWithoutGraph`).
 - A test of a `FILTER [NOT] EXISTS` inside `GRAPH` on rdflib must sweep seeds in child processes, as the probe for this finding does. One run in the test process measures luck.
 - The probe is `test_tsd_34_*` in `tools/persistence/tests/test_store_probes.py`. It asserts the defect on rdflib, so a fix in rdflib fails it and this entry is then updated.
+
+**Which generated operations had the shape (FMH-H2-6g, answering TSD-Q19 in part).** A scan of the rendered text of every operation the examples generate found 29 builders (operation ids) with a `FILTER NOT EXISTS`
+with no `GRAPH` of its own inside a `GRAPH` block. `FILTER EXISTS` is not used by any builder, and the audits and key claims already named their graph.
+
+| Builders | The body | Solutions in the block | Can the defect change the outcome |
+|---|---|---|---|
+| `append-version`, `append-version-delta`, the six `cas-replace-*` and six `tombstone-delete-*` variants, each with its dataset-guard variant (28 operations) | `$root pat:deleted true` in the row's graph | one per head and per current version of the row | No |
+| `members` | the nearest-checkpoint test and the drop test, on `?cp`, `?w` and `?member` | one per candidate checkpoint, version and member | Possibly. Not exposed by any history we built |
+
+The solutions of a row block do share one context on rdflib. We counted the contexts of the yielded solutions with a row of three heads and three current versions, and `cas-replace-composite-property` yielded three solutions in one context, `append-version` three in each of three. The OPTIONAL that
+reads `pat:head` does it, so a sub-select is not needed for the sharing (the sub-select's own part in TSD-34 stays open). The write guards still cannot be wrong, for a reason that does not depend on how many solutions share a context. `evalGraph` resets the context's graph only after it yields a solution, and a body that mentions only `$root`, one value in every solution,
+gives the same answer for every solution. If the first is dropped nothing is yielded and nothing is reset. If the first is kept, all are kept, and the wrong graph keeps what the right graph keeps. The defect can only keep a solution wrongly after another was kept rightly, which needs a body that depends on a solution variable. The test on 28
+operations has a tombstoned row, three heads and three current versions, 16 seeds in child processes and Oxigraph once, and a live row as the control. The tombstoned row is never written.
+The same sweep still passes when the `GRAPH` is taken out of a template, so only the text scan, the equivalence harness and the checker rule guard against that. `members` has bodies that depend on solution variables, and a sweep of 192 random histories (checkpoint every 2, 3 and 4 versions, 16 seeds) and the nine version history with stray adds were right on the text
+that had no `GRAPH`. In that read the solutions did not share a context. We put the `GRAPH` in anyway, so the checker rule has no exception and a later rdflib cannot expose it.
 
 **Reproduce it.** Run the query above over the data of the table's caption, once for each `PYTHONHASHSEED` from 0 to 31, in a child process with `rdflib.Dataset`, and once on Oxigraph.
 `mise exec -- python -m pytest tools/persistence/tests/test_store_probes.py -q -k tsd_34` runs it on rdflib, and `mise run check:persistence-oxigraph` on both.
@@ -1342,4 +1358,4 @@ that a check can fail.
 | TSD-Q16 | what `inplace=True` saves, and whether it is safe with shared graphs | TSD-31's 9% is a fixed cost per validation | run the suite with a copy per test and `inplace=True`, and with the mutation guard on |
 | TSD-Q17 | why Oxigraph returns no row for `COUNT(*)` over a statically false filter | TSD-33 is observed, not explained | read Oxigraph's query optimiser |
 | TSD-Q18 | whether Fuseki or Jena ARQ shows the sensitivity of TSD-25 to TSD-27 | the rules in ADR-A128 assume only rdflib is sensitive | run benchmark `sparql-constraint-query-cost` against a Fuseki endpoint |
-| TSD-Q19 | what makes a sub-select matter in TSD-34, which of the generated queries with a `FILTER [NOT] EXISTS` without its own `GRAPH` inside a `GRAPH` block (`append-version`, `cas-replace-composite-property` and the other write templates) can meet it, and whether Fuseki or Jena ARQ does | TSD-34 is isolated on a non-lazy join of a sub-select and a `UNION` only, and the read-only and write templates have the shape in other joins | trace which solutions share a context, run each template's guard on a seed sweep, and report the defect upstream if it still holds in a later rdflib |
+| TSD-Q19 | why the sub-select decides TSD-34 when a `UNION` alone does not, and whether Fuseki or Jena ARQ shows the defect | TSD-34 is isolated on a non-lazy join of a sub-select and a `UNION`. The part of TSD-Q19 about the generated operations is answered under TSD-34 (FMH-H2-6g) | trace which solution comes first and which are kept in TSD-34's query, run the query on Fuseki, and report the defect upstream if it still holds in a later rdflib |

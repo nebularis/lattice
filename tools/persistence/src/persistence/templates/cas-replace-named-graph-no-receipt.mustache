@@ -34,7 +34,7 @@ WHERE {
   BIND(IRI(CONCAT({{{graphPrefix}}}, ENCODE_FOR_URI(STR($root)), {{{graphSuffix}}})) AS ?g)
   GRAPH {{{metaGraphPrefix}}} {
       $root pat:epoch $epoch ; pat:seq $expectedSeq .
-      FILTER NOT EXISTS { $root pat:deleted true }
+      FILTER NOT EXISTS { GRAPH {{{metaGraphPrefix}}} { $root pat:deleted true } }
   }
   FILTER NOT EXISTS { GRAPH {{{txnGraph}}} { $txnId pat:rev ?any } }
   OPTIONAL { GRAPH ?g { ?s ?p ?o } }

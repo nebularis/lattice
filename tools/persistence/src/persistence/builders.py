@@ -384,14 +384,15 @@ def _row_where(b: Bindings, *, binds: tuple, dataset_guard: bool, sweep, receipt
     optional dataset guard, the version row, the claim check, and last the `sweep` of what the aggregate holds."""
     root = ParamRef("root")
     epoch = Var("rowEpoch") if dataset_guard else ParamRef("epoch")
+    meta = b.graph("metaGraphPrefix")
     return (
         *binds,
         *(_dataset_guard(b) if dataset_guard else ()),
-        GraphBlock(b.graph("metaGraphPrefix"), (
+        GraphBlock(meta, (
             Triple(root, _pat("epoch"), epoch),
             Triple(root, _pat("seq"), ParamRef("expectedSeq")),
             *((Optional_(Group((Triple(root, _pat("head"), Var("prevRev")),))),) if receipt != "none" else ()),
-            NotExists(Group((Triple(root, _pat("deleted"), _TRUE),))),
+            NotExists(Group((GraphBlock(meta, (Triple(root, _pat("deleted"), _TRUE),)),))),
         )),
         NotExists(Group((GraphBlock(b.graph("txnGraph"), (Triple(ParamRef("txnId"), _pat("rev"), _ANY),)),))),
         *(_claim_binds() if receipt != "none" else ()),
@@ -589,7 +590,7 @@ def _append_version(b: Bindings, *, guards: bool, dataset_guard: bool, delta: bo
             Triple(root, _pat("seq"), ParamRef("expectedSeq")),
             Optional_(Group((Triple(root, _pat("head"), Var("prevRev")),))),
             Optional_(Group((Triple(root, _pat("currentVersion"), Var("priorVersion")),))),
-            NotExists(Group((Triple(root, _pat("deleted"), _TRUE),))),
+            NotExists(Group((GraphBlock(meta, (Triple(root, _pat("deleted"), _TRUE),)),))),
         )),
         NotExists(Group((GraphBlock(b.graph("txnGraph"), (Triple(ParamRef("txnId"), _pat("rev"), _ANY),)),))),
         *_claim_binds(),
@@ -647,18 +648,18 @@ def _members(b: Bindings, *, guards: bool) -> Operation:
         Group((GraphBlock(data, (
             Triple(cp, _pat("checkpoint"), _TRUE),
             Triple(version, before, cp),
-            NotExists(Group((
+            NotExists(Group((GraphBlock(data, (
                 Triple(later, _pat("checkpoint"), _TRUE), Triple(later, _pat("previousVersion"), y), Triple(y, before, cp), Triple(version, before, later),
-            ))),
+            )),))),
             Triple(version, before, w),
             Triple(w, before, cp),
             Union_((
                 Group((Triple(w, prop, member),)),
                 Group((Triple(w, _pat("addsMember"), member),)),
             )),
-            NotExists(Group((
+            NotExists(Group((GraphBlock(data, (
                 Triple(x, _pat("dropsMember"), member), Triple(x, _pat("previousVersion"), z), Triple(z, before, w), Triple(version, before, x),
-            ))),
+            )),))),
         )),)),
         guards=guards,
         select=Select((member,), distinct=True),

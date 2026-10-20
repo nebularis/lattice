@@ -121,6 +121,8 @@ def _refusals() -> list[tuple[str, str, object]]:
         ("DefaultGraphPattern", "bare triple in WHERE", lambda: valid(where_=(*where(), Triple(ROOT, pat("p"), Var("x"))))),
         ("DefaultGraphPattern", "template element outside a graph", lambda: valid(insert_=(*insert(), Triple(ROOT, pat("p"), Var("x", binding=Binding.BOUND))))),
         ("NestedGraph", "graph in graph", lambda: valid(where_=(*where(), GraphBlock(META, (GraphBlock(TXN, ()),))))),
+        ("NotExistsWithoutGraph", "a NOT EXISTS in a GRAPH block whose body has no GRAPH (TSD-34)", lambda: valid(where_=(*where(), GraphBlock(META, (NotExists(Group((Triple(ROOT, pat("p"), Var("x")),))),))))),
+        ("NotExistsWithoutGraph", "a NOT EXISTS in a GRAPH block whose body holds only a filter (TSD-34)", lambda: valid(where_=(*where(), GraphBlock(META, (NotExists(Group((Filter(Not(Func("BOUND", (Var("now"),)))),))),))))),
         ("PathOutsideWhere", "path in INSERT", lambda: valid(insert_=(*insert(), GraphBlock(DATA, (Triple(ROOT, _PATH, ROOT),))))),
         ("PathOutsideWhere", "path in DELETE", lambda: valid(delete_=(GraphBlock(DATA, (Triple(ROOT, _PATH, ROOT),)),))),
         ("UnsupportedInTemplate", "filter in INSERT", lambda: valid(insert_=(GraphBlock(META, (Filter(Func("BOUND", (ROOT,))),)),))),

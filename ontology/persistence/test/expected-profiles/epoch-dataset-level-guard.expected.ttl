@@ -641,7 +641,7 @@
                 <https://example.org/lending/LoanApplication/compiled/cas-replace#param-root>,
                 <https://example.org/lending/LoanApplication/compiled/cas-replace#param-txnId> ;
             dal:payloadContract <https://example.org/lending/LoanApplication/compiled/cas-replace#payload> ;
-            dal:templateVersion 1 ;
+            dal:templateVersion 2 ;
             dal:usesTemplate [ a dal:Template ;
                     dal:templateId "cas-replace-named-graph-patch-log-dataset-guard" ] ],
         [ a dal:GeneratedOperation ;
@@ -723,7 +723,7 @@
                 <https://example.org/lending/LoanApplication/compiled/tombstone-delete#param-requestDigest>,
                 <https://example.org/lending/LoanApplication/compiled/tombstone-delete#param-root>,
                 <https://example.org/lending/LoanApplication/compiled/tombstone-delete#param-txnId> ;
-            dal:templateVersion 1 ;
+            dal:templateVersion 2 ;
             dal:usesTemplate [ a dal:Template ;
                     dal:templateId "tombstone-delete-named-graph-patch-log-dataset-guard" ] ],
         [ a dal:GeneratedOperation ;

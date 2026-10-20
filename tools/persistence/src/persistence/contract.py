@@ -153,15 +153,24 @@ def stem_of(operation_id: str) -> str:
     return operation_id.removesuffix(DATASET_GUARD_SUFFIX)
 
 
+_NOT_EXISTS_NAMES_ITS_GRAPH = (
+    "append-version", "append-version-delta", "members",
+    *(f"{base}{tag}" for base in ("cas-replace-composite-property", "cas-replace-named-graph", "tombstone-delete-composite", "tombstone-delete-named-graph")
+      for tag in ("", "-no-receipt", "-patch-log")),
+)
+"""The builders whose `NOT EXISTS` inside a `GRAPH` block gained a `GRAPH` of its own in H2.6g (TSD-34). Each is one version above where it was."""
+
 BUILDER_VERSIONS: dict[str, int] = {
-    **{stem: 1 for stem in sorted(_STEM_KIND)}, "append-event": 2, "append-version": 2, "cas-replace-named-graph": 2, "cas-replace-value-guard": 2,
+    stem: {"append-event": 2, "append-version": 2, "cas-replace-named-graph": 2, "cas-replace-value-guard": 2}.get(stem, 1) + (stem in _NOT_EXISTS_NAMES_ITS_GRAPH)
+    for stem in sorted(_STEM_KIND)
 }
 """The version of each builder, which any change to the text it renders must bump. A golden check
 (`tests/test_builder_versions.py`) holds the version to the text, and it is a number kept here, never computed, so that a
 change to a builder is a change a reviewer sees. A dataset-guard variant shares its base operation's version. `append-event` is at 2
 since its events became request-time slots (formal-methods H2.6b). `append-version` is at 2 since it links versions with `pat:previousVersion`
 (R2, H2.6d), and `cas-replace-named-graph` since it no longer names delta graphs from caller parameters, which a patch-log variant now writes.
-`cas-replace-value-guard` is at 2 since its patterns moved from the default graph into the family's data graph (H2.7, TD-43)."""
+`cas-replace-value-guard` is at 2 since its patterns moved from the default graph into the family's data graph (H2.7, TD-43). The builders in
+`_NOT_EXISTS_NAMES_ITS_GRAPH` are one higher since a `NOT EXISTS` inside a `GRAPH` block names its graph (H2.6g, TSD-34)."""
 
 
 class GuardStatus(Enum):

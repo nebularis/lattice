@@ -18,17 +18,21 @@ WHERE {
     ?cp pat:checkpoint true .
     $version pat:previousVersion* ?cp .
     FILTER NOT EXISTS {
-      ?later pat:checkpoint true ; pat:previousVersion ?y .
-      ?y pat:previousVersion* ?cp .
-      $version pat:previousVersion* ?later
+      GRAPH {{{dataGraph}}} {
+        ?later pat:checkpoint true ; pat:previousVersion ?y .
+        ?y pat:previousVersion* ?cp .
+        $version pat:previousVersion* ?later
+      }
     }
     $version pat:previousVersion* ?w .
     ?w pat:previousVersion* ?cp .
     { ?w $membershipProperty ?member } UNION { ?w pat:addsMember ?member }
     FILTER NOT EXISTS {
-      ?x pat:dropsMember ?member ; pat:previousVersion ?z .
-      ?z pat:previousVersion* ?w .
-      $version pat:previousVersion* ?x
+      GRAPH {{{dataGraph}}} {
+        ?x pat:dropsMember ?member ; pat:previousVersion ?z .
+        ?z pat:previousVersion* ?w .
+        $version pat:previousVersion* ?x
+      }
     }
   }
 }

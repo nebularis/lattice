@@ -50,7 +50,7 @@ WHERE {
   GRAPH {{{metaGraphPrefix}}} {
       $root pat:epoch ?rowEpoch ; pat:seq $expectedSeq .
       OPTIONAL { $root pat:head ?prevRev }
-      FILTER NOT EXISTS { $root pat:deleted true }
+      FILTER NOT EXISTS { GRAPH {{{metaGraphPrefix}}} { $root pat:deleted true } }
   }
   FILTER NOT EXISTS { GRAPH {{{txnGraph}}} { $txnId pat:rev ?any } }
   BIND(STR($txnId) AS ?txnKey)

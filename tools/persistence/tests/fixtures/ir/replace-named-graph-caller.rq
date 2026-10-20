@@ -21,7 +21,7 @@ WHERE {
   GRAPH <urn:g:meta> {
     $root pat:epoch $epoch ; pat:seq $expectedSeq .
     OPTIONAL { $root pat:head ?prevRev }
-    FILTER NOT EXISTS { $root pat:deleted "true"^^xsd:boolean }
+    FILTER NOT EXISTS { GRAPH <urn:g:meta> { $root pat:deleted "true"^^xsd:boolean } }
   }
   FILTER NOT EXISTS { GRAPH <urn:g:txn> { $txnId pat:rev ?any } }
   BIND(STR($txnId) AS ?txnKey)

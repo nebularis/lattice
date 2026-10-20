@@ -46,7 +46,7 @@ INSERT {
 WHERE {
   GRAPH {{{metaGraphPrefix}}} {
       $root pat:epoch $epoch ; pat:seq $expectedSeq .
-      FILTER NOT EXISTS { $root pat:deleted true }
+      FILTER NOT EXISTS { GRAPH {{{metaGraphPrefix}}} { $root pat:deleted true } }
   }
   FILTER NOT EXISTS { GRAPH {{{txnGraph}}} { $txnId pat:rev ?any } }
   OPTIONAL { GRAPH {{{dataGraph}}} { $root {{{ownedPath}}} ?s . ?s ?p ?o } }

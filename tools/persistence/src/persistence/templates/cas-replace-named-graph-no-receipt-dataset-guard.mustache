@@ -36,7 +36,7 @@ WHERE {
   GRAPH {{{datasetGraph}}} { {{{datasetNode}}} pat:epoch $epoch }
   GRAPH {{{metaGraphPrefix}}} {
       $root pat:epoch ?rowEpoch ; pat:seq $expectedSeq .
-      FILTER NOT EXISTS { $root pat:deleted true }
+      FILTER NOT EXISTS { GRAPH {{{metaGraphPrefix}}} { $root pat:deleted true } }
   }
   FILTER NOT EXISTS { GRAPH {{{txnGraph}}} { $txnId pat:rev ?any } }
   OPTIONAL { GRAPH ?g { ?s ?p ?o } }
