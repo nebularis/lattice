@@ -53,15 +53,31 @@ section below.
 
 ## Next action
 
-Decided 2026-10-20: VH-P1 (c), with TD-63 before the merge. The ADR-A123 addendum of 2026-10-14 accepted. VH-Q7 confirmed. EX-Q1 (b),
-EX-Q2, EX-Q3 and FS-Q1 to FS-Q7 at their leanings. **This branch ignores versioning** until its changes are complete, then bumps a minor
-when it merges into `main` (H2.7-Q5, TD-64). We work autonomously, committing on the branch without pushing.
+**Paused 2026-10-20 for the maintainer's review of one tranche.** Everything below was decided at our leanings, or by an agent alone,
+at the maintainer's request, and is committed on this branch, not pushed. Versioning is ignored on this branch (TD-64), so
+`check:ontology-versioning` fails with `UNBUMPED`, as expected.
 
-1. ~~**The examples E1 to E8**~~ done 2026-10-20: sketch §10.1 to §10.8, open points EP-1 to EP-11 with our leanings in §10.9, TD-65, TD-66 and PDD-11.
-2. **H2.6c, the write disciplines** ([plan §4.9](../plans/formal-methods-track-h.md#49-h26c-the-write-disciplines-planned-2026-10-20)), then **H2.6d**, the patch log for in-place families (§4.10).
-3. **H2.7 and H2.8**, with VH-Q1 to VH-Q6 decided at our leanings (H-D34 met).
-4. Then H2.9. H2.10 follows the sketch's answers. Later, PDD-06.
-5. Before the merge into `main`: TD-63, and the minor version bump (TD-64).
+### The review tranche
+
+| # | What | Where | Decided by |
+|---|---|---|---|
+| R1 | VH-Q1 to VH-Q6 at their leanings, with the size and cost rationale | sketch §11 and its closing table | us, at our leanings |
+| R2 | VH-D1, the head names the latest version written, agreement evaluated. **One inconsistency to settle:** H2.6c asserts `fnd:supersededBy` on every append, as plan §4.9 says, while VH-D1 says it is asserted when an amendment is agreed. Our leaning: on every append for every versioned family, since most have no agreement, with Instrument's agreed chain a separate evaluation. E7 argues the opposite case for the pointer | sketch §10.7, §11, plan §4.9 | us |
+| R3 | VH-D2, a full membership list per root version until E5's benchmark | sketch closing table | us |
+| R4 | the examples E1 to E8, and EP-1 to EP-11 | sketch §10.1 to §10.9 | four agents, then us |
+| R5 | TD-63 to TD-66, PDD-11, the workload note | the registers | us |
+| R6 | H2.6c, built, with eight decisions taken alone: `pat:currentVersion` beside `pat:head`, a first version appended onto a bootstrapped row, no tombstone for an appending family, the named-graph variant refused (`AppendVersionsUnsupported`), one refusal for three causes, the version as the contract's `Aggregate`, no new slot, and `dal:WriteDisciplineProfile` | [FMH-H2-6c](../validation/FMH-H2-6c.md) | an agent, reviewed and checks re-run by us |
+| R7 | H2.6c's twelve regenerated or new expected profiles, for re-approval as data | FMH-H2-6c | |
+| R8 | two existing tests changed in H2.6c (`test_h2_2_t1`, `test_h2_6_t1`), for countersignature. None removed | FMH-H2-6c | |
+| R9 | H2.7-Q1 to Q4 and H2.8-Q1 to Q3 at (a), H2.7-Q5 by the maintainer | plan §4.7, §4.8 | us, and the maintainer |
+| R10 | the ADR-A123 addendum of 2026-10-20 for H2.6c, a draft | ADR-A123 | the agent |
+
+### After the review
+
+1. H2.6d, the patch log for in-place families (plan §4.10).
+2. H2.7, the vocabulary and the compiler's emission, now including `dal:writeDiscipline`, then H2.8.
+3. Then H2.9. H2.10 follows the sketch's answers. Later, PDD-06.
+4. Before the merge into `main`: TD-63, and one minor version bump (TD-64).
 
 ## Slices
 
@@ -97,6 +113,8 @@ when it merges into `main` (H2.7-Q5, TD-64). We work autonomously, committing on
 | H2.5 (key claims, audits, guard D, the `SELECT` fragment) | **built** 2026-10-13, autonomously, in six gates. [Validation Pack](../validation/FMH-H2-5.md). [Plan §4.3](../plans/formal-methods-track-h.md#43-h25-key-claims-the-audits-and-the-self-calibrating-guard-planned-2026-10-13). TD-34 closed. every decision taken | the maintainer's merge |
 | H2.6 (expected compiled profiles, paper check) | **built 2026-10-13 and approved by the maintainer 2026-10-13.** [Validation Pack](../validation/FMH-H2-6.md). [Plan §4.4](../plans/formal-methods-track-h.md#44-h26-the-expected-compiled-profile-examples-first-and-the-paper-check-planned-2026-10-13). Five of eight review questions answered (H-D24 to H-D28), three open ([write-up](../notes/track-h-h26-review-questions.md)). `mise run build:persistence-expected-profiles` and a check in `check:persistence` | the maintainer's merge. H2.7 waits for RQ4 to RQ6 |
 | H2.6b (event slots, patch-log half held, H-D33) | **event half built 2026-10-14, approved by the maintainer and complete 2026-10-14.** Six expected profiles re-approved, `test_ho6_t14` countersigned. [Validation Pack](../validation/FMH-H2-6b.md), [plan §4.6](../plans/formal-methods-track-h.md#46-h26b-the-event-and-patch-content-slots-planned-2026-10-14). The patch-log half is held (H-D33) | the merge |
+| H2.6c (write disciplines) | **built 2026-10-20, awaiting the maintainer's review.** [Validation Pack](../validation/FMH-H2-6c.md), [plan §4.9](../plans/formal-methods-track-h.md#49-h26c-the-write-disciplines-planned-2026-10-20). `check:persistence` 2869 passed, 1 xfailed. `check:persistence-oxigraph` 225 passed | the review tranche below |
+| H2.6d (patch log for in-place families) | planned 2026-10-20, [plan §4.10](../plans/formal-methods-track-h.md#410-h26d-the-patch-log-for-in-place-families-planned-2026-10-20) | H2.6c's review |
 | H2.7 (vocabulary and emission) | **planned** 2026-10-14, [plan §4.7](../plans/formal-methods-track-h.md#47-h27-the-vocabulary-and-the-compilers-emission-planned-2026-10-14) | H2.7-Q1 to Q4, and H2.6b's merge |
 | H2.8 (typed payload, caller checks) | **planned** 2026-10-14, [plan §4.8](../plans/formal-methods-track-h.md#48-h28-the-typed-payload-and-the-caller-side-checks-planned-2026-10-14) | H2.8-Q1 to Q3, and H2.7's merge |
 | H3 (specification registry) | not started, outlined in the plan | H2 preferred first (smaller, more self-contained), not a hard blocker |
@@ -673,4 +691,6 @@ when it merges into `main` (H2.7-Q5, TD-64). We work autonomously, committing on
 - 2026-10-20: the examples E1 to E8 drafted by four agents in parallel, merged into the sketch (§10.1 to §10.9), every diagram
   rendered. Their open points decided at our leanings (EP-1 to EP-11), with TD-65 (Wording values), TD-66 (AIR exposure versions) and
   PDD-11 (entry into force per holder, the life of an offer). H2.6c planned (plan §4.9) and building, H2.6d planned (§4.10).
+- 2026-10-20: H2.6c built by an agent, reviewed, checks re-run (2869 passed, 1 xfailed, Oxigraph 225 passed) and committed. Paused
+  for the maintainer's review of the tranche R1 to R10.
 
