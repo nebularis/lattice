@@ -132,6 +132,8 @@ measures, with abandonment conditions. Gate D decides FM-D1.
 | B2 | differential tests of the Eligibility compilers against B1, with shape-derived generators, and a named negative fixture for hierarchical match with exclusions | sketch §8.4 |
 | B3 | property test: regeneration as naturality (ADR-A27). MORK's lattice laws and MCN's round trip are deferred (our own call, and a missing encoder, respectively) | sketch §8.8, §10 |
 | B4 | the reference for the evaluation context and Behaviour's macrostep, with `DesignEnv` and `RunEnv`, the rounding and residual rule, and conformance kits for C12 | reference evaluator §3, §4 |
+| B4a | within B4, the reference for Ledger ([ADR-A131](../../architecture/decisions/ADR-A131-ledger-layer.md)): postings, balances along an account path, credits, and each merge rule, with conformance cases for C12's draws | [Ledger plan](ledger.md) |
+| B4b | the reference for Ensemble's composition ([ADR-A130](../../architecture/decisions/ADR-A130-ensemble-layer.md)): an ensemble evaluated member by member, passing facts, a conformance kit for C12's composition step, and a differential check against evaluating every member together on small ensembles | [Ensemble plan](ensemble.md) |
 
 Detailed in its own [sketch](../sketches/formal-methods-track-b.md) and
 [plan](formal-methods-track-b.md); status in [its status record](../status/formal-methods-track-b.md).
@@ -151,7 +153,13 @@ corrected to match.
 
 Skeletons first (C1), then one model per ADR that adds or changes a law (FM-D8). C2 models binding
 resolution with scheme composition ahead of CCS C8. C3 is slot exclusivity and exhaustiveness by SMT
-for every condition kind, driven from Python, in step with CCS C13a.
+for every condition kind, driven from Python, in step with CCS C13a. C4 models ADR-A130 (Ensemble):
+the order of evaluation is well founded under its rule for cycles broken by time, a cycle at one
+position is refused, and a derived shared-resource relation agrees with the terms that draw on its
+account. C5 models ADR-A131 (Ledger): a draw on a path succeeds or fails whole, availability is the
+least along the path, a credit never exceeds the stated amount, the account tree has no cycle, and
+each merge rule conserves the amount it shares. Both are run before or alongside their ADR's
+acceptance, as C2.3 is for ADR-A116.
 
 Detailed in its own [sketch](../sketches/formal-methods-track-c.md) and
 [plan](formal-methods-track-c.md); status in [its status record](../status/formal-methods-track-c.md).
@@ -173,7 +181,10 @@ is decided, FM-D2, ADR-A-FM2, `tools/proofs/`). E2 the Eligibility denotation an
 compiler core, with the mapping of "not a value" to Undetermined as its first theorem, a
 mechanical fragment gate, and a cross-store conformance suite. E3 the combinator algebra. E4 the
 evaluation context,
-mechanising B4. E5 the template library in rely and guarantee form.
+mechanising B4, with E4a the Ledger laws of C5 mechanised from B4a. E4b the composition law of
+ADR-A130, that composed evaluation reaches the same outcomes as evaluating every member together for
+ensembles whose cycles are broken by time, mechanised from B4b. E5 the template library in rely and
+guarantee form.
 
 ### Track F: native tooling
 
@@ -357,6 +368,8 @@ None of these is taken without the maintainer.
 | CCS | C11a, C12 | track B gives C12 its reference and conformance kits. C12 does not wait for them |
 | CCS | C13, C13a | track B checks relation plans. Track C supplies the SMT checks for C13a. I7 is track E's first Instrument target once C13 is specified |
 | CCS | C8a | track G states the template library's claims in rely and guarantee form |
+| [Ledger](ledger.md) | ADR-A131, LG-1 to LG-4 | track C's C5 models the ADR before or alongside acceptance. Track B's B4a gives its reference, track E's E4a its proofs. Distinct from track A's assurance ledger, which records claims, not amounts |
+| [Ensemble](ensemble.md) | ADR-A130, ES-3 to ES-8 | track C's C4 models the ADR before or alongside acceptance. Track B's B4b gives the composition reference and C12's kit, track E's E4b proves the composition law |
 | CCS | C9b3 | **an Eligibility pass first, FM-EP, done 2026-10-09** on machine S, branch `fm/eligibility-pass` (FM-D17, E1.4, B2.1, B2.2 all built and verified; B5 attempted, blocked by a mirror gap, deferred). Held ready for the maintainer to commit and merge to `main`; C9b3 can start once that happens. C9b3 adds set comparisons and aggregate bindings to Eligibility, extending its laws, its theory, its reference semantics and its compilers, and then carries its own proof and reference rows ([consent sketch](../sketches/consent-and-group-powers.md) §2.3) |
 | CCS | C16a | laws with formal statements make simplifications checkable |
 | [insurml-alignment](insurml-alignment.md) | IMA-D4a, IMA-4.2 | track C informs scheme composition. Assembly parity is a track B property test first and a track E theorem later |

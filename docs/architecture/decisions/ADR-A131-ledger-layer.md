@@ -84,9 +84,10 @@ and an ontology that extends the ledger would have to extend Behaviour with it.
      position.
    - **Persistence.** Postings and balance records are append-only, so persistence writes them as
      record families.
-5. **An account belongs to a persistent identity.** It may belong to an instrument, an authority, a
-   programme, a vehicle or any other `fnd:PersistentIdentity`, so it outlives a new version of what it
-   belongs to.
+5. **An account belongs to a persistent identity.** It may belong to an instrument, an authority, an
+   ensemble of instruments (ADR-A130), such as a programme or a vehicle, or any other
+   `fnd:PersistentIdentity`, so it outlives a new version of what it belongs to. An account drawn on by
+   several instruments belongs to their ensemble.
    - **Owner kinds.** An account definition states which kinds of owner it admits.
    - **Aggregate.** An account and its postings form an aggregate of their own under ADR-A122, owned
      by that identity and by no occasion.

@@ -285,6 +285,8 @@ flowchart LR
   S1 --> AIR["AIR-6.8 and M7<br/>claims across a programme"]
 ```
 
+The [Ensemble plan](../plans/ensemble.md) supersedes this sequence (2026-10-20).
+
 ## 9. Questions IR-Q1 to IR-Q6
 
 | ID | Question | Options | Leaning |
@@ -294,4 +296,43 @@ flowchart LR
 | **IR-Q3** | Where `ins:boundUnder` and incorporation live | stay in Instrument and are read by Ensemble as K1, or move to Ensemble | stay. They are proven, and they concern how one instrument comes to exist |
 | **IR-Q4** | The Instrument hook | a regime's measured value supplied from outside, or a condition's evidence supplied from outside, or both | both, as one rule: an externally supplied value is a recorded fact with provenance |
 | **IR-Q5** | The first slice's scope | K2 and K3 only, or K2 to K4 | K2 and K3, tested on a guarantee called on default and an excess attaching on exhaustion |
-| **IR-Q6** | Does this take over HQ-2, HQ-7 and HQ-12 from the CCS plan? | yes, with the CCS plan pointing here, or keep them in CCS | yes, once IR-Q2 is answered |
+| **IR-Q6** | Does this take over HQ-2, HQ-7 and HQ-12 from the CCS plan? | yes, with the CCS plan pointing here, or keep them in CCS | **Revised 2026-10-20:** HQ-2's second case, HQ-7 and HQ-12 move here. HQ-2's first case, one participant's share within one agreement, stays with Instrument and Party beside HQ-5 (ADR-A130 decision 9) |
+
+## 10. Needs added on 2026-10-20
+
+Testing the design against layered programmes, vehicles and master arrangements found needs the
+first draft did not meet. Each is stated from the law or from drafting, with examples from several
+fields. The first five, with signed shares, representation and confidentiality, amend ADR-A130
+before acceptance. The rest are slices of the
+[Ensemble plan](../plans/ensemble.md).
+
+| Need | Premise | Examples | Where |
+|---|---|---|---|
+| an ensemble with an identity | the Code civil's definition is of a set serving one operation, and the set acts as a whole: it owns shared limits, is formed and changed, and may be part of a larger set | a syndicated facility with its guarantees, a construction contract with its bonds, a master with its confirmations, a programme | ADR-A130 decision 2 |
+| endpoints below the instrument, and identity or version | coordination terms target a term, a section or a limit of another agreement. Most relations survive amendment, and some are to one text | a master's shared limit over two children's limits, one section following the form of another, incorporation of one edition | ADR-A130 decision 4 |
+| one agreement's participants are not an ensemble | several liability within one agreement is a matter of the agreement's parties | the lenders' several commitments in one facility agreement | ADR-A130 decision 9 |
+| cycles broken by time | mutual cross-default is ordinary drafting, and each side reads the other's default as already occurred | two facilities of one borrower, each in default if the other is | ADR-A130 decision 5 |
+| a resource shared by instruments, visible at design time | a limit or aggregate shared by several contracts is stated by their terms, and reviewers need to see it without reading each term | two contracts sharing an aggregate, an authority's aggregate over the contracts bound under it | ADR-A130 decision 3, K6 derived and checked by a shape |
+| a state from outside the modelled set | a contract may respond after another that is not held, whose state is known only as facts | a statutory scheme responding first, senior debt held by a lender not modelled | ES-2 |
+| the composition law | option B rests on the claim that composed evaluation loses nothing against evaluating together | every ensemble whose cycles are broken by time | ES-3, formal methods C4, B4b, E4b |
+| separate orders for draws and credits | recoveries are often applied in the reverse of the order in which loss was borne | excess layers applying a recovery from the top, a lending waterfall for recoveries | ES-8 |
+| signed shares | where commitments exceed the order, each is reduced by the rule the terms state, a judgement from facts | an oversubscribed public offer of bonds scaled by the prospectus's basis of allocation, an MRC's signing provisions (lines to stand in full, the rest in equal proportion) | ADR-A130 decision 10, ES-5 |
+| formation by a recorded act | a set of agreements comes into being at an act with its evidence | the signing of a facility, the closing of a bond issue, a placement completed | ES-6 |
+| membership by rule | some sets are defined by a rule, not a list | every policy of a class written in a period under a treaty, the eligible receivables in a borrowing base, a framework's call-offs | ES-6 |
+| nested ensembles | a set may be a member of a larger set | a vehicle participating in a layer, a facility within a group's financing | ES-6 |
+| representation | one party's act may bind others whose agreements authorise it, one authority per subject, in stated tiers, with conditions, defaults and exclusions, sometimes with authority from a rule outside the agreements | an intercreditor agreement's security agent and instructing group acting across the facility, hedging and security documents, an MRC's slip leader for changes and claims agreement party for claims | ADR-A130 decision 11, ES-7 |
+| confidentiality | members may agree terms the others must not see | an insurer's own security details pages on an MRC, a lender's side letter | ADR-A130 decision 12 |
+| contribution | where several agreements answer one loss or debt, each bears a rateable part, by their terms or by the law where they are silent | co-sureties, policies covering the same loss | ES-8, K7 by addendum |
+
+**Subscription.** Where several insurers subscribe a policy, each subscription is a distinct
+contract with the insured unless the contrary is expressed (Marine Insurance Act 1906, s. 24(2)),
+and the reported reading of *General Reinsurance Corp v Forsakringsaktiebolaget Fennia Patria*
+[1983] QB 856 is that each line binds when it is written, subject to signing down. Both are to be
+checked against the primary texts before a public document relies on them. The London Market
+Group's MRC (Open Market) guidance v3.0 (2023) agrees: its model several liability clause reads "this
+contract" as contracts in the plural, and its data dictionary records the date each written line's
+contract was entered into. A subscription is then an
+ensemble of one instrument per line sharing one wording, with K4 portions, and one instrument with a
+group of several parties stays for a single agreement such as a syndicated facility. Where this is
+modelled is the phase 7 plan's P7-Q5.
+

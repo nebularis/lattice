@@ -68,6 +68,16 @@ flowchart LR
   L4 --> A75["AIR-7.5 vehicles"]
 ```
 
+## Formal methods
+
+Placed in the [formal-methods epic](formal-methods.md), under FM-D8:
+
+| Slice | Track | Content | When |
+|---|---|---|---|
+| C5 | C | an Alloy model of ADR-A131: a draw on a path succeeds or fails whole, availability is the least along the path, a credit never exceeds the stated amount, the tree has no cycle, each merge rule conserves the amount it shares | before or alongside ADR-A131's acceptance |
+| B4a | B | the Ledger reference within the evaluation context's reference (B4), with conformance cases for C12's draws | with LG-2 and CCS C12 |
+| E4a | E | the same laws mechanised from B4a, within E4 | after B4a |
+
 ## Releases
 
 Ledger is a member of the substrate's release (ADR-A129). Each slice that changes a member is a new
@@ -94,7 +104,7 @@ to the release's number.
 | Unit | Change |
 |---|---|
 | CCS | C12 runs draws and credits as postings, sequential environment first. C12 waits on LG-3 |
-| Ensemble (ADR-A130) | slice 1's K2 example reads exhaustion from a balance record, so it waits on LG-2. LG-Q3 is settled before slice 1 is briefed |
+| Ensemble (ADR-A130) | ES-3's K2 examples read exhaustion from a balance record, so ES-3 waits on LG-2. An account drawn by several instruments belongs to their ensemble, and the K6 relation is derived from the terms that draw on it. LG-Q3 and LG-Q4 are settled before ES-4 is briefed |
 | AIR phase 7 | AIR-7.4 becomes LG-4. AIR-7.5 depends on LG-4 |
 | AIR claims | AIR-6.8's programme erosion uses programme-owned accounts, after LG-3 |
 | AIR phase 5 | term parameters (limits, retentions, aggregates, reinstatements) state accounts. Phase 5 waits on LG-3 |
@@ -106,6 +116,6 @@ to the release's number.
 |---|---|---|---|
 | **LG-Q1** | The word for an account (PDD-08) | account, budget, allowance, tally | account. It is the ledger's own unit in accounting and in computing, and has no market meaning. "Budget" suggests planning, and "allowance" is the term being deprecated |
 | **LG-Q2** | Shared limits that are not a tree (EC-Q3) | (a) an account with two parents. (b) one account with several draw purposes, keeping the tree. (c) across instruments, two accounts and an Ensemble relation | (b) within one owner, and (c) across owners. A tree keeps the path debit and its proof simple |
-| **LG-Q3** | An account shared by several instruments, such as an authority's aggregate, drawn by their separate evaluations | (a) the draws are ordered by Ensemble K3 rank, each evaluation reading the balance the one before it left. (b) the draws are proposals merged by the account's merge rule at the owner's pass. (c) (a) where a rank is stated, (b) otherwise | (c). A stated priority is the law's answer where there is one. Otherwise the merge rule decides, and the default is "refuse" |
-| **LG-Q4** | How a posting names its position without naming Behaviour | (a) Ledger's own ordered pair, position and micro-position, supplied by whatever posts. (b) only `prov:wasGeneratedBy` to the run, with the order read from the run | (a). A balance at a position is then read without joining the runtime records of another layer. Behaviour supplies its stimulus log positions |
+| **LG-Q3** | An account shared by several instruments, such as an authority's aggregate, drawn by their separate evaluations | (a) the draws are ordered by Ensemble K3 rank, each evaluation reading the balance the one before it left. (b) the draws are proposals merged by the account's merge rule at the owner's pass. (c) (a) where a rank is stated, (b) otherwise | (c), refined 2026-10-20. A stated priority is the law's answer where there is one. Otherwise draws at different positions fall in the order of their positions, and the merge rule decides only between draws at one position, with "refuse" as the default |
+| **LG-Q4** | How a posting names its position without naming Behaviour | (a) Ledger's own ordered pair, position and micro-position, supplied by whatever posts. (b) only `prov:wasGeneratedBy` to the run, with the order read from the run | (a). A balance at a position is then read without joining the runtime records of another layer. Behaviour supplies its stimulus log positions. Since an ensemble's account is drawn from several instruments' logs, their positions must be comparable, so the account's owner supplies one order for its account (added 2026-10-20) |
 | **LG-Q5** | Balance records materialised per pass, or derived on read | (a) materialised once per pass for each affected account. (b) derived from postings on each read | (a), with postings authoritative. A read then costs one lookup, against a sum over every posting on the account and its descendants |

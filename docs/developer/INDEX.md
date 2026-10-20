@@ -729,6 +729,20 @@ A substrate layer above Quantification for amounts consumed and restored over ti
 postings, balances and merge rules. Behaviour's allowances become a shorthand for it. Slices LG-0 to
 LG-4. CCS C12, Ensemble's slice 1, AIR Phase 5, AIR-6.8 and AIR-7.5 wait on it.
 
+## 8.19 Ensemble — Proposed
+
+| Field | Value |
+|-------|-------|
+| **Status** | 📝 Plan proposed 2026-10-20, no slice briefed. ADR-A130, amended 2026-10-20, and ADR-A01's 2026-10-18 addendum Proposed |
+| **Unit ID** | `ensemble` |
+| **Sketch** | [instrument-relations.md](sketches/instrument-relations.md) |
+| **Plan** | [ensemble.md](plans/ensemble.md) |
+| **ADRs** | [A-130](../architecture/decisions/ADR-A130-ensemble-layer.md), Proposed |
+
+A substrate layer above Instrument and Behaviour for sets of instruments forming one operation:
+ensembles, reified relations K1 to K8, and evaluation by composition. Slices ES-0 to ES-8. Formal
+methods C4, B4b and E4b. CCS C12, AIR-6.8 and phase 7's programme and vehicle modules wait on it.
+
 ## 8. Phase Handoff Documents (0-6)
 
 | Phase | Status Record | Key Outcome |

@@ -114,6 +114,25 @@ practice: `skos:inScheme` is many-valued), may be exactly the overlap the simple
 `run` that fails to admit either motivating case is evidence the ADR should be revised before it
 is accepted, not after.
 
+### C4: model ADR-A130 (Ensemble) — not started
+
+**Recommended before or alongside ADR-A130's acceptance.** Model ensembles, relations with their
+kinds and the positions at which each relation reads. Check that the order of evaluation is well
+founded whenever every cycle has an edge reading at a strictly earlier position, that a cycle whose
+edges all read at one position is refused, and that a derived shared-resource relation (K6) names
+exactly the instruments whose terms draw on its account, and that signed shares sum to the order
+whenever the written shares reach it (decision 10). `run` the motivating cases (a guarantee
+called on default, mutual cross-default, an excess on exhaustion, two contracts sharing an aggregate)
+to confirm they are admitted. See the [Ensemble plan](ensemble.md).
+
+### C5: model ADR-A131 (Ledger) — not started
+
+**Recommended before or alongside ADR-A131's acceptance.** Model account trees, draws, credits and
+merge rules. Check that a draw on a path succeeds or fails whole, that availability is the least
+remaining balance along the path, that a credit never raises a balance above its stated amount, that
+the tree has no cycle, and that each merge rule's postings sum to the amount shared. `run` the Ledger
+plan's examples to confirm they are admitted. See the [Ledger plan](ledger.md).
+
 ## 4. Home for the model
 
 Confirmed, not merely proposed: `tools/models/vocabulary-scheme-composition/`, with a parent
