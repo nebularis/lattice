@@ -2,7 +2,7 @@
 
 # ADR-A123: A typed operation IR for the persistence compiler
 
-**Status:** Accepted, 2026-10-10, with the ADR-A79 addendum applied the same day, and six addenda of its own (2026-10-12, 2026-10-13 and 2026-10-14, the last accepted 2026-10-20)
+**Status:** Accepted, 2026-10-10, with the ADR-A79 addendum applied the same day, and eight addenda of its own (2026-10-12 to 2026-10-20)
 **Date:** 2026-10-10
 **Supersedes:** parts of [ADR-A79](ADR-A79-persistence-compiler-toolchain.md), listed under Decision 10. ADR-A79 stays Accepted for the rest
 **Related:** [ADR-A78](ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md),
@@ -273,7 +273,7 @@ versioning sketch's VH-Q1 to VH-Q6, and extends the builders of decision 1.
    the data graph), the receipt and the claim. Its digest parts are the usual four, with the payload as the content part.
 
 
-## Addendum, 2026-10-20: the subjects of an event append (proposed, for the maintainer's acceptance)
+## Addendum, 2026-10-20: the subjects of an event append (accepted 2026-10-20)
 
 This addendum extends this ADR's addendum of 2026-10-14 on the event slots. It adds a rule for what an append of events may write, using the
 identity grammar of [ADR-A51](ADR-A51-iri-and-identity-policy.md) (its Rule 8 and its event IRI). It changes no IRI grammar.

@@ -2,7 +2,7 @@
 
 # ADR-A132: A caller library for the generated persistence operations
 
-**Status:** Proposed, 2026-10-20
+**Status:** Accepted, 2026-10-20
 **Date:** 2026-10-20
 **Supersedes:** none
 **Related:** [ADR-A123](ADR-A123-typed-operation-ir.md) (the typed IR, its contract and its addenda),

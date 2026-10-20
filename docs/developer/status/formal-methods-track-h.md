@@ -709,4 +709,12 @@ For acceptance: ADR-A132, the persistence caller library (Proposed), and ADR-A12
 - 2026-10-20: the maintainer decided H2.7-Q2 (a), H2.7-Q3 (a), H2.8-Q2 (c) with (b) as an optional tightening, and H2.8-Q3 (c).
 - 2026-10-20: planned H2.6d (revised), H2.6e, H2.6f, W-65, AIR-66, H2.7 and H2.8 (revised), H2.9, and the order (plan §4.10 to
   §4.16). H2.10 dropped. ADR-A132 drafted as Proposed, and the event-subject rule as a proposed addendum to ADR-A123.
+- 2026-10-20: the maintainer approved every slice of plan §4.10 to §4.16, agreed H2.10 dropped, and accepted ADR-A132 and ADR-A123's
+  addendum on the subjects of an event append. We proceed autonomously, committing locally without pushing. Every decision we take
+  alone is recorded in its slice's Validation Pack and listed in the decisions log below, for ratification.
+
+### Decisions log, for ratification
+
+| # | Slice | Decision taken alone | Where |
+|---|---|---|---|
 
