@@ -8,12 +8,11 @@
 **Related:** [ADR-A01](ADR-A01-layer-dependency-order.md) (the layer order, amended by its
 2026-10-19 addendum), [ADR-A92](ADR-A92-derived-artefact-contract-and-prov-o-alignment.md) (derived artefacts),
 [ADR-A106](ADR-A106-behaviour-configuration-runtime-occasions-and-records.md) (Behaviour's
-configuration and runtime), [ADR-A113](ADR-A113-breaking-changes-at-major-version-zero.md) (versioning at major
-version zero), [ADR-A121](ADR-A121-repository-catalogue.md) (the repository catalogue),
+configuration and runtime), [ADR-A113](ADR-A113-breaking-changes-at-major-version-zero.md) (major version zero),
+[ADR-A129](ADR-A129-one-release-for-the-substrate.md) (one release), [ADR-A121](ADR-A121-repository-catalogue.md) (the repository catalogue),
 [ADR-A122](ADR-A122-aggregate-ownership.md) (aggregate ownership),
 [ADR-A130](ADR-A130-ensemble-layer.md) (Ensemble), [ADR-A-C2](ADR-AC2-clean-room-authoring-procedure.md)
-(authoring order), the [evaluation-context sketch](../../developer/sketches/evaluation-context.md) §5
-(the ledger's design in outline)
+(authoring order)
 
 ## Context
 
@@ -46,8 +45,8 @@ Several consumers need a running amount, and most of them are not state machines
 | design-time checks | an account tree's structure |
 | Behaviour | effects that draw and threshold regimes that read a balance |
 
-Keeping the model inside Behaviour would make each consumer import six layers, and a change to it
-would bump Behaviour and re-pin every importer of Behaviour.
+Keeping the model inside Behaviour would make each consumer import six layers where four would do,
+and an ontology that extends the ledger would have to extend Behaviour with it.
 
 ## Decision
 
@@ -105,8 +104,9 @@ would bump Behaviour and re-pin every importer of Behaviour.
    - **Allowances become a shorthand.** `bhv:AllowanceDefinition` becomes a deprecated shorthand for
      a one-account ledger with a reset period. `bhv:AllowanceAccount` and `bhv:availableBalance`
      give way to balance records, and `bhv:AbsorptionPolicy` gives way to merge rules.
-   - **Versioning.** The shorthand is deprecated in a MINOR release and removed in a later one, as
-     ADR-A113 allows at major version zero.
+   - **Releases.** The shorthand is deprecated in one release of the substrate and removed in a later
+     one (ADR-A129, ADR-A113). The release notes class the deprecation as no effect and the removal as
+     changes meaning, which owes a migration once an adopter holds production data.
 8. **Extension.** Another ontology may add account kinds, posting kinds and merge rules under its own
    prefix, as subclasses or concepts.
    - **Semantics.** Ledger documents the semantics of its own terms, and the reference evaluator
@@ -139,20 +139,25 @@ flowchart TB
 
 ## Consequences
 
-- **The layer order changes** (ADR-A01, 2026-10-19 addendum). The repository catalogue gains a
-  substrate entry for Ledger when its first slice creates `ontology/ledger/`, so
-  `mise run check:import-guard` enforces its imports with no change to the guard's code.
+- **The layer order changes** (ADR-A01, 2026-10-19 addendum). When its first slice creates
+  `ontology/ledger/`, Ledger's README carries its catalogue entry, of kind `substrate` with its
+  imports, the root catalogue lists it after Quantification, and Behaviour's entry adds it to its
+  imports (ADR-A121). `mise run check:import-guard` then enforces them with no change to the guard's
+  code.
+- **Releases.** Ledger joins the substrate's release at the release's number, with no version of its
+  own (ADR-A129). Each slice that changes a member is a new release, made by `release:prepare`.
   `docs/architecture/ontology-architecture.md` and the root README show the new layer.
-- **Behaviour changes, breaking at major version zero** (ADR-A113). It imports Ledger, retargets its
-  effects and regimes, and deprecates the allowance terms. About 30 files use them today, most of
-  them the insure-o example's cases. Instrument, Ensemble and every applied module re-pin.
+- **Behaviour changes.** It imports Ledger, retargets its effects and regimes, and deprecates the
+  allowance terms. About 30 files use them today, most of them the insure-o example's cases. The
+  substrate moves with the release, and the applied modules and examples pin the new release
+  (ADR-A129 decision 4).
 - **Cost.** A draw on a path of depth *d* writes one posting of about 7 triples. A materialised
   balance record per affected account adds about 6 triples each, so a pass that draws once on a
   three-level path writes about 25 triples. A balance read without materialised records sums the
   postings on the account and its descendants up to a position. That is linear in the postings, and
   a per-pass materialisation bounds it.
 - **The evaluator** (CCS C12) runs draws and credits as postings, in the sequential environment
-  first. Parallel environments and their merge follow the evaluation-context sketch §7.
+  first. Parallel environments and their merge are designed separately.
 - **Ensemble** reads exhaustion as a fact derived from a balance record. An account shared by several
   instruments, such as an authority's aggregate, is drawn by their separate evaluations. How their
   draws are ordered is the Ledger plan's question LG-Q3, to be settled before Ensemble's slice 1 is
@@ -160,3 +165,13 @@ flowchart TB
 - **Applied modules.** Phase 7's allocation slice (AIR-7.4) builds on decision 6 rather than
   adding allocation to Behaviour. The claims plan's programme erosion (AIR-6.8) uses programme-owned
   accounts.
+- **Publication.** Ledger's README follows ADR-A126's layout, so it cites only published decisions
+  (ADR-A127). This ADR is published with the first slice that creates the README, citing accepted
+  decisions it builds on by their GitHub links.
+
+## Provenance
+
+Designed in outline in the [evaluation-context sketch](../../developer/sketches/evaluation-context.md)
+§5. The maintainer decided on 2026-10-19 that the ledger is a substrate layer above Quantification
+(EC-Q7), and that allowances become ledger accounts (EC-Q2). Planned in the
+[Ledger plan](../../developer/plans/ledger.md).

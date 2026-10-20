@@ -38,6 +38,7 @@ HQ-2.
 | P7-3 | A market response is checked by the same shapes as a contract (CCS HQ-1). Its commitment is formation law. Its precision and completeness are recorded as the market stated them | CCS HQ-1, C9 |
 | P7-4 | A vehicle is a set of instruments with an identity of its own. It can do nothing its instruments do not say | vehicles sketch §2 |
 | P7-5 | Examples first (ADR-A-C2). Every slice's examples are committed before its model | lifecycle |
+| P7-6 | The phase's modules keep their own versions and pin a release of the substrate. Their READMEs cite only published decisions, so ADR-A130 and ADR-A131 are published before a module README cites them | ADR-A129 decision 4, ADR-A127 |
 
 ## Slices
 

@@ -50,9 +50,9 @@ Estimates are in tokens, for agent work, excluding review.
 | Slice | Content | Depends on | Estimate |
 |---|---|---|---|
 | LG-0 | examples, as data the model must accept or refuse. Software licensing: a seat quota with an annual reset. Lending: a revolving facility, drawn and repaid. Grants: a grant with sub-budgets, and unspent funds returned. Delegated authority: an aggregate over every contract bound under an authority. Insurance: an aggregate with sections and a sublimit, a recovery credited, a reinstatement. Refusals: a cycle in the tree, a debit beyond availability under the refuse rule | ADR-A131 accepted, LG-Q1, LG-Q4 | 150k |
-| LG-1 | the configuration document: the literate README, account definitions, the tree, owner kinds, the merge rule scheme, reset periods, shapes (no cycle, one value space along a path), the catalogue entry and the import guard | LG-0 | 300k |
+| LG-1 | the configuration document: the README in ADR-A126's layout, with its release notes section, account definitions, the tree, owner kinds, the merge rule scheme, reset periods, shapes (no cycle, one value space along a path). The catalogue entry in the README, `ledger` in the root catalogue after `quantification`, and the import guard. The publication pass for ADR-A131 and every decision the README cites (ADR-A127). Ledger joins the release | LG-0 | 340k |
 | LG-2 | the runtime document: postings, balance records, their keys and PROV, persistence's record families, and the laws as tests (a draw debits the path, availability is the least along the path, a credit never exceeds the stated amount, a pass commits whole) | LG-1, LG-Q2, LG-Q5 | 300k |
-| LG-3 | Behaviour's migration: the import, effects onto accounts, threshold regimes over a balance, the allowance terms deprecated with a normalisation to a one-account ledger, insure-o and the other users moved, re-pins of Instrument and the applied modules. Repairs the allowance contract, formerly PDD-07 | LG-2 | 350k |
+| LG-3 | Behaviour's migration: the import, effects onto accounts, threshold regimes over a balance, the allowance terms deprecated with a normalisation to a one-account ledger, insure-o and the other users moved, the applied modules and examples pinned to the new release. Behaviour's release notes class the deprecation. Repairs the allowance contract, formerly PDD-07 | LG-2 | 350k |
 | LG-4 | allocation with conservation: one amount split into postings on several accounts by a merge rule, the conservation law as a shape and a test, with examples from lending (pro rata sharing), insolvency (a waterfall) and a pool | LG-2, LG-Q3 | 250k |
 
 ```mermaid
@@ -68,11 +68,26 @@ flowchart LR
   L4 --> A75["AIR-7.5 vehicles"]
 ```
 
+## Releases
+
+Ledger is a member of the substrate's release (ADR-A129). Each slice that changes a member is a new
+release: `mise run release:prepare -- <X.Y.Z>`, release notes in every changed layer classing each
+change by its effect on existing data, and a tag the maintainer creates. LG-1 and LG-2 add terms
+only, so their notes class them as no effect. LG-3's deprecation is no effect, and the later removal
+of the allowance terms changes meaning. That removal owes a migration if an adopter holds production
+data under the allowance terms by then, so it is timed before that or ships with one.
+
+Behaviour's README migrates to ADR-A126's layout in a later unit (`improved-ontology-documentation`,
+OD-D61). Whichever of LG-3 and that migration lands second adopts the other's format, as that plan
+already arranges for CCS slices.
+
 ## Done when
 
 The five examples of LG-0 validate. Their postings and balances match a hand-computed table. The
 refusals fail with the shape that names them. Behaviour's tests and insure-o's cases pass on the
-migrated model. `mise run check` passes, with `check:import-guard` enforcing Ledger's imports.
+migrated model. `mise run check` passes, with `check:import-guard` enforcing Ledger's imports,
+`check:published-decisions` passing on Ledger's README, and `check:ontology-versioning` holding Ledger
+to the release's number.
 
 ## Effects on other units
 

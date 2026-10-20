@@ -227,7 +227,7 @@ single-instrument evaluations either way. They differ in what each evaluation re
 | instruments loaded to evaluate one | itself and every instrument its gates read, transitively | itself only |
 | facts passed between instruments | none, the state is read in place | one per dependency, recorded |
 | evaluations that can run in parallel | only instruments with no relations | every set of instruments not ordered by a relation |
-| what a change to the relation model bumps | Instrument's spec, and every module importing Instrument re-pins | Ensemble's spec, and its importers re-pin |
+| what a change to the relation model touches | Instrument's spec, read by every module that needs one agreement | Ensemble's spec only. Under one release (ADR-A129, 2026-10-20) both are a new release of the whole substrate |
 | proofs per instrument | restated for neighbourhoods | unchanged |
 | cycles | found at evaluation | rejected at design time by the order |
 
@@ -247,9 +247,10 @@ costs cross only for a single pair of instruments, where A loads one neighbour a
 fact.
 
 **Cascades.** Instrument has no importers inside LATTICE today, but applied modules, the claims
-module and Open CBAA will import it. Under A, every refinement of relations across agreements
-bumps Instrument for all of them. Under B, those refinements bump Ensemble only, and a module that
-needs only single agreements never re-pins for them.
+module and Open CBAA will import it. Since ADR-A129 (2026-10-20) the substrate is released as one
+set, so any change is a new release under either option, and the version cascade no longer separates
+them. What remains is that under A every module that needs one agreement loads the model of many,
+and its release notes list changes to relations it never uses.
 
 ## 8. Guidance
 
@@ -263,8 +264,9 @@ needs only single agreements never re-pins for them.
    would reopen them for neighbourhoods.
 3. **It scales the right way.** Evaluation stays within one aggregate, parallelises across
    unrelated instruments, and records the cross-instrument evidence a decision has to cite.
-4. **It isolates change.** Relations across agreements are the newer, less settled part. B lets
-   them evolve on their own version line.
+4. **It isolates change.** Relations across agreements are the newer, less settled part. B keeps
+   them in their own document and their own release notes. Since ADR-A129 they share the
+   substrate's release number, so this reason no longer includes a version line of their own.
 
 **What would favour A.** If the hook in Instrument (an externally supplied, recorded fact) proved
 unable to carry a real dependency, for example one where the related instrument's state must be

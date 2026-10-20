@@ -111,8 +111,8 @@ Instrument and Behaviour runtime
 - Ensemble imports Instrument and Behaviour's runtime document, and through them every layer below.
 - Ensemble is the top substrate layer. Nothing in the substrate imports it, and no lower layer names
   its terms.
-- The repository catalogue's substrate entry for Ensemble states its imports (ADR-A121), so
-  `mise run check:import-guard` checks it with no change to the guard.
+- Ensemble's README carries its catalogue entry with its imports, and the root catalogue lists it
+  after Instrument (ADR-A121), so `mise run check:import-guard` checks it with no change to the guard.
 
 ## Addendum (2026-10-19): Ledger above Quantification
 
@@ -139,5 +139,6 @@ Instrument and Behaviour runtime
 - Ledger imports Foundation, Vocabulary and Quantification only.
 - Behaviour's configuration document imports Ledger, and every layer above reaches it through
   Behaviour. Party, Eligibility and Wording do not import it, and Ledger names none of their terms.
-- The repository catalogue's substrate entry for Ledger states its imports (ADR-A121), so
-  `mise run check:import-guard` checks it with no change to the guard.
+- Ledger's README carries its catalogue entry with its imports, the root catalogue lists it after
+  Quantification, and Behaviour's entry adds it to its imports (ADR-A121), so
+  `mise run check:import-guard` checks them with no change to the guard.

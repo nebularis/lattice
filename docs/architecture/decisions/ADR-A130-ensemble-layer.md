@@ -10,8 +10,8 @@
 [ADR-A106](ADR-A106-behaviour-configuration-runtime-occasions-and-records.md) (Behaviour's runtime),
 [ADR-A121](ADR-A121-repository-catalogue.md) (the repository catalogue),
 [ADR-A122](ADR-A122-aggregate-ownership.md) (aggregate ownership),
-[ADR-A-C2](ADR-AC2-clean-room-authoring-procedure.md) (authoring order),
-the [relations sketch](../../developer/sketches/instrument-relations.md) (the analysis and the options)
+[ADR-A129](ADR-A129-one-release-for-the-substrate.md) (one release),
+[ADR-A-C2](ADR-AC2-clean-room-authoring-procedure.md) (authoring order)
 
 ## Context
 
@@ -29,8 +29,8 @@ excess layers, intercreditor ranking, and the single agreement of a master and i
 The relations sketch compares widening Instrument (option A) with a layer of its own (option B).
 Under A, evaluating one instrument loads every instrument its gates read, so a chain of *n* related
 instruments costs of order *n*² loads, Instrument's single-agreement laws and proofs must be
-restated for sets of instruments, and every refinement bumps Instrument for all its importers.
-Under B, each instrument is evaluated alone and the link supplies a fact, at *n* loads. The
+restated for sets of instruments, and every module that reads one agreement carries the model of
+many. Under B, each instrument is evaluated alone and the link supplies a fact, at *n* loads. The
 maintainer chose B on 2026-10-18 (IR-Q2).
 
 ## Decision
@@ -88,12 +88,16 @@ flowchart TB
 
 ## Consequences
 
-- **The layer order changes** (ADR-A01, 2026-10-18 addendum). The repository catalogue gains a
-  substrate entry for Ensemble, so `mise run check:import-guard` enforces its imports with no change to
-  the guard's code. `docs/architecture/ontology-architecture.md` and the root README show the new top
+- **The layer order changes** (ADR-A01, 2026-10-18 addendum). Ensemble's README carries its
+  catalogue entry, of kind `substrate` with its imports, and the root catalogue lists it after
+  Instrument (ADR-A121), so `mise run check:import-guard` enforces its imports with no change to the
+  guard's code.
+- **Releases.** Ensemble joins the substrate's release at the release's number, with no version of
+  its own (ADR-A129). Its first slice is a new release, whose notes class the new layer and the
+  Instrument hook as no effect on existing data. `docs/architecture/ontology-architecture.md` and the root README show the new top
   layer.
-- **Instrument gains one property or rule** for an externally supplied value (decision 4), a MINOR
-  bump at major version zero (ADR-A113), with its own slice in the Ensemble unit.
+- **Instrument gains one property or rule** for an externally supplied value (decision 4), with its
+  own slice in the Ensemble unit.
 - **The evaluator** (CCS C12) gains a composition step: order the related instruments, evaluate
   each, record the facts passed between them. The single-instrument pass is unchanged.
 - **Ledger** ([ADR-A131](ADR-A131-ledger-layer.md)). An exhaustion or a payment passed between
@@ -107,3 +111,12 @@ flowchart TB
 - **Open questions carried from the sketch:** IR-Q3 (K1 stays in
   Instrument, as decision 5 assumes), IR-Q4 (both forms of the hook, as decision 4 assumes), IR-Q5
   (slice 1's scope, as decision 6 assumes). Each is confirmed or revised before slice 1 is briefed.
+- **Publication.** Ensemble's README follows ADR-A126's layout, so it cites only published decisions
+  (ADR-A127). This ADR is published with slice 1, citing accepted decisions it builds on by their
+  GitHub links.
+
+## Provenance
+
+Proposed in the [relations sketch](../../developer/sketches/instrument-relations.md), which compares
+options A and B. The maintainer chose B on 2026-10-18 (IR-Q2) and the name Ensemble on 2026-10-19
+(IR-Q1).
