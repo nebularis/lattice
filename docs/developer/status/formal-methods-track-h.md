@@ -81,9 +81,13 @@ Built and committed 2026-10-20: H2.6c, H2.6d, H2.6e, H2.6f, H2.6g, W-65, AIR-66,
    parts documented (H2.6f (8)).
 2. **H2.9** ([plan §4.15](../plans/formal-methods-track-h.md#415-h29-mustache-retired-planned-2026-10-20)): Mustache retired, with D-12,
    the goldens keyed by operation, and the template id's suffix gone.
-3. **Before the merge into `main`:** TD-63, one minor version bump (TD-64), the maintainer's re-approval of the expected profiles and
+3. **H2.11a and H2.11b** ([plan §4.19](../plans/formal-methods-track-h.md#419-h211-the-persistence-readme-as-a-literate-specification-planned-2026-10-20),
+   [sketch](../sketches/persistence-readme-literate.md)): the Persistence README in the ADR-A126 layout, graph for graph, then its
+   narrative, pictures and gotchas. Questions RL-Q1 to RL-Q7 for the maintainer. Its prerequisite is the publication of the accepted ADRs
+   it cites (RL-Q3).
+4. **Before the merge into `main`:** TD-63, one minor version bump (TD-64), the maintainer's re-approval of the expected profiles and
    countersignature of the changed tests listed in each Validation Pack.
-4. **Owed later:** the idealised in-place benchmark once TD-42 is fixed (recorded on TD-42).
+5. **Owed later:** the idealised in-place benchmark once TD-42 is fixed (recorded on TD-42).
 
 ## Slices
 
@@ -763,4 +767,6 @@ Built and committed 2026-10-20: H2.6c, H2.6d, H2.6e, H2.6f, H2.6g, W-65, AIR-66,
 - 2026-10-20: the maintainer took the middle ground for H2.6e (2), agreed H2.6f (1), accepted the reused part names with good documentation
   (H2.6f (8)), deferred the idealised in-place benchmark to TD-42's fix, asked to adopt the faster members form if it proves correct
   (H2.6f (12)), and approved H2.7 (12). Planned H2.8c (plan §4.18) and added D-12, the goldens and the template id to H2.9. Paused.
+- 2026-10-20: the maintainer asked for a slice bringing the Persistence README into the literate specification v2 layout, with narrative,
+  pictures and gotchas drawn from the tested examples. Sketched (RL-Q1 to RL-Q7) and planned as H2.11a and H2.11b (plan §4.19), after H2.9.
 

@@ -1578,10 +1578,61 @@ a `GRAPH` block, for example the deleted-row guard `FILTER NOT EXISTS { $root pa
 
 `FMH-H2-6g`. About 120k tokens. Runs after H2.7, before H2.8.
 
+### 4.19 H2.11: the Persistence README as a literate specification (planned 2026-10-20)
+
+Asked for by the maintainer on 2026-10-20, to run after the rest of Track H's H2 work (H2.8c and H2.9). Sketch:
+[persistence: the README as a literate specification](../sketches/persistence-readme-literate.md), questions RL-Q1 to RL-Q7. It closes
+TD-01, the one module README neither literate nor in ADR-A126's layout. Versioning is ignored on this branch (TD-64).
+
+Split at RL-Q1's leaning into two slices, so the migration check judges one and a reviewer the other.
+
+#### H2.11a: conformance, graph for graph
+
+1. **Prerequisite (RL-Q3).** The maintainer publishes the accepted ADRs the README cites (A78, A79, A80, A114, A122, A123, A132,
+   A121 is already), and the text stops citing the proposed ones (A67, A82, A84, A128) and every working document, so the sources check passes on a migrated
+   README.
+2. **The layout.** Sections 1 to 13 of ADR-A126: Purpose and Scope, Namespace and Prefixes with the contributors table, the Extraction
+   Contract holding the catalogue entry, Overview, Detailed Design, Description Logic Encoding, Shapes, Examples, Canonicalisation (not
+   applicable), Formalisation (not applicable), Dependencies, Release Notes, Open Issues. Today's sections 1 to 15 map into them, with
+   the configuration model, the dimensions and the compiler's output in Detailed Design, and the keys module (today's §14) in its own
+   subsections.
+3. **Section 6, both documents.** Every class, property and individual of `spec/persistence.ttl` as a grammar entry, with
+   `persistent-foundation` in `output-file` regions (RL-Q4). Every term has a definition and a utility, drafted where missing for the
+   maintainer's review (RL-Q7). What the grammar cannot state goes in 6.6 blocks.
+4. **Section 7.** `shapes/constraints.ttl` and `shapes/persistent-foundation.ttl` as hidden blocks naming their files, structural shapes
+   generated from section 6's restriction rows where they apply.
+5. **Generated regions.** The Axiom Index, and the Overview's class diagram in a collapsed block (RL-Q6 (b)).
+6. **Release notes** rewritten from git history and the Validation Packs, classed by their effect on data as ADR-A129 asks, citing only
+   published ADRs.
+7. **The check.** `mise run check:literate-migration -- persistence <the branch point>` passes, with any reconciliation listed and approved.
+   The sources check, `check:persistence`, `check:persistence-oxigraph` and `check:ontology-catalog` pass, and the expected profiles are
+   unchanged.
+
+Probe: change one restriction row in the migrated README, and the migration check fails naming the triple. `FMH-H2-11a`. About 400k tokens.
+
+#### H2.11b: the narrative, the pictures, the gotchas
+
+1. **The running case (RL-Q2 (a))** through Detailed Design, in the sketch's eight steps: declare, compile, generate, write, race and
+   retry, history, read back, keep it small. Each step names its example file, its generated operation and the test that holds it.
+2. **Pictures of SPARQL on the graph.** For each kind of write (replace, create, tombstone, append of events, append of a version, a delta
+   version), a diagram of the named graphs it touches, what it deletes and inserts, and a before and after. Sequence diagrams for a race, a
+   retry after a lost reply, and a stale seq. A timeline for retention and a chain diagram for members.
+3. **Best practices, gotchas and considerations** as a Detailed Design subsection, the sketch's §4 table, each item a short paragraph with a
+   picture where it is structural and a pointer to its test or finding, citing the triple-store record and efficient queries and shapes.
+4. **The palette (RL-Q5 (a))** applied to every diagram, old and new, with the class names of the sketch's §5. Every diagram rendered with
+   mermaid in the light and dark themes and checked before handoff.
+5. **Examples** keeps its usual contents: each shipped example with what it shows and the SPARQL it compiles to, cross-referenced from the
+   narrative.
+6. **The check.** The migration check still passes with no reconciliation added, since H2.11b changes no generated graph. The sources
+   check passes.
+
+Probe: a diagram with a syntax error (the render check fails), a narrative paragraph citing a working document (the sources check fails).
+`FMH-H2-11b`. About 300k tokens.
+
 ### 4.16 Order, from 2026-10-20
 
 H2.6d, then H2.6e, then H2.6f, one at a time since they touch the same code. W-65 and AIR-66 touch other modules and may run beside them.
-Then H2.7, H2.6g (TSD-34), H2.8a, H2.8b, H2.8c, H2.9. Before the merge into `main`: TD-63, and one minor version bump (TD-64).
+Then H2.7, H2.6g (TSD-34), H2.8a, H2.8b, H2.8c, H2.9, then H2.11a and H2.11b, the Persistence README (§4.19). Before the merge into `main`: TD-63, and one minor version bump (TD-64).
 
 ## 5. H4 onward, outline only
 
