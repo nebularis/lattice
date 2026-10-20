@@ -101,14 +101,14 @@ ex:factory-building-identity a aeo:AssetIdentity , fnd:PersistentIdentity .
 ex:factory-building a aeo:Asset ;
     fnd:hasIdentity ex:factory-building-identity ;
     aeo:assetClass aeo-voc:Building ;
-    aeo:locatedAt ex:factory .
+    aeo:locatedAt ex:factory-identity .
 
 ex:factory-contents-identity a aeo:AssetIdentity , fnd:PersistentIdentity .
 
 ex:factory-contents a aeo:Asset ;
     fnd:hasIdentity ex:factory-contents-identity ;
     aeo:assetClass aeo-voc:Machinery ;
-    aeo:locatedAt ex:factory ;
+    aeo:locatedAt ex:factory-identity ;
     aeo:partOf ex:factory-building .
 
 # ---- Interests -------------------------------------------------------------
@@ -146,7 +146,7 @@ ex:lender-interest a aeo:Interest ;
 
 ex:building-valuation a aeo:Valuation ;
     fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-01-01T00:00:00Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> ] ;
-    aeo:valueOf ex:factory-building ;
+    aeo:valueOf ex:factory-building-identity ;
     aeo:valueType aeo-voc:Building ;
     aeo:valuationBasis aeo-voc:ReplacementCost ;
     aeo:valuationMethod aeo-voc:Appraised ;
@@ -154,7 +154,7 @@ ex:building-valuation a aeo:Valuation ;
 
 ex:contents-valuation a aeo:Valuation ;
     fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-01-01T00:00:00Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> ] ;
-    aeo:valueOf ex:factory-contents ;
+    aeo:valueOf ex:factory-contents-identity ;
     aeo:valueType aeo-voc:Machinery ;
     aeo:valuationBasis aeo-voc:ReplacementCost ;
     aeo:valuationMethod aeo-voc:Declared ;
@@ -162,7 +162,7 @@ ex:contents-valuation a aeo:Valuation ;
 
 ex:bi-valuation a aeo:Valuation ;
     fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-01-01T00:00:00Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> ] ;
-    aeo:valueOf ex:factory-building ;
+    aeo:valueOf ex:factory-building-identity ;
     aeo:valueType aeo-voc:GrossProfit ;
     aeo:valuationBasis aeo-voc:AgreedValue ;
     aeo:valuationMethod aeo-voc:Declared ;

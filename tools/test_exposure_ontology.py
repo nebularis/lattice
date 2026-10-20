@@ -18,7 +18,7 @@ import pytest
 from pyshacl import validate
 import lattice_repo_catalogue
 from rdflib import BNode, Graph, Literal, Namespace, URIRef
-from rdflib.namespace import OWL, RDF, XSD
+from rdflib.namespace import OWL, RDF, RDFS, XSD
 
 ROOT = Path(__file__).resolve().parents[1]
 RELEASE = lattice_repo_catalogue.load(ROOT).release_version
@@ -550,3 +550,80 @@ def test_air42_13_a_concept_of_another_vocabulary_is_not_checked_by_this_shape()
     concept = next(iter(_fixture().subjects(SKOS.inScheme, PRLV.CauseScheme)))
     data = _without_english_note(_fixture(), concept, None)
     assert DOCUMENTATION not in shapes_for(concept, data)
+
+
+# ---- AIR-66 (TD-66): versions are never edited, and content names identities -------------------------
+
+VERSIONS = MODULE / "examples" / "versions.ttl"
+EXPOSURE_SET_SHAPE = AEO.ExposureSetShape
+
+
+def _versions() -> Graph:
+    return _graph(MODULE / "spec" / "exposure.ttl", MODULE / "vocab" / "exposure-vocab.ttl", VERSIONS)
+
+
+def test_air66_01_located_at_and_value_of_range_over_identities():
+    spec = _spec()
+    assert (AEO.locatedAt, RDFS.range, AEO.LocationIdentity) in spec
+    union = spec.value(AEO.valueOf, RDFS.range)
+    members = set(spec.items(spec.value(union, OWL.unionOf)))
+    assert members == {AEO.AssetIdentity, AEO.LocationIdentity}
+
+
+def test_air66_02_versions_example_conforms():
+    assert results(_versions()) == []
+
+
+def test_air66_03_succession_does_not_edit_version_1():
+    data = _versions()
+    v1, v2 = EX["schedule-v1"], EX["schedule-v2"]
+    assert (v1, FND.supersededBy, v2) in data
+    assert list(data.objects(v1, FND.hasGovernanceState)) == [FND.Active]
+    for scope in data.objects(v1, FND.hasTemporalScope):
+        assert (scope, FND.validTo, None) not in data
+    assert not list(data.triples((None, FND.validTo, None)))
+
+
+def test_air66_04_one_location_changing_writes_one_version_and_shares_the_rest():
+    data = _versions()
+    v1, v2 = EX["schedule-v1"], EX["schedule-v2"]
+    assert set(data.objects(v1, AEO.hasAsset)) == set(data.objects(v2, AEO.hasAsset))
+    assert set(data.objects(v1, AEO.hasValuation)) == set(data.objects(v2, AEO.hasValuation))
+    assert set(data.objects(v1, AEO.hasLocation)) ^ set(data.objects(v2, AEO.hasLocation)) == {
+        EX["warehouse-v1"],
+        EX["warehouse-v2"],
+    }
+    assert len(set(data.subjects(FND.hasIdentity, EX["warehouse-identity"]))) == 2
+    assert len(set(data.subjects(RDF.type, AEO.Asset))) == 2
+    assert len(set(data.subjects(RDF.type, AEO.Valuation))) == 2
+
+
+def test_air66_05_asset_naming_a_location_version_is_rejected():
+    data = _versions()
+    data.set((EX["warehouse-stock"], AEO.locatedAt, EX["warehouse-v2"]))
+    assert ASSET in shapes_for(EX["warehouse-stock"], data)
+
+
+def test_air66_06_valuation_naming_an_asset_version_is_rejected():
+    data = _versions()
+    data.set((EX["stock-valuation"], AEO.valueOf, EX["warehouse-stock"]))
+    assert VALUATION in shapes_for(EX["stock-valuation"], data)
+
+
+def test_air66_07_set_listing_an_asset_whose_location_identity_it_does_not_list_is_rejected():
+    data = _versions()
+    data.remove((EX["schedule-v2"], AEO.hasLocation, EX["warehouse-v2"]))
+    assert EXPOSURE_SET_SHAPE in shapes_for(EX["schedule-v2"], data)
+    assert EXPOSURE_SET_SHAPE not in shapes_for(EX["schedule-v1"], data)
+
+
+def test_air66_08_set_listing_two_versions_of_one_location_identity_is_rejected():
+    data = _versions()
+    data.add((EX["schedule-v2"], AEO.hasLocation, EX["warehouse-v1"]))
+    assert EXPOSURE_SET_SHAPE in shapes_for(EX["schedule-v2"], data)
+
+
+def test_air66_09_set_listing_a_valuation_whose_asset_identity_it_does_not_list_is_rejected():
+    data = _versions()
+    data.remove((EX["schedule-v2"], AEO.hasAsset, EX["warehouse-stock"]))
+    assert EXPOSURE_SET_SHAPE in shapes_for(EX["schedule-v2"], data)
