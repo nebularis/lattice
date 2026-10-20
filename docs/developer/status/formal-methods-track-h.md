@@ -743,3 +743,5 @@ For acceptance: ADR-A132, the persistence caller library (Proposed), and ADR-A12
 | D-23 | H2.7 | declaration IRIs include the deployment where there is one. `dal:HandDeclared` kept as an escape hatch | FMH-H2-7 |
 | D-24 | H2.7 | five H2.6 tests removed and two replaced by the isomorphism test, for countersignature. The `pat:` terms checked against the guide's Appendix A by hand, since a test reading `docs/architecture` breaks the catalogue's reach rule | FMH-H2-7 |
 
+| D-25 | H2.6g | all 29 operations with the shape name their graph, not only those the defect could affect (none could), so the checker rule has no exception. 15 builder versions bumped | FMH-H2-6g |
+| D-26 | H2.6g | a test asserts rdflib's context sharing still holds, so an rdflib change prompts a TSD-34 review. No seed-sweep test fails on removing a `GRAPH`, since no outcome depends on it: the text scan, the harness and the checker are the guards | FMH-H2-6g |
