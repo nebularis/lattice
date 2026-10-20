@@ -1531,10 +1531,26 @@ since they are removed, ADR-grade justification: their subject no longer exists)
 `$name` convention (H-D11). The README's "Using the generated SPARQL directly" and ADR-A79's addendum follow. `FMH-H2-9`. About 250k
 tokens.
 
+### 4.17 H2.6g: every NOT EXISTS reads the graph it means (planned 2026-10-20, TSD-34)
+
+TSD-34 found that rdflib 7.6.0 may evaluate a `FILTER NOT EXISTS` with no `GRAPH` of its own, inside a `GRAPH` block, against the
+default graph once the block has yielded a solution, depending on `PYTHONHASHSEED`. Several generated operations put such a test inside
+a `GRAPH` block, for example the deleted-row guard `FILTER NOT EXISTS { $root pat:deleted true }` (TSD-Q19).
+
+1. List every builder whose rendered text has a `NOT EXISTS` or `EXISTS` body with no `GRAPH`, inside a `GRAPH` block.
+2. For each, a behaviour test that would expose the defect, for example a tombstoned row with a write that has several solutions, run
+   over a sweep of hash seeds in child processes on rdflib, and once on Oxigraph.
+3. Where a test shows the defect can change an outcome, the builder states the `GRAPH` inside the body, which is correct on every store,
+   and the expected profiles and goldens follow. Where it cannot, because the block yields one solution before the test, the reason is
+   recorded in the test.
+4. A rule in the IR checker, so a new builder cannot reintroduce the shape: a `NotExists` inside a `GraphBlock` names its graph.
+
+`FMH-H2-6g`. About 120k tokens. Runs after H2.7, before H2.8.
+
 ### 4.16 Order, from 2026-10-20
 
 H2.6d, then H2.6e, then H2.6f, one at a time since they touch the same code. W-65 and AIR-66 touch other modules and may run beside them.
-Then H2.7, H2.8 (after ADR-A132 is accepted), H2.9. Before the merge into `main`: TD-63, and one minor version bump (TD-64).
+Then H2.7, H2.6g (TSD-34), H2.8, H2.9. Before the merge into `main`: TD-63, and one minor version bump (TD-64).
 
 ## 5. H4 onward, outline only
 
