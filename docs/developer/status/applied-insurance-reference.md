@@ -171,3 +171,7 @@ handed to R). S became unavailable on 2026-10-14 and R built AIR-4.2a to AIR-4.4
   [claims plan](../plans/applied-insurance-reference-claims.md), which subsumes AIR-6.2 to AIR-6.4: slices
   AIR-6.2 to AIR-6.12 and AIR-6.W0 to AIR-6.W7, milestones M7 and M8, substrate items S8 to S10.
   Seventeen questions open (CL-Q1 to CL-Q10, WF-Q1 to WF-Q7), none answered. No slice briefed.
+- 2026-10-20: AIR-66 (TD-66) built on the formal-methods Track H branch at the maintainer's request, for the AIR plate at its next
+  start-up: exposure versions are never edited, and `aeo:locatedAt` and `aeo:valueOf` name identities. Handover and follow-ups in the
+  [Phase 4 plan](../plans/applied-insurance-reference-phase-4.md#handover-from-formal-methods-track-h-air-66-and-its-follow-ups-2026-10-20).
+
