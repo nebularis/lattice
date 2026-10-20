@@ -525,3 +525,16 @@ window. The counts below are judgement, store-independent, in triples.
 | VH-Q4 | (a) append, and move a current pointer on the identity's version row | two writers of one record, for example two revisions of one offer, race on one row's seq, as two replaces do today. A current read is one lookup, and a fork cannot leave two currents | per write: the new version's triples, one `fnd:supersededBy`, the row's three rewritten triples and a receipt of 9. No sweep, so TD-42's quadratic cost never applies: about 100 fills where a replace of a 9,600-triple aggregate costs about 92 million | a hot record, such as a popular authority's balance, serialises on its row. That is the contention the workload note asks to test, not a new one |
 | VH-Q5 | the table in §5.5: receipt only for append families, a patch log read backward for in-place data that wants history, receipt only otherwise | each kind of history is kept once. A consumer is told which model a family uses, so no one assumes replay where none exists (guide Chapter 20) | a receipt is 9 triples per write, a patch log 11 plus the change. The snapshot model is unnecessary for append families, where the root version and its manifest are the snapshot | the refusal of a receipt-only composite family is relaxed for append families, a change to a shipped rule |
 | VH-Q6 | never prune a version that a retained version references | an assent, a later version's lineage or a pinned reference always resolves, as a pinned head keeps a dormant stream's head (guide §24.2) | retention is less aggressive for cited records. Market-wide, about 2.6 million binds with two changes each, at about 270 triples a version, keep about 2 billion triples a year before sharing, partitioned by tenant (workload note §17), so a few gigabytes per tenant. Drafts under S2 and derived artefacts under S5 prune freely | a retention job must read references before it drops a version, a query per candidate, run in housekeeping (ADR-A80), not on the write path |
+
+**Decided 2026-10-20 at our leanings, for the maintainer's review at the end of the branch's work.** VH-Q1 (a), refined as §11
+says: history in the data for what a party assents to, relies on or cites, and S2 for working drafts. VH-Q2 (a), with a version pinned
+wherever a record is evidence of what was seen. VH-Q3 (b). VH-Q4 (a). VH-Q5, the table of §5.5. VH-Q6, never prune a version a retained
+version references.
+
+Two points the examples raised, decided the same way:
+
+| # | Point | Decision |
+|---|---|---|
+| VH-D1 | which version the current pointer names when several proposals are pending against one version | the pointer is persistence's: the latest version written for the identity, its head. Which version is in force, or agreed, is evaluated from the assents (Instrument §6.3), never stored. `fnd:supersededBy` is asserted when an amendment is agreed, as `ins:AgreedChainShape` already expects |
+| VH-D2 | whether a new root version lists every member or only what changed | every member, as `wrd:includes` and AIR-4.2a's membership do today. A manifest stored as changes waits for E5's benchmark (EX-Q2 (c)) |
+

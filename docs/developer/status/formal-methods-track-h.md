@@ -152,11 +152,11 @@ when it merges into `main` (H2.7-Q5, TD-64). We work autonomously, committing on
 | H-D33 | H2.6b's patch-log half, and H2.10 | **decided 2026-10-14**: held for the [history and versioning sketch](../sketches/persistence-history-and-versioning.md). H2.6b ships its event half |
 | H-D34 | whether H2.7 waits for the history and versioning sketch | **decided 2026-10-14**: H2.7 waits for VH-Q1, VH-Q3 and VH-Q5, so the `persistence` vocabulary is published once |
 | H2.6b-Q1 to Q5 | which writes log patches, who names the delta graphs, the snapshot model, events per request, the digest parts | **decided** 2026-10-14, (a) for Q1 to Q3 and Q5, (c) for Q4, the guide's batch. Q3's warning covers both receipt models while the patch log is held (H-D33). Q1 and Q2 are held with the patch-log half |
-| H2.7-Q1 to Q5, H2.8-Q1 to Q3 | the remaining questions of the plans (plan §4.7, §4.8). Q5, how H2.7 is released under ADR-A129, added 2026-10-20 | **open**, the maintainer. Leanings (a). Q5 decided 2026-10-20: versioning ignored on this branch until its merge (TD-64) |
+| H2.7-Q1 to Q5, H2.8-Q1 to Q3 | the remaining questions of the plans (plan §4.7, §4.8). Q5, how H2.7 is released under ADR-A129, added 2026-10-20 | **decided 2026-10-20 at our leanings (a)**, for the maintainer's review. Q5: versioning ignored on this branch until its merge (TD-64) |
 | VH-P1 | how §4.1, §4.2 and §9 of the history and versioning sketch are re-authored | **decided 2026-10-20: (c)**, left as they are, TD-63 before the merge |
 | ADR-A123 addendum, 2026-10-14 | the event slots and the digest parts | **accepted 2026-10-20** |
 | EX-Q1 to EX-Q3, FS-Q1 to FS-Q7 (decided 2026-10-20: EX-Q1 (b), the rest at their leanings) | which examples, how deep, how costed, and the strategy menu's shape, granularity, guidance, streams, projections and retention ([sketch §10](../sketches/persistence-history-and-versioning.md#10-questions-for-the-examples-and-the-strategy-menu-2026-10-20)) | **decided 2026-10-20** |
-| VH-Q1 to VH-Q7 | history, versions and the receipt models ([sketch §8](../sketches/persistence-history-and-versioning.md#8-questions-for-the-maintainer)) | **open**, the maintainer. VH-Q7 researched (sketch §6.1, §6.4): no change to Behaviour here, its balance keying is the ledger plan's |
+| VH-Q1 to VH-Q7 | history, versions and the receipt models ([sketch §8](../sketches/persistence-history-and-versioning.md#8-questions-for-the-maintainer)) | **decided 2026-10-20 at our leanings**, for the maintainer's review (sketch §11 and its closing table, VH-D1 and VH-D2) |
 | H2.5-Q1 to Q3, H2.6-Q1 to Q4, NQ1 to NQ7 | the design review's questions and the plans' own ([track-h-feedback.md](../notes/track-h-feedback.md)) | **decided 2026-10-13**: the closed `SELECT` fragment with four type rules and three fragment limits, a `Literal` kind for `$now`, one H2.5 slice, `test/expected-profiles/`, nine expected profiles, the value guard hand-declared, the model proposed now, the pinned head a realisation of receipts, a digest contract, minted IRIs, a strict caller check (H2.8). NQ5 waits for H2.5's `MIN` finding, NQ7 was answered by the template (merge relations go to the keys graph). Recorded in plan §4.3 and §4.4 and ADR-A123's fourth and fifth addenda |
 | H-D7 | H1's checks live in one new module, `persistence.hygiene`, behind one `hygiene` subcommand, and run under `check:persistence`. No new `mise` task until H1's closing slice | agreed 2026-10-09 |
 
@@ -668,4 +668,6 @@ when it merges into `main` (H2.7-Q5, TD-64). We work autonomously, committing on
   examples and strategy questions EX-Q1 to EX-Q3 and FS-Q1 to FS-Q7 (sketch §10).
 - 2026-10-20: the maintainer decided VH-P1 (c), accepted the ADR-A123 addendum, confirmed VH-Q7, took EX-Q1 (b) and every other
   example and strategy leaning, and set this branch to ignore versioning until its merge (TD-64). TD-63 recorded.
+- 2026-10-20: the maintainer asked us to proceed at our own leanings and review at the end. VH-Q1 to VH-Q6, H2.7-Q1 to Q4 and
+  H2.8-Q1 to Q3 decided at their leanings, and VH-D1 and VH-D2 from the examples' open points.
 
