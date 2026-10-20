@@ -718,3 +718,6 @@ For acceptance: ADR-A132, the persistence caller library (Proposed), and ADR-A12
 | # | Slice | Decision taken alone | Where |
 |---|---|---|---|
 
+| D-1 | AIR-66 | `tools/exposure_derivations.py` follows the identity ranges (resolves through the set's own versions). Not exercised by a test | FMH-AIR-66 |
+| D-2 | AIR-66 | the set-level shapes are violations, and also refuse a set listing two versions of one identity, which AIR-4.2a had left uncovered | FMH-AIR-66 |
+| D-3 | AIR-66 | `aeo:presenceLocation`, `aeo:assesses`, `aeo:interestIn`, `aeo:partOf` and the zone and loss links still name versions, deliberate non-coverage | FMH-AIR-66 |
