@@ -121,16 +121,7 @@ def emit_contract(
         g.add((node, DAL.digestContract, dc))
         g.add((dc, RDF.type, DAL.DigestContract))
         g.add((dc, DAL.digestAlgorithm, Literal("SHA-256")))
-        parts = [
-            ("OperationKindPart", ()),
-            ("TargetPart", (c.digest.target,) if c.digest.target else ()),
-            ("ExpectedSeqPart", (c.digest.expected,) if c.digest.expected else ()),
-            # the content of the request, one part: the payload of a write, or the events of an append (H2.6b, Q5)
-            ("EventPart", c.digest.event) if c.digest.event else ("PayloadPart", (c.digest.payload,) if c.digest.payload else ()),
-            # a replace under a patch log adds the asserted and the retracted triples, in that order (H2.6d)
-            *((("AddPart", (c.digest.add,)),) if c.digest.add else ()),
-            *((("DelPart", (c.digest.delete,)),) if c.digest.delete else ()),
-        ]
+        parts = c.digest.parts()
         for i, (role, sources) in enumerate(parts, 1):
             dp = m(f"digest-part-{i}")
             g.add((dc, DAL.digestPart, dp))

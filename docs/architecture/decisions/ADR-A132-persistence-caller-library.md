@@ -84,6 +84,21 @@ ADR-A123 fixes what the generated operations expect. It leaves the caller's half
 - A payload remains trusted text relative to ADR-A79's injection boundary. The library narrows the risk by building the slot's
   text from typed terms only, and a caller that bypasses `Payload` leaves that boundary.
 
+## Dated note, 2026-10-20: decisions taken building H2.8a
+
+Taken while building the library core, for the maintainer's review.
+
+- **The digest nests each content part.** `requestDigest = hex(SHA-256(enc([kind, target, expected, part1, part2, ...])))`, where each content
+  part is one component, `enc` of the part's sorted canonical lines. The patterns guide's flat list cannot tell the payload, add and del parts
+  apart. The vectors in `contracts/persistence/` are the definition, and the guide's section 15.2 is to carry a dated note saying so.
+- **The kind is the profile's `dal:operationKind`** (`Replace`, `Append`), not the template's name, since the contract names an `OperationKindPart`
+  and builders differ by variant while the kind does not.
+- **Canonical N-Triples** escape only backslash, quote, line feed and carriage return, write `xsd:string` plain, keep a typed literal's lexical
+  form and lower-case a language tag. Lines sort by their UTF-8 bytes.
+- **The shared types.** `lattice_persistence` holds the terms (without `PropertyPath`, which renders a compiler structure and stays in
+  `persistence.terms`), `Payload`, `Rows`, and the contract's data classes the library reads (`OperationKind`, `ParameterContract`,
+  `PayloadContract`, `EdgeContract`, `DigestContract`). `persistence.terms` and `persistence.contract` re-export them.
+
 ## Provenance
 
 Raised in the Track H plan's slice H2.8, where the maintainer decided on 2026-10-20 that the caller-side code is usable library

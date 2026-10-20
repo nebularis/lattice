@@ -24,7 +24,7 @@ depends = ["bootstrap:python", "bootstrap:frontend"]
 [tasks."bootstrap:python"]
 description = "Install every Python package of the repository into this checkout's .venv in one resolve"
 depends = ["bootstrap:pip"]
-run = "python -m pip install -c requirements-lock.txt \".[reasoning,test]\" -e \"./workers[test,authoring]\" -e ./tools/mork -e \"./tools/mork_compilers[test]\" -e ./tools/surface -e \"./tools/persistence[test]\" -e \"./tools/vocabulary[test]\" -e \"./tools/reference/eligibility[test]\" -e \"./packages/minting/python[test]\""
+run = "python -m pip install -c requirements-lock.txt \".[reasoning,test]\" -e \"./workers[test,authoring]\" -e ./tools/mork -e \"./tools/mork_compilers[test]\" -e ./tools/surface -e ./packages/persistence/python -e \"./tools/persistence[test]\" -e \"./tools/vocabulary[test]\" -e \"./tools/reference/eligibility[test]\" -e \"./packages/minting/python[test]\""
 
 # A virtual environment that mise creates with uv has no pip. This puts one in, and does nothing
 # where pip is already there.
@@ -60,7 +60,7 @@ run = "python -m pip install -e ./tools/surface"
 [tasks."bootstrap:persistence"]
 depends = ["bootstrap:pip"]
 description = "Install the persistence profile compiler package (ADR-A78/A79)"
-run = "python -m pip install -e \"./tools/persistence[test]\""
+run = "python -m pip install -e ./packages/persistence/python -e \"./tools/persistence[test]\""
 
 [tasks."bootstrap:testing-oxigraph"]
 depends = ["bootstrap:pip"]
@@ -83,7 +83,7 @@ run = "corepack enable && yarn install --immutable"
 
 [tasks.check]
 description = "Run all repository validation tasks"
-depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:reasoning-isolation", "check:minting", "check:formal-freshness", "check:catalogue", "check:agent-guidance", "build:mtp", "check:mtp", "check:authoring-tools", "check:published-decisions", "check:site-sections"]
+depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:reasoning-isolation", "check:minting", "check:persistence-library", "check:formal-freshness", "check:catalogue", "check:agent-guidance", "build:mtp", "check:mtp", "check:authoring-tools", "check:published-decisions", "check:site-sections"]
 
 [tasks.test]
 description = "Run the repository test suites"
@@ -164,6 +164,20 @@ run = "mvn -q -f packages/minting/java/pom.xml verify"
 [tasks."check:minting"]
 description = "Check both identity minting libraries and the anchor vectors (the table check, which downloads the UCD, is check:minting-tables)"
 depends = ["check:minting-anchors", "check:minting-python", "check:minting-java"]
+
+[tasks."check:persistence-vectors"]
+description = "Recompute every persistence conformance vector (canonical N-Triples and request digests) with openssl and the Python standard library, sharing no code with the caller library (ADR-A132 decision 4)"
+run = "python contracts/persistence/verify-vectors.py"
+
+[tasks."bootstrap:persistence-library"]
+depends = ["bootstrap:pip"]
+description = "Install the persistence caller library (ADR-A132) with its test extra"
+run = "python -m pip install -e \"./packages/persistence/python[test]\""
+
+[tasks."check:persistence-library"]
+depends = ["check:persistence-vectors"]
+description = "Run the persistence caller library against the conformance vectors in contracts/persistence and its own tests (ADR-A132)"
+run = "python -m pytest packages/persistence/python/tests -q"
 
 [tasks."build:persistence-execution"]
 description = "Compile every ontology/persistence example and write its SPARQL and minting recipes to ontology/persistence/execution (generated, ignored by git)"

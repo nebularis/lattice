@@ -23,33 +23,13 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Optional
 
+from lattice_persistence.contract import (  # the data classes moved to the caller library (ADR-A132 decision 3, H2.8a)
+    DigestContract, EdgeContract, OperationKind, ParameterContract, PayloadContract,
+)
+
 from .ir import AccessMode, Kind, Operation, Projected, SLOT_KINDS, Var
 from .ir_render import Access, access_sets
 from .namespaces import PAT
-
-
-class OperationKind(Enum):
-    """The logical kind of an operation. A relational realisation and a model compare operations by kind, not by the SPARQL a
-    builder writes."""
-
-    CREATE = "Create"
-    BOOTSTRAP = "Bootstrap"
-    REPLACE = "Replace"
-    TOMBSTONE = "Tombstone"
-    APPEND = "Append"
-    APPEND_VERSION = "AppendVersion"
-    UNCONDITIONAL_WRITE = "UnconditionalWrite"
-    VALUE_GUARDED_REPLACE = "ValueGuardedReplace"
-    KEY_CLAIM_WRITE = "KeyClaimWrite"
-    KEY_CLAIM_WRITE_DUAL = "KeyClaimWriteDual"
-    KEY_CLAIM_RETIRE = "KeyClaimRetire"
-    QUARANTINE = "Quarantine"
-    MERGE_REWRITE = "MergeRewrite"
-    AUDIT = "Audit"
-    MEMBERS_READ = "MembersRead"
-    PAYLOAD_CHECK = "PayloadCheck"
-    """The check of a payload against the family's boundary shape, as a query a caller in any language gets from ``instantiate`` (ADR-A123
-    decision 6, H2.7-Q3). H2.7 adds the kind and H2.8 emits the operation, so no builder has this kind yet."""
 
 
 class ResourceKind(Enum):
@@ -191,15 +171,6 @@ class DeclarationSource(Enum):
 
 
 @dataclass(frozen=True, order=True)
-class ParameterContract:
-    name: str
-    kind: str
-    required: bool
-    equals_graph_name: bool = False
-    sourced_from_registry: bool = False
-
-
-@dataclass(frozen=True, order=True)
 class AccessContract:
     resource: str
     mode: str
@@ -213,20 +184,6 @@ class ResultColumn:
     separator: Optional[str] = None
 
 
-@dataclass(frozen=True, order=True)
-class EdgeContract:
-    """One edge of the boundary shape that leads to a node, as a caller's check reads it (H2.6e): where it leaves, the step, its
-    ownership, the class it leads to and its reference mode (``ByIdentity`` or ``Pinned``). H2.8 refuses a payload whose object on a
-    pinned edge is not a version, and on an identity edge is a version of a versioned class."""
-
-    source_shape: str
-    predicate: str
-    inverse: bool
-    ownership: str
-    target_class: Optional[str]
-    reference_mode: str
-
-
 def edge_contracts(tree) -> tuple:
     """The edges of an ownership tree (``persistence.boundary.OwnershipTree``) that lead to a node, as contracts, in a total order."""
     if tree is None:
@@ -238,31 +195,6 @@ def edge_contracts(tree) -> tuple:
         )
         for e in tree.node_edges()
     ))
-
-
-@dataclass(frozen=True)
-class PayloadContract:
-    parameter: str
-    root: Optional[str]
-    edges: tuple = ()
-
-
-@dataclass(frozen=True)
-class DigestContract:
-    """What the request digest is taken over (the patterns guide, remediation A5): the kind of the operation, the target it
-    names, the sequence it expects, and the sorted canonical N-Triples of what the request asserts. That last part is one slot
-    per kind of content, in a fixed order, so a triple's role is part of what is hashed (formal-methods H2.6b, Q5): the payload of
-    a write, or for an append the events, which are its rows slot and its triples slot together, and for a replace that writes a patch
-    log the asserted and the retracted triples, in the order payload, add, del (formal-methods H2.6d), and for an append of versions under delta membership the added and the dropped members in the same two parts (H2.6f). A part an operation does not have
-    is ``None`` or empty. A create's add graph is its payload and a tombstone's del graph is copied from its sweep, so neither has a part
-    of its own. The hash and the encoding are fixed by the contract, and the algorithm is built in H2.8."""
-
-    target: Optional[str]
-    expected: Optional[str]
-    payload: Optional[str]
-    event: tuple = ()
-    add: Optional[str] = None
-    delete: Optional[str] = None
 
 
 @dataclass(frozen=True)

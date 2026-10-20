@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebularis.org/lattice/persistence/vectors/1.0.0",
+  "title": "LATTICE persistence conformance vectors",
+  "description": "Conformance vectors for the canonical N-Triples of a payload and for the request digest. Normative definition: ADR-A123 (the digest contract and its addenda) and ADR-A132 decision 4. An implementation is conformant when it reproduces every canonical line and every digest, and refuses every payload in the refusals.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["vectorsFormat", "description", "ntriples", "refusals", "digests"],
+  "properties": {
+    "vectorsFormat": {"const": "lattice-persistence-vectors/1"},
+    "description": {"type": "string"},
+    "ntriples": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "description", "triples", "canonical"],
+        "properties": {
+          "id": {"type": "string"},
+          "description": {"type": "string"},
+          "triples": {"type": "array", "items": {"$ref": "#/$defs/triple"}},
+          "canonical": {"type": "array", "items": {"type": "string"}, "description": "The canonical lines, sorted by UTF-8 bytes, without duplicates."}
+        }
+      }
+    },
+    "refusals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "description", "refusal", "triples"],
+        "properties": {
+          "id": {"type": "string"},
+          "description": {"type": "string"},
+          "refusal": {"enum": ["BlankNode", "LiteralSubject", "InvalidIri"]},
+          "triples": {"type": "array", "items": {"$ref": "#/$defs/triple"}}
+        }
+      }
+    },
+    "digests": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "description", "operationKind", "target", "expected", "parts", "canonicalParts", "encodedHex", "sha256"],
+        "properties": {
+          "id": {"type": "string"},
+          "description": {"type": "string"},
+          "operationKind": {"type": "string", "description": "The operation's kind as the compiled profile names it, for example Replace."},
+          "target": {"type": ["string", "null"], "description": "The target IRI without angle brackets, or null for an empty component."},
+          "expected": {"type": ["integer", "null"], "description": "The expected seq, written as a decimal string in the digest, or null for an empty component."},
+          "parts": {
+            "type": "array",
+            "description": "The content parts, in the contract's order. An event part has rows and triples, the others have triples.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["role"],
+              "properties": {
+                "role": {"enum": ["PayloadPart", "EventPart", "AddPart", "DelPart"]},
+                "triples": {"type": "array", "items": {"$ref": "#/$defs/triple"}},
+                "rows": {"type": "array", "items": {"$ref": "#/$defs/row"}}
+              }
+            }
+          },
+          "canonicalParts": {"type": "array", "items": {"type": "array", "items": {"type": "string"}}},
+          "encodedHex": {"type": "string", "pattern": "^([0-9a-f]{2})*$", "description": "The bytes that are hashed."},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "term": {
+      "oneOf": [
+        {"type": "object", "additionalProperties": false, "required": ["iri"], "properties": {"iri": {"type": "string"}}},
+        {"type": "object", "additionalProperties": false, "required": ["literal"], "properties": {
+          "literal": {"type": "string"}, "datatype": {"type": "string"}, "language": {"type": "string"}}},
+        {"type": "object", "additionalProperties": false, "required": ["bnode"], "properties": {"bnode": {"type": "string"}}}
+      ]
+    },
+    "triple": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["s", "p", "o"],
+      "properties": {"s": {"$ref": "#/$defs/term"}, "p": {"$ref": "#/$defs/term"}, "o": {"$ref": "#/$defs/term"}}
+    },
+    "row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["event", "type", "opSeq", "occurredAt"],
+      "properties": {
+        "event": {"type": "string"},
+        "type": {"type": "string"},
+        "opSeq": {"type": "integer"},
+        "occurredAt": {"$ref": "#/$defs/term"}
+      }
+    }
+  }
+}
