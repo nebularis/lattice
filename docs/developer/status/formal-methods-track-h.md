@@ -724,3 +724,9 @@ For acceptance: ADR-A132, the persistence caller library (Proposed), and ADR-A12
 | D-4 | W-65 | a value still belongs to at least one assembled wording (minimum kept), so a value in no wording is reported | FMH-W65 |
 | D-5 | W-65 | the endorsement example asserts `ex:sec-2 fnd:supersededBy ex:sec-2-v2`, and the new section version repeats `ex:sec-2`'s object id and rank key | FMH-W65 |
 | D-6 | W-65 | one changed test, the Wording example count, for countersignature. No law yet checks that two wordings sharing a value are versions of one identity | FMH-W65 |
+| D-7 | H2.6d | a receipt names a delta graph only where the write fills it: a create `pat:asserts`, a tombstone `pat:retracts`, a replace both | FMH-H2-6d |
+| D-8 | H2.6d | the IR's one-payload-slot rule dropped, since a replace under a patch log has three slots | FMH-H2-6d |
+| D-9 | H2.6d | under `dal:NoReceipt` the tombstone drops `$cause` and `$actor`, the gap scan and receipt-side fork audits are not generated, and a composite family may declare it though `dal:ReceiptOnly` is refused for composites. To ratify or refuse | FMH-H2-6d |
+| D-10 | H2.6d | a patch log declared on a family that never writes one (an append discipline, an append-only concurrency, an unconditional or value-guarded write) has no warning, following the brief. A warning is a small follow-up if wanted | FMH-H2-6d, TD-46 |
+| D-11 | H2.6d | a no-receipt family needs its own meta shard, since another family's gap scan would read its rows. Documented, not checked | FMH-H2-6d |
+| D-12 | H2.6d | the receipt-only composite templates are reachable only through the snapshot model, candidates for removal in H2.9 | FMH-H2-6d |
