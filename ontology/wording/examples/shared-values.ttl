@@ -1,0 +1,91 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. An equipment lease is assembled from a form, and its schedule has
+# three variables, the return period in days, the monthly rent and the
+# lessee's notice period. Mid-term, an endorsement changes the return period
+# from 10 to 14 days and nothing else. The lease's second assembled wording is
+# the same instance with the same identity, and it supplies the rent and the
+# notice period by the very value records the first one did. Only the return
+# period has a new value record.
+#
+# A value record is evidence of one value for one variable, never edited. So a
+# change is a new record, and a record the change leaves alone is shared by the
+# wordings before and after it, as a library element is shared by the
+# instances that include it.
+#
+# What the example shows:
+#
+# | Construct                                       | Where                                  |
+# |-------------------------------------------------|----------------------------------------|
+# | two assembled wordings of one instrument        | ex:lease-v1, ex:lease-v2               |
+# | a value record supplied by both                 | ex:v-rent, ex:v-notice                 |
+# | a value record that changed, as a new record    | ex:v-days-1, ex:v-days-2               |
+
+@prefix wrd:     <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix wrd-voc: <https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#> .
+@prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix qnt:     <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:      <https://example.org/lattice/wording/shared-values/> .
+
+# ---- The form's clause, schedule and variables ----------------------------------
+
+ex:sec-1 a wrd:Element ;
+    fnd:hasIdentity ex:sec-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "1" ; wrd:rankKey "a0" ;
+    wrd:directlyComprises ex:cl-1-1 .
+ex:cl-1-1 a wrd:Text ;
+    fnd:hasIdentity ex:cl-1-1-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:objectId "1.1" ; wrd:rankKey "a0" ;
+    wrd:hasTextPart
+        [ a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "On termination the Lessee shall return the Equipment within " ] ,
+        [ a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToVariable ex:var-days-identity ] ,
+        [ a wrd:TextPart ; wrd:partIndex 2 ; wrd:partText " days." ] .
+
+ex:schedule a wrd:Element ;
+    fnd:hasIdentity ex:schedule-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Schedule ; wrd:objectId "Schedule" ; wrd:rankKey "b0" ;
+    wrd:directlyComprises ex:var-days , ex:var-rent , ex:var-notice .
+
+ex:var-days a wrd:EmbeddedVariable ;
+    fnd:hasIdentity ex:var-days-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:variableKey "return-days" ; wrd:rankKey "a0" ;
+    wrd:valueSpace ex:days-space ; wrd:multiValued false ;
+    wrd:populationMethod wrd-voc:FreeEntry .
+ex:var-rent a wrd:EmbeddedVariable ;
+    fnd:hasIdentity ex:var-rent-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:variableKey "monthly-rent" ; wrd:rankKey "b0" ;
+    wrd:valueSpace ex:rent-space ; wrd:multiValued false ;
+    wrd:populationMethod wrd-voc:FreeEntry .
+ex:var-notice a wrd:EmbeddedVariable ;
+    fnd:hasIdentity ex:var-notice-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:variableKey "notice-days" ; wrd:rankKey "c0" ;
+    wrd:valueSpace ex:days-space ; wrd:multiValued false ;
+    wrd:populationMethod wrd-voc:FreeEntry .
+
+ex:days-space a qnt:ValueSpace .
+ex:rent-space a qnt:ValueSpace .
+
+ex:form a wrd:Wording ;
+    fnd:hasIdentity ex:form-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:directlyComprises ex:sec-1 , ex:schedule .
+
+# ---- The lease before and after the endorsement ------------------------------------
+
+ex:lease-v1 a wrd:AssembledWording ;
+    fnd:hasIdentity ex:lease-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:assembledFrom ex:form ;
+    wrd:includes ex:sec-1 , ex:cl-1-1 , ex:schedule , ex:var-days , ex:var-rent , ex:var-notice ;
+    wrd:hasValue ex:v-days-1 , ex:v-rent , ex:v-notice ;
+    fnd:supersededBy ex:lease-v2 .
+
+ex:lease-v2 a wrd:AssembledWording ;
+    fnd:hasIdentity ex:lease-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:assembledFrom ex:form ;
+    wrd:includes ex:sec-1 , ex:cl-1-1 , ex:schedule , ex:var-days , ex:var-rent , ex:var-notice ;
+    wrd:hasValue ex:v-days-2 , ex:v-rent , ex:v-notice .
+
+ex:v-days-1 a wrd:VariableValue ; wrd:forVariable ex:var-days ; wrd:literalValue "10"^^xsd:decimal .
+ex:v-days-2 a wrd:VariableValue ; wrd:forVariable ex:var-days ; wrd:literalValue "14"^^xsd:decimal .
+ex:v-rent   a wrd:VariableValue ; wrd:forVariable ex:var-rent ; wrd:literalValue "2500"^^xsd:decimal .
+ex:v-notice a wrd:VariableValue ; wrd:forVariable ex:var-notice ; wrd:literalValue "30"^^xsd:decimal .

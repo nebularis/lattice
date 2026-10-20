@@ -52,6 +52,7 @@
 # | Construct                                           | Where                                |
 # |-----------------------------------------------------|--------------------------------------|
 # | an endorsement replacing a clause                   | ex:replace-2-1, Wording's Replace    |
+# | the section holding it is a new version             | ex:sec-2-v2, ex:wording-v2           |
 # | the amendment it states, from v1 to v2              | ex:mta-1, ins:statedIn               |
 # | effective before it is agreed                       | ex:mta-1's scope, the assents' times |
 # | each party's assent, the insured's first            | ex:assent-insured, ex:assent-insurer |
@@ -114,10 +115,19 @@ ex:replace-2-1 a wrd:Amendment ;
     wrd:replacement ex:cl-2-1-v2 ;
     wrd:expressedIn ex:endorsement-1-para-1 .
 
+# A wording's tree is evidence of its exact text, so the section holding the
+# replaced clause is a new version of the section, with the same identity.
+ex:sec-2-v2 a wrd:Element ;
+    fnd:hasIdentity ex:sec-2-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "2" ; wrd:rankKey "b0" ;
+    prov:wasRevisionOf ex:sec-2 ;
+    wrd:directlyComprises ex:cl-2-1-v2 .
+ex:sec-2 fnd:supersededBy ex:sec-2-v2 .
+
 ex:wording-v2 a wrd:AssembledWording ;
     fnd:hasIdentity ex:wording-identity ; fnd:hasGovernanceState fnd:Active ;
-    wrd:directlyComprises ex:sec-2 , ex:cl-2-1-v2 ;
-    wrd:includes ex:sec-2 , ex:cl-2-1-v2 .
+    wrd:directlyComprises ex:sec-2-v2 ;
+    wrd:includes ex:sec-2-v2 , ex:cl-2-1-v2 .
 ex:wording-v1 fnd:supersededBy ex:wording-v2 .
 
 # ==== Roles, places and the cover's scope =====================================

@@ -6155,9 +6155,10 @@ Insurance practice changes a policy in force by **endorsement**, and a change du
 insurance is a **mid-term adjustment** (MTA). Here the insured takes a second unit and, on 20
 February, asks for it to be covered from 1 March. The underwriter agrees on 10 March, from the date
 asked for, as is common, charging an additional premium for the rest of the period (outside the
-example). The endorsement replaces the insuring clause with one naming both units. The insured's
-signed request is its assent to the amended policy, so the amendment is agreed when the insurer
-assents.
+example). The endorsement replaces the insuring clause with one naming both units, so the section
+holding it has a new version too, with the same identity, and the second assembled wording includes
+that section version and the new clause. The insured's signed request is its assent to the amended
+policy, so the amendment is agreed when the insurer assents.
 
 ```mermaid
 flowchart LR
@@ -6241,6 +6242,7 @@ withdrawal counts is the facility's, since withdrawal has no default.
 
 Breaking versions at major version zero ([ADR-A113](../../docs/architecture/decisions/ADR-A113-breaking-changes-at-major-version-zero.md)):
 
+- Example note (TD-65): `property-endorsement.ttl` gains a new version of the section holding the replaced clause, `ex:sec-2-v2`, which the second assembled wording includes. No change to the vocabulary or the shapes.
 - 0.18.0, the first release of the substrate and standalone modules as one set ([ADR-A129](../../docs/architecture/decisions/ADR-A129-one-release-for-the-substrate.md)). Every document of the layer takes the release's number and imports the other layers at it (no effect). No other change to the documents. The examples declare composition operations on admission profiles only, as Eligibility now requires, and the warranty's carve-back is typed as the profile it is.
 - 0.17.0 (`instrument`, `instrument-acts` and `instrument-vocab`, breaking): re-pinned to Eligibility 0.12.0, whose set readings decide on completeness only under a closure
   (ADR-A105), and the layers re-pinned with it, with no other change (CCS HQ-6a.1).
