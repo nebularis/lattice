@@ -271,3 +271,46 @@ versioning sketch's VH-Q1 to VH-Q6, and extends the builders of decision 1.
    (VH-Q5). It still refuses `dal:InPlace` with `dal:ReceiptOnly`.
 6. **The contract gains one operation kind,** `AppendVersion`. Its resources are the version row, the version (the aggregate resource, in
    the data graph), the receipt and the claim. Its digest parts are the usual four, with the payload as the content part.
+
+
+## Addendum, 2026-10-20: the subjects of an event append (proposed, for the maintainer's acceptance)
+
+This addendum extends this ADR's addendum of 2026-10-14 on the event slots. It adds a rule for what an append of events may write, using the
+identity grammar of [ADR-A51](ADR-A51-iri-and-identity-policy.md) (its Rule 8 and its event IRI). It changes no IRI grammar.
+
+### Context
+
+An append of events carries rows of `(event, type, opSeq, occurredAt)` and an `eventTriples` slot of further triples written beside them. The
+slot is free text to the store. Nothing stops its triples from having an existing aggregate as their subject, so an append, whose only
+protection is the transaction claim, could write into an aggregate's data without that aggregate's version guard. An event is an immutable
+occurrence ([iri-identity-patterns](../iri-identity-patterns.md) §5.10). It records what happened, and it does not change the thing it concerns.
+
+### Decision
+
+1. **Every subject of the event triples is an event of the batch, or a node minted under one event's IRI.** Such a node uses the
+   parent-relative key `{eventIri}/part/{encodedImmutableKey}` or the parent-local ordinal `{eventIri}/part/{ordinal}` of
+   [iri-identity-patterns](../iri-identity-patterns.md) §5.4. The parent is always the event, and the key or ordinal is immutable within it.
+2. **An event may name any other resource as an object.** For example it names the aggregate it concerns. It never names one as a subject.
+   An event therefore cannot describe an aggregate, and the event slot cannot write into an aggregate's data.
+3. **The caller library checks the rule before sending.** The payload check tests each subject of the event triples against the batch's event
+   IRIs and the prefix `{eventIri}/part/`. A deployment may tighten the rule with SHACL shapes per event type, for example to fix which parts an
+   event type may have. The store is not involved.
+4. **Blank nodes in event triples are skolemised under the event IRI,** as ADR-A51 already requires, with the parent-local ordinal where no key
+   exists. An existing event whose parts are blank nodes is skolemised the same way before it is accepted.
+
+### Options considered
+
+| Option | Verdict |
+|---|---|
+| (a) Any node reachable from an event may be a subject | Rejected. An event could reach an existing aggregate and describe it, which writes into the aggregate outside its guard. |
+| (b) A shape per event type that lists the allowed subjects | Kept as the optional tightening of point 3. It cannot be the base rule, because a deployment would have to write a shape before an append is safe. |
+| (c) Subjects are the batch's events and nodes minted under them | Chosen. It needs no shape and no store change. |
+
+### Consequences
+
+- Adopters mint event parts under the event. Moving a part to another event gives a new IRI, as for any parent-relative part
+  (§5.4). Events are immutable, so this does not arise in practice.
+- The check is a string prefix test plus a subject test. It needs no store change and no query.
+- An event cannot be corrected by an append that describes it from outside. A correction is a new event that names the first as an object.
+- Existing events with blank-node parts are skolemised under the event IRI, which ADR-A51 already requires.
+- A reader may rely on the rule. Every triple of an event graph is about an event or a part of one.

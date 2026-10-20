@@ -1252,6 +1252,15 @@ of H2.6, as H2.6b leaves them, into vocabulary, shapes and `compile` output. Que
 | H2.7-Q5 | how H2.7's vocabulary change is released, now that the substrate and standalone ontologies are one release (ADR-A129, added 2026-10-20) | (a) **H2.7 moves the release number itself** with `mise run release:prepare -- <next>`, so the versioning check passes on its branch, and the maintainer tags `ontologies-v<next>` after the merge. (b) H2.7 waits for a release that other units' changes also take, which leaves the versioning check failing on its branch until then | (a). The versioning check fails on a changed member whose number did not move (ADR-A129 decision 7) **Decided 2026-10-20, neither:** this branch ignores versioning until all its changes are complete, then bumps a minor when it merges into `main` (TD-64) |
 | H2.7-Q4 | how strictly the profile is compared once it is emitted | (a) **byte equality of `compile` output with the expected files**, replacing H2.6's base-profile and agreement tests, so the files become the golden output (H1.5's stable labels allow it). (b) isomorphism | (a) **Decided by the maintainer 2026-10-20: (b), isomorphism.** Byte equality ties the files to one serialiser, and an editor such as Protégé lays a file out its own way on save |
 
+#### Revised 2026-10-20
+
+The vocabulary H2.7 publishes once (H-D34) now includes what H2.6c to H2.6f add: `dal:writeDiscipline` and its individuals,
+`dal:NoReceipt`, `dal:referenceMode` with `dal:ByIdentity` and `dal:Pinned`, and `dal:membershipEncoding` with `dal:FullMembership`,
+`dal:DeltaMembership` and `dal:checkpointEvery`, each with shapes and witnesses, and `pat:currentVersion`, `pat:previousVersion`,
+`pat:addsMember` and `pat:dropsMember` in the patterns vocabulary the templates use. Step 5 compares the emitted profile with the expected
+files by graph isomorphism (Q4 (b)), so the files may be laid out by any editor. Step 6's release tag is replaced by TD-64: no version
+moves on this branch. About 450k tokens.
+
 #### Steps
 
 1. **The vocabulary**, in `ontology/persistence/spec/persistence.ttl`: the classes and properties of the model, and the enumerations moved from
@@ -1306,6 +1315,20 @@ H2.8-Q1 to Q3 are for the maintainer before a branch.
 | H2.8-Q1 | where the caller-side code lives | (a) **`persistence.payload` and `persistence.caller` in `tools/persistence`, as a reference implementation** the tests and the README use, not a published library. (b) a new package under `packages/`, the SDK sketch's option S-A, which needs its own ADR (ADR-A84's precedent) | (a). The SDK is held for the end of Track H **Decided by the maintainer 2026-10-20: (b).** Usable library code under `packages/`, with its own ADR, drafted before H2.8 is briefed |
 | H2.8-Q2 | what bounds an event's triples | (a) **every subject is an event of the batch or a node the slot reaches from one by any predicate**, the connected part, as H2.6b-Q4 (c) says. (b) an event shape per event type, which adopters would have to declare | (a), with (b) left for when a deployment asks for it **Decided by the maintainer 2026-10-20: (c), added that day:** every subject is an event of the batch or a node minted under one event's IRI, so an event may link to an aggregate but never describe it. (b) as an optional tightening where a deployment declares shapes |
 | H2.8-Q3 | an empty `logGraphs` | (a) **the caller check refuses it**, since an audit over the pinned graph alone reports clean (FMH-H2-5, non-coverage). (b) allow it with a warning | (a) **Decided by the maintainer 2026-10-20: (c), added that day:** the audit reports "nothing examined" as a third outcome beside clean and failed |
+
+#### Revised 2026-10-20
+
+- **Where (Q1 (b)).** The caller code is a library, `packages/persistence/python`, under ADR-A132 (Proposed). `tools/persistence` depends
+  on it for the shared types (terms, payload, rows, contract reading) and never the reverse. The digest's vectors live in
+  `contracts/persistence/`. H2.8 is briefed once ADR-A132 is accepted.
+- **Events (Q2 (c)).** The payload check of an append follows ADR-A123's addendum on the subjects of an event append (proposed): every
+  subject is an event of the batch or a node minted under one event's IRI. A deployment's shapes per event type tighten it.
+- **Audits (Q3 (c)).** An audit's result has three values, clean, failed and nothing examined, the last when its log graphs are empty,
+  in the contract's result columns.
+- **References (H2.6e).** The caller check refuses an object of the wrong kind on a pinned or an identity edge.
+
+About 600k tokens, likely split into H2.8a (the library and its types, the digest and its vectors) and H2.8b (the checks and the
+diagnostics), decided when it is briefed.
 
 #### Steps
 
@@ -1409,12 +1432,109 @@ place without the warning (its witness fails).
 
 About 300k tokens.
 
-### 4.10 H2.6d: the patch log for in-place families (planned 2026-10-20)
+### 4.10 H2.6d: the patch log for in-place families, the link between versions, no receipt (planned 2026-10-20, revised the same day)
 
 The held half of H2.6b (§4.6, "Held (H-D33)"), narrowed by VH-Q5 to `dal:InPlace` families that declare `dal:PatchLog`: their replace,
 create and tombstone write delta graphs in the same update, named from the receipt (H2.6b-Q2), with H2.6b-Q1's coverage, and the guide's
 as-of read is restated to read backward from the current state (TD-48). `ReceiptModelNotHonoured` then warns only for
-`dal:SnapshotPerRevision` on in-place families. Validation Pack `FMH-H2-6d`. About 250k tokens. Runs after H2.6c.
+`dal:SnapshotPerRevision` on in-place families. Two additions, decided 2026-10-20:
+
+- **R2 (a).** `append-version` links a new version to the prior current one with `pat:previousVersion`, never `fnd:supersededBy`
+  (ADR-A123 addendum of 2026-10-20, amended). Its tests, template, builder, golden and expected profiles follow.
+- **VH-Q5a.** A `dal:NoReceipt` model: no receipt and no log bucket, for a `dal:InPlace` family that wants no history. Refused with
+  the append disciplines, whose versions and records take their position and transaction time from the receipt. The transaction claim
+  stays wherever a compare-and-set or an append can be retried.
+
+Validation Pack `FMH-H2-6d`. About 280k tokens. Runs after H2.6c.
+
+### 4.11 H2.6e: how references between versions are declared (planned 2026-10-20)
+
+From VH-Q2 as the maintainer settled it: by identity by default, pinned to a version where a record is evidence of exactly what it saw,
+unless an edge declares otherwise.
+
+| # | Question | Decision, at our leaning |
+|---|---|---|
+| H2.6e-Q1 | where the declaration sits | `dal:referenceMode` on a property shape of the boundary shape, beside `dal:ownership`, one of `dal:ByIdentity` (the default) and `dal:Pinned`. Ownership says what a write sweeps, the reference mode what a reference names |
+| H2.6e-Q2 | what persistence does with it | records it in the compiled profile, refuses `dal:Pinned` on an edge whose target class is not versioned, and the caller check (H2.8) refuses a payload whose object on a pinned edge is not a version, or on an identity edge is a version of a versioned class |
+| H2.6e-Q3 | the warning for evidence | `EvidenceEdgeByIdentity`, when the edge's subject class is a subclass of `fnd:Evidence` or `fnd:DerivedArtefact`, or of a class the profile names as a record, and its target is versioned, and the edge is by identity. A warning, so a deliberate choice compiles |
+| H2.6e-Q4 | reads | no generated read that resolves an identity through a root version's membership yet. A query that does so is written by the consumer, and a generated one waits for the first consumer that needs it |
+
+Pros: one declaration, where ownership already lives, so an adopter states both facts about an edge in one place. The checks are at
+compile time and in the caller, with no store cost. Cons: a second classification on every edge an adopter writes, though the default
+needs none. Deferring reads means early consumers write the resolving query themselves. `FMH-H2-6e`. About 120k tokens.
+
+### 4.12 H2.6f: how a root version lists its members, with fixtures and a benchmark (planned 2026-10-20)
+
+From VH-D2 as the maintainer revised it: a choice per family.
+
+| # | Question | Decision, at our leaning |
+|---|---|---|
+| H2.6f-Q1 | the declaration | `dal:membershipEncoding` on an `dal:AppendVersions` family, `dal:FullMembership` (the default) or `dal:DeltaMembership` |
+| H2.6f-Q2 | how a delta is stored | in persistence's own terms on the new version: `pat:previousVersion`, and `pat:addsMember` and `pat:dropsMember` for what changed. The domain's membership property, for example `aeo:hasLocation`, is not written for the new version |
+| H2.6f-Q3 | how members are read | a generated `members` query per family resolving the chain from the version back to the nearest full list, and a checkpoint: every `dal:checkpointEvery` versions (default 16) the write lists every member, so no chain is longer than that |
+| H2.6f-Q4 | validation of domain data | shapes over the domain's membership property run over the resolved members, materialised into a scratch graph by the generated query, never over the stored delta |
+
+Pros: a large set changed slightly costs a handful of triples instead of a full list, for example 3 against 540 for one location of 500
+(E5), and history stays readable. Cons: every read of members pays the chain, up to the checkpoint, and domain shapes cannot run over the
+stored data directly, so the family trades read cost and validation convenience for write and storage cost, which is why it is a choice
+and not the default.
+
+Fixtures (EX-Q2 (b)): a TriG file per chosen strategy, the stored triples of E5 and E7 under each encoding, checked by a test against
+their counts. Benchmark (EX-Q2 (c), ADR-A124): `benchmark/persistence-membership/`, full against delta against in-place with a patch log,
+writes and reads at 1, 10 and 100 versions of a 500-member set, failing on a wrong count, never on time. `FMH-H2-6f`. About 300k tokens.
+
+### 4.13 W-65: Wording shares values across assembled wordings (planned 2026-10-20, TD-65)
+
+Done on this branch at the maintainer's request (2026-10-20). Wording's README is not migrated to the ADR-A126 layout, so its current
+conventions hold: the `turtle-spec` and `turtle-shapes` blocks are the source, `tools/literate_extract.py` regenerates the files, and the
+release notes gain an entry. Versioning is ignored on this branch (TD-64).
+
+1. `wrd:hasValue` loses `owl:InverseFunctionalProperty`, and the shape that a value belongs to exactly one assembled wording becomes at
+   least one.
+2. An example: two assembled wordings of one instrument sharing every value record but the one an endorsement changes.
+3. Instrument's property-endorsement example (EP-10): `ex:sec-2` comprises the superseded clause version after the endorsement. Decided at
+   our leaning: a new version of the section, `ex:sec-2-v2`, comprising `ex:cl-2-1-v2`, since a wording's tree is evidence of its exact text
+   and so pinned (VH-Q2). The example's README text follows.
+4. `mise run check:literate-extract`, the Wording and Instrument tests, and the ontology catalogue check.
+
+Pros: an endorsement or requote restates one value instead of about 30, and no reasoner merges two wordings. Cons: a value record shared
+by several wordings cannot be edited for one of them, which is right, since a change is a new record. `FMH-W65`. About 60k tokens.
+
+### 4.14 AIR-66: exposure versions are never edited, and content names identities (planned 2026-10-20, TD-66)
+
+Done on this branch at the maintainer's request, to be moved to the AIR branches later.
+
+1. `examples/versions.ttl` stops editing version 1: no `fnd:validTo` added to its scope and no governance state changed on succession.
+   Which version is current or superseded is read from the set's succession.
+2. `aeo:locatedAt` and `aeo:valueOf` name a location's or asset's persistent identity, fixed by the exposure set version's membership
+   (VH-Q2 (a)), so one location changing writes one location version. Their ranges become the identity classes, and the shapes follow.
+3. The README's worked text, the exposure tests and a release-notes entry. The AIR module keeps its own version under ADR-A86, ignored on
+   this branch.
+
+Pros: a mid-term change to one location writes one version, not three, and no version is written twice. Cons: a reader of an asset's
+location at a date resolves the identity through the set version, a join it did not need before, and a breaking change to AIR's exposure
+module at 0.x. `FMH-AIR-66`. About 80k tokens.
+
+### 4.15 H2.9: Mustache retired (planned 2026-10-20)
+
+The typed IR sketch's §7 slice: the templates, `render.py`, `chevron` and the equivalence harness go, and every generated operation is
+rendered from its builder. It runs after H2.8, so every operation has its final builder.
+
+| # | Question | Decision, at our leaning |
+|---|---|---|
+| H2.9-Q1 | how a request-time slot is marked once Mustache is gone | keep the `{{{name}}}` marker as a plain-text convention the library (ADR-A132) and any caller fill by substitution. It needs no dependency and every rendered query keeps its shape. The alternative, a SPARQL-native form, cannot carry a set of triples |
+| H2.9-Q2 | what replaces the harness's assurance | the recorded builder outputs (`builder-goldens.json`), the expected profiles, the behaviour tests on both engines, and the static checks S-3 and S-4 over the builders' output. The goldens' order dependence that H2.6c found is fixed here by keying them on the operation, not on the first fixture that produces it |
+| H2.9-Q3 | the injection corpus | runs over the builders and over the library's slot filling, since a slot is where untyped text enters |
+
+Steps: remove the templates and their check, `render.py` and the `chevron` dependency, and the harness tests (listed for countersignature,
+since they are removed, ADR-grade justification: their subject no longer exists). S-3 reads the parameter declarations instead of the
+`$name` convention (H-D11). The README's "Using the generated SPARQL directly" and ADR-A79's addendum follow. `FMH-H2-9`. About 250k
+tokens.
+
+### 4.16 Order, from 2026-10-20
+
+H2.6d, then H2.6e, then H2.6f, one at a time since they touch the same code. W-65 and AIR-66 touch other modules and may run beside them.
+Then H2.7, H2.8 (after ADR-A132 is accepted), H2.9. Before the merge into `main`: TD-63, and one minor version bump (TD-64).
 
 ## 5. H4 onward, outline only
 
@@ -1428,7 +1548,7 @@ as-of read is restated to read backward from the current state (TD-48). `Receipt
 | H8 | protocol models K-N (erasure, multi-aggregate writes, bulk load/cutover, shard migration), plus grounding every model built so far against at least one real MVCC-style backend (isolation probes, history checking, predicted-anomaly reproduction). **From aggregate ownership** (ownership sketch §15): K's store list includes composite members, L adds references across aggregates under the roots-only rule, M adds an out-of-band load that makes a node a member of two aggregates | T4/T7 | H7 |
 | H9 | detection-coverage closure: generate the nine missing audits the review names (L11's gap) from the same invariants H4's registry states, Alloy detection-completeness/soundness obligations per invariant, applicability labelling so a not-applicable audit cannot be read as "clean". **From aggregate ownership** (ownership sketch §15): four more audits, instance overlap, orphan member, reference into a member, and payload outside the tree for named-graph families with a boundary shape | T2/T0 | H3, H4 |
 | H10 | runtime monitors from the same invariants (T7): housekeeping evidence, capability drift, declaration drift, an erasure audit, a position-reuse audit, feeding track A's ledger once it exists. The four ownership audits of H9 become monitors with the rest | T7 | H9 |
-| H2.10 | **the snapshot receipt model** (`dal:SnapshotPerRevision`, TD-46): a sealed snapshot graph per revision, written in the same update as the guarded write (as H2.6b does for the patch log), named from the receipt, with its retention and its cost measured against the patch log. Until then `compile` warns `ReceiptModelNotHonoured` (H2.6b-Q3). Added to the roadmap 2026-10-14 at the maintainer's request. **Held** for the history and versioning sketch (H-D33), which may make the snapshot the root version's manifest | T1 | H2.6b, H2.8, the sketch's answers |
+| ~~H2.10~~ | **Dropped 2026-10-20 (P6).** A family that appends versions needs no snapshot, since its root version and membership are one (VH-Q5 (3)). Snapshots of in-place families stay with TD-46, and `ReceiptModelNotHonoured` keeps warning for them | | |
 
 ### 5.1 Later: a SPARQL semantic IR (PDD-06, raised 2026-10-12)
 

@@ -74,10 +74,16 @@ at the maintainer's request, and is committed on this branch, not pushed. Versio
 
 ### After the review
 
-1. H2.6d, the patch log for in-place families (plan §4.10).
-2. H2.7, the vocabulary and the compiler's emission, now including `dal:writeDiscipline`, then H2.8.
-3. Then H2.9. H2.10 follows the sketch's answers. Later, PDD-06.
-4. Before the merge into `main`: TD-63, and one minor version bump (TD-64).
+Planned 2026-10-20 (plan §4.10 to §4.16), for the maintainer's review before implementation:
+
+1. H2.6d, the patch log for in-place families, `pat:previousVersion` (R2), `dal:NoReceipt` (VH-Q5a).
+2. H2.6e, reference modes per edge. H2.6f, membership encoding per family, with fixtures and the benchmark.
+3. W-65, Wording's shared values (TD-65), and AIR-66, exposure versions (TD-66), beside them.
+4. H2.7 with all the new vocabulary, compared by isomorphism. H2.8 once ADR-A132 is accepted. H2.9, Mustache retired.
+5. H2.10 dropped. Before the merge: TD-63, one minor version bump (TD-64).
+
+For acceptance: ADR-A132, the persistence caller library (Proposed), and ADR-A123's addendum on the subjects of an event append
+(proposed).
 
 ## Slices
 
@@ -701,4 +707,6 @@ at the maintainer's request, and is committed on this branch, not pushed. Versio
   as amended, the persistence link named `pat:previousVersion`. H2.7-Q2, H2.7-Q3, H2.8-Q2 and H2.8-Q3 asked back. Implementation waits
   for the maintainer's rules once planning is done.
 - 2026-10-20: the maintainer decided H2.7-Q2 (a), H2.7-Q3 (a), H2.8-Q2 (c) with (b) as an optional tightening, and H2.8-Q3 (c).
+- 2026-10-20: planned H2.6d (revised), H2.6e, H2.6f, W-65, AIR-66, H2.7 and H2.8 (revised), H2.9, and the order (plan §4.10 to
+  §4.16). H2.10 dropped. ADR-A132 drafted as Proposed, and the event-subject rule as a proposed addendum to ADR-A123.
 
