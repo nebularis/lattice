@@ -128,6 +128,23 @@ def check_cross_axis(
             "transaction time from the receipt. Use dal:ReceiptOnly, or write in place (H2.6d, VH-Q5a).",
         )
 
+    # H2.8c, D-9: a family that writes no receipt keeps no record of when each write took effect. A versioned class or a record class is
+    # cited for what it said at a time, so writing it with no receipt is allowed and warned.
+    if _local(receipts.value if receipts else None) == "NoReceipt" and (_is_versioned(graph, target.cls) or target.cls in record_classes(graph)):
+        diagnostics.append(
+            Diagnostic(
+                kind="NoReceiptForRecord",
+                severity="WARNING",
+                target=str(target),
+                message=(
+                    f"dal:receiptModel dal:NoReceipt writes no receipt, and {target.cls} is "
+                    f"{'versioned (a subclass of fnd:Version)' if _is_versioned(graph, target.cls) else 'a record class (dal:recordClass)'}, "
+                    "whose instances are cited for what they said at a time. With no receipt nothing records when a write took effect or "
+                    "which transaction made it. Use dal:ReceiptOnly, or dal:NoReceipt deliberately (H2.8c, D-9)."
+                ),
+            )
+        )
+
     # Row 1: NoBoundary + Optimistic with no value guard. Appending versions guards on the version row instead.
     if boundary_local == "NoBoundary" and concurrency_local == "Optimistic" and discipline != "AppendVersions":
         if not concurrency.extra.get("valueGuardProperty"):
@@ -412,17 +429,41 @@ def _check_tree(graph: Graph, target: Target, boundary: ResolvedDimension, tree,
                 )
 
 
+def record_classes(graph: Graph) -> set[URIRef]:
+    """The classes whose instances are evidence of what they saw, as a configuration names them (H2.8c, D-15 (b)): every object of
+    ``dal:recordClass`` on a profile, and the classes the configuration asserts to be ``rdfs:subClassOf+`` one of them. Read beside the
+    subclasses of ``fnd:Evidence`` and ``fnd:DerivedArtefact``, for a class that is a record and is not modelled as evidence."""
+    out: set[URIRef] = set()
+    for named in graph.objects(None, DAL.recordClass):
+        if isinstance(named, URIRef):
+            out.update(c for c in graph.transitive_subjects(RDFS.subClassOf, named) if isinstance(c, URIRef))
+    return out
+
+
+def family_record_classes(graph: Graph, target: Target, tree) -> tuple:
+    """The record classes (:func:`record_classes`) a family touches, its target class and the subject class of each edge of its boundary shape,
+    in IRI order. The compiled profile states them (``dal:recordClass``), so a caller reads them without the configuration."""
+    records = record_classes(graph)
+    if not records:
+        return ()
+    touched = {target.cls}
+    if tree is not None:
+        touched.update(functional_value(graph, e.source_shape, SH.targetClass) for e in tree.node_edges())
+    return tuple(sorted(str(c) for c in touched if c in records))
+
+
 def check_reference_modes(graph: Graph, target: Target, tree) -> list[Diagnostic]:
     """The warning of H2.6e-Q3: an edge from a class that is evidence of what it saw (a subclass of ``fnd:Evidence`` or
-    ``fnd:DerivedArtefact``, by IRI) to a versioned class, and by identity. A later version of the target changes what
-    the evidence appears to have seen. A warning, so a deliberate choice compiles."""
+    ``fnd:DerivedArtefact``, by IRI, or a record class the configuration names, H2.8c) to a versioned class, and by identity. A later
+    version of the target changes what the evidence appears to have seen. A warning, so a deliberate choice compiles."""
     out: list[Diagnostic] = []
+    records = record_classes(graph)
     for edge in tree.node_edges():
         if edge.reference_mode != BY_IDENTITY or not _is_versioned(graph, edge.target_class):
             continue
         source_class = functional_value(graph, edge.source_shape, SH.targetClass)
         ancestors = set(graph.transitive_objects(source_class, RDFS.subClassOf)) if source_class is not None else set()
-        if not ancestors & {FND.Evidence, FND.DerivedArtefact}:
+        if not ancestors & {FND.Evidence, FND.DerivedArtefact} and source_class not in records:
             continue
         out.append(
             Diagnostic(
@@ -431,7 +472,7 @@ def check_reference_modes(graph: Graph, target: Target, tree) -> list[Diagnostic
                 target=str(target),
                 message=(
                     f"the property shape for {edge.step.predicate} on {edge.source_shape} is by identity, its subject class "
-                    f"{source_class} is evidence (a subclass of fnd:Evidence or fnd:DerivedArtefact) and its target class "
+                    f"{source_class} is evidence (a subclass of fnd:Evidence or fnd:DerivedArtefact, or a dal:recordClass) and its target class "
                     f"{edge.target_class} is versioned, so the evidence names whichever version is current and not the one it saw. "
                     "Declare dal:referenceMode dal:Pinned, or dal:ByIdentity deliberately (H2.6e)."
                 ),

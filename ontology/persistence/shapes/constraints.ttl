@@ -580,7 +580,16 @@ dal:PayloadContractShape
     sh:property [ sh:path dal:boundaryShape ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
                   sh:message "A payload contract names its boundary shape, or says dal:NoBoundaryShape. It never leaves the shape out." ] ;
     sh:property [ sh:path dal:referenceEdge ; sh:nodeKind sh:IRI ; sh:class dal:ReferenceEdge ;
-                  sh:message "Every dal:referenceEdge of a payload contract is an IRI, never a blank node." ] .
+                  sh:message "Every dal:referenceEdge of a payload contract is an IRI, never a blank node." ] ;
+    # H2.8c: the profile states each edge once, and a payload contract points at the edges of its own profile, never at a copy.
+    sh:sparql [
+        sh:message "A dal:referenceEdge of a payload contract is an edge its own compiled profile states." ;
+        sh:prefixes dal: ;
+        sh:select """
+            SELECT $this ?value WHERE {
+              $this dal:referenceEdge ?value .
+              FILTER NOT EXISTS { ?profile dal:generatedOperation ?op ; dal:referenceEdge ?value . ?op dal:payloadContract $this }
+            }""" ] .
 
 dal:DigestContractShape
     a sh:NodeShape ;

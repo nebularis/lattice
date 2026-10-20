@@ -25,7 +25,7 @@ from .capability import (
 )
 from .builders import _check_graph_names
 from .contract import edge_contracts
-from .contract_emit import add_edge_facts, contract_for, emit_contract
+from .contract_emit import add_edge_facts, contract_for, emit_contract, mint_edge
 from .instantiate import TEMPLATE_SUFFIX
 from .model import DIMENSIONS, Diagnostic, ResolvedDimension
 from .namespaces import DAL
@@ -52,6 +52,8 @@ class CompiledTarget:
     identity: dict[str, ResolvedDimension] = field(default_factory=dict)
     # identity-minting M1: one sealed minting recipe per identity role.
     recipes: list[dict] = field(default_factory=list)
+    # H2.8c: the record classes the family touches, which the profile states as dal:recordClass.
+    record_classes: tuple = ()
 
 
 class CompileError(Exception):
@@ -126,6 +128,7 @@ def compile_targets(
                     diagnostics=diagnostics,
                     identity=identity,
                     recipes=recipes,
+                    record_classes=validator.family_record_classes(graph, target, dimensions["aggregateBoundary"].extra.get("ownershipTree")),
                 )
             )
         except Exception as e:
@@ -211,13 +214,18 @@ def emit_compiled_profile(out: Graph, compiled: CompiledTarget, guards: bool = T
     for constraint in compiled.uniqueness:
         out.add((profile, DAL.appliedUniquenessConstraint, URIRef(constraint["constraint"])))
 
-    # H2.6e: each edge of the boundary shape that leads to a node, with its ownership and its reference mode, in walk order.
+    # H2.6e: each edge of the boundary shape that leads to a node, with its ownership and its reference mode, in walk order. Stated once, here,
+    # with an IRI, so that the payload contract of each operation points at it (H2.8c).
     tree = compiled.dimensions["aggregateBoundary"].extra.get("ownershipTree")
+    edge_nodes = []
     for index, edge in enumerate(edge_contracts(tree)):
-        node = BNode(f"{stem}-edge-{index:02d}")
+        node = mint_edge(compiled.target.cls, index, compiled.target.deployment)
         out.add((node, RDF.type, DAL.ReferenceEdge))
         add_edge_facts(out, node, edge)
         out.add((profile, DAL.referenceEdge, node))
+        edge_nodes.append(node)
+    for cls in compiled.record_classes:
+        out.add((profile, DAL.recordClass, URIRef(cls)))
 
     for recipe in compiled.recipes:
         node = BNode(f"{stem}-recipe-{recipe['role']}")
@@ -248,16 +256,13 @@ def emit_compiled_profile(out: Graph, compiled: CompiledTarget, guards: bool = T
             out.add((op_node, DAL.hasParameterBinding, binding_node))
         out.add((profile, DAL.generatedOperation, op_node))
         # H2.7: the contract of the operation, from its builder, under the run's choices. Every operation has a builder.
-        edges = edge_contracts(compiled.dimensions["aggregateBoundary"].extra.get("ownershipTree"))
         shape = compiled.dimensions["aggregateBoundary"].extra.get("boundaryShape")
-        contract = contract_for(
-            out, op_node, guards=guards, graph_names=graph_names, edges=edges, shape=URIRef(str(shape)) if shape is not None else None
-        )
+        contract = contract_for(out, op_node, guards=guards, graph_names=graph_names, shape=URIRef(str(shape)) if shape is not None else None)
         if contract is None:
             raise KeyError(f"no builder and no hand declaration for the operation {op.operation} ({op.template_id})")
         emit_contract(
             out, op_node, compiled.target.cls, op.operation, contract, URIRef(str(shape)) if shape is not None else None,
-            compiled.target.deployment,
+            compiled.target.deployment, tuple(edge_nodes),
         )
 
     req_node = BNode(f"{stem}-requirement")

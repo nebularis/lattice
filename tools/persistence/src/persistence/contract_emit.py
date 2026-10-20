@@ -42,6 +42,16 @@ def mint(target: URIRef, operation: str, part: str, deployment: URIRef | None = 
     return URIRef(f"{base}/compiled/{slug}#{part}")
 
 
+PROFILE_PART = "profile"
+"""The segment under which a profile's own declarations are minted, in place of an operation's name. No generated operation has this name."""
+
+
+def mint_edge(target: URIRef, index: int, deployment: URIRef | None = None) -> URIRef:
+    """The IRI of the profile's ``index``-th ``dal:ReferenceEdge``, in the order of :func:`persistence.contract.edge_contracts`. The payload
+    contract of each operation points at these nodes and never restates them (H2.8c, H2.6e (2))."""
+    return mint(target, PROFILE_PART, f"edge-{index:02d}", deployment)
+
+
 def is_declaration(node) -> bool:
     return isinstance(node, URIRef) and "/compiled/" in str(node)
 
@@ -54,23 +64,21 @@ def column_name(kind: str) -> str:
     return f"{kind}Column"
 
 
-def contract_for(
-    compiled: Graph, node, *, guards: bool, graph_names: str, edges: tuple = (), shape: URIRef | None = None
-) -> OperationContract | None:
+def contract_for(compiled: Graph, node, *, guards: bool, graph_names: str, shape: URIRef | None = None) -> OperationContract | None:
     """The contract of the operation ``node`` of ``compiled``, from its builder, or from the hand declarations of operations that have
     none. ``None`` when there is neither."""
     stem = str(compiled.value(compiled.value(node, DAL.usesTemplate), DAL.templateId)).removesuffix(TEMPLATE_SUFFIX)
     if stem in BUILDERS:
-        return contract_of(
-            build(stem, operation_context(compiled, node), guards=guards, graph_names=graph_names), edges, None if shape is None else str(shape)
-        )
+        return contract_of(build(stem, operation_context(compiled, node), guards=guards, graph_names=graph_names), None if shape is None else str(shape))
     return HAND_DECLARED.get(stem)
 
 
 def emit_contract(
-    g: Graph, node, target_iri: URIRef, name: str, c: OperationContract, shape: URIRef | None, deployment: URIRef | None = None
+    g: Graph, node, target_iri: URIRef, name: str, c: OperationContract, shape: URIRef | None, deployment: URIRef | None = None,
+    edges: tuple = (),
 ) -> None:
-    """Add the contract ``c`` of the generated operation ``node`` to ``g``."""
+    """Add the contract ``c`` of the generated operation ``node`` to ``g``. ``edges`` are the profile's ``dal:ReferenceEdge`` nodes
+    (:func:`mint_edge`), which a payload contract points at."""
 
     def m(part: str) -> URIRef:
         return mint(target_iri, name, part, deployment)
@@ -124,11 +132,8 @@ def emit_contract(
             g.add((pc, DAL.payloadRoot, m(f"param-{c.payload.root}")))
         g.add((pc, DAL.payloadEncoding, DAL.GroundNTriples))
         g.add((pc, DAL.boundaryShape, shape if shape is not None else DAL.NoBoundaryShape))
-        for i, edge in enumerate(c.payload.edges):
-            en = m(f"edge-{i:02d}")
-            g.add((pc, DAL.referenceEdge, en))
-            g.add((en, RDF.type, DAL.ReferenceEdge))
-            add_edge_facts(g, en, edge)
+        for edge in edges:
+            g.add((pc, DAL.referenceEdge, edge))
     if c.digest is not None:
         dc = m("digest")
         g.add((node, DAL.digestContract, dc))
@@ -162,4 +167,4 @@ def add_edge_facts(out: Graph, node, edge) -> None:
     out.add((node, DAL.referenceMode, DAL[edge.reference_mode]))
 
 
-__all__ = ["TEMPLATE_SUFFIX", "mint", "is_declaration", "kind_name", "column_name", "contract_for", "emit_contract", "add_edge_facts"]
+__all__ = ["TEMPLATE_SUFFIX", "PROFILE_PART", "mint", "mint_edge", "is_declaration", "kind_name", "column_name", "contract_for", "emit_contract", "add_edge_facts"]

@@ -86,23 +86,6 @@
     dal:partRole dal:DelPart ;
     dal:partSource <https://example.org/quoting/Quote/compiled/append-version#param-droppedMembers> .
 
-<https://example.org/quoting/Quote/compiled/append-version#edge-00> a dal:ReferenceEdge ;
-    dal:edgeInverse false ;
-    dal:edgeOwnership dal:Reference ;
-    dal:edgePredicate <https://example.org/quoting#forClient> ;
-    dal:edgeSource <https://example.org/quoting#QuoteShape> ;
-    dal:edgeTargetClass <https://example.org/quoting#Organisation> ;
-    dal:referenceMode dal:ByIdentity .
-
-<https://example.org/quoting/Quote/compiled/append-version#edge-01> a dal:ReferenceEdge ;
-    dal:edgeInverse false ;
-    dal:edgeOwnership dal:Owned ;
-    dal:edgePredicate <https://example.org/quoting#hasTerms> ;
-    dal:edgeSource <https://example.org/quoting#QuoteShape> ;
-    dal:edgeTargetClass <https://example.org/quoting#Terms> ;
-    dal:edgeTargetShape <https://example.org/quoting#TermsShape> ;
-    dal:referenceMode dal:ByIdentity .
-
 <https://example.org/quoting/Quote/compiled/append-version#param-epoch> a dal:ParameterDeclaration ;
     dal:parameterKind dal:LongKind ;
     dal:parameterName "epoch" ;
@@ -128,8 +111,8 @@
     dal:payloadEncoding dal:GroundNTriples ;
     dal:payloadParameter <https://example.org/quoting/Quote/compiled/append-version#param-payloadTriples> ;
     dal:payloadRoot <https://example.org/quoting/Quote/compiled/append-version#param-newVersion> ;
-    dal:referenceEdge <https://example.org/quoting/Quote/compiled/append-version#edge-00>,
-        <https://example.org/quoting/Quote/compiled/append-version#edge-01> .
+    dal:referenceEdge <https://example.org/quoting/Quote/compiled/profile#edge-00>,
+        <https://example.org/quoting/Quote/compiled/profile#edge-01> .
 
 <https://example.org/quoting/Quote/compiled/bootstrap-version-row#access-1> a dal:ResourceAccess ;
     dal:accessMode dal:PointRead ;
@@ -291,6 +274,23 @@
     dal:parameterName "logGraphs" ;
     dal:required true ;
     dal:sourcedFrom dal:RegistryGraph .
+
+<https://example.org/quoting/Quote/compiled/profile#edge-00> a dal:ReferenceEdge ;
+    dal:edgeInverse false ;
+    dal:edgeOwnership dal:Reference ;
+    dal:edgePredicate <https://example.org/quoting#forClient> ;
+    dal:edgeSource <https://example.org/quoting#QuoteShape> ;
+    dal:edgeTargetClass <https://example.org/quoting#Organisation> ;
+    dal:referenceMode dal:ByIdentity .
+
+<https://example.org/quoting/Quote/compiled/profile#edge-01> a dal:ReferenceEdge ;
+    dal:edgeInverse false ;
+    dal:edgeOwnership dal:Owned ;
+    dal:edgePredicate <https://example.org/quoting#hasTerms> ;
+    dal:edgeSource <https://example.org/quoting#QuoteShape> ;
+    dal:edgeTargetClass <https://example.org/quoting#Terms> ;
+    dal:edgeTargetShape <https://example.org/quoting#TermsShape> ;
+    dal:referenceMode dal:ByIdentity .
 
 <https://example.org/quoting/Quote/compiled/revision-multi-txn-audit#param-logGraphs> a dal:ParameterDeclaration ;
     dal:parameterKind dal:RegistryListKind ;
@@ -483,7 +483,7 @@
             dal:parameter <https://example.org/quoting/Quote/compiled/members#param-membershipProperty>,
                 <https://example.org/quoting/Quote/compiled/members#param-version> ;
             dal:resultColumn <https://example.org/quoting/Quote/compiled/members#result-member> ;
-            dal:templateVersion 2 ;
+            dal:templateVersion 3 ;
             dal:usesTemplate [ a dal:Template ;
                     dal:templateId "members" ] ],
         [ a dal:GeneratedOperation ;
@@ -748,21 +748,8 @@
             dal:templateVersion 1 ;
             dal:usesTemplate [ a dal:Template ;
                     dal:templateId "payload-check" ] ] ;
-    dal:referenceEdge [ a dal:ReferenceEdge ;
-            dal:edgeInverse false ;
-            dal:edgeOwnership dal:Reference ;
-            dal:edgePredicate <https://example.org/quoting#forClient> ;
-            dal:edgeSource <https://example.org/quoting#QuoteShape> ;
-            dal:edgeTargetClass <https://example.org/quoting#Organisation> ;
-            dal:referenceMode dal:ByIdentity ],
-        [ a dal:ReferenceEdge ;
-            dal:edgeInverse false ;
-            dal:edgeOwnership dal:Owned ;
-            dal:edgePredicate <https://example.org/quoting#hasTerms> ;
-            dal:edgeSource <https://example.org/quoting#QuoteShape> ;
-            dal:edgeTargetClass <https://example.org/quoting#Terms> ;
-            dal:edgeTargetShape <https://example.org/quoting#TermsShape> ;
-            dal:referenceMode dal:ByIdentity ] ;
+    dal:referenceEdge <https://example.org/quoting/Quote/compiled/profile#edge-00>,
+        <https://example.org/quoting/Quote/compiled/profile#edge-01> ;
     dal:resolvedDimension [ dal:candidateCount 1 ;
             dal:dimension "aggregateBoundary" ;
             dal:resolvedValue dal:CompositePropertyBoundary ;

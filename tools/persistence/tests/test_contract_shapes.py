@@ -161,6 +161,13 @@ def _blank_link(g: Graph) -> None:
     g.add((node, DAL.required, Literal(False)))
 
 
+def _foreign_edge(g: Graph) -> None:
+    """Point a payload contract at an edge its profile does not state, as a copy made by hand would be (H2.8c)."""
+    edge = URIRef("urn:x:copied-edge")
+    g.add((edge, RDF.type, DAL.ReferenceEdge))
+    g.add((g.value(_op(g, "cas-replace"), DAL.payloadContract), DAL.referenceEdge, edge))
+
+
 CASES = [
     # the operation
     ("kind outside the enumeration", BASELINE, _replace_with(_op_node("cas-replace"), DAL.operationKind, DAL.Bogus), ("OperationContractShape", "operationKind")),
@@ -201,6 +208,7 @@ CASES = [
     ("boundary shape a literal", BASELINE, _replace_with(_payload("cas-replace"), DAL.boundaryShape, Literal("shape")), ("PayloadContractShape", "boundaryShape")),
     ("payload parameter missing", BASELINE, _drop(_payload("cas-replace"), DAL.payloadParameter), ("PayloadContractShape", "payloadParameter")),
     ("an edge that is a blank node", COMPOSITE, _second(_payload("cas-replace"), DAL.referenceEdge, BNode()), ("PayloadContractShape", "referenceEdge")),
+    ("an edge its own profile does not state", COMPOSITE, _foreign_edge, ("PayloadContractShape", None)),
     # a digest
     ("digest algorithm other than SHA-256", BASELINE, _replace_with(_digest("cas-replace"), DAL.digestAlgorithm, Literal("MD5")), ("DigestContractShape", "digestAlgorithm")),
     ("digest with no part", BASELINE, _drop(_digest("cas-replace"), DAL.digestPart), ("DigestContractShape", "digestPart")),

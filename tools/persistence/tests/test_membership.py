@@ -382,7 +382,7 @@ def test_h2_6f_t19_a_full_membership_declaration_changes_nothing_and_an_interval
 def test_h2_6f_t20_the_members_query_is_a_read_of_the_data_graph_with_one_result_column_and_no_write():
     operation = build("members", {"dataGraph": CONTEXT["dataGraph"]})
     c = contract_of(operation)
-    assert c.kind is OperationKind.MEMBERS_READ and c.kind.value == "MembersRead" and c.version == 2
+    assert c.kind is OperationKind.MEMBERS_READ and c.kind.value == "MembersRead" and c.version == 3  # 3 since H2.8c (TD-68)
     assert {a.mode for a in c.accesses} <= {"WholeAggregateRead", "AbsenceRead", "ScanRead", "PointRead"}
     assert {a.resource for a in c.accesses} == {"Aggregate"}
     assert [(p.name, p.kind, p.required) for p in c.parameters] == [("membershipProperty", "Iri", True), ("version", "Iri", True)]
@@ -401,3 +401,35 @@ def test_h2_6f_t21_the_delta_write_has_the_kind_of_append_version_and_declares_t
     assert contract_of(build("append-version-delta-dataset-guard", CONTEXT)).digest == c.digest
     full = contract_of(build("append-version", CONTEXT))
     assert (full.digest.add, full.digest.delete) == (None, None) and {p.name for p in full.parameters}.isdisjoint({"addedMembers", "droppedMembers"})
+
+
+# ---- H2.8c: the faster form of the members read (plan 4.18 step 2, TD-68). Test IDs are H2.8c-Tn -------------------------
+
+
+def test_h2_8c_t5_the_nearest_checkpoint_is_found_in_a_sub_select_whose_not_exists_names_its_graph():
+    """The sub-select gives the one nearest checkpoint before the chain and the members are joined, which is what makes the read fast on rdflib.
+    Both `NOT EXISTS` bodies name their graph, which this form needs on rdflib (TSD-34)."""
+    from persistence.ir import GraphBlock, NotExists, SubSelect
+
+    operation = build("members", {"dataGraph": CONTEXT["dataGraph"]})
+    (block,) = operation.where.elements
+    assert isinstance(block, GraphBlock) and isinstance(block.elements[0], SubSelect)
+    sub = block.elements[0]
+    assert [v.name for v in sub.select.projection] == ["cp"]
+    inner = [e for e in sub.where.elements if isinstance(e, NotExists)] + [e for e in block.elements if isinstance(e, NotExists)]
+    assert len(inner) == 2 and all(isinstance(n.group.elements[0], GraphBlock) for n in inner)
+
+
+def test_h2_8c_t6_random_histories_read_right_at_every_version_on_sixteen_hash_seeds():
+    """24 random histories (checkpoints every 2, 3 and 4), with stray adds, against the reference model at every version, each hash seed in a child
+    process on rdflib. Which checkpoint a store meets first follows the seed (TSD-34)."""
+    import tsd34_support as support
+
+    assert support.sweep_random_histories(range(16)) == {"[]"}
+
+
+@engines.each_engine
+def test_h2_8c_t7_random_histories_read_right_on_each_engine():
+    import tsd34_support as support
+
+    assert support.random_histories_probe() == []

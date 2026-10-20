@@ -75,6 +75,9 @@ class PayloadContract:
     root: Optional[str]
     edges: tuple = ()
     shape: Optional[str] = None
+    record_classes: tuple = ()
+    """The classes the profile names as records, whose instances are evidence of what they saw (``dal:recordClass``, H2.8c). An edge by
+    identity from one to a versioned class is warned at compile, and a caller can read them here."""
 
 
 # The digest's content parts, in the fixed order of the contract: the payload of a write, or for an append the events, then for a
@@ -195,9 +198,12 @@ def _payload(g: Graph, node) -> PayloadContract:
         for e in g.objects(node, DAL.referenceEdge)
     ))
     shape = _one(g, node, DAL.boundaryShape)
+    records = tuple(sorted(
+        str(c) for op in g.subjects(DAL.payloadContract, node) for profile in g.subjects(DAL.generatedOperation, op) for c in g.objects(profile, DAL.recordClass)
+    ))
     return PayloadContract(
         _param_name(g, _one(g, node, DAL.payloadParameter)), None if root is None else _param_name(g, root), edges,
-        None if shape == DAL.NoBoundaryShape else str(shape),
+        None if shape == DAL.NoBoundaryShape else str(shape), records,
     )
 
 

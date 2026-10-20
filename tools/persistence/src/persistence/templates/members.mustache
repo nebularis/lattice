@@ -4,7 +4,8 @@
     property (a checkpoint's full list) or by pat:addsMember. It is a member of
     version unless a later version of the chain, nearer to version, drops it, so
     a member dropped and added again is listed by the later add. The nearest
-    checkpoint has no other checkpoint between it and version. A version with no
+    checkpoint has no other checkpoint between it and version, found in a
+    sub-select before the joins (H2.8c, TD-68). A version with no
     checkpoint before it has no members, so the first version of the family must
     be one. membershipProperty names the domain's membership property and is a
     request-time parameter, since a family declares none. A domain shape runs
@@ -15,13 +16,18 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 SELECT DISTINCT ?member
 WHERE {
   GRAPH {{{dataGraph}}} {
-    ?cp pat:checkpoint true .
-    $version pat:previousVersion* ?cp .
-    FILTER NOT EXISTS {
-      GRAPH {{{dataGraph}}} {
-        ?later pat:checkpoint true ; pat:previousVersion ?y .
-        ?y pat:previousVersion* ?cp .
-        $version pat:previousVersion* ?later
+    {
+      SELECT ?cp
+      WHERE {
+        ?cp pat:checkpoint true .
+        $version pat:previousVersion* ?cp .
+        FILTER NOT EXISTS {
+          GRAPH {{{dataGraph}}} {
+            ?later pat:checkpoint true ; pat:previousVersion ?y .
+            ?y pat:previousVersion* ?cp .
+            $version pat:previousVersion* ?later
+          }
+        }
       }
     }
     $version pat:previousVersion* ?w .

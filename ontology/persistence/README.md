@@ -500,7 +500,8 @@ rules, the refusals and the reasons.
 **What an edge names.** `dal:referenceMode` sits on the same property shape as `dal:ownership`, one of `dal:ByIdentity` (absent
 means this) and `dal:Pinned`. Ownership says what a write sweeps, and the reference mode says what a reference names, when its
 target has versions (§7.10): the persistent identity, or one version of it. `compile` records the mode of every edge that leads to a
-node in the compiled profile and in the contract of each operation that takes a payload, so a caller's check can read it. The mode
+node in the compiled profile, once, and the contract of each operation that takes a payload points at those edges, so a caller's check
+can read them. The mode
 changes no generated operation, since a write stores what its payload contains.
 
 ```turtle
@@ -513,7 +514,16 @@ ex:OpinionShape a sh:NodeShape ; sh:targetClass ex:Opinion ;
 |---|---|
 | `PinnedReferenceToUnversionedClass` (refusal) | an edge is `dal:Pinned` and its target class is not a subclass of `fnd:Version` (by IRI, with no import), or it has no target class, or it is a value property |
 | `ReferenceModeUnknown` (refusal) | the value is neither individual |
-| `EvidenceEdgeByIdentity` (warning) | the edge's subject class is a subclass of `fnd:Evidence` or `fnd:DerivedArtefact`, its target class is versioned, and the edge is by identity |
+| `EvidenceEdgeByIdentity` (warning) | the edge's subject class is a subclass of `fnd:Evidence` or `fnd:DerivedArtefact`, or a record class, its target class is versioned, and the edge is by identity |
+
+**Record classes.** A class whose instances are records, cited for what they said at a time, need not be modelled as `fnd:Evidence`. A
+profile names it with `dal:recordClass`, and its subclasses, as the configuration asserts them, are records too. The warning above reads
+it, and so does `NoReceiptForRecord` (§7.4). The compiled profile states the record classes the family touches, its target class and the
+subject classes of its edges, and the caller library reads them.
+
+```turtle
+ex:OpinionBoundaryProfile dal:recordClass ex:Opinion .
+```
 
 **When to pin.** Pin an edge when the node that holds it is evidence of exactly what it saw, such as an opinion, a decision, an
 assessment or a derived figure that cites the version it was computed from. A later version of the target must not change what the
@@ -714,7 +724,9 @@ guard that loses a race writes none of it. A backward as-of read over these grap
 concurrency or a stream. A version or a record takes its position and its transaction time from the receipt. A composite family may declare
 `dal:NoReceipt`, where `dal:ReceiptOnly` is refused, since it has asked for no history and not for a history it cannot audit. The audits that
 read receipts (the gap scan and the two receipt-side fork audits) are not generated for such a family. A gap scan generated for another family of the same meta graph
-would report this family's version rows as gaps, so such a family belongs in a shard of its own. Nothing checks that yet.
+would report this family's version rows as gaps, so such a family belongs in a shard of its own, and `compile` refuses it otherwise
+(`NoReceiptSharesMetaShard`). **Warned.** `NoReceiptForRecord`, for `dal:NoReceipt` on a family whose target class is versioned or a record
+class (§7.1), whose instances are cited for what they said at a time. With no receipt nothing records when a write took effect.
 
 ```mermaid
 flowchart LR
@@ -1138,6 +1150,14 @@ carries `pat:checkpoint true`, so no chain is longer than the interval. The writ
 caller already holds the sequence. The caller fills `{{{payloadTriples}}}` with the full list and the marker on a checkpoint, and `{{{addedMembers}}}`
 and `{{{droppedMembers}}}`, the triples `newVersion pat:addsMember m` and `newVersion pat:dropsMember m`, on any other version, leaving the
 slots it does not use empty (`persistence.members.is_checkpoint`). H2.8's caller check verifies the choice.
+
+**The add and del parts.** The digest of the delta write has an add part and a del part (`dal:AddPart`, `dal:DelPart`), as a write under a
+patch log does, and they hold different things. Here they hold the members the version adds and drops, as the triples of `{{{addedMembers}}}`
+and `{{{droppedMembers}}}`. For example, version 5 of a quote that drops line 3 and adds line 7 has
+`<urn:quote:1/v5> pat:addsMember <urn:quote:1/line7>` in its add part and `<urn:quote:1/v5> pat:dropsMember <urn:quote:1/line3>` in its del part.
+Under a patch log they hold the triples of the aggregate a write adds and removes (`{{{assertTriples}}}`, `{{{retractTriples}}}`). For
+example, a replace that renames a project has its new title, `<urn:project:1> <urn:ex:title> "Beta"`, in the add part and its old title in the del
+part. A checkpoint version leaves both member slots empty, and they still hash as two empty parts.
 
 The `members` operation (kind `MembersRead`) takes `$version` and `$membershipProperty`, since a family declares no membership property, and
 returns `?member`. A member is one listed at a version of the chain from `$version` back to the nearest checkpoint, by the property or by

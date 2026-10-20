@@ -92,6 +92,57 @@ def members_probe() -> list:
     return wrong
 
 
+def random_histories_probe(per_interval: int = 8) -> list:
+    """The (interval, history, version) triples at which the `members` read differs from the reference model, on the engine `engines.CURRENT` names
+    (H2.8c, TD-68). For checkpoints every 2, 3 and 4 versions, ``per_interval`` random histories of 5 to 13 versions, each adding and dropping up to
+    two members per version, with two stray adds that no later list restates. A stray add at version k is a member from k until the next checkpoint
+    after k, whether or not k is itself one. The histories are fixed by their own seeds, so only the hash seed varies between child processes."""
+    import random
+
+    from test_membership import ADDS, DATA, L, history, members_of, store, version
+    from persistence.members import is_checkpoint
+
+    wrong = []
+    for every in (2, 3, 4):
+        for h in range(per_interval):
+            rng = random.Random(1000 * every + h)
+            state = {L(i) for i in range(6)}
+            steps = [(set(state), ())]
+            for _ in range(rng.randint(4, 12)):
+                drop = set(rng.sample(sorted(state, key=str), min(len(state), rng.randint(0, 2))))
+                add = set(rng.sample(sorted({L(i) for i in range(100, 140)} - state, key=str), rng.randint(0, 2)))
+                state = (state - drop) | add
+                steps.append((add, drop))
+            ds = store()
+            model = history(ds, steps, every=every)
+            count = len(steps)
+            strays = {k: L(900 + k) for k in rng.sample(range(2, count + 1), 2)}
+            for k, m in strays.items():
+                ds.graph(DATA).add((version(k), ADDS, m))
+            checkpoints = [n for n in range(1, count + 1) if is_checkpoint(n, every)]
+            for n in range(1, count + 1):
+                want = set(model[n - 1]) | {m for k, m in strays.items() if k <= n < min([c for c in checkpoints if c > k] or [count + 1])}
+                if members_of(ds, n) != want:
+                    wrong.append((every, h, n))
+    return wrong
+
+
+def sweep_random_histories(seeds=range(16)) -> set:
+    """The lists of wrong versions over the seeds, each seed in a child process. The children run side by side, since each takes tens of seconds."""
+    here = Path(__file__).resolve()
+    children = [
+        subprocess.Popen([sys.executable, str(here), "random-histories"], env={**os.environ, "PYTHONHASHSEED": str(seed)}, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        for seed in seeds
+    ]
+    out = set()
+    for child in children:
+        stdout, stderr = child.communicate()
+        if child.returncode != 0:
+            raise subprocess.CalledProcessError(child.returncode, child.args, stdout, stderr)
+        out.add(stdout.strip())
+    return out
+
+
 def sweep(scenarios: dict, seeds=range(16)) -> dict:
     """For each stem, the set of outcomes over the seeds, each seed in a child process. `True` means the tombstoned row was written."""
     here = Path(__file__).resolve()
@@ -117,6 +168,10 @@ def sweep_members(seeds=range(16)) -> set:
 
 if __name__ == "__main__" and sys.argv[1:] == ["members"]:
     print(members_probe())
+elif __name__ == "__main__" and sys.argv[1:] == ["random-histories"]:
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        print(json.dumps(random_histories_probe()))
 elif __name__ == "__main__":
     scenarios = json.loads(sys.stdin.read())
     result = {}

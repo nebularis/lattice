@@ -639,7 +639,8 @@ def _members(b: Bindings, *, guards: bool) -> Operation:
     the domain's membership property (a checkpoint's full list) or by `pat:addsMember`. It is a member of `$version` unless a later
     version of the chain, nearer to `$version`, drops it. A member dropped and added again is listed by the later add. A version
     that adds and drops one member lists it, since the drop must be later. The nearest checkpoint is the one with no other checkpoint
-    between it and `$version`. A step and a closure, `pat:previousVersion ?y . ?y pat:previousVersion* ?w`, is written for "strictly before", since rdflib evaluates the one path `pat:previousVersion/pat:previousVersion*` about six times slower (FMH-H2-6f). A version with no checkpoint before it has no members, so the first version of a family must be one.
+    between it and `$version`, found in a sub-select so that a store finds the one checkpoint before it joins the chain and the members (H2.8c,
+    TD-68). Every `NOT EXISTS` names its graph, which the sub-select form needs on rdflib (TSD-34). A step and a closure, `pat:previousVersion ?y . ?y pat:previousVersion* ?w`, is written for "strictly before", since rdflib evaluates the one path `pat:previousVersion/pat:previousVersion*` about six times slower (FMH-H2-6f). A version with no checkpoint before it has no members, so the first version of a family must be one.
     `$membershipProperty` names the domain's membership property, for example `aeo:hasLocation`, as a parameter because a family
     declares none. A domain shape runs over these results and never over the stored delta (H2.6f-Q4)."""
     version, prop = ParamRef("version"), ParamRef("membershipProperty")
@@ -651,11 +652,13 @@ def _members(b: Bindings, *, guards: bool) -> Operation:
         "members",
         (Param("version", Kind.IRI), Param("membershipProperty", Kind.IRI)),
         Group((GraphBlock(data, (
-            Triple(cp, _pat("checkpoint"), _TRUE),
-            Triple(version, before, cp),
-            NotExists(Group((GraphBlock(data, (
-                Triple(later, _pat("checkpoint"), _TRUE), Triple(later, _pat("previousVersion"), y), Triple(y, before, cp), Triple(version, before, later),
-            )),))),
+            SubSelect(Select((cp,)), Group((
+                Triple(cp, _pat("checkpoint"), _TRUE),
+                Triple(version, before, cp),
+                NotExists(Group((GraphBlock(data, (
+                    Triple(later, _pat("checkpoint"), _TRUE), Triple(later, _pat("previousVersion"), y), Triple(y, before, cp), Triple(version, before, later),
+                )),))),
+            ))),
             Triple(version, before, w),
             Triple(w, before, cp),
             Union_((

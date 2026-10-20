@@ -4,7 +4,7 @@
 
 **Unit ID:** `formal-methods-track-h` (phase, within the `formal-methods` epic)
 **Status:** In progress. H1 (H1.1 to H1.5, with H1.4c), the aggregate-ownership slices HO0 to HO9 and H2.0 to H2.3 are merged to `main` and signed off (H1 and HO 2026-10-10, H2.0 to H2.3 2026-10-12). H2.4a and H2.4b are built and reviewed, and every decision in their Validation Packs is taken (2026-10-13), awaiting the maintainer's merge with the triple-store record. ADR-A123 is accepted with five addenda, ADR-A124 and ADR-A125 are accepted. H2.5 and H2.6 are built (2026-10-13). Every decision of H2.5 is taken, and the maintainer approved H2.6 on 2026-10-13 with three design questions open (RQ4 to RQ6), awaiting the merge. H2.6b's event half is built, approved and merged to `main` (2026-10-14), with its six regenerated expected profiles re-approved and the change to `test_ho6_t14` countersigned. Its ADR-A123 addendum is a draft. Its patch-log half is held (H-D33).
-**Last updated:** 2026-10-20
+**Last updated:** 2026-10-20 (H2.8c built)
 **Plan:** [formal-methods-track-h.md](../plans/formal-methods-track-h.md)
 **Sketches:** [formal-methods-track-h.md](../sketches/formal-methods-track-h.md) (main),
 [formal-methods-track-h-protocols.md](../sketches/formal-methods-track-h-protocols.md),
@@ -74,11 +74,14 @@ at the maintainer's request, and is committed on this branch, not pushed. Versio
 
 ### After the review
 
-Built and committed 2026-10-20: H2.6c, H2.6d, H2.6e, H2.6f, H2.6g, W-65, AIR-66, H2.7, H2.8a, H2.8b. Planned, for the next session:
+Built and committed 2026-10-20: H2.6c, H2.6d, H2.6e, H2.6f, H2.6g, W-65, AIR-66, H2.7, H2.8a, H2.8b, and H2.8c
+([FMH-H2-8c](../validation/FMH-H2-8c.md)), whose seven decisions the maintainer approved. Its four expected profiles await re-approval and its
+four changed tests countersignature. Next:
 
-1. **H2.8c** ([plan §4.18](../plans/formal-methods-track-h.md#418-h28c-the-follow-ups-of-the-h26-and-h28-reviews-planned-2026-10-20)):
-   each edge stated once, the faster `members` form adopted if it proves correct (TD-68), `dal:recordClass` (D-15, D-9), the member
-   parts documented (H2.6f (8)).
+1. **pyoxigraph 0.5.12.** `bootstrap:testing-oxigraph` now installs it (`>=0.5.11,<0.6`), and three Oxigraph tests that pass on 0.5.11 fail on it:
+   the two P1 probes of `test_store_probes.py` (it now applies a `DELETE`/`INSERT WHERE` in the specification's order) and `test_h2_5_t44` (the
+   grouping of a chain of additions). They fail on this branch before H2.8c too. Pin 0.5.11 or record the change (TSD) and update the
+   probes, the maintainer's choice (TD-73).
 2. **H2.9** ([plan §4.15](../plans/formal-methods-track-h.md#415-h29-mustache-retired-planned-2026-10-20)): Mustache retired, with D-12,
    the goldens keyed by operation, and the template id's suffix gone.
 3. **H2.11a and H2.11b** ([plan §4.19](../plans/formal-methods-track-h.md#419-h211-the-persistence-readme-as-a-literate-specification-planned-2026-10-20),
@@ -125,6 +128,7 @@ Built and committed 2026-10-20: H2.6c, H2.6d, H2.6e, H2.6f, H2.6g, W-65, AIR-66,
 | H2.6b (event slots, patch-log half held, H-D33) | **event half built 2026-10-14, approved by the maintainer and complete 2026-10-14.** Six expected profiles re-approved, `test_ho6_t14` countersigned. [Validation Pack](../validation/FMH-H2-6b.md), [plan §4.6](../plans/formal-methods-track-h.md#46-h26b-the-event-and-patch-content-slots-planned-2026-10-14). The patch-log half is held (H-D33) | the merge |
 | H2.6c (write disciplines) | **built 2026-10-20, awaiting the maintainer's review.** [Validation Pack](../validation/FMH-H2-6c.md), [plan §4.9](../plans/formal-methods-track-h.md#49-h26c-the-write-disciplines-planned-2026-10-20). `check:persistence` 2869 passed, 1 xfailed. `check:persistence-oxigraph` 225 passed | the review tranche below |
 | H2.6d (patch log for in-place families) | planned 2026-10-20, [plan §4.10](../plans/formal-methods-track-h.md#410-h26d-the-patch-log-for-in-place-families-planned-2026-10-20) | H2.6c's review |
+| H2.8c (edges once, faster `members`, record classes, member parts) | **built 2026-10-20, decisions approved.** [Validation Pack](../validation/FMH-H2-8c.md), [plan §4.18](../plans/formal-methods-track-h.md#418-h28c-the-follow-ups-of-the-h26-and-h28-reviews-planned-2026-10-20). TD-68 closed, TD-67 narrowed | re-approval of four expected profiles, countersignature of four tests |
 | H2.7 (vocabulary and emission) | **planned** 2026-10-14, [plan §4.7](../plans/formal-methods-track-h.md#47-h27-the-vocabulary-and-the-compilers-emission-planned-2026-10-14) | H2.7-Q1 to Q4, and H2.6b's merge |
 | H2.8 (typed payload, caller checks) | **planned** 2026-10-14, [plan §4.8](../plans/formal-methods-track-h.md#48-h28-the-typed-payload-and-the-caller-side-checks-planned-2026-10-14) | H2.8-Q1 to Q3, and H2.7's merge |
 | H3 (specification registry) | not started, outlined in the plan | H2 preferred first (smaller, more self-contained), not a hard blocker |
@@ -775,4 +779,14 @@ Built and committed 2026-10-20: H2.6c, H2.6d, H2.6e, H2.6f, H2.6g, W-65, AIR-66,
 - 2026-10-20: at the maintainer's request, ADR-A78, A79, A80, A114, A122, A123 and A132 are published. Working references and the
   citations of superseded or proposed decisions (A51, A71, A74, A75, A82, A84) moved into each ADR's Provenance section, and ADR-A51's
   rules are cited through the IRI and identity patterns. The wording changes beyond dropped references are for the maintainer's review.
-
+| D-35 | H2.8c | the profile's edges are minted `<target>/compiled/profile#edge-NN`, under a reserved `profile` segment. **Approved 2026-10-20** | FMH-H2-8c |
+| D-36 | H2.8c | record classes are named for the whole configuration, with asserted subclasses, as `dal:ReferenceData` is. **Approved 2026-10-20** | FMH-H2-8c |
+| D-37 | H2.8c | the library reads record classes and refuses nothing on them. **Ratified 2026-10-20**, TD-67 narrowed and not closed | FMH-H2-8c, TD-67 |
+| D-38 | H2.8c | a compiled profile states only the record classes its family touches. **Approved 2026-10-20** | FMH-H2-8c |
+| D-39 | H2.8c | `NoReceiptForRecord` is a warning and fires for a versioned target too. **Approved 2026-10-20** | FMH-H2-8c |
+| D-40 | H2.8c | the note on the add and del parts sits on `dal:AddPart` and `dal:DelPart`, not on each emitted part. **Approved 2026-10-20** | FMH-H2-8c |
+| D-41 | H2.8c | the random-history sweep runs its 16 child processes side by side (test code). **Approved 2026-10-20** | FMH-H2-8c |
+- 2026-10-20: H2.8c built autonomously ([FMH-H2-8c](../validation/FMH-H2-8c.md)). Each edge stated once by the profile, the faster `members` form
+  adopted after a 16-seed sweep and both engines agreed with the reference model (TD-68 closed, read of version 100 from 98.6 s to 1.28 s on
+  rdflib), `dal:recordClass` and `NoReceiptForRecord` (TD-67 narrowed), and the member parts documented. The maintainer approved D-35 to D-41.
+  Three Oxigraph tests fail on pyoxigraph 0.5.12, before and after H2.8c, and pass on 0.5.11.

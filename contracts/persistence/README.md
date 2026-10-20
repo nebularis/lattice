@@ -34,6 +34,10 @@ requestDigest = hex(SHA-256(enc([kind, target, expected, part1, part2, ...])))
 * Each content part is one component, and it is `enc` of the part's canonical lines. The parts are those the profile's digest contract declares,
   in its `partOrder`: the payload, or for an append the events, then the add part and the del part where the operation has them. An empty
   part is still a component, so a triple in the add part and the same triple in the del part give different digests.
+* The add and del parts mean different things for the two kinds of operation that have them. Under `dal:DeltaMembership` they hold the members a
+  new version adds and drops, as `<v> pat:addsMember <m>` and `<v> pat:dropsMember <m>` (for example `<urn:quote:1/v5> pat:addsMember
+  <urn:quote:1/line7>`). Under a patch log they hold the triples of the aggregate a write adds and removes (for example a renamed project's
+  new `<urn:project:1> <urn:ex:title> "Beta"` in the add part and its old title in the del part). The digest treats both alike.
 * The event part is the lines of each row's `rdf:type`, `pat:opSeq` (`xsd:long`) and `pat:occurredAt` triples together with the event triples,
   sorted and de-duplicated as one list. It leaves out `pat:revision`, which the store mints.
 

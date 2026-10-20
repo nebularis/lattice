@@ -164,8 +164,8 @@
     "version": 1
   },
   "members": {
-    "sha256": "a227fc7fd3632a59929ddf0d293e41afd68c99491241c21d95298d6cce97409c",
-    "version": 2
+    "sha256": "1688ecfe1d9ea3edbf274c827e0b85d38504b9829ed4cb9a04b6eec35194a307",
+    "version": 3
   },
   "payload-check": {
     "sha256": "7df0e82d40280b0e1089402e05ee84bf2f7bffbe0edddf3ea876bb4842e6abc5",

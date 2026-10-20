@@ -37,6 +37,37 @@ and `membership` (a checkpoint's full list).
 
 The values are keyed by the names of the operation's parameters and slots. A slot is a `Payload`, or `Rows` for `eventRows`.
 
+`read_contracts` follows each payload contract's `dal:referenceEdge` to the edges its profile states once, and reads the record classes the
+profile names (`dal:recordClass`) into `payload.record_classes`.
+
+### The add and del parts
+
+Two kinds of operation have an add part and a del part in their digest, and the parts hold different things.
+
+| Under | The add part | The del part |
+|---|---|---|
+| `dal:DeltaMembership` (`append-version-delta`, slots `addedMembers` and `droppedMembers`) | the members the new version adds, as `newVersion pat:addsMember m` | the members it drops, as `newVersion pat:dropsMember m` |
+| `dal:PatchLog` (the patch-log variants, slots `assertTriples` and `retractTriples`) | the triples of the aggregate the write adds | the triples it removes |
+
+For example, version 5 of a quote that drops line 3 and adds line 7 passes, under delta membership:
+
+```python
+from lattice_persistence.namespaces import PAT
+
+added = Payload.of(Triple(Iri.encode("urn:quote:1/v5"), Iri.encode(PAT + "addsMember"), Iri.encode("urn:quote:1/line7")))
+dropped = Payload.of(Triple(Iri.encode("urn:quote:1/v5"), Iri.encode(PAT + "dropsMember"), Iri.encode("urn:quote:1/line3")))
+values = {..., "addedMembers": added, "droppedMembers": dropped}
+```
+
+and a replace under a patch log that renames a project passes the new title in `assertTriples` and the old one in `retractTriples`:
+
+```python
+values = {..., "assertTriples": Payload.of(Triple(Iri.encode("urn:project:1"), Iri.encode("urn:ex:title"), Lit("Beta"))),
+               "retractTriples": Payload.of(Triple(Iri.encode("urn:project:1"), Iri.encode("urn:ex:title"), Lit("Alpha")))}
+```
+
+A version that is a checkpoint lists its members in `payloadTriples` and leaves both member slots empty, which still hash as two empty parts.
+
 ## Tests
 
 ```bash

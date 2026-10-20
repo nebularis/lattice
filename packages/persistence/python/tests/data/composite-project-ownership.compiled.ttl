@@ -97,100 +97,6 @@
     dal:partRole dal:DelPart ;
     dal:partSource <https://example.org/projects/Project/compiled/cas-replace#param-retractTriples> .
 
-<https://example.org/projects/Project/compiled/cas-replace#edge-00> a dal:ReferenceEdge ;
-    dal:edgeInverse false ;
-    dal:edgeOwnership dal:Reference ;
-    dal:edgePredicate <https://example.org/projects#onTask> ;
-    dal:edgeSource <https://example.org/projects#CommentShape> ;
-    dal:edgeTargetClass <https://example.org/projects#Task> ;
-    dal:referenceMode dal:ByIdentity .
-
-<https://example.org/projects/Project/compiled/cas-replace#edge-01> a dal:ReferenceEdge ;
-    dal:edgeInverse false ;
-    dal:edgeOwnership dal:Owned ;
-    dal:edgePredicate <https://example.org/projects#hasTask> ;
-    dal:edgeSource <https://example.org/projects#MilestoneShape> ;
-    dal:edgeTargetClass <https://example.org/projects#Task> ;
-    dal:edgeTargetShape <https://example.org/projects#TaskShape> ;
-    dal:referenceMode dal:ByIdentity .
-
-<https://example.org/projects/Project/compiled/cas-replace#edge-02> a dal:ReferenceEdge ;
-    dal:edgeInverse false ;
-    dal:edgeOwnership dal:Reference ;
-    dal:edgePredicate <https://example.org/projects#attachment> ;
-    dal:edgeSource <https://example.org/projects#PlanShape> ;
-    dal:edgeTargetClass <https://example.org/projects#Document> ;
-    dal:referenceMode dal:ByIdentity .
-
-<https://example.org/projects/Project/compiled/cas-replace#edge-03> a dal:ReferenceEdge ;
-    dal:edgeInverse false ;
-    dal:edgeOwnership dal:Reference ;
-    dal:edgePredicate <https://example.org/projects#forClient> ;
-    dal:edgeSource <https://example.org/projects#ProjectShape> ;
-    dal:edgeTargetClass <https://example.org/projects#Organisation> ;
-    dal:referenceMode dal:ByIdentity .
-
-<https://example.org/projects/Project/compiled/cas-replace#edge-04> a dal:ReferenceEdge ;
-    dal:edgeInverse false ;
-    dal:edgeOwnership dal:Owned ;
-    dal:edgePredicate <https://example.org/projects#hasMilestone> ;
-    dal:edgeSource <https://example.org/projects#ProjectShape> ;
-    dal:edgeTargetClass <https://example.org/projects#Milestone> ;
-    dal:edgeTargetShape <https://example.org/projects#MilestoneShape> ;
-    dal:referenceMode dal:ByIdentity .
-
-<https://example.org/projects/Project/compiled/cas-replace#edge-05> a dal:ReferenceEdge ;
-    dal:edgeInverse false ;
-    dal:edgeOwnership dal:Owned ;
-    dal:edgePredicate <https://example.org/projects#hasPlan> ;
-    dal:edgeSource <https://example.org/projects#ProjectShape> ;
-    dal:edgeTargetClass <https://example.org/projects#Plan> ;
-    dal:edgeTargetShape <https://example.org/projects#PlanShape> ;
-    dal:referenceMode dal:ByIdentity .
-
-<https://example.org/projects/Project/compiled/cas-replace#edge-06> a dal:ReferenceEdge ;
-    dal:edgeInverse false ;
-    dal:edgeOwnership dal:Reference ;
-    dal:edgePredicate <https://example.org/projects#assignee> ;
-    dal:edgeSource <https://example.org/projects#TaskShape> ;
-    dal:edgeTargetClass <https://example.org/projects#Person> ;
-    dal:referenceMode dal:ByIdentity .
-
-<https://example.org/projects/Project/compiled/cas-replace#edge-07> a dal:ReferenceEdge ;
-    dal:edgeInverse false ;
-    dal:edgeOwnership dal:Owned ;
-    dal:edgePredicate <https://example.org/projects#attachment> ;
-    dal:edgeSource <https://example.org/projects#TaskShape> ;
-    dal:edgeTargetClass <https://example.org/projects#Document> ;
-    dal:edgeTargetShape <https://example.org/projects#DocumentShape> ;
-    dal:referenceMode dal:ByIdentity .
-
-<https://example.org/projects/Project/compiled/cas-replace#edge-08> a dal:ReferenceEdge ;
-    dal:edgeInverse false ;
-    dal:edgeOwnership dal:Owned ;
-    dal:edgePredicate <https://example.org/projects#hasSubtask> ;
-    dal:edgeSource <https://example.org/projects#TaskShape> ;
-    dal:edgeTargetClass <https://example.org/projects#Task> ;
-    dal:edgeTargetShape <https://example.org/projects#TaskShape> ;
-    dal:referenceMode dal:ByIdentity .
-
-<https://example.org/projects/Project/compiled/cas-replace#edge-09> a dal:ReferenceEdge ;
-    dal:edgeInverse true ;
-    dal:edgeOwnership dal:Owned ;
-    dal:edgePredicate <https://example.org/projects#onTask> ;
-    dal:edgeSource <https://example.org/projects#TaskShape> ;
-    dal:edgeTargetClass <https://example.org/projects#Comment> ;
-    dal:edgeTargetShape <https://example.org/projects#CommentShape> ;
-    dal:referenceMode dal:ByIdentity .
-
-<https://example.org/projects/Project/compiled/cas-replace#edge-10> a dal:ReferenceEdge ;
-    dal:edgeInverse false ;
-    dal:edgeOwnership dal:Vocabulary ;
-    dal:edgePredicate <https://example.org/projects#status> ;
-    dal:edgeSource <https://example.org/projects#TaskShape> ;
-    dal:edgeTargetClass skos:Concept ;
-    dal:referenceMode dal:ByIdentity .
-
 <https://example.org/projects/Project/compiled/cas-replace#param-epoch> a dal:ParameterDeclaration ;
     dal:parameterKind dal:LongKind ;
     dal:parameterName "epoch" ;
@@ -216,17 +122,17 @@
     dal:payloadEncoding dal:GroundNTriples ;
     dal:payloadParameter <https://example.org/projects/Project/compiled/cas-replace#param-payloadTriples> ;
     dal:payloadRoot <https://example.org/projects/Project/compiled/cas-replace#param-root> ;
-    dal:referenceEdge <https://example.org/projects/Project/compiled/cas-replace#edge-00>,
-        <https://example.org/projects/Project/compiled/cas-replace#edge-01>,
-        <https://example.org/projects/Project/compiled/cas-replace#edge-02>,
-        <https://example.org/projects/Project/compiled/cas-replace#edge-03>,
-        <https://example.org/projects/Project/compiled/cas-replace#edge-04>,
-        <https://example.org/projects/Project/compiled/cas-replace#edge-05>,
-        <https://example.org/projects/Project/compiled/cas-replace#edge-06>,
-        <https://example.org/projects/Project/compiled/cas-replace#edge-07>,
-        <https://example.org/projects/Project/compiled/cas-replace#edge-08>,
-        <https://example.org/projects/Project/compiled/cas-replace#edge-09>,
-        <https://example.org/projects/Project/compiled/cas-replace#edge-10> .
+    dal:referenceEdge <https://example.org/projects/Project/compiled/profile#edge-00>,
+        <https://example.org/projects/Project/compiled/profile#edge-01>,
+        <https://example.org/projects/Project/compiled/profile#edge-02>,
+        <https://example.org/projects/Project/compiled/profile#edge-03>,
+        <https://example.org/projects/Project/compiled/profile#edge-04>,
+        <https://example.org/projects/Project/compiled/profile#edge-05>,
+        <https://example.org/projects/Project/compiled/profile#edge-06>,
+        <https://example.org/projects/Project/compiled/profile#edge-07>,
+        <https://example.org/projects/Project/compiled/profile#edge-08>,
+        <https://example.org/projects/Project/compiled/profile#edge-09>,
+        <https://example.org/projects/Project/compiled/profile#edge-10> .
 
 <https://example.org/projects/Project/compiled/create-if-absent#access-1> a dal:ResourceAccess ;
     dal:accessMode dal:AbsenceRead ;
@@ -293,100 +199,6 @@
     dal:partRole dal:PayloadPart ;
     dal:partSource <https://example.org/projects/Project/compiled/create-if-absent#param-payloadTriples> .
 
-<https://example.org/projects/Project/compiled/create-if-absent#edge-00> a dal:ReferenceEdge ;
-    dal:edgeInverse false ;
-    dal:edgeOwnership dal:Reference ;
-    dal:edgePredicate <https://example.org/projects#onTask> ;
-    dal:edgeSource <https://example.org/projects#CommentShape> ;
-    dal:edgeTargetClass <https://example.org/projects#Task> ;
-    dal:referenceMode dal:ByIdentity .
-
-<https://example.org/projects/Project/compiled/create-if-absent#edge-01> a dal:ReferenceEdge ;
-    dal:edgeInverse false ;
-    dal:edgeOwnership dal:Owned ;
-    dal:edgePredicate <https://example.org/projects#hasTask> ;
-    dal:edgeSource <https://example.org/projects#MilestoneShape> ;
-    dal:edgeTargetClass <https://example.org/projects#Task> ;
-    dal:edgeTargetShape <https://example.org/projects#TaskShape> ;
-    dal:referenceMode dal:ByIdentity .
-
-<https://example.org/projects/Project/compiled/create-if-absent#edge-02> a dal:ReferenceEdge ;
-    dal:edgeInverse false ;
-    dal:edgeOwnership dal:Reference ;
-    dal:edgePredicate <https://example.org/projects#attachment> ;
-    dal:edgeSource <https://example.org/projects#PlanShape> ;
-    dal:edgeTargetClass <https://example.org/projects#Document> ;
-    dal:referenceMode dal:ByIdentity .
-
-<https://example.org/projects/Project/compiled/create-if-absent#edge-03> a dal:ReferenceEdge ;
-    dal:edgeInverse false ;
-    dal:edgeOwnership dal:Reference ;
-    dal:edgePredicate <https://example.org/projects#forClient> ;
-    dal:edgeSource <https://example.org/projects#ProjectShape> ;
-    dal:edgeTargetClass <https://example.org/projects#Organisation> ;
-    dal:referenceMode dal:ByIdentity .
-
-<https://example.org/projects/Project/compiled/create-if-absent#edge-04> a dal:ReferenceEdge ;
-    dal:edgeInverse false ;
-    dal:edgeOwnership dal:Owned ;
-    dal:edgePredicate <https://example.org/projects#hasMilestone> ;
-    dal:edgeSource <https://example.org/projects#ProjectShape> ;
-    dal:edgeTargetClass <https://example.org/projects#Milestone> ;
-    dal:edgeTargetShape <https://example.org/projects#MilestoneShape> ;
-    dal:referenceMode dal:ByIdentity .
-
-<https://example.org/projects/Project/compiled/create-if-absent#edge-05> a dal:ReferenceEdge ;
-    dal:edgeInverse false ;
-    dal:edgeOwnership dal:Owned ;
-    dal:edgePredicate <https://example.org/projects#hasPlan> ;
-    dal:edgeSource <https://example.org/projects#ProjectShape> ;
-    dal:edgeTargetClass <https://example.org/projects#Plan> ;
-    dal:edgeTargetShape <https://example.org/projects#PlanShape> ;
-    dal:referenceMode dal:ByIdentity .
-
-<https://example.org/projects/Project/compiled/create-if-absent#edge-06> a dal:ReferenceEdge ;
-    dal:edgeInverse false ;
-    dal:edgeOwnership dal:Reference ;
-    dal:edgePredicate <https://example.org/projects#assignee> ;
-    dal:edgeSource <https://example.org/projects#TaskShape> ;
-    dal:edgeTargetClass <https://example.org/projects#Person> ;
-    dal:referenceMode dal:ByIdentity .
-
-<https://example.org/projects/Project/compiled/create-if-absent#edge-07> a dal:ReferenceEdge ;
-    dal:edgeInverse false ;
-    dal:edgeOwnership dal:Owned ;
-    dal:edgePredicate <https://example.org/projects#attachment> ;
-    dal:edgeSource <https://example.org/projects#TaskShape> ;
-    dal:edgeTargetClass <https://example.org/projects#Document> ;
-    dal:edgeTargetShape <https://example.org/projects#DocumentShape> ;
-    dal:referenceMode dal:ByIdentity .
-
-<https://example.org/projects/Project/compiled/create-if-absent#edge-08> a dal:ReferenceEdge ;
-    dal:edgeInverse false ;
-    dal:edgeOwnership dal:Owned ;
-    dal:edgePredicate <https://example.org/projects#hasSubtask> ;
-    dal:edgeSource <https://example.org/projects#TaskShape> ;
-    dal:edgeTargetClass <https://example.org/projects#Task> ;
-    dal:edgeTargetShape <https://example.org/projects#TaskShape> ;
-    dal:referenceMode dal:ByIdentity .
-
-<https://example.org/projects/Project/compiled/create-if-absent#edge-09> a dal:ReferenceEdge ;
-    dal:edgeInverse true ;
-    dal:edgeOwnership dal:Owned ;
-    dal:edgePredicate <https://example.org/projects#onTask> ;
-    dal:edgeSource <https://example.org/projects#TaskShape> ;
-    dal:edgeTargetClass <https://example.org/projects#Comment> ;
-    dal:edgeTargetShape <https://example.org/projects#CommentShape> ;
-    dal:referenceMode dal:ByIdentity .
-
-<https://example.org/projects/Project/compiled/create-if-absent#edge-10> a dal:ReferenceEdge ;
-    dal:edgeInverse false ;
-    dal:edgeOwnership dal:Vocabulary ;
-    dal:edgePredicate <https://example.org/projects#status> ;
-    dal:edgeSource <https://example.org/projects#TaskShape> ;
-    dal:edgeTargetClass skos:Concept ;
-    dal:referenceMode dal:ByIdentity .
-
 <https://example.org/projects/Project/compiled/create-if-absent#param-epoch> a dal:ParameterDeclaration ;
     dal:parameterKind dal:LongKind ;
     dal:parameterName "epoch" ;
@@ -407,17 +219,17 @@
     dal:payloadEncoding dal:GroundNTriples ;
     dal:payloadParameter <https://example.org/projects/Project/compiled/create-if-absent#param-payloadTriples> ;
     dal:payloadRoot <https://example.org/projects/Project/compiled/create-if-absent#param-root> ;
-    dal:referenceEdge <https://example.org/projects/Project/compiled/create-if-absent#edge-00>,
-        <https://example.org/projects/Project/compiled/create-if-absent#edge-01>,
-        <https://example.org/projects/Project/compiled/create-if-absent#edge-02>,
-        <https://example.org/projects/Project/compiled/create-if-absent#edge-03>,
-        <https://example.org/projects/Project/compiled/create-if-absent#edge-04>,
-        <https://example.org/projects/Project/compiled/create-if-absent#edge-05>,
-        <https://example.org/projects/Project/compiled/create-if-absent#edge-06>,
-        <https://example.org/projects/Project/compiled/create-if-absent#edge-07>,
-        <https://example.org/projects/Project/compiled/create-if-absent#edge-08>,
-        <https://example.org/projects/Project/compiled/create-if-absent#edge-09>,
-        <https://example.org/projects/Project/compiled/create-if-absent#edge-10> .
+    dal:referenceEdge <https://example.org/projects/Project/compiled/profile#edge-00>,
+        <https://example.org/projects/Project/compiled/profile#edge-01>,
+        <https://example.org/projects/Project/compiled/profile#edge-02>,
+        <https://example.org/projects/Project/compiled/profile#edge-03>,
+        <https://example.org/projects/Project/compiled/profile#edge-04>,
+        <https://example.org/projects/Project/compiled/profile#edge-05>,
+        <https://example.org/projects/Project/compiled/profile#edge-06>,
+        <https://example.org/projects/Project/compiled/profile#edge-07>,
+        <https://example.org/projects/Project/compiled/profile#edge-08>,
+        <https://example.org/projects/Project/compiled/profile#edge-09>,
+        <https://example.org/projects/Project/compiled/profile#edge-10> .
 
 <https://example.org/projects/Project/compiled/fork-detection-audit#access-1> a dal:ResourceAccess ;
     dal:accessMode dal:ScanRead ;
@@ -675,6 +487,100 @@
     dal:parameterKind dal:IriKind ;
     dal:parameterName "root" ;
     dal:required true .
+
+<https://example.org/projects/Project/compiled/profile#edge-00> a dal:ReferenceEdge ;
+    dal:edgeInverse false ;
+    dal:edgeOwnership dal:Reference ;
+    dal:edgePredicate <https://example.org/projects#onTask> ;
+    dal:edgeSource <https://example.org/projects#CommentShape> ;
+    dal:edgeTargetClass <https://example.org/projects#Task> ;
+    dal:referenceMode dal:ByIdentity .
+
+<https://example.org/projects/Project/compiled/profile#edge-01> a dal:ReferenceEdge ;
+    dal:edgeInverse false ;
+    dal:edgeOwnership dal:Owned ;
+    dal:edgePredicate <https://example.org/projects#hasTask> ;
+    dal:edgeSource <https://example.org/projects#MilestoneShape> ;
+    dal:edgeTargetClass <https://example.org/projects#Task> ;
+    dal:edgeTargetShape <https://example.org/projects#TaskShape> ;
+    dal:referenceMode dal:ByIdentity .
+
+<https://example.org/projects/Project/compiled/profile#edge-02> a dal:ReferenceEdge ;
+    dal:edgeInverse false ;
+    dal:edgeOwnership dal:Reference ;
+    dal:edgePredicate <https://example.org/projects#attachment> ;
+    dal:edgeSource <https://example.org/projects#PlanShape> ;
+    dal:edgeTargetClass <https://example.org/projects#Document> ;
+    dal:referenceMode dal:ByIdentity .
+
+<https://example.org/projects/Project/compiled/profile#edge-03> a dal:ReferenceEdge ;
+    dal:edgeInverse false ;
+    dal:edgeOwnership dal:Reference ;
+    dal:edgePredicate <https://example.org/projects#forClient> ;
+    dal:edgeSource <https://example.org/projects#ProjectShape> ;
+    dal:edgeTargetClass <https://example.org/projects#Organisation> ;
+    dal:referenceMode dal:ByIdentity .
+
+<https://example.org/projects/Project/compiled/profile#edge-04> a dal:ReferenceEdge ;
+    dal:edgeInverse false ;
+    dal:edgeOwnership dal:Owned ;
+    dal:edgePredicate <https://example.org/projects#hasMilestone> ;
+    dal:edgeSource <https://example.org/projects#ProjectShape> ;
+    dal:edgeTargetClass <https://example.org/projects#Milestone> ;
+    dal:edgeTargetShape <https://example.org/projects#MilestoneShape> ;
+    dal:referenceMode dal:ByIdentity .
+
+<https://example.org/projects/Project/compiled/profile#edge-05> a dal:ReferenceEdge ;
+    dal:edgeInverse false ;
+    dal:edgeOwnership dal:Owned ;
+    dal:edgePredicate <https://example.org/projects#hasPlan> ;
+    dal:edgeSource <https://example.org/projects#ProjectShape> ;
+    dal:edgeTargetClass <https://example.org/projects#Plan> ;
+    dal:edgeTargetShape <https://example.org/projects#PlanShape> ;
+    dal:referenceMode dal:ByIdentity .
+
+<https://example.org/projects/Project/compiled/profile#edge-06> a dal:ReferenceEdge ;
+    dal:edgeInverse false ;
+    dal:edgeOwnership dal:Reference ;
+    dal:edgePredicate <https://example.org/projects#assignee> ;
+    dal:edgeSource <https://example.org/projects#TaskShape> ;
+    dal:edgeTargetClass <https://example.org/projects#Person> ;
+    dal:referenceMode dal:ByIdentity .
+
+<https://example.org/projects/Project/compiled/profile#edge-07> a dal:ReferenceEdge ;
+    dal:edgeInverse false ;
+    dal:edgeOwnership dal:Owned ;
+    dal:edgePredicate <https://example.org/projects#attachment> ;
+    dal:edgeSource <https://example.org/projects#TaskShape> ;
+    dal:edgeTargetClass <https://example.org/projects#Document> ;
+    dal:edgeTargetShape <https://example.org/projects#DocumentShape> ;
+    dal:referenceMode dal:ByIdentity .
+
+<https://example.org/projects/Project/compiled/profile#edge-08> a dal:ReferenceEdge ;
+    dal:edgeInverse false ;
+    dal:edgeOwnership dal:Owned ;
+    dal:edgePredicate <https://example.org/projects#hasSubtask> ;
+    dal:edgeSource <https://example.org/projects#TaskShape> ;
+    dal:edgeTargetClass <https://example.org/projects#Task> ;
+    dal:edgeTargetShape <https://example.org/projects#TaskShape> ;
+    dal:referenceMode dal:ByIdentity .
+
+<https://example.org/projects/Project/compiled/profile#edge-09> a dal:ReferenceEdge ;
+    dal:edgeInverse true ;
+    dal:edgeOwnership dal:Owned ;
+    dal:edgePredicate <https://example.org/projects#onTask> ;
+    dal:edgeSource <https://example.org/projects#TaskShape> ;
+    dal:edgeTargetClass <https://example.org/projects#Comment> ;
+    dal:edgeTargetShape <https://example.org/projects#CommentShape> ;
+    dal:referenceMode dal:ByIdentity .
+
+<https://example.org/projects/Project/compiled/profile#edge-10> a dal:ReferenceEdge ;
+    dal:edgeInverse false ;
+    dal:edgeOwnership dal:Vocabulary ;
+    dal:edgePredicate <https://example.org/projects#status> ;
+    dal:edgeSource <https://example.org/projects#TaskShape> ;
+    dal:edgeTargetClass skos:Concept ;
+    dal:referenceMode dal:ByIdentity .
 
 <https://example.org/projects/Project/compiled/tombstone-delete#param-txnId> a dal:ParameterDeclaration ;
     dal:parameterKind dal:IriKind ;
@@ -1201,89 +1107,17 @@
             dal:templateVersion 1 ;
             dal:usesTemplate [ a dal:Template ;
                     dal:templateId "payload-check" ] ] ;
-    dal:referenceEdge [ a dal:ReferenceEdge ;
-            dal:edgeInverse false ;
-            dal:edgeOwnership dal:Reference ;
-            dal:edgePredicate <https://example.org/projects#onTask> ;
-            dal:edgeSource <https://example.org/projects#CommentShape> ;
-            dal:edgeTargetClass <https://example.org/projects#Task> ;
-            dal:referenceMode dal:ByIdentity ],
-        [ a dal:ReferenceEdge ;
-            dal:edgeInverse false ;
-            dal:edgeOwnership dal:Owned ;
-            dal:edgePredicate <https://example.org/projects#hasTask> ;
-            dal:edgeSource <https://example.org/projects#MilestoneShape> ;
-            dal:edgeTargetClass <https://example.org/projects#Task> ;
-            dal:edgeTargetShape <https://example.org/projects#TaskShape> ;
-            dal:referenceMode dal:ByIdentity ],
-        [ a dal:ReferenceEdge ;
-            dal:edgeInverse false ;
-            dal:edgeOwnership dal:Reference ;
-            dal:edgePredicate <https://example.org/projects#attachment> ;
-            dal:edgeSource <https://example.org/projects#PlanShape> ;
-            dal:edgeTargetClass <https://example.org/projects#Document> ;
-            dal:referenceMode dal:ByIdentity ],
-        [ a dal:ReferenceEdge ;
-            dal:edgeInverse false ;
-            dal:edgeOwnership dal:Reference ;
-            dal:edgePredicate <https://example.org/projects#forClient> ;
-            dal:edgeSource <https://example.org/projects#ProjectShape> ;
-            dal:edgeTargetClass <https://example.org/projects#Organisation> ;
-            dal:referenceMode dal:ByIdentity ],
-        [ a dal:ReferenceEdge ;
-            dal:edgeInverse false ;
-            dal:edgeOwnership dal:Owned ;
-            dal:edgePredicate <https://example.org/projects#hasMilestone> ;
-            dal:edgeSource <https://example.org/projects#ProjectShape> ;
-            dal:edgeTargetClass <https://example.org/projects#Milestone> ;
-            dal:edgeTargetShape <https://example.org/projects#MilestoneShape> ;
-            dal:referenceMode dal:ByIdentity ],
-        [ a dal:ReferenceEdge ;
-            dal:edgeInverse false ;
-            dal:edgeOwnership dal:Owned ;
-            dal:edgePredicate <https://example.org/projects#hasPlan> ;
-            dal:edgeSource <https://example.org/projects#ProjectShape> ;
-            dal:edgeTargetClass <https://example.org/projects#Plan> ;
-            dal:edgeTargetShape <https://example.org/projects#PlanShape> ;
-            dal:referenceMode dal:ByIdentity ],
-        [ a dal:ReferenceEdge ;
-            dal:edgeInverse false ;
-            dal:edgeOwnership dal:Reference ;
-            dal:edgePredicate <https://example.org/projects#assignee> ;
-            dal:edgeSource <https://example.org/projects#TaskShape> ;
-            dal:edgeTargetClass <https://example.org/projects#Person> ;
-            dal:referenceMode dal:ByIdentity ],
-        [ a dal:ReferenceEdge ;
-            dal:edgeInverse false ;
-            dal:edgeOwnership dal:Owned ;
-            dal:edgePredicate <https://example.org/projects#attachment> ;
-            dal:edgeSource <https://example.org/projects#TaskShape> ;
-            dal:edgeTargetClass <https://example.org/projects#Document> ;
-            dal:edgeTargetShape <https://example.org/projects#DocumentShape> ;
-            dal:referenceMode dal:ByIdentity ],
-        [ a dal:ReferenceEdge ;
-            dal:edgeInverse false ;
-            dal:edgeOwnership dal:Owned ;
-            dal:edgePredicate <https://example.org/projects#hasSubtask> ;
-            dal:edgeSource <https://example.org/projects#TaskShape> ;
-            dal:edgeTargetClass <https://example.org/projects#Task> ;
-            dal:edgeTargetShape <https://example.org/projects#TaskShape> ;
-            dal:referenceMode dal:ByIdentity ],
-        [ a dal:ReferenceEdge ;
-            dal:edgeInverse true ;
-            dal:edgeOwnership dal:Owned ;
-            dal:edgePredicate <https://example.org/projects#onTask> ;
-            dal:edgeSource <https://example.org/projects#TaskShape> ;
-            dal:edgeTargetClass <https://example.org/projects#Comment> ;
-            dal:edgeTargetShape <https://example.org/projects#CommentShape> ;
-            dal:referenceMode dal:ByIdentity ],
-        [ a dal:ReferenceEdge ;
-            dal:edgeInverse false ;
-            dal:edgeOwnership dal:Vocabulary ;
-            dal:edgePredicate <https://example.org/projects#status> ;
-            dal:edgeSource <https://example.org/projects#TaskShape> ;
-            dal:edgeTargetClass skos:Concept ;
-            dal:referenceMode dal:ByIdentity ] ;
+    dal:referenceEdge <https://example.org/projects/Project/compiled/profile#edge-00>,
+        <https://example.org/projects/Project/compiled/profile#edge-01>,
+        <https://example.org/projects/Project/compiled/profile#edge-02>,
+        <https://example.org/projects/Project/compiled/profile#edge-03>,
+        <https://example.org/projects/Project/compiled/profile#edge-04>,
+        <https://example.org/projects/Project/compiled/profile#edge-05>,
+        <https://example.org/projects/Project/compiled/profile#edge-06>,
+        <https://example.org/projects/Project/compiled/profile#edge-07>,
+        <https://example.org/projects/Project/compiled/profile#edge-08>,
+        <https://example.org/projects/Project/compiled/profile#edge-09>,
+        <https://example.org/projects/Project/compiled/profile#edge-10> ;
     dal:resolvedDimension [ dal:candidateCount 1 ;
             dal:dimension "aggregateBoundary" ;
             dal:resolvedValue dal:CompositePropertyBoundary ;
