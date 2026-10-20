@@ -748,3 +748,6 @@ For acceptance: ADR-A132, the persistence caller library (Proposed), and ADR-A12
 | D-27 | H2.8a | the digest hashes each content part as one component, `enc([kind, target, expected, enc(part 1), enc(part 2), ...])`, where guide §15.2 has one flat list, which cannot tell the parts apart. The guide's text is TD-69 | FMH-H2-8a, TD-69 |
 | D-28 | H2.8a | canonical N-Triples: lines sorted by UTF-8 bytes, duplicates dropped, four characters escaped, `xsd:string` plain, language tags lower-cased. The kind is `dal:operationKind`, the target hashed without angle brackets | FMH-H2-8a |
 | D-29 | H2.8a | a payload has two texts, canonical N-Triples for the digest and SPARQL-encoded for the slot. `bootstrap:persistence` installs the library, which is on no index | FMH-H2-8a |
+- 2026-10-20: the maintainer approved W-65's decisions (D-4 to D-6), and decided D-10 (add a warning), D-11 (a compile-time check)
+  and D-24 (a test, with persistence's catalogue reach widened, coverage before narrow scope). All three are added to H2.8b. D-9, D-12
+  and D-15 asked back. AIR-66 handed over into the AIR Phase 4 plan.
