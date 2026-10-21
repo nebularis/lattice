@@ -239,6 +239,22 @@ def _term(graph: Graph, text: str):
     return URIRef(graph.namespace_manager.expand_curie(text))
 
 
+@lru_cache(maxsize=None)
+def _parsed(text: str) -> Graph:
+    """One Turtle document parsed once per process. Never mutate the result, copy it (``Graph() + g`` keeps the blank-node labels)."""
+    graph = Graph()
+    graph.parse(data=text, format="turtle")
+    return graph
+
+
+def _add_parsed(graph: Graph, path: Path) -> None:
+    """What ``graph.parse(path)`` leaves in ``graph``, its triples and its prefix bindings, from the cached parse."""
+    parsed = _parsed(path.read_text(encoding="utf-8"))
+    for prefix, namespace in parsed.namespaces():
+        graph.bind(prefix, namespace)
+    graph += parsed
+
+
 def _load_fixture(path: Path) -> Graph:
     """The spec plus one fixture.
 
@@ -262,13 +278,12 @@ def _load_fixture(path: Path) -> Graph:
     directives = [m.groups() for line in text.splitlines() if (m := _DIRECTIVE.match(line))]
     bases = [value for kind, value in directives if kind == "base"]
     graph = Graph()
-    graph.parse(SPEC_TTL, format="turtle")
+    _add_parsed(graph, SPEC_TTL)
     if path.name == "capability-spec-example.ttl":
         bases = ["baseline-single-class.ttl"]
     for base in bases:
-        graph.parse(next(d / base for d in (EXAMPLES_DIR, WITNESS_DIR) if (d / base).is_file()), format="turtle")
-    body = Graph()
-    body.parse(data=text, format="turtle")
+        _add_parsed(graph, next(d / base for d in (EXAMPLES_DIR, WITNESS_DIR) if (d / base).is_file()))
+    body = _parsed(text)
     for kind, value in directives:
         if kind != "remove":
             continue

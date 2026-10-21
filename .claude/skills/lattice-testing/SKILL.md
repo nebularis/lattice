@@ -57,6 +57,17 @@ contention, not slow tests. `PYTEST_XDIST_AUTO_NUM_WORKERS` sets what `auto` mea
 and `mise run dev:time-ontology-tests -- --workers N --dist MODE` compares settings and reports
 when each worker finished and the peak memory.
 
+## Lessons from the persistence suite (FMH-TS-1)
+
+`check:persistence` went from 4m12s serial to about 1m35s on a loaded machine. What paid, in order: `-n auto --dist loadgroup`, a
+session-wide `_sparql_translated_once` (H1) for a suite that calls `pyshacl.validate` directly in many places, running the children of
+a hash-seed sweep side by side (a thread pool over `subprocess.run`), memoising a pure function that parses SPARQL
+(`templatecheck.analyse`), and parsing a fixture once per process (`witness._load_fixture`). A module whose tests share one slow
+per-process computation goes in one `xdist_group` (`--dist loadgroup`), or every worker repeats it. Count parses before caching them:
+a profile showed 5901 SPARQL parses of 1675 distinct texts, and the update texts of a sweep are distinct per history, so only reads gain.
+The summed CPU time rises with the worker count on 4 performance plus 4 efficiency cores, so keep `auto`. Not tried successfully: sharing
+rdflib's update parse tree between sweep children by pickle (`ParseResults` did not round-trip).
+
 ## Speed: the record to read first
 
 [docs/architecture/efficient-queries-and-shapes.md](../../../docs/architecture/efficient-queries-and-shapes.md) records why the ontology

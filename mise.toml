@@ -218,8 +218,8 @@ run = "python packages/minting/tools/generate_ucd_tables.py --check"
 
 [tasks."check:persistence"]
 depends = ["check:persistence-expected-profiles"]
-description = "Run the persistence profile compiler test suite (resolver, validator, capability, injection corpus, determinism)"
-run = "python -m pytest tools/persistence/tests -q"
+description = "Run the persistence profile compiler test suite (resolver, validator, capability, injection corpus, determinism). Parallelised by test with -n auto --dist loadgroup (FMH-TS-1): the witness-coverage module is one group, since its tests share one slow corpus run. PYTEST_XDIST_AUTO_NUM_WORKERS sets what auto means, e.g. on a machine whose efficiency cores add nothing"
+run = "python -m pytest tools/persistence/tests -q -n auto --dist loadgroup"
 
 [tasks."check:persistence-expected-profiles"]
 description = "Check that the expected compiled profiles under ontology/persistence/test/expected-profiles are what the builders and compile give now (formal-methods H2.6). Fails with the names of the stale files. Part of check:persistence"

@@ -130,29 +130,32 @@ def random_histories_probe(per_interval: int = 8) -> list:
 def sweep_random_histories(seeds=range(16)) -> set:
     """The lists of wrong versions over the seeds, each seed in a child process. The children run side by side, since each takes tens of seconds."""
     here = Path(__file__).resolve()
-    children = [
-        subprocess.Popen([sys.executable, str(here), "random-histories"], env={**os.environ, "PYTHONHASHSEED": str(seed)}, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        for seed in seeds
-    ]
-    out = set()
-    for child in children:
-        stdout, stderr = child.communicate()
-        if child.returncode != 0:
-            raise subprocess.CalledProcessError(child.returncode, child.args, stdout, stderr)
-        out.add(stdout.strip())
-    return out
+    return {out.strip() for out in _children([([sys.executable, str(here), "random-histories"], {**os.environ, "PYTHONHASHSEED": str(seed)}, None) for seed in seeds])}
+
+
+def _children(runs: list[tuple[list[str], dict, str | None]]) -> list[str]:
+    """Each run is (argv, environment, standard input). The children run side by side, since each is CPU-bound and none depends on another.
+    Returns their standard outputs in order."""
+    from concurrent.futures import ThreadPoolExecutor
+
+    def run(item):
+        argv, env, stdin = item
+        return subprocess.run(argv, input=stdin, env=env, capture_output=True, text=True, check=True).stdout
+
+    if not runs:
+        return []
+    with ThreadPoolExecutor(max_workers=len(runs)) as pool:
+        return list(pool.map(run, runs))
 
 
 def sweep(scenarios: dict, seeds=range(16)) -> dict:
     """For each stem, the set of outcomes over the seeds, each seed in a child process. `True` means the tombstoned row was written."""
     here = Path(__file__).resolve()
+    stdin = json.dumps(scenarios)
+    outputs = _children([([sys.executable, str(here)], {**os.environ, "PYTHONHASHSEED": str(seed)}, stdin) for seed in seeds])
     out = {stem: set() for stem in scenarios}
-    for seed in seeds:
-        proc = subprocess.run(
-            [sys.executable, str(here)], input=json.dumps(scenarios), env={**os.environ, "PYTHONHASHSEED": str(seed)},
-            capture_output=True, text=True, check=True,
-        )
-        for stem, changed in json.loads(proc.stdout).items():
+    for stdout in outputs:
+        for stem, changed in json.loads(stdout).items():
             out[stem].add(changed)
     return out
 
@@ -160,15 +163,34 @@ def sweep(scenarios: dict, seeds=range(16)) -> dict:
 def sweep_members(seeds=range(16)) -> set:
     """The sets of wrong versions over the seeds, each in a child process."""
     here = Path(__file__).resolve()
-    return {
-        subprocess.run([sys.executable, str(here), "members"], env={**os.environ, "PYTHONHASHSEED": str(seed)}, capture_output=True, text=True, check=True).stdout.strip()
-        for seed in seeds
-    }
+    return {out.strip() for out in _children([([sys.executable, str(here), "members"], {**os.environ, "PYTHONHASHSEED": str(seed)}, None) for seed in seeds])}
+
+
+def _translate_each_read_once() -> None:
+    """In a child process, parse and translate each distinct read once, as `_sparql_translated_once` in tools/conftest.py does for pySHACL. The
+    probes below run one `members` text hundreds of times. Evaluation, which is what the hash seed changes, is rdflib's own."""
+    from rdflib.plugins.sparql.algebra import translateQuery
+    from rdflib.plugins.sparql.parser import parseQuery
+    from rdflib.plugins.sparql.processor import SPARQLProcessor
+
+    original, translated = SPARQLProcessor.query, {}
+
+    def query(self, strOrQuery, initBindings=None, initNs=None, base=None, DEBUG=False):
+        if isinstance(strOrQuery, str):
+            key = (strOrQuery, base, tuple(sorted((k, str(v)) for k, v in dict(initNs or {}).items())))
+            if key not in translated:
+                translated[key] = translateQuery(parseQuery(strOrQuery), base, initNs)
+            strOrQuery = translated[key]
+        return original(self, strOrQuery, initBindings, initNs, base, DEBUG)
+
+    SPARQLProcessor.query = query
 
 
 if __name__ == "__main__" and sys.argv[1:] == ["members"]:
+    _translate_each_read_once()
     print(members_probe())
 elif __name__ == "__main__" and sys.argv[1:] == ["random-histories"]:
+    _translate_each_read_once()
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", DeprecationWarning)
         print(json.dumps(random_histories_probe()))

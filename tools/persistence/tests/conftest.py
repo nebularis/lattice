@@ -29,6 +29,12 @@ def load_example(name: str) -> Graph:
     return g
 
 
+@pytest.fixture(scope="session", autouse=True)
+def _sparql_translated_once(sparql_translated_once) -> None:
+    """pySHACL parses and translates a constraint query for every focus node, and the tests run one generated read many times. Do both
+    once per text (efficient-queries-and-shapes H1). Evaluation is unchanged, so a test of rdflib's behaviour still sees it."""
+
+
 @pytest.fixture
 def example():
     return load_example

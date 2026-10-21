@@ -31,6 +31,7 @@ that, and the required-parameter guard of the builders (TD-34) is what stops a m
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import Mapping
 
 from rdflib import RDF, BNode, Graph, Variable
@@ -231,6 +232,17 @@ class Issue:
 
 
 def analyse(text: str, parameters: frozenset | set | tuple = ()) -> list[Issue]:
+    """The issues of ``_analyse``. The corpus is analysed by many tests and the parse is most of the cost, so each (text, parameters) is analysed once
+    per process. Issue is frozen and a new list is returned."""
+    return list(_analysed(text, frozenset(parameters)))
+
+
+@lru_cache(maxsize=None)
+def _analysed(text: str, parameters: frozenset) -> tuple[Issue, ...]:
+    return tuple(_analyse(text, parameters))
+
+
+def _analyse(text: str, parameters: frozenset | set | tuple = ()) -> list[Issue]:
     """S-3 and S-4 (and a parse check) over one generated update, with no allowances. ``parameters`` are the names the operation declares
     as request-time parameters, which the caller binds (H-D11)."""
     issues: list[Issue] = []
