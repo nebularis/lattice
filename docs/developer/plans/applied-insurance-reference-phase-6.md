@@ -37,6 +37,12 @@ Milestone M6 closes in AIR-6.1 and the claims plan's AIR-6.5.
 
 ## AIR-6.1 in detail
 
+**Added 2026-10-21, from phase 7's P7-Q2.** A request records the structure the broker asks for, as
+requested layers: each an attachment, a limit and a basis on the loss axis, with the scope it is
+asked for. A requested layer is a fact of what was asked, never the reference against which anything
+is computed as missing. Placed layers are phase 7's (AIR-7.1). If AIR-6.1 is built on its trip
+before this note reaches that branch, the requested layer is added by AIR-7.0's examples instead.
+
 **Machine:** S (Copilot Business). **Branch:** `air/applied-reference`, commits `[AIR-6.1] …`, the
 last being `[AIR-6.1] Handoff`. **Validation Pack:**
 [applied-insurance-reference-6.1](../validation/applied-insurance-reference-6.1.md). **Decisions:**

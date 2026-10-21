@@ -220,6 +220,11 @@ flowchart TB
   instruments is derived from a Ledger balance record. An account shared by several instruments is
   owned by their ensemble, and the K6 relation is derived from the terms that draw on it. How their
   draws are ordered is the Ledger plan's question LG-Q3, settled before the K6 slice is briefed.
+- **Comparison between instruments.** Where one instrument replaces or completes another, for
+  example a facility agreement completing its commitment letter, or an issued policy replacing
+  interim cover, a judgement compares them term by term: each term conforms, differs, is omitted or
+  is added. Neither instrument restates the other's meaning: both bind shared forms, and bound
+  meaning shared by content address is one node (the Ensemble plan's ES-9).
 - **Market forms.** The applied insurance modules model the MRC (Open Market) form of the London
   Market Group's implementation guide v3.0 (2023) as an ensemble of one instrument per written line,
   sharing the MRC's wording, with its signing provisions (decision 10) and its placement,
@@ -242,9 +247,10 @@ flowchart TB
   from Ensemble. Phase 7's programme module makes a programme an ensemble, records
   contract-to-layer bindings as K4 relations and relations between layers as K2, K3 and K6
   relations. A risk-capital vehicle is an ensemble too.
-- **Open questions carried from the sketch:** IR-Q3 (K1 stays in
-  Instrument, as decision 7 assumes), IR-Q4 (both forms of the hook, as decision 6 assumes), IR-Q5
-  (the first slices' scope, as decision 8 assumes). Each is confirmed or revised before the first slice, ES-0, is briefed.
+- **Questions carried from the sketch:** IR-Q3 (K1 stays in Instrument, decision 7), IR-Q4 (both
+  forms of the hook, decision 6) and IR-Q5 (the first slices' scope, decision 8), each confirmed on
+  2026-10-21. The Ensemble plan's ES-Q1 and ES-Q4 to ES-Q9 were answered the same day. Acceptance
+  follows the C4 design model.
 - **Publication.** Ensemble's README follows ADR-A126's layout, so it cites only published decisions
   (ADR-A127). This ADR is published with slice 1, citing accepted decisions it builds on by their
   GitHub links.

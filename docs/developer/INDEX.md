@@ -558,7 +558,7 @@ non-blocking track.
 |-------|-------|
 | **Status** | 📝 Proposed. D2 and D3 answered 2026-09-30, D7 answered 2026-10-10. N4 and N5 moved to the computable contract substrate unit (N5 as HQ-6, 2026-10-10). Remaining scope open (NQ-1 to NQ-4) |
 | **Unit ID** | `normative-rule-substrate` |
-| **Sketches** | [legalruleml-mapping.md](sketches/legalruleml-mapping.md), [rule-layers.md](sketches/rule-layers.md), [rule-layers-cross-check.md](sketches/rule-layers-cross-check.md) |
+| **Sketches** | [legalruleml-mapping.md](sketches/legalruleml-mapping.md), [rule-layers.md](sketches/rule-layers.md), [rule-layers-cross-check.md](sketches/rule-layers-cross-check.md), [normative-rules-ensembles-and-ledgers.md](sketches/normative-rules-ensembles-and-ledgers.md) (2026-10-21, NE-Q1 to NE-Q8: outside rules, precedence, one stratification graph) |
 | **Plan** | [normative-rule-substrate.md](plans/normative-rule-substrate.md) |
 | **Status Record** | [normative-rule-substrate.md](status/normative-rule-substrate.md) |
 | **ADRs** | A-104 and A-106 accepted in CCS. A-105 moved to CCS HQ-6a. A-107 to A-111 to be drafted |
@@ -736,13 +736,13 @@ LG-2, and ES-4 on LG-Q3. AIR-7.4 is LG-4, and AIR-7.5 waits on it.
 |-------|-------|
 | **Status** | 📝 Plan proposed 2026-10-20, no slice briefed. ADR-A130, amended 2026-10-20 and 2026-10-21, and ADR-A01's 2026-10-18 addendum Proposed |
 | **Unit ID** | `ensemble` |
-| **Sketch** | [instrument-relations.md](sketches/instrument-relations.md) |
+| **Sketches** | [instrument-relations.md](sketches/instrument-relations.md), [normative-rules-ensembles-and-ledgers.md](sketches/normative-rules-ensembles-and-ledgers.md) (how outside rules, precedence and closures meet composition) |
 | **Plan** | [ensemble.md](plans/ensemble.md) |
 | **ADRs** | [A-130](../architecture/decisions/ADR-A130-ensemble-layer.md), Proposed |
 
 A substrate layer above Instrument and Behaviour for sets of instruments forming one operation:
 ensembles, reified relations K1 to K8, and evaluation by composition. Takes over CCS HQ-2's second
-case, HQ-7 and HQ-12. Slices ES-0 to ES-8, questions ES-Q1 to ES-Q9. Formal methods C4, B4b and E4b.
+case, HQ-7 and HQ-12. Slices ES-0 to ES-9, questions ES-Q1 to ES-Q9 (answered 2026-10-21). Formal methods C4, B4b and E4b.
 C12's composition step and AIR-6.8 follow ES-3, AIR-6.8's contribution follows ES-8, and phase 7's
 programme, vehicle and MRC modules follow ES-4 to ES-7.
 

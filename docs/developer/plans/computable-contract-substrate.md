@@ -4318,7 +4318,7 @@ existing ontology checks and touches no AIR file.
 | [phase-3-plan](phase-3-plan.md) (platform operation plane) | the behaviour engine loads Behaviour configuration and writes runtime records, occasions and evidence (C10, C11, C12) |
 | Open CBAA plan and integration spec | migration of §7 |
 | [insurml-alignment](insurml-alignment.md) (proposed epic, 2026-10-05) | C7c's brief takes InsurML's scope-based resolution of defined terms as input (bridge sketch §11). C9 is the gate for the epic's Wording changes, and receives endorsements lifted from InsurML as amendments. C12, C13 and C13a evaluate and verify placed contracts. The LMA WIM profile of §7 is built with InsurML in view, in the epic's Phase 1 (IMA-D2) |
-| [ensemble](ensemble.md) (ADR-A130, Proposed) | takes over HQ-2's second case, HQ-7 and HQ-12. C12 gains the composition step after ES-3 |
+| [ensemble](ensemble.md) (ADR-A130, Proposed) | takes over HQ-2's second case, HQ-7 and HQ-12. C12 gains the composition step after ES-3. ES-9's comparison between instruments needs C16b's content addresses |
 | [ledger](ledger.md) (ADR-A131, Proposed) | C12 runs draws and credits as postings, after LG-3, which migrates Behaviour's allowances |
 | [evaluation-context](../sketches/evaluation-context.md) (sketch, 2026-10-02) | the ledger, combinators and environments that runtime passes run in. The ledger is now a layer of its own, [ADR-A131](../../architecture/decisions/ADR-A131-ledger-layer.md) (Proposed), with its own [plan](ledger.md), and C12 waits on its slice LG-3. Comes back in at C7b (the target of `ins:computedBy`), C8a (bases), C12 (a pass as a run of the context, the sequential environment) and C13 (a Datalog form beside the SPARQL reference), and at AIR Phase 5. Its §13 |
 

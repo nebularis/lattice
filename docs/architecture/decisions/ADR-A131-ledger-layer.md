@@ -77,13 +77,22 @@ and an ontology that extends the ledger would have to extend Behaviour with it.
    - **Credits.** A credit is the inverse of a draw along the same path, and never raises a balance
      above its stated amount unless a term says so.
    - **Cycles.** A cycle in the tree is refused by a shape.
-   - **Keyed accounts and other value spaces.** Some amounts apply per key, for example seats per
-     site, a sublimit per borrower in a facility with several borrowers, or an aggregate per location.
-     Some draws arrive in another value space than the account's, for example a currency. How each is
-     stated is the Ledger plan's LG-Q7 and LG-Q8, settled before LG-1.
+   - **Keyed accounts.** Some amounts apply per key, for example seats per site, a sublimit per
+     borrower in a facility with several borrowers, or an aggregate per location. The definition
+     states a key dimension, a concept scheme or a value space, and one account per key value is
+     derived on the first draw that names it. A parent above the keyed accounts is an ordinary parent
+     edge (LG-Q7).
+   - **Other value spaces.** A draw in another value space than the account's, for example a currency,
+     is converted on its posting, by the method the terms state, or where they are silent by an
+     outside rule, or else it is Undetermined. The posting records the amount drawn, the converted
+     amount and the conversion's context (LG-Q8).
+   - **Purposes.** A draw may name a purpose. An account outside the draw's path that counts that
+     purpose is debited by the same draw, which still succeeds or fails whole, so a limit that sits
+     under two parents keeps the tree (LG-Q2).
 4. **Postings are records, and a balance is derived.** A posting is a `fnd:DerivedArtefact` (ADR-A92).
    - **What it names.** It names its account, the account's owner, its position, its amount and
-     direction, and its read set in `prov:wasDerivedFrom`.
+     direction, and its read set in `prov:wasDerivedFrom`. The amount is a decimal literal in the
+     account's unit of account, never a quantity node of its own, so a balance read joins nothing.
    - **Ancestors.** A draw writes one posting, and ancestor balances follow by a closure over the
      finite tree.
    - **Balance records.** A balance record is a derived artefact keyed by account, owner and position.
@@ -174,11 +183,18 @@ flowchart TB
   allowance terms. About 30 files use them today, most of them the insure-o example's cases. The
   substrate moves with the release, and the applied modules and examples pin the new release
   (ADR-A129 decision 4).
-- **Cost.** A draw on a path of depth *d* writes one posting of about 7 triples. A materialised
-  balance record per affected account adds about 6 triples each, so a pass that draws once on a
-  three-level path writes about 25 triples. A balance read without materialised records sums the
-  postings on the account and its descendants up to a position. That is linear in the postings, and
-  a per-pass materialisation bounds it.
+- **Cost.** A draw on a path of depth *d* writes one posting of about 8 triples. A materialised
+  balance record per affected account, holding both the remaining balance and the availability,
+  adds about 8 triples each, so a pass that draws once on a three-level path writes about 32 triples
+  in one batch. A balance read is one lookup on a materialised record. Without one it sums the
+  postings on the account and its descendants up to a position, which is linear in the postings.
+- **Realisations.** This model is the published, conceptual one. A deployment that needs speed may
+  realise it in a compiled form, for example the account tree as arrays indexed by account, with
+  paths precomputed, balances as integers in minor units, and postings appended to a log written
+  once per pass. Such a realisation is a derived engine: it adds no semantics (decision 8), is
+  populated from the configuration by a projection, and is held to the model by a stated agreement
+  law, that folding its postings gives the model's balance records. The Ledger plan's performance
+  section sets out the costs.
 - **The evaluator** (CCS C12) runs draws and credits as postings. Draws by several evaluations on
   one account at one position follow decision 6's two phases, so they may run in parallel. Any other
   composition of effects in one pass is fixed by the evaluation context's model (decision 9).
@@ -202,4 +218,7 @@ Designed in outline in the [evaluation-context sketch](../../developer/sketches/
 phases at one position and exactness (decision 6), closed semantics for extensions (decision 8) and
 environments fixed by the model (decision 9), after a review against the evaluator's implementation
 options. At design closure the same day we added the stated edge for "in addition to", the unit of
-account, and keyed accounts and other value spaces as questions LG-Q7 and LG-Q8 (decision 3).
+account, and keyed accounts and other value spaces as questions LG-Q7 and LG-Q8 (decision 3). The
+maintainer answered LG-Q1 to LG-Q8 the same day, as the plan leaned, and asked that every choice be
+checked for its cost at runtime. Decision 3 then states keyed accounts, conversion and purposes, and
+decision 4 carries a posting's amount as a literal in the unit of account.
