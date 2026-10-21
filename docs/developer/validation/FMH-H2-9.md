@@ -54,7 +54,7 @@ Numbered on from D-41 of the status record, which was the last (checked).
 | D-48 | The injection corpus counts operations, where it asserted `True` after a parse, and a literal corpus is added for the literal bindings | a corpus that cannot fail is not a gate | ratify |
 | D-49 | The library gets its own corpus (`test_slot_injection.py`), which reads the values back from a store | the library does not import the compiler, so its slot filling cannot be reached from the compiler's tests | ratify |
 
-## Changed tests (for countersignature)
+## Changed tests (countersigned by the maintainer 2026-10-21)
 
 No test was skipped or weakened. The assertions that changed are those whose subject was a template.
 
@@ -78,7 +78,7 @@ No test was skipped or weakened. The assertions that changed are those whose sub
 | `test_terms` | the template corpus is replaced by the builder corpus (below), and the encoder tests no longer render through Mustache | H2.9-Q3 |
 | `test_compiler_integration`, `test_membership`, `test_patch_log`, `test_slice_2_extensions`, `test_write_disciplines`, `test_reference_modes`, `test_contract_emission`, `test_expected_profiles` | the expected template ids lose `.mustache` | `template_id` has no suffix |
 
-## Removed tests (for countersignature)
+## Removed tests (countersigned by the maintainer 2026-10-21)
 
 Their subject, the templates, the renderer or the harness, no longer exists. Counts are cases before the slice.
 

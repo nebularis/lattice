@@ -25,7 +25,7 @@ Status: authored, all runs below were made on a machine shared with other agents
 | Fixture documents parsed once per process, copied with their prefix bindings | `persistence/witness.py` |
 | Witness module is one xdist group | `test_witness_coverage.py` |
 
-No test was edited in its assertions. Tests whose helpers changed, for countersignature: `test_membership` t6, `test_tsd_34_builders` t2 and t4, `test_store_probes` (P1 and the TSD-34 probe), and all of `test_witness_coverage.py` (module mark only). Passed count is 4346 against 4258 because another agent added tests meanwhile, no parametrisation was merged or split.
+No test was edited in its assertions. Tests whose helpers changed, countersigned by the maintainer 2026-10-21: `test_membership` t6, `test_tsd_34_builders` t2 and t4, `test_store_probes` (P1 and the TSD-34 probe), and all of `test_witness_coverage.py` (module mark only). Passed count is 4346 against 4258 because another agent added tests meanwhile, no parametrisation was merged or split.
 
 ## Measured (wall, `-n N --dist loadgroup`, same loaded machine)
 

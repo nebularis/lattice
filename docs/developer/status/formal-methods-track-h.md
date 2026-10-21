@@ -83,8 +83,8 @@ Done 2026-10-21:
 
 Left for the maintainer:
 
-1. **Countersignature** of the changed and removed tests listed in each Validation Pack not yet countersigned (FMH-H2-9, FMH-TS-1, and
-   `test_c8b_09`, which now asserts that 0.18.0 was the first release instead of reading the current number).
+1. **Countersignature** of `test_c8b_09`, which now asserts that 0.18.0 was the first release instead of reading the current number.
+   FMH-H2-9 and FMH-TS-1 were countersigned on 2026-10-21.
 2. **The merge**, once the conformance run below is accepted. `mise run check:persistence-conformance` passed on the merge candidate on
    2026-10-21 (4353 passed, 1 xfailed), and `mise run check:full-sweep` passed every check.
 3. **After the merge**, then the release tags it prints, `ontologies-v0.19.0` and the applied tags among them.
@@ -885,4 +885,5 @@ Left for the maintainer:
 - 2026-10-21: the maintainer confirmed ADR-A129 as recorded: the substrate and standalone modules take one release tag,
   `ontologies-vX.Y.Z`, and the applied modules keep their own versions and tags under ADR-A86. The maintainer creates the tags
   `mise run build:ontology-releases` lists once the branch is merged into `main`.
+- 2026-10-21: the maintainer countersigned the changed and removed tests of FMH-H2-9 and FMH-TS-1.
 
