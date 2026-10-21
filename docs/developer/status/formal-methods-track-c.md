@@ -6,7 +6,8 @@
 **Status:** C1 and C2 done, 2026-10-06. `ADR-A116` (Vocabulary scheme composition) drafted
 2026-10-07, Proposed, citing this track's checked evidence. C2.1 (well-formedness facts, a
 re-run) done 2026-10-08, after an implementation-level review; C2.2 and C2.3 queued, not started
-**Last updated:** 2026-10-08
+**Last updated:** 2026-10-22. C4 (a design model of ADR-A130, Ensemble) briefed 2026-10-22, with its
+[Validation Pack](../validation/formal-methods-c4.md). ADR-A130's acceptance waits on it
 **Plan:** [formal-methods-track-c.md](../plans/formal-methods-track-c.md)
 **Sketch:** [formal-methods-track-c.md](../sketches/formal-methods-track-c.md)
 **Epic status:** [formal-methods.md](formal-methods.md)
