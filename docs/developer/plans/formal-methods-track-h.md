@@ -1618,6 +1618,9 @@ Split into two slices (RL-Q1 (a)), so the migration check judges one and a revie
 
 Probe: change one restriction row in the migrated README, and the migration check fails naming the triple. `FMH-H2-11a`. About 400k tokens.
 
+**Built 2026-10-21** ([FMH-H2-11a](../validation/FMH-H2-11a.md)), awaiting review. TD-01 is closed. The probe changed a domain, since the
+spec has no restriction row, and the migration check failed naming the triple.
+
 #### H2.11b: the narrative, the pictures, the gotchas
 
 1. **The running case (RL-Q2 (a))** through Detailed Design, in the sketch's eight steps: declare, compile, generate, write, race and

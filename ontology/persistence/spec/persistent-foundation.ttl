@@ -1,24 +1,26 @@
 # SPDX-License-Identifier: MPL-2.0
 
-# persistent-foundation: Foundation's keys (ADR-A114), enforced by Persistence.
-# Optional. The dal: configuration ontology (persistence.ttl) imports no layer.
-# This document imports Foundation, for adopters who write keyed data through
-# Persistence. Its shapes are in ../shapes/persistent-foundation.ttl, and the
-# Persistence README §14 explains both.
-
-@prefix dal:  <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
-@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
-@prefix owl:  <http://www.w3.org/2002/07/owl#> .
-@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-<https://www.nebularis.org/neuro-semantic/lattice/persistent-foundation>
-    a owl:Ontology ;
+<https://www.nebularis.org/neuro-semantic/lattice/persistent-foundation> a owl:Ontology ;
     owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/persistent-foundation/0.18.0> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.18.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/persistence/0.18.0> .
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.18.0>, <https://www.nebularis.org/neuro-semantic/lattice/persistence/0.18.0> ;
+    dct:description """A relational database gives an application a unique key, a row that two writers collide on and a count of the rows an update touched. An RDF store gives none of them, so an adopter that writes changing data to one needs machinery of its own. Which machinery depends on the adopter's domain, workload and store, so LATTICE does not decide it. Persistence is the vocabulary an adopter uses to record, per class and per deployment, which options they chose for aggregate boundaries, concurrency, ordering, history, uniqueness, identity minting, epochs and erasure. The compiler in tools/persistence turns that record into generated, portable SPARQL and identity minting recipes.
+
+Persistence targets classes, graphs and shapes by IRI reference only. It is optional, and an adopter's domain ontology never needs to know that it exists. The configuration vocabulary imports nothing, and only the optional persistent-foundation document imports a layer.""" ;
+    dct:creator <https://github.com/hyperthunk> .
 
 dal:PersistenceKeyed a owl:Class ;
-    rdfs:subClassOf fnd:NaturallyKeyed ;
     rdfs:comment "A naturally keyed thing whose natural keys Persistence keeps unique when they are written." ;
-    fnd:utility "Subject: a class whose members carry natural keys and are written through Persistence. Adds no key axiom, so no reasoner merges two members sharing a key. Give the class a dal:UniquenessConstraint on fnd:naturalKey: the guarded key-claim write then refuses a second owner, and dal:onViolation picks the reconciler for duplicates written around it (reject, quarantine, or a reviewable dal:mergeRelation, never owl:sameAs). Never combine with fnd:MergedOnNaturalKey." .
+    fnd:utility "Subject: a class whose members carry natural keys and are written through Persistence. Adds no key axiom, so no reasoner merges two members sharing a key. Give the class a dal:UniquenessConstraint on fnd:naturalKey: the guarded key-claim write then refuses a second owner, and dal:onViolation picks the reconciler for duplicates written around it (reject, quarantine, or a reviewable dal:mergeRelation, never owl:sameAs). Never combine with fnd:MergedOnNaturalKey." ;
+    rdfs:subClassOf fnd:NaturallyKeyed .
+
+dct:creator a owl:AnnotationProperty .
+
+dct:description a owl:AnnotationProperty .

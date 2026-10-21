@@ -4,7 +4,8 @@
 
 **Status:** Accepted with [ADR-A126](decisions/ADR-A126-literate-specification-layout-and-grammar.md),
 2026-10-17. The extractor implements them, and [Eligibility](../../ontology/eligibility/README.md) is the first
-module migrated to them. Until a module's README is migrated, the current conventions at the end of this document
+module migrated to them. [Persistence](../../ontology/persistence/README.md) is migrated too, and shows two spec documents
+generated from one README and a module whose shapes are all written by hand. Until a module's README is migrated, the current conventions at the end of this document
 apply to it.
 
 A LATTICE module's `README.md` is its specification. The normative sections are read by

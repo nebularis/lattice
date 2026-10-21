@@ -2,7 +2,8 @@
 
 # Persistence Ontology — the Data Access Layer (`dal:`)
 
-Literate specification and guide for the persistence profile substrate.
+Literate specification and guide for the persistence profile substrate, in the layout of
+[ADR-A126](../../docs/architecture/decisions/ADR-A126-literate-specification-layout-and-grammar.md).
 
 This README is meant to be read on its own. It explains why storing changing data safely in an RDF
 store needs machinery that a relational database gives for free, what that machinery is, which
@@ -13,40 +14,64 @@ turn them into SPARQL. The full reasoning lives in two architecture guides, the
 (*the identity guide*). This document summarises what an adopter needs from them, so that a design
 built on Persistence can be understood without reading either first.
 
-**Contents**
-
-1. [Purpose and scope](#1-purpose-and-scope)
-2. [Why persistence in RDF is hard](#2-why-persistence-in-rdf-is-hard)
-3. [The infrastructure the patterns add](#3-the-infrastructure-the-patterns-add)
-4. [One write, end to end](#4-one-write-end-to-end)
-5. [The configuration model](#5-the-configuration-model)
-6. [Scopes, targets and resolution](#6-scopes-targets-and-resolution)
-7. [The dimensions, one by one](#7-the-dimensions-one-by-one)
-8. [Capability self-checks](#8-capability-self-checks)
-9. [What the compiler produces](#9-what-the-compiler-produces)
-10. [Choosing a profile](#10-choosing-a-profile)
-11. [Worked examples](#11-worked-examples)
-12. [Validation](#12-validation)
-13. [Repository layout](#13-repository-layout)
-14. [Keys: `persistent-foundation`](#14-keys-persistent-foundation)
-15. [Cross references](#15-cross-references)
-
 ---
 
-## 1. Purpose and scope
+## 1. Purpose and Scope
 
-LATTICE ships ontologies, libraries and control-plane infrastructure the way a framework does, not
-the way a single application does. An adopter builds their own applied ontology on the substrate
-layers, and then has to decide how its data is stored: whether a population of individuals forms
-aggregates that change together, how concurrent writers are kept from overwriting each other, what
-order changes are recorded in, how much history is kept, how keys are kept unique, how identifiers
-are minted, and how personal data is erased.
+A relational database gives an application a unique key, a row that two writers collide on and a count of the rows an update touched. An RDF store gives none of them, so an adopter that writes changing data to one needs machinery of its own. Which machinery depends on the adopter's domain, workload and store, so LATTICE does not decide it. Persistence is the vocabulary an adopter uses to record, per class and per deployment, which options they chose for aggregate boundaries, concurrency, ordering, history, uniqueness, identity minting, epochs and erasure. The compiler in `tools/persistence` turns that record into generated, portable SPARQL and identity minting recipes.
 
-Those decisions depend on the adopter's domain, workload and store, so LATTICE does not make them.
-The guides document **what the options are and what each one costs**. This ontology is **how one
-adopter records which options they chose**, per class and per deployment, and the
-[`tools/persistence`](../../tools/persistence/README.md) compiler turns that record into generated,
-portable SPARQL and identity minting recipes.
+Persistence targets classes, graphs and shapes by IRI reference only. It is optional, and an adopter's domain ontology never needs to know that it exists. The configuration vocabulary imports nothing, and only the optional `persistent-foundation` document imports a layer.
+
+## 2. Namespace and Prefixes
+
+| Document | Ontology IRI | Version IRI | Imports |
+|---|---|---|---|
+| `spec/persistence.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/persistence> | <https://www.nebularis.org/neuro-semantic/lattice/persistence/0.18.0> | none |
+| `spec/persistent-foundation.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/persistent-foundation> | <https://www.nebularis.org/neuro-semantic/lattice/persistent-foundation/0.18.0> | <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.18.0>, <https://www.nebularis.org/neuro-semantic/lattice/persistence/0.18.0> |
+
+| Prefix | Namespace |
+|---|---|
+| `dal:` | <https://www.nebularis.org/neuro-semantic/lattice/persistence#> |
+| `fnd:` | <https://www.nebularis.org/neuro-semantic/lattice/foundation#> |
+
+| Identifier | Role | Display name |
+|---|---|---|
+| <https://github.com/hyperthunk> | creator | T. R. Watson |
+
+## 3. Extraction Contract
+
+- Sections 1, 2 and 6 generate `spec/persistence.ttl`. Persistence has no vocabulary document, so section 6's
+  individuals tables sit in a region that sends them to the spec document.
+- `spec/persistent-foundation.ttl` has its own row in section 2's header table. It imports Foundation and
+  `spec/persistence.ttl`, and the two spec documents share one version. The terms of section 6 that belong to it sit in
+  `output-file` regions ([literate specifications](../../docs/architecture/literate-specifications.md)).
+- The two hidden blocks of section 7 generate `shapes/constraints.ttl` and `shapes/persistent-foundation.ttl`, each
+  naming its file. Section 6 states no OWL restriction, so no `shapes/structural.ttl` is generated.
+- Extraction rewrites the class diagram (section 4) and the Axiom Index (6.7), which are never edited by hand.
+- `turtle` blocks outside section 6 are illustrative only.
+
+```bash
+mise exec -- python tools/literate_extract.py ontology/persistence/README.md --layer persistence --root . --check
+```
+
+The module's entry in the [repository catalogue](../../repository-catalogue.md)
+([ADR-A121](../../docs/architecture/decisions/ADR-A121-repository-catalogue.md)) follows.
+
+```toml repository-catalogue
+[module]
+kind = "standalone"
+roles = ["docs", "examples", "shapes", "spec", "test"]
+
+[module.extract]
+spec = ["spec/persistence.ttl", "spec/persistent-foundation.ttl"]
+shapes = ["shapes/constraints.ttl", "shapes/persistent-foundation.ttl"]
+```
+
+## 4. Overview
+
+The guides document **what the options are and what each one costs**. This ontology is **how one adopter records which
+options they chose**, per class and per deployment, and the [`tools/persistence`](../../tools/persistence/README.md)
+compiler turns that record into generated, portable SPARQL and identity minting recipes.
 
 ```mermaid
 flowchart LR
@@ -83,14 +108,14 @@ of them imports it. It has no place in the layer order of
 [ontology-architecture.md](../../docs/architecture/ontology-architecture.md#the-lattice-layers):
 it sits beside Surface and MORK as a cross-cutting substrate. An adopter's domain ontology never needs
 to know that Persistence exists, and a configuration can be added, changed or removed without touching
-it (ADR-A78). The one exception is optional: `persistent-foundation` (§14) imports Foundation, so that
+it (ADR-A78). The one exception is optional: `persistent-foundation` (§5.11) imports Foundation, so that
 Persistence can enforce Foundation's natural keys, and the `dal:` ontology itself imports nothing.
 
 **Persistence is optional.** An adopter may use LATTICE's ontologies without this vocabulary, the
 compiler, or any runtime component. Everything here is for adopters who write changing data to an RDF
 store and want the guarantees described below.
 
-### Namespace
+### 4.1 Namespace
 
 ```turtle
 @prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
@@ -100,9 +125,320 @@ The directory is named `persistence` because the compiler, and any future housek
 component (ADR-A80), belong to that subsystem. The ontology inside it is named for what it is: a
 **Data Access Layer** configuration vocabulary, hence `dal:`.
 
----
+### 4.2 The class diagram
 
-## 2. Why persistence in RDF is hard
+The diagram is generated from section 6 and drawn collapsed, since it shows every class.
+
+<details>
+<summary>The class diagram, generated from section 6</summary>
+
+<!-- start: {"generated": "class-diagram"} -->
+
+```mermaid
+classDiagram
+    class AccessMode
+    class AggregateBoundaryProfile {
+        dataGraph
+        graphIriTemplate (xsd:string)
+        ownsReferenceData (xsd:boolean)
+    }
+    class AggregateBoundaryStrategy
+    class AuditOutcome
+    class BoundaryShapeAbsence
+    class CapabilityCheck {
+        verdict (xsd:string)
+    }
+    class CapabilityRequirement {
+        requiresCas (xsd:string)
+        requiresReasoningFor
+        requiresUniquenessLevel
+    }
+    class CapabilitySpec {
+        appliesToTarget
+        providesCas (xsd:string)
+        providesCommitValidation (xsd:string)
+        providesReasoning (xsd:boolean)
+        providesSingleWriter (xsd:boolean)
+        providesStatementLevelConflictDetection (xsd:boolean)
+    }
+    class ClaimScheme {
+        claimIriTemplate (xsd:string)
+        claimKeyId (xsd:string)
+        schemeVersion (xsd:string)
+    }
+    class Class
+    class ClassScope {
+        includeSubclasses (xsd:boolean)
+        targetClass
+    }
+    class ColumnKind
+    class CompiledProfile {
+        forDeployment
+        forTarget
+    }
+    class ConcurrencyProfile {
+        minConcurrencyLevel
+        valueGuardProperty
+    }
+    class ConcurrencyStrategy
+    class ContiguityCheckMode
+    class DataAccessProfile
+    class DatasetTierModel
+    class DeadlockPolicy
+    class DeclarationSource
+    class Diagnostic {
+        diagnosticKind (xsd:string)
+        diagnosticMessage (xsd:string)
+        diagnosticSeverity (xsd:string)
+    }
+    class DigestContract {
+        digestAlgorithm (xsd:string)
+    }
+    class DigestPart {
+        partOrder (xsd:integer)
+        partSource
+    }
+    class DigestPartRole
+    class DigestScheme {
+        digestEncoding (xsd:string)
+        digestFunction (xsd:string)
+        digestWidthBits (xsd:integer)
+        verifyFullDigestOnWrite (xsd:boolean)
+    }
+    class EpochAuthority
+    class EpochGuardScope
+    class EpochProfile {
+        epochCoordinatorBinding (xsd:string)
+        erasureRegisterBinding (xsd:string)
+        erasureReplayOnRestore (xsd:boolean)
+    }
+    class EquivalentClassScope {
+        equivalentTo
+    }
+    class ErasurePrecedence
+    class ErasureStrategy
+    class EtagForm
+    class EtagRepresentation
+    class EventIdentityStrategy
+    class FirstWriteMode
+    class GeneratedOperation {
+        forOperation (xsd:string)
+        templateVersion (xsd:integer)
+    }
+    class GlobalReadStrategy
+    class GraphNaming
+    class GraphPatternScope {
+        graphPrefix (xsd:string)
+    }
+    class GuardStatus
+    class IdentityProfile {
+        acceptedIriPattern (xsd:string)
+        callerSuppliedPattern (xsd:string)
+        canonicalizationWorkBudget (xsd:integer)
+        epochWidth (xsd:integer)
+        mintedIriTemplate (xsd:string)
+        namingAuthority (xsd:string)
+        sequenceWidth (xsd:integer)
+        tuplePrefix
+        uniquenessWitnessRequired (xsd:boolean)
+    }
+    class IdentityStrategy
+    class MembershipEncoding
+    class MetaTopology
+    class MetaTopologyProfile {
+        epochBumpAcknowledged (xsd:boolean)
+        keyShards (xsd:long)
+        logShards (xsd:long)
+        metaShards (xsd:long)
+        priorMetaShards (xsd:long)
+        registryGraph (xsd:string)
+        txnShards (xsd:long)
+    }
+    class MintingRecipe {
+        recipeDigest (xsd:string)
+        recipeDocument
+        recipeStrategy
+    }
+    class NamespaceScope {
+        iriPrefix (xsd:string)
+    }
+    class NaturallyKeyed
+    class OccurrenceNamespaceDerivation
+    class OperationKind
+    class OrderingGrain
+    class OrderingProfile {
+        lagWindowMillis (xsd:long)
+        opSeqRequired (xsd:boolean)
+    }
+    class OwnershipKind
+    class ParameterBinding {
+        paramName (xsd:string)
+        paramType (xsd:string)
+        paramValue
+    }
+    class ParameterDeclaration {
+        parameterName (xsd:string)
+        required (xsd:boolean)
+    }
+    class ParameterKind
+    class PayloadContract
+    class PayloadEncoding
+    class PersistenceKeyed
+    class PrivacyClass
+    class PrivacyProfile
+    class ProfileScope {
+        describedBy (xsd:string)
+        priority (xsd:integer)
+    }
+    class ReceiptModel
+    class ReceiptProfile {
+        asOfFloorSource (xsd:string)
+        perSubjectScoped (xsd:boolean)
+    }
+    class ReferenceData
+    class ReferenceEdge {
+        edgeInverse (xsd:boolean)
+        edgePredicate
+        edgeSource
+        edgeTargetClass
+        edgeTargetShape
+    }
+    class ReferenceMode
+    class ResolvedDimension {
+        candidateCount (xsd:integer)
+        dimension (xsd:string)
+        resolvedLiteral
+        resolvedValue
+        wonBy
+    }
+    class ResourceAccess
+    class ResourceKind {
+        logicalKey (xsd:string)
+    }
+    class ResourceRole
+    class ResultColumn {
+        columnName (xsd:string)
+        columnPosition (xsd:integer)
+        columnSeparator (xsd:string)
+    }
+    class RetentionMode
+    class Rule
+    class SchemeState
+    class SelfReferenceRule
+    class ShapeScope {
+        targetShape
+    }
+    class Source
+    class SurrogateKind
+    class Template {
+        templateId (xsd:string)
+    }
+    class UniquenessConstraint {
+        constraintId (xsd:string)
+        keyProperty
+        mergeRelation
+        normalizePipeline
+        onViolation
+        scopeProperty
+    }
+    class WriteDiscipline
+    class WriteDisciplineProfile {
+        checkpointEvery (xsd:long)
+    }
+    AggregateBoundaryProfile --> AggregateBoundaryStrategy : strategy
+    AggregateBoundaryProfile --> FirstWriteMode : firstWrite
+    CapabilityCheck --> CapabilitySpec : checkedAgainst
+    ClaimScheme --> DigestScheme : claimDigestScheme
+    ClaimScheme --> SchemeState : schemeState
+    CompiledProfile --> CapabilityCheck : capabilityCheck
+    CompiledProfile --> CapabilityRequirement : capabilityRequirement
+    CompiledProfile --> Diagnostic : diagnostic
+    CompiledProfile --> GeneratedOperation : generatedOperation
+    CompiledProfile --> MintingRecipe : mintingRecipe
+    CompiledProfile --> ResolvedDimension : resolvedDimension
+    CompiledProfile --> UniquenessConstraint : appliedUniquenessConstraint
+    ConcurrencyProfile --> ConcurrencyStrategy : concurrencyProfile
+    ConcurrencyProfile --> DeadlockPolicy : deadlockPolicy
+    ConcurrencyProfile --> EtagForm : etagForm
+    ConcurrencyProfile --> EtagRepresentation : etagRepresentation
+    DigestContract --> DigestPart : digestPart
+    DigestPart --> DigestPartRole : partRole
+    EpochProfile --> EpochAuthority : epochAuthority
+    EpochProfile --> EpochGuardScope : epochGuardScope
+    GeneratedOperation --> AuditOutcome : reportsOutcome
+    GeneratedOperation --> DeclarationSource : declarationSource
+    GeneratedOperation --> DigestContract : digestContract
+    GeneratedOperation --> GraphNaming : graphNaming
+    GeneratedOperation --> GuardStatus : guardStatus
+    GeneratedOperation --> OperationKind : operationKind
+    GeneratedOperation --> ParameterBinding : hasParameterBinding
+    GeneratedOperation --> ParameterDeclaration : examinedParameter
+    GeneratedOperation --> ParameterDeclaration : parameter
+    GeneratedOperation --> PayloadContract : payloadContract
+    GeneratedOperation --> ResourceAccess : access
+    GeneratedOperation --> ResultColumn : resultColumn
+    GeneratedOperation --> Template : usesTemplate
+    IdentityProfile --> DigestScheme : digestScheme
+    IdentityProfile --> EventIdentityStrategy : eventIdentityStrategy
+    IdentityProfile --> IdentityStrategy : identityStrategy
+    IdentityProfile --> OccurrenceNamespaceDerivation : occurrenceNamespaceDerivation
+    IdentityProfile --> ResourceRole : resourceRole
+    IdentityProfile --> SelfReferenceRule : selfReferenceRule
+    IdentityProfile --> SurrogateKind : surrogateKind
+    IdentityProfile --> UniquenessConstraint : claimsConstraint
+    IdentityProfile --> UniquenessConstraint : keyConstraint
+    MetaTopologyProfile --> MetaTopology : metaTopology
+    MintingRecipe --> ResourceRole : forRole
+    NaturallyKeyed <|-- PersistenceKeyed
+    OrderingProfile --> ContiguityCheckMode : contiguityCheckMode
+    OrderingProfile --> DatasetTierModel : datasetTierModel
+    OrderingProfile --> GlobalReadStrategy : globalReadStrategy
+    OrderingProfile --> OrderingGrain : orderingGrain
+    ParameterDeclaration --> ParameterDeclaration : mustEqualFor
+    ParameterDeclaration --> ParameterKind : parameterKind
+    ParameterDeclaration --> Rule : mustEqual
+    ParameterDeclaration --> Source : sourcedFrom
+    PayloadContract --> ParameterDeclaration : payloadParameter
+    PayloadContract --> ParameterDeclaration : payloadRoot
+    PayloadContract --> PayloadEncoding : payloadEncoding
+    PrivacyProfile --> ErasurePrecedence : erasurePrecedence
+    PrivacyProfile --> ErasureStrategy : erasureStrategy
+    PrivacyProfile --> PrivacyClass : privacyClass
+    ProfileScope <|-- ClassScope
+    ProfileScope <|-- EquivalentClassScope
+    ProfileScope <|-- GraphPatternScope
+    ProfileScope <|-- NamespaceScope
+    ProfileScope <|-- ShapeScope
+    ReceiptProfile --> ReceiptModel : receiptModel
+    ReceiptProfile --> RetentionMode : retentionMode
+    ReferenceEdge --> OwnershipKind : edgeOwnership
+    ResourceAccess --> AccessMode : accessMode
+    ResourceAccess --> ParameterDeclaration : keyedBy
+    ResourceAccess --> ResourceKind : resourceKind
+    ResultColumn --> ColumnKind : columnKind
+    UniquenessConstraint --> ClaimScheme : claimScheme
+    WriteDisciplineProfile --> MembershipEncoding : membershipEncoding
+    WriteDisciplineProfile --> WriteDiscipline : writeDiscipline
+    class DatatypeProperty_acknowledgedSharedClassOverride["Datatype Property - acknowledgedSharedClassOverride"]
+    class ObjectProperty_appliesTo["Object Property - appliesTo"]
+    class ObjectProperty_boundaryShape["Object Property - boundaryShape"]
+    class ObjectProperty_coversClass["Object Property - coversClass"]
+    class ObjectProperty_minEnforcementLevel["Object Property - minEnforcementLevel"]
+    class ObjectProperty_ownership["Object Property - ownership"]
+    class ObjectProperty_recordClass["Object Property - recordClass"]
+    class ObjectProperty_referenceEdge["Object Property - referenceEdge"]
+    class ObjectProperty_referenceMode["Object Property - referenceMode"]
+    class DatatypeProperty_requiresReasoning["Datatype Property - requiresReasoning"]
+    class DatatypeProperty_unicodeVersion["Datatype Property - unicodeVersion"]
+```
+
+<!-- end -->
+
+</details>
+
+## 5. Detailed Design
+
+### 5.1 Why persistence in RDF is hard
 
 A relational database gives an application three things it barely notices until they are gone: a
 `UNIQUE` index, a row that two writers collide on, and a return value saying how many rows an
@@ -143,12 +479,12 @@ What the patterns rebuild, and where this README covers it:
 
 | A relational database gives | An RDF store needs | Here |
 |---|---|---|
-| a `UNIQUE` index | a deterministic claim node per key value, with at most one owner | §7.6 |
-| a `SERIAL` sequence | a counter rewritten inside the writing transaction | §7.3 |
-| a row two writers collide on | one small version row per aggregate, kept apart from its payload | §3, §7.1 |
-| `UPDATE … RETURNING` | a transaction claim keyed by a client-generated id, checked after the write | §4 |
-| `BEGIN … COMMIT` across statements | one request, or a vendor transaction API, gated by capability | §7.2, §8 |
-| a documented isolation level | an empirical conformance test per backend | §8 |
+| a `UNIQUE` index | a deterministic claim node per key value, with at most one owner | §5.6.6 |
+| a `SERIAL` sequence | a counter rewritten inside the writing transaction | §5.6.3 |
+| a row two writers collide on | one small version row per aggregate, kept apart from its payload | §5.2, §5.6.1 |
+| `UPDATE … RETURNING` | a transaction claim keyed by a client-generated id, checked after the write | §5.3 |
+| `BEGIN … COMMIT` across statements | one request, or a vendor transaction API, gated by capability | §5.6.2, §5.7 |
+| a documented isolation level | an empirical conformance test per backend | §5.7 |
 
 The guide calls the version-row machinery the **strong profile**, and is explicit that it is not the
 platform default. Data addressed by immutable revision hashes, or data with no concurrent writers,
@@ -156,9 +492,7 @@ can use a **baseline profile** that relies on the store's own behaviour. Every c
 per class or per deployment, so the strong profile can be switched on where it pays for itself and
 left off where it does not.
 
----
-
-## 3. The infrastructure the patterns add
+### 5.2 The infrastructure the patterns add
 
 The patterns keep changing data in several kinds of graph, each with its own mutability, retention,
 access control and contention (guide §2.3). Separating them is not decoration: several guarantees
@@ -202,30 +536,28 @@ flowchart LR
 The terms, in one place:
 
 - **Aggregate.** The unit of consistency: an order and its line items change together and are read
-  together. Choosing what an aggregate is belongs to the adopter (§7.1).
+  together. Choosing what an aggregate is belongs to the adopter (§5.6.1).
 - **Version row.** A tiny record, kept apart from the payload, holding the aggregate's current
   sequence number and head receipt. Every write to the aggregate rewrites this one statement, which is
   what makes two concurrent writers collide. Keeping it out of the payload graph is what lets a write
   replace the payload whole without erasing its own history (guide §17.1, A3).
 - **Receipt.** An append-only record of one write: which aggregate, which position, which previous
   receipt, which client transaction. Receipts order the writes and audit them. Whether they also let
-  a reader replay the change depends on the receipt model (§7.4).
+  a reader replay the change depends on the receipt model (§5.6.4).
 - **Transaction claim.** A node keyed by the client's transaction id. It is how a writer learns, after
-  the fact, whether its write applied (§4).
+  the fact, whether its write applied (§5.3).
 - **Key claim.** A deterministic node per unique key value, owned by at most one entity. It turns
-  global uniqueness into a per-node cardinality check (§7.6).
+  global uniqueness into a per-node cardinality check (§5.6.6).
 - **Epoch.** A number on the dataset, bumped on every restore, rebuild or migration. Positions are
   `(epoch, seq)` pairs, so a position recorded before a restore can never be mistaken for one minted
-  after it (§7.8).
+  after it (§5.6.8).
 
 **Every IRI in these examples is illustrative.** The `urn:g:`, `urn:rev:`, `urn:key:` and similar
 namespaces are unregistered and would collide the moment two deployments merge. A deployment chooses a
-controlled `https` authority, a `tag:` URI or a registered scheme through its identity profile (§7.7).
-The compiler currently binds the infrastructure graph IRIs above as fixed constants (§9).
+controlled `https` authority, a `tag:` URI or a registered scheme through its identity profile (§5.6.7).
+The compiler currently binds the infrastructure graph IRIs above as fixed constants (§5.8).
 
----
-
-## 4. One write, end to end
+### 5.3 One write, end to end
 
 The strong profile's write is a single guarded SPARQL update, followed by a confirmation read
 (guide Chapters 14, 15 and 19). Everything below is generated by the compiler: an adopter does not
@@ -268,8 +600,7 @@ is definitive and survives concurrent writers. The claim carries a digest of the
 that reuses an id for a different request is told so instead of being told it succeeded. An `Unknown`
 outcome (a transport failure) is resolved by resending the identical request and then confirming:
 the resend either applies once or is a no-op against the claim. A claim protects retries only for as
-long as it is kept, so its time-to-live must cover the longest redelivery horizon (guide §15.2,
-§24.2).
+long as it is kept, so its time-to-live must cover the longest redelivery horizon (guide §15.2 and §24.2).
 
 **Compare-and-set or append.** The same version row serves two contracts (guide Chapter 22):
 
@@ -286,12 +617,10 @@ the same version row, transaction claim and receipt shape, so one stream can be 
 ingestion and compare-and-set by an editor without two mechanisms.
 
 **HTTP agrees with SPARQL by construction.** The ETag of an aggregate is derived, never stored:
-`"{epoch}-{seq}"`, a strong validator (§7.2). `If-Match: "3-41"` on a Graph Store Protocol `PUT` is
+`"{epoch}-{seq}"`, a strong validator (§5.6.2). `If-Match: "3-41"` on a Graph Store Protocol `PUT` is
 the same guard as the SPARQL above.
 
----
-
-## 5. The configuration model
+### 5.4 The configuration model
 
 An adopter's configuration is a graph of `dal:` individuals of two kinds: **scopes**, which say what
 a profile applies to, and **profiles**, which declare values for one or more **dimensions**.
@@ -350,29 +679,29 @@ classDiagram
     DataAccessProfile --> ProfileScope : appliesTo
 ```
 
-Every dimension resolves **on its own**, per target (§6). The table lists each one, the class that
+Every dimension resolves **on its own**, per target (§5.5). The table lists each one, the class that
 declares it, its values, and the platform baseline default the compiler uses when no scope matches.
 
-| Dimension | Declared on | Values | Baseline | § |
+| Dimension | Declared on | Values | Baseline | Section |
 |---|---|---|---|---|
-| Aggregate boundary | `dal:AggregateBoundaryProfile` (`dal:strategy`) | `dal:NamedGraphBoundary`, `dal:CompositePropertyBoundary`, `dal:NoBoundary` | named graph | 7.1 |
-| First write | `dal:AggregateBoundaryProfile` (`dal:firstWrite`) | `dal:AbsentRow`, `dal:PreCreatedRow` | absent row | 7.1 |
-| Write discipline | `dal:WriteDisciplineProfile` (`dal:writeDiscipline`) | `dal:InPlace`, `dal:AppendVersions`, `dal:AppendRecords` | in place | 7.10 |
-| Membership encoding | `dal:WriteDisciplineProfile` (`dal:membershipEncoding`, `dal:checkpointEvery`) | `dal:FullMembership`, `dal:DeltaMembership`, and an interval of at least 1 | full, every 16 | 7.10.1 |
-| Concurrency | `dal:ConcurrencyProfile` (`dal:concurrencyProfile`) | `dal:ProvidedConcurrency`, `dal:Optimistic`, `dal:AppendOnly`, `dal:LockingConcurrency` (marker only) | provided | 7.2 |
-| Deadlock policy | `dal:ConcurrencyProfile` | `dal:EngineDetectAndRetry`, `dal:SortedAcquisition`, `dal:PartitionedWriter` | engine detect and retry | 7.2 |
-| ETag form and representation | `dal:ConcurrencyProfile` | `dal:StrongEtag`/`dal:WeakEtag`, `dal:SingleRepresentation`/`dal:TaggedRepresentation` | strong, single | 7.2 |
-| Ordering grain | `dal:OrderingProfile` (`dal:orderingGrain`) | `dal:CommitGrain`, `dal:EventGrain` | commit | 7.3 |
-| Dataset tier | `dal:OrderingProfile` (`dal:datasetTierModel`) | `dal:DerivedFeed`, `dal:GlobalDenseCounter`, `dal:HybridLogicalClock` | none | 7.3 |
-| Global read | `dal:OrderingProfile` | `dal:WatermarkedRead`, `dal:LagWindowRead` (with `dal:lagWindowMillis`), `dal:DenseFeedRead`, `dal:NoGlobalRead` | none | 7.3 |
-| Contiguity check | `dal:OrderingProfile` | `dal:BlockingContiguityCheck`, `dal:AdvisoryContiguityCheck` | blocking | 7.3 |
-| Receipt model | `dal:ReceiptProfile` (`dal:receiptModel`) | `dal:ReceiptOnly`, `dal:PatchLog`, `dal:SnapshotPerRevision`, `dal:NoReceipt` | receipt only | 7.4 |
-| Retention | `dal:ReceiptProfile` | `dal:PrefixOnlyRetention`, `dal:BucketAnyRetention`, plus `dal:asOfFloorSource` | prefix only | 7.4 |
-| Meta topology | `dal:MetaTopologyProfile` (`dal:metaTopology`) | `dal:SharedSharded`, `dal:PerAggregate`, plus `dal:metaShards`, `dal:txnShards`, `dal:logShards`, `dal:keyShards`, `dal:registryGraph` | shared, sharded | 7.5 |
-| Uniqueness | `dal:UniquenessConstraint` | many-valued: zero, one or several keyed constraints per target | none | 7.6 |
-| Identity minting | `dal:IdentityProfile` | one `dal:IdentityStrategy` per `dal:ResourceRole`, each role its own dimension `identity:<Role>` | none | 7.7 |
-| Epoch | `dal:EpochProfile` | authority: `dal:ExternalHighWaterMark`, `dal:RestoreControlledEpoch`, `dal:WriterStartRefusal`, `dal:StoreLocalEpoch` (warned). Guard: `dal:DatasetLevelGuard`, `dal:RowLevelGuardOnly` (warned) | row-level guard (warned) | 7.8 |
-| Privacy and erasure | `dal:PrivacyProfile` | class: `dal:PersonalData`, `dal:InternalData`, `dal:PublicData`. Strategy: `dal:PerSubjectGraphDrop`, `dal:CryptoShred`, `dal:NoErasure`. Precedence: `dal:ErasureWins`, `dal:MonotonicityWins` | none | 7.9 |
+| Aggregate boundary | `dal:AggregateBoundaryProfile` (`dal:strategy`) | `dal:NamedGraphBoundary`, `dal:CompositePropertyBoundary`, `dal:NoBoundary` | named graph | 5.6.1 |
+| First write | `dal:AggregateBoundaryProfile` (`dal:firstWrite`) | `dal:AbsentRow`, `dal:PreCreatedRow` | absent row | 5.6.1 |
+| Write discipline | `dal:WriteDisciplineProfile` (`dal:writeDiscipline`) | `dal:InPlace`, `dal:AppendVersions`, `dal:AppendRecords` | in place | 5.6.10 |
+| Membership encoding | `dal:WriteDisciplineProfile` (`dal:membershipEncoding`, `dal:checkpointEvery`) | `dal:FullMembership`, `dal:DeltaMembership`, and an interval of at least 1 | full, every 16 | 5.6.11 |
+| Concurrency | `dal:ConcurrencyProfile` (`dal:concurrencyProfile`) | `dal:ProvidedConcurrency`, `dal:Optimistic`, `dal:AppendOnly`, `dal:LockingConcurrency` (marker only) | provided | 5.6.2 |
+| Deadlock policy | `dal:ConcurrencyProfile` | `dal:EngineDetectAndRetry`, `dal:SortedAcquisition`, `dal:PartitionedWriter` | engine detect and retry | 5.6.2 |
+| ETag form and representation | `dal:ConcurrencyProfile` | `dal:StrongEtag`/`dal:WeakEtag`, `dal:SingleRepresentation`/`dal:TaggedRepresentation` | strong, single | 5.6.2 |
+| Ordering grain | `dal:OrderingProfile` (`dal:orderingGrain`) | `dal:CommitGrain`, `dal:EventGrain` | commit | 5.6.3 |
+| Dataset tier | `dal:OrderingProfile` (`dal:datasetTierModel`) | `dal:DerivedFeed`, `dal:GlobalDenseCounter`, `dal:HybridLogicalClock` | none | 5.6.3 |
+| Global read | `dal:OrderingProfile` | `dal:WatermarkedRead`, `dal:LagWindowRead` (with `dal:lagWindowMillis`), `dal:DenseFeedRead`, `dal:NoGlobalRead` | none | 5.6.3 |
+| Contiguity check | `dal:OrderingProfile` | `dal:BlockingContiguityCheck`, `dal:AdvisoryContiguityCheck` | blocking | 5.6.3 |
+| Receipt model | `dal:ReceiptProfile` (`dal:receiptModel`) | `dal:ReceiptOnly`, `dal:PatchLog`, `dal:SnapshotPerRevision`, `dal:NoReceipt` | receipt only | 5.6.4 |
+| Retention | `dal:ReceiptProfile` | `dal:PrefixOnlyRetention`, `dal:BucketAnyRetention`, plus `dal:asOfFloorSource` | prefix only | 5.6.4 |
+| Meta topology | `dal:MetaTopologyProfile` (`dal:metaTopology`) | `dal:SharedSharded`, `dal:PerAggregate`, plus `dal:metaShards`, `dal:txnShards`, `dal:logShards`, `dal:keyShards`, `dal:registryGraph` | shared, sharded | 5.6.5 |
+| Uniqueness | `dal:UniquenessConstraint` | many-valued: zero, one or several keyed constraints per target | none | 5.6.6 |
+| Identity minting | `dal:IdentityProfile` | one `dal:IdentityStrategy` per `dal:ResourceRole`, each role its own dimension `identity:<Role>` | none | 5.6.7 |
+| Epoch | `dal:EpochProfile` | authority: `dal:ExternalHighWaterMark`, `dal:RestoreControlledEpoch`, `dal:WriterStartRefusal`, `dal:StoreLocalEpoch` (warned). Guard: `dal:DatasetLevelGuard`, `dal:RowLevelGuardOnly` (warned) | row-level guard (warned) | 5.6.8 |
+| Privacy and erasure | `dal:PrivacyProfile` | class: `dal:PersonalData`, `dal:InternalData`, `dal:PublicData`. Strategy: `dal:PerSubjectGraphDrop`, `dal:CryptoShred`, `dal:NoErasure`. Precedence: `dal:ErasureWins`, `dal:MonotonicityWins` | none | 5.6.9 |
 
 "None" means the absence is itself meaningful and checked where it matters: an undeclared privacy
 profile means "this scope declares no privacy stance", not "this scope is public data". The epoch
@@ -391,11 +720,9 @@ or defaulted.
   own goes on a `dal:DataAccessProfile` node. The compiled profile records each resolved value, using
   `dal:resolvedLiteral` for literal-valued ones.
 
----
+### 5.5 Scopes, targets and resolution
 
-## 6. Scopes, targets and resolution
-
-### 6.1 Five scope kinds
+#### 5.5.1 Five scope kinds
 
 A scope says which resources a profile applies to. Four kinds need no reasoning, and one does:
 
@@ -407,7 +734,7 @@ A scope says which resources a profile applies to. Four kinds need no reasoning,
 | `dal:ShapeScope` | resources conforming to a named `sh:NodeShape`, resolved once at compile time | no |
 | `dal:EquivalentClassScope` | resources reachable through `owl:equivalentClass` and `owl:intersectionOf` | **yes** |
 
-### 6.2 A target is a class, plus a deployment
+#### 5.5.2 A target is a class, plus a deployment
 
 The compiler resolves profiles for **targets**. A target is a class, or a class together with one of
 its deployments: a shared class written by two applied ontologies into two graph families is two
@@ -425,7 +752,7 @@ deployments. Two consequences matter when designing a configuration:
   deploys it, scoped to that deployment's graph pattern, which structurally outranks a bare class
   scope.
 
-### 6.3 Precedence
+#### 5.5.3 Precedence
 
 When several profiles declare a value for the same dimension at scopes that all match one target,
 the compiler picks one, the same way every time, on any machine
@@ -464,11 +791,9 @@ The algorithm never ranks scope kinds against each other: a graph-pattern scope 
 can be narrower than a class scope matching millions of individuals, so `dal:priority` is how an
 adopter says what they mean. A remaining tie is a refusal, never a guess.
 
----
+### 5.6 The dimensions, one by one
 
-## 7. The dimensions, one by one
-
-### 7.1 Aggregate boundary
+#### 5.6.1 Aggregate boundary
 
 **The question.** Which triples change together, and so must be written as one unit?
 
@@ -499,7 +824,7 @@ rules, the refusals and the reasons.
 
 **What an edge names.** `dal:referenceMode` sits on the same property shape as `dal:ownership`, one of `dal:ByIdentity` (absent
 means this) and `dal:Pinned`. Ownership says what a write sweeps, and the reference mode says what a reference names, when its
-target has versions (§7.10): the persistent identity, or one version of it. `compile` records the mode of every edge that leads to a
+target has versions (§5.6.10): the persistent identity, or one version of it. `compile` records the mode of every edge that leads to a
 node in the compiled profile, once, and the contract of each operation that takes a payload points at those edges, so a caller's check
 can read them. The mode
 changes no generated operation, since a write stores what its payload contains.
@@ -518,7 +843,7 @@ ex:OpinionShape a sh:NodeShape ; sh:targetClass ex:Opinion ;
 
 **Record classes.** A class whose instances are records, cited for what they said at a time, need not be modelled as `fnd:Evidence`. A
 profile names it with `dal:recordClass`, and its subclasses, as the configuration asserts them, are records too. The warning above reads
-it, and so does `NoReceiptForRecord` (§7.4). The compiled profile states the record classes the family touches, its target class and the
+it, and so does `NoReceiptForRecord` (§5.6.4). The compiled profile states the record classes the family touches, its target class and the
 subject classes of its edges, and the caller library reads them.
 
 ```turtle
@@ -531,7 +856,7 @@ record says it read. Leave the edge by identity when the node means the thing as
 task's assignee or a policy's insured, so a new version of the target needs no write to the node that refers to it. A caller that
 pins writes the version's IRI as the object, and one that leaves the edge by identity writes the identity's. A reader that wants the
 version in force at a date resolves an identity through the version row or the root version's membership, and no generated read does
-so yet (H2.6e-Q4). The warning is for the case that is usually a mistake, so a deliberate choice stays by identity and compiles.
+so yet. The warning is for the case that is usually a mistake, so a deliberate choice stays by identity and compiles.
 
 **Which strategy.** Prefer a named graph per aggregate for a new deployment. It is the cheapest boundary
 to reason about, and a delete is one operation. The composite strategy is for data that already lives in
@@ -553,19 +878,19 @@ write's boundary, and the same shape can keep serving the adopter's own validati
   every later write, including the first, rewrites an existing statement. On stores with
   multi-version concurrency, this removes the creation race entirely.
 
-### 7.2 Concurrency
+#### 5.6.2 Concurrency
 
 **The question.** How are two writers to one aggregate kept from silently overwriting each other?
 
 | Strategy | Means | Use when |
 |---|---|---|
 | `dal:ProvidedConcurrency` (baseline) | rely on the store. The compiler generates an unconditional write | no concurrent writers, or a store that serialises them |
-| `dal:Optimistic` | the guarded compare-and-set of §4 | read-modify-write by concurrent writers on a store that detects write conflicts |
-| `dal:AppendOnly` | the append form of §4: the store allocates the next position | event streams and decision records |
+| `dal:Optimistic` | the guarded compare-and-set of §5.3 | read-modify-write by concurrent writers on a store that detects write conflicts |
+| `dal:AppendOnly` | the append form of §5.3: the store allocates the next position | event streams and decision records |
 | `dal:LockingConcurrency` | a marker that mutual exclusion lives outside the store (an external lock, a single writer per partition) | the store's isolation is too weak or unknown. No guard is generated |
 
 `dal:minConcurrencyLevel` (`dal:Linearizable`, `dal:BestEffort`) records the level the family needs,
-which a capability check compares with the store (§8).
+which a capability check compares with the store (§5.7).
 
 **Choosing, by situation** (guide §16.6):
 
@@ -575,7 +900,7 @@ which a capability check compares with the store (§8).
 | a store with a real transaction API | explicit serializable transactions, with the guards as defence in depth |
 | a store with only a SPARQL Update endpoint | `dal:Optimistic`: guarded single-request update, transaction claim, receipts, retry, verified by the conformance tests |
 | weak or unknown isolation | a single-writer queue or an external lock with fencing tokens (`dal:LockingConcurrency`) |
-| audit, offline clients, multi-master | a patch log or event sourcing (§7.4) |
+| audit, offline clients, multi-master | a patch log or event sourcing (§5.6.4) |
 
 **Deadlocks across aggregates.** A write that touches two version rows can deadlock on stores that
 lock, or livelock on stores that abort and retry. SPARQL specifies no evaluation order, so listing the
@@ -604,7 +929,7 @@ composite family's aggregates do, and a family with no boundary that guards a va
 refused (`MissingDataGraph`). Every pattern of the guard is inside that graph, never in the default graph, whose
 contents differ between stores.
 
-### 7.3 Ordering
+#### 5.6.3 Ordering
 
 **The question.** In what order did changes happen, and can a consumer tell whether it missed one?
 
@@ -616,7 +941,7 @@ trouble:
 | O1 | total order for replay and sync: "everything after where I left off" | a dense, gap-detectable position |
 | O2 | causal order per entity: version 3 supersedes version 2 | a per-stream counter |
 | O3 | domain order: sorted by when things happened in the world | a valid time, with commit order only as a tiebreak |
-| O4 | point-in-time reads: "as of last Tuesday" | history (§7.4) |
+| O4 | point-in-time reads: "as of last Tuesday" | history (§5.6.4) |
 | O5 | ordered collections inside the data | a rank or index property, a different problem entirely |
 
 Three clocks are kept apart, and never allowed to stand in for each other:
@@ -696,7 +1021,7 @@ the read safe, and a late-arrival audit backs it up.
 gap looks exactly like data loss. `dal:AdvisoryContiguityCheck` logs and continues, for a family whose
 downstream reconciliation re-derives completeness independently, and is warned.
 
-### 7.4 Receipts, history and retention
+#### 5.6.4 Receipts, history and retention
 
 **The question.** What does the log remember about each write, and for how long?
 
@@ -707,17 +1032,17 @@ audit writes but cannot replay them. A family declares one of four models (guide
 |---|---|---|---|---|
 | `dal:ReceiptOnly` (baseline) | that a write happened, where, and by which transaction | outcome, audit, order | lowest | compare-and-set outcomes and light audit are enough |
 | `dal:PatchLog` | plus the triples each write added and removed, in delta graphs | replay, change data capture, as-of reads | about twice the write volume | downstream replay or deterministic history is needed |
-| `dal:SnapshotPerRevision` | a sealed payload graph per revision (not built, `compile` warns `ReceiptModelNotHonoured` and refuses it on a composite family written in place, `CompositeBoundarySnapshotNotBuilt`, TD-46) | point-in-time reads without replay, immutable evidence | the most storage and graphs | compliance, forensics, data already addressed by revision |
-| `dal:NoReceipt` | nothing about the write beyond its transaction claim: no receipt, no log bucket, no head | a retry after a lost reply is confirmed, and the seq still decides a race | the lowest, and no audit, order or history | a family that is derived and can be regenerated, or that keeps no history. Refused with an append discipline (VH-Q5a) |
+| `dal:SnapshotPerRevision` | a sealed payload graph per revision (not built, `compile` warns `ReceiptModelNotHonoured` and refuses it on a composite family written in place, `CompositeBoundarySnapshotNotBuilt`) | point-in-time reads without replay, immutable evidence | the most storage and graphs | compliance, forensics, data already addressed by revision |
+| `dal:NoReceipt` | nothing about the write beyond its transaction claim: no receipt, no log bucket, no head | a retry after a lost reply is confirmed, and the seq still decides a race | the lowest, and no audit, order or history | a family that is derived and can be regenerated, or that keeps no history. Refused with an append discipline |
 
 **The patch log is written by the in-place writes** of a `dal:NamedGraphBoundary` or `dal:CompositePropertyBoundary` family that declares
-`dal:PatchLog` (H2.6d). `compile` then selects a patch-log variant of `create-if-absent`, `cas-replace` and `tombstone-delete`, which writes the
+`dal:PatchLog`. `compile` then selects a patch-log variant of `create-if-absent`, `cas-replace` and `tombstone-delete`, which writes the
 delta graphs in the same update as the write, named from the receipt, `newRev` followed by `/add` and `/del`, so a caller cannot name one wrongly.
 A create's add graph holds its payload. A replace's add and del graphs hold the delta the caller computed from the aggregate it read before the
 compare-and-set, in the request-time slots `{{{assertTriples}}}` and `{{{retractTriples}}}`. A tombstone's del graph holds what its sweep removed,
 at no cost to the caller. The receipt names a graph with `pat:asserts` or `pat:retracts` wherever the write puts content in it. An unrendered slot is
-a syntax error, so a request that leaves one out writes nothing. Each delta must satisfy the patch rules of the plan (the del triples were in the
-old state, the add triples were not, and the new state is the old less del plus add), which the caller checks before it submits (H2.8). The
+a syntax error, so a request that leaves one out writes nothing. Each delta must satisfy the patch rules (the del triples were in the
+old state, the add triples were not, and the new state is the old less del plus add), which the caller checks before it submits. The
 guard that loses a race writes none of it. A backward as-of read over these graphs is described in the patterns guide, S6.
 
 **Refused.** `NoReceiptWithAppendDiscipline`, for `dal:NoReceipt` with `dal:AppendVersions`, `dal:AppendRecords`, an append-only
@@ -726,7 +1051,7 @@ concurrency or a stream. A version or a record takes its position and its transa
 read receipts (the gap scan and the two receipt-side fork audits) are not generated for such a family. A gap scan generated for another family of the same meta graph
 would report this family's version rows as gaps, so such a family belongs in a shard of its own, and `compile` refuses it otherwise
 (`NoReceiptSharesMetaShard`). **Warned.** `NoReceiptForRecord`, for `dal:NoReceipt` on a family whose target class is versioned or a record
-class (§7.1), whose instances are cited for what they said at a time. With no receipt nothing records when a write took effect.
+class (§5.6.1), whose instances are cited for what they said at a time. With no receipt nothing records when a write took effect.
 
 ```mermaid
 flowchart LR
@@ -746,7 +1071,7 @@ flowchart LR
 Decision records (eligibility decisions, behaviour state changes, MORK outcomes) are always
 append-only, so for them a receipt-only model with whole replace is not an option. A composite
 boundary with receipts only is refused: a closure sweep is not a single graph replace, and a receipt
-could not say what changed inside it. A family that appends versions or records (§7.10) is not refused,
+could not say what changed inside it. A family that appends versions or records (§5.6.10) is not refused,
 since its history is in the data and nothing is swept. A graph family whose targets resolve to different receipt
 models raises a warning, so a consumer is told rather than left to assume uniformity.
 
@@ -766,7 +1091,7 @@ models raises a warning, so a consumer is told rather than left to assume unifor
 Retention, epoch bumps and the erasure procedure are housekeeping (ADR-A80): the compiler does not
 generate them, and this vocabulary records the choices they must honour.
 
-### 7.5 Meta topology
+#### 5.6.5 Meta topology
 
 **The question.** Where do the version rows live, and what do concurrent writers collide on?
 
@@ -783,11 +1108,11 @@ how those are sharded too. The generated operations still write one of each, and
 raises a `ShardingNotHonoured` warning.
 
 Changing `dal:metaShards` moves every version row, which is a migration: the compiler refuses it unless
-`dal:priorMetaShards` and `dal:epochBumpAcknowledged true` record that the epoch will be bumped (§7.8).
+`dal:priorMetaShards` and `dal:epochBumpAcknowledged true` record that the epoch will be bumped (§5.6.8).
 `dal:registryGraph` names the graph that lists the family's log, event, delta, transaction and key
 graphs, so audits and readers find them by explicit links, never by scanning graph-name prefixes.
 
-### 7.6 Uniqueness
+#### 5.6.6 Uniqueness
 
 **The question.** How is "no two people share an email" kept true when an RDF store will happily hold
 both?
@@ -910,11 +1235,11 @@ every statement about both entities and cannot be retracted cleanly if the merge
 A key property must lie inside the aggregate it belongs to: with a composite boundary, a key property
 the boundary shape cannot reach is refused.
 
-### 7.7 Identity minting
+#### 5.6.7 Identity minting
 
 **The question.** What IRI does each resource get, and who decides?
 
-LATTICE does not pick an identity scheme for an adopter (ADR-A82). An IRI can name very different
+LATTICE does not pick an identity scheme for an adopter. An IRI can name very different
 things, with different needs for stability, privacy and ordering (identity guide §2):
 
 | Resource role | Names | Typical stability |
@@ -959,7 +1284,7 @@ up the claim, and never correlate across tenants, whose secrets differ.
 (`dal:MintingRecipe`): canonical JSON with a digest, holding everything a minter needs, such as the
 template, key properties, normalisation pipeline, digest scheme and widths. Missing members are refused
 by name. `export-recipes` writes them out for the
-[minting libraries](../../docs/architecture/decisions/ADR-A84-standalone-minting-libraries.md) or any
+[minting libraries](../../packages/minting/README.md) or any
 implementation of the
 [identity minting specification](../../docs/architecture/identity-minting-specification.md), and
 conformance is defined by test vectors, not by LATTICE's code.
@@ -977,7 +1302,7 @@ which needs a `dal:digestScheme`) or allocated by a registry (`dal:RegistryToken
 integer. Unpadded `e10` sorts before `e3`, and "short in examples, long in production" is two schemes,
 not one.
 
-### 7.8 Epoch
+#### 5.6.8 Epoch
 
 **The question.** What stops a restore from making old positions mean new things?
 
@@ -1017,10 +1342,10 @@ An epoch is safe only if two things hold (identity guide §10.3):
 
 The restore runbook (guide §24.4), which housekeeping carries out: quiesce writers for at least the
 maximum transaction time, allocate the new epoch from the declared authority, replay the erasure
-register where the family holds personal data (§7.9), confirm the dataset-level guard, re-admit
+register where the family holds personal data (§5.6.9), confirm the dataset-level guard, re-admit
 writers, and run the reconciler, gap scan and fork audits before declaring the dataset healthy.
 
-### 7.9 Privacy and erasure
+#### 5.6.9 Privacy and erasure
 
 **The question.** How is one person's data removed when the law requires it, from a store whose other
 patterns keep history?
@@ -1063,19 +1388,16 @@ restoring it would bring erased subjects back. An append-only erasure register h
 dataset and its backups (`dal:erasureRegisterBinding`) is replayed before readers or writers are
 admitted (`dal:erasureReplayOnRestore true`).
 
----
-
-### 7.10 Write discipline
+#### 5.6.10 Write discipline
 
 **The question.** When a family writes a new state, does the old one go?
 
 `dal:writeDiscipline`, declared on a `dal:WriteDisciplineProfile` (or any profile of the family) and resolved like any dimension, picks
-one of three. Absent, it is `dal:InPlace`, so a configuration that declares none compiles as before. The discipline is the draft of
-H2.6c, decided at our leanings for the maintainer's review (history and versioning sketch, VH-Q1 to VH-Q6).
+one of three. Absent, it is `dal:InPlace`, so a configuration that declares none compiles as before.
 
 | Discipline | A write | Operations | History is | Applies to |
 |---|---|---|---|---|
-| `dal:InPlace` (baseline) | replaces the old state and deletes it | `create-if-absent` or `bootstrap-version-row`, `cas-replace`, `tombstone-delete` | the receipt model's (§7.4) | every family |
+| `dal:InPlace` (baseline) | replaces the old state and deletes it | `create-if-absent` or `bootstrap-version-row`, `cas-replace`, `tombstone-delete` | the receipt model's (§5.6.4) | every family |
 | `dal:AppendVersions` | adds a new version beside the old and links it to the one before with `pat:previousVersion`. Nothing is swept or deleted | `bootstrap-version-row` and `append-version` | in the data, as versions | `dal:CompositePropertyBoundary`, and `dal:NoBoundary` with a `dal:dataGraph`, under `dal:Optimistic` |
 | `dal:AppendRecords` | adds records, each an immutable occurrence | `bootstrap-version-row` and `append` | in the data, as records | any family. The discipline selects the append form whatever the concurrency |
 
@@ -1094,17 +1416,17 @@ flowchart LR
 **What `append-version` does,** in one update. It guards the identity's version row at the expected seq and the transaction claim. It
 inserts the new version's own triples from the payload slot, and `$newVersion pat:previousVersion $priorVersion` when the row names a current
 version. Persistence never writes `fnd:supersededBy`, which the domain asserts under its own rule (R2). It moves the row's seq and head and sets its current version to the new one, writes the receipt, and links the version to its
-receipt with `pat:revision`. The current version is the latest one written (VH-D1). Which version is in force, or agreed, is evaluated
+receipt with `pat:revision`. The current version is the latest one written. Which version is in force, or agreed, is evaluated
 from other facts and never stored here. The first version is written at seq 0 onto a row `bootstrap-version-row` created, whatever
 `dal:firstWrite` says, so a family that appends versions is never given `create-if-absent`. A family that appends versions has no
 `tombstone-delete`, which would sweep the history. Removing one is housekeeping and erasure (ADR-A80), not a write of this family.
 
-A caller restates only what changed. A member the new version does not restate is shared by reference (VH-Q2), so the payload holds the
+A caller restates only what changed. A member the new version does not restate is shared by reference, so the payload holds the
 new version's own triples and a pointer to each unchanged member. A node a new version points at must already be in the data graph.
 
 **Warned.** `compile` warns `VersionedClassWrittenInPlace` when a target class is a subclass of `fnd:Version`, by IRI in the loaded graphs
-with no import of Foundation, and the discipline is `dal:InPlace`. A replace deletes the version before it, which `pat:previousVersion`
-and ADR-A67 keep. Declare `dal:AppendVersions`, or `dal:InPlace` deliberately for a working draft that nothing cites.
+with no import of Foundation, and the discipline is `dal:InPlace`. A replace deletes the version before it, which the chain of `pat:previousVersion`
+keeps. Declare `dal:AppendVersions`, or `dal:InPlace` deliberately for a working draft that nothing cites.
 
 **Refused.** `AppendVersionsUnsupported`, for `dal:AppendVersions` on a named-graph family (a graph per version is not built), under a
 concurrency that is not `dal:Optimistic` (the guard is the version row), or with no boundary and no `dal:dataGraph` (the default graph is
@@ -1123,24 +1445,22 @@ never written).
 | a hot record that many writers revise at once | `dal:AppendVersions`, and expect contention | writers race on one version row, as two replaces of one record do |
 
 A family may be split to mix, for example an instrument's versions appended while a working draft beside it is edited in place. A
-retention policy decides when a superseded version may be pruned, never one that a retained version references (VH-Q6). That is
-housekeeping and is not generated (ADR-A80, TD-47).
+retention policy decides when a superseded version may be pruned, never one that a retained version references. That is
+housekeeping and is not generated (ADR-A80).
 
----
-
-### 7.10.1 Membership encoding
+#### 5.6.11 Membership encoding
 
 **The question.** When a family appends versions and a root version lists many members, does each new version list them all?
 
 `dal:membershipEncoding`, declared beside `dal:writeDiscipline` and resolved like any dimension, picks `dal:FullMembership` (the default) or
-`dal:DeltaMembership`. It is the draft of H2.6f, for the maintainer's review. `dal:DeltaMembership` is refused unless the family declares
+`dal:DeltaMembership`. `dal:DeltaMembership` is refused unless the family declares
 `dal:AppendVersions` (`DeltaMembershipNeedsAppendVersions`), and any other value is refused (`MembershipEncodingUnknown`).
 
 | | `dal:FullMembership` | `dal:DeltaMembership` |
 |---|---|---|
 | a new version stores | every member, under the domain's membership property | `pat:previousVersion`, and `pat:addsMember` and `pat:dropsMember` for what changed |
 | the membership property | written for every version | written only for a checkpoint version |
-| one change to a set of 500 (E5) | 501 triples besides the header | 3 |
+| one change to a set of 500 | 501 triples besides the header | 3 |
 | reading a version's members | one lookup | the generated `members` query, a chain back to the nearest checkpoint, at most `dal:checkpointEvery` versions |
 | a domain shape | runs over the stored data | runs over the `members` results (below) |
 
@@ -1149,7 +1469,7 @@ first and every one whose seq is a multiple of the interval, lists every member 
 carries `pat:checkpoint true`, so no chain is longer than the interval. The write does not decide which version is a checkpoint, since the
 caller already holds the sequence. The caller fills `{{{payloadTriples}}}` with the full list and the marker on a checkpoint, and `{{{addedMembers}}}`
 and `{{{droppedMembers}}}`, the triples `newVersion pat:addsMember m` and `newVersion pat:dropsMember m`, on any other version, leaving the
-slots it does not use empty (`persistence.members.is_checkpoint`). H2.8's caller check verifies the choice.
+slots it does not use empty (`persistence.members.is_checkpoint`). The caller library's check verifies the choice (ADR-A132).
 
 **The add and del parts.** The digest of the delta write has an add part and a del part (`dal:AddPart`, `dal:DelPart`), as a write under a
 patch log does, and they hold different things. Here they hold the members the version adds and drops, as the triples of `{{{addedMembers}}}`
@@ -1170,10 +1490,10 @@ rows)`, validate that graph with the domain's own shapes and discard it.
 
 A large set changed slightly costs a handful of triples instead of a full list, and history stays readable. Every read of members pays the
 chain, and domain shapes need the scratch graph, so the family trades read cost and validation convenience for write and storage cost. That
-is why it is a choice. The fixtures under `test/membership/` hold the stored triples of the history sketch's E5 and E7 under each encoding, and
+is why it is a choice. The fixtures under `test/membership/` hold the stored triples of two sets of members, of 500 and of 150, under each encoding, and
 `benchmark/persistence-membership/` measures both against an in-place family with a patch log.
 
-## 8. Capability self-checks
+### 5.7 Capability self-checks
 
 The compiler builds no store interface and consults no live backend. For each target it computes an
 unconditional `dal:CapabilityRequirement` from the resolved profile alone: the concurrency level the
@@ -1191,7 +1511,7 @@ ex:MyFusekiEnvironment a dal:CapabilitySpec ;
 ```
 
 A spec that says no reasoning is available also makes resolution drop reasoning-dependent scopes
-(§6.3). Without a spec, nothing is dropped or downgraded: the compiler assumes the most any backend
+(§5.5.3). Without a spec, nothing is dropped or downgraded: the compiler assumes the most any backend
 could provide and records what its resolution depended on.
 
 **Why unverified.** A compiler that needed a live store before producing anything would make every
@@ -1199,9 +1519,7 @@ adopter expose a running database to a design-time tool (ADR-A79). The truth abo
 running the conformance tests against it (guide Chapter 27): a store's documentation says what its
 isolation should be, and only the tests say what it is.
 
----
-
-## 9. What the compiler produces
+### 5.8 What the compiler produces
 
 `python -m persistence compile` runs five stages and emits a `dal:CompiledProfile` per target:
 
@@ -1209,9 +1527,9 @@ isolation should be, and only the tests say what it is.
 |---|---|---|
 | Load | one graph: this ontology, the adopter's configuration and applied ontology | malformed Turtle |
 | Resolve | one value per dimension per target, each with the profile that won and how many candidates there were (`dal:ResolvedDimension`) | `ProfileAmbiguityError` |
-| Validate | diagnostics: refusals and warnings (§12) | `CrossAxisViolation`, `BoundaryConflict`, `MissingBoundaryShapeError` |
+| Validate | diagnostics: refusals and warnings (§5.10) | `CrossAxisViolation`, `BoundaryConflict`, `MissingBoundaryShapeError` |
 | Select | one named builder per generated operation | none: a lookup table |
-| Emit | `dal:GeneratedOperation`s with reified `dal:ParameterBinding`s and the contract of each (§9.1), minting recipes, the capability requirement | an encoder rejection |
+| Emit | `dal:GeneratedOperation`s with reified `dal:ParameterBinding`s and the contract of each (§5.8.1), minting recipes, the capability requirement | an encoder rejection |
 
 The compiled profile names builders and parameters. It never embeds SPARQL text, so it is the same
 whatever store will run it. `instantiate` finds each builder by its `dal:templateId`, the operation's id with
@@ -1224,7 +1542,7 @@ name each root's graph as `$g`. The profile records both on each operation (`dal
 and `instantiate` renders what the profile says. It has no flags of its own, so a profile cannot say its queries are
 guarded while the rendered queries are not.
 
-### 9.1 The contract of a generated operation
+#### 5.8.1 The contract of a generated operation
 
 Each `dal:GeneratedOperation` also states what a caller in any language, a relational realisation and a model checker need, with no
 SPARQL text and no blank node. Every node of it has an IRI minted from the target (and the deployment, where there is one), the operation and the part,
@@ -1238,13 +1556,13 @@ for example `<…/compiled/LoanApplication/cas-replace#param-root>`, so two comp
 | `dal:access` | each logical resource the operation touches (`dal:ResourceKind`, such as `dal:VersionRow` or `dal:Receipt`), the mode (`dal:PointRead`, `dal:AbsenceRead`, `dal:ScanRead`, `dal:WholeAggregateRead`, `dal:Insert`, `dal:Delete`) and the parameter that keys it |
 | `dal:resultColumn` | each column of an audit or of the members query, with its kind and a separator |
 | `dal:payloadContract` | the payload slot, its root (the new version, for an append of versions), its encoding (`dal:GroundNTriples`), the boundary shape or `dal:NoBoundaryShape`, and the edges of the shape, each with the shape it leads to (`dal:edgeTargetShape`), so that a caller can walk the owned edges |
-| `dal:reportsOutcome`, `dal:examinedParameter` | on an audit, the outcomes it can report (`dal:Clean`, `dal:Failed`, `dal:NothingExamined`) and the parameter that lists the graphs it reads (H2.8b) |
+| `dal:reportsOutcome`, `dal:examinedParameter` | on an audit, the outcomes it can report (`dal:Clean`, `dal:Failed`, `dal:NothingExamined`) and the parameter that lists the graphs it reads |
 | `dal:digestContract` | what the request digest is hashed over, in order: the operation kind, the target, the expected seq, and the payload, the events, or the added and dropped triples |
 | `dal:guardStatus`, `dal:graphNaming` | the run's choices, above |
 | `dal:declarationSource` | `dal:BuilderDerived`, read from the builder. `dal:HandDeclared` is kept for an operation with no builder, and none has since the value guard was given one |
 
-The kinds, modes and resources are individuals of `spec/persistence.ttl` §10a, each with its logical key and realisation. Shapes
-in `shapes/constraints.ttl` check a compiled profile (§12), and the files of `test/expected-profiles/` are their positive fixtures.
+The kinds, modes and resources are individuals of `spec/persistence.ttl`, each with its logical key and realisation. Shapes
+in `shapes/constraints.ttl` check a compiled profile (§7.2), and the files of `test/expected-profiles/` are their positive fixtures.
 
 **Which operations a target gets** follows from its dimensions:
 
@@ -1253,12 +1571,12 @@ in `shapes/constraints.ttl` check a compiled profile (§12), and the files of `t
 | `dal:Optimistic` with a named-graph boundary | `create-if-absent` (or `bootstrap-version-row` under `dal:PreCreatedRow`), `cas-replace`, `tombstone-delete` |
 | `dal:Optimistic` with a composite boundary | `create-if-absent` (or `bootstrap-version-row` under `dal:PreCreatedRow`), `cas-replace` and `tombstone-delete`, each sweeping the aggregate with one property path inside the family's `dal:dataGraph` |
 | `dal:Optimistic` with no boundary | `cas-replace` guarded on `dal:valueGuardProperty`, inside the family's `dal:dataGraph` |
-| `dal:AppendVersions` (composite boundary, or no boundary with a `dal:dataGraph`, under `dal:Optimistic`) | `bootstrap-version-row` and `append-version`, whatever `dal:firstWrite` says, and no `tombstone-delete` (§7.10) |
+| `dal:AppendVersions` (composite boundary, or no boundary with a `dal:dataGraph`, under `dal:Optimistic`) | `bootstrap-version-row` and `append-version`, whatever `dal:firstWrite` says, and no `tombstone-delete` (§5.6.10) |
 | `dal:AppendRecords` | `bootstrap-version-row` and `append`, whatever the concurrency |
 | `dal:AppendOnly`, or event grain with any concurrency other than `dal:Optimistic` | `bootstrap-version-row` and `append` |
 | `dal:ProvidedConcurrency` or `dal:LockingConcurrency`, with commit grain | `unconditional-write` |
-| each uniqueness constraint | `key-claim-write` (or its dual form during rotation), `key-claim-retire`, and the reconciler of §7.6 |
-| a payload operation and a `dal:boundaryShape` | `payload-check`, the query that returns the subjects of a payload that no owned edge reaches from the root. A caller runs it over a local copy of its payload (H2.8b) |
+| each uniqueness constraint | `key-claim-write` (or its dual form during rotation), `key-claim-retire`, and the reconciler of §5.6.6 |
+| a payload operation and a `dal:boundaryShape` | `payload-check`, the query that returns the subjects of a payload that no owned edge reaches from the root. A caller runs it over a local copy of its payload |
 | every target | the audits: `gap-scan-audit`, `fork-detection-audit`, `revision-multi-txn-audit`, `txn-multi-revision-audit` |
 
 Under `dal:DatasetLevelGuard`, the create, bootstrap, compare-and-set, tombstone and append operations
@@ -1268,9 +1586,7 @@ limitations, among them: infrastructure graph IRIs are fixed constants rather th
 declared shard counts are recorded but not yet applied, and retention and epoch bumps are left to
 housekeeping.
 
----
-
-## 10. Choosing a profile
+### 5.9 Choosing a profile
 
 The guide's decision procedure (Chapter 29), for each graph family, tenant or aggregate:
 
@@ -1314,13 +1630,3776 @@ What each choice costs to run (guide §29.4):
 | strong, append | gap-detectable streams, idempotent ingestion | writers take turns per stream, `opSeq` discipline | the same, and frozen stream keys |
 | patch-log receipts | replay, change data capture, as-of reads | about twice the write volume, delta graphs | delta bucket rotation |
 
----
+### 5.10 Refusals and warnings
 
-## 11. Worked examples
+A configuration is checked twice: by SHACL shapes in [`shapes/constraints.ttl`](shapes/constraints.ttl),
+which any SHACL engine can run on a configuration graph, and by the compiler, which mirrors the
+cross-axis checks on resolved values. The compiler also catches combinations declared on different
+profile nodes, which node-local shapes cannot see.
+
+**Refused**, because the configuration cannot work:
+
+| Check | Why |
+|---|---|
+| no boundary with compare-and-set and no value guard | there is nothing to replace whole |
+| no boundary with a value guard and no `dal:dataGraph` | the guard would read and write the default graph, whose contents differ between stores |
+| composite boundary with receipts only, unless the family appends versions or records | a receipt could not say what changed inside the closure |
+| `dal:AppendVersions` on a named-graph family, without `dal:Optimistic`, or with no boundary and no data graph | the write has no variant, or no version row to guard, or no graph to hold the versions |
+| commit grain with `opSeq` required | the two contradict each other |
+| a key property outside a composite boundary | the key would not belong to the aggregate |
+| `dal:metaShards` changed without an acknowledged epoch bump | moving version rows is a migration |
+| `dal:BucketAnyRetention` with an as-of floor | replay would read across a hole |
+| a lag-window read without `dal:lagWindowMillis` | there is no bound |
+| `dal:Merge` without `dal:mergeRelation` | a merge must name what it records |
+| personal data with no erasure, or with replayable history not scoped per subject | no lawful erasure path |
+| an identity profile missing its key constraint, digest scheme, witness, namespace derivation or accepted pattern | the recipe could not be built |
+| a capability requirement the declared spec does not meet | the environment cannot run the profile |
+
+**Warned**, because the configuration works and its trade-off should be a conscious one: the
+store-local epoch, the row-level epoch guard, a weak ETag with compare-and-set, no global read where
+a dataset tier is declared, an advisory contiguity check, sorted acquisition with a single guarded
+update, declared shard counts not yet honoured, mixed receipt models in one graph family, a
+profile scoped to a bare class from another namespace, and a subclass of `fnd:Version` written in place.
+
+### 5.11 Keys: `persistent-foundation`
+
+Foundation gives every adopter keys: the names the world gives a thing, as key nodes with a
+scheme and a value, either locating it (`fnd:externalKey`) or identifying it (`fnd:naturalKey`)
+(Foundation README §8, [ADR-A114](../../docs/architecture/decisions/ADR-A114-external-and-natural-keys.md)).
+A natural key identifies one thing, and something has to keep it that way. An adopter using a
+reasoner alone takes `fnd:MergedOnNaturalKey`, and OWL merges any two things sharing one. **LATTICE
+recommends Persistence instead, for any deployment that writes keyed data**: `owl:hasKey` merges on
+any collision, including a mistaken one, and nothing in OWL can undo a merge or say why it happened.
+Persistence refuses the second claim when it is written, and reports, quarantines or records for
+review anything written around it.
+
+`persistent-foundation` is how. It is optional, and it is Persistence's only document that imports a
+layer: `spec/persistent-foundation.ttl` imports Foundation and this ontology, both at this README's version, so the `dal:`
+configuration ontology itself still imports nothing (§11). It holds one class and the shapes that tie
+Foundation's keys to Persistence's profiles.
+
+```mermaid
+flowchart LR
+    subgraph ONT["the adopter's ontology"]
+        S["scheme ex:lei<br/>a fnd:KeyScheme"]
+        KC["key class ex:LeiKey<br/>≡ fnd:keyScheme value ex:lei"]
+        C["ex:Company<br/>⊑ dal:PersistenceKeyed"]
+    end
+    subgraph CFG["the dal: configuration"]
+        IP["identity profile on ex:LeiKey<br/>mints key IRIs"]
+        KU["uniqueness on fnd:keyValue<br/>one key node per value"]
+        NU["uniqueness on fnd:naturalKey<br/>one owner per key"]
+        PP["privacy profile<br/>sensitive schemes only"]
+    end
+    S --> KC
+    KC --> IP
+    KC --> KU
+    KC -.-> PP
+    C --> NU
+```
+
+#### 5.11.1 What an adopter declares
+
+1. **The mixin on each keyed class**: `ex:Company rdfs:subClassOf dal:PersistenceKeyed`. It adds no
+   key axiom, so no reasoner merges two companies, and never sits beside `fnd:MergedOnNaturalKey`.
+2. **One key class per scheme**, defined from the scheme by an OWL restriction, and every key
+   asserted a member of it. Persistence resolves every profile for a class (§5.5.2), so a scheme's keys
+   need a class of their own for their IRIs to be minted their own way.
+3. **For each key class**, an identity profile minting its key IRIs and a uniqueness constraint on
+   `( fnd:keyValue )`, normalised by the scheme's `fnd:keyNormalisation`. The constraint is what the
+   recipe mints from, and it guarantees one key node per value however many writers record it.
+   Public schemes mint by natural key or derived hash, with no tenant scope, so two tenants recording
+   one company number reach one node by computation. Sensitive schemes mint a claimed surrogate (§5.6.7).
+4. **For each keyed class**, a uniqueness constraint on `( fnd:naturalKey )`. Its key component is
+   the key node's IRI, so the generated `key-claim-write` refuses a second owner of one key node. Any
+   of the three pipelines will do: a minted key IRI is already normalised, and its digest alphabet
+   has one case, so no two key nodes fold together. `dal:onViolation` picks the reconciler (§5.6.6).
+   A `dal:Merge` records `dal:mergeRelation` between the two owners, never `owl:sameAs`.
+5. **For a sensitive scheme's key class**, a privacy profile that is not `dal:PublicData`, and for a
+   personal-data scheme `dal:PersonalData`, so §5.6.9's erasure rules reach its keys.
+
+The compiler reads one `dal:appliesTo` per constraint, so each class takes its own constraint, as the
+example does. Deriving the natural-key constraint from the mixin alone is not built.
+
+#### 5.11.2 What the shapes check
+
+`shapes/persistent-foundation.ttl` runs on the adopter's ontology, configuration and data together,
+since the compiler matches asserted types and never reasons:
+
+| Shape | Reports |
+|---|---|
+| `dal:SchemeKeyClassShape` | a scheme with no key class, or more than one |
+| `dal:KeyClassIdentityShape` | a key class with no identity profile for `dal:EntityRole` |
+| `dal:SensitiveKeyClassShape` | a sensitive scheme's keys minted by any strategy other than `dal:SurrogateClaimedIdentity`, or with no privacy profile, or a public one. A personal-data scheme's keys without `dal:PersonalData` |
+| `dal:KeyNormalisationShape` | a key class's uniqueness constraint normalising differently from its scheme |
+| `dal:KeyTypedShape` | a key not asserted a member of its scheme's key class, or asserted a member of another scheme's, which a reasoner would resolve by merging the two schemes |
+| `dal:PersistenceKeyedClassShape` | a `dal:PersistenceKeyed` class with no natural-key constraint, or one that is also `fnd:MergedOnNaturalKey` |
+
+### 5.12 Repository layout
+
+```
+ontology/persistence/
+  spec/persistence.ttl       the dal: vocabulary
+  spec/persistent-foundation.ttl
+                             dal:PersistenceKeyed, importing Foundation (optional, §5.11)
+  shapes/constraints.ttl     SHACL shapes validating dal: configuration data (§7.2)
+  shapes/persistent-foundation.ttl
+                             the shapes tying Foundation's keys to dal: profiles (§5.11.2)
+  examples/                  the worked examples of §8, one negative fixture per refused
+                             combination, and the warning fixtures
+  execution/                 the SPARQL and recipes each example compiles to: generated by
+                             mise run build:persistence-execution, ignored by git (§8.5)
+  docs/                      the precedence algorithm and the aggregate-boundary design
+  test/expected-profiles/    the compiled profile each example gives, with the contract of every generated
+                             operation (§5.8.1). Compared with the output of compile by graph isomorphism, and the
+                             positive fixtures of the shapes over a compiled profile (§7.2).
+                             Regenerate with mise run build:persistence-expected-profiles
+  test/membership/           the stored triples of a set of members under each membership encoding (§5.6.11)
+```
+
+The compiler that consumes this ontology lives in [`tools/persistence`](../../tools/persistence/README.md),
+following the repository's split between `ontology/` (semantic assets) and `tools/` (executable
+reference implementations). The minting libraries live in `packages/minting`.
+
+### 5.13 Cross references
+
+| Document | Read it for |
+|---|---|
+| [rdf-sparql-patterns-guide.md](../../docs/architecture/rdf-sparql-patterns-guide.md) | the patterns this ontology configures, every failure they prevent, the full SPARQL, the conformance tests |
+| [iri-identity-patterns.md](../../docs/architecture/iri-identity-patterns.md) | identity, minting, epochs, merge and erasure in depth |
+| [identity-minting-specification.md](../../docs/architecture/identity-minting-specification.md) | the recipe format, pipelines, encodings and test vectors |
+| [tools/persistence/README.md](../../tools/persistence/README.md) | using the compiler and its generated SPARQL, and its known limitations |
+| [docs/precedence-and-resolution.md](docs/precedence-and-resolution.md), [docs/aggregate-boundaries.md](docs/aggregate-boundaries.md) | resolution and boundaries, in more depth |
+| [ADR-A78](../../docs/architecture/decisions/ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md), [ADR-A79](../../docs/architecture/decisions/ADR-A79-persistence-compiler-toolchain.md), [ADR-A80](../../docs/architecture/decisions/ADR-A80-housekeeping-component-boundary.md) | the governing decisions |
+| [ADR-A114](../../docs/architecture/decisions/ADR-A114-external-and-natural-keys.md) | external and natural keys, which Persistence enforces for adopters who choose it |
+| [ADR-A122](../../docs/architecture/decisions/ADR-A122-aggregate-ownership.md), [ADR-A123](../../docs/architecture/decisions/ADR-A123-typed-operation-ir.md), [ADR-A132](../../docs/architecture/decisions/ADR-A132-persistence-caller-library.md) | aggregate ownership, the contract of a generated operation, and the caller library |
+
+## 6. Description Logic Encoding
+
+Every term of `spec/persistence.ttl` is stated here, once. The foundation document's one class is the entry in an `output-file` region of 6.1, which sends it to `spec/persistent-foundation.ttl`.
+
+### 6.1 Classes
+
+#### `dal:ProfileScope`
+
+**Definition.** Base class for anything that answers 'which resources does this profile apply to'.
+
+#### `dal:GraphPatternScope`
+
+**Definition.** Matches graphs whose IRI starts with dal:graphPrefix. No reasoning.
+
+**Subclass of.** `dal:ProfileScope`
+
+#### `dal:NamespaceScope`
+
+**Definition.** Matches resources whose own IRI starts with dal:iriPrefix. No reasoning.
+
+**Subclass of.** `dal:ProfileScope`
+
+#### `dal:ClassScope`
+
+**Definition.** Matches resources with an asserted rdf:type of dal:targetClass, optionally including asserted
+rdfs:subClassOf* members when dal:includeSubclasses is true. Asserted triples only, never entailment.
+
+**Subclass of.** `dal:ProfileScope`
+
+#### `dal:ShapeScope`
+
+**Definition.** Matches resources conforming to dal:targetShape, an sh:NodeShape evaluated once against the adopter's
+data model at compile time. Never a write-time SHACL dependency.
+
+**Subclass of.** `dal:ProfileScope`
+
+#### `dal:EquivalentClassScope`
+
+**Definition.** Matches resources reachable only through owl:equivalentClass or other OWL entailment
+(dal:equivalentTo). The only scope kind that needs a reasoner or a precomputed materialised closure.
+
+**Subclass of.** `dal:ProfileScope`
+
+#### `dal:DataAccessProfile`
+
+**Definition.** Convenience individual declaring several dimensions at one scope. Never the model of record: the
+compiler decomposes it into six per-dimension assertions before resolution runs.
+
+#### `dal:AggregateBoundaryProfile`
+
+**Definition.** A profile that declares how a target's aggregate is bounded and how its first write creates the
+version row.
+
+#### `dal:AggregateBoundaryStrategy`
+
+**Definition.** How the triples that change together are delimited, one of a closed set of named strategies.
+
+#### `dal:OwnershipKind`
+
+**Definition.** How the aggregate stands to the node at the far end of an edge in a dal:boundaryShape tree. One of
+dal:Owned, dal:Reference, dal:Vocabulary.
+
+#### `dal:ReferenceMode`
+
+**Definition.** What an edge's reference names, when its target class is versioned. One of dal:ByIdentity, dal:Pinned.
+
+#### `dal:ReferenceData`
+
+**Definition.** Declares that the instances of each dal:coversClass are reference data. An owned edge to reference
+data is refused unless its profile declares dal:ownsReferenceData true. skos:Concept and skos:ConceptScheme are
+reference data without a declaration.
+
+#### `dal:ConcurrencyProfile`
+
+**Definition.** A profile that declares how concurrent writers to one aggregate are kept apart, with the deadlock
+policy and the ETag form and representation.
+
+#### `dal:ConcurrencyStrategy`
+
+**Definition.** The mechanism that keeps concurrent writers to one aggregate from overwriting each other, one of a
+closed set of named strategies.
+
+#### `dal:OrderingProfile`
+
+**Definition.** A profile that declares a family's ordering grain, dataset tier, global read and contiguity check.
+
+#### `dal:OrderingGrain`
+
+**Definition.** The grain at which a family assigns positions, one of a closed set of named grains.
+
+#### `dal:DatasetTierModel`
+
+**Definition.** How a total order across streams is derived, for a family that declares one, one of a closed set of
+named models.
+
+#### `dal:ReceiptProfile`
+
+**Definition.** A profile that declares a family's receipt model and how its receipts are retained.
+
+#### `dal:ReceiptModel`
+
+**Definition.** What history a family's writes leave in the receipt log. One of dal:ReceiptOnly, dal:PatchLog,
+dal:SnapshotPerRevision, dal:NoReceipt.
+
+#### `dal:MetaTopologyProfile`
+
+**Definition.** A profile that declares a family's meta topology, its shard counts and its registry graph.
+
+#### `dal:MetaTopology`
+
+**Definition.** How version rows are spread over meta graphs, one of a closed set of named topologies.
+
+#### `dal:UniquenessConstraint`
+
+**Definition.** One keyed uniqueness constraint on a target, with its key properties, scope, normalisation and policy
+on violation.
+
+#### `dal:CapabilitySpec`
+
+**Definition.** An adopter-authored, optional, static declaration of assumed backend capabilities. NEVER derived from
+a live SPI or a TCK run, and never required for compilation to succeed. Shares field shape with the guide's
+StoreCapabilities record (Chapter 25 §25.2) by design, not by identity, so a future SPI-integrated stage can populate
+one from a real TCK run without a second vocabulary.
+
+#### `dal:CapabilityRequirement`
+
+**Definition.** The compiler's own unconditional output: exactly what a resolved configuration requires, independent
+of any CapabilitySpec. Always produced, one per target.
+
+#### `dal:CapabilityCheck`
+
+**Definition.** A per-dimension comparison of a dal:CapabilityRequirement against a supplied dal:CapabilitySpec, with
+a verdict. Present only when a spec was supplied for the target.
+
+#### `dal:Template`
+
+**Definition.** The builder that renders a generated operation, shared across every target resolving to the same
+dimension combination. Its dal:templateId is the builder's identity, the operation id without a suffix.
+
+#### `dal:GeneratedOperation`
+
+**Definition.** One operation (create, cas-replace, tombstone, ...) selected for a target: which template, which
+parameters to mix into it, and its contract (§10a).
+
+#### `dal:ParameterBinding`
+
+**Definition.** A reified, typed parameter binding mixed into a template's Mustache slots at instantiate time.
+Modelled on mrk:ParameterBinding (paramName/paramType/paramValue).
+
+#### `dal:ParameterDeclaration`
+
+**Definition.** One request-time parameter of a generated operation: its name, its kind and whether it is required.
+Its IRI is minted from the target, the operation and the name.
+
+#### `dal:ParameterKind`
+
+**Definition.** What a parameter holds. The first nine are SPARQL terms, and dal:PayloadKind, dal:RowsKind and
+dal:RegistryListKind are request-time slots, text the caller fills in because a set of triples, of rows or of graph
+IRIs is not one RDF term.
+
+#### `dal:Rule`
+
+**Definition.** A rule a parameter's value must satisfy, named and never written as a SPARQL expression.
+
+#### `dal:Source`
+
+**Definition.** Where a caller obtains a value, or the statement that there is no source.
+
+#### `dal:ResourceAccess`
+
+**Definition.** One logical resource an operation touches, with the mode of the access and the parameter that keys it.
+Its IRI is minted from the target, the operation and the position of the access.
+
+#### `dal:AccessMode`
+
+**Definition.** How an operation touches a logical resource. An absence read is named apart from a point read, since
+write skew turns on it.
+
+#### `dal:ResourceKind`
+
+**Definition.** A logical resource an operation reads or writes, with its logical key and its realisation in SPARQL.
+
+#### `dal:OperationKind`
+
+**Definition.** The logical kind of a generated operation, closed. A dataset-guard variant, a patch-log variant and a
+no-receipt variant have the kind of their base operation.
+
+#### `dal:AuditOutcome`
+
+**Definition.** What an audit reports. A query returns the rows that violate an invariant, so a caller derives the
+outcome from the rows and from whether the audit read anything.
+
+#### `dal:GuardStatus`
+
+**Definition.** Whether an operation's required-parameter guard is in its query, and why not when it is not.
+
+#### `dal:GraphNaming`
+
+**Definition.** Who names the named graph of a root.
+
+#### `dal:DeclarationSource`
+
+**Definition.** Where an operation's contract comes from.
+
+#### `dal:ResultColumn`
+
+**Definition.** One column of the result of an operation that selects. Its IRI is minted from the target, the
+operation and the column's name.
+
+#### `dal:ColumnKind`
+
+**Definition.** What a result column holds.
+
+#### `dal:PayloadContract`
+
+**Definition.** What an operation takes as the aggregate's triples: the slot, the root, the encoding, the boundary
+shape the payload is checked against, and the edges of that shape that lead to a node. Its IRI is minted from the
+target and the operation.
+
+#### `dal:PayloadEncoding`
+
+**Definition.** How a payload is written into its slot.
+
+#### `dal:BoundaryShapeAbsence`
+
+**Definition.** The statement that a family names no boundary shape.
+
+#### `dal:DigestContract`
+
+**Definition.** What the request digest of an operation is taken over. Its IRI is minted from the target and the
+operation. The algorithm and the encoding are fixed here, and the caller library computes it (ADR-A132).
+
+#### `dal:DigestPart`
+
+**Definition.** One part of a digest: its role, its position and the parameters that fill it.
+
+#### `dal:DigestPartRole`
+
+**Definition.** What a part of a digest holds.
+
+#### `dal:CompiledProfile`
+
+**Definition.** The canonical output of persistence compile. Never contains literal SPARQL text.
+
+#### `dal:ResolvedDimension`
+
+**Definition.** Provenance for one dimension's winning value at one target: which scope won, and how many candidates
+existed.
+
+#### `dal:MintingRecipe`
+
+**Definition.** A self-contained minting recipe for one resource role at one target, generated by tools/persistence
+(identity-minting-specification.md).
+
+#### `dal:Diagnostic`
+
+**Definition.** A warning the compiler recorded for a target in its compiled profile, with its kind and its message.
+
+#### `dal:ReferenceEdge`
+
+**Definition.** One edge of a family's dal:boundaryShape tree that leads to a node, in a compiled profile: its source
+shape, step, ownership, target class and reference mode, in walk order.
+
+#### `dal:IdentityProfile`
+
+**Definition.** Convenience individual declaring an identity strategy for one resource role at one scope. Decomposes
+into the same per-dimension model as dal:DataAccessProfile.
+
+#### `dal:ResourceRole`
+
+**Definition.** Which kind of thing is being named (iri-identity-patterns.md §2). Identity choices are made per role,
+never once for a whole deployment.
+
+#### `dal:IdentityStrategy`
+
+**Definition.** One minting pattern from iri-identity-patterns.md §6. An adopter selects the strategy compatible with
+their key's mutability and privacy class; the framework does not default to one for every role.
+
+#### `dal:DigestScheme`
+
+**Definition.** The exact bytes for a derived-hash or content-addressed identity (iri-identity-patterns.md §7.4).
+Required whenever dal:identityStrategy is dal:DerivedHashIdentity or dal:ContentAddressedIdentity, except when
+dal:eventIdentityStrategy is dal:PositionDerivedEvent and dal:occurrenceNamespaceDerivation is
+dal:RegistryTokenDerivation: the namespace is a registry-allocated token, not digest-derived, so no digest scheme is
+ever used for that role (persistence-compiler-iri-sync Slice 5).
+
+#### `dal:OccurrenceNamespaceDerivation`
+
+**Definition.** How an event/occurrence IRI's namespace is derived from its target (iri-identity-patterns.md §10.1,
+§10.5). Required whenever dal:resourceRole is dal:EventOccurrenceRole and the strategy is position-derived.
+
+#### `dal:EventIdentityStrategy`
+
+**Definition.** Whether an occurrence IRI is deterministic from position or a random surrogate
+(iri-identity-patterns.md §10.6).
+
+#### `dal:SurrogateKind`
+
+**Definition.** What a surrogate identifier is.
+
+#### `dal:SelfReferenceRule`
+
+**Definition.** How a content-addressed graph that mentions its own identifier is hashed (iri-identity-patterns.md
+§8.3).
+
+#### `dal:EpochProfile`
+
+**Definition.** A profile that declares where a dataset's epoch comes from and what every write guards on.
+
+#### `dal:EpochAuthority`
+
+**Definition.** Where a new epoch value is allocated from, so that it survives a restore (iri-identity-patterns.md
+§10.3).
+
+#### `dal:EpochGuardScope`
+
+**Definition.** Which epoch value a write's guard compares against.
+
+#### `dal:PrivacyProfile`
+
+**Definition.** A profile that declares the class of a family's data, how a subject is erased and what wins when
+erasure meets the monotonicity of claims.
+
+#### `dal:PrivacyClass`
+
+**Definition.** The class of data a profile governs for erasure, one of a closed set of named classes.
+
+#### `dal:ErasureStrategy`
+
+**Definition.** How one subject's data is erased, one of a closed set of named strategies.
+
+#### `dal:ErasurePrecedence`
+
+**Definition.** Which wins when erasure and the key-claim registry's ownership monotonicity (Chapter 6.2 of the
+patterns guide) conflict, because a physically deleted claim breaks the 'a claim is only ever released by its own
+owner' premise.
+
+#### `dal:GlobalReadStrategy`
+
+**Definition.** How a cross-stream (dataset-tier) consumer avoids the pre-commit HLC reorder hole (guide §21.3, G2).
+Exactly one is selected per family that advertises a dataset tier.
+
+#### `dal:ContiguityCheckMode`
+
+**Definition.** What a consumer does when the sequence numbers it has seen for a stream have a gap, one of a closed
+set of named modes.
+
+#### `dal:RetentionMode`
+
+**Definition.** How receipt buckets may be pruned, one of a closed set of named modes.
+
+#### `dal:EtagForm`
+
+**Definition.** Whether the ETag derived for an aggregate is a strong or a weak validator.
+
+#### `dal:EtagRepresentation`
+
+**Definition.** Whether conditional requests are served one representation or the tag names the representation.
+
+#### `dal:FirstWriteMode`
+
+**Definition.** How the first write of an aggregate creates its version row, one of a closed set of named modes.
+
+#### `dal:DeadlockPolicy`
+
+**Definition.** Who is responsible for avoiding deadlock when a write touches several version rows, one of a closed
+set of named policies.
+
+#### `dal:WriteDisciplineProfile`
+
+**Definition.** Declares how a scope's families write a new state (dal:writeDiscipline), and for a family that appends
+versions how a version states its members (dal:membershipEncoding, dal:checkpointEvery). Resolved like any dimension.
+
+#### `dal:WriteDiscipline`
+
+**Definition.** How a family writes a new state. One of dal:InPlace, dal:AppendVersions, dal:AppendRecords.
+
+#### `dal:MembershipEncoding`
+
+**Definition.** How a version of a root states its members. One of dal:FullMembership, dal:DeltaMembership.
+
+#### `dal:ClaimScheme`
+
+**Definition.** Versioned state for a keyed-hash claim (guide Chapter 6.1), so rotating the HMAC secret does not open
+a window where two scheme versions can each claim the same normalized key.
+
+#### `dal:SchemeState`
+
+**Definition.** A state of a claim scheme in its rotation, one of a closed set of named states.
+
+<!-- start: {"output-file": "spec/persistent-foundation.ttl"} -->
+
+#### `dal:PersistenceKeyed`
+
+**Definition.** A naturally keyed thing whose natural keys Persistence keeps unique when they are written.
+
+**Utility.** Subject: a class whose members carry natural keys and are written through Persistence. Adds no key axiom,
+so no reasoner merges two members sharing a key. Give the class a dal:UniquenessConstraint on fnd:naturalKey: the
+guarded key-claim write then refuses a second owner, and dal:onViolation picks the reconciler for duplicates written
+around it (reject, quarantine, or a reviewable dal:mergeRelation, never owl:sameAs). Never combine with
+fnd:MergedOnNaturalKey.
+
+**Subclass of.** `fnd:NaturallyKeyed`
+
+<!-- end -->
+
+### 6.2 Object Properties
+
+#### `dal:coversClass`
+
+**Definition.** On a dal:GraphPatternScope, which class(es) its resources instantiate. A design-time compiler resolves
+per class, not per live instance, and has no data graph to check actual membership against, so a GraphPatternScope
+must say what it covers rather than being discovered to cover it. Required for a GraphPatternScope to participate in
+resolution for a class-level target. On a dal:ReferenceData, the classes whose instances are reference data. No
+rdfs:domain is declared, since one would make every dal:ReferenceData a dal:GraphPatternScope.
+
+#### `dal:targetClass`
+
+**Definition.** The class a class scope matches by asserted type.
+
+**Domain.** `dal:ClassScope`
+
+#### `dal:targetShape`
+
+**Definition.** An sh:NodeShape defining scope membership.
+
+**Domain.** `dal:ShapeScope`
+
+#### `dal:equivalentTo`
+
+**Definition.** The class an equivalent-class scope matches through owl:equivalentClass or another OWL entailment.
+
+**Domain.** `dal:EquivalentClassScope`
+
+#### `dal:appliesTo`
+
+**Definition.** Every profile dimension individual (including DataAccessProfile) carries exactly one of these.
+
+**Range.** `dal:ProfileScope`
+
+#### `dal:strategy`
+
+**Definition.** The aggregate boundary strategy a boundary profile declares.
+
+**Domain.** `dal:AggregateBoundaryProfile`
+
+**Range.** `dal:AggregateBoundaryStrategy`
+
+#### `dal:boundaryShape`
+
+**Definition.** On a dal:AggregateBoundaryProfile, an sh:NodeShape, the root of a classified tree: every property
+shape in it that leads to a node carries dal:ownership. Mandatory when dal:strategy is dal:CompositePropertyBoundary.
+A dal:NamedGraphBoundary profile may name one too, to define the subjects a payload may contain. The compiler walks
+the tree once, offline. No target backend ever executes it. On a dal:PayloadContract of a compiled profile, the shape
+the payload is checked against, or dal:NoBoundaryShape. No rdfs:domain is declared, since the property has two.
+
+#### `dal:dataGraph`
+
+**Definition.** The named graph that holds the aggregates of a dal:CompositePropertyBoundary family, and the values of
+a dal:NoBoundary family. Mandatory for the composite strategy, for dal:NoBoundary under dal:Optimistic with a
+dal:valueGuardProperty (the refusal is MissingDataGraph), and for dal:AppendVersions. Every operation of such a family
+reads and writes this graph only, never the default graph, whose contents differ between stores (static check S-1).
+
+**Domain.** `dal:AggregateBoundaryProfile`
+
+#### `dal:ownership`
+
+**Definition.** On an sh:PropertyShape inside a dal:boundaryShape tree. Classifies the edge the property shape
+describes, in the context of the node shape that holds it. Mandatory on every property shape that leads to a node.
+Forbidden on a value property (sh:datatype, or sh:nodeKind sh:Literal). No rdfs:domain is declared, so the vocabulary
+does not assert that a property shape is anything else.
+
+**Range.** `dal:OwnershipKind`
+
+#### `dal:recordClass`
+
+**Definition.** On a profile, a class whose instances are records: evidence of what they saw, cited for what they said
+at a time, beside the subclasses of fnd:Evidence and fnd:DerivedArtefact. Its subclasses, as the configuration asserts
+them, are records too. compile warns EvidenceEdgeByIdentity for an edge by identity from a record class to a versioned
+one, and NoReceiptForRecord for dal:NoReceipt on a family whose target is a record class or versioned. On a
+dal:CompiledProfile, the record classes the family touches, its target class and the subject classes of its edges, so
+a caller reads them without the configuration. No rdfs:domain is declared, since any profile may name one.
+
+**Range.** `owl:Class`
+
+#### `dal:referenceMode`
+
+**Definition.** On an sh:PropertyShape inside a dal:boundaryShape tree, beside dal:ownership. Says what the edge
+names, an identity (dal:ByIdentity, absent means this) or a version (dal:Pinned). Ownership says what a write sweeps,
+the reference mode what a reference names. compile records it for every edge that leads to a node, refuses dal:Pinned
+on an edge whose target class is not versioned (PinnedReferenceToUnversionedClass), and warns EvidenceEdgeByIdentity
+for an edge by identity from an evidence class to a versioned one. The edge compiles unchanged, whichever the mode,
+since a write names what the payload contains. No rdfs:domain is declared, as for dal:ownership.
+
+**Range.** `dal:ReferenceMode`
+
+#### `dal:concurrencyProfile`
+
+**Definition.** The concurrency strategy a concurrency profile declares.
+
+**Domain.** `dal:ConcurrencyProfile`
+
+**Range.** `dal:ConcurrencyStrategy`
+
+#### `dal:minConcurrencyLevel`
+
+**Definition.** Meaningful only when dal:concurrencyProfile is dal:Optimistic.
+
+**Domain.** `dal:ConcurrencyProfile`
+
+#### `dal:valueGuardProperty`
+
+**Definition.** For dal:NoBoundary targets choosing dal:Optimistic: the single property a value-based guard compares
+the old value of (guide §14.2). Without one, Optimistic concurrency on a NoBoundary target has nothing coherent to
+replace and is rejected.
+
+**Domain.** `dal:ConcurrencyProfile`
+
+#### `dal:orderingGrain`
+
+**Definition.** The grain at which positions are assigned, per commit or per event.
+
+**Domain.** `dal:OrderingProfile`
+
+**Range.** `dal:OrderingGrain`
+
+#### `dal:datasetTierModel`
+
+**Definition.** The dataset tier model an ordering profile declares.
+
+**Domain.** `dal:OrderingProfile`
+
+**Range.** `dal:DatasetTierModel`
+
+#### `dal:receiptModel`
+
+**Definition.** The receipt model a receipt profile declares.
+
+**Domain.** `dal:ReceiptProfile`
+
+**Range.** `dal:ReceiptModel`
+
+#### `dal:metaTopology`
+
+**Definition.** The meta topology a meta topology profile declares.
+
+**Domain.** `dal:MetaTopologyProfile`
+
+**Range.** `dal:MetaTopology`
+
+#### `dal:keyProperty`
+
+**Definition.** An rdf:List of one or more properties forming the key.
+
+**Domain.** `dal:UniquenessConstraint`
+
+#### `dal:scopeProperty`
+
+**Definition.** Optional: narrows the key to be unique within this property's value (a composite/scoped key, guide
+K3).
+
+**Domain.** `dal:UniquenessConstraint`
+
+#### `dal:normalizePipeline`
+
+**Definition.** The frozen normalization pipeline applied to every key component before claim derivation (guide §8.1).
+A pipeline is identified by its implementation and pinned Unicode data version, not by its description: two
+implementations that disagree on one input mint two claim IRIs for one key.
+
+**Domain.** `dal:UniquenessConstraint`
+
+#### `dal:onViolation`
+
+**Definition.** What a uniqueness constraint does with a violation, one of dal:Reject, dal:Merge and dal:Quarantine,
+which selects the reconciler.
+
+**Domain.** `dal:UniquenessConstraint`
+
+#### `dal:minEnforcementLevel`
+
+**Definition.** The weakest enforcement level a uniqueness constraint accepts, one of dal:Advisory, dal:Transactional
+and dal:Strong.
+
+#### `dal:appliesToTarget`
+
+**Definition.** Which named deployment target this spec describes.
+
+**Domain.** `dal:CapabilitySpec`
+
+#### `dal:requiresReasoningFor`
+
+**Definition.** An rdf:List of the scopes, if any, whose resolution depended on reasoning being available.
+
+**Domain.** `dal:CapabilityRequirement`
+
+#### `dal:requiresUniquenessLevel`
+
+**Definition.** The highest enforcement level that any uniqueness constraint of the target asks for.
+
+**Domain.** `dal:CapabilityRequirement`
+
+#### `dal:checkedAgainst`
+
+**Definition.** The capability spec a capability check compared the requirement with.
+
+**Domain.** `dal:CapabilityCheck`
+
+**Range.** `dal:CapabilitySpec`
+
+#### `dal:usesTemplate`
+
+**Definition.** The template, that is the builder, a generated operation is rendered from.
+
+**Domain.** `dal:GeneratedOperation`
+
+**Range.** `dal:Template`
+
+#### `dal:hasParameterBinding`
+
+**Definition.** A parameter binding of a generated operation.
+
+**Domain.** `dal:GeneratedOperation`
+
+**Range.** `dal:ParameterBinding`
+
+#### `dal:operationKind`
+
+**Definition.** The logical kind of the operation, one individual of dal:OperationKind. A relational realisation and a
+model compare operations by kind and not by the SPARQL a builder writes. A dataset-guard variant has the kind of its
+base operation.
+
+**Domain.** `dal:GeneratedOperation`
+
+**Range.** `dal:OperationKind`
+
+#### `dal:guardStatus`
+
+**Definition.** Whether the operation's required-parameter guard is in the query, as the compile run chose
+(persistence compile --no-parameter-guards). instantiate renders what this says, so a rendering cannot disagree with
+its profile.
+
+**Domain.** `dal:GeneratedOperation`
+
+**Range.** `dal:GuardStatus`
+
+#### `dal:graphNaming`
+
+**Definition.** Who names the named graph the operation writes, as the compile run chose (persistence compile
+--caller-graph-names). Absent for an operation that names no graph by a root.
+
+**Domain.** `dal:GeneratedOperation`
+
+**Range.** `dal:GraphNaming`
+
+#### `dal:declarationSource`
+
+**Definition.** Where the contract comes from, derived from the operation's builder or written by hand.
+
+**Domain.** `dal:GeneratedOperation`
+
+**Range.** `dal:DeclarationSource`
+
+#### `dal:parameter`
+
+**Definition.** A request-time parameter of the operation, one declaration for each $name of its query and each slot a
+caller fills with text.
+
+**Domain.** `dal:GeneratedOperation`
+
+**Range.** `dal:ParameterDeclaration`
+
+#### `dal:access`
+
+**Definition.** A logical resource the operation touches, one declaration for each resource, mode and key.
+
+**Domain.** `dal:GeneratedOperation`
+
+**Range.** `dal:ResourceAccess`
+
+#### `dal:resultColumn`
+
+**Definition.** A column of the result of an operation that selects, an audit or the members query, in
+dal:columnPosition order.
+
+**Domain.** `dal:GeneratedOperation`
+
+**Range.** `dal:ResultColumn`
+
+#### `dal:payloadContract`
+
+**Definition.** What the operation takes as the aggregate's triples. Absent for an operation with no payload.
+
+**Domain.** `dal:GeneratedOperation`
+
+**Range.** `dal:PayloadContract`
+
+#### `dal:digestContract`
+
+**Definition.** What the request digest of an operation that takes $requestDigest is taken over, so a caller in
+another language can compute it.
+
+**Domain.** `dal:GeneratedOperation`
+
+**Range.** `dal:DigestContract`
+
+#### `dal:parameterKind`
+
+**Definition.** What the parameter holds, one individual of dal:ParameterKind.
+
+**Domain.** `dal:ParameterDeclaration`
+
+**Range.** `dal:ParameterKind`
+
+#### `dal:mustEqual`
+
+**Definition.** A rule the parameter's value must satisfy, checked by the guard. dal:GraphNameOfRoot, for a graph the
+caller names.
+
+**Domain.** `dal:ParameterDeclaration`
+
+**Range.** `dal:Rule`
+
+#### `dal:mustEqualFor`
+
+**Definition.** The parameter the rule of dal:mustEqual is applied to, the root.
+
+**Domain.** `dal:ParameterDeclaration`
+
+**Range.** `dal:ParameterDeclaration`
+
+#### `dal:sourcedFrom`
+
+**Definition.** Where a caller obtains the parameter's value, when it is not the caller's own. A caller obligation.
+
+**Domain.** `dal:ParameterDeclaration`
+
+**Range.** `dal:Source`
+
+#### `dal:resourceKind`
+
+**Definition.** The logical resource, one individual of dal:ResourceKind.
+
+**Domain.** `dal:ResourceAccess`
+
+**Range.** `dal:ResourceKind`
+
+#### `dal:accessMode`
+
+**Definition.** How the operation touches the resource, one individual of dal:AccessMode.
+
+**Domain.** `dal:ResourceAccess`
+
+**Range.** `dal:AccessMode`
+
+#### `dal:keyedBy`
+
+**Definition.** The parameter whose value is the key of the resource, when the access is about one given subject.
+Absent for a computed or minted subject, such as a receipt, and for a scan.
+
+**Domain.** `dal:ResourceAccess`
+
+**Range.** `dal:ParameterDeclaration`
+
+#### `dal:reportsOutcome`
+
+**Definition.** An outcome an audit can report. Every audit declares all three.
+
+**Domain.** `dal:GeneratedOperation`
+
+**Range.** `dal:AuditOutcome`
+
+#### `dal:examinedParameter`
+
+**Definition.** On an audit that reads the graphs a caller lists, the parameter that lists them. When it lists none,
+the audit examines nothing and reports dal:NothingExamined.
+
+**Domain.** `dal:GeneratedOperation`
+
+**Range.** `dal:ParameterDeclaration`
+
+#### `dal:columnKind`
+
+**Definition.** What the column holds, one individual of dal:ColumnKind.
+
+**Domain.** `dal:ResultColumn`
+
+**Range.** `dal:ColumnKind`
+
+#### `dal:payloadParameter`
+
+**Definition.** The slot the payload is written into.
+
+**Domain.** `dal:PayloadContract`
+
+**Range.** `dal:ParameterDeclaration`
+
+#### `dal:payloadRoot`
+
+**Definition.** The parameter that names the root of the payload. Absent for an operation with no root.
+
+**Domain.** `dal:PayloadContract`
+
+**Range.** `dal:ParameterDeclaration`
+
+#### `dal:payloadEncoding`
+
+**Definition.** How the payload is written into its slot.
+
+**Domain.** `dal:PayloadContract`
+
+**Range.** `dal:PayloadEncoding`
+
+#### `dal:digestPart`
+
+**Definition.** A part of the digest, in dal:partOrder order.
+
+**Domain.** `dal:DigestContract`
+
+**Range.** `dal:DigestPart`
+
+#### `dal:partRole`
+
+**Definition.** What the part holds, one individual of dal:DigestPartRole.
+
+**Domain.** `dal:DigestPart`
+
+**Range.** `dal:DigestPartRole`
+
+#### `dal:partSource`
+
+**Definition.** A parameter declaration that fills the part, or dal:NoSource for a part that takes none.
+
+**Domain.** `dal:DigestPart`
+
+#### `dal:forTarget`
+
+**Definition.** The target class a compiled profile was resolved for.
+
+**Domain.** `dal:CompiledProfile`
+
+#### `dal:forDeployment`
+
+**Definition.** The dal:GraphPatternScope this compiled profile was resolved for, when the target class has more than
+one disjoint graph-pattern deployment (for example lending and credit both deploying beh:Behaviour, each into its own
+graph family, each getting its own compiled profile). Absent for the unscoped/fallback deployment and for targets with
+no graph-pattern deployment at all.
+
+**Domain.** `dal:CompiledProfile`
+
+#### `dal:resolvedDimension`
+
+**Definition.** A dimension the compiler resolved for the target, with its value and its provenance.
+
+**Domain.** `dal:CompiledProfile`
+
+**Range.** `dal:ResolvedDimension`
+
+#### `dal:resolvedValue`
+
+**Definition.** The individual a dimension resolved to.
+
+**Domain.** `dal:ResolvedDimension`
+
+#### `dal:mintingRecipe`
+
+**Definition.** A minting recipe the compiler emitted in a compiled profile.
+
+**Domain.** `dal:CompiledProfile`
+
+**Range.** `dal:MintingRecipe`
+
+#### `dal:forRole`
+
+**Definition.** The resource role a minting recipe mints for.
+
+**Domain.** `dal:MintingRecipe`
+
+**Range.** `dal:ResourceRole`
+
+#### `dal:recipeStrategy`
+
+**Definition.** The strategy the recipe executes: a dal:IdentityStrategy, or dal:PositionDerivedEvent for
+position-derived occurrences.
+
+**Domain.** `dal:MintingRecipe`
+
+#### `dal:wonBy`
+
+**Definition.** The profile whose value won the resolution of a dimension.
+
+**Domain.** `dal:ResolvedDimension`
+
+#### `dal:diagnostic`
+
+**Definition.** A diagnostic the compiler recorded in a compiled profile.
+
+**Domain.** `dal:CompiledProfile`
+
+**Range.** `dal:Diagnostic`
+
+#### `dal:appliedUniquenessConstraint`
+
+**Definition.** A uniqueness constraint the compiler applied to the target.
+
+**Domain.** `dal:CompiledProfile`
+
+**Range.** `dal:UniquenessConstraint`
+
+#### `dal:referenceEdge`
+
+**Definition.** On a dal:CompiledProfile, an edge of the family's boundary shape, stated there once with an IRI. On a
+dal:PayloadContract, a pointer to an edge of its own profile, which the payload's caller check follows. No rdfs:domain
+is declared, since the property has two.
+
+**Range.** `dal:ReferenceEdge`
+
+#### `dal:edgeSource`
+
+**Definition.** The node shape that holds the edge's property shape.
+
+**Domain.** `dal:ReferenceEdge`
+
+#### `dal:edgePredicate`
+
+**Definition.** The predicate of the edge's one step.
+
+**Domain.** `dal:ReferenceEdge`
+
+#### `dal:edgeOwnership`
+
+**Definition.** The ownership kind of a reference edge, owned, a reference or vocabulary.
+
+**Domain.** `dal:ReferenceEdge`
+
+**Range.** `dal:OwnershipKind`
+
+#### `dal:edgeTargetClass`
+
+**Definition.** The sh:class of the edge, else the sh:targetClass of its sh:node. Absent when neither is declared.
+
+**Domain.** `dal:ReferenceEdge`
+
+#### `dal:edgeTargetShape`
+
+**Definition.** The sh:node of the edge, the node shape of what it leads to. Absent when it names none, so a node
+reached by it owns nothing further. A caller's payload check walks owned edges by it.
+
+**Domain.** `dal:ReferenceEdge`
+
+#### `dal:generatedOperation`
+
+**Definition.** An operation the compiler generated for a compiled profile's target.
+
+**Domain.** `dal:CompiledProfile`
+
+**Range.** `dal:GeneratedOperation`
+
+#### `dal:capabilityRequirement`
+
+**Definition.** The capability requirement the compiler computed for the target.
+
+**Domain.** `dal:CompiledProfile`
+
+**Range.** `dal:CapabilityRequirement`
+
+#### `dal:capabilityCheck`
+
+**Definition.** The check of the target's capability requirement against a supplied capability spec.
+
+**Domain.** `dal:CompiledProfile`
+
+**Range.** `dal:CapabilityCheck`
+
+#### `dal:resourceRole`
+
+**Definition.** The resource role an identity profile names.
+
+**Domain.** `dal:IdentityProfile`
+
+**Range.** `dal:ResourceRole`
+
+#### `dal:identityStrategy`
+
+**Definition.** The identity strategy an identity profile declares for its resource role.
+
+**Domain.** `dal:IdentityProfile`
+
+**Range.** `dal:IdentityStrategy`
+
+#### `dal:digestScheme`
+
+**Definition.** The digest scheme an identity profile mints with, when an identifier or a namespace is a digest.
+
+**Domain.** `dal:IdentityProfile`
+
+**Range.** `dal:DigestScheme`
+
+#### `dal:occurrenceNamespaceDerivation`
+
+**Definition.** How the namespace of a position-derived event identity is derived from its target.
+
+**Domain.** `dal:IdentityProfile`
+
+**Range.** `dal:OccurrenceNamespaceDerivation`
+
+#### `dal:eventIdentityStrategy`
+
+**Definition.** How the IRI of an event occurrence is chosen, as an identity profile declares it.
+
+**Domain.** `dal:IdentityProfile`
+
+**Range.** `dal:EventIdentityStrategy`
+
+#### `dal:keyConstraint`
+
+**Definition.** For dal:NaturalKeyIdentity and dal:DerivedHashIdentity: the uniqueness constraint whose key
+properties, scope property and normalization pipeline the identity is derived from, so the derived IRI and the
+uniqueness check normalize the key identically.
+
+**Domain.** `dal:IdentityProfile`
+
+**Range.** `dal:UniquenessConstraint`
+
+#### `dal:claimsConstraint`
+
+**Definition.** For dal:SurrogateClaimedIdentity: the one uniqueness constraint whose claim is minted alongside the
+surrogate. It must apply to the same target and carry a complete dal:ClaimScheme. Other constraints on the class stay
+ordinary uniqueness claims.
+
+**Domain.** `dal:IdentityProfile`
+
+**Range.** `dal:UniquenessConstraint`
+
+#### `dal:tuplePrefix`
+
+**Definition.** An rdf:List of strings prepended to a derived-hash tuple for domain separation, for example ("iri"
+"v1" "sku"), so two recipes sharing a key never share a digest. Required for dal:DerivedHashIdentity.
+
+**Domain.** `dal:IdentityProfile`
+
+#### `dal:surrogateKind`
+
+**Definition.** Required for dal:SurrogateClaimedIdentity.
+
+**Domain.** `dal:IdentityProfile`
+
+**Range.** `dal:SurrogateKind`
+
+#### `dal:selfReferenceRule`
+
+**Definition.** Required for dal:ContentAddressedIdentity.
+
+**Domain.** `dal:IdentityProfile`
+
+**Range.** `dal:SelfReferenceRule`
+
+#### `dal:epochAuthority`
+
+**Definition.** Where a new epoch comes from, as an epoch profile declares it.
+
+**Domain.** `dal:EpochProfile`
+
+**Range.** `dal:EpochAuthority`
+
+#### `dal:epochGuardScope`
+
+**Definition.** Whether each write compares the dataset's epoch or only its row's, as an epoch profile declares it.
+
+**Domain.** `dal:EpochProfile`
+
+**Range.** `dal:EpochGuardScope`
+
+#### `dal:privacyClass`
+
+**Definition.** The class of the data a privacy profile governs.
+
+**Domain.** `dal:PrivacyProfile`
+
+**Range.** `dal:PrivacyClass`
+
+#### `dal:erasureStrategy`
+
+**Definition.** How a subject's data is erased, as a privacy profile declares it.
+
+**Domain.** `dal:PrivacyProfile`
+
+**Range.** `dal:ErasureStrategy`
+
+#### `dal:erasurePrecedence`
+
+**Definition.** Which wins when erasure meets the monotonicity of key claims, as a privacy profile declares it.
+
+**Domain.** `dal:PrivacyProfile`
+
+**Range.** `dal:ErasurePrecedence`
+
+#### `dal:globalReadStrategy`
+
+**Definition.** How a consumer of the dataset tier reads across streams without skipping a write that commits late.
+
+**Domain.** `dal:OrderingProfile`
+
+**Range.** `dal:GlobalReadStrategy`
+
+#### `dal:contiguityCheckMode`
+
+**Definition.** The contiguity check mode an ordering profile declares.
+
+**Domain.** `dal:OrderingProfile`
+
+**Range.** `dal:ContiguityCheckMode`
+
+#### `dal:retentionMode`
+
+**Definition.** How receipts are pruned, as a receipt profile declares it.
+
+**Domain.** `dal:ReceiptProfile`
+
+**Range.** `dal:RetentionMode`
+
+#### `dal:etagForm`
+
+**Definition.** Whether the ETag derived for an aggregate is strong or weak.
+
+**Domain.** `dal:ConcurrencyProfile`
+
+**Range.** `dal:EtagForm`
+
+#### `dal:etagRepresentation`
+
+**Definition.** Whether a store serves one representation for conditional requests or folds the representation into
+the tag.
+
+**Domain.** `dal:ConcurrencyProfile`
+
+**Range.** `dal:EtagRepresentation`
+
+#### `dal:firstWrite`
+
+**Definition.** How the first write of an aggregate creates its version row.
+
+**Domain.** `dal:AggregateBoundaryProfile`
+
+**Range.** `dal:FirstWriteMode`
+
+#### `dal:deadlockPolicy`
+
+**Definition.** The deadlock policy a concurrency profile declares.
+
+**Domain.** `dal:ConcurrencyProfile`
+
+**Range.** `dal:DeadlockPolicy`
+
+#### `dal:writeDiscipline`
+
+**Definition.** How the family writes. Absent means dal:InPlace. compile warns VersionedClassWrittenInPlace when a
+target class is a subclass of fnd:Version (by IRI, with no import) and the discipline is dal:InPlace.
+
+**Domain.** `dal:WriteDisciplineProfile`
+
+**Range.** `dal:WriteDiscipline`
+
+#### `dal:membershipEncoding`
+
+**Definition.** How a family that appends versions states each version's members. Absent means dal:FullMembership.
+compile refuses dal:DeltaMembership for a family that does not declare dal:AppendVersions
+(DeltaMembershipNeedsAppendVersions) and any other value (MembershipEncodingUnknown).
+
+**Domain.** `dal:WriteDisciplineProfile`
+
+**Range.** `dal:MembershipEncoding`
+
+#### `dal:mergeRelation`
+
+**Definition.** The ontology relation used to record a merge (for example fnd:replacedBy, if the adopter's ontology
+defines it), pointing from the deprecated IRI to the canonical one. Never owl:sameAs: under reasoning it produces
+sameAs-clique explosion and cannot be retracted cleanly. Required whenever dal:onViolation is dal:Merge.
+
+**Domain.** `dal:UniquenessConstraint`
+
+#### `dal:claimScheme`
+
+**Definition.** A claim scheme in use for a uniqueness constraint, which fixes the form of its claim IRIs.
+
+**Domain.** `dal:UniquenessConstraint`
+
+**Range.** `dal:ClaimScheme`
+
+#### `dal:schemeState`
+
+**Definition.** The state of a claim scheme in its rotation.
+
+**Domain.** `dal:ClaimScheme`
+
+**Range.** `dal:SchemeState`
+
+#### `dal:claimDigestScheme`
+
+**Definition.** The MAC function (HMAC-SHA-256), width and encoding of this scheme version. On the scheme, so changing
+any of them is a rotation.
+
+**Domain.** `dal:ClaimScheme`
+
+**Range.** `dal:DigestScheme`
+
+### 6.3 Datatype Properties
+
+#### `dal:priority`
+
+**Definition.** Explicit precedence, higher wins. Default 0. The sole tiebreak input the resolver uses. Scope kind
+itself is never treated as a specificity ladder.
+
+**Domain.** `dal:ProfileScope`
+
+**Range.** `xsd:integer`
+
+#### `dal:describedBy`
+
+**Definition.** Human-readable note for review, not consumed by the resolver.
+
+**Domain.** `dal:ProfileScope`
+
+**Range.** `xsd:string`
+
+#### `dal:graphPrefix`
+
+**Definition.** The prefix of the IRIs of the graphs a graph pattern scope matches.
+
+**Domain.** `dal:GraphPatternScope`
+
+**Range.** `xsd:string`
+
+#### `dal:iriPrefix`
+
+**Definition.** The prefix a namespace scope matches against the IRIs of resources.
+
+**Domain.** `dal:NamespaceScope`
+
+**Range.** `xsd:string`
+
+#### `dal:includeSubclasses`
+
+**Definition.** Whether a class scope also matches the asserted subclasses of its target class.
+
+**Domain.** `dal:ClassScope`
+
+**Range.** `xsd:boolean`
+
+#### `dal:requiresReasoning`
+
+**Definition.** Intrinsic to dal:EquivalentClassScope and to dal:ClassScope with entailed (not merely asserted)
+subclass membership.
+
+**Range.** `xsd:boolean`
+
+#### `dal:graphIriTemplate`
+
+**Definition.** How to derive the aggregate's graph IRI from its root instance's identity, e.g. "urn:g:orders/{id}".
+Meaningful only for dal:NamedGraphBoundary. It holds {id} exactly once, replaced by the whole root IRI percent-encoded
+as SPARQL's ENCODE_FOR_URI does, so distinct roots name distinct graphs. Text after {id} is kept and begins with a
+character the encoding never emits (not a letter, a digit, or one of - . _ ~ %). Across families the text before {id}
+is not a prefix of another family's. Undeclared, the template is urn:g:<family token>/{id}.
+
+**Domain.** `dal:AggregateBoundaryProfile`
+
+**Range.** `xsd:string`
+
+#### `dal:ownsReferenceData`
+
+**Definition.** True for an aggregate that manages reference data, for example a concept scheme and its concepts.
+Without it, an owned edge to reference data is refused. Default false.
+
+**Domain.** `dal:AggregateBoundaryProfile`
+
+**Range.** `xsd:boolean`
+
+#### `dal:opSeqRequired`
+
+**Definition.** Meaningless, and rejected, at dal:CommitGrain.
+
+**Domain.** `dal:OrderingProfile`
+
+**Range.** `xsd:boolean`
+
+#### `dal:metaShards`
+
+**Definition.** The number of meta graphs the version rows are spread over, by hash.
+
+**Domain.** `dal:MetaTopologyProfile`
+
+**Range.** `xsd:long`
+
+#### `dal:priorMetaShards`
+
+**Definition.** The shard count this scope was previously deployed under, declared by the adopter when migrating. Its
+presence alongside a different dal:metaShards value triggers the epoch-bump requirement below.
+
+**Domain.** `dal:MetaTopologyProfile`
+
+**Range.** `xsd:long`
+
+#### `dal:epochBumpAcknowledged`
+
+**Definition.** Required alongside a dal:metaShards value that differs from a declared dal:priorMetaShards, for a
+scope with committed history (guide §24.4).
+
+**Domain.** `dal:MetaTopologyProfile`
+
+**Range.** `xsd:boolean`
+
+#### `dal:constraintId`
+
+**Definition.** The stable name of a uniqueness constraint, part of every claim IRI.
+
+**Domain.** `dal:UniquenessConstraint`
+
+**Range.** `xsd:string`
+
+#### `dal:providesCas`
+
+**Definition.** One of LINEARIZABLE, BEST_EFFORT, NONE.
+
+**Domain.** `dal:CapabilitySpec`
+
+**Range.** `xsd:string`
+
+#### `dal:providesReasoning`
+
+**Definition.** Whether the supplied environment provides reasoning.
+
+**Domain.** `dal:CapabilitySpec`
+
+**Range.** `xsd:boolean`
+
+#### `dal:providesCommitValidation`
+
+**Definition.** One of NONE, SHACL_CORE, SHACL_SPARQL, CUSTOM_RULES.
+
+**Domain.** `dal:CapabilitySpec`
+
+**Range.** `xsd:string`
+
+#### `dal:providesSingleWriter`
+
+**Definition.** Whether the supplied environment provides a single writer per partition.
+
+**Domain.** `dal:CapabilitySpec`
+
+**Range.** `xsd:boolean`
+
+#### `dal:providesStatementLevelConflictDetection`
+
+**Definition.** Whether the supplied environment detects write conflicts per statement.
+
+**Domain.** `dal:CapabilitySpec`
+
+**Range.** `xsd:boolean`
+
+#### `dal:requiresCas`
+
+**Definition.** The level of compare-and-set the resolved configuration requires, as a name.
+
+**Domain.** `dal:CapabilityRequirement`
+
+**Range.** `xsd:string`
+
+#### `dal:acknowledgedSharedClassOverride`
+
+**Definition.** Escape hatch for the SharedClassProfileWarning shape (shapes/constraints.ttl): set true when a global
+override of a shared substrate class's profile is genuinely deliberate.
+
+**Range.** `xsd:boolean`
+
+#### `dal:verdict`
+
+**Definition.** PASS or FAIL.
+
+**Domain.** `dal:CapabilityCheck`
+
+**Range.** `xsd:string`
+
+#### `dal:templateId`
+
+**Definition.** The builder's identity, for example cas-replace-named-graph-dataset-guard. instantiate finds the
+builder by it.
+
+**Domain.** `dal:Template`
+
+**Range.** `xsd:string`
+
+#### `dal:forOperation`
+
+**Definition.** The id of the operation a generated operation is, for example cas-replace.
+
+**Domain.** `dal:GeneratedOperation`
+
+**Range.** `xsd:string`
+
+#### `dal:paramName`
+
+**Definition.** The name of the parameter a binding sets.
+
+**Domain.** `dal:ParameterBinding`
+
+**Range.** `xsd:string`
+
+#### `dal:paramType`
+
+**Definition.** One of Iri, Literal, Integer, String, Boolean.
+
+**Domain.** `dal:ParameterBinding`
+
+**Range.** `xsd:string`
+
+#### `dal:paramValue`
+
+**Definition.** The encoded value a binding gives its parameter.
+
+**Domain.** `dal:ParameterBinding`
+
+#### `dal:templateVersion`
+
+**Definition.** The version of the builder that renders the operation, bumped by any change to the text the builder
+renders, which a golden check in tools/persistence enforces. Not the version of the ontology.
+
+**Domain.** `dal:GeneratedOperation`
+
+**Range.** `xsd:integer`
+
+#### `dal:parameterName`
+
+**Definition.** The name of the parameter without its $, the name the golden query uses.
+
+**Domain.** `dal:ParameterDeclaration`
+
+**Range.** `xsd:string`
+
+#### `dal:required`
+
+**Definition.** True when the operation does nothing useful without the parameter. A required parameter that is not a
+request-time slot is guarded unless dal:guardStatus says otherwise.
+
+**Domain.** `dal:ParameterDeclaration`
+
+**Range.** `xsd:boolean`
+
+#### `dal:logicalKey`
+
+**Definition.** The parts of the resource's logical key, comma separated. A bucket month is a realisation and never
+part of a key.
+
+**Domain.** `dal:ResourceKind`
+
+**Range.** `xsd:string`
+
+#### `dal:columnName`
+
+**Definition.** The name of the projected variable, without its ?.
+
+**Domain.** `dal:ResultColumn`
+
+**Range.** `xsd:string`
+
+#### `dal:columnPosition`
+
+**Definition.** The column's position in the projection, from 1.
+
+**Domain.** `dal:ResultColumn`
+
+**Range.** `xsd:integer`
+
+#### `dal:columnSeparator`
+
+**Definition.** The separator of a dal:ConcatenationColumn, the argument of GROUP_CONCAT, which a caller splits on.
+
+**Domain.** `dal:ResultColumn`
+
+**Range.** `xsd:string`
+
+#### `dal:digestAlgorithm`
+
+**Definition.** The hash, SHA-256, over the parts in dal:partOrder, encoded as the patterns guide §15.2 says. The
+caller library computes it (ADR-A132).
+
+**Domain.** `dal:DigestContract`
+
+**Range.** `xsd:string`
+
+#### `dal:partOrder`
+
+**Definition.** The part's position in the digest, from 1.
+
+**Domain.** `dal:DigestPart`
+
+**Range.** `xsd:integer`
+
+#### `dal:dimension`
+
+**Definition.** The name of a resolved dimension.
+
+**Domain.** `dal:ResolvedDimension`
+
+**Range.** `xsd:string`
+
+#### `dal:resolvedLiteral`
+
+**Definition.** The winning value of a literal-valued dimension (for example dal:lagWindowMillis, dal:txnShards,
+dal:registryGraph), which dal:resolvedValue, an object property, cannot carry. A resolved dimension has at most one of
+the two.
+
+**Domain.** `dal:ResolvedDimension`
+
+#### `dal:recipeDocument`
+
+**Definition.** The recipe as RFC 8785 canonical JSON, a literal of datatype rdf:JSON. The canonical form of the
+recipe: persistence export-recipes extracts it, and the other properties of dal:MintingRecipe only make it queryable.
+
+**Domain.** `dal:MintingRecipe`
+
+#### `dal:recipeDigest`
+
+**Definition.** "sha256:" plus the lowercase hex SHA-256 of the recipe's canonical JSON with its recipeDigest member
+removed.
+
+**Domain.** `dal:MintingRecipe`
+
+**Range.** `xsd:string`
+
+#### `dal:candidateCount`
+
+**Definition.** How many candidate values the resolution of a dimension had.
+
+**Domain.** `dal:ResolvedDimension`
+
+**Range.** `xsd:integer`
+
+#### `dal:diagnosticKind`
+
+**Definition.** The kind of a diagnostic, the name of the warning.
+
+**Domain.** `dal:Diagnostic`
+
+**Range.** `xsd:string`
+
+#### `dal:diagnosticMessage`
+
+**Definition.** The message of a diagnostic.
+
+**Domain.** `dal:Diagnostic`
+
+**Range.** `xsd:string`
+
+#### `dal:diagnosticSeverity`
+
+**Definition.** INFO, WARNING or ERROR.
+
+**Domain.** `dal:Diagnostic`
+
+**Range.** `xsd:string`
+
+#### `dal:edgeInverse`
+
+**Definition.** True when the step is [ sh:inversePath predicate ].
+
+**Domain.** `dal:ReferenceEdge`
+
+**Range.** `xsd:boolean`
+
+#### `dal:namingAuthority`
+
+**Definition.** Free-text or IRI-shaped description of who owns and may mint this role's identifiers (adopter,
+external registry, source system, LATTICE runtime service).
+
+**Domain.** `dal:IdentityProfile`
+
+**Range.** `xsd:string`
+
+#### `dal:digestFunction`
+
+**Definition.** For example SHA-256. Never left implicit.
+
+**Domain.** `dal:DigestScheme`
+
+**Range.** `xsd:string`
+
+#### `dal:digestWidthBits`
+
+**Definition.** Exact output width. "At least N bits" is not a valid value: two implementations choosing different
+widths mint different IRIs for the same input.
+
+**Domain.** `dal:DigestScheme`
+
+**Range.** `xsd:integer`
+
+#### `dal:digestEncoding`
+
+**Definition.** One of lowercase-hex, base32, base64url. Case and alphabet are identity-bearing.
+
+**Domain.** `dal:DigestScheme`
+
+**Range.** `xsd:string`
+
+#### `dal:verifyFullDigestOnWrite`
+
+**Definition.** Whether registration compares the full (possibly untruncated) digest on re-registering an existing
+identifier, closing the truncated-digest collision risk.
+
+**Domain.** `dal:DigestScheme`
+
+**Range.** `xsd:boolean`
+
+#### `dal:uniquenessWitnessRequired`
+
+**Definition.** True when dal:eventIdentityStrategy is dal:PositionDerivedEvent: a broken isolation guarantee then
+merges two writers' occurrences into one subject rather than producing two, so detection must rest on a per-occurrence
+witness (for example a transaction-claim cardinality check), never on subject-count comparison alone.
+
+**Domain.** `dal:IdentityProfile`
+
+**Range.** `xsd:boolean`
+
+#### `dal:unicodeVersion`
+
+**Definition.** The Unicode Character Database version whose tables a normalization pipeline uses. Changing it is a
+new pipeline, and so a re-key.
+
+**Range.** `xsd:string`
+
+#### `dal:mintedIriTemplate`
+
+**Definition.** The shape of a minted IRI, with named slots: {digest} (derived hash, content-addressed), {key}
+(natural key), {surrogate} (surrogates), {namespace}, {epoch} and {seq} (position-derived occurrences). Required for
+every strategy that mints.
+
+**Domain.** `dal:IdentityProfile`
+
+**Range.** `xsd:string`
+
+#### `dal:callerSuppliedPattern`
+
+**Definition.** The pattern a caller-supplied surrogate must match in full, in the portable pattern subset of
+identity-minting-specification.md §6.8. Required with dal:CallerSuppliedSurrogate.
+
+**Domain.** `dal:IdentityProfile`
+
+**Range.** `xsd:string`
+
+#### `dal:acceptedIriPattern`
+
+**Definition.** For dal:AdoptedIdentity and dal:ExternalRegistryIdentity: the pattern an identifier supplied by the
+naming authority must match. Nothing is minted.
+
+**Domain.** `dal:IdentityProfile`
+
+**Range.** `xsd:string`
+
+#### `dal:epochWidth`
+
+**Definition.** Zero-padded decimal width of the epoch in a position-derived occurrence IRI, 1 to 19
+(iri-identity-patterns.md §10.2).
+
+**Domain.** `dal:IdentityProfile`
+
+**Range.** `xsd:integer`
+
+#### `dal:sequenceWidth`
+
+**Definition.** Zero-padded decimal width of the sequence in a position-derived occurrence IRI, 1 to 19.
+
+**Domain.** `dal:IdentityProfile`
+
+**Range.** `xsd:integer`
+
+#### `dal:canonicalizationWorkBudget`
+
+**Definition.** Required for dal:ContentAddressedIdentity: the RDFC-1.0 work budget beyond which a graph is refused,
+never hashed on a best-effort basis (iri-identity-patterns.md §8.4).
+
+**Domain.** `dal:IdentityProfile`
+
+**Range.** `xsd:integer`
+
+#### `dal:epochCoordinatorBinding`
+
+**Definition.** Adopter-supplied connection descriptor for the external coordinator, when the chosen authority needs
+one. Opaque to the compiler.
+
+**Domain.** `dal:EpochProfile`
+
+**Range.** `xsd:string`
+
+#### `dal:erasureRegisterBinding`
+
+**Definition.** Adopter-supplied connection descriptor for an erasure register held outside the dataset, so a restore
+can replay it before admitting readers or writers. Meaningful only where dal:PrivacyProfile declares personal data
+(§14).
+
+**Domain.** `dal:EpochProfile`
+
+**Range.** `xsd:string`
+
+#### `dal:erasureReplayOnRestore`
+
+**Definition.** Whether restore tooling replays the erasure register before writers or readers are admitted. False is
+a declared, accepted risk that a restore can resurrect erased personal data, never a silent default.
+
+**Domain.** `dal:EpochProfile`
+
+**Range.** `xsd:boolean`
+
+#### `dal:perSubjectScoped`
+
+**Definition.** Whether this receipt model's delta or snapshot graphs are partitioned per data subject and
+individually enumerable. Required (or dal:CryptoShred required instead) whenever the same scope's dal:privacyClass is
+dal:PersonalData and dal:receiptModel is dal:PatchLog or dal:SnapshotPerRevision; see
+dal:PersonalDataReceiptCompatibilityShape.
+
+**Domain.** `dal:ReceiptProfile`
+
+**Range.** `xsd:boolean`
+
+#### `dal:lagWindowMillis`
+
+**Definition.** Required when dal:globalReadStrategy is dal:LagWindowRead.
+
+**Domain.** `dal:OrderingProfile`
+
+**Range.** `xsd:long`
+
+#### `dal:asOfFloorSource`
+
+**Definition.** Which job advances the as-of floor (normally the retention job itself). Required whenever an as-of
+strategy of log replay is offered.
+
+**Domain.** `dal:ReceiptProfile`
+
+**Range.** `xsd:string`
+
+#### `dal:checkpointEvery`
+
+**Definition.** Under dal:DeltaMembership, the interval of full lists: a version whose seq is a multiple of it, and
+the first version, lists every member. Absent means 16. compile refuses a value that is not an integer of at least 1
+(CheckpointEveryInvalid). The caller decides which version is a checkpoint, and the caller library's check verifies it
+(ADR-A132).
+
+**Domain.** `dal:WriteDisciplineProfile`
+
+**Range.** `xsd:long`
+
+#### `dal:schemeVersion`
+
+**Definition.** The version label of a claim scheme, part of every claim IRI.
+
+**Domain.** `dal:ClaimScheme`
+
+**Range.** `xsd:string`
+
+#### `dal:claimKeyId`
+
+**Definition.** Identifies the secret this scheme version's MAC uses, resolved by the runtime's secret provider. Never
+the secret itself.
+
+**Domain.** `dal:ClaimScheme`
+
+**Range.** `xsd:string`
+
+#### `dal:claimIriTemplate`
+
+**Definition.** The claim IRI's shape, with the slots {constraintId}, {schemeVersion} and {mac}, for example
+"urn:key:person-email:{schemeVersion}:{mac}". On the scheme, so every byte of a claim IRI changes only through
+rotation.
+
+**Domain.** `dal:ClaimScheme`
+
+**Range.** `xsd:string`
+
+#### `dal:txnShards`
+
+**Definition.** Shard count for the txn-claim graph. A starting value; the real number is decided per engine by the
+conformance TCK's contention tests, exactly as dal:metaShards already is.
+
+**Domain.** `dal:MetaTopologyProfile`
+
+**Range.** `xsd:long`
+
+#### `dal:logShards`
+
+**Definition.** Shard count applied within each retention time bucket for the receipt log graph, so bucket rotation
+and shard isolation are both preserved.
+
+**Domain.** `dal:MetaTopologyProfile`
+
+**Range.** `xsd:long`
+
+#### `dal:keyShards`
+
+**Definition.** Shard count for the P3 sentinel-counter graph.
+
+**Domain.** `dal:MetaTopologyProfile`
+
+**Range.** `xsd:long`
+
+#### `dal:registryGraph`
+
+**Definition.** IRI of a small catalog graph listing every log bucket, txn shard, key shard and delta bucket this
+family uses, with its role and (epoch, seq) coverage. Integrity, ordering and as-of queries enumerate from this
+registry; they never rely on a STRSTARTS prefix scan over graph names, which is a diagnostic convenience, not an
+integrity mechanism.
+
+**Domain.** `dal:MetaTopologyProfile`
+
+**Range.** `xsd:string`
+
+### 6.4 Individuals
+
+The closed sets of named individuals that the configuration model and the compiled profile use. Persistence has no vocabulary document, so the tables sit in a region that sends them to `spec/persistence.ttl`. An individual with a statement the tables cannot hold, such as a logical key or a Unicode version, is written whole in 6.6.
+
+<!-- start: {"output-file": "spec/persistence.ttl"} -->
+
+The individuals of `dal:AggregateBoundaryStrategy`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:NamedGraphBoundary` | `dal:AggregateBoundaryStrategy` | The aggregate root's IRI names a dedicated graph; members co-located inside it. |
+| `dal:CompositePropertyBoundary` | `dal:AggregateBoundaryStrategy` | The aggregate lives in the named graph dal:dataGraph, among other aggregates. Its members are the nodes reached from the root along the owned edges of dal:boundaryShape, a classified tree walked once at compile time. Mandatory: dal:boundaryShape and dal:dataGraph. |
+| `dal:NoBoundary` | `dal:AggregateBoundaryStrategy` | No coherent aggregate. Concurrency, if any, is value-based CAS on individual properties, which live in the profile's dal:dataGraph, mandatory for a family that has one. |
+
+The individuals of `dal:OwnershipKind`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:Owned` | `dal:OwnershipKind` | The node belongs to the aggregate. It is deleted with the aggregate, and its own owned edges are followed. |
+| `dal:Reference` | `dal:OwnershipKind` | The node is another aggregate or an independent entity. The edge belongs to the aggregate and is deleted with it. The node is never deleted and its edges are not followed. |
+| `dal:Vocabulary` | `dal:OwnershipKind` | As dal:Reference, for an edge to reference data such as a concept or a code. Declares intent. Behaves as dal:Reference at run time. |
+
+The individuals of `dal:ReferenceMode`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:ByIdentity` | `dal:ReferenceMode` | The default. The edge names the target's persistent identity, and the version in force is read from the identity's own record, so a new version of the target needs no change to the node that refers to it. |
+| `dal:Pinned` | `dal:ReferenceMode` | The edge names one version of the target. For a record that is evidence of exactly what it saw. Refused when the edge's target class is not a subclass of fnd:Version (by IRI, with no import), since there is then no version to name. |
+
+The individuals of `dal:ConcurrencyStrategy`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:ProvidedConcurrency` | `dal:ConcurrencyStrategy` | Whatever the target backend provides natively. No guard is generated: an unconditional write. |
+| `dal:Optimistic` | `dal:ConcurrencyStrategy` | The guarded compare-and-set pattern (guide Chapter 19): version-row guard, txn claim, receipt. Fully realised by generated SPARQL. |
+| `dal:AppendOnly` | `dal:ConcurrencyStrategy` | Server-assigned next-position append, no expected-version guard (guide Chapter 22). |
+| `dal:LockingConcurrency` | `dal:ConcurrencyStrategy` | MARKER ONLY. Declares this target needs external serialisation (guide §16.1-§16.2). The compiler emits an unconditional write and the marker itself, for non-SPARQL tooling (an IaC compiler, a future routing layer) to act on. Never realised as a SPARQL guard. |
+
+Individuals with no class of their own, used as levels and policies.
+
+| Individual | Type |
+|---|---|
+| `dal:Linearizable` | `owl:NamedIndividual` |
+| `dal:BestEffort` | `owl:NamedIndividual` |
+| `dal:Reject` | `owl:NamedIndividual` |
+| `dal:Merge` | `owl:NamedIndividual` |
+| `dal:Advisory` | `owl:NamedIndividual` |
+| `dal:Transactional` | `owl:NamedIndividual` |
+| `dal:Strong` | `owl:NamedIndividual` |
+
+The individuals of `dal:OrderingGrain`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:CommitGrain` | `dal:OrderingGrain` | One position per commit; events within it are unordered unless opSeq is used. |
+| `dal:EventGrain` | `dal:OrderingGrain` | Each event carries its own client-supplied opSeq within a commit. |
+
+The individuals of `dal:DatasetTierModel`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:DerivedFeed` | `dal:DatasetTierModel` | Sourced from the store's native change feed, when one exists. |
+| `dal:HybridLogicalClock` | `dal:DatasetTierModel` | Contention-free partial order, no completeness detection. |
+| `dal:GlobalDenseCounter` | `dal:DatasetTierModel` | Affordable only on genuinely single-writer backends. |
+
+The individuals of `dal:ReceiptModel`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:ReceiptOnly` | `dal:ReceiptModel` | Audit breadcrumbs and CAS outcomes. No replay, no as-of. |
+| `dal:PatchLog` | `dal:ReceiptModel` | asserts/retracts delta graphs alongside each receipt, written in the same update as the write. A create's add graph holds its payload, a replace's add and del graphs hold the delta the caller computed, and a tombstone's del graph holds what the sweep removed. The graphs are named from the receipt. Enables replay and CDC, and an as-of read backward from the current state. Honoured for the in-place writes of dal:NamedGraphBoundary and dal:CompositePropertyBoundary families. |
+| `dal:SnapshotPerRevision` | `dal:ReceiptModel` | A sealed payload graph per revision. Trivially as-of, highest storage cost. |
+| `dal:NoReceipt` | `dal:ReceiptModel` | No receipt and no head for a write, which still records its transaction claim, so a retry after a lost reply is confirmed. For a dal:InPlace family that wants no history, such as a derived artefact that can be regenerated. Refused with dal:AppendVersions, dal:AppendRecords and a stream, whose versions and records take their position and transaction time from the receipt. |
+
+The individuals of `dal:MetaTopology`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:SharedSharded` | `dal:MetaTopology` | One sharded meta graph, dal:metaShards shards, one row per aggregate. |
+| `dal:PerAggregate` | `dal:MetaTopology` | One meta graph per aggregate. Isolates conflict detection on coarse-grained engines at the cost of graph-count growth. |
+
+The individuals of `dal:OperationKind`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:Quarantine` | `dal:OperationKind`, `owl:NamedIndividual` | Records the owners of a duplicated claim in the quarantine graph. |
+| `dal:Create` | `dal:OperationKind` | Writes an aggregate that does not exist yet, with its version row, receipt and claim. |
+| `dal:Bootstrap` | `dal:OperationKind` | Creates a version row at seq 0, when the id is allocated. |
+| `dal:Replace` | `dal:OperationKind` | Replaces an aggregate if the version row is at the expected seq. |
+| `dal:Tombstone` | `dal:OperationKind` | Deletes an aggregate's triples and marks its version row deleted. |
+| `dal:Append` | `dal:OperationKind` | Appends events to a stream (dal:AppendRecords or an append-only family). |
+| `dal:AppendVersion` | `dal:OperationKind` | Adds a new version beside the old one (dal:AppendVersions), in full or as a delta (dal:DeltaMembership). |
+| `dal:UnconditionalWrite` | `dal:OperationKind` | Writes into a named graph with no guard on a version row. |
+| `dal:ValueGuardedReplace` | `dal:OperationKind` | Replaces the value of one property if its old value is still there, for a dal:NoBoundary family. |
+| `dal:KeyClaimWrite` | `dal:OperationKind` | Acquires a uniqueness claim with a guarded write. |
+| `dal:KeyClaimWriteDual` | `dal:OperationKind` | Acquires the claims of two scheme versions in one operation, during a rotation. |
+| `dal:KeyClaimRetire` | `dal:OperationKind` | Retires a uniqueness claim. |
+| `dal:MergeRewrite` | `dal:OperationKind` | Rewrites the claims of a merged owner onto the canonical one. |
+| `dal:Audit` | `dal:OperationKind` | A read-only query that returns the rows that violate an invariant. Returns none on a clean dataset. |
+| `dal:MembersRead` | `dal:OperationKind` | Resolves the members of a version from a chain of deltas back to the nearest checkpoint (dal:DeltaMembership). |
+| `dal:PayloadCheck` | `dal:OperationKind` | Returns the subjects of a payload that are neither the root nor reached from it by the family's owned edges, as a query a caller in any language gets from instantiate (ADR-A123 decision 6). The caller runs it over a local graph holding its payload and never over the store. Generated for a family that names a dal:boundaryShape. |
+
+The individuals of `dal:ParameterKind`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:IriKind` | `dal:ParameterKind` | An IRI. |
+| `dal:LongKind` | `dal:ParameterKind` | An xsd:long. |
+| `dal:StringKind` | `dal:ParameterKind` | A plain string literal. |
+| `dal:LangStringKind` | `dal:ParameterKind` | A language-tagged string. |
+| `dal:PositionKind` | `dal:ParameterKind` | A stored position (an epoch or a seq), an xsd:long compared by term. |
+| `dal:DigestKind` | `dal:ParameterKind` | A request digest, a lower-case hexadecimal string. |
+| `dal:IriOrLiteralKind` | `dal:ParameterKind` | An IRI or a literal, a value of a property. |
+| `dal:LiteralKind` | `dal:ParameterKind` | A literal. |
+| `dal:PayloadKind` | `dal:ParameterKind` | A request-time slot for a set of ground triples. |
+| `dal:RowsKind` | `dal:ParameterKind` | A request-time slot for rows of a VALUES clause. |
+| `dal:RegistryListKind` | `dal:ParameterKind` | A request-time slot for the graph IRIs of the family's registry, which the caller lists. |
+
+The individuals of `dal:Rule`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:GraphNameOfRoot` | `dal:Rule` | The graph IRI the family's dal:graphIriTemplate gives for the value of the root parameter. |
+
+The individuals of `dal:Source`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:RegistryGraph` | `dal:Source` | The family's dal:registryGraph, a caller obligation. |
+| `dal:NoSource` | `dal:Source` | No parameter, for a part of a digest that takes none, such as the operation kind. |
+
+The individuals of `dal:AccessMode`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:PointRead` | `dal:AccessMode` | A read of one resource by its key. |
+| `dal:AbsenceRead` | `dal:AccessMode` | A test that a resource is not there, inside NOT EXISTS. What write skew turns on. |
+| `dal:ScanRead` | `dal:AccessMode` | A read of every resource of the kind, with no key. |
+| `dal:WholeAggregateRead` | `dal:AccessMode` | A read of an aggregate's every triple, through the owned path or of the root's graph. |
+| `dal:Insert` | `dal:AccessMode` | An insertion of a resource or of its triples. |
+| `dal:Delete` | `dal:AccessMode` | A deletion of a resource or of its triples. |
+
+The individuals of `dal:AuditOutcome`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:Clean` | `dal:AuditOutcome` | The audit read the graphs it examines and found no violation. |
+| `dal:Failed` | `dal:AuditOutcome` | The audit returned at least one row. |
+| `dal:NothingExamined` | `dal:AuditOutcome` | The audit returned no row and read nothing: the graphs it examines are not listed, or hold no receipt. This is not a clean result. |
+
+The individuals of `dal:GuardStatus`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:Guarded` | `dal:GuardStatus` | The query starts with one group of type tests, one for each required parameter that is not a slot. |
+| `dal:GuardsOff` | `dal:GuardStatus` | The compile run chose no guards (--no-parameter-guards). The caller's own code must check every parameter. |
+| `dal:NoRequiredParameter` | `dal:GuardStatus` | The operation has no required parameter that is not a slot, so there is nothing to guard. |
+| `dal:NotGenerated` | `dal:GuardStatus` | The operation's query is not generated from a builder, so no guard is generated for it. For a hand declaration. |
+
+The individuals of `dal:GraphNaming`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:QueryNamed` | `dal:GraphNaming` | The query computes the graph from $root by the rule of the family's dal:graphIriTemplate (ADR-A122 decision 8). |
+| `dal:CallerNamed` | `dal:GraphNaming` | The caller passes the graph as $g, which the guard checks against the naming rule unless guards are off, so a caller that substitutes text puts a constant graph in the query. |
+
+The individuals of `dal:DeclarationSource`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:BuilderDerived` | `dal:DeclarationSource` | Read from the operation's builder by persistence.contract, so it cannot drift from the query. |
+| `dal:HandDeclared` | `dal:DeclarationSource` | Written by hand, for an operation that has no builder. None has, since the value-based guard has a builder. |
+
+The individuals of `dal:ColumnKind`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:IriColumn` | `dal:ColumnKind` | An IRI. |
+| `dal:PositionColumn` | `dal:ColumnKind` | A stored position, an xsd:long. |
+| `dal:StringColumn` | `dal:ColumnKind` | A string. |
+| `dal:TermColumn` | `dal:ColumnKind` | Any RDF term. |
+| `dal:CountColumn` | `dal:ColumnKind` | The result of COUNT, an xsd:integer. |
+| `dal:ConcatenationColumn` | `dal:ColumnKind` | The result of GROUP_CONCAT, split on dal:columnSeparator. |
+
+The individuals of `dal:PayloadEncoding`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:GroundNTriples` | `dal:PayloadEncoding` | Ground N-Triples, with no blank node and no variable, as the caller's slot text. A blank node is skolemized before it is sent. |
+
+The individuals of `dal:BoundaryShapeAbsence`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:NoBoundaryShape` | `dal:BoundaryShapeAbsence` | The family names no boundary shape, so a payload is not checked against one. The value of dal:boundaryShape on a dal:PayloadContract in that case. |
+
+The individuals of `dal:DigestPartRole`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:OperationKindPart` | `dal:DigestPartRole` | The operation's kind. |
+| `dal:TargetPart` | `dal:DigestPartRole` | The target the operation names, the key of its version row. |
+| `dal:ExpectedSeqPart` | `dal:DigestPartRole` | The seq the operation expects the version row to be at. |
+| `dal:PayloadPart` | `dal:DigestPartRole` | The sorted canonical N-Triples of the payload. |
+| `dal:EventPart` | `dal:DigestPartRole` | The events of an append, its rows slot and its triples slot, in place of the payload. |
+| `dal:AddPart` | `dal:DigestPartRole` | What a write adds. Under a patch log, the triples of the aggregate the write adds ({{{assertTriples}}}). Under dal:DeltaMembership, the members the new version adds, as the triples newVersion pat:addsMember m ({{{addedMembers}}}). For example <urn:quote:1/v5> pat:addsMember <urn:quote:1/line7>. |
+| `dal:DelPart` | `dal:DigestPartRole` | What a write removes. Under a patch log, the triples of the aggregate the write removes ({{{retractTriples}}}). Under dal:DeltaMembership, the members the new version drops, as the triples newVersion pat:dropsMember m ({{{droppedMembers}}}). For example <urn:quote:1/v5> pat:dropsMember <urn:quote:1/line3>. |
+
+The individuals of `dal:ResourceRole`.
+
+| Individual | Type |
+|---|---|
+| `dal:EntityRole` | `dal:ResourceRole` |
+| `dal:AggregateRootRole` | `dal:ResourceRole` |
+| `dal:ComponentRole` | `dal:ResourceRole` |
+| `dal:LineageRole` | `dal:ResourceRole` |
+| `dal:ContentRevisionRole` | `dal:ResourceRole` |
+| `dal:GraphLocatorRole` | `dal:ResourceRole` |
+| `dal:KeyClaimRole` | `dal:ResourceRole` |
+| `dal:EventOccurrenceRole` | `dal:ResourceRole` |
+
+The individuals of `dal:IdentityStrategy`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:AdoptedIdentity` | `dal:IdentityStrategy` | The identifier's authority is external; LATTICE never re-mints it (§5.1). |
+| `dal:NaturalKeyIdentity` | `dal:IdentityStrategy` | Immutable, non-PII key only (§6.1). |
+| `dal:DerivedHashIdentity` | `dal:IdentityStrategy` | Non-sensitive composite keys only, unless keyed (§6.2). |
+| `dal:RandomSurrogateIdentity` | `dal:IdentityStrategy` | No stable key; retry convergence not required (§6.3). |
+| `dal:SurrogateClaimedIdentity` | `dal:IdentityStrategy` | Opaque surrogate plus a keyed P1 claim, for mutable or sensitive keys (§6.4). |
+| `dal:ExternalRegistryIdentity` | `dal:IdentityStrategy` | An external allocator or registry owns the identifier (§6.5). |
+| `dal:ContentAddressedIdentity` | `dal:IdentityStrategy` | Digest-derived identity for genuinely immutable content (§6.6). Minters hash canonical bytes supplied by the caller and never canonicalize RDF themselves. The caller must produce canonical N-Quads (UTF-8, one LF-terminated line per quad) with an RDFC-1.0 implementation that passes the W3C RDFC-1.0 test suite, apply the self-reference rule before canonicalizing, refuse graphs over the work budget, and compare the full digest on re-registration where declared. See identity-minting-specification.md §7. |
+
+The individuals of `dal:OccurrenceNamespaceDerivation`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:RegistryTokenDerivation` | `dal:OccurrenceNamespaceDerivation` | A registry-allocated token for the target, resolved once at target creation. |
+| `dal:HashedTargetDerivation` | `dal:OccurrenceNamespaceDerivation` | An injective, fixed-width digest of the target's own IRI, never a prefix-stripped string. |
+
+The individuals of `dal:EventIdentityStrategy`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:PositionDerivedEvent` | `dal:EventIdentityStrategy` | Deterministic from (target, epoch, position). Range-scannable; requires a uniqueness witness, see dal:uniquenessWitnessRequired. |
+| `dal:RandomOccurrenceEvent` | `dal:EventIdentityStrategy` | UUID surrogate with position carried as properties. No lexical range scan; no uniqueness-witness requirement. |
+| `dal:ExternalEventIdStrategy` | `dal:EventIdentityStrategy` | An adopted producer event id. |
+
+The individuals of `dal:SurrogateKind`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:UuidV4Surrogate` | `dal:SurrogateKind` | A random version 4 UUID, minted by the minter from a cryptographically secure source. Embeds no timestamp (iri-identity-patterns.md §6.3). |
+| `dal:CallerSuppliedSurrogate` | `dal:SurrogateKind` | An existing surrogate supplied by the caller (for example an existing database key, iri-identity-patterns.md §13.1), validated against dal:callerSuppliedPattern and never minted. |
+
+The individuals of `dal:SelfReferenceRule`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:SelfReferenceDisallowed` | `dal:SelfReferenceRule` | Self-referential identifier triples are not allowed in the hashed payload. |
+| `dal:ExcludeHeaderSubgraph` | `dal:SelfReferenceRule` | A declared header subgraph is excluded from content identity. |
+| `dal:PlaceholderSubstitution` | `dal:SelfReferenceRule` | Exact self references are replaced with a fixed placeholder before canonicalization. |
+
+The individuals of `dal:EpochAuthority`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:ExternalHighWaterMark` | `dal:EpochAuthority` | An external system tracks the highest epoch ever issued; restore reads current-max-plus-one from it. Fail-safe under repeated restores from the same backup. |
+| `dal:RestoreControlledEpoch` | `dal:EpochAuthority` | Restore tooling itself is the sole allocator, reading its own operational log, never the dataset being restored. Depends on the runbook always running first. |
+| `dal:WriterStartRefusal` | `dal:EpochAuthority` | Writers refuse to start, or fail in-flight, until their cached epoch matches a durable external watermark. Combinable with dal:ExternalHighWaterMark for defence in depth. |
+| `dal:StoreLocalEpoch` | `dal:EpochAuthority` | The epoch lives only inside the dataset being restored. Unsafe under a double restore from the same backup: the second restore reuses the epoch the first one just allocated. Warned, not refused (dal:StoreLocalEpochWarningShape): acceptable only when the same backup is never restored twice into a live epoch space and no position-derived identifier leaves the dataset. |
+
+The individuals of `dal:EpochGuardScope`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:DatasetLevelGuard` | `dal:EpochGuardScope` | Every write, including create paths, compares the dataset node's current epoch. The version row's own pat:epoch is read and rewritten to the current epoch on the row's next write, and pat:seq continues, so rows are rebased lazily after a bump instead of being guarded on (guide §10.1). Required for restore-safety to hold at all. |
+| `dal:RowLevelGuardOnly` | `dal:EpochGuardScope` | Only the version row's own epoch is guarded. A bump never reaches a row until it is written, so a stale client can still match an unrestored row. Discouraged; see dal:RowLevelGuardOnlyWarningShape. |
+
+The individuals of `dal:PrivacyClass`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:PersonalData` | `dal:PrivacyClass` | Subject to erasure obligations. |
+| `dal:InternalData` | `dal:PrivacyClass` |  |
+| `dal:PublicData` | `dal:PrivacyClass` |  |
+
+The individuals of `dal:ErasureStrategy`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:PerSubjectGraphDrop` | `dal:ErasureStrategy` | Drop the per-subject graph and record a tombstone. Requires every graph holding this subject's payload, including patch-log deltas and snapshots, to be per-subject and enumerable. |
+| `dal:CryptoShred` | `dal:ErasureStrategy` | Destroy the per-subject encryption key rather than the graph. Requires key custody, an as-of failure policy for shredded revisions, and a stated interaction with content-addressed hashing (re-encryption changes bytes, and therefore content identity). |
+| `dal:NoErasure` | `dal:ErasureStrategy` | No erasure mechanism. Valid only where dal:privacyClass is not dal:PersonalData. |
+
+The individuals of `dal:ErasurePrecedence`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:ErasureWins` | `dal:ErasurePrecedence` |  |
+| `dal:MonotonicityWins` | `dal:ErasurePrecedence` | Erasure of a claimed key is deferred or requires explicit reconciliation. |
+
+The individuals of `dal:GlobalReadStrategy`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:WatermarkedRead` | `dal:GlobalReadStrategy` | Read only below a published stable watermark computed from active writers' in-flight positions. Requires writer registration and heartbeats. |
+| `dal:LagWindowRead` | `dal:GlobalReadStrategy` | Read only below now minus a declared lag window of at least the server-enforced maximum transaction duration (measured from HLC stamp to commit) plus maximum clock skew plus replica lag plus margin, with a late-arrival audit over a trailing window (guide §21.3). |
+| `dal:DenseFeedRead` | `dal:GlobalReadStrategy` | Use a store-native dense change feed as the dataset tier directly. Preferred where available. |
+| `dal:NoGlobalRead` | `dal:GlobalReadStrategy` | No cross-stream reader exists for this family. Only valid if the family truly advertises no dataset tier; see dal:NoGlobalReadWarningShape. |
+
+The individuals of `dal:ContiguityCheckMode`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:BlockingContiguityCheck` | `dal:ContiguityCheckMode` | On a gap, the consumer rescans from the affected stream's last known-good position before advancing its global watermark. |
+| `dal:AdvisoryContiguityCheck` | `dal:ContiguityCheckMode` | A gap only raises a metric. A data-loss path; discouraged, see dal:AdvisoryContiguityWarningShape. |
+
+The individuals of `dal:RetentionMode`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:PrefixOnlyRetention` | `dal:RetentionMode` | Retention prunes only a contiguous prefix of receipt buckets. Before each drop it advances each affected target's retention low-water mark and the as-of floor, and carries any receipt that is still a live head into the pinned-head graph (guide §24.2). Required wherever as-of log replay is offered. |
+| `dal:BucketAnyRetention` | `dal:RetentionMode` | Retention may drop any bucket regardless of position. Incompatible with as-of log replay; see dal:AsOfFloorRetentionCompatibilityShape. |
+
+The individuals of `dal:EtagForm`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:StrongEtag` | `dal:EtagForm` | RFC 9110 §13.1.1 strong comparison. Required for If-Match to mean anything. |
+| `dal:WeakEtag` | `dal:EtagForm` | Never satisfies If-Match under strong comparison. Valid only for If-None-Match caching, never for CAS; see dal:WeakEtagCasWarningShape. |
+
+The individuals of `dal:EtagRepresentation`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:SingleRepresentation` | `dal:EtagRepresentation` | Exactly one serialisation is served for conditional requests. |
+| `dal:TaggedRepresentation` | `dal:EtagRepresentation` | The tag includes a representation token and responses carry Vary. |
+
+The individuals of `dal:FirstWriteMode`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:PreCreatedRow` | `dal:FirstWriteMode` | A version row with seq 0 and no head is created when the aggregate id is allocated, before any write. The CAS shape is the only write shape ever used, and create-if-absent is unavailable for this family. tools/persistence emits the bootstrap-version-row operation for the row creation; a caller that runs the generated SPARQL directly must execute it at id allocation. |
+| `dal:AbsentRow` | `dal:FirstWriteMode` | No row exists until the first write. Create-if-absent applies, with P2's write-skew caveat. |
+
+The individuals of `dal:DeadlockPolicy`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:EngineDetectAndRetry` | `dal:DeadlockPolicy` | Deadlock avoidance across multiple targets in one request is the engine's responsibility; the adapter treats an abort as Conflict and retries with jitter. Sorted acquisition order in query text is a readability convention only, never a guarantee. |
+| `dal:SortedAcquisition` | `dal:DeadlockPolicy` | Valid only for multi-request transaction strategies and external-lock strategies, where the client itself controls acquisition order. |
+| `dal:PartitionedWriter` | `dal:DeadlockPolicy` | A single partition key must cover every target of a multi-target write, or the write is a saga instead. |
+
+The individuals of `dal:WriteDiscipline`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:InPlace` | `dal:WriteDiscipline` | The default. A write replaces the old state, as the replace, create and tombstone operations always have. The family's receipt model says what history the log keeps (dal:ReceiptOnly, dal:PatchLog or dal:NoReceipt). |
+| `dal:AppendVersions` | `dal:WriteDiscipline` | A write adds a new version beside the old and links the new version to the one before it with pat:previousVersion, never fnd:supersededBy, which the domain asserts under its own rule. Nothing is swept or deleted. The version row keeps the latest version written as its current version. Applies to dal:CompositePropertyBoundary families and to dal:NoBoundary families with a dal:dataGraph, under dal:Optimistic. The first version is written onto a row created by bootstrap-version-row. History is in the data, so dal:CompositePropertyBoundary is allowed with dal:ReceiptOnly. |
+| `dal:AppendRecords` | `dal:WriteDiscipline` | A write appends records (events), each an immutable occurrence, with the append operation. History is in the data, so dal:CompositePropertyBoundary is allowed with dal:ReceiptOnly. |
+
+The individuals of `dal:MembershipEncoding`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:FullMembership` | `dal:MembershipEncoding` | The default. Each new version lists every member under the domain's own membership property, so a version is readable alone and a domain shape validates the stored data directly. |
+| `dal:DeltaMembership` | `dal:MembershipEncoding` | Each new version states only what changed, as pat:addsMember and pat:dropsMember beside pat:previousVersion, and the domain's membership property is not written for it. Every dal:checkpointEvery versions the write lists every member as under dal:FullMembership and the version carries pat:checkpoint true, so a chain read is never longer than that. Members are read with the generated members query, and a domain shape runs over its results and never over the stored delta. Applies to a family that declares dal:AppendVersions only. |
+
+The individuals of `dal:SchemeState`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:Accepting` | `dal:SchemeState` | New claims may use this scheme version. |
+| `dal:Dual` | `dal:SchemeState` | Every claim acquisition guards and inserts both this and the next scheme version's claim IRI in one operation, so uniqueness holds across the rotation window. |
+| `dal:Retiring` | `dal:SchemeState` | No writer accepts this version for new claims; a backfill is completing. |
+| `dal:Retired` | `dal:SchemeState` | Claims under this version are tombstoned, or deleted under an erasure policy. |
+
+<!-- end -->
+
+### 6.5 Disjointness and Keys
+
+None.
+
+### 6.6 Other Axioms
+
+The kinds of logical resource, and the Unicode normalisation pipelines, carry a statement the individuals tables cannot hold (`dal:logicalKey`, `dal:unicodeVersion`), so each is written whole.
+
+```turtle-spec
+dal:Aggregate a dal:ResourceKind ;
+    rdfs:comment "The root's data graph (named-graph family) or the owned members in the family's data graph (composite)." ;
+    dal:logicalKey "root" .
+
+dal:DatasetEpoch a dal:ResourceKind ;
+    rdfs:comment "The dataset's epoch, in the dataset graph." ;
+    dal:logicalKey "dataset" .
+
+dal:Event a dal:ResourceKind ;
+    rdfs:comment "An event in its monthly event bucket." ;
+    dal:logicalKey "stream, seq" .
+
+dal:KeyClaim a dal:ResourceKind ;
+    rdfs:comment "The claim node and its owner, constraint and retirement, in the keys graph." ;
+    dal:logicalKey "claim" .
+
+dal:KeyQuarantine a dal:ResourceKind ;
+    rdfs:comment "An owner recorded against a duplicated claim, in the quarantine graph." ;
+    dal:logicalKey "claim, owner" .
+
+dal:MergeRecord a dal:ResourceKind ;
+    rdfs:comment "A link from a non-canonical owner to the canonical one, in the keys graph, by the adopter's merge relation." ;
+    dal:logicalKey "owner" .
+
+dal:PatchContent a dal:ResourceKind ;
+    rdfs:comment "The triples a write added or removed, in a graph named from its receipt, newRev followed by /add or /del, one per direction." ;
+    dal:logicalKey "target, epoch, seq, direction" .
+
+dal:PropertyValue a dal:ResourceKind ;
+    rdfs:comment "The value of one property of a root, in the data graph of a family with no boundary. Read and written by the value-based guard." ;
+    dal:logicalKey "root, property" .
+
+dal:Receipt a dal:ResourceKind ;
+    rdfs:comment "A receipt in its monthly log bucket, and in the pinned graph for a retained head. The pinned graph is how retention is realised." ;
+    dal:logicalKey "target, epoch, seq" .
+
+dal:RetentionMark a dal:ResourceKind ;
+    rdfs:comment "A target's retention low-water mark, in the retention graph." ;
+    dal:logicalKey "target" .
+
+dal:TransactionClaim a dal:ResourceKind ;
+    rdfs:comment "The claim recorded for a transaction id, in the transaction graph." ;
+    dal:logicalKey "transaction id" .
+
+dal:VersionRow a dal:ResourceKind ;
+    rdfs:comment "The version row of a root or stream, in its meta graph." ;
+    dal:logicalKey "root" .
+```
+
+```turtle-spec
+dal:NfkcTrimCasefold a owl:NamedIndividual ;
+    rdfs:comment "trim(NFKC_Casefold(x)): the Unicode NFKC_Casefold mapping (NFKC, full case folding and removal of every Default_Ignorable_Code_Point, idempotent), as ICU Normalizer2.getNFKCCasefoldInstance() implements it, then trim. The canonical pipeline for caseless human text (guide §8.1). Folding an email local part with it is a declared business rule, not a generic correctness fix." ;
+    dal:unicodeVersion "16.0.0" .
+
+dal:NfkcTrimLowercase a owl:NamedIndividual ;
+    rdfs:comment "NFKC, then trim, then Unicode lowercase mapping, then NFKC again. Case mapping, not case folding: prefer dal:NfkcTrimCasefold for caseless matching of human text." ;
+    dal:unicodeVersion "16.0.0" .
+
+dal:NfkcTrimUppercase a owl:NamedIndividual ;
+    rdfs:comment "NFKC, then trim, then Unicode uppercase mapping, then NFKC again (case mapping is not closed under NFKC). Case-insensitive codes such as SKUs and order numbers." ;
+    dal:unicodeVersion "16.0.0" .
+```
+
+### 6.7 Axiom Index
+
+<!-- start: {"generated": "axiom-index"} -->
+
+| Term | Kind | Summary |
+|---|---|---|
+| `dal:AccessMode` | Class |  |
+| `dal:AggregateBoundaryProfile` | Class |  |
+| `dal:AggregateBoundaryStrategy` | Class |  |
+| `dal:AuditOutcome` | Class |  |
+| `dal:BoundaryShapeAbsence` | Class |  |
+| `dal:CapabilityCheck` | Class |  |
+| `dal:CapabilityRequirement` | Class |  |
+| `dal:CapabilitySpec` | Class |  |
+| `dal:ClaimScheme` | Class |  |
+| `dal:ClassScope` | Class | Subclass of `dal:ProfileScope`. |
+| `dal:ColumnKind` | Class |  |
+| `dal:CompiledProfile` | Class |  |
+| `dal:ConcurrencyProfile` | Class |  |
+| `dal:ConcurrencyStrategy` | Class |  |
+| `dal:ContiguityCheckMode` | Class |  |
+| `dal:DataAccessProfile` | Class |  |
+| `dal:DatasetTierModel` | Class |  |
+| `dal:DeadlockPolicy` | Class |  |
+| `dal:DeclarationSource` | Class |  |
+| `dal:Diagnostic` | Class |  |
+| `dal:DigestContract` | Class |  |
+| `dal:DigestPart` | Class |  |
+| `dal:DigestPartRole` | Class |  |
+| `dal:DigestScheme` | Class |  |
+| `dal:EpochAuthority` | Class |  |
+| `dal:EpochGuardScope` | Class |  |
+| `dal:EpochProfile` | Class |  |
+| `dal:EquivalentClassScope` | Class | Subclass of `dal:ProfileScope`. |
+| `dal:ErasurePrecedence` | Class |  |
+| `dal:ErasureStrategy` | Class |  |
+| `dal:EtagForm` | Class |  |
+| `dal:EtagRepresentation` | Class |  |
+| `dal:EventIdentityStrategy` | Class |  |
+| `dal:FirstWriteMode` | Class |  |
+| `dal:GeneratedOperation` | Class |  |
+| `dal:GlobalReadStrategy` | Class |  |
+| `dal:GraphNaming` | Class |  |
+| `dal:GraphPatternScope` | Class | Subclass of `dal:ProfileScope`. |
+| `dal:GuardStatus` | Class |  |
+| `dal:IdentityProfile` | Class |  |
+| `dal:IdentityStrategy` | Class |  |
+| `dal:MembershipEncoding` | Class |  |
+| `dal:MetaTopology` | Class |  |
+| `dal:MetaTopologyProfile` | Class |  |
+| `dal:MintingRecipe` | Class |  |
+| `dal:NamespaceScope` | Class | Subclass of `dal:ProfileScope`. |
+| `dal:OccurrenceNamespaceDerivation` | Class |  |
+| `dal:OperationKind` | Class |  |
+| `dal:OrderingGrain` | Class |  |
+| `dal:OrderingProfile` | Class |  |
+| `dal:OwnershipKind` | Class |  |
+| `dal:ParameterBinding` | Class |  |
+| `dal:ParameterDeclaration` | Class |  |
+| `dal:ParameterKind` | Class |  |
+| `dal:PayloadContract` | Class |  |
+| `dal:PayloadEncoding` | Class |  |
+| `dal:PersistenceKeyed` | Class | Subclass of `fnd:NaturallyKeyed`. |
+| `dal:PrivacyClass` | Class |  |
+| `dal:PrivacyProfile` | Class |  |
+| `dal:ProfileScope` | Class |  |
+| `dal:ReceiptModel` | Class |  |
+| `dal:ReceiptProfile` | Class |  |
+| `dal:ReferenceData` | Class |  |
+| `dal:ReferenceEdge` | Class |  |
+| `dal:ReferenceMode` | Class |  |
+| `dal:ResolvedDimension` | Class |  |
+| `dal:ResourceAccess` | Class |  |
+| `dal:ResourceKind` | Class |  |
+| `dal:ResourceRole` | Class |  |
+| `dal:ResultColumn` | Class |  |
+| `dal:RetentionMode` | Class |  |
+| `dal:Rule` | Class |  |
+| `dal:SchemeState` | Class |  |
+| `dal:SelfReferenceRule` | Class |  |
+| `dal:ShapeScope` | Class | Subclass of `dal:ProfileScope`. |
+| `dal:Source` | Class |  |
+| `dal:SurrogateKind` | Class |  |
+| `dal:Template` | Class |  |
+| `dal:UniquenessConstraint` | Class |  |
+| `dal:WriteDiscipline` | Class |  |
+| `dal:WriteDisciplineProfile` | Class |  |
+| `dal:access` | Object property | Domain `dal:GeneratedOperation`. Range `dal:ResourceAccess`. |
+| `dal:accessMode` | Object property | Domain `dal:ResourceAccess`. Range `dal:AccessMode`. |
+| `dal:appliedUniquenessConstraint` | Object property | Domain `dal:CompiledProfile`. Range `dal:UniquenessConstraint`. |
+| `dal:appliesTo` | Object property | Range `dal:ProfileScope`. |
+| `dal:appliesToTarget` | Object property | Domain `dal:CapabilitySpec`. |
+| `dal:boundaryShape` | Object property |  |
+| `dal:capabilityCheck` | Object property | Domain `dal:CompiledProfile`. Range `dal:CapabilityCheck`. |
+| `dal:capabilityRequirement` | Object property | Domain `dal:CompiledProfile`. Range `dal:CapabilityRequirement`. |
+| `dal:checkedAgainst` | Object property | Domain `dal:CapabilityCheck`. Range `dal:CapabilitySpec`. |
+| `dal:claimDigestScheme` | Object property | Domain `dal:ClaimScheme`. Range `dal:DigestScheme`. |
+| `dal:claimScheme` | Object property | Domain `dal:UniquenessConstraint`. Range `dal:ClaimScheme`. |
+| `dal:claimsConstraint` | Object property | Domain `dal:IdentityProfile`. Range `dal:UniquenessConstraint`. |
+| `dal:columnKind` | Object property | Domain `dal:ResultColumn`. Range `dal:ColumnKind`. |
+| `dal:concurrencyProfile` | Object property | Domain `dal:ConcurrencyProfile`. Range `dal:ConcurrencyStrategy`. |
+| `dal:contiguityCheckMode` | Object property | Domain `dal:OrderingProfile`. Range `dal:ContiguityCheckMode`. |
+| `dal:coversClass` | Object property |  |
+| `dal:dataGraph` | Object property | Domain `dal:AggregateBoundaryProfile`. |
+| `dal:datasetTierModel` | Object property | Domain `dal:OrderingProfile`. Range `dal:DatasetTierModel`. |
+| `dal:deadlockPolicy` | Object property | Domain `dal:ConcurrencyProfile`. Range `dal:DeadlockPolicy`. |
+| `dal:declarationSource` | Object property | Domain `dal:GeneratedOperation`. Range `dal:DeclarationSource`. |
+| `dal:diagnostic` | Object property | Domain `dal:CompiledProfile`. Range `dal:Diagnostic`. |
+| `dal:digestContract` | Object property | Domain `dal:GeneratedOperation`. Range `dal:DigestContract`. |
+| `dal:digestPart` | Object property | Domain `dal:DigestContract`. Range `dal:DigestPart`. |
+| `dal:digestScheme` | Object property | Domain `dal:IdentityProfile`. Range `dal:DigestScheme`. |
+| `dal:edgeOwnership` | Object property | Domain `dal:ReferenceEdge`. Range `dal:OwnershipKind`. |
+| `dal:edgePredicate` | Object property | Domain `dal:ReferenceEdge`. |
+| `dal:edgeSource` | Object property | Domain `dal:ReferenceEdge`. |
+| `dal:edgeTargetClass` | Object property | Domain `dal:ReferenceEdge`. |
+| `dal:edgeTargetShape` | Object property | Domain `dal:ReferenceEdge`. |
+| `dal:epochAuthority` | Object property | Domain `dal:EpochProfile`. Range `dal:EpochAuthority`. |
+| `dal:epochGuardScope` | Object property | Domain `dal:EpochProfile`. Range `dal:EpochGuardScope`. |
+| `dal:equivalentTo` | Object property | Domain `dal:EquivalentClassScope`. |
+| `dal:erasurePrecedence` | Object property | Domain `dal:PrivacyProfile`. Range `dal:ErasurePrecedence`. |
+| `dal:erasureStrategy` | Object property | Domain `dal:PrivacyProfile`. Range `dal:ErasureStrategy`. |
+| `dal:etagForm` | Object property | Domain `dal:ConcurrencyProfile`. Range `dal:EtagForm`. |
+| `dal:etagRepresentation` | Object property | Domain `dal:ConcurrencyProfile`. Range `dal:EtagRepresentation`. |
+| `dal:eventIdentityStrategy` | Object property | Domain `dal:IdentityProfile`. Range `dal:EventIdentityStrategy`. |
+| `dal:examinedParameter` | Object property | Domain `dal:GeneratedOperation`. Range `dal:ParameterDeclaration`. |
+| `dal:firstWrite` | Object property | Domain `dal:AggregateBoundaryProfile`. Range `dal:FirstWriteMode`. |
+| `dal:forDeployment` | Object property | Domain `dal:CompiledProfile`. |
+| `dal:forRole` | Object property | Domain `dal:MintingRecipe`. Range `dal:ResourceRole`. |
+| `dal:forTarget` | Object property | Domain `dal:CompiledProfile`. |
+| `dal:generatedOperation` | Object property | Domain `dal:CompiledProfile`. Range `dal:GeneratedOperation`. |
+| `dal:globalReadStrategy` | Object property | Domain `dal:OrderingProfile`. Range `dal:GlobalReadStrategy`. |
+| `dal:graphNaming` | Object property | Domain `dal:GeneratedOperation`. Range `dal:GraphNaming`. |
+| `dal:guardStatus` | Object property | Domain `dal:GeneratedOperation`. Range `dal:GuardStatus`. |
+| `dal:hasParameterBinding` | Object property | Domain `dal:GeneratedOperation`. Range `dal:ParameterBinding`. |
+| `dal:identityStrategy` | Object property | Domain `dal:IdentityProfile`. Range `dal:IdentityStrategy`. |
+| `dal:keyConstraint` | Object property | Domain `dal:IdentityProfile`. Range `dal:UniquenessConstraint`. |
+| `dal:keyProperty` | Object property | Domain `dal:UniquenessConstraint`. |
+| `dal:keyedBy` | Object property | Domain `dal:ResourceAccess`. Range `dal:ParameterDeclaration`. |
+| `dal:membershipEncoding` | Object property | Domain `dal:WriteDisciplineProfile`. Range `dal:MembershipEncoding`. |
+| `dal:mergeRelation` | Object property | Domain `dal:UniquenessConstraint`. |
+| `dal:metaTopology` | Object property | Domain `dal:MetaTopologyProfile`. Range `dal:MetaTopology`. |
+| `dal:minConcurrencyLevel` | Object property | Domain `dal:ConcurrencyProfile`. |
+| `dal:minEnforcementLevel` | Object property |  |
+| `dal:mintingRecipe` | Object property | Domain `dal:CompiledProfile`. Range `dal:MintingRecipe`. |
+| `dal:mustEqual` | Object property | Domain `dal:ParameterDeclaration`. Range `dal:Rule`. |
+| `dal:mustEqualFor` | Object property | Domain `dal:ParameterDeclaration`. Range `dal:ParameterDeclaration`. |
+| `dal:normalizePipeline` | Object property | Domain `dal:UniquenessConstraint`. |
+| `dal:occurrenceNamespaceDerivation` | Object property | Domain `dal:IdentityProfile`. Range `dal:OccurrenceNamespaceDerivation`. |
+| `dal:onViolation` | Object property | Domain `dal:UniquenessConstraint`. |
+| `dal:operationKind` | Object property | Domain `dal:GeneratedOperation`. Range `dal:OperationKind`. |
+| `dal:orderingGrain` | Object property | Domain `dal:OrderingProfile`. Range `dal:OrderingGrain`. |
+| `dal:ownership` | Object property | Range `dal:OwnershipKind`. |
+| `dal:parameter` | Object property | Domain `dal:GeneratedOperation`. Range `dal:ParameterDeclaration`. |
+| `dal:parameterKind` | Object property | Domain `dal:ParameterDeclaration`. Range `dal:ParameterKind`. |
+| `dal:partRole` | Object property | Domain `dal:DigestPart`. Range `dal:DigestPartRole`. |
+| `dal:partSource` | Object property | Domain `dal:DigestPart`. |
+| `dal:payloadContract` | Object property | Domain `dal:GeneratedOperation`. Range `dal:PayloadContract`. |
+| `dal:payloadEncoding` | Object property | Domain `dal:PayloadContract`. Range `dal:PayloadEncoding`. |
+| `dal:payloadParameter` | Object property | Domain `dal:PayloadContract`. Range `dal:ParameterDeclaration`. |
+| `dal:payloadRoot` | Object property | Domain `dal:PayloadContract`. Range `dal:ParameterDeclaration`. |
+| `dal:privacyClass` | Object property | Domain `dal:PrivacyProfile`. Range `dal:PrivacyClass`. |
+| `dal:receiptModel` | Object property | Domain `dal:ReceiptProfile`. Range `dal:ReceiptModel`. |
+| `dal:recipeStrategy` | Object property | Domain `dal:MintingRecipe`. |
+| `dal:recordClass` | Object property | Range `owl:Class`. |
+| `dal:referenceEdge` | Object property | Range `dal:ReferenceEdge`. |
+| `dal:referenceMode` | Object property | Range `dal:ReferenceMode`. |
+| `dal:reportsOutcome` | Object property | Domain `dal:GeneratedOperation`. Range `dal:AuditOutcome`. |
+| `dal:requiresReasoningFor` | Object property | Domain `dal:CapabilityRequirement`. |
+| `dal:requiresUniquenessLevel` | Object property | Domain `dal:CapabilityRequirement`. |
+| `dal:resolvedDimension` | Object property | Domain `dal:CompiledProfile`. Range `dal:ResolvedDimension`. |
+| `dal:resolvedValue` | Object property | Domain `dal:ResolvedDimension`. |
+| `dal:resourceKind` | Object property | Domain `dal:ResourceAccess`. Range `dal:ResourceKind`. |
+| `dal:resourceRole` | Object property | Domain `dal:IdentityProfile`. Range `dal:ResourceRole`. |
+| `dal:resultColumn` | Object property | Domain `dal:GeneratedOperation`. Range `dal:ResultColumn`. |
+| `dal:retentionMode` | Object property | Domain `dal:ReceiptProfile`. Range `dal:RetentionMode`. |
+| `dal:schemeState` | Object property | Domain `dal:ClaimScheme`. Range `dal:SchemeState`. |
+| `dal:scopeProperty` | Object property | Domain `dal:UniquenessConstraint`. |
+| `dal:selfReferenceRule` | Object property | Domain `dal:IdentityProfile`. Range `dal:SelfReferenceRule`. |
+| `dal:sourcedFrom` | Object property | Domain `dal:ParameterDeclaration`. Range `dal:Source`. |
+| `dal:strategy` | Object property | Domain `dal:AggregateBoundaryProfile`. Range `dal:AggregateBoundaryStrategy`. |
+| `dal:surrogateKind` | Object property | Domain `dal:IdentityProfile`. Range `dal:SurrogateKind`. |
+| `dal:targetClass` | Object property | Domain `dal:ClassScope`. |
+| `dal:targetShape` | Object property | Domain `dal:ShapeScope`. |
+| `dal:tuplePrefix` | Object property | Domain `dal:IdentityProfile`. |
+| `dal:usesTemplate` | Object property | Domain `dal:GeneratedOperation`. Range `dal:Template`. |
+| `dal:valueGuardProperty` | Object property | Domain `dal:ConcurrencyProfile`. |
+| `dal:wonBy` | Object property | Domain `dal:ResolvedDimension`. |
+| `dal:writeDiscipline` | Object property | Domain `dal:WriteDisciplineProfile`. Range `dal:WriteDiscipline`. |
+| `dal:acceptedIriPattern` | Datatype property | Domain `dal:IdentityProfile`. Range `xsd:string`. |
+| `dal:acknowledgedSharedClassOverride` | Datatype property | Range `xsd:boolean`. |
+| `dal:asOfFloorSource` | Datatype property | Domain `dal:ReceiptProfile`. Range `xsd:string`. |
+| `dal:callerSuppliedPattern` | Datatype property | Domain `dal:IdentityProfile`. Range `xsd:string`. |
+| `dal:candidateCount` | Datatype property | Domain `dal:ResolvedDimension`. Range `xsd:integer`. |
+| `dal:canonicalizationWorkBudget` | Datatype property | Domain `dal:IdentityProfile`. Range `xsd:integer`. |
+| `dal:checkpointEvery` | Datatype property | Domain `dal:WriteDisciplineProfile`. Range `xsd:long`. |
+| `dal:claimIriTemplate` | Datatype property | Domain `dal:ClaimScheme`. Range `xsd:string`. |
+| `dal:claimKeyId` | Datatype property | Domain `dal:ClaimScheme`. Range `xsd:string`. |
+| `dal:columnName` | Datatype property | Domain `dal:ResultColumn`. Range `xsd:string`. |
+| `dal:columnPosition` | Datatype property | Domain `dal:ResultColumn`. Range `xsd:integer`. |
+| `dal:columnSeparator` | Datatype property | Domain `dal:ResultColumn`. Range `xsd:string`. |
+| `dal:constraintId` | Datatype property | Domain `dal:UniquenessConstraint`. Range `xsd:string`. |
+| `dal:describedBy` | Datatype property | Domain `dal:ProfileScope`. Range `xsd:string`. |
+| `dal:diagnosticKind` | Datatype property | Domain `dal:Diagnostic`. Range `xsd:string`. |
+| `dal:diagnosticMessage` | Datatype property | Domain `dal:Diagnostic`. Range `xsd:string`. |
+| `dal:diagnosticSeverity` | Datatype property | Domain `dal:Diagnostic`. Range `xsd:string`. |
+| `dal:digestAlgorithm` | Datatype property | Domain `dal:DigestContract`. Range `xsd:string`. |
+| `dal:digestEncoding` | Datatype property | Domain `dal:DigestScheme`. Range `xsd:string`. |
+| `dal:digestFunction` | Datatype property | Domain `dal:DigestScheme`. Range `xsd:string`. |
+| `dal:digestWidthBits` | Datatype property | Domain `dal:DigestScheme`. Range `xsd:integer`. |
+| `dal:dimension` | Datatype property | Domain `dal:ResolvedDimension`. Range `xsd:string`. |
+| `dal:edgeInverse` | Datatype property | Domain `dal:ReferenceEdge`. Range `xsd:boolean`. |
+| `dal:epochBumpAcknowledged` | Datatype property | Domain `dal:MetaTopologyProfile`. Range `xsd:boolean`. |
+| `dal:epochCoordinatorBinding` | Datatype property | Domain `dal:EpochProfile`. Range `xsd:string`. |
+| `dal:epochWidth` | Datatype property | Domain `dal:IdentityProfile`. Range `xsd:integer`. |
+| `dal:erasureRegisterBinding` | Datatype property | Domain `dal:EpochProfile`. Range `xsd:string`. |
+| `dal:erasureReplayOnRestore` | Datatype property | Domain `dal:EpochProfile`. Range `xsd:boolean`. |
+| `dal:forOperation` | Datatype property | Domain `dal:GeneratedOperation`. Range `xsd:string`. |
+| `dal:graphIriTemplate` | Datatype property | Domain `dal:AggregateBoundaryProfile`. Range `xsd:string`. |
+| `dal:graphPrefix` | Datatype property | Domain `dal:GraphPatternScope`. Range `xsd:string`. |
+| `dal:includeSubclasses` | Datatype property | Domain `dal:ClassScope`. Range `xsd:boolean`. |
+| `dal:iriPrefix` | Datatype property | Domain `dal:NamespaceScope`. Range `xsd:string`. |
+| `dal:keyShards` | Datatype property | Domain `dal:MetaTopologyProfile`. Range `xsd:long`. |
+| `dal:lagWindowMillis` | Datatype property | Domain `dal:OrderingProfile`. Range `xsd:long`. |
+| `dal:logShards` | Datatype property | Domain `dal:MetaTopologyProfile`. Range `xsd:long`. |
+| `dal:logicalKey` | Datatype property | Domain `dal:ResourceKind`. Range `xsd:string`. |
+| `dal:metaShards` | Datatype property | Domain `dal:MetaTopologyProfile`. Range `xsd:long`. |
+| `dal:mintedIriTemplate` | Datatype property | Domain `dal:IdentityProfile`. Range `xsd:string`. |
+| `dal:namingAuthority` | Datatype property | Domain `dal:IdentityProfile`. Range `xsd:string`. |
+| `dal:opSeqRequired` | Datatype property | Domain `dal:OrderingProfile`. Range `xsd:boolean`. |
+| `dal:ownsReferenceData` | Datatype property | Domain `dal:AggregateBoundaryProfile`. Range `xsd:boolean`. |
+| `dal:paramName` | Datatype property | Domain `dal:ParameterBinding`. Range `xsd:string`. |
+| `dal:paramType` | Datatype property | Domain `dal:ParameterBinding`. Range `xsd:string`. |
+| `dal:paramValue` | Datatype property | Domain `dal:ParameterBinding`. |
+| `dal:parameterName` | Datatype property | Domain `dal:ParameterDeclaration`. Range `xsd:string`. |
+| `dal:partOrder` | Datatype property | Domain `dal:DigestPart`. Range `xsd:integer`. |
+| `dal:perSubjectScoped` | Datatype property | Domain `dal:ReceiptProfile`. Range `xsd:boolean`. |
+| `dal:priorMetaShards` | Datatype property | Domain `dal:MetaTopologyProfile`. Range `xsd:long`. |
+| `dal:priority` | Datatype property | Domain `dal:ProfileScope`. Range `xsd:integer`. |
+| `dal:providesCas` | Datatype property | Domain `dal:CapabilitySpec`. Range `xsd:string`. |
+| `dal:providesCommitValidation` | Datatype property | Domain `dal:CapabilitySpec`. Range `xsd:string`. |
+| `dal:providesReasoning` | Datatype property | Domain `dal:CapabilitySpec`. Range `xsd:boolean`. |
+| `dal:providesSingleWriter` | Datatype property | Domain `dal:CapabilitySpec`. Range `xsd:boolean`. |
+| `dal:providesStatementLevelConflictDetection` | Datatype property | Domain `dal:CapabilitySpec`. Range `xsd:boolean`. |
+| `dal:recipeDigest` | Datatype property | Domain `dal:MintingRecipe`. Range `xsd:string`. |
+| `dal:recipeDocument` | Datatype property | Domain `dal:MintingRecipe`. |
+| `dal:registryGraph` | Datatype property | Domain `dal:MetaTopologyProfile`. Range `xsd:string`. |
+| `dal:required` | Datatype property | Domain `dal:ParameterDeclaration`. Range `xsd:boolean`. |
+| `dal:requiresCas` | Datatype property | Domain `dal:CapabilityRequirement`. Range `xsd:string`. |
+| `dal:requiresReasoning` | Datatype property | Range `xsd:boolean`. |
+| `dal:resolvedLiteral` | Datatype property | Domain `dal:ResolvedDimension`. |
+| `dal:schemeVersion` | Datatype property | Domain `dal:ClaimScheme`. Range `xsd:string`. |
+| `dal:sequenceWidth` | Datatype property | Domain `dal:IdentityProfile`. Range `xsd:integer`. |
+| `dal:templateId` | Datatype property | Domain `dal:Template`. Range `xsd:string`. |
+| `dal:templateVersion` | Datatype property | Domain `dal:GeneratedOperation`. Range `xsd:integer`. |
+| `dal:txnShards` | Datatype property | Domain `dal:MetaTopologyProfile`. Range `xsd:long`. |
+| `dal:unicodeVersion` | Datatype property | Range `xsd:string`. |
+| `dal:uniquenessWitnessRequired` | Datatype property | Domain `dal:IdentityProfile`. Range `xsd:boolean`. |
+| `dal:verdict` | Datatype property | Domain `dal:CapabilityCheck`. Range `xsd:string`. |
+| `dal:verifyFullDigestOnWrite` | Datatype property | Domain `dal:DigestScheme`. Range `xsd:boolean`. |
+| `dal:AbsenceRead` | Individual | Type `dal:AccessMode`. |
+| `dal:AbsentRow` | Individual | Type `dal:FirstWriteMode`. |
+| `dal:Accepting` | Individual | Type `dal:SchemeState`. |
+| `dal:AddPart` | Individual | Type `dal:DigestPartRole`. |
+| `dal:AdoptedIdentity` | Individual | Type `dal:IdentityStrategy`. |
+| `dal:Advisory` | Individual | Type `owl:NamedIndividual`. |
+| `dal:AdvisoryContiguityCheck` | Individual | Type `dal:ContiguityCheckMode`. |
+| `dal:AggregateRootRole` | Individual | Type `dal:ResourceRole`. |
+| `dal:Append` | Individual | Type `dal:OperationKind`. |
+| `dal:AppendOnly` | Individual | Type `dal:ConcurrencyStrategy`. |
+| `dal:AppendRecords` | Individual | Type `dal:WriteDiscipline`. |
+| `dal:AppendVersion` | Individual | Type `dal:OperationKind`. |
+| `dal:AppendVersions` | Individual | Type `dal:WriteDiscipline`. |
+| `dal:Audit` | Individual | Type `dal:OperationKind`. |
+| `dal:BestEffort` | Individual | Type `owl:NamedIndividual`. |
+| `dal:BlockingContiguityCheck` | Individual | Type `dal:ContiguityCheckMode`. |
+| `dal:Bootstrap` | Individual | Type `dal:OperationKind`. |
+| `dal:BucketAnyRetention` | Individual | Type `dal:RetentionMode`. |
+| `dal:BuilderDerived` | Individual | Type `dal:DeclarationSource`. |
+| `dal:ByIdentity` | Individual | Type `dal:ReferenceMode`. |
+| `dal:CallerNamed` | Individual | Type `dal:GraphNaming`. |
+| `dal:CallerSuppliedSurrogate` | Individual | Type `dal:SurrogateKind`. |
+| `dal:Clean` | Individual | Type `dal:AuditOutcome`. |
+| `dal:CommitGrain` | Individual | Type `dal:OrderingGrain`. |
+| `dal:ComponentRole` | Individual | Type `dal:ResourceRole`. |
+| `dal:CompositePropertyBoundary` | Individual | Type `dal:AggregateBoundaryStrategy`. |
+| `dal:ConcatenationColumn` | Individual | Type `dal:ColumnKind`. |
+| `dal:ContentAddressedIdentity` | Individual | Type `dal:IdentityStrategy`. |
+| `dal:ContentRevisionRole` | Individual | Type `dal:ResourceRole`. |
+| `dal:CountColumn` | Individual | Type `dal:ColumnKind`. |
+| `dal:Create` | Individual | Type `dal:OperationKind`. |
+| `dal:CryptoShred` | Individual | Type `dal:ErasureStrategy`. |
+| `dal:DatasetLevelGuard` | Individual | Type `dal:EpochGuardScope`. |
+| `dal:DelPart` | Individual | Type `dal:DigestPartRole`. |
+| `dal:Delete` | Individual | Type `dal:AccessMode`. |
+| `dal:DeltaMembership` | Individual | Type `dal:MembershipEncoding`. |
+| `dal:DenseFeedRead` | Individual | Type `dal:GlobalReadStrategy`. |
+| `dal:DerivedFeed` | Individual | Type `dal:DatasetTierModel`. |
+| `dal:DerivedHashIdentity` | Individual | Type `dal:IdentityStrategy`. |
+| `dal:DigestKind` | Individual | Type `dal:ParameterKind`. |
+| `dal:Dual` | Individual | Type `dal:SchemeState`. |
+| `dal:EngineDetectAndRetry` | Individual | Type `dal:DeadlockPolicy`. |
+| `dal:EntityRole` | Individual | Type `dal:ResourceRole`. |
+| `dal:ErasureWins` | Individual | Type `dal:ErasurePrecedence`. |
+| `dal:EventGrain` | Individual | Type `dal:OrderingGrain`. |
+| `dal:EventOccurrenceRole` | Individual | Type `dal:ResourceRole`. |
+| `dal:EventPart` | Individual | Type `dal:DigestPartRole`. |
+| `dal:ExcludeHeaderSubgraph` | Individual | Type `dal:SelfReferenceRule`. |
+| `dal:ExpectedSeqPart` | Individual | Type `dal:DigestPartRole`. |
+| `dal:ExternalEventIdStrategy` | Individual | Type `dal:EventIdentityStrategy`. |
+| `dal:ExternalHighWaterMark` | Individual | Type `dal:EpochAuthority`. |
+| `dal:ExternalRegistryIdentity` | Individual | Type `dal:IdentityStrategy`. |
+| `dal:Failed` | Individual | Type `dal:AuditOutcome`. |
+| `dal:FullMembership` | Individual | Type `dal:MembershipEncoding`. |
+| `dal:GlobalDenseCounter` | Individual | Type `dal:DatasetTierModel`. |
+| `dal:GraphLocatorRole` | Individual | Type `dal:ResourceRole`. |
+| `dal:GraphNameOfRoot` | Individual | Type `dal:Rule`. |
+| `dal:GroundNTriples` | Individual | Type `dal:PayloadEncoding`. |
+| `dal:Guarded` | Individual | Type `dal:GuardStatus`. |
+| `dal:GuardsOff` | Individual | Type `dal:GuardStatus`. |
+| `dal:HandDeclared` | Individual | Type `dal:DeclarationSource`. |
+| `dal:HashedTargetDerivation` | Individual | Type `dal:OccurrenceNamespaceDerivation`. |
+| `dal:HybridLogicalClock` | Individual | Type `dal:DatasetTierModel`. |
+| `dal:InPlace` | Individual | Type `dal:WriteDiscipline`. |
+| `dal:Insert` | Individual | Type `dal:AccessMode`. |
+| `dal:InternalData` | Individual | Type `dal:PrivacyClass`. |
+| `dal:IriColumn` | Individual | Type `dal:ColumnKind`. |
+| `dal:IriKind` | Individual | Type `dal:ParameterKind`. |
+| `dal:IriOrLiteralKind` | Individual | Type `dal:ParameterKind`. |
+| `dal:KeyClaimRetire` | Individual | Type `dal:OperationKind`. |
+| `dal:KeyClaimRole` | Individual | Type `dal:ResourceRole`. |
+| `dal:KeyClaimWrite` | Individual | Type `dal:OperationKind`. |
+| `dal:KeyClaimWriteDual` | Individual | Type `dal:OperationKind`. |
+| `dal:LagWindowRead` | Individual | Type `dal:GlobalReadStrategy`. |
+| `dal:LangStringKind` | Individual | Type `dal:ParameterKind`. |
+| `dal:LineageRole` | Individual | Type `dal:ResourceRole`. |
+| `dal:Linearizable` | Individual | Type `owl:NamedIndividual`. |
+| `dal:LiteralKind` | Individual | Type `dal:ParameterKind`. |
+| `dal:LockingConcurrency` | Individual | Type `dal:ConcurrencyStrategy`. |
+| `dal:LongKind` | Individual | Type `dal:ParameterKind`. |
+| `dal:MembersRead` | Individual | Type `dal:OperationKind`. |
+| `dal:Merge` | Individual | Type `owl:NamedIndividual`. |
+| `dal:MergeRewrite` | Individual | Type `dal:OperationKind`. |
+| `dal:MonotonicityWins` | Individual | Type `dal:ErasurePrecedence`. |
+| `dal:NamedGraphBoundary` | Individual | Type `dal:AggregateBoundaryStrategy`. |
+| `dal:NaturalKeyIdentity` | Individual | Type `dal:IdentityStrategy`. |
+| `dal:NoBoundary` | Individual | Type `dal:AggregateBoundaryStrategy`. |
+| `dal:NoBoundaryShape` | Individual | Type `dal:BoundaryShapeAbsence`. |
+| `dal:NoErasure` | Individual | Type `dal:ErasureStrategy`. |
+| `dal:NoGlobalRead` | Individual | Type `dal:GlobalReadStrategy`. |
+| `dal:NoReceipt` | Individual | Type `dal:ReceiptModel`. |
+| `dal:NoRequiredParameter` | Individual | Type `dal:GuardStatus`. |
+| `dal:NoSource` | Individual | Type `dal:Source`. |
+| `dal:NotGenerated` | Individual | Type `dal:GuardStatus`. |
+| `dal:NothingExamined` | Individual | Type `dal:AuditOutcome`. |
+| `dal:OperationKindPart` | Individual | Type `dal:DigestPartRole`. |
+| `dal:Optimistic` | Individual | Type `dal:ConcurrencyStrategy`. |
+| `dal:Owned` | Individual | Type `dal:OwnershipKind`. |
+| `dal:PartitionedWriter` | Individual | Type `dal:DeadlockPolicy`. |
+| `dal:PatchLog` | Individual | Type `dal:ReceiptModel`. |
+| `dal:PayloadCheck` | Individual | Type `dal:OperationKind`. |
+| `dal:PayloadKind` | Individual | Type `dal:ParameterKind`. |
+| `dal:PayloadPart` | Individual | Type `dal:DigestPartRole`. |
+| `dal:PerAggregate` | Individual | Type `dal:MetaTopology`. |
+| `dal:PerSubjectGraphDrop` | Individual | Type `dal:ErasureStrategy`. |
+| `dal:PersonalData` | Individual | Type `dal:PrivacyClass`. |
+| `dal:Pinned` | Individual | Type `dal:ReferenceMode`. |
+| `dal:PlaceholderSubstitution` | Individual | Type `dal:SelfReferenceRule`. |
+| `dal:PointRead` | Individual | Type `dal:AccessMode`. |
+| `dal:PositionColumn` | Individual | Type `dal:ColumnKind`. |
+| `dal:PositionDerivedEvent` | Individual | Type `dal:EventIdentityStrategy`. |
+| `dal:PositionKind` | Individual | Type `dal:ParameterKind`. |
+| `dal:PreCreatedRow` | Individual | Type `dal:FirstWriteMode`. |
+| `dal:PrefixOnlyRetention` | Individual | Type `dal:RetentionMode`. |
+| `dal:ProvidedConcurrency` | Individual | Type `dal:ConcurrencyStrategy`. |
+| `dal:PublicData` | Individual | Type `dal:PrivacyClass`. |
+| `dal:Quarantine` | Individual | Type `dal:OperationKind`, `owl:NamedIndividual`. |
+| `dal:QueryNamed` | Individual | Type `dal:GraphNaming`. |
+| `dal:RandomOccurrenceEvent` | Individual | Type `dal:EventIdentityStrategy`. |
+| `dal:RandomSurrogateIdentity` | Individual | Type `dal:IdentityStrategy`. |
+| `dal:ReceiptOnly` | Individual | Type `dal:ReceiptModel`. |
+| `dal:Reference` | Individual | Type `dal:OwnershipKind`. |
+| `dal:RegistryGraph` | Individual | Type `dal:Source`. |
+| `dal:RegistryListKind` | Individual | Type `dal:ParameterKind`. |
+| `dal:RegistryTokenDerivation` | Individual | Type `dal:OccurrenceNamespaceDerivation`. |
+| `dal:Reject` | Individual | Type `owl:NamedIndividual`. |
+| `dal:Replace` | Individual | Type `dal:OperationKind`. |
+| `dal:RestoreControlledEpoch` | Individual | Type `dal:EpochAuthority`. |
+| `dal:Retired` | Individual | Type `dal:SchemeState`. |
+| `dal:Retiring` | Individual | Type `dal:SchemeState`. |
+| `dal:RowLevelGuardOnly` | Individual | Type `dal:EpochGuardScope`. |
+| `dal:RowsKind` | Individual | Type `dal:ParameterKind`. |
+| `dal:ScanRead` | Individual | Type `dal:AccessMode`. |
+| `dal:SelfReferenceDisallowed` | Individual | Type `dal:SelfReferenceRule`. |
+| `dal:SharedSharded` | Individual | Type `dal:MetaTopology`. |
+| `dal:SingleRepresentation` | Individual | Type `dal:EtagRepresentation`. |
+| `dal:SnapshotPerRevision` | Individual | Type `dal:ReceiptModel`. |
+| `dal:SortedAcquisition` | Individual | Type `dal:DeadlockPolicy`. |
+| `dal:StoreLocalEpoch` | Individual | Type `dal:EpochAuthority`. |
+| `dal:StringColumn` | Individual | Type `dal:ColumnKind`. |
+| `dal:StringKind` | Individual | Type `dal:ParameterKind`. |
+| `dal:Strong` | Individual | Type `owl:NamedIndividual`. |
+| `dal:StrongEtag` | Individual | Type `dal:EtagForm`. |
+| `dal:SurrogateClaimedIdentity` | Individual | Type `dal:IdentityStrategy`. |
+| `dal:TaggedRepresentation` | Individual | Type `dal:EtagRepresentation`. |
+| `dal:TargetPart` | Individual | Type `dal:DigestPartRole`. |
+| `dal:TermColumn` | Individual | Type `dal:ColumnKind`. |
+| `dal:Tombstone` | Individual | Type `dal:OperationKind`. |
+| `dal:Transactional` | Individual | Type `owl:NamedIndividual`. |
+| `dal:UnconditionalWrite` | Individual | Type `dal:OperationKind`. |
+| `dal:UuidV4Surrogate` | Individual | Type `dal:SurrogateKind`. |
+| `dal:ValueGuardedReplace` | Individual | Type `dal:OperationKind`. |
+| `dal:Vocabulary` | Individual | Type `dal:OwnershipKind`. |
+| `dal:WatermarkedRead` | Individual | Type `dal:GlobalReadStrategy`. |
+| `dal:WeakEtag` | Individual | Type `dal:EtagForm`. |
+| `dal:WholeAggregateRead` | Individual | Type `dal:AccessMode`. |
+| `dal:WriterStartRefusal` | Individual | Type `dal:EpochAuthority`. |
+
+<!-- end -->
+
+## 7. Shapes
+
+A shape lives in one file only, so no violation is reported twice.
+
+### 7.1 Structural shapes
+
+Section 6 states no OWL restriction, so no `shapes/structural.ttl` is generated.
+
+### 7.2 Constraints
+
+`shapes/constraints.ttl` holds the SHACL shapes that validate a `dal:` configuration graph, which any SHACL engine can run,
+and the shapes over a compiled profile. Section 5.10 says which of these checks the compiler repeats.
+
+**Shapes over a compiled profile.** The contract of §5.8.1 is held to its structure by one shape per declaration
+(`dal:OperationContractShape`, `dal:ParameterDeclarationShape`, `dal:ResourceAccessShape`, `dal:ResultColumnShape`,
+`dal:PayloadContractShape`, `dal:DigestContractShape`, `dal:DigestPartShape`), and to three rules that cross them. Every enumeration
+value is closed with `sh:in`, so a kind, mode or resource outside the spec fails. A declaration is an IRI and never a blank node
+(`dal:ContractDeclarationIsIriShape`). No value is SPARQL text, since a declaration holds the properties of its class and a name or a
+separator is a short word (`dal:ContractHoldsNoSparqlTextShape`). A required parameter is guarded unless `dal:guardStatus` says otherwise
+(`dal:RequiredParametersGuardedShape`). The write discipline, the receipt model, the membership encoding and the reference mode are closed the same way
+
+<!-- hidden: {"output-file": "shapes/constraints.ttl"}
+```turtle-shapes
+@prefix dal:  <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+# SHACL shapes validating ontology/persistence's OWN instance data (an
+# adopter's dal: configuration). Mirrors the pattern in
+# rdf-sparql-patterns-guide.md Appendix B: sh:maxCount 1 on every functional
+# profile property, sh:class on every object property pointing at a scope,
+# and a standing sh:sparql check enforcing the shared-substrate-class
+# convention from ADR-A78 point 5.
+
+dal:ProfileScopeShape
+    a sh:NodeShape ;
+    sh:targetClass dal:ProfileScope ;
+    sh:property [ sh:path dal:priority ; sh:maxCount 1 ; sh:datatype xsd:integer ] ;
+    sh:property [ sh:path dal:describedBy ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+dal:GraphPatternScopeShape
+    a sh:NodeShape ;
+    sh:targetClass dal:GraphPatternScope ;
+    sh:property [ sh:path dal:graphPrefix ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+dal:NamespaceScopeShape
+    a sh:NodeShape ;
+    sh:targetClass dal:NamespaceScope ;
+    sh:property [ sh:path dal:iriPrefix ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+dal:ClassScopeShape
+    a sh:NodeShape ;
+    sh:targetClass dal:ClassScope ;
+    sh:property [ sh:path dal:targetClass ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ] ;
+    sh:property [ sh:path dal:includeSubclasses ; sh:maxCount 1 ; sh:datatype xsd:boolean ] .
+
+dal:ShapeScopeShape
+    a sh:NodeShape ;
+    sh:targetClass dal:ShapeScope ;
+    sh:property [ sh:path dal:targetShape ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ] .
+
+dal:EquivalentClassScopeShape
+    a sh:NodeShape ;
+    sh:targetClass dal:EquivalentClassScope ;
+    sh:property [ sh:path dal:equivalentTo ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+dal:DataAccessProfileShape
+    a sh:NodeShape ;
+    sh:targetClass dal:DataAccessProfile ;
+    sh:property [ sh:path dal:appliesTo ; sh:minCount 1 ; sh:maxCount 1 ; sh:class dal:ProfileScope ] .
+
+dal:AggregateBoundaryProfileShape
+    a sh:NodeShape ;
+    sh:targetClass dal:AggregateBoundaryProfile ;
+    sh:property [ sh:path dal:strategy ; sh:minCount 1 ; sh:maxCount 1 ; sh:class dal:AggregateBoundaryStrategy ] ;
+    sh:property [ sh:path dal:dataGraph ; sh:maxCount 1 ; sh:nodeKind sh:IRI ] ;
+    sh:property [ sh:path dal:ownsReferenceData ; sh:maxCount 1 ; sh:datatype xsd:boolean ] .
+
+# A CompositePropertyBoundary profile MUST carry a boundaryShape (ADR-A78
+# point 4: SHACL is the sole authoring surface for this strategy). Checked
+# with sh:sparql because the requirement is conditional on another
+# property's value, which sh:property alone cannot express.
+dal:CompositePropertyBoundaryRequiresShapeShape
+    a sh:NodeShape ;
+    sh:targetClass dal:AggregateBoundaryProfile ;
+    sh:sparql [
+        sh:message "dal:CompositePropertyBoundary requires dal:boundaryShape (ADR-A78 point 4): there is no other authoring surface for this strategy." ;
+        sh:prefixes dal: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this dal:strategy dal:CompositePropertyBoundary .
+              FILTER NOT EXISTS { $this dal:boundaryShape ?shape }
+            }""" ] .
+
+# A composite aggregate lives in one named graph (ADR-A122 decision 3, static
+# check S-1), so the profile must name it.
+dal:CompositePropertyBoundaryRequiresDataGraphShape
+    a sh:NodeShape ;
+    sh:targetClass dal:AggregateBoundaryProfile ;
+    sh:sparql [
+        sh:message "dal:CompositePropertyBoundary requires dal:dataGraph, the named graph its aggregates live in (ADR-A122 decision 3, static check S-1)." ;
+        sh:select """
+            PREFIX dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#>
+            SELECT $this WHERE {
+              $this dal:strategy dal:CompositePropertyBoundary .
+              FILTER NOT EXISTS { $this dal:dataGraph ?graph }
+            }""" ] .
+
+# dal:ownership takes exactly one of the three kinds (ADR-A122 decision 1).
+dal:BoundaryOwnershipShape
+    a sh:NodeShape ;
+    sh:targetSubjectsOf dal:ownership ;
+    sh:property [
+        sh:path dal:ownership ;
+        sh:maxCount 1 ;
+        sh:in ( dal:Owned dal:Reference dal:Vocabulary ) ;
+        sh:message "dal:ownership takes exactly one of dal:Owned, dal:Reference, dal:Vocabulary." ] .
+
+# A dal:ReferenceData declaration names at least one class.
+dal:ReferenceDataShape
+    a sh:NodeShape ;
+    sh:targetClass dal:ReferenceData ;
+    sh:property [
+        sh:path dal:coversClass ;
+        sh:minCount 1 ;
+        sh:nodeKind sh:IRI ;
+        sh:message "A dal:ReferenceData declaration names at least one class with dal:coversClass." ] .
+
+dal:ConcurrencyProfileShape
+    a sh:NodeShape ;
+    sh:targetClass dal:ConcurrencyProfile ;
+    sh:property [ sh:path dal:concurrencyProfile ; sh:minCount 1 ; sh:maxCount 1 ; sh:class dal:ConcurrencyStrategy ] .
+
+dal:UniquenessConstraintShape
+    a sh:NodeShape ;
+    sh:targetClass dal:UniquenessConstraint ;
+    sh:property [ sh:path dal:constraintId ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path dal:appliesTo ; sh:minCount 1 ; sh:maxCount 1 ; sh:class dal:ProfileScope ] ;
+    sh:property [ sh:path dal:keyProperty ; sh:minCount 1 ] .
+
+dal:CapabilitySpecShape
+    a sh:NodeShape ;
+    sh:targetClass dal:CapabilitySpec ;
+    sh:property [ sh:path dal:providesCas ; sh:maxCount 1 ; sh:datatype xsd:string ;
+                  sh:in ( "LINEARIZABLE" "BEST_EFFORT" "NONE" ) ] ;
+    sh:property [ sh:path dal:providesReasoning ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
+    sh:property [ sh:path dal:providesCommitValidation ; sh:maxCount 1 ; sh:datatype xsd:string ;
+                  sh:in ( "NONE" "SHACL_CORE" "SHACL_SPARQL" "CUSTOM_RULES" ) ] .
+
+# The SharedClassProfileWarning convention (ADR-A78 point 5):
+# a DataAccessProfile scoped ONLY by a bare ClassScope, targeting a class
+# whose IRI is not in the same namespace as the profile individual itself,
+# is very likely binding a persistence opinion to a shared substrate class
+# rather than to the deploying application's own graph family. This is a
+# warning shape (sh:severity sh:Warning), not a hard rejection, because a
+# deliberate global override is a legitimate, if rare, choice.
+dal:SharedClassProfileWarningShape
+    a sh:NodeShape ;
+    sh:targetClass dal:DataAccessProfile , dal:ConcurrencyProfile , dal:OrderingProfile ,
+                   dal:ReceiptProfile , dal:MetaTopologyProfile , dal:AggregateBoundaryProfile , dal:WriteDisciplineProfile ;
+    sh:severity sh:Warning ;
+    sh:sparql [
+        sh:message "This profile's only scope is a bare ClassScope targeting a class outside its own namespace. Per ADR-A78 point 5, authority over a shared substrate class belongs to the deploying application, expressed via a GraphPatternScope or NamespaceScope, not a bare ClassScope. If this override is deliberate, acknowledge it explicitly." ;
+        sh:prefixes dal: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this dal:appliesTo ?scope .
+              ?scope a dal:ClassScope ; dal:targetClass ?cls .
+              FILTER NOT EXISTS { $this dal:appliesTo [ a ?otherKind ] .
+                                  FILTER (?otherKind != dal:ClassScope) }
+              FILTER NOT EXISTS { $this dal:acknowledgedSharedClassOverride true }
+              BIND(STRBEFORE(STR($this), "#") AS ?thisNamespace)
+              BIND(STRBEFORE(STR(?cls), "#") AS ?clsNamespace)
+              FILTER(?thisNamespace != ?clsNamespace)
+            }""" ] .
+
+#################################################################
+#    Identity, epoch, privacy and lifecycle configuration shapes.
+#    Structural shapes mirror the pattern above: sh:maxCount 1 on
+#    every functional profile property, sh:class on every object
+#    property pointing at an enumeration. Compatibility shapes flag
+#    combinations that are internally contradictory (sh:Violation)
+#    or merely discouraged and worth a second look (sh:Warning) —
+#    the framework never refuses a deployment choice outright unless
+#    the combination cannot function at all.
+#################################################################
+
+dal:IdentityProfileShape
+    a sh:NodeShape ;
+    sh:targetClass dal:IdentityProfile ;
+    sh:property [ sh:path dal:resourceRole ; sh:minCount 1 ; sh:maxCount 1 ; sh:class dal:ResourceRole ] ;
+    sh:property [ sh:path dal:identityStrategy ; sh:minCount 1 ; sh:maxCount 1 ; sh:class dal:IdentityStrategy ] ;
+    sh:property [ sh:path dal:digestScheme ; sh:maxCount 1 ; sh:class dal:DigestScheme ] ;
+    sh:property [ sh:path dal:occurrenceNamespaceDerivation ; sh:maxCount 1 ; sh:class dal:OccurrenceNamespaceDerivation ] ;
+    sh:property [ sh:path dal:eventIdentityStrategy ; sh:maxCount 1 ; sh:class dal:EventIdentityStrategy ] ;
+    sh:property [ sh:path dal:uniquenessWitnessRequired ; sh:maxCount 1 ; sh:datatype xsd:boolean ] .
+
+dal:DigestSchemeRequiredShape
+    a sh:NodeShape ;
+    sh:targetClass dal:IdentityProfile ;
+    sh:sparql [
+        sh:message "dal:DerivedHashIdentity and dal:ContentAddressedIdentity require a dal:digestScheme with an exact function, width and encoding: 'at least N bits' is not a valid width, because it lets two implementations mint different IRIs for the same input. Exempt when dal:eventIdentityStrategy is dal:PositionDerivedEvent and dal:occurrenceNamespaceDerivation is dal:RegistryTokenDerivation: the namespace is a registry-allocated token, not digest-derived, so no digest scheme is ever used." ;
+        sh:prefixes dal: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this dal:identityStrategy ?s .
+              FILTER (?s = dal:DerivedHashIdentity || ?s = dal:ContentAddressedIdentity)
+              FILTER NOT EXISTS {
+                $this dal:eventIdentityStrategy dal:PositionDerivedEvent ;
+                      dal:occurrenceNamespaceDerivation dal:RegistryTokenDerivation .
+              }
+              FILTER NOT EXISTS { $this dal:digestScheme ?d . ?d dal:digestFunction ?f ; dal:digestWidthBits ?w ; dal:digestEncoding ?e }
+            }""" ] .
+
+dal:UniquenessWitnessRequiredShape
+    a sh:NodeShape ;
+    sh:targetClass dal:IdentityProfile ;
+    sh:sparql [
+        sh:message "dal:PositionDerivedEvent occurrence identity requires dal:uniquenessWitnessRequired true: under broken isolation, two writers merge into one occurrence subject rather than producing two, so subject-count fork detection cannot fire and a per-occurrence witness (for example a transaction-claim cardinality check) is the only remaining signal." ;
+        sh:prefixes dal: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this dal:eventIdentityStrategy dal:PositionDerivedEvent .
+              FILTER NOT EXISTS { $this dal:uniquenessWitnessRequired true }
+            }""" ] .
+
+dal:DigestSchemeWellFormedShape
+    a sh:NodeShape ;
+    sh:targetClass dal:DigestScheme ;
+    sh:sparql [
+        sh:message "dal:digestWidthBits must be a positive multiple of 8, and dal:digestEncoding one of lowercase-hex, base32 or base64url: width and alphabet are identity-bearing (iri-identity-patterns.md section 7.4)." ;
+        sh:prefixes dal: ;
+        sh:select """
+            SELECT $this WHERE {
+              { $this dal:digestWidthBits ?w . FILTER (?w <= 0 || FLOOR(?w / 8) * 8 != ?w) }
+              UNION
+              { $this dal:digestEncoding ?e . FILTER (?e NOT IN ("lowercase-hex", "base32", "base64url")) }
+            }""" ] .
+
+dal:OccurrenceNamespaceDerivationRequiredShape
+    a sh:NodeShape ;
+    sh:targetClass dal:IdentityProfile ;
+    sh:sparql [
+        sh:message "dal:PositionDerivedEvent requires dal:occurrenceNamespaceDerivation, so that two targets never share an occurrence namespace (iri-identity-patterns.md section 10.1)." ;
+        sh:prefixes dal: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this dal:eventIdentityStrategy dal:PositionDerivedEvent .
+              FILTER NOT EXISTS { $this dal:occurrenceNamespaceDerivation ?d }
+            }""" ] .
+
+# identity-minting M1: the members a self-contained minting recipe needs.
+# Checked on one profile node at a time. tools/persistence repeats these
+# checks on resolved values, together with the joins SHACL cannot do
+# (a claimed or key constraint that applies to the same target).
+dal:MintingRecipeMembersShape
+    a sh:NodeShape ;
+    sh:targetClass dal:IdentityProfile ;
+    sh:sparql [
+        sh:message "An identity strategy that mints needs dal:mintedIriTemplate." ;
+        sh:prefixes dal: ;
+        sh:select """
+            SELECT $this WHERE {
+              { $this dal:identityStrategy ?s . FILTER (?s IN (dal:NaturalKeyIdentity, dal:DerivedHashIdentity, dal:SurrogateClaimedIdentity, dal:RandomSurrogateIdentity, dal:ContentAddressedIdentity)) }
+              UNION { $this dal:eventIdentityStrategy dal:PositionDerivedEvent }
+              FILTER NOT EXISTS { $this dal:mintedIriTemplate ?t }
+            }""" ] ;
+    sh:sparql [
+        sh:message "dal:NaturalKeyIdentity and dal:DerivedHashIdentity need dal:keyConstraint naming the uniqueness constraint whose key they derive from." ;
+        sh:prefixes dal: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this dal:identityStrategy ?s . FILTER (?s IN (dal:NaturalKeyIdentity, dal:DerivedHashIdentity))
+              FILTER NOT EXISTS { $this dal:eventIdentityStrategy dal:PositionDerivedEvent }
+              FILTER NOT EXISTS { $this dal:keyConstraint ?k }
+            }""" ] ;
+    sh:sparql [
+        sh:message "dal:DerivedHashIdentity needs dal:tuplePrefix for domain separation." ;
+        sh:prefixes dal: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this dal:identityStrategy dal:DerivedHashIdentity .
+              FILTER NOT EXISTS { $this dal:eventIdentityStrategy dal:PositionDerivedEvent }
+              FILTER NOT EXISTS { $this dal:tuplePrefix ?p }
+            }""" ] ;
+    sh:sparql [
+        sh:message "dal:SurrogateClaimedIdentity needs dal:claimsConstraint and dal:surrogateKind." ;
+        sh:prefixes dal: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this dal:identityStrategy dal:SurrogateClaimedIdentity .
+              FILTER (NOT EXISTS { $this dal:claimsConstraint ?c } || NOT EXISTS { $this dal:surrogateKind ?k })
+            }""" ] ;
+    sh:sparql [
+        sh:message "dal:CallerSuppliedSurrogate needs dal:callerSuppliedPattern." ;
+        sh:prefixes dal: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this dal:surrogateKind dal:CallerSuppliedSurrogate .
+              FILTER NOT EXISTS { $this dal:callerSuppliedPattern ?p }
+            }""" ] ;
+    sh:sparql [
+        sh:message "dal:PositionDerivedEvent needs dal:epochWidth and dal:sequenceWidth, each from 1 to 19." ;
+        sh:prefixes dal: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this dal:eventIdentityStrategy dal:PositionDerivedEvent .
+              FILTER (NOT EXISTS { $this dal:epochWidth ?e . FILTER (?e >= 1 && ?e <= 19) }
+                      || NOT EXISTS { $this dal:sequenceWidth ?q . FILTER (?q >= 1 && ?q <= 19) })
+            }""" ] ;
+    sh:sparql [
+        sh:message "dal:ContentAddressedIdentity needs dal:selfReferenceRule and a positive dal:canonicalizationWorkBudget." ;
+        sh:prefixes dal: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this dal:identityStrategy dal:ContentAddressedIdentity .
+              FILTER (NOT EXISTS { $this dal:selfReferenceRule ?r }
+                      || NOT EXISTS { $this dal:canonicalizationWorkBudget ?b . FILTER (?b > 0) })
+            }""" ] .
+
+dal:AcceptedIriPatternRequiredShape
+    a sh:NodeShape ;
+    sh:targetClass dal:IdentityProfile ;
+    sh:sparql [
+        sh:message "dal:AdoptedIdentity and dal:ExternalRegistryIdentity need dal:acceptedIriPattern and dal:namingAuthority: nothing is minted, so the identifier supplied by the authority is validated instead." ;
+        sh:prefixes dal: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this dal:identityStrategy ?s . FILTER (?s IN (dal:AdoptedIdentity, dal:ExternalRegistryIdentity))
+              FILTER (NOT EXISTS { $this dal:acceptedIriPattern ?p } || NOT EXISTS { $this dal:namingAuthority ?a })
+            }""" ] .
+
+dal:ClaimSchemeCompletenessShape
+    a sh:NodeShape ;
+    sh:targetClass dal:ClaimScheme ;
+    sh:property [ sh:path dal:schemeVersion ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path dal:schemeState ; sh:minCount 1 ; sh:maxCount 1 ; sh:class dal:SchemeState ] ;
+    sh:property [ sh:path dal:claimKeyId ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path dal:claimDigestScheme ; sh:minCount 1 ; sh:maxCount 1 ; sh:class dal:DigestScheme ] ;
+    sh:property [ sh:path dal:claimIriTemplate ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ;
+                  sh:pattern "\\{mac\\}" ] .
+
+dal:EpochProfileShape
+    a sh:NodeShape ;
+    sh:targetClass dal:EpochProfile ;
+    sh:property [ sh:path dal:epochAuthority ; sh:minCount 1 ; sh:maxCount 1 ; sh:class dal:EpochAuthority ] ;
+    sh:property [ sh:path dal:epochGuardScope ; sh:minCount 1 ; sh:maxCount 1 ; sh:class dal:EpochGuardScope ] ;
+    sh:property [ sh:path dal:erasureReplayOnRestore ; sh:maxCount 1 ; sh:datatype xsd:boolean ] .
+
+dal:StoreLocalEpochWarningShape
+    a sh:NodeShape ;
+    sh:targetClass dal:EpochProfile ;
+    sh:severity sh:Warning ;
+    sh:sparql [
+        sh:message "dal:epochAuthority is dal:StoreLocalEpoch. This is unsafe under a double restore from the same backup: the second restore reuses the epoch the first one just allocated inside the same dataset. Acceptable only when the same backup is never restored twice into a live epoch space and no position-derived identifier (revision IRI, ETag, consumer position) leaves the dataset." ;
+        sh:prefixes dal: ;
+        sh:select "SELECT $this WHERE { $this dal:epochAuthority dal:StoreLocalEpoch }" ] .
+
+dal:RowLevelGuardOnlyWarningShape
+    a sh:NodeShape ;
+    sh:targetClass dal:EpochProfile ;
+    sh:severity sh:Warning ;
+    sh:sparql [
+        sh:message "dal:epochGuardScope is dal:RowLevelGuardOnly. A write guarded only on the version row's own epoch can still match an unrestored row after a dataset-level bump that never reaches that row. dal:DatasetLevelGuard is required for restore safety to actually hold." ;
+        sh:prefixes dal: ;
+        sh:select "SELECT $this WHERE { $this dal:epochGuardScope dal:RowLevelGuardOnly }" ] .
+
+dal:PrivacyProfileShape
+    a sh:NodeShape ;
+    sh:targetClass dal:PrivacyProfile ;
+    sh:property [ sh:path dal:privacyClass ; sh:minCount 1 ; sh:maxCount 1 ; sh:class dal:PrivacyClass ] ;
+    sh:property [ sh:path dal:erasureStrategy ; sh:minCount 1 ; sh:maxCount 1 ; sh:class dal:ErasureStrategy ] ;
+    sh:property [ sh:path dal:erasurePrecedence ; sh:maxCount 1 ; sh:class dal:ErasurePrecedence ] .
+
+dal:PersonalDataRequiresErasureShape
+    a sh:NodeShape ;
+    sh:targetClass dal:PrivacyProfile ;
+    sh:sparql [
+        sh:message "dal:privacyClass dal:PersonalData with dal:erasureStrategy dal:NoErasure has no lawful erasure path. Select dal:PerSubjectGraphDrop or dal:CryptoShred." ;
+        sh:prefixes dal: ;
+        sh:select "SELECT $this WHERE { $this dal:privacyClass dal:PersonalData ; dal:erasureStrategy dal:NoErasure }" ] .
+
+# Joins a PrivacyProfile to a ReceiptProfile sharing the same dal:appliesTo
+# scope: personal data plus a replay-capable receipt model without
+# per-subject scoping or crypto-shredding means the delta or snapshot
+# graphs are a second, immutable copy of the personal data that the
+# graph-drop erasure mechanism cannot reach.
+dal:PersonalDataReceiptCompatibilityShape
+    a sh:NodeShape ;
+    sh:targetClass dal:PrivacyProfile ;
+    sh:sparql [
+        sh:message "This scope declares dal:PersonalData alongside a dal:PatchLog or dal:SnapshotPerRevision receipt model with neither dal:perSubjectScoped true nor dal:erasureStrategy dal:CryptoShred. The delta or snapshot graphs are then a second, immutable copy of the personal data that per-subject graph drop cannot reach." ;
+        sh:prefixes dal: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this dal:privacyClass dal:PersonalData ; dal:appliesTo ?scope .
+              ?receipts a dal:ReceiptProfile ; dal:appliesTo ?scope ; dal:receiptModel ?model .
+              FILTER (?model = dal:PatchLog || ?model = dal:SnapshotPerRevision)
+              FILTER NOT EXISTS { ?receipts dal:perSubjectScoped true }
+              FILTER NOT EXISTS { $this dal:erasureStrategy dal:CryptoShred }
+            }""" ] .
+
+dal:AsOfFloorRetentionCompatibilityShape
+    a sh:NodeShape ;
+    sh:targetClass dal:ReceiptProfile , dal:DataAccessProfile ;
+    sh:sparql [
+        sh:message "dal:retentionMode dal:BucketAnyRetention combined with an as-of log-replay strategy silently returns wrong state: pruning a retraction's bucket while its assertion's bucket survives resurrects a deleted triple with no error. Select dal:PrefixOnlyRetention wherever as-of replay is offered, or compact to a snapshot before pruning." ;
+        sh:prefixes dal: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this dal:retentionMode dal:BucketAnyRetention ; dal:asOfFloorSource ?src .
+            }""" ] .
+
+dal:MergeRelationRequiredShape
+    a sh:NodeShape ;
+    sh:targetClass dal:UniquenessConstraint ;
+    sh:sparql [
+        sh:message "dal:onViolation dal:Merge requires dal:mergeRelation naming the relation the merge writes (for example fnd:replacedBy, if the selected ontology defines it). A merge policy that names no relation writes an undefined term." ;
+        sh:prefixes dal: ;
+        sh:select "SELECT $this WHERE { $this dal:onViolation dal:Merge . FILTER NOT EXISTS { $this dal:mergeRelation ?r } }" ] .
+
+# Checks one profile node. tools/persistence checks the resolved values
+# across nodes, which also catches the two properties declared on
+# different nodes; that check is authoritative.
+dal:WeakEtagCasWarningShape
+    a sh:NodeShape ;
+    sh:targetClass dal:ConcurrencyProfile , dal:DataAccessProfile ;
+    sh:severity sh:Warning ;
+    sh:sparql [
+        sh:message "dal:etagForm dal:WeakEtag with dal:concurrencyProfile dal:Optimistic: RFC 9110 section 13.1.1 requires strong comparison for If-Match, so a weak validator never satisfies a conditional write and every CAS attempt over HTTP fails unconditionally. Weak tags remain valid for If-None-Match caching only." ;
+        sh:prefixes dal: ;
+        sh:select "SELECT $this WHERE { $this dal:etagForm dal:WeakEtag ; dal:concurrencyProfile dal:Optimistic }" ] .
+
+dal:LagWindowRequiredShape
+    a sh:NodeShape ;
+    sh:targetClass dal:OrderingProfile , dal:DataAccessProfile ;
+    sh:sparql [
+        sh:message "dal:globalReadStrategy dal:LagWindowRead requires a positive dal:lagWindowMillis. The window must cover the server-enforced maximum transaction duration plus maximum clock skew plus replica lag plus a margin (guide section 21.3); without it the read has no upper bound and skips late-committing writes." ;
+        sh:prefixes dal: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this dal:globalReadStrategy dal:LagWindowRead .
+              FILTER NOT EXISTS { $this dal:lagWindowMillis ?w . FILTER (?w > 0) }
+            }""" ] .
+
+dal:NoGlobalReadWarningShape
+    a sh:NodeShape ;
+    sh:targetClass dal:OrderingProfile , dal:DataAccessProfile ;
+    sh:severity sh:Warning ;
+    sh:sparql [
+        sh:message "dal:globalReadStrategy dal:NoGlobalRead. Confirm this family genuinely has no dataset-tier consumer; otherwise select dal:WatermarkedRead, dal:LagWindowRead or dal:DenseFeedRead so a cross-stream reader cannot silently skip a receipt whose HLC commits after a later one was already read." ;
+        sh:prefixes dal: ;
+        sh:select "SELECT $this WHERE { $this dal:globalReadStrategy dal:NoGlobalRead }" ] .
+
+dal:AdvisoryContiguityWarningShape
+    a sh:NodeShape ;
+    sh:targetClass dal:OrderingProfile , dal:DataAccessProfile ;
+    sh:severity sh:Warning ;
+    sh:sparql [
+        sh:message "dal:contiguityCheckMode dal:AdvisoryContiguityCheck only raises a metric on a gap. dal:BlockingContiguityCheck is recommended: it rescans from the affected stream's last known-good position before the consumer advances its global watermark, so a gap cannot be silently absorbed." ;
+        sh:prefixes dal: ;
+        sh:select "SELECT $this WHERE { $this dal:contiguityCheckMode dal:AdvisoryContiguityCheck }" ] .
+
+#################################################################
+#    Write discipline, membership encoding and reference mode
+#    (the write disciplines, the receipt models, the membership encodings and the reference modes). Each
+#    names its closed enumeration with sh:in, as dal:ownership does.
+#################################################################
+
+dal:ReceiptProfileShape
+    a sh:NodeShape ;
+    sh:targetClass dal:ReceiptProfile ;
+    sh:property [ sh:path dal:receiptModel ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+                  sh:in ( dal:ReceiptOnly dal:PatchLog dal:SnapshotPerRevision dal:NoReceipt ) ;
+                  sh:message "dal:receiptModel takes one of dal:ReceiptOnly, dal:PatchLog, dal:SnapshotPerRevision, dal:NoReceipt." ] .
+
+dal:WriteDisciplineProfileShape
+    a sh:NodeShape ;
+    sh:targetClass dal:WriteDisciplineProfile ;
+    sh:property [ sh:path dal:writeDiscipline ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+                  sh:in ( dal:InPlace dal:AppendVersions dal:AppendRecords ) ;
+                  sh:message "dal:writeDiscipline takes one of dal:InPlace, dal:AppendVersions, dal:AppendRecords." ] ;
+    sh:property [ sh:path dal:membershipEncoding ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+                  sh:in ( dal:FullMembership dal:DeltaMembership ) ;
+                  sh:message "dal:membershipEncoding takes one of dal:FullMembership, dal:DeltaMembership." ] ;
+    sh:property [ sh:path dal:checkpointEvery ; sh:maxCount 1 ;
+                  sh:or ( [ sh:datatype xsd:long ] [ sh:datatype xsd:integer ] ) ;
+                  sh:message "dal:checkpointEvery is one integer, the number of versions between full lists of members." ] .
+
+# dal:referenceMode on a property shape of a boundary shape, and on an edge of a compiled profile.
+dal:ReferenceModeShape
+    a sh:NodeShape ;
+    sh:targetSubjectsOf dal:referenceMode ;
+    sh:property [ sh:path dal:referenceMode ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+                  sh:in ( dal:ByIdentity dal:Pinned ) ;
+                  sh:message "dal:referenceMode takes one of dal:ByIdentity, dal:Pinned." ] .
+
+#################################################################
+#    The contract of a generated operation in a compiled profile
+#    (the typed operation IR). The expected profiles under
+#    ontology/persistence/test/expected-profiles are the positive
+#    fixtures, and tools/persistence/tests/witnesses/shape-*Contract*
+#    and the like are the negative ones. Written to
+#    docs/architecture/efficient-queries-and-shapes.md:
+#    every shape but one is SHACL Core, each targets one class (R5),
+#    the one query is a lookup from $this and tests a bound variable
+#    with FILTER EXISTS (R1, R4), and nothing joins the whole graph.
+#    The enumerations are closed with sh:in. A test holds each list
+#    to the individuals of the spec, so they cannot drift.
+#################################################################
+
+# The operation: one kind, one version, one guard status, one declaration source, at most one naming, payload and digest, and each declaration an IRI of its class.
+dal:OperationContractShape
+    a sh:NodeShape ;
+    sh:targetClass dal:GeneratedOperation ;
+    sh:property [ sh:path dal:operationKind ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+                  sh:in ( dal:Create dal:Bootstrap dal:Replace dal:Tombstone dal:Append dal:AppendVersion dal:UnconditionalWrite
+                          dal:ValueGuardedReplace dal:KeyClaimWrite dal:KeyClaimWriteDual dal:KeyClaimRetire dal:Quarantine
+                          dal:MergeRewrite dal:Audit dal:MembersRead dal:PayloadCheck ) ;
+                  sh:message "A generated operation has exactly one dal:operationKind, an individual of dal:OperationKind." ] ;
+    sh:property [ sh:path dal:templateVersion ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ;
+                  sh:message "A generated operation has exactly one dal:templateVersion, an integer." ] ;
+    sh:property [ sh:path dal:guardStatus ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+                  sh:in ( dal:Guarded dal:GuardsOff dal:NoRequiredParameter dal:NotGenerated ) ;
+                  sh:message "A generated operation has exactly one dal:guardStatus, an individual of dal:GuardStatus." ] ;
+    sh:property [ sh:path dal:graphNaming ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+                  sh:in ( dal:QueryNamed dal:CallerNamed ) ;
+                  sh:message "A generated operation has at most one dal:graphNaming, an individual of dal:GraphNaming." ] ;
+    sh:property [ sh:path dal:declarationSource ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+                  sh:in ( dal:BuilderDerived dal:HandDeclared ) ;
+                  sh:message "A generated operation has exactly one dal:declarationSource, an individual of dal:DeclarationSource." ] ;
+    sh:property [ sh:path dal:parameter ; sh:nodeKind sh:IRI ; sh:class dal:ParameterDeclaration ;
+                  sh:message "Every dal:parameter of an operation is an IRI, never a blank node, and a dal:ParameterDeclaration." ] ;
+    sh:property [ sh:path dal:access ; sh:minCount 1 ; sh:nodeKind sh:IRI ; sh:class dal:ResourceAccess ;
+                  sh:message "An operation touches at least one resource, and every dal:access is an IRI, never a blank node, and a dal:ResourceAccess." ] ;
+    sh:property [ sh:path dal:resultColumn ; sh:nodeKind sh:IRI ; sh:class dal:ResultColumn ;
+                  sh:message "Every dal:resultColumn of an operation is an IRI, never a blank node, and a dal:ResultColumn." ] ;
+    sh:property [ sh:path dal:payloadContract ; sh:maxCount 1 ; sh:nodeKind sh:IRI ; sh:class dal:PayloadContract ;
+                  sh:message "An operation has at most one dal:payloadContract, an IRI and never a blank node." ] ;
+    sh:property [ sh:path dal:digestContract ; sh:maxCount 1 ; sh:nodeKind sh:IRI ; sh:class dal:DigestContract ;
+                  sh:message "An operation has at most one dal:digestContract, an IRI and never a blank node." ] ;
+    sh:property [ sh:path dal:reportsOutcome ; sh:nodeKind sh:IRI ; sh:in ( dal:Clean dal:Failed dal:NothingExamined ) ;
+                  sh:message "dal:reportsOutcome names an individual of dal:AuditOutcome." ] ;
+    sh:property [ sh:path dal:examinedParameter ; sh:maxCount 1 ; sh:nodeKind sh:IRI ; sh:class dal:ParameterDeclaration ;
+                  sh:message "dal:examinedParameter names a parameter declaration by its IRI, once." ] .
+
+dal:ParameterDeclarationShape
+    a sh:NodeShape ;
+    sh:targetClass dal:ParameterDeclaration ;
+    sh:property [ sh:path dal:parameterName ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ;
+                  sh:message "A parameter declaration has exactly one dal:parameterName." ] ;
+    sh:property [ sh:path dal:parameterKind ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+                  sh:in ( dal:IriKind dal:LongKind dal:StringKind dal:LangStringKind dal:PositionKind dal:DigestKind dal:IriOrLiteralKind
+                          dal:LiteralKind dal:PayloadKind dal:RowsKind dal:RegistryListKind ) ;
+                  sh:message "A parameter declaration has exactly one dal:parameterKind, an individual of dal:ParameterKind." ] ;
+    sh:property [ sh:path dal:required ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:boolean ;
+                  sh:message "A parameter declaration says whether it is dal:required, once, as a boolean." ] ;
+    sh:property [ sh:path dal:mustEqual ; sh:maxCount 1 ; sh:in ( dal:GraphNameOfRoot ) ;
+                  sh:message "dal:mustEqual names a dal:Rule, and the only rule is dal:GraphNameOfRoot." ] ;
+    sh:property [ sh:path dal:mustEqualFor ; sh:maxCount 1 ; sh:nodeKind sh:IRI ; sh:class dal:ParameterDeclaration ;
+                  sh:message "dal:mustEqualFor names a parameter declaration by its IRI." ] ;
+    sh:property [ sh:path dal:sourcedFrom ; sh:maxCount 1 ; sh:in ( dal:RegistryGraph ) ;
+                  sh:message "dal:sourcedFrom names a dal:Source, and the only source of a parameter is dal:RegistryGraph." ] .
+
+dal:ResourceAccessShape
+    a sh:NodeShape ;
+    sh:targetClass dal:ResourceAccess ;
+    sh:property [ sh:path dal:resourceKind ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+                  sh:in ( dal:Aggregate dal:VersionRow dal:TransactionClaim dal:Receipt dal:Event dal:KeyClaim dal:MergeRecord
+                          dal:KeyQuarantine dal:DatasetEpoch dal:RetentionMark dal:PropertyValue dal:PatchContent ) ;
+                  sh:message "A resource access has exactly one dal:resourceKind, an individual of dal:ResourceKind." ] ;
+    sh:property [ sh:path dal:accessMode ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+                  sh:in ( dal:PointRead dal:AbsenceRead dal:ScanRead dal:WholeAggregateRead dal:Insert dal:Delete ) ;
+                  sh:message "A resource access has exactly one dal:accessMode, an individual of dal:AccessMode." ] ;
+    sh:property [ sh:path dal:keyedBy ; sh:maxCount 1 ; sh:nodeKind sh:IRI ; sh:class dal:ParameterDeclaration ;
+                  sh:message "dal:keyedBy names a parameter declaration by its IRI." ] .
+
+dal:ResultColumnShape
+    a sh:NodeShape ;
+    sh:targetClass dal:ResultColumn ;
+    sh:property [ sh:path dal:columnName ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ;
+                  sh:message "A result column has exactly one dal:columnName." ] ;
+    sh:property [ sh:path dal:columnPosition ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ; sh:minInclusive 1 ;
+                  sh:message "A result column has exactly one dal:columnPosition, an integer from 1." ] ;
+    sh:property [ sh:path dal:columnKind ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+                  sh:in ( dal:IriColumn dal:PositionColumn dal:StringColumn dal:TermColumn dal:CountColumn dal:ConcatenationColumn ) ;
+                  sh:message "A result column has exactly one dal:columnKind, an individual of dal:ColumnKind." ] ;
+    sh:property [ sh:path dal:columnSeparator ; sh:maxCount 1 ; sh:datatype xsd:string ;
+                  sh:message "dal:columnSeparator is one string." ] .
+
+dal:PayloadContractShape
+    a sh:NodeShape ;
+    sh:targetClass dal:PayloadContract ;
+    sh:property [ sh:path dal:payloadParameter ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ; sh:class dal:ParameterDeclaration ;
+                  sh:message "A payload contract names exactly one dal:payloadParameter, a parameter declaration." ] ;
+    sh:property [ sh:path dal:payloadRoot ; sh:maxCount 1 ; sh:nodeKind sh:IRI ; sh:class dal:ParameterDeclaration ;
+                  sh:message "dal:payloadRoot names a parameter declaration by its IRI." ] ;
+    sh:property [ sh:path dal:payloadEncoding ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( dal:GroundNTriples ) ;
+                  sh:message "A payload contract has exactly one dal:payloadEncoding, an individual of dal:PayloadEncoding." ] ;
+    sh:property [ sh:path dal:boundaryShape ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+                  sh:message "A payload contract names its boundary shape, or says dal:NoBoundaryShape. It never leaves the shape out." ] ;
+    sh:property [ sh:path dal:referenceEdge ; sh:nodeKind sh:IRI ; sh:class dal:ReferenceEdge ;
+                  sh:message "Every dal:referenceEdge of a payload contract is an IRI, never a blank node." ] ;
+    # The profile states each edge once, and a payload contract points at the edges of its own profile, never at a copy.
+    sh:sparql [
+        sh:message "A dal:referenceEdge of a payload contract is an edge its own compiled profile states." ;
+        sh:prefixes dal: ;
+        sh:select """
+            SELECT $this ?value WHERE {
+              $this dal:referenceEdge ?value .
+              FILTER NOT EXISTS { ?profile dal:generatedOperation ?op ; dal:referenceEdge ?value . ?op dal:payloadContract $this }
+            }""" ] .
+
+dal:DigestContractShape
+    a sh:NodeShape ;
+    sh:targetClass dal:DigestContract ;
+    sh:property [ sh:path dal:digestAlgorithm ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( "SHA-256" ) ;
+                  sh:message "A digest contract has exactly one dal:digestAlgorithm, SHA-256." ] ;
+    sh:property [ sh:path dal:digestPart ; sh:minCount 1 ; sh:nodeKind sh:IRI ; sh:class dal:DigestPart ;
+                  sh:message "A digest contract has at least one part, and every dal:digestPart is an IRI, never a blank node." ] .
+
+dal:DigestPartShape
+    a sh:NodeShape ;
+    sh:targetClass dal:DigestPart ;
+    sh:property [ sh:path dal:partOrder ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ; sh:minInclusive 1 ;
+                  sh:message "A digest part has exactly one dal:partOrder, an integer from 1." ] ;
+    sh:property [ sh:path dal:partRole ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+                  sh:in ( dal:OperationKindPart dal:TargetPart dal:ExpectedSeqPart dal:PayloadPart dal:EventPart dal:AddPart dal:DelPart ) ;
+                  sh:message "A digest part has exactly one dal:partRole, an individual of dal:DigestPartRole." ] ;
+    sh:property [ sh:path dal:partSource ; sh:minCount 1 ; sh:nodeKind sh:IRI ;
+                  sh:or ( [ sh:class dal:ParameterDeclaration ] [ sh:in ( dal:NoSource ) ] ) ;
+                  sh:message "Every dal:partSource of a digest part is a parameter declaration, or dal:NoSource." ] .
+
+# No blank node in a declaration: every node the contract declares has an IRI minted from the target, the
+# operation and the part. A declaration that is a blank node fails here, and one that hangs off an operation by a blank node fails
+# the property constraints of the shapes above.
+dal:ContractDeclarationIsIriShape
+    a sh:NodeShape ;
+    sh:targetClass dal:ParameterDeclaration , dal:ResourceAccess , dal:ResultColumn , dal:PayloadContract , dal:DigestContract , dal:DigestPart ;
+    sh:nodeKind sh:IRI ;
+    sh:message "A declaration of the contract of a generated operation is an IRI minted from the target, the operation and the part, and never a blank node." .
+
+# No SPARQL text in a value (a declaration holds the properties of its class and no other,
+# so text cannot hide in one more, and a name, a kind or a separator is a short word, never a query. An owned path stays in the
+# ownedPath binding and a caller-named graph's rule is dal:GraphNameOfRoot, which refers to dal:graphIriTemplate.
+dal:ContractHoldsNoSparqlTextShape
+    a sh:NodeShape ;
+    sh:targetClass dal:ParameterDeclaration , dal:ResourceAccess , dal:ResultColumn , dal:PayloadContract , dal:DigestContract , dal:DigestPart ;
+    sh:closed true ;
+    sh:ignoredProperties ( rdf:type ) ;
+    sh:property [ sh:path dal:parameterName ; sh:pattern "^[A-Za-z_][A-Za-z0-9_]*$" ] ;
+    sh:property [ sh:path dal:parameterKind ] ;
+    sh:property [ sh:path dal:required ] ;
+    sh:property [ sh:path dal:mustEqual ] ;
+    sh:property [ sh:path dal:mustEqualFor ] ;
+    sh:property [ sh:path dal:sourcedFrom ] ;
+    sh:property [ sh:path dal:resourceKind ] ;
+    sh:property [ sh:path dal:accessMode ] ;
+    sh:property [ sh:path dal:keyedBy ] ;
+    sh:property [ sh:path dal:columnName ; sh:pattern "^[A-Za-z_][A-Za-z0-9_]*$" ] ;
+    sh:property [ sh:path dal:columnPosition ] ;
+    sh:property [ sh:path dal:columnKind ] ;
+    sh:property [ sh:path dal:columnSeparator ; sh:pattern "^[A-Za-z0-9 ._-]*$" ] ;
+    sh:property [ sh:path dal:payloadParameter ] ;
+    sh:property [ sh:path dal:payloadRoot ] ;
+    sh:property [ sh:path dal:payloadEncoding ] ;
+    sh:property [ sh:path dal:boundaryShape ] ;
+    sh:property [ sh:path dal:referenceEdge ] ;
+    sh:property [ sh:path dal:digestAlgorithm ; sh:pattern "^[A-Za-z0-9-]+$" ] ;
+    sh:property [ sh:path dal:digestPart ] ;
+    sh:property [ sh:path dal:partOrder ] ;
+    sh:property [ sh:path dal:partRole ] ;
+    sh:property [ sh:path dal:partSource ] ;
+    sh:message "A declaration of the contract holds the properties of its class, and no value of it is SPARQL text. Names, kinds, modes and resources are words and individuals (SI-5)." .
+
+# A required parameter is guarded unless dal:guardStatus says otherwise. dal:Guarded holds when some required parameter is not a
+# request-time slot, since a slot is text the caller fills in and a guard cannot type it. dal:NoRequiredParameter holds when none is.
+# dal:GuardsOff and dal:NotGenerated say the guard is not there, and promise nothing of the parameters. Both queries start from
+# $this and test the parameters with FILTER EXISTS (R1).
+dal:RequiredParametersGuardedShape
+    a sh:NodeShape ;
+    sh:targetClass dal:GeneratedOperation ;
+    sh:sparql [
+        sh:message "dal:NoRequiredParameter says no parameter needs a guard, and this operation has a required parameter that is not a request-time slot. The status is dal:Guarded, or dal:GuardsOff when the run chose no guards." ;
+        sh:prefixes dal: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this dal:guardStatus dal:NoRequiredParameter .
+              FILTER EXISTS { $this dal:parameter ?p . ?p dal:required true ; dal:parameterKind ?k .
+                              FILTER (?k NOT IN (dal:PayloadKind, dal:RowsKind, dal:RegistryListKind)) }
+            }""" ] ;
+    sh:sparql [
+        sh:message "dal:Guarded says a required parameter is guarded, and this operation has none that is not a request-time slot. The status is dal:NoRequiredParameter." ;
+        sh:prefixes dal: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this dal:guardStatus dal:Guarded .
+              FILTER NOT EXISTS { $this dal:parameter ?p . ?p dal:required true ; dal:parameterKind ?k .
+                                  FILTER (?k NOT IN (dal:PayloadKind, dal:RowsKind, dal:RegistryListKind)) }
+            }""" ] .
+```
+-->
+
+### 7.3 Persistent-foundation shapes
+
+`shapes/persistent-foundation.ttl` ties Foundation's keys to Persistence's profiles. Section 5.11.2 says what each shape
+reports.
+
+<!-- hidden: {"output-file": "shapes/persistent-foundation.ttl"}
+```turtle-shapes
+# SPDX-License-Identifier: MPL-2.0
+
+# Shapes for persistent-foundation (ADR-A114). Run them on the adopter's ontology, dal: configuration and data
+# together: they read key classes from the ontology, profiles from the
+# configuration, and keys from the data. The compiler matches asserted types
+# and never reasons, so these shapes are what ties a key to the class whose
+# profiles mint it.
+
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix dal:  <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+# Every scheme has exactly one key class: C rdfs:subClassOf fnd:Key and
+# C owl:equivalentClass [ owl:onProperty fnd:keyScheme ; owl:hasValue S ].
+dal:SchemeKeyClassShape a sh:NodeShape ;
+    sh:targetClass fnd:KeyScheme ;
+    sh:sparql [
+        sh:message "The key scheme {$this} has {?n} key classes. Persistence mints and protects a scheme's keys through exactly one class, defined as fnd:Key with owl:equivalentClass [ owl:onProperty fnd:keyScheme ; owl:hasValue {$this} ]." ;
+        sh:select """
+            PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            PREFIX owl:  <http://www.w3.org/2002/07/owl#>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            SELECT $this (COUNT(DISTINCT ?class) AS ?n) WHERE {
+                $this a fnd:KeyScheme .
+                OPTIONAL {
+                    ?class rdfs:subClassOf fnd:Key ;
+                           owl:equivalentClass ?restriction .
+                    ?restriction owl:onProperty fnd:keyScheme ;
+                                 owl:hasValue $this .
+                }
+            }
+            GROUP BY $this
+            HAVING (COUNT(DISTINCT ?class) != 1)
+        """
+    ] .
+
+# Every key class has an identity profile minting its keys, through a scope
+# naming the class.
+dal:KeyClassIdentityShape a sh:NodeShape ;
+    sh:targetClass fnd:KeyScheme ;
+    sh:sparql [
+        sh:message "{?class}, the key class of {$this}, has no dal:IdentityProfile for dal:EntityRole. Every key class needs one, through a scope naming the class, so its key IRIs are minted the same way by every writer." ;
+        sh:select """
+            PREFIX dal:  <https://www.nebularis.org/neuro-semantic/lattice/persistence#>
+            PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            PREFIX owl:  <http://www.w3.org/2002/07/owl#>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            SELECT $this ?class WHERE {
+                ?class rdfs:subClassOf fnd:Key ;
+                       owl:equivalentClass [ owl:onProperty fnd:keyScheme ; owl:hasValue $this ] .
+                FILTER NOT EXISTS {
+                    ?scope dal:targetClass|dal:coversClass ?class .
+                    ?profile a dal:IdentityProfile ;
+                             dal:appliesTo ?scope ;
+                             dal:resourceRole dal:EntityRole .
+                }
+            }
+        """
+    ] .
+
+# A sensitive scheme's keys are claimed surrogates, never derived from the
+# value, and are not public. A personal-data scheme's keys are
+# dal:PersonalData, so Persistence's erasure rules apply.
+dal:SensitiveKeyClassShape a sh:NodeShape ;
+    sh:targetClass fnd:KeyScheme ;
+    sh:sparql [
+        sh:message "{?class}, the key class of the sensitive scheme {$this}, is minted by {?strategy}. A sensitive value never appears in an IRI, hashed or not: mint its keys with dal:SurrogateClaimedIdentity." ;
+        sh:select """
+            PREFIX dal:  <https://www.nebularis.org/neuro-semantic/lattice/persistence#>
+            PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            PREFIX owl:  <http://www.w3.org/2002/07/owl#>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            SELECT $this ?class ?strategy WHERE {
+                $this fnd:sensitiveDataScheme true .
+                ?class rdfs:subClassOf fnd:Key ;
+                       owl:equivalentClass [ owl:onProperty fnd:keyScheme ; owl:hasValue $this ] .
+                ?scope dal:targetClass|dal:coversClass ?class .
+                ?profile a dal:IdentityProfile ;
+                         dal:appliesTo ?scope ;
+                         dal:resourceRole dal:EntityRole ;
+                         dal:identityStrategy ?strategy .
+                FILTER (?strategy != dal:SurrogateClaimedIdentity)
+            }
+        """
+    ] ;
+    sh:sparql [
+        sh:message "{?class}, the key class of the sensitive scheme {$this}, has no dal:PrivacyProfile, or a dal:PublicData one. Declare dal:InternalData, or dal:PersonalData for personal data." ;
+        sh:select """
+            PREFIX dal:  <https://www.nebularis.org/neuro-semantic/lattice/persistence#>
+            PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            PREFIX owl:  <http://www.w3.org/2002/07/owl#>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            SELECT $this ?class WHERE {
+                $this fnd:sensitiveDataScheme true .
+                ?class rdfs:subClassOf fnd:Key ;
+                       owl:equivalentClass [ owl:onProperty fnd:keyScheme ; owl:hasValue $this ] .
+                FILTER NOT EXISTS {
+                    ?scope dal:targetClass|dal:coversClass ?class .
+                    ?privacy a dal:PrivacyProfile ;
+                             dal:appliesTo ?scope ;
+                             dal:privacyClass ?privacyClass .
+                    FILTER (?privacyClass != dal:PublicData)
+                }
+            }
+        """
+    ] ;
+    sh:sparql [
+        sh:message "{?class}, the key class of the personal-data scheme {$this}, has no dal:PrivacyProfile of dal:PersonalData. Declare one, so Persistence's erasure rules apply to its keys." ;
+        sh:select """
+            PREFIX dal:  <https://www.nebularis.org/neuro-semantic/lattice/persistence#>
+            PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            PREFIX owl:  <http://www.w3.org/2002/07/owl#>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            SELECT $this ?class WHERE {
+                $this fnd:personalDataScheme true .
+                ?class rdfs:subClassOf fnd:Key ;
+                       owl:equivalentClass [ owl:onProperty fnd:keyScheme ; owl:hasValue $this ] .
+                FILTER NOT EXISTS {
+                    ?scope dal:targetClass|dal:coversClass ?class .
+                    ?privacy a dal:PrivacyProfile ;
+                             dal:appliesTo ?scope ;
+                             dal:privacyClass dal:PersonalData .
+                }
+            }
+        """
+    ] .
+
+# Minting and uniqueness use the scheme's normalisation.
+dal:KeyNormalisationShape a sh:NodeShape ;
+    sh:targetClass fnd:KeyScheme ;
+    sh:sparql [
+        sh:message "{$this} names fnd:keyNormalisation {?declared}, but the uniqueness constraint {?constraint} on its key class {?class} uses {?pipeline}. Minting and uniqueness must normalise a scheme's values the same way." ;
+        sh:select """
+            PREFIX dal:  <https://www.nebularis.org/neuro-semantic/lattice/persistence#>
+            PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            PREFIX owl:  <http://www.w3.org/2002/07/owl#>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            SELECT $this ?declared ?class ?constraint ?pipeline WHERE {
+                $this fnd:keyNormalisation ?declared .
+                ?class rdfs:subClassOf fnd:Key ;
+                       owl:equivalentClass [ owl:onProperty fnd:keyScheme ; owl:hasValue $this ] .
+                ?scope dal:targetClass|dal:coversClass ?class .
+                ?constraint a dal:UniquenessConstraint ;
+                            dal:appliesTo ?scope ;
+                            dal:normalizePipeline ?pipeline .
+                FILTER (STRAFTER(STR(?pipeline), "#") != STR(?declared))
+            }
+        """
+    ] .
+
+# Every key is asserted a member of its own scheme's key class, and of no
+# other scheme's: the compiler targets asserted types, and a reasoner would
+# otherwise resolve a mismatch by inferring two schemes owl:sameAs.
+dal:KeyTypedShape a sh:NodeShape ;
+    sh:targetSubjectsOf fnd:keyScheme ;
+    sh:sparql [
+        sh:message "The key {$this} has scheme {?scheme} but is not asserted a member of its key class {?class}. Assert it, so Persistence's profiles for that class apply." ;
+        sh:select """
+            PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            PREFIX owl:  <http://www.w3.org/2002/07/owl#>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            SELECT $this ?scheme ?class WHERE {
+                $this fnd:keyScheme ?scheme .
+                ?class rdfs:subClassOf fnd:Key ;
+                       owl:equivalentClass [ owl:onProperty fnd:keyScheme ; owl:hasValue ?scheme ] .
+                FILTER NOT EXISTS { $this a ?class }
+            }
+        """
+    ] ;
+    sh:sparql [
+        sh:message "The key {$this} has scheme {?scheme} but is asserted a member of {?other}, the key class of {?otherScheme}. A key belongs to its own scheme's class only." ;
+        sh:select """
+            PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            PREFIX owl:  <http://www.w3.org/2002/07/owl#>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            SELECT $this ?scheme ?other ?otherScheme WHERE {
+                $this fnd:keyScheme ?scheme ;
+                      a ?other .
+                ?other rdfs:subClassOf fnd:Key ;
+                       owl:equivalentClass [ owl:onProperty fnd:keyScheme ; owl:hasValue ?otherScheme ] .
+                FILTER (?otherScheme != ?scheme)
+            }
+        """
+    ] .
+
+# Every PersistenceKeyed class has a uniqueness constraint on fnd:naturalKey,
+# and never also takes fnd:MergedOnNaturalKey.
+dal:PersistenceKeyedClassShape a sh:NodeShape ;
+    sh:targetSubjectsOf rdfs:subClassOf ;
+    sh:sparql [
+        sh:message "{$this} is dal:PersistenceKeyed but no dal:UniquenessConstraint on fnd:naturalKey applies to it through a scope naming the class. Without one, nothing keeps its natural keys unique." ;
+        sh:select """
+            PREFIX dal:  <https://www.nebularis.org/neuro-semantic/lattice/persistence#>
+            PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            SELECT $this WHERE {
+                $this rdfs:subClassOf+ dal:PersistenceKeyed .
+                FILTER NOT EXISTS {
+                    ?scope dal:targetClass|dal:coversClass $this .
+                    ?constraint a dal:UniquenessConstraint ;
+                                dal:appliesTo ?scope ;
+                                dal:keyProperty ?list .
+                    ?list rdf:rest*/rdf:first fnd:naturalKey .
+                }
+            }
+        """
+    ] ;
+    sh:sparql [
+        sh:message "{$this} is both dal:PersistenceKeyed and fnd:MergedOnNaturalKey. Choose one: a reasoner would merge on a shared natural key what Persistence keeps apart for review." ;
+        sh:select """
+            PREFIX dal:  <https://www.nebularis.org/neuro-semantic/lattice/persistence#>
+            PREFIX fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            SELECT $this WHERE {
+                $this rdfs:subClassOf+ dal:PersistenceKeyed ;
+                      rdfs:subClassOf+ fnd:MergedOnNaturalKey .
+            }
+        """
+    ] .
+```
+-->
+
+## 8. Examples
 
 Each example is a fixture in [`examples/`](examples/), compiled by the tests in `tools/persistence`.
 
-### 11.1 A minimal single-class profile
+### 8.1 A minimal single-class profile
 
 One class, a named-graph aggregate, compare-and-set, event grain, a patch log, shared sharded meta
 graphs, and an application number unique per branch. The constraint attaches to the target through
@@ -1358,7 +5437,7 @@ Full fixture: [`examples/baseline-single-class.ttl`](examples/baseline-single-cl
 cas-replace, tombstone-delete, key-claim write and retire, and the gap-scan, fork-detection,
 revision-multi-txn and txn-multi-revision audits.
 
-### 11.2 A shared class, two deployments
+### 8.2 A shared class, two deployments
 
 Two applied ontologies, lending and credit, both deploy the shared class `beh:Behaviour`, each into its
 own graph family, and want different guarantees for it:
@@ -1399,12 +5478,12 @@ flowchart LR
 Full fixture, including the bare-class fallback and a reasoning-dependent `dal:EquivalentClassScope`
 override: [`examples/lending-credit-shared-class.ttl`](examples/lending-credit-shared-class.ttl). The
 compiler discovers **three** targets for `beh:Behaviour`: lending's deployment, credit's deployment,
-and the unscoped fallback (§6.2). A `dal:DataAccessProfile` whose only scope is a bare
+and the unscoped fallback (§5.5.2). A `dal:DataAccessProfile` whose only scope is a bare
 `dal:ClassScope` on a class outside its own namespace raises `dal:SharedClassProfileWarningShape`, a
 warning rather than a refusal, since a deliberate global override is legitimate and is acknowledged
 with `dal:acknowledgedSharedClassOverride`.
 
-### 11.3 A composite-property aggregate, declared by a classified shape
+### 8.3 A composite-property aggregate, declared by a classified shape
 
 An order and its line items form one aggregate. The customer the order refers to does not:
 
@@ -1445,7 +5524,7 @@ A larger one, with several owned edges, a recursion, an edge from child to paren
 a property owned in one place and a reference in another, is
 [`examples/composite-project-ownership.ttl`](examples/composite-project-ownership.ttl).
 
-### 11.4 Identity, epoch and privacy together
+### 8.4 Identity, epoch and privacy together
 
 A claimant is personal data. Its entity IRI is a claimed surrogate (its email is mutable and
 sensitive), its events are position-derived, its epoch comes from an external high-water mark, and its
@@ -1540,7 +5619,7 @@ Why each piece is what it is:
   `examples/identity-minting-coverage.ttl`).
 
 Full fixture: [`examples/identity-epoch-privacy-profile.ttl`](examples/identity-epoch-privacy-profile.ttl).
-The other identity, epoch, privacy and uniqueness fixtures, by the slice that added them:
+The other identity, epoch, privacy and uniqueness fixtures:
 
 | Fixture | Shows |
 |---|---|
@@ -1554,7 +5633,7 @@ The other identity, epoch, privacy and uniqueness fixtures, by the slice that ad
 | [`uniqueness-merge-policy.ttl`](examples/uniqueness-merge-policy.ttl), [`uniqueness-quarantine-policy.ttl`](examples/uniqueness-quarantine-policy.ttl), [`invalid-merge-policy-no-relation.ttl`](examples/invalid-merge-policy-no-relation.ttl) | the violation policies, and a merge naming no relation |
 | [`claim-scheme-dual-rotation.ttl`](examples/claim-scheme-dual-rotation.ttl) | two schemes in state `dal:Dual`, selecting the dual-guard write |
 
-### 11.5 Every example, and the SPARQL it compiles to
+### 8.5 Every example, and the SPARQL it compiles to
 
 Every example in [`examples/`](examples/) compiles to SPARQL, and the table below says where to
 look for each kind of configuration. **The output is generated, not committed**, so on a fresh
@@ -1582,19 +5661,19 @@ target also gets the four audits (`gap-scan-audit`, `fork-detection-audit`,
 | composite-property aggregate by SHACL shape | [`composite-property-boundary-shacl`](examples/composite-property-boundary-shacl.ttl) and [`composite-project-ownership`](examples/composite-project-ownership.ttl) | `sparql/Order/cas-replace.rq`, the aggregate swept by one property path in `WHERE`, with `create-if-absent` and `tombstone-delete` beside it |
 | no boundary, value-based guard | [`value-based-cas`](examples/value-based-cas.ttl) | `sparql/Order/cas-replace.rq`, guarded on the property's old value |
 | append-only stream under the dataset guard | [`append-stream-dataset-guard`](examples/append-stream-dataset-guard.ttl) | `sparql/DecisionStream/bootstrap-version-row.rq`, `sparql/DecisionStream/append.rq` |
-| composite family that appends versions, under the dataset-level guard (§7.10) | [`write-discipline-composite-append-versions`](examples/write-discipline-composite-append-versions.ttl) | `sparql/Quote/bootstrap-version-row.rq`, `sparql/Quote/append-version.rq`, and no create, replace or tombstone |
-| family with no boundary that appends versions (§7.10) | [`write-discipline-noboundary-append-versions`](examples/write-discipline-noboundary-append-versions.ttl) | `sparql/Offer/bootstrap-version-row.rq`, `sparql/Offer/append-version.rq` |
+| composite family that appends versions, under the dataset-level guard (§5.6.10) | [`write-discipline-composite-append-versions`](examples/write-discipline-composite-append-versions.ttl) | `sparql/Quote/bootstrap-version-row.rq`, `sparql/Quote/append-version.rq`, and no create, replace or tombstone |
+| family with no boundary that appends versions (§5.6.10) | [`write-discipline-noboundary-append-versions`](examples/write-discipline-noboundary-append-versions.ttl) | `sparql/Offer/bootstrap-version-row.rq`, `sparql/Offer/append-version.rq` |
 | one shared class, two deployments and a fallback | [`lending-credit-shared-class`](examples/lending-credit-shared-class.ttl) | three target directories: `sparql/Behaviour.LendingBehaviourGraphs/` (compare-and-set), `sparql/Behaviour.CreditBehaviourGraphs/` (unconditional), `sparql/Behaviour/` (baseline) |
 | a namespace-wide baseline | [`namespace-wide`](examples/namespace-wide.ttl) | `sparql/CreditDecision/unconditional-write.rq` |
 | uniqueness: reject (the baseline policy) | [`baseline-single-class`](examples/baseline-single-class.ttl) | `sparql/LoanApplication/key-claim-duplicate-audit_loan-application-number-per-branch.rq` |
 | uniqueness: merge | [`uniqueness-merge-policy`](examples/uniqueness-merge-policy.ttl) | `sparql/Customer/key-claim-merge-rewrite_customer-email-unique.rq` |
 | uniqueness: quarantine | [`uniqueness-quarantine-policy`](examples/uniqueness-quarantine-policy.ttl) | `sparql/Device/key-claim-quarantine_device-serial-unique.rq` |
 | claim-secret rotation, two schemes `dal:Dual` | [`claim-scheme-dual-rotation`](examples/claim-scheme-dual-rotation.ttl) | `sparql/Member/key-claim-write_member-handle-unique.rq`, guarding and inserting both versions' claims |
-| identity, epoch and privacy for personal data (§11.4) | [`identity-epoch-privacy-profile`](examples/identity-epoch-privacy-profile.ttl) | `sparql/Claimant/` and two recipes in `recipes/` |
+| identity, epoch and privacy for personal data (§8.4) | [`identity-epoch-privacy-profile`](examples/identity-epoch-privacy-profile.ttl) | `sparql/Claimant/` and two recipes in `recipes/` |
 | one recipe per identity strategy (the anchors) | [`identity-minting-anchors`](examples/identity-minting-anchors.ttl) | seven targets in `sparql/`, seven recipes in `recipes/` |
 | the remaining recipe features | [`identity-minting-coverage`](examples/identity-minting-coverage.ttl) | four targets and four recipes in its directory |
 | personal data with a per-subject patch log | [`privacy-receipt-compatible`](examples/privacy-receipt-compatible.ttl) | `sparql/Beneficiary/` |
-| keys (CCS F1, ADR-A114): key nodes per scheme and natural keys | [`persistent-foundation-keys`](examples/persistent-foundation-keys.ttl) | nine targets in `sparql/`: for each key class, the guarded claim on `fnd:keyValue` and its reject audit, for each keyed class, the claim on `fnd:naturalKey` (`sparql/AgreementIdentity/key-claim-write_agreement-natural-key-unique.rq`). Six key recipes in `recipes/`, which mint every key IRI of `ontology/foundation/examples/keys.ttl` |
+| keys (ADR-A114): key nodes per scheme and natural keys | [`persistent-foundation-keys`](examples/persistent-foundation-keys.ttl) | nine targets in `sparql/`: for each key class, the guarded claim on `fnd:keyValue` and its reject audit, for each keyed class, the claim on `fnd:naturalKey` (`sparql/AgreementIdentity/key-claim-write_agreement-natural-key-unique.rq`). Six key recipes in `recipes/`, which mint every key IRI of `ontology/foundation/examples/keys.ttl` |
 | warning: both discouraged epoch values | [`warning-epoch-unsafe-restore`](examples/warning-epoch-unsafe-restore.ttl) | `sparql/CreditLine/` |
 | warning: mixed receipt models in one family | [`warning-mixed-receipt-model`](examples/warning-mixed-receipt-model.ttl) | `sparql/` |
 | warning: a bare class scope on a shared class | [`warning-shared-class-profile`](examples/warning-shared-class-profile.ttl) | `sparql/Behaviour/` |
@@ -1606,163 +5685,16 @@ Any change to `spec/persistence.ttl`, to an example, to the compiler or to its b
 it, so regenerate after such a change, and before reading the output against this table. The task
 replaces `execution/` whole. Its output is deterministic, so a copy taken before the change and
 `diff -r` show exactly what the change did to the generated SPARQL. Compiled profiles are not
-written here. Their blank-node labels are stable since formal-methods H1.5, so a compiled profile is byte-identical between runs
+written here. Their blank-node labels are stable, so a compiled profile is byte-identical between runs
 (`tools/persistence/tests/test_compiled_profile_stable.py`), and `test/expected-profiles/` keeps the reviewed compiled profile of each example, which `compile` must emit up to graph isomorphism.
 
----
-
-## 12. Validation
-
-A configuration is checked twice: by SHACL shapes in [`shapes/constraints.ttl`](shapes/constraints.ttl),
-which any SHACL engine can run on a configuration graph, and by the compiler, which mirrors the
-cross-axis checks on resolved values. The compiler also catches combinations declared on different
-profile nodes, which node-local shapes cannot see.
-
-**Refused**, because the configuration cannot work:
-
-| Check | Why |
-|---|---|
-| no boundary with compare-and-set and no value guard | there is nothing to replace whole |
-| no boundary with a value guard and no `dal:dataGraph` | the guard would read and write the default graph, whose contents differ between stores |
-| composite boundary with receipts only, unless the family appends versions or records | a receipt could not say what changed inside the closure |
-| `dal:AppendVersions` on a named-graph family, without `dal:Optimistic`, or with no boundary and no data graph | the write has no variant, or no version row to guard, or no graph to hold the versions |
-| commit grain with `opSeq` required | the two contradict each other |
-| a key property outside a composite boundary | the key would not belong to the aggregate |
-| `dal:metaShards` changed without an acknowledged epoch bump | moving version rows is a migration |
-| `dal:BucketAnyRetention` with an as-of floor | replay would read across a hole |
-| a lag-window read without `dal:lagWindowMillis` | there is no bound |
-| `dal:Merge` without `dal:mergeRelation` | a merge must name what it records |
-| personal data with no erasure, or with replayable history not scoped per subject | no lawful erasure path |
-| an identity profile missing its key constraint, digest scheme, witness, namespace derivation or accepted pattern | the recipe could not be built |
-| a capability requirement the declared spec does not meet | the environment cannot run the profile |
-
-**Warned**, because the configuration works and its trade-off should be a conscious one: the
-store-local epoch, the row-level epoch guard, a weak ETag with compare-and-set, no global read where
-a dataset tier is declared, an advisory contiguity check, sorted acquisition with a single guarded
-update, declared shard counts not yet honoured, mixed receipt models in one graph family, a
-profile scoped to a bare class from another namespace, and a subclass of `fnd:Version` written in place.
-
-**Shapes over a compiled profile.** The contract of §9.1 is held to its structure by one shape per declaration
-(`dal:OperationContractShape`, `dal:ParameterDeclarationShape`, `dal:ResourceAccessShape`, `dal:ResultColumnShape`,
-`dal:PayloadContractShape`, `dal:DigestContractShape`, `dal:DigestPartShape`), and to three rules that cross them. Every enumeration
-value is closed with `sh:in`, so a kind, mode or resource outside the spec fails. A declaration is an IRI and never a blank node
-(`dal:ContractDeclarationIsIriShape`). No value is SPARQL text, since a declaration holds the properties of its class and a name or a
-separator is a short word (`dal:ContractHoldsNoSparqlTextShape`). A required parameter is guarded unless `dal:guardStatus` says otherwise
-(`dal:RequiredParametersGuardedShape`). The write discipline, the receipt model, the membership encoding and the reference mode are closed the same way
-(`dal:WriteDisciplineProfileShape`, `dal:ReceiptProfileShape`, `dal:ReferenceModeShape`).
-
----
-
-## 13. Repository layout
-
-```
-ontology/persistence/
-  spec/persistence.ttl       the dal: vocabulary
-  spec/persistent-foundation.ttl
-                             dal:PersistenceKeyed, importing Foundation (optional, §14)
-  shapes/constraints.ttl     SHACL shapes validating dal: configuration data (§12)
-  shapes/persistent-foundation.ttl
-                             the shapes tying Foundation's keys to dal: profiles (§14.2)
-  examples/                  the worked examples of §11, one negative fixture per refused
-                             combination, and the warning fixtures
-  execution/                 the SPARQL and recipes each example compiles to: generated by
-                             mise run build:persistence-execution, ignored by git (§11.5)
-  docs/                      the precedence algorithm and the aggregate-boundary design
-  test/expected-profiles/    the compiled profile each example gives, with the contract of every generated
-                             operation (§9.1). Compared with the output of compile by graph isomorphism, and the
-                             positive fixtures of the shapes over a compiled profile (§12).
-                             Regenerate with mise run build:persistence-expected-profiles
-  test/membership/           the stored triples of a set of members under each membership encoding (§7.10.1)
-```
-
-The compiler that consumes this ontology lives in [`tools/persistence`](../../tools/persistence/README.md),
-following the repository's split between `ontology/` (semantic assets) and `tools/` (executable
-reference implementations). The minting libraries live in `packages/minting`.
-
----
-
-## 14. Keys: `persistent-foundation`
-
-Foundation 0.4.0 gives every adopter keys: the names the world gives a thing, as key nodes with a
-scheme and a value, either locating it (`fnd:externalKey`) or identifying it (`fnd:naturalKey`)
-(Foundation README §8, [ADR-A114](../../docs/architecture/decisions/ADR-A114-external-and-natural-keys.md)).
-A natural key identifies one thing, and something has to keep it that way. An adopter using a
-reasoner alone takes `fnd:MergedOnNaturalKey`, and OWL merges any two things sharing one. **LATTICE
-recommends Persistence instead, for any deployment that writes keyed data**: `owl:hasKey` merges on
-any collision, including a mistaken one, and nothing in OWL can undo a merge or say why it happened.
-Persistence refuses the second claim when it is written, and reports, quarantines or records for
-review anything written around it.
-
-`persistent-foundation` is how. It is optional, and it is Persistence's only document that imports a
-layer: `spec/persistent-foundation.ttl` imports Foundation 0.4.0 and this ontology, so the `dal:`
-configuration ontology itself still imports nothing (§1). It holds one class and the shapes that tie
-Foundation's keys to Persistence's profiles.
-
-```mermaid
-flowchart LR
-    subgraph ONT["the adopter's ontology"]
-        S["scheme ex:lei<br/>a fnd:KeyScheme"]
-        KC["key class ex:LeiKey<br/>≡ fnd:keyScheme value ex:lei"]
-        C["ex:Company<br/>⊑ dal:PersistenceKeyed"]
-    end
-    subgraph CFG["the dal: configuration"]
-        IP["identity profile on ex:LeiKey<br/>mints key IRIs"]
-        KU["uniqueness on fnd:keyValue<br/>one key node per value"]
-        NU["uniqueness on fnd:naturalKey<br/>one owner per key"]
-        PP["privacy profile<br/>sensitive schemes only"]
-    end
-    S --> KC
-    KC --> IP
-    KC --> KU
-    KC -.-> PP
-    C --> NU
-```
-
-### 14.1 What an adopter declares
-
-1. **The mixin on each keyed class**: `ex:Company rdfs:subClassOf dal:PersistenceKeyed`. It adds no
-   key axiom, so no reasoner merges two companies, and never sits beside `fnd:MergedOnNaturalKey`.
-2. **One key class per scheme**, defined from the scheme by an OWL restriction, and every key
-   asserted a member of it. Persistence resolves every profile for a class (§6.2), so a scheme's keys
-   need a class of their own for their IRIs to be minted their own way.
-3. **For each key class**, an identity profile minting its key IRIs and a uniqueness constraint on
-   `( fnd:keyValue )`, normalised by the scheme's `fnd:keyNormalisation`. The constraint is what the
-   recipe mints from, and it guarantees one key node per value however many writers record it.
-   Public schemes mint by natural key or derived hash, with no tenant scope, so two tenants recording
-   one company number reach one node by computation. Sensitive schemes mint a claimed surrogate (§7.7).
-4. **For each keyed class**, a uniqueness constraint on `( fnd:naturalKey )`. Its key component is
-   the key node's IRI, so the generated `key-claim-write` refuses a second owner of one key node. Any
-   of the three pipelines will do: a minted key IRI is already normalised, and its digest alphabet
-   has one case, so no two key nodes fold together. `dal:onViolation` picks the reconciler (§7.6).
-   A `dal:Merge` records `dal:mergeRelation` between the two owners, never `owl:sameAs`.
-5. **For a sensitive scheme's key class**, a privacy profile that is not `dal:PublicData`, and for a
-   personal-data scheme `dal:PersonalData`, so §7.9's erasure rules reach its keys.
-
-The compiler reads one `dal:appliesTo` per constraint, so each class takes its own constraint, as the
-example does. Deriving the natural-key constraint from the mixin alone is a planned follow-up (CCS
-FU-F1b).
-
-### 14.2 What the shapes check
-
-`shapes/persistent-foundation.ttl` runs on the adopter's ontology, configuration and data together,
-since the compiler matches asserted types and never reasons:
-
-| Shape | Reports |
-|---|---|
-| `dal:SchemeKeyClassShape` | a scheme with no key class, or more than one |
-| `dal:KeyClassIdentityShape` | a key class with no identity profile for `dal:EntityRole` |
-| `dal:SensitiveKeyClassShape` | a sensitive scheme's keys minted by any strategy other than `dal:SurrogateClaimedIdentity`, or with no privacy profile, or a public one. A personal-data scheme's keys without `dal:PersonalData` |
-| `dal:KeyNormalisationShape` | a key class's uniqueness constraint normalising differently from its scheme |
-| `dal:KeyTypedShape` | a key not asserted a member of its scheme's key class, or asserted a member of another scheme's, which a reasoner would resolve by merging the two schemes |
-| `dal:PersistenceKeyedClassShape` | a `dal:PersistenceKeyed` class with no natural-key constraint, or one that is also `fnd:MergedOnNaturalKey` |
-
-### 14.3 Worked example
+### 8.6 Keys, Foundation's own example
 
 [`examples/persistent-foundation-keys.ttl`](examples/persistent-foundation-keys.ttl) configures
 Foundation's own example, [`ontology/foundation/examples/keys.ttl`](../foundation/examples/keys.ttl):
 six schemes, two minted by natural key, two by derived hash, and two sensitive ones by claimed
 surrogate, one of them personal data. Its recipes mint every key IRI in Foundation's example, and its
-SPARQL is in §11.5. Compile it with Foundation's example and this document:
+SPARQL is in §8.5. Compile it with Foundation's example and this document:
 
 ```bash
 python -m persistence compile ontology/persistence/spec/persistence.ttl \
@@ -1770,28 +5702,82 @@ python -m persistence compile ontology/persistence/spec/persistence.ttl \
     ontology/persistence/examples/persistent-foundation-keys.ttl --out compiled.ttl
 ```
 
----
+## 9. Canonicalisation
 
-## 15. Cross references
+Not applicable.
 
-| Document | Read it for |
-|---|---|
-| [rdf-sparql-patterns-guide.md](../../docs/architecture/rdf-sparql-patterns-guide.md) | the patterns this ontology configures, every failure they prevent, the full SPARQL, the conformance tests |
-| [iri-identity-patterns.md](../../docs/architecture/iri-identity-patterns.md) | identity, minting, epochs, merge and erasure in depth |
-| [identity-minting-specification.md](../../docs/architecture/identity-minting-specification.md) | the recipe format, pipelines, encodings and test vectors |
-| [tools/persistence/README.md](../../tools/persistence/README.md) | using the compiler and its generated SPARQL, and its known limitations |
-| [docs/precedence-and-resolution.md](docs/precedence-and-resolution.md), [docs/aggregate-boundaries.md](docs/aggregate-boundaries.md) | resolution and boundaries, for a reader who has not read the sketch |
-| [persistence-profile-substrate.md](../../docs/developer/sketches/persistence-profile-substrate.md) | the original design sketch |
-| [ADR-A78](../../docs/architecture/decisions/ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md), [ADR-A79](../../docs/architecture/decisions/ADR-A79-persistence-compiler-toolchain.md), [ADR-A80](../../docs/architecture/decisions/ADR-A80-housekeeping-component-boundary.md), [ADR-A82](../../docs/architecture/decisions/ADR-A82-framework-neutral-identity-pattern-selection.md), [ADR-A84](../../docs/architecture/decisions/ADR-A84-standalone-minting-libraries.md) | the governing decisions |
-| [ADR-A114](../../docs/architecture/decisions/ADR-A114-external-and-natural-keys.md) | external and natural keys, which Persistence enforces for adopters who choose it |
+## 10. Formalisation
 
-## Repository catalogue entry
+Not applicable.
 
-The module's entry in the [repository catalogue](../../repository-catalogue.md)
-([ADR-A121](../../docs/architecture/decisions/ADR-A121-repository-catalogue.md)) follows.
+## 11. Dependencies
 
-```toml repository-catalogue
-[module]
-kind = "standalone"
-roles = ["docs", "examples", "shapes", "spec", "test"]
-```
+The configuration vocabulary, `spec/persistence.ttl`, imports nothing. None of Foundation, Vocabulary, Quantification,
+Party, Eligibility, Wording, Behaviour or Instrument imports it, and it has no place in the layer order of
+[ontology-architecture.md](../../docs/architecture/ontology-architecture.md#the-lattice-layers). It targets classes,
+graphs and shapes by IRI reference only (ADR-A78).
+
+Only `spec/persistent-foundation.ttl` imports a layer. It imports Foundation and `spec/persistence.ttl`, at this README's
+version, so that Persistence can enforce Foundation's natural keys (§5.11).
+
+## 12. Release Notes
+
+Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).
+
+- Unreleased, on this branch. The release number moves once, when the branch merges.
+  - The README follows the layout of [ADR-A126](../../docs/architecture/decisions/ADR-A126-literate-specification-layout-and-grammar.md), and generates both spec documents and both shapes files from
+    sections 1, 2, 6 and 7. Both spec documents gain a `dct:description` and a `dct:creator`, and the ontology node of
+    `spec/persistence.ttl` loses its `rdfs:label` and `rdfs:comment`, which the description replaces. 85 terms gain
+    a definition, and 21 comments are reworded to drop references to working documents, to decisions that are not
+    published and to markup (no effect).
+  - Write disciplines. New: `dal:WriteDiscipline`, `dal:InPlace`, `dal:AppendVersions`, `dal:AppendRecords`,
+    `dal:writeDiscipline` and `dal:WriteDisciplineProfile`. A configuration that declares no discipline is written in place,
+    as before. The shared-class warning also reads a `dal:WriteDisciplineProfile` (no effect).
+  - Receipts. New: `dal:NoReceipt`. `dal:PatchLog` is written by the in-place operations of named-graph and composite
+    families (no effect).
+  - References between versions. New: `dal:ReferenceMode`, `dal:ByIdentity`, `dal:Pinned`, `dal:referenceMode`,
+    `dal:ReferenceEdge` with its properties, and `dal:recordClass` (no effect).
+  - Membership. New: `dal:MembershipEncoding`, `dal:FullMembership`, `dal:DeltaMembership` and `dal:checkpointEvery`
+    (no effect).
+  - The contract of a generated operation ([ADR-A123](../../docs/architecture/decisions/ADR-A123-typed-operation-ir.md)). About 120 new terms state the kinds, access modes, logical resources,
+    parameters, result columns, payload and digest contracts of an operation, and the outcomes of an audit
+    (`dal:Clean`, `dal:Failed`, `dal:NothingExamined`) (no effect). Thirteen new shapes hold a compiled profile to that
+    structure and close the write discipline, the receipt model, the membership encoding and the reference mode (may
+    invalidate).
+  - `dal:templatePath` is removed, since a builder renders each operation and `dal:templateId` names it (changes meaning).
+    A graph that states a template path migrates by dropping it. `dal:templateVersion` moves from `dal:Template` to
+    `dal:GeneratedOperation` and is an integer (changes meaning). `dal:boundaryShape` and `dal:referenceEdge` lose their
+    `rdfs:domain`, since a compiled profile's contract uses them too (no effect).
+- 0.18.0, the first release of the substrate and standalone modules as one set ([ADR-A129](../../docs/architecture/decisions/ADR-A129-one-release-for-the-substrate.md)). Every document takes the
+  release's number. `persistent-foundation` imports Foundation and Persistence at 0.18.0, where it imported Foundation
+  0.4.0 and Persistence 0.3.0. The shapes directory no longer carries a `.version` (no effect).
+- `persistence` 0.3.0, `persistence-shapes` 0.3.0 and `persistent-foundation` 0.2.0, aggregate ownership ([ADR-A122](../../docs/architecture/decisions/ADR-A122-aggregate-ownership.md)). New:
+  `dal:OwnershipKind` with `dal:Owned`, `dal:Reference` and `dal:Vocabulary`, `dal:ownership`, `dal:dataGraph`,
+  `dal:ReferenceData` and `dal:ownsReferenceData` (no effect). `dal:maxTraversalDepth` is removed with the walk it capped
+  (changes meaning). A graph that states it migrates by dropping it. `dal:coversClass` loses its `rdfs:domain`, since it
+  also applies to `dal:ReferenceData` (no effect). Three new shapes require an ownership on every edge that leads to a node,
+  a data graph on a composite boundary, and a valid reference data declaration (may invalidate).
+  `persistent-foundation` re-pins Persistence 0.3.0 (no effect).
+- `persistence-shapes` 0.2.0 and `persistent-foundation` 0.1.0, keys ([ADR-A114](../../docs/architecture/decisions/ADR-A114-external-and-natural-keys.md)). New: `dal:PersistenceKeyed`, a subclass of
+  `fnd:NaturallyKeyed`, and six shapes in `shapes/persistent-foundation.ttl` that tie Foundation's keys to Persistence's
+  profiles (may invalidate). `persistence-shapes` 0.2.0 changes no shape of `shapes/constraints.ttl`.
+- `persistence` 0.2.1 and `persistence-shapes` 0.1.0, the first versions in the register ([ADR-A78](../../docs/architecture/decisions/ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md)). Scopes, a profile for each
+  dimension, uniqueness constraints with claim schemes, identity minting, epochs, privacy, capability specifications and the
+  compiled profile, with 33 shapes that validate a configuration (no effect).
+
+## 13. Open Issues
+
+- **The version in force at a date.** A reader that wants the version of a target in force at a date resolves an
+  identity through the version row or the root version's membership. No generated read does so yet.
+- **Natural-key constraints from the mixin.** The compiler reads one `dal:appliesTo` per constraint, so each keyed class
+  takes its own constraint on `fnd:naturalKey`. Deriving it from `dal:PersistenceKeyed` alone is not built.
+- **Declared shard counts.** `dal:txnShards`, `dal:logShards` and `dal:keyShards` are recorded and raise
+  `ShardingNotHonoured`, and the generated operations still write one graph of each.
+- **Infrastructure graph IRIs.** The compiler binds the IRIs of the infrastructure graphs (§5.2) as fixed constants,
+  which an adopter cannot configure.
+- **Snapshot per revision.** `dal:SnapshotPerRevision` is not built. `compile` warns `ReceiptModelNotHonoured`, and
+  refuses it on a composite family written in place.
+- **Utilities.** Section 6 states 253 classes and properties, and one of them has a utility. The others have a
+  definition alone.
+- **Individuals without a definition.** 18 of the 172 individuals have no definition. They name a level, a
+  policy, a class of data or a role, for example `dal:Advisory`, `dal:PublicData` and `dal:EntityRole`.

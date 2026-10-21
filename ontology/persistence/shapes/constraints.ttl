@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MPL-2.0
+
 @prefix dal:  <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
@@ -6,11 +8,11 @@
 @prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 
 # SHACL shapes validating ontology/persistence's OWN instance data (an
-# adopter's dal: configuration), per sketch §3.9. Mirrors the pattern in
+# adopter's dal: configuration). Mirrors the pattern in
 # rdf-sparql-patterns-guide.md Appendix B: sh:maxCount 1 on every functional
 # profile property, sh:class on every object property pointing at a scope,
 # and a standing sh:sparql check enforcing the shared-substrate-class
-# convention from ADR-A78 point 5 / sketch §3.7.
+# convention from ADR-A78 point 5.
 
 dal:ProfileScopeShape
     a sh:NodeShape ;
@@ -127,7 +129,7 @@ dal:CapabilitySpecShape
     sh:property [ sh:path dal:providesCommitValidation ; sh:maxCount 1 ; sh:datatype xsd:string ;
                   sh:in ( "NONE" "SHACL_CORE" "SHACL_SPARQL" "CUSTOM_RULES" ) ] .
 
-# The SharedClassProfileWarning convention (ADR-A78 point 5, sketch §3.7):
+# The SharedClassProfileWarning convention (ADR-A78 point 5):
 # a DataAccessProfile scoped ONLY by a bare ClassScope, targeting a class
 # whose IRI is not in the same namespace as the profile individual itself,
 # is very likely binding a persistence opinion to a shared substrate class
@@ -443,7 +445,7 @@ dal:AdvisoryContiguityWarningShape
 
 #################################################################
 #    Write discipline, membership encoding and reference mode
-#    (formal-methods H2.6c to H2.6f, shapes added in H2.7). Each
+#    (the write disciplines, the receipt models, the membership encodings and the reference modes). Each
 #    names its closed enumeration with sh:in, as dal:ownership does.
 #################################################################
 
@@ -477,11 +479,11 @@ dal:ReferenceModeShape
 
 #################################################################
 #    The contract of a generated operation in a compiled profile
-#    (formal-methods H2.7, plan 4.7). The expected profiles under
+#    (the typed operation IR). The expected profiles under
 #    ontology/persistence/test/expected-profiles are the positive
 #    fixtures, and tools/persistence/tests/witnesses/shape-*Contract*
 #    and the like are the negative ones. Written to
-#    docs/architecture/efficient-queries-and-shapes.md (ADR-A128):
+#    docs/architecture/efficient-queries-and-shapes.md:
 #    every shape but one is SHACL Core, each targets one class (R5),
 #    the one query is a lookup from $this and tests a bound variable
 #    with FILTER EXISTS (R1, R4), and nothing joins the whole graph.
@@ -581,7 +583,7 @@ dal:PayloadContractShape
                   sh:message "A payload contract names its boundary shape, or says dal:NoBoundaryShape. It never leaves the shape out." ] ;
     sh:property [ sh:path dal:referenceEdge ; sh:nodeKind sh:IRI ; sh:class dal:ReferenceEdge ;
                   sh:message "Every dal:referenceEdge of a payload contract is an IRI, never a blank node." ] ;
-    # H2.8c: the profile states each edge once, and a payload contract points at the edges of its own profile, never at a copy.
+    # The profile states each edge once, and a payload contract points at the edges of its own profile, never at a copy.
     sh:sparql [
         sh:message "A dal:referenceEdge of a payload contract is an edge its own compiled profile states." ;
         sh:prefixes dal: ;
@@ -611,7 +613,7 @@ dal:DigestPartShape
                   sh:or ( [ sh:class dal:ParameterDeclaration ] [ sh:in ( dal:NoSource ) ] ) ;
                   sh:message "Every dal:partSource of a digest part is a parameter declaration, or dal:NoSource." ] .
 
-# No blank node in a declaration (design review 2.6, NQ4): every node the contract declares has an IRI minted from the target, the
+# No blank node in a declaration: every node the contract declares has an IRI minted from the target, the
 # operation and the part. A declaration that is a blank node fails here, and one that hangs off an operation by a blank node fails
 # the property constraints of the shapes above.
 dal:ContractDeclarationIsIriShape
@@ -620,7 +622,7 @@ dal:ContractDeclarationIsIriShape
     sh:nodeKind sh:IRI ;
     sh:message "A declaration of the contract of a generated operation is an IRI minted from the target, the operation and the part, and never a blank node." .
 
-# No SPARQL text in a value (SI-5 of the typed IR sketch, review 2.6). A declaration holds the properties of its class and no other,
+# No SPARQL text in a value (a declaration holds the properties of its class and no other,
 # so text cannot hide in one more, and a name, a kind or a separator is a short word, never a query. An owned path stays in the
 # ownedPath binding and a caller-named graph's rule is dal:GraphNameOfRoot, which refers to dal:graphIriTemplate.
 dal:ContractHoldsNoSparqlTextShape
