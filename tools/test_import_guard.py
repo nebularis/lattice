@@ -75,3 +75,21 @@ def test_c10a_05_check_runs_the_guard() -> None:
     tasks = tomllib.loads((ROOT / "mise.toml").read_text())["tasks"]
     assert "check:import-guard" in tasks["check"]["depends"]
     assert "import_guard.py" in tasks["check:import-guard"]["run"]
+
+
+def test_d52_t1_a_standalone_module_imports_only_itself_and_what_its_catalogue_entry_declares(tmp_path: Path) -> None:
+    """Persistence declares Foundation (ADR-A121, addendum of 2026-10-21). An import of Behaviour is reported, an import of
+    Persistence's own documents and of Foundation is not."""
+    spec = tmp_path / "ontology" / "persistence" / "spec"
+    spec.mkdir(parents=True)
+    lattice = "https://www.nebularis.org/neuro-semantic/lattice/"
+    (spec / "probe.ttl").write_text(
+        "@prefix owl: <http://www.w3.org/2002/07/owl#> .\n"
+        f"<urn:probe> a owl:Ontology ; owl:versionIRI <{lattice}persistent-foundation/0.19.0> ;\n"
+        f"    owl:imports <{lattice}persistence/0.19.0> , <{lattice}foundation/0.19.0> , <{lattice}behaviour/0.19.0> .\n"
+        f"<urn:own> a owl:Ontology ; owl:versionIRI <{lattice}persistence/0.19.0> .\n",
+        encoding="utf-8",
+    )
+    found = list(import_guard.standalone_violations(tmp_path))
+    assert [v.named for v in found] == [f"{lattice}behaviour/0.19.0"]
+    assert "its catalogue entry does not declare" in found[0].render(tmp_path)

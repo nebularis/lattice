@@ -83,8 +83,7 @@ Done 2026-10-21:
 
 Left for the maintainer:
 
-1. **Countersignature** of `test_c8b_09`, which now asserts that 0.18.0 was the first release instead of reading the current number.
-   FMH-H2-9 and FMH-TS-1 were countersigned on 2026-10-21.
+1. **Countersignature:** done. FMH-H2-9, FMH-TS-1 and `test_c8b_09` were countersigned on 2026-10-21.
 2. **The merge**, once the conformance run below is accepted. `mise run check:persistence-conformance` passed on the merge candidate on
    2026-10-21 (4353 passed, 1 xfailed), and `mise run check:full-sweep` passed every check.
 3. **After the merge**, then the release tags it prints, `ontologies-v0.19.0` and the applied tags among them.
@@ -695,7 +694,7 @@ Left for the maintainer:
   which refines VH-Q2. CCS C16b already decides "point, do not copy" for generated meaning. Nothing decided.
 - 2026-10-14: cross-referenced the placement vision papers (outside the repository) with LATTICE's layers and the plans under way
   (CCS, AIR, the evaluation context, capacity, Surface, insurml-alignment), as
-  [sketch §9](../sketches/persistence-history-and-versioning.md#9-the-vision-papers-lattice-and-the-data-a-placement-makes-2026-10-14).
+  [sketch §9](../sketches/persistence-history-and-versioning.md#9-what-lattice-records-about-history-and-the-data-an-instrument-makes-2026-10-14-restated-2026-10-21).
   Most of the papers' ideas have a home. Four departures to test: state read from acts rather than authored, binding by assent rather
   than copy, versioning chosen per family, the words' history in Wording's amendments. A quote carrying wording and meaning costs about
   5,000 triples a version copied, about 270 under C7c's rules, and about 5 to 20 a requote with sharing (judgement). Eight strategies
@@ -886,4 +885,16 @@ Left for the maintainer:
   `ontologies-vX.Y.Z`, and the applied modules keep their own versions and tags under ADR-A86. The maintainer creates the tags
   `mise run build:ontology-releases` lists once the branch is merged into `main`.
 - 2026-10-21: the maintainer countersigned the changed and removed tests of FMH-H2-9 and FMH-TS-1.
+- 2026-10-21: the maintainer countersigned `test_c8b_09` and answered the review: Q1 (H2.9), Q3 (H2.11b), Q4 (the enumeration follow-ups)
+  and Q5 (FMH-TS-1) approved, and of Q2 (H2.11a) D-53, D-54 and the rest approved, with these changes:
+  - D-50: a utility is written only where it serves a purpose. None is added.
+  - D-51: the 18 individuals with no comment gain a definition, saying what each does (done, 18 comments, no other graph change).
+  - D-52: the Foundation import is needed, by `persistent-foundation`, so the rule widens. A standalone module now declares `imports`,
+    the import guard holds its documents' imports to that list (ADR-A121, addendum of 2026-10-21), and Persistence, MORK and Surface
+    declare theirs.
+  - D-63: the README's open issues each have a home: the version in force at a date is TD-74 (new), natural keys from the mixin is
+    FU-F1b (computable-contract-substrate plan), declared shard counts are TD-06 and TD-41, infrastructure graph IRIs TD-05, and snapshot
+    per revision TD-46. The issues on utilities and on individuals without a definition are closed by D-50 and D-51.
+  - Q6: 24 stale anchors are fixed. The three left in `docs/_includes/theory/` are correct on the published theory page, where kramdown
+    sets those ids.
 

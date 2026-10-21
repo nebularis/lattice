@@ -61,6 +61,7 @@ The module's entry in the [repository catalogue](../../repository-catalogue.md)
 [module]
 kind = "standalone"
 roles = ["docs", "examples", "shapes", "spec", "test"]
+imports = ["foundation"]
 
 [module.extract]
 spec = ["spec/persistence.ttl", "spec/persistent-foundation.ttl"]
@@ -783,15 +784,28 @@ This section explains why Persistence exists (5.1 to 5.3), how an adopter config
 **Reading the pictures.** One set of colours is used in every picture, so a colour means the same thing wherever it appears. Pictures of a write show each named graph the update touches as a box, with what is deleted from it and inserted into it on the arrows.
 
 ```mermaid
-flowchart LR
-    A["what an adopter<br/>writes or a<br/>caller sends"]:::author
-    T["the compiler,<br/>the library and<br/>transaction claims"]:::tool
-    M["a version row"]:::meta
-    D["aggregate data<br/>and what the<br/>store does"]:::data
-    L["receipts and<br/>history"]:::log
-    P["patch content,<br/>the delta graphs"]:::delta
-    R["a refusal or<br/>a failed guard"]:::refused
-    O["no colour, outside<br/>what the picture<br/>is about"]
+flowchart TB
+    subgraph .
+        direction LR    
+        R["a refusal or<br/>a failed guard"]:::refused
+        O["no colour, outside<br/>what the picture<br/>is about"]
+    end
+    subgraph ..
+        direction LR
+        L["receipts and<br/>history"]:::log
+        P["patch content,<br/>the delta graphs"]:::delta
+    end
+    subgraph ...
+        direction LR
+        M["a version row"]:::meta
+        D["aggregate data<br/>and what the<br/>store does"]:::data
+    end
+    subgraph ....
+        direction LR
+        A["what an adopter<br/>writes or a<br/>caller sends"]:::author
+        T["the compiler,<br/>the library and<br/>transaction claims"]:::tool
+    end
+
     classDef author fill:#fde2e4,stroke:#c0392b,color:#000
     classDef tool fill:#d6eaf8,stroke:#2874a6,color:#000
     classDef meta fill:#e8daef,stroke:#7d3c98,color:#000
@@ -5020,15 +5034,15 @@ The individuals of `dal:ConcurrencyStrategy`.
 
 Individuals with no class of their own, used as levels and policies.
 
-| Individual | Type |
-|---|---|
-| `dal:Linearizable` | `owl:NamedIndividual` |
-| `dal:BestEffort` | `owl:NamedIndividual` |
-| `dal:Reject` | `owl:NamedIndividual` |
-| `dal:Merge` | `owl:NamedIndividual` |
-| `dal:Advisory` | `owl:NamedIndividual` |
-| `dal:Transactional` | `owl:NamedIndividual` |
-| `dal:Strong` | `owl:NamedIndividual` |
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:Linearizable` | `owl:NamedIndividual` | A compare-and-set level for `dal:minConcurrencyLevel`: every guarded update takes effect at one instant, so of two writers holding the same expected version exactly one succeeds. A capability check passes it only against a store that provides `LINEARIZABLE`. |
+| `dal:BestEffort` | `owl:NamedIndividual` | The compare-and-set level `dal:minConcurrencyLevel` takes when none is given under `dal:Optimistic`. It relies on the store applying one update atomically, and a capability check passes it against a store that provides `BEST_EFFORT` or `LINEARIZABLE`. |
+| `dal:Reject` | `owl:NamedIndividual` | The baseline `dal:onViolation`. The duplicate audit reports every key claimed by more than one owner, and nothing is rewritten. |
+| `dal:Merge` | `owl:NamedIndividual` | A `dal:onViolation` that records `dal:mergeRelation` from each non-canonical owner of a duplicated key to the lexicographically lowest owner IRI, never `owl:sameAs`. A merge without a merge relation is refused. |
+| `dal:Advisory` | `owl:NamedIndividual` | The lowest `dal:minEnforcementLevel`, ranked below `dal:Transactional` and `dal:Strong`. It asks nothing of the store beyond running the generated operations and reconcilers. |
+| `dal:Transactional` | `owl:NamedIndividual` | A `dal:minEnforcementLevel` ranked between `dal:Advisory` and `dal:Strong`, for a key claim written by one guarded update that the store applies atomically. |
+| `dal:Strong` | `owl:NamedIndividual` | The highest `dal:minEnforcementLevel`. A capability check passes it only against a store that declares commit-time validation (`dal:providesCommitValidation`). |
 
 The individuals of `dal:OrderingGrain`.
 
@@ -5190,16 +5204,16 @@ The individuals of `dal:DigestPartRole`.
 
 The individuals of `dal:ResourceRole`.
 
-| Individual | Type |
-|---|---|
-| `dal:EntityRole` | `dal:ResourceRole` |
-| `dal:AggregateRootRole` | `dal:ResourceRole` |
-| `dal:ComponentRole` | `dal:ResourceRole` |
-| `dal:LineageRole` | `dal:ResourceRole` |
-| `dal:ContentRevisionRole` | `dal:ResourceRole` |
-| `dal:GraphLocatorRole` | `dal:ResourceRole` |
-| `dal:KeyClaimRole` | `dal:ResourceRole` |
-| `dal:EventOccurrenceRole` | `dal:ResourceRole` |
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:EntityRole` | `dal:ResourceRole` | The resource role of a real or conceptual thing, such as a customer or a policy. Long-lived. |
+| `dal:AggregateRootRole` | `dal:ResourceRole` | The resource role of the unit that is read or written consistently, such as an order or a case. Its stability is the domain's. |
+| `dal:ComponentRole` | `dal:ResourceRole` | The resource role of a node that belongs to an aggregate or an artefact, such as an order line. Its stability depends on its containment and lifecycle. |
+| `dal:LineageRole` | `dal:ResourceRole` | The resource role of an enduring authored artefact family, such as a mapping, a shape set or a contract. Long-lived. |
+| `dal:ContentRevisionRole` | `dal:ResourceRole` | The resource role of one exact, immutable content state, named for example by a digest of its canonical form. |
+| `dal:GraphLocatorRole` | `dal:ResourceRole` | The resource role of where a graph is stored or materialised. Deployment-local, and never part of a domain IRI. |
+| `dal:KeyClaimRole` | `dal:ResourceRole` | The resource role of a claim by one owner on a normalised key. Retirable and access-controlled. |
+| `dal:EventOccurrenceRole` | `dal:ResourceRole` | The resource role of something that happened, at a position in a stream. Immutable and append-only. |
 
 The individuals of `dal:IdentityStrategy`.
 
@@ -5264,8 +5278,8 @@ The individuals of `dal:PrivacyClass`.
 | Individual | Type | Definition |
 |---|---|---|
 | `dal:PersonalData` | `dal:PrivacyClass` | Subject to erasure obligations. |
-| `dal:InternalData` | `dal:PrivacyClass` |  |
-| `dal:PublicData` | `dal:PrivacyClass` |  |
+| `dal:InternalData` | `dal:PrivacyClass` | Data kept within the deployment, with no erasure obligation. The erasure rules for personal data do not apply to it. |
+| `dal:PublicData` | `dal:PrivacyClass` | Data with no confidentiality or erasure obligation. A sensitive key scheme's key class may not take it. |
 
 The individuals of `dal:ErasureStrategy`.
 
@@ -5279,7 +5293,7 @@ The individuals of `dal:ErasurePrecedence`.
 
 | Individual | Type | Definition |
 |---|---|---|
-| `dal:ErasureWins` | `dal:ErasurePrecedence` |  |
+| `dal:ErasureWins` | `dal:ErasurePrecedence` | When erasure meets claim monotonicity, erasure takes effect, even where it breaks the strict monotonicity of the key's ownership. |
 | `dal:MonotonicityWins` | `dal:ErasurePrecedence` | Erasure of a claimed key is deferred or requires explicit reconciliation. |
 
 The individuals of `dal:GlobalReadStrategy`.
@@ -7310,6 +7324,8 @@ Earlier versions are listed in the [ontology release register](../../docs/archit
     `spec/persistence.ttl` loses its `rdfs:label` and `rdfs:comment`, which the description replaces. 85 terms gain
     a definition, and 21 comments are reworded to drop references to working documents, to decisions that are not
     published and to markup (no effect).
+  - 18 individuals gain a definition: the eight resource roles, two privacy classes, an erasure precedence, and the
+    compare-and-set levels, enforcement levels and violation policies (no effect).
   - Write disciplines. New: `dal:WriteDiscipline`, `dal:InPlace`, `dal:AppendVersions`, `dal:AppendRecords`,
     `dal:writeDiscipline` and `dal:WriteDisciplineProfile`. A configuration that declares no discipline is written in place,
     as before. The shared-class warning also reads a `dal:WriteDisciplineProfile` (no effect).
@@ -7362,7 +7378,3 @@ Earlier versions are listed in the [ontology release register](../../docs/archit
   which an adopter cannot configure.
 - **Snapshot per revision.** `dal:SnapshotPerRevision` is not built. `compile` warns `ReceiptModelNotHonoured`, and
   refuses it on a composite family written in place.
-- **Utilities.** Section 6 states 253 classes and properties, and one of them has a utility. The others have a
-  definition alone.
-- **Individuals without a definition.** 18 of the 172 individuals have no definition. They name a level, a
-  policy, a class of data or a role, for example `dal:Advisory`, `dal:PublicData` and `dal:EntityRole`.

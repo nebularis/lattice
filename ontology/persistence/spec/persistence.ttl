@@ -34,7 +34,8 @@ dal:AddPart a dal:DigestPartRole ;
 dal:AdoptedIdentity a dal:IdentityStrategy ;
     rdfs:comment "The identifier's authority is external; LATTICE never re-mints it (§5.1)." .
 
-dal:Advisory a owl:NamedIndividual .
+dal:Advisory a owl:NamedIndividual ;
+    rdfs:comment "The lowest dal:minEnforcementLevel, ranked below dal:Transactional and dal:Strong. It asks nothing of the store beyond running the generated operations and reconcilers." .
 
 dal:AdvisoryContiguityCheck a dal:ContiguityCheckMode ;
     rdfs:comment "A gap only raises a metric. A data-loss path; discouraged, see dal:AdvisoryContiguityWarningShape." .
@@ -49,7 +50,8 @@ dal:AggregateBoundaryStrategy a owl:Class ;
     rdfs:comment "How the triples that change together are delimited, one of a closed set of named strategies." ;
     owl:equivalentClass [ a owl:Class ; owl:oneOf ( dal:NamedGraphBoundary dal:CompositePropertyBoundary dal:NoBoundary ) ] .
 
-dal:AggregateRootRole a dal:ResourceRole .
+dal:AggregateRootRole a dal:ResourceRole ;
+    rdfs:comment "The resource role of the unit that is read or written consistently, such as an order or a case. Its stability is the domain's." .
 
 dal:Append a dal:OperationKind ;
     rdfs:comment "Appends events to a stream (dal:AppendRecords or an append-only family)." .
@@ -73,7 +75,8 @@ dal:AuditOutcome a owl:Class ;
     rdfs:comment "What an audit reports. A query returns the rows that violate an invariant, so a caller derives the outcome from the rows and from whether the audit read anything." ;
     owl:equivalentClass [ a owl:Class ; owl:oneOf ( dal:Clean dal:Failed dal:NothingExamined ) ] .
 
-dal:BestEffort a owl:NamedIndividual .
+dal:BestEffort a owl:NamedIndividual ;
+    rdfs:comment "The compare-and-set level dal:minConcurrencyLevel takes when none is given under dal:Optimistic. It relies on the store applying one update atomically, and a capability check passes it against a store that provides BEST_EFFORT or LINEARIZABLE." .
 
 dal:BlockingContiguityCheck a dal:ContiguityCheckMode ;
     rdfs:comment "On a gap, the consumer rescans from the affected stream's last known-good position before advancing its global watermark." .
@@ -129,7 +132,8 @@ dal:CommitGrain a dal:OrderingGrain ;
 dal:CompiledProfile a owl:Class ;
     rdfs:comment "The canonical output of persistence compile. Never contains literal SPARQL text." .
 
-dal:ComponentRole a dal:ResourceRole .
+dal:ComponentRole a dal:ResourceRole ;
+    rdfs:comment "The resource role of a node that belongs to an aggregate or an artefact, such as an order line. Its stability depends on its containment and lifecycle." .
 
 dal:CompositePropertyBoundary a dal:AggregateBoundaryStrategy ;
     rdfs:comment "The aggregate lives in the named graph dal:dataGraph, among other aggregates. Its members are the nodes reached from the root along the owned edges of dal:boundaryShape, a classified tree walked once at compile time. Mandatory: dal:boundaryShape and dal:dataGraph." .
@@ -147,7 +151,8 @@ dal:ConcurrencyStrategy a owl:Class ;
 dal:ContentAddressedIdentity a dal:IdentityStrategy ;
     rdfs:comment "Digest-derived identity for genuinely immutable content (§6.6). Minters hash canonical bytes supplied by the caller and never canonicalize RDF themselves. The caller must produce canonical N-Quads (UTF-8, one LF-terminated line per quad) with an RDFC-1.0 implementation that passes the W3C RDFC-1.0 test suite, apply the self-reference rule before canonicalizing, refuse graphs over the work budget, and compare the full digest on re-registration where declared. See identity-minting-specification.md §7." .
 
-dal:ContentRevisionRole a dal:ResourceRole .
+dal:ContentRevisionRole a dal:ResourceRole ;
+    rdfs:comment "The resource role of one exact, immutable content state, named for example by a digest of its canonical form." .
 
 dal:ContiguityCheckMode a owl:Class ;
     rdfs:comment "What a consumer does when the sequence numbers it has seen for a stream have a gap, one of a closed set of named modes." ;
@@ -226,7 +231,8 @@ dal:Dual a dal:SchemeState ;
 dal:EngineDetectAndRetry a dal:DeadlockPolicy ;
     rdfs:comment "Deadlock avoidance across multiple targets in one request is the engine's responsibility; the adapter treats an abort as Conflict and retries with jitter. Sorted acquisition order in query text is a readability convention only, never a guarantee." .
 
-dal:EntityRole a dal:ResourceRole .
+dal:EntityRole a dal:ResourceRole ;
+    rdfs:comment "The resource role of a real or conceptual thing, such as a customer or a policy. Long-lived." .
 
 dal:EpochAuthority a owl:Class ;
     rdfs:comment "Where a new epoch value is allocated from, so that it survives a restore (iri-identity-patterns.md §10.3)." ;
@@ -251,7 +257,8 @@ dal:ErasureStrategy a owl:Class ;
     rdfs:comment "How one subject's data is erased, one of a closed set of named strategies." ;
     owl:equivalentClass [ a owl:Class ; owl:oneOf ( dal:PerSubjectGraphDrop dal:CryptoShred dal:NoErasure ) ] .
 
-dal:ErasureWins a dal:ErasurePrecedence .
+dal:ErasureWins a dal:ErasurePrecedence ;
+    rdfs:comment "When erasure meets claim monotonicity, erasure takes effect, even where it breaks the strict monotonicity of the key's ownership." .
 
 dal:EtagForm a owl:Class ;
     rdfs:comment "Whether the ETag derived for an aggregate is a strong or a weak validator." ;
@@ -271,7 +278,8 @@ dal:EventIdentityStrategy a owl:Class ;
     rdfs:comment "Whether an occurrence IRI is deterministic from position or a random surrogate (iri-identity-patterns.md §10.6)." ;
     owl:equivalentClass [ a owl:Class ; owl:oneOf ( dal:PositionDerivedEvent dal:RandomOccurrenceEvent dal:ExternalEventIdStrategy ) ] .
 
-dal:EventOccurrenceRole a dal:ResourceRole .
+dal:EventOccurrenceRole a dal:ResourceRole ;
+    rdfs:comment "The resource role of something that happened, at a position in a stream. Immutable and append-only." .
 
 dal:EventPart a dal:DigestPartRole ;
     rdfs:comment "The events of an append, its rows slot and its triples slot, in place of the payload." .
@@ -311,7 +319,8 @@ dal:GlobalReadStrategy a owl:Class ;
     rdfs:comment "How a cross-stream (dataset-tier) consumer avoids the pre-commit HLC reorder hole (guide §21.3, G2). Exactly one is selected per family that advertises a dataset tier." ;
     owl:equivalentClass [ a owl:Class ; owl:oneOf ( dal:WatermarkedRead dal:LagWindowRead dal:DenseFeedRead dal:NoGlobalRead ) ] .
 
-dal:GraphLocatorRole a dal:ResourceRole .
+dal:GraphLocatorRole a dal:ResourceRole ;
+    rdfs:comment "The resource role of where a graph is stored or materialised. Deployment-local, and never part of a domain IRI." .
 
 dal:GraphNameOfRoot a dal:Rule ;
     rdfs:comment "The graph IRI the family's dal:graphIriTemplate gives for the value of the root parameter." .
@@ -359,7 +368,8 @@ dal:InPlace a dal:WriteDiscipline ;
 dal:Insert a dal:AccessMode ;
     rdfs:comment "An insertion of a resource or of its triples." .
 
-dal:InternalData a dal:PrivacyClass .
+dal:InternalData a dal:PrivacyClass ;
+    rdfs:comment "Data kept within the deployment, with no erasure obligation. The erasure rules for personal data do not apply to it." .
 
 dal:IriColumn a dal:ColumnKind ;
     rdfs:comment "An IRI." .
@@ -376,7 +386,8 @@ dal:KeyClaim a dal:ResourceKind ;
 dal:KeyClaimRetire a dal:OperationKind ;
     rdfs:comment "Retires a uniqueness claim." .
 
-dal:KeyClaimRole a dal:ResourceRole .
+dal:KeyClaimRole a dal:ResourceRole ;
+    rdfs:comment "The resource role of a claim by one owner on a normalised key. Retirable and access-controlled." .
 
 dal:KeyClaimWrite a dal:OperationKind ;
     rdfs:comment "Acquires a uniqueness claim with a guarded write." .
@@ -393,9 +404,11 @@ dal:LagWindowRead a dal:GlobalReadStrategy ;
 dal:LangStringKind a dal:ParameterKind ;
     rdfs:comment "A language-tagged string." .
 
-dal:LineageRole a dal:ResourceRole .
+dal:LineageRole a dal:ResourceRole ;
+    rdfs:comment "The resource role of an enduring authored artefact family, such as a mapping, a shape set or a contract. Long-lived." .
 
-dal:Linearizable a owl:NamedIndividual .
+dal:Linearizable a owl:NamedIndividual ;
+    rdfs:comment "A compare-and-set level for dal:minConcurrencyLevel: every guarded update takes effect at one instant, so of two writers holding the same expected version exactly one succeeds. A capability check passes it only against a store that provides LINEARIZABLE." .
 
 dal:LiteralKind a dal:ParameterKind ;
     rdfs:comment "A literal." .
@@ -413,7 +426,8 @@ dal:MembershipEncoding a owl:Class ;
     rdfs:comment "How a version of a root states its members. One of dal:FullMembership, dal:DeltaMembership." ;
     owl:equivalentClass [ a owl:Class ; owl:oneOf ( dal:FullMembership dal:DeltaMembership ) ] .
 
-dal:Merge a owl:NamedIndividual .
+dal:Merge a owl:NamedIndividual ;
+    rdfs:comment "A dal:onViolation that records dal:mergeRelation from each non-canonical owner of a duplicated key to the lexicographically lowest owner IRI, never owl:sameAs. A merge without a merge relation is refused." .
 
 dal:MergeRecord a dal:ResourceKind ;
     rdfs:comment "A link from a non-canonical owner to the canonical one, in the keys graph, by the adopter's merge relation." .
@@ -592,7 +606,8 @@ dal:PropertyValue a dal:ResourceKind ;
 dal:ProvidedConcurrency a dal:ConcurrencyStrategy ;
     rdfs:comment "Whatever the target backend provides natively. No guard is generated: an unconditional write." .
 
-dal:PublicData a dal:PrivacyClass .
+dal:PublicData a dal:PrivacyClass ;
+    rdfs:comment "Data with no confidentiality or erasure obligation. A sensitive key scheme's key class may not take it." .
 
 dal:Quarantine a dal:OperationKind, owl:NamedIndividual ;
     rdfs:comment "Records the owners of a duplicated claim in the quarantine graph." .
@@ -641,7 +656,8 @@ dal:RegistryListKind a dal:ParameterKind ;
 dal:RegistryTokenDerivation a dal:OccurrenceNamespaceDerivation ;
     rdfs:comment "A registry-allocated token for the target, resolved once at target creation." .
 
-dal:Reject a owl:NamedIndividual .
+dal:Reject a owl:NamedIndividual ;
+    rdfs:comment "The baseline dal:onViolation. The duplicate audit reports every key claimed by more than one owner, and nothing is rewritten." .
 
 dal:Replace a dal:OperationKind ;
     rdfs:comment "Replaces an aggregate if the version row is at the expected seq." .
@@ -732,7 +748,8 @@ dal:StringColumn a dal:ColumnKind ;
 dal:StringKind a dal:ParameterKind ;
     rdfs:comment "A plain string literal." .
 
-dal:Strong a owl:NamedIndividual .
+dal:Strong a owl:NamedIndividual ;
+    rdfs:comment "The highest dal:minEnforcementLevel. A capability check passes it only against a store that declares commit-time validation (dal:providesCommitValidation)." .
 
 dal:StrongEtag a dal:EtagForm ;
     rdfs:comment "RFC 9110 §13.1.1 strong comparison. Required for If-Match to mean anything." .
@@ -762,7 +779,8 @@ dal:Tombstone a dal:OperationKind ;
 dal:TransactionClaim a dal:ResourceKind ;
     rdfs:comment "The claim recorded for a transaction id, in the transaction graph." .
 
-dal:Transactional a owl:NamedIndividual .
+dal:Transactional a owl:NamedIndividual ;
+    rdfs:comment "A dal:minEnforcementLevel ranked between dal:Advisory and dal:Strong, for a key claim written by one guarded update that the store applies atomically." .
 
 dal:UnconditionalWrite a dal:OperationKind ;
     rdfs:comment "Writes into a named graph with no guard on a version row." .

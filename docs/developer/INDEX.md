@@ -289,17 +289,17 @@ The unratified universal IRI policy in ADR-A51 was superseded by [ADR-A82](../ar
 
 | Phase | Scope | Status | Tests | Key Document |
 |-------|-------|--------|-------|---|
-| **0** | Vocabulary and layer semantics | ✅ Complete | ontology conforms | [Status §0](status/surface-mork-unified-projection.md#phase-0) |
-| **1** | Projection, promotion, index contracts | ✅ Complete | all validate | [Status §1](status/surface-mork-unified-projection.md#phase-1) |
-| **2** | Surface compiler architecture | ✅ Complete | 61/61 | [Status §2](status/surface-mork-unified-projection.md#phase-2) |
-| **3** | Surface-to-MORK lowering | ✅ Complete | 61/61 | [Status §3](status/surface-mork-unified-projection.md#phase-3) |
-| **4** | MORK governance and versioning | ✅ Complete | governance shapes | [Status §4](status/surface-mork-unified-projection.md#phase-4) |
-| **5** | MORK compiler backends | ✅ Complete | 15/15 (SPARQL, SHACL, SWRL, Eligibility IR) | [Status §5](status/surface-mork-unified-projection.md#phase-5) |
-| **6** | LLM training curriculum generation | ✅ Complete | 346/346 | [Status §6](status/surface-mork-unified-projection.md#phase-6) |
-| **7** | Invalidation and minimal-scope regeneration | ✅ Complete | 60+ invalidation tests | [Status §7](status/surface-mork-unified-projection.md#phase-7) |
-| **8** | Conformance, parity, and CI gates | ✅ Complete | parity ≥99%; 7/8 verification items; 1 SWRL integration pending | [Status §8](status/surface-mork-unified-projection.md#phase-8) |
-| **9** | Migration guides and phased rollout | ⏳ Planned | — | [Plan §9](plans/surface-mork-unified-projection-plan.md#phase-9) |
-| **10** | Scale, performance, optimization | ⏳ Planned | — | [Plan §10](plans/surface-mork-unified-projection-plan.md#phase-10) |
+| **0** | Vocabulary and layer semantics | ✅ Complete | ontology conforms | [Status §0](status/surface-mork-unified-projection.md#phase-0--architecture-lock-and-adr-updates) |
+| **1** | Projection, promotion, index contracts | ✅ Complete | all validate | [Status §1](status/surface-mork-unified-projection.md#phase-1--surface-projection-specification) |
+| **2** | Surface compiler architecture | ✅ Complete | 61/61 | [Status §2](status/surface-mork-unified-projection.md#phase-2--surface-compiler-refactor-and-entailment-policy) |
+| **3** | Surface-to-MORK lowering | ✅ Complete | 61/61 | [Status §3](status/surface-mork-unified-projection.md#phase-3--surface-to-mork-lowering-engine) |
+| **4** | MORK governance and versioning | ✅ Complete | governance shapes | [Status §4](status/surface-mork-unified-projection.md#phase-4--mork-governance-and-versioning-enhancements) |
+| **5** | MORK compiler backends | ✅ Complete | 15/15 (SPARQL, SHACL, SWRL, Eligibility IR) | [Status §5](status/surface-mork-unified-projection.md#phase-5--compiler-family-implementation--eligibility-tranche) |
+| **6** | LLM training curriculum generation | ✅ Complete | 346/346 | [Status §6](status/surface-mork-unified-projection.md#phase-6--eligibility-tranche) |
+| **7** | Invalidation and minimal-scope regeneration | ✅ Complete | 60+ invalidation tests | [Status §7](status/surface-mork-unified-projection.md#phase-7--provenance-and-invalidation-hardening) |
+| **8** | Conformance, parity, and CI gates | ✅ Complete | parity ≥99%; 7/8 verification items; 1 SWRL integration pending | [Status §8](status/surface-mork-unified-projection.md#phase-8--conformance-and-parity-framework) |
+| **9** | Migration guides and phased rollout | ⏳ Planned | — | [Plan §9](plans/surface-mork-unified-projection-plan.md#phase-9--migration-and-rollout) |
+| **10** | Scale, performance, optimization | ⏳ Planned | — | [Plan §10](plans/surface-mork-unified-projection-plan.md#phase-10--scale-and-optimization) |
 
 ### Key Findings
 - **Projection mechanism:** Unified abstraction for promotion (restating as direct properties) and shadow indexing (generating lookup symbols)
@@ -313,11 +313,11 @@ The unratified universal IRI policy in ADR-A51 was superseded by [ADR-A82](../ar
 | Slice ID | Deliverable | Status | Reference |
 |----------|-------------|--------|-----------|
 | `surface-projection` | Design sketch + plan + status | ✅ | [Status §§1–2](status/surface-mork-unified-projection.md) |
-| `surface-to-mork-lowering` | Lowering engine (Phase 3) | ✅ | [Plan §3](plans/surface-mork-unified-projection-plan.md#phase-3) |
-| `mork-governance-and-versioning` | Foundation integration (Phase 4) | ✅ | [Plan §4](plans/surface-mork-unified-projection-plan.md#phase-4) |
-| `mork-compiler-family` | All backends (Phase 5) | ✅ | [Plan §5](plans/surface-mork-unified-projection-plan.md#phase-5) |
-| `surface-invalidation-and-regeneration` | Read-set tracking (Phase 7) | ✅ | [Plan §7](plans/surface-mork-unified-projection-plan.md#phase-7) |
-| `surface-conformance-and-parity` | CI gates (Phase 8) | ✅ | [Plan §8](plans/surface-mork-unified-projection-plan.md#phase-8) |
+| `surface-to-mork-lowering` | Lowering engine (Phase 3) | ✅ | [Plan §3](plans/surface-mork-unified-projection-plan.md#phase-3--surface-to-mork-lowering-engine) |
+| `mork-governance-and-versioning` | Foundation integration (Phase 4) | ✅ | [Plan §4](plans/surface-mork-unified-projection-plan.md#phase-4--mork-governance-and-versioning-enhancements) |
+| `mork-compiler-family` | All backends (Phase 5) | ✅ | [Plan §5](plans/surface-mork-unified-projection-plan.md#phase-5--compiler-family-implementation) |
+| `surface-invalidation-and-regeneration` | Read-set tracking (Phase 7) | ✅ | [Plan §7](plans/surface-mork-unified-projection-plan.md#phase-7--provenance-and-invalidation-hardening) |
+| `surface-conformance-and-parity` | CI gates (Phase 8) | ✅ | [Plan §8](plans/surface-mork-unified-projection-plan.md#phase-8--conformance-and-parity-framework) |
 
 ### Operational Documentation
 - [Invalidation Runbook](../operator/surface-invalidation-runbook.md) — 4 operational scenarios with release gates
@@ -326,10 +326,10 @@ The unratified universal IRI policy in ADR-A51 was superseded by [ADR-A82](../ar
 ### Outstanding Items
 | Item | Status | Link |
 |------|--------|------|
-| Signature scope and law X6 | ✅ Closed | [Outstanding items §3.1](status/surface-outstanding-items.md#31-signature-scope-and-law-x6--closed) |
-| Foundation migration (`srf:DerivedArtefact`) | ✅ Done (ADR-A92) | [Outstanding items §3.2](status/surface-outstanding-items.md#32-adr-a01-convention-conflict--closed) |
-| Profile identity assertion | ⏳ Blocked | [Outstanding items §3.3](status/surface-outstanding-items.md#33-profile-identity-assertion--blocked) |
-| MORK toolchain join assumptions | ⏳ Needed | [Outstanding items §3.4](status/surface-outstanding-items.md#34-mork-toolchain-join-assumptions--needed) |
+| Signature scope and law X6 | ✅ Closed | [Outstanding items §1.1](status/surface-outstanding-items.md#11-signature-scope-and-law-x6---closed) |
+| Foundation migration (`srf:DerivedArtefact`) | ✅ Done (ADR-A92) | [Outstanding items §3.1](status/surface-outstanding-items.md#31-foundation-migration-for-derived-artefact-contract---closed-2026-09-25) |
+| Profile identity assertion | ⏳ Blocked | [Outstanding items §3.3](status/surface-outstanding-items.md#33-profile-identity-is-computed-not-modelled---unblocked-not-started) |
+| MORK toolchain join assumptions | ⏳ Needed | [Outstanding items §5](status/surface-outstanding-items.md#5-mork-toolchain-join-assumptions---decision-needed) |
 
 ### Deferred Items (Explicit Scoping)
 - `srf:RangePartitionPopulation` (bucketing) — blocked on Quantification layer
@@ -401,7 +401,7 @@ A cross-reference of this unit's Surface/Eligibility integration against
 [docs/architecture/rdf-sparql-patterns-guide.md](../architecture/rdf-sparql-patterns-guide.md)
 found the work internally consistent, with four follow-on hardening items and
 one accepted terminology note. None block closure. See
-[Vocabulary Consumer Hardening](#vocabulary-consumer-hardening--planned-2026-09-25)
+[Vocabulary Consumer Hardening](#vocabulary-consumer-hardening--implemented-2026-09-25)
 below.
 
 ## 8.5 Vocabulary Conformance — Closed
@@ -913,8 +913,8 @@ ontology (REL-Q1 to REL-Q6 answered 2026-10-19, REL-Q2a open), and
 3. **MTP backend integration** — What HTTP API shape for LLM curriculum consumption? (Phase 7, post-Phase-6)
 4. **Housekeeping execution** — When is the housekeeping component itself executed (real-time vs. batch)? (ADR-A80 defers to future phase)
 5. **Surface MORK Phase 9 decomposition** — How to slice migration guides and phased rollout? (Blocking Phase 9, needs decomposition after Phase 8 SWRL verification)
-6. ~~**Foundation migration for `srf:DerivedArtefact`**~~ — resolved 2026-09-25 by ADR-A92 (AOR-12). Original question: Should profile identity be a Foundation concept or Surface-only? (Blocking profile identity assertion in Surface; see [surface-outstanding-items.md](status/surface-outstanding-items.md#33-profile-identity-assertion--blocked)). Proposed resolution: [ADR-A92](../architecture/decisions/ADR-A92-derived-artefact-contract-and-prov-o-alignment.md)
-7. **MORK toolchain join assumptions** — Pre-production verification checklist for join operations in mapping compilation (see [surface-outstanding-items.md](status/surface-outstanding-items.md#34-mork-toolchain-join-assumptions--needed))
+6. ~~**Foundation migration for `srf:DerivedArtefact`**~~ — resolved 2026-09-25 by ADR-A92 (AOR-12). Original question: Should profile identity be a Foundation concept or Surface-only? (Blocking profile identity assertion in Surface; see [surface-outstanding-items.md](status/surface-outstanding-items.md#33-profile-identity-is-computed-not-modelled---unblocked-not-started)). Proposed resolution: [ADR-A92](../architecture/decisions/ADR-A92-derived-artefact-contract-and-prov-o-alignment.md)
+7. **MORK toolchain join assumptions** — Pre-production verification checklist for join operations in mapping compilation (see [surface-outstanding-items.md](status/surface-outstanding-items.md#5-mork-toolchain-join-assumptions---decision-needed))
 
 ---
 
