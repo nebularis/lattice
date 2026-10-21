@@ -10,7 +10,7 @@
 
 Party provides Actor, Role, and the reified qualified-relation individual (Role Occupancy) that connects them, scoped and time-bound. Participation Groups with outward and inward shares and composition rules, Delegation between an accountable role and a performing one, are both built on that reification.
 
-Party imports Foundation and Vocabulary, and is imported in turn by Instrument, Eligibility, and Behaviour, per the established dependency order. The direction matters more here than in prior ontologies, because upward references (e.g., an Obligation's obligor and obligee, an Effect populating a contingent occupancy, or a Guard testing a delegation's scope) are deliberately left to the higher layer's own projection file(s) to declare.
+Party imports Foundation and Quantification, and is imported in turn by Instrument, Eligibility, and Behaviour, per the established dependency order. The direction matters more here than in prior ontologies, because upward references (e.g., an Obligation's obligor and obligee, an Effect populating a contingent occupancy, or a Guard testing a delegation's scope) are deliberately left to the higher layer's own projection file(s) to declare.
 
 ## 2. Namespace and Prefixes
 
@@ -21,6 +21,15 @@ Party imports Foundation and Vocabulary, and is imported in turn by Instrument, 
 @prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+```
+
+The ontology header, stated here so the extracted document carries it.
+
+```turtle-spec
+<https://www.nebularis.org/neuro-semantic/party> a owl:Ontology ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/party/0.19.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ,
+        <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.19.0> .
 ```
 
 ## 3. How to Read This Document
@@ -185,7 +194,7 @@ pty:Delegation a owl:Class ;
 
 ```turtle-spec
 [] a owl:AllDisjointClasses ;
-    owl:members ( pty:Actor pty:Role pty:RoleOccupancy pty:ParticipationGroup pty:GroupMembership pty:Delegation ) .
+    owl:members ( pty:Actor pty:Delegation pty:GroupMembership pty:ParticipationGroup pty:Role pty:RoleOccupancy ) .
 ```
 
 **Utility.** Actor, Role, RoleOccupancy, ParticipationGroup, GroupMembership, and Delegation are distinct kinds of thing. One individual should never be classified as more than one of them.
@@ -232,13 +241,13 @@ pty:memberOccupancy a owl:ObjectProperty, owl:FunctionalProperty ;
 pty:memberOf a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:domain pty:GroupMembership ;
     rdfs:range pty:ParticipationGroup ;
-    owl:inverseOf pty:hasParticipant ;
     rdfs:comment "The Participation Group a GroupMembership belongs to." ;
     fnd:utility "Functional and required (§6) — a membership always names exactly one group." .
 
 pty:hasParticipant a owl:ObjectProperty ;
     rdfs:domain pty:ParticipationGroup ;
     rdfs:range pty:GroupMembership ;
+    owl:inverseOf pty:memberOf ;
     rdfs:comment "The inverse of memberOf." ;
     fnd:utility "The inverse of memberOf — points a ParticipationGroup at its GroupMembership individuals. Typically used for querying a group's members rather than asserted directly." .
 ```

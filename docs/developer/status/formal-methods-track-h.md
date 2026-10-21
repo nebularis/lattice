@@ -875,4 +875,11 @@ Left for the maintainer:
 - 2026-10-21: the maintainer approved every expected profile and asked us to complete everything up to merge readiness. TD-63 is closed,
   release 0.19.0 is prepared with the applied modules' own bumps and release notes, and the developer index is current. `party` and `spc`
   report extraction drift on `main` as well as here, which this branch does not cause.
+- 2026-10-21: the extraction drift of Party and SPC is fixed, at the maintainer's request. Both READMEs had fallen behind their tracked
+  documents, which were edited directly. Party's README now states the ontology header the document carries (imports of Foundation and
+  Quantification, which its prose also now says), `owl:inverseOf` on `pty:hasParticipant` and the disjoint classes in the document's
+  order, so the regenerated document is the same graph. SPC's README had a subject-less `rdfs:comment` line, which the document had
+  commented out by hand, and still spelt `Behavior` where the released document has used `Behaviour` since 2026-09-20. It now follows the
+  document, with its version IRI, and its comments drop the capitals a blanket rename left. The regenerated document differs only in those
+  22 comments (no effect). `tools/spc/python/src/spc/ontologies/spc.owl.ttl`, a copy inside the SPC tool, still spells `Behavior`.
 
