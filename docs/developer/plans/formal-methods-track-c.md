@@ -13,8 +13,8 @@ now; neither needs a prover choice or an ADR of its own first
 ## 1. Scope
 
 Design-time models, permanently, for whichever law family needs one before an ADR fixes it (epic
-§4, "Track C"). This plan details the first two slices only — C1 (skeletons) and C2 (binding
-resolution with scheme composition, ahead of CCS C8's HQ-4 and insurml-alignment's IMA-D4a). C3
+§4, "Track C"). This plan details C1 (skeletons), C2 (binding
+resolution with scheme composition, ahead of CCS C8's HQ-4 and insurml-alignment's IMA-D4a), and C4 and C5 (the models of ADR-A130 and ADR-A131). C4c, with the Ensemble plan's ES-8, is added only if its addendum admits cyclic components. C3
 (slot exclusivity and exhaustiveness by SMT, in step with CCS C13a) stays at the epic's outline
 level until C2 is done, per the rolling-wave rule.
 
@@ -119,7 +119,8 @@ is accepted, not after.
 **Recommended before or alongside ADR-A130's acceptance.** Model ensembles, relations with their
 kinds, evaluation units (an instrument, or a part of one an endpoint narrows to) and the positions at
 which each relation reads. Check that the order of evaluation over units and positions is well
-founded whenever that graph is acyclic, that a cycle remaining over parts and positions is refused, and that a derived shared-resource relation (K6) names
+founded whenever that graph is acyclic, that every valid order gives the same outcome where units
+sharing an account at one position draw in two phases, that a cycle remaining over parts and positions is refused, and that a derived shared-resource relation (K6) names
 exactly the instruments whose terms draw on its account, and that signed shares sum to the order
 whenever the written shares reach it (decision 10). `run` the motivating cases (a guarantee
 called on default, mutual cross-default, an excess on exhaustion, two contracts sharing an aggregate,
@@ -131,7 +132,8 @@ mutual other insurance clauses to confirm they are refused until an addendum adm
 **Recommended before or alongside ADR-A131's acceptance.** Model account trees, draws, credits and
 merge rules. Check that a draw on a path succeeds or fails whole, that availability is the least
 remaining balance along the path, that a credit never raises a balance above its stated amount, that
-the tree has no cycle, and that each merge rule's postings sum to the amount shared. `run` the Ledger
+the tree has no cycle, that each merge rule's postings sum to the amount shared after rounding and its residual
+rule, and that draws proposed at one position give the same postings in every order. `run` the Ledger
 plan's examples to confirm they are admitted. See the [Ledger plan](ledger.md).
 
 ## 4. Home for the model

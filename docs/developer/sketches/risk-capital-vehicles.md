@@ -5,7 +5,7 @@
 **Unit:** `applied-insurance-reference` (epic), proposed phase 7
 ([plan](../plans/applied-insurance-reference-phase-7.md)). **Status:** sketch, 2026-10-18. Nothing
 here is ratified. The vehicle model is expected to change substantially before its first slice.
-**Reads with:** [relations between instruments](instrument-relations.md) (K1 to K5), the
+**Reads with:** [relations between instruments](instrument-relations.md) (the kinds of [ADR-A130](../../architecture/decisions/ADR-A130-ensemble-layer.md)), the
 [Instrument README](../../../ontology/instrument/README.md) §10 (legal triggers), §11 (regimes),
 §13 (anchored time) and §16 (sections), the
 [claims sketch](insurance-claims-ontology.md) §10 (recoveries, reinsurance, towers), and
@@ -36,7 +36,7 @@ instruments, linked to each other, whose terms decide when money moves and how m
 
 Three pieces of the substrate are needed and not yet present:
 
-- **links between instruments** (the [relations sketch](instrument-relations.md)), since a bond's
+- **links between instruments** (the [relations sketch](instrument-relations.md), now [ADR-A130](../../architecture/decisions/ADR-A130-ensemble-layer.md) and the [Ensemble plan](../plans/ensemble.md)), since a bond's
   reinsurance agreement, note terms and collateral trust are separate instruments
 - **richer conditions over observed values**, for parametric and index triggers: a count of events
   within a window, a sequence with a maximum delay, a value sustained for a duration (§4.1)
@@ -205,7 +205,7 @@ From facts, as for any instrument:
 | Question | How it is answered |
 |---|---|
 | did the trigger fire | the trigger condition (§4.1) over the observations, true, false or Undetermined |
-| what is paid | the payout terms, under the vehicle's allowances (limit, aggregate, reinstatement) |
+| what is paid | the payout terms, under the vehicle's ledger accounts (limit, aggregate, reinstatement, [ADR-A131](../../architecture/decisions/ADR-A131-ledger-layer.md)) |
 | from where | for a collateralised vehicle, a draw on the collateral account, under its draw terms |
 | to whom, in what shares | the allocation rule (§4.2), with its conservation law checked |
 | what follows for the notes | principal reduction, read from the loss paid under the reinsurance agreement (K2) |
@@ -219,9 +219,9 @@ Proposed for the phase 7 plan. Estimates are in tokens.
 |---|---|---|---|
 | RV-0 | examples first: the clean-room vehicles of §5, as data the model must accept | this sketch's questions answered | 150k |
 | RV-1 | substrate: conditions over observed values (§4.1), with examples from several domains | RV-0, an ADR | 300k |
-| RV-2 | substrate: allocation with conservation (§4.2), built as Ledger slice LG-4 | RV-0, ADR-A131 | 250k |
-| RV-3 | the vehicle module: kinds, `rcv:Vehicle`, roles, trigger kinds, collateral terms, lifecycle | RV-0, Ensemble slice 1 | 300k |
-| RV-4 | evaluation of the examples end to end: trigger, payout, allocation, collateral draw | RV-1 to RV-3, CCS C12 | 300k |
+| RV-2 | substrate: allocation with conservation (§4.2), built as Ledger slice LG-4 | RV-0, ADR-A131, Ledger LG-2 and LG-Q3 | 250k |
+| RV-3 | the vehicle module: kinds, `rcv:Vehicle`, roles, trigger kinds, collateral terms, lifecycle | RV-0, Ensemble ES-6, Ledger LG-4 | 300k |
+| RV-4 | evaluation of the examples end to end: trigger, payout, allocation, collateral draw | RV-1 to RV-3, CCS C12, Ensemble ES-3 where it reads across instruments | 300k |
 
 ## 9. Questions RV-Q1 to RV-Q6
 

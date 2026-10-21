@@ -2,7 +2,10 @@
 
 # Relations between instruments: inside Instrument, or a layer of their own
 
-**Unit:** `instrument-relations` (sketch). **Status:** sketch, 2026-10-18. Nothing here is ratified.
+**Unit:** `instrument-relations` (sketch). **Status:** sketch, 2026-10-18. Nothing here is ratified. Option B became
+[ADR-A130](../../architecture/decisions/ADR-A130-ensemble-layer.md) (Proposed), which holds the
+current design as amended to 2026-10-21. §2 to §8 are the analysis that chose it, with the kinds and
+the order brought into line with the ADR. §10 and §11 are dated records.
 **Takes up:** CCS held questions HQ-2 (gating by another agreement's state), HQ-7 (several
 instruments covering portions of one order) and HQ-12 (composing shares), in the
 [CCS plan](../plans/computable-contract-substrate.md) §"Held questions".
@@ -90,14 +93,16 @@ Two consequences shape the design.
 > a master, and evaluated against facts that include the related instrument's state. No relation
 > merges the instruments it names, except a single-agreement relation that their own terms declare.
 
-The patterns of §2 fall into five kinds, which the options below must all carry:
+The patterns of §2 fall into the kinds below, which the options must all carry. ADR-A130 adds K6
+(shared resource), reserves K7 (contribution) for an addendum, and adds K8 (representation), from
+the needs of §10:
 
 | Kind | Patterns | Reified properties, for example |
 |---|---|---|
 | **K1 derivation** | created under, incorporates | the power exercised, the edition incorporated |
 | **K2 dependency** | accessory, conditional on another's state, back to back | the state read (default, exhaustion, payment), how it is reached (payment, erosion, settlement), the instruments that count towards it |
 | **K3 priority** | intercreditor ranking, inuring order | rank, the measure ranked, what happens at equal rank |
-| **K4 portion and share** | several commitments, portions of one order, composed shares (HQ-7, HQ-12) | the order, the share, the risk or terms the portion covers |
+| **K4 portion and share** | several commitments, portions of one order, composed shares (HQ-7, HQ-12), signed shares | the order, the share, the risk or terms the portion covers |
 | **K5 single agreement** | master and confirmations | the master, the children, what the single agreement nets |
 
 ## 4. Examples
@@ -178,10 +183,10 @@ imports both. Instrument stays a model of one agreement.
 
 | Change | Detail |
 |---|---|
-| a new layer | `ontology/ensemble/`, literate, with its own spec, vocabulary (K1 to K5 and their properties), shapes and laws |
+| a new layer | `ontology/ensemble/`, literate, with its own spec, vocabulary (the kinds and their properties), shapes and laws |
 | `ens:Relation` | the reified relation of §3, by kind |
-| evaluation order | a set of related instruments is evaluated as a sequence of single-instrument evaluations, in an order the relations determine (dependencies before dependants, rank before rank). A cycle is rejected at design time |
-| state as facts | what one instrument needs of another, such as an exhaustion, a default or a payment, reaches it as a fact with provenance, produced by evaluating the other. The single-instrument evaluator never loads a neighbour |
+| evaluation order | a set of related instruments is evaluated as a sequence of evaluations of units (an instrument, or a part of one an endpoint narrows to), in an order over units and positions the relations determine (dependencies before dependants, rank before rank). The outcome is the least fixpoint, the same under every valid order. A cycle that remains over units and positions is rejected at design time unless an addendum admits it (§11) |
+| state as facts | what one instrument needs of another, such as an exhaustion, a default or a payment, reaches it as a fact with provenance (the producing unit and version, the position, a digest of its read set), produced by evaluating the other. The single-instrument evaluator never loads a neighbour |
 | one hook in Instrument | a regime's measured value, or a condition's evidence, may be supplied from outside the instrument with its source recorded. This is the only Instrument change, and it is generic |
 | K1 constructs | `ins:boundUnder` and incorporation stay in Instrument, where they are already proven, and Ensemble reads them as K1 relations |
 | K5 | a single-agreement relation tells the composition step to treat stated children as one agreement for stated purposes, for example netting, as their own terms say |
@@ -212,7 +217,7 @@ never an assertion of the instrument's own state.
 
 **Runtime overheads.** None beyond the work itself. Each evaluation stays within one instrument,
 which keeps the persistence aggregate at one instrument and lets evaluations of unrelated
-instruments run in parallel. The composition step is a topological order over the relations. The
+instruments run in parallel. The composition step is an order over units and positions, and its log is written in a canonical order. The
 facts passed between steps are recorded, so a decision on the excess cites the underlying's
 exhaustion as evidence, which is how a claims file reads anyway.
 
@@ -228,10 +233,10 @@ single-instrument evaluations either way. They differ in what each evaluation re
 |---|---|---|
 | instruments loaded to evaluate one | itself and every instrument its gates read, transitively | itself only |
 | facts passed between instruments | none, the state is read in place | one per dependency, recorded |
-| evaluations that can run in parallel | only instruments with no relations | every set of instruments not ordered by a relation |
+| evaluations that can run in parallel | only instruments with no relations | every set of units not ordered by a relation, and draws on one account at one position through Ledger's two phases |
 | what a change to the relation model touches | Instrument's spec, read by every module that needs one agreement | Ensemble's spec only. Under one release (ADR-A129, 2026-10-20) both are a new release of the whole substrate |
 | proofs per instrument | restated for neighbourhoods | unchanged |
-| cycles | found at evaluation | rejected at design time by the order |
+| cycles | found at evaluation | most are acyclic over units and positions. The rest are rejected at design time, or admitted by an addendum with a resolving rule |
 
 **A worked example.** A programme of a primary and four excess layers, each placed on two
 policies (K4), so ten instruments, all evaluated for one loss:
@@ -314,10 +319,10 @@ before acceptance. The rest are slices of the
 | an ensemble with an identity | the Code civil's definition is of a set serving one operation, and the set acts as a whole: it owns shared limits, is formed and changed, and may be part of a larger set | a syndicated facility with its guarantees, a construction contract with its bonds, a master with its confirmations, a programme | ADR-A130 decision 2 |
 | endpoints below the instrument, and identity or version | coordination terms target a term, a section or a limit of another agreement. Most relations survive amendment, and some are to one text | a master's shared limit over two children's limits, one section following the form of another, incorporation of one edition | ADR-A130 decision 4 |
 | one agreement's participants are not an ensemble | several liability within one agreement is a matter of the agreement's parties | the lenders' several commitments in one facility agreement | ADR-A130 decision 9 |
-| cycles broken by time | mutual cross-default is ordinary drafting, and each side reads the other's default as already occurred | two facilities of one borrower, each in default if the other is | ADR-A130 decision 5 |
+| cycles broken by time | mutual cross-default is ordinary drafting, and each side reads the other's default as already occurred | two facilities of one borrower, each in default if the other is | ADR-A130 decision 5, now a case of its general rule over units and positions (§11) |
 | a resource shared by instruments, visible at design time | a limit or aggregate shared by several contracts is stated by their terms, and reviewers need to see it without reading each term | two contracts sharing an aggregate, an authority's aggregate over the contracts bound under it | ADR-A130 decision 3, K6 derived and checked by a shape |
 | a state from outside the modelled set | a contract may respond after another that is not held, whose state is known only as facts | a statutory scheme responding first, senior debt held by a lender not modelled | ES-2 |
-| the composition law | option B rests on the claim that composed evaluation loses nothing against evaluating together | every ensemble whose cycles are broken by time | ES-3, formal methods C4, B4b, E4b |
+| the composition law | option B rests on the claim that composed evaluation loses nothing against evaluating together | every ensemble acyclic over units and positions, stated as a least fixpoint (§11) | ES-3, formal methods C4, B4b, E4b |
 | separate orders for draws and credits | recoveries are often applied in the reverse of the order in which loss was borne | excess layers applying a recovery from the top, a lending waterfall for recoveries | ES-8 |
 | signed shares | where commitments exceed the order, each is reduced by the rule the terms state, a judgement from facts | an oversubscribed public offer of bonds scaled by the prospectus's basis of allocation, an MRC's signing provisions (lines to stand in full, the rest in equal proportion) | ADR-A130 decision 10, ES-5 |
 | formation by a recorded act | a set of agreements comes into being at an act with its evidence | the signing of a facility, the closing of a bond issue, a placement completed | ES-6 |
@@ -424,7 +429,7 @@ So a fixpoint finds such a cycle and needs a stated rule to resolve it.
 | checked at design time by | a shape: the graph over units and positions is acyclic | a sufficient condition at best: no closure (HQ-6) and no reading of absence over facts produced in the same component. General monotonicity is undecidable, and the condition bars other insurance clauses, the motivating case |
 | determinism | one order, one answer | unique only if every member is monotone. Otherwise the answer can depend on the order of iteration |
 | closures over absence | read facts already final | must never close over a fact still pending in the same component |
-| a shared account inside a cycle | draws in the order | arrival order varies by round, so the order of draws must be a rule the terms state (LG-Q3), never first come |
+| a shared account inside a cycle | draws in the order | arrival order varies by round, so the order of draws must be a rule the terms state (LG-Q3), never first come. ADR-A131 decision 6 now gives this: draws are proposed, merged by the owner and settled |
 | persistence | each fact written when produced | rounds held in memory, the component written at once, across several instruments' aggregates, owned by the ensemble's (ADR-A122, to confirm) |
 | a late fact | re-evaluates the units downstream of it | re-evaluates the whole component from the bottom, since a superseding fact is a change, not more information |
 | explaining an answer | "the primaries first, then the excess" | the same story, told by round. An oscillation reads as "these terms contradict each other" |

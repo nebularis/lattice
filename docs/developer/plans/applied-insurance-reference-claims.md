@@ -80,7 +80,7 @@ every slice is checked against:
 | liability direction derivation rules, term parameters (claims basis, aggregation, limits) | AIR-5.2, 5.3, 5.5 (Phase 5) | AIR-6.5 reads term parameters when they exist (CL-Q1), AIR-6.12's D&O example |
 | occurrence grouping by an anchored window | substrate S4 | AIR-6.3 |
 | W-Q2's legal review of causation profiles | the maintainer, with counsel | AIR-6.4 |
-| the evaluation context (ledger, combinators) | its sketch, unplanned | AIR-6.8's erosion on a ledger. AIR-6.7 derives without it (CL-Q4) |
+| the ledger ([Ledger plan](ledger.md) LG-3), and combinators | the ledger is planned, combinators remain in the evaluation context sketch | AIR-6.8's erosion on a ledger. AIR-6.7 derives without it (CL-Q4) |
 | the XSLT sidecar (ADR-A119, Proposed) | its plan | AIR-6.W3, 6.W7, and XML egress in 6.W4 |
 | an RML processor in the toolchain | AIR-6.W0 | every RML ingress |
 | a disclosure class, retention and legal hold, erasure deferred by a duty to retain | substrate S8 to S10 (§6) | AIR-6.10 |
@@ -144,7 +144,7 @@ history.
 | CL-Q1 | does claims import Instrument directly, or wait for the contract module? An ADR-A98 addendum either way | Instrument directly, contract module optionally for term parameters | every slice |
 | CL-Q2 | when does the indemnity occasion arise: at the trigger the governing law gives, or at notification? | at the governing law's trigger, by an evaluation profile, with notification and proof as conditions of the duty to pay | AIR-6.5 |
 | CL-Q3 | one claim shared by every instrument, or a claim per insurer? | one claim, a response per instrument version | AIR-6.2, 6.5 |
-| CL-Q4 | money as movements now, or wait for the evaluation context's ledger? | movements now, balances derived, the ledger later | AIR-6.7, 6.8 |
+| CL-Q4 | money as movements now, or wait for the evaluation context's ledger? | movements now, balances derived, the ledger later (Ledger LG-3) | AIR-6.7, 6.8 |
 | CL-Q5 | is a settlement an `ins:Instrument`? | yes | AIR-6.6 |
 | CL-Q6 | is the stated coverage position kept apart from the evaluated coverage? | yes, always | AIR-6.6 |
 | CL-Q7 | prefix and module name | `clm:`, `clm-voc:`, `insurance/claims/` | AIR-6.2 |
@@ -186,11 +186,11 @@ actual cost.
 | AIR-6.7 | `clm:Movement` (asserted and derived), cost classes after the CRS heads, derived balances (paid, outstanding, incurred, recovered), the loss run derivation writing `aeo:LossExperience` and `aeo:LossRecord` | CL-Q4, Q9, WF-Q2, AIR-6.2 | yes | 300k |
 | AIR-6.3 | `clm:Grouping` per response by its aggregation term, hours clauses through S4, related claims as findings | AIR-6.5, substrate S4 | after S4 | 250k |
 | AIR-6.4 | causation profiles by governing law: dominant cause, efficient proximate cause, anti-concurrent clause as a precedence statement | AIR-6.5, W-Q2's review | after the review | 250k |
-| AIR-6.8 | recoveries as demands run the other way (subrogation, contribution, salvage, deductible recovery), reinsurance claims (loss advice, ultimate net loss, reinstatement premium), towers (exhaustion as a threshold regime, drop-down, other insurance) | AIR-6.5, 6.7, the evaluation context for ledger erosion | after CCS C12 | 400k |
+| AIR-6.8 | recoveries as demands run the other way (subrogation, contribution, salvage, deductible recovery), reinsurance claims (loss advice, ultimate net loss, reinstatement premium), towers (exhaustion as a threshold regime, drop-down, other insurance) | AIR-6.5, 6.7, Ledger LG-3 (programme-owned accounts), [Ensemble](ensemble.md) ES-3 (cross-instrument reads), ES-8 (contribution and other insurance) | after CCS C12 | 400k |
 | AIR-6.9 | `clm:Proceedings`, findings and determinations, complaints as demands, fraud indicators and findings with the s.12 consequences, conduct duties `ins:impliedBy` a rule and the conduct queries | AIR-6.5 | after CCS C12 | 300k |
 | AIR-6.10 | personal and special category classification, privacy profiles for claimants, disclosure classes for privileged material, retention and legal hold profiles, as examples over the claims model | CL-Q8, substrate S8 to S10, AIR-6.2 | yes, after the substrate ADRs | 200k |
 | AIR-6.11 | projections: development triangle cells by valid and record time, the S.19.01 cell set, conduct report queries, each a derived artefact with its read set | AIR-6.7 | yes | 200k |
-| AIR-6.12 | the four worked examples of claims sketch §14 as README walkthroughs with expected decisions, milestone M7, and the catastrophe benchmark of robustness-testing §4 under `benchmark/` (ADR-A124) | all of the above | last | 400k |
+| AIR-6.12 | the four worked examples of claims sketch §14 as README walkthroughs with expected decisions, milestone M7, and the catastrophe benchmark of robustness-testing §4 under `benchmark/` (ADR-A124) | all of the above, Ensemble ES-3 where an example reads across instruments | last | 400k |
 | AIR-6.W0 | an ADR for an RML processor in the toolchain, its licence checked, its mise task, one smoke test | WF-Q3 | yes | 100k |
 | AIR-6.W1 | the CRS v5.2 claims bordereau: representation scheme with field codes confirmed against Lloyd's user guide, mapping graph, spreadsheet-to-CSV conversion, source graph, golden fixtures we author | WF-Q1, AIR-6.W0, AIR-6.2 | yes | 300k |
 | AIR-6.W2 | reconciliation rules as data: identity by keys, movements from snapshots with the inconsistency check (G1), statuses as the sender's assertions (G4), code lifting (G5), image differences (G2), exchange rates without a date (G8), late and repeated data (G17, wire formats sketch §8) | WF-Q2, Q6, AIR-6.W1, 6.7, AIR-3.4 | yes | 400k |
@@ -266,7 +266,7 @@ the track.
 | # | Outcome, end to end over example graphs | Closes in |
 |---|---|---|
 | M6 | (epic, unchanged) a submission packages an exposure set version, and a claim records a loss cause chain against the contract that responds | AIR-6.1 and AIR-6.5 |
-| M7 | one loss across a primary policy, an excess layer and a reinsurance: positions, movements, a settlement, a recovery and a derived loss run, each traced to the words | AIR-6.12 |
+| M7 | one loss across a primary policy, an excess layer and a reinsurance: positions, movements, a settlement, a recovery and a derived loss run, each traced to the words | AIR-6.12, Ensemble ES-3 |
 | M8 | a coverholder's claims bordereau lifted, reconciled into movements and statuses, and emitted again for the market with its lowering report, the round trip reproducible from the stored files | AIR-6.W3 |
 
 ---

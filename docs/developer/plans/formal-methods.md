@@ -154,12 +154,15 @@ corrected to match.
 Skeletons first (C1), then one model per ADR that adds or changes a law (FM-D8). C2 models binding
 resolution with scheme composition ahead of CCS C8. C3 is slot exclusivity and exhaustiveness by SMT
 for every condition kind, driven from Python, in step with CCS C13a. C4 models ADR-A130 (Ensemble):
-the order of evaluation over units and positions is well founded, a cycle that remains over parts
+the order of evaluation over units and positions is well founded, the outcome is the same under
+every valid order, a cycle that remains over parts
 and positions is refused, and a derived shared-resource relation agrees with the terms that draw on its
 account. C5 models ADR-A131 (Ledger): a draw on a path succeeds or fails whole, availability is the
-least along the path, a credit never exceeds the stated amount, the account tree has no cycle, and
-each merge rule conserves the amount it shares. Both are run before or alongside their ADR's
-acceptance, as C2.3 is for ADR-A116.
+least along the path, a credit never exceeds the stated amount, the account tree has no cycle,
+each merge rule conserves the amount it shares after rounding and its residual, and draws at one
+position give the same postings in any order of proposal. Both are run before or alongside their ADR's
+acceptance, as C2.3 is for ADR-A116. C4c, a bounded search for terms with several fixpoints, is added only if the
+[Ensemble plan](ensemble.md)'s ES-8 addendum admits cyclic components.
 
 Detailed in its own [sketch](../sketches/formal-methods-track-c.md) and
 [plan](formal-methods-track-c.md); status in [its status record](../status/formal-methods-track-c.md).
@@ -183,7 +186,8 @@ mechanical fragment gate, and a cross-store conformance suite. E3 the combinator
 evaluation context,
 mechanising B4, with E4a the Ledger laws of C5 mechanised from B4a. E4b the composition law of
 ADR-A130, that for ensembles acyclic over units and positions, evaluation in order reaches the least
-fixpoint, the same outcomes as evaluating every member together, mechanised from B4b. E5 the template library in rely and
+fixpoint, the same outcomes as evaluating every member together, mechanised from B4b. E4c, the chaotic iteration theorem for cyclic components, only with ES-8. E4a follows B4a
+(with LG-2 and C12) and E4b follows B4b (with ES-3 and C12), as the [Ledger](ledger.md) and Ensemble plans place them. E5 the template library in rely and
 guarantee form.
 
 ### Track F: native tooling

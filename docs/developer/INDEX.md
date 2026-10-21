@@ -719,15 +719,16 @@ ontology (REL-Q1 to REL-Q6 answered 2026-10-19, REL-Q2a open), and
 
 | Field | Value |
 |-------|-------|
-| **Status** | 📝 Plan proposed 2026-10-19, no slice briefed. ADR-A131 and ADR-A01's 2026-10-19 addendum Proposed |
+| **Status** | 📝 Plan proposed 2026-10-19, no slice briefed. ADR-A131, amended 2026-10-21, and ADR-A01's 2026-10-19 addendum Proposed |
 | **Unit ID** | `ledger` |
-| **Sketches** | [evaluation-context.md](sketches/evaluation-context.md) §5, [contract-amounts.md](sketches/contract-amounts.md) |
+| **Sketches** | [evaluation-context.md](sketches/evaluation-context.md) §5, [contract-amounts.md](sketches/contract-amounts.md), [persistence-history-and-versioning.md](sketches/persistence-history-and-versioning.md) §6.1 |
 | **Plan** | [ledger.md](plans/ledger.md) |
 | **ADRs** | [A-131](../architecture/decisions/ADR-A131-ledger-layer.md), Proposed |
 
 A substrate layer above Quantification for amounts consumed and restored over time: account trees,
 postings, balances and merge rules. Behaviour's allowances become a shorthand for it. Slices LG-0 to
-LG-4. CCS C12, Ensemble's slice 1, AIR Phase 5, AIR-6.8 and AIR-7.5 wait on it.
+LG-4, questions LG-Q1 to LG-Q8. CCS C12, AIR Phase 5 and AIR-6.8 wait on LG-3. Ensemble's ES-3 waits on
+LG-2, and ES-4 on LG-Q3. AIR-7.4 is LG-4, and AIR-7.5 waits on it.
 
 ## 8.19 Ensemble — Proposed
 
@@ -740,8 +741,50 @@ LG-4. CCS C12, Ensemble's slice 1, AIR Phase 5, AIR-6.8 and AIR-7.5 wait on it.
 | **ADRs** | [A-130](../architecture/decisions/ADR-A130-ensemble-layer.md), Proposed |
 
 A substrate layer above Instrument and Behaviour for sets of instruments forming one operation:
-ensembles, reified relations K1 to K8, and evaluation by composition. Slices ES-0 to ES-8. Formal
-methods C4, B4b and E4b. CCS C12, AIR-6.8 and phase 7's programme and vehicle modules wait on it.
+ensembles, reified relations K1 to K8, and evaluation by composition. Takes over CCS HQ-2's second
+case, HQ-7 and HQ-12. Slices ES-0 to ES-8, questions ES-Q1 to ES-Q9. Formal methods C4, B4b and E4b.
+C12's composition step and AIR-6.8 follow ES-3, AIR-6.8's contribution follows ES-8, and phase 7's
+programme, vehicle and MRC modules follow ES-4 to ES-7.
+
+## 8.20 Consumer Distribution — Proposed
+
+| Field | Value |
+|-------|-------|
+| **Status** | 📝 Plan proposed 2026-10-21, no slice briefed. CD-Q1 to CD-Q6 open |
+| **Unit ID** | `consumer-distribution` |
+| **Sketch** | [consumer-distribution.md](sketches/consumer-distribution.md) |
+| **Plan** | [consumer-distribution.md](plans/consumer-distribution.md) |
+| **ADRs** | A-88, A-117, A-129 |
+
+Using LATTICE from another repository at a pinned release, with nothing copied: agent guidance and
+skills first (CD-1 to CD-3), then ontologies, tools, a consumer gate and upgrades (CD-4 to CD-7),
+then the conformance kit, minting in more languages, a guide and the first consumer (CD-8 to CD-11).
+
+## 8.21 Evaluator Implementation — Proposed
+
+| Field | Value |
+|-------|-------|
+| **Status** | 📝 Plan proposed 2026-10-21, no slice briefed. EV-Q11 decided, EV-Q2 to EV-Q10 and EV-Q12 open |
+| **Unit ID** | `evaluator-implementation` |
+| **Plan** | [evaluator-implementation.md](plans/evaluator-implementation.md) |
+| **ADRs** | A-FM1, A-FM3, A-130 and A-131 (Proposed). EV-3 drafts an ADR revising formal methods §13.1 |
+
+The evaluator as a pure core behind the codec and the conformance kit, generated for several hosts
+from one model and held together by an N-version gate. Slices EV-0 to EV-10, from the interface and a
+three-way spike to generated cores and the terms digest.
+
+## 8.22 Interval-Normal Scopes — Proposed
+
+| Field | Value |
+|-------|-------|
+| **Status** | 📝 Plan proposed 2026-10-21, no slice briefed. IX-Q1 to IX-Q7 open |
+| **Unit ID** | `interval-normal-scopes` |
+| **Sketch** | [interval-normal-scopes.md](sketches/interval-normal-scopes.md) |
+| **Plan** | [interval-normal-scopes.md](plans/interval-normal-scopes.md) |
+
+Concept schemes read as lines, with interval labels or closure bitsets as Surface index forms, and
+conditions in the interval-normal fragment decided by arithmetic: joint satisfiability, entailment
+and coverage, as C13a's first path and NRS N3's overlap check. Slices IX-0 to IX-6.
 
 ## 8. Phase Handoff Documents (0-6)
 

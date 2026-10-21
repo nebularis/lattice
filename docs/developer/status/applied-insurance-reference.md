@@ -180,5 +180,12 @@ handed to R). S became unavailable on 2026-10-14 and R built AIR-4.2a to AIR-4.4
   on 2026-10-20 (decisions 10 to 12, an MRC module planned as AIR-7.9) and on 2026-10-21 (IR-Q7 (iv):
   evaluation units below the instrument, with a least fixpoint semantics). P7-Q8 added and decided in
   part on 2026-10-21 (a replacing contract is a new instrument, and the applied modules do not use the
-  word "renewal"), and P7-Q9 (binder and issued policy) held for independent research. No slice
-  briefed.
+  word "renewal"), and P7-Q9 (binder and issued policy) held for independent research. Principle
+  P7-7 added on 2026-10-21: the phase's modules add data, never evaluation code, so every
+  implementation of the evaluator runs every programme (ADR-A130 and ADR-A131 amended the same day).
+  Design closure the same day: P7-Q2's band borne by the insured settled (derived, never a layer),
+  ADR-A130 and ADR-A131 completed before acceptance, and the dependencies fixed across the epic: AIR-7.4
+  is Ledger LG-4, Phase 5 and AIR-6.8 wait on LG-3, AIR-6.8 takes its cross-instrument reads from
+  Ensemble ES-3 and contribution from ES-8, AIR-7.1 waits on ES-4 and ES-5, AIR-7.5 on ES-6 and LG-4,
+  and AIR-7.9 on ES-5 and ES-7.
+  No slice briefed.

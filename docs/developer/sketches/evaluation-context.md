@@ -4,7 +4,9 @@
 
 **Status:** sketch, 2026-10-02. The ledger (§5) is placed in a substrate layer of its own by
 [ADR-A131](../../architecture/decisions/ADR-A131-ledger-layer.md) (Proposed) and planned in the
-[Ledger plan](../plans/ledger.md). Combinators, environments and the rest have no plan yet.
+[Ledger plan](../plans/ledger.md). ADR-A131 also fixes environments in this model with conformance
+cases (decision 9), and adds two phases at one position and exactness (decision 6). Combinators and
+the rest have no plan yet.
 **Comes back in with:** the [computable contract substrate](../plans/computable-contract-substrate.md)
 (`[ccs]`: C7b, C8a, C12, C13) and the
 [applied insurance reference](../plans/applied-insurance-reference.md) epic (`[air]`: Phase 5).
@@ -39,7 +41,7 @@ its state, into which side-effecting computation must be lifted. The name and th
 borrowed from functional programming, where this is a stack of monads. Behaviour's states stay
 discrete and declared. The evaluation context is what flows through them.
 
-The fixed set of axioms defined in this sketch would have known, documented semantics, that lattice software packages would provide a reference implementation of. Implementors/deployments could extend these axioms, however the semantics (and therefore runtime behaviour) of any extensions would be entirely dependent upon the extender to document and implement. Lattice is NOT attempting to build a general purpose programming language syntax in RDF.
+The fixed set of axioms defined in this sketch would have known, documented semantics, that lattice software packages would provide a reference implementation of. Implementors/deployments could extend these axioms by specialising them, stating what an extension means in terms the axioms already evaluate (ADR-A130 decision 3, ADR-A131 decision 8). An extension that needs new evaluation semantics comes as an addendum with conformance cases, so every implementation runs it. Lattice is NOT attempting to build a general purpose programming language syntax in RDF.
 
 ## 2. What exists, and what is missing
 
@@ -118,7 +120,9 @@ The set is closed, and every member is data, never code: contract-amounts §3.2 
 - **Undetermined absorbs, except where the answer is already decided.** `max(5M, Undetermined)` is
   Undetermined. `cap(v, 0)` is 0 whatever `v` is. This is Strong Kleene lifted to values, as CEL
   does for expressions (logic-encodings §4).
-- **Exact arithmetic.** Decimal, never binary floating point. A rounding rule is a combinator
+- **Exact arithmetic.** Decimal, never binary floating point. A part no decimal states, such as a
+  third, is kept as an exact rational or rounded by the rule's stated method with its residual
+  allocated (ADR-A131 decision 6, the Ledger plan's LG-Q6). A rounding rule is a combinator
   argument, never an engine default.
 
 ## 5. The ledger
@@ -147,14 +151,15 @@ flowchart TB
 | Construct | Ledger form |
 |---|---|
 | A1, A2, A4, A5 nested sublimits | a path of accounts. A draw debits the path |
-| A3 a lesser cap for one section under a shared limit, reduced by prior payments | the section is a child of the shared account with its own smaller balance. Its availability is `min(own, parent's)`, a combinator, not a second account |
+| A3 a lesser cap for one section under a shared limit, reduced by prior payments | the section is a child of the shared account with its own smaller balance. Its availability is the least of its own and every ancestor's remaining balance, a Ledger rule (ADR-A131 decision 3), not a second account |
 | A6 an excess limit that drops down when the section and other insurance are exhausted | a second account, drawn only by a draw whose guard reads the section's balance as zero (sequential environment) |
-| A8 a limit shared with another section for one purpose | one account with two parents is not a tree. Raised as EC-Q3 |
+| A8 a limit shared with another section for one purpose | one account with two parents is not a tree. Raised as EC-Q3, now the Ledger plan's LG-Q2: several draw purposes within one owner, two accounts and an Ensemble relation across owners |
 | A25 recoveries reinstate limits, less recovery costs | a credit: the inverse of a draw, along the same path, of `excessOver(recovery, costs)` |
 | A30 to A33 aggregates over bound business | a ledger scoped to the authority, not to one instrument: every instrument bound under the power draws on it |
 | A56 reinstatements | a credit, with its premium as a second lifted computation |
 
-**Scope.** A ledger belongs to a persistent identity (an instrument, an authority, a programme), as
+**Scope.** A ledger belongs to a persistent identity (an instrument, an authority, an ensemble such as a
+programme or a vehicle), as
 regime state does (ADR-A106 decision 5), so it outlives a new version of what it belongs to.
 
 **Relation to allowances.** An `AllowanceDefinition` is a one-account ledger with a reset
@@ -188,7 +193,7 @@ different evaluation context, not a flag on one.
 | Environment | Functional reading | Each guard reads | Ledger changes | Needs |
 |---|---|---|---|---|
 | **sequential** | State threaded through bind (`>>=`) | the ledger the previous computation left | applied one after another, in `bhv:priority` order | distinct priorities among the competitors |
-| **parallel** | Reader over a snapshot, Writer of proposed changes, then a merge (applicative `<*>`) | the ledger as the pass found it | proposed together, then merged | a merge rule for proposals that touch one account |
+| **parallel** | Reader over a snapshot, Writer of proposed changes, then a merge (applicative `<*>`) | the ledger as the pass found it | proposed together, merged by the account's owner, then each evaluation settles against what it was granted (ADR-A131 decision 6) | a merge rule for proposals that touch one account |
 
 **Sequential** is order of payment: "Side A first, then B and C only if limits remain" (A24). Each
 draw's guard sees what the one before it left.
@@ -198,7 +203,7 @@ what happens when together they exceed an account. Merge rules, as data:
 
 | Merge | Effect on an over-subscribed account | Catalogue |
 |---|---|---|
-| proportional | each proposal scaled by `proRata` to the balance | A29 public cap, pro rata below the statutory aggregate |
+| proportional | each proposal scaled by `proRata` to the balance, rounded to the account's unit by the rule's stated method, with the residual allocated so the parts sum | A29 public cap, pro rata below the statutory aggregate |
 | in priority order | proposals applied by priority until the balance runs out | the existing `bhv:Sequential` absorption |
 | refuse | no proposal applied, Undetermined with a reason | a strict cap with no allocation rule |
 
@@ -337,7 +342,7 @@ Decided or to be kept so nothing here is foreclosed:
 | EC-Q4 | How a combinator expression is written | an RDF expression IR like Eligibility's compiled IR in `tools/mork_compilers`, or the JSON abstract syntax the logic-encodings note proposes (§1, §4), with RDF as its projection |
 | EC-Q5 | How fine the log is | one derived artefact per pass, or per lifted computation. Per pass is cheaper. Per computation explains more |
 | EC-Q6 | A Datalog backend at runtime | an ADR beside A83 and under A71, choosing whether the platform may run a rules engine in production, and on what licence terms |
-| EC-Q7 | Whether this is a layer | **Answered 2026-10-19 for the ledger:** the ledger and its merge rules are a substrate layer of their own, Ledger, above Quantification and imported by Behaviour (ADR-A131). Combinators stay with EC-Q1. Environments are evaluation semantics, held by the evaluators |
+| EC-Q7 | Whether this is a layer | **Answered 2026-10-19 for the ledger:** the ledger and its merge rules are a substrate layer of their own, Ledger, above Quantification and imported by Behaviour (ADR-A131). Combinators stay with EC-Q1. Environments are evaluation semantics, stated in this model and fixed by conformance cases, never left to one implementation (ADR-A131 decision 9) |
 
 ## 13. When it comes back in
 

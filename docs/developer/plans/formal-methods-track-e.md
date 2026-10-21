@@ -25,7 +25,11 @@ methods.md` §4): the logic kernel with the rounding and residual theorem and bi
 (E1), the Eligibility denotation with one proved SPARQL compiler core (E2), the combinator
 algebra (E3), the evaluation context mechanising track B4's reference (E4), and the template
 library in rely and guarantee form (E5). This plan details E1 only; E2 to E5 stay at the epic's
-outline level until E1 is underway, per the Epic Decomposition Model's rolling-wave rule.
+outline level until E1 is underway, per the Epic Decomposition Model's rolling-wave rule. E4 has three placed parts.
+E4a mechanises the Ledger laws (a draw succeeds or fails whole, conservation after rounding with its residual, draws at one position
+independent of the order of proposal) from B4a, after B4a. E4b mechanises the composition law (for ensembles acyclic over units and positions,
+evaluation in order reaches the least fixpoint) from B4b. E4c, only with ES-8, is the chaotic iteration theorem for cyclic components.
+Their timing is in the [Ledger](ledger.md) and [Ensemble](ensemble.md) plans.
 
 Every artefact follows the chain track D proved out (phase-0 plan §2.1): prose, shape, formal
 statement (extracted back into the README), proof with its assumption audit, an interface one

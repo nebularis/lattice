@@ -6,9 +6,9 @@ Draft for review, 2026-09-30. A requirements catalogue, not yet a design. The de
 [computable-contract-substrate.md](computable-contract-substrate.md) says *that* a party must pay
 or may not exceed something. This sketch collects every construct in the tested instruments that
 decides *how much*, so that none is lost before the design is written. It feeds AIR Phase 5
-(ADR-A101, term parameters) and Open CBAA's binding authority capacity. The unplanned
-[evaluation context](evaluation-context.md) sketch outlines a design for §3: a ledger of accounts,
-combinators and environments.
+(ADR-A101, term parameters) and Open CBAA's binding authority capacity. The ledger for §3 is
+designed in [ADR-A131](../../architecture/decisions/ADR-A131-ledger-layer.md) and planned in the [Ledger plan](../plans/ledger.md). The
+[evaluation context](evaluation-context.md) sketch keeps combinators and environments.
 
 Sources use the codes of the substrate sketch: PKG (package policy), IUA (IUA 09-069 BAA2018),
 CBAA (Lloyd's computable binding authority collateral).
@@ -144,7 +144,7 @@ occurrence grouping), with insurance's bases as applied schemes. The CCS templat
 | percentages of a base | `qnt:DerivedValueSpace` (ADR-A93) |
 | relative changes ("more than 10%") | `qnt:AnchorBinding` with a proportional offset |
 | conversion at a date | `qnt:Conversion` of kind contextual |
-| caps consumed over a period, reset by recurrence | Behaviour `AllowanceDefinition`, `AllowanceAccount` |
+| caps consumed over a period, reset by recurrence | ledger accounts (ADR-A131). Behaviour's `AllowanceDefinition` and `AllowanceAccount` are a deprecated shorthand |
 | ordering between competing draws | `bhv:priority`, `bhv:PriorityOrdered` |
 | grouping occurrences into one event | AIR substrate item S4 (occurrence grouping) |
 | parameters attached to terms | A-101 term parameters, `ins:Qualifier` |
@@ -153,21 +153,21 @@ occurrence grouping), with insurance's bases as applied schemes. The CCS templat
 
 ## 3. What a design must decide
 
-1. **Nested accounts.** Whether "part of and not in addition to" is a tree of allowance accounts
+1. **Nested accounts.** Whether "part of and not in addition to" is a tree of ledger accounts
    where each draw debits every ancestor (A1 to A5, A8), and how a lesser section cap under a
-   shared limit (A3) and an excess layer that drops down (A6) fit it.
+   shared limit (A3) and an excess layer that drops down (A6) fit it. Answered by ADR-A131 decision 3.
 2. **Combinators.** The highest of several retentions (A16, A18), the highest of several limits
    (A9), coinsurance splits (A20), and order of payment (A24) as named, declared operations over
-   accounts, not code.
+   accounts, not code. Answered by ADR-A131 decision 3, and combinators by EC-Q1 of the evaluation context sketch.
 3. **Grouping.** Related claims as one (A15, A28) through substrate S4.
 4. **Reinstatement and reduction.** Recoveries crediting accounts (A25), and reductions for amounts
-   recoverable elsewhere (A26, A27).
+   recoverable elsewhere (A26, A27). Answered by ADR-A131 decision 3.
 5. **Aggregates over bound instruments.** Income and exposure limits (A30 to A33) summing over the
-   instruments `ins:boundUnder` a power, with the notification threshold as a derived trigger.
+   instruments `ins:boundUnder` a power, with the notification threshold as a derived trigger. Answered by Ledger LG-Q3 and Ensemble K6.
 6. **Remuneration formulas.** Commission, fees and profit commission (A35 to A46) as derived
    amounts with a declared basis, adjustable with the premium they derive from.
 7. **Bases.** The general basis pattern of §1.7, and whether it belongs in the substrate.
 8. **Where each lives.** Which parts are substrate (accounts, combinators, derived amounts) and
-   which applied (insurance limit kinds, capacity).
+   which applied (insurance limit kinds, capacity). Answered by ADR-A131 decision 6.
 
 Each row above becomes a test case when the design is written.

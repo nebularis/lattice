@@ -43,7 +43,9 @@ maintainer chose B on 2026-10-18 (IR-Q2).
    imports it. ADR-A01's 2026-10-18 addendum places it, and its repository catalogue entry states
    its imports.
 2. **An ensemble is an identity.** `ens:Ensemble` is a `fnd:PersistentIdentity` with versions. Each
-   version names its member instruments by role. An ensemble may own Ledger accounts
+   version names its member instruments by role, or, where its terms define membership by a rule,
+   states the rule, and the members it admits at a position are derived from facts (the Ensemble
+   plan's ES-Q4). An ensemble may own Ledger accounts
    ([ADR-A131](ADR-A131-ledger-layer.md) decision 5), may be a member of another ensemble, and
    scopes the order in which its members are evaluated. For example, a syndicated facility with its
    guarantees, a construction contract with its subcontracts and bonds, a master agreement with its
@@ -52,7 +54,9 @@ maintainer chose B on 2026-10-18 (IR-Q2).
    ensemble, and carries the properties of its kind. The kinds form an open vocabulary:
    - **K1 derivation:** created under, incorporates
    - **K2 dependency:** accessory, conditional on another's state, back to back
-   - **K3 priority:** ranking between agreements, inuring order
+   - **K3 priority:** ranking between agreements, inuring order. Where the terms state them, the
+     order in which members draw and the order in which they are restored may differ, for example
+     recoveries applied in the reverse of the order of loss
    - **K4 portion and share:** several commitments, portions of one order, composed shares, signed
      shares (decision 10)
    - **K5 single agreement:** a master and its children, for the purposes their terms state
@@ -67,12 +71,27 @@ maintainer chose B on 2026-10-18 (IR-Q2).
    account, never authored, and a shape checks each one against those terms, so sharing is visible
    at design time and cannot disagree with what the terms say. A further kind is added by an
    addendum with its own analysis.
+
+   The vocabulary of kinds is open, and their semantics are closed. An applied module may specialise
+   a kind, for example a programme's placement as a K4 relation, but adds no evaluation semantics of
+   its own. What a specialised relation does is stated by terms the substrate already evaluates:
+   Ledger merge rules, Eligibility conditions, normative rules. New evaluation semantics come only by
+   a substrate addendum with its own conformance cases, so every implementation of the evaluator runs
+   every ensemble.
+
+   Where the terms are silent on a relation's effect, the effect comes from a rule outside them that
+   binds the members, selected by governing law through the normative rule substrate, never from a
+   default built into this layer. Decision 11 applies this to authority. The applied modules apply
+   it to readings such as when an underlying agreement counts as exhausted.
 4. **Endpoints.** A relation names each member by role. By default an endpoint is the instrument's
    persistent identity, so an amendment needs no change to the relation. An endpoint names one
    version where the relation is to one text, for example the edition an instrument incorporates, or a
    proposal provisionally placed before it is accepted. An endpoint may narrow to a term, a section
    or a Ledger account of its instrument, for example a master's shared limit over two children's
-   limits, or one section of a contract following the form of another.
+   limits, or one section of a contract following the form of another. An endpoint may name an
+   instrument outside the modelled set, whose state reaches the ensemble only as facts, for example a
+   statutory scheme that responds first, or senior debt held by a lender the deployment does not
+   model.
 5. **Evaluation by composition.** What one instrument needs of another, such as an exhaustion, a
    default or a payment, reaches it as a fact with provenance, produced by evaluating the other. The
    single-instrument evaluator never loads a neighbour.
@@ -94,6 +113,14 @@ maintainer chose B on 2026-10-18 (IR-Q2).
      never change a determined outcome, and a rule the law or the terms state resolves it. Contribution
      (K7) is such a rule for policies whose other insurance clauses each make it excess of the other.
      Only an admitted component is evaluated by iteration.
+   - **Independence of order.** An acyclic graph admits many valid orders. The outcome is the same
+     under every one of them. Units that draw on one account at one position are the only case
+     where it could differ, and Ledger's two phases settle it (ADR-A131 decision 6). The log of a
+     composition is written in a canonical order, with ties between units broken by their keys, so
+     two implementations that choose different valid orders produce the same log.
+   - **Passed facts.** A fact passed between units records the unit and version that produced it,
+     its position and a digest of that unit's read set. A receiving unit can then cite and audit it
+     without reading the producing unit's terms (decision 12).
 6. **One hook in Instrument.** A regime's measured value, or a condition's evidence, may be supplied
    from outside the instrument, as a recorded fact naming its source. It never asserts the receiving
    instrument's own state. This is Instrument's only change, and it is generic.
@@ -121,7 +148,9 @@ maintainer chose B on 2026-10-18 (IR-Q2).
     - **Tiers, conditions and exclusions.** The authority holds within the tiers, conditions and
       exclusions stated, for example changes the leader agrees alone against changes every member
       must agree, members admitted only if they share the same terms, or acts each member keeps for
-      its own share.
+      its own share. That members share the same terms is a judgement, evaluated from a digest of
+      each member version's bound terms with stated term kinds left out, such as the share and the
+      premium. The digest is computed once, where the data lives, and every evaluator reads it.
     - **Defaults.** Where the holder is chosen by a default, such as the largest participation, the
       holder is a judgement from facts.
     - **Source.** The authority comes from the members' terms, or from a rule outside them that binds
@@ -170,11 +199,23 @@ flowchart TB
   layer.
 - **Instrument gains one property or rule** for an externally supplied value (decision 6), with its
   own slice in the Ensemble unit.
-- **The evaluator** (CCS C12) gains a composition step: order the evaluation units by unit and
-  position, evaluate each, record the facts passed between them. It evaluates a part of an
-  instrument that an endpoint narrows to, given the facts that part reads. Instrument already places
-  cases at sections, so the part is a scope Instrument knows. The single-instrument semantics is
-  unchanged.
+- **The evaluator** (CCS C12) gains a composition step. It evaluates a part of an instrument that
+  an endpoint narrows to, given the facts that part reads. Instrument already places cases at
+  sections, so the part is a scope Instrument knows. The single-instrument semantics is unchanged.
+  The step is built so that several implementations of the evaluator, in different languages, can
+  run it and agree:
+  - **Pure entry points.** Planning (the graph of units, relations and positions to a schedule, as
+    data), evaluating one unit (its facts and a view of the accounts it reads to an outcome, a
+    ledger delta, passed facts and a log), and evaluating one admitted cyclic component in one call.
+    The host drives the schedule, persists between units and may run independent units in parallel
+    or in different processes.
+  - **Read sets known before evaluation.** A unit's read set, or a superset of it, follows from its
+    terms, its relations and the stimulus. A pass then runs in phases: resolve endpoints, keys and
+    membership, select any outside rule by governing law, plan, fetch every fact the pass reads in one
+    batch, evaluate, persist. A pass never queries the store per unit.
+  - **Keys, not identities.** The evaluator emits natural keys for the records it derives, and the
+    host mints their IRIs from the minting recipes (ADR-A84). Unit keys come from the stable
+    identities of instruments and their sections.
 - **Ledger** ([ADR-A131](ADR-A131-ledger-layer.md)). An exhaustion or a payment passed between
   instruments is derived from a Ledger balance record. An account shared by several instruments is
   owned by their ensemble, and the K6 relation is derived from the terms that draw on it. How their
@@ -192,14 +233,18 @@ flowchart TB
   addendum admits a cyclic component. That case then needs each member's evaluation to be monotone
   in the facts it reads, a proof over Instrument's and Behaviour's semantics.
 - **Persistence.** A relation belongs to no instrument's aggregate. The ensemble is an aggregate
-  root, and its relations are part of it, to be confirmed against ADR-A122 in the first slice.
+  root, and its relations are part of it, to be confirmed against ADR-A122 in the first slice. An
+  ensemble whose membership follows a rule, such as every policy written under a treaty in a period,
+  may have thousands of members. Its derived membership records are kept outside the root's
+  aggregate, as Ledger keeps postings outside an account's definition, so the root never becomes a
+  point of contention. How membership is bounded and read is the Ensemble plan's ES-Q5.
 - **Applied insurance.** The claims plan's AIR-6.8 and milestone M7 take their cross-instrument reads
   from Ensemble. Phase 7's programme module makes a programme an ensemble, records
   contract-to-layer bindings as K4 relations and relations between layers as K2, K3 and K6
   relations. A risk-capital vehicle is an ensemble too.
 - **Open questions carried from the sketch:** IR-Q3 (K1 stays in
   Instrument, as decision 7 assumes), IR-Q4 (both forms of the hook, as decision 6 assumes), IR-Q5
-  (the first slices' scope, as decision 8 assumes). Each is confirmed or revised before slice 1 is briefed.
+  (the first slices' scope, as decision 8 assumes). Each is confirmed or revised before the first slice, ES-0, is briefed.
 - **Publication.** Ensemble's README follows ADR-A126's layout, so it cites only published decisions
   (ADR-A127). This ADR is published with slice 1, citing accepted decisions it builds on by their
   GitHub links.
@@ -214,5 +259,13 @@ split of HQ-2, and decisions 10 to 12, checked against the Marine Insurance Act 
 the London Market Group's MRC (Open Market) implementation guide, data dictionary and example 2,
 all v3.0 (2023). On 2026-10-21 the maintainer amended decision 5 with evaluation units below the
 instrument and its least fixpoint semantics, after we found that one contract spanning several
-layers makes an order over whole instruments cycle within one occurrence (relations sketch §11).
+layers makes an order over whole instruments cycle within one occurrence (relations sketch §11). The
+same day the maintainer added closed semantics for kinds (decision 3), independence of order and
+passed facts (decision 5), and the evaluator's and persistence's consequences for implementations in
+several languages, after a review against the evaluator's implementation options. At design
+closure the same day we added membership by rule (decision 2), separate orders for draws and
+restorations and the rule for silent terms (decision 3, the second from phase 7's principle P7-7),
+endpoints outside the modelled set (decision 4), and the terms digest as the evidence for members
+sharing the same terms (decision 11), after a review of the layer against published excess and
+following-form wordings and the law of contribution.
 The [Ensemble plan](../../developer/plans/ensemble.md) sequences the slices.

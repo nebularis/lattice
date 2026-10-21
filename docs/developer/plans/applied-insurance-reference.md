@@ -61,9 +61,9 @@ Each is stated once in the sketch cited, and every phase plan inherits them.
 | 2 | [phase 2](applied-insurance-reference-phase-2.md) | reference peril vocabulary | 1 | M1 |
 | 3 | [phase 3](applied-insurance-reference-phase-3.md) | Eligibility over flat schemes and several values (substrate), crosswalks, a check across cause and characteristics | 0 (3.1 to 3.3), 2 (3.4, 3.5), 4.4 (M2) | M2 |
 | 4 | [phase 4](applied-insurance-reference-phase-4.md) | exposure ontology | 1, and slices of 2 per the phase plan | M3 |
-| 5 | [phase 5](applied-insurance-reference-phase-5.md) | contract module: term parameters, liability direction in contract terms, optional compilation. Deferred (D2) | 1, 2, Open CBAA integration of 1 to 4 | M4, M5 |
-| 6 | [phase 6](applied-insurance-reference-phase-6.md) and [claims](applied-insurance-reference-claims.md) | submission (after 4), claims: the claims core, money and wire formats after 4, the parts that evaluate cover after CCS C12 (claims plan §3) | 4, CCS, Phase 5 for term parameters | M6, M7, M8 |
-| 7 | [phase 7](applied-insurance-reference-phase-7.md), proposed 2026-10-18 | placement and capital: programme data model, market responses, risk-capital vehicles | 1, 6 (claims), the [relations sketch](../sketches/instrument-relations.md) | M8 |
+| 5 | [phase 5](applied-insurance-reference-phase-5.md) | contract module: term parameters, liability direction in contract terms, optional compilation. Deferred (D2) | 1, 2, Open CBAA integration of 1 to 4, [Ledger](ledger.md) LG-3 (waits) | M4, M5 |
+| 6 | [phase 6](applied-insurance-reference-phase-6.md) and [claims](applied-insurance-reference-claims.md) | submission (after 4), claims: the claims core, money and wire formats after 4, the parts that evaluate cover after CCS C12 (claims plan §3) | 4, CCS, Phase 5 for term parameters, Ledger LG-3 and [Ensemble](ensemble.md) ES-3 (AIR-6.8 waits) | M6, M7, M8 |
+| 7 | [phase 7](applied-insurance-reference-phase-7.md), proposed 2026-10-18 | placement and capital: programme data model, market responses, risk-capital vehicles | 1, 6 (claims), the [relations sketch](../sketches/instrument-relations.md), Ensemble ES-5, ES-6 and ES-7, Ledger LG-4, [ADR-A130](../../architecture/decisions/ADR-A130-ensemble-layer.md) and [ADR-A131](../../architecture/decisions/ADR-A131-ledger-layer.md) (both Proposed) | M8 |
 | S | [substrate track](applied-insurance-reference-substrate.md) | upstream LATTICE changes L-P1 to L-P5, spatial guidance, evidence resolution | 0 | none, non-blocking |
 
 ```mermaid

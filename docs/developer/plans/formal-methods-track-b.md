@@ -16,7 +16,8 @@ B2, kept small," alongside the spike and CCS, with no CCS dependency). This plan
 and B3** only. B4 (the evaluation-context reference, `DesignEnv`/`RunEnv`, CCS C12's conformance
 kit) needs CCS's C12, which is not yet briefable (confirmed by reading `main` directly, sketch
 §6) — it is named, not detailed, and gets its own phase document when that dependency clears, the
-same rolling-wave discipline tracks C and E already use.
+same rolling-wave discipline tracks C and E already use. B4a (Ledger) and B4b (composition) are placed in the
+[Ledger](ledger.md) and [Ensemble](ensemble.md) plans.
 
 ## 2. What this plan depends on, and what blocks it
 
@@ -195,7 +196,7 @@ an unconditional claim.
 
 ## 6. Out of scope
 
-B4 (the evaluation-context reference, CCS C12's conformance kit) — a later phase, once CCS's C12
+B4 (the evaluation-context reference, CCS C12's conformance kit), placed as B4a in the Ledger plan and B4b in the Ensemble plan — a later phase, once CCS's C12
 is briefable. Building an MCN encoder. Stating or confirming MORK's join-semilattice claim —
 deferred by our own call, not this phase's to pursue. Mechanising any of B1 or B3's
 statements in Isabelle (track E, later). Fixing any disagreement B2 or B3 finds in

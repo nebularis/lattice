@@ -65,8 +65,11 @@ and an ontology that extends the ledger would have to extend Behaviour with it.
 
    A design-time check reads only the first.
 3. **Accounts form a tree.** An account definition states its amount as a `qnt:Quantity` in a
-   `qnt:ValueSpace`.
-   - **Parent edge.** "Part of and not in addition to" is the parent edge.
+   `qnt:ValueSpace`, its unit of account.
+   - **Parent edge.** "Part of and not in addition to" is the parent edge. An account outside
+     another's subtree is in addition to it. Agreements state both, for example a sublimit that is
+     part of a section's limit beside a further limit for one class of beneficiary in addition to a
+     shared aggregate, so the edge is stated, never inferred.
    - **Draws.** A draw on an account debits it and each ancestor, as one operation that succeeds or
      fails whole.
    - **Availability.** An account's availability is the least of its own remaining balance and its
@@ -74,6 +77,10 @@ and an ontology that extends the ledger would have to extend Behaviour with it.
    - **Credits.** A credit is the inverse of a draw along the same path, and never raises a balance
      above its stated amount unless a term says so.
    - **Cycles.** A cycle in the tree is refused by a shape.
+   - **Keyed accounts and other value spaces.** Some amounts apply per key, for example seats per
+     site, a sublimit per borrower in a facility with several borrowers, or an aggregate per location.
+     Some draws arrive in another value space than the account's, for example a currency. How each is
+     stated is the Ledger plan's LG-Q7 and LG-Q8, settled before LG-1.
 4. **Postings are records, and a balance is derived.** A posting is a `fnd:DerivedArtefact` (ADR-A92).
    - **What it names.** It names its account, the account's owner, its position, its amount and
      direction, and its read set in `prov:wasDerivedFrom`.
@@ -99,6 +106,16 @@ and an ontology that extends the ledger would have to extend Behaviour with it.
 
    Allocation with conservation is the same mechanism. One amount is split into postings on several
    accounts by a merge rule, and the parts sum to the amount.
+   - **Two phases at one position.** Where several evaluations draw on one account at one position,
+     each proposes its draws, the account's owner merges them by the rule, and each evaluation then
+     settles its outcome against what the merge granted. No evaluation's outcome depends on the order
+     in which the others ran, so they may run in parallel, and implementations in different
+     languages agree.
+   - **Exactness.** A proportional merge, or a share signed down in proportion, can give a part that
+     no decimal states exactly, for example a third. Postings are in the account's declared unit of
+     account. Where a rule's exact parts must be rounded to that unit, the rule states the rounding
+     and how the residual is allocated, so the parts still sum to the amount. Whether derived
+     proportions are kept as exact rationals is the Ledger plan's LG-Q6.
 7. **Behaviour uses the ledger and no longer defines one.**
    - **What Behaviour keeps.** Effects that draw, credit or accrue onto an account, threshold regimes
      whose states partition a balance, and the firing of a reset on an occasion.
@@ -110,14 +127,19 @@ and an ontology that extends the ledger would have to extend Behaviour with it.
      changes meaning, which owes a migration once an adopter holds production data.
 8. **Extension.** Another ontology may add account kinds, posting kinds and merge rules under its own
    prefix, as subclasses or concepts.
-   - **Semantics.** Ledger documents the semantics of its own terms, and the reference evaluator
-     implements only those. An extension's semantics are its author's to state and implement.
+   - **Semantics.** Ledger documents the semantics of its own terms, and every implementation of
+     the evaluator implements only those. An extension specialises Ledger's kinds and rules, and
+     states what it means in terms Ledger already evaluates, for example a merge rule composed of
+     priority and proportional rules. It adds no evaluation semantics of its own, since a semantics
+     only one implementation knows would make implementations disagree. New semantics come by an
+     addendum to this ADR, with conformance cases.
    - **Boundary.** An extension never changes what Ledger's own terms mean.
 9. **What Ledger does not hold.**
    - **Pure operations over amounts (combinators).** The evaluation-context sketch's EC-Q1 places
      these, leaning towards Quantification.
-   - **How effects in one pass compose (environments).** That is evaluation semantics, held by the
-     evaluator (CCS C12).
+   - **How effects in one pass compose (environments).** That is evaluation semantics, stated in
+     the evaluation context's model and fixed by conformance cases, never left to one
+     implementation (CCS C12).
    - **The order between instruments.** That is Ensemble's.
 
 ```mermaid
@@ -157,12 +179,13 @@ flowchart TB
   three-level path writes about 25 triples. A balance read without materialised records sums the
   postings on the account and its descendants up to a position. That is linear in the postings, and
   a per-pass materialisation bounds it.
-- **The evaluator** (CCS C12) runs draws and credits as postings, in the sequential environment
-  first. Parallel environments and their merge are designed separately.
+- **The evaluator** (CCS C12) runs draws and credits as postings. Draws by several evaluations on
+  one account at one position follow decision 6's two phases, so they may run in parallel. Any other
+  composition of effects in one pass is fixed by the evaluation context's model (decision 9).
 - **Ensemble** reads exhaustion as a fact derived from a balance record. An account shared by several
   instruments, such as an authority's aggregate, is drawn by their separate evaluations. How their
-  draws are ordered is the Ledger plan's question LG-Q3, to be settled before Ensemble's slice 1 is
-  briefed.
+  draws are ordered is the Ledger plan's question LG-Q3, to be settled before Ensemble's K6 slice
+  (ES-4) is briefed.
 - **Applied modules.** Phase 7's allocation slice (AIR-7.4) builds on decision 6 rather than
   adding allocation to Behaviour. The claims plan's programme erosion (AIR-6.8) uses programme-owned
   accounts.
@@ -175,4 +198,8 @@ flowchart TB
 Designed in outline in the [evaluation-context sketch](../../developer/sketches/evaluation-context.md)
 §5. The maintainer decided on 2026-10-19 that the ledger is a substrate layer above Quantification
 (EC-Q7), and that allowances become ledger accounts (EC-Q2). Planned in the
-[Ledger plan](../../developer/plans/ledger.md).
+[Ledger plan](../../developer/plans/ledger.md). Amended before acceptance on 2026-10-21 with the two
+phases at one position and exactness (decision 6), closed semantics for extensions (decision 8) and
+environments fixed by the model (decision 9), after a review against the evaluator's implementation
+options. At design closure the same day we added the stated edge for "in addition to", the unit of
+account, and keyed accounts and other value spaces as questions LG-Q7 and LG-Q8 (decision 3).
