@@ -26,8 +26,8 @@ Persistence targets classes, graphs and shapes by IRI reference only. It is opti
 
 | Document | Ontology IRI | Version IRI | Imports |
 |---|---|---|---|
-| `spec/persistence.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/persistence> | <https://www.nebularis.org/neuro-semantic/lattice/persistence/0.18.0> | none |
-| `spec/persistent-foundation.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/persistent-foundation> | <https://www.nebularis.org/neuro-semantic/lattice/persistent-foundation/0.18.0> | <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.18.0>, <https://www.nebularis.org/neuro-semantic/lattice/persistence/0.18.0> |
+| `spec/persistence.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/persistence> | <https://www.nebularis.org/neuro-semantic/lattice/persistence/0.19.0> | none |
+| `spec/persistent-foundation.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/persistent-foundation> | <https://www.nebularis.org/neuro-semantic/lattice/persistent-foundation/0.19.0> | <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0>, <https://www.nebularis.org/neuro-semantic/lattice/persistence/0.19.0> |
 
 | Prefix | Namespace |
 |---|---|
@@ -7304,7 +7304,7 @@ version, so that Persistence can enforce Foundation's natural keys (§5.11).
 
 Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).
 
-- Unreleased, on this branch. The release number moves once, when the branch merges.
+- 0.19.0. Every document takes the release's number.
   - The README follows the layout of [ADR-A126](../../docs/architecture/decisions/ADR-A126-literate-specification-layout-and-grammar.md), and generates both spec documents and both shapes files from
     sections 1, 2, 6 and 7. Both spec documents gain a `dct:description` and a `dct:creator`, and the ontology node of
     `spec/persistence.ttl` loses its `rdfs:label` and `rdfs:comment`, which the description replaces. 85 terms gain
@@ -7327,7 +7327,12 @@ Earlier versions are listed in the [ontology release register](../../docs/archit
   - `dal:templatePath` is removed, since a builder renders each operation and `dal:templateId` names it (changes meaning).
     A graph that states a template path migrates by dropping it. `dal:templateVersion` moves from `dal:Template` to
     `dal:GeneratedOperation` and is an integer (changes meaning). `dal:boundaryShape` and `dal:referenceEdge` lose their
-    `rdfs:domain`, since a compiled profile's contract uses them too (no effect).
+    `rdfs:domain`, since a compiled profile's contract uses them too (no effect). `dal:templateId` names a builder with no
+    `.mustache` suffix (changes meaning for a compiled profile written before).
+  - Enumerations closed. 43 classes whose members are a closed set of individuals are equivalent to that set
+    (`owl:oneOf`), and 40 of them state their members distinct (`owl:AllDifferent`). A graph that types an individual of its
+    own with one of these classes now entails that it is one of the listed members (changes meaning). 26 more properties
+    whose range is one of these classes take only its members (`sh:in`) (may invalidate).
 - 0.18.0, the first release of the substrate and standalone modules as one set ([ADR-A129](../../docs/architecture/decisions/ADR-A129-one-release-for-the-substrate.md)). Every document takes the
   release's number. `persistent-foundation` imports Foundation and Persistence at 0.18.0, where it imported Foundation
   0.4.0 and Persistence 0.3.0. The shapes directory no longer carries a `.version` (no effect).

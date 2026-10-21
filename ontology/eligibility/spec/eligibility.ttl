@@ -13,8 +13,8 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 <https://www.nebularis.org/neuro-semantic/eligibility> a owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.18.0> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.18.0>, <https://www.nebularis.org/neuro-semantic/lattice/party/0.18.0>, <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.18.0>, <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.18.0> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.19.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0>, <https://www.nebularis.org/neuro-semantic/lattice/party/0.19.0>, <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.19.0>, <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0> ;
     dct:description "Eligibility models admissibility by declaring reusable conditions, collecting evaluation questions, and recording a three-valued decision (Permitted, Denied, Undetermined)." ;
     dct:creator <https://github.com/hyperthunk> .
 

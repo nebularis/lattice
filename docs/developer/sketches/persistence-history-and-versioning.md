@@ -4,7 +4,7 @@
 
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), the patch-log half of H2.6b and H2.10, held for this sketch
 on 2026-10-14 (H-D33)
-**Status:** draft for the maintainer, 2026-10-14. Questions VH-Q1 to VH-Q7 are open. VH-Q7 researched 2026-10-14 (§6.1). §9 cross-references the placement vision papers, 2026-10-14
+**Status:** draft for the maintainer, 2026-10-14. Questions VH-Q1 to VH-Q7 are open. VH-Q7 researched 2026-10-14 (§6.1). §9 sets out what LATTICE's layers already record about history, 2026-10-14, restated 2026-10-21
 **Touches:** Foundation's versioning, Behaviour's runtime records, Wording's references by identity
 ([ADR-A112 addendum](../../architecture/decisions/ADR-A112-wording-layer.md#addendum-2026-10-06-references-by-identity)),
 the bi-temporal model ([ADR-A67](../../architecture/decisions/ADR-A67-bi-temporal-model.md)), the receipt models of
@@ -101,15 +101,15 @@ Clarified 2026-10-14: an earlier wording read as if the 19,000 were new nodes un
 
 ### 4.2 Where the quote belongs
 
-The maintainer's answer, 2026-10-14. The quote's versions and history are not part of the tower's aggregate. A `NegotiationThread`
-aggregate, not yet defined, references the tower and governs the quotes. A quote attaches to the layer it is for, though the carrier knows
-nothing of layers, a broking construct, and quotes only against an attachment point and a limit. A quote is structurally a contract, an
-instrument on `ins:`, with a different epistemic status: an indication, a quote, a binding offer, firming as its details build up. This
-matches the computable-contract-substrate sketch's account of proposals "at different levels of commitment", checked by the same shapes as
+The maintainer's answer, 2026-10-14, restated 2026-10-21. A quote's versions and history are not part of the tower's aggregate. A thread of
+negotiation, not yet defined, references the tower and holds the quotes, so the tower is written rarely and the thread once per move. A
+quote is an instrument on `ins:`, a proposal whose words may be partial, and the computable-contract-substrate sketch's account of
+proposals "at different levels of commitment" applies: its commitment is read from legal acts, and its precision and completeness are
+recorded beside its terms. A quote names the layer it is offered for, as the placing record states it, and is checked by the same shapes as
 a contract.
 
-So in the worked case the tower is written rarely, the thread is written per move, and each firming or requote is a new quote version.
-Defining the thread and the quote's status is domain modelling for another unit (§7).
+So in the worked case each firming or requote is a new quote version. Defining the thread and how a quote names its layer is domain
+modelling for another unit (§7).
 
 ## 5. Options
 
@@ -317,8 +317,8 @@ flowchart LR
    finding 4 is input to EC-Q2, not a change of our own.
 2. **The word "account" is open.** The evaluation-context sketch says "ledger account", capacity says "resource" with an "account",
    and the maintainer asks for a less domain-bearing word. That choice belongs with EC-Q2 too.
-3. **The three disciplines are confirmed across the roadmap.** AIR-6.1 versions its submission, records its approaches, and derives its
-   information gaps. Capacity versions its dependencies and rules, records its demands and draws, and projects a current balance.
+3. **The three disciplines are confirmed across the roadmap.** AIR-6.1 versions its submission, records its approaches, and derives what
+   the submission still lacks. Capacity versions its dependencies and rules, records its demands and draws, and projects a current balance.
 4. **Two balance forms coexist, by design.** Behaviour's records hold the history, and capacity's `capx:ExecutableBalance` is the current
    value for the hot path, which is ADR-A67's two-path split. The projection is an in-place family. Its `capx:balanceVersion` is an
    optimistic-concurrency token of its own, which a persistence profile's version row already provides. That is input to VH-Q5.
@@ -341,7 +341,7 @@ Persistence needs three write disciplines, not two, which VH-Q4 and VH-Q5 should
 
 ## 7. Out of scope here
 
-- Defining `NegotiationThread`, the quote's epistemic status and the attachment of a quote to a layer. They are domain modelling, for an
+- Defining the negotiation thread, the terms for a quote's precision and completeness, and how a quote names its layer. They are domain modelling, for an
   applied unit, and this sketch uses them only as the worked case.
 - The in-force question, which ADR-A67 and the instrument layer answer.
 - The event slots of H2.6b, which do not depend on any of this.
@@ -362,45 +362,37 @@ Answers decide whether the patch log is built as planned in H2.6b's held half, r
 narrowed to in-place data, and what H2.10 builds. An ADR follows the answers, since VH-Q1 and VH-Q3 change how persistence relates to
 Foundation.
 
-## 9. The vision papers, LATTICE, and the data a placement makes (2026-10-14)
+## 9. What LATTICE records about history, and the data an instrument makes (2026-10-14, restated 2026-10-21)
 
-At the maintainer's request, before the examples are designed, we read a series of vision papers
-against LATTICE's layers and the plans under way. The papers predate LATTICE. LATTICE's designs 
-supersede theirs, and their end-state goals stay as direction: a broker's programme connected to 
-large volumes of data, every decision traced to evidence, and history reconstructable at any time. 
-LATTICE serves more than placement. Delegated authority in the London market (Open CBAA, through 
-Instrument's `ins:boundUnder` and powers) and the other domains of Instrument's worked examples 
-(facilities, licences, trials, frameworks) put the same questions to data management.
+Before the examples were designed, we set out what LATTICE's layers already record about history and versions. The questions are the
+same across the domains of Instrument's worked examples (facilities, licences, trials, frameworks), delegated authority in the London
+market (Open CBAA, through Instrument's `ins:boundUnder` and powers) and placement.
 
-### 9.1 Where each idea of the papers lands
+### 9.1 What each layer already records
 
-| Idea in the papers | In LATTICE | State |
+| Concern | In LATTICE | State |
 |---|---|---|
-| a contract's structure (elements, term applications, facets, flow directives) | Wording elements, Instrument's stated and bound terms, relations and qualifiers, Quantification's amounts, Eligibility's conditions | built (CCS C3 to C9b2). The template library is C8a, planned |
-| a quote as a "proto-contract", structurally a contract | an instrument version whose words are a proposal (CCS sketch, "proposals are many, and are fragments of instruments") | modelled in outline. A proposal arriving as data without words is held question HQ-1 |
-| epistemic status: commitment, precision, completeness, as an overlay on the terms | "precision … and completeness are recorded beside its terms, never inside them" (CCS sketch §7.4). Commitment reads from legal acts: a binding quote is the carrier's `ins:Assent` to a version, and binding is the client's assent to the same version. "Pending, decided and lapsed are derived, never stored" (`ins:Proposal`) | acts built (C9b1). The overlay's terms are not yet defined |
-| `p_bind` copies the quote's structure into a child contract | no copy: the bound contract is the version both parties assented to. A change at binding, such as a signed-down line, is an amendment | a hypothesis for the examples to test |
-| master contract, arrangement assembly, panels and subscription | Instrument's sections (§16), Party's groups, held question HQ-7 (several instruments covering portions of one order) | partly modelled. PDD-09 |
-| tower, block, coverage term set, the contract-tower and fulfilment bindings | the AIR contract module's "coverage, layers, term parameters" (Phase 5), AIR-4.4's coverage requirements, AIR-6.1's submission | not modelled. Phase 5 is deferred |
-| negotiation thread as an append-only sequence of moves, state derived | legal acts (Instrument) and records (Behaviour), with state evaluated from them | the pieces exist. PDD-09 |
-| a fact ledger, immutable, hash-chained, superseded by corrections | `fnd:Evidence`, Behaviour's records, ADR-A67's corrections as new versions, persistence's receipts and request digests | built in parts |
-| `VersionedEntity` with valid-from and valid-to, "never deleted, superseded" | `fnd:Version` with `fnd:supersededBy`, `fnd:TemporalScope` for valid time, persistence for transaction time, a current pointer (VH-Q4) | built, VH-Q4 open |
-| a terms hash that followers acknowledge | content-addressed element versions (ADR-A51, C7c D2) | built |
-| a term delta fact, an endorsement change fact: the diff in business terms | `wrd:Amendment`'s operations and `ins:Amendment`, which already record the change in the words and its legal effect | built (C5, C9a) |
-| coverage gaps and spans, materialised and recomputed within minimal scope | derived artefacts (ADR-A92), Surface projections with read-set invalidation (ADR-A27), interval geometry (workload note §19) | built in parts |
-| the behaviour model's tank state, per scenario | the evaluation context's ledger (PDD-08), the reference evaluator's laws | sketched |
-| an exposure set versioned with every member | AIR's exposure module, with members shared across versions (TD-49) | built on the AIR branch, TD-49 to fix |
-| a coverholder binding risks under an authority, bordereaux, an income limit | `ins:boundUnder` and powers, Open CBAA's migration after C9 and C12, the ledger for the limit (PDD-08) | partly built |
+| a contract's structure | Wording elements, Instrument's stated and bound terms, relations and qualifiers, Quantification's amounts, Eligibility's conditions | built (CCS C3 to C9b2). The template library is C8a, planned |
+| a quote or an offer, structurally an instrument | an instrument version whose words are a proposal (CCS sketch, "proposals are many, and are fragments of instruments") | modelled in outline. A proposal arriving as data without words is held question HQ-1 |
+| a market response's commitment, precision and completeness | commitment reads from legal acts: a binding quote is the carrier's `ins:Assent` to a version, and binding is the client's assent to the same version. "Precision … and completeness are recorded beside its terms, never inside them" (CCS sketch §7.4). "Pending, decided and lapsed are derived, never stored" (`ins:Proposal`) | acts built (C9b1). The terms for precision and completeness are not yet defined |
+| binding | the bound contract is the version both parties assented to, with no copy. A change at binding, such as a signed-down line, is an amendment | a hypothesis for the examples to test |
+| several instruments in one arrangement, and subscription | Instrument's sections (§16), Party's groups, held question HQ-7 (several instruments covering portions of one order) | partly modelled. PDD-09 |
+| a programme, its tower and layers, as the placing record states them | the AIR contract module (Phase 5) and AIR-6.1's submission | not modelled. Phase 5 is deferred |
+| a negotiation as an append-only sequence of moves | legal acts (Instrument) and records (Behaviour), with state evaluated from them | the pieces exist. PDD-09 |
+| facts never edited, corrections as new versions | `fnd:Evidence`, Behaviour's records, ADR-A67's corrections as new versions, persistence's receipts and request digests | built in parts |
+| versions, valid time and transaction time | `fnd:Version` with `fnd:supersededBy`, `fnd:TemporalScope` for valid time, persistence for transaction time, a current pointer (VH-Q4) | built, VH-Q4 open |
+| one content stated once | content-addressed element versions (ADR-A51, C7c D2) | built |
+| a change in business terms | `wrd:Amendment`'s operations and `ins:Amendment`, which record the change in the words and its legal effect | built (C5, C9a) |
+| a set versioned with its members | AIR's exposure module, with members shared across versions (TD-49) | built on the AIR branch, TD-49 to fix |
+| risks bound under an authority, bordereaux, an income limit | `ins:boundUnder` and powers, Open CBAA's migration after C9 and C12, the ledger for the limit (PDD-08) | partly built |
 
-Four places where LATTICE departs from the papers, each a hypothesis the examples should test:
+Four hypotheses the examples should test:
 
-1. **State is read, not authored.** The papers keep a thread state, a quote status, a binding status
-   and a fulfilment status side by side. LATTICE evaluates state from acts and records, so four
-   stored statuses become one derivation and cannot disagree.
+1. **State is read, not authored.** A status that could be stored beside another, for a thread, a quote, a binding or a fulfilment, is
+   evaluated from acts and records instead, so two statuses cannot disagree.
 2. **Binding points, it does not copy.** See the table.
 3. **Versioning is chosen per family**, not applied to every entity, by the three disciplines of §6.3.
-4. **History of the words lives in the words.** Wording's amendments are the domain-level patch log
-   the papers built as delta facts.
+4. **History of the words lives in the words.** Wording's amendments are the domain-level patch log.
 
 ### 9.2 How much data a placement makes, revisited
 
@@ -428,7 +420,7 @@ flowchart LR
   end
   subgraph generated["generated on demand, cached or not"]
     BM["bound meaning"]
-    GAP["gaps, spans, tower view"]
+    GAP["projections, for example<br/>a tower as placed"]
   end
   AW --> EL
   SM --> BM
@@ -462,7 +454,7 @@ on worked cases:
 | S2 | edit in place with a patch log | current state, and what each write changed | 11 plus the change | data edited often whose history matters but whose old states are not cited |
 | S3 | append versions, members shared, a current pointer | every version, each citable | the changed nodes plus pointers | instruments, wordings, submissions, exposure sets: what is cited as "as it was" |
 | S4 | append records, state derived | every act and observation | one record per event | negotiation moves, assents, findings, stimuli |
-| S5 | derived artefact, generated on demand | nothing but its recipe | compute per read, or a cache | bound meaning, gaps, spans, balances |
+| S5 | derived artefact, generated on demand | nothing but its recipe | compute per read, or a cache | bound meaning, balances |
 | S6 | content-addressed sharing | one node for equal content | a hash per node | library wording, stated meaning, bound meaning across instruments (C16b) |
 | S7 | a projection, materialised and current | a fast read for a known query | refresh on change | "load my tower" within the 1 to 2 second budget (workload note §10) |
 | S8 | tiering and export, an outgoing event stream | everything, cold or elsewhere | a columnar store, a stream | closed years, change capture to other systems |

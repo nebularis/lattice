@@ -71,12 +71,23 @@ FMH-TS-2. The review tranche R1 to R10 was answered on 2026-10-20 (History). Ver
 
 ### Before the merge into `main`
 
-1. **TD-63**, re-state 9.1 and 4.2 with a better overlay.
-2. **One minor version bump** (TD-64), by `mise run release:prepare`, and the release tags after the merge.
-3. **The maintainer's re-approval** of the expected profiles and countersignature of the changed tests listed in each Validation Pack.
-4. **`mise run check:persistence-conformance`**, which runs the generated SPARQL on every engine (skill `lattice-lifecycle`). It passed on
-   2026-10-21 (4352 passed, 1 xfailed), before the last two commits, and runs again on the merge candidate.
-5. **`docs/developer/INDEX.md`**, whose Track H row stops at H2.3.
+Done 2026-10-21:
+
+- **TD-63**, closed: the history and versioning sketch's §4.2 and §9 are restated from LATTICE's own layers.
+- **The minor version bump** (TD-64's rule for this branch): `mise run release:prepare -- 0.19.0`, and the applied modules that pin the
+  release take their own minor, `applied-capacity-execution` 0.17.0, `applied-classification` and its vocab 0.4.0, `insurance-common` and its
+  vocab 0.8.0, `insurance-exposure` and its vocab 0.3.0 (AIR-66) with its shapes 0.2.0, and `insurance-peril`, its intensity and its vocab
+  0.7.0. Each changed README has its release notes. `check:ontology-versioning --base-ref origin/main` finds no unbumped change.
+- **The expected profiles**, approved by the maintainer 2026-10-21.
+- **`docs/developer/INDEX.md`**, Track H's rows brought up to date.
+
+Left for the maintainer:
+
+1. **Countersignature** of the changed and removed tests listed in each Validation Pack not yet countersigned (FMH-H2-9, FMH-TS-1, and
+   `test_c8b_09`, which now asserts that 0.18.0 was the first release instead of reading the current number).
+2. **The merge**, once the conformance run below is accepted. `mise run check:persistence-conformance` passed on the merge candidate on
+   2026-10-21 (4353 passed, 1 xfailed), and `mise run check:full-sweep` passed every check.
+3. **After the merge**, then the release tags it prints, `ontologies-v0.19.0` and the applied tags among them.
 
 ### Owed later
 
@@ -179,7 +190,7 @@ FMH-TS-2. The review tranche R1 to R10 was answered on 2026-10-20 (History). Ver
 | H-D34 | whether H2.7 waits for the history and versioning sketch | **decided 2026-10-14**: H2.7 waits for VH-Q1, VH-Q3 and VH-Q5, so the `persistence` vocabulary is published once |
 | H2.6b-Q1 to Q5 | which writes log patches, who names the delta graphs, the snapshot model, events per request, the digest parts | **decided** 2026-10-14, (a) for Q1 to Q3 and Q5, (c) for Q4, the guide's batch. Q3's warning covers both receipt models while the patch log is held (H-D33). Q1 and Q2 are held with the patch-log half |
 | H2.7-Q1 to Q5, H2.8-Q1 to Q3 | the remaining questions of the plans (plan §4.7, §4.8). Q5, how H2.7 is released under ADR-A129, added 2026-10-20 | **decided 2026-10-20 at our leanings (a)**, for the maintainer's review. Q5: versioning ignored on this branch until its merge (TD-64) |
-| VH-P1 | how §4.1, §4.2 and §9 of the history and versioning sketch are re-authored | **decided 2026-10-20: (c)**, left as they are, TD-63 before the merge |
+| VH-P1 | how §4.1, §4.2 and §9 of the history and versioning sketch are re-authored | **decided 2026-10-20: (c)**, left as they are, TD-63 before the merge. **Done 2026-10-21:** §4.2 and §9 restated from LATTICE's own layers, and TD-63 removed. §4.1 is a persistence cost case and stays |
 | ADR-A123 addendum, 2026-10-14 | the event slots and the digest parts | **accepted 2026-10-20** |
 | EX-Q1 to EX-Q3, FS-Q1 to FS-Q7 (decided 2026-10-20: EX-Q1 (b), the rest at their leanings) | which examples, how deep, how costed, and the strategy menu's shape, granularity, guidance, streams, projections and retention ([sketch §10](../sketches/persistence-history-and-versioning.md#10-questions-for-the-examples-and-the-strategy-menu-2026-10-20)) | **decided 2026-10-20** |
 | VH-Q1 to VH-Q7 | history, versions and the receipt models ([sketch §8](../sketches/persistence-history-and-versioning.md#8-questions-for-the-maintainer)) | **decided 2026-10-20 at our leanings**, for the maintainer's review (sketch §11 and its closing table, VH-D1 and VH-D2) |
@@ -861,4 +872,7 @@ FMH-TS-2. The review tranche R1 to R10 was answered on 2026-10-20 (History). Ver
   right drawing of a part, and is still drafted, for the maintainer to accept.
 - 2026-10-21: the maintainer accepted the ADR-A126 addendum (class diagram parts, `**All different.**`, the 6.6 split) and countersigned
   the change to `test_h2_4b_t12`, whose child process now runs without `PERSISTENCE_ENGINES_REQUIRED`.
+- 2026-10-21: the maintainer approved every expected profile and asked us to complete everything up to merge readiness. TD-63 is closed,
+  release 0.19.0 is prepared with the applied modules' own bumps and release notes, and the developer index is current. `party` and `spc`
+  report extraction drift on `main` as well as here, which this branch does not cause.
 

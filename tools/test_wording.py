@@ -711,5 +711,5 @@ def test_c8b_08_instrument_imports_wording_0_7_0_and_nothing_names_0_6_0() -> No
 def test_c8b_09_readme_release_notes() -> None:
     readme = (LAYER / "README.md").read_text()
     assert "- 0.7.0 (`wording` and `wording-vocab`, breaking, CCS C8b" in readme
-    assert f"- {RELEASE}, the first release" in readme
+    assert "- 0.18.0, the first release" in readme
     assert "0.14.0 (breaking, CCS C8b)" in (ROOT / "ontology" / "instrument" / "README.md").read_text()

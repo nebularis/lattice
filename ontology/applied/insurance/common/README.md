@@ -93,13 +93,13 @@ vocab = ["vocab/common-vocab.ttl"]
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/insurance/common>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/common/0.7.0> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/common/0.8.0> ;
     rdfs:label "Insurance domain shared contracts"@en ;
     rdfs:comment "Insurance scheme contracts shared by two or more of the domain's modules (ADR-A98 decision 1, epic D7): peril, mechanism, agency, consequence, harm subject and pool classifications. The liability role types of ADR-A102 are declared in vocab/common-vocab.ttl, alongside these properties' scheme contracts. The loss event (AIR-4.4) and the liability direction scheme (Phase 5) are not yet declared here." ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.18.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.18.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/party/0.18.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/applied/classification/0.3.0> .
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/party/0.19.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/applied/classification/0.4.0> .
 
 icm:peril a owl:ObjectProperty ;
     rdfs:range skos:Concept ;
@@ -178,8 +178,8 @@ without the full peril vocabulary, can depend on `common/` alone.
 
 <https://www.nebularis.org/neuro-semantic/insurance/common/vocab>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/common-vocab/0.7.0> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/insurance/common/0.7.0> .
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/common-vocab/0.8.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/insurance/common/0.8.0> .
 
 icm-voc:PerilContract a voc:SchemeContract ;
     fnd:hasIdentity icm-voc:PerilContract-identity ;
@@ -599,3 +599,4 @@ every conversion's factor, and every currency's notation, QUDT match and placeme
 | `0.5.0` | re-pinned by the computable-contract-substrate unit's Foundation, Vocabulary and Party cascades (no content change) |
 | `0.6.0` (spec) | AIR-4.4: `icm:LossEvent` and `icm:classOfBusiness`. The vocabulary adds `icm-voc:ClassOfBusinessContract` and `icm-voc:GlideNumber` and re-pins to the spec's 0.6.0 |
 | `0.6.0` | AIR-2.6: QUDT-aligned units across nine families, four exact conversions, and a draft list of ISO 4217 currencies on one money value space (common-vocab only, no spec change) |
+| `0.8.0` | spec and vocab re-pinned to the substrate release 0.19.0, with no content change |

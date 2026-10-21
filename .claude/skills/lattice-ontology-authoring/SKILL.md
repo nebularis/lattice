@@ -40,7 +40,8 @@ Follow every step for any change to `ontology/**/spec/`, `ontology/**/vocab/`, o
      and committed graphs (`rdflib.compare.graph_diff` over `to_isomorphic` graphs) before
      regenerating, and either restore the README or record the drift. A regeneration over a
      drifting layer can silently discard hand-maintained content.
-   - Persistence and the applied modules are not literate. Edit their `.ttl` directly.
+   - A module whose README has no extracted blocks is not literate, and its `.ttl` is edited directly. Persistence and the
+     insurance applied modules are literate. Check a README for `turtle-spec` blocks or a `generated` region before editing.
    - A README migrated to the layout of ADR-A126 follows
      [literate-specifications.md](https://github.com/nebularis/lattice/blob/main/docs/architecture/literate-specifications.md):
      a term's axioms are written once, in its Description Logic Encoding section, and markers hide a

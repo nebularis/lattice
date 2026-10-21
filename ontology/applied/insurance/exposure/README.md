@@ -170,15 +170,15 @@ schedule versions, not one snapshot.
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/insurance/exposure>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/exposure/0.2.0> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/exposure/0.3.0> ;
     rdfs:label "LATTICE asset exposure ontology"@en ;
     rdfs:comment "Facts about the world a risk sits in: exposure sets, locations, legal entities and control, assets, interests and valuations (AIR-4.1), with zones, attributes, dependencies, losses, requirements, cover and liability arriving in later regions (AIR-4.2 to AIR-4.5). No class here says what a contract insures, which is the contract module's (Phase 5). See the asset exposure ontology sketch." ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.18.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.18.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.18.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/party/0.18.0> ,
-                <https://www.nebularis.org/neuro-semantic/insurance/common/0.7.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.18.0> .
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.19.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/party/0.19.0> ,
+                <https://www.nebularis.org/neuro-semantic/insurance/common/0.8.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.19.0> .
 
 #################################################################
 #    Identity classes (AIR-4.1). Each versioned class below has
@@ -1582,13 +1582,13 @@ thousands.
 
 <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/exposure-vocab/0.2.0> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/insurance/exposure/0.2.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.18.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.18.0> ,
-                <https://www.nebularis.org/neuro-semantic/insurance/common-vocab/0.7.0> ,
-                <https://www.nebularis.org/neuro-semantic/insurance/peril-vocab/0.6.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/applied/classification-vocab/0.3.0> .
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/exposure-vocab/0.3.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/insurance/exposure/0.3.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ,
+                <https://www.nebularis.org/neuro-semantic/insurance/common-vocab/0.8.0> ,
+                <https://www.nebularis.org/neuro-semantic/insurance/peril-vocab/0.7.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/applied/classification-vocab/0.4.0> .
 
 #################################################################
 #    Reference schemes (AIR-4.1), each the unscoped fallback
@@ -5255,6 +5255,8 @@ revenue by territory, with the output of `effective_characteristics` for its cau
 | `0.1.0` | AIR-4.1: exposure set, location, legal entity, control relations, asset, interest, valuation. Seven scheme contracts, nine programme roles. Literate from the start |
 | `0.1.0` (AIR-4.2a) | Exposure set membership, zone designations, pool participations, assessments and attribute values are no longer inverse functional, and `aeo:MembershipShape` is withdrawn (TD-49). Unchanged members are shared across exposure set versions by identity, as this README always stated. Corrects `0.1.0` before it is released, so no version bump. Example `versions.ttl` added |
 | `0.1.0` (AIR-4.3) | Dependencies, peril metrics, metric comparisons and exposure units, with the dependency kind, substitutability, metric kind, perspective, calculation method and model option schemes, the schedule group and scenario contracts, and the output share, return period and exceedance probability spaces. `aeo:perilScope` loses its domain (AIR-4.2 gave it `aeo:PoolParticipation`, which a metric's use would have contradicted). Nine shapes |
-| `0.1.0` (AIR-66, breaking) | `aeo:locatedAt` and `aeo:valueOf` name a location's or asset's persistent identity (`aeo:LocationIdentity`, `aeo:AssetIdentity`) instead of a version, fixed by the exposure set version's membership, so one location changing writes one location version and no asset or valuation version. Their ranges change, `aeo:AssetShape`, `aeo:ValuationShape` and `aeo:ExposureSetShape` check them, and `aeo:PerilCompletenessShape` joins through the identity. `examples/versions.ttl` no longer edits version 1 on succession. The module's version is not bumped on this branch (TD-64) |
+| `0.3.0` (AIR-66, breaking, spec and vocab) | `aeo:locatedAt` and `aeo:valueOf` name a location's or asset's persistent identity (`aeo:LocationIdentity`, `aeo:AssetIdentity`) instead of a version, fixed by the exposure set version's membership, so one location changing writes one location version and no asset or valuation version. Their ranges change, `aeo:AssetShape`, `aeo:ValuationShape` and `aeo:ExposureSetShape` check them, and `aeo:PerilCompletenessShape` joins through the identity. `examples/versions.ttl` no longer edits version 1 on succession. The module's version is not bumped on this branch (TD-64) |
 | `0.1.0` (AIR-4.4) | Loss experiences, loss records, cause chains with recorded and effective characteristics and defaulted characteristics, coverage requirements with measure constraints, existing cover with summary terms, cover history events and financial metrics, with ten reference schemes and contracts, the money share space, and nineteen shapes. Imports Eligibility 0.12.0 and `insurance/common` 0.6.0. Financial metric kinds for revenue, gross profit and headcount are `aeo-voc:RevenueMetric`, `aeo-voc:GrossProfitMetric` and `aeo-voc:HeadcountMetric`, since `Revenue`, `GrossProfit` and `Headcount` name a value type and an attribute type |
 | shapes `0.1.1` | `aeo:DocumentationShape` reads the same concepts with its scheme check as a `FILTER EXISTS` and its note check as a `FILTER NOT EXISTS`, instead of joining the scheme's type and counting notes. About six times faster on the reference fixture, with the same targets, focus nodes and message |
+| shapes `0.2.0` | AIR-66's shapes: an asset's `aeo:locatedAt` names an `aeo:LocationIdentity`, a valuation's `aeo:valueOf` an identity, and each identity an asset or a valuation the set lists names resolves, through `fnd:hasIdentity`, to exactly one location or asset the set lists (may invalidate) |
+| `0.3.0` | both documents re-pinned to the substrate release 0.19.0 with AIR-66 above, and to `insurance/common` 0.8.0, `insurance/peril-vocab` 0.7.0 and `applied/classification-vocab` 0.4.0 |

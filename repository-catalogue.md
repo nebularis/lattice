@@ -69,7 +69,7 @@ new number, and the versioning check holds every member to it.
 
 ```toml repository-catalogue
 [conventions.release]
-version = "0.18.0"
+version = "0.19.0"
 kinds = ["substrate", "standalone"]
 ```
 

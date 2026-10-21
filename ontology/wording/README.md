@@ -99,11 +99,11 @@ ex:cl-4-1-p4 a wrd:TextPart ; wrd:partIndex 4 ; wrd:partText " per annum." .
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/wording>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording/0.18.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.18.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.18.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.18.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.18.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording/0.19.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.19.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.19.0> .
 ```
 
 ### 5.2 Wordings and elements
@@ -693,8 +693,8 @@ use, and is not closed: a deployment binds a scheme of its own, which may extend
 
 <https://www.nebularis.org/neuro-semantic/wording-vocab>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording-vocab/0.18.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/wording/0.18.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording-vocab/0.19.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/wording/0.19.0> .
 
 wrd-voc:ElementTypeContract a voc:SchemeContract ;
 	fnd:hasIdentity wrd-voc:ElementTypeContract-identity ;
@@ -1612,5 +1612,9 @@ Breaking versions at major version zero ([ADR-A113](../../docs/architecture/deci
 - Shapes 0.4.1: the slot-overlap and slot-coverage queries run their cheap guards as a sub-group before the
   candidate points are enumerated, and law W8 looks up the versions of an identity before pairing the items a
   wording holds. The same reports as before, from about half the work on the slot queries and W8.
+- 0.19.0. Every document takes the release's number and imports the other layers at it (no effect). `wrd:hasValue` is no
+  longer inverse-functional, and a variable value belongs to at least one assembled wording, not exactly one. Two assembled
+  wordings of one instrument may share a value record, so an endorsement or a requote writes only the records it changes
+  (changes meaning, since a reasoner no longer merges two records that share a value). The shapes follow, accepting a value
+  in several assembled wordings (no effect). New example `shared-values.ttl`.
 - 0.18.0, the first release of the substrate and standalone modules as one set ([ADR-A129](../../docs/architecture/decisions/ADR-A129-one-release-for-the-substrate.md)). Every document of the layer takes the release's number and imports the other layers at it (no effect). No other change.
-- Release note (breaking, ignored at this stage, TD-65): `wrd:hasValue` is no longer inverse-functional, and a variable value belongs to at least one assembled wording, not exactly one. Two assembled wordings of one instrument may share a value record, so an endorsement or a requote writes only the records it changes. New example `shared-values.ttl`.
