@@ -3,11 +3,12 @@
 # Plan: Ensemble, relations between instruments
 
 **Unit ID:** `ensemble`
-**Status:** proposed 2026-10-20, for the maintainer's review. No slice is briefed yet.
+**Status:** proposed 2026-10-20, amended 2026-10-21 (IR-Q7, evaluation below the instrument), for the
+maintainer's review. No slice is briefed yet.
 **ADRs:** [ADR-A130](../../architecture/decisions/ADR-A130-ensemble-layer.md) and ADR-A01's 2026-10-18
 addendum, both Proposed
 **Sketch:** [relations between instruments](../sketches/instrument-relations.md), with §10 for the
-needs added on 2026-10-20
+needs added on 2026-10-20 and §11 for evaluation below the instrument
 **Takes over:** HQ-2's second case, HQ-7 and HQ-12 from the
 [computable contract substrate](computable-contract-substrate.md), once ADR-A130 is accepted
 
@@ -24,8 +25,9 @@ runtime:
 - **judgements across an ensemble:** signed shares and a representative chosen by default
 - **confidentiality:** members' terms may be hidden from one another, and composition never needs
   them (ADR-A130 decision 12)
-- **evaluation by composition:** the order, cycles broken by time, the facts passed, and the
-  composition step CCS C12 runs
+- **evaluation by composition:** the least fixpoint semantics, evaluation units below the
+  instrument, the order over units and positions (which covers cycles broken by time), the facts
+  passed, and the composition step CCS C12 runs
 - **the Instrument hook:** an externally supplied value recorded as a fact, and endpoints for
   instruments outside the modelled set
 
@@ -42,10 +44,10 @@ Out of scope:
 
 | # | Principle | Source |
 |---|---|---|
-| ES-1 | Each instrument is evaluated alone. What it needs of another arrives as a fact with provenance | ADR-A130 decision 5 |
+| ES-1 | Each instrument, or part of one, is evaluated alone. What it needs of another arrives as a fact with provenance | ADR-A130 decision 5 |
 | ES-2 | A relation's legal effect is stated by a term, never by the relation | ADR-A130 decision 3 |
 | ES-3 | A K6 relation is derived from terms, and a shape holds it to them | ADR-A130 decision 3 |
-| ES-4 | A cycle is admitted only when time breaks it | ADR-A130 decision 5 |
+| ES-4 | The dependency graph over evaluation units and positions is acyclic. A cycle that remains waits for an addendum with a rule that resolves it | ADR-A130 decision 5, IR-Q7 |
 | ES-5 | Examples first, from at least two fields besides insurance (ADR-A-C2) | lifecycle |
 
 ## Slices
@@ -54,15 +56,15 @@ Estimates are in tokens, for agent work, excluding review.
 
 | Slice | Content | Depends on | Estimate |
 |---|---|---|---|
-| ES-0 | examples, as data the model must accept or refuse. Lending: a guarantee called on the borrower's default, ranking under an intercreditor agreement, two facilities with mutual cross-default. Construction: a back-to-back subcontract and a performance bond. Insurance: an excess attaching on exhaustion of its underlying, and an MRC-style subscription, one placing contract with three layers as sections, lines written per section, one line to stand, and terms one insurer agreed on its own security details pages. Refusals: a cycle whose edges all read at one position, an endpoint narrowed to a section its instrument does not have | ADR-A130 accepted | 150k |
+| ES-0 | examples, as data the model must accept or refuse. Lending: a guarantee called on the borrower's default, ranking under an intercreditor agreement, two facilities with mutual cross-default, two facilities whose junior tranches each wait on the other's senior tranche. Construction: a back-to-back subcontract and a performance bond. Insurance: an excess attaching on exhaustion of its underlying, and an MRC-style subscription, one placing contract with three layers as sections, lines written per section, one line to stand, terms one insurer agreed on its own security details pages, and two insurers each writing the primary and the excess in one contract. Refusals: a cycle that remains over parts and positions, for example two policies whose other insurance clauses each make it excess of the other (refused until ES-8), an endpoint narrowed to a section its instrument does not have | ADR-A130 accepted | 150k |
 | ES-1 | the layer: the README in ADR-A126's layout with its release notes section, `ens:Ensemble`, `ens:Relation`, endpoints (identity, version, narrowing), the kinds vocabulary K1 to K6, structural shapes, the catalogue entry and `ensemble` in the root catalogue after `instrument`. The publication pass for ADR-A130 and every decision the README cites (ADR-A127). Ensemble joins the release | ES-0 | 350k |
 | ES-2 | the Instrument hook: a regime's measured value or a condition's evidence supplied as a recorded fact naming its source, and an endpoint for an instrument outside the modelled set, whose state arrives only as facts (for example a statutory scheme that responds first, or senior debt held by a lender not modelled) | ES-1 | 200k |
-| ES-3 | K2 and K3: dependency and priority, the order of evaluation, the rule for cycles broken by time, the facts passed with their provenance, the composition step's contract for CCS C12, and the composition law stated with its conformance cases | ES-2, Ledger LG-2 | 350k |
+| ES-3 | K2 and K3: dependency and priority, evaluation units below the instrument, the order over units and positions (cycles broken by time and by parts), the facts passed with their provenance, the composition step's contract for CCS C12, and the composition law stated as a least fixpoint with its conformance cases. Acyclic graphs only | ES-2, Ledger LG-2 | 350k |
 | ES-4 | K6, shared resources: the derivation from the terms that draw on an account, the shape that holds each K6 relation to those terms, accounts owned by the ensemble, and draws ordered by the answer to LG-Q3 | ES-3, Ledger LG-2, LG-Q3, LG-Q4 | 250k |
 | ES-5 | K4, portions and shares: several commitments, portions of one order, composed shares (HQ-12, a new operation kind with its law), and signed shares evaluated from the written shares and the signing rule the terms state (ADR-A130 decision 10), for example an oversubscribed public offer of bonds scaled by the prospectus's basis of allocation, or an MRC's signing provisions: lines to stand in full, the rest in equal proportion to the order, every line in full if placement is incomplete at inception | ES-3 | 350k |
 | ES-6 | K5 and the ensemble's life: a master and its children, formation by a recorded act with its evidence, membership by rule (for example every policy of a class written in a period, every eligible receivable in a borrowing base, a framework's call-offs), and an ensemble nested in another | ES-3 | 350k |
-| ES-7 | K8, representation (ADR-A130 decision 11): authorities one per subject (changes to terms, claims, notices), each with its tiers, conditions and exclusions, holders chosen by default as judgements from facts, and authority from the members' terms or from an outside rule through the normative rule substrate. Examples: a security agent and the instructing group under an intercreditor agreement, acting across the facility, hedging and security documents, and an MRC's slip leader agreeing changes in tiers, a claims agreement party agreeing claims for the insurers on its terms, and ex gratia payments each insurer keeps for its own share | ES-6, CCS C9's consent rules (HQ-5) | 300k |
-| ES-8 | K7, contribution, by addendum to ADR-A130: several instruments answering one loss or debt, each for a rateable part, for example co-sureties' contribution, and policies covering the same loss with rateable proportion clauses. With separate orders for draws and credits under K3, since recoveries often run in the reverse of the order of loss | ES-4, Ledger LG-4 | 250k |
+| ES-7 | K8, representation (ADR-A130 decision 11): authorities one per subject (changes to terms, claims, notices), each with its tiers, conditions and exclusions, holders chosen by default as judgements from facts, the judgement that members state the same terms up to their shares, which an authority's condition may read, and authority from the members' terms or from an outside rule through the normative rule substrate. Examples: a security agent and the instructing group under an intercreditor agreement, acting across the facility, hedging and security documents, and an MRC's slip leader agreeing changes in tiers, a claims agreement party agreeing claims for the insurers on its terms, and ex gratia payments each insurer keeps for its own share | ES-6, CCS C9's consent rules (HQ-5) | 300k |
+| ES-8 | K7, contribution, by addendum to ADR-A130: several instruments answering one loss or debt, each for a rateable part, for example co-sureties' contribution, and policies covering the same loss with rateable proportion clauses. With separate orders for draws and credits under K3, since recoveries often run in the reverse of the order of loss. The first cyclic components, admitted by the same addendum where every edge is monotone and contribution resolves the cycle: policies whose other insurance clauses each make it excess of the other, and circular guarantees in a group. Only those components are evaluated by iteration | ES-4, Ledger LG-4 | 300k |
 
 ```mermaid
 flowchart LR
@@ -89,9 +91,10 @@ that adds or changes a law):
 
 | Slice | Track | Content | When |
 |---|---|---|---|
-| C4 | C | an Alloy model of ADR-A130: the order is well founded under the rule for cycles broken by time, a cycle at one position is refused, a derived K6 relation agrees with the terms that draw on its account, and signed shares sum to the order | before or alongside ADR-A130's acceptance |
-| B4b | B | the reference for composition: an ensemble evaluated member by member, passing facts, with a conformance kit for C12's composition step, and a differential check against evaluating every member together on small ensembles | with ES-3 and CCS C12 |
-| E4b | E | the composition law proved: composed evaluation reaches the same outcomes as evaluating every member together, for ensembles whose cycles are broken by time | after B4b and E4 |
+| C4 | C | an Alloy model of ADR-A130: the order over units and positions is well founded, a cycle that remains is refused, a derived K6 relation agrees with the terms that draw on its account, and signed shares sum to the order | before or alongside ADR-A130's acceptance |
+| B4b | B | the reference for composition: an ensemble evaluated member by member, passing facts, with a conformance kit for C12's composition step, and differential checks against evaluating every member together and against the least fixpoint on small ensembles | with ES-3 and CCS C12 |
+| E4b | E | the composition law proved: for ensembles acyclic over units and positions, evaluation in order reaches the least fixpoint, the same outcomes as evaluating every member together, with the locality lemma that evaluating a part agrees with evaluating its whole instrument restricted to it | after B4b and E4 |
+| C4c, E4c | C, E | only if ES-8's addendum admits cyclic components: a bounded search for terms with several fixpoints, and the chaotic iteration theorem with a monotonicity proof over the term forms such a component may use | with ES-8 |
 
 ## Done when
 
@@ -105,7 +108,7 @@ release's number.
 
 | Unit | Change |
 |---|---|
-| CCS | HQ-2's second case, HQ-7 and HQ-12 point here. C12 gains the composition step, after ES-3 |
+| CCS | HQ-2's second case, HQ-7 and HQ-12 point here. C12 gains the composition step and evaluates a part of an instrument an endpoint narrows to, after ES-3 |
 | Ledger | accounts drawn by several instruments belong to their ensemble. LG-Q3 is answered before ES-4, and LG-Q4's positions are comparable across instruments |
 | AIR claims | AIR-6.8 and M7 take their cross-instrument reads from ES-3 |
 | AIR phase 7 | a programme and a vehicle are ensembles. AIR-7.1 waits on ES-5 for lines and signed shares, and AIR-7.5 on ES-6. How a subscription is modelled is P7-Q5 |
@@ -114,7 +117,7 @@ release's number.
 
 ## Questions ES-Q1 to ES-Q4
 
-The relations sketch's IR-Q3 to IR-Q5 are confirmed or revised before ES-0 is briefed.
+The relations sketch's IR-Q3 to IR-Q5 are confirmed or revised before ES-0 is briefed. IR-Q7 is answered (2026-10-21) and taken into ADR-A130 decision 5.
 
 | ID | Question | Options | Leaning |
 |---|---|---|---|

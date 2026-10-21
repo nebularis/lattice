@@ -20,7 +20,9 @@ the [claims sketch](insurance-claims-ontology.md) §10.2 (towers and erosion).
 6. [Option B: a layer of its own](#6-option-b-a-layer-of-its-own)
 7. [The two compared](#7-the-two-compared)
 8. [Guidance](#8-guidance)
-9. [Questions IR-Q1 to IR-Q6](#9-questions-ir-q1-to-ir-q6)
+9. [Questions IR-Q1 to IR-Q7](#9-questions-ir-q1-to-ir-q7)
+10. [Needs added on 2026-10-20](#10-needs-added-on-2026-10-20)
+11. [Evaluation below the instrument](#11-evaluation-below-the-instrument)
 
 ---
 
@@ -287,7 +289,7 @@ flowchart LR
 
 The [Ensemble plan](../plans/ensemble.md) supersedes this sequence (2026-10-20).
 
-## 9. Questions IR-Q1 to IR-Q6
+## 9. Questions IR-Q1 to IR-Q7
 
 | ID | Question | Options | Leaning |
 |---|---|---|---|
@@ -297,6 +299,7 @@ The [Ensemble plan](../plans/ensemble.md) supersedes this sequence (2026-10-20).
 | **IR-Q4** | The Instrument hook | a regime's measured value supplied from outside, or a condition's evidence supplied from outside, or both | both, as one rule: an externally supplied value is a recorded fact with provenance |
 | **IR-Q5** | The first slice's scope | K2 and K3 only, or K2 to K4 | K2 and K3, tested on a guarantee called on default and an excess attaching on exhaustion |
 | **IR-Q6** | Does this take over HQ-2, HQ-7 and HQ-12 from the CCS plan? | yes, with the CCS plan pointing here, or keep them in CCS | **Revised 2026-10-20:** HQ-2's second case, HQ-7 and HQ-12 move here. HQ-2's first case, one participant's share within one agreement, stays with Instrument and Party beside HQ-5 (ADR-A130 decision 9) |
+| **IR-Q7** | The unit of evaluation, where an order over whole instruments cycles at one position (§11) | (i) units below the instrument, in order. (ii) one instrument per part, so no instrument spans a cycle. (iii) a fixpoint over whole instruments. (iv) a least fixpoint as the semantics, reached by an order over units and positions, with remaining cycles refused unless an addendum admits them | **Answered 2026-10-21: (iv).** Taken into ADR-A130 decision 5 before acceptance |
 
 ## 10. Needs added on 2026-10-20
 
@@ -336,3 +339,127 @@ ensemble of one instrument per line sharing one wording, with K4 portions, and o
 group of several parties stays for a single agreement such as a syndicated facility. Where this is
 modelled is the phase 7 plan's P7-Q5.
 
+## 11. Evaluation below the instrument
+
+Added 2026-10-21. ADR-A130 decision 5, as first drafted, ordered whole instruments and admitted a
+cycle only where time breaks it. A case from two fields shows that this is too coarse.
+
+### 11.1 The case
+
+**Lending.** Facilities A and B each have a senior and a junior tranche. An intercreditor agreement
+pays both junior tranches from shared collateral proceeds only once both senior tranches are
+discharged. A's junior tranche reads B's senior discharge, and B's junior tranche reads A's.
+
+**Insurance.** Two insurers each write a line on a primary layer and on the excess layer above it,
+in one contract each, as one subscription to a placing contract with sections. Each excess section
+reads the primary layer's exhaustion, which both insurers' primary sections produce.
+
+```mermaid
+flowchart LR
+  subgraph A["instrument A"]
+    A1["A, part 1<br/>(senior, or primary)"]
+    A2["A, part 2<br/>(junior, or excess)"]
+  end
+  subgraph B["instrument B"]
+    B1["B, part 1"]
+    B2["B, part 2"]
+  end
+  A1 --> A2
+  B1 --> A2
+  A1 --> B2
+  B1 --> B2
+```
+
+Over whole instruments, A needs B's part 1 and B needs A's, at one position, so the draft rule
+refuses an ordinary arrangement. Over parts there is no cycle: both first parts, then both second
+parts.
+
+### 11.2 The options
+
+| | (i) units below the instrument | (ii) one instrument per part | (iii) a fixpoint over whole instruments | (iv) least fixpoint, reached by order |
+|---|---|---|---|---|
+| what it does | orders evaluation units, each an instrument or a part an endpoint narrows to (decision 4), and evaluates each once | splits each contract into one instrument per part, so whole-instrument order suffices | treats passed facts as Undetermined, evaluates whole instruments repeatedly until nothing changes | defines the outcome as (iii)'s least fixpoint, computes it by (i)'s order where the graph over units and positions is acyclic, and refuses a remaining cycle unless an addendum admits it |
+| law | faithful | splits what the law treats as one act of writing, one agreement | faithful | faithful |
+| evaluator's commitment | structural: a part can be evaluated given the facts it reads | none | semantic: an Undetermined input stays local to what reads it, and every path is monotone in the facts it is given | (i)'s, justified as the implementation of a general semantics |
+| genuine cycles at one position | refused | refused | admitted, resolved or reported | refused now, admissible later by addendum with a resolving rule |
+
+### 11.3 What a fixpoint needs
+
+A fixpoint does not avoid a commitment from the evaluator. In the first round, A's part 1 must come
+out determined while A's part 2 waits for B. If an Undetermined input made all of A's outcome
+Undetermined, both instruments would stay at the bottom forever. So the evaluator must keep
+Undetermined local to what reads it, which Instrument already does for relations and gates, and
+must be monotone: a further fact never changes an outcome already determined.
+
+Where the graph over units and positions is acyclic, the equations have exactly one solution, and the
+round in which each fact becomes determined is the order (i) would use. (i) and (iii) then agree, and
+(i) needs no monotonicity. They differ only on cycles that remain over parts. The law has some:
+
+- **Other insurance clauses.** Two policies each say they are excess of any other valid insurance,
+  or exclude cover where other insurance exists. The reported reading of *Weddell v Road Transport
+  & General Insurance Co* [1932] 2 KB 563 is that such clauses cancel each other and both insurers
+  contribute. *Lamb-Weston v Oregon Automobile Insurance Co*, 219 Or. 110 (1959), is reported to
+  prorate conflicting clauses. Both are to be checked against the reports.
+- **Circular guarantees.** Two companies in a group each guarantee the other's debt, and each one's
+  ability to pay depends on the other's call.
+
+A clause that reads the absence of other insurance is not monotone, and iterating it can oscillate:
+
+```mermaid
+flowchart LR
+  R0["round 0:<br/>A and B Undetermined"] --> R1["round 1: neither sees<br/>other insurance. Both pay"]
+  R1 --> R2["round 2: each sees the other pays.<br/>Neither pays"]
+  R2 --> R3["round 3: each sees no payment.<br/>Both pay"]
+  R3 -.-> R2
+```
+
+A monotone reading can still have several fixpoints, here "both pay" and "neither pays", and the
+least is "both Undetermined". The law picks its answer by a rule outside the clauses, contribution.
+So a fixpoint finds such a cycle and needs a stated rule to resolve it.
+
+### 11.4 Consequences
+
+| | (i) | (iii) |
+|---|---|---|
+| checked at design time by | a shape: the graph over units and positions is acyclic | a sufficient condition at best: no closure (HQ-6) and no reading of absence over facts produced in the same component. General monotonicity is undecidable, and the condition bars other insurance clauses, the motivating case |
+| determinism | one order, one answer | unique only if every member is monotone. Otherwise the answer can depend on the order of iteration |
+| closures over absence | read facts already final | must never close over a fact still pending in the same component |
+| a shared account inside a cycle | draws in the order | arrival order varies by round, so the order of draws must be a rule the terms state (LG-Q3), never first come |
+| persistence | each fact written when produced | rounds held in memory, the component written at once, across several instruments' aggregates, owned by the ensemble's (ADR-A122, to confirm) |
+| a late fact | re-evaluates the units downstream of it | re-evaluates the whole component from the bottom, since a superseding fact is a change, not more information |
+| explaining an answer | "the primaries first, then the excess" | the same story, told by round. An oscillation reads as "these terms contradict each other" |
+
+**Cost.** For a component of *n* instruments each spanning *d* parts, with *c* the cost of
+evaluating one part:
+
+| Strategy | Order of cost | 10 instruments, 4 parts each |
+|---|---|---|
+| (i) | *n·d·c* | 40 part evaluations |
+| (iii), in rounds | *n·d·(d+1)·c* | 200 |
+| (iii), re-running an instrument whenever an input arrives | up to *n²·d²·c* | about 1,240 |
+| (iii), re-running only the relations whose inputs changed | about *n·d·c* | about 40, plus dependency tracking, which is (i)'s part-level evaluation under another name |
+
+For one claim these are small. For a catastrophe event across a book of several thousand losses, a
+factor of 5 to 30 matters. A fixpoint also holds a component's outcomes in memory until it converges,
+with a round number on each fact to keep provenance well founded. It terminates in at most *k* + 1
+rounds while each of *k* passed facts is a single value or Undetermined. If passed facts carry ranges
+(for example "at least 30 paid"), chains are infinite and iteration needs widening, which loses
+precision.
+
+**Formal methods.**
+
+| Track | (i) | (iii) |
+|---|---|---|
+| C, design models (C4) | the graph over units and positions is acyclic, a small model | iteration unrolled to the lattice's height, larger models. In return, a bounded search can find terms with several fixpoints at design time |
+| B, the reference (B4b) | one order, compared with evaluating every member together | confluence across iteration orders as well, with oscillating cases |
+| E, the prover (E4b) | the composition law by induction on the order, with a locality lemma: evaluating a part agrees with evaluating the whole instrument restricted to it | joint evaluation of a cyclic ensemble defined as a least fixpoint, composed evaluation equal to it by the chaotic iteration theorem, and a monotonicity proof over every Instrument and Behaviour term form |
+
+### 11.5 Decision
+
+**(iv), answered 2026-10-21 (IR-Q7).** The outcome is the least fixpoint. ES-3 builds the acyclic
+path only, evaluating each unit once in its order, and the composition law is stated as a least
+fixpoint, so its statement survives a later admission of cycles. ES-8, contribution, is where a
+cyclic component may first be admitted by addendum, since the law's own cycles at one position
+(other insurance clauses, circular guarantees) are resolved by contribution. Decision 5's earlier
+rule for cycles broken by time becomes a case of the general one: refine the graph's nodes, by
+position and then by part, until it is acyclic.

@@ -104,6 +104,7 @@ handed to R). S became unavailable on 2026-10-14 and R built AIR-4.2a to AIR-4.4
 | 5 Contract module | [plan](../plans/applied-insurance-reference-phase-5.md) | 🅿️ deferred until Open CBAA integration of 1 to 4 (D2) |
 | 6 Submission, claims | [plan](../plans/applied-insurance-reference-phase-6.md) | ⏳ |
 | S Substrate track | [plan](../plans/applied-insurance-reference-substrate.md) | ⏳ |
+| 7 Placement and capital | [plan](../plans/applied-insurance-reference-phase-7.md) | 📝 proposed 2026-10-18. P7-Q1 and P7-Q4 answered, P7-Q2 reopened |
 
 ## History
 
@@ -171,3 +172,13 @@ handed to R). S became unavailable on 2026-10-14 and R built AIR-4.2a to AIR-4.4
   [claims plan](../plans/applied-insurance-reference-claims.md), which subsumes AIR-6.2 to AIR-6.4: slices
   AIR-6.2 to AIR-6.12 and AIR-6.W0 to AIR-6.W7, milestones M7 and M8, substrate items S8 to S10.
   Seventeen questions open (CL-Q1 to CL-Q10, WF-Q1 to WF-Q7), none answered. No slice briefed.
+- 2026-10-18 to 2026-10-21: phase 7 planned on `docs/placement-vehicles-structure`, with the
+  [relations sketch](../sketches/instrument-relations.md), ADR-A130 (Ensemble) and ADR-A131 (Ledger),
+  both Proposed, and the [Ensemble](../plans/ensemble.md) and [Ledger](../plans/ledger.md) plans.
+  P7-Q4 answered (b) on 2026-10-18 and P7-Q1 (`programme/`, `prg:`) on 2026-10-20. P7-Q2 reopened on
+  2026-10-20, and P7-Q7 (what one line's instrument covers) added. ADR-A130 amended before acceptance
+  on 2026-10-20 (decisions 10 to 12, an MRC module planned as AIR-7.9) and on 2026-10-21 (IR-Q7 (iv):
+  evaluation units below the instrument, with a least fixpoint semantics). P7-Q8 added and decided in
+  part on 2026-10-21 (a replacing contract is a new instrument, and the applied modules do not use the
+  word "renewal"), and P7-Q9 (binder and issued policy) held for independent research. No slice
+  briefed.

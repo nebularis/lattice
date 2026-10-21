@@ -73,14 +73,27 @@ maintainer chose B on 2026-10-18 (IR-Q2).
    proposal provisionally placed before it is accepted. An endpoint may narrow to a term, a section
    or a Ledger account of its instrument, for example a master's shared limit over two children's
    limits, or one section of a contract following the form of another.
-5. **Evaluation by composition.** A set of related instruments is evaluated as a sequence of
-   single-instrument evaluations, ordered by the relations: dependencies before dependants, rank
-   before rank. What one instrument needs of another, such as an exhaustion, a default or a payment,
-   reaches it as a fact with provenance, produced by evaluating the other. The single-instrument
-   evaluator never loads a neighbour. A cycle of dependencies is admitted only when each of its loops
-   has an edge that reads the other instrument's state at a strictly earlier position. For example,
-   two facilities with mutual cross-default clauses each read the other's default as already
-   occurred. A cycle whose edges all read at one position is rejected at design time.
+5. **Evaluation by composition.** What one instrument needs of another, such as an exhaustion, a
+   default or a payment, reaches it as a fact with provenance, produced by evaluating the other. The
+   single-instrument evaluator never loads a neighbour.
+   - **The semantics.** The outcome of a set of related instruments is the least fixpoint of their
+     evaluations over the facts passed between them. Every passed fact is Undetermined until the
+     evaluation that produces it has run.
+   - **Evaluation units.** A unit is an instrument, or a part of one that an endpoint narrows to
+     (decision 4), such as a section. The dependency graph is taken over pairs of a unit and a
+     position.
+   - **The order.** Where that graph is acyclic, each unit is evaluated once, in its order:
+     dependencies before dependants, rank before rank. This reaches the least fixpoint with no
+     iteration. A cycle between whole instruments is often acyclic over units and positions. For
+     example, two facilities with mutual cross-default clauses each read the other's default as
+     already occurred, at an earlier position. Two insurers that each write a primary and an excess
+     layer in one contract each read the other's primary payment, so both primary sections are
+     evaluated before either excess section.
+   - **Cycles that remain.** A strongly connected component over units and positions is rejected at
+     design time. An addendum may admit one where every edge in it is monotone, so that more facts
+     never change a determined outcome, and a rule the law or the terms state resolves it. Contribution
+     (K7) is such a rule for policies whose other insurance clauses each make it excess of the other.
+     Only an admitted component is evaluated by iteration.
 6. **One hook in Instrument.** A regime's measured value, or a condition's evidence, may be supplied
    from outside the instrument, as a recorded fact naming its source. It never asserts the receiving
    instrument's own state. This is Instrument's only change, and it is generic.
@@ -157,8 +170,11 @@ flowchart TB
   layer.
 - **Instrument gains one property or rule** for an externally supplied value (decision 6), with its
   own slice in the Ensemble unit.
-- **The evaluator** (CCS C12) gains a composition step: order the related instruments, evaluate
-  each, record the facts passed between them. The single-instrument pass is unchanged.
+- **The evaluator** (CCS C12) gains a composition step: order the evaluation units by unit and
+  position, evaluate each, record the facts passed between them. It evaluates a part of an
+  instrument that an endpoint narrows to, given the facts that part reads. Instrument already places
+  cases at sections, so the part is a scope Instrument knows. The single-instrument semantics is
+  unchanged.
 - **Ledger** ([ADR-A131](ADR-A131-ledger-layer.md)). An exhaustion or a payment passed between
   instruments is derived from a Ledger balance record. An account shared by several instruments is
   owned by their ensemble, and the K6 relation is derived from the terms that draw on it. How their
@@ -169,9 +185,12 @@ flowchart TB
   endorsement and claims roles (decision 11). Lending's intercreditor agreement is the other field's
   reference case for representation.
 - **The composition law.** Decision 5 rests on a hypothesis to be stated and proved: for an
-  ensemble whose cycles are broken by time, evaluating its members in the order the relations give,
-  passing facts, reaches the same outcomes as evaluating all of them together. It is stated with the
-  K2 and K3 slice, modelled at design time when this ADR is reviewed, and proved later.
+  ensemble whose dependency graph over units and positions is acyclic, evaluating each unit once in
+  that order, passing facts, reaches the least fixpoint, and so the same outcomes as evaluating every
+  member together. It is stated with the K2 and K3 slice, modelled at design time when this ADR is
+  reviewed, and proved later. Stating it as a least fixpoint keeps the statement unchanged when an
+  addendum admits a cyclic component. That case then needs each member's evaluation to be monotone
+  in the facts it reads, a proof over Instrument's and Behaviour's semantics.
 - **Persistence.** A relation belongs to no instrument's aggregate. The ensemble is an aggregate
   root, and its relations are part of it, to be confirmed against ADR-A122 in the first slice.
 - **Applied insurance.** The claims plan's AIR-6.8 and milestone M7 take their cross-instrument reads
@@ -193,4 +212,7 @@ options A and B. The maintainer chose B on 2026-10-18 (IR-Q2) and the name Ensem
 5's rule for cycles broken by time, K6 as a derived relation checked by a shape, decision 9's
 split of HQ-2, and decisions 10 to 12, checked against the Marine Insurance Act 1906, s. 24(2), and
 the London Market Group's MRC (Open Market) implementation guide, data dictionary and example 2,
-all v3.0 (2023). The [Ensemble plan](../../developer/plans/ensemble.md) sequences the slices.
+all v3.0 (2023). On 2026-10-21 the maintainer amended decision 5 with evaluation units below the
+instrument and its least fixpoint semantics, after we found that one contract spanning several
+layers makes an order over whole instruments cycle within one occurrence (relations sketch §11).
+The [Ensemble plan](../../developer/plans/ensemble.md) sequences the slices.

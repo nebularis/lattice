@@ -154,8 +154,8 @@ corrected to match.
 Skeletons first (C1), then one model per ADR that adds or changes a law (FM-D8). C2 models binding
 resolution with scheme composition ahead of CCS C8. C3 is slot exclusivity and exhaustiveness by SMT
 for every condition kind, driven from Python, in step with CCS C13a. C4 models ADR-A130 (Ensemble):
-the order of evaluation is well founded under its rule for cycles broken by time, a cycle at one
-position is refused, and a derived shared-resource relation agrees with the terms that draw on its
+the order of evaluation over units and positions is well founded, a cycle that remains over parts
+and positions is refused, and a derived shared-resource relation agrees with the terms that draw on its
 account. C5 models ADR-A131 (Ledger): a draw on a path succeeds or fails whole, availability is the
 least along the path, a credit never exceeds the stated amount, the account tree has no cycle, and
 each merge rule conserves the amount it shares. Both are run before or alongside their ADR's
@@ -182,8 +182,8 @@ compiler core, with the mapping of "not a value" to Undetermined as its first th
 mechanical fragment gate, and a cross-store conformance suite. E3 the combinator algebra. E4 the
 evaluation context,
 mechanising B4, with E4a the Ledger laws of C5 mechanised from B4a. E4b the composition law of
-ADR-A130, that composed evaluation reaches the same outcomes as evaluating every member together for
-ensembles whose cycles are broken by time, mechanised from B4b. E5 the template library in rely and
+ADR-A130, that for ensembles acyclic over units and positions, evaluation in order reaches the least
+fixpoint, the same outcomes as evaluating every member together, mechanised from B4b. E5 the template library in rely and
 guarantee form.
 
 ### Track F: native tooling

@@ -117,13 +117,14 @@ is accepted, not after.
 ### C4: model ADR-A130 (Ensemble) — not started
 
 **Recommended before or alongside ADR-A130's acceptance.** Model ensembles, relations with their
-kinds and the positions at which each relation reads. Check that the order of evaluation is well
-founded whenever every cycle has an edge reading at a strictly earlier position, that a cycle whose
-edges all read at one position is refused, and that a derived shared-resource relation (K6) names
+kinds, evaluation units (an instrument, or a part of one an endpoint narrows to) and the positions at
+which each relation reads. Check that the order of evaluation over units and positions is well
+founded whenever that graph is acyclic, that a cycle remaining over parts and positions is refused, and that a derived shared-resource relation (K6) names
 exactly the instruments whose terms draw on its account, and that signed shares sum to the order
 whenever the written shares reach it (decision 10). `run` the motivating cases (a guarantee
-called on default, mutual cross-default, an excess on exhaustion, two contracts sharing an aggregate)
-to confirm they are admitted. See the [Ensemble plan](ensemble.md).
+called on default, mutual cross-default, an excess on exhaustion, two contracts sharing an aggregate,
+two insurers each writing a primary and an excess in one contract) to confirm they are admitted, and
+mutual other insurance clauses to confirm they are refused until an addendum admits them. See the [Ensemble plan](ensemble.md).
 
 ### C5: model ADR-A131 (Ledger) — not started
 

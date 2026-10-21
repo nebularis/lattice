@@ -733,7 +733,7 @@ LG-4. CCS C12, Ensemble's slice 1, AIR Phase 5, AIR-6.8 and AIR-7.5 wait on it.
 
 | Field | Value |
 |-------|-------|
-| **Status** | 📝 Plan proposed 2026-10-20, no slice briefed. ADR-A130, amended 2026-10-20, and ADR-A01's 2026-10-18 addendum Proposed |
+| **Status** | 📝 Plan proposed 2026-10-20, no slice briefed. ADR-A130, amended 2026-10-20 and 2026-10-21, and ADR-A01's 2026-10-18 addendum Proposed |
 | **Unit ID** | `ensemble` |
 | **Sketch** | [instrument-relations.md](sketches/instrument-relations.md) |
 | **Plan** | [ensemble.md](plans/ensemble.md) |
