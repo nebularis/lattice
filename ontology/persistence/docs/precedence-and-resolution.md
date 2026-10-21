@@ -2,7 +2,7 @@
 
 # Precedence and Resolution
 
-Written for a reader who has not read [the sketch](../../../docs/developer/sketches/persistence-profile-substrate.md). Cross-references it and [the guide](../../../docs/architecture/rdf-sparql-patterns-guide.md) rather than repeating them.
+Written for a reader new to the module. It cross-references [the guide](../../../docs/architecture/rdf-sparql-patterns-guide.md) and the [README](../README.md#553-precedence) rather than repeating them.
 
 ## The problem
 

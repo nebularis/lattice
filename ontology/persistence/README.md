@@ -74,23 +74,23 @@ options they chose**, per class and per deployment, and the [`tools/persistence`
 compiler turns that record into generated, portable SPARQL and identity minting recipes.
 
 ```mermaid
-flowchart LR
+flowchart TB
     subgraph AUTHOR["What the adopter writes"]
-        AO["applied ontology<br/>(classes, properties)"]
-        CFG["dal: configuration<br/>(scopes and profiles)"]
-        CAP["dal:CapabilitySpec<br/>(optional)"]
+        AO["applied ontology<br/>classes, properties"]:::author
+        CFG["dal: configuration<br/>scopes and profiles"]:::author
+        CAP["dal:CapabilitySpec<br/>optional"]:::author
     end
     subgraph COMPILE["tools/persistence compile"]
-        R["resolve<br/>one value per dimension per target"]
-        V["validate<br/>cross-axis checks"]
-        S["select<br/>named templates"]
-        E["emit<br/>dal:CompiledProfile"]
+        R["resolve<br/>one value per<br/>dimension per target"]:::tool
+        V["validate<br/>cross-axis<br/>checks"]:::tool
+        S["select<br/>a builder<br/>per operation"]:::tool
+        E["emit<br/>dal:CompiledProfile"]:::tool
         R --> V --> S --> E
     end
     subgraph OUT["What the adopter gets"]
-        CP["compiled profile (Turtle)"]
-        RQ[".rq SPARQL<br/>(instantiate)"]
-        RC["minting recipes, JSON<br/>(export-recipes)"]
+        CP["compiled profile<br/>Turtle"]:::tool
+        RQ[".rq SPARQL<br/>instantiate"]:::tool
+        RC["minting recipes, JSON<br/>export-recipes"]:::tool
     end
     AO --> R
     CFG --> R
@@ -98,8 +98,14 @@ flowchart LR
     E --> CP
     CP --> RQ
     CP --> RC
-    RC --> ML["minting libraries<br/>(packages/minting)"]
-    RQ --> ST["any SPARQL 1.1 store"]
+    RC --> ML["minting libraries<br/>packages/minting"]:::tool
+    RQ --> ST["any SPARQL 1.1<br/>store"]:::store
+    style AUTHOR fill:none,stroke:#8a8a8a
+    style COMPILE fill:none,stroke:#8a8a8a
+    style OUT fill:none,stroke:#8a8a8a
+    classDef author fill:#fde2e4,stroke:#c0392b,color:#000
+    classDef tool fill:#d6eaf8,stroke:#2874a6,color:#000
+    classDef store fill:#d5f5e3,stroke:#1e8449,color:#000
 ```
 
 **This ontology targets classes, graphs and shapes by IRI reference only.** It imports nothing from
@@ -438,6 +444,31 @@ classDiagram
 
 ## 5. Detailed Design
 
+This section explains why Persistence exists (5.1 to 5.3), how an adopter configures it (5.4 to 5.7) and what the compiler produces (5.8 to 5.12). Section 5.13 then follows one aggregate through eight steps, from its declaration to the graphs a generated update leaves behind. Section 5.14 collects what we learned the hard way, each item tied to the test or the record that taught it. [Section 8](#8-examples) lists every example and the SPARQL it compiles to, and the steps of 5.13 point into it.
+
+**Reading the pictures.** One set of colours is used in every picture, so a colour means the same thing wherever it appears. Pictures of a write show each named graph the update touches as a box, with what is deleted from it and inserted into it on the arrows.
+
+```mermaid
+flowchart LR
+    A["what an adopter<br/>writes or a<br/>caller sends"]:::author
+    T["the compiler,<br/>the library and<br/>transaction claims"]:::tool
+    M["a version row"]:::meta
+    D["aggregate data<br/>and what the<br/>store does"]:::data
+    L["receipts and<br/>history"]:::log
+    P["patch content,<br/>the delta graphs"]:::delta
+    R["a refusal or<br/>a failed guard"]:::refused
+    O["no colour, outside<br/>what the picture<br/>is about"]
+    classDef author fill:#fde2e4,stroke:#c0392b,color:#000
+    classDef tool fill:#d6eaf8,stroke:#2874a6,color:#000
+    classDef meta fill:#e8daef,stroke:#7d3c98,color:#000
+    classDef data fill:#d5f5e3,stroke:#1e8449,color:#000
+    classDef log fill:#fff3cd,stroke:#b7950b,color:#000
+    classDef delta fill:#fdebd0,stroke:#ca6f1e,color:#000
+    classDef refused fill:#f5b7b1,stroke:#922b21,color:#000
+```
+
+A sequence diagram cannot carry a class, so its phases are tinted with the same fills, kept translucent so that the text stays legible on a light and on a dark page. The tint of a caller's step is pink, a step the store applies is green, and a guard that fails is red.
+
 ### 5.1 Why persistence in RDF is hard
 
 A relational database gives an application three things it barely notices until they are gone: a
@@ -453,10 +484,14 @@ sequenceDiagram
     participant A as Writer A
     participant S as Store (snapshot isolation, no conflict detection)
     participant B as Writer B
+    rect rgba(253, 226, 228, 0.5)
     A->>S: read version 41
     B->>S: read version 41
+    end
+    rect rgba(213, 245, 227, 0.5)
     A->>S: delete seq 41, insert seq 42, status "paid"
     B->>S: delete seq 41 (no-op), insert seq 42 (no-op), status "cancelled"
+    end
     Note over S: one triple says seq 42, which looks healthy.<br/>The order now has status "paid" and "cancelled".<br/>Nothing records that two writers both produced version 42.
 ```
 
@@ -514,16 +549,16 @@ depend on it.
 | Dataset | the dataset node: the current **epoch** | rewritten only by the epoch authority | `urn:g:dataset` | strong profile |
 
 ```mermaid
-flowchart LR
+flowchart TB
     subgraph PAYLOAD["Payload"]
-        O1["urn:g:orders/1<br/>the order and its line items"]
+        O1["urn:g:orders/1<br/>the order and its line items"]:::data
     end
     subgraph INFRA["Infrastructure"]
-        D["urn:g:dataset<br/>epoch 3"]
-        M["urn:g:meta/17<br/>version row of orders/1:<br/>epoch, seq 41, head"]
-        T["urn:g:txn<br/>txn claim → receipt,<br/>request digest"]
-        L["urn:g:txlog/2026-09<br/>receipt e3/41:<br/>target, seq, prevRev, txn"]
-        K["urn:g:keys<br/>key claim → owner"]
+        D["urn:g:dataset<br/>epoch 3"]:::meta
+        M["urn:g:meta/17<br/>version row of orders/1<br/>epoch, seq 41, head"]:::meta
+        T["urn:g:txn<br/>txn claim to receipt,<br/>request digest"]:::txn
+        L["urn:g:txlog/2026-09<br/>receipt e3/41<br/>target, seq, prevRev, txn"]:::log
+        K["urn:g:keys<br/>key claim to owner"]:::txn
     end
     M -- "pat:head" --> L
     T -- "pat:rev" --> L
@@ -531,6 +566,12 @@ flowchart LR
     M -. "one row per aggregate" .-> O1
     K -- "pat:claimedBy" --> P["an owner entity"]
     D -. "every write guards on it" .-> M
+    style PAYLOAD fill:none,stroke:#8a8a8a
+    style INFRA fill:none,stroke:#8a8a8a
+    classDef meta fill:#e8daef,stroke:#7d3c98,color:#000
+    classDef txn fill:#d6eaf8,stroke:#2874a6,color:#000
+    classDef data fill:#d5f5e3,stroke:#1e8449,color:#000
+    classDef log fill:#fff3cd,stroke:#b7950b,color:#000
 ```
 
 The terms, in one place:
@@ -567,10 +608,14 @@ write it by hand.
 sequenceDiagram
     participant C as Client
     participant S as Store
+    rect rgba(253, 226, 228, 0.5)
     C->>S: read the aggregate and its version row (seq 41, epoch 3)
     Note over C: decide the new state, choose txn id T,<br/>compute the request digest
+    end
+    rect rgba(213, 245, 227, 0.5)
     C->>S: one update request:<br/>WHERE dataset epoch is 3, row seq is 41,<br/>row is not tombstoned, T is not yet claimed<br/>DELETE old payload and row values<br/>INSERT new payload, row seq 42 and head,<br/>txn claim T with digest, receipt e3/42
     S-->>C: 204 (applied or not, it cannot say)
+    end
     C->>S: read txn claim T from the writer, never a replica
     alt claim present, digest equal
         S-->>C: Applied
@@ -677,6 +722,22 @@ classDiagram
     EpochProfile --> ProfileScope : appliesTo
     PrivacyProfile --> ProfileScope : appliesTo
     DataAccessProfile --> ProfileScope : appliesTo
+    style AggregateBoundaryProfile fill:#fde2e4,stroke:#c0392b,color:#000
+    style ConcurrencyProfile fill:#fde2e4,stroke:#c0392b,color:#000
+    style OrderingProfile fill:#fde2e4,stroke:#c0392b,color:#000
+    style ReceiptProfile fill:#fde2e4,stroke:#c0392b,color:#000
+    style MetaTopologyProfile fill:#fde2e4,stroke:#c0392b,color:#000
+    style UniquenessConstraint fill:#fde2e4,stroke:#c0392b,color:#000
+    style IdentityProfile fill:#fde2e4,stroke:#c0392b,color:#000
+    style EpochProfile fill:#fde2e4,stroke:#c0392b,color:#000
+    style PrivacyProfile fill:#fde2e4,stroke:#c0392b,color:#000
+    style DataAccessProfile fill:#fde2e4,stroke:#c0392b,color:#000
+    style ProfileScope fill:#d6eaf8,stroke:#2874a6,color:#000
+    style GraphPatternScope fill:#d6eaf8,stroke:#2874a6,color:#000
+    style NamespaceScope fill:#d6eaf8,stroke:#2874a6,color:#000
+    style ClassScope fill:#d6eaf8,stroke:#2874a6,color:#000
+    style ShapeScope fill:#d6eaf8,stroke:#2874a6,color:#000
+    style EquivalentClassScope fill:#d6eaf8,stroke:#2874a6,color:#000
 ```
 
 Every dimension resolves **on its own**, per target (§5.5). The table lists each one, the class that
@@ -785,6 +846,12 @@ stateDiagram-v2
     BaselineDefault --> [*]
     Winner --> [*]
     Ambiguity --> [*]
+    classDef tool fill:#d6eaf8,stroke:#2874a6,color:#000
+    classDef data fill:#d5f5e3,stroke:#1e8449,color:#000
+    classDef refused fill:#f5b7b1,stroke:#922b21,color:#000
+    class BaselineDefault tool
+    class Winner data
+    class Ambiguity refused
 ```
 
 The algorithm never ranks scope kinds against each other: a graph-pattern scope naming one exact graph
@@ -948,17 +1015,21 @@ Three clocks are kept apart, and never allowed to stand in for each other:
 
 ```mermaid
 flowchart TB
-    subgraph VT["Valid time: when it happened in the world"]
-        V["ex:occurredAt, fnd:validFrom / fnd:validTo"]
+    subgraph VT["Valid time, when it happened in the world"]
+        V["ex:occurredAt, fnd:validFrom and fnd:validTo"]:::history
     end
-    subgraph TT["Transaction time: when the store learned it"]
-        T["recordedAt, and the (epoch, seq) position"]
+    subgraph TT["Transaction time, when the store learned it"]
+        T["recordedAt, and the (epoch, seq) position"]:::history
     end
-    subgraph LT["Logical time: what happened before what"]
-        L["per-stream seq, prevRev chain,<br/>hybrid logical clock"]
+    subgraph LT["Logical time, what happened before what"]
+        L["per-stream seq, prevRev chain,<br/>hybrid logical clock"]:::history
     end
     V -. "late and backfilled data is normal" .-> T
     T -. "monotonic, never backdated" .-> L
+    style VT fill:none,stroke:#8a8a8a
+    style TT fill:none,stroke:#8a8a8a
+    style LT fill:none,stroke:#8a8a8a
+    classDef history fill:#fff3cd,stroke:#b7950b,color:#000
 ```
 
 **Dense or sparse.** A dense counter has no gaps, so "did I miss anything?" is answerable, but writers
@@ -975,12 +1046,18 @@ sequenceDiagram
     participant A as Transaction A
     participant B as Transaction B
     participant R as Reader
+    rect rgba(253, 226, 228, 0.5)
     A->>A: takes seq 5
     B->>B: takes seq 6
+    end
+    rect rgba(213, 245, 227, 0.5)
     B->>R: commits seq 6
     R->>R: delivers 6, advances to 6
+    end
+    rect rgba(245, 183, 177, 0.5)
     A->>R: commits seq 5
     Note over R: reads only above 6 from now on.<br/>Event 5 is never delivered.
+    end
 ```
 
 Putting the read-and-increment of the counter in the same update as the payload write, on one shared
@@ -1056,16 +1133,22 @@ class (§5.6.1), whose instances are cited for what they said at a time. With no
 ```mermaid
 flowchart LR
     subgraph RO["Receipt only"]
-        R1["receipt e3/42<br/>target, seq, prevRev, txn"]
+        R1["receipt e3/42<br/>target, seq, prevRev, txn"]:::log
     end
     subgraph PL["Patch log"]
-        R2["receipt e3/42"] --> A2["delta: added"]
-        R2 --> D2["delta: removed"]
+        R2["receipt e3/42"]:::log --> A2["delta, added"]:::delta
+        R2 --> D2["delta, removed"]:::delta
     end
     subgraph SN["Snapshot per revision"]
-        R3["receipt e3/42"] --> S3["sealed graph<br/>orders/1/e3/42"]
-        R4["receipt e3/41"] --> S4["sealed graph<br/>orders/1/e3/41"]
+        R3["receipt e3/42"]:::log --> S3["sealed graph<br/>orders/1/e3/42"]:::data
+        R4["receipt e3/41"]:::log --> S4["sealed graph<br/>orders/1/e3/41"]:::data
     end
+    style RO fill:none,stroke:#8a8a8a
+    style PL fill:none,stroke:#8a8a8a
+    style SN fill:none,stroke:#8a8a8a
+    classDef data fill:#d5f5e3,stroke:#1e8449,color:#000
+    classDef log fill:#fff3cd,stroke:#b7950b,color:#000
+    classDef delta fill:#fdebd0,stroke:#ca6f1e,color:#000
 ```
 
 Decision records (eligibility decisions, behaviour state changes, MORK outcomes) are always
@@ -1132,13 +1215,13 @@ They are stacked, not chosen between (guide Chapters 5 to 8):
 
 ```mermaid
 flowchart TB
-    P0["P0 deterministic IRI<br/>the key is the identity: concurrent writers converge"]
-    P1["P1 key-claim registry<br/>one node per key value, at most one owner"]
-    P2["P2 guarded write<br/>claim and payload in one request"]
-    P3["P3 materialised conflict<br/>writers racing for a new key collide on a sentinel"]
-    P5["P5 SHACL at commit<br/>sh:maxCount 1 on the owner, where the store validates"]
-    P6["P6 external allocator<br/>a database index or registry for high contention"]
-    P7["P7 detect and reconcile<br/>always on: bulk loads and restores bypass every guard"]
+    P0["P0 deterministic IRI<br/>the key is the identity<br/>concurrent writers converge"]:::tool
+    P1["P1 key-claim registry<br/>one node per key value<br/>at most one owner"]:::txn
+    P2["P2 guarded write<br/>claim and payload<br/>in one request"]:::tool
+    P3["P3 materialised conflict<br/>writers racing for a new key<br/>collide on a sentinel"]:::tool
+    P5["P5 SHACL at commit<br/>sh:maxCount 1 on the owner<br/>where the store validates"]:::tool
+    P6["P6 external allocator<br/>a database index or registry<br/>for high contention"]:::tool
+    P7["P7 detect and reconcile<br/>always on, since bulk loads<br/>and restores bypass every guard"]:::history
     P0 --> P1 --> P2
     P2 --> P3
     P2 --> P5
@@ -1146,6 +1229,9 @@ flowchart TB
     P3 --> P7
     P5 --> P7
     P6 --> P7
+    classDef tool fill:#d6eaf8,stroke:#2874a6,color:#000
+    classDef txn fill:#d6eaf8,stroke:#2874a6,color:#000
+    classDef history fill:#fff3cd,stroke:#b7950b,color:#000
 ```
 
 **P0, the key as the identity.** If an entity's IRI is derived from its key, a second insert of the same
@@ -1211,6 +1297,8 @@ stateDiagram-v2
     Dual --> Retiring : new claims stop using the old version
     Retiring --> Retired : backfill of existing claims complete
     Retired --> [*]
+    classDef history fill:#fff3cd,stroke:#b7950b,color:#000
+    class Accepting,Dual,Retiring,Retired history
 ```
 
 While two schemes are `dal:Dual`, the compiler selects a write that guards and inserts both versions'
@@ -1310,12 +1398,16 @@ not one.
 sequenceDiagram
     participant D as Dataset
     participant C as Consumer
+    rect rgba(213, 245, 227, 0.5)
     D->>C: events up to seq 91,438
     C->>C: remembers 91,438
+    end
+    rect rgba(245, 183, 177, 0.5)
     Note over D: restored from a morning backup:<br/>the counter rewinds to 90,900
     D->>D: new writes take 90,901 to 91,600,<br/>different events, the same numbers
     C->>D: resume after 91,438
     Note over C: skips 90,901 to 91,438, all new,<br/>and cannot tell that it did
+    end
 ```
 
 The fix is an **epoch** on the dataset, bumped on any restore, rebuild, re-key or migration, with
@@ -1403,14 +1495,17 @@ one of three. Absent, it is `dal:InPlace`, so a configuration that declares none
 
 ```mermaid
 flowchart LR
-  subgraph inplace["InPlace: v1 is replaced"]
-    A1["state v1"] -- "sweep and delete" --> A2["state v2"]
+  subgraph inplace["InPlace, v1 is replaced"]
+    A1["state v1"]:::data -- "sweep and delete" --> A2["state v2"]:::data
   end
-  subgraph versions["AppendVersions: v1 stays"]
-    B2["version v2"] -- "pat:previousVersion" --> B1["version v1"]
-    B2 -. "shares by reference" .-> M["members not restated"]
+  subgraph versions["AppendVersions, v1 stays"]
+    B2["version v2"]:::data -- "pat:previousVersion" --> B1["version v1"]:::data
+    B2 -. "shares by reference" .-> M["members not restated"]:::data
     B1 -.-> M
   end
+  style inplace fill:none,stroke:#8a8a8a
+  style versions fill:none,stroke:#8a8a8a
+    classDef data fill:#d5f5e3,stroke:#1e8449,color:#000
 ```
 
 **What `append-version` does,** in one update. It guards the identity's version row at the expected seq and the transaction claim. It
@@ -1581,7 +1676,7 @@ in `shapes/constraints.ttl` check a compiled profile (§7.2), and the files of `
 
 Under `dal:DatasetLevelGuard`, the create, bootstrap, compare-and-set, tombstone and append operations
 use their `-dataset-guard` variants. The value-guard and unconditional writes have none. The compiler's own [README](../../tools/persistence/README.md) documents the parameters each
-template takes, the obligations the generated SPARQL cannot enforce for the caller, and its known
+operation takes, the obligations the generated SPARQL cannot enforce for the caller, and its known
 limitations, among them: infrastructure graph IRIs are fixed constants rather than configurable,
 declared shard counts are recorded but not yet applied, and retention and epoch bumps are left to
 housekeeping.
@@ -1619,6 +1714,12 @@ stateDiagram-v2
     ExternalLock --> Uniqueness
     
     Uniqueness --> [*]
+    classDef tool fill:#d6eaf8,stroke:#2874a6,color:#000
+    classDef data fill:#d5f5e3,stroke:#1e8449,color:#000
+    classDef history fill:#fff3cd,stroke:#b7950b,color:#000
+    class BaselineProfileRevision,BaselineProfileConcurrency tool
+    class StrongProfileAppend,StrongProfileCAS data
+    class SingleWriterPartition,ExternalLock history
 ```
 
 What each choice costs to run (guide §29.4):
@@ -1681,21 +1782,24 @@ Foundation's keys to Persistence's profiles.
 ```mermaid
 flowchart LR
     subgraph ONT["the adopter's ontology"]
-        S["scheme ex:lei<br/>a fnd:KeyScheme"]
-        KC["key class ex:LeiKey<br/>≡ fnd:keyScheme value ex:lei"]
-        C["ex:Company<br/>⊑ dal:PersistenceKeyed"]
+        S["scheme ex:lei<br/>a fnd:KeyScheme"]:::author
+        KC["key class ex:LeiKey<br/>equivalent to fnd:keyScheme value ex:lei"]:::author
+        C["ex:Company<br/>subclass of dal:PersistenceKeyed"]:::author
     end
     subgraph CFG["the dal: configuration"]
-        IP["identity profile on ex:LeiKey<br/>mints key IRIs"]
-        KU["uniqueness on fnd:keyValue<br/>one key node per value"]
-        NU["uniqueness on fnd:naturalKey<br/>one owner per key"]
-        PP["privacy profile<br/>sensitive schemes only"]
+        IP["identity profile on ex:LeiKey<br/>mints key IRIs"]:::author
+        KU["uniqueness on fnd:keyValue<br/>one key node per value"]:::author
+        NU["uniqueness on fnd:naturalKey<br/>one owner per key"]:::author
+        PP["privacy profile<br/>sensitive schemes only"]:::author
     end
     S --> KC
     KC --> IP
     KC --> KU
     KC -.-> PP
     C --> NU
+    style ONT fill:none,stroke:#8a8a8a
+    style CFG fill:none,stroke:#8a8a8a
+    classDef author fill:#fde2e4,stroke:#c0392b,color:#000
 ```
 
 #### 5.11.1 What an adopter declares
@@ -1761,7 +1865,876 @@ The compiler that consumes this ontology lives in [`tools/persistence`](../../to
 following the repository's split between `ontology/` (semantic assets) and `tools/` (executable
 reference implementations). The minting libraries live in `packages/minting`.
 
-### 5.13 Cross references
+### 5.13 A running case, from declaration to history
+
+The dimensions above are explained one at a time. This section follows a single aggregate through all of them, so that they meet in one place. The aggregate is a project that owns its milestones, a plan, tasks, subtasks, attachments and comments, declared in [`examples/composite-project-ownership.ttl`](examples/composite-project-ownership.ttl). A named-graph family, a stream and two families that append versions join where the case needs them.
+
+Everything below comes from a shipped example, from the SPARQL that `compile` and `instantiate` produce for it, or from a test that runs the generated update on rdflib and on Oxigraph. The excerpts of SPARQL are quoted from the generated text, and [8.5](#85-every-example-and-the-sparql-it-compiles-to) says how to generate it. The counts in the pictures are those of the test data in `tools/persistence/tests/fixtures/project-data.ttl`, whose aggregate holds 28 triples.
+
+```mermaid
+flowchart LR
+    A["1 declare"]:::author --> B["2 compile"]:::tool
+    B --> C["3 generate"]:::tool
+    C --> D["4 write"]:::store
+    D --> E["5 race and retry"]:::store
+    E --> F["6 history"]:::history
+    F --> G["7 read back"]:::history
+    G --> H["8 keep it small"]:::history
+    classDef author fill:#fde2e4,stroke:#c0392b,color:#000
+    classDef tool fill:#d6eaf8,stroke:#2874a6,color:#000
+    classDef store fill:#d5f5e3,stroke:#1e8449,color:#000
+    classDef history fill:#fff3cd,stroke:#b7950b,color:#000
+```
+
+| Step | Example | Generated operation | Held by (in `tools/persistence/tests/`) |
+|---|---|---|---|
+| 1 declare | `composite-project-ownership`, `baseline-single-class` | none, a declaration | `test_ownership_tree.py` (`test_ho4_t5`), `test_ownership_refusals.py` (`test_ho6_t2`), `test_named_graph_builders.py` (`test_h2_3_t9`) |
+| 2 compile | `composite-project-ownership`, `invalid-compositeboundary-receiptonly` | the compiled profile | `test_resolver.py`, `test_compiler_integration.py` (`test_negative_fixture_fails_compile`) |
+| 3 generate | `composite-project-ownership` | the contract of `cas-replace` | `test_expected_profiles.py` (`test_h2_7_t1`, `test_h2_7_t7`) |
+| 4 write | `composite-project-ownership`, `append-stream-dataset-guard`, `write-discipline-composite-append-versions`, `write-discipline-delta-membership` | `create-if-absent`, `cas-replace`, `tombstone-delete`, `append-event`, `append-version`, `append-version-delta` | `test_composite_lifecycle.py` (`test_ho7_t2` to `t5`), `test_patch_log.py` (`test_h2_6d_t1`), `test_append_events.py` (`test_h2_6b_t1`), `test_write_disciplines.py` (`test_h2_6c_t1`), `test_membership.py` (`test_h2_6f_t1`) |
+| 5 race and retry | the same, `value-based-cas`, `persistent-foundation-keys` | the guards of `cas-replace`, the value guard, `key-claim-write` | `test_patch_log.py` (`test_h2_6d_t5`, `t6`), `test_composite_lifecycle.py` (`test_ho7_t6`, `t7`), `test_contract_emission.py` (`test_h2_7_t20`), `test_key_claims_and_audits.py` (`test_h2_5_t15`) |
+| 6 history | `composite-project-ownership`, `write-discipline-composite-append-versions` | the receipts, the delta graphs and the versions the writes leave | `test_patch_log.py` (`test_h2_6d_t10`), `test_write_disciplines.py` (`test_h2_6c_t3`) |
+| 7 read back | `write-discipline-delta-membership` | `members` and the audits | `test_membership.py` (`test_h2_6f_t5`, `t8`, `t9`), `test_key_claims_and_audits.py` (`test_h2_5_t36`), `packages/persistence/python/tests/test_check.py` |
+| 8 keep it small | `write-discipline-delta-membership` | the same, and the retention a housekeeper performs | `benchmark/persistence-membership`, `test_key_claims_and_audits.py` (`test_h2_5_t36`) |
+
+#### 5.13.1 Declare
+
+An adopter says what an aggregate is and nothing about how it is written. For the project, a class scope selects `ex:Project`, and three profiles apply to it, one for the boundary, one for concurrency and one for receipts.
+
+```mermaid
+flowchart LR
+    S["ex:ProjectClass<br/>a dal:ClassScope<br/>targets ex:Project, priority 20"]:::author
+    B["ex:ProjectBoundaryProfile<br/>composite property boundary<br/>boundary shape ex:ProjectShape<br/>data graph urn:g:projects"]:::author
+    C["ex:ProjectConcurrencyProfile<br/>optimistic<br/>linearizable"]:::author
+    R["ex:ProjectReceiptProfile<br/>patch log"]:::author
+    B -- appliesTo --> S
+    C -- appliesTo --> S
+    R -- appliesTo --> S
+    classDef author fill:#fde2e4,stroke:#c0392b,color:#000
+```
+
+The boundary is a classified shape (§5.6.1). Each edge that leads to a node says whether the node is owned, a reference to something independent, or vocabulary. The shape is written once, and what it selects is a closure. Starting at `ex:p1`, the project of the test data, the owned edges reach eight members and no other node.
+
+```mermaid
+flowchart TB
+    subgraph AGG["the aggregate of ex:p1, nine nodes and 28 triples"]
+        P1["ex:p1"]:::data
+        M1["ex:m1"]:::data
+        M2["ex:m2"]:::data
+        PL["ex:plan1"]:::data
+        T1["ex:t1"]:::data
+        T2["ex:t2"]:::data
+        T3["ex:t3"]:::data
+        DO["ex:docOwned"]:::data
+        C1["ex:c1<br/>a comment"]:::data
+    end
+    ACME["ex:acme"]
+    ALICE["ex:alice"]
+    DS["ex:docShared"]
+    ST["ex:InProgress<br/>and ex:Done"]
+    P1 -- hasMilestone --> M1
+    P1 -- hasMilestone --> M2
+    P1 -- hasPlan --> PL
+    M1 -- hasTask --> T1
+    T1 -- hasSubtask --> T2
+    T2 -- hasSubtask --> T3
+    T1 -- attachment --> DO
+    C1 -- "onTask, followed backwards" --> T1
+    P1 -. "forClient, a reference" .-> ACME
+    T1 -. "assignee, a reference" .-> ALICE
+    PL -. "attachment, a reference" .-> DS
+    T1 -. "status, vocabulary" .-> ST
+    style AGG fill:none,stroke:#8a8a8a
+    classDef data fill:#d5f5e3,stroke:#1e8449,color:#000
+```
+
+Three details of the shape show how much the classification carries. The property `ex:attachment` is owned from a task and a reference from a plan, because ownership belongs to an edge in its context. The comment points at its task, so the edge is followed against its direction. A subtask is a task, so the walk recurses, and the compiler turns it into a star in one property path. A write sweeps the triples whose subject is one of the nine nodes and leaves the client, the assignee, the shared document and the status concepts as they are. `test_ownership_tree.py` holds the closure (`test_ho4_t5`), and `test_ownership_refusals.py` holds that an edge left unclassified is refused (`test_ho6_t2`).
+
+A named-graph family declares less. [`examples/baseline-single-class.ttl`](examples/baseline-single-class.ttl) says that each loan application is a graph named from its root, with compare-and-set, event grain and a patch log. There is no boundary shape, since the graph is the aggregate.
+
+```mermaid
+flowchart LR
+    R["$root<br/>an IRI the caller gives"]:::caller
+    G["urn:g:loan-application/ and the encoded root<br/>one graph, the aggregate"]:::data
+    M["urn:g:meta/47<br/>the version rows of the target,<br/>one of 64 shards"]:::meta
+    R -- "the graph IRI template" --> G
+    R -- "the row of the root" --> M
+    classDef caller fill:#fde2e4,stroke:#c0392b,color:#000
+    classDef meta fill:#e8daef,stroke:#7d3c98,color:#000
+    classDef data fill:#d5f5e3,stroke:#1e8449,color:#000
+```
+
+The shard is chosen once per target, from the target's name. Every root of the target keeps its row in that graph, and the compiled `cas-replace` binds the graph with `BIND(IRI(CONCAT("urn:g:loan-application/", ENCODE_FOR_URI(STR($root)), "")) AS ?g)`. `test_named_graph_builders.py` holds what it writes (`test_h2_3_t9`).
+
+#### 5.13.2 Compile
+
+`compile` resolves one value for each dimension of the target (§5.5 and §5.8). For the project it resolves 27 dimensions. Three are declared by the profiles above. Of the other 24, twelve take the platform baseline and twelve stay without a value, which §5.4 says is itself meaningful. Then it validates the combination and selects the operations.
+
+```mermaid
+flowchart TB
+    subgraph IN["declared by the adopter"]
+        D1["boundary<br/>composite property"]:::author
+        D2["concurrency<br/>optimistic"]:::author
+        D3["receipt model<br/>patch log"]:::author
+    end
+    RES["resolve<br/>27 dimensions for ex:Project"]:::tool
+    VAL["validate<br/>one warning, RowLevelGuardOnly<br/>no refusal"]:::tool
+    SEL["select and emit<br/>8 operations, 11 reference edges"]:::tool
+    IN --> RES --> VAL --> SEL
+    style IN fill:none,stroke:#8a8a8a
+    classDef author fill:#fde2e4,stroke:#c0392b,color:#000
+    classDef tool fill:#d6eaf8,stroke:#2874a6,color:#000
+```
+
+The warning is a witness of the baseline at work. Nothing declares an epoch guard, so the dimension takes its baseline value, the row-level guard, which §5.6.8 discourages and the compiler reports whether the value was declared or defaulted. `test_resolver.py` holds both the resolution of every dimension and the baseline (`test_baseline_default_is_row_level_guard_only`).
+
+A refusal is the other outcome. [`examples/invalid-compositeboundary-receiptonly.ttl`](examples/invalid-compositeboundary-receiptonly.ttl) declares the same boundary with `dal:ReceiptOnly`, and the compiler stops with `CompositeBoundaryReceiptConflict`. Its message ends with "Require at least dal:PatchLog.", the receipt model the project declares, since a receipt alone could not say what changed inside a closure. Nothing is generated for a refused target. `test_compiler_integration.py` holds that every negative example fails to compile (`test_negative_fixture_fails_compile`).
+
+```mermaid
+flowchart LR
+    W1["composite boundary<br/>receipt only"]:::author --> V1["validate"]:::tool
+    V1 --> X["CompositeBoundaryReceiptConflict<br/>nothing generated"]:::refused
+    W2["composite boundary<br/>patch log"]:::author --> V2["validate"]:::tool
+    V2 --> OK["three writes, a payload check<br/>and four audits"]:::tool
+    classDef author fill:#fde2e4,stroke:#c0392b,color:#000
+    classDef tool fill:#d6eaf8,stroke:#2874a6,color:#000
+    classDef refused fill:#f5b7b1,stroke:#922b21,color:#000
+```
+
+When two profiles declare the same dimension at scopes that both match, §5.5.3 says which one wins, and a tie is a refusal.
+
+#### 5.13.3 Generate
+
+The compiled profile names a builder for each operation and holds no SPARQL (§5.8). For the project it holds eight operations, `create-if-absent`, `cas-replace`, `tombstone-delete`, `payload-check` and the four audits. Each states its contract (§5.8.1), and the contract of `cas-replace` is the one that matters most.
+
+```mermaid
+flowchart TB
+    subgraph IN["ten parameters, all required"]
+        P1["root, newRev, txnId<br/>IRIs"]:::caller
+        P2["epoch<br/>an xsd:long"]:::caller
+        P3["expectedSeq, nextSeq<br/>positions"]:::caller
+        P4["requestDigest"]:::caller
+        P5["payloadTriples,<br/>assertTriples, retractTriples<br/>request-time slots"]:::caller
+    end
+    OP["cas-replace<br/>kind Replace<br/>guarded"]:::tool
+    subgraph OUT["the resources it touches"]
+        R1["version row<br/>point read, absence read,<br/>delete, insert"]:::meta
+        R2["transaction claim<br/>absence read, insert"]:::txn
+        R3["aggregate<br/>whole aggregate read,<br/>delete, insert"]:::data
+        R4["patch content<br/>insert"]:::delta
+        R5["receipt<br/>insert"]:::log
+    end
+    DG["digest, in order<br/>operation kind, root, expected seq,<br/>payload, added, removed"]:::tool
+    IN --> OP --> OUT
+    OP --> DG
+    style IN fill:none,stroke:#8a8a8a
+    style OUT fill:none,stroke:#8a8a8a
+    classDef caller fill:#fde2e4,stroke:#c0392b,color:#000
+    classDef tool fill:#d6eaf8,stroke:#2874a6,color:#000
+    classDef meta fill:#e8daef,stroke:#7d3c98,color:#000
+    classDef txn fill:#d6eaf8,stroke:#2874a6,color:#000
+    classDef data fill:#d5f5e3,stroke:#1e8449,color:#000
+    classDef log fill:#fff3cd,stroke:#b7950b,color:#000
+    classDef delta fill:#fdebd0,stroke:#ca6f1e,color:#000
+```
+
+Both the SPARQL and a caller in any language read the same contract. The names in it are the `$` names of the generated text, and the guard that the generated text opens with tests each parameter's type, so a mistyped parameter writes nothing. The part of the generated `WHERE` that decides whether the write applies is short.
+
+```sparql
+GRAPH <urn:g:meta/38> {
+  $root pat:epoch $epoch ; pat:seq $expectedSeq .
+  OPTIONAL { $root pat:head ?prevRev }
+  FILTER NOT EXISTS { GRAPH <urn:g:meta/38> { $root pat:deleted "true"^^xsd:boolean } }
+}
+FILTER NOT EXISTS { GRAPH <urn:g:txn> { $txnId pat:rev ?any } }
+```
+
+The row must be at the expected sequence, must carry no tombstone, and the transaction id must not be claimed yet. The compiled profile is held to the builders by `test_expected_profiles.py`. It compares what `compile` emits with `test/expected-profiles/composite-project-ownership.expected.ttl` by graph isomorphism (`test_h2_7_t1`) and checks that every declared parameter is a `$` name of the rendered query (`test_h2_7_t7`).
+
+#### 5.13.4 Write
+
+Each kind of write is one update, and each leaves a different mark on the graphs. The pictures show, for the project and for the families of the other examples, the graphs an update touches, what it deletes and inserts, and the graphs before and after. The request is on the left, and a graph that a write does not touch is left out.
+
+**Create.** `create-if-absent` writes the first state. It applies only if the root has no version row, no triple of its own and no claim for the transaction id, which are three absence tests.
+
+```mermaid
+flowchart TB
+    subgraph REQ["the request"]
+        PAY["payload<br/>the aggregate's 28 triples"]:::caller
+    end
+    subgraph BEFORE["before"]
+        G0["three tests hold<br/>no row, no triple of the root,<br/>no claim for the txn id"]:::store
+    end
+    subgraph AFTER["after"]
+        M["urn:g:meta/38<br/>4 triples<br/>a row at seq 1 with its head"]:::meta
+        D["urn:g:projects<br/>28 triples"]:::data
+        A["urn:rev:a/add<br/>28 triples"]:::delta
+        T["urn:g:txn<br/>2 triples, the claim"]:::txn
+        L["urn:g:txlog/2026-10<br/>7 triples, the receipt"]:::log
+    end
+    G0 -- "insert 4" --> M
+    G0 -- "insert 2" --> T
+    G0 -- "insert 7" --> L
+    PAY -- "insert 28" --> D
+    PAY -- "insert 28" --> A
+    style REQ fill:none,stroke:#8a8a8a
+    style BEFORE fill:none,stroke:#8a8a8a
+    style AFTER fill:none,stroke:#8a8a8a
+    classDef caller fill:#fde2e4,stroke:#c0392b,color:#000
+    classDef store fill:#d5f5e3,stroke:#1e8449,color:#000
+    classDef meta fill:#e8daef,stroke:#7d3c98,color:#000
+    classDef data fill:#d5f5e3,stroke:#1e8449,color:#000
+    classDef delta fill:#fdebd0,stroke:#ca6f1e,color:#000
+    classDef txn fill:#d6eaf8,stroke:#2874a6,color:#000
+    classDef log fill:#fff3cd,stroke:#b7950b,color:#000
+```
+
+Under a patch log the payload is written twice, once as the state and once as the add graph that the receipt asserts, so the log can rebuild the state from the create (`test_h2_6d_t4`). `test_composite_lifecycle.py` holds that a create writes the payload to the data graph, a row at seq 1 and one revision (`test_ho7_t2`), that a second create under another transaction changes nothing (`test_ho7_t3`), and that a create over a root that already has triples changes nothing (`test_ho7_t4`).
+
+**Replace.** `cas-replace` is the write most callers make. It deletes the closure the owned edges select, inserts the new state and moves the row. The caller supplies the whole new state in `{{{payloadTriples}}}` and the delta it computed in `{{{assertTriples}}}` and `{{{retractTriples}}}`. The head of the generated update shows all three.
+
+```sparql
+DELETE {
+  GRAPH <urn:g:projects> { ?s ?p ?o }
+  GRAPH <urn:g:meta/38> { $root pat:seq $expectedSeq ; pat:head ?prevRev }
+}
+INSERT {
+  GRAPH <urn:g:projects> { {{{payloadTriples}}} }
+  GRAPH ?addGraph { {{{assertTriples}}} }
+  GRAPH ?delGraph { {{{retractTriples}}} }
+  GRAPH <urn:g:meta/38> { $root pat:epoch $epoch ; pat:seq $nextSeq ; pat:head $newRev }
+  GRAPH <urn:g:txn> { $txnId pat:rev $newRev ; pat:requestDigest $requestDigest }
+  # the receipt, nine triples
+}
+```
+
+For example, a replace that renames the project, with a new title in the add slot and the old one in the del slot, leaves these graphs.
+
+```mermaid
+flowchart TB
+    subgraph REQ["the request"]
+        PAY["payload<br/>the whole new state, 28 triples"]:::caller
+        ADD["add and del slots<br/>the new and the old name, 1 triple each"]:::caller
+    end
+    subgraph BEFORE["before"]
+        M1["urn:g:meta/38<br/>row at seq 1, head a"]:::meta
+        D1["urn:g:projects<br/>28 triples"]:::data
+        TL1["urn:g:txn and urn:g:txlog/2026-10<br/>the create's claim and receipt"]:::log
+    end
+    subgraph AFTER["after"]
+        M2["urn:g:meta/38<br/>row at seq 2, head b"]:::meta
+        D2["urn:g:projects<br/>28 triples, the new state"]:::data
+        TL2["urn:g:txn and urn:g:txlog/2026-10<br/>2 claims and 2 receipts"]:::log
+        A2["urn:rev:b/add and urn:rev:b/del<br/>1 triple each"]:::delta
+    end
+    PAY ~~~ M1
+    M1 -- "delete seq 1 and head a<br/>insert seq 2 and head b" --> M2
+    D1 -- "delete the closure, 28" --> D2
+    TL1 -- "insert 2 and 9" --> TL2
+    PAY -- "insert 28" --> D2
+    ADD -- "insert 2" --> A2
+    style REQ fill:none,stroke:#8a8a8a
+    style BEFORE fill:none,stroke:#8a8a8a
+    style AFTER fill:none,stroke:#8a8a8a
+    classDef caller fill:#fde2e4,stroke:#c0392b,color:#000
+    classDef meta fill:#e8daef,stroke:#7d3c98,color:#000
+    classDef data fill:#d5f5e3,stroke:#1e8449,color:#000
+    classDef txn fill:#d6eaf8,stroke:#2874a6,color:#000
+    classDef log fill:#fff3cd,stroke:#b7950b,color:#000
+    classDef delta fill:#fdebd0,stroke:#ca6f1e,color:#000
+```
+
+The payload repeats every triple the aggregate keeps, such as an unchanged milestone, so a store that applies the update one solution at a time still ends with the right state (gotcha, §5.14). `test_patch_log.py` holds that a replace writes exactly the caller's delta into the two graphs the receipt names (`test_h2_6d_t1`) and that a payload never fills the add graph (`test_h2_6d_t2`).
+
+**Tombstone.** `tombstone-delete` removes the aggregate and keeps the evidence that it existed. It needs no payload, copies what its sweep removed into the del graph, and marks the row.
+
+```mermaid
+flowchart TB
+    subgraph REQ["the request"]
+        RQ["expected seq, cause and actor<br/>no payload"]:::caller
+    end
+    subgraph BEFORE["before"]
+        M1["urn:g:meta/38<br/>row at seq 2"]:::meta
+        D1["urn:g:projects<br/>28 triples"]:::data
+    end
+    subgraph AFTER["after"]
+        M2["urn:g:meta/38<br/>row at seq 3, deleted true"]:::meta
+        D2["urn:g:projects<br/>empty of this aggregate"]:::data
+        X2["urn:rev:c/del<br/>28 triples, a copy"]:::delta
+        L2["urn:g:txlog/2026-10<br/>11 triples, a Deletion<br/>with its cause and actor"]:::log
+    end
+    M1 -- "delete seq 2 and the head<br/>insert seq 3, head and the tombstone" --> M2
+    D1 -- "delete the closure, 28" --> D2
+    D1 -- "the same 28 triples" --> X2
+    RQ -- "insert 11" --> L2
+    style REQ fill:none,stroke:#8a8a8a
+    style BEFORE fill:none,stroke:#8a8a8a
+    style AFTER fill:none,stroke:#8a8a8a
+    classDef caller fill:#fde2e4,stroke:#c0392b,color:#000
+    classDef meta fill:#e8daef,stroke:#7d3c98,color:#000
+    classDef data fill:#d5f5e3,stroke:#1e8449,color:#000
+    classDef delta fill:#fdebd0,stroke:#ca6f1e,color:#000
+    classDef log fill:#fff3cd,stroke:#b7950b,color:#000
+```
+
+The sweep removes the closure of the root and no neighbour (`test_ho7_t5`), a replace after a tombstone writes nothing (`test_ho7_t7`), and the del graph holds the old aggregate and nothing else (`test_h2_6d_t3`).
+
+**Append of events.** A stream never replaces anything. [`examples/append-stream-dataset-guard.ttl`](examples/append-stream-dataset-guard.ttl) declares a decision stream under the dataset-level guard, and `append-event-dataset-guard` takes the next position from the row inside the update. A batch of events is one request, so three events step the sequence once. The events arrive as rows in `{{{eventRows}}}`, with their own triples in `{{{eventTriples}}}`.
+
+```mermaid
+flowchart TB
+    subgraph REQ["the request"]
+        EV["three event rows<br/>and three triples of their own"]:::caller
+    end
+    subgraph BEFORE["before"]
+        DS["urn:g:dataset<br/>the epoch, read and never written"]:::meta
+        M1["urn:g:meta/42<br/>the stream's row, seq 0"]:::meta
+    end
+    subgraph AFTER["after"]
+        M2["urn:g:meta/42<br/>row at seq 1, head"]:::meta
+        E2["urn:g:events/decisionstream/2026-10<br/>15 triples, 4 per event<br/>and the 3 of the caller"]:::log
+        TL2["urn:g:txn and urn:g:txlog/2026-10<br/>1 claim and 1 receipt, 8 triples"]:::log
+    end
+    DS -- "guards on the epoch" --> M2
+    M1 -- "delete epoch and seq<br/>insert epoch, seq 1 and head" --> M2
+    EV -- "insert 15" --> E2
+    EV -- "insert 8" --> TL2
+    style REQ fill:none,stroke:#8a8a8a
+    style BEFORE fill:none,stroke:#8a8a8a
+    style AFTER fill:none,stroke:#8a8a8a
+    classDef caller fill:#fde2e4,stroke:#c0392b,color:#000
+    classDef meta fill:#e8daef,stroke:#7d3c98,color:#000
+    classDef log fill:#fff3cd,stroke:#b7950b,color:#000
+    classDef txn fill:#d6eaf8,stroke:#2874a6,color:#000
+```
+
+Each event carries its type, its receipt (`pat:revision`), its position within the batch (`pat:opSeq`) and its time, which are the four triples of the picture. `test_append_events.py` holds that a three-row append steps the sequence once and writes one receipt, one claim and three events (`test_h2_6b_t1`), and that the result is the same under every hash seed on rdflib (`test_h2_6b_t2`).
+
+**Append of a version.** A family that appends versions writes no replace and no tombstone. [`examples/write-discipline-composite-append-versions.ttl`](examples/write-discipline-composite-append-versions.ttl) declares a quote as a `fnd:Version`, and `append-version` adds a new version beside the old one. The caller writes only the new version's own triples, and a member it does not restate is reached by reference.
+
+```mermaid
+flowchart TB
+    subgraph REQ["the request"]
+        PAY["payload<br/>the new version's own triples<br/>and a link to the shared terms"]:::caller
+    end
+    subgraph BEFORE["before"]
+        M1["urn:g:meta/43<br/>row at seq 1<br/>head r1, current version v1"]:::meta
+        D1["urn:g:quotes<br/>4 triples<br/>v1 and the terms it links to"]:::data
+    end
+    subgraph AFTER["after"]
+        M2["urn:g:meta/43<br/>row at seq 2<br/>head r2, current version v2"]:::meta
+        D2["urn:g:quotes<br/>9 triples<br/>v1 untouched, v2 beside it"]:::data
+        L2["urn:g:txlog/2026-10<br/>the receipt of v2, 7 triples"]:::log
+    end
+    M1 -- "delete seq, head and current version<br/>insert them moved on" --> M2
+    D1 -- "delete nothing" --> D2
+    PAY -- "insert 5, including<br/>previousVersion v1" --> D2
+    PAY -- "insert 7" --> L2
+    style REQ fill:none,stroke:#8a8a8a
+    style BEFORE fill:none,stroke:#8a8a8a
+    style AFTER fill:none,stroke:#8a8a8a
+    classDef caller fill:#fde2e4,stroke:#c0392b,color:#000
+    classDef meta fill:#e8daef,stroke:#7d3c98,color:#000
+    classDef data fill:#d5f5e3,stroke:#1e8449,color:#000
+    classDef log fill:#fff3cd,stroke:#b7950b,color:#000
+```
+
+The five inserted triples are the version's type, its link to the shared terms, one changed value, `pat:previousVersion` and `pat:revision`. The generated `DELETE` names only the version row, and `test_write_disciplines.py` holds that `append-version` never deletes from the data graph (`test_h2_6c_t10`) and that the second version leaves the first in place and links to it (`test_h2_6c_t1`).
+
+**A delta version.** When a version lists many members, the delta encoding states only what changed. [`examples/write-discipline-delta-membership.ttl`](examples/write-discipline-delta-membership.ttl) declares it with a checkpoint every fourth version, so version 1 lists every member and carries the checkpoint marker. The next version writes `pat:addsMember` and `pat:dropsMember` in place of the list.
+
+```mermaid
+flowchart TB
+    subgraph REQ["the request"]
+        PAY["payload<br/>the new version's own triples"]:::caller
+        ADD["added members<br/>one triple, adds line 4"]:::caller
+        DRP["dropped members<br/>one triple, drops line 1"]:::caller
+    end
+    subgraph BEFORE["before"]
+        D1["urn:g:quotes<br/>6 triples<br/>v1, a checkpoint, lists lines 1 to 3"]:::data
+    end
+    subgraph AFTER["after"]
+        D2["urn:g:quotes<br/>11 triples<br/>v2 follows v1 and lists no member"]:::data
+    end
+    D1 -- "delete nothing" --> D2
+    PAY -- "insert 3, the type,<br/>previousVersion and revision" --> D2
+    ADD -- "insert 1" --> D2
+    DRP -- "insert 1" --> D2
+    style REQ fill:none,stroke:#8a8a8a
+    style BEFORE fill:none,stroke:#8a8a8a
+    style AFTER fill:none,stroke:#8a8a8a
+    classDef caller fill:#fde2e4,stroke:#c0392b,color:#000
+    classDef data fill:#d5f5e3,stroke:#1e8449,color:#000
+```
+
+A change to a set of 500 members stores three triples where the full encoding stores 501 (§5.6.11). The row and the receipt move exactly as in the picture above and are left out. `test_membership.py` holds that a checkpoint lists every member and a delta states only what changed (`test_h2_6f_t1`).
+
+#### 5.13.5 Race and retry
+
+A guarded update has no return value, so the store's reply cannot say whether it applied (§5.3). What a writer learns comes from the guards and from the claim.
+
+**Two writers, one winner.** Two writers read the project at seq 1 and both send a replace with the expected seq 1. The store applies whichever update it receives first. The second finds no row at seq 1, so its `WHERE` has no solution and nothing is deleted or inserted, including the delta graphs it would have named.
+
+```mermaid
+sequenceDiagram
+    participant A as Writer A
+    participant B as Writer B
+    participant S as Store
+    rect rgba(253, 226, 228, 0.5)
+    A->>S: read the project and its row, seq 1
+    B->>S: read the project and its row, seq 1
+    end
+    rect rgba(213, 245, 227, 0.5)
+    A->>S: cas-replace, expected seq 1, txn A
+    Note over S: the row is at seq 1 and txn A is unclaimed.<br/>It sweeps, inserts, moves the row to seq 2<br/>and writes claim A and a receipt
+    S-->>A: 204
+    end
+    rect rgba(245, 183, 177, 0.5)
+    B->>S: cas-replace, expected seq 1, txn B
+    Note over S: no row at seq 1, so no solution.<br/>No delete, no insert, no claim, no delta graph
+    S-->>B: 204
+    end
+    rect rgba(253, 226, 228, 0.5)
+    B->>S: read claim B from the writer
+    S-->>B: absent, so PreconditionFailed
+    B->>S: read at seq 2, decide again, resend with a new txn id
+    end
+```
+
+`test_patch_log.py` holds that a write that loses the race writes nothing and neither does its delta, for a create, a replace and a tombstone (`test_h2_6d_t6`). `test_composite_lifecycle.py` holds it for a stale sequence (`test_ho7_t6`).
+
+**A retry after a lost reply.** The write may have applied or not, and reading the row cannot tell, since it shows only the current seq. The client resends the identical request. By then the row has moved and the claim exists, so both guards fail and nothing is written. The update alone could not tell this from a lost race. The claim does, because it is keyed by the client's own id and carries a digest of the request.
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant S as Store
+    rect rgba(253, 226, 228, 0.5)
+    C->>S: cas-replace, expected seq 1, txn T, digest D
+    end
+    rect rgba(213, 245, 227, 0.5)
+    Note over S: it applies, the row is at seq 2<br/>and claim T holds digest D
+    S--xC: the reply is lost
+    end
+    rect rgba(253, 226, 228, 0.5)
+    Note over C: no answer, so the outcome is unknown
+    C->>S: the identical request, txn T, digest D
+    end
+    rect rgba(245, 183, 177, 0.5)
+    Note over S: the row is at seq 2 and claim T exists.<br/>Both guards fail, so nothing is written
+    S-->>C: 204
+    end
+    rect rgba(253, 226, 228, 0.5)
+    C->>S: read claim T from the writer
+    S-->>C: claim T with digest D
+    Note over C: the digest equals the request's, so Applied.<br/>A different digest would be IdempotencyKeyReuse
+    end
+```
+
+`test_patch_log.py` holds that a retry with the same transaction id writes nothing, the delta graphs included (`test_h2_6d_t5`), `test_append_events.py` holds it for an append (`test_h2_6b_t3`) and `test_composite_builders.py` for a replace and a tombstone (`test_h2_4a_t4`). The digest the client sends is computed by the caller library over the parts of the operation's digest contract (`packages/persistence/python/tests/test_vectors.py`). The confirming read is the caller's, and no generated operation performs it.
+
+**A stale sequence.** An editor opens a project at seq 41 and submits it later. Other writers have moved the row on, so the update finds no row at seq 41 and writes nothing. If the row was tombstoned in the meantime the outcome is `Gone`, and no replace can bring it back.
+
+```mermaid
+sequenceDiagram
+    participant E as Editor
+    participant O as Other writers
+    participant S as Store
+    rect rgba(253, 226, 228, 0.5)
+    E->>S: read the project, row at seq 41
+    Note over E: the form stays open
+    end
+    rect rgba(213, 245, 227, 0.5)
+    O->>S: two writes, the row moves to seq 43
+    end
+    rect rgba(245, 183, 177, 0.5)
+    E->>S: cas-replace, expected seq 41
+    Note over S: no row at seq 41, nothing written
+    S-->>E: 204
+    end
+    rect rgba(253, 226, 228, 0.5)
+    E->>S: read claim, absent
+    alt the row is tombstoned
+        S-->>E: Gone, 410
+    else the row is live
+        S-->>E: PreconditionFailed, 412, read seq 43 and decide again
+    end
+    end
+```
+
+`test_composite_lifecycle.py` holds that a replace after a tombstone is refused by the tombstone guard (`test_ho7_t7`), and `test_tsd_34_builders.py` holds that a write to a tombstoned row changes nothing on sixteen hash seeds and on Oxigraph (`test_h2_6g_t2`).
+
+**A guard on a value.** With no boundary there is no row to guard, and the guard is the old value of one property. [`examples/value-based-cas.ttl`](examples/value-based-cas.ttl) guards an order's status, and the generated update is short enough to quote whole.
+
+```sparql
+DELETE {
+  GRAPH <urn:g:order-status> { $root <https://example.org/lending#status> $oldValue }
+}
+INSERT {
+  GRAPH <urn:g:order-status> { $root <https://example.org/lending#status> $newValue }
+}
+WHERE {
+  { FILTER(ISIRI($root) && (ISIRI($oldValue) || ISLITERAL($oldValue)) && (ISIRI($newValue) || ISLITERAL($newValue))) }
+  GRAPH <urn:g:order-status> { $root <https://example.org/lending#status> $oldValue }
+}
+```
+
+A stale old value finds no triple to match and writes nothing (`test_contract_emission.py`, `test_h2_7_t20`). The guard cannot see a concurrent change to any other property, which is why §5.6.2 keeps it for a field of a state machine.
+
+**A race for a key.** A key claim is the other thing writers race for. [`examples/persistent-foundation-keys.ttl`](examples/persistent-foundation-keys.ttl) gives each keyed class a claim on its natural key, and `key-claim-write` writes a claim only if no other owner holds it.
+
+```mermaid
+sequenceDiagram
+    participant O1 as Owner 1
+    participant O2 as Owner 2
+    participant S as Store, urn:g:keys
+    rect rgba(213, 245, 227, 0.5)
+    O1->>S: key-claim-write, claim C, owner 1
+    Note over S: no other owner holds C, so it writes<br/>C a pat:KeyClaim, claimedBy owner 1
+    end
+    rect rgba(245, 183, 177, 0.5)
+    O2->>S: key-claim-write, claim C, owner 2
+    Note over S: C is claimed by another owner, nothing written
+    end
+    rect rgba(213, 245, 227, 0.5)
+    O1->>S: key-claim-write, claim C, owner 1
+    Note over S: the owner may claim again, a no-op
+    end
+```
+
+The picture is the sequential case, which `test_key_claims_and_audits.py` holds (`test_h2_5_t15` and `test_h2_5_t16`). Two writers racing for a key that nobody holds yet are decided by the store's isolation, which §5.6.6 treats as the gap that the later patterns close. `tools/test_keys.py` holds that the example compiles the natural key constraint (`test_f1_05_persistence_compiles_the_natural_key_constraint`).
+
+#### 5.13.6 History
+
+Each in-place write leaves a receipt, and under a patch log it leaves what it added and removed. After the create, the replace and the tombstone of the project, the log holds three receipts chained by `pat:prevRev`, and the row names the last one as its head.
+
+```mermaid
+flowchart TB
+    ROW["urn:g:meta/38<br/>the row, seq 3<br/>head c, deleted"]:::meta
+    RC["receipt c, seq 3<br/>a Deletion"]:::log
+    RB["receipt b, seq 2"]:::log
+    RA["receipt a, seq 1"]:::log
+    CD["urn:rev:c/del<br/>28 triples"]:::delta
+    BD["urn:rev:b/del<br/>1 triple"]:::delta
+    BA["urn:rev:b/add<br/>1 triple"]:::delta
+    AA["urn:rev:a/add<br/>28 triples"]:::delta
+    ROW -- head --> RC
+    RC -- prevRev --> RB
+    RB -- prevRev --> RA
+    RC -. retracts .-> CD
+    RB -. retracts .-> BD
+    RB -. asserts .-> BA
+    RA -. asserts .-> AA
+    classDef meta fill:#e8daef,stroke:#7d3c98,color:#000
+    classDef log fill:#fff3cd,stroke:#b7950b,color:#000
+    classDef delta fill:#fdebd0,stroke:#ca6f1e,color:#000
+```
+
+The receipts order and audit the writes, and the delta graphs make them replayable. The transaction claims, not drawn, point at the receipts, one claim for each write. `test_patch_log.py` holds that the chain of receipts lets the log rebuild the aggregate from its deltas (`test_h2_6d_t10`).
+
+A family that appends versions keeps its history in the data. The versions form a chain, each version names its receipt, and the row names the current version. A member that a new version does not restate is shared.
+
+```mermaid
+flowchart TB
+    ROW["urn:g:meta/43<br/>the row of the quote<br/>current version v2, head r2"]:::meta
+    V2["version v2"]:::data
+    V1["version v1"]:::data
+    TERMS["the terms<br/>shared by reference"]:::data
+    R2["receipt r2"]:::log
+    R1["receipt r1"]:::log
+    ROW -- currentVersion --> V2
+    ROW -- head --> R2
+    V2 -- previousVersion --> V1
+    V2 -- hasTerms --> TERMS
+    V1 -- hasTerms --> TERMS
+    V2 -. revision .-> R2
+    V1 -. revision .-> R1
+    R2 -- prevRev --> R1
+    classDef meta fill:#e8daef,stroke:#7d3c98,color:#000
+    classDef data fill:#d5f5e3,stroke:#1e8449,color:#000
+    classDef log fill:#fff3cd,stroke:#b7950b,color:#000
+```
+
+Nothing is deleted, so every version stays reachable. `test_write_disciplines.py` holds that each version names its receipt and that the receipts chain (`test_h2_6c_t3`), and that a member the caller does not restate is still reachable from the new version (`test_h2_6c_t4`).
+
+#### 5.13.7 Read back
+
+The current state of an in-place aggregate is the data graph, and the row says at which sequence. An earlier state is rebuilt from the log. The create's add graph is the state at seq 1, and each later receipt removes its del graph and adds its add graph.
+
+```mermaid
+flowchart TB
+    AA["urn:rev:a/add<br/>the create's payload, 28 triples"]:::delta
+    BD["urn:rev:b/del<br/>the old name, 1 triple"]:::delta
+    BA["urn:rev:b/add<br/>the new name, 1 triple"]:::delta
+    ST["the state at seq 2<br/>28 triples, equal to the data graph before the tombstone"]:::data
+    AA -- "start from" --> ST
+    BD -- "remove" --> ST
+    BA -- "add" --> ST
+    classDef delta fill:#fdebd0,stroke:#ca6f1e,color:#000
+    classDef data fill:#d5f5e3,stroke:#1e8449,color:#000
+```
+
+A backward as-of read over these graphs is chapter 11 of the [patterns guide](../../docs/architecture/rdf-sparql-patterns-guide.md). No generated operation performs an as-of read.
+
+The one generated read is `members`, which reads the members of a version in a family that uses delta membership. With a checkpoint every fourth version, the checkpoints of nine versions are 1, 4 and 8. The read of a version follows `pat:previousVersion` back to the nearest checkpoint and applies the adds and drops it meets on the way.
+
+```mermaid
+flowchart LR
+    V1["v1<br/>checkpoint"]:::history
+    V2["v2"]:::delta
+    V3["v3"]:::delta
+    V4["v4<br/>checkpoint"]:::history
+    V5["v5"]:::delta
+    V6["v6"]:::delta
+    V7["v7"]:::delta
+    V8["v8<br/>checkpoint"]:::history
+    V9["v9"]:::delta
+    V2 --> V1
+    V3 --> V2
+    V4 --> V3
+    V5 --> V4
+    V6 --> V5
+    V7 --> V6
+    V8 --> V7
+    V9 --> V8
+    linkStyle 3,4,7 stroke:#c0392b,stroke-width:4px
+    classDef history fill:#fff3cd,stroke:#b7950b,color:#000
+    classDef delta fill:#fdebd0,stroke:#ca6f1e,color:#000
+```
+
+The thick arrows are the chains that the reads of version 6 and of version 9 follow. A checkpoint ends the chain behind it, so version 6 never reads version 3 and version 9 reads one version only. `test_membership.py` holds that the members of a checkpoint are its list and of a delta that list with the changes applied (`test_h2_6f_t5`), that the chain stops at the nearest checkpoint (`test_h2_6f_t8`), and that every version of a longer history matches a reference model (`test_h2_6f_t9`). `test_tsd_34_builders.py` holds that the read is right on sixteen hash seeds (`test_h2_6g_t4`).
+
+The audits are the other reads, and they report one of three outcomes. The one that is easy to miss is an audit that examined nothing, which is not a pass.
+
+```mermaid
+flowchart TB
+    Q["run an audit<br/>its rows, the graphs it was given<br/>and the receipts it examined"]:::tool
+    R{"any row?"}
+    F["Failed<br/>the rows are the evidence"]:::refused
+    L{"does it take a list of graphs?"}
+    C1["Clean<br/>it reads fixed graphs"]:::data
+    E{"is the list empty,<br/>or did it examine nothing?"}
+    N["NothingExamined<br/>not a pass"]:::history
+    C2["Clean"]:::data
+    Q --> R
+    R -- yes --> F
+    R -- no --> L
+    L -- no --> C1
+    L -- yes --> E
+    E -- yes --> N
+    E -- no --> C2
+    classDef tool fill:#d6eaf8,stroke:#2874a6,color:#000
+    classDef data fill:#d5f5e3,stroke:#1e8449,color:#000
+    classDef history fill:#fff3cd,stroke:#b7950b,color:#000
+    classDef refused fill:#f5b7b1,stroke:#922b21,color:#000
+```
+
+Every audit declares these three outcomes and the parameter that lists the graphs it reads (`test_payload_check.py`, `test_h2_8b_t8`). The caller library classifies the result (`test_the_outcome_has_three_values` in `packages/persistence/python/tests/test_check.py`). The gap scan, for example, counts the receipts of each row from its low-water mark to its sequence and reports a row whose count is short, and `test_key_claims_and_audits.py` runs it over complete runs, a missing receipt and a head kept in the pinned graph (`test_h2_5_t36`).
+
+#### 5.13.8 Keep it small
+
+History that is kept forever grows forever, and each choice above has a cost in stored triples. The same set of 500 members, with one member replaced in each version, stores a very different amount under the three strategies.
+
+| Stored triples after | 1 version | 10 versions | 100 versions | A read of the current members |
+|---|---|---|---|---|
+| in place, with a patch log | 500 | 518 | 698 | one lookup |
+| appended versions, full membership | 503 | 5,030 | 50,300 | one lookup |
+| appended versions, delta membership, checkpoint every 16 | 503 | 548 | 3,992 | a chain back to a checkpoint |
+
+The counts are those of the data graph and the delta graphs, without receipts, and the check asserts each of them (`mise run check:persistence-membership`). The in-place family stores the least and keeps no version, and its replace pays for the sweep and the payload together, which the composite cost benchmark measures (`mise run check:persistence-composite-cost`, §5.14). The delta family stores almost as little and keeps every version, and it pays when it reads. `test/membership/` holds the stored triples of two sets of members under each encoding, which `test_membership_fixtures.py` reads.
+
+Receipts are pruned from the oldest end, and the generated gap scan is built to accept the result. Retention is housekeeping and is not generated (§5.6.4). What a housekeeper does in one pass, in this order, is shown below.
+
+```mermaid
+flowchart TB
+    subgraph MONTHS["receipt buckets, oldest first"]
+        M6["urn:g:txlog/2026-06<br/>holds the head of a stream<br/>last written in June"]:::log
+        M7["urn:g:txlog/2026-07"]:::log
+        M8["urn:g:txlog/2026-08"]:::log
+        M9["urn:g:txlog/2026-09<br/>current"]:::log
+        M6 --> M7 --> M8 --> M9
+    end
+    subgraph PASS["one retention pass"]
+        S1["1 raise the low-water mark of each stream<br/>in urn:g:retention, one transaction"]:::history
+        S2["2 copy each receipt that is still a head<br/>into urn:g:txlog/pinned"]:::history
+        S3["3 drop the oldest bucket whole<br/>urn:g:txlog/2026-06"]:::history
+        S1 --> S2 --> S3
+    end
+    MONTHS ~~~ PASS
+    style MONTHS fill:none,stroke:#8a8a8a
+    style PASS fill:none,stroke:#8a8a8a
+    classDef log fill:#fff3cd,stroke:#b7950b,color:#000
+    classDef history fill:#fff3cd,stroke:#b7950b,color:#000
+```
+
+Afterwards the gap scan counts receipts from the low-water mark to the row's sequence, in the buckets and in the pinned graph, and finds the run complete. A receipt below the mark is not required, and a head held in the pinned graph counts. A gap above the mark is still reported (`test_key_claims_and_audits.py`, `test_h2_5_t36`).
+
+Two further choices keep a family small. A family that is derived and can be regenerated declares `dal:NoReceipt`, and a family of occurrences that never change declares `dal:AppendRecords`. [8.5](#85-every-example-and-the-sparql-it-compiles-to) lists an example for each of the other dimensions, and §5.14 collects what to watch for.
+
+### 5.14 Best practices, gotchas and considerations
+
+Each item below is something a store, a standard or our own profile does that is easy to get wrong, with the test that holds our answer and, for the behaviour of a store, the entry of the [triple-store record](../../docs/architecture/triple-store-discovery.md) that records how we found out. Read that record before relying on what a store does with SPARQL. A picture is given where the mechanism is structural.
+
+#### What a store does
+
+**An integer is not an `xsd:long`.** Sequences, epochs and positions are `xsd:long`, and `"1"^^xsd:long` and `"1"^^xsd:integer` are different RDF terms, so a pattern that matches by term does not match the other. Oxigraph stores an integer-derived literal as `xsd:integer` and reports it so ([TSD-07]). The generated guard therefore compares a parameter with what the store makes of a constant, as in `DATATYPE($epoch) = DATATYPE("0"^^xsd:long)`, and the caller library refuses a position that is not exactly an `xsd:long` before it sends. Held by `test_store_probes.py` (`test_h2_5_t1`) and by `packages/persistence/python/tests/test_check.py`.
+
+**The order a store applies an update in.** The specification removes every deletion of an update before it adds any insertion. rdflib applies the update one solution at a time, in an order that follows the process's hash seed, and Oxigraph before 0.5.12 applied each mutation in solution order ([TSD-01]). A replace would then lose a triple that the aggregate keeps, in some processes and not in others. The generated replace puts the whole payload in its `INSERT` template, so every solution ends by inserting every payload triple, and a triple the payload holds survives whatever order the store takes. A test of order-dependent behaviour on rdflib fixes or sweeps the hash seed. Held by `test_store_probes.py` (`test_h2_4b_t1` and `t2`) and `test_composite_builders.py` (`test_h2_4a_t7`).
+
+```mermaid
+sequenceDiagram
+    participant U as The update
+    participant G as The data graph
+    rect rgba(213, 245, 227, 0.5)
+    U->>G: solution 1, delete t1, then insert the whole payload
+    U->>G: solution 2, delete t2, then insert the whole payload
+    U->>G: solution 3, delete t3, then insert the whole payload
+    Note over U,G: any order of the solutions ends the same.<br/>A payload triple that the aggregate held survives
+    end
+    rect rgba(245, 183, 177, 0.5)
+    U->>G: a form that inserts the payload in one solution only
+    U->>G: another solution deletes t1, which the payload keeps
+    Note over U,G: applied after the first, t1 is lost,<br/>and only in the processes that order it so
+    end
+```
+
+**`NOT EXISTS` and the graph.** On rdflib a `FILTER NOT EXISTS` with no `GRAPH` of its own, inside a `GRAPH` block that also holds a sub-select and a `UNION`, tests the default graph for some solutions, chosen by the hash seed ([TSD-34]). A tombstone test written that way finds nothing and lets a write through to a deleted row. Every generated `NOT EXISTS` names its graph, as in `FILTER NOT EXISTS { GRAPH <urn:g:meta/38> { $root pat:deleted "true"^^xsd:boolean } }`, and a check refuses a rendered operation that does not. Held by `test_tsd_34_builders.py` (`test_h2_6g_t1` and `test_h2_6g_t2`).
+
+```mermaid
+flowchart TB
+    subgraph SAFE["what every generated operation writes"]
+        A["GRAPH meta {<br/>FILTER NOT EXISTS {<br/>GRAPH meta { root deleted true } } }"]:::tool
+        A2["the test reads the meta graph<br/>on every engine"]:::data
+        A --> A2
+    end
+    subgraph RISK["what the check refuses"]
+        B["GRAPH meta {<br/>FILTER NOT EXISTS {<br/>root deleted true } }"]:::refused
+        B2["on rdflib, for some seeds,<br/>the test reads the default graph<br/>and a tombstoned row looks live"]:::refused
+        B --> B2
+    end
+    style SAFE fill:none,stroke:#8a8a8a
+    style RISK fill:none,stroke:#8a8a8a
+    classDef tool fill:#d6eaf8,stroke:#2874a6,color:#000
+    classDef data fill:#d5f5e3,stroke:#1e8449,color:#000
+    classDef refused fill:#f5b7b1,stroke:#922b21,color:#000
+```
+
+**A request of several operations.** SPARQL 1.1 Update says a request should be atomic and leaves it to the store. A request whose second operation fails keeps its first on rdflib and loses it on Oxigraph, and the documentation of other stores says different things again ([TSD-06]). Each generated write is one update for that reason, and no write depends on two operations committing together. Whether one update is atomic is also the store's property, which §5.7 records and a conformance test on the target store establishes. Held by `test_store_probes.py` (`test_h2_4b_t3`).
+
+**An empty `VALUES`.** An append's `{{{eventRows}}}` slot is a `VALUES` block. Empty, it gives no solution on Oxigraph, so nothing is written, and on rdflib it raises before changing anything ([TSD-21]). The caller check refuses an append of no events before it sends, so a generated operation never meets the difference. Held by `test_append_events.py` (`test_h2_6b_t6`) and `test_check.py` in the caller library (`test_the_rows_of_a_batch`).
+
+**The cost of a sweep.** A composite replace's sweep gives one solution for each stored triple of the aggregate, and the `INSERT` template holds the whole payload. A store therefore fills the payload once for each solution before the copies collapse, and time and memory grow with the product of the two sizes ([TSD-02]). The work of the sweep alone is linear in the aggregate (`test_composite_sweep.py`, `test_ho1_t5`), and the payload is what multiplies. A named-graph family drops a graph and avoids it. The composite cost benchmark measures it, fails on a wrong result and never on time, and is run with `mise run check:persistence-composite-cost`. [Efficient queries and shapes](../../docs/architecture/efficient-queries-and-shapes.md) says which of its rules for a query hold for any engine and which only for rdflib.
+
+```mermaid
+flowchart LR
+    SW["the sweep<br/>M solutions, one per stored triple"]:::store
+    TP["the INSERT template<br/>N payload triples"]:::caller
+    X["M times N triples filled<br/>then the copies collapse"]:::store
+    SW --> X
+    TP --> X
+    classDef caller fill:#fde2e4,stroke:#c0392b,color:#000
+    classDef store fill:#d5f5e3,stroke:#1e8449,color:#000
+```
+
+**A slot left unfilled.** The payload, the delta and the event slots are request-time text. An unfilled slot is a syntax error on every engine, so a request that leaves one out writes nothing. Held by `test_patch_log.py` (`test_h2_6d_t7` and `test_h2_6d_t8`).
+
+#### What the model does not give
+
+**Inverse functional properties are not uniqueness constraints.** `owl:InverseFunctionalProperty` and `owl:hasKey` look like a unique key. A reasoner does not reject two things that share a value. It infers that they are one thing, and the merge cannot be cleanly retracted if it was a mistake (§5.1 and [the patterns guide](../../docs/architecture/rdf-sparql-patterns-guide.md), chapter 4). A key claim refuses the second owner when it is written, and a merge, when an adopter chooses one, records a plain relation of its own (§5.6.6).
+
+```mermaid
+flowchart LR
+    P1["person 1<br/>email a@x"]:::data
+    P2["person 2<br/>email a@x"]:::data
+    R["a reasoner with<br/>an inverse functional email"]:::tool
+    S["owl:sameAs<br/>the two are one, silently"]:::refused
+    K["a key claim for a@x<br/>owned by person 1"]:::txn
+    N["person 2 is refused<br/>when it is written"]:::store
+    P1 --> R
+    P2 --> R
+    R --> S
+    P1 --> K
+    P2 -. claims .-> K
+    K --> N
+    classDef data fill:#d5f5e3,stroke:#1e8449,color:#000
+    classDef tool fill:#d6eaf8,stroke:#2874a6,color:#000
+    classDef txn fill:#d6eaf8,stroke:#2874a6,color:#000
+    classDef store fill:#d5f5e3,stroke:#1e8449,color:#000
+    classDef refused fill:#f5b7b1,stroke:#922b21,color:#000
+```
+
+Held by `tools/test_keys.py`, where a class that merges on its natural key is inconsistent with two distinct members that share one (`test_f1_04_merged_on_natural_key_merges`), a class that Persistence keys is not (`test_f1_05_persistence_keyed_does_not_merge`), and the compiler generates the claim (`test_f1_05_persistence_compiles_the_natural_key_constraint`). The reasoner cases skip when the reasoner is not built.
+
+**A blank node never goes in a payload.** A blank node is a fresh node each time a document is parsed ([TSD-29]), so a retried request would write a second copy and its digest would differ from the claim's. The caller library cannot build a blank node, and a nested record gets an IRI minted under its parent instead (the [identity guide](../../docs/architecture/iri-identity-patterns.md), section 9). Held by `packages/persistence/python/tests/test_payload.py` (`test_a_blank_node_is_refused`) and [ADR-A123](../../docs/architecture/decisions/ADR-A123-typed-operation-ir.md).
+
+#### What a choice costs
+
+**Guards off.** `compile --no-parameter-guards` leaves the required-parameter guard out of every operation, for a caller whose own code checks every parameter. A mistyped or missing parameter then writes a malformed row, or sweeps every aggregate of the data graph, in place of writing nothing, and the caller owns every check the store would have made. The compiler reports it once per target as `ParameterGuardsOff`, with the obligation. Held by `test_builders.py` (`test_h2_2_t14`), `test_composite_builders.py` (`test_h2_4a_t3`) and `test_payload_check.py` (`test_h2_8b_t11`).
+
+**No receipt, and the meta shard.** A family that declares `dal:NoReceipt` writes a claim and no receipt and no head. The generated gap scan reads every version row of a meta graph and counts the receipts of each, so a no-receipt row in a shard that a scan covers is reported as a gap. Such a family belongs in a shard of its own, and `compile` refuses it otherwise (`NoReceiptSharesMetaShard`). Held by `test_payload_check.py` (`test_h2_8b_t14` and `test_h2_8b_t15`).
+
+```mermaid
+flowchart TB
+    subgraph SHARD["one meta graph"]
+        R1["a row of a family with receipts<br/>seq 5, head r5"]:::meta
+        R2["a row of a no-receipt family<br/>seq 5, no head"]:::meta
+    end
+    LOG["receipts<br/>of the first family only"]:::log
+    GAP["gap scan<br/>counts receipts from the mark to seq"]:::tool
+    X["reports the second row as a gap<br/>NoReceiptSharesMetaShard refuses this"]:::refused
+    R1 --> GAP
+    R2 --> GAP
+    LOG --> GAP
+    GAP --> X
+    style SHARD fill:none,stroke:#8a8a8a
+    classDef meta fill:#e8daef,stroke:#7d3c98,color:#000
+    classDef log fill:#fff3cd,stroke:#b7950b,color:#000
+    classDef tool fill:#d6eaf8,stroke:#2874a6,color:#000
+    classDef refused fill:#f5b7b1,stroke:#922b21,color:#000
+```
+
+**Pinned, or by identity.** An edge that refers to a versioned node names either its identity or one version of it (§5.6.1). Pin where a record is evidence of what it saw, such as an opinion about a quote, since a later version of the quote must not change what the opinion says it read. Leave the edge by identity where the node means the thing as it is now. The compiler warns `EvidenceEdgeByIdentity` for the case that is usually a mistake, and a deliberate choice compiles. Held by `test_reference_modes.py` (`test_h2_6e_t9` and `test_h2_6e_t10`).
+
+```mermaid
+flowchart TB
+    OP["an opinion<br/>evidence of what it read"]:::data
+    I["the quote's identity"]
+    V2["version 2"]:::data
+    V1["version 1"]:::data
+    OP -- "by identity" --> I
+    I -. "current version" .-> V2
+    OP -- "pinned" --> V1
+    V2 -- previousVersion --> V1
+    classDef data fill:#d5f5e3,stroke:#1e8449,color:#000
+```
+
+**Full or delta membership.** The delta encoding writes a handful of triples where the full encoding writes the whole list, and its reads pay a chain back to a checkpoint. A domain shape over the membership property cannot run over the stored delta and has to run over the results of `members`, which §5.6.11 describes. The table in 5.13.8 gives the stored counts, and `mise run check:persistence-membership` asserts them. Held by `test_membership.py` (`test_h2_6f_t1`, `test_h2_6f_t12` and `test_h2_6f_t13`) and `test_membership_fixtures.py`.
+
+**An event names an aggregate and never describes it.** An append's event triples may point at the aggregate that the event is about. They may not state anything about it, since the append would then write into the aggregate outside the aggregate's own guard. The caller check refuses an event triple whose subject is neither an event of the batch nor minted under one. Held by `test_an_event_may_name_an_aggregate_and_never_describe_one` in the caller library's `test_check.py`.
+
+```mermaid
+flowchart LR
+    subgraph OK["allowed"]
+        E1["event e1"]:::log -- "about" --> A1["the aggregate"]
+    end
+    subgraph NO["refused before sending"]
+        A2["the aggregate"]:::refused -- "a triple with it as subject" --> V["a changed value"]:::refused
+    end
+    style OK fill:none,stroke:#8a8a8a
+    style NO fill:none,stroke:#8a8a8a
+    classDef log fill:#fff3cd,stroke:#b7950b,color:#000
+    classDef refused fill:#f5b7b1,stroke:#922b21,color:#000
+```
+
+[TSD-01]: ../../docs/architecture/triple-store-discovery.md#tsd-01-the-order-in-which-a-delete-insert-where-is-applied
+[TSD-02]: ../../docs/architecture/triple-store-discovery.md#tsd-02-what-filling-a-template-once-per-solution-costs
+[TSD-06]: ../../docs/architecture/triple-store-discovery.md#tsd-06-a-request-whose-second-operation-fails-and-graph-management
+[TSD-07]: ../../docs/architecture/triple-store-discovery.md#tsd-07-numeric-datatypes-are-not-kept-by-oxigraph
+[TSD-21]: ../../docs/architecture/triple-store-discovery.md#tsd-21-an-empty-values-block-in-an-update
+[TSD-29]: ../../docs/architecture/triple-store-discovery.md#tsd-29-two-parses-of-one-document-never-give-equal-triple-sets
+[TSD-34]: ../../docs/architecture/triple-store-discovery.md#tsd-34-rdflib-evaluates-a-filter-not-exists-in-a-graph-block-against-the-wrong-graph-for-some-solutions
+
+### 5.15 Cross references
 
 | Document | Read it for |
 |---|---|
@@ -1915,12 +2888,12 @@ dimension combination. Its dal:templateId is the builder's identity, the operati
 
 #### `dal:GeneratedOperation`
 
-**Definition.** One operation (create, cas-replace, tombstone, ...) selected for a target: which template, which
-parameters to mix into it, and its contract (§10a).
+**Definition.** One operation (create, cas-replace, tombstone, ...) selected for a target, with the builder that renders it,
+the parameters bound into it and its contract.
 
 #### `dal:ParameterBinding`
 
-**Definition.** A reified, typed parameter binding mixed into a template's Mustache slots at instantiate time.
+**Definition.** A reified, typed parameter binding that instantiate binds into the text a builder renders.
 Modelled on mrk:ParameterBinding (paramName/paramType/paramValue).
 
 #### `dal:ParameterDeclaration`
@@ -5466,13 +6439,15 @@ ex:CreditBehaviourProfile a dal:DataAccessProfile ;
 
 ```mermaid
 flowchart LR
-    B["beh:Behaviour<br/>(no profile of its own)"]
-    T1["target: Behaviour @ lending<br/>Optimistic, PatchLog"]
-    T2["target: Behaviour @ credit<br/>Provided, ReceiptOnly"]
-    T3["target: Behaviour, fallback<br/>baseline defaults"]
+    B["beh:Behaviour<br/>no profile of its own"]:::author
+    T1["target Behaviour at lending<br/>Optimistic, PatchLog"]:::tool
+    T2["target Behaviour at credit<br/>Provided, ReceiptOnly"]:::tool
+    T3["target Behaviour, fallback<br/>baseline defaults"]:::tool
     B --> T1
     B --> T2
     B --> T3
+    classDef author fill:#fde2e4,stroke:#c0392b,color:#000
+    classDef tool fill:#d6eaf8,stroke:#2874a6,color:#000
 ```
 
 Full fixture, including the bare-class fallback and a reasoning-dependent `dal:EquivalentClassScope`
@@ -5506,9 +6481,10 @@ ex:OrderBoundaryProfile a dal:AggregateBoundaryProfile ;
 
 ```mermaid
 flowchart LR
-    O["ex:Order (root)"] -- "ex:lineItem<br/>owned" --> L["line item"]
-    L -- "ex:sku<br/>a value" --> S["sku value"]
-    O -- "ex:customer<br/>reference" --> C["customer (stays)"]
+    O["ex:Order, the root"]:::data -- "ex:lineItem<br/>owned" --> L["line item"]:::data
+    L -- "ex:sku<br/>a value" --> S["sku value"]:::data
+    O -- "ex:customer<br/>reference" --> C["customer, stays"]
+    classDef data fill:#d5f5e3,stroke:#1e8449,color:#000
 ```
 
 Deleting the order deletes its own triples (including the edge to the customer), the line items' triples,
@@ -5593,15 +6569,16 @@ ex:ClaimantReceipts a dal:DataAccessProfile ;
 ```
 
 ```mermaid
-flowchart TB
-    S["ex:ClaimantEntity<br/>a dal:ClassScope"]
-    I1["entity IRI:<br/>surrogate claimed"] --> S
-    U["email unique per tenant,<br/>keyed claim, scheme v1"] --> S
-    I2["events:<br/>position derived, witness required"] --> S
-    EP["epoch:<br/>external high-water mark, dataset guard,<br/>erasure register replayed on restore"] --> S
-    PR["privacy:<br/>personal data, graph drop, erasure wins"] --> S
-    RC["receipts:<br/>receipt only, per subject"] --> S
+flowchart LR
+    I1["entity IRI<br/>surrogate claimed"]:::author --> S
+    U["email unique per tenant<br/>keyed claim, scheme v1"]:::author --> S
+    I2["events<br/>position derived, witness required"]:::author --> S
+    EP["epoch<br/>external high-water mark, dataset guard,<br/>erasure register replayed on restore"]:::author --> S
+    PR["privacy<br/>personal data, graph drop, erasure wins"]:::author --> S
+    RC["receipts<br/>receipt only, per subject"]:::author --> S
+    S["ex:ClaimantEntity<br/>a dal:ClassScope"]:::author
     I1 -. "dal:claimsConstraint" .-> U
+    classDef author fill:#fde2e4,stroke:#c0392b,color:#000
 ```
 
 Why each piece is what it is:

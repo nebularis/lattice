@@ -4,7 +4,7 @@
 
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice H2.11 ([plan §4.19](../plans/formal-methods-track-h.md#419-h211-the-persistence-readme-as-a-literate-specification-planned-2026-10-20)),
 after H2.9 and the rest of Track H's H2 work
-**Status:** sketch, 2026-10-20. RL-Q1 to RL-Q7 decided by the maintainer the same day (§6). Ready to build after H2.9
+**Status:** sketch, 2026-10-20. RL-Q1 to RL-Q7 decided by the maintainer the same day (§6). H2.11a and H2.11b built 2026-10-21, awaiting review
 **Builds on:** [ADR-A126](../../architecture/decisions/ADR-A126-literate-specification-layout-and-grammar.md) (the layout and the section 6
 grammar), [ADR-A127](../../architecture/decisions/ADR-A127-published-architecture-decisions.md) (what a user-facing document may cite),
 [literate specifications](../../architecture/literate-specifications.md), the Eligibility migration (OD6) and Vocabulary's (OD7) of the

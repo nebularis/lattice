@@ -1640,6 +1640,9 @@ spec has no restriction row, and the migration check failed naming the triple.
 Probe: a diagram with a syntax error (the render check fails), a narrative paragraph citing a working document (the sources check fails).
 `FMH-H2-11b`. About 300k tokens.
 
+**Built 2026-10-21** ([FMH-H2-11b](../validation/FMH-H2-11b.md)), awaiting review. The new subsections are 5.13 (the running case) and 5.14 (gotchas), and the
+cross references are 5.15. The migration check passes with the same 137 reconciliations, both probes failed as expected, and D-64 is closed.
+
 ### 4.16 Order, from 2026-10-20
 
 H2.6d, then H2.6e, then H2.6f, one at a time since they touch the same code. W-65 and AIR-66 touch other modules and may run beside them.

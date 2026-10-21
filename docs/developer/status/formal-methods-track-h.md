@@ -4,7 +4,7 @@
 
 **Unit ID:** `formal-methods-track-h` (phase, within the `formal-methods` epic)
 **Status:** In progress. H1 (H1.1 to H1.5, with H1.4c), the aggregate-ownership slices HO0 to HO9 and H2.0 to H2.3 are merged to `main` and signed off (H1 and HO 2026-10-10, H2.0 to H2.3 2026-10-12). H2.4a and H2.4b are built and reviewed, and every decision in their Validation Packs is taken (2026-10-13), awaiting the maintainer's merge with the triple-store record. ADR-A123 is accepted with five addenda, ADR-A124 and ADR-A125 are accepted. H2.5 and H2.6 are built (2026-10-13). Every decision of H2.5 is taken, and the maintainer approved H2.6 on 2026-10-13 with three design questions open (RQ4 to RQ6), awaiting the merge. H2.6b's event half is built, approved and merged to `main` (2026-10-14), with its six regenerated expected profiles re-approved and the change to `test_ho6_t14` countersigned. Its ADR-A123 addendum is a draft. Its patch-log half is held (H-D33).
-**Last updated:** 2026-10-21 (H2.9 and H2.11a built)
+**Last updated:** 2026-10-21 (H2.9, H2.11a and H2.11b built)
 **Plan:** [formal-methods-track-h.md](../plans/formal-methods-track-h.md)
 **Sketches:** [formal-methods-track-h.md](../sketches/formal-methods-track-h.md) (main),
 [formal-methods-track-h-protocols.md](../sketches/formal-methods-track-h-protocols.md),
@@ -88,11 +88,13 @@ the same day). **Paused 2026-10-20 at the maintainer's request.** Next:
    [sketch](../sketches/persistence-readme-literate.md)): the Persistence README in the ADR-A126 layout, the one source of both spec
    documents and both shapes files, graph for graph. `check:literate-migration` passes with 137 reconciled differences (10 header
    lines, 85 drafted definitions, 21 rewritten comments), TD-01 is closed, and the class diagram is too wide to read (D-59, a split is
-   proposed). Fifteen decisions taken alone (D-50 to D-64). **H2.11b** (the narrative, the pictures, the gotchas) is next, and waits for
-   the review. RL-Q1 to RL-Q7 are decided, and RL-Q3's prerequisite is met.
-3. **Before the merge into `main`:** TD-63, one minor version bump (TD-64), the maintainer's re-approval of the expected profiles and
+   proposed). Fifteen decisions taken alone (D-50 to D-64). RL-Q1 to RL-Q7 are decided, and RL-Q3's prerequisite is met.
+3. **H2.11b, built 2026-10-21, awaiting the maintainer's review** ([FMH-H2-11b](../validation/FMH-H2-11b.md)): the Persistence README told through its examples,
+   a running case in eight steps (§5.13), pictures of each kind of write, three sequence diagrams and the rest, 14 gotchas (§5.14), and the palette on all 49 diagrams.
+   No graph changed (the migration check reports the same 137 reconciled differences). D-64 is closed. Two decisions taken alone (D-65, D-66).
+4. **Before the merge into `main`:** TD-63, one minor version bump (TD-64), the maintainer's re-approval of the expected profiles and
    countersignature of the changed tests listed in each Validation Pack.
-4. **Owed later:** the idealised in-place benchmark once TD-42 is fixed (recorded on TD-42).
+5. **Owed later:** the idealised in-place benchmark once TD-42 is fixed (recorded on TD-42).
 
 ## Slices
 
@@ -133,7 +135,7 @@ the same day). **Paused 2026-10-20 at the maintainer's request.** Next:
 | H2.8c (edges once, faster `members`, record classes, member parts) | **signed off 2026-10-20**, with decisions, expected profiles and changed tests approved. [Validation Pack](../validation/FMH-H2-8c.md), [plan §4.18](../plans/formal-methods-track-h.md#418-h28c-the-follow-ups-of-the-h26-and-h28-reviews-planned-2026-10-20). TD-68 closed, TD-67 narrowed | the merge |
 | H2.9 (Mustache retired, D-12 (a), goldens keyed by operation) | **built 2026-10-21, awaiting the maintainer's review.** [Validation Pack](../validation/FMH-H2-9.md), [plan §4.15](../plans/formal-methods-track-h.md#415-h29-mustache-retired-planned-2026-10-20). No expected profile changed. D-42 to D-49 for ratification | the review |
 | H2.11a (the Persistence README as a literate specification, graph for graph) | **built 2026-10-21, awaiting the maintainer's review.** [Validation Pack](../validation/FMH-H2-11a.md), [plan §4.19](../plans/formal-methods-track-h.md#419-h211-the-persistence-readme-as-a-literate-specification-planned-2026-10-20). 137 reconciled differences, `check:persistence` 4258 passed, 1 xfailed, `check:persistence-oxigraph` 368 passed. TD-01 closed. D-50 to D-64 for ratification | the review |
-| H2.11b (the narrative, the pictures, the gotchas) | **planned** 2026-10-20, [plan §4.19](../plans/formal-methods-track-h.md#419-h211-the-persistence-readme-as-a-literate-specification-planned-2026-10-20) | H2.11a's review, and D-59's split |
+| H2.11b (the narrative, the pictures, the gotchas) | **built 2026-10-21, awaiting the maintainer's review.** [Validation Pack](../validation/FMH-H2-11b.md), [plan §4.19](../plans/formal-methods-track-h.md#419-h211-the-persistence-readme-as-a-literate-specification-planned-2026-10-20). No graph changed, 49 diagrams render in two themes. D-65 and D-66 for ratification | the review, and D-59's split |
 | H2.7 (vocabulary and emission) | **planned** 2026-10-14, [plan §4.7](../plans/formal-methods-track-h.md#47-h27-the-vocabulary-and-the-compilers-emission-planned-2026-10-14) | H2.7-Q1 to Q4, and H2.6b's merge |
 | H2.8 (typed payload, caller checks) | **planned** 2026-10-14, [plan §4.8](../plans/formal-methods-track-h.md#48-h28-the-typed-payload-and-the-caller-side-checks-planned-2026-10-14) | H2.8-Q1 to Q3, and H2.7's merge |
 | H3 (specification registry) | not started, outlined in the plan | H2 preferred first (smaller, more self-contained), not a hard blocker |
@@ -822,7 +824,10 @@ the same day). **Paused 2026-10-20 at the maintainer's request.** Next:
 | D-61 | H2.11a | comments in the two hidden shape blocks are edited, which changes no graph, and the generated shapes files open with the SPDX header | FMH-H2-11a |
 | D-62 | H2.11a | the release notes class each change by its effect on a graph valid under the previous release, with the branch's changes in one "Unreleased" entry | FMH-H2-11a |
 | D-63 | H2.11a | the README's Open Issues lists seven items, none naming a debt row or a working document | FMH-H2-11a |
-| D-64 | H2.11a | `ontology/persistence/docs/*.md` still link the sketches, and the README links both | FMH-H2-11a |
+| D-64 | H2.11a | `ontology/persistence/docs/*.md` still link the sketches, and the README links both. **Closed in H2.11b**, the links are rewritten out | FMH-H2-11a, FMH-H2-11b |
+| D-65 | H2.11b | a sequence diagram carries the palette as translucent `rect` phases, a class diagram as `style` lines, and every subgraph box has no fill, since mermaid has no class for them and the default cluster fill would read as the receipts colour | FMH-H2-11b |
+| D-66 | H2.11b | the new subsections are 5.13 and 5.14 and the cross references moved to 5.15, since nothing cites 5.13 | FMH-H2-11b |
+| D-67 | H2.11b | two §6 definitions still described the Mustache templates H2.9 retired (`dal:GeneratedOperation`, `dal:ParameterBinding`), and the compiler diagram of §4 had a "select named templates" step. Both definitions are rewritten to name the builder, as four reconciliation lines in a fourth group of the H2.11a file (141 in all), and the diagram step reads "select a builder per operation". Three stale anchors in `tools/persistence/README.md` are repointed to §5.6.1, §5.6.10 and §5.6.11 | FMH-H2-11b |
 - 2026-10-21: H2.9 built autonomously ([FMH-H2-9](../validation/FMH-H2-9.md)). The templates, `render.py`, `chevron` and the equivalence harness are gone, every
   operation is rendered from its builder, the template id has no suffix in memory, the goldens are keyed by operation, the receipt-only composite writes are
   deleted and `dal:SnapshotPerRevision` is refused on an in-place composite family (TD-46 narrowed), S-3 reads the declared parameters, and the injection corpus
@@ -833,6 +838,12 @@ the same day). **Paused 2026-10-20 at the maintainer's request.** Next:
   `f25008b2` but for 137 reconciled differences (the header, 85 drafted definitions, 21 rewritten comments). It cites only published decisions and no working
   document, and a changed domain makes the migration check fail naming the triple. TD-01 is closed. The class diagram is too wide to read (D-59). D-50 to D-64
   are for the maintainer. Paused.
+- 2026-10-21: H2.11b built autonomously ([FMH-H2-11b](../validation/FMH-H2-11b.md)). The Persistence README has a running case in eight steps, pictures of each
+  kind of write, a race, a retry and a stale seq, 14 gotchas and one palette on all 49 diagrams, each rendered with mermaid 10.9.1 in both themes. No graph changed
+  (137 reconciled differences as before), D-64 is closed, and D-65 and D-66 are for the maintainer. Paused.
 - 2026-10-21: the maintainer approved D-42 (the receipt-only composite tests ported to the patch-log variants, not removed) and D-44 (the builder
   goldens re-recorded once from one canonical context), and asked us to carry on with H2.11a and H2.11b.
+- 2026-10-21: in our review of H2.11b, two definitions that still named the retired templates are rewritten (D-67), so the migration check now
+  reconciles 141 differences against `f25008b2`. Every check passes and all 50 diagrams render in the light and dark themes. Track H's planned
+  H2 slices are built. Paused for the maintainer's review.
 

@@ -2,7 +2,7 @@
 
 # Aggregate Boundary Design
 
-Written for a reader who has not read [the legacy sketch](../../../docs/developer/sketches/persistence-profile-substrate.md)'s Part 4. The decisions are [ADR-A122](../../../docs/architecture/decisions/ADR-A122-aggregate-ownership.md), which amends [ADR-A78](../../../docs/architecture/decisions/ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md) decision 4, and the normative detail is [the design sketch](../../../docs/developer/sketches/persistence-aggregate-ownership.md). The [patterns guide](../../../docs/architecture/rdf-sparql-patterns-guide.md)'s Part V explains the write itself.
+Written for a reader new to the module. The decisions are [ADR-A122](../../../docs/architecture/decisions/ADR-A122-aggregate-ownership.md), which amends [ADR-A78](../../../docs/architecture/decisions/ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md) decision 4, and the [README](../README.md#561-aggregate-boundary) shows the boundary at work. The [patterns guide](../../../docs/architecture/rdf-sparql-patterns-guide.md)'s Part V explains the write itself.
 
 ## Only the adopter can say what an aggregate is
 
@@ -94,7 +94,7 @@ A named graph is `dal:graphIriTemplate` with `{id}` replaced by the whole root I
 
 ## Concurrency
 
-Every write to an aggregate meets every other on the root's version row. That is correct, and it conflicts more than strictly necessary: a deep edit and a root edit need not contend. Finer version rows per owned node, and edits below the root, were considered and are not built. The rules they would need are recorded in [the design sketch](../../../docs/developer/sketches/persistence-aggregate-ownership.md#11-deferred-units-and-level-operations). They return if contention on a root's row is measured, or a domain invariant needs per-level edits.
+Every write to an aggregate meets every other on the root's version row. That is correct, and it conflicts more than strictly necessary: a deep edit and a root edit need not contend. Finer version rows per owned node, and edits below the root, were considered and are not built. Their rules are not designed. They return if contention on a root's row is measured, or a domain invariant needs per-level edits.
 
 ## Boundary conflicts
 

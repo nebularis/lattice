@@ -274,7 +274,7 @@ dal:FullMembership a dal:MembershipEncoding ;
     rdfs:comment "The default. Each new version lists every member under the domain's own membership property, so a version is readable alone and a domain shape validates the stored data directly." .
 
 dal:GeneratedOperation a owl:Class ;
-    rdfs:comment "One operation (create, cas-replace, tombstone, ...) selected for a target: which template, which parameters to mix into it, and its contract (§10a)." .
+    rdfs:comment "One operation (create, cas-replace, tombstone, ...) selected for a target, with the builder that renders it, the parameters bound into it and its contract." .
 
 dal:GlobalDenseCounter a dal:DatasetTierModel ;
     rdfs:comment "Affordable only on genuinely single-writer backends." .
@@ -453,7 +453,7 @@ dal:OwnershipKind a owl:Class ;
     rdfs:comment "How the aggregate stands to the node at the far end of an edge in a dal:boundaryShape tree. One of dal:Owned, dal:Reference, dal:Vocabulary." .
 
 dal:ParameterBinding a owl:Class ;
-    rdfs:comment "A reified, typed parameter binding mixed into a template's Mustache slots at instantiate time. Modelled on mrk:ParameterBinding (paramName/paramType/paramValue)." .
+    rdfs:comment "A reified, typed parameter binding that instantiate binds into the text a builder renders. Modelled on mrk:ParameterBinding (paramName/paramType/paramValue)." .
 
 dal:ParameterDeclaration a owl:Class ;
     rdfs:comment "One request-time parameter of a generated operation: its name, its kind and whether it is required. Its IRI is minted from the target, the operation and the name." .
