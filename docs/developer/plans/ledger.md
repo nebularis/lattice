@@ -4,9 +4,9 @@
 
 **Unit ID:** `ledger`
 **Status:** proposed 2026-10-19, amended 2026-10-21 (two phases, exactness, LG-Q6 to LG-Q8). LG-Q1 to
-LG-Q8 answered 2026-10-21. LG-0 to LG-2 briefed below. ADR-A131 awaits the maintainer's acceptance.
+LG-Q8 answered 2026-10-21. LG-0 to LG-2 briefed below. ADR-A131 and ADR-A01's 2026-10-19 addendum accepted 2026-10-21.
 **ADRs:** [ADR-A131](../../architecture/decisions/ADR-A131-ledger-layer.md) and ADR-A01's 2026-10-19
-addendum, both Proposed
+addendum, both Accepted 2026-10-21
 **Sketches:** [evaluation context](../sketches/evaluation-context.md) §5 (the ledger in outline),
 [contract amounts](../sketches/contract-amounts.md) (the requirements), the
 [history and versioning sketch](../sketches/persistence-history-and-versioning.md) §6.1 (the account
@@ -35,6 +35,44 @@ Out of scope:
   conformance cases (ADR-A131 decision 9), and run by CCS C12. Draws at one position follow
   decision 6's two phases, which LG-2 states.
 - **Order between instruments.** That is Ensemble's (ADR-A130).
+
+## What Ledger is for, and what it is not
+
+Added 2026-10-21 at the maintainer's question: does Ledger also track observed values, such as a
+stock price, a temperature anomaly, a renewable share or a ground station's wind speed?
+
+**No.** Ledger holds amounts that are **consumed and restored**, and so **conserved**. Every balance
+is the stated amount less what was drawn plus what was restored. That law is what makes balances
+cheap (a fold of postings), provable (path debit, conservation) and parallel (two phases). It holds
+only for quantities whose parts add up to the whole, which Quantification calls extensive, and which
+permit sum and difference. The unit of account need not be money. Seats, support hours, megawatt
+hours, tonnes of emissions allowed under a carbon budget and certificates surrendered are all
+extensive.
+
+An observed value is a different thing. A temperature, a percentage share, a wind speed or a price is
+intensive: two readings do not add, nothing draws on them, and nothing restores them. A later reading
+replaces nothing either, it is another fact at another time, and providers revise readings, so the
+history matters.
+
+| Thing | Example | Where it lives | Its law |
+|---|---|---|---|
+| a consumed and restored amount | a limit, a commitment, a seat quota, a carbon budget | Ledger (an account) | conservation: the balance is the fold of its postings |
+| an observed value | warming above a baseline, a renewable share, a wind speed at a station, an index level | an outside fact with its source and time (ADR-A130's Instrument hook, IR-Q4), in a Quantification value space | none to conserve. A reading is evidence, and a revised reading supersedes it with both kept |
+| a condition over observed values | above 1.5 degrees for a year, a share at or above a target, a gust above a speed within 72 hours | Eligibility, with the vehicles sketch's forms over time (count in a window, sustained for a duration, sequence) | three-valued, a missing reading is Undetermined |
+| a state over time | a transition instrument's phases, a threshold regime partitioning a reading or a balance | Behaviour | its transition laws |
+| what the instrument pays | a graduated payout by wind speed, a step-up in margin | combinators over values, then a draw on a Ledger account | the payout is computed, then posted |
+
+So a climate transition instrument uses all of them. Its trigger (a degree of warming, a renewable
+share meeting a target) is a condition over observed facts, possibly through a Behaviour regime. What
+it pays or adjusts is computed, and where an amount is drawn against a limit or a budget, that is a
+Ledger posting. A parametric wind cover works the same way, with the station's reading as the fact
+and the policy limit as the account.
+
+**One abstraction each, no overlap.** The performance choice of ADR-A131 decision 4, a value carried
+as a literal in a value space its definition declares, applies to observed facts in the same way and
+is not Ledger's own: it is a pattern for any record of a value. How observed facts are recorded is
+ES-2's Instrument hook, and its conditions over time are the vehicles sketch's RV-1 (phase 7's
+AIR-7.3).
 
 ## Principles
 
@@ -170,6 +208,7 @@ per example.
 | `refusal-unit.ttl` | Refused: a child account in a different unit of account from its parent | shape |
 | `refusal-overdraw.ttl` | Under `ldg:Refuse`, two proposals exceeding availability: a merge record with no grant and a reason, and no posting | 6 |
 | `refusal-proportional-unrounded.ttl` | Refused: a proportional account with no rounding method | shape |
+| `refusal-intensive-unit.ttl` | Refused: an account whose unit of account is a temperature, an intensive value space | shape |
 
 | ID | Given / When / Then | Level | +/- |
 |---|---|---|---|
@@ -196,7 +235,9 @@ tree, before any runtime record exists.
    cites runs in this slice.
 2. The configuration terms and the vocabulary above, extracted from the README.
 3. Shapes (`ontology/ledger/shapes/`): cardinalities as in the table, no cycle through `ldg:partOf`
-   (SHACL-SPARQL, following ADR-A128's rules), a child's unit of account equal to its parent's, a
+   (SHACL-SPARQL, following ADR-A128's rules), a child's unit of account equal to its parent's, a unit of
+   account whose additivity is `qnt:Extensive` and whose operation capabilities include `qnt:Sum` and
+   `qnt:Difference` ("What Ledger is for"), a
    proportional rule with a rounding method and a residual allocation, a credit ceiling not below the
    stated amount, a key dimension that is a scheme or a value space.
 4. `ledger` in the root catalogue after `quantification`, so `check:import-guard` enforces its imports.
@@ -211,6 +252,7 @@ tree, before any runtime record exists.
 | LG1-03 | `refusal-cycle.ttl` / validated / fails the cycle shape, by name | L3 | - |
 | LG1-04 | `refusal-unit.ttl` / validated / fails the unit shape | L3 | - |
 | LG1-05 | `refusal-proportional-unrounded.ttl` / validated / fails the rounding shape | L3 | - |
+| LG1-05b | an account definition in an intensive value space, for example a temperature / validated / fails the additivity shape | L3 | - |
 | LG1-06 | the import guard / run / Ledger imports only Foundation, Vocabulary and Quantification | L1 | + |
 | LG1-07 | the spec / grep / no term of Party, Eligibility, Wording, Instrument or Behaviour | L1 | + |
 | LG1-08 | the README / `check:published-decisions` / passes | L1 | + |

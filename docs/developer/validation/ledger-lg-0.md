@@ -25,7 +25,7 @@ mise run check
 
 ## Artefacts to inspect
 
-`ontology/ledger/examples/`: nine files, each with its hand-computed table.
+`ontology/ledger/examples/`: ten files, each with its hand-computed table.
 
 ## Deliberate non-coverage
 

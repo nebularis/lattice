@@ -335,8 +335,8 @@ sets, which are configuration.
 
 | # | Question | Options | Leaning |
 |---|---|---|---|
-| **NE-Q1** | What an outside rule is | (a) encoded provisions stated as terms, reaching an instrument by operation of law. (b) a norm of its own kind. (c) defaults built into layers | (a). No second semantics, every core runs it |
-| **NE-Q2** | How one is chosen | (a) a resolution modelled on ADR-A85: governing law, applicability time, later interpretation, recorded on every decision. (b) authored per instrument | (a). It is A-110's narrowest form, and authoring per instrument restates the law in every contract |
+| **NE-Q1** | What an outside rule is | (a) encoded provisions stated as terms, reaching an instrument by operation of law. (b) a norm of its own kind. (c) defaults built into layers | **Answered 2026-10-21, as leaned:** (a). No second semantics, every core runs it |
+| **NE-Q2** | How one is chosen | (a) a resolution modelled on ADR-A85: governing law, applicability time, later interpretation, recorded on every decision. (b) authored per instrument | **Answered 2026-10-21, as leaned:** (a). It is A-110's narrowest form, and authoring per instrument restates the law in every contract |
 | **NE-Q3** | Precedence | (a) two families, meaning and resource, one mechanism each. (b) one mechanism for all five. (c) as today, separately | **Answered 2026-10-21, as leaned:** (a). Meaning compiles to stratified negation, resource to the order of draws, and they answer different questions |
 | **NE-Q4** | Acyclicity | (a) one graph with edge kinds, one builder, one lemma. (b) four checks | **Answered 2026-10-21, as leaned:** (a) |
 | **NE-Q5** | Absence across instruments | (a) a producer's negative fact carries its closure. (b) the receiver closes over the producer's data | **Answered 2026-10-21, as leaned:** (a). It keeps closures with their authority, and keeps decision 12 |

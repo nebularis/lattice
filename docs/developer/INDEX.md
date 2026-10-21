@@ -719,11 +719,11 @@ ontology (REL-Q1 to REL-Q6 answered 2026-10-19, REL-Q2a open), and
 
 | Field | Value |
 |-------|-------|
-| **Status** | 📝 Plan proposed 2026-10-19, no slice briefed. ADR-A131, amended 2026-10-21, and ADR-A01's 2026-10-19 addendum Proposed |
+| **Status** | 📝 Plan proposed 2026-10-19, no slice briefed. ADR-A131 and ADR-A01's 2026-10-19 addendum Accepted 2026-10-21. LG-0 to LG-2 briefed |
 | **Unit ID** | `ledger` |
 | **Sketches** | [evaluation-context.md](sketches/evaluation-context.md) §5, [contract-amounts.md](sketches/contract-amounts.md), [persistence-history-and-versioning.md](sketches/persistence-history-and-versioning.md) §6.1 |
 | **Plan** | [ledger.md](plans/ledger.md) |
-| **ADRs** | [A-131](../architecture/decisions/ADR-A131-ledger-layer.md), Proposed |
+| **ADRs** | [A-131](../architecture/decisions/ADR-A131-ledger-layer.md), Accepted |
 
 A substrate layer above Quantification for amounts consumed and restored over time: account trees,
 postings, balances and merge rules. Behaviour's allowances become a shorthand for it. Slices LG-0 to

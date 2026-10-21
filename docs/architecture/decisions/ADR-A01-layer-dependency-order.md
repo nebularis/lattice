@@ -116,7 +116,7 @@ Instrument and Behaviour runtime
 
 ## Addendum (2026-10-19): Ledger above Quantification
 
-**Status:** Proposed, with [ADR-A131](ADR-A131-ledger-layer.md).
+**Status:** Accepted 2026-10-21, with [ADR-A131](ADR-A131-ledger-layer.md).
 
 With the 2026-10-18 addendum, the dependency order becomes:
 

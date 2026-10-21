@@ -36,7 +36,7 @@ its own idiom, and engines that derive from the semantics, which are a deploymen
 |---|---|---|
 | three kinds of engine around the evaluator: semantic cores, derived engines, services | 2026-10-21 | note §19 |
 | conditions SC1 to SC6 for several semantic cores, including at most one hand-written semantic core at a time, the rest generated | 2026-10-21 | note §19. This answers EV-Q1 in principle. EV-3's ADR records it |
-| X1 to X10 in ADR-A130 and ADR-A131 (Proposed) | 2026-10-21 | note §19 |
+| X1 to X10 in ADR-A130 (Proposed) and ADR-A131 (Accepted) | 2026-10-21 | note §19 |
 | EV-Q11, the terms digest: computed once, where the RDF lives, over the RDFC-1.0 canonical form of a version's bound terms, with a declared list of term kinds left out, and carried by the codec as a string | 2026-10-21 | note §18. Built in EV-9 |
 
 ## Slices

@@ -131,7 +131,7 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-128](ADR-A128-efficient-queries-and-shapes.md) | Efficient queries and shapes | Proposed, 2026-10-17 |
 | [A-129](ADR-A129-one-release-for-the-substrate.md) | One release for the substrate and standalone ontologies | Published |
 | [A-130](ADR-A130-ensemble-layer.md) | Ensemble, a substrate layer for relations between instruments | Proposed |
-| [A-131](ADR-A131-ledger-layer.md) | Ledger, a substrate layer for amounts consumed and restored over time | Proposed |
+| [A-131](ADR-A131-ledger-layer.md) | Ledger, a substrate layer for amounts consumed and restored over time | Accepted |
 
 **The `A-FM` block.** ADR-A-FM1 and its successors are the `formal-methods` epic's own ADRs,
 filed outside the main sequential pool for the same reason `A-CAP` and `A-C` are: this epic's

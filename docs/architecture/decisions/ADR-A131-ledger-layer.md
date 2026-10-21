@@ -2,7 +2,7 @@
 
 # ADR-A131: Ledger, a substrate layer for amounts consumed and restored over time
 
-**Status:** Proposed, 2026-10-19
+**Status:** Accepted, 2026-10-21 (proposed 2026-10-19)
 **Date:** 2026-10-19
 **Supersedes:** none
 **Related:** [ADR-A01](ADR-A01-layer-dependency-order.md) (the layer order, amended by its
@@ -221,4 +221,5 @@ options. At design closure the same day we added the stated edge for "in additio
 account, and keyed accounts and other value spaces as questions LG-Q7 and LG-Q8 (decision 3). The
 maintainer answered LG-Q1 to LG-Q8 the same day, as the plan leaned, and asked that every choice be
 checked for its cost at runtime. Decision 3 then states keyed accounts, conversion and purposes, and
-decision 4 carries a posting's amount as a literal in the unit of account.
+decision 4 carries a posting's amount as a literal in the unit of account. The maintainer accepted
+this ADR, with ADR-A01's 2026-10-19 addendum, on 2026-10-21.
