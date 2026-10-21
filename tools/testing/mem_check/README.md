@@ -5,9 +5,9 @@
 How much memory this machine has available, and how many test workers fit in it, for LATTICE's test suites
 ([ADR-A125](../../../docs/architecture/decisions/ADR-A125-test-support-tooling.md)). Standard library only.
 
-A suite that runs its tests in parallel measures what one worker needs at its peak, and asks `mem_check.workers` for a count. When
-the count the suite would use fits in what is available less a reserve of 1 GiB, it is kept. Otherwise the suite runs on two workers,
-which takes longer and stays within memory, for example on an 8 GB machine with an editor open.
+A suite that runs its tests in parallel measures what one worker needs at its peak, and asks `mem_check.workers` for a count. It gets
+as many workers as fit in what is available less a reserve of 1 GiB, up to the count it would use anyway and never fewer than two. A
+short machine, for example 8 GB with an editor open, runs fewer workers, which takes longer and stays within memory.
 
 ```python
 import mem_check
@@ -39,4 +39,5 @@ def pytest_xdist_auto_num_workers(config):
 
 `tools/persistence/tests/conftest.py` is the first suite to do so.
 
-`mise run bootstrap:testing-mem-check` installs it, and `mise run check:testing-mem-check` runs its tests.
+`mise run bootstrap` installs it (or `mise run bootstrap:testing-mem-check` alone), and `mise run check:testing-mem-check` runs its
+tests.

@@ -20,8 +20,8 @@ PER_WORKER = 700 * 1024 ** 2
 
 
 def pytest_xdist_auto_num_workers(config):
-    """What ``-n auto`` means for this suite. ``PYTEST_XDIST_AUTO_NUM_WORKERS`` decides when it is set. Otherwise mem_check keeps the
-    machine's count when the workers fit in the memory available, and drops to two when they do not (ADR-A125)."""
+    """What ``-n auto`` means for this suite. ``PYTEST_XDIST_AUTO_NUM_WORKERS`` decides when it is set. Otherwise mem_check gives as many
+    workers as fit in the memory available, up to the machine's count and never fewer than two (ADR-A125)."""
     if os.environ.get("PYTEST_XDIST_AUTO_NUM_WORKERS"):
         return None
     try:
@@ -63,12 +63,33 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "oxigraph: runs on Oxigraph, the default engine (needs tools/testing/oxigraph, mise run bootstrap:testing-oxigraph)")
     config.addinivalue_line("markers", "rdflib: runs on rdflib, which PERSISTENCE_ENGINES must name (check:persistence-conformance does)")
     config.addinivalue_line("markers", "conformance: its subject is one engine's behaviour, not the generated SPARQL. check:persistence leaves it out and check:persistence-conformance runs it")
+    if os.environ.get("PERSISTENCE_ENGINES_REQUIRED"):
+        _require_engines_and_mem_check()
+
+
+_PACKAGES = {"oxigraph": ("lattice_testing_oxigraph", "bootstrap:testing-oxigraph")}
+
+
+def _require_engines_and_mem_check() -> None:
+    """The check tasks set ``PERSISTENCE_ENGINES_REQUIRED``, so an engine they name, or mem_check, that is not installed stops the run
+    instead of its cases being skipped. A run by hand still skips them. The tasks install nothing themselves, ``mise run bootstrap`` does."""
+    import importlib.util
+
+    import engines
+
+    names = [p.values[0] if hasattr(p, "values") else p for p in engines.ENGINES]
+    missing = [_PACKAGES[n] for n in names if n in _PACKAGES and importlib.util.find_spec(_PACKAGES[n][0]) is None]
+    if importlib.util.find_spec("mem_check") is None:
+        missing.append(("mem_check", "bootstrap:testing-mem-check"))
+    if missing:
+        raise pytest.UsageError("not installed: " + ", ".join(m for m, _ in missing) + ". Run mise run bootstrap, or "
+                                + ", ".join(f"mise run {t}" for _, t in missing))
 
 
 @pytest.fixture(params=__import__("engines").ENGINES)
 def engine(request):
     """The engine a test that opts in with ``engines.each_engine`` runs on, one of the names ``PERSISTENCE_ENGINES`` gives (Oxigraph when
-    it is unset). Oxigraph cases skip where it is absent (``mise run bootstrap:testing-oxigraph``, which ``check:persistence`` depends on)."""
+    it is unset). Oxigraph cases skip where it is absent in a run by hand. The check tasks stop instead (``_require_engines_and_mem_check``)."""
     import engines
 
     if request.param == "oxigraph":

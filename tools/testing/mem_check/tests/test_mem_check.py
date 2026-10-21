@@ -11,16 +11,18 @@ def test_mc_t1_the_default_count_is_kept_when_it_fits():
     assert mem_check.workers(8, 500 * MIB, available=8 * GIB) == 8
 
 
-def test_mc_t2_a_short_machine_drops_to_two_workers():
+def test_mc_t2_a_short_machine_runs_as_many_workers_as_fit():
+    assert mem_check.workers(8, 700 * MIB, available=4 * GIB) == 4
     assert mem_check.workers(8, 700 * MIB, available=3 * GIB) == 2
 
 
 def test_mc_t3_the_reserve_counts_against_what_is_available():
-    assert mem_check.workers(4, GIB, available=4 * GIB) == 2
+    assert mem_check.workers(4, GIB, available=4 * GIB) == 3
     assert mem_check.workers(4, GIB, available=5 * GIB) == 4
 
 
-def test_mc_t4_the_low_count_never_exceeds_the_default():
+def test_mc_t4_never_fewer_than_two_and_never_more_than_the_default():
+    assert mem_check.workers(8, GIB, available=0) == 2
     assert mem_check.workers(1, GIB, available=0) == 1
 
 

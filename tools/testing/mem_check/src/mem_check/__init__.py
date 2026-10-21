@@ -5,7 +5,7 @@
 
 A suite that runs in parallel asks for a worker count, given what one worker needs at its peak. When the machine has room for
 the count it would use anyway, the suite keeps it. When it is short, for example with an editor and other tools open on an
-8 GB machine, the suite drops to two workers, which takes longer and stays within memory.
+8 GB machine, the suite runs as many workers as fit, and never fewer than two, which takes longer and stays within memory.
 
 Standard library only. "Available" is what the operating system can give a new process without swapping: on macOS the free,
 inactive, speculative and purgeable pages that ``vm_stat`` reports, on Linux ``MemAvailable`` from ``/proc/meminfo``, and on
@@ -89,14 +89,16 @@ def available_bytes() -> int | None:
 
 
 def workers(default: int, per_worker: int, *, reserve: int = RESERVE, low: int = LOW_WORKERS, available: int | None = None) -> int:
-    """``default`` workers when they fit in what is available less ``reserve``, otherwise ``low`` (never more than ``default``).
+    """The largest count up to ``default`` whose workers fit in what is available less ``reserve``, and never fewer than ``low``
+    (or ``default``, if that is smaller).
 
     ``per_worker`` is a suite's own measured peak for one worker process, in bytes. ``available`` is for tests, and is read from
     the machine when absent. An unreadable machine keeps ``default``."""
     free = available_bytes() if available is None else available
-    if free is None or free - reserve >= default * per_worker:
+    if free is None:
         return default
-    return min(default, low)
+    fits = max(0, free - reserve) // max(1, per_worker)
+    return min(default, max(low, fits))
 
 
 def report(default: int, per_worker: int) -> str:

@@ -867,4 +867,9 @@ the same day). **Paused 2026-10-20 at the maintainer's request.** Next:
   memory available, two when the default count does not fit, and the persistence suite uses it. ADR-A125 has a drafted addendum. The
   skills `lattice-testing` and `lattice-lifecycle` make the fast techniques and conformance before a merge the defaults, and
   `python-test-melting` is reopened for TM9 to TM12, every other suite on them. TSD-35 records that Oxigraph refuses a literal as a graph.
+- 2026-10-21: the maintainer accepted the ADR-A125 addendum and the FMH-TS-2 decisions, and chose the graduated rule: `mem_check` gives as
+  many workers as fit, never fewer than two. The check tasks no longer install their test packages on every run. `mise run bootstrap`
+  installs `tools/testing/oxigraph` and `tools/testing/mem_check` (pyoxigraph 0.5.11 joins the lock file), and a check task that finds one
+  missing stops and names the task to run, where a run by hand still skips the Oxigraph cases. The ADR-A126 addendum gains the left to
+  right drawing of a part, and is still drafted, for the maintainer to accept.
 

@@ -37,8 +37,8 @@ description.
 
 Most runs happen on an 8 GB laptop with an editor and other tools open, so a suite must not take more memory than the machine has
 free. `tools/testing/mem_check` (`mise run bootstrap:testing-mem-check`, standard library only, macOS, Linux and Windows) reads what
-is available and `mem_check.workers(default, per_worker)` keeps the default count when the workers fit in it less a 1 GiB reserve,
-and otherwise gives two, which runs longer and smaller. `MEM_CHECK_AVAILABLE_MIB` stands in for the machine. A suite adopts it with
+is available and `mem_check.workers(default, per_worker)` gives as many workers as fit in it less a 1 GiB reserve, up to the default
+count and never fewer than two, which runs longer and smaller. `MEM_CHECK_AVAILABLE_MIB` stands in for the machine. A suite adopts it with
 the hook its README shows, giving its own peak per worker, measured with `-n 0` (`tools/persistence/tests/conftest.py` gives 700 MiB
 from a measured 649 MB). Any other suite that can run short of memory, or that starts more than two workers, may use it the same way.
 

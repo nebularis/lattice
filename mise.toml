@@ -24,7 +24,7 @@ depends = ["bootstrap:python", "bootstrap:frontend"]
 [tasks."bootstrap:python"]
 description = "Install every Python package of the repository into this checkout's .venv in one resolve"
 depends = ["bootstrap:pip"]
-run = "python -m pip install -c requirements-lock.txt \".[reasoning,test]\" -e \"./workers[test,authoring]\" -e ./tools/mork -e \"./tools/mork_compilers[test]\" -e ./tools/surface -e ./packages/persistence/python -e \"./tools/persistence[test]\" -e \"./tools/vocabulary[test]\" -e \"./tools/reference/eligibility[test]\" -e \"./packages/minting/python[test]\""
+run = "python -m pip install -c requirements-lock.txt \".[reasoning,test]\" -e \"./workers[test,authoring]\" -e ./tools/mork -e \"./tools/mork_compilers[test]\" -e ./tools/surface -e ./packages/persistence/python -e \"./tools/persistence[test]\" -e \"./tools/vocabulary[test]\" -e \"./tools/reference/eligibility[test]\" -e \"./packages/minting/python[test]\" -e \"./tools/testing/oxigraph[test]\" -e \"./tools/testing/mem_check[test]\""
 
 # A virtual environment that mise creates with uv has no pip. This puts one in, and does nothing
 # where pip is already there.
@@ -227,15 +227,15 @@ description = "Regenerate the pinned Unicode 16.0 tables from the UCD and fail i
 run = "python packages/minting/tools/generate_ucd_tables.py --check"
 
 [tasks."check:persistence"]
-depends = ["check:persistence-expected-profiles", "bootstrap:testing-oxigraph", "bootstrap:testing-mem-check"]
+depends = ["check:persistence-expected-profiles"]
 description = "Run the persistence profile compiler test suite (resolver, validator, capability, injection corpus, determinism). Oxigraph is the default engine for the tests that run generated SPARQL, and conformance tests (one engine's behaviour, such as rdflib's hash-seed sweeps) run separately in check:persistence-conformance (ADR-A125). Also runs the Oxigraph adapter's own tests. Parallelised by test with -n auto --dist loadgroup (FMH-TS-1): the witness-coverage module is one group, since its tests share one slow corpus run. PYTEST_XDIST_AUTO_NUM_WORKERS sets what auto means, e.g. on a machine whose efficiency cores add nothing"
 run = "python -m pytest tools/testing/oxigraph/tests tools/persistence/tests -q -n auto --dist loadgroup -m \"not conformance\""
+env = { PERSISTENCE_ENGINES_REQUIRED = "1" }
 
 [tasks."check:persistence-conformance"]
-depends = ["bootstrap:testing-oxigraph", "bootstrap:testing-mem-check"]
 description = "Run the persistence tests on every engine we have (rdflib and Oxigraph) and the conformance tests that check:persistence leaves out: the generated SPARQL on rdflib, the hash-seed sweeps and the probes of each engine's behaviour (ADR-A125). Run on demand and before a merge into main, not part of check. A new engine is added to PERSISTENCE_ENGINES here"
 run = "python -m pytest tools/testing/oxigraph/tests tools/persistence/tests -q -n auto --dist loadgroup"
-env = { PERSISTENCE_ENGINES = "rdflib,oxigraph" }
+env = { PERSISTENCE_ENGINES = "rdflib,oxigraph", PERSISTENCE_ENGINES_REQUIRED = "1" }
 
 [tasks."check:persistence-expected-profiles"]
 description = "Check that the expected compiled profiles under ontology/persistence/test/expected-profiles are what the builders and compile give now (formal-methods H2.6). Fails with the names of the stale files. Part of check:persistence"

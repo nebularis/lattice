@@ -141,7 +141,8 @@ that does not use them.
    association range outside the list is drawn as a bare box, and an association arriving from an unlisted
    class is drawn in that class's part. A README draws its diagram whole, in one region with no `"classes"`,
    or in parts that sit in Overview or Detailed Design and between them list every class of section 6. The
-   extractor names a class no part lists. `--check` names each stale region.
+   extractor names a class no part lists. `--check` names each stale region. A part is drawn left to right, which stacks its
+   unlinked classes down the page instead of lining them up across it.
 2. **`**All different.**` joins `**All disjoint.**` and `**Disjoint.**` in 6.5 (amends decision 3).** A
    paragraph naming two individuals or more becomes one `owl:AllDifferent` with `owl:distinctMembers` in the
    order written, in the document its region names, by default the main spec document.
