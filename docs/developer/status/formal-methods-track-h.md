@@ -882,4 +882,7 @@ Left for the maintainer:
   commented out by hand, and still spelt `Behavior` where the released document has used `Behaviour` since 2026-09-20. It now follows the
   document, with its version IRI, and its comments drop the capitals a blanket rename left. The regenerated document differs only in those
   22 comments (no effect). `tools/spc/python/src/spc/ontologies/spc.owl.ttl`, a copy inside the SPC tool, still spells `Behavior`.
+- 2026-10-21: the maintainer confirmed ADR-A129 as recorded: the substrate and standalone modules take one release tag,
+  `ontologies-vX.Y.Z`, and the applied modules keep their own versions and tags under ADR-A86. The maintainer creates the tags
+  `mise run build:ontology-releases` lists once the branch is merged into `main`.
 
