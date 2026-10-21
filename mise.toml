@@ -64,8 +64,18 @@ run = "python -m pip install -e ./packages/persistence/python -e \"./tools/persi
 
 [tasks."bootstrap:testing-oxigraph"]
 depends = ["bootstrap:pip"]
-description = "Install the Oxigraph test-support package (ADR-A125). The default check does not need it"
+description = "Install the Oxigraph test-support package, the default engine of the persistence tests (ADR-A125)"
 run = "python -m pip install -e \"./tools/testing/oxigraph[test]\""
+
+[tasks."bootstrap:testing-mem-check"]
+depends = ["bootstrap:pip"]
+description = "Install mem_check, which says how much memory is available and how many test workers fit in it (ADR-A125). Standard library only"
+run = "python -m pip install -e \"./tools/testing/mem_check[test]\""
+
+[tasks."check:testing-mem-check"]
+depends = ["bootstrap:testing-mem-check"]
+description = "Run mem_check's tests (ADR-A125)"
+run = "python -m pytest tools/testing/mem_check/tests -q"
 
 [tasks."bootstrap:vocabulary"]
 depends = ["bootstrap:pip"]
@@ -217,9 +227,15 @@ description = "Regenerate the pinned Unicode 16.0 tables from the UCD and fail i
 run = "python packages/minting/tools/generate_ucd_tables.py --check"
 
 [tasks."check:persistence"]
-depends = ["check:persistence-expected-profiles"]
-description = "Run the persistence profile compiler test suite (resolver, validator, capability, injection corpus, determinism). Parallelised by test with -n auto --dist loadgroup (FMH-TS-1): the witness-coverage module is one group, since its tests share one slow corpus run. PYTEST_XDIST_AUTO_NUM_WORKERS sets what auto means, e.g. on a machine whose efficiency cores add nothing"
-run = "python -m pytest tools/persistence/tests -q -n auto --dist loadgroup"
+depends = ["check:persistence-expected-profiles", "bootstrap:testing-oxigraph", "bootstrap:testing-mem-check"]
+description = "Run the persistence profile compiler test suite (resolver, validator, capability, injection corpus, determinism). Oxigraph is the default engine for the tests that run generated SPARQL, and conformance tests (one engine's behaviour, such as rdflib's hash-seed sweeps) run separately in check:persistence-conformance (ADR-A125). Also runs the Oxigraph adapter's own tests. Parallelised by test with -n auto --dist loadgroup (FMH-TS-1): the witness-coverage module is one group, since its tests share one slow corpus run. PYTEST_XDIST_AUTO_NUM_WORKERS sets what auto means, e.g. on a machine whose efficiency cores add nothing"
+run = "python -m pytest tools/testing/oxigraph/tests tools/persistence/tests -q -n auto --dist loadgroup -m \"not conformance\""
+
+[tasks."check:persistence-conformance"]
+depends = ["bootstrap:testing-oxigraph", "bootstrap:testing-mem-check"]
+description = "Run the persistence tests on every engine we have (rdflib and Oxigraph) and the conformance tests that check:persistence leaves out: the generated SPARQL on rdflib, the hash-seed sweeps and the probes of each engine's behaviour (ADR-A125). Run on demand and before a merge into main, not part of check. A new engine is added to PERSISTENCE_ENGINES here"
+run = "python -m pytest tools/testing/oxigraph/tests tools/persistence/tests -q -n auto --dist loadgroup"
+env = { PERSISTENCE_ENGINES = "rdflib,oxigraph" }
 
 [tasks."check:persistence-expected-profiles"]
 description = "Check that the expected compiled profiles under ontology/persistence/test/expected-profiles are what the builders and compile give now (formal-methods H2.6). Fails with the names of the stale files. Part of check:persistence"
@@ -241,11 +257,6 @@ run = "python tools/persistence/tests/membership_fixtures.py --write"
 depends = ["bootstrap:testing-oxigraph"]
 description = "Measure full, delta and in-place-with-patch-log membership on rdflib and Oxigraph (ADR-A124, formal-methods H2.6f). Run on demand, not part of check. Fails on a wrong count, never on time. MEMBERSHIP_COST_MAX caps the versions"
 run = "python -m pytest benchmark/persistence-membership -q -p no:cacheprovider && python benchmark/persistence-membership/check.py"
-
-[tasks."check:persistence-oxigraph"]
-depends = ["bootstrap:testing-oxigraph"]
-description = "Run the persistence engine tests on Oxigraph as well as rdflib (ADR-A125). Not part of check"
-run = "python -m pytest tools/testing/oxigraph/tests -q && python -m pytest tools/persistence/tests -q -m oxigraph"
 
 [tasks."check:persistence-composite-cost"]
 depends = ["bootstrap:testing-oxigraph"]

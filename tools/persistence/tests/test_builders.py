@@ -257,8 +257,8 @@ _TYPE = (str(_TARGET), str(RDF.type), PAT + "VersionRow")
 @pytest.mark.parametrize("name, bindings, unguarded", [
     ("no epoch", {"target": _TARGET}, {_TYPE, (str(_TARGET), "seq", "0")}),
     ("no target", {"epoch": LONG(3)}, set()),
-    ("epoch as xsd:integer", {"target": _TARGET, "epoch": RdfLiteral(3)}, {_TYPE, (str(_TARGET), "seq", "0"), (str(_TARGET), "epoch", "3")}),
-    ("target as a literal", {"target": RdfLiteral("urn:stream:new"), "epoch": LONG(3)}, {_TYPE, (str(_TARGET), "seq", "0"), (str(_TARGET), "epoch", "3")}),
+    pytest.param("epoch as xsd:integer", {"target": _TARGET, "epoch": RdfLiteral(3)}, {_TYPE, (str(_TARGET), "seq", "0"), (str(_TARGET), "epoch", "3")}, marks=engines.RDFLIB_ONLY),
+    pytest.param("target as a literal", {"target": RdfLiteral("urn:stream:new"), "epoch": LONG(3)}, {_TYPE, (str(_TARGET), "seq", "0"), (str(_TARGET), "epoch", "3")}, marks=engines.RDFLIB_ONLY),
 ])
 def test_h2_2_t14_a_missing_or_mistyped_parameter_writes_nothing_where_without_the_guard_it_writes_a_bad_row(name, bindings, unguarded):
     assert _meta(_run("bootstrap-version-row", engines.dataset(), bindings)) == set()

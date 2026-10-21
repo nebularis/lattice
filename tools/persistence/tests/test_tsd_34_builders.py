@@ -99,6 +99,7 @@ def test_h2_6g_t2_a_write_to_a_tombstoned_row_changes_nothing_on_any_of_sixteen_
     assert {stem for stem, o in live_outcomes.items() if o != {True}} == set(), "not written to a live row"
 
 
+@engines.rdflib_only
 def test_h2_6g_t3_the_solutions_of_a_row_block_share_one_context_on_rdflib_so_the_precondition_of_the_defect_holds(tombstoned):
     """Why T2 needs its argument: the defect's precondition holds in these blocks. If rdflib stops sharing a context here, this fails, and TSD-34 and the
     comment of T2 are revisited."""
@@ -126,6 +127,7 @@ def test_h2_6g_t3_the_solutions_of_a_row_block_share_one_context_on_rdflib_so_th
     assert max(seen.values()) >= 3, dict(seen)
 
 
+@engines.rdflib_only
 def test_h2_6g_t4_the_members_read_is_right_at_every_version_on_sixteen_hash_seeds():
     """`members` had two `NOT EXISTS` bodies with no `GRAPH`, in its one block, and they depend on `?cp`, `?w` and `?member`, so unlike the guards of T2 a
     wrong test could keep a stray member. No history we built exposed it on the original text (the solutions of its block do not share a context, which

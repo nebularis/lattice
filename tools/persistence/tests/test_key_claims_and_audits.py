@@ -460,6 +460,7 @@ def _scalar(ds, text: str):
     return [tuple(t for t in row) for row in ds.query(text)][0]
 
 
+@pytest.mark.conformance
 @engines.each_engine
 def test_h2_5_t41_min_and_max_over_iris_return_the_lowest_and_highest_by_text_as_an_iri_on_oxigraph_and_as_a_literal_on_rdflib():
     """TSD-16. `urn:o:10` sorts before `urn:o:2` on both, since the comparison is of the IRI text."""
@@ -472,6 +473,7 @@ def test_h2_5_t41_min_and_max_over_iris_return_the_lowest_and_highest_by_text_as
     assert wrapped == U("urn:o:1")  # the store independent form, on both
 
 
+@pytest.mark.conformance
 @engines.each_engine
 def test_h2_5_t42_count_distinct_counts_xsd_long_and_xsd_integer_terms_apart_on_rdflib_and_together_on_oxigraph():
     """TSD-18, the answer to TSD-Q10 for the counts. The gap scan counts distinct `seq` terms, so a receipt written with another
@@ -487,6 +489,7 @@ def test_h2_5_t42_count_distinct_counts_xsd_long_and_xsd_integer_terms_apart_on_
     assert int(valued) == (2 if engines.CURRENT == "rdflib" else 1)
 
 
+@pytest.mark.conformance
 @engines.each_engine
 def test_h2_5_t43_a_duplicate_seq_written_with_another_integer_type_is_reported_by_the_gap_scan_on_rdflib_only():
     ds = engines.dataset()
@@ -496,6 +499,7 @@ def test_h2_5_t43_a_duplicate_seq_written_with_another_integer_type_is_reported_
     assert rows("gap-scan-audit", ds) == ([(STREAM, "1", "1", "2")] if engines.CURRENT == "rdflib" else [])
 
 
+@pytest.mark.conformance
 @engines.each_engine
 def test_h2_5_t44_a_chain_of_additions_and_subtractions_is_grouped_from_the_left_on_rdflib_and_on_oxigraph_from_0_5_12():
     """TSD-17. The gap scan's `?S - ?L + 1` would count wrongly on Oxigraph 0.5.11, which groups from the right, so the renderer writes the
@@ -511,6 +515,7 @@ def test_h2_5_t44_a_chain_of_additions_and_subtractions_is_grouped_from_the_left
     assert "(?S - ?L) + 1" in sparql("gap-scan-audit")
 
 
+@engines.rdflib_only
 def test_h2_5_t45_group_concat_keeps_the_stores_scan_order_whatever_the_hash_seed_on_rdflib():
     """TSD-Q7 for the query shape of the duplicate audit. The order is the order the owners were stored in, which is no
     guarantee, so the audit tests compare a set."""
@@ -527,7 +532,7 @@ def test_h2_5_t45_group_concat_keeps_the_stores_scan_order_whatever_the_hash_see
     ) % os.path.dirname(os.path.abspath(__file__))
     seen = set()
     for seed in range(6):
-        env = {**os.environ, "PYTHONHASHSEED": str(seed)}
+        env = {**os.environ, "PYTHONHASHSEED": str(seed), "PERSISTENCE_ENGINES": "rdflib"}
         seen.add(subprocess.run([sys.executable, "-c", script], env=env, capture_output=True, text=True, check=True).stdout.strip())
     assert seen == {"urn:o:5 urn:o:3 urn:o:6 urn:o:1 urn:o:4 urn:o:2"}
 

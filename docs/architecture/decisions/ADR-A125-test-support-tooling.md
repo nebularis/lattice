@@ -49,3 +49,24 @@ reads back quads. It is used by tests and by benchmarks, and by nothing else. No
   imports from `tools/testing/` is a small addition, and until it exists the rule is kept by review.
 - A dependency of a test-support package is a test dependency of the suites that use it, recorded in the lock file like any
   other.
+
+## Addendum, 2026-10-21: Oxigraph is the default engine, conformance runs before a merge, and mem_check (drafted, for the maintainer to accept)
+
+Decided by the maintainer on 2026-10-21, as the later decision that decision 4 allows. Drafted for the maintainer to accept.
+
+1. **The persistence tests run their generated SPARQL on Oxigraph by default.** `check:persistence` installs
+   `tools/testing/oxigraph` and runs each engine test once, on Oxigraph. rdflib stays the library the compiler and pySHACL are
+   built on. Only the store that executes generated SPARQL in a behaviour test changes. Measured serially before the change, the
+   engine tests took 8.8 s on Oxigraph and 39.8 s on rdflib, at peaks of 347 MB and 403 MB.
+2. **Conformance is a run of its own.** A test whose subject is one engine's behaviour, not the generated SPARQL, is a conformance
+   test, for example a sweep over sixteen hash seeds on rdflib or a probe of a recorded store behaviour. It is marked so the default
+   run leaves it out. `check:persistence-conformance` runs the engine tests on every engine we have, with the conformance tests, on
+   demand and before a merge into `main`. It is not part of `check`, as the benchmarks of ADR-A124 are not. Each engine added later,
+   for example Jena, GraphDB or RDFox, joins this run and adds nothing to `check`.
+3. **`tools/testing/mem_check` says how much memory is available and how many workers fit in it.** A suite that runs in parallel
+   gives its own measured peak per worker. When the count it would use fits in what is available less a reserve, it keeps it,
+   and otherwise it runs on two workers. `PYTEST_XDIST_AUTO_NUM_WORKERS` overrides it. It uses only the standard library, on macOS,
+   Linux and Windows, so `check:persistence` installs it without adding a dependency.
+
+Decision 4's last sentence is amended: the default `check` needs `tools/testing/oxigraph` and `tools/testing/mem_check` for the
+persistence tests. Applying the same split to the other suites is a slice of its own, ordered by their expected memory use.

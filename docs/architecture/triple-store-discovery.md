@@ -120,8 +120,10 @@ flowchart TB
   `OxigraphStore` wraps `pyoxigraph.Store`. Its `bind_parameters` writes each parameter into the query text as an encoded
   term, as a caller with no initial-binding API would. The tests reach it through `OxDataset` in
   `tools/persistence/tests/engines.py`, which offers the part of rdflib's `Dataset` API the tests use.
-- **A test opts in to both engines** with `@engines.each_engine`. The Oxigraph cases carry the `oxigraph` marker and skip where
-  the package is absent. `mise run check:persistence-oxigraph` installs it and runs only them.
+- **A test opts in to the engines** with `@engines.each_engine`, which runs it on each engine `PERSISTENCE_ENGINES` names and on Oxigraph
+  alone when it is unset. The cases carry the engine's marker (`oxigraph`, `rdflib`), and the Oxigraph cases skip where the package is
+  absent. A test whose subject is one engine's behaviour carries `conformance`. `mise run check:persistence` runs the rest on Oxigraph,
+  and `mise run check:persistence-conformance` runs every engine and the conformance tests.
 - **The benchmark** `benchmark/persistence-composite-cost` ([ADR-A124](decisions/ADR-A124-benchmark-root.md)) runs each size in a
   child process under a memory cap, on both engines.
 
@@ -236,6 +238,7 @@ to the store or where it is a matter of capacity.
 | [TSD-32](#tsd-32-a-constant-filter-whose-value-is-false-is-dropped-by-rdflib) | `FILTER (false)` | removes every solution | ✘ removes none | ✔ | Source, Observed |
 | [TSD-33](#tsd-33-on-oxigraph-count-over-a-statically-false-filter-returns-no-row) | `COUNT(*)` over a filter that is statically false | one row, 0 | ✔ except TSD-32 | ✘ no row | Observed |
 | [TSD-34](#tsd-34-rdflib-evaluates-a-filter-not-exists-in-a-graph-block-against-the-wrong-graph-for-some-solutions) | `FILTER NOT EXISTS` without its own `GRAPH`, inside a `GRAPH` block that holds a sub-select and a `UNION` | tests the block's graph | ✘ sometimes tests the default graph, by hash seed | ✔ | Source, Observed |
+| [TSD-35](#tsd-35-a-literal-as-the-graph-of-a-graph-block-is-refused-by-oxigraph-and-parsed-by-rdflib) | a literal as the graph of a `GRAPH` block | a syntax error | ✘ parsed, the block matches nothing | ✔ a syntax error | Observed |
 
 ## 6. The findings
 
@@ -1320,7 +1323,23 @@ The same sweep still passes when the `GRAPH` is taken out of a template, so only
 that had no `GRAPH`. In that read the solutions did not share a context. We put the `GRAPH` in anyway, so the checker rule has no exception and a later rdflib cannot expose it.
 
 **Reproduce it.** Run the query above over the data of the table's caption, once for each `PYTHONHASHSEED` from 0 to 31, in a child process with `rdflib.Dataset`, and once on Oxigraph.
-`mise exec -- python -m pytest tools/persistence/tests/test_store_probes.py -q -k tsd_34` runs it on rdflib, and `mise run check:persistence-oxigraph` on both.
+`mise run check:persistence-conformance` runs it on both engines.
+
+### TSD-35. A literal as the graph of a `GRAPH` block is refused by Oxigraph and parsed by rdflib
+
+**Evidence:** Observed on both stores, 2026-10-21, when the persistence tests moved to Oxigraph as their default engine (ADR-A125,
+addendum of 2026-10-21).
+
+**What the store does.** A caller that binds a graph parameter to a literal, for example `GRAPH "g" { ... }` after substitution, gives
+a text the SPARQL 1.1 grammar refuses, since a `GRAPH` block takes a variable or an IRI (`VarOrIri`). Oxigraph refuses it as a syntax
+error when it parses the update. rdflib parses it, the block matches no graph, and the update writes nothing.
+
+**What it means for LATTICE.** A guarded write that is given a literal for a graph writes nothing on both stores, by different routes,
+so the outcome a test asserts is the same. A test that expects the request to be accepted and do nothing holds on rdflib only, and is a
+conformance test. The caller check refuses a literal for a graph parameter before the store sees it.
+
+**Reproduce it.** `mise run check:persistence-conformance` runs `test_named_graph_builders` t23, whose literal-graph case is pinned to
+rdflib.
 
 ## 7. Corrections, and what they taught us
 

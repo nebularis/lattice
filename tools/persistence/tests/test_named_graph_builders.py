@@ -305,7 +305,7 @@ def test_h2_3_t22_with_the_right_g_each_naming_operation_equals_its_default_form
     assert _normalised(caller) == _normalised(default)
 
 
-@pytest.mark.parametrize("wrong", [URIRef("urn:g:orders/other"), URIRef("urn:g:orders/urn:root:1"), RdfLiteral("urn:g:orders/urn%3Aroot%3A1")])
+@pytest.mark.parametrize("wrong", [URIRef("urn:g:orders/other"), URIRef("urn:g:orders/urn:root:1"), pytest.param(RdfLiteral("urn:g:orders/urn%3Aroot%3A1"), marks=engines.RDFLIB_ONLY)])
 def test_h2_3_t23_a_wrong_g_writes_nothing_under_the_guard_and_into_that_graph_without_it(wrong):
     ds = engines.dataset()
     run("unconditional-write", ds, {"root": ROOT, "g": wrong}, names="caller")

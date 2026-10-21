@@ -96,6 +96,7 @@ def _update(ds: Dataset, text: str, values: dict) -> None:
         ds.update(text, initBindings={Variable(k): v for k, v in values.items()})
 
 
+@engines.rdflib_only
 def test_h2_4a_t3_a_replace_with_no_root_over_two_aggregates_writes_nothing_and_unguarded_it_sweeps_the_data_graph():
     payload = _nt({(ROOT, _px("name"), Literal("Back"))})
     guarded = _dataset(REPLACE, data=_data())
@@ -153,6 +154,7 @@ def _select(ds: Dataset, query: str) -> set:
         return {tuple(str(v) for v in row) for row in ds.query(query)}
 
 
+@pytest.mark.conformance
 @engines.each_engine_and_guards
 def test_h2_4a_t6_a_path_that_may_match_no_steps_reaches_the_root_itself_and_an_inverse_step_walks_against_the_edge():
     ds = engines.dataset()

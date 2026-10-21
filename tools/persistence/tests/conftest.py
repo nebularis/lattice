@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import pytest
@@ -13,6 +14,21 @@ ONTOLOGY_DIR = REPO_ROOT / "ontology" / "persistence"
 SPEC_TTL = ONTOLOGY_DIR / "spec" / "persistence.ttl"
 SHAPES_TTL = ONTOLOGY_DIR / "shapes" / "constraints.ttl"
 EXAMPLES_DIR = ONTOLOGY_DIR / "examples"
+
+PER_WORKER = 700 * 1024 ** 2
+"""One worker's peak resident memory, measured at 649 MB for the whole suite in one process (FMH-TS-1)."""
+
+
+def pytest_xdist_auto_num_workers(config):
+    """What ``-n auto`` means for this suite. ``PYTEST_XDIST_AUTO_NUM_WORKERS`` decides when it is set. Otherwise mem_check keeps the
+    machine's count when the workers fit in the memory available, and drops to two when they do not (ADR-A125)."""
+    if os.environ.get("PYTEST_XDIST_AUTO_NUM_WORKERS"):
+        return None
+    try:
+        import mem_check
+    except ImportError:
+        return None
+    return mem_check.workers(os.cpu_count() or 1, PER_WORKER)
 
 
 @pytest.fixture(scope="session")
@@ -44,12 +60,15 @@ def example():
 
 
 def pytest_configure(config):
-    config.addinivalue_line("markers", "oxigraph: runs on Oxigraph (needs tools/testing/oxigraph, see check:persistence-oxigraph)")
+    config.addinivalue_line("markers", "oxigraph: runs on Oxigraph, the default engine (needs tools/testing/oxigraph, mise run bootstrap:testing-oxigraph)")
+    config.addinivalue_line("markers", "rdflib: runs on rdflib, which PERSISTENCE_ENGINES must name (check:persistence-conformance does)")
+    config.addinivalue_line("markers", "conformance: its subject is one engine's behaviour, not the generated SPARQL. check:persistence leaves it out and check:persistence-conformance runs it")
 
 
 @pytest.fixture(params=__import__("engines").ENGINES)
 def engine(request):
-    """The engine a test that opts in with ``engines.each_engine`` runs on. Oxigraph cases skip where it is absent."""
+    """The engine a test that opts in with ``engines.each_engine`` runs on, one of the names ``PERSISTENCE_ENGINES`` gives (Oxigraph when
+    it is unset). Oxigraph cases skip where it is absent (``mise run bootstrap:testing-oxigraph``, which ``check:persistence`` depends on)."""
     import engines
 
     if request.param == "oxigraph":
@@ -67,3 +86,16 @@ def guard_axis(request):
     previous, engines.GUARDS = engines.GUARDS, request.param
     yield request.param
     engines.GUARDS = previous
+
+
+@pytest.fixture(autouse=True)
+def _rdflib_only_runs_on_rdflib(request):
+    """A test marked ``rdflib`` that has no ``engine`` parameter is pinned to rdflib (``engines.rdflib_only``), whatever ``PERSISTENCE_ENGINES`` says."""
+    import engines
+
+    if request.node.get_closest_marker("rdflib") is None or "engine" in request.fixturenames:
+        yield
+        return
+    previous, engines.CURRENT = engines.CURRENT, "rdflib"
+    yield
+    engines.CURRENT = previous

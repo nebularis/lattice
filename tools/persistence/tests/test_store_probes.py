@@ -87,6 +87,7 @@ def _p1_rdflib_by_seed(rows: str, seeds=range(12)) -> list[bool]:
         return list(pool.map(child, seeds))
 
 
+@pytest.mark.conformance
 @pytest.mark.parametrize("order", sorted(_ROWS))
 def test_h2_4b_t1_p1_how_an_engine_applies_the_result_of_a_delete_insert_where(order):
     if _current() == "rdflib":
@@ -101,6 +102,7 @@ def test_h2_4b_t1_p1_how_an_engine_applies_the_result_of_a_delete_insert_where(o
         assert _p1(_ROWS[order]) == {"insert row first": False, "delete row first": True}[order]
 
 
+@pytest.mark.conformance
 def test_h2_4b_t2_p1_snapshot_update_semantics_holds_on_oxigraph_from_0_5_12_and_not_on_rdflib():
     """Corrected on 2026-10-13. The first version asserted that rdflib keeps the triple in both orders, which held only
     for some hash seeds and made the test fail at random. Changed on 2026-10-20: pyoxigraph 0.5.12 applies the specification's order,
@@ -127,6 +129,7 @@ def _p2(failing: str) -> tuple[bool, bool]:
     return failed, TRIPLE in ds.graph(U("urn:g"))
 
 
+@pytest.mark.conformance
 def test_h2_4b_t3_p2_a_request_that_fails_at_its_second_operation_keeps_or_loses_its_first():
     """The failure half of `atomicUpdateRequest`. Its isolation half needs concurrent writers, which is H5's."""
     if _current() == "rdflib":
@@ -168,6 +171,7 @@ def test_h2_4b_t4_p3_a_graph_variable_bound_outside_does_not_make_the_query_scan
 # ---- P4 an unbound graph variable in a template ------------------------------------------------------------------------
 
 
+@pytest.mark.conformance
 def test_h2_4b_t5_p4_a_template_quad_whose_graph_variable_is_unbound_is_skipped_or_written_to_a_blank_node_graph():
     """TD-44. The specification skips it."""
     ds = engines.dataset()
@@ -182,6 +186,7 @@ def test_h2_4b_t5_p4_a_template_quad_whose_graph_variable_is_unbound_is_skipped_
 # ---- P5 numeric datatypes ---------------------------------------------------------------------------------------------
 
 
+@pytest.mark.conformance
 def test_h2_4b_t6_p5_an_integer_derived_literal_keeps_its_datatype_on_rdflib_and_becomes_xsd_integer_on_oxigraph():
     """The persistence profile pins `seq`, `epoch` and every position to `xsd:long` (guide Chapter 13). That holds only on an
     engine that keeps the datatype."""
@@ -218,6 +223,7 @@ def _term(text: str):
     return Literal(value.strip('"'), datatype=URIRef(datatype.strip("<>"))) if datatype else Literal(value.strip('"'))
 
 
+@pytest.mark.conformance
 def test_h2_5_t1_p5_a_long_has_one_datatype_in_every_form_on_each_engine_so_guard_d_can_pass():
     """Guard D compares a parameter's datatype with a constant's (ADR-A123, addendum of 2026-10-13). That rests on a store
     treating the two alike. If an engine ever reports different datatypes for them, guard D refuses every write there, and the
@@ -254,6 +260,7 @@ def test_h2_5_t3_a_guarded_write_applies_on_each_engine_where_before_guard_d_eve
     assert _bootstrap_written({"target": U("urn:stream:new"), "epoch": LONG_TERM(3)}, guards=guards)
 
 
+@pytest.mark.conformance
 def test_h2_5_t4_guard_d_refuses_a_missing_or_non_numeric_epoch_on_each_engine_and_an_integer_one_only_where_datatypes_are_kept():
     from rdflib import XSD
     from test_builders import LONG as LONG_TERM
@@ -320,6 +327,7 @@ def _tsd34_here(query: str) -> str:
     return "".join(sorted(str(r[0])[-1] for r in rows))
 
 
+@pytest.mark.conformance
 @engines.each_engine
 @pytest.mark.parametrize("version", ["<urn:v3>", "$v"], ids=["constant", "parameter"])
 def test_tsd_34_a_filter_not_exists_in_a_graph_block_with_a_sub_select_and_a_union_sees_the_graph_on_oxigraph_and_only_for_some_hash_seeds_on_rdflib(version):

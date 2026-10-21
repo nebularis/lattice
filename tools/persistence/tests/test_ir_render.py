@@ -16,6 +16,7 @@ from rdflib import XSD, Dataset, Literal as RdfLiteral, URIRef
 from rdflib.plugins.sparql.algebra import translateQuery, translateUpdate
 from rdflib.plugins.sparql.parser import parseQuery, parseUpdate
 
+import engines
 from persistence.ir import (
     GUARDS_OFF, A, Bind, Binding, Compare, Const, Filter, Func, Graph, GraphBlock, GraphRole, Group, Kind, Not, NotExists, Op,
     Operation, Optional_, Param, ParamRef, PayloadSlot, Path, Projected, RegistrySlot, Select, TermGuard, Triple,
@@ -180,7 +181,7 @@ def _bootstrap() -> Operation:
 
 
 def _run(op: Operation, **bindings) -> set:
-    ds = Dataset()
+    ds = engines.dataset()
     ds.update(render(op), initBindings=bindings)
     return {(str(s), str(p), str(o)) for s, p, o, _ in ds.quads((None, None, None, URIRef("urn:g:meta")))}
 
@@ -193,7 +194,7 @@ def test_h2_1_t16_with_every_parameter_bound_the_operation_writes_the_whole_reco
 @pytest.mark.parametrize("bindings", [
     {"epoch": RdfLiteral(3, datatype=XSD.long)},
     {"target": _TARGET},
-    {"target": _TARGET, "epoch": RdfLiteral(3)},
+    pytest.param({"target": _TARGET, "epoch": RdfLiteral(3)}, marks=engines.RDFLIB_ONLY),
     {"target": _TARGET, "epoch": RdfLiteral("3")},
     {"target": RdfLiteral("urn:test:target"), "epoch": RdfLiteral(3, datatype=XSD.long)},
 ], ids=["no target", "no epoch", "epoch as xsd:integer", "epoch as a string", "target as a literal"])
@@ -222,7 +223,7 @@ def _replace_shaped() -> Operation:
 
 
 def _two_aggregates(op: Operation, **bindings) -> dict:
-    ds = Dataset()
+    ds = engines.dataset()
     for root in ("urn:test:a", "urn:test:b"):
         ds.graph(URIRef("urn:g:meta")).add((URIRef(root), URIRef(str(P("seq").term)[1:-1]), RdfLiteral(0, datatype=XSD.long)))
     ds.update(render(op), initBindings=bindings)
@@ -337,7 +338,7 @@ def test_h2_1_t21_an_adversarial_literal_stays_a_literal(seed):
     )
     text = render(op)
     assert parsed(text) == 1
-    ds = Dataset()
+    ds = engines.dataset()
     ds.update(text, initBindings={"root": _TARGET})
     objects = [o for _, _, o, _ in ds.quads((None, None, None, URIRef("urn:g:meta")))]
     assert objects == [RdfLiteral(value)]
@@ -356,7 +357,7 @@ def test_h2_1_t22_an_adversarial_iri_is_refused_or_stays_an_iri(seed):
     )
     text = render(op)
     assert parsed(text) == 1
-    ds = Dataset()
+    ds = engines.dataset()
     ds.update(text, initBindings={"root": _TARGET})
     assert [o for _, _, o, _ in ds.quads((None, None, None, URIRef("urn:g:meta")))] == [URIRef(value)]
 
@@ -371,7 +372,7 @@ def test_h2_1_t26_a_literal_that_looks_like_an_iri_is_rendered_unchanged():
         "label", (Param("root", Kind.IRI),), Group(()),
         insert=(GraphBlock(META, (Triple(ParamRef("root"), P("label"), Const(Literal.encode(value))),)),),
     )
-    ds = Dataset()
+    ds = engines.dataset()
     ds.update(render(op), initBindings={"root": _TARGET})
     assert [o for _, _, o, _ in ds.quads((None, None, None, URIRef("urn:g:meta")))] == [RdfLiteral(value)]
     typed = Const(Literal.encode("3", datatype=XSD_LONG))
@@ -390,7 +391,7 @@ def test_h2_1_t28_the_guard_survives_a_caller_that_substitutes_parameter_text():
         substituted = substituted.replace(name, term)
     assert parsed(substituted.replace("$root", "<urn:test:a>")) == 1
     for root, expected in (("<urn:test:a>", {"urn:test:a": 1, "urn:test:b": 0}), (None, {"urn:test:a": 0, "urn:test:b": 0})):
-        ds = Dataset()
+        ds = engines.dataset()
         for r in ("urn:test:a", "urn:test:b"):
             ds.graph(URIRef("urn:g:meta")).add((URIRef(r), URIRef(str(P("seq").term)[1:-1]), RdfLiteral(0, datatype=XSD.long)))
         ds.update(substituted if root is None else substituted.replace("$root", root))
@@ -417,6 +418,7 @@ _SCOPE = {
 }
 
 
+@engines.rdflib_only
 @pytest.mark.parametrize("kind", sorted(_SCOPE))
 def test_h2_1_t29_a_bind_sees_only_its_own_group_on_rdflib(kind):
     query, expected = _SCOPE[kind]
@@ -425,6 +427,7 @@ def test_h2_1_t29_a_bind_sees_only_its_own_group_on_rdflib(kind):
     assert sorted((None if row[1] is None else int(row[1]) for row in ds.query(query)), key=lambda v: (v is not None, v)) == expected
 
 
+@engines.rdflib_only
 def test_h2_1_t29b_not_exists_sees_the_enclosing_group_on_rdflib():
     assert list(Dataset().query("SELECT ?a WHERE { BIND(1 AS ?a) FILTER NOT EXISTS { FILTER(?a = 1) } }")) == []
 
@@ -440,6 +443,7 @@ _JOIN = {
 }
 
 
+@engines.rdflib_only
 @pytest.mark.parametrize("shape", sorted(_JOIN))
 def test_h2_3_t2_a_graph_variable_bound_outside_restricts_an_inner_group_to_that_graph_on_rdflib(shape):
     ds = Dataset()

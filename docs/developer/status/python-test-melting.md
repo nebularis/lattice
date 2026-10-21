@@ -5,7 +5,7 @@
 **Unit ID:** `python-test-melting`
 **Status:** Done, 2026-10-09, branch `test/slow-py`. TM0, TM1, TM2, TM3a/b/c, TM6, TM7 and TM8 built
 and validated. TM4 and TM5 deferred, with reasoning recorded below.
-**Last updated:** 2026-10-09
+**Last updated:** 2026-10-21 (reopened for TM9 to TM12)
 **Plan:** [python-test-melting.md](../plans/python-test-melting.md)
 **Sketch:** [python-test-melting.md](../sketches/python-test-melting.md)
 
@@ -30,7 +30,10 @@ out to all 16 modules with a `validate()` call site. Full detail in "Final resul
 
 ## Next action
 
-None for this unit; it is done. Review and merge `test/slow-py` to `main` (the maintainer's). The two
+**Reopened 2026-10-21** for TM9 to TM12 (plan, "Follow-on, 2026-10-21"), at the maintainer's request: every suite of
+`check` on the defaults of skill `lattice-testing`, in the order of expected memory use. TM9, measuring every suite, is next.
+
+For TM0 to TM8: none, it is done. Review and merge `test/slow-py` to `main` (the maintainer's). The two
 superseded sketches (`python-test-melting.md`, `test-suite-performance.md`) stay until the maintainer
 decides whether to delete them, per TM8's own text.
 

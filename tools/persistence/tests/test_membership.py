@@ -420,6 +420,7 @@ def test_h2_8c_t5_the_nearest_checkpoint_is_found_in_a_sub_select_whose_not_exis
     assert len(inner) == 2 and all(isinstance(n.group.elements[0], GraphBlock) for n in inner)
 
 
+@engines.rdflib_only
 def test_h2_8c_t6_random_histories_read_right_at_every_version_on_sixteen_hash_seeds():
     """24 random histories (checkpoints every 2, 3 and 4), with stray adds, against the reference model at every version, each hash seed in a child
     process on rdflib. Which checkpoint a store meets first follows the seed (TSD-34)."""

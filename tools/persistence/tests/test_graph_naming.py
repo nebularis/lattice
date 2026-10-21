@@ -5,7 +5,7 @@
 decision 8, technical debt TD-38).
 Validation Pack: docs/developer/validation/FMH-HO8.md. Test IDs are HO8-Tn.
 
-The generated create runs on rdflib's in-memory ``Dataset``. The expected graph IRI is computed here in
+The generated create runs on the default engine (``engines.dataset()``). The expected graph IRI is computed here in
 Python, with percent-encoding of every byte but the unreserved characters, which is what SPARQL's
 ``ENCODE_FOR_URI`` does."""
 
@@ -18,6 +18,7 @@ import pytest
 from rdflib import RDF, Dataset, Graph, Literal, URIRef, Variable
 from rdflib.namespace import XSD
 
+import engines
 from persistence import templatecheck, witness
 from persistence.compiler import CompileError, compile_targets, compile_to_graph
 
@@ -46,7 +47,7 @@ def _graphs_after_creating(graph: Graph, roots: list[str], prefix: str = "urn:g:
     text = _create(graph).replace(templatecheck._SLOT_STAND_INS["payloadTriples"], "<urn:x:s> <urn:x:p> <urn:x:o> .")
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", DeprecationWarning)
-        ds = Dataset()
+        ds = engines.dataset()
         for number, root in enumerate(roots):
             values = {
                 "root": URIRef(root), "epoch": Literal(1, datatype=XSD.long), "newRev": URIRef(f"urn:rev:{number}"),

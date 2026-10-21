@@ -35,8 +35,10 @@ test asserts, the test reads a flag instead of the version number. Each flag is 
 
 ```bash
 mise run bootstrap:testing-oxigraph
-mise run check:persistence-oxigraph     # the persistence engine tests, on Oxigraph
+mise run check:persistence              # the default engine of the persistence tests, with this package's own tests
+mise run check:persistence-conformance  # every engine we have, and the conformance tests (on demand and before a merge)
 ```
 
-`mise run check:persistence` does not need it. The persistence engine tests that are parametrised over engines skip their
-Oxigraph cases where this package is absent.
+Oxigraph is the default engine of the persistence tests (ADR-A125, addendum of 2026-10-21), so `check:persistence` depends on this
+package. The engines a test marked `each_engine` runs on come from `PERSISTENCE_ENGINES` (for example `rdflib,oxigraph`), and are
+Oxigraph alone when it is unset. The Oxigraph cases skip where this package is absent.

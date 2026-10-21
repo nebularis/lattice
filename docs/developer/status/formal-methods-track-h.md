@@ -860,4 +860,11 @@ the same day). **Paused 2026-10-20 at the maintainer's request.** Next:
   other changes ([FMH-TS-1](../validation/FMH-TS-1.md)). 4m12s became 1m40s (4346 passed, 1 xfailed), measured on a loaded machine. The
   three sixteen-seed sweeps set the floor. No assertion changed. Reaching 60 s needs fewer seeds in `check` with the full sweep on demand,
   a decision for the maintainer.
+- 2026-10-21: at the maintainer's decision, Oxigraph is the default engine of the persistence tests and conformance runs on its own
+  ([FMH-TS-2](../validation/FMH-TS-2.md)). `check:persistence` runs each engine test once, on Oxigraph, and leaves out 27 tests marked
+  `conformance` (57 cases). `check:persistence-conformance` runs every engine, on demand and before a merge, and replaces
+  `check:persistence-oxigraph`. Together they cover every test that ran before. `tools/testing/mem_check` gives the worker count from the
+  memory available, two when the default count does not fit, and the persistence suite uses it. ADR-A125 has a drafted addendum. The
+  skills `lattice-testing` and `lattice-lifecycle` make the fast techniques and conformance before a merge the defaults, and
+  `python-test-melting` is reopened for TM9 to TM12, every other suite on them. TSD-35 records that Oxigraph refuses a literal as a graph.
 

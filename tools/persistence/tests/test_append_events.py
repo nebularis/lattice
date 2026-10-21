@@ -69,6 +69,7 @@ def test_h2_6b_t1_a_three_row_append_steps_the_seq_once_and_writes_one_receipt_o
         assert (e, U(PAT + "opSeq"), engines.canon(LONG(n))) in events
 
 
+@engines.rdflib_only
 def test_h2_6b_t2_the_three_row_append_is_the_same_under_every_hash_seed_on_rdflib():
     """TSD-01: rdflib applies the solutions one at a time in an order that follows the hash seed. Every solution writes the same
     version row, claim and receipt, so the order must not matter."""
@@ -80,7 +81,7 @@ def test_h2_6b_t2_the_three_row_append_is_the_same_under_every_hash_seed_on_rdfl
     ) % TESTS_DIR
     seen = set()
     for seed in range(8):
-        env = {**os.environ, "PYTHONHASHSEED": str(seed)}
+        env = {**os.environ, "PYTHONHASHSEED": str(seed), "PERSISTENCE_ENGINES": "rdflib"}
         out = subprocess.run([sys.executable, "-c", script], env=env, capture_output=True, text=True, check=True).stdout.strip().splitlines()[-1]
         seen.add(out)
     assert len(seen) == 1
@@ -121,6 +122,7 @@ def test_h2_6b_t5_a_one_row_append_writes_the_four_triples_the_single_event_form
     assert at.toPython() == RdfLiteral("2026-10-12T10:00:00Z", datatype=XSD.dateTime).toPython()  # rdflib writes the offset as +00:00
 
 
+@pytest.mark.conformance
 @engines.each_engine_and_guards
 def test_h2_6b_t6_an_empty_rows_slot_writes_nothing_and_rdflib_raises_where_oxigraph_gives_no_solution():
     """TSD-21: rdflib 7.6.0 raises an AttributeError for any empty VALUES block, before it changes anything. Oxigraph gives no solution.

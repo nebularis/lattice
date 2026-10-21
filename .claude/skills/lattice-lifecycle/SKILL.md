@@ -102,6 +102,10 @@ justification in its Validation Pack, countersigned at the gate.
   `mise run check:ontology-versioning` lists pending tags, end the handoff with a notice headed
   `🔴 RELEASE TAGS REQUIRED`, listing each tag as a, b, c with the commands to create and push them
   once the change is merged. Repeat it in every handoff until the tags exist.
+- **Conformance before a merge.** Before a branch is merged into `main`, every conformance task of a suite the branch touched runs
+  and passes, for example `mise run check:persistence-conformance`, which runs the generated SPARQL on every engine we have. They are
+  not part of `check` (skill `lattice-testing`), so the handoff that asks for the merge lists each one with its result, or says it
+  was not run and why. A failure on one engine is recorded in the triple-store record and is fixed or accepted before the merge.
 - Never merge, push or tag without the maintainer's go-ahead.
 
 ## Reporting

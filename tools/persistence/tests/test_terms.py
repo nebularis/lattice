@@ -214,9 +214,10 @@ def test_h2_9_t5_an_unfilled_slot_is_left_as_a_marker_and_the_query_does_not_par
     "\\u0041", "a\\U00000041", "\\\\u0041", "\\ud83d", "\\u00zz", "\\uabcdefgh12", "ends with a backslash \\", "uU",
 ])
 def test_h2_1_a_literal_with_a_backslash_before_u_round_trips(value):
-    from rdflib import Dataset, Literal as RdfLiteral
+    import engines
+    from rdflib import Literal as RdfLiteral
 
-    dataset = Dataset()
+    dataset = engines.dataset()
     dataset.update(f"INSERT DATA {{ GRAPH <urn:g> {{ <urn:s> <urn:p> {Literal.encode(value)} }} }}")
     assert [o for _, _, o, _ in dataset.quads((None, None, None, URIRef("urn:g")))] == [RdfLiteral(value)]
 

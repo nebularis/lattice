@@ -665,7 +665,7 @@ revising it. A utility meant to be glued into other stacks, not a vertical proof
 
 | Field | Value |
 |-------|-------|
-| **Status** | ✅ Done 2026-10-09, branch `test/slow-py`. All 16 modules with a `validate()` call site adopted a shared graph/validation cache (`tools/conftest.py`), the five `git grep` call sites replaced with a Python scan, `pytest-xdist` wired into `check:ontology-catalog`. 456s serial to 123.6s (`pytest-xdist`), identical outcomes. TM4 and TM5 deferred, reasoning recorded. Held ready for the maintainer to review and merge |
+| **Status** | Reopened 2026-10-21 for TM9 to TM12, every suite on the test defaults, planned. ✅ Done 2026-10-09, branch `test/slow-py`. All 16 modules with a `validate()` call site adopted a shared graph/validation cache (`tools/conftest.py`), the five `git grep` call sites replaced with a Python scan, `pytest-xdist` wired into `check:ontology-catalog`. 456s serial to 123.6s (`pytest-xdist`), identical outcomes. TM4 and TM5 deferred, reasoning recorded. Held ready for the maintainer to review and merge |
 | **Unit ID** | `python-test-melting` |
 | **Sketches** | [python-test-melting.md](sketches/python-test-melting.md), [test-suite-performance.md](sketches/test-suite-performance.md) (both superseded, kept until the maintainer decides) |
 | **Plan** | [python-test-melting.md](plans/python-test-melting.md) |

@@ -7,21 +7,56 @@ A test that executes an update takes a dataset from :func:`dataset` and uses the
 that these tests need. On rdflib it is the ``Dataset`` itself. On Oxigraph it is :class:`OxDataset`, which has the same
 methods, answers in rdflib terms, and runs the update on :class:`lattice_testing_oxigraph.OxigraphStore`, putting each
 `initBindings` parameter in the text as a caller with no initial-binding API would. The ``engine`` fixture in
-``conftest.py`` chooses the engine, and a test opts in with :data:`each_engine`."""
+``conftest.py`` chooses the engine, and a test opts in with :data:`each_engine`.
+
+The engines a test marked :data:`each_engine` runs on come from the environment variable ``PERSISTENCE_ENGINES``, a comma-separated
+list of names in :data:`REGISTRY`, and are Oxigraph alone when it is unset (ADR-A125, addendum of 2026-10-21). ``check:persistence``
+leaves it unset and ``check:persistence-conformance`` names every engine we have. :data:`CURRENT`, the engine of a test that calls
+:func:`dataset` without opting in, is the first of them. To add an engine, add one entry to :data:`REGISTRY`, an ``if`` in
+:func:`dataset`, and the engine's name to the conformance task."""
 
 from __future__ import annotations
 
+import os
 import warnings
 
 import pytest
 from rdflib import BNode, Dataset, Literal, URIRef
 from rdflib.namespace import XSD
 
-CURRENT = "rdflib"
+REGISTRY = {"oxigraph": pytest.mark.oxigraph, "rdflib": pytest.mark.rdflib}
+"""Every engine we have, by name, with the mark that selects it (``-m oxigraph``, ``-m rdflib``)."""
+DEFAULT = "oxigraph"
+
+
+def selected(value: str | None = None) -> list[str]:
+    """The engine names ``PERSISTENCE_ENGINES`` gives, in order and without repeats, or ``[DEFAULT]`` when it is unset or blank."""
+    text = os.environ.get("PERSISTENCE_ENGINES") if value is None else value
+    names = list(dict.fromkeys(n.strip().lower() for n in (text or "").split(",") if n.strip())) or [DEFAULT]
+    unknown = [n for n in names if n not in REGISTRY]
+    if unknown:
+        raise ValueError(f"PERSISTENCE_ENGINES names {unknown}, and the engines we have are {sorted(REGISTRY)}")
+    return names
+
+
+NAMES = selected()
+CURRENT = NAMES[0]
 DEFAULT_GRAPH = URIRef("urn:x-rdflib:default")
-ENGINES = ["rdflib", pytest.param("oxigraph", marks=pytest.mark.oxigraph)]
+ENGINES = [pytest.param(n, marks=REGISTRY[n]) for n in NAMES]
 each_engine = pytest.mark.usefixtures("engine")
 each_engine_and_guards = pytest.mark.usefixtures("engine", "guard_axis")
+
+
+RDFLIB_ONLY = [pytest.mark.conformance, pytest.mark.rdflib]
+"""The marks of a test whose subject is rdflib's behaviour, with no engine parameter: it is a conformance test and runs on rdflib,
+whatever ``PERSISTENCE_ENGINES`` says (an autouse fixture in ``conftest.py`` pins it). On one case of a parametrised test, ``pytest.param(..., marks=RDFLIB_ONLY)``."""
+
+
+def rdflib_only(test):
+    """Decorator form of :data:`RDFLIB_ONLY`."""
+    for mark in RDFLIB_ONLY:
+        test = mark(test)
+    return test
 
 
 GUARDS = True

@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -70,5 +71,5 @@ def test_h2_4b_t12_the_oxigraph_cases_skip_where_the_package_is_absent():
         "import sys; sys.modules['lattice_testing_oxigraph'] = None; import pytest; "
         "sys.exit(pytest.main(['-q', '-p', 'no:cacheprovider', 'test_store_probes.py', '-k', 'test_h2_4b_t6']))"
     )
-    result = subprocess.run([sys.executable, "-c", code], cwd=Path(__file__).parent, capture_output=True, text=True)
+    result = subprocess.run([sys.executable, "-c", code], cwd=Path(__file__).parent, env={**os.environ, "PERSISTENCE_ENGINES": "rdflib,oxigraph"}, capture_output=True, text=True)
     assert "1 passed, 1 skipped" in result.stdout, result.stdout[-400:]

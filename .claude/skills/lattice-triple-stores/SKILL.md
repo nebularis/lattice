@@ -58,7 +58,7 @@ Then:
 | Store | Reached through | Install | Run its cases |
 |---|---|---|---|
 | rdflib | `rdflib.Dataset`, in the test process, parameters as `initBindings` | part of every Python bootstrap | `mise run check:persistence` |
-| Oxigraph | `tools/testing/oxigraph` (ADR-A125), parameters substituted as text | `mise run bootstrap:testing-oxigraph` | `mise run check:persistence-oxigraph` |
+| Oxigraph | `tools/testing/oxigraph` (ADR-A125), parameters substituted as text | `mise run bootstrap:testing-oxigraph` | `mise run check:persistence` (the default engine), `mise run check:persistence-conformance` |
 
 A measurement of cost belongs in a benchmark under `benchmark/` (ADR-A124), which fails on a wrong result and never on time.
 `benchmark/sparql-constraint-query-cost` is the one for query forms, and `mise run check:sparql-constraint-query-cost` runs it.

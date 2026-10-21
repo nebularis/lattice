@@ -239,6 +239,11 @@ import-names = ["surface"]
 reaches = ["ontology/surface", "test/conformance"]
 
 [[tools]]
+name = "testing/mem_check"
+path = "tools/testing/mem_check"
+import-names = ["mem_check"]
+
+[[tools]]
 name = "testing/oxigraph"
 path = "tools/testing/oxigraph"
 import-names = ["lattice_testing_oxigraph"]
