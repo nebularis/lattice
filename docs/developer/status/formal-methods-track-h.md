@@ -4,7 +4,7 @@
 
 **Unit ID:** `formal-methods-track-h` (phase, within the `formal-methods` epic)
 **Status:** In progress. H1 (H1.1 to H1.5, with H1.4c), the aggregate-ownership slices HO0 to HO9 and H2.0 to H2.3 are merged to `main` and signed off (H1 and HO 2026-10-10, H2.0 to H2.3 2026-10-12). H2.4a and H2.4b are built and reviewed, and every decision in their Validation Packs is taken (2026-10-13), awaiting the maintainer's merge with the triple-store record. ADR-A123 is accepted with five addenda, ADR-A124 and ADR-A125 are accepted. H2.5 and H2.6 are built (2026-10-13). Every decision of H2.5 is taken, and the maintainer approved H2.6 on 2026-10-13 with three design questions open (RQ4 to RQ6), awaiting the merge. H2.6b's event half is built, approved and merged to `main` (2026-10-14), with its six regenerated expected profiles re-approved and the change to `test_ho6_t14` countersigned. Its ADR-A123 addendum is a draft. Its patch-log half is held (H-D33).
-**Last updated:** 2026-10-21 (H2.9, H2.11a and H2.11b built)
+**Last updated:** 2026-10-21 (every planned H2 slice built, the test defaults)
 **Plan:** [formal-methods-track-h.md](../plans/formal-methods-track-h.md)
 **Sketches:** [formal-methods-track-h.md](../sketches/formal-methods-track-h.md) (main),
 [formal-methods-track-h-protocols.md](../sketches/formal-methods-track-h-protocols.md),
@@ -53,48 +53,35 @@ section below.
 
 ## Next action
 
-**Paused 2026-10-20 for the maintainer's review of one tranche.** Everything below was decided at our leanings, or by an agent alone,
-at the maintainer's request, and is committed on this branch, not pushed. Versioning is ignored on this branch (TD-64), so
+Every planned H2 slice is built and committed on this branch, not pushed: H2.6c to H2.6g, W-65, AIR-66, H2.7, H2.8a to H2.8c, H2.9,
+H2.11a and H2.11b, with the follow-ups of 2026-10-21 (enumerations closed, the class diagram in parts) and the test work of FMH-TS-1 and
+FMH-TS-2. The review tranche R1 to R10 was answered on 2026-10-20 (History). Versioning is ignored on this branch (TD-64), so
 `check:ontology-versioning` fails with `UNBUMPED`, as expected.
 
-### The review tranche
+### For the maintainer's review
 
-| # | What | Where | Decided by |
-|---|---|---|---|
-| R1 | VH-Q1 to VH-Q6 at their leanings, with the size and cost rationale | sketch §11 and its closing table | us, at our leanings |
-| R2 | VH-D1, the head names the latest version written, agreement evaluated. **One inconsistency to settle:** H2.6c asserts `fnd:supersededBy` on every append, as plan §4.9 says, while VH-D1 says it is asserted when an amendment is agreed. Our leaning: on every append for every versioned family, since most have no agreement, with Instrument's agreed chain a separate evaluation. E7 argues the opposite case for the pointer | sketch §10.7, §11, plan §4.9 | us |
-| R3 | VH-D2, a full membership list per root version until E5's benchmark | sketch closing table | us |
-| R4 | the examples E1 to E8, and EP-1 to EP-11 | sketch §10.1 to §10.9 | four agents, then us |
-| R5 | TD-63 to TD-66, PDD-11, the workload note | the registers | us |
-| R6 | H2.6c, built, with eight decisions taken alone: `pat:currentVersion` beside `pat:head`, a first version appended onto a bootstrapped row, no tombstone for an appending family, the named-graph variant refused (`AppendVersionsUnsupported`), one refusal for three causes, the version as the contract's `Aggregate`, no new slot, and `dal:WriteDisciplineProfile` | [FMH-H2-6c](../validation/FMH-H2-6c.md) | an agent, reviewed and checks re-run by us |
-| R7 | H2.6c's twelve regenerated or new expected profiles, for re-approval as data | FMH-H2-6c | |
-| R8 | two existing tests changed in H2.6c (`test_h2_2_t1`, `test_h2_6_t1`), for countersignature. None removed | FMH-H2-6c | |
-| R9 | H2.7-Q1 to Q4 and H2.8-Q1 to Q3 at (a), H2.7-Q5 by the maintainer | plan §4.7, §4.8 | us, and the maintainer |
-| R10 | the ADR-A123 addendum of 2026-10-20 for H2.6c, a draft | ADR-A123 | the agent |
+| # | What | Where |
+|---|---|---|
+| Q1 | H2.9's decisions D-43 and D-45 to D-49 (D-42 and D-44 approved), and the 77 removed test cases and changed tests for countersignature | [FMH-H2-9](../validation/FMH-H2-9.md) |
+| Q2 | H2.11a's decisions D-50 to D-58 and D-60 to D-64 (D-59 decided), the 85 drafted definitions and 21 rewritten comments, and the release notes' effect classes (D-62) | [FMH-H2-11a](../validation/FMH-H2-11a.md) |
+| Q3 | H2.11b's decisions D-65 to D-67 | [FMH-H2-11b](../validation/FMH-H2-11b.md) |
+| Q4 | the follow-ups' decisions D-68 to D-73, among them closing the three enumerations of one member (D-68) | FMH-H2-11b, "Follow-ups of 2026-10-21" |
+| Q5 | FMH-TS-1's decisions and changed tests, among them the session-wide translate-once cache that tests running SPARQL directly on rdflib now go through | [FMH-TS-1](../validation/FMH-TS-1.md) |
+| Q6 | 26 stale anchors outside Persistence whose right target is not clear, mostly `#phase-N` links in `docs/developer/INDEX.md` | FMH-H2-11b, D-72 |
 
-### After the review
+### Before the merge into `main`
 
-Built and committed 2026-10-20: H2.6c, H2.6d, H2.6e, H2.6f, H2.6g, W-65, AIR-66, H2.7, H2.8a, H2.8b, and H2.8c
-([FMH-H2-8c](../validation/FMH-H2-8c.md)), signed off 2026-10-20, with its seven decisions, four expected profiles and four changed tests approved
-by the maintainer. pyoxigraph 0.5.12's changes are recorded in TSD-01 and TSD-17, and the tests follow the installed version (TD-73, closed
-the same day). **Paused 2026-10-20 at the maintainer's request.** Next:
+1. **TD-63**, re-state 9.1 and 4.2 with a better overlay.
+2. **One minor version bump** (TD-64), by `mise run release:prepare`, and the release tags after the merge.
+3. **The maintainer's re-approval** of the expected profiles and countersignature of the changed tests listed in each Validation Pack.
+4. **`mise run check:persistence-conformance`**, which runs the generated SPARQL on every engine (skill `lattice-lifecycle`). It passed on
+   2026-10-21 (4352 passed, 1 xfailed), before the last two commits, and runs again on the merge candidate.
+5. **`docs/developer/INDEX.md`**, whose Track H row stops at H2.3.
 
-1. **H2.9, built 2026-10-21, awaiting the maintainer's review** ([FMH-H2-9](../validation/FMH-H2-9.md),
-   [plan §4.15](../plans/formal-methods-track-h.md#415-h29-mustache-retired-planned-2026-10-20)): Mustache retired, with D-12,
-   the goldens keyed by operation, and the template id's suffix gone. Eight decisions taken alone (D-42 to D-49), no expected profile changed,
-   the changed and removed tests listed in the Pack for countersignature.
-2. **H2.11a, built 2026-10-21, awaiting the maintainer's review** ([FMH-H2-11a](../validation/FMH-H2-11a.md),
-   [plan §4.19](../plans/formal-methods-track-h.md#419-h211-the-persistence-readme-as-a-literate-specification-planned-2026-10-20),
-   [sketch](../sketches/persistence-readme-literate.md)): the Persistence README in the ADR-A126 layout, the one source of both spec
-   documents and both shapes files, graph for graph. `check:literate-migration` passes with 137 reconciled differences (10 header
-   lines, 85 drafted definitions, 21 rewritten comments), TD-01 is closed, and the class diagram is too wide to read (D-59, a split is
-   proposed). Fifteen decisions taken alone (D-50 to D-64). RL-Q1 to RL-Q7 are decided, and RL-Q3's prerequisite is met.
-3. **H2.11b, built 2026-10-21, awaiting the maintainer's review** ([FMH-H2-11b](../validation/FMH-H2-11b.md)): the Persistence README told through its examples,
-   a running case in eight steps (§5.13), pictures of each kind of write, three sequence diagrams and the rest, 14 gotchas (§5.14), and the palette on all 49 diagrams.
-   No graph changed (the migration check reports the same 137 reconciled differences). D-64 is closed. Two decisions taken alone (D-65, D-66).
-4. **Before the merge into `main`:** TD-63, one minor version bump (TD-64), the maintainer's re-approval of the expected profiles and
-   countersignature of the changed tests listed in each Validation Pack.
-5. **Owed later:** the idealised in-place benchmark once TD-42 is fixed (recorded on TD-42).
+### Owed later
+
+- The idealised in-place benchmark once TD-42 is fixed (recorded on TD-42).
+- `python-test-melting` TM9 to TM12, every other suite on the test defaults (planned 2026-10-21).
 
 ## Slices
 
@@ -872,4 +859,6 @@ the same day). **Paused 2026-10-20 at the maintainer's request.** Next:
   installs `tools/testing/oxigraph` and `tools/testing/mem_check` (pyoxigraph 0.5.11 joins the lock file), and a check task that finds one
   missing stops and names the task to run, where a run by hand still skips the Oxigraph cases. The ADR-A126 addendum gains the left to
   right drawing of a part, and is still drafted, for the maintainer to accept.
+- 2026-10-21: the maintainer accepted the ADR-A126 addendum (class diagram parts, `**All different.**`, the 6.6 split) and countersigned
+  the change to `test_h2_4b_t12`, whose child process now runs without `PERSISTENCE_ENGINES_REQUIRED`.
 

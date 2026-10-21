@@ -129,7 +129,7 @@ state.
 - Persistence, MORK, the applied modules and Governance are not literate today. They take the layout when
   they become literate.
 
-## Addendum 2026-10-21 (drafted, for the maintainer to accept)
+## Addendum 2026-10-21 (accepted 2026-10-21)
 
 Persistence is the first module whose class diagram is too large to read, about 15,000 px wide, and it
 needed an individual stated across two places. Three changes follow. None alters a generated file of a module
