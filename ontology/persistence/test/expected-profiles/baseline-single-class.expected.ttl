@@ -539,7 +539,7 @@
 [] a dal:CompiledProfile ;
     dal:appliedUniquenessConstraint <https://example.org/lending#LoanApplicationNumberPerBranch> ;
     dal:capabilityRequirement [ a dal:CapabilityRequirement ;
-            dal:requiresCas "LINEARIZABLE" ;
+            dal:requiresCas dal:Linearizable ;
             dal:requiresUniquenessLevel dal:Transactional ] ;
     dal:diagnostic [ a dal:Diagnostic ;
             dal:diagnosticKind "RowLevelGuardOnly" ;

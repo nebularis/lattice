@@ -480,7 +480,7 @@
 
 [] a dal:CompiledProfile ;
     dal:capabilityRequirement [ a dal:CapabilityRequirement ;
-            dal:requiresCas "BEST_EFFORT" ] ;
+            dal:requiresCas dal:BestEffort ] ;
     dal:diagnostic [ a dal:Diagnostic ;
             dal:diagnosticKind "UnboundedPayload" ;
             dal:diagnosticMessage "https://example.org/lending#LoanApplication is a named-graph family with payload operations and no dal:boundaryShape, so a caller can check the form of a payload and not that every subject belongs to the aggregate. Declare a dal:boundaryShape to have the payload-check query generated." ;

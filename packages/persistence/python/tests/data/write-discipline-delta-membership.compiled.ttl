@@ -331,7 +331,7 @@
 
 [] a dal:CompiledProfile ;
     dal:capabilityRequirement [ a dal:CapabilityRequirement ;
-            dal:requiresCas "LINEARIZABLE" ] ;
+            dal:requiresCas dal:Linearizable ] ;
     dal:forTarget <https://example.org/quoting#Quote> ;
     dal:generatedOperation [ a dal:GeneratedOperation ;
             dal:access <https://example.org/quoting/Quote/compiled/bootstrap-version-row#access-1>,

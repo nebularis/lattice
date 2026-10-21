@@ -267,7 +267,7 @@ def emit_compiled_profile(out: Graph, compiled: CompiledTarget, guards: bool = T
     req_node = BNode(f"{stem}-requirement")
     out.add((req_node, RDF.type, DAL.CapabilityRequirement))
     if compiled.requirement.requires_cas:
-        out.add((req_node, DAL.requiresCas, RdfLiteral(compiled.requirement.requires_cas)))
+        out.add((req_node, DAL.requiresCas, URIRef(compiled.requirement.requires_cas)))
     if compiled.requirement.requires_uniqueness_level:
         out.add(
             (

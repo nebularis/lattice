@@ -136,7 +136,7 @@ component (ADR-A80), belong to that subsystem. The ontology inside it is named f
 
 The class diagrams are generated from section 6, one for each part of the model. Each draws its own classes with their members, and a class it links to in another part as a bare box. An enumeration lists its individuals.
 
-<!-- start: {"generated": "class-diagram", "part": "Profiles, scopes and capabilities", "classes": ["dal:ProfileScope", "dal:GraphPatternScope", "dal:NamespaceScope", "dal:ClassScope", "dal:ShapeScope", "dal:EquivalentClassScope", "dal:DataAccessProfile", "dal:CapabilitySpec", "dal:CapabilityRequirement", "dal:CapabilityCheck"], "enumerations": "table"} -->
+<!-- start: {"generated": "class-diagram", "part": "Profiles, scopes and capabilities", "classes": ["dal:ProfileScope", "dal:GraphPatternScope", "dal:NamespaceScope", "dal:ClassScope", "dal:ShapeScope", "dal:EquivalentClassScope", "dal:DataAccessProfile", "dal:CapabilitySpec", "dal:CommitValidationLevel", "dal:CapabilityRequirement", "dal:CapabilityCheck"], "enumerations": "table"} -->
 
 **Profiles, scopes and capabilities**
 
@@ -147,14 +147,10 @@ classDiagram
         verdict (xsd:string)
     }
     class CapabilityRequirement {
-        requiresCas (xsd:string)
         requiresReasoningFor
-        requiresUniquenessLevel
     }
     class CapabilitySpec {
         appliesToTarget
-        providesCas (xsd:string)
-        providesCommitValidation (xsd:string)
         providesReasoning (xsd:boolean)
         providesSingleWriter (xsd:boolean)
         providesStatementLevelConflictDetection (xsd:boolean)
@@ -163,6 +159,14 @@ classDiagram
         includeSubclasses (xsd:boolean)
         targetClass
     }
+    class CommitValidationLevel {
+        <<enumeration>>
+        CustomRulesValidation
+        NoCommitValidation
+        ShaclCoreValidation
+        ShaclSparqlValidation
+    }
+    class ConcurrencyLevel
     class DataAccessProfile
     class EquivalentClassScope {
         equivalentTo
@@ -180,7 +184,12 @@ classDiagram
     class ShapeScope {
         targetShape
     }
+    class UniquenessEnforcementLevel
     CapabilityCheck --> CapabilitySpec : checkedAgainst
+    CapabilityRequirement --> ConcurrencyLevel : requiresCas
+    CapabilityRequirement --> UniquenessEnforcementLevel : requiresUniquenessLevel
+    CapabilitySpec --> CommitValidationLevel : providesCommitValidation
+    CapabilitySpec --> ConcurrencyLevel : providesCas
     ProfileScope <|-- ClassScope
     ProfileScope <|-- EquivalentClassScope
     ProfileScope <|-- GraphPatternScope
@@ -191,7 +200,7 @@ classDiagram
 
 <!-- end -->
 
-<!-- start: {"generated": "class-diagram", "part": "Aggregate boundary, concurrency and write discipline", "classes": ["dal:AggregateBoundaryProfile", "dal:AggregateBoundaryStrategy", "dal:OwnershipKind", "dal:ReferenceMode", "dal:ReferenceData", "dal:ConcurrencyProfile", "dal:ConcurrencyStrategy", "dal:WriteDisciplineProfile", "dal:WriteDiscipline", "dal:MembershipEncoding", "dal:FirstWriteMode", "dal:DeadlockPolicy"], "enumerations": "table"} -->
+<!-- start: {"generated": "class-diagram", "part": "Aggregate boundary, concurrency and write discipline", "classes": ["dal:AggregateBoundaryProfile", "dal:AggregateBoundaryStrategy", "dal:OwnershipKind", "dal:ReferenceMode", "dal:ReferenceData", "dal:ConcurrencyProfile", "dal:ConcurrencyStrategy", "dal:ConcurrencyLevel", "dal:WriteDisciplineProfile", "dal:WriteDiscipline", "dal:MembershipEncoding", "dal:FirstWriteMode", "dal:DeadlockPolicy"], "enumerations": "table"} -->
 
 **Aggregate boundary, concurrency and write discipline**
 
@@ -209,8 +218,13 @@ classDiagram
         NamedGraphBoundary
         NoBoundary
     }
+    class ConcurrencyLevel {
+        <<enumeration>>
+        BestEffort
+        Linearizable
+        NoConcurrencyGuarantee
+    }
     class ConcurrencyProfile {
-        minConcurrencyLevel
         valueGuardProperty
     }
     class ConcurrencyStrategy {
@@ -261,6 +275,7 @@ classDiagram
     }
     AggregateBoundaryProfile --> AggregateBoundaryStrategy : strategy
     AggregateBoundaryProfile --> FirstWriteMode : firstWrite
+    ConcurrencyProfile --> ConcurrencyLevel : minConcurrencyLevel
     ConcurrencyProfile --> ConcurrencyStrategy : concurrencyProfile
     ConcurrencyProfile --> DeadlockPolicy : deadlockPolicy
     ConcurrencyProfile --> EtagForm : etagForm
@@ -358,7 +373,7 @@ classDiagram
 
 <!-- end -->
 
-<!-- start: {"generated": "class-diagram", "part": "Uniqueness and keys", "classes": ["dal:UniquenessConstraint", "dal:ClaimScheme", "dal:SchemeState", "dal:PersistenceKeyed"], "enumerations": "table"} -->
+<!-- start: {"generated": "class-diagram", "part": "Uniqueness and keys", "classes": ["dal:UniquenessConstraint", "dal:UniquenessEnforcementLevel", "dal:ViolationPolicy", "dal:ClaimScheme", "dal:SchemeState", "dal:PersistenceKeyed"], "enumerations": "table"} -->
 
 **Uniqueness and keys**
 
@@ -385,13 +400,26 @@ classDiagram
         keyProperty
         mergeRelation
         normalizePipeline
-        onViolation
         scopeProperty
+    }
+    class UniquenessEnforcementLevel {
+        <<enumeration>>
+        Advisory
+        Strong
+        Transactional
+    }
+    class ViolationPolicy {
+        <<enumeration>>
+        Merge
+        Quarantine
+        Reject
     }
     ClaimScheme --> DigestScheme : claimDigestScheme
     ClaimScheme --> SchemeState : schemeState
     NaturallyKeyed <|-- PersistenceKeyed
     UniquenessConstraint --> ClaimScheme : claimScheme
+    UniquenessConstraint --> ViolationPolicy : onViolation
+    class ObjectProperty_minEnforcementLevel["Object Property - minEnforcementLevel"]
 ```
 
 <!-- end -->
@@ -1305,7 +1333,8 @@ write's boundary, and the same shape can keep serving the adopter's own validati
 | `dal:LockingConcurrency` | a marker that mutual exclusion lives outside the store (an external lock, a single writer per partition) | the store's isolation is too weak or unknown. No guard is generated |
 
 `dal:minConcurrencyLevel` (`dal:Linearizable`, `dal:BestEffort`) records the level the family needs,
-which a capability check compares with the store (§5.7).
+which a capability check compares with the store (§5.7). A family that needs no guarantee declares no level,
+so `dal:NoConcurrencyGuarantee` is the level a store can provide and never one a family requires.
 
 **Choosing, by situation** (guide §16.6):
 
@@ -1940,7 +1969,10 @@ is why it is a choice. The fixtures under `test/membership/` hold the stored tri
 
 The compiler builds no store interface and consults no live backend. For each target it computes an
 unconditional `dal:CapabilityRequirement` from the resolved profile alone: the concurrency level the
-family needs, whether resolution relied on reasoning, the uniqueness enforcement level.
+family needs (`dal:requiresCas`), whether resolution relied on reasoning, the uniqueness enforcement level.
+Both the requirement and the spec name a `dal:ConcurrencyLevel`, ranked `dal:NoConcurrencyGuarantee`, then
+`dal:BestEffort`, then `dal:Linearizable`, so the check compares like with like. A spec that names no level
+provides `dal:NoConcurrencyGuarantee`.
 
 An adopter may **optionally** supply a `dal:CapabilitySpec`, their own unverified statement of what
 their environment provides, and the compiler checks the requirement against it:
@@ -1948,9 +1980,9 @@ their environment provides, and the compiler checks the requirement against it:
 ```turtle
 ex:MyFusekiEnvironment a dal:CapabilitySpec ;
     dal:appliesToTarget           ex:LoanApplication ;
-    dal:providesCas               "LINEARIZABLE" ;
+    dal:providesCas               dal:Linearizable ;
     dal:providesReasoning         false ;
-    dal:providesCommitValidation  "NONE" .
+    dal:providesCommitValidation  dal:NoCommitValidation .
 ```
 
 A spec that says no reasoning is available also makes resolution drop reasoning-dependent scopes
@@ -3185,6 +3217,13 @@ closed set of named strategies.
 
 **Equivalent to.** { dal:ProvidedConcurrency, dal:Optimistic, dal:AppendOnly, dal:LockingConcurrency }
 
+#### `dal:ConcurrencyLevel`
+
+**Definition.** The compare-and-set level that a store provides or a family needs, one of a closed set of named
+levels, ranked dal:NoConcurrencyGuarantee below dal:BestEffort below dal:Linearizable.
+
+**Equivalent to.** { dal:Linearizable, dal:BestEffort, dal:NoConcurrencyGuarantee }
+
 #### `dal:OrderingProfile`
 
 **Definition.** A profile that declares a family's ordering grain, dataset tier, global read and contiguity check.
@@ -3227,6 +3266,27 @@ dal:SnapshotPerRevision, dal:NoReceipt.
 
 **Definition.** One keyed uniqueness constraint on a target, with its key properties, scope, normalisation and policy
 on violation.
+
+#### `dal:UniquenessEnforcementLevel`
+
+**Definition.** How strongly a store must enforce a uniqueness constraint, one of a closed set of named levels, ranked
+dal:Advisory below dal:Transactional below dal:Strong.
+
+**Equivalent to.** { dal:Advisory, dal:Transactional, dal:Strong }
+
+#### `dal:ViolationPolicy`
+
+**Definition.** What a uniqueness constraint does with a violation, one of a closed set of named policies. The policy
+selects the reconciler (5.6.6).
+
+**Equivalent to.** { dal:Reject, dal:Merge, dal:Quarantine }
+
+#### `dal:CommitValidationLevel`
+
+**Definition.** What a store validates at commit time, one of a closed set of named levels. The levels are
+dal:NoCommitValidation, dal:ShaclCoreValidation, dal:ShaclSparqlValidation and dal:CustomRulesValidation.
+
+**Equivalent to.** { dal:NoCommitValidation, dal:ShaclCoreValidation, dal:ShaclSparqlValidation, dal:CustomRulesValidation }
 
 #### `dal:CapabilitySpec`
 
@@ -3687,9 +3747,12 @@ since a write names what the payload contains. No rdfs:domain is declared, as fo
 
 #### `dal:minConcurrencyLevel`
 
-**Definition.** Meaningful only when dal:concurrencyProfile is dal:Optimistic.
+**Definition.** Meaningful only when dal:concurrencyProfile is dal:Optimistic. A family that needs no guarantee
+declares no level, so the property takes dal:Linearizable or dal:BestEffort.
 
 **Domain.** `dal:ConcurrencyProfile`
+
+**Range.** `dal:ConcurrencyLevel`
 
 #### `dal:valueGuardProperty`
 
@@ -3759,16 +3822,47 @@ which selects the reconciler.
 
 **Domain.** `dal:UniquenessConstraint`
 
+**Range.** `dal:ViolationPolicy`
+
 #### `dal:minEnforcementLevel`
 
 **Definition.** The weakest enforcement level a uniqueness constraint accepts, one of dal:Advisory, dal:Transactional
 and dal:Strong.
+
+**Range.** `dal:UniquenessEnforcementLevel`
 
 #### `dal:appliesToTarget`
 
 **Definition.** Which named deployment target this spec describes.
 
 **Domain.** `dal:CapabilitySpec`
+
+#### `dal:providesCas`
+
+**Definition.** The compare-and-set level the supplied environment provides, one of dal:Linearizable, dal:BestEffort
+and dal:NoConcurrencyGuarantee.
+
+**Domain.** `dal:CapabilitySpec`
+
+**Range.** `dal:ConcurrencyLevel`
+
+#### `dal:providesCommitValidation`
+
+**Definition.** What the supplied environment validates at commit time, one of dal:NoCommitValidation,
+dal:ShaclCoreValidation, dal:ShaclSparqlValidation and dal:CustomRulesValidation.
+
+**Domain.** `dal:CapabilitySpec`
+
+**Range.** `dal:CommitValidationLevel`
+
+#### `dal:requiresCas`
+
+**Definition.** The compare-and-set level the resolved configuration requires, one of the levels of
+dal:ConcurrencyLevel.
+
+**Domain.** `dal:CapabilityRequirement`
+
+**Range.** `dal:ConcurrencyLevel`
 
 #### `dal:requiresReasoningFor`
 
@@ -3781,6 +3875,8 @@ and dal:Strong.
 **Definition.** The highest enforcement level that any uniqueness constraint of the target asks for.
 
 **Domain.** `dal:CapabilityRequirement`
+
+**Range.** `dal:UniquenessEnforcementLevel`
 
 #### `dal:checkedAgainst`
 
@@ -4499,14 +4595,6 @@ scope with committed history (guide §24.4).
 
 **Range.** `xsd:string`
 
-#### `dal:providesCas`
-
-**Definition.** One of LINEARIZABLE, BEST_EFFORT, NONE.
-
-**Domain.** `dal:CapabilitySpec`
-
-**Range.** `xsd:string`
-
 #### `dal:providesReasoning`
 
 **Definition.** Whether the supplied environment provides reasoning.
@@ -4514,14 +4602,6 @@ scope with committed history (guide §24.4).
 **Domain.** `dal:CapabilitySpec`
 
 **Range.** `xsd:boolean`
-
-#### `dal:providesCommitValidation`
-
-**Definition.** One of NONE, SHACL_CORE, SHACL_SPARQL, CUSTOM_RULES.
-
-**Domain.** `dal:CapabilitySpec`
-
-**Range.** `xsd:string`
 
 #### `dal:providesSingleWriter`
 
@@ -4538,14 +4618,6 @@ scope with committed history (guide §24.4).
 **Domain.** `dal:CapabilitySpec`
 
 **Range.** `xsd:boolean`
-
-#### `dal:requiresCas`
-
-**Definition.** The level of compare-and-set the resolved configuration requires, as a name.
-
-**Domain.** `dal:CapabilityRequirement`
-
-**Range.** `xsd:string`
 
 #### `dal:acknowledgedSharedClassOverride`
 
@@ -5032,17 +5104,37 @@ The individuals of `dal:ConcurrencyStrategy`.
 | `dal:AppendOnly` | `dal:ConcurrencyStrategy` | Server-assigned next-position append, no expected-version guard (guide Chapter 22). |
 | `dal:LockingConcurrency` | `dal:ConcurrencyStrategy` | MARKER ONLY. Declares this target needs external serialisation (guide §16.1-§16.2). The compiler emits an unconditional write and the marker itself, for non-SPARQL tooling (an IaC compiler, a future routing layer) to act on. Never realised as a SPARQL guard. |
 
-Individuals with no class of their own, used as levels and policies.
+The individuals of `dal:ConcurrencyLevel`.
 
 | Individual | Type | Definition |
 |---|---|---|
-| `dal:Linearizable` | `owl:NamedIndividual` | A compare-and-set level for `dal:minConcurrencyLevel`: every guarded update takes effect at one instant, so of two writers holding the same expected version exactly one succeeds. A capability check passes it only against a store that provides `LINEARIZABLE`. |
-| `dal:BestEffort` | `owl:NamedIndividual` | The compare-and-set level `dal:minConcurrencyLevel` takes when none is given under `dal:Optimistic`. It relies on the store applying one update atomically, and a capability check passes it against a store that provides `BEST_EFFORT` or `LINEARIZABLE`. |
-| `dal:Reject` | `owl:NamedIndividual` | The baseline `dal:onViolation`. The duplicate audit reports every key claimed by more than one owner, and nothing is rewritten. |
-| `dal:Merge` | `owl:NamedIndividual` | A `dal:onViolation` that records `dal:mergeRelation` from each non-canonical owner of a duplicated key to the lexicographically lowest owner IRI, never `owl:sameAs`. A merge without a merge relation is refused. |
-| `dal:Advisory` | `owl:NamedIndividual` | The lowest `dal:minEnforcementLevel`, ranked below `dal:Transactional` and `dal:Strong`. It asks nothing of the store beyond running the generated operations and reconcilers. |
-| `dal:Transactional` | `owl:NamedIndividual` | A `dal:minEnforcementLevel` ranked between `dal:Advisory` and `dal:Strong`, for a key claim written by one guarded update that the store applies atomically. |
-| `dal:Strong` | `owl:NamedIndividual` | The highest `dal:minEnforcementLevel`. A capability check passes it only against a store that declares commit-time validation (`dal:providesCommitValidation`). |
+| `dal:Linearizable` | `dal:ConcurrencyLevel` | The highest compare-and-set level. Every guarded update takes effect at one instant, so of two writers holding the same expected version exactly one succeeds. A capability check passes it only against a store whose `dal:providesCas` is `dal:Linearizable`. |
+| `dal:BestEffort` | `dal:ConcurrencyLevel` | The level `dal:minConcurrencyLevel` takes when none is given under `dal:Optimistic`. It relies on the store applying one update atomically, and a capability check passes it against a store whose `dal:providesCas` is `dal:BestEffort` or `dal:Linearizable`. |
+| `dal:NoConcurrencyGuarantee` | `dal:ConcurrencyLevel` | The lowest level. Two writers holding the same expected version may both succeed. A store with this level, or a spec that names none, fails a capability check of any family under `dal:Optimistic`. A family never requires it, since `dal:minConcurrencyLevel` does not take it. |
+
+The individuals of `dal:CommitValidationLevel`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:NoCommitValidation` | `dal:CommitValidationLevel` | The store validates nothing at commit time. A spec that names no level provides this one, and it fails a check of `dal:Strong` uniqueness. |
+| `dal:ShaclCoreValidation` | `dal:CommitValidationLevel` | The store validates SHACL Core shapes at commit time, enough for a count constraint on a key claim. |
+| `dal:ShaclSparqlValidation` | `dal:CommitValidationLevel` | The store validates SHACL Core and SHACL-SPARQL shapes at commit time. |
+| `dal:CustomRulesValidation` | `dal:CommitValidationLevel` | The store runs rules of its own at commit time, outside SHACL. |
+
+The individuals of `dal:UniquenessEnforcementLevel`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:Advisory` | `dal:UniquenessEnforcementLevel` | The lowest `dal:minEnforcementLevel`, ranked below `dal:Transactional` and `dal:Strong`. It asks nothing of the store beyond running the generated operations and reconcilers. |
+| `dal:Transactional` | `dal:UniquenessEnforcementLevel` | A `dal:minEnforcementLevel` ranked between `dal:Advisory` and `dal:Strong`, for a key claim written by one guarded update that the store applies atomically. |
+| `dal:Strong` | `dal:UniquenessEnforcementLevel` | The highest `dal:minEnforcementLevel`. A capability check passes it only against a store that declares commit-time validation (`dal:providesCommitValidation`). |
+
+The individuals of `dal:ViolationPolicy` are the two below and `dal:Quarantine`, which the table of `dal:OperationKind` types with both classes.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:Reject` | `dal:ViolationPolicy` | The baseline `dal:onViolation`. The duplicate audit reports every key claimed by more than one owner, and nothing is rewritten. |
+| `dal:Merge` | `dal:ViolationPolicy` | A `dal:onViolation` that records `dal:mergeRelation` from each non-canonical owner of a duplicated key to the lexicographically lowest owner IRI, never `owl:sameAs`. A merge without a merge relation is refused. |
 
 The individuals of `dal:OrderingGrain`.
 
@@ -5079,7 +5171,7 @@ The individuals of `dal:OperationKind`.
 
 | Individual | Type | Definition |
 |---|---|---|
-| `dal:Quarantine` | `dal:OperationKind`, `owl:NamedIndividual` | Records the owners of a duplicated claim in the quarantine graph. |
+| `dal:Quarantine` | `dal:OperationKind`, `dal:ViolationPolicy` | The kind of the operation that records the owners of a duplicated claim in the quarantine graph, and the `dal:onViolation` that selects it. |
 | `dal:Create` | `dal:OperationKind` | Writes an aggregate that does not exist yet, with its version row, receipt and claim. |
 | `dal:Bootstrap` | `dal:OperationKind` | Creates a version row at seq 0, when the id is allocated. |
 | `dal:Replace` | `dal:OperationKind` | Replaces an aggregate if the version row is at the expected seq. |
@@ -5411,6 +5503,14 @@ The members of each enumeration of 6.1 are distinct individuals, so a reasoner c
 
 **All different.** dal:ProvidedConcurrency, dal:Optimistic, dal:AppendOnly, dal:LockingConcurrency
 
+**All different.** dal:Linearizable, dal:BestEffort, dal:NoConcurrencyGuarantee
+
+**All different.** dal:NoCommitValidation, dal:ShaclCoreValidation, dal:ShaclSparqlValidation, dal:CustomRulesValidation
+
+**All different.** dal:Advisory, dal:Transactional, dal:Strong
+
+**All different.** dal:Reject, dal:Merge, dal:Quarantine
+
 **All different.** dal:CommitGrain, dal:EventGrain
 
 **All different.** dal:DerivedFeed, dal:HybridLogicalClock, dal:GlobalDenseCounter
@@ -5527,7 +5627,9 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:ClaimScheme` | Class |  |
 | `dal:ClassScope` | Class | Subclass of `dal:ProfileScope`. |
 | `dal:ColumnKind` | Class | Equivalent to {`dal:IriColumn`, `dal:PositionColumn`, `dal:StringColumn`, `dal:TermColumn`, `dal:CountColumn`, `dal:ConcatenationColumn`}. |
+| `dal:CommitValidationLevel` | Class | Equivalent to {`dal:NoCommitValidation`, `dal:ShaclCoreValidation`, `dal:ShaclSparqlValidation`, `dal:CustomRulesValidation`}. |
 | `dal:CompiledProfile` | Class |  |
+| `dal:ConcurrencyLevel` | Class | Equivalent to {`dal:Linearizable`, `dal:BestEffort`, `dal:NoConcurrencyGuarantee`}. |
 | `dal:ConcurrencyProfile` | Class |  |
 | `dal:ConcurrencyStrategy` | Class | Equivalent to {`dal:ProvidedConcurrency`, `dal:Optimistic`, `dal:AppendOnly`, `dal:LockingConcurrency`}. |
 | `dal:ContiguityCheckMode` | Class | Equivalent to {`dal:BlockingContiguityCheck`, `dal:AdvisoryContiguityCheck`}. |
@@ -5595,6 +5697,8 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:SurrogateKind` | Class | Equivalent to {`dal:UuidV4Surrogate`, `dal:CallerSuppliedSurrogate`}. |
 | `dal:Template` | Class |  |
 | `dal:UniquenessConstraint` | Class |  |
+| `dal:UniquenessEnforcementLevel` | Class | Equivalent to {`dal:Advisory`, `dal:Transactional`, `dal:Strong`}. |
+| `dal:ViolationPolicy` | Class | Equivalent to {`dal:Reject`, `dal:Merge`, `dal:Quarantine`}. |
 | `dal:WriteDiscipline` | Class | Equivalent to {`dal:InPlace`, `dal:AppendVersions`, `dal:AppendRecords`}. |
 | `dal:WriteDisciplineProfile` | Class |  |
 | `dal:access` | Object property | Domain `dal:GeneratedOperation`. Range `dal:ResourceAccess`. |
@@ -5651,14 +5755,14 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:membershipEncoding` | Object property | Domain `dal:WriteDisciplineProfile`. Range `dal:MembershipEncoding`. |
 | `dal:mergeRelation` | Object property | Domain `dal:UniquenessConstraint`. |
 | `dal:metaTopology` | Object property | Domain `dal:MetaTopologyProfile`. Range `dal:MetaTopology`. |
-| `dal:minConcurrencyLevel` | Object property | Domain `dal:ConcurrencyProfile`. |
-| `dal:minEnforcementLevel` | Object property |  |
+| `dal:minConcurrencyLevel` | Object property | Domain `dal:ConcurrencyProfile`. Range `dal:ConcurrencyLevel`. |
+| `dal:minEnforcementLevel` | Object property | Range `dal:UniquenessEnforcementLevel`. |
 | `dal:mintingRecipe` | Object property | Domain `dal:CompiledProfile`. Range `dal:MintingRecipe`. |
 | `dal:mustEqual` | Object property | Domain `dal:ParameterDeclaration`. Range `dal:Rule`. |
 | `dal:mustEqualFor` | Object property | Domain `dal:ParameterDeclaration`. Range `dal:ParameterDeclaration`. |
 | `dal:normalizePipeline` | Object property | Domain `dal:UniquenessConstraint`. |
 | `dal:occurrenceNamespaceDerivation` | Object property | Domain `dal:IdentityProfile`. Range `dal:OccurrenceNamespaceDerivation`. |
-| `dal:onViolation` | Object property | Domain `dal:UniquenessConstraint`. |
+| `dal:onViolation` | Object property | Domain `dal:UniquenessConstraint`. Range `dal:ViolationPolicy`. |
 | `dal:operationKind` | Object property | Domain `dal:GeneratedOperation`. Range `dal:OperationKind`. |
 | `dal:orderingGrain` | Object property | Domain `dal:OrderingProfile`. Range `dal:OrderingGrain`. |
 | `dal:ownership` | Object property | Range `dal:OwnershipKind`. |
@@ -5671,14 +5775,17 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:payloadParameter` | Object property | Domain `dal:PayloadContract`. Range `dal:ParameterDeclaration`. |
 | `dal:payloadRoot` | Object property | Domain `dal:PayloadContract`. Range `dal:ParameterDeclaration`. |
 | `dal:privacyClass` | Object property | Domain `dal:PrivacyProfile`. Range `dal:PrivacyClass`. |
+| `dal:providesCas` | Object property | Domain `dal:CapabilitySpec`. Range `dal:ConcurrencyLevel`. |
+| `dal:providesCommitValidation` | Object property | Domain `dal:CapabilitySpec`. Range `dal:CommitValidationLevel`. |
 | `dal:receiptModel` | Object property | Domain `dal:ReceiptProfile`. Range `dal:ReceiptModel`. |
 | `dal:recipeStrategy` | Object property | Domain `dal:MintingRecipe`. |
 | `dal:recordClass` | Object property | Range `owl:Class`. |
 | `dal:referenceEdge` | Object property | Range `dal:ReferenceEdge`. |
 | `dal:referenceMode` | Object property | Range `dal:ReferenceMode`. |
 | `dal:reportsOutcome` | Object property | Domain `dal:GeneratedOperation`. Range `dal:AuditOutcome`. |
+| `dal:requiresCas` | Object property | Domain `dal:CapabilityRequirement`. Range `dal:ConcurrencyLevel`. |
 | `dal:requiresReasoningFor` | Object property | Domain `dal:CapabilityRequirement`. |
-| `dal:requiresUniquenessLevel` | Object property | Domain `dal:CapabilityRequirement`. |
+| `dal:requiresUniquenessLevel` | Object property | Domain `dal:CapabilityRequirement`. Range `dal:UniquenessEnforcementLevel`. |
 | `dal:resolvedDimension` | Object property | Domain `dal:CompiledProfile`. Range `dal:ResolvedDimension`. |
 | `dal:resolvedValue` | Object property | Domain `dal:ResolvedDimension`. |
 | `dal:resourceKind` | Object property | Domain `dal:ResourceAccess`. Range `dal:ResourceKind`. |
@@ -5748,8 +5855,6 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:perSubjectScoped` | Datatype property | Domain `dal:ReceiptProfile`. Range `xsd:boolean`. |
 | `dal:priorMetaShards` | Datatype property | Domain `dal:MetaTopologyProfile`. Range `xsd:long`. |
 | `dal:priority` | Datatype property | Domain `dal:ProfileScope`. Range `xsd:integer`. |
-| `dal:providesCas` | Datatype property | Domain `dal:CapabilitySpec`. Range `xsd:string`. |
-| `dal:providesCommitValidation` | Datatype property | Domain `dal:CapabilitySpec`. Range `xsd:string`. |
 | `dal:providesReasoning` | Datatype property | Domain `dal:CapabilitySpec`. Range `xsd:boolean`. |
 | `dal:providesSingleWriter` | Datatype property | Domain `dal:CapabilitySpec`. Range `xsd:boolean`. |
 | `dal:providesStatementLevelConflictDetection` | Datatype property | Domain `dal:CapabilitySpec`. Range `xsd:boolean`. |
@@ -5757,7 +5862,6 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:recipeDocument` | Datatype property | Domain `dal:MintingRecipe`. |
 | `dal:registryGraph` | Datatype property | Domain `dal:MetaTopologyProfile`. Range `xsd:string`. |
 | `dal:required` | Datatype property | Domain `dal:ParameterDeclaration`. Range `xsd:boolean`. |
-| `dal:requiresCas` | Datatype property | Domain `dal:CapabilityRequirement`. Range `xsd:string`. |
 | `dal:requiresReasoning` | Datatype property | Range `xsd:boolean`. |
 | `dal:resolvedLiteral` | Datatype property | Domain `dal:ResolvedDimension`. |
 | `dal:schemeVersion` | Datatype property | Domain `dal:ClaimScheme`. Range `xsd:string`. |
@@ -5774,7 +5878,7 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:Accepting` | Individual | Type `dal:SchemeState`. Different from `dal:Dual`, `dal:Retired`, `dal:Retiring`. |
 | `dal:AddPart` | Individual | Type `dal:DigestPartRole`. Different from `dal:DelPart`, `dal:EventPart`, `dal:ExpectedSeqPart`, `dal:OperationKindPart`, `dal:PayloadPart`, `dal:TargetPart`. |
 | `dal:AdoptedIdentity` | Individual | Type `dal:IdentityStrategy`. Different from `dal:ContentAddressedIdentity`, `dal:DerivedHashIdentity`, `dal:ExternalRegistryIdentity`, `dal:NaturalKeyIdentity`, `dal:RandomSurrogateIdentity`, `dal:SurrogateClaimedIdentity`. |
-| `dal:Advisory` | Individual | Type `owl:NamedIndividual`. |
+| `dal:Advisory` | Individual | Type `dal:UniquenessEnforcementLevel`. Different from `dal:Strong`, `dal:Transactional`. |
 | `dal:AdvisoryContiguityCheck` | Individual | Type `dal:ContiguityCheckMode`. Different from `dal:BlockingContiguityCheck`. |
 | `dal:Aggregate` | Individual | Type `dal:ResourceKind`. Different from `dal:DatasetEpoch`, `dal:Event`, `dal:KeyClaim`, `dal:KeyQuarantine`, `dal:MergeRecord`, `dal:PatchContent`, `dal:PropertyValue`, `dal:Receipt`, `dal:RetentionMark`, `dal:TransactionClaim`, `dal:VersionRow`. |
 | `dal:AggregateRootRole` | Individual | Type `dal:ResourceRole`. Different from `dal:ComponentRole`, `dal:ContentRevisionRole`, `dal:EntityRole`, `dal:EventOccurrenceRole`, `dal:GraphLocatorRole`, `dal:KeyClaimRole`, `dal:LineageRole`. |
@@ -5784,7 +5888,7 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:AppendVersion` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
 | `dal:AppendVersions` | Individual | Type `dal:WriteDiscipline`. Different from `dal:AppendRecords`, `dal:InPlace`. |
 | `dal:Audit` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Bootstrap`, `dal:Create`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
-| `dal:BestEffort` | Individual | Type `owl:NamedIndividual`. |
+| `dal:BestEffort` | Individual | Type `dal:ConcurrencyLevel`. Different from `dal:Linearizable`, `dal:NoConcurrencyGuarantee`. |
 | `dal:BlockingContiguityCheck` | Individual | Type `dal:ContiguityCheckMode`. Different from `dal:AdvisoryContiguityCheck`. |
 | `dal:Bootstrap` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Create`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
 | `dal:BucketAnyRetention` | Individual | Type `dal:RetentionMode`. Different from `dal:PrefixOnlyRetention`. |
@@ -5802,6 +5906,7 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:CountColumn` | Individual | Type `dal:ColumnKind`. Different from `dal:ConcatenationColumn`, `dal:IriColumn`, `dal:PositionColumn`, `dal:StringColumn`, `dal:TermColumn`. |
 | `dal:Create` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
 | `dal:CryptoShred` | Individual | Type `dal:ErasureStrategy`. Different from `dal:NoErasure`, `dal:PerSubjectGraphDrop`. |
+| `dal:CustomRulesValidation` | Individual | Type `dal:CommitValidationLevel`. Different from `dal:NoCommitValidation`, `dal:ShaclCoreValidation`, `dal:ShaclSparqlValidation`. |
 | `dal:DatasetEpoch` | Individual | Type `dal:ResourceKind`. Different from `dal:Aggregate`, `dal:Event`, `dal:KeyClaim`, `dal:KeyQuarantine`, `dal:MergeRecord`, `dal:PatchContent`, `dal:PropertyValue`, `dal:Receipt`, `dal:RetentionMark`, `dal:TransactionClaim`, `dal:VersionRow`. |
 | `dal:DatasetLevelGuard` | Individual | Type `dal:EpochGuardScope`. Different from `dal:RowLevelGuardOnly`. |
 | `dal:DelPart` | Individual | Type `dal:DigestPartRole`. Different from `dal:AddPart`, `dal:EventPart`, `dal:ExpectedSeqPart`, `dal:OperationKindPart`, `dal:PayloadPart`, `dal:TargetPart`. |
@@ -5850,12 +5955,12 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:LagWindowRead` | Individual | Type `dal:GlobalReadStrategy`. Different from `dal:DenseFeedRead`, `dal:NoGlobalRead`, `dal:WatermarkedRead`. |
 | `dal:LangStringKind` | Individual | Type `dal:ParameterKind`. Different from `dal:DigestKind`, `dal:IriKind`, `dal:IriOrLiteralKind`, `dal:LiteralKind`, `dal:LongKind`, `dal:PayloadKind`, `dal:PositionKind`, `dal:RegistryListKind`, `dal:RowsKind`, `dal:StringKind`. |
 | `dal:LineageRole` | Individual | Type `dal:ResourceRole`. Different from `dal:AggregateRootRole`, `dal:ComponentRole`, `dal:ContentRevisionRole`, `dal:EntityRole`, `dal:EventOccurrenceRole`, `dal:GraphLocatorRole`, `dal:KeyClaimRole`. |
-| `dal:Linearizable` | Individual | Type `owl:NamedIndividual`. |
+| `dal:Linearizable` | Individual | Type `dal:ConcurrencyLevel`. Different from `dal:BestEffort`, `dal:NoConcurrencyGuarantee`. |
 | `dal:LiteralKind` | Individual | Type `dal:ParameterKind`. Different from `dal:DigestKind`, `dal:IriKind`, `dal:IriOrLiteralKind`, `dal:LangStringKind`, `dal:LongKind`, `dal:PayloadKind`, `dal:PositionKind`, `dal:RegistryListKind`, `dal:RowsKind`, `dal:StringKind`. |
 | `dal:LockingConcurrency` | Individual | Type `dal:ConcurrencyStrategy`. Different from `dal:AppendOnly`, `dal:Optimistic`, `dal:ProvidedConcurrency`. |
 | `dal:LongKind` | Individual | Type `dal:ParameterKind`. Different from `dal:DigestKind`, `dal:IriKind`, `dal:IriOrLiteralKind`, `dal:LangStringKind`, `dal:LiteralKind`, `dal:PayloadKind`, `dal:PositionKind`, `dal:RegistryListKind`, `dal:RowsKind`, `dal:StringKind`. |
 | `dal:MembersRead` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
-| `dal:Merge` | Individual | Type `owl:NamedIndividual`. |
+| `dal:Merge` | Individual | Type `dal:ViolationPolicy`. Different from `dal:Quarantine`, `dal:Reject`. |
 | `dal:MergeRecord` | Individual | Type `dal:ResourceKind`. Different from `dal:Aggregate`, `dal:DatasetEpoch`, `dal:Event`, `dal:KeyClaim`, `dal:KeyQuarantine`, `dal:PatchContent`, `dal:PropertyValue`, `dal:Receipt`, `dal:RetentionMark`, `dal:TransactionClaim`, `dal:VersionRow`. |
 | `dal:MergeRewrite` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
 | `dal:MonotonicityWins` | Individual | Type `dal:ErasurePrecedence`. Different from `dal:ErasureWins`. |
@@ -5866,6 +5971,8 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:NfkcTrimUppercase` | Individual | Type `owl:NamedIndividual`. |
 | `dal:NoBoundary` | Individual | Type `dal:AggregateBoundaryStrategy`. Different from `dal:CompositePropertyBoundary`, `dal:NamedGraphBoundary`. |
 | `dal:NoBoundaryShape` | Individual | Type `dal:BoundaryShapeAbsence`. |
+| `dal:NoCommitValidation` | Individual | Type `dal:CommitValidationLevel`. Different from `dal:CustomRulesValidation`, `dal:ShaclCoreValidation`, `dal:ShaclSparqlValidation`. |
+| `dal:NoConcurrencyGuarantee` | Individual | Type `dal:ConcurrencyLevel`. Different from `dal:BestEffort`, `dal:Linearizable`. |
 | `dal:NoErasure` | Individual | Type `dal:ErasureStrategy`. Different from `dal:CryptoShred`, `dal:PerSubjectGraphDrop`. |
 | `dal:NoGlobalRead` | Individual | Type `dal:GlobalReadStrategy`. Different from `dal:DenseFeedRead`, `dal:LagWindowRead`, `dal:WatermarkedRead`. |
 | `dal:NoReceipt` | Individual | Type `dal:ReceiptModel`. Different from `dal:PatchLog`, `dal:ReceiptOnly`, `dal:SnapshotPerRevision`. |
@@ -5896,7 +6003,7 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:PropertyValue` | Individual | Type `dal:ResourceKind`. Different from `dal:Aggregate`, `dal:DatasetEpoch`, `dal:Event`, `dal:KeyClaim`, `dal:KeyQuarantine`, `dal:MergeRecord`, `dal:PatchContent`, `dal:Receipt`, `dal:RetentionMark`, `dal:TransactionClaim`, `dal:VersionRow`. |
 | `dal:ProvidedConcurrency` | Individual | Type `dal:ConcurrencyStrategy`. Different from `dal:AppendOnly`, `dal:LockingConcurrency`, `dal:Optimistic`. |
 | `dal:PublicData` | Individual | Type `dal:PrivacyClass`. Different from `dal:InternalData`, `dal:PersonalData`. |
-| `dal:Quarantine` | Individual | Type `dal:OperationKind`, `owl:NamedIndividual`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Replace`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
+| `dal:Quarantine` | Individual | Type `dal:OperationKind`, `dal:ViolationPolicy`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:Merge`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Reject`, `dal:Replace`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
 | `dal:QueryNamed` | Individual | Type `dal:GraphNaming`. Different from `dal:CallerNamed`. |
 | `dal:RandomOccurrenceEvent` | Individual | Type `dal:EventIdentityStrategy`. Different from `dal:ExternalEventIdStrategy`, `dal:PositionDerivedEvent`. |
 | `dal:RandomSurrogateIdentity` | Individual | Type `dal:IdentityStrategy`. Different from `dal:AdoptedIdentity`, `dal:ContentAddressedIdentity`, `dal:DerivedHashIdentity`, `dal:ExternalRegistryIdentity`, `dal:NaturalKeyIdentity`, `dal:SurrogateClaimedIdentity`. |
@@ -5906,7 +6013,7 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:RegistryGraph` | Individual | Type `dal:Source`. Different from `dal:NoSource`. |
 | `dal:RegistryListKind` | Individual | Type `dal:ParameterKind`. Different from `dal:DigestKind`, `dal:IriKind`, `dal:IriOrLiteralKind`, `dal:LangStringKind`, `dal:LiteralKind`, `dal:LongKind`, `dal:PayloadKind`, `dal:PositionKind`, `dal:RowsKind`, `dal:StringKind`. |
 | `dal:RegistryTokenDerivation` | Individual | Type `dal:OccurrenceNamespaceDerivation`. Different from `dal:HashedTargetDerivation`. |
-| `dal:Reject` | Individual | Type `owl:NamedIndividual`. |
+| `dal:Reject` | Individual | Type `dal:ViolationPolicy`. Different from `dal:Merge`, `dal:Quarantine`. |
 | `dal:Replace` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
 | `dal:RestoreControlledEpoch` | Individual | Type `dal:EpochAuthority`. Different from `dal:ExternalHighWaterMark`, `dal:StoreLocalEpoch`, `dal:WriterStartRefusal`. |
 | `dal:RetentionMark` | Individual | Type `dal:ResourceKind`. Different from `dal:Aggregate`, `dal:DatasetEpoch`, `dal:Event`, `dal:KeyClaim`, `dal:KeyQuarantine`, `dal:MergeRecord`, `dal:PatchContent`, `dal:PropertyValue`, `dal:Receipt`, `dal:TransactionClaim`, `dal:VersionRow`. |
@@ -5916,6 +6023,8 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:RowsKind` | Individual | Type `dal:ParameterKind`. Different from `dal:DigestKind`, `dal:IriKind`, `dal:IriOrLiteralKind`, `dal:LangStringKind`, `dal:LiteralKind`, `dal:LongKind`, `dal:PayloadKind`, `dal:PositionKind`, `dal:RegistryListKind`, `dal:StringKind`. |
 | `dal:ScanRead` | Individual | Type `dal:AccessMode`. Different from `dal:AbsenceRead`, `dal:Delete`, `dal:Insert`, `dal:PointRead`, `dal:WholeAggregateRead`. |
 | `dal:SelfReferenceDisallowed` | Individual | Type `dal:SelfReferenceRule`. Different from `dal:ExcludeHeaderSubgraph`, `dal:PlaceholderSubstitution`. |
+| `dal:ShaclCoreValidation` | Individual | Type `dal:CommitValidationLevel`. Different from `dal:CustomRulesValidation`, `dal:NoCommitValidation`, `dal:ShaclSparqlValidation`. |
+| `dal:ShaclSparqlValidation` | Individual | Type `dal:CommitValidationLevel`. Different from `dal:CustomRulesValidation`, `dal:NoCommitValidation`, `dal:ShaclCoreValidation`. |
 | `dal:SharedSharded` | Individual | Type `dal:MetaTopology`. Different from `dal:PerAggregate`. |
 | `dal:SingleRepresentation` | Individual | Type `dal:EtagRepresentation`. Different from `dal:TaggedRepresentation`. |
 | `dal:SnapshotPerRevision` | Individual | Type `dal:ReceiptModel`. Different from `dal:NoReceipt`, `dal:PatchLog`, `dal:ReceiptOnly`. |
@@ -5923,7 +6032,7 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:StoreLocalEpoch` | Individual | Type `dal:EpochAuthority`. Different from `dal:ExternalHighWaterMark`, `dal:RestoreControlledEpoch`, `dal:WriterStartRefusal`. |
 | `dal:StringColumn` | Individual | Type `dal:ColumnKind`. Different from `dal:ConcatenationColumn`, `dal:CountColumn`, `dal:IriColumn`, `dal:PositionColumn`, `dal:TermColumn`. |
 | `dal:StringKind` | Individual | Type `dal:ParameterKind`. Different from `dal:DigestKind`, `dal:IriKind`, `dal:IriOrLiteralKind`, `dal:LangStringKind`, `dal:LiteralKind`, `dal:LongKind`, `dal:PayloadKind`, `dal:PositionKind`, `dal:RegistryListKind`, `dal:RowsKind`. |
-| `dal:Strong` | Individual | Type `owl:NamedIndividual`. |
+| `dal:Strong` | Individual | Type `dal:UniquenessEnforcementLevel`. Different from `dal:Advisory`, `dal:Transactional`. |
 | `dal:StrongEtag` | Individual | Type `dal:EtagForm`. Different from `dal:WeakEtag`. |
 | `dal:SurrogateClaimedIdentity` | Individual | Type `dal:IdentityStrategy`. Different from `dal:AdoptedIdentity`, `dal:ContentAddressedIdentity`, `dal:DerivedHashIdentity`, `dal:ExternalRegistryIdentity`, `dal:NaturalKeyIdentity`, `dal:RandomSurrogateIdentity`. |
 | `dal:TaggedRepresentation` | Individual | Type `dal:EtagRepresentation`. Different from `dal:SingleRepresentation`. |
@@ -5931,7 +6040,7 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:TermColumn` | Individual | Type `dal:ColumnKind`. Different from `dal:ConcatenationColumn`, `dal:CountColumn`, `dal:IriColumn`, `dal:PositionColumn`, `dal:StringColumn`. |
 | `dal:Tombstone` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
 | `dal:TransactionClaim` | Individual | Type `dal:ResourceKind`. Different from `dal:Aggregate`, `dal:DatasetEpoch`, `dal:Event`, `dal:KeyClaim`, `dal:KeyQuarantine`, `dal:MergeRecord`, `dal:PatchContent`, `dal:PropertyValue`, `dal:Receipt`, `dal:RetentionMark`, `dal:VersionRow`. |
-| `dal:Transactional` | Individual | Type `owl:NamedIndividual`. |
+| `dal:Transactional` | Individual | Type `dal:UniquenessEnforcementLevel`. Different from `dal:Advisory`, `dal:Strong`. |
 | `dal:UnconditionalWrite` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:Tombstone`, `dal:ValueGuardedReplace`. |
 | `dal:UuidV4Surrogate` | Individual | Type `dal:SurrogateKind`. Different from `dal:CallerSuppliedSurrogate`. |
 | `dal:ValueGuardedReplace` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:Tombstone`, `dal:UnconditionalWrite`. |
@@ -6092,11 +6201,9 @@ dal:UniquenessConstraintShape
 dal:CapabilitySpecShape
     a sh:NodeShape ;
     sh:targetClass dal:CapabilitySpec ;
-    sh:property [ sh:path dal:providesCas ; sh:maxCount 1 ; sh:datatype xsd:string ;
-                  sh:in ( "LINEARIZABLE" "BEST_EFFORT" "NONE" ) ] ;
+    sh:property [ sh:path dal:providesCas ; sh:maxCount 1 ] ;
     sh:property [ sh:path dal:providesReasoning ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
-    sh:property [ sh:path dal:providesCommitValidation ; sh:maxCount 1 ; sh:datatype xsd:string ;
-                  sh:in ( "NONE" "SHACL_CORE" "SHACL_SPARQL" "CUSTOM_RULES" ) ] .
+    sh:property [ sh:path dal:providesCommitValidation ; sh:maxCount 1 ] .
 
 # The SharedClassProfileWarning convention (ADR-A78 point 5):
 # a DataAccessProfile scoped ONLY by a bare ClassScope, targeting a class
@@ -6652,7 +6759,7 @@ dal:RequiredParametersGuardedShape
 ```
 -->
 
-**Enumerations.** Every property whose range is a closed enumeration of 6.1 has a property shape with `sh:in` listing the members of that enumeration. Those of the contract are in the shapes above, and the others are below, one shape for each class that carries them. `dal:sourcedFrom` lists `dal:RegistryGraph` only, since a parameter with no source has no `dal:sourcedFrom` at all.
+**Enumerations.** Every property whose range is a closed enumeration of 6.1 has a property shape with `sh:in` listing the members of that enumeration. Those of the contract are in the shapes above, and the others are below, one shape for each class that carries them. `dal:sourcedFrom` lists `dal:RegistryGraph` only, since a parameter with no source has no `dal:sourcedFrom` at all. `dal:minConcurrencyLevel` lists `dal:Linearizable` and `dal:BestEffort` only, since a family that needs no guarantee declares no level.
 
 <!-- hidden: {"output-file": "shapes/constraints.ttl"}
 ```turtle-shapes
@@ -6680,7 +6787,25 @@ dal:ConcurrencyProfileEnumerationsShape
     sh:property [ sh:path dal:etagForm ; sh:nodeKind sh:IRI ; sh:in ( dal:StrongEtag dal:WeakEtag ) ;
                   sh:message "dal:etagForm takes one of dal:StrongEtag, dal:WeakEtag." ] ;
     sh:property [ sh:path dal:etagRepresentation ; sh:nodeKind sh:IRI ; sh:in ( dal:SingleRepresentation dal:TaggedRepresentation ) ;
-                  sh:message "dal:etagRepresentation takes one of dal:SingleRepresentation, dal:TaggedRepresentation." ] .
+                  sh:message "dal:etagRepresentation takes one of dal:SingleRepresentation, dal:TaggedRepresentation." ] ;
+    sh:property [ sh:path dal:minConcurrencyLevel ; sh:nodeKind sh:IRI ; sh:in ( dal:Linearizable dal:BestEffort ) ;
+                  sh:message "dal:minConcurrencyLevel takes one of dal:Linearizable, dal:BestEffort. A family that needs no guarantee declares no level." ] .
+
+dal:CapabilityRequirementEnumerationsShape
+    a sh:NodeShape ;
+    sh:targetClass dal:CapabilityRequirement ;
+    sh:property [ sh:path dal:requiresCas ; sh:nodeKind sh:IRI ; sh:in ( dal:Linearizable dal:BestEffort dal:NoConcurrencyGuarantee ) ;
+                  sh:message "dal:requiresCas takes one of dal:Linearizable, dal:BestEffort, dal:NoConcurrencyGuarantee." ] ;
+    sh:property [ sh:path dal:requiresUniquenessLevel ; sh:nodeKind sh:IRI ; sh:in ( dal:Advisory dal:Transactional dal:Strong ) ;
+                  sh:message "dal:requiresUniquenessLevel takes one of dal:Advisory, dal:Transactional, dal:Strong." ] .
+
+dal:CapabilitySpecEnumerationsShape
+    a sh:NodeShape ;
+    sh:targetClass dal:CapabilitySpec ;
+    sh:property [ sh:path dal:providesCas ; sh:nodeKind sh:IRI ; sh:in ( dal:Linearizable dal:BestEffort dal:NoConcurrencyGuarantee ) ;
+                  sh:message "dal:providesCas takes one of dal:Linearizable, dal:BestEffort, dal:NoConcurrencyGuarantee, not a string." ] ;
+    sh:property [ sh:path dal:providesCommitValidation ; sh:nodeKind sh:IRI ; sh:in ( dal:NoCommitValidation dal:ShaclCoreValidation dal:ShaclSparqlValidation dal:CustomRulesValidation ) ;
+                  sh:message "dal:providesCommitValidation takes one of dal:NoCommitValidation, dal:ShaclCoreValidation, dal:ShaclSparqlValidation, dal:CustomRulesValidation, not a string." ] .
 
 dal:EpochProfileEnumerationsShape
     a sh:NodeShape ;
@@ -6751,6 +6876,14 @@ dal:ReferenceEdgeEnumerationsShape
     sh:targetClass dal:ReferenceEdge ;
     sh:property [ sh:path dal:edgeOwnership ; sh:nodeKind sh:IRI ; sh:in ( dal:Owned dal:Reference dal:Vocabulary ) ;
                   sh:message "dal:edgeOwnership takes one of dal:Owned, dal:Reference, dal:Vocabulary." ] .
+
+dal:UniquenessConstraintEnumerationsShape
+    a sh:NodeShape ;
+    sh:targetClass dal:UniquenessConstraint ;
+    sh:property [ sh:path dal:minEnforcementLevel ; sh:nodeKind sh:IRI ; sh:in ( dal:Advisory dal:Transactional dal:Strong ) ;
+                  sh:message "dal:minEnforcementLevel takes one of dal:Advisory, dal:Transactional, dal:Strong." ] ;
+    sh:property [ sh:path dal:onViolation ; sh:nodeKind sh:IRI ; sh:in ( dal:Reject dal:Merge dal:Quarantine ) ;
+                  sh:message "dal:onViolation takes one of dal:Reject, dal:Merge, dal:Quarantine." ] .
 ```
 -->
 
@@ -6995,7 +7128,8 @@ One class, a named-graph aggregate, compare-and-set, event grain, a patch log, s
 graphs, and an application number unique per branch. The constraint attaches to the target through
 its own `dal:appliesTo`, like any other profile:
 
-```turtle
+```turtle-example
+# from examples/baseline-single-class.ttl
 ex:LoanApplicationClass a dal:ClassScope ;
     dal:targetClass ex:LoanApplication ;
     dal:priority "20"^^xsd:integer .
@@ -7030,29 +7164,7 @@ revision-multi-txn and txn-multi-revision audits.
 ### 8.2 A shared class, two deployments
 
 Two applied ontologies, lending and credit, both deploy the shared class `beh:Behaviour`, each into its
-own graph family, and want different guarantees for it:
-
-```turtle
-ex:LendingBehaviourGraphs a dal:GraphPatternScope ;
-    dal:graphPrefix "urn:g:lending/behaviour/" ;
-    dal:coversClass beh:Behaviour ;
-    dal:priority "10"^^xsd:integer .
-
-ex:LendingBehaviourProfile a dal:DataAccessProfile ;
-    dal:appliesTo ex:LendingBehaviourGraphs ;
-    dal:concurrencyProfile dal:Optimistic ;
-    dal:receiptModel dal:PatchLog .
-
-ex:CreditBehaviourGraphs a dal:GraphPatternScope ;
-    dal:graphPrefix "urn:g:credit/behaviour/" ;
-    dal:coversClass beh:Behaviour ;
-    dal:priority "10"^^xsd:integer .
-
-ex:CreditBehaviourProfile a dal:DataAccessProfile ;
-    dal:appliesTo ex:CreditBehaviourGraphs ;
-    dal:concurrencyProfile dal:ProvidedConcurrency ;
-    dal:receiptModel dal:ReceiptOnly .
-```
+own graph family, and want different guarantees for it, as the diagram shows.
 
 ```mermaid
 flowchart LR
@@ -7077,24 +7189,7 @@ with `dal:acknowledgedSharedClassOverride`.
 
 ### 8.3 A composite-property aggregate, declared by a classified shape
 
-An order and its line items form one aggregate. The customer the order refers to does not:
-
-```turtle
-ex:OrderAggregateShape a sh:NodeShape ;
-    sh:targetClass ex:Order ;
-    sh:property [ sh:path ex:lineItem ; sh:node ex:LineItemShape ; sh:minCount 1 ; dal:ownership dal:Owned ] ,
-                [ sh:path ex:customer ; sh:class ex:Customer ; dal:ownership dal:Reference ] .
-
-ex:LineItemShape a sh:NodeShape ;
-    sh:targetClass ex:LineItem ;
-    sh:property [ sh:path ex:sku ; sh:datatype xsd:string ] .
-
-ex:OrderBoundaryProfile a dal:AggregateBoundaryProfile ;
-    dal:appliesTo     ex:OrderClass ;
-    dal:strategy      dal:CompositePropertyBoundary ;
-    dal:boundaryShape ex:OrderAggregateShape ;
-    dal:dataGraph     <urn:g:orders> .
-```
+An order and its line items form one aggregate. The customer the order refers to does not, as the diagram shows.
 
 ```mermaid
 flowchart LR
@@ -7121,69 +7216,7 @@ a property owned in one place and a reference in another, is
 
 A claimant is personal data. Its entity IRI is a claimed surrogate (its email is mutable and
 sensitive), its events are position-derived, its epoch comes from an external high-water mark, and its
-data is erased by dropping the claimant's own graph:
-
-```turtle
-ex:ClaimantEntity a dal:ClassScope ;
-    dal:targetClass ex:Claimant ;
-    dal:priority "20"^^xsd:integer .
-
-ex:ClaimantIdentity a dal:IdentityProfile ;
-    dal:appliesTo          ex:ClaimantEntity ;
-    dal:resourceRole       dal:EntityRole ;
-    dal:identityStrategy   dal:SurrogateClaimedIdentity ;      # mutable, sensitive key (an email)
-    dal:surrogateKind      dal:UuidV4Surrogate ;
-    dal:mintedIriTemplate  "urn:claimant:{surrogate}" ;
-    dal:claimsConstraint   ex:ClaimantEmailUnique ;            # the claim minted with the surrogate
-    dal:namingAuthority    "adopter" .
-
-ex:ClaimantEmailUnique a dal:UniquenessConstraint ;           # the key the claimed surrogate is minted from;
-    dal:constraintId        "claimant-email-unique" ;          # without it the compiler refuses the identity profile
-    dal:appliesTo            ex:ClaimantEntity ;
-    dal:keyProperty          ( ex:email ) ;
-    dal:scopeProperty        ex:tenant ;
-    dal:normalizePipeline    dal:NfkcTrimCasefold ;
-    dal:onViolation          dal:Reject ;
-    dal:claimScheme          ex:ClaimantEmailSchemeV1 .
-
-ex:ClaimantEmailSchemeV1 a dal:ClaimScheme ;                   # every byte of a claim IRI is fixed here,
-    dal:schemeVersion      "v1" ;                              # so it changes only through rotation
-    dal:schemeState        dal:Accepting ;
-    dal:claimKeyId         "claimant-email-key-v1" ;           # names the secret, never holds it
-    dal:claimDigestScheme  ex:ClaimantEmailMac ;               # HMAC-SHA-256, 128 bits, base32
-    dal:claimIriTemplate   "urn:key:claimant-email:{schemeVersion}:{mac}" .
-
-ex:ClaimantEvents a dal:IdentityProfile ;                      # a second role for the same class
-    dal:appliesTo                     ex:ClaimantEntity ;
-    dal:resourceRole                  dal:EventOccurrenceRole ;
-    dal:identityStrategy              dal:DerivedHashIdentity ;
-    dal:eventIdentityStrategy         dal:PositionDerivedEvent ;
-    dal:occurrenceNamespaceDerivation dal:HashedTargetDerivation ;
-    dal:uniquenessWitnessRequired     true ;
-    dal:digestScheme                  ex:ClaimantEventDigest ;     # SHA-256, 128 bits, base32
-    dal:mintedIriTemplate             "urn:ev:claimant:{namespace}/e{epoch}/{seq}" ;
-    dal:epochWidth                    19 ;
-    dal:sequenceWidth                 19 .
-
-ex:ClaimantEpoch a dal:EpochProfile ;
-    dal:appliesTo          ex:ClaimantEntity ;
-    dal:epochAuthority     dal:ExternalHighWaterMark ;
-    dal:epochCoordinatorBinding "postgres://coord/epoch_watermark" ;
-    dal:epochGuardScope    dal:DatasetLevelGuard ;
-    dal:erasureRegisterBinding  "postgres://coord/erasure_register" ;
-    dal:erasureReplayOnRestore  true .
-
-ex:ClaimantPrivacy a dal:PrivacyProfile ;
-    dal:appliesTo          ex:ClaimantEntity ;
-    dal:privacyClass       dal:PersonalData ;
-    dal:erasureStrategy    dal:PerSubjectGraphDrop ;
-    dal:erasurePrecedence  dal:ErasureWins .
-
-ex:ClaimantReceipts a dal:DataAccessProfile ;
-    dal:appliesTo          ex:ClaimantEntity ;
-    dal:receiptModel       dal:ReceiptOnly ;          # required, given personal data + graph-drop erasure below
-    dal:perSubjectScoped   true .
-```
+data is erased by dropping the claimant's own graph, as the diagram shows.
 
 ```mermaid
 flowchart LR
@@ -7349,6 +7382,21 @@ Earlier versions are listed in the [ontology release register](../../docs/archit
     (`owl:oneOf`), and 40 of them state their members distinct (`owl:AllDifferent`). A graph that types an individual of its
     own with one of these classes now entails that it is one of the listed members (changes meaning). 26 more properties
     whose range is one of these classes take only its members (`sh:in`) (may invalidate).
+  - Levels and policies get classes. New: `dal:UniquenessEnforcementLevel` (`dal:Advisory`, `dal:Transactional`,
+    `dal:Strong`), `dal:ViolationPolicy` (`dal:Reject`, `dal:Merge`, `dal:Quarantine`, which stays a `dal:OperationKind`),
+    `dal:ConcurrencyLevel` (`dal:Linearizable`, `dal:BestEffort`, `dal:NoConcurrencyGuarantee`) and
+    `dal:CommitValidationLevel` (`dal:NoCommitValidation`, `dal:ShaclCoreValidation`, `dal:ShaclSparqlValidation`,
+    `dal:CustomRulesValidation`). Each is equivalent to its members, which it states distinct, and
+    `dal:minEnforcementLevel`, `dal:requiresUniquenessLevel`, `dal:onViolation` and `dal:minConcurrencyLevel` take them as
+    their range. A graph that types its own individual with one of these classes now entails that it is one of the listed
+    members (changes meaning). `dal:minConcurrencyLevel` takes `dal:Linearizable` and `dal:BestEffort` only (may invalidate
+    for a graph that named another level).
+  - `dal:providesCas`, `dal:requiresCas` and `dal:providesCommitValidation` become object properties ranging over
+    `dal:ConcurrencyLevel` and `dal:CommitValidationLevel`, in place of the strings `"LINEARIZABLE"`, `"BEST_EFFORT"`, `"NONE"`,
+    `"SHACL_CORE"`, `"SHACL_SPARQL"` and `"CUSTOM_RULES"`. A capability spec that states a string fails its shape (may
+    invalidate) and migrates by naming the individual. A compiled profile states `dal:requiresCas` as an IRI (changes
+    meaning for a compiled profile written before).
+  - New: `dal:NoConcurrencyGuarantee` and the four commit validation individuals (no effect).
 - 0.18.0, the first release of the substrate and standalone modules as one set ([ADR-A129](../../docs/architecture/decisions/ADR-A129-one-release-for-the-substrate.md)). Every document takes the
   release's number. `persistent-foundation` imports Foundation and Persistence at 0.18.0, where it imported Foundation
   0.4.0 and Persistence 0.3.0. The shapes directory no longer carries a `.version` (no effect).

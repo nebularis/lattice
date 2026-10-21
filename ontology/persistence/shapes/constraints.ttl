@@ -123,11 +123,9 @@ dal:UniquenessConstraintShape
 dal:CapabilitySpecShape
     a sh:NodeShape ;
     sh:targetClass dal:CapabilitySpec ;
-    sh:property [ sh:path dal:providesCas ; sh:maxCount 1 ; sh:datatype xsd:string ;
-                  sh:in ( "LINEARIZABLE" "BEST_EFFORT" "NONE" ) ] ;
+    sh:property [ sh:path dal:providesCas ; sh:maxCount 1 ] ;
     sh:property [ sh:path dal:providesReasoning ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
-    sh:property [ sh:path dal:providesCommitValidation ; sh:maxCount 1 ; sh:datatype xsd:string ;
-                  sh:in ( "NONE" "SHACL_CORE" "SHACL_SPARQL" "CUSTOM_RULES" ) ] .
+    sh:property [ sh:path dal:providesCommitValidation ; sh:maxCount 1 ] .
 
 # The SharedClassProfileWarning convention (ADR-A78 point 5):
 # a DataAccessProfile scoped ONLY by a bare ClassScope, targeting a class
@@ -705,7 +703,25 @@ dal:ConcurrencyProfileEnumerationsShape
     sh:property [ sh:path dal:etagForm ; sh:nodeKind sh:IRI ; sh:in ( dal:StrongEtag dal:WeakEtag ) ;
                   sh:message "dal:etagForm takes one of dal:StrongEtag, dal:WeakEtag." ] ;
     sh:property [ sh:path dal:etagRepresentation ; sh:nodeKind sh:IRI ; sh:in ( dal:SingleRepresentation dal:TaggedRepresentation ) ;
-                  sh:message "dal:etagRepresentation takes one of dal:SingleRepresentation, dal:TaggedRepresentation." ] .
+                  sh:message "dal:etagRepresentation takes one of dal:SingleRepresentation, dal:TaggedRepresentation." ] ;
+    sh:property [ sh:path dal:minConcurrencyLevel ; sh:nodeKind sh:IRI ; sh:in ( dal:Linearizable dal:BestEffort ) ;
+                  sh:message "dal:minConcurrencyLevel takes one of dal:Linearizable, dal:BestEffort. A family that needs no guarantee declares no level." ] .
+
+dal:CapabilityRequirementEnumerationsShape
+    a sh:NodeShape ;
+    sh:targetClass dal:CapabilityRequirement ;
+    sh:property [ sh:path dal:requiresCas ; sh:nodeKind sh:IRI ; sh:in ( dal:Linearizable dal:BestEffort dal:NoConcurrencyGuarantee ) ;
+                  sh:message "dal:requiresCas takes one of dal:Linearizable, dal:BestEffort, dal:NoConcurrencyGuarantee." ] ;
+    sh:property [ sh:path dal:requiresUniquenessLevel ; sh:nodeKind sh:IRI ; sh:in ( dal:Advisory dal:Transactional dal:Strong ) ;
+                  sh:message "dal:requiresUniquenessLevel takes one of dal:Advisory, dal:Transactional, dal:Strong." ] .
+
+dal:CapabilitySpecEnumerationsShape
+    a sh:NodeShape ;
+    sh:targetClass dal:CapabilitySpec ;
+    sh:property [ sh:path dal:providesCas ; sh:nodeKind sh:IRI ; sh:in ( dal:Linearizable dal:BestEffort dal:NoConcurrencyGuarantee ) ;
+                  sh:message "dal:providesCas takes one of dal:Linearizable, dal:BestEffort, dal:NoConcurrencyGuarantee, not a string." ] ;
+    sh:property [ sh:path dal:providesCommitValidation ; sh:nodeKind sh:IRI ; sh:in ( dal:NoCommitValidation dal:ShaclCoreValidation dal:ShaclSparqlValidation dal:CustomRulesValidation ) ;
+                  sh:message "dal:providesCommitValidation takes one of dal:NoCommitValidation, dal:ShaclCoreValidation, dal:ShaclSparqlValidation, dal:CustomRulesValidation, not a string." ] .
 
 dal:EpochProfileEnumerationsShape
     a sh:NodeShape ;
@@ -776,3 +792,11 @@ dal:ReferenceEdgeEnumerationsShape
     sh:targetClass dal:ReferenceEdge ;
     sh:property [ sh:path dal:edgeOwnership ; sh:nodeKind sh:IRI ; sh:in ( dal:Owned dal:Reference dal:Vocabulary ) ;
                   sh:message "dal:edgeOwnership takes one of dal:Owned, dal:Reference, dal:Vocabulary." ] .
+
+dal:UniquenessConstraintEnumerationsShape
+    a sh:NodeShape ;
+    sh:targetClass dal:UniquenessConstraint ;
+    sh:property [ sh:path dal:minEnforcementLevel ; sh:nodeKind sh:IRI ; sh:in ( dal:Advisory dal:Transactional dal:Strong ) ;
+                  sh:message "dal:minEnforcementLevel takes one of dal:Advisory, dal:Transactional, dal:Strong." ] ;
+    sh:property [ sh:path dal:onViolation ; sh:nodeKind sh:IRI ; sh:in ( dal:Reject dal:Merge dal:Quarantine ) ;
+                  sh:message "dal:onViolation takes one of dal:Reject, dal:Merge, dal:Quarantine." ] .

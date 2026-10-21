@@ -211,3 +211,31 @@ compiles to `owl:AllDifferent`, so a reasoner can tell the values of a closed se
 (D-59), each drawing its own classes with their members, a class it links to in another part as a bare box, and each enumeration's
 individuals. Every class of §6 is in a part, which the extractor checks.
 
+
+## Follow-ups of 2026-10-21, second review
+
+**What changed.** Seven individuals had no class. `dal:UniquenessEnforcementLevel` ({ `dal:Advisory`, `dal:Transactional`, `dal:Strong` }),
+`dal:ViolationPolicy` ({ `dal:Reject`, `dal:Merge`, `dal:Quarantine` }) and `dal:ConcurrencyLevel` ({ `dal:Linearizable`, `dal:BestEffort`,
+the new `dal:NoConcurrencyGuarantee` }) close them, each with a definition, an `**All different.**` paragraph and its individuals' definitions.
+`dal:CommitValidationLevel` ({ `dal:NoCommitValidation`, `dal:ShaclCoreValidation`, `dal:ShaclSparqlValidation`, `dal:CustomRulesValidation` })
+replaces the strings of `dal:providesCommitValidation`. `dal:providesCas`, `dal:requiresCas` and `dal:providesCommitValidation` are object
+properties. `dal:minConcurrencyLevel`, `dal:onViolation`, `dal:minEnforcementLevel` and `dal:requiresUniquenessLevel` gain a range.
+Shapes: `dal:UniquenessConstraintEnumerationsShape`, `dal:CapabilityRequirementEnumerationsShape` and `dal:CapabilitySpecEnumerationsShape` are new,
+`dal:ConcurrencyProfileEnumerationsShape` gains `dal:minConcurrencyLevel` (`dal:Linearizable`, `dal:BestEffort` only, D-74), and
+`dal:CapabilitySpecShape` loses its string `sh:in`. The compiler (`capability.py`, `compiler.py`) ranks levels by IRI and emits `dal:requiresCas`
+as an IRI. The generated spec and shapes and the README's diagrams and axiom index are regenerated, and the 0.19.0 release notes list the changes.
+
+**Expected profiles changed (for re-approval).** All eight differ only in `dal:requiresCas`, now an IRI:
+`baseline-single-class`, `baseline-single-class.caller-named`, `composite-project-ownership`, `epoch-dataset-level-guard`, `value-based-cas`,
+`write-discipline-composite-append-versions`, `write-discipline-delta-membership` and `write-discipline-noboundary-append-versions`
+(`.expected.ttl`). The library fixtures `baseline-single-class`, `composite-project-ownership` and `write-discipline-delta-membership`
+(`.compiled.ttl`, `packages/persistence/python/tests/data/`) change the same way.
+
+**Tests changed.** `test_capability.py` states levels as IRIs and gains three cases (ranking, a spec naming no level, the loader reading an IRI).
+`test_enumerations.py` gains the exception for `dal:minConcurrencyLevel` and two cases (no-guarantee level refused, strings refused), and its
+floor of enumerations is 47. Witnesses: `shape-` and `ok-` for the three new shapes, `shape-CapabilitySpecShape` now fires on a non-boolean flag,
+and `refusal-CapabilityCheckFailed` and `capability-spec-example.ttl` name individuals.
+
+**Checks.** Extractor `--check`: 4 artefacts consistent. `ontology_version_check.py --base-ref origin/main`: no unbumped changes.
+`check:persistence`: 3975 passed, 1 xfailed. `check:persistence-conformance`: 4371 passed, 1 xfailed. `check:persistence-expected-profiles`: current.
+`check:persistence-library`: 91 vectors passed and 113 tests passed. `check:full-sweep` after removing `ontology/persistence/execution`: all 17 checks passed.

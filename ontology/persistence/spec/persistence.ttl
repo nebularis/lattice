@@ -34,7 +34,7 @@ dal:AddPart a dal:DigestPartRole ;
 dal:AdoptedIdentity a dal:IdentityStrategy ;
     rdfs:comment "The identifier's authority is external; LATTICE never re-mints it (§5.1)." .
 
-dal:Advisory a owl:NamedIndividual ;
+dal:Advisory a dal:UniquenessEnforcementLevel ;
     rdfs:comment "The lowest dal:minEnforcementLevel, ranked below dal:Transactional and dal:Strong. It asks nothing of the store beyond running the generated operations and reconcilers." .
 
 dal:AdvisoryContiguityCheck a dal:ContiguityCheckMode ;
@@ -75,8 +75,8 @@ dal:AuditOutcome a owl:Class ;
     rdfs:comment "What an audit reports. A query returns the rows that violate an invariant, so a caller derives the outcome from the rows and from whether the audit read anything." ;
     owl:equivalentClass [ a owl:Class ; owl:oneOf ( dal:Clean dal:Failed dal:NothingExamined ) ] .
 
-dal:BestEffort a owl:NamedIndividual ;
-    rdfs:comment "The compare-and-set level dal:minConcurrencyLevel takes when none is given under dal:Optimistic. It relies on the store applying one update atomically, and a capability check passes it against a store that provides BEST_EFFORT or LINEARIZABLE." .
+dal:BestEffort a dal:ConcurrencyLevel ;
+    rdfs:comment "The level dal:minConcurrencyLevel takes when none is given under dal:Optimistic. It relies on the store applying one update atomically, and a capability check passes it against a store whose dal:providesCas is dal:BestEffort or dal:Linearizable." .
 
 dal:BlockingContiguityCheck a dal:ContiguityCheckMode ;
     rdfs:comment "On a gap, the consumer rescans from the affected stream's last known-good position before advancing its global watermark." .
@@ -129,6 +129,10 @@ dal:ColumnKind a owl:Class ;
 dal:CommitGrain a dal:OrderingGrain ;
     rdfs:comment "One position per commit; events within it are unordered unless opSeq is used." .
 
+dal:CommitValidationLevel a owl:Class ;
+    rdfs:comment "What a store validates at commit time, one of a closed set of named levels. The levels are dal:NoCommitValidation, dal:ShaclCoreValidation, dal:ShaclSparqlValidation and dal:CustomRulesValidation." ;
+    owl:equivalentClass [ a owl:Class ; owl:oneOf ( dal:NoCommitValidation dal:ShaclCoreValidation dal:ShaclSparqlValidation dal:CustomRulesValidation ) ] .
+
 dal:CompiledProfile a owl:Class ;
     rdfs:comment "The canonical output of persistence compile. Never contains literal SPARQL text." .
 
@@ -140,6 +144,10 @@ dal:CompositePropertyBoundary a dal:AggregateBoundaryStrategy ;
 
 dal:ConcatenationColumn a dal:ColumnKind ;
     rdfs:comment "The result of GROUP_CONCAT, split on dal:columnSeparator." .
+
+dal:ConcurrencyLevel a owl:Class ;
+    rdfs:comment "The compare-and-set level that a store provides or a family needs, one of a closed set of named levels, ranked dal:NoConcurrencyGuarantee below dal:BestEffort below dal:Linearizable." ;
+    owl:equivalentClass [ a owl:Class ; owl:oneOf ( dal:Linearizable dal:BestEffort dal:NoConcurrencyGuarantee ) ] .
 
 dal:ConcurrencyProfile a owl:Class ;
     rdfs:comment "A profile that declares how concurrent writers to one aggregate are kept apart, with the deadlock policy and the ETag form and representation." .
@@ -166,6 +174,9 @@ dal:Create a dal:OperationKind ;
 
 dal:CryptoShred a dal:ErasureStrategy ;
     rdfs:comment "Destroy the per-subject encryption key rather than the graph. Requires key custody, an as-of failure policy for shredded revisions, and a stated interaction with content-addressed hashing (re-encryption changes bytes, and therefore content identity)." .
+
+dal:CustomRulesValidation a dal:CommitValidationLevel ;
+    rdfs:comment "The store runs rules of its own at commit time, outside SHACL." .
 
 dal:DataAccessProfile a owl:Class ;
     rdfs:comment "Convenience individual declaring several dimensions at one scope. Never the model of record: the compiler decomposes it into six per-dimension assertions before resolution runs." .
@@ -407,8 +418,8 @@ dal:LangStringKind a dal:ParameterKind ;
 dal:LineageRole a dal:ResourceRole ;
     rdfs:comment "The resource role of an enduring authored artefact family, such as a mapping, a shape set or a contract. Long-lived." .
 
-dal:Linearizable a owl:NamedIndividual ;
-    rdfs:comment "A compare-and-set level for dal:minConcurrencyLevel: every guarded update takes effect at one instant, so of two writers holding the same expected version exactly one succeeds. A capability check passes it only against a store that provides LINEARIZABLE." .
+dal:Linearizable a dal:ConcurrencyLevel ;
+    rdfs:comment "The highest compare-and-set level. Every guarded update takes effect at one instant, so of two writers holding the same expected version exactly one succeeds. A capability check passes it only against a store whose dal:providesCas is dal:Linearizable." .
 
 dal:LiteralKind a dal:ParameterKind ;
     rdfs:comment "A literal." .
@@ -426,7 +437,7 @@ dal:MembershipEncoding a owl:Class ;
     rdfs:comment "How a version of a root states its members. One of dal:FullMembership, dal:DeltaMembership." ;
     owl:equivalentClass [ a owl:Class ; owl:oneOf ( dal:FullMembership dal:DeltaMembership ) ] .
 
-dal:Merge a owl:NamedIndividual ;
+dal:Merge a dal:ViolationPolicy ;
     rdfs:comment "A dal:onViolation that records dal:mergeRelation from each non-canonical owner of a duplicated key to the lexicographically lowest owner IRI, never owl:sameAs. A merge without a merge relation is refused." .
 
 dal:MergeRecord a dal:ResourceKind ;
@@ -472,6 +483,12 @@ dal:NoBoundary a dal:AggregateBoundaryStrategy ;
 
 dal:NoBoundaryShape a dal:BoundaryShapeAbsence ;
     rdfs:comment "The family names no boundary shape, so a payload is not checked against one. The value of dal:boundaryShape on a dal:PayloadContract in that case." .
+
+dal:NoCommitValidation a dal:CommitValidationLevel ;
+    rdfs:comment "The store validates nothing at commit time. A spec that names no level provides this one, and it fails a check of dal:Strong uniqueness." .
+
+dal:NoConcurrencyGuarantee a dal:ConcurrencyLevel ;
+    rdfs:comment "The lowest level. Two writers holding the same expected version may both succeed. A store with this level, or a spec that names none, fails a capability check of any family under dal:Optimistic. A family never requires it, since dal:minConcurrencyLevel does not take it." .
 
 dal:NoErasure a dal:ErasureStrategy ;
     rdfs:comment "No erasure mechanism. Valid only where dal:privacyClass is not dal:PersonalData." .
@@ -609,8 +626,8 @@ dal:ProvidedConcurrency a dal:ConcurrencyStrategy ;
 dal:PublicData a dal:PrivacyClass ;
     rdfs:comment "Data with no confidentiality or erasure obligation. A sensitive key scheme's key class may not take it." .
 
-dal:Quarantine a dal:OperationKind, owl:NamedIndividual ;
-    rdfs:comment "Records the owners of a duplicated claim in the quarantine graph." .
+dal:Quarantine a dal:OperationKind, dal:ViolationPolicy ;
+    rdfs:comment "The kind of the operation that records the owners of a duplicated claim in the quarantine graph, and the dal:onViolation that selects it." .
 
 dal:QueryNamed a dal:GraphNaming ;
     rdfs:comment "The query computes the graph from $root by the rule of the family's dal:graphIriTemplate (ADR-A122 decision 8)." .
@@ -656,7 +673,7 @@ dal:RegistryListKind a dal:ParameterKind ;
 dal:RegistryTokenDerivation a dal:OccurrenceNamespaceDerivation ;
     rdfs:comment "A registry-allocated token for the target, resolved once at target creation." .
 
-dal:Reject a owl:NamedIndividual ;
+dal:Reject a dal:ViolationPolicy ;
     rdfs:comment "The baseline dal:onViolation. The duplicate audit reports every key claimed by more than one owner, and nothing is rewritten." .
 
 dal:Replace a dal:OperationKind ;
@@ -719,6 +736,12 @@ dal:SelfReferenceRule a owl:Class ;
     rdfs:comment "How a content-addressed graph that mentions its own identifier is hashed (iri-identity-patterns.md §8.3)." ;
     owl:equivalentClass [ a owl:Class ; owl:oneOf ( dal:SelfReferenceDisallowed dal:ExcludeHeaderSubgraph dal:PlaceholderSubstitution ) ] .
 
+dal:ShaclCoreValidation a dal:CommitValidationLevel ;
+    rdfs:comment "The store validates SHACL Core shapes at commit time, enough for a count constraint on a key claim." .
+
+dal:ShaclSparqlValidation a dal:CommitValidationLevel ;
+    rdfs:comment "The store validates SHACL Core and SHACL-SPARQL shapes at commit time." .
+
 dal:ShapeScope a owl:Class ;
     rdfs:comment "Matches resources conforming to dal:targetShape, an sh:NodeShape evaluated once against the adopter's data model at compile time. Never a write-time SHACL dependency." ;
     rdfs:subClassOf dal:ProfileScope .
@@ -748,7 +771,7 @@ dal:StringColumn a dal:ColumnKind ;
 dal:StringKind a dal:ParameterKind ;
     rdfs:comment "A plain string literal." .
 
-dal:Strong a owl:NamedIndividual ;
+dal:Strong a dal:UniquenessEnforcementLevel ;
     rdfs:comment "The highest dal:minEnforcementLevel. A capability check passes it only against a store that declares commit-time validation (dal:providesCommitValidation)." .
 
 dal:StrongEtag a dal:EtagForm ;
@@ -779,7 +802,7 @@ dal:Tombstone a dal:OperationKind ;
 dal:TransactionClaim a dal:ResourceKind ;
     rdfs:comment "The claim recorded for a transaction id, in the transaction graph." .
 
-dal:Transactional a owl:NamedIndividual ;
+dal:Transactional a dal:UniquenessEnforcementLevel ;
     rdfs:comment "A dal:minEnforcementLevel ranked between dal:Advisory and dal:Strong, for a key claim written by one guarded update that the store applies atomically." .
 
 dal:UnconditionalWrite a dal:OperationKind ;
@@ -787,6 +810,10 @@ dal:UnconditionalWrite a dal:OperationKind ;
 
 dal:UniquenessConstraint a owl:Class ;
     rdfs:comment "One keyed uniqueness constraint on a target, with its key properties, scope, normalisation and policy on violation." .
+
+dal:UniquenessEnforcementLevel a owl:Class ;
+    rdfs:comment "How strongly a store must enforce a uniqueness constraint, one of a closed set of named levels, ranked dal:Advisory below dal:Transactional below dal:Strong." ;
+    owl:equivalentClass [ a owl:Class ; owl:oneOf ( dal:Advisory dal:Transactional dal:Strong ) ] .
 
 dal:UuidV4Surrogate a dal:SurrogateKind ;
     rdfs:comment "A random version 4 UUID, minted by the minter from a cryptographically secure source. Embeds no timestamp (iri-identity-patterns.md §6.3)." .
@@ -796,6 +823,10 @@ dal:ValueGuardedReplace a dal:OperationKind ;
 
 dal:VersionRow a dal:ResourceKind ;
     rdfs:comment "The version row of a root or stream, in its meta graph." .
+
+dal:ViolationPolicy a owl:Class ;
+    rdfs:comment "What a uniqueness constraint does with a violation, one of a closed set of named policies. The policy selects the reconciler (5.6.6)." ;
+    owl:equivalentClass [ a owl:Class ; owl:oneOf ( dal:Reject dal:Merge dal:Quarantine ) ] .
 
 dal:Vocabulary a dal:OwnershipKind ;
     rdfs:comment "As dal:Reference, for an edge to reference data such as a concept or a code. Declares intent. Behaves as dal:Reference at run time." .
@@ -1263,11 +1294,13 @@ dal:metaTopology a owl:ObjectProperty ;
     rdfs:range dal:MetaTopology .
 
 dal:minConcurrencyLevel a owl:ObjectProperty ;
-    rdfs:comment "Meaningful only when dal:concurrencyProfile is dal:Optimistic." ;
-    rdfs:domain dal:ConcurrencyProfile .
+    rdfs:comment "Meaningful only when dal:concurrencyProfile is dal:Optimistic. A family that needs no guarantee declares no level, so the property takes dal:Linearizable or dal:BestEffort." ;
+    rdfs:domain dal:ConcurrencyProfile ;
+    rdfs:range dal:ConcurrencyLevel .
 
 dal:minEnforcementLevel a owl:ObjectProperty ;
-    rdfs:comment "The weakest enforcement level a uniqueness constraint accepts, one of dal:Advisory, dal:Transactional and dal:Strong." .
+    rdfs:comment "The weakest enforcement level a uniqueness constraint accepts, one of dal:Advisory, dal:Transactional and dal:Strong." ;
+    rdfs:range dal:UniquenessEnforcementLevel .
 
 dal:mintedIriTemplate a owl:DatatypeProperty ;
     rdfs:comment "The shape of a minted IRI, with named slots: {digest} (derived hash, content-addressed), {key} (natural key), {surrogate} (surrogates), {namespace}, {epoch} and {seq} (position-derived occurrences). Required for every strategy that mints." ;
@@ -1305,7 +1338,8 @@ dal:occurrenceNamespaceDerivation a owl:ObjectProperty ;
 
 dal:onViolation a owl:ObjectProperty ;
     rdfs:comment "What a uniqueness constraint does with a violation, one of dal:Reject, dal:Merge and dal:Quarantine, which selects the reconciler." ;
-    rdfs:domain dal:UniquenessConstraint .
+    rdfs:domain dal:UniquenessConstraint ;
+    rdfs:range dal:ViolationPolicy .
 
 dal:opSeqRequired a owl:DatatypeProperty ;
     rdfs:comment "Meaningless, and rejected, at dal:CommitGrain." ;
@@ -1414,15 +1448,15 @@ dal:privacyClass a owl:ObjectProperty ;
     rdfs:domain dal:PrivacyProfile ;
     rdfs:range dal:PrivacyClass .
 
-dal:providesCas a owl:DatatypeProperty ;
-    rdfs:comment "One of LINEARIZABLE, BEST_EFFORT, NONE." ;
+dal:providesCas a owl:ObjectProperty ;
+    rdfs:comment "The compare-and-set level the supplied environment provides, one of dal:Linearizable, dal:BestEffort and dal:NoConcurrencyGuarantee." ;
     rdfs:domain dal:CapabilitySpec ;
-    rdfs:range xsd:string .
+    rdfs:range dal:ConcurrencyLevel .
 
-dal:providesCommitValidation a owl:DatatypeProperty ;
-    rdfs:comment "One of NONE, SHACL_CORE, SHACL_SPARQL, CUSTOM_RULES." ;
+dal:providesCommitValidation a owl:ObjectProperty ;
+    rdfs:comment "What the supplied environment validates at commit time, one of dal:NoCommitValidation, dal:ShaclCoreValidation, dal:ShaclSparqlValidation and dal:CustomRulesValidation." ;
     rdfs:domain dal:CapabilitySpec ;
-    rdfs:range xsd:string .
+    rdfs:range dal:CommitValidationLevel .
 
 dal:providesReasoning a owl:DatatypeProperty ;
     rdfs:comment "Whether the supplied environment provides reasoning." ;
@@ -1484,10 +1518,10 @@ dal:required a owl:DatatypeProperty ;
     rdfs:domain dal:ParameterDeclaration ;
     rdfs:range xsd:boolean .
 
-dal:requiresCas a owl:DatatypeProperty ;
-    rdfs:comment "The level of compare-and-set the resolved configuration requires, as a name." ;
+dal:requiresCas a owl:ObjectProperty ;
+    rdfs:comment "The compare-and-set level the resolved configuration requires, one of the levels of dal:ConcurrencyLevel." ;
     rdfs:domain dal:CapabilityRequirement ;
-    rdfs:range xsd:string .
+    rdfs:range dal:ConcurrencyLevel .
 
 dal:requiresReasoning a owl:DatatypeProperty ;
     rdfs:comment "Intrinsic to dal:EquivalentClassScope and to dal:ClassScope with entailed (not merely asserted) subclass membership." ;
@@ -1499,7 +1533,8 @@ dal:requiresReasoningFor a owl:ObjectProperty ;
 
 dal:requiresUniquenessLevel a owl:ObjectProperty ;
     rdfs:comment "The highest enforcement level that any uniqueness constraint of the target asks for." ;
-    rdfs:domain dal:CapabilityRequirement .
+    rdfs:domain dal:CapabilityRequirement ;
+    rdfs:range dal:UniquenessEnforcementLevel .
 
 dal:resolvedDimension a owl:ObjectProperty ;
     rdfs:comment "A dimension the compiler resolved for the target, with its value and its provenance." ;
@@ -1645,6 +1680,8 @@ dct:description a owl:AnnotationProperty .
 
 [ a owl:AllDifferent ; owl:distinctMembers ( dal:AdoptedIdentity dal:NaturalKeyIdentity dal:DerivedHashIdentity dal:RandomSurrogateIdentity dal:SurrogateClaimedIdentity dal:ExternalRegistryIdentity dal:ContentAddressedIdentity ) ] .
 
+[ a owl:AllDifferent ; owl:distinctMembers ( dal:Advisory dal:Transactional dal:Strong ) ] .
+
 [ a owl:AllDifferent ; owl:distinctMembers ( dal:Aggregate dal:DatasetEpoch dal:Event dal:KeyClaim dal:KeyQuarantine dal:MergeRecord dal:PatchContent dal:PropertyValue dal:Receipt dal:RetentionMark dal:TransactionClaim dal:VersionRow ) ] .
 
 [ a owl:AllDifferent ; owl:distinctMembers ( dal:BlockingContiguityCheck dal:AdvisoryContiguityCheck ) ] .
@@ -1679,7 +1716,11 @@ dct:description a owl:AnnotationProperty .
 
 [ a owl:AllDifferent ; owl:distinctMembers ( dal:IriKind dal:LongKind dal:StringKind dal:LangStringKind dal:PositionKind dal:DigestKind dal:IriOrLiteralKind dal:LiteralKind dal:PayloadKind dal:RowsKind dal:RegistryListKind ) ] .
 
+[ a owl:AllDifferent ; owl:distinctMembers ( dal:Linearizable dal:BestEffort dal:NoConcurrencyGuarantee ) ] .
+
 [ a owl:AllDifferent ; owl:distinctMembers ( dal:NamedGraphBoundary dal:CompositePropertyBoundary dal:NoBoundary ) ] .
+
+[ a owl:AllDifferent ; owl:distinctMembers ( dal:NoCommitValidation dal:ShaclCoreValidation dal:ShaclSparqlValidation dal:CustomRulesValidation ) ] .
 
 [ a owl:AllDifferent ; owl:distinctMembers ( dal:OperationKindPart dal:TargetPart dal:ExpectedSeqPart dal:PayloadPart dal:EventPart dal:AddPart dal:DelPart ) ] .
 
@@ -1708,6 +1749,8 @@ dct:description a owl:AnnotationProperty .
 [ a owl:AllDifferent ; owl:distinctMembers ( dal:RegistryGraph dal:NoSource ) ] .
 
 [ a owl:AllDifferent ; owl:distinctMembers ( dal:RegistryTokenDerivation dal:HashedTargetDerivation ) ] .
+
+[ a owl:AllDifferent ; owl:distinctMembers ( dal:Reject dal:Merge dal:Quarantine ) ] .
 
 [ a owl:AllDifferent ; owl:distinctMembers ( dal:SelfReferenceDisallowed dal:ExcludeHeaderSubgraph dal:PlaceholderSubstitution ) ] .
 

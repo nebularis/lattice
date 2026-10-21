@@ -249,7 +249,7 @@
 
 [] a dal:CompiledProfile ;
     dal:capabilityRequirement [ a dal:CapabilityRequirement ;
-            dal:requiresCas "BEST_EFFORT" ] ;
+            dal:requiresCas dal:BestEffort ] ;
     dal:forTarget <https://example.org/offers#Offer> ;
     dal:generatedOperation [ a dal:GeneratedOperation ;
             dal:access <https://example.org/offers/Offer/compiled/bootstrap-version-row#access-1>,
