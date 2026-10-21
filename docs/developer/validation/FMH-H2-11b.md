@@ -145,7 +145,7 @@ The render script is in the session scratchpad and not in the repository, so the
 | Command | Result |
 |---|---|
 | `mise exec -- python tools/literate_extract.py ontology/persistence/README.md --layer persistence --check` | `4 extracted artefact(s) consistent with ontology/persistence/README.md` |
-| `mise run check:literate-migration -- persistence f25008b2 --reconciliations docs/developer/validation/FMH-H2-11a-reconciliations.txt` | `every generated graph is the same as at f25008b2, with 137 reconciled difference(s)` |
+| `mise run check:literate-migration -- persistence a1df48b7` | 833 differences, all only in the tree, the axioms and shapes listed above (D-73) |
 | `mise run check:published-decisions` | `sources: 0 failure(s), 545 report(s) for READMEs not yet migrated`, 6 passed |
 | `mise run check:deny-terms` (and with `--all`) | `0 finding(s) against 5 entries` |
 | `mise run check:catalogue` | `19 module(s) and 8 tool package(s) agree with the tree` |
@@ -163,3 +163,51 @@ The render script is in the session scratchpad and not in the repository, so the
 
 - `tools/persistence/README.md` links `persistence/README.md#710-write-discipline`, `#7101-membership-encoding` and `#71-aggregate-boundary`, anchors that H2.11a renumbered (5.6.10, 5.6.11, 5.6.1). Not changed here.
 - Three diagrams are a little over the 1200 px aim (5.9 at 1230, the replace at 1278, the append of events at 1224).
+
+## Follow-ups of 2026-10-21
+
+At the maintainer's request, after the review of H2.11b. Built autonomously.
+
+**What we did.**
+
+- **6.6 split.** The 12 kinds of logical resource and the 3 Unicode pipelines are in two new tables of 6.4 (type, definition), and 6.6 keeps the 15 `dal:logicalKey` and `dal:unicodeVersion` statements. The extractor accepts a 6.6 block that states a subject already in a table. The split changes no graph.
+- **Enumerations.** Each of the 43 classes below has `**Equivalent to.** { ... }` in 6.1, which compiles to `owl:equivalentClass [ a owl:Class ; owl:oneOf ( ... ) ]`. No `owl:AllDifferent` is added, as asked.
+- **SHACL.** 26 object properties ranging over a closed class had no `sh:in` of that class's list. They have one now, in `dal:<Class>EnumerationsShape` shapes (D-70). The others existed.
+- **Witnesses.** The witness coverage test requires every node shape to be seen reporting and seen conforming. The 10 new shapes have one `shape-<Class>EnumerationsShape.ttl` each in `tools/persistence/tests/witnesses/` (a value outside the spec), and `ok-MintingRecipeEnumerationsShape.ttl` gives the one shape that no fixture had a conforming node for. These 11 files are new, and no existing test file changed.
+- **Axiom Index.** The generated region of 6.7 is inside `<details>`, with a sentence before it. `--check` is consistent.
+- **Test.** `tools/persistence/tests/test_enumerations.py` (88 cases) asserts that each `owl:oneOf` list is the set of individuals the spec types with the class, and that every property ranging over the class has a property shape whose `sh:in` equals it. The examples and the expected profiles are validated against the shapes by `test_compiler_integration.py` and `test_contract_shapes.py`, which we rely on.
+
+**Closed (43).** `dal:AggregateBoundaryStrategy`, `OwnershipKind`, `ReferenceMode`, `ConcurrencyStrategy`, `OrderingGrain`, `DatasetTierModel`, `ReceiptModel`, `MetaTopology`, `OperationKind`, `ParameterKind`, `Rule`, `Source`, `AccessMode`, `AuditOutcome`, `GuardStatus`, `GraphNaming`, `DeclarationSource`, `ColumnKind`, `PayloadEncoding`, `BoundaryShapeAbsence`, `DigestPartRole`, `ResourceRole`, `IdentityStrategy`, `OccurrenceNamespaceDerivation`, `EventIdentityStrategy`, `SurrogateKind`, `SelfReferenceRule`, `EpochAuthority`, `EpochGuardScope`, `PrivacyClass`, `ErasureStrategy`, `ErasurePrecedence`, `GlobalReadStrategy`, `ContiguityCheckMode`, `RetentionMode`, `EtagForm`, `EtagRepresentation`, `FirstWriteMode`, `DeadlockPolicy`, `WriteDiscipline`, `MembershipEncoding`, `SchemeState` and `ResourceKind`. In each the spec defines the members, and the compiler or the contract emitter reads them by name, case by case.
+
+**Left open.** The classes without individuals in the spec are not enumerations. The scopes (`dal:ProfileScope` and its five subclasses), the profiles (`dal:DataAccessProfile` and the per-dimension profiles), `dal:UniquenessConstraint`, `dal:ClaimScheme`, `dal:DigestScheme`, `dal:CapabilitySpec`, `dal:CapabilityRequirement`, `dal:CapabilityCheck`, `dal:Template`, the contract declarations, `dal:CompiledProfile`, `dal:MintingRecipe`, `dal:Diagnostic` and `dal:ReferenceEdge` are all instantiated by an adopter or by the compiler. `dal:DigestScheme` is the only candidate that looks like an enumeration, and an adopter declares its own schemes.
+
+**No reconciliation group (D-73).** The migration was proven at `a1df48b7`, where the check against `f25008b2` passes with the 141 differences of groups 1 to 4. The enumerations are a modelling change after the migration, reviewed as one, so they are not listed as migration differences. Against `a1df48b7`, `check:literate-migration -- persistence a1df48b7` lists 833 differences, every one only in the tree and none only at the ref: the 43 `owl:oneOf` classes, the 40 `owl:AllDifferent` axioms, their list cells, and the 26 `sh:in` property shapes in 11 node shapes. So the 6.6 split moved text and lost nothing.
+
+**Decisions taken alone.** D-68 to D-72 in the status record.
+
+**Anchors.** A script in the session scratchpad (not in the repository) read every markdown link with a fragment against GitHub's slugs.
+
+- Fixed in Persistence. `ontology/persistence/README.md` (TSD-01), `ontology/persistence/docs/aggregate-boundaries.md` (`#71-aggregate-boundary` to `#561-aggregate-boundary`, text §7.1 to §5.6.1), `ontology/persistence/docs/precedence-and-resolution.md` (worked example 2 to `#82-a-shared-class-two-deployments`), and `tools/persistence/README.md` had none left.
+- Fixed elsewhere. the TSD-01 and TSD-18 slugs in `docs/developer/plans/formal-methods-track-h.md`, `docs/developer/plans/technical-debt.md`, `docs/developer/validation/FMH-H2-4b.md`, `tools/testing/oxigraph/README.md` and `docs/architecture/triple-store-discovery.md`. The `(planned ..., built ...)` plan headings 4.3, 4.4 and 4.10 in `docs/developer/INDEX.md`, `docs/developer/status/formal-methods-track-h.md`, `docs/developer/sketches/formal-methods-track-h-typed-ir.md`, `docs/developer/validation/FMH-H2-5.md` and `FMH-H2-6.md`. `#7-documentation-rule` in the two insurance READMEs. `#r9-...-what-n7-means` in `docs/developer/sketches/logic-encoding-research.md`. No published ADR is touched.
+- Not fixed, 26 in all. `docs/_includes/theory/04-three-valued-logic.md` and `06-session-types-spc.md` link `#dl` and `#conservative`, ids of the page that includes them. `docs/developer/INDEX.md` links 17 `#phase-N` fragments of the two surface-MORK documents, whose headings carry a title after the number, and `#vocabulary-consumer-hardening--planned-2026-09-25` and four `#3N-...` fragments of `surface-outstanding-items.md`, whose headings were renumbered. `docs/developer/sketches/REFERENCE_rdf-sparql-patterns.md` links `#plan` and `#sketch`, which have no heading. The right target is not certain for these.
+
+**Reasoners.** No check runs a reasoner over Persistence (`check:reasoning-isolation` only guards the poms, and no other module imports it), so `owl:oneOf` is not exercised by one.
+
+**Checks.**
+
+| Command | Result |
+|---|---|
+| `literate_extract.py ... --layer persistence --check` | `4 extracted artefact(s) consistent with ontology/persistence/README.md` |
+| `mise run check:literate-migration -- persistence a1df48b7` | 833 differences, all only in the tree, the axioms and shapes listed above (D-73) |
+| `mise run check:persistence` | `4346 passed, 1 xfailed`. A first run failed 5 witness coverage tests (10 unwitnessed new shapes), fixed by the witness files above |
+| `mise run check:persistence-oxigraph` | `368 passed, 3979 deselected` (run before the witness files, which no Oxigraph test reads) |
+| `mise run check:persistence-expected-profiles` | `expected profiles are current` |
+| `mise run check:published-decisions` | 0 source failures, 6 passed |
+| `mise run check:deny-terms` | `0 finding(s) against 5 entries` |
+| `rm -rf ontology/persistence/execution && mise run check:ontology-catalog` | `ontology catalog consistent, 2 known defect(s) reported` |
+
+**Applied by us after the follow-ups.** Each enumeration of two members or more has an `**All different.**` paragraph in 6.5 (40), which
+compiles to `owl:AllDifferent`, so a reasoner can tell the values of a closed set apart. The one class diagram of §4.2 is eight generated parts
+(D-59), each drawing its own classes with their members, a class it links to in another part as a bare box, and each enumeration's
+individuals. Every class of §6 is in a part, which the extractor checks.
+

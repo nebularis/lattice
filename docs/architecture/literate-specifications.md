@@ -196,20 +196,32 @@ Section 6.4 lists individuals in tables whose first two columns are Individual a
 the annotation columns Label, Preferred label, Definition, Utility and Scope note. Type holds one or more
 names, separated by commas, so an individual that is also an `owl:NamedIndividual` says so. Section 6.5 holds
 `**All disjoint.**` paragraphs, each naming two classes or more, which become one `owl:AllDisjointClasses`
-with its members in the order written, and `**Disjoint.**` paragraphs, each naming exactly two, which become
-an `owl:disjointWith`. Section 6.6 holds `turtle-spec` and `turtle-vocab` blocks, visible or hidden, for what
-the grammar does not express, for example property chains, or an individual with a statement the table's
-columns cannot hold, which is written whole. Such blocks declare no prefixes, since section 2's prefix table is
-their one source, and their order in the README does not matter.
+with its members in the order written, `**Disjoint.**` paragraphs, each naming exactly two, which become
+an `owl:disjointWith`, and `**All different.**` paragraphs, each naming two individuals or more, which become
+one `owl:AllDifferent` with an `owl:distinctMembers` list in the order written. An `**All different.**`
+paragraph goes to the main spec document unless an `output-file` region encloses it, so a region naming the
+vocab document sends it beside the individuals. The Axiom Index row of each individual it names says
+"Different from" the others.
+
+Section 6.6 holds `turtle-spec` and `turtle-vocab` blocks, visible or hidden, for what the grammar does not
+express, for example property chains. Such blocks declare no prefixes, since section 2's prefix table is
+their one source, and their order in the README does not matter. A block may also add statements about a term
+a 6.4 table lists, when the table's columns cannot hold them, for example a `dal:logicalKey "root"` on an
+individual. The table row states the individual, its types and its annotations, and the block states only the
+rest. Both go to one document, so a `turtle-vocab` block (or a block in a region that names the same file)
+goes with a row in the vocab document. A block that restates the row's types or annotations is accepted too,
+and the document then holds the statement once, since Turtle merges equal triples. We prefer the row alone
+for what a column holds.
 
 ### Generated views
 
 The Axiom Index and the Overview's class diagram are generated from section 6 and written into the README by
 the extractor, each in its own region: `<!-- start: {"generated": "axiom-index"} -->` inside 6.7 and
-`<!-- start: {"generated": "class-diagram"} -->` inside section 4, each closed by `<!-- end -->`. Both regions
-are required, once each, in those places. The extractor rewrites what is between the markers, and `--check`
-reports the README as drift when a region is out of date, for example after a hand edit. Neither region is
-read as part of section 6.
+`<!-- start: {"generated": "class-diagram"} -->` inside section 4, each closed by `<!-- end -->`. The Axiom
+Index region is required, once, in 6.7. The class diagram is either one region in section 4, or several parts
+(below). The extractor rewrites what is between the markers, and `--check` reports the README as drift when a
+region is out of date, for example after a hand edit, naming each stale region by its kind, its part title
+and its line. No region is read as part of section 6.
 
 The **Axiom Index** is a table of every term, classes first, then object properties, datatype properties and
 individuals, each sorted by name. Its summary column states a class's superclasses, equivalent class, key,
@@ -229,11 +241,40 @@ The **class diagram** is a mermaid `classDiagram`. It shows:
 Classes are named by their local names, qualified by their prefix where two would share one. The diagram draws
 no composition arrows, since nothing in section 6 says which associations are aggregates.
 
+**Parts.** A large module's diagram is unreadable whole, so a README may draw it in parts. A part is a
+class-diagram region that carries two more keys, written in the same marker.
+
+````markdown
+<!-- start: {"generated": "class-diagram", "part": "Aggregate boundaries", "classes": ["dal:AggregateBoundaryProfile", "dal:AggregateBoundaryStrategy"]} -->
+<!-- end -->
+````
+
+- `"classes"` is a list of CURIEs of classes of section 6, and `"part"` is the part's title, required with
+  `"classes"`. The title is written above the diagram in bold. Titles are unique.
+- A part draws its listed classes with their members, the subclassing among them and the associations among
+  them. A superclass of a listed class, and the range of an association from a listed class, that is not
+  itself listed is drawn as a bare box with no members, so a reader sees where the part connects. An
+  association or subclass arriving at a listed class from an unlisted one is drawn in the part of the unlisted
+  class, not here.
+- A property with no named domain is left out of a part, unless it is an object property whose range is
+  listed, and then it is drawn as the box of its own.
+- A part is drawn left to right (`direction LR`), which stacks its unlinked classes down the page instead of
+  lining them up across it. The whole diagram keeps mermaid's default direction.
+- A README draws its diagram whole or in parts. A region without `"classes"` is the whole diagram, there is
+  one of it, in section 4, and a README with such a region has no part. Parts may sit in section 4 or in
+  section 5, next to the prose they illustrate. A class may be listed in more than one part. Every class of
+  section 6 must be listed in at least one, and the extractor names each that is not.
+- `"enumerations": "table"` may be added to any class-diagram region, a part or the whole diagram. A drawn
+  class that is an enumeration (`**Equivalent to.** { ... }`) then shows its individuals as members under
+  `<<enumeration>>`. Without it an enumerated class is drawn as any other.
+
 ## Markers
 
 HTML comments carry four kinds of marker. A region opens with `<!-- start: {...} -->` and closes with
 `<!-- end -->`, which closes the innermost open region. The keys are `exclude` (a boolean), `output-file` (a
-path inside the module) and `generated` (the name of a generated region). Any other key is an error. A
+path inside the module) and `generated` (the name of a generated region). Any other key is an error, except
+that a `generated` region may also carry `part`, `classes` and `enumerations`, which choose what a class diagram
+draws (see "Generated views"). A
 marker written inside a fenced block is text.
 
 **Excluding text** from an extracted region, for example a diagram in section 1.

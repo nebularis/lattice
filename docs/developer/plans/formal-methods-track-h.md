@@ -817,7 +817,7 @@ Ten facts constrain the slice, checked against the code and the templates on 202
 10. **The audits' results depend on store behaviour not yet probed**: `MIN` over IRIs, `COUNT(DISTINCT)` over mixed numeric terms
     ([TSD-07](../../architecture/triple-store-discovery.md#tsd-07-numeric-datatypes-are-not-kept-by-oxigraph)), the arithmetic of
     `?S - ?L + 1`, and `GROUP_CONCAT`'s order, which on rdflib may follow the hash seed
-    ([TSD-01](../../architecture/triple-store-discovery.md#tsd-01-the-order-in-which-a-delete-insert-where-is-applied)).
+    ([TSD-01](../../architecture/triple-store-discovery.md#tsd-01-the-order-in-which-a-deleteinsertwhere-is-applied)).
 
 #### Decisions (2026-10-13)
 

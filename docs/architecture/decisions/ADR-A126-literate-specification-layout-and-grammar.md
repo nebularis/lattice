@@ -129,9 +129,33 @@ state.
 - Persistence, MORK, the applied modules and Governance are not literate today. They take the layout when
   they become literate.
 
+## Addendum 2026-10-21 (drafted, for the maintainer to accept)
+
+Persistence is the first module whose class diagram is too large to read, about 15,000 px wide, and it
+needed an individual stated across two places. Three changes follow. None alters a generated file of a module
+that does not use them.
+
+1. **The class diagram may be drawn in parts (amends decisions 7 and 8).** A `generated` region may carry
+   `"part"` (a title) and `"classes"` (a list of CURIEs), and `"enumerations": "table"`. A part draws its
+   listed classes with their members, and the subclassing and associations among them. A superclass or an
+   association range outside the list is drawn as a bare box, and an association arriving from an unlisted
+   class is drawn in that class's part. A README draws its diagram whole, in one region with no `"classes"`,
+   or in parts that sit in Overview or Detailed Design and between them list every class of section 6. The
+   extractor names a class no part lists. `--check` names each stale region.
+2. **`**All different.**` joins `**All disjoint.**` and `**Disjoint.**` in 6.5 (amends decision 3).** A
+   paragraph naming two individuals or more becomes one `owl:AllDifferent` with `owl:distinctMembers` in the
+   order written, in the document its region names, by default the main spec document.
+3. **A 6.6 block may add statements about an individual a 6.4 table lists (amends decision 6).** The row
+   states the individual, its types and its annotations, and the block states only what the columns cannot
+   hold. The extractor already accepted this, and the conventions document now says so.
+
+Enumerated classes written `**Equivalent to.** { ... }` as an `owl:oneOf` are unchanged.
+
 ## Provenance
 
 Proposed in the [improved ontology documentation sketch](../../developer/sketches/improved-ontology-documentation.md)
 and settled in design discussion on 2026-10-15 and 2026-10-16, recorded as decisions OD-D1 to OD-D27 in the
 [`improved-ontology-documentation` plan](../../developer/plans/improved-ontology-documentation.md) (slices OD1
 to OD8 onward). The measurements cited in the context are in that unit's status record.
+
+The addendum of 2026-10-21 is decision D-59 of the Persistence work, recorded in that unit's status record.

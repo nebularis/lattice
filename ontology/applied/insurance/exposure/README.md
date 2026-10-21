@@ -5197,7 +5197,7 @@ aeo:CyberPostureProfileOutsideFamilyShape a sh:NodeShape ;
 ## 7. Documentation rule
 
 Every concept this module's vocabulary publishes carries a `skos:note` per the
-[AIR-2.0 documentation rule](../peril/README.md#7-documentation-rule): which published standards,
+[AIR-2.0 documentation rule](../peril/README.md#7-documentation-rule-air-20): which published standards,
 scales or sources it follows, how it follows them, and where it departs from them.
 
 ## 8. Sources consulted

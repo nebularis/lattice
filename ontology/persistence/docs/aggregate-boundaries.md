@@ -60,7 +60,7 @@ The shape is the authority on which edges exist, and an edge it does not declare
 | `BoundaryConflict` | a member class, at any depth, declares a boundary strategy of its own |
 | `OverlappingOwnership` | two composite aggregates own one class, or one owns the other's root |
 | `GraphIriTemplateInvalid`, `GraphIriTemplateOverlap` | a named-graph template is not injective, within a family or across families |
-| `PinnedReferenceToUnversionedClass`, `ReferenceModeUnknown` | an edge is `dal:Pinned` and its target class is not a subclass of `fnd:Version`, or `dal:referenceMode` is neither `dal:ByIdentity` nor `dal:Pinned` ([ontology README, §7.1](../README.md#71-aggregate-boundary)) |
+| `PinnedReferenceToUnversionedClass`, `ReferenceModeUnknown` | an edge is `dal:Pinned` and its target class is not a subclass of `fnd:Version`, or `dal:referenceMode` is neither `dal:ByIdentity` nor `dal:Pinned` ([ontology README, §5.6.1](../README.md#561-aggregate-boundary)) |
 
 Two warnings. `EvidenceEdgeByIdentity` says that an edge from an evidence class to a versioned class names an identity and not a version. `ReferenceToOwnedClass` says that a property shape outside an aggregate points at a member class that is not its root. A deleted member leaves such a reference dangling, so references from outside should name the root, which keeps a tombstoned version row.
 

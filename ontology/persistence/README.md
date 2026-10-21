@@ -131,26 +131,17 @@ The directory is named `persistence` because the compiler, and any future housek
 component (ADR-A80), belong to that subsystem. The ontology inside it is named for what it is: a
 **Data Access Layer** configuration vocabulary, hence `dal:`.
 
-### 4.2 The class diagram
+### 4.2 The class diagrams
 
-The diagram is generated from section 6 and drawn collapsed, since it shows every class.
+The class diagrams are generated from section 6, one for each part of the model. Each draws its own classes with their members, and a class it links to in another part as a bare box. An enumeration lists its individuals.
 
-<details>
-<summary>The class diagram, generated from section 6</summary>
+<!-- start: {"generated": "class-diagram", "part": "Profiles, scopes and capabilities", "classes": ["dal:ProfileScope", "dal:GraphPatternScope", "dal:NamespaceScope", "dal:ClassScope", "dal:ShapeScope", "dal:EquivalentClassScope", "dal:DataAccessProfile", "dal:CapabilitySpec", "dal:CapabilityRequirement", "dal:CapabilityCheck"], "enumerations": "table"} -->
 
-<!-- start: {"generated": "class-diagram"} -->
+**Profiles, scopes and capabilities**
 
 ```mermaid
 classDiagram
-    class AccessMode
-    class AggregateBoundaryProfile {
-        dataGraph
-        graphIriTemplate (xsd:string)
-        ownsReferenceData (xsd:boolean)
-    }
-    class AggregateBoundaryStrategy
-    class AuditOutcome
-    class BoundaryShapeAbsence
+    direction LR
     class CapabilityCheck {
         verdict (xsd:string)
     }
@@ -167,76 +158,290 @@ classDiagram
         providesSingleWriter (xsd:boolean)
         providesStatementLevelConflictDetection (xsd:boolean)
     }
-    class ClaimScheme {
-        claimIriTemplate (xsd:string)
-        claimKeyId (xsd:string)
-        schemeVersion (xsd:string)
-    }
-    class Class
     class ClassScope {
         includeSubclasses (xsd:boolean)
         targetClass
     }
-    class ColumnKind
-    class CompiledProfile {
-        forDeployment
-        forTarget
+    class DataAccessProfile
+    class EquivalentClassScope {
+        equivalentTo
+    }
+    class GraphPatternScope {
+        graphPrefix (xsd:string)
+    }
+    class NamespaceScope {
+        iriPrefix (xsd:string)
+    }
+    class ProfileScope {
+        describedBy (xsd:string)
+        priority (xsd:integer)
+    }
+    class ShapeScope {
+        targetShape
+    }
+    CapabilityCheck --> CapabilitySpec : checkedAgainst
+    ProfileScope <|-- ClassScope
+    ProfileScope <|-- EquivalentClassScope
+    ProfileScope <|-- GraphPatternScope
+    ProfileScope <|-- NamespaceScope
+    ProfileScope <|-- ShapeScope
+    class ObjectProperty_appliesTo["Object Property - appliesTo"]
+```
+
+<!-- end -->
+
+<!-- start: {"generated": "class-diagram", "part": "Aggregate boundary, concurrency and write discipline", "classes": ["dal:AggregateBoundaryProfile", "dal:AggregateBoundaryStrategy", "dal:OwnershipKind", "dal:ReferenceMode", "dal:ReferenceData", "dal:ConcurrencyProfile", "dal:ConcurrencyStrategy", "dal:WriteDisciplineProfile", "dal:WriteDiscipline", "dal:MembershipEncoding", "dal:FirstWriteMode", "dal:DeadlockPolicy"], "enumerations": "table"} -->
+
+**Aggregate boundary, concurrency and write discipline**
+
+```mermaid
+classDiagram
+    direction LR
+    class AggregateBoundaryProfile {
+        dataGraph
+        graphIriTemplate (xsd:string)
+        ownsReferenceData (xsd:boolean)
+    }
+    class AggregateBoundaryStrategy {
+        <<enumeration>>
+        CompositePropertyBoundary
+        NamedGraphBoundary
+        NoBoundary
     }
     class ConcurrencyProfile {
         minConcurrencyLevel
         valueGuardProperty
     }
-    class ConcurrencyStrategy
-    class ContiguityCheckMode
-    class DataAccessProfile
-    class DatasetTierModel
-    class DeadlockPolicy
-    class DeclarationSource
-    class Diagnostic {
-        diagnosticKind (xsd:string)
-        diagnosticMessage (xsd:string)
-        diagnosticSeverity (xsd:string)
+    class ConcurrencyStrategy {
+        <<enumeration>>
+        AppendOnly
+        LockingConcurrency
+        Optimistic
+        ProvidedConcurrency
     }
-    class DigestContract {
-        digestAlgorithm (xsd:string)
+    class DeadlockPolicy {
+        <<enumeration>>
+        EngineDetectAndRetry
+        PartitionedWriter
+        SortedAcquisition
     }
-    class DigestPart {
-        partOrder (xsd:integer)
-        partSource
+    class EtagForm
+    class EtagRepresentation
+    class FirstWriteMode {
+        <<enumeration>>
+        AbsentRow
+        PreCreatedRow
     }
-    class DigestPartRole
+    class MembershipEncoding {
+        <<enumeration>>
+        DeltaMembership
+        FullMembership
+    }
+    class OwnershipKind {
+        <<enumeration>>
+        Owned
+        Reference
+        Vocabulary
+    }
+    class ReferenceData
+    class ReferenceMode {
+        <<enumeration>>
+        ByIdentity
+        Pinned
+    }
+    class WriteDiscipline {
+        <<enumeration>>
+        AppendRecords
+        AppendVersions
+        InPlace
+    }
+    class WriteDisciplineProfile {
+        checkpointEvery (xsd:long)
+    }
+    AggregateBoundaryProfile --> AggregateBoundaryStrategy : strategy
+    AggregateBoundaryProfile --> FirstWriteMode : firstWrite
+    ConcurrencyProfile --> ConcurrencyStrategy : concurrencyProfile
+    ConcurrencyProfile --> DeadlockPolicy : deadlockPolicy
+    ConcurrencyProfile --> EtagForm : etagForm
+    ConcurrencyProfile --> EtagRepresentation : etagRepresentation
+    WriteDisciplineProfile --> MembershipEncoding : membershipEncoding
+    WriteDisciplineProfile --> WriteDiscipline : writeDiscipline
+    class ObjectProperty_ownership["Object Property - ownership"]
+    class ObjectProperty_referenceMode["Object Property - referenceMode"]
+```
+
+<!-- end -->
+
+<!-- start: {"generated": "class-diagram", "part": "Ordering, receipts, meta topology and retention", "classes": ["dal:OrderingProfile", "dal:OrderingGrain", "dal:DatasetTierModel", "dal:ReceiptProfile", "dal:ReceiptModel", "dal:MetaTopologyProfile", "dal:MetaTopology", "dal:GlobalReadStrategy", "dal:ContiguityCheckMode", "dal:RetentionMode", "dal:EtagForm", "dal:EtagRepresentation"], "enumerations": "table"} -->
+
+**Ordering, receipts, meta topology and retention**
+
+```mermaid
+classDiagram
+    direction LR
+    class ContiguityCheckMode {
+        <<enumeration>>
+        AdvisoryContiguityCheck
+        BlockingContiguityCheck
+    }
+    class DatasetTierModel {
+        <<enumeration>>
+        DerivedFeed
+        GlobalDenseCounter
+        HybridLogicalClock
+    }
+    class EtagForm {
+        <<enumeration>>
+        StrongEtag
+        WeakEtag
+    }
+    class EtagRepresentation {
+        <<enumeration>>
+        SingleRepresentation
+        TaggedRepresentation
+    }
+    class GlobalReadStrategy {
+        <<enumeration>>
+        DenseFeedRead
+        LagWindowRead
+        NoGlobalRead
+        WatermarkedRead
+    }
+    class MetaTopology {
+        <<enumeration>>
+        PerAggregate
+        SharedSharded
+    }
+    class MetaTopologyProfile {
+        epochBumpAcknowledged (xsd:boolean)
+        keyShards (xsd:long)
+        logShards (xsd:long)
+        metaShards (xsd:long)
+        priorMetaShards (xsd:long)
+        registryGraph (xsd:string)
+        txnShards (xsd:long)
+    }
+    class OrderingGrain {
+        <<enumeration>>
+        CommitGrain
+        EventGrain
+    }
+    class OrderingProfile {
+        lagWindowMillis (xsd:long)
+        opSeqRequired (xsd:boolean)
+    }
+    class ReceiptModel {
+        <<enumeration>>
+        NoReceipt
+        PatchLog
+        ReceiptOnly
+        SnapshotPerRevision
+    }
+    class ReceiptProfile {
+        asOfFloorSource (xsd:string)
+        perSubjectScoped (xsd:boolean)
+    }
+    class RetentionMode {
+        <<enumeration>>
+        BucketAnyRetention
+        PrefixOnlyRetention
+    }
+    MetaTopologyProfile --> MetaTopology : metaTopology
+    OrderingProfile --> ContiguityCheckMode : contiguityCheckMode
+    OrderingProfile --> DatasetTierModel : datasetTierModel
+    OrderingProfile --> GlobalReadStrategy : globalReadStrategy
+    OrderingProfile --> OrderingGrain : orderingGrain
+    ReceiptProfile --> ReceiptModel : receiptModel
+    ReceiptProfile --> RetentionMode : retentionMode
+```
+
+<!-- end -->
+
+<!-- start: {"generated": "class-diagram", "part": "Uniqueness and keys", "classes": ["dal:UniquenessConstraint", "dal:ClaimScheme", "dal:SchemeState", "dal:PersistenceKeyed"], "enumerations": "table"} -->
+
+**Uniqueness and keys**
+
+```mermaid
+classDiagram
+    direction LR
+    class ClaimScheme {
+        claimIriTemplate (xsd:string)
+        claimKeyId (xsd:string)
+        schemeVersion (xsd:string)
+    }
+    class DigestScheme
+    class NaturallyKeyed
+    class PersistenceKeyed
+    class SchemeState {
+        <<enumeration>>
+        Accepting
+        Dual
+        Retired
+        Retiring
+    }
+    class UniquenessConstraint {
+        constraintId (xsd:string)
+        keyProperty
+        mergeRelation
+        normalizePipeline
+        onViolation
+        scopeProperty
+    }
+    ClaimScheme --> DigestScheme : claimDigestScheme
+    ClaimScheme --> SchemeState : schemeState
+    NaturallyKeyed <|-- PersistenceKeyed
+    UniquenessConstraint --> ClaimScheme : claimScheme
+```
+
+<!-- end -->
+
+<!-- start: {"generated": "class-diagram", "part": "Identity, epochs and privacy", "classes": ["dal:IdentityProfile", "dal:ResourceRole", "dal:IdentityStrategy", "dal:DigestScheme", "dal:OccurrenceNamespaceDerivation", "dal:EventIdentityStrategy", "dal:SurrogateKind", "dal:SelfReferenceRule", "dal:EpochProfile", "dal:EpochAuthority", "dal:EpochGuardScope", "dal:PrivacyProfile", "dal:PrivacyClass", "dal:ErasureStrategy", "dal:ErasurePrecedence"], "enumerations": "table"} -->
+
+**Identity, epochs and privacy**
+
+```mermaid
+classDiagram
+    direction LR
     class DigestScheme {
         digestEncoding (xsd:string)
         digestFunction (xsd:string)
         digestWidthBits (xsd:integer)
         verifyFullDigestOnWrite (xsd:boolean)
     }
-    class EpochAuthority
-    class EpochGuardScope
+    class EpochAuthority {
+        <<enumeration>>
+        ExternalHighWaterMark
+        RestoreControlledEpoch
+        StoreLocalEpoch
+        WriterStartRefusal
+    }
+    class EpochGuardScope {
+        <<enumeration>>
+        DatasetLevelGuard
+        RowLevelGuardOnly
+    }
     class EpochProfile {
         epochCoordinatorBinding (xsd:string)
         erasureRegisterBinding (xsd:string)
         erasureReplayOnRestore (xsd:boolean)
     }
-    class EquivalentClassScope {
-        equivalentTo
+    class ErasurePrecedence {
+        <<enumeration>>
+        ErasureWins
+        MonotonicityWins
     }
-    class ErasurePrecedence
-    class ErasureStrategy
-    class EtagForm
-    class EtagRepresentation
-    class EventIdentityStrategy
-    class FirstWriteMode
-    class GeneratedOperation {
-        forOperation (xsd:string)
-        templateVersion (xsd:integer)
+    class ErasureStrategy {
+        <<enumeration>>
+        CryptoShred
+        NoErasure
+        PerSubjectGraphDrop
     }
-    class GlobalReadStrategy
-    class GraphNaming
-    class GraphPatternScope {
-        graphPrefix (xsd:string)
+    class EventIdentityStrategy {
+        <<enumeration>>
+        ExternalEventIdStrategy
+        PositionDerivedEvent
+        RandomOccurrenceEvent
     }
-    class GuardStatus
     class IdentityProfile {
         acceptedIriPattern (xsd:string)
         callerSuppliedPattern (xsd:string)
@@ -248,60 +453,110 @@ classDiagram
         tuplePrefix
         uniquenessWitnessRequired (xsd:boolean)
     }
-    class IdentityStrategy
-    class MembershipEncoding
-    class MetaTopology
-    class MetaTopologyProfile {
-        epochBumpAcknowledged (xsd:boolean)
-        keyShards (xsd:long)
-        logShards (xsd:long)
-        metaShards (xsd:long)
-        priorMetaShards (xsd:long)
-        registryGraph (xsd:string)
-        txnShards (xsd:long)
+    class IdentityStrategy {
+        <<enumeration>>
+        AdoptedIdentity
+        ContentAddressedIdentity
+        DerivedHashIdentity
+        ExternalRegistryIdentity
+        NaturalKeyIdentity
+        RandomSurrogateIdentity
+        SurrogateClaimedIdentity
     }
+    class OccurrenceNamespaceDerivation {
+        <<enumeration>>
+        HashedTargetDerivation
+        RegistryTokenDerivation
+    }
+    class PrivacyClass {
+        <<enumeration>>
+        InternalData
+        PersonalData
+        PublicData
+    }
+    class PrivacyProfile
+    class ResourceRole {
+        <<enumeration>>
+        AggregateRootRole
+        ComponentRole
+        ContentRevisionRole
+        EntityRole
+        EventOccurrenceRole
+        GraphLocatorRole
+        KeyClaimRole
+        LineageRole
+    }
+    class SelfReferenceRule {
+        <<enumeration>>
+        ExcludeHeaderSubgraph
+        PlaceholderSubstitution
+        SelfReferenceDisallowed
+    }
+    class SurrogateKind {
+        <<enumeration>>
+        CallerSuppliedSurrogate
+        UuidV4Surrogate
+    }
+    class UniquenessConstraint
+    EpochProfile --> EpochAuthority : epochAuthority
+    EpochProfile --> EpochGuardScope : epochGuardScope
+    IdentityProfile --> DigestScheme : digestScheme
+    IdentityProfile --> EventIdentityStrategy : eventIdentityStrategy
+    IdentityProfile --> IdentityStrategy : identityStrategy
+    IdentityProfile --> OccurrenceNamespaceDerivation : occurrenceNamespaceDerivation
+    IdentityProfile --> ResourceRole : resourceRole
+    IdentityProfile --> SelfReferenceRule : selfReferenceRule
+    IdentityProfile --> SurrogateKind : surrogateKind
+    IdentityProfile --> UniquenessConstraint : claimsConstraint
+    IdentityProfile --> UniquenessConstraint : keyConstraint
+    PrivacyProfile --> ErasurePrecedence : erasurePrecedence
+    PrivacyProfile --> ErasureStrategy : erasureStrategy
+    PrivacyProfile --> PrivacyClass : privacyClass
+```
+
+<!-- end -->
+
+<!-- start: {"generated": "class-diagram", "part": "The compiled profile", "classes": ["dal:CompiledProfile", "dal:ResolvedDimension", "dal:MintingRecipe", "dal:Diagnostic", "dal:ReferenceEdge", "dal:Template", "dal:GeneratedOperation", "dal:ParameterBinding"], "enumerations": "table"} -->
+
+**The compiled profile**
+
+```mermaid
+classDiagram
+    direction LR
+    class AuditOutcome
+    class CapabilityCheck
+    class CapabilityRequirement
+    class CompiledProfile {
+        forDeployment
+        forTarget
+    }
+    class DeclarationSource
+    class Diagnostic {
+        diagnosticKind (xsd:string)
+        diagnosticMessage (xsd:string)
+        diagnosticSeverity (xsd:string)
+    }
+    class DigestContract
+    class GeneratedOperation {
+        forOperation (xsd:string)
+        templateVersion (xsd:integer)
+    }
+    class GraphNaming
+    class GuardStatus
     class MintingRecipe {
         recipeDigest (xsd:string)
         recipeDocument
         recipeStrategy
     }
-    class NamespaceScope {
-        iriPrefix (xsd:string)
-    }
-    class NaturallyKeyed
-    class OccurrenceNamespaceDerivation
     class OperationKind
-    class OrderingGrain
-    class OrderingProfile {
-        lagWindowMillis (xsd:long)
-        opSeqRequired (xsd:boolean)
-    }
     class OwnershipKind
     class ParameterBinding {
         paramName (xsd:string)
         paramType (xsd:string)
         paramValue
     }
-    class ParameterDeclaration {
-        parameterName (xsd:string)
-        required (xsd:boolean)
-    }
-    class ParameterKind
+    class ParameterDeclaration
     class PayloadContract
-    class PayloadEncoding
-    class PersistenceKeyed
-    class PrivacyClass
-    class PrivacyProfile
-    class ProfileScope {
-        describedBy (xsd:string)
-        priority (xsd:integer)
-    }
-    class ReceiptModel
-    class ReceiptProfile {
-        asOfFloorSource (xsd:string)
-        perSubjectScoped (xsd:boolean)
-    }
-    class ReferenceData
     class ReferenceEdge {
         edgeInverse (xsd:boolean)
         edgePredicate
@@ -309,7 +564,6 @@ classDiagram
         edgeTargetClass
         edgeTargetShape
     }
-    class ReferenceMode
     class ResolvedDimension {
         candidateCount (xsd:integer)
         dimension (xsd:string)
@@ -318,44 +572,12 @@ classDiagram
         wonBy
     }
     class ResourceAccess
-    class ResourceKind {
-        logicalKey (xsd:string)
-    }
     class ResourceRole
-    class ResultColumn {
-        columnName (xsd:string)
-        columnPosition (xsd:integer)
-        columnSeparator (xsd:string)
-    }
-    class RetentionMode
-    class Rule
-    class SchemeState
-    class SelfReferenceRule
-    class ShapeScope {
-        targetShape
-    }
-    class Source
-    class SurrogateKind
+    class ResultColumn
     class Template {
         templateId (xsd:string)
     }
-    class UniquenessConstraint {
-        constraintId (xsd:string)
-        keyProperty
-        mergeRelation
-        normalizePipeline
-        onViolation
-        scopeProperty
-    }
-    class WriteDiscipline
-    class WriteDisciplineProfile {
-        checkpointEvery (xsd:long)
-    }
-    AggregateBoundaryProfile --> AggregateBoundaryStrategy : strategy
-    AggregateBoundaryProfile --> FirstWriteMode : firstWrite
-    CapabilityCheck --> CapabilitySpec : checkedAgainst
-    ClaimScheme --> DigestScheme : claimDigestScheme
-    ClaimScheme --> SchemeState : schemeState
+    class UniquenessConstraint
     CompiledProfile --> CapabilityCheck : capabilityCheck
     CompiledProfile --> CapabilityRequirement : capabilityRequirement
     CompiledProfile --> Diagnostic : diagnostic
@@ -363,14 +585,6 @@ classDiagram
     CompiledProfile --> MintingRecipe : mintingRecipe
     CompiledProfile --> ResolvedDimension : resolvedDimension
     CompiledProfile --> UniquenessConstraint : appliedUniquenessConstraint
-    ConcurrencyProfile --> ConcurrencyStrategy : concurrencyProfile
-    ConcurrencyProfile --> DeadlockPolicy : deadlockPolicy
-    ConcurrencyProfile --> EtagForm : etagForm
-    ConcurrencyProfile --> EtagRepresentation : etagRepresentation
-    DigestContract --> DigestPart : digestPart
-    DigestPart --> DigestPartRole : partRole
-    EpochProfile --> EpochAuthority : epochAuthority
-    EpochProfile --> EpochGuardScope : epochGuardScope
     GeneratedOperation --> AuditOutcome : reportsOutcome
     GeneratedOperation --> DeclarationSource : declarationSource
     GeneratedOperation --> DigestContract : digestContract
@@ -384,63 +598,183 @@ classDiagram
     GeneratedOperation --> ResourceAccess : access
     GeneratedOperation --> ResultColumn : resultColumn
     GeneratedOperation --> Template : usesTemplate
-    IdentityProfile --> DigestScheme : digestScheme
-    IdentityProfile --> EventIdentityStrategy : eventIdentityStrategy
-    IdentityProfile --> IdentityStrategy : identityStrategy
-    IdentityProfile --> OccurrenceNamespaceDerivation : occurrenceNamespaceDerivation
-    IdentityProfile --> ResourceRole : resourceRole
-    IdentityProfile --> SelfReferenceRule : selfReferenceRule
-    IdentityProfile --> SurrogateKind : surrogateKind
-    IdentityProfile --> UniquenessConstraint : claimsConstraint
-    IdentityProfile --> UniquenessConstraint : keyConstraint
-    MetaTopologyProfile --> MetaTopology : metaTopology
     MintingRecipe --> ResourceRole : forRole
-    NaturallyKeyed <|-- PersistenceKeyed
-    OrderingProfile --> ContiguityCheckMode : contiguityCheckMode
-    OrderingProfile --> DatasetTierModel : datasetTierModel
-    OrderingProfile --> GlobalReadStrategy : globalReadStrategy
-    OrderingProfile --> OrderingGrain : orderingGrain
-    ParameterDeclaration --> ParameterDeclaration : mustEqualFor
-    ParameterDeclaration --> ParameterKind : parameterKind
-    ParameterDeclaration --> Rule : mustEqual
-    ParameterDeclaration --> Source : sourcedFrom
-    PayloadContract --> ParameterDeclaration : payloadParameter
-    PayloadContract --> ParameterDeclaration : payloadRoot
-    PayloadContract --> PayloadEncoding : payloadEncoding
-    PrivacyProfile --> ErasurePrecedence : erasurePrecedence
-    PrivacyProfile --> ErasureStrategy : erasureStrategy
-    PrivacyProfile --> PrivacyClass : privacyClass
-    ProfileScope <|-- ClassScope
-    ProfileScope <|-- EquivalentClassScope
-    ProfileScope <|-- GraphPatternScope
-    ProfileScope <|-- NamespaceScope
-    ProfileScope <|-- ShapeScope
-    ReceiptProfile --> ReceiptModel : receiptModel
-    ReceiptProfile --> RetentionMode : retentionMode
     ReferenceEdge --> OwnershipKind : edgeOwnership
-    ResourceAccess --> AccessMode : accessMode
-    ResourceAccess --> ParameterDeclaration : keyedBy
-    ResourceAccess --> ResourceKind : resourceKind
-    ResultColumn --> ColumnKind : columnKind
-    UniquenessConstraint --> ClaimScheme : claimScheme
-    WriteDisciplineProfile --> MembershipEncoding : membershipEncoding
-    WriteDisciplineProfile --> WriteDiscipline : writeDiscipline
-    class DatatypeProperty_acknowledgedSharedClassOverride["Datatype Property - acknowledgedSharedClassOverride"]
-    class ObjectProperty_appliesTo["Object Property - appliesTo"]
-    class ObjectProperty_boundaryShape["Object Property - boundaryShape"]
-    class ObjectProperty_coversClass["Object Property - coversClass"]
-    class ObjectProperty_minEnforcementLevel["Object Property - minEnforcementLevel"]
-    class ObjectProperty_ownership["Object Property - ownership"]
-    class ObjectProperty_recordClass["Object Property - recordClass"]
     class ObjectProperty_referenceEdge["Object Property - referenceEdge"]
-    class ObjectProperty_referenceMode["Object Property - referenceMode"]
-    class DatatypeProperty_requiresReasoning["Datatype Property - requiresReasoning"]
-    class DatatypeProperty_unicodeVersion["Datatype Property - unicodeVersion"]
 ```
 
 <!-- end -->
 
-</details>
+<!-- start: {"generated": "class-diagram", "part": "The operation contract, parameters and resources", "classes": ["dal:ParameterDeclaration", "dal:ParameterKind", "dal:Rule", "dal:Source", "dal:ResourceAccess", "dal:AccessMode", "dal:ResourceKind", "dal:GraphNaming", "dal:OperationKind"], "enumerations": "table"} -->
+
+**The operation contract, parameters and resources**
+
+```mermaid
+classDiagram
+    direction LR
+    class AccessMode {
+        <<enumeration>>
+        AbsenceRead
+        Delete
+        Insert
+        PointRead
+        ScanRead
+        WholeAggregateRead
+    }
+    class GraphNaming {
+        <<enumeration>>
+        CallerNamed
+        QueryNamed
+    }
+    class OperationKind {
+        <<enumeration>>
+        Append
+        AppendVersion
+        Audit
+        Bootstrap
+        Create
+        KeyClaimRetire
+        KeyClaimWrite
+        KeyClaimWriteDual
+        MembersRead
+        MergeRewrite
+        PayloadCheck
+        Quarantine
+        Replace
+        Tombstone
+        UnconditionalWrite
+        ValueGuardedReplace
+    }
+    class ParameterDeclaration {
+        parameterName (xsd:string)
+        required (xsd:boolean)
+    }
+    class ParameterKind {
+        <<enumeration>>
+        DigestKind
+        IriKind
+        IriOrLiteralKind
+        LangStringKind
+        LiteralKind
+        LongKind
+        PayloadKind
+        PositionKind
+        RegistryListKind
+        RowsKind
+        StringKind
+    }
+    class ResourceAccess
+    class ResourceKind {
+        <<enumeration>>
+        Aggregate
+        DatasetEpoch
+        Event
+        KeyClaim
+        KeyQuarantine
+        MergeRecord
+        PatchContent
+        PropertyValue
+        Receipt
+        RetentionMark
+        TransactionClaim
+        VersionRow
+        logicalKey (xsd:string)
+    }
+    class Rule {
+        <<enumeration>>
+        GraphNameOfRoot
+    }
+    class Source {
+        <<enumeration>>
+        NoSource
+        RegistryGraph
+    }
+    ParameterDeclaration --> ParameterDeclaration : mustEqualFor
+    ParameterDeclaration --> ParameterKind : parameterKind
+    ParameterDeclaration --> Rule : mustEqual
+    ParameterDeclaration --> Source : sourcedFrom
+    ResourceAccess --> AccessMode : accessMode
+    ResourceAccess --> ParameterDeclaration : keyedBy
+    ResourceAccess --> ResourceKind : resourceKind
+```
+
+<!-- end -->
+
+<!-- start: {"generated": "class-diagram", "part": "The operation contract, results, payload and digest", "classes": ["dal:AuditOutcome", "dal:GuardStatus", "dal:DeclarationSource", "dal:ResultColumn", "dal:ColumnKind", "dal:PayloadContract", "dal:PayloadEncoding", "dal:BoundaryShapeAbsence", "dal:DigestContract", "dal:DigestPart", "dal:DigestPartRole"], "enumerations": "table"} -->
+
+**The operation contract, results, payload and digest**
+
+```mermaid
+classDiagram
+    direction LR
+    class AuditOutcome {
+        <<enumeration>>
+        Clean
+        Failed
+        NothingExamined
+    }
+    class BoundaryShapeAbsence {
+        <<enumeration>>
+        NoBoundaryShape
+    }
+    class ColumnKind {
+        <<enumeration>>
+        ConcatenationColumn
+        CountColumn
+        IriColumn
+        PositionColumn
+        StringColumn
+        TermColumn
+    }
+    class DeclarationSource {
+        <<enumeration>>
+        BuilderDerived
+        HandDeclared
+    }
+    class DigestContract {
+        digestAlgorithm (xsd:string)
+    }
+    class DigestPart {
+        partOrder (xsd:integer)
+        partSource
+    }
+    class DigestPartRole {
+        <<enumeration>>
+        AddPart
+        DelPart
+        EventPart
+        ExpectedSeqPart
+        OperationKindPart
+        PayloadPart
+        TargetPart
+    }
+    class GuardStatus {
+        <<enumeration>>
+        Guarded
+        GuardsOff
+        NoRequiredParameter
+        NotGenerated
+    }
+    class ParameterDeclaration
+    class PayloadContract
+    class PayloadEncoding {
+        <<enumeration>>
+        GroundNTriples
+    }
+    class ResultColumn {
+        columnName (xsd:string)
+        columnPosition (xsd:integer)
+        columnSeparator (xsd:string)
+    }
+    DigestContract --> DigestPart : digestPart
+    DigestPart --> DigestPartRole : partRole
+    PayloadContract --> ParameterDeclaration : payloadParameter
+    PayloadContract --> ParameterDeclaration : payloadRoot
+    PayloadContract --> PayloadEncoding : payloadEncoding
+    ResultColumn --> ColumnKind : columnKind
+```
+
+<!-- end -->
 
 ## 5. Detailed Design
 
@@ -2726,7 +3060,7 @@ flowchart LR
     classDef refused fill:#f5b7b1,stroke:#922b21,color:#000
 ```
 
-[TSD-01]: ../../docs/architecture/triple-store-discovery.md#tsd-01-the-order-in-which-a-delete-insert-where-is-applied
+[TSD-01]: ../../docs/architecture/triple-store-discovery.md#tsd-01-the-order-in-which-a-deleteinsertwhere-is-applied
 [TSD-02]: ../../docs/architecture/triple-store-discovery.md#tsd-02-what-filling-a-template-once-per-solution-costs
 [TSD-06]: ../../docs/architecture/triple-store-discovery.md#tsd-06-a-request-whose-second-operation-fails-and-graph-management
 [TSD-07]: ../../docs/architecture/triple-store-discovery.md#tsd-07-numeric-datatypes-are-not-kept-by-oxigraph
@@ -2804,14 +3138,20 @@ version row.
 
 **Definition.** How the triples that change together are delimited, one of a closed set of named strategies.
 
+**Equivalent to.** { dal:NamedGraphBoundary, dal:CompositePropertyBoundary, dal:NoBoundary }
+
 #### `dal:OwnershipKind`
 
 **Definition.** How the aggregate stands to the node at the far end of an edge in a dal:boundaryShape tree. One of
 dal:Owned, dal:Reference, dal:Vocabulary.
 
+**Equivalent to.** { dal:Owned, dal:Reference, dal:Vocabulary }
+
 #### `dal:ReferenceMode`
 
 **Definition.** What an edge's reference names, when its target class is versioned. One of dal:ByIdentity, dal:Pinned.
+
+**Equivalent to.** { dal:ByIdentity, dal:Pinned }
 
 #### `dal:ReferenceData`
 
@@ -2829,6 +3169,8 @@ policy and the ETag form and representation.
 **Definition.** The mechanism that keeps concurrent writers to one aggregate from overwriting each other, one of a
 closed set of named strategies.
 
+**Equivalent to.** { dal:ProvidedConcurrency, dal:Optimistic, dal:AppendOnly, dal:LockingConcurrency }
+
 #### `dal:OrderingProfile`
 
 **Definition.** A profile that declares a family's ordering grain, dataset tier, global read and contiguity check.
@@ -2837,10 +3179,14 @@ closed set of named strategies.
 
 **Definition.** The grain at which a family assigns positions, one of a closed set of named grains.
 
+**Equivalent to.** { dal:CommitGrain, dal:EventGrain }
+
 #### `dal:DatasetTierModel`
 
 **Definition.** How a total order across streams is derived, for a family that declares one, one of a closed set of
 named models.
+
+**Equivalent to.** { dal:DerivedFeed, dal:HybridLogicalClock, dal:GlobalDenseCounter }
 
 #### `dal:ReceiptProfile`
 
@@ -2851,6 +3197,8 @@ named models.
 **Definition.** What history a family's writes leave in the receipt log. One of dal:ReceiptOnly, dal:PatchLog,
 dal:SnapshotPerRevision, dal:NoReceipt.
 
+**Equivalent to.** { dal:ReceiptOnly, dal:PatchLog, dal:SnapshotPerRevision, dal:NoReceipt }
+
 #### `dal:MetaTopologyProfile`
 
 **Definition.** A profile that declares a family's meta topology, its shard counts and its registry graph.
@@ -2858,6 +3206,8 @@ dal:SnapshotPerRevision, dal:NoReceipt.
 #### `dal:MetaTopology`
 
 **Definition.** How version rows are spread over meta graphs, one of a closed set of named topologies.
+
+**Equivalent to.** { dal:SharedSharded, dal:PerAggregate }
 
 #### `dal:UniquenessConstraint`
 
@@ -2907,13 +3257,19 @@ Its IRI is minted from the target, the operation and the name.
 dal:RegistryListKind are request-time slots, text the caller fills in because a set of triples, of rows or of graph
 IRIs is not one RDF term.
 
+**Equivalent to.** { dal:IriKind, dal:LongKind, dal:StringKind, dal:LangStringKind, dal:PositionKind, dal:DigestKind, dal:IriOrLiteralKind, dal:LiteralKind, dal:PayloadKind, dal:RowsKind, dal:RegistryListKind }
+
 #### `dal:Rule`
 
 **Definition.** A rule a parameter's value must satisfy, named and never written as a SPARQL expression.
 
+**Equivalent to.** { dal:GraphNameOfRoot }
+
 #### `dal:Source`
 
 **Definition.** Where a caller obtains a value, or the statement that there is no source.
+
+**Equivalent to.** { dal:RegistryGraph, dal:NoSource }
 
 #### `dal:ResourceAccess`
 
@@ -2925,31 +3281,45 @@ Its IRI is minted from the target, the operation and the position of the access.
 **Definition.** How an operation touches a logical resource. An absence read is named apart from a point read, since
 write skew turns on it.
 
+**Equivalent to.** { dal:PointRead, dal:AbsenceRead, dal:ScanRead, dal:WholeAggregateRead, dal:Insert, dal:Delete }
+
 #### `dal:ResourceKind`
 
 **Definition.** A logical resource an operation reads or writes, with its logical key and its realisation in SPARQL.
+
+**Equivalent to.** { dal:Aggregate, dal:DatasetEpoch, dal:Event, dal:KeyClaim, dal:KeyQuarantine, dal:MergeRecord, dal:PatchContent, dal:PropertyValue, dal:Receipt, dal:RetentionMark, dal:TransactionClaim, dal:VersionRow }
 
 #### `dal:OperationKind`
 
 **Definition.** The logical kind of a generated operation, closed. A dataset-guard variant, a patch-log variant and a
 no-receipt variant have the kind of their base operation.
 
+**Equivalent to.** { dal:Quarantine, dal:Create, dal:Bootstrap, dal:Replace, dal:Tombstone, dal:Append, dal:AppendVersion, dal:UnconditionalWrite, dal:ValueGuardedReplace, dal:KeyClaimWrite, dal:KeyClaimWriteDual, dal:KeyClaimRetire, dal:MergeRewrite, dal:Audit, dal:MembersRead, dal:PayloadCheck }
+
 #### `dal:AuditOutcome`
 
 **Definition.** What an audit reports. A query returns the rows that violate an invariant, so a caller derives the
 outcome from the rows and from whether the audit read anything.
 
+**Equivalent to.** { dal:Clean, dal:Failed, dal:NothingExamined }
+
 #### `dal:GuardStatus`
 
 **Definition.** Whether an operation's required-parameter guard is in its query, and why not when it is not.
+
+**Equivalent to.** { dal:Guarded, dal:GuardsOff, dal:NoRequiredParameter, dal:NotGenerated }
 
 #### `dal:GraphNaming`
 
 **Definition.** Who names the named graph of a root.
 
+**Equivalent to.** { dal:QueryNamed, dal:CallerNamed }
+
 #### `dal:DeclarationSource`
 
 **Definition.** Where an operation's contract comes from.
+
+**Equivalent to.** { dal:BuilderDerived, dal:HandDeclared }
 
 #### `dal:ResultColumn`
 
@@ -2959,6 +3329,8 @@ operation and the column's name.
 #### `dal:ColumnKind`
 
 **Definition.** What a result column holds.
+
+**Equivalent to.** { dal:IriColumn, dal:PositionColumn, dal:StringColumn, dal:TermColumn, dal:CountColumn, dal:ConcatenationColumn }
 
 #### `dal:PayloadContract`
 
@@ -2970,9 +3342,13 @@ target and the operation.
 
 **Definition.** How a payload is written into its slot.
 
+**Equivalent to.** { dal:GroundNTriples }
+
 #### `dal:BoundaryShapeAbsence`
 
 **Definition.** The statement that a family names no boundary shape.
+
+**Equivalent to.** { dal:NoBoundaryShape }
 
 #### `dal:DigestContract`
 
@@ -2986,6 +3362,8 @@ operation. The algorithm and the encoding are fixed here, and the caller library
 #### `dal:DigestPartRole`
 
 **Definition.** What a part of a digest holds.
+
+**Equivalent to.** { dal:OperationKindPart, dal:TargetPart, dal:ExpectedSeqPart, dal:PayloadPart, dal:EventPart, dal:AddPart, dal:DelPart }
 
 #### `dal:CompiledProfile`
 
@@ -3020,10 +3398,14 @@ into the same per-dimension model as dal:DataAccessProfile.
 **Definition.** Which kind of thing is being named (iri-identity-patterns.md §2). Identity choices are made per role,
 never once for a whole deployment.
 
+**Equivalent to.** { dal:EntityRole, dal:AggregateRootRole, dal:ComponentRole, dal:LineageRole, dal:ContentRevisionRole, dal:GraphLocatorRole, dal:KeyClaimRole, dal:EventOccurrenceRole }
+
 #### `dal:IdentityStrategy`
 
 **Definition.** One minting pattern from iri-identity-patterns.md §6. An adopter selects the strategy compatible with
 their key's mutability and privacy class; the framework does not default to one for every role.
+
+**Equivalent to.** { dal:AdoptedIdentity, dal:NaturalKeyIdentity, dal:DerivedHashIdentity, dal:RandomSurrogateIdentity, dal:SurrogateClaimedIdentity, dal:ExternalRegistryIdentity, dal:ContentAddressedIdentity }
 
 #### `dal:DigestScheme`
 
@@ -3038,19 +3420,27 @@ ever used for that role (persistence-compiler-iri-sync Slice 5).
 **Definition.** How an event/occurrence IRI's namespace is derived from its target (iri-identity-patterns.md §10.1,
 §10.5). Required whenever dal:resourceRole is dal:EventOccurrenceRole and the strategy is position-derived.
 
+**Equivalent to.** { dal:RegistryTokenDerivation, dal:HashedTargetDerivation }
+
 #### `dal:EventIdentityStrategy`
 
 **Definition.** Whether an occurrence IRI is deterministic from position or a random surrogate
 (iri-identity-patterns.md §10.6).
 
+**Equivalent to.** { dal:PositionDerivedEvent, dal:RandomOccurrenceEvent, dal:ExternalEventIdStrategy }
+
 #### `dal:SurrogateKind`
 
 **Definition.** What a surrogate identifier is.
+
+**Equivalent to.** { dal:UuidV4Surrogate, dal:CallerSuppliedSurrogate }
 
 #### `dal:SelfReferenceRule`
 
 **Definition.** How a content-addressed graph that mentions its own identifier is hashed (iri-identity-patterns.md
 §8.3).
+
+**Equivalent to.** { dal:SelfReferenceDisallowed, dal:ExcludeHeaderSubgraph, dal:PlaceholderSubstitution }
 
 #### `dal:EpochProfile`
 
@@ -3061,9 +3451,13 @@ ever used for that role (persistence-compiler-iri-sync Slice 5).
 **Definition.** Where a new epoch value is allocated from, so that it survives a restore (iri-identity-patterns.md
 §10.3).
 
+**Equivalent to.** { dal:ExternalHighWaterMark, dal:RestoreControlledEpoch, dal:WriterStartRefusal, dal:StoreLocalEpoch }
+
 #### `dal:EpochGuardScope`
 
 **Definition.** Which epoch value a write's guard compares against.
+
+**Equivalent to.** { dal:DatasetLevelGuard, dal:RowLevelGuardOnly }
 
 #### `dal:PrivacyProfile`
 
@@ -3074,9 +3468,13 @@ erasure meets the monotonicity of claims.
 
 **Definition.** The class of data a profile governs for erasure, one of a closed set of named classes.
 
+**Equivalent to.** { dal:PersonalData, dal:InternalData, dal:PublicData }
+
 #### `dal:ErasureStrategy`
 
 **Definition.** How one subject's data is erased, one of a closed set of named strategies.
+
+**Equivalent to.** { dal:PerSubjectGraphDrop, dal:CryptoShred, dal:NoErasure }
 
 #### `dal:ErasurePrecedence`
 
@@ -3084,36 +3482,52 @@ erasure meets the monotonicity of claims.
 patterns guide) conflict, because a physically deleted claim breaks the 'a claim is only ever released by its own
 owner' premise.
 
+**Equivalent to.** { dal:ErasureWins, dal:MonotonicityWins }
+
 #### `dal:GlobalReadStrategy`
 
 **Definition.** How a cross-stream (dataset-tier) consumer avoids the pre-commit HLC reorder hole (guide §21.3, G2).
 Exactly one is selected per family that advertises a dataset tier.
+
+**Equivalent to.** { dal:WatermarkedRead, dal:LagWindowRead, dal:DenseFeedRead, dal:NoGlobalRead }
 
 #### `dal:ContiguityCheckMode`
 
 **Definition.** What a consumer does when the sequence numbers it has seen for a stream have a gap, one of a closed
 set of named modes.
 
+**Equivalent to.** { dal:BlockingContiguityCheck, dal:AdvisoryContiguityCheck }
+
 #### `dal:RetentionMode`
 
 **Definition.** How receipt buckets may be pruned, one of a closed set of named modes.
+
+**Equivalent to.** { dal:PrefixOnlyRetention, dal:BucketAnyRetention }
 
 #### `dal:EtagForm`
 
 **Definition.** Whether the ETag derived for an aggregate is a strong or a weak validator.
 
+**Equivalent to.** { dal:StrongEtag, dal:WeakEtag }
+
 #### `dal:EtagRepresentation`
 
 **Definition.** Whether conditional requests are served one representation or the tag names the representation.
+
+**Equivalent to.** { dal:SingleRepresentation, dal:TaggedRepresentation }
 
 #### `dal:FirstWriteMode`
 
 **Definition.** How the first write of an aggregate creates its version row, one of a closed set of named modes.
 
+**Equivalent to.** { dal:PreCreatedRow, dal:AbsentRow }
+
 #### `dal:DeadlockPolicy`
 
 **Definition.** Who is responsible for avoiding deadlock when a write touches several version rows, one of a closed
 set of named policies.
+
+**Equivalent to.** { dal:EngineDetectAndRetry, dal:SortedAcquisition, dal:PartitionedWriter }
 
 #### `dal:WriteDisciplineProfile`
 
@@ -3124,9 +3538,13 @@ versions how a version states its members (dal:membershipEncoding, dal:checkpoin
 
 **Definition.** How a family writes a new state. One of dal:InPlace, dal:AppendVersions, dal:AppendRecords.
 
+**Equivalent to.** { dal:InPlace, dal:AppendVersions, dal:AppendRecords }
+
 #### `dal:MembershipEncoding`
 
 **Definition.** How a version of a root states its members. One of dal:FullMembership, dal:DeltaMembership.
+
+**Equivalent to.** { dal:FullMembership, dal:DeltaMembership }
 
 #### `dal:ClaimScheme`
 
@@ -3136,6 +3554,8 @@ a window where two scheme versions can each claim the same normalized key.
 #### `dal:SchemeState`
 
 **Definition.** A state of a claim scheme in its rotation, one of a closed set of named states.
+
+**Equivalent to.** { dal:Accepting, dal:Dual, dal:Retiring, dal:Retired }
 
 <!-- start: {"output-file": "spec/persistent-foundation.ttl"} -->
 
@@ -4562,7 +4982,7 @@ integrity mechanism.
 
 ### 6.4 Individuals
 
-The closed sets of named individuals that the configuration model and the compiled profile use. Persistence has no vocabulary document, so the tables sit in a region that sends them to `spec/persistence.ttl`. An individual with a statement the tables cannot hold, such as a logical key or a Unicode version, is written whole in 6.6.
+The closed sets of named individuals that the configuration model and the compiled profile use. Persistence has no vocabulary document, so the tables sit in a region that sends them to `spec/persistence.ttl`. An individual's logical key or Unicode version, which the tables cannot hold, is stated in 6.6.
 
 <!-- start: {"output-file": "spec/persistence.ttl"} -->
 
@@ -4938,166 +5358,230 @@ The individuals of `dal:SchemeState`.
 | `dal:Retiring` | `dal:SchemeState` | No writer accepts this version for new claims; a backfill is completing. |
 | `dal:Retired` | `dal:SchemeState` | Claims under this version are tombstoned, or deleted under an erasure policy. |
 
+The individuals of `dal:ResourceKind`, the kinds of logical resource. Each also carries a `dal:logicalKey`, stated in 6.6.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:Aggregate` | `dal:ResourceKind` | The root's data graph (named-graph family) or the owned members in the family's data graph (composite). |
+| `dal:DatasetEpoch` | `dal:ResourceKind` | The dataset's epoch, in the dataset graph. |
+| `dal:Event` | `dal:ResourceKind` | An event in its monthly event bucket. |
+| `dal:KeyClaim` | `dal:ResourceKind` | The claim node and its owner, constraint and retirement, in the keys graph. |
+| `dal:KeyQuarantine` | `dal:ResourceKind` | An owner recorded against a duplicated claim, in the quarantine graph. |
+| `dal:MergeRecord` | `dal:ResourceKind` | A link from a non-canonical owner to the canonical one, in the keys graph, by the adopter's merge relation. |
+| `dal:PatchContent` | `dal:ResourceKind` | The triples a write added or removed, in a graph named from its receipt, newRev followed by /add or /del, one per direction. |
+| `dal:PropertyValue` | `dal:ResourceKind` | The value of one property of a root, in the data graph of a family with no boundary. Read and written by the value-based guard. |
+| `dal:Receipt` | `dal:ResourceKind` | A receipt in its monthly log bucket, and in the pinned graph for a retained head. The pinned graph is how retention is realised. |
+| `dal:RetentionMark` | `dal:ResourceKind` | A target's retention low-water mark, in the retention graph. |
+| `dal:TransactionClaim` | `dal:ResourceKind` | The claim recorded for a transaction id, in the transaction graph. |
+| `dal:VersionRow` | `dal:ResourceKind` | The version row of a root or stream, in its meta graph. |
+
+The Unicode normalisation pipelines. Each also carries a `dal:unicodeVersion`, stated in 6.6.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:NfkcTrimCasefold` | `owl:NamedIndividual` | trim(NFKC_Casefold(x)): the Unicode NFKC_Casefold mapping (NFKC, full case folding and removal of every Default_Ignorable_Code_Point, idempotent), as ICU Normalizer2.getNFKCCasefoldInstance() implements it, then trim. The canonical pipeline for caseless human text (guide §8.1). Folding an email local part with it is a declared business rule, not a generic correctness fix. |
+| `dal:NfkcTrimLowercase` | `owl:NamedIndividual` | NFKC, then trim, then Unicode lowercase mapping, then NFKC again. Case mapping, not case folding: prefer dal:NfkcTrimCasefold for caseless matching of human text. |
+| `dal:NfkcTrimUppercase` | `owl:NamedIndividual` | NFKC, then trim, then Unicode uppercase mapping, then NFKC again (case mapping is not closed under NFKC). Case-insensitive codes such as SKUs and order numbers. |
+
 <!-- end -->
 
 ### 6.5 Disjointness and Keys
 
-None.
+The members of each enumeration of 6.1 are distinct individuals, so a reasoner can tell two values of a closed set apart.
+
+**All different.** dal:NamedGraphBoundary, dal:CompositePropertyBoundary, dal:NoBoundary
+
+**All different.** dal:Owned, dal:Reference, dal:Vocabulary
+
+**All different.** dal:ByIdentity, dal:Pinned
+
+**All different.** dal:ProvidedConcurrency, dal:Optimistic, dal:AppendOnly, dal:LockingConcurrency
+
+**All different.** dal:CommitGrain, dal:EventGrain
+
+**All different.** dal:DerivedFeed, dal:HybridLogicalClock, dal:GlobalDenseCounter
+
+**All different.** dal:ReceiptOnly, dal:PatchLog, dal:SnapshotPerRevision, dal:NoReceipt
+
+**All different.** dal:SharedSharded, dal:PerAggregate
+
+**All different.** dal:IriKind, dal:LongKind, dal:StringKind, dal:LangStringKind, dal:PositionKind, dal:DigestKind, dal:IriOrLiteralKind, dal:LiteralKind, dal:PayloadKind, dal:RowsKind, dal:RegistryListKind
+
+**All different.** dal:RegistryGraph, dal:NoSource
+
+**All different.** dal:PointRead, dal:AbsenceRead, dal:ScanRead, dal:WholeAggregateRead, dal:Insert, dal:Delete
+
+**All different.** dal:Aggregate, dal:DatasetEpoch, dal:Event, dal:KeyClaim, dal:KeyQuarantine, dal:MergeRecord, dal:PatchContent, dal:PropertyValue, dal:Receipt, dal:RetentionMark, dal:TransactionClaim, dal:VersionRow
+
+**All different.** dal:Quarantine, dal:Create, dal:Bootstrap, dal:Replace, dal:Tombstone, dal:Append, dal:AppendVersion, dal:UnconditionalWrite, dal:ValueGuardedReplace, dal:KeyClaimWrite, dal:KeyClaimWriteDual, dal:KeyClaimRetire, dal:MergeRewrite, dal:Audit, dal:MembersRead, dal:PayloadCheck
+
+**All different.** dal:Clean, dal:Failed, dal:NothingExamined
+
+**All different.** dal:Guarded, dal:GuardsOff, dal:NoRequiredParameter, dal:NotGenerated
+
+**All different.** dal:QueryNamed, dal:CallerNamed
+
+**All different.** dal:BuilderDerived, dal:HandDeclared
+
+**All different.** dal:IriColumn, dal:PositionColumn, dal:StringColumn, dal:TermColumn, dal:CountColumn, dal:ConcatenationColumn
+
+**All different.** dal:OperationKindPart, dal:TargetPart, dal:ExpectedSeqPart, dal:PayloadPart, dal:EventPart, dal:AddPart, dal:DelPart
+
+**All different.** dal:EntityRole, dal:AggregateRootRole, dal:ComponentRole, dal:LineageRole, dal:ContentRevisionRole, dal:GraphLocatorRole, dal:KeyClaimRole, dal:EventOccurrenceRole
+
+**All different.** dal:AdoptedIdentity, dal:NaturalKeyIdentity, dal:DerivedHashIdentity, dal:RandomSurrogateIdentity, dal:SurrogateClaimedIdentity, dal:ExternalRegistryIdentity, dal:ContentAddressedIdentity
+
+**All different.** dal:RegistryTokenDerivation, dal:HashedTargetDerivation
+
+**All different.** dal:PositionDerivedEvent, dal:RandomOccurrenceEvent, dal:ExternalEventIdStrategy
+
+**All different.** dal:UuidV4Surrogate, dal:CallerSuppliedSurrogate
+
+**All different.** dal:SelfReferenceDisallowed, dal:ExcludeHeaderSubgraph, dal:PlaceholderSubstitution
+
+**All different.** dal:ExternalHighWaterMark, dal:RestoreControlledEpoch, dal:WriterStartRefusal, dal:StoreLocalEpoch
+
+**All different.** dal:DatasetLevelGuard, dal:RowLevelGuardOnly
+
+**All different.** dal:PersonalData, dal:InternalData, dal:PublicData
+
+**All different.** dal:PerSubjectGraphDrop, dal:CryptoShred, dal:NoErasure
+
+**All different.** dal:ErasureWins, dal:MonotonicityWins
+
+**All different.** dal:WatermarkedRead, dal:LagWindowRead, dal:DenseFeedRead, dal:NoGlobalRead
+
+**All different.** dal:BlockingContiguityCheck, dal:AdvisoryContiguityCheck
+
+**All different.** dal:PrefixOnlyRetention, dal:BucketAnyRetention
+
+**All different.** dal:StrongEtag, dal:WeakEtag
+
+**All different.** dal:SingleRepresentation, dal:TaggedRepresentation
+
+**All different.** dal:PreCreatedRow, dal:AbsentRow
+
+**All different.** dal:EngineDetectAndRetry, dal:SortedAcquisition, dal:PartitionedWriter
+
+**All different.** dal:InPlace, dal:AppendVersions, dal:AppendRecords
+
+**All different.** dal:FullMembership, dal:DeltaMembership
+
+**All different.** dal:Accepting, dal:Dual, dal:Retiring, dal:Retired
 
 ### 6.6 Other Axioms
 
-The kinds of logical resource, and the Unicode normalisation pipelines, carry a statement the individuals tables cannot hold (`dal:logicalKey`, `dal:unicodeVersion`), so each is written whole.
+The logical key of each kind of logical resource, and the Unicode version of each normalisation pipeline, are statements the individuals tables of 6.4 cannot hold.
 
 ```turtle-spec
-dal:Aggregate a dal:ResourceKind ;
-    rdfs:comment "The root's data graph (named-graph family) or the owned members in the family's data graph (composite)." ;
-    dal:logicalKey "root" .
-
-dal:DatasetEpoch a dal:ResourceKind ;
-    rdfs:comment "The dataset's epoch, in the dataset graph." ;
-    dal:logicalKey "dataset" .
-
-dal:Event a dal:ResourceKind ;
-    rdfs:comment "An event in its monthly event bucket." ;
-    dal:logicalKey "stream, seq" .
-
-dal:KeyClaim a dal:ResourceKind ;
-    rdfs:comment "The claim node and its owner, constraint and retirement, in the keys graph." ;
-    dal:logicalKey "claim" .
-
-dal:KeyQuarantine a dal:ResourceKind ;
-    rdfs:comment "An owner recorded against a duplicated claim, in the quarantine graph." ;
-    dal:logicalKey "claim, owner" .
-
-dal:MergeRecord a dal:ResourceKind ;
-    rdfs:comment "A link from a non-canonical owner to the canonical one, in the keys graph, by the adopter's merge relation." ;
-    dal:logicalKey "owner" .
-
-dal:PatchContent a dal:ResourceKind ;
-    rdfs:comment "The triples a write added or removed, in a graph named from its receipt, newRev followed by /add or /del, one per direction." ;
-    dal:logicalKey "target, epoch, seq, direction" .
-
-dal:PropertyValue a dal:ResourceKind ;
-    rdfs:comment "The value of one property of a root, in the data graph of a family with no boundary. Read and written by the value-based guard." ;
-    dal:logicalKey "root, property" .
-
-dal:Receipt a dal:ResourceKind ;
-    rdfs:comment "A receipt in its monthly log bucket, and in the pinned graph for a retained head. The pinned graph is how retention is realised." ;
-    dal:logicalKey "target, epoch, seq" .
-
-dal:RetentionMark a dal:ResourceKind ;
-    rdfs:comment "A target's retention low-water mark, in the retention graph." ;
-    dal:logicalKey "target" .
-
-dal:TransactionClaim a dal:ResourceKind ;
-    rdfs:comment "The claim recorded for a transaction id, in the transaction graph." ;
-    dal:logicalKey "transaction id" .
-
-dal:VersionRow a dal:ResourceKind ;
-    rdfs:comment "The version row of a root or stream, in its meta graph." ;
-    dal:logicalKey "root" .
-```
-
-```turtle-spec
-dal:NfkcTrimCasefold a owl:NamedIndividual ;
-    rdfs:comment "trim(NFKC_Casefold(x)): the Unicode NFKC_Casefold mapping (NFKC, full case folding and removal of every Default_Ignorable_Code_Point, idempotent), as ICU Normalizer2.getNFKCCasefoldInstance() implements it, then trim. The canonical pipeline for caseless human text (guide §8.1). Folding an email local part with it is a declared business rule, not a generic correctness fix." ;
-    dal:unicodeVersion "16.0.0" .
-
-dal:NfkcTrimLowercase a owl:NamedIndividual ;
-    rdfs:comment "NFKC, then trim, then Unicode lowercase mapping, then NFKC again. Case mapping, not case folding: prefer dal:NfkcTrimCasefold for caseless matching of human text." ;
-    dal:unicodeVersion "16.0.0" .
-
-dal:NfkcTrimUppercase a owl:NamedIndividual ;
-    rdfs:comment "NFKC, then trim, then Unicode uppercase mapping, then NFKC again (case mapping is not closed under NFKC). Case-insensitive codes such as SKUs and order numbers." ;
-    dal:unicodeVersion "16.0.0" .
+dal:Aggregate dal:logicalKey "root" .
+dal:DatasetEpoch dal:logicalKey "dataset" .
+dal:Event dal:logicalKey "stream, seq" .
+dal:KeyClaim dal:logicalKey "claim" .
+dal:KeyQuarantine dal:logicalKey "claim, owner" .
+dal:MergeRecord dal:logicalKey "owner" .
+dal:PatchContent dal:logicalKey "target, epoch, seq, direction" .
+dal:PropertyValue dal:logicalKey "root, property" .
+dal:Receipt dal:logicalKey "target, epoch, seq" .
+dal:RetentionMark dal:logicalKey "target" .
+dal:TransactionClaim dal:logicalKey "transaction id" .
+dal:VersionRow dal:logicalKey "root" .
+dal:NfkcTrimCasefold dal:unicodeVersion "16.0.0" .
+dal:NfkcTrimLowercase dal:unicodeVersion "16.0.0" .
+dal:NfkcTrimUppercase dal:unicodeVersion "16.0.0" .
 ```
 
 ### 6.7 Axiom Index
+
+The index is generated from section 6 and drawn collapsed, since it lists every term.
+
+<details>
+<summary>The Axiom Index, generated from section 6</summary>
 
 <!-- start: {"generated": "axiom-index"} -->
 
 | Term | Kind | Summary |
 |---|---|---|
-| `dal:AccessMode` | Class |  |
+| `dal:AccessMode` | Class | Equivalent to {`dal:PointRead`, `dal:AbsenceRead`, `dal:ScanRead`, `dal:WholeAggregateRead`, `dal:Insert`, `dal:Delete`}. |
 | `dal:AggregateBoundaryProfile` | Class |  |
-| `dal:AggregateBoundaryStrategy` | Class |  |
-| `dal:AuditOutcome` | Class |  |
-| `dal:BoundaryShapeAbsence` | Class |  |
+| `dal:AggregateBoundaryStrategy` | Class | Equivalent to {`dal:NamedGraphBoundary`, `dal:CompositePropertyBoundary`, `dal:NoBoundary`}. |
+| `dal:AuditOutcome` | Class | Equivalent to {`dal:Clean`, `dal:Failed`, `dal:NothingExamined`}. |
+| `dal:BoundaryShapeAbsence` | Class | Equivalent to {`dal:NoBoundaryShape`}. |
 | `dal:CapabilityCheck` | Class |  |
 | `dal:CapabilityRequirement` | Class |  |
 | `dal:CapabilitySpec` | Class |  |
 | `dal:ClaimScheme` | Class |  |
 | `dal:ClassScope` | Class | Subclass of `dal:ProfileScope`. |
-| `dal:ColumnKind` | Class |  |
+| `dal:ColumnKind` | Class | Equivalent to {`dal:IriColumn`, `dal:PositionColumn`, `dal:StringColumn`, `dal:TermColumn`, `dal:CountColumn`, `dal:ConcatenationColumn`}. |
 | `dal:CompiledProfile` | Class |  |
 | `dal:ConcurrencyProfile` | Class |  |
-| `dal:ConcurrencyStrategy` | Class |  |
-| `dal:ContiguityCheckMode` | Class |  |
+| `dal:ConcurrencyStrategy` | Class | Equivalent to {`dal:ProvidedConcurrency`, `dal:Optimistic`, `dal:AppendOnly`, `dal:LockingConcurrency`}. |
+| `dal:ContiguityCheckMode` | Class | Equivalent to {`dal:BlockingContiguityCheck`, `dal:AdvisoryContiguityCheck`}. |
 | `dal:DataAccessProfile` | Class |  |
-| `dal:DatasetTierModel` | Class |  |
-| `dal:DeadlockPolicy` | Class |  |
-| `dal:DeclarationSource` | Class |  |
+| `dal:DatasetTierModel` | Class | Equivalent to {`dal:DerivedFeed`, `dal:HybridLogicalClock`, `dal:GlobalDenseCounter`}. |
+| `dal:DeadlockPolicy` | Class | Equivalent to {`dal:EngineDetectAndRetry`, `dal:SortedAcquisition`, `dal:PartitionedWriter`}. |
+| `dal:DeclarationSource` | Class | Equivalent to {`dal:BuilderDerived`, `dal:HandDeclared`}. |
 | `dal:Diagnostic` | Class |  |
 | `dal:DigestContract` | Class |  |
 | `dal:DigestPart` | Class |  |
-| `dal:DigestPartRole` | Class |  |
+| `dal:DigestPartRole` | Class | Equivalent to {`dal:OperationKindPart`, `dal:TargetPart`, `dal:ExpectedSeqPart`, `dal:PayloadPart`, `dal:EventPart`, `dal:AddPart`, `dal:DelPart`}. |
 | `dal:DigestScheme` | Class |  |
-| `dal:EpochAuthority` | Class |  |
-| `dal:EpochGuardScope` | Class |  |
+| `dal:EpochAuthority` | Class | Equivalent to {`dal:ExternalHighWaterMark`, `dal:RestoreControlledEpoch`, `dal:WriterStartRefusal`, `dal:StoreLocalEpoch`}. |
+| `dal:EpochGuardScope` | Class | Equivalent to {`dal:DatasetLevelGuard`, `dal:RowLevelGuardOnly`}. |
 | `dal:EpochProfile` | Class |  |
 | `dal:EquivalentClassScope` | Class | Subclass of `dal:ProfileScope`. |
-| `dal:ErasurePrecedence` | Class |  |
-| `dal:ErasureStrategy` | Class |  |
-| `dal:EtagForm` | Class |  |
-| `dal:EtagRepresentation` | Class |  |
-| `dal:EventIdentityStrategy` | Class |  |
-| `dal:FirstWriteMode` | Class |  |
+| `dal:ErasurePrecedence` | Class | Equivalent to {`dal:ErasureWins`, `dal:MonotonicityWins`}. |
+| `dal:ErasureStrategy` | Class | Equivalent to {`dal:PerSubjectGraphDrop`, `dal:CryptoShred`, `dal:NoErasure`}. |
+| `dal:EtagForm` | Class | Equivalent to {`dal:StrongEtag`, `dal:WeakEtag`}. |
+| `dal:EtagRepresentation` | Class | Equivalent to {`dal:SingleRepresentation`, `dal:TaggedRepresentation`}. |
+| `dal:EventIdentityStrategy` | Class | Equivalent to {`dal:PositionDerivedEvent`, `dal:RandomOccurrenceEvent`, `dal:ExternalEventIdStrategy`}. |
+| `dal:FirstWriteMode` | Class | Equivalent to {`dal:PreCreatedRow`, `dal:AbsentRow`}. |
 | `dal:GeneratedOperation` | Class |  |
-| `dal:GlobalReadStrategy` | Class |  |
-| `dal:GraphNaming` | Class |  |
+| `dal:GlobalReadStrategy` | Class | Equivalent to {`dal:WatermarkedRead`, `dal:LagWindowRead`, `dal:DenseFeedRead`, `dal:NoGlobalRead`}. |
+| `dal:GraphNaming` | Class | Equivalent to {`dal:QueryNamed`, `dal:CallerNamed`}. |
 | `dal:GraphPatternScope` | Class | Subclass of `dal:ProfileScope`. |
-| `dal:GuardStatus` | Class |  |
+| `dal:GuardStatus` | Class | Equivalent to {`dal:Guarded`, `dal:GuardsOff`, `dal:NoRequiredParameter`, `dal:NotGenerated`}. |
 | `dal:IdentityProfile` | Class |  |
-| `dal:IdentityStrategy` | Class |  |
-| `dal:MembershipEncoding` | Class |  |
-| `dal:MetaTopology` | Class |  |
+| `dal:IdentityStrategy` | Class | Equivalent to {`dal:AdoptedIdentity`, `dal:NaturalKeyIdentity`, `dal:DerivedHashIdentity`, `dal:RandomSurrogateIdentity`, `dal:SurrogateClaimedIdentity`, `dal:ExternalRegistryIdentity`, `dal:ContentAddressedIdentity`}. |
+| `dal:MembershipEncoding` | Class | Equivalent to {`dal:FullMembership`, `dal:DeltaMembership`}. |
+| `dal:MetaTopology` | Class | Equivalent to {`dal:SharedSharded`, `dal:PerAggregate`}. |
 | `dal:MetaTopologyProfile` | Class |  |
 | `dal:MintingRecipe` | Class |  |
 | `dal:NamespaceScope` | Class | Subclass of `dal:ProfileScope`. |
-| `dal:OccurrenceNamespaceDerivation` | Class |  |
-| `dal:OperationKind` | Class |  |
-| `dal:OrderingGrain` | Class |  |
+| `dal:OccurrenceNamespaceDerivation` | Class | Equivalent to {`dal:RegistryTokenDerivation`, `dal:HashedTargetDerivation`}. |
+| `dal:OperationKind` | Class | Equivalent to {`dal:Quarantine`, `dal:Create`, `dal:Bootstrap`, `dal:Replace`, `dal:Tombstone`, `dal:Append`, `dal:AppendVersion`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:KeyClaimRetire`, `dal:MergeRewrite`, `dal:Audit`, `dal:MembersRead`, `dal:PayloadCheck`}. |
+| `dal:OrderingGrain` | Class | Equivalent to {`dal:CommitGrain`, `dal:EventGrain`}. |
 | `dal:OrderingProfile` | Class |  |
-| `dal:OwnershipKind` | Class |  |
+| `dal:OwnershipKind` | Class | Equivalent to {`dal:Owned`, `dal:Reference`, `dal:Vocabulary`}. |
 | `dal:ParameterBinding` | Class |  |
 | `dal:ParameterDeclaration` | Class |  |
-| `dal:ParameterKind` | Class |  |
+| `dal:ParameterKind` | Class | Equivalent to {`dal:IriKind`, `dal:LongKind`, `dal:StringKind`, `dal:LangStringKind`, `dal:PositionKind`, `dal:DigestKind`, `dal:IriOrLiteralKind`, `dal:LiteralKind`, `dal:PayloadKind`, `dal:RowsKind`, `dal:RegistryListKind`}. |
 | `dal:PayloadContract` | Class |  |
-| `dal:PayloadEncoding` | Class |  |
+| `dal:PayloadEncoding` | Class | Equivalent to {`dal:GroundNTriples`}. |
 | `dal:PersistenceKeyed` | Class | Subclass of `fnd:NaturallyKeyed`. |
-| `dal:PrivacyClass` | Class |  |
+| `dal:PrivacyClass` | Class | Equivalent to {`dal:PersonalData`, `dal:InternalData`, `dal:PublicData`}. |
 | `dal:PrivacyProfile` | Class |  |
 | `dal:ProfileScope` | Class |  |
-| `dal:ReceiptModel` | Class |  |
+| `dal:ReceiptModel` | Class | Equivalent to {`dal:ReceiptOnly`, `dal:PatchLog`, `dal:SnapshotPerRevision`, `dal:NoReceipt`}. |
 | `dal:ReceiptProfile` | Class |  |
 | `dal:ReferenceData` | Class |  |
 | `dal:ReferenceEdge` | Class |  |
-| `dal:ReferenceMode` | Class |  |
+| `dal:ReferenceMode` | Class | Equivalent to {`dal:ByIdentity`, `dal:Pinned`}. |
 | `dal:ResolvedDimension` | Class |  |
 | `dal:ResourceAccess` | Class |  |
-| `dal:ResourceKind` | Class |  |
-| `dal:ResourceRole` | Class |  |
+| `dal:ResourceKind` | Class | Equivalent to {`dal:Aggregate`, `dal:DatasetEpoch`, `dal:Event`, `dal:KeyClaim`, `dal:KeyQuarantine`, `dal:MergeRecord`, `dal:PatchContent`, `dal:PropertyValue`, `dal:Receipt`, `dal:RetentionMark`, `dal:TransactionClaim`, `dal:VersionRow`}. |
+| `dal:ResourceRole` | Class | Equivalent to {`dal:EntityRole`, `dal:AggregateRootRole`, `dal:ComponentRole`, `dal:LineageRole`, `dal:ContentRevisionRole`, `dal:GraphLocatorRole`, `dal:KeyClaimRole`, `dal:EventOccurrenceRole`}. |
 | `dal:ResultColumn` | Class |  |
-| `dal:RetentionMode` | Class |  |
-| `dal:Rule` | Class |  |
-| `dal:SchemeState` | Class |  |
-| `dal:SelfReferenceRule` | Class |  |
+| `dal:RetentionMode` | Class | Equivalent to {`dal:PrefixOnlyRetention`, `dal:BucketAnyRetention`}. |
+| `dal:Rule` | Class | Equivalent to {`dal:GraphNameOfRoot`}. |
+| `dal:SchemeState` | Class | Equivalent to {`dal:Accepting`, `dal:Dual`, `dal:Retiring`, `dal:Retired`}. |
+| `dal:SelfReferenceRule` | Class | Equivalent to {`dal:SelfReferenceDisallowed`, `dal:ExcludeHeaderSubgraph`, `dal:PlaceholderSubstitution`}. |
 | `dal:ShapeScope` | Class | Subclass of `dal:ProfileScope`. |
-| `dal:Source` | Class |  |
-| `dal:SurrogateKind` | Class |  |
+| `dal:Source` | Class | Equivalent to {`dal:RegistryGraph`, `dal:NoSource`}. |
+| `dal:SurrogateKind` | Class | Equivalent to {`dal:UuidV4Surrogate`, `dal:CallerSuppliedSurrogate`}. |
 | `dal:Template` | Class |  |
 | `dal:UniquenessConstraint` | Class |  |
-| `dal:WriteDiscipline` | Class |  |
+| `dal:WriteDiscipline` | Class | Equivalent to {`dal:InPlace`, `dal:AppendVersions`, `dal:AppendRecords`}. |
 | `dal:WriteDisciplineProfile` | Class |  |
 | `dal:access` | Object property | Domain `dal:GeneratedOperation`. Range `dal:ResourceAccess`. |
 | `dal:accessMode` | Object property | Domain `dal:ResourceAccess`. Range `dal:AccessMode`. |
@@ -5271,165 +5755,182 @@ dal:NfkcTrimUppercase a owl:NamedIndividual ;
 | `dal:uniquenessWitnessRequired` | Datatype property | Domain `dal:IdentityProfile`. Range `xsd:boolean`. |
 | `dal:verdict` | Datatype property | Domain `dal:CapabilityCheck`. Range `xsd:string`. |
 | `dal:verifyFullDigestOnWrite` | Datatype property | Domain `dal:DigestScheme`. Range `xsd:boolean`. |
-| `dal:AbsenceRead` | Individual | Type `dal:AccessMode`. |
-| `dal:AbsentRow` | Individual | Type `dal:FirstWriteMode`. |
-| `dal:Accepting` | Individual | Type `dal:SchemeState`. |
-| `dal:AddPart` | Individual | Type `dal:DigestPartRole`. |
-| `dal:AdoptedIdentity` | Individual | Type `dal:IdentityStrategy`. |
+| `dal:AbsenceRead` | Individual | Type `dal:AccessMode`. Different from `dal:Delete`, `dal:Insert`, `dal:PointRead`, `dal:ScanRead`, `dal:WholeAggregateRead`. |
+| `dal:AbsentRow` | Individual | Type `dal:FirstWriteMode`. Different from `dal:PreCreatedRow`. |
+| `dal:Accepting` | Individual | Type `dal:SchemeState`. Different from `dal:Dual`, `dal:Retired`, `dal:Retiring`. |
+| `dal:AddPart` | Individual | Type `dal:DigestPartRole`. Different from `dal:DelPart`, `dal:EventPart`, `dal:ExpectedSeqPart`, `dal:OperationKindPart`, `dal:PayloadPart`, `dal:TargetPart`. |
+| `dal:AdoptedIdentity` | Individual | Type `dal:IdentityStrategy`. Different from `dal:ContentAddressedIdentity`, `dal:DerivedHashIdentity`, `dal:ExternalRegistryIdentity`, `dal:NaturalKeyIdentity`, `dal:RandomSurrogateIdentity`, `dal:SurrogateClaimedIdentity`. |
 | `dal:Advisory` | Individual | Type `owl:NamedIndividual`. |
-| `dal:AdvisoryContiguityCheck` | Individual | Type `dal:ContiguityCheckMode`. |
-| `dal:AggregateRootRole` | Individual | Type `dal:ResourceRole`. |
-| `dal:Append` | Individual | Type `dal:OperationKind`. |
-| `dal:AppendOnly` | Individual | Type `dal:ConcurrencyStrategy`. |
-| `dal:AppendRecords` | Individual | Type `dal:WriteDiscipline`. |
-| `dal:AppendVersion` | Individual | Type `dal:OperationKind`. |
-| `dal:AppendVersions` | Individual | Type `dal:WriteDiscipline`. |
-| `dal:Audit` | Individual | Type `dal:OperationKind`. |
+| `dal:AdvisoryContiguityCheck` | Individual | Type `dal:ContiguityCheckMode`. Different from `dal:BlockingContiguityCheck`. |
+| `dal:Aggregate` | Individual | Type `dal:ResourceKind`. Different from `dal:DatasetEpoch`, `dal:Event`, `dal:KeyClaim`, `dal:KeyQuarantine`, `dal:MergeRecord`, `dal:PatchContent`, `dal:PropertyValue`, `dal:Receipt`, `dal:RetentionMark`, `dal:TransactionClaim`, `dal:VersionRow`. |
+| `dal:AggregateRootRole` | Individual | Type `dal:ResourceRole`. Different from `dal:ComponentRole`, `dal:ContentRevisionRole`, `dal:EntityRole`, `dal:EventOccurrenceRole`, `dal:GraphLocatorRole`, `dal:KeyClaimRole`, `dal:LineageRole`. |
+| `dal:Append` | Individual | Type `dal:OperationKind`. Different from `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
+| `dal:AppendOnly` | Individual | Type `dal:ConcurrencyStrategy`. Different from `dal:LockingConcurrency`, `dal:Optimistic`, `dal:ProvidedConcurrency`. |
+| `dal:AppendRecords` | Individual | Type `dal:WriteDiscipline`. Different from `dal:AppendVersions`, `dal:InPlace`. |
+| `dal:AppendVersion` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
+| `dal:AppendVersions` | Individual | Type `dal:WriteDiscipline`. Different from `dal:AppendRecords`, `dal:InPlace`. |
+| `dal:Audit` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Bootstrap`, `dal:Create`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
 | `dal:BestEffort` | Individual | Type `owl:NamedIndividual`. |
-| `dal:BlockingContiguityCheck` | Individual | Type `dal:ContiguityCheckMode`. |
-| `dal:Bootstrap` | Individual | Type `dal:OperationKind`. |
-| `dal:BucketAnyRetention` | Individual | Type `dal:RetentionMode`. |
-| `dal:BuilderDerived` | Individual | Type `dal:DeclarationSource`. |
-| `dal:ByIdentity` | Individual | Type `dal:ReferenceMode`. |
-| `dal:CallerNamed` | Individual | Type `dal:GraphNaming`. |
-| `dal:CallerSuppliedSurrogate` | Individual | Type `dal:SurrogateKind`. |
-| `dal:Clean` | Individual | Type `dal:AuditOutcome`. |
-| `dal:CommitGrain` | Individual | Type `dal:OrderingGrain`. |
-| `dal:ComponentRole` | Individual | Type `dal:ResourceRole`. |
-| `dal:CompositePropertyBoundary` | Individual | Type `dal:AggregateBoundaryStrategy`. |
-| `dal:ConcatenationColumn` | Individual | Type `dal:ColumnKind`. |
-| `dal:ContentAddressedIdentity` | Individual | Type `dal:IdentityStrategy`. |
-| `dal:ContentRevisionRole` | Individual | Type `dal:ResourceRole`. |
-| `dal:CountColumn` | Individual | Type `dal:ColumnKind`. |
-| `dal:Create` | Individual | Type `dal:OperationKind`. |
-| `dal:CryptoShred` | Individual | Type `dal:ErasureStrategy`. |
-| `dal:DatasetLevelGuard` | Individual | Type `dal:EpochGuardScope`. |
-| `dal:DelPart` | Individual | Type `dal:DigestPartRole`. |
-| `dal:Delete` | Individual | Type `dal:AccessMode`. |
-| `dal:DeltaMembership` | Individual | Type `dal:MembershipEncoding`. |
-| `dal:DenseFeedRead` | Individual | Type `dal:GlobalReadStrategy`. |
-| `dal:DerivedFeed` | Individual | Type `dal:DatasetTierModel`. |
-| `dal:DerivedHashIdentity` | Individual | Type `dal:IdentityStrategy`. |
-| `dal:DigestKind` | Individual | Type `dal:ParameterKind`. |
-| `dal:Dual` | Individual | Type `dal:SchemeState`. |
-| `dal:EngineDetectAndRetry` | Individual | Type `dal:DeadlockPolicy`. |
-| `dal:EntityRole` | Individual | Type `dal:ResourceRole`. |
-| `dal:ErasureWins` | Individual | Type `dal:ErasurePrecedence`. |
-| `dal:EventGrain` | Individual | Type `dal:OrderingGrain`. |
-| `dal:EventOccurrenceRole` | Individual | Type `dal:ResourceRole`. |
-| `dal:EventPart` | Individual | Type `dal:DigestPartRole`. |
-| `dal:ExcludeHeaderSubgraph` | Individual | Type `dal:SelfReferenceRule`. |
-| `dal:ExpectedSeqPart` | Individual | Type `dal:DigestPartRole`. |
-| `dal:ExternalEventIdStrategy` | Individual | Type `dal:EventIdentityStrategy`. |
-| `dal:ExternalHighWaterMark` | Individual | Type `dal:EpochAuthority`. |
-| `dal:ExternalRegistryIdentity` | Individual | Type `dal:IdentityStrategy`. |
-| `dal:Failed` | Individual | Type `dal:AuditOutcome`. |
-| `dal:FullMembership` | Individual | Type `dal:MembershipEncoding`. |
-| `dal:GlobalDenseCounter` | Individual | Type `dal:DatasetTierModel`. |
-| `dal:GraphLocatorRole` | Individual | Type `dal:ResourceRole`. |
+| `dal:BlockingContiguityCheck` | Individual | Type `dal:ContiguityCheckMode`. Different from `dal:AdvisoryContiguityCheck`. |
+| `dal:Bootstrap` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Create`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
+| `dal:BucketAnyRetention` | Individual | Type `dal:RetentionMode`. Different from `dal:PrefixOnlyRetention`. |
+| `dal:BuilderDerived` | Individual | Type `dal:DeclarationSource`. Different from `dal:HandDeclared`. |
+| `dal:ByIdentity` | Individual | Type `dal:ReferenceMode`. Different from `dal:Pinned`. |
+| `dal:CallerNamed` | Individual | Type `dal:GraphNaming`. Different from `dal:QueryNamed`. |
+| `dal:CallerSuppliedSurrogate` | Individual | Type `dal:SurrogateKind`. Different from `dal:UuidV4Surrogate`. |
+| `dal:Clean` | Individual | Type `dal:AuditOutcome`. Different from `dal:Failed`, `dal:NothingExamined`. |
+| `dal:CommitGrain` | Individual | Type `dal:OrderingGrain`. Different from `dal:EventGrain`. |
+| `dal:ComponentRole` | Individual | Type `dal:ResourceRole`. Different from `dal:AggregateRootRole`, `dal:ContentRevisionRole`, `dal:EntityRole`, `dal:EventOccurrenceRole`, `dal:GraphLocatorRole`, `dal:KeyClaimRole`, `dal:LineageRole`. |
+| `dal:CompositePropertyBoundary` | Individual | Type `dal:AggregateBoundaryStrategy`. Different from `dal:NamedGraphBoundary`, `dal:NoBoundary`. |
+| `dal:ConcatenationColumn` | Individual | Type `dal:ColumnKind`. Different from `dal:CountColumn`, `dal:IriColumn`, `dal:PositionColumn`, `dal:StringColumn`, `dal:TermColumn`. |
+| `dal:ContentAddressedIdentity` | Individual | Type `dal:IdentityStrategy`. Different from `dal:AdoptedIdentity`, `dal:DerivedHashIdentity`, `dal:ExternalRegistryIdentity`, `dal:NaturalKeyIdentity`, `dal:RandomSurrogateIdentity`, `dal:SurrogateClaimedIdentity`. |
+| `dal:ContentRevisionRole` | Individual | Type `dal:ResourceRole`. Different from `dal:AggregateRootRole`, `dal:ComponentRole`, `dal:EntityRole`, `dal:EventOccurrenceRole`, `dal:GraphLocatorRole`, `dal:KeyClaimRole`, `dal:LineageRole`. |
+| `dal:CountColumn` | Individual | Type `dal:ColumnKind`. Different from `dal:ConcatenationColumn`, `dal:IriColumn`, `dal:PositionColumn`, `dal:StringColumn`, `dal:TermColumn`. |
+| `dal:Create` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
+| `dal:CryptoShred` | Individual | Type `dal:ErasureStrategy`. Different from `dal:NoErasure`, `dal:PerSubjectGraphDrop`. |
+| `dal:DatasetEpoch` | Individual | Type `dal:ResourceKind`. Different from `dal:Aggregate`, `dal:Event`, `dal:KeyClaim`, `dal:KeyQuarantine`, `dal:MergeRecord`, `dal:PatchContent`, `dal:PropertyValue`, `dal:Receipt`, `dal:RetentionMark`, `dal:TransactionClaim`, `dal:VersionRow`. |
+| `dal:DatasetLevelGuard` | Individual | Type `dal:EpochGuardScope`. Different from `dal:RowLevelGuardOnly`. |
+| `dal:DelPart` | Individual | Type `dal:DigestPartRole`. Different from `dal:AddPart`, `dal:EventPart`, `dal:ExpectedSeqPart`, `dal:OperationKindPart`, `dal:PayloadPart`, `dal:TargetPart`. |
+| `dal:Delete` | Individual | Type `dal:AccessMode`. Different from `dal:AbsenceRead`, `dal:Insert`, `dal:PointRead`, `dal:ScanRead`, `dal:WholeAggregateRead`. |
+| `dal:DeltaMembership` | Individual | Type `dal:MembershipEncoding`. Different from `dal:FullMembership`. |
+| `dal:DenseFeedRead` | Individual | Type `dal:GlobalReadStrategy`. Different from `dal:LagWindowRead`, `dal:NoGlobalRead`, `dal:WatermarkedRead`. |
+| `dal:DerivedFeed` | Individual | Type `dal:DatasetTierModel`. Different from `dal:GlobalDenseCounter`, `dal:HybridLogicalClock`. |
+| `dal:DerivedHashIdentity` | Individual | Type `dal:IdentityStrategy`. Different from `dal:AdoptedIdentity`, `dal:ContentAddressedIdentity`, `dal:ExternalRegistryIdentity`, `dal:NaturalKeyIdentity`, `dal:RandomSurrogateIdentity`, `dal:SurrogateClaimedIdentity`. |
+| `dal:DigestKind` | Individual | Type `dal:ParameterKind`. Different from `dal:IriKind`, `dal:IriOrLiteralKind`, `dal:LangStringKind`, `dal:LiteralKind`, `dal:LongKind`, `dal:PayloadKind`, `dal:PositionKind`, `dal:RegistryListKind`, `dal:RowsKind`, `dal:StringKind`. |
+| `dal:Dual` | Individual | Type `dal:SchemeState`. Different from `dal:Accepting`, `dal:Retired`, `dal:Retiring`. |
+| `dal:EngineDetectAndRetry` | Individual | Type `dal:DeadlockPolicy`. Different from `dal:PartitionedWriter`, `dal:SortedAcquisition`. |
+| `dal:EntityRole` | Individual | Type `dal:ResourceRole`. Different from `dal:AggregateRootRole`, `dal:ComponentRole`, `dal:ContentRevisionRole`, `dal:EventOccurrenceRole`, `dal:GraphLocatorRole`, `dal:KeyClaimRole`, `dal:LineageRole`. |
+| `dal:ErasureWins` | Individual | Type `dal:ErasurePrecedence`. Different from `dal:MonotonicityWins`. |
+| `dal:Event` | Individual | Type `dal:ResourceKind`. Different from `dal:Aggregate`, `dal:DatasetEpoch`, `dal:KeyClaim`, `dal:KeyQuarantine`, `dal:MergeRecord`, `dal:PatchContent`, `dal:PropertyValue`, `dal:Receipt`, `dal:RetentionMark`, `dal:TransactionClaim`, `dal:VersionRow`. |
+| `dal:EventGrain` | Individual | Type `dal:OrderingGrain`. Different from `dal:CommitGrain`. |
+| `dal:EventOccurrenceRole` | Individual | Type `dal:ResourceRole`. Different from `dal:AggregateRootRole`, `dal:ComponentRole`, `dal:ContentRevisionRole`, `dal:EntityRole`, `dal:GraphLocatorRole`, `dal:KeyClaimRole`, `dal:LineageRole`. |
+| `dal:EventPart` | Individual | Type `dal:DigestPartRole`. Different from `dal:AddPart`, `dal:DelPart`, `dal:ExpectedSeqPart`, `dal:OperationKindPart`, `dal:PayloadPart`, `dal:TargetPart`. |
+| `dal:ExcludeHeaderSubgraph` | Individual | Type `dal:SelfReferenceRule`. Different from `dal:PlaceholderSubstitution`, `dal:SelfReferenceDisallowed`. |
+| `dal:ExpectedSeqPart` | Individual | Type `dal:DigestPartRole`. Different from `dal:AddPart`, `dal:DelPart`, `dal:EventPart`, `dal:OperationKindPart`, `dal:PayloadPart`, `dal:TargetPart`. |
+| `dal:ExternalEventIdStrategy` | Individual | Type `dal:EventIdentityStrategy`. Different from `dal:PositionDerivedEvent`, `dal:RandomOccurrenceEvent`. |
+| `dal:ExternalHighWaterMark` | Individual | Type `dal:EpochAuthority`. Different from `dal:RestoreControlledEpoch`, `dal:StoreLocalEpoch`, `dal:WriterStartRefusal`. |
+| `dal:ExternalRegistryIdentity` | Individual | Type `dal:IdentityStrategy`. Different from `dal:AdoptedIdentity`, `dal:ContentAddressedIdentity`, `dal:DerivedHashIdentity`, `dal:NaturalKeyIdentity`, `dal:RandomSurrogateIdentity`, `dal:SurrogateClaimedIdentity`. |
+| `dal:Failed` | Individual | Type `dal:AuditOutcome`. Different from `dal:Clean`, `dal:NothingExamined`. |
+| `dal:FullMembership` | Individual | Type `dal:MembershipEncoding`. Different from `dal:DeltaMembership`. |
+| `dal:GlobalDenseCounter` | Individual | Type `dal:DatasetTierModel`. Different from `dal:DerivedFeed`, `dal:HybridLogicalClock`. |
+| `dal:GraphLocatorRole` | Individual | Type `dal:ResourceRole`. Different from `dal:AggregateRootRole`, `dal:ComponentRole`, `dal:ContentRevisionRole`, `dal:EntityRole`, `dal:EventOccurrenceRole`, `dal:KeyClaimRole`, `dal:LineageRole`. |
 | `dal:GraphNameOfRoot` | Individual | Type `dal:Rule`. |
 | `dal:GroundNTriples` | Individual | Type `dal:PayloadEncoding`. |
-| `dal:Guarded` | Individual | Type `dal:GuardStatus`. |
-| `dal:GuardsOff` | Individual | Type `dal:GuardStatus`. |
-| `dal:HandDeclared` | Individual | Type `dal:DeclarationSource`. |
-| `dal:HashedTargetDerivation` | Individual | Type `dal:OccurrenceNamespaceDerivation`. |
-| `dal:HybridLogicalClock` | Individual | Type `dal:DatasetTierModel`. |
-| `dal:InPlace` | Individual | Type `dal:WriteDiscipline`. |
-| `dal:Insert` | Individual | Type `dal:AccessMode`. |
-| `dal:InternalData` | Individual | Type `dal:PrivacyClass`. |
-| `dal:IriColumn` | Individual | Type `dal:ColumnKind`. |
-| `dal:IriKind` | Individual | Type `dal:ParameterKind`. |
-| `dal:IriOrLiteralKind` | Individual | Type `dal:ParameterKind`. |
-| `dal:KeyClaimRetire` | Individual | Type `dal:OperationKind`. |
-| `dal:KeyClaimRole` | Individual | Type `dal:ResourceRole`. |
-| `dal:KeyClaimWrite` | Individual | Type `dal:OperationKind`. |
-| `dal:KeyClaimWriteDual` | Individual | Type `dal:OperationKind`. |
-| `dal:LagWindowRead` | Individual | Type `dal:GlobalReadStrategy`. |
-| `dal:LangStringKind` | Individual | Type `dal:ParameterKind`. |
-| `dal:LineageRole` | Individual | Type `dal:ResourceRole`. |
+| `dal:Guarded` | Individual | Type `dal:GuardStatus`. Different from `dal:GuardsOff`, `dal:NoRequiredParameter`, `dal:NotGenerated`. |
+| `dal:GuardsOff` | Individual | Type `dal:GuardStatus`. Different from `dal:Guarded`, `dal:NoRequiredParameter`, `dal:NotGenerated`. |
+| `dal:HandDeclared` | Individual | Type `dal:DeclarationSource`. Different from `dal:BuilderDerived`. |
+| `dal:HashedTargetDerivation` | Individual | Type `dal:OccurrenceNamespaceDerivation`. Different from `dal:RegistryTokenDerivation`. |
+| `dal:HybridLogicalClock` | Individual | Type `dal:DatasetTierModel`. Different from `dal:DerivedFeed`, `dal:GlobalDenseCounter`. |
+| `dal:InPlace` | Individual | Type `dal:WriteDiscipline`. Different from `dal:AppendRecords`, `dal:AppendVersions`. |
+| `dal:Insert` | Individual | Type `dal:AccessMode`. Different from `dal:AbsenceRead`, `dal:Delete`, `dal:PointRead`, `dal:ScanRead`, `dal:WholeAggregateRead`. |
+| `dal:InternalData` | Individual | Type `dal:PrivacyClass`. Different from `dal:PersonalData`, `dal:PublicData`. |
+| `dal:IriColumn` | Individual | Type `dal:ColumnKind`. Different from `dal:ConcatenationColumn`, `dal:CountColumn`, `dal:PositionColumn`, `dal:StringColumn`, `dal:TermColumn`. |
+| `dal:IriKind` | Individual | Type `dal:ParameterKind`. Different from `dal:DigestKind`, `dal:IriOrLiteralKind`, `dal:LangStringKind`, `dal:LiteralKind`, `dal:LongKind`, `dal:PayloadKind`, `dal:PositionKind`, `dal:RegistryListKind`, `dal:RowsKind`, `dal:StringKind`. |
+| `dal:IriOrLiteralKind` | Individual | Type `dal:ParameterKind`. Different from `dal:DigestKind`, `dal:IriKind`, `dal:LangStringKind`, `dal:LiteralKind`, `dal:LongKind`, `dal:PayloadKind`, `dal:PositionKind`, `dal:RegistryListKind`, `dal:RowsKind`, `dal:StringKind`. |
+| `dal:KeyClaim` | Individual | Type `dal:ResourceKind`. Different from `dal:Aggregate`, `dal:DatasetEpoch`, `dal:Event`, `dal:KeyQuarantine`, `dal:MergeRecord`, `dal:PatchContent`, `dal:PropertyValue`, `dal:Receipt`, `dal:RetentionMark`, `dal:TransactionClaim`, `dal:VersionRow`. |
+| `dal:KeyClaimRetire` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
+| `dal:KeyClaimRole` | Individual | Type `dal:ResourceRole`. Different from `dal:AggregateRootRole`, `dal:ComponentRole`, `dal:ContentRevisionRole`, `dal:EntityRole`, `dal:EventOccurrenceRole`, `dal:GraphLocatorRole`, `dal:LineageRole`. |
+| `dal:KeyClaimWrite` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:KeyClaimRetire`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
+| `dal:KeyClaimWriteDual` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
+| `dal:KeyQuarantine` | Individual | Type `dal:ResourceKind`. Different from `dal:Aggregate`, `dal:DatasetEpoch`, `dal:Event`, `dal:KeyClaim`, `dal:MergeRecord`, `dal:PatchContent`, `dal:PropertyValue`, `dal:Receipt`, `dal:RetentionMark`, `dal:TransactionClaim`, `dal:VersionRow`. |
+| `dal:LagWindowRead` | Individual | Type `dal:GlobalReadStrategy`. Different from `dal:DenseFeedRead`, `dal:NoGlobalRead`, `dal:WatermarkedRead`. |
+| `dal:LangStringKind` | Individual | Type `dal:ParameterKind`. Different from `dal:DigestKind`, `dal:IriKind`, `dal:IriOrLiteralKind`, `dal:LiteralKind`, `dal:LongKind`, `dal:PayloadKind`, `dal:PositionKind`, `dal:RegistryListKind`, `dal:RowsKind`, `dal:StringKind`. |
+| `dal:LineageRole` | Individual | Type `dal:ResourceRole`. Different from `dal:AggregateRootRole`, `dal:ComponentRole`, `dal:ContentRevisionRole`, `dal:EntityRole`, `dal:EventOccurrenceRole`, `dal:GraphLocatorRole`, `dal:KeyClaimRole`. |
 | `dal:Linearizable` | Individual | Type `owl:NamedIndividual`. |
-| `dal:LiteralKind` | Individual | Type `dal:ParameterKind`. |
-| `dal:LockingConcurrency` | Individual | Type `dal:ConcurrencyStrategy`. |
-| `dal:LongKind` | Individual | Type `dal:ParameterKind`. |
-| `dal:MembersRead` | Individual | Type `dal:OperationKind`. |
+| `dal:LiteralKind` | Individual | Type `dal:ParameterKind`. Different from `dal:DigestKind`, `dal:IriKind`, `dal:IriOrLiteralKind`, `dal:LangStringKind`, `dal:LongKind`, `dal:PayloadKind`, `dal:PositionKind`, `dal:RegistryListKind`, `dal:RowsKind`, `dal:StringKind`. |
+| `dal:LockingConcurrency` | Individual | Type `dal:ConcurrencyStrategy`. Different from `dal:AppendOnly`, `dal:Optimistic`, `dal:ProvidedConcurrency`. |
+| `dal:LongKind` | Individual | Type `dal:ParameterKind`. Different from `dal:DigestKind`, `dal:IriKind`, `dal:IriOrLiteralKind`, `dal:LangStringKind`, `dal:LiteralKind`, `dal:PayloadKind`, `dal:PositionKind`, `dal:RegistryListKind`, `dal:RowsKind`, `dal:StringKind`. |
+| `dal:MembersRead` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
 | `dal:Merge` | Individual | Type `owl:NamedIndividual`. |
-| `dal:MergeRewrite` | Individual | Type `dal:OperationKind`. |
-| `dal:MonotonicityWins` | Individual | Type `dal:ErasurePrecedence`. |
-| `dal:NamedGraphBoundary` | Individual | Type `dal:AggregateBoundaryStrategy`. |
-| `dal:NaturalKeyIdentity` | Individual | Type `dal:IdentityStrategy`. |
-| `dal:NoBoundary` | Individual | Type `dal:AggregateBoundaryStrategy`. |
+| `dal:MergeRecord` | Individual | Type `dal:ResourceKind`. Different from `dal:Aggregate`, `dal:DatasetEpoch`, `dal:Event`, `dal:KeyClaim`, `dal:KeyQuarantine`, `dal:PatchContent`, `dal:PropertyValue`, `dal:Receipt`, `dal:RetentionMark`, `dal:TransactionClaim`, `dal:VersionRow`. |
+| `dal:MergeRewrite` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
+| `dal:MonotonicityWins` | Individual | Type `dal:ErasurePrecedence`. Different from `dal:ErasureWins`. |
+| `dal:NamedGraphBoundary` | Individual | Type `dal:AggregateBoundaryStrategy`. Different from `dal:CompositePropertyBoundary`, `dal:NoBoundary`. |
+| `dal:NaturalKeyIdentity` | Individual | Type `dal:IdentityStrategy`. Different from `dal:AdoptedIdentity`, `dal:ContentAddressedIdentity`, `dal:DerivedHashIdentity`, `dal:ExternalRegistryIdentity`, `dal:RandomSurrogateIdentity`, `dal:SurrogateClaimedIdentity`. |
+| `dal:NfkcTrimCasefold` | Individual | Type `owl:NamedIndividual`. |
+| `dal:NfkcTrimLowercase` | Individual | Type `owl:NamedIndividual`. |
+| `dal:NfkcTrimUppercase` | Individual | Type `owl:NamedIndividual`. |
+| `dal:NoBoundary` | Individual | Type `dal:AggregateBoundaryStrategy`. Different from `dal:CompositePropertyBoundary`, `dal:NamedGraphBoundary`. |
 | `dal:NoBoundaryShape` | Individual | Type `dal:BoundaryShapeAbsence`. |
-| `dal:NoErasure` | Individual | Type `dal:ErasureStrategy`. |
-| `dal:NoGlobalRead` | Individual | Type `dal:GlobalReadStrategy`. |
-| `dal:NoReceipt` | Individual | Type `dal:ReceiptModel`. |
-| `dal:NoRequiredParameter` | Individual | Type `dal:GuardStatus`. |
-| `dal:NoSource` | Individual | Type `dal:Source`. |
-| `dal:NotGenerated` | Individual | Type `dal:GuardStatus`. |
-| `dal:NothingExamined` | Individual | Type `dal:AuditOutcome`. |
-| `dal:OperationKindPart` | Individual | Type `dal:DigestPartRole`. |
-| `dal:Optimistic` | Individual | Type `dal:ConcurrencyStrategy`. |
-| `dal:Owned` | Individual | Type `dal:OwnershipKind`. |
-| `dal:PartitionedWriter` | Individual | Type `dal:DeadlockPolicy`. |
-| `dal:PatchLog` | Individual | Type `dal:ReceiptModel`. |
-| `dal:PayloadCheck` | Individual | Type `dal:OperationKind`. |
-| `dal:PayloadKind` | Individual | Type `dal:ParameterKind`. |
-| `dal:PayloadPart` | Individual | Type `dal:DigestPartRole`. |
-| `dal:PerAggregate` | Individual | Type `dal:MetaTopology`. |
-| `dal:PerSubjectGraphDrop` | Individual | Type `dal:ErasureStrategy`. |
-| `dal:PersonalData` | Individual | Type `dal:PrivacyClass`. |
-| `dal:Pinned` | Individual | Type `dal:ReferenceMode`. |
-| `dal:PlaceholderSubstitution` | Individual | Type `dal:SelfReferenceRule`. |
-| `dal:PointRead` | Individual | Type `dal:AccessMode`. |
-| `dal:PositionColumn` | Individual | Type `dal:ColumnKind`. |
-| `dal:PositionDerivedEvent` | Individual | Type `dal:EventIdentityStrategy`. |
-| `dal:PositionKind` | Individual | Type `dal:ParameterKind`. |
-| `dal:PreCreatedRow` | Individual | Type `dal:FirstWriteMode`. |
-| `dal:PrefixOnlyRetention` | Individual | Type `dal:RetentionMode`. |
-| `dal:ProvidedConcurrency` | Individual | Type `dal:ConcurrencyStrategy`. |
-| `dal:PublicData` | Individual | Type `dal:PrivacyClass`. |
-| `dal:Quarantine` | Individual | Type `dal:OperationKind`, `owl:NamedIndividual`. |
-| `dal:QueryNamed` | Individual | Type `dal:GraphNaming`. |
-| `dal:RandomOccurrenceEvent` | Individual | Type `dal:EventIdentityStrategy`. |
-| `dal:RandomSurrogateIdentity` | Individual | Type `dal:IdentityStrategy`. |
-| `dal:ReceiptOnly` | Individual | Type `dal:ReceiptModel`. |
-| `dal:Reference` | Individual | Type `dal:OwnershipKind`. |
-| `dal:RegistryGraph` | Individual | Type `dal:Source`. |
-| `dal:RegistryListKind` | Individual | Type `dal:ParameterKind`. |
-| `dal:RegistryTokenDerivation` | Individual | Type `dal:OccurrenceNamespaceDerivation`. |
+| `dal:NoErasure` | Individual | Type `dal:ErasureStrategy`. Different from `dal:CryptoShred`, `dal:PerSubjectGraphDrop`. |
+| `dal:NoGlobalRead` | Individual | Type `dal:GlobalReadStrategy`. Different from `dal:DenseFeedRead`, `dal:LagWindowRead`, `dal:WatermarkedRead`. |
+| `dal:NoReceipt` | Individual | Type `dal:ReceiptModel`. Different from `dal:PatchLog`, `dal:ReceiptOnly`, `dal:SnapshotPerRevision`. |
+| `dal:NoRequiredParameter` | Individual | Type `dal:GuardStatus`. Different from `dal:Guarded`, `dal:GuardsOff`, `dal:NotGenerated`. |
+| `dal:NoSource` | Individual | Type `dal:Source`. Different from `dal:RegistryGraph`. |
+| `dal:NotGenerated` | Individual | Type `dal:GuardStatus`. Different from `dal:Guarded`, `dal:GuardsOff`, `dal:NoRequiredParameter`. |
+| `dal:NothingExamined` | Individual | Type `dal:AuditOutcome`. Different from `dal:Clean`, `dal:Failed`. |
+| `dal:OperationKindPart` | Individual | Type `dal:DigestPartRole`. Different from `dal:AddPart`, `dal:DelPart`, `dal:EventPart`, `dal:ExpectedSeqPart`, `dal:PayloadPart`, `dal:TargetPart`. |
+| `dal:Optimistic` | Individual | Type `dal:ConcurrencyStrategy`. Different from `dal:AppendOnly`, `dal:LockingConcurrency`, `dal:ProvidedConcurrency`. |
+| `dal:Owned` | Individual | Type `dal:OwnershipKind`. Different from `dal:Reference`, `dal:Vocabulary`. |
+| `dal:PartitionedWriter` | Individual | Type `dal:DeadlockPolicy`. Different from `dal:EngineDetectAndRetry`, `dal:SortedAcquisition`. |
+| `dal:PatchContent` | Individual | Type `dal:ResourceKind`. Different from `dal:Aggregate`, `dal:DatasetEpoch`, `dal:Event`, `dal:KeyClaim`, `dal:KeyQuarantine`, `dal:MergeRecord`, `dal:PropertyValue`, `dal:Receipt`, `dal:RetentionMark`, `dal:TransactionClaim`, `dal:VersionRow`. |
+| `dal:PatchLog` | Individual | Type `dal:ReceiptModel`. Different from `dal:NoReceipt`, `dal:ReceiptOnly`, `dal:SnapshotPerRevision`. |
+| `dal:PayloadCheck` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:Quarantine`, `dal:Replace`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
+| `dal:PayloadKind` | Individual | Type `dal:ParameterKind`. Different from `dal:DigestKind`, `dal:IriKind`, `dal:IriOrLiteralKind`, `dal:LangStringKind`, `dal:LiteralKind`, `dal:LongKind`, `dal:PositionKind`, `dal:RegistryListKind`, `dal:RowsKind`, `dal:StringKind`. |
+| `dal:PayloadPart` | Individual | Type `dal:DigestPartRole`. Different from `dal:AddPart`, `dal:DelPart`, `dal:EventPart`, `dal:ExpectedSeqPart`, `dal:OperationKindPart`, `dal:TargetPart`. |
+| `dal:PerAggregate` | Individual | Type `dal:MetaTopology`. Different from `dal:SharedSharded`. |
+| `dal:PerSubjectGraphDrop` | Individual | Type `dal:ErasureStrategy`. Different from `dal:CryptoShred`, `dal:NoErasure`. |
+| `dal:PersonalData` | Individual | Type `dal:PrivacyClass`. Different from `dal:InternalData`, `dal:PublicData`. |
+| `dal:Pinned` | Individual | Type `dal:ReferenceMode`. Different from `dal:ByIdentity`. |
+| `dal:PlaceholderSubstitution` | Individual | Type `dal:SelfReferenceRule`. Different from `dal:ExcludeHeaderSubgraph`, `dal:SelfReferenceDisallowed`. |
+| `dal:PointRead` | Individual | Type `dal:AccessMode`. Different from `dal:AbsenceRead`, `dal:Delete`, `dal:Insert`, `dal:ScanRead`, `dal:WholeAggregateRead`. |
+| `dal:PositionColumn` | Individual | Type `dal:ColumnKind`. Different from `dal:ConcatenationColumn`, `dal:CountColumn`, `dal:IriColumn`, `dal:StringColumn`, `dal:TermColumn`. |
+| `dal:PositionDerivedEvent` | Individual | Type `dal:EventIdentityStrategy`. Different from `dal:ExternalEventIdStrategy`, `dal:RandomOccurrenceEvent`. |
+| `dal:PositionKind` | Individual | Type `dal:ParameterKind`. Different from `dal:DigestKind`, `dal:IriKind`, `dal:IriOrLiteralKind`, `dal:LangStringKind`, `dal:LiteralKind`, `dal:LongKind`, `dal:PayloadKind`, `dal:RegistryListKind`, `dal:RowsKind`, `dal:StringKind`. |
+| `dal:PreCreatedRow` | Individual | Type `dal:FirstWriteMode`. Different from `dal:AbsentRow`. |
+| `dal:PrefixOnlyRetention` | Individual | Type `dal:RetentionMode`. Different from `dal:BucketAnyRetention`. |
+| `dal:PropertyValue` | Individual | Type `dal:ResourceKind`. Different from `dal:Aggregate`, `dal:DatasetEpoch`, `dal:Event`, `dal:KeyClaim`, `dal:KeyQuarantine`, `dal:MergeRecord`, `dal:PatchContent`, `dal:Receipt`, `dal:RetentionMark`, `dal:TransactionClaim`, `dal:VersionRow`. |
+| `dal:ProvidedConcurrency` | Individual | Type `dal:ConcurrencyStrategy`. Different from `dal:AppendOnly`, `dal:LockingConcurrency`, `dal:Optimistic`. |
+| `dal:PublicData` | Individual | Type `dal:PrivacyClass`. Different from `dal:InternalData`, `dal:PersonalData`. |
+| `dal:Quarantine` | Individual | Type `dal:OperationKind`, `owl:NamedIndividual`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Replace`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
+| `dal:QueryNamed` | Individual | Type `dal:GraphNaming`. Different from `dal:CallerNamed`. |
+| `dal:RandomOccurrenceEvent` | Individual | Type `dal:EventIdentityStrategy`. Different from `dal:ExternalEventIdStrategy`, `dal:PositionDerivedEvent`. |
+| `dal:RandomSurrogateIdentity` | Individual | Type `dal:IdentityStrategy`. Different from `dal:AdoptedIdentity`, `dal:ContentAddressedIdentity`, `dal:DerivedHashIdentity`, `dal:ExternalRegistryIdentity`, `dal:NaturalKeyIdentity`, `dal:SurrogateClaimedIdentity`. |
+| `dal:Receipt` | Individual | Type `dal:ResourceKind`. Different from `dal:Aggregate`, `dal:DatasetEpoch`, `dal:Event`, `dal:KeyClaim`, `dal:KeyQuarantine`, `dal:MergeRecord`, `dal:PatchContent`, `dal:PropertyValue`, `dal:RetentionMark`, `dal:TransactionClaim`, `dal:VersionRow`. |
+| `dal:ReceiptOnly` | Individual | Type `dal:ReceiptModel`. Different from `dal:NoReceipt`, `dal:PatchLog`, `dal:SnapshotPerRevision`. |
+| `dal:Reference` | Individual | Type `dal:OwnershipKind`. Different from `dal:Owned`, `dal:Vocabulary`. |
+| `dal:RegistryGraph` | Individual | Type `dal:Source`. Different from `dal:NoSource`. |
+| `dal:RegistryListKind` | Individual | Type `dal:ParameterKind`. Different from `dal:DigestKind`, `dal:IriKind`, `dal:IriOrLiteralKind`, `dal:LangStringKind`, `dal:LiteralKind`, `dal:LongKind`, `dal:PayloadKind`, `dal:PositionKind`, `dal:RowsKind`, `dal:StringKind`. |
+| `dal:RegistryTokenDerivation` | Individual | Type `dal:OccurrenceNamespaceDerivation`. Different from `dal:HashedTargetDerivation`. |
 | `dal:Reject` | Individual | Type `owl:NamedIndividual`. |
-| `dal:Replace` | Individual | Type `dal:OperationKind`. |
-| `dal:RestoreControlledEpoch` | Individual | Type `dal:EpochAuthority`. |
-| `dal:Retired` | Individual | Type `dal:SchemeState`. |
-| `dal:Retiring` | Individual | Type `dal:SchemeState`. |
-| `dal:RowLevelGuardOnly` | Individual | Type `dal:EpochGuardScope`. |
-| `dal:RowsKind` | Individual | Type `dal:ParameterKind`. |
-| `dal:ScanRead` | Individual | Type `dal:AccessMode`. |
-| `dal:SelfReferenceDisallowed` | Individual | Type `dal:SelfReferenceRule`. |
-| `dal:SharedSharded` | Individual | Type `dal:MetaTopology`. |
-| `dal:SingleRepresentation` | Individual | Type `dal:EtagRepresentation`. |
-| `dal:SnapshotPerRevision` | Individual | Type `dal:ReceiptModel`. |
-| `dal:SortedAcquisition` | Individual | Type `dal:DeadlockPolicy`. |
-| `dal:StoreLocalEpoch` | Individual | Type `dal:EpochAuthority`. |
-| `dal:StringColumn` | Individual | Type `dal:ColumnKind`. |
-| `dal:StringKind` | Individual | Type `dal:ParameterKind`. |
+| `dal:Replace` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
+| `dal:RestoreControlledEpoch` | Individual | Type `dal:EpochAuthority`. Different from `dal:ExternalHighWaterMark`, `dal:StoreLocalEpoch`, `dal:WriterStartRefusal`. |
+| `dal:RetentionMark` | Individual | Type `dal:ResourceKind`. Different from `dal:Aggregate`, `dal:DatasetEpoch`, `dal:Event`, `dal:KeyClaim`, `dal:KeyQuarantine`, `dal:MergeRecord`, `dal:PatchContent`, `dal:PropertyValue`, `dal:Receipt`, `dal:TransactionClaim`, `dal:VersionRow`. |
+| `dal:Retired` | Individual | Type `dal:SchemeState`. Different from `dal:Accepting`, `dal:Dual`, `dal:Retiring`. |
+| `dal:Retiring` | Individual | Type `dal:SchemeState`. Different from `dal:Accepting`, `dal:Dual`, `dal:Retired`. |
+| `dal:RowLevelGuardOnly` | Individual | Type `dal:EpochGuardScope`. Different from `dal:DatasetLevelGuard`. |
+| `dal:RowsKind` | Individual | Type `dal:ParameterKind`. Different from `dal:DigestKind`, `dal:IriKind`, `dal:IriOrLiteralKind`, `dal:LangStringKind`, `dal:LiteralKind`, `dal:LongKind`, `dal:PayloadKind`, `dal:PositionKind`, `dal:RegistryListKind`, `dal:StringKind`. |
+| `dal:ScanRead` | Individual | Type `dal:AccessMode`. Different from `dal:AbsenceRead`, `dal:Delete`, `dal:Insert`, `dal:PointRead`, `dal:WholeAggregateRead`. |
+| `dal:SelfReferenceDisallowed` | Individual | Type `dal:SelfReferenceRule`. Different from `dal:ExcludeHeaderSubgraph`, `dal:PlaceholderSubstitution`. |
+| `dal:SharedSharded` | Individual | Type `dal:MetaTopology`. Different from `dal:PerAggregate`. |
+| `dal:SingleRepresentation` | Individual | Type `dal:EtagRepresentation`. Different from `dal:TaggedRepresentation`. |
+| `dal:SnapshotPerRevision` | Individual | Type `dal:ReceiptModel`. Different from `dal:NoReceipt`, `dal:PatchLog`, `dal:ReceiptOnly`. |
+| `dal:SortedAcquisition` | Individual | Type `dal:DeadlockPolicy`. Different from `dal:EngineDetectAndRetry`, `dal:PartitionedWriter`. |
+| `dal:StoreLocalEpoch` | Individual | Type `dal:EpochAuthority`. Different from `dal:ExternalHighWaterMark`, `dal:RestoreControlledEpoch`, `dal:WriterStartRefusal`. |
+| `dal:StringColumn` | Individual | Type `dal:ColumnKind`. Different from `dal:ConcatenationColumn`, `dal:CountColumn`, `dal:IriColumn`, `dal:PositionColumn`, `dal:TermColumn`. |
+| `dal:StringKind` | Individual | Type `dal:ParameterKind`. Different from `dal:DigestKind`, `dal:IriKind`, `dal:IriOrLiteralKind`, `dal:LangStringKind`, `dal:LiteralKind`, `dal:LongKind`, `dal:PayloadKind`, `dal:PositionKind`, `dal:RegistryListKind`, `dal:RowsKind`. |
 | `dal:Strong` | Individual | Type `owl:NamedIndividual`. |
-| `dal:StrongEtag` | Individual | Type `dal:EtagForm`. |
-| `dal:SurrogateClaimedIdentity` | Individual | Type `dal:IdentityStrategy`. |
-| `dal:TaggedRepresentation` | Individual | Type `dal:EtagRepresentation`. |
-| `dal:TargetPart` | Individual | Type `dal:DigestPartRole`. |
-| `dal:TermColumn` | Individual | Type `dal:ColumnKind`. |
-| `dal:Tombstone` | Individual | Type `dal:OperationKind`. |
+| `dal:StrongEtag` | Individual | Type `dal:EtagForm`. Different from `dal:WeakEtag`. |
+| `dal:SurrogateClaimedIdentity` | Individual | Type `dal:IdentityStrategy`. Different from `dal:AdoptedIdentity`, `dal:ContentAddressedIdentity`, `dal:DerivedHashIdentity`, `dal:ExternalRegistryIdentity`, `dal:NaturalKeyIdentity`, `dal:RandomSurrogateIdentity`. |
+| `dal:TaggedRepresentation` | Individual | Type `dal:EtagRepresentation`. Different from `dal:SingleRepresentation`. |
+| `dal:TargetPart` | Individual | Type `dal:DigestPartRole`. Different from `dal:AddPart`, `dal:DelPart`, `dal:EventPart`, `dal:ExpectedSeqPart`, `dal:OperationKindPart`, `dal:PayloadPart`. |
+| `dal:TermColumn` | Individual | Type `dal:ColumnKind`. Different from `dal:ConcatenationColumn`, `dal:CountColumn`, `dal:IriColumn`, `dal:PositionColumn`, `dal:StringColumn`. |
+| `dal:Tombstone` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
+| `dal:TransactionClaim` | Individual | Type `dal:ResourceKind`. Different from `dal:Aggregate`, `dal:DatasetEpoch`, `dal:Event`, `dal:KeyClaim`, `dal:KeyQuarantine`, `dal:MergeRecord`, `dal:PatchContent`, `dal:PropertyValue`, `dal:Receipt`, `dal:RetentionMark`, `dal:VersionRow`. |
 | `dal:Transactional` | Individual | Type `owl:NamedIndividual`. |
-| `dal:UnconditionalWrite` | Individual | Type `dal:OperationKind`. |
-| `dal:UuidV4Surrogate` | Individual | Type `dal:SurrogateKind`. |
-| `dal:ValueGuardedReplace` | Individual | Type `dal:OperationKind`. |
-| `dal:Vocabulary` | Individual | Type `dal:OwnershipKind`. |
-| `dal:WatermarkedRead` | Individual | Type `dal:GlobalReadStrategy`. |
-| `dal:WeakEtag` | Individual | Type `dal:EtagForm`. |
-| `dal:WholeAggregateRead` | Individual | Type `dal:AccessMode`. |
-| `dal:WriterStartRefusal` | Individual | Type `dal:EpochAuthority`. |
+| `dal:UnconditionalWrite` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:Tombstone`, `dal:ValueGuardedReplace`. |
+| `dal:UuidV4Surrogate` | Individual | Type `dal:SurrogateKind`. Different from `dal:CallerSuppliedSurrogate`. |
+| `dal:ValueGuardedReplace` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:Tombstone`, `dal:UnconditionalWrite`. |
+| `dal:VersionRow` | Individual | Type `dal:ResourceKind`. Different from `dal:Aggregate`, `dal:DatasetEpoch`, `dal:Event`, `dal:KeyClaim`, `dal:KeyQuarantine`, `dal:MergeRecord`, `dal:PatchContent`, `dal:PropertyValue`, `dal:Receipt`, `dal:RetentionMark`, `dal:TransactionClaim`. |
+| `dal:Vocabulary` | Individual | Type `dal:OwnershipKind`. Different from `dal:Owned`, `dal:Reference`. |
+| `dal:WatermarkedRead` | Individual | Type `dal:GlobalReadStrategy`. Different from `dal:DenseFeedRead`, `dal:LagWindowRead`, `dal:NoGlobalRead`. |
+| `dal:WeakEtag` | Individual | Type `dal:EtagForm`. Different from `dal:StrongEtag`. |
+| `dal:WholeAggregateRead` | Individual | Type `dal:AccessMode`. Different from `dal:AbsenceRead`, `dal:Delete`, `dal:Insert`, `dal:PointRead`, `dal:ScanRead`. |
+| `dal:WriterStartRefusal` | Individual | Type `dal:EpochAuthority`. Different from `dal:ExternalHighWaterMark`, `dal:RestoreControlledEpoch`, `dal:StoreLocalEpoch`. |
 
 <!-- end -->
+
+</details>
 
 ## 7. Shapes
 
@@ -6134,6 +6635,108 @@ dal:RequiredParametersGuardedShape
               FILTER NOT EXISTS { $this dal:parameter ?p . ?p dal:required true ; dal:parameterKind ?k .
                                   FILTER (?k NOT IN (dal:PayloadKind, dal:RowsKind, dal:RegistryListKind)) }
             }""" ] .
+```
+-->
+
+**Enumerations.** Every property whose range is a closed enumeration of 6.1 has a property shape with `sh:in` listing the members of that enumeration. Those of the contract are in the shapes above, and the others are below, one shape for each class that carries them. `dal:sourcedFrom` lists `dal:RegistryGraph` only, since a parameter with no source has no `dal:sourcedFrom` at all.
+
+<!-- hidden: {"output-file": "shapes/constraints.ttl"}
+```turtle-shapes
+dal:AggregateBoundaryProfileEnumerationsShape
+    a sh:NodeShape ;
+    sh:targetClass dal:AggregateBoundaryProfile ;
+    sh:property [ sh:path dal:firstWrite ; sh:nodeKind sh:IRI ; sh:in ( dal:PreCreatedRow dal:AbsentRow ) ;
+                  sh:message "dal:firstWrite takes one of dal:PreCreatedRow, dal:AbsentRow." ] ;
+    sh:property [ sh:path dal:strategy ; sh:nodeKind sh:IRI ; sh:in ( dal:NamedGraphBoundary dal:CompositePropertyBoundary dal:NoBoundary ) ;
+                  sh:message "dal:strategy takes one of dal:NamedGraphBoundary, dal:CompositePropertyBoundary, dal:NoBoundary." ] .
+
+dal:ClaimSchemeEnumerationsShape
+    a sh:NodeShape ;
+    sh:targetClass dal:ClaimScheme ;
+    sh:property [ sh:path dal:schemeState ; sh:nodeKind sh:IRI ; sh:in ( dal:Accepting dal:Dual dal:Retiring dal:Retired ) ;
+                  sh:message "dal:schemeState takes one of dal:Accepting, dal:Dual, dal:Retiring, dal:Retired." ] .
+
+dal:ConcurrencyProfileEnumerationsShape
+    a sh:NodeShape ;
+    sh:targetClass dal:ConcurrencyProfile ;
+    sh:property [ sh:path dal:concurrencyProfile ; sh:nodeKind sh:IRI ; sh:in ( dal:ProvidedConcurrency dal:Optimistic dal:AppendOnly dal:LockingConcurrency ) ;
+                  sh:message "dal:concurrencyProfile takes one of dal:ProvidedConcurrency, dal:Optimistic, dal:AppendOnly, dal:LockingConcurrency." ] ;
+    sh:property [ sh:path dal:deadlockPolicy ; sh:nodeKind sh:IRI ; sh:in ( dal:EngineDetectAndRetry dal:SortedAcquisition dal:PartitionedWriter ) ;
+                  sh:message "dal:deadlockPolicy takes one of dal:EngineDetectAndRetry, dal:SortedAcquisition, dal:PartitionedWriter." ] ;
+    sh:property [ sh:path dal:etagForm ; sh:nodeKind sh:IRI ; sh:in ( dal:StrongEtag dal:WeakEtag ) ;
+                  sh:message "dal:etagForm takes one of dal:StrongEtag, dal:WeakEtag." ] ;
+    sh:property [ sh:path dal:etagRepresentation ; sh:nodeKind sh:IRI ; sh:in ( dal:SingleRepresentation dal:TaggedRepresentation ) ;
+                  sh:message "dal:etagRepresentation takes one of dal:SingleRepresentation, dal:TaggedRepresentation." ] .
+
+dal:EpochProfileEnumerationsShape
+    a sh:NodeShape ;
+    sh:targetClass dal:EpochProfile ;
+    sh:property [ sh:path dal:epochAuthority ; sh:nodeKind sh:IRI ; sh:in ( dal:ExternalHighWaterMark dal:RestoreControlledEpoch dal:WriterStartRefusal dal:StoreLocalEpoch ) ;
+                  sh:message "dal:epochAuthority takes one of dal:ExternalHighWaterMark, dal:RestoreControlledEpoch, dal:WriterStartRefusal, dal:StoreLocalEpoch." ] ;
+    sh:property [ sh:path dal:epochGuardScope ; sh:nodeKind sh:IRI ; sh:in ( dal:DatasetLevelGuard dal:RowLevelGuardOnly ) ;
+                  sh:message "dal:epochGuardScope takes one of dal:DatasetLevelGuard, dal:RowLevelGuardOnly." ] .
+
+dal:IdentityProfileEnumerationsShape
+    a sh:NodeShape ;
+    sh:targetClass dal:IdentityProfile ;
+    sh:property [ sh:path dal:eventIdentityStrategy ; sh:nodeKind sh:IRI ; sh:in ( dal:PositionDerivedEvent dal:RandomOccurrenceEvent dal:ExternalEventIdStrategy ) ;
+                  sh:message "dal:eventIdentityStrategy takes one of dal:PositionDerivedEvent, dal:RandomOccurrenceEvent, dal:ExternalEventIdStrategy." ] ;
+    sh:property [ sh:path dal:identityStrategy ; sh:nodeKind sh:IRI ; sh:in ( dal:AdoptedIdentity dal:NaturalKeyIdentity dal:DerivedHashIdentity dal:RandomSurrogateIdentity dal:SurrogateClaimedIdentity dal:ExternalRegistryIdentity dal:ContentAddressedIdentity ) ;
+                  sh:message "dal:identityStrategy takes one of dal:AdoptedIdentity, dal:NaturalKeyIdentity, dal:DerivedHashIdentity, dal:RandomSurrogateIdentity, dal:SurrogateClaimedIdentity, dal:ExternalRegistryIdentity, dal:ContentAddressedIdentity." ] ;
+    sh:property [ sh:path dal:occurrenceNamespaceDerivation ; sh:nodeKind sh:IRI ; sh:in ( dal:RegistryTokenDerivation dal:HashedTargetDerivation ) ;
+                  sh:message "dal:occurrenceNamespaceDerivation takes one of dal:RegistryTokenDerivation, dal:HashedTargetDerivation." ] ;
+    sh:property [ sh:path dal:resourceRole ; sh:nodeKind sh:IRI ; sh:in ( dal:EntityRole dal:AggregateRootRole dal:ComponentRole dal:LineageRole dal:ContentRevisionRole dal:GraphLocatorRole dal:KeyClaimRole dal:EventOccurrenceRole ) ;
+                  sh:message "dal:resourceRole takes one of dal:EntityRole, dal:AggregateRootRole, dal:ComponentRole, dal:LineageRole, dal:ContentRevisionRole, dal:GraphLocatorRole, dal:KeyClaimRole, dal:EventOccurrenceRole." ] ;
+    sh:property [ sh:path dal:selfReferenceRule ; sh:nodeKind sh:IRI ; sh:in ( dal:SelfReferenceDisallowed dal:ExcludeHeaderSubgraph dal:PlaceholderSubstitution ) ;
+                  sh:message "dal:selfReferenceRule takes one of dal:SelfReferenceDisallowed, dal:ExcludeHeaderSubgraph, dal:PlaceholderSubstitution." ] ;
+    sh:property [ sh:path dal:surrogateKind ; sh:nodeKind sh:IRI ; sh:in ( dal:UuidV4Surrogate dal:CallerSuppliedSurrogate ) ;
+                  sh:message "dal:surrogateKind takes one of dal:UuidV4Surrogate, dal:CallerSuppliedSurrogate." ] .
+
+dal:MetaTopologyProfileEnumerationsShape
+    a sh:NodeShape ;
+    sh:targetClass dal:MetaTopologyProfile ;
+    sh:property [ sh:path dal:metaTopology ; sh:nodeKind sh:IRI ; sh:in ( dal:SharedSharded dal:PerAggregate ) ;
+                  sh:message "dal:metaTopology takes one of dal:SharedSharded, dal:PerAggregate." ] .
+
+dal:MintingRecipeEnumerationsShape
+    a sh:NodeShape ;
+    sh:targetClass dal:MintingRecipe ;
+    sh:property [ sh:path dal:forRole ; sh:nodeKind sh:IRI ; sh:in ( dal:EntityRole dal:AggregateRootRole dal:ComponentRole dal:LineageRole dal:ContentRevisionRole dal:GraphLocatorRole dal:KeyClaimRole dal:EventOccurrenceRole ) ;
+                  sh:message "dal:forRole takes one of dal:EntityRole, dal:AggregateRootRole, dal:ComponentRole, dal:LineageRole, dal:ContentRevisionRole, dal:GraphLocatorRole, dal:KeyClaimRole, dal:EventOccurrenceRole." ] .
+
+dal:OrderingProfileEnumerationsShape
+    a sh:NodeShape ;
+    sh:targetClass dal:OrderingProfile ;
+    sh:property [ sh:path dal:contiguityCheckMode ; sh:nodeKind sh:IRI ; sh:in ( dal:BlockingContiguityCheck dal:AdvisoryContiguityCheck ) ;
+                  sh:message "dal:contiguityCheckMode takes one of dal:BlockingContiguityCheck, dal:AdvisoryContiguityCheck." ] ;
+    sh:property [ sh:path dal:datasetTierModel ; sh:nodeKind sh:IRI ; sh:in ( dal:DerivedFeed dal:HybridLogicalClock dal:GlobalDenseCounter ) ;
+                  sh:message "dal:datasetTierModel takes one of dal:DerivedFeed, dal:HybridLogicalClock, dal:GlobalDenseCounter." ] ;
+    sh:property [ sh:path dal:globalReadStrategy ; sh:nodeKind sh:IRI ; sh:in ( dal:WatermarkedRead dal:LagWindowRead dal:DenseFeedRead dal:NoGlobalRead ) ;
+                  sh:message "dal:globalReadStrategy takes one of dal:WatermarkedRead, dal:LagWindowRead, dal:DenseFeedRead, dal:NoGlobalRead." ] ;
+    sh:property [ sh:path dal:orderingGrain ; sh:nodeKind sh:IRI ; sh:in ( dal:CommitGrain dal:EventGrain ) ;
+                  sh:message "dal:orderingGrain takes one of dal:CommitGrain, dal:EventGrain." ] .
+
+dal:PrivacyProfileEnumerationsShape
+    a sh:NodeShape ;
+    sh:targetClass dal:PrivacyProfile ;
+    sh:property [ sh:path dal:erasurePrecedence ; sh:nodeKind sh:IRI ; sh:in ( dal:ErasureWins dal:MonotonicityWins ) ;
+                  sh:message "dal:erasurePrecedence takes one of dal:ErasureWins, dal:MonotonicityWins." ] ;
+    sh:property [ sh:path dal:erasureStrategy ; sh:nodeKind sh:IRI ; sh:in ( dal:PerSubjectGraphDrop dal:CryptoShred dal:NoErasure ) ;
+                  sh:message "dal:erasureStrategy takes one of dal:PerSubjectGraphDrop, dal:CryptoShred, dal:NoErasure." ] ;
+    sh:property [ sh:path dal:privacyClass ; sh:nodeKind sh:IRI ; sh:in ( dal:PersonalData dal:InternalData dal:PublicData ) ;
+                  sh:message "dal:privacyClass takes one of dal:PersonalData, dal:InternalData, dal:PublicData." ] .
+
+dal:ReceiptProfileEnumerationsShape
+    a sh:NodeShape ;
+    sh:targetClass dal:ReceiptProfile ;
+    sh:property [ sh:path dal:retentionMode ; sh:nodeKind sh:IRI ; sh:in ( dal:PrefixOnlyRetention dal:BucketAnyRetention ) ;
+                  sh:message "dal:retentionMode takes one of dal:PrefixOnlyRetention, dal:BucketAnyRetention." ] .
+
+dal:ReferenceEdgeEnumerationsShape
+    a sh:NodeShape ;
+    sh:targetClass dal:ReferenceEdge ;
+    sh:property [ sh:path dal:edgeOwnership ; sh:nodeKind sh:IRI ; sh:in ( dal:Owned dal:Reference dal:Vocabulary ) ;
+                  sh:message "dal:edgeOwnership takes one of dal:Owned, dal:Reference, dal:Vocabulary." ] .
 ```
 -->
 

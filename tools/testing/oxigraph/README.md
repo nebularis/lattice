@@ -28,7 +28,7 @@ test asserts, the test reads a flag instead of the version number. Each flag is 
 
 | Flag | True from | Means | Finding |
 |---|---|---|---|
-| `SNAPSHOT_UPDATES` | 0.5.12 | a `DELETE`/`INSERT WHERE` removes every deletion before it adds any insertion | [TSD-01](../../../docs/architecture/triple-store-discovery.md#tsd-01-the-order-in-which-a-delete-insert-where-is-applied) |
+| `SNAPSHOT_UPDATES` | 0.5.12 | a `DELETE`/`INSERT WHERE` removes every deletion before it adds any insertion | [TSD-01](../../../docs/architecture/triple-store-discovery.md#tsd-01-the-order-in-which-a-deleteinsertwhere-is-applied) |
 | `LEFT_GROUPED_ARITHMETIC` | 0.5.12 | `a - b + c` and `a / b / c` are grouped from the left | [TSD-17](../../../docs/architecture/triple-store-discovery.md#tsd-17-a-chain-of-additions-and-subtractions) |
 
 ## Install and run

@@ -680,3 +680,99 @@ dal:RequiredParametersGuardedShape
               FILTER NOT EXISTS { $this dal:parameter ?p . ?p dal:required true ; dal:parameterKind ?k .
                                   FILTER (?k NOT IN (dal:PayloadKind, dal:RowsKind, dal:RegistryListKind)) }
             }""" ] .
+
+dal:AggregateBoundaryProfileEnumerationsShape
+    a sh:NodeShape ;
+    sh:targetClass dal:AggregateBoundaryProfile ;
+    sh:property [ sh:path dal:firstWrite ; sh:nodeKind sh:IRI ; sh:in ( dal:PreCreatedRow dal:AbsentRow ) ;
+                  sh:message "dal:firstWrite takes one of dal:PreCreatedRow, dal:AbsentRow." ] ;
+    sh:property [ sh:path dal:strategy ; sh:nodeKind sh:IRI ; sh:in ( dal:NamedGraphBoundary dal:CompositePropertyBoundary dal:NoBoundary ) ;
+                  sh:message "dal:strategy takes one of dal:NamedGraphBoundary, dal:CompositePropertyBoundary, dal:NoBoundary." ] .
+
+dal:ClaimSchemeEnumerationsShape
+    a sh:NodeShape ;
+    sh:targetClass dal:ClaimScheme ;
+    sh:property [ sh:path dal:schemeState ; sh:nodeKind sh:IRI ; sh:in ( dal:Accepting dal:Dual dal:Retiring dal:Retired ) ;
+                  sh:message "dal:schemeState takes one of dal:Accepting, dal:Dual, dal:Retiring, dal:Retired." ] .
+
+dal:ConcurrencyProfileEnumerationsShape
+    a sh:NodeShape ;
+    sh:targetClass dal:ConcurrencyProfile ;
+    sh:property [ sh:path dal:concurrencyProfile ; sh:nodeKind sh:IRI ; sh:in ( dal:ProvidedConcurrency dal:Optimistic dal:AppendOnly dal:LockingConcurrency ) ;
+                  sh:message "dal:concurrencyProfile takes one of dal:ProvidedConcurrency, dal:Optimistic, dal:AppendOnly, dal:LockingConcurrency." ] ;
+    sh:property [ sh:path dal:deadlockPolicy ; sh:nodeKind sh:IRI ; sh:in ( dal:EngineDetectAndRetry dal:SortedAcquisition dal:PartitionedWriter ) ;
+                  sh:message "dal:deadlockPolicy takes one of dal:EngineDetectAndRetry, dal:SortedAcquisition, dal:PartitionedWriter." ] ;
+    sh:property [ sh:path dal:etagForm ; sh:nodeKind sh:IRI ; sh:in ( dal:StrongEtag dal:WeakEtag ) ;
+                  sh:message "dal:etagForm takes one of dal:StrongEtag, dal:WeakEtag." ] ;
+    sh:property [ sh:path dal:etagRepresentation ; sh:nodeKind sh:IRI ; sh:in ( dal:SingleRepresentation dal:TaggedRepresentation ) ;
+                  sh:message "dal:etagRepresentation takes one of dal:SingleRepresentation, dal:TaggedRepresentation." ] .
+
+dal:EpochProfileEnumerationsShape
+    a sh:NodeShape ;
+    sh:targetClass dal:EpochProfile ;
+    sh:property [ sh:path dal:epochAuthority ; sh:nodeKind sh:IRI ; sh:in ( dal:ExternalHighWaterMark dal:RestoreControlledEpoch dal:WriterStartRefusal dal:StoreLocalEpoch ) ;
+                  sh:message "dal:epochAuthority takes one of dal:ExternalHighWaterMark, dal:RestoreControlledEpoch, dal:WriterStartRefusal, dal:StoreLocalEpoch." ] ;
+    sh:property [ sh:path dal:epochGuardScope ; sh:nodeKind sh:IRI ; sh:in ( dal:DatasetLevelGuard dal:RowLevelGuardOnly ) ;
+                  sh:message "dal:epochGuardScope takes one of dal:DatasetLevelGuard, dal:RowLevelGuardOnly." ] .
+
+dal:IdentityProfileEnumerationsShape
+    a sh:NodeShape ;
+    sh:targetClass dal:IdentityProfile ;
+    sh:property [ sh:path dal:eventIdentityStrategy ; sh:nodeKind sh:IRI ; sh:in ( dal:PositionDerivedEvent dal:RandomOccurrenceEvent dal:ExternalEventIdStrategy ) ;
+                  sh:message "dal:eventIdentityStrategy takes one of dal:PositionDerivedEvent, dal:RandomOccurrenceEvent, dal:ExternalEventIdStrategy." ] ;
+    sh:property [ sh:path dal:identityStrategy ; sh:nodeKind sh:IRI ; sh:in ( dal:AdoptedIdentity dal:NaturalKeyIdentity dal:DerivedHashIdentity dal:RandomSurrogateIdentity dal:SurrogateClaimedIdentity dal:ExternalRegistryIdentity dal:ContentAddressedIdentity ) ;
+                  sh:message "dal:identityStrategy takes one of dal:AdoptedIdentity, dal:NaturalKeyIdentity, dal:DerivedHashIdentity, dal:RandomSurrogateIdentity, dal:SurrogateClaimedIdentity, dal:ExternalRegistryIdentity, dal:ContentAddressedIdentity." ] ;
+    sh:property [ sh:path dal:occurrenceNamespaceDerivation ; sh:nodeKind sh:IRI ; sh:in ( dal:RegistryTokenDerivation dal:HashedTargetDerivation ) ;
+                  sh:message "dal:occurrenceNamespaceDerivation takes one of dal:RegistryTokenDerivation, dal:HashedTargetDerivation." ] ;
+    sh:property [ sh:path dal:resourceRole ; sh:nodeKind sh:IRI ; sh:in ( dal:EntityRole dal:AggregateRootRole dal:ComponentRole dal:LineageRole dal:ContentRevisionRole dal:GraphLocatorRole dal:KeyClaimRole dal:EventOccurrenceRole ) ;
+                  sh:message "dal:resourceRole takes one of dal:EntityRole, dal:AggregateRootRole, dal:ComponentRole, dal:LineageRole, dal:ContentRevisionRole, dal:GraphLocatorRole, dal:KeyClaimRole, dal:EventOccurrenceRole." ] ;
+    sh:property [ sh:path dal:selfReferenceRule ; sh:nodeKind sh:IRI ; sh:in ( dal:SelfReferenceDisallowed dal:ExcludeHeaderSubgraph dal:PlaceholderSubstitution ) ;
+                  sh:message "dal:selfReferenceRule takes one of dal:SelfReferenceDisallowed, dal:ExcludeHeaderSubgraph, dal:PlaceholderSubstitution." ] ;
+    sh:property [ sh:path dal:surrogateKind ; sh:nodeKind sh:IRI ; sh:in ( dal:UuidV4Surrogate dal:CallerSuppliedSurrogate ) ;
+                  sh:message "dal:surrogateKind takes one of dal:UuidV4Surrogate, dal:CallerSuppliedSurrogate." ] .
+
+dal:MetaTopologyProfileEnumerationsShape
+    a sh:NodeShape ;
+    sh:targetClass dal:MetaTopologyProfile ;
+    sh:property [ sh:path dal:metaTopology ; sh:nodeKind sh:IRI ; sh:in ( dal:SharedSharded dal:PerAggregate ) ;
+                  sh:message "dal:metaTopology takes one of dal:SharedSharded, dal:PerAggregate." ] .
+
+dal:MintingRecipeEnumerationsShape
+    a sh:NodeShape ;
+    sh:targetClass dal:MintingRecipe ;
+    sh:property [ sh:path dal:forRole ; sh:nodeKind sh:IRI ; sh:in ( dal:EntityRole dal:AggregateRootRole dal:ComponentRole dal:LineageRole dal:ContentRevisionRole dal:GraphLocatorRole dal:KeyClaimRole dal:EventOccurrenceRole ) ;
+                  sh:message "dal:forRole takes one of dal:EntityRole, dal:AggregateRootRole, dal:ComponentRole, dal:LineageRole, dal:ContentRevisionRole, dal:GraphLocatorRole, dal:KeyClaimRole, dal:EventOccurrenceRole." ] .
+
+dal:OrderingProfileEnumerationsShape
+    a sh:NodeShape ;
+    sh:targetClass dal:OrderingProfile ;
+    sh:property [ sh:path dal:contiguityCheckMode ; sh:nodeKind sh:IRI ; sh:in ( dal:BlockingContiguityCheck dal:AdvisoryContiguityCheck ) ;
+                  sh:message "dal:contiguityCheckMode takes one of dal:BlockingContiguityCheck, dal:AdvisoryContiguityCheck." ] ;
+    sh:property [ sh:path dal:datasetTierModel ; sh:nodeKind sh:IRI ; sh:in ( dal:DerivedFeed dal:HybridLogicalClock dal:GlobalDenseCounter ) ;
+                  sh:message "dal:datasetTierModel takes one of dal:DerivedFeed, dal:HybridLogicalClock, dal:GlobalDenseCounter." ] ;
+    sh:property [ sh:path dal:globalReadStrategy ; sh:nodeKind sh:IRI ; sh:in ( dal:WatermarkedRead dal:LagWindowRead dal:DenseFeedRead dal:NoGlobalRead ) ;
+                  sh:message "dal:globalReadStrategy takes one of dal:WatermarkedRead, dal:LagWindowRead, dal:DenseFeedRead, dal:NoGlobalRead." ] ;
+    sh:property [ sh:path dal:orderingGrain ; sh:nodeKind sh:IRI ; sh:in ( dal:CommitGrain dal:EventGrain ) ;
+                  sh:message "dal:orderingGrain takes one of dal:CommitGrain, dal:EventGrain." ] .
+
+dal:PrivacyProfileEnumerationsShape
+    a sh:NodeShape ;
+    sh:targetClass dal:PrivacyProfile ;
+    sh:property [ sh:path dal:erasurePrecedence ; sh:nodeKind sh:IRI ; sh:in ( dal:ErasureWins dal:MonotonicityWins ) ;
+                  sh:message "dal:erasurePrecedence takes one of dal:ErasureWins, dal:MonotonicityWins." ] ;
+    sh:property [ sh:path dal:erasureStrategy ; sh:nodeKind sh:IRI ; sh:in ( dal:PerSubjectGraphDrop dal:CryptoShred dal:NoErasure ) ;
+                  sh:message "dal:erasureStrategy takes one of dal:PerSubjectGraphDrop, dal:CryptoShred, dal:NoErasure." ] ;
+    sh:property [ sh:path dal:privacyClass ; sh:nodeKind sh:IRI ; sh:in ( dal:PersonalData dal:InternalData dal:PublicData ) ;
+                  sh:message "dal:privacyClass takes one of dal:PersonalData, dal:InternalData, dal:PublicData." ] .
+
+dal:ReceiptProfileEnumerationsShape
+    a sh:NodeShape ;
+    sh:targetClass dal:ReceiptProfile ;
+    sh:property [ sh:path dal:retentionMode ; sh:nodeKind sh:IRI ; sh:in ( dal:PrefixOnlyRetention dal:BucketAnyRetention ) ;
+                  sh:message "dal:retentionMode takes one of dal:PrefixOnlyRetention, dal:BucketAnyRetention." ] .
+
+dal:ReferenceEdgeEnumerationsShape
+    a sh:NodeShape ;
+    sh:targetClass dal:ReferenceEdge ;
+    sh:property [ sh:path dal:edgeOwnership ; sh:nodeKind sh:IRI ; sh:in ( dal:Owned dal:Reference dal:Vocabulary ) ;
+                  sh:message "dal:edgeOwnership takes one of dal:Owned, dal:Reference, dal:Vocabulary." ] .

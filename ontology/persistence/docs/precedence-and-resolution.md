@@ -33,4 +33,4 @@ The algorithm above never asks a real triple store anything. Step 2's `dal:Capab
 
 ## Worked example
 
-See the README's [worked example 2](../README.md#6-worked-example-2-a-shared-substrate-class-two-deployments) for the full lending/credit trace, including what changes when a `dal:CapabilitySpec` declaring no reasoning support is introduced.
+See the README's [section 8.2](../README.md#82-a-shared-class-two-deployments) for the full lending/credit trace, including what changes when a `dal:CapabilitySpec` declaring no reasoning support is introduced.

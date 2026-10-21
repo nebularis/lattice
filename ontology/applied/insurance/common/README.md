@@ -567,7 +567,7 @@ icm-voc:ISK a qnt:Unit ; qnt:onSpace icm-voc:Money ; skos:exactMatch <http://qud
 
 Every concept this module's vocabulary publishes (units, currencies, class-of-business codes from
 AIR-4.x onwards) follows the documentation rule of
-[`insurance/peril`](../peril/README.md#7-documentation-rule): at least one `skos:note` naming the
+[`insurance/peril`](../peril/README.md#7-documentation-rule-air-20): at least one `skos:note` naming the
 published standards, scales or sources it follows, and `rdfs:seeAlso` to a stable public entry
 where one exists. Units and currencies carry `skos:note` as drafted above (§6); `rdfs:seeAlso` is
 added where QUDT or ISO 4217 publish a stable entry.

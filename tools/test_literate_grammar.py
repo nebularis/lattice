@@ -6,6 +6,7 @@ Validation Packs: docs/developer/validation/OD2.md and OD3.md. Test IDs are OD2-
 
 from __future__ import annotations
 
+import json
 import re
 import subprocess
 import sys
@@ -703,3 +704,164 @@ def test_od6_t5_a_comma_list_label_splits_outside_braces_only() -> None:
     out = extract(section6_readme(classes=entry))["ontology/x/spec/x.ttl"]
     assert isomorphic(body(out), expected(
         'ex:Thing a owl:Class ; rdfs:comment "A thing." ; rdfs:subClassOf [ a owl:Class ; owl:oneOf ( ex:a ex:b ) ], ex:C .'))
+
+
+# ---- D-59: the class diagram in parts, and All different -----------------------------------------------
+
+AIM = ("#### `ex:aboutProfile`\n\n**Definition.** About a profile.\n\n**Range.** `ex:Profile`\n\n"
+       "#### `ex:linksKind`\n\n**Definition.** Links.\n\n**Domain.** `ex:Profile`\n\n**Range.** `ex:Kind`")
+
+
+def part_region(title: str, classes: list[str], **more) -> str:
+    marker = {"generated": "class-diagram", "part": title, "classes": classes, **more}
+    return f"<!-- start: {json.dumps(marker)} -->\n<!-- end -->"
+
+
+def parted_readme(*regions: str, detail: bool = False) -> str:
+    text = views_readme().replace("#### `ex:forProfile`", AIM + "\n\n#### `ex:forProfile`", 1)
+    if detail:
+        return text.replace("## 5. Detailed Design\n\nNone.", "## 5. Detailed Design\n\n" + "\n\n".join(regions)).replace(DIAGRAM_REGION, "None.")
+    return text.replace(DIAGRAM_REGION, "\n\n".join(regions))
+
+
+def regions_of(text: str, name: str = "class-diagram") -> list[str]:
+    return re.findall(rf'<!-- start: \{{"generated": "{name}".*?-->\n(.*?)<!-- end -->', text, re.S)
+
+
+THREE = [part_region("The decision", ["ex:Decision"]), part_region("Kinds and profiles", ["ex:Kind", "ex:Profile"])]
+
+
+def test_d59_t1_a_part_draws_its_classes_and_a_bare_box_for_what_they_point_to() -> None:
+    first, second = regions_of(compile_readme(parted_readme(*THREE)).readme)
+    assert first.strip().splitlines()[0] == "**The decision**"
+    assert "    class Decision {" in first and "        code (xsd:string)" in first
+    for bare in ("    class Profile", "    class Evidenced", "    class Thing"):
+        assert bare in first.splitlines()
+    assert "    Decision --> Profile : forProfile" in first and "Kind" not in first
+    assert "ObjectProperty_relatesTo" not in first and "aboutProfile" not in first
+    assert "    class Profile" in second and "    Version <|-- Profile" in second and "    Profile --> Kind : linksKind" in second
+    assert "    class Version" in second.splitlines() and "Decision" not in second and "forProfile" not in second
+
+
+def test_d59_t2_a_property_with_no_domain_is_drawn_in_a_part_only_when_its_range_is_listed() -> None:
+    first, second = regions_of(compile_readme(parted_readme(*THREE)).readme)
+    assert "relatesTo" not in first + second  # no domain and no range
+    assert 'class ObjectProperty_aboutProfile["Object Property - aboutProfile"]' in second
+    assert "aboutProfile" not in first
+
+
+def test_d59_t3_a_class_no_part_draws_is_reported() -> None:
+    with pytest.raises(lg.GrammarError, match="no class-diagram part draws ex:Kind"):
+        compile_readme(parted_readme(part_region("Only some", ["ex:Decision", "ex:Profile"])))
+
+
+@pytest.mark.parametrize("regions,message", [
+    ([part_region("A", ["ex:Decision", "ex:Kind", "ex:Profile"]), DIAGRAM_REGION], "whole or in parts, not both"),
+    ([part_region("A", ["ex:Decision", "ex:Kind", "ex:Profile"]), part_region("A", ["ex:Kind"])], "two class-diagram parts are titled 'A'"),
+    ([part_region("A", ["ex:Decision", "ex:Kind", "ex:Profile", "ex:Nothing"])], "ex:Nothing is not a class of section 6"),
+    ([part_region("A", ["ex:Decision", "ex:Kind", "ex:Profile", "ex:forProfile"])], "ex:forProfile is not a class of section 6"),
+    ([part_region(" ", ["ex:Decision", "ex:Kind", "ex:Profile"])], "needs a \"part\" title"),
+    ([part_region("A", [])], "lists at least one class"),
+    (['<!-- start: {"generated": "class-diagram", "part": "A"} -->\n<!-- end -->'], "without \"classes\""),
+    ([part_region("A", ["ex:Decision", "ex:Kind", "ex:Profile"], enumerations="list")], "takes \"table\""),
+])
+def test_d59_t4_malformed_parts_are_refused(regions: list[str], message: str) -> None:
+    with pytest.raises(lg.GrammarError, match=message):
+        compile_readme(parted_readme(*regions))
+
+
+def test_d59_t5_parts_may_sit_in_detailed_design_and_nowhere_else_outside_overview() -> None:
+    compiled = compile_readme(parted_readme(*THREE, detail=True))
+    assert len(regions_of(compiled.readme)) == 2
+    elsewhere = parted_readme(*THREE).replace("## 8. Examples\n\nNone.", "## 8. Examples\n\n" + THREE[0])
+    elsewhere = elsewhere.replace(THREE[0], "None.", 1)
+    with pytest.raises(lg.GrammarError, match="sits in Overview or Detailed Design"):
+        compile_readme(elsewhere)
+
+
+def test_d59_t6_a_part_is_regenerated_and_drift_is_reported_per_region() -> None:
+    once = compile_readme(parted_readme(*THREE))
+    assert [s.split(" at ")[0] for s in once.stale] == ["class-diagram 'The decision'", "class-diagram 'Kinds and profiles'", "axiom-index"]
+    again = compile_readme(once.readme)
+    assert again.readme == once.readme and again.stale == ()
+    edited = once.readme.replace("        code (xsd:string)", "        code (xsd:token)")
+    stale = compile_readme(edited).stale
+    assert stale == ("class-diagram 'The decision' at line " + str(edited[:edited.index('"part": "The decision"')].count("\n") + 1),)
+
+
+def test_d59_t7_the_views_of_parts_do_not_depend_on_the_order_of_entries() -> None:
+    one = compile_readme(parted_readme(*THREE)).readme
+    swapped = compile_readme(parted_readme(*reversed(THREE))).readme
+    assert sorted(regions_of(one)) == sorted(regions_of(swapped))
+
+
+def test_d59_t8_a_region_without_classes_is_unchanged_and_enumerations_can_be_drawn_as_tables() -> None:
+    plain = compile_readme(views_readme())
+    assert "<<enumeration>>" not in plain.readme
+    enumerated = "#### `ex:Dir`\n\n**Definition.** A direction.\n\n**Equivalent to.** { `ex:Forward`, `ex:Inverse` }"
+    table = DIAGRAM_REGION.replace('"class-diagram"', '"class-diagram", "enumerations": "table"')
+    text = views_readme(DECISION + "\n\n" + enumerated).replace(DIAGRAM_REGION, table)
+    diagram = regions_of(compile_readme(text).readme)[0]
+    assert "    class Dir {\n        <<enumeration>>\n        Forward\n        Inverse\n    }" in diagram
+    # in a part the option applies to the listed classes, and a bare box has no members
+    both = part_region("Dir", ["ex:Dir"], enumerations="table")
+    rest = part_region("Rest", ["ex:Decision"])
+    parts = compile_readme(views_readme(DECISION + "\n\n" + enumerated).replace(DIAGRAM_REGION, both + "\n\n" + rest))
+    assert "<<enumeration>>" in regions_of(parts.readme)[0] and "<<enumeration>>" not in regions_of(parts.readme)[1]
+
+
+@pytest.mark.parametrize("marker,message", [
+    ('{"generated": "class-diagram", "colour": "red"}', "unknown key 'colour' in a generated region"),
+    ('{"generated": "class-diagram", "classes": "ex:A"}', "key 'classes' of a generated region takes a list"),
+    ('{"generated": "class-diagram", "classes": [1], "part": "A"}', "takes a list of CURIEs"),
+    ('{"exclude": true, "part": "A"}', "a marker holds exactly one key"),
+])
+def test_d59_t9_a_marker_takes_the_keys_of_its_kind(marker: str, message: str) -> None:
+    with pytest.raises(ValueError, match=message):
+        literate_extract.scan(f"<!-- start: {marker} -->\n<!-- end -->\n")
+
+
+PERMITTED_AND_DENIED = ("| Individual | Type | Definition |\n|---|---|---|\n| `ex:Permitted` | `ex:Outcome` | Admitted. |\n"
+                        "| `ex:Denied` | `ex:Outcome` | Refused. |\n| `ex:Open` | `ex:Outcome` | Undecided. |")
+
+
+def different_readme(disjointness: str, other: str = "None.") -> str:
+    rows = HEADER_TABLE + f"\n| `vocab/x-vocab.ttl` | <{X}-vocab> | <{X}-vocab/0.1.0> | |"
+    return readme(section2=rows + "\n\n" + PREFIXES_EX_FND, section6=six(
+        individuals=PERMITTED_AND_DENIED, disjointness=disjointness, other=other))
+
+
+def test_d59_t10_all_different_is_one_owl_alldifferent_in_the_order_written() -> None:
+    out = extract(different_readme("**All different.** `ex:Permitted`, `ex:Open`, `ex:Denied`"))
+    assert isomorphic(body(out["ontology/x/spec/x.ttl"]), expected(
+        "[] a owl:AllDifferent ; owl:distinctMembers ( ex:Permitted ex:Open ex:Denied ) ."))
+
+
+def test_d59_t11_all_different_goes_where_its_region_sends_it_and_shows_in_the_index() -> None:
+    sent = ('<!-- start: {"output-file": "vocab/x-vocab.ttl"} -->\n\n'
+            "**All different.** `ex:Permitted`, `ex:Denied`\n\n<!-- end -->")
+    compiled = compile_readme(different_readme(sent))
+    out = extract(different_readme(sent))
+    assert "owl:AllDifferent" in out["ontology/x/vocab/x-vocab.ttl"] and "owl:AllDifferent" not in out["ontology/x/spec/x.ttl"]
+    index = region(compiled.readme, "axiom-index")
+    assert "| `ex:Denied` | Individual | Type `ex:Outcome`. Different from `ex:Permitted`. |" in index
+    assert "| `ex:Open` | Individual | Type `ex:Outcome`. |" in index
+
+
+@pytest.mark.parametrize("paragraph,message", [
+    ("**All different.** `ex:Permitted`", "two individuals or more"),
+    ("**Different.** `ex:Permitted`, `ex:Denied`", "takes \\*\\*All disjoint.\\*\\*, \\*\\*Disjoint.\\*\\* or \\*\\*All different"),
+])
+def test_d59_t12_a_malformed_all_different_is_refused(paragraph: str, message: str) -> None:
+    with pytest.raises(lg.GrammarError, match=message):
+        compile_readme(different_readme(paragraph))
+
+
+@pytest.mark.parametrize("fence,document", [("turtle-vocab", "vocab/x-vocab.ttl"), ("turtle-spec", "spec/x.ttl")])
+def test_d59_t13_a_block_in_6_6_may_add_statements_about_an_individual_a_6_4_table_lists(fence: str, document: str) -> None:
+    block = f'{FENCE}{fence}\nex:Permitted ex:logicalKey "root" .\n{FENCE}'
+    out = extract(different_readme("None.", block))["ontology/x/" + document]
+    g = graph(out)
+    assert (URIRef(X + "#Permitted"), URIRef(X + "#logicalKey"), Literal("root")) in g
+    if fence == "turtle-vocab":
+        assert (URIRef(X + "#Permitted"), RDF.type, URIRef(X + "#Outcome")) in g
