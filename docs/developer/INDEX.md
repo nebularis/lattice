@@ -715,14 +715,16 @@ their versions, widened by [ontology-release-model.md](sketches/ontology-release
 ontology (REL-Q1 to REL-Q6 answered 2026-10-19, REL-Q2a open), and
 [release-bundles.md](sketches/release-bundles.md), what a release ships and where (BUN-Q1 to BUN-Q7 open).
 
-## 8.18 Ledger — Proposed
+## 8.18 Ledger — 🚧 LG-0 built
 
 | Field | Value |
 |-------|-------|
-| **Status** | 📝 Plan proposed 2026-10-19, no slice briefed. ADR-A131 and ADR-A01's 2026-10-19 addendum Accepted 2026-10-21. LG-0 to LG-2 briefed |
+| **Status** | 🚧 LG-0 (examples) built and hand-checked on `docs/placement-vehicles-structure` 2026-10-22, not yet committed. LG-1 and LG-2 briefed, not started. ADR-A131 and ADR-A01's 2026-10-19 addendum Accepted 2026-10-21 |
 | **Unit ID** | `ledger` |
 | **Sketches** | [evaluation-context.md](sketches/evaluation-context.md) §5, [contract-amounts.md](sketches/contract-amounts.md), [persistence-history-and-versioning.md](sketches/persistence-history-and-versioning.md) §6.1 |
 | **Plan** | [ledger.md](plans/ledger.md) |
+| **Status Record** | [ledger.md](status/ledger.md) |
+| **Validation Packs** | [LG-0](validation/ledger-lg-0.md) |
 | **ADRs** | [A-131](../architecture/decisions/ADR-A131-ledger-layer.md), Accepted |
 
 A substrate layer above Quantification for amounts consumed and restored over time: account trees,

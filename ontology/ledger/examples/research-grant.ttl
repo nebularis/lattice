@@ -1,0 +1,135 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. Grants, with sub-budgets (the "part of and not in addition to"
+# tree, ADR-A131 decision 3) and a credit ceiling (decision 3, LG-Q2's
+# neighbour). A 200,000 research grant has a staff sub-budget and an
+# equipment sub-budget. A draw on a sub-budget also debits the grant as its
+# ancestor, in the same posting's closure. Unspent equipment funds are
+# returned, but a credit never restores an account above its stated amount
+# unless a term raises the ceiling, so here the return is capped at what the
+# equipment budget can still hold.
+#
+# | Account            | Before  | Position 1 (staff spend) | Position 2 (equipment spend) | Position 3 (equipment return, requested / granted) | After   |
+# |---------------------|--------:|---------------------------|-------------------------------|------------------------------------------------------|--------:|
+# | grant-budget (root) | 200,000 | -90,000 -> 110,000        | -50,000 -> 60,000             | +50,000 -> 110,000                                   | 110,000 |
+# | staff-budget         | 120,000 | -90,000 -> 30,000         | --                             | --                                                     |  30,000 |
+# | equipment-budget     |  80,000 | --                        | -50,000 -> 30,000              | 55,000 requested, 50,000 granted (ceiling 80,000) -> 80,000 | 80,000 |
+#
+# The equipment budget's credit ceiling equals its stated amount (the default,
+# LG-Q2's table), so the 55,000 claimed as unspent is granted only the 50,000
+# that brings it back to 80,000, never beyond.
+
+@prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
+@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/ledger/research-grant/> .
+
+# ==== The owner and the value space ===========================================
+
+ex:institution a fnd:PersistentIdentity ; rdfs:comment "The grantee institution, owner of the budget accounts." .
+ex:Grantee a owl:Class ; rdfs:comment "The kind of owner these accounts admit." .
+
+ex:funds a qnt:ValueSpace ;
+    qnt:spaceKey "ledger-research-grant-funds" ; qnt:orderKind qnt:TotalOrder ;
+    qnt:densityKind qnt:Dense ; qnt:spaceHash "ledger-research-grant-funds-v1" ;
+    qnt:additivity qnt:Extensive ;
+    qnt:hasOperationCapability ex:funds-sum , ex:funds-difference .
+ex:funds-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ; qnt:resultSpace ex:funds .
+ex:funds-difference a qnt:OperationCapability ; qnt:operationKind qnt:Difference ; qnt:resultSpace ex:funds .
+
+ex:q-200000 a qnt:Quantity ; qnt:onSpace ex:funds ; qnt:numericValue "200000"^^xsd:decimal .
+ex:q-120000 a qnt:Quantity ; qnt:onSpace ex:funds ; qnt:numericValue "120000"^^xsd:decimal .
+ex:q-80000  a qnt:Quantity ; qnt:onSpace ex:funds ; qnt:numericValue "80000"^^xsd:decimal .
+
+# ==== The configuration: a budget with two sub-budgets ========================
+
+ex:grant-budget a ldg:AccountDefinition ;
+    ldg:statedAmount ex:q-200000 ; ldg:unitOfAccount ex:funds ;
+    ldg:admitsOwnerKind ex:Grantee ; ldg:mergeRule ldg:Refuse ;
+    rdfs:comment "The grant's overall budget." .
+
+ex:staff-budget a ldg:AccountDefinition ;
+    ldg:statedAmount ex:q-120000 ; ldg:unitOfAccount ex:funds ;
+    ldg:admitsOwnerKind ex:Grantee ; ldg:mergeRule ldg:Refuse ;
+    ldg:partOf ex:grant-budget ;
+    rdfs:comment "The staff sub-budget, part of the grant." .
+
+ex:equipment-budget a ldg:AccountDefinition ;
+    ldg:statedAmount ex:q-80000 ; ldg:unitOfAccount ex:funds ;
+    ldg:admitsOwnerKind ex:Grantee ; ldg:mergeRule ldg:Refuse ;
+    ldg:partOf ex:grant-budget ; ldg:creditCeiling ex:q-80000 ;
+    rdfs:comment "The equipment sub-budget, part of the grant. Its credit ceiling equals its stated amount." .
+
+# ==== Position 1: staff spending ==============================================
+
+ex:staff-spend-proposal a fnd:Identified ; rdfs:comment "Staff spending of 90,000." .
+ex:staff-spend-grant a ldg:Grant ;
+    ldg:forProposal ex:staff-spend-proposal ;
+    ldg:requestedValue "90000"^^xsd:decimal ; ldg:grantedValue "90000"^^xsd:decimal .
+ex:staff-spend-merge a ldg:MergeRecord ;
+    ldg:onAccount ex:staff-budget ; ldg:forOwner ex:institution ;
+    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:grant ex:staff-spend-grant .
+ex:staff-spend-posting a ldg:Posting ;
+    ldg:onAccount ex:staff-budget ; ldg:forOwner ex:institution ;
+    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:direction ldg:Debit ; ldg:amountValue "90000"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:staff-spend-merge , ex:staff-spend-grant .
+ex:staff-balance-1 a ldg:BalanceRecord ;
+    ldg:onAccount ex:staff-budget ; ldg:forOwner ex:institution ;
+    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:remainingValue "30000"^^xsd:decimal ; ldg:availableValue "30000"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:staff-spend-posting .
+ex:grant-balance-1 a ldg:BalanceRecord ;
+    ldg:onAccount ex:grant-budget ; ldg:forOwner ex:institution ;
+    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:remainingValue "110000"^^xsd:decimal ; ldg:availableValue "110000"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:staff-spend-posting .
+
+# ==== Position 2: equipment spending ==========================================
+
+ex:equipment-spend-proposal a fnd:Identified ; rdfs:comment "Equipment spending of 50,000." .
+ex:equipment-spend-grant a ldg:Grant ;
+    ldg:forProposal ex:equipment-spend-proposal ;
+    ldg:requestedValue "50000"^^xsd:decimal ; ldg:grantedValue "50000"^^xsd:decimal .
+ex:equipment-spend-merge a ldg:MergeRecord ;
+    ldg:onAccount ex:equipment-budget ; ldg:forOwner ex:institution ;
+    ldg:atPosition "2"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:grant ex:equipment-spend-grant .
+ex:equipment-spend-posting a ldg:Posting ;
+    ldg:onAccount ex:equipment-budget ; ldg:forOwner ex:institution ;
+    ldg:atPosition "2"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:direction ldg:Debit ; ldg:amountValue "50000"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:equipment-spend-merge , ex:equipment-spend-grant .
+ex:equipment-balance-2 a ldg:BalanceRecord ;
+    ldg:onAccount ex:equipment-budget ; ldg:forOwner ex:institution ;
+    ldg:atPosition "2"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:remainingValue "30000"^^xsd:decimal ; ldg:availableValue "30000"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:equipment-spend-posting .
+ex:grant-balance-2 a ldg:BalanceRecord ;
+    ldg:onAccount ex:grant-budget ; ldg:forOwner ex:institution ;
+    ldg:atPosition "2"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:remainingValue "60000"^^xsd:decimal ; ldg:availableValue "60000"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:equipment-spend-posting .
+
+# ==== Position 3: unspent equipment funds returned, capped at the ceiling ====
+
+ex:equipment-return-posting a ldg:Posting ;
+    ldg:onAccount ex:equipment-budget ; ldg:forOwner ex:institution ;
+    ldg:atPosition "3"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:direction ldg:Credit ; ldg:amountValue "50000"^^xsd:decimal ;
+    rdfs:comment "55,000 claimed as unspent, granted only the 50,000 that reaches the ceiling (80,000)." .
+ex:equipment-balance-3 a ldg:BalanceRecord ;
+    ldg:onAccount ex:equipment-budget ; ldg:forOwner ex:institution ;
+    ldg:atPosition "3"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:remainingValue "80000"^^xsd:decimal ; ldg:availableValue "80000"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:equipment-return-posting .
+ex:grant-balance-3 a ldg:BalanceRecord ;
+    ldg:onAccount ex:grant-budget ; ldg:forOwner ex:institution ;
+    ldg:atPosition "3"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:remainingValue "110000"^^xsd:decimal ; ldg:availableValue "110000"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:equipment-return-posting .

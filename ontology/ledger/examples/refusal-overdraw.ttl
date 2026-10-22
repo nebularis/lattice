@@ -1,0 +1,51 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. Refused, under ldg:Refuse (ADR-A131 decision 6). Two proposals at
+# one position together exceed an account's availability, and its merge rule
+# is Refuse, not Proportional or InPriorityOrder. The whole merge is refused:
+# a merge record carries the reason, neither proposal is granted, and no
+# posting is written. Both proposals stay Undetermined.
+#
+# | Account      | Available | Proposal 1 | Proposal 2 | Outcome                        |
+# |--------------|----------:|-----------:|-----------:|---------------------------------|
+# | tight-account |       100 |         60 |         70 | refused, no grant, no posting |
+
+@prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
+@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/ledger/refusal-overdraw/> .
+
+ex:owner a fnd:PersistentIdentity .
+ex:OwnerKind a owl:Class .
+
+ex:units a qnt:ValueSpace ;
+    qnt:spaceKey "ledger-refusal-overdraw-units" ; qnt:orderKind qnt:TotalOrder ;
+    qnt:densityKind qnt:Discrete ; qnt:spaceHash "ledger-refusal-overdraw-units-v1" ;
+    qnt:additivity qnt:Extensive ;
+    qnt:hasOperationCapability ex:units-sum .
+ex:units-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ; qnt:resultSpace ex:units .
+
+ex:q-100 a qnt:Quantity ; qnt:onSpace ex:units ; qnt:numericValue "100"^^xsd:decimal .
+
+ex:tight-account a ldg:AccountDefinition ;
+    ldg:statedAmount ex:q-100 ; ldg:unitOfAccount ex:units ;
+    ldg:admitsOwnerKind ex:OwnerKind ; ldg:mergeRule ldg:Refuse ;
+    rdfs:comment "100 units, refusing whole where proposals together overdraw it." .
+
+ex:overdrawn a skos:Concept ;
+    skos:prefLabel "requested more than the account's availability" .
+
+ex:proposal-1 a fnd:Identified ; rdfs:comment "Requests 60." .
+ex:proposal-2 a fnd:Identified ; rdfs:comment "Requests 70." .
+
+# No ldg:Grant exists for either proposal: under ldg:Refuse, a merge that
+# cannot grant every proposal in full grants none of them.
+ex:merge-1 a ldg:MergeRecord ;
+    ldg:onAccount ex:tight-account ; ldg:forOwner ex:owner ;
+    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:refusalReason ex:overdrawn ;
+    rdfs:comment "60 + 70 = 130 exceeds the 100 available. No grant. No posting follows." .
