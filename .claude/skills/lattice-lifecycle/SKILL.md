@@ -91,6 +91,15 @@ justification in its Validation Pack, countersigned at the gate.
   `main`, then tag. A tag on an unmerged branch can name a commit that never reaches `main`.
 - **Branch from `main`**, so a branch starts from every merged release, unless the maintainer has said
   parallel work is under way.
+- **Ontology version bumps happen once, at merge, never mid-branch.** `mise run release:prepare`
+  moves every release member's shared version number forward (ADR-A129) and cascades into every
+  applied module that pins it. Nobody consumes a branch's version numbers before it merges, so
+  bumping per-slice re-pins dozens of files for no reader and still has to happen again at the
+  merge. A branch's new or changed ontology documents keep citing the version `main` was pinned to
+  at the branch point throughout the branch's life (skill `lattice-ontology-authoring`). Expect
+  `check:ontology-versioning` to report a pending bump for a branch's own new release-member
+  content until the actual merge-time bump — that is the correct state of a branch mid-flight, not
+  a defect to work around.
 - **Release tags are the maintainer's.** Whenever `mise run build:ontology-releases` adds a row, or
   `mise run check:ontology-versioning` lists pending tags, end the handoff with a notice headed
   `🔴 RELEASE TAGS REQUIRED`, listing each tag as a, b, c with the commands to create and push them

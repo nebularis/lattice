@@ -12,6 +12,22 @@ Follow every step for any change to `ontology/**/spec/`, `ontology/**/vocab/`, o
 [versioning policy](https://github.com/nebularis/lattice/blob/main/docs/architecture/ontology-versioning-policy.md)
 (ADR-A86, ADR-A113) first. A skipped step breaks consumers silently, and has done so before.
 
+**Version bumps and `release:prepare` are a merge-time operation, never a branch-time one.** Steps 2
+to 6 below move every release member's `owl:versionIRI` to a new shared number (ADR-A129), which
+touches every substrate and standalone document whether or not its own content changed, and cascades
+into every applied module that pins the release. Nobody consumes a long-lived development branch's
+version numbers before it merges, so bumping mid-branch re-pins dozens of files for no reader, and
+the real bump still has to happen again, once, when the branch actually merges. A branch pins its
+imports to `main`'s versions at the branch point and never re-pins them itself, precisely as the
+Applied Insurance Reference lanes document states for machine S's branch
+(`docs/developer/plans/applied-insurance-reference-lanes.md` §1, §3: "Imports of LATTICE layers stay
+pinned to the versions of `main` at the branch point, and S never re-pins them... R re-pins the
+branch to `main`'s layer versions once, at the merge"). A new document a branch adds, such as a new
+layer's first README, cites the *current* release number throughout (matching whatever `main` is
+pinned to when the branch started), not a bumped one, and stays that way until the person merging
+runs the bump, once, for the whole branch's accumulated changes. Follow steps 2 to 6 only when
+the maintainer is actually preparing a merge into `main`, never as part of an ordinary slice.
+
 1. **Find the source of truth.** A literate layer's `README.md` is its source. Its fenced
    `turtle-spec`, `turtle-vocab` and `turtle-shapes` blocks generate the `.ttl` files, and
    `turtle-example` blocks are illustration only. Edit the README, never the generated file, then
