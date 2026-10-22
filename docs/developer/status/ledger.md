@@ -3,17 +3,17 @@
 # Ledger — Status
 
 **Unit ID:** `ledger`
-**Status:** 🚧 LG-0 built, hand-checked, not yet committed. LG-1 and LG-2 not started.
+**Status:** 🚧 LG-0 and LG-1 built and verified, not yet committed. LG-2 not started.
 **Last updated:** 2026-10-22
 **Plan:** [ledger.md](../plans/ledger.md)
-**Validation Packs:** [LG-0](../validation/ledger-lg-0.md)
+**Validation Packs:** [LG-0](../validation/ledger-lg-0.md), [LG-1](../validation/ledger-lg-1.md)
 
 ---
 
 ## Is this unit complete?
 
-**No.** LG-0 (examples first) is built and hand-checked. LG-1 (configuration document) and LG-2
-(runtime document) are briefed in the plan but not started. LG-3 (Behaviour's migration), LG-4
+**No.** LG-0 (examples first) and LG-1 (the configuration document) are built and verified. LG-2
+(runtime document) is briefed in the plan but not started. LG-3 (Behaviour's migration), LG-4
 (allocation) and LG-5 (benchmark) are not briefed.
 
 ## Current state
@@ -43,6 +43,51 @@ instrument-relations sketch (`ins:InstrumentRelation`) all declare terms `⊑ fn
 that does not yet exist in `ontology/foundation`. Someone needs to add it to Foundation, with its own
 bump, before any of these slices' specs can be written.
 
-**Next action:** the maintainer reviews LG-0 (examples, Validation Pack, the two open points above),
-and once the environment blocker is resolved, runs LG0-01's parse check. If LG-0 is accepted, LG-1
-(configuration document) is next, per the plan.
+**Next action:** the maintainer reviews LG-0 and LG-1 (see below), publishes ADR-A131 (and ideally
+ADR-A01's 2026-10-19 addendum), and creates the pending release tags. If accepted, LG-2 (runtime
+document) is next, per the plan.
+
+## 2026-10-22, LG-1 built and verified
+
+Built on `docs/placement-vehicles-structure`, same session convention as LG-0 (one branch, one
+bundle). Full detail in the [LG-1 Validation Pack](../validation/ledger-lg-1.md)'s Handoff and
+Results sections. In short:
+
+- `ontology/ledger/README.md` written in ADR-A126's layout and extracted: `spec/ledger.ttl`,
+  `vocab/ledger-vocab.ttl`, `shapes/structural.ttl`, `shapes/constraints.ttl` (six SHACL-SPARQL
+  constraints). Registered in the root catalogue after `quantification`, in the ontology
+  architecture document and the root README. `tools/test_ledger.py` added to
+  `check:ontology-catalog`'s list (13 tests, all passing).
+- **The substrate release moved to 0.19.0.** Ledger joining the release changes every member's
+  version IRI under ADR-A129's one-release model, which cascaded into five applied modules that pin
+  the substrate (each bumped one MINOR of their own, per ADR-A86's re-pinned-import rule, with their
+  test files' hardcoded version strings updated to match): `applied/capacity` 0.17.0,
+  `applied/classification` 0.4.0, `insurance/common` 0.8.0, `insurance/exposure` 0.3.0,
+  `insurance/peril` 0.7.0. Release-notes lines added to every affected README that has one.
+- **🔴 RELEASE TAGS REQUIRED**, once this is merged (`mise run build:ontology-releases` already lists
+  them; repeated here per the lifecycle skill):
+  ```
+  git tag applied-capacity-execution-v0.16.0 applied-capacity-execution-v0.17.0 applied-classification-v0.3.0 applied-classification-v0.4.0 applied-classification-vocab-v0.3.0 applied-classification-vocab-v0.4.0 insurance-common-v0.7.0 insurance-common-v0.8.0 insurance-common-vocab-v0.7.0 insurance-common-vocab-v0.8.0 insurance-exposure-v0.2.0 insurance-exposure-v0.3.0 insurance-exposure-vocab-v0.2.0 insurance-exposure-vocab-v0.3.0 insurance-peril-v0.6.0 insurance-peril-v0.7.0 insurance-peril-intensity-v0.6.0 insurance-peril-intensity-v0.7.0 insurance-peril-vocab-v0.6.0 insurance-peril-vocab-v0.7.0 ontologies-v0.18.0 ontologies-v0.19.0
+  ```
+  (most of these pre-date this slice and were already pending; `ontologies-v0.19.0` and the
+  `v0.17.0`/`v0.4.0`/`v0.8.0`/`v0.3.0`/`v0.7.0` members are new here.)
+- **🔴 `check:published-decisions` cannot go green without the maintainer.** Ledger's README and
+  `shapes/constraints.ttl` cite ADR-A131 throughout, since the whole document describes that
+  decision, which is Accepted but not Published. Publishing is the maintainer's act (ADR-A127
+  decision 1), the same as accepting. ADR-A01's 2026-10-19 addendum (also cited, also Accepted) has
+  the same gate.
+- Two small, low-risk fixes made to pass this environment's checks honestly rather than skip them:
+  `tools/import_guard.py`'s violation renderer now prints `Path.as_posix()` (was bare `Path`,
+  backslash-separated on Windows, failing five of its own test's fixtures), and
+  `tools/test_import_guard.py`'s diagram-order check now reads `ontology-architecture.md` with
+  `encoding="utf-8"` explicitly (was defaulting to the Windows locale codec).
+- Three LG-0 refusal fixtures gained a missing `qnt:Difference` capability so each isolates exactly
+  the one shape it is meant to test (see LG-1 Validation Pack for which).
+- A real scaling limit found, not a defect: rdflib's SPARQL property-path evaluator recurses past
+  Python's call stack on a 10,000-deep `ldg:partOf+` chain. No real account tree is anywhere near
+  that deep; LG1-09's test now uses a shallow, wide tree instead, which is also the shape real trees
+  have.
+- `check:full-sweep`'s other failures (`build:mtp`/`check:mtp`, `check:persistence`,
+  `check:agent-guidance`, and one flaky `reasoning_server` timing test) are pre-existing and
+  unrelated, each confirmed in isolation. `check:site-sections` failed once (my edit to
+  `eligibility/README.md` left its site copy stale) and is fixed (`build:site-sections` run).

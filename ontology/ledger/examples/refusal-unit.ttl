@@ -21,15 +21,17 @@ ex:pounds a qnt:ValueSpace ;
     qnt:spaceKey "ledger-refusal-unit-pounds" ; qnt:orderKind qnt:TotalOrder ;
     qnt:densityKind qnt:Dense ; qnt:spaceHash "ledger-refusal-unit-pounds-v1" ;
     qnt:additivity qnt:Extensive ;
-    qnt:hasOperationCapability ex:pounds-sum .
+    qnt:hasOperationCapability ex:pounds-sum , ex:pounds-difference .
 ex:pounds-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ; qnt:resultSpace ex:pounds .
+ex:pounds-difference a qnt:OperationCapability ; qnt:operationKind qnt:Difference ; qnt:resultSpace ex:pounds .
 
 ex:dollars a qnt:ValueSpace ;
     qnt:spaceKey "ledger-refusal-unit-dollars" ; qnt:orderKind qnt:TotalOrder ;
     qnt:densityKind qnt:Dense ; qnt:spaceHash "ledger-refusal-unit-dollars-v1" ;
     qnt:additivity qnt:Extensive ;
-    qnt:hasOperationCapability ex:dollars-sum .
+    qnt:hasOperationCapability ex:dollars-sum , ex:dollars-difference .
 ex:dollars-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ; qnt:resultSpace ex:dollars .
+ex:dollars-difference a qnt:OperationCapability ; qnt:operationKind qnt:Difference ; qnt:resultSpace ex:dollars .
 
 ex:q-100000-gbp a qnt:Quantity ; qnt:onSpace ex:pounds ; qnt:numericValue "100000"^^xsd:decimal .
 ex:q-10000-usd  a qnt:Quantity ; qnt:onSpace ex:dollars ; qnt:numericValue "10000"^^xsd:decimal .

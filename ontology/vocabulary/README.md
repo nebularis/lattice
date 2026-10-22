@@ -21,7 +21,7 @@ What Vocabulary does *not* do is resolve a fuzzy label to a concept - it defines
 
 | Document | Ontology IRI | Version IRI | Imports |
 |---|---|---|---|
-| `spec/vocabulary.ttl` | <https://www.nebularis.org/neuro-semantic/vocabulary> | <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.18.0> | <http://www.w3.org/2004/02/skos/core>, <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.18.0> |
+| `spec/vocabulary.ttl` | <https://www.nebularis.org/neuro-semantic/vocabulary> | <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0> | <http://www.w3.org/2004/02/skos/core>, <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> |
 
 | Prefix | Namespace |
 |---|---|
@@ -578,6 +578,7 @@ Vocabulary imports Foundation, for identity, versions, governance and temporal s
 
 Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).
 
+- 0.19.0. Re-pinned: a new substrate layer joins the release. No other change.
 - 0.18.0, the first release of the substrate and standalone modules as one set
   ([ADR-A129](../../docs/architecture/decisions/ADR-A129-one-release-for-the-substrate.md)). The README
   follows the layout of

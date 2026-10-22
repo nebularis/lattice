@@ -69,7 +69,7 @@ new number, and the versioning check holds every member to it.
 
 ```toml repository-catalogue
 [conventions.release]
-version = "0.18.0"
+version = "0.19.0"
 kinds = ["substrate", "standalone"]
 ```
 
@@ -82,7 +82,7 @@ standalone modules, the applied modules, the examples and the scaffolds.
 [catalogue]
 schema = 1
 modules = [
-    "foundation", "vocabulary", "quantification", "party", "eligibility", "wording", "behaviour", "instrument",
+    "foundation", "vocabulary", "quantification", "ledger", "party", "eligibility", "wording", "behaviour", "instrument",
     "surface", "spc", "mork", "persistence",
     "applied/capacity", "applied/classification",
     "applied/insurance/common", "applied/insurance/peril", "applied/insurance/exposure",

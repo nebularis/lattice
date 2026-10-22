@@ -46,8 +46,8 @@ def _tree(tmp: Path, entry: str = 'kind = "substrate"\nroles = ["spec"]\nimports
 def test_rc1_t1_the_catalogue_lists_every_module_in_order() -> None:
     catalogue = rc.load(ROOT)
     names = list(catalogue.modules)
-    assert names[:8] == ["foundation", "vocabulary", "quantification", "party", "eligibility", "wording", "behaviour", "instrument"]
-    assert len(names) == 19 and names[-1] == "governance"
+    assert names[:9] == ["foundation", "vocabulary", "quantification", "ledger", "party", "eligibility", "wording", "behaviour", "instrument"]
+    assert len(names) == 20 and names[-1] == "governance"
     assert catalogue.module("instrument").files("shapes") == tuple(
         Path("ontology/instrument/shapes") / f for f in ("structural.ttl", "constraints.ttl", "single-expression.ttl")
     )
@@ -73,12 +73,13 @@ def test_rc1_t3_each_extraction_contract_is_what_its_readme_generates(name: str)
     assert generated == declared
 
 
-# ADR-A01 and its 2026-10-01 addendum, written out here so that an edit to the catalogue's order
-# fails a test until the ADR is amended (ADR-A121 decision 2). The import guard reads the same
-# entries since RC2.
+# ADR-A01 and its 2026-10-01 and 2026-10-19 addenda, written out here so that an edit to the
+# catalogue's order fails a test until the ADR is amended (ADR-A121 decision 2). The import guard
+# reads the same entries since RC2.
 _LOWER = ("foundation", "vocabulary", "quantification", "party", "eligibility")
 ADR_A01_ORDER = {
     "foundation": frozenset(), "vocabulary": frozenset(_LOWER[:1]), "quantification": frozenset(_LOWER[:2]),
+    "ledger": frozenset(_LOWER[:3]),
     "party": frozenset(_LOWER[:3]), "eligibility": frozenset(_LOWER[:4]), "wording": frozenset(_LOWER),
     "behaviour": frozenset(_LOWER), "instrument": frozenset(_LOWER) | {"wording", "behaviour"},
 }

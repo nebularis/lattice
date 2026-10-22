@@ -1,0 +1,101 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# SHACL-SPARQL constraints for ldg:AccountDefinition, named in the Ledger
+# plan's LG-1 "in detail" section (ADR-A131 decisions 2 and 3).
+
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
+@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+ldg:NoCycleThroughPartOfShape a sh:NodeShape ;
+	sh:targetClass ldg:AccountDefinition ;
+	sh:sparql [
+		sh:message "An account definition must not be its own ancestor through any chain of ldg:partOf edges." ;
+		sh:select """
+			PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+			SELECT $this WHERE {
+				$this ldg:partOf+ $this .
+			}
+		"""
+	] .
+
+ldg:ChildUnitMatchesParentShape a sh:NodeShape ;
+	sh:targetClass ldg:AccountDefinition ;
+	sh:sparql [
+		sh:message "An account definition's unit of account must equal its parent's." ;
+		sh:select """
+			PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+			SELECT $this WHERE {
+				$this ldg:partOf ?parent ;
+					  ldg:unitOfAccount ?childSpace .
+				?parent ldg:unitOfAccount ?parentSpace .
+				FILTER (?childSpace != ?parentSpace)
+			}
+		"""
+	] .
+
+ldg:ExtensiveUnitOfAccountShape a sh:NodeShape ;
+	sh:targetClass ldg:AccountDefinition ;
+	sh:sparql [
+		sh:message "An account definition's unit of account must be extensive, with Sum and Difference capabilities." ;
+		sh:select """
+			PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+			PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+			SELECT $this WHERE {
+				$this ldg:unitOfAccount ?space .
+				OPTIONAL { ?space qnt:additivity qnt:Extensive . BIND(true AS ?extensive) }
+				OPTIONAL { ?space qnt:hasOperationCapability ?sumCap . ?sumCap qnt:operationKind qnt:Sum . BIND(true AS ?sum) }
+				OPTIONAL { ?space qnt:hasOperationCapability ?diffCap . ?diffCap qnt:operationKind qnt:Difference . BIND(true AS ?difference) }
+				FILTER (!BOUND(?extensive) || !BOUND(?sum) || !BOUND(?difference))
+			}
+		"""
+	] .
+
+ldg:ProportionalNeedsRoundingShape a sh:NodeShape ;
+	sh:targetClass ldg:AccountDefinition ;
+	sh:sparql [
+		sh:message "A proportional merge rule must state a rounding method and a residual allocation." ;
+		sh:select """
+			PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+			SELECT $this WHERE {
+				$this ldg:mergeRule ldg:Proportional .
+				OPTIONAL { $this ldg:roundingMethod ?rounding }
+				OPTIONAL { $this ldg:residualAllocation ?residual }
+				FILTER (!BOUND(?rounding) || !BOUND(?residual))
+			}
+		"""
+	] .
+
+ldg:CreditCeilingNotBelowStatedShape a sh:NodeShape ;
+	sh:targetClass ldg:AccountDefinition ;
+	sh:sparql [
+		sh:message "A credit ceiling must not be below the account's stated amount." ;
+		sh:select """
+			PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+			PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+			SELECT $this WHERE {
+				$this ldg:statedAmount ?stated ;
+					  ldg:creditCeiling ?ceiling .
+				?stated qnt:numericValue ?statedValue .
+				?ceiling qnt:numericValue ?ceilingValue .
+				FILTER (?ceilingValue < ?statedValue)
+			}
+		"""
+	] .
+
+ldg:KeyDimensionTypeShape a sh:NodeShape ;
+	sh:targetClass ldg:AccountDefinition ;
+	sh:sparql [
+		sh:message "A key dimension must be a skos:ConceptScheme or a qnt:ValueSpace." ;
+		sh:select """
+			PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+			PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+			PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+			SELECT $this WHERE {
+				$this ldg:keyDimension ?dim .
+				FILTER NOT EXISTS { ?dim a skos:ConceptScheme }
+				FILTER NOT EXISTS { ?dim a qnt:ValueSpace }
+			}
+		"""
+	] .

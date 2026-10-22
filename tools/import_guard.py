@@ -59,7 +59,7 @@ class Violation:
 
     def render(self, root: Path) -> str:
         where = self.path.relative_to(root) if self.path.is_relative_to(root) else self.path
-        return f"{where}:{self.line}: {self.layer} {self.kind} {self.named}, which the order does not allow"
+        return f"{where.as_posix()}:{self.line}: {self.layer} {self.kind} {self.named}, which the order does not allow"
 
 
 def forbidden(layer: str, named: str) -> bool:

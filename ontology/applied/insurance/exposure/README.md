@@ -158,15 +158,15 @@ schedule versions, not one snapshot.
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/insurance/exposure>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/exposure/0.2.0> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/exposure/0.3.0> ;
     rdfs:label "LATTICE asset exposure ontology"@en ;
     rdfs:comment "Facts about the world a risk sits in: exposure sets, locations, legal entities and control, assets, interests and valuations (AIR-4.1), with zones, attributes, dependencies, losses, requirements, cover and liability arriving in later regions (AIR-4.2 to AIR-4.5). No class here says what a contract insures, which is the contract module's (Phase 5). See the asset exposure ontology sketch." ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.18.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.18.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.18.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/party/0.18.0> ,
-                <https://www.nebularis.org/neuro-semantic/insurance/common/0.7.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.18.0> .
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.19.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/party/0.19.0> ,
+                <https://www.nebularis.org/neuro-semantic/insurance/common/0.8.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.19.0> .
 
 #################################################################
 #    Identity classes (AIR-4.1). Each versioned class below has
@@ -1569,13 +1569,13 @@ thousands.
 
 <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/exposure-vocab/0.2.0> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/insurance/exposure/0.2.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.18.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.18.0> ,
-                <https://www.nebularis.org/neuro-semantic/insurance/common-vocab/0.7.0> ,
-                <https://www.nebularis.org/neuro-semantic/insurance/peril-vocab/0.6.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/applied/classification-vocab/0.3.0> .
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/exposure-vocab/0.3.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/insurance/exposure/0.3.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ,
+                <https://www.nebularis.org/neuro-semantic/insurance/common-vocab/0.8.0> ,
+                <https://www.nebularis.org/neuro-semantic/insurance/peril-vocab/0.7.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/applied/classification-vocab/0.4.0> .
 
 #################################################################
 #    Reference schemes (AIR-4.1), each the unscoped fallback
@@ -5186,6 +5186,7 @@ revenue by territory, with the output of `effective_characteristics` for its cau
 
 | Version | Change |
 |---|---|
+| `0.3.0` | re-pinned to the substrate's 0.19.0 release, in which Ledger joins ([ADR-A131](../../../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). No content change |
 | `0.1.0` | AIR-4.1: exposure set, location, legal entity, control relations, asset, interest, valuation. Seven scheme contracts, nine programme roles. Literate from the start |
 | `0.1.0` (AIR-4.2a) | Exposure set membership, zone designations, pool participations, assessments and attribute values are no longer inverse functional, and `aeo:MembershipShape` is withdrawn (TD-49). Unchanged members are shared across exposure set versions by identity, as this README always stated. Corrects `0.1.0` before it is released, so no version bump. Example `versions.ttl` added |
 | `0.1.0` (AIR-4.3) | Dependencies, peril metrics, metric comparisons and exposure units, with the dependency kind, substitutability, metric kind, perspective, calculation method and model option schemes, the schedule group and scenario contracts, and the output share, return period and exceedance probability spaces. `aeo:perilScope` loses its domain (AIR-4.2 gave it `aeo:PoolParticipation`, which a metric's use would have contradicted). Nine shapes |

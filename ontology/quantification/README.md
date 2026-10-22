@@ -58,9 +58,9 @@ It imports Foundation and Vocabulary. It is imported by Party, Eligibility, Word
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/quantification>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.18.0> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.18.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.18.0> .
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.19.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0> .
 ```
 
 ## 3. How to Read This Document
@@ -2270,6 +2270,7 @@ What changed from the earlier draft, and why — kept here rather than only in a
 
 ## 17. Release Notes
 
+- **0.19.0.** Re-pinned: Ledger joins the substrate's release ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). No other change.
 - **0.18.0, the first release of the substrate and standalone modules as one set ([ADR-A129](../../docs/architecture/decisions/ADR-A129-one-release-for-the-substrate.md)). Every document of the layer takes the release's number and imports the other layers at it (no effect).** The shapes and projection directories no longer carry a `.version` of their own. No other change.
 - **0.8.0** (additive, CCS C9b2): `qnt:additivity`, with `qnt:Extensive` and `qnt:Intensive` in
   `qnt:Additivity`, a proportion's base `qnt:baseRole`, constrained by `qnt:ContextRoleContract`, and

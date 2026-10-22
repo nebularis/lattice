@@ -99,11 +99,11 @@ ex:cl-4-1-p4 a wrd:TextPart ; wrd:partIndex 4 ; wrd:partText " per annum." .
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/wording>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording/0.18.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.18.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.18.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.18.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.18.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording/0.19.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.19.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.19.0> .
 ```
 
 ### 5.2 Wordings and elements
@@ -687,8 +687,8 @@ use, and is not closed: a deployment binds a scheme of its own, which may extend
 
 <https://www.nebularis.org/neuro-semantic/wording-vocab>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording-vocab/0.18.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/wording/0.18.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording-vocab/0.19.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/wording/0.19.0> .
 
 wrd-voc:ElementTypeContract a voc:SchemeContract ;
 	fnd:hasIdentity wrd-voc:ElementTypeContract-identity ;
@@ -1580,6 +1580,7 @@ of a slot. A steward finds every instance's revisions of a clause by `prov:wasRe
 
 Breaking versions at major version zero ([ADR-A113](../../docs/architecture/decisions/ADR-A113-breaking-changes-at-major-version-zero.md)):
 
+- 0.19.0. Re-pinned: Ledger joins the substrate's release ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). No other change.
 - 0.3.0 (breaking): tables take fields and entries in place of rows and columns (CC-D6 amended).
   `wrd:Row`, `wrd:rowKey`, `wrd:rowVariable` and `wrd:forColumn` are renamed `wrd:Field`,
   `wrd:fieldKey`, `wrd:fieldVariable` and `wrd:forEntry`. New: `wrd:Entry`, `wrd:entryKey`,

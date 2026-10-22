@@ -37,13 +37,14 @@ The layers described below are one family of mapping target, but not the only po
 
 #### Ontology Layers
 
-LATTICE is organised as seven layers, each an independent OWL/SHACL/SKOS module:
+LATTICE is organised as eight layers, each an independent OWL/SHACL/SKOS module:
 
 | Layer | Kind | What it models |
 |---|---|---|
 | **Foundation** | Substrate | Identity, versioning, provenance and evidence, governance state, temporal scoping, and a derived-artefact contract aligned with PROV-O ([ADR-A92](docs/architecture/decisions/ADR-A92-derived-artefact-contract-and-prov-o-alignment.md)). |
 | **Vocabulary** | Substrate | The governed mechanism by which external, domain-specific concept schemes get bound into the other layers without touching their core specifications, including scoped and time-bounded bindings. The vocabulary and SHACL shapes live under `ontology/vocabulary/`; a reference resolver for the scoped/temporal binding precedence law lives under `tools/vocabulary/`. See [ADR-A85](docs/architecture/decisions/ADR-A85-vocabulary-scoped-temporal-binding-resolution.md). |
 | **Quantification** | Substrate | Declared value spaces, quantities, ordered values, bounds, ranges, conversion, granularity, and recurrence — the mechanism behind any magnitude, interval, or ordinal comparison the other layers need. |
+| **Ledger** | Substrate | Amounts consumed and restored over time, and so conserved: account trees ("part of and not in addition to"), merge rules that arbitrate several draws at one position, postings and derived balances ([ADR-A131](docs/architecture/decisions/ADR-A131-ledger-layer.md)). |
 | **Party** | Substrate | 	Actors, the roles they occupy, and the direction and composition of obligation between them (e.g., modelling independently capped shares, joint obligation with a right of recourse, delegated accountability, or contingent role occupancy). |
 | **Eligibility** | Substrate | Admissibility criteria (conditions, unresolved questions, and decisions), including concept inclusion and exclusion and evidence bindings that evaluate an applied ontology's own properties. `tools/mork_compilers` compiles conditions and profiles to SPARQL, SHACL, and SWRL through one IR. See [ADR-A87](docs/architecture/decisions/ADR-A87-eligibility-concept-inclusion-and-exclusion.md), [ADR-A89](docs/architecture/decisions/ADR-A89-eligibility-ir-concept-conditions-and-profile-aggregation.md) and [ADR-A91](docs/architecture/decisions/ADR-A91-eligibility-candidate-evidence-binding.md). |
 | **Behaviour** | Substrate | State, transition, trigger, and effect, including a usable `Sequential` allowance profile. `Proportional` allowance semantics and reset edge cases remain explicitly deferred. |

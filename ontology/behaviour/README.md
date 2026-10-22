@@ -86,12 +86,12 @@ Behaviour distinguishes four tiers:
 
 <https://www.nebularis.org/neuro-semantic/behaviour>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.18.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.18.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.18.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.18.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/party/0.18.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.18.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.19.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.19.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/party/0.19.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.19.0> .
 
 bhv:StateSpace a owl:Class ;
 	rdfs:subClassOf fnd:Version ;
@@ -260,8 +260,8 @@ configuration document, at the same version.
 
 <https://www.nebularis.org/neuro-semantic/behaviour-runtime>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-runtime/0.18.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.18.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-runtime/0.19.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.19.0> .
 ```
 
 ```turtle-spec
@@ -607,8 +607,8 @@ stateDiagram-v2
 
 <https://www.nebularis.org/neuro-semantic/behaviour-vocab>
 	a owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-vocab/0.18.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.18.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-vocab/0.19.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.19.0> .
 
 bhv:ExternalStimulus a bhv:TriggerKind .
 bhv:ScheduledTrigger a bhv:TriggerKind .
@@ -1519,6 +1519,7 @@ where only the highest enabled transition fires.
 
 Breaking versions at major version zero ([ADR-A113](../../docs/architecture/decisions/ADR-A113-breaking-changes-at-major-version-zero.md)):
 
+- 0.19.0. Re-pinned: Ledger joins the substrate's release ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). No other change. Behaviour does not yet import Ledger (LG-3).
 - 0.8.0 (breaking): Behaviour no longer imports Instrument, and moves below it. `bhv:targetsElement`
   is replaced by `bhv:targets`, with no range. `bhv:forSubject` loses its range. A transition needs
   no effect. The occurrence, execution and state record tiers move to `behaviour-runtime` 0.8.0.

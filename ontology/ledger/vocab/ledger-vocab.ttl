@@ -1,0 +1,66 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://www.nebularis.org/neuro-semantic/ledger-vocab> a owl:Ontology ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/ledger-vocab/0.19.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/ledger/0.19.0> ;
+    dct:description """Ledger holds amounts that are consumed and restored, and so conserved: a limit, a commitment, a seat quota, a carbon budget. Every balance is the stated amount less what was drawn plus what was restored. That law is what makes a balance cheap to compute (a fold of postings), provable (path debit, conservation) and parallel (two phases at one position). Ledger does not hold observed values such as a price or a temperature, which are intensive and carry no such law (a condition over them is Eligibility's, and what an instrument pays is a combinator, then a draw on a Ledger account).
+
+This document is the configuration half of the layer: account definitions, the tree they form by \"part of and not in addition to\", the kinds of owner an account admits, the merge rule that arbitrates several draws at one position, and the reset, key, purpose, credit ceiling and conversion a definition may state. The runtime half, postings and balance records, is a separate document (spec/ledger-runtime.ttl, not yet written).""" ;
+    dct:creator <https://github.com/hyperthunk> .
+
+dct:creator a owl:AnnotationProperty .
+
+dct:description a owl:AnnotationProperty .
+
+ldg:Credit a skos:Concept ;
+    rdfs:comment "The inverse of a draw along the same path, reducing it." .
+
+ldg:Debit a skos:Concept ;
+    rdfs:comment "A draw, reducing the balance." .
+
+ldg:HalfEven a skos:Concept ;
+    rdfs:comment "Rounds a tie to the nearest even value." .
+
+ldg:HalfUp a skos:Concept ;
+    rdfs:comment "Rounds a tie away from zero." .
+
+ldg:InPriorityOrder a skos:Concept ;
+    rdfs:comment "Draws are granted in a stated priority order until availability is exhausted." .
+
+ldg:LargestRemainder a skos:Concept ;
+    rdfs:comment "The residual is allocated to the proposal(s) with the largest rounding remainder, ties broken by the total order of the proposals." .
+
+ldg:MergeRules a skos:ConceptScheme ;
+    rdfs:comment "What happens when several draws at one position together exceed availability." .
+
+ldg:PostingDirections a skos:ConceptScheme ;
+    rdfs:comment "Whether a posting debits or credits its account." .
+
+ldg:Proportional a skos:Concept ;
+    rdfs:comment "Draws are granted in proportion to the amounts requested, rounded and allocated per the account's ldg:roundingMethod and ldg:residualAllocation." .
+
+ldg:Refuse a skos:Concept ;
+    rdfs:comment "Where proposals together exceed availability, the whole merge is refused: no grant, a reason recorded, no posting." .
+
+ldg:ResidualAllocations a skos:ConceptScheme ;
+    rdfs:comment "How a proportional merge's rounding residual is allocated." .
+
+ldg:RoundingMethods a skos:ConceptScheme ;
+    rdfs:comment "How a proportional merge's exact shares round to the account's unit." .
+
+ldg:ToFirstInOrder a skos:Concept ;
+    rdfs:comment "The residual is allocated to the first proposal in order." .
+
+ldg:TowardZero a skos:Concept ;
+    rdfs:comment "Truncates toward zero." .

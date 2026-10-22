@@ -50,7 +50,7 @@ The ontology header, with the version every importer pins (ADR-A86):
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/foundation>
     a owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.18.0> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ;
     owl:imports <http://www.w3.org/ns/prov-o-20130430> .
 ```
 
@@ -898,6 +898,7 @@ Eight classes mutually disjoint (`Version`, `PersistentIdentity`, `Evidence`, `T
 
 ## 13. Release notes
 
+- **0.19.0.** Re-pinned: Ledger joins the substrate's release ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). No other change.
 - **0.18.0, the first release of the substrate and standalone modules as one set ([ADR-A129](../../docs/architecture/decisions/ADR-A129-one-release-for-the-substrate.md)). Every document of the layer takes the release's number and imports the other layers at it (no effect).** No other change.
 - **0.4.0** (additive, CCS F1, ADR-A114). Keys: `fnd:Key`, `fnd:KeyScheme`, `fnd:keyValue`,
   `fnd:keyScheme`, `fnd:externalKey` with its property chain, `fnd:naturalKey`,
