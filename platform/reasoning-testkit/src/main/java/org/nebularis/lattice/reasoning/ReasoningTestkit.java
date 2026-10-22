@@ -200,7 +200,12 @@ public final class ReasoningTestkit {
                 String message = failure.getMessage() == null ? failure.getClass().getName() : failure.getMessage();
                 answer = "{\"error\": " + jsonString(failure.getClass().getSimpleName() + ": " + message) + "}";
             }
-            out.println(answer);
+            // One line is one answer, in every host's reading, never println's platform
+            // separator: on Windows that is "\r\n", and a reader splitting on "\n" alone
+            // (any consumer, Java or Python) is then left with a trailing "\r" on every
+            // line but the last.
+            out.print(answer);
+            out.print('\n');
             out.flush();
         }
     }
@@ -218,6 +223,7 @@ public final class ReasoningTestkit {
             System.err.println("usage: reasoning-testkit consistent|satisfiable|subsumes|values [IRI...] FILE... | serve");
             System.exit(2);
         }
-        System.out.println("{\"result\": " + execute(args, null) + "}");
+        System.out.print("{\"result\": " + execute(args, null) + "}");
+        System.out.print('\n');
     }
 }
