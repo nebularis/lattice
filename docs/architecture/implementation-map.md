@@ -8,7 +8,7 @@ Read [solution-design-specification.md](solution-design-specification.md) first 
 
 | Area | Primary implementation | Contracts and guides | Current state |
 |---|---|---|---|
-| Repository orchestration | `mise.toml`, `.devcontainer/`, `deployment/compose/` | [toolchain](../developer/toolchain.md), [ADR-A29](decisions/ADR-A29-repository-toolchain-and-environment-boundary.md) | Authoring complete, runtime validation pending |
+| Repository orchestration | `mise.toml`, `.devcontainer/`, `deployment/compose/` | [toolchain](../developer/developer-guide.md), [ADR-A29](decisions/ADR-A29-repository-toolchain-and-environment-boundary.md) | Authoring complete, runtime validation pending |
 | Semantic platform | `platform/semantic-dataset-*`, `semantic-policy`, `platform-outbox`, `workers/graph_validation.py` | `contracts/events/graph-validation-*.schema.json`, [semantic platform](semantic-platform.md), [ADR-A30](decisions/ADR-A30-shared-semantic-platform-cross-runtime-boundary.md) | Authoring complete, persistence and integration validation pending |
 | Surface workflow | `platform/surface-workflow`, `workers/surface_jobs.py` | `contracts/surface/`, `contracts/events/surface-job-*.schema.json`, [Surface workflow](surface-workflow.md), [ADR-A32](decisions/ADR-A32-surface-revision-lifecycle-and-release-candidates.md) | In progress |
 | Surface authoring UI | `apps/surface-contract-studio` | [Surface Contract Studio](surface-contract-studio.md), `contracts/openapi/surface-workflow.openapi.json`, [ADR-A38](decisions/ADR-A38-surface-output-publication-and-studio-authoring-boundary.md) | Fixture-backed, awaiting HTTP adapter validation |

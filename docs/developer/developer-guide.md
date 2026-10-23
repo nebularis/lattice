@@ -38,10 +38,33 @@ record of what actually needs to run and in what order, and CI runs the exact sa
 
 ```bash
 mise install            # pin the toolchain versions mise.toml declares (Java, Python, Node, Erlang, Elixir)
-mise run bootstrap       # install every package's dependencies
+mise run bootstrap       # install every package's dependencies, and the git hooks
 mise run check           # run every validation task
 mise tasks               # list every task mise.toml declares, with its description
 ```
+
+### Git hooks
+
+`mise run bootstrap` installs two git hooks, `pre-commit` and `pre-merge-commit` ([ADR-A133](../architecture/decisions/ADR-A133-git-hooks.md)). They live in the repository's shared hooks directory, so one install covers the main checkout and every worktree. `mise run hooks:install` installs them alone. It never replaces a hook it did not write: it stops and says how to add the dispatcher to yours, and under bootstrap it warns and carries on.
+
+**At a commit**, the hook runs only the checks the staged files touch, and each judges only those files, so debt elsewhere in the tree never blocks you:
+
+| You stage | The hook checks |
+|---|---|
+| anything | your personal deny-list (`check:deny-terms`) |
+| a layer's README or a file it generates | that they agree, as the literate check does (§3) |
+| `AGENTS.md`, a skill, the plugin listing or the catalogue | the agent guidance and its Copilot copy (§8) |
+| an ontology file, a module or a tool package | the repository catalogue and the import guard |
+| Markdown | its links, and the writing rules on the lines you added: no semicolon in prose, no "this document" in a literate README. A hard-wrapped line and a citation of an unpublished decision only warn |
+| a theory, a reference or the site's sources | formal freshness (§4) and the site's section copies |
+
+A commit that touches none of these runs the deny-list alone, in well under a second. A typical commit takes a few seconds. If a check's tool cannot run, for example after a dependency change, it warns and asks for `mise run bootstrap`.
+
+**At a merge into `main`** (a clean merge, or a commit on `main` while a merge or a squash is in progress) the same checks run over every file the merge brings, all blocking, together with the published-decisions check over the whole tree and ontology versioning, since the merge is where the release moves. CI is manual (§6), so before merging on GitHub run `mise run hooks:merge`, which runs this gate for the current branch by hand.
+
+**No hook runs at a push**, so a branch, and a cloud agent's work, always reaches the maintainer.
+
+**Running and skipping.** `mise run hooks:run` runs the commit checks over what is staged without committing. `LATTICE_HOOKS_SKIP=links,writing git commit …` skips named checks, and `git commit --no-verify` skips every check. Record a skip, and why, in the slice's Validation Pack. The hooks are a floor: `mise run check` remains the full gate. `mise run check:hooks` tests the dispatcher (`tools/hooks.py`) and the writing rules (`tools/writing_rules.py`).
 
 ### Task families
 
@@ -221,6 +244,8 @@ Alloy) each install a full native toolchain from scratch, making them slower and
 fragile than everything else — kept out of the main `platform.yml` run so a toolchain hiccup there
 never blocks the rest of CI.
 
+While CI stays manual, the merge gate is local: the `pre-merge-commit` hook, or `mise run hooks:merge` before a merge on GitHub (§2, Git hooks).
+
 ## 7. Validation packs and the Epic Decomposition Model
 
 Any unit of work beyond a small fix follows the model in the [lattice-lifecycle skill](../../.claude/skills/lattice-lifecycle/SKILL.md) and
@@ -242,7 +267,10 @@ is generated from `AGENTS.md`, never edited by hand.
 | `check:agent-guidance` | checks that table is current, that file, every skill's name and description, `AGENTS.md`'s skill table, the plugin marketplace and every link (in `check`) |
 | `skills:link` | links the skills into `~/.copilot/skills/` for Copilot in other projects, copying on Windows |
 | `check:deny-terms` | checks staged changes against your personal, never published, list of terms (skill `lattice-publication-hygiene`) |
-| `hooks:install` | adds an opt-in pre-commit hook running `check:deny-terms` |
+| `hooks:install` | installs the git hooks into the shared hooks directory, covering every worktree. `bootstrap` runs it (ADR-A133) |
+| `hooks:run` | runs the commit checks over what is staged, as the commit hook does |
+| `hooks:merge` | runs the merge checks for the current branch against `main`, for example before merging on GitHub |
+| `check:hooks` | tests the hooks dispatcher and the writing rules |
 
 Claude Code users elsewhere install the skills with `/plugin marketplace add nebularis/lattice` and
 `/plugin install lattice@nebularis`. Do not install the plugin inside this repository, where the

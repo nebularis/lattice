@@ -34,7 +34,7 @@ becomes of it, is to be decided.
 
 ## Amendment status: superseded in part by ADR-A77
 
-ADR-A77 supersedes AM-05's additive-only repository-topology rule and its prohibition on moving root ontology layers. The replacement is the [Repository Topology and Documentation Governance Plan](../developer/plans/repository-topology-and-documentation-governance.md): semantic assets move below `ontology/`, executable MORK and SPC implementations move below `tools/`, and `workers/` remains a top-level deployable runtime package.
+ADR-A77 supersedes AM-05's additive-only repository-topology rule and its prohibition on moving root ontology layers. The replacement is the [Repository Topology and Documentation Governance Plan](../../architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md): semantic assets move below `ontology/`, executable MORK and SPC implementations move below `tools/`, and `workers/` remains a top-level deployable runtime package.
 
 The toolchain corrections in AM-04 remain in force. `mise` remains the sole orchestration entry point, and Maven, Yarn 4, Python project tooling, and Mix remain dependency authorities. ADR-A77 also replaces the former path-migration policy with the approved relocation manifest and documentation-lifecycle requirements.
 

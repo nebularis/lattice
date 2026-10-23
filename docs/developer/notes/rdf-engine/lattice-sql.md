@@ -1,16 +1,6 @@
 # Compiling LATTICE to a relational model
 
-**Technology exploration, 2026-10-03.** The fifth paper in the series. Papers 1 to 3
-([rdf-datalog-engine-technology-exploration.md](rdf-datalog-engine-technology-exploration.md),
-[compiled-persistence-physical-planning.md](compiled-persistence-physical-planning.md),
-[engine-build-versus-adopt.md](engine-build-versus-adopt.md)) asked how to run LATTICE faster on an
-RDF engine. Paper 4,
-[workload-modeling-and-robustness-testing-strategy.md](workload-modeling-and-robustness-testing-strategy.md),
-found that throughput is not the risk, and its §19 already moved one computation (tower gap
-analysis) out of RDF into PostgreSQL range types. This paper asks the general version of that move:
-what it would cost, and what it would gain, to compile a domain ontology plus the full LATTICE stack
-into a relational schema, integrity constraints and stored procedures that run inside an ordinary
-SQL database.
+**Technology exploration, 2026-10-03.** The fifth paper in the series. Papers 1 to 3 ([rdf-datalog-engine-technology-exploration.md](lock-free-rdf-store.md), [compiled-persistence-physical-planning.md](compiled-persistence-profiles.md), [engine-build-versus-adopt.md](build-adopt-engine.md)) asked how to run LATTICE faster on an RDF engine. Paper 4, [workload-modeling-and-robustness-testing-strategy.md](workload-modelling.md), found that throughput is not the risk, and its §19 already moved one computation (tower gap analysis) out of RDF into PostgreSQL range types. This paper asks the general version of that move: what it would cost, and what it would gain, to compile a domain ontology plus the full LATTICE stack into a relational schema, integrity constraints and stored procedures that run inside an ordinary SQL database.
 
 Grading as before. **Fact** means a cited source says so. **Judgement** means a reasoned position
 that a prototype or measurement could overturn. *(verify)* marks details from memory that must be

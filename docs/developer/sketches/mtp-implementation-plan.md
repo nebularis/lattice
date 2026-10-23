@@ -2,10 +2,7 @@
 
 # MORK Teaching Pack (MTP): Implementation Plan
 
-Date: 2026-09-20
-Status: Implementation in progress. Structural scaffold authored, generated pack and validation pending a working environment.
-Owner: MORK maintainers
-Decision class: Build roadmap (implements [LLM Training.md](LLM%20Training.md), [MTP-L0 Generator Sketch](MTP-L0%20Generator%20Sketch), [MTP L2 Generator Sketch.md](MTP%20L2%20Generator%20Sketch.md))
+Date: 2026-09-20 Status: Implementation in progress. Structural scaffold authored, generated pack and validation pending a working environment. Owner: MORK maintainers Decision class: Build roadmap (implements [LLM Training.md](llm-training.md), [MTP-L0 Generator Sketch](MTP-L0%20Generator%20Sketch), [MTP L2 Generator Sketch.md](MTP%20L2%20Generator%20Sketch.md))
 
 ---
 
@@ -17,7 +14,7 @@ The three source documents already agree with each other almost everywhere they 
 
 **Backend-dependent model-quality evaluation is explicitly out of scope for this plan.** A separate effort is designing a configurable interface to different LLM backends, and the eval harness for *model output quality* depends on that interface existing. §2.2 draws the line precisely: structural verification that generated MCN decodes, lints, validates, round-trips, remains pinned, and fits its budget is required infrastructure; scoring what a model produces from a prompt is the deferred part.
 
-> **Repository integration update, 2026-09-20:** this plan follows the repository delivery model introduced by the broader Surface and MORK programme. `mise` selects toolchains and runs repository tasks. Python, Maven, Yarn, and Mix remain dependency authorities. Work is authoring complete only when source, contracts, fixtures, tests, CI wiring, ADRs, architecture documentation, and a validation handoff are present. It is validated complete only after a network-enabled environment records command results. See [the consolidated implementation handover](../../../docs/developer/status/implementation-handover.md), [the toolchain guide](../../../docs/developer/toolchain.md), and [the offline handoff procedure](../../../docs/developer/status/offline-phase-handoff.md).
+> **Repository integration update, 2026-09-20:** this plan follows the repository delivery model introduced by the broader Surface and MORK programme. `mise` selects toolchains and runs repository tasks. Python, Maven, Yarn, and Mix remain dependency authorities. Work is authoring complete only when source, contracts, fixtures, tests, CI wiring, ADRs, architecture documentation, and a validation handoff are present. It is validated complete only after a network-enabled environment records command results. See [the consolidated implementation handover](implementation-handover.md), [the toolchain guide](../developer-guide.md), and the offline handoff procedure.
 
 ## 1.1 Repository delivery and documentation rules
 
@@ -75,8 +72,8 @@ MTP model-quality evaluation remains deferred to the backend-interface effort. S
 | Decoder test suite (337 tests, incl. round-trip proofs for `loan_mapping.ttl`/`UncertainMappings.ttl`) | **Built** | [tools/mork/src/test_mcn_decoder.py](../../../tools/mork/src/test_mcn_decoder.py) |
 | MCN encoder (spec §15, RDF → MCN) | **Not built** | — |
 | MTP package scaffold, CLI, facts, MCN adapter, corpus, partition, mutation, cassette, lens, routing, pin, and budget surfaces | **Authored, unvalidated** | [tools/mork/src/mtp](../../../tools/mork/src/mtp) |
-| Curated starter doctrine, partition, lenses, cassettes, routing, and configuration | **Authored, unvalidated** | [ontology/mork/mtp/data](../mtp/data) |
-| Generated teaching pack | **Not generated in this restricted environment** | [ontology/mork/mtp/out](../mtp/out) |
+| Curated starter doctrine, partition, lenses, cassettes, routing, and configuration | **Authored, unvalidated** | `ontology/mork/mtp/data` |
+| Generated teaching pack | **Not generated in this restricted environment** | `ontology/mork/mtp/out` |
 
 This matters for sequencing: the L0/L2 sketches were written assuming a decoder might not exist yet (hence `NullTool` and `"provisional": true`). It exists now. `NullTool` is retained only for the one thing still genuinely absent — `encode()`. The authored MTP scaffold uses real decoder and codebook interfaces, but its generated pack, pin file, cassette fidelity report, mutation matrix, and CI results remain unvalidated until a working environment runs the command matrix in the MTP handoff.
 
@@ -507,7 +504,7 @@ Phases 0–2 have no dependency on each other's outputs beyond Phase 0's shared 
 
 Immediate next actions:
 
-1. Read the [consolidated repository handover](../../../docs/developer/status/implementation-handover.md), [toolchain guide](../../../docs/developer/toolchain.md), [implementation map](../../../docs/architecture/implementation-map.md), and the [MORK ADR catalogue](../../../docs/architecture/decisions/README.md) before adding MTP code.
+1. Read the [consolidated repository handover](implementation-handover.md), [toolchain guide](../developer-guide.md), [implementation map](../../../docs/architecture/implementation-map.md), and the [MORK ADR catalogue](../../../docs/architecture/decisions/README.md) before adding MTP code.
 2. Create the Phase 0 MTP ADR, architecture guide, and validation handoff alongside the `tools/mork/src/mtp/` scaffold and `ontology/mork/mtp/data/config.yaml`.
 3. Add scoped `mise` and CI wiring only when the first importable MTP command exists. Do not claim that `mise run check:mtp` passed until the network-enabled validation environment has installed dependencies.
 4. Build `mtp/facts.py`, `mtp/ce.py`, and `mtp/mcnio.py` against the live MORK sources. Keep decoder and codebook changes out of scope unless a separately documented interface gap is discovered.
@@ -523,4 +520,4 @@ Immediate next actions:
 - Phase 7 is recorded as an explicit stub with its dependency on the backend-interface effort stated, not silently dropped or half-started.
 - No change made to `mcn_decoder.py` or `mcn_codebook.py` in the course of this work beyond what already exists (§6) — if Phase 0 or 1 discovers a genuine gap in that interface, it is raised as its own decision, not patched in passing.
 - Each implemented MTP phase has an ADR where it establishes a durable boundary, an architecture guide, a developer handoff, structural tests, CI wiring, and explicit authoring-complete versus validated-complete status.
-- The final MTP handover is linked from [docs/developer/status/implementation-handover.md](../../../docs/developer/status/implementation-handover.md) and identifies Phase 7's dependency on the LLM backend interface.
+- The final MTP handover is linked from [docs/developer/status/implementation-handover.md](implementation-handover.md) and identifies Phase 7's dependency on the LLM backend interface.

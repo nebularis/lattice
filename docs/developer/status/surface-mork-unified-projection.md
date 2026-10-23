@@ -135,7 +135,7 @@ The Surface-MORK Unified Projection program adopts one top-level authoring model
 - Shared conformance manifest with three explicit Surface cases
 - Surface-to-source parity verification (`surface/parity.py`)
 - Compiler tests + ontology/governance SHACL + generated Eligibility SHACL integrated
-- CI workflow established ([`.github/workflows/phase8-conformance.yml`](../../.github/workflows/phase8-conformance.yml))
+- CI workflow established ([`.github/workflows/phase8-conformance.yml`](../../../.github/workflows/phase8-conformance.yml))
 - 16 parity comparisons passing (Index, multi-hop promotion, crosswalk)
 
 **Code:** `tools/surface/src/surface/parity.py`, `tools/phase8_conformance.py`  

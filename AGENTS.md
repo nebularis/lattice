@@ -20,6 +20,7 @@ along the way.
   command.
 - **Pause for design decisions.** Do not make an architecture or modelling decision alone. Present
   the options and their consequences (skill `lattice-design`) and wait for the answer.
+- **The git hooks are a floor, never a ceiling.** `mise run bootstrap` installs them ([ADR-A133](docs/architecture/decisions/ADR-A133-git-hooks.md)). They run the checks a commit, or a merge into `main`, touches, and never block a push. Never bypass one (`--no-verify`, `LATTICE_HOOKS_SKIP`) without recording which and why in the slice's Validation Pack, and never report a passing hook as a passing `mise run check`.
 - **Never commit, merge, tag or push** without the maintainer's go-ahead. Release tags are always the
   maintainer's to create. Do not mark an ADR Accepted yourself.
 - **End a "what next" report** with 🔴 PLAN FIRST when something must be decided first, or

@@ -50,11 +50,7 @@ which is never published. It reads the first of these that exists, and passes wh
 2. `${XDG_CONFIG_HOME:-~/.config}/lattice/deny-terms` on macOS and Linux
 3. `%APPDATA%\lattice\deny-terms` on Windows
 
-The file holds one case-insensitive regular expression per line, with `#` for comments. A line
-starting `!` names a path glob to skip, for a file where a term is legitimate. By default the check
-reads only the lines being committed (`git diff --cached`), and `--all` scans the tracked tree. A
-finding names the file, the line and the pattern's line number in the list, never the pattern.
-`mise run hooks:install` adds an optional pre-commit hook that runs it.
+The file holds one case-insensitive regular expression per line, with `#` for comments. A line starting `!` names a path glob to skip, for a file where a term is legitimate. By default the check reads only the lines being committed (`git diff --cached`), and `--all` scans the tracked tree. A finding names the file, the line and the pattern's line number in the list, never the pattern. It is one of the checks the commit hook runs, which `mise run bootstrap` installs (ADR-A133, skill `lattice-toolchain`).
 
 ## The private overlay
 

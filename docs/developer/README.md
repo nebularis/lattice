@@ -24,11 +24,11 @@ Plans change only when planned work changes. Status changes after every material
 
 | Unit | Plan | Status | Review |
 |---|---|---|---|
-| `repository-topology-a77` | [plan](plans/repository-topology-and-documentation-governance.md) | [status](status/repository-topology-a77.md) | [review](review/repository-topology-a77-review.md) |
+| `repository-topology-a77` | [plan](../architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md) | [status](status/repository-topology-a77.md) | [review](review/repository-topology-a77-review.md) |
 | `lattice-platform-development` | [plan](plans/lattice-platform-agentic-development-v0.2.md) | [status](status/platform-continuation.md) | [review](review/platform-continuation-review.md) |
-| `ontology-root-relocation` | [plan](plans/repository-topology-and-documentation-governance.md) | [status](status/ontology-root-relocation.md) | [review](review/ontology-root-relocation-review.md) |
-| `mork-package-split` | [plan](plans/repository-topology-and-documentation-governance.md) | [status](status/mork-package-split.md) | — |
-| `spc-package-split` | [plan](plans/repository-topology-and-documentation-governance.md) | [status](status/spc-package-split.md) | — |
+| `ontology-root-relocation` | [plan](../architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md) | [status](status/ontology-root-relocation.md) | [review](review/ontology-root-relocation-review.md) |
+| `mork-package-split` | [plan](../architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md) | [status](status/mork-package-split.md) | — |
+| `spc-package-split` | [plan](../architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md) | [status](status/spc-package-split.md) | — |
 | `applied-insurance-reference` | [epic](plans/applied-insurance-reference.md), [lanes](plans/applied-insurance-reference-lanes.md) | [status](status/applied-insurance-reference.md) | Phase 0 review closed |
 
 ## Architecture Decisions

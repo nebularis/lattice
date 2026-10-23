@@ -430,7 +430,7 @@ Surface validation requires:
 - **Status (tracking):** [surface-mork-unified-projection.md](../status/surface-mork-unified-projection.md)
 - **Outstanding items:** [surface-outstanding-items.md](../status/surface-outstanding-items.md)
 - **ADRs:** A16 (mechanism), A17 (authoring model), A18 (lowering), A19 (compiler), A20 (semantics), A21 (composition), A22–A28 (MORK/governance/conformance)
-- **Code:** [tools/surface/](../../tools/surface/) (61/61 tests passing), [ontology/surface/](../../ontology/surface/) (vocab, shapes, examples)
+- **Code:** [tools/surface/](../../../tools/surface) (61/61 tests passing), [ontology/surface/](../../../ontology/surface) (vocab, shapes, examples)
 
 ---
 

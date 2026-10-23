@@ -16,7 +16,7 @@ Phases 0–6 are authoring complete and their validation has begun in a network-
 - Current phase handoffs: [phase-0-1](phase-0-1-handoff.md), [phase-2](phase-2-handoff.md), [phase-3](phase-3-handoff.md), [phase-4](phase-4-handoff.md), [phase-5](phase-5-handoff.md), [phase-6](phase-6-handoff.md)
 - Live status: [Platform Continuation Status](platform-continuation.md)
 - Acceptance records: [repository-topology-a77](repository-topology-a77.md), [ontology-root-relocation](ontology-root-relocation.md), [mork-package-split](mork-package-split.md), [spc-package-split](spc-package-split.md)
-- Completed work: [mtp-implementation-plan](mtp-implementation-plan.md) (implemented and validated), [eligibility-compiler](eligibility-compiler.md) (implemented, awaiting validation)
+- Completed work: [mtp-implementation-plan](../sketches/mtp-implementation-plan.md) (implemented and validated), [eligibility-compiler](eligibility-compiler.md) (implemented, awaiting validation)
 
 ## What it contained
 
