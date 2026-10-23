@@ -65,7 +65,7 @@ ex:seat-licence a ldg:AccountDefinition ;
 
 # ==== Position 1: the two sites draw independently ===========================
 
-ex:london-draw-proposal a fnd:Identified ; rdfs:comment "London's draw of 120 seats." .
+ex:london-draw-proposal rdfs:comment "London's draw of 120 seats." .
 ex:london-draw-grant a ldg:Grant ;
     ldg:forProposal ex:london-draw-proposal ;
     ldg:requestedValue "120"^^xsd:decimal ; ldg:grantedValue "120"^^xsd:decimal .
@@ -84,7 +84,7 @@ ex:london-balance-1 a ldg:BalanceRecord ;
     ldg:remainingValue "380"^^xsd:decimal ; ldg:availableValue "380"^^xsd:decimal ;
     prov:wasDerivedFrom ex:london-draw-posting .
 
-ex:porto-draw-proposal a fnd:Identified ; rdfs:comment "Porto's draw of 80 seats." .
+ex:porto-draw-proposal rdfs:comment "Porto's draw of 80 seats." .
 ex:porto-draw-grant a ldg:Grant ;
     ldg:forProposal ex:porto-draw-proposal ;
     ldg:requestedValue "80"^^xsd:decimal ; ldg:grantedValue "80"^^xsd:decimal .

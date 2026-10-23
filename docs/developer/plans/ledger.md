@@ -129,7 +129,7 @@ no term of Party, Eligibility, Wording, Instrument or Behaviour (LG-4). Owners a
 
 | Term | Kind | Domain, range, cardinality | Meaning |
 |---|---|---|---|
-| `ldg:AccountDefinition` | class | ⊑ `fnd:Identified` | an amount consumed and restored, as the terms state it |
+| `ldg:AccountDefinition` | class | none: part of the terms that state it, as `bhv:AllowanceDefinition` is | an amount consumed and restored, as the terms state it |
 | `ldg:statedAmount` | object property | AccountDefinition to `qnt:Quantity`, exactly 1 | the amount when fresh |
 | `ldg:unitOfAccount` | object property | AccountDefinition to `qnt:ValueSpace`, exactly 1 | the value space every posting on it is in |
 | `ldg:partOf` | object property | AccountDefinition to AccountDefinition, at most 1 | "part of and not in addition to". Absent means in addition to every other account |
@@ -160,7 +160,7 @@ concepts:
 | `ldg:Posting` | class | ⊑ `fnd:DerivedArtefact` | one draw or credit on one account |
 | `ldg:BalanceRecord` | class | ⊑ `fnd:DerivedArtefact` | an account's remaining balance and availability at a position |
 | `ldg:MergeRecord` | class | ⊑ `fnd:DerivedArtefact` | the merge of several proposals at one account and position |
-| `ldg:Grant` | class | ⊑ `fnd:Identified` | one proposal's request and what the merge granted it |
+| `ldg:Grant` | class | none: part of its merge record | one proposal's request and what the merge granted it |
 | `ldg:onAccount` | object property | Posting, BalanceRecord, MergeRecord to AccountDefinition, exactly 1 | the account's definition |
 | `ldg:forOwner` | object property | the same, to `fnd:PersistentIdentity`, exactly 1 | the account's owner |
 | `ldg:accountKey` | object property | the same, to `skos:Concept` or `qnt:Value`, at most 1 | the key, for a keyed account |
@@ -174,7 +174,7 @@ concepts:
 | `ldg:grant` | object property | MergeRecord to Grant, at least 2 | the proposals merged |
 | `ldg:requestedValue`, `ldg:grantedValue` | datatype properties | Grant to `xsd:decimal`, exactly 1 each | in the account's unit, after rounding |
 | `ldg:grantedProportion` | datatype property | Grant to the rational form LG-2's probe chooses, at most 1 | exact, for a proportional merge |
-| `ldg:forProposal` | object property | Grant to `fnd:Identified`, exactly 1 | the evaluation that proposed it, named by the layer above |
+| `ldg:forProposal` | object property | Grant to the evaluation that proposed it, exactly 1, with no range, since the layer above names it (LG-4) | the evaluation that proposed it, named by the layer above |
 | `ldg:refusalReason` | object property | MergeRecord to `skos:Concept`, at most 1 | under `ldg:Refuse`, why nothing was granted |
 
 Every record's read set is `prov:wasDerivedFrom`. Natural keys follow ADR-A114: a posting by

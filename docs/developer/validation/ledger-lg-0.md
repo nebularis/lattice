@@ -76,6 +76,8 @@ instrument-relations sketch), but `fnd:Identified` does not yet exist in `ontolo
 examples use it as a forward reference, as LG-0 is examples only. Whoever builds LG-1 (or Foundation
 first) needs to add it.
 
+**Resolved 2026-10-23:** the maintainer dropped `fnd:Identified` everywhere. These terms are plain classes, parts of their owners, and the examples' proposals carry no type.
+
 **A modelling choice for the maintainer:** `insurance-aggregate.ttl`'s reinstatement (position 4)
 restores the aggregate alone and does not credit the reinstatement pool, on the reading that the
 pool's balance measures total capacity ever available across the original cover and the

@@ -148,7 +148,7 @@ Instrument gains a relation class and widens its gates.
 
 | Change | Detail |
 |---|---|
-| `ins:InstrumentRelation` | a reified relation, `⊑ fnd:Identified ⊓ fnd:TemporallyScoped`, with kinds K1 to K5 as a vocabulary, its instruments by role (`ins:relatesFrom`, `ins:relatesTo`), and properties per kind |
+| `ins:InstrumentRelation` | a reified relation, `⊑ fnd:TemporallyScoped`, with kinds K1 to K5 as a vocabulary, its instruments by role (`ins:relatesFrom`, `ins:relatesTo`), and properties per kind |
 | qualified gates (HQ-2) | a gate may name a subject other than its own instrument: the related instrument's regime, through a relation |
 | portions and shares (HQ-7, HQ-12) | a portion relation between an order and the instruments placed on it, and share composition as a law |
 | single agreement (K5) | a master's sections, or a relation that makes children one agreement for stated purposes |

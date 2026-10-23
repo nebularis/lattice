@@ -28,7 +28,7 @@ Ten files written under `ontology/ledger/examples/`, one per row of LG-0's table
 `revolving-facility.ttl`, `research-grant.ttl`, `authority-aggregate.ttl`, `insurance-aggregate.ttl`,
 and the five refusals (`refusal-cycle.ttl`, `refusal-unit.ttl`, `refusal-overdraw.ttl`,
 `refusal-proportional-unrounded.ttl`, `refusal-intensive-unit.ttl`). Full detail, including what
-passed, what is hand-checked only, and two points for the maintainer (a gap in `fnd:Identified` and
+passed, what is hand-checked only, and two points for the maintainer (a gap in `fnd:Identified`, since resolved, and
 a modelling choice in the reinstatement example), is in the [LG-0 Validation Pack](../validation/ledger-lg-0.md)'s
 Handoff section.
 
@@ -40,8 +40,9 @@ to the maintainer rather than retried.
 **Gap found, cross-cutting:** the plan's vocabulary tables for Ledger (`ldg:AccountDefinition`,
 `ldg:Grant`) and for Ensemble (`ens:Membership`, `ens:Relation`, `ens:Endpoint`) and the
 instrument-relations sketch (`ins:InstrumentRelation`) all declare terms `⊑ fnd:Identified`, a class
-that does not yet exist in `ontology/foundation`. Someone needs to add it to Foundation, with its own
-bump, before any of these slices' specs can be written.
+that does not yet exist in `ontology/foundation`.
+
+**Resolved 2026-10-23:** the maintainer decided to drop `fnd:Identified` everywhere rather than add a class to Foundation. A named node already has a stable identity, its IRI. Account definitions, grants, memberships and endpoints are parts of their owners, plain classes as `ins:Term` and `bhv:AllowanceDefinition` are, and `ens:Relation` is only `fnd:TemporallyScoped`. The plans, the relations sketch, Ledger's README and six examples were corrected the same day.
 
 **Next action:** the maintainer reviews LG-0 and LG-1 (see below), publishes ADR-A131 (and ideally
 ADR-A01's 2026-10-19 addendum), and creates the pending release tags. If accepted, LG-2 (runtime

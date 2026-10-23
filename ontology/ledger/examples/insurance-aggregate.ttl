@@ -103,7 +103,7 @@ ex:flood-aggregate a ldg:AccountDefinition ;
 
 # ==== Position 1: a flood loss on the sublimit, and the flood purpose =========
 
-ex:loss-1-proposal a fnd:Identified ; rdfs:comment "A flood loss of 700,000, paid from the sublimit." .
+ex:loss-1-proposal rdfs:comment "A flood loss of 700,000, paid from the sublimit." .
 ex:loss-1-grant a ldg:Grant ;
     ldg:forProposal ex:loss-1-proposal ;
     ldg:requestedValue "700000"^^xsd:decimal ; ldg:grantedValue "700000"^^xsd:decimal .
@@ -196,7 +196,7 @@ ex:balance-2-flood a ldg:BalanceRecord ;
 
 # ==== Position 3: a liability loss paid straight from the aggregate ==========
 
-ex:loss-3-proposal a fnd:Identified ; rdfs:comment "A liability loss of 9,600,000, not scoped to a section." .
+ex:loss-3-proposal rdfs:comment "A liability loss of 9,600,000, not scoped to a section." .
 ex:loss-3-grant a ldg:Grant ;
     ldg:forProposal ex:loss-3-proposal ;
     ldg:requestedValue "9600000"^^xsd:decimal ; ldg:grantedValue "9600000"^^xsd:decimal .

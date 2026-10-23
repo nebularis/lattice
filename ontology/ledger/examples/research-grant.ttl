@@ -66,7 +66,7 @@ ex:equipment-budget a ldg:AccountDefinition ;
 
 # ==== Position 1: staff spending ==============================================
 
-ex:staff-spend-proposal a fnd:Identified ; rdfs:comment "Staff spending of 90,000." .
+ex:staff-spend-proposal rdfs:comment "Staff spending of 90,000." .
 ex:staff-spend-grant a ldg:Grant ;
     ldg:forProposal ex:staff-spend-proposal ;
     ldg:requestedValue "90000"^^xsd:decimal ; ldg:grantedValue "90000"^^xsd:decimal .
@@ -92,7 +92,7 @@ ex:grant-balance-1 a ldg:BalanceRecord ;
 
 # ==== Position 2: equipment spending ==========================================
 
-ex:equipment-spend-proposal a fnd:Identified ; rdfs:comment "Equipment spending of 50,000." .
+ex:equipment-spend-proposal rdfs:comment "Equipment spending of 50,000." .
 ex:equipment-spend-grant a ldg:Grant ;
     ldg:forProposal ex:equipment-spend-proposal ;
     ldg:requestedValue "50000"^^xsd:decimal ; ldg:grantedValue "50000"^^xsd:decimal .

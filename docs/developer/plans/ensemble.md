@@ -111,16 +111,16 @@ Prefix `ens:`, namespace `https://www.nebularis.org/neuro-semantic/lattice/ensem
 |---|---|---|---|
 | `ens:Ensemble` | class | ⊑ `fnd:PersistentIdentity` | a set of instruments forming one operation (decision 1) |
 | `ens:EnsembleVersion` | class | ⊑ `fnd:Version` | one version of an ensemble, naming its members |
-| `ens:Membership` | class | ⊑ `fnd:Identified` | one member of a version, by role |
+| `ens:Membership` | class | none: part of its ensemble version, as `ins:Term` is part of its instrument | one member of a version, by role |
 | `ens:hasMembership` | object property | EnsembleVersion to Membership, any | the version's members named by list |
 | `ens:member` | object property | Membership to `fnd:PersistentIdentity`, exactly 1 | an instrument's identity, or another ensemble (nesting) |
 | `ens:memberRole` | object property | Membership to `skos:Concept`, exactly 1 | the member's role, named by the applied module |
-| `ens:Relation` | class | ⊑ `fnd:Identified` ⊓ `fnd:TemporallyScoped` | a reified relation (decision 3) |
+| `ens:Relation` | class | ⊑ `fnd:TemporallyScoped` | a reified relation (decision 3) |
 | `ens:inEnsemble` | object property | Relation to Ensemble, exactly 1 | the one ensemble it belongs to |
 | `ens:relationKind` | object property | Relation to a concept in `ens:RelationKinds`, exactly 1 | K1 to K6, K8 |
 | `ens:hasEndpoint` | object property | Relation to Endpoint, at least 2 | its members by role |
 | `ens:effectStatedBy` | object property | Relation to `ins:Term`, at least 1 except K6 | the term that states its legal effect (decision 3) |
-| `ens:Endpoint` | class | ⊑ `fnd:Identified` | one member's part in a relation (decision 4) |
+| `ens:Endpoint` | class | none: part of its relation | one member's part in a relation (decision 4) |
 | `ens:endpointRole` | object property | Endpoint to a concept in `ens:EndpointRoles`, exactly 1 | its role in the kind |
 | `ens:toIdentity` | object property | Endpoint to `fnd:PersistentIdentity`, at most 1 | the default: the instrument's identity |
 | `ens:toVersion` | object property | Endpoint to `ins:Instrument`, at most 1 | one version, where the relation is to one text |

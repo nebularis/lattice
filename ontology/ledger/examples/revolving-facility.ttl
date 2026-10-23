@@ -79,7 +79,7 @@ ex:facility a ldg:AccountDefinition ;
 
 # ==== Position 1: a euro drawing, converted at the day's spot rate ============
 
-ex:draw-1-proposal a fnd:Identified ; rdfs:comment "A drawing of EUR 11,500,000." .
+ex:draw-1-proposal rdfs:comment "A drawing of EUR 11,500,000." .
 ex:q-draw-1-eur a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "11500000"^^xsd:decimal ; qnt:inUnit ex:EUR .
 ex:draw-1-grant a ldg:Grant ;
     ldg:forProposal ex:draw-1-proposal ;
@@ -118,7 +118,7 @@ ex:balance-2 a ldg:BalanceRecord ;
 # ==== Position 3: revaluation of the euros still outstanding ==================
 
 ex:q-outstanding-eur a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "6500000"^^xsd:decimal ; qnt:inUnit ex:EUR .
-ex:revaluation-proposal a fnd:Identified ;
+ex:revaluation-proposal
     rdfs:comment "A mark to market of the euros still outstanding, not a fresh drawing." .
 ex:revaluation-grant a ldg:Grant ;
     ldg:forProposal ex:revaluation-proposal ;

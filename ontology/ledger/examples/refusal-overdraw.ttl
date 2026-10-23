@@ -40,8 +40,8 @@ ex:tight-account a ldg:AccountDefinition ;
 ex:overdrawn a skos:Concept ;
     skos:prefLabel "requested more than the account's availability" .
 
-ex:proposal-1 a fnd:Identified ; rdfs:comment "Requests 60." .
-ex:proposal-2 a fnd:Identified ; rdfs:comment "Requests 70." .
+ex:proposal-1 rdfs:comment "Requests 60." .
+ex:proposal-2 rdfs:comment "Requests 70." .
 
 # No ldg:Grant exists for either proposal: under ldg:Refuse, a merge that
 # cannot grant every proposal in full grants none of them.

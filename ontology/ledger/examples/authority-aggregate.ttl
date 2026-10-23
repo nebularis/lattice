@@ -53,9 +53,9 @@ ex:delegated-aggregate a ldg:AccountDefinition ;
 
 # ==== One position, three proposals, one merge record, three postings ========
 
-ex:proposal-1 a fnd:Identified ; rdfs:comment "The first proposal, 40 units." .
-ex:proposal-2 a fnd:Identified ; rdfs:comment "The second proposal, 40 units." .
-ex:proposal-3 a fnd:Identified ; rdfs:comment "The third proposal, 40 units." .
+ex:proposal-1 rdfs:comment "The first proposal, 40 units." .
+ex:proposal-2 rdfs:comment "The second proposal, 40 units." .
+ex:proposal-3 rdfs:comment "The third proposal, 40 units." .
 
 ex:grant-1 a ldg:Grant ;
     ldg:forProposal ex:proposal-1 ;

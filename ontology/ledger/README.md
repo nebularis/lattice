@@ -138,9 +138,7 @@ classDiagram
   and 8). Its runtime terms (postings, balance records, merge records and grants) are not yet specified.
 - **No account node.** An account is identified by its definition, its owner and its key, with no node of
   its own (ADR-A131 decision 4). That identification is used only by the runtime terms.
-- **`ldg:AccountDefinition` is not yet `⊑ fnd:Identified`.** A lighter mixin than `fnd:Version`, for a
-  stable identity that is not itself versioned, would suit it, and other planned layers need the same.
-  Foundation does not yet declare one, and adding it is a change to Foundation with its own release.
+- **`ldg:AccountDefinition` is a plain class.** It is part of the terms that state it and changes only with them, as Behaviour's allowance definition is, so it needs no superclass from Foundation.
   `ldg:AccountDefinition` is a plain `owl:Class` until then. See Open Issues.
 - **All four concept schemes are declared now**, including `ldg:PostingDirections`, which only the runtime
   terms will use. A concept scheme is a freestanding declaration, independent of which class first points
@@ -604,7 +602,6 @@ Earlier versions are listed in the [ontology release register](../../docs/archit
 
 ## 13. Open Issues
 
-- **`ldg:AccountDefinition ⊑ fnd:Identified`** waits on Foundation declaring that term (§5.1).
 - **Runtime terms.** Postings, balance records, merge records and grants are not yet specified.
 - **Behaviour's use of Ledger.** Behaviour's allowance terms are to give way to accounts, with its effects
   and threshold regimes drawing on and reading them (ADR-A131 decision 7).

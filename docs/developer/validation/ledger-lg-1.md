@@ -113,6 +113,8 @@ with its time recorded.
 yet `⊑ fnd:Identified` (§5.1 of the README, Open Issues). `fnd:Identified` still does not exist in
 Foundation.
 
+**Resolved 2026-10-23:** the maintainer dropped `fnd:Identified` everywhere. These terms are plain classes, parts of their owners, and the examples' proposals carry no type.
+
 ## Results
 
 **Status: built and verified, as far as this environment and the maintainer-gated items allow. Not
