@@ -289,7 +289,7 @@ def test_h1_2_t23_every_refusal_and_warning_has_a_witness_and_only_shapes_remain
     assert report.ok, "\n".join(report.lines())
     assert {r.family for r in report.listed_gaps} <= {SHAPE}
     assert {r.family for r in report.covered} >= {REFUSAL, WARNING, AUDIT}
-    assert Rule(WARNING, "MixedReceiptModel") in report.covered  # not reachable from the shipped example
+    assert Rule(WARNING, "MixedReceiptModel") in report.covered  # reachable from the shipped example since TD-23's fix
     assert Rule(REFUSAL, "IdentityStrategyUnsupported") in report.covered
 
 

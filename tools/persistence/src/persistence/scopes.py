@@ -168,16 +168,19 @@ def matches(graph: Graph, scope: ScopeInfo, target: Target) -> bool:
 def discover_targets(graph: Graph, classes: Optional[set[URIRef]] = None) -> list[Target]:
     """Every ``Target`` the compiler should resolve a profile for.
 
-    For each class (discovered via ``dal:targetClass`` if ``classes`` is not
-    given explicitly), yields one ``Target`` per distinct ``GraphPatternScope``
+    For each class (discovered, if ``classes`` is not given explicitly, from
+    ``dal:targetClass`` and from the ``dal:coversClass`` of every
+    ``GraphPatternScope``, never of a ``dal:ReferenceData``, TD-23), yields one
+    ``Target`` per distinct ``GraphPatternScope``
     that declares ``dal:coversClass`` for it (one per deployment, sketch
     §3.4.3), plus one unscoped ``Target`` representing "this class where no
     graph-pattern deployment applies" -- which is the *only* target for a
     class with no graph-pattern deployment at all."""
+    scopes = [s for s in all_scopes(graph) if s.kind == "GraphPatternScope"]
     if classes is None:
         classes = set(graph.objects(None, DAL.targetClass))
+        classes |= {c for s in scopes for c in graph.objects(s.iri, DAL.coversClass)}
 
-    scopes = [s for s in all_scopes(graph) if s.kind == "GraphPatternScope"]
     out: list[Target] = []
     for cls in classes:
         deployments = [s.iri for s in scopes if cls in set(graph.objects(s.iri, DAL.coversClass))]

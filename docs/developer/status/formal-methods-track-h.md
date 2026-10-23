@@ -907,4 +907,10 @@ Left for the maintainer:
     sets those ids.
 - 2026-10-23: the maintainer approved the second review's follow-ups: the eight regenerated expected profiles (only `dal:requiresCas` as
   an IRI) and the three library fixtures, decisions D-74 to D-77, and the changed tests of FMH-H2-11b's "second review" section.
+- 2026-10-23: TD-23 fixed at the maintainer's request, before the merge. `discover_targets` (`persistence.scopes`) takes its classes from
+  `dal:targetClass` and from the `dal:coversClass` of every `dal:GraphPatternScope`, never of a `dal:ReferenceData`, so a class a
+  graph-pattern scope covers is compiled and the shipped example's `MixedReceiptModel` warning leaves `compile`. The strict expected failure
+  in `test_known_defects.py` passed, as designed, and moved to `test_validator.py` as an ordinary test. `test_mixed_receipt_model_is_a_warning_not_an_error`
+  no longer passes its classes in by hand, and a comment in `test_h1_2_t23` follows, both for countersignature. No expected profile changed.
+  Reverting the fix fails both tests. TD-23 is removed from the register. `check:persistence` has no expected failure left.
 
