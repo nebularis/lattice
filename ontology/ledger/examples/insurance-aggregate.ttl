@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 # Premise. Insurance, with the full tree, a limit stated in addition to the
-# aggregate, a purpose counted outside the path (LG-Q2), and a reinstatement
+# aggregate, a purpose counted outside the path, and a reinstatement
 # (ADR-A131 decision 3). The programme's annual aggregate (10,000,000) has two
 # sections, one with a sublimit. A separate limit for one class of
 # beneficiary sits beside the aggregate, "in addition to" it, so it is never

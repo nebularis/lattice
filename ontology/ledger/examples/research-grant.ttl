@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: MPL-2.0
 
 # Premise. Grants, with sub-budgets (the "part of and not in addition to"
-# tree, ADR-A131 decision 3) and a credit ceiling (decision 3, LG-Q2's
-# neighbour). A 200,000 research grant has a staff sub-budget and an
+# tree, ADR-A131 decision 3) and a credit ceiling (decision 3). A 200,000
+# research grant has a staff sub-budget and an
 # equipment sub-budget. A draw on a sub-budget also debits the grant as its
 # ancestor, in the same posting's closure. Unspent equipment funds are
 # returned, but a credit never restores an account above its stated amount
@@ -15,8 +15,8 @@
 # | staff-budget         | 120,000 | -90,000 -> 30,000         | --                             | --                                                     |  30,000 |
 # | equipment-budget     |  80,000 | --                        | -50,000 -> 30,000              | 55,000 requested, 50,000 granted (ceiling 80,000) -> 80,000 | 80,000 |
 #
-# The equipment budget's credit ceiling equals its stated amount (the default,
-# LG-Q2's table), so the 55,000 claimed as unspent is granted only the 50,000
+# The equipment budget's credit ceiling equals its stated amount (the
+# default), so the 55,000 claimed as unspent is granted only the 50,000
 # that brings it back to 80,000, never beyond.
 
 @prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .

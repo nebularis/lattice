@@ -14,9 +14,29 @@
 <https://www.nebularis.org/neuro-semantic/ledger> a owl:Ontology ;
     owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/ledger/0.19.0> ;
     owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0>, <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.19.0>, <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0> ;
-    dct:description """Ledger holds amounts that are consumed and restored, and so conserved: a limit, a commitment, a seat quota, a carbon budget. Every balance is the stated amount less what was drawn plus what was restored. That law is what makes a balance cheap to compute (a fold of postings), provable (path debit, conservation) and parallel (two phases at one position). Ledger does not hold observed values such as a price or a temperature, which are intensive and carry no such law (a condition over them is Eligibility's, and what an instrument pays is a combinator, then a draw on a Ledger account).
+    dct:description """Ledger holds amounts that can be consumed and restored, such as a limit, commitment, seat quota, carbon budget, and so on. These are represented by an \"account\", configured by how much it holds when fresh, what unit it's held in, and the rule for arbitrating several claims on it at once. Accounts form a tree by \"part of and not in addition to\", so a single draw or credit can affect several accounts at once, along one stated path.
 
-This document is the configuration half of the layer: account definitions, the tree they form by \"part of and not in addition to\", the kinds of owner an account admits, the merge rule that arbitrates several draws at one position, and the reset, key, purpose, credit ceiling and conversion a definition may state. The runtime half, postings and balance records, is a separate document (spec/ledger-runtime.ttl, not yet written).""" ;
+In order to keep a history of changes to an account, weigh several claims on it together, and let different implementations agree on a shared record, each draw or credit is recorded as a fact of its own: a claim against the account that leaves its stated amount untouched. A balance is always derived by folding an operation over those facts. Conservation then holds by construction, since no balance can disagree with the facts it is derived from. Recording a claim and applying it also become separate acts, so claims made together can be held unresolved and decided together by a stated merge rule.
+
+Separate facts require two forms of ordering. A strict before and after ensures a balance can be read 'as of' a given point, and a mark of which facts belong together ensures they can be decided as one. Wall-clock time can supply neither (since clocks on different machines do not agree closely enough to order two claims), so an evaluator assigns the order deterministically, such that any two implementations given the same inputs will assign the same order.
+
+Each fact carries a whole number placing it among the other facts on its account, called its position, and a second number for ordering facts that share a position, called its micro-position. The fact itself, containing one draw or credit with its account, owner, amount, direction and position, is referred to as a posting.
+
+This one central law then, governs balances: each is a stated amount less what has been drawn, plus what has been restored, ensuring a balance is cheap to compute, but provable across properties checkable as a closed, mechanical law.
+
+Since the effect of a posting is exactly the account plus every ancestor reached by following the ldg:partOf property upward, one fixed edge at a time, the set of accounts a draw touches is always fully enumerable (by walking one chain and checking each link), with no ambiguity about which balances a draw changes.
+
+Avoiding storing a balance also ensures that a balance agrees with its posting history by construction, with no path by which someone might set a balance to a value the postings don't justify.
+
+When disparate evaluations draw on the same account at the same position (being logically simultaneous, not \"whoever runs first\"), the model follows a fixed path, 'propose -> merge -> settle'.
+
+- Propose - each evaluation states what it requires (e.g., a requested value)
+- Merge - the account's own merge rule (priority order / proportionality / refusal) looks at the whole batch together and decides every grant in one pass, producing one merge record
+- Settle - each evaluation then posts whatever it was actually granted
+
+Because the merge step is a pure function of the complete set of proposals, the result can't depend on what order the evaluations happened to run in. No evaluation's outcome therefore, depends on the order in which the others ran, so they may run in parallel. Given exact arithmetic in the account's unit, the account's stated rounding and residual rules, and ties broken by an order defined on the data rather than on arrival, two conforming implementations reach the same grants in any execution order, and the same bytes once their records are written in canonical form. Conformance cases check this.
+
+Ledger accounts do not hold observed values such as prices or temperatures, which are intensive and carry no such law.""" ;
     dct:creator <https://github.com/hyperthunk> .
 
 dct:creator a owl:AnnotationProperty .
@@ -36,7 +56,7 @@ ldg:admitsOwnerKind a owl:ObjectProperty ;
 
 ldg:conversionMethod a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:comment "How a draw in another value space than the account's is converted." ;
-    fnd:utility "States the standing conversion arrangement for a draw made in a different value space from the account's own (a sterling commitment drawn in euros). A specific posting's own conversion context, which may differ by date, is the runtime document's ldg:conversionUsed (LG-2)." ;
+    fnd:utility "States the standing conversion arrangement for a draw made in a different value space from the account's own (a sterling commitment drawn in euros). The conversion context a specific draw used, which may differ by date, is recorded with that draw." ;
     rdfs:domain ldg:AccountDefinition ;
     rdfs:range qnt:ConversionContext .
 

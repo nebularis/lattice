@@ -4,7 +4,7 @@
 # parent. A pound-denominated sublimit cannot be part of a dollar-denominated
 # section, since a draw on the child would debit the parent in an
 # incomparable unit. Refused by the shape requiring a child's unit of account
-# to equal its parent's (LG-1).
+# to equal its parent's.
 
 @prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
 @prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .

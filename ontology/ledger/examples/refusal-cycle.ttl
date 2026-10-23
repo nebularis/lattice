@@ -3,7 +3,7 @@
 # Premise. Refused: two account definitions each ldg:partOf the other. A tree
 # has no cycle, so a definition can never be its own ancestor through any
 # chain of partOf edges. Refused by the no-cycle shape over ldg:partOf
-# (LG-1, SHACL-SPARQL per ADR-A128, following a cycle through the property
+# (SHACL-SPARQL per ADR-A128, following a cycle through the property
 # rather than one hop).
 
 @prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .

@@ -9,18 +9,29 @@ Literate specification for the Ledger layer, in the layout of
 
 ## 1. Purpose and Scope
 
-Ledger holds amounts that are consumed and restored, and so conserved: a limit, a commitment, a seat
-quota, a carbon budget. Every balance is the stated amount less what was drawn plus what was restored.
-That law is what makes a balance cheap to compute (a fold of postings), provable (path debit,
-conservation) and parallel (two phases at one position). Ledger does not hold observed values such as a
-price or a temperature, which are intensive and carry no such law (a condition over them is Eligibility's,
-and what an instrument pays is a combinator, then a draw on a Ledger account).
+Ledger holds amounts that can be consumed and restored, such as a limit, commitment, seat quota, carbon budget, and so on. These are represented by an "account", configured by how much it holds when fresh, what unit it's held in, and the rule for arbitrating several claims on it at once. Accounts form a tree by "part of and not in addition to", so a single draw or credit can affect several accounts at once, along one stated path. 
 
-This document is the configuration half of the layer: account definitions, the tree they form by "part of
-and not in addition to", the kinds of owner an account admits, the merge rule that arbitrates several draws
-at one position, and the reset, key, purpose, credit ceiling and conversion a definition may state. The
-runtime half, postings and balance records, is a separate document (`spec/ledger-runtime.ttl`, not yet
-written).
+In order to keep a history of changes to an account, weigh several claims on it together, and let different implementations agree on a shared record, each draw or credit is recorded as a fact of its own: a claim against the account that leaves its stated amount untouched. A balance is always derived by folding an operation over those facts. Conservation then holds by construction, since no balance can disagree with the facts it is derived from. Recording a claim and applying it also become separate acts, so claims made together can be held unresolved and decided together by a stated merge rule.
+
+Separate facts require two forms of ordering. A strict before and after ensures a balance can be read 'as of' a given point, and a mark of which facts belong together ensures they can be decided as one. Wall-clock time can supply neither (since clocks on different machines do not agree closely enough to order two claims), so an evaluator assigns the order deterministically, such that any two implementations given the same inputs will assign the same order.
+
+Each fact carries a whole number placing it among the other facts on its account, called its **position**, and a second number for ordering facts that share a position, called its **micro-position**. The fact itself, containing one draw or credit with its account, owner, amount, direction and position, is referred to as a **posting**.
+
+This one central law then, governs balances: each is a stated amount less what has been drawn, plus what has been restored, ensuring a balance is cheap to compute, but provable across properties checkable as a closed, mechanical law. 
+
+Since the effect of a posting is exactly the account plus every ancestor reached by following the ldg:partOf property upward, one fixed edge at a time, the set of accounts a draw touches is always fully enumerable (by walking one chain and checking each link), with no ambiguity about which balances a draw changes.
+
+Avoiding storing a balance also ensures that a balance agrees with its posting history by construction, with no path by which someone might set a balance to a value the postings don't justify.
+
+When disparate evaluations draw on the same account at the same position (being logically simultaneous, not "whoever runs first"), the model follows a fixed path, 'propose -> merge -> settle'. 
+
+1. Propose - each evaluation states what it requires (e.g., a requested value)
+2. Merge - the account's own merge rule (priority order / proportionality / refusal) looks at the whole batch together and decides every grant in one pass, producing one merge record
+3. Settle - each evaluation then posts whatever it was actually granted
+
+Because the merge step is a pure function of the complete set of proposals, the result can't depend on what order the evaluations happened to run in. No evaluation's outcome therefore, depends on the order in which the others ran, so they may run in parallel. Given exact arithmetic in the account's unit, the account's stated rounding and residual rules, and ties broken by an order defined on the data rather than on arrival, two conforming implementations reach the same grants in any execution order, and the same bytes once their records are written in canonical form. Conformance cases check this.
+
+Ledger accounts do not hold observed values such as prices or temperatures, which are intensive and carry no such law.
 
 ## 2. Namespace and Prefixes
 
@@ -72,18 +83,9 @@ shapes = ["shapes/structural.ttl", "shapes/constraints.ttl"]
 ## 4. Overview
 
 An `ldg:AccountDefinition` states an amount consumed and restored, in a unit of account that must be
-extensive (ADR-A131, "What Ledger is for"): disjoint parts add to the whole, so a draw along a path and an
-availability reading (the least remaining balance along it) both mean something. "Part of and not in
-addition to" is the parent edge, `ldg:partOf`, stated explicitly rather than inferred, so a sublimit sits
-inside a section inside an aggregate while a further limit for one class of beneficiary sits beside it,
-never drawn through it. A key dimension derives one account per key value, on the first draw that names
-it (a seat quota per site, a sublimit per borrower). A merge rule arbitrates several proposals at one
-position: in priority order, proportionally (with a rounding method and a residual allocation, since an
-exact share need not round to a whole unit of account), or by refusing the whole merge. A credit ceiling,
-defaulting to the stated amount, is how far a credit may restore a balance, which lets a reinstatement
-raise a layer's capacity above its first stated amount without inventing a second account for it. A
-purpose lets one draw debit a second account outside its path (a flood sub-aggregate, say), and a
-conversion method states how a draw in another value space is converted.
+extensive (ADR-A131, "What Ledger is for"): disjoint parts add to the whole, so a draw along a path and an availability reading (the least remaining balance along it) both mean something. "Part of and not in addition to" is the parent edge, `ldg:partOf`, stated explicitly rather than inferred, so a sublimit sits inside a section inside an aggregate while a further limit for one class of beneficiary sits beside it, never drawn through it.
+
+A key dimension derives one account per key value, on the first draw that names it (a seat quota per site, a sublimit per borrower). A merge rule arbitrates several proposals at one position: in priority order, proportionally (with a rounding method and a residual allocation, since an exact share need not round to a whole unit of account), or by refusing the whole merge. A credit ceiling, defaulting to the stated amount, is how far a credit may restore a balance, which lets a reinstatement raise a layer's capacity above its first stated amount without inventing a second account for it. A purpose lets one draw debit a second account outside its path (a flood sub-aggregate, say), and a conversion method states how a draw in another value space is converted.
 
 The class diagram below is generated from section 6.
 
@@ -131,27 +133,21 @@ classDiagram
 
 ### 5.1 Design decisions
 
-- **One class this slice.** The runtime document (postings, balance records, merge records, grants) is a
-  separate document, LG-2, not yet written. This document states only the configuration ADR-A131 decisions
-  1 to 3, 5, 6 and 8 need: the tree, owner kinds, merge rules and their parameters, reset, keys, purposes,
-  credit ceiling and conversion.
-- **No account node.** Decision 4's performance choice (an account is identified by its definition, its
-  owner and its key, with no account node of its own) belongs to the runtime document, which is where that
-  identification is actually used. This document is unaffected by it.
-- **`ldg:AccountDefinition` is not yet `⊑ fnd:Identified`.** The Ledger plan's vocabulary table, the
-  Ensemble plan and the instrument-relations sketch all declare a term `⊑ fnd:Identified`, a lighter mixin
-  than `fnd:Version` for a stable identity that is not itself versioned. `fnd:Identified` does not yet
-  exist in `ontology/foundation` (flagged at LG-0). Adding it to Foundation is a change to a different
-  layer, with its own cascade (every importer re-pins), out of proportion to this slice. `ldg:AccountDefinition`
-  is declared a plain `owl:Class` for now. See Open Issues.
-- **The vocabulary document carries all four concept schemes**, including `ldg:PostingDirections`, though
-  `ldg:direction` (the property that uses it) belongs to the runtime document, LG-2. The plan's brief
-  states the vocabulary once, for LG-0 to LG-2 together, and a `skos:Concept` scheme is a freestanding
-  declaration, independent of which document's class first points at it.
-- **The six shapes of ADR-A131's "in detail" section** (no cycle, matching units, extensive additivity, a
-  proportional rule's rounding and residual, a credit ceiling at or above the stated amount, a key
-  dimension's type) are SHACL-SPARQL, in section 7. Cardinalities are generated structural shapes from
-  section 6's Restrictions table.
+- **Configuration only, so far.** Ledger states its configuration: the tree, owner kinds, merge rules and
+  their parameters, reset, keys, purposes, credit ceiling and conversion (ADR-A131 decisions 1 to 3, 5, 6
+  and 8). Its runtime terms (postings, balance records, merge records and grants) are not yet specified.
+- **No account node.** An account is identified by its definition, its owner and its key, with no node of
+  its own (ADR-A131 decision 4). That identification is used only by the runtime terms.
+- **`ldg:AccountDefinition` is not yet `⊑ fnd:Identified`.** A lighter mixin than `fnd:Version`, for a
+  stable identity that is not itself versioned, would suit it, and other planned layers need the same.
+  Foundation does not yet declare one, and adding it is a change to Foundation with its own release.
+  `ldg:AccountDefinition` is a plain `owl:Class` until then. See Open Issues.
+- **All four concept schemes are declared now**, including `ldg:PostingDirections`, which only the runtime
+  terms will use. A concept scheme is a freestanding declaration, independent of which class first points
+  at it.
+- **Six constraints** (no cycle, matching units, extensive additivity, a proportional rule's rounding and
+  residual, a credit ceiling at or above the stated amount, a key dimension's type) are SHACL-SPARQL, in
+  section 7. Cardinalities are generated structural shapes from section 6's Restrictions table.
 
 ### 5.2 Worked reading
 
@@ -162,7 +158,7 @@ a draw on the sublimit. All four state the same unit of account, GBP, extensive,
 `qnt:Difference` capabilities. The aggregate also sits `ldg:partOf` a reinstatement pool of twice its
 amount, and states a `ldg:creditCeiling` equal to its own stated amount (the default), so a reinstatement
 credit can restore it in full without ever exceeding that ceiling. [`ontology/ledger/examples/insurance-aggregate.ttl`](examples/insurance-aggregate.ttl)
-carries this reading in full, with a hand-computed table of its postings and balances (LG-0).
+carries this reading in full, with a hand-computed table of its postings and balances.
 
 ## 6. Description Logic Encoding
 
@@ -352,8 +348,8 @@ to twice it, without a second account).
 **Definition.** How a draw in another value space than the account's is converted.
 
 **Utility.** States the standing conversion arrangement for a draw made in a different value space from
-the account's own (a sterling commitment drawn in euros). A specific posting's own conversion context,
-which may differ by date, is the runtime document's `ldg:conversionUsed` (LG-2).
+the account's own (a sterling commitment drawn in euros). The conversion context a specific draw used,
+which may differ by date, is recorded with that draw.
 
 **Domain.** `ldg:AccountDefinition`
 
@@ -368,8 +364,8 @@ None.
 ### 6.4 Individuals
 
 The merge rules, posting directions, rounding methods and residual allocations are each a `skos:Concept`
-in a scheme of its own. `ldg:PostingDirections` is used only by the runtime document (LG-2), declared here
-since the vocabulary document states all four schemes together (§5.1).
+in a scheme of its own. `ldg:PostingDirections` is used only by the runtime terms, not yet specified
+(§5.1).
 
 **Concept schemes.**
 
@@ -412,7 +408,7 @@ since the vocabulary document states all four schemes together (§5.1).
 
 ### 6.5 Disjointness and Keys
 
-None. One class is declared in this document.
+None. Ledger declares one class so far.
 
 ### 6.6 Other Axioms
 
@@ -462,16 +458,15 @@ None.
 
 ### 7.2 Constraints
 
-`shapes/constraints.ttl` holds the six SHACL-SPARQL constraints ADR-A131's "in detail" section names: no
-cycle through `ldg:partOf`, a child's unit of account equal to its parent's, a unit of account that is
-extensive with `qnt:Sum` and `qnt:Difference` capabilities, a proportional rule with a rounding method and
-a residual allocation, a credit ceiling not below the stated amount, and a key dimension that is a concept
-scheme or a value space.
+`shapes/constraints.ttl` holds six SHACL-SPARQL constraints, for no cycle through `ldg:partOf`, a child's
+unit of account equal to its parent's, a unit of account that is extensive with `qnt:Sum` and
+`qnt:Difference` capabilities, a proportional rule with a rounding method and a residual allocation, a
+credit ceiling not below the stated amount, and a key dimension that is a concept scheme or a value space.
 
 <!-- hidden: {"output-file": "shapes/constraints.ttl"}
 ```turtle-shapes
-# SHACL-SPARQL constraints for ldg:AccountDefinition, named in the Ledger
-# plan's LG-1 "in detail" section (ADR-A131 decisions 2 and 3).
+# SHACL-SPARQL constraints for ldg:AccountDefinition (ADR-A131 decisions 2
+# and 3).
 
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
@@ -574,8 +569,8 @@ ldg:KeyDimensionTypeShape a sh:NodeShape ;
 
 ## 8. Examples
 
-The examples in [`examples/`](examples/) are LG-0's: five accepted arrangements (licensing, lending,
-grants, delegated authority, insurance) and five refusals (cycle, unit mismatch, overdraw under
+The examples in [`examples/`](examples/) are five accepted arrangements (licensing, lending, grants,
+delegated authority, insurance) and five refusals (cycle, unit mismatch, overdraw under
 `ldg:Refuse`, an unrounded proportional rule, an intensive unit of account), validated against the
 structural shapes and the constraints of section 7. §5.2 walks through one of them.
 
@@ -598,23 +593,22 @@ Behaviour (ADR-A01, 2026-10-19 addendum; ADR-A131 decision 1).
 
 Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).
 
-- 0.19.0, the first release of Ledger, joining the substrate's release at its number
+- 0.18.0, the first release of Ledger, joining the substrate's release at its number
   ([ADR-A129](../../docs/architecture/decisions/ADR-A129-one-release-for-the-substrate.md),
   [ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). The configuration document:
   `ldg:AccountDefinition`, the account tree (`ldg:partOf`), owner kinds, merge rules and their rounding and
   residual parameters, reset, key dimension, purposes, credit ceiling and conversion method. The vocabulary
   document: `ldg:MergeRules`, `ldg:PostingDirections`, `ldg:RoundingMethods`, `ldg:ResidualAllocations` and
   their concepts. Structural shapes generated from section 6, and six SHACL-SPARQL constraints (§7.2). The
-  runtime document (postings, balance records, merge records, grants) is LG-2, not yet released.
+  runtime terms (postings, balance records, merge records, grants) are not yet released.
 
 ## 13. Open Issues
 
-- **`ldg:AccountDefinition ⊑ fnd:Identified`** waits on Foundation gaining that term (§5.1), which the
-  Ensemble plan and the instrument-relations sketch also need.
-- **The runtime document** (`spec/ledger-runtime.ttl`): postings, balance records, merge records and
-  grants, is LG-2.
-- **Behaviour's migration** to this layer (the allowance terms deprecated, effects and regimes retargeted)
-  is LG-3.
-- **Allocation with conservation** across several accounts by a merge rule, with examples from lending,
-  insolvency and a pool, is LG-4.
-- **A benchmark** under `benchmark/ledger/` at the volumes the plan's performance section sets out is LG-5.
+- **`ldg:AccountDefinition ⊑ fnd:Identified`** waits on Foundation declaring that term (§5.1).
+- **Runtime terms.** Postings, balance records, merge records and grants are not yet specified.
+- **Behaviour's use of Ledger.** Behaviour's allowance terms are to give way to accounts, with its effects
+  and threshold regimes drawing on and reading them (ADR-A131 decision 7).
+- **Allocation with conservation**, one amount split across several accounts by a merge rule, is not yet
+  specified.
+- **A benchmark** under `benchmark/ledger/`, at realistic volumes of accounts and draws, is not yet
+  written.

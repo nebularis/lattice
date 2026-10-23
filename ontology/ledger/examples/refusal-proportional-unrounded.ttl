@@ -5,7 +5,7 @@
 # decimal in the account's unit states exactly, so a rounding method (and a
 # residual allocation) must be stated wherever the rule is chosen. Refused by
 # the shape requiring a proportional rule to carry a rounding method and a
-# residual allocation (LG-1).
+# residual allocation.
 
 @prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
 @prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
-# SHACL-SPARQL constraints for ldg:AccountDefinition, named in the Ledger
-# plan's LG-1 "in detail" section (ADR-A131 decisions 2 and 3).
+# SHACL-SPARQL constraints for ldg:AccountDefinition (ADR-A131 decisions 2
+# and 3).
 
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .

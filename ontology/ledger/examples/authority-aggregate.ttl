@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 # Premise. Delegated authority, with a proportional merge (ADR-A131 decision
-# 6, LG-Q3, LG-Q6). An authority owns one aggregate of 100 units of delegated
+# 6). An authority owns one aggregate of 100 units of delegated
 # capacity. Three proposals, each for 40, arrive at the same position, 120 in
 # all against 100 available. The merge rule is proportional: each proposal's
 # exact share is its request scaled by availability over the total requested,

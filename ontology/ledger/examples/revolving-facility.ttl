@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 # Premise. Lending, with a drawing in another value space than the account's
-# (LG-Q8, ADR-A131 decision 3). A 20,000,000 sterling revolving facility is
+# (ADR-A131 decision 3). A 20,000,000 sterling revolving facility is
 # drawn in euros, each drawing converted at the rate recorded for its date. A
 # repayment is credited the same way. A later revaluation, at a further
 # recorded rate, restates the sterling-equivalent of the euros still

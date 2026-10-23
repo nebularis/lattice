@@ -6,7 +6,7 @@
 # two readings do not add, nothing draws on them, and nothing restores them.
 # Refused by the shape requiring a unit of account whose additivity is
 # qnt:Extensive and whose operation capabilities include qnt:Sum and
-# qnt:Difference (LG-1, "What Ledger is for").
+# qnt:Difference.
 
 @prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
 @prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .

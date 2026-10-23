@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MPL-2.0
 
-# Premise. Licensing, with seats keyed per site (LG-Q7, ADR-A131 decision 3).
+# Premise. Licensing, with seats keyed per site (ADR-A131 decision 3).
 # One account definition states the amount once, and a separate account is
 # derived for each key value the first draw against it names. A customer's
 # seat licence grants 500 seats a year at each site. London and Porto draw
@@ -15,8 +15,7 @@
 # A draw proposes and merges even with nothing to arbitrate (decision 6), so
 # each keyed account gets its own one-grant merge record. A reset credit has
 # no competing claim to arbitrate, so it is posted directly, without a merge
-# record (a modelling choice for this example, open for the maintainer to
-# revisit at LG-1).
+# record.
 
 @prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
 @prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
