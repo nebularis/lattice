@@ -33,6 +33,38 @@ aeo:ExposureSetShape a sh:NodeShape ;
               }
               FILTER (?ni != 1 || ?nu != 1 || ?nt != 1 || ?ng != 1)
             }
+        """ ] ;
+    sh:sparql [
+        sh:message "Every aeo:locatedAt of an asset the set lists must resolve to exactly one location the set lists, through fnd:hasIdentity." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            SELECT $this WHERE {
+              {
+                SELECT $this ?id (COUNT(DISTINCT ?l) AS ?n) WHERE {
+                  $this aeo:hasAsset ?a .
+                  ?a aeo:locatedAt ?id .
+                  OPTIONAL { $this aeo:hasLocation ?l . ?l fnd:hasIdentity ?id }
+                } GROUP BY $this ?id
+              }
+              FILTER (?n != 1)
+            }
+        """ ] ;
+    sh:sparql [
+        sh:message "Every aeo:valueOf of a valuation the set lists must resolve to exactly one asset or location the set lists, through fnd:hasIdentity." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            SELECT $this WHERE {
+              {
+                SELECT $this ?id (COUNT(DISTINCT ?m) AS ?n) WHERE {
+                  $this aeo:hasValuation ?v .
+                  ?v aeo:valueOf ?id .
+                  OPTIONAL { { $this aeo:hasAsset ?m } UNION { $this aeo:hasLocation ?m } ?m fnd:hasIdentity ?id }
+                } GROUP BY $this ?id
+              }
+              FILTER (?n != 1)
+            }
         """ ] .
 
 aeo:LocationShape a sh:NodeShape ;
@@ -88,6 +120,15 @@ aeo:AssetShape a sh:NodeShape ;
             SELECT $this WHERE {
               $this aeo:locatedAt ?l ; aeo:presence ?p .
             }
+        """ ] ;
+    sh:sparql [
+        sh:message "An asset's aeo:locatedAt must name an aeo:LocationIdentity, not a location version." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            SELECT $this WHERE {
+              $this aeo:locatedAt ?l .
+              FILTER NOT EXISTS { ?l a aeo:LocationIdentity }
+            }
         """ ] .
 
 aeo:InterestShape a sh:NodeShape ;
@@ -125,6 +166,16 @@ aeo:ValuationShape a sh:NodeShape ;
                 } GROUP BY $this
               }
               FILTER (?nv != 1 || ?nt != 1 || ?nb != 1)
+            }
+        """ ] ;
+    sh:sparql [
+        sh:message "A valuation's aeo:valueOf must name an aeo:AssetIdentity or an aeo:LocationIdentity, not a version." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            SELECT $this WHERE {
+              $this aeo:valueOf ?v .
+              FILTER NOT EXISTS { ?v a aeo:AssetIdentity }
+              FILTER NOT EXISTS { ?v a aeo:LocationIdentity }
             }
         """ ] ;
     sh:sparql [

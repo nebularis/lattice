@@ -15,11 +15,17 @@ from itertools import combinations
 from rdflib import RDF, RDFS, SKOS, Graph, URIRef
 
 from .functional import functional_value
-from .boundary import MissingBoundaryShapeError, walk_ownership
+from .boundary import BY_IDENTITY, PINNED, MissingBoundaryShapeError, walk_ownership
 from .capability import CapabilityCheckResult
 from .model import BoundaryConflict, CrossAxisViolation, Diagnostic, ResolvedDimension
-from .namespaces import DAL, SH
+from .namespaces import DAL, FND, SH
+from .operations import PAYLOAD_TEMPLATES
 from .scopes import Target
+
+
+def _is_versioned(graph: Graph, cls) -> bool:
+    """A subclass of ``fnd:Version`` by IRI in the loaded graphs. Foundation is not imported."""
+    return cls is not None and FND.Version in set(graph.transitive_objects(cls, RDFS.subClassOf))
 
 
 def _local(value) -> str | None:
@@ -45,9 +51,102 @@ def check_cross_axis(
 
     boundary_local = _local(boundary.value) if boundary else None
     concurrency_local = _local(concurrency.value) if concurrency else None
+    discipline = _local(_value(dimensions, "writeDiscipline"))
+    appends = discipline in ("AppendVersions", "AppendRecords")
 
-    # Row 1: NoBoundary + Optimistic with no value guard.
-    if boundary_local == "NoBoundary" and concurrency_local == "Optimistic":
+    # H2.6c, VH-Q3 and H2.6c-Q4: a class the loaded graphs make a subclass of fnd:Version, written by replace. Foundation is not
+    # imported, the class is found by its IRI. A replace deletes the version before it, which fnd:supersededBy and ADR-A67 keep.
+    if discipline == "InPlace" and _is_versioned(graph, target.cls):
+        diagnostics.append(
+            Diagnostic(
+                kind="VersionedClassWrittenInPlace",
+                severity="WARNING",
+                target=str(target),
+                message=(
+                    "this target's class is a subclass of fnd:Version and dal:writeDiscipline is dal:InPlace, so every write "
+                    "replaces the version before it and deletes it. Declare dal:AppendVersions to keep each version, or "
+                    "dal:InPlace deliberately for a working draft that is not cited (H2.6c, VH-Q3)."
+                ),
+            )
+        )
+
+    # H2.6c: appending versions has no variant for a named-graph family (a graph per version is not built), writes under a
+    # version row and so needs optimistic concurrency, and with no boundary needs a graph to hold the versions.
+    if discipline == "AppendVersions":
+        problem = None
+        if boundary_local == "NamedGraphBoundary":
+            problem = "a named-graph family would append one graph per version, which is not built"
+        elif concurrency_local != "Optimistic":
+            problem = f"the write is guarded by the identity's version row, so it needs dal:Optimistic and not dal:{concurrency_local}"
+        elif boundary_local == "NoBoundary" and (boundary is None or boundary.extra.get("dataGraph") is None):
+            problem = "a family with no boundary declares no dal:dataGraph to hold its versions, and the default graph is never written"
+        if problem is not None:
+            raise CrossAxisViolation(
+                "AppendVersionsUnsupported",
+                str(target),
+                f"dal:AppendVersions is declared, and {problem}. Use dal:CompositePropertyBoundary, or dal:NoBoundary with a "
+                "dal:dataGraph, under dal:Optimistic, or write in place.",
+            )
+
+    # H2.6f: the membership encoding. A delta is stored against the version before it, so it needs a family that appends versions,
+    # and a checkpoint interval that makes sense.
+    encoding = _local(_value(dimensions, "membershipEncoding"))
+    if encoding not in ("FullMembership", "DeltaMembership"):
+        raise CrossAxisViolation(
+            "MembershipEncodingUnknown",
+            str(target),
+            f"dal:membershipEncoding is {encoding}, and the encodings are dal:FullMembership and dal:DeltaMembership (H2.6f).",
+        )
+    if encoding == "DeltaMembership" and discipline != "AppendVersions":
+        raise CrossAxisViolation(
+            "DeltaMembershipNeedsAppendVersions",
+            str(target),
+            "dal:DeltaMembership states a version's members as changes against the version before it, which only a family that "
+            "declares dal:AppendVersions keeps. Declare dal:AppendVersions, or dal:FullMembership (H2.6f).",
+        )
+    interval = _value(dimensions, "checkpointEvery")
+    value = interval.toPython() if hasattr(interval, "toPython") else interval
+    if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+        raise CrossAxisViolation(
+            "CheckpointEveryInvalid",
+            str(target),
+            f"dal:checkpointEvery is {interval}, and it must be an integer of at least 1, the number of versions between full "
+            "lists of members (H2.6f).",
+        )
+
+    # H2.6d, VH-Q5a: a family that wants no receipt writes in place. A version or a record takes its position and its transaction time
+    # from the receipt, so an append discipline cannot do without one, and a stream (an append-only or event-grain family) is such a family.
+    ordering_local = _local(ordering.value) if ordering else None
+    if _local(receipts.value if receipts else None) == "NoReceipt" and (
+        appends or concurrency_local == "AppendOnly" or (ordering_local == "EventGrain" and concurrency_local != "Optimistic")
+    ):
+        raise CrossAxisViolation(
+            "NoReceiptWithAppendDiscipline",
+            str(target),
+            "dal:receiptModel dal:NoReceipt writes no receipt and no head, and this family appends (dal:AppendVersions, "
+            "dal:AppendRecords, an append-only concurrency or a stream), where a version or a record takes its position and its "
+            "transaction time from the receipt. Use dal:ReceiptOnly, or write in place (H2.6d, VH-Q5a).",
+        )
+
+    # H2.8c, D-9: a family that writes no receipt keeps no record of when each write took effect. A versioned class or a record class is
+    # cited for what it said at a time, so writing it with no receipt is allowed and warned.
+    if _local(receipts.value if receipts else None) == "NoReceipt" and (_is_versioned(graph, target.cls) or target.cls in record_classes(graph)):
+        diagnostics.append(
+            Diagnostic(
+                kind="NoReceiptForRecord",
+                severity="WARNING",
+                target=str(target),
+                message=(
+                    f"dal:receiptModel dal:NoReceipt writes no receipt, and {target.cls} is "
+                    f"{'versioned (a subclass of fnd:Version)' if _is_versioned(graph, target.cls) else 'a record class (dal:recordClass)'}, "
+                    "whose instances are cited for what they said at a time. With no receipt nothing records when a write took effect or "
+                    "which transaction made it. Use dal:ReceiptOnly, or dal:NoReceipt deliberately (H2.8c, D-9)."
+                ),
+            )
+        )
+
+    # Row 1: NoBoundary + Optimistic with no value guard. Appending versions guards on the version row instead.
+    if boundary_local == "NoBoundary" and concurrency_local == "Optimistic" and discipline != "AppendVersions":
         if not concurrency.extra.get("valueGuardProperty"):
             raise CrossAxisViolation(
                 "NoBoundaryConcurrencyConflict",
@@ -56,15 +155,41 @@ def check_cross_axis(
                 "there is no aggregate to whole-graph replace. Declare a dal:valueGuardProperty "
                 "for a value-based guard (guide §14.2), or declare a real boundary.",
             )
+        # The values the guard reads and writes live in one named graph, never in the default graph, whose contents differ between
+        # stores (static check S-1, H2.7-Q1, TD-43).
+        if discipline != "AppendRecords" and (boundary is None or boundary.extra.get("dataGraph") is None):
+            raise CrossAxisViolation(
+                "MissingDataGraph",
+                str(target),
+                "dal:NoBoundary combined with dal:Optimistic and a dal:valueGuardProperty declares no dal:dataGraph. The value-based "
+                "guard reads and writes the values of one named graph and never the default graph, since stores differ on what the "
+                "default graph holds. Declare dal:dataGraph on the profile.",
+            )
 
-    # Row 2: CompositePropertyBoundary + ReceiptOnly.
-    if boundary_local == "CompositePropertyBoundary" and _local(receipts.value if receipts else None) == "ReceiptOnly":
+    # Row 2: CompositePropertyBoundary + ReceiptOnly. Not for a family that appends, where the history is in the data and a patch
+    # log would repeat it (H2.6c-Q5, VH-Q5).
+    if boundary_local == "CompositePropertyBoundary" and not appends and _local(receipts.value if receipts else None) == "ReceiptOnly":
         raise CrossAxisViolation(
             "CompositeBoundaryReceiptConflict",
             str(target),
             "dal:CompositePropertyBoundary with dal:ReceiptOnly: a composite-property aggregate's "
             "write is a bounded closure sweep, not a single named-graph replace, so a receipt-only "
             "model cannot audit what changed within the closure. Require at least dal:PatchLog.",
+        )
+
+    # H2.9, D-12 (a): the receipt-only writes of a composite family were reached only through dal:SnapshotPerRevision, which no
+    # generated operation honours. They are deleted, so that model is refused on a composite family written in place until snapshots
+    # are built (TD-46).
+    if (
+        boundary_local == "CompositePropertyBoundary" and not appends and concurrency_local == "Optimistic"
+        and _local(receipts.value if receipts else None) == "SnapshotPerRevision"
+    ):
+        raise CrossAxisViolation(
+            "CompositeBoundarySnapshotNotBuilt",
+            str(target),
+            "dal:CompositePropertyBoundary with dal:SnapshotPerRevision: no generated operation writes a snapshot of the aggregate per "
+            "revision, and a composite family written in place has no write that records a receipt only. Use dal:PatchLog, or "
+            "dal:NoReceipt deliberately, until snapshots are built (TD-46).",
         )
 
     # Row 3: metaShards changed without an acknowledged epoch bump.
@@ -152,6 +277,7 @@ def check_cross_axis(
             )
         tree = boundary.extra["ownershipTree"]
         _check_tree(graph, target, boundary, tree, composite=True)
+        diagnostics += check_reference_modes(graph, target, tree)
         reachable = tree.predicates()
         for constraint in uniqueness:
             for key_prop in constraint["keyProperty"]:
@@ -169,6 +295,7 @@ def check_cross_axis(
         # A named-graph profile that names a boundary shape is checked by the same rules, since the
         # shape defines the subjects a payload may contain (ADR-A122 decision 6).
         _check_tree(graph, target, boundary, boundary.extra["ownershipTree"], composite=False)
+        diagnostics += check_reference_modes(graph, target, boundary.extra["ownershipTree"])
 
     # Last, so that a fixture written to isolate another row still reaches it. An unconditional write
     # (dal:ProvidedConcurrency or dal:LockingConcurrency, with a grain that is not event grain) names its graph from the root, so it needs a named-graph boundary. Any other
@@ -279,6 +406,24 @@ def _check_tree(graph: Graph, target: Target, boundary: ResolvedDimension, tree,
             f"the property shape for {predicate} on {owner} is a value property (sh:datatype or "
             "sh:nodeKind sh:Literal) and cannot carry dal:ownership.",
         )
+    if tree.unknown_modes:
+        owner, predicate, declared = tree.unknown_modes[0]
+        raise CrossAxisViolation(
+            "ReferenceModeUnknown",
+            str(target),
+            f"the property shape for {predicate} on {owner} declares dal:referenceMode {declared}. "
+            "Use dal:ByIdentity, or dal:Pinned on an edge to a versioned class.",
+        )
+    for edge in tree.edges:
+        # H2.6e-Q2: an edge pinned to a version needs a target that has versions. A value property has no target class.
+        if edge.reference_mode == PINNED and not _is_versioned(graph, edge.target_class):
+            raise CrossAxisViolation(
+                "PinnedReferenceToUnversionedClass",
+                str(target),
+                f"the property shape for {edge.step.predicate} on {edge.source_shape} is dal:Pinned, and its target class "
+                f"{edge.target_class} is not a subclass of fnd:Version, so there is no version to pin to. "
+                "Leave the edge dal:ByIdentity, or make the target class versioned.",
+            )
     if composite and not tree.owned_edges():
         raise CrossAxisViolation(
             "CompositeBoundaryWithoutOwnedEdges",
@@ -297,6 +442,58 @@ def _check_tree(graph: Graph, target: Target, boundary: ResolvedDimension, tree,
                     "which is reference data. Classify the edge dal:Vocabulary, or declare dal:ownsReferenceData true "
                     "on the profile if this aggregate manages that vocabulary.",
                 )
+
+
+def record_classes(graph: Graph) -> set[URIRef]:
+    """The classes whose instances are evidence of what they saw, as a configuration names them (H2.8c, D-15 (b)): every object of
+    ``dal:recordClass`` on a profile, and the classes the configuration asserts to be ``rdfs:subClassOf+`` one of them. Read beside the
+    subclasses of ``fnd:Evidence`` and ``fnd:DerivedArtefact``, for a class that is a record and is not modelled as evidence."""
+    out: set[URIRef] = set()
+    for named in graph.objects(None, DAL.recordClass):
+        if isinstance(named, URIRef):
+            out.update(c for c in graph.transitive_subjects(RDFS.subClassOf, named) if isinstance(c, URIRef))
+    return out
+
+
+def family_record_classes(graph: Graph, target: Target, tree) -> tuple:
+    """The record classes (:func:`record_classes`) a family touches, its target class and the subject class of each edge of its boundary shape,
+    in IRI order. The compiled profile states them (``dal:recordClass``), so a caller reads them without the configuration."""
+    records = record_classes(graph)
+    if not records:
+        return ()
+    touched = {target.cls}
+    if tree is not None:
+        touched.update(functional_value(graph, e.source_shape, SH.targetClass) for e in tree.node_edges())
+    return tuple(sorted(str(c) for c in touched if c in records))
+
+
+def check_reference_modes(graph: Graph, target: Target, tree) -> list[Diagnostic]:
+    """The warning of H2.6e-Q3: an edge from a class that is evidence of what it saw (a subclass of ``fnd:Evidence`` or
+    ``fnd:DerivedArtefact``, by IRI, or a record class the configuration names, H2.8c) to a versioned class, and by identity. A later
+    version of the target changes what the evidence appears to have seen. A warning, so a deliberate choice compiles."""
+    out: list[Diagnostic] = []
+    records = record_classes(graph)
+    for edge in tree.node_edges():
+        if edge.reference_mode != BY_IDENTITY or not _is_versioned(graph, edge.target_class):
+            continue
+        source_class = functional_value(graph, edge.source_shape, SH.targetClass)
+        ancestors = set(graph.transitive_objects(source_class, RDFS.subClassOf)) if source_class is not None else set()
+        if not ancestors & {FND.Evidence, FND.DerivedArtefact} and source_class not in records:
+            continue
+        out.append(
+            Diagnostic(
+                kind="EvidenceEdgeByIdentity",
+                severity="WARNING",
+                target=str(target),
+                message=(
+                    f"the property shape for {edge.step.predicate} on {edge.source_shape} is by identity, its subject class "
+                    f"{source_class} is evidence (a subclass of fnd:Evidence or fnd:DerivedArtefact, or a dal:recordClass) and its target class "
+                    f"{edge.target_class} is versioned, so the evidence names whichever version is current and not the one it saw. "
+                    "Declare dal:referenceMode dal:Pinned, or dal:ByIdentity deliberately (H2.6e)."
+                ),
+            )
+        )
+    return out
 
 
 def check_references_to_owned(graph: Graph, target: Target, boundary: ResolvedDimension) -> list[Diagnostic]:
@@ -431,21 +628,16 @@ def _check_slice_2(target: Target, dimensions: dict[str, ResolvedDimension]) -> 
                 "The declaration is recorded in the compiled profile and not yet applied.",
             ))
 
-    # TD-46: the receipt models that no template honours. A patch log names delta graphs and a snapshot copies the aggregate per
-    # revision, and no template writes either, so a profile that chooses one still records a receipt only. H1.4c: a declaration the
-    # compiler cannot honour is a warning or a refusal, never silent. CompositeBoundaryReceiptOnly still demands a patch log of a
-    # composite family, so the examples keep compiling, with this warning.
+    # TD-46: the receipt model that no template honours. A snapshot copies the aggregate per revision and no template writes one, so a
+    # profile that chooses it still records a receipt only. H1.4c: a declaration the compiler cannot honour is a warning or a refusal,
+    # never silent. dal:PatchLog is honoured by the in-place writes since H2.6d, and dal:NoReceipt is a model of its own.
     receipt_model = _local(_value(dimensions, "receiptModel"))
-    if receipt_model in ("PatchLog", "SnapshotPerRevision"):
-        what = (
-            "asserts and retracts delta graphs alongside each receipt" if receipt_model == "PatchLog"
-            else "a snapshot of the aggregate per revision"
-        )
+    if receipt_model == "SnapshotPerRevision":
         out.append(_warning(
             "ReceiptModelNotHonoured", target,
-            f"dal:receiptModel dal:{receipt_model} declares {what}, but no generated operation writes it. "
-            "The compiled profile records the declaration and the operations write a receipt only (TD-46). "
-            "Do not rely on replay, as-of reads or change capture from this profile.",
+            "dal:receiptModel dal:SnapshotPerRevision declares a snapshot of the aggregate per revision, but no generated operation "
+            "writes it. The compiled profile records the declaration and the operations write a receipt only (TD-46). "
+            "Do not rely on as-of reads from this profile.",
         ))
     return out
 
@@ -626,6 +818,77 @@ def check_identity(
                 "different IRIs for one graph, and no conformance vector can detect it.",
             ))
     return out
+
+
+def check_patch_log_written(target: Target, dimensions: dict[str, ResolvedDimension], operations) -> list[Diagnostic]:
+    """D-10 (H2.8b): a family that declares dal:PatchLog but has no generated operation that writes a patch log. Only the in-place writes of
+    an optimistic named-graph or composite family do. An append discipline, an append-only concurrency, an unconditional write and a value-guarded
+    write record a receipt at most, so the declaration is recorded and not honoured (TD-46)."""
+    if _local(_value(dimensions, "receiptModel")) != "PatchLog" or any("-patch-log" in op.template_id for op in operations):
+        return []
+    return [_warning(
+        "PatchLogNotWritten", target,
+        "dal:receiptModel dal:PatchLog declares that each change is recorded as added and retracted triples, but no generated operation of this "
+        "family writes a patch log. Only the create, replace and tombstone of an optimistic named-graph or composite family do. An append "
+        "discipline, an append-only concurrency, an unconditional write and a value-guarded write do not. The declaration is recorded in the "
+        "compiled profile and not applied.",
+    )]
+
+
+def check_payload_bound(
+    target: Target, dimensions: dict[str, ResolvedDimension], operations, *, warn: bool, graph_names: str = ""
+) -> list[Diagnostic]:
+    """H2.8b (ADR-A123 decision 6, H2-Q2): a named-graph family with a payload operation and no ``dal:boundaryShape`` has the form checks of
+    a payload and not the check that every subject belongs to the aggregate. ``INFO`` by default, ``WARNING`` under
+    ``compile --warn-unbounded-payload``."""
+    boundary = dimensions["aggregateBoundary"]
+    if not str(boundary.value).endswith("NamedGraphBoundary") or boundary.extra.get("ownershipTree") is not None:
+        return []
+    if not any(op.template_id.startswith(PAYLOAD_TEMPLATES) for op in operations):
+        return []
+    message = (
+        f"{target} is a named-graph family with payload operations and no dal:boundaryShape, so a caller can check the form of a payload and "
+        "not that every subject belongs to the aggregate. Declare a dal:boundaryShape to have the payload-check query generated."
+    )
+    if warn:
+        return [Diagnostic(kind="UnboundedPayload", severity="WARNING", target=str(target), message=message)]
+    return [Diagnostic(kind="UnboundedPayload", severity="INFO", target=str(target), message=message)]
+
+
+def check_guards_off(target: Target) -> list[Diagnostic]:
+    """H2.8b (ADR-A123, addendum of 2026-10-12): a run with the parameter guards off names the caller's obligation."""
+    return [Diagnostic(
+        kind="ParameterGuardsOff", severity="INFO", target=str(target),
+        message=(
+            "compiled with --no-parameter-guards, so no generated operation tests its parameters. The caller must check every one before "
+            "sending: each present and of its declared kind, an xsd:long exactly, a literal and not an IRI where the contract says so, and a "
+            "caller-named graph equal to the naming rule. A request that leaves out $root can write every aggregate whose version row matches. "
+            "The caller library (lattice_persistence.check) does these checks (TD-34, TD-44)."
+        ),
+    )]
+
+
+def check_no_receipt_meta_shards(compiled) -> None:
+    """D-11 (H2.8b): a dal:NoReceipt family keeps its version row in a meta graph and writes no receipt for it. The gap scan of another
+    family that shares the meta graph reads every version row there and counts receipts for it, so it reports each row of the NoReceipt family as
+    a gap. Refused, since the audit would fail on every run."""
+    by_graph: dict[str, list] = {}
+    for ct in compiled:
+        for op in ct.operations:
+            binding = next((b for b in op.bindings if b.name == "metaGraphPrefix"), None)
+            if binding is not None:
+                by_graph.setdefault(str(binding.value), []).append(ct)
+                break
+    for graph_name, targets in sorted(by_graph.items()):
+        quiet = [t for t in targets if _local(t.dimensions["receiptModel"].value) == "NoReceipt"]
+        scanned = [t for t in targets if t not in quiet and any(op.template_id.startswith("gap-scan-audit") for op in t.operations)]
+        if quiet and scanned:
+            raise CrossAxisViolation(
+                "NoReceiptSharesMetaShard", str(quiet[0].target),
+                f"the family writes no receipt (dal:NoReceipt) and shares the meta graph {graph_name} with {scanned[0].target}, whose gap scan reads every "
+                "version row of that graph and would report each row of this family as a gap. Give them different meta shards (dal:metaShards) or the "
+                "same receipt model.",
+            )
 
 
 def check_mixed_receipt_model(graph: Graph, resolved_by_target: dict[Target, dict[str, ResolvedDimension]]) -> list[Diagnostic]:

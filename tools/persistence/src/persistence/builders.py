@@ -3,24 +3,25 @@
 
 """The operation builders (formal-methods track H, slice H2.2, ADR-A123 decision 1).
 
-One builder per operation id takes the compile-time bindings of a generated operation, the same values a
-template is rendered with, and returns the typed :class:`~persistence.ir.Operation` that
-:func:`persistence.ir_render.render` turns into SPARQL. A builder is a port of one Mustache template and
-changes nothing about the query. The equivalence harness of the tests holds it to that, and the templates
-stay in use until H2.9.
+One builder per operation id takes the compile-time bindings of a generated operation and returns the typed
+:class:`~persistence.ir.Operation` that :func:`persistence.ir_render.render` turns into SPARQL. The builders are the only
+source of the generated text (H2.9 retired the Mustache templates they were ported from).
 
-The ported operations are listed in :data:`BUILDERS`. Each keeps the template's variable names, so the
-two renderings can be compared as SPARQL algebra.
+The operations are listed in :data:`BUILDERS`, keyed by the builder's identity, which is the ``dal:templateId`` of the
+compiled profile.
 """
 
 from __future__ import annotations
 
 from typing import Callable, Mapping
 
+from rdflib import URIRef
+
 from .ir import (
     A, Bind, Binding, Compare, Const, Filter, Func, Graph, GraphBlock, GraphRole, Group, Kind, NotExists, Op, Operation,
-    Optional_, Param, ParamRef, PayloadSlot, Path, Projected, RegistrySlot, RowsSlot, RowValues, Select, SubSelect, Triple, ValueGuard, Values, Var,
+    Optional_, Param, ParamRef, PayloadSlot, Path, Projected, RegistrySlot, RowsSlot, RowValues, Select, SubSelect, TermGuard, Triple, Union_, ValueGuard, Values, Var,
 )
+from .paths import Star, Step
 from .namespaces import PAT
 from .terms import Integer, Iri, Literal, PropertyPath
 
@@ -34,6 +35,7 @@ GRAPH_ROLES: dict[str, GraphRole] = {
     "txnGraph": GraphRole.TXN,
     "datasetGraph": GraphRole.DATASET,
     "dataGraph": GraphRole.DATA,
+    "payloadGraph": GraphRole.DATA,  # the caller's local copy of the payload, which is the aggregate's new state (H2.8b)
     "keysGraph": GraphRole.KEYS,
     "keyQuarantineGraph": GraphRole.QUARANTINE,
     "retentionGraph": GraphRole.RETENTION,
@@ -43,6 +45,9 @@ GRAPH_ROLES: dict[str, GraphRole] = {
     "log": GraphRole.LOG,
     "logGraph": GraphRole.LOG,
     "logGraph2": GraphRole.LOG,
+    # the delta graphs of a patch-log write, named from the receipt (H2.6d)
+    "addGraph": GraphRole.PATCH,
+    "delGraph": GraphRole.PATCH,
     "eventGraph": GraphRole.EVENT,
 }
 """The role of every graph a builder names, by binding or variable name. A builder never chooses a role itself, so
@@ -78,6 +83,10 @@ class Bindings:
     def path(self, name: str) -> Path:
         """A ``PropertyPath`` binding, such as a composite family's owned path."""
         return Path(self._value(name))
+
+    def has(self, name: str) -> bool:
+        """Whether the operation has the binding. Reading it with :meth:`const` or :meth:`path` records the read."""
+        return name in self._context
 
     def graph(self, name: str) -> Graph:
         """The graph a binding names, with its role from :data:`GRAPH_ROLES`."""
@@ -269,6 +278,38 @@ def _claim_binds() -> tuple:
     return (Bind(Func("STR", (ParamRef("txnId"),)), Var("txnKey")), Bind(Func("NOW"), Var("now")))
 
 
+RECEIPT_MODELS = ("receipt", "patch-log", "none")
+"""What an in-place write records (formal-methods H2.6d). `receipt` is a receipt (`dal:ReceiptOnly`, and `dal:SnapshotPerRevision`, which is
+not honoured). `patch-log` is a receipt that names the delta graphs the same update writes (`dal:PatchLog`). `none` writes neither a receipt nor
+a head (`dal:NoReceipt`), and keeps the transaction claim, which a retry needs."""
+
+
+def _check_receipt(receipt: str) -> None:
+    if receipt not in RECEIPT_MODELS:
+        raise ValueError(f"receipt is one of {RECEIPT_MODELS}, not {receipt!r}")
+
+
+def _check_composite_receipt(receipt: str) -> None:
+    """An in-place composite family writes a patch log or no receipt. The receipt-only writes were reached only through
+    `dal:SnapshotPerRevision`, which no generated operation honours, so they are gone, and the validator refuses that model on an
+    in-place composite family until snapshots are built (H2.9, D-12 (a), TD-46)."""
+    if receipt not in ("patch-log", "none"):
+        raise ValueError(f"an in-place composite write takes receipt 'patch-log' or 'none', not {receipt!r} (snapshots are not built, TD-46)")
+
+
+def _delta_binds(*names: str) -> tuple:
+    """The delta graphs of a patch-log write, named from the receipt (H2.6b-Q2): `IRI(CONCAT(STR($newRev), "/add"))` and `"/del"`, so a
+    caller cannot name one wrongly. `names` is `add`, `del` or both."""
+    return tuple(
+        Bind(Func("IRI", (Func("CONCAT", (Func("STR", (ParamRef("newRev"),)), _string("/" + name))),)), Var(name + "Graph"))
+        for name in names
+    )
+
+
+def _delta_block(name: str, *elements) -> GraphBlock:
+    return GraphBlock(graph_var(name + "Graph", Binding.BOUND), elements)
+
+
 def _dataset_guard(b: Bindings) -> tuple:
     return (GraphBlock(b.graph("datasetGraph"), (Triple(b.const("datasetNode"), _pat("epoch"), ParamRef("epoch")),)),)
 
@@ -291,121 +332,166 @@ def _claim_block(b: Bindings) -> GraphBlock:
     ))
 
 
-def _create(b: Bindings, *, guards: bool, dataset_guard: bool, graph_names: str) -> Operation:
+def _suffix(dataset_guard: bool, receipt: str) -> str:
+    return {"receipt": "", "patch-log": "-patch-log", "none": "-no-receipt"}[receipt] + ("-dataset-guard" if dataset_guard else "")
+
+
+def _create(b: Bindings, *, guards: bool, dataset_guard: bool, graph_names: str, receipt: str = "receipt") -> Operation:
+    _check_receipt(receipt)
     named = _Named(b, graph_names)
     meta = b.graph("metaGraphPrefix")
     root, epoch, new_rev = ParamRef("root"), ParamRef("epoch"), ParamRef("newRev")
+    has_receipt, patch = receipt != "none", receipt == "patch-log"
     where = (
         *named.binds(),
-        *_log_binds(b),
+        *(_log_binds(b) if has_receipt else ()),
+        *(_delta_binds("add") if patch else ()),
         *(_dataset_guard(b) if dataset_guard else ()),
         NotExists(Group((GraphBlock(meta, (Triple(root, _pat("seq"), _ANY),)),))),
         NotExists(Group((GraphBlock(b.graph("txnGraph"), (Triple(ParamRef("txnId"), _pat("rev"), _ANY),)),))),
-        *_claim_binds(),
+        *(_claim_binds() if has_receipt else ()),
     )
     insert = (
         GraphBlock(named.graph(Binding.BOUND), (PayloadSlot("payloadTriples"),)),
+        # a create's add graph is its payload, which the same slot fills (H2.6b-Q1)
+        *((_delta_block("add", PayloadSlot("payloadTriples")),) if patch else ()),
         GraphBlock(meta, (
             Triple(root, A, _pat("VersionRow")), Triple(root, _pat("epoch"), epoch),
-            Triple(root, _pat("seq"), _long("1")), Triple(root, _pat("head"), new_rev),
+            Triple(root, _pat("seq"), _long("1")), *((Triple(root, _pat("head"), new_rev),) if has_receipt else ()),
         )),
         _claim_block(b),
-        GraphBlock(graph_var("logGraph", Binding.BOUND), (
+        *((GraphBlock(graph_var("logGraph", Binding.BOUND), (
             Triple(new_rev, A, _pat("Revision")), Triple(new_rev, _pat("target"), root), Triple(new_rev, _pat("epoch"), epoch),
             Triple(new_rev, _pat("seq"), _long("1")), Triple(new_rev, _pat("txn"), _bound("txnKey")),
             Triple(new_rev, _pat("recordedAt"), _bound("now")),
-        )),
+            *((Triple(new_rev, _pat("asserts"), _bound("addGraph")),) if patch else ()),
+        )),) if has_receipt else ()),
     )
     return Operation.build(
-        "create-if-absent-named-graph" + ("-dataset-guard" if dataset_guard else ""),
+        "create-if-absent-named-graph" + _suffix(dataset_guard, receipt),
         (*_ROW_PARAMS, Param("payloadTriples", Kind.PAYLOAD), *named.params()),
         Group(where), guards=guards, insert=insert,
     )
 
 
-def _sweep_delete(b: Bindings, named: _Named, *, dataset_guard: bool) -> tuple:
+def _row_delete(b: Bindings, *, dataset_guard: bool, receipt: str) -> tuple:
+    """The version row's triples a replace or tombstone removes, which are its seq, its head when a receipt names one, and under the
+    dataset guard its epoch."""
     root = ParamRef("root")
     row = ((Triple(root, _pat("epoch"), _bound("rowEpoch")),) if dataset_guard else ())
+    head = ((Triple(root, _pat("head"), _optional("prevRev")),) if receipt != "none" else ())
+    return GraphBlock(b.graph("metaGraphPrefix"), (*row, Triple(root, _pat("seq"), ParamRef("expectedSeq")), *head))
+
+
+def _sweep_delete(b: Bindings, named: _Named, *, dataset_guard: bool, receipt: str = "receipt") -> tuple:
     return (
         GraphBlock(named.graph(Binding.BOUND), (Triple(_optional("s"), _optional("p"), _optional("o")),)),
-        GraphBlock(b.graph("metaGraphPrefix"), (*row, Triple(root, _pat("seq"), ParamRef("expectedSeq")), Triple(root, _pat("head"), _optional("prevRev")))),
+        _row_delete(b, dataset_guard=dataset_guard, receipt=receipt),
     )
 
 
-def _row_where(b: Bindings, *, binds: tuple, dataset_guard: bool, sweep) -> tuple:
+def _row_where(b: Bindings, *, binds: tuple, dataset_guard: bool, sweep, receipt: str = "receipt") -> tuple:
     """The `WHERE` of replace and tombstone, which differ only in their templates. `binds` come first, then the
     optional dataset guard, the version row, the claim check, and last the `sweep` of what the aggregate holds."""
     root = ParamRef("root")
     epoch = Var("rowEpoch") if dataset_guard else ParamRef("epoch")
+    meta = b.graph("metaGraphPrefix")
     return (
         *binds,
         *(_dataset_guard(b) if dataset_guard else ()),
-        GraphBlock(b.graph("metaGraphPrefix"), (
+        GraphBlock(meta, (
             Triple(root, _pat("epoch"), epoch),
             Triple(root, _pat("seq"), ParamRef("expectedSeq")),
-            Optional_(Group((Triple(root, _pat("head"), Var("prevRev")),))),
-            NotExists(Group((Triple(root, _pat("deleted"), _TRUE),))),
+            *((Optional_(Group((Triple(root, _pat("head"), Var("prevRev")),))),) if receipt != "none" else ()),
+            NotExists(Group((GraphBlock(meta, (Triple(root, _pat("deleted"), _TRUE),)),))),
         )),
         NotExists(Group((GraphBlock(b.graph("txnGraph"), (Triple(ParamRef("txnId"), _pat("rev"), _ANY),)),))),
-        *_claim_binds(),
+        *(_claim_binds() if receipt != "none" else ()),
         sweep,
     )
 
 
-def _named_where(b: Bindings, named: _Named, *, dataset_guard: bool) -> tuple:
+def _named_where(b: Bindings, named: _Named, *, dataset_guard: bool, receipt: str = "receipt", deltas: tuple = ()) -> tuple:
     sweep = Optional_(Group((GraphBlock(named.graph(), (Triple(Var("s"), Var("p"), Var("o")),)),)))
-    return _row_where(b, binds=(*named.binds(), *_log_binds(b)), dataset_guard=dataset_guard, sweep=sweep)
+    binds = (*named.binds(), *(_log_binds(b) if receipt != "none" else ()), *_delta_binds(*deltas))
+    return _row_where(b, binds=binds, dataset_guard=dataset_guard, sweep=sweep, receipt=receipt)
 
 
-def _replace(b: Bindings, *, guards: bool, dataset_guard: bool, graph_names: str) -> Operation:
-    named = _Named(b, graph_names)
+def _replace_insert(b: Bindings, data: Graph, *, receipt: str, log: str) -> tuple:
+    """The `INSERT` of a replace, whichever family. A patch log writes the caller's delta, in two slots, into the two graphs the receipt
+    names (H2.6b-Q1 and Q2)."""
     root, epoch, new_rev = ParamRef("root"), ParamRef("epoch"), ParamRef("newRev")
-    insert = (
-        GraphBlock(named.graph(Binding.BOUND), (PayloadSlot("payloadTriples"),)),
+    has_receipt, patch = receipt != "none", receipt == "patch-log"
+    return (
+        GraphBlock(data, (PayloadSlot("payloadTriples"),)),
+        *((_delta_block("add", PayloadSlot("assertTriples")), _delta_block("del", PayloadSlot("retractTriples"))) if patch else ()),
         GraphBlock(b.graph("metaGraphPrefix"), (
-            Triple(root, _pat("epoch"), epoch), Triple(root, _pat("seq"), ParamRef("nextSeq")), Triple(root, _pat("head"), new_rev),
+            Triple(root, _pat("epoch"), epoch), Triple(root, _pat("seq"), ParamRef("nextSeq")),
+            *((Triple(root, _pat("head"), new_rev),) if has_receipt else ()),
         )),
         _claim_block(b),
-        GraphBlock(graph_var("logGraph", Binding.BOUND), (
+        *((GraphBlock(graph_var(log, Binding.BOUND), (
             Triple(new_rev, A, _pat("Revision")), Triple(new_rev, _pat("target"), root), Triple(new_rev, _pat("epoch"), epoch),
             Triple(new_rev, _pat("seq"), ParamRef("nextSeq")), Triple(new_rev, _pat("prevRev"), _optional("prevRev")),
             Triple(new_rev, _pat("txn"), _bound("txnKey")), Triple(new_rev, _pat("recordedAt"), _bound("now")),
-            Triple(new_rev, _pat("asserts"), ParamRef("assertGraph")), Triple(new_rev, _pat("retracts"), ParamRef("retractGraph")),
-        )),
-    )
-    return Operation.build(
-        "cas-replace-named-graph" + ("-dataset-guard" if dataset_guard else ""),
-        (
-            *_CAS_PARAMS, Param("assertGraph", Kind.IRI, required=False), Param("retractGraph", Kind.IRI, required=False),
-            Param("payloadTriples", Kind.PAYLOAD), *named.params(),
-        ),
-        Group(_named_where(b, named, dataset_guard=dataset_guard)), guards=guards, insert=insert,
-        delete=_sweep_delete(b, named, dataset_guard=dataset_guard),
+            *((Triple(new_rev, _pat("asserts"), _bound("addGraph")), Triple(new_rev, _pat("retracts"), _bound("delGraph"))) if patch else ()),
+        )),) if has_receipt else ()),
     )
 
 
-def _tombstone(b: Bindings, *, guards: bool, dataset_guard: bool, graph_names: str) -> Operation:
-    named = _Named(b, graph_names)
+def _tombstone_insert(b: Bindings, *, receipt: str) -> tuple:
+    """The `INSERT` of a tombstone, whichever family. A patch log copies what the sweep found into the del graph (H2.6b-Q1)."""
     root, epoch, new_rev = ParamRef("root"), ParamRef("epoch"), ParamRef("newRev")
-    insert = (
+    has_receipt, patch = receipt != "none", receipt == "patch-log"
+    return (
+        *((_delta_block("del", Triple(_optional("s"), _optional("p"), _optional("o"))),) if patch else ()),
         GraphBlock(b.graph("metaGraphPrefix"), (
             Triple(root, _pat("epoch"), epoch), Triple(root, _pat("seq"), ParamRef("nextSeq")),
-            Triple(root, _pat("head"), new_rev), Triple(root, _pat("deleted"), _TRUE),
+            *((Triple(root, _pat("head"), new_rev),) if has_receipt else ()), Triple(root, _pat("deleted"), _TRUE),
         )),
         _claim_block(b),
-        GraphBlock(graph_var("logGraph", Binding.BOUND), (
+        *((GraphBlock(graph_var("logGraph", Binding.BOUND), (
             Triple(new_rev, A, _pat("Revision")), Triple(new_rev, A, _pat("Deletion")), Triple(new_rev, _pat("target"), root),
             Triple(new_rev, _pat("epoch"), epoch), Triple(new_rev, _pat("seq"), ParamRef("nextSeq")),
             Triple(new_rev, _pat("prevRev"), _optional("prevRev")), Triple(new_rev, _pat("txn"), _bound("txnKey")),
             Triple(new_rev, _pat("recordedAt"), _bound("now")), Triple(new_rev, _pat("cause"), ParamRef("cause")),
             Triple(new_rev, _pat("actor"), ParamRef("actor")),
-        )),
+            *((Triple(new_rev, _pat("retracts"), _bound("delGraph")),) if patch else ()),
+        )),) if has_receipt else ()),
     )
+
+
+def _replace_params(receipt: str) -> tuple:
+    return (*_CAS_PARAMS, Param("payloadTriples", Kind.PAYLOAD), *((Param("assertTriples", Kind.PAYLOAD), Param("retractTriples", Kind.PAYLOAD)) if receipt == "patch-log" else ()))
+
+
+def _tombstone_params(receipt: str) -> tuple:
+    return (*_CAS_PARAMS, *((Param("cause", Kind.IRI), Param("actor", Kind.IRI)) if receipt != "none" else ()))
+
+
+def _replace(b: Bindings, *, guards: bool, dataset_guard: bool, graph_names: str, receipt: str = "receipt") -> Operation:
+    _check_receipt(receipt)
+    named = _Named(b, graph_names)
+    deltas = ("add", "del") if receipt == "patch-log" else ()
     return Operation.build(
-        "tombstone-delete-named-graph" + ("-dataset-guard" if dataset_guard else ""),
-        (*_CAS_PARAMS, Param("cause", Kind.IRI), Param("actor", Kind.IRI), *named.params()),
-        Group(_named_where(b, named, dataset_guard=dataset_guard)), guards=guards, insert=insert,
-        delete=_sweep_delete(b, named, dataset_guard=dataset_guard),
+        "cas-replace-named-graph" + _suffix(dataset_guard, receipt),
+        (*_replace_params(receipt), *named.params()),
+        Group(_named_where(b, named, dataset_guard=dataset_guard, receipt=receipt, deltas=deltas)), guards=guards,
+        insert=_replace_insert(b, named.graph(Binding.BOUND), receipt=receipt, log="logGraph"),
+        delete=_sweep_delete(b, named, dataset_guard=dataset_guard, receipt=receipt),
+    )
+
+
+def _tombstone(b: Bindings, *, guards: bool, dataset_guard: bool, graph_names: str, receipt: str = "receipt") -> Operation:
+    _check_receipt(receipt)
+    named = _Named(b, graph_names)
+    deltas = ("del",) if receipt == "patch-log" else ()
+    return Operation.build(
+        "tombstone-delete-named-graph" + _suffix(dataset_guard, receipt),
+        (*_tombstone_params(receipt), *named.params()),
+        Group(_named_where(b, named, dataset_guard=dataset_guard, receipt=receipt, deltas=deltas)), guards=guards,
+        insert=_tombstone_insert(b, receipt=receipt),
+        delete=_sweep_delete(b, named, dataset_guard=dataset_guard, receipt=receipt),
     )
 
 
@@ -431,91 +517,187 @@ def _composite_sweep(b: Bindings) -> Optional_:
     )),)))
 
 
-def _composite_delete(b: Bindings, *, dataset_guard: bool) -> tuple:
-    root = ParamRef("root")
-    row = (Triple(root, _pat("epoch"), _bound("rowEpoch")),) if dataset_guard else ()
+def _composite_delete(b: Bindings, *, dataset_guard: bool, receipt: str) -> tuple:
     return (
         GraphBlock(b.graph("dataGraph"), (Triple(_optional("s"), _optional("p"), _optional("o")),)),
-        GraphBlock(b.graph("metaGraphPrefix"), (*row, Triple(root, _pat("seq"), ParamRef("expectedSeq")), Triple(root, _pat("head"), _optional("prevRev")))),
+        _row_delete(b, dataset_guard=dataset_guard, receipt=receipt),
     )
 
 
-def _composite_create(b: Bindings, *, guards: bool, dataset_guard: bool) -> Operation:
+def _composite_create(b: Bindings, *, guards: bool, dataset_guard: bool, receipt: str) -> Operation:
+    _check_composite_receipt(receipt)
     meta = b.graph("metaGraphPrefix")
     root, epoch, new_rev = ParamRef("root"), ParamRef("epoch"), ParamRef("newRev")
+    has_receipt, patch = receipt != "none", receipt == "patch-log"
     where = (
-        *_log_binds(b),
+        *(_log_binds(b) if has_receipt else ()),
+        *(_delta_binds("add") if patch else ()),
         *(_dataset_guard(b) if dataset_guard else ()),
         NotExists(Group((GraphBlock(meta, (Triple(root, _pat("seq"), _ANY),)),))),
         NotExists(Group((GraphBlock(b.graph("dataGraph"), (Triple(root, Var("anyP"), Var("anyO")),)),))),
         NotExists(Group((GraphBlock(b.graph("txnGraph"), (Triple(ParamRef("txnId"), _pat("rev"), _ANY),)),))),
-        *_claim_binds(),
+        *(_claim_binds() if has_receipt else ()),
     )
     insert = (
         GraphBlock(b.graph("dataGraph"), (PayloadSlot("payloadTriples"),)),
+        *((_delta_block("add", PayloadSlot("payloadTriples")),) if patch else ()),
         GraphBlock(meta, (
             Triple(root, A, _pat("VersionRow")), Triple(root, _pat("epoch"), epoch),
-            Triple(root, _pat("seq"), _long("1")), Triple(root, _pat("head"), new_rev),
+            Triple(root, _pat("seq"), _long("1")), *((Triple(root, _pat("head"), new_rev),) if has_receipt else ()),
         )),
         _claim_block(b),
-        GraphBlock(graph_var("logGraph", Binding.BOUND), (
+        *((GraphBlock(graph_var("logGraph", Binding.BOUND), (
             Triple(new_rev, A, _pat("Revision")), Triple(new_rev, _pat("target"), root), Triple(new_rev, _pat("epoch"), epoch),
             Triple(new_rev, _pat("seq"), _long("1")), Triple(new_rev, _pat("txn"), _bound("txnKey")),
             Triple(new_rev, _pat("recordedAt"), _bound("now")),
-        )),
+            *((Triple(new_rev, _pat("asserts"), _bound("addGraph")),) if patch else ()),
+        )),) if has_receipt else ()),
     )
     return Operation.build(
-        "create-if-absent-composite" + ("-dataset-guard" if dataset_guard else ""),
+        "create-if-absent-composite" + _suffix(dataset_guard, receipt),
         (*_ROW_PARAMS, Param("payloadTriples", Kind.PAYLOAD)),
         Group(where), guards=guards, insert=insert,
     )
 
 
-def _composite_replace(b: Bindings, *, guards: bool, dataset_guard: bool) -> Operation:
-    root, epoch, new_rev = ParamRef("root"), ParamRef("epoch"), ParamRef("newRev")
+def _composite_replace(b: Bindings, *, guards: bool, dataset_guard: bool, receipt: str) -> Operation:
+    _check_composite_receipt(receipt)
     # the receipt goes to ?logGraph2, a copy of ?logGraph that the templates have always had (plan 4.2, fact 4)
-    binds = (*_log_binds(b), Bind(Var("logGraph"), Var("logGraph2")))
+    binds = (*(_log_binds(b) + (Bind(Var("logGraph"), Var("logGraph2")),) if receipt != "none" else ()), *_delta_binds(*(("add", "del") if receipt == "patch-log" else ())))
+    return Operation.build(
+        "cas-replace-composite-property" + _suffix(dataset_guard, receipt),
+        _replace_params(receipt),
+        Group(_row_where(b, binds=binds, dataset_guard=dataset_guard, sweep=_composite_sweep(b), receipt=receipt)),
+        guards=guards, insert=_replace_insert(b, b.graph("dataGraph"), receipt=receipt, log="logGraph2"),
+        delete=_composite_delete(b, dataset_guard=dataset_guard, receipt=receipt),
+    )
+
+
+def _composite_tombstone(b: Bindings, *, guards: bool, dataset_guard: bool, receipt: str) -> Operation:
+    _check_composite_receipt(receipt)
+    binds = (*(_log_binds(b) if receipt != "none" else ()), *_delta_binds(*(("del",) if receipt == "patch-log" else ())))
+    return Operation.build(
+        "tombstone-delete-composite" + _suffix(dataset_guard, receipt),
+        _tombstone_params(receipt),
+        Group(_row_where(b, binds=binds, dataset_guard=dataset_guard, sweep=_composite_sweep(b), receipt=receipt)),
+        guards=guards, insert=_tombstone_insert(b, receipt=receipt), delete=_composite_delete(b, dataset_guard=dataset_guard, receipt=receipt),
+    )
+
+
+def _append_version(b: Bindings, *, guards: bool, dataset_guard: bool, delta: bool = False) -> Operation:
+    """The write of a family that appends versions (formal-methods H2.6c, `dal:AppendVersions`). The guard is the version row of the
+    identity at the expected seq, and the txn claim. Nothing is swept or deleted. The new version's own triples come from the payload
+    slot, the new version is linked to the prior current one with `pat:previousVersion` (R2, never `fnd:supersededBy`), the row moves its seq, head and current version, and the receipt is
+    written. The version names its receipt with `pat:revision`, as an event does. A member the caller does not restate stays where it
+    is and is reached from the new version by reference (VH-Q2), so the payload holds only the new version's own triples."""
+    meta = b.graph("metaGraphPrefix")
+    root, epoch, new_rev, new_version = ParamRef("root"), ParamRef("epoch"), ParamRef("newRev"), ParamRef("newVersion")
+    row_epoch = Var("rowEpoch") if dataset_guard else epoch
+    where = (
+        *_log_binds(b),
+        *(_dataset_guard(b) if dataset_guard else ()),
+        GraphBlock(meta, (
+            Triple(root, _pat("epoch"), row_epoch),
+            Triple(root, _pat("seq"), ParamRef("expectedSeq")),
+            Optional_(Group((Triple(root, _pat("head"), Var("prevRev")),))),
+            Optional_(Group((Triple(root, _pat("currentVersion"), Var("priorVersion")),))),
+            NotExists(Group((GraphBlock(meta, (Triple(root, _pat("deleted"), _TRUE),)),))),
+        )),
+        NotExists(Group((GraphBlock(b.graph("txnGraph"), (Triple(ParamRef("txnId"), _pat("rev"), _ANY),)),))),
+        *_claim_binds(),
+    )
+    row = (Triple(root, _pat("epoch"), _bound("rowEpoch")),) if dataset_guard else ()
+    delete = (GraphBlock(meta, (
+        *row, Triple(root, _pat("seq"), ParamRef("expectedSeq")), Triple(root, _pat("head"), _optional("prevRev")),
+        Triple(root, _pat("currentVersion"), _optional("priorVersion")),
+    )),)
     insert = (
-        GraphBlock(b.graph("dataGraph"), (PayloadSlot("payloadTriples"),)),
-        GraphBlock(b.graph("metaGraphPrefix"), (
+        GraphBlock(b.graph("dataGraph"), (
+            Triple(new_version, _pat("revision"), new_rev),
+            Triple(new_version, _pat("previousVersion"), _optional("priorVersion")),
+            PayloadSlot("payloadTriples"),
+            *((PayloadSlot("addedMembers"), PayloadSlot("droppedMembers")) if delta else ()),
+        )),
+        GraphBlock(meta, (
             Triple(root, _pat("epoch"), epoch), Triple(root, _pat("seq"), ParamRef("nextSeq")), Triple(root, _pat("head"), new_rev),
+            Triple(root, _pat("currentVersion"), new_version),
         )),
         _claim_block(b),
-        GraphBlock(graph_var("logGraph2", Binding.BOUND), (
+        GraphBlock(graph_var("logGraph", Binding.BOUND), (
             Triple(new_rev, A, _pat("Revision")), Triple(new_rev, _pat("target"), root), Triple(new_rev, _pat("epoch"), epoch),
             Triple(new_rev, _pat("seq"), ParamRef("nextSeq")), Triple(new_rev, _pat("prevRev"), _optional("prevRev")),
             Triple(new_rev, _pat("txn"), _bound("txnKey")), Triple(new_rev, _pat("recordedAt"), _bound("now")),
         )),
     )
     return Operation.build(
-        "cas-replace-composite-property" + ("-dataset-guard" if dataset_guard else ""),
-        (*_CAS_PARAMS, Param("payloadTriples", Kind.PAYLOAD)),
-        Group(_row_where(b, binds=binds, dataset_guard=dataset_guard, sweep=_composite_sweep(b))),
-        guards=guards, insert=insert, delete=_composite_delete(b, dataset_guard=dataset_guard),
+        "append-version" + ("-delta" if delta else "") + ("-dataset-guard" if dataset_guard else ""),
+        (
+            *_CAS_PARAMS, Param("newVersion", Kind.IRI), Param("payloadTriples", Kind.PAYLOAD),
+            *((Param("addedMembers", Kind.PAYLOAD), Param("droppedMembers", Kind.PAYLOAD)) if delta else ()),
+        ),
+        Group(where), guards=guards, insert=insert, delete=delete,
     )
 
 
-def _composite_tombstone(b: Bindings, *, guards: bool, dataset_guard: bool) -> Operation:
-    root, epoch, new_rev = ParamRef("root"), ParamRef("epoch"), ParamRef("newRev")
-    insert = (
-        GraphBlock(b.graph("metaGraphPrefix"), (
-            Triple(root, _pat("epoch"), epoch), Triple(root, _pat("seq"), ParamRef("nextSeq")),
-            Triple(root, _pat("head"), new_rev), Triple(root, _pat("deleted"), _TRUE),
-        )),
-        _claim_block(b),
-        GraphBlock(graph_var("logGraph", Binding.BOUND), (
-            Triple(new_rev, A, _pat("Revision")), Triple(new_rev, A, _pat("Deletion")), Triple(new_rev, _pat("target"), root),
-            Triple(new_rev, _pat("epoch"), epoch), Triple(new_rev, _pat("seq"), ParamRef("nextSeq")),
-            Triple(new_rev, _pat("prevRev"), _optional("prevRev")), Triple(new_rev, _pat("txn"), _bound("txnKey")),
-            Triple(new_rev, _pat("recordedAt"), _bound("now")), Triple(new_rev, _pat("cause"), ParamRef("cause")),
-            Triple(new_rev, _pat("actor"), ParamRef("actor")),
-        )),
+def _members(b: Bindings, *, guards: bool) -> Operation:
+    """The members of a version of a family under `dal:DeltaMembership` (formal-methods H2.6f), from the chain back to the nearest
+    checkpoint. A member is listed by an event at a version `?w` of the chain, from `$version` back to the checkpoint `?cp`: under
+    the domain's membership property (a checkpoint's full list) or by `pat:addsMember`. It is a member of `$version` unless a later
+    version of the chain, nearer to `$version`, drops it. A member dropped and added again is listed by the later add. A version
+    that adds and drops one member lists it, since the drop must be later. The nearest checkpoint is the one with no other checkpoint
+    between it and `$version`, found in a sub-select so that a store finds the one checkpoint before it joins the chain and the members (H2.8c,
+    TD-68). Every `NOT EXISTS` names its graph, which the sub-select form needs on rdflib (TSD-34). A step and a closure, `pat:previousVersion ?y . ?y pat:previousVersion* ?w`, is written for "strictly before", since rdflib evaluates the one path `pat:previousVersion/pat:previousVersion*` about six times slower (FMH-H2-6f). A version with no checkpoint before it has no members, so the first version of a family must be one.
+    `$membershipProperty` names the domain's membership property, for example `aeo:hasLocation`, as a parameter because a family
+    declares none. A domain shape runs over these results and never over the stored delta (H2.6f-Q4)."""
+    version, prop = ParamRef("version"), ParamRef("membershipProperty")
+    cp, later, w, x, y, z, member = Var("cp"), Var("later"), Var("w"), Var("x"), Var("y"), Var("z"), Var("member", kind=Kind.IRI)
+    previous = Step(URIRef(str(PAT["previousVersion"])))
+    before = Path(PropertyPath.encode(Star(previous)))
+    data = b.graph("dataGraph")
+    return Operation.build(
+        "members",
+        (Param("version", Kind.IRI), Param("membershipProperty", Kind.IRI)),
+        Group((GraphBlock(data, (
+            SubSelect(Select((cp,)), Group((
+                Triple(cp, _pat("checkpoint"), _TRUE),
+                Triple(version, before, cp),
+                NotExists(Group((GraphBlock(data, (
+                    Triple(later, _pat("checkpoint"), _TRUE), Triple(later, _pat("previousVersion"), y), Triple(y, before, cp), Triple(version, before, later),
+                )),))),
+            ))),
+            Triple(version, before, w),
+            Triple(w, before, cp),
+            Union_((
+                Group((Triple(w, prop, member),)),
+                Group((Triple(w, _pat("addsMember"), member),)),
+            )),
+            NotExists(Group((GraphBlock(data, (
+                Triple(x, _pat("dropsMember"), member), Triple(x, _pat("previousVersion"), z), Triple(z, before, w), Triple(version, before, x),
+            )),))),
+        )),)),
+        guards=guards,
+        select=Select((member,), distinct=True),
+    )
+
+
+def _payload_check(b: Bindings, *, guards: bool) -> Operation:
+    """The subjects of a payload outside the aggregate (formal-methods H2.8b, ADR-A123 decision 6, PL-B). A caller loads its payload into a local
+    graph, binds `$root` to the node the payload starts at, and runs this. Every subject must be the root or be reached from it by the owned
+    path, which can take no steps, so a family that owns nothing admits the root alone. An empty result passes. The path is walked over the
+    payload alone, from a node that is the subject of a triple, so the result does not depend on how a store reads a zero-length path from a
+    term in no triple (TSD-08). It reads no store."""
+    graph = b.graph("payloadGraph")
+    s, root = Var("s", kind=Kind.IRI), ParamRef("root")
+    outside = (
+        NotExists(Group((GraphBlock(graph, (Triple(root, b.path("ownedPath"), s),)),)))
+        if b.has("ownedPath") else Filter(TermGuard(s, root, negated=True))
     )
     return Operation.build(
-        "tombstone-delete-composite" + ("-dataset-guard" if dataset_guard else ""),
-        (*_CAS_PARAMS, Param("cause", Kind.IRI), Param("actor", Kind.IRI)),
-        Group(_row_where(b, binds=_log_binds(b), dataset_guard=dataset_guard, sweep=_composite_sweep(b))),
-        guards=guards, insert=insert, delete=_composite_delete(b, dataset_guard=dataset_guard),
+        "payload-check",
+        (Param("root", Kind.IRI),),
+        Group((GraphBlock(graph, (Triple(s, Var("p"), Var("o")), outside)),)),
+        guards=guards,
+        select=Select((s,), distinct=True),
     )
 
 
@@ -613,7 +795,7 @@ def _key_claim_quarantine(b: Bindings, *, guards: bool) -> Operation:
 
 def _key_claim_merge_rewrite(b: Bindings, *, guards: bool) -> Operation:
     """The canonical owner is the lowest owner IRI, taken over the IRI text and turned back into an IRI, because rdflib's `MIN` over
-    IRIs returns a plain literal (TSD-16, decided in FMH-H2-5, decision 1). The Mustache template says the same."""
+    IRIs returns a plain literal (TSD-16, decided in FMH-H2-5, decision 1)."""
     claim, owner, canonical = Var("claim"), Var("owner"), Var("canonical")
     other = Var("other", kind=Kind.IRI)
     relation = b.const("mergeRelation")
@@ -744,6 +926,22 @@ def _gap_scan_audit(b: Bindings, *, guards: bool) -> Operation:
     )
 
 
+def _value_guard(b: Bindings, *, guards: bool) -> Operation:
+    """The value-based compare-and-set of a ``dal:NoBoundary`` target (guide §14.2, TD-43): replace the old value of one property of a
+    root with a new one, only if the old value is still there. Every pattern sits in the family's ``dal:dataGraph``, which a family with
+    no boundary must declare (H2.7-Q1), so the write no longer depends on what a store's default graph holds."""
+    pattern = (Triple(ParamRef("root"), b.const("guardProperty"), ParamRef("oldValue")),)
+    data = b.graph("dataGraph")
+    return Operation.build(
+        "cas-replace-value-guard",
+        (Param("root", Kind.IRI), Param("oldValue", Kind.IRI_OR_LITERAL), Param("newValue", Kind.IRI_OR_LITERAL)),
+        Group((GraphBlock(data, pattern),)),
+        guards=guards,
+        delete=(GraphBlock(data, pattern),),
+        insert=(GraphBlock(data, (Triple(ParamRef("root"), b.const("guardProperty"), ParamRef("newValue")),)),),
+    )
+
+
 Builder = Callable[[Bindings, bool, str], Operation]
 
 BUILDERS: dict[str, Builder] = {
@@ -758,12 +956,13 @@ BUILDERS: dict[str, Builder] = {
     "tombstone-delete-named-graph": lambda b, guards, names: _tombstone(b, guards=guards, dataset_guard=False, graph_names=names),
     "tombstone-delete-named-graph-dataset-guard": lambda b, guards, names: _tombstone(b, guards=guards, dataset_guard=True, graph_names=names),
     "unconditional-write": lambda b, guards, names: _unconditional(b, guards=guards, graph_names=names),
-    "create-if-absent-composite": lambda b, guards, names: _composite_create(b, guards=guards, dataset_guard=False),
-    "create-if-absent-composite-dataset-guard": lambda b, guards, names: _composite_create(b, guards=guards, dataset_guard=True),
-    "cas-replace-composite-property": lambda b, guards, names: _composite_replace(b, guards=guards, dataset_guard=False),
-    "cas-replace-composite-property-dataset-guard": lambda b, guards, names: _composite_replace(b, guards=guards, dataset_guard=True),
-    "tombstone-delete-composite": lambda b, guards, names: _composite_tombstone(b, guards=guards, dataset_guard=False),
-    "tombstone-delete-composite-dataset-guard": lambda b, guards, names: _composite_tombstone(b, guards=guards, dataset_guard=True),
+    "cas-replace-value-guard": lambda b, guards, names: _value_guard(b, guards=guards),
+    "append-version": lambda b, guards, names: _append_version(b, guards=guards, dataset_guard=False),
+    "append-version-dataset-guard": lambda b, guards, names: _append_version(b, guards=guards, dataset_guard=True),
+    "append-version-delta": lambda b, guards, names: _append_version(b, guards=guards, dataset_guard=False, delta=True),
+    "append-version-delta-dataset-guard": lambda b, guards, names: _append_version(b, guards=guards, dataset_guard=True, delta=True),
+    "members": lambda b, guards, names: _members(b, guards=guards),
+    "payload-check": lambda b, guards, names: _payload_check(b, guards=guards),
     "key-claim-write": lambda b, guards, names: _key_claim_write(b, guards=guards),
     "key-claim-write-dual": lambda b, guards, names: _key_claim_write_dual(b, guards=guards),
     "key-claim-retire": lambda b, guards, names: _key_claim_retire(b, guards=guards),
@@ -775,7 +974,28 @@ BUILDERS: dict[str, Builder] = {
     "revision-multi-txn-audit": lambda b, guards, names: _revision_multi_txn_audit(b, guards=guards),
     "txn-multi-revision-audit": lambda b, guards, names: _txn_multi_revision_audit(b, guards=guards),
 }
-"""The ported operations, keyed by template stem. A template with no entry is still rendered by Mustache."""
+
+
+def _receipt_variants() -> dict:
+    """The writes of a family that records a patch log or no receipt (formal-methods H2.6d), each with its dataset-guard variant, keyed by stem."""
+    out: dict = {}
+    for receipt, tag in (("patch-log", "-patch-log"), ("none", "-no-receipt")):
+        for stem, build_one, named in (
+            ("create-if-absent-named-graph", _create, True), ("cas-replace-named-graph", _replace, True),
+            ("tombstone-delete-named-graph", _tombstone, True), ("create-if-absent-composite", _composite_create, False),
+            ("cas-replace-composite-property", _composite_replace, False), ("tombstone-delete-composite", _composite_tombstone, False),
+        ):
+            for guard in (False, True):
+                key = stem + tag + ("-dataset-guard" if guard else "")
+                if named:
+                    out[key] = lambda b, guards, names, f=build_one, g=guard, r=receipt: f(b, guards=guards, dataset_guard=g, graph_names=names, receipt=r)
+                else:
+                    out[key] = lambda b, guards, names, f=build_one, g=guard, r=receipt: f(b, guards=guards, dataset_guard=g, receipt=r)
+    return out
+
+
+BUILDERS.update(_receipt_variants())
+"""Every generated operation, keyed by its builder identity (`dal:templateId`)."""
 
 
 def build(template: str, context: Mapping, *, guards: bool = True, graph_names: str = "query") -> Operation:

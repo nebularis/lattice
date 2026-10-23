@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# A declaration that carries a query as the value of a property of its own, where no value of the contract may be SPARQL text.
+# base: _base-contract.ttl
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:replace-root dal:queryText "SELECT ?s WHERE { ?s ?p ?o }" .

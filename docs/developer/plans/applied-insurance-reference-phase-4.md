@@ -23,6 +23,7 @@ about the world, not about cover. No class the substrate already provides.
 | AIR-4.4 | loss history with one `aeo:LossCause` node per link of the cause chain (peril, position, mechanism, agency), effective characteristic values defaulted from the cause's typical values as derived artefacts (epic D12), the loss event class in `insurance/common/` (D7), coverage requirements, existing cover, financial metrics | §5.12 to §5.14 |
 | AIR-4.5 | liability exposure: counterparty populations, relationship depth, exposure bases | §5.15 |
 | AIR-4.6 | London and US profiles as scheme bindings and shapes, the worked examples, and their persistence profiles (an aggregate boundary per exposure set version, a privacy profile for natural persons) | §10, §12, §5.2 |
+| AIR-4.2b | **built on the formal-methods Track H branch `claude/nice-bohr-pmj43u` as AIR-66 (TD-66), to bring across** (see "Handover from formal-methods Track H" below): an exposure version is never edited on succession, and `aeo:locatedAt` and `aeo:valueOf` name identities fixed by the set version's membership | below |
 | AIR-deferred-testing | the tests for the applied insurance slices built while testing is deferred (amendment of 2026-10-14), from AIR-4.2a, with their test plans collected here | per slice |
 
 After 4.1, 4.2 needs AIR-2.3, 2.4 and 2.6 (it links their concepts and uses their units), 4.3
@@ -232,6 +233,48 @@ in `.github/copilot-instructions.md` ("Authoring SHACL-SPARQL shapes").
 | AIR41-12 | `aeo:industry`, `aeo:domicile` / read / sub-properties of `cls:industry` and `cls:territory`, and the legal form contract is bound to its reference scheme | L1 | + |
 | AIR41-13 | a legal entity with two domiciles / validated / violation | L1 | − |
 | AIR41-14 | `aeo-voc:LendersLossPayee` / read / `skos:broader` `aeo-voc:LossPayee`, and every role and legal form has a note | L1 | + |
+
+## Handover from formal-methods Track H: AIR-66 and its follow-ups (2026-10-20)
+
+**On the AIR plate at its next start-up.** Built at the maintainer's request on the formal-methods Track H branch `claude/nice-bohr-pmj43u`
+(commit `e9c83562`, Validation Pack `FMH-AIR-66`), which the maintainer migrates to the AIR branches. Until then it is not on
+`air/applied-reference` or `main`.
+
+**Why.** The history and versioning sketch's example E5 showed a mid-term change to one location writing three versions, the location, its
+assets and their valuations, because `aeo:locatedAt` and `aeo:valueOf` named versions. And `examples/versions.ttl` edited version 1 on
+succession (`fnd:validTo` and the governance state), though a version is never edited. TD-66 recorded both. The design follows the
+maintainer's VH-Q2 decision: references name an identity inside content, and the root version, here the exposure set version, fixes which
+version of each member applies.
+
+**What changed.**
+
+| Area | Change |
+|---|---|
+| ranges | `aeo:locatedAt` to `aeo:LocationIdentity`. `aeo:valueOf` to `owl:unionOf (aeo:AssetIdentity aeo:LocationIdentity)`, where it had no range |
+| shapes | `aeo:AssetShape` and `aeo:ValuationShape` require an identity, not a version (SPARQL, house style). `aeo:ExposureSetShape` gains three violation-severity constraints: each `locatedAt` of a listed asset resolves to exactly one listed location, each `valueOf` of a listed valuation to exactly one listed asset or location, and no set lists two versions of one identity (which AIR-4.2a left uncovered). `aeo:PerilCompletenessShape` joins through `fnd:hasIdentity` |
+| examples | `versions.ttl` no longer edits version 1, and shows one location changing while its asset and valuation are shared unchanged. `core.ttl` and `units.ttl` name identities |
+| code | `tools/exposure_derivations.py` resolves `locatedAt` through the set's own locations and looks valuations up by identity. No test exercises it |
+| tests | AIR66-01 to AIR66-09 in `tools/test_exposure_ontology.py`, 41 passing on the branch |
+| README | a paragraph after §4's membership text, the diagram, the class and shape tables, a release-notes row. The module's version is not bumped (the branch ignores versioning, TD-64) |
+
+**To do when it lands in AIR.**
+
+1. Bring the commit across, then bump the exposure module's version under ADR-A86, as a breaking change at 0.x (ADR-A113), with its release
+   row and tag (the maintainer's).
+2. Decide the same change for the links AIR-66 left naming versions: `aeo:presenceLocation`, `aeo:assesses`, `aeo:interestIn`, `aeo:partOf`
+   and the zone and loss links. A presence is a period at a place, so `aeo:presenceLocation` is the first candidate.
+3. Scope `aeo:PerilCompletenessShape`'s join to one set version, which it does not do yet.
+4. Give `tools/exposure_derivations.py` a test.
+5. Ratify or change AIR-66's decisions taken alone (FMH-AIR-66): the union range of `aeo:valueOf`, the violation severity of the set
+   shapes, SPARQL type checks rather than `sh:class`, the new stock asset in `versions.ttl`.
+6. Remove TD-66 from the debt register, naming this slice.
+7. Re-check AIR-6.1's submission, which pins an exposure set version, and AIR-4.3 and 4.4's members for the same pattern, since every member
+   added after AIR-4.2a should name identities inside content.
+
+**Related, also on the Track H branch.** W-65 (TD-65) made `wrd:hasValue` sharable across assembled wordings, which the contract module of
+Phase 5 will rely on when an endorsement restates one value. Persistence gained per-family write disciplines (`dal:writeDiscipline`), reference
+modes per edge (`dal:referenceMode`) and membership encoding (`dal:membershipEncoding`), which an AIR deployment declares for its exposure
+families. The history and versioning sketch's §10.5 (E5) has the counts.
 
 ## AIR-4.2 in detail
 

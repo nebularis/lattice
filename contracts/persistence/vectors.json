@@ -1,0 +1,3923 @@
+{
+ "vectorsFormat": "lattice-persistence-vectors/1",
+ "description": "Conformance vectors for the canonical N-Triples of a payload and for the request digest (ADR-A132 decision 4, ADR-A123). Verified by verify-vectors.py with openssl, which shares no code with a library.",
+ "ntriples": [
+  {
+   "id": "nt-sorted-deduplicated",
+   "description": "Three triples given out of order with one repeated. The lines are sorted and the repeat is dropped.",
+   "triples": [
+    {
+     "s": {
+      "iri": "urn:example:b"
+     },
+     "p": {
+      "iri": "urn:example:p"
+     },
+     "o": {
+      "iri": "urn:example:o"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:a"
+     },
+     "p": {
+      "iri": "urn:example:p"
+     },
+     "o": {
+      "iri": "urn:example:o"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:b"
+     },
+     "p": {
+      "iri": "urn:example:p"
+     },
+     "o": {
+      "iri": "urn:example:o"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:a"
+     },
+     "p": {
+      "iri": "urn:example:p"
+     },
+     "o": {
+      "iri": "urn:example:n"
+     }
+    }
+   ],
+   "canonical": [
+    "<urn:example:a> <urn:example:p> <urn:example:n> .",
+    "<urn:example:a> <urn:example:p> <urn:example:o> .",
+    "<urn:example:b> <urn:example:p> <urn:example:o> ."
+   ]
+  },
+  {
+   "id": "nt-literal-escapes",
+   "description": "Only backslash, quote, line feed and carriage return are escaped. A tab, a non-ASCII character and an astral character are written as themselves, and a backslash before u stays two backslashes.",
+   "triples": [
+    {
+     "s": {
+      "iri": "urn:example:s"
+     },
+     "p": {
+      "iri": "urn:example:quote"
+     },
+     "o": {
+      "literal": "say \"hi\""
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:s"
+     },
+     "p": {
+      "iri": "urn:example:backslash"
+     },
+     "o": {
+      "literal": "a\\b"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:s"
+     },
+     "p": {
+      "iri": "urn:example:newline"
+     },
+     "o": {
+      "literal": "a\nb"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:s"
+     },
+     "p": {
+      "iri": "urn:example:cr"
+     },
+     "o": {
+      "literal": "a\rb"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:s"
+     },
+     "p": {
+      "iri": "urn:example:tab"
+     },
+     "o": {
+      "literal": "a\tb"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:s"
+     },
+     "p": {
+      "iri": "urn:example:unicode"
+     },
+     "o": {
+      "literal": "café 😀"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:s"
+     },
+     "p": {
+      "iri": "urn:example:backslash-u"
+     },
+     "o": {
+      "literal": "\\u0041 \\U0001F600"
+     }
+    }
+   ],
+   "canonical": [
+    "<urn:example:s> <urn:example:backslash-u> \"\\\\u0041 \\\\U0001F600\" .",
+    "<urn:example:s> <urn:example:backslash> \"a\\\\b\" .",
+    "<urn:example:s> <urn:example:cr> \"a\\rb\" .",
+    "<urn:example:s> <urn:example:newline> \"a\\nb\" .",
+    "<urn:example:s> <urn:example:quote> \"say \\\"hi\\\"\" .",
+    "<urn:example:s> <urn:example:tab> \"a\tb\" .",
+    "<urn:example:s> <urn:example:unicode> \"café 😀\" ."
+   ]
+  },
+  {
+   "id": "nt-datatypes-and-languages",
+   "description": "An xsd:string literal is written plain, other datatypes are kept, and a language tag is lower case.",
+   "triples": [
+    {
+     "s": {
+      "iri": "urn:example:s"
+     },
+     "p": {
+      "iri": "urn:example:plain"
+     },
+     "o": {
+      "literal": "x"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:s"
+     },
+     "p": {
+      "iri": "urn:example:string"
+     },
+     "o": {
+      "literal": "x",
+      "datatype": "http://www.w3.org/2001/XMLSchema#string"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:s"
+     },
+     "p": {
+      "iri": "urn:example:long"
+     },
+     "o": {
+      "literal": "42",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:s"
+     },
+     "p": {
+      "iri": "urn:example:lexical"
+     },
+     "o": {
+      "literal": "042",
+      "datatype": "http://www.w3.org/2001/XMLSchema#integer"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:s"
+     },
+     "p": {
+      "iri": "urn:example:lang"
+     },
+     "o": {
+      "literal": "colour",
+      "language": "EN-gb"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:s"
+     },
+     "p": {
+      "iri": "urn:example:empty"
+     },
+     "o": {
+      "literal": ""
+     }
+    }
+   ],
+   "canonical": [
+    "<urn:example:s> <urn:example:empty> \"\" .",
+    "<urn:example:s> <urn:example:lang> \"colour\"@en-gb .",
+    "<urn:example:s> <urn:example:lexical> \"042\"^^<http://www.w3.org/2001/XMLSchema#integer> .",
+    "<urn:example:s> <urn:example:long> \"42\"^^<http://www.w3.org/2001/XMLSchema#long> .",
+    "<urn:example:s> <urn:example:plain> \"x\" .",
+    "<urn:example:s> <urn:example:string> \"x\" ."
+   ]
+  },
+  {
+   "id": "nt-sort-is-by-utf8-bytes",
+   "description": "The lines sort by their UTF-8 bytes, not by UTF-16 code units. U+FF5E (EF BD 9E) comes before U+10000 (F0 90 80 80), which UTF-16 order would reverse.",
+   "triples": [
+    {
+     "s": {
+      "iri": "urn:example:𐀀"
+     },
+     "p": {
+      "iri": "urn:example:p"
+     },
+     "o": {
+      "iri": "urn:example:o"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:～"
+     },
+     "p": {
+      "iri": "urn:example:p"
+     },
+     "o": {
+      "iri": "urn:example:o"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:é"
+     },
+     "p": {
+      "iri": "urn:example:p"
+     },
+     "o": {
+      "iri": "urn:example:o"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:z"
+     },
+     "p": {
+      "iri": "urn:example:p"
+     },
+     "o": {
+      "iri": "urn:example:o"
+     }
+    }
+   ],
+   "canonical": [
+    "<urn:example:z> <urn:example:p> <urn:example:o> .",
+    "<urn:example:é> <urn:example:p> <urn:example:o> .",
+    "<urn:example:～> <urn:example:p> <urn:example:o> .",
+    "<urn:example:𐀀> <urn:example:p> <urn:example:o> ."
+   ]
+  }
+ ],
+ "refusals": [
+  {
+   "id": "refuse-blank-subject",
+   "description": "A blank node as a subject.",
+   "refusal": "BlankNode",
+   "triples": [
+    {
+     "s": {
+      "bnode": "b0"
+     },
+     "p": {
+      "iri": "urn:example:p"
+     },
+     "o": {
+      "iri": "urn:example:o"
+     }
+    }
+   ]
+  },
+  {
+   "id": "refuse-blank-object",
+   "description": "A blank node as an object.",
+   "refusal": "BlankNode",
+   "triples": [
+    {
+     "s": {
+      "iri": "urn:example:s"
+     },
+     "p": {
+      "iri": "urn:example:p"
+     },
+     "o": {
+      "bnode": "b0"
+     }
+    }
+   ]
+  },
+  {
+   "id": "refuse-literal-subject",
+   "description": "A literal as a subject.",
+   "refusal": "LiteralSubject",
+   "triples": [
+    {
+     "s": {
+      "literal": "x"
+     },
+     "p": {
+      "iri": "urn:example:p"
+     },
+     "o": {
+      "iri": "urn:example:o"
+     }
+    }
+   ]
+  },
+  {
+   "id": "refuse-iri-with-space",
+   "description": "An IRI with a space.",
+   "refusal": "InvalidIri",
+   "triples": [
+    {
+     "s": {
+      "iri": "urn:example:a b"
+     },
+     "p": {
+      "iri": "urn:example:p"
+     },
+     "o": {
+      "iri": "urn:example:o"
+     }
+    }
+   ]
+  },
+  {
+   "id": "refuse-iri-with-angle-bracket",
+   "description": "An IRI with a closing angle bracket.",
+   "refusal": "InvalidIri",
+   "triples": [
+    {
+     "s": {
+      "iri": "urn:example:s"
+     },
+     "p": {
+      "iri": "urn:example:p"
+     },
+     "o": {
+      "iri": "urn:example:o>"
+     }
+    }
+   ]
+  }
+ ],
+ "digests": [
+  {
+   "id": "digest-create",
+   "description": "Create. The payload part holds the new aggregate's triples. There is no expected seq, so that component is empty.",
+   "operationKind": "Create",
+   "target": "urn:example:person/1",
+   "expected": null,
+   "parts": [
+    {
+     "role": "PayloadPart",
+     "triples": [
+      {
+       "s": {
+        "iri": "urn:example:person/1"
+       },
+       "p": {
+        "iri": "urn:example:name"
+       },
+       "o": {
+        "literal": "Ada"
+       }
+      },
+      {
+       "s": {
+        "iri": "urn:example:person/1"
+       },
+       "p": {
+        "iri": "urn:example:age"
+       },
+       "o": {
+        "literal": "36",
+        "datatype": "http://www.w3.org/2001/XMLSchema#long"
+       }
+      }
+     ]
+    }
+   ],
+   "canonicalParts": [
+    [
+     "<urn:example:person/1> <urn:example:age> \"36\"^^<http://www.w3.org/2001/XMLSchema#long> .",
+     "<urn:example:person/1> <urn:example:name> \"Ada\" ."
+    ]
+   ],
+   "encodedHex": "363a43726561746532303a75726e3a6578616d706c653a706572736f6e2f31303a3134333a38383a3c75726e3a6578616d706c653a706572736f6e2f313e203c75726e3a6578616d706c653a6167653e20223336225e5e3c687474703a2f2f7777772e77332e6f72672f323030312f584d4c536368656d61236c6f6e673e202e34393a3c75726e3a6578616d706c653a706572736f6e2f313e203c75726e3a6578616d706c653a6e616d653e202241646122202e",
+   "sha256": "480f822fedf63fe5ef3afcec5afad1adc53e65fca676bd30780e528b57cbfc55"
+  },
+  {
+   "id": "digest-replace-patch-log",
+   "description": "Replace under a patch log. Payload, add and del parts, in that order.",
+   "operationKind": "Replace",
+   "target": "urn:example:person/1",
+   "expected": 3,
+   "parts": [
+    {
+     "role": "PayloadPart",
+     "triples": [
+      {
+       "s": {
+        "iri": "urn:example:person/1"
+       },
+       "p": {
+        "iri": "urn:example:name"
+       },
+       "o": {
+        "literal": "Ada"
+       }
+      },
+      {
+       "s": {
+        "iri": "urn:example:person/1"
+       },
+       "p": {
+        "iri": "urn:example:age"
+       },
+       "o": {
+        "literal": "36",
+        "datatype": "http://www.w3.org/2001/XMLSchema#long"
+       }
+      }
+     ]
+    },
+    {
+     "role": "AddPart",
+     "triples": [
+      {
+       "s": {
+        "iri": "urn:example:person/1"
+       },
+       "p": {
+        "iri": "urn:example:age"
+       },
+       "o": {
+        "literal": "36",
+        "datatype": "http://www.w3.org/2001/XMLSchema#long"
+       }
+      }
+     ]
+    },
+    {
+     "role": "DelPart",
+     "triples": [
+      {
+       "s": {
+        "iri": "urn:example:person/1"
+       },
+       "p": {
+        "iri": "urn:example:nick"
+       },
+       "o": {
+        "literal": "Countess"
+       }
+      }
+     ]
+    }
+   ],
+   "canonicalParts": [
+    [
+     "<urn:example:person/1> <urn:example:age> \"36\"^^<http://www.w3.org/2001/XMLSchema#long> .",
+     "<urn:example:person/1> <urn:example:name> \"Ada\" ."
+    ],
+    [
+     "<urn:example:person/1> <urn:example:age> \"36\"^^<http://www.w3.org/2001/XMLSchema#long> ."
+    ],
+    [
+     "<urn:example:person/1> <urn:example:nick> \"Countess\" ."
+    ]
+   ],
+   "encodedHex": "373a5265706c61636532303a75726e3a6578616d706c653a706572736f6e2f31313a333134333a38383a3c75726e3a6578616d706c653a706572736f6e2f313e203c75726e3a6578616d706c653a6167653e20223336225e5e3c687474703a2f2f7777772e77332e6f72672f323030312f584d4c536368656d61236c6f6e673e202e34393a3c75726e3a6578616d706c653a706572736f6e2f313e203c75726e3a6578616d706c653a6e616d653e202241646122202e39313a38383a3c75726e3a6578616d706c653a706572736f6e2f313e203c75726e3a6578616d706c653a6167653e20223336225e5e3c687474703a2f2f7777772e77332e6f72672f323030312f584d4c536368656d61236c6f6e673e202e35373a35343a3c75726e3a6578616d706c653a706572736f6e2f313e203c75726e3a6578616d706c653a6e69636b3e2022436f756e7465737322202e",
+   "sha256": "f05e0ad9954e60def7f14dcd5ae5fef3b5935525a973e40ba6aee3d1f09036a2"
+  },
+  {
+   "id": "digest-same-triple-in-add",
+   "description": "The triple C is in the add part and the del part is empty.",
+   "operationKind": "Replace",
+   "target": "urn:example:person/1",
+   "expected": 3,
+   "parts": [
+    {
+     "role": "PayloadPart",
+     "triples": []
+    },
+    {
+     "role": "AddPart",
+     "triples": [
+      {
+       "s": {
+        "iri": "urn:example:person/1"
+       },
+       "p": {
+        "iri": "urn:example:nick"
+       },
+       "o": {
+        "literal": "Countess"
+       }
+      }
+     ]
+    },
+    {
+     "role": "DelPart",
+     "triples": []
+    }
+   ],
+   "canonicalParts": [
+    [],
+    [
+     "<urn:example:person/1> <urn:example:nick> \"Countess\" ."
+    ],
+    []
+   ],
+   "encodedHex": "373a5265706c61636532303a75726e3a6578616d706c653a706572736f6e2f31313a33303a35373a35343a3c75726e3a6578616d706c653a706572736f6e2f313e203c75726e3a6578616d706c653a6e69636b3e2022436f756e7465737322202e303a",
+   "sha256": "3ac118f28e37dfcc0ce008636d27233079f6ba43c8da44098082652eaed8861b"
+  },
+  {
+   "id": "digest-same-triple-in-del",
+   "description": "The same triple C is in the del part and the add part is empty. The digest differs from the vector before, since a triple's role is hashed.",
+   "operationKind": "Replace",
+   "target": "urn:example:person/1",
+   "expected": 3,
+   "parts": [
+    {
+     "role": "PayloadPart",
+     "triples": []
+    },
+    {
+     "role": "AddPart",
+     "triples": []
+    },
+    {
+     "role": "DelPart",
+     "triples": [
+      {
+       "s": {
+        "iri": "urn:example:person/1"
+       },
+       "p": {
+        "iri": "urn:example:nick"
+       },
+       "o": {
+        "literal": "Countess"
+       }
+      }
+     ]
+    }
+   ],
+   "canonicalParts": [
+    [],
+    [],
+    [
+     "<urn:example:person/1> <urn:example:nick> \"Countess\" ."
+    ]
+   ],
+   "encodedHex": "373a5265706c61636532303a75726e3a6578616d706c653a706572736f6e2f31313a33303a303a35373a35343a3c75726e3a6578616d706c653a706572736f6e2f313e203c75726e3a6578616d706c653a6e69636b3e2022436f756e7465737322202e",
+   "sha256": "854cb8bd7b9d871333cb994cebc0618fc8d590374071eb4bb3bafeaaf667885f"
+  },
+  {
+   "id": "digest-tombstone",
+   "description": "Tombstone. The payload part is empty and still has its component.",
+   "operationKind": "Tombstone",
+   "target": "urn:example:person/1",
+   "expected": 7,
+   "parts": [
+    {
+     "role": "PayloadPart",
+     "triples": []
+    }
+   ],
+   "canonicalParts": [
+    []
+   ],
+   "encodedHex": "393a546f6d6273746f6e6532303a75726e3a6578616d706c653a706572736f6e2f31313a37303a",
+   "sha256": "032d488119f338ebd4d79855d7b64369d583348a48b1e25eae290a4785e67869"
+  },
+  {
+   "id": "digest-append-events",
+   "description": "Append of two events. One event part holds each row's type, pat:opSeq and pat:occurredAt triples with the event triples, which here include a node minted under event 1.",
+   "operationKind": "Append",
+   "target": "urn:example:stream/orders",
+   "expected": null,
+   "parts": [
+    {
+     "role": "EventPart",
+     "rows": [
+      {
+       "event": "urn:event:order/2",
+       "type": "urn:example:OrderPaid",
+       "opSeq": 2,
+       "occurredAt": {
+        "literal": "2026-10-20T10:00:05Z",
+        "datatype": "http://www.w3.org/2001/XMLSchema#dateTime"
+       }
+      },
+      {
+       "event": "urn:event:order/1",
+       "type": "urn:example:OrderPlaced",
+       "opSeq": 1,
+       "occurredAt": {
+        "literal": "2026-10-20T10:00:00Z",
+        "datatype": "http://www.w3.org/2001/XMLSchema#dateTime"
+       }
+      }
+     ],
+     "triples": [
+      {
+       "s": {
+        "iri": "urn:event:order/1"
+       },
+       "p": {
+        "iri": "urn:example:customer"
+       },
+       "o": {
+        "iri": "urn:example:customer/9"
+       }
+      },
+      {
+       "s": {
+        "iri": "urn:event:order/1/part/1"
+       },
+       "p": {
+        "iri": "urn:example:sku"
+       },
+       "o": {
+        "literal": "A-100"
+       }
+      },
+      {
+       "s": {
+        "iri": "urn:event:order/1"
+       },
+       "p": {
+        "iri": "urn:example:hasPart"
+       },
+       "o": {
+        "iri": "urn:event:order/1/part/1"
+       }
+      }
+     ]
+    }
+   ],
+   "canonicalParts": [
+    [
+     "<urn:event:order/1/part/1> <urn:example:sku> \"A-100\" .",
+     "<urn:event:order/1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <urn:example:OrderPlaced> .",
+     "<urn:event:order/1> <https://example.org/lattice/patterns#occurredAt> \"2026-10-20T10:00:00Z\"^^<http://www.w3.org/2001/XMLSchema#dateTime> .",
+     "<urn:event:order/1> <https://example.org/lattice/patterns#opSeq> \"1\"^^<http://www.w3.org/2001/XMLSchema#long> .",
+     "<urn:event:order/1> <urn:example:customer> <urn:example:customer/9> .",
+     "<urn:event:order/1> <urn:example:hasPart> <urn:event:order/1/part/1> .",
+     "<urn:event:order/2> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <urn:example:OrderPaid> .",
+     "<urn:event:order/2> <https://example.org/lattice/patterns#occurredAt> \"2026-10-20T10:00:05Z\"^^<http://www.w3.org/2001/XMLSchema#dateTime> .",
+     "<urn:event:order/2> <https://example.org/lattice/patterns#opSeq> \"2\"^^<http://www.w3.org/2001/XMLSchema#long> ."
+    ]
+   ],
+   "encodedHex": "363a417070656e6432353a75726e3a6578616d706c653a73747265616d2f6f7264657273303a3931363a35343a3c75726e3a6576656e743a6f726465722f312f706172742f313e203c75726e3a6578616d706c653a736b753e2022412d31303022202e39373a3c75726e3a6576656e743a6f726465722f313e203c687474703a2f2f7777772e77332e6f72672f313939392f30322f32322d7264662d73796e7461782d6e7323747970653e203c75726e3a6578616d706c653a4f72646572506c616365643e202e3133393a3c75726e3a6576656e743a6f726465722f313e203c68747470733a2f2f6578616d706c652e6f72672f6c6174746963652f7061747465726e73236f6363757272656441743e2022323032362d31302d32305431303a30303a30305a225e5e3c687474703a2f2f7777772e77332e6f72672f323030312f584d4c536368656d61236461746554696d653e202e3131313a3c75726e3a6576656e743a6f726465722f313e203c68747470733a2f2f6578616d706c652e6f72672f6c6174746963652f7061747465726e73236f705365713e202231225e5e3c687474703a2f2f7777772e77332e6f72672f323030312f584d4c536368656d61236c6f6e673e202e36393a3c75726e3a6576656e743a6f726465722f313e203c75726e3a6578616d706c653a637573746f6d65723e203c75726e3a6578616d706c653a637573746f6d65722f393e202e37303a3c75726e3a6576656e743a6f726465722f313e203c75726e3a6578616d706c653a686173506172743e203c75726e3a6576656e743a6f726465722f312f706172742f313e202e39353a3c75726e3a6576656e743a6f726465722f323e203c687474703a2f2f7777772e77332e6f72672f313939392f30322f32322d7264662d73796e7461782d6e7323747970653e203c75726e3a6578616d706c653a4f72646572506169643e202e3133393a3c75726e3a6576656e743a6f726465722f323e203c68747470733a2f2f6578616d706c652e6f72672f6c6174746963652f7061747465726e73236f6363757272656441743e2022323032362d31302d32305431303a30303a30355a225e5e3c687474703a2f2f7777772e77332e6f72672f323030312f584d4c536368656d61236461746554696d653e202e3131313a3c75726e3a6576656e743a6f726465722f323e203c68747470733a2f2f6578616d706c652e6f72672f6c6174746963652f7061747465726e73236f705365713e202232225e5e3c687474703a2f2f7777772e77332e6f72672f323030312f584d4c536368656d61236c6f6e673e202e",
+   "sha256": "4b4e6af484ab03df1f006114caeb1a883228516b1eb8ed0f8222f367f2354d9e"
+  },
+  {
+   "id": "digest-append-version-delta",
+   "description": "Append of a version under delta membership. Payload, then the added members and the dropped members in the add and del parts.",
+   "operationKind": "AppendVersion",
+   "target": "urn:example:quote/5",
+   "expected": 2,
+   "parts": [
+    {
+     "role": "PayloadPart",
+     "triples": [
+      {
+       "s": {
+        "iri": "urn:example:person/1"
+       },
+       "p": {
+        "iri": "urn:example:name"
+       },
+       "o": {
+        "literal": "Ada"
+       }
+      }
+     ]
+    },
+    {
+     "role": "AddPart",
+     "triples": [
+      {
+       "s": {
+        "iri": "urn:example:quote/5"
+       },
+       "p": {
+        "iri": "urn:example:addsMember"
+       },
+       "o": {
+        "iri": "urn:example:line/2"
+       }
+      }
+     ]
+    },
+    {
+     "role": "DelPart",
+     "triples": [
+      {
+       "s": {
+        "iri": "urn:example:quote/5"
+       },
+       "p": {
+        "iri": "urn:example:dropsMember"
+       },
+       "o": {
+        "iri": "urn:example:line/1"
+       }
+      }
+     ]
+    }
+   ],
+   "canonicalParts": [
+    [
+     "<urn:example:person/1> <urn:example:name> \"Ada\" ."
+    ],
+    [
+     "<urn:example:quote/5> <urn:example:addsMember> <urn:example:line/2> ."
+    ],
+    [
+     "<urn:example:quote/5> <urn:example:dropsMember> <urn:example:line/1> ."
+    ]
+   ],
+   "encodedHex": "31333a417070656e6456657273696f6e31393a75726e3a6578616d706c653a71756f74652f35313a3235323a34393a3c75726e3a6578616d706c653a706572736f6e2f313e203c75726e3a6578616d706c653a6e616d653e202241646122202e37323a36393a3c75726e3a6578616d706c653a71756f74652f353e203c75726e3a6578616d706c653a616464734d656d6265723e203c75726e3a6578616d706c653a6c696e652f323e202e37333a37303a3c75726e3a6578616d706c653a71756f74652f353e203c75726e3a6578616d706c653a64726f70734d656d6265723e203c75726e3a6578616d706c653a6c696e652f313e202e",
+   "sha256": "56bc366ca6cc1101d584e4f871a0c974a4b79235a8ceb61642cfbd98e6540fee"
+  },
+  {
+   "id": "digest-non-ascii-target",
+   "description": "A target with a non-ASCII character. The length prefix counts bytes, so the target (18 characters) has prefix 19.",
+   "operationKind": "Create",
+   "target": "urn:example:café/1",
+   "expected": null,
+   "parts": [
+    {
+     "role": "PayloadPart",
+     "triples": [
+      {
+       "s": {
+        "iri": "urn:example:person/1"
+       },
+       "p": {
+        "iri": "urn:example:name"
+       },
+       "o": {
+        "literal": "Ada"
+       }
+      }
+     ]
+    }
+   ],
+   "canonicalParts": [
+    [
+     "<urn:example:person/1> <urn:example:name> \"Ada\" ."
+    ]
+   ],
+   "encodedHex": "363a43726561746531393a75726e3a6578616d706c653a636166c3a92f31303a35323a34393a3c75726e3a6578616d706c653a706572736f6e2f313e203c75726e3a6578616d706c653a6e616d653e202241646122202e",
+   "sha256": "27abb4b9106a74c4345d4325451c7a3f7f009c3fad344e042472b1680f4d0a48"
+  },
+  {
+   "id": "digest-overlap-between-parts",
+   "description": "A triple that is in both the payload and the add part is hashed in both parts, not once.",
+   "operationKind": "Replace",
+   "target": "urn:example:person/1",
+   "expected": 0,
+   "parts": [
+    {
+     "role": "PayloadPart",
+     "triples": [
+      {
+       "s": {
+        "iri": "urn:example:person/1"
+       },
+       "p": {
+        "iri": "urn:example:name"
+       },
+       "o": {
+        "literal": "Ada"
+       }
+      }
+     ]
+    },
+    {
+     "role": "AddPart",
+     "triples": [
+      {
+       "s": {
+        "iri": "urn:example:person/1"
+       },
+       "p": {
+        "iri": "urn:example:name"
+       },
+       "o": {
+        "literal": "Ada"
+       }
+      }
+     ]
+    },
+    {
+     "role": "DelPart",
+     "triples": []
+    }
+   ],
+   "canonicalParts": [
+    [
+     "<urn:example:person/1> <urn:example:name> \"Ada\" ."
+    ],
+    [
+     "<urn:example:person/1> <urn:example:name> \"Ada\" ."
+    ],
+    []
+   ],
+   "encodedHex": "373a5265706c61636532303a75726e3a6578616d706c653a706572736f6e2f31313a3035323a34393a3c75726e3a6578616d706c653a706572736f6e2f313e203c75726e3a6578616d706c653a6e616d653e202241646122202e35323a34393a3c75726e3a6578616d706c653a706572736f6e2f313e203c75726e3a6578616d706c653a6e616d653e202241646122202e303a",
+   "sha256": "e2af34774918cfd393487f740633cc1bcfef611ada936252f26ddd67bb8b8243"
+  }
+ ],
+ "payloadChecks": [
+  {
+   "id": "pc-within-the-aggregate",
+   "description": "Every subject is the root or reached from it by owned edges.",
+   "root": "urn:example:p1",
+   "shape": "urn:example:Root",
+   "edges": [
+    {
+     "source": "urn:example:Root",
+     "predicate": "urn:example:hasMilestone",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Milestone",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Root",
+     "predicate": "urn:example:client",
+     "inverse": false,
+     "ownership": "Reference",
+     "targetShape": null,
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Milestone",
+     "predicate": "urn:example:hasTask",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Task",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:hasSubtask",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Task",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:attachment",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Document",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:onTask",
+     "inverse": true,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Comment",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:assignee",
+     "inverse": false,
+     "ownership": "Reference",
+     "targetShape": null,
+     "mode": "ByIdentity"
+    }
+   ],
+   "triples": [
+    {
+     "s": {
+      "iri": "urn:example:p1"
+     },
+     "p": {
+      "iri": "urn:example:name"
+     },
+     "o": {
+      "literal": "Alpha"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:p1"
+     },
+     "p": {
+      "iri": "urn:example:hasMilestone"
+     },
+     "o": {
+      "iri": "urn:example:m1"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:m1"
+     },
+     "p": {
+      "iri": "urn:example:due"
+     },
+     "o": {
+      "literal": "2026-12-01",
+      "datatype": "http://www.w3.org/2001/XMLSchema#date"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:m1"
+     },
+     "p": {
+      "iri": "urn:example:hasTask"
+     },
+     "o": {
+      "iri": "urn:example:t1"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:t1"
+     },
+     "p": {
+      "iri": "urn:example:hasSubtask"
+     },
+     "o": {
+      "iri": "urn:example:t2"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:t2"
+     },
+     "p": {
+      "iri": "urn:example:attachment"
+     },
+     "o": {
+      "iri": "urn:example:d1"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:d1"
+     },
+     "p": {
+      "iri": "urn:example:title"
+     },
+     "o": {
+      "literal": "Plan"
+     }
+    }
+   ],
+   "outside": []
+  },
+  {
+   "id": "pc-subject-outside",
+   "description": "A subject that no owned edge reaches is returned.",
+   "root": "urn:example:p1",
+   "shape": "urn:example:Root",
+   "edges": [
+    {
+     "source": "urn:example:Root",
+     "predicate": "urn:example:hasMilestone",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Milestone",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Root",
+     "predicate": "urn:example:client",
+     "inverse": false,
+     "ownership": "Reference",
+     "targetShape": null,
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Milestone",
+     "predicate": "urn:example:hasTask",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Task",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:hasSubtask",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Task",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:attachment",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Document",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:onTask",
+     "inverse": true,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Comment",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:assignee",
+     "inverse": false,
+     "ownership": "Reference",
+     "targetShape": null,
+     "mode": "ByIdentity"
+    }
+   ],
+   "triples": [
+    {
+     "s": {
+      "iri": "urn:example:p1"
+     },
+     "p": {
+      "iri": "urn:example:name"
+     },
+     "o": {
+      "literal": "Alpha"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:p1"
+     },
+     "p": {
+      "iri": "urn:example:hasMilestone"
+     },
+     "o": {
+      "iri": "urn:example:m1"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:m1"
+     },
+     "p": {
+      "iri": "urn:example:due"
+     },
+     "o": {
+      "literal": "2026-12-01",
+      "datatype": "http://www.w3.org/2001/XMLSchema#date"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:m1"
+     },
+     "p": {
+      "iri": "urn:example:hasTask"
+     },
+     "o": {
+      "iri": "urn:example:t1"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:p2"
+     },
+     "p": {
+      "iri": "urn:example:name"
+     },
+     "o": {
+      "literal": "Beta"
+     }
+    }
+   ],
+   "outside": [
+    "urn:example:p2"
+   ]
+  },
+  {
+   "id": "pc-reference-edge-is-not-followed",
+   "description": "A node reached only by a reference edge is not the aggregate's to describe.",
+   "root": "urn:example:p1",
+   "shape": "urn:example:Root",
+   "edges": [
+    {
+     "source": "urn:example:Root",
+     "predicate": "urn:example:hasMilestone",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Milestone",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Root",
+     "predicate": "urn:example:client",
+     "inverse": false,
+     "ownership": "Reference",
+     "targetShape": null,
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Milestone",
+     "predicate": "urn:example:hasTask",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Task",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:hasSubtask",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Task",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:attachment",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Document",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:onTask",
+     "inverse": true,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Comment",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:assignee",
+     "inverse": false,
+     "ownership": "Reference",
+     "targetShape": null,
+     "mode": "ByIdentity"
+    }
+   ],
+   "triples": [
+    {
+     "s": {
+      "iri": "urn:example:p1"
+     },
+     "p": {
+      "iri": "urn:example:client"
+     },
+     "o": {
+      "iri": "urn:example:org"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:org"
+     },
+     "p": {
+      "iri": "urn:example:name"
+     },
+     "o": {
+      "literal": "Org"
+     }
+    }
+   ],
+   "outside": [
+    "urn:example:org"
+   ]
+  },
+  {
+   "id": "pc-inverse-edge",
+   "description": "A comment reaches the aggregate through an inverse owned edge from its task.",
+   "root": "urn:example:p1",
+   "shape": "urn:example:Root",
+   "edges": [
+    {
+     "source": "urn:example:Root",
+     "predicate": "urn:example:hasMilestone",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Milestone",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Root",
+     "predicate": "urn:example:client",
+     "inverse": false,
+     "ownership": "Reference",
+     "targetShape": null,
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Milestone",
+     "predicate": "urn:example:hasTask",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Task",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:hasSubtask",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Task",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:attachment",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Document",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:onTask",
+     "inverse": true,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Comment",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:assignee",
+     "inverse": false,
+     "ownership": "Reference",
+     "targetShape": null,
+     "mode": "ByIdentity"
+    }
+   ],
+   "triples": [
+    {
+     "s": {
+      "iri": "urn:example:p1"
+     },
+     "p": {
+      "iri": "urn:example:name"
+     },
+     "o": {
+      "literal": "Alpha"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:p1"
+     },
+     "p": {
+      "iri": "urn:example:hasMilestone"
+     },
+     "o": {
+      "iri": "urn:example:m1"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:m1"
+     },
+     "p": {
+      "iri": "urn:example:due"
+     },
+     "o": {
+      "literal": "2026-12-01",
+      "datatype": "http://www.w3.org/2001/XMLSchema#date"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:m1"
+     },
+     "p": {
+      "iri": "urn:example:hasTask"
+     },
+     "o": {
+      "iri": "urn:example:t1"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:c1"
+     },
+     "p": {
+      "iri": "urn:example:onTask"
+     },
+     "o": {
+      "iri": "urn:example:t1"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:c1"
+     },
+     "p": {
+      "iri": "urn:example:text"
+     },
+     "o": {
+      "literal": "ok"
+     }
+    }
+   ],
+   "outside": []
+  },
+  {
+   "id": "pc-inverse-edge-to-an-unreached-task",
+   "description": "The same comment on a task nothing reaches is outside, and so is nothing else in the payload.",
+   "root": "urn:example:p1",
+   "shape": "urn:example:Root",
+   "edges": [
+    {
+     "source": "urn:example:Root",
+     "predicate": "urn:example:hasMilestone",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Milestone",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Root",
+     "predicate": "urn:example:client",
+     "inverse": false,
+     "ownership": "Reference",
+     "targetShape": null,
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Milestone",
+     "predicate": "urn:example:hasTask",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Task",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:hasSubtask",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Task",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:attachment",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Document",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:onTask",
+     "inverse": true,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Comment",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:assignee",
+     "inverse": false,
+     "ownership": "Reference",
+     "targetShape": null,
+     "mode": "ByIdentity"
+    }
+   ],
+   "triples": [
+    {
+     "s": {
+      "iri": "urn:example:p1"
+     },
+     "p": {
+      "iri": "urn:example:name"
+     },
+     "o": {
+      "literal": "Alpha"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:p1"
+     },
+     "p": {
+      "iri": "urn:example:hasMilestone"
+     },
+     "o": {
+      "iri": "urn:example:m1"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:m1"
+     },
+     "p": {
+      "iri": "urn:example:due"
+     },
+     "o": {
+      "literal": "2026-12-01",
+      "datatype": "http://www.w3.org/2001/XMLSchema#date"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:m1"
+     },
+     "p": {
+      "iri": "urn:example:hasTask"
+     },
+     "o": {
+      "iri": "urn:example:t1"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:c1"
+     },
+     "p": {
+      "iri": "urn:example:onTask"
+     },
+     "o": {
+      "iri": "urn:example:t9"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:c1"
+     },
+     "p": {
+      "iri": "urn:example:text"
+     },
+     "o": {
+      "literal": "ok"
+     }
+    }
+   ],
+   "outside": [
+    "urn:example:c1"
+   ]
+  },
+  {
+   "id": "pc-recursion",
+   "description": "A recursive owned edge reaches any depth.",
+   "root": "urn:example:p1",
+   "shape": "urn:example:Root",
+   "edges": [
+    {
+     "source": "urn:example:Root",
+     "predicate": "urn:example:hasMilestone",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Milestone",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Root",
+     "predicate": "urn:example:client",
+     "inverse": false,
+     "ownership": "Reference",
+     "targetShape": null,
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Milestone",
+     "predicate": "urn:example:hasTask",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Task",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:hasSubtask",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Task",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:attachment",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Document",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:onTask",
+     "inverse": true,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Comment",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:assignee",
+     "inverse": false,
+     "ownership": "Reference",
+     "targetShape": null,
+     "mode": "ByIdentity"
+    }
+   ],
+   "triples": [
+    {
+     "s": {
+      "iri": "urn:example:p1"
+     },
+     "p": {
+      "iri": "urn:example:name"
+     },
+     "o": {
+      "literal": "Alpha"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:p1"
+     },
+     "p": {
+      "iri": "urn:example:hasMilestone"
+     },
+     "o": {
+      "iri": "urn:example:m1"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:m1"
+     },
+     "p": {
+      "iri": "urn:example:due"
+     },
+     "o": {
+      "literal": "2026-12-01",
+      "datatype": "http://www.w3.org/2001/XMLSchema#date"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:m1"
+     },
+     "p": {
+      "iri": "urn:example:hasTask"
+     },
+     "o": {
+      "iri": "urn:example:t1"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:t1"
+     },
+     "p": {
+      "iri": "urn:example:hasSubtask"
+     },
+     "o": {
+      "iri": "urn:example:t2"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:t2"
+     },
+     "p": {
+      "iri": "urn:example:hasSubtask"
+     },
+     "o": {
+      "iri": "urn:example:t3"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:t3"
+     },
+     "p": {
+      "iri": "urn:example:hasSubtask"
+     },
+     "o": {
+      "iri": "urn:example:t4"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:t4"
+     },
+     "p": {
+      "iri": "urn:example:attachment"
+     },
+     "o": {
+      "iri": "urn:example:d1"
+     }
+    }
+   ],
+   "outside": []
+  },
+  {
+   "id": "pc-cycle",
+   "description": "A cycle in the data ends the walk.",
+   "root": "urn:example:p1",
+   "shape": "urn:example:Root",
+   "edges": [
+    {
+     "source": "urn:example:Root",
+     "predicate": "urn:example:hasMilestone",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Milestone",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Root",
+     "predicate": "urn:example:client",
+     "inverse": false,
+     "ownership": "Reference",
+     "targetShape": null,
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Milestone",
+     "predicate": "urn:example:hasTask",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Task",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:hasSubtask",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Task",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:attachment",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Document",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:onTask",
+     "inverse": true,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Comment",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:assignee",
+     "inverse": false,
+     "ownership": "Reference",
+     "targetShape": null,
+     "mode": "ByIdentity"
+    }
+   ],
+   "triples": [
+    {
+     "s": {
+      "iri": "urn:example:p1"
+     },
+     "p": {
+      "iri": "urn:example:name"
+     },
+     "o": {
+      "literal": "Alpha"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:p1"
+     },
+     "p": {
+      "iri": "urn:example:hasMilestone"
+     },
+     "o": {
+      "iri": "urn:example:m1"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:m1"
+     },
+     "p": {
+      "iri": "urn:example:due"
+     },
+     "o": {
+      "literal": "2026-12-01",
+      "datatype": "http://www.w3.org/2001/XMLSchema#date"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:m1"
+     },
+     "p": {
+      "iri": "urn:example:hasTask"
+     },
+     "o": {
+      "iri": "urn:example:t1"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:t1"
+     },
+     "p": {
+      "iri": "urn:example:hasSubtask"
+     },
+     "o": {
+      "iri": "urn:example:t1"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:t1"
+     },
+     "p": {
+      "iri": "urn:example:hasSubtask"
+     },
+     "o": {
+      "iri": "urn:example:t2"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:t2"
+     },
+     "p": {
+      "iri": "urn:example:hasSubtask"
+     },
+     "o": {
+      "iri": "urn:example:t1"
+     }
+    }
+   ],
+   "outside": []
+  },
+  {
+   "id": "pc-the-shape-of-the-source-matters",
+   "description": "hasSubtask is owned from a task and not from a milestone, so a node a milestone names by it is outside.",
+   "root": "urn:example:p1",
+   "shape": "urn:example:Root",
+   "edges": [
+    {
+     "source": "urn:example:Root",
+     "predicate": "urn:example:hasMilestone",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Milestone",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Root",
+     "predicate": "urn:example:client",
+     "inverse": false,
+     "ownership": "Reference",
+     "targetShape": null,
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Milestone",
+     "predicate": "urn:example:hasTask",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Task",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:hasSubtask",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Task",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:attachment",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Document",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:onTask",
+     "inverse": true,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Comment",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:assignee",
+     "inverse": false,
+     "ownership": "Reference",
+     "targetShape": null,
+     "mode": "ByIdentity"
+    }
+   ],
+   "triples": [
+    {
+     "s": {
+      "iri": "urn:example:p1"
+     },
+     "p": {
+      "iri": "urn:example:name"
+     },
+     "o": {
+      "literal": "Alpha"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:p1"
+     },
+     "p": {
+      "iri": "urn:example:hasMilestone"
+     },
+     "o": {
+      "iri": "urn:example:m1"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:m1"
+     },
+     "p": {
+      "iri": "urn:example:due"
+     },
+     "o": {
+      "literal": "2026-12-01",
+      "datatype": "http://www.w3.org/2001/XMLSchema#date"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:m1"
+     },
+     "p": {
+      "iri": "urn:example:hasTask"
+     },
+     "o": {
+      "iri": "urn:example:t1"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:m1"
+     },
+     "p": {
+      "iri": "urn:example:hasSubtask"
+     },
+     "o": {
+      "iri": "urn:example:t9"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:t9"
+     },
+     "p": {
+      "iri": "urn:example:name"
+     },
+     "o": {
+      "literal": "stray"
+     }
+    }
+   ],
+   "outside": [
+    "urn:example:t9"
+   ]
+  },
+  {
+   "id": "pc-the-root-need-not-be-described",
+   "description": "A payload that does not mention the root reaches nothing, so each of its subjects is outside.",
+   "root": "urn:example:p1",
+   "shape": "urn:example:Root",
+   "edges": [
+    {
+     "source": "urn:example:Root",
+     "predicate": "urn:example:hasMilestone",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Milestone",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Root",
+     "predicate": "urn:example:client",
+     "inverse": false,
+     "ownership": "Reference",
+     "targetShape": null,
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Milestone",
+     "predicate": "urn:example:hasTask",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Task",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:hasSubtask",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Task",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:attachment",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Document",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:onTask",
+     "inverse": true,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Comment",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:assignee",
+     "inverse": false,
+     "ownership": "Reference",
+     "targetShape": null,
+     "mode": "ByIdentity"
+    }
+   ],
+   "triples": [
+    {
+     "s": {
+      "iri": "urn:example:m1"
+     },
+     "p": {
+      "iri": "urn:example:hasTask"
+     },
+     "o": {
+      "iri": "urn:example:t1"
+     }
+    }
+   ],
+   "outside": [
+    "urn:example:m1"
+   ]
+  },
+  {
+   "id": "pc-a-shape-that-owns-nothing-admits-the-root-alone",
+   "description": "With no owned edge the only subject is the root.",
+   "root": "urn:example:p1",
+   "shape": "urn:example:Root",
+   "edges": [
+    {
+     "source": "urn:example:Root",
+     "predicate": "urn:example:client",
+     "inverse": false,
+     "ownership": "Reference",
+     "targetShape": null,
+     "mode": "ByIdentity"
+    }
+   ],
+   "triples": [
+    {
+     "s": {
+      "iri": "urn:example:p1"
+     },
+     "p": {
+      "iri": "urn:example:name"
+     },
+     "o": {
+      "literal": "Alpha"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:x"
+     },
+     "p": {
+      "iri": "urn:example:name"
+     },
+     "o": {
+      "literal": "X"
+     }
+    }
+   ],
+   "outside": [
+    "urn:example:x"
+   ]
+  },
+  {
+   "id": "pc-no-boundary-shape",
+   "description": "A family with no boundary shape bounds nothing, and the form of the payload is all that is checked.",
+   "root": "urn:example:p1",
+   "shape": null,
+   "edges": [],
+   "triples": [
+    {
+     "s": {
+      "iri": "urn:example:p1"
+     },
+     "p": {
+      "iri": "urn:example:name"
+     },
+     "o": {
+      "literal": "Alpha"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:anything"
+     },
+     "p": {
+      "iri": "urn:example:name"
+     },
+     "o": {
+      "literal": "X"
+     }
+    }
+   ],
+   "outside": []
+  },
+  {
+   "id": "pc-a-literal-is-only-an-object",
+   "description": "A literal that looks like a query is an object and names no subject.",
+   "root": "urn:example:p1",
+   "shape": "urn:example:Root",
+   "edges": [
+    {
+     "source": "urn:example:Root",
+     "predicate": "urn:example:hasMilestone",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Milestone",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Root",
+     "predicate": "urn:example:client",
+     "inverse": false,
+     "ownership": "Reference",
+     "targetShape": null,
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Milestone",
+     "predicate": "urn:example:hasTask",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Task",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:hasSubtask",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Task",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:attachment",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Document",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:onTask",
+     "inverse": true,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Comment",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:assignee",
+     "inverse": false,
+     "ownership": "Reference",
+     "targetShape": null,
+     "mode": "ByIdentity"
+    }
+   ],
+   "triples": [
+    {
+     "s": {
+      "iri": "urn:example:p1"
+     },
+     "p": {
+      "iri": "urn:example:name"
+     },
+     "o": {
+      "literal": "} } ; DROP ALL ; INSERT { {"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:p1"
+     },
+     "p": {
+      "iri": "urn:example:hasMilestone"
+     },
+     "o": {
+      "iri": "urn:example:m1"
+     }
+    }
+   ],
+   "outside": []
+  }
+ ],
+ "eventChecks": [
+  {
+   "id": "ev-within-the-events",
+   "description": "An event may name an aggregate as an object, and nodes minted under an event are its own.",
+   "events": [
+    {
+     "event": "urn:example:ev/1",
+     "type": "urn:example:Opened",
+     "opSeq": 1,
+     "occurredAt": {
+      "literal": "2026-10-20T00:00:00Z",
+      "datatype": "http://www.w3.org/2001/XMLSchema#dateTime"
+     }
+    },
+    {
+     "event": "urn:example:ev/2",
+     "type": "urn:example:Opened",
+     "opSeq": 2,
+     "occurredAt": {
+      "literal": "2026-10-20T00:00:00Z",
+      "datatype": "http://www.w3.org/2001/XMLSchema#dateTime"
+     }
+    }
+   ],
+   "triples": [
+    {
+     "s": {
+      "iri": "urn:example:ev/1"
+     },
+     "p": {
+      "iri": "urn:example:about"
+     },
+     "o": {
+      "iri": "urn:example:agg"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:ev/2/part/a"
+     },
+     "p": {
+      "iri": "urn:example:note"
+     },
+     "o": {
+      "literal": "x"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:ev/2/part/a/b"
+     },
+     "p": {
+      "iri": "urn:example:note"
+     },
+     "o": {
+      "literal": "y"
+     }
+    }
+   ],
+   "refusals": []
+  },
+  {
+   "id": "ev-an-existing-aggregate-as-subject",
+   "description": "An event triple whose subject is an existing aggregate would write into it.",
+   "events": [
+    {
+     "event": "urn:example:ev/1",
+     "type": "urn:example:Opened",
+     "opSeq": 1,
+     "occurredAt": {
+      "literal": "2026-10-20T00:00:00Z",
+      "datatype": "http://www.w3.org/2001/XMLSchema#dateTime"
+     }
+    }
+   ],
+   "triples": [
+    {
+     "s": {
+      "iri": "urn:example:agg"
+     },
+     "p": {
+      "iri": "urn:example:name"
+     },
+     "o": {
+      "literal": "changed"
+     }
+    }
+   ],
+   "refusals": [
+    "EventOutsideBound"
+   ]
+  },
+  {
+   "id": "ev-a-lookalike-is-not-a-part",
+   "description": "A longer name that starts with an event's name, and a path that is not part/, are neither an event nor minted under one.",
+   "events": [
+    {
+     "event": "urn:example:ev/1",
+     "type": "urn:example:Opened",
+     "opSeq": 1,
+     "occurredAt": {
+      "literal": "2026-10-20T00:00:00Z",
+      "datatype": "http://www.w3.org/2001/XMLSchema#dateTime"
+     }
+    }
+   ],
+   "triples": [
+    {
+     "s": {
+      "iri": "urn:example:ev/10"
+     },
+     "p": {
+      "iri": "urn:example:note"
+     },
+     "o": {
+      "literal": "x"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:ev/1/parts/a"
+     },
+     "p": {
+      "iri": "urn:example:note"
+     },
+     "o": {
+      "literal": "y"
+     }
+    }
+   ],
+   "refusals": [
+    "EventOutsideBound"
+   ]
+  },
+  {
+   "id": "ev-no-events",
+   "description": "An append holds at least one event.",
+   "events": [],
+   "triples": [],
+   "refusals": [
+    "NoEvents"
+   ]
+  },
+  {
+   "id": "ev-one-iri-twice",
+   "description": "Each event of a batch has its own IRI.",
+   "events": [
+    {
+     "event": "urn:example:ev/1",
+     "type": "urn:example:Opened",
+     "opSeq": 1,
+     "occurredAt": {
+      "literal": "2026-10-20T00:00:00Z",
+      "datatype": "http://www.w3.org/2001/XMLSchema#dateTime"
+     }
+    },
+    {
+     "event": "urn:example:ev/1",
+     "type": "urn:example:Closed",
+     "opSeq": 2,
+     "occurredAt": {
+      "literal": "2026-10-20T00:00:00Z",
+      "datatype": "http://www.w3.org/2001/XMLSchema#dateTime"
+     }
+    }
+   ],
+   "triples": [],
+   "refusals": [
+    "DuplicateEvent"
+   ]
+  },
+  {
+   "id": "ev-one-opseq-twice",
+   "description": "opSeq is distinct within a batch.",
+   "events": [
+    {
+     "event": "urn:example:ev/1",
+     "type": "urn:example:Opened",
+     "opSeq": 1,
+     "occurredAt": {
+      "literal": "2026-10-20T00:00:00Z",
+      "datatype": "http://www.w3.org/2001/XMLSchema#dateTime"
+     }
+    },
+    {
+     "event": "urn:example:ev/2",
+     "type": "urn:example:Opened",
+     "opSeq": 1,
+     "occurredAt": {
+      "literal": "2026-10-20T00:00:00Z",
+      "datatype": "http://www.w3.org/2001/XMLSchema#dateTime"
+     }
+    }
+   ],
+   "triples": [],
+   "refusals": [
+    "DuplicateOpSeq"
+   ]
+  },
+  {
+   "id": "ev-an-undefined-value-in-a-row",
+   "description": "A row has all four values. A row with an unbound one would make the VALUES row UNDEF, and a guard over it would read as true.",
+   "events": [
+    {
+     "event": "urn:example:ev/1",
+     "type": "urn:example:Opened",
+     "opSeq": 1,
+     "occurredAt": null
+    }
+   ],
+   "triples": [],
+   "refusals": [
+    "UndefInRow"
+   ]
+  }
+ ],
+ "callerChecks": [
+  {
+   "id": "cc-a-good-request",
+   "description": "Every parameter present and of its kind.",
+   "operation": {
+    "kind": "Replace",
+    "parameters": [
+     {
+      "name": "root",
+      "kind": "Iri",
+      "required": true
+     },
+     {
+      "name": "epoch",
+      "kind": "Long",
+      "required": true
+     },
+     {
+      "name": "expectedSeq",
+      "kind": "Position",
+      "required": true
+     },
+     {
+      "name": "requestDigest",
+      "kind": "Digest",
+      "required": true
+     }
+    ]
+   },
+   "values": {
+    "root": {
+     "iri": "urn:example:p1"
+    },
+    "epoch": {
+     "int": 1
+    },
+    "expectedSeq": {
+     "int": 3
+    },
+    "requestDigest": {
+     "string": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+   },
+   "refusals": []
+  },
+  {
+   "id": "cc-a-missing-parameter",
+   "description": "A required parameter that is not given is named.",
+   "operation": {
+    "kind": "Replace",
+    "parameters": [
+     {
+      "name": "root",
+      "kind": "Iri",
+      "required": true
+     },
+     {
+      "name": "epoch",
+      "kind": "Long",
+      "required": true
+     },
+     {
+      "name": "expectedSeq",
+      "kind": "Position",
+      "required": true
+     },
+     {
+      "name": "requestDigest",
+      "kind": "Digest",
+      "required": true
+     }
+    ]
+   },
+   "values": {
+    "root": {
+     "iri": "urn:example:p1"
+    },
+    "expectedSeq": {
+     "int": 3
+    },
+    "requestDigest": {
+     "string": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+   },
+   "refusals": [
+    "MissingParameter"
+   ]
+  },
+  {
+   "id": "cc-an-unknown-parameter",
+   "description": "A parameter the operation does not declare is named, so a misspelling is not silent.",
+   "operation": {
+    "kind": "Replace",
+    "parameters": [
+     {
+      "name": "root",
+      "kind": "Iri",
+      "required": true
+     },
+     {
+      "name": "epoch",
+      "kind": "Long",
+      "required": true
+     },
+     {
+      "name": "expectedSeq",
+      "kind": "Position",
+      "required": true
+     },
+     {
+      "name": "requestDigest",
+      "kind": "Digest",
+      "required": true
+     }
+    ]
+   },
+   "values": {
+    "root": {
+     "iri": "urn:example:p1"
+    },
+    "epoch": {
+     "int": 1
+    },
+    "expectedSeq": {
+     "int": 3
+    },
+    "requestDigest": {
+     "string": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "epock": {
+     "int": 1
+    }
+   },
+   "refusals": [
+    "UnknownParameter"
+   ]
+  },
+  {
+   "id": "cc-an-xsd-integer-epoch",
+   "description": "An epoch is exactly xsd:long on any store. An xsd:integer is refused where a store's own guard might pass it.",
+   "operation": {
+    "kind": "Replace",
+    "parameters": [
+     {
+      "name": "root",
+      "kind": "Iri",
+      "required": true
+     },
+     {
+      "name": "epoch",
+      "kind": "Long",
+      "required": true
+     },
+     {
+      "name": "expectedSeq",
+      "kind": "Position",
+      "required": true
+     },
+     {
+      "name": "requestDigest",
+      "kind": "Digest",
+      "required": true
+     }
+    ]
+   },
+   "values": {
+    "root": {
+     "iri": "urn:example:p1"
+    },
+    "epoch": {
+     "literal": "1",
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer"
+    },
+    "expectedSeq": {
+     "int": 3
+    },
+    "requestDigest": {
+     "string": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+   },
+   "refusals": [
+    "NotXsdLong"
+   ]
+  },
+  {
+   "id": "cc-an-untyped-epoch",
+   "description": "A plain string literal is not an xsd:long.",
+   "operation": {
+    "kind": "Replace",
+    "parameters": [
+     {
+      "name": "root",
+      "kind": "Iri",
+      "required": true
+     },
+     {
+      "name": "epoch",
+      "kind": "Long",
+      "required": true
+     },
+     {
+      "name": "expectedSeq",
+      "kind": "Position",
+      "required": true
+     },
+     {
+      "name": "requestDigest",
+      "kind": "Digest",
+      "required": true
+     }
+    ]
+   },
+   "values": {
+    "root": {
+     "iri": "urn:example:p1"
+    },
+    "epoch": {
+     "literal": "1"
+    },
+    "expectedSeq": {
+     "int": 3
+    },
+    "requestDigest": {
+     "string": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+   },
+   "refusals": [
+    "NotXsdLong"
+   ]
+  },
+  {
+   "id": "cc-a-long-literal",
+   "description": "An xsd:long literal in canonical form passes.",
+   "operation": {
+    "kind": "Replace",
+    "parameters": [
+     {
+      "name": "root",
+      "kind": "Iri",
+      "required": true
+     },
+     {
+      "name": "epoch",
+      "kind": "Long",
+      "required": true
+     },
+     {
+      "name": "expectedSeq",
+      "kind": "Position",
+      "required": true
+     },
+     {
+      "name": "requestDigest",
+      "kind": "Digest",
+      "required": true
+     }
+    ]
+   },
+   "values": {
+    "root": {
+     "iri": "urn:example:p1"
+    },
+    "epoch": {
+     "literal": "1",
+     "datatype": "http://www.w3.org/2001/XMLSchema#long"
+    },
+    "expectedSeq": {
+     "int": 3
+    },
+    "requestDigest": {
+     "string": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+   },
+   "refusals": []
+  },
+  {
+   "id": "cc-an-ill-typed-long",
+   "description": "A literal that keeps xsd:long and is not a number is refused.",
+   "operation": {
+    "kind": "Replace",
+    "parameters": [
+     {
+      "name": "root",
+      "kind": "Iri",
+      "required": true
+     },
+     {
+      "name": "epoch",
+      "kind": "Long",
+      "required": true
+     },
+     {
+      "name": "expectedSeq",
+      "kind": "Position",
+      "required": true
+     },
+     {
+      "name": "requestDigest",
+      "kind": "Digest",
+      "required": true
+     }
+    ]
+   },
+   "values": {
+    "root": {
+     "iri": "urn:example:p1"
+    },
+    "epoch": {
+     "literal": "abc",
+     "datatype": "http://www.w3.org/2001/XMLSchema#long"
+    },
+    "expectedSeq": {
+     "int": 3
+    },
+    "requestDigest": {
+     "string": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+   },
+   "refusals": [
+    "IllTypedLiteral"
+   ]
+  },
+  {
+   "id": "cc-a-long-out-of-range",
+   "description": "9223372036854775808 is one past the largest xsd:long.",
+   "operation": {
+    "kind": "Replace",
+    "parameters": [
+     {
+      "name": "root",
+      "kind": "Iri",
+      "required": true
+     },
+     {
+      "name": "epoch",
+      "kind": "Long",
+      "required": true
+     },
+     {
+      "name": "expectedSeq",
+      "kind": "Position",
+      "required": true
+     },
+     {
+      "name": "requestDigest",
+      "kind": "Digest",
+      "required": true
+     }
+    ]
+   },
+   "values": {
+    "root": {
+     "iri": "urn:example:p1"
+    },
+    "epoch": {
+     "literal": "9223372036854775808",
+     "datatype": "http://www.w3.org/2001/XMLSchema#long"
+    },
+    "expectedSeq": {
+     "int": 3
+    },
+    "requestDigest": {
+     "string": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+   },
+   "refusals": [
+    "IllTypedLiteral"
+   ]
+  },
+  {
+   "id": "cc-an-iri-where-a-long-is-declared",
+   "description": "An IRI is not a literal.",
+   "operation": {
+    "kind": "Replace",
+    "parameters": [
+     {
+      "name": "root",
+      "kind": "Iri",
+      "required": true
+     },
+     {
+      "name": "epoch",
+      "kind": "Long",
+      "required": true
+     },
+     {
+      "name": "expectedSeq",
+      "kind": "Position",
+      "required": true
+     },
+     {
+      "name": "requestDigest",
+      "kind": "Digest",
+      "required": true
+     }
+    ]
+   },
+   "values": {
+    "root": {
+     "iri": "urn:example:p1"
+    },
+    "epoch": {
+     "int": 1
+    },
+    "expectedSeq": {
+     "iri": "urn:example:3"
+    },
+    "requestDigest": {
+     "string": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+   },
+   "refusals": [
+    "WrongKind"
+   ]
+  },
+  {
+   "id": "cc-a-literal-where-an-iri-is-declared",
+   "description": "A literal is not an IRI.",
+   "operation": {
+    "kind": "Replace",
+    "parameters": [
+     {
+      "name": "root",
+      "kind": "Iri",
+      "required": true
+     },
+     {
+      "name": "epoch",
+      "kind": "Long",
+      "required": true
+     },
+     {
+      "name": "expectedSeq",
+      "kind": "Position",
+      "required": true
+     },
+     {
+      "name": "requestDigest",
+      "kind": "Digest",
+      "required": true
+     }
+    ]
+   },
+   "values": {
+    "root": {
+     "literal": "urn:example:p1"
+    },
+    "epoch": {
+     "int": 1
+    },
+    "expectedSeq": {
+     "int": 3
+    },
+    "requestDigest": {
+     "string": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+   },
+   "refusals": [
+    "WrongKind"
+   ]
+  },
+  {
+   "id": "cc-a-digest-is-lower-case-hex",
+   "description": "A digest is 64 lower-case hexadecimal characters.",
+   "operation": {
+    "kind": "Replace",
+    "parameters": [
+     {
+      "name": "root",
+      "kind": "Iri",
+      "required": true
+     },
+     {
+      "name": "epoch",
+      "kind": "Long",
+      "required": true
+     },
+     {
+      "name": "expectedSeq",
+      "kind": "Position",
+      "required": true
+     },
+     {
+      "name": "requestDigest",
+      "kind": "Digest",
+      "required": true
+     }
+    ]
+   },
+   "values": {
+    "root": {
+     "iri": "urn:example:p1"
+    },
+    "epoch": {
+     "int": 1
+    },
+    "expectedSeq": {
+     "int": 3
+    },
+    "requestDigest": {
+     "string": "ABC"
+    }
+   },
+   "refusals": [
+    "WrongKind"
+   ]
+  },
+  {
+   "id": "cc-a-caller-named-graph-that-equals-the-rule",
+   "description": "The graph is the prefix, the root encoded as ENCODE_FOR_URI does, and the suffix.",
+   "operation": {
+    "kind": "Replace",
+    "graphPrefix": "urn:example:g/",
+    "graphSuffix": "",
+    "parameters": [
+     {
+      "name": "root",
+      "kind": "Iri",
+      "required": true
+     },
+     {
+      "name": "g",
+      "kind": "Iri",
+      "required": true,
+      "equalsGraphName": true
+     }
+    ]
+   },
+   "values": {
+    "root": {
+     "iri": "urn:example:a/b?c"
+    },
+    "g": {
+     "iri": "urn:example:g/urn%3Aexample%3Aa%2Fb%3Fc"
+    }
+   },
+   "refusals": []
+  },
+  {
+   "id": "cc-a-caller-named-graph-that-differs",
+   "description": "The raw root in the graph name is not the encoded one.",
+   "operation": {
+    "kind": "Replace",
+    "graphPrefix": "urn:example:g/",
+    "graphSuffix": "",
+    "parameters": [
+     {
+      "name": "root",
+      "kind": "Iri",
+      "required": true
+     },
+     {
+      "name": "g",
+      "kind": "Iri",
+      "required": true,
+      "equalsGraphName": true
+     }
+    ]
+   },
+   "values": {
+    "root": {
+     "iri": "urn:example:a/b?c"
+    },
+    "g": {
+     "iri": "urn:example:g/urn:example:a/b?c"
+    }
+   },
+   "refusals": [
+    "GraphNameMismatch"
+   ]
+  },
+  {
+   "id": "cc-log-graphs-listed",
+   "description": "A list of IRIs passes.",
+   "operation": {
+    "kind": "Audit",
+    "parameters": [
+     {
+      "name": "logGraphs",
+      "kind": "RegistryList",
+      "required": true
+     }
+    ]
+   },
+   "values": {
+    "logGraphs": {
+     "strings": [
+      "urn:g:txlog/2026-10"
+     ]
+    }
+   },
+   "refusals": []
+  },
+  {
+   "id": "cc-no-log-graphs",
+   "description": "An audit over no graph examines nothing, so the check refuses it.",
+   "operation": {
+    "kind": "Audit",
+    "parameters": [
+     {
+      "name": "logGraphs",
+      "kind": "RegistryList",
+      "required": true
+     }
+    ]
+   },
+   "values": {
+    "logGraphs": {
+     "strings": []
+    }
+   },
+   "refusals": [
+    "EmptyLogGraphs"
+   ]
+  },
+  {
+   "id": "cc-no-log-graphs-allowed",
+   "description": "A caller that allows it gets NothingExamined from the audit outcome and not a clean result.",
+   "operation": {
+    "kind": "Audit",
+    "parameters": [
+     {
+      "name": "logGraphs",
+      "kind": "RegistryList",
+      "required": true
+     }
+    ]
+   },
+   "values": {
+    "logGraphs": {
+     "strings": []
+    }
+   },
+   "refusals": [],
+   "allowEmptyLogGraphs": true
+  },
+  {
+   "id": "cc-a-log-graph-that-is-not-an-iri",
+   "description": "Every member is an IRI.",
+   "operation": {
+    "kind": "Audit",
+    "parameters": [
+     {
+      "name": "logGraphs",
+      "kind": "RegistryList",
+      "required": true
+     }
+    ]
+   },
+   "values": {
+    "logGraphs": {
+     "strings": [
+      "not an iri"
+     ]
+    }
+   },
+   "refusals": [
+    "LogGraphNotIri"
+   ]
+  },
+  {
+   "id": "cc-log-graphs-missing",
+   "description": "The list is required.",
+   "operation": {
+    "kind": "Audit",
+    "parameters": [
+     {
+      "name": "logGraphs",
+      "kind": "RegistryList",
+      "required": true
+     }
+    ]
+   },
+   "values": {},
+   "refusals": [
+    "MissingParameter"
+   ]
+  }
+ ],
+ "auditOutcomes": [
+  {
+   "id": "ao-failed",
+   "description": "An audit that returned a row failed.",
+   "rows": 2,
+   "logGraphs": [
+    "urn:g:txlog/2026-10"
+   ],
+   "examined": 7,
+   "outcome": "Failed"
+  },
+  {
+   "id": "ao-clean",
+   "description": "No row, and the listed graphs held receipts to read.",
+   "rows": 0,
+   "logGraphs": [
+    "urn:g:txlog/2026-10"
+   ],
+   "examined": 7,
+   "outcome": "Clean"
+  },
+  {
+   "id": "ao-an-empty-registry-examines-nothing",
+   "description": "No row and no graph listed is not a clean result.",
+   "rows": 0,
+   "logGraphs": [],
+   "examined": null,
+   "outcome": "NothingExamined"
+  },
+  {
+   "id": "ao-listed-graphs-that-hold-no-receipt",
+   "description": "No row and nothing to read in the listed graphs.",
+   "rows": 0,
+   "logGraphs": [
+    "urn:g:txlog/2026-10"
+   ],
+   "examined": 0,
+   "outcome": "NothingExamined"
+  },
+  {
+   "id": "ao-an-audit-that-lists-no-graph",
+   "description": "The key-claim and fork audits read fixed graphs and list none, so no row is clean.",
+   "rows": 0,
+   "logGraphs": null,
+   "examined": null,
+   "outcome": "Clean"
+  },
+  {
+   "id": "ao-a-row-wins-over-an-empty-registry",
+   "description": "A row means the audit read something, even over an empty registry.",
+   "rows": 1,
+   "logGraphs": [],
+   "examined": null,
+   "outcome": "Failed"
+  }
+ ],
+ "referenceChecks": [
+  {
+   "id": "rc-a-version-on-a-pinned-edge",
+   "description": "An object on a pinned edge is a version.",
+   "root": "urn:example:p1",
+   "shape": "urn:example:Root",
+   "edges": [
+    {
+     "source": "urn:example:Root",
+     "predicate": "urn:example:hasMilestone",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Milestone",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Root",
+     "predicate": "urn:example:client",
+     "inverse": false,
+     "ownership": "Reference",
+     "targetShape": null,
+     "mode": "Pinned"
+    },
+    {
+     "source": "urn:example:Milestone",
+     "predicate": "urn:example:hasTask",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Task",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:hasSubtask",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Task",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:attachment",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Document",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:onTask",
+     "inverse": true,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Comment",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:assignee",
+     "inverse": false,
+     "ownership": "Reference",
+     "targetShape": null,
+     "mode": "ByIdentity"
+    }
+   ],
+   "triples": [
+    {
+     "s": {
+      "iri": "urn:example:p1"
+     },
+     "p": {
+      "iri": "urn:example:client"
+     },
+     "o": {
+      "iri": "urn:example:org/v2"
+     }
+    }
+   ],
+   "versions": [
+    "urn:example:org/v2"
+   ],
+   "refusals": []
+  },
+  {
+   "id": "rc-an-identity-on-a-pinned-edge",
+   "description": "The identity of the organisation on a pinned edge is refused.",
+   "root": "urn:example:p1",
+   "shape": "urn:example:Root",
+   "edges": [
+    {
+     "source": "urn:example:Root",
+     "predicate": "urn:example:hasMilestone",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Milestone",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Root",
+     "predicate": "urn:example:client",
+     "inverse": false,
+     "ownership": "Reference",
+     "targetShape": null,
+     "mode": "Pinned"
+    },
+    {
+     "source": "urn:example:Milestone",
+     "predicate": "urn:example:hasTask",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Task",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:hasSubtask",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Task",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:attachment",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Document",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:onTask",
+     "inverse": true,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Comment",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:assignee",
+     "inverse": false,
+     "ownership": "Reference",
+     "targetShape": null,
+     "mode": "ByIdentity"
+    }
+   ],
+   "triples": [
+    {
+     "s": {
+      "iri": "urn:example:p1"
+     },
+     "p": {
+      "iri": "urn:example:client"
+     },
+     "o": {
+      "iri": "urn:example:org"
+     }
+    }
+   ],
+   "versions": [
+    "urn:example:org/v2"
+   ],
+   "refusals": [
+    "ReferenceModeViolation"
+   ]
+  },
+  {
+   "id": "rc-an-unknown-object-on-a-pinned-edge",
+   "description": "What the caller cannot say is a version is refused on a pinned edge.",
+   "root": "urn:example:p1",
+   "shape": "urn:example:Root",
+   "edges": [
+    {
+     "source": "urn:example:Root",
+     "predicate": "urn:example:hasMilestone",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Milestone",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Root",
+     "predicate": "urn:example:client",
+     "inverse": false,
+     "ownership": "Reference",
+     "targetShape": null,
+     "mode": "Pinned"
+    },
+    {
+     "source": "urn:example:Milestone",
+     "predicate": "urn:example:hasTask",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Task",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:hasSubtask",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Task",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:attachment",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Document",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:onTask",
+     "inverse": true,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Comment",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:assignee",
+     "inverse": false,
+     "ownership": "Reference",
+     "targetShape": null,
+     "mode": "ByIdentity"
+    }
+   ],
+   "triples": [
+    {
+     "s": {
+      "iri": "urn:example:p1"
+     },
+     "p": {
+      "iri": "urn:example:client"
+     },
+     "o": {
+      "iri": "urn:example:never-seen"
+     }
+    }
+   ],
+   "versions": [
+    "urn:example:org/v2"
+   ],
+   "refusals": [
+    "ReferenceModeViolation"
+   ]
+  },
+  {
+   "id": "rc-a-version-on-an-identity-edge",
+   "description": "A version on an edge by identity is refused.",
+   "root": "urn:example:p1",
+   "shape": "urn:example:Root",
+   "edges": [
+    {
+     "source": "urn:example:Root",
+     "predicate": "urn:example:hasMilestone",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Milestone",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Root",
+     "predicate": "urn:example:client",
+     "inverse": false,
+     "ownership": "Reference",
+     "targetShape": null,
+     "mode": "Pinned"
+    },
+    {
+     "source": "urn:example:Milestone",
+     "predicate": "urn:example:hasTask",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Task",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:hasSubtask",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Task",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:attachment",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Document",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:onTask",
+     "inverse": true,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Comment",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:assignee",
+     "inverse": false,
+     "ownership": "Reference",
+     "targetShape": null,
+     "mode": "ByIdentity"
+    }
+   ],
+   "triples": [
+    {
+     "s": {
+      "iri": "urn:example:p1"
+     },
+     "p": {
+      "iri": "urn:example:hasMilestone"
+     },
+     "o": {
+      "iri": "urn:example:m1"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:m1"
+     },
+     "p": {
+      "iri": "urn:example:hasTask"
+     },
+     "o": {
+      "iri": "urn:example:t1"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:t1"
+     },
+     "p": {
+      "iri": "urn:example:assignee"
+     },
+     "o": {
+      "iri": "urn:example:person/v3"
+     }
+    }
+   ],
+   "versions": [
+    "urn:example:person/v3"
+   ],
+   "refusals": [
+    "ReferenceModeViolation"
+   ]
+  },
+  {
+   "id": "rc-an-identity-on-an-identity-edge",
+   "description": "An identity on an edge by identity passes.",
+   "root": "urn:example:p1",
+   "shape": "urn:example:Root",
+   "edges": [
+    {
+     "source": "urn:example:Root",
+     "predicate": "urn:example:hasMilestone",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Milestone",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Root",
+     "predicate": "urn:example:client",
+     "inverse": false,
+     "ownership": "Reference",
+     "targetShape": null,
+     "mode": "Pinned"
+    },
+    {
+     "source": "urn:example:Milestone",
+     "predicate": "urn:example:hasTask",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Task",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:hasSubtask",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Task",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:attachment",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Document",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:onTask",
+     "inverse": true,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Comment",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:assignee",
+     "inverse": false,
+     "ownership": "Reference",
+     "targetShape": null,
+     "mode": "ByIdentity"
+    }
+   ],
+   "triples": [
+    {
+     "s": {
+      "iri": "urn:example:p1"
+     },
+     "p": {
+      "iri": "urn:example:hasMilestone"
+     },
+     "o": {
+      "iri": "urn:example:m1"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:m1"
+     },
+     "p": {
+      "iri": "urn:example:hasTask"
+     },
+     "o": {
+      "iri": "urn:example:t1"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:t1"
+     },
+     "p": {
+      "iri": "urn:example:assignee"
+     },
+     "o": {
+      "iri": "urn:example:person"
+     }
+    }
+   ],
+   "versions": [
+    "urn:example:person/v3"
+   ],
+   "refusals": []
+  },
+  {
+   "id": "rc-an-edge-of-an-unreached-node-is-not-read",
+   "description": "Only the nodes the owned walk reaches have their edges read.",
+   "root": "urn:example:p1",
+   "shape": "urn:example:Root",
+   "edges": [
+    {
+     "source": "urn:example:Root",
+     "predicate": "urn:example:hasMilestone",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Milestone",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Root",
+     "predicate": "urn:example:client",
+     "inverse": false,
+     "ownership": "Reference",
+     "targetShape": null,
+     "mode": "Pinned"
+    },
+    {
+     "source": "urn:example:Milestone",
+     "predicate": "urn:example:hasTask",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Task",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:hasSubtask",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Task",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:attachment",
+     "inverse": false,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Document",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:onTask",
+     "inverse": true,
+     "ownership": "Owned",
+     "targetShape": "urn:example:Comment",
+     "mode": "ByIdentity"
+    },
+    {
+     "source": "urn:example:Task",
+     "predicate": "urn:example:assignee",
+     "inverse": false,
+     "ownership": "Reference",
+     "targetShape": null,
+     "mode": "ByIdentity"
+    }
+   ],
+   "triples": [
+    {
+     "s": {
+      "iri": "urn:example:p1"
+     },
+     "p": {
+      "iri": "urn:example:name"
+     },
+     "o": {
+      "literal": "x"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:t9"
+     },
+     "p": {
+      "iri": "urn:example:assignee"
+     },
+     "o": {
+      "iri": "urn:example:person/v3"
+     }
+    }
+   ],
+   "versions": [
+    "urn:example:person/v3"
+   ],
+   "refusals": []
+  }
+ ],
+ "checkpointChecks": [
+  {
+   "id": "kc-a-checkpoint-lists-every-member",
+   "description": "A checkpoint states pat:checkpoint true and lists all the members.",
+   "version": "urn:example:v17",
+   "membershipProperty": "urn:example:hasLocation",
+   "members": [
+    "urn:example:l1",
+    "urn:example:l2"
+   ],
+   "checkpoint": true,
+   "triples": [
+    {
+     "s": {
+      "iri": "urn:example:v17"
+     },
+     "p": {
+      "iri": "https://example.org/lattice/patterns#checkpoint"
+     },
+     "o": {
+      "literal": "true",
+      "datatype": "http://www.w3.org/2001/XMLSchema#boolean"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:v17"
+     },
+     "p": {
+      "iri": "urn:example:hasLocation"
+     },
+     "o": {
+      "iri": "urn:example:l1"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:v17"
+     },
+     "p": {
+      "iri": "urn:example:hasLocation"
+     },
+     "o": {
+      "iri": "urn:example:l2"
+     }
+    }
+   ],
+   "refusals": []
+  },
+  {
+   "id": "kc-a-checkpoint-with-a-member-missing",
+   "description": "A list that leaves a member out is not full.",
+   "version": "urn:example:v17",
+   "membershipProperty": "urn:example:hasLocation",
+   "members": [
+    "urn:example:l1",
+    "urn:example:l2"
+   ],
+   "checkpoint": true,
+   "triples": [
+    {
+     "s": {
+      "iri": "urn:example:v17"
+     },
+     "p": {
+      "iri": "https://example.org/lattice/patterns#checkpoint"
+     },
+     "o": {
+      "literal": "true",
+      "datatype": "http://www.w3.org/2001/XMLSchema#boolean"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:v17"
+     },
+     "p": {
+      "iri": "urn:example:hasLocation"
+     },
+     "o": {
+      "iri": "urn:example:l1"
+     }
+    }
+   ],
+   "refusals": [
+    "CheckpointNotFull"
+   ]
+  },
+  {
+   "id": "kc-a-checkpoint-with-an-extra-member",
+   "description": "A list with a member the version does not have is not the list.",
+   "version": "urn:example:v17",
+   "membershipProperty": "urn:example:hasLocation",
+   "members": [
+    "urn:example:l1",
+    "urn:example:l2"
+   ],
+   "checkpoint": true,
+   "triples": [
+    {
+     "s": {
+      "iri": "urn:example:v17"
+     },
+     "p": {
+      "iri": "https://example.org/lattice/patterns#checkpoint"
+     },
+     "o": {
+      "literal": "true",
+      "datatype": "http://www.w3.org/2001/XMLSchema#boolean"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:v17"
+     },
+     "p": {
+      "iri": "urn:example:hasLocation"
+     },
+     "o": {
+      "iri": "urn:example:l1"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:v17"
+     },
+     "p": {
+      "iri": "urn:example:hasLocation"
+     },
+     "o": {
+      "iri": "urn:example:l2"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:v17"
+     },
+     "p": {
+      "iri": "urn:example:hasLocation"
+     },
+     "o": {
+      "iri": "urn:example:l3"
+     }
+    }
+   ],
+   "refusals": [
+    "CheckpointNotFull"
+   ]
+  },
+  {
+   "id": "kc-a-full-list-that-is-not-marked",
+   "description": "The list without pat:checkpoint true is not a checkpoint.",
+   "version": "urn:example:v17",
+   "membershipProperty": "urn:example:hasLocation",
+   "members": [
+    "urn:example:l1",
+    "urn:example:l2"
+   ],
+   "checkpoint": true,
+   "triples": [
+    {
+     "s": {
+      "iri": "urn:example:v17"
+     },
+     "p": {
+      "iri": "urn:example:hasLocation"
+     },
+     "o": {
+      "iri": "urn:example:l1"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:v17"
+     },
+     "p": {
+      "iri": "urn:example:hasLocation"
+     },
+     "o": {
+      "iri": "urn:example:l2"
+     }
+    }
+   ],
+   "refusals": [
+    "CheckpointNotFull"
+   ]
+  },
+  {
+   "id": "kc-a-version-that-states-changes-only",
+   "description": "A version that is not a checkpoint lists no member and no mark.",
+   "version": "urn:example:v17",
+   "membershipProperty": "urn:example:hasLocation",
+   "members": [
+    "urn:example:l1",
+    "urn:example:l2"
+   ],
+   "checkpoint": false,
+   "triples": [
+    {
+     "s": {
+      "iri": "urn:example:v17"
+     },
+     "p": {
+      "iri": "urn:example:note"
+     },
+     "o": {
+      "literal": "x"
+     }
+    }
+   ],
+   "refusals": []
+  },
+  {
+   "id": "kc-a-full-list-on-a-version-that-is-not-due",
+   "description": "A list the domain's property on a version that is not a checkpoint is refused.",
+   "version": "urn:example:v17",
+   "membershipProperty": "urn:example:hasLocation",
+   "members": [
+    "urn:example:l1",
+    "urn:example:l2"
+   ],
+   "checkpoint": false,
+   "triples": [
+    {
+     "s": {
+      "iri": "urn:example:v17"
+     },
+     "p": {
+      "iri": "urn:example:hasLocation"
+     },
+     "o": {
+      "iri": "urn:example:l1"
+     }
+    },
+    {
+     "s": {
+      "iri": "urn:example:v17"
+     },
+     "p": {
+      "iri": "urn:example:hasLocation"
+     },
+     "o": {
+      "iri": "urn:example:l2"
+     }
+    }
+   ],
+   "refusals": [
+    "UnexpectedFullList"
+   ]
+  }
+ ]
+}

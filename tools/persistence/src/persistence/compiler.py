@@ -23,6 +23,9 @@ from .capability import (
     compute_requirement,
     load_capability_spec,
 )
+from .builders import _check_graph_names
+from .contract import edge_contracts
+from .contract_emit import add_edge_facts, contract_for, emit_contract, mint_edge
 from .model import DIMENSIONS, Diagnostic, ResolvedDimension
 from .namespaces import DAL
 from .operations import GeneratedOperation, default_graph_template, select_operations
@@ -48,6 +51,8 @@ class CompiledTarget:
     identity: dict[str, ResolvedDimension] = field(default_factory=dict)
     # identity-minting M1: one sealed minting recipe per identity role.
     recipes: list[dict] = field(default_factory=list)
+    # H2.8c: the record classes the family touches, which the profile states as dal:recordClass.
+    record_classes: tuple = ()
 
 
 class CompileError(Exception):
@@ -65,6 +70,8 @@ def compile_targets(
     graph: Graph,
     classes: set[URIRef] | None = None,
     fail_on_capability_mismatch: bool = True,
+    guards: bool = True,
+    warn_unbounded_payload: bool = False,
 ) -> list[CompiledTarget]:
     """Resolve, validate, and select operations for every discovered
     target. Raises :class:`CompileError` on the first hard failure,
@@ -103,6 +110,10 @@ def compile_targets(
                 validator.check_capability(check)
 
             operations = select_operations(target, dimensions, uniqueness)
+            diagnostics += validator.check_patch_log_written(target, dimensions, operations)
+            diagnostics += validator.check_payload_bound(target, dimensions, operations, warn=warn_unbounded_payload)
+            if not guards:
+                diagnostics += validator.check_guards_off(target)
 
             compiled.append(
                 CompiledTarget(
@@ -116,6 +127,7 @@ def compile_targets(
                     diagnostics=diagnostics,
                     identity=identity,
                     recipes=recipes,
+                    record_classes=validator.family_record_classes(graph, target, dimensions["aggregateBoundary"].extra.get("ownershipTree")),
                 )
             )
         except Exception as e:
@@ -133,6 +145,11 @@ def compile_targets(
         validator.check_graph_naming(families)
     except Exception as e:  # GraphIriTemplateOverlap
         raise CompileError(Target(cls=URIRef("urn:x-persistence:whole-graph")), e) from e
+
+    try:
+        validator.check_no_receipt_meta_shards(compiled)
+    except Exception as e:  # NoReceiptSharesMetaShard
+        raise CompileError(next(ct.target for ct in compiled), e) from e
 
     for ct in compiled:
         boundary = ct.dimensions["aggregateBoundary"]
@@ -162,11 +179,14 @@ def _profile_label(compiled: CompiledTarget) -> str:
     return "p" + hashlib.sha256(key.encode("utf-8")).hexdigest()[:12]
 
 
-def emit_compiled_profile(out: Graph, compiled: CompiledTarget) -> URIRef:
+def emit_compiled_profile(out: Graph, compiled: CompiledTarget, guards: bool = True, graph_names: str = "query") -> URIRef:
     """Serialise one :class:`CompiledTarget` into ``out`` as a
     ``dal:CompiledProfile`` individual. Never writes literal SPARQL text
     (ADR-A79 point 2): only resolved values, provenance, template
-    identifiers, and reified parameter bindings."""
+    identifiers, reified parameter bindings, and the contract of each
+    operation (H2.7). ``guards`` and ``graph_names`` are the run's choices,
+    which the contract records (``dal:guardStatus``, ``dal:graphNaming``) and
+    ``instantiate`` follows."""
     stem = _profile_label(compiled)
     profile = BNode(stem)
     out.add((profile, RDF.type, DAL.CompiledProfile))
@@ -193,6 +213,19 @@ def emit_compiled_profile(out: Graph, compiled: CompiledTarget) -> URIRef:
     for constraint in compiled.uniqueness:
         out.add((profile, DAL.appliedUniquenessConstraint, URIRef(constraint["constraint"])))
 
+    # H2.6e: each edge of the boundary shape that leads to a node, with its ownership and its reference mode, in walk order. Stated once, here,
+    # with an IRI, so that the payload contract of each operation points at it (H2.8c).
+    tree = compiled.dimensions["aggregateBoundary"].extra.get("ownershipTree")
+    edge_nodes = []
+    for index, edge in enumerate(edge_contracts(tree)):
+        node = mint_edge(compiled.target.cls, index, compiled.target.deployment)
+        out.add((node, RDF.type, DAL.ReferenceEdge))
+        add_edge_facts(out, node, edge)
+        out.add((profile, DAL.referenceEdge, node))
+        edge_nodes.append(node)
+    for cls in compiled.record_classes:
+        out.add((profile, DAL.recordClass, URIRef(cls)))
+
     for recipe in compiled.recipes:
         node = BNode(f"{stem}-recipe-{recipe['role']}")
         out.add((node, RDF.type, DAL.MintingRecipe))
@@ -212,7 +245,6 @@ def emit_compiled_profile(out: Graph, compiled: CompiledTarget) -> URIRef:
         template_node = BNode(f"{op_stem}-template")
         out.add((template_node, RDF.type, DAL.Template))
         out.add((template_node, DAL.templateId, RdfLiteral(op.template_id)))
-        out.add((template_node, DAL.templatePath, RdfLiteral(op.template_id)))
         out.add((op_node, DAL.usesTemplate, template_node))
         for binding in op.bindings:
             binding_node = BNode(f"{op_stem}-binding-{binding.name}")
@@ -222,11 +254,20 @@ def emit_compiled_profile(out: Graph, compiled: CompiledTarget) -> URIRef:
             out.add((binding_node, DAL.paramValue, RdfLiteral(str(binding.value))))
             out.add((op_node, DAL.hasParameterBinding, binding_node))
         out.add((profile, DAL.generatedOperation, op_node))
+        # H2.7: the contract of the operation, from its builder, under the run's choices. Every operation has a builder.
+        shape = compiled.dimensions["aggregateBoundary"].extra.get("boundaryShape")
+        contract = contract_for(out, op_node, guards=guards, graph_names=graph_names, shape=URIRef(str(shape)) if shape is not None else None)
+        if contract is None:
+            raise KeyError(f"no builder and no hand declaration for the operation {op.operation} ({op.template_id})")
+        emit_contract(
+            out, op_node, compiled.target.cls, op.operation, contract, URIRef(str(shape)) if shape is not None else None,
+            compiled.target.deployment, tuple(edge_nodes),
+        )
 
     req_node = BNode(f"{stem}-requirement")
     out.add((req_node, RDF.type, DAL.CapabilityRequirement))
     if compiled.requirement.requires_cas:
-        out.add((req_node, DAL.requiresCas, RdfLiteral(compiled.requirement.requires_cas)))
+        out.add((req_node, DAL.requiresCas, URIRef(compiled.requirement.requires_cas)))
     if compiled.requirement.requires_uniqueness_level:
         out.add(
             (
@@ -267,12 +308,20 @@ def compile_to_graph(
     graph: Graph,
     classes: set[URIRef] | None = None,
     fail_on_capability_mismatch: bool = True,
+    guards: bool = True,
+    graph_names: str = "query",
+    warn_unbounded_payload: bool = False,
 ) -> tuple[Graph, list[CompiledTarget]]:
-    compiled = compile_targets(graph, classes, fail_on_capability_mismatch)
+    """Compile ``graph`` and emit the profile. ``guards`` is false for a caller whose own code checks every parameter, and ``graph_names``
+    is ``caller`` to have the caller name each root's graph as ``$g`` (ADR-A123 addenda of 2026-10-12). The profile records both, and
+    ``instantiate`` renders what the profile says (H2.7-Q2). ``warn_unbounded_payload`` raises the ``INFO`` diagnostic of a named-graph family with
+    payload operations and no boundary shape to a warning."""
+    _check_graph_names(graph_names)
+    compiled = compile_targets(graph, classes, fail_on_capability_mismatch, guards=guards, warn_unbounded_payload=warn_unbounded_payload)
     out = Graph()
     out.bind("dal", DAL)
     for ct in compiled:
-        emit_compiled_profile(out, ct)
+        emit_compiled_profile(out, ct, guards, graph_names)
     return out, compiled
 
 

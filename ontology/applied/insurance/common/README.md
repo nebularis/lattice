@@ -567,7 +567,7 @@ icm-voc:ISK a qnt:Unit ; qnt:onSpace icm-voc:Money ; skos:exactMatch <http://qud
 
 Every concept this module's vocabulary publishes (units, currencies, class-of-business codes from
 AIR-4.x onwards) follows the documentation rule of
-[`insurance/peril`](../peril/README.md#7-documentation-rule): at least one `skos:note` naming the
+[`insurance/peril`](../peril/README.md#7-documentation-rule-air-20): at least one `skos:note` naming the
 published standards, scales or sources it follows, and `rdfs:seeAlso` to a stable public entry
 where one exists. Units and currencies carry `skos:note` as drafted above (§6); `rdfs:seeAlso` is
 added where QUDT or ISO 4217 publish a stable entry.
@@ -595,8 +595,9 @@ every conversion's factor, and every currency's notation, QUDT match and placeme
 
 | Version | Change |
 |---|---|
-| `0.8.0` | re-pinned to the substrate's 0.19.0 release, in which Ledger joins ([ADR-A131](../../../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). No content change |
+| next version | re-pinned to the substrate's next release, in which Ledger joins ([ADR-A131](../../../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). No content change |
 | `0.1.0` | AIR-1.2: the six shared classification properties, the six scheme contracts, the four liability role types |
 | `0.5.0` | re-pinned by the computable-contract-substrate unit's Foundation, Vocabulary and Party cascades (no content change) |
 | `0.6.0` (spec) | AIR-4.4: `icm:LossEvent` and `icm:classOfBusiness`. The vocabulary adds `icm-voc:ClassOfBusinessContract` and `icm-voc:GlideNumber` and re-pins to the spec's 0.6.0 |
 | `0.6.0` | AIR-2.6: QUDT-aligned units across nine families, four exact conversions, and a draft list of ISO 4217 currencies on one money value space (common-vocab only, no spec change) |
+| `0.8.0` | spec and vocab re-pinned to the substrate release 0.19.0, with no content change |

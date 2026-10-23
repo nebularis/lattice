@@ -11,6 +11,9 @@ Do not edit it by hand.
 | [A03](decisions/ADR-A03-condition-taxonomy.md) | Eligibility condition taxonomy | 2026-10-19 | [Eligibility README](../../ontology/eligibility/README.md) |
 | [A05](decisions/ADR-A05-compatibility-vocabulary.md) | Compatibility operation vocabulary | 2026-10-19 | [Eligibility README](../../ontology/eligibility/README.md) |
 | [A06](decisions/ADR-A06-wildcard-semantics.md) | Wildcard semantics and limits | 2026-10-19 | [Eligibility README](../../ontology/eligibility/README.md) |
+| [A78](decisions/ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md) | Persistence profile substrate and configurable aggregate boundaries | 2026-10-20 | [Persistence](../../ontology/persistence/README.md) |
+| [A79](decisions/ADR-A79-persistence-compiler-toolchain.md) | Persistence compiler toolchain and template-based SPARQL generation | 2026-10-20 | [Persistence](../../ontology/persistence/README.md) |
+| [A80](decisions/ADR-A80-housekeeping-component-boundary.md) | Housekeeping component boundary | 2026-10-20 | [Persistence](../../ontology/persistence/README.md) |
 | [A85](decisions/ADR-A85-vocabulary-scoped-temporal-binding-resolution.md) | Vocabulary scoped and temporal binding resolution | 2026-10-19 | [Vocabulary README](../../ontology/vocabulary/README.md) |
 | [A87](decisions/ADR-A87-eligibility-concept-inclusion-and-exclusion.md) | Eligibility concept inclusion and exclusion | 2026-10-19 | [Eligibility README](../../ontology/eligibility/README.md) |
 | [A90](decisions/ADR-A90-eligibility-design-time-owl-class-backend.md) | Design-time OWL class backend for Eligibility | 2026-10-19 | [Eligibility README](../../ontology/eligibility/README.md) |
@@ -18,6 +21,10 @@ Do not edit it by hand.
 | [A100](decisions/ADR-A100-hierarchical-match-over-flat-schemes.md) | Hierarchical match over schemes without a hierarchy | 2026-10-19 | [Eligibility README](../../ontology/eligibility/README.md) |
 | [A103](decisions/ADR-A103-eligibility-set-readings.md) | Eligibility set readings and negation | 2026-10-19 | [Eligibility README](../../ontology/eligibility/README.md) |
 | [A105](decisions/ADR-A105-closure-declarations.md) | Closure declarations | 2026-10-19 | [Eligibility README](../../ontology/eligibility/README.md) |
+| [A114](decisions/ADR-A114-external-and-natural-keys.md) | External and natural keys | 2026-10-20 | [Foundation](../../ontology/foundation/README.md), [Persistence](../../ontology/persistence/README.md) |
 | [A121](decisions/ADR-A121-repository-catalogue.md) | The repository catalogue | 2026-10-19 | [Repository catalogue](../../repository-catalogue.md) |
+| [A122](decisions/ADR-A122-aggregate-ownership.md) | Aggregate ownership, a classified boundary shape for every boundary strategy | 2026-10-20 | [Persistence](../../ontology/persistence/README.md) |
+| [A123](decisions/ADR-A123-typed-operation-ir.md) | A typed operation IR for the persistence compiler | 2026-10-20 | [Persistence](../../ontology/persistence/README.md) |
 | [A126](decisions/ADR-A126-literate-specification-layout-and-grammar.md) | Literate specification layout and grammar | 2026-10-19 | [Literate specifications](literate-specifications.md) |
 | [A129](decisions/ADR-A129-one-release-for-the-substrate.md) | One release for the substrate and standalone ontologies | 2026-10-20 | [Ontology versioning policy](ontology-versioning-policy.md) |
+| [A132](decisions/ADR-A132-persistence-caller-library.md) | A caller library for the generated persistence operations | 2026-10-20 | [the persistence caller library](../../packages/persistence/python/README.md) |

@@ -89,7 +89,10 @@ def test_rc1_t4_the_substrate_imports_are_adr_a01s_order_and_the_import_guard_re
     catalogue = rc.load(ROOT)
     substrate = {m.name: frozenset(m.imports or ()) for m in catalogue.modules_of_kind("substrate")}
     assert substrate == ADR_A01_ORDER == import_guard.ALLOWED
-    assert all(m.imports is None for m in catalogue.modules.values() if m.kind != "substrate")
+    assert all(m.imports is None for m in catalogue.modules.values() if m.kind not in ("substrate", "standalone"))
+    standalone = {m.name: frozenset(m.imports or ()) for m in catalogue.modules_of_kind("standalone")}
+    assert standalone == import_guard.STANDALONE
+    assert all(declared <= set(ADR_A01_ORDER) for declared in standalone.values())
 
 
 # ---- root discovery

@@ -230,7 +230,7 @@ def test_absent_row_keeps_create_if_absent():
 def test_pre_created_row_gets_bootstrap_instead_of_create():
     ops = _ops("ex:B a dal:DataAccessProfile ; dal:appliesTo ex:ThingScope ; dal:firstWrite dal:PreCreatedRow .")
     assert "create-if-absent" not in ops
-    assert ops["bootstrap-version-row"].template_id == "bootstrap-version-row.mustache"
+    assert ops["bootstrap-version-row"].template_id == "bootstrap-version-row"
     assert "cas-replace" in ops
 
 
@@ -239,7 +239,7 @@ def test_pre_created_row_under_dataset_guard_uses_guarded_bootstrap():
 ex:B a dal:DataAccessProfile ; dal:appliesTo ex:ThingScope ; dal:firstWrite dal:PreCreatedRow .
 ex:E a dal:EpochProfile ; dal:appliesTo ex:ThingScope ; dal:epochGuardScope dal:DatasetLevelGuard .
 """
-    assert _ops(extra)["bootstrap-version-row"].template_id == "bootstrap-version-row-dataset-guard.mustache"
+    assert _ops(extra)["bootstrap-version-row"].template_id == "bootstrap-version-row-dataset-guard"
 
 
 def test_registry_graph_is_bound_on_every_audit():

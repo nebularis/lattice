@@ -205,7 +205,7 @@ aeo:Asset a owl:Class ;
         [ a owl:Restriction ; owl:onProperty aeo:locatedAt ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
     rdfs:label "Asset"@en ;
     rdfs:comment "Anything of value exposed to loss: a building, contents, stock, machinery, a vessel, a fleet, a crop, a data estate, an income stream." ;
-    fnd:utility "Subject: an asset version. aeo:partOf composes assets (critical equipment in a building, a building in a campus): asymmetric, irreflexive. aeo:locatedAt is functional, for a fixed asset; a mobile asset uses aeo:presence nodes instead (a shape enforces one or the other, never both)." .
+    fnd:utility "Subject: an asset version. aeo:partOf composes assets (critical equipment in a building, a building in a campus): asymmetric, irreflexive. aeo:locatedAt is functional and names a location identity, for a fixed asset; a mobile asset uses aeo:presence nodes instead (a shape enforces one or the other, never both)." .
 
 aeo:assetClass a owl:ObjectProperty ;
     rdfs:subPropertyOf cls:assetClass ;
@@ -215,10 +215,10 @@ aeo:assetClass a owl:ObjectProperty ;
     fnd:utility "Subject: an asset. Value: a concept bound by a reference asset-class scheme (AIR-4.6). Exactly one. Specialises cls:assetClass." .
 
 aeo:locatedAt a owl:ObjectProperty, owl:FunctionalProperty ;
-    rdfs:domain aeo:Asset ; rdfs:range aeo:Location ;
+    rdfs:domain aeo:Asset ; rdfs:range aeo:LocationIdentity ;
     rdfs:label "located at"@en ;
-    rdfs:comment "The fixed location of an asset." ;
-    fnd:utility "Subject: a fixed asset. Value: its location. At most one, and never together with aeo:presence (the asset-location shape)." .
+    rdfs:comment "The identity of the fixed location of an asset. The exposure set version's aeo:hasLocation members say which version of that location holds for the set, so a location changing writes one location version and no asset version." ;
+    fnd:utility "Subject: a fixed asset. Value: the aeo:LocationIdentity of its location, never a location version. At most one, and never together with aeo:presence (the asset-location shape). Resolve it to a location version through the exposure set version that lists the asset (the set-resolves-identities shape)." .
 
 aeo:partOf a owl:ObjectProperty, owl:AsymmetricProperty, owl:IrreflexiveProperty ;
     rdfs:domain aeo:Asset ; rdfs:range aeo:Asset ;
@@ -299,9 +299,10 @@ aeo:Valuation a owl:Class ;
 
 aeo:valueOf a owl:ObjectProperty ;
     rdfs:domain aeo:Valuation ;
+    rdfs:range [ a owl:Class ; owl:unionOf ( aeo:AssetIdentity aeo:LocationIdentity ) ] ;
     rdfs:label "value of"@en ;
-    rdfs:comment "The asset or location a valuation states a value for." ;
-    fnd:utility "Subject: a valuation. Value: an aeo:Asset or an aeo:Location. Exactly one." .
+    rdfs:comment "The identity of the asset or location a valuation states a value for. The exposure set version's members say which version holds for the set, so a location or asset changing writes one version and no valuation version." ;
+    fnd:utility "Subject: a valuation. Value: an aeo:AssetIdentity or an aeo:LocationIdentity, never a version. Exactly one. Resolve it to a version through the exposure set version that lists the valuation (the set-resolves-identities shape)." .
 
 aeo:valueType a owl:ObjectProperty ;
     rdfs:domain aeo:Valuation ; rdfs:range skos:Concept ;

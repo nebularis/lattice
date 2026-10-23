@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# dal:NoReceipt with a family that appends versions. A version takes its position and transaction time from the receipt (VH-Q5a). The other
+# causes, appending records, an append-only concurrency and a stream, are cases of the same refusal in test_patch_log.py.
+# base: write-discipline-composite-append-versions.ttl
+# remove: ex:QuoteReceiptProfile dal:receiptModel
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/quoting#> .
+
+ex:QuoteReceiptProfile dal:receiptModel dal:NoReceipt .

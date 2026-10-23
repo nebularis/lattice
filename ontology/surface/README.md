@@ -278,6 +278,7 @@ The module's entry in the [repository catalogue](../../repository-catalogue.md)
 [module]
 kind = "standalone"
 roles = ["docs", "examples", "execution", "shapes", "spec", "test", "vocab"]
+imports = ["foundation", "vocabulary", "quantification"]
 
 [module.extract]
 spec = ["spec/surface.ttl"]

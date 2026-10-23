@@ -189,3 +189,7 @@ handed to R). S became unavailable on 2026-10-14 and R built AIR-4.2a to AIR-4.4
   Ensemble ES-3 and contribution from ES-8, AIR-7.1 waits on ES-4 and ES-5, AIR-7.5 on ES-6 and LG-4,
   and AIR-7.9 on ES-5 and ES-7.
   No slice briefed.
+- 2026-10-20: AIR-66 (TD-66) built on the formal-methods Track H branch at the maintainer's request, for the AIR plate at its next
+  start-up: exposure versions are never edited, and `aeo:locatedAt` and `aeo:valueOf` name identities. Handover and follow-ups in the
+  [Phase 4 plan](../plans/applied-insurance-reference-phase-4.md#handover-from-formal-methods-track-h-air-66-and-its-follow-ups-2026-10-20).
+

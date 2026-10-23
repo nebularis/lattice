@@ -3,7 +3,7 @@
 # Validation Pack: FMH-H2.5, key claims, the audits, guard D and the SELECT fragment
 
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice H2.5, planned in
-[plan §4.3](../plans/formal-methods-track-h.md#43-h25-key-claims-the-audits-and-the-self-calibrating-guard-planned-2026-10-13) (H-D23, one slice in
+[plan §4.3](../plans/formal-methods-track-h.md#43-h25-key-claims-the-audits-and-the-self-calibrating-guard-planned-2026-10-13-built-2026-10-13) (H-D23, one slice in
 six gates) under [ADR-A123](../../architecture/decisions/ADR-A123-typed-operation-ir.md) and its addenda of 2026-10-13.
 **For the maintainer:** all three decisions were taken on 2026-10-13, and 1 and 2 are built in this slice. Nothing is open. The stop condition on P5 did not arise.
 **For countersignature (non-weakening rule):** none. No test was removed or loosened. Two existing tests changed their expected text to follow

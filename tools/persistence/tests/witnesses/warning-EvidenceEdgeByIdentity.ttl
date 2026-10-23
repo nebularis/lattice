@@ -1,0 +1,12 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# A record that is evidence refers by identity (the base's ex:customer edge) to a versioned class, which names the version in force and not the one it saw.
+# base: composite-property-boundary-shacl.ttl
+@prefix dal:  <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:   <https://example.org/lending#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+
+ex:Order rdfs:subClassOf fnd:Evidence .
+ex:Customer rdfs:subClassOf fnd:Version .

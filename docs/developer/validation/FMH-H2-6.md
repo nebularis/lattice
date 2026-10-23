@@ -3,7 +3,7 @@
 # Validation Pack: FMH-H2.6, the expected compiled profile and the paper check
 
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice H2.6, planned in
-[plan §4.4](../plans/formal-methods-track-h.md#44-h26-the-expected-compiled-profile-examples-first-and-the-paper-check-planned-2026-10-13) and
+[plan §4.4](../plans/formal-methods-track-h.md#44-h26-the-expected-compiled-profile-examples-first-and-the-paper-check-planned-2026-10-13-built-2026-10-13) and
 the [typed IR sketch §7.2](../sketches/formal-methods-track-h-typed-ir.md#72-the-paper-check-of-the-logical-resources-h26), after
 [H2.5](FMH-H2-5.md). Examples first (`lattice-lifecycle`): this slice stops here for your review, and for your commit of the expected
 profiles, before H2.7 is briefed against them.

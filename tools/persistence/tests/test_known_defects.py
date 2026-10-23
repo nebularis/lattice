@@ -11,22 +11,4 @@ turns that into a failure, and the fixer removes the marker and the entry in
 ``docs/developer/plans/technical-debt.md``. Each reason names its register entry.
 """
 
-from __future__ import annotations
-
-import pytest
-from rdflib import Graph
-
-from persistence import witness
-from persistence.compiler import compile_targets
-
-PREFIXES = """
-@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
-@prefix ex:  <https://example.org/lending#> .
-"""
-
-
-@pytest.mark.xfail(strict=True, reason="TD-23: a class named only by dal:coversClass is never compiled")
-def test_a_class_covered_only_by_a_graph_pattern_scope_is_compiled():
-    graph = witness._load_fixture(witness.EXAMPLES_DIR / "warning-mixed-receipt-model.ttl")
-    compiled = {str(ct.target.cls).rsplit("#", 1)[-1] for ct in compile_targets(graph)}
-    assert compiled == {"Widget", "Gadget"}
+# None at present. TD-23 was fixed on 2026-10-23 and its test moved to test_validator.py.

@@ -91,6 +91,9 @@ justification in its Validation Pack, countersigned at the gate.
   `main`, then tag. A tag on an unmerged branch can name a commit that never reaches `main`.
 - **Branch from `main`**, so a branch starts from every merged release, unless the maintainer has said
   parallel work is under way.
+- **One release tag.** The substrate and standalone modules are tagged once per release, as
+  `ontologies-vX.Y.Z` (ADR-A129). An applied module takes its own tag for each new version
+  (ADR-A86). The per-module tags from before release 0.18.0 are history.
 - **Ontology version bumps happen once, at merge, never mid-branch.** `mise run release:prepare`
   moves every release member's shared version number forward (ADR-A129) and cascades into every
   applied module that pins it. Nobody consumes a branch's version numbers before it merges, so
@@ -100,10 +103,18 @@ justification in its Validation Pack, countersigned at the gate.
   `check:ontology-versioning` to report a pending bump for a branch's own new release-member
   content until the actual merge-time bump — that is the correct state of a branch mid-flight, not
   a defect to work around.
+- **Versions on a working branch.** Where the maintainer has agreed that a branch defers versioning,
+  the branch makes no bump, its status record says so, and `check:ontology-versioning`'s `UNBUMPED`
+  is expected there. The release moves once, by `mise run release:prepare`, before the merge into
+  `main`, and the tag follows the merge.
 - **Release tags are the maintainer's.** Whenever `mise run build:ontology-releases` adds a row, or
   `mise run check:ontology-versioning` lists pending tags, end the handoff with a notice headed
   `🔴 RELEASE TAGS REQUIRED`, listing each tag as a, b, c with the commands to create and push them
   once the change is merged. Repeat it in every handoff until the tags exist.
+- **Conformance before a merge.** Before a branch is merged into `main`, every conformance task of a suite the branch touched runs
+  and passes, for example `mise run check:persistence-conformance`, which runs the generated SPARQL on every engine we have. They are
+  not part of `check` (skill `lattice-testing`), so the handoff that asks for the merge lists each one with its result, or says it
+  was not run and why. A failure on one engine is recorded in the triple-store record and is fixed or accepted before the merge.
 - Never merge, push or tag without the maintainer's go-ahead.
 
 ## Reporting

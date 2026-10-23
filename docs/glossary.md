@@ -231,7 +231,7 @@ SPC also formally reifies the actual runtime state of such a system as a **confi
 
 SPC has a substantial ontology already authored, but — as noted in Part II — it isn't integrated with the rest of this repository yet: it still uses a provisional, placeholder namespace rather than LATTICE's shared one, and no `projection/` contract connects it to Behaviour or to any layer below. It's best read, for now, as a serious, separate body of work rather than another rung on the dependency ladder.
 
-*Terms introduced here:* session type, global type / local type, `spc:Behavior`, `spc:Configuration`, `spc:ReductionStep`, `spc:ProjectionAssertion` (SPC's own sense of "projection"), subject reduction.
+*Terms introduced here:* session type, global type / local type, `spc:Behaviour`, `spc:Configuration`, `spc:ReductionStep`, `spc:ProjectionAssertion` (SPC's own sense of "projection"), subject reduction.
 
 ---
 

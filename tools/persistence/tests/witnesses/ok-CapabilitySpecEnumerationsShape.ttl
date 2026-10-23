@@ -1,0 +1,7 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# A capability spec that names a level conforms, which shows that the enumeration shape detects only a string or a value outside the spec.
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:Env a dal:CapabilitySpec ; dal:appliesToTarget ex:Thing ; dal:providesCas dal:NoConcurrencyGuarantee ; dal:providesCommitValidation dal:ShaclSparqlValidation .

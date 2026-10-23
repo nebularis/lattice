@@ -4,7 +4,8 @@
 
 **Unit ID:** `python-test-melting`
 **Status:** Done, 2026-10-09, branch `test/slow-py`. TM0-TM3, TM6-TM8 built and validated. TM4 and TM5
-deferred, with reasoning recorded (slices table). All of TM-Q1 to TM-Q5 decided (status record).
+deferred, with reasoning recorded (slices table). All of TM-Q1 to TM-Q5 decided (status record). Reopened 2026-10-21 for
+TM9 to TM12, every suite on the defaults (planned).
 **Trigger:** request, 2026-10-09. The `check:ontology-catalog` run took 19 minutes in a fresh
 cloud environment, and about 31 s for one test locally.
 **Status record:** [python-test-melting.md](../status/python-test-melting.md)
@@ -181,6 +182,27 @@ Remove the TD-18 and TD-29 rows, naming this plan, and repoint the TD-18 referen
 [formal methods plan](formal-methods.md) (CI time), which would otherwise dangle. Add the support module and
 the timing task to the developer guide. The two sketches are superseded and the maintainer decides whether
 they are deleted. Record final timings against the TM0 baseline.
+
+## Follow-on, 2026-10-21: every suite on the defaults (TM9 to TM12)
+
+Asked for by the maintainer on 2026-10-21, after the persistence suite went from 4m12s to under two minutes (Track H's
+[FMH-TS-1](../validation/FMH-TS-1.md) and [FMH-TS-2](../validation/FMH-TS-2.md)). The techniques are now the defaults of skill
+`lattice-testing` ("The defaults for every suite"), and conformance before a merge is a rule of skill `lattice-lifecycle`. These
+slices apply them to the other suites of `check`, in the order of their expected memory use, since most runs happen on an 8 GB
+laptop with an editor open. Governing decisions: ADR-A124 (benchmarks out of `check`), ADR-A125 and its addendum of 2026-10-21
+(Oxigraph as the default engine, conformance runs, `mem_check`), ADR-A128 (efficient queries and shapes).
+
+| Slice | Scope | Suites | Estimate | Status |
+|---|---|---|---|---|
+| TM9 | Measure. For every `pytest` task `check` runs, the wall time serially and with `-n auto`, the peak resident memory of one process (`-n 0`) and of one worker, the number of workers xdist starts, and whether any test executes SPARQL on a store beyond pySHACL's own use of rdflib. A table in the Validation Pack orders the suites by peak memory per worker. No behaviour change | all | 40k | planned |
+| TM10 | The parallel suites, which use the most memory: `check:ontology-catalog` and `check:peril-vocabulary` answer `pytest_xdist_auto_num_workers` with `mem_check` from TM9's measured peak per worker. A test that starts the reasoner's JVM counts the JVM's heap in that peak, and the JVM's own maximum is set so two workers fit in 8 GB | `tools/test_*.py`, `tools/conftest.py` | 60k | planned, after TM9 |
+| TM11 | The engine split, only for suites TM9 finds executing generated or hand-written SPARQL on a store. Their behaviour tests run on Oxigraph, a test whose subject is one engine's behaviour is marked `conformance`, and each such suite gains a `check:<suite>-conformance` task, run before a merge. A suite with no such test is listed and left alone | per TM9 | 60k per suite | planned, after TM9 |
+| TM12 | The serial suites (`check:workers`, `check:vocabulary`, `check:mork-compilers`, `check:reference-eligibility`, `check:minting-python`, `check:persistence-library`). Each one over 10 s serially gets `-n auto` with `mem_check`, after the work its tests share is made safe for workers. Each one under 10 s stays serial, with its time recorded | those six | 50k | planned, after TM10 |
+
+Validation: TM10 and TM12 each show, with `MEM_CHECK_AVAILABLE_MIB` set low and high, that the suite starts two workers and the
+default count, and that every test outcome is the same as before (the baseline diff of "Measure before changing anything" in the
+skill). TM11 shows that the default run and the conformance run together cover every test that ran before. Each slice keeps every
+assertion and records the wall time, the worker count and the peak memory before and after.
 
 ## Design questions
 

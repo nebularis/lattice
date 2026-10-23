@@ -326,6 +326,15 @@ def validated() -> ValidationCache:
     return _VALIDATION_CACHE
 
 
+@pytest.fixture(scope="session")
+def sparql_translated_once() -> Iterator[None]:
+    """Run the whole session under `_sparql_translated_once` (H1), for a suite that calls pySHACL and runs queries on rdflib in many
+    places and cannot adopt `validated` in each (tools/persistence/tests). Evaluation is unchanged. Only the parse and the translation
+    of a query text that was seen before are skipped."""
+    with _sparql_translated_once():
+        yield
+
+
 @pytest.fixture(scope="session", autouse=True)
 def _graph_cache_not_mutated() -> None:
     """TM1's guard. Runs once, at session end (see the module docstring)."""

@@ -19,7 +19,8 @@ from persistence import resolver
 from persistence.compiler import compile_to_graph
 from persistence.model import DIMENSIONS, CrossAxisViolation
 from persistence.namespaces import DAL
-from persistence.render import load_template, render
+from persistence.builders import build
+from persistence.ir_render import render
 from persistence.scopes import Target
 from persistence.terms import Iri, Literal
 from persistence.validator import check_cross_axis, check_identity
@@ -205,7 +206,7 @@ def test_explicit_reject_generates_the_duplicate_audit():
     ops = {o.operation: o.template_id for o in compiled[0].operations}
     # baseline-single-class.ttl declares dal:onViolation dal:Reject explicitly.
     assert any(op.startswith("key-claim-duplicate-audit:") for op in ops)
-    assert all(t == "key-claim-duplicate-audit.mustache" for op, t in ops.items() if op.startswith("key-claim-duplicate-audit:"))
+    assert all(t == "key-claim-duplicate-audit" for op, t in ops.items() if op.startswith("key-claim-duplicate-audit:"))
 
 
 def test_undeclared_on_violation_also_defaults_to_the_duplicate_audit():
@@ -218,14 +219,14 @@ def test_undeclared_on_violation_also_defaults_to_the_duplicate_audit():
     )
     _, compiled = compile_to_graph(g, classes={CLS})
     ops = {o.operation: o.template_id for o in compiled[0].operations}
-    assert ops["key-claim-duplicate-audit:thing-key"] == "key-claim-duplicate-audit.mustache"
+    assert ops["key-claim-duplicate-audit:thing-key"] == "key-claim-duplicate-audit"
 
 
 def test_merge_policy_generates_the_merge_rewrite_operation_with_the_relation_bound():
     _, compiled = _compile("uniqueness-merge-policy.ttl", "https://example.org/lending#Customer")
     ops = {o.operation: o for o in compiled[0].operations}
     op = ops["key-claim-merge-rewrite:customer-email-unique"]
-    assert op.template_id == "key-claim-merge-rewrite.mustache"
+    assert op.template_id == "key-claim-merge-rewrite"
     binding = next(b for b in op.bindings if b.name == "mergeRelation")
     assert binding.value == "<https://example.org/lending#supersededBy>"
 
@@ -233,22 +234,22 @@ def test_merge_policy_generates_the_merge_rewrite_operation_with_the_relation_bo
 def test_quarantine_policy_generates_the_quarantine_operation():
     _, compiled = _compile("uniqueness-quarantine-policy.ttl", "https://example.org/lending#Device")
     ops = {o.operation: o.template_id for o in compiled[0].operations}
-    assert ops["key-claim-quarantine:device-serial-unique"] == "key-claim-quarantine.mustache"
+    assert ops["key-claim-quarantine:device-serial-unique"] == "key-claim-quarantine"
 
 
 def test_dual_claim_scheme_selects_the_dual_write_template():
     _, compiled = _compile("claim-scheme-dual-rotation.ttl", "https://example.org/lending#Member")
     ops = {o.operation: o.template_id for o in compiled[0].operations}
-    assert ops["key-claim-write:member-handle-unique"] == "key-claim-write-dual.mustache"
+    assert ops["key-claim-write:member-handle-unique"] == "key-claim-write-dual"
 
 
 def test_single_claim_scheme_selects_the_plain_write_template():
     _, compiled = _compile("baseline-single-class.ttl", "https://example.org/lending#LoanApplication")
     ops = {o.operation: o.template_id for o in compiled[0].operations}
-    assert ops["key-claim-write:loan-application-number-per-branch"] == "key-claim-write.mustache"
+    assert ops["key-claim-write:loan-application-number-per-branch"] == "key-claim-write"
 
 
-# ---- template rendering: the merge/quarantine/dual templates render as expected ----------------
+# ---- rendering: the merge/quarantine/dual builders render as expected ----------------
 
 
 def _render(name: str, **extra) -> str:
@@ -258,24 +259,24 @@ def _render(name: str, **extra) -> str:
         "constraintId": Literal.encode("example-constraint"),
         **extra,
     }
-    return render(load_template(name), ctx)
+    return render(build(name, ctx))
 
 
 def test_merge_rewrite_uses_min_owner_as_canonical_and_guards_idempotently():
-    text = _render("key-claim-merge-rewrite.mustache", mergeRelation=Iri.encode("https://example.org/lending#supersededBy"))
+    text = _render("key-claim-merge-rewrite", mergeRelation=Iri.encode("https://example.org/lending#supersededBy"))
     assert "IRI(MIN(STR(?owner))) AS ?canonical" in text
     assert "FILTER NOT EXISTS" in text
     assert "<https://example.org/lending#supersededBy>" in text
 
 
 def test_quarantine_writes_to_the_quarantine_graph_and_deletes_nothing():
-    text = _render("key-claim-quarantine.mustache")
+    text = _render("key-claim-quarantine")
     assert "DELETE" not in text
     assert "<urn:g:key-quarantine>" in text
     assert "pat:quarantinedOwner" in text
 
 
 def test_dual_write_guards_both_claim_iris_independently():
-    text = _render("key-claim-write-dual.mustache")
+    text = _render("key-claim-write-dual")
     assert "$claimCurrent" in text and "$claimNext" in text
     assert text.count("FILTER NOT EXISTS") == 2

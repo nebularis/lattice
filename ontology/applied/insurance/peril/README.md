@@ -4798,8 +4798,9 @@ upstream changes (substrate track S1, S2). Neither blocks this module's first re
 
 | Version | Change |
 |---|---|
-| `0.7.0` | re-pinned to the substrate's 0.19.0 release, in which Ledger joins ([ADR-A131](../../../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). No content change |
+| next version | re-pinned to the substrate's next release, in which Ledger joins ([ADR-A131](../../../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). No content change |
 | `0.1.0` | AIR-2.1: the `prl:` properties, kind/part/trigger/overlap/characteristic links, the eight reference schemes, the well-formedness shapes |
 | `0.4.0` | re-pinned by the computable-contract-substrate unit's Foundation and Quantification cascades (no content change). AIR-2.0 (this slice) converts the module to a literate README and adds `prl:DocumentationShape` to `shapes/constraints.ttl`, bumping the shapes `.version` to `0.2.0` only |
 | `0.5.0` | AIR-2.2: imports `insurance/common`, specialises four characteristic properties as its sub-properties, fills the characteristic and companion scheme regions |
 | shapes `0.3.1` | the duplicate-code and parent-code queries of `prl:ReferenceCodeShape` read the same rows by looking a notation up before testing the scheme, instead of joining every cause concept once per focus node. About seventeen times faster on the reference scheme, with no change to what a graph experiences |
+| `0.7.0` | spec, vocab and intensity re-pinned to the substrate release 0.19.0 and `insurance/common` 0.8.0, with no content change |

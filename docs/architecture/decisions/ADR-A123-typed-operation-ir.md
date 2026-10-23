@@ -1,18 +1,17 @@
+---
+published: true
+---
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
 # ADR-A123: A typed operation IR for the persistence compiler
 
-**Status:** Accepted, 2026-10-10, with the ADR-A79 addendum applied the same day, and five addenda of its own (2026-10-12 and 2026-10-13)
+**Status:** Published, 2026-10-20. Accepted 2026-10-10.
+**Described in:** [Persistence](../../../ontology/persistence/README.md)
 **Date:** 2026-10-10
 **Supersedes:** parts of [ADR-A79](ADR-A79-persistence-compiler-toolchain.md), listed under Decision 10. ADR-A79 stays Accepted for the rest
 **Related:** [ADR-A78](ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md),
 [ADR-A122](ADR-A122-aggregate-ownership.md) (decision 6 assigns the payload check to this work),
-[ADR-A-FM4](ADR-A-FM4-persistence-formal-methods-home-and-scope.md),
-[the design brief](../../developer/sketches/formal-methods-track-h-typed-ir.md) (normative detail, with the
-options and their consequences),
-[the specification sketch §3](../../developer/sketches/formal-methods-track-h-specification.md#3-the-typed-intermediate-representation)
-(the hazard table),
-[Track H plan §4](../../developer/plans/formal-methods-track-h.md#4-h2-h3-the-typed-ir-and-the-specification-registry)
+[ADR-A-FM4](https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-A-FM4-persistence-formal-methods-home-and-scope.md)
 
 ## Context
 
@@ -28,10 +27,10 @@ configuration cannot inject SPARQL (decision 4). Three things are left outside t
   `$requestDigest` separately from canonical N-Triples. Nothing checks that the two agree, that the text
   holds no blank node, that a literal cannot break out of the template, or that every subject belongs to the
   aggregate being written.
-- **A missing request-time variable is silently unbound.** An update can then write part of a record (TD-34).
+- **A missing request-time variable is silently unbound.** An update can then write part of a record.
 
 A third problem is cost. The composite replace builds its payload once per stored triple of the aggregate,
-which is quadratic in the aggregate's size (TD-42). It is correct under every store's evaluation order for that
+which is quadratic in the aggregate's size. It is correct under every store's evaluation order for that
 reason, so it is kept as it is for now.
 
 ## Decision
@@ -43,15 +42,15 @@ reason, so it is kept as it is for now.
 
    | Part | Rule | Closes |
    |---|---|---|
-   | parameters | `Param(name, kind, required)`, with kind one of `Iri`, `Long`, `String`, `LangString`, `Position`, `Digest`, `Payload`, `RegistryList` | a missing or misspelt parameter (H-D11) |
+   | parameters | `Param(name, kind, required)`, with kind one of `Iri`, `Long`, `String`, `LangString`, `Position`, `Digest`, `Payload`, `RegistryList` | a missing or misspelt parameter |
    | compile-time constants | the encoders of `terms.py`, unchanged | injection from configuration |
-   | patterns | every triple pattern carries a graph role (data, meta, transaction, log bucket, event bucket, keys, registry). There is no default-graph constructor | S-1, TD-40 |
+   | patterns | every triple pattern carries a graph role (data, meta, transaction, log bucket, event bucket, keys, registry). There is no default-graph constructor | S-1 |
    | terms | a variable, a parameter or a constant. No blank-node constructor exists | a retry that is not a no-op |
    | property paths | allowed only in a `WHERE` pattern | a path in a template |
-   | variables in `DELETE` and `INSERT` | tagged `Bound` or `OptionalAllowed`. An untagged variable is refused | S-3, H-D12 |
+   | variables in `DELETE` and `INSERT` | tagged `Bound` or `OptionalAllowed`. An untagged variable is refused | S-3 |
    | guards | `TermGuard` or `ValueGuard`. A position is declared term-invariant or value-compared, and the wrong guard is refused | term and value divergence |
    | clock | `Now()` appears only in a `BIND` for a receipt field or a bucket choice, never in a guard | `NOW()` in a guard |
-   | required parameters | a guard generated from the parameter list (decision 5) | TD-34, H-D12 |
+   | required parameters | a guard generated from the parameter list (decision 5) | a missing request-time variable |
 
 3. **Read and write sets are derived.** The renderer walks every pattern and yields the graphs and subjects an
    operation reads (its `WHERE`, with a composite closure read through its owned path) and writes (its `DELETE`
@@ -60,12 +59,11 @@ reason, so it is kept as it is for now.
    operation, the parameter declarations, the derived read and write sets and the payload contract. They name
    **logical resources** (the aggregate with its members, its version row, the transaction claim, the receipt, a
    key claim, a log bucket), not SPARQL graph roles. The builders map each logical resource to a graph role.
-   A relational realisation reads the same declarations and can be compared with this one operation by operation
-   (H2-Q5, H2-Q6). The `OwnershipTree` stays in `persistence.boundary`, and the IR holds a reference to it.
+   A relational realisation reads the same declarations and can be compared with this one operation by operation. The `OwnershipTree` stays in `persistence.boundary`, and the IR holds a reference to it.
 5. **The required-parameter guard runs twice.** It is generated from the parameter list as `FILTER(BOUND($p))` in
    its own group at the top of `WHERE`, `{ FILTER(...) }`, with a `DATATYPE` test for `Long`, `Position` and `Digest`, so a missing parameter becomes
    no write for every caller. The Python caller also refuses a missing or mistyped parameter before sending and
-   says why, since a guard that fails reads as a lost race (H2-Q4). The guard needs its own group because a `FILTER`
+   says why, since a guard that fails reads as a lost race. The guard needs its own group because a `FILTER`
    applies to the solutions of its whole group, after the group's patterns have matched. As a top-level `FILTER`, a
    missing `$root` would be bound from the data by a pattern such as `$root pat:seq $expectedSeq`, and the guard would
    pass for every aggregate (found in the H2.1 review, 2026-10-10, before acceptance).
@@ -74,19 +72,19 @@ reason, so it is kept as it is for now.
    and the same lines feed `$requestDigest`. Every subject must be the root or be reached from the root within
    the payload by the owned edges of the boundary shape, in their declared direction. The slot in the rendered
    query is still written `{{{payloadTriples}}}`, so an unrendered slot is a syntax error. Its declared type is
-   `dal:GroundNTriples`. `logGraphs` becomes a `RegistryList` of encoded IRIs (H2-Q1).
+   `dal:GroundNTriples`. `logGraphs` becomes a `RegistryList` of encoded IRIs.
    - The store cannot check the payload, because a guard in an update's `WHERE` sees stored data and a property
      path cannot walk `VALUES` rows. The check runs in the caller. A caller using the Python package gets it
      inside `Payload`. A caller in another language runs a generated `payload-check` query over a local graph.
-   - PL-B refuses no predicate the shape does not declare (H2-Q3).
+   - PL-B refuses no predicate the shape does not declare.
    - A named-graph family with payload operations and no `dal:boundaryShape` gets PL-A only. The compiler reports
      an informational diagnostic by default, and a warning when `compile` is run with a warning option. The
-     diagnostic model gains an `INFO` severity (H2-Q2). No `dal:` term is added for it.
+     diagnostic model gains an `INFO` severity. No `dal:` term is added for it.
 7. **A composite replace keeps its current evaluation form for now.** The payload sits in the `INSERT` template,
-   which is filled once per sweep solution. That is quadratic and correct on every store (TD-42). Two linear
+   which is filled once per sweep solution. That is quadratic and correct on every store. Two linear
    forms exist, and each needs a store property: request atomicity (`atomicUpdateRequest`) for two operations in
    one request, and the specification's evaluation order (`snapshotUpdateSemantics`) for one operation with the
-   payload in a `UNION` branch. Both fields join the capability record of the Track H sketch, three-valued, with
+   payload in a `UNION` branch. Both fields join the capability record, three-valued, with
    a probe each. Choosing a form per store is a `compile` selection made once that record exists, and is not
    decided here.
 8. **Mustache is retired.** The templates, `render.py` and the `chevron` dependency are removed in the last slice
@@ -110,19 +108,18 @@ reason, so it is kept as it is for now.
 
 ## Consequences
 
-- The hazards of the specification sketch become refusals by type, and S-3 and S-4 pass by construction over the
+- The hazards of decision 2's table become refusals by type, and S-3 and S-4 pass by construction over the
   renderer's output. S-3 then reads the parameter declarations instead of the `$name` convention.
 - `compile` gains declarations and a payload contract, so the persistence vocabulary and its shapes change
   (planned as 0.4.0 in slice H2.7, with release tags owed).
 - A caller in another language has two payload duties, PL-A by following the contract and PL-B by running the
-  generated check. Nothing forces the second. A published client SDK that performs both is sketched in
-  [persistence-client-sdk.md](../../developer/sketches/persistence-client-sdk.md) and is not planned.
+  generated check. Nothing forces the second. A published client SDK that performs both is not planned.
 - The logical resources are designed with one realisation in hand. Their fit with `lattice-sql.md` §9 is a
   paper check in slice H2.6. Two realisations generated from one contract share any misreading of it, so the
   models of H5 remain the independent oracle.
 - Nothing outside `tools/persistence` and its tests calls `instantiate` or fills the slots, so no
-  compatibility is owed (H-D14).
-- Sharding (TD-06, TD-41), infrastructure graph names (TD-05), PL-C (SHACL conformance of the payload), the
+  compatibility is owed.
+- Sharding, infrastructure graph names, PL-C (SHACL conformance of the payload), the
   staged in-store payload check and the specification registry (H3) are not decided here.
 
 ## The ADR-A79 addendum
@@ -131,7 +128,7 @@ Applied to [ADR-A79](ADR-A79-persistence-compiler-toolchain.md) on 2026-10-10, w
 
 ## Addendum, 2026-10-12: parameter guards are optional, and are type tests
 
-Decided by the maintainer after the H2.1 review ([FMH-H2-1](../../developer/validation/FMH-H2-1.md#review-2026-10-10)).
+Decided by the maintainer after the review of slice H2.1.
 It amends decisions 5 and 8.
 
 1. **Guards are on by default and can be turned off.** Input checking normally belongs in the access layer, not the
@@ -147,7 +144,7 @@ It amends decisions 5 and 8.
    Unlike `BOUND`, it still parses when a caller substitutes the parameter's text, which a caller with no
    initial-binding API must do. It also catches a parameter of the wrong type, such as an IRI bound to a literal.
 3. **The guard stays in its own group at the top of `WHERE`**, as decision 5 says. It runs once per request, so it
-   costs about nothing, where a top-level `FILTER` ran once per solution (measured on rdflib, FMH-H2-1).
+   costs about nothing, where a top-level `FILTER` ran once per solution (measured on rdflib).
 4. **An operation carries the derived guard or an explicit "guards off" value**, never none. `check` refuses an
    operation without one, so a builder cannot drop it by accident. The equivalence harness of decision 8 renders with
    guards off, not with the guard removed from the value.
@@ -157,7 +154,7 @@ vocabulary, and the `INFO` diagnostic, its witness and the Python caller's own c
 
 ## Addendum, 2026-10-12: who names a named graph
 
-Decided by the maintainer while planning slice H2.3 (Track H plan §4.1, H2.3-Q2).
+Decided by the maintainer while planning slice H2.3.
 
 1. **By default the query names the graph.** A named-graph operation computes `?g` from `$root` by the rule of
    [ADR-A122](ADR-A122-aggregate-ownership.md) decision 8, and a pattern `GRAPH ?g` inside an inner group, such as the
@@ -174,23 +171,20 @@ both the query's naming and its guards.
 
 ## Addendum, 2026-10-12: the path is the IR's reference to the tree, and the IR is not stored yet
 
-Decided by the maintainer while planning slice H2.4 (Track H plan §4.2, H2.4-Q1, and the status record's H2-Q7).
+Decided by the maintainer while planning slice H2.4.
 
-1. **Decision 4's "the IR holds a reference to it" is corrected.** The IR is built by the builders inside `instantiate`
-   (FMH-H2-2, decision 2), which reads only the compiled profile (ADR-A79 decision 1), and the profile holds the owned path,
-   not the tree (H2-Q5). So the compiled path is the IR's reference to the `OwnershipTree`. A composite operation reads it
+1. **Decision 4's "the IR holds a reference to it" is corrected.** The IR is built by the builders inside `instantiate`,
+   which reads only the compiled profile (ADR-A79 decision 1), and the profile holds the owned path,
+   not the tree. So the compiled path is the IR's reference to the `OwnershipTree`. A composite operation reads it
    with `Bindings.path`, and its read set marks the sweep a closure read with the path's text. The tree stays in
-   `persistence.boundary`, where `compile`, H4's language check (C10) and H5's models use it. The sentence was written in the
-   typed IR brief without checking where the IR is built.
-2. **H2-Q5 stands, and a stored IR is decided with PDD-06's ADR.** The IR published, if any, is the semantic SPARQL IR that
-   PDD-06 proposes, so that one contract is published once. Until then the rules SI-1 to SI-6 of the
-   [typed IR sketch §9.4](../../developer/sketches/formal-methods-track-h-typed-ir.md#94-rules-that-keep-a-clean-stored-ir-possible)
-   keep a clean stored IR possible, and §9.5 lists what that ADR must decide. One rule does not hold today: a `Path` holds the
-   path's rendered text, not its structure.
+   `persistence.boundary`, where `compile`, H4's language check (C10) and H5's models use it. The sentence was written without checking where the IR is built.
+2. **The profile holds no tree, and a stored IR is decided with the ADR on a semantic SPARQL IR.** The IR published, if any, is
+   that semantic SPARQL IR, so that one contract is published once. Until then six rules on the IR, recorded with its design (see Provenance), keep a clean stored IR possible.
+   One rule does not hold today: a `Path` holds the path's rendered text, not its structure.
 
 ## Addendum, 2026-10-13: the datatype test calibrates itself to the store
 
-Decided by the maintainer after slice H2.4b (FMH-H2-4b, decision 1, option D). It amends the first addendum's point 2.
+Decided by the maintainer after slice H2.4b. It amends the first addendum's point 2.
 
 1. **The test for `Long` and `Position` is `DATATYPE($p) = DATATYPE("0"^^xsd:long)`**, not `DATATYPE($p) = xsd:long`. It compares
    the parameter's datatype with what the store makes of an `xsd:long` constant. Oxigraph 0.5.11 stores every integer-derived literal as
@@ -203,39 +197,36 @@ Decided by the maintainer after slice H2.4b (FMH-H2-4b, decision 1, option D). I
    parameter and a stored value alike, which probe P5 asserts per store. A store that fails P5 needs a decision of its own.
 4. The tests for `Iri`, `Digest`, `String`, `LangString` and `IriOrLiteral` are unchanged. `Digest` and `String` keep
    `DATATYPE($p) = xsd:string`, since no probed store turns a simple literal into another datatype, and P5 asserts it per store.
-5. **The Python caller's own check is strict and store-independent** (decided 2026-10-13, NQ6 of the
-   [design review](../../developer/notes/track-h-feedback.md)): a `Long` or `Position` parameter must be exactly `xsd:long` on any store.
+5. **The Python caller's own check is strict and store-independent** (decided 2026-10-13): a `Long` or `Position` parameter must be exactly `xsd:long` on any store.
    The SPARQL guard is the store-calibrated backstop, whose acceptance set differs by store, which H5's capability record carries as
    whether a store normalises numeric datatypes. Built with the caller check in H2.8.
 
 ## Addendum, 2026-10-13: queries, sub-selects and two parameter kinds
 
-Decided by the maintainer on the [design review](../../developer/notes/track-h-feedback.md) of slices H2.5 and H2.6 (Track H plan §4.3,
-H2.5-Q1 and Q2). It extends decision 2.
+Decided by the maintainer on the design review of slices H2.5 and H2.6. It extends decision 2.
 
 1. **One `Select` value serves a query operation and a sub-select**, as a `SubSelect` pattern element. The fragment is closed: projection
    of variables and aggregates, `GROUP BY` over variables, and `HAVING`.
 2. **Four further type rules**, each refused with a named rule because the form is illegal SPARQL or fails silently: an aggregate outside a
    projection or `HAVING`, a projected variable neither grouped nor aggregated, a `HAVING` term neither a group key nor an aggregate, and an
    inner variable used outside a sub-select without being projected.
-3. **A projected item is bound in every solution only as the plan's boundness table says.** `COUNT` always is. `MIN`, `MAX`, `SAMPLE`,
+3. **A projected item is bound in every solution only as follows.** `COUNT` always is. `MIN`, `MAX`, `SAMPLE`,
    `SUM`, `AVG` and `GROUP_CONCAT` are only with an explicit `GROUP BY` and a bound argument that cannot raise a type error. No aggregate
    but `COUNT` is, without a `GROUP BY`.
 4. **`ORDER BY`, `LIMIT`, `OFFSET`, `DISTINCT` inside a sub-select, and nested sub-selects are outside the fragment** for now. They are
    limits, not type rules, each lifted with an engine test when a template needs it.
-5. **Two parameter kinds join decision 2's list**: `IriOrLiteral` (FMH-H2-2 decision 1), guarded by `isIRI($p) || isLiteral($p)`, and
+5. **Two parameter kinds join decision 2's list**: `IriOrLiteral`, guarded by `isIRI($p) || isLiteral($p)`, and
    `Literal`, guarded by `isLiteral($p) && LANG($p) = ""`, which accepts any timestamp datatype and refuses an IRI or a missing value.
 
 
-## Addendum, 2026-10-14: the event slots and the digest parts (draft for the maintainer's acceptance)
+## Addendum, 2026-10-14: the event slots and the digest parts (accepted 2026-10-20)
 
-Drafted in slice H2.6b (Track H plan §4.6, H-D30 and H-D32) for the maintainer to accept. It extends decision 2 and the H2.4a addendum on
+Drafted in slice H2.6b for the maintainer to accept. It extends decision 2 and the H2.4a addendum on
 request-time slots.
 
 1. **Two request-time slots join `payloadTriples` and `logGraphs`.** `{{{eventRows}}}` holds the rows of
    `VALUES (?event ?eventType ?opSeq ?occurredAt)` and `{{{eventTriples}}}` holds the data written beside each event. The IR has a `Rows`
-   slot kind and a `RowValues` element, which binds its variables. The checker does not restrict where it is placed (review note,
-   2026-10-14). Like every
+   slot kind and a `RowValues` element, which binds its variables. The checker does not restrict where it is placed. Like every
    slot, neither is parameter-guarded.
 2. **An append takes its events from the rows.** One request still steps the seq once and writes one receipt and one claim. Each event's
    `pat:revision` is that receipt, so its position is (epoch, seq, `opSeq`). Every solution writes the same version row, claim and receipt,
@@ -244,4 +235,225 @@ request-time slots.
    triples slot, and covers each row's type, `pat:opSeq` and `pat:occurredAt` triples with the event triples. It leaves out `pat:revision`,
    which the store mints. This slice declares the part in the contract. H2.8 computes it.
 4. **`compile` warns `ReceiptModelNotHonoured`** for a target whose receipt model is `dal:PatchLog` or `dal:SnapshotPerRevision`, as it warns
-   for `ShardingNotHonoured` (TD-46).
+   for `ShardingNotHonoured`.
+
+
+## Addendum, 2026-10-20: the write disciplines and `append-version` (accepted 2026-10-20)
+
+Drafted in slice H2.6c for the maintainer to accept or change. It is decided at our leanings and extends the builders of decision 1.
+
+1. **`dal:writeDiscipline` selects the write of a family.** `dal:InPlace` (absent means this) keeps every operation as it was.
+   `dal:AppendVersions` selects `bootstrap-version-row` and `append-version`. `dal:AppendRecords` selects the append form of H2.6b. The
+   discipline is a resolved dimension like any other, so every compiled profile now carries it.
+2. **`append-version` is a builder with a dataset-guard variant,** kind `AppendVersion`, version 1. One update guards the identity's version
+   row at the expected seq and the transaction claim, inserts the new version's own triples from the payload slot, links
+   it to the version the row names as current with `pat:previousVersion`, never `fnd:supersededBy`, which the domain asserts under its
+   own rule (amended 2026-10-20, the code follows), moves the row's seq, head and current version
+   (`pat:currentVersion`), writes the receipt, and links the version to its receipt with `pat:revision`. It reads and writes the data graph
+   but never deletes from it, so it has no sweep. Its parameters are those of the compare-and-set and `$newVersion`. It imports nothing
+   from Foundation (ADR-A78).
+3. **Which families.** A composite family, and a family with no boundary that declares a `dal:dataGraph`, under `dal:Optimistic`. Any other
+   is refused with `AppendVersionsUnsupported`. A named-graph family, which would append one graph per version named from the version, is
+   not built. A family that appends versions has no create, replace or tombstone.
+4. **`compile` warns `VersionedClassWrittenInPlace`** when a target class is a subclass of `fnd:Version` in the loaded graphs and its
+   discipline is `dal:InPlace`.
+5. **`CompositeBoundaryReceiptConflict` does not apply to a family that appends versions or records,** where the history is in the data. It still refuses `dal:InPlace` with `dal:ReceiptOnly`.
+6. **The contract gains one operation kind,** `AppendVersion`. Its resources are the version row, the version (the aggregate resource, in
+   the data graph), the receipt and the claim. Its digest parts are the usual four, with the payload as the content part.
+
+
+## Addendum, 2026-10-20: the subjects of an event append (accepted 2026-10-20)
+
+This addendum extends this ADR's addendum of 2026-10-14 on the event slots. It adds a rule for what an append of events may write, using the
+[IRI and identity patterns](../iri-identity-patterns.md) and the rule that blank nodes are skolemised under their parent, whose event IRI is the parent of an event's parts. It changes no IRI grammar.
+
+### Context
+
+An append of events carries rows of `(event, type, opSeq, occurredAt)` and an `eventTriples` slot of further triples written beside them. The
+slot is free text to the store. Nothing stops its triples from having an existing aggregate as their subject, so an append, whose only
+protection is the transaction claim, could write into an aggregate's data without that aggregate's version guard. An event is an immutable
+occurrence ([iri-identity-patterns](../iri-identity-patterns.md) §5.10). It records what happened, and it does not change the thing it concerns.
+
+### Decision
+
+1. **Every subject of the event triples is an event of the batch, or a node minted under one event's IRI.** Such a node uses the
+   parent-relative key `{eventIri}/part/{encodedImmutableKey}` or the parent-local ordinal `{eventIri}/part/{ordinal}` of
+   [iri-identity-patterns](../iri-identity-patterns.md) §5.4. The parent is always the event, and the key or ordinal is immutable within it.
+2. **An event may name any other resource as an object.** For example it names the aggregate it concerns. It never names one as a subject.
+   An event therefore cannot describe an aggregate, and the event slot cannot write into an aggregate's data.
+3. **The caller library checks the rule before sending.** The payload check tests each subject of the event triples against the batch's event
+   IRIs and the prefix `{eventIri}/part/`. A deployment may tighten the rule with SHACL shapes per event type, for example to fix which parts an
+   event type may have. The store is not involved.
+4. **Blank nodes in event triples are skolemised under the event IRI,** as that rule already requires, with the parent-local ordinal where no key
+   exists. An existing event whose parts are blank nodes is skolemised the same way before it is accepted.
+
+### Options considered
+
+| Option | Verdict |
+|---|---|
+| (a) Any node reachable from an event may be a subject | Rejected. An event could reach an existing aggregate and describe it, which writes into the aggregate outside its guard. |
+| (b) A shape per event type that lists the allowed subjects | Kept as the optional tightening of point 3. It cannot be the base rule, because a deployment would have to write a shape before an append is safe. |
+| (c) Subjects are the batch's events and nodes minted under them | Chosen. It needs no shape and no store change. |
+
+### Consequences
+
+- Adopters mint event parts under the event. Moving a part to another event gives a new IRI, as for any parent-relative part
+  (§5.4). Events are immutable, so this does not arise in practice.
+- The check is a string prefix test plus a subject test. It needs no store change and no query.
+- An event cannot be corrected by an append that describes it from outside. A correction is a new event that names the first as an object.
+- Existing events with blank-node parts are skolemised under the event IRI, which that rule already requires.
+- A reader may rely on the rule. Every triple of an event graph is about an event or a part of one.
+
+
+## Addendum, 2026-10-20: the patch log, no receipt and the link between versions (accepted with the slice's plan)
+
+Built in slice H2.6d. It extends the builders of decision 1 and the addenda of 2026-10-14 and 2026-10-20 (the write
+disciplines).
+
+1. **`dal:PatchLog` selects patch-log variants** of create, replace and tombstone, for a `dal:NamedGraphBoundary` and a
+   `dal:CompositePropertyBoundary` family under `dal:InPlace` and `dal:Optimistic`, each with its dataset-guard variant. The update writes two
+   delta graphs, named from the receipt by `IRI(CONCAT(STR($newRev), "/add"))` and `"/del"`, so no parameter names one. The receipt
+   names a graph with `pat:asserts` or `pat:retracts` where the write puts content in it. A create's add graph holds its payload, which the
+   payload slot fills twice. A replace's add and del graphs hold the caller's delta in two new request-time slots, `{{{assertTriples}}}` and
+   `{{{retractTriples}}}`. A tombstone's del graph is copied from its own sweep and has no slot. `$assertGraph` and `$retractGraph` are removed,
+   so `cas-replace-named-graph` is at builder version 2.
+2. **The contract names the patch content.** A `PatchContent` resource, keyed by (target, epoch, seq, direction), is realised by the delta
+   graphs, and the IR has a graph role `patch` for the two graph variables. A replace under a patch log has a digest of the operation kind,
+   the target, the expected seq, the payload, the asserted triples and the retracted triples, in that order. A create and a
+   tombstone have no part of their own for what they assert or retract. The IR no longer limits an operation to one payload slot.
+3. **`dal:NoReceipt` selects variants that write no receipt,** no log bucket and no head, and keep the transaction claim, which a retry needs.
+   The audits that read receipts are not generated for such a family. It is refused with an append discipline, an append-only concurrency
+   or a stream (`NoReceiptWithAppendDiscipline`), whose versions and records take their position and transaction time from the receipt.
+4. **`append-version` links versions with `pat:previousVersion`,** from the new version to the one the row names as current, and never writes
+   `fnd:supersededBy`, which the domain asserts under its own rule (R2). Builder version 2. This is the code of the amendment to the addendum
+   of 2026-10-20, point 2.
+5. **`ReceiptModelNotHonoured` warns for `dal:SnapshotPerRevision` alone.** It amends point 4 of the addendum of 2026-10-14.
+
+
+## Addendum, 2026-10-20: reference modes in the contract (accepted with the slice's plan)
+
+Built in slice H2.6e. It extends the contract of decisions 4 and 6.
+
+1. **The payload contract carries the edges of the family's boundary shape,** as `EdgeContract` values: the source shape, the step, its
+   ownership, the target class and the reference mode (`dal:ByIdentity` or `dal:Pinned`), for every edge that leads to a node. An operation
+   cannot know them, so `contract_of` takes them as a second argument, the family's `edge_contracts`, and the compiler's profile records the
+   same edges. The mode changes no builder and no rendered query.
+2. **The caller check of H2.8 reads them.** A payload whose object on a pinned edge is not a version, or on an identity edge is a version of
+   a versioned class, is refused there. Persistence refuses `dal:Pinned` on an edge whose target class is not versioned, and warns
+   `EvidenceEdgeByIdentity`, at compile time.
+
+
+## Addendum, 2026-10-20: membership encoding, the delta write and the members read (accepted with the slice's plan)
+
+Built in slice H2.6f. It extends the operation kinds of decision 4 and the slots of decision 6.
+
+1. **`append-version-delta` and its dataset-guard variant** are the `dal:DeltaMembership` form of `append-version`, with the kind
+   `AppendVersion`. They take two more request-time payload slots, `addedMembers` and `droppedMembers`, written into the data graph beside the
+   payload. The digest contract names them as its add and del parts, in that order after the payload. The write never writes the domain's
+   membership property. The caller fills the payload with the full list and `pat:checkpoint true` on a checkpoint version.
+2. **`members` is a read operation of a new kind, `MembersRead`,** generated once per `dal:DeltaMembership` family. It takes `$version` and
+   `$membershipProperty`, reads the data graph only, writes nothing and returns one column, `?member`. The IR gains no construct, since the
+   chain is a property path in a `WHERE` pattern and the drops are a `NOT EXISTS`. The query is in the IR's fragment, with one
+   path-valued sub-pattern per direction, and runs on rdflib and Oxigraph.
+3. **The request-time slots `addedMembers` and `droppedMembers` join `REQUEST_TIME_SLOTS`,** and the static checks fill them with stand-ins.
+   `append-version-delta` and `members` are at builder version 1.
+
+## Addendum, 2026-10-20: the vocabulary, the contract in the profile and the run choices (accepted with the slice's plan)
+
+Built in slice H2.7. It carries out decisions 4, 6 and 10, and amends the addenda of 2026-10-12 on
+the run choices.
+
+1. **The vocabulary is published.** Every class and property the contract uses, and the enumerations the expected profiles had declared in a
+   test file (operation kinds, resource kinds, access modes, parameter kinds, column kinds, guard status, graph naming, declaration source,
+   digest part roles, rules, sources, payload encodings), are in the persistence specification as classes and individuals, each documented, beside
+   what the disciplines and reference modes added. `dal:templatePath` is gone, as decision 10 said. `dal:templateId` is the builder's identity, the
+   operation id with no `.mustache` suffix, and `instantiate` finds the builder by it. `dal:templateVersion` is declared on the generated operation,
+   where the profile writes it. The `pat:` terms of the append-version operations are in the pattern vocabulary of the patterns guide.
+2. **`compile` writes the contract of every operation,** from its builder, with a minted IRI for every declaration node (the target, the
+   deployment where there is one, the operation and the part), so a profile has no blank node in a declaration and no SPARQL text in a value. The
+   compiled profile and the reviewed expected profiles are compared by graph isomorphism, so an editor may lay a file out as it likes. A test of
+   byte equality would tie the files to one serialiser.
+3. **The run choices are in the profile.** `compile --no-parameter-guards` and `compile --caller-graph-names` record `dal:guardStatus` and
+   `dal:graphNaming` on each operation, and `instantiate` renders what the profile says. Its own flags and the `guards` and `graph_names`
+   arguments of its functions are removed, since no compatibility is owed. This amends the addenda of 2026-10-12, whose flags were on
+   `instantiate`, and a rendering can no longer disagree with its profile.
+4. **`PayloadCheck` is an operation kind.** H2.7 adds the kind to the vocabulary, and H2.8 emits one operation of it for each family that
+   has a payload, so a caller in another language gets the query from `instantiate` (decision 6).
+5. **A family with no boundary keeps its values in a data graph.** `dal:dataGraph` is mandatory for a `dal:NoBoundary` family that
+   guards a value, refused without one as `MissingDataGraph`, as for a composite family. The value-based compare-and-set is the builder
+   `cas-replace-value-guard`, with every pattern in that graph, so no operation reads or writes the default graph, and no operation is declared
+   by hand. It is a change and not a port: the query now names the graph, its builder version is 2, and its template changed with it, so the
+   equivalence harness still holds the two together until the templates go.
+6. **Shapes check a compiled profile.** The structure of each declaration, every enumeration closed with `sh:in`, no blank node in a declaration, no
+   SPARQL text in a value (a declaration holds the properties of its class, and a name is a word), and a required parameter guarded unless
+   `dal:guardStatus` says otherwise. The expected profiles are the positive fixtures, and each rule has a negative witness. A test holds each
+   `sh:in` list to the individuals of the specification.
+
+No version IRI moves on this branch.
+
+## Addendum, 2026-10-20: a NOT EXISTS inside a GRAPH block names its graph (accepted with the slice's plan)
+
+Built in slice H2.6g. It adds one rule to the checker of decision 3.
+
+1. **`NotExistsWithoutGraph`.** A `NotExists` inside a `GraphBlock` is refused unless its body holds a `GraphBlock`. rdflib 7.6.0 can evaluate a body with
+   no `GRAPH` of its own against the default graph once the enclosing block has yielded a solution, depending on the hash seed (TSD-34). A body that names
+   its graph does not depend on the enclosing context, on any store. The body is checked outside the enclosing block, so a `GRAPH` in it is not the
+   `NestedGraph` of a block in a block, and a triple beside it is still a `DefaultGraphPattern`. A `NotExists` outside a `GraphBlock` is unchanged.
+2. **Fifteen builders change,** with their dataset-guard variants: the version appends, the in-place replaces and the tombstones (each with its
+   no-receipt and patch-log variants), and `members`. Each states its graph in the body of the deleted-row guard, or of the two `members` tests, and its
+   template says the same. The builder versions move up by one and the expected profiles carry the new `dal:templateVersion`. No contract, parameter,
+   access set or result changes.
+3. **The write guards could not have been wrong.** Their body depends on `$root` only, so every solution of the block passes or every one fails. The change
+   is made for the rule to have no exception and for `members`, whose bodies depend on solution variables. The evidence is in TSD-34.
+
+## Addendum, 2026-10-20: the payload check, the caller check, the audit outcome and the diagnostics (accepted with the slice's plan)
+
+Built in slice H2.8b. It carries out decisions 5 and 6 and the addenda of 2026-10-12 and 2026-10-14, and the addendum on the subjects of an event append.
+
+1. **`payload-check` is an operation of kind `PayloadCheck`.** A family with a payload operation and a `dal:boundaryShape` gets it. It selects the subjects of a payload
+   graph, `urn:g:payload`, that `$root` does not reach by the owned path, or that are not `$root` where the shape owns nothing. A caller loads its payload into a local store, binds `$root` and runs it. It
+   is a builder with no template. The payload contract of an append of versions is rooted at the new version, whose own triples the payload holds.
+2. **The contract carries what a walk needs.** Each edge names the shape it leads to (`dal:edgeTargetShape`), and the payload contract names the boundary shape. A caller walks the owned edges
+   from the root without an engine, and the library does. Tests hold its result equal to the query's on rdflib and Oxigraph.
+3. **The caller check is in the library.** It refuses before sending, with every reason named: a missing, unknown or mistyped parameter, an `xsd:long` that is not exactly one, a caller-named graph
+   that is not the naming rule's, an empty or non-IRI `logGraphs`, a payload or an event triple outside its bound, an object of the wrong kind on a pinned or an identity edge where the caller says what a version is, and a
+   checkpoint that does not list every member.
+4. **An audit has three outcomes.** The contract declares `dal:Clean`, `dal:Failed` and `dal:NothingExamined` on every audit, and `dal:examinedParameter` where it reads the graphs a caller lists. A query returns the
+   violations only, so the caller derives the outcome from the rows and from a count of the receipts in the listed graphs.
+5. **The diagnostic model gains `INFO`.** `UnboundedPayload` is information for a named-graph family with payload operations and no boundary shape, and a warning under `compile --warn-unbounded-payload`.
+   `ParameterGuardsOff` is information for a run with the guards off and names the caller's obligation. Two compile checks join them. `PatchLogNotWritten` warns when a family declares
+   `dal:PatchLog` and no operation writes one, and `NoReceiptSharesMetaShard` refuses a `dal:NoReceipt` family that shares a meta graph with a family whose gap scan reads receipts.
+
+## Addendum, 2026-10-21: the templates are retired (accepted with the slice's plan)
+
+Built in slice H2.9. It carries out decision 8, and its clause "until then" is spent.
+
+1. **Every generated operation is rendered from its builder.** The Mustache templates, `persistence.render` and the `chevron` dependency are removed, and with them
+   the equivalence harness, the template checks and the `instantiate` option that read a template library. `dal:templateId` is the identity of the builder,
+   with no suffix, in the compiled profile and in memory. `instantiate` refuses an operation that names a builder that does not exist.
+2. **The request-time slot marker is a plain-text convention.** A slot stays the marker `{{{name}}}` in the rendered text. A caller fills it by substitution, in one pass, so
+   a value that holds another slot's marker is not filled again, and a marker with no value stays and makes the request a syntax error. The `REQUEST_TIME_SLOTS` list that the renderer kept is gone,
+   and the static checks keep a stand-in for each slot name. A set of triples cannot be a
+   SPARQL variable, so a SPARQL-native form could not replace it. The caller library fills `logGraphs` this way, and `persistence.ir_render.fill_slots` does it for tests and checks.
+3. **What holds the builders in place of the harness.** The recorded builder outputs are keyed by the operation and rendered from one canonical context, so adding or
+   changing a fixture moves no builder's record. The expected compiled profiles, the behaviour tests on both engines, and the static checks S-3 and S-4 run over the
+   builders' output. S-3 reads the parameters an operation declares, where it read the `$name` convention in the text.
+4. **The injection corpus runs over the builders and the slot filling.** Every adversarial value is put into every binding of every builder, and into the values the
+   caller library places in a slot. A value the encoders refuse is a pass. A value they accept must leave the text as the same operations, or not parse.
+5. **The receipt-only writes of a composite family are deleted.** They were reached only through `dal:SnapshotPerRevision`, which no generated operation honours.
+   That model is now refused for a composite family written in place (`CompositeBoundarySnapshotNotBuilt`) until snapshots are built. A named-graph family keeps its
+   receipt-only writes, and keeps the `ReceiptModelNotHonoured` warning for the snapshot.
+
+## Provenance
+
+The decision was taken on 2026-10-10 from the typed IR design brief ([formal-methods-track-h-typed-ir](../../developer/sketches/formal-methods-track-h-typed-ir.md), normative detail, options and consequences) and the hazard table of the specification sketch ([formal-methods-track-h-specification, section 3](../../developer/sketches/formal-methods-track-h-specification.md#3-the-typed-intermediate-representation)). The plan is [Track H plan section 4](../../developer/plans/formal-methods-track-h.md#4-h2-h3-the-typed-ir-and-the-specification-registry). The hazard rows cite H-D11 and H-D12, the questions H2-Q1 to H2-Q6 are answered in decisions 4 to 6, and H-D14 is the no-compatibility decision. The debt rows addressed are TD-34 (the unbound request variable), TD-40 (default-graph patterns), TD-42 (the quadratic composite replace), TD-43 and TD-64 (below), and the sharding and graph-name rows TD-05, TD-06 and TD-41, which are left open. The client SDK is sketched in [persistence-client-sdk](../../developer/sketches/persistence-client-sdk.md) and is not planned. The guard that needs its own group was found in the review of slice H2.1 on 2026-10-10.
+
+The addendum of 2026-10-12 on parameter guards followed the H2.1 review ([FMH-H2-1](../../developer/validation/FMH-H2-1.md#review-2026-10-10)), which also measured the guard cost on rdflib. The addendum on who names a named graph was decided while planning slice H2.3 (plan section 4.1, question H2.3-Q2). The addendum on the path as the IR's reference to the tree was decided while planning slice H2.4 (plan section 4.2, question H2.4-Q1, and the status record's H2-Q7). It rests on FMH-H2-2 decision 2 and on H2-Q5, and defers the stored IR to the ADR proposed by PDD-06, with the rules SI-1 to SI-6 in [typed IR sketch section 9.4](../../developer/sketches/formal-methods-track-h-typed-ir.md#94-rules-that-keep-a-clean-stored-ir-possible) and the open points in section 9.5.
+
+The addendum of 2026-10-13 on the datatype test was decided after slice H2.4b (FMH-H2-4b, decision 1, option D). Its point 5, the strict Python caller check, was question NQ6 of the [design review](../../developer/notes/track-h-feedback.md). The addendum on queries, sub-selects and two parameter kinds was decided on the same design review of slices H2.5 and H2.6 (plan section 4.3, questions H2.5-Q1 and Q2) and takes the `IriOrLiteral` kind from FMH-H2-2 decision 1. The boundness rules in its point 3 are the plan's boundness table.
+
+The addendum of 2026-10-14 on event slots was drafted in slice H2.6b (plan section 4.6, decisions H-D30 and H-D32) and accepted on 2026-10-20. The placement of the rows slot follows the review note of 2026-10-14, and TD-46 is the sharding warning. The addendum on write disciplines was drafted in slice H2.6c (plan section 4.9) with the history and versioning sketch's questions VH-Q1 to VH-Q6, and VH-Q5 is the receipt conflict rule. The addendum on the subjects of an event append applies the rule of ADR-A51 (superseded by a proposed ADR), whose Rule 8 skolemises blank nodes under their parent and whose event IRI is the parent of an event's parts. Its text is not repeated here because that ADR is not published.
+
+The addenda built in slices H2.6d (plan section 4.10, question H2.6b-Q2, and Q5 (a) of H2.6b for the digest), H2.6e (section 4.11), H2.6f (section 4.12), H2.6g (section 4.17), H2.7 (section 4.7, questions H2.7-Q1 to Q4) and H2.8b (section 4.8) were accepted with their slice plans. The decisions taken alone in each are listed in the Validation Packs [FMH-H2-6d](../../developer/validation/FMH-H2-6d.md), [FMH-H2-6e](../../developer/validation/FMH-H2-6e.md), [FMH-H2-6f](../../developer/validation/FMH-H2-6f.md), [FMH-H2-6g](../../developer/validation/FMH-H2-6g.md), [FMH-H2-7](../../developer/validation/FMH-H2-7.md) and [FMH-H2-8b](../../developer/validation/FMH-H2-8b.md). TD-43 is the data graph for a family with no boundary (H2.7), TD-64 the version IRIs that did not move, and FMH-H2-6g holds the evidence for the `NotExistsWithoutGraph` rule beside TSD-34.
+
+The addendum of 2026-10-21 on the retired templates was built in slice H2.9 (plan section 4.15, questions H2.9-Q1 to Q3, and the maintainer's decision D-12 (a)), whose decisions taken alone are listed in [FMH-H2-9](../../developer/validation/FMH-H2-9.md).

@@ -5,7 +5,7 @@
 
 Turns an adopter's ``ontology/persistence`` configuration into a
 ``dal:CompiledProfile`` graph (the ``compile`` stage), and optionally that
-graph plus the checked-in template library into portable SPARQL text (the
+graph into portable SPARQL text, built by each operation's builder (the
 ``instantiate`` stage). Neither stage requires a live backend or an SPI.
 """
 

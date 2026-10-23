@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# A class that is a subclass of fnd:Version, written by replace. The write discipline is absent, so it is dal:InPlace.
+# base: _base-thing.ttl
+@prefix ex:   <https://example.org/lending#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+ex:Thing rdfs:subClassOf fnd:Version .

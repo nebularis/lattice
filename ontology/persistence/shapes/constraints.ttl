@@ -1,15 +1,18 @@
+# SPDX-License-Identifier: MPL-2.0
+
 @prefix dal:  <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 
 # SHACL shapes validating ontology/persistence's OWN instance data (an
-# adopter's dal: configuration), per sketch §3.9. Mirrors the pattern in
+# adopter's dal: configuration). Mirrors the pattern in
 # rdf-sparql-patterns-guide.md Appendix B: sh:maxCount 1 on every functional
 # profile property, sh:class on every object property pointing at a scope,
 # and a standing sh:sparql check enforcing the shared-substrate-class
-# convention from ADR-A78 point 5 / sketch §3.7.
+# convention from ADR-A78 point 5.
 
 dal:ProfileScopeShape
     a sh:NodeShape ;
@@ -120,13 +123,11 @@ dal:UniquenessConstraintShape
 dal:CapabilitySpecShape
     a sh:NodeShape ;
     sh:targetClass dal:CapabilitySpec ;
-    sh:property [ sh:path dal:providesCas ; sh:maxCount 1 ; sh:datatype xsd:string ;
-                  sh:in ( "LINEARIZABLE" "BEST_EFFORT" "NONE" ) ] ;
+    sh:property [ sh:path dal:providesCas ; sh:maxCount 1 ] ;
     sh:property [ sh:path dal:providesReasoning ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
-    sh:property [ sh:path dal:providesCommitValidation ; sh:maxCount 1 ; sh:datatype xsd:string ;
-                  sh:in ( "NONE" "SHACL_CORE" "SHACL_SPARQL" "CUSTOM_RULES" ) ] .
+    sh:property [ sh:path dal:providesCommitValidation ; sh:maxCount 1 ] .
 
-# The SharedClassProfileWarning convention (ADR-A78 point 5, sketch §3.7):
+# The SharedClassProfileWarning convention (ADR-A78 point 5):
 # a DataAccessProfile scoped ONLY by a bare ClassScope, targeting a class
 # whose IRI is not in the same namespace as the profile individual itself,
 # is very likely binding a persistence opinion to a shared substrate class
@@ -136,7 +137,7 @@ dal:CapabilitySpecShape
 dal:SharedClassProfileWarningShape
     a sh:NodeShape ;
     sh:targetClass dal:DataAccessProfile , dal:ConcurrencyProfile , dal:OrderingProfile ,
-                   dal:ReceiptProfile , dal:MetaTopologyProfile , dal:AggregateBoundaryProfile ;
+                   dal:ReceiptProfile , dal:MetaTopologyProfile , dal:AggregateBoundaryProfile , dal:WriteDisciplineProfile ;
     sh:severity sh:Warning ;
     sh:sparql [
         sh:message "This profile's only scope is a bare ClassScope targeting a class outside its own namespace. Per ADR-A78 point 5, authority over a shared substrate class belongs to the deploying application, expressed via a GraphPatternScope or NamespaceScope, not a bare ClassScope. If this override is deliberate, acknowledge it explicitly." ;
@@ -439,3 +440,363 @@ dal:AdvisoryContiguityWarningShape
         sh:message "dal:contiguityCheckMode dal:AdvisoryContiguityCheck only raises a metric on a gap. dal:BlockingContiguityCheck is recommended: it rescans from the affected stream's last known-good position before the consumer advances its global watermark, so a gap cannot be silently absorbed." ;
         sh:prefixes dal: ;
         sh:select "SELECT $this WHERE { $this dal:contiguityCheckMode dal:AdvisoryContiguityCheck }" ] .
+
+#################################################################
+#    Write discipline, membership encoding and reference mode
+#    (the write disciplines, the receipt models, the membership encodings and the reference modes). Each
+#    names its closed enumeration with sh:in, as dal:ownership does.
+#################################################################
+
+dal:ReceiptProfileShape
+    a sh:NodeShape ;
+    sh:targetClass dal:ReceiptProfile ;
+    sh:property [ sh:path dal:receiptModel ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+                  sh:in ( dal:ReceiptOnly dal:PatchLog dal:SnapshotPerRevision dal:NoReceipt ) ;
+                  sh:message "dal:receiptModel takes one of dal:ReceiptOnly, dal:PatchLog, dal:SnapshotPerRevision, dal:NoReceipt." ] .
+
+dal:WriteDisciplineProfileShape
+    a sh:NodeShape ;
+    sh:targetClass dal:WriteDisciplineProfile ;
+    sh:property [ sh:path dal:writeDiscipline ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+                  sh:in ( dal:InPlace dal:AppendVersions dal:AppendRecords ) ;
+                  sh:message "dal:writeDiscipline takes one of dal:InPlace, dal:AppendVersions, dal:AppendRecords." ] ;
+    sh:property [ sh:path dal:membershipEncoding ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+                  sh:in ( dal:FullMembership dal:DeltaMembership ) ;
+                  sh:message "dal:membershipEncoding takes one of dal:FullMembership, dal:DeltaMembership." ] ;
+    sh:property [ sh:path dal:checkpointEvery ; sh:maxCount 1 ;
+                  sh:or ( [ sh:datatype xsd:long ] [ sh:datatype xsd:integer ] ) ;
+                  sh:message "dal:checkpointEvery is one integer, the number of versions between full lists of members." ] .
+
+# dal:referenceMode on a property shape of a boundary shape, and on an edge of a compiled profile.
+dal:ReferenceModeShape
+    a sh:NodeShape ;
+    sh:targetSubjectsOf dal:referenceMode ;
+    sh:property [ sh:path dal:referenceMode ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+                  sh:in ( dal:ByIdentity dal:Pinned ) ;
+                  sh:message "dal:referenceMode takes one of dal:ByIdentity, dal:Pinned." ] .
+
+#################################################################
+#    The contract of a generated operation in a compiled profile
+#    (the typed operation IR). The expected profiles under
+#    ontology/persistence/test/expected-profiles are the positive
+#    fixtures, and tools/persistence/tests/witnesses/shape-*Contract*
+#    and the like are the negative ones. Written to
+#    docs/architecture/efficient-queries-and-shapes.md:
+#    every shape but one is SHACL Core, each targets one class (R5),
+#    the one query is a lookup from $this and tests a bound variable
+#    with FILTER EXISTS (R1, R4), and nothing joins the whole graph.
+#    The enumerations are closed with sh:in. A test holds each list
+#    to the individuals of the spec, so they cannot drift.
+#################################################################
+
+# The operation: one kind, one version, one guard status, one declaration source, at most one naming, payload and digest, and each declaration an IRI of its class.
+dal:OperationContractShape
+    a sh:NodeShape ;
+    sh:targetClass dal:GeneratedOperation ;
+    sh:property [ sh:path dal:operationKind ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+                  sh:in ( dal:Create dal:Bootstrap dal:Replace dal:Tombstone dal:Append dal:AppendVersion dal:UnconditionalWrite
+                          dal:ValueGuardedReplace dal:KeyClaimWrite dal:KeyClaimWriteDual dal:KeyClaimRetire dal:Quarantine
+                          dal:MergeRewrite dal:Audit dal:MembersRead dal:PayloadCheck ) ;
+                  sh:message "A generated operation has exactly one dal:operationKind, an individual of dal:OperationKind." ] ;
+    sh:property [ sh:path dal:templateVersion ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ;
+                  sh:message "A generated operation has exactly one dal:templateVersion, an integer." ] ;
+    sh:property [ sh:path dal:guardStatus ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+                  sh:in ( dal:Guarded dal:GuardsOff dal:NoRequiredParameter dal:NotGenerated ) ;
+                  sh:message "A generated operation has exactly one dal:guardStatus, an individual of dal:GuardStatus." ] ;
+    sh:property [ sh:path dal:graphNaming ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+                  sh:in ( dal:QueryNamed dal:CallerNamed ) ;
+                  sh:message "A generated operation has at most one dal:graphNaming, an individual of dal:GraphNaming." ] ;
+    sh:property [ sh:path dal:declarationSource ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+                  sh:in ( dal:BuilderDerived dal:HandDeclared ) ;
+                  sh:message "A generated operation has exactly one dal:declarationSource, an individual of dal:DeclarationSource." ] ;
+    sh:property [ sh:path dal:parameter ; sh:nodeKind sh:IRI ; sh:class dal:ParameterDeclaration ;
+                  sh:message "Every dal:parameter of an operation is an IRI, never a blank node, and a dal:ParameterDeclaration." ] ;
+    sh:property [ sh:path dal:access ; sh:minCount 1 ; sh:nodeKind sh:IRI ; sh:class dal:ResourceAccess ;
+                  sh:message "An operation touches at least one resource, and every dal:access is an IRI, never a blank node, and a dal:ResourceAccess." ] ;
+    sh:property [ sh:path dal:resultColumn ; sh:nodeKind sh:IRI ; sh:class dal:ResultColumn ;
+                  sh:message "Every dal:resultColumn of an operation is an IRI, never a blank node, and a dal:ResultColumn." ] ;
+    sh:property [ sh:path dal:payloadContract ; sh:maxCount 1 ; sh:nodeKind sh:IRI ; sh:class dal:PayloadContract ;
+                  sh:message "An operation has at most one dal:payloadContract, an IRI and never a blank node." ] ;
+    sh:property [ sh:path dal:digestContract ; sh:maxCount 1 ; sh:nodeKind sh:IRI ; sh:class dal:DigestContract ;
+                  sh:message "An operation has at most one dal:digestContract, an IRI and never a blank node." ] ;
+    sh:property [ sh:path dal:reportsOutcome ; sh:nodeKind sh:IRI ; sh:in ( dal:Clean dal:Failed dal:NothingExamined ) ;
+                  sh:message "dal:reportsOutcome names an individual of dal:AuditOutcome." ] ;
+    sh:property [ sh:path dal:examinedParameter ; sh:maxCount 1 ; sh:nodeKind sh:IRI ; sh:class dal:ParameterDeclaration ;
+                  sh:message "dal:examinedParameter names a parameter declaration by its IRI, once." ] .
+
+dal:ParameterDeclarationShape
+    a sh:NodeShape ;
+    sh:targetClass dal:ParameterDeclaration ;
+    sh:property [ sh:path dal:parameterName ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ;
+                  sh:message "A parameter declaration has exactly one dal:parameterName." ] ;
+    sh:property [ sh:path dal:parameterKind ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+                  sh:in ( dal:IriKind dal:LongKind dal:StringKind dal:LangStringKind dal:PositionKind dal:DigestKind dal:IriOrLiteralKind
+                          dal:LiteralKind dal:PayloadKind dal:RowsKind dal:RegistryListKind ) ;
+                  sh:message "A parameter declaration has exactly one dal:parameterKind, an individual of dal:ParameterKind." ] ;
+    sh:property [ sh:path dal:required ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:boolean ;
+                  sh:message "A parameter declaration says whether it is dal:required, once, as a boolean." ] ;
+    sh:property [ sh:path dal:mustEqual ; sh:maxCount 1 ; sh:in ( dal:GraphNameOfRoot ) ;
+                  sh:message "dal:mustEqual names a dal:Rule, and the only rule is dal:GraphNameOfRoot." ] ;
+    sh:property [ sh:path dal:mustEqualFor ; sh:maxCount 1 ; sh:nodeKind sh:IRI ; sh:class dal:ParameterDeclaration ;
+                  sh:message "dal:mustEqualFor names a parameter declaration by its IRI." ] ;
+    sh:property [ sh:path dal:sourcedFrom ; sh:maxCount 1 ; sh:in ( dal:RegistryGraph ) ;
+                  sh:message "dal:sourcedFrom names a dal:Source, and the only source of a parameter is dal:RegistryGraph." ] .
+
+dal:ResourceAccessShape
+    a sh:NodeShape ;
+    sh:targetClass dal:ResourceAccess ;
+    sh:property [ sh:path dal:resourceKind ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+                  sh:in ( dal:Aggregate dal:VersionRow dal:TransactionClaim dal:Receipt dal:Event dal:KeyClaim dal:MergeRecord
+                          dal:KeyQuarantine dal:DatasetEpoch dal:RetentionMark dal:PropertyValue dal:PatchContent ) ;
+                  sh:message "A resource access has exactly one dal:resourceKind, an individual of dal:ResourceKind." ] ;
+    sh:property [ sh:path dal:accessMode ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+                  sh:in ( dal:PointRead dal:AbsenceRead dal:ScanRead dal:WholeAggregateRead dal:Insert dal:Delete ) ;
+                  sh:message "A resource access has exactly one dal:accessMode, an individual of dal:AccessMode." ] ;
+    sh:property [ sh:path dal:keyedBy ; sh:maxCount 1 ; sh:nodeKind sh:IRI ; sh:class dal:ParameterDeclaration ;
+                  sh:message "dal:keyedBy names a parameter declaration by its IRI." ] .
+
+dal:ResultColumnShape
+    a sh:NodeShape ;
+    sh:targetClass dal:ResultColumn ;
+    sh:property [ sh:path dal:columnName ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ;
+                  sh:message "A result column has exactly one dal:columnName." ] ;
+    sh:property [ sh:path dal:columnPosition ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ; sh:minInclusive 1 ;
+                  sh:message "A result column has exactly one dal:columnPosition, an integer from 1." ] ;
+    sh:property [ sh:path dal:columnKind ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+                  sh:in ( dal:IriColumn dal:PositionColumn dal:StringColumn dal:TermColumn dal:CountColumn dal:ConcatenationColumn ) ;
+                  sh:message "A result column has exactly one dal:columnKind, an individual of dal:ColumnKind." ] ;
+    sh:property [ sh:path dal:columnSeparator ; sh:maxCount 1 ; sh:datatype xsd:string ;
+                  sh:message "dal:columnSeparator is one string." ] .
+
+dal:PayloadContractShape
+    a sh:NodeShape ;
+    sh:targetClass dal:PayloadContract ;
+    sh:property [ sh:path dal:payloadParameter ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ; sh:class dal:ParameterDeclaration ;
+                  sh:message "A payload contract names exactly one dal:payloadParameter, a parameter declaration." ] ;
+    sh:property [ sh:path dal:payloadRoot ; sh:maxCount 1 ; sh:nodeKind sh:IRI ; sh:class dal:ParameterDeclaration ;
+                  sh:message "dal:payloadRoot names a parameter declaration by its IRI." ] ;
+    sh:property [ sh:path dal:payloadEncoding ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( dal:GroundNTriples ) ;
+                  sh:message "A payload contract has exactly one dal:payloadEncoding, an individual of dal:PayloadEncoding." ] ;
+    sh:property [ sh:path dal:boundaryShape ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+                  sh:message "A payload contract names its boundary shape, or says dal:NoBoundaryShape. It never leaves the shape out." ] ;
+    sh:property [ sh:path dal:referenceEdge ; sh:nodeKind sh:IRI ; sh:class dal:ReferenceEdge ;
+                  sh:message "Every dal:referenceEdge of a payload contract is an IRI, never a blank node." ] ;
+    # The profile states each edge once, and a payload contract points at the edges of its own profile, never at a copy.
+    sh:sparql [
+        sh:message "A dal:referenceEdge of a payload contract is an edge its own compiled profile states." ;
+        sh:prefixes dal: ;
+        sh:select """
+            SELECT $this ?value WHERE {
+              $this dal:referenceEdge ?value .
+              FILTER NOT EXISTS { ?profile dal:generatedOperation ?op ; dal:referenceEdge ?value . ?op dal:payloadContract $this }
+            }""" ] .
+
+dal:DigestContractShape
+    a sh:NodeShape ;
+    sh:targetClass dal:DigestContract ;
+    sh:property [ sh:path dal:digestAlgorithm ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( "SHA-256" ) ;
+                  sh:message "A digest contract has exactly one dal:digestAlgorithm, SHA-256." ] ;
+    sh:property [ sh:path dal:digestPart ; sh:minCount 1 ; sh:nodeKind sh:IRI ; sh:class dal:DigestPart ;
+                  sh:message "A digest contract has at least one part, and every dal:digestPart is an IRI, never a blank node." ] .
+
+dal:DigestPartShape
+    a sh:NodeShape ;
+    sh:targetClass dal:DigestPart ;
+    sh:property [ sh:path dal:partOrder ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ; sh:minInclusive 1 ;
+                  sh:message "A digest part has exactly one dal:partOrder, an integer from 1." ] ;
+    sh:property [ sh:path dal:partRole ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+                  sh:in ( dal:OperationKindPart dal:TargetPart dal:ExpectedSeqPart dal:PayloadPart dal:EventPart dal:AddPart dal:DelPart ) ;
+                  sh:message "A digest part has exactly one dal:partRole, an individual of dal:DigestPartRole." ] ;
+    sh:property [ sh:path dal:partSource ; sh:minCount 1 ; sh:nodeKind sh:IRI ;
+                  sh:or ( [ sh:class dal:ParameterDeclaration ] [ sh:in ( dal:NoSource ) ] ) ;
+                  sh:message "Every dal:partSource of a digest part is a parameter declaration, or dal:NoSource." ] .
+
+# No blank node in a declaration: every node the contract declares has an IRI minted from the target, the
+# operation and the part. A declaration that is a blank node fails here, and one that hangs off an operation by a blank node fails
+# the property constraints of the shapes above.
+dal:ContractDeclarationIsIriShape
+    a sh:NodeShape ;
+    sh:targetClass dal:ParameterDeclaration , dal:ResourceAccess , dal:ResultColumn , dal:PayloadContract , dal:DigestContract , dal:DigestPart ;
+    sh:nodeKind sh:IRI ;
+    sh:message "A declaration of the contract of a generated operation is an IRI minted from the target, the operation and the part, and never a blank node." .
+
+# No SPARQL text in a value (a declaration holds the properties of its class and no other,
+# so text cannot hide in one more, and a name, a kind or a separator is a short word, never a query. An owned path stays in the
+# ownedPath binding and a caller-named graph's rule is dal:GraphNameOfRoot, which refers to dal:graphIriTemplate.
+dal:ContractHoldsNoSparqlTextShape
+    a sh:NodeShape ;
+    sh:targetClass dal:ParameterDeclaration , dal:ResourceAccess , dal:ResultColumn , dal:PayloadContract , dal:DigestContract , dal:DigestPart ;
+    sh:closed true ;
+    sh:ignoredProperties ( rdf:type ) ;
+    sh:property [ sh:path dal:parameterName ; sh:pattern "^[A-Za-z_][A-Za-z0-9_]*$" ] ;
+    sh:property [ sh:path dal:parameterKind ] ;
+    sh:property [ sh:path dal:required ] ;
+    sh:property [ sh:path dal:mustEqual ] ;
+    sh:property [ sh:path dal:mustEqualFor ] ;
+    sh:property [ sh:path dal:sourcedFrom ] ;
+    sh:property [ sh:path dal:resourceKind ] ;
+    sh:property [ sh:path dal:accessMode ] ;
+    sh:property [ sh:path dal:keyedBy ] ;
+    sh:property [ sh:path dal:columnName ; sh:pattern "^[A-Za-z_][A-Za-z0-9_]*$" ] ;
+    sh:property [ sh:path dal:columnPosition ] ;
+    sh:property [ sh:path dal:columnKind ] ;
+    sh:property [ sh:path dal:columnSeparator ; sh:pattern "^[A-Za-z0-9 ._-]*$" ] ;
+    sh:property [ sh:path dal:payloadParameter ] ;
+    sh:property [ sh:path dal:payloadRoot ] ;
+    sh:property [ sh:path dal:payloadEncoding ] ;
+    sh:property [ sh:path dal:boundaryShape ] ;
+    sh:property [ sh:path dal:referenceEdge ] ;
+    sh:property [ sh:path dal:digestAlgorithm ; sh:pattern "^[A-Za-z0-9-]+$" ] ;
+    sh:property [ sh:path dal:digestPart ] ;
+    sh:property [ sh:path dal:partOrder ] ;
+    sh:property [ sh:path dal:partRole ] ;
+    sh:property [ sh:path dal:partSource ] ;
+    sh:message "A declaration of the contract holds the properties of its class, and no value of it is SPARQL text. Names, kinds, modes and resources are words and individuals (SI-5)." .
+
+# A required parameter is guarded unless dal:guardStatus says otherwise. dal:Guarded holds when some required parameter is not a
+# request-time slot, since a slot is text the caller fills in and a guard cannot type it. dal:NoRequiredParameter holds when none is.
+# dal:GuardsOff and dal:NotGenerated say the guard is not there, and promise nothing of the parameters. Both queries start from
+# $this and test the parameters with FILTER EXISTS (R1).
+dal:RequiredParametersGuardedShape
+    a sh:NodeShape ;
+    sh:targetClass dal:GeneratedOperation ;
+    sh:sparql [
+        sh:message "dal:NoRequiredParameter says no parameter needs a guard, and this operation has a required parameter that is not a request-time slot. The status is dal:Guarded, or dal:GuardsOff when the run chose no guards." ;
+        sh:prefixes dal: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this dal:guardStatus dal:NoRequiredParameter .
+              FILTER EXISTS { $this dal:parameter ?p . ?p dal:required true ; dal:parameterKind ?k .
+                              FILTER (?k NOT IN (dal:PayloadKind, dal:RowsKind, dal:RegistryListKind)) }
+            }""" ] ;
+    sh:sparql [
+        sh:message "dal:Guarded says a required parameter is guarded, and this operation has none that is not a request-time slot. The status is dal:NoRequiredParameter." ;
+        sh:prefixes dal: ;
+        sh:select """
+            SELECT $this WHERE {
+              $this dal:guardStatus dal:Guarded .
+              FILTER NOT EXISTS { $this dal:parameter ?p . ?p dal:required true ; dal:parameterKind ?k .
+                                  FILTER (?k NOT IN (dal:PayloadKind, dal:RowsKind, dal:RegistryListKind)) }
+            }""" ] .
+
+dal:AggregateBoundaryProfileEnumerationsShape
+    a sh:NodeShape ;
+    sh:targetClass dal:AggregateBoundaryProfile ;
+    sh:property [ sh:path dal:firstWrite ; sh:nodeKind sh:IRI ; sh:in ( dal:PreCreatedRow dal:AbsentRow ) ;
+                  sh:message "dal:firstWrite takes one of dal:PreCreatedRow, dal:AbsentRow." ] ;
+    sh:property [ sh:path dal:strategy ; sh:nodeKind sh:IRI ; sh:in ( dal:NamedGraphBoundary dal:CompositePropertyBoundary dal:NoBoundary ) ;
+                  sh:message "dal:strategy takes one of dal:NamedGraphBoundary, dal:CompositePropertyBoundary, dal:NoBoundary." ] .
+
+dal:ClaimSchemeEnumerationsShape
+    a sh:NodeShape ;
+    sh:targetClass dal:ClaimScheme ;
+    sh:property [ sh:path dal:schemeState ; sh:nodeKind sh:IRI ; sh:in ( dal:Accepting dal:Dual dal:Retiring dal:Retired ) ;
+                  sh:message "dal:schemeState takes one of dal:Accepting, dal:Dual, dal:Retiring, dal:Retired." ] .
+
+dal:ConcurrencyProfileEnumerationsShape
+    a sh:NodeShape ;
+    sh:targetClass dal:ConcurrencyProfile ;
+    sh:property [ sh:path dal:concurrencyProfile ; sh:nodeKind sh:IRI ; sh:in ( dal:ProvidedConcurrency dal:Optimistic dal:AppendOnly dal:LockingConcurrency ) ;
+                  sh:message "dal:concurrencyProfile takes one of dal:ProvidedConcurrency, dal:Optimistic, dal:AppendOnly, dal:LockingConcurrency." ] ;
+    sh:property [ sh:path dal:deadlockPolicy ; sh:nodeKind sh:IRI ; sh:in ( dal:EngineDetectAndRetry dal:SortedAcquisition dal:PartitionedWriter ) ;
+                  sh:message "dal:deadlockPolicy takes one of dal:EngineDetectAndRetry, dal:SortedAcquisition, dal:PartitionedWriter." ] ;
+    sh:property [ sh:path dal:etagForm ; sh:nodeKind sh:IRI ; sh:in ( dal:StrongEtag dal:WeakEtag ) ;
+                  sh:message "dal:etagForm takes one of dal:StrongEtag, dal:WeakEtag." ] ;
+    sh:property [ sh:path dal:etagRepresentation ; sh:nodeKind sh:IRI ; sh:in ( dal:SingleRepresentation dal:TaggedRepresentation ) ;
+                  sh:message "dal:etagRepresentation takes one of dal:SingleRepresentation, dal:TaggedRepresentation." ] ;
+    sh:property [ sh:path dal:minConcurrencyLevel ; sh:nodeKind sh:IRI ; sh:in ( dal:Linearizable dal:BestEffort ) ;
+                  sh:message "dal:minConcurrencyLevel takes one of dal:Linearizable, dal:BestEffort. A family that needs no guarantee declares no level." ] .
+
+dal:CapabilityRequirementEnumerationsShape
+    a sh:NodeShape ;
+    sh:targetClass dal:CapabilityRequirement ;
+    sh:property [ sh:path dal:requiresCas ; sh:nodeKind sh:IRI ; sh:in ( dal:Linearizable dal:BestEffort dal:NoConcurrencyGuarantee ) ;
+                  sh:message "dal:requiresCas takes one of dal:Linearizable, dal:BestEffort, dal:NoConcurrencyGuarantee." ] ;
+    sh:property [ sh:path dal:requiresUniquenessLevel ; sh:nodeKind sh:IRI ; sh:in ( dal:Advisory dal:Transactional dal:Strong ) ;
+                  sh:message "dal:requiresUniquenessLevel takes one of dal:Advisory, dal:Transactional, dal:Strong." ] .
+
+dal:CapabilitySpecEnumerationsShape
+    a sh:NodeShape ;
+    sh:targetClass dal:CapabilitySpec ;
+    sh:property [ sh:path dal:providesCas ; sh:nodeKind sh:IRI ; sh:in ( dal:Linearizable dal:BestEffort dal:NoConcurrencyGuarantee ) ;
+                  sh:message "dal:providesCas takes one of dal:Linearizable, dal:BestEffort, dal:NoConcurrencyGuarantee, not a string." ] ;
+    sh:property [ sh:path dal:providesCommitValidation ; sh:nodeKind sh:IRI ; sh:in ( dal:NoCommitValidation dal:ShaclCoreValidation dal:ShaclSparqlValidation dal:CustomRulesValidation ) ;
+                  sh:message "dal:providesCommitValidation takes one of dal:NoCommitValidation, dal:ShaclCoreValidation, dal:ShaclSparqlValidation, dal:CustomRulesValidation, not a string." ] .
+
+dal:EpochProfileEnumerationsShape
+    a sh:NodeShape ;
+    sh:targetClass dal:EpochProfile ;
+    sh:property [ sh:path dal:epochAuthority ; sh:nodeKind sh:IRI ; sh:in ( dal:ExternalHighWaterMark dal:RestoreControlledEpoch dal:WriterStartRefusal dal:StoreLocalEpoch ) ;
+                  sh:message "dal:epochAuthority takes one of dal:ExternalHighWaterMark, dal:RestoreControlledEpoch, dal:WriterStartRefusal, dal:StoreLocalEpoch." ] ;
+    sh:property [ sh:path dal:epochGuardScope ; sh:nodeKind sh:IRI ; sh:in ( dal:DatasetLevelGuard dal:RowLevelGuardOnly ) ;
+                  sh:message "dal:epochGuardScope takes one of dal:DatasetLevelGuard, dal:RowLevelGuardOnly." ] .
+
+dal:IdentityProfileEnumerationsShape
+    a sh:NodeShape ;
+    sh:targetClass dal:IdentityProfile ;
+    sh:property [ sh:path dal:eventIdentityStrategy ; sh:nodeKind sh:IRI ; sh:in ( dal:PositionDerivedEvent dal:RandomOccurrenceEvent dal:ExternalEventIdStrategy ) ;
+                  sh:message "dal:eventIdentityStrategy takes one of dal:PositionDerivedEvent, dal:RandomOccurrenceEvent, dal:ExternalEventIdStrategy." ] ;
+    sh:property [ sh:path dal:identityStrategy ; sh:nodeKind sh:IRI ; sh:in ( dal:AdoptedIdentity dal:NaturalKeyIdentity dal:DerivedHashIdentity dal:RandomSurrogateIdentity dal:SurrogateClaimedIdentity dal:ExternalRegistryIdentity dal:ContentAddressedIdentity ) ;
+                  sh:message "dal:identityStrategy takes one of dal:AdoptedIdentity, dal:NaturalKeyIdentity, dal:DerivedHashIdentity, dal:RandomSurrogateIdentity, dal:SurrogateClaimedIdentity, dal:ExternalRegistryIdentity, dal:ContentAddressedIdentity." ] ;
+    sh:property [ sh:path dal:occurrenceNamespaceDerivation ; sh:nodeKind sh:IRI ; sh:in ( dal:RegistryTokenDerivation dal:HashedTargetDerivation ) ;
+                  sh:message "dal:occurrenceNamespaceDerivation takes one of dal:RegistryTokenDerivation, dal:HashedTargetDerivation." ] ;
+    sh:property [ sh:path dal:resourceRole ; sh:nodeKind sh:IRI ; sh:in ( dal:EntityRole dal:AggregateRootRole dal:ComponentRole dal:LineageRole dal:ContentRevisionRole dal:GraphLocatorRole dal:KeyClaimRole dal:EventOccurrenceRole ) ;
+                  sh:message "dal:resourceRole takes one of dal:EntityRole, dal:AggregateRootRole, dal:ComponentRole, dal:LineageRole, dal:ContentRevisionRole, dal:GraphLocatorRole, dal:KeyClaimRole, dal:EventOccurrenceRole." ] ;
+    sh:property [ sh:path dal:selfReferenceRule ; sh:nodeKind sh:IRI ; sh:in ( dal:SelfReferenceDisallowed dal:ExcludeHeaderSubgraph dal:PlaceholderSubstitution ) ;
+                  sh:message "dal:selfReferenceRule takes one of dal:SelfReferenceDisallowed, dal:ExcludeHeaderSubgraph, dal:PlaceholderSubstitution." ] ;
+    sh:property [ sh:path dal:surrogateKind ; sh:nodeKind sh:IRI ; sh:in ( dal:UuidV4Surrogate dal:CallerSuppliedSurrogate ) ;
+                  sh:message "dal:surrogateKind takes one of dal:UuidV4Surrogate, dal:CallerSuppliedSurrogate." ] .
+
+dal:MetaTopologyProfileEnumerationsShape
+    a sh:NodeShape ;
+    sh:targetClass dal:MetaTopologyProfile ;
+    sh:property [ sh:path dal:metaTopology ; sh:nodeKind sh:IRI ; sh:in ( dal:SharedSharded dal:PerAggregate ) ;
+                  sh:message "dal:metaTopology takes one of dal:SharedSharded, dal:PerAggregate." ] .
+
+dal:MintingRecipeEnumerationsShape
+    a sh:NodeShape ;
+    sh:targetClass dal:MintingRecipe ;
+    sh:property [ sh:path dal:forRole ; sh:nodeKind sh:IRI ; sh:in ( dal:EntityRole dal:AggregateRootRole dal:ComponentRole dal:LineageRole dal:ContentRevisionRole dal:GraphLocatorRole dal:KeyClaimRole dal:EventOccurrenceRole ) ;
+                  sh:message "dal:forRole takes one of dal:EntityRole, dal:AggregateRootRole, dal:ComponentRole, dal:LineageRole, dal:ContentRevisionRole, dal:GraphLocatorRole, dal:KeyClaimRole, dal:EventOccurrenceRole." ] .
+
+dal:OrderingProfileEnumerationsShape
+    a sh:NodeShape ;
+    sh:targetClass dal:OrderingProfile ;
+    sh:property [ sh:path dal:contiguityCheckMode ; sh:nodeKind sh:IRI ; sh:in ( dal:BlockingContiguityCheck dal:AdvisoryContiguityCheck ) ;
+                  sh:message "dal:contiguityCheckMode takes one of dal:BlockingContiguityCheck, dal:AdvisoryContiguityCheck." ] ;
+    sh:property [ sh:path dal:datasetTierModel ; sh:nodeKind sh:IRI ; sh:in ( dal:DerivedFeed dal:HybridLogicalClock dal:GlobalDenseCounter ) ;
+                  sh:message "dal:datasetTierModel takes one of dal:DerivedFeed, dal:HybridLogicalClock, dal:GlobalDenseCounter." ] ;
+    sh:property [ sh:path dal:globalReadStrategy ; sh:nodeKind sh:IRI ; sh:in ( dal:WatermarkedRead dal:LagWindowRead dal:DenseFeedRead dal:NoGlobalRead ) ;
+                  sh:message "dal:globalReadStrategy takes one of dal:WatermarkedRead, dal:LagWindowRead, dal:DenseFeedRead, dal:NoGlobalRead." ] ;
+    sh:property [ sh:path dal:orderingGrain ; sh:nodeKind sh:IRI ; sh:in ( dal:CommitGrain dal:EventGrain ) ;
+                  sh:message "dal:orderingGrain takes one of dal:CommitGrain, dal:EventGrain." ] .
+
+dal:PrivacyProfileEnumerationsShape
+    a sh:NodeShape ;
+    sh:targetClass dal:PrivacyProfile ;
+    sh:property [ sh:path dal:erasurePrecedence ; sh:nodeKind sh:IRI ; sh:in ( dal:ErasureWins dal:MonotonicityWins ) ;
+                  sh:message "dal:erasurePrecedence takes one of dal:ErasureWins, dal:MonotonicityWins." ] ;
+    sh:property [ sh:path dal:erasureStrategy ; sh:nodeKind sh:IRI ; sh:in ( dal:PerSubjectGraphDrop dal:CryptoShred dal:NoErasure ) ;
+                  sh:message "dal:erasureStrategy takes one of dal:PerSubjectGraphDrop, dal:CryptoShred, dal:NoErasure." ] ;
+    sh:property [ sh:path dal:privacyClass ; sh:nodeKind sh:IRI ; sh:in ( dal:PersonalData dal:InternalData dal:PublicData ) ;
+                  sh:message "dal:privacyClass takes one of dal:PersonalData, dal:InternalData, dal:PublicData." ] .
+
+dal:ReceiptProfileEnumerationsShape
+    a sh:NodeShape ;
+    sh:targetClass dal:ReceiptProfile ;
+    sh:property [ sh:path dal:retentionMode ; sh:nodeKind sh:IRI ; sh:in ( dal:PrefixOnlyRetention dal:BucketAnyRetention ) ;
+                  sh:message "dal:retentionMode takes one of dal:PrefixOnlyRetention, dal:BucketAnyRetention." ] .
+
+dal:ReferenceEdgeEnumerationsShape
+    a sh:NodeShape ;
+    sh:targetClass dal:ReferenceEdge ;
+    sh:property [ sh:path dal:edgeOwnership ; sh:nodeKind sh:IRI ; sh:in ( dal:Owned dal:Reference dal:Vocabulary ) ;
+                  sh:message "dal:edgeOwnership takes one of dal:Owned, dal:Reference, dal:Vocabulary." ] .
+
+dal:UniquenessConstraintEnumerationsShape
+    a sh:NodeShape ;
+    sh:targetClass dal:UniquenessConstraint ;
+    sh:property [ sh:path dal:minEnforcementLevel ; sh:nodeKind sh:IRI ; sh:in ( dal:Advisory dal:Transactional dal:Strong ) ;
+                  sh:message "dal:minEnforcementLevel takes one of dal:Advisory, dal:Transactional, dal:Strong." ] ;
+    sh:property [ sh:path dal:onViolation ; sh:nodeKind sh:IRI ; sh:in ( dal:Reject dal:Merge dal:Quarantine ) ;
+                  sh:message "dal:onViolation takes one of dal:Reject, dal:Merge, dal:Quarantine." ] .

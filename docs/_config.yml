@@ -38,9 +38,16 @@ include:
   - ADR-A100-hierarchical-match-over-flat-schemes.md
   - ADR-A103-eligibility-set-readings.md
   - ADR-A105-closure-declarations.md
+  - ADR-A114-external-and-natural-keys.md
   - ADR-A121-repository-catalogue.md
+  - ADR-A122-aggregate-ownership.md
+  - ADR-A123-typed-operation-ir.md
   - ADR-A126-literate-specification-layout-and-grammar.md
   - ADR-A129-one-release-for-the-substrate.md
+  - ADR-A132-persistence-caller-library.md
+  - ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md
+  - ADR-A79-persistence-compiler-toolchain.md
+  - ADR-A80-housekeeping-component-boundary.md
   - ADR-A85-vocabulary-scoped-temporal-binding-resolution.md
   - ADR-A87-eligibility-concept-inclusion-and-exclusion.md
   - ADR-A90-eligibility-design-time-owl-class-backend.md

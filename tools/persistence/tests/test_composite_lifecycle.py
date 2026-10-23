@@ -25,6 +25,7 @@ from rdflib.namespace import XSD
 from persistence import templatecheck, witness
 from persistence.compiler import compile_targets, compile_to_graph
 from persistence.instantiate import instantiate_by_target
+from persistence.ir_render import fill_slots
 
 from conftest import EXAMPLES_DIR
 
@@ -36,17 +37,19 @@ DATASET_GUARD_FIXTURE = witness.WITNESS_DIR / "template-cas-replace-composite-pr
 DATA_GRAPH = URIRef("urn:g:projects")
 ROOT = URIRef(PX + "p1")
 MEMBERS = {"m1", "m2", "plan1", "t1", "t2", "t3", "docOwned", "c1"}
-CREATE, TOMBSTONE, REPLACE = "create-if-absent-composite", "tombstone-delete-composite", "cas-replace-composite-property"
+CREATE, TOMBSTONE, REPLACE = (
+    "create-if-absent-composite-patch-log", "tombstone-delete-composite-patch-log", "cas-replace-composite-property-patch-log"
+)
 
 
-_OPERATION = {"create-if-absent-composite": "create-if-absent", "cas-replace-composite-property": "cas-replace", "tombstone-delete-composite": "tombstone-delete"}
+_OPERATION = {CREATE: "create-if-absent", REPLACE: "cas-replace", TOMBSTONE: "tombstone-delete"}
 
 
 @lru_cache(maxsize=None)
 def _text_for(template: str, guards: bool) -> str:
-    compiled, _ = compile_to_graph(witness._load_fixture(PROJECT_EXAMPLE))
-    (by_target,) = instantiate_by_target(compiled, guards=guards).values()
-    return by_target[_OPERATION[template]].replace("{{{payloadTriples}}}", templatecheck._SLOT_STAND_INS["payloadTriples"])
+    compiled, _ = compile_to_graph(witness._load_fixture(PROJECT_EXAMPLE), guards=guards)
+    (by_target,) = instantiate_by_target(compiled).values()
+    return fill_slots(by_target[_OPERATION[template]], templatecheck._SLOT_STAND_INS)
 
 
 def _text(template: str) -> str:
@@ -124,8 +127,8 @@ def test_ho7_t1_a_composite_family_with_an_absent_row_gets_both_create_templates
     for fixture, suffix in ((PROJECT_EXAMPLE, ""), (DATASET_GUARD_FIXTURE, "-dataset-guard")):
         (compiled,) = compile_targets(witness._load_fixture(fixture))
         templates = {o.operation: o.template_id for o in compiled.operations}
-        assert templates["create-if-absent"] == f"create-if-absent-composite{suffix}.mustache"
-        assert templates["tombstone-delete"] == f"tombstone-delete-composite{suffix}.mustache"
+        assert templates["create-if-absent"] == f"create-if-absent-composite-patch-log{suffix}"
+        assert templates["tombstone-delete"] == f"tombstone-delete-composite-patch-log{suffix}"
         assert templates["cas-replace"].startswith("cas-replace-composite-property")
 
 

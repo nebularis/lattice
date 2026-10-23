@@ -1,17 +1,19 @@
 # SPDX-License-Identifier: MPL-2.0
 
-# Positive fixture (applied-insurance-reference AIR-4.2a, TD-49): two
-# versions of one insured's schedule that share an unchanged location, its
-# building and that building's valuation by identity. No owl:Ontology
-# header: not a released document.
+# Positive fixture (applied-insurance-reference AIR-4.2a, TD-49, and AIR-66,
+# TD-66): two versions of one insured's schedule that share an unchanged
+# location, its building and that building's valuation, and a warehouse
+# that changes address. No owl:Ontology header: not a released document.
 #
 # The first version, as of 2027-01-01, lists a factory and a warehouse.
-# A mid-term change on 2027-07-01 moves the warehouse to a new address and
-# restates its valuation. The second version lists the same factory,
-# building and building valuation nodes as the first, and the changed
-# warehouse and its new valuation. Nothing unchanged is copied. Neither
-# version is exclusive: aeo:hasLocation and its siblings are not inverse
-# functional.
+# A mid-term change on 2027-07-01 moves the warehouse to a new address. One
+# location version is written. The warehouse's stock asset and its
+# valuation name the warehouse and the stock by identity, so both are
+# unchanged and shared by the two schedule versions. A schedule version
+# is never edited once written: version 1 keeps its validity and its
+# governance state, and that version 2 supersedes it is read from
+# fnd:supersededBy. Neither version is exclusive: aeo:hasLocation and its
+# siblings are not inverse functional.
 
 @prefix aeo:     <https://www.nebularis.org/neuro-semantic/insurance/exposure#> .
 @prefix aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#> .
@@ -35,12 +37,12 @@ ex:schedule-identity a aeo:ExposureIdentity , fnd:PersistentIdentity .
 ex:schedule-v1 a aeo:ExposureSet ;
     fnd:hasIdentity ex:schedule-identity ;
     fnd:supersededBy ex:schedule-v2 ;
-    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime ; fnd:validTo "2027-07-01T00:00:00Z"^^xsd:dateTime ] ;
-    fnd:hasGovernanceState fnd:Superseded ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime ] ;
+    fnd:hasGovernanceState fnd:Active ;
     aeo:reportingUnit ex:GBP ;
     aeo:hasLocation ex:factory , ex:warehouse-v1 ;
-    aeo:hasAsset ex:factory-building ;
-    aeo:hasValuation ex:building-valuation , ex:warehouse-valuation-v1 .
+    aeo:hasAsset ex:factory-building , ex:warehouse-stock ;
+    aeo:hasValuation ex:building-valuation , ex:stock-valuation .
 
 ex:schedule-v2 a aeo:ExposureSet ;
     fnd:hasIdentity ex:schedule-identity ;
@@ -48,8 +50,8 @@ ex:schedule-v2 a aeo:ExposureSet ;
     fnd:hasGovernanceState fnd:Active ;
     aeo:reportingUnit ex:GBP ;
     aeo:hasLocation ex:factory , ex:warehouse-v2 ;
-    aeo:hasAsset ex:factory-building ;
-    aeo:hasValuation ex:building-valuation , ex:warehouse-valuation-v2 .
+    aeo:hasAsset ex:factory-building , ex:warehouse-stock ;
+    aeo:hasValuation ex:building-valuation , ex:stock-valuation .
 
 # ---- The unchanged members, listed by both versions ----------------------
 
@@ -66,16 +68,30 @@ ex:factory-building-identity a aeo:AssetIdentity , fnd:PersistentIdentity .
 ex:factory-building a aeo:Asset ;
     fnd:hasIdentity ex:factory-building-identity ;
     aeo:assetClass aeo-voc:Building ;
-    aeo:locatedAt ex:factory .
+    aeo:locatedAt ex:factory-identity .
 
 ex:building-valuation a aeo:Valuation ;
     fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime ] ;
-    aeo:valueOf ex:factory-building ;
+    aeo:valueOf ex:factory-building-identity ;
     aeo:valueType aeo-voc:Building ;
     aeo:valuationBasis aeo-voc:ReplacementCost ;
     aeo:amount [ a qnt:Quantity ; qnt:onSpace ex:GBP ; qnt:numericValue "4200000"^^xsd:decimal ] .
 
-# ---- The changed member: one location identity, two versions --------------
+# ---- The warehouse changes, its stock and the stock's valuation do not ----
+
+ex:warehouse-stock-identity a aeo:AssetIdentity , fnd:PersistentIdentity .
+
+ex:warehouse-stock a aeo:Asset ;
+    fnd:hasIdentity ex:warehouse-stock-identity ;
+    aeo:assetClass aeo-voc:Stock ;
+    aeo:locatedAt ex:warehouse-identity .
+
+ex:stock-valuation a aeo:Valuation ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime ] ;
+    aeo:valueOf ex:warehouse-stock-identity ;
+    aeo:valueType aeo-voc:Stock ;
+    aeo:valuationBasis aeo-voc:ReplacementCost ;
+    aeo:amount [ a qnt:Quantity ; qnt:onSpace ex:GBP ; qnt:numericValue "600000"^^xsd:decimal ] .
 
 ex:warehouse-identity a aeo:LocationIdentity , fnd:PersistentIdentity .
 
@@ -91,17 +107,3 @@ ex:warehouse-v2 a aeo:Location ;
     aeo:address [ a aeo:Address ; rdfs:label "Canal Wharf" ] ;
     aeo:territory ex:great-britain ;
     aeo:geoPrecision aeo-voc:Street .
-
-ex:warehouse-valuation-v1 a aeo:Valuation ;
-    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime ; fnd:validTo "2027-07-01T00:00:00Z"^^xsd:dateTime ] ;
-    aeo:valueOf ex:warehouse-v1 ;
-    aeo:valueType aeo-voc:Stock ;
-    aeo:valuationBasis aeo-voc:ReplacementCost ;
-    aeo:amount [ a qnt:Quantity ; qnt:onSpace ex:GBP ; qnt:numericValue "600000"^^xsd:decimal ] .
-
-ex:warehouse-valuation-v2 a aeo:Valuation ;
-    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-07-01T00:00:00Z"^^xsd:dateTime ] ;
-    aeo:valueOf ex:warehouse-v2 ;
-    aeo:valueType aeo-voc:Stock ;
-    aeo:valuationBasis aeo-voc:ReplacementCost ;
-    aeo:amount [ a qnt:Quantity ; qnt:onSpace ex:GBP ; qnt:numericValue "750000"^^xsd:decimal ] .

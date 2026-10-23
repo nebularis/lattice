@@ -28,16 +28,22 @@ from .model import ResolvedDimension
 from .namespaces import DAL
 from .scopes import Target
 
-_CAS_RANK = {"NONE": 0, "BEST_EFFORT": 1, "LINEARIZABLE": 2}
+# The ranking is NoConcurrencyGuarantee < BestEffort < Linearizable, as the rank of the levels' IRIs.
+_CAS_RANK = {str(DAL.NoConcurrencyGuarantee): 0, str(DAL.BestEffort): 1, str(DAL.Linearizable): 2}
+_NO_GUARANTEE = str(DAL.NoConcurrencyGuarantee)
+
+
+def _level_name(level: Optional[str]) -> str:
+    return (level or _NO_GUARANTEE).rsplit("#", 1)[-1]
 _UNIQUENESS_RANK = {"Advisory": 0, "Transactional": 1, "Strong": 2}
 
 
 @dataclass(frozen=True)
 class CapabilitySpec:
     iri: Optional[str]
-    provides_cas: Optional[str] = None
+    provides_cas: Optional[str] = None  # the IRI of a dal:ConcurrencyLevel
     provides_reasoning: bool = False
-    provides_commit_validation: Optional[str] = None
+    provides_commit_validation: Optional[str] = None  # the IRI of a dal:CommitValidationLevel
     provides_single_writer: Optional[bool] = None
     provides_statement_level_conflict_detection: Optional[bool] = None
 
@@ -81,7 +87,7 @@ def load_capability_spec(graph: Graph, target: Optional[Target] = None) -> Optio
 
 @dataclass
 class CapabilityRequirement:
-    requires_cas: Optional[str] = None
+    requires_cas: Optional[str] = None  # the IRI of a dal:ConcurrencyLevel
     requires_reasoning_for: list[str] = field(default_factory=list)
     requires_uniqueness_level: Optional[str] = None
 
@@ -98,8 +104,7 @@ def compute_requirement(
         strategy_local = str(concurrency.value).rsplit("#", 1)[-1] if concurrency.value else None
         if strategy_local == "Optimistic":
             level = concurrency.extra.get("minConcurrencyLevel")
-            level_local = str(level).rsplit("#", 1)[-1] if level else "BEST_EFFORT"
-            requires_cas = level_local.upper() if level_local.upper() in _CAS_RANK else "BEST_EFFORT"
+            requires_cas = str(level) if level is not None and str(level) in _CAS_RANK else str(DAL.BestEffort)
 
     reasoning_for = [
         dim.won_by for dim in dimensions.values() if dim.won_by_requires_reasoning and dim.won_by
@@ -134,11 +139,11 @@ def check_requirement(requirement: CapabilityRequirement, spec: CapabilitySpec) 
 
     if requirement.requires_cas:
         required_rank = _CAS_RANK.get(requirement.requires_cas, 0)
-        provided_rank = _CAS_RANK.get(spec.provides_cas or "NONE", 0)
+        provided_rank = _CAS_RANK.get(spec.provides_cas or _NO_GUARANTEE, 0)
         if provided_rank < required_rank:
             failures.append(
-                f"requires concurrency {requirement.requires_cas}, spec provides "
-                f"{spec.provides_cas or 'NONE'}"
+                f"requires concurrency {_level_name(requirement.requires_cas)}, spec provides "
+                f"{_level_name(spec.provides_cas)}"
             )
 
     if requirement.requires_reasoning_for and not spec.provides_reasoning:
@@ -148,7 +153,7 @@ def check_requirement(requirement: CapabilityRequirement, spec: CapabilitySpec) 
         )
 
     if requirement.requires_uniqueness_level == "Strong":
-        if spec.provides_commit_validation in (None, "NONE"):
+        if spec.provides_commit_validation in (None, str(DAL.NoCommitValidation)):
             failures.append(
                 "requires Strong uniqueness enforcement, spec provides no commit-time validation"
             )

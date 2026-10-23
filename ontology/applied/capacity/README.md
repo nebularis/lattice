@@ -78,7 +78,7 @@ list of substrate layers puts Instrument below Behaviour, the order before ADR-A
 
 Breaking versions at major version zero ([ADR-A113](../../../docs/architecture/decisions/ADR-A113-breaking-changes-at-major-version-zero.md)):
 
-- 0.17.0: re-pinned to the substrate's 0.19.0 release, in which Ledger joins ([ADR-A131](../../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). No other change.
+- Next version: re-pinned to the substrate's next release, in which Ledger joins ([ADR-A131](../../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). No other change.
 - 0.8.0 (breaking): the execution profile imports `behaviour-runtime` 0.8.0 in place of `behaviour`
   0.7.0. Its import closure no longer includes Instrument, so a consumer that reached Instrument's
   terms through it must import Instrument directly. ADR-A106.
@@ -89,6 +89,7 @@ Breaking versions at major version zero ([ADR-A113](../../../docs/architecture/d
 - 0.13.0 (breaking): re-pinned to `behaviour-runtime` 0.13.0 and Eligibility 0.10.0, which follow
   Party 0.8.0's renamed shares and composition rules, with no other change (CCS C7c).
 - 0.13.1: re-pinned to `behaviour-runtime` 0.13.1, with no other change (ADR-A120).
+- 0.17.0: re-pinned to the substrate release 0.19.0, with no other change.
 - 0.14.0 (breaking): re-pinned to `behaviour-runtime` 0.14.0, whose records are narrowed to the
   evaluator's findings and whose acceptance record is deprecated (CCS C9b1), and to Quantification
   0.8.0 (CCS C9b2), with no other change.

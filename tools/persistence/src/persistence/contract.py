@@ -19,32 +19,18 @@ nothing here is SPARQL, so the contract stays valid for a realisation that is no
 
 from __future__ import annotations
 
+import dataclasses
 from dataclasses import dataclass
 from enum import Enum
 from typing import Optional
 
+from lattice_persistence.contract import (  # the data classes moved to the caller library (ADR-A132 decision 3, H2.8a)
+    DigestContract, EdgeContract, OperationKind, ParameterContract, PayloadContract,
+)
+
 from .ir import AccessMode, Kind, Operation, Projected, SLOT_KINDS, Var
 from .ir_render import Access, access_sets
 from .namespaces import PAT
-
-
-class OperationKind(Enum):
-    """The logical kind of an operation. A relational realisation and a model compare operations by kind, not by the SPARQL a
-    builder writes."""
-
-    CREATE = "Create"
-    BOOTSTRAP = "Bootstrap"
-    REPLACE = "Replace"
-    TOMBSTONE = "Tombstone"
-    APPEND = "Append"
-    UNCONDITIONAL_WRITE = "UnconditionalWrite"
-    VALUE_GUARDED_REPLACE = "ValueGuardedReplace"
-    KEY_CLAIM_WRITE = "KeyClaimWrite"
-    KEY_CLAIM_WRITE_DUAL = "KeyClaimWriteDual"
-    KEY_CLAIM_RETIRE = "KeyClaimRetire"
-    QUARANTINE = "Quarantine"
-    MERGE_REWRITE = "MergeRewrite"
-    AUDIT = "Audit"
 
 
 class ResourceKind(Enum):
@@ -62,6 +48,7 @@ class ResourceKind(Enum):
     DATASET_EPOCH = "DatasetEpoch"
     RETENTION_MARK = "RetentionMark"
     PROPERTY_VALUE = "PropertyValue"
+    PATCH_CONTENT = "PatchContent"
 
 
 LOGICAL_KEYS: dict[ResourceKind, tuple[str, ...]] = {
@@ -76,6 +63,7 @@ LOGICAL_KEYS: dict[ResourceKind, tuple[str, ...]] = {
     ResourceKind.DATASET_EPOCH: ("dataset",),
     ResourceKind.RETENTION_MARK: ("target",),
     ResourceKind.PROPERTY_VALUE: ("root", "property"),
+    ResourceKind.PATCH_CONTENT: ("target", "epoch", "seq", "direction"),
 }
 """The logical key of each resource, as the names of its parts. A stream is the root of its version row, and a bucket month is a
 realisation and never part of a key (design review 2.2)."""
@@ -94,6 +82,7 @@ _ROLE_RESOURCE: dict[str, ResourceKind] = {
     "quarantine": ResourceKind.KEY_QUARANTINE,
     "retention": ResourceKind.RETENTION_MARK,
     "dataset": ResourceKind.DATASET_EPOCH,
+    "patch": ResourceKind.PATCH_CONTENT,  # the add and del graphs of a patch log, named from the receipt (H2.6d)
 }
 
 
@@ -109,6 +98,10 @@ def resource_of(role: str, predicate: str) -> ResourceKind:
 _STEM_KIND: dict[str, OperationKind] = {
     "bootstrap-version-row": OperationKind.BOOTSTRAP,
     "append-event": OperationKind.APPEND,
+    "append-version": OperationKind.APPEND_VERSION,
+    "append-version-delta": OperationKind.APPEND_VERSION,
+    "members": OperationKind.MEMBERS_READ,
+    "payload-check": OperationKind.PAYLOAD_CHECK,
     "create-if-absent-named-graph": OperationKind.CREATE,
     "create-if-absent-composite": OperationKind.CREATE,
     "cas-replace-named-graph": OperationKind.REPLACE,
@@ -128,6 +121,14 @@ _STEM_KIND: dict[str, OperationKind] = {
     "revision-multi-txn-audit": OperationKind.AUDIT,
     "txn-multi-revision-audit": OperationKind.AUDIT,
 }
+# The patch-log and no-receipt variants of the in-place writes (H2.6d) have the kind of their base operation.
+for _stem, _kind in tuple(_STEM_KIND.items()):
+    if _stem.startswith(("create-if-absent-", "cas-replace-named", "cas-replace-composite", "tombstone-delete-")):
+        _STEM_KIND[_stem + "-patch-log"] = _kind
+        _STEM_KIND[_stem + "-no-receipt"] = _kind
+# A composite family written in place has no receipt-only write (H2.9, D-12 (a)), so only its two variants are builders.
+for _stem in ("create-if-absent-composite", "cas-replace-composite-property", "tombstone-delete-composite"):
+    del _STEM_KIND[_stem]
 OPERATION_KINDS = _STEM_KIND
 DATASET_GUARD_SUFFIX = "-dataset-guard"
 
@@ -137,11 +138,25 @@ def stem_of(operation_id: str) -> str:
     return operation_id.removesuffix(DATASET_GUARD_SUFFIX)
 
 
-BUILDER_VERSIONS: dict[str, int] = {**{stem: 1 for stem in sorted(_STEM_KIND)}, "append-event": 2}
+_NOT_EXISTS_NAMES_ITS_GRAPH = (
+    "append-version", "append-version-delta", "members",
+    *(f"{base}{tag}" for base in ("cas-replace-named-graph", "tombstone-delete-named-graph") for tag in ("", "-no-receipt", "-patch-log")),
+    *(f"{base}{tag}" for base in ("cas-replace-composite-property", "tombstone-delete-composite") for tag in ("-no-receipt", "-patch-log")),
+)
+"""The builders whose `NOT EXISTS` inside a `GRAPH` block gained a `GRAPH` of its own in H2.6g (TSD-34). Each is one version above where it was."""
+
+BUILDER_VERSIONS: dict[str, int] = {
+    stem: {"append-event": 2, "append-version": 2, "cas-replace-named-graph": 2, "cas-replace-value-guard": 2, "members": 2}.get(stem, 1) + (stem in _NOT_EXISTS_NAMES_ITS_GRAPH)
+    for stem in sorted(_STEM_KIND)
+}
 """The version of each builder, which any change to the text it renders must bump. A golden check
 (`tests/test_builder_versions.py`) holds the version to the text, and it is a number kept here, never computed, so that a
 change to a builder is a change a reviewer sees. A dataset-guard variant shares its base operation's version. `append-event` is at 2
-since its events became request-time slots (formal-methods H2.6b)."""
+since its events became request-time slots (formal-methods H2.6b). `append-version` is at 2 since it links versions with `pat:previousVersion`
+(R2, H2.6d), and `cas-replace-named-graph` since it no longer names delta graphs from caller parameters, which a patch-log variant now writes.
+`cas-replace-value-guard` is at 2 since its patterns moved from the default graph into the family's data graph (H2.7, TD-43), and `members`
+since its nearest checkpoint is found in a sub-select (H2.8c, TD-68). The builders in
+`_NOT_EXISTS_NAMES_ITS_GRAPH` are one higher since a `NOT EXISTS` inside a `GRAPH` block names its graph (H2.6g, TSD-34)."""
 
 
 class GuardStatus(Enum):
@@ -162,15 +177,6 @@ class DeclarationSource(Enum):
 
 
 @dataclass(frozen=True, order=True)
-class ParameterContract:
-    name: str
-    kind: str
-    required: bool
-    equals_graph_name: bool = False
-    sourced_from_registry: bool = False
-
-
-@dataclass(frozen=True, order=True)
 class AccessContract:
     resource: str
     mode: str
@@ -184,24 +190,21 @@ class ResultColumn:
     separator: Optional[str] = None
 
 
-@dataclass(frozen=True)
-class PayloadContract:
-    parameter: str
-    root: Optional[str]
-
-
-@dataclass(frozen=True)
-class DigestContract:
-    """What the request digest is taken over (the patterns guide, remediation A5): the kind of the operation, the target it
-    names, the sequence it expects, and the sorted canonical N-Triples of what the request asserts. That last part is one slot
-    per kind of content, in a fixed order, so a triple's role is part of what is hashed (formal-methods H2.6b, Q5): the payload of
-    a write, or for an append the events, which are its rows slot and its triples slot together. A part an operation does not
-    have is ``None`` or empty. The hash and the encoding are fixed by the contract, and the algorithm is built in H2.8."""
-
-    target: Optional[str]
-    expected: Optional[str]
-    payload: Optional[str]
-    event: tuple = ()
+def edge_contracts(tree) -> tuple:
+    """The edges of an ownership tree (``persistence.boundary.OwnershipTree``) that lead to a node, as contracts, in a total order."""
+    if tree is None:
+        return ()
+    return tuple(sorted(
+        (
+            EdgeContract(
+                str(e.source_shape), str(e.step.predicate), e.step.inverse, e.kind,
+                None if e.target_class is None else str(e.target_class), e.reference_mode,
+                None if e.target_shape is None else str(e.target_shape),
+            )
+            for e in tree.node_edges()
+        ),
+        key=lambda c: tuple("" if v is None else str(v) for v in dataclasses.astuple(c)),
+    ))
 
 
 @dataclass(frozen=True)
@@ -217,27 +220,14 @@ class OperationContract:
     payload: Optional[PayloadContract]
     digest: Optional[DigestContract]
     source: DeclarationSource = DeclarationSource.BUILDER_DERIVED
+    examines: Optional[str] = None
+    """For an audit that reads the graphs a caller lists, the parameter that lists them (H2.8b). An audit that examines nothing when it is empty."""
 
 
-HAND_DECLARED: dict[str, OperationContract] = {
-    # The value-based compare-and-set of a dal:NoBoundary target. It reads and writes the default graph and the typed IR cannot
-    # express it (TD-43), so it has no builder and its contract is written here. It has no generated parameter guard.
-    "cas-replace-value-guard": OperationContract(
-        id="cas-replace-value-guard", kind=OperationKind.VALUE_GUARDED_REPLACE, version=1, guard_status=GuardStatus.NOT_GENERATED,
-        graph_naming=None,
-        parameters=(
-            ParameterContract("newValue", Kind.IRI_OR_LITERAL.value, True),
-            ParameterContract("oldValue", Kind.IRI_OR_LITERAL.value, True),
-            ParameterContract("root", Kind.IRI.value, True),
-        ),
-        accesses=(
-            AccessContract(ResourceKind.PROPERTY_VALUE.value, AccessMode.DELETE.value, "root"),
-            AccessContract(ResourceKind.PROPERTY_VALUE.value, AccessMode.INSERT.value, "root"),
-            AccessContract(ResourceKind.PROPERTY_VALUE.value, AccessMode.POINT_READ.value, "root"),
-        ),
-        results=(), payload=None, digest=None, source=DeclarationSource.HAND_DECLARED,
-    ),
-}
+HAND_DECLARED: dict[str, OperationContract] = {}
+"""The contracts of operations that have no builder, written by hand and marked ``dal:HandDeclared``. Empty since H2.7, which gave the one
+operation that had none, the value-based compare-and-set of a ``dal:NoBoundary`` family, a builder (TD-43). A new entry needs a reason a
+builder cannot express the operation, and the vocabulary keeps ``dal:HandDeclared`` for it."""
 
 
 def _keyed_by(access: Access, resource: ResourceKind, params: dict) -> Optional[str]:
@@ -275,14 +265,18 @@ def _result_columns(operation: Operation) -> tuple:
     return tuple(columns)
 
 
-def contract_of(operation: Operation) -> OperationContract:
-    """The contract of ``operation``, derived from it and from the three tables of this module."""
+def contract_of(operation: Operation, shape: Optional[str] = None) -> OperationContract:
+    """The contract of ``operation``, derived from it and from the three tables of this module. ``shape`` is the family's boundary shape, which
+    an operation cannot know, carried on the payload contract of an operation that has one. The family's edges are not copied onto it. The
+    compiled profile states them once and the payload contract points at them (H2.8c), so a contract derived here has none."""
     stem = stem_of(operation.id)
     params = {p.name: p for p in operation.params}
     sets = access_sets(operation)
     accesses = set()
     for access in sets.reads | sets.writes:
         resource = resource_of(access.role, access.predicate)
+        if stem == "cas-replace-value-guard" and resource is ResourceKind.AGGREGATE:
+            resource = ResourceKind.PROPERTY_VALUE  # a family with no boundary has no aggregate. Its data graph holds one value per (root, property)
         accesses.add(AccessContract(resource.value, access.mode, _keyed_by(access, resource, params)))
     graph_texts = {a.graph for a in sets.reads | sets.writes}
     naming = (
@@ -307,19 +301,26 @@ def contract_of(operation: Operation) -> OperationContract:
     # An append's triples slot holds its events' domain triples, which are not the aggregate's payload and have no boundary shape.
     event = tuple(sorted(p.name for p in operation.params if p.kind in SLOT_KINDS and p.kind is not Kind.REGISTRY_LIST)) if kind is OperationKind.APPEND else ()
     payload_name = None if kind is OperationKind.APPEND else payload_name
-    payload = PayloadContract(payload_name, "root" if "root" in params else None) if payload_name else None
+    # The payload of a new version is rooted at the version, whose own triples it holds, and not at the identity (H2.8b).
+    root_name = "newVersion" if kind is OperationKind.APPEND_VERSION else "root" if "root" in params else None
+    payload = PayloadContract(payload_name, root_name, (), shape) if payload_name else None
     digest = None
     if "requestDigest" in params:
         target = next((a.keyed_by for a in sorted(accesses) if a.resource == ResourceKind.VERSION_ROW.value and a.keyed_by), None)
-        digest = DigestContract(target, "expectedSeq" if "expectedSeq" in params else None, payload_name, event)
+        digest = DigestContract(
+            target, "expectedSeq" if "expectedSeq" in params else None, payload_name, event,
+            "assertTriples" if "assertTriples" in params else "addedMembers" if "addedMembers" in params else None,
+            "retractTriples" if "retractTriples" in params else "droppedMembers" if "droppedMembers" in params else None,
+        )
     return OperationContract(
         id=operation.id, kind=kind, version=BUILDER_VERSIONS[stem], guard_status=status, graph_naming=naming,
         parameters=parameters, accesses=tuple(sorted(accesses)), results=_result_columns(operation), payload=payload, digest=digest,
+        examines=next((p.name for p in operation.params if p.kind is Kind.REGISTRY_LIST), None) if kind is OperationKind.AUDIT else None,
     )
 
 
 __all__ = [
     "OperationKind", "ResourceKind", "AccessMode", "LOGICAL_KEYS", "OPERATION_KINDS", "BUILDER_VERSIONS", "GuardStatus",
     "GraphNaming", "DeclarationSource", "ParameterContract", "AccessContract", "ResultColumn", "PayloadContract",
-    "DigestContract", "OperationContract", "HAND_DECLARED", "resource_of", "stem_of", "contract_of",
+    "DigestContract", "EdgeContract", "edge_contracts", "OperationContract", "HAND_DECLARED", "resource_of", "stem_of", "contract_of",
 ]

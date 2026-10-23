@@ -113,6 +113,14 @@ catalogued root. Its paths move to the reader when the tools have, and the scan 
 The known exceptions are listed in `tools/lattice_repo_catalogue_exceptions.txt`, one file per line with a
 reason, and the scan fails on a file that builds such a path and is not listed.
 
+## Addendum (2026-10-21): what a standalone module may import
+
+Decided by the maintainer. A standalone module (MORK, SPC, Surface, Persistence) declares `imports` too,
+naming the substrate layers its documents import, for example Persistence, whose `persistent-foundation`
+document imports Foundation. Decision 2 already says an entry names the modules it may import. The import
+guard now holds every `owl:imports` of a standalone module's documents to the module itself and that list,
+where before it judged only the substrate. The substrate's order is unchanged and still ADR-A01's.
+
 ## Provenance
 
 Proposed in the [repository catalogue sketch](../../developer/sketches/repository-catalogue.md), whose

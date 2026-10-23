@@ -5,8 +5,8 @@
 
 **Reading order:**
 1. [Status](#status) — what's complete and where we are
-2. [Sketch](#sketch) — the patterns and decisions
-3. [Plan](#plan) — how to execute
+2. [Sketch](#sketch-overview) — the patterns and decisions
+3. [Plan](#plan-overview) — how to execute
 4. [Next steps](#next-steps) — what decision you need to make
 
 ---

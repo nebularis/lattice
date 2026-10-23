@@ -1,6 +1,6 @@
 ---
 name: lattice-ontology-authoring
-description: How to change a LATTICE ontology and model well in it. Use when editing anything under ontology/ (a layer README, spec, vocab, shapes, projection or examples), bumping or re-pinning a version IRI, writing a SHACL or SHACL-SPARQL shape, declaring a domain or range, simplifying a model, or naming a new technical term, in LATTICE or an applied ontology built on it.
+description: How to change a LATTICE ontology and model well in it. Use when editing anything under ontology/ (a layer README, spec, vocab, shapes, projection or examples), moving the release number or an applied module's version IRI, writing a SHACL or SHACL-SPARQL shape, declaring a domain or range, simplifying a model, or naming a new technical term, in LATTICE or an applied ontology built on it.
 ---
 
 # Authoring LATTICE ontologies
@@ -10,7 +10,7 @@ description: How to change a LATTICE ontology and model well in it. Use when edi
 Follow every step for any change to `ontology/**/spec/`, `ontology/**/vocab/`, or a `shapes/` or
 `projection/` directory. Read the
 [versioning policy](https://github.com/nebularis/lattice/blob/main/docs/architecture/ontology-versioning-policy.md)
-(ADR-A86, ADR-A113) first. A skipped step breaks consumers silently, and has done so before.
+(ADR-A129, ADR-A86, ADR-A113) first. A skipped step breaks consumers silently, and has done so before.
 
 **Version bumps and `release:prepare` are a merge-time operation, never a branch-time one.** Steps 2
 to 6 below move every release member's `owl:versionIRI` to a new shared number (ADR-A129), which
@@ -56,7 +56,8 @@ the maintainer is actually preparing a merge into `main`, never as part of an or
      and committed graphs (`rdflib.compare.graph_diff` over `to_isomorphic` graphs) before
      regenerating, and either restore the README or record the drift. A regeneration over a
      drifting layer can silently discard hand-maintained content.
-   - Persistence and the applied modules are not literate. Edit their `.ttl` directly.
+   - A module whose README has no extracted blocks is not literate, and its `.ttl` is edited directly. Persistence and the
+     insurance applied modules are literate. Check a README for `turtle-spec` blocks or a `generated` region before editing.
    - A README migrated to the layout of ADR-A126 follows
      [literate-specifications.md](https://github.com/nebularis/lattice/blob/main/docs/architecture/literate-specifications.md):
      a term's axioms are written once, in its Description Logic Encoding section, and markers hide a
@@ -71,26 +72,36 @@ the maintainer is actually preparing a merge into `main`, never as part of an or
    - **A README, its examples and its shapes name no delivery identifier**, such as a slice, a plan
      question or a technical debt item, and no delivery phrasing such as "this slice". Skill
      `lattice-publication-hygiene`, "Delivery identifiers stay in working documents", has the rule.
-2. **Bump the version.** At major version zero an additive change is a MINOR, and a breaking one a
-   MINOR marked breaking (ADR-A113). Change the document's `owl:versionIRI`. A `shapes/` or
-   `projection/` directory is versioned by its `.version` file, never by the spec's IRI.
-3. **Compute the cascade, never trust a count.** A document whose only change is a re-pinned import
-   takes the imported change's bump level (ADR-A86). Build the import graph with
-   `find_in_scope_ttl_files` and `extract_version_iris` from `tools/ontology_version_check.py`, and
-   close it transitively from the changed IRI. MORK's IRIs are `http://`. A document with no version
-   of its own still re-pins, with no release.
-4. **Re-pin in one pass.** Version IRIs appear in spec and vocab files, literate README blocks,
-   `tools/surface/src/surface/namespaces.py`, examples and tests. Replace exact IRIs with one regex
-   alternation over the whole old-to-new mapping, so nothing is replaced twice. Tests also build
-   IRIs from fragments, such as `LATTICE + "behaviour/0.10.0"`. Move a test that locates the current
-   document to the new version, and keep a test that asserts history, a release row or a release
-   note. Leave alone `docs/architecture/ontology-releases.md` (generated),
+2. **Know which versioning applies.** The modules of the kinds listed in the repository catalogue's
+   `[conventions.release]` (`substrate` and `standalone`, which cover the layers, MORK, SPC,
+   Surface and Persistence) are one release with one number, held there (ADR-A129). Their shapes and projection
+   directories have no `.version` file. The applied modules and the examples keep their own versions
+   and pin a release (ADR-A86).
+3. **Move the release for a change to a member.** `mise run release:prepare -- <X.Y.Z>` moves every
+   member version IRI, every import of a member, the applied modules' pins, the literate READMEs and
+   the tool packages' sources to the new number in one substitution, then regenerates the XML catalogs
+   and the release register. At major version zero a breaking change is a MINOR (ADR-A113).
+   `check:ontology-versioning` fails with `UNBUMPED` when a member changed and the number did not.
+   Where the maintainer has agreed that a working branch defers versioning to its merge into `main`,
+   that branch ignores the failure and takes one bump at the merge, as its status record says.
+4. **Bump an applied module's or an example's own version.** Change the document's
+   `owl:versionIRI`, or a `shapes/` or `projection/` directory's `.version` file. A document whose
+   only change is a re-pinned import takes the imported change's bump level (ADR-A86). Build the
+   import graph with `find_in_scope_ttl_files` and `extract_version_iris` from
+   `tools/ontology_version_check.py`, and close it transitively from the changed IRI, never trusting a
+   count. Replace exact IRIs with one regex alternation over the whole old-to-new mapping, so nothing
+   is replaced twice.
+5. **Tests.** `release:prepare` leaves tests alone, since they assert history as well as the present.
+   Tests also build IRIs from fragments, such as `LATTICE + "behaviour/0.18.0"`. Move a test that
+   locates the current document to the new version, and keep a test that asserts history, a release
+   row or a release note. Leave alone `docs/architecture/ontology-releases.md` (generated),
    `tools/test_ontology_releases.py` and `tools/fixtures/import_guard/`.
-5. **Regenerate:** `mise run build:ontology-catalog`, then `mise run build:ontology-releases`, which
-   adds a row per new version and prints the tags to create. The tags are the maintainer's (skill
-   `lattice-lifecycle`).
-6. **Record the release** in the "Release notes" section of every README that has one, re-pins
-   included.
+6. **Regenerate and record.** `mise run build:ontology-catalog`, then `mise run build:ontology-releases`,
+   which adds the register rows and prints the tags to create: one `ontologies-vX.Y.Z` for the
+   release, and one per new applied version. The tags are the maintainer's (skill
+   `lattice-lifecycle`). Write the release notes in the "Release notes" section of each changed
+   README, classing every release change by its effect on a graph valid under the previous release:
+   no effect, may invalidate, or changes meaning (ADR-A129).
 7. **Check:** `mise run check:full-sweep` runs all of these but the literate checks, one line each. Or singly: `mise run check:ontology-catalog`, `check:ontology-versioning`, `check:import-guard`,
    `build:mtp`, `check:mtp`, `check:persistence`, `check:python-root`, `check:vocabulary`,
    `check:mork-compilers`, and the literate `--check` for every literate layer touched. `build:mtp`
