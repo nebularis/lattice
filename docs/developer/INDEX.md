@@ -721,7 +721,7 @@ ontology (REL-Q1 to REL-Q6 answered 2026-10-19, REL-Q2a open), and
 |-------|-------|
 | **Status** | 🚧 LG-0 (examples) and LG-1 (configuration document, registered in the root catalogue at substrate release 0.19.0) built and verified on `docs/placement-vehicles-structure` 2026-10-22, not yet committed. LG-2 briefed, not started. ADR-A131 and ADR-A01's 2026-10-19 addendum Accepted 2026-10-21, not yet Published (blocks `check:published-decisions` until the maintainer publishes them) |
 | **Unit ID** | `ledger` |
-| **Sketches** | [evaluation-context.md](sketches/evaluation-context.md) §5, [contract-amounts.md](sketches/contract-amounts.md), [persistence-history-and-versioning.md](sketches/persistence-history-and-versioning.md) §6.1 |
+| **Sketches** | [evaluation-context.md](sketches/evaluation-context.md) §5, [contract-amounts.md](sketches/contract-amounts.md), [persistence-history-and-versioning.md](sketches/persistence-history-and-versioning.md) §6.1, [ledger-folds-and-stores.md](sketches/ledger-folds-and-stores.md) (exactness, folds and where they run, LF-Q1 to LF-Q8 open) |
 | **Plan** | [ledger.md](plans/ledger.md) |
 | **Status Record** | [ledger.md](status/ledger.md) |
 | **Validation Packs** | [LG-0](validation/ledger-lg-0.md), [LG-1](validation/ledger-lg-1.md) |
