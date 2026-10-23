@@ -63,6 +63,7 @@ describes every tool.
 
 Every piece of text, in documents, code comments, commit messages and replies:
 
+- do not put newlines in markdown text for formatting. Modern editors can word-wrap long lines. Newlines should be used to create space between paragraphs: don't assume a line length and enforce it with newlines.
 - no semicolons. Use periods or commas
 - colons sparingly, never to join two clauses or to lead into an explanation. A colon may introduce
   a list, a table or a quotation
