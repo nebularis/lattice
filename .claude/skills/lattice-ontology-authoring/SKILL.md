@@ -68,6 +68,9 @@ the maintainer is actually preparing a merge into `main`, never as part of an or
      reader of the README itself. Describe the layer and its concepts. Where the split into documents
      matters, it belongs in section 2's document table and section 3's extraction contract, which
      name each file, never in prose that will be extracted.
+   - **A README, its examples and its shapes name no delivery identifier**, such as a slice, a plan
+     question or a technical debt item, and no delivery phrasing such as "this slice". Skill
+     `lattice-publication-hygiene`, "Delivery identifiers stay in working documents", has the rule.
 2. **Bump the version.** At major version zero an additive change is a MINOR, and a breaking one a
    MINOR marked breaking (ADR-A113). Change the document's `owl:versionIRI`. A `shapes/` or
    `projection/` directory is versioned by its `.version` file, never by the spec's IRI.
