@@ -35,7 +35,19 @@ are in [environment-lessons.md](environment-lessons.md), beside this file.
 | a benchmark under `benchmark/` | its own `check:<area>-<topic>`, run on demand, never part of `check` (ADR-A124) |
 | `AGENTS.md` or a skill | `build:agent-guidance`, then `check:agent-guidance`. The "Where things are" table in `AGENTS.md` is generated from `repository-catalogue.md`, so edit a root, tool package or documentation area there |
 | a root, a tool package, a documentation area or a generated path | `repository-catalogue.md`, then `build:agent-guidance` and `check:catalogue` |
-| anything to be committed | `check:deny-terms` (skill `lattice-publication-hygiene`) |
+| anything to be committed | the commit hook runs what the change touches (below). `mise run hooks:run` runs it by hand over what is staged |
+
+## Git hooks
+
+`mise run bootstrap` installs the git hooks ([ADR-A133](../../../docs/architecture/decisions/ADR-A133-git-hooks.md)), as `mise run hooks:install` does alone. They go into the repository's shared hooks directory, so one install covers every worktree. Install never replaces a hook it did not write: on its own it fails and says what to do, and under bootstrap it warns.
+
+| Moment | What runs |
+|---|---|
+| a commit | the checks the staged files touch: the deny-list, literate freshness per module, agent guidance, the catalogue, the import guard, links in the touched Markdown, formal freshness, the site's copies and the writing rules. Published decisions and hard wraps warn |
+| a merge into `main` (a clean merge, or a commit on `main` while a merge or a squash is in progress) | the same checks over every file the merge changes, all blocking but the writing rules, plus published decisions over the whole tree and ontology versioning. `mise run hooks:merge` runs this by hand, for example before merging on GitHub |
+| a push | nothing, so a cloud agent's push always reaches the maintainer |
+
+A check judges only what the change touches, so a failure elsewhere in the tree never blocks a commit, and `mise run check` still finds it. A check whose tool cannot run warns and asks for `mise run bootstrap`. `LATTICE_HOOKS_SKIP=links,writing` skips named checks, and `--no-verify` skips all. Record either, and why, in the slice's Validation Pack. `mise run check:hooks` tests the dispatcher (`tools/hooks.py`) and the writing rules (`tools/writing_rules.py`).
 
 ## Is the code under test this checkout's?
 

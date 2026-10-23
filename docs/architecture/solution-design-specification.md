@@ -596,7 +596,7 @@ The Control Plane and worker processes are not yet containerized or added to Com
 
 ## 6. UX Design
 
-Full design is in [ux-design.md](ux-design.md), which covers the MORK Review Workbench (canonically [MORK UXD](../../ontology/mork/docs/MORK%20UXD.md)) and the newly authored Surface Contract Studio design at equivalent depth, including the Release view this document's [§4.4](#44-release-integration-exposure-the-answer-to-who-calls-this) requires. The cross-cutting principle repeated here because it governs every process map in [§2](#2-process-design): role perimeters and evidence redaction are enforced server-side, the browser never receives data it must hide from itself.
+Full design is in [ux-design.md](ux-design.md), which covers the MORK Review Workbench (canonically [MORK UXD](../developer/sketches/governance-and-versioning-migration.md)) and the newly authored Surface Contract Studio design at equivalent depth, including the Release view this document's [§4.4](#44-release-integration-exposure-the-answer-to-who-calls-this) requires. The cross-cutting principle repeated here because it governs every process map in [§2](#2-process-design): role perimeters and evidence redaction are enforced server-side, the browser never receives data it must hide from itself.
 
 ---
 

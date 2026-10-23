@@ -26,6 +26,7 @@ import ast
 import json
 import os
 import re
+import subprocess
 import sys
 import tomllib
 import warnings
@@ -424,13 +425,26 @@ def _path_problems(catalogue: Catalogue) -> List[str]:
     return problems
 
 
+def _subdirectories(root: Path, directory: Path) -> set:
+    """The subdirectories of a module that hold a file git does not ignore, so that local build output
+    left in an ignored directory is not taken for a role. Outside git, every subdirectory on disk."""
+    try:
+        listed = subprocess.run(["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z", "--",
+                                 directory.relative_to(root).as_posix()],
+                                cwd=root, capture_output=True, text=True, check=True).stdout
+    except (OSError, subprocess.CalledProcessError):
+        return {p.name for p in directory.iterdir() if p.is_dir() and not p.name.startswith(".")}
+    names = (Path(f).relative_to(directory.relative_to(root)).parts for f in listed.split("\0") if f)
+    return {parts[0] for parts in names if len(parts) > 1 and not parts[0].startswith(".")}
+
+
 def check(catalogue: Catalogue, scan: Optional["Scan"] = None) -> List[str]:
     """Problems between the catalogue and the tree, in both directions. Empty when they agree."""
     root, problems = catalogue.root, []
     known_roles = set(catalogue.conventions.get("roles", []))
     for module in catalogue.modules.values():
         directory = root / module.path
-        on_disk = {p.name for p in directory.iterdir() if p.is_dir() and not p.name.startswith(".")}
+        on_disk = _subdirectories(root, directory)
         for role in sorted(set(module.roles) - on_disk):
             problems.append(f"{module.name}: declares role {role!r}, but {module.path.as_posix()}/{role} does not exist")
         for role in sorted(on_disk - set(module.roles)):

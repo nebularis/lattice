@@ -130,6 +130,19 @@ def test_rc1_t7_the_check_finds_where_the_tree_and_an_entry_disagree(tmp_path: P
     assert any(message in p for p in rc.check(rc.load(root)))
 
 
+def test_rc1_t7b_a_directory_git_ignores_is_not_a_role(tmp_path: Path) -> None:
+    import subprocess
+    root = _tree(tmp_path)
+    (root / "ontology" / "alpha" / "spec" / "alpha.ttl").write_text("", encoding="utf-8")
+    (root / "ontology" / "alpha" / "execution" / "old").mkdir(parents=True)
+    (root / "ontology" / "alpha" / "execution" / "old" / "out.txt").write_text("", encoding="utf-8")
+    (root / ".gitignore").write_text("**/execution/*\n", encoding="utf-8")
+    subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+    assert rc.check(rc.load(root)) == []
+    (root / ".gitignore").write_text("", encoding="utf-8")
+    assert any("execution exists, but is not one of its roles" in p for p in rc.check(rc.load(root)))
+
+
 def test_rc1_t8_a_module_on_disk_that_is_not_listed_is_found(tmp_path: Path) -> None:
     root = _tree(tmp_path)
     (root / "ontology" / "beta" / "spec").mkdir(parents=True)

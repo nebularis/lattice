@@ -14,8 +14,13 @@ MAVEN_OPTS = "-Dstyle.color=always"
 PYTHONUNBUFFERED = "1"
 
 [tasks.bootstrap]
-description = "Install configured toolchains and dependency sets"
-depends = ["bootstrap:python", "bootstrap:frontend"]
+description = "Install configured toolchains and dependency sets, and the git hooks"
+depends = ["bootstrap:python", "bootstrap:frontend", "bootstrap:hooks"]
+
+# The git hooks (ADR-A133). Warns, never fails, where a hook it did not write is already present.
+[tasks."bootstrap:hooks"]
+description = "Install the git hooks, warning where a hook this task did not write is present (ADR-A133)"
+run = "python tools/hooks.py install --bootstrap"
 
 # One pip, once. The Python packages share one virtual environment per checkout, so they are
 # installed in a single resolve. Ten pip processes writing one site-packages at the same time
@@ -93,7 +98,7 @@ run = "corepack enable && yarn install --immutable"
 
 [tasks.check]
 description = "Run all repository validation tasks"
-depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:reasoning-isolation", "check:minting", "check:persistence-library", "check:formal-freshness", "check:catalogue", "check:agent-guidance", "build:mtp", "check:mtp", "check:authoring-tools", "check:published-decisions", "check:site-sections"]
+depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:reasoning-isolation", "check:minting", "check:persistence-library", "check:formal-freshness", "check:catalogue", "check:agent-guidance", "build:mtp", "check:mtp", "check:authoring-tools", "check:published-decisions", "check:site-sections", "check:hooks"]
 
 [tasks.test]
 description = "Run the repository test suites"
@@ -325,8 +330,20 @@ description = "Check staged changes against your personal deny-list, never publi
 run = "python tools/deny_terms.py"
 
 [tasks."hooks:install"]
-description = "Install an opt-in git pre-commit hook running the deny-terms check"
-run = "python tools/deny_terms.py install-hook"
+description = "Install the git hooks into the shared hooks directory, covering every worktree: the checks a change needs at a commit and at a merge into main, never at a push (ADR-A133)"
+run = "python tools/hooks.py install"
+
+[tasks."hooks:run"]
+description = "Run the commit checks over what is staged, as the pre-commit hook does (ADR-A133)"
+run = "python tools/hooks.py run pre-commit"
+
+[tasks."hooks:merge"]
+description = "Run the merge checks for the current branch against main, as a merge into main does, for example before merging on GitHub (ADR-A133)"
+run = "python tools/hooks.py merge"
+
+[tasks."check:hooks"]
+description = "Test the hooks dispatcher and the writing rules (ADR-A133)"
+run = "python -m pytest tools/test_hooks.py tools/test_writing_rules.py -q"
 
 [tasks."check:mork-compilers"]
 description = "Run the MORK backend compiler tests, including generated SPARQL executed against fixtures (ADR-A24, ADR-A89)"

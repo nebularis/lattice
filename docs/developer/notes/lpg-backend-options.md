@@ -53,12 +53,7 @@ or Cypher, as a storage backend?
    persistence compiler's generated SPARQL is executed only by tests, a spike and a benchmark. No
    production component sends a SPARQL query or update today (§2.2). Option 2's main benefit, that
    every consumer keeps speaking SPARQL, protects little that runs.
-3. **Option 2's write path meets the view-update problem (judgement, high confidence).** A general
-   SPARQL Update over a schema-dependent mapping has no unique translation. The repository's own
-   paper on unified SPARQL views ([distirbuted-queries.md](../docs/developer/notes/rdf-engine/distirbuted-queries.md)
-   §3.4) reached the same conclusion for SQL: production virtualisation is read-only, and writes
-   stay native. A facade restricted to the fragment the compiler emits avoids the problem, but it
-   is then Option 1 behind a parser (§5.3).
+3. **Option 2's write path meets the view-update problem (judgement, high confidence).** A general SPARQL Update over a schema-dependent mapping has no unique translation. The repository's own paper on unified SPARQL views ([distirbuted-queries.md](rdf-engine/distirbuted-queries.md) §3.4) reached the same conclusion for SQL: production virtualisation is read-only, and writes stay native. A facade restricted to the fragment the compiler emits avoids the problem, but it is then Option 1 behind a parser (§5.3).
 4. **Option 1 follows the direction already accepted (fact for the decisions, judgement for the
    fit).** ADR-A123 decision 4 makes the compiled profile declare logical resources so that "a
    relational realisation reads the same declarations and can be compared with this one operation by
@@ -87,14 +82,9 @@ Every statement in this section was checked against the source named.
 
 ### 2.1 What `persistence` models, and what it does not
 
-**What it is.** [ontology/persistence/README.md](../ontology/persistence/README.md) describes the
-layer as how "one adopter records which options they chose, per class and per deployment, and the
-`tools/persistence` compiler turns that record into generated, portable SPARQL and identity minting
-recipes". It is a cross-cutting substrate, not a layer in the dependency order, and imports nothing
-from Foundation through Instrument ([ontology-architecture.md](../docs/architecture/ontology-architecture.md) §8a).
+**What it is.** [ontology/persistence/README.md](../../../ontology/persistence/README.md) describes the layer as how "one adopter records which options they chose, per class and per deployment, and the `tools/persistence` compiler turns that record into generated, portable SPARQL and identity minting recipes". It is a cross-cutting substrate, not a layer in the dependency order, and imports nothing from Foundation through Instrument ([ontology-architecture.md](../../architecture/ontology-architecture.md) §8a).
 
-**Its dimensions** ([ADR-A78](../docs/architecture/decisions/ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md),
-[spec/persistence.ttl](../ontology/persistence/spec/persistence.ttl)):
+**Its dimensions** ([ADR-A78](../../architecture/decisions/ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md), [spec/persistence.ttl](../../../ontology/persistence/spec/persistence.ttl)):
 
 | Dimension | Class | Values |
 |---|---|---|
@@ -111,36 +101,22 @@ from Foundation through Instrument ([ontology-architecture.md](../docs/architect
 Targets are a class plus a deployment, discovered through five scope kinds, with a fixed precedence
 algorithm that refuses ambiguity rather than picking silently (ADR-A78 decisions 2 and 3).
 
-**The store is described only by capability.** `dal:CapabilitySpec` carries `dal:providesCas`,
-`dal:providesReasoning`, `dal:providesCommitValidation`, `dal:providesSingleWriter` and
-`dal:providesStatementLevelConflictDetection` ([persistence.ttl](../ontology/persistence/spec/persistence.ttl)
-lines 289 to 311). Its comment says it shares its field shape with the patterns guide's
-`StoreCapabilities` record "by design, not by identity". There is no backend kind, no dialect and no
-physical mapping anywhere in `dal:`.
+**The store is described only by capability.** `dal:CapabilitySpec` carries `dal:providesCas`, `dal:providesReasoning`, `dal:providesCommitValidation`, `dal:providesSingleWriter` and `dal:providesStatementLevelConflictDetection` ([persistence.ttl](../../../ontology/persistence/spec/persistence.ttl) lines 289 to 311). Its comment says it shares its field shape with the patterns guide's `StoreCapabilities` record "by design, not by identity". There is no backend kind, no dialect and no physical mapping anywhere in `dal:`.
 
-**What the compiler emits.** `compile` produces a `dal:CompiledProfile` graph and no SPARQL text.
-`instantiate` turns it into SPARQL, and `export-recipes` into minting recipes
-([tools/persistence/README.md](../tools/persistence/README.md), ADR-A79). Since
-[ADR-A123](../docs/architecture/decisions/ADR-A123-typed-operation-ir.md), each operation is a typed
-value built by a builder and rendered by one renderer. Two details of A123 matter here.
+**What the compiler emits.** `compile` produces a `dal:CompiledProfile` graph and no SPARQL text. `instantiate` turns it into SPARQL, and `export-recipes` into minting recipes ([tools/persistence/README.md](../../../tools/persistence/README.md), ADR-A79). Since [ADR-A123](../../architecture/decisions/ADR-A123-typed-operation-ir.md), each operation is a typed value built by a builder and rendered by one renderer. Two details of A123 matter here.
 
 - **Decision 4.** The compiled profile names "logical resources (the aggregate with its members, its
   version row, the transaction claim, the receipt, a key claim, a log bucket), not SPARQL graph
   roles". The builders map each logical resource to a graph role. "A relational realisation reads
   the same declarations and can be compared with this one operation by operation."
-- **The IR itself is SPARQL-shaped.** [persistence/ir.py](../tools/persistence/src/persistence/ir.py)
+- **The IR itself is SPARQL-shaped.** [persistence/ir.py](../../../tools/persistence/src/persistence/ir.py)
   builds patterns inside a `GraphBlock` that names a `GraphRole`, and a property path holds its
   rendered SPARQL text (A123, third addendum). Another realisation reuses the logical contract, not
   the IR.
 
-**The SPARQL fragment the operations rely on** (A123 decision 2, the
-[patterns guide](../docs/architecture/rdf-sparql-patterns-guide.md), and the generated operations):
-named graphs in every pattern and never the default graph, `DELETE`/`INSERT`/`WHERE`,
-`FILTER NOT EXISTS`, `OPTIONAL`, property paths in `WHERE` only (the composite sweep), `BIND` with
-`IRI`, `CONCAT`, `STRDT`, `ENCODE_FOR_URI`, `NOW()` outside guards, `VALUES`, typed literals
-(`xsd:long` positions), and `DATATYPE` tests in parameter guards. No blank nodes.
+**The SPARQL fragment the operations rely on** (A123 decision 2, the [patterns guide](../../architecture/rdf-sparql-patterns-guide.md), and the generated operations): named graphs in every pattern and never the default graph, `DELETE`/`INSERT`/`WHERE`, `FILTER NOT EXISTS`, `OPTIONAL`, property paths in `WHERE` only (the composite sweep), `BIND` with `IRI`, `CONCAT`, `STRDT`, `ENCODE_FOR_URI`, `NOW()` outside guards, `VALUES`, typed literals (`xsd:long` positions), and `DATATYPE` tests in parameter guards. No blank nodes.
 
-**A pending decision bears on both options.** [PDD-06](../docs/developer/plans/pending-design-decisions.md)
+**A pending decision bears on both options.** [PDD-06](../plans/pending-design-decisions.md)
 proposes a second IR that models SPARQL's semantics between the configuration IR and the text, and
 notes that "a relational backend then needs its own path or IR". An LPG backend is in the same
 position.
@@ -162,10 +138,7 @@ and update execution found none). The generated persistence operations run only 
 on rdflib and Oxigraph. ADR-A123 records that "nothing outside `tools/persistence` and its tests
 calls `instantiate` or fills the slots".
 
-The cross-runtime contract is the graph reference, not a query language
-([ADR-A30](../docs/architecture/decisions/ADR-A30-shared-semantic-platform-cross-runtime-boundary.md)).
-A reference carries tenant, project, graph IRI and revision hash, and no public contract under
-`contracts/` exposes SPARQL.
+The cross-runtime contract is the graph reference, not a query language ([ADR-A30](../../architecture/decisions/ADR-A30-shared-semantic-platform-cross-runtime-boundary.md)). A reference carries tenant, project, graph IRI and revision hash, and no public contract under `contracts/` exposes SPARQL.
 
 ### 2.3 SPARQL artefacts elsewhere
 
@@ -198,11 +171,11 @@ A reference carries tenant, project, graph IRI and revision hash, and no public 
 
 | Repository document | Status | Maps onto |
 |---|---|---|
-| [lattice-sql.md](../docs/developer/notes/rdf-engine/lattice-sql.md), compiling LATTICE to a relational model | exploration | **Option 1's analogue for SQL.** Verdict: worth building as a compiled realisation, with ontology and shapes as the single source of truth, and it "does not replace RDF" |
-| [distirbuted-queries.md](../docs/developer/notes/rdf-engine/distirbuted-queries.md), one SPARQL view over RDF and SQL | exploration | **Option 2's analogue for SQL.** Verdict: adopt Ontop for reads. "Writes stay native", because view update is not generally solvable |
-| [persistence-client-sdk.md](../docs/developer/sketches/persistence-client-sdk.md) | early sketch, not planned | **Option 1's API ingress.** Options S-A to S-D for typed per-operation functions and payload builders per language |
-| [rdf-sparql-patterns-guide.md](../docs/architecture/rdf-sparql-patterns-guide.md) Chapters 25 to 27 | architecture | the `ConditionalRdfStore` port with `CasCommand`, the `StoreCapabilities` record, strategy tables, per-store wiring and the conformance TCK |
-| [triple-store-discovery.md](../docs/architecture/triple-store-discovery.md) | living record | TSD-01 to TSD-14. Even two RDF stores depart from the specification in ways the operations had to absorb |
+| [lattice-sql.md](rdf-engine/lattice-sql.md), compiling LATTICE to a relational model | exploration | **Option 1's analogue for SQL.** Verdict: worth building as a compiled realisation, with ontology and shapes as the single source of truth, and it "does not replace RDF" |
+| [distirbuted-queries.md](rdf-engine/distirbuted-queries.md), one SPARQL view over RDF and SQL | exploration | **Option 2's analogue for SQL.** Verdict: adopt Ontop for reads. "Writes stay native", because view update is not generally solvable |
+| [persistence-client-sdk.md](../sketches/persistence-client-sdk.md) | early sketch, not planned | **Option 1's API ingress.** Options S-A to S-D for typed per-operation functions and payload builders per language |
+| [rdf-sparql-patterns-guide.md](../../architecture/rdf-sparql-patterns-guide.md) Chapters 25 to 27 | architecture | the `ConditionalRdfStore` port with `CasCommand`, the `StoreCapabilities` record, strategy tables, per-store wiring and the conformance TCK |
+| [triple-store-discovery.md](../../architecture/triple-store-discovery.md) | living record | TSD-01 to TSD-14. Even two RDF stores depart from the specification in ways the operations had to absorb |
 
 ```mermaid
 flowchart LR
@@ -472,9 +445,7 @@ record (§25.2) applies as it stands. Most of its fields are store properties, n
 
 ### 4.4 API ingress
 
-The "API ingress code" of Option 1 is the client SDK of
-[persistence-client-sdk.md](../docs/developer/sketches/persistence-client-sdk.md), with a
-backend-specific statement and driver layer underneath.
+The "API ingress code" of Option 1 is the client SDK of [persistence-client-sdk.md](../sketches/persistence-client-sdk.md), with a backend-specific statement and driver layer underneath.
 
 ```mermaid
 flowchart TB
@@ -881,9 +852,7 @@ flowchart TB
 
 ## 9. Probes to run before deciding
 
-Each probe records a finding in an LPG discovery record kept like
-[triple-store-discovery.md](../docs/architecture/triple-store-discovery.md), with the store, version,
-edition and run environment.
+Each probe records a finding in an LPG discovery record kept like [triple-store-discovery.md](../../architecture/triple-store-discovery.md), with the store, version, edition and run environment.
 
 | Probe | Question | How | Needed by |
 |---|---|---|---|
@@ -1110,30 +1079,20 @@ distance, judged against the SPARQL guide in `.local/sparql-guide.md` and the sp
 
 **In the repository**
 
-- [ontology/persistence/README.md](../ontology/persistence/README.md),
-  [ontology/persistence/spec/persistence.ttl](../ontology/persistence/spec/persistence.ttl)
-- [tools/persistence/README.md](../tools/persistence/README.md),
-  [tools/persistence/src/persistence/ir.py](../tools/persistence/src/persistence/ir.py)
-- [docs/architecture/ontology-architecture.md](../docs/architecture/ontology-architecture.md) §8a
-- [docs/architecture/rdf-sparql-patterns-guide.md](../docs/architecture/rdf-sparql-patterns-guide.md),
+- [ontology/persistence/README.md](../../../ontology/persistence/README.md), [ontology/persistence/spec/persistence.ttl](../../../ontology/persistence/spec/persistence.ttl)
+- [tools/persistence/README.md](../../../tools/persistence/README.md), [tools/persistence/src/persistence/ir.py](../../../tools/persistence/src/persistence/ir.py)
+- [docs/architecture/ontology-architecture.md](../../architecture/ontology-architecture.md) §8a
+- [docs/architecture/rdf-sparql-patterns-guide.md](../../architecture/rdf-sparql-patterns-guide.md),
   Chapters 25 to 27
-- [docs/architecture/triple-store-discovery.md](../docs/architecture/triple-store-discovery.md)
-- ADRs [A15](../docs/architecture/decisions/ADR-A15-realisation-strategy-neutrality.md),
-  [A30](../docs/architecture/decisions/ADR-A30-shared-semantic-platform-cross-runtime-boundary.md),
-  [A74](../docs/architecture/decisions/ADR-A74-graph-primary-realm-model.md),
-  [A75](../docs/architecture/decisions/ADR-A75-three-tier-store-spi.md),
-  [A78](../docs/architecture/decisions/ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md),
-  [A79](../docs/architecture/decisions/ADR-A79-persistence-compiler-toolchain.md),
-  [A84](../docs/architecture/decisions/ADR-A84-standalone-minting-libraries.md),
-  [A122](../docs/architecture/decisions/ADR-A122-aggregate-ownership.md),
-  [A123](../docs/architecture/decisions/ADR-A123-typed-operation-ir.md)
-- [docs/developer/plans/pending-design-decisions.md](../docs/developer/plans/pending-design-decisions.md), PDD-06
-- [docs/developer/sketches/persistence-client-sdk.md](../docs/developer/sketches/persistence-client-sdk.md)
-- [docs/developer/notes/rdf-engine/lattice-sql.md](../docs/developer/notes/rdf-engine/lattice-sql.md)
-- [docs/developer/notes/rdf-engine/distirbuted-queries.md](../docs/developer/notes/rdf-engine/distirbuted-queries.md)
+- [docs/architecture/triple-store-discovery.md](../../architecture/triple-store-discovery.md)
+- ADRs [A15](../../architecture/decisions/ADR-A15-realisation-strategy-neutrality.md), [A30](../../architecture/decisions/ADR-A30-shared-semantic-platform-cross-runtime-boundary.md), [A74](../../architecture/decisions/ADR-A74-graph-primary-realm-model.md), [A75](../../architecture/decisions/ADR-A75-three-tier-store-spi.md), [A78](../../architecture/decisions/ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md), [A79](../../architecture/decisions/ADR-A79-persistence-compiler-toolchain.md), [A84](../../architecture/decisions/ADR-A84-standalone-minting-libraries.md), [A122](../../architecture/decisions/ADR-A122-aggregate-ownership.md), [A123](../../architecture/decisions/ADR-A123-typed-operation-ir.md)
+- [docs/developer/plans/pending-design-decisions.md](../plans/pending-design-decisions.md), PDD-06
+- [docs/developer/sketches/persistence-client-sdk.md](../sketches/persistence-client-sdk.md)
+- [docs/developer/notes/rdf-engine/lattice-sql.md](rdf-engine/lattice-sql.md)
+- [docs/developer/notes/rdf-engine/distirbuted-queries.md](rdf-engine/distirbuted-queries.md)
 - `platform/semantic-dataset-spi`, `platform/semantic-dataset-fuseki`,
   `platform/authoring-service/.../store/FusekiAuthoringStore.java`, `deployment/compose/authoring`
-- [.local/sparql-guide.md](sparql-guide.md), for SPARQL semantics referred to in Appendix B
+- `.local/sparql-guide.md`, for SPARQL semantics referred to in Appendix B
 
 **Outside the repository**, all *(verify)* before a decision rests on them
 

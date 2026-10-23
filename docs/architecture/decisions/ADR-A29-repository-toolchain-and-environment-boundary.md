@@ -5,7 +5,7 @@
 **Status:** Accepted
 **Date:** 2026-09-19
 **Supersedes:** none
-**Related:** Phase 0, [toolchain guide](../../developer/toolchain.md), [Windows and WSL guide](../../developer/windows-wsl.md)
+**Related:** Phase 0, [toolchain guide](../../developer/developer-guide.md), [Windows and WSL guide](../../developer/windows-wsl.md)
 
 ## Context
 

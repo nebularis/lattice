@@ -1625,14 +1625,14 @@ If the guard fails, nothing changes. Because SPARQL Update gives no affected-cou
 
 ### User Note on (1/Optimistic Concurrency)
 
-Please read [`optimistic-concurrency-in-rdf.md`](optimistic-concurrency-in-rdf.md) for the latest guidance on this.
+Please read [`optimistic-concurrency-in-rdf.md`](../../architecture/optimistic-concurrency-in-rdf.md) for the latest guidance on this.
 
 **2. Uniqueness constraints.** No native support.
 *Pattern, in preference order:* (a) **make uniqueness structural** — content-addressed revision IRIs mean collision is impossible by construction, which covers the graph-family registry, snapshots, generated outputs and packs; (b) **guarded insert** — `INSERT ... WHERE NOT EXISTS { ... }` in a single request, then verify; (c) **coordination-realm mutex** for the residual cases where a genuine cross-entity invariant must be serialised (one activation in flight per environment, one maintainer per projection). Do not attempt general uniqueness enforcement in the graph; make identity derive from content instead, which is the ontology's own idiom.
 
 ### User Note on (2/Uniqueness)
 
-Please read [`uniqueness-in-rdf.md`](uniqueness-in-rdf.md) for the latest guidance on this.
+Please read [`uniqueness-in-rdf.md`](../notes/Uniqueness%20in%20RDF.md) for the latest guidance on this.
 
 
 **3. Monotonic sequence and ordering.** RDF is a set; `recordedAt` alone cannot order events written in the same instant.
@@ -1640,7 +1640,7 @@ Please read [`uniqueness-in-rdf.md`](uniqueness-in-rdf.md) for the latest guidan
 
 ### User Note on (3/Monotonic sequence and ordering)
 
-Please read [`ordering-in-rdf.md`](ordering-in-rdf.md) for the latest guidance on this.
+Please read [`ordering-in-rdf.md`](../notes/Ordering%20in%20RDF.md) for the latest guidance on this.
 
 **4. Work queues and the outbox.** `SELECT ... FOR UPDATE SKIP LOCKED` has no RDF equivalent, and per-message state churn in a triple store is wasteful.
 *Pattern:* work queues are **never** graph-resident. Two acceptable forms: (a) **broker-native** — publish inside the store transaction is impossible, so use the commit-marker technique: the unit of work writes its intent as part of its single-request update with `lattice:publishPending true`, and a relay claims pending intents by commit sequence, publishes, and clears the flag idempotently; or (b) **coordination outbox** — a table in the coordination realm written in the same coordination transaction as a lease, for flows that do not need graph atomicity. Form (a) preserves the outbox guarantee (`§7.2`) without a second authoritative store, at the cost of a scan on a small indexed pattern; form (b) is the pragmatic choice where the coordination realm already exists. Either way the guarantee is unchanged: nothing is published that was not committed, and nothing committed is lost.

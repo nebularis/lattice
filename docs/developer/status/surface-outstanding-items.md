@@ -242,7 +242,7 @@ See §1.3 above. Resolved by [ADR-A92](../../architecture/decisions/ADR-A92-deri
 
 ### 4.2 `elg:HierarchicalClosureRule` unscoped — ✅ Closed
 
-**Fix:** Removed from `ontology/eligibility/shapes/` per [eligibility-L9-replacement.md](../../surface/docs/eligibility-L9-replacement.md).
+**Fix:** Removed from `ontology/eligibility/shapes/` per [eligibility-L9-replacement.md](../../../ontology/surface/docs/eligibility-L9-replacement.md).
 
 **Status:** No remaining reference in Eligibility layer.
 

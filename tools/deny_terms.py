@@ -16,7 +16,7 @@ pattern, so a shared log does not repeat it.
 
   python tools/deny_terms.py                 the lines staged for commit
   python tools/deny_terms.py --all           every tracked file
-  python tools/deny_terms.py install-hook    an opt-in git pre-commit hook
+  python tools/deny_terms.py install-hook    the hooks (ADR-A133), or this check alone elsewhere
 
 Standard library only.
 """
@@ -102,6 +102,16 @@ def findings(lines, patterns, skips) -> list[str]:
 
 
 def install_hook(cwd: Path) -> str:
+    """Where the repository has the hooks dispatcher (ADR-A133), install it. Otherwise, for a project
+    that runs this script by path, install a hook that runs this check alone."""
+    here = Path(__file__).resolve().parent
+    if (here / "hooks.py").is_file() and here.parent == cwd.resolve():
+        sys.path.insert(0, str(here))
+        try:
+            import hooks
+        finally:
+            sys.path.pop(0)
+        return "\n".join(hooks.install(cwd))
     hooks = Path(git("rev-parse", "--git-path", "hooks", cwd=cwd).strip())
     hook = (cwd / hooks / "pre-commit") if not hooks.is_absolute() else hooks / "pre-commit"
     if hook.exists() and HOOK_MARK not in hook.read_text(encoding="utf-8", errors="replace"):

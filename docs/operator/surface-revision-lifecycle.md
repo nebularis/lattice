@@ -427,11 +427,11 @@ Release Gates Summary:
 ## See Also
 
 - [Surface Invalidation Runbook](surface-invalidation-runbook.md) — Technical procedures
-- [Phase 7 Status](../status/surface-mork-unified-projection.md#phase-7--provenance-and-invalidation-hardening) — Implementation details
-- [Outstanding Items](../status/surface-outstanding-items.md#32-adr-a01-convention-conflict--closed) — Known limitations
+- [Phase 7 Status](../developer/status/surface-mork-unified-projection.md#phase-7--provenance-and-invalidation-hardening) — Implementation details
+- [Outstanding Items](../developer/status/surface-outstanding-items.md#32-adr-a01-convention-conflict--closed) — Known limitations
 - `tools/surface/invalidation.py` — API reference
 
 ---
 
 **Last updated:** 2026-09-22  
-**Related ADR:** [ADR-A12 (Identity and Derivation Model)](../../architecture/decisions/ADR-A12-identity-and-derivation-model.md), [ADR-A27 (Invalidation and Minimal-Scope Regeneration Policy)](../../architecture/decisions/ADR-A27-invalidation-and-minimal-scope-regeneration-policy.md)
+**Related ADR:** [ADR-A12 (Identity and Derivation Model)](../architecture/decisions/ADR-A12-identity-and-derivation-model.md), [ADR-A27 (Invalidation and Minimal-Scope Regeneration Policy)](../architecture/decisions/ADR-A27-invalidation-and-minimal-scope-regeneration-policy.md)

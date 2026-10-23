@@ -1,12 +1,6 @@
 # Workload modelling and robustness testing strategy
 
-**Technology exploration, 2026-10-03.** The fourth paper on the RDF and Datalog engine question.
-Paper 3, [engine-build-versus-adopt.md](engine-build-versus-adopt.md), concluded that no engine
-should be built before a measurement gate, **G0**, shows an existing store falls short of a named
-adopter's requirements. This paper is G0's design: three candidate first deployments, a method for
-turning each into storage, throughput, query and latency numbers, a synthetic data generation
-strategy, an automated test plan mapped to the repository's test taxonomy, and an ephemeral cloud
-test infrastructure sized for a small FOSS project's budget.
+**Technology exploration, 2026-10-03.** The fourth paper on the RDF and Datalog engine question. Paper 3, [engine-build-versus-adopt.md](build-adopt-engine.md), concluded that no engine should be built before a measurement gate, **G0**, shows an existing store falls short of a named adopter's requirements. This paper is G0's design: three candidate first deployments, a method for turning each into storage, throughput, query and latency numbers, a synthetic data generation strategy, an automated test plan mapped to the repository's test taxonomy, and an ephemeral cloud test infrastructure sized for a small FOSS project's budget.
 
 Grading as in the earlier papers. **Fact** means a cited source says so, with the source and access
 date given. **Judgement** means a reasoned estimate that a measurement could overturn. Every number
@@ -1093,8 +1087,8 @@ otherwise be walked, is illustrative, not a measured benchmark result.
   and function names)*.
 - `docs/developer/review/Architecture Review.md` finding G-06 (PostgreSQL/Fuseki dual-write risk,
   §19.4), and `ontology/surface/docs/revision-lifecycle.md` (projection invalidation, §19.5).
-- [engine-build-versus-adopt.md](engine-build-versus-adopt.md) (paper 3, this paper's G0 design).
-- [compiled-persistence-physical-planning.md](compiled-persistence-physical-planning.md) (paper 2,
+- [engine-build-versus-adopt.md](build-adopt-engine.md) (paper 3, this paper's G0 design).
+- [compiled-persistence-physical-planning.md](compiled-persistence-profiles.md) (paper 2,
   shelved, its tiering and access-pattern ideas rehabilitated in §7.2, §9.1 and §18.3).
 - LATTICE: `docs/architecture/decisions/ADR-A54-dataset-topology.md`,
   `docs/developer/review/Architecture Review.md` (findings G-10, G-11, G-13, G-16),

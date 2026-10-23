@@ -115,6 +115,7 @@ justification in its Validation Pack, countersigned at the gate.
   and passes, for example `mise run check:persistence-conformance`, which runs the generated SPARQL on every engine we have. They are
   not part of `check` (skill `lattice-testing`), so the handoff that asks for the merge lists each one with its result, or says it
   was not run and why. A failure on one engine is recorded in the triple-store record and is fixed or accepted before the merge.
+- **The merge gate.** A merge into `main` runs the hooks' merge checks, published decisions over the whole tree and ontology versioning among them (ADR-A133). Before merging on GitHub, where no local hook runs, run `mise run hooks:merge`. No hook ever blocks a push, so a branch always reaches the maintainer for review.
 - Never merge, push or tag without the maintainer's go-ahead.
 
 ## Reporting

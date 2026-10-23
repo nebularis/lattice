@@ -238,7 +238,7 @@ Part 6 (Phase 2) of the epic plan now integrates the persistence compiler instea
 See [rdf-sparql-patterns-phase-plan.md](plans/rdf-sparql-patterns-phase-plan.md) and [persistence-profile-substrate.md](sketches/persistence-profile-substrate.md) for the underlying substrate; no new ADR was needed (refinement of ADR-A78/A79 within existing guardrail G5).
 
 ### Optional Phase 0.2–0.4 Integration — ✅ Done (2026-09-22)
-Per [COORDINATION_REORG_HANDOFF.md](../COORDINATION_REORG_HANDOFF.md), Phase 0 of the epic plan (Part 4) now carries a "Persistence-pattern coherence" note plus cross-references so its vocabulary is `dal:`-nameable from day one, without Phase 0 depending on `tools/persistence`:
+Per [COORDINATION_REORG_HANDOFF.md](COORDINATION_REORG_HANDOFF.md), Phase 0 of the epic plan (Part 4) now carries a "Persistence-pattern coherence" note plus cross-references so its vocabulary is `dal:`-nameable from day one, without Phase 0 depending on `tools/persistence`:
 - **Pattern C (CAS)** ↔ `dal:ConcurrencyStrategy`, cross-referenced at P0.5.2 (`conditionalWrite`/`guardSatisfied`) and P0.5.6 (concurrency TCK).
 - **Pattern T (named-graph-per-batch)** ↔ `dal:MetaTopologyProfile`/`dal:ReceiptModel`, cross-referenced at P0.1.5 (ADR-A65) and P0.3.6 (`provenance.ttl`).
 - **Pattern K (uniqueness)** ↔ `dal:UniquenessConstraint`, cross-referenced at P0.1.3 through the configurable minting and identity profiles described by ADR-A82.

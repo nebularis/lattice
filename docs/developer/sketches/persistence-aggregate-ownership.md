@@ -254,13 +254,11 @@ slice that adds it, or `mise run check:persistence` fails (H1.2).
 | 5 | `CompositeBoundaryWithoutOwnedEdges` | `tree.owned_edges()` is empty | `boundary shape {shape} owns no edge, so the aggregate is its root alone. Use dal:NamedGraphBoundary or dal:NoBoundary.` |
 | 6 | `OwnedReferenceData` | an owned edge's `target_class` is reference data (§2), and the profile does not have `dal:ownsReferenceData true` | `property shape {ps} on {shape} owns {class}, which is reference data. Classify the edge dal:Vocabulary, or declare dal:ownsReferenceData true on the profile if this aggregate manages that vocabulary.` |
 | 7 | `UniquenessOutsideBoundary` (exists) | a uniqueness key property is not in `tree.predicates()` | unchanged, reworded to say "not a property of the root or of an owned shape" |
-| 8 | `BoundaryConflict` (exists, rewritten) | a member class at **any** depth declares its own boundary strategy other than `dal:NoBoundary` | unchanged text. Today's check reads only the first level ([validator.py:504](../../../tools/persistence/src/persistence/validator.py:504)) |
+| 8 | `BoundaryConflict` (exists, rewritten) | a member class at **any** depth declares its own boundary strategy other than `dal:NoBoundary` | unchanged text. Today's check reads only the first level ([validator.py:504](../../../tools/persistence/src/persistence/validator.py)) |
 | 9 | `OverlappingOwnership` | two composite profiles A and B where `members(A)` meets `members(B) ∪ {root(B)}` | `{class} is owned by both {shapeA} and {shapeB}. A node belongs to one aggregate.` |
 | W | `ReferenceToOwnedClass` (warning) | a property shape anywhere in the configuration graph, not on an owned shape of tree T, has `sh:class X` or an `sh:node` targeting `X`, where `X` is a member class of T and not T's root class | `{ps} points at {X}, which {shapeT} owns. References from outside an aggregate should target its root ({rootClass}), since a deleted member leaves the reference dangling.` |
 
-Rules 8 and 9 are configuration-wide and run where `BoundaryConflict` runs today. The warning is a
-`Diagnostic(kind="ReferenceToOwnedClass", severity="WARNING", ...)`, emitted like
-`MixedReceiptModel` ([validator.py:469](../../../tools/persistence/src/persistence/validator.py:469)).
+Rules 8 and 9 are configuration-wide and run where `BoundaryConflict` runs today. The warning is a `Diagnostic(kind="ReferenceToOwnedClass", severity="WARNING", ...)`, emitted like `MixedReceiptModel` ([validator.py:469](../../../tools/persistence/src/persistence/validator.py)).
 
 Removed in HO5, with its witness and tests: `CompositeBoundaryMultipleProperties`. Several owned
 edges are the normal case now.
