@@ -239,3 +239,5 @@ and `refusal-CapabilityCheckFailed` and `capability-spec-example.ttl` name indiv
 **Checks.** Extractor `--check`: 4 artefacts consistent. `ontology_version_check.py --base-ref origin/main`: no unbumped changes.
 `check:persistence`: 3975 passed, 1 xfailed. `check:persistence-conformance`: 4371 passed, 1 xfailed. `check:persistence-expected-profiles`: current.
 `check:persistence-library`: 91 vectors passed and 113 tests passed. `check:full-sweep` after removing `ontology/persistence/execution`: all 17 checks passed.
+
+**Approved 2026-10-23.** The maintainer re-approved the eight expected profiles and the three library fixtures, accepted D-74 to D-77, and countersigned the changed tests of this section.
