@@ -30,7 +30,7 @@ Each phase plan cross-references its Part below for slice-level detail rather th
 
 ### v0.2 topology and documentation-governance override
 
-This v0.2 plan is amended for repository topology and implementation-document governance by [ADR-A77](../../architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md) and the [Repository Topology and Documentation Governance Plan](repository-topology-and-documentation-governance.md). Where this document's Part 1, P0.1, P0.2, P0.3, or developer-document references conflict with that decision and plan, ADR-A77 controls.
+This v0.2 plan is amended for repository topology and implementation-document governance by [ADR-A77](../../architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md) and the [Repository Topology and Documentation Governance Plan](../../architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md). Where this document's Part 1, P0.1, P0.2, P0.3, or developer-document references conflict with that decision and plan, ADR-A77 controls.
 
 The repository retains `mise` as the sole orchestration entry point and retains Maven, Yarn 4, Python project tooling, and Mix as dependency authorities. The relocation affects semantic and documentation ownership only. It does not change ontology namespace IRIs, application names, or runtime component ownership.
 

@@ -1,7 +1,7 @@
 # Compiling persistence profiles into physical plans
 
 **Technology exploration, 2026-10-03.** The second paper for the Rust RDF and Datalog engine
-explored in [rdf-datalog-engine-technology-exploration.md](rdf-datalog-engine-technology-exploration.md)
+explored in [rdf-datalog-engine-technology-exploration.md](lock-free-rdf-store.md)
 (cited below as "the engine paper"). It analyses a proposal: compile an adopter's LATTICE
 persistence configuration (`dal:`) into the physical indexes and storage structures the engine
 uses for that adopter's data, and store persistence's infrastructure data (version rows,
@@ -12,7 +12,7 @@ Statements are graded as in the engine paper. **Fact** means the cited source sa
 is a LATTICE decision. Adding workload hints to `ontology/persistence` would be an ontology change
 under ADR-A86 and needs its own ADR before any work starts (§13.4).
 
-**Status.** [engine-build-versus-adopt.md](engine-build-versus-adopt.md) recommends shelving this
+**Status.** [engine-build-versus-adopt.md](build-adopt-engine.md) recommends shelving this
 paper until a measurement shows guarded writes dominate latency (its §7, D3).
 
 ---

@@ -45,11 +45,11 @@ change the conclusions:
 
 | Claim in the note | Evidence | Verdict |
 |---|---|---|
-| The composite replace inserts the payload into the log graph (note §2.3, TD-39) | [cas-replace-composite-property.mustache](../../../tools/persistence/src/persistence/templates/cas-replace-composite-property.mustache): the `DELETE` removes `?root ?p1 ?o1` and `?member ?p2 ?o2` from the default graph, and the `INSERT` puts `{{{payloadTriples}}}` inside `GRAPH ?logGraph` | confirmed |
-| The walk treats every `sh:node` as owned (note §4.5) | [boundary.py:84](../../../tools/persistence/src/persistence/boundary.py:84) records any property shape with `sh:node` as a node property | confirmed |
-| The compiler binds the first node property (note §2.2) | [operations.py:164](../../../tools/persistence/src/persistence/operations.py:164) | confirmed |
+| The composite replace inserts the payload into the log graph (note §2.3, TD-39) | `cas-replace-composite-property.mustache`: the `DELETE` removes `?root ?p1 ?o1` and `?member ?p2 ?o2` from the default graph, and the `INSERT` puts `{{{payloadTriples}}}` inside `GRAPH ?logGraph` | confirmed |
+| The walk treats every `sh:node` as owned (note §4.5) | [boundary.py:84](../../../tools/persistence/src/persistence/boundary.py) records any property shape with `sh:node` as a node property | confirmed |
+| The compiler binds the first node property (note §2.2) | [operations.py:164](../../../tools/persistence/src/persistence/operations.py) | confirmed |
 | No create or tombstone operation for the composite strategy (note §2.2, TD-04) | only `cas-replace-composite-property` and its dataset-guard variant exist in `templates/` | confirmed |
-| Several node properties are refused (note §2.2) | `CompositeBoundaryMultipleProperties`, [validator.py:149](../../../tools/persistence/src/persistence/validator.py:149) | confirmed |
+| Several node properties are refused (note §2.2) | `CompositeBoundaryMultipleProperties`, [validator.py:149](../../../tools/persistence/src/persistence/validator.py) | confirmed |
 
 ## 3. The spike: what it shows and what it assumes
 
@@ -58,36 +58,36 @@ the compiler generated. [`placement.py`](../../../spikes/persistence-aggregate-o
 [`concurrency_model.py`](../../../spikes/persistence-aggregate-ownership/concurrency_model.py) are models.
 
 **S1. The "today" closure simulates the compiler before H1.4a.** `first_property_path`
-([placement.py:115](../../../spikes/persistence-aggregate-ownership/placement.py:115)) sorts the
+([placement.py:115](../../../spikes/persistence-aggregate-ownership/placement.py)) sorts the
 `Placement` entry of `OWNED_TREE` and follows the first property. The real walk collects node
-properties across the whole shape tree ([boundary.py:81](../../../tools/persistence/src/persistence/boundary.py:81)),
+properties across the whole shape tree ([boundary.py:81](../../../tools/persistence/src/persistence/boundary.py)),
 and the compiler refuses the placement shape under H1.4a because it has several node properties.
-The verdict at [note:123](persistence-aggregate-ownership.md:123) and the test
+The verdict at [note:123](persistence-aggregate-ownership.md) and the test
 `test_the_first_property_alone_reaches_only_the_tower`
-([test_spike.py:31](../../../spikes/persistence-aggregate-ownership/test_spike.py:31)) describe the
+([test_spike.py:31](../../../spikes/persistence-aggregate-ownership/test_spike.py)) describe the
 pre-H1.4a compiler. Today the shape is refused.
 
 **S2. The figures assume an answer to Q1.** `OWNED_TREE` owns `connectsPolicy`
-([placement.py:85](../../../spikes/persistence-aggregate-ownership/placement.py:85)). The "12 nodes"
-([note:151](persistence-aggregate-ownership.md:151)), the policy with two owners and the inbound
+([placement.py:85](../../../spikes/persistence-aggregate-ownership/placement.py)). The "12 nodes"
+([note:151](persistence-aggregate-ownership.md)), the policy with two owners and the inbound
 quote (note §4.3) all follow from that. With Q1 answered "reference" ([§6](#6-the-twelve-questions-answered)),
 the closure is 11 nodes and both §4.3 examples disappear. A single-owner check is still needed in
 general, and HO0 rebuilds its example from a document owned by two layers.
 
 **S3. The two tree closures differ.** `unrolled_paths` checks the child's `rdf:type`
-([placement.py:136](../../../spikes/persistence-aggregate-ownership/placement.py:136)), taking the
+([placement.py:136](../../../spikes/persistence-aggregate-ownership/placement.py)), taking the
 first type rdflib returns, in an arbitrary order. `unrolled_sparql`
-([placement.py:142](../../../spikes/persistence-aggregate-ownership/placement.py:142)) checks no type.
+([placement.py:142](../../../spikes/persistence-aggregate-ownership/placement.py)) checks no type.
 They agree on this graph only. The SPARQL form is what a template can carry. **Decided:** the delete
 set follows paths and does not check types. The path from the root carries the context, and a
 wrongly typed edge is a data error that SHACL validation of the aggregate catches.
 
 **S4. The spike has no blank nodes or skolem IRIs.** `delete_set`
-([placement.py:176](../../../spikes/persistence-aggregate-ownership/placement.py:176)) takes each
+([placement.py:176](../../../spikes/persistence-aggregate-ownership/placement.py)) takes each
 member's outgoing triples, and the share `S1` is an ordinary IRI.
 
 **S5. The concurrency model does not cover a store that serialises writers.** `overlap`
-([concurrency_model.py:229](../../../spikes/persistence-aggregate-ownership/concurrency_model.py:229))
+([concurrency_model.py:229](../../../spikes/persistence-aggregate-ownership/concurrency_model.py))
 takes both snapshots before either commits, which is snapshot isolation with real concurrency. On a
 store that runs writers one at a time, a removal that computes its closure inside the update's
 `WHERE` sees the concurrent write, and D1's orphan cannot happen. The spike README names stores that
@@ -100,17 +100,17 @@ correct and over-protective.
 ## 4. Findings against the note and the code
 
 **F1. A referenced entity can be deleted today.** The note says "never delete a referenced entity"
-holds by accident ([note:127](persistence-aggregate-ownership.md:127)) and that the `sh:node`
-problem "is limited by the one-property rule" ([note:230](persistence-aggregate-ownership.md:230)).
+holds by accident ([note:127](persistence-aggregate-ownership.md)) and that the `sh:node`
+problem "is limited by the one-property rule" ([note:230](persistence-aggregate-ownership.md)).
 Neither holds. A shape whose only `sh:node` is a reference, for example
 `[ sh:path ex:placedBy ; sh:node ex:CustomerShape ]`, with line items declared through `sh:class`,
-is accepted by H1.4a. [operations.py:164](../../../tools/persistence/src/persistence/operations.py:164)
+is accepted by H1.4a. [operations.py:164](../../../tools/persistence/src/persistence/operations.py)
 binds `placedBy`, and the replace sweeps `$root ex:placedBy+ ?member . ?member ?p2 ?o2`, which
 deletes the customer's triples. Reasoned from the code, not run. Neither the spike nor the H1.4a
 tests cover it. Registered as TD-35.
 
 **F2. The composite replace is quadratic.** The template's two independent `OPTIONAL`s
-([cas-replace-composite-property.mustache:53](../../../tools/persistence/src/persistence/templates/cas-replace-composite-property.mustache:53))
+(`cas-replace-composite-property.mustache:53`)
 join to one solution per pair of a root triple and a member triple. A root with 20 triples and
 members with 2,000 triples gives 40,000 solutions for one write. Sweeping with a single pattern
 whose subject ranges over the root and the members makes it linear. Reasoned from SPARQL's join
@@ -123,7 +123,7 @@ only from the default graph, so earlier payloads stay in the monthly log graphs,
 values are read together.
 
 **F4. Edges from child to parent are not handled.** The walk reads `sh:path` with `graph.value`
-([boundary.py:81](../../../tools/persistence/src/persistence/boundary.py:81)), so an
+([boundary.py:81](../../../tools/persistence/src/persistence/boundary.py)), so an
 `sh:inversePath` is recorded as a blank-node "property" and rendered as one. LATTICE's own Instrument
 layer links a child to its parent (`ins:boundIn`), so this is a common shape, not an edge case.
 Registered as TD-37.
@@ -131,34 +131,34 @@ Registered as TD-37.
 **F5. Blank nodes, revised after re-reading the contract.** The first draft of this review proposed
 the W3C Concise Bounded Description, following blank-node objects of every owned node. The
 persistence contract already requires payloads to be skolemised, with no blank nodes
-([tools/persistence/README.md:118](../../../tools/persistence/README.md:118)), so a stored
+([tools/persistence/README.md:118](../../../tools/persistence/README.md)), so a stored
 aggregate holds skolem IRIs, not blank nodes. **Decided:** a skolem IRI is an ordinary node to the
 ownership walk. It is owned only if an owned edge reaches it, so an RDF list or a quantity inside an
 aggregate needs owned edges in the shape (`rdf:first`, `rdf:rest`). `rdf:rest` is self-recursive,
 which the path compilation of the sketch supports.
 
 **F6. Named graphs move the classification to write time.** Note §9.1 says named graphs give
-ownership "by construction" ([note:458](persistence-aggregate-ownership.md:458)). A writer still
+ownership "by construction" ([note:458](persistence-aggregate-ownership.md)). A writer still
 decides which subjects go in the graph, the same owned, reference or vocabulary question, so both
 strategies need one classified tree. Separately, the named-graph templates name the graph from the
 root's local name (`REPLACE(STR($root), "^.*[/#]", "")`,
-[cas-replace-named-graph.mustache:36](../../../tools/persistence/src/persistence/templates/cas-replace-named-graph.mustache:36)),
+`cas-replace-named-graph.mustache:36`),
 and `operations.py` keeps only the text of `dal:graphIriTemplate` before `{id}`. Two roots with the
 same local name share a graph, and text after `{id}` is silently dropped. Registered as TD-38. The
 remedy is AO-Q13.
 
 **F7. "Set at a node" must not replace owned edges.** As written
-([note:302](persistence-aggregate-ownership.md:302)), replacing a node's outgoing triples could drop
+([note:302](persistence-aggregate-ownership.md)), replacing a node's outgoing triples could drop
 an owned edge and leave the child's closure behind. Moot for now, since level operations are
 deferred with units (Q5), but recorded in the sketch for when they return.
 
 **F8. The vocabulary guard is too absolute.** The guard proposed at
-[note:212](persistence-aggregate-ownership.md:212), and `is_vocabulary`
-([placement.py:101](../../../spikes/persistence-aggregate-ownership/placement.py:101)), would stop a
+[note:212](persistence-aggregate-ownership.md), and `is_vocabulary`
+([placement.py:101](../../../spikes/persistence-aggregate-ownership/placement.py)), would stop a
 concept scheme's own aggregate from deleting its concepts. **Decided:** reference data may be owned
 only by an aggregate that declares it owns reference data (`dal:ownsReferenceData true`).
 
-**F9. Ambiguous register references.** [note:493](persistence-aggregate-ownership.md:493) cites
+**F9. Ambiguous register references.** [note:493](persistence-aggregate-ownership.md) cites
 TD-26, and the register had two TD-26 rows and two TD-28 rows from parallel work. Resolved when
 `main` was merged into this branch on 2026-10-10. `main`'s rows keep their numbers, since other
 branches cite them. Track H's row on a missing parameter, formerly TD-26, is TD-34, and its row on

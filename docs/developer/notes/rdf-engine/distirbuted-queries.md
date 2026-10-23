@@ -1,9 +1,9 @@
 # One SPARQL view over RDF and SQL
 
 **Technology exploration, 2026-10-03.** The sixth paper in the series. Paper 4
-([workload-modeling-and-robustness-testing-strategy.md](workload-modeling-and-robustness-testing-strategy.md))
+([workload-modeling-and-robustness-testing-strategy.md](workload-modelling.md))
 moved interval data into PostgreSQL and split tenants into separate datasets. Paper 5
-([ontology-to-relational-compiler.md](ontology-to-relational-compiler.md)) compiled shape-closed
+([ontology-to-relational-compiler.md](lattice-sql.md)) compiled shape-closed
 aggregates into SQL tables and emitted an R2RML mapping back to the ontology. Together they leave
 LATTICE data in several places: native RDF stores, compiled SQL tables, interval materialisations,
 per-tenant datasets and a central lakehouse. This paper asks whether all of it can be queried as one

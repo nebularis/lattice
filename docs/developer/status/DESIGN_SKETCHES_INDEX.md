@@ -44,7 +44,7 @@ This document is kept for historical reference. For current work status, consult
 
 | Sketch | Status Document | Plan Document | Summary |
 |---|---|---|---|
-| **governance-and-versioning-migration.md** | [governance-surfaces.md](./governance-surfaces.md) | [governance-surfaces-integration.md](./governance-surfaces-integration.md) | Studio and Bench fixture shells correct, role model demonstrated, permission enforcement not yet wired; 3 integration slices needed for Phase 2 & 5 |
+| **governance-and-versioning-migration.md** | [governance-surfaces.md](./governance-surfaces.md) | [governance-surfaces-integration.md](../plans/governance-surfaces-integration.md) | Studio and Bench fixture shells correct, role model demonstrated, permission enforcement not yet wired; 3 integration slices needed for Phase 2 & 5 |
 
 ### Superseded/Archived 🗄️
 

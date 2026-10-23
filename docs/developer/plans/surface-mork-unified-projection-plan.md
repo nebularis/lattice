@@ -21,7 +21,7 @@ This plan adopts a single top-level authoring approach for projection in LATTICE
 
 This avoids a third mapping language while preserving MORK's machine contract for governance, provenance, and review.
 
-**Status:** Phases 0–8 are complete and verified ✅ (see [surface-mork-unified-projection.md](status/surface-mork-unified-projection.md)). Phases 9–10 are planned, not started.
+**Status:** Phases 0–8 are complete and verified ✅ (see [surface-mork-unified-projection.md](../status/surface-mork-unified-projection.md)). Phases 9–10 are planned, not started.
 
 ---
 
@@ -290,10 +290,10 @@ A release cannot pass production gate without all four checks.
 
 ## Documentation and References
 
-- **Status tracking:** [surface-mork-unified-projection.md](status/surface-mork-unified-projection.md)
-- **Outstanding items:** [surface-outstanding-items.md](status/surface-outstanding-items.md)
+- **Status tracking:** [surface-mork-unified-projection.md](../status/surface-mork-unified-projection.md)
+- **Outstanding items:** [surface-outstanding-items.md](../status/surface-outstanding-items.md)
 - **Architecture decisions:** [docs/architecture/decisions/ADR-A16](../../architecture/decisions/ADR-A16-surface-projection-mechanism.md) through [ADR-A28](../../architecture/decisions/ADR-A28-parity-and-conformance-release-gate.md)
-- **Code:** [tools/surface/](../../tools/surface/), [tools/mork_compilers/](../../tools/mork_compilers/)
+- **Code:** [tools/surface/](../../../tools/surface), [tools/mork_compilers/](../../../tools/mork_compilers)
 - **Tests:** 61/61 Surface tests, 15/15 MORK compiler tests
 
 ---

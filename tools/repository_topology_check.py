@@ -15,6 +15,8 @@ DECISIONS_PATH = ROOT / "docs" / "architecture" / "decisions"
 LEGACY_ADR_PATH = ROOT / "docs" / "adr"
 LEGACY_CURRENT_PATH = ROOT / "docs" / "developer" / "current"
 MARKDOWN_LINK = re.compile(r"(?<!!)\[[^\]]*\]\(([^)]+)\)")
+# The first line of a copy that `tools/site_sections.py` writes into docs/_includes, which names its source.
+GENERATED_COPY = re.compile(r"\A\{% comment %\}Copied from (\S+) by mise run build:site-sections")
 
 
 def load_manifest() -> dict[str, object]:
@@ -73,12 +75,15 @@ def check_links() -> list[str]:
         if "vendor" in markdown_file.parts:
             continue
         text = markdown_file.read_text(encoding="utf-8")
+        # A generated copy is verbatim, so its links are relative to the source it was copied from.
+        copied = GENERATED_COPY.match(text)
+        base = (ROOT / copied.group(1)).parent if copied else markdown_file.parent
         for target in MARKDOWN_LINK.findall(text):
             target = unquote(target.strip())
             if not target or target.startswith(("#", "http://", "https://", "mailto:")):
                 continue
             path = target.split("#", 1)[0]
-            if path and not (markdown_file.parent / path).resolve().exists():
+            if path and not (base / path).resolve().exists():
                 errors.append(f"broken link in {markdown_file.relative_to(ROOT)}: {target}")
     return errors
 

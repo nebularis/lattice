@@ -78,7 +78,7 @@ Pass looks like: `Tests run: 9, Failures: 0, Errors: 0`, including `SurfaceRevis
 
 ## Reference Material
 
-- [Canonical Phase 0-7 plan](../../../.github/prompts/plan-morkSurfaceImplementation.prompt.md)
+- Canonical Phase 0-7 plan
 - [Implementation handover](../sketches/implementation-handover.md), including its "Do Not Break" invariants
 - [Validation status](validation-status.md)
 - [Validation status](validation-status.md)

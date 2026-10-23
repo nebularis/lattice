@@ -555,11 +555,11 @@ python -m mork_compilers --version
 ## See Also
 
 - [Surface Revision Lifecycle](surface-revision-lifecycle.md) — State machine for surface versions
-- [Phase 7 Status](../status/surface-mork-unified-projection.md#phase-7--provenance-and-invalidation-hardening) — Completion details
-- [Outstanding Items](../status/surface-outstanding-items.md) — Known limitations and future work
+- [Phase 7 Status](../developer/status/surface-mork-unified-projection.md#phase-7--provenance-and-invalidation-hardening) — Completion details
+- [Outstanding Items](../developer/status/surface-outstanding-items.md) — Known limitations and future work
 - `tools/surface/invalidation.py` — API reference
 
 ---
 
 **Last updated:** 2026-09-22  
-**Related ADR:** [ADR-A27 (Invalidation and Minimal-Scope Regeneration Policy)](../../architecture/decisions/ADR-A27-invalidation-and-minimal-scope-regeneration-policy.md)
+**Related ADR:** [ADR-A27 (Invalidation and Minimal-Scope Regeneration Policy)](../architecture/decisions/ADR-A27-invalidation-and-minimal-scope-regeneration-policy.md)

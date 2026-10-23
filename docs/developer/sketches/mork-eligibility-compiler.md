@@ -3,9 +3,9 @@
 # Eligibility executable compiler: scope and design record
 
 Date: 2026-09-18
-Status: Accompanies [ADR-A23](../../docs/architecture/decisions/ADR-A23-mork-compiler-family-completion-policy.md) and [ADR-A24](../../docs/architecture/decisions/ADR-A24-eligibility-executable-semantics-backend-strategy.md)
+Status: Accompanies [ADR-A23](../../architecture/decisions/ADR-A23-mork-compiler-family-completion-policy.md) and [ADR-A24](../../architecture/decisions/ADR-A24-eligibility-executable-semantics-backend-strategy.md)
 Verification: [plans/eligibility-compiler.md](../plans/eligibility-compiler.md) (2026-09-23)
-Source design note: [ontology/surface/docs/MorkEnhancements.md](../../ontology/surface/docs/MorkEnhancements.md)
+Source design note: [ontology/surface/docs/MorkEnhancements.md](../../../ontology/surface/docs/MorkEnhancements.md)
 
 ## What this is
 

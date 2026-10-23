@@ -1,9 +1,9 @@
 # Build, adopt, or build on: the engine decision
 
 **Technology exploration, 2026-10-03.** The third paper on the RDF and Datalog engine. The first,
-[rdf-datalog-engine-technology-exploration.md](rdf-datalog-engine-technology-exploration.md)
+[rdf-datalog-engine-technology-exploration.md](lock-free-rdf-store.md)
 ("paper 1"), designed an engine and chose its languages. The second,
-[compiled-persistence-physical-planning.md](compiled-persistence-physical-planning.md) ("paper 2"),
+[compiled-persistence-physical-planning.md](compiled-persistence-profiles.md) ("paper 2"),
 compiled persistence profiles into that engine's physical structures. Both assumed the engine would
 be built. This paper tests that assumption against the existing database landscape, using the
 "lazy senior developer" ladder in `.github/prompts/ponytail.md` as its standard, and then costs the
