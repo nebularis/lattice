@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# A composite family written in place that declares dal:SnapshotPerRevision, which no generated operation honours (TD-46). Its receipt-only
+# create, replace and tombstone were reached only this way and are deleted, so compile refuses it until snapshots are built (H2.9, D-12 (a)).
+# The same family under dal:PatchLog or dal:NoReceipt compiles, and a named-graph family under dal:SnapshotPerRevision still compiles with a warning.
+# base: composite-project-ownership.ttl
+# remove: ex:ProjectReceiptProfile dal:receiptModel
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/projects#> .
+
+ex:ProjectReceiptProfile dal:receiptModel dal:SnapshotPerRevision .

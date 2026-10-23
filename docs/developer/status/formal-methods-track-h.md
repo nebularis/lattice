@@ -3,8 +3,8 @@
 # Formal Methods, Track H: Status
 
 **Unit ID:** `formal-methods-track-h` (phase, within the `formal-methods` epic)
-**Status:** In progress. H1 (H1.1 to H1.5, with H1.4c), the aggregate-ownership slices HO0 to HO9 and H2.0 to H2.3 are merged to `main` and signed off (H1 and HO 2026-10-10, H2.0 to H2.3 2026-10-12). H2.4a and H2.4b are built and reviewed, and every decision in their Validation Packs is taken (2026-10-13), awaiting the maintainer's merge with the triple-store record. ADR-A123 is accepted with five addenda, ADR-A124 and ADR-A125 are accepted. H2.5 and H2.6 are built (2026-10-13). Every decision of H2.5 is taken, and the maintainer approved H2.6 on 2026-10-13 with three design questions open (RQ4 to RQ6), awaiting the merge. H2.6b's event half is built, approved by the maintainer and complete (2026-10-14), with its six regenerated expected profiles re-approved and the change to `test_ho6_t14` countersigned, awaiting the merge. Its patch-log half is held (H-D33).
-**Last updated:** 2026-10-14
+**Status:** In progress. H1 (H1.1 to H1.5, with H1.4c), the aggregate-ownership slices HO0 to HO9 and H2.0 to H2.3 are merged to `main` and signed off (H1 and HO 2026-10-10, H2.0 to H2.3 2026-10-12). H2.4a and H2.4b are built and reviewed, and every decision in their Validation Packs is taken (2026-10-13), awaiting the maintainer's merge with the triple-store record. ADR-A123 is accepted with five addenda, ADR-A124 and ADR-A125 are accepted. H2.5 and H2.6 are built (2026-10-13). Every decision of H2.5 is taken, and the maintainer approved H2.6 on 2026-10-13 with three design questions open (RQ4 to RQ6), awaiting the merge. H2.6b's event half is built, approved and merged to `main` (2026-10-14), with its six regenerated expected profiles re-approved and the change to `test_ho6_t14` countersigned. Its ADR-A123 addendum is a draft. Its patch-log half is held (H-D33).
+**Last updated:** 2026-10-21 (every planned H2 slice built, the test defaults)
 **Plan:** [formal-methods-track-h.md](../plans/formal-methods-track-h.md)
 **Sketches:** [formal-methods-track-h.md](../sketches/formal-methods-track-h.md) (main),
 [formal-methods-track-h-protocols.md](../sketches/formal-methods-track-h-protocols.md),
@@ -53,17 +53,45 @@ section below.
 
 ## Next action
 
-1. **The maintainer merges H2.6b** to `main`, which is the sign-off, and accepts or amends the ADR-A123 addendum drafted on 2026-10-14,
-   which stays a draft until then.
-2. **Meanwhile, locally,** the maintainer reviews the [history and versioning sketch](../sketches/persistence-history-and-versioning.md),
-   VH-Q1 to VH-Q7, and we work on the design changes it leads to. VH-Q7 needs research first.
-3. **H2.7 waits for VH-Q1, Q3 and Q5** (H-D34), so the vocabulary is published once. Before H2.7 and H2.8 branch, the maintainer
-   answers H2.7-Q1 to Q4
-   ([§4.7](../plans/formal-methods-track-h.md#47-h27-the-vocabulary-and-the-compilers-emission-planned-2026-10-14)) and H2.8-Q1 to Q3
-   ([§4.8](../plans/formal-methods-track-h.md#48-h28-the-typed-payload-and-the-caller-side-checks-planned-2026-10-14)). They follow H2.6b in
-   turn, each from `main` after the previous one merges (H-D32). H2.7 owes release tags for `persistence` and `persistence-shapes` 0.4.0.
-4. Then H2.9, retiring Mustache. H2.6b's held half and H2.10 wait on the sketch's answers (H-D33).
-5. Later, not scheduled: the SPARQL semantic IR of plan §5.1 (PDD-06).
+Every planned H2 slice is built and committed on this branch, not pushed: H2.6c to H2.6g, W-65, AIR-66, H2.7, H2.8a to H2.8c, H2.9,
+H2.11a and H2.11b, with the follow-ups of 2026-10-21 (enumerations closed, the class diagram in parts) and the test work of FMH-TS-1 and
+FMH-TS-2. The review tranche R1 to R10 was answered on 2026-10-20 (History). Versioning is ignored on this branch (TD-64), so
+`check:ontology-versioning` fails with `UNBUMPED`, as expected.
+
+### For the maintainer's review
+
+| # | What | Where |
+|---|---|---|
+| Q1 | H2.9's decisions D-43 and D-45 to D-49 (D-42 and D-44 approved), and the 77 removed test cases and changed tests for countersignature | [FMH-H2-9](../validation/FMH-H2-9.md) |
+| Q2 | H2.11a's decisions D-50 to D-58 and D-60 to D-64 (D-59 decided), the 85 drafted definitions and 21 rewritten comments, and the release notes' effect classes (D-62) | [FMH-H2-11a](../validation/FMH-H2-11a.md) |
+| Q3 | H2.11b's decisions D-65 to D-67 | [FMH-H2-11b](../validation/FMH-H2-11b.md) |
+| Q4 | the follow-ups' decisions D-68 to D-73, among them closing the three enumerations of one member (D-68) | FMH-H2-11b, "Follow-ups of 2026-10-21" |
+| Q5 | FMH-TS-1's decisions and changed tests, among them the session-wide translate-once cache that tests running SPARQL directly on rdflib now go through | [FMH-TS-1](../validation/FMH-TS-1.md) |
+| Q6 | 26 stale anchors outside Persistence whose right target is not clear, mostly `#phase-N` links in `docs/developer/INDEX.md` | FMH-H2-11b, D-72 |
+
+### Before the merge into `main`
+
+Done 2026-10-21:
+
+- **TD-63**, closed: the history and versioning sketch's §4.2 and §9 are restated from LATTICE's own layers.
+- **The minor version bump** (TD-64's rule for this branch): `mise run release:prepare -- 0.19.0`, and the applied modules that pin the
+  release take their own minor, `applied-capacity-execution` 0.17.0, `applied-classification` and its vocab 0.4.0, `insurance-common` and its
+  vocab 0.8.0, `insurance-exposure` and its vocab 0.3.0 (AIR-66) with its shapes 0.2.0, and `insurance-peril`, its intensity and its vocab
+  0.7.0. Each changed README has its release notes. `check:ontology-versioning --base-ref origin/main` finds no unbumped change.
+- **The expected profiles**, approved by the maintainer 2026-10-21.
+- **`docs/developer/INDEX.md`**, Track H's rows brought up to date.
+
+Left for the maintainer:
+
+1. **Countersignature:** done. FMH-H2-9, FMH-TS-1 and `test_c8b_09` were countersigned on 2026-10-21.
+2. **The merge**, once the conformance run below is accepted. `mise run check:persistence-conformance` passed on the merge candidate on
+   2026-10-21 (4353 passed, 1 xfailed), and `mise run check:full-sweep` passed every check.
+3. **After the merge**, then the release tags it prints, `ontologies-v0.19.0` and the applied tags among them.
+
+### Owed later
+
+- The idealised in-place benchmark once TD-42 is fixed (recorded on TD-42).
+- `python-test-melting` TM9 to TM12, every other suite on the test defaults (planned 2026-10-21).
 
 ## Slices
 
@@ -96,9 +124,15 @@ section below.
 | H2.3 (named-graph row writers) | **built and reviewed** 2026-10-12, one review fix. [Validation Pack](../validation/FMH-H2-3.md). [Plan §4.1](../plans/formal-methods-track-h.md#41-h23-the-named-graph-row-writers-planned-2026-10-12). Countersignature items signed 2026-10-12. TD-34 closed for its operations | merged and signed off 2026-10-12 |
 | H2.4a (the composite ports) | **built and reviewed** 2026-10-12. [Validation Pack](../validation/FMH-H2-4a.md). [Plan §4.2](../plans/formal-methods-track-h.md#42-h24-the-composite-family-and-what-each-store-does-planned-2026-10-12) | the maintainer's merge |
 | H2.4b (Oxigraph, probes, benchmark) | **built** 2026-10-12, reviewed 2026-10-13. [Validation Pack](../validation/FMH-H2-4b.md). Decision 1 decided (option D, built in H2.5), and the corrected P1 test countersigned | the maintainer's merge |
-| H2.5 (key claims, audits, guard D, the `SELECT` fragment) | **built** 2026-10-13, autonomously, in six gates. [Validation Pack](../validation/FMH-H2-5.md). [Plan §4.3](../plans/formal-methods-track-h.md#43-h25-key-claims-the-audits-and-the-self-calibrating-guard-planned-2026-10-13). TD-34 closed. every decision taken | the maintainer's merge |
-| H2.6 (expected compiled profiles, paper check) | **built 2026-10-13 and approved by the maintainer 2026-10-13.** [Validation Pack](../validation/FMH-H2-6.md). [Plan §4.4](../plans/formal-methods-track-h.md#44-h26-the-expected-compiled-profile-examples-first-and-the-paper-check-planned-2026-10-13). Five of eight review questions answered (H-D24 to H-D28), three open ([write-up](../notes/track-h-h26-review-questions.md)). `mise run build:persistence-expected-profiles` and a check in `check:persistence` | the maintainer's merge. H2.7 waits for RQ4 to RQ6 |
+| H2.5 (key claims, audits, guard D, the `SELECT` fragment) | **built** 2026-10-13, autonomously, in six gates. [Validation Pack](../validation/FMH-H2-5.md). [Plan §4.3](../plans/formal-methods-track-h.md#43-h25-key-claims-the-audits-and-the-self-calibrating-guard-planned-2026-10-13-built-2026-10-13). TD-34 closed. every decision taken | the maintainer's merge |
+| H2.6 (expected compiled profiles, paper check) | **built 2026-10-13 and approved by the maintainer 2026-10-13.** [Validation Pack](../validation/FMH-H2-6.md). [Plan §4.4](../plans/formal-methods-track-h.md#44-h26-the-expected-compiled-profile-examples-first-and-the-paper-check-planned-2026-10-13-built-2026-10-13). Five of eight review questions answered (H-D24 to H-D28), three open ([write-up](../notes/track-h-h26-review-questions.md)). `mise run build:persistence-expected-profiles` and a check in `check:persistence` | the maintainer's merge. H2.7 waits for RQ4 to RQ6 |
 | H2.6b (event slots, patch-log half held, H-D33) | **event half built 2026-10-14, approved by the maintainer and complete 2026-10-14.** Six expected profiles re-approved, `test_ho6_t14` countersigned. [Validation Pack](../validation/FMH-H2-6b.md), [plan §4.6](../plans/formal-methods-track-h.md#46-h26b-the-event-and-patch-content-slots-planned-2026-10-14). The patch-log half is held (H-D33) | the merge |
+| H2.6c (write disciplines) | **built 2026-10-20, awaiting the maintainer's review.** [Validation Pack](../validation/FMH-H2-6c.md), [plan §4.9](../plans/formal-methods-track-h.md#49-h26c-the-write-disciplines-planned-2026-10-20). `check:persistence` 2869 passed, 1 xfailed. `check:persistence-oxigraph` 225 passed | the review tranche below |
+| H2.6d (patch log for in-place families) | planned 2026-10-20, [plan §4.10](../plans/formal-methods-track-h.md#410-h26d-the-patch-log-for-in-place-families-the-link-between-versions-no-receipt-planned-2026-10-20-revised-the-same-day) | H2.6c's review |
+| H2.8c (edges once, faster `members`, record classes, member parts) | **signed off 2026-10-20**, with decisions, expected profiles and changed tests approved. [Validation Pack](../validation/FMH-H2-8c.md), [plan §4.18](../plans/formal-methods-track-h.md#418-h28c-the-follow-ups-of-the-h26-and-h28-reviews-planned-2026-10-20). TD-68 closed, TD-67 narrowed | the merge |
+| H2.9 (Mustache retired, D-12 (a), goldens keyed by operation) | **built 2026-10-21, awaiting the maintainer's review.** [Validation Pack](../validation/FMH-H2-9.md), [plan §4.15](../plans/formal-methods-track-h.md#415-h29-mustache-retired-planned-2026-10-20). No expected profile changed. D-42 to D-49 for ratification | the review |
+| H2.11a (the Persistence README as a literate specification, graph for graph) | **built 2026-10-21, awaiting the maintainer's review.** [Validation Pack](../validation/FMH-H2-11a.md), [plan §4.19](../plans/formal-methods-track-h.md#419-h211-the-persistence-readme-as-a-literate-specification-planned-2026-10-20). 137 reconciled differences, `check:persistence` 4258 passed, 1 xfailed, `check:persistence-oxigraph` 368 passed. TD-01 closed. D-50 to D-64 for ratification | the review |
+| H2.11b (the narrative, the pictures, the gotchas) | **built 2026-10-21, awaiting the maintainer's review.** [Validation Pack](../validation/FMH-H2-11b.md), [plan §4.19](../plans/formal-methods-track-h.md#419-h211-the-persistence-readme-as-a-literate-specification-planned-2026-10-20). No graph changed, 49 diagrams render in two themes. D-65 and D-66 for ratification | the review, and D-59's split |
 | H2.7 (vocabulary and emission) | **planned** 2026-10-14, [plan §4.7](../plans/formal-methods-track-h.md#47-h27-the-vocabulary-and-the-compilers-emission-planned-2026-10-14) | H2.7-Q1 to Q4, and H2.6b's merge |
 | H2.8 (typed payload, caller checks) | **planned** 2026-10-14, [plan §4.8](../plans/formal-methods-track-h.md#48-h28-the-typed-payload-and-the-caller-side-checks-planned-2026-10-14) | H2.8-Q1 to Q3, and H2.7's merge |
 | H3 (specification registry) | not started, outlined in the plan | H2 preferred first (smaller, more self-contained), not a hard blocker |
@@ -154,8 +188,11 @@ section below.
 | H-D33 | H2.6b's patch-log half, and H2.10 | **decided 2026-10-14**: held for the [history and versioning sketch](../sketches/persistence-history-and-versioning.md). H2.6b ships its event half |
 | H-D34 | whether H2.7 waits for the history and versioning sketch | **decided 2026-10-14**: H2.7 waits for VH-Q1, VH-Q3 and VH-Q5, so the `persistence` vocabulary is published once |
 | H2.6b-Q1 to Q5 | which writes log patches, who names the delta graphs, the snapshot model, events per request, the digest parts | **decided** 2026-10-14, (a) for Q1 to Q3 and Q5, (c) for Q4, the guide's batch. Q3's warning covers both receipt models while the patch log is held (H-D33). Q1 and Q2 are held with the patch-log half |
-| H2.7-Q1 to Q4, H2.8-Q1 to Q3 | the remaining questions of the plans (plan §4.7, §4.8) | **open**, the maintainer. Leanings (a) |
-| VH-Q1 to VH-Q7 | history, versions and the receipt models ([sketch §8](../sketches/persistence-history-and-versioning.md#8-questions-for-the-maintainer)) | **open**, the maintainer. VH-Q7 needs research first |
+| H2.7-Q1 to Q5, H2.8-Q1 to Q3 | the remaining questions of the plans (plan §4.7, §4.8). Q5, how H2.7 is released under ADR-A129, added 2026-10-20 | **decided 2026-10-20 at our leanings (a)**, for the maintainer's review. Q5: versioning ignored on this branch until its merge (TD-64) |
+| VH-P1 | how §4.1, §4.2 and §9 of the history and versioning sketch are re-authored | **decided 2026-10-20: (c)**, left as they are, TD-63 before the merge. **Done 2026-10-21:** §4.2 and §9 restated from LATTICE's own layers, and TD-63 removed. §4.1 is a persistence cost case and stays |
+| ADR-A123 addendum, 2026-10-14 | the event slots and the digest parts | **accepted 2026-10-20** |
+| EX-Q1 to EX-Q3, FS-Q1 to FS-Q7 (decided 2026-10-20: EX-Q1 (b), the rest at their leanings) | which examples, how deep, how costed, and the strategy menu's shape, granularity, guidance, streams, projections and retention ([sketch §10](../sketches/persistence-history-and-versioning.md#10-questions-for-the-examples-and-the-strategy-menu-2026-10-20)) | **decided 2026-10-20** |
+| VH-Q1 to VH-Q7 | history, versions and the receipt models ([sketch §8](../sketches/persistence-history-and-versioning.md#8-questions-for-the-maintainer)) | **decided 2026-10-20 at our leanings**, for the maintainer's review (sketch §11 and its closing table, VH-D1 and VH-D2) |
 | H2.5-Q1 to Q3, H2.6-Q1 to Q4, NQ1 to NQ7 | the design review's questions and the plans' own ([track-h-feedback.md](../notes/track-h-feedback.md)) | **decided 2026-10-13**: the closed `SELECT` fragment with four type rules and three fragment limits, a `Literal` kind for `$now`, one H2.5 slice, `test/expected-profiles/`, nine expected profiles, the value guard hand-declared, the model proposed now, the pinned head a realisation of receipts, a digest contract, minted IRIs, a strict caller check (H2.8). NQ5 waits for H2.5's `MIN` finding, NQ7 was answered by the template (merge relations go to the keys graph). Recorded in plan §4.3 and §4.4 and ADR-A123's fourth and fifth addenda |
 | H-D7 | H1's checks live in one new module, `persistence.hygiene`, behind one `hygiene` subcommand, and run under `check:persistence`. No new `mise` task until H1's closing slice | agreed 2026-10-09 |
 
@@ -657,9 +694,224 @@ section below.
   which refines VH-Q2. CCS C16b already decides "point, do not copy" for generated meaning. Nothing decided.
 - 2026-10-14: cross-referenced the placement vision papers (outside the repository) with LATTICE's layers and the plans under way
   (CCS, AIR, the evaluation context, capacity, Surface, insurml-alignment), as
-  [sketch §9](../sketches/persistence-history-and-versioning.md#9-the-vision-papers-lattice-and-the-data-a-placement-makes-2026-10-14).
+  [sketch §9](../sketches/persistence-history-and-versioning.md#9-what-lattice-records-about-history-and-the-data-an-instrument-makes-2026-10-14-restated-2026-10-21).
   Most of the papers' ideas have a home. Four departures to test: state read from acts rather than authored, binding by assent rather
   than copy, versioning chosen per family, the words' history in Wording's amendments. A quote carrying wording and meaning costs about
   5,000 triples a version copied, about 270 under C7c's rules, and about 5 to 20 a requote with sharing (judgement). Eight strategies
   listed for the examples to exercise.
+- 2026-10-20: re-oriented after `main` moved (ADR-A126 to A129, AIR-4.2a to 4.4, the claims plan). Plan §4.7 and §4.8 aligned with
+  ADR-A129 (one release, H2.7-Q5 added) and ADR-A128. Next action rewritten. New open decisions: VH-P1, the ADR-A123 addendum, and the
+  examples and strategy questions EX-Q1 to EX-Q3 and FS-Q1 to FS-Q7 (sketch §10).
+- 2026-10-20: the maintainer decided VH-P1 (c), accepted the ADR-A123 addendum, confirmed VH-Q7, took EX-Q1 (b) and every other
+  example and strategy leaning, and set this branch to ignore versioning until its merge (TD-64). TD-63 recorded.
+- 2026-10-20: the maintainer asked us to proceed at our own leanings and review at the end. VH-Q1 to VH-Q6, H2.7-Q1 to Q4 and
+  H2.8-Q1 to Q3 decided at their leanings, and VH-D1 and VH-D2 from the examples' open points.
+- 2026-10-20: the examples E1 to E8 drafted by four agents in parallel, merged into the sketch (§10.1 to §10.9), every diagram
+  rendered. Their open points decided at our leanings (EP-1 to EP-11), with TD-65 (Wording values), TD-66 (AIR exposure versions) and
+  PDD-11 (entry into force per holder, the life of an offer). H2.6c planned (plan §4.9) and building, H2.6d planned (§4.10).
+- 2026-10-20: H2.6c built by an agent, reviewed, checks re-run (2869 passed, 1 xfailed, Oxigraph 225 passed) and committed. Paused
+  for the maintainer's review of the tranche R1 to R10.
+- 2026-10-20: the maintainer reviewed the tranche. Approved VH-Q1, VH-Q3, VH-Q4, VH-Q6, VH-D1, R2 (a), R4 to R8. VH-Q2 settled as a
+  default with a per-edge override. VH-Q5 (2) and (3) yes, (1) became VH-Q5a. VH-D2 revised into a per-family choice. R9 and R10 put
+  to the maintainer in full. Follow-ups: H2.6c's link to the prior version moves off `fnd:supersededBy` (R2), TD-65 fixed for VH-Q1's
+  shared cost.
+- 2026-10-20: the maintainer approved VH-Q5a, H2.7-Q1 (a), H2.7-Q4 (b) isomorphism, H2.8-Q1 (b) with an ADR for library code, and R10
+  as amended, the persistence link named `pat:previousVersion`. H2.7-Q2, H2.7-Q3, H2.8-Q2 and H2.8-Q3 asked back. Implementation waits
+  for the maintainer's rules once planning is done.
+- 2026-10-20: the maintainer decided H2.7-Q2 (a), H2.7-Q3 (a), H2.8-Q2 (c) with (b) as an optional tightening, and H2.8-Q3 (c).
+- 2026-10-20: planned H2.6d (revised), H2.6e, H2.6f, W-65, AIR-66, H2.7 and H2.8 (revised), H2.9, and the order (plan §4.10 to
+  §4.16). H2.10 dropped. ADR-A132 drafted as Proposed, and the event-subject rule as a proposed addendum to ADR-A123.
+- 2026-10-20: the maintainer approved every slice of plan §4.10 to §4.16, agreed H2.10 dropped, and accepted ADR-A132 and ADR-A123's
+  addendum on the subjects of an event append. We proceed autonomously, committing locally without pushing. Every decision we take
+  alone is recorded in its slice's Validation Pack and listed in the decisions log below, for ratification.
+
+### Decisions log, for ratification
+
+| # | Slice | Decision taken alone | Where |
+|---|---|---|---|
+
+| D-1 | AIR-66 | `tools/exposure_derivations.py` follows the identity ranges (resolves through the set's own versions). Not exercised by a test | FMH-AIR-66 |
+| D-2 | AIR-66 | the set-level shapes are violations, and also refuse a set listing two versions of one identity, which AIR-4.2a had left uncovered | FMH-AIR-66 |
+| D-3 | AIR-66 | `aeo:presenceLocation`, `aeo:assesses`, `aeo:interestIn`, `aeo:partOf` and the zone and loss links still name versions, deliberate non-coverage | FMH-AIR-66 |
+| D-4 | W-65 | a value still belongs to at least one assembled wording (minimum kept), so a value in no wording is reported | FMH-W65 |
+| D-5 | W-65 | the endorsement example asserts `ex:sec-2 fnd:supersededBy ex:sec-2-v2`, and the new section version repeats `ex:sec-2`'s object id and rank key | FMH-W65 |
+| D-6 | W-65 | one changed test, the Wording example count, for countersignature. No law yet checks that two wordings sharing a value are versions of one identity | FMH-W65 |
+| D-7 | H2.6d | a receipt names a delta graph only where the write fills it: a create `pat:asserts`, a tombstone `pat:retracts`, a replace both | FMH-H2-6d |
+| D-8 | H2.6d | the IR's one-payload-slot rule dropped, since a replace under a patch log has three slots | FMH-H2-6d |
+| D-9 | H2.6d | under `dal:NoReceipt` the tombstone drops `$cause` and `$actor`, the gap scan and receipt-side fork audits are not generated, and a composite family may declare it though `dal:ReceiptOnly` is refused for composites. To ratify or refuse | FMH-H2-6d |
+| D-10 | H2.6d | a patch log declared on a family that never writes one (an append discipline, an append-only concurrency, an unconditional or value-guarded write) has no warning, following the brief. A warning is a small follow-up if wanted | FMH-H2-6d, TD-46 |
+| D-11 | H2.6d | a no-receipt family needs its own meta shard, since another family's gap scan would read its rows. Documented, not checked | FMH-H2-6d |
+| D-12 | H2.6d | the receipt-only composite templates are reachable only through the snapshot model, candidates for removal in H2.9 | FMH-H2-6d |
+| D-13 | H2.6e | the profile records every node-leading edge, the default mode stated, and the payload contract carries them too, so they are stated twice | FMH-H2-6e |
+| D-14 | H2.6e | a pinned value property is refused, and an unknown mode is refused at compile, not by a shape | FMH-H2-6e |
+| D-15 | H2.6e | the evidence warning reads the source shape's target class. "A class the profile names as a record" is not built, since a profile cannot name one (TD-67) | FMH-H2-6e, TD-67 |
+| D-16 | H2.6f | the caller passes the full list and `pat:checkpoint true` on the first version and every `checkpointEvery`th, and the member slots otherwise. A version with no checkpoint before it has no members. Checkpoints found by their marker, not by seq | FMH-H2-6f |
+| D-17 | H2.6f | the member slots reuse the digest's add and del parts, and the membership property is a parameter of the members read | FMH-H2-6f |
+| D-18 | H2.6f | the members read keeps its correct but slow form (98.6 s for 100 versions on rdflib, 1.7 s on Oxigraph). A sub-select form was fast on rdflib but returned wrong results. **Corrected 2026-10-20 by TSD-34:** parameters in a sub-select are applied. The cause is rdflib evaluating a `NOT EXISTS` with no `GRAPH` against the default graph after the first solution. TD-68 to be corrected the same way | FMH-H2-6f, TD-68 |
+| D-19 | TSD-34 follow-up | every template with a `NOT EXISTS` inside a `GRAPH` block and no `GRAPH` of its own, for example the deleted-row guard, is probed over a seed sweep on rdflib (TSD-Q19) after H2.7, and given its own `GRAPH` where it can be wrong. Planned as H2.6g | TSD-34 |
+| D-20 | H2.7 | `GeneratedOperation.template_id` keeps its suffix in memory until H2.9, only the profile drops it | FMH-H2-7 |
+| D-21 | H2.7 | `dal:templateVersion` moves to the generated operation, and `dal:boundaryShape` and `dal:referenceEdge` lose their `rdfs:domain`, since the contract is a second use | FMH-H2-7 |
+| D-22 | H2.7 | `MissingDataGraph` applies only where the value guard is generated. The value guard's resource is `dal:PropertyValue`, keyed by root, builder version 2 | FMH-H2-7 |
+| D-23 | H2.7 | declaration IRIs include the deployment where there is one. `dal:HandDeclared` kept as an escape hatch | FMH-H2-7 |
+| D-24 | H2.7 | five H2.6 tests removed and two replaced by the isomorphism test, for countersignature. The `pat:` terms checked against the guide's Appendix A by hand, since a test reading `docs/architecture` breaks the catalogue's reach rule | FMH-H2-7 |
+
+| D-25 | H2.6g | all 29 operations with the shape name their graph, not only those the defect could affect (none could), so the checker rule has no exception. 15 builder versions bumped | FMH-H2-6g |
+| D-26 | H2.6g | a test asserts rdflib's context sharing still holds, so an rdflib change prompts a TSD-34 review. No seed-sweep test fails on removing a `GRAPH`, since no outcome depends on it: the text scan, the harness and the checker are the guards | FMH-H2-6g |
+| D-27 | H2.8a | the digest hashes each content part as one component, `enc([kind, target, expected, enc(part 1), enc(part 2), ...])`, where guide §15.2 has one flat list, which cannot tell the parts apart. The guide's text is TD-69 | FMH-H2-8a, TD-69 |
+| D-28 | H2.8a | canonical N-Triples: lines sorted by UTF-8 bytes, duplicates dropped, four characters escaped, `xsd:string` plain, language tags lower-cased. The kind is `dal:operationKind`, the target hashed without angle brackets | FMH-H2-8a |
+| D-29 | H2.8a | a payload has two texts, canonical N-Triples for the digest and SPARQL-encoded for the slot. `bootstrap:persistence` installs the library, which is on no index | FMH-H2-8a |
+- 2026-10-20: the maintainer approved W-65's decisions (D-4 to D-6), and decided D-10 (add a warning), D-11 (a compile-time check)
+  and D-24 (a test, with persistence's catalogue reach widened, coverage before narrow scope). All three are added to H2.8b. D-9, D-12
+  and D-15 asked back. AIR-66 handed over into the AIR Phase 4 plan.
+| D-30 | H2.8b | the library walks the contract's edges in Python rather than running the payload-check query, held equal to it on both engines over random payloads | FMH-H2-8b |
+| D-31 | H2.8b | the contract gains `dal:edgeTargetShape` and the payload contract the boundary shape. An append of versions roots its payload at `newVersion` | FMH-H2-8b |
+| D-32 | H2.8b | an empty `logGraphs` is refused by default, with a flag that reports nothing examined. The outcome is two contract properties and a library derivation, not a result column. Fixed-graph audits report clean over an empty graph (TD-72) | FMH-H2-8b, TD-72 |
+| D-33 | H2.8b | reference modes are checked only where the caller supplies which nodes are versions (TD-67 narrowed). The delta and patch-log slots are not bounded (TD-70), and event-type shapes have no hook yet (TD-71) | FMH-H2-8b |
+| D-34 | H2.8b | the caller check is strict: an unknown parameter is refused, a digest must be 64 lower-case hex | FMH-H2-8b |
+- 2026-10-20: the maintainer decided D-9 (allow `dal:NoReceipt` on composites, with a later warning for record classes), D-15 (b), a
+  profile term naming record classes, and D-12 (a), the receipt-only composite templates deleted in H2.9 and `dal:SnapshotPerRevision`
+  refused on in-place composites. Approved H2.6d's twelve, H2.6e's except (2), asked back, H2.6f's except (1), (8), (11) and (12),
+  asked back, and H2.7's fifteen, (12) explained. Paused after H2.8b, at the maintainer's request.
+- 2026-10-20: the maintainer took the middle ground for H2.6e (2), agreed H2.6f (1), accepted the reused part names with good documentation
+  (H2.6f (8)), deferred the idealised in-place benchmark to TD-42's fix, asked to adopt the faster members form if it proves correct
+  (H2.6f (12)), and approved H2.7 (12). Planned H2.8c (plan §4.18) and added D-12, the goldens and the template id to H2.9. Paused.
+- 2026-10-20: the maintainer asked for a slice bringing the Persistence README into the literate specification v2 layout, with narrative,
+  pictures and gotchas drawn from the tested examples. Sketched (RL-Q1 to RL-Q7) and planned as H2.11a and H2.11b (plan §4.19), after H2.9.
+- 2026-10-20: RL-Q1 (a) two slices, RL-Q2 (a) the shipped examples, RL-Q3 as leaned (publish the accepted ADRs, stop citing the proposed),
+  RL-Q4 (a) one README generates both documents as Behaviour's does (ADR-A120), RL-Q5 (a), RL-Q6 (b) for now with a split if it cannot be
+  read, RL-Q7 (a).
+- 2026-10-20: at the maintainer's request, ADR-A78, A79, A80, A114, A122, A123 and A132 are published. Working references and the
+  citations of superseded or proposed decisions (A51, A71, A74, A75, A82, A84) moved into each ADR's Provenance section, and ADR-A51's
+  rules are cited through the IRI and identity patterns. The wording changes beyond dropped references are for the maintainer's review.
+| D-35 | H2.8c | the profile's edges are minted `<target>/compiled/profile#edge-NN`, under a reserved `profile` segment. **Approved 2026-10-20** | FMH-H2-8c |
+| D-36 | H2.8c | record classes are named for the whole configuration, with asserted subclasses, as `dal:ReferenceData` is. **Approved 2026-10-20** | FMH-H2-8c |
+| D-37 | H2.8c | the library reads record classes and refuses nothing on them. **Ratified 2026-10-20**, TD-67 narrowed and not closed | FMH-H2-8c, TD-67 |
+| D-38 | H2.8c | a compiled profile states only the record classes its family touches. **Approved 2026-10-20** | FMH-H2-8c |
+| D-39 | H2.8c | `NoReceiptForRecord` is a warning and fires for a versioned target too. **Approved 2026-10-20** | FMH-H2-8c |
+| D-40 | H2.8c | the note on the add and del parts sits on `dal:AddPart` and `dal:DelPart`, not on each emitted part. **Approved 2026-10-20** | FMH-H2-8c |
+| D-41 | H2.8c | the random-history sweep runs its 16 child processes side by side (test code). **Approved 2026-10-20** | FMH-H2-8c |
+- 2026-10-20: H2.8c built autonomously ([FMH-H2-8c](../validation/FMH-H2-8c.md)). Each edge stated once by the profile, the faster `members` form
+  adopted after a 16-seed sweep and both engines agreed with the reference model (TD-68 closed, read of version 100 from 98.6 s to 1.28 s on
+  rdflib), `dal:recordClass` and `NoReceiptForRecord` (TD-67 narrowed), and the member parts documented. The maintainer approved D-35 to D-41.
+  Three Oxigraph tests fail on pyoxigraph 0.5.12, before and after H2.8c, and pass on 0.5.11.
+- 2026-10-20: the maintainer approved H2.8c's four expected profiles and four changed tests, and chose to record pyoxigraph 0.5.12 rather
+  than pin 0.5.11. 0.5.12 applies a `DELETE`/`INSERT WHERE` in the specification's order and groups arithmetic from the left (its release
+  notes, its source and our probes, run R-H). TSD-01 and TSD-17 record both, with 0.5.11's behaviour kept. `lattice_testing_oxigraph` gains
+  `VERSION`, `SNAPSHOT_UPDATES` and `LEFT_GROUPED_ARITHMETIC`, held to the installed version's behaviour by `test_ox_t6`, and the three tests
+  that failed read them, so they pass on 0.5.11 and on 0.5.12. Two were renamed, for countersignature. TD-73 closed. Paused.
+| D-42 | H2.9 | the tests that reached the receipt-only composite writes through `receipt_only.py` are ported to the patch-log variants with every assertion unchanged, not removed, since their subject is the sweep, the lifecycle and the guard. The helper and the snapshot witnesses are removed | FMH-H2-9. Approved by the maintainer 2026-10-21 |
+| D-43 | H2.9 | `CompositeBoundarySnapshotNotBuilt` is raised for a composite boundary with `dal:SnapshotPerRevision`, optimistic concurrency and no append discipline, the configurations that selected the deleted writes | FMH-H2-9 |
+| D-44 | H2.9 | the builder goldens use one canonical context. 48 of 52 digests changed once and were re-recorded by a one-time run that skipped the changed-text refusal, after the old keying was shown to match the old record for all 52 | FMH-H2-9. Approved by the maintainer 2026-10-21 |
+| D-45 | H2.9 | `fill_slots` and `slot_marker` live in `ir_render`, one pass, and `REQUEST_TIME_SLOTS` is gone | FMH-H2-9 |
+| D-46 | H2.9 | `instantiate` and the command line lose the template library override, with no deprecation | FMH-H2-9 |
+| D-47 | H2.9 | the `hygiene` message still says `templates:`, since two existing tests assert it | FMH-H2-9 |
+| D-48 | H2.9 | the injection corpus counts the operations a value yields, where it asserted `True` after a parse, and adds a literal corpus | FMH-H2-9 |
+| D-49 | H2.9 | the caller library gets its own slot-filling corpus, which reads the values back from a store | FMH-H2-9 |
+| D-50 | H2.11a | no Utility paragraph is added where none exists, so one term has one. About 320 utilities are authoring work, not conformance | FMH-H2-11a |
+| D-51 | H2.11a | the 18 individuals with no comment keep none, and are listed as an open issue in the README | FMH-H2-11a |
+| D-52 | H2.11a | the catalogue entry has no `imports` line, since `test_rc1_t4` allows it for substrate modules only (ADR-A121). The Foundation import is in §2, §3 and §11 | FMH-H2-11a |
+| D-53 | H2.11a | two comments lose their backticks, since the plain-text rules cannot give them back and a datatyped literal is a different RDF term | FMH-H2-11a |
+| D-54 | H2.11a | the old Validation section is Detailed Design 5.10, and its paragraph on the shapes over a compiled profile is in 7.2 | FMH-H2-11a |
+| D-55 | H2.11a | old §1 is the Overview whole, and the new §1, the `dct:description` of both documents, is new and shorter | FMH-H2-11a |
+| D-56 | H2.11a | old 7.10.1 is 5.6.11, old §11 is §8, old 14.3 is 8.6, and every `§` reference is mapped by one table | FMH-H2-11a |
+| D-57 | H2.11a | 6.4 is 43 tables in one `output-file` region, and the 15 individuals with a logical key or a Unicode version are two 6.6 blocks | FMH-H2-11a |
+| D-58 | H2.11a | 6.1 to 6.3 follow the old file's topic order, not the alphabet | FMH-H2-11a |
+| D-59 | H2.11a | the class diagram is kept whole and collapsed, and is 16,210 by 1,460 pixels, too wide to read. A split is proposed, a generator filter, and no tool was changed | FMH-H2-11a. Decided by the maintainer 2026-10-21, the generator draws parts, and Persistence has eight |
+| D-60 | H2.11a | the sketch and the two proposed decisions leave the cross references, and each sentence that cited one keeps its meaning | FMH-H2-11a |
+| D-61 | H2.11a | comments in the two hidden shape blocks are edited, which changes no graph, and the generated shapes files open with the SPDX header | FMH-H2-11a |
+| D-62 | H2.11a | the release notes class each change by its effect on a graph valid under the previous release, with the branch's changes in one "Unreleased" entry | FMH-H2-11a |
+| D-63 | H2.11a | the README's Open Issues lists seven items, none naming a debt row or a working document | FMH-H2-11a |
+| D-64 | H2.11a | `ontology/persistence/docs/*.md` still link the sketches, and the README links both. **Closed in H2.11b**, the links are rewritten out | FMH-H2-11a, FMH-H2-11b |
+| D-65 | H2.11b | a sequence diagram carries the palette as translucent `rect` phases, a class diagram as `style` lines, and every subgraph box has no fill, since mermaid has no class for them and the default cluster fill would read as the receipts colour | FMH-H2-11b |
+| D-66 | H2.11b | the new subsections are 5.13 and 5.14 and the cross references moved to 5.15, since nothing cites 5.13 | FMH-H2-11b |
+| D-67 | H2.11b | two §6 definitions still described the Mustache templates H2.9 retired (`dal:GeneratedOperation`, `dal:ParameterBinding`), and the compiler diagram of §4 had a "select named templates" step. Both definitions are rewritten to name the builder, as four reconciliation lines in a fourth group of the H2.11a file (141 in all), and the diagram step reads "select a builder per operation". Three stale anchors in `tools/persistence/README.md` are repointed to §5.6.1, §5.6.10 and §5.6.11 | FMH-H2-11b |
+| D-68 | follow-ups of 2026-10-21 | every class with individuals in the spec is closed with `owl:oneOf`, 43 in all, and no class with individuals is left open. That includes three with one member (`dal:Rule`, `dal:PayloadEncoding`, `dal:BoundaryShapeAbsence`), since the compiler reads each by name and a new member would need new code | FMH-H2-11b |
+| D-69 | follow-ups of 2026-10-21 | `dal:sourcedFrom` keeps its `sh:in ( dal:RegistryGraph )`, although `dal:Source` also has `dal:NoSource`, since no source is the absence of the property. The new test names this one exception | FMH-H2-11b |
+| D-70 | follow-ups of 2026-10-21 | the missing `sh:in` lists are one `<Class>EnumerationsShape` for each domain class, in a second hidden block at the end of 7.2, and not edits to the shapes that exist. Each is SHACL Core and targets one class | FMH-H2-11b |
+| D-71 | follow-ups of 2026-10-21 | 6.4 gains a table for `dal:ResourceKind` and one for the Unicode pipelines (type `owl:NamedIndividual`), and 6.6 keeps only the 15 `dal:logicalKey` and `dal:unicodeVersion` statements. The Axiom Index is collapsed in a `<details>` as the class diagram is | FMH-H2-11b |
+| D-72 | follow-ups of 2026-10-21 | a link fragment is changed where the target heading is the same heading under a new slug (the TSD-01 and TSD-18 slugs, which drop `/` and parentheses, and headings that gained a suffix), and 26 others are listed in the Pack for the maintainer | FMH-H2-11b |
+| D-73 | follow-ups of 2026-10-21 | the enumerations are not a reconciliation group of the migration. The migration was proven at `a1df48b7` (141 differences against `f25008b2`). Against `a1df48b7` the follow-ups add 833 triples and remove none, all the `owl:oneOf`, `owl:AllDifferent` and `sh:in` axioms. The class diagram is eight parts (D-59) | FMH-H2-11b |
+| D-74 | second review of 2026-10-21 | `dal:minConcurrencyLevel` takes `dal:Linearizable` and `dal:BestEffort` only, with an exception in `test_enumerations.py` as for `dal:sourcedFrom`. A family that needs no guarantee declares no level, since `dal:Optimistic` already needs `dal:BestEffort`, and `dal:NoConcurrencyGuarantee` is a level a store provides. Approved by the maintainer 2026-10-23 |
+| D-75 | second review of 2026-10-21 | `dal:Quarantine` is typed `dal:OperationKind` and `dal:ViolationPolicy` and loses its `owl:NamedIndividual` type, and its definition says both. Its 6.4 row stays in the table of `dal:OperationKind`, and the table of `dal:ViolationPolicy` lists `dal:Reject` and `dal:Merge` with a sentence naming `dal:Quarantine`. `dal:Merge` and `dal:Reject` clash with no enumeration. Approved by the maintainer 2026-10-23 |
+| D-76 | second review of 2026-10-21 | `dal:requiresCas` changes with `dal:providesCas`, and `dal:requiresUniquenessLevel` and `dal:minEnforcementLevel` range over `dal:UniquenessEnforcementLevel`. The compiler holds a level as its IRI string, ranks it by `_CAS_RANK` keyed by IRI, emits `dal:requiresCas` as an IRI, and a spec that names no level provides `dal:NoConcurrencyGuarantee`. Three library fixtures under `packages/persistence/python/tests/data/` and eight expected profiles change. Approved by the maintainer 2026-10-23 |
+| D-77 | second review of 2026-10-21 | by the maintainer's change of scope, `dal:providesCommitValidation` ranges over the new `dal:CommitValidationLevel` = { `dal:NoCommitValidation`, `dal:ShaclCoreValidation`, `dal:ShaclSparqlValidation`, `dal:CustomRulesValidation` }. None of the four names clashes with an existing term, and no requirement mirrors the property. Property shapes are in new `dal:CapabilitySpecEnumerationsShape` and `dal:CapabilityRequirementEnumerationsShape` and `dal:UniquenessConstraintEnumerationsShape`, and the structural `dal:CapabilitySpecShape` keeps `sh:maxCount 1`. Approved by the maintainer 2026-10-23 |
+- 2026-10-21: H2.9 built autonomously ([FMH-H2-9](../validation/FMH-H2-9.md)). The templates, `render.py`, `chevron` and the equivalence harness are gone, every
+  operation is rendered from its builder, the template id has no suffix in memory, the goldens are keyed by operation, the receipt-only composite writes are
+  deleted and `dal:SnapshotPerRevision` is refused on an in-place composite family (TD-46 narrowed), S-3 reads the declared parameters, and the injection corpus
+  runs over the builders and the library's slot filling. ADR-A123 has an addendum and ADR-A79's addenda are updated. No expected profile changed. D-42 to D-49
+  and the changed and removed tests are for the maintainer. Paused.
+- 2026-10-21: H2.11a built autonomously ([FMH-H2-11a](../validation/FMH-H2-11a.md)). The Persistence README is in the 13-section layout and is the one
+  source of `spec/persistence.ttl`, `spec/persistent-foundation.ttl`, `shapes/constraints.ttl` and `shapes/persistent-foundation.ttl`, each the same graph as at
+  `f25008b2` but for 137 reconciled differences (the header, 85 drafted definitions, 21 rewritten comments). It cites only published decisions and no working
+  document, and a changed domain makes the migration check fail naming the triple. TD-01 is closed. The class diagram is too wide to read (D-59). D-50 to D-64
+  are for the maintainer. Paused.
+- 2026-10-21: H2.11b built autonomously ([FMH-H2-11b](../validation/FMH-H2-11b.md)). The Persistence README has a running case in eight steps, pictures of each
+  kind of write, a race, a retry and a stale seq, 14 gotchas and one palette on all 49 diagrams, each rendered with mermaid 10.9.1 in both themes. No graph changed
+  (137 reconciled differences as before), D-64 is closed, and D-65 and D-66 are for the maintainer. Paused.
+- 2026-10-21: the maintainer approved D-42 (the receipt-only composite tests ported to the patch-log variants, not removed) and D-44 (the builder
+  goldens re-recorded once from one canonical context), and asked us to carry on with H2.11a and H2.11b.
+- 2026-10-21: in our review of H2.11b, two definitions that still named the retired templates are rewritten (D-67), so the migration check now
+  reconciles 141 differences against `f25008b2`. Every check passes and all 50 diagrams render in the light and dark themes. Track H's planned
+  H2 slices are built. Paused for the maintainer's review.
+- 2026-10-21: at the maintainer's request, the follow-ups of H2.11. The 6.6 individuals sit in their 6.4 tables, 43 enumerations are closed
+  in OWL (`owl:oneOf`, with 40 `owl:AllDifferent`) and in SHACL (26 more `sh:in`), held equal by `test_enumerations.py`, the Axiom Index
+  is collapsed, 20 stale anchors are fixed. The generator draws the class diagram in parts (D-59, decided), drawn left to right, and
+  Persistence has eight. ADR-A126 has a drafted addendum for the maintainer. D-68 to D-73 are for review.
+- 2026-10-21: `check:persistence` runs in parallel (`-n auto --dist loadgroup`) and translates each query text once per session, among
+  other changes ([FMH-TS-1](../validation/FMH-TS-1.md)). 4m12s became 1m40s (4346 passed, 1 xfailed), measured on a loaded machine. The
+  three sixteen-seed sweeps set the floor. No assertion changed. Reaching 60 s needs fewer seeds in `check` with the full sweep on demand,
+  a decision for the maintainer.
+- 2026-10-21: at the maintainer's decision, Oxigraph is the default engine of the persistence tests and conformance runs on its own
+  ([FMH-TS-2](../validation/FMH-TS-2.md)). `check:persistence` runs each engine test once, on Oxigraph, and leaves out 27 tests marked
+  `conformance` (57 cases). `check:persistence-conformance` runs every engine, on demand and before a merge, and replaces
+  `check:persistence-oxigraph`. Together they cover every test that ran before. `tools/testing/mem_check` gives the worker count from the
+  memory available, two when the default count does not fit, and the persistence suite uses it. ADR-A125 has a drafted addendum. The
+  skills `lattice-testing` and `lattice-lifecycle` make the fast techniques and conformance before a merge the defaults, and
+  `python-test-melting` is reopened for TM9 to TM12, every other suite on them. TSD-35 records that Oxigraph refuses a literal as a graph.
+- 2026-10-21: the maintainer accepted the ADR-A125 addendum and the FMH-TS-2 decisions, and chose the graduated rule: `mem_check` gives as
+  many workers as fit, never fewer than two. The check tasks no longer install their test packages on every run. `mise run bootstrap`
+  installs `tools/testing/oxigraph` and `tools/testing/mem_check` (pyoxigraph 0.5.11 joins the lock file), and a check task that finds one
+  missing stops and names the task to run, where a run by hand still skips the Oxigraph cases. The ADR-A126 addendum gains the left to
+  right drawing of a part, and is still drafted, for the maintainer to accept.
+- 2026-10-21: the maintainer accepted the ADR-A126 addendum (class diagram parts, `**All different.**`, the 6.6 split) and countersigned
+  the change to `test_h2_4b_t12`, whose child process now runs without `PERSISTENCE_ENGINES_REQUIRED`.
+- 2026-10-21: the maintainer approved every expected profile and asked us to complete everything up to merge readiness. TD-63 is closed,
+  release 0.19.0 is prepared with the applied modules' own bumps and release notes, and the developer index is current. `party` and `spc`
+  report extraction drift on `main` as well as here, which this branch does not cause.
+- 2026-10-21: the extraction drift of Party and SPC is fixed, at the maintainer's request. Both READMEs had fallen behind their tracked
+  documents, which were edited directly. Party's README now states the ontology header the document carries (imports of Foundation and
+  Quantification, which its prose also now says), `owl:inverseOf` on `pty:hasParticipant` and the disjoint classes in the document's
+  order, so the regenerated document is the same graph. SPC's README had a subject-less `rdfs:comment` line, which the document had
+  commented out by hand, and still spelt `Behavior` where the released document has used `Behaviour` since 2026-09-20. It now follows the
+  document, with its version IRI, and its comments drop the capitals a blanket rename left. The regenerated document differs only in those
+  22 comments (no effect). `tools/spc/python/src/spc/ontologies/spc.owl.ttl`, a copy inside the SPC tool, still spells `Behavior`.
+- 2026-10-21: the maintainer confirmed ADR-A129 as recorded: the substrate and standalone modules take one release tag,
+  `ontologies-vX.Y.Z`, and the applied modules keep their own versions and tags under ADR-A86. The maintainer creates the tags
+  `mise run build:ontology-releases` lists once the branch is merged into `main`.
+- 2026-10-21: the maintainer countersigned the changed and removed tests of FMH-H2-9 and FMH-TS-1.
+- 2026-10-21: second review of H2.11b built autonomously (D-74 to D-77). Four classes close the seven individuals without a class
+  and the commit validation strings, `dal:providesCas`, `dal:requiresCas` and `dal:providesCommitValidation` are object properties,
+  eight expected profiles and three library fixtures are regenerated, and the 0.19.0 release notes record the changes
+  ([FMH-H2-11b](../validation/FMH-H2-11b.md)).
+- 2026-10-21: the maintainer countersigned `test_c8b_09` and answered the review: Q1 (H2.9), Q3 (H2.11b), Q4 (the enumeration follow-ups)
+  and Q5 (FMH-TS-1) approved, and of Q2 (H2.11a) D-53, D-54 and the rest approved, with these changes:
+  - D-50: a utility is written only where it serves a purpose. None is added.
+  - D-51: the 18 individuals with no comment gain a definition, saying what each does (done, 18 comments, no other graph change).
+  - D-52: the Foundation import is needed, by `persistent-foundation`, so the rule widens. A standalone module now declares `imports`,
+    the import guard holds its documents' imports to that list (ADR-A121, addendum of 2026-10-21), and Persistence, MORK and Surface
+    declare theirs.
+  - D-63: the README's open issues each have a home: the version in force at a date is TD-74 (new), natural keys from the mixin is
+    FU-F1b (computable-contract-substrate plan), declared shard counts are TD-06 and TD-41, infrastructure graph IRIs TD-05, and snapshot
+    per revision TD-46. The issues on utilities and on individuals without a definition are closed by D-50 and D-51.
+  - Q6: 24 stale anchors are fixed. The three left in `docs/_includes/theory/` are correct on the published theory page, where kramdown
+    sets those ids.
+- 2026-10-23: the maintainer approved the second review's follow-ups: the eight regenerated expected profiles (only `dal:requiresCas` as
+  an IRI) and the three library fixtures, decisions D-74 to D-77, and the changed tests of FMH-H2-11b's "second review" section.
+- 2026-10-23: TD-23 fixed at the maintainer's request, before the merge. `discover_targets` (`persistence.scopes`) takes its classes from
+  `dal:targetClass` and from the `dal:coversClass` of every `dal:GraphPatternScope`, never of a `dal:ReferenceData`, so a class a
+  graph-pattern scope covers is compiled and the shipped example's `MixedReceiptModel` warning leaves `compile`. The strict expected failure
+  in `test_known_defects.py` passed, as designed, and moved to `test_validator.py` as an ordinary test. `test_mixed_receipt_model_is_a_warning_not_an_error`
+  no longer passes its classes in by hand, and a comment in `test_h1_2_t23` follows, both countersigned by the maintainer 2026-10-23. No expected profile changed.
+  Reverting the fix fails both tests. TD-23 is removed from the register. `check:persistence` has no expected failure left.
+- 2026-10-23: the maintainer countersigned TD-23's test changes. Nothing on the branch awaits review.
 

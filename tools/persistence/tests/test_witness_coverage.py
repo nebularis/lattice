@@ -36,6 +36,10 @@ from persistence.witness import (
 
 from conftest import EXAMPLES_DIR
 
+# One worker runs the whole module under pytest-xdist --dist loadgroup, since its tests share the compile and validate of the whole corpus
+# (witness._observations), which every worker would otherwise do for itself.
+pytestmark = pytest.mark.xdist_group("witness-observations")
+
 AUDITS = sorted(a.removeprefix("audit:") for a in map(str, (r for r in enumerate_rules() if r.family == AUDIT)))
 
 
@@ -285,7 +289,7 @@ def test_h1_2_t23_every_refusal_and_warning_has_a_witness_and_only_shapes_remain
     assert report.ok, "\n".join(report.lines())
     assert {r.family for r in report.listed_gaps} <= {SHAPE}
     assert {r.family for r in report.covered} >= {REFUSAL, WARNING, AUDIT}
-    assert Rule(WARNING, "MixedReceiptModel") in report.covered  # not reachable from the shipped example
+    assert Rule(WARNING, "MixedReceiptModel") in report.covered  # reachable from the shipped example since TD-23's fix
     assert Rule(REFUSAL, "IdentityStrategyUnsupported") in report.covered
 
 

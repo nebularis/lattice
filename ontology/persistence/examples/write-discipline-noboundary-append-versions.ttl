@@ -1,0 +1,30 @@
+# A family with no boundary that appends versions (formal-methods H2.6c, DRAFT for the maintainer's review).
+# An offer is a version, revised by writing a new node in the data graph beside the old one. With no
+# boundary there is no aggregate to sweep, so the family names the graph that holds its versions, and
+# the version row guards the write. The dataset-level epoch guard is declared, so this example also
+# exercises the dataset-guard variant.
+@prefix dal:  <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:   <https://example.org/offers#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+ex:OfferClass a dal:ClassScope ;
+    dal:targetClass ex:Offer ;
+    dal:priority "20"^^xsd:integer .
+
+ex:OfferBoundaryProfile a dal:AggregateBoundaryProfile ;
+    dal:appliesTo ex:OfferClass ;
+    dal:strategy  dal:NoBoundary ;
+    dal:dataGraph <urn:g:offers> .
+
+ex:OfferConcurrencyProfile a dal:ConcurrencyProfile ;
+    dal:appliesTo          ex:OfferClass ;
+    dal:concurrencyProfile dal:Optimistic .
+
+ex:OfferWriteProfile a dal:WriteDisciplineProfile ;
+    dal:appliesTo       ex:OfferClass ;
+    dal:writeDiscipline dal:AppendVersions .
+
+ex:OfferEpoch a dal:EpochProfile ;
+    dal:appliesTo       ex:OfferClass ;
+    dal:epochGuardScope dal:DatasetLevelGuard ;
+    dal:epochAuthority  dal:ExternalHighWaterMark .

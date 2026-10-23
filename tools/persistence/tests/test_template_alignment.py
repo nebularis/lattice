@@ -1,75 +1,56 @@
 # SPDX-License-Identifier: MPL-2.0
 # NB: This module has been produced using GenAI
 
-"""Template alignment with the remediated patterns guide
+"""Builder alignment with the remediated patterns guide
 (iri-patterns-post-3866b21-remediation, 2026-09-23): lazy epoch rebase
 under dal:DatasetLevelGuard, request digests on txn claims, optional heads,
 typed version rows, key claims in the keys graph, txn-cardinality and
 receipt-side audits, and a row-driven gap scan. Each assertion names the
-guide section it checks."""
+guide section it checks. Since H2.9 the text read is the rendered output of
+each builder, where it was the Mustache template."""
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import pytest
 from rdflib import Graph, URIRef
 from rdflib.plugins.sparql import prepareQuery, prepareUpdate
 
+from persistence.builders import BUILDERS, build
 from persistence.compiler import compile_to_graph
 from persistence.instantiate import instantiate_profile
-from persistence.render import REQUEST_TIME_SLOTS, load_template, render
-from rdflib import URIRef
+from persistence.ir_render import render
 
-from persistence.paths import Opt, Step
-from persistence.terms import Iri, Literal, PropertyPath
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 SPEC_TTL = REPO_ROOT / "ontology" / "persistence" / "spec" / "persistence.ttl"
 EXAMPLES_DIR = REPO_ROOT / "ontology" / "persistence" / "examples"
-TEMPLATE_DIR = REPO_ROOT / "tools" / "persistence" / "src" / "persistence" / "templates"
 
+from builder_goldens import CANONICAL_CONTEXT
 from request_slots import fill_request_slots
 
-ALL_TEMPLATES = sorted(p.name for p in TEMPLATE_DIR.glob("*.mustache"))
+ALL_BUILDERS = sorted(BUILDERS)
 DATASET_GUARD_ROW_WRITERS = [
-    "cas-replace-named-graph-dataset-guard.mustache",
-    "cas-replace-composite-property-dataset-guard.mustache",
-    "tombstone-delete-named-graph-dataset-guard.mustache",
-    "append-event-dataset-guard.mustache",
+    "cas-replace-named-graph-dataset-guard",
+    "cas-replace-composite-property-patch-log-dataset-guard",
+    "tombstone-delete-named-graph-dataset-guard",
+    "append-event-dataset-guard",
 ]
 CAS_AND_TOMBSTONE = [
-    "cas-replace-named-graph.mustache",
-    "cas-replace-named-graph-dataset-guard.mustache",
-    "cas-replace-composite-property.mustache",
-    "cas-replace-composite-property-dataset-guard.mustache",
-    "tombstone-delete-named-graph.mustache",
-    "tombstone-delete-named-graph-dataset-guard.mustache",
+    "cas-replace-named-graph",
+    "cas-replace-named-graph-dataset-guard",
+    "cas-replace-composite-property-patch-log",
+    "cas-replace-composite-property-patch-log-dataset-guard",
+    "tombstone-delete-named-graph",
+    "tombstone-delete-named-graph-dataset-guard",
 ]
+_SLOT_MARKER = re.compile(r"\{\{\{[A-Za-z_]\w*\}\}\}")
 
 
 def _full_context() -> dict:
-    return {
-        "shard": 17,
-        "logGraphPrefix": Iri.encode("urn:g:txlog/"),
-        "txnGraph": Iri.encode("urn:g:txn"),
-        "keysGraph": Iri.encode("urn:g:keys"),
-        "keyQuarantineGraph": Iri.encode("urn:g:key-quarantine"),
-        "retentionGraph": Iri.encode("urn:g:retention"),
-        "pinnedGraph": Iri.encode("urn:g:txlog/pinned"),
-        "eventGraphPrefix": Iri.encode("urn:g:events/order/"),
-        "metaGraphPrefix": Iri.encode("urn:g:meta/17"),
-        "datasetGraph": Iri.encode("urn:g:dataset"),
-        "datasetNode": Iri.encode("urn:g:dataset"),
-        "graphPrefix": Literal.encode("urn:g:orders/"),
-        "graphSuffix": Literal.encode("/data"),
-        "guardProperty": Iri.encode("https://example.org/lending#status"),
-        "ownedPath": PropertyPath.encode(Opt(Step(URIRef("https://example.org/lending#lineItem")))),
-        "dataGraph": Iri.encode("urn:g:orders"),
-        "constraintId": Literal.encode("example-constraint"),
-        # persistence-compiler-iri-sync Slice 5.
-        "mergeRelation": Iri.encode("https://example.org/lending#supersededBy"),
-    }
+    return dict(CANONICAL_CONTEXT)
 
 
 def _parse(text: str) -> None:
@@ -81,35 +62,30 @@ def _parse(text: str) -> None:
 
 
 def _raw(name: str) -> str:
-    return load_template(name)
+    """The rendered text of the builder ``name``, with its request-time slots still marked."""
+    return render(build(name, _full_context()))
 
 
-@pytest.mark.parametrize("template", ALL_TEMPLATES)
-def test_every_template_parses_with_a_complete_context(template):
+@pytest.mark.parametrize("builder", ALL_BUILDERS)
+def test_every_builder_parses_with_a_complete_context(builder):
     """Stricter than the injection corpus, which accepts a parse failure as
-    a safe outcome: with every slot bound, every template must parse."""
-    _parse(render(_raw(template), _full_context()))
+    a safe outcome: with every slot filled, every builder's text must parse."""
+    _parse(_raw(builder))
 
 
-@pytest.mark.parametrize("template", ALL_TEMPLATES)
-def test_request_time_slots_are_the_only_mustache_left_after_instantiate(template):
-    """Slice 2: the instantiated SPARQL carries standard Mustache tags for
-    request-time values and nothing else a second Mustache pass could
-    misread."""
-    text = render(_raw(template), _full_context())
-    stripped = text
-    for slot in REQUEST_TIME_SLOTS:
-        stripped = stripped.replace("{{{" + slot + "}}}", "")
+@pytest.mark.parametrize("builder", ALL_BUILDERS)
+def test_request_time_slots_are_the_only_markers_left_after_instantiate(builder):
+    """Slice 2: the instantiated SPARQL carries plain-text markers for
+    request-time values and nothing else a substitution could misread."""
+    stripped = _SLOT_MARKER.sub("", _raw(builder))
     assert "{{" not in stripped and "}}" not in stripped
 
 
-@pytest.mark.parametrize(
-    "template", [t for t in ALL_TEMPLATES if any("{{{" + s + "}}}" in _raw(t) for s in REQUEST_TIME_SLOTS)]
-)
-def test_unrendered_request_time_slot_fails_closed(template):
-    """A caller that forgets to render a request-time slot gets a parse
+@pytest.mark.parametrize("builder", [b for b in ALL_BUILDERS if _SLOT_MARKER.search(_raw(b))])
+def test_unrendered_request_time_slot_fails_closed(builder):
+    """A caller that forgets to fill a request-time slot gets a parse
     error, never a silently empty payload or an empty VALUES block."""
-    text = render(_raw(template), _full_context())
+    text = _raw(builder)
     with pytest.raises(Exception):
         if any(k in text for k in ["INSERT", "DELETE"]):
             prepareUpdate(text)
@@ -117,116 +93,108 @@ def test_unrendered_request_time_slot_fails_closed(template):
             prepareQuery(text)
 
 
-def test_request_time_slot_cannot_be_bound_at_compile_time():
-    ctx = _full_context()
-    ctx["payloadTriples"] = Literal.encode("x")
-    with pytest.raises(ValueError):
-        render(_raw("unconditional-write.mustache"), ctx)
-
-
-@pytest.mark.parametrize("template", DATASET_GUARD_ROW_WRITERS)
-def test_dataset_guard_rebases_row_epoch_instead_of_guarding_it(template):
+@pytest.mark.parametrize("builder", DATASET_GUARD_ROW_WRITERS)
+def test_dataset_guard_rebases_row_epoch_instead_of_guarding_it(builder):
     """Guide §10.1, §19.1 (review A1): guarding on dataset epoch and row
     epoch together wedges every row after a bump."""
-    text = _raw(template)
-    assert "{{{datasetGraph}}} { {{{datasetNode}}} pat:epoch $epoch }" in text
+    text = _raw(builder)
+    assert "GRAPH <urn:g:dataset> { <urn:g:dataset> pat:epoch $epoch }" in text
     assert "pat:epoch ?rowEpoch" in text
     assert "pat:epoch $epoch ; pat:seq $expectedSeq" not in text
     assert "{ $stream pat:epoch $epoch ; pat:seq ?n }" not in text
 
 
-@pytest.mark.parametrize("template", CAS_AND_TOMBSTONE)
-def test_head_is_read_optionally(template):
+@pytest.mark.parametrize("builder", CAS_AND_TOMBSTONE)
+def test_head_is_read_optionally(builder):
     """Guide §14.2, §24.1 (review B2): a pre-created row has no head."""
-    assert "OPTIONAL { $root pat:head ?prevRev }" in _raw(template)
+    assert "OPTIONAL { $root pat:head ?prevRev }" in _raw(builder)
 
 
 @pytest.mark.parametrize(
-    "template",
-    [t for t in ALL_TEMPLATES if "INSERT" in _raw(t) and ("pat:rev $newRev" in _raw(t) or "pat:rev ?rev" in _raw(t))],
+    "builder",
+    [t for t in ALL_BUILDERS if "INSERT" in _raw(t) and ("pat:rev $newRev" in _raw(t) or "pat:rev ?rev" in _raw(t))],
 )
-def test_every_txn_claim_records_the_request_digest(template):
+def test_every_txn_claim_records_the_request_digest(builder):
     """Guide §15.2 (review A5)."""
-    assert "pat:requestDigest $requestDigest" in _raw(template)
+    assert "pat:requestDigest $requestDigest" in _raw(builder)
 
 
-@pytest.mark.parametrize("template", [t for t in ALL_TEMPLATES if "pat:txn" in _raw(t)])
-def test_receipt_txn_is_a_string(template):
+@pytest.mark.parametrize("builder", [t for t in ALL_BUILDERS if "pat:txn" in _raw(t)])
+def test_receipt_txn_is_a_string(builder):
     """Appendix B pins pat:txn to xsd:string; the claim subject is an IRI."""
-    text = _raw(template)
-    assert "pat:txn $txnId" not in text
+    assert "pat:txn $txnId" not in _raw(builder)
 
 
 @pytest.mark.parametrize(
-    "template",
+    "builder",
     [
-        "create-if-absent-named-graph.mustache",
-        "create-if-absent-named-graph-dataset-guard.mustache",
-        "bootstrap-version-row.mustache",
-        "bootstrap-version-row-dataset-guard.mustache",
+        "create-if-absent-named-graph",
+        "create-if-absent-named-graph-dataset-guard",
+        "bootstrap-version-row",
+        "bootstrap-version-row-dataset-guard",
     ],
 )
-def test_row_creation_types_the_version_row(template):
+def test_row_creation_types_the_version_row(builder):
     """Guide Appendix B (review A6): shapes target pat:VersionRow."""
-    assert "a pat:VersionRow" in _raw(template)
+    assert "a pat:VersionRow" in _raw(builder)
 
 
 @pytest.mark.parametrize(
-    "template",
+    "builder",
     [
-        "create-if-absent-named-graph-dataset-guard.mustache",
-        "bootstrap-version-row-dataset-guard.mustache",
+        "create-if-absent-named-graph-dataset-guard",
+        "bootstrap-version-row-dataset-guard",
     ],
 )
-def test_dataset_guard_row_creation_checks_the_epoch(template):
+def test_dataset_guard_row_creation_checks_the_epoch(builder):
     """Guide §14.2, §19.3 (review B3)."""
-    assert "{{{datasetGraph}}} { {{{datasetNode}}} pat:epoch $epoch }" in _raw(template)
+    assert "GRAPH <urn:g:dataset> { <urn:g:dataset> pat:epoch $epoch }" in _raw(builder)
 
 
 @pytest.mark.parametrize(
-    "template",
+    "builder",
     [
-        "key-claim-write.mustache",
-        "key-claim-write-dual.mustache",
-        "key-claim-retire.mustache",
-        "key-claim-duplicate-audit.mustache",
-        "key-claim-merge-rewrite.mustache",
-        "key-claim-quarantine.mustache",
+        "key-claim-write",
+        "key-claim-write-dual",
+        "key-claim-retire",
+        "key-claim-duplicate-audit",
+        "key-claim-merge-rewrite",
+        "key-claim-quarantine",
     ],
 )
-def test_key_claims_live_in_the_keys_graph(template):
-    text = _raw(template)
-    assert "{{{keysGraph}}}" in text
-    assert "{{{txnGraph}}}" not in text
+def test_key_claims_live_in_the_keys_graph(builder):
+    text = _raw(builder)
+    assert "<urn:g:keys>" in text
+    assert "<urn:g:txn>" not in text
 
 
 def test_fork_audit_counts_txn_claims_not_shared_predecessors():
     """Guide F5 (review A6): deterministic revision IRIs make a
     shared-prevRev grouping unable to fire."""
-    text = _raw("fork-detection-audit.mustache")
-    assert "prevRev" not in text.split("}}", 1)[1]
+    text = _raw("fork-detection-audit")
+    assert "prevRev" not in text
     assert "COUNT(DISTINCT ?t)" in text
 
 
-@pytest.mark.parametrize("template", ALL_TEMPLATES)
-def test_no_template_scans_graphs_by_prefix(template):
+@pytest.mark.parametrize("builder", ALL_BUILDERS)
+def test_no_builder_scans_graphs_by_prefix(builder):
     """Guide S3, F6: enumerate registry-listed graphs, never STRSTARTS."""
-    assert "STRSTARTS" not in _raw(template)
+    assert "STRSTARTS" not in _raw(builder)
 
 
 def test_gap_scan_is_row_driven_with_low_water_mark():
     """Guide S3 (review B7)."""
-    text = _raw("gap-scan-audit.mustache")
+    text = _raw("gap-scan-audit")
     assert "?target a pat:VersionRow ; pat:seq ?S" in text
     assert "pat:retentionLowWaterMark" in text
     assert 'COALESCE(?lwm, "1"^^xsd:long)' in text
-    assert "HAVING (COUNT(DISTINCT ?seq) != (?S - ?L) + 1)" in text
+    assert "HAVING (COUNT(DISTINCT ?seq) != ((?S - ?L) + 1))" in text
     assert "$epoch" not in text
 
 
 def test_append_uses_portable_typing_and_padded_revision_iri():
     """Guide §10.1 (review B14): STRDT, not ?n + 1; 19-digit padding."""
-    for name in ["append-event.mustache", "append-event-dataset-guard.mustache"]:
+    for name in ["append-event", "append-event-dataset-guard"]:
         text = _raw(name)
         assert "STRDT(STR(?n + 1), xsd:long)" in text
         assert '"0000000000000000000"' in text
@@ -243,8 +211,8 @@ def _compile(fixture: str, cls: str):
 def test_append_stream_under_dataset_guard_selects_guarded_variants():
     out, compiled = _compile("append-stream-dataset-guard.ttl", "https://example.org/lending#DecisionStream")
     by_op = {o.operation: o.template_id for o in compiled[0].operations}
-    assert by_op["append"] == "append-event-dataset-guard.mustache"
-    assert by_op["bootstrap-version-row"] == "bootstrap-version-row-dataset-guard.mustache"
+    assert by_op["append"] == "append-event-dataset-guard"
+    assert by_op["bootstrap-version-row"] == "bootstrap-version-row-dataset-guard"
     rendered = instantiate_profile(out)
     assert "<urn:g:events/decisionstream/>" in rendered["append"]
     _parse(rendered["append"])
@@ -253,7 +221,7 @@ def test_append_stream_under_dataset_guard_selects_guarded_variants():
 def test_named_graph_under_dataset_guard_selects_guarded_create():
     _, compiled = _compile("epoch-dataset-level-guard.ttl", "https://example.org/lending#LoanApplication")
     by_op = {o.operation: o.template_id for o in compiled[0].operations}
-    assert by_op["create-if-absent"] == "create-if-absent-named-graph-dataset-guard.mustache"
+    assert by_op["create-if-absent"] == "create-if-absent-named-graph-patch-log-dataset-guard"  # dal:PatchLog (H2.6d)
 
 
 def test_every_profile_gets_the_receipt_side_audits():

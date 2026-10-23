@@ -1,0 +1,5 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# A run with --no-parameter-guards, which leaves every parameter test to the caller and says so (H2.8b, TD-34, TD-44).
+# base: baseline-single-class.ttl
+# option: no-parameter-guards

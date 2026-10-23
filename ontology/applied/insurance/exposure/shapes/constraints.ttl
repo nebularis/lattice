@@ -33,6 +33,7 @@ aeo:PerilCompletenessShape a sh:NodeShape ;
         sh:message "A location exposed to a peril (through a pool participation's peril scope) should have a value, in some assessment of the location or of an asset located there, for each attribute type that peril or a broader cause concept names relevant." ;
         sh:select """
             PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
             PREFIX prl: <https://www.nebularis.org/neuro-semantic/insurance/peril#>
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             SELECT $this WHERE {
@@ -45,7 +46,8 @@ aeo:PerilCompletenessShape a sh:NodeShape ;
                   ?asmt aeo:assesses $this .
                 } UNION {
                   ?asmt aeo:assesses ?asset .
-                  ?asset aeo:locatedAt $this .
+                  ?asset aeo:locatedAt ?locationIdentity .
+                  $this fnd:hasIdentity ?locationIdentity .
                 }
                 ?asmt aeo:hasAttribute ?av .
                 ?av aeo:attributeType ?type .

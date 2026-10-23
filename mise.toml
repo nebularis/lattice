@@ -24,7 +24,7 @@ depends = ["bootstrap:python", "bootstrap:frontend"]
 [tasks."bootstrap:python"]
 description = "Install every Python package of the repository into this checkout's .venv in one resolve"
 depends = ["bootstrap:pip"]
-run = "python -m pip install -c requirements-lock.txt \".[reasoning,test]\" -e \"./workers[test,authoring]\" -e ./tools/mork -e \"./tools/mork_compilers[test]\" -e ./tools/surface -e \"./tools/persistence[test]\" -e \"./tools/vocabulary[test]\" -e \"./tools/reference/eligibility[test]\" -e \"./packages/minting/python[test]\""
+run = "python -m pip install -c requirements-lock.txt \".[reasoning,test]\" -e \"./workers[test,authoring]\" -e ./tools/mork -e \"./tools/mork_compilers[test]\" -e ./tools/surface -e ./packages/persistence/python -e \"./tools/persistence[test]\" -e \"./tools/vocabulary[test]\" -e \"./tools/reference/eligibility[test]\" -e \"./packages/minting/python[test]\" -e \"./tools/testing/oxigraph[test]\" -e \"./tools/testing/mem_check[test]\""
 
 # A virtual environment that mise creates with uv has no pip. This puts one in, and does nothing
 # where pip is already there.
@@ -60,12 +60,22 @@ run = "python -m pip install -e ./tools/surface"
 [tasks."bootstrap:persistence"]
 depends = ["bootstrap:pip"]
 description = "Install the persistence profile compiler package (ADR-A78/A79)"
-run = "python -m pip install -e \"./tools/persistence[test]\""
+run = "python -m pip install -e ./packages/persistence/python -e \"./tools/persistence[test]\""
 
 [tasks."bootstrap:testing-oxigraph"]
 depends = ["bootstrap:pip"]
-description = "Install the Oxigraph test-support package (ADR-A125). The default check does not need it"
+description = "Install the Oxigraph test-support package, the default engine of the persistence tests (ADR-A125)"
 run = "python -m pip install -e \"./tools/testing/oxigraph[test]\""
+
+[tasks."bootstrap:testing-mem-check"]
+depends = ["bootstrap:pip"]
+description = "Install mem_check, which says how much memory is available and how many test workers fit in it (ADR-A125). Standard library only"
+run = "python -m pip install -e \"./tools/testing/mem_check[test]\""
+
+[tasks."check:testing-mem-check"]
+depends = ["bootstrap:testing-mem-check"]
+description = "Run mem_check's tests (ADR-A125)"
+run = "python -m pytest tools/testing/mem_check/tests -q"
 
 [tasks."bootstrap:vocabulary"]
 depends = ["bootstrap:pip"]
@@ -83,7 +93,7 @@ run = "corepack enable && yarn install --immutable"
 
 [tasks.check]
 description = "Run all repository validation tasks"
-depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:reasoning-isolation", "check:minting", "check:formal-freshness", "check:catalogue", "check:agent-guidance", "build:mtp", "check:mtp", "check:authoring-tools", "check:published-decisions", "check:site-sections"]
+depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:reasoning-isolation", "check:minting", "check:persistence-library", "check:formal-freshness", "check:catalogue", "check:agent-guidance", "build:mtp", "check:mtp", "check:authoring-tools", "check:published-decisions", "check:site-sections"]
 
 [tasks.test]
 description = "Run the repository test suites"
@@ -165,6 +175,20 @@ run = "mvn -q -f packages/minting/java/pom.xml verify"
 description = "Check both identity minting libraries and the anchor vectors (the table check, which downloads the UCD, is check:minting-tables)"
 depends = ["check:minting-anchors", "check:minting-python", "check:minting-java"]
 
+[tasks."check:persistence-vectors"]
+description = "Recompute every persistence conformance vector (canonical N-Triples and request digests) with openssl and the Python standard library, sharing no code with the caller library (ADR-A132 decision 4)"
+run = "python contracts/persistence/verify-vectors.py"
+
+[tasks."bootstrap:persistence-library"]
+depends = ["bootstrap:pip"]
+description = "Install the persistence caller library (ADR-A132) with its test extra"
+run = "python -m pip install -e \"./packages/persistence/python[test]\""
+
+[tasks."check:persistence-library"]
+depends = ["check:persistence-vectors"]
+description = "Run the persistence caller library against the conformance vectors in contracts/persistence and its own tests (ADR-A132)"
+run = "python -m pytest packages/persistence/python/tests -q"
+
 [tasks."build:persistence-execution"]
 description = "Compile every ontology/persistence example and write its SPARQL and minting recipes to ontology/persistence/execution (generated, ignored by git)"
 run = """
@@ -204,8 +228,14 @@ run = "python packages/minting/tools/generate_ucd_tables.py --check"
 
 [tasks."check:persistence"]
 depends = ["check:persistence-expected-profiles"]
-description = "Run the persistence profile compiler test suite (resolver, validator, capability, injection corpus, determinism)"
-run = "python -m pytest tools/persistence/tests -q"
+description = "Run the persistence profile compiler test suite (resolver, validator, capability, injection corpus, determinism). Oxigraph is the default engine for the tests that run generated SPARQL, and conformance tests (one engine's behaviour, such as rdflib's hash-seed sweeps) run separately in check:persistence-conformance (ADR-A125). Also runs the Oxigraph adapter's own tests. Parallelised by test with -n auto --dist loadgroup (FMH-TS-1): the witness-coverage module is one group, since its tests share one slow corpus run. PYTEST_XDIST_AUTO_NUM_WORKERS sets what auto means, e.g. on a machine whose efficiency cores add nothing"
+run = "python -m pytest tools/testing/oxigraph/tests tools/persistence/tests -q -n auto --dist loadgroup -m \"not conformance\""
+env = { PERSISTENCE_ENGINES_REQUIRED = "1" }
+
+[tasks."check:persistence-conformance"]
+description = "Run the persistence tests on every engine we have (rdflib and Oxigraph) and the conformance tests that check:persistence leaves out: the generated SPARQL on rdflib, the hash-seed sweeps and the probes of each engine's behaviour (ADR-A125). Run on demand and before a merge into main, not part of check. A new engine is added to PERSISTENCE_ENGINES here"
+run = "python -m pytest tools/testing/oxigraph/tests tools/persistence/tests -q -n auto --dist loadgroup"
+env = { PERSISTENCE_ENGINES = "rdflib,oxigraph", PERSISTENCE_ENGINES_REQUIRED = "1" }
 
 [tasks."check:persistence-expected-profiles"]
 description = "Check that the expected compiled profiles under ontology/persistence/test/expected-profiles are what the builders and compile give now (formal-methods H2.6). Fails with the names of the stale files. Part of check:persistence"
@@ -219,10 +249,14 @@ run = "python tools/persistence/tests/expected_profiles.py --write"
 description = "Record the version and a digest of the text each persistence builder renders, after bumping BUILDER_VERSIONS in persistence/contract.py. Refuses a changed text under an unchanged version"
 run = "python tools/persistence/tests/builder_goldens.py --update"
 
-[tasks."check:persistence-oxigraph"]
+[tasks."build:persistence-membership-fixtures"]
+description = "Regenerate the TriG fixtures of E5 and E7 under each membership encoding in ontology/persistence/test/membership (formal-methods H2.6f), after a change to the append-version builders"
+run = "python tools/persistence/tests/membership_fixtures.py --write"
+
+[tasks."check:persistence-membership"]
 depends = ["bootstrap:testing-oxigraph"]
-description = "Run the persistence engine tests on Oxigraph as well as rdflib (ADR-A125). Not part of check"
-run = "python -m pytest tools/testing/oxigraph/tests -q && python -m pytest tools/persistence/tests -q -m oxigraph"
+description = "Measure full, delta and in-place-with-patch-log membership on rdflib and Oxigraph (ADR-A124, formal-methods H2.6f). Run on demand, not part of check. Fails on a wrong count, never on time. MEMBERSHIP_COST_MAX caps the versions"
+run = "python -m pytest benchmark/persistence-membership -q -p no:cacheprovider && python benchmark/persistence-membership/check.py"
 
 [tasks."check:persistence-composite-cost"]
 depends = ["bootstrap:testing-oxigraph"]

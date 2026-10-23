@@ -665,4 +665,5 @@ The module's entry in the [repository catalogue](../../repository-catalogue.md)
 [module]
 kind = "standalone"
 roles = ["examples", "mtp", "shapes", "spec", "targets", "test"]
+imports = ["foundation", "eligibility"]
 ```

@@ -1,8 +1,8 @@
 # persistence-compiler-iri-sync Slice 5: a claim-secret rotation in
 # progress (guide §6.1). Both scheme versions are dal:Dual at once, so
-# key-claim-write-dual.mustache guards and inserts both versions' claim
+# key-claim-write-dual guards and inserts both versions' claim
 # IRIs for the same owner in one operation, instead of the single-scheme
-# key-claim-write.mustache.
+# key-claim-write.
 @prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
 @prefix ex:  <https://example.org/lending#> .
 

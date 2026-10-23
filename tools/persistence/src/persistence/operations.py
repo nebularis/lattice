@@ -1,15 +1,15 @@
 # SPDX-License-Identifier: MPL-2.0
 # NB: This module has been produced using GenAI
 
-"""Template selection (sketch §5.2 "Select" stage): a fixed lookup table
-keyed by resolved dimension values, never a live template file read. This
+"""Operation selection (sketch §5.2 "Select" stage): a fixed lookup table
+keyed by resolved dimension values, naming the builder of each operation. This
 stage cannot fail once validation has passed (ADR-A79 point 3): it is a
 lookup, not a decision with its own failure modes.
 
 Every operation's parameter bindings are configuration-time constants only
 (a shard number, a graph-IRI prefix, a log-bucket property IRI). Genuine
 SPARQL variables (``$root``, ``$expectedSeq``, the payload) are never
-computed here; they stay unbound in the emitted templates for the
+computed here; they stay unbound in the builders' output for the
 ``instantiate`` stage to leave untouched (sketch §5.2, ADR-A79 point 3).
 """
 
@@ -36,6 +36,9 @@ class ParameterBinding:
 
 @dataclass(frozen=True)
 class GeneratedOperation:
+    """``template_id`` is the identity of the operation's builder in :data:`persistence.builders.BUILDERS`, the ``dal:templateId`` of the
+    compiled profile."""
+
     operation: str
     template_id: str
     bindings: list[ParameterBinding] = field(default_factory=list)
@@ -74,6 +77,12 @@ def select_operations(
     boundary = _local(dimensions["aggregateBoundary"].value)
     concurrency = _local(dimensions["concurrencyProfile"].value)
     ordering = _local(dimensions["orderingGrain"].value)
+    # dal:writeDiscipline (H2.6c). The default, dal:InPlace, is every selection below that is not one of the two branches it names.
+    discipline = _local(dimensions["writeDiscipline"].value)
+    # dal:receiptModel (H2.6d). dal:PatchLog selects the variants that write delta graphs, and dal:NoReceipt the variants that write no
+    # receipt. The validator has refused dal:NoReceipt with an append discipline. Any other model writes the receipt, as it always has.
+    receipt_model = _local(dimensions["receiptModel"].value)
+    receipt_tag = {"PatchLog": "-patch-log", "NoReceipt": "-no-receipt"}.get(receipt_model, "")
     meta = dimensions["metaTopology"]
     shard_count = int(meta.extra.get("metaShards", DEFAULT_META_SHARDS))
     shard = _shard_for(target, shard_count)
@@ -90,7 +99,7 @@ def select_operations(
     # operation instead, which the caller runs when the id is allocated.
     pre_created_row = _local(dimensions["firstWrite"].value) == "PreCreatedRow"
     bootstrap_op = GeneratedOperation(
-        "bootstrap-version-row", f"bootstrap-version-row{guard_suffix}.mustache", []
+        "bootstrap-version-row", f"bootstrap-version-row{guard_suffix}", []
     )
 
     ops: list[GeneratedOperation] = []
@@ -138,21 +147,35 @@ def select_operations(
             ParameterBinding("graphSuffix", "String", Literal.encode(graph_suffix)),
         ]
 
-    if concurrency == "Optimistic":
+    if discipline == "AppendVersions":
+        # Nothing is swept, so there is no boundary path and no tombstone, which would sweep the history. The validator has refused
+        # every configuration this cannot serve (AppendVersionsUnsupported): optimistic concurrency, and a composite family or a
+        # family with no boundary and a data graph. The first version is written at seq 0 onto a row that bootstrap-version-row
+        # created, so the version row's current version is only ever set by one operation, whatever dal:firstWrite says.
+        data_graph = ParameterBinding("dataGraph", "Iri", Iri.encode(str(dimensions["aggregateBoundary"].extra["dataGraph"])))
+        ops.append(GeneratedOperation(bootstrap_op.operation, bootstrap_op.template_id, common_bindings))
+        # dal:membershipEncoding (H2.6f). Under dal:DeltaMembership the write states what changed, and the family gets the query that
+        # resolves a version's members from the chain, which holds the data graph and nothing else.
+        delta = _local(dimensions["membershipEncoding"].value) == "DeltaMembership"
+        delta_tag = "-delta" if delta else ""
+        ops.append(GeneratedOperation("append-version", f"append-version{delta_tag}{guard_suffix}", common_bindings + [data_graph]))
+        if delta:
+            ops.append(GeneratedOperation("members", "members", [data_graph]))
+    elif concurrency == "Optimistic" and discipline != "AppendRecords":
         if boundary == "NamedGraphBoundary":
             cas_template = (
-                "cas-replace-named-graph-dataset-guard.mustache" if dataset_level_guard
-                else "cas-replace-named-graph.mustache"
+                f"cas-replace-named-graph{receipt_tag}-dataset-guard" if dataset_level_guard
+                else f"cas-replace-named-graph{receipt_tag}"
             )
             tombstone_template = (
-                "tombstone-delete-named-graph-dataset-guard.mustache" if dataset_level_guard
-                else "tombstone-delete-named-graph.mustache"
+                f"tombstone-delete-named-graph{receipt_tag}-dataset-guard" if dataset_level_guard
+                else f"tombstone-delete-named-graph{receipt_tag}"
             )
             if pre_created_row:
                 ops.append(GeneratedOperation(bootstrap_op.operation, bootstrap_op.template_id, common_bindings))
             else:
                 ops.append(GeneratedOperation(
-                    "create-if-absent", f"create-if-absent-named-graph{guard_suffix}.mustache", common_bindings
+                    "create-if-absent", f"create-if-absent-named-graph{receipt_tag}{guard_suffix}", common_bindings
                 ))
             ops.append(GeneratedOperation("cas-replace", cas_template, common_bindings))
             ops.append(GeneratedOperation("tombstone-delete", tombstone_template, common_bindings))
@@ -168,12 +191,12 @@ def select_operations(
             data_graph = ParameterBinding("dataGraph", "Iri", Iri.encode(str(boundary_dim.extra["dataGraph"])))
             bindings = common_bindings + [ParameterBinding("ownedPath", "PropertyPath", PropertyPath.encode(owned_path)), data_graph]
             composite_template = (
-                "cas-replace-composite-property-dataset-guard.mustache" if dataset_level_guard
-                else "cas-replace-composite-property.mustache"
+                f"cas-replace-composite-property{receipt_tag}-dataset-guard" if dataset_level_guard
+                else f"cas-replace-composite-property{receipt_tag}"
             )
             tombstone_template = (
-                "tombstone-delete-composite-dataset-guard.mustache" if dataset_level_guard
-                else "tombstone-delete-composite.mustache"
+                f"tombstone-delete-composite{receipt_tag}-dataset-guard" if dataset_level_guard
+                else f"tombstone-delete-composite{receipt_tag}"
             )
             if pre_created_row:
                 ops.append(GeneratedOperation(bootstrap_op.operation, bootstrap_op.template_id, bindings))
@@ -181,27 +204,28 @@ def select_operations(
                 # a create sweeps nothing, so it needs the data graph and no path
                 create_bindings = common_bindings + [data_graph]
                 ops.append(GeneratedOperation(
-                    "create-if-absent", f"create-if-absent-composite{guard_suffix}.mustache", create_bindings
+                    "create-if-absent", f"create-if-absent-composite{receipt_tag}{guard_suffix}", create_bindings
                 ))
             ops.append(GeneratedOperation("cas-replace", composite_template, bindings))
             ops.append(GeneratedOperation("tombstone-delete", tombstone_template, bindings))
         elif boundary == "NoBoundary":
-            guard_prop = dimensions["concurrencyProfile"].extra.get("valueGuardProperty")
-            bindings = common_bindings + (
-                [ParameterBinding("guardProperty", "Iri", Iri.encode(str(guard_prop)))]
-                if guard_prop is not None
-                else []
-            )
-            ops.append(GeneratedOperation("cas-replace", "cas-replace-value-guard.mustache", bindings))
-    elif concurrency == "AppendOnly" or ordering == "EventGrain":
+            # The values live in the family's data graph, which the validator has required (MissingDataGraph, H2.7-Q1), and the
+            # value guard property, which it has required too (NoBoundaryConcurrencyConflict).
+            guard_prop = dimensions["concurrencyProfile"].extra["valueGuardProperty"]
+            bindings = common_bindings + [
+                ParameterBinding("guardProperty", "Iri", Iri.encode(str(guard_prop))),
+                ParameterBinding("dataGraph", "Iri", Iri.encode(str(dimensions["aggregateBoundary"].extra["dataGraph"]))),
+            ]
+            ops.append(GeneratedOperation("cas-replace", "cas-replace-value-guard", bindings))
+    elif concurrency == "AppendOnly" or ordering == "EventGrain" or discipline == "AppendRecords":
         # A stream's version row is bootstrapped eagerly before any append
         # (guide §10.1): a lazy first write would reintroduce the race.
         ops.append(GeneratedOperation(bootstrap_op.operation, bootstrap_op.template_id, common_bindings))
-        ops.append(GeneratedOperation("append", f"append-event{guard_suffix}.mustache", common_bindings))
+        ops.append(GeneratedOperation("append", f"append-event{guard_suffix}", common_bindings))
     else:
         # ProvidedConcurrency or LockingConcurrency (a marker only, sketch
         # §3.3.1): no guard is generated either way.
-        ops.append(GeneratedOperation("unconditional-write", "unconditional-write.mustache", common_bindings))
+        ops.append(GeneratedOperation("unconditional-write", "unconditional-write", common_bindings))
 
     for constraint in uniqueness:
         key_bindings = common_bindings + [
@@ -211,14 +235,14 @@ def select_operations(
         # (guide §6.1). Two active scheme versions mean the guarded write
         # must guard-and-insert both claim IRIs in one operation.
         write_template = (
-            "key-claim-write-dual.mustache" if constraint.get("dualClaimScheme") else "key-claim-write.mustache"
+            "key-claim-write-dual" if constraint.get("dualClaimScheme") else "key-claim-write"
         )
         ops.append(
             GeneratedOperation(f"key-claim-write:{constraint['constraintId']}", write_template, key_bindings)
         )
         ops.append(
             GeneratedOperation(
-                f"key-claim-retire:{constraint['constraintId']}", "key-claim-retire.mustache", key_bindings
+                f"key-claim-retire:{constraint['constraintId']}", "key-claim-retire", key_bindings
             )
         )
         # persistence-compiler-iri-sync Slice 5 (decision 1, Option A): the
@@ -238,21 +262,21 @@ def select_operations(
             ops.append(
                 GeneratedOperation(
                     f"key-claim-merge-rewrite:{constraint['constraintId']}",
-                    "key-claim-merge-rewrite.mustache", merge_bindings,
+                    "key-claim-merge-rewrite", merge_bindings,
                 )
             )
         elif on_violation == "Quarantine":
             ops.append(
                 GeneratedOperation(
                     f"key-claim-quarantine:{constraint['constraintId']}",
-                    "key-claim-quarantine.mustache", key_bindings,
+                    "key-claim-quarantine", key_bindings,
                 )
             )
         else:
             ops.append(
                 GeneratedOperation(
                     f"key-claim-duplicate-audit:{constraint['constraintId']}",
-                    "key-claim-duplicate-audit.mustache", key_bindings,
+                    "key-claim-duplicate-audit", key_bindings,
                 )
             )
 
@@ -263,14 +287,37 @@ def select_operations(
     registry = dimensions["registryGraph"].value
     if registry is not None:
         audit_bindings.append(ParameterBinding("registryGraph", "Iri", Iri.encode(str(registry))))
-    ops.append(GeneratedOperation("gap-scan-audit", "gap-scan-audit.mustache", audit_bindings))
-    ops.append(GeneratedOperation("fork-detection-audit", "fork-detection-audit.mustache", audit_bindings))
-    # Receipt-side forms of the fork audit, which survive txn-claim pruning
-    # (guide §24.2).
-    ops.append(GeneratedOperation("revision-multi-txn-audit", "revision-multi-txn-audit.mustache", audit_bindings))
-    ops.append(GeneratedOperation("txn-multi-revision-audit", "txn-multi-revision-audit.mustache", audit_bindings))
+    # The audits that read receipts have nothing to read for a family that writes none (dal:NoReceipt), and the gap scan would report every
+    # one of its version rows as a gap. The fork audit reads the claims, which such a family still writes.
+    has_receipts = receipt_model != "NoReceipt"
+    if has_receipts:
+        ops.append(GeneratedOperation("gap-scan-audit", "gap-scan-audit", audit_bindings))
+    ops.append(GeneratedOperation("fork-detection-audit", "fork-detection-audit", audit_bindings))
+    if has_receipts:
+        # Receipt-side forms of the fork audit, which survive txn-claim pruning
+        # (guide §24.2).
+        ops.append(GeneratedOperation("revision-multi-txn-audit", "revision-multi-txn-audit", audit_bindings))
+        ops.append(GeneratedOperation("txn-multi-revision-audit", "txn-multi-revision-audit", audit_bindings))
+
+    # H2.8b: a family with a payload operation and a boundary shape gets the query that checks a payload against the shape, which a caller in
+    # any language runs over a local copy of its payload (ADR-A123 decision 6). A shape that owns nothing gives no path, and the query then
+    # admits the root alone. A family with no shape gets none, and the compiler reports it (UnboundedPayload).
+    tree = dimensions["aggregateBoundary"].extra.get("ownershipTree")
+    if tree is not None and any(op.template_id.startswith(PAYLOAD_TEMPLATES) for op in ops):
+        owned_path = tree.owned_path()
+        check_bindings = [ParameterBinding("payloadGraph", "Iri", Iri.encode(PAYLOAD_GRAPH))]
+        if owned_path is not None:
+            check_bindings.append(ParameterBinding("ownedPath", "PropertyPath", PropertyPath.encode(owned_path)))
+        ops.append(GeneratedOperation("payload-check", "payload-check", check_bindings))
 
     return ops
+
+
+PAYLOAD_GRAPH = "urn:g:payload"
+"""The graph a caller loads its payload into for the payload check, in a local store of its own."""
+
+PAYLOAD_TEMPLATES = ("create-if-absent", "cas-replace-named-graph", "cas-replace-composite", "append-version", "unconditional-write")
+"""The templates of the operations that take a payload for the aggregate (not the events of an append, and not a value)."""
 
 
 __all__ = ["ParameterBinding", "GeneratedOperation", "select_operations", "DEFAULT_META_SHARDS"]

@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: MPL-2.0
 
-# Shapes for persistent-foundation (ADR-A114, CCS F1, keys impact analysis P2
-# to P5). Run them on the adopter's ontology, dal: configuration and data
+# SPDX-License-Identifier: MPL-2.0
+
+# Shapes for persistent-foundation (ADR-A114). Run them on the adopter's ontology, dal: configuration and data
 # together: they read key classes from the ontology, profiles from the
 # configuration, and keys from the data. The compiler matches asserted types
 # and never reasons, so these shapes are what ties a key to the class whose
@@ -61,8 +62,8 @@ dal:KeyClassIdentityShape a sh:NodeShape ;
     ] .
 
 # A sensitive scheme's keys are claimed surrogates, never derived from the
-# value (ADR-A51), and are not public. A personal-data scheme's keys are
-# dal:PersonalData, so Persistence's erasure rules apply (keys impact P5).
+# value, and are not public. A personal-data scheme's keys are
+# dal:PersonalData, so Persistence's erasure rules apply.
 dal:SensitiveKeyClassShape a sh:NodeShape ;
     sh:targetClass fnd:KeyScheme ;
     sh:sparql [
@@ -127,7 +128,7 @@ dal:SensitiveKeyClassShape a sh:NodeShape ;
         """
     ] .
 
-# Minting and uniqueness use the scheme's normalisation (keys impact P3).
+# Minting and uniqueness use the scheme's normalisation.
 dal:KeyNormalisationShape a sh:NodeShape ;
     sh:targetClass fnd:KeyScheme ;
     sh:sparql [

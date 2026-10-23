@@ -134,10 +134,10 @@ CONVERSIONS = {
 
 def test_air26_01_intensity_document_and_common_vocab_parse_and_import():
     intensity = _intensity()
-    assert "https://www.nebularis.org/neuro-semantic/insurance/peril-vocab/0.6.0" in {
+    assert "https://www.nebularis.org/neuro-semantic/insurance/peril-vocab/0.7.0" in {
         str(o) for o in intensity.objects(None, OWL.imports)
     }
-    assert "https://www.nebularis.org/neuro-semantic/insurance/common-vocab/0.7.0" in {
+    assert "https://www.nebularis.org/neuro-semantic/insurance/common-vocab/0.8.0" in {
         str(o) for o in intensity.objects(None, OWL.imports)
     }
     common_vocab = _common_vocab()

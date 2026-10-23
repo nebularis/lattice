@@ -51,9 +51,13 @@ def _members(graph: Graph, exposure_set: Optional[URIRef], prop: URIRef, cls: UR
     return set(graph.subjects(RDF.type, cls))
 
 
-def _locations_of(graph: Graph, asset: URIRef) -> Set[URIRef]:
-    """Where an asset is: ``aeo:locatedAt``, or the location of each of its ``aeo:presence``."""
-    found = set(graph.objects(asset, AEO.locatedAt))
+def _locations_of(graph: Graph, asset: URIRef, locations: Set[URIRef]) -> Set[URIRef]:
+    """Where an asset is, as location versions of ``locations``.
+
+    ``aeo:locatedAt`` names a location identity (AIR-66), resolved through the set's own locations.
+    A presence names a location version directly."""
+    identities = set(graph.objects(asset, AEO.locatedAt))
+    found = {l for l in locations if graph.value(l, FND.hasIdentity) in identities}
     for presence in graph.objects(asset, AEO.presence):
         found.update(graph.objects(presence, AEO.presenceLocation))
     return {l for l in found if isinstance(l, URIRef)}
@@ -84,14 +88,14 @@ def exposure_units(
         asset_class = graph.value(asset, AEO.assetClass)
         if asset_class is None:
             continue
-        for location in _locations_of(graph, asset):
+        for location in _locations_of(graph, asset, locations):
             if location in locations:
                 by_place.setdefault((location, asset_class), set()).add(asset)
 
     amounts: Dict[URIRef, List[Tuple[Decimal, URIRef]]] = {}
     for valuation in valuations:
         amount = graph.value(valuation, AEO.amount)
-        target = graph.value(valuation, AEO.valueOf)
+        target = graph.value(valuation, AEO.valueOf)  # an identity (AIR-66)
         if amount is None or target is None:
             continue
         number, space = graph.value(amount, QNT.numericValue), graph.value(amount, QNT.onSpace)
@@ -106,7 +110,7 @@ def exposure_units(
     units.add((run, RDF.type, FND.DerivationRun))
 
     for (location, asset_class), members in sorted(by_place.items(), key=lambda kv: (str(kv[0][0]), str(kv[0][1]))):
-        figures = [f for asset in members for f in amounts.get(asset, [])]
+        figures = [f for asset in members for f in amounts.get(graph.value(asset, FND.hasIdentity), [])]
         spaces = {space for _, space in figures}
         for peril in perils:
             unit = _unit_node(run, location, asset_class, peril)

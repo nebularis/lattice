@@ -1,0 +1,125 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This module has been produced using GenAI
+
+"""The stored triples of the history sketch's E5 and E7 under each membership encoding (formal-methods H2.6f, plan 4.12, EX-Q2 (b)).
+
+Each fixture is a TriG file under ``ontology/persistence/test/membership/``, the data graph a family holds after its first two versions, written
+by the generated operations on rdflib and not typed by hand. E5 is a set of 500 members where one is replaced (an exposure schedule's
+locations), and E7 a set of 150 members where one is replaced (a wording's inclusions, an endorsement replacing a clause). Under
+``dal:FullMembership`` version 2 lists every member, and under ``dal:DeltaMembership`` it states one add and one drop. The version's own
+header is its type and receipt link, which both encodings write, so the count that differs is the member state, the triples of the version
+other than those two. ``mise run build:persistence-membership-fixtures`` regenerates the files, and ``test_membership_fixtures.py`` holds them
+to the operations and to their counts."""
+
+from __future__ import annotations
+
+import sys
+import warnings
+from pathlib import Path
+
+from rdflib import RDF, Dataset, Literal, URIRef
+from rdflib.namespace import XSD
+
+from persistence.builders import build
+from persistence.ir_render import render
+from persistence.terms import Iri
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
+OUT_DIR = REPO_ROOT / "ontology" / "persistence" / "test" / "membership"
+PAT = "https://example.org/lattice/patterns#"
+EX = "https://example.org/membership#"
+DATA, META, TXN = URIRef("urn:g:set"), URIRef("urn:g:meta"), URIRef("urn:g:txn")
+ROOT = URIRef("urn:set:1")
+MEMBER = URIRef(EX + "hasMember")
+SCENARIOS = {"e5": 500, "e7": 150}
+ENCODINGS = ("full", "delta")
+CONTEXT = {
+    "metaGraphPrefix": Iri.encode(str(META)), "txnGraph": Iri.encode(str(TXN)), "logGraphPrefix": Iri.encode("urn:g:txlog/"),
+    "dataGraph": Iri.encode(str(DATA)), "datasetGraph": Iri.encode("urn:g:dataset"), "datasetNode": Iri.encode("urn:g:dataset-node"),
+}
+
+
+def version(n: int) -> URIRef:
+    return URIRef(f"urn:set:1/v{n}")
+
+
+def member(n: int) -> URIRef:
+    return URIRef(f"urn:set:1/m{n}")
+
+
+def _nt(triples) -> str:
+    return " ".join(f"<{s}> <{p}> {o.n3()} ." if not isinstance(o, URIRef) else f"<{s}> <{p}> <{o}> ." for s, p, o in triples)
+
+
+def new_store() -> Dataset:
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        ds = Dataset()
+    meta = ds.graph(META)
+    for p, o in ((RDF.type, URIRef(PAT + "VersionRow")), (URIRef(PAT + "epoch"), Literal(1, datatype=XSD.long)), (URIRef(PAT + "seq"), Literal(0, datatype=XSD.long))):
+        meta.add((ROOT, p, o))
+    return ds
+
+
+def append(ds: Dataset, n: int, encoding: str, *, payload, added=(), dropped=()) -> None:
+    stem = "append-version-delta" if encoding == "delta" else "append-version"
+    text = render(build(stem, CONTEXT, guards=False)).replace("{{{payloadTriples}}}", _nt(payload))
+    if encoding == "delta":
+        text = text.replace("{{{addedMembers}}}", _nt(added)).replace("{{{droppedMembers}}}", _nt(dropped))
+    long = lambda v: Literal(v, datatype=XSD.long)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        ds.update(text, initBindings={
+            "root": ROOT, "epoch": long(1), "expectedSeq": long(n - 1), "nextSeq": long(n), "newRev": URIRef(f"urn:rev:set/{n}"),
+            "txnId": URIRef(f"urn:txn:{n}"), "requestDigest": Literal("ab" * 32), "newVersion": version(n),
+        })
+
+
+def two_versions(size: int, encoding: str) -> Dataset:
+    """Version 1 lists ``size`` members and is a checkpoint, and version 2 replaces member 0 by a new one."""
+    ds = new_store()
+    header = lambda n: [(version(n), RDF.type, URIRef(EX + "MemberSet"))]
+    first = header(1) + [(version(1), MEMBER, member(i)) for i in range(size)] + [(version(1), URIRef(PAT + "checkpoint"), Literal(True))]
+    append(ds, 1, encoding, payload=first)
+    new = member(size)
+    if encoding == "full":
+        append(ds, 2, encoding, payload=header(2) + [(version(2), MEMBER, member(i)) for i in range(1, size + 1)])
+    else:
+        append(ds, 2, encoding, payload=header(2), added=[(version(2), URIRef(PAT + "addsMember"), new)], dropped=[(version(2), URIRef(PAT + "dropsMember"), member(0))])
+    return ds
+
+
+def render_trig(size: int, encoding: str) -> str:
+    ds = two_versions(size, encoding)
+    out = Dataset()
+    for s, p, o in ds.graph(DATA):
+        if p != URIRef(PAT + "recordedAt"):
+            out.graph(DATA).add((s, p, o))
+    out.bind("pat", PAT)
+    out.bind("ex", EX)
+    head = (f"# SPDX-License-Identifier: CC-BY-SA-4.0\n# The data graph of a family that appends versions, after two versions of a set of {size} members where the second\n"
+            f"# replaces one member, under dal:{'FullMembership' if encoding == 'full' else 'DeltaMembership'}. Generated by tools/persistence/tests/membership_fixtures.py.\n")
+    return head + out.serialize(format="trig")
+
+
+def files() -> dict[str, str]:
+    return {f"{s}-{e}.trig": render_trig(n, e) for s, n in SCENARIOS.items() for e in ENCODINGS}
+
+
+def main(argv: list[str]) -> int:
+    rendered = files()
+    if "--write" in argv:
+        OUT_DIR.mkdir(parents=True, exist_ok=True)
+        for name, text in rendered.items():
+            (OUT_DIR / name).write_text(text, encoding="utf-8")
+        print(f"wrote {len(rendered)} files to {OUT_DIR}")
+        return 0
+    stale = [n for n, t in rendered.items() if not (OUT_DIR / n).exists() or (OUT_DIR / n).read_text(encoding="utf-8") != t]
+    if stale:
+        print("stale: " + ", ".join(stale), file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv[1:]))

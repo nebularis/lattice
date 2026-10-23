@@ -91,7 +91,7 @@ def test_classification_documents_parse_and_import_the_pinned_versions():
         f"https://www.nebularis.org/neuro-semantic/lattice/vocabulary/{RELEASE}",
     }
     vocab_imports = {str(o) for o in _classification_vocab().objects(None, OWL.imports)}
-    assert vocab_imports == {"https://www.nebularis.org/neuro-semantic/lattice/applied/classification/0.3.0"}
+    assert vocab_imports == {"https://www.nebularis.org/neuro-semantic/lattice/applied/classification/0.4.0"}
 
 
 def test_common_documents_parse_and_import_the_pinned_versions():
@@ -100,10 +100,10 @@ def test_common_documents_parse_and_import_the_pinned_versions():
         f"https://www.nebularis.org/neuro-semantic/lattice/foundation/{RELEASE}",
         f"https://www.nebularis.org/neuro-semantic/lattice/vocabulary/{RELEASE}",
         f"https://www.nebularis.org/neuro-semantic/lattice/party/{RELEASE}",
-        "https://www.nebularis.org/neuro-semantic/lattice/applied/classification/0.3.0",
+        "https://www.nebularis.org/neuro-semantic/lattice/applied/classification/0.4.0",
     }
     vocab_imports = {str(o) for o in _common_vocab().objects(None, OWL.imports)}
-    assert vocab_imports == {"https://www.nebularis.org/neuro-semantic/insurance/common/0.7.0"}
+    assert vocab_imports == {"https://www.nebularis.org/neuro-semantic/insurance/common/0.8.0"}
 
 
 # ---- AIR12-02: the ten contracts conform to Vocabulary's shapes (nine, then AIR-4.4's class of business) ---

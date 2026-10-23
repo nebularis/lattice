@@ -69,7 +69,7 @@ new number, and the versioning check holds every member to it.
 
 ```toml repository-catalogue
 [conventions.release]
-version = "0.18.0"
+version = "0.19.0"
 kinds = ["substrate", "standalone"]
 ```
 
@@ -108,9 +108,11 @@ shapes = ["shapes/structural.ttl", "shapes/constraints.ttl", "shapes/single-expr
 ```
 
 - `kind` is one of the kinds above, and `roles` the module's subdirectories.
-- `imports` is given for a substrate layer only, and names every module it may import. A module outside
-  the order has none, and its imports are not judged. A change to the substrate's order here needs an
-  amendment to ADR-A01.
+- `imports` names every module a module may import, for a substrate layer and for a standalone module. A
+  substrate layer's list is the order of ADR-A01, and a change to it here needs an amendment to ADR-A01. A
+  standalone module, which is outside the order, lists the layers its documents import, for example
+  Persistence's `persistent-foundation`, which imports Foundation. The import guard holds each standalone
+  document's imports to its module and that list. An applied module has none, and its imports are not judged.
 - `extract` is given for a literate module only. It names the files its README generates, each in its
   role's directory, and lists the shape files in the order of the README's shape blocks. The README's
   other shape files are written by hand.
@@ -220,7 +222,7 @@ reaches = ["ontology/eligibility", "ontology/mork", "ontology/quantification", "
 name = "persistence"
 path = "tools/persistence"
 import-names = ["persistence"]
-reaches = ["ontology/persistence", "contracts/identity"]
+reaches = ["ontology/persistence", "contracts/identity", "packages/persistence", "docs/architecture"]
 
 [[tools]]
 name = "reference/eligibility"
@@ -237,6 +239,11 @@ name = "surface"
 path = "tools/surface"
 import-names = ["surface"]
 reaches = ["ontology/surface", "test/conformance"]
+
+[[tools]]
+name = "testing/mem_check"
+path = "tools/testing/mem_check"
+import-names = ["mem_check"]
 
 [[tools]]
 name = "testing/oxigraph"

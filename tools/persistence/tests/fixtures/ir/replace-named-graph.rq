@@ -10,7 +10,7 @@ INSERT {
   GRAPH <urn:g:meta> { $root pat:epoch $epoch ; pat:seq $nextSeq ; pat:head $newRev }
   GRAPH <urn:g:txn> { $txnId pat:rev $newRev ; pat:requestDigest $requestDigest }
   GRAPH ?logGraph {
-    $newRev a pat:Revision ; pat:target $root ; pat:epoch $epoch ; pat:seq $nextSeq ; pat:prevRev ?prevRev ; pat:txn ?txnKey ; pat:recordedAt ?now ; pat:asserts $assertGraph ; pat:retracts $retractGraph
+    $newRev a pat:Revision ; pat:target $root ; pat:epoch $epoch ; pat:seq $nextSeq ; pat:prevRev ?prevRev ; pat:txn ?txnKey ; pat:recordedAt ?now
   }
 }
 WHERE {
@@ -22,7 +22,7 @@ WHERE {
   GRAPH <urn:g:meta> {
     $root pat:epoch $epoch ; pat:seq $expectedSeq .
     OPTIONAL { $root pat:head ?prevRev }
-    FILTER NOT EXISTS { $root pat:deleted "true"^^xsd:boolean }
+    FILTER NOT EXISTS { GRAPH <urn:g:meta> { $root pat:deleted "true"^^xsd:boolean } }
   }
   FILTER NOT EXISTS { GRAPH <urn:g:txn> { $txnId pat:rev ?any } }
   BIND(STR($txnId) AS ?txnKey)

@@ -14,11 +14,11 @@
 
 <https://www.nebularis.org/neuro-semantic/wording>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording/0.18.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.18.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.18.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.18.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.18.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording/0.19.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.19.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.19.0> .
 
 wrd:Wording a owl:Class ;
 	rdfs:subClassOf fnd:Version , fnd:Governable , wrd:WordingNode ;
@@ -348,10 +348,10 @@ wrd:includes a owl:ObjectProperty ;
 	rdfs:domain wrd:AssembledWording ; rdfs:range wrd:Element ;
 	rdfs:comment "An element version the instance includes. Recorded at assembly, never recomputed. Subject: an assembled wording. Value: an element." .
 
-wrd:hasValue a owl:ObjectProperty , owl:InverseFunctionalProperty ;
+wrd:hasValue a owl:ObjectProperty ;
 	rdfs:label "has value"@en ;
 	rdfs:domain wrd:AssembledWording ; rdfs:range wrd:VariableValue ;
-	rdfs:comment "A value the instance supplies. Each value record belongs to one assembled wording. Subject: an assembled wording. Value: a variable value." .
+	rdfs:comment "A value the instance supplies. A value record may be supplied by several assembled wordings, such as those of one instrument before and after an endorsement that leaves it alone. Subject: an assembled wording. Value: a variable value." .
 
 wrd:VariableValue a owl:Class ;
 	rdfs:label "Variable value"@en ;

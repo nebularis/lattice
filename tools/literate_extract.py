@@ -73,8 +73,9 @@ ADR-A126 (2026-10-17) adds HTML comment markers, documented for README authors i
 ``docs/architecture/literate-specifications.md``. The scanner skips any other fence
 and any ordinary comment whole, so a tagged block or a marker shown inside one is
 text. ``<!-- start: {"key": value} -->`` opens a region and ``<!-- end -->`` closes
-the innermost, with one key of ``exclude``, ``output-file`` or ``generated``. An
-``output-file`` region sends the spec, vocab and shapes blocks inside it to that
+the innermost, with one key of ``exclude``, ``output-file`` or ``generated``. A
+``generated`` region may also carry ``part``, ``classes`` and ``enumerations``, which choose what its class
+diagram draws. An ``output-file`` region sends the spec, vocab and shapes blocks inside it to that
 file. ``<!-- hidden`` or ``<!-- hidden: {"output-file": "..."}``, on its own line,
 wraps one tagged block that is extracted but not rendered, and is closed by a line
 holding only ``-->``. A block may name its file by one form only, the marker or its
@@ -109,7 +110,7 @@ import json
 import os
 import re
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Mapping, Sequence, Tuple
 
@@ -137,6 +138,8 @@ REGION_END_RE = re.compile(r"^<!--\s*end\s*-->\s*$")
 HIDDEN_RE = re.compile(r"^<!--\s*hidden(?::\s*(?P<json>\{.*\}))?\s*$")
 SECTION_RE = re.compile(r"^## (?P<number>\d+)\.\s+(?P<title>.+?)\s*$")
 REGION_KEYS: Dict[str, type] = {"exclude": bool, "output-file": str, "generated": str}
+# A generated region may also carry these keys, which choose what its view draws (ADR-A126 addendum, D-59).
+GENERATED_OPTIONS: Dict[str, type] = {"part": str, "classes": list, "enumerations": str}
 EXTRACTED_TO_ONTOLOGY = ("turtle-spec", "turtle-vocab", "turtle-shapes")
 CATALOGUE_TAG = "toml repository-catalogue"
 # The README layout of ADR-A126 decision 1, in order. Sections are found by title.
@@ -177,6 +180,7 @@ class Region:
     value: object
     start_line: int
     end_line: int
+    options: Mapping[str, object] = field(default_factory=dict, compare=False)
 
 
 @dataclass(frozen=True)
@@ -215,7 +219,7 @@ def scan(markdown: str) -> Scan:
     regions: List[Region] = []
     sections: List[Section] = []
     counters: Dict[str, int] = {}
-    open_regions: List[Tuple[str, object, int]] = []
+    open_regions: List[Tuple[str, object, int, Mapping[str, object]]] = []
     prose: List[int] = []
     catalogue_lines: List[int] = []
 
@@ -236,7 +240,7 @@ def scan(markdown: str) -> Scan:
     def region_file(tag: str) -> str | None:
         if tag not in EXTRACTED_TO_ONTOLOGY:
             return None
-        return next((v for k, v, _ in reversed(open_regions) if k == "output-file"), None)
+        return next((v for k, v, _, _ in reversed(open_regions) if k == "output-file"), None)
 
     index = 0
     while index < len(lines):
@@ -258,14 +262,14 @@ def scan(markdown: str) -> Scan:
             if REGION_END_RE.match(line):
                 if not open_regions:
                     raise ValueError(f"line {index + 1}: <!-- end --> closes no region")
-                key, value, opened = open_regions.pop()
-                regions.append(Region(key, value, opened, index + 1))
+                key, value, opened, options = open_regions.pop()
+                regions.append(Region(key, value, opened, index + 1, options))
                 index += 1
                 continue
             start = REGION_START_RE.match(line)
             if start:
-                key, value = _marker_json(start.group("json"), index, REGION_KEYS)
-                open_regions.append((key, value, index + 1))
+                key, value, options = _region_json(start.group("json"), index)
+                open_regions.append((key, value, index + 1, options))
                 index += 1
                 continue
             hidden = HIDDEN_RE.match(line)
@@ -339,6 +343,30 @@ def _marker_json(text: str, at: int, allowed: Mapping[str, type]) -> Tuple[str, 
     if type(value) is not allowed[key]:
         raise ValueError(f"line {at + 1}: marker key {key!r} takes a {allowed[key].__name__}")
     return key, value
+
+
+def _region_json(text: str, at: int) -> Tuple[str, object, Mapping[str, object]]:
+    """A region marker's JSON: one key from ``REGION_KEYS``, and for a ``generated`` region the further
+    keys of ``GENERATED_OPTIONS``, returned apart from it."""
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError:
+        data = None
+    if isinstance(data, dict) and len(data) > 1 and "generated" in data and not set(data) & (set(REGION_KEYS) - {"generated"}):
+        options = {k: v for k, v in data.items() if k != "generated"}
+        for key, value in options.items():
+            if key not in GENERATED_OPTIONS:
+                raise ValueError(
+                    f"line {at + 1}: unknown key {key!r} in a generated region, expected one of {', '.join(GENERATED_OPTIONS)}"
+                )
+            if type(value) is not GENERATED_OPTIONS[key]:
+                raise ValueError(f"line {at + 1}: key {key!r} of a generated region takes a {GENERATED_OPTIONS[key].__name__}")
+        if "classes" in options and not all(type(c) is str for c in options["classes"]):
+            raise ValueError(f"line {at + 1}: key 'classes' takes a list of CURIEs")
+        key, value = _marker_json(json.dumps({"generated": data["generated"]}), at, REGION_KEYS)
+        return key, value, options
+    key, value = _marker_json(text, at, REGION_KEYS)
+    return key, value, {}
 
 
 def _norm(title: str) -> str:
@@ -798,7 +826,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     # class diagram, are rewritten in place (ADR-A126 decision 7).
     if compiled is not None and compiled.readme != text:
         if args.check:
-            drifted.append(f"{readme_path} (its generated regions)")
+            drifted.append(f"{readme_path} (its generated regions: {', '.join(compiled.stale)})")
         else:
             readme_path.write_text(compiled.readme, encoding="utf-8", newline="\n")
             print(f"wrote the generated regions of {readme_path}")

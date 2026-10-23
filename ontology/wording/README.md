@@ -99,11 +99,11 @@ ex:cl-4-1-p4 a wrd:TextPart ; wrd:partIndex 4 ; wrd:partText " per annum." .
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/wording>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording/0.18.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.18.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.18.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.18.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.18.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording/0.19.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.19.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.19.0> .
 ```
 
 ### 5.2 Wordings and elements
@@ -547,6 +547,12 @@ A variable value records an instance's value for one variable, and for one entry
 variable is a table field's. A multi-valued variable's values all sit on its one value record, so a
 single-valued variable is a variable whose record holds one value.
 
+A value record is never edited, so a change is a new record. Two assembled wordings of one instrument,
+before and after an endorsement, share every value record the endorsement leaves alone and differ in
+the one it changes, as they share the elements they both include. A record belongs to at least one
+assembled wording, and a value no wording supplies is reported
+([`shared-values.ttl`](examples/shared-values.ttl)).
+
 ```turtle-spec
 wrd:AssembledWording a owl:Class ;
 	rdfs:subClassOf wrd:Wording ;
@@ -564,10 +570,10 @@ wrd:includes a owl:ObjectProperty ;
 	rdfs:domain wrd:AssembledWording ; rdfs:range wrd:Element ;
 	rdfs:comment "An element version the instance includes. Recorded at assembly, never recomputed. Subject: an assembled wording. Value: an element." .
 
-wrd:hasValue a owl:ObjectProperty , owl:InverseFunctionalProperty ;
+wrd:hasValue a owl:ObjectProperty ;
 	rdfs:label "has value"@en ;
 	rdfs:domain wrd:AssembledWording ; rdfs:range wrd:VariableValue ;
-	rdfs:comment "A value the instance supplies. Each value record belongs to one assembled wording. Subject: an assembled wording. Value: a variable value." .
+	rdfs:comment "A value the instance supplies. A value record may be supplied by several assembled wordings, such as those of one instrument before and after an endorsement that leaves it alone. Subject: an assembled wording. Value: a variable value." .
 
 wrd:VariableValue a owl:Class ;
 	rdfs:label "Variable value"@en ;
@@ -687,8 +693,8 @@ use, and is not closed: a deployment binds a scheme of its own, which may extend
 
 <https://www.nebularis.org/neuro-semantic/wording-vocab>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording-vocab/0.18.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/wording/0.18.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording-vocab/0.19.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/wording/0.19.0> .
 
 wrd-voc:ElementTypeContract a voc:SchemeContract ;
 	fnd:hasIdentity wrd-voc:ElementTypeContract-identity ;
@@ -1067,8 +1073,8 @@ wrd:VariableValueShape a sh:NodeShape ;
 	sh:targetClass wrd:VariableValue ;
 	sh:property [ sh:path wrd:forVariable ; sh:minCount 1 ; sh:maxCount 1 ; sh:class wrd:Variable ;
 		sh:message "A variable value is for exactly one variable." ] ;
-	sh:property [ sh:path [ sh:inversePath wrd:hasValue ] ; sh:minCount 1 ; sh:maxCount 1 ;
-		sh:message "A variable value belongs to exactly one assembled wording." ] ;
+	sh:property [ sh:path [ sh:inversePath wrd:hasValue ] ; sh:minCount 1 ;
+		sh:message "A variable value belongs to at least one assembled wording." ] ;
 	sh:property [ sh:path wrd:forEntry ; sh:maxCount 1 ] ;
 	sh:property [ sh:path wrd:value ; sh:nodeKind sh:BlankNodeOrIRI ] ;
 	sh:property [ sh:path wrd:literalValue ; sh:nodeKind sh:Literal ] ;
@@ -1606,4 +1612,9 @@ Breaking versions at major version zero ([ADR-A113](../../docs/architecture/deci
 - Shapes 0.4.1: the slot-overlap and slot-coverage queries run their cheap guards as a sub-group before the
   candidate points are enumerated, and law W8 looks up the versions of an identity before pairing the items a
   wording holds. The same reports as before, from about half the work on the slot queries and W8.
+- 0.19.0. Every document takes the release's number and imports the other layers at it (no effect). `wrd:hasValue` is no
+  longer inverse-functional, and a variable value belongs to at least one assembled wording, not exactly one. Two assembled
+  wordings of one instrument may share a value record, so an endorsement or a requote writes only the records it changes
+  (changes meaning, since a reasoner no longer merges two records that share a value). The shapes follow, accepting a value
+  in several assembled wordings (no effect). New example `shared-values.ttl`.
 - 0.18.0, the first release of the substrate and standalone modules as one set ([ADR-A129](../../docs/architecture/decisions/ADR-A129-one-release-for-the-substrate.md)). Every document of the layer takes the release's number and imports the other layers at it (no effect). No other change.

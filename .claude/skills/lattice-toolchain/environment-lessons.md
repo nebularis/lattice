@@ -25,10 +25,8 @@ note true of one machine belongs in that person's own configuration, not here.
 - **More workers than cores that do real work add contention, not speed.** On four performance and four efficiency cores, 8 workers
   gave the wall time of 4 and doubled the summed test time.
 
-## Templates and shapes
+## Shapes
 
-- **A mustache comment must not quote a real tag.** `chevron` parses `{{! … }}` bodies, so writing
-  `{{{slot}}}` inside a comment opens a spurious tag. Describe the slot in words.
 - **Jena SHACL reports the shape that carries the failing constraint.** A constraint nested as
   `sh:property [ … ]` under a named node shape reports the blank node as its source, not the named
   shape. Where a report's shape identifier matters, give each property constraint its own named,

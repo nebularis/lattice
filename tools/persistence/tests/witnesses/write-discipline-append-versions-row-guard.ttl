@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# The row-level guard variant of the append-version write. The base declares the dataset-level guard, and this takes it away,
+# so the epoch guard scope is the baseline's.
+# base: write-discipline-composite-append-versions.ttl
+# remove: ex:QuoteEpoch dal:epochGuardScope dal:DatasetLevelGuard
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/quoting#> .

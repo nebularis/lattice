@@ -47,3 +47,26 @@ def test_ox_t5_select_returns_bound_variables_only_and_remove_graph_empties_one_
     assert rows == [{"o": literal(1)}]
     store.remove_graph(iri("urn:g"))
     assert store.quads(iri("urn:g")) == [] and len(store.quads(ox.DefaultGraph())) == 1
+
+
+def _p1_kept(rows: str) -> bool:
+    store = ox.Store()
+    triple = ox.Quad(ox.NamedNode("urn:s"), ox.NamedNode("urn:p"), ox.NamedNode("urn:o"), ox.NamedNode("urn:g"))
+    store.add(triple)
+    store.update(
+        "DELETE { GRAPH <urn:g> { ?d <urn:p> <urn:o> } } INSERT { GRAPH <urn:g> { ?i <urn:p> <urn:o> } } "
+        f"WHERE {{ VALUES (?i ?d) {{ {rows} }} }}"
+    )
+    return triple in store
+
+
+def test_ox_t6_each_version_flag_says_what_the_installed_pyoxigraph_does():
+    """The flags are read from the version number. This holds them to the behaviour, so a later release that changes either again fails here
+    and the triple-store record is revisited (TSD-01, TSD-17)."""
+    from lattice_testing_oxigraph import LEFT_GROUPED_ARITHMETIC, SNAPSHOT_UPDATES, VERSION
+
+    assert len(VERSION) == 3 and all(isinstance(n, int) for n in VERSION)
+    snapshot = _p1_kept("(<urn:s> UNDEF) (UNDEF <urn:s>)") and _p1_kept("(UNDEF <urn:s>) (<urn:s> UNDEF)")
+    assert snapshot is SNAPSHOT_UPDATES
+    value = int(next(iter(ox.Store().query("SELECT (10 - 3 + 2 AS ?x) WHERE {}")))["x"].value)
+    assert (value == 9) is LEFT_GROUPED_ARITHMETIC

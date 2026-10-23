@@ -65,7 +65,7 @@ def where() -> tuple:
             Triple(ROOT, pat("epoch"), EPOCH),
             Triple(ROOT, pat("seq"), EXPECTED),
             Optional_(Group((Triple(ROOT, pat("head"), Var("prevRev")),))),
-            NotExists(Group((Triple(ROOT, pat("deleted"), true()),))),
+            NotExists(Group((GraphBlock(META, (Triple(ROOT, pat("deleted"), true()),)),))),
         )),
         NotExists(Group((GraphBlock(TXN, (Triple(TXN_ID, pat("rev"), Var("any")),)),))),
         Bind(Func("NOW"), Var("now")),

@@ -2,7 +2,7 @@
 
 # Aggregate Boundary Design
 
-Written for a reader who has not read [the legacy sketch](../../../docs/developer/sketches/persistence-profile-substrate.md)'s Part 4. The decisions are [ADR-A122](../../../docs/architecture/decisions/ADR-A122-aggregate-ownership.md), which amends [ADR-A78](../../../docs/architecture/decisions/ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md) decision 4, and the normative detail is [the design sketch](../../../docs/developer/sketches/persistence-aggregate-ownership.md). The [patterns guide](../../../docs/architecture/rdf-sparql-patterns-guide.md)'s Part V explains the write itself.
+Written for a reader new to the module. The decisions are [ADR-A122](../../../docs/architecture/decisions/ADR-A122-aggregate-ownership.md), which amends [ADR-A78](../../../docs/architecture/decisions/ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md) decision 4, and the [README](../README.md#561-aggregate-boundary) shows the boundary at work. The [patterns guide](../../../docs/architecture/rdf-sparql-patterns-guide.md)'s Part V explains the write itself.
 
 ## Only the adopter can say what an aggregate is
 
@@ -49,7 +49,7 @@ The shape is the authority on which edges exist, and an edge it does not declare
 
 | Refusal | When |
 |---|---|
-| `MissingDataGraph` | a composite profile names no `dal:dataGraph` |
+| `MissingDataGraph` | a composite profile names no `dal:dataGraph`, or a `dal:NoBoundary` profile with `dal:Optimistic` and a `dal:valueGuardProperty` names none, so its values would be read and written in the default graph |
 | `MissingBoundaryShapeError` | a composite profile names no `dal:boundaryShape` |
 | `ComplexBoundaryPath` | a property shape's `sh:path` is neither an IRI nor `[ sh:inversePath IRI ]` |
 | `UnclassifiedBoundaryEdge` | an edge leads to a node and carries no `dal:ownership` |
@@ -60,8 +60,9 @@ The shape is the authority on which edges exist, and an edge it does not declare
 | `BoundaryConflict` | a member class, at any depth, declares a boundary strategy of its own |
 | `OverlappingOwnership` | two composite aggregates own one class, or one owns the other's root |
 | `GraphIriTemplateInvalid`, `GraphIriTemplateOverlap` | a named-graph template is not injective, within a family or across families |
+| `PinnedReferenceToUnversionedClass`, `ReferenceModeUnknown` | an edge is `dal:Pinned` and its target class is not a subclass of `fnd:Version`, or `dal:referenceMode` is neither `dal:ByIdentity` nor `dal:Pinned` ([ontology README, §5.6.1](../README.md#561-aggregate-boundary)) |
 
-One warning, `ReferenceToOwnedClass`, says that a property shape outside an aggregate points at a member class that is not its root. A deleted member leaves such a reference dangling, so references from outside should name the root, which keeps a tombstoned version row.
+Two warnings. `EvidenceEdgeByIdentity` says that an edge from an evidence class to a versioned class names an identity and not a version. `ReferenceToOwnedClass` says that a property shape outside an aggregate points at a member class that is not its root. A deleted member leaves such a reference dangling, so references from outside should name the root, which keeps a tombstoned version row.
 
 Reference data is declared per class, so non-SKOS sets such as currency codes get the same protection:
 
@@ -93,7 +94,7 @@ A named graph is `dal:graphIriTemplate` with `{id}` replaced by the whole root I
 
 ## Concurrency
 
-Every write to an aggregate meets every other on the root's version row. That is correct, and it conflicts more than strictly necessary: a deep edit and a root edit need not contend. Finer version rows per owned node, and edits below the root, were considered and are not built. The rules they would need are recorded in [the design sketch](../../../docs/developer/sketches/persistence-aggregate-ownership.md#11-deferred-units-and-level-operations). They return if contention on a root's row is measured, or a domain invariant needs per-level edits.
+Every write to an aggregate meets every other on the root's version row. That is correct, and it conflicts more than strictly necessary: a deep edit and a root edit need not contend. Finer version rows per owned node, and edits below the root, were considered and are not built. Their rules are not designed. They return if contention on a root's row is measured, or a domain invariant needs per-level edits.
 
 ## Boundary conflicts
 

@@ -38,7 +38,7 @@ PX = "https://example.org/projects#"
 PROJECT_EXAMPLE = EXAMPLES_DIR / "composite-project-ownership.ttl"
 PROJECT_DATA = Path(__file__).resolve().parent / "fixtures" / "project-data.ttl"
 ORDER_EXAMPLE = EXAMPLES_DIR / "composite-property-boundary-shacl.ttl"
-TEMPLATE = "cas-replace-composite-property"
+TEMPLATE = "cas-replace-composite-property-patch-log"
 ROOT = URIRef(PX + "p1")
 MEMBERS = {"m1", "m2", "plan1", "t1", "t2", "t3", "docOwned", "c1"}
 OUTSIDE = {"acme", "alice", "docShared", "InProgress", "Done", "TaskStatuses", "report1", "p2", "m9"}
@@ -66,8 +66,8 @@ def _refusal(graph: Graph):
 
 @lru_cache(maxsize=None)
 def _project_text_for(guards: bool) -> str:
-    compiled, _ = compile_to_graph(witness._load_fixture(PROJECT_EXAMPLE))
-    return next(o for o in templatecheck.operations(compiled, guards) if o.template == TEMPLATE).text
+    compiled, _ = compile_to_graph(witness._load_fixture(PROJECT_EXAMPLE), guards=guards)
+    return next(o for o in templatecheck.operations(compiled) if o.template == TEMPLATE).text
 
 
 def _project_text() -> str:
@@ -75,8 +75,8 @@ def _project_text() -> str:
 
 
 def _text(graph: Graph) -> str:
-    compiled, _ = compile_to_graph(graph)
-    return next(o for o in templatecheck.operations(compiled, engines.guards()) if o.template == TEMPLATE).text
+    compiled, _ = compile_to_graph(graph, guards=engines.guards())
+    return next(o for o in templatecheck.operations(compiled) if o.template == TEMPLATE).text
 
 
 def _values() -> dict:

@@ -68,7 +68,8 @@ def test_mixed_receipt_model_is_a_warning_not_an_error(example):
     g = example("warning-mixed-receipt-model.ttl")
     widget = URIRef(LENDING + "Widget")
     gadget = URIRef(LENDING + "Gadget")
-    targets = discover_targets(g, classes={widget, gadget})
+    targets = discover_targets(g)
+    assert {t.cls for t in targets} == {widget, gadget}  # Widget is named only by dal:coversClass (TD-23)
     resolved_by_target = {}
     for t in targets:
         spec = capability.load_capability_spec(g, t)
@@ -139,3 +140,14 @@ def test_epoch_guard_scope_does_not_warn_on_dataset_level_guard(example):
 def test_boundary_conflicts_do_not_false_positive_on_valid_fixtures(example, fixture):
     g = example(fixture)
     validator.check_boundary_conflicts(g)  # must not raise
+
+
+def test_td23_a_class_covered_only_by_a_graph_pattern_scope_is_compiled_and_its_warning_leaves_compile(example):
+    """TD-23, fixed 2026-10-23: a class a dal:GraphPatternScope names only by dal:coversClass gets targets, so the
+    MixedReceiptModel warning the shipped example exists to show reaches the compiled targets."""
+    from persistence.compiler import compile_targets
+
+    compiled = compile_targets(example("warning-mixed-receipt-model.ttl"))
+    assert {str(ct.target.cls).rsplit("#", 1)[-1] for ct in compiled} == {"Widget", "Gadget"}
+    assert any(d.kind == "MixedReceiptModel" for ct in compiled for d in ct.diagnostics)
+

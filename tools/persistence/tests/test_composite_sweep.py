@@ -34,8 +34,8 @@ EX = "https://example.org/lending#"
 PAT = "https://example.org/lattice/patterns#"
 ROOT = URIRef("urn:order:1")
 DATA_GRAPH = URIRef("urn:g:orders")
-PLAIN = "cas-replace-composite-property"
-DATASET_GUARD = "cas-replace-composite-property-dataset-guard"
+PLAIN = "cas-replace-composite-property-patch-log"
+DATASET_GUARD = "cas-replace-composite-property-patch-log-dataset-guard"
 FIXTURES = {
     PLAIN: EXAMPLES_DIR / "composite-property-boundary-shacl.ttl",
     DATASET_GUARD: witness.WITNESS_DIR / "template-cas-replace-composite-property-dataset-guard.ttl",
@@ -48,8 +48,8 @@ PAYLOAD = (
 
 @lru_cache(maxsize=None)
 def _text_for(template: str, guards: bool) -> str:
-    compiled, _ = compile_to_graph(witness._load_fixture(FIXTURES[template]))
-    return next(o for o in templatecheck.operations(compiled, guards) if o.template == template).text
+    compiled, _ = compile_to_graph(witness._load_fixture(FIXTURES[template]), guards=guards)
+    return next(o for o in templatecheck.operations(compiled) if o.template == template).text
 
 
 def _text(template: str) -> str:

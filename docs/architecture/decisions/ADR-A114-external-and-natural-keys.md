@@ -1,13 +1,14 @@
+---
+published: true
+---
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
 # ADR-A114: External and natural keys
 
-**Status:** Accepted (2026-10-03, at the CCS F1 gate)
-**Date:** 2026-10-02 (proposed), revised 2026-10-03, gate questions G2 and G3 answered 2026-10-03
-**Related:** ADR-A12 (identity and derivation), ADR-A51 (IRI and identity policy), ADR-A82, ADR-A83,
-ADR-A84 (minting libraries), ADR-A86 (versioning), ADR-A01 (layer order), ADR-A104, ADR-A112
-**Unit:** [`computable-contract-substrate`](../../developer/plans/computable-contract-substrate.md)
-(decision CC-D9, slice F1)
+**Status:** Published, 2026-10-20. Accepted 2026-10-03.
+**Described in:** [Foundation](../../../ontology/foundation/README.md), [Persistence](../../../ontology/persistence/README.md)
+**Date:** 2026-10-02 (proposed), revised 2026-10-03
+**Related:** ADR-A12 (identity and derivation), ADR-A83, ADR-A86 (versioning), ADR-A01 (layer order), ADR-A104, ADR-A112
 
 ## Context
 
@@ -31,10 +32,10 @@ and claim on a Lloyd's contract carries the contract's unique market reference.
    insurer.
 
 **Identity is not a key.** LATTICE already names everything it holds: every versioned thing has a
-persistent identity, an IRI minted under ADR-A51 and never reused. That is LATTICE's name for the
+persistent identity, an IRI minted under the [IRI and identity patterns](../iri-identity-patterns.md) and never reused. That is LATTICE's name for the
 thing, and RDF's notion of identity. A key is a name some authority outside LATTICE gives it:
 
-| | Identity (ADR-A51) | Key (this ADR) |
+| | Identity | Key (this ADR) |
 |---|---|---|
 | issued by | LATTICE, when the thing is first recorded | a registry, a market, a party |
 | how many | exactly one per thing | any number, from different schemes |
@@ -47,13 +48,13 @@ two apart.
 
 **The gap.** The graph cannot hold a key today. Minting may use one as an input, but minting is
 one-way: a surrogate or a hash does not give the value back, and readers must never parse an IRI
-(ADR-A51). So a thing cannot be listed, shown, cited or matched by the value people quote, and two
-records of one coverholder under two spellings of its address (the CCS scenario S98) cannot be
+([IRI and identity patterns](../iri-identity-patterns.md)). So a thing cannot be listed, shown, cited or matched by the value people quote, and two
+records of one coverholder under two spellings of its address cannot be
 joined on the PIN they share. Layers that met the gap built their own: Open CBAA's `agr:umr`, and
-the exposure ontology's planned `aeo:Identifier` (AIR-4.1).
+the exposure ontology's planned `aeo:Identifier`.
 
 **Why Foundation.** Actors (Party), instruments (Instrument), standard forms (Wording), assets and
-locations (applied exposure) all carry keys. Only Foundation is below all of them (ADR-A01, CC-D9).
+locations (applied exposure) all carry keys. Only Foundation is below all of them (ADR-A01).
 
 ## Decision
 
@@ -132,7 +133,7 @@ locations (applied exposure) all carry keys. Only Foundation is below all of the
    }
    ```
 
-6. **Key IRIs are minted per scheme**, under ADR-A51's strategies, so that two systems recording one
+6. **Key IRIs are minted per scheme**, under the minting strategies of the [IRI and identity patterns](../iri-identity-patterns.md), so that two systems recording one
    key reach one node:
 
    | Scheme | Strategy | Two sources reach one node |
@@ -140,7 +141,7 @@ locations (applied exposure) all carry keys. Only Foundation is below all of the
    | not sensitive (UMR, LEI, a company number) | natural key or derived hash of scheme and value | by computation, within one tenant. Across tenants only where the recipe declares no scope |
    | sensitive (`fnd:sensitiveDataScheme true`) | a surrogate with a keyed claim (HMAC under a tenant secret) | by looking up the claim, within one tenant only |
 
-   ADR-A51 forbids putting personal data in an IRI and forbids an unkeyed hash of a low-entropy
+   The IRI and identity patterns forbid putting personal data in an IRI and forbid an unkeyed hash of a low-entropy
    personal value, which can be reversed by trying every value. Keys apply the same rule to every
    sensitive value, personal or not. A keyed claim can be computed only by the tenant that holds the
    secret, so records of one person or account never correlate across tenants. The constraint is the
@@ -149,7 +150,7 @@ locations (applied exposure) all carry keys. Only Foundation is below all of the
    so erasure rules apply. The flags state the facts for adopters without Persistence.
 
    **Normalisation and valid IRIs.** A key's value is held as issued in `fnd:keyValue`. Matching
-   uses a normalised form: a scheme names one of the minting specification's pipelines with
+   uses a normalised form: a scheme names one of the [minting specification](../identity-minting-specification.md)'s pipelines with
    `fnd:keyNormalisation` (`NfkcTrimCasefold`, `NfkcTrimUppercase`, `NfkcTrimLowercase`, §3.2), and
    the minting recipe and the uniqueness constraint for its keys must both use it. Validity of the
    minted IRI is the recipe's encoding step, never the scheme's: the natural-key strategy
@@ -159,7 +160,7 @@ locations (applied exposure) all carry keys. Only Foundation is below all of the
 7. **Uniqueness has two homes, by intent** (decision 8, option (c) of the review, 2026-10-03):
    - **`fnd:NaturallyKeyed`** is the common mixin: the domain of `fnd:naturalKey`, the target of
      Foundation's SHACL shapes. Two different things never share a natural key (reported as a
-     warning where both are `fnd:MergedOnNaturalKey`, whose merge it announces, F1-Q1), a key has one scheme
+     warning where both are `fnd:MergedOnNaturalKey`, whose merge it announces), a key has one scheme
      and one value, a natural key's scheme never reissues values, and a value matches its scheme's
      pattern.
    - **`fnd:MergedOnNaturalKey ⊑ fnd:NaturallyKeyed`** adds `owl:hasKey ( fnd:naturalKey )`. To an OWL
@@ -193,9 +194,9 @@ locations (applied exposure) all carry keys. Only Foundation is below all of the
    A key on `( fnd:hasVersion fnd:naturalKey )` would be vacuous: two different identities never
    share a version (`fnd:hasIdentity` is functional), so it would never fire on two contracts
    claiming one reference.
-10. **Layers adopt keys.** Instrument records an instrument's numbers on its identity (CCS slice C6).
+10. **Layers adopt keys.** Instrument records an instrument's numbers on its identity.
     Party's actors carry registry and market keys. The exposure ontology uses `fnd:Key` directly in
-    place of `aeo:Identifier` (AIR-4.1). Open CBAA's `agr:umr` becomes a key scheme. Surface may index
+    place of `aeo:Identifier`. Open CBAA's `agr:umr` becomes a key scheme. Surface may index
     `fnd:externalKey` for retrieval by key, and promote an identity's natural key onto its versions
     for one-step lookup, with its existing contracts.
 
@@ -210,41 +211,53 @@ locations (applied exposure) all carry keys. Only Foundation is below all of the
 - *Keys in Party.* Instruments, forms and assets are not parties.
 - *One construct per layer.* Scheme handling and uniqueness would be repeated, and a thing keyed in
   two layers would carry two.
-- *The key as the identity.* Keys are withdrawn and may be sensitive. Identity must not be
-  (ADR-A51).
+- *The key as the identity.* Keys are withdrawn and may be sensitive. Identity must not be.
 - *A single mixin with `owl:hasKey`.* It forces OWL's silent merge on Persistence's adopters.
 - *No `owl:hasKey` at all.* It leaves an ontology-only adopter's natural keys with no formal meaning.
 
 **Answered at review, 2026-10-03.** Sensitivity is a Foundation flag, `fnd:sensitiveDataScheme`, with
-`fnd:personalDataScheme` beside it for the personal data among sensitive schemes (A114-Q1). Normalisation is named by the scheme from the minting specification's closed set, and
-IRI validity stays with the recipe's encoding (A114-Q2, decision 6).
+`fnd:personalDataScheme` beside it for the personal data among sensitive schemes. Normalisation is named by the scheme from the minting specification's closed set, and
+IRI validity stays with the recipe's encoding (decision 6).
 
-**At the F1 gate, 2026-10-03** ([impact analysis](../../developer/sketches/keys-impact.md) §6). G2:
-the property chain of decision 5, accepted. G3: Instrument takes 0.8.0 in the cascade, and CCS C6 to
-C9 each shift by one MINOR, accepted. G1: the key class of decision 2 replaces the analysis's
-`dal:keyClassFor`, accepted.
+**Accepted 2026-10-03,** with the property chain of decision 5 and the key class of decision 2, which
+replaced a Persistence-side property naming the class. Instrument takes 0.8.0 in the Foundation cascade.
 
 ## Consequences
 
 - Foundation takes an additive MINOR (`0.3.0` to `0.4.0`). Twenty-four documents import it directly
   (15) or through another (9), and each takes a MINOR with its own release row and tag (ADR-A86), in
-  one cascade. The [impact analysis](../../developer/sketches/keys-impact.md) §4 lists them.
-- The cascade must not run while another branch edits a Foundation importer. On 2026-10-03 none
-  does: `air/2.2-characteristics`, `air/3.3-readings-swrl-owl` and `air/4.1-exposure-core` exist
-  without commits. F1 runs now, and those branches start from the `main` it merges into. CCS risk R6
-  is retired for F1.
+  one cascade.
 - Persistence gains its first document that imports Foundation, `persistent-foundation`, optional and
   separate from the `dal:` configuration ontology, which still imports no layer. It ships the mixin,
   and a shape requiring a `dal:UniquenessConstraint` on `fnd:naturalKey` for each
   `dal:PersistenceKeyed` class, with an identity profile per strategy of decision 6 in its example.
   (Built 2026-10-03: a shipped default constraint was dropped, since the compiler reads one
   `dal:appliesTo` per constraint, so one constraint could serve only one class. The compiler
-  deriving it is CCS follow-up FU-F1b.) Its shapes require each scheme whose keys
+  deriving it is a follow-up.) Its shapes require each scheme whose keys
   Persistence mints to have a key class (decision 2) with an identity profile, and each key to be
   asserted a member of its scheme's class.
-- F1 writes an impact analysis for Persistence and Surface before this ADR is accepted (CCS plan,
-  F1): uniqueness constraints and merge policy, identity profiles and recipes for key nodes,
-  normalisation, privacy, and Surface's index and promotion contracts over keys.
-- NRS N9 (ADR-A108), planned to share this cascade, keeps its own later window.
-- CCS C6 starts after F1, takes Instrument 0.9.0, and records keys from its first examples. AIR-4.1's brief drops
-  `aeo:Identifier`. Open CBAA migrates `agr:umr` (CCS plan §7).
+- Instrument takes 0.9.0 and records keys from its first examples. The exposure ontology drops
+  `aeo:Identifier`. Open CBAA migrates `agr:umr`.
+
+## Provenance
+
+Unit `computable-contract-substrate`, decision CC-D9, slice F1. The
+[impact analysis](../../developer/sketches/keys-impact.md) (§4 lists the importers, §6 holds the gate
+questions) was written before acceptance and covers Persistence and Surface: uniqueness constraints
+and merge policy, identity profiles and recipes for key nodes, normalisation, privacy, and the index
+and promotion contracts over keys.
+
+Review questions A114-Q1 (sensitivity flags) and A114-Q2 (normalisation) were answered 2026-10-03,
+as was F1-Q1 (the warning where both classes are `fnd:MergedOnNaturalKey`). Gate answers 2026-10-03: G2 the property chain,
+G3 Instrument at 0.8.0 with CCS slices C6 to C9 each shifting one MINOR, G1 the key class replacing
+the analysis's `dal:keyClassFor`.
+
+Scheduling notes moved from the Consequences. On 2026-10-03 no branch edited a Foundation importer
+(`air/2.2-characteristics`, `air/3.3-readings-swrl-owl` and `air/4.1-exposure-core` existed without
+commits), so F1 ran then and those branches start from the `main` it merged into, retiring CCS risk
+R6 for F1. NRS N9 (ADR-A108), planned to share the cascade, keeps its own later window. CCS C6 starts
+after F1, AIR-4.1's brief drops `aeo:Identifier`, and Open CBAA migrates `agr:umr` (CCS plan §7).
+Follow-up FU-F1b is the compiler deriving the default uniqueness constraint.
+
+The citations of ADR-A51, ADR-A82 and ADR-A84 were replaced on publication, since those decisions
+are superseded or proposed.

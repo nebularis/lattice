@@ -47,7 +47,7 @@ rdflib 7.6.0 and Oxigraph 0.5.11, on 2026-10-12, Python 3.14.8, Linux x86_64.
 
 | Probe | rdflib | Oxigraph | Feeds |
 |---|---|---|---|
-| P1 `snapshotUpdateSemantics`: a `DELETE`/`INSERT` of one triple in two solutions, in both row orders | **corrected 2026-10-13: False.** rdflib applies one solution at a time, in an order that follows `PYTHONHASHSEED`, so the triple survives or is lost by process. The first reading, True, held only for some seeds ([TSD-01](../../architecture/triple-store-discovery.md#tsd-01-the-order-in-which-a-delete-insert-where-is-applied)) | lost when the inserting row comes first. **False** | TD-42's linear form R2 |
+| P1 `snapshotUpdateSemantics`: a `DELETE`/`INSERT` of one triple in two solutions, in both row orders | **corrected 2026-10-13: False.** rdflib applies one solution at a time, in an order that follows `PYTHONHASHSEED`, so the triple survives or is lost by process. The first reading, True, held only for some seeds ([TSD-01](../../architecture/triple-store-discovery.md#tsd-01-the-order-in-which-a-deleteinsertwhere-is-applied)) | lost when the inserting row comes first. **False** | TD-42's linear form R2 |
 | P2 request failure atomicity: `INSERT DATA` then a failing operation | `CREATE GRAPH` is not implemented and `DROP GRAPH` of an absent graph does not fail. A failing `LOAD` leaves the first insert in place. **Not atomic** | a failing `DROP GRAPH` (an error at run time) rolls the insert back. **Atomic** | R1, two operations in one request |
 | P3 correlated `GRAPH ?g`: 100 graphs of 3000 triples against 1 | ratio 1.1 | ratio 1.1 | the cost note of H2.3-Q2. Neither scans every graph |
 | P4 unbound graph variable in a template | writes into a fresh blank-node graph | skips the quad, as the specification says | TD-44 |
@@ -60,7 +60,7 @@ and nothing on Oxigraph (H2.4a-T6, now per engine), and `CREATE GRAPH` does not 
 `evalModify` deletes and inserts one solution at a time, and `evalJoin` puts the solutions of this `WHERE` in a Python `set`, so their order,
 and the probe's answer, follow the process's hash seed. Swept over seeds 0 to 11 the triple was lost in both orders for 6, kept for 4 and
 lost in one order for 2, and the test that asserted rdflib keeps it failed in 2 of 3 runs. The sketch's §4.3 was right. Neither engine is
-snapshot. [TSD-01](../../architecture/triple-store-discovery.md#tsd-01-the-order-in-which-a-delete-insert-where-is-applied) has the detail.
+snapshot. [TSD-01](../../architecture/triple-store-discovery.md#tsd-01-the-order-in-which-a-deleteinsertwhere-is-applied) has the detail.
 
 ### R0 on Oxigraph
 

@@ -12,6 +12,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
+from rdflib import Literal as RdfLiteral
+from rdflib.namespace import XSD
+
 
 # The original six dimension names (sketch §3.3), used as plain strings
 # throughout, never as IRIs -- ``dal:dimension`` is an ``xsd:string``
@@ -62,13 +65,18 @@ DIMENSIONS = (
     "erasureStrategy",
     "erasurePrecedence",
     "perSubjectScoped",
+    # H2.6c (2026-10-20): how a family writes, by replacing, by appending versions or by appending records.
+    "writeDiscipline",
+    # H2.6f (2026-10-20): how a family that appends versions states each version's members, and how often it lists them all.
+    "membershipEncoding",
+    "checkpointEvery",
 )
 
 # Dimensions whose resolved value is an RDF literal, emitted with
 # ``dal:resolvedLiteral`` rather than ``dal:resolvedValue``.
 LITERAL_DIMENSIONS = frozenset(
     {"lagWindowMillis", "asOfFloorSource", "txnShards", "logShards", "keyShards", "registryGraph",
-     "perSubjectScoped"}
+     "perSubjectScoped", "checkpointEvery"}
 )
 
 # Platform baseline defaults (sketch §3.4.1). Every dimension resolves to
@@ -99,6 +107,11 @@ BASELINE_DEFAULTS: dict[str, str] = {
     "deadlockPolicy": "EngineDetectAndRetry",
     "contiguityCheckMode": "BlockingContiguityCheck",
     "retentionMode": "PrefixOnlyRetention",
+    # H2.6c: today's replace, so every example that declares no discipline compiles as before.
+    "writeDiscipline": "InPlace",
+    # H2.6f: every version lists its members, and a checkpoint is every 16th version under dal:DeltaMembership.
+    "membershipEncoding": "FullMembership",
+    "checkpointEvery": RdfLiteral(16, datatype=XSD.long),
     # Slice 4 (plan decision, following Slice 2 decision 2's precedent): no
     # default for epochAuthority, privacyClass, erasureStrategy,
     # erasurePrecedence or perSubjectScoped. An undeclared dal:PrivacyProfile

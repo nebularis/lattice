@@ -67,25 +67,25 @@ ex:site-d-identity a aeo:LocationIdentity , fnd:PersistentIdentity .
 ex:site-d a aeo:Location ; fnd:hasIdentity ex:site-d-identity ; aeo:territory ex:great-britain .
 
 ex:building-a-identity a aeo:AssetIdentity , fnd:PersistentIdentity .
-ex:building-a a aeo:Asset ; fnd:hasIdentity ex:building-a-identity ; aeo:assetClass aeo-voc:Building ; aeo:locatedAt ex:site-a .
+ex:building-a a aeo:Asset ; fnd:hasIdentity ex:building-a-identity ; aeo:assetClass aeo-voc:Building ; aeo:locatedAt ex:site-a-identity .
 ex:building-b-identity a aeo:AssetIdentity , fnd:PersistentIdentity .
-ex:building-b a aeo:Asset ; fnd:hasIdentity ex:building-b-identity ; aeo:assetClass aeo-voc:Building ; aeo:locatedAt ex:site-b .
+ex:building-b a aeo:Asset ; fnd:hasIdentity ex:building-b-identity ; aeo:assetClass aeo-voc:Building ; aeo:locatedAt ex:site-b-identity .
 ex:building-c-identity a aeo:AssetIdentity , fnd:PersistentIdentity .
-ex:building-c a aeo:Asset ; fnd:hasIdentity ex:building-c-identity ; aeo:assetClass aeo-voc:Building ; aeo:locatedAt ex:site-c .
+ex:building-c a aeo:Asset ; fnd:hasIdentity ex:building-c-identity ; aeo:assetClass aeo-voc:Building ; aeo:locatedAt ex:site-c-identity .
 ex:building-d-identity a aeo:AssetIdentity , fnd:PersistentIdentity .
-ex:building-d a aeo:Asset ; fnd:hasIdentity ex:building-d-identity ; aeo:assetClass aeo-voc:Building ; aeo:locatedAt ex:site-d .
+ex:building-d a aeo:Asset ; fnd:hasIdentity ex:building-d-identity ; aeo:assetClass aeo-voc:Building ; aeo:locatedAt ex:site-d-identity .
 
 ex:value-a a aeo:Valuation ; fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime ] ;
-    aeo:valueOf ex:building-a ; aeo:valueType aeo-voc:Building ; aeo:valuationBasis aeo-voc:ReplacementCost ;
+    aeo:valueOf ex:building-a-identity ; aeo:valueType aeo-voc:Building ; aeo:valuationBasis aeo-voc:ReplacementCost ;
     aeo:amount [ a qnt:Quantity ; qnt:onSpace ex:GBP ; qnt:numericValue "1000000"^^xsd:decimal ] .
 ex:value-b a aeo:Valuation ; fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime ] ;
-    aeo:valueOf ex:building-b ; aeo:valueType aeo-voc:Building ; aeo:valuationBasis aeo-voc:ReplacementCost ;
+    aeo:valueOf ex:building-b-identity ; aeo:valueType aeo-voc:Building ; aeo:valuationBasis aeo-voc:ReplacementCost ;
     aeo:amount [ a qnt:Quantity ; qnt:onSpace ex:GBP ; qnt:numericValue "2000000"^^xsd:decimal ] .
 ex:value-c a aeo:Valuation ; fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime ] ;
-    aeo:valueOf ex:building-c ; aeo:valueType aeo-voc:Building ; aeo:valuationBasis aeo-voc:ReplacementCost ;
+    aeo:valueOf ex:building-c-identity ; aeo:valueType aeo-voc:Building ; aeo:valuationBasis aeo-voc:ReplacementCost ;
     aeo:amount [ a qnt:Quantity ; qnt:onSpace ex:GBP ; qnt:numericValue "3000000"^^xsd:decimal ] .
 ex:value-d a aeo:Valuation ; fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime ] ;
-    aeo:valueOf ex:building-d ; aeo:valueType aeo-voc:Building ; aeo:valuationBasis aeo-voc:ReplacementCost ;
+    aeo:valueOf ex:building-d-identity ; aeo:valueType aeo-voc:Building ; aeo:valuationBasis aeo-voc:ReplacementCost ;
     aeo:amount [ a qnt:Quantity ; qnt:onSpace ex:GBP ; qnt:numericValue "4000000"^^xsd:decimal ] .
 
 # ---- Flood zones: an example map edition and special flood hazard set ----

@@ -31,11 +31,12 @@ flowchart TB
     ES -->|aeo:hasAsset| A["aeo:Asset"]
     ES -->|aeo:hasInterest| I["aeo:Interest"]
     ES -->|aeo:hasValuation| V["aeo:Valuation"]
-    L -->|aeo:locatedAt / aeo:presence| A
+    A -->|aeo:locatedAt, by identity| L
+    A -->|aeo:presence| P["aeo:Presence"]
     A -->|aeo:interestIn| I
     I -->|aeo:interestHolder| RO["pty:RoleOccupancy"]
-    A -->|aeo:valueOf| V
-    L -->|aeo:valueOf| V
+    V -->|aeo:valueOf, by identity| A
+    V -->|aeo:valueOf, by identity| L
     LE["aeo:LegalEntity\n(pty:Actor, fnd:NaturallyKeyed)"] -->|aeo:controller / aeo:controlled| CR["aeo:ControlRelation"]
     CR --> LE
     RO -->|pty:occupiedBy| LE
@@ -142,13 +143,24 @@ nodes that changed and a new version that lists the rest. Membership is not inve
 which a reasoner would read as an identity statement and merge two schedule versions that list one
 location (TD-49).
 
+Content names identities, not versions (AIR-66, TD-66). `aeo:locatedAt` names the `aeo:LocationIdentity`
+of an asset's location, and `aeo:valueOf` the `aeo:AssetIdentity` or `aeo:LocationIdentity` of what a
+valuation values. The exposure set version's `aeo:hasLocation`, `aeo:hasAsset` members fix which version of
+each identity holds for the set, so a location changing writes one location version, and the assets
+and valuations that name its identity stay as they are and are shared by both set versions. A reader
+resolves an asset's location at a date through the set version that lists the asset. The set's shape
+requires each identity to resolve to exactly one listed version. A version is never edited once
+written. That a set is superseded is read from `fnd:supersededBy` on the succession, and its
+validity ends where the next version's begins, so succession adds no `fnd:validTo` and changes no
+governance state on the earlier version. `examples/versions.ttl` shows both.
+
 | Class | Mixins | Key properties |
 |---|---|---|
 | `aeo:ExposureSet` | `fnd:Version`, `fnd:Governable`, `fnd:TemporallyScoped`, `fnd:Evidenced` | `aeo:reportingUnit` (1, `qnt:Unit`) |
 | `aeo:Location` | `fnd:Version` | `aeo:address` (0..1), `aeo:geometry` (0..1, GeoSPARQL optional), `aeo:geoPrecision` (0..1), `aeo:territory` (1..\*) |
-| `aeo:Asset` | `fnd:Version` | `aeo:assetClass` (1), `aeo:locatedAt` (0..1, functional) xor `aeo:presence` (0..\*), `aeo:partOf` (asymmetric, irreflexive) |
+| `aeo:Asset` | `fnd:Version` | `aeo:assetClass` (1), `aeo:locatedAt` (0..1, functional, a `aeo:LocationIdentity`) xor `aeo:presence` (0..\*), `aeo:partOf` (asymmetric, irreflexive) |
 | `aeo:Interest` | `fnd:TemporallyScoped`, `fnd:Evidenced` | `aeo:interestHolder` (1, `pty:RoleOccupancy`), `aeo:interestIn` (1, `aeo:Asset`), `aeo:interestKind` (1), `aeo:extent` (0..1) |
-| `aeo:Valuation` | `fnd:Evidenced`, `fnd:TemporallyScoped` | `aeo:valueOf` (1, asset or location), `aeo:valueType` (1), `aeo:valuationBasis` (1), `aeo:valuationMethod` (0..1), `aeo:amount` xor (`aeo:rate` + `aeo:horizon`) |
+| `aeo:Valuation` | `fnd:Evidenced`, `fnd:TemporallyScoped` | `aeo:valueOf` (1, an `aeo:AssetIdentity` or `aeo:LocationIdentity`), `aeo:valueType` (1), `aeo:valuationBasis` (1), `aeo:valuationMethod` (0..1), `aeo:amount` xor (`aeo:rate` + `aeo:horizon`) |
 
 Every one of `aeo:ExposureSet`, `aeo:Location` and `aeo:Asset` has its own identity class
 (`aeo:ExposureIdentity`, `aeo:LocationIdentity`, `aeo:AssetIdentity`, each `⊑ fnd:PersistentIdentity`),
@@ -158,15 +170,15 @@ schedule versions, not one snapshot.
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/insurance/exposure>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/exposure/0.2.0> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/exposure/0.3.0> ;
     rdfs:label "LATTICE asset exposure ontology"@en ;
     rdfs:comment "Facts about the world a risk sits in: exposure sets, locations, legal entities and control, assets, interests and valuations (AIR-4.1), with zones, attributes, dependencies, losses, requirements, cover and liability arriving in later regions (AIR-4.2 to AIR-4.5). No class here says what a contract insures, which is the contract module's (Phase 5). See the asset exposure ontology sketch." ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.18.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.18.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.18.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/party/0.18.0> ,
-                <https://www.nebularis.org/neuro-semantic/insurance/common/0.7.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.18.0> .
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.19.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/party/0.19.0> ,
+                <https://www.nebularis.org/neuro-semantic/insurance/common/0.8.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.19.0> .
 
 #################################################################
 #    Identity classes (AIR-4.1). Each versioned class below has
@@ -347,7 +359,7 @@ aeo:Asset a owl:Class ;
         [ a owl:Restriction ; owl:onProperty aeo:locatedAt ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
     rdfs:label "Asset"@en ;
     rdfs:comment "Anything of value exposed to loss: a building, contents, stock, machinery, a vessel, a fleet, a crop, a data estate, an income stream." ;
-    fnd:utility "Subject: an asset version. aeo:partOf composes assets (critical equipment in a building, a building in a campus): asymmetric, irreflexive. aeo:locatedAt is functional, for a fixed asset; a mobile asset uses aeo:presence nodes instead (a shape enforces one or the other, never both)." .
+    fnd:utility "Subject: an asset version. aeo:partOf composes assets (critical equipment in a building, a building in a campus): asymmetric, irreflexive. aeo:locatedAt is functional and names a location identity, for a fixed asset; a mobile asset uses aeo:presence nodes instead (a shape enforces one or the other, never both)." .
 
 aeo:assetClass a owl:ObjectProperty ;
     rdfs:subPropertyOf cls:assetClass ;
@@ -357,10 +369,10 @@ aeo:assetClass a owl:ObjectProperty ;
     fnd:utility "Subject: an asset. Value: a concept bound by a reference asset-class scheme (AIR-4.6). Exactly one. Specialises cls:assetClass." .
 
 aeo:locatedAt a owl:ObjectProperty, owl:FunctionalProperty ;
-    rdfs:domain aeo:Asset ; rdfs:range aeo:Location ;
+    rdfs:domain aeo:Asset ; rdfs:range aeo:LocationIdentity ;
     rdfs:label "located at"@en ;
-    rdfs:comment "The fixed location of an asset." ;
-    fnd:utility "Subject: a fixed asset. Value: its location. At most one, and never together with aeo:presence (the asset-location shape)." .
+    rdfs:comment "The identity of the fixed location of an asset. The exposure set version's aeo:hasLocation members say which version of that location holds for the set, so a location changing writes one location version and no asset version." ;
+    fnd:utility "Subject: a fixed asset. Value: the aeo:LocationIdentity of its location, never a location version. At most one, and never together with aeo:presence (the asset-location shape). Resolve it to a location version through the exposure set version that lists the asset (the set-resolves-identities shape)." .
 
 aeo:partOf a owl:ObjectProperty, owl:AsymmetricProperty, owl:IrreflexiveProperty ;
     rdfs:domain aeo:Asset ; rdfs:range aeo:Asset ;
@@ -441,9 +453,10 @@ aeo:Valuation a owl:Class ;
 
 aeo:valueOf a owl:ObjectProperty ;
     rdfs:domain aeo:Valuation ;
+    rdfs:range [ a owl:Class ; owl:unionOf ( aeo:AssetIdentity aeo:LocationIdentity ) ] ;
     rdfs:label "value of"@en ;
-    rdfs:comment "The asset or location a valuation states a value for." ;
-    fnd:utility "Subject: a valuation. Value: an aeo:Asset or an aeo:Location. Exactly one." .
+    rdfs:comment "The identity of the asset or location a valuation states a value for. The exposure set version's members say which version holds for the set, so a location or asset changing writes one version and no valuation version." ;
+    fnd:utility "Subject: a valuation. Value: an aeo:AssetIdentity or an aeo:LocationIdentity, never a version. Exactly one. Resolve it to a version through the exposure set version that lists the valuation (the set-resolves-identities shape)." .
 
 aeo:valueType a owl:ObjectProperty ;
     rdfs:domain aeo:Valuation ; rdfs:range skos:Concept ;
@@ -1569,13 +1582,13 @@ thousands.
 
 <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/exposure-vocab/0.2.0> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/insurance/exposure/0.2.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.18.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.18.0> ,
-                <https://www.nebularis.org/neuro-semantic/insurance/common-vocab/0.7.0> ,
-                <https://www.nebularis.org/neuro-semantic/insurance/peril-vocab/0.6.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/applied/classification-vocab/0.3.0> .
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/exposure-vocab/0.3.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/insurance/exposure/0.3.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ,
+                <https://www.nebularis.org/neuro-semantic/insurance/common-vocab/0.8.0> ,
+                <https://www.nebularis.org/neuro-semantic/insurance/peril-vocab/0.7.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/applied/classification-vocab/0.4.0> .
 
 #################################################################
 #    Reference schemes (AIR-4.1), each the unscoped fallback
@@ -3988,11 +4001,11 @@ the shape itself since `sh:sparql`'s value is a constraint, not a nested propert
 
 | Shape | Rule |
 |---|---|
-| `aeo:ExposureSetShape` | exactly one identity, one reporting unit, one temporal scope, one governance state |
+| `aeo:ExposureSetShape` | exactly one identity, one reporting unit, one temporal scope, one governance state. Every identity named by `aeo:locatedAt` of a listed asset, and by `aeo:valueOf` of a listed valuation, resolves to exactly one listed location or asset (AIR-66) |
 | `aeo:LocationShape` | exactly one identity, at least one territory. A location with a geometry has a geo precision |
-| `aeo:AssetShape` | exactly one identity and one asset class. Not both `aeo:locatedAt` and `aeo:presence` |
+| `aeo:AssetShape` | exactly one identity and one asset class. Not both `aeo:locatedAt` and `aeo:presence`. `aeo:locatedAt` names an `aeo:LocationIdentity` (AIR-66) |
 | `aeo:InterestShape` | exactly one holder, one asset and one kind |
-| `aeo:ValuationShape` | exactly one `aeo:valueOf`, one value type and one basis. Either one amount, or one rate and one horizon, never both and never neither |
+| `aeo:ValuationShape` | exactly one `aeo:valueOf`, an `aeo:AssetIdentity` or `aeo:LocationIdentity` (AIR-66), one value type and one basis. Either one amount, or one rate and one horizon, never both and never neither |
 | `aeo:ControlRelationShape` | exactly one controller and one controlled, and no cycle through `aeo:controller` / `aeo:controlled` |
 | `aeo:LegalEntityShape` | at most one domicile and one legal form |
 | `aeo:DocumentationShape` | every concept in an `aeo-voc:` scheme has at least one `skos:note` in `@en` (AIR-2.0 documentation rule) |
@@ -4068,6 +4081,38 @@ aeo:ExposureSetShape a sh:NodeShape ;
               }
               FILTER (?ni != 1 || ?nu != 1 || ?nt != 1 || ?ng != 1)
             }
+        """ ] ;
+    sh:sparql [
+        sh:message "Every aeo:locatedAt of an asset the set lists must resolve to exactly one location the set lists, through fnd:hasIdentity." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            SELECT $this WHERE {
+              {
+                SELECT $this ?id (COUNT(DISTINCT ?l) AS ?n) WHERE {
+                  $this aeo:hasAsset ?a .
+                  ?a aeo:locatedAt ?id .
+                  OPTIONAL { $this aeo:hasLocation ?l . ?l fnd:hasIdentity ?id }
+                } GROUP BY $this ?id
+              }
+              FILTER (?n != 1)
+            }
+        """ ] ;
+    sh:sparql [
+        sh:message "Every aeo:valueOf of a valuation the set lists must resolve to exactly one asset or location the set lists, through fnd:hasIdentity." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+            SELECT $this WHERE {
+              {
+                SELECT $this ?id (COUNT(DISTINCT ?m) AS ?n) WHERE {
+                  $this aeo:hasValuation ?v .
+                  ?v aeo:valueOf ?id .
+                  OPTIONAL { { $this aeo:hasAsset ?m } UNION { $this aeo:hasLocation ?m } ?m fnd:hasIdentity ?id }
+                } GROUP BY $this ?id
+              }
+              FILTER (?n != 1)
+            }
         """ ] .
 
 aeo:LocationShape a sh:NodeShape ;
@@ -4123,6 +4168,15 @@ aeo:AssetShape a sh:NodeShape ;
             SELECT $this WHERE {
               $this aeo:locatedAt ?l ; aeo:presence ?p .
             }
+        """ ] ;
+    sh:sparql [
+        sh:message "An asset's aeo:locatedAt must name an aeo:LocationIdentity, not a location version." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            SELECT $this WHERE {
+              $this aeo:locatedAt ?l .
+              FILTER NOT EXISTS { ?l a aeo:LocationIdentity }
+            }
         """ ] .
 
 aeo:InterestShape a sh:NodeShape ;
@@ -4160,6 +4214,16 @@ aeo:ValuationShape a sh:NodeShape ;
                 } GROUP BY $this
               }
               FILTER (?nv != 1 || ?nt != 1 || ?nb != 1)
+            }
+        """ ] ;
+    sh:sparql [
+        sh:message "A valuation's aeo:valueOf must name an aeo:AssetIdentity or an aeo:LocationIdentity, not a version." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            SELECT $this WHERE {
+              $this aeo:valueOf ?v .
+              FILTER NOT EXISTS { ?v a aeo:AssetIdentity }
+              FILTER NOT EXISTS { ?v a aeo:LocationIdentity }
             }
         """ ] ;
     sh:sparql [
@@ -4839,6 +4903,7 @@ aeo:PerilCompletenessShape a sh:NodeShape ;
         sh:message "A location exposed to a peril (through a pool participation's peril scope) should have a value, in some assessment of the location or of an asset located there, for each attribute type that peril or a broader cause concept names relevant." ;
         sh:select """
             PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
             PREFIX prl: <https://www.nebularis.org/neuro-semantic/insurance/peril#>
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             SELECT $this WHERE {
@@ -4851,7 +4916,8 @@ aeo:PerilCompletenessShape a sh:NodeShape ;
                   ?asmt aeo:assesses $this .
                 } UNION {
                   ?asmt aeo:assesses ?asset .
-                  ?asset aeo:locatedAt $this .
+                  ?asset aeo:locatedAt ?locationIdentity .
+                  $this fnd:hasIdentity ?locationIdentity .
                 }
                 ?asmt aeo:hasAttribute ?av .
                 ?av aeo:attributeType ?type .
@@ -5131,7 +5197,7 @@ aeo:CyberPostureProfileOutsideFamilyShape a sh:NodeShape ;
 ## 7. Documentation rule
 
 Every concept this module's vocabulary publishes carries a `skos:note` per the
-[AIR-2.0 documentation rule](../peril/README.md#7-documentation-rule): which published standards,
+[AIR-2.0 documentation rule](../peril/README.md#7-documentation-rule-air-20): which published standards,
 scales or sources it follows, how it follows them, and where it departs from them.
 
 ## 8. Sources consulted
@@ -5189,5 +5255,8 @@ revenue by territory, with the output of `effective_characteristics` for its cau
 | `0.1.0` | AIR-4.1: exposure set, location, legal entity, control relations, asset, interest, valuation. Seven scheme contracts, nine programme roles. Literate from the start |
 | `0.1.0` (AIR-4.2a) | Exposure set membership, zone designations, pool participations, assessments and attribute values are no longer inverse functional, and `aeo:MembershipShape` is withdrawn (TD-49). Unchanged members are shared across exposure set versions by identity, as this README always stated. Corrects `0.1.0` before it is released, so no version bump. Example `versions.ttl` added |
 | `0.1.0` (AIR-4.3) | Dependencies, peril metrics, metric comparisons and exposure units, with the dependency kind, substitutability, metric kind, perspective, calculation method and model option schemes, the schedule group and scenario contracts, and the output share, return period and exceedance probability spaces. `aeo:perilScope` loses its domain (AIR-4.2 gave it `aeo:PoolParticipation`, which a metric's use would have contradicted). Nine shapes |
+| `0.3.0` (AIR-66, breaking, spec and vocab) | `aeo:locatedAt` and `aeo:valueOf` name a location's or asset's persistent identity (`aeo:LocationIdentity`, `aeo:AssetIdentity`) instead of a version, fixed by the exposure set version's membership, so one location changing writes one location version and no asset or valuation version. Their ranges change, `aeo:AssetShape`, `aeo:ValuationShape` and `aeo:ExposureSetShape` check them, and `aeo:PerilCompletenessShape` joins through the identity. `examples/versions.ttl` no longer edits version 1 on succession. The module's version is not bumped on this branch (TD-64) |
 | `0.1.0` (AIR-4.4) | Loss experiences, loss records, cause chains with recorded and effective characteristics and defaulted characteristics, coverage requirements with measure constraints, existing cover with summary terms, cover history events and financial metrics, with ten reference schemes and contracts, the money share space, and nineteen shapes. Imports Eligibility 0.12.0 and `insurance/common` 0.6.0. Financial metric kinds for revenue, gross profit and headcount are `aeo-voc:RevenueMetric`, `aeo-voc:GrossProfitMetric` and `aeo-voc:HeadcountMetric`, since `Revenue`, `GrossProfit` and `Headcount` name a value type and an attribute type |
 | shapes `0.1.1` | `aeo:DocumentationShape` reads the same concepts with its scheme check as a `FILTER EXISTS` and its note check as a `FILTER NOT EXISTS`, instead of joining the scheme's type and counting notes. About six times faster on the reference fixture, with the same targets, focus nodes and message |
+| shapes `0.2.0` | AIR-66's shapes: an asset's `aeo:locatedAt` names an `aeo:LocationIdentity`, a valuation's `aeo:valueOf` an identity, and each identity an asset or a valuation the set lists names resolves, through `fnd:hasIdentity`, to exactly one location or asset the set lists (may invalidate) |
+| `0.3.0` | both documents re-pinned to the substrate release 0.19.0 with AIR-66 above, and to `insurance/common` 0.8.0, `insurance/peril-vocab` 0.7.0 and `applied/classification-vocab` 0.4.0 |

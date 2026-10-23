@@ -25,6 +25,18 @@ import pyoxigraph as ox
 XSD = "http://www.w3.org/2001/XMLSchema#"
 Term = ox.NamedNode | ox.Literal | ox.BlankNode
 
+VERSION: tuple = tuple(int(part) for part in re.findall(r"\d+", ox.__version__)[:3])
+"""The installed pyoxigraph's version, as integers. A machine may not be able to install the newest one, so a test that depends on a
+behaviour that changed between versions reads one of the flags below, never this number."""
+
+SNAPSHOT_UPDATES: bool = VERSION >= (0, 5, 12)
+"""Whether a ``DELETE``/``INSERT WHERE`` removes every deletion before it adds any insertion, as SPARQL 1.1 says. 0.5.11 applied the
+collected mutations one solution at a time, and 0.5.12 applies the deletions first (docs/architecture/triple-store-discovery.md, TSD-01)."""
+
+LEFT_GROUPED_ARITHMETIC: bool = VERSION >= (0, 5, 12)
+"""Whether ``a - b + c`` and ``a / b / c`` are grouped from the left, as SPARQL 1.1 says. 0.5.11 grouped them from the right, and
+0.5.12 from the left (TSD-17)."""
+
 
 def iri(value: str) -> ox.NamedNode:
     return ox.NamedNode(value)
@@ -93,4 +105,4 @@ class OxigraphStore:
         return sum(1 for q in self.quads(graph) if q.predicate.value == predicate)
 
 
-__all__ = ["OxigraphStore", "bind_parameters", "iri", "literal", "Term", "XSD"]
+__all__ = ["OxigraphStore", "bind_parameters", "iri", "literal", "Term", "XSD", "VERSION", "SNAPSHOT_UPDATES", "LEFT_GROUPED_ARITHMETIC"]

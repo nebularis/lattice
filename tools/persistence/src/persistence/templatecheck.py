@@ -4,14 +4,13 @@
 """Static checks over the SPARQL the compiler generates (formal-methods
 track H, slice H1.3, review §12 and priority items S-3 and S-4).
 
-Both read the text of each generated update after ``instantiate`` has filled
-in the compile-time bindings, with no backend and no data.
+Both read the text of each generated update, built from its builder with the compile-time bindings filled in, with no backend and no data.
 
 S-3, unbound INSERT variables
     A variable in an INSERT template that is not bound in a solution makes
     the engine skip that triple silently, so a confirmation-outcome record can
     lose a field with no error. Every variable in an INSERT template must be a
-    request-time parameter (written ``$name``, bound by the caller), bound in
+    request-time parameter (one the operation declares, bound by the caller), bound in
     every solution of the WHERE clause, or listed with a reason in
     :data:`OPTIONAL_INSERT_VARIABLES`.
 
@@ -23,22 +22,16 @@ S-4, blank nodes in templates
 
 A construct this module cannot analyse is reported, never passed over.
 
-Two assumptions, both decided 2026-10-09 (H-D11, H-D12, explained in plan
-section 13 of docs/developer/plans/formal-methods-track-h.md) and both to be removed by the typed
-IR of slice H2:
-
-* A name written ``$name`` is taken to be supplied by the caller. The compiled profile does not list
-  request-time parameters, so the convention is read from the text. A template author who writes
-  ``$x`` where the WHERE clause should bind ``?x`` would escape the check.
-* A BIND whose inputs are all bound is taken to give its variable a value. An expression can fail,
-  for example when the caller omits a parameter, and the INSERT then skips its triples silently.
-  Nothing here detects that. See TD-34 in docs/developer/plans/technical-debt.md.
+One assumption remains, decided 2026-10-09 (H-D12). A BIND whose inputs are all bound is taken to give its variable a value. An
+expression can fail, for example when the caller omits a parameter, and the INSERT then skips its triples silently. Nothing here detects
+that, and the required-parameter guard of the builders (TD-34) is what stops a missing parameter. The other assumption, that a name written
+``$name`` is supplied by the caller (H-D11), is gone since H2.9. The operation's declared parameters are read.
 """
 
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import Mapping
 
 from rdflib import RDF, BNode, Graph, Variable
@@ -48,9 +41,10 @@ from rdflib.plugins.sparql.parserutils import CompValue
 from rdflib.term import Node
 
 from .hygiene import VIOLATION, Finding
-from .instantiate import _render_operation
+from .instantiate import build_operation
+from .ir import SLOT_KINDS
+from .ir_render import fill_slots, render
 from .namespaces import DAL
-from .render import REQUEST_TIME_SLOTS
 
 # Variables a template may leave unbound in an INSERT, by template file stem,
 # each with the reason. An entry is a deliberate, reviewed exception and is
@@ -63,18 +57,35 @@ _FIRST_APPEND = (
     "a new stream has no pat:head before its first append, so its first revision has no previous "
     "revision and the pat:prevRev triple is correctly absent (guide §14.2)"
 )
+_FIRST_VERSION = (
+    "the first version of an identity has no current version before it, so no version precedes it and the "
+    "pat:previousVersion triple is correctly absent (H2.6c, R2)"
+)
 OPTIONAL_INSERT_VARIABLES: dict[str, dict[str, str]] = {
     "cas-replace-named-graph": {"prevRev": _FIRST_CAS},
     "cas-replace-named-graph-dataset-guard": {"prevRev": _FIRST_CAS},
-    "cas-replace-composite-property": {"prevRev": _FIRST_CAS},
-    "cas-replace-composite-property-dataset-guard": {"prevRev": _FIRST_CAS},
-    "tombstone-delete-composite": {"prevRev": _FIRST_CAS},
-    "tombstone-delete-composite-dataset-guard": {"prevRev": _FIRST_CAS},
     "tombstone-delete-named-graph": {"prevRev": _FIRST_CAS},
     "tombstone-delete-named-graph-dataset-guard": {"prevRev": _FIRST_CAS},
+    "append-version": {"prevRev": _FIRST_CAS, "priorVersion": _FIRST_VERSION},
+    "append-version-dataset-guard": {"prevRev": _FIRST_CAS, "priorVersion": _FIRST_VERSION},
+    "append-version-delta": {"prevRev": _FIRST_CAS, "priorVersion": _FIRST_VERSION},
+    "append-version-delta-dataset-guard": {"prevRev": _FIRST_CAS, "priorVersion": _FIRST_VERSION},
     "append-event": {"prev": _FIRST_APPEND},
     "append-event-dataset-guard": {"prev": _FIRST_APPEND},
 }
+_NOTHING_SWEPT = (
+    "an aggregate with nothing in it has nothing for the sweep to find, so a patch-log tombstone copies nothing into its del graph "
+    "and its own receipt still names that graph (H2.6d)"
+)
+# The patch-log variants (H2.6d) have the receipt allowances of their base operation. Their tombstones also copy the sweep.
+for _base in (
+    "cas-replace-named-graph", "cas-replace-composite-property", "tombstone-delete-named-graph", "tombstone-delete-composite",
+):
+    for _guard in ("", "-dataset-guard"):
+        OPTIONAL_INSERT_VARIABLES[f"{_base}-patch-log{_guard}"] = {
+            "prevRev": _FIRST_CAS,
+            **({"s": _NOTHING_SWEPT, "p": _NOTHING_SWEPT, "o": _NOTHING_SWEPT} if _base.startswith("tombstone") else {}),
+        }
 
 # Stand-ins for the request-time slots, so the text parses as SPARQL. The
 # payload is a ground triple. A real payload is skolemized by the caller.
@@ -83,11 +94,12 @@ _SLOT_STAND_INS = {
     "logGraphs": "<urn:x-check:log>",
     "eventRows": '(<urn:x-check:event> <urn:x-check:type> "1"^^<http://www.w3.org/2001/XMLSchema#long> "2026-01-01T00:00:00Z"^^<http://www.w3.org/2001/XMLSchema#dateTime>)',
     "eventTriples": "<urn:x-check:event> <urn:x-check:p> <urn:x-check:o> .",
+    "assertTriples": "<urn:x-check:s> <urn:x-check:p> <urn:x-check:added> .",
+    "retractTriples": "<urn:x-check:s> <urn:x-check:p> <urn:x-check:removed> .",
+    "addedMembers": "<urn:x-check:s> <urn:x-check:addsMember> <urn:x-check:added> .",
+    "droppedMembers": "<urn:x-check:s> <urn:x-check:dropsMember> <urn:x-check:removed> .",
 }
 
-_COMMENT = re.compile(r"\{\{!.*?\}\}", re.S)
-_PARAMETER = re.compile(r"\$(\w+)")
-_STRING_OR_IRI = re.compile(r'"(?:[^"\\\n]|\\.)*"|\'(?:[^\'\\\n]|\\.)*\'|<[^<>\s]*>|#[^\n]*')
 
 
 @dataclass(frozen=True)
@@ -96,13 +108,14 @@ class Operation:
 
     target: str
     name: str
-    template: str  # the template file stem
+    template: str  # the builder's identity (dal:templateId)
     text: str  # rendered, request-time slots filled with stand-ins
+    parameters: frozenset = frozenset()  # the names the operation declares as request-time parameters, bound by the caller
 
 
-def operations(compiled: Graph, guards: bool = True) -> list[Operation]:
+def operations(compiled: Graph) -> list[Operation]:
     """Every generated operation of every target in a compiled profile,
-    rendered as ``instantiate`` renders it."""
+    rendered as ``instantiate`` renders it, with the guards and graph naming its contract records."""
     out: list[Operation] = []
     for profile in sorted(compiled.subjects(RDF.type, DAL.CompiledProfile), key=str):
         target = str(compiled.value(profile, DAL.forTarget)).rsplit("#", 1)[-1]
@@ -110,11 +123,10 @@ def operations(compiled: Graph, guards: bool = True) -> list[Operation]:
         if deployment is not None:
             target += "@" + str(deployment).rsplit("#", 1)[-1]
         for node in sorted(compiled.objects(profile, DAL.generatedOperation), key=str):
-            name, text = _render_operation(compiled, node, None, guards)
-            path = str(compiled.value(compiled.value(node, DAL.usesTemplate), DAL.templatePath))
-            for slot in REQUEST_TIME_SLOTS:
-                text = text.replace("{{{" + slot + "}}}", _SLOT_STAND_INS[slot])
-            out.append(Operation(target, name, path.removesuffix(".mustache"), text))
+            name, built = build_operation(compiled, node)
+            builder = str(compiled.value(compiled.value(node, DAL.usesTemplate), DAL.templateId))
+            parameters = frozenset(p.name for p in built.params if p.kind not in SLOT_KINDS)
+            out.append(Operation(target, name, builder, fill_slots(render(built), _SLOT_STAND_INS), parameters))
     return out
 
 
@@ -219,8 +231,20 @@ class Issue:
     variable: str = ""
 
 
-def analyse(text: str) -> list[Issue]:
-    """S-3 and S-4 (and a parse check) over one generated update, with no allowances."""
+def analyse(text: str, parameters: frozenset | set | tuple = ()) -> list[Issue]:
+    """The issues of ``_analyse``. The corpus is analysed by many tests and the parse is most of the cost, so each (text, parameters) is analysed once
+    per process. Issue is frozen and a new list is returned."""
+    return list(_analysed(text, frozenset(parameters)))
+
+
+@lru_cache(maxsize=None)
+def _analysed(text: str, parameters: frozenset) -> tuple[Issue, ...]:
+    return tuple(_analyse(text, parameters))
+
+
+def _analyse(text: str, parameters: frozenset | set | tuple = ()) -> list[Issue]:
+    """S-3 and S-4 (and a parse check) over one generated update, with no allowances. ``parameters`` are the names the operation declares
+    as request-time parameters, which the caller binds (H-D11)."""
     issues: list[Issue] = []
     try:
         updates = translateUpdate(parseUpdate(text)).algebra
@@ -231,8 +255,7 @@ def analyse(text: str) -> list[Issue]:
         except Exception:
             return [Issue("S-0", f"does not parse as SPARQL ({type(error).__name__}: {str(error)[:120]})")]
 
-    cleaned = _STRING_OR_IRI.sub(" ", _COMMENT.sub("", text))
-    parameters = frozenset(Variable(n) for n in _PARAMETER.findall(cleaned))
+    declared = frozenset(Variable(n) for n in parameters)
 
     for update in updates:
         kind = getattr(update, "name", "")
@@ -259,14 +282,14 @@ def analyse(text: str) -> list[Issue]:
         if kind != "Modify":
             continue
         try:
-            bound = definitely_bound(update.where, parameters)
+            bound = definitely_bound(update.where, declared)
         except _Unsupported as error:
             issues.append(Issue("S-3", f"cannot analyse the WHERE clause ({error}), so its INSERT variables are unchecked"))
             continue
         used: set[Variable] = set()
         for graph_name, triple in insert:
             used |= {t for t in (*triple, graph_name) if isinstance(t, Variable)}
-        for variable in sorted(used - bound - parameters, key=str):
+        for variable in sorted(used - bound - declared, key=str):
             issues.append(
                 Issue(
                     "S-3",
@@ -278,12 +301,14 @@ def analyse(text: str) -> list[Issue]:
     return issues
 
 
-def check_text(text: str, template: str, label: str, allow: Mapping[str, Mapping[str, str]] | None = None) -> list[Finding]:
+def check_text(
+    text: str, template: str, label: str, allow: Mapping[str, Mapping[str, str]] | None = None, parameters: frozenset | set | tuple = ()
+) -> list[Finding]:
     """S-3 and S-4 over one generated update, with the template's allowances applied."""
     allowed = (OPTIONAL_INSERT_VARIABLES if allow is None else allow).get(template, {})
     return [
         Finding(issue.check, VIOLATION, (label,), f"{label}: {issue.message}")
-        for issue in analyse(text)
+        for issue in analyse(text, parameters)
         if not (issue.check == "S-3" and issue.variable in allowed)
     ]
 
@@ -293,7 +318,7 @@ def unbound_by_template(compiled: Graph) -> dict[str, set[str]]:
     leaves unbound. This is what an allowance excuses."""
     seen: dict[str, set[str]] = {}
     for op in operations(compiled):
-        variables = {i.variable for i in analyse(op.text) if i.check == "S-3" and i.variable}
+        variables = {i.variable for i in analyse(op.text, op.parameters) if i.check == "S-3" and i.variable}
         seen.setdefault(op.template, set()).update(variables)
     return seen
 
@@ -315,7 +340,7 @@ def check_compiled(compiled: Graph, allow: Mapping[str, Mapping[str, str]] | Non
     """S-3 and S-4 over every generated operation of a compiled profile."""
     findings: list[Finding] = []
     for op in operations(compiled):
-        findings += check_text(op.text, op.template, f"{op.target}/{op.name}", allow)
+        findings += check_text(op.text, op.template, f"{op.target}/{op.name}", allow, op.parameters)
     return sorted(set(findings))
 
 

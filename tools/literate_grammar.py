@@ -74,7 +74,7 @@ PREDICATE_ORDER = (
     "owl:onProperty", "owl:intersectionOf", "owl:unionOf", "owl:complementOf", "owl:someValuesFrom",
     "owl:allValuesFrom", "owl:hasValue", "owl:cardinality", "owl:minCardinality", "owl:maxCardinality",
     "owl:qualifiedCardinality", "owl:minQualifiedCardinality", "owl:maxQualifiedCardinality", "owl:onClass",
-    "owl:members", "owl:oneOf",
+    "owl:members", "owl:distinctMembers", "owl:oneOf",
     "sh:targetClass", "sh:property", "sh:path", "sh:class", "sh:datatype", "sh:minCount", "sh:maxCount",
     "sh:qualifiedValueShape", "sh:qualifiedMinCount", "sh:qualifiedMaxCount", "sh:hasValue", "sh:in", "sh:message",
 )
@@ -379,6 +379,7 @@ class Compiled:
     documents: Dict[str, str]
     shapes: Dict[str, str]
     readme: str
+    stale: Tuple[str, ...] = ()
 
 
 def compile_layout(markdown: str, scan, layer: str) -> Compiled:
@@ -410,11 +411,10 @@ def compile_layout(markdown: str, scan, layer: str) -> Compiled:
     documents = {target: document.turtle(header.prefixes) for target, document in header.documents.items()}
     shapes = structural_shapes(section6.restrictions, header.prefixes)
     views = Views(header.documents.values(), section6)
-    regions = {"axiom-index": views.axiom_index(), "class-diagram": views.class_diagram()}
-    refreshed = refresh(markdown, scan, regions, {
-        "axiom-index": section6.ranges["axiom index"], "class-diagram": readme.section("Overview"),
-    })
-    return Compiled(documents, {f"ontology/{layer}/shapes/structural.ttl": shapes} if shapes else {}, refreshed)
+    views.check_diagrams(scan.regions, readme)
+    regions = {"axiom-index": views.axiom_index(), "class-diagram": views.diagram}
+    refreshed, stale = refresh(markdown, scan, regions, {"axiom-index": section6.ranges["axiom index"]})
+    return Compiled(documents, {f"ontology/{layer}/shapes/structural.ttl": shapes} if shapes else {}, refreshed, stale)
 
 
 # ---- OWL Manchester syntax, the subset section 6 uses (ADR-A126 decision 4) ----------------------
@@ -816,8 +816,15 @@ class Section6:
                 if len(names) != 2:
                     raise GrammarError(f"line {paragraph.line}: **Disjoint.** names exactly two classes")
                 document.add(names[0], "owl:disjointWith", names[1])
+            elif label == "all different":
+                if len(names) < 2:
+                    raise GrammarError(f"line {paragraph.line}: **All different.** names two individuals or more")
+                document.anonymous.append(Node((("rdf:type", "owl:AllDifferent"), ("owl:distinctMembers", Collection(tuple(names))))))
             else:
-                raise GrammarError(f"line {paragraph.line}: section 6.5 takes **All disjoint.** or **Disjoint.**, not **{match.group('label')}.**")
+                raise GrammarError(
+                    f"line {paragraph.line}: section 6.5 takes **All disjoint.**, **Disjoint.** or **All different.**, "
+                    f"not **{match.group('label')}.**"
+                )
 
 
 
@@ -989,6 +996,10 @@ class Views:
         self.table_terms = section6.table_terms
         self.prefixes = section6.prefixes
 
+    def _groups(self, kind: str, predicate: str) -> List[Tuple[Term, ...]]:
+        """The members of each anonymous node of the given type, in the order written."""
+        return [dict(node.pairs)[predicate].items for node in self.anonymous if ("rdf:type", kind) in node.pairs]
+
     def kind(self, subject: str) -> str:
         types = {o for p, o in self.facts[subject] if p == "rdf:type"}
         return next((KIND_NAMES[t] for t in KIND_NAMES if t in types), "Individual" if types else "")
@@ -1019,8 +1030,8 @@ class Views:
             sentence("Equivalent to", self.values(subject, "owl:equivalentClass"))
             sentence("Key", self.values(subject, "owl:hasKey"))
             disjoint = self.values(subject, "owl:disjointWith") + [
-                d for node in self.anonymous for d in dict(node.pairs)["owl:members"].items
-                if subject in dict(node.pairs)["owl:members"].items and d != subject
+                d for items in self._groups("owl:AllDisjointClasses", "owl:members") if subject in items
+                for d in items if d != subject
             ] + [s for s in self.facts if subject in self.values(s, "owl:disjointWith")]
             sentence("Disjoint with", sorted(set(disjoint)))
             restrictions = []
@@ -1033,6 +1044,10 @@ class Views:
                 parts.append(f"Restrictions {', '.join(sorted(restrictions))}.")
         elif kind == "Individual":
             sentence("Type", sorted(t for t in self.values(subject, "rdf:type")))
+            sentence("Different from", sorted({
+                d for items in self._groups("owl:AllDifferent", "owl:distinctMembers") if subject in items
+                for d in items if d != subject
+            }))
         else:
             sentence("Domain", self.values(subject, "rdfs:domain"))
             sentence("Range", self.values(subject, "rdfs:range"))
@@ -1043,31 +1058,105 @@ class Views:
             sentence("Subproperty of", self.values(subject, "rdfs:subPropertyOf"))
         return parts
 
-    def class_diagram(self) -> str:
-        classes = sorted(s for s in self.facts if self.kind(s) == "Class")
+    def check_diagrams(self, regions: Sequence, readme: "Readme") -> None:
+        """Refuse a README whose class-diagram regions break the rules: either one region with no ``classes``,
+        in Overview, or parts, in Overview or Detailed Design, that between them list every class of section 6."""
+        found = [r for r in regions if r.key == "generated" and r.value == "class-diagram"]
+        for region in found:
+            options = region.options
+            if "classes" in options and not options["classes"]:
+                raise GrammarError(f"line {region.start_line}: a part lists at least one class")
+            if "classes" in options and not options.get("part", "").strip():
+                raise GrammarError(f"line {region.start_line}: a part needs a \"part\" title")
+            if "classes" not in options and "part" in options:
+                raise GrammarError(f"line {region.start_line}: \"part\" is given without \"classes\"")
+            if options.get("enumerations", "table") != "table":
+                raise GrammarError(f"line {region.start_line}: \"enumerations\" takes \"table\"")
+        places = [readme.section("Overview"), readme.section("Detailed Design")]
+        parts = [r for r in found if "classes" in r.options]
+        if not parts:
+            if len(found) != 1 or not places[0][0] < found[0].start_line < places[0][1]:
+                raise GrammarError(
+                    f"the README needs one generated region 'class-diagram', in its place (found {len(found)})"
+                )
+            return
+        if len(parts) != len(found):
+            raise GrammarError("a README draws its class diagram whole or in parts, not both. Give every region \"classes\"")
+        titles = [r.options["part"].strip() for r in parts]
+        for region, title in zip(parts, titles):
+            if not any(start < region.start_line < end for start, end in places):
+                raise GrammarError(f"line {region.start_line}: a class-diagram part sits in Overview or Detailed Design")
+            if titles.count(title) > 1:
+                raise GrammarError(f"line {region.start_line}: two class-diagram parts are titled {title!r}")
+        known = {s for s in self.facts if self.kind(s) == "Class"}
+        covered = set()
+        for region in parts:
+            for name in region.options["classes"]:
+                if name not in known:
+                    raise GrammarError(f"line {region.start_line}: {name} is not a class of section 6")
+                covered.add(name)
+        if known - covered:
+            raise GrammarError(
+                f"no class-diagram part draws {', '.join(sorted(known - covered))}. Every class of section 6 sits in one part"
+            )
+
+    def diagram(self, region) -> str:
+        """The content of one class-diagram region: the whole diagram, or its part with a caption."""
+        options = region.options
+        only = set(options["classes"]) if "classes" in options else None
+        text = self.class_diagram(only, options.get("enumerations") == "table")
+        return f"**{options['part'].strip()}**\n\n{text}" if only is not None else text
+
+    def class_diagram(self, only: Optional[set] = None, enumerations: bool = False) -> str:
+        """The diagram of every class, or of the classes in ``only`` with their members, the subclassing
+        and associations among them, and a bare box for each class they point to that is not in ``only``.
+        With ``enumerations``, an enumerated class lists its individuals as members."""
+        classes = sorted(s for s in self.facts if self.kind(s) == "Class" and (only is None or s in only))
         properties = sorted(s for s in self.facts if self.kind(s) in ("Object property", "Datatype property"))
         if not classes and not properties:
             return "None."
+        part = only is not None
+
+        def aimed(prop: str, names: List[str]) -> List[str]:
+            return [n for n in names if n in only] if part else names
+
         named = set(classes)
         for subject in classes:
             named.update(t for t in self.values(subject, "rdfs:subClassOf") if isinstance(t, str))
         for prop in properties:
-            named.update(t for p in ("rdfs:domain", "rdfs:range") for t in self.values(prop, p)
-                         if isinstance(t, str) and self.kind(prop) == "Object property")
+            if self.kind(prop) != "Object property":
+                continue
+            domains = [t for t in self.values(prop, "rdfs:domain") if isinstance(t, str)]
+            ranges = [t for t in self.values(prop, "rdfs:range") if isinstance(t, str)]
+            if not part or aimed(prop, domains) or (not domains and aimed(prop, ranges)):
+                named.update(aimed(prop, domains) + ranges if part else domains + ranges)
         ids = self._identifiers(named)
         members: Dict[str, List[str]] = {c: [] for c in sorted(named)}
         links: List[str] = []
         boxes: List[str] = []
         for row in self.rows:
+            if part and row.subject not in only:
+                continue
             term = class_expression(f"{row.prop} {row.values}", self.prefixes, f"line {row.line}")
             members.setdefault(row.subject, []).append(f"{_local(row.prop)}, {verbalise(term)}")
         for subject in classes:
             for parent in sorted(t for t in self.values(subject, "rdfs:subClassOf") if isinstance(t, str)):
                 links.append(f"{ids[parent]} <|-- {ids[subject]}")
+            if enumerations:
+                for expression in self.values(subject, "owl:equivalentClass"):
+                    one_of = dict(expression.pairs).get("owl:oneOf") if isinstance(expression, Node) else None
+                    if one_of is not None and all(isinstance(i, str) for i in one_of.items):
+                        members[subject] += ["<<enumeration>>", *[_local(i) for i in one_of.items]]
         for prop in properties:
             domains = [t for t in self.values(prop, "rdfs:domain") if isinstance(t, str)]
             ranges = [t for t in self.values(prop, "rdfs:range") if isinstance(t, str)]
             local = _local(prop)
+            if part:
+                if domains and not aimed(prop, domains):
+                    continue
+                if not domains and not (self.kind(prop) == "Object property" and aimed(prop, ranges)):
+                    continue
+                domains = aimed(prop, domains)
             if self.kind(prop) == "Object property" and domains and ranges:
                 links += [f"{ids[d]} --> {ids[r]} : {local}" for d in domains for r in ranges]
             elif domains:
@@ -1079,7 +1168,8 @@ class Views:
                 kind = self.kind(prop).replace("property", "Property")
                 identifier = re.sub(r"[^A-Za-z0-9_]", "_", f"{kind.replace(' ', '')}_{local}")
                 boxes.append(f'    class {identifier}["{kind} - {local}"]')
-        lines = ["```mermaid", "classDiagram"]
+        # A part is drawn left to right, which stacks its unlinked classes instead of lining them up across the page.
+        lines = ["```mermaid", "classDiagram"] + (["    direction LR"] if part else [])
         for subject in sorted(members, key=lambda c: ids.get(c, c)):
             if subject not in ids:
                 continue
@@ -1103,9 +1193,10 @@ class Views:
         return out
 
 
-def refresh(markdown: str, scan, contents: Mapping[str, str], places: Mapping[str, Tuple[int, int]]) -> str:
-    """The README with each generated region's content replaced by ``contents``. Each region is required,
-    once, inside its place (a range of line numbers), and an unknown region is refused."""
+def refresh(markdown: str, scan, contents: Mapping[str, object], places: Mapping[str, Tuple[int, int]]):
+    """The README with each generated region's content replaced by ``contents`` (a text, or a function of
+    the region), and the regions that were out of date, each named with its line. A region named in
+    ``places`` is required, once, inside its place (a range of line numbers). An unknown region is refused."""
     lines = markdown.split("\n")
     regions = [r for r in scan.regions if r.key == "generated"]
     for region in regions:
@@ -1115,6 +1206,12 @@ def refresh(markdown: str, scan, contents: Mapping[str, str], places: Mapping[st
         found = [r for r in regions if r.value == name]
         if len(found) != 1 or not start < found[0].start_line < end:
             raise GrammarError(f"the README needs one generated region {name!r}, in its place (found {len(found)})")
+    stale: List[str] = []
     for region in sorted(regions, key=lambda r: r.start_line, reverse=True):
-        lines[region.start_line:region.end_line - 1] = ["", *contents[region.value].split("\n"), ""]
-    return "\n".join(lines)
+        content = contents[region.value]
+        new = ["", *(content(region) if callable(content) else content).split("\n"), ""]
+        if lines[region.start_line:region.end_line - 1] != new:
+            part = f" {region.options['part']!r}" if "part" in region.options else ""
+            stale.append(f"{region.value}{part} at line {region.start_line}")
+        lines[region.start_line:region.end_line - 1] = new
+    return "\n".join(lines), tuple(reversed(stale))

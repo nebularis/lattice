@@ -1,0 +1,4 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# A family that declares dal:PatchLog and is append-only, so no operation of it writes a patch log (D-10, H2.8b).
+# base: append-stream-dataset-guard.ttl

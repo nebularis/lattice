@@ -1,0 +1,59 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# A shared base for the witnesses of the shapes over a compiled profile (formal-methods H2.7): two generated operations with the
+# contract each states, which conforms to every shape. A witness patches it with `# remove:` lines and adds one fault.
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# A replace: a guarded operation with a payload, a digest and a caller-named graph.
+ex:replace a dal:GeneratedOperation ;
+    dal:forOperation "cas-replace" ;
+    dal:operationKind dal:Replace ;
+    dal:templateVersion "1"^^xsd:integer ;
+    dal:guardStatus dal:Guarded ;
+    dal:graphNaming dal:CallerNamed ;
+    dal:declarationSource dal:BuilderDerived ;
+    dal:parameter ex:replace-root , ex:replace-g , ex:replace-seq , ex:replace-payload ;
+    dal:access ex:replace-access-1 ;
+    dal:payloadContract ex:replace-payload-contract ;
+    dal:digestContract ex:replace-digest .
+
+ex:replace-root a dal:ParameterDeclaration ;
+    dal:parameterName "root" ; dal:parameterKind dal:IriKind ; dal:required true .
+ex:replace-g a dal:ParameterDeclaration ;
+    dal:parameterName "g" ; dal:parameterKind dal:IriKind ; dal:required true ;
+    dal:mustEqual dal:GraphNameOfRoot ; dal:mustEqualFor ex:replace-root .
+ex:replace-seq a dal:ParameterDeclaration ;
+    dal:parameterName "expectedSeq" ; dal:parameterKind dal:PositionKind ; dal:required true .
+ex:replace-payload a dal:ParameterDeclaration ;
+    dal:parameterName "payloadTriples" ; dal:parameterKind dal:PayloadKind ; dal:required true .
+
+ex:replace-access-1 a dal:ResourceAccess ;
+    dal:resourceKind dal:VersionRow ; dal:accessMode dal:PointRead ; dal:keyedBy ex:replace-root .
+
+ex:replace-payload-contract a dal:PayloadContract ;
+    dal:payloadParameter ex:replace-payload ; dal:payloadRoot ex:replace-root ;
+    dal:payloadEncoding dal:GroundNTriples ; dal:boundaryShape dal:NoBoundaryShape .
+
+ex:replace-digest a dal:DigestContract ;
+    dal:digestAlgorithm "SHA-256" ; dal:digestPart ex:replace-digest-1 , ex:replace-digest-2 .
+ex:replace-digest-1 a dal:DigestPart ;
+    dal:partOrder "1"^^xsd:integer ; dal:partRole dal:OperationKindPart ; dal:partSource dal:NoSource .
+ex:replace-digest-2 a dal:DigestPart ;
+    dal:partOrder "2"^^xsd:integer ; dal:partRole dal:ExpectedSeqPart ; dal:partSource ex:replace-seq .
+
+# An audit: no required parameter, so nothing to guard, and a column that concatenates.
+ex:audit a dal:GeneratedOperation ;
+    dal:forOperation "fork-detection-audit" ;
+    dal:operationKind dal:Audit ;
+    dal:templateVersion "1"^^xsd:integer ;
+    dal:guardStatus dal:NoRequiredParameter ;
+    dal:declarationSource dal:BuilderDerived ;
+    dal:access ex:audit-access-1 ;
+    dal:resultColumn ex:audit-result-n .
+
+ex:audit-access-1 a dal:ResourceAccess ;
+    dal:resourceKind dal:Receipt ; dal:accessMode dal:ScanRead .
+ex:audit-result-n a dal:ResultColumn ;
+    dal:columnName "revs" ; dal:columnPosition "1"^^xsd:integer ; dal:columnKind dal:ConcatenationColumn ; dal:columnSeparator " " .

@@ -1,6 +1,6 @@
 ---
 name: lattice-testing
-description: Diagnosing and speeding up a slow test suite, and writing or extending Python tests under tools/ that parse ontology graphs or call pySHACL. Use when a check task is slow, when adding a test that validates a graph against shapes, when sharing state across test modules with pytest fixtures, or when a repository-wide text scan needs to work on every platform.
+description: Diagnosing and speeding up a slow test suite, and writing or extending Python tests under tools/ that parse ontology graphs, call pySHACL or run SPARQL on an engine. Use when a check task is slow, when adding or parallelising a suite, when choosing its engine or splitting out conformance tests, when a suite may run short of memory, when adding a test that validates a graph against shapes, when sharing state across test modules with pytest fixtures, or when a repository-wide text scan needs to work on every platform.
 ---
 
 # Testing in LATTICE
@@ -9,6 +9,38 @@ Grounded in the `python-test-melting` unit (2026-10-09), which took the ontology
 456s serial to about 124s under `pytest-xdist`, with zero change to any test's meaning. Full
 detail: [the plan](../../../docs/developer/plans/python-test-melting.md) and
 [its status record](../../../docs/developer/status/python-test-melting.md).
+
+## The defaults for every suite
+
+These are how a suite is built from the start, not fixes applied once it is slow. A suite that departs from one says why in its task
+description.
+
+- **Parallel by test.** The task runs `pytest -n auto`, with `--dist worksteal`, or `--dist loadgroup` where a module's tests share one
+  slow per-process computation and are put in one `xdist_group`. Nothing a test writes is shared between workers: temporary
+  directories per test, no file written in the tree.
+- **Sized to the memory available.** The suite's `conftest.py` answers `pytest_xdist_auto_num_workers` with `mem_check` (below), from
+  its own measured peak per worker, and `PYTEST_XDIST_AUTO_NUM_WORKERS` still overrides it.
+- **Parse once, copy, never share a mutable graph.** Session-scoped fixtures parse a document once per process, and a test that
+  changes a graph changes a copy. `_sparql_translated_once` (H1) parses and translates each query text once. A pure function that
+  parses SPARQL is memoised on its input and returns a fresh value.
+- **Oxigraph runs the generated SPARQL.** A behaviour test that executes generated SPARQL runs on the default engine, Oxigraph
+  (ADR-A125, addendum of 2026-10-21). rdflib stays the library the tools and pySHACL are built on.
+- **Conformance is not part of `check`.** A test whose subject is one engine's behaviour, such as a sweep over hash seeds on rdflib or a
+  probe of a TSD entry, is marked `conformance` and runs in the suite's `check:<suite>-conformance` task, with every engine we have, on
+  demand and before a merge (skill `lattice-lifecycle`). A new engine joins that task and adds nothing to `check`.
+- **Benchmarks are not part of `check` either.** A test that measures belongs under `benchmark/` and fails on a wrong result, never on
+  time (ADR-A124).
+- **Measured before and after.** A change made for speed records the wall time, the worker count and the peak memory, and keeps every
+  assertion, as the next section says.
+
+## Memory: `mem_check`
+
+Most runs happen on an 8 GB laptop with an editor and other tools open, so a suite must not take more memory than the machine has
+free. `tools/testing/mem_check` (`mise run bootstrap:testing-mem-check`, standard library only, macOS, Linux and Windows) reads what
+is available and `mem_check.workers(default, per_worker)` gives as many workers as fit in it less a 1 GiB reserve, up to the default
+count and never fewer than two, which runs longer and smaller. `MEM_CHECK_AVAILABLE_MIB` stands in for the machine. A suite adopts it with
+the hook its README shows, giving its own peak per worker, measured with `-n 0` (`tools/persistence/tests/conftest.py` gives 700 MiB
+from a measured 649 MB). Any other suite that can run short of memory, or that starts more than two workers, may use it the same way.
 
 ## Measure before changing anything
 
@@ -56,6 +88,17 @@ same work ran at half the speed per worker. A summed time that doubles with the 
 contention, not slow tests. `PYTEST_XDIST_AUTO_NUM_WORKERS` sets what `auto` means for one machine,
 and `mise run dev:time-ontology-tests -- --workers N --dist MODE` compares settings and reports
 when each worker finished and the peak memory.
+
+## Lessons from the persistence suite (FMH-TS-1)
+
+`check:persistence` went from 4m12s serial to about 1m35s on a loaded machine. What paid, in order: `-n auto --dist loadgroup`, a
+session-wide `_sparql_translated_once` (H1) for a suite that calls `pyshacl.validate` directly in many places, running the children of
+a hash-seed sweep side by side (a thread pool over `subprocess.run`), memoising a pure function that parses SPARQL
+(`templatecheck.analyse`), and parsing a fixture once per process (`witness._load_fixture`). A module whose tests share one slow
+per-process computation goes in one `xdist_group` (`--dist loadgroup`), or every worker repeats it. Count parses before caching them:
+a profile showed 5901 SPARQL parses of 1675 distinct texts, and the update texts of a sweep are distinct per history, so only reads gain.
+The summed CPU time rises with the worker count on 4 performance plus 4 efficiency cores, so keep `auto`. Not tried successfully: sharing
+rdflib's update parse tree between sweep children by pickle (`ParseResults` did not round-trip).
 
 ## Speed: the record to read first
 
@@ -167,8 +210,9 @@ that the approach is wrong (skip a named list of build/dependency directories; `
 
 ## Tests that run SPARQL on an engine
 
-A test that executes generated SPARQL opts in to every engine with `@engines.each_engine`
-(`tools/persistence/tests/engines.py`), so it runs on rdflib and, where `tools/testing/oxigraph` is installed, on Oxigraph.
+A test that executes generated SPARQL opts in with `@engines.each_engine` (`tools/persistence/tests/engines.py`), so it runs on
+the engines `PERSISTENCE_ENGINES` names. `check:persistence` leaves it unset, which means Oxigraph, and
+`check:persistence-conformance` runs every engine we have, rdflib among them, with the tests marked `conformance`.
 What the engines do differently is recorded in
 [docs/architecture/triple-store-discovery.md](../../../docs/architecture/triple-store-discovery.md), and skill
 `lattice-triple-stores` says how to probe and record a new difference. Two points from it matter for any such test.

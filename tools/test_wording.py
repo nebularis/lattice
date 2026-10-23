@@ -277,7 +277,7 @@ TRIAL = Namespace("https://example.org/lattice/wording/trial/")
 
 
 def test_c4_02_c5_01_every_example_conforms() -> None:
-    assert len(EXAMPLES) == 5  # C8b adds reused-clause.ttl
+    assert len(EXAMPLES) == 6  # C8b adds reused-clause.ttl, TD-65 shared-values.ttl
     for example in EXAMPLES:
         assert _violations(_example(example)) == set(), example.name
 
@@ -424,6 +424,25 @@ SPACE = "ex:sp a qnt:ValueSpace ; qnt:densityKind qnt:{} . "
 ], ids=["concept-outside-scheme", "quantity-on-another-space", "value-outside-range", "two-values-single-valued"])
 def test_c5_07_values_must_match_their_variable(data: str) -> None:
     assert _reported("ex:w a wrd:AssembledWording ; wrd:hasValue ex:v . " + data, "v", "W6")
+
+
+SHARED = Namespace("https://example.org/lattice/wording/shared-values/")
+
+
+def test_td65_two_assembled_wordings_share_value_records() -> None:
+    """TD-65: wrd:hasValue is not inverse-functional, so a record may belong to several wordings,
+    and a record in no wording is still reported."""
+    g = _graph(LAYER / "examples" / "shared-values.ttl")
+    shared = set(g.objects(SHARED["lease-v1"], WRD.hasValue)) & set(g.objects(SHARED["lease-v2"], WRD.hasValue))
+    assert shared == {SHARED["v-rent"], SHARED["v-notice"]}
+    assert set(g.objects(SHARED["lease-v1"], WRD.hasValue)) ^ set(g.objects(SHARED["lease-v2"], WRD.hasValue)) \
+        == {SHARED["v-days-1"], SHARED["v-days-2"]}
+    assert (WRD.hasValue, RDF.type, OWL.InverseFunctionalProperty) not in _vocab_closure()
+    assert _violations(g) == set()
+    g.add((SHARED["v-orphan"], RDF.type, WRD.VariableValue))
+    g.add((SHARED["v-orphan"], WRD.forVariable, SHARED["var-days"]))
+    g.add((SHARED["v-orphan"], WRD.literalValue, Literal(1)))
+    assert "v-orphan" in _violations(g)
 
 
 def _bound(name: str, sense: str, value, closed: bool) -> str:
@@ -692,5 +711,5 @@ def test_c8b_08_instrument_imports_wording_0_7_0_and_nothing_names_0_6_0() -> No
 def test_c8b_09_readme_release_notes() -> None:
     readme = (LAYER / "README.md").read_text()
     assert "- 0.7.0 (`wording` and `wording-vocab`, breaking, CCS C8b" in readme
-    assert f"- {RELEASE}, the first release" in readme
+    assert "- 0.18.0, the first release" in readme
     assert "0.14.0 (breaking, CCS C8b)" in (ROOT / "ontology" / "instrument" / "README.md").read_text()

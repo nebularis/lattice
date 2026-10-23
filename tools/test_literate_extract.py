@@ -281,3 +281,10 @@ def test_od1_t11_main_warns_on_a_misnumbered_section_and_fails_on_a_missing_one(
     readme.write_text(_layout(drop="Open Issues"), encoding="utf-8")
     assert literate_extract.main([str(readme), "--layer", "x", "--root", str(tmp_path), "--check"]) == 1
     assert "LAYOUT" in capsys.readouterr().err
+
+
+def test_d59_a_generated_region_keeps_the_keys_that_choose_its_view() -> None:
+    marker = '<!-- start: {"generated": "class-diagram", "part": "A", "classes": ["ex:A"]} -->\n<!-- end -->\n'
+    (region,) = literate_extract.scan(marker).regions
+    assert (region.key, region.value) == ("generated", "class-diagram")
+    assert region.options == {"part": "A", "classes": ["ex:A"]}

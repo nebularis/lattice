@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MPL-2.0
+
 @prefix : <http://example.org/spc#> .
 @prefix spc: <http://example.org/spc#> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
@@ -6,17 +8,17 @@
 
 #################################################################
 # SPC OWL Ontology (Turtle)
-# 
+#
 # This ontology encodes the Subject Process Calculus (SPC) structures
 # and the Description Logic/DL integration layer described in:
 # - "A Categorical Foundation for Subject-Oriented Process Logic" (SPC foundations)
 # - "Formal Specification of the SPC-to-OWL Ontology" (DL paper)
 #
 # Notes:
-# - The ontology targets OWL 2 DL (SHOIQ(D)). 
-# - Domain-specific refinement predicates should remain in EL++ (imported ontology), 
+# - The ontology targets OWL 2 DL (SHOIQ(D)).
+# - Domain-specific refinement predicates should remain in EL++ (imported ontology),
 #   while structural axioms here may use OWL 2 DL features (qualified cardinalities, keys, property chains).
-# - Some metatheoretic invariants and process-level reduction semantics require external validation or SWRL rules; 
+# - Some metatheoretic invariants and process-level reduction semantics require external validation or SWRL rules;
 #   they are annotated accordingly.
 # - Extensive rdfs:comment annotations are provided to document design intent and constraints.
 #################################################################
@@ -26,10 +28,10 @@
 #################################################################
 
 spc:Ontology a owl:Ontology ;
-  owl:versionIRI <http://example.org/spc/0.18.0> ;
-  rdfs:comment "SPC OWL Ontology: Structural encoding of sorts, Behaviours, session types (global/local), configurations, interfaces/open systems, typing assertions, domain bridge, and selected invariants. See foundation and DL papers for formal semantics and proofs." ;
+  owl:versionIRI <http://example.org/spc/0.19.0> ;
+  rdfs:comment "SPC OWL Ontology: Structural encoding of sorts, behaviours, session types (global/local), configurations, interfaces/open systems, typing assertions, domain bridge, and selected invariants. See foundation and DL papers for formal semantics and proofs." ;
   rdfs:comment "Design principles: structural layer in OWL 2 DL; domain layer (refinement predicates) in tractable fragment (EL++); use of keys for intra-parent uniqueness (branch/label), property chains for participant extraction, qualified cardinality for structural exactness." ;
-  rdfs:comment "Contravariant functor 𝒪: SPC^op → DL is realized by conservative extension patterns; narrowing Behaviour in SPC corresponds to expanding knowledge in DL." .
+  rdfs:comment "Contravariant functor 𝒪: SPC^op → DL is realized by conservative extension patterns; narrowing behaviour in SPC corresponds to expanding knowledge in DL." .
 
 #################################################################
 # Core object classes (shared vocabulary)
@@ -40,7 +42,7 @@ spc:SubjectIdentifier a owl:Class ;
   rdfs:comment "Identifiers (names) for subjects/ports in SPC." .
 
 spc:Label a owl:Class ;
-  rdfs:comment "Message/branch labels used in session types and Behaviours." .
+  rdfs:comment "Message/branch labels used in session types and behaviours." .
 
 spc:Variable a owl:Class ;
   rdfs:comment "Variables bound on receive branches and used in expressions/predicates." .
@@ -175,7 +177,7 @@ spc:Behaviour a owl:Class ;
 
 spc:EndBehaviour a owl:Class ;
   rdfs:subClassOf spc:Behaviour ;
-  rdfs:comment "Termination Behaviour; no continuation." .
+  rdfs:comment "Termination behaviour; no continuation." .
 
 spc:SendBehaviour a owl:Class ;
   rdfs:subClassOf spc:Behaviour ;
@@ -186,7 +188,7 @@ spc:ReceiveBehaviour a owl:Class ;
   rdfs:comment "Receive from source; multi-branch structure with label-variable-body triples; at least one branch." .
 
 spc:ReceiveBranch a owl:Class ;
-  rdfs:comment "Branch element of a receive Behaviour; includes label, bound variable, and branch body. Parent link used to enforce label uniqueness via hasKey." .
+  rdfs:comment "Branch element of a receive behaviour; includes label, bound variable, and branch body. Parent link used to enforce label uniqueness via hasKey." .
 
 spc:DoBehaviour a owl:Class ;
   rdfs:subClassOf spc:Behaviour ;
@@ -194,7 +196,7 @@ spc:DoBehaviour a owl:Class ;
 
 spc:ChoiceBehaviour a owl:Class ;
   rdfs:subClassOf spc:Behaviour ;
-  rdfs:comment "Internal choice between two alternative Behaviours; type of both branches must be identical (subsumption used as needed)." .
+  rdfs:comment "Internal choice between two alternative behaviours; type of both branches must be identical (subsumption used as needed)." .
 
 spc:ConditionalBehaviour a owl:Class ;
   rdfs:subClassOf spc:Behaviour ;
@@ -202,17 +204,17 @@ spc:ConditionalBehaviour a owl:Class ;
 
 spc:RecBehaviour a owl:Class ;
   rdfs:subClassOf spc:Behaviour ;
-  rdfs:comment "Recursive Behaviour binder (rec X.B)." .
+  rdfs:comment "Recursive behaviour binder (rec X.B)." .
 
 spc:RecVarBehaviour a owl:Class ;
   rdfs:subClassOf spc:Behaviour ;
-  rdfs:comment "Recursion variable Behaviour (X); refersToVariable must match binder (external scope check)." .
+  rdfs:comment "Recursion variable behaviour (X); refersToVariable must match binder (external scope check)." .
 
 spc:CallBehaviour a owl:Class ;
   rdfs:subClassOf spc:Behaviour ;
   rdfs:comment "Subprocess/protocol invocation call[P⟨s̄⟩].B; continuation resumes after subprocess completion." .
 
-# Disjointness for Behaviour subclasses
+# Disjointness for behaviour subclasses
 [ a owl:AllDisjointClasses ;
   owl:members ( spc:EndBehaviour spc:SendBehaviour spc:ReceiveBehaviour spc:DoBehaviour spc:ChoiceBehaviour spc:ConditionalBehaviour spc:RecBehaviour spc:RecVarBehaviour spc:CallBehaviour )
 ] .
@@ -221,7 +223,7 @@ spc:CallBehaviour a owl:Class ;
 spc:hasContinuation a owl:ObjectProperty ;
   rdfs:domain spc:Behaviour ;
   rdfs:range spc:Behaviour ;
-  rdfs:comment "Continuation link for Behaviours that proceed (send/do/call, etc.)." .
+  rdfs:comment "Continuation link for behaviours that proceed (send/do/call, etc.)." .
 
 spc:hasTargetSubject a owl:ObjectProperty ;
   rdfs:domain spc:SendBehaviour ;
@@ -239,13 +241,13 @@ spc:hasPayloadExpression a owl:ObjectProperty ;
   rdfs:comment "Payload expression evaluated to a Value and sent on the message." .
 
 # Exact roles for SendBehaviour
-spc:SendBehaviour rdfs:subClassOf 
+spc:SendBehaviour rdfs:subClassOf
   [ a owl:Restriction ; owl:onProperty spc:hasTargetSubject ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:SubjectIdentifier ],
   [ a owl:Restriction ; owl:onProperty spc:hasSendLabel ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:Label ],
   [ a owl:Restriction ; owl:onProperty spc:hasPayloadExpression ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:Expression ],
   [ a owl:Restriction ; owl:onProperty spc:hasContinuation ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:Behaviour ] .
 
-# Receive Behaviour roles
+# Receive behaviour roles
 spc:hasSourceSubject a owl:ObjectProperty ;
   rdfs:domain spc:ReceiveBehaviour ;
   rdfs:range spc:SubjectIdentifier ;
@@ -254,7 +256,7 @@ spc:hasSourceSubject a owl:ObjectProperty ;
 spc:hasBranch a owl:ObjectProperty ;
   rdfs:domain spc:ReceiveBehaviour ;
   rdfs:range spc:ReceiveBranch ;
-  rdfs:comment "Branches of a receive Behaviour (one per label/variable/body triple)." .
+  rdfs:comment "Branches of a receive behaviour (one per label/variable/body triple)." .
 
 spc:hasBranchLabel a owl:ObjectProperty ;
   rdfs:domain spc:ReceiveBranch ;
@@ -269,49 +271,49 @@ spc:hasBranchVariable a owl:ObjectProperty ;
 spc:hasBranchBody a owl:ObjectProperty ;
   rdfs:domain spc:ReceiveBranch ;
   rdfs:range spc:Behaviour ;
-  rdfs:comment "Branch body Behaviour." .
+  rdfs:comment "Branch body behaviour." .
 
 spc:hasBranchParent a owl:ObjectProperty ;
   rdfs:domain spc:ReceiveBranch ;
   rdfs:range spc:ReceiveBehaviour ;
   owl:inverseOf spc:hasBranch ;
-  rdfs:comment "Parent receive Behaviour for this branch; used for key constraint on (parent,label)." .
+  rdfs:comment "Parent receive behaviour for this branch; used for key constraint on (parent,label)." .
 
 # ReceiveBehaviour constraints: source and at least one branch
-spc:ReceiveBehaviour rdfs:subClassOf 
+spc:ReceiveBehaviour rdfs:subClassOf
   [ a owl:Restriction ; owl:onProperty spc:hasSourceSubject ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:SubjectIdentifier ],
   [ a owl:Restriction ; owl:onProperty spc:hasBranch ; owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:ReceiveBranch ] .
 
-# Key: uniquely identify branches within a receive Behaviour by (parent,label)
+# Key: uniquely identify branches within a receive behaviour by (parent,label)
 spc:ReceiveBranch owl:hasKey ( spc:hasBranchParent spc:hasBranchLabel ) ;
   rdfs:comment "Key constraint: within a single ReceiveBehaviour, branch labels must be unique. Enforced via hasKey on (parent,label)." .
 
-# Do Behaviour roles
+# Do behaviour roles
 spc:hasInternalFunction a owl:ObjectProperty ;
   rdfs:domain spc:DoBehaviour ;
   rdfs:range spc:InternalFunction ;
   rdfs:comment "Internal function executed by do[f].B; f guaranteed total externally." .
 
-spc:DoBehaviour rdfs:subClassOf 
+spc:DoBehaviour rdfs:subClassOf
   [ a owl:Restriction ; owl:onProperty spc:hasInternalFunction ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:InternalFunction ],
   [ a owl:Restriction ; owl:onProperty spc:hasContinuation ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:Behaviour ] .
 
-# Choice Behaviour roles
+# Choice behaviour roles
 spc:hasLeftAlternative a owl:ObjectProperty ;
   rdfs:domain spc:ChoiceBehaviour ;
   rdfs:range spc:Behaviour ;
-  rdfs:comment "Left alternative Behaviour." .
+  rdfs:comment "Left alternative behaviour." .
 
 spc:hasRightAlternative a owl:ObjectProperty ;
   rdfs:domain spc:ChoiceBehaviour ;
   rdfs:range spc:Behaviour ;
-  rdfs:comment "Right alternative Behaviour." .
+  rdfs:comment "Right alternative behaviour." .
 
-spc:ChoiceBehaviour rdfs:subClassOf 
+spc:ChoiceBehaviour rdfs:subClassOf
   [ a owl:Restriction ; owl:onProperty spc:hasLeftAlternative ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:Behaviour ],
   [ a owl:Restriction ; owl:onProperty spc:hasRightAlternative ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:Behaviour ] .
 
-# Conditional Behaviour roles
+# Conditional behaviour roles
 spc:hasGuardExpression a owl:ObjectProperty ;
   rdfs:domain spc:ConditionalBehaviour ;
   rdfs:range spc:Expression ;
@@ -320,31 +322,31 @@ spc:hasGuardExpression a owl:ObjectProperty ;
 spc:hasTrueBranch a owl:ObjectProperty ;
   rdfs:domain spc:ConditionalBehaviour ;
   rdfs:range spc:Behaviour ;
-  rdfs:comment "True branch Behaviour." .
+  rdfs:comment "True branch behaviour." .
 
 spc:hasFalseBranch a owl:ObjectProperty ;
   rdfs:domain spc:ConditionalBehaviour ;
   rdfs:range spc:Behaviour ;
-  rdfs:comment "False branch Behaviour." .
+  rdfs:comment "False branch behaviour." .
 
 spc:hasExpressionSort a owl:ObjectProperty ;
   rdfs:domain spc:Expression ;
   rdfs:range spc:Sort ;
   rdfs:comment "Typing of expressions to sorts (structural typing)." .
 
-spc:ConditionalBehaviour rdfs:subClassOf 
+spc:ConditionalBehaviour rdfs:subClassOf
   [ a owl:Restriction ; owl:onProperty spc:hasGuardExpression ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:Expression ],
   [ a owl:Restriction ; owl:onProperty spc:hasTrueBranch ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:Behaviour ],
   [ a owl:Restriction ; owl:onProperty spc:hasFalseBranch ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:Behaviour ],
-  [ a owl:Restriction ; owl:onProperty spc:hasGuardExpression ; 
-    owl:someValuesFrom [ 
-      a owl:Class ; 
-      owl:intersectionOf ( spc:Expression [ a owl:Restriction ; owl:onProperty spc:hasExpressionSort ; owl:hasValue spc:bool_sort ] ) 
-    ] 
+  [ a owl:Restriction ; owl:onProperty spc:hasGuardExpression ;
+    owl:someValuesFrom [
+      a owl:Class ;
+      owl:intersectionOf ( spc:Expression [ a owl:Restriction ; owl:onProperty spc:hasExpressionSort ; owl:hasValue spc:bool_sort ] )
+    ]
   ] ;
   rdfs:comment "Guard must be boolean: hasGuardExpression some (Expression and hasExpressionSort value bool_sort)." .
 
-# Rec Behaviour roles
+# Rec behaviour roles
 spc:hasRecursionVariable a owl:ObjectProperty ;
   rdfs:domain spc:RecBehaviour ;
   rdfs:range spc:Variable ;
@@ -353,9 +355,9 @@ spc:hasRecursionVariable a owl:ObjectProperty ;
 spc:hasRecBody a owl:ObjectProperty ;
   rdfs:domain spc:RecBehaviour ;
   rdfs:range spc:Behaviour ;
-  rdfs:comment "Recursive body Behaviour." .
+  rdfs:comment "Recursive body behaviour." .
 
-spc:RecBehaviour rdfs:subClassOf 
+spc:RecBehaviour rdfs:subClassOf
   [ a owl:Restriction ; owl:onProperty spc:hasRecursionVariable ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:Variable ],
   [ a owl:Restriction ; owl:onProperty spc:hasRecBody ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:Behaviour ] .
 
@@ -364,10 +366,10 @@ spc:refersToVariable a owl:ObjectProperty ;
   rdfs:range spc:Variable ;
   rdfs:comment "Reference from RecVarBehaviour to corresponding recursion variable. Binder matching is an external scope check." .
 
-spc:RecVarBehaviour rdfs:subClassOf 
+spc:RecVarBehaviour rdfs:subClassOf
   [ a owl:Restriction ; owl:onProperty spc:refersToVariable ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:Variable ] .
 
-# Call Behaviour roles
+# Call behaviour roles
 spc:hasProtocolReference a owl:ObjectProperty ;
   rdfs:domain spc:CallBehaviour ;
   rdfs:range spc:ProtocolName ;
@@ -378,11 +380,11 @@ spc:hasSubjectArgument a owl:ObjectProperty ;
   rdfs:range spc:SubjectIdentifier ;
   rdfs:comment "Subject arguments passed to protocol call (0..n)." .
 
-spc:CallBehaviour rdfs:subClassOf 
+spc:CallBehaviour rdfs:subClassOf
   [ a owl:Restriction ; owl:onProperty spc:hasProtocolReference ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:ProtocolName ],
   [ a owl:Restriction ; owl:onProperty spc:hasContinuation ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:Behaviour ] .
 
-# End Behaviour: no continuation
+# End behaviour: no continuation
 spc:EndBehaviour rdfs:subClassOf [
     a owl:Class ;
     owl:complementOf [
@@ -474,7 +476,7 @@ spc:hasOptionParent a owl:ObjectProperty ;
   rdfs:comment "Parent communication global type; used for label uniqueness via hasKey." .
 
 # CommunicationGlobalType constraints: sender/receiver functional; ≥1 option
-spc:CommunicationGlobalType rdfs:subClassOf 
+spc:CommunicationGlobalType rdfs:subClassOf
   [ a owl:Restriction ; owl:onProperty spc:hasSenderRole ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:ParticipantRole ],
   [ a owl:Restriction ; owl:onProperty spc:hasReceiverRole ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:ParticipantRole ],
   [ a owl:Restriction ; owl:onProperty spc:hasMessageOption ; owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:MessageOption ] .
@@ -494,7 +496,7 @@ spc:hasRightComponent a owl:ObjectProperty ;
   rdfs:range spc:GlobalType ;
   rdfs:comment "Right component G₂." .
 
-spc:ParallelGlobalType rdfs:subClassOf 
+spc:ParallelGlobalType rdfs:subClassOf
   [ a owl:Restriction ; owl:onProperty spc:hasLeftComponent ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:GlobalType ],
   [ a owl:Restriction ; owl:onProperty spc:hasRightComponent ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:GlobalType ] ;
   rdfs:comment "Coherence: participants of left and right components should be disjoint. Full set-disjointness is nontrivial in DL; see property chain participants and annotate external check." .
@@ -512,7 +514,7 @@ spc:hasParticipant owl:propertyChainAxiom ( spc:hasMessageOption spc:hasContinua
 # Propagate participants through parallel components
 spc:hasParticipant owl:propertyChainAxiom ( spc:hasLeftComponent spc:hasParticipant ) .
 spc:hasParticipant owl:propertyChainAxiom ( spc:hasRightComponent spc:hasParticipant ) .
-# rdfs:comment "Property chains: participants of left/right components are participants of the parallel type." .
+# Property chains: participants of left/right components are participants of the parallel type.
 
 # Local types
 spc:LocalType a owl:Class ;
@@ -582,11 +584,11 @@ spc:hasContinuationLocalType a owl:ObjectProperty ;
   rdfs:comment "Continuation local type for this option." .
 
 # Constraints
-spc:OutputLocalType rdfs:subClassOf 
+spc:OutputLocalType rdfs:subClassOf
   [ a owl:Restriction ; owl:onProperty spc:hasOutputTarget ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:ParticipantRole ],
   [ a owl:Restriction ; owl:onProperty spc:hasOutputOption ; owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:TypeOption ] .
 
-spc:InputLocalType rdfs:subClassOf 
+spc:InputLocalType rdfs:subClassOf
   [ a owl:Restriction ; owl:onProperty spc:hasInputSource ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:ParticipantRole ],
   [ a owl:Restriction ; owl:onProperty spc:hasInputOption ; owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass spc:TypeOption ] .
 
@@ -622,7 +624,7 @@ spc:ActorState a owl:Class ;
 
 spc:ReadyState a owl:Class ;
   rdfs:subClassOf spc:ActorState ;
-  rdfs:comment "Ready state with Behaviour to process." .
+  rdfs:comment "Ready state with behaviour to process." .
 
 spc:ExecutingState a owl:Class ;
   rdfs:subClassOf spc:ActorState ;
@@ -679,12 +681,12 @@ spc:hasActorState a owl:ObjectProperty ;
 spc:hasReadyBehaviour a owl:ObjectProperty ;
   rdfs:domain spc:ReadyState ;
   rdfs:range spc:Behaviour ;
-  rdfs:comment "Ready state's Behaviour (to process next message)." .
+  rdfs:comment "Ready state's behaviour (to process next message)." .
 
 spc:hasExecutingBehaviour a owl:ObjectProperty ;
   rdfs:domain spc:ExecutingState ;
   rdfs:range spc:Behaviour ;
-  rdfs:comment "Executing state's Behaviour." .
+  rdfs:comment "Executing state's behaviour." .
 
 spc:hasContinuationRef a owl:ObjectProperty ;
   rdfs:domain spc:ExecutingState ;
@@ -749,7 +751,7 @@ spc:OpenSubjectSystem a owl:Class ;
   rdfs:comment "Open subject system S = (Σ, α, B, ι, o) from input interface I to output interface J. Structured cospan L(I) → S ← L(J)." .
 
 spc:InternalSubject a owl:Class ;
-  rdfs:comment "Internal subject (name/type/Behaviour binding) of an open system." .
+  rdfs:comment "Internal subject (name/type/behaviour binding) of an open system." .
 
 spc:WiringEntry a owl:Class ;
   rdfs:comment "Wiring entry mapping interface port to internal subject." .
@@ -835,7 +837,7 @@ spc:hasTypingContext a owl:ObjectProperty ;
 spc:hasTypedBehaviour a owl:ObjectProperty ;
   rdfs:domain spc:TypingAssertion ;
   rdfs:range spc:Behaviour ;
-  rdfs:comment "Typing assertion's Behaviour." .
+  rdfs:comment "Typing assertion's behaviour." .
 
 spc:hasAssignedType a owl:ObjectProperty ;
   rdfs:domain spc:TypingAssertion ;

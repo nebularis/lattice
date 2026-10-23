@@ -17,8 +17,8 @@ Eligibility models admissibility by declaring reusable conditions, collecting ev
 
 | Document | Ontology IRI | Version IRI | Imports |
 |---|---|---|---|
-| `spec/eligibility.ttl` | <https://www.nebularis.org/neuro-semantic/eligibility> | <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.18.0> | <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.18.0>, <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.18.0>, <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.18.0>, <https://www.nebularis.org/neuro-semantic/lattice/party/0.18.0> |
-| `vocab/eligibility-vocab.ttl` | <https://www.nebularis.org/neuro-semantic/eligibility-vocab> | <https://www.nebularis.org/neuro-semantic/lattice/eligibility-vocab/0.18.0> | <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.18.0> |
+| `spec/eligibility.ttl` | <https://www.nebularis.org/neuro-semantic/eligibility> | <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.19.0> | <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0>, <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0>, <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.19.0>, <https://www.nebularis.org/neuro-semantic/lattice/party/0.19.0> |
+| `vocab/eligibility-vocab.ttl` | <https://www.nebularis.org/neuro-semantic/eligibility-vocab> | <https://www.nebularis.org/neuro-semantic/lattice/eligibility-vocab/0.19.0> | <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.19.0> |
 
 | Prefix | Namespace |
 |---|---|
@@ -1596,6 +1596,7 @@ Eligibility imports Foundation, Vocabulary, Quantification, and Party. Quantific
 
 Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).
 
+- 0.19.0. Every document takes the release's number and imports the other layers at it (no effect). No other change.
 - 0.18.0, the first release of the substrate and standalone modules as one set
   ([ADR-A129](../../docs/architecture/decisions/ADR-A129-one-release-for-the-substrate.md)). Every
   document takes the release's number and imports the other layers at it (no effect).
