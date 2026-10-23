@@ -61,6 +61,13 @@ the maintainer is actually preparing a merge into `main`, never as part of an or
      [literate-specifications.md](https://github.com/nebularis/lattice/blob/main/docs/architecture/literate-specifications.md):
      a term's axioms are written once, in its Description Logic Encoding section, and markers hide a
      block, exclude text or send a region to another file.
+   - **A literate README never says "this document".** One README generates several documents, a
+     spec, a vocabulary, shape files and sometimes several spec documents (ADR-A120), and section 1
+     becomes the `dct:description` of more than one of them. A sentence such as "this document is the
+     configuration half of the layer" is wrong in every generated document but one, and confuses a
+     reader of the README itself. Describe the layer and its concepts. Where the split into documents
+     matters, it belongs in section 2's document table and section 3's extraction contract, which
+     name each file, never in prose that will be extracted.
 2. **Bump the version.** At major version zero an additive change is a MINOR, and a breaking one a
    MINOR marked breaking (ADR-A113). Change the document's `owl:versionIRI`. A `shapes/` or
    `projection/` directory is versioned by its `.version` file, never by the spec's IRI.
