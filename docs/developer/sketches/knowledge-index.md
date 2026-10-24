@@ -120,7 +120,7 @@ Because only this repository consumes it, changes are additive and there is no c
 
 Design shapes are a taxonomy with `broader` and `narrower`, which is what SKOS is for. `append-only-log` sits under `monotonic-growth`. `ki:tagged` has range `skos:Concept`, and that is where the two artefacts meet.
 
-A concept is phrased as a **problem or situation, never as a technique**, because an agent matches against it before knowing the solution. `checkpoint-lookup` is a shape. `computed-iri` is a pattern that serves it, and belongs in the pattern register.
+A concept is phrased as a **problem or situation, never as a technique**, because an agent matches against it before knowing the solution. `checkpoint-lookup` is a shape. "Derived IRI, bound subject" is a pattern that serves it, and belongs in the pattern register.
 
 Target size is 40 to 70 concepts in at most three levels. Fewer makes retrieval coarse. More makes consistent tagging impossible, which is the failure that matters.
 
@@ -230,10 +230,10 @@ flowchart LR
 | Column | Content | Who |
 |---|---|---|
 | ID | `PAT-07` | agent |
-| Name | computed IRI, bound subject | maintainer |
-| Claim | **bolded, one sentence, with the cost.** "A checkpoint found by an IRI computed from the account and the close position gives the seek a bound subject gives, where a bound object leaves a scan." | agent drafts, maintainer corrects the trade-off |
-| Shapes | `checkpoint-lookup`, `derived-identity`, `append-only-log` | maintainer |
-| Evidenced by | `TSD-36`, the ledger posting-cost benchmark | agent |
+| Name | derived IRI, bound subject | maintainer |
+| Claim | **bolded, one sentence, with the cost.** "Addressing a checkpoint by an IRI derived from the account and the close position gives the seek a bound subject gives, where a bound object leaves a scan." | agent drafts, maintainer corrects the trade-off |
+| Shapes | `checkpoint-lookup`, `derived-identity`, `visit-vs-use` | maintainer |
+| Evidenced by | [`TSD-36`](../../architecture/triple-store-discovery.md), the ledger posting-cost benchmark | agent |
 | Decided by | `ADR-A131` | agent |
 | Pointer | `docs/developer/plans/ledger.md:412-431` | agent |
 
@@ -267,7 +267,7 @@ Had this row existed, the duplicate versioning proposal would not have happened.
 
 Five rules, and they are the whole discipline.
 
-1. **Tag the problem, not the solution.** A pattern is tagged with the shapes of problem it serves. `computed-iri` is not a tag, it is a pattern's name.
+1. **Tag the problem, not the solution.** A pattern is tagged with the shapes of problem it serves. `derived-identity` is the shape. "Derived IRI, bound subject" is a pattern's name and belongs in the pattern register.
 2. **Two to four shapes per node.** One is usually too coarse to be worth retrieving. Five means the node is really several nodes, or the shapes are too narrow.
 3. **If no shape fits, propose one in the same change.** The check rejects an unknown tag, so the vocabulary cannot fork silently. A proposed concept carries a definition phrased as a problem and a parent.
 4. **An untagged node is invisible, and that is the intended behaviour.** It is better than a node tagged with something plausible, because a wrong tag poisons every future retrieval of that shape.
@@ -275,24 +275,32 @@ Five rules, and they are the whole discipline.
 
 ### 8.4 What it costs
 
-Row counts below the double rule are estimates from the corpus sweep in progress and will be replaced by its figures. Minutes are maintainer minutes, not agent minutes.
+**Counted, not estimated, 2026-10-24.** A corpus sweep replaced the estimates this section first carried, and the honest result is that the authoring work is three to five times what I guessed. The corpus holds far more claim-shaped content than the register count suggested: 258 discrete rules and standards across the guides, `AGENTS.md` and the skills, 127 patterns, 177 principles, and 21 benchmark results. My estimates had been 36, 40 to 80, and 30 to 50.
 
-| Register | Rows | Agent drafts | Maintainer, per row | Maintainer total |
+Minutes below are maintainer minutes, not agent minutes, and the work is ratifying drafted rows rather than writing them.
+
+| Register | Rows | State | Maintainer, per row | Total |
 |---|---|---|---|---|
-| Decisions, status vocabulary | 1 vocabulary | yes | ratify once | ~30 min |
-| Decisions, `Unit:` backfill | 96 | yes, inferred | review a diff | ~1 h |
-| Decisions, tagging | 120 | proposes tags | ~1 min | ~2 h |
-| Store discoveries, tagging | 36 | proposes tags | ~1 min | ~40 min |
-| Query rules, tagging | 36 | proposes tags | ~1 min | ~40 min |
-| Design shape vocabulary | 40–70 concepts | drafts the scheme | review, and fix the hierarchy | ~3 h |
-| **Principles** | ~30–50 | drafts from `AGENTS.md`, ADRs | ~3 min, these are judgement | ~2.5 h |
-| **Patterns** | ~40–80 | drafts, trade-off needs correcting | ~3 min | ~4 h |
-| **Mechanisms** | ~80–150 | drafts, confidence marked per row | ~2 min | ~5 h |
-| | | | | **~20 h** |
+| Design shapes | 68 concepts | **built**, 175 synonyms | review the scheme and its hierarchy | ~2 h |
+| Decisions, status vocabulary | 5 statuses | **done**, measured from the corpus | — | — |
+| Decisions, `Unit:` backfill | 96 missing | agent infers | review a diff | ~1 h |
+| Decisions, tagging | 120 | agent proposes tags | ~1 min | ~2 h |
+| Store discoveries, tagging | 38 | claims already exist | ~1 min | ~40 min |
+| Rules and standards, tagging | **258** | claims already exist | ~1 min | ~4.5 h |
+| Benchmark results | 21 | numbers already exist | ~2 min | ~40 min |
+| **Mechanisms**, ontology | 83 | **drafted**, unratified | ~2 min | ~3 h |
+| **Mechanisms**, tooling, checks, runtime | not yet swept | to draft | ~2 min | ~2 h |
+| **Patterns** | **127** | to draft | ~3 min | ~6.5 h |
+| **Principles** | **177** | to draft | ~3 min | ~9 h |
+| | | | | **~31 h** |
 
-Twenty hours of maintainer time, almost all of it reviewing drafted rows rather than writing them, and most of it in the three new registers. The claim is that this is cheaper than one slice redone because an agent did not know something the project already knew.
+Thirty-one hours, against the twenty this section first claimed. Three things make that defensible rather than a reason to stop.
 
-Two honest caveats. The estimate assumes the sweeps produce usable drafts, and a row drafted wrongly costs more to correct than to write. And the backfill does not have to complete before the index is useful, which §8.5 is about.
+The index is useful from the first register, not the last. 83 mechanism rows and the shape scheme are already queryable, and §9.2's loop closes today.
+
+The order is by payback, not by completeness, and the miss log decides the depth. A shape that is queried and returns nothing names the next row to write. Nothing obliges us to write the 177th principle.
+
+And the alternative is paid per lookup rather than once. The reading cost measured independently in the same sweep: one design task obeying the current agent guidance once points at 168 files and about 499,000 tokens, which is about 125 times the cost of an indexed lookup. Seven corpus-wide "go and read" instructions carry 90% of that.
 
 ### 8.5 The order to do it in
 

@@ -78,9 +78,10 @@ FAMILY_CLASS = {
 
 # The status words a decision's Status line may open with, longest first so "Published" is not read
 # as a prefix of nothing. The line's freeform tail is discarded: the typed individual is the fact.
+PUBLISHED_RE = re.compile(r"^Published, (?P<date>\d{4}-\d{2}-\d{2})\.")
+
 STATUS_WORDS = (
     "Superseded",
-    "Published",
     "Proposed",
     "Accepted",
     "Rejected",
@@ -183,7 +184,17 @@ def decisions(out: Extract) -> dict[str, ox.NamedNode]:
                 # dated addendum, and taking both would give one node two statuses, which would
                 # make the check that no Accepted decision depends on a Proposed one meaningless.
                 seen_status = True
-                word = status_of(st.group("status"))
+                line_status = st.group("status")
+                # Publication is a flag, not a lifecycle state, so a published decision keeps the
+                # state its own line gives it after the publication clause.
+                if (published := PUBLISHED_RE.match(line_status)) is not None:
+                    out.quads.append(
+                        ox.Quad(subject, ki("publishedOn"),
+                                ox.Literal(published.group("date")), INDEX_GRAPH)
+                    )
+                    out.bump("published")
+                    line_status = line_status[published.end():].strip()
+                word = status_of(line_status)
                 if word is None:
                     out.problems.append(f"{rel}:{number}: Status line opens with no known word")
                 else:

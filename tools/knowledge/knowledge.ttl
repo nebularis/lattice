@@ -115,16 +115,14 @@ ki:Status
 
 ki:Proposed    rdf:type ki:Status ; rdfs:label "proposed" .
 ki:Accepted    rdf:type ki:Status ; rdfs:label "accepted" .
-ki:Published   rdf:type ki:Status ; rdfs:label "published" .
 ki:Superseded  rdf:type ki:Status ; rdfs:label "superseded" .
-ki:Rejected    rdf:type ki:Status ; rdfs:label "rejected" .
 ki:Open        rdf:type ki:Status ; rdfs:label "open" ;
-    rdfs:comment "A register entry or question still live." .
-ki:Rehomed     rdf:type ki:Status ; rdfs:label "rehomed" ;
-    rdfs:comment "A register entry a plan has taken on, so its row is removed. Measured: 26 such references exist, and they are rehomings rather than broken links." .
-ki:Deferred    rdf:type ki:Status ; rdfs:label "deferred" .
-ki:Complete    rdf:type ki:Status ; rdfs:label "complete" .
-ki:Withdrawn   rdf:type ki:Status ; rdfs:label "withdrawn" .
+    rdfs:comment "A register entry still live." .
+
+# These five are what the corpus exhibits, measured: no decision's Status line opens with
+# "Rejected", "Withdrawn", "Deferred" or "Complete", and an earlier draft of this file declared all
+# four. Decision 6 of ADR-A134 applies to a vocabulary as much as to a class, so a status is
+# declared when a document first uses it rather than in anticipation.
 
 #################################################################
 #    What every node carries
@@ -144,6 +142,11 @@ ki:pointer
     rdf:type owl:DatatypeProperty ; rdfs:domain ki:Node ; rdfs:range xsd:string ;
     rdfs:label "pointer" ;
     rdfs:comment "Where the full entry is, as a repository-relative path with a line range. The index is a handle, so this is the only route to the prose." .
+
+ki:publishedOn
+    rdf:type owl:DatatypeProperty ; rdfs:domain ki:Decision ; rdfs:range xsd:string ;
+    rdfs:label "published on" ;
+    rdfs:comment "The date a decision was published to the site, where it was. Earns its place because publication is a flag on an Accepted decision and not a lifecycle state of its own: 20 of the 120 decisions read \"Published, <date>. Accepted <date>.\", and treating Published as a status lost the fact that they are Accepted. tools/published_decisions.py already models it this way." .
 
 ki:problemShape
     rdf:type owl:DatatypeProperty ; rdfs:domain ki:Node ; rdfs:range xsd:string ;

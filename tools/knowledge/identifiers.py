@@ -58,7 +58,8 @@ EXCEPTIONS_PATH = Path(__file__).resolve().parent / "identifier-exceptions.txt"
 # source. A generated copy repeats its source's identifiers, so scanning it would double-count them.
 GENERATED_COPY = re.compile(r"\A\{% comment %\}Copied from (\S+) by mise run build:site-sections")
 
-NON_ALPHANUMERIC = re.compile(r"[^A-Za-z0-9]+")
+SEPARATORS = re.compile(r"[-\u2011 _]+")
+NOT_KEPT = re.compile(r"[^A-Z0-9.]+")
 
 
 def normalise(identifier: str) -> str:
@@ -66,8 +67,13 @@ def normalise(identifier: str) -> str:
 
     ``ADR-A-C2``, ``ADR-AC2`` and ``ADR AC2`` all normalise to ``ADRAC2``, so one decision written
     three ways resolves once. ``ADR-A07`` and ``ADR-A07b`` stay distinct.
+
+    **A dot is kept.** Dropping every separator merged ``AIR-6.6`` with ``AIR-66``, which are
+    different slices, so only the separators that actually vary in this corpus are removed: the
+    hyphen, the non-breaking hyphen that four decisions are cited with, the space that headings
+    use, and the underscore.
     """
-    return NON_ALPHANUMERIC.sub("", identifier).upper()
+    return NOT_KEPT.sub("", SEPARATORS.sub("", identifier).upper())
 
 
 @dataclass(frozen=True)

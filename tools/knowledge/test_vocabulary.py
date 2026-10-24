@@ -105,14 +105,12 @@ def test_every_node_kind_is_a_subclass_of_node(graph: rdflib.Graph):
 
 
 def test_status_is_a_closed_set_of_typed_individuals(graph: rdflib.Graph):
-    """ADR-A134 decision 5. The roughly fifteen freeform Status line shapes measured across the 120
-    decisions collapse to these. A status added here without a mapping from a real line shape would
-    make the vocabulary wider than the corpus it describes."""
+    """ADR-A134 decisions 5 and 6. The fifteen literal Status strings across the 120 decisions
+    normalise to these five, and no decision's line opens with Rejected, Withdrawn, Deferred or
+    Complete, all four of which an earlier draft declared. A status declared in anticipation makes
+    the vocabulary wider than the corpus, so one is added when a document first uses it."""
     statuses = {_local(s) for s in graph.subjects(rdflib.RDF.type, rdflib.URIRef(KI + "Status"))}
-    assert statuses == {
-        "Proposed", "Accepted", "Published", "Superseded", "Rejected",
-        "Open", "Rehomed", "Deferred", "Complete", "Withdrawn",
-    }
+    assert statuses == {"Proposed", "Accepted", "Superseded", "Open"}
 
 
 def test_the_vocabulary_sits_outside_the_substrate_release(graph: rdflib.Graph):
