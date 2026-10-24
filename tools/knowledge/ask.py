@@ -58,18 +58,32 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 EXISTS = (
     PREFIXES
     + """
-SELECT ?needle ?module ?name ?kind ?label ?pointer WHERE {
-  GRAPH ki:terms {
-    ?t ki:identifier ?term ; ki:declaredAs ?kind ; ki:ownedBy ?m ; ki:pointer ?pointer .
-    OPTIONAL { ?t rdfs:label ?label }
-    FILTER (CONTAINS(LCASE(?term), LCASE(?needle)) ||
-            CONTAINS(LCASE(COALESCE(?label, "")), LCASE(?needle)))
-    BIND (REPLACE(STR(?m), "^.*module/", "") AS ?module)
-    # The local name, not the full IRI. It is what an agent reads and greps for, and a column of
-    # 80-character IRIs would be truncated to something that is no longer the term.
-    BIND (REPLACE(STR(?term), "^.*[#/]", "") AS ?name)
+SELECT ?needle ?where ?module ?name ?kind ?label ?pointer WHERE {
+  {
+    # A declared term. Answers "is there already a class or property for this".
+    GRAPH ki:terms {
+      ?t ki:identifier ?term ; ki:declaredAs ?kind ; ki:ownedBy ?m ; ki:pointer ?pointer .
+      OPTIONAL { ?t rdfs:label ?label }
+      FILTER (CONTAINS(LCASE(?term), LCASE(?needle)) ||
+              CONTAINS(LCASE(COALESCE(?label, "")), LCASE(?needle)))
+      BIND ("term" AS ?where)
+      BIND (REPLACE(STR(?m), "^.*module/", "") AS ?module)
+      BIND (REPLACE(STR(?term), "^.*[#/]", "") AS ?name)
+    }
+  } UNION {
+    # A mechanism the project already has. Its problem shape is phrased as the problem, so it is
+    # matched by a question a term name cannot answer (sketch section 9.1).
+    GRAPH ki:index {
+      ?n a ki:Mechanism ; ki:identifier ?name ; ki:claim ?label ; ki:pointer ?pointer .
+      OPTIONAL { ?n ki:problemShape ?shape }
+      FILTER (CONTAINS(LCASE(COALESCE(?shape, "")), LCASE(?needle)) ||
+              CONTAINS(LCASE(?label), LCASE(?needle)))
+      BIND ("mechanism" AS ?where)
+      BIND (COALESCE(?shape, "") AS ?module)
+      BIND ("already built" AS ?kind)
+    }
   }
-} ORDER BY ?module ?name LIMIT 40"""
+} ORDER BY ?where ?module ?name LIMIT 40"""
 )
 
 NODE = (
@@ -163,7 +177,7 @@ def main() -> int:
     if arguments.question == "exists":
         needle = ox.Literal(arguments.argument)
         rows = rows_of(db.query(EXISTS, substitutions={ox.Variable("needle"): needle}))
-        columns = ("module", "name", "kind", "label", "pointer")
+        columns = ("where", "name", "module", "label", "pointer")
     elif arguments.question in {"node", "reaches"}:
         subject = ox.NamedNode(KI + "node/" + identifiers.normalise(arguments.argument))
         query = NODE if arguments.question == "node" else REACHES

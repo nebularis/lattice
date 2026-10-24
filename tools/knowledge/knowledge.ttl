@@ -145,6 +145,11 @@ ki:pointer
     rdfs:label "pointer" ;
     rdfs:comment "Where the full entry is, as a repository-relative path with a line range. The index is a handle, so this is the only route to the prose." .
 
+ki:problemShape
+    rdf:type owl:DatatypeProperty ; rdfs:domain ki:Node ; rdfs:range xsd:string ;
+    rdfs:label "problem shape" ;
+    rdfs:comment "The kind of problem this node answers, in the author's own words and phrased as the problem. Earns its place from the measurement of knowledge-index sketch section 9.1: a term lookup finds fnd:Version for the question 'version' and nothing for 'versioning', because an identifier is a noun and a question is a gerund. This is the text that closes that gap, and it is matched before the design-shape scheme exists. ki:tagged and ki:solves replace it with concepts once a node is tagged, and this stays as the human phrasing." .
+
 ki:status
     rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range ki:Status ;
     rdfs:label "status" ;

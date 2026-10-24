@@ -187,9 +187,9 @@ A maintainer never writes Turtle. The authoring interface is a Markdown table ro
 | Technical debt | 49 rows, exists | `TD-*nn*` | `docs/developer/plans/technical-debt.md` |
 | Store discoveries | 36 entries, exists | `TSD-*nn*` | `docs/architecture/triple-store-discovery.md` |
 | Query rules | 36 entries, exists, needs a narrower reference rule | `R*n*` | `docs/architecture/efficient-queries-and-shapes.md` |
-| **Principles** | new | `PRI-*nn*` | `docs/developer/registers/principles.md` |
-| **Patterns** | new | `PAT-*nn*` | `docs/developer/registers/patterns.md` |
-| **Mechanisms** | new | `MEC-*nn*` | `docs/developer/registers/mechanisms.md` |
+| **Principles** | new | `PRI-*nn*` | `docs/developer/plans/principles.md` |
+| **Patterns** | new | `PAT-*nn*` | `docs/developer/plans/patterns.md` |
+| **Mechanisms** | **83 rows drafted** | `MEC-*nn*` | [`docs/developer/plans/mechanisms.md`](../plans/mechanisms.md) |
 | **Design shapes** | new, the vocabulary itself | slug | `tools/knowledge/design-shapes.ttl` |
 
 The mechanism register is the one with no existing home and the clearest payback, because it is the register that answers "does this already exist".
@@ -326,6 +326,20 @@ What closes it is the **mechanism register's problem-shape column**, which is wr
 
 It also sharpens what the miss log is for. A query returning nothing is not evidence that embeddings are needed, because the first thing to check is whether a register row or a shape would have answered it. Only a miss that survives that check counts.
 
+### 9.2 Free text is not enough either, so the scheme carries synonyms
+
+The mechanism register was built and the same question asked again. `exists versioning` now returns MEC-08, on controlled vocabularies that change by edition, because its claim happens to contain the word. **It does not return MEC-01, which is the row the agent needed.** MEC-01's problem shape reads "keeping one thing recognisable while its content is edited, restated or superseded over time", which is the problem stated well and contains no word that "versioning" matches.
+
+So a substring match over an author's own phrasing fails for the same reason a match over an identifier does. Phrasing the problem rather than the solution was necessary and is not sufficient, and no amount of rewriting that cell fixes it, because the author cannot anticipate every word a questioner will use.
+
+What fixes it is the one thing SKOS has that free text does not. A concept `versioning-an-entity-over-time` carries `skos:altLabel` "versioning", "version history" and "supersession", MEC-01 is tagged with it, and the question matches the concept rather than the prose. That is a requirement on the scheme rather than a nicety:
+
+- **every concept carries `skos:altLabel`s, including the gerund and noun forms of its own words**, because a question is a gerund and a model's name is a noun
+- a recall query matches `skos:prefLabel`, every `skos:altLabel` and the concept's definition, then returns what is tagged with the concept and with its `skos:narrower` concepts
+- the free-text `ki:problemShape` stays as the author's phrasing, read by a human once the concept has found the row
+
+This was found by building, not by reasoning, and it is the strongest argument in this sketch for the vocabulary over embeddings. Embeddings would have matched "versioning" to MEC-01 without being told anything. The cost is that nothing would explain why, nothing could check it, and the next question would be a coin toss. A declared synonym is cheap, auditable and exact, and the miss log is what finds the ones worth declaring.
+
 ## 10. The store, and running without a server
 
 ```mermaid
@@ -381,7 +395,7 @@ One shape over the decision graph also replaces the several ad-hoc `**Status:**`
 
 **KI-Q2. What is the no-server query latency? Answered 2026-10-24, measured and recorded as [TSD-38](../../architecture/triple-store-discovery.md).** A read-only open is 23.8 ms, a query is 0.1 to 0.9 ms, and a whole process is 50 ms end to end over 72,832 quads. The server is dropped. Re-measure if the corpus grows by an order of magnitude, because the open is a fixed cost and the queries are not.
 
-**KI-Q3. Where do the three new registers live?** `docs/developer/registers/` is proposed, which is a new directory under a documentation area and so needs declaring in `repository-catalogue.md`. The alternative is `docs/developer/plans/` beside the two existing registers, which is where a reader would look for them but describes them wrongly, since a register is explicitly not a unit.
+**KI-Q3. Where do the three new registers live? Answered 2026-10-24 by precedent.** `docs/developer/plans/`, beside `pending-design-decisions.md` and `technical-debt.md`. A register is not a unit, and saying so in the file's own header is what those two already do. A `registers/` directory would be a new kind of directory, needing an accepted ADR and a catalogue entry, to hold files that already have a conventional home.
 
 **KI-Q4. Does the pattern register overlap the query-rules guide?** `efficient-queries-and-shapes.md` already holds 36 numbered rules that are arguably patterns. The distinction proposed is that a rule is prescriptive and universal within its scope, and a pattern is a technique with a trade-off to weigh. That line is thin and may not survive contact with the corpus.
 

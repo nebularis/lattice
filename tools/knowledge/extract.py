@@ -70,6 +70,7 @@ FAMILY_CLASS = {
     "pending-decision": "PendingDecision",
     "technical-debt": "Debt",
     "store-discovery": "Discovery",
+    "mechanism": "Mechanism",
 }
 
 # The status words a decision's Status line may open with, longest first so "Published" is not read
@@ -217,7 +218,7 @@ def register_rows(out: Extract) -> None:
                     if not stripped.startswith("|"):
                         continue
                     cells = stripped.split("|")
-                    if len(cells) < 3:
+                    if len(cells) <= family.claim_cell:
                         continue
                     match = family.mention.fullmatch(cells[1].strip())
                     if not match:
@@ -233,15 +234,27 @@ def register_rows(out: Extract) -> None:
                     out.quads.append(
                         ox.Quad(subject, ki("pointer"), ox.Literal(f"{rel}:{number}"), INDEX_GRAPH)
                     )
-                    out.quads.append(ox.Quad(subject, ki("status"), ki("Open"), INDEX_GRAPH))
-                    bold = BOLD_RE.search(cells[2])
-                    claim = bold.group("claim") if bold else cells[2]
+                    status = "Accepted" if "| ratified |" in stripped.lower() else "Proposed"
+                    out.quads.append(
+                        ox.Quad(subject, ki("status"),
+                                ki(status if family.name == "mechanism" else "Open"), INDEX_GRAPH)
+                    )
+                    cell = cells[family.claim_cell] if len(cells) > family.claim_cell else ""
+                    bold = BOLD_RE.search(cell)
+                    claim = bold.group("claim") if bold else cell
                     if claim.strip():
                         out.quads.append(
                             ox.Quad(subject, ki("claim"), ox.Literal(shorten(claim)), INDEX_GRAPH)
                         )
                     else:
                         out.problems.append(f"{rel}:{number}: {canonical} has no extractable claim")
+                    # The problem shape, where the register states one. It is what a recall
+                    # query matches on, phrased as the problem rather than the solution.
+                    if family.name == "mechanism" and len(cells) > 6 and cells[6].strip():
+                        out.quads.append(
+                            ox.Quad(subject, ki("problemShape"), ox.Literal(cells[6].strip()), INDEX_GRAPH)
+                        )
+                        out.bump("problem-shape")
                     out.bump(family.name)
 
 
