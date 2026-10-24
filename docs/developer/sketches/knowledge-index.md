@@ -2,7 +2,7 @@
 
 # Knowledge index: what the project knows, as a graph an agent can query
 
-**Status:** sketch, 2026-10-24. The design is approved by the maintainer in session, and its decisions are stated here in §4, §6 and §11 pending an ADR, which takes the next free number from the [catalogue](../../architecture/decisions/README.md) when it is drafted. The first slice, the identifier check, is built (`mise run check:identifiers`). The rest is authored and not yet built.
+**Status:** sketch, 2026-10-24. The design is approved by the maintainer in session and recorded in [ADR-A134](../../architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md). KI-1, the identifier check, is built (`mise run check:identifiers`). KI-2 is measured and recorded as [TSD-38](../../architecture/triple-store-discovery.md), and its result dropped KI-8. The rest is authored and not yet built.
 **Comes back in with:** every epic, because the index reads their plans and registers. Nothing waits on it, and it makes nothing else harder, so it can be built alongside any slice.
 **Reads with:** [efficient-queries-and-shapes.md](../../architecture/efficient-queries-and-shapes.md) (the rules a generated query obeys), [triple-store-discovery.md](../../architecture/triple-store-discovery.md) (what the store really does), [ADR-A126](../../architecture/decisions/ADR-A126-literate-specification-layout-and-grammar.md) (the extraction contract this generalises), [ADR-A121](../../architecture/decisions/ADR-A121-repository-catalogue.md) (where things live, stated once) and [ADR-A117](../../architecture/decisions/ADR-A117-agent-guidance-and-skill-library.md) (the agent guidance this shrinks).
 
@@ -321,19 +321,21 @@ Memory pressure was the concern behind the question, and it does not arise. The 
 ```mermaid
 flowchart TD
   B["mise run bootstrap"] --> X["extractor"]
-  X --> S[".build/knowledge/<br/>Oxigraph on disk"]
   W["a register or document changes"] --> X
-  S --> P1["mise run graph:ask<br/>opens the store, queries, exits<br/>no server needed"]
-  S --> P2["mise run graph:serve<br/>long-running pyoxigraph process"]
-  P2 --> M["MCP surface"]
+  X --> S[".build/knowledge/<br/>Oxigraph on disk, 23.7 MB"]
+  S --> P1["mise run graph:ask<br/>read-only open 24 ms,<br/>query 0.2 ms,<br/>50 ms end to end"]
   P1 --> A["agent"]
-  M --> A
-  P2 --> Q["mise run graph:stop"]
+  S -.->|"only if a larger corpus<br/>makes the open dominate"| P2["a long-running process,<br/>then an MCP surface"]
+  P2 -.-> A
 ```
 
-An agent queries the index many times per prompt, so the server earns its place. It must stay optional, because a cloud agent and a memory-constrained machine have to work without it. An on-disk store is what makes that credible rather than nominal: the no-server path opens the store and queries it, with no parse of 9.7 MB of Markdown and no graph build.
+**There is no server, and that is now a measured conclusion rather than a preference.** KI-Q2 was the one question worth answering before building anything, and the answer removes a component. Recorded as [TSD-38](../../architecture/triple-store-discovery.md): over the whole corpus in one store, 72,832 quads and 23.7 MB on disk built in 1.17 seconds, `Store.read_only()` opens in 23.8 ms against 141 ms for a read-write open, and the queries are not the cost at all. A two-hop property path runs in 0.1 ms, a two-tag conjunctive lookup in 0.3 ms, and a `CONTAINS` filter over every label in every graph in 0.6 ms. A whole process, counting interpreter start and the import, is **50 ms end to end**.
 
-Two things are unresolved and are questions in §13 rather than claims here. How the server is stopped reliably, given that `mise` has no supervision model, and whether query latency without the server is actually acceptable at ~25k triples plus a loaded ontology graph. The second is measurable before anything is built, and should be measured rather than assumed.
+So twenty queries in a prompt cost one second. A server would save most of that, and in exchange would need supervising, would have a lifecycle to get wrong, would need a stop command `mise` has no model for, and could not be relied on where a process does not persist. It is not worth it at this size. The dotted path above is kept because the open is a fixed cost while the queries are not, so a corpus ten times larger should be measured again rather than assumed to behave the same way.
+
+A caller that only reads opens read-only, which is both the faster mode and the one that cannot write by accident.
+
+The extractor must also tolerate a document it cannot parse, per [TSD-37](../../architecture/triple-store-discovery.md): one tracked fixture holds IRIs with two fragment separators, which rdflib accepts and Oxigraph refuses outright. Loading the corpus as one batch would lose all 270 documents to one bad file, so the load is per document and reports which failed.
 
 The JVM is not in this design. `jena-text` is the only surveyed engine that offers a Lucene index inside SPARQL, and it is held in reserve for the case where keyword recall inside a query turns out to matter. The JVM's footprint rules it out until then.
 
@@ -365,9 +367,9 @@ One shape over the decision graph also replaces the several ad-hoc `**Status:**`
 
 ## 13. Questions
 
-**KI-Q1. How is the server stopped?** `mise` has no supervision model. Options are a PID file in `.build/` with `graph:stop` reading it, a socket-activated process that exits on idle, or no server at all until measurement says one is needed. Leaning to the third, because §10's second question may dissolve the first.
+**KI-Q1. How is the server stopped? Answered 2026-10-24, and the question is void.** There is no server, so there is nothing to stop. KI-Q2 dissolved it.
 
-**KI-Q2. What is the no-server query latency?** Measurable now, on the real corpus, before anything is built. If opening an on-disk Oxigraph store and running an impact query costs tens of milliseconds, the server is premature. This should be probed and recorded as a discovery.
+**KI-Q2. What is the no-server query latency? Answered 2026-10-24, measured and recorded as [TSD-38](../../architecture/triple-store-discovery.md).** A read-only open is 23.8 ms, a query is 0.1 to 0.9 ms, and a whole process is 50 ms end to end over 72,832 quads. The server is dropped. Re-measure if the corpus grows by an order of magnitude, because the open is a fixed cost and the queries are not.
 
 **KI-Q3. Where do the three new registers live?** `docs/developer/registers/` is proposed, which is a new directory under a documentation area and so needs declaring in `repository-catalogue.md`. The alternative is `docs/developer/plans/` beside the two existing registers, which is where a reader would look for them but describes them wrongly, since a register is explicitly not a unit.
 
@@ -382,12 +384,12 @@ Nothing waits on this, and it makes nothing else harder, so it is not on any epi
 | Slice | Content | State |
 |---|---|---|
 | KI-1 | the identifier families and the referential-integrity check | **built**, `mise run check:identifiers` |
-| KI-2 | measure KI-Q2, record it as a discovery | next, and it gates KI-5 |
-| KI-3 | the T-Box, the design shape scheme, and the extractor for the five existing registers | designed in §4 and §6, and needs the ADR drafted first |
+| KI-2 | measure KI-Q2, record it as a discovery | **done**, [TSD-38](../../architecture/triple-store-discovery.md). It dropped KI-8 |
+| KI-3 | the T-Box, the design shape scheme, and the extractor for the five existing registers | next. Designed in §4 and §6, decided by [ADR-A134](../../architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md) |
 | KI-4 | the mechanism register, seeded from the corpus sweep | the highest-value backfill |
-| KI-5 | the query surface, `mise run graph:ask`, with the miss log | after KI-2 |
+| KI-5 | the query surface, `mise run graph:ask`, with the miss log | after KI-3 |
 | KI-6 | the SHACL suite of §12 | after KI-3 |
 | KI-7 | the lifecycle instruction, and the agent guidance the index lets us delete | last, and it is where the token saving is realised |
-| KI-8 | the optional server and the MCP surface | only if KI-2 says it is needed |
+| ~~KI-8~~ | ~~the optional server and the MCP surface~~ | **dropped** by KI-2's measurement. An MCP surface over `graph:ask` stays possible without a resident process |
 
 KI-7 is the slice that closes the loop the premise opened. Each "go and scan directory X" note in the agent guidance is replaced by one query, and the guidance shrinks instead of growing.

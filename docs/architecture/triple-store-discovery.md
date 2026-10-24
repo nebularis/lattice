@@ -1371,6 +1371,26 @@ SELECT ?b WHERE { <urn:checkpoint:100000:a0> l:balance ?b }
 
 **Reproduce it.** The three forms above against a store holding the benchmark's checkpointed history. `benchmark/ledger-posting-cost` builds that history, and its `LEDGER_COST_PROBE` run reaches 200 closes an account.
 
+### TSD-37. Oxigraph refuses an IRI with two fragment separators and rdflib accepts it
+
+**Evidence:** Observed on both stores, 2026-10-24, loading every tracked ontology document into Oxigraph for the knowledge index (knowledge-index sketch KI-Q2). 269 of 270 documents loaded. The exception was `ontology/mork/test/data/Contracts.ttl`.
+
+**What the store does.** That fixture's subjects concatenate two absolute IRIs, each with its own `#`, for example `http://www.nebularis.org/ontologies/Mork#http://www.nebularis.org/hyperthunk/examples/Contract#acceptingParty`. A second `#` is not a legal IRI code point, so Oxigraph refuses the document outright with a syntax error naming the line and column, and loads none of it. rdflib parses the same document and returns 190 triples, with the malformed text as the subject IRI.
+
+**What it means for LATTICE.** A document that only ever passes through rdflib can hold IRIs that no strict parser accepts, and the defect surfaces at the first strict consumer rather than at authoring time. Anything that loads the corpus into Oxigraph, or hands it to a consumer's own store, has to treat a parse failure per document as expected and report which document failed, rather than loading the corpus as one batch. The fixture itself is referenced by no tool, test or document, so whether it is live input or an orphan is a question for its owner rather than a finding here.
+
+**Reproduce it.** Load the file with `pyoxigraph.Store().load(path=..., format=RdfFormat.TURTLE)`, which raises `SyntaxError`, and with `rdflib.Graph().parse(..., format="turtle")`, which returns 190 triples.
+
+### TSD-38. Oxigraph's read-only open costs a fraction of a read-write open, and a query over the whole corpus is sub-millisecond
+
+**Evidence:** Measured 2026-10-24 on macOS (Darwin 27, Apple silicon), pyoxigraph 0.5.13, for the knowledge index's KI-Q2. The store held every tracked ontology document in a named graph each plus a synthetic index graph of 16,800 quads, 72,832 quads and 23.7 MB on disk in total, built in 1.17s.
+
+**What the store does.** `Store(path)` opens read-write in 141 ms cold and about 32 ms warm, because RocksDB recovers its write-ahead log and may compact. `Store.read_only(path)` opens in 23.8 ms, repeatably, doing neither. Queries themselves are then far cheaper than either open: a property-path traversal two hops out took 0.1 ms, a two-tag conjunctive lookup 0.3 ms, a `CONTAINS` filter over every `rdfs:label` in every graph 0.6 ms, and a `GROUP BY` histogram over 16,800 quads 0.9 ms. A whole process, counting interpreter start, importing pyoxigraph, opening read-only and running a query, costs 50 ms end to end.
+
+**What it means for LATTICE.** A caller that only reads opens read-only, which is both roughly six times faster and the mode that cannot write by accident. At this corpus size the query is not the cost and the open is, so a long-running server process to amortise loading buys little: 50 ms per call means twenty calls cost one second, against which a server has to be supervised, has a lifecycle to get wrong, and cannot be relied on where a process may not persist. Measure again before assuming this holds at ten times the quads, since the open is a fixed cost and the queries are not.
+
+**Reproduce it.** Build a store with the corpus, then time `pyoxigraph.Store.read_only(path)` against `pyoxigraph.Store(path)` and the queries above.
+
 ## 7. Corrections, and what they taught us
 
 ### 7.1 rdflib and the order of an update (TSD-01)

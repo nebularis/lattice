@@ -1,0 +1,66 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+# ADR-A134: A knowledge index over the working documents, and a design-shape vocabulary to retrieve it by
+
+**Status:** Accepted 2026-10-24
+**Date:** 2026-10-24
+**Related:** [ADR-A126](ADR-A126-literate-specification-layout-and-grammar.md) (the extraction contract this generalises), [ADR-A121](ADR-A121-repository-catalogue.md) (where things live, stated once), [ADR-A117](ADR-A117-agent-guidance-and-skill-library.md) (the agent guidance this shrinks), [ADR-A127](ADR-A127-published-architecture-decisions.md) (a published document never cites a working one), [ADR-A128](ADR-A128-efficient-queries-and-shapes.md) (the rules a generated query obeys), [ADR-A129](ADR-A129-one-release-for-the-substrate.md) (the release this sits outside), [ADR-A125](ADR-A125-test-support-tooling.md) (Oxigraph as the default engine)
+**Unit:** [`knowledge-index`](../../developer/sketches/knowledge-index.md) (sketch)
+
+## Context
+
+An agent making a design decision here has to know what the project already decided, found out, forbade and built. Today it finds out by reading documents, and the documents are large. A live view of the `applied-insurance-reference`, `computable-contract-substrate` and `formal-methods` epics is 89 files, 1.85 MB and about 463,000 tokens, which is two and a half context windows to answer one question about one decision. The same bill is paid again for coding standards, a layer's design principles, the literate-specification requirements, and what we know about each triple store. Agent guidance has grown a note for each of those telling an agent which directory to scan, and each note is a reading bill rather than an answer.
+
+Two failures follow. Retrieval is unaffordable, so it is skipped, and an agent works from what is in front of it. Worse, **recall is impossible rather than merely expensive**: an agent designing an append-only log does not know the identifier of the thing it should read, so it cannot look up what it cannot name. An agent once proposed building a versioning system although Foundation already models one. That error costs a slice, not a context window.
+
+The collateral measures 700 tracked Markdown files and 9.7 MB, holding some 950 distinct stable identifiers across 9,645 mention sites, in seven families. Alongside it sit 270 Turtle documents, about 41,330 triples and 3,049 declared terms.
+
+Three things already in the repository decide the shape of the answer. `tools/literate_extract.py` and `tools/literate_grammar.py`, 2,061 lines under [ADR-A126](ADR-A126-literate-specification-layout-and-grammar.md), already compile fenced blocks in a layer README into Turtle, a Python module and Isabelle theory, on the stated principle that the prose is authoritative and the compiled artefact is derived so the two cannot drift. `tools/published_decisions.py` already parses the decision headers. `pyoxigraph`, `rdflib` and `pySHACL` are already installed, so the work adds no dependency.
+
+A survey of open-source alternatives found none that indexes knowledge collateral with semi-structured headers, RDF artefacts and multi-language code behind one typed, permissively licensed, offline query surface. The closest candidates each fail on a different axis, and the only attempts at the intersection are unmaintained prototypes. Two otherwise capable code indexers were rejected on a stronger ground than their licence or maintenance risk: they index symbols, and the failure we actually suffered was at the altitude of a design concept, which no call graph would have caught.
+
+## Decision
+
+**1. The knowledge index is a new extraction contract over working documents, not a new subsystem.** It generalises [ADR-A126](ADR-A126-literate-specification-layout-and-grammar.md) from layer READMEs to the registers, plans, sketches and decisions. Markdown stays the source of truth, the graph is derived, and the index holds no content of its own. Deleting it loses nothing but speed.
+
+**2. Derived facts only, each keeping exactly one source.** Decision metadata comes from the decision headers, module and path facts from `repository-catalogue.md` (read, never restated), layer edges from `owl:imports`, slice-to-file edges from git history. A fact authored only in the graph makes the graph a second thing to maintain by hand, and it will drift as `docs/developer/INDEX.md` has, at 1,005 hand-maintained lines last updated four weeks before this decision.
+
+**3. The claim is extracted, never authored twice.** Each node carries one sentence, at most 200 characters, taken from the bolded lead sentence of its Markdown entry in the shape `pending-design-decisions.md` already uses.
+
+**4. Two artefacts, both under `tools/knowledge/`.** An OWL T-Box for the node kinds and their relations, and a SKOS scheme for the design shapes. They describe this repository rather than the domain, and a published document may not cite a working one ([ADR-A127](ADR-A127-published-architecture-decisions.md)), so they sit outside `ontology/` and outside the substrate release of [ADR-A129](ADR-A129-one-release-for-the-substrate.md). Namespace `https://www.nebularis.org/neuro-semantic/lattice/dev/knowledge#`, prefix `ki:`, where the `dev` segment marks it as not part of the release.
+
+**5. A real T-Box, not SKOS alone, because SHACL cannot check what has no domain and range.** "No Accepted decision depends on a Proposed one" needs `ki:dependsOn` to have a stated domain and range and `ki:status` to point at a typed individual rather than one of fifteen freeform strings. SKOS is kept for the design shapes alone, where `broader` and `narrower` are what the taxonomy needs, and `ki:tagged` has range `skos:Concept`.
+
+**6. A class or property enters the T-Box only when a query or a check needs it.** Only this repository consumes the T-Box, so changes are additive and there is no compatibility promise to keep. This decision is what stops that freedom becoming a modelling hobby.
+
+**7. A declared edge and a derived edge are different properties.** An edge a document states, such as a register's "Waits for" column, is trusted. An edge inferred from two identifiers appearing on one line is a hint, and is a separate property. **SHACL constraints read only declared edges**, because mixing them would make every check as reliable as a co-mention.
+
+**8. Recall matches on the controlled vocabulary, not on embeddings.** The vocabulary makes recall exact, deterministic and checkable, and maintaining a SKOS scheme with SHACL validation is work this project already does. The cost is that an untagged node is invisible. The decision is not irreversible: the query surface records every query that returns nothing, and that miss log is the only admissible evidence for later adding vectors, which would then be built over the claim sentences and not over 9.7 MB of prose.
+
+**9. A design shape is phrased as a problem, never as a technique**, because an agent matches against it before knowing the solution. Target size is 40 to 70 concepts in at most three levels. A node carries two to four shapes. An unknown tag fails the check, so the vocabulary cannot fork silently.
+
+**10. Three new registers, beside the five that exist.** Principles, patterns and mechanisms, each a Markdown table whose row shape is the schema and whose authoring interface is a table row, never Turtle. The mechanism register is the one with no home today and the clearest payback, because it is what answers "does this already exist".
+
+**11. Enumeration is from `git ls-files`, never a filesystem walk.** A checkout can hold ignored directories of confidential third-party material. The same rule excludes any third-party indexer pointed at this checkout, whatever its capability, and it excludes a tool with a hosted tier for the same reason.
+
+**12. A design shape never names private work.** Shapes are substrate-neutral problem statements. A shape naming a protected mechanism would make a public vocabulary a bridge out of the private estate. Any private-side index is a separate graph with no link to this one.
+
+**13. The store is Oxigraph on disk under `.build/`, built on bootstrap, refreshed when a source changes, and never committed.** A reader opens it read-only, which is both the faster mode and the one that cannot write by accident.
+
+**14. There is no resident server process.** Measured and recorded as TSD-38 in [the discovery record](../triple-store-discovery.md): over 72,832 quads and 23.7 MB, a read-only open costs 23.8 ms against 141 ms read-write, queries cost 0.1 to 0.9 ms, and a whole process is 50 ms end to end. Twenty queries in a prompt cost one second, against which a server must be supervised, has a lifecycle to get wrong, and cannot be relied on where a process does not persist. The open is a fixed cost while the queries are not, so this is re-measured if the corpus grows by an order of magnitude.
+
+**15. A family is extracted and checked only once its definition rule is written.** A family without one is counted and never failed, so nothing is reported broken on the strength of a rule nobody has written, and nothing is silently half-indexed. The load is per document and reports which failed, because one unparseable fixture would otherwise lose the whole corpus (TSD-37).
+
+## Consequences
+
+**What this buys.** A design lookup costs about 4,000 tokens against the ~463,000 of reading three epics. Recall becomes possible at all, which is the point rather than the saving. Each "go and scan directory X" note in the agent guidance is replaced by one query, so the guidance shrinks instead of growing. And a class of check becomes writable that is not writable today, listed in the sketch §12: a decision resting on something unratified, a slice with no epic, a principle with no supporting evidence, a pattern recommended without its cost, a register row that has drifted from the code it names.
+
+**What it costs.** About twenty hours of maintainer time for the backfill, almost all of it ratifying rows an agent drafted rather than authoring them, and most of it in the three new registers. The sketch §8 states the row shape, the tagging rules and the per-register estimate. The work is forward-only first and backfilled by demand, with the miss log deciding the depth, so the index is useful from the first register rather than after the last.
+
+**The main risk is tagging discipline.** An untagged node is invisible, and a half-tagged corpus looks complete while being partial, which is worse than an empty one. The mitigations are that an unknown tag fails the check, that the vocabulary stays small enough to hold in mind, and that the miss log turns an invisible gap into a named next row. A second risk is vocabulary drift into near-synonyms, which is why a new concept is ratified as a decision is.
+
+**What this does not do.** It does not replace the existing checks that already read Turtle, such as the import guard, and rewriting those as SHACL would be a lateral move. It indexes no code symbols, on the ground that the failure we suffered was conceptual. It holds no narrative, so an agent still reads the document once the graph says which one.
+
+## Provenance
+
+The design was presented to the maintainer in session on 2026-10-24, over four exchanges that narrowed it from a blast-radius index to this, and was approved in writing, including the T-Box split of decision 5 and the store choice of decision 13, both of which the maintainer proposed. The maintainer authorised recording the decisions as accepted without separate countersignature, and authorised the work on the `docs/placement-vehicles-structure` branch. Decision 14 replaced an earlier proposal for an optional long-running server after the measurement in TSD-38 was taken. The alternatives considered, the survey of open-source tools behind the Context section, and the costs are in the [sketch](../../developer/sketches/knowledge-index.md).
