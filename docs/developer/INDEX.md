@@ -2,7 +2,7 @@
 
 # LATTICE Developer Coordination Index
 
-**Last updated:** 2026-09-25 — ADR-A97 makes MORK OWL 2 DL (Mork 0.4.0). ADR-A83 reasoning harness delivered (`eligibility-compiler` Part B). `applied-ontology-readiness` AOR-10, AOR-11 and AOR-14 to AOR-17 implemented, ADRs A-83, A-86, A-93 to A-96 accepted. `documentation-link-repair` planned  
+**Last updated:** 2026-10-24 — `knowledge-index` KI-1 to KI-3 and KI-5 built, ADR-A134 Accepted, TSD-37 and TSD-38 recorded. ADR-A133 git hooks and merge gates added. A-130 (Ensemble) and A-131 (Ledger) drafted on `docs/placement-vehicles-structure`  
 **Purpose:** Single source of truth for all active units of work: sketches, plans, status, reviews, and validation packs.  
 **Format:** By unit identifier, with links to all related documents and current status.
 
@@ -549,6 +549,20 @@ vocabulary, Eligibility over flat lists and several values with reviewed crosswa
 ontology, term parameters with derived liability direction, and optional compilation into
 Capacity. Seven substrate items (L-P1 to L-P5, spatial guidance, evidence resolution) run as a
 non-blocking track.
+
+## 8.12 Knowledge Index — Building (2026-10-24)
+
+| Field | Value |
+|-------|-------|
+| **Status** | 🚧 KI-1 and KI-2 complete, KI-3 and KI-5 built. `mise run check:identifiers`, `mise run check:knowledge`, `mise run build:knowledge`, `mise run graph:ask`. KI-4, the mechanism register, is the next and highest-value slice. KI-6 waits on the registers and KI-7 on the shape vocabulary. KI-8 was dropped by measurement |
+| **Unit ID** | `knowledge-index` |
+| **Sketch** | [knowledge-index.md](sketches/knowledge-index.md) |
+| **ADRs** | [A-134](../architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md), Accepted 2026-10-24 |
+| **Discoveries** | TSD-37 (a strict parser refuses IRIs rdflib accepts), TSD-38 (a read-only open is six times cheaper, and the queries are not the cost) |
+
+A derived graph over this repository's own working documents, so an agent can retrieve what the project already knows by design shape as well as by identifier, instead of reading whole plans. A live view of the AIR, CCS and FML epics is 89 files and about 463,000 tokens today, against about 4,000 for an indexed lookup. Markdown stays the source of truth and the index holds no content of its own, so deleting it loses nothing but speed.
+
+The remaining work is mostly authoring rather than code: three new registers (principles, patterns, mechanisms), a SKOS scheme of 40 to 70 design shapes, and the tagging. Sketch §8 states the row shape per register, the five tagging rules and about 20 hours of maintainer time, almost all of it ratifying drafted rows rather than writing them. §9.1 is the measurement that makes the mechanism register the first backfill: `graph:ask -- exists version` finds Foundation's class, and `exists versioning` finds nothing, because an identifier is a noun and a question is a gerund.
 
 # Part III — Archived/Historical Work
 

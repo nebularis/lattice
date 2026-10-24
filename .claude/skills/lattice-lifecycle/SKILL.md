@@ -35,6 +35,32 @@ approved.
 
 Never create a second status record for a unit. `docs/developer/` itself holds durable guidance only.
 
+## Recording what we learn
+
+A learning that outlives its session goes into a register in the same change that produced it, and the index is refreshed so other agents can find it ([ADR-A134](../../../docs/architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md)). A learning left in a commit message is lost: 22 of this project's learnings existed only in git history when the index was built, including a Windows newline translation that silently corrupted generated SPARQL and two merge resolutions that made a task skip test modules without failing.
+
+**Which register takes it.**
+
+| What was learned | Goes in |
+|---|---|
+| what a store, tool, engine or platform actually does, found by probing or being surprised | [`docs/architecture/triple-store-discovery.md`](../../../docs/architecture/triple-store-discovery.md) as the next `TSD-`*n*, for a store. Otherwise the unit's status record until a register owns it |
+| a choice made, where an ADR is warranted | an ADR, drafted as Proposed |
+| a choice that matters and cannot be made yet | `pending-design-decisions.md` |
+| a shortfall in something that exists, with no planned home | `technical-debt.md` |
+| a rule about how we write, name, structure or check something | the skill that an agent reads for that task, not a commit message |
+| a cost measured, with numbers | the discovery record, citing the benchmark |
+
+**How to write the entry.** One bolded lead sentence stating the claim, then the detail. The index extracts that sentence as the claim and never stores a second copy, so an entry whose first sentence is a preamble indexes as a preamble. Keep it under 200 characters and state the cost as well as the benefit.
+
+**Then refresh the index.**
+
+```bash
+mise run build:knowledge
+mise run check:identifiers
+```
+
+The first derives the index again, in about two seconds, so the entry is findable. The second fails if the entry cites an identifier that resolves to nothing, which is the commonest way a new entry is wrong.
+
 ## Epics, phases, slices and milestones
 
 | Unit | Is | Ends with | Documents |
