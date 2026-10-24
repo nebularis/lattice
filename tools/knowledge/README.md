@@ -13,12 +13,16 @@ Markdown stays the source of truth. Everything here derives from it and holds no
 | `identifiers.py` | the identifier families, how each is written and where each is defined, and the referential-integrity check over them |
 | `identifier-exceptions.txt` | identifiers that are mentioned but defined nowhere, each with its reason. The baseline the check measures a new break against |
 | `knowledge.ttl` | the T-Box: the node kinds, their relations and the closed status set ([ADR-A134](../../docs/architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md)) |
+| `extract.py` | derives the index from the tracked documents into an Oxigraph store under `.build/`, never committed |
+| `ask.py` | the query surface. `exists`, `node`, `reaches` and `sparql`, with the miss log that decides whether the vocabulary needs a new concept |
 
 ## Tasks
 
 ```bash
 mise run check:identifiers            # fail on an identifier mentioned but defined nowhere
-mise run check:knowledge-vocabulary   # fail on a T-Box term that breaks ADR-A134
+mise run check:knowledge              # fail on a T-Box term or a derived node that breaks ADR-A134
+mise run build:knowledge              # derive the index into .build/knowledge, about two seconds
+mise run graph:ask -- exists version  # ask it a question
 ```
 
 Three reports, none of which fails:
@@ -41,6 +45,6 @@ mise exec -- python tools/knowledge/identifiers.py --rehomed     # register entr
 
 **A generated copy is skipped by its marker, not its directory.** Most files under `docs/_includes` are originals that live there, and only a file carrying the marker its generator writes is a copy.
 
-**A term enters the T-Box only when a query or a check needs it, and its `rdfs:comment` says which.** `check:knowledge-vocabulary` fails on a term without one, so the rule is enforced rather than merely intended. The vocabulary describes this repository, so it sits here and not under `ontology/`, and it is outside the substrate release.
+**A term enters the T-Box only when a query or a check needs it, and its `rdfs:comment` says which.** `check:knowledge` fails on a term without one, so the rule is enforced rather than merely intended. The vocabulary describes this repository, so it sits here and not under `ontology/`, and it is outside the substrate release.
 
 **The T-Box is parsed by Oxigraph in its own test, not only by rdflib.** rdflib accepts IRIs a strict parser refuses ([TSD-37](../../docs/architecture/triple-store-discovery.md)), so a document checked only on the lenient parser fails at its first strict consumer instead.

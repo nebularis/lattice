@@ -92,6 +92,15 @@ ki:Document
     rdf:type owl:Class ; rdfs:label "document" ;
     rdfs:comment "A tracked file that defines nodes. Earns its class from the query that goes the other way, from a document to what it defines, which is how an agent editing a file learns what depends on it." .
 
+ki:Term
+    rdf:type owl:Class ; rdfs:label "term" ;
+    rdfs:comment "A class, property or vocabulary concept an ontology module declares, summarised with its label, owner and source line. Earns its class from the query that answers 'does this already exist' over 3,049 declared terms without reading 270 documents, which is the error class the index exists to prevent. Not a ki:Node, because it carries no claim of its own: the module's own documentation is the claim." .
+
+ki:declaredAs
+    rdf:type owl:DatatypeProperty ; rdfs:domain ki:Term ; rdfs:range xsd:string ;
+    rdfs:label "declared as" ;
+    rdfs:comment "What the module declared the term to be, as written, for example owl:Class or skos:Concept. Earns its place from the term query, which has to distinguish a class from a property before an agent can tell whether a mechanism is the one it needs." .
+
 ki:Module
     rdf:type owl:Class ; rdfs:label "module" ;
     rdfs:comment "An ontology layer, standalone module or tool package, as repository-catalogue.md names it. The catalogue stays the source and this is read from it, never restated (ADR-A134 decision 2)." .
@@ -185,6 +194,11 @@ ki:partOf
     rdf:type owl:ObjectProperty ; rdfs:domain ki:Slice ; rdfs:range ki:Epic ;
     rdfs:label "part of" ;
     rdfs:comment "Earns its place from the check that every slice names its epic." .
+
+ki:relatedTo
+    rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range ki:Node ;
+    rdfs:label "related to" ;
+    rdfs:comment "A relation the node's own author stated, read from a decision's Related line. Earns its place from the blast-radius query, what a decision reaches, which has to distinguish a relation an author declared from two identifiers merely appearing on one line. Weaker than ki:dependsOn, which asserts a direction and carries the status check." .
 
 ki:evidencedBy
     rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range ki:Discovery ;

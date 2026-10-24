@@ -316,6 +316,16 @@ Oxigraph is a quad store with named graphs and no OWL reasoner, so it does not p
 
 Memory pressure was the concern behind the question, and it does not arise. The summary is small, the full graphs are loaded per query, and an on-disk Oxigraph store pays no parse cost at all on a query.
 
+### 9.1 The term summary is necessary and not sufficient, which is measured
+
+Built and queried, 2026-10-24. `mise run graph:ask -- exists version` returns `foundation#Version` as a class at `ontology/foundation/spec/foundation.ttl:18`, which is exactly the answer that would have prevented an agent proposing a second versioning system. **`exists versioning` returns nothing.**
+
+That gap is the whole argument for the registers, stated as sharply as it can be. The corpus declares 2,814 terms and carries an `rdfs:label` on 563 of them, so a term lookup is mostly a substring match against an identifier, and an identifier is a noun while an agent's question is a gerund. No amount of term summarising closes that, because the summary can only hold what the ontology says.
+
+What closes it is the **mechanism register's problem-shape column**, which is written in the words an agent would use for its problem rather than the words the model uses for its solution. `versioning-an-entity-over-time` is matched by the question. `fnd:Version` is not. The register row is the bridge, and this measurement is why that register is the first backfill rather than the last.
+
+It also sharpens what the miss log is for. A query returning nothing is not evidence that embeddings are needed, because the first thing to check is whether a register row or a shape would have answered it. Only a miss that survives that check counts.
+
 ## 10. The store, and running without a server
 
 ```mermaid

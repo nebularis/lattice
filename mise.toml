@@ -98,7 +98,7 @@ run = "corepack enable && yarn install --immutable"
 
 [tasks.check]
 description = "Run all repository validation tasks"
-depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:reasoning-isolation", "check:minting", "check:persistence-library", "check:formal-freshness", "check:catalogue", "check:identifiers", "check:knowledge-vocabulary", "check:agent-guidance", "build:mtp", "check:mtp", "check:authoring-tools", "check:published-decisions", "check:site-sections", "check:hooks"]
+depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:reasoning-isolation", "check:minting", "check:persistence-library", "check:formal-freshness", "check:catalogue", "check:identifiers", "check:knowledge", "check:agent-guidance", "build:mtp", "check:mtp", "check:authoring-tools", "check:published-decisions", "check:site-sections", "check:hooks"]
 
 [tasks.test]
 description = "Run the repository test suites"
@@ -326,9 +326,17 @@ run = "python tools/lattice_repo_catalogue.py check"
 description = "Check every stable identifier a working document mentions resolves to a definition: decisions by filename, register entries by row, with tools/knowledge/identifier-exceptions.txt as the baseline"
 run = "python tools/knowledge/identifiers.py && python -m pytest tools/knowledge/test_identifiers.py -q"
 
-[tasks."check:knowledge-vocabulary"]
-description = "Check the knowledge index's T-Box honours ADR-A134: every property states a domain and a range, every term says what query or check earns it, and the derived edge stays the only one"
-run = "python -m pytest tools/knowledge/test_vocabulary.py -q"
+[tasks."build:knowledge"]
+description = "Derive the knowledge index from the working documents and ontologies into .build/knowledge (ADR-A134). Never committed, rebuilt in about two seconds"
+run = "python tools/knowledge/extract.py"
+
+[tasks."graph:ask"]
+description = "Ask the knowledge index a question: exists <text>, node <id>, reaches <id>, or sparql <query>. Opens the store read-only and exits, with no resident process (TSD-38)"
+run = "python tools/knowledge/ask.py"
+
+[tasks."check:knowledge"]
+description = "Check the knowledge index: the T-Box honours ADR-A134 (every property states a domain and a range, every term says what query or check earns it, the derived edge stays the only one), and the extractor derives every node with a claim and a pointer from the real corpus"
+run = "python -m pytest tools/knowledge/test_vocabulary.py tools/knowledge/test_extract.py -q"
 
 [tasks."check:agent-guidance"]
 description = "Check AGENTS.md's Where things are table is current, Copilot's file matches AGENTS.md, every skill is well formed and listed, the plugin marketplace is right, and every link resolves (ADR-A117)"
