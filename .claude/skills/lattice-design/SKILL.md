@@ -53,9 +53,7 @@ hard-codes one domain's practice as the only way is wrong at the substrate.
 3. **Each option, then its consequences**, compared on:
    - *design overheads*: is it hard to reason about, easy to model incorrectly, hard to assure or
      govern, or brittle under likely change
-   - *runtime overheads*: does it explode the data, invite inconsistency, block common traversals or
-     processing, or make common operations, such as aggregating or summing a measure, behave in
-     surprising ways
+   - *runtime overheads*: does it explode the data, invite inconsistency, block common traversals or processing, or make common operations, such as aggregating or summing a measure, behave in surprising ways. Where the option writes terms at runtime, compare it on all four drivers of the skill `lattice-ontology-authoring`: defensible history, storage, retrieval and throughput
    - *space and time, quantified*: the order of each cost (triples stored per write, template fills
      or solutions per update, round trips, reads to reconstruct), then a worked example with stated
      numbers in a table. Name where an option's cost crosses another's

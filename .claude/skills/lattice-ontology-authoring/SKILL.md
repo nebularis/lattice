@@ -206,6 +206,27 @@ anything, check:
   simplification breaks, and discuss it with the maintainer if one exists.
 - **An accepted ADR wins.** A simplification contradicting one is a new decision.
 
+## Designing for the runtime
+
+A term written only at design time costs nothing to keep. A term written at runtime is written once per event, kept for the life of the instrument, and read on every path that needs it, so its shape is a runtime decision as much as a semantic one. Weigh four drivers together and quantify each before choosing, since they pull against one another and a model that serves only one of them is rejected on the others.
+
+| Driver | The question | Measured as |
+|---|---|---|
+| **Defensible history** | could we show a regulator how a number was arrived at, and reproduce it | every value derived from recorded facts rather than asserted, a reading available as of any point, and a replay that reproduces the number |
+| **Storage** | what does one event cost, permanently | triples written per event, times the events a year. Where a record is append-only, what is written is kept |
+| **Retrieval** | what does one read cost | the order of the read, whether one lookup, a fold bounded by a stated interval, or a scan of a lifetime, and the rows it touches |
+| **Throughput** | what waits for what | which nodes several writers contend for, and whether a barrier is the semantics or an artefact of the shape |
+
+Three rules follow.
+
+- **Count what is kept, not what changes.** An append-only record has no working set. A figure for triples written per event is a growth rate, so state it per year beside the volume the domain expects.
+- **Find the contended node before the slow query.** A node every writer touches, such as an aggregate every contract draws on, limits throughput whatever the read costs. Ask what writes it, not only what reads it.
+- **Reach for the domain's own mechanism first.** A cost the domain has met before usually has an answer already in its practice, and that answer carries meaning the layer should model anyway.
+
+**When an optimisation belongs in a layer, and when it belongs in a projection.** An optimisation with a meaning in the domain belongs in the layer that owns the concept. Closing a period, a running balance on a statement, and the split between a sub-ledger and a general ledger are each the domain's own answer to a cost, so each is modelled rather than hidden. An optimisation with no such meaning, such as a cache of a current value to serve reads at transaction rates, is projected through Surface onto a second set of terms tuned for reading, with the richer model remaining the system of record. Stratifying a domain concept moves meaning out of the layer that owns it, so look for the domain's own mechanism before splitting.
+
+The worked example is Ledger, in [ledger-history-and-runtime.md](../../../docs/developer/sketches/ledger-history-and-runtime.md), where the four drivers decide where a draw is recorded.
+
 ## SHACL-SPARQL shapes
 
 Read [docs/architecture/efficient-queries-and-shapes.md](../../../docs/architecture/efficient-queries-and-shapes.md) before writing or

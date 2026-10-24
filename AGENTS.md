@@ -90,6 +90,7 @@ Every piece of text, in documents, code comments, commit messages and replies:
   any drift forced by usability.
 - Judgements, such as whether a rule was met or an act took effect, are evaluated from facts, never
   authored. Layers state, code executes.
+- **Weigh the runtime with the meaning.** A term written at runtime carries four costs at once: whether its history is defensible to a regulator, what it costs to store, what a read of it costs, and whether concurrent work contends for it. Keep stored data to the minimum correctness and robustness need, and reach for a mechanism the domain already has before inventing one for performance.
 
 Skill `lattice-ontology-authoring` has the detail.
 

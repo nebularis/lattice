@@ -273,6 +273,11 @@ depends = ["bootstrap:testing-oxigraph"]
 description = "Measure the forms of a SHACL-SPARQL constraint query on rdflib and Oxigraph (ADR-A124, ADR-A128). Run on demand, not part of check. Fails on a wrong result, never on time. SPARQL_COST_QUICK=1 runs the smallest sizes"
 run = "python -m pytest benchmark/sparql-constraint-query-cost -q -p no:cacheprovider && python benchmark/sparql-constraint-query-cost/check.py"
 
+[tasks."check:ledger-posting-cost"]
+depends = ["bootstrap:testing-oxigraph"]
+description = "Measure the storage and read cost of recording a draw at every level of an account tree, at the drawn account only, and with checkpoints, on Oxigraph (ADR-A124). Run on demand, not part of check. Fails on a wrong balance or count, never on time. LEDGER_COST_MAX caps the events, LEDGER_COST_QUICK=1 runs the smallest size"
+run = "python -m pytest benchmark/ledger-posting-cost -q -p no:cacheprovider && python benchmark/ledger-posting-cost/check.py"
+
 [tasks."check:vocabulary"]
 description = "Run the Vocabulary scoped/temporal binding conformance package (SHACL fixtures, resolver, determinism, consumer boundary; ADR-A85)"
 run = "python -m pytest tools/vocabulary/tests -q"
