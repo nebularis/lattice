@@ -3,15 +3,15 @@
 
 """What it costs to record the draws on an account tree, held five ways on Oxigraph (ADR-A124).
 
-The account tree has depth 3, a leaf, a programme aggregate and an authority aggregate, with several leaves to a parent. A stream of N events (mostly
-draws, some credits) falls on random leaves. The same history is held in several ways.
+The account tree has depth 3, mirroring a placement: a contract account, the layer it sits on, and the programme the layer belongs to. There are 2 programmes,
+5 layers to a programme and 10 contracts to a layer. A stream of N events (mostly draws, some credits) falls on random contract accounts. The same history is held in several ways.
 
-* **every-level**. Each event writes a posting to the leaf and to each ancestor. An account's balance is its stated amount less its own debits plus its own credits.
-* **post-once**. Each event writes one posting, at the leaf. An ancestor's balance is a fold over the postings of its whole subtree, reached by `partOf*`.
+* **every-level**. Each event writes a posting to the contract and to each ancestor. An account's balance is its stated amount less its own debits plus its own credits.
+* **post-once**. Each event writes one posting, at the contract. An ancestor's balance is a fold over the postings of its whole subtree, reached by `partOf*`.
 * **post-once-checkpointed**. As post-once, and every K events each account gets a checkpoint holding its balance. A read takes the latest checkpoint at or before the
   point, then folds the postings after it.
-* **post-once-balance-after**. As post-once, and each posting carries `balanceAfter`. A leaf is read from its latest posting. An ancestor is a fold.
-* **post-once-period-graphs**. As post-once-checkpointed, and each posting goes into a named graph keyed by its programme and its period (K events). A read takes the
+* **post-once-balance-after**. As post-once, and each posting carries `balanceAfter`. A contract is read from its latest posting. An ancestor is a fold.
+* **post-once-period-graphs**. As post-once-checkpointed, and each posting goes into a named graph keyed by its layer and its period (K events). A read takes the
   latest checkpoint, then folds exactly the graphs of the periods after it, so the postings before the checkpoint are never visited.
 
 **Pass criterion.** For every account and every read point, all the strategies report the balance the model gives, so they report the same balance as each other.
@@ -45,11 +45,11 @@ STRING = ox.NamedNode("http://www.w3.org/2001/XMLSchema#string")
 
 SIZES = (1_000, 5_000, 20_000)
 CHECKPOINT_EVERY = 500
-AUTHORITIES, PROGRAMMES_PER_AUTHORITY, LEAVES_PER_PROGRAMME = 2, 5, 10
+PROGRAMMES, LAYERS_PER_PROGRAMME, CONTRACTS_PER_LAYER = 2, 5, 10
 DEPTH = 3
-STATED = (10**9, 10**10, 10**11)  # by level, leaf first
+STATED = (10**9, 10**10, 10**11)  # by level, contract first
 STRATEGIES = ("every-level", "post-once", "post-once-checkpointed", "post-once-balance-after", "post-once-period-graphs")
-LEVELS = ("leaf", "programme", "authority")
+LEVELS = ("contract", "layer", "programme")
 POSTING_TRIPLES = 8  # type, account, owner, key, position, micro-position, direction, amount
 CHECKPOINT_TRIPLES = 4  # type, account, position, balance
 SEED = 20261024
@@ -70,27 +70,27 @@ def num(value: int) -> ox.Literal:
 @dataclass(frozen=True)
 class Account:
     iri: ox.NamedNode
-    level: int  # 0 leaf, 1 programme, 2 authority
+    level: int  # 0 contract, 1 layer, 2 programme
     parent: int | None  # index in the account list
 
 
 def build_tree() -> list[Account]:
-    """Authorities first, then programmes, then leaves, so a parent always precedes its child."""
+    """Programmes first, then layers, then contracts, so a parent always precedes its child."""
     accounts: list[Account] = []
-    for a in range(AUTHORITIES):
-        accounts.append(Account(ox.NamedNode(f"urn:acct:a{a}"), 2, None))
-    for a in range(AUTHORITIES):
-        for p in range(PROGRAMMES_PER_AUTHORITY):
-            accounts.append(Account(ox.NamedNode(f"urn:acct:p{a}-{p}"), 1, a))
-    first_programme = AUTHORITIES
-    for index in range(AUTHORITIES * PROGRAMMES_PER_AUTHORITY):
-        for leaf in range(LEAVES_PER_PROGRAMME):
-            accounts.append(Account(ox.NamedNode(f"urn:acct:l{index}-{leaf}"), 0, first_programme + index))
+    for a in range(PROGRAMMES):
+        accounts.append(Account(ox.NamedNode(f"urn:acct:prog{a}"), 2, None))
+    for a in range(PROGRAMMES):
+        for p in range(LAYERS_PER_PROGRAMME):
+            accounts.append(Account(ox.NamedNode(f"urn:acct:lyr{a}-{p}"), 1, a))
+    first_layer = PROGRAMMES
+    for index in range(PROGRAMMES * LAYERS_PER_PROGRAMME):
+        for contract in range(CONTRACTS_PER_LAYER):
+            accounts.append(Account(ox.NamedNode(f"urn:acct:con{index}-{contract}"), 0, first_layer + index))
     return accounts
 
 
 def ancestors(accounts: list[Account], index: int) -> list[int]:
-    """The account and every ancestor, leaf first."""
+    """The account and every ancestor, contract first."""
     chain = [index]
     while accounts[chain[-1]].parent is not None:
         chain.append(accounts[chain[-1]].parent)
@@ -98,10 +98,10 @@ def ancestors(accounts: list[Account], index: int) -> list[int]:
 
 
 def events(count: int, accounts: list[Account]) -> list[tuple[int, bool, int]]:
-    """(leaf index, is a debit, amount) for events 1 to count. One in five is a credit."""
+    """(contract index, is a debit, amount) for events 1 to count. One in five is a credit."""
     rng = random.Random(SEED)
-    leaves = [i for i, a in enumerate(accounts) if a.level == 0]
-    return [(rng.choice(leaves), rng.random() >= 0.2, rng.randint(1, 1000)) for _ in range(count)]
+    contracts = [i for i, a in enumerate(accounts) if a.level == 0]
+    return [(rng.choice(contracts), rng.random() >= 0.2, rng.randint(1, 1000)) for _ in range(count)]
 
 
 @dataclass
@@ -110,7 +110,7 @@ class Model:
 
     at_points: dict[int, list[int]]  # read point -> balance of each account
     at_checkpoints: dict[int, list[int]]  # checkpoint position -> balance of each account
-    after: dict[int, int]  # event -> balance of its leaf after it
+    after: dict[int, int]  # event -> balance of its contract after it
 
 
 def run_model(count: int, every: int, points: list[int], accounts: list[Account], stream) -> Model:
@@ -118,10 +118,10 @@ def run_model(count: int, every: int, points: list[int], accounts: list[Account]
     model = Model({}, {}, {})
     if 0 in points:
         model.at_points[0] = list(balance)
-    for e, (leaf, debit, amount) in enumerate(stream, start=1):
-        for i in ancestors(accounts, leaf):
+    for e, (contract, debit, amount) in enumerate(stream, start=1):
+        for i in ancestors(accounts, contract):
             balance[i] += -amount if debit else amount
-        model.after[e] = balance[leaf]
+        model.after[e] = balance[contract]
         if e in points:
             model.at_points[e] = list(balance)
         if e % every == 0:
@@ -150,9 +150,9 @@ def expected_stored(strategy: str, count: int, every: int = CHECKPOINT_EVERY) ->
     return total
 
 
-def period_graph(programme: ox.NamedNode, period: int) -> ox.NamedNode:
-    """The named graph holding the postings of one programme's leaves in one period of `every` events."""
-    return ox.NamedNode(f"urn:graph:{programme.value.rsplit(':', 1)[1]}:{period}")
+def period_graph(layer: ox.NamedNode, period: int) -> ox.NamedNode:
+    """The named graph holding the postings of one layer's contracts in one period of `every` events."""
+    return ox.NamedNode(f"urn:graph:{layer.value.rsplit(':', 1)[1]}:{period}")
 
 
 def posting(e: int, acct: Account, debit: bool, amount: int, after: int | None, graph=ox.DefaultGraph()):
@@ -175,16 +175,16 @@ def quads_for(strategy: str, accounts: list[Account], stream, model: Model, ever
         yield ox.Quad(a.iri, n("statedAmount"), num(STATED[a.level]))
         if a.parent is not None:
             yield ox.Quad(a.iri, n("partOf"), accounts[a.parent].iri)
-    for e, (leaf, debit, amount) in enumerate(stream, start=1):
+    for e, (contract, debit, amount) in enumerate(stream, start=1):
         if strategy == "every-level":
-            for i in ancestors(accounts, leaf):
+            for i in ancestors(accounts, contract):
                 yield from posting(e, accounts[i], debit, amount, None)
         elif strategy == "post-once-period-graphs":
-            graph = period_graph(accounts[accounts[leaf].parent].iri, (e - 1) // every)
-            yield from posting(e, accounts[leaf], debit, amount, None, graph)
+            graph = period_graph(accounts[accounts[contract].parent].iri, (e - 1) // every)
+            yield from posting(e, accounts[contract], debit, amount, None, graph)
         else:
             after = model.after[e] if strategy == "post-once-balance-after" else None
-            yield from posting(e, accounts[leaf], debit, amount, after)
+            yield from posting(e, accounts[contract], debit, amount, after)
     if strategy in ("post-once-checkpointed", "post-once-period-graphs"):
         for position, balances in model.at_checkpoints.items():
             for i, a in enumerate(accounts):
@@ -223,8 +223,8 @@ def tree() -> list[Account]:
     return build_tree()
 
 
-def programmes_of(account: Account) -> list[ox.NamedNode]:
-    """The programmes whose leaves lie in the account's subtree, read from the tree structure."""
+def layers_of(account: Account) -> list[ox.NamedNode]:
+    """The layers whose contracts lie in the account's subtree, read from the tree structure."""
     accounts = tree()
     if account.level == 0:
         return [accounts[account.parent].iri]
@@ -242,8 +242,8 @@ def graph_block(names: list[ox.NamedNode], scope: str, bound: str) -> str:
 def fold_graphs(store, account: Account, after: int, point: int, every: int) -> tuple[int, int]:
     """The fold for post-once-period-graphs: only the graphs of the periods holding events after `after` and up to `point`.
 
-    Programme and authority reads take every posting in their graphs, with no join to the account tree. A leaf read adds its own account, since a graph holds the
-    programme's ten leaves. A graph is taken whole unless the bound falls inside its period, the one place a position FILTER is left. The lower bound is a checkpoint
+    Layer and programme reads take every posting in their graphs, with no join to the account tree. A contract read adds its own account, since a graph holds the
+    layer's ten contracts. A graph is taken whole unless the bound falls inside its period, the one place a position FILTER is left. The lower bound is a checkpoint
     and closes on a period end, so only the period of the read point is usually filtered, and a bound that does not fall on a period end filters its own period."""
     first, last = max(after, 0) // every, (point - 1) // every
     by_bound: dict[str, list[ox.NamedNode]] = {}
@@ -251,7 +251,7 @@ def fold_graphs(store, account: Account, after: int, point: int, every: int) -> 
         low = period == first and max(after, 0) % every != 0
         high = period == last and point % every != 0
         bound = "FILTER(" + " && ".join(([f"?pos > {after}"] if low else []) + ([f"?pos <= {point}"] if high else [])) + ")" if low or high else ""
-        by_bound.setdefault(bound, []).extend(period_graph(g, period) for g in programmes_of(account))
+        by_bound.setdefault(bound, []).extend(period_graph(g, period) for g in layers_of(account))
     if not by_bound:
         return 0, 0
     scope = OWN.format(acct=account.iri.value) if account.level == 0 else ""
@@ -259,6 +259,20 @@ def fold_graphs(store, account: Account, after: int, point: int, every: int) -> 
     text = f"{PREFIX}SELECT (SUM(?signed) AS ?sum) (COUNT(?p) AS ?folded) WHERE {{ {blocks} BIND(IF(?d = l:Debit, -?a, ?a) AS ?signed) }}"
     (row,) = store.query(text)
     return (_integer(row["sum"]) if row["sum"] is not None else 0), _integer(row["folded"])
+
+
+def checkpoint(store: ox.Store, account: Account, point: int, every: int, base: int) -> tuple[int, int]:
+    """(the position of the latest checkpoint at or before the point, the balance it holds), or (-1, base) before the first close.
+
+    A closing recurrence fixes the positions at which checkpoints exist, so the latest one at or before a point is computed rather
+    than searched for, and its IRI is derived from the account and that position. Searching for it by its properties costs an order
+    more and grows with the number of closes, even with the position bound, which is TSD-36."""
+    position = (point // every) * every
+    if position < every:
+        return -1, base
+    name = f"urn:checkpoint:{position}:{account.iri.value.rsplit(':', 1)[1]}"
+    (row,) = store.query(f"{PREFIX}SELECT ?b WHERE {{ <{name}> l:balance ?b }}")
+    return position, _integer(row["b"])
 
 
 def read(strategy: str, store: ox.Store, account: Account, point: int, every: int = CHECKPOINT_EVERY) -> tuple[int, int]:
@@ -273,10 +287,7 @@ def read(strategy: str, store: ox.Store, account: Account, point: int, every: in
         return (_integer(rows[0]["b"]), 1) if rows else (base, 0)
     after, start = -1, base
     if strategy in ("post-once-checkpointed", "post-once-period-graphs"):
-        rows = list(store.query(f"{PREFIX}SELECT ?pos ?b WHERE {{ ?c l:account <{account.iri.value}> ; l:position ?pos ; l:balance ?b . "
-                                f"FILTER(?pos <= {point}) }} ORDER BY DESC(?pos) LIMIT 1"))
-        if rows:
-            after, start = _integer(rows[0]["pos"]), _integer(rows[0]["b"])
+        after, start = checkpoint(store, account, point, every, base)
     if strategy == "post-once-period-graphs":
         total, folded = fold_graphs(store, account, after, point, every)
     else:
@@ -353,7 +364,7 @@ def run(sizes=SIZES, every: int = CHECKPOINT_EVERY) -> list[Measurement]:
 
 def environment() -> dict[str, str]:
     return {"date": time.strftime("%Y-%m-%d"), "python": platform.python_version(), "machine": f"{platform.system()} {platform.machine()}",
-            "pyoxigraph": ox.__version__, "depth": str(DEPTH), "leaves": str(AUTHORITIES * PROGRAMMES_PER_AUTHORITY * LEAVES_PER_PROGRAMME),
+            "pyoxigraph": ox.__version__, "depth": str(DEPTH), "contracts": str(PROGRAMMES * LAYERS_PER_PROGRAMME * CONTRACTS_PER_LAYER),
             "checkpoint_every": str(CHECKPOINT_EVERY), "seed": str(SEED)}
 
 
@@ -373,10 +384,14 @@ def write_report(measurements: list[Measurement], directory: Path = HERE) -> Non
 
 
 def main() -> int:
-    cap = int(os.environ.get("LEDGER_COST_MAX", SIZES[-1]))
-    sizes = [s for s in SIZES if s <= cap] or [cap]
-    if os.environ.get("LEDGER_COST_QUICK"):
-        sizes = sizes[:1]
+    probe = os.environ.get("LEDGER_COST_PROBE")
+    if probe:
+        sizes = [int(probe)]
+    else:
+        cap = int(os.environ.get("LEDGER_COST_MAX", SIZES[-1]))
+        sizes = [s for s in SIZES if s <= cap] or [cap]
+        if os.environ.get("LEDGER_COST_QUICK"):
+            sizes = sizes[:1]
     try:
         measurements = run(sizes)
     except WrongResult as error:

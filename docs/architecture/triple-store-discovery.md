@@ -239,6 +239,7 @@ to the store or where it is a matter of capacity.
 | [TSD-33](#tsd-33-on-oxigraph-count-over-a-statically-false-filter-returns-no-row) | `COUNT(*)` over a filter that is statically false | one row, 0 | ✔ except TSD-32 | ✘ no row | Observed |
 | [TSD-34](#tsd-34-rdflib-evaluates-a-filter-not-exists-in-a-graph-block-against-the-wrong-graph-for-some-solutions) | `FILTER NOT EXISTS` without its own `GRAPH`, inside a `GRAPH` block that holds a sub-select and a `UNION` | tests the block's graph | ✘ sometimes tests the default graph, by hash seed | ✔ | Source, Observed |
 | [TSD-35](#tsd-35-a-literal-as-the-graph-of-a-graph-block-is-refused-by-oxigraph-and-parsed-by-rdflib) | a literal as the graph of a `GRAPH` block | a syntax error | ✘ parsed, the block matches nothing | ✔ a syntax error | Observed |
+| [TSD-36](#tsd-36-a-bound-object-does-not-give-the-seek-a-bound-subject-gives) | the same row reached by a bound object or by a bound subject | not specified | not tested | the bound object scans the predicate's matches, the bound subject seeks | Observed |
 
 ## 6. The findings
 
@@ -1340,6 +1341,35 @@ conformance test. The caller check refuses a literal for a graph parameter befor
 
 **Reproduce it.** `mise run check:persistence-conformance` runs `test_named_graph_builders` t23, whose literal-graph case is pinned to
 rdflib.
+
+### TSD-36. A bound object does not give the seek a bound subject gives
+
+**Evidence:** Observed on Oxigraph 0.5.13, 2026-10-24, probing the ledger posting-cost benchmark. Not tested on rdflib.
+
+**Context.** The benchmark's checkpointed reads find the latest checkpoint of an account at or before a read point, then fold the postings after it. Partitioning the postings into a graph per period made the fold flat in the history, after which this lookup was the only term still growing. It rose from 0.04 ms at 2 closes an account to 1.06 ms at 200, so it grew with the number of closes and so with time.
+
+**How we found it.** Three forms of the same lookup were timed against the same store, at 1,000, 20,000 and 100,000 events, which is 2, 40 and 200 closes for each account. All three returned the same balance. The median of 40 runs is reported.
+
+| Form | What is bound | 2 closes | 40 closes | 200 closes |
+|---|---|---|---|---|
+| A | the account, as an object, with `FILTER(?pos <= p)`, `ORDER BY DESC(?pos)` and `LIMIT 1` | 0.040 ms | 0.224 ms | 1.059 ms |
+| B | the account and the exact position, both as objects | 0.032 ms | 0.114 ms | 0.485 ms |
+| C | the checkpoint itself, as the subject | 0.020 ms | 0.020 ms | 0.023 ms |
+
+**What the store does.** Form B binds every term that identifies the row and still grows linearly in the account's checkpoints, at about half of form A's cost. Removing the sort and the filter therefore accounts for half of the cost and the scan for the other half. Only form C, which names the subject, is flat.
+
+```sparql
+# B, both objects bound, still scans the account's checkpoints
+SELECT ?b WHERE { ?c l:account <urn:acct:a0> ; l:position 100000 ; l:balance ?b }
+# C, the subject bound, seeks
+SELECT ?b WHERE { <urn:checkpoint:100000:a0> l:balance ?b }
+```
+
+**Why.** The planner picks one pattern as the entry point and joins the rest to it. With `?c` unbound it enters on a predicate-object match, here `l:account <urn:acct:a0>`, which yields every checkpoint of that account, and tests each against the remaining patterns. Binding the position does not make the planner enter there, so the selectivity of the second pattern is not used. We read the behaviour from the timings rather than from the planner, so the mechanism is inferred and the measurement is not.
+
+**What it means for LATTICE.** [Efficient queries and shapes](efficient-queries-and-shapes.md) R8 asks that every pattern start from a bound term. This refines it. A bound term in the object position is not equivalent to a bound subject, and a query that looks fully constrained can still scan. Where a row's identity is computable, addressing it by a derived IRI is a different order of cost from searching for it by its properties, and Persistence already has the strategy for exactly that, `dal:PositionDerivedEvent`, an IRI minted from the target and the position. The ledger's checkpoints are position-derived in this sense, since a closing recurrence fixes the positions at which they exist.
+
+**Reproduce it.** The three forms above against a store holding the benchmark's checkpointed history. `benchmark/ledger-posting-cost` builds that history, and its `LEDGER_COST_PROBE` run reaches 200 closes an account.
 
 ## 7. Corrections, and what they taught us
 

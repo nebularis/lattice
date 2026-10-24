@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MPL-2.0
 # NB: This module has been produced using GenAI
 
-"""The check's own tests (ADR-A124): it passes on a right history at small sizes, fails on a wrong one, does not fail on time, and leaves no store behind."""
+"""The check's own tests (ADR-A124): it passes on a right history at small sizes, fails on a wrong one, does not fail on time, and contracts no store behind."""
 
 from __future__ import annotations
 
@@ -57,8 +57,8 @@ def test_lc6_a_checkpoint_bounds_the_fold_at_a_late_point():
     _, plain = check.run_strategy("post-once", SMALL, EVERY)
     _, bounded = check.run_strategy("post-once-checkpointed", SMALL, EVERY)
     accounts = check.build_tree()
-    authority = next(i for i, a in enumerate(accounts) if a.level == 2)
-    assert bounded[(authority, SMALL - 1)] < plain[(authority, SMALL - 1)]
+    programme = next(i for i, a in enumerate(accounts) if a.level == 2)
+    assert bounded[(programme, SMALL - 1)] < plain[(programme, SMALL - 1)]
 
 
 def test_lc7_the_check_does_not_fail_on_time(monkeypatch):
@@ -96,8 +96,8 @@ def test_lc10_period_graphs_store_the_postings_in_graphs_and_the_same_count_as_c
     postings = {q.subject for q in store.quads_for_pattern(None, check.RDF_TYPE, check.n("Posting"), None)}
     assert len(postings) == SMALL
     assert not list(store.quads_for_pattern(None, check.RDF_TYPE, check.n("Posting"), check.ox.DefaultGraph()))
-    leaf, _, _ = stream[EVERY]  # event EVERY + 1, the first of period 1
-    assert next(store.quads_for_pattern(check.ox.NamedNode(f"urn:posting:{EVERY + 1}:{accounts[leaf].iri.value.rsplit(':', 1)[1]}"), None, None, None)).graph_name == check.period_graph(accounts[accounts[leaf].parent].iri, 1)
+    contract, _, _ = stream[EVERY]  # event EVERY + 1, the first of period 1
+    assert next(store.quads_for_pattern(check.ox.NamedNode(f"urn:posting:{EVERY + 1}:{accounts[contract].iri.value.rsplit(':', 1)[1]}"), None, None, None)).graph_name == check.period_graph(accounts[accounts[contract].parent].iri, 1)
 
 
 def test_lc11_a_period_graph_fold_is_no_wider_than_the_checkpointed_fold_at_an_ancestor():
@@ -120,11 +120,11 @@ def test_lc13_a_position_filter_is_left_only_in_a_period_that_the_bound_cuts(mon
     model = check.run_model(SMALL, EVERY, [], accounts, stream)
     store = check.ox.Store()
     store.extend(check.quads_for("post-once-period-graphs", accounts, stream, model, EVERY))
-    authority = next(a for a in accounts if a.level == 2)
+    programme = next(a for a in accounts if a.level == 2)
     blocks, real = [], check.graph_block
     monkeypatch.setattr(check, "graph_block", lambda names, scope, bound: (blocks.append((len(names), bound)), real(names, scope, bound))[1])
-    check.fold_graphs(store, authority, 2 * EVERY, 5 * EVERY, EVERY)
+    check.fold_graphs(store, programme, 2 * EVERY, 5 * EVERY, EVERY)
     assert blocks == [(3 * 5, "")]
     blocks.clear()
-    check.fold_graphs(store, authority, 2 * EVERY, 5 * EVERY - 3, EVERY)
+    check.fold_graphs(store, programme, 2 * EVERY, 5 * EVERY - 3, EVERY)
     assert sorted(blocks) == [(5, f"FILTER(?pos <= {5 * EVERY - 3})"), (2 * 5, "")]
