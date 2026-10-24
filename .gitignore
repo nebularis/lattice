@@ -8,6 +8,7 @@ temp-ext*
 
 # Build artifacts and caches consolidated in .build/
 .build/site/
+.build/knowledge/
 .build/pytest-cache/*
 !.build/pytest-cache/.gitkeep
 .build/full-sweep/*
