@@ -1,0 +1,39 @@
+# Identifiers that are mentioned in a working document but defined nowhere, each with the reason it
+# is allowed to stay. `mise run check:identifiers` fails on any unresolved identifier that is not
+# listed here, so this file is the baseline that lets the check catch a new break rather than the
+# corpus's history. Read by tools/knowledge/identifiers.py.
+#
+# An entry is compared on its normalised form, letters and digits only, so the spelling here does
+# not have to match the spelling at the mention site.
+#
+# Remove an entry when its decision is drafted. Do not add one to silence a mention that is simply
+# wrong: correct the mention instead.
+
+# Planned and not yet drafted. The developer index records A-107 to A-111 as to be drafted, and
+# ADR-A104 and ADR-A114 already cite them.
+ADR-A101
+ADR-A108
+ADR-A109
+
+# Referenced only by an early planning document, under a numbering that was never drafted. These
+# come from docs/architecture/solution-design-specification.md and
+# docs/developer/review/Architecture Review.md, both written before the ADR catalogue settled, and
+# the numbers they cite were never taken up. Left as the historical record they are.
+ADR-A45
+ADR-A46
+ADR-A47
+ADR-A49
+ADR-A52
+ADR-A53
+ADR-A55
+ADR-A56
+ADR-A58
+ADR-A60
+ADR-A61
+ADR-A64
+ADR-A70
+
+# Cited by the phase 0 plan and two early sketches as the decision covering the repository's
+# agentic development contract. The contract was settled by ADR-A117 and ADR-A133 instead, and no
+# ADR-A76 was ever written.
+ADR-A76

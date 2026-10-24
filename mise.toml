@@ -98,7 +98,7 @@ run = "corepack enable && yarn install --immutable"
 
 [tasks.check]
 description = "Run all repository validation tasks"
-depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:reasoning-isolation", "check:minting", "check:persistence-library", "check:formal-freshness", "check:catalogue", "check:agent-guidance", "build:mtp", "check:mtp", "check:authoring-tools", "check:published-decisions", "check:site-sections", "check:hooks"]
+depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:reasoning-isolation", "check:minting", "check:persistence-library", "check:formal-freshness", "check:catalogue", "check:identifiers", "check:agent-guidance", "build:mtp", "check:mtp", "check:authoring-tools", "check:published-decisions", "check:site-sections", "check:hooks"]
 
 [tasks.test]
 description = "Run the repository test suites"
@@ -321,6 +321,10 @@ run = "python tools/site_sections.py check && python -m pytest tools/test_site_s
 [tasks."check:catalogue"]
 description = "Check the repository catalogue against the tree: every listed module's entry, roles and extracted files, every module on disk listed, the roots, documentation areas and tool packages declared, and the bypass scan of tools (ADR-A121)"
 run = "python tools/lattice_repo_catalogue.py check"
+
+[tasks."check:identifiers"]
+description = "Check every stable identifier a working document mentions resolves to a definition: decisions by filename, register entries by row, with tools/knowledge/identifier-exceptions.txt as the baseline"
+run = "python tools/knowledge/identifiers.py && python -m pytest tools/knowledge/test_identifiers.py -q"
 
 [tasks."check:agent-guidance"]
 description = "Check AGENTS.md's Where things are table is current, Copilot's file matches AGENTS.md, every skill is well formed and listed, the plugin marketplace is right, and every link resolves (ADR-A117)"
