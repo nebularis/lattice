@@ -1,0 +1,698 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+# NB: This document has been produced using GenAI
+#
+# The design-shape scheme of the knowledge index (ADR-A134 decisions 5 and 9).
+#
+# A design shape is a recurring KIND OF PROBLEM that comes up when designing in this repository. An
+# agent about to design something names its problem shape and retrieves everything tagged with it,
+# so a concept is phrased as a problem or a situation and never as a technique. "computed IRI" is a
+# pattern's name and belongs in the pattern register. "deriving an identifier so it need not be
+# looked up" is the shape it serves.
+#
+# EVERY CONCEPT CARRIES skos:altLabel FORMS, INCLUDING THE GERUND. This is a requirement, not a
+# nicety, and it is measured: knowledge-index sketch section 9.2 records that a question for
+# "versioning" matches neither fnd:Version (a noun) nor MEC-01's own phrasing ("keeping one thing
+# recognisable while its content is edited"), so without a declared synonym the right row is
+# unreachable. The lists below are not exhaustive and are not meant to be. The query surface logs
+# every question that returns nothing, and that log names the next synonym to declare.
+#
+# Outside ontology/ and outside the substrate release of ADR-A129: this describes how we design in
+# this repository, not the domain. The insurance-domain facet is marked, so one subtree carries the
+# confidentiality rule rather than the whole scheme.
+
+@prefix shape: <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes#> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
+
+<https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes>
+    rdf:type owl:Ontology, skos:ConceptScheme ;
+    rdfs:label "LATTICE design shapes" ;
+    skos:prefLabel "LATTICE design shapes" ;
+    skos:definition "The recurring kinds of problem that come up when designing in this repository, phrased as problems so an agent can match its own question against them." ;
+    owl:versionInfo "0.1.0" .
+
+######################################################################
+#    Facets, the top concepts
+######################################################################
+
+shape:data-over-time
+    rdf:type skos:Concept ;
+    skos:prefLabel "Data over time" ;
+    skos:definition "what accumulates, what it costs to keep, how a past state is read and how a record is bounded" ;
+    skos:topConceptOf <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:identity-and-uniqueness
+    rdf:type skos:Concept ;
+    skos:prefLabel "Identity and uniqueness" ;
+    skos:definition "naming, staying the same thing, being unique, being found twice" ;
+    skos:topConceptOf <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:cost-of-reads-and-writes
+    rdf:type skos:Concept ;
+    skos:prefLabel "Cost of reads and writes" ;
+    skos:definition "what a read or a validation visits, and where the layout decides the cost" ;
+    skos:topConceptOf <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:concurrency-and-atomicity
+    rdf:type skos:Concept ;
+    skos:prefLabel "Concurrency and atomicity" ;
+    skos:definition "writers that contend, race, retry or exceed a limit together" ;
+    skos:topConceptOf <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:meaning-and-correctness
+    rdf:type skos:Concept ;
+    skos:prefLabel "Meaning and correctness" ;
+    skos:definition "how a judgement is derived, what unknown means, order, arithmetic, and how we know an answer is right" ;
+    skos:topConceptOf <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:structure-and-boundaries
+    rdf:type skos:Concept ;
+    skos:prefLabel "Structure and boundaries" ;
+    skos:definition "layers, ownership, where a concept belongs, and the edges to engines and external standards" ;
+    skos:topConceptOf <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:versioning-and-release
+    rdf:type skos:Concept ;
+    skos:prefLabel "Versioning and release" ;
+    skos:definition "a thing changing while staying itself, and the cost of change spreading" ;
+    skos:topConceptOf <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:authoring-and-drift
+    rdf:type skos:Concept ;
+    skos:prefLabel "Authoring and drift" ;
+    skos:definition "copies, generated artefacts, hand-kept lists, and what an agent can afford to read" ;
+    skos:topConceptOf <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:contract-semantics
+    rdf:type skos:Concept ;
+    skos:prefLabel "Contract semantics" ;
+    skos:definition "recurring problems in the law of agreements, which are substrate concerns and domain-neutral" ;
+    skos:topConceptOf <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:insurance-domain
+    rdf:type skos:Concept ;
+    skos:prefLabel "Insurance domain" ;
+    skos:definition "recurring problems that only make sense in insurance. Flagged, see A.3" ;
+    skos:topConceptOf <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+######################################################################
+#    The shapes
+######################################################################
+
+shape:monotonic-growth
+    rdf:type skos:Concept ;
+    skos:prefLabel "Monotonic growth" ;
+    skos:altLabel "growing" ;
+    skos:altLabel "unbounded growth" ;
+    skos:altLabel "ever-growing data" ;
+    skos:definition "Records are only ever added, so storage and read cost grow with age instead of with the live working set." ;
+    skos:broader shape:data-over-time ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:append-only-log
+    rdf:type skos:Concept ;
+    skos:prefLabel "Append-only log" ;
+    skos:altLabel "append only log" ;
+    skos:altLabel "appending" ;
+    skos:altLabel "event log" ;
+    skos:altLabel "audit log" ;
+    skos:altLabel "immutable log" ;
+    skos:altLabel "journal" ;
+    skos:definition "History must never be edited, yet the present state is wanted from it, and a wrong fact still has to be put right." ;
+    skos:broader shape:monotonic-growth ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:retention-and-archival
+    rdf:type skos:Concept ;
+    skos:prefLabel "Retention and archival" ;
+    skos:altLabel "archiving" ;
+    skos:altLabel "purging" ;
+    skos:altLabel "erasure" ;
+    skos:altLabel "right to be forgotten" ;
+    skos:definition "Old detail must leave the hot store, or a person's data must be removed, without making the record unreachable or unprovable." ;
+    skos:broader shape:monotonic-growth ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:storage-over-time
+    rdf:type skos:Concept ;
+    skos:prefLabel "Storage over time" ;
+    skos:altLabel "storage cost" ;
+    skos:altLabel "disk growth" ;
+    skos:altLabel "retention cost" ;
+    skos:definition "What one event costs to keep permanently, multiplied by the rate at which events arrive." ;
+    skos:broader shape:data-over-time ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:bitemporal-reading
+    rdf:type skos:Concept ;
+    skos:prefLabel "Bitemporal reading" ;
+    skos:altLabel "as-at reading" ;
+    skos:altLabel "valid time" ;
+    skos:altLabel "recording time" ;
+    skos:altLabel "point-in-time query" ;
+    skos:definition "A fact is recorded later than it takes effect, and a past state must be reproducible as of a point in both senses." ;
+    skos:broader shape:data-over-time ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:state-from-facts
+    rdf:type skos:Concept ;
+    skos:prefLabel "State from facts" ;
+    skos:altLabel "folding" ;
+    skos:altLabel "recomputing" ;
+    skos:altLabel "derived balance" ;
+    skos:altLabel "materialising" ;
+    skos:definition "A running figure can be stored or recomputed from the facts behind it, and each choice loses something." ;
+    skos:broader shape:data-over-time ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:speculative-vs-committed
+    rdf:type skos:Concept ;
+    skos:prefLabel "Speculative against committed" ;
+    skos:altLabel "speculative vs committed" ;
+    skos:definition "Evaluations that are not facts about the thing, such as scenarios and replays, must not enter its record." ;
+    skos:broader shape:data-over-time ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:derived-identity
+    rdf:type skos:Concept ;
+    skos:prefLabel "Derived identity" ;
+    skos:altLabel "computed IRI" ;
+    skos:altLabel "deterministic identifier" ;
+    skos:altLabel "minting" ;
+    skos:altLabel "hashing an identifier" ;
+    skos:definition "An identifier should be computable from what it denotes, so finding or creating the thing needs no lookup or allocation." ;
+    skos:broader shape:identity-and-uniqueness ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:persistent-identity-across-change
+    rdf:type skos:Concept ;
+    skos:prefLabel "Persistent identity across change" ;
+    skos:altLabel "stable identifier" ;
+    skos:altLabel "identity across edits" ;
+    skos:definition "A thing changes through time yet must stay recognisably the same thing, in references and in what it owns." ;
+    skos:broader shape:identity-and-uniqueness ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:external-names
+    rdf:type skos:Concept ;
+    skos:prefLabel "External names" ;
+    skos:altLabel "external identifier" ;
+    skos:altLabel "foreign key" ;
+    skos:altLabel "third-party code" ;
+    skos:definition "The world already names things with identifiers that may pick out one thing or many, and the model must use them without trusting them." ;
+    skos:broader shape:identity-and-uniqueness ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:uniqueness-under-concurrency
+    rdf:type skos:Concept ;
+    skos:prefLabel "Uniqueness under concurrency" ;
+    skos:altLabel "uniqueness" ;
+    skos:altLabel "deduplicating" ;
+    skos:altLabel "race on insert" ;
+    skos:definition "A key must be unique, but two writers who touch different statements cannot see each other." ;
+    skos:broader shape:identity-and-uniqueness ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:duplicate-entity
+    rdf:type skos:Concept ;
+    skos:prefLabel "Duplicate entity" ;
+    skos:altLabel "duplicates" ;
+    skos:altLabel "deduplication" ;
+    skos:altLabel "same thing twice" ;
+    skos:definition "Two identifiers turn out to denote one thing after references to both already exist." ;
+    skos:broader shape:identity-and-uniqueness ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:checkpoint-lookup
+    rdf:type skos:Concept ;
+    skos:prefLabel "Checkpoint lookup" ;
+    skos:altLabel "checkpointing" ;
+    skos:altLabel "snapshotting" ;
+    skos:altLabel "finding the latest" ;
+    skos:definition "The latest of a growing series of snapshots has to be found without searching the series." ;
+    skos:broader shape:cost-of-reads-and-writes ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:visit-vs-use
+    rdf:type skos:Concept ;
+    skos:prefLabel "Visit against use" ;
+    skos:altLabel "visit vs use" ;
+    skos:altLabel "scanning" ;
+    skos:altLabel "seeking" ;
+    skos:altLabel "query footprint" ;
+    skos:altLabel "index selectivity" ;
+    skos:definition "A read's cost is set by the data the engine visits rather than the data it uses." ;
+    skos:broader shape:cost-of-reads-and-writes ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:partition-by-placement
+    rdf:type skos:Concept ;
+    skos:prefLabel "Partition by placement" ;
+    skos:altLabel "partitioning" ;
+    skos:altLabel "sharding" ;
+    skos:altLabel "named graph layout" ;
+    skos:definition "Data a read must not visit shares a unit with data it must, so the layout, not the mechanism, sets the cost." ;
+    skos:broader shape:visit-vs-use ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:fan-in-read
+    rdf:type skos:Concept ;
+    skos:prefLabel "Fan-in read" ;
+    skos:altLabel "fan in read" ;
+    skos:definition "A figure or an evaluation needs many related things, and its cost grows with how many." ;
+    skos:broader shape:cost-of-reads-and-writes ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:constraint-cost-per-focus-node
+    rdf:type skos:Concept ;
+    skos:prefLabel "Constraint cost per focus node" ;
+    skos:altLabel "shape cost" ;
+    skos:altLabel "validation cost" ;
+    skos:altLabel "SHACL performance" ;
+    skos:definition "A validation rule's cost is multiplied by the number of nodes it targets." ;
+    skos:broader shape:cost-of-reads-and-writes ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:read-model-for-hot-reads
+    rdf:type skos:Concept ;
+    skos:prefLabel "Read model for hot reads" ;
+    skos:altLabel "read model" ;
+    skos:altLabel "projection" ;
+    skos:altLabel "cache for reads" ;
+    skos:definition "A read rate the system of record cannot serve needs a fix, and the fix either carries domain meaning and belongs in the model, or carries none and belongs in a projection." ;
+    skos:broader shape:cost-of-reads-and-writes ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:unmeasured-cost-claim
+    rdf:type skos:Concept ;
+    skos:prefLabel "Unmeasured cost claim" ;
+    skos:altLabel "guessed cost" ;
+    skos:altLabel "unverified performance claim" ;
+    skos:altLabel "asserting speed" ;
+    skos:definition "A cost claim rests on reasoning, not on a measurement on the engine in use." ;
+    skos:broader shape:cost-of-reads-and-writes ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:contended-node
+    rdf:type skos:Concept ;
+    skos:prefLabel "Contended node" ;
+    skos:altLabel "contention" ;
+    skos:altLabel "hot spot" ;
+    skos:altLabel "lock" ;
+    skos:definition "A node every writer touches limits throughput however cheap the read is." ;
+    skos:broader shape:concurrency-and-atomicity ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:atomic-guarded-write
+    rdf:type skos:Concept ;
+    skos:prefLabel "Atomic guarded write" ;
+    skos:altLabel "compare and set" ;
+    skos:altLabel "guarded update" ;
+    skos:altLabel "conditional write" ;
+    skos:definition "A check and the writes that depend on it, possibly across records, must happen as one indivisible step, or two writers can both act on a stale read." ;
+    skos:broader shape:concurrency-and-atomicity ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:unknown-write-outcome
+    rdf:type skos:Concept ;
+    skos:prefLabel "Unknown write outcome" ;
+    skos:altLabel "uncertain write" ;
+    skos:altLabel "did it commit" ;
+    skos:altLabel "ambiguous result" ;
+    skos:definition "After a timeout or an ambiguous reply a writer cannot tell whether its write applied, and a blind retry may apply it twice." ;
+    skos:broader shape:concurrency-and-atomicity ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:ordering-across-writers
+    rdf:type skos:Concept ;
+    skos:prefLabel "Ordering across writers" ;
+    skos:altLabel "ordering" ;
+    skos:altLabel "sequencing" ;
+    skos:altLabel "causal order" ;
+    skos:definition "Events from many writers need an order that no single writer's counter provides." ;
+    skos:broader shape:concurrency-and-atomicity ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:competing-claims
+    rdf:type skos:Concept ;
+    skos:prefLabel "Competing claims" ;
+    skos:altLabel "conflicting claims" ;
+    skos:altLabel "claim race" ;
+    skos:altLabel "first writer wins" ;
+    skos:definition "Several claims on one limited resource arrive together and exceed it, and something must decide who gets what." ;
+    skos:broader shape:concurrency-and-atomicity ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:derived-not-authored
+    rdf:type skos:Concept ;
+    skos:prefLabel "Derived, not authored" ;
+    skos:altLabel "derived not authored" ;
+    skos:altLabel "deriving" ;
+    skos:altLabel "generated artefact" ;
+    skos:altLabel "single source of truth" ;
+    skos:definition "A judgement stored as data can disagree with the rule that decides it." ;
+    skos:broader shape:meaning-and-correctness ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:unknown-is-not-false
+    rdf:type skos:Concept ;
+    skos:prefLabel "Unknown is not false" ;
+    skos:altLabel "three-valued logic" ;
+    skos:altLabel "open world" ;
+    skos:altLabel "undetermined" ;
+    skos:altLabel "missing data" ;
+    skos:definition "A missing fact must not be read as a failure, and absence means something only when its producer states the record is complete." ;
+    skos:broader shape:meaning-and-correctness ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:deferred-value
+    rdf:type skos:Concept ;
+    skos:prefLabel "Deferred value" ;
+    skos:altLabel "lazy value" ;
+    skos:altLabel "computed later" ;
+    skos:altLabel "placeholder" ;
+    skos:definition "A value is not known when meaning is stated, whether a placeholder, a date named by an event or a share of what others consent to, and is forced later." ;
+    skos:broader shape:meaning-and-correctness ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:order-sensitive-result
+    rdf:type skos:Concept ;
+    skos:prefLabel "Order-sensitive result" ;
+    skos:altLabel "order sensitive result" ;
+    skos:definition "The outcome depends on the order in which parts are applied or solutions arrive." ;
+    skos:broader shape:meaning-and-correctness ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:quantity-arithmetic
+    rdf:type skos:Concept ;
+    skos:prefLabel "Quantity arithmetic" ;
+    skos:altLabel "units" ;
+    skos:altLabel "rounding" ;
+    skos:altLabel "exactness" ;
+    skos:altLabel "currency arithmetic" ;
+    skos:definition "Parts must sum to a whole in units that cannot be divided, and only some kinds of quantity may be added at all." ;
+    skos:broader shape:meaning-and-correctness ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:statically-decidable-conditions
+    rdf:type skos:Concept ;
+    skos:prefLabel "Statically decidable conditions" ;
+    skos:altLabel "decidable condition" ;
+    skos:altLabel "static evaluation" ;
+    skos:altLabel "compile-time check" ;
+    skos:definition "Conditions have to be checked as sets, for overlap and union, and only some can be decided from stated meaning without runtime records." ;
+    skos:broader shape:meaning-and-correctness ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:claim-about-all-inputs
+    rdf:type skos:Concept ;
+    skos:prefLabel "Claim about all inputs" ;
+    skos:altLabel "universal property" ;
+    skos:altLabel "property-based testing" ;
+    skos:altLabel "proving for all inputs" ;
+    skos:definition "A property must hold for every input, which examples cannot show." ;
+    skos:broader shape:meaning-and-correctness ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:implementations-must-agree
+    rdf:type skos:Concept ;
+    skos:prefLabel "Implementations must agree" ;
+    skos:altLabel "differential testing" ;
+    skos:altLabel "two implementations" ;
+    skos:altLabel "oracle" ;
+    skos:definition "Independent implementations, backends, or a theory and the thing it describes must give the same answer, and a shared misreading hides when they are only checked against each other." ;
+    skos:broader shape:meaning-and-correctness ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:layer-dependency-direction
+    rdf:type skos:Concept ;
+    skos:prefLabel "Layer dependency direction" ;
+    skos:altLabel "layering" ;
+    skos:altLabel "import direction" ;
+    skos:altLabel "dependency order" ;
+    skos:definition "A layer must not know of one above it, a sibling or an application built on it." ;
+    skos:broader shape:structure-and-boundaries ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:domain-neutral-substrate
+    rdf:type skos:Concept ;
+    skos:prefLabel "Domain-neutral substrate" ;
+    skos:altLabel "domain neutral substrate" ;
+    skos:definition "General machinery must not encode one domain's practice or impose a choice correctness does not need." ;
+    skos:broader shape:structure-and-boundaries ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:aggregate-boundary
+    rdf:type skos:Concept ;
+    skos:prefLabel "Aggregate boundary" ;
+    skos:altLabel "aggregate" ;
+    skos:altLabel "transaction boundary" ;
+    skos:altLabel "consistency boundary" ;
+    skos:definition "What is owned, and so moves, replaces and deletes together, must be told apart from what is merely referenced." ;
+    skos:broader shape:structure-and-boundaries ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:placement-of-a-concept
+    rdf:type skos:Concept ;
+    skos:prefLabel "Placement of a concept" ;
+    skos:altLabel "where does this belong" ;
+    skos:altLabel "which layer" ;
+    skos:definition "A new concern could widen an existing layer, become a layer of its own, or start applied and be promoted, and moving it later is costly." ;
+    skos:broader shape:structure-and-boundaries ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:engine-and-runtime-divergence
+    rdf:type skos:Concept ;
+    skos:prefLabel "Engine and runtime divergence" ;
+    skos:altLabel "store differences" ;
+    skos:altLabel "engine portability" ;
+    skos:altLabel "SPARQL conformance" ;
+    skos:definition "Stores, languages and runtimes depart from the specification and from each other, so a design must not rest on one." ;
+    skos:broader shape:structure-and-boundaries ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:external-standard-boundary
+    rdf:type skos:Concept ;
+    skos:prefLabel "External standard boundary" ;
+    skos:altLabel "external standard" ;
+    skos:altLabel "standards alignment" ;
+    skos:altLabel "interoperating" ;
+    skos:definition "An outside standard or format has to be accepted and emitted without the substrate taking its shape, and meaning must survive the round trip." ;
+    skos:broader shape:structure-and-boundaries ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:versioning-an-entity-over-time
+    rdf:type skos:Concept ;
+    skos:prefLabel "Versioning an entity over time" ;
+    skos:altLabel "versioning" ;
+    skos:altLabel "version history" ;
+    skos:altLabel "supersession" ;
+    skos:altLabel "revisions" ;
+    skos:definition "A thing changes while keeping one identity, and each state must be an immutable version linked to its successor." ;
+    skos:broader shape:versioning-and-release ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:version-cascade
+    rdf:type skos:Concept ;
+    skos:prefLabel "Version cascade" ;
+    skos:altLabel "cascading bumps" ;
+    skos:altLabel "pinning" ;
+    skos:altLabel "dependent versions" ;
+    skos:definition "A change low in the dependency order forces every dependent to re-version, though compatibility belongs to the set loaded together." ;
+    skos:broader shape:versioning-and-release ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:reference-by-identity-or-version
+    rdf:type skos:Concept ;
+    skos:prefLabel "Reference by identity or version" ;
+    skos:altLabel "pinning a reference" ;
+    skos:altLabel "referencing a version" ;
+    skos:altLabel "floating reference" ;
+    skos:definition "A reference must say whether it means the thing or one specific version of it, and pinning forces a new version of everything on the path." ;
+    skos:broader shape:versioning-and-release ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:migrating-existing-data
+    rdf:type skos:Concept ;
+    skos:prefLabel "Migrating existing data" ;
+    skos:altLabel "migration" ;
+    skos:altLabel "backfilling" ;
+    skos:altLabel "upgrading stored data" ;
+    skos:definition "Data written under an old model must be carried across a change of meaning." ;
+    skos:broader shape:versioning-and-release ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:fact-stated-twice
+    rdf:type skos:Concept ;
+    skos:prefLabel "Fact stated twice" ;
+    skos:altLabel "duplication" ;
+    skos:altLabel "drift" ;
+    skos:altLabel "two sources of truth" ;
+    skos:definition "The same fact is written in several places and the copies diverge." ;
+    skos:broader shape:authoring-and-drift ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:derived-artefact-staleness
+    rdf:type skos:Concept ;
+    skos:prefLabel "Derived-artefact staleness" ;
+    skos:altLabel "derived artefact staleness" ;
+    skos:altLabel "staleness" ;
+    skos:altLabel "regenerating" ;
+    skos:altLabel "freshness check" ;
+    skos:definition "A generated artefact falls out of step with its authoritative source, and regeneration should touch only what a change invalidated." ;
+    skos:broader shape:authoring-and-drift ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:where-things-live
+    rdf:type skos:Concept ;
+    skos:prefLabel "Where things live" ;
+    skos:altLabel "locating" ;
+    skos:altLabel "repository layout" ;
+    skos:altLabel "which directory" ;
+    skos:definition "Every consumer carries its own hand-written copy of where things are or what exists, and nothing checks the copies." ;
+    skos:broader shape:authoring-and-drift ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:agent-reading-cost
+    rdf:type skos:Concept ;
+    skos:prefLabel "Agent reading cost" ;
+    skos:altLabel "token cost" ;
+    skos:altLabel "context cost" ;
+    skos:altLabel "retrieval cost" ;
+    skos:definition "An agent cannot afford to read what it must know to decide, so it works from what is in front of it." ;
+    skos:broader shape:authoring-and-drift ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:term-collision
+    rdf:type skos:Concept ;
+    skos:prefLabel "Term collision" ;
+    skos:altLabel "naming" ;
+    skos:altLabel "renaming" ;
+    skos:altLabel "vocabulary clash" ;
+    skos:definition "A word with a market meaning is read as that meaning when used as a technical term." ;
+    skos:broader shape:authoring-and-drift ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:working-vs-published-text
+    rdf:type skos:Concept ;
+    skos:prefLabel "Working text against published text" ;
+    skos:altLabel "working vs published text" ;
+    skos:definition "Delivery vocabulary leaks into text meant to stand on its own, and published text cites documents the site does not serve." ;
+    skos:broader shape:authoring-and-drift ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:consumed-and-restored-amount
+    rdf:type skos:Concept ;
+    skos:prefLabel "Consumed and restored amount" ;
+    skos:altLabel "aggregates" ;
+    skos:altLabel "reinstatement" ;
+    skos:altLabel "erosion" ;
+    skos:altLabel "limits" ;
+    skos:definition "An amount is drawn down and given back over time, in nested limits where a part is not in addition to its whole." ;
+    skos:broader shape:contract-semantics ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:relation-across-agreements
+    rdf:type skos:Concept ;
+    skos:prefLabel "Relation across agreements" ;
+    skos:altLabel "linked contracts" ;
+    skos:altLabel "cross-contract relation" ;
+    skos:altLabel "instrument relations" ;
+    skos:definition "One agreement's effect depends on the state of another, though the law keeps each contract separate." ;
+    skos:broader shape:contract-semantics ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:ending-of-an-agreement
+    rdf:type skos:Concept ;
+    skos:prefLabel "Ending of an agreement" ;
+    skos:altLabel "termination" ;
+    skos:altLabel "expiry" ;
+    skos:altLabel "cancellation" ;
+    skos:definition "An agreement or part of it ends by expiry, notice or breach, and some terms survive the ending." ;
+    skos:broader shape:contract-semantics ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:change-to-agreed-terms
+    rdf:type skos:Concept ;
+    skos:prefLabel "Change to agreed terms" ;
+    skos:altLabel "amendment" ;
+    skos:altLabel "endorsement" ;
+    skos:altLabel "varying terms" ;
+    skos:definition "Terms are amended, with different effect depending on materiality, entry into force and who has assented." ;
+    skos:broader shape:contract-semantics ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:states-within-states
+    rdf:type skos:Concept ;
+    skos:prefLabel "States within states" ;
+    skos:altLabel "nested states" ;
+    skos:altLabel "sub-states" ;
+    skos:altLabel "hierarchical state machine" ;
+    skos:definition "One subject holds nested states and several independent regimes at once, and a return must find the state it left." ;
+    skos:broader shape:contract-semantics ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:stated-once-bound-per-instrument
+    rdf:type skos:Concept ;
+    skos:prefLabel "Stated once, bound per instrument" ;
+    skos:altLabel "stated once bound per instrument" ;
+    skos:definition "A clause's meaning is stated once with placeholders, and values for one instrument are produced later and never stored with the clause." ;
+    skos:broader shape:contract-semantics ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:programme-structure-as-placed
+    rdf:type skos:Concept ;
+    skos:prefLabel "Programme structure as placed" ;
+    skos:altLabel "programme structure" ;
+    skos:altLabel "tower" ;
+    skos:altLabel "layers as placed" ;
+    skos:definition "A programme of layers, lines and instruments has to be recorded as it was placed, with an instrument placed on a position rather than being the position." ;
+    skos:broader shape:insurance-domain ;
+    rdfs:comment "Insurance domain rather than substrate. Governed by this repository's confidentiality rules, which is why the domain shapes are one subtree." ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:subscription-on-one-wording
+    rdf:type skos:Concept ;
+    skos:prefLabel "Subscription on one wording" ;
+    skos:altLabel "subscription" ;
+    skos:altLabel "shared wording" ;
+    skos:altLabel "co-insurance lines" ;
+    skos:definition "Several insurers each take a line on one wording and one set of terms, and each is bound by its own assent." ;
+    skos:broader shape:insurance-domain ;
+    rdfs:comment "Insurance domain rather than substrate. Governed by this repository's confidentiality rules, which is why the domain shapes are one subtree." ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:market-response-firming
+    rdf:type skos:Concept ;
+    skos:prefLabel "Market response firming" ;
+    skos:altLabel "firming" ;
+    skos:altLabel "indication to quote" ;
+    skos:altLabel "binding offer" ;
+    skos:definition "A response to a request firms from indication to quote to binding offer, and its commitment, precision and completeness must be recorded as the market stated them." ;
+    skos:broader shape:insurance-domain ;
+    rdfs:comment "Insurance domain rather than substrate. Governed by this repository's confidentiality rules, which is why the domain shapes are one subtree." ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+
+shape:cause-structure
+    rdf:type skos:Concept ;
+    skos:prefLabel "Cause structure" ;
+    skos:altLabel "causes" ;
+    skos:altLabel "perils" ;
+    skos:altLabel "cause taxonomy" ;
+    skos:definition "A classification of causes must serve several purposes at once, and a hierarchy alone is necessary and not sufficient." ;
+    skos:broader shape:insurance-domain ;
+    rdfs:comment "Insurance domain rather than substrate. Governed by this repository's confidentiality rules, which is why the domain shapes are one subtree." ;
+    skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes> .
+

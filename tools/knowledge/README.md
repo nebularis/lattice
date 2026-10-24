@@ -13,6 +13,7 @@ Markdown stays the source of truth. Everything here derives from it and holds no
 | `identifiers.py` | the identifier families, how each is written and where each is defined, and the referential-integrity check over them |
 | `identifier-exceptions.txt` | identifiers that are mentioned but defined nowhere, each with its reason. The baseline the check measures a new break against |
 | `knowledge.ttl` | the T-Box: the node kinds, their relations and the closed status set ([ADR-A134](../../docs/architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md)) |
+| `design-shapes.ttl` | the SKOS scheme: 10 facets and 58 shapes, each phrased as a problem and carrying the synonyms a question arrives under |
 | `extract.py` | derives the index from the tracked documents into an Oxigraph store under `.build/`, never committed |
 | `ask.py` | the query surface. `exists`, `node`, `reaches` and `sparql`, with the miss log that decides whether the vocabulary needs a new concept |
 
@@ -44,6 +45,8 @@ mise exec -- python tools/knowledge/identifiers.py --rehomed     # register entr
 **One identifier may have several spellings.** Mentions resolve on a normalised key of letters and digits, and the spelling a definition uses is the canonical one. A mention that resolves under another spelling is reported by `--variants`, never failed.
 
 **A generated copy is skipped by its marker, not its directory.** Most files under `docs/_includes` are originals that live there, and only a file carrying the marker its generator writes is a copy.
+
+**Every design shape carries `skos:altLabel` forms, including the gerund.** Measured: a question for "versioning" matches neither `fnd:Version`, a noun, nor the author's own phrasing of the problem, so without a declared synonym the right row is unreachable. `check:knowledge` fails on a shape with no synonym, and a tag outside the scheme is refused rather than stored.
 
 **A term enters the T-Box only when a query or a check needs it, and its `rdfs:comment` says which.** `check:knowledge` fails on a term without one, so the rule is enforced rather than merely intended. The vocabulary describes this repository, so it sits here and not under `ontology/`, and it is outside the substrate release.
 

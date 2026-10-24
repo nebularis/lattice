@@ -53,12 +53,13 @@ KI = "https://www.nebularis.org/neuro-semantic/lattice/dev/knowledge#"
 PREFIXES = f"""
 PREFIX ki: <{KI}>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 """
 
 EXISTS = (
     PREFIXES
     + """
-SELECT ?needle ?where ?module ?name ?kind ?label ?pointer WHERE {
+SELECT DISTINCT ?needle ?where ?module ?name ?kind ?label ?pointer WHERE {
   {
     # A declared term. Answers "is there already a class or property for this".
     GRAPH ki:terms {
@@ -70,6 +71,22 @@ SELECT ?needle ?where ?module ?name ?kind ?label ?pointer WHERE {
       BIND (REPLACE(STR(?m), "^.*module/", "") AS ?module)
       BIND (REPLACE(STR(?term), "^.*[#/]", "") AS ?name)
     }
+  } UNION {
+    # A design shape whose own name or a declared synonym matches, then whatever is tagged with it
+    # or with a concept under it. This is the branch that bridges a gerund to a noun (§9.2), and
+    # the only one that can answer a question phrased in words no document uses.
+    GRAPH ki:shapes {
+      ?c a skos:Concept .
+      { ?c skos:prefLabel ?l } UNION { ?c skos:altLabel ?l } UNION { ?c skos:definition ?l }
+      FILTER (CONTAINS(LCASE(STR(?l)), LCASE(?needle)))
+      ?under skos:broader* ?c .
+    }
+    GRAPH ki:index {
+      ?n ki:tagged ?under ; ki:identifier ?name ; ki:claim ?label ; ki:pointer ?pointer .
+    }
+    BIND ("shape" AS ?where)
+    BIND (REPLACE(STR(?c), "^.*#", "") AS ?module)
+    BIND ("tagged" AS ?kind)
   } UNION {
     # A mechanism the project already has. Its problem shape is phrased as the problem, so it is
     # matched by a question a term name cannot answer (sketch section 9.1).

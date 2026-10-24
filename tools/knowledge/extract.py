@@ -56,6 +56,8 @@ import identifiers  # noqa: E402
 ROOT = identifiers.ROOT
 STORE_PATH = ROOT / ".build" / "knowledge" / "store"
 TBOX_PATH = Path(__file__).resolve().parent / "knowledge.ttl"
+SHAPES_PATH = Path(__file__).resolve().parent / "design-shapes.ttl"
+SHAPE_NS = "https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes#"
 
 KI = "https://www.nebularis.org/neuro-semantic/lattice/dev/knowledge#"
 RDF_TYPE = ox.NamedNode("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
@@ -63,6 +65,7 @@ RDFS_LABEL = ox.NamedNode("http://www.w3.org/2000/01/rdf-schema#label")
 INDEX_GRAPH = ox.NamedNode(KI + "index")
 TERMS_GRAPH = ox.NamedNode(KI + "terms")
 TBOX_GRAPH = ox.NamedNode(KI + "tbox")
+SHAPES_GRAPH = ox.NamedNode(KI + "shapes")
 
 # Which node class each identifier family becomes.
 FAMILY_CLASS = {
@@ -203,8 +206,20 @@ def decisions(out: Extract) -> dict[str, ox.NamedNode]:
     return known
 
 
+def shape_slugs() -> set[str]:
+    """The concepts the design-shape scheme declares, so a tag outside it can be refused."""
+    graph = ox.Store()
+    graph.load(path=str(SHAPES_PATH), format=ox.RdfFormat.TURTLE)
+    rows = graph.query(
+        "PREFIX skos: <http://www.w3.org/2004/02/skos/core#> "
+        "SELECT ?c WHERE { ?c a skos:Concept }"
+    )
+    return {str(r["c"].value).rsplit("#", 1)[-1] for r in rows}
+
+
 def register_rows(out: Extract) -> None:
     """One node per row of each register, with the row's bolded lead sentence as the claim."""
+    known_shapes = shape_slugs()
     for family in identifiers.FAMILIES:
         if family.name not in FAMILY_CLASS or family.definition != "table-row":
             continue
@@ -250,6 +265,20 @@ def register_rows(out: Extract) -> None:
                         out.problems.append(f"{rel}:{number}: {canonical} has no extractable claim")
                     # The problem shape, where the register states one. It is what a recall
                     # query matches on, phrased as the problem rather than the solution.
+                    if family.name == "mechanism" and len(cells) > 7 and cells[7].strip():
+                        for slug in (s.strip() for s in cells[7].split(",")):
+                            if not slug:
+                                continue
+                            if slug not in known_shapes:
+                                out.problems.append(
+                                    f"{rel}:{number}: {canonical} is tagged '{slug}', "
+                                    f"which is not a concept of the design-shape scheme"
+                                )
+                                continue
+                            out.quads.append(
+                                ox.Quad(subject, ki("tagged"), ox.NamedNode(SHAPE_NS + slug), INDEX_GRAPH)
+                            )
+                            out.bump("tagged")
                     if family.name == "mechanism" and len(cells) > 6 and cells[6].strip():
                         out.quads.append(
                             ox.Quad(subject, ki("problemShape"), ox.Literal(cells[6].strip()), INDEX_GRAPH)
@@ -324,6 +353,7 @@ def term_summary(store: ox.Store, out: Extract) -> None:
                               skos:Concept, skos:ConceptScheme))
             OPTIONAL { ?s rdfs:label ?label }
           }
+          FILTER (STRSTARTS(STR(?g), "https://lattice.local/graph/"))
         }"""
     )
     quads: list[ox.Quad] = []
@@ -382,6 +412,7 @@ def build(store_path: Path) -> Extract:
     store = ox.Store(str(store_path))
 
     store.bulk_load(path=str(TBOX_PATH), format=ox.RdfFormat.TURTLE, to_graph=TBOX_GRAPH)
+    store.bulk_load(path=str(SHAPES_PATH), format=ox.RdfFormat.TURTLE, to_graph=SHAPES_GRAPH)
     decisions(out)
     register_rows(out)
     discoveries(out)

@@ -190,7 +190,7 @@ A maintainer never writes Turtle. The authoring interface is a Markdown table ro
 | **Principles** | new | `PRI-*nn*` | `docs/developer/plans/principles.md` |
 | **Patterns** | new | `PAT-*nn*` | `docs/developer/plans/patterns.md` |
 | **Mechanisms** | **83 rows drafted** | `MEC-*nn*` | [`docs/developer/plans/mechanisms.md`](../plans/mechanisms.md) |
-| **Design shapes** | new, the vocabulary itself | slug | `tools/knowledge/design-shapes.ttl` |
+| **Design shapes** | **58 shapes in 10 facets, built** | slug | [`tools/knowledge/design-shapes.ttl`](../../../tools/knowledge/design-shapes.ttl) |
 
 The mechanism register is the one with no existing home and the clearest payback, because it is the register that answers "does this already exist".
 
@@ -338,6 +338,8 @@ What fixes it is the one thing SKOS has that free text does not. A concept `vers
 - a recall query matches `skos:prefLabel`, every `skos:altLabel` and the concept's definition, then returns what is tagged with the concept and with its `skos:narrower` concepts
 - the free-text `ki:problemShape` stays as the author's phrasing, read by a human once the concept has found the row
 
+**Built and closed, 2026-10-24.** `tools/knowledge/design-shapes.ttl` holds 10 facets and 58 shapes with 175 synonyms, `versioning-an-entity-over-time` carries `skos:altLabel` "versioning", MEC-01 is tagged with it, and `graph:ask -- exists versioning` now returns MEC-01. A tag outside the scheme is refused rather than stored, and `check:knowledge` fails on a shape with no synonym, so neither half of the rule can decay quietly. The assertion is in `test_the_gerund_reaches_the_noun`, which is the one test that fails if the index stops doing the thing it exists for.
+
 This was found by building, not by reasoning, and it is the strongest argument in this sketch for the vocabulary over embeddings. Embeddings would have matched "versioning" to MEC-01 without being told anything. The cost is that nothing would explain why, nothing could check it, and the next question would be a coin toss. A declared synonym is cheap, auditable and exact, and the miss log is what finds the ones worth declaring.
 
 ## 10. The store, and running without a server
@@ -409,9 +411,9 @@ Nothing waits on this, and it makes nothing else harder, so it is not on any epi
 |---|---|---|
 | KI-1 | the identifier families and the referential-integrity check | **built**, `mise run check:identifiers` |
 | KI-2 | measure KI-Q2, record it as a discovery | **done**, [TSD-38](../../architecture/triple-store-discovery.md). It dropped KI-8 |
-| KI-3 | the T-Box, the design shape scheme, and the extractor for the five existing registers | next. Designed in §4 and §6, decided by [ADR-A134](../../architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md) |
-| KI-4 | the mechanism register, seeded from the corpus sweep | the highest-value backfill |
-| KI-5 | the query surface, `mise run graph:ask`, with the miss log | after KI-3 |
+| KI-3 | the T-Box, the design shape scheme, and the extractor for the five existing registers | **built**. `mise run build:knowledge`, 73,046 quads in about two seconds |
+| KI-4 | the mechanism register, seeded from the corpus sweep | **83 ontology rows drafted**, unratified. Tooling, checks and runtime rows are the remainder |
+| KI-5 | the query surface, `mise run graph:ask`, with the miss log | **built**. `exists`, `node`, `reaches`, `sparql` |
 | KI-6 | the SHACL suite of §12 | after KI-3 |
 | KI-7 | the lifecycle instruction, and the agent guidance the index lets us delete | last, and it is where the token saving is realised |
 | ~~KI-8~~ | ~~the optional server and the MCP surface~~ | **dropped** by KI-2's measurement. An MCP surface over `graph:ask` stays possible without a resident process |

@@ -151,3 +151,50 @@ def test_every_node_has_a_claim_and_a_pointer(built):
         }} }}""",
     )
     assert not [str(r["id"].value) for r in rows]
+
+
+def test_a_tag_outside_the_scheme_is_refused(built):
+    """ADR-A134 decision 9. An unknown tag has to fail rather than be stored, because a silently
+    forked vocabulary makes every recall query unreliable and nothing would say so."""
+    out, _ = built
+    assert out.counts.get("tagged", 0) > 0, "the worked examples must be tagged"
+    assert not [p for p in out.problems if "not a concept of the design-shape scheme" in p]
+
+
+def test_the_gerund_reaches_the_noun(built):
+    """The whole design, in one assertion. An agent asking about "versioning" must reach MEC-01,
+    Foundation's versioning, although MEC-01's own text never uses that word and the model's term
+    is the noun `fnd:Version`. Measured in sketch §9.1 and §9.2: a term lookup fails, the author's
+    free-text problem shape fails, and a declared synonym on a tagged concept succeeds. If this
+    breaks, the index has stopped doing the one thing it exists for."""
+    _, store = built
+    rows = list(
+        store.query(
+            f"""PREFIX ki: <{KI}>
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+            SELECT DISTINCT ?id WHERE {{
+              GRAPH ki:shapes {{
+                ?c a skos:Concept ; skos:altLabel ?alt .
+                FILTER (LCASE(STR(?alt)) = "versioning")
+                ?under skos:broader* ?c .
+              }}
+              GRAPH ki:index {{ ?n ki:tagged ?under ; ki:identifier ?id . }}
+            }}"""
+        )
+    )
+    assert "MEC-01" in {str(r["id"].value) for r in rows}
+
+
+def test_the_term_summary_holds_only_declared_ontology_terms(built):
+    """The T-Box and the design-shape scheme are loaded into graphs of their own. Without a filter
+    they also appeared in the term summary, so a question about a design shape came back as though
+    a module had declared it."""
+    _, store = built
+    rows = list(
+        store.query(
+            f"""PREFIX ki: <{KI}>
+            SELECT ?term WHERE {{ GRAPH ki:terms {{ ?t ki:identifier ?term }} }}"""
+        )
+    )
+    leaked = [str(r["term"].value) for r in rows if "/dev/" in str(r["term"].value)]
+    assert not leaked
