@@ -49,7 +49,7 @@ hard-codes one domain's practice as the only way is wrong at the substrate.
    before and after, a timeline of the failure cases (a race, a partial write, a retry), and the options
    side by side. Show them inline when presenting, and put the ones that last into the plan or sketch as
    mermaid, which renders on GitHub. Check every diagram renders before handing off, for example by
-   loading it with mermaid in a browser.
+   loading it with mermaid in a browser. Three rules, each found the hard way. Labels are ASCII only, because non-ASCII punctuation such as an em dash, and HTML entities, fail in some renderers. An edge targets a node, never a subgraph's own container ID, which breaks rendering. In a `classDiagram` a relation is `A --> B : label`, never `A : label --> B`, which silently declares a member instead.
 3. **Each option, then its consequences**, compared on:
    - *design overheads*: is it hard to reason about, easy to model incorrectly, hard to assure or
      govern, or brittle under likely change
