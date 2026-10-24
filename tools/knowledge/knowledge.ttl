@@ -1,0 +1,216 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+# NB: This document has been produced using GenAI
+#
+# The T-Box of the knowledge index (ADR-A134 decisions 4 to 7).
+#
+# This describes THIS REPOSITORY, not the insurance domain. It is deliberately outside ontology/
+# and outside the substrate release of ADR-A129, and the `dev` path segment marks that. Only this
+# repository consumes it, so changes are additive and there is no compatibility promise.
+#
+# ADR-A134 decision 6 is the rule that keeps that freedom honest: a class or property enters here
+# only when a query or a check needs it. Every term below names the query or check that earns it.
+# A term with no such line does not belong here.
+#
+# ADR-A134 decision 7: a DECLARED edge, which a document states, and a DERIVED edge, which is
+# inferred from two identifiers appearing together, are different properties. SHACL constraints
+# read only declared edges. The one derived property is `ki:citedWith`, marked as such.
+
+@prefix ki:   <https://www.nebularis.org/neuro-semantic/lattice/dev/knowledge#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+<https://www.nebularis.org/neuro-semantic/lattice/dev/knowledge>
+    rdf:type owl:Ontology ;
+    rdfs:label "LATTICE knowledge index vocabulary" ;
+    rdfs:comment "The node kinds and relations of the index over this repository's working documents. Outside the substrate release, consumed only by this repository's own tooling." ;
+    owl:versionInfo "0.1.0" ;
+    owl:imports <http://www.w3.org/2004/02/skos/core> .
+
+#################################################################
+#    Nodes
+#################################################################
+
+ki:Node
+    rdf:type owl:Class ;
+    rdfs:label "node" ;
+    rdfs:comment "Anything with a stable identifier, a one-sentence claim and a pointer into the document that defines it. The index holds no content of its own, so a node is a handle on prose rather than a copy of it (ADR-A134 decisions 1 and 3)." .
+
+# The kinds. Each is a subclass because a query selects by kind ("every pattern tagged
+# append-only-log") and because the SHACL suite constrains kinds differently: a principle needs
+# evidence, a pattern needs a cost, a mechanism needs a pointer into something that exists.
+
+ki:Decision
+    rdf:type owl:Class ; rdfs:subClassOf ki:Node ; rdfs:label "decision" ;
+    rdfs:comment "An architecture decision record. Earns its class from the check that no Accepted decision depends on a Proposed one." .
+
+ki:PendingDecision
+    rdf:type owl:Class ; rdfs:subClassOf ki:Node ; rdfs:label "pending decision" ;
+    rdfs:comment "A decision that matters and cannot be made yet. Earns its class from the query for what a slice is waiting on, and because its definition is removable where a decision's is not." .
+
+ki:Debt
+    rdf:type owl:Class ; rdfs:subClassOf ki:Node ; rdfs:label "technical debt" ;
+    rdfs:comment "A shortfall in something that exists, with no planned home. Removable, like a pending decision." .
+
+ki:Discovery
+    rdf:type owl:Class ; rdfs:subClassOf ki:Node ; rdfs:label "discovery" ;
+    rdfs:comment "Something found out by probing, measuring or being surprised. Earns its class from the check that a principle has supporting evidence, which is a query for discoveries." .
+
+ki:Rule
+    rdf:type owl:Class ; rdfs:subClassOf ki:Node ; rdfs:label "rule" ;
+    rdfs:comment "Prescriptive guidance an agent must follow within a stated scope. Earns its class from the query that replaces a 'go and read the guide' instruction in agent guidance." .
+
+ki:Pattern
+    rdf:type owl:Class ; rdfs:subClassOf ki:Node ; rdfs:label "pattern" ;
+    rdfs:comment "A named, reusable technique with a trade-off. Earns its class from the check that a pattern states a cost as well as a benefit." .
+
+ki:Mechanism
+    rdf:type owl:Class ; rdfs:subClassOf ki:Node ; rdfs:label "mechanism" ;
+    rdfs:comment "Something the project already has, described at the altitude of a design concept rather than a code symbol. Earns its class from the query that answers 'does this already exist', which is the error this index exists to prevent." .
+
+ki:Principle
+    rdf:type owl:Class ; rdfs:subClassOf ki:Node ; rdfs:label "principle" ;
+    rdfs:comment "A durable design commitment. Earns its class from the check that every principle has at least one discovery or benchmark supporting it, so an opinion cannot be promoted to a principle." .
+
+ki:Epic
+    rdf:type owl:Class ; rdfs:subClassOf ki:Node ; rdfs:label "epic" ;
+    rdfs:comment "A unit of work with its own plan. Earns its class from the check that every slice names its epic." .
+
+ki:Slice
+    rdf:type owl:Class ; rdfs:subClassOf ki:Node ; rdfs:label "slice" ;
+    rdfs:comment "A deliverable step of an epic. Earns its class from the blast-radius query, which is what a slice reaches." .
+
+ki:Question
+    rdf:type owl:Class ; rdfs:subClassOf ki:Node ; rdfs:label "question" ;
+    rdfs:comment "A design question raised against a slice, answered by a decision. Earns its class from the query for the questions a decision answers." .
+
+# Things a node points at, which are not themselves nodes because they carry no claim.
+
+ki:Document
+    rdf:type owl:Class ; rdfs:label "document" ;
+    rdfs:comment "A tracked file that defines nodes. Earns its class from the query that goes the other way, from a document to what it defines, which is how an agent editing a file learns what depends on it." .
+
+ki:Module
+    rdf:type owl:Class ; rdfs:label "module" ;
+    rdfs:comment "An ontology layer, standalone module or tool package, as repository-catalogue.md names it. The catalogue stays the source and this is read from it, never restated (ADR-A134 decision 2)." .
+
+#################################################################
+#    Status, as typed individuals rather than fifteen strings
+#################################################################
+
+ki:Status
+    rdf:type owl:Class ; rdfs:label "status" ;
+    rdfs:comment "The lifecycle state of a node. A typed individual rather than free text, because the check that no Accepted decision depends on a Proposed one cannot compare prose (ADR-A134 decision 5). The closed set below replaces the roughly fifteen distinct Status line shapes measured across the 120 decisions." .
+
+ki:Proposed    rdf:type ki:Status ; rdfs:label "proposed" .
+ki:Accepted    rdf:type ki:Status ; rdfs:label "accepted" .
+ki:Published   rdf:type ki:Status ; rdfs:label "published" .
+ki:Superseded  rdf:type ki:Status ; rdfs:label "superseded" .
+ki:Rejected    rdf:type ki:Status ; rdfs:label "rejected" .
+ki:Open        rdf:type ki:Status ; rdfs:label "open" ;
+    rdfs:comment "A register entry or question still live." .
+ki:Rehomed     rdf:type ki:Status ; rdfs:label "rehomed" ;
+    rdfs:comment "A register entry a plan has taken on, so its row is removed. Measured: 26 such references exist, and they are rehomings rather than broken links." .
+ki:Deferred    rdf:type ki:Status ; rdfs:label "deferred" .
+ki:Complete    rdf:type ki:Status ; rdfs:label "complete" .
+ki:Withdrawn   rdf:type ki:Status ; rdfs:label "withdrawn" .
+
+#################################################################
+#    What every node carries
+#################################################################
+
+ki:identifier
+    rdf:type owl:DatatypeProperty ; rdfs:domain ki:Node ; rdfs:range xsd:string ;
+    rdfs:label "identifier" ;
+    rdfs:comment "The canonical spelling, which is the one its definition uses. A mention resolves on a normalised key of letters and digits, because one identifier has several spellings in this corpus (tools/knowledge/identifiers.py)." .
+
+ki:claim
+    rdf:type owl:DatatypeProperty ; rdfs:domain ki:Node ; rdfs:range xsd:string ;
+    rdfs:label "claim" ;
+    rdfs:comment "One sentence, at most 200 characters, extracted from the bolded lead sentence of the Markdown entry and never authored twice (ADR-A134 decision 3). It is what an agent reads to decide whether to open the document." .
+
+ki:pointer
+    rdf:type owl:DatatypeProperty ; rdfs:domain ki:Node ; rdfs:range xsd:string ;
+    rdfs:label "pointer" ;
+    rdfs:comment "Where the full entry is, as a repository-relative path with a line range. The index is a handle, so this is the only route to the prose." .
+
+ki:status
+    rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range ki:Status ;
+    rdfs:label "status" ;
+    rdfs:comment "Earns its place from every check that compares lifecycle states, which cannot be done against free text." .
+
+ki:definedIn
+    rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range ki:Document ;
+    rdfs:label "defined in" ;
+    rdfs:comment "Earns its place from the referential-integrity check, which is exactly the question of whether a mentioned identifier is defined anywhere." .
+
+ki:tagged
+    rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range skos:Concept ;
+    rdfs:label "tagged" ;
+    rdfs:comment "A design shape this node is about. The property where the T-Box meets the SKOS scheme of design-shapes.ttl (ADR-A134 decision 5), and the one recall matches on. An unknown concept fails the check, so the vocabulary cannot fork silently." .
+
+#################################################################
+#    Declared edges: a document states these, so a check may trust them
+#################################################################
+
+ki:dependsOn
+    rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range ki:Node ;
+    rdfs:label "depends on" ;
+    rdfs:comment "Earns its place from the check that no Accepted decision depends on a Proposed one." .
+
+ki:supersedes
+    rdf:type owl:ObjectProperty ; rdfs:domain ki:Decision ; rdfs:range ki:Decision ;
+    rdfs:label "supersedes" ;
+    rdfs:comment "Earns its place as the inverse of ki:supersededBy, so the query may start from either end." ;
+    owl:inverseOf ki:supersededBy .
+
+ki:supersededBy
+    rdf:type owl:ObjectProperty ; rdfs:domain ki:Decision ; rdfs:range ki:Decision ;
+    rdfs:label "superseded by" ;
+    rdfs:comment "Earns its place from the query for whether a decision a document cites is still the live one." .
+
+ki:answers
+    rdf:type owl:ObjectProperty ; rdfs:domain ki:Decision ; rdfs:range ki:Question ;
+    rdfs:label "answers" ;
+    rdfs:comment "Earns its place from the query for a question's answer, and from the check that a closed question has one." .
+
+ki:waitsOn
+    rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range ki:Node ;
+    rdfs:label "waits on" ;
+    rdfs:comment "Read from a register's 'Waits for' column and a plan's prose. Earns its place from the roadmap query, what is blocked and by what, which is today answered by a hand-maintained index." .
+
+ki:partOf
+    rdf:type owl:ObjectProperty ; rdfs:domain ki:Slice ; rdfs:range ki:Epic ;
+    rdfs:label "part of" ;
+    rdfs:comment "Earns its place from the check that every slice names its epic." .
+
+ki:evidencedBy
+    rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range ki:Discovery ;
+    rdfs:label "evidenced by" ;
+    rdfs:comment "Earns its place from the check that a principle rests on a discovery or a benchmark rather than on an opinion." .
+
+ki:supports
+    rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range ki:Principle ;
+    rdfs:label "supports" ;
+    rdfs:comment "Earns its place as the inverse direction of ki:evidencedBy, so a principle can be asked what rests on it as well as what holds it up." .
+
+ki:solves
+    rdf:type owl:ObjectProperty ; rdfs:domain ki:Mechanism ; rdfs:range skos:Concept ;
+    rdfs:label "solves" ;
+    rdfs:comment "The shape of problem a mechanism answers, phrased as the problem and never as the mechanism's own name, because an agent matches against it before knowing the mechanism exists (ADR-A134 decision 9)." .
+
+ki:ownedBy
+    rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range ki:Module ;
+    rdfs:label "owned by" ;
+    rdfs:comment "Earns its place from the mechanism query, which must say which layer or tool a thing belongs to before an agent can reuse it." .
+
+#################################################################
+#    The one derived edge, which no check may trust
+#################################################################
+
+ki:citedWith
+    rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range ki:Node ;
+    rdfs:label "cited with" ;
+    rdfs:comment "Two identifiers written on one line. A hint for navigation, never evidence. Untyped, so it cannot say whether one answers, supersedes or merely mentions the other, and measured to over-reach: 2,458 such edges exist, most of them through hub documents. ADR-A134 decision 7 forbids any SHACL constraint from reading it." .
