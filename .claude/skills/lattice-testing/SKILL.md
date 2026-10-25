@@ -32,6 +32,7 @@ description.
   time (ADR-A124).
 - **Measured before and after.** A change made for speed records the wall time, the worker count and the peak memory, and keeps every
   assertion, as the next section says.
+- **A new check is seen to fail before it is relied on.** Break what it checks, watch it fail, then restore it. A check that has never failed may be checking nothing.
 
 ## Memory: `mem_check`
 

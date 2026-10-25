@@ -466,3 +466,61 @@ def test_a_query_rebuilds_an_index_older_than_the_files_it_reads(tmp_path, monke
     assert ask.stale(), "a build older than every tracked file is stale"
     stamp.write_text(f"{time.time() + 3600}\n", encoding="utf-8")
     assert not ask.stale(), "a build newer than every tracked file is current"
+
+
+def _rows(store, query):
+    return list(store.query(f"PREFIX ki: <{KI}>\n" + query))
+
+
+def test_every_standard_has_a_stratum(built):
+    _, store = built
+    rows = _rows(store, "SELECT ?id WHERE { GRAPH ki:index { ?s a ki:Standard ; ki:identifier ?id "
+                        "FILTER NOT EXISTS { ?s ki:stratum ?x } } }")
+    assert not [str(r["id"].value) for r in rows]
+
+
+def test_a_standard_refines_only_one_at_its_own_level_or_above(built):
+    """A narrow rule must not be made to govern a broad one. Refinement runs from convention and
+    practice up towards design and architecture, never down, and so can never form a cycle."""
+    _, store = built
+    rows = _rows(store, """SELECT ?a ?b WHERE {
+        GRAPH ki:index { ?s ki:refines ?t ; ki:stratum ?ls ; ki:identifier ?a .
+                         ?t ki:stratum ?lt ; ki:identifier ?b . }
+        GRAPH ki:tbox { ?ls ki:level ?x . ?lt ki:level ?y . }
+        FILTER (?y > ?x) }""")
+    assert not [(str(r["a"].value), str(r["b"].value)) for r in rows]
+
+
+def test_enforcement_names_a_capability(built):
+    """A standard is enforced by a check the index holds, never by a review, which is not a check."""
+    _, store = built
+    rows = _rows(store, "SELECT ?id WHERE { GRAPH ki:index { ?s ki:enforcedBy ?c ; ki:identifier ?id "
+                        "FILTER NOT EXISTS { ?c a ki:Capability } } }")
+    assert not [str(r["id"].value) for r in rows]
+
+
+def test_an_extrapolated_standard_rests_on_something(built):
+    """A standard an agent extrapolated was found written nowhere, so it must name what it was
+    extrapolated from: a principle it serves, a decision, or a discovery. Otherwise it is an opinion
+    with an identifier."""
+    _, store = built
+    rows = _rows(store, """SELECT ?id WHERE { GRAPH ki:index {
+        ?s ki:origin ki:Extrapolated ; ki:identifier ?id .
+        FILTER NOT EXISTS { ?s ki:supports|ki:decidedBy|ki:evidencedBy ?g } } }""")
+    assert not [str(r["id"].value) for r in rows]
+
+
+def test_the_enforcement_gap_is_one_query(built):
+    """The governance question no skill can answer: which standards does nothing check."""
+    _, store = built
+    def count(where: str) -> int:
+        return int(_rows(store, f"SELECT (COUNT(DISTINCT ?s) AS ?n) WHERE {{ GRAPH ki:index {{ "
+                                f"?s a ki:Standard {where} }} }}")[0]["n"].value)
+
+    enforced = count(". ?s ki:enforcedBy ?c")
+    unenforced = count("FILTER NOT EXISTS { ?s ki:enforcedBy ?c }")
+    # Both halves, because each alone passes vacuously: a register whose enforcement edges were all
+    # lost still has standards nothing enforces, and one with every edge still has a capability.
+    assert enforced > 0, "no standard is enforced, so the enforcement column was not read"
+    assert unenforced > 0
+    assert enforced + unenforced == count("")

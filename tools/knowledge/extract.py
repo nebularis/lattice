@@ -83,6 +83,7 @@ FAMILY_CLASS = {
     "capability": "Capability",
     "pattern": "Pattern",
     "principle": "Principle",
+    "standard": "Standard",
 }
 
 # The status words a decision's Status line may open with, longest first so "Published" is not read
@@ -256,6 +257,11 @@ COLUMNS: dict[str, tuple[str, str]] = {
     "Waits for": ("waitsOn", "ids"),
     "Evidenced by": ("evidencedBy", "ids"),
     "Decided by": ("decidedBy", "ids"),
+    "Refines": ("refines", "ids"),
+    "Supports": ("supports", "ids"),
+    "Enforced by": ("enforcedBy", "ids"),
+    "Stratum": ("stratum", "stratum"),
+    "Origin": ("origin", "origin"),
     "Cost": ("cost", "text"),
     "Owner": ("ownedBy", "module"),
     "Provided by": ("ownedBy", "module"),
@@ -280,6 +286,9 @@ CONTROLLED = {
     "phase": {"development": "Development", "authoring": "Authoring", "runtime": "Runtime"},
     "built": {"built": "Built", "partial": "PartlyBuilt", "proposed": "NotBuilt"},
     "ratified": {"yes": "Accepted", "no": "Proposed"},
+    "stratum": {"architectural": "ArchitecturalStratum", "design": "DesignStratum",
+                "practice": "PracticeStratum", "convention": "ConventionStratum"},
+    "origin": {"stated": "Stated", "extrapolated": "Extrapolated"},
 }
 
 SEPARATOR_RE = re.compile(r"^\|[\s:|-]+\|?$")

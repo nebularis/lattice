@@ -109,3 +109,5 @@ Some networks reach public registries only through a mirror, or not at all.
 - A new build output outside `build/` or `.build/<name>/`, or a Maven module outside
   `platform/pom.xml`, needs adding to `clean` and `clean-win`, which list exact paths.
 - Ask the maintainer to start Docker Desktop if its engine is not running. Do not start it yourself.
+- A tool writes text with an explicit encoding and newline, for example `path.write_text(text, encoding="utf-8", newline="\n")`, never the platform's. Without it Windows writes `\r\n` for a `\n` inside a generated multi-line string, and the file is corrupt.
+- After changing a list that something else counts or iterates, such as a task's modules, a version pin or a contract set, run everything that reads it. A merge resolution once left a task skipping two test modules without failing, and a contract added beyond a pinned count was caught only by the full sweep.

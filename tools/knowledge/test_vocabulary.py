@@ -97,7 +97,7 @@ def test_every_node_kind_is_a_subclass_of_node(graph: rdflib.Graph):
     their domain, so a kind outside that hierarchy would carry none of them."""
     node = rdflib.URIRef(KI + "Node")
     kinds = {
-        "Decision", "PendingDecision", "Debt", "Discovery", "Rule",
+        "Decision", "PendingDecision", "Debt", "Discovery", "Standard",
         "Pattern", "Mechanism", "Principle", "Epic", "Slice", "Question",
     }
     for kind in kinds:

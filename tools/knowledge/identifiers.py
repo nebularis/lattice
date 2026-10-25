@@ -170,6 +170,14 @@ FAMILIES: tuple[Family, ...] = (
         "that settled it. A row is never removed, because a principle that is withdrawn is a change to record",
     ),
     Family(
+        name="standard",
+        mention=re.compile(r"\b(STD-\d+)\b"),
+        definition="table-row",
+        defines=("docs/developer/plans/standards.md",),
+        note="prescriptive guidance, stratified from architectural to convention, whose text lives in "
+        "the skill or AGENTS.md section loaded for the work",
+    ),
+    Family(
         name="store-discovery",
         mention=re.compile(r"\b(TSD-\d+[a-z]?)\b"),
         definition="heading",

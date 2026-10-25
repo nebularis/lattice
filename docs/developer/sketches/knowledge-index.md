@@ -91,7 +91,7 @@ flowchart TD
   N --> K2["ki:PendingDecision"]
   N --> K3["ki:Debt"]
   N --> K4["ki:Discovery"]
-  N --> K5["ki:Rule"]
+  N --> K5["ki:Standard"]
   N --> K6["ki:Pattern"]
   N --> K7["ki:Mechanism"]
   N --> K8["ki:Principle"]
@@ -190,6 +190,7 @@ A maintainer never writes Turtle. The authoring interface is a Markdown table ro
 | **Principles** | **62 rows drafted** | `PRI-*nn*` | [`docs/developer/plans/principles.md`](../plans/principles.md) |
 | **Patterns** | **54 rows drafted** | `PAT-*nn*` | [`docs/developer/plans/patterns.md`](../plans/patterns.md) |
 | **Capabilities** | **71 rows derived** | `CAP-*nn*` | [`docs/developer/plans/capabilities.md`](../plans/capabilities.md) |
+| **Standards** | **270 rows in four strata** | `STD-*nnn*` | [`docs/developer/plans/standards.md`](../plans/standards.md) |
 | **Mechanisms** | **83 rows drafted** | `MEC-*nn*` | [`docs/developer/plans/mechanisms.md`](../plans/mechanisms.md) |
 | **Design shapes** | **58 shapes in 10 facets, built** | slug | [`tools/knowledge/design-shapes.ttl`](../../../tools/knowledge/design-shapes.ttl) |
 

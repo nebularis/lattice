@@ -39,7 +39,7 @@ foundation
 | Principle | Says | Where decided |
 |---|---|---|
 | LATTICE is a framework | offer options and configuration, impose nothing correctness does not need | the design skill |
-| Identity and versions | a versioned thing keeps one persistent identity across immutable versions, linked by `fnd:supersededBy`. A version is never edited | Foundation, ADR-A07b, ADR-A51 |
+| Identity and versions | a versioned thing keeps one persistent identity across immutable versions, linked by `fnd:supersededBy`. A version is never edited | Foundation, ADR-A07b, ADR-A82 |
 | Versioning of ontologies | the substrate and standalone modules are one release with one number and one tag, `ontologies-vX.Y.Z`. Applied modules and examples keep their own versions and pin a release. Breaking changes at 0.x are MINOR, marked breaking | ADR-A129, ADR-A86, ADR-A113 |
 | The words are the contract | an instrument version is expressed in exactly one assembled wording, and binds exactly the stated meaning of what that wording includes | ADR-A104, ADR-A112 |
 | Stated and bound meaning | a clause states meaning once, with roles, words and placeholders. Bound meaning, with parties and values, is generated per instrument, never stored with it | ADR-A104 and its addenda |
@@ -53,6 +53,13 @@ foundation
 | Layers state, code executes | ontology layers, Behaviour's runtime included, are data. The evaluator counts, sums and forces deferred values. No layer that states meaning depends on a runtime | the ontology authoring skill |
 | Behaviour is abstract | a state machine that applied ontologies use, implemented differently by deployment, market or jurisdiction. Legal concepts live in Instrument, findings and execution in Behaviour | ADR-A106 |
 | Agent guidance | an always-on `AGENTS.md` and skills loaded by task | ADR-A117 |
+
+## Standards for structure
+
+- **An architectural quantum is the unit versioned and released as one, and its boundary is drawn so that a change inside it forces no other quantum to release.** Today the substrate with the standalone modules is one quantum (ADR-A129) and each applied module is its own (ADR-A86). A change that has to release two quanta together marks a boundary in the wrong place. The term is architectural, and distinct from the claims ontology's `clm:Quantum`.
+- **Every architectural and design standard has a check that fails when it is broken, or a recorded reason it cannot.** A standard nothing checks holds only while an agent remembers it, and the knowledge index lists the ones nothing enforces.
+- **Whatever a tool can derive is derived on every build and never committed or edited by hand.** A fact keeps one source, and an edited copy of a derived one becomes a second source that drifts (ADR-A126, ADR-A134).
+- **A component justified by a cost, such as a resident server, a cache or a second store, is added only once that cost is measured and recorded.** A measured read-only open of 24 ms is why the knowledge index has no server (TSD-38).
 
 ## Before changing a dependency
 

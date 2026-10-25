@@ -73,6 +73,8 @@ Every piece of text, in documents, code comments, commit messages and replies:
 - keep rhetorical questions, emphatic short sentences and metaphors to a minimum
 - think critically. Look for logical gaps and errors, and present arguments as hypotheses where they
   are not settled
+- show structure with metadata a tool reads, and state a meaning once where it is defined rather than restating it in prose around it
+- name a thing by the term this repository already uses for it, never by a name another layer already defines for something else
 - do not coin technical terms from insurance market vocabulary. Producing bound meaning is
   **instantiation**, done by an **instantiator**, never a "binder" (skill `lattice-ontology-authoring`)
 - call a class that is a member of `fnd:Version` "versioned". Call a node "a version" only when it is

@@ -58,9 +58,53 @@ ki:Discovery
     rdf:type owl:Class ; rdfs:subClassOf ki:Node ; rdfs:label "discovery" ;
     rdfs:comment "Something found out by probing, measuring or being surprised. Earns its class from the check that a principle has supporting evidence, which is a query for discoveries." .
 
-ki:Rule
-    rdf:type owl:Class ; rdfs:subClassOf ki:Node ; rdfs:label "rule" ;
-    rdfs:comment "Prescriptive guidance an agent must follow within a stated scope. Earns its class from the query that replaces a 'go and read the guide' instruction in agent guidance." .
+ki:Standard
+    rdf:type owl:Class ; rdfs:subClassOf ki:Node ; rdfs:label "standard" ;
+    rdfs:comment "Prescriptive guidance an agent must follow within a stated scope, which the guides also call a rule. Its text lives once, in the skill or AGENTS.md section loaded for the work it governs, because a rule held only in a register is followed only by an agent that thinks to ask for it. The register indexes it. Earns its class from two queries no skill answers: which standards nothing enforces, and which apply to the work in hand." .
+
+ki:Stratum
+    rdf:type owl:Class ; rdfs:label "stratum" ;
+    rdfs:comment "The level a standard governs at, ordered by how far a change to it reaches and how dear it is to reverse. Earns its class from the check that a standard refines only one at its own level or above, so a narrow rule cannot be made to govern a broad one." .
+
+ki:level
+    rdf:type owl:DatatypeProperty ; rdfs:domain ki:Stratum ; rdfs:range xsd:integer ;
+    rdfs:label "level" ;
+    rdfs:comment "A stratum's place in the order, 1 the broadest. Earns its place from the refinement check, which compares levels." .
+
+ki:ArchitecturalStratum rdf:type ki:Stratum ; rdfs:label "architectural" ; ki:level 1 ;
+    rdfs:comment "Structure and how it evolves: what may depend on what, what is released as one, where a capability may live." .
+ki:DesignStratum rdf:type ki:Stratum ; rdfs:label "design" ; ki:level 2 ;
+    rdfs:comment "How a solution is shaped within the architecture: how a fact is modelled, named, identified and recorded." .
+ki:PracticeStratum rdf:type ki:Stratum ; rdfs:label "practice" ; ki:level 3 ;
+    rdfs:comment "How work is built, checked and run: code, queries, tests, tools and the lifecycle." .
+ki:ConventionStratum rdf:type ki:Stratum ; rdfs:label "convention" ; ki:level 4 ;
+    rdfs:comment "The form of text and names." .
+
+ki:stratum
+    rdf:type owl:ObjectProperty ; rdfs:domain ki:Standard ; rdfs:range ki:Stratum ;
+    rdfs:label "stratum" ;
+    rdfs:comment "Earns its place from the query for the standards at one level, for example every architectural standard a design must meet, without loading the practice and convention rules beneath them." .
+
+ki:refines
+    rdf:type owl:ObjectProperty ; rdfs:domain ki:Standard ; rdfs:range ki:Standard ;
+    rdfs:label "refines" ;
+    rdfs:comment "A narrower standard that implements a broader one, at the same level or below it. Earns its place from the query for what a broad standard means in practice, and from the check that refinement never points downward." .
+
+ki:enforcedBy
+    rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range ki:Capability ;
+    rdfs:label "enforced by" ;
+    rdfs:comment "The capability whose check fails when this is broken. A human review is not a check and is never recorded here. Earns its place from the query for what nothing enforces, which is the list of standards held up only by an agent remembering them." .
+
+ki:Origin
+    rdf:type owl:Class ; rdfs:label "origin" ;
+    rdfs:comment "Whether a standard was found written down or extrapolated from principles and the project's history. Earns its class from the query for the standards an agent proposed rather than found, which deserve the closest reading before ratification." .
+ki:Stated       rdf:type ki:Origin ; rdfs:label "stated" .
+ki:Extrapolated rdf:type ki:Origin ; rdfs:label "extrapolated" .
+
+ki:origin
+    rdf:type owl:ObjectProperty ; rdfs:domain ki:Standard ; rdfs:range ki:Origin ;
+    rdfs:label "origin" ;
+    rdfs:comment "Earns its place from the same query as ki:Origin." .
 
 ki:Pattern
     rdf:type owl:Class ; rdfs:subClassOf ki:Node ; rdfs:label "pattern" ;

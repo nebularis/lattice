@@ -17,6 +17,7 @@ the project. Every claim about a store elsewhere, in a sketch, an ADR, a Validat
    reproduction.
 3. If the record is silent, do not reason from memory about what SPARQL or a store does. Probe it. Two of the typed IR's first
    rules were written from memory and were wrong (record §7.2).
+4. Validate on the strictest engine a consumer may use, not only on rdflib, which accepts IRIs and updates that others refuse (record TSD-35, TSD-37).
 
 ## Probing a store
 

@@ -25,6 +25,13 @@ It imposes no design decision on its users unless correctness needs it. It offer
 where it can, configuration and capabilities that work on the user's chosen settings. A design that
 hard-codes one domain's practice as the only way is wrong at the substrate.
 
+## Standards for a design
+
+- **A class, column, status or classification is added only when some query or check answers differently because of it.** A distinction that changes no answer is one more thing to keep consistent, for nothing.
+- **A fact a query or check compares is a value from a closed set, never free text.** Free text cannot be compared and drifts into variants, as the decisions' status lines drifted into fifteen shapes.
+- **A section, row or definition is referred to by a name that survives an edit, never by its position.** A line number or a column index is right until the next edit, then silently wrong.
+- **A thing is recorded once, however many documents mention it, and every other mention points at that record.** Two records of one thing diverge, as the two copies of the MORK-to-RML compiler have (TD-79).
+
 ## Writing a sketch or a plan
 
 - Re-read the latest version of everything the design touches. Never work from memory, and above
