@@ -48,6 +48,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import pyoxigraph as ox
+# ponytail: PyYAML is declared by tools/mork, not by this tooling, which declares nothing of its
+# own. Declare it here if tools/knowledge becomes a package.
+import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -55,6 +58,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import anchors  # noqa: E402
 import identifiers  # noqa: E402
 import lattice_repo_catalogue  # noqa: E402
+import quanta  # noqa: E402
 
 ROOT = identifiers.ROOT
 STORE_PATH = ROOT / ".build" / "knowledge" / "store"
@@ -155,6 +159,7 @@ class Extract:
     quads: list[ox.Quad] = field(default_factory=list)
     counts: dict[str, int] = field(default_factory=dict)
     problems: list[str] = field(default_factory=list)
+    findings: list[str] = field(default_factory=list)
 
     def bump(self, key: str, by: int = 1) -> None:
         self.counts[key] = self.counts.get(key, 0) + by
@@ -261,6 +266,9 @@ COLUMNS: dict[str, tuple[str, str]] = {
     "Supports": ("supports", "ids"),
     "Enforced by": ("enforcedBy", "ids"),
     "Stratum": ("stratum", "stratum"),
+    "Governs": ("governs", "names"),
+    "Fitness scope": ("fitnessScope", "fitnessScope"),
+    "Cadence": ("cadence", "cadence"),
     "Origin": ("origin", "origin"),
     "Cost": ("cost", "text"),
     "Owner": ("ownedBy", "module"),
@@ -289,6 +297,8 @@ CONTROLLED = {
     "stratum": {"architectural": "ArchitecturalStratum", "design": "DesignStratum",
                 "practice": "PracticeStratum", "convention": "ConventionStratum"},
     "origin": {"stated": "Stated", "extrapolated": "Extrapolated"},
+    "fitnessScope": {"atomic": "Atomic", "holistic": "Holistic"},
+    "cadence": {"triggered": "Triggered", "continual": "Continual"},
 }
 
 SEPARATOR_RE = re.compile(r"^\|[\s:|-]+\|?$")
@@ -426,6 +436,13 @@ def register_rows(out: Extract) -> None:
                                     )
                                 for unit in units or []:
                                     add(prop, ox.NamedNode(KI + "module/" + unit))
+                        elif kind == "names":
+                            # A quantum is derived, so it is named rather than defined in a
+                            # document. A test checks every name resolves to a derived quantum.
+                            for name in (n.strip() for n in cell.split(",")):
+                                if name:
+                                    add(prop, node(name))
+                                    out.bump(prop)
                         elif kind == "ids":
                             for other in waited_on(cell):
                                 if other != canonical:
@@ -578,6 +595,92 @@ def load_ontologies(store: ox.Store, out: Extract) -> None:
             out.bump("ontology-document-failed")
 
 
+VIEW = {"data": "DataView", "software": "SoftwareView"}
+
+
+def derive_quanta(store: ox.Store, out: Extract) -> None:
+    """Every architectural quantum of the data and software views, derived from coupling.
+
+    The data view reads the imports between the ontology documents already loaded, and the software
+    view each deployment's compose file. See quanta.py for the rules.
+    """
+    catalogue = lattice_repo_catalogue.load(ROOT)
+    modules = {m.name: m for m in catalogue.modules.values()}
+    paths = sorted(
+        ((Path(m.path).resolve().relative_to(ROOT).as_posix(), m.name) for m in modules.values()),
+        key=lambda pair: -len(pair[0]),
+    )
+
+    def module_of(rel: str) -> str | None:
+        return next((name for path, name in paths if rel == path or rel.startswith(path + "/")), None)
+
+    graph = "https://lattice.local/graph/"
+    declared: dict[str, str] = {}
+    for row in store.query(
+        "PREFIX owl: <http://www.w3.org/2002/07/owl#> SELECT ?g ?o ?v WHERE { GRAPH ?g { ?o a owl:Ontology "
+        "OPTIONAL { ?o owl:versionIRI ?v } } }"
+    ):
+        rel = str(row["g"].value).removeprefix(graph)
+        for term in (row["o"], row["v"]):
+            if term is not None:
+                declared[str(term.value)] = rel
+    imports: set[tuple[str, str]] = set()
+    for row in store.query(
+        "PREFIX owl: <http://www.w3.org/2002/07/owl#> SELECT ?g ?t WHERE { GRAPH ?g { ?x owl:imports ?t } }"
+    ):
+        importer = module_of(str(row["g"].value).removeprefix(graph))
+        target = declared.get(str(row["t"].value))
+        imported = module_of(target) if target else None
+        if importer and imported and importer != imported:
+            imports.add((importer, imported))
+
+    readme = {
+        name: f"{path}/README.md" for path, name in paths if (ROOT / path / "README.md").exists()
+    }
+    found, straddling = quanta.data_quanta(
+        {n: m.kind for n, m in modules.items()},
+        imports,
+        {m.name for m in catalogue.release_members()},
+        readme,
+    )
+    for name in straddling:
+        out.findings.append(
+            f"{name} shares the substrate's release number although nothing in the substrate imports "
+            f"it, so the release policy places it across a quantum boundary"
+        )
+    for path in tracked("deployment/*/docker-compose.yml", "deployment/**/docker-compose.yml"):
+        rel = path.relative_to(ROOT).as_posix()
+        # A deployment is named by its directory below the deployment root, read from the path git
+        # gave, so the root is never rebuilt here (ADR-A121).
+        deployment = "/".join(Path(rel).parts[1:-1])
+        found += quanta.software_quanta(deployment, yaml.safe_load(path.read_text(encoding="utf-8")) or {}, rel)
+
+    quads: list[ox.Quad] = []
+    for q in found:
+        subject = node(q.identifier)
+        quads += [
+            ox.Quad(subject, RDF_TYPE, ki("Quantum"), INDEX_GRAPH),
+            ox.Quad(subject, ki("identifier"), ox.Literal(q.identifier), INDEX_GRAPH),
+            ox.Quad(subject, ki("claim"), ox.Literal(q.claim), INDEX_GRAPH),
+            ox.Quad(subject, ki("pointer"), ox.Literal(anchors.resolve_part(ROOT, q.pointer)), INDEX_GRAPH),
+            ox.Quad(subject, ki("view"), ki(VIEW[q.view]), INDEX_GRAPH),
+        ]
+        if q.deployment:
+            quads.append(ox.Quad(subject, ki("deployment"), ox.Literal(q.deployment), INDEX_GRAPH))
+        for part in q.parts:
+            if q.view == "data":
+                iri, kind = ox.NamedNode(KI + "module/" + part), "Module"
+            else:
+                iri, kind = ox.NamedNode(KI + f"component/{q.deployment}/{part}"), "Component"
+            quads += [
+                ox.Quad(subject, ki("includes"), iri, INDEX_GRAPH),
+                ox.Quad(iri, RDF_TYPE, ki(kind), INDEX_GRAPH),
+                ox.Quad(iri, RDFS_LABEL, ox.Literal(part), INDEX_GRAPH),
+            ]
+        out.bump(f"quantum:{q.view}")
+    store.bulk_extend(quads)
+
+
 def build(store_path: Path) -> Extract:
     out = Extract()
     start = time.perf_counter()
@@ -597,6 +700,8 @@ def build(store_path: Path) -> Extract:
     load_ontologies(store, out)
     # After the documents are loaded, because the summary is derived by query over them.
     term_summary(store, out)
+    # After the documents are loaded, because data-view coupling is read from their imports.
+    derive_quanta(store, out)
     store.flush()
     store.optimize()
 
@@ -619,6 +724,8 @@ def main() -> int:
             print(f"  {key:<28} {out.counts[key]}")
     for problem in out.problems:
         print(f"NOTE: {problem}")
+    for finding in out.findings:
+        print(f"FINDING: {finding}")
     print(f"knowledge index built at {Path(arguments.store).relative_to(ROOT).as_posix()}")
     return 0
 

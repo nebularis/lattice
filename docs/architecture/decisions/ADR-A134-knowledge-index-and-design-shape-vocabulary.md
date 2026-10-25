@@ -61,6 +61,20 @@ A survey of open-source alternatives found none that indexes knowledge collatera
 
 **What this does not do.** It does not replace the existing checks that already read Turtle, such as the import guard, and rewriting those as SHACL would be a lateral move. It indexes no code symbols, on the ground that the failure we suffered was conceptual. It holds no narrative, so an agent still reads the document once the graph says which one.
 
+## Addendum of 2026-10-25: architectural quanta, derived per view
+
+The maintainer clarified the term the architecture skill used without defining it, following *Building Evolutionary Architectures* (Ford, Parsons, Kua and Sadalage). **An architectural quantum is the smallest set that must change and be released together because of its coupling, so its size is the lower bound on incremental change.** It grows with every dependency. It is also the scope that architectural characteristics, and the checks that test them, apply to. The term is distinct from the claims ontology's `clm:Quantum`.
+
+**16. A quantum is derived from coupling, never declared, and separately in each view.** One module or component falls into different quanta in different views. The data view reads imports among the ontology modules and the catalogue's kinds. The substrate layers are one quantum, and any other module is its own unless the substrate imports it, in which case the substrate's quantum grows to take it in. The software view is per deployment, read from what each component's configuration points at. Components sharing a store, or calling one another synchronously, are one quantum. A broker separates components only where nothing else couples them. The process view is modelled and not yet derived. `tools/knowledge/quanta.py` holds the rules.
+
+**17. A standard is scoped by the quantum it governs**, `ki:governs`, replacing `Owner` on the standard register. A standard with none applies to every quantum. Ownership, where something lives, stays `ki:ownedBy` on the other registers, since it is a different fact.
+
+**18. A check that enforces a standard is a fitness function, classified by scope and cadence.** Atomic or holistic, triggered or continual. Every check today is atomic and triggered. Nothing assesses characteristics in combination and nothing runs continually, and the classification makes that a query rather than an impression.
+
+**19. The design standards are rules about connascence, and bind hardest across a quantum boundary.** Addressing by name rather than position, closed values rather than free text, and one record per thing each weaken a form of connascence. Inside a quantum a stronger form is tolerable. Across a boundary it is not, and every failure that led to those standards crossed one.
+
+Two findings were derived on the day. MORK, Persistence, SPC and Surface share the substrate's release number although nothing in the substrate imports them, so ADR-A129 places them across a quantum boundary. Whether they should leave that release is PDD-12, and not decided here. And in the authoring deployment the service and its worker talk through RabbitMQ yet share Fuseki, so they are one quantum, and the broker does not separate them.
+
 ## Provenance
 
 The design was presented to the maintainer in session on 2026-10-24, over four exchanges that narrowed it from a blast-radius index to this, and was approved in writing, including the T-Box split of decision 5 and the store choice of decision 13, both of which the maintainer proposed. The maintainer authorised recording the decisions as accepted without separate countersignature, and authorised the work on the `docs/placement-vehicles-structure` branch. Decision 14 replaced an earlier proposal for an optional long-running server after the measurement in TSD-38 was taken. The alternatives considered, the survey of open-source tools behind the Context section, and the costs are in the [sketch](../../developer/sketches/knowledge-index.md).

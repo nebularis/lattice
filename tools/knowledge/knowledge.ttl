@@ -150,7 +150,7 @@ ki:declaredAs
     rdfs:comment "What the module declared the term to be, as written, for example owl:Class or skos:Concept. Earns its place from the term query, which has to distinguish a class from a property before an agent can tell whether a mechanism is the one it needs." .
 
 ki:Module
-    rdf:type owl:Class ; rdfs:label "module" ;
+    rdf:type owl:Class ; rdfs:subClassOf ki:Part ; rdfs:label "module" ;
     rdfs:comment "An ontology layer, standalone module or tool package, as repository-catalogue.md names it. The catalogue stays the source and this is read from it, never restated (ADR-A134 decision 2)." .
 
 #################################################################
@@ -343,3 +343,75 @@ ki:citedWith
     rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range ki:Node ;
     rdfs:label "cited with" ;
     rdfs:comment "Two identifiers written on one line. A hint for navigation, never evidence. Untyped, so it cannot say whether one answers, supersedes or merely mentions the other, and measured to over-reach: 2,458 such edges exist, most of them through hub documents. ADR-A134 decision 7 forbids any SHACL constraint from reading it." .
+
+#################################################################
+#    Architectural quanta, derived per view (ADR-A134, addendum of 2026-10-25)
+#################################################################
+
+ki:Quantum
+    rdf:type owl:Class ; rdfs:subClassOf ki:Node ; rdfs:label "architectural quantum" ;
+    rdfs:comment "The smallest set that must change and be released together because of its coupling, so its size is the lower bound on incremental change. Derived from coupling, never declared, and in each view separately. Distinct from the claims ontology's clm:Quantum. Earns its class from the query for what a change actually reaches, and as the scope a standard governs." .
+
+ki:View
+    rdf:type owl:Class ; rdfs:label "view" ;
+    rdfs:comment "The architecture a quantum is derived in. Earns its class because the same module or component falls into different quanta in different views, so a quantum without its view is ambiguous." .
+ki:DataView     rdf:type ki:View ; rdfs:label "data" ;
+    rdfs:comment "Derived from imports and release membership among the ontology modules." .
+ki:SoftwareView rdf:type ki:View ; rdfs:label "software" ;
+    rdfs:comment "Derived from how a deployment's components share stores and call each other, so it is per deployment." .
+ki:ProcessView  rdf:type ki:View ; rdfs:label "process" ;
+    rdfs:comment "Derived from which steps of a process must change together. Not yet derived." .
+
+ki:view
+    rdf:type owl:ObjectProperty ; rdfs:domain ki:Quantum ; rdfs:range ki:View ;
+    rdfs:label "view" ;
+    rdfs:comment "Earns its place from the query for the quanta of one view, for example the runtime quanta of a deployment without the data quanta." .
+
+ki:Part
+    rdf:type owl:Class ; rdfs:label "part" ;
+    rdfs:comment "What a quantum is made of: a module in the data view, a component in the software view. Earns its class as the range that lets one query list everything in a quantum whatever its view." .
+
+ki:Component
+    rdf:type owl:Class ; rdfs:subClassOf ki:Part ; rdfs:label "component" ;
+    rdfs:comment "A service of a deployment, such as an application service, a worker, a store or a broker. Earns its class from the software view, which is made of these rather than of catalogue modules." .
+
+ki:includes
+    rdf:type owl:ObjectProperty ; rdfs:domain ki:Quantum ; rdfs:range ki:Part ;
+    rdfs:label "includes" ;
+    rdfs:comment "Earns its place from the query for what a change to one part reaches, which is the rest of its quantum." .
+
+ki:deployment
+    rdf:type owl:DatatypeProperty ; rdfs:domain ki:Quantum ; rdfs:range xsd:string ;
+    rdfs:label "deployment" ;
+    rdfs:comment "The deployment a software-view quantum belongs to. Earns its place because a runtime quantum depends on how components are configured and deployed, so two deployments of the same code can form different quanta." .
+
+ki:governs
+    rdf:type owl:ObjectProperty ; rdfs:domain ki:Standard ; rdfs:range ki:Quantum ;
+    rdfs:label "governs" ;
+    rdfs:comment "The quantum a standard applies to, since architectural characteristics are scoped per quantum and one quantum's standard need not bind another. A standard with no ki:governs applies to every quantum. Earns its place from the query for the standards that govern a given quantum." .
+
+ki:FitnessScope
+    rdf:type owl:Class ; rdfs:label "fitness scope" ;
+    rdfs:comment "Whether a check assesses one architectural characteristic or several in combination. Earns its class from the query for which characteristics have only atomic checks." .
+ki:Atomic   rdf:type ki:FitnessScope ; rdfs:label "atomic" ;
+    rdfs:comment "One characteristic, however wide the part of the system it inspects." .
+ki:Holistic rdf:type ki:FitnessScope ; rdfs:label "holistic" ;
+    rdfs:comment "Several characteristics in combination, in a shared context." .
+
+ki:fitnessScope
+    rdf:type owl:ObjectProperty ; rdfs:domain ki:Capability ; rdfs:range ki:FitnessScope ;
+    rdfs:label "fitness scope" ;
+    rdfs:comment "Earns its place from the same query as ki:FitnessScope." .
+
+ki:Cadence
+    rdf:type owl:Class ; rdfs:label "cadence" ;
+    rdfs:comment "When a check runs. Earns its class from the query for whether anything is checked continually rather than only when triggered." .
+ki:Triggered rdf:type ki:Cadence ; rdfs:label "triggered" ;
+    rdfs:comment "Run by an event: a commit, a merge, a task." .
+ki:Continual rdf:type ki:Cadence ; rdfs:label "continual" ;
+    rdfs:comment "Run constantly against a running system, as monitoring is." .
+
+ki:cadence
+    rdf:type owl:ObjectProperty ; rdfs:domain ki:Capability ; rdfs:range ki:Cadence ;
+    rdfs:label "cadence" ;
+    rdfs:comment "Earns its place from the same query as ki:Cadence." .

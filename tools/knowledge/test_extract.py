@@ -22,6 +22,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import extract  # noqa: E402
 import identifiers  # noqa: E402
+import lattice_repo_catalogue  # noqa: E402
 
 KI = extract.KI
 
@@ -524,3 +525,46 @@ def test_the_enforcement_gap_is_one_query(built):
     assert enforced > 0, "no standard is enforced, so the enforcement column was not read"
     assert unenforced > 0
     assert enforced + unenforced == count("")
+
+
+# The release members the release policy places outside the substrate's quantum, as derived on
+# 2026-10-25 and confirmed by the maintainer. A fitness function guards a boundary against drifting
+# further: a module that newly shares the release without being coupled to the substrate fails here.
+STRADDLING = frozenset({"mork", "persistence", "spc", "surface"})
+
+
+def test_the_data_quanta_follow_the_coupling(built):
+    out, store = built
+    substrate = {
+        str(r["p"].value) for r in _rows(store, """PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        SELECT ?p WHERE { GRAPH ki:index { ?q ki:identifier "data/substrate" ; ki:includes ?m . ?m rdfs:label ?p } }""")
+    }
+    catalogue = lattice_repo_catalogue.load(identifiers.ROOT)
+    assert substrate == {m.name for m in catalogue.modules.values() if m.kind == "substrate"}
+    release = {m.name for m in catalogue.release_members()}
+    assert release - substrate == STRADDLING, "the release policy straddles a different set of quanta"
+
+
+def test_a_broker_does_not_separate_the_authoring_service_from_its_worker(built):
+    """The finding the software view exists to make: in the authoring deployment the service and the
+    worker talk through RabbitMQ and share Fuseki, so they are one quantum."""
+    _, store = built
+    rows = _rows(store, """PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        SELECT ?id WHERE { GRAPH ki:index { ?q ki:deployment "compose/authoring" ; ki:identifier ?id ;
+        ki:includes ?a , ?b . ?a rdfs:label "authoring-service" . ?b rdfs:label "authoring-worker" } }""")
+    assert len(rows) == 1
+
+
+def test_a_governed_quantum_exists(built):
+    _, store = built
+    rows = _rows(store, "SELECT ?id ?q WHERE { GRAPH ki:index { ?s ki:governs ?q ; ki:identifier ?id "
+                        "FILTER NOT EXISTS { ?q a ki:Quantum } } }")
+    assert not [(str(r["id"].value), str(r["q"].value)) for r in rows]
+
+
+def test_every_enforcing_check_is_classified_as_a_fitness_function(built):
+    """So the absence of a holistic or a continual check is a query, not an impression."""
+    _, store = built
+    rows = _rows(store, """SELECT DISTINCT ?id WHERE { GRAPH ki:index { ?s ki:enforcedBy ?c . ?c ki:identifier ?id
+        FILTER (NOT EXISTS { ?c ki:fitnessScope ?f } || NOT EXISTS { ?c ki:cadence ?k }) } }""")
+    assert not [str(r["id"].value) for r in rows]
