@@ -9,7 +9,7 @@ end, so twenty questions in a prompt cost a second and a server would not earn i
 ([ADR-A134](../../docs/architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md)
 decision 14).
 
-Four questions, which are the ones agents actually ask:
+Five questions, which are the ones agents actually ask:
 
 ``exists <text>``
     does the project already have a term for this? Searches the 2,814 declared terms of every
@@ -17,6 +17,9 @@ Four questions, which are the ones agents actually ask:
     system although Foundation already models one, which is the error the index exists to prevent
 ``node <id>``
     what is this identifier, in one line, and where do I read it
+``read <id>``
+    the text itself: the current range or ranges the node's pointer resolves to, so an agent gets
+    the section in one call and not a handle to go and read
 ``reaches <id>``
     what does it touch, by the relations its own authors declared
 ``sparql <query>``
@@ -30,6 +33,7 @@ Usage, from the repository root::
 
     mise run graph:ask -- exists versioning
     mise run graph:ask -- node ADR-A131
+    mise run graph:ask -- read MEC-01
     mise run graph:ask -- reaches ADR-A131
 """
 
@@ -37,6 +41,8 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -44,6 +50,8 @@ import pyoxigraph as ox
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+import anchors  # noqa: E402
+import extract  # noqa: E402
 import identifiers  # noqa: E402
 
 ROOT = identifiers.ROOT
@@ -141,11 +149,65 @@ SELECT ?subject ?direction ?id ?kind ?status ?claim WHERE {
 )
 
 
+POINTERS = (
+    PREFIXES
+    + """
+SELECT ?subject ?pointer WHERE { GRAPH ?g { ?subject ki:pointer ?pointer } }"""
+)
+
+
+def read_ranges(db: ox.Store, identifier: str) -> list[tuple[str, str]]:
+    """The ``(path:start-end, text)`` of every range a node's pointer resolves to, as of the build.
+
+    A bare path is the whole file. The ranges were resolved from anchors when the index was built,
+    so the text read here is the text at those lines now, and a document edited since the build
+    is answered by rebuilding."""
+    subject = ox.NamedNode(KI + "node/" + identifiers.normalise(identifier))
+    found: list[tuple[str, str]] = []
+    for row in db.query(POINTERS, substitutions={ox.Variable("subject"): subject}):
+        for part in str(row["pointer"].value).split(","):
+            path, start, end = anchors.parse_range(part)
+            lines = (ROOT / path).read_text(encoding="utf-8", errors="replace").splitlines()
+            last = len(lines) if end is None else min(end, len(lines))
+            found.append((f"{path}:{start}-{last}", "\n".join(lines[start - 1 : last])))
+    return found
+
+
+def stale() -> bool:
+    """Whether any tracked file is newer than the build the store was made from.
+
+    A pointer resolves an anchor to a line range at build time, so an edit to a document after the
+    build would leave every pointer into it on the wrong lines, silently. Checking every tracked
+    file, rather than the ones the index read, also catches a new document the index should hold.
+    """
+    # ponytail: stats all ~2,200 tracked files, about 55 ms, which doubles a 50 ms query. Record
+    # the build's own source list with their mtimes if query latency comes to matter.
+    if not STORE_PATH.exists() or not extract.STAMP_PATH.exists():
+        return True
+    built_from = float(extract.STAMP_PATH.read_text(encoding="utf-8").strip())
+    names = subprocess.run(
+        ["git", "-C", str(ROOT), "ls-files", "-z"], capture_output=True, text=True, check=True
+    ).stdout.split("\0")
+    for name in names:
+        try:
+            if name and os.stat(ROOT / name).st_mtime > built_from:
+                return True
+        except FileNotFoundError:
+            continue
+    return False
+
+
 def store() -> ox.Store:
-    if not STORE_PATH.exists():
-        raise SystemExit(
-            f"no index at {STORE_PATH.relative_to(ROOT).as_posix()}. Run: mise run build:knowledge"
-        )
+    """The index, rebuilt first if any tracked file changed since it was built.
+
+    So an agent that edits a document and asks again gets the document as it now is, and never the
+    lines it held before. The rebuild costs about two seconds and happens once per change.
+    """
+    # ponytail: two agents finding the store stale at once both rebuild into the same directory.
+    # Build into a temporary directory and rename it into place if that race is ever seen.
+    if stale():
+        print("knowledge index is older than the files it reads, so rebuilding it", file=sys.stderr)
+        extract.build(STORE_PATH)
     return ox.Store.read_only(str(STORE_PATH))
 
 
@@ -187,6 +249,7 @@ def main() -> int:
     for name, helptext in (
         ("exists", "does a term for this already exist in any ontology module"),
         ("node", "what one identifier is, and where to read it"),
+        ("read", "the text of the section or definition an identifier's pointer names"),
         ("reaches", "what an identifier touches, by declared relations"),
         ("sparql", "run a SPARQL query against the index"),
     ):
@@ -196,6 +259,17 @@ def main() -> int:
 
     db = store()
     question = f"{arguments.question} {arguments.argument}"
+
+    if arguments.question == "read":
+        pieces = read_ranges(db, arguments.argument)
+        if not pieces:
+            log_miss(question)
+            print(f"nothing to read for: {arguments.argument}")
+            return 0
+        for where, text in pieces:
+            print(f"== {where}")
+            print(text)
+        return 0
 
     if arguments.question == "exists":
         needle = ox.Literal(arguments.argument)

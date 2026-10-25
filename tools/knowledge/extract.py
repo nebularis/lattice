@@ -52,11 +52,15 @@ import pyoxigraph as ox
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+import anchors  # noqa: E402
 import identifiers  # noqa: E402
 import lattice_repo_catalogue  # noqa: E402
 
 ROOT = identifiers.ROOT
 STORE_PATH = ROOT / ".build" / "knowledge" / "store"
+# When the store was built from, as the build's start time. A query compares every tracked file
+# against it, so the index never answers from lines a document no longer holds.
+STAMP_PATH = ROOT / ".build" / "knowledge" / "built-from"
 TBOX_PATH = Path(__file__).resolve().parent / "knowledge.ttl"
 SHAPES_PATH = Path(__file__).resolve().parent / "design-shapes.ttl"
 SHAPE_NS = "https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes#"
@@ -181,8 +185,9 @@ def decisions(out: Extract) -> dict[str, ox.NamedNode]:
                 out.quads.append(
                     ox.Quad(subject, ki("claim"), ox.Literal(shorten(title.group("title"))), INDEX_GRAPH)
                 )
+                start, end = anchors.section_at(lines, number)
                 out.quads.append(
-                    ox.Quad(subject, ki("pointer"), ox.Literal(f"{rel}:{number}"), INDEX_GRAPH)
+                    ox.Quad(subject, ki("pointer"), ox.Literal(f"{rel}:{start}-{end}"), INDEX_GRAPH)
                 )
             elif (st := STATUS_RE.match(line)) is not None and not seen_status:
                 # Only the header's Status line is the decision's status. A later one belongs to a
@@ -391,9 +396,16 @@ def register_rows(out: Extract) -> None:
                             has_claim = True
                         elif kind == "label":
                             out.quads.append(ox.Quad(subject, RDFS_LABEL, ox.Literal(cell), INDEX_GRAPH))
+                        elif kind == "text" and prop == "pointer":
+                            # An anchor, resolved against the files as they are now. One that no longer
+                            # resolves is reported, never replaced by a guessed range.
+                            ranges, failed = anchors.resolve(ROOT, cell)
+                            out.problems.extend(f"{here} has Pointer {reason}" for reason in failed)
+                            if ranges:
+                                add("pointer", ox.Literal(",".join(ranges)))
+                            has_pointer = True
                         elif kind == "text":
-                            add(prop, ox.Literal(cell.replace("`", "") if prop in ("pointer", "entryPoint") else cell))
-                            has_pointer = has_pointer or prop == "pointer"
+                            add(prop, ox.Literal(cell.replace("`", "") if prop == "entryPoint" else cell))
                             if prop == "problemShape":
                                 out.bump("problem-shape")
                         elif kind == "module":
@@ -435,7 +447,7 @@ def register_rows(out: Extract) -> None:
                                     add(prop, ki(CONTROLLED[kind][value]))
                     add("status", ki(status))
                     if not has_pointer:
-                        add("pointer", ox.Literal(f"{rel}:{number}"))
+                        add("pointer", ox.Literal(f"{rel}:{number}-{number}"))
                     if not has_claim:
                         out.problems.append(f"{here} has no extractable claim")
                     out.bump(family.name)
@@ -447,9 +459,8 @@ def discoveries(out: Extract) -> None:
     for pattern in family.defines:
         for path in sorted(ROOT.glob(pattern)):
             rel = path.relative_to(ROOT).as_posix()
-            for number, line in enumerate(
-                path.read_text(encoding="utf-8", errors="replace").splitlines(), 1
-            ):
+            lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+            for number, line in enumerate(lines, 1):
                 stripped = line.strip()
                 if not stripped.startswith("#"):
                     continue
@@ -462,7 +473,8 @@ def discoveries(out: Extract) -> None:
                 claim = heading[match.end() :].lstrip(". ").strip()
                 out.quads.append(ox.Quad(subject, RDF_TYPE, ki("Discovery"), INDEX_GRAPH))
                 out.quads.append(ox.Quad(subject, ki("identifier"), ox.Literal(canonical), INDEX_GRAPH))
-                out.quads.append(ox.Quad(subject, ki("pointer"), ox.Literal(f"{rel}:{number}"), INDEX_GRAPH))
+                start, end = anchors.section_at(lines, number)
+                out.quads.append(ox.Quad(subject, ki("pointer"), ox.Literal(f"{rel}:{start}-{end}"), INDEX_GRAPH))
                 out.quads.append(ox.Quad(subject, ki("claim"), ox.Literal(shorten(claim)), INDEX_GRAPH))
                 out.bump("store-discovery")
 
@@ -560,6 +572,8 @@ def load_ontologies(store: ox.Store, out: Extract) -> None:
 def build(store_path: Path) -> Extract:
     out = Extract()
     start = time.perf_counter()
+    # Taken before reading anything, so a file edited while the build runs is caught next time.
+    built_from = time.time()
     if store_path.exists():
         shutil.rmtree(store_path)
     store_path.parent.mkdir(parents=True, exist_ok=True)
@@ -579,6 +593,8 @@ def build(store_path: Path) -> Extract:
 
     out.counts["quads"] = len(list(store.quads_for_pattern(None, None, None, None)))
     out.counts["seconds"] = round(time.perf_counter() - start, 2)
+    if store_path == STORE_PATH:
+        STAMP_PATH.write_text(f"{built_from}\n", encoding="utf-8")
     return out
 
 

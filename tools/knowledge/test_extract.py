@@ -10,7 +10,9 @@ and that one unreadable document does not take the corpus with it.
 
 from __future__ import annotations
 
+import re
 import sys
+import time
 from pathlib import Path
 
 import pyoxigraph as ox
@@ -352,3 +354,115 @@ def test_every_table_in_a_register_is_a_data_table():
                 if first not in {"ID", "#"}:
                     offenders.append(f"{path.relative_to(identifiers.ROOT)}:{number} starts with {first!r}")
     assert not offenders, offenders
+
+
+def test_a_range_follows_an_edit(tmp_path):
+    """The maintainer's requirement: when a document changes, a rebuild picks up the new range. A
+    pointer names an anchor, so inserting lines above a section moves its range by exactly that
+    many, and renaming the heading is reported and never answered with a guessed range."""
+    import anchors
+
+    doc = tmp_path / "doc.md"
+    doc.write_text("# Title\n\n## Alpha\na\n\n## Beta\nb1\nb2\n", encoding="utf-8")
+    assert anchors.resolve_part(tmp_path, "doc.md#beta") == "doc.md:6-8"
+    doc.write_text("new\nlines\nabove\n" + doc.read_text(encoding="utf-8"), encoding="utf-8")
+    assert anchors.resolve_part(tmp_path, "doc.md#beta") == "doc.md:9-11"
+    doc.write_text(doc.read_text(encoding="utf-8").replace("## Beta", "## Gamma"), encoding="utf-8")
+    ranges, problems = anchors.resolve(tmp_path, "doc.md#beta")
+    assert not ranges and problems and "no heading" in problems[0]
+
+
+def test_a_repeated_heading_is_suffixed_as_github_does(tmp_path):
+    import anchors
+
+    (tmp_path / "doc.md").write_text("## Same\nx\n## Same\ny\n```\n# not a heading\n```\n", encoding="utf-8")
+    assert anchors.resolve_part(tmp_path, "doc.md#same") == "doc.md:1-2"
+    assert anchors.resolve_part(tmp_path, "doc.md#same-1") == "doc.md:3-7"
+
+
+def test_a_line_number_is_refused_as_a_pointer(tmp_path):
+    import anchors
+
+    (tmp_path / "doc.md").write_text("# T\n", encoding="utf-8")
+    _, problems = anchors.resolve(tmp_path, "doc.md:1-3")
+    assert problems and "line number" in problems[0]
+
+
+def test_a_python_definition_resolves_to_its_ast_span(tmp_path):
+    import anchors
+
+    (tmp_path / "m.py").write_text('"""Doc."""\n\n\ndef f():\n    return 1\n\n\nclass C:\n    x = 1\n', encoding="utf-8")
+    assert anchors.resolve_part(tmp_path, "m.py::f") == "m.py:4-5"
+    assert anchors.resolve_part(tmp_path, "m.py::C") == "m.py:8-9"
+    assert anchors.resolve_part(tmp_path, "m.py::__doc__") == "m.py:1-1"
+    _, problems = anchors.resolve(tmp_path, "m.py::gone")
+    assert problems
+
+
+def test_a_toml_table_resolves_to_its_span(tmp_path):
+    import anchors
+
+    (tmp_path / "t.toml").write_text('[tasks."a:b"]\nrun = "x"\n\n[tasks.c]\nrun = "y"\n', encoding="utf-8")
+    assert anchors.resolve_part(tmp_path, "t.toml::a:b") == "t.toml:1-3"
+    assert anchors.resolve_part(tmp_path, "t.toml::c") == "t.toml:4-5"
+
+
+def test_the_slug_rule_matches_every_link_the_guides_already_use():
+    """The anchors mirror GitHub's, so the repository's own in-page links are the oracle."""
+    import re
+    import anchors
+
+    for rel in ("docs/architecture/rdf-sparql-patterns-guide.md", "docs/architecture/triple-store-discovery.md"):
+        text = (extract.ROOT / rel).read_text(encoding="utf-8")
+        slugs = {s for _, _, s in anchors.headings(text.splitlines())}
+        missing = sorted(l for l in set(re.findall(r"\]\(#([^)\s]+)\)", text)) if l not in slugs)
+        assert not missing, (rel, missing[:5])
+
+
+def test_every_authored_pointer_resolves_against_the_real_corpus(built):
+    out, store = built
+    assert not [p for p in out.problems if "has Pointer" in p], [p for p in out.problems if "has Pointer" in p][:5]
+    rows = one(
+        store,
+        f"""PREFIX ki: <{KI}>
+        SELECT ?id ?pointer WHERE {{ GRAPH ki:index {{ ?n ki:identifier ?id ; ki:pointer ?pointer }} }}""",
+    )
+    bad = [
+        str(r["id"].value)
+        for r in rows
+        for part in str(r["pointer"].value).split(",")
+        if not re.fullmatch(r".+:\d+-\d+", part)
+    ]
+    assert not bad, bad[:5]
+
+
+def test_read_returns_the_bounded_text_of_a_pointer(built):
+    import ask
+
+    _, store = built
+    pieces = ask.read_ranges(store, "MEC-01")
+    assert pieces and all(text.strip() for _, text in pieces)
+    path = pieces[0][0].rsplit(":", 1)[0]
+    whole = (extract.ROOT / path).read_text(encoding="utf-8").count("\n")
+    assert sum(text.count("\n") + 1 for _, text in pieces) < whole
+
+
+def test_a_query_rebuilds_an_index_older_than_the_files_it_reads(tmp_path, monkeypatch):
+    """The maintainer's requirement: when a document changes, the index must pick up the new line
+    range. A rebuild resolves every anchor afresh, but nothing made one happen, so an agent that
+    edited a document and asked again got the lines the document used to hold. Every query now
+    checks whether any tracked file is newer than the build, driven here through the stamp so no
+    tracked file is touched."""
+    import ask
+
+    store = tmp_path / "store"
+    store.mkdir()
+    stamp = tmp_path / "built-from"
+    monkeypatch.setattr(ask, "STORE_PATH", store)
+    monkeypatch.setattr(extract, "STAMP_PATH", stamp)
+
+    assert ask.stale(), "a store with no stamp has to be rebuilt"
+    stamp.write_text("0\n", encoding="utf-8")
+    assert ask.stale(), "a build older than every tracked file is stale"
+    stamp.write_text(f"{time.time() + 3600}\n", encoding="utf-8")
+    assert not ask.stale(), "a build newer than every tracked file is current"
