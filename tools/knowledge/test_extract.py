@@ -221,3 +221,39 @@ def test_an_audience_outside_the_set_is_reported_not_stored(tmp_path, monkeypatc
     out = _register(tmp_path, monkeypatch, "| ID | Claim | Audience |", "| MEC-1 | **A claim.** | public |")
     assert any("Audience 'public'" in p for p in out.problems)
     assert not [q for q in out.quads if q.predicate.value.endswith("#audience")]
+
+
+def test_an_owner_that_names_no_catalogue_unit_is_reported_not_minted(tmp_path, monkeypatch):
+    out = _register(tmp_path, monkeypatch, "| ID | Claim | Owner |", "| MEC-1 | **A claim.** | nowhere-in-particular |")
+    assert any("Owner 'nowhere-in-particular'" in p for p in out.problems)
+    assert not [q for q in out.quads if q.predicate.value.endswith("#ownedBy")]
+
+
+def test_a_capability_is_invoked_and_a_mechanism_is_adopted(built):
+    """The class definitions in knowledge.ttl, as checks. A capability has an entry point or a
+    pointer into code, and a mechanism never has an entry point."""
+    _, store = built
+    rows = one(
+        store,
+        f"""PREFIX ki: <{KI}>
+        SELECT ?id ?pointer WHERE {{ GRAPH ki:index {{
+          ?n a ki:Capability ; ki:identifier ?id ; ki:pointer ?pointer .
+          FILTER NOT EXISTS {{ ?n ki:entryPoint ?e }}
+        }} }}""",
+    )
+    assert rows, "the capability register must contribute capabilities"
+    prose = [str(r["id"].value) for r in rows if str(r["pointer"].value).split(":")[0].endswith(".md")]
+    assert not prose, f"capabilities with neither an entry point nor a pointer into code: {prose}"
+    mechanisms = one(
+        store,
+        f"""PREFIX ki: <{KI}>
+        SELECT ?id WHERE {{ GRAPH ki:index {{ ?n a ki:Mechanism ; ki:identifier ?id ; ki:entryPoint ?e }} }}""",
+    )
+    assert not [str(r["id"].value) for r in mechanisms]
+
+
+def test_every_capability_row_is_a_capability_node(built):
+    out, _ = built
+    assert out.counts["capability"] == len(
+        [l for l in (extract.ROOT / "docs/developer/plans/capabilities.md").read_text().splitlines() if l.startswith("| CAP-")]
+    )

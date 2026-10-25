@@ -50,8 +50,10 @@ from pathlib import Path
 import pyoxigraph as ox
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import identifiers  # noqa: E402
+import lattice_repo_catalogue  # noqa: E402
 
 ROOT = identifiers.ROOT
 STORE_PATH = ROOT / ".build" / "knowledge" / "store"
@@ -74,6 +76,7 @@ FAMILY_CLASS = {
     "technical-debt": "Debt",
     "store-discovery": "Discovery",
     "mechanism": "Mechanism",
+    "capability": "Capability",
 }
 
 # The status words a decision's Status line may open with, longest first so "Published" is not read
@@ -243,6 +246,7 @@ COLUMNS: dict[str, tuple[str, str]] = {
     "Pointer": ("pointer", "text"),
     "Problem shape": ("problemShape", "text"),
     "Shapes": ("tagged", "shapes"),
+    "Waits for": ("waitsOn", "waits"),
     "Owner": ("ownedBy", "module"),
     "Provided by": ("ownedBy", "module"),
     "Audience": ("audience", "audience"),
@@ -256,7 +260,7 @@ UNMAPPED_COLUMNS = frozenset(
     {
         "Built", "Conf", "Reuse note",
         "Spotted", "Cost while it stays", "Likely home",
-        "Raised", "Cost of deferring", "Options known", "Waits for",
+        "Raised", "Cost of deferring", "Options known",
     }
 )
 
@@ -269,11 +273,49 @@ CONTROLLED = {
 SEPARATOR_RE = re.compile(r"^\|[\s:|-]+\|?$")
 
 
+_UNITS: dict[str, list[str]] | None = None
+
+
+def owner_units(value: str) -> list[str] | None:
+    """The catalogue units an owner value names, as module IRI tails, or None if it names nothing.
+
+    The catalogue is the one source of modules and tool packages (ADR-A121), read by its own reader.
+    A value is a module name, a tool package's path or name, a root area's path, or a module kind
+    such as ``substrate``, which is every module of that kind. An annotation in parentheses is
+    stripped. A module IRI is its name and any other unit's is its path, so a tool package never
+    collides with the module of the same name.
+    """
+    global _UNITS
+    if _UNITS is None:
+        catalogue = lattice_repo_catalogue.load(identifiers.ROOT)
+        units: dict[str, list[str]] = {}
+        for tool in catalogue.tools:
+            units[tool.name] = units[tool.path] = [tool.path]
+        for area in catalogue.roots + catalogue.docs:
+            units[area.path.rstrip("/")] = [area.path.rstrip("/")]
+        for kind in {m.kind for m in catalogue.modules.values()}:
+            units[kind] = [m.name for m in catalogue.modules_of_kind(kind)]
+        for name in catalogue.modules:
+            units[name] = [name]
+        _UNITS = units
+    return _UNITS.get(re.sub(r"\s*\(.*?\)", "", value).strip(" `").rstrip("/"))
+
+
 def table_cells(line: str) -> list[str]:
     cells = line.strip().split("|")[1:]
     if cells and not cells[-1].strip():
         cells.pop()
     return [c.strip() for c in cells]
+
+
+def waited_on(cell: str) -> list[str]:
+    """Every identifier of a resolvable family written in a cell, once each, in order."""
+    found: dict[str, str] = {}
+    for family in identifiers.FAMILIES:
+        if family.resolvable:
+            for spelling in family.mention.findall(cell):
+                found.setdefault(identifiers.normalise(spelling), spelling)
+    return list(found.values())
 
 
 def register_rows(out: Extract) -> None:
@@ -343,14 +385,24 @@ def register_rows(out: Extract) -> None:
                         elif kind == "label":
                             out.quads.append(ox.Quad(subject, RDFS_LABEL, ox.Literal(cell), INDEX_GRAPH))
                         elif kind == "text":
-                            add(prop, ox.Literal(cell.replace("`", "") if prop == "pointer" else cell))
+                            add(prop, ox.Literal(cell.replace("`", "") if prop in ("pointer", "entryPoint") else cell))
                             has_pointer = has_pointer or prop == "pointer"
                             if prop == "problemShape":
                                 out.bump("problem-shape")
                         elif kind == "module":
-                            for owner in (o.strip(" `") for o in cell.split(",")):
-                                if owner:
-                                    add(prop, ox.NamedNode(KI + "module/" + owner.replace(" ", "-")))
+                            for owner in (o.strip() for o in cell.split(",")):
+                                units = owner_units(owner) if owner else []
+                                if units is None:
+                                    out.problems.append(
+                                        f"{here} has {header} '{owner}', which names no catalogue module or tool package"
+                                    )
+                                for unit in units or []:
+                                    add(prop, ox.NamedNode(KI + "module/" + unit))
+                        elif kind == "waits":
+                            for other in waited_on(cell):
+                                if other != canonical:
+                                    add(prop, node(other))
+                                    out.bump("waitsOn")
                         elif kind == "ratified":
                             value = CONTROLLED["ratified"].get(cell.lower())
                             if value is None:

@@ -146,6 +146,14 @@ FAMILIES: tuple[Family, ...] = (
         "because a mechanism that goes away is a change to record rather than a row to delete",
     ),
     Family(
+        name="capability",
+        mention=re.compile(r"\b(CAP-\d+)\b"),
+        definition="table-row",
+        defines=("docs/developer/plans/capabilities.md",),
+        note="what the project's own software can already do, so new work reuses it. A row is never "
+        "removed, because a capability that goes away is a change to record rather than a row to delete",
+    ),
+    Family(
         name="store-discovery",
         mention=re.compile(r"\b(TSD-\d+[a-z]?)\b"),
         definition="heading",
