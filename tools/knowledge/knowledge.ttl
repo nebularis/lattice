@@ -76,7 +76,7 @@ ki:Capability
 
 ki:Principle
     rdf:type owl:Class ; rdfs:subClassOf ki:Node ; rdfs:label "principle" ;
-    rdfs:comment "A durable design commitment. Earns its class from the check that every principle has at least one discovery or benchmark supporting it, so an opinion cannot be promoted to a principle." .
+    rdfs:comment "A durable design or method commitment. Earns its class from the check that a ratified principle rests on something: a deciding decision (ki:decidedBy) or a discovery or benchmark (ki:evidencedBy). Either grounds it, and one with neither is an opinion, so the check is applied at ratification, which is where the grounding should be supplied." .
 
 ki:Epic
     rdf:type owl:Class ; rdfs:subClassOf ki:Node ; rdfs:label "epic" ;
@@ -181,6 +181,11 @@ ki:cost
 #    Declared edges: a document states these, so a check may trust them
 #################################################################
 
+ki:decidedBy
+    rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range ki:Decision ;
+    rdfs:label "decided by" ;
+    rdfs:comment "The decision that settled a node, read from a register's Decided by column. Earns its place from the question whether a principle is binding, since one decided by an Accepted decision binds and one decided by a Proposed decision does not yet." .
+
 ki:dependsOn
     rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range ki:Node ;
     rdfs:label "depends on" ;
@@ -235,7 +240,7 @@ ki:solves
 ki:ownedBy
     rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range ki:Module ;
     rdfs:label "owned by" ;
-    rdfs:comment "Earns its place from the mechanism query, which must say which layer or tool a thing belongs to before an agent can reuse it." .
+    rdfs:comment "Earns its place from the mechanism query, which must say which layer or tool a thing belongs to before an agent can reuse it. A row with no owner governs the whole repository, so absence states universality rather than a missing value, which a principle uses where it binds every module." .
 
 ki:Audience
     rdf:type owl:Class ; rdfs:label "audience" ;

@@ -162,6 +162,14 @@ FAMILIES: tuple[Family, ...] = (
         "it. A row is never removed, because a pattern that is withdrawn is a change to record",
     ),
     Family(
+        name="principle",
+        mention=re.compile(r"\b(PRI-\d+)\b"),
+        definition="table-row",
+        defines=("docs/developer/plans/principles.md",),
+        note="a durable design commitment, as a handle on the document that states it and the decision "
+        "that settled it. A row is never removed, because a principle that is withdrawn is a change to record",
+    ),
+    Family(
         name="store-discovery",
         mention=re.compile(r"\b(TSD-\d+[a-z]?)\b"),
         definition="heading",

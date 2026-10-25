@@ -304,3 +304,27 @@ def test_exists_reaches_every_register_that_records_what_exists(built):
     assert "PAT-12" in found("pagination"), "a pattern must be found by its name"
     assert "CAP-22" in found("imports or names"), "a capability must be found by its claim"
     assert "MEC-01" in found("versioning"), "the gerund must still reach the noun"
+
+
+def test_a_ratified_principle_has_something_under_it(built):
+    """Nothing is ratified yet, so this passes. It fails the moment a principle is ratified with
+    neither a deciding decision nor evidence, which is when that support should be supplied."""
+    _, store = built
+    rows = one(
+        store,
+        f"""PREFIX ki: <{KI}>
+        SELECT ?id WHERE {{ GRAPH ki:index {{
+          ?n a ki:Principle ; ki:identifier ?id ; ki:status ki:Accepted .
+          FILTER NOT EXISTS {{ ?n ki:decidedBy ?d }}
+          FILTER NOT EXISTS {{ ?n ki:evidencedBy ?e }}
+        }} }}""",
+    )
+    assert not [str(r["id"].value) for r in rows], "ratified principles with no decision or evidence"
+
+
+def test_a_principle_is_found_by_a_word_in_its_claim(built):
+    import ask
+
+    _, store = built
+    rows = list(store.query(ask.EXISTS, substitutions={ox.Variable("needle"): ox.Literal("Undetermined")}))
+    assert any(str(r["where"].value) == "principle" for r in rows)

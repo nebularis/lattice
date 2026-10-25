@@ -187,8 +187,9 @@ A maintainer never writes Turtle. The authoring interface is a Markdown table ro
 | Technical debt | 49 rows, exists | `TD-*nn*` | `docs/developer/plans/technical-debt.md` |
 | Store discoveries | 36 entries, exists | `TSD-*nn*` | `docs/architecture/triple-store-discovery.md` |
 | Query rules | 36 entries, exists, needs a narrower reference rule | `R*n*` | `docs/architecture/efficient-queries-and-shapes.md` |
-| **Principles** | new | `PRI-*nn*` | `docs/developer/plans/principles.md` |
-| **Patterns** | new | `PAT-*nn*` | `docs/developer/plans/patterns.md` |
+| **Principles** | **62 rows drafted** | `PRI-*nn*` | [`docs/developer/plans/principles.md`](../plans/principles.md) |
+| **Patterns** | **54 rows drafted** | `PAT-*nn*` | [`docs/developer/plans/patterns.md`](../plans/patterns.md) |
+| **Capabilities** | **71 rows derived** | `CAP-*nn*` | [`docs/developer/plans/capabilities.md`](../plans/capabilities.md) |
 | **Mechanisms** | **83 rows drafted** | `MEC-*nn*` | [`docs/developer/plans/mechanisms.md`](../plans/mechanisms.md) |
 | **Design shapes** | **58 shapes in 10 facets, built** | slug | [`tools/knowledge/design-shapes.ttl`](../../../tools/knowledge/design-shapes.ttl) |
 
@@ -289,12 +290,12 @@ Minutes below are maintainer minutes, not agent minutes, and the work is ratifyi
 | Rules and standards, tagging | **258** | claims already exist | ~1 min | ~4.5 h |
 | Benchmark results | 21 | numbers already exist | ~2 min | ~40 min |
 | **Mechanisms**, ontology | 83 | **drafted**, unratified | ~2 min | ~3 h |
-| **Mechanisms**, tooling, checks, runtime | not yet swept | to draft | ~2 min | ~2 h |
-| **Patterns** | **127** | to draft | ~3 min | ~6.5 h |
-| **Principles** | **177** | to draft | ~3 min | ~9 h |
-| | | | | **~31 h** |
+| **Capabilities**, which tooling, checks and runtime services turned out to be | 71 | **derived** from 305 sources | ~1 min | ~1 h |
+| **Patterns** | 54, from 127 counted | **drafted** | ~3 min | ~2.5 h |
+| **Principles** | 62, from 177 counted | **drafted** | ~3 min | ~3 h |
+| | | | | **~21 h** |
 
-Thirty-one hours, against the twenty this section first claimed. Three things make that defensible rather than a reason to stop.
+About 21 hours. The raw counts behind an earlier estimate of 31 were taken before deduplication: one principle stated in `AGENTS.md`, the architecture skill and an ADR was three, and the sweep counted rules and process as principles. Drafted one row per thing, 177 principles became 62 and 127 patterns became 54. Three things make the figure defensible rather than a reason to stop.
 
 The index is useful from the first register, not the last. 83 mechanism rows and the shape scheme are already queryable, and §9.2's loop closes today.
 

@@ -92,7 +92,7 @@ SELECT DISTINCT ?needle ?where ?module ?name ?kind ?label ?pointer WHERE {
     # capability invoked, or a pattern applied. Matched on the claim and on a stated problem shape,
     # so an untagged row is still found by its own words (sketch section 9.1).
     GRAPH ki:index {
-      VALUES (?k ?where) { (ki:Mechanism "mechanism") (ki:Capability "capability") (ki:Pattern "pattern") }
+      VALUES (?k ?where) { (ki:Mechanism "mechanism") (ki:Capability "capability") (ki:Pattern "pattern") (ki:Principle "principle") }
       ?n a ?k ; ki:identifier ?name ; ki:claim ?label ; ki:pointer ?pointer .
       OPTIONAL { ?n ki:problemShape ?shape }
       OPTIONAL { ?n ki:built ?state }

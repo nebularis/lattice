@@ -78,6 +78,7 @@ FAMILY_CLASS = {
     "mechanism": "Mechanism",
     "capability": "Capability",
     "pattern": "Pattern",
+    "principle": "Principle",
 }
 
 # The status words a decision's Status line may open with, longest first so "Published" is not read
@@ -249,6 +250,7 @@ COLUMNS: dict[str, tuple[str, str]] = {
     "Shapes": ("tagged", "shapes"),
     "Waits for": ("waitsOn", "ids"),
     "Evidenced by": ("evidencedBy", "ids"),
+    "Decided by": ("decidedBy", "ids"),
     "Cost": ("cost", "text"),
     "Owner": ("ownedBy", "module"),
     "Provided by": ("ownedBy", "module"),
