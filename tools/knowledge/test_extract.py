@@ -328,3 +328,27 @@ def test_a_principle_is_found_by_a_word_in_its_claim(built):
     _, store = built
     rows = list(store.query(ask.EXISTS, substitutions={ox.Variable("needle"): ox.Literal("Undetermined")}))
     assert any(str(r["where"].value) == "principle" for r in rows)
+
+
+def test_every_table_in_a_register_is_a_data_table():
+    """A register shows its structure with metadata, not with words: a column's meaning is the
+    rdfs:comment of the T-Box property it maps to, written once. A register that explains its own
+    columns does so in a second table, whose first column is not an identifier, so that is what
+    fails. The first register written carried one, and every later register would have repeated it."""
+    registers = {
+        path
+        for family in identifiers.FAMILIES
+        if family.definition == "table-row"
+        for pattern in family.defines
+        for path in identifiers.ROOT.glob(pattern)
+    }
+    assert len(registers) >= 6
+    offenders = []
+    for path in sorted(registers):
+        lines = path.read_text(encoding="utf-8").splitlines()
+        for number, (line, below) in enumerate(zip(lines, lines[1:]), 1):
+            if line.startswith("|") and extract.SEPARATOR_RE.match(below.strip()):
+                first = line.strip().strip("|").split("|")[0].strip()
+                if first not in {"ID", "#"}:
+                    offenders.append(f"{path.relative_to(identifiers.ROOT)}:{number} starts with {first!r}")
+    assert not offenders, offenders

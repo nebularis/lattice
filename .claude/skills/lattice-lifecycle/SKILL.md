@@ -50,6 +50,8 @@ A learning that outlives its session goes into a register in the same change tha
 | a rule about how we write, name, structure or check something | the skill that an agent reads for that task, not a commit message |
 | a cost measured, with numbers | the discovery record, citing the benchmark |
 
+**A register's header is a title, its Unit type line and at most one line of state.** A column's meaning is the `rdfs:comment` of the T-Box property it maps to, written once, so a header explaining its columns restates it. `check:knowledge` fails a register holding a table whose first column is not `ID` or `#`.
+
 **How to write the entry.** One bolded lead sentence stating the claim, then the detail. The index extracts that sentence as the claim and never stores a second copy, so an entry whose first sentence is a preamble indexes as a preamble. Keep it under 200 characters and state the cost as well as the benefit.
 
 **Then refresh the index.**
