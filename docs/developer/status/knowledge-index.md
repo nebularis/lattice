@@ -1,0 +1,71 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+# Knowledge index: status
+
+**Unit ID:** `knowledge-index`
+**Sketch:** [knowledge-index.md](../sketches/knowledge-index.md)
+**ADR:** [ADR-A134](../../architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md), Accepted 2026-10-24, with the addendum of 2026-10-25
+**Branch:** `docs/placement-vehicles-structure`, not merged into `main`
+**Mode:** autonomous on the branch, at the maintainer's request
+
+## Position
+
+Built and not yet active. The index derives in about two seconds, `mise run graph:ask` answers from it in about 50 ms, and `check:knowledge` and `check:identifiers` pass. No agent uses it yet, because nothing tells an agent to ask it, and nothing outside this branch can reach it.
+
+The tasks below are what remains. Owner says who acts: **maintainer** for a decision or a judgement only the maintainer makes, **agent drafts** where an agent prepares the change and the maintainer approves it, **agent** where it needs no judgement.
+
+## Activation
+
+Without these, no agent uses the index. In order.
+
+| # | Task | Owner | Why it blocks |
+|---|---|---|---|
+| A1 | Approve an `AGENTS.md` instruction to ask the index before a design, modelling, code or efficiency decision, and before adding a mechanism, a dependency or a component: `graph:ask -- exists <the problem in your own words>`, then `read <ID>`. | agent drafts | No always-on text or skill mentions `graph:ask`. A rule a register holds is followed only by an agent told to ask for it. `AGENTS.md` reaches Copilot as well, through `build:agent-guidance` |
+| A2 | Approve replacing the heaviest "go and read" instructions in the skills with a query, which is KI-7 of the sketch. A sweep ranked 24 of them, and seven carry 90% of the reading they cause | agent drafts | the token saving is realised only here, and each replacement removes text agents follow today |
+| A3 | Decide whether the commit hooks run `check:identifiers` and `check:knowledge` on a change to a register or a working document, under [ADR-A133](../../architecture/decisions/ADR-A133-git-hooks.md) | maintainer | today a row an agent writes, with a dangling identifier or a tag outside the scheme, is caught only by a manual `mise run check` |
+| A4 | Add `build:knowledge` to `mise run bootstrap` | agent | ADR-A134 decision 13 says the index is built there, which is not yet true. A query rebuilds a stale index itself, so this is the least urgent |
+| A5 | Merge into `main`, or have the knowledge-index commits taken onto a branch of their own first. 18 of the branch's 44 commits are this unit's, interleaved with the Ledger and Ensemble work. Run `mise run hooks:merge` before merging on GitHub | maintainer | every other branch and every cloud agent works from `main` |
+
+## Ratification
+
+The index is useful before this is done, and a row is found by its own words even unratified. Ratifying makes it trustworthy. Sketch §8 states the row shapes and the estimate of about 21 maintainer hours.
+
+| # | Task | Owner | Note |
+|---|---|---|---|
+| R1 | **Read the 14 extrapolated standards first**: STD-001 to STD-004, STD-013 to STD-016, STD-022 to STD-025, STD-257 and STD-258 | maintainer | they are new rules an agent wrote, and their text is already in the skills and `AGENTS.md`, so agents already follow them unratified |
+| R2 | Review the design-shape scheme, `tools/knowledge/design-shapes.ttl`: 68 concepts, 175 synonyms, and the marked insurance-domain facet | maintainer | recall depends on it, and a wrong synonym misleads every query that reaches it |
+| R3 | Tag rows with design shapes. 540 rows across the five registers carry none, and six tags exist in all. Mechanisms first | maintainer | an untagged row is found only by its own words, which is the gap sketch §9.2 measured |
+| R4 | Ratify the registers: mechanisms (83), capabilities (71), patterns (54), principles (62), standards (270) | maintainer | a row is ratified by reading its pointer, correcting it, and setting Ratified to `yes` |
+| R5 | Ground 32 principles that rest on neither a decision nor a discovery, or drop them | maintainer | `check:knowledge` fails a ratified principle with nothing under it |
+| R6 | Scope standards to the quanta they govern. 256 of 270 have no `Governs`, which means they apply to every quantum | maintainer | a standard that binds one quantum and is read as binding all of them over-constrains the rest |
+
+## Decisions
+
+| # | Task | Owner |
+|---|---|---|
+| D1 | PDD-12: whether MORK, Persistence, SPC and Surface leave the substrate's release | maintainer |
+| D2 | The process view: which artefacts define a process quantum, so it can be derived | maintainer |
+| D3 | Which characteristics warrant a holistic or a continual fitness function. All 18 checks that enforce a standard are atomic and triggered | maintainer |
+| D4 | Which of the 14 extrapolated standards get a check, and which record why they cannot, as STD-002 requires | maintainer |
+| D5 | Add the method and naming principles the principle register left out, such as testing methodology and coding style, which were scoped out by mistake | agent drafts |
+| D6 | TSD-37: whether `ontology/mork/test/data/Contracts.ttl` is live input or an orphan | maintainer |
+
+## Clean-up the index has found
+
+None blocks activation. Each is a defect the index surfaced, recorded where it belongs.
+
+| # | Task | Owner |
+|---|---|---|
+| C1 | Give the seven decisions that carry a `## Status` section a `**Status:**` header field: ADR-A04, ADR-A07, ADR-A07b, ADR-A08, ADR-A09, ADR-A10 and ADR-A11. Without it they have no status in the index | agent |
+| C2 | Add a `**Unit:**` line to the 96 decisions without one | agent drafts |
+| C3 | Correct the 18 non-canonical identifier spellings, `identifiers.py --variants`, among them four decisions cited with a non-breaking hyphen and ADR-AC2 written `ADR-A-C2` 125 times | agent |
+| C4 | Review the 26 citations of register entries since removed, `identifiers.py --rehomed`. A document citing one may be stale | maintainer |
+| C5 | Draft ADR-A101, ADR-A108 and ADR-A109, or remove the references to them. They are in `tools/knowledge/identifier-exceptions.txt` as planned and never drafted | maintainer |
+| C6 | TD-78, TD-79 and TD-80 | agent drafts |
+| C7 | Give six platform components and two apps a README, so they have a capability row: `platform-outbox`, `release-integration`, `semantic-dataset-fuseki`, `semantic-dataset-spi`, `semantic-policy`, `surface-workflow`, `mork-review-workbench` and `surface-contract-studio` | agent drafts |
+| C8 | Declare PyYAML for `tools/knowledge`, which borrows it from `tools/mork` | agent |
+
+## History
+
+- 2026-10-24. Unit started. Identifier check, sketch, ADR-A134, T-Box, extractor, query surface, the mechanism register and the design-shape scheme built. The resident server was dropped on a measurement (TSD-38).
+- 2026-10-25. Capability, pattern, principle and standard registers built. Pointers became anchors resolved at every build, and a query rebuilds a stale index. Architectural quanta derived per view (ADR-A134 addendum). This record written, with the tasks that remain.

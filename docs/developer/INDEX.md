@@ -556,7 +556,8 @@ non-blocking track.
 |-------|-------|
 | **Status** | 🚧 KI-1 and KI-2 complete, KI-3 and KI-5 built. `mise run check:identifiers`, `mise run check:knowledge`, `mise run build:knowledge`, `mise run graph:ask`. KI-4, the mechanism register, is the next and highest-value slice. KI-6 waits on the registers and KI-7 on the shape vocabulary. KI-8 was dropped by measurement |
 | **Unit ID** | `knowledge-index` |
-| **Sketch** | [knowledge-index.md](sketches/knowledge-index.md) |
+| **Sketch** | [knowledge-index.md](sketches/knowledge-index.md), and for consumers [knowledge-index-for-consumers.md](sketches/knowledge-index-for-consumers.md) (KC-Q1 to KC-Q7) |
+| **Status Record** | [knowledge-index.md](status/knowledge-index.md), which lists what remains before agents use it |
 | **ADRs** | [A-134](../architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md), Accepted 2026-10-24 |
 | **Discoveries** | TSD-37 (a strict parser refuses IRIs rdflib accepts), TSD-38 (a read-only open is six times cheaper, and the queries are not the cost) |
 

@@ -43,7 +43,7 @@ A survey of open-source alternatives found none that indexes knowledge collatera
 
 **11. Enumeration is from `git ls-files`, never a filesystem walk.** A checkout can hold ignored directories of confidential third-party material. The same rule excludes any third-party indexer pointed at this checkout, whatever its capability, and it excludes a tool with a hosted tier for the same reason.
 
-**12. A design shape never names private work.** Shapes are substrate-neutral problem statements. A shape naming a protected mechanism would make a public vocabulary a bridge out of the private estate. Any private-side index is a separate graph with no link to this one.
+**12. A design shape never names private work.** Shapes are substrate-neutral problem statements. A shape naming work that belongs to a private project would carry that work into a public vocabulary. A private project's own index is a separate graph with no link to this one.
 
 **13. The store is Oxigraph on disk under `.build/`, built on bootstrap, refreshed when a source changes, and never committed.** A reader opens it read-only, which is both the faster mode and the one that cannot write by accident.
 

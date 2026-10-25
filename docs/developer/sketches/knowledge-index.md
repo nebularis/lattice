@@ -168,7 +168,7 @@ flowchart TD
 
 Four rules, each of which is a decision rather than a preference.
 
-**Enumeration is from `git ls-files`, never a filesystem walk.** A checkout can hold ignored directories of confidential third-party material. A walk would read them. This is the rule the umbrella makes non-negotiable, and it is already enforced in the built slice.
+**Enumeration is from `git ls-files`, never a filesystem walk.** A checkout can hold ignored directories of confidential third-party material. A walk would read them. It is ADR-A134 decision 11, and is already enforced in the built slice.
 
 **Derived facts only.** Every fact keeps exactly one source. Decision metadata comes from ADR headers, module and path facts from `repository-catalogue.md` (the graph reads it and never restates it), layer edges from `owl:imports`, slice-to-file edges from git. A fact authored only in the graph makes the graph a second thing to maintain by hand, and it will drift inside a month exactly as `docs/developer/INDEX.md` did, which is 1,005 hand-maintained lines last updated 2026-09-25.
 
@@ -375,15 +375,15 @@ The extractor must also tolerate a document it cannot parse, per [TSD-37](../../
 
 The JVM is not in this design. `jena-text` is the only surveyed engine that offers a Lucene index inside SPARQL, and it is held in reserve for the case where keyword recall inside a query turns out to matter. The JVM's footprint rules it out until then.
 
-## 11. Placement and the umbrella
+## 11. Placement
 
 The index covers tracked documents of this public repository and nothing else. Three rules follow, and the first two are already enforced in the built slice.
 
-**Enumeration from `git ls-files`.** An ignored directory may hold archive or MERIDIAN-side material. No tool here walks the tree.
+**Enumeration from `git ls-files`.** An ignored directory may hold confidential material that is not this repository's. No tool here walks the tree.
 
 **No third-party indexer over this checkout.** A tool that walks the working tree, or that has a hosted tier, is excluded by the same rule, whatever its capability.
 
-**A design shape never names private work.** Shapes are substrate-neutral problem statements: `append-only-log`, `monotonic-growth`, `derived-identity`. A shape that named a protected mechanism would make the public vocabulary a bridge out of the private estate. If a private-side index is ever wanted it is a separate graph with no link to this one, and nothing from it enters here.
+**A design shape never names private work.** Shapes are substrate-neutral problem statements: `append-only-log`, `monotonic-growth`, `derived-identity`. A shape that named work belonging to a private project would carry that work into the public vocabulary. A private project's own index is a separate graph with no link to this one, and nothing from it enters here.
 
 ## 12. What the constraint checks catch
 
