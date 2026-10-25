@@ -257,3 +257,50 @@ def test_every_capability_row_is_a_capability_node(built):
     assert out.counts["capability"] == len(
         [l for l in (extract.ROOT / "docs/developer/plans/capabilities.md").read_text().splitlines() if l.startswith("| CAP-")]
     )
+
+
+def test_every_pattern_states_a_cost(built):
+    """A technique with no trade-off is a rule, not a pattern. An empty Cost cell is reported here
+    rather than filled with a guess."""
+    _, store = built
+    rows = one(
+        store,
+        f"""PREFIX ki: <{KI}>
+        SELECT ?id WHERE {{ GRAPH ki:index {{
+          ?n a ki:Pattern ; ki:identifier ?id .
+          FILTER NOT EXISTS {{ ?n ki:cost ?c }}
+        }} }}""",
+    )
+    assert not [str(r["id"].value) for r in rows], "patterns with no stated cost"
+
+
+def test_every_evidenced_by_target_exists(built):
+    """A declared edge to an identifier that no register defines would point at nothing."""
+    _, store = built
+    rows = one(
+        store,
+        f"""PREFIX ki: <{KI}>
+        SELECT ?n ?o WHERE {{ GRAPH ki:index {{
+          ?n ki:evidencedBy ?o .
+          FILTER NOT EXISTS {{ ?o ki:identifier ?id }}
+        }} }}""",
+    )
+    assert not [(str(r["n"].value), str(r["o"].value)) for r in rows]
+
+
+def test_exists_reaches_every_register_that_records_what_exists(built):
+    """An agent asks one question, "does this already exist", and must not need to know which
+    register holds the answer. The query once searched mechanisms alone, so every capability and
+    every pattern was invisible to it until tagged, and none were. A pattern is found by its name,
+    which is its most findable handle, and a capability by its claim."""
+    import ask
+
+    _, store = built
+
+    def found(needle: str) -> set[str]:
+        rows = store.query(ask.EXISTS, substitutions={ox.Variable("needle"): ox.Literal(needle)})
+        return {str(r["name"].value) for r in rows if r["name"] is not None}
+
+    assert "PAT-12" in found("pagination"), "a pattern must be found by its name"
+    assert "CAP-22" in found("imports or names"), "a capability must be found by its claim"
+    assert "MEC-01" in found("versioning"), "the gerund must still reach the noun"

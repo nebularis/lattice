@@ -88,16 +88,22 @@ SELECT DISTINCT ?needle ?where ?module ?name ?kind ?label ?pointer WHERE {
     BIND (REPLACE(STR(?c), "^.*#", "") AS ?module)
     BIND ("tagged" AS ?kind)
   } UNION {
-    # A mechanism the project already has. Its problem shape is phrased as the problem, so it is
-    # matched by a question a term name cannot answer (sketch section 9.1).
+    # What the project already has, whichever register holds it: a mechanism adopted, a
+    # capability invoked, or a pattern applied. Matched on the claim and on a stated problem shape,
+    # so an untagged row is still found by its own words (sketch section 9.1).
     GRAPH ki:index {
-      ?n a ki:Mechanism ; ki:identifier ?name ; ki:claim ?label ; ki:pointer ?pointer .
+      VALUES (?k ?where) { (ki:Mechanism "mechanism") (ki:Capability "capability") (ki:Pattern "pattern") }
+      ?n a ?k ; ki:identifier ?name ; ki:claim ?label ; ki:pointer ?pointer .
       OPTIONAL { ?n ki:problemShape ?shape }
+      OPTIONAL { ?n ki:built ?state }
+      OPTIONAL { ?n ki:entryPoint ?entry }
+      OPTIONAL { ?n rdfs:label ?title }
       FILTER (CONTAINS(LCASE(COALESCE(?shape, "")), LCASE(?needle)) ||
+              CONTAINS(LCASE(COALESCE(?title, "")), LCASE(?needle)) ||
               CONTAINS(LCASE(?label), LCASE(?needle)))
-      BIND ("mechanism" AS ?where)
-      BIND (COALESCE(?shape, "") AS ?module)
-      BIND ("already built" AS ?kind)
+      BIND (COALESCE(?shape, ?entry, "") AS ?module)
+      BIND (IF(?state = ki:Built, "built", IF(?state = ki:PartlyBuilt, "partial",
+             IF(?state = ki:NotBuilt, "proposed", ""))) AS ?kind)
     }
   }
 } ORDER BY ?where ?module ?name LIMIT 40"""
@@ -194,7 +200,7 @@ def main() -> int:
     if arguments.question == "exists":
         needle = ox.Literal(arguments.argument)
         rows = rows_of(db.query(EXISTS, substitutions={ox.Variable("needle"): needle}))
-        columns = ("where", "name", "module", "label", "pointer")
+        columns = ("where", "name", "kind", "module", "label", "pointer")
     elif arguments.question in {"node", "reaches"}:
         subject = ox.NamedNode(KI + "node/" + identifiers.normalise(arguments.argument))
         query = NODE if arguments.question == "node" else REACHES

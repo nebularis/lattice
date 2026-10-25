@@ -154,6 +154,14 @@ FAMILIES: tuple[Family, ...] = (
         "removed, because a capability that goes away is a change to record rather than a row to delete",
     ),
     Family(
+        name="pattern",
+        mention=re.compile(r"\b(PAT-\d+)\b"),
+        definition="table-row",
+        defines=("docs/developer/plans/patterns.md",),
+        note="a named, reusable technique with a trade-off, as a handle on the guide section that treats "
+        "it. A row is never removed, because a pattern that is withdrawn is a change to record",
+    ),
+    Family(
         name="store-discovery",
         mention=re.compile(r"\b(TSD-\d+[a-z]?)\b"),
         definition="heading",

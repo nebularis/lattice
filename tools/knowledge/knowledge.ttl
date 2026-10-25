@@ -172,6 +172,11 @@ ki:tagged
     rdfs:label "tagged" ;
     rdfs:comment "A design shape this node is about. The property where the T-Box meets the SKOS scheme of design-shapes.ttl (ADR-A134 decision 5), and the one recall matches on. An unknown concept fails the check, so the vocabulary cannot fork silently." .
 
+ki:cost
+    rdf:type owl:DatatypeProperty ; rdfs:domain ki:Pattern ; rdfs:range xsd:string ;
+    rdfs:label "cost" ;
+    rdfs:comment "What a pattern costs, in one sentence taken from the document that treats it. Earns its place from the check that a pattern states a cost as well as a benefit, since a technique with no trade-off is a rule." .
+
 #################################################################
 #    Declared edges: a document states these, so a check may trust them
 #################################################################
@@ -245,6 +250,20 @@ ki:audience
     rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range ki:Audience ;
     rdfs:label "audience" ;
     rdfs:comment "Whether a node is internal or published. Earns its place from the question 'may I depend on this, and will it move under me': internal changes freely, published carries a compatibility promise under ADR-A129 or ADR-A86. Read from a register's Audience column, values internal or published." .
+
+ki:BuildState
+    rdf:type owl:Class ; rdfs:label "build state" ;
+    rdfs:comment "Whether what a node describes exists today. Earns its class from the existence query itself, since an agent told a proposed design exists will build on something that is not there, and one told nothing will build a parallel one." .
+
+ki:Built      rdf:type ki:BuildState ; rdfs:label "built" .
+ki:PartlyBuilt rdf:type ki:BuildState ; rdfs:label "partial" .
+ki:NotBuilt   rdf:type ki:BuildState ; rdfs:label "proposed" ;
+    rdfs:comment "A design is recorded and nothing implements it yet." .
+
+ki:built
+    rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range ki:BuildState ;
+    rdfs:label "built" ;
+    rdfs:comment "Whether the thing exists today. Earns its place from the existence query itself, since an agent told a proposed design exists will build on something that is not there, and one told nothing will build a parallel one. Read from a register's Built column, values built, partial or proposed." .
 
 ki:Phase
     rdf:type owl:Class ; rdfs:label "phase" ;

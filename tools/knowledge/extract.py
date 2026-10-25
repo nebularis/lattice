@@ -77,6 +77,7 @@ FAMILY_CLASS = {
     "store-discovery": "Discovery",
     "mechanism": "Mechanism",
     "capability": "Capability",
+    "pattern": "Pattern",
 }
 
 # The status words a decision's Status line may open with, longest first so "Published" is not read
@@ -246,19 +247,22 @@ COLUMNS: dict[str, tuple[str, str]] = {
     "Pointer": ("pointer", "text"),
     "Problem shape": ("problemShape", "text"),
     "Shapes": ("tagged", "shapes"),
-    "Waits for": ("waitsOn", "waits"),
+    "Waits for": ("waitsOn", "ids"),
+    "Evidenced by": ("evidencedBy", "ids"),
+    "Cost": ("cost", "text"),
     "Owner": ("ownedBy", "module"),
     "Provided by": ("ownedBy", "module"),
     "Audience": ("audience", "audience"),
     "Phase": ("phase", "phase"),
     "Entry point": ("entryPoint", "text"),
+    "Built": ("built", "built"),
     "Ratified": ("status", "ratified"),
 }
 
 # Human-only columns, deliberately not indexed. A header in neither table is a reported problem.
 UNMAPPED_COLUMNS = frozenset(
     {
-        "Built", "Conf", "Reuse note",
+        "Conf", "Reuse note",
         "Spotted", "Cost while it stays", "Likely home",
         "Raised", "Cost of deferring", "Options known",
     }
@@ -267,6 +271,7 @@ UNMAPPED_COLUMNS = frozenset(
 CONTROLLED = {
     "audience": {"internal": "InternalUse", "published": "PublishedUse"},
     "phase": {"development": "Development", "authoring": "Authoring", "runtime": "Runtime"},
+    "built": {"built": "Built", "partial": "PartlyBuilt", "proposed": "NotBuilt"},
     "ratified": {"yes": "Accepted", "no": "Proposed"},
 }
 
@@ -398,11 +403,11 @@ def register_rows(out: Extract) -> None:
                                     )
                                 for unit in units or []:
                                     add(prop, ox.NamedNode(KI + "module/" + unit))
-                        elif kind == "waits":
+                        elif kind == "ids":
                             for other in waited_on(cell):
                                 if other != canonical:
                                     add(prop, node(other))
-                                    out.bump("waitsOn")
+                                    out.bump(prop)
                         elif kind == "ratified":
                             value = CONTROLLED["ratified"].get(cell.lower())
                             if value is None:
