@@ -68,7 +68,11 @@ ki:Pattern
 
 ki:Mechanism
     rdf:type owl:Class ; rdfs:subClassOf ki:Node ; rdfs:label "mechanism" ;
-    rdfs:comment "Something the project already has, described at the altitude of a design concept rather than a code symbol. Earns its class from the query that answers 'does this already exist', which is the error this index exists to prevent." .
+    rdfs:comment "A design the project already provides, which new work ADOPTS and builds on rather than invokes, for example Foundation's versioning. Distinct from ki:Capability by that test alone: a mechanism has no entry point. Earns its class from the query 'is there already a design for this problem', the error class of an agent modelling versioning again beside fnd:Version." .
+
+ki:Capability
+    rdf:type owl:Class ; rdfs:subClassOf ki:Node ; rdfs:label "capability" ;
+    rdfs:comment "Something the project already has that new work INVOKES, a tool, a check, a compiler or a runtime service, and so has an entry point or is code a caller calls. Distinct from ki:Mechanism by that test alone, so a thing is one or the other and never both. Earns its class from the query 'where does this technical capability already live', so new work reuses it rather than rebuilding it beside it." .
 
 ki:Principle
     rdf:type owl:Class ; rdfs:subClassOf ki:Node ; rdfs:label "principle" ;
@@ -227,6 +231,41 @@ ki:ownedBy
     rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range ki:Module ;
     rdfs:label "owned by" ;
     rdfs:comment "Earns its place from the mechanism query, which must say which layer or tool a thing belongs to before an agent can reuse it." .
+
+ki:Audience
+    rdf:type owl:Class ; rdfs:label "audience" ;
+    rdfs:comment "Who may depend on a node. Earns its class from the question 'may I depend on this, and will it move under me'." .
+
+ki:InternalUse   rdf:type ki:Audience ; rdfs:label "internal" ;
+    rdfs:comment "Changes freely, with no compatibility promise." .
+ki:PublishedUse  rdf:type ki:Audience ; rdfs:label "published" ;
+    rdfs:comment "Carries a compatibility promise under ADR-A129 or ADR-A86." .
+
+ki:audience
+    rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range ki:Audience ;
+    rdfs:label "audience" ;
+    rdfs:comment "Whether a node is internal or published. Earns its place from the question 'may I depend on this, and will it move under me': internal changes freely, published carries a compatibility promise under ADR-A129 or ADR-A86. Read from a register's Audience column, values internal or published." .
+
+ki:Phase
+    rdf:type owl:Class ; rdfs:label "phase" ;
+    rdfs:comment "When a consumer reaches for a node. Earns its class from the question of when a consumer reaches for it." .
+
+ki:Development rdf:type ki:Phase ; rdfs:label "development" ;
+    rdfs:comment "Used while building this repository. Every internal node is development." .
+ki:Authoring   rdf:type ki:Phase ; rdfs:label "authoring" ;
+    rdfs:comment "Used by those who write models, documents or mappings." .
+ki:Runtime     rdf:type ki:Phase ; rdfs:label "runtime" ;
+    rdfs:comment "Used while a deployed system runs." .
+
+ki:phase
+    rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range ki:Phase ;
+    rdfs:label "phase" ;
+    rdfs:comment "When a consumer reaches for this node. Earns its place from the question of when a consumer reaches for it. Internal things are development. A published thing is authoring, runtime, or both. Read from a register's Phase column, comma-separated." .
+
+ki:entryPoint
+    rdf:type owl:DatatypeProperty ; rdfs:domain ki:Node ; rdfs:range xsd:string ;
+    rdfs:label "entry point" ;
+    rdfs:comment "The command that invokes a capability, for example a mise task. Earns its place from the question 'how do I use what already exists'." .
 
 #################################################################
 #    The one derived edge, which no check may trust

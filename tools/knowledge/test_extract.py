@@ -198,3 +198,26 @@ def test_the_term_summary_holds_only_declared_ontology_terms(built):
     )
     leaked = [str(r["term"].value) for r in rows if "/dev/" in str(r["term"].value)]
     assert not leaked
+
+
+def _register(tmp_path, monkeypatch, header: str, row: str) -> extract.Extract:
+    """Run register_rows over a one-row register standing in for the mechanism register."""
+    (tmp_path / "docs/developer/plans").mkdir(parents=True)
+    table = f"{header}\n|{'---|' * (header.count('|') - 1)}\n{row}\n"
+    (tmp_path / "docs/developer/plans/mechanisms.md").write_text(table, encoding="utf-8")
+    monkeypatch.setattr(extract, "ROOT", tmp_path)
+    out = extract.Extract()
+    extract.register_rows(out)
+    return out
+
+
+def test_an_unknown_column_header_is_reported(tmp_path, monkeypatch):
+    """A misspelled header must fail loudly, not vanish from the index."""
+    out = _register(tmp_path, monkeypatch, "| ID | Claim | Audiance |", "| MEC-1 | **A claim.** | published |")
+    assert any("'Audiance'" in p for p in out.problems)
+
+
+def test_an_audience_outside_the_set_is_reported_not_stored(tmp_path, monkeypatch):
+    out = _register(tmp_path, monkeypatch, "| ID | Claim | Audience |", "| MEC-1 | **A claim.** | public |")
+    assert any("Audience 'public'" in p for p in out.problems)
+    assert not [q for q in out.quads if q.predicate.value.endswith("#audience")]

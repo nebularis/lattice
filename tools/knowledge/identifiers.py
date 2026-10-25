@@ -103,7 +103,6 @@ class Family:
     definition: str
     defines: tuple[str, ...] = ()
     removable: bool = False
-    claim_cell: int = 2
     note: str = ""
 
     @property
@@ -143,8 +142,6 @@ FAMILIES: tuple[Family, ...] = (
         mention=re.compile(r"\b(MEC-\d+)\b"),
         definition="table-row",
         defines=("docs/developer/plans/mechanisms.md",),
-        # Its rows read ID, Name, Claim, so the claim is the third cell rather than the second.
-        claim_cell=3,
         note="what the project already has, so it is not built twice. A row is never removed, "
         "because a mechanism that goes away is a change to record rather than a row to delete",
     ),

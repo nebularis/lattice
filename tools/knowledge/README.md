@@ -34,6 +34,10 @@ mise exec -- python tools/knowledge/identifiers.py --variants    # identifiers w
 mise exec -- python tools/knowledge/identifiers.py --rehomed     # register entries no longer in their register
 ```
 
+## Registers
+
+A register is a Markdown table whose column headers map to properties of [`knowledge.ttl`](knowledge.ttl). The mapping is the `COLUMNS` dict in `extract.py`, and a column's meaning is that property's `rdfs:comment`, written nowhere else. A row's claim is its bolded lead sentence of at most 200 characters. A header that is neither mapped nor on the unmapped list, and a value outside a controlled column's set, are reported rather than stored or dropped.
+
 ## Rules this tooling keeps
 
 **Enumeration is from `git ls-files`, never a filesystem walk.** A checkout may hold ignored directories whose contents must not be read, so no tool here walks the tree.

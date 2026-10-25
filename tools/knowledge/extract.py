@@ -228,8 +228,56 @@ def shape_slugs() -> set[str]:
     return {str(r["c"].value).rsplit("#", 1)[-1] for r in rows}
 
 
+# A register's table header IS its schema. Each column header maps to a T-Box property, and the
+# meaning of a column is that property's rdfs:comment in knowledge.ttl, written once. The kinds:
+# ``id`` the identifier, ``claim`` the first bolded span, ``label`` rdfs:label, ``text`` a plain
+# literal, ``module`` ki:ownedBy, ``shapes``, ``audience``, ``phase`` and ``ratified`` controlled.
+COLUMNS: dict[str, tuple[str, str]] = {
+    "ID": ("identifier", "id"),
+    "#": ("identifier", "id"),
+    "Claim": ("claim", "claim"),
+    "Capability": ("claim", "claim"),
+    "Debt": ("claim", "claim"),
+    "Decision": ("claim", "claim"),
+    "Name": ("label", "label"),
+    "Pointer": ("pointer", "text"),
+    "Problem shape": ("problemShape", "text"),
+    "Shapes": ("tagged", "shapes"),
+    "Owner": ("ownedBy", "module"),
+    "Provided by": ("ownedBy", "module"),
+    "Audience": ("audience", "audience"),
+    "Phase": ("phase", "phase"),
+    "Entry point": ("entryPoint", "text"),
+    "Ratified": ("status", "ratified"),
+}
+
+# Human-only columns, deliberately not indexed. A header in neither table is a reported problem.
+UNMAPPED_COLUMNS = frozenset(
+    {
+        "Built", "Conf", "Reuse note",
+        "Spotted", "Cost while it stays", "Likely home",
+        "Raised", "Cost of deferring", "Options known", "Waits for",
+    }
+)
+
+CONTROLLED = {
+    "audience": {"internal": "InternalUse", "published": "PublishedUse"},
+    "phase": {"development": "Development", "authoring": "Authoring", "runtime": "Runtime"},
+    "ratified": {"yes": "Accepted", "no": "Proposed"},
+}
+
+SEPARATOR_RE = re.compile(r"^\|[\s:|-]+\|?$")
+
+
+def table_cells(line: str) -> list[str]:
+    cells = line.strip().split("|")[1:]
+    if cells and not cells[-1].strip():
+        cells.pop()
+    return [c.strip() for c in cells]
+
+
 def register_rows(out: Extract) -> None:
-    """One node per row of each register, with the row's bolded lead sentence as the claim."""
+    """One node per row of each register, read by column header (see ``COLUMNS``)."""
     known_shapes = shape_slugs()
     for family in identifiers.FAMILIES:
         if family.name not in FAMILY_CLASS or family.definition != "table-row":
@@ -237,64 +285,100 @@ def register_rows(out: Extract) -> None:
         for pattern in family.defines:
             for path in sorted(ROOT.glob(pattern)):
                 rel = path.relative_to(ROOT).as_posix()
-                for number, line in enumerate(
-                    path.read_text(encoding="utf-8", errors="replace").splitlines(), 1
-                ):
+                lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+                headers: list[str] | None = None
+                checked = False
+                for number, line in enumerate(lines, 1):
                     stripped = line.strip()
                     if not stripped.startswith("|"):
+                        headers = None
                         continue
-                    cells = stripped.split("|")
-                    if len(cells) <= family.claim_cell:
+                    following = lines[number].strip() if number < len(lines) else ""
+                    if SEPARATOR_RE.match(following) and not SEPARATOR_RE.match(stripped):
+                        headers, checked = table_cells(stripped), False
                         continue
-                    match = family.mention.fullmatch(cells[1].strip())
+                    if headers is None or SEPARATOR_RE.match(stripped):
+                        continue
+                    cells = table_cells(stripped)
+                    id_at = next((i for i, h in enumerate(headers) if COLUMNS.get(h, ("", ""))[1] == "id"), 0)
+                    match = family.mention.fullmatch(cells[id_at]) if id_at < len(cells) else None
                     if not match:
                         continue
+                    if not checked:
+                        checked = True
+                        for header in headers:
+                            if header not in COLUMNS and header not in UNMAPPED_COLUMNS:
+                                out.problems.append(
+                                    f"{rel}:{number}: column '{header}' is neither mapped to a "
+                                    f"property nor on the unmapped list"
+                                )
                     canonical = match.group(1)
                     subject = node(canonical)
+                    if len(cells) != len(headers):
+                        out.problems.append(
+                            f"{rel}:{number}: {canonical} has {len(cells)} cells under "
+                            f"{len(headers)} headers, so its columns cannot be trusted"
+                        )
+                        continue
+                    here = f"{rel}:{number}: {canonical}"
+
+                    def add(prop: str, obj) -> None:
+                        out.quads.append(ox.Quad(subject, ki(prop), obj, INDEX_GRAPH))
+
                     out.quads.append(
                         ox.Quad(subject, RDF_TYPE, ki(FAMILY_CLASS[family.name]), INDEX_GRAPH)
                     )
-                    out.quads.append(
-                        ox.Quad(subject, ki("identifier"), ox.Literal(canonical), INDEX_GRAPH)
-                    )
-                    out.quads.append(
-                        ox.Quad(subject, ki("pointer"), ox.Literal(f"{rel}:{number}"), INDEX_GRAPH)
-                    )
-                    status = "Accepted" if "| ratified |" in stripped.lower() else "Proposed"
-                    out.quads.append(
-                        ox.Quad(subject, ki("status"),
-                                ki(status if family.name == "mechanism" else "Open"), INDEX_GRAPH)
-                    )
-                    cell = cells[family.claim_cell] if len(cells) > family.claim_cell else ""
-                    bold = BOLD_RE.search(cell)
-                    claim = bold.group("claim") if bold else cell
-                    if claim.strip():
-                        out.quads.append(
-                            ox.Quad(subject, ki("claim"), ox.Literal(shorten(claim)), INDEX_GRAPH)
-                        )
-                    else:
-                        out.problems.append(f"{rel}:{number}: {canonical} has no extractable claim")
-                    # The problem shape, where the register states one. It is what a recall
-                    # query matches on, phrased as the problem rather than the solution.
-                    if family.name == "mechanism" and len(cells) > 7 and cells[7].strip():
-                        for slug in (s.strip() for s in cells[7].split(",")):
-                            if not slug:
-                                continue
-                            if slug not in known_shapes:
-                                out.problems.append(
-                                    f"{rel}:{number}: {canonical} is tagged '{slug}', "
-                                    f"which is not a concept of the design-shape scheme"
-                                )
-                                continue
-                            out.quads.append(
-                                ox.Quad(subject, ki("tagged"), ox.NamedNode(SHAPE_NS + slug), INDEX_GRAPH)
-                            )
-                            out.bump("tagged")
-                    if family.name == "mechanism" and len(cells) > 6 and cells[6].strip():
-                        out.quads.append(
-                            ox.Quad(subject, ki("problemShape"), ox.Literal(cells[6].strip()), INDEX_GRAPH)
-                        )
-                        out.bump("problem-shape")
+                    add("identifier", ox.Literal(canonical))
+                    status = "Open"
+                    has_claim = has_pointer = False
+                    for header, cell in zip(headers, cells):
+                        if header not in COLUMNS or not cell or COLUMNS[header][1] == "id":
+                            continue
+                        prop, kind = COLUMNS[header]
+                        if kind == "claim":
+                            bold = BOLD_RE.search(cell)
+                            claim = shorten(bold.group("claim") if bold else cell)
+                            add("claim", ox.Literal(claim))
+                            has_claim = True
+                        elif kind == "label":
+                            out.quads.append(ox.Quad(subject, RDFS_LABEL, ox.Literal(cell), INDEX_GRAPH))
+                        elif kind == "text":
+                            add(prop, ox.Literal(cell.replace("`", "") if prop == "pointer" else cell))
+                            has_pointer = has_pointer or prop == "pointer"
+                            if prop == "problemShape":
+                                out.bump("problem-shape")
+                        elif kind == "module":
+                            for owner in (o.strip(" `") for o in cell.split(",")):
+                                if owner:
+                                    add(prop, ox.NamedNode(KI + "module/" + owner.replace(" ", "-")))
+                        elif kind == "ratified":
+                            value = CONTROLLED["ratified"].get(cell.lower())
+                            if value is None:
+                                out.problems.append(f"{here} has Ratified '{cell}', not yes or no")
+                            else:
+                                status = value
+                        else:
+                            allowed = known_shapes if kind == "shapes" else CONTROLLED[kind]
+                            for value in (v.strip() for v in cell.split(",")):
+                                if not value:
+                                    continue
+                                if value not in allowed:
+                                    out.problems.append(
+                                        f"{here} is tagged '{value}', which is not a concept of the design-shape scheme"
+                                        if kind == "shapes"
+                                        else f"{here} has {header} '{value}', outside {sorted(allowed)}"
+                                    )
+                                    continue
+                                if kind == "shapes":
+                                    add(prop, ox.NamedNode(SHAPE_NS + value))
+                                    out.bump("tagged")
+                                else:
+                                    add(prop, ki(CONTROLLED[kind][value]))
+                    add("status", ki(status))
+                    if not has_pointer:
+                        add("pointer", ox.Literal(f"{rel}:{number}"))
+                    if not has_claim:
+                        out.problems.append(f"{here} has no extractable claim")
                     out.bump(family.name)
 
 
