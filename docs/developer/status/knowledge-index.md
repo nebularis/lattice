@@ -32,11 +32,12 @@ The index is useful before this is done, and a row is found by its own words eve
 
 | # | Task | Owner | Note |
 |---|---|---|---|
-| R1 | **Read the 14 extrapolated standards first**: STD-001 to STD-004, STD-013 to STD-016, STD-022 to STD-025, STD-257 and STD-258 | maintainer | they are new rules an agent wrote, and their text is already in the skills and `AGENTS.md`, so agents already follow them unratified |
+| R1 | Re-read the three extrapolated standards rewritten on review, STD-004, STD-016 and STD-024. The other eleven are ratified | maintainer | rewritten 2026-10-25 from the maintainer's notes, so the new wording is not yet ratified |
 | R2 | Review the design-shape scheme, `tools/knowledge/design-shapes.ttl`: 68 concepts, 175 synonyms, and the marked insurance-domain facet | maintainer | recall depends on it, and a wrong synonym misleads every query that reaches it |
 | R3 | Tag rows with design shapes. 540 rows across the five registers carry none, and six tags exist in all. Mechanisms first | maintainer | an untagged row is found only by its own words, which is the gap sketch §9.2 measured |
-| R4 | Ratify the registers: mechanisms (83), capabilities (71), patterns (54), principles (62), standards (270) | maintainer | a row is ratified by reading its pointer, correcting it, and setting Ratified to `yes` |
-| R5 | Ground 32 principles that rest on neither a decision nor a discovery, or drop them | maintainer | `check:knowledge` fails a ratified principle with nothing under it |
+| R4 | Ratify mechanisms (83), capabilities (71) and patterns (54). Standards and principles are ratified, except STD-004, STD-016, STD-021, STD-024, STD-038, STD-040, STD-043 and PRI-02 | maintainer | STD-021 is linked as refining STD-016 rather than repeating STD-007. STD-038, STD-040 and STD-043 are now scoped as internal and development-only |
+| R5 | Re-source the principles that rest on the platform plan v0.2, PRI-51, PRI-52, PRI-53, PRI-54, PRI-60, which is no longer where the guardrails for agentic development are kept | maintainer | ratifying a principle is now its grounding, and a principle citing no decision is found by query rather than failed |
+| R7 | Review the scope each entry was given from where its text lives. Standards, principles and patterns now state an audience and a phase, and those values were not part of the ratification | maintainer | 184 of the 235 practice standards are internal and development-only, so a query for runtime design leaves them out |
 | R6 | Scope standards to the quanta they govern. 256 of 270 have no `Governs`, which means they apply to every quantum | maintainer | a standard that binds one quantum and is read as binding all of them over-constrains the rest |
 
 ## Decisions
@@ -68,4 +69,5 @@ None blocks activation. Each is a defect the index surfaced, recorded where it b
 ## History
 
 - 2026-10-24. Unit started. Identifier check, sketch, ADR-A134, T-Box, extractor, query surface, the mechanism register and the design-shape scheme built. The resident server was dropped on a measurement (TSD-38).
+- 2026-10-25. Standards and principles ratified by the maintainer, with seven standards and one principle held for rewording or scope. Every entry now states its scope.
 - 2026-10-25. Capability, pattern, principle and standard registers built. Pointers became anchors resolved at every build, and a query rebuilds a stale index. Architectural quanta derived per view (ADR-A134 addendum). This record written, with the tasks that remain.

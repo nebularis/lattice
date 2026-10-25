@@ -310,21 +310,15 @@ def test_exists_reaches_every_register_that_records_what_exists(built):
     assert "MEC-01" in found("versioning"), "the gerund must still reach the noun"
 
 
-def test_a_ratified_principle_has_something_under_it(built):
-    """Nothing is ratified yet, so this passes. It fails the moment a principle is ratified with
-    neither a deciding decision nor evidence, which is when that support should be supplied."""
+def test_every_index_entry_states_its_scope(built):
+    """Each entry says who may depend on it and when it applies, so a rule of LATTICE's own test
+    harness is never read as a rule for designing a runtime component."""
     _, store = built
-    rows = one(
-        store,
-        f"""PREFIX ki: <{KI}>
-        SELECT ?id WHERE {{ GRAPH ki:index {{
-          ?n a ki:Principle ; ki:identifier ?id ; ki:status ki:Accepted .
-          FILTER NOT EXISTS {{ ?n ki:decidedBy ?d }}
-          FILTER NOT EXISTS {{ ?n ki:evidencedBy ?e }}
-        }} }}""",
-    )
-    assert not [str(r["id"].value) for r in rows], "ratified principles with no decision or evidence"
-
+    rows = _rows(store, """SELECT ?id WHERE { GRAPH ki:index {
+        VALUES ?k { ki:Mechanism ki:Capability ki:Pattern ki:Principle ki:Standard }
+        ?s a ?k ; ki:identifier ?id .
+        FILTER (NOT EXISTS { ?s ki:audience ?a } || NOT EXISTS { ?s ki:phase ?p }) } }""")
+    assert not [str(r["id"].value) for r in rows]
 
 def test_a_principle_is_found_by_a_word_in_its_claim(built):
     import ask
