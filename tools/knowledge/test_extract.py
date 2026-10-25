@@ -32,6 +32,7 @@ def built(tmp_path_factory) -> tuple[extract.Extract, ox.Store]:
     """Build the index once, into a temporary store rather than the one in .build."""
     path = tmp_path_factory.mktemp("knowledge") / "store"
     out = extract.build(path)
+    out.store_path = path
     return out, ox.Store.read_only(str(path))
 
 
@@ -568,3 +569,12 @@ def test_every_enforcing_check_is_classified_as_a_fitness_function(built):
     rows = _rows(store, """SELECT DISTINCT ?id WHERE { GRAPH ki:index { ?s ki:enforcedBy ?c . ?c ki:identifier ?id
         FILTER (NOT EXISTS { ?c ki:fitnessScope ?f } || NOT EXISTS { ?c ki:cadence ?k }) } }""")
     assert not [str(r["id"].value) for r in rows]
+
+
+def test_the_store_stays_within_a_default_open_file_limit(built):
+    """TSD-39: one bulk load per document left over a thousand SST files, which compaction did not
+    merge, so a build or a read-only open exceeded macOS's default limit of 256 open files. It passed
+    in an agent's shell, whose limit was a million, and failed in the maintainer's terminal."""
+    out, _ = built
+    files = list(out.store_path.glob("*.sst"))
+    assert len(files) <= 32, f"{len(files)} SST files: the store has fragmented again"

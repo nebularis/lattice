@@ -580,19 +580,30 @@ def term_summary(store: ox.Store, out: Extract) -> None:
 
 
 def load_ontologies(store: ox.Store, out: Extract) -> None:
-    """Every ontology document in a graph of its own, one at a time so one bad file loses only itself."""
+    """Every ontology document in a graph of its own, parsed one at a time so one bad file loses only
+    itself (TSD-37), then written to the store in a single bulk write.
+
+    Not one bulk load per document: each writes SST files of its own, which compaction does not merge
+    back, so 270 of them left over a thousand files in the store, and a query or a read-only open that
+    has to open them all exceeds macOS's default limit of 256 open files (TSD-39).
+    """
+    quads: list[ox.Quad] = []
     for path in tracked("ontology/*.ttl", "ontology/**/*.ttl"):
         rel = path.relative_to(ROOT).as_posix()
+        graph = ox.NamedNode(f"https://lattice.local/graph/{rel}")
         try:
-            store.bulk_load(
-                path=str(path),
-                format=ox.RdfFormat.TURTLE,
-                to_graph=ox.NamedNode(f"https://lattice.local/graph/{rel}"),
-            )
-            out.bump("ontology-document")
+            # Parsed in full before anything is kept, so a document failing part-way contributes nothing.
+            # Blank nodes are renamed so each document's stay its own, as a per-document load kept them.
+            parsed = [ox.Quad(q.subject, q.predicate, q.object, graph)
+                      for q in ox.parse(path=str(path), format=ox.RdfFormat.TURTLE,
+                                                 rename_blank_nodes=True)]
         except (SyntaxError, ValueError) as error:
             out.problems.append(f"{rel}: does not parse, so its axioms are absent ({error.__class__.__name__})")
             out.bump("ontology-document-failed")
+            continue
+        quads += parsed
+        out.bump("ontology-document")
+    store.bulk_extend(quads)
 
 
 VIEW = {"data": "DataView", "software": "SoftwareView"}

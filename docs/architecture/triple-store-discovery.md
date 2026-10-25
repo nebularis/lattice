@@ -1391,6 +1391,16 @@ SELECT ?b WHERE { <urn:checkpoint:100000:a0> l:balance ?b }
 
 **Reproduce it.** Build a store with the corpus, then time `pyoxigraph.Store.read_only(path)` against `pyoxigraph.Store(path)` and the queries above.
 
+### TSD-39. One Oxigraph bulk load per document fragments the store past a default open-file limit
+
+**Evidence:** Observed 2026-10-25 on macOS, pyoxigraph 0.5.13, building the knowledge index. The maintainer's build failed with `Too many open files` on an SST file numbered above 2,300. Reproduced at `ulimit -n 256`.
+
+**What the store does.** Each `Store.bulk_load` call writes SST files of its own and ingests them, and `Store.optimize()` does not merge them back. Loading 270 small documents with one `bulk_load` each left 1,016 SST files after compaction. A query, or a `Store.read_only` open, has to open them, so it exceeds macOS's default soft limit of 256 open files. Parsing each document with `pyoxigraph.parse` and writing all of them in one `bulk_extend` leaves 9 files, takes the same 2.1 seconds, and gives an identical graph: 56,032 quads and 5,173 blank nodes, none shared across documents, with `rename_blank_nodes=True` keeping each document's blank nodes its own as a per-document load did.
+
+**What it means for LATTICE.** Load many documents in one bulk write, isolating a bad document by parsing it on its own first rather than by giving it a bulk load of its own (TSD-37). And test a tool that opens many files at the default limit, not only in an agent's shell: this one passed where the limit was 1,048,576 and failed in the maintainer's terminal, which had 256.
+
+**Reproduce it.** `ulimit -n 256` and bulk load each of the ontology documents separately into one store, then query it. `check:knowledge` asserts the built index holds at most 32 SST files.
+
 ## 7. Corrections, and what they taught us
 
 ### 7.1 rdflib and the order of an update (TSD-01)
