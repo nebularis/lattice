@@ -110,6 +110,21 @@ Every piece of text, in documents, code comments, commit messages and replies:
 
 Skill `lattice-ontology-authoring` has the detail.
 
+## Platform guardrails
+
+Code under `platform/`, `workers/`, `packages/` and `apps/` keeps these, and so does any code that reads or writes a graph store. Each is a principle in the register, which points at the decision behind it. Most are not yet enforced by a check (TD-85), so a reviewer holds a change to them.
+
+- **The scoped dataset is the only door** to the RDF store (PRI-51).
+- **No new authoritative store.** Anything persisted outside the graph is marked as coordination or derived, and can be rebuilt from the graph (PRI-52).
+- **Contract first.** Wire types are generated from the schemas in `contracts/`, never written again by hand (PRI-53).
+- **Every write carries its commit metadata**, its cause, principal, profile, transaction time and provenance (PRI-54).
+- **No string concatenation into SPARQL.** Use a prepared query with typed parameters (PRI-55).
+- **No `now()` in a guard, an effect, an ordering key, a canonicalisation or an identity.** Time is an input (PRI-56).
+- **A result-returning store method returns a cursor**, never a materialised collection (PRI-57).
+- **A function that claims determinism is tested** with a permutation and a repeat (PRI-58).
+- **Store isolation is verified** against the actual store and its configuration (PRI-59).
+- **A write path governed by a persistence profile is generated** by the persistence compiler, never written by hand (PRI-60).
+
 ## A public repository
 
 This repository is public, and so is everything it publishes.
