@@ -39,7 +39,7 @@ BLOCK_TAG = "toml repository-catalogue"
 ANY_FENCE_RE = re.compile(r"^ {0,3}(?P<fence>`{3,}|~{3,})(?P<info>.*)$")
 
 EXCEPTIONS_FILE = "tools/lattice_repo_catalogue_exceptions.txt"
-DEBT_FILE = "docs/developer/plans/technical-debt.md"
+DEBT_FILE = "docs/developer/technical-debt.md"
 SCAN_SKIP_DIRS = {"node_modules", "__pycache__", "build", "dist"}
 
 # The schema. A key not listed here is an error, so later keys (for example a downstream

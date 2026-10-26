@@ -38,7 +38,7 @@ and neither does any file it generates.
 2. **Generated, by `tools/literate_extract.py`:** `spec/persistence.ttl`, `spec/persistent-foundation.ttl`, `shapes/constraints.ttl`,
    `shapes/persistent-foundation.ttl`, and the README's two generated regions. No `shapes/structural.ttl` is generated, since section 6 states no restriction, and
    the extractor did not insist on one.
-3. **Documents.** `docs/developer/validation/FMH-H2-11a-reconciliations.txt`, plan §4.19, the status record, `docs/developer/plans/technical-debt.md`
+3. **Documents.** `docs/developer/validation/FMH-H2-11a-reconciliations.txt`, plan §4.19, the status record, `docs/developer/technical-debt.md`
    (TD-01 removed) and the status line of `docs/architecture/literate-specifications.md`.
 4. **Not changed:** every tool, every test, every example, every other README.
 

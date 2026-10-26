@@ -2,7 +2,7 @@
 
 # Principle register
 
-**Unit type:** [Register](../../../tools/knowledge/README.md#registers)
+**Unit type:** [Register](../../tools/knowledge/README.md#registers)
 
 Read from the architecture skill, AGENTS.md, the epic plans and the deciding ADRs. Ratified 2026-10-25 except where marked.
 

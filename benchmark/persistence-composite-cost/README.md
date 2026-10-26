@@ -3,7 +3,7 @@
 # Composite replace cost
 
 The first benchmark under [ADR-A124](../../docs/architecture/decisions/ADR-A124-benchmark-root.md). It measures R0, the composite
-replace as shipped, on rdflib and on Oxigraph ([TD-42](../../docs/developer/plans/technical-debt.md)).
+replace as shipped, on rdflib and on Oxigraph ([TD-42](../../docs/developer/technical-debt.md)).
 
 The replace sweeps the root and every member of an aggregate (M stored triples) and writes a payload (N triples). Its `INSERT`
 template holds the payload and is filled once per sweep solution, so a store builds M x N triples before the union removes the

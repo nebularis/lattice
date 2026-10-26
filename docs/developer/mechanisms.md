@@ -2,7 +2,7 @@
 
 # Mechanism register
 
-**Unit type:** [Register](../../../tools/knowledge/README.md#registers)
+**Unit type:** [Register](../../tools/knowledge/README.md#registers)
 
 Ontology mechanisms only so far, and not yet ratified.
 

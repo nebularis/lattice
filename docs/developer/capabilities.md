@@ -2,7 +2,7 @@
 
 # Capability register
 
-**Unit type:** [Register](../../../tools/knowledge/README.md#registers)
+**Unit type:** [Register](../../tools/knowledge/README.md#registers)
 
 Derived from `mise.toml`, the tool modules' docstrings and the package manifests. Not yet ratified.
 

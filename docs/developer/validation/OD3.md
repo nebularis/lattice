@@ -109,7 +109,7 @@ mise exec -- python -m pytest tools/test_literate_grammar.py tools/test_literate
 ## Decisions answered
 
 2026-10-18, by the maintainer: all ten agreed. Decision 4 raised multilingual support, recorded as PDD-10 in the
-[pending design decisions](../plans/pending-design-decisions.md). Decision 10's unsupported forms are in the plan's
+[pending design decisions](../pending-design-decisions.md). Decision 10's unsupported forms are in the plan's
 unplanned backlog.
 
 The maintainer ran every test suite on 2026-10-18, and all pass.

@@ -183,16 +183,16 @@ A maintainer never writes Turtle. The authoring interface is a Markdown table ro
 | Register | State | ID | Lives in |
 |---|---|---|---|
 | Decisions | 120 ADRs, exists | `ADR-A*n*` | `docs/architecture/decisions/` |
-| Pending decisions | 11 rows, exists | `PDD-*nn*` | `docs/developer/plans/pending-design-decisions.md` |
-| Technical debt | 49 rows, exists | `TD-*nn*` | `docs/developer/plans/technical-debt.md` |
+| Pending decisions | 11 rows, exists | `PDD-*nn*` | `docs/developer/pending-design-decisions.md` |
+| Technical debt | 49 rows, exists | `TD-*nn*` | `docs/developer/technical-debt.md` |
 | Store discoveries | 36 entries, exists | `TSD-*nn*` | `docs/architecture/triple-store-discovery.md` |
 | Query rules | 36 entries, exists, needs a narrower reference rule | `R*n*` | `docs/architecture/efficient-queries-and-shapes.md` |
-| **Principles** | **62 rows drafted** | `PRI-*nn*` | [`docs/developer/plans/principles.md`](../plans/principles.md) |
-| **Patterns** | **54 rows drafted** | `PAT-*nn*` | [`docs/developer/plans/patterns.md`](../plans/patterns.md) |
-| **Capabilities** | **71 rows derived** | `CAP-*nn*` | [`docs/developer/plans/capabilities.md`](../plans/capabilities.md) |
-| **Standards** | **270 rows in four strata** | `STD-*nnn*` | [`docs/developer/plans/standards.md`](../plans/standards.md) |
-| **Mechanisms** | **83 rows drafted** | `MEC-*nn*` | [`docs/developer/plans/mechanisms.md`](../plans/mechanisms.md) |
-| **Design shapes** | **58 shapes in 10 facets, built** | slug | [`tools/knowledge/design-shapes.ttl`](../../../tools/knowledge/design-shapes.ttl) |
+| **Principles** | **62 rows drafted** | `PRI-*nn*` | [`docs/developer/principles.md`](../principles.md) |
+| **Patterns** | **54 rows drafted** | `PAT-*nn*` | [`docs/developer/patterns.md`](../patterns.md) |
+| **Capabilities** | **71 rows derived** | `CAP-*nn*` | [`docs/developer/capabilities.md`](../capabilities.md) |
+| **Standards** | **270 rows in four strata** | `STD-*nnn*` | [`docs/developer/standards.md`](../standards.md) |
+| **Mechanisms** | **83 rows drafted** | `MEC-*nn*` | [`docs/developer/mechanisms.md`](../mechanisms.md) |
+| **Facets** | **320 values in three schemes, replacing the 58 design shapes (ADR-A134 decision 24)** | slug | [`tools/knowledge/facets.ttl`](../../../tools/knowledge/facets.ttl) |
 
 The mechanism register is the one with no existing home and the clearest payback, because it is the register that answers "does this already exist".
 

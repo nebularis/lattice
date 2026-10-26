@@ -11,7 +11,7 @@ cloud environment, and about 31 s for one test locally.
 **Status record:** [python-test-melting.md](../status/python-test-melting.md)
 **Sketches:** [python-test-melting.md](../sketches/python-test-melting.md) (diagnosis),
 [test-suite-performance.md](../sketches/test-suite-performance.md) (earlier, unmeasured)
-**Takes on:** TD-18 and TD-29, both in the [technical debt register](technical-debt.md)
+**Takes on:** TD-18 and TD-29, both in the [technical debt register](../technical-debt.md)
 **Shares work with:** [repository-catalogue](../sketches/repository-catalogue.md) (§8.1)
 **Governing decisions:** none new. No ADR is needed, since only test code changes. [ADR-A29](../../architecture/decisions/ADR-A29-repository-toolchain-and-environment-boundary.md) (`mise` is the entry point)
 

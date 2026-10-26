@@ -2,7 +2,7 @@
 
 # Pattern register
 
-**Unit type:** [Register](../../../tools/knowledge/README.md#registers)
+**Unit type:** [Register](../../tools/knowledge/README.md#registers)
 
 Handles on the sections of the RDF and IRI pattern guides, which stay the source. Not yet ratified.
 

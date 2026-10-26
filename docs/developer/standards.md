@@ -2,7 +2,7 @@
 
 # Standard register
 
-**Unit type:** [Register](../../../tools/knowledge/README.md#registers)
+**Unit type:** [Register](../../tools/knowledge/README.md#registers)
 
 Stratified from architectural to convention. Ratified 2026-10-25 except where marked.
 
@@ -104,7 +104,7 @@ Stratified from architectural to convention. Ratified 2026-10-25 except where ma
 | STD-094 | document roles | **Keep the document roles: sketch (freely changed), plan (only when the plan changes), status (after every material action), review (before handoff), Validation Pack (with the slice).** | which document records what | practice | stated |  |  |  |  |  |  | internal | development | delivery, documentation | consistency | | .claude/skills/lattice-lifecycle/SKILL.md#the-lattice-development-lifecycle | yes |
 | STD-095 | pending decisions register | **Add a pending design decision when raised and remove it naming the ADR, sketch or plan that settles it.** | recording an open design decision | practice | stated |  |  |  |  | CAP-10 |  | internal | development | delivery | consistency | | .claude/skills/lattice-lifecycle/SKILL.md#the-lattice-development-lifecycle | yes |
 | STD-096 | technical debt register | **Add technical debt when spotted and remove it naming the plan that takes it on. Never features, follow-ups or deferred slices.** | recording technical debt | practice | stated |  |  |  |  | CAP-10 |  | internal | development | delivery | consistency | | .claude/skills/lattice-lifecycle/SKILL.md#the-documents | yes |
-| STD-097 | one status record per unit | **Never create a second status record for a unit. docs/developer holds durable guidance only.** | a second status record for a unit | practice | stated |  |  |  |  |  |  | internal | development | delivery | consistency | | .claude/skills/lattice-lifecycle/SKILL.md#the-documents | yes |
+| STD-097 | one status record per unit | **Never create a second status record for a unit. docs/developer holds the registers and durable guidance only.** | a second status record for a unit | practice | stated |  |  |  |  |  |  | internal | development | delivery | consistency | | .claude/skills/lattice-lifecycle/SKILL.md#the-documents | yes |
 | STD-098 | epic reviews wait | **Create no epic-level review until every phase plan exists and every acceptance suite passes.** | reviewing an epic before its phases are done | practice | stated |  |  |  |  |  |  | internal | development | delivery | correctness | | .claude/skills/lattice-lifecycle/SKILL.md#the-lattice-development-lifecycle | yes |
 | STD-099 | slice size | **Split a slice over about 15 test cases or two modules, merge one under 3. Skeleton slices are exempt.** | a slice too large or too small | practice | stated |  |  |  |  |  |  | internal | development | delivery | efficiency | | .claude/skills/lattice-lifecycle/SKILL.md#the-lattice-development-lifecycle | yes |
 | STD-100 | what a slice delivers | **Every slice delivers code in one or two modules, a Validation Pack (invariant, test table, one command, artefacts, deliberate non-coverage), a traceability update, and the doc delta in the same slice.** | what a slice must hand over | practice | stated |  |  |  |  |  |  | internal | development | delivery | correctness | | .claude/skills/lattice-lifecycle/SKILL.md#the-lattice-development-lifecycle | yes |

@@ -12,7 +12,7 @@ addendum, both Accepted 2026-10-21
 [history and versioning sketch](../sketches/persistence-history-and-versioning.md) §6.1 (the account
 record's keying)
 **Takes over:** PDD-07 (the repair of Behaviour's allowance contract) and the ledger part of PDD-08,
-from the [pending design decisions](pending-design-decisions.md)
+from the [pending design decisions](../pending-design-decisions.md)
 
 ## Scope
 

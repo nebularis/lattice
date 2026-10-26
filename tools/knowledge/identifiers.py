@@ -125,7 +125,7 @@ FAMILIES: tuple[Family, ...] = (
         name="pending-decision",
         mention=re.compile(r"\b(PDD-\d+)\b"),
         definition="table-row",
-        defines=("docs/developer/plans/pending-design-decisions.md",),
+        defines=("docs/developer/pending-design-decisions.md",),
         removable=True,
         note="removed from the register when an ADR, sketch or plan takes the decision on",
     ),
@@ -133,7 +133,7 @@ FAMILIES: tuple[Family, ...] = (
         name="technical-debt",
         mention=re.compile(r"\b(TD-\d+)\b"),
         definition="table-row",
-        defines=("docs/developer/plans/technical-debt.md",),
+        defines=("docs/developer/technical-debt.md",),
         removable=True,
         note="removed from the register when an item gains a home in a plan",
     ),
@@ -141,7 +141,7 @@ FAMILIES: tuple[Family, ...] = (
         name="mechanism",
         mention=re.compile(r"\b(MEC-\d+)\b"),
         definition="table-row",
-        defines=("docs/developer/plans/mechanisms.md",),
+        defines=("docs/developer/mechanisms.md",),
         note="what the project already has, so it is not built twice. A row is never removed, "
         "because a mechanism that goes away is a change to record rather than a row to delete",
     ),
@@ -149,7 +149,7 @@ FAMILIES: tuple[Family, ...] = (
         name="capability",
         mention=re.compile(r"\b(CAP-\d+)\b"),
         definition="table-row",
-        defines=("docs/developer/plans/capabilities.md",),
+        defines=("docs/developer/capabilities.md",),
         note="what the project's own software can already do, so new work reuses it. A row is never "
         "removed, because a capability that goes away is a change to record rather than a row to delete",
     ),
@@ -157,7 +157,7 @@ FAMILIES: tuple[Family, ...] = (
         name="pattern",
         mention=re.compile(r"\b(PAT-\d+)\b"),
         definition="table-row",
-        defines=("docs/developer/plans/patterns.md",),
+        defines=("docs/developer/patterns.md",),
         note="a named, reusable technique with a trade-off, as a handle on the guide section that treats "
         "it. A row is never removed, because a pattern that is withdrawn is a change to record",
     ),
@@ -165,7 +165,7 @@ FAMILIES: tuple[Family, ...] = (
         name="principle",
         mention=re.compile(r"\b(PRI-\d+)\b"),
         definition="table-row",
-        defines=("docs/developer/plans/principles.md",),
+        defines=("docs/developer/principles.md",),
         note="a durable design commitment, as a handle on the document that states it and the decision "
         "that settled it. A row is never removed, because a principle that is withdrawn is a change to record",
     ),
@@ -173,7 +173,7 @@ FAMILIES: tuple[Family, ...] = (
         name="standard",
         mention=re.compile(r"\b(STD-\d+)\b"),
         definition="table-row",
-        defines=("docs/developer/plans/standards.md",),
+        defines=("docs/developer/standards.md",),
         note="prescriptive guidance, stratified from architectural to convention, whose text lives in "
         "the skill or AGENTS.md section loaded for the work",
     ),

@@ -20,7 +20,7 @@ along the way.
   command.
 - **Pause for design decisions.** Do not make an architecture or modelling decision alone. Present
   the options and their consequences (skill `lattice-design`) and wait for the answer.
-- **When two standards conflict for a change, stop and ask the maintainer** before proceeding, and record the conflict in `docs/developer/plans/pending-design-decisions.md`, so conflicts that recur show which standards to rework. Standards have no precedence order.
+- **When two standards conflict for a change, stop and ask the maintainer** before proceeding, and record the conflict in `docs/developer/pending-design-decisions.md`, so conflicts that recur show which standards to rework. Standards have no precedence order.
 - **The git hooks are a floor, never a ceiling.** `mise run bootstrap` installs them ([ADR-A133](docs/architecture/decisions/ADR-A133-git-hooks.md)). They run the checks a commit, or a merge into `main`, touches, and never block a push. Never bypass one (`--no-verify`, `LATTICE_HOOKS_SKIP`) without recording which and why in the slice's Validation Pack, and never report a passing hook as a passing `mise run check`.
 - **Never commit, merge, tag or push** without the maintainer's go-ahead. Release tags are always the
   maintainer's to create. Do not mark an ADR Accepted yourself.
@@ -38,7 +38,7 @@ along the way.
 | `benchmark/` | checks that measure, run on demand and never part of `check`. They fail on a wrong result, never on time (ADR-A124) |
 | `platform/`, `apps/`, `packages/`, `contracts/`, `deployment/`, `workers/`, `test/`, `spikes/` | services, applications, libraries, data contracts, the local environment, the worker runtime, end-to-end suites, experiments |
 | `docs/architecture/` | architecture documents and the ADRs, in `decisions/` |
-| `docs/developer/` | sketches, plans, status records, review requests, Validation Packs, and durable guidance |
+| `docs/developer/` | sketches, plans, status records, review requests, Validation Packs, the registers, and durable guidance |
 | `.claude/skills/` | the skills below |
 
 <!-- END GENERATED where-things-are -->
@@ -71,7 +71,7 @@ The knowledge index ranks the project's decisions, mechanisms, capabilities, pat
   `mise run graph:ask -- find --help` lists every option, and `tools/knowledge/facets.ttl` defines every facet value. `exists <word>` finds a declared ontology term by name.
 - **Ask more than once.** Reword the question, or narrow, widen or drop a filter, until the answers fit the question or two attempts have found nothing better.
 - **An empty or weak answer never proves that nothing exists.** When `find` reports one, fall back to reading the documents and the code as you would without the index.
-- **A register gap is technical debt.** If the fallback finds an answer in the repository that no register entry holds, tell the maintainer in the handoff, and add the entry in the same change or a row to `docs/developer/plans/technical-debt.md` (STD-272).
+- **A register gap is technical debt.** If the fallback finds an answer in the repository that no register entry holds, tell the maintainer in the handoff, and add the entry in the same change or a row to `docs/developer/technical-debt.md` (STD-272).
 
 ## Writing
 

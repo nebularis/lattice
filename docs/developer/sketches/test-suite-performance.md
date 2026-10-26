@@ -4,7 +4,7 @@
 
 **Unit:** none yet. **Status:** unplanned sketch, 2026-10-05. Registered as technical debt TD-18.
 **Planned in:** [python-test-melting](../plans/python-test-melting.md), which uses this sketch's measuring commands and fixes.
-**Reads with:** [technical-debt.md](../plans/technical-debt.md), `mise.toml`.
+**Reads with:** [technical-debt.md](../technical-debt.md), `mise.toml`.
 
 ---
 

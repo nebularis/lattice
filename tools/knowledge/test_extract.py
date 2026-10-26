@@ -201,9 +201,9 @@ def test_the_term_summary_holds_only_declared_ontology_terms(built):
 
 def _register(tmp_path, monkeypatch, header: str, row: str) -> extract.Extract:
     """Run register_rows over a one-row register standing in for the mechanism register."""
-    (tmp_path / "docs/developer/plans").mkdir(parents=True)
+    (tmp_path / "docs/developer").mkdir(parents=True)
     table = f"{header}\n|{'---|' * (header.count('|') - 1)}\n{row}\n"
-    (tmp_path / "docs/developer/plans/mechanisms.md").write_text(table, encoding="utf-8")
+    (tmp_path / "docs/developer/mechanisms.md").write_text(table, encoding="utf-8")
     monkeypatch.setattr(extract, "ROOT", tmp_path)
     out = extract.Extract()
     extract.register_rows(out)
@@ -254,7 +254,7 @@ def test_a_capability_is_invoked_and_a_mechanism_is_adopted(built):
 def test_every_capability_row_is_a_capability_node(built):
     out, _ = built
     assert out.counts["capability"] == len(
-        [l for l in (extract.ROOT / "docs/developer/plans/capabilities.md").read_text().splitlines() if l.startswith("| CAP-")]
+        [l for l in (extract.ROOT / "docs/developer/capabilities.md").read_text().splitlines() if l.startswith("| CAP-")]
     )
 
 

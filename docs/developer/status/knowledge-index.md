@@ -65,7 +65,7 @@ None blocks activation. Each is a defect the index surfaced, recorded where it b
 | C6 | TD-78, TD-79 and TD-80 | agent drafts |
 | C7 | Give six platform components and two apps a README, so they have a capability row: `platform-outbox`, `release-integration`, `semantic-dataset-fuseki`, `semantic-dataset-spi`, `semantic-policy`, `surface-workflow`, `mork-review-workbench` and `surface-contract-studio` | agent drafts |
 | C8 | Done 2026-10-26. The root package's `knowledge` extra declares PyYAML, pyoxigraph, numpy, tokenizers and onnxruntime, and `bootstrap:python` installs it | agent |
-| C9 | Move the registers of mechanisms, capabilities, patterns, principles and standards out of `docs/developer/plans/` to `docs/developer/`, since they are neither plans nor tied to one. The registers of technical debt and pending design decisions move with them, and AGENTS.md and the skills that cite them are updated in the same change. Move them with `git mv` and update every reference in the same change (STD-091), including the extractor's paths | agent |
+| C9 | Done 2026-10-26. The seven registers moved from `docs/developer/plans/` to `docs/developer/`, with every reference updated | agent |
 | C10 | Give the Ensemble principles, PRI-38 to PRI-42, an owner. They name every ontology, and the Ensemble module they govern has no catalogue entry yet | maintainer |
 
 ## History

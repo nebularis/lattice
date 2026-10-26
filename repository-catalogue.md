@@ -273,7 +273,7 @@ row = "architecture documents and the ADRs, in `decisions/`"
 path = "docs/developer/"
 owns = "working documents and durable developer guidance"
 adrs = ["ADR-A77", "ADR-A127"]
-row = "sketches, plans, status records, review requests, Validation Packs, and durable guidance"
+row = "sketches, plans, status records, review requests, Validation Packs, the registers, and durable guidance"
 
 [[docs]]
 path = ".claude/skills/"
