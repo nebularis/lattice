@@ -69,4 +69,6 @@ corrects one defect found since.
 
 ## Provenance
 
+**Unit:** [`applied-ontology-readiness`](../../developer/plans/applied-ontology-readiness.md) (plan)
+
 Part of the [`applied-ontology-readiness`](../../developer/plans/applied-ontology-readiness.md) unit, where the example patches are slice AOR-2.

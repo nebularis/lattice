@@ -154,6 +154,8 @@ Enumerated classes written `**Equivalent to.** { ... }` as an `owl:oneOf` are un
 
 ## Provenance
 
+**Unit:** [`improved-ontology-documentation`](../../developer/plans/improved-ontology-documentation.md) (plan)
+
 Proposed in the [improved ontology documentation sketch](../../developer/sketches/improved-ontology-documentation.md)
 and settled in design discussion on 2026-10-15 and 2026-10-16, recorded as decisions OD-D1 to OD-D27 in the
 [`improved-ontology-documentation` plan](../../developer/plans/improved-ontology-documentation.md) (slices OD1

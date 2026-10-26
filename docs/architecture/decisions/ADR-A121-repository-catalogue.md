@@ -123,6 +123,8 @@ where before it judged only the substrate. The substrate's order is unchanged an
 
 ## Provenance
 
+**Unit:** [`improved-ontology-documentation`](../../developer/plans/improved-ontology-documentation.md) (plan)
+
 Proposed in the [repository catalogue sketch](../../developer/sketches/repository-catalogue.md), whose
 questions RC-Q1 to RC-Q8 were answered on 2026-10-16, and planned in the
 [`improved-ontology-documentation` plan](../../developer/plans/improved-ontology-documentation.md)

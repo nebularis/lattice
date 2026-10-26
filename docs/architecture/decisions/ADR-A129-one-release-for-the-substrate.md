@@ -59,6 +59,8 @@ valid invalid, inconsistent, or differently entailed, whatever the semantic vers
 
 ## Provenance
 
+**Unit:** [`improved-ontology-documentation`](../../developer/plans/improved-ontology-documentation.md) (plan)
+
 Proposed in the [release model sketch](../../developer/sketches/ontology-release-model.md) and decided as OD-D55
 to OD-D59 and OD-D63 of the [`improved-ontology-documentation`](../../developer/plans/improved-ontology-documentation.md)
 plan, from the maintainer's answers of 2026-10-19 to REL-Q1 to REL-Q6 and REL-Q2a. Built in its slice VER1.

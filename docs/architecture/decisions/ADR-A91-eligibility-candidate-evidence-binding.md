@@ -82,4 +82,6 @@ Option A, with D remaining available.
 
 ## Provenance
 
+**Unit:** [`applied-ontology-readiness`](../../developer/plans/applied-ontology-readiness.md) (plan)
+
 Part of the [`applied-ontology-readiness`](../../developer/plans/applied-ontology-readiness.md) unit. The gap was identified in the `mork-eligibility-compiler` sketch, and the implementation notes record slice AOR-9.
