@@ -63,7 +63,7 @@ The knowledge index ranks the project's decisions, mechanisms, capabilities, pat
   mise run graph:ask -- find <the problem in your own words> --activity physical-data-modelling --quality concurrency --phase runtime
   mise run graph:ask -- read <ID>
   ```
-  `mise run graph:ask -- find --help` lists every option, and `tools/knowledge/facets.ttl` defines every facet value. `exists <word>` finds a declared ontology term by name.
+  `mise run graph:ask -- find --help` lists every option, and the [facet register](docs/developer/facets.md) defines every facet value. `exists <word>` finds a declared ontology term by name.
 - **Ask more than once.** Reword the question, or narrow, widen or drop a filter, until the answers fit the question or two attempts have found nothing better.
 - **Look for what is related, not only for the entry.** When reviewing, re-sourcing or changing an entry, ask for the decisions that ground it and the standards, patterns and mechanisms that bear on it, in your own words and with `--kind decision` among them, since the entry itself is rarely the whole answer.
 - **An empty or weak answer never proves that nothing exists.** When `find` reports one, fall back to reading the documents and the code as you would without the index.

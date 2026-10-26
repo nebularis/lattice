@@ -462,7 +462,7 @@ def main() -> int:
     p.add_argument("--phase", default="", help=f"comma-separated, of {', '.join(PHASES)}")
     p.add_argument("--audience", default="", help=f"comma-separated, of {', '.join(AUDIENCES)}")
     for flag, (scheme, _) in FACET_FLAGS.items():
-        p.add_argument(f"--{flag}", default="", help=f"comma-separated values of the {scheme} facet, which raise matching entries and hide none. See tools/knowledge/facets.ttl")
+        p.add_argument(f"--{flag}", default="", help=f"comma-separated values of the {scheme} facet, which raise matching entries and hide none. See docs/developer/facets.md")
     p.add_argument("--limit", type=int, default=8)
     m = sub.add_parser("misses", help="the questions answered weakly or not at all, newest first")
     m.add_argument("--limit", type=int, default=20)
@@ -486,7 +486,7 @@ def main() -> int:
             given[scheme] = [v.strip() for v in getattr(arguments, flag).split(",") if v.strip()]
             unknown = [v for v in given[scheme] if v not in known.get(scheme, {})]
             if unknown:
-                parser.error(f"--{flag} {', '.join(unknown)} is not a value of the {scheme} facet. See tools/knowledge/facets.ttl")
+                parser.error(f"--{flag} {', '.join(unknown)} is not a value of the {scheme} facet. See docs/developer/facets.md")
         return find(db, " ".join(arguments.words), *chosen, arguments.limit, expand(db, given))
 
     db = store()

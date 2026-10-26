@@ -192,7 +192,7 @@ A maintainer never writes Turtle. The authoring interface is a Markdown table ro
 | **Capabilities** | **71 rows derived** | `CAP-*nn*` | [`docs/developer/capabilities.md`](../capabilities.md) |
 | **Standards** | **270 rows in four strata** | `STD-*nnn*` | [`docs/developer/standards.md`](../standards.md) |
 | **Mechanisms** | **83 rows drafted** | `MEC-*nn*` | [`docs/developer/mechanisms.md`](../mechanisms.md) |
-| **Facets** | **320 values in three schemes, replacing the 58 design shapes (ADR-A134 decision 24)** | slug | [`tools/knowledge/facets.ttl`](../../../tools/knowledge/facets.ttl) |
+| **Facets** | **320 values in three schemes, replacing the 58 design shapes (ADR-A134 decision 24)** | slug | [`docs/developer/facets.md`](../facets.md), generated as Turtle on every build (ADR-A134 decision 26) |
 
 The mechanism register is the one with no existing home and the clearest payback, because it is the register that answers "does this already exist".
 

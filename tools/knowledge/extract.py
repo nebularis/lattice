@@ -57,6 +57,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import anchors  # noqa: E402
 import embed  # noqa: E402
+import facets  # noqa: E402
 import identifiers  # noqa: E402
 import lattice_repo_catalogue  # noqa: E402
 import quanta  # noqa: E402
@@ -67,7 +68,8 @@ STORE_PATH = ROOT / ".build" / "knowledge" / "store"
 # against it, so the index never answers from lines a document no longer holds.
 STAMP_PATH = ROOT / ".build" / "knowledge" / "built-from"
 TBOX_PATH = Path(__file__).resolve().parent / "knowledge.ttl"
-FACETS_PATH = Path(__file__).resolve().parent / "facets.ttl"
+# Generated from the facet register on every build, never committed (ADR-A134 decision 26, STD-003).
+FACETS_PATH = facets.OUTPUT_PATH
 FACET_NS = "https://www.nebularis.org/neuro-semantic/lattice/dev/facets#"
 
 KI = "https://www.nebularis.org/neuro-semantic/lattice/dev/knowledge#"
@@ -282,7 +284,7 @@ def facet_slugs() -> dict[str, set[str]]:
 
     A group, a value carrying the editorial note "group", is filtered on and never tagged."""
     graph = ox.Store()
-    graph.load(path=str(FACETS_PATH), format=ox.RdfFormat.TURTLE)
+    graph.load(path=str(facets.generate()), format=ox.RdfFormat.TURTLE)
     rows = graph.query(
         "PREFIX skos: <http://www.w3.org/2004/02/skos/core#> "
         "SELECT ?c ?scheme WHERE { ?c a skos:Concept ; skos:inScheme ?scheme "
@@ -534,7 +536,7 @@ def register_rows(out: Extract) -> None:
 def technology_words() -> dict[str, re.Pattern[str]]:
     """Each taggable Technology value, with a pattern that finds its slug or label as a whole word."""
     graph = ox.Store()
-    graph.load(path=str(FACETS_PATH), format=ox.RdfFormat.TURTLE)
+    graph.load(path=str(facets.generate()), format=ox.RdfFormat.TURTLE)
     rows = graph.query(
         "PREFIX skos: <http://www.w3.org/2004/02/skos/core#> "
         "SELECT ?c ?l WHERE { ?c skos:inScheme <" + FACET_NS + "Technology> ; skos:prefLabel ?l "
@@ -786,7 +788,7 @@ def build(store_path: Path) -> Extract:
     store = ox.Store(str(store_path))
 
     store.bulk_load(path=str(TBOX_PATH), format=ox.RdfFormat.TURTLE, to_graph=TBOX_GRAPH)
-    store.bulk_load(path=str(FACETS_PATH), format=ox.RdfFormat.TURTLE, to_graph=FACETS_GRAPH)
+    store.bulk_load(path=str(facets.generate()), format=ox.RdfFormat.TURTLE, to_graph=FACETS_GRAPH)
     decisions(out)
     register_rows(out)
     discoveries(out)

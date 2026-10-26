@@ -13,7 +13,7 @@ Markdown stays the source of truth. Everything here derives from it and holds no
 | `identifiers.py` | the identifier families, how each is written and where each is defined, and the referential-integrity check over them |
 | `identifier-exceptions.txt` | identifiers that are mentioned but defined nowhere, each with its reason. The baseline the check measures a new break against |
 | `knowledge.ttl` | the T-Box: the node kinds, their relations and the closed status set ([ADR-A134](../../docs/architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md)) |
-| `facets.ttl` | the facets entries are tagged with, Activity, Quality and Technology, each a SKOS concept scheme with a definition per value. A value may sit under several broader values, so Java is both a language and a platform, and two values may be related across facets, as UX design is to interaction capability. Generated from Markdown once TD-81 is paid |
+| `facets.py` | generates the facet schemes, Activity, Quality and Technology, as SKOS Turtle in `.build/knowledge/facets.ttl` from the [facet register](../../docs/developer/facets.md) on every build, never committed (see [Facets](#facets)) |
 | `extract.py` | derives the index from the tracked documents into an Oxigraph store under `.build/`, never committed |
 | `embed.py` | ranks entries by meaning: the pinned model, fetched into `.build/knowledge/model/` on first build, and the vectors beside the store, re-embedding only changed text |
 | `ask.py` | the query surface. `find`, `read`, `node`, `reaches`, `exists` and `sparql`, with the miss log of questions answered weakly or not at all |
@@ -45,6 +45,24 @@ A weak answer is advice to look further. The agent then reads the documents as i
 ## Registers
 
 A register is a Markdown table whose column headers map to properties of [`knowledge.ttl`](knowledge.ttl). The mapping is the `COLUMNS` dict in `extract.py`, and a column's meaning is that property's `rdfs:comment`, written nowhere else. A row's claim is its bolded lead sentence of at most 200 characters. A header that is neither mapped nor on the unmapped list, and a value outside a controlled column's set, are reported rather than stored or dropped.
+
+## Facets
+
+A facet is a closed set of values a register entry is tagged with, in its Activity, Quality and Technology columns ([ADR-A134](../../docs/architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md) decisions 24 and 25). The [facet register](../../docs/developer/facets.md) is the source. `facets.py` writes it as three SKOS concept schemes into `.build/knowledge/facets.ttl` on every build, and the Turtle is never committed or edited, as STD-003 requires of anything a tool can derive. SKOS concepts rather than OWL classes, because these are values the maintainer amends, not facts a check reasons over.
+
+| Facet | Says | Follows |
+|---|---|---|
+| Activity | what the person or agent is doing when the entry matters | the knowledge areas of SWEBOK v4, the DAMA-DMBOK 2 data-management areas, TOGAF's architecture domains and the DevOps loop |
+| Quality | which characteristic the entry protects or trades | the characteristics of ISO/IEC 25010:2023 and the data qualities of ISO/IEC 25012, with what this repository needs beyond them, such as determinism, development efficiency and auditability |
+| Technology | which technology the entry is specific to, left empty when it is not specific | what this repository uses and what an agent is likely to ask about |
+
+Each facet follows a published division of its field, so it covers the field rather than this repository's habits and needs few additions. The definitions are our own words, and no value names private work.
+
+Each column of a scheme's table is the SKOS property that states its meaning: Label `skos:prefLabel`, Broader `skos:broader`, Related `skos:related`, Definition `skos:definition` and Scope note `skos:scopeNote`. A value with no broader value is a top concept of its scheme. Group yes is the editorial note "group", and Ratified no the editorial note "proposed". Broader and related values are slugs separated by spaces.
+
+**Tagging.** An entry takes one to three values of Activity and of Quality, and as many of Technology as it is specific to, always the most specific value that fits. A value may have several broader values, as SKOS allows, so Java is both a language and a platform. A group value organises the others and is never tagged. A question's value matches an entry's when one lies on the other's broader chain, so a question about physical data modelling still raises an entry tagged data modelling. A value two taggers might confuse with its neighbour has a scope note saying when to use it rather than that one, and the pairs most often confused are also related, so a question naming either raises entries tagged with the other.
+
+The structural facets, kind, audience, phase, stratum and the quanta, are T-Box individuals in [`knowledge.ttl`](knowledge.ttl), because a check reads them. The facets live outside `ontology/` and the substrate release of ADR-A129, since they describe how we work in this repository, not the domain.
 
 ## Rules this tooling keeps
 

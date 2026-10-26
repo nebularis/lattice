@@ -85,7 +85,7 @@ def test_the_derived_edge_is_the_only_one_and_is_marked_as_such(graph: rdflib.Gr
 
 
 def test_the_facets_meet_the_skos_scheme(graph: rdflib.Graph):
-    """The facet properties are where the T-Box meets the concept schemes of facets.ttl, so their
+    """The facet properties are where the T-Box meets the concept schemes generated from the facet register, so their
     range is a SKOS concept and not a class of this vocabulary."""
     for name in ("activity", "quality", "technology"):
         ranges = set(graph.objects(rdflib.URIRef(KI + name), rdflib.RDFS.range))
