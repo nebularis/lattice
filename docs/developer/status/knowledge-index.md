@@ -67,7 +67,7 @@ None blocks activation. Each is a defect the index surfaced, recorded where it b
 | C8 | Done 2026-10-26. The root package's `knowledge` extra declares PyYAML, pyoxigraph, numpy, tokenizers and onnxruntime, and `bootstrap:python` installs it | agent |
 | C9 | Done 2026-10-26. The seven registers moved from `docs/developer/plans/` to `docs/developer/`, with every reference updated | agent |
 | C10 | Give the Ensemble principles, PRI-38 to PRI-42, an owner. They name every ontology, and the Ensemble module they govern has no catalogue entry yet | maintainer |
-| C11 | Decide whether `ADR-A-C1` and `ADR-A-C2`, as the decisions title themselves and 146 mentions write them, or `ADR-AC1` and `ADR-AC2`, as their filenames and the identifier check have them, is canonical. Then rename the files or correct the mentions to match | maintainer |
+| C11 | Done 2026-10-26. The maintainer chose `ADR-A-C1` and `ADR-A-C2`, as the decisions title themselves and as the other epic blocks are written. Their files were renamed to match | maintainer |
 
 ## History
 

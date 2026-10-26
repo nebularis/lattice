@@ -34,7 +34,7 @@ Three consequences follow, and they compound.
 
 - **Applied modules will invent it locally.** Applied-insurance A-101 currently expects to draft
   term parameters on `ins:Qualifier` without a normative model of the obligation being qualified.
-  The restatement boundary (ADR-AC1) exists to prevent exactly this.
+  The restatement boundary (ADR-A-C1) exists to prevent exactly this.
 - **Absence cannot decide anything.** "No notification arrived by the deadline" is permanently
   `Undetermined` under current semantics, which is correct and useless. Conformance level L5
   (ADR-A14) already requires closure assumptions that no vocabulary defines.
@@ -315,7 +315,7 @@ exactly.
 **First task, before any authoring:** confirm no Foundation change is required. If one is, this
 slice inherits N9's quiet-window constraint and the plan's parallel-safe verdict collapses (§4.6).
 
-**Clean-room requirement (ADR-AC2):** two non-domain worked examples first, a lending covenant
+**Clean-room requirement (ADR-A-C2):** two non-domain worked examples first, a lending covenant
 reporting duty with a cure period and a trial adverse-event reporting duty. Insurance examples
 come later and must not drive the design.
 

@@ -62,8 +62,8 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-09](ADR-A09-behaviour-selection-policy.md) | Behaviour selection policy | Accepted |
 | [A-10](ADR-A10-behaviour-activation-policy.md) | Behaviour activation policy | Accepted |
 | [A-11](ADR-A11-effect-and-target-binding.md) | Effect payload and target binding contract | Accepted, amended by A-106 |
-| [A-C1](ADR-AC1-applied-layer-theorem-restatement.md) | Applied-layer theorem restatement policy | Accepted |
-| [A-C2](ADR-AC2-clean-room-authoring-procedure.md) | Clean-room authoring procedure for substrate content (with addendum) | Accepted. Addendum 2026-10-18 (how examples are drawn and presented) Proposed |
+| [A-C1](ADR-A-C1-applied-layer-theorem-restatement.md) | Applied-layer theorem restatement policy | Accepted |
+| [A-C2](ADR-A-C2-clean-room-authoring-procedure.md) | Clean-room authoring procedure for substrate content (with addendum) | Accepted. Addendum 2026-10-18 (how examples are drawn and presented) Proposed |
 | [A-FM1](ADR-A-FM1-formal-methods-prover-choice.md) | Formal-methods prover choice and code-generation targets (Isabelle/HOL) | Accepted |
 | [A-FM2](ADR-A-FM2-formal-methods-theory-home.md) | Home of the formal-methods prover programme's theories (`tools/proofs/`) | Accepted |
 | [A-FM3](ADR-A-FM3-reference-evaluator-home-and-scope.md) | Home and scope of the reference evaluator and its oracle (`tools/reference/`) | Accepted |

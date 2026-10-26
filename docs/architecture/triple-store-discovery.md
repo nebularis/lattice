@@ -2,19 +2,12 @@
 
 # Triple-store discovery
 
-**What this is.** The project's record of how each triple store we run actually behaves: its features, its limits, and how it
-reads the standards it implements, SPARQL 1.1 Query and Update above all. Each entry says what we were doing, how we found out,
-what the store does, why, what follows for LATTICE, and how to see it again.
+**What this is.** The project's record of how each triple store we run actually behaves: its features, its limits, and how it reads the standards it implements, SPARQL 1.1 Query and Update above all. Each entry says what we were doing, how we found out, what the store does, why, what follows for LATTICE, and how to see it again.
 
-**Status:** a living document, begun 2026-10-13 from formal-methods Track H's persistence work (slices H2.1 to H2.4b). It is a
-source of truth for the project. Read it before relying on how a store behaves, and add to it when you find something. The
-skill `lattice-triple-stores` has the procedure.
+**Status:** a living document, begun 2026-10-13 from formal-methods Track H's persistence work (slices H2.1 to H2.4b). It is a source of truth for the project. Read it before relying on how a store behaves, and add to it when you find something. The skill `lattice-triple-stores` has the procedure.
 
-**Stores covered:** rdflib 7.6.0 and Oxigraph 0.5.11 (through `pyoxigraph`), and Oxigraph 0.5.12 for the findings the test suite probes, of which
-TSD-01 and TSD-17 changed (R-H). Each finding names the versions it was seen on.
-A finding holds for those versions only, until it is checked again. **Tools above a store covered:** pySHACL 0.40.1, which validates
-shapes on rdflib (TSD-23, TSD-24, TSD-31). TSD-22 to TSD-33 are about the cost of running queries and shapes, and
-[Efficient queries and shapes](efficient-queries-and-shapes.md) says which of them are properties of rdflib or pySHACL and which hold anywhere.
+**Stores covered:** rdflib 7.6.0 and Oxigraph 0.5.11 (through `pyoxigraph`), and Oxigraph 0.5.12 for the findings the test suite probes, of which TSD-01 and TSD-17 changed (R-H). Each finding names the versions it was seen on.
+A finding holds for those versions only, until it is checked again. **Tools above a store covered:** pySHACL 0.40.1, which validates shapes on rdflib (TSD-23, TSD-24, TSD-31). TSD-22 to TSD-33 are about the cost of running queries and shapes, and [Efficient queries and shapes](efficient-queries-and-shapes.md) says which of them are properties of rdflib or pySHACL and which hold anywhere.
 
 ## Contents
 

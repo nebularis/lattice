@@ -69,7 +69,7 @@ shapes = ["shapes/structural.ttl", "shapes/constraints.ttl"]
 
 ## 4. Worked examples
 
-Authored before this specification ([ADR-A-C2](../../docs/architecture/decisions/ADR-AC2-clean-room-authoring-procedure.md)).
+Authored before this specification ([ADR-A-C2](../../docs/architecture/decisions/ADR-A-C2-clean-room-authoring-procedure.md)).
 Each file opens with its premise.
 
 | Example | Shows |

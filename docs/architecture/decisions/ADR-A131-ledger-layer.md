@@ -11,7 +11,7 @@
 configuration and runtime), [ADR-A113](ADR-A113-breaking-changes-at-major-version-zero.md) (major version zero),
 [ADR-A129](ADR-A129-one-release-for-the-substrate.md) (one release), [ADR-A121](ADR-A121-repository-catalogue.md) (the repository catalogue),
 [ADR-A122](ADR-A122-aggregate-ownership.md) (aggregate ownership),
-[ADR-A130](ADR-A130-ensemble-layer.md) (Ensemble), [ADR-A-C2](ADR-AC2-clean-room-authoring-procedure.md)
+[ADR-A130](ADR-A130-ensemble-layer.md) (Ensemble), [ADR-A-C2](ADR-A-C2-clean-room-authoring-procedure.md)
 (authoring order)
 
 ## Context

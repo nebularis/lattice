@@ -11,7 +11,7 @@
 [ADR-A121](ADR-A121-repository-catalogue.md) (the repository catalogue),
 [ADR-A122](ADR-A122-aggregate-ownership.md) (aggregate ownership),
 [ADR-A129](ADR-A129-one-release-for-the-substrate.md) (one release),
-[ADR-A-C2](ADR-AC2-clean-room-authoring-procedure.md) (authoring order)
+[ADR-A-C2](ADR-A-C2-clean-room-authoring-procedure.md) (authoring order)
 
 ## Context
 

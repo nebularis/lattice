@@ -4,7 +4,7 @@
 
 **Status:** sketch, 2026-10-25. Nothing here is ratified.
 **Extends:** the [knowledge index](knowledge-index.md) ([ADR-A134](../../architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md)) and [consumer distribution](consumer-distribution.md), whose plan is [consumer-distribution](../plans/consumer-distribution.md).
-**Reads with:** [ADR-A117](../../architecture/decisions/ADR-A117-agent-guidance-and-skill-library.md) (agent guidance, and private guidance that spans public and private projects), [ADR-AC2](../../architecture/decisions/ADR-AC2-clean-room-authoring-procedure.md) (clean-room authoring), [ADR-A121](../../architecture/decisions/ADR-A121-repository-catalogue.md) (the repository catalogue).
+**Reads with:** [ADR-A117](../../architecture/decisions/ADR-A117-agent-guidance-and-skill-library.md) (agent guidance, and private guidance that spans public and private projects), [ADR-AC2](../../architecture/decisions/ADR-A-C2-clean-room-authoring-procedure.md) (clean-room authoring), [ADR-A121](../../architecture/decisions/ADR-A121-repository-catalogue.md) (the repository catalogue).
 
 ---
 
@@ -52,7 +52,7 @@ Six rules carry the separation, and each is checkable.
 3. **An agent writes only to the base of the repository it is changing.** A session spanning two repositories reads both and writes each change to its own repository's registers.
 4. **Each base mints its own IRIs**, under a base the repository's catalogue declares, so identifiers in two bases never collide, and a private base's IRIs need not resolve anywhere.
 5. **A link crosses from downstream to upstream only, and names the base it crosses into**, so a consumer citing LATTICE's STD-002 is distinguishable from its own.
-6. **Knowledge moves upstream only by being written afresh** under ADR-AC2's clean-room procedure, never by copying a row, a claim or a link. A learning in a downstream base that belongs in LATTICE is restated from a generic premise in LATTICE's own registers.
+6. **Knowledge moves upstream only by being written afresh** under ADR-A-C2's clean-room procedure, never by copying a row, a claim or a link. A learning in a downstream base that belongs in LATTICE is restated from a generic premise in LATTICE's own registers.
 
 ### 3.1 A private project
 

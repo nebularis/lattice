@@ -40,7 +40,7 @@ These are not blocked by Quantification or by the current Behaviour ontology sha
 
 ## 2. Applied-layer boundary
 
-Per [ADR-A-C1](decisions/ADR-AC1-applied-layer-theorem-restatement.md), the public substrate stops at generic mechanism and generic law.
+Per [ADR-A-C1](decisions/ADR-A-C1-applied-layer-theorem-restatement.md), the public substrate stops at generic mechanism and generic law.
 
 What belongs in an applied or deployment layer instead:
 
