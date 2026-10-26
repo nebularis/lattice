@@ -65,8 +65,10 @@ The knowledge index ranks the project's decisions, mechanisms, capabilities, pat
   ```
   `mise run graph:ask -- find --help` lists every option, and `tools/knowledge/facets.ttl` defines every facet value. `exists <word>` finds a declared ontology term by name.
 - **Ask more than once.** Reword the question, or narrow, widen or drop a filter, until the answers fit the question or two attempts have found nothing better.
+- **Look for what is related, not only for the entry.** When reviewing, re-sourcing or changing an entry, ask for the decisions that ground it and the standards, patterns and mechanisms that bear on it, in your own words and with `--kind decision` among them, since the entry itself is rarely the whole answer.
 - **An empty or weak answer never proves that nothing exists.** When `find` reports one, fall back to reading the documents and the code as you would without the index.
 - **A register gap is technical debt.** If the fallback finds an answer in the repository that no register entry holds, tell the maintainer in the handoff, and add the entry in the same change or a row to `docs/developer/technical-debt.md` (STD-272).
+- **Report misses and improvements as they come up.** At each handoff, list what the index answered weakly or not at all, from `mise run graph:ask -- misses`, and what would have answered it, so the maintainer can decide what to add.
 
 ## Writing
 

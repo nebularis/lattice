@@ -5,6 +5,8 @@ description: What may and may not be published from LATTICE and projects built o
 
 # Publication hygiene
 
+Ask the knowledge index first, as AGENTS.md's "Asking the knowledge index" says, for example `mise run graph:ask -- find <the task in your own words> --kind standard,principle --quality confidentiality`, then `read` each entry that answers. It finds the rules this skill does not mention, and the entries related to the ones it does.
+
 LATTICE's repository is public, and so is everything it publishes. Anything committed stays in its
 history, so the time to catch a problem is before the commit.
 

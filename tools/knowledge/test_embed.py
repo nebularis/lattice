@@ -165,3 +165,18 @@ def test_a_matching_facet_raises_an_entry_and_a_mismatch_hides_none(tmp_path, wo
     out = capsys.readouterr().out.splitlines()
     assert out[2].split()[1] == "PAT-1" and out[2].split()[0].endswith("+")
     assert any(line.split()[1:2] == ["MEC-1"] for line in out[2:4]), "a mismatched activity must not hide an entry"
+
+
+def test_misses_lists_each_question_once_newest_first(tmp_path, monkeypatch, capsys):
+    """The miss log is read at a handoff to decide what the index lacks, so a question asked three
+    times is one row with its count, and the newest gap comes first."""
+    log = tmp_path / "misses.log"
+    log.write_text("2026-10-24T09:00:00+00:00\tfind a\n2026-10-26T09:00:00+00:00\tfind b\n"
+                   "2026-10-25T09:00:00+00:00\tfind a\n2026-10-25T10:00:00+00:00\tfind a\n", encoding="utf-8")
+    monkeypatch.setattr(ask, "MISS_LOG", log)
+    monkeypatch.setattr(ask, "ROOT", tmp_path)
+    ask.misses(20)
+    lines = capsys.readouterr().out.splitlines()
+    assert lines[2].split() == ["2026-10-26", "1", "find", "b"]
+    assert lines[3].split() == ["2026-10-25", "3", "find", "a"]
+    assert "2 distinct question(s)" in lines[-1]

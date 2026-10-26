@@ -5,6 +5,8 @@ description: How work is run in LATTICE and projects built on it. Use when start
 
 # The LATTICE development lifecycle
 
+Ask the knowledge index first, as AGENTS.md's "Asking the knowledge index" says, for example `mise run graph:ask -- find <the task in your own words> --kind standard,principle --activity delivery`, then `read` each entry that answers. It finds the rules this skill does not mention, and the entries related to the ones it does.
+
 The always-on rules are in `AGENTS.md`. This skill is the procedure behind them. Paths are relative
 to the LATTICE repository, browsable at <https://github.com/nebularis/lattice>.
 
@@ -109,6 +111,7 @@ justification in its Validation Pack, countersigned at the gate.
   maintainer commits them. The model phase follows.
 - **Pause before commit.** The agent builds and verifies, writes the Validation Pack's handoff and
   results, updates the status record, and stops. The maintainer commits.
+- **Report on the knowledge index at every handoff.** List the questions it answered weakly or not at all (`mise run graph:ask -- misses`), say which entry, facet value or relation would have answered each, and add any answer the fallback found to its register in the same change (STD-272).
 - **Executing a whole plan autonomously.** The request is the go-ahead to author every slice, but do
   not ratify ADRs, record each open design decision in the status record rather than choosing
   silently, and never report a check as passed that could not run.

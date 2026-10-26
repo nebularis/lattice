@@ -5,6 +5,8 @@ description: Building, testing and running LATTICE's checks, and setting up or r
 
 # The LATTICE toolchain
 
+Ask the knowledge index first, as AGENTS.md's "Asking the knowledge index" says, for example `mise run graph:ask -- find <the task in your own words> --kind capability,standard --activity environment`, then `read` each entry that answers. It finds the rules this skill does not mention, and the entries related to the ones it does.
+
 The [developer guide](https://github.com/nebularis/lattice/blob/main/docs/developer/developer-guide.md)
 describes every tool and task, and
 [getting started](https://github.com/nebularis/lattice/blob/main/docs/developer/getting-started.md)

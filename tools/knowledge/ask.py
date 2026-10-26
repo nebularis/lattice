@@ -29,6 +29,9 @@ Six questions, which are the ones agents actually ask:
     what does it touch, by the relations its own authors declared
 ``sparql <query>``
     anything else
+``misses [--limit n]``
+    the questions answered weakly or not at all, newest first, so the gaps they name can be
+    discussed at a handoff and closed with an entry, a facet value or a relation
 
 **Every question that returns nothing, or only a weak match, is logged** (ADR-A134 decision 8 and
 its addendum of 2026-10-26). An unanswered question names a missing register row, a missing tag or
@@ -363,6 +366,24 @@ def log_miss(question: str) -> None:
         handle.write(f"{dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds')}\t{question}\n")
 
 
+def misses(limit: int) -> int:
+    """The distinct questions in the miss log, newest first, with how often and when last asked."""
+    if not MISS_LOG.exists():
+        print("no misses recorded")
+        return 0
+    seen: dict[str, list] = {}
+    for line in MISS_LOG.read_text(encoding="utf-8").splitlines():
+        when, _, question = line.partition("\t")
+        entry = seen.setdefault(question, [0, when])
+        entry[0] += 1
+        entry[1] = when
+    rows = sorted(({"last": w[:10], "times": str(n), "question": q} for q, (n, w) in seen.items()),
+                  key=lambda r: r["last"], reverse=True)[:limit]
+    show(rows, ("last", "times", "question"))
+    print(f"\n{len(seen)} distinct question(s) in {MISS_LOG.relative_to(ROOT).as_posix()}")
+    return 0
+
+
 def show(rows: list, columns: tuple[str, ...]) -> None:
     widths = {c: max(len(c), *(len(str(r.get(c) or "")) for r in rows)) for c in columns}
     for c in columns:
@@ -407,7 +428,12 @@ def main() -> int:
     for flag, (scheme, _) in FACET_FLAGS.items():
         p.add_argument(f"--{flag}", default="", help=f"comma-separated values of the {scheme} facet, which raise matching entries and hide none. See tools/knowledge/facets.ttl")
     p.add_argument("--limit", type=int, default=8)
+    m = sub.add_parser("misses", help="the questions answered weakly or not at all, newest first")
+    m.add_argument("--limit", type=int, default=20)
     arguments = parser.parse_args()
+
+    if arguments.question == "misses":
+        return misses(arguments.limit)
 
     if arguments.question == "find":
         chosen = []

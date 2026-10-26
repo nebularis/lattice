@@ -5,6 +5,8 @@ description: LATTICE's structure and the principles behind it. Use when a design
 
 # LATTICE's architecture
 
+Ask the knowledge index first, as AGENTS.md's "Asking the knowledge index" says, for example `mise run graph:ask -- find <the task in your own words> --kind decision,principle,standard --activity cross-layer-design`, then `read` each entry that answers. It finds the rules this skill does not mention, and the entries related to the ones it does.
+
 This skill points to the architecture rather than restating it. The canonical sources are
 [ontology-architecture.md](https://github.com/nebularis/lattice/blob/main/docs/architecture/ontology-architecture.md),
 [solution-design-specification.md](https://github.com/nebularis/lattice/blob/main/docs/architecture/solution-design-specification.md)
