@@ -57,9 +57,9 @@ None blocks activation. Each is a defect the index surfaced, recorded where it b
 
 | # | Task | Owner |
 |---|---|---|
-| C1 | Give the seven decisions that carry a `## Status` section a `**Status:**` header field: ADR-A04, ADR-A07, ADR-A07b, ADR-A08, ADR-A09, ADR-A10 and ADR-A11. Without it they have no status in the index | agent |
+| C1 | Done 2026-10-26. The seven decisions' `## Status` sections became `**Status:**` header fields, so each has its status in the index | agent |
 | C2 | Add a `**Unit:**` line to the 96 decisions without one | agent drafts |
-| C3 | Correct the 18 non-canonical identifier spellings, `identifiers.py --variants`, among them four decisions cited with a non-breaking hyphen and ADR-AC2 written `ADR-A-C2` 125 times | agent |
+| C3 | Done 2026-10-26 except two. Non-breaking hyphens, spaced spellings and old-style titles corrected. `ADR-A-C1` and `ADR-A-C2` are left, since those decisions' own titles write them so and only their filenames say `ADR-AC1` and `ADR-AC2`. Which spelling is canonical is the maintainer's choice (C11) | agent |
 | C4 | Review the 26 citations of register entries since removed, `identifiers.py --rehomed`. A document citing one may be stale | maintainer |
 | C5 | Draft ADR-A101, ADR-A108 and ADR-A109, or remove the references to them. They are in `tools/knowledge/identifier-exceptions.txt` as planned and never drafted | maintainer |
 | C6 | TD-78, TD-79 and TD-80 | agent drafts |
@@ -67,6 +67,7 @@ None blocks activation. Each is a defect the index surfaced, recorded where it b
 | C8 | Done 2026-10-26. The root package's `knowledge` extra declares PyYAML, pyoxigraph, numpy, tokenizers and onnxruntime, and `bootstrap:python` installs it | agent |
 | C9 | Done 2026-10-26. The seven registers moved from `docs/developer/plans/` to `docs/developer/`, with every reference updated | agent |
 | C10 | Give the Ensemble principles, PRI-38 to PRI-42, an owner. They name every ontology, and the Ensemble module they govern has no catalogue entry yet | maintainer |
+| C11 | Decide whether `ADR-A-C1` and `ADR-A-C2`, as the decisions title themselves and 146 mentions write them, or `ADR-AC1` and `ADR-AC2`, as their filenames and the identifier check have them, is canonical. Then rename the files or correct the mentions to match | maintainer |
 
 ## History
 

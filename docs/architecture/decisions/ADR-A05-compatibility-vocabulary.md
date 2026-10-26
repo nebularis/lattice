@@ -3,7 +3,7 @@ published: true
 ---
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# ADR A-05: Compatibility operation vocabulary
+# ADR-A05: Compatibility operation vocabulary
 
 **Status:** Published, 2026-10-19. Accepted 2026-09-17.
 **Described in:** [Eligibility README](../../../ontology/eligibility/README.md)

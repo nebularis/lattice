@@ -77,15 +77,24 @@ def test_no_decision_has_two_statuses(built):
     assert not [str(r["n"].value) for r in rows]
 
 
-def test_a_decision_with_no_readable_status_is_reported_not_guessed(built):
-    """Seven decisions carry their status as a `## Status` section rather than a header field. A
-    node with no status is invisible to every check that compares one, so the extractor says so
-    rather than inventing a default."""
+def test_a_decision_with_no_readable_status_is_reported_not_guessed(tmp_path, monkeypatch):
+    """A node with no status is invisible to every check that compares one, so the extractor says
+    so rather than inventing a default. Seven decisions once carried their status as a `## Status`
+    section, which this caught."""
+    decision = tmp_path / "docs/architecture/decisions/ADR-A999-fixture.md"
+    decision.parent.mkdir(parents=True)
+    decision.write_text("# ADR-A999: A fixture\n\n## Status\n\nAccepted\n", encoding="utf-8")
+    monkeypatch.setattr(extract, "ROOT", tmp_path)
+    monkeypatch.setattr(extract, "tracked", lambda *patterns: [decision])
+    out = extract.Extract()
+    extract.decisions(out)
+    assert out.counts.get("decision-without-status") == 1
+    assert sum("no **Status:** header field" in p for p in out.problems) == 1
+
+
+def test_every_decision_in_the_corpus_states_its_status(built):
     out, _ = built
-    assert out.counts.get("decision-without-status", 0) > 0
-    assert sum("no **Status:** header field" in p for p in out.problems) == out.counts[
-        "decision-without-status"
-    ]
+    assert out.counts.get("decision-without-status", 0) == 0, [p for p in out.problems if "Status:" in p]
 
 
 def test_every_status_used_is_in_the_tbox_closed_set(built):

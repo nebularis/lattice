@@ -18,7 +18,7 @@ directories of confidential third-party material, and a walk would read them.
 Three facts about the corpus shape this module, each measured rather than assumed.
 
 *One identifier has several spellings.* The clean-room decision is the file ``ADR-AC2-...`` and is
-written ``ADR-A-C2`` in 125 places. Headings write ``ADR A-07`` with a space where prose writes
+written ``ADR-A-C2`` in 125 places. Headings write ``ADR-A07`` with a space where prose writes
 ``ADR-A07``. So a mention is resolved on a **normalised** key, letters and digits only, and the
 spelling a definition uses is the canonical one. A mention that resolves under a different spelling
 is reported as a variant, never failed.
@@ -114,7 +114,7 @@ class Family:
 FAMILIES: tuple[Family, ...] = (
     Family(
         name="decision",
-        # ADR-A131, ADR-A07b, ADR-AC2, ADR-A-C2, ADR-A-FM2, ADR-A-CAP1, and "ADR A-07" in a heading.
+        # ADR-A131, ADR-A07b, ADR-AC2, ADR-A-C2, ADR-A-FM2, ADR-A-CAP1, and "ADR-A07" in a heading.
         mention=re.compile(r"\b(ADR[-‑ ]A-?[A-Za-z]{0,4}-?\d+[a-z]?)\b"),
         definition="filename",
         defines=("docs/architecture/decisions/*.md",),

@@ -75,17 +75,19 @@ What a private project may let leave it, and how it decides, are its own rules, 
 | Option | Cost |
 |---|---|
 | (a) the consumer builds LATTICE's base from LATTICE's sources at the pin | needs LATTICE's whole tree checked out, which the consumer distribution exists to avoid |
-| (b) **a release artefact**: the index as N-Quads with the T-Box and the scheme, and the documents its pointers name, at the tag | measured: the index graphs are 4.67 MB as N-Quads and 0.26 MB gzipped. The documents are 10.08 MB. Pointers resolve against them unchanged, so `read` works offline |
+| (b) **a release artefact**: the index as N-Quads with the T-Box and the facet scheme, the entry vectors with the model revision that made them, and the documents its pointers name, at the tag | measured: the index graphs are 4.67 MB as N-Quads and 0.26 MB gzipped, and the vectors of 778 entries 1.7 MB. The documents are 10.08 MB. Pointers resolve against them unchanged, so `read` works offline |
 | (c) a hosted endpoint at LATTICE | a resident service and a network dependency, which TSD-38 and ADR-A134 decision 14 rejected for less |
 
 Embedding each pointer's text in the artefact, rather than shipping the documents, would carry 6.74 MB raw, two thirds of the documents' size counting overlap, and make a second copy of every section it quotes. **Leaning (b)**, built by the release task and attached to the tag, never committed.
+
+The vectors are for a consumer's development, where an agent working in the consumer needs LATTICE's knowledge beside the consumer's own. They are never part of a deployment. A consumer ranks LATTICE's entries and its own on one scale only if it embeds its entries and its agents' questions with the same model at the same revision, since vectors from two models share no space. The artefact therefore names the revision, and `find` refuses vectors made by another, as it does within LATTICE (ADR-A134 decision 21). The model itself is fetched by revision and checksum, as LATTICE's build fetches it, and not shipped.
 
 **KC-Q2. The T-Box's status once a consumer depends on it.**
 
 | Option | Consequence |
 |---|---|
 | (a) in the substrate's release | ties development vocabulary to the ontologies, and enlarges the substrate's quantum for something that is not substrate |
-| (b) **its own version line, released with each LATTICE release tag** | a published contract with semantic versioning. Adding a term is minor and removing one breaking, which ends ADR-A134 decision 6's freedom to change it at will. It becomes a quantum of its own |
+| (b) **its own version line, released with each LATTICE release tag** | a published contract with semantic versioning, covering the T-Box, the facet scheme and the embedding model's revision. Adding a term or a facet value is minor, and removing one or changing the model is breaking, since a new model obliges every consumer to embed again. This ends ADR-A134 decision 6's freedom to change it at will. It becomes a quantum of its own |
 | (c) kept to LATTICE, with consumers holding their own | two vocabularies for one structure, and no shared query across bases |
 
 **Leaning (b).** It is also the first case of a quantum boundary the index itself draws.

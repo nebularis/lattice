@@ -1,10 +1,8 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# ADR A-07b: Minimal Instrument shape and versioning contract
+# ADR-A07b: Minimal Instrument shape and versioning contract
 
-## Status
-
-Superseded by [ADR-A104](ADR-A104-instrument-terms-and-legal-relations.md) (2026-10-01). Its versioning contract carries to `ins:Instrument`.
+**Status:** Superseded by [ADR-A104](ADR-A104-instrument-terms-and-legal-relations.md) (2026-10-01). Its versioning contract carries to `ins:Instrument`.
 
 ## Context
 

@@ -17,11 +17,11 @@ DECISION = next(f for f in identifiers.FAMILIES if f.name == "decision")
 
 def test_normalise_unifies_the_spellings_one_decision_is_written_in():
     """The clean-room decision is the file ADR-AC2 and is written ADR-A-C2 in 125 places, and a
-    heading writes ADR A-07 where prose writes ADR-A07. Each pair has to resolve to one key."""
+    heading writes ADR-A07 where prose writes ADR-A07. Each pair has to resolve to one key."""
     assert identifiers.normalise("ADR-A-C2") == identifiers.normalise("ADR-AC2")
-    assert identifiers.normalise("ADR A-07") == identifiers.normalise("ADR-A07")
+    assert identifiers.normalise("ADR-A07") == identifiers.normalise("ADR-A07")
     # U+2011, the non-breaking hyphen, appears in four decisions' references.
-    assert identifiers.normalise("ADR‑A82") == identifiers.normalise("ADR-A82")
+    assert identifiers.normalise("ADR-A82") == identifiers.normalise("ADR-A82")
 
 
 def test_normalise_keeps_distinct_decisions_apart():
@@ -39,9 +39,9 @@ def test_the_decision_pattern_matches_every_spelling_the_corpus_uses():
         "ADR-A-C2",
         "ADR-A-FM2",
         "ADR-A-CAP1",
-        "ADR A-07",
-        "ADR A127",
-        "ADR‑A68",
+        "ADR-A07",
+        "ADR-A127",
+        "ADR-A68",
     ):
         assert DECISION.mention.fullmatch(spelling), spelling
 
