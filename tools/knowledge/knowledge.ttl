@@ -95,6 +95,11 @@ ki:enforcedBy
     rdfs:label "enforced by" ;
     rdfs:comment "The capability whose check fails when this is broken. A human review is not a check and is never recorded here. Earns its place from the query for what nothing enforces, which is the list of standards held up only by an agent remembering them." .
 
+ki:uncheckedBecause
+    rdf:type owl:DatatypeProperty ; rdfs:domain ki:Standard ; rdfs:range xsd:string ;
+    rdfs:label "unchecked because" ;
+    rdfs:comment "Why no check can tell that this standard is broken, in one sentence. Earns its place from STD-002, which asks of every architectural and design standard a check or a recorded reason, so the check of STD-002 can tell a reason given from one forgotten." .
+
 ki:Origin
     rdf:type owl:Class ; rdfs:label "origin" ;
     rdfs:comment "Whether a standard was found written down or extrapolated from principles and the project's history. Earns its class from the query for the standards an agent proposed rather than found, which deserve the closest reading before ratification." .

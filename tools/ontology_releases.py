@@ -179,7 +179,7 @@ def write(root: Path) -> list[str]:
             rows[key] = row(release)
             added.append(release["tag"])
     (root / REGISTER).parent.mkdir(parents=True, exist_ok=True)
-    (root / REGISTER).write_text(HEADER + "\n".join(rows[key] for key in sorted(rows, key=version_key)) + "\n", encoding="utf-8")
+    (root / REGISTER).write_text(HEADER + "\n".join(rows[key] for key in sorted(rows, key=version_key)) + "\n", encoding="utf-8", newline="\n")
     return added
 
 

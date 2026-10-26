@@ -6,6 +6,7 @@
 **Date:** 2026-09-18
 **Supersedes:** none
 **Related:** ADR-A17 (Surface unified projection authoring model), ADR-A16 (Surface projection mechanism, laws X1–X6), ADR-A21 (signature-scope composition)
+**Unit:** [`surface-mork-unified-projection`](../../developer/plans/surface-mork-unified-projection-plan.md) (epic)
 **Source plan:** [surface-mork-unified-projection-delivery-plan.md](../../../ontology/surface/docs/surface-mork-unified-projection-delivery-plan.md)
 
 ## Context

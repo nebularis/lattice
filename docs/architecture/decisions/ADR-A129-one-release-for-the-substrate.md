@@ -57,6 +57,18 @@ valid invalid, inconsistent, or differently entailed, whatever the semantic vers
 - The 217 existing register rows and 220 tags stay as history.
 - Tests that assert a specific version IRI are updated at each release, as before.
 
+## Addendum (2026-10-26): the standalone modules leave the release
+
+**Status:** Accepted 2026-10-26, proposed the same day.
+
+Nothing in the substrate imports MORK, SPC, Surface or Persistence, so the shared number released each of them whenever any substrate layer changed, and moved its version when nothing it depends on had. The number hid which releases changed a standalone module.
+
+1. **The release is the substrate's.** `[conventions.release]` lists the kind `substrate` alone. Decisions 1 to 3 hold for the layers of ADR-A01's order and no longer for MORK, SPC, Surface or Persistence.
+2. **Each standalone module is released on its own,** as the applied modules are under decision 4. Its documents keep their own version IRIs under ADR-A86, its shape directory has a `.version` file, and the release register lists each of them. Each import of a substrate layer names the substrate release it was built against.
+3. **The starting point** is 0.19.0 for every standalone document and shape directory, the release they last shared with the substrate, so no IRI changes.
+
+Consequences. A change to a substrate layer no longer moves a standalone module's version, and a standalone module moves the substrate pin of its imports when it adopts a new substrate release, as an applied module does. `release:prepare` still moves the substrate imports of every module, the standalone modules among them, which a standalone module whose own content is unchanged now takes as a bump under ADR-A86.
+
 ## Provenance
 
 **Unit:** [`improved-ontology-documentation`](../../developer/plans/improved-ontology-documentation.md) (plan)

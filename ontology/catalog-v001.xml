@@ -4,8 +4,6 @@
 <catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog" prefer="public">
     <uri name="http://example.org/spc#Ontology" uri="spc/spec/spc.ttl"/>
     <uri name="http://example.org/spc/0.19.0" uri="spc/spec/spc.ttl"/>
-    <uri name="http://www.nebularis.org/hyperthunk/Demo" uri="mork/test/data/Demo.ttl"/>
-    <uri name="http://www.nebularis.org/hyperthunk/examples/Contract" uri="mork/test/data/Contracts.ttl"/>
     <uri name="http://www.nebularis.org/ontologies/Governance" uri="mork/examples/Governance/GovernanceAndVersioning.ttl"/>
     <uri name="http://www.nebularis.org/ontologies/Mork" uri="mork/spec/Mork.ttl"/>
     <uri name="http://www.nebularis.org/ontologies/Mork/0.19.0" uri="mork/spec/Mork.ttl"/>
@@ -30,8 +28,8 @@
     <uri name="https://www.nebularis.org/neuro-semantic/insurance/common/0.8.0" uri="applied/insurance/common/spec/common.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/insurance/common/vocab" uri="applied/insurance/common/vocab/common-vocab.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/insurance/exposure" uri="applied/insurance/exposure/spec/exposure.ttl"/>
-    <uri name="https://www.nebularis.org/neuro-semantic/insurance/exposure-vocab/0.3.0" uri="applied/insurance/exposure/vocab/exposure-vocab.ttl"/>
-    <uri name="https://www.nebularis.org/neuro-semantic/insurance/exposure/0.3.0" uri="applied/insurance/exposure/spec/exposure.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/insurance/exposure-vocab/0.3.1" uri="applied/insurance/exposure/vocab/exposure-vocab.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/insurance/exposure/0.3.1" uri="applied/insurance/exposure/spec/exposure.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab" uri="applied/insurance/exposure/vocab/exposure-vocab.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/insurance/peril" uri="applied/insurance/peril/spec/peril.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/insurance/peril-intensity/0.7.0" uri="applied/insurance/peril/vocab/peril-intensity.ttl"/>

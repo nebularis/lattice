@@ -42,4 +42,6 @@ refuse one they cannot evaluate.
 
 ## Provenance
 
+**Unit:** [`improved-ontology-documentation`](../../developer/plans/improved-ontology-documentation.md) (plan), addendum 2026-10-19
+
 Accepted when Eligibility was first specified, 2026-09-17. The 2026-10-19 addendum answers question OD6-Q7 of the [`improved-ontology-documentation`](../../developer/plans/improved-ontology-documentation.md) plan.

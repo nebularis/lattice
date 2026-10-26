@@ -350,7 +350,7 @@ def install(root: Path, bootstrap: bool = False) -> list[str]:
                     lines.append(message)
                     continue
                 raise SystemExit(message)
-        hook.write_text(HOOK_SCRIPT, encoding="utf-8")
+        hook.write_text(HOOK_SCRIPT, encoding="utf-8", newline="\n")
         hook.chmod(0o755)
         lines.append(f"hooks: installed {hook}")
     return lines

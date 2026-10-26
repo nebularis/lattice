@@ -1293,7 +1293,7 @@ None of them covers the defect. It reproduces on 7.6.0, on `main` (7.7.0a0, `62b
 
 **What it means for LATTICE.**
 
-- Initial bindings inside a sub-select work on both stores. TD-68's account of the fast form of the `members` read is wrong, and the note on it should say so and cite this finding. The form is still not usable on rdflib.
+- Initial bindings inside a sub-select work on both stores. The account of the fast form of the `members` read that the paid debt TD-68 gave was wrong, and this finding corrects it. The form is still not usable on rdflib.
 - **Added 2026-10-20 (H2.8c).** The sub-select form with a `GRAPH` inside each `NOT EXISTS` body is right. It read every version of 24 random histories (checkpoint every 2, 3 and 4 versions, stray adds) as the reference model gives, on rdflib under 16 hash seeds in child processes and on Oxigraph, and the existing histories of `test_membership.py` on both engines with and without guards. It is the `members` read since H2.8c. The read of version 100 of a set of 500 took 1.28 s on rdflib, where the form without a sub-select took 98.6 s, and 0.005 s on Oxigraph, where it took 1.7 s (`benchmark/persistence-membership`).
 - The `members` read had no sub-select, and no history we built exposed the defect in it on 192 runs over 16 seeds (FMH-H2-6g). Its two `NOT EXISTS` bodies depend on solution variables, so it is the one generated operation where the defect could change an outcome. Since H2.6g each body names its graph, and a sweep holds it to the reference model.
 - A fast form of `members` on rdflib should put a `GRAPH` inside each `FILTER [NOT] EXISTS` body, which the audits (`key-claim-quarantine`, `key-claim-merge-rewrite`) already do, or avoid a sub-select beside a `UNION` in one `GRAPH` block, and be tested on a sweep of hash seeds against the reference model of `test_membership.py`.
@@ -1366,7 +1366,7 @@ SELECT ?b WHERE { <urn:checkpoint:100000:a0> l:balance ?b }
 
 ### TSD-37. Oxigraph refuses an IRI with two fragment separators and rdflib accepts it
 
-**Evidence:** Observed on both stores, 2026-10-24, loading every tracked ontology document into Oxigraph for the knowledge index (knowledge-index sketch KI-Q2). 269 of 270 documents loaded. The exception was `ontology/mork/test/data/Contracts.ttl`.
+**Evidence:** Observed on both stores, 2026-10-24, loading every tracked ontology document into Oxigraph for the knowledge index (knowledge-index sketch KI-Q2). 269 of 270 documents loaded. The exception was `ontology/mork/test/data/Contracts.ttl`. That file was part of an early MORK demonstration in MORK's test data, imported only by the demonstration's `Demo.ttl` and read by no code. The three files were deleted on 2026-10-26, so every tracked ontology document now loads in Oxigraph.
 
 **What the store does.** That fixture's subjects concatenate two absolute IRIs, each with its own `#`, for example `http://www.nebularis.org/ontologies/Mork#http://www.nebularis.org/hyperthunk/examples/Contract#acceptingParty`. A second `#` is not a legal IRI code point, so Oxigraph refuses the document outright with a syntax error naming the line and column, and loads none of it. rdflib parses the same document and returns 190 triples, with the malformed text as the subject IRI.
 

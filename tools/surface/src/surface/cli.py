@@ -219,7 +219,7 @@ def command_compile(args: argparse.Namespace) -> int:
         target.mkdir(parents=True, exist_ok=True)
         rendered = render(compiled)
         for name, text in sorted(rendered.items()):
-            (target / f"{name}.ttl").write_text(text, encoding="utf-8")
+            (target / f"{name}.ttl").write_text(text, encoding="utf-8", newline="\n")
 
         if args.mork_mapping:
             mapping = mork_interop.lift(compiled)
@@ -232,7 +232,7 @@ def command_compile(args: argparse.Namespace) -> int:
                     prefixes,
                     ["# SPDX-License-Identifier: MPL-2.0", "# MORK projection mapping record.", ""],
                 ),
-                encoding="utf-8",
+                encoding="utf-8", newline="\n",
             )
 
         print(
@@ -331,7 +331,7 @@ def command_mork(args: argparse.Namespace) -> int:
         for triple in mork_interop.lift(compiled, mapping_scheme=args.mapping_scheme):
             combined.add(triple)
     text = serialise(combined, prefixes, header + ["# MORK projection mapping records.", ""])
-    Path(args.out).write_text(text, encoding="utf-8") if args.out else print(text)
+    Path(args.out).write_text(text, encoding="utf-8", newline="\n") if args.out else print(text)
     return 0
 
 
@@ -361,7 +361,7 @@ def command_lower(args: argparse.Namespace) -> int:
 
     combined = lower_all(contracts=contracts, projections=projections)
     text = serialise(combined, prefixes, header + ["# Lowered MORK mapping graph.", ""])
-    Path(args.out).write_text(text, encoding="utf-8") if args.out else print(text)
+    Path(args.out).write_text(text, encoding="utf-8", newline="\n") if args.out else print(text)
     return 0
 
 

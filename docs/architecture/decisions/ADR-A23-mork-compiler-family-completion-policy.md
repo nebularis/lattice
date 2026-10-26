@@ -6,6 +6,7 @@
 **Date:** 2026-09-18
 **Supersedes:** none
 **Related:** ADR-A19 (staged compiler architecture), ADR-A24 (Eligibility executable strategy)
+**Unit:** [`surface-mork-unified-projection`](../../developer/plans/surface-mork-unified-projection-plan.md) (epic)
 **Source plan:** [surface-mork-unified-projection-delivery-plan.md](../../../ontology/surface/docs/surface-mork-unified-projection-delivery-plan.md)
 
 ## Context

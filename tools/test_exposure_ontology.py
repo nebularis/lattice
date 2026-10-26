@@ -164,7 +164,7 @@ def test_air42_01_spec_and_vocab_parse_every_import_resolves():
     }
     vocab_imports = {str(o) for o in vocab.objects(None, OWL.imports)}
     assert vocab_imports == {
-        "https://www.nebularis.org/neuro-semantic/insurance/exposure/0.3.0",
+        "https://www.nebularis.org/neuro-semantic/insurance/exposure/0.3.1",
         f"https://www.nebularis.org/neuro-semantic/lattice/vocabulary/{RELEASE}",
         f"https://www.nebularis.org/neuro-semantic/lattice/foundation/{RELEASE}",
         "https://www.nebularis.org/neuro-semantic/insurance/common-vocab/0.8.0",

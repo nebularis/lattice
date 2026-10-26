@@ -15,10 +15,10 @@ MAJOR.MINOR.PATCH) unmodified. If you have not read `semver.md`'s summary,
 read it now; this document only translates its three rules into ontology
 terms.
 
-## The release, for the substrate and standalone modules
+## The release, for the substrate
 
-From release 0.18.0, the substrate and standalone modules are released together, as one set with one number
-([ADR-A129](decisions/ADR-A129-one-release-for-the-substrate.md)). For them:
+From release 0.18.0, the substrate layers are released together, as one set with one number
+([ADR-A129](decisions/ADR-A129-one-release-for-the-substrate.md)). MORK, SPC, Surface and Persistence were in the release until 0.19.0 and are released on their own since, as the applied modules are (ADR-A129's 2026-10-26 addendum). For the substrate:
 
 - **One number**, the repository catalogue's `[conventions.release]` version. Every member document's version IRI
   ends with it, every import of a member names it, and member shape and projection directories have no
@@ -35,7 +35,7 @@ From release 0.18.0, the substrate and standalone modules are released together,
   | may invalidate | a new restriction, shape, disjointness, key or domain | the rule, so an adopter can validate first |
   | changes meaning | a renamed or removed term, a changed law | a migration, once an adopter holds production data |
 
-The rest of this document governs the applied modules and the examples, which keep their own versions and pin a
+The rest of this document governs the standalone modules, the applied modules and the examples, which keep their own versions and pin a
 release.
 
 ## The versioning unit

@@ -4,7 +4,7 @@
 
 Literate specification for the asset exposure ontology, built by the
 [`applied-insurance-reference`](../../../../docs/developer/plans/applied-insurance-reference.md)
-epic, Phase 4. See [ADR-A98](../../../../docs/architecture/decisions/ADR-A98-applied-insurance-domain-layout.md)
+epic, Phase 4. See [ADR-A98](../../../../docs/architecture/decisions/ADR-A98-applied-layout-and-insurance-modules.md)
 and the [asset exposure ontology sketch](../../../../docs/developer/sketches/asset-exposure-ontology.md)
 for the design this module implements.
 
@@ -141,7 +141,7 @@ through a plain membership property, and is not owned by it. An unchanged member
 version it holds for, shared by identity and not duplicated by node, so a mid-term change adds the
 nodes that changed and a new version that lists the rest. Membership is not inverse functional,
 which a reasoner would read as an identity statement and merge two schedule versions that list one
-location (TD-49).
+location.
 
 Content names identities, not versions (AIR-66, TD-66). `aeo:locatedAt` names the `aeo:LocationIdentity`
 of an asset's location, and `aeo:valueOf` the `aeo:AssetIdentity` or `aeo:LocationIdentity` of what a
@@ -170,7 +170,7 @@ schedule versions, not one snapshot.
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/insurance/exposure>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/exposure/0.3.0> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/exposure/0.3.1> ;
     rdfs:label "LATTICE asset exposure ontology"@en ;
     rdfs:comment "Facts about the world a risk sits in: exposure sets, locations, legal entities and control, assets, interests and valuations (AIR-4.1), with zones, attributes, dependencies, losses, requirements, cover and liability arriving in later regions (AIR-4.2 to AIR-4.5). No class here says what a contract insures, which is the contract module's (Phase 5). See the asset exposure ontology sketch." ;
     owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ,
@@ -226,7 +226,7 @@ aeo:hasLocation a owl:ObjectProperty ;
     rdfs:domain aeo:ExposureSet ; rdfs:range aeo:Location ;
     rdfs:label "has location"@en ;
     rdfs:comment "A location belonging to this exposure set version." ;
-    fnd:utility "Subject: an exposure set. Value: one of its locations. Not inverse functional: an unchanged location version is listed by every exposure set version it holds for, shared by identity (TD-49)." .
+    fnd:utility "Subject: an exposure set. Value: one of its locations. Not inverse functional: an unchanged location version is listed by every exposure set version it holds for, shared by identity." .
 
 aeo:hasAsset a owl:ObjectProperty ;
     rdfs:domain aeo:ExposureSet ; rdfs:range aeo:Asset ;
@@ -510,7 +510,7 @@ aeo:zoneDesignation a owl:ObjectProperty ;
     rdfs:domain aeo:Location ; rdfs:range aeo:ZoneDesignation ;
     rdfs:label "zone designation"@en ;
     rdfs:comment "A zone designation belonging to this location." ;
-    fnd:utility "Subject: a location. Value: one of its zone designations. Not inverse functional: a designation follows a location's identity, so every version of the location it holds for carries it (TD-49)." .
+    fnd:utility "Subject: a location. Value: one of its zone designations. Not inverse functional: a designation follows a location's identity, so every version of the location it holds for carries it." .
 
 aeo:zone a owl:ObjectProperty ;
     rdfs:domain aeo:ZoneDesignation ; rdfs:range skos:Concept ;
@@ -572,7 +572,7 @@ aeo:poolParticipation a owl:ObjectProperty ;
     rdfs:domain aeo:Location ; rdfs:range aeo:PoolParticipation ;
     rdfs:label "pool participation"@en ;
     rdfs:comment "A pool participation belonging to this location." ;
-    fnd:utility "Subject: a location. Value: one of its pool participations. Not inverse functional: a participation follows a location's identity, so every version of the location it holds for carries it (TD-49)." .
+    fnd:utility "Subject: a location. Value: one of its pool participations. Not inverse functional: a participation follows a location's identity, so every version of the location it holds for carries it." .
 
 aeo:pool a owl:ObjectProperty ;
     rdfs:subPropertyOf icm:pool ;
@@ -636,7 +636,7 @@ aeo:hasAttribute a owl:ObjectProperty ;
     rdfs:domain aeo:Assessment ; rdfs:range aeo:AttributeValue ;
     rdfs:label "has attribute"@en ;
     rdfs:comment "An attribute value belonging to this assessment." ;
-    fnd:utility "Subject: an assessment. Value: one of its attribute values. Not inverse functional: an assessment that restates an unchanged value may share the node (TD-49)." .
+    fnd:utility "Subject: an assessment. Value: one of its attribute values. Not inverse functional: an assessment that restates an unchanged value may share the node." .
 
 aeo:attributeType a owl:ObjectProperty ;
     rdfs:domain aeo:AttributeValue ; rdfs:range skos:Concept ;
@@ -833,7 +833,7 @@ aeo:hasDependency a owl:ObjectProperty ;
     rdfs:domain aeo:ExposureSet ; rdfs:range aeo:Dependency ;
     rdfs:label "has dependency"@en ;
     rdfs:comment "A dependency listed in this exposure set version." ;
-    fnd:utility "Subject: an exposure set. Value: one of its dependencies. Not inverse functional, for the same reason as aeo:hasLocation (TD-49)." .
+    fnd:utility "Subject: an exposure set. Value: one of its dependencies. Not inverse functional, for the same reason as aeo:hasLocation." .
 
 #################################################################
 #    Peril metrics (AIR-4.3, sketch §5.10)
@@ -921,7 +921,7 @@ aeo:hasPerilMetric a owl:ObjectProperty ;
     rdfs:domain aeo:ExposureSet ; rdfs:range aeo:PerilMetric ;
     rdfs:label "has peril metric"@en ;
     rdfs:comment "A peril metric listed in this exposure set version." ;
-    fnd:utility "Subject: an exposure set. Value: one of its peril metrics. Not inverse functional, for the same reason as aeo:hasLocation (TD-49)." .
+    fnd:utility "Subject: an exposure set. Value: one of its peril metrics. Not inverse functional, for the same reason as aeo:hasLocation." .
 
 aeo:MetricComparison a owl:Class ;
     rdfs:subClassOf fnd:DerivedArtefact , fnd:Evidenced ,
@@ -1119,13 +1119,13 @@ aeo:hasLossExperience a owl:ObjectProperty ;
     rdfs:domain aeo:ExposureSet ; rdfs:range aeo:LossExperience ;
     rdfs:label "has loss experience"@en ;
     rdfs:comment "A loss experience listed in this exposure set version." ;
-    fnd:utility "Subject: an exposure set. Value: one of its loss experiences. Not inverse functional, for the same reason as aeo:hasLocation (TD-49)." .
+    fnd:utility "Subject: an exposure set. Value: one of its loss experiences. Not inverse functional, for the same reason as aeo:hasLocation." .
 
 aeo:hasLossRecord a owl:ObjectProperty ;
     rdfs:domain aeo:LossExperience ; rdfs:range aeo:LossRecord ;
     rdfs:label "has loss record"@en ;
     rdfs:comment "A loss record in this loss experience." ;
-    fnd:utility "Subject: a loss experience. Value: one of its loss records. Not inverse functional (TD-49): a later experience from the same source may list a record unchanged." .
+    fnd:utility "Subject: a loss experience. Value: one of its loss records. Not inverse functional: a later experience from the same source may list a record unchanged." .
 
 aeo:LossRecord a owl:Class ;
     rdfs:subClassOf fnd:Evidenced , fnd:NaturallyKeyed ,
@@ -1374,7 +1374,7 @@ aeo:hasRequirement a owl:ObjectProperty ;
     rdfs:domain aeo:ExposureSet ; rdfs:range aeo:CoverageRequirement ;
     rdfs:label "has requirement"@en ;
     rdfs:comment "A coverage requirement listed in this exposure set version." ;
-    fnd:utility "Subject: an exposure set. Value: one of its coverage requirements. Not inverse functional, for the same reason as aeo:hasLocation (TD-49)." .
+    fnd:utility "Subject: an exposure set. Value: one of its coverage requirements. Not inverse functional, for the same reason as aeo:hasLocation." .
 
 #################################################################
 #    Existing cover and cover history (AIR-4.4, sketch §5.14)
@@ -1437,7 +1437,7 @@ aeo:hasExistingCover a owl:ObjectProperty ;
     rdfs:domain aeo:ExposureSet ; rdfs:range aeo:ExistingCover ;
     rdfs:label "has existing cover"@en ;
     rdfs:comment "An existing cover listed in this exposure set version." ;
-    fnd:utility "Subject: an exposure set. Value: one of its existing covers. Not inverse functional, for the same reason as aeo:hasLocation (TD-49)." .
+    fnd:utility "Subject: an exposure set. Value: one of its existing covers. Not inverse functional, for the same reason as aeo:hasLocation." .
 
 aeo:CoverHistoryEvent a owl:Class ;
     rdfs:subClassOf fnd:Evidenced ,
@@ -1477,7 +1477,7 @@ aeo:hasCoverHistoryEvent a owl:ObjectProperty ;
     rdfs:domain aeo:ExposureSet ; rdfs:range aeo:CoverHistoryEvent ;
     rdfs:label "has cover history event"@en ;
     rdfs:comment "A cover history event listed in this exposure set version." ;
-    fnd:utility "Subject: an exposure set. Value: one of its cover history events. Not inverse functional, for the same reason as aeo:hasLocation (TD-49)." .
+    fnd:utility "Subject: an exposure set. Value: one of its cover history events. Not inverse functional, for the same reason as aeo:hasLocation." .
 
 #################################################################
 #    Financial metrics (AIR-4.4, sketch §5.14)
@@ -1528,7 +1528,7 @@ aeo:hasFinancialMetric a owl:ObjectProperty ;
     rdfs:domain aeo:ExposureSet ; rdfs:range aeo:FinancialMetric ;
     rdfs:label "has financial metric"@en ;
     rdfs:comment "A financial metric listed in this exposure set version." ;
-    fnd:utility "Subject: an exposure set. Value: one of its financial metrics. Not inverse functional, for the same reason as aeo:hasLocation (TD-49)." .
+    fnd:utility "Subject: an exposure set. Value: one of its financial metrics. Not inverse functional, for the same reason as aeo:hasLocation." .
 
 [] a owl:AllDisjointClasses ;
     owl:members ( aeo:ExposureSet aeo:Location aeo:Asset aeo:Interest aeo:Valuation
@@ -1582,8 +1582,8 @@ thousands.
 
 <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/exposure-vocab/0.3.0> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/insurance/exposure/0.3.0> ,
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/exposure-vocab/0.3.1> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/insurance/exposure/0.3.1> ,
                 <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0> ,
                 <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ,
                 <https://www.nebularis.org/neuro-semantic/insurance/common-vocab/0.8.0> ,
@@ -5230,7 +5230,7 @@ domicile and a legal form. [`tools/test_exposure_ontology.py`](../../../../tools
 validates it, plus one negative case per shape, with pySHACL (`advanced=True`, `inference="none"`),
 modelled on `tools/test_peril_vocabulary.py`.
 
-[`examples/versions.ttl`](examples/versions.ttl) (AIR-4.2a, TD-49) shows two versions of one
+[`examples/versions.ttl`](examples/versions.ttl) (AIR-4.2a) shows two versions of one
 schedule sharing an unchanged location, building and valuation by identity, with one location
 changed between them. It passes every shape, and is the case that fails if membership is made
 inverse functional again.
@@ -5254,10 +5254,11 @@ revenue by territory, with the output of `effective_characteristics` for its cau
 |---|---|
 | next version | re-pinned to the substrate's next release, in which Ledger joins ([ADR-A131](../../../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). No content change |
 | `0.1.0` | AIR-4.1: exposure set, location, legal entity, control relations, asset, interest, valuation. Seven scheme contracts, nine programme roles. Literate from the start |
-| `0.1.0` (AIR-4.2a) | Exposure set membership, zone designations, pool participations, assessments and attribute values are no longer inverse functional, and `aeo:MembershipShape` is withdrawn (TD-49). Unchanged members are shared across exposure set versions by identity, as this README always stated. Corrects `0.1.0` before it is released, so no version bump. Example `versions.ttl` added |
+| `0.1.0` (AIR-4.2a) | Exposure set membership, zone designations, pool participations, assessments and attribute values are no longer inverse functional, and `aeo:MembershipShape` is withdrawn. Unchanged members are shared across exposure set versions by identity, as this README always stated. Corrects `0.1.0` before it is released, so no version bump. Example `versions.ttl` added |
 | `0.1.0` (AIR-4.3) | Dependencies, peril metrics, metric comparisons and exposure units, with the dependency kind, substitutability, metric kind, perspective, calculation method and model option schemes, the schedule group and scenario contracts, and the output share, return period and exceedance probability spaces. `aeo:perilScope` loses its domain (AIR-4.2 gave it `aeo:PoolParticipation`, which a metric's use would have contradicted). Nine shapes |
 | `0.3.0` (AIR-66, breaking, spec and vocab) | `aeo:locatedAt` and `aeo:valueOf` name a location's or asset's persistent identity (`aeo:LocationIdentity`, `aeo:AssetIdentity`) instead of a version, fixed by the exposure set version's membership, so one location changing writes one location version and no asset or valuation version. Their ranges change, `aeo:AssetShape`, `aeo:ValuationShape` and `aeo:ExposureSetShape` check them, and `aeo:PerilCompletenessShape` joins through the identity. `examples/versions.ttl` no longer edits version 1 on succession. The module's version is not bumped on this branch (TD-64) |
 | `0.1.0` (AIR-4.4) | Loss experiences, loss records, cause chains with recorded and effective characteristics and defaulted characteristics, coverage requirements with measure constraints, existing cover with summary terms, cover history events and financial metrics, with ten reference schemes and contracts, the money share space, and nineteen shapes. Imports Eligibility 0.12.0 and `insurance/common` 0.6.0. Financial metric kinds for revenue, gross profit and headcount are `aeo-voc:RevenueMetric`, `aeo-voc:GrossProfitMetric` and `aeo-voc:HeadcountMetric`, since `Revenue`, `GrossProfit` and `Headcount` name a value type and an attribute type |
 | shapes `0.1.1` | `aeo:DocumentationShape` reads the same concepts with its scheme check as a `FILTER EXISTS` and its note check as a `FILTER NOT EXISTS`, instead of joining the scheme's type and counting notes. About six times faster on the reference fixture, with the same targets, focus nodes and message |
 | shapes `0.2.0` | AIR-66's shapes: an asset's `aeo:locatedAt` names an `aeo:LocationIdentity`, a valuation's `aeo:valueOf` an identity, and each identity an asset or a valuation the set lists names resolves, through `fnd:hasIdentity`, to exactly one location or asset the set lists (may invalidate) |
 | `0.3.0` | both documents re-pinned to the substrate release 0.19.0 with AIR-66 above, and to `insurance/common` 0.8.0, `insurance/peril-vocab` 0.7.0 and `applied/classification-vocab` 0.4.0 |
+| `0.3.1` (spec and vocab) | the annotations on the membership, designation, participation, assessment and loss properties no longer cite a working record. The vocabulary re-pinned to the specification `0.3.1`. No change to any axiom or shape |

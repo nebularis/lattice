@@ -1,19 +1,22 @@
+---
+published: true
+---
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
 # ADR-A131: Ledger, a substrate layer for amounts consumed and restored over time
 
-**Status:** Accepted, 2026-10-21 (proposed 2026-10-19)
+**Status:** Published, 2026-10-26. Accepted 2026-10-21.
+**Described in:** [Ledger](../../../ontology/ledger/README.md)
 **Date:** 2026-10-19
 **Supersedes:** none
-**Related:** [ADR-A01](ADR-A01-layer-dependency-order.md) (the layer order, amended by its
-2026-10-19 addendum), [ADR-A92](ADR-A92-derived-artefact-contract-and-prov-o-alignment.md) (derived artefacts),
-[ADR-A106](ADR-A106-behaviour-configuration-runtime-occasions-and-records.md) (Behaviour's
-configuration and runtime), [ADR-A113](ADR-A113-breaking-changes-at-major-version-zero.md) (major version zero),
-[ADR-A129](ADR-A129-one-release-for-the-substrate.md) (one release), [ADR-A121](ADR-A121-repository-catalogue.md) (the repository catalogue),
-[ADR-A122](ADR-A122-aggregate-ownership.md) (aggregate ownership),
-[ADR-A130](ADR-A130-ensemble-layer.md) (Ensemble), [ADR-A-C2](ADR-A-C2-clean-room-authoring-procedure.md)
+**Related:** [ADR-A01](https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-A01-layer-dependency-order.md) (the layer order, amended by its
+2026-10-19 addendum), [ADR-A92](https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-A92-derived-artefact-contract-and-prov-o-alignment.md) (derived artefacts),
+[ADR-A106](https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-A106-behaviour-configuration-runtime-occasions-and-records.md) (Behaviour's
+configuration and runtime), [ADR-A113](https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-A113-breaking-changes-at-major-version-zero.md) (major version zero),
+[ADR-A129](https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-A129-one-release-for-the-substrate.md) (one release), [ADR-A121](https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-A121-repository-catalogue.md) (the repository catalogue),
+[ADR-A122](https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-A122-aggregate-ownership.md) (aggregate ownership),
+[ADR-A-C2](https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-A-C2-clean-room-authoring-procedure.md)
 (authoring order)
-**Unit:** [`ledger`](../../developer/plans/ledger.md)
 
 ## Context
 
@@ -40,7 +43,7 @@ Several consumers need a running amount, and most of them are not state machines
 
 | Consumer | Needs |
 |---|---|
-| Ensemble (ADR-A130) | the fact that an account is exhausted |
+| Ensemble, a layer proposed and not yet decided | the fact that an account is exhausted |
 | authorities and programmes | an account owned by an authority or a programme |
 | vehicles | collateral and allocation |
 | design-time checks | an account tree's structure |
@@ -102,7 +105,7 @@ and an ontology that extends the ledger would have to extend Behaviour with it.
    - **Persistence.** Postings and balance records are append-only, so persistence writes them as
      record families.
 5. **An account belongs to a persistent identity.** It may belong to an instrument, an authority, an
-   ensemble of instruments (ADR-A130), such as a programme or a vehicle, or any other
+   ensemble of instruments, such as a programme or a vehicle, or any other
    `fnd:PersistentIdentity`, so it outlives a new version of what it belongs to. An account drawn on by
    several instruments belongs to their ensemble.
    - **Owner kinds.** An account definition states which kinds of owner it admits.
@@ -211,6 +214,8 @@ flowchart TB
   decisions it builds on by their GitHub links.
 
 ## Provenance
+
+**Unit:** [`ledger`](../../developer/plans/ledger.md)
 
 Designed in outline in the [evaluation-context sketch](../../developer/sketches/evaluation-context.md)
 §5. The maintainer decided on 2026-10-19 that the ledger is a substrate layer above Quantification

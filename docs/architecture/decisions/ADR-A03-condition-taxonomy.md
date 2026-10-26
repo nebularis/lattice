@@ -45,4 +45,6 @@ date). Laws L1 to L3 and Eligibility's shapes say so.
 
 ## Provenance
 
+**Unit:** [`improved-ontology-documentation`](../../developer/plans/improved-ontology-documentation.md) (plan), addendum 2026-10-19
+
 Accepted when Eligibility was first specified, 2026-09-17. The 2026-10-19 addendum answers questions OD6-Q7, ELC-Q1 and ELC-Q2 of the [`improved-ontology-documentation`](../../developer/plans/improved-ontology-documentation.md) plan.

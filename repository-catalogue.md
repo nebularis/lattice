@@ -61,16 +61,13 @@ example = "an applied validation package under ontology/examples/"
 scaffold = "a module with no artefacts yet"
 ```
 
-**The release.** The substrate and standalone modules are released together, as one set with one number
-(OD-D55). Every one of their documents carries that number in its version IRI, and every import of one names it.
-Their shape and projection directories have no `.version` file. The applied modules and the examples are not in
-the release, keep their own versions, and pin a release. `mise run release:prepare -- <version>` moves the set to a
+**The release.** The substrate modules are released together, as one set with one number (OD-D55). Every one of their documents carries that number in its version IRI, and every import of one names it. Their shape and projection directories have no `.version` file. The standalone modules, the applied modules and the examples are not in the release, keep their own versions, and pin a release (ADR-A129's 2026-10-26 addendum). `mise run release:prepare -- <version>` moves the set to a
 new number, and the versioning check holds every member to it.
 
 ```toml repository-catalogue
 [conventions.release]
 version = "0.19.0"
-kinds = ["substrate", "standalone"]
+kinds = ["substrate"]
 ```
 
 ## Modules

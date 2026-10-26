@@ -112,7 +112,7 @@ def main(argv: list[str]) -> int:
             if name not in rendered:
                 (OUT_DIR / name).unlink()
         for filename, text in rendered.items():
-            (OUT_DIR / filename).write_text(text, encoding="utf-8")
+            (OUT_DIR / filename).write_text(text, encoding="utf-8", newline="\n")
         print(f"wrote {len(rendered)} files to {OUT_DIR}")
         return 0
     out = stale(rendered)

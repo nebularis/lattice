@@ -585,7 +585,7 @@ Not applicable.
 Ledger imports Foundation, for persistent identity, and Quantification, for value spaces, quantities and
 recurrences. It imports Vocabulary only transitively, through Quantification, and declares no term of its
 own as a subclass of a Vocabulary term. Ledger names no term of Party, Eligibility, Wording, Instrument or
-Behaviour (ADR-A01, 2026-10-19 addendum; ADR-A131 decision 1).
+Behaviour (ADR-A131 decision 1).
 
 ## 12. Release Notes
 

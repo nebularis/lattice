@@ -16,7 +16,7 @@ Follow every step for any change to `ontology/**/spec/`, `ontology/**/vocab/`, o
 
 **Version bumps and `release:prepare` are a merge-time operation, never a branch-time one.** Steps 2
 to 6 below move every release member's `owl:versionIRI` to a new shared number (ADR-A129), which
-touches every substrate and standalone document whether or not its own content changed, and cascades
+touches every substrate document whether or not its own content changed, and cascades
 into every applied module that pins the release. Nobody consumes a long-lived development branch's
 version numbers before it merges, so bumping mid-branch re-pins dozens of files for no reader, and
 the real bump still has to happen again, once, when the branch actually merges. A branch pins its
@@ -75,10 +75,7 @@ the maintainer is actually preparing a merge into `main`, never as part of an or
      question or a technical debt item, and no delivery phrasing such as "this slice". Skill
      `lattice-publication-hygiene`, "Delivery identifiers stay in working documents", has the rule.
 2. **Know which versioning applies.** The modules of the kinds listed in the repository catalogue's
-   `[conventions.release]` (`substrate` and `standalone`, which cover the layers, MORK, SPC,
-   Surface and Persistence) are one release with one number, held there (ADR-A129). Their shapes and projection
-   directories have no `.version` file. The applied modules and the examples keep their own versions
-   and pin a release (ADR-A86).
+   `[conventions.release]` (`substrate`, the layers of ADR-A01's order) are one release with one number, held there (ADR-A129). Their shapes and projection directories have no `.version` file. The standalone modules (MORK, SPC, Surface and Persistence), the applied modules and the examples keep their own versions and pin a release (ADR-A86, and ADR-A129's 2026-10-26 addendum).
 3. **Move the release for a change to a member.** `mise run release:prepare -- <X.Y.Z>` moves every
    member version IRI, every import of a member, the applied modules' pins, the literate READMEs and
    the tool packages' sources to the new number in one substitution, then regenerates the XML catalogs
@@ -86,7 +83,7 @@ the maintainer is actually preparing a merge into `main`, never as part of an or
    `check:ontology-versioning` fails with `UNBUMPED` when a member changed and the number did not.
    Where the maintainer has agreed that a working branch defers versioning to its merge into `main`,
    that branch ignores the failure and takes one bump at the merge, as its status record says.
-4. **Bump an applied module's or an example's own version.** Change the document's
+4. **Bump a standalone module's, an applied module's or an example's own version.** Change the document's
    `owl:versionIRI`, or a `shapes/` or `projection/` directory's `.version` file. A document whose
    only change is a re-pinned import takes the imported change's bump level (ADR-A86). Build the
    import graph with `find_in_scope_ttl_files` and `extract_version_iris` from

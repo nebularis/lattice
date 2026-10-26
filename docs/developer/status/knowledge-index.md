@@ -38,18 +38,18 @@ The index is useful before this is done, and a row is found by its own words eve
 | R4 | Done 2026-10-26. The maintainer ratified every row of the mechanism, capability, pattern, principle and standard registers | maintainer | |
 | R5 | Re-source the principles that rest on the platform plan v0.2, PRI-51, PRI-52, PRI-53, PRI-54, PRI-60, which is no longer where the guardrails for agentic development are kept | maintainer | ratifying a principle is now its grounding, and a principle citing no decision is found by query rather than failed |
 | R7 | Review the scope each entry was given from where its text lives. Standards, principles and patterns now state an audience and a phase, and those values were not part of the ratification | maintainer | 184 of the 235 practice standards are internal and development-only, so a query for runtime design leaves them out |
-| R6 | Deferred to TD-82 by the maintainer, to be done as the architectural fitness functions are brought to life | maintainer | |
+| R6 | Done 2026-10-26. Deferred to TD-82, then done at the maintainer's request from where each standard points. The 51 standards that bind ontology documents, shapes or the queries in them govern the data quanta, the four release standards the substrate's alone. The conventions and practices are left to govern every quantum | maintainer | |
 
 ## Decisions
 
 | # | Task | Owner |
 |---|---|---|
-| D1 | PDD-12: whether MORK, Persistence, SPC and Surface leave the substrate's release | maintainer |
-| D2 | The process view: which artefacts define a process quantum, so it can be derived | maintainer |
-| D3 | Which characteristics warrant a holistic or a continual fitness function. All 18 checks that enforce a standard are atomic and triggered | maintainer |
-| D4 | Which of the 14 extrapolated standards get a check, and which record why they cannot, as STD-002 requires | maintainer |
+| D1 | Done 2026-10-26. The maintainer chose that MORK, Persistence, SPC and Surface each take their own release, pinning the substrate release they import (ADR-A129 addendum). Each keeps 0.19.0 as its own version, with a shape `.version` and release rows. PDD-12 removed | maintainer |
+| D2 | The process view: which artefacts define a process quantum, so it can be derived. Explained to the maintainer on 2026-10-26, awaiting an answer | maintainer |
+| D3 | Done 2026-10-26. The maintainer chose a holistic release-integrity check, and continual dependency advisories, external link rot and the check suite's run-time trend. None exists, so they are TD-89 and TD-90 | maintainer |
+| D4 | Done 2026-10-26. STD-002, STD-003, STD-023 and STD-025 have checks (CAP-81, CAP-82), and STD-013 to STD-015 name the checks `check:knowledge` already ran. The standard register's `Unchecked because` column holds the reason for STD-001, STD-004, STD-008, STD-009, STD-016 to STD-018, STD-020, STD-022, STD-024, STD-257 and STD-258. STD-003 loosened at the maintainer's request to allow a committed derived file a consumer fetches, unratified. 36 `write_text` calls under `tools/` given an explicit encoding and newline | maintainer |
 | D5 | Drafted 2026-10-26. PRI-63 to PRI-74 state testing, naming, writing, reporting and publication principles the repository already holds, unratified. The standards they sit above do not yet point to them through `Supports` | agent drafts |
-| D6 | TSD-37: whether `ontology/mork/test/data/Contracts.ttl` is live input or an orphan | maintainer |
+| D6 | Done 2026-10-26. The maintainer had it deleted as a MORK example file. `Demo.ttl` and `Demo.owl`, the demonstration that imported it, went with it, read by no code. Every tracked ontology document now parses in Oxigraph, which `check:knowledge` holds (STD-023) | maintainer |
 
 ## Clean-up the index has found
 
@@ -58,9 +58,9 @@ None blocks activation. Each is a defect the index surfaced, recorded where it b
 | # | Task | Owner |
 |---|---|---|
 | C1 | Done 2026-10-26. The seven decisions' `## Status` sections became `**Status:**` header fields, so each has its status in the index | agent |
-| C2 | Partly done 2026-10-26. 27 decisions gained a `**Unit:**` line where the evidence names one unit. 57 are left because their evidence names several units or none, and 11 Published decisions found a unit but may not link a working document outside their Provenance section (C12) | agent drafts |
+| C2 | Done 2026-10-26. 27 decisions gained a `**Unit:**` line where the evidence named one unit. Of the other 57, 25 gained one naming every unit the evidence shows, as a comma-separated list, and 32 have none, since their evidence shows only a later citation or they predate the units. The 11 Published decisions name theirs in Provenance (C12) | agent drafts |
 | C3 | Done 2026-10-26 except two. Non-breaking hyphens, spaced spellings and old-style titles corrected, except in one review record whose lines carrying them also carry its own semicolons. `ADR-A-C1` and `ADR-A-C2` are left, since those decisions' own titles write them so and only their filenames say `ADR-AC1` and `ADR-AC2`. Which spelling is canonical is the maintainer's choice (C11) | agent |
-| C4 | Deferred to TD-83 by the maintainer | maintainer | |
+| C4 | Done 2026-10-26. The citations of removed register rows outside working history were sorted. Those that record history stay. The stale ones were corrected, among them the TD-49 citations in the exposure README and its generated Turtle (exposure spec and vocabulary 0.3.1), TD-28 in the insure-o README, TD-79 in the design skill and TD-68 in TSD-34's record. TD-83 removed | maintainer | |
 | C5 | Done 2026-10-26. ADR-A101, ADR-A108 and ADR-A109 drafted as Proposed, at a high level with every modelling question left open | maintainer | |
 | C6 | Done 2026-10-26 except TD-80, which stays open by the maintainer's decision. TD-78 paid, so `repo_files` lists files from git and refuses a checkout without `.git`. TD-79 paid, with the duplicate compiler removed. `morkSC_Test.py` revived as `test_morkSC.py`, 15 tests | agent drafts |
 | C7 | Done 2026-10-26. The eight components have READMEs and capability rows CAP-73 to CAP-80, unratified | agent drafts |
@@ -83,3 +83,4 @@ None blocks activation. Each is a defect the index surfaced, recorded where it b
 - 2026-10-26. Every register row ratified (R1, R4). ADR-A101, ADR-A108 and ADR-A109 drafted (C5). `check:mork` added to `check` (C13). TD-82, TD-83 and TD-84 hold R6, C4 and C10. `AGENTS.md` and every skill now ask the index first, look for related entries, and report misses at each handoff through `graph:ask -- misses`.
 - 2026-10-26. TD-81 paid. The facets are authored in the facet register, `docs/developer/facets.md`, one table per scheme, and `tools/knowledge/facets.py` generates `.build/knowledge/facets.ttl` on every build, never committed (ADR-A134 decision 26, approved by the maintainer). The generated graph was isomorphic to the hand-written file, 1,757 triples, less its version, which is dropped. The embedding model could not be fetched in the cloud environment, so `find` did not rank during this work.
 - 2026-10-26. Paths from the catalogue, at the maintainer's request. A ranked question about building a path to a repository directory found no standard, since the rule lived only in ADR-A121. STD-273 now states it, pointing at the toolchain skill's new Finding paths section, and CAP-09 says the reader resolves names. The reader gives every root and documentation area a `name` and resolves it with `Catalogue.area` and `area <name>` (ADR-A121 addendum of 2026-10-26). The knowledge tools take the root and their areas from it. TD-87 holds the nine tools that still count `__file__`'s parents, and TD-88 the scan that cannot see them. `AGENTS.md`, the developer guide, and the toolchain, testing and lifecycle skills say how to ask. The embedding model was fetched once `huggingface.co` and its content host were allowed.
+- 2026-10-26. ADR-A131 Published, clearing `check:published-decisions`. D1, D3, D4 and D6 decided by the maintainer and done, with C2, R6 (TD-82) and C4 (TD-83). ADR-A135 drafted as Proposed for TD-86. `dev:guardrail-scan` reports possible breaks of PRI-55 and PRI-56 for TD-85.

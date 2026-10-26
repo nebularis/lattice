@@ -59,7 +59,7 @@ class EgressConfigGenerator:
             sparql = self._generate_construct_template(
                 mapping_iri, concept_iri)
             template_path = queries_dir / f"{template_name}.rq"
-            template_path.write_text(sparql)
+            template_path.write_text(sparql, encoding="utf-8", newline="\n")
 
             # Generate JSON-LD frame if applicable
             frame_path = None
@@ -67,7 +67,7 @@ class EgressConfigGenerator:
                 frame = self._generate_jsonld_frame(mapping_iri, concept_iri)
                 frame_path = frames_dir / f"{template_name}.jsonld"
                 import json
-                frame_path.write_text(json.dumps(frame, indent=2))
+                frame_path.write_text(json.dumps(frame, indent=2), encoding="utf-8", newline="\n")
 
             # Fetch parameters
             params = self._fetch_parameters(mapping_iri)

@@ -135,13 +135,30 @@ def test_the_term_summary_answers_the_question_the_index_exists_for(built):
     assert "foundation" in str(rows[0]["pointer"].value)
 
 
-def test_an_unparseable_document_is_reported_and_loses_only_itself(built):
-    """TSD-37: one tracked fixture holds IRIs with two fragment separators, which Oxigraph refuses.
-    A single batch load would lose all 270 documents to it, so the load is per document."""
+def test_every_tracked_ontology_document_parses_in_the_strict_store(built):
+    """STD-023: every tracked ontology document parses in Oxigraph, which refuses what rdflib accepts.
+    TSD-37 found one that did not, a MORK demonstration file, deleted on 2026-10-26."""
     out, _ = built
-    assert out.counts.get("ontology-document-failed", 0) == 1
     assert out.counts["ontology-document"] > 250
-    assert any("does not parse" in p for p in out.problems)
+    assert out.counts.get("ontology-document-failed", 0) == 0, [p for p in out.problems if "does not parse" in p]
+
+
+def test_an_unparseable_document_is_reported_and_loses_only_itself(tmp_path, monkeypatch):
+    """TSD-37: a document holding an IRI with two fragment separators, which Oxigraph refuses. A single
+    batch load would lose every document to it, so the load is per document."""
+    good = tmp_path / "good.ttl"
+    good.write_text("<https://example.org/a> <https://example.org/p> <https://example.org/b> .\n", encoding="utf-8")
+    bad = tmp_path / "bad.ttl"
+    bad.write_text("<https://example.org/a#b#c> <https://example.org/p> <https://example.org/b> .\n", encoding="utf-8")
+    monkeypatch.setattr(extract, "ROOT", tmp_path)
+    monkeypatch.setattr(extract, "tracked", lambda *patterns: [good, bad])
+    out = extract.Extract()
+    store = ox.Store()
+    extract.load_ontologies(store, out)
+    assert out.counts.get("ontology-document") == 1
+    assert out.counts.get("ontology-document-failed") == 1
+    assert any("bad.ttl: does not parse" in p for p in out.problems)
+    assert len(store) == 1
 
 
 def test_the_registers_contribute_their_rows(built):
@@ -527,13 +544,10 @@ def test_the_enforcement_gap_is_one_query(built):
     assert enforced + unenforced == count("")
 
 
-# The release members the release policy places outside the substrate's quantum, as derived on
-# 2026-10-25 and confirmed by the maintainer. A fitness function guards a boundary against drifting
-# further: a module that newly shares the release without being coupled to the substrate fails here.
-STRADDLING = frozenset({"mork", "persistence", "spc", "surface"})
-
-
-def test_the_data_quanta_follow_the_coupling(built):
+def test_the_release_is_one_data_quantum(built):
+    """The release holds exactly the substrate's data quantum. MORK, Persistence, SPC and Surface shared
+    it until ADR-A129's addendum of 2026-10-26, coupled to the substrate by nothing but the number. A
+    module that newly joins the release without being coupled to the substrate fails here."""
     out, store = built
     substrate = {
         str(r["p"].value) for r in _rows(store, """PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -541,8 +555,7 @@ def test_the_data_quanta_follow_the_coupling(built):
     }
     catalogue = lattice_repo_catalogue.load(identifiers.ROOT)
     assert substrate == {m.name for m in catalogue.modules.values() if m.kind == "substrate"}
-    release = {m.name for m in catalogue.release_members()}
-    assert release - substrate == STRADDLING, "the release policy straddles a different set of quanta"
+    assert {m.name for m in catalogue.release_members()} == substrate
 
 
 def test_a_broker_does_not_separate_the_authoring_service_from_its_worker(built):
@@ -560,6 +573,19 @@ def test_a_governed_quantum_exists(built):
     rows = _rows(store, "SELECT ?id ?q WHERE { GRAPH ki:index { ?s ki:governs ?q ; ki:identifier ?id "
                         "FILTER NOT EXISTS { ?q a ki:Quantum } } }")
     assert not [(str(r["id"].value), str(r["q"].value)) for r in rows]
+
+
+def test_every_architectural_and_design_standard_names_its_check_or_why_it_has_none(built):
+    """STD-002: a standard nobody can tell is broken holds only while every reader remembers it. A
+    standard with a check does not also say why it has none."""
+    _, store = built
+    rows = _rows(store, """SELECT ?id WHERE { GRAPH ki:index {
+        ?s a ki:Standard ; ki:identifier ?id ; ki:stratum ?l .
+        FILTER (?l IN (ki:ArchitecturalStratum, ki:DesignStratum))
+        FILTER (NOT EXISTS { ?s ki:enforcedBy ?c } && NOT EXISTS { ?s ki:uncheckedBecause ?r }) } }""")
+    assert not [str(r["id"].value) for r in rows]
+    both = _rows(store, "SELECT ?id WHERE { GRAPH ki:index { ?s ki:enforcedBy ?c ; ki:uncheckedBecause ?r ; ki:identifier ?id } }")
+    assert not [str(r["id"].value) for r in both]
 
 
 def test_every_enforcing_check_is_classified_as_a_fitness_function(built):

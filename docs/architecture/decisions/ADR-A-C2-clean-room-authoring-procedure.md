@@ -4,6 +4,7 @@
 
 **Status:** Accepted
 **Date:** 2026-09-17
+**Unit:** [`computable-contract-substrate`](../../developer/plans/computable-contract-substrate.md) (plan)
 
 ## Context
 

@@ -84,7 +84,7 @@ def main() -> int:
         result = subprocess.run(command, cwd=ROOT, env=env, capture_output=True, text=True,
                                 encoding="utf-8", errors="replace")
         output = result.stdout + result.stderr
-        log.write_text(output, encoding="utf-8")
+        log.write_text(output, encoding="utf-8", newline="\n")
         counts, failed = outcome(output)
         passed = result.returncode == 0
         failures += not passed

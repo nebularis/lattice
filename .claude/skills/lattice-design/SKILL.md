@@ -30,7 +30,7 @@ hard-codes one domain's practice as the only way is wrong at the substrate.
 - **A class, column, status or classification is added only when some query or check answers differently because of it.** A distinction that changes no answer is one more thing to keep consistent, for nothing.
 - **A fact a query or check compares is a value from a closed set, never free text.** Free text cannot be compared and drifts into variants, as the decisions' status lines drifted into fifteen shapes.
 - **A section, row or definition is referred to by a name that survives an edit, never by its position.** A line number or a column index is right until the next edit, then silently wrong.
-- **A thing is recorded once, however many documents mention it, and every other mention points at that record, but a node is never shared across an aggregate boundary or where concurrent writers would contend for it.** Two records of one thing diverge, as the two copies of the MORK-to-RML compiler have (TD-79). A derived restatement, such as a new version, a projection to a lower layer or a promoted value, is not a second record, since it is derived and never edited.
+- **A thing is recorded once, however many documents mention it, and every other mention points at that record, but a node is never shared across an aggregate boundary or where concurrent writers would contend for it.** Two records of one thing diverge, as the two copies of the MORK-to-RML compiler did until one was removed. A derived restatement, such as a new version, a projection to a lower layer or a promoted value, is not a second record, since it is derived and never edited.
 
 ## Writing a sketch or a plan
 

@@ -270,7 +270,7 @@ def export_recipes(compiled: Graph, out_dir, vectors: bool = False) -> list:
         cls = recipe["target"]["class"].rstrip("/#").replace("#", "/").rsplit("/", 1)[-1]
         name = f"{cls}-{recipe['role']}-{recipe['recipeDigest'][7:19]}.recipe.json"
         path = out / name
-        path.write_text(json.dumps(recipe, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        path.write_text(json.dumps(recipe, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
         written.append(path)
         if vectors:
             # identity-minting M2: the Python minting library is the reference
@@ -281,7 +281,7 @@ def export_recipes(compiled: Graph, out_dir, vectors: bool = False) -> list:
                 raise RuntimeError("vector generation needs packages/minting/python installed "
                                    "(mise run bootstrap:minting-python)") from e
             vpath = out / name.replace(".recipe.json", ".vectors.json")
-            vpath.write_text(json.dumps(generate(recipe), indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
+            vpath.write_text(json.dumps(generate(recipe), indent=2, ensure_ascii=True) + "\n", encoding="utf-8", newline="\n")
             written.append(vpath)
     return written
 

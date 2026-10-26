@@ -111,7 +111,7 @@ def main(argv: list[str]) -> int:
     if "--write" in argv:
         OUT_DIR.mkdir(parents=True, exist_ok=True)
         for name, text in rendered.items():
-            (OUT_DIR / name).write_text(text, encoding="utf-8")
+            (OUT_DIR / name).write_text(text, encoding="utf-8", newline="\n")
         print(f"wrote {len(rendered)} files to {OUT_DIR}")
         return 0
     stale = [n for n, t in rendered.items() if not (OUT_DIR / n).exists() or (OUT_DIR / n).read_text(encoding="utf-8") != t]

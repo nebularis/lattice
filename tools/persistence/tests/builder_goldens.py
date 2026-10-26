@@ -79,7 +79,7 @@ def main(argv: list[str]) -> int:
         print("  " + "\n  ".join(refused))
         return 1
     if "--update" in argv:
-        GOLDEN.write_text(json.dumps(now, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        GOLDEN.write_text(json.dumps(now, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
         print(f"recorded {len(now)} builders in {GOLDEN}")
         return 0
     print("builder goldens are current" if now == before else "builder goldens are stale")

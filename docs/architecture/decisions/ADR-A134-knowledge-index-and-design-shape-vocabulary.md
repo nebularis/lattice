@@ -73,7 +73,7 @@ The maintainer clarified the term the architecture skill used without defining i
 
 **19. The design standards are rules about connascence, and bind hardest across a quantum boundary.** Addressing by name rather than position, closed values rather than free text, and one record per thing each weaken a form of connascence. Inside a quantum a stronger form is tolerable. Across a boundary it is not, and every failure that led to those standards crossed one.
 
-Two findings were derived on the day. MORK, Persistence, SPC and Surface share the substrate's release number although nothing in the substrate imports them, so ADR-A129 places them across a quantum boundary. Whether they should leave that release is PDD-12, and not decided here. And in the authoring deployment the service and its worker talk through RabbitMQ yet share Fuseki, so they are one quantum, and the broker does not separate them.
+Two findings were derived on the day. MORK, Persistence, SPC and Surface share the substrate's release number although nothing in the substrate imports them, so ADR-A129 places them across a quantum boundary. Whether they should leave that release was not decided here, and ADR-A129's addendum of 2026-10-26 took them out of it. And in the authoring deployment the service and its worker talk through RabbitMQ yet share Fuseki, so they are one quantum, and the broker does not separate them.
 
 ## Addendum of 2026-10-26: ranking by meaning, and falling back
 

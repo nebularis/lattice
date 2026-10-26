@@ -154,7 +154,7 @@ def link(root: Path, target: Path, copy: bool) -> list[str]:
             raise SystemExit(f"{dest} exists and was not made by this task. Remove it first.")
         if copy:
             shutil.copytree(skill, dest)
-            (dest / ".lattice-copy").write_text("Copied by `mise run skills:link`. Re-run it after pulling.\n")
+            (dest / ".lattice-copy").write_text("Copied by `mise run skills:link`. Re-run it after pulling.\n", encoding="utf-8", newline="\n")
         else:
             dest.symlink_to(skill, target_is_directory=True)
         done.append(dest.name)
@@ -170,8 +170,8 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.command == "build":
         agents = render_agents((ROOT / "AGENTS.md").read_text(encoding="utf-8"), rc.where_things_are(rc.load(ROOT)))
-        (ROOT / "AGENTS.md").write_text(agents, encoding="utf-8")
-        (ROOT / COPILOT).write_text(render_copilot(agents), encoding="utf-8")
+        (ROOT / "AGENTS.md").write_text(agents, encoding="utf-8", newline="\n")
+        (ROOT / COPILOT).write_text(render_copilot(agents), encoding="utf-8", newline="\n")
         print(f"wrote AGENTS.md's table and {COPILOT}")
         return 0
     if args.command == "check":

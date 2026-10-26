@@ -45,5 +45,7 @@ Introduce `ontology/persistence`, a cross-cutting ontology (prefix `dal:`, for t
 
 ## Provenance
 
+**Unit:** [`persistence-profile-substrate`](../../developer/sketches/persistence-profile-substrate.md) (sketch)
+
 Designed in the [persistence profile substrate sketch](../../developer/sketches/persistence-profile-substrate.md). The store SPI and the runtime binding deferred here are proposed decisions A74 and A75, and open questions
 of the [platform development plan](../../developer/plans/lattice-platform-agentic-development-v0.2.md), Part 13. Published 2026-10-20, when the citations of proposed decisions moved here.

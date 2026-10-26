@@ -57,6 +57,8 @@ and `compile` takes `--no-parameter-guards` and `--caller-graph-names`, which `i
 
 ## Provenance
 
+**Unit:** [`persistence-profile-substrate`](../../developer/sketches/persistence-profile-substrate.md) (sketch), [`formal-methods-track-h`](../../developer/plans/formal-methods-track-h.md) (plan), slices H2.7 and H2.9
+
 Designed in the [persistence profile substrate sketch](../../developer/sketches/persistence-profile-substrate.md). The three runtime concerns of decision 6 are open questions of the [platform development plan](../../developer/plans/lattice-platform-agentic-development-v0.2.md), Part 13, whose Part 6 was marked
 pending revision because its ingestion and query-plane slices assumed ad hoc query construction. The store SPI is proposed decision
 A75. The addendum of 2026-10-10 follows ADR-A123. The templates were retired by slice H2.9 of the

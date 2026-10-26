@@ -320,6 +320,7 @@ COLUMNS: dict[str, tuple[str, str]] = {
     "Refines": ("refines", "ids"),
     "Supports": ("supports", "ids"),
     "Enforced by": ("enforcedBy", "ids"),
+    "Unchecked because": ("uncheckedBecause", "text"),
     "Stratum": ("stratum", "stratum"),
     "Governs": ("governs", "names"),
     "Fitness scope": ("fitnessScope", "fitnessScope"),
@@ -811,7 +812,7 @@ def build(store_path: Path) -> Extract:
         except embed.Unavailable as error:
             out.problems.append(f"no embeddings, so graph:ask -- find cannot rank: {error}")
             out.bump("embeddings-unavailable")
-        STAMP_PATH.write_text(f"{built_from}\n", encoding="utf-8")
+        STAMP_PATH.write_text(f"{built_from}\n", encoding="utf-8", newline="\n")
     out.counts["seconds"] = round(time.perf_counter() - start, 2)
     return out
 
