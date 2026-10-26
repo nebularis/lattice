@@ -67,8 +67,8 @@ STORE_PATH = ROOT / ".build" / "knowledge" / "store"
 # against it, so the index never answers from lines a document no longer holds.
 STAMP_PATH = ROOT / ".build" / "knowledge" / "built-from"
 TBOX_PATH = Path(__file__).resolve().parent / "knowledge.ttl"
-SHAPES_PATH = Path(__file__).resolve().parent / "design-shapes.ttl"
-SHAPE_NS = "https://www.nebularis.org/neuro-semantic/lattice/dev/design-shapes#"
+FACETS_PATH = Path(__file__).resolve().parent / "facets.ttl"
+FACET_NS = "https://www.nebularis.org/neuro-semantic/lattice/dev/facets#"
 
 KI = "https://www.nebularis.org/neuro-semantic/lattice/dev/knowledge#"
 RDF_TYPE = ox.NamedNode("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
@@ -76,7 +76,7 @@ RDFS_LABEL = ox.NamedNode("http://www.w3.org/2000/01/rdf-schema#label")
 INDEX_GRAPH = ox.NamedNode(KI + "index")
 TERMS_GRAPH = ox.NamedNode(KI + "terms")
 TBOX_GRAPH = ox.NamedNode(KI + "tbox")
-SHAPES_GRAPH = ox.NamedNode(KI + "shapes")
+FACETS_GRAPH = ox.NamedNode(KI + "facets")
 
 # Which node class each identifier family becomes.
 FAMILY_CLASS = {
@@ -234,21 +234,27 @@ def decisions(out: Extract) -> dict[str, ox.NamedNode]:
     return known
 
 
-def shape_slugs() -> set[str]:
-    """The concepts the design-shape scheme declares, so a tag outside it can be refused."""
+def facet_slugs() -> dict[str, set[str]]:
+    """The taggable values of each facet scheme, so a tag outside its scheme can be refused.
+
+    A group, a value carrying the editorial note "group", is filtered on and never tagged."""
     graph = ox.Store()
-    graph.load(path=str(SHAPES_PATH), format=ox.RdfFormat.TURTLE)
+    graph.load(path=str(FACETS_PATH), format=ox.RdfFormat.TURTLE)
     rows = graph.query(
         "PREFIX skos: <http://www.w3.org/2004/02/skos/core#> "
-        "SELECT ?c WHERE { ?c a skos:Concept }"
+        "SELECT ?c ?scheme WHERE { ?c a skos:Concept ; skos:inScheme ?scheme "
+        "FILTER NOT EXISTS { ?c skos:editorialNote \"group\" } }"
     )
-    return {str(r["c"].value).rsplit("#", 1)[-1] for r in rows}
+    slugs: dict[str, set[str]] = {}
+    for row in rows:
+        slugs.setdefault(row["scheme"].value.removeprefix(FACET_NS), set()).add(row["c"].value.removeprefix(FACET_NS))
+    return slugs
 
 
 # A register's table header IS its schema. Each column header maps to a T-Box property, and the
 # meaning of a column is that property's rdfs:comment in knowledge.ttl, written once. The kinds:
 # ``id`` the identifier, ``claim`` the first bolded span, ``label`` rdfs:label, ``text`` a plain
-# literal, ``module`` ki:ownedBy, ``shapes``, ``audience``, ``phase`` and ``ratified`` controlled.
+# literal, ``module`` ki:ownedBy, ``audience``, ``phase`` and ``ratified`` controlled.
 COLUMNS: dict[str, tuple[str, str]] = {
     "ID": ("identifier", "id"),
     "#": ("identifier", "id"),
@@ -259,7 +265,9 @@ COLUMNS: dict[str, tuple[str, str]] = {
     "Name": ("label", "label"),
     "Pointer": ("pointer", "text"),
     "Problem shape": ("problemShape", "text"),
-    "Shapes": ("tagged", "shapes"),
+    "Activity": ("activity", "facet:Activity"),
+    "Quality": ("quality", "facet:Quality"),
+    "Technology": ("technology", "facet:Technology"),
     "Waits for": ("waitsOn", "ids"),
     "Evidenced by": ("evidencedBy", "ids"),
     "Decided by": ("decidedBy", "ids"),
@@ -352,7 +360,7 @@ def waited_on(cell: str) -> list[str]:
 
 def register_rows(out: Extract) -> None:
     """One node per row of each register, read by column header (see ``COLUMNS``)."""
-    known_shapes = shape_slugs()
+    known_facets = facet_slugs()
     for family in identifiers.FAMILIES:
         if family.name not in FAMILY_CLASS or family.definition != "table-row":
             continue
@@ -455,23 +463,23 @@ def register_rows(out: Extract) -> None:
                                 out.problems.append(f"{here} has Ratified '{cell}', not yes or no")
                             else:
                                 status = value
+                        elif kind.startswith("facet:"):
+                            scheme = kind.removeprefix("facet:")
+                            for value in (v.strip() for v in cell.split(",")):
+                                if value and value not in known_facets[scheme]:
+                                    out.problems.append(f"{here} has {header} '{value}', which is not a taggable value of the {scheme} facet")
+                                elif value:
+                                    add(prop, ox.NamedNode(FACET_NS + value))
+                                    out.bump(f"facet:{scheme}")
                         else:
-                            allowed = known_shapes if kind == "shapes" else CONTROLLED[kind]
+                            allowed = CONTROLLED[kind]
                             for value in (v.strip() for v in cell.split(",")):
                                 if not value:
                                     continue
                                 if value not in allowed:
-                                    out.problems.append(
-                                        f"{here} is tagged '{value}', which is not a concept of the design-shape scheme"
-                                        if kind == "shapes"
-                                        else f"{here} has {header} '{value}', outside {sorted(allowed)}"
-                                    )
+                                    out.problems.append(f"{here} has {header} '{value}', outside {sorted(allowed)}")
                                     continue
-                                if kind == "shapes":
-                                    add(prop, ox.NamedNode(SHAPE_NS + value))
-                                    out.bump("tagged")
-                                else:
-                                    add(prop, ki(CONTROLLED[kind][value]))
+                                add(prop, ki(CONTROLLED[kind][value]))
                     add("status", ki(status))
                     if not has_pointer:
                         add("pointer", ox.Literal(f"{rel}:{number}-{number}"))
@@ -704,7 +712,7 @@ def build(store_path: Path) -> Extract:
     store = ox.Store(str(store_path))
 
     store.bulk_load(path=str(TBOX_PATH), format=ox.RdfFormat.TURTLE, to_graph=TBOX_GRAPH)
-    store.bulk_load(path=str(SHAPES_PATH), format=ox.RdfFormat.TURTLE, to_graph=SHAPES_GRAPH)
+    store.bulk_load(path=str(FACETS_PATH), format=ox.RdfFormat.TURTLE, to_graph=FACETS_GRAPH)
     decisions(out)
     register_rows(out)
     discoveries(out)

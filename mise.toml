@@ -335,8 +335,8 @@ description = "Ask the knowledge index a question: find <words> [--kind --phase 
 run = "python tools/knowledge/ask.py"
 
 [tasks."check:knowledge"]
-description = "Check the knowledge index: the T-Box honours ADR-A134, every design shape carries the synonyms that let a question reach it, and the extractor derives every node with a claim and a pointer from the real corpus, including the gerund-to-noun bridge the index exists for"
-run = "python -m pytest tools/knowledge/test_vocabulary.py tools/knowledge/test_design_shapes.py tools/knowledge/test_quanta.py tools/knowledge/test_extract.py tools/knowledge/test_embed.py -q"
+description = "Check the knowledge index: the T-Box honours ADR-A134, every facet tag is a value of its scheme, and the extractor derives every node with a claim and a pointer from the real corpus, including the gerund-to-noun bridge the index exists for"
+run = "python -m pytest tools/knowledge/test_vocabulary.py tools/knowledge/test_quanta.py tools/knowledge/test_extract.py tools/knowledge/test_embed.py -q"
 
 [tasks."check:agent-guidance"]
 description = "Check AGENTS.md's Where things are table is current, Copilot's file matches AGENTS.md, every skill is well formed and listed, the plugin marketplace is right, and every link resolves (ADR-A117)"

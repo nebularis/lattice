@@ -157,42 +157,37 @@ def test_every_node_has_a_claim_and_a_pointer(built):
     assert not [str(r["id"].value) for r in rows]
 
 
-def test_a_tag_outside_the_scheme_is_refused(built):
-    """ADR-A134 decision 9. An unknown tag has to fail rather than be stored, because a silently
-    forked vocabulary makes every recall query unreliable and nothing would say so."""
+def test_every_facet_tag_is_a_value_of_its_scheme(built):
+    """An unknown facet value has to be reported rather than stored, because a silently forked
+    vocabulary makes every filter unreliable and nothing would say so."""
     out, _ = built
-    assert out.counts.get("tagged", 0) > 0, "the worked examples must be tagged"
-    assert not [p for p in out.problems if "not a concept of the design-shape scheme" in p]
+    for scheme in ("Activity", "Quality", "Technology"):
+        assert out.counts.get(f"facet:{scheme}", 0) > 0, f"the registers must be tagged with {scheme}"
+    assert not [p for p in out.problems if "not a taggable value" in p]
 
 
-def test_the_gerund_reaches_the_noun(built):
-    """The whole design, in one assertion. An agent asking about "versioning" must reach MEC-01,
-    Foundation's versioning, although MEC-01's own text never uses that word and the model's term
-    is the noun `fnd:Version`. Measured in sketch §9.1 and §9.2: a term lookup fails, the author's
-    free-text problem shape fails, and a declared synonym on a tagged concept succeeds. If this
-    breaks, the index has stopped doing the one thing it exists for."""
+def test_a_group_reaches_every_value_under_it(built):
+    """A facet value may sit under several groups, so Java is both a language and a platform, and a
+    filter on either group must reach what is tagged java. CAP-72, the Java minting library, is the
+    entry a held-out question failed to find."""
     _, store = built
-    rows = list(
-        store.query(
+    for group in ("language", "platform"):
+        rows = store.query(
             f"""PREFIX ki: <{KI}>
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+            PREFIX fct: <https://www.nebularis.org/neuro-semantic/lattice/dev/facets#>
             SELECT DISTINCT ?id WHERE {{
-              GRAPH ki:shapes {{
-                ?c a skos:Concept ; skos:altLabel ?alt .
-                FILTER (LCASE(STR(?alt)) = "versioning")
-                ?under skos:broader* ?c .
-              }}
-              GRAPH ki:index {{ ?n ki:tagged ?under ; ki:identifier ?id . }}
+              GRAPH ki:facets {{ ?value skos:broader* fct:{group} }}
+              GRAPH ki:index {{ ?n ki:technology ?value ; ki:identifier ?id }}
             }}"""
         )
-    )
-    assert "MEC-01" in {str(r["id"].value) for r in rows}
+        assert "CAP-72" in {str(r["id"].value) for r in rows}, group
 
 
 def test_the_term_summary_holds_only_declared_ontology_terms(built):
-    """The T-Box and the design-shape scheme are loaded into graphs of their own. Without a filter
-    they also appeared in the term summary, so a question about a design shape came back as though
-    a module had declared it."""
+    """The T-Box and the facet schemes are loaded into graphs of their own. Without a filter they
+    would also appear in the term summary, so a question about a facet value would come back as
+    though a module had declared it."""
     _, store = built
     rows = list(
         store.query(
@@ -296,7 +291,9 @@ def test_exists_reaches_every_register_that_records_what_exists(built):
     """An agent asks one question, "does this already exist", and must not need to know which
     register holds the answer. The query once searched mechanisms alone, so every capability and
     every pattern was invisible to it until tagged, and none were. A pattern is found by its name,
-    which is its most findable handle, and a capability by its claim."""
+    which is its most findable handle, and a capability by its claim. Reaching MEC-01 from
+    "versioning", a word its text never uses, is find's job by meaning, measured in ADR-A134's
+    addendum of 2026-10-26 and not testable here without the model."""
     import ask
 
     _, store = built
@@ -307,7 +304,6 @@ def test_exists_reaches_every_register_that_records_what_exists(built):
 
     assert "PAT-12" in found("pagination"), "a pattern must be found by its name"
     assert "CAP-22" in found("imports or names"), "a capability must be found by its claim"
-    assert "MEC-01" in found("versioning"), "the gerund must still reach the noun"
 
 
 def test_every_index_entry_states_its_scope(built):
@@ -572,3 +568,28 @@ def test_the_store_stays_within_a_default_open_file_limit(built):
     out, _ = built
     files = list(out.store_path.glob("*.sst"))
     assert len(files) <= 32, f"{len(files)} SST files: the store has fragmented again"
+
+
+def test_a_facet_value_matches_up_and_down_its_chain_but_not_its_siblings(built):
+    """A question about physical data modelling must raise an entry tagged with the broader data
+    modelling, and the reverse, so tags written before the scheme grew still count. A sibling under
+    the same group must not, or naming any design activity would raise every design entry."""
+    import ask
+
+    _, store = built
+    values = ask.facet_values(store)["Activity"]
+    assert {"data-modelling", "design"} <= values["physical-data-modelling"]
+    assert "physical-data-modelling" in values["data-modelling"]
+    assert "ux-design" not in values["physical-data-modelling"]
+
+
+def test_a_related_value_raises_entries_in_another_facet(built):
+    """UX design is an activity and accessibility a quality, linked by skos:related through the
+    interaction-capability group. Naming the activity must raise entries tagged with the quality,
+    while a value with no relation adds nothing to another facet."""
+    import ask
+
+    _, store = built
+    wanted = ask.expand(store, {"Activity": ["ux-design"]})
+    assert "accessibility" in wanted["qualities"] and "ux-design" in wanted["activities"]
+    assert set(ask.expand(store, {"Activity": ["refactoring"]})) == {"activities"}

@@ -84,10 +84,10 @@ def test_the_derived_edge_is_the_only_one_and_is_marked_as_such(graph: rdflib.Gr
     assert derived == ["citedWith"]
 
 
-def test_tagging_meets_the_skos_scheme(graph: rdflib.Graph):
-    """ADR-A134 decision 5. ki:tagged and ki:solves are where the T-Box meets the design-shape
-    scheme, so their range is a SKOS concept and not a class of this vocabulary."""
-    for name in ("tagged", "solves"):
+def test_the_facets_meet_the_skos_scheme(graph: rdflib.Graph):
+    """The facet properties are where the T-Box meets the concept schemes of facets.ttl, so their
+    range is a SKOS concept and not a class of this vocabulary."""
+    for name in ("activity", "quality", "technology"):
         ranges = set(graph.objects(rdflib.URIRef(KI + name), rdflib.RDFS.range))
         assert ranges == {rdflib.URIRef(SKOS + "Concept")}, name
 

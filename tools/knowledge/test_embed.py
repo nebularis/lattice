@@ -23,12 +23,13 @@ import ask  # noqa: E402
 import embed  # noqa: E402
 
 KI = embed.KI
+FCT = "https://www.nebularis.org/neuro-semantic/lattice/dev/facets#"
 INDEX = ox.NamedNode(KI + "index")
 RDFS_LABEL = ox.NamedNode("http://www.w3.org/2000/01/rdf-schema#label")
 RDF_TYPE = ox.NamedNode("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
 
 
-def entry(store: ox.Store, ident: str, kind: str, claim: str, phase: str | None = None) -> None:
+def entry(store: ox.Store, ident: str, kind: str, claim: str, phase: str | None = None, activity: str | None = None) -> None:
     n = ox.NamedNode(KI + "node/" + ident.replace("-", ""))
     quads = [
         (n, ox.NamedNode(KI + "identifier"), ox.Literal(ident)),
@@ -38,6 +39,8 @@ def entry(store: ox.Store, ident: str, kind: str, claim: str, phase: str | None 
     ]
     if phase:
         quads.append((n, ox.NamedNode(KI + "phase"), ox.NamedNode(KI + phase)))
+    if activity:
+        quads.append((n, ox.NamedNode(KI + "activity"), ox.NamedNode(FCT + activity)))
     store.extend([ox.Quad(s, p, o, INDEX) for s, p, o in quads])
 
 
@@ -144,3 +147,21 @@ def test_find_falls_back_when_there_are_no_vectors(index, tmp_path, capsys):
     ask.find(index, "a ledger", set(), set(), set(), 8)
     out = capsys.readouterr().out
     assert "find cannot rank here" in out and "Fall back to reading the documents" in out
+
+
+def test_a_matching_facet_raises_an_entry_and_a_mismatch_hides_none(tmp_path, words, monkeypatch, capsys):
+    """Activity is a judgement two taggers can disagree on, so it boosts and never filters. PAT-1
+    trails MEC-1 by about 0.01 in meaning, less than one boost, so naming its activity puts it first,
+    and MEC-1 is still listed."""
+    store = ox.Store()
+    entry(store, "MEC-1", "Mechanism", "ledger", activity="ontology-design")
+    entry(store, "PAT-1", "Pattern", "ledger " * 7 + "minting", activity="solution-design")
+    embed.build(store, tmp_path)
+    monkeypatch.setattr(ask, "STORE_PATH", tmp_path / "store")
+    monkeypatch.setattr(ask, "log_miss", lambda question: None)
+    ask.find(store, "ledger", set(), set(), set(), 8)
+    assert capsys.readouterr().out.splitlines()[2].split()[1] == "MEC-1"
+    ask.find(store, "ledger", set(), set(), set(), 8, {"activities": {"solution-design"}})
+    out = capsys.readouterr().out.splitlines()
+    assert out[2].split()[1] == "PAT-1" and out[2].split()[0].endswith("+")
+    assert any(line.split()[1:2] == ["MEC-1"] for line in out[2:4]), "a mismatched activity must not hide an entry"

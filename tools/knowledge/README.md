@@ -13,7 +13,7 @@ Markdown stays the source of truth. Everything here derives from it and holds no
 | `identifiers.py` | the identifier families, how each is written and where each is defined, and the referential-integrity check over them |
 | `identifier-exceptions.txt` | identifiers that are mentioned but defined nowhere, each with its reason. The baseline the check measures a new break against |
 | `knowledge.ttl` | the T-Box: the node kinds, their relations and the closed status set ([ADR-A134](../../docs/architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md)) |
-| `design-shapes.ttl` | the SKOS scheme: 10 facets and 58 shapes, each phrased as a problem and carrying the synonyms a question arrives under |
+| `facets.ttl` | the facets entries are tagged with, Activity, Quality and Technology, each a SKOS concept scheme with a definition per value. A value may sit under several broader values, so Java is both a language and a platform, and two values may be related across facets, as UX design is to interaction capability. Generated from Markdown once TD-81 is paid |
 | `extract.py` | derives the index from the tracked documents into an Oxigraph store under `.build/`, never committed |
 | `embed.py` | ranks entries by meaning: the pinned model, fetched into `.build/knowledge/model/` on first build, and the vectors beside the store, re-embedding only changed text |
 | `ask.py` | the query surface. `find`, `read`, `node`, `reaches`, `exists` and `sparql`, with the miss log of questions answered weakly or not at all |
@@ -38,7 +38,7 @@ mise exec -- python tools/knowledge/identifiers.py --rehomed     # register entr
 
 ## Ranking by meaning
 
-`find` filters on the facets an entry states, then ranks the rest by how close its name, claim and problem shape are in meaning to the question. The model is `BAAI/bge-small-en-v1.5` (MIT licence), run from its ONNX export by onnxruntime, at the revision and SHA-256 pinned in `embed.py` ([ADR-A134](../../docs/architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md), decisions 20 to 23). The first build downloads 130 MB from Hugging Face. Where that is blocked, the build notes why and `find` says it cannot rank, and the other questions still work.
+`find` filters exactly on kind, phase and audience, ranks what remains by how close an entry's name, claim and problem shape are in meaning to the question, and raises an entry by 0.02 for each of activity, quality and technology that matches the question's. A facet value matches up and down its broader chain, so a mismatch hides nothing and a tag written before the scheme grew still counts. The model is `BAAI/bge-small-en-v1.5` (MIT licence), run from its ONNX export by onnxruntime, at the revision and SHA-256 pinned in `embed.py` ([ADR-A134](../../docs/architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md), decisions 20 to 23). The first build downloads 130 MB from Hugging Face. Where that is blocked, the build notes why and `find` says it cannot rank, and the other questions still work.
 
 A weak answer is advice to look further. The agent then reads the documents as it would without the index, and an answer found there that no register entry holds is a register gap, reported to the maintainer.
 
@@ -58,7 +58,7 @@ A register is a Markdown table whose column headers map to properties of [`knowl
 
 **A generated copy is skipped by its marker, not its directory.** Most files under `docs/_includes` are originals that live there, and only a file carrying the marker its generator writes is a copy.
 
-**Every design shape carries `skos:altLabel` forms, including the gerund.** Measured: a question for "versioning" matches neither `fnd:Version`, a noun, nor the author's own phrasing of the problem, so without a declared synonym the right row is unreachable. `check:knowledge` fails on a shape with no synonym, and a tag outside the scheme is refused rather than stored.
+**A facet value outside its scheme is reported, never stored.** A forked vocabulary makes every filter unreliable and nothing would say so. An entry is tagged with the most specific value that fits, and a filter on a broader value reaches every value under it.
 
 **A term enters the T-Box only when a query or a check needs it, and its `rdfs:comment` says which.** `check:knowledge` fails on a term without one, so the rule is enforced rather than merely intended. The vocabulary describes this repository, so it sits here and not under `ontology/`, and it is outside the substrate release.
 

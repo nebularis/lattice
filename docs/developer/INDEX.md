@@ -558,12 +558,12 @@ non-blocking track.
 | **Unit ID** | `knowledge-index` |
 | **Sketch** | [knowledge-index.md](sketches/knowledge-index.md), and for consumers [knowledge-index-for-consumers.md](sketches/knowledge-index-for-consumers.md) (KC-Q1 to KC-Q7) |
 | **Status Record** | [knowledge-index.md](status/knowledge-index.md), which lists what remains before agents use it |
-| **ADRs** | [A-134](../architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md), Accepted 2026-10-24 |
+| **ADRs** | [A-134](../architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md), Accepted 2026-10-24, with addenda of 2026-10-25 and 2026-10-26 |
 | **Discoveries** | TSD-37 (a strict parser refuses IRIs rdflib accepts), TSD-38 (a read-only open is six times cheaper, and the queries are not the cost) |
 
-A derived graph over this repository's own working documents, so an agent can retrieve what the project already knows by design shape as well as by identifier, instead of reading whole plans. A live view of the AIR, CCS and FML epics is 89 files and about 463,000 tokens today, against about 4,000 for an indexed lookup. Markdown stays the source of truth and the index holds no content of its own, so deleting it loses nothing but speed.
+A derived graph over this repository's own working documents, so an agent can retrieve what the project already knows by meaning and by facet as well as by identifier, instead of reading whole plans. A live view of the AIR, CCS and FML epics is 89 files and about 463,000 tokens today, against about 4,000 for an indexed lookup. Markdown stays the source of truth and the index holds no content of its own, so deleting it loses nothing but speed.
 
-The remaining work is mostly authoring rather than code: three new registers (principles, patterns, mechanisms), a SKOS scheme of 40 to 70 design shapes, and the tagging. Sketch §8 states the row shape per register, the five tagging rules and about 20 hours of maintainer time, almost all of it ratifying drafted rows rather than writing them. §9.1 is the measurement that makes the mechanism register the first backfill: `graph:ask -- exists version` finds Foundation's class, and `exists versioning` finds nothing, because an identifier is a noun and a question is a gerund.
+The remaining work is mostly ratification rather than code, of the drafted register rows and their facet tags. Sketch §8 states the row shape per register, the five tagging rules and about 20 hours of maintainer time, almost all of it ratifying drafted rows rather than writing them. §9.1 is the measurement that makes the mechanism register the first backfill: `graph:ask -- exists version` finds Foundation's class, and `exists versioning` finds nothing, because an identifier is a noun and a question is a gerund.
 
 # Part III — Archived/Historical Work
 

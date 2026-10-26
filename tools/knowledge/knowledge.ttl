@@ -199,7 +199,7 @@ ki:publishedOn
 ki:problemShape
     rdf:type owl:DatatypeProperty ; rdfs:domain ki:Node ; rdfs:range xsd:string ;
     rdfs:label "problem shape" ;
-    rdfs:comment "The kind of problem this node answers, in the author's own words and phrased as the problem. Earns its place from the measurement of knowledge-index sketch section 9.1: a term lookup finds fnd:Version for the question 'version' and nothing for 'versioning', because an identifier is a noun and a question is a gerund. This is the text that closes that gap, and it is matched before the design-shape scheme exists. ki:tagged and ki:solves replace it with concepts once a node is tagged, and this stays as the human phrasing." .
+    rdfs:comment "The kind of problem this node answers, in the author's own words and phrased as the problem. Earns its place from the measurement of knowledge-index sketch section 9.1, where a term lookup found fnd:Version for 'version' and nothing for 'versioning', and from the bake-off of ADR-A134's addendum of 2026-10-26. It is part of the text graph:ask -- find embeds and ranks." .
 
 ki:status
     rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range ki:Status ;
@@ -211,10 +211,21 @@ ki:definedIn
     rdfs:label "defined in" ;
     rdfs:comment "Earns its place from the referential-integrity check, which is exactly the question of whether a mentioned identifier is defined anywhere." .
 
-ki:tagged
+ki:activity
     rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range skos:Concept ;
-    rdfs:label "tagged" ;
-    rdfs:comment "A design shape this node is about. The property where the T-Box meets the SKOS scheme of design-shapes.ttl (ADR-A134 decision 5), and the one recall matches on. An unknown concept fails the check, so the vocabulary cannot fork silently." .
+    rdfs:label "activity" ;
+    rdfs:comment "What a person or agent is doing when this node matters, a concept of the Activity scheme in facets.ttl. Earns its place as graph:ask -- find --activity, which the skill loaded for a task supplies, so of two entries that share a topic the one serving the work at hand ranks higher. Read from a register's Activity column." .
+
+ki:quality
+    rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range skos:Concept ;
+    rdfs:label "quality" ;
+    rdfs:comment "The characteristic this node protects or trades, a concept of the Quality scheme in facets.ttl. Earns its place as graph:ask -- find --quality, which raises what bears on performance or concurrency by tag when the question's words never say so. Read from a register's Quality column." .
+
+ki:technology
+    rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range skos:Concept ;
+    rdfs:label "technology" ;
+    rdfs:comment "A technology this node is specific to, a concept of the Technology scheme in facets.ttl. Earns its place as graph:ask -- find --tech, which raises rules for the engine or language at hand above rules for another. A node true of every technology carries none. Read from a register's Technology column." .
+
 
 ki:cost
     rdf:type owl:DatatypeProperty ; rdfs:domain ki:Pattern ; rdfs:range xsd:string ;
@@ -276,10 +287,6 @@ ki:supports
     rdfs:label "supports" ;
     rdfs:comment "Earns its place as the inverse direction of ki:evidencedBy, so a principle can be asked what rests on it as well as what holds it up." .
 
-ki:solves
-    rdf:type owl:ObjectProperty ; rdfs:domain ki:Mechanism ; rdfs:range skos:Concept ;
-    rdfs:label "solves" ;
-    rdfs:comment "The shape of problem a mechanism answers, phrased as the problem and never as the mechanism's own name, because an agent matches against it before knowing the mechanism exists (ADR-A134 decision 9)." .
 
 ki:ownedBy
     rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range ki:Module ;

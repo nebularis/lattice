@@ -87,22 +87,6 @@ SELECT DISTINCT ?needle ?where ?module ?name ?kind ?label ?pointer WHERE {
       BIND (REPLACE(STR(?term), "^.*[#/]", "") AS ?name)
     }
   } UNION {
-    # A design shape whose own name or a declared synonym matches, then whatever is tagged with it
-    # or with a concept under it. This is the branch that bridges a gerund to a noun (§9.2), and
-    # the only one that can answer a question phrased in words no document uses.
-    GRAPH ki:shapes {
-      ?c a skos:Concept .
-      { ?c skos:prefLabel ?l } UNION { ?c skos:altLabel ?l } UNION { ?c skos:definition ?l }
-      FILTER (CONTAINS(LCASE(STR(?l)), LCASE(?needle)))
-      ?under skos:broader* ?c .
-    }
-    GRAPH ki:index {
-      ?n ki:tagged ?under ; ki:identifier ?name ; ki:claim ?label ; ki:pointer ?pointer .
-    }
-    BIND ("shape" AS ?where)
-    BIND (REPLACE(STR(?c), "^.*#", "") AS ?module)
-    BIND ("tagged" AS ?kind)
-  } UNION {
     # What the project already has, whichever register holds it: a mechanism adopted, a
     # capability invoked, or a pattern applied. Matched on the claim and on a stated problem shape,
     # so an untagged row is still found by its own words (sketch section 9.1).
@@ -168,13 +152,18 @@ CANDIDATES = (
     PREFIXES
     + """
 SELECT ?n ?id ?kind ?status ?claim ?pointer
-       (GROUP_CONCAT(DISTINCT ?ph) AS ?phases) (GROUP_CONCAT(DISTINCT ?au) AS ?audiences) WHERE {
+       (GROUP_CONCAT(DISTINCT ?ph) AS ?phases) (GROUP_CONCAT(DISTINCT ?au) AS ?audiences)
+       (GROUP_CONCAT(DISTINCT ?ac) AS ?activities) (GROUP_CONCAT(DISTINCT ?qu) AS ?qualities)
+       (GROUP_CONCAT(DISTINCT ?te) AS ?technologies) WHERE {
   GRAPH ki:index {
     ?n ki:identifier ?id ; ki:claim ?claim ; a ?k .
     OPTIONAL { ?n ki:pointer ?pointer }
     OPTIONAL { ?n ki:status ?s }
     OPTIONAL { ?n ki:phase ?p BIND (REPLACE(STR(?p), "^.*#", "") AS ?ph) }
     OPTIONAL { ?n ki:audience ?a BIND (REPLACE(STR(?a), "^.*#", "") AS ?au) }
+    OPTIONAL { ?n ki:activity ?x BIND (REPLACE(STR(?x), "^.*#", "") AS ?ac) }
+    OPTIONAL { ?n ki:quality ?y BIND (REPLACE(STR(?y), "^.*#", "") AS ?qu) }
+    OPTIONAL { ?n ki:technology ?z BIND (REPLACE(STR(?z), "^.*#", "") AS ?te) }
     BIND (REPLACE(STR(?k), "^.*#", "") AS ?kind)
     BIND (REPLACE(STR(?s), "^.*#", "") AS ?status)
   }
@@ -186,19 +175,91 @@ KINDS = {
     "decision": "Decision", "pending-decision": "PendingDecision", "debt": "Debt",
 }
 PHASES = {"development": "Development", "authoring": "Authoring", "runtime": "Runtime"}
+FACET_FLAGS = {"activity": ("Activity", "activities"), "quality": ("Quality", "qualities"), "tech": ("Technology", "technologies")}
+# Each facet value with every value under it, through skos:broader, so a filter on a group finds what
+# is tagged beneath it.
+FACET_VALUES = (
+    PREFIXES
+    + """
+SELECT ?scheme ?value ?under WHERE {
+  GRAPH ki:facets { ?v skos:inScheme ?s . ?u skos:broader* ?v ; skos:inScheme ?s . }
+  BIND (REPLACE(STR(?s), "^.*#", "") AS ?scheme)
+  BIND (REPLACE(STR(?v), "^.*#", "") AS ?value)
+  BIND (REPLACE(STR(?u), "^.*#", "") AS ?under)
+}"""
+)
+
+
+# Related values, which may sit in different facets, so naming ux-design also raises entries tagged
+# with a quality of interaction capability.
+FACET_RELATED = (
+    PREFIXES
+    + """
+SELECT ?value ?other ?scheme WHERE {
+  GRAPH ki:facets { { ?v skos:related ?o } UNION { ?o skos:related ?v } ?o skos:inScheme ?s . }
+  BIND (REPLACE(STR(?v), "^.*#", "") AS ?value)
+  BIND (REPLACE(STR(?o), "^.*#", "") AS ?other)
+  BIND (REPLACE(STR(?s), "^.*#", "") AS ?scheme)
+}"""
+)
+
+
+def expand(db: ox.Store, given: dict[str, list[str]]) -> dict[str, set[str]]:
+    """The values each candidate column must hold to match, from the values given per scheme.
+
+    A value matches up and down its broader chain, and so does every value related to it, in
+    whichever facet that one sits."""
+    known = facet_values(db)
+    related: dict[str, list[tuple[str, str]]] = {}
+    for r in rows_of(db.query(FACET_RELATED)):
+        related.setdefault(r["value"], []).append((r["scheme"], r["other"]))
+    columns = {scheme: column for scheme, column in FACET_FLAGS.values()}
+    wanted: dict[str, set[str]] = {}
+    for scheme, values in given.items():
+        for value in values:
+            wanted.setdefault(columns[scheme], set()).update(known[scheme][value])
+            for other_scheme, other in related.get(value, []):
+                wanted.setdefault(columns[other_scheme], set()).update(known[other_scheme][other])
+    return wanted
+
+
+def facet_values(db: ox.Store) -> dict[str, dict[str, set[str]]]:
+    """Per scheme, each value and the values it matches: itself, every value under it, and every
+    value above it. A question about physical data modelling matches an entry tagged data modelling,
+    and one about data modelling matches an entry tagged physical data modelling, but neither matches
+    a sibling such as UX design through their shared group."""
+    out: dict[str, dict[str, set[str]]] = {}
+    for r in rows_of(db.query(FACET_VALUES)):
+        scheme = out.setdefault(r["scheme"], {})
+        scheme.setdefault(r["value"], {r["value"]}).add(r["under"])
+        scheme.setdefault(r["under"], {r["under"]}).add(r["value"])
+    return out
 AUDIENCES = {"internal": "InternalUse", "published": "PublishedUse"}
-# ponytail: one threshold, set from 52 questions on bge-small (answerable questions scored 0.69 or
-# more in nine cases of ten, questions with no answer 0.64 to 0.68). Calibrate per facet once the
-# facets are tagged, since a filter changes which neighbours compete.
+# ponytail: one threshold on the meaning score alone, set from 52 questions on bge-small (answerable
+# questions scored 0.69 or more in nine cases of ten, questions with no answer 0.64 to 0.68). The
+# facet boost is left out of it, so naming facets never makes a weak answer look strong.
 WEAK = 0.69
+# What each matching facet adds to an entry's score. Measured in ADR-A134's addendum of 2026-10-26:
+# 0.02 to 0.03 lifted recall on held-out questions, and 0.05 began to override meaning.
+BOOST = 0.02
 FALLBACK = (
     "Fall back to reading the documents as you would without the index. If the answer is there\n"
     "but no register entry holds it, that is a gap in the registers: tell the maintainer (STD-272)."
 )
 
 
-def find(db: ox.Store, words: str, kinds: set[str], phases: set[str], audiences: set[str], limit: int) -> int:
-    """Rank entries by meaning against the words, after filtering exactly on the facets given."""
+def find(
+    db: ox.Store, words: str, kinds: set[str], phases: set[str], audiences: set[str], limit: int,
+    facets: dict[str, set[str]] | None = None,
+) -> int:
+    """Rank entries by meaning against the words, filtering exactly on kind, phase and audience and
+    raising entries whose activity, quality or technology matches.
+
+    Kind, phase and audience are closed facts an agent states on purpose, so they filter. Activity,
+    quality and technology are judgements two taggers can disagree on, so a match adds BOOST to the
+    score for each facet and a mismatch hides nothing. ``facets`` maps a candidate column, such as
+    ``technologies``, to the values that match, broader and narrower values already included."""
+    facets = facets or {}
     rows = [
         r for r in rows_of(db.query(CANDIDATES))
         if (not kinds or r["kind"] in kinds)
@@ -215,9 +276,12 @@ def find(db: ox.Store, words: str, kinds: set[str], phases: set[str], audiences:
         return 0
     index = {node: i for i, node in enumerate(nodes)}
     for r in rows:
-        r["score"] = float(vectors[index[r["n"]]] @ question) if r["n"] in index else -1.0
+        r["meaning"] = float(vectors[index[r["n"]]] @ question) if r["n"] in index else -1.0
+        r["facets"] = sum(bool(wanted & set((r[c] or "").split())) for c, wanted in facets.items())
+        r["score"] = r["meaning"] + BOOST * r["facets"]
+    best = max((r["meaning"] for r in rows), default=-1.0)
     rows = sorted(rows, key=lambda r: -r["score"])[:limit]
-    if not rows or rows[0]["score"] < WEAK:
+    if best < WEAK:
         log_miss(f"find {words}")
     if not rows:
         print(f"no entry has the facets asked for: {words}")
@@ -225,9 +289,11 @@ def find(db: ox.Store, words: str, kinds: set[str], phases: set[str], audiences:
         print(FALLBACK)
         return 0
     for r in rows:
-        r["score"] = f"{r['score']:.2f}"
+        r["score"] = f"{r['score']:.2f}" + ("+" * r["facets"])
     show(rows, ("score", "id", "kind", "status", "claim", "pointer"))
-    if float(rows[0]["score"]) < WEAK:
+    if facets:
+        print("\n+ marks each facet the entry matches, which raised it by", BOOST)
+    if best < WEAK:
         print(f"\nweak match: no entry scored {WEAK} or more, so the index may not hold the answer.")
         print("Try other words, or a different or wider filter.")
         print(FALLBACK)
@@ -338,6 +404,8 @@ def main() -> int:
     p.add_argument("--kind", default="", help=f"comma-separated, of {', '.join(KINDS)}")
     p.add_argument("--phase", default="", help=f"comma-separated, of {', '.join(PHASES)}")
     p.add_argument("--audience", default="", help=f"comma-separated, of {', '.join(AUDIENCES)}")
+    for flag, (scheme, _) in FACET_FLAGS.items():
+        p.add_argument(f"--{flag}", default="", help=f"comma-separated values of the {scheme} facet, which raise matching entries and hide none. See tools/knowledge/facets.ttl")
     p.add_argument("--limit", type=int, default=8)
     arguments = parser.parse_args()
 
@@ -349,7 +417,15 @@ def main() -> int:
             if unknown:
                 parser.error(f"--{flag} {', '.join(unknown)} is not one of {', '.join(values)}")
             chosen.append({values[v] for v in given})
-        return find(store(), " ".join(arguments.words), *chosen, arguments.limit)
+        db = store()
+        known = facet_values(db)
+        given = {}
+        for flag, (scheme, _) in FACET_FLAGS.items():
+            given[scheme] = [v.strip() for v in getattr(arguments, flag).split(",") if v.strip()]
+            unknown = [v for v in given[scheme] if v not in known.get(scheme, {})]
+            if unknown:
+                parser.error(f"--{flag} {', '.join(unknown)} is not a value of the {scheme} facet. See tools/knowledge/facets.ttl")
+        return find(db, " ".join(arguments.words), *chosen, arguments.limit, expand(db, given))
 
     db = store()
     question = f"{arguments.question} {arguments.argument}"
