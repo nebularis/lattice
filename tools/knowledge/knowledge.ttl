@@ -330,12 +330,18 @@ ki:Development rdf:type ki:Phase ; rdfs:label "development" ;
 ki:Authoring   rdf:type ki:Phase ; rdfs:label "authoring" ;
     rdfs:comment "Used by those who write models, documents or mappings." .
 ki:Runtime     rdf:type ki:Phase ; rdfs:label "runtime" ;
-    rdfs:comment "Used while a deployed system runs." .
+    rdfs:comment "Used while code or a model runs, in whichever environment. A node that binds in every environment, such as a rule for generated code, is tagged runtime, and one that binds in only some is tagged with each environment it binds in." .
+ki:Testing     rdf:type ki:Phase ; rdfs:label "testing" ; skos:broader ki:Runtime ;
+    rdfs:comment "Used while tests run, such as a rule for a test, a fixture or a conformance suite." .
+ki:Benchmarking rdf:type ki:Phase ; rdfs:label "benchmarking" ; skos:broader ki:Runtime ;
+    rdfs:comment "Used while a benchmark runs or its result is read." .
+ki:Production  rdf:type ki:Phase ; rdfs:label "production" ; skos:broader ki:Runtime ;
+    rdfs:comment "Used while a deployed system serves its users." .
 
 ki:phase
     rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range ki:Phase ;
     rdfs:label "phase" ;
-    rdfs:comment "When a consumer reaches for this node. Earns its place from the question of when a consumer reaches for it. Internal things are development. A published thing is authoring, runtime, or both. Read from a register's Phase column, comma-separated." .
+    rdfs:comment "When a consumer reaches for this node. Earns its place from the question of when a consumer reaches for it. Internal things are development. A published thing is authoring, runtime or one of the environments under runtime, or several. A phase matches up and down its skos:broader chain, so a question about production finds a node tagged runtime, and one about runtime finds a node tagged testing, but testing never matches production. Read from a register's Phase column, comma-separated." .
 
 ki:entryPoint
     rdf:type owl:DatatypeProperty ; rdfs:domain ki:Node ; rdfs:range xsd:string ;

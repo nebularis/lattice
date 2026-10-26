@@ -177,7 +177,20 @@ KINDS = {
     "principle": "Principle", "standard": "Standard", "discovery": "Discovery",
     "decision": "Decision", "pending-decision": "PendingDecision", "debt": "Debt",
 }
-PHASES = {"development": "Development", "authoring": "Authoring", "runtime": "Runtime"}
+PHASES = {
+    "development": "Development", "authoring": "Authoring", "runtime": "Runtime",
+    "testing": "Testing", "benchmarking": "Benchmarking", "production": "Production",
+}
+# Each phase with every phase under it, through skos:broader in the T-Box.
+PHASE_CHAIN = (
+    PREFIXES
+    + """
+SELECT ?value ?under WHERE {
+  GRAPH ki:tbox { ?v a ki:Phase . ?u skos:broader* ?v ; a ki:Phase . }
+  BIND (REPLACE(STR(?v), "^.*#", "") AS ?value)
+  BIND (REPLACE(STR(?u), "^.*#", "") AS ?under)
+}"""
+)
 FACET_FLAGS = {"activity": ("Activity", "activities"), "quality": ("Quality", "qualities"), "tech": ("Technology", "technologies")}
 # Each facet value with every value under it, through skos:broader, so a filter on a group finds what
 # is tagged beneath it.
@@ -238,6 +251,19 @@ def facet_values(db: ox.Store) -> dict[str, dict[str, set[str]]]:
         scheme.setdefault(r["under"], {r["under"]}).add(r["value"])
     return out
 AUDIENCES = {"internal": "InternalUse", "published": "PublishedUse"}
+
+
+def phase_matches(db: ox.Store, given: set[str]) -> set[str]:
+    """The phases an entry may carry to match the phases given: each one, every phase under it and
+    every phase above it, as a facet value matches. Runtime finds testing, and production finds
+    runtime, but testing never finds production."""
+    out = set(given)
+    for r in rows_of(db.query(PHASE_CHAIN)):
+        if r["value"] in given:
+            out.add(r["under"])
+        if r["under"] in given:
+            out.add(r["value"])
+    return out
 # ponytail: one threshold on the meaning score alone, set from 52 questions on bge-small (answerable
 # questions scored 0.69 or more in nine cases of ten, questions with no answer 0.64 to 0.68). The
 # facet boost is left out of it, so naming facets never makes a weak answer look strong.
@@ -487,6 +513,7 @@ def main() -> int:
             unknown = [v for v in given[scheme] if v not in known.get(scheme, {})]
             if unknown:
                 parser.error(f"--{flag} {', '.join(unknown)} is not a value of the {scheme} facet. See docs/developer/facets.md")
+        chosen[1] = phase_matches(db, chosen[1])
         return find(db, " ".join(arguments.words), *chosen, arguments.limit, expand(db, given))
 
     db = store()

@@ -195,3 +195,15 @@ def test_find_lists_what_the_top_answers_are_linked_to(tmp_path, words, monkeypa
     ask.find(store, "ledger", {"Principle"}, set(), set(), 8)
     out = capsys.readouterr().out
     assert "linked to the top answers" in out and "supports PRI-1" in out and "STD-1" in out
+
+
+def test_a_phase_matches_up_and_down_its_chain_and_never_a_sibling():
+    """An entry tagged runtime binds in every environment, so a question about production finds it.
+    A question about runtime finds one tagged testing. A question about testing never finds one
+    tagged production."""
+    store = ox.Store()
+    store.load(path=str(Path(ask.__file__).resolve().parent / "knowledge.ttl"), format=ox.RdfFormat.TURTLE, to_graph=ox.NamedNode(KI + "tbox"))
+    assert ask.phase_matches(store, {"Production"}) == {"Production", "Runtime"}
+    assert ask.phase_matches(store, {"Runtime"}) == {"Runtime", "Testing", "Benchmarking", "Production"}
+    assert "Production" not in ask.phase_matches(store, {"Testing"})
+    assert ask.phase_matches(store, {"Authoring"}) == {"Authoring"}

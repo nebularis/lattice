@@ -345,7 +345,8 @@ UNMAPPED_COLUMNS = frozenset(
 
 CONTROLLED = {
     "audience": {"internal": "InternalUse", "published": "PublishedUse"},
-    "phase": {"development": "Development", "authoring": "Authoring", "runtime": "Runtime"},
+    "phase": {"development": "Development", "authoring": "Authoring", "runtime": "Runtime",
+              "testing": "Testing", "benchmarking": "Benchmarking", "production": "Production"},
     "built": {"built": "Built", "partial": "PartlyBuilt", "proposed": "NotBuilt"},
     "ratified": {"yes": "Accepted", "no": "Proposed"},
     "stratum": {"architectural": "ArchitecturalStratum", "design": "DesignStratum",
