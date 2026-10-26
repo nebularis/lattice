@@ -132,4 +132,6 @@ Decision 4 resolves a module's role to a directory, but a root or a documentatio
 Proposed in the [repository catalogue sketch](../../developer/sketches/repository-catalogue.md), whose
 questions RC-Q1 to RC-Q8 were answered on 2026-10-16, and planned in the
 [`improved-ontology-documentation` plan](../../developer/plans/improved-ontology-documentation.md)
-(slices RC1 to RC6, decisions OD-D14, OD-D16 and the RC rows). The 2026-10-19 addendum answers question RC3-Q3, and "until downstream projects extend the catalogue" is the plan's slice RC4. The 2026-10-26 addendum was asked for by the maintainer on that date, after the knowledge-index unit found its tools comparing a written path with the catalogue's list to pass the scan.
+(slices RC1 to RC6, decisions OD-D14, OD-D16 and the RC rows). The 2026-10-19 addendum answers question RC3-Q3, and "until downstream projects extend the catalogue" is the plan's slice RC4.
+
+The 2026-10-26 addendum was asked for by the maintainer on that date, after the knowledge-index unit found its tools comparing a written path with the catalogue's list to pass the scan.
