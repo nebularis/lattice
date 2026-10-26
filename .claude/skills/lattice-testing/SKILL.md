@@ -181,19 +181,9 @@ working unchanged: this assigns onto the module's own namespace, so a bare `MODE
   on it**, so a pattern using `\b` can pass on one platform while finding nothing real on another.
   Use `([^A-Za-z0-9_]|$)` instead, which means the same thing on every platform.
 
-`tools/conftest.py`'s `repo_files(roots, pattern, *, fixed=False, repo_root=ROOT)` replaces a
-`git grep` subprocess call: it walks the tree directly (so it also works in a source archive, with
-no `.git`), reads every file as UTF-8 explicitly, and matches line by line the way `git grep` does
-(so `^`/`$` anchor one line, not the whole file).
+`tools/conftest.py`'s `repo_files(roots, pattern, *, fixed=False, repo_root=ROOT)` replaces a `git grep` subprocess call: it lists files with `git ls-files` (tracked, and untracked but not ignored, so a file just written is scanned and an ignored directory never is), reads every file as UTF-8 explicitly, and matches line by line the way `git grep` does (so `^`/`$` anchor one line, not the whole file). In a checkout with no `.git` it raises, since a scan there cannot tell an ignored file from a tracked one.
 
-**The one real cost of walking the tree instead of asking git**: it sees *untracked* files too,
-which `git grep` would not. This bit the roll-out for real: a new test fixture file
-(`test_repo_files.py`) contained the literal string `"ins:Element"` as test data for exercising the
-pattern matcher itself, and a retired-term scan over `tools/` picked it up as a false positive.
-Fixed the same way the suite already handled its own `RETIRED`-constant test file: add the new file
-to the scan's own allow-list. If this keeps happening, it is a sign the roots are too broad, not
-that the approach is wrong (skip a named list of build/dependency directories; `.git`, `__pycache__`,
-`node_modules`, `.venv`, `.build`, `build`, `dist`, `target`, `.pytest_cache`, and similar).
+**The one real cost of including untracked files**: it sees them too, which `git grep` would not. This bit the roll-out for real: a new test fixture file (`test_repo_files.py`) contained the literal string `"ins:Element"` as test data for exercising the pattern matcher itself, and a retired-term scan over `tools/` picked it up as a false positive. Fixed the same way the suite already handled its own `RETIRED`-constant test file: add the new file to the scan's own allow-list. If this keeps happening, it is a sign the roots are too broad, not that the approach is wrong (skip a named list of build and dependency directories, namely `.git`, `__pycache__`, `node_modules`, `.venv`, `.build`, `build`, `dist`, `target`, `.pytest_cache`, and similar).
 
 ## Writing a new SHACL-validating test
 

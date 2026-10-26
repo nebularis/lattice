@@ -11,7 +11,7 @@ sidecar process rather than embedded in any one platform component, turns that k
 documents, reports and pages on the way out, and turns external XML on the way in into the triples
 our persistence tier recognises. The same engine, the same hosting, the same security posture serve
 both directions. A MORK compiler backend makes the inbound direction generated rather than
-hand-written, the same way `tools/mork2rml.py` already does for RML.
+hand-written, the same way `tools/mork/src/mork2rml.py` already does for RML.
 
 This is deliberately **not** another vertical proof of concept. It is a utility: something another
 stack glues in, not something that owns a stack of its own.
@@ -217,7 +217,7 @@ rejected at the boundary before parsing. Additionally:
 
 ## 7. MORK as a compiler target: `mork2rml`'s sibling
 
-`tools/mork2rml.py` already implements, in the module's own words, "the compilation functor
+`tools/mork/src/mork2rml.py` already implements, in the module's own words, "the compilation functor
 C: MorkDAG → RMLDAG", a catamorphism over a MORK mapping graph that produces an RML mapping
 document: a static artefact, generated once at compile time, later executed by an RML processor
 against whatever source data arrives. **The ingress direction needs exactly the same shape of
@@ -308,7 +308,7 @@ Extends the existing sketch's own §14 table with what this unit additionally st
 | `persistence instantiate` | **exists.** Produces portable SPARQL text from a `dal:CompiledProfile` (ADR-A79) |
 | Persistence boundary SHACL shapes | **exist**, per resolved profile (`dal:boundaryShape`, persistence sketch §4.3) |
 | A Surface compiler producing generated surfaces | **partially exists** (`tools/surface`, `ontology/surface`). Its generated-surface shape is a second grounding source where a kit's target is a promoted property |
-| `tools/mork2rml.py` | **exists.** `MorkDAG → RMLDAG`, one file, not yet split into a shared IR plus backend |
+| `tools/mork/src/mork2rml.py` | **exists.** `MorkDAG → RMLDAG`, one file, not yet split into a shared IR plus backend |
 | A second MORK compiler backend (XSLT) | **does not exist** |
 | ADR-A81 (control plane HTTP runtime) | **Proposed**, not yet built as `platform/runtime-host` |
 | A standalone sidecar process anywhere in the repository | **none.** Every existing HTTP surface is embedded in its own service |

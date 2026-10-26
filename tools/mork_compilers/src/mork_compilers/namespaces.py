@@ -4,7 +4,7 @@
 """
 The MORK backend compiler family (ADR-A23, ADR-A24, delivery-plan Phase 5).
 
-Namespace bindings, following the convention ``tools/mork2rml.py`` and
+Namespace bindings, following the convention ``tools/mork/src/mork2rml.py`` and
 ``tools/surface/namespaces.py`` both already establish: declared once here,
 imported everywhere in this package.
 

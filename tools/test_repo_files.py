@@ -4,11 +4,22 @@
 
 from __future__ import annotations
 
+import subprocess
 from pathlib import Path
+
+import pytest
 
 from conftest import repo_files
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+@pytest.fixture(autouse=True)
+def _git_checkout(request: pytest.FixtureRequest, tmp_path: Path) -> None:
+    """`repo_files` enumerates with `git ls-files`, so each test's tmp_path is a git checkout,
+    except the one that tests the refusal without one."""
+    if "without_git" not in request.node.name:
+        subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
 
 
 def test_finds_a_fixed_string(tmp_path: Path) -> None:
@@ -76,3 +87,26 @@ def test_plants_a_retired_term_and_catches_it_on_this_platform(tmp_path: Path) -
     pattern = r"ins:(Element|Provision)([^A-Za-z0-9_]|$)"
     found = repo_files(["ontology"], pattern, repo_root=tmp_path)
     assert found == ["ontology/instrument/README.md"]
+
+
+def test_an_ignored_path_is_never_returned(tmp_path: Path) -> None:
+    """A scan must not read a gitignored directory, which may hold material that is not for the repository."""
+    (tmp_path / ".gitignore").write_text("private/\n", encoding="utf-8")
+    (tmp_path / "private").mkdir()
+    (tmp_path / "private" / "secret.md").write_text("needle\n", encoding="utf-8")
+    (tmp_path / "public.md").write_text("needle\n", encoding="utf-8")
+    assert repo_files(["."], "needle", fixed=True, repo_root=tmp_path) == ["public.md"]
+    assert repo_files(["private"], "needle", fixed=True, repo_root=tmp_path) == []
+
+
+def test_an_untracked_file_that_is_not_ignored_is_still_scanned(tmp_path: Path) -> None:
+    """A file a contributor has just written is scanned before it is added or committed."""
+    (tmp_path / "new.md").write_text("needle\n", encoding="utf-8")
+    assert repo_files(["."], "needle", fixed=True, repo_root=tmp_path) == ["new.md"]
+
+
+def test_refuses_without_git(tmp_path: Path) -> None:
+    """Without git metadata a scan cannot tell an ignored file from a tracked one, so it refuses."""
+    (tmp_path / "a.md").write_text("needle\n", encoding="utf-8")
+    with pytest.raises(RuntimeError, match="needs a git checkout"):
+        repo_files(["."], "needle", fixed=True, repo_root=tmp_path)

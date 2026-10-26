@@ -18,7 +18,7 @@ Java module, projects in one direction (egress), and that each kit's query is ha
 
 Three things have changed the picture since. The persistence compiler (ADR-A79) now produces
 portable SPARQL text from a compiled profile, so the shape of a query's results is frequently
-already known rather than independently authored. `tools/mork2rml.py` already compiles a MORK
+already known rather than independently authored. `tools/mork/src/mork2rml.py` already compiles a MORK
 mapping graph into an executable artefact (RML) for one direction (ingestion into RDF). Nothing
 compiles a MORK mapping into an XSLT stylesheet for the same purpose. Nothing in the repository runs
 as a standalone sidecar process usable outside a JVM-hosted caller.
@@ -65,7 +65,7 @@ ingress output form, in favour of the repository's existing canonical sorted N-T
 - A new Maven module (or an extension of the existing egress sketch's planned
   `platform/semantic-xml-egress`) hosts the core library. A further module or packaging hosts the
   standalone sidecar process.
-- `tools/mork2rml.py` is refactored to expose its DAG-walking logic to a second backend before that
+- `tools/mork/src/mork2rml.py` is refactored to expose its DAG-walking logic to a second backend before that
   backend is added, with its own existing tests as the regression guard for the refactor.
 - `contracts/xml/` becomes a real directory, shared by egress and ingress kits, distinguished by a
   manifest field.

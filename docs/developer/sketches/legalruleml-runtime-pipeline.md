@@ -6,7 +6,7 @@
 
 Version 0.1, draft for review. Explores whether the construct mapping in
 [legalruleml-mapping.md](legalruleml-mapping.md) can be delivered as a **MORK mapping graph**
-compiled by `tools/mork2rml.py` into **RML**, and executed at runtime to ingest LegalRuleML
+compiled by `tools/mork/src/mork2rml.py` into **RML**, and executed at runtime to ingest LegalRuleML
 documents into LATTICE terms.
 
 **Short answer: yes for the structural 80%, and no for the part that matters most.** RML is a
@@ -42,8 +42,8 @@ The premise is stronger than it first appears. Four pieces are already built.
 
 | Piece | Where | State |
 |---|---|---|
-| MORK → RML compiler | `tools/mork2rml.py` | Built. The reference adapter under ADR-A19's staged pipeline |
-| **XPath reference formulation** | `tools/mork2rml.py`, `SourceFormat.XML → QL.XPath` | **Already emitted.** Not a new capability |
+| MORK → RML compiler | `tools/mork/src/mork2rml.py` | Built. The reference adapter under ADR-A19's staged pipeline |
+| **XPath reference formulation** | `tools/mork/src/mork2rml.py`, `SourceFormat.XML → QL.XPath` | **Already emitted.** Not a new capability |
 | RML executor | `tools/spc/python/src/spc/ingress/rml_executor.py` | Built. Two modes, RMLMapper via Java subprocess or `pyrml` in-process |
 | Compact-notation decoder precedent | `tools/mork/src/mcn_decoder.py` | Built. Maps `"xml"` → `ql:XPath` in its own codebook |
 
@@ -380,7 +380,7 @@ The accepted graph's read set carries all four. Consequences:
 
 ## 10. Gaps in the existing tooling
 
-Measured against `tools/mork2rml.py` as it stands.
+Measured against `tools/mork/src/mork2rml.py` as it stands.
 
 | # | Gap | Severity for this work | Note |
 |---|---|---|---|

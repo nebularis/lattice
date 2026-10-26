@@ -16,7 +16,7 @@ A run takes a contract, a source graph, and a profile, and emits four modules:
 Module boundaries follow invalidation classes rather than file size: a change
 to the carrier instance graph must be able to leave ``core.ttl`` untouched.
 
-The class structure follows ``MorkToRmlCompiler`` in ``tools/mork2rml.py``:
+The class structure follows ``MorkToRmlCompiler`` in ``tools/mork/src/mork2rml.py``:
 analyse, then plan, then emit, with a mutable context carried through. What
 differs is the algebra — MORK folds a mapping DAG into RML triples maps; this
 folds one contract plus its read set into a symbol inventory. Dependency order

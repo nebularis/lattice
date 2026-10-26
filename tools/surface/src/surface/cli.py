@@ -4,7 +4,7 @@
 """
 Command line for the surface compiler.
 
-Argument and logging conventions follow ``tools/mork2rml.py``, so the two tools
+Argument and logging conventions follow ``tools/mork/src/mork2rml.py``, so the two tools
 behave the same way in a pipeline.
 
 ``compile``

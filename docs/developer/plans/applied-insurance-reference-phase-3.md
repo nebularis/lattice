@@ -358,7 +358,7 @@ mechanism is needed.
 
 A MORK data mapping for a loss row with a cause code field: a `mork:Lookup` with
 `mork:referenceDataPath skos:notation` against `ex:HouseList`, producing the `aeo:LossCause` with
-its `aeo:peril`. The test compiles it with `tools/mork2rml.py` and checks the triples map holds the
+its `aeo:peril`. The test compiles it with `tools/mork/src/mork2rml.py` and checks the triples map holds the
 lookup. Running RML is not required, so the lift test starts from a graph shaped as the mapping
 produces.
 

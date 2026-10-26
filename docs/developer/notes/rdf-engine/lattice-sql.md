@@ -628,7 +628,7 @@ Ponytail rung 4: a native platform feature covers it.
 
 | Layer | Treatment |
 |---|---|
-| MORK | ingestion mappings target the generated tables instead of triples. The MORK-to-RML compiler (`tools/mork2rml.py`) already produces RML. A relational target needs a MORK-to-SQL `INSERT`/`COPY` emitter from the same mapping DAG. Deferred until a deployment needs relational ingestion |
+| MORK | ingestion mappings target the generated tables instead of triples. The MORK-to-RML compiler (`tools/mork/src/mork2rml.py`) already produces RML. A relational target needs a MORK-to-SQL `INSERT`/`COPY` emitter from the same mapping DAG. Deferred until a deployment needs relational ingestion |
 | SPC | orchestration, not storage. Session state, if persisted, compiles like any other shape-closed class. No special rules |
 
 ---

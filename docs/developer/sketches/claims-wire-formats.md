@@ -108,7 +108,7 @@ Measured, not assumed, on 2026-10-16.
 | Piece | State |
 |---|---|
 | MORK mapping vocabulary (`ontology/mork`), including `mork:Lookup` and `mork:referenceDataPath` for code lookups | exists |
-| `tools/mork2rml.py`, MORK mapping graph to RML | exists, one file, not yet factored into a shared walk |
+| `tools/mork/src/mork2rml.py`, MORK mapping graph to RML | exists, one file, not yet factored into a shared walk |
 | an RML processor in the toolchain | **none.** Nothing executes RML today (no RMLMapper, morph-kgc or pyrml dependency) |
 | `mork:egressProjection` and `mork:TransformMapping`'s egress reading | declared in the vocabulary. **No compiler** emits an egress query from them |
 | `tools/mork2xslt` | **does not exist.** Proposed by the sidecar sketch (XS-D5) |
@@ -674,7 +674,7 @@ Proposed, and to be placed in a plan only after the claims sketch's questions ar
 - [xslt-sidecar.md](xslt-sidecar.md), [xml-egress-and-transformation-kits.md](xml-egress-and-transformation-kits.md),
   ADR-A119 (Proposed), the [MORK README](../../../ontology/mork/README.md) and `ontology/mork/spec/Mork.ttl`
   (`mork:Lookup`, `mork:referenceDataPath`, `mork:egressProjection`, `mork:TransformMapping`),
-  `tools/mork2rml.py`, ADR-A13, ADR-A105, ADR-A114, [mork-bridge.md](mork-bridge.md)
+  `tools/mork/src/mork2rml.py`, ADR-A13, ADR-A105, ADR-A114, [mork-bridge.md](mork-bridge.md)
 - ACORD P&C/Surety claims service messages, read through a published model viewer (Checked, version
   not stated)
 - Lloyd's Coverholder Reporting Standards v5.2 and Lloyd's claims bordereaux guidance (Checked), with

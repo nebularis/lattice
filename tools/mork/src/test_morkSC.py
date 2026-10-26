@@ -19,7 +19,7 @@ from rdflib.collection import Collection as RDFCollection
 from rdflib.namespace import RDF, RDFS, OWL, XSD
 
 # Import the compiler
-from mork_compiler import (
+from morkSC import (
     MORK, SH, SWRL, SWRLB, DCT, SKOS,
     MorkCompiler,
     PrecedenceDAG,

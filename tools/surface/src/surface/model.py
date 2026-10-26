@@ -4,7 +4,7 @@
 """
 The declaration model, and the analyser that extracts it from a contract graph.
 
-Structurally this mirrors ``MorkGraphAnalyser`` in ``tools/mork2rml.py``: a set
+Structurally this mirrors ``MorkGraphAnalyser`` in ``tools/mork/src/mork2rml.py``: a set
 of frozen specification dataclasses, and one analyser class whose job is a
 faithful transcription of what was declared. Nothing here decides anything. It
 does apply the structural checks the layer's SHACL shapes also make, so that a
@@ -553,7 +553,7 @@ class SurfaceGraphAnalyser:
 
 
 def read_contracts(graph: Graph, only: Optional[str] = None) -> List[Contract]:
-    """Convenience wrapper, matching the shape of ``tools/mork2rml.py``'s entry points."""
+    """Convenience wrapper, matching the shape of ``tools/mork/src/mork2rml.py``'s entry points."""
     return SurfaceGraphAnalyser(graph).contracts(only=only)
 
 
