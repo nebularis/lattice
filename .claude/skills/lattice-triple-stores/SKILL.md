@@ -12,7 +12,7 @@ the project. Every claim about a store elsewhere, in a sketch, an ADR, a Validat
 
 ## Before relying on a store
 
-1. Read the findings at a glance (§5 of the record) and every finding that touches what you are doing.
+1. Find every finding that touches what you are doing, with `mise run graph:ask -- find <the behaviour> --kind discovery`, and read each with `read TSD-nn`. When the query answers weakly, read the findings at a glance (§5 of the record) instead.
 2. Check the versions. A finding holds for the versions it names. If yours differ, treat it as a hypothesis and re-run its
    reproduction.
 3. If the record is silent, do not reason from memory about what SPARQL or a store does. Probe it. Two of the typed IR's first

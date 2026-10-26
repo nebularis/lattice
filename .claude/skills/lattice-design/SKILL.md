@@ -9,9 +9,7 @@ description: How to design in LATTICE and projects built on it. Use when writing
 
 Ask the knowledge index first, as AGENTS.md's "Asking the knowledge index" says, with `--kind decision,mechanism,pattern,principle,standard` and the phase the design runs in. Where it answers weakly, read the documents as before, and report any answer they hold that no register entry does.
 
-Before planning code, consult the architecture and the ADRs, and propose an ADR with either a
-design sketch or a detailed entry in `docs/architecture/solution-design-specification.md`. Keep
-these current with every change they cover:
+Before planning code, find the decisions and architecture sections the change touches, with `find <the change> --kind decision` and `read`, and propose an ADR with either a design sketch or a detailed entry in `docs/architecture/solution-design-specification.md`. Keep these current with every change they cover:
 
 - the root `README.md` (new structure, folders or projects) and each project's `README.md`
 - the ADR catalogue, `docs/architecture/decisions/README.md`
@@ -36,11 +34,9 @@ hard-codes one domain's practice as the only way is wrong at the substrate.
 
 ## Writing a sketch or a plan
 
-- Re-read the latest version of everything the design touches. Never work from memory, and above
-  all never describe an ontology's behaviour without re-reading it.
+- Re-read the latest version of everything the design touches. `graph:ask -- reaches <ID>` names what an entry touches, and `read <ID>` returns its current text. Never work from memory, and above all never describe an ontology's behaviour without re-reading it.
 - Check each modelling consequence against the ontologies themselves.
-- Check the design against the roadmap: the epic plans, the held design questions, and the slices
-  waiting on this one. A design that works now and makes a roadmap item harder is wrong.
+- Check the design against the roadmap: the epic plans, the held design questions, which `find <the design> --kind pending-decision` returns, and the slices waiting on this one. A design that works now and makes a roadmap item harder is wrong.
 - Say a design decision once, and cross-reference it.
 - A design that depends on how a triple store evaluates SPARQL cites the finding in
   [docs/architecture/triple-store-discovery.md](../../../docs/architecture/triple-store-discovery.md) it rests on, or probes the

@@ -229,10 +229,7 @@ The worked example is Ledger, in [ledger-history-and-runtime.md](../../../docs/d
 
 ## SHACL-SPARQL shapes
 
-Read [docs/architecture/efficient-queries-and-shapes.md](../../../docs/architecture/efficient-queries-and-shapes.md) before writing or
-changing a constraint query, and follow its checklist (section 4.1). A constraint runs once per focus node, so its cost is multiplied by the
-nodes the shape targets. Most of its speed rules (R1 to R4, R8) are workarounds for how rdflib plans a query, and the record says which
-rules are portable. A rewrite for speed is a PATCH change to the shapes' version, replayed against the old shapes' results first.
+Before writing or changing a constraint query, find the rules of [docs/architecture/efficient-queries-and-shapes.md](../../../docs/architecture/efficient-queries-and-shapes.md) that apply, with `mise run graph:ask -- find <what the constraint checks> --kind standard --activity query-writing --tech shacl`, and follow its checklist (section 4.1, STD-042). Read the record whole when the query answers weakly. A constraint runs once per focus node, so its cost is multiplied by the nodes the shape targets. Most of its speed rules (R1 to R4, R8) are workarounds for how rdflib plans a query, and the record says which rules are portable. A rewrite for speed is a PATCH change to the shapes' version, replayed against the old shapes' results first.
 
 - **Declare prefixes inside the query**, with `PREFIX` lines at the top of `sh:select`, as
   `ontology/eligibility/shapes/constraints.ttl` does. Never point `sh:prefixes` at a namespace IRI

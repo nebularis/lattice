@@ -43,14 +43,9 @@ along the way.
 
 <!-- END GENERATED where-things-are -->
 
-How each triple store behaves, and how we found out, is recorded in
-[docs/architecture/triple-store-discovery.md](docs/architecture/triple-store-discovery.md). Read it before relying on what a
-store does with SPARQL, and add to it when you find something new (skill `lattice-triple-stores`).
+How each triple store behaves, and how we found out, is recorded in [docs/architecture/triple-store-discovery.md](docs/architecture/triple-store-discovery.md). Before relying on what a store does with SPARQL, find the findings that touch it with `mise run graph:ask -- find <the behaviour> --kind discovery` and read each with `read TSD-nn`, reading the whole record only when the query answers weakly. Add to it when you find something new (skill `lattice-triple-stores`).
 
-How to write a SPARQL constraint, a generated query or a test fixture that runs in reasonable time is recorded in
-[docs/architecture/efficient-queries-and-shapes.md](docs/architecture/efficient-queries-and-shapes.md)
-([ADR-A128](docs/architecture/decisions/ADR-A128-efficient-queries-and-shapes.md)). Read it before writing or changing one. It says
-which of its rules hold for any engine and which only for rdflib, pySHACL or our harness.
+How to write a SPARQL constraint, a generated query or a test fixture that runs in reasonable time is recorded in [docs/architecture/efficient-queries-and-shapes.md](docs/architecture/efficient-queries-and-shapes.md) ([ADR-A128](docs/architecture/decisions/ADR-A128-efficient-queries-and-shapes.md)), and its rules are standards in the register. Before writing or changing one, find the rules that apply with `mise run graph:ask -- find <what the query does> --kind standard --activity query-writing` and read each, reading the whole record only when the query answers weakly. It says which of its rules hold for any engine and which only for rdflib, pySHACL or our harness.
 
 Do not add a directory at the root, or a new kind of directory anywhere, without an accepted ADR.
 `mise` is the only task entry point (ADR-A29). Every command you run or give the maintainer goes

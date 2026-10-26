@@ -21,7 +21,7 @@ Without these, no agent uses the index. In order.
 | # | Task | Owner | Why it blocks |
 |---|---|---|---|
 | A1 | Done 2026-10-26. `AGENTS.md` says to ask `find` first, to ask more than once, to fall back to the documents on a weak answer, and to report a register gap (STD-272). The design and lifecycle skills point at it | agent drafts | |
-| A2 | Approve replacing the heaviest "go and read" instructions in the skills with a query, which is KI-7 of the sketch. A sweep ranked 24 of them, and seven carry 90% of the reading they cause | agent drafts | the token saving is realised only here, and each replacement removes text agents follow today |
+| A2 | Approve the drafted replacement of seven corpus-wide reading instructions with queries, in `AGENTS.md` and the design, ontology-authoring and triple-store skills. Each keeps its rule and falls back to the whole document when the query answers weakly | maintainer | the token saving is realised only here, and each replacement changes text every agent follows |
 | A3 | Decide whether the commit hooks run `check:identifiers` and `check:knowledge` on a change to a register or a working document, under [ADR-A133](../../architecture/decisions/ADR-A133-git-hooks.md) | maintainer | today a row an agent writes, with a dangling identifier or a tag outside the scheme, is caught only by a manual `mise run check` |
 | A4 | Done 2026-10-26. `mise run bootstrap` builds the index through `bootstrap:knowledge`, after the Python packages, and fetches the model on first run | agent | |
 | A5 | Merge into `main`, or have the knowledge-index commits taken onto a branch of their own first. 18 of the branch's 44 commits are this unit's, interleaved with the Ledger and Ensemble work. Run `mise run hooks:merge` before merging on GitHub | maintainer | every other branch and every cloud agent works from `main` |
@@ -59,7 +59,7 @@ None blocks activation. Each is a defect the index surfaced, recorded where it b
 |---|---|---|
 | C1 | Done 2026-10-26. The seven decisions' `## Status` sections became `**Status:**` header fields, so each has its status in the index | agent |
 | C2 | Add a `**Unit:**` line to the 96 decisions without one | agent drafts |
-| C3 | Done 2026-10-26 except two. Non-breaking hyphens, spaced spellings and old-style titles corrected. `ADR-A-C1` and `ADR-A-C2` are left, since those decisions' own titles write them so and only their filenames say `ADR-AC1` and `ADR-AC2`. Which spelling is canonical is the maintainer's choice (C11) | agent |
+| C3 | Done 2026-10-26 except two. Non-breaking hyphens, spaced spellings and old-style titles corrected, except in one review record whose lines carrying them also carry its own semicolons. `ADR-A-C1` and `ADR-A-C2` are left, since those decisions' own titles write them so and only their filenames say `ADR-AC1` and `ADR-AC2`. Which spelling is canonical is the maintainer's choice (C11) | agent |
 | C4 | Review the 26 citations of register entries since removed, `identifiers.py --rehomed`. A document citing one may be stale | maintainer |
 | C5 | Draft ADR-A101, ADR-A108 and ADR-A109, or remove the references to them. They are in `tools/knowledge/identifier-exceptions.txt` as planned and never drafted | maintainer |
 | C6 | TD-78, TD-79 and TD-80 | agent drafts |
