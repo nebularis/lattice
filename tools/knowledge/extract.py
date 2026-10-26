@@ -56,6 +56,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import anchors  # noqa: E402
+import embed  # noqa: E402
 import identifiers  # noqa: E402
 import lattice_repo_catalogue  # noqa: E402
 import quanta  # noqa: E402
@@ -717,9 +718,15 @@ def build(store_path: Path) -> Extract:
     store.optimize()
 
     out.counts["quads"] = len(list(store.quads_for_pattern(None, None, None, None)))
-    out.counts["seconds"] = round(time.perf_counter() - start, 2)
     if store_path == STORE_PATH:
+        # Only the real index is embedded, so a test building elsewhere never loads the model.
+        try:
+            out.counts["embedded"] = embed.build(store, store_path.parent)
+        except embed.Unavailable as error:
+            out.problems.append(f"no embeddings, so graph:ask -- find cannot rank: {error}")
+            out.bump("embeddings-unavailable")
         STAMP_PATH.write_text(f"{built_from}\n", encoding="utf-8")
+    out.counts["seconds"] = round(time.perf_counter() - start, 2)
     return out
 
 

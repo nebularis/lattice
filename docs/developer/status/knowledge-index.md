@@ -4,13 +4,13 @@
 
 **Unit ID:** `knowledge-index`
 **Sketch:** [knowledge-index.md](../sketches/knowledge-index.md)
-**ADR:** [ADR-A134](../../architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md), Accepted 2026-10-24, with the addendum of 2026-10-25
+**ADR:** [ADR-A134](../../architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md), Accepted 2026-10-24, with addenda of 2026-10-25 and 2026-10-26
 **Branch:** `docs/placement-vehicles-structure`, not merged into `main`
 **Mode:** autonomous on the branch, at the maintainer's request
 
 ## Position
 
-Built and not yet active. The index derives in about two seconds, `mise run graph:ask` answers from it in about 50 ms, and `check:knowledge` and `check:identifiers` pass. No agent uses it yet, because nothing tells an agent to ask it, and nothing outside this branch can reach it.
+Built, and instructed on this branch only. The index derives in about two seconds once the model is fetched, `mise run graph:ask -- find` ranks its entries by meaning in about half a second, and `check:knowledge` and `check:identifiers` pass. `AGENTS.md` tells an agent to ask it first and to fall back to the documents, but nothing outside this branch can reach it until it is merged.
 
 The tasks below are what remains. Owner says who acts: **maintainer** for a decision or a judgement only the maintainer makes, **agent drafts** where an agent prepares the change and the maintainer approves it, **agent** where it needs no judgement.
 
@@ -20,7 +20,7 @@ Without these, no agent uses the index. In order.
 
 | # | Task | Owner | Why it blocks |
 |---|---|---|---|
-| A1 | Approve an `AGENTS.md` instruction to ask the index before a design, modelling, code or efficiency decision, and before adding a mechanism, a dependency or a component: `graph:ask -- exists <the problem in your own words>`, then `read <ID>`. | agent drafts | No always-on text or skill mentions `graph:ask`. A rule a register holds is followed only by an agent told to ask for it. `AGENTS.md` reaches Copilot as well, through `build:agent-guidance` |
+| A1 | Done 2026-10-26. `AGENTS.md` says to ask `find` first, to ask more than once, to fall back to the documents on a weak answer, and to report a register gap (STD-272). The design and lifecycle skills point at it | agent drafts | |
 | A2 | Approve replacing the heaviest "go and read" instructions in the skills with a query, which is KI-7 of the sketch. A sweep ranked 24 of them, and seven carry 90% of the reading they cause | agent drafts | the token saving is realised only here, and each replacement removes text agents follow today |
 | A3 | Decide whether the commit hooks run `check:identifiers` and `check:knowledge` on a change to a register or a working document, under [ADR-A133](../../architecture/decisions/ADR-A133-git-hooks.md) | maintainer | today a row an agent writes, with a dangling identifier or a tag outside the scheme, is caught only by a manual `mise run check` |
 | A4 | Add `build:knowledge` to `mise run bootstrap` | agent | ADR-A134 decision 13 says the index is built there, which is not yet true. A query rebuilds a stale index itself, so this is the least urgent |
@@ -64,7 +64,7 @@ None blocks activation. Each is a defect the index surfaced, recorded where it b
 | C5 | Draft ADR-A101, ADR-A108 and ADR-A109, or remove the references to them. They are in `tools/knowledge/identifier-exceptions.txt` as planned and never drafted | maintainer |
 | C6 | TD-78, TD-79 and TD-80 | agent drafts |
 | C7 | Give six platform components and two apps a README, so they have a capability row: `platform-outbox`, `release-integration`, `semantic-dataset-fuseki`, `semantic-dataset-spi`, `semantic-policy`, `surface-workflow`, `mork-review-workbench` and `surface-contract-studio` | agent drafts |
-| C8 | Declare PyYAML for `tools/knowledge`, which borrows it from `tools/mork` | agent |
+| C8 | Done 2026-10-26. The root package's `knowledge` extra declares PyYAML, pyoxigraph, numpy, tokenizers and onnxruntime, and `bootstrap:python` installs it | agent |
 | C9 | Move the registers of mechanisms, capabilities, patterns, principles and standards out of `docs/developer/plans/` to `docs/developer/`, since they are neither plans nor tied to one. The registers of technical debt and pending design decisions move with them, and AGENTS.md and the skills that cite them are updated in the same change. Move them with `git mv` and update every reference in the same change (STD-091), including the extractor's paths | agent |
 | C10 | Give the Ensemble principles, PRI-38 to PRI-42, an owner. They name every ontology, and the Ensemble module they govern has no catalogue entry yet | maintainer |
 
@@ -73,3 +73,4 @@ None blocks activation. Each is a defect the index surfaced, recorded where it b
 - 2026-10-24. Unit started. Identifier check, sketch, ADR-A134, T-Box, extractor, query surface, the mechanism register and the design-shape scheme built. The resident server was dropped on a measurement (TSD-38).
 - 2026-10-25. Standards and principles ratified by the maintainer, with seven standards and one principle held for rewording or scope. Every entry now states its scope.
 - 2026-10-25. Capability, pattern, principle and standard registers built. Pointers became anchors resolved at every build, and a query rebuilds a stale index. Architectural quanta derived per view (ADR-A134 addendum). This record written, with the tasks that remain.
+- 2026-10-26. Two embedding models compared on 47 questions and five held out. `find` built on `BAAI/bge-small-en-v1.5`, reversing ADR-A134 decision 8 (addendum of 2026-10-26). Every capability, pattern, principle and standard given a problem shape, and the unnamed standards a name. The Java minting library given its capability row, CAP-72, after a held-out question found the gap. `AGENTS.md` instructs asking first and falling back, and a register gap is technical debt (STD-272).

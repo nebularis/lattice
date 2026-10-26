@@ -75,6 +75,25 @@ The maintainer clarified the term the architecture skill used without defining i
 
 Two findings were derived on the day. MORK, Persistence, SPC and Surface share the substrate's release number although nothing in the substrate imports them, so ADR-A129 places them across a quantum boundary. Whether they should leave that release is PDD-12, and not decided here. And in the authoring deployment the service and its worker talk through RabbitMQ yet share Fuseki, so they are one quantum, and the broker does not separate them.
 
+## Addendum of 2026-10-26: ranking by meaning, and falling back
+
+Decision 8 held that recall matches on the controlled vocabulary and not on embeddings, with the miss log as the evidence that could reverse it. The log showed questions phrased in words no entry used, "tracking state" among them, and tagging 540 rows to the scheme had not begun. We measured instead. Two embedding models ranked all 580 register entries and store findings against 47 questions mapped by hand to their expected answers, and against five more the maintainer wrote without reading the registers.
+
+| Model, over name, claim and problem shape | an expected answer in the top 5 | mean reciprocal rank | a question, cold, process to answer |
+|---|---|---|---|
+| `minishlab/potion-retrieval-32M`, static | 0.72 | 0.76 | 0.29 s |
+| `BAAI/bge-small-en-v1.5`, ONNX on onnxruntime | 0.91, and 0.95 with problem shapes | 0.82, and 0.93 | 0.20 s |
+
+Embedding a section's first prose with each entry made both measures worse, because a section that serves several entries gives each the same unrelated text. On the five unseen questions, every one had a right answer in its top five whether or not the entries had problem shapes, so the rise from 0.91 to 0.95 is probably fitted to questions the problem shapes were written alongside.
+
+**20. Recall ranks by meaning, after filtering exactly.** `graph:ask -- find` filters on the facets an entry states, then ranks what remains by the cosine of its embedded name, claim and problem shape against the question. This reverses decision 8. The model is `BAAI/bge-small-en-v1.5` (MIT licence) at a pinned revision, checked by SHA-256, fetched into `.build/knowledge/model/` on first build and never committed. The vectors sit beside the store, keyed by a digest of each text, so a rebuild embeds only what changed. A process costs about 0.5 s end to end, so decision 14 stands. The design-shape scheme of decisions 9 and 12 is to be replaced by facets, recorded when they are built.
+
+**21. A downstream index that ranks LATTICE's entries with its own embeds with the same model and revision.** Vectors from two models do not share a space, so a score between them means nothing. The model is part of what the index publishes, as its T-Box is.
+
+**22. The index never proves an absence.** When `find` has no entry close to a question, it says so, and the agent falls back to reading the documents and the code as it would without the index. A single threshold separates answerable questions from unanswerable ones only roughly, and a filter changes which entries compete, so the threshold is advice to look further, never a verdict.
+
+**23. A register gap is technical debt.** An answer the fallback finds in the repository that no register entry holds, such as the Java minting library that had no capability row, is reported to the maintainer and closed by adding the entry, or recorded in the technical-debt register until it is. STD-272 states the practice, and `AGENTS.md` instructs it.
+
 ## Provenance
 
 The design was presented to the maintainer in session on 2026-10-24, over four exchanges that narrowed it from a blast-radius index to this, and was approved in writing, including the T-Box split of decision 5 and the store choice of decision 13, both of which the maintainer proposed. The maintainer authorised recording the decisions as accepted without separate countersignature, and authorised the work on the `docs/placement-vehicles-structure` branch. Decision 14 replaced an earlier proposal for an optional long-running server after the measurement in TSD-38 was taken. The alternatives considered, the survey of open-source tools behind the Context section, and the costs are in the [sketch](../../developer/sketches/knowledge-index.md).

@@ -29,7 +29,7 @@ run = "python tools/hooks.py install --bootstrap"
 [tasks."bootstrap:python"]
 description = "Install every Python package of the repository into this checkout's .venv in one resolve"
 depends = ["bootstrap:pip"]
-run = "python -m pip install -c requirements-lock.txt \".[reasoning,test]\" -e \"./workers[test,authoring]\" -e ./tools/mork -e \"./tools/mork_compilers[test]\" -e ./tools/surface -e ./packages/persistence/python -e \"./tools/persistence[test]\" -e \"./tools/vocabulary[test]\" -e \"./tools/reference/eligibility[test]\" -e \"./packages/minting/python[test]\" -e \"./tools/testing/oxigraph[test]\" -e \"./tools/testing/mem_check[test]\""
+run = "python -m pip install -c requirements-lock.txt \".[reasoning,test,knowledge]\" -e \"./workers[test,authoring]\" -e ./tools/mork -e \"./tools/mork_compilers[test]\" -e ./tools/surface -e ./packages/persistence/python -e \"./tools/persistence[test]\" -e \"./tools/vocabulary[test]\" -e \"./tools/reference/eligibility[test]\" -e \"./packages/minting/python[test]\" -e \"./tools/testing/oxigraph[test]\" -e \"./tools/testing/mem_check[test]\""
 
 # A virtual environment that mise creates with uv has no pip. This puts one in, and does nothing
 # where pip is already there.
@@ -331,12 +331,12 @@ description = "Derive the knowledge index from the working documents and ontolog
 run = "python tools/knowledge/extract.py"
 
 [tasks."graph:ask"]
-description = "Ask the knowledge index a question: exists <text>, node <id>, reaches <id>, or sparql <query>. Opens the store read-only and exits, with no resident process (TSD-38)"
+description = "Ask the knowledge index a question: find <words> [--kind --phase --audience], read <id>, node <id>, reaches <id>, exists <text>, or sparql <query>. Opens the store read-only and exits, with no resident process (TSD-38)"
 run = "python tools/knowledge/ask.py"
 
 [tasks."check:knowledge"]
 description = "Check the knowledge index: the T-Box honours ADR-A134, every design shape carries the synonyms that let a question reach it, and the extractor derives every node with a claim and a pointer from the real corpus, including the gerund-to-noun bridge the index exists for"
-run = "python -m pytest tools/knowledge/test_vocabulary.py tools/knowledge/test_design_shapes.py tools/knowledge/test_quanta.py tools/knowledge/test_extract.py -q"
+run = "python -m pytest tools/knowledge/test_vocabulary.py tools/knowledge/test_design_shapes.py tools/knowledge/test_quanta.py tools/knowledge/test_extract.py tools/knowledge/test_embed.py -q"
 
 [tasks."check:agent-guidance"]
 description = "Check AGENTS.md's Where things are table is current, Copilot's file matches AGENTS.md, every skill is well formed and listed, the plugin marketplace is right, and every link resolves (ADR-A117)"

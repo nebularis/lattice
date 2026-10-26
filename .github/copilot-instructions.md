@@ -61,6 +61,20 @@ Only mise picks up this checkout's `.venv` and its dependencies, and a bare inte
 one (skill `lattice-toolchain`). The [developer guide](../docs/developer/developer-guide.md)
 describes every tool.
 
+## Asking the knowledge index
+
+The knowledge index ranks the project's decisions, mechanisms, capabilities, patterns, principles, standards and store findings against a question, so an agent reads the one section that answers it instead of whole documents ([ADR-A134](../docs/architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md)).
+
+- **Ask it first,** before a design, modelling, code or efficiency decision, and before adding a mechanism, a dependency or a component. Describe the problem in your own words, filter by what you know, then read the entries that answer it.
+  ```bash
+  mise run graph:ask -- find <the problem in your own words> --kind mechanism,pattern --phase runtime
+  mise run graph:ask -- read <ID>
+  ```
+  `mise run graph:ask -- find --help` lists every filter and its values. `exists <word>` finds a declared ontology term by name.
+- **Ask more than once.** Reword the question, or narrow, widen or drop a filter, until the answers fit the question or two attempts have found nothing better.
+- **An empty or weak answer never proves that nothing exists.** When `find` reports one, fall back to reading the documents and the code as you would without the index.
+- **A register gap is technical debt.** If the fallback finds an answer in the repository that no register entry holds, tell the maintainer in the handoff, and add the entry in the same change or a row to `docs/developer/plans/technical-debt.md` (STD-272).
+
 ## Writing
 
 Every piece of text, in documents, code comments, commit messages and replies:

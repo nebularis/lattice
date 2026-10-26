@@ -7,6 +7,8 @@ description: How to design in LATTICE and projects built on it. Use when writing
 
 ## Design first
 
+Ask the knowledge index first, as AGENTS.md's "Asking the knowledge index" says, with `--kind decision,mechanism,pattern,principle,standard` and the phase the design runs in. Where it answers weakly, read the documents as before, and report any answer they hold that no register entry does.
+
 Before planning code, consult the architecture and the ADRs, and propose an ADR with either a
 design sketch or a detailed entry in `docs/architecture/solution-design-specification.md`. Keep
 these current with every change they cover:

@@ -15,15 +15,17 @@ Markdown stays the source of truth. Everything here derives from it and holds no
 | `knowledge.ttl` | the T-Box: the node kinds, their relations and the closed status set ([ADR-A134](../../docs/architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md)) |
 | `design-shapes.ttl` | the SKOS scheme: 10 facets and 58 shapes, each phrased as a problem and carrying the synonyms a question arrives under |
 | `extract.py` | derives the index from the tracked documents into an Oxigraph store under `.build/`, never committed |
-| `ask.py` | the query surface. `exists`, `node`, `reaches` and `sparql`, with the miss log that decides whether the vocabulary needs a new concept |
+| `embed.py` | ranks entries by meaning: the pinned model, fetched into `.build/knowledge/model/` on first build, and the vectors beside the store, re-embedding only changed text |
+| `ask.py` | the query surface. `find`, `read`, `node`, `reaches`, `exists` and `sparql`, with the miss log of questions answered weakly or not at all |
 
 ## Tasks
 
 ```bash
 mise run check:identifiers            # fail on an identifier mentioned but defined nowhere
 mise run check:knowledge              # fail on a T-Box term or a derived node that breaks ADR-A134
-mise run build:knowledge              # derive the index into .build/knowledge, about two seconds
-mise run graph:ask -- exists version  # ask it a question
+mise run build:knowledge              # derive the index into .build/knowledge, about two seconds once the model is fetched
+mise run graph:ask -- find tracking a balance drawn down and restored --kind mechanism  # ask it a question
+mise run graph:ask -- read MEC-56     # read the section an entry points at
 ```
 
 Three reports, none of which fails:
@@ -33,6 +35,12 @@ mise exec -- python tools/knowledge/identifiers.py --report      # the inventory
 mise exec -- python tools/knowledge/identifiers.py --variants    # identifiers written non-canonically
 mise exec -- python tools/knowledge/identifiers.py --rehomed     # register entries no longer in their register
 ```
+
+## Ranking by meaning
+
+`find` filters on the facets an entry states, then ranks the rest by how close its name, claim and problem shape are in meaning to the question. The model is `BAAI/bge-small-en-v1.5` (MIT licence), run from its ONNX export by onnxruntime, at the revision and SHA-256 pinned in `embed.py` ([ADR-A134](../../docs/architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md), decisions 20 to 23). The first build downloads 130 MB from Hugging Face. Where that is blocked, the build notes why and `find` says it cannot rank, and the other questions still work.
+
+A weak answer is advice to look further. The agent then reads the documents as it would without the index, and an answer found there that no register entry holds is a register gap, reported to the maintainer.
 
 ## Registers
 

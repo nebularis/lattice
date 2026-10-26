@@ -9,8 +9,13 @@ end, so twenty questions in a prompt cost a second and a server would not earn i
 ([ADR-A134](../../docs/architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md)
 decision 14).
 
-Five questions, which are the ones agents actually ask:
+Six questions, which are the ones agents actually ask:
 
+``find <words> [--kind k,...] [--phase p,...] [--audience a,...]``
+    what does the project already have for this problem? Ranks every decision, register entry and
+    store finding by how close its name, claim and problem shape are in meaning to the words, after
+    filtering exactly on the facets given, and says so when nothing is close. The question to ask
+    first, before a design, modelling, code or efficiency decision
 ``exists <text>``
     does the project already have a term for this? Searches the 2,814 declared terms of every
     ontology module. This is the query that would have prevented an agent proposing a versioning
@@ -25,12 +30,13 @@ Five questions, which are the ones agents actually ask:
 ``sparql <query>``
     anything else
 
-**Every question that returns nothing is logged** (ADR-A134 decision 8). The vocabulary is what
-recall matches on, so an unanswered question names either a missing tag or a missing register row,
-and that log is the only admissible evidence for ever adding embeddings.
+**Every question that returns nothing, or only a weak match, is logged** (ADR-A134 decision 8 and
+its addendum of 2026-10-26). An unanswered question names a missing register row, a missing tag or
+a missing concept, and the log of them says which registers to fill next.
 
 Usage, from the repository root::
 
+    mise run graph:ask -- find tracking what state a contract is in --kind mechanism
     mise run graph:ask -- exists versioning
     mise run graph:ask -- node ADR-A131
     mise run graph:ask -- read MEC-01
@@ -51,6 +57,7 @@ import pyoxigraph as ox
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import anchors  # noqa: E402
+import embed  # noqa: E402
 import extract  # noqa: E402
 import identifiers  # noqa: E402
 
@@ -155,6 +162,77 @@ POINTERS = (
 SELECT ?subject ?pointer WHERE { GRAPH ?g { ?subject ki:pointer ?pointer } }"""
 )
 
+# Every entry with a claim, with the facets find filters on. One fixed query and a filter in Python,
+# so no text from the command line is ever written into SPARQL (PRI-55).
+CANDIDATES = (
+    PREFIXES
+    + """
+SELECT ?n ?id ?kind ?status ?claim ?pointer
+       (GROUP_CONCAT(DISTINCT ?ph) AS ?phases) (GROUP_CONCAT(DISTINCT ?au) AS ?audiences) WHERE {
+  GRAPH ki:index {
+    ?n ki:identifier ?id ; ki:claim ?claim ; a ?k .
+    OPTIONAL { ?n ki:pointer ?pointer }
+    OPTIONAL { ?n ki:status ?s }
+    OPTIONAL { ?n ki:phase ?p BIND (REPLACE(STR(?p), "^.*#", "") AS ?ph) }
+    OPTIONAL { ?n ki:audience ?a BIND (REPLACE(STR(?a), "^.*#", "") AS ?au) }
+    BIND (REPLACE(STR(?k), "^.*#", "") AS ?kind)
+    BIND (REPLACE(STR(?s), "^.*#", "") AS ?status)
+  }
+} GROUP BY ?n ?id ?kind ?status ?claim ?pointer"""
+)
+KINDS = {
+    "mechanism": "Mechanism", "capability": "Capability", "pattern": "Pattern",
+    "principle": "Principle", "standard": "Standard", "discovery": "Discovery",
+    "decision": "Decision", "pending-decision": "PendingDecision", "debt": "Debt",
+}
+PHASES = {"development": "Development", "authoring": "Authoring", "runtime": "Runtime"}
+AUDIENCES = {"internal": "InternalUse", "published": "PublishedUse"}
+# ponytail: one threshold, set from 52 questions on bge-small (answerable questions scored 0.69 or
+# more in nine cases of ten, questions with no answer 0.64 to 0.68). Calibrate per facet once the
+# facets are tagged, since a filter changes which neighbours compete.
+WEAK = 0.69
+FALLBACK = (
+    "Fall back to reading the documents as you would without the index. If the answer is there\n"
+    "but no register entry holds it, that is a gap in the registers: tell the maintainer (STD-272)."
+)
+
+
+def find(db: ox.Store, words: str, kinds: set[str], phases: set[str], audiences: set[str], limit: int) -> int:
+    """Rank entries by meaning against the words, after filtering exactly on the facets given."""
+    rows = [
+        r for r in rows_of(db.query(CANDIDATES))
+        if (not kinds or r["kind"] in kinds)
+        and (not phases or phases & set((r["phases"] or "").split()))
+        and (not audiences or audiences & set((r["audiences"] or "").split()))
+    ]
+    try:
+        nodes, vectors = embed.load(STORE_PATH.parent)
+        question = embed.Model().question(words)
+    except embed.Unavailable as error:
+        print(f"find cannot rank here: {error}")
+        print("Try exists with a word the answer would use.")
+        print(FALLBACK)
+        return 0
+    index = {node: i for i, node in enumerate(nodes)}
+    for r in rows:
+        r["score"] = float(vectors[index[r["n"]]] @ question) if r["n"] in index else -1.0
+    rows = sorted(rows, key=lambda r: -r["score"])[:limit]
+    if not rows or rows[0]["score"] < WEAK:
+        log_miss(f"find {words}")
+    if not rows:
+        print(f"no entry has the facets asked for: {words}")
+        print("Widen or drop a filter, or try other words.")
+        print(FALLBACK)
+        return 0
+    for r in rows:
+        r["score"] = f"{r['score']:.2f}"
+    show(rows, ("score", "id", "kind", "status", "claim", "pointer"))
+    if float(rows[0]["score"]) < WEAK:
+        print(f"\nweak match: no entry scored {WEAK} or more, so the index may not hold the answer.")
+        print("Try other words, or a different or wider filter.")
+        print(FALLBACK)
+    return 0
+
 
 def read_ranges(db: ox.Store, identifier: str) -> list[tuple[str, str]]:
     """The ``(path:start-end, text)`` of every range a node's pointer resolves to, as of the build.
@@ -255,7 +333,23 @@ def main() -> int:
     ):
         p = sub.add_parser(name, help=helptext)
         p.add_argument("argument")
+    p = sub.add_parser("find", help="entries ranked by how close their meaning is to your words")
+    p.add_argument("words", nargs="+")
+    p.add_argument("--kind", default="", help=f"comma-separated, of {', '.join(KINDS)}")
+    p.add_argument("--phase", default="", help=f"comma-separated, of {', '.join(PHASES)}")
+    p.add_argument("--audience", default="", help=f"comma-separated, of {', '.join(AUDIENCES)}")
+    p.add_argument("--limit", type=int, default=8)
     arguments = parser.parse_args()
+
+    if arguments.question == "find":
+        chosen = []
+        for flag, values in (("kind", KINDS), ("phase", PHASES), ("audience", AUDIENCES)):
+            given = [v.strip() for v in getattr(arguments, flag).split(",") if v.strip()]
+            unknown = [v for v in given if v not in values]
+            if unknown:
+                parser.error(f"--{flag} {', '.join(unknown)} is not one of {', '.join(values)}")
+            chosen.append({values[v] for v in given})
+        return find(store(), " ".join(arguments.words), *chosen, arguments.limit)
 
     db = store()
     question = f"{arguments.question} {arguments.argument}"

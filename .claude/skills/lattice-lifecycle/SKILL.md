@@ -47,6 +47,7 @@ A learning that outlives its session goes into a register in the same change tha
 | a choice made, where an ADR is warranted | an ADR, drafted as Proposed |
 | a choice that matters and cannot be made yet | `pending-design-decisions.md` |
 | a shortfall in something that exists, with no planned home | `technical-debt.md` |
+| an answer the repository holds and no register entry does, found by falling back from the knowledge index | the register that should hold it, in the same change. Otherwise `technical-debt.md`, and tell the maintainer (STD-272) |
 | a rule about how we write, name, structure or check something | the skill that an agent reads for that task, not a commit message |
 | a cost measured, with numbers | the discovery record, citing the benchmark |
 
