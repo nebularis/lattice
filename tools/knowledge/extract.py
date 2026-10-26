@@ -488,13 +488,39 @@ def register_rows(out: Extract) -> None:
                     out.bump(family.name)
 
 
+def technology_words() -> dict[str, re.Pattern[str]]:
+    """Each taggable Technology value, with a pattern that finds its slug or label as a whole word."""
+    graph = ox.Store()
+    graph.load(path=str(FACETS_PATH), format=ox.RdfFormat.TURTLE)
+    rows = graph.query(
+        "PREFIX skos: <http://www.w3.org/2004/02/skos/core#> "
+        "SELECT ?c ?l WHERE { ?c skos:inScheme <" + FACET_NS + "Technology> ; skos:prefLabel ?l "
+        "FILTER NOT EXISTS { ?c skos:editorialNote \"group\" } }"
+    )
+    words = {}
+    for row in rows:
+        slug = row["c"].value.removeprefix(FACET_NS)
+        names = {slug, row["l"].value}
+        words[slug] = re.compile(r"(?<![\w.-])(" + "|".join(map(re.escape, names)) + r")(?![\w-])", re.I)
+    return words
+
+
 def discoveries(out: Extract) -> None:
-    """One node per discovery, whose heading already is its claim."""
+    """One node per discovery, whose heading already is its claim.
+
+    A finding's technology is derived from its Evidence line, which names the engines and versions it
+    was found on, so the fact is read where the record states it and never authored twice. "Both
+    stores" means the stores the record's own Stores covered line names, and an engine named in the
+    heading, which is the finding's claim, counts too. Its
+    activity and quality are not stated, so it carries none, which hides it from no question."""
     family = next(f for f in identifiers.FAMILIES if f.name == "store-discovery")
+    words = technology_words()
     for pattern in family.defines:
         for path in sorted(ROOT.glob(pattern)):
             rel = path.relative_to(ROOT).as_posix()
             lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+            covered = next((l for l in lines if l.startswith("**Stores covered:**")), "")
+            both = {slug for slug, pattern in words.items() if pattern.search(covered)}
             for number, line in enumerate(lines, 1):
                 stripped = line.strip()
                 if not stripped.startswith("#"):
@@ -511,6 +537,11 @@ def discoveries(out: Extract) -> None:
                 start, end = anchors.section_at(lines, number)
                 out.quads.append(ox.Quad(subject, ki("pointer"), ox.Literal(f"{rel}:{start}-{end}"), INDEX_GRAPH))
                 out.quads.append(ox.Quad(subject, ki("claim"), ox.Literal(shorten(claim)), INDEX_GRAPH))
+                evidence = next((l for l in lines[start - 1 : end] if l.startswith("**Evidence:**")), "")
+                for slug, pattern in words.items():
+                    if pattern.search(evidence) or pattern.search(heading) or ("both stores" in evidence and slug in both):
+                        out.quads.append(ox.Quad(subject, ki("technology"), ox.NamedNode(FACET_NS + slug), INDEX_GRAPH))
+                        out.bump("facet:Technology:derived")
                 out.bump("store-discovery")
 
 

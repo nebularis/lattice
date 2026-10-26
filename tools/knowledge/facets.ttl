@@ -41,7 +41,7 @@
 <https://www.nebularis.org/neuro-semantic/lattice/dev/facets>
     rdf:type owl:Ontology ;
     rdfs:label "LATTICE knowledge-index facets" ;
-    owl:versionInfo "0.3.0" .
+    owl:versionInfo "0.4.0" .
 
 fct:Activity rdf:type skos:ConceptScheme ;
     skos:prefLabel "activity" ;
@@ -684,8 +684,7 @@ fct:storage rdf:type skos:Concept ; skos:inScheme fct:Quality ;
 fct:parallelism rdf:type skos:Concept ; skos:inScheme fct:Quality ;
     skos:broader fct:performance-efficiency, fct:functional-suitability ;
     skos:prefLabel "parallelism" ;
-    skos:definition "Work split across cores, processes or workers stays correct, and gets faster as workers are added up to a measured limit. The twin of concurrency." ;
-    skos:editorialNote "proposed" .
+    skos:definition "Work split across cores, processes or workers stays correct, and gets faster as workers are added up to a measured limit. The twin of concurrency." .
 
 fct:memory rdf:type skos:Concept ; skos:inScheme fct:Quality ;
     skos:broader fct:performance-efficiency ;
@@ -760,14 +759,12 @@ fct:concurrency rdf:type skos:Concept ; skos:inScheme fct:Quality ;
 fct:partition-tolerance rdf:type skos:Concept ; skos:inScheme fct:Quality ;
     skos:broader fct:reliability ;
     skos:prefLabel "partition tolerance" ;
-    skos:definition "It keeps working when the network between its parts fails. One of the three properties of the CAP theorem, which a distributed system trades against the other two." ;
-    skos:editorialNote "proposed" .
+    skos:definition "It keeps working when the network between its parts fails. One of the three properties of the CAP theorem, which a distributed system trades against the other two." .
 
 fct:replica-consistency rdf:type skos:Concept ; skos:inScheme fct:Quality ;
     skos:broader fct:reliability ;
     skos:prefLabel "replica consistency" ;
-    skos:definition "Every read sees the latest write, across every copy or replica. One of the three properties of the CAP theorem, and distinct from consistency between records." ;
-    skos:editorialNote "proposed" .
+    skos:definition "Every read sees the latest write, across every copy or replica. One of the three properties of the CAP theorem, and distinct from consistency between records." .
 
 fct:security rdf:type skos:Concept ; skos:inScheme fct:Quality ;
     skos:topConceptOf fct:Quality ;
@@ -822,32 +819,27 @@ fct:reusability rdf:type skos:Concept ; skos:inScheme fct:Quality ;
 fct:understandability rdf:type skos:Concept ; skos:inScheme fct:Quality ;
     skos:broader fct:maintainability ;
     skos:prefLabel "understandability" ;
-    skos:definition "A human or AI reader can tell what a thing is and means, whether an element in code, a term in a document or a concept in a model." ;
-    skos:editorialNote "proposed" .
+    skos:definition "A human or AI reader can tell what a thing is and means, whether an element in code, a term in a document or a concept in a model." .
 
 fct:naming-conventions rdf:type skos:Concept ; skos:inScheme fct:Quality ;
     skos:broader fct:understandability ;
     skos:prefLabel "naming conventions" ;
-    skos:definition "Things are named by a rule and by the terms the project already uses, so a name says what it refers to." ;
-    skos:editorialNote "proposed" .
+    skos:definition "Things are named by a rule and by the terms the project already uses, so a name says what it refers to." .
 
 fct:consistent-terminology rdf:type skos:Concept ; skos:inScheme fct:Quality ;
     skos:broader fct:understandability ;
     skos:prefLabel "consistent terminology" ;
-    skos:definition "A term means one thing wherever it appears, in code, documents and models, and one thing has one term." ;
-    skos:editorialNote "proposed" .
+    skos:definition "A term means one thing wherever it appears, in code, documents and models, and one thing has one term." .
 
 fct:concept-definition rdf:type skos:Concept ; skos:inScheme fct:Quality ;
     skos:broader fct:understandability ;
     skos:prefLabel "concept definition" ;
-    skos:definition "Each concept is defined once, where it lives, in words that do not need the reader to know its implementation." ;
-    skos:editorialNote "proposed" .
+    skos:definition "Each concept is defined once, where it lives, in words that do not need the reader to know its implementation." .
 
 fct:readability rdf:type skos:Concept ; skos:inScheme fct:Quality ;
     skos:broader fct:understandability ;
     skos:prefLabel "readability" ;
-    skos:definition "Code and prose can be read and followed quickly, by their structure, layout and length." ;
-    skos:editorialNote "proposed" .
+    skos:definition "Code and prose can be read and followed quickly, by their structure, layout and length." .
 
 fct:analysability rdf:type skos:Concept ; skos:inScheme fct:Quality ;
     skos:broader fct:maintainability ;
@@ -1014,31 +1006,31 @@ fct:ai-model rdf:type skos:Concept ; skos:inScheme fct:Technology ;
     skos:broader fct:ai ;
     skos:prefLabel "AI model" ;
     skos:definition "A kind of trained model." ;
-    skos:editorialNote "group", "proposed" .
+    skos:editorialNote "group" .
 
 fct:ai-runtime rdf:type skos:Concept ; skos:inScheme fct:Technology ;
     skos:broader fct:ai ;
     skos:prefLabel "AI runtime" ;
     skos:definition "Software that loads and runs a trained model." ;
-    skos:editorialNote "group", "proposed" .
+    skos:editorialNote "group" .
 
 fct:ai-framework rdf:type skos:Concept ; skos:inScheme fct:Technology ;
     skos:broader fct:ai ;
     skos:prefLabel "AI framework" ;
     skos:definition "A library for building, training or composing models and model calls." ;
-    skos:editorialNote "group", "proposed" .
+    skos:editorialNote "group" .
 
 fct:ai-integration rdf:type skos:Concept ; skos:inScheme fct:Technology ;
     skos:broader fct:ai ;
     skos:prefLabel "AI integration" ;
     skos:definition "How an application or an agent reaches a model and the tools it may use." ;
-    skos:editorialNote "group", "proposed" .
+    skos:editorialNote "group" .
 
 fct:ai-operations rdf:type skos:Concept ; skos:inScheme fct:Technology ;
     skos:broader fct:ai ;
     skos:prefLabel "AI operations" ;
     skos:definition "Evaluating, training, versioning and serving models, the MLOps loop." ;
-    skos:editorialNote "group", "proposed" .
+    skos:editorialNote "group" .
 
 fct:python rdf:type skos:Concept ; skos:inScheme fct:Technology ;
     skos:broader fct:language ;
@@ -1543,26 +1535,22 @@ fct:llm rdf:type skos:Concept ; skos:inScheme fct:Technology ;
 fct:claude rdf:type skos:Concept ; skos:inScheme fct:Technology ;
     skos:broader fct:llm ;
     skos:prefLabel "Claude" ;
-    skos:definition "Anthropic's Claude models and API." ;
-    skos:editorialNote "proposed" .
+    skos:definition "Anthropic's Claude models and API." .
 
 fct:gpt rdf:type skos:Concept ; skos:inScheme fct:Technology ;
     skos:broader fct:llm ;
     skos:prefLabel "GPT" ;
-    skos:definition "OpenAI's GPT models and API." ;
-    skos:editorialNote "proposed" .
+    skos:definition "OpenAI's GPT models and API." .
 
 fct:gemini rdf:type skos:Concept ; skos:inScheme fct:Technology ;
     skos:broader fct:llm ;
     skos:prefLabel "Gemini" ;
-    skos:definition "Google's Gemini models and API." ;
-    skos:editorialNote "proposed" .
+    skos:definition "Google's Gemini models and API." .
 
 fct:open-weight-llm rdf:type skos:Concept ; skos:inScheme fct:Technology ;
     skos:broader fct:llm ;
     skos:prefLabel "open-weight language models" ;
-    skos:definition "Language models whose weights are published, such as Llama, Mistral and Qwen, run on one's own hardware." ;
-    skos:editorialNote "proposed" .
+    skos:definition "Language models whose weights are published, such as Llama, Mistral and Qwen, run on one's own hardware." .
 
 fct:embeddings rdf:type skos:Concept ; skos:inScheme fct:Technology ;
     skos:broader fct:ai-model ;
@@ -1572,38 +1560,32 @@ fct:embeddings rdf:type skos:Concept ; skos:inScheme fct:Technology ;
 fct:bge rdf:type skos:Concept ; skos:inScheme fct:Technology ;
     skos:broader fct:embeddings ;
     skos:prefLabel "BGE" ;
-    skos:definition "The BAAI general embedding models, such as bge-small-en-v1.5." ;
-    skos:editorialNote "proposed" .
+    skos:definition "The BAAI general embedding models, such as bge-small-en-v1.5." .
 
 fct:static-embeddings rdf:type skos:Concept ; skos:inScheme fct:Technology ;
     skos:broader fct:embeddings ;
     skos:prefLabel "static embeddings" ;
-    skos:definition "Embeddings looked up per token rather than computed by a transformer, such as model2vec." ;
-    skos:editorialNote "proposed" .
+    skos:definition "Embeddings looked up per token rather than computed by a transformer, such as model2vec." .
 
 fct:reranker rdf:type skos:Concept ; skos:inScheme fct:Technology ;
     skos:broader fct:ai-model ;
     skos:prefLabel "rerankers" ;
-    skos:definition "Cross-encoder models that rescore a short list of candidates against a question." ;
-    skos:editorialNote "proposed" .
+    skos:definition "Cross-encoder models that rescore a short list of candidates against a question." .
 
 fct:multimodal-model rdf:type skos:Concept ; skos:inScheme fct:Technology ;
     skos:broader fct:ai-model ;
     skos:prefLabel "multimodal models" ;
-    skos:definition "Models that read or produce images, audio or video as well as text." ;
-    skos:editorialNote "proposed" .
+    skos:definition "Models that read or produce images, audio or video as well as text." .
 
 fct:speech-model rdf:type skos:Concept ; skos:inScheme fct:Technology ;
     skos:broader fct:ai-model ;
     skos:prefLabel "speech models" ;
-    skos:definition "Speech recognition and speech synthesis models." ;
-    skos:editorialNote "proposed" .
+    skos:definition "Speech recognition and speech synthesis models." .
 
 fct:classical-ml rdf:type skos:Concept ; skos:inScheme fct:Technology ;
     skos:broader fct:ai-model ;
     skos:prefLabel "classical machine learning" ;
-    skos:definition "Linear models, decision trees, gradient boosting, clustering and other machine learning that is not deep learning." ;
-    skos:editorialNote "proposed" .
+    skos:definition "Linear models, decision trees, gradient boosting, clustering and other machine learning that is not deep learning." .
 
 fct:onnxruntime rdf:type skos:Concept ; skos:inScheme fct:Technology ;
     skos:broader fct:ai-runtime, fct:library ;
@@ -1613,140 +1595,117 @@ fct:onnxruntime rdf:type skos:Concept ; skos:inScheme fct:Technology ;
 fct:llama-cpp rdf:type skos:Concept ; skos:inScheme fct:Technology ;
     skos:broader fct:ai-runtime ;
     skos:prefLabel "llama.cpp" ;
-    skos:definition "llama.cpp and its GGUF models, for running models on a CPU or a laptop." ;
-    skos:editorialNote "proposed" .
+    skos:definition "llama.cpp and its GGUF models, for running models on a CPU or a laptop." .
 
 fct:vllm rdf:type skos:Concept ; skos:inScheme fct:Technology ;
     skos:broader fct:ai-runtime ;
     skos:prefLabel "vLLM" ;
-    skos:definition "vLLM and other servers that run models for many callers at once." ;
-    skos:editorialNote "proposed" .
+    skos:definition "vLLM and other servers that run models for many callers at once." .
 
 fct:ollama rdf:type skos:Concept ; skos:inScheme fct:Technology ;
     skos:broader fct:ai-runtime ;
     skos:prefLabel "Ollama" ;
-    skos:definition "Ollama, for running open-weight models locally." ;
-    skos:editorialNote "proposed" .
+    skos:definition "Ollama, for running open-weight models locally." .
 
 fct:pytorch rdf:type skos:Concept ; skos:inScheme fct:Technology ;
     skos:broader fct:ai-framework, fct:library ;
     skos:prefLabel "PyTorch" ;
-    skos:definition "PyTorch." ;
-    skos:editorialNote "proposed" .
+    skos:definition "PyTorch." .
 
 fct:tensorflow rdf:type skos:Concept ; skos:inScheme fct:Technology ;
     skos:broader fct:ai-framework, fct:library ;
     skos:prefLabel "TensorFlow" ;
-    skos:definition "TensorFlow and Keras." ;
-    skos:editorialNote "proposed" .
+    skos:definition "TensorFlow and Keras." .
 
 fct:jax rdf:type skos:Concept ; skos:inScheme fct:Technology ;
     skos:broader fct:ai-framework, fct:library ;
     skos:prefLabel "JAX" ;
-    skos:definition "JAX." ;
-    skos:editorialNote "proposed" .
+    skos:definition "JAX." .
 
 fct:transformers rdf:type skos:Concept ; skos:inScheme fct:Technology ;
     skos:broader fct:ai-framework, fct:library ;
     skos:prefLabel "Transformers" ;
-    skos:definition "The Hugging Face Transformers library." ;
-    skos:editorialNote "proposed" .
+    skos:definition "The Hugging Face Transformers library." .
 
 fct:sentence-transformers rdf:type skos:Concept ; skos:inScheme fct:Technology ;
     skos:broader fct:ai-framework, fct:library ;
     skos:prefLabel "sentence-transformers" ;
-    skos:definition "The sentence-transformers library for embedding and reranking." ;
-    skos:editorialNote "proposed" .
+    skos:definition "The sentence-transformers library for embedding and reranking." .
 
 fct:scikit-learn rdf:type skos:Concept ; skos:inScheme fct:Technology ;
     skos:broader fct:ai-framework, fct:library ;
     skos:prefLabel "scikit-learn" ;
-    skos:definition "scikit-learn." ;
-    skos:editorialNote "proposed" .
+    skos:definition "scikit-learn." .
 
 fct:tokenizers rdf:type skos:Concept ; skos:inScheme fct:Technology ;
     skos:broader fct:ai-framework, fct:library ;
     skos:prefLabel "tokenizers" ;
-    skos:definition "Tokenizer libraries, such as Hugging Face tokenizers and tiktoken." ;
-    skos:editorialNote "proposed" .
+    skos:definition "Tokenizer libraries, such as Hugging Face tokenizers and tiktoken." .
 
 fct:langchain rdf:type skos:Concept ; skos:inScheme fct:Technology ;
     skos:broader fct:ai-framework, fct:library ;
     skos:prefLabel "LangChain" ;
-    skos:definition "LangChain and LangGraph, for composing model calls into chains and graphs." ;
-    skos:editorialNote "proposed" .
+    skos:definition "LangChain and LangGraph, for composing model calls into chains and graphs." .
 
 fct:mcp rdf:type skos:Concept ; skos:inScheme fct:Technology ;
     skos:broader fct:ai-integration, fct:standard ;
     skos:prefLabel "Model Context Protocol" ;
-    skos:definition "The Model Context Protocol, for giving a model tools and data." ;
-    skos:editorialNote "proposed" .
+    skos:definition "The Model Context Protocol, for giving a model tools and data." .
 
 fct:tool-use rdf:type skos:Concept ; skos:inScheme fct:Technology ;
     skos:broader fct:ai-integration ;
     skos:prefLabel "tool use" ;
-    skos:definition "A model calling functions or tools that an application declares to it." ;
-    skos:editorialNote "proposed" .
+    skos:definition "A model calling functions or tools that an application declares to it." .
 
 fct:agent-sdk rdf:type skos:Concept ; skos:inScheme fct:Technology ;
     skos:broader fct:ai-integration, fct:library ;
     skos:prefLabel "agent SDKs" ;
-    skos:definition "Frameworks for building agents that plan and act with tools, such as the Claude Agent SDK." ;
-    skos:editorialNote "proposed" .
+    skos:definition "Frameworks for building agents that plan and act with tools, such as the Claude Agent SDK." .
 
 fct:coding-agent rdf:type skos:Concept ; skos:inScheme fct:Technology ;
     skos:broader fct:ai-integration, fct:tool ;
     skos:prefLabel "coding agents" ;
-    skos:definition "Agents that read and change a codebase, such as Claude Code and GitHub Copilot, and the instructions they read." ;
-    skos:editorialNote "proposed" .
+    skos:definition "Agents that read and change a codebase, such as Claude Code and GitHub Copilot, and the instructions they read." .
 
 fct:structured-output rdf:type skos:Concept ; skos:inScheme fct:Technology ;
     skos:broader fct:ai-integration ;
     skos:prefLabel "structured output" ;
-    skos:definition "Constraining a model to answer in a schema, such as JSON matching a JSON Schema." ;
-    skos:editorialNote "proposed" .
+    skos:definition "Constraining a model to answer in a schema, such as JSON matching a JSON Schema." .
 
 fct:vector-index rdf:type skos:Concept ; skos:inScheme fct:Technology ;
     skos:broader fct:ai, fct:store ;
     skos:prefLabel "vector indexes" ;
-    skos:definition "Approximate nearest-neighbour indexes, such as HNSW, and the databases built on them." ;
-    skos:editorialNote "proposed" .
+    skos:definition "Approximate nearest-neighbour indexes, such as HNSW, and the databases built on them." .
 
 fct:model-hub rdf:type skos:Concept ; skos:inScheme fct:Technology ;
     skos:broader fct:ai-operations ;
     skos:prefLabel "model hubs" ;
-    skos:definition "Registries that publish models and their revisions, such as the Hugging Face Hub." ;
-    skos:editorialNote "proposed" .
+    skos:definition "Registries that publish models and their revisions, such as the Hugging Face Hub." .
 
 fct:model-evaluation rdf:type skos:Concept ; skos:inScheme fct:Technology ;
     skos:broader fct:ai-operations ;
     skos:prefLabel "model evaluation" ;
-    skos:definition "Benchmarks, question sets and harnesses that measure a model or a system built on one." ;
-    skos:editorialNote "proposed" .
+    skos:definition "Benchmarks, question sets and harnesses that measure a model or a system built on one." .
 
 fct:model-training rdf:type skos:Concept ; skos:inScheme fct:Technology ;
     skos:broader fct:ai-operations ;
     skos:prefLabel "model training" ;
-    skos:definition "Training and fine-tuning models, including adapters such as LoRA." ;
-    skos:editorialNote "proposed" .
+    skos:definition "Training and fine-tuning models, including adapters such as LoRA." .
 
 fct:experiment-tracking rdf:type skos:Concept ; skos:inScheme fct:Technology ;
     skos:broader fct:ai-operations ;
     skos:prefLabel "experiment tracking" ;
-    skos:definition "Recording runs, parameters and results, such as with MLflow." ;
-    skos:editorialNote "proposed" .
+    skos:definition "Recording runs, parameters and results, such as with MLflow." .
 
 fct:model-formats rdf:type skos:Concept ; skos:inScheme fct:Technology ;
     skos:broader fct:ai, fct:format ;
     skos:prefLabel "model formats" ;
-    skos:definition "Formats that hold model weights, such as ONNX, GGUF and safetensors." ;
-    skos:editorialNote "proposed" .
+    skos:definition "Formats that hold model weights, such as ONNX, GGUF and safetensors." .
 
 fct:gpu rdf:type skos:Concept ; skos:inScheme fct:Technology ;
     skos:broader fct:ai, fct:platform ;
     skos:prefLabel "GPUs and accelerators" ;
-    skos:definition "GPUs and other accelerators, and CUDA." ;
-    skos:editorialNote "proposed" .
+    skos:definition "GPUs and other accelerators, and CUDA." .
 
 
 ######################################################################

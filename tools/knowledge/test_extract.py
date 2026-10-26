@@ -602,3 +602,15 @@ def test_a_related_value_raises_entries_in_another_facet(built):
     wanted = ask.expand(store, {"Activity": ["ux-design"]})
     assert "accessibility" in wanted["qualities"] and "ux-design" in wanted["activities"]
     assert set(ask.expand(store, {"Activity": ["refactoring"]})) == {"activities"}
+
+
+def test_a_store_finding_takes_its_technology_from_its_evidence(built):
+    """TSD-23's Evidence line names pySHACL, so it carries pySHACL without anyone authoring it.
+    TSD-07's says "both stores", which the record's Stores covered line names as rdflib and
+    Oxigraph."""
+    _, store = built
+    rows = _rows(store, """SELECT ?id ?t WHERE { GRAPH ki:index {
+        ?n ki:identifier ?id ; ki:technology ?t . FILTER (?id IN ("TSD-23", "TSD-07")) } }""")
+    found = {(str(r["id"].value), str(r["t"].value).rsplit("#", 1)[1]) for r in rows}
+    assert ("TSD-23", "pyshacl") in found
+    assert {("TSD-07", "rdflib"), ("TSD-07", "oxigraph")} <= found
