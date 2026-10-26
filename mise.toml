@@ -106,7 +106,7 @@ run = "corepack enable && yarn install --immutable"
 
 [tasks.check]
 description = "Run all repository validation tasks"
-depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:reasoning-isolation", "check:minting", "check:persistence-library", "check:formal-freshness", "check:catalogue", "check:identifiers", "check:knowledge", "check:agent-guidance", "build:mtp", "check:mtp", "check:authoring-tools", "check:published-decisions", "check:site-sections", "check:hooks"]
+depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:mork", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:reasoning-isolation", "check:minting", "check:persistence-library", "check:formal-freshness", "check:catalogue", "check:identifiers", "check:knowledge", "check:agent-guidance", "build:mtp", "check:mtp", "check:authoring-tools", "check:published-decisions", "check:site-sections", "check:hooks"]
 
 [tasks.test]
 description = "Run the repository test suites"
@@ -175,6 +175,10 @@ run = "python contracts/identity/verify-anchors.py"
 depends = ["bootstrap:pip"]
 description = "Install the standalone Python minting library (ADR-A84) with its test extra"
 run = "python -m pip install -e \"./packages/minting/python[test]\""
+
+[tasks."check:mork"]
+description = "Run the MORK tooling's tests under tools/mork/src, the compiler agent's among them"
+run = "python -m pytest tools/mork/src -q"
 
 [tasks."check:minting-python"]
 description = "Run the Python minting library against the anchors, the generated vectors and the Unicode 16.0 cross-checks"
