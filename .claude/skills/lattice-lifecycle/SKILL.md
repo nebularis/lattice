@@ -52,6 +52,8 @@ A learning that outlives its session goes into a register in the same change tha
 | an answer the repository holds and no register entry does, found by falling back from the knowledge index | the register that should hold it, in the same change. Otherwise `technical-debt.md`, and tell the maintainer (STD-272) |
 | a rule about how we write, name, structure or check something | the skill that an agent reads for that task, not a commit message |
 | a cost measured, with numbers | the discovery record, citing the benchmark |
+| a facet value an entry needs and the scheme lacks | [`docs/developer/facets.md`](../../../docs/developer/facets.md), as a row in its scheme's table with Ratified no, never in generated Turtle. Tag the entry with it in the same change |
+| a rule a skill states, so the index can rank it | the standard register, as a row whose Pointer is the skill's section, with Ratified no |
 
 **A register's header is a title, its Unit type line and at most one line of state.** A column's meaning is the `rdfs:comment` of the T-Box property it maps to, written once, so a header explaining its columns restates it. `check:knowledge` fails a register holding a table whose first column is not `ID` or `#`.
 

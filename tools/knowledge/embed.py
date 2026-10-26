@@ -21,11 +21,16 @@ from __future__ import annotations
 
 import hashlib
 import shutil
+import sys
 import urllib.request
 from pathlib import Path
 
 import numpy as np
 import pyoxigraph as ox
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+import lattice_repo_catalogue  # noqa: E402
 
 REPO = "BAAI/bge-small-en-v1.5"
 REVISION = "5c38ec7c405ec4b44b94cc5a9bb96e735b38267a"
@@ -35,7 +40,8 @@ FILES = {
 }
 # The instruction the model was trained to read before a question, and never before a passage.
 QUERY_PREFIX = "Represent this sentence for searching relevant passages: "
-MODEL_DIR = Path(__file__).resolve().parents[2] / ".build" / "knowledge" / "model" / REVISION
+# Under the root the catalogue reader finds, never a count of this file's parents (ADR-A121 decision 4).
+MODEL_DIR = lattice_repo_catalogue.find_root() / ".build" / "knowledge" / "model" / REVISION
 VECTORS = "vectors.npz"
 
 KI = "https://www.nebularis.org/neuro-semantic/lattice/dev/knowledge#"

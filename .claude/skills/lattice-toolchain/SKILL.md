@@ -36,7 +36,7 @@ are in [environment-lessons.md](environment-lessons.md), beside this file.
 | generated SPARQL, or a test that runs it on an engine | `check:persistence` on Oxigraph, and `check:persistence-conformance` on every engine before a merge (skill `lattice-triple-stores`) |
 | a benchmark under `benchmark/` | its own `check:<area>-<topic>`, run on demand, never part of `check` (ADR-A124) |
 | `AGENTS.md` or a skill | `build:agent-guidance`, then `check:agent-guidance`. The "Where things are" table in `AGENTS.md` is generated from `repository-catalogue.md`, so edit a root, tool package or documentation area there |
-| a root, a tool package, a documentation area or a generated path | `repository-catalogue.md`, then `build:agent-guidance` and `check:catalogue` |
+| a root, a tool package, a documentation area or a generated path | `repository-catalogue.md`, giving a new root or documentation area a `name` code asks for it by (see [Finding paths](#finding-paths)), then `build:agent-guidance` and `check:catalogue` |
 | anything to be committed | the commit hook runs what the change touches (below). `mise run hooks:run` runs it by hand over what is staged |
 
 ## Git hooks
@@ -95,6 +95,19 @@ Some networks reach public registries only through a mirror, or not at all.
   record a mirror's hostname, an index URL or a credential in the repository or in published notes.
 - A package missing from a mirror, or a registry that cannot be reached, is handed to the maintainer with
   the exact command. Do not retry it.
+
+## Finding paths
+
+**Find the repository root and every catalogued directory through the catalogue reader, never from `__file__` or a path written in code** ([ADR-A121](../../../docs/architecture/decisions/ADR-A121-repository-catalogue.md) decisions 4 and 5). A written path breaks when a directory moves, and a root counted from `__file__` is wrong in a copy or a worktree run with another checkout's interpreter.
+
+| To find | Ask the reader, in Python | From a task or a shell |
+|---|---|---|
+| the repository root | `lattice_repo_catalogue.find_root()`, or `catalogue.root` after `load()` | the working directory, or `LATTICE_ROOT` |
+| a module's role directory, such as its examples | `catalogue.module("instrument").directory("examples")` | `python tools/lattice_repo_catalogue.py path instrument examples` |
+| a module's generated files, in order | `catalogue.module("wording").files("shapes")` | `python tools/lattice_repo_catalogue.py paths wording shapes` |
+| a root or documentation area, such as the registers' | `catalogue.area("developer")` | `python tools/lattice_repo_catalogue.py area developer` |
+
+`load()` comes from `tools/lattice_repo_catalogue.py`, which a tool under `tools/` imports after putting `tools/` on `sys.path`. Each lookup returns a directory relative to the root, and a file's name is joined to it, as in `catalogue.root / catalogue.area("developer") / "facets.md"`. A name or role the catalogue lacks fails with an error naming where to declare it, so declare it there rather than writing the path. `check:catalogue` fails a tool under `tools/` that builds a path to a catalogued root itself. Its scan does not yet read tests (TD-54) or find a root counted from `__file__` (TD-87, TD-88), so there the rule holds only while it is followed.
 
 ## Rules for tasks and tools
 

@@ -33,10 +33,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import lattice_repo_catalogue  # noqa: E402
 
-# The register sits with the other registers, in the area the catalogue names for them (ADR-A121).
+# The register sits with the other registers, in the area the catalogue names developer (ADR-A121).
 _CATALOGUE = lattice_repo_catalogue.load()
 ROOT = _CATALOGUE.root
-SOURCE_PATH = ROOT / next(a.path for a in _CATALOGUE.docs if a.path == "docs/developer/") / "facets.md"
+SOURCE_PATH = ROOT / _CATALOGUE.area("developer") / "facets.md"
 OUTPUT_PATH = ROOT / ".build" / "knowledge" / "facets.ttl"
 NS = "https://www.nebularis.org/neuro-semantic/lattice/dev/facets#"
 ONTOLOGY = "https://www.nebularis.org/neuro-semantic/lattice/dev/facets"

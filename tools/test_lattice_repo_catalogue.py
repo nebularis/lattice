@@ -273,7 +273,7 @@ TABLE_AT_82FC2B25 = """\
 | `benchmark/` | checks that measure, run on demand and never part of `check`. They fail on a wrong result, never on time (ADR-A124) |
 | `platform/`, `apps/`, `packages/`, `contracts/`, `deployment/`, `workers/`, `test/`, `spikes/` | services, applications, libraries, data contracts, the local environment, the worker runtime, end-to-end suites, experiments |
 | `docs/architecture/` | architecture documents and the ADRs, in `decisions/` |
-| `docs/developer/` | sketches, plans, status records, review requests, Validation Packs, and durable guidance |
+| `docs/developer/` | sketches, plans, status records, review requests, Validation Packs, the registers, and durable guidance |
 | `.claude/skills/` | the skills below |"""
 
 AREA = '[[roots]]\npath = "tools/"\nowns = "tools"\nrow = "tool row"\n'
@@ -307,7 +307,9 @@ def test_rc3_t1_the_catalogue_declares_the_roots_tool_packages_documentation_are
     ('[[roots]]\npath = "a/"\nowns = "x"\ngroup = "g"\nrow = "r"\n[[roots]]\npath = "b/"\nowns = "x"\nrow = "r"\n'
      '[[roots]]\npath = "c/"\nowns = "x"\ngroup = "g"\nrow = "r"', "next to each other"),
     ('[roots]\npath = "tools/"', "list of tables"),
-    ('[[docs]]\npath = "docs/"\nowns = "x"\nrow = "r"\nname = "n"', "unknown key"),
+    ('[[docs]]\npath = "docs/"\nowns = "x"\nrow = "r"\ncolour = "red"', "unknown key"),
+    ('[[docs]]\nname = "Docs"\npath = "docs/"\nowns = "x"\nrow = "r"', "not a lower-case word"),
+    ('[[roots]]\nname = "a"\npath = "a/"\nowns = "x"\nrow = "r"\n[[docs]]\nname = "a"\npath = "d/"\nowns = "x"\nrow = "r"', "used twice"),
     ('[[tools]]\nname = "t"\npath = "tools/t"', "needs 'import-names'"),
     ('[[tools]]\nname = "t"\npath = "tools/t"\nimport-names = ["t"]\nreaches = "ontology"', "must be a list of strings"),
     ('[[tools]]\nname = "t"\npath = "tools/t"\nimport-names = ["t"]\nversion = "1"', "unknown key"),
@@ -521,3 +523,20 @@ def derived_reaches(package: Path) -> set[str]:
 def test_rc3_t17_each_packages_reaches_are_what_its_code_reads(tool) -> None:
     assert derived_reaches(ROOT / tool.path) == set(tool.reaches)
 
+
+def test_rc3_t9_a_root_or_documentation_area_is_found_by_its_name() -> None:
+    """Code asks for an area by name, so no tool writes its path, and a name it lacks says where to add one."""
+    catalogue = rc.load(ROOT)
+    assert all(a.name for a in (*catalogue.roots, *catalogue.docs)), "every root and documentation area has a name"
+    assert catalogue.area("developer") == Path("docs/developer")
+    assert catalogue.area("ontology") == Path("ontology")
+    assert catalogue.area("skills") == Path(".claude/skills")
+    with pytest.raises(rc.CatalogueError, match="no root or documentation area named 'registers'.*known: apps"):
+        catalogue.area("registers")
+
+
+def test_rc3_t10_the_command_line_prints_an_area_by_its_name(capsys) -> None:
+    assert rc.main(["--root", str(ROOT), "area", "developer"]) == 0
+    assert capsys.readouterr().out.strip() == "docs/developer"
+    assert rc.main(["--root", str(ROOT), "area", "nowhere"]) == 1
+    assert "give its [[roots]] or [[docs]] entry a name" in capsys.readouterr().err

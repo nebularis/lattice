@@ -54,6 +54,8 @@ Only mise picks up this checkout's `.venv` and its dependencies, and a bare inte
 one (skill `lattice-toolchain`). The [developer guide](docs/developer/developer-guide.md)
 describes every tool.
 
+Code finds the repository root and every directory the [repository catalogue](repository-catalogue.md) names through its reader, `tools/lattice_repo_catalogue.py`, by a module's role or a root's or documentation area's name, such as `area("developer")` for the registers, never from `__file__` or a path written in code (STD-273, skill `lattice-toolchain`'s Finding paths).
+
 ## Asking the knowledge index
 
 The knowledge index ranks the project's decisions, mechanisms, capabilities, patterns, principles, standards and store findings against a question, so an agent reads the one section that answers it instead of whole documents ([ADR-A134](docs/architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md)).

@@ -47,11 +47,21 @@ from __future__ import annotations
 import argparse
 import re
 import subprocess
+import sys
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+import lattice_repo_catalogue  # noqa: E402
+
+# The root and the documentation areas come from the catalogue reader, never from this file's place
+# or a written path (ADR-A121 decisions 4 and 5).
+CATALOGUE = lattice_repo_catalogue.load()
+ROOT = CATALOGUE.root
+ARCHITECTURE = CATALOGUE.area("architecture")
+DEVELOPER = CATALOGUE.area("developer")
 EXCEPTIONS_PATH = Path(__file__).resolve().parent / "identifier-exceptions.txt"
 
 # The first line of a copy that tools/site_sections.py writes into docs/_includes, which names its
@@ -117,7 +127,7 @@ FAMILIES: tuple[Family, ...] = (
         # ADR-A131, ADR-A07b, ADR-AC2, ADR-A-C2, ADR-A-FM2, ADR-A-CAP1, and "ADR A-07" in a heading.
         mention=re.compile(r"\b(ADR[-‑ ]A-?[A-Za-z]{0,4}-?\d+[a-z]?)\b"),
         definition="filename",
-        defines=("docs/architecture/decisions/*.md",),
+        defines=((ARCHITECTURE / "decisions" / "*.md").as_posix(),),
         note="a decision file is never removed, so an unresolved mention is rot or a decision "
         "that was planned and never drafted",
     ),
@@ -125,7 +135,7 @@ FAMILIES: tuple[Family, ...] = (
         name="pending-decision",
         mention=re.compile(r"\b(PDD-\d+)\b"),
         definition="table-row",
-        defines=("docs/developer/pending-design-decisions.md",),
+        defines=((DEVELOPER / "pending-design-decisions.md").as_posix(),),
         removable=True,
         note="removed from the register when an ADR, sketch or plan takes the decision on",
     ),
@@ -133,7 +143,7 @@ FAMILIES: tuple[Family, ...] = (
         name="technical-debt",
         mention=re.compile(r"\b(TD-\d+)\b"),
         definition="table-row",
-        defines=("docs/developer/technical-debt.md",),
+        defines=((DEVELOPER / "technical-debt.md").as_posix(),),
         removable=True,
         note="removed from the register when an item gains a home in a plan",
     ),
@@ -141,7 +151,7 @@ FAMILIES: tuple[Family, ...] = (
         name="mechanism",
         mention=re.compile(r"\b(MEC-\d+)\b"),
         definition="table-row",
-        defines=("docs/developer/mechanisms.md",),
+        defines=((DEVELOPER / "mechanisms.md").as_posix(),),
         note="what the project already has, so it is not built twice. A row is never removed, "
         "because a mechanism that goes away is a change to record rather than a row to delete",
     ),
@@ -149,7 +159,7 @@ FAMILIES: tuple[Family, ...] = (
         name="capability",
         mention=re.compile(r"\b(CAP-\d+)\b"),
         definition="table-row",
-        defines=("docs/developer/capabilities.md",),
+        defines=((DEVELOPER / "capabilities.md").as_posix(),),
         note="what the project's own software can already do, so new work reuses it. A row is never "
         "removed, because a capability that goes away is a change to record rather than a row to delete",
     ),
@@ -157,7 +167,7 @@ FAMILIES: tuple[Family, ...] = (
         name="pattern",
         mention=re.compile(r"\b(PAT-\d+)\b"),
         definition="table-row",
-        defines=("docs/developer/patterns.md",),
+        defines=((DEVELOPER / "patterns.md").as_posix(),),
         note="a named, reusable technique with a trade-off, as a handle on the guide section that treats "
         "it. A row is never removed, because a pattern that is withdrawn is a change to record",
     ),
@@ -165,7 +175,7 @@ FAMILIES: tuple[Family, ...] = (
         name="principle",
         mention=re.compile(r"\b(PRI-\d+)\b"),
         definition="table-row",
-        defines=("docs/developer/principles.md",),
+        defines=((DEVELOPER / "principles.md").as_posix(),),
         note="a durable design commitment, as a handle on the document that states it and the decision "
         "that settled it. A row is never removed, because a principle that is withdrawn is a change to record",
     ),
@@ -173,7 +183,7 @@ FAMILIES: tuple[Family, ...] = (
         name="standard",
         mention=re.compile(r"\b(STD-\d+)\b"),
         definition="table-row",
-        defines=("docs/developer/standards.md",),
+        defines=((DEVELOPER / "standards.md").as_posix(),),
         note="prescriptive guidance, stratified from architectural to convention, whose text lives in "
         "the skill or AGENTS.md section loaded for the work",
     ),
@@ -181,7 +191,7 @@ FAMILIES: tuple[Family, ...] = (
         name="store-discovery",
         mention=re.compile(r"\b(TSD-\d+[a-z]?)\b"),
         definition="heading",
-        defines=("docs/architecture/triple-store-discovery.md",),
+        defines=((ARCHITECTURE / "triple-store-discovery.md").as_posix(),),
         note="what a triple store actually does, found by probing it. An entry is never removed, "
         "so an unresolved mention is rot",
     ),
@@ -191,7 +201,7 @@ FAMILIES: tuple[Family, ...] = (
         name="query-rule",
         mention=re.compile(r"\b(R\d+)\b"),
         definition="none",
-        defines=("docs/architecture/efficient-queries-and-shapes.md",),
+        defines=((ARCHITECTURE / "efficient-queries-and-shapes.md").as_posix(),),
         note="numbered rules of the efficient-queries guide. A bare R<n> is too common in prose "
         "to fail a build on, so the rule recognising a reference has to be narrower than this",
     ),

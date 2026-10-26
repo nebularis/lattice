@@ -63,6 +63,7 @@ import lattice_repo_catalogue  # noqa: E402
 import quanta  # noqa: E402
 
 ROOT = identifiers.ROOT
+ONTOLOGY = identifiers.CATALOGUE.area("ontology")
 STORE_PATH = ROOT / ".build" / "knowledge" / "store"
 # When the store was built from, as the build's start time. A query compares every tracked file
 # against it, so the index never answers from lines a document no longer holds.
@@ -214,7 +215,7 @@ def decisions(out: Extract) -> dict[str, ox.NamedNode]:
     known: dict[str, ox.NamedNode] = {}
     family = next(f for f in identifiers.FAMILIES if f.name == "decision")
     defined = identifiers.definitions(family)
-    for path in tracked("docs/architecture/decisions/*.md"):
+    for path in tracked((identifiers.ARCHITECTURE / "decisions" / "*.md").as_posix()):
         match = family.mention.match(path.stem)
         if not match:
             continue
@@ -600,7 +601,7 @@ def source_lines() -> dict[str, str]:
     misses some declarations and is therefore never the source of the term set itself.
     """
     found: dict[str, str] = {}
-    for path in tracked("ontology/*.ttl", "ontology/**/*.ttl"):
+    for path in tracked((ONTOLOGY / "*.ttl").as_posix(), (ONTOLOGY / "**" / "*.ttl").as_posix()):
         rel = path.relative_to(ROOT).as_posix()
         for number, line in enumerate(
             path.read_text(encoding="utf-8", errors="replace").splitlines(), 1
@@ -674,7 +675,7 @@ def load_ontologies(store: ox.Store, out: Extract) -> None:
     has to open them all exceeds macOS's default limit of 256 open files (TSD-39).
     """
     quads: list[ox.Quad] = []
-    for path in tracked("ontology/*.ttl", "ontology/**/*.ttl"):
+    for path in tracked((ONTOLOGY / "*.ttl").as_posix(), (ONTOLOGY / "**" / "*.ttl").as_posix()):
         rel = path.relative_to(ROOT).as_posix()
         graph = ox.NamedNode(f"https://lattice.local/graph/{rel}")
         try:

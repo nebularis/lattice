@@ -123,31 +123,35 @@ shapes = ["shapes/structural.ttl", "shapes/constraints.ttl", "shapes/single-expr
 Each top-level root, what it owns and the decisions behind it. A root is a directory at the repository root
 that holds one kind of thing. A new root, or a new kind of directory anywhere, needs an accepted ADR.
 
-`owns` is one plain statement for the catalogue. `row` is the text of the root's row in the "Where things are"
+`name` is what code asks for the root by, `Catalogue.area(name)` in Python or `lattice_repo_catalogue.py area <name>` from a task, so no tool writes the root's path itself (ADR-A121 decision 5). `owns` is one plain statement for the catalogue. `row` is the text of the root's row in the "Where things are"
 table of [AGENTS.md](AGENTS.md), which `mise run build:agent-guidance` generates from these entries. Roots
 that share a `group` are one row, written once on the first of them. The documentation areas below follow
 the roots in that table.
 
 ```toml repository-catalogue
 [[roots]]
+name = "ontology"
 path = "ontology/"
 owns = "semantic assets and their documentation"
 adrs = ["ADR-A01", "ADR-A77", "ADR-A121", "ADR-A126"]
 row = "semantic assets only: sources, shapes, vocabularies, projections, examples, their documentation"
 
 [[roots]]
+name = "tools"
 path = "tools/"
 owns = "executable reference implementations and developer toolchains"
 adrs = ["ADR-A29", "ADR-A121", "ADR-A125"]
 row = "executable reference implementations and developer toolchains. `tools/testing/` holds test-support packages, used only by tests, checks and benchmarks (ADR-A125)"
 
 [[roots]]
+name = "benchmark"
 path = "benchmark/"
 owns = "checks that measure"
 adrs = ["ADR-A124"]
 row = "checks that measure, run on demand and never part of `check`. They fail on a wrong result, never on time (ADR-A124)"
 
 [[roots]]
+name = "platform"
 path = "platform/"
 owns = "Java services"
 adrs = ["ADR-A77"]
@@ -155,42 +159,49 @@ group = "services"
 row = "services, applications, libraries, data contracts, the local environment, the worker runtime, end-to-end suites, experiments"
 
 [[roots]]
+name = "apps"
 path = "apps/"
 owns = "applications"
 adrs = ["ADR-A77"]
 group = "services"
 
 [[roots]]
+name = "packages"
 path = "packages/"
 owns = "libraries"
 adrs = ["ADR-A77"]
 group = "services"
 
 [[roots]]
+name = "contracts"
 path = "contracts/"
 owns = "data contracts"
 adrs = ["ADR-A77"]
 group = "services"
 
 [[roots]]
+name = "deployment"
 path = "deployment/"
 owns = "the local environment"
 adrs = ["ADR-A77"]
 group = "services"
 
 [[roots]]
+name = "workers"
 path = "workers/"
 owns = "the worker runtime"
 adrs = ["ADR-A77"]
 group = "services"
 
 [[roots]]
+name = "test"
 path = "test/"
 owns = "end-to-end suites"
 adrs = ["ADR-A77"]
 group = "services"
 
 [[roots]]
+name = "spikes"
 path = "spikes/"
 owns = "experiments"
 group = "services"
@@ -264,18 +275,21 @@ a root, and its row follows the roots' rows in the "Where things are" table.
 
 ```toml repository-catalogue
 [[docs]]
+name = "architecture"
 path = "docs/architecture/"
 owns = "architecture documents and the ADRs"
 adrs = ["ADR-A77", "ADR-A127"]
 row = "architecture documents and the ADRs, in `decisions/`"
 
 [[docs]]
+name = "developer"
 path = "docs/developer/"
 owns = "working documents and durable developer guidance"
 adrs = ["ADR-A77", "ADR-A127"]
 row = "sketches, plans, status records, review requests, Validation Packs, the registers, and durable guidance"
 
 [[docs]]
+name = "skills"
 path = ".claude/skills/"
 owns = "agent skills"
 adrs = ["ADR-A117"]

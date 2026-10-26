@@ -66,6 +66,8 @@ The structural facets, kind, audience, phase, stratum and the quanta, are T-Box 
 
 ## Rules this tooling keeps
 
+**Every path comes from the catalogue reader.** `identifiers.py` takes the root and the `developer` and `architecture` areas from it, and `facets.py`, `extract.py` and `embed.py` build on those, so a moved register is one catalogue edit and the tools run from any worktree (STD-273).
+
 **Enumeration is from `git ls-files`, never a filesystem walk.** A checkout may hold ignored directories whose contents must not be read, so no tool here walks the tree.
 
 **A family is checked only once its definition rule is written.** A family with no rule is counted and never failed, so no identifier is reported broken on the strength of a rule nobody has written.

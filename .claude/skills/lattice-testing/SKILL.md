@@ -22,6 +22,7 @@ description.
   directories per test, no file written in the tree.
 - **Sized to the memory available.** The suite's `conftest.py` answers `pytest_xdist_auto_num_workers` with `mem_check` (below), from
   its own measured peak per worker, and `PYTEST_XDIST_AUTO_NUM_WORKERS` still overrides it.
+- **Paths from the catalogue.** A test finds a module's examples, a register or the root through the catalogue reader, as skill `lattice-toolchain`'s Finding paths shows (STD-273), never from `__file__` or a written path. The catalogue's scan does not read tests yet (TD-54), so a reviewer holds this.
 - **Parse once, copy, never share a mutable graph.** Session-scoped fixtures parse a document once per process, and a test that
   changes a graph changes a copy. `_sparql_translated_once` (H1) parses and translates each query text once. A pure function that
   parses SPARQL is memoised on its input and returns a fresh value.
