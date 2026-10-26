@@ -58,7 +58,7 @@ A register is a Markdown table whose column headers map to properties of [`knowl
 
 **A generated copy is skipped by its marker, not its directory.** Most files under `docs/_includes` are originals that live there, and only a file carrying the marker its generator writes is a copy.
 
-**A facet value outside its scheme is reported, never stored.** A forked vocabulary makes every filter unreliable and nothing would say so. An entry is tagged with the most specific value that fits, and a filter on a broader value reaches every value under it.
+**A facet value outside its scheme is reported, never stored.** A forked vocabulary makes every filter unreliable and nothing would say so. An entry is tagged with the most specific value that fits, and a filter on a broader value reaches every value under it. A value that two taggers might confuse with its neighbour carries a `skos:scopeNote` saying when to use it rather than that one, and the pairs most often confused are related, so a question naming either raises entries tagged with the other.
 
 **A term enters the T-Box only when a query or a check needs it, and its `rdfs:comment` says which.** `check:knowledge` fails on a term without one, so the rule is enforced rather than merely intended. The vocabulary describes this repository, so it sits here and not under `ontology/`, and it is outside the substrate release.
 

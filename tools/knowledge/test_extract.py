@@ -602,6 +602,11 @@ def test_a_related_value_raises_entries_in_another_facet(built):
     wanted = ask.expand(store, {"Activity": ["ux-design"]})
     assert "accessibility" in wanted["qualities"] and "ux-design" in wanted["activities"]
     assert set(ask.expand(store, {"Activity": ["refactoring"]})) == {"activities"}
+    # Two siblings a tagger confuses are related, so naming either raises entries tagged with the
+    # other: the persistence patterns tagged physical data modelling for a solution-design question,
+    # and the test-speed standards tagged efficiency for a performance-tuning one.
+    assert "physical-data-modelling" in ask.expand(store, {"Activity": ["solution-design"]})["activities"]
+    assert "efficiency" in ask.expand(store, {"Activity": ["performance-tuning"]})["qualities"]
 
 
 def test_a_store_finding_takes_its_technology_from_its_evidence(built):

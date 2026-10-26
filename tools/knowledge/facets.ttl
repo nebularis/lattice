@@ -27,7 +27,10 @@
 # SKOS allows, so Java is both a language and a platform. A value carrying skos:editorialNote "group"
 # organises the others and is never tagged. A question's value matches an entry's when one lies on
 # the other's broader chain, so a question about physical data modelling still raises an entry tagged
-# data modelling. A value carrying skos:editorialNote "proposed" is not yet ratified.
+# data modelling. A value two taggers might confuse with its neighbour carries a skos:scopeNote saying
+# when to use it rather than that one, and the pairs most often confused are also related, so a
+# question naming either raises entries tagged with the other. A value carrying skos:editorialNote
+# "proposed" is not yet ratified.
 #
 # Outside ontology/ and the substrate release of ADR-A129. It describes how we work in this
 # repository, not the domain, and no value names private work.
@@ -41,7 +44,7 @@
 <https://www.nebularis.org/neuro-semantic/lattice/dev/facets>
     rdf:type owl:Ontology ;
     rdfs:label "LATTICE knowledge-index facets" ;
-    owl:versionInfo "0.4.0" .
+    owl:versionInfo "0.5.0" .
 
 fct:Activity rdf:type skos:ConceptScheme ;
     skos:prefLabel "activity" ;
@@ -203,6 +206,7 @@ fct:process-design rdf:type skos:Concept ; skos:inScheme fct:Activity ;
 fct:solution-design rdf:type skos:Concept ; skos:inScheme fct:Activity ;
     skos:broader fct:design ;
     skos:prefLabel "solution design" ;
+    skos:scopeNote "Use for the design of a component as a whole. Use physical data modelling for how it lays out and writes its data, and identity design for how it names things." ;
     skos:definition "Designing a component, service, compiler or library that executes against the ontologies, including how it stores and reads data." .
 
 fct:integration-design rdf:type skos:Concept ; skos:inScheme fct:Activity ;
@@ -238,6 +242,7 @@ fct:logical-data-modelling rdf:type skos:Concept ; skos:inScheme fct:Activity ;
 fct:physical-data-modelling rdf:type skos:Concept ; skos:inScheme fct:Activity ;
     skos:broader fct:data-modelling ;
     skos:prefLabel "physical data modelling" ;
+    skos:scopeNote "Use for how a model is laid out in a store and written to it, such as aggregates, guarded writes and history. Use solution design for the component around it." ;
     skos:definition "Fitting a logical model to a store, with its indexes, partitions, graphs, encodings and write paths." .
 
 fct:ontology-design rdf:type skos:Concept ; skos:inScheme fct:Activity ;
@@ -323,6 +328,7 @@ fct:document-management rdf:type skos:Concept ; skos:inScheme fct:Activity ;
 fct:implementation rdf:type skos:Concept ; skos:inScheme fct:Activity ;
     skos:broader fct:coding ;
     skos:prefLabel "implementation" ;
+    skos:scopeNote "Use for code written by hand. Use code generation where the code writes code, queries or documents, and language design for the notation such code reads." ;
     skos:definition "Writing or changing code." .
 
 fct:query-writing rdf:type skos:Concept ; skos:inScheme fct:Activity ;
@@ -358,11 +364,13 @@ fct:performance-tuning rdf:type skos:Concept ; skos:inScheme fct:Activity ;
 fct:code-generation rdf:type skos:Concept ; skos:inScheme fct:Activity ;
     skos:broader fct:coding ;
     skos:prefLabel "code generation" ;
+    skos:scopeNote "Use for generators, templates and compilers, and the code they emit. Use implementation for code written by hand." ;
     skos:definition "Writing the generators, templates and compilers that emit code, queries or documents." .
 
 fct:testing rdf:type skos:Concept ; skos:inScheme fct:Activity ;
     skos:broader fct:verification ;
     skos:prefLabel "testing" ;
+    skos:scopeNote "Use where none of its kinds fits. A rule about a check's own power to catch a fault takes testing with the quality testability." ;
     skos:definition "Writing, running, speeding up or repairing tests, checks and benchmarks." .
 
 fct:unit-testing rdf:type skos:Concept ; skos:inScheme fct:Activity ;
@@ -393,6 +401,7 @@ fct:property-based-testing rdf:type skos:Concept ; skos:inScheme fct:Activity ;
 fct:regression-testing rdf:type skos:Concept ; skos:inScheme fct:Activity ;
     skos:broader fct:testing ;
     skos:prefLabel "regression testing" ;
+    skos:scopeNote "Use for record and replay, and for comparing outcomes before and after a change." ;
     skos:definition "Recording what a system reports and checking that a change leaves it as it was." .
 
 fct:performance-testing rdf:type skos:Concept ; skos:inScheme fct:Activity ;
@@ -463,6 +472,7 @@ fct:configuration-management rdf:type skos:Concept ; skos:inScheme fct:Activity 
 fct:release-and-versioning rdf:type skos:Concept ; skos:inScheme fct:Activity ;
     skos:broader fct:operations, fct:delivery-management, fct:configuration-management ;
     skos:prefLabel "release and versioning" ;
+    skos:scopeNote "Use for version numbers, tags and releases. Use delivery for the rest of running a unit of work." ;
     skos:definition "Versioning, releasing and tagging ontologies and packages, and the branches and merges a release moves through." .
 
 fct:monitoring rdf:type skos:Concept ; skos:inScheme fct:Activity ;
@@ -533,6 +543,7 @@ fct:compliance-assessment rdf:type skos:Concept ; skos:inScheme fct:Activity ;
 fct:delivery rdf:type skos:Concept ; skos:inScheme fct:Activity ;
     skos:broader fct:delivery-management ;
     skos:prefLabel "delivery" ;
+    skos:scopeNote "Use for running a unit of work. Use release and versioning for version numbers and tags, and continuous integration for automated checks." ;
     skos:definition "Running a unit of work, with its slices, plans, status records, Validation Packs, handoffs and commits, and knowing when to stop for a decision." .
 
 fct:planning-and-estimation rdf:type skos:Concept ; skos:inScheme fct:Activity ;
@@ -558,6 +569,7 @@ fct:licensing-and-ip rdf:type skos:Concept ; skos:inScheme fct:Activity ;
 fct:documentation rdf:type skos:Concept ; skos:inScheme fct:Activity ;
     skos:broader fct:technical-writing ;
     skos:prefLabel "documentation" ;
+    skos:scopeNote "Use for writing prose others read. Name the quality it serves as readability or understandability." ;
     skos:definition "Writing READMEs, guides, ADRs, sketches and other prose others read, and deciding what of it may be published." .
 
 fct:presenting-decisions rdf:type skos:Concept ; skos:inScheme fct:Activity ;
@@ -649,6 +661,7 @@ fct:governance-and-compliance rdf:type skos:Concept ; skos:inScheme fct:Quality 
 fct:correctness rdf:type skos:Concept ; skos:inScheme fct:Quality ;
     skos:broader fct:functional-suitability ;
     skos:prefLabel "correctness" ;
+    skos:scopeNote "Use where the answer follows from the model's own meaning, such as an evaluation or a query result. Use accuracy where a model or a report must represent something real truly." ;
     skos:definition "A query, check, evaluation or document gives the answer the model's meaning requires." .
 
 fct:completeness rdf:type skos:Concept ; skos:inScheme fct:Quality ;
@@ -669,6 +682,7 @@ fct:determinism rdf:type skos:Concept ; skos:inScheme fct:Quality ;
 fct:performance rdf:type skos:Concept ; skos:inScheme fct:Quality ;
     skos:broader fct:performance-efficiency ;
     skos:prefLabel "performance" ;
+    skos:scopeNote "Use for how long one operation of the running system takes. Use efficiency for the speed of builds and tests, and throughput for work completed under load." ;
     skos:definition "How long one operation takes at runtime, such as a read on a hot path or a validation." .
 
 fct:throughput rdf:type skos:Concept ; skos:inScheme fct:Quality ;
@@ -744,6 +758,7 @@ fct:availability rdf:type skos:Concept ; skos:inScheme fct:Quality ;
 fct:robustness rdf:type skos:Concept ; skos:inScheme fct:Quality ;
     skos:broader fct:reliability ;
     skos:prefLabel "robustness" ;
+    skos:scopeNote "Use for behaving well on failure or bad input. Use recoverability for returning to a correct state after a failure." ;
     skos:definition "Behaving well on failure, such as a partial write, a retry, a restore, missing data or bad input." .
 
 fct:recoverability rdf:type skos:Concept ; skos:inScheme fct:Quality ;
@@ -754,6 +769,7 @@ fct:recoverability rdf:type skos:Concept ; skos:inScheme fct:Quality ;
 fct:concurrency rdf:type skos:Concept ; skos:inScheme fct:Quality ;
     skos:broader fct:reliability, fct:functional-suitability ;
     skos:prefLabel "concurrency" ;
+    skos:scopeNote "Use for staying correct while writers or readers act at once, such as a lost update. Use parallelism for splitting work so it runs faster." ;
     skos:definition "Staying correct when writers or readers act at the same time." .
 
 fct:partition-tolerance rdf:type skos:Concept ; skos:inScheme fct:Quality ;
@@ -764,6 +780,7 @@ fct:partition-tolerance rdf:type skos:Concept ; skos:inScheme fct:Quality ;
 fct:replica-consistency rdf:type skos:Concept ; skos:inScheme fct:Quality ;
     skos:broader fct:reliability ;
     skos:prefLabel "replica consistency" ;
+    skos:scopeNote "Use only where copies or replicas of data exist, such as an eventually consistent tier. Use consistency for agreement between the records of one store." ;
     skos:definition "Every read sees the latest write, across every copy or replica. One of the three properties of the CAP theorem, and distinct from consistency between records." .
 
 fct:security rdf:type skos:Concept ; skos:inScheme fct:Quality ;
@@ -779,6 +796,7 @@ fct:confidentiality rdf:type skos:Concept ; skos:inScheme fct:Quality ;
 fct:integrity rdf:type skos:Concept ; skos:inScheme fct:Quality ;
     skos:broader fct:security ;
     skos:prefLabel "integrity" ;
+    skos:scopeNote "Use for protection against change without authority, including a lost, stale or forged write. Use consistency for agreement between records." ;
     skos:definition "Data and code cannot be changed without authority, and a change is detectable." .
 
 fct:authenticity rdf:type skos:Concept ; skos:inScheme fct:Quality ;
@@ -804,11 +822,13 @@ fct:privacy rdf:type skos:Concept ; skos:inScheme fct:Quality ;
 fct:evolvability rdf:type skos:Concept ; skos:inScheme fct:Quality ;
     skos:broader fct:maintainability, fct:flexibility ;
     skos:prefLabel "evolvability" ;
+    skos:scopeNote "Use for change over time, such as versions, compatibility and what a change forces elsewhere. Use modularity for coupling between parts." ;
     skos:definition "Changing something later safely, which turns on versions, compatibility, coupling and what a change forces elsewhere." .
 
 fct:modularity rdf:type skos:Concept ; skos:inScheme fct:Quality ;
     skos:broader fct:maintainability ;
     skos:prefLabel "modularity" ;
+    skos:scopeNote "Use for coupling and dependency between parts, such as a layer that must not import a layer above it. Use evolvability for versions and compatibility." ;
     skos:definition "Parts can change apart, because they are loosely coupled and each is cohesive." .
 
 fct:reusability rdf:type skos:Concept ; skos:inScheme fct:Quality ;
@@ -884,11 +904,13 @@ fct:fail-safety rdf:type skos:Concept ; skos:inScheme fct:Quality ;
 fct:consistency rdf:type skos:Concept ; skos:inScheme fct:Quality ;
     skos:broader fct:data-quality ;
     skos:prefLabel "consistency" ;
+    skos:scopeNote "Use where one fact must have one record that copies cannot contradict. Use replica consistency for reads across copies, concurrency for simultaneous writers, and integrity for change only by authority." ;
     skos:definition "Records and documents agree with each other. One fact has one source, and copies cannot diverge." .
 
 fct:accuracy rdf:type skos:Concept ; skos:inScheme fct:Quality ;
     skos:broader fct:data-quality ;
     skos:prefLabel "accuracy" ;
+    skos:scopeNote "Use where a model, a report or a value must truly represent the real thing, such as modelling the law or reporting a check's result. Use correctness for what follows from the model's own meaning." ;
     skos:definition "A value correctly represents the real thing it stands for." .
 
 fct:currentness rdf:type skos:Concept ; skos:inScheme fct:Quality ;
@@ -909,6 +931,7 @@ fct:provenance rdf:type skos:Concept ; skos:inScheme fct:Quality ;
 fct:efficiency rdf:type skos:Concept ; skos:inScheme fct:Quality ;
     skos:broader fct:cost ;
     skos:prefLabel "efficiency" ;
+    skos:scopeNote "Use for what development costs, such as the speed of builds and test suites. Use performance for how fast the running system is." ;
     skos:definition "What development costs, such as the time of builds and tests, the tokens and reading an agent spends, and the maintainer's effort. Runtime speed is performance." .
 
 fct:operating-cost rdf:type skos:Concept ; skos:inScheme fct:Quality ;
@@ -1729,3 +1752,9 @@ fct:capacity-planning skos:related fct:scalability .
 fct:licensing-and-ip skos:related fct:licence-compliance .
 fct:regulatory-analysis skos:related fct:regulatory-compliance .
 fct:documentation skos:related fct:understandability .
+fct:solution-design skos:related fct:physical-data-modelling .
+fct:performance-tuning skos:related fct:efficiency .
+fct:concurrency skos:related fct:integrity .
+fct:evolvability skos:related fct:modularity .
+fct:correctness skos:related fct:accuracy .
+fct:implementation skos:related fct:code-generation .
