@@ -166,8 +166,49 @@ class Extract:
         self.counts[key] = self.counts.get(key, 0) + by
 
 
+def decision_claim(lines: list[str]) -> str | None:
+    """What a decision decides: the start of its Decision section, read as text.
+
+    A title names a decision, often by a noun phrase such as "Provenance Model", which says too
+    little for a question phrased as the problem to reach it. So the claim is the section's own
+    words up to the claim limit: paragraphs, subheadings and table rows, without code blocks or a
+    table's header row. A bold lead that is a whole sentence, as in a numbered list of decisions,
+    is the claim by itself. A lead-in such as "Rules:" is not."""
+    start = next((i for i, l in enumerate(lines) if re.match(r"^##\s+Decision", l)), None)
+    if start is None:
+        return None
+    items: list[str] = []
+    fenced = False
+    for line in lines[start + 1 :]:
+        stripped = line.strip()
+        if line.startswith("## "):
+            break
+        if stripped.startswith("```"):
+            fenced = not fenced
+            continue
+        if fenced or not stripped or stripped.startswith(("<!--", ">")):
+            continue
+        if SEPARATOR_RE.match(stripped):
+            if items:
+                items.pop()  # the row above a separator is the table's header
+            continue
+        if stripped.startswith("|"):
+            items.append(", ".join(c for c in table_cells(stripped) if c))
+        else:
+            items.append(re.sub(r"^(#+\s*|[-*]\s+)", "", stripped))
+        if not items[:-1] and (bold := BOLD_RE.match(re.sub(r"^\d+\.\s*", "", items[-1]))):
+            lead = bold.group("claim").strip()
+            if len(lead) > 30 and not lead.endswith(":"):
+                return shorten(lead)
+        if sum(map(len, items)) >= CLAIM_LIMIT:
+            break
+    text = re.sub(r"\*\*|`", "", " ".join(items))
+    return shorten(text) if text.strip() else None
+
+
 def decisions(out: Extract) -> dict[str, ox.NamedNode]:
-    """One node per decision file, with its title as the claim and its Related line as declared edges."""
+    """One node per decision file, named by its title, with what it decides as the claim and its
+    Related line as declared edges."""
     known: dict[str, ox.NamedNode] = {}
     family = next(f for f in identifiers.FAMILIES if f.name == "decision")
     defined = identifiers.definitions(family)
@@ -189,8 +230,10 @@ def decisions(out: Extract) -> dict[str, ox.NamedNode]:
         )
         for number, line in enumerate(lines, 1):
             if (title := TITLE_RE.match(line)) is not None:
+                name = shorten(title.group("title"))
+                out.quads.append(ox.Quad(subject, RDFS_LABEL, ox.Literal(name), INDEX_GRAPH))
                 out.quads.append(
-                    ox.Quad(subject, ki("claim"), ox.Literal(shorten(title.group("title"))), INDEX_GRAPH)
+                    ox.Quad(subject, ki("claim"), ox.Literal(decision_claim(lines) or name), INDEX_GRAPH)
                 )
                 start, end = anchors.section_at(lines, number)
                 out.quads.append(

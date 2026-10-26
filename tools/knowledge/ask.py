@@ -251,6 +251,38 @@ FALLBACK = (
 )
 
 
+# The entries an answer is linked to by an edge its own author declared, in either direction, so a
+# principle brings the standards that support it and a standard the decision behind it, whatever their
+# words. Declared edges only, never citedWith (ADR-A134 decision 7).
+LINKED = (
+    PREFIXES
+    + """
+SELECT DISTINCT ?subject ?id ?kind ?status ?claim ?pointer ?edge WHERE {
+  GRAPH ki:index {
+    VALUES ?p { ki:supports ki:refines ki:decidedBy ki:evidencedBy ki:enforcedBy ki:dependsOn ki:waitsOn }
+    { ?subject ?p ?o } UNION { ?o ?p ?subject }
+    ?o ki:identifier ?id ; a ?k ; ki:claim ?claim .
+    OPTIONAL { ?o ki:pointer ?pointer }
+    OPTIONAL { ?o ki:status ?s }
+    BIND (REPLACE(STR(?k), "^.*#", "") AS ?kind)
+    BIND (REPLACE(STR(?s), "^.*#", "") AS ?status)
+    BIND (REPLACE(STR(?p), "^.*#", "") AS ?edge)
+  }
+}"""
+)
+
+
+def linked(db: ox.Store, top: list[dict], shown: set[str], limit: int = 8) -> list[dict]:
+    """The entries the top answers are linked to by declared edges, not already shown."""
+    out: dict[str, dict] = {}
+    for answer in top:
+        for r in rows_of(db.query(LINKED, substitutions={ox.Variable("subject"): ox.NamedNode(answer["n"])})):
+            if r["id"] not in shown and r["id"] not in out:
+                r["via"] = f"{r['edge']} {answer['id']}"
+                out[r["id"]] = r
+    return list(out.values())[:limit]
+
+
 def find(
     db: ox.Store, words: str, kinds: set[str], phases: set[str], audiences: set[str], limit: int,
     facets: dict[str, set[str]] | None = None,
@@ -294,6 +326,10 @@ def find(
     for r in rows:
         r["score"] = f"{r['score']:.2f}" + ("+" * r["facets"])
     show(rows, ("score", "id", "kind", "status", "claim", "pointer"))
+    also = linked(db, rows[:3], {r["id"] for r in rows})
+    if also:
+        print("\nlinked to the top answers by a declared edge:")
+        show(also, ("via", "id", "kind", "status", "claim", "pointer"))
     if facets:
         print("\n+ marks each facet the entry matches, which raised it by", BOOST)
     if best < WEAK:

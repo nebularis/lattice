@@ -180,3 +180,18 @@ def test_misses_lists_each_question_once_newest_first(tmp_path, monkeypatch, cap
     assert lines[2].split() == ["2026-10-26", "1", "find", "b"]
     assert lines[3].split() == ["2026-10-25", "3", "find", "a"]
     assert "2 distinct question(s)" in lines[-1]
+
+
+def test_find_lists_what_the_top_answers_are_linked_to(tmp_path, words, monkeypatch, capsys):
+    """A standard that supports the principle a question finds is shown with it, whatever its words,
+    because its author declared the link. STD-1 shares no word with the question."""
+    store = ox.Store()
+    entry(store, "PRI-1", "Principle", "ledger accounts are restored")
+    entry(store, "STD-1", "Standard", "graph graph graph")
+    store.add(ox.Quad(ox.NamedNode(KI + "node/STD1"), ox.NamedNode(KI + "supports"), ox.NamedNode(KI + "node/PRI1"), INDEX))
+    embed.build(store, tmp_path)
+    monkeypatch.setattr(ask, "STORE_PATH", tmp_path / "store")
+    monkeypatch.setattr(ask, "log_miss", lambda question: None)
+    ask.find(store, "ledger", {"Principle"}, set(), set(), 8)
+    out = capsys.readouterr().out
+    assert "linked to the top answers" in out and "supports PRI-1" in out and "STD-1" in out

@@ -619,3 +619,18 @@ def test_a_store_finding_takes_its_technology_from_its_evidence(built):
     found = {(str(r["id"].value), str(r["t"].value).rsplit("#", 1)[1]) for r in rows}
     assert ("TSD-23", "pyshacl") in found
     assert {("TSD-07", "rdflib"), ("TSD-07", "oxigraph")} <= found
+
+
+def test_a_decision_is_claimed_by_what_it_decides_not_its_title():
+    """A title such as "Provenance Model" says too little for a question phrased as the problem, so
+    the claim is the Decision section's own words. A bold lead that is a whole sentence stands alone,
+    a lead-in such as "Rules:" does not, a table's rows are read without its header, and code is not
+    read at all."""
+    lead = ["# ADR-A1: X", "## Decision", "", "**1. We keep one release number for the substrate layers.** More text."]
+    assert extract.decision_claim(lead) == "1. We keep one release number for the substrate layers."
+    table = ["## Decision", "", "```", "Principal { subject }", "```", "**Rules:**", "",
+             "| Tier | Contract |", "|---|---|", "| **Core** | Every adapter implements it. |", "## Consequences", "later"]
+    claim = extract.decision_claim(table)
+    assert claim.startswith("Rules: Core, Every adapter implements it.")
+    assert "Tier" not in claim and "Principal" not in claim and "later" not in claim
+    assert extract.decision_claim(["# ADR-A1: X", "## Context", "text"]) is None
