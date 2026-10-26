@@ -107,11 +107,14 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-98](ADR-A98-applied-layout-and-insurance-modules.md) | Applied layout and insurance modules (with addendum) | Accepted |
 | [A-99](ADR-A99-reference-vocabularies-and-peril-structure.md) | Reference vocabularies and peril structure | Accepted |
 | [A-100](ADR-A100-hierarchical-match-over-flat-schemes.md) | Hierarchical match over schemes without a hierarchy | Published |
+| [A-101](ADR-A101-term-parameters.md) | Term parameters | Proposed |
 | [A-102](ADR-A102-liability-direction-from-party-roles.md) | Liability direction from party roles | Accepted |
 | [A-103](ADR-A103-eligibility-set-readings.md) | Eligibility set readings and negation | Published |
 | [A-105](ADR-A105-closure-declarations.md) | Closure declarations | Published |
 | [A-104](ADR-A104-instrument-terms-and-legal-relations.md) | Instrument: terms and legal relations | Accepted, with addenda |
 | [A-106](ADR-A106-behaviour-configuration-runtime-occasions-and-records.md) | Behaviour configuration, runtime, occasions and records | Accepted, with addenda |
+| [A-108](ADR-A108-multi-axis-temporal-scope.md) | Multi-axis temporal scope | Proposed |
+| [A-109](ADR-A109-importable-rule-body-fragment.md) | The importable rule-body fragment | Proposed |
 | [A-112](ADR-A112-wording-layer.md) | Wording layer | Accepted |
 | [A-113](ADR-A113-breaking-changes-at-major-version-zero.md) | Breaking changes at major version zero | Accepted |
 | [A-114](ADR-A114-external-and-natural-keys.md) | External and natural keys | Accepted |

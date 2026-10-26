@@ -9,12 +9,6 @@
 # Remove an entry when its decision is drafted. Do not add one to silence a mention that is simply
 # wrong: correct the mention instead.
 
-# Planned and not yet drafted. The developer index records A-107 to A-111 as to be drafted, and
-# ADR-A104 and ADR-A114 already cite them.
-ADR-A101
-ADR-A108
-ADR-A109
-
 # Referenced only by an early planning document, under a numbering that was never drafted. These
 # come from docs/architecture/solution-design-specification.md and
 # docs/developer/review/Architecture Review.md, both written before the ADR catalogue settled, and
