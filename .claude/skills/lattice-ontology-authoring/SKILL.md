@@ -5,7 +5,7 @@ description: How to change a LATTICE ontology and model well in it. Use when edi
 
 # Authoring LATTICE ontologies
 
-Ask the knowledge index first, as AGENTS.md's "Asking the knowledge index" says, for example `mise run graph:ask -- find <the task in your own words> --kind mechanism,standard,decision --activity ontology-design`, then `read` each entry that answers. It finds the rules this skill does not mention, and the entries related to the ones it does.
+Ask the knowledge index first, as AGENTS.md's "Asking the knowledge index" says, with `mise run graph:ask -- find <the task in your own words>` and every facet value that fits the task at hand, then `read` each entry that answers. This skill's tasks span the activities ontology-design, conceptual-data-modelling, logical-data-modelling, schema-design, identity-design, temporal-modelling, scenario-and-test-data and release-and-versioning, and a task often needs several of them, named together and separated by commas. `--activity`, `--quality` and `--tech` raise matching entries and hide none, while `--kind` filters exactly, so leave `--kind` off unless only one kind of entry will do. The index finds the rules this skill does not mention, and the entries related to the ones it does.
 
 ## Changing an ontology document
 

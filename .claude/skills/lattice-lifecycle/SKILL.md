@@ -5,7 +5,7 @@ description: How work is run in LATTICE and projects built on it. Use when start
 
 # The LATTICE development lifecycle
 
-Ask the knowledge index first, as AGENTS.md's "Asking the knowledge index" says, for example `mise run graph:ask -- find <the task in your own words> --kind standard,principle --activity delivery`, then `read` each entry that answers. It finds the rules this skill does not mention, and the entries related to the ones it does.
+Ask the knowledge index first, as AGENTS.md's "Asking the knowledge index" says, with `mise run graph:ask -- find <the task in your own words>` and every facet value that fits the task at hand, then `read` each entry that answers. This skill's tasks span the activities delivery, planning-and-estimation, release-and-versioning, acceptance, regression-testing, continuous-integration, technical-debt-management, architecture-decision-making and documentation, and a task often needs several of them, named together and separated by commas. `--activity`, `--quality` and `--tech` raise matching entries and hide none, while `--kind` filters exactly, so leave `--kind` off unless only one kind of entry will do. The index finds the rules this skill does not mention, and the entries related to the ones it does.
 
 The always-on rules are in `AGENTS.md`. This skill is the procedure behind them. Paths are relative
 to the LATTICE repository, browsable at <https://github.com/nebularis/lattice>.

@@ -5,7 +5,7 @@ description: LATTICE's structure and the principles behind it. Use when a design
 
 # LATTICE's architecture
 
-Ask the knowledge index first, as AGENTS.md's "Asking the knowledge index" says, for example `mise run graph:ask -- find <the task in your own words> --kind decision,principle,standard --activity cross-layer-design`, then `read` each entry that answers. It finds the rules this skill does not mention, and the entries related to the ones it does.
+Ask the knowledge index first, as AGENTS.md's "Asking the knowledge index" says, with `mise run graph:ask -- find <the task in your own words>` and every facet value that fits the task at hand, then `read` each entry that answers. This skill's tasks span the activities cross-layer-design, solution-architecture, dependency-analysis, architecture-decision-making, quality-attribute-analysis and technology-selection, and a task often needs several of them, named together and separated by commas. `--activity`, `--quality` and `--tech` raise matching entries and hide none, while `--kind` filters exactly, so leave `--kind` off unless only one kind of entry will do. The index finds the rules this skill does not mention, and the entries related to the ones it does.
 
 This skill points to the architecture rather than restating it. The canonical sources are
 [ontology-architecture.md](https://github.com/nebularis/lattice/blob/main/docs/architecture/ontology-architecture.md),

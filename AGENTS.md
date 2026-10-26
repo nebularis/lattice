@@ -58,7 +58,7 @@ describes every tool.
 
 The knowledge index ranks the project's decisions, mechanisms, capabilities, patterns, principles, standards and store findings against a question, so an agent reads the one section that answers it instead of whole documents ([ADR-A134](docs/architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md)).
 
-- **Ask it first,** before a design, modelling, code or efficiency decision, and before adding a mechanism, a dependency or a component. Describe the problem in your own words, name the activity, quality and technology of the work at hand, then read the entries that answer it. `--kind`, `--phase` and `--audience` filter exactly. `--activity`, `--quality` and `--tech` raise matching entries and hide none.
+- **Ask it first,** before a design, modelling, code or efficiency decision, and before adding a mechanism, a dependency or a component. Describe the problem in your own words, name every activity, quality and technology of the work at hand, several at once where several apply, then read the entries that answer it. `--activity`, `--quality` and `--tech` raise matching entries and hide none. `--kind`, `--phase` and `--audience` filter exactly, so use them only where an entry outside them could not answer.
   ```bash
   mise run graph:ask -- find <the problem in your own words> --activity physical-data-modelling --quality concurrency --phase runtime
   mise run graph:ask -- read <ID>

@@ -7,7 +7,7 @@ description: How to design in LATTICE and projects built on it. Use when writing
 
 ## Design first
 
-Ask the knowledge index first, as AGENTS.md's "Asking the knowledge index" says, with `--kind decision,mechanism,pattern,principle,standard` and the phase the design runs in. Where it answers weakly, read the documents as before, and report any answer they hold that no register entry does.
+Ask the knowledge index first, as AGENTS.md's "Asking the knowledge index" says, with every design activity that fits the work, such as solution-design, ontology-design, physical-data-modelling or integration-design, and the phase the design runs in. A design often needs several activities, and `--kind` filters exactly, so leave it off unless only one kind of entry will do. Where it answers weakly, read the documents as before, and report any answer they hold that no register entry does.
 
 Before planning code, find the decisions and architecture sections the change touches, with `find <the change> --kind decision` and `read`, and propose an ADR with either a design sketch or a detailed entry in `docs/architecture/solution-design-specification.md`. Keep these current with every change they cover:
 

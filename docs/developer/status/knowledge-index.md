@@ -32,13 +32,13 @@ The index is useful before this is done, and a row is found by its own words eve
 
 | # | Task | Owner | Note |
 |---|---|---|---|
-| R1 | Re-read the three extrapolated standards rewritten on review, STD-004, STD-016 and STD-024. The other eleven are ratified | maintainer | rewritten 2026-10-25 from the maintainer's notes, so the new wording is not yet ratified |
+| R1 | Done 2026-10-26. STD-004, STD-016 and STD-024 ratified by the maintainer | maintainer | |
 | R2 | Done 2026-10-26. All 320 facet values ratified by the maintainer | maintainer | |
 | R3 | Done 2026-10-26. The maintainer spot-checked the quality tags and the mechanism register and approved all the facet tags | maintainer | |
-| R4 | Ratify mechanisms (83), capabilities (71) and patterns (54). Standards and principles are ratified, except STD-004, STD-016, STD-021, STD-024, STD-038, STD-040, STD-043 and PRI-02 | maintainer | STD-021 is linked as refining STD-016 rather than repeating STD-007. STD-038, STD-040 and STD-043 are now scoped as internal and development-only |
+| R4 | Done 2026-10-26. The maintainer ratified every row of the mechanism, capability, pattern, principle and standard registers | maintainer | |
 | R5 | Re-source the principles that rest on the platform plan v0.2, PRI-51, PRI-52, PRI-53, PRI-54, PRI-60, which is no longer where the guardrails for agentic development are kept | maintainer | ratifying a principle is now its grounding, and a principle citing no decision is found by query rather than failed |
 | R7 | Review the scope each entry was given from where its text lives. Standards, principles and patterns now state an audience and a phase, and those values were not part of the ratification | maintainer | 184 of the 235 practice standards are internal and development-only, so a query for runtime design leaves them out |
-| R6 | Scope standards to the quanta they govern. 256 of 270 have no `Governs`, which means they apply to every quantum | maintainer | a standard that binds one quantum and is read as binding all of them over-constrains the rest |
+| R6 | Deferred to TD-82 by the maintainer, to be done as the architectural fitness functions are brought to life | maintainer | |
 
 ## Decisions
 
@@ -60,16 +60,16 @@ None blocks activation. Each is a defect the index surfaced, recorded where it b
 | C1 | Done 2026-10-26. The seven decisions' `## Status` sections became `**Status:**` header fields, so each has its status in the index | agent |
 | C2 | Partly done 2026-10-26. 27 decisions gained a `**Unit:**` line where the evidence names one unit. 57 are left because their evidence names several units or none, and 11 Published decisions found a unit but may not link a working document outside their Provenance section (C12) | agent drafts |
 | C3 | Done 2026-10-26 except two. Non-breaking hyphens, spaced spellings and old-style titles corrected, except in one review record whose lines carrying them also carry its own semicolons. `ADR-A-C1` and `ADR-A-C2` are left, since those decisions' own titles write them so and only their filenames say `ADR-AC1` and `ADR-AC2`. Which spelling is canonical is the maintainer's choice (C11) | agent |
-| C4 | Review the 26 citations of register entries since removed, `identifiers.py --rehomed`. A document citing one may be stale | maintainer |
-| C5 | Draft ADR-A101, ADR-A108 and ADR-A109, or remove the references to them. They are in `tools/knowledge/identifier-exceptions.txt` as planned and never drafted | maintainer |
+| C4 | Deferred to TD-83 by the maintainer | maintainer | |
+| C5 | Done 2026-10-26. ADR-A101, ADR-A108 and ADR-A109 drafted as Proposed, at a high level with every modelling question left open | maintainer | |
 | C6 | Done 2026-10-26 except TD-80, which stays open by the maintainer's decision. TD-78 paid, so `repo_files` lists files from git and refuses a checkout without `.git`. TD-79 paid, with the duplicate compiler removed. `morkSC_Test.py` revived as `test_morkSC.py`, 15 tests | agent drafts |
 | C7 | Done 2026-10-26. The eight components have READMEs and capability rows CAP-73 to CAP-80, unratified | agent drafts |
 | C8 | Done 2026-10-26. The root package's `knowledge` extra declares PyYAML, pyoxigraph, numpy, tokenizers and onnxruntime, and `bootstrap:python` installs it | agent |
 | C9 | Done 2026-10-26. The seven registers moved from `docs/developer/plans/` to `docs/developer/`, with every reference updated | agent |
-| C10 | Give the Ensemble principles, PRI-38 to PRI-42, an owner. They name every ontology, and the Ensemble module they govern has no catalogue entry yet | maintainer |
+| C10 | Kept as they are by the maintainer, and recorded as TD-84 for the Ensemble unit | maintainer | |
 | C11 | Done 2026-10-26. The maintainer chose `ADR-A-C1` and `ADR-A-C2`, as the decisions title themselves and as the other epic blocks are written. Their files were renamed to match | maintainer |
-| C12 | Decide how a Published decision records its unit, since it may not link a working document outside its Provenance section. Units were found for ADR-A87, A90, A91, A100, A114, A121, A122, A123, A126, A129 and A132 | maintainer |
-| C13 | Decide whether `tools/mork`'s tests get a mise task, and which aggregate it joins. No task runs them today, so the revived `test_morkSC.py` and the 346 other tests run only by hand | maintainer |
+| C12 | Done 2026-10-26. The 11 Published decisions name their unit in their Provenance section, which ADR-A127 allows. STD-070 and PRI-20 now state that exception, which they had left out | maintainer | |
+| C13 | Done 2026-10-26. `check:mork` runs tools/mork's 361 tests in about 3 seconds alone and joins the `check` aggregate, which took 139 seconds without it and 157 with it, an upper bound of 13% since other checks ran during the second timing | maintainer | |
 
 ## History
 
@@ -80,3 +80,4 @@ None blocks activation. Each is a defect the index surfaced, recorded where it b
 - 2026-10-26. The design-shape scheme retired, replaced by facets in SKOS with several broader values allowed (ADR-A134 decision 24). Every register entry tagged with Activity, Quality and Technology. Facets raise matching entries rather than filter them, measured over the bake-off questions (decision 25). The scheme enriched to 274 values from SWEBOK, DAMA-DMBOK, TOGAF and ISO/IEC 25010 and 25012, for review.
 - 2026-10-26. The facet scheme ratified (R2). Store findings take their technology from their Evidence lines and headings, derived rather than authored, so all 39 carry one. The clean-room decisions renamed to ADR-A-C1 and ADR-A-C2 (C11). A2 approved and done.
 - 2026-10-26. The facet tags approved after a spot-check (R3). Confusable facet values given scope notes, and the pairs most often confused related, so a question naming one raises entries tagged with the other.
+- 2026-10-26. Every register row ratified (R1, R4). ADR-A101, ADR-A108 and ADR-A109 drafted (C5). `check:mork` added to `check` (C13). TD-82, TD-83 and TD-84 hold R6, C4 and C10. `AGENTS.md` and every skill now ask the index first, look for related entries, and report misses at each handoff through `graph:ask -- misses`.

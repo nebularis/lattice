@@ -5,7 +5,7 @@ description: Diagnosing and speeding up a slow test suite, and writing or extend
 
 # Testing in LATTICE
 
-Ask the knowledge index first, as AGENTS.md's "Asking the knowledge index" says, for example `mise run graph:ask -- find <the task in your own words> --kind standard,capability,discovery --activity testing`, then `read` each entry that answers. It finds the rules this skill does not mention, and the entries related to the ones it does.
+Ask the knowledge index first, as AGENTS.md's "Asking the knowledge index" says, with `mise run graph:ask -- find <the task in your own words>` and every facet value that fits the task at hand, then `read` each entry that answers. This skill's tasks span the activities testing and its kinds, such as unit-testing, regression-testing, conformance-testing and performance-testing, with performance-tuning and scenario-and-test-data, and a task often needs several of them, named together and separated by commas. `--activity`, `--quality` and `--tech` raise matching entries and hide none, while `--kind` filters exactly, so leave `--kind` off unless only one kind of entry will do. The index finds the rules this skill does not mention, and the entries related to the ones it does.
 
 Grounded in the `python-test-melting` unit (2026-10-09), which took the ontology test suite from
 456s serial to about 124s under `pytest-xdist`, with zero change to any test's meaning. Full
