@@ -8,6 +8,7 @@
 versioning contract — a distinct concern, see "Consequences"), ADR-A22 (MORK
 governance/versioning via Foundation alignment — likewise instance-level, not
 document-level)
+**Unit:** [`ontology-semantic-versioning`](../../developer/plans/ontology-semantic-versioning.md)
 
 ## Context
 

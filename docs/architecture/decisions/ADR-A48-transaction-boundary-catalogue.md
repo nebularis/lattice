@@ -5,6 +5,7 @@
 **Status:** Proposed
 **Date:** 2026-09-23
 **Related:** Architecture Review §5.2, §7.1, G-06, G-26, ADR-A74
+**Unit:** [`phase-0`](../../developer/plans/phase-0-plan.md)
 **Supersedes:** `solution-design-specification.md` §7.1's CAP framing ("single-writer, single-broker, partition tolerance explicitly deferred")
 **Drafted in:** P0.1.9. Pending ratification — see [phase-0-status.md](../../developer/status/phase-0-status.md).
 

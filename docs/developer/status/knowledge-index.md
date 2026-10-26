@@ -48,7 +48,7 @@ The index is useful before this is done, and a row is found by its own words eve
 | D2 | The process view: which artefacts define a process quantum, so it can be derived | maintainer |
 | D3 | Which characteristics warrant a holistic or a continual fitness function. All 18 checks that enforce a standard are atomic and triggered | maintainer |
 | D4 | Which of the 14 extrapolated standards get a check, and which record why they cannot, as STD-002 requires | maintainer |
-| D5 | Add the method and naming principles the principle register left out, such as testing methodology and coding style, which were scoped out by mistake | agent drafts |
+| D5 | Drafted 2026-10-26. PRI-63 to PRI-74 state testing, naming, writing, reporting and publication principles the repository already holds, unratified. The standards they sit above do not yet point to them through `Supports` | agent drafts |
 | D6 | TSD-37: whether `ontology/mork/test/data/Contracts.ttl` is live input or an orphan | maintainer |
 
 ## Clean-up the index has found
@@ -58,16 +58,18 @@ None blocks activation. Each is a defect the index surfaced, recorded where it b
 | # | Task | Owner |
 |---|---|---|
 | C1 | Done 2026-10-26. The seven decisions' `## Status` sections became `**Status:**` header fields, so each has its status in the index | agent |
-| C2 | Add a `**Unit:**` line to the 96 decisions without one | agent drafts |
+| C2 | Partly done 2026-10-26. 27 decisions gained a `**Unit:**` line where the evidence names one unit. 57 are left because their evidence names several units or none, and 11 Published decisions found a unit but may not link a working document outside their Provenance section (C12) | agent drafts |
 | C3 | Done 2026-10-26 except two. Non-breaking hyphens, spaced spellings and old-style titles corrected, except in one review record whose lines carrying them also carry its own semicolons. `ADR-A-C1` and `ADR-A-C2` are left, since those decisions' own titles write them so and only their filenames say `ADR-AC1` and `ADR-AC2`. Which spelling is canonical is the maintainer's choice (C11) | agent |
 | C4 | Review the 26 citations of register entries since removed, `identifiers.py --rehomed`. A document citing one may be stale | maintainer |
 | C5 | Draft ADR-A101, ADR-A108 and ADR-A109, or remove the references to them. They are in `tools/knowledge/identifier-exceptions.txt` as planned and never drafted | maintainer |
-| C6 | TD-78, TD-79 and TD-80 | agent drafts |
-| C7 | Give six platform components and two apps a README, so they have a capability row: `platform-outbox`, `release-integration`, `semantic-dataset-fuseki`, `semantic-dataset-spi`, `semantic-policy`, `surface-workflow`, `mork-review-workbench` and `surface-contract-studio` | agent drafts |
+| C6 | Done 2026-10-26 except TD-80, which stays open by the maintainer's decision. TD-78 paid, so `repo_files` lists files from git and refuses a checkout without `.git`. TD-79 paid, with the duplicate compiler removed. `morkSC_Test.py` revived as `test_morkSC.py`, 15 tests | agent drafts |
+| C7 | Done 2026-10-26. The eight components have READMEs and capability rows CAP-73 to CAP-80, unratified | agent drafts |
 | C8 | Done 2026-10-26. The root package's `knowledge` extra declares PyYAML, pyoxigraph, numpy, tokenizers and onnxruntime, and `bootstrap:python` installs it | agent |
 | C9 | Done 2026-10-26. The seven registers moved from `docs/developer/plans/` to `docs/developer/`, with every reference updated | agent |
 | C10 | Give the Ensemble principles, PRI-38 to PRI-42, an owner. They name every ontology, and the Ensemble module they govern has no catalogue entry yet | maintainer |
 | C11 | Done 2026-10-26. The maintainer chose `ADR-A-C1` and `ADR-A-C2`, as the decisions title themselves and as the other epic blocks are written. Their files were renamed to match | maintainer |
+| C12 | Decide how a Published decision records its unit, since it may not link a working document outside its Provenance section. Units were found for ADR-A87, A90, A91, A100, A114, A121, A122, A123, A126, A129 and A132 | maintainer |
+| C13 | Decide whether `tools/mork`'s tests get a mise task, and which aggregate it joins. No task runs them today, so the revived `test_morkSC.py` and the 346 other tests run only by hand | maintainer |
 
 ## History
 

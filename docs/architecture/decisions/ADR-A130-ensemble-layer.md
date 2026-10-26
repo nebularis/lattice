@@ -12,6 +12,7 @@
 [ADR-A122](ADR-A122-aggregate-ownership.md) (aggregate ownership),
 [ADR-A129](ADR-A129-one-release-for-the-substrate.md) (one release),
 [ADR-A-C2](ADR-A-C2-clean-room-authoring-procedure.md) (authoring order)
+**Unit:** [`ensemble`](../../developer/plans/ensemble.md)
 
 ## Context
 

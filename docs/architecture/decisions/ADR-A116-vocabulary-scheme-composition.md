@@ -10,6 +10,7 @@ temporal binding resolution, extended here, not superseded), [ADR-A100](ADR-A100
 is a follow-on, not decided here), [ADR-A87](ADR-A87-eligibility-concept-inclusion-and-exclusion.md)
 (concept inclusion and exclusion, read by `tools/mork_compilers`, also a follow-on consumer, not
 changed here)
+**Unit:** [`formal-methods`](../../developer/plans/formal-methods.md) (epic), track C
 **Shared with:** CCS's held design question HQ-4 (`computable-contract-substrate.md`, found
 building C7b, 2026-10-05) and insurml-alignment's IMA-D4a (`insurml-alignment.md`), both of which
 name this exact construct and wait on it. One ADR answers both, as `insurml-alignment.md`'s own

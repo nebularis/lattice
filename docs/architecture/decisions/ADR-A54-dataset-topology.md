@@ -5,6 +5,7 @@
 **Status:** Proposed
 **Date:** 2026-09-23
 **Related:** Architecture Review §4.3, G-10, G-16, ADR-A51, ADR-A74
+**Unit:** [`phase-0`](../../developer/plans/phase-0-plan.md)
 **Drafted in:** P0.1.4. Pending ratification — see [phase-0-status.md](../../developer/status/phase-0-status.md).
 
 ## Context
