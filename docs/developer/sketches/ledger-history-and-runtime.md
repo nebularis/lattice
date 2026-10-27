@@ -97,7 +97,7 @@ The usual objection to a running balance is that it serialises writers at an acc
 
 A running balance is also not a denormalisation in the pejorative sense. It is the running balance every bank statement carries, which matters for §6.
 
-**Open.** Whether a running balance is recorded along the recorded ordering only. It cannot be a running balance along both axes at once, so a reading as of an effective position still folds. That narrows its benefit to the common read, which is "the balance now".
+**Answered (LF-Q17, 2026-10-27).** A running balance is recorded along the recorded ordering only. It cannot be a running balance along both axes at once, so a reading as of an effective position still folds. That narrows its benefit to the common read, which is "the balance now". The same axis keys the period's unit of partition and its checkpoints, which [ADR-A131](../../architecture/decisions/ADR-A131-ledger-layer.md)'s second addendum of that date states, and which the sealing rule forces: a unit keyed on effective position could never be complete, so it could never be sealed.
 
 ## 5. A model that carries both obligations
 
