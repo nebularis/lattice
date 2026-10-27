@@ -4,7 +4,10 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import {
+  BookOpen,
   ChevronDown,
+  ListChecks,
+  Ruler,
   ChevronUp,
   Database,
   FileCode2,
@@ -22,6 +25,7 @@ import {
 } from "lucide-react";
 import { Baseline } from "../rdf/baseline";
 import { items, nodeFor, type Item } from "../rdf/editors";
+import type { Graph } from "../rdf/graph";
 import { compact } from "../rdf/ns";
 import type { Issue } from "../rdf/report";
 import type { Vocabulary } from "../rdf/vocabulary";
@@ -38,6 +42,10 @@ export interface Studio {
   vocab: Vocabulary;
   baseline: Baseline;
   items: Record<Part, Item[]>;
+  /** The baseline and every configuration as edited, merged, for references across parts. */
+  world: Graph;
+  /** The configuration that holds a node, if any does. */
+  partOf: (node: string) => Part | undefined;
   /** Navigate to a node of a configuration, optionally flashing one of its fields. */
   open: (part: Part, node?: string, field?: string) => void;
 }
@@ -50,7 +58,15 @@ export function useStudio(): Studio {
   return studio;
 }
 
-const VIEWS = ["overview", "baseline", "persistence", "surface", "build"] as const;
+const VIEWS = ["overview", "baseline", "vocabulary", "quantification", "eligibility", "persistence", "surface", "build"] as const;
+
+const PART_NAV: { part: Part; label: string; icon: React.ReactNode }[] = [
+  { part: "vocabulary", label: "Vocabulary", icon: <BookOpen size={16} /> },
+  { part: "quantification", label: "Quantification", icon: <Ruler size={16} /> },
+  { part: "eligibility", label: "Eligibility", icon: <ListChecks size={16} /> },
+  { part: "persistence", label: "Persistence", icon: <Database size={16} /> },
+  { part: "surface", label: "Surface", icon: <Sparkles size={16} /> },
+];
 type View = (typeof VIEWS)[number];
 
 export function Workspace({ id, route, vocab }: { id: string; route: string[]; vocab: Vocabulary }) {
@@ -58,22 +74,18 @@ export function Workspace({ id, route, vocab }: { id: string; route: string[]; v
   const { state } = model;
   const view: View = (VIEWS as readonly string[]).includes(route[0]) ? (route[0] as View) : "overview";
   const node = route[1];
-  const activePart: Part = view === "surface" ? "surface" : "persistence";
+  const activePart: Part = (PARTS as string[]).includes(view) ? (view as Part) : "persistence";
   const [inspector, setInspector] = useState(() => window.innerWidth >= 1560);
   const [problemsOpen, setProblemsOpen] = useState(true);
   const [palette, setPalette] = useState(false);
 
   const baseline = state.baseline?.index;
-  const persistence = state.configs.persistence?.current;
-  const surface = state.configs.surface?.current;
   const itemLists = useMemo(
-    () => ({
-      persistence: persistence && baseline ? items(persistence, "persistence", baseline, vocab) : [],
-      surface: surface && baseline ? items(surface, "surface", baseline, vocab) : [],
-    }),
-    [persistence, surface, baseline, vocab],
+    () => Object.fromEntries(PARTS.map((p) => [p, state.configs[p] && baseline ? items(state.configs[p]!.current, p, baseline, vocab) : []])) as Record<Part, Item[]>,
+    [state.configs, baseline, vocab],
   );
-  const dirty = useMemo(() => ({ persistence: isDirty(state.configs.persistence), surface: isDirty(state.configs.surface) }), [state.configs]);
+  const dirty = useMemo(() => Object.fromEntries(PARTS.map((p) => [p, isDirty(state.configs[p])])) as Record<Part, boolean>, [state.configs]);
+  const anyDirty = PARTS.some((p) => dirty[p]);
 
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
@@ -85,14 +97,14 @@ export function Workspace({ id, route, vocab }: { id: string; route: string[]; v
       } else if (mod && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setPalette(true);
-      } else if (mod && e.key.toLowerCase() === "z" && !typing && (view === "persistence" || view === "surface")) {
+      } else if (mod && e.key.toLowerCase() === "z" && !typing && (PARTS as string[]).includes(view)) {
         e.preventDefault();
         if (e.shiftKey) model.redo(activePart);
         else model.undo(activePart);
       }
     };
     const leave = (e: BeforeUnloadEvent) => {
-      if (dirty.persistence || dirty.surface) e.preventDefault();
+      if (anyDirty) e.preventDefault();
     };
     window.addEventListener("keydown", key);
     window.addEventListener("beforeunload", leave);
@@ -100,7 +112,7 @@ export function Workspace({ id, route, vocab }: { id: string; route: string[]; v
       window.removeEventListener("keydown", key);
       window.removeEventListener("beforeunload", leave);
     };
-  }, [dirty, model, view, activePart]);
+  }, [dirty, anyDirty, model, view, activePart]);
 
   if (state.error && !state.summary) {
     return (
@@ -111,7 +123,7 @@ export function Workspace({ id, route, vocab }: { id: string; route: string[]; v
       </div>
     );
   }
-  if (!state.summary || !baseline || !state.configs.persistence || !state.configs.surface) {
+  if (!state.summary || !baseline || PARTS.some((p) => !state.configs[p])) {
     return (
       <div className="empty" style={{ height: "100%" }}>
         <Spinner size={22} />
@@ -125,10 +137,12 @@ export function Workspace({ id, route, vocab }: { id: string; route: string[]; v
     vocab,
     baseline,
     items: itemLists,
+    world: model.world,
+    partOf: (n) => PARTS.find((p) => state.configs[p]!.current.has(n)),
     open: (part, n, field) => go("w", id, part, ...(n ? [n] : []), ...(field ? [field] : [])),
   };
   const config = state.configs[activePart]!;
-  const editing = view === "persistence" || view === "surface";
+  const editing = (PARTS as string[]).includes(view);
 
   return (
     <StudioContext.Provider value={studio}>
@@ -174,8 +188,9 @@ export function Workspace({ id, route, vocab }: { id: string; route: string[]; v
           <NavLink to="overview" view={view} id={id} icon={<LayoutDashboard size={16} />} label="Overview" />
           <NavLink to="baseline" view={view} id={id} icon={<Shapes size={16} />} label="Baseline" count={baseline.classes.size} />
           <div className="group">Configuration</div>
-          <NavLink to="persistence" view={view} id={id} icon={<Database size={16} />} label="Persistence" count={itemLists.persistence.length} issues={model.issues.persistence} dirty={dirty.persistence} />
-          <NavLink to="surface" view={view} id={id} icon={<Sparkles size={16} />} label="Surface" count={itemLists.surface.length} issues={model.issues.surface} dirty={dirty.surface} />
+          {PART_NAV.map((n) => (
+            <NavLink key={n.part} to={n.part} view={view} id={id} icon={n.icon} label={n.label} count={itemLists[n.part].length} issues={model.issues[n.part]} dirty={dirty[n.part]} />
+          ))}
           <div className="group">Output</div>
           <NavLink to="build" view={view} id={id} icon={<FileCode2 size={16} />} label="Build" />
         </nav>
@@ -225,7 +240,7 @@ function NavLink(props: { to: View; view: View; id: string; icon: React.ReactNod
 function ValidationPill({ model }: { model: WorkspaceModel }) {
   const running = PARTS.some((p) => model.state.configs[p]?.validation.state === "running");
   const failed = PARTS.find((p) => model.state.configs[p]?.validation.state === "failed");
-  const all = [...model.issues.persistence, ...model.issues.surface];
+  const all = PARTS.flatMap((p) => model.issues[p]);
   const violations = all.filter((i) => i.severity === "Violation").length;
   const warnings = all.filter((i) => i.severity === "Warning").length;
   if (running) {
@@ -253,7 +268,7 @@ function ValidationPill({ model }: { model: WorkspaceModel }) {
 
 function SaveButton({ model, dirty }: { model: WorkspaceModel; dirty: Record<Part, boolean> }) {
   const saving = PARTS.some((p) => model.state.configs[p]?.saving);
-  const any = dirty.persistence || dirty.surface;
+  const any = PARTS.some((p) => dirty[p]);
   return (
     <button
       className="btn"
@@ -350,7 +365,7 @@ function Palette({ onClose }: { onClose: () => void }) {
   const [index, setIndex] = useState(0);
   const entries = useMemo(() => {
     const out: { label: string; hint: string; go: () => void }[] = [
-      ...(["overview", "baseline", "persistence", "surface", "build"] as const).map((v) => ({ label: v[0].toUpperCase() + v.slice(1), hint: "view", go: () => go("w", id, v) })),
+      ...VIEWS.map((v) => ({ label: v[0].toUpperCase() + v.slice(1), hint: "view", go: () => go("w", id, v) })),
       ...PARTS.flatMap((part) => lists[part].map((it) => ({ label: it.name, hint: `${it.kind.title}`, go: () => open(part, it.iri) }))),
       ...[...baseline.classes.values()].map((c) => ({ label: c.label, hint: "class", go: () => go("w", id, "baseline", c.iri) })),
     ];

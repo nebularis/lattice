@@ -37,7 +37,10 @@ public final class StudioApi {
     public static final int MAX_BODY_BYTES = 5 * 1024 * 1024;
     private static final Logger LOG = LoggerFactory.getLogger(StudioApi.class);
     private static final Pattern SAMPLE_ID = Pattern.compile("[a-z0-9][a-z0-9-]*");
-    private static final List<String> GRAPH_NAMES = List.of("baseline", "surface", "persistence");
+    private static final List<String> GRAPH_NAMES = Workspace.GRAPHS;
+    /** The configurations a job checks, and those of them that compile. */
+    private static final List<String> TARGETS = GRAPH_NAMES.subList(1, GRAPH_NAMES.size());
+    private static final List<String> COMPILED = List.of("eligibility", "surface", "persistence");
 
     private final StudioStore store;
     private final JobBus bus;
@@ -182,7 +185,7 @@ public final class StudioApi {
         }
         String id = ids.get().toString();
         Instant now = now();
-        Workspace ws = new Workspace(id, label, now, now, 1, 0, 0);
+        Workspace ws = Workspace.created(id, label, now);
         store.write(List.of(), Map.of(Graphs.workspace(id), ws.toModel(), ws.baselineGraph(), baseline));
         return ApiResponse.turtle(201, Turtle.write(ws.toModel())).with("Location", "/api/workspaces/" + id);
     }
@@ -199,11 +202,12 @@ public final class StudioApi {
                 return notFound();
             }
             List<String> graphs = new java.util.ArrayList<>();
-            for (long n = 1; n <= ws.baselineRevision(); n++) {
+            for (long n = 1; n <= ws.revision("baseline"); n++) {
                 graphs.add(Graphs.baseline(id, n));
             }
-            graphs.add(Graphs.config(id, "surface"));
-            graphs.add(Graphs.config(id, "persistence"));
+            for (String name : TARGETS) {
+                graphs.add(Graphs.config(id, name));
+            }
             graphs.add(Graphs.workspace(id));
             store.drop(graphs);
             return ApiResponse.empty(204);
@@ -258,8 +262,8 @@ public final class StudioApi {
         Map<String, String> query = query(req.query());
         String kind = query.get("kind");
         String target = query.get("target");
-        if (!("validate".equals(kind) || "compile".equals(kind)) || !("surface".equals(target) || "persistence".equals(target))) {
-            return ApiResponse.text(400, "kind must be validate or compile, and target surface or persistence");
+        if (!("validate".equals(kind) && TARGETS.contains(target)) && !("compile".equals(kind) && COMPILED.contains(target))) {
+            return ApiResponse.text(400, "kind must be validate, with target one of " + TARGETS + ", or compile, with target one of " + COMPILED);
         }
         Workspace ws = load(id);
         if (ws == null) {
@@ -297,7 +301,7 @@ public final class StudioApi {
         Resource job = m.createResource(jobIri);
         job.addProperty(RDF.type, Cst.Job);
         job.addProperty(Cst.kind, kind.equals("validate") ? Cst.Validate : Cst.Compile);
-        job.addProperty(Cst.target, target.equals("surface") ? Cst.Surface : Cst.Persistence);
+        job.addProperty(Cst.target, Cst.target(target));
         job.addProperty(Cst.workspace, m.createResource(Graphs.workspace(ws)));
         job.addProperty(Cst.configGraph, m.createResource(input));
         job.addProperty(Cst.baselineGraph, m.createResource(workspace.baselineGraph()));

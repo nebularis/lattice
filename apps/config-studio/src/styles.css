@@ -350,3 +350,24 @@ table.grid tr.clickable:hover td { background: var(--surface-2); }
   .field { grid-template-columns: 1fr; }
   .field .help, .field .errors { grid-column: 1; }
 }
+
+/* --- vocabulary, quantification and eligibility sections ---------------------- */
+
+.construction { display: flex; gap: 10px; align-items: flex-start; margin-top: 12px; padding: 10px 12px; border-radius: 8px; border: 1px dashed var(--warn); background: var(--warn-2); color: var(--warn); font-size: 13px; line-height: 1.45; }
+.construction strong { color: inherit; }
+.construction .small { opacity: 0.85; margin-top: 2px; }
+.concept-tree { border: 1px solid var(--border); border-radius: 8px; padding: 4px 0; max-height: 420px; overflow: auto; background: var(--surface); }
+.concept-row { display: flex; align-items: center; gap: 8px; min-height: 30px; padding-right: 8px; font-size: 13px; }
+.concept-row:hover { background: var(--surface-2); }
+.link { all: unset; cursor: pointer; color: var(--accent); font-weight: 550; }
+.link:hover { text-decoration: underline; }
+.res-table td, .res-table th { white-space: nowrap; }
+.res-cell { --scheme: var(--text-3); display: inline-flex; align-items: center; gap: 2px; padding: 3px 8px; border-radius: 6px; font-size: 12.5px; font-weight: 600; color: var(--scheme); background: color-mix(in srgb, var(--scheme) 12%, transparent); border: 1px solid color-mix(in srgb, var(--scheme) 30%, transparent); }
+.res-cell.fallback { border-style: dashed; }
+.res-cell.conflict { --scheme: var(--bad); }
+.res-cell.unresolved { --scheme: var(--text-3); font-weight: 500; }
+.res-cell.selected { outline: 2px solid var(--scheme); outline-offset: 2px; }
+.try { margin-top: 12px; padding: 12px; box-shadow: none; background: var(--surface-2); }
+.numberline { width: 100%; height: auto; display: block; margin: 6px 0 10px; overflow: visible; }
+.range-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
+.dot.ok { background: var(--ok); }

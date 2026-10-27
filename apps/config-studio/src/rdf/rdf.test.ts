@@ -8,11 +8,13 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { Baseline } from "./baseline";
 import { KINDS, checkReferences, create, items, sectionsFor } from "./editors";
 import { Graph, iri, literal } from "./graph";
-import { CST, DAL, SH, SRF } from "./ns";
+import { CST, DAL, ELG, QNT, SH, SKOS, SRF, VOC } from "./ns";
 import { readJob } from "./report";
 import { split } from "./split";
 import { readPath, writePath } from "./path";
 import { diffLines, tokenise } from "../lib/text";
+import { addRange, contains, rangesOf, removeRange } from "./quantity";
+import { addQuestion, conceptForest, questionsFor, removeQuestion } from "./eligibility";
 import { Vocabulary } from "./vocabulary";
 
 const assets = process.env.LATTICE_STUDIO_ASSETS ?? join(import.meta.dirname, "../../../../.build/config-studio");
@@ -63,7 +65,7 @@ describe("fields derived from the ontology", () => {
 
   it("keeps the read path out of a contract's fields and gives it its own section", () => {
     const sections = sectionsFor(kind(SRF("IndexContract")), vocab);
-    expect(sections.some((s) => s.path)).toBe(true);
+    expect(sections.some((s) => s.special === "path")).toBe(true);
     const all = sections.flatMap((s) => s.fields.map((f) => f.property));
     expect(all).not.toContain(SRF("readProperty"));
     expect(all).not.toContain(SRF("hasPathStep"));
@@ -78,7 +80,11 @@ describe("importing a sample", () => {
     expect(parts.baseline.has(contract)).toBe(false);
     expect(parts.baseline.has("https://example.org/lattice/surface/employment#RoleAssignment")).toBe(true);
     expect(parts.persistence.size).toBe(0);
-    expect(parts.baseline.size + parts.surface.size).toBe(Graph.parse(read("samples/employment.ttl")).size);
+    expect(parts.vocabulary.types("https://example.org/lattice/surface/employment#JobFamilyScheme")).toContain(VOC("ConceptScheme"));
+    expect(parts.vocabulary.has("https://example.org/lattice/surface/employment#SiteReliability")).toBe(true);
+    expect(parts.vocabulary.has("https://example.org/lattice/surface/employment#job-family-contract")).toBe(true);
+    const total = Object.values(parts).reduce((n, g) => n + g.size, 0);
+    expect(total).toBe(Graph.parse(read("samples/employment.ttl")).size);
   });
 
   it("sorts the lending sample's profile and key, with its RDF list, into persistence", () => {
@@ -238,5 +244,87 @@ describe("text", () => {
     expect(tokens.map((t) => t.text).join("")).toBe(source);
     expect(tokens.find((t) => t.kind === "comment")?.text).toBe("# note");
     expect(tokens.find((t) => t.kind === "iri")?.text).toBe("<https://example.org/>");
+  });
+});
+
+describe("the new parts", () => {
+  const ns = "https://example.org/x#";
+
+  it("sorts the lending eligibility sample into eligibility, quantification and vocabulary", () => {
+    const parts = split(Graph.parse(read("samples/lending-eligibility.ttl")));
+    const e = "https://example.org/lattice/eligibility/";
+    expect(parts.eligibility.types(e + "eligible-sector")).toContain(ELG("Condition"));
+    expect(parts.eligibility.types(e + "minimum-credit-condition")).toContain(ELG("IntervalCondition"));
+    expect(parts.quantification.types(e + "required-range")).toContain(QNT("Range"));
+    expect(parts.vocabulary.ofType(VOC("SchemeBinding")).length).toBeGreaterThan(0);
+    expect(parts.baseline.size).toBe(0);
+  });
+
+  it("derives the fields of a condition and a binding, with references where a range has one individual", () => {
+    expect(vocab.field(ELG("matchStrategy")).kind).toBe("choice");
+    expect(vocab.field(ELG("constrainedByContract")).kind).toBe("reference");
+    expect(vocab.field(VOC("forContract")).kind).toBe("reference");
+    expect(vocab.field(ELG("requiredConcept")).single).toBe(false);
+    expect(vocab.field(SKOS("prefLabel")).lang).toBe("en");
+    expect(vocab.field(QNT("numericValue")).kind).toBe("number");
+    expect(vocab.field(QNT("boundClosure")).options.map((o) => o.iri)).toEqual(expect.arrayContaining([QNT("Closed"), QNT("Open")]));
+  });
+
+  it("writes a range's bounds and quantities with it, reads them back, and removes them with it", () => {
+    const set = ns + "set";
+    const start = Graph.empty().edit((e) => e.add(set, "http://www.w3.org/1999/02/22-rdf-syntax-ns#type", iri(QNT("RangeSet"))));
+    const made = addRange(start, ns, "score", { space: ns + "space", lower: { value: 700, closed: true }, upper: { value: 850, closed: false } }, set);
+    const [range] = rangesOf(made.graph, set);
+    expect(range.lower).toEqual({ value: 700, closed: true });
+    expect(range.upper).toEqual({ value: 850, closed: false });
+    expect([contains(range, 700), contains(range, 849.9), contains(range, 850), contains(range, 699)]).toEqual([true, true, false, false]);
+    expect(removeRange(made.graph, made.iri).size).toBe(start.size);
+  });
+
+  it("makes a test as an elg:Question, with a point range set for a value, and removes it whole", () => {
+    const condition = ns + "c";
+    const concept = addQuestion(Graph.empty(), ns, condition, "first", { concept: ns + "retail" }, "Permitted");
+    const value = addQuestion(concept.graph, ns, condition, "second", { value: 720, space: ns + "space" });
+    const questions = questionsFor(value.graph, condition);
+    expect(questions.map((q) => [q.candidate?.startsWith(ns), q.expected])).toEqual([[true, "Permitted"], [true, undefined]]);
+    const point = rangesOf(value.graph, value.graph.value(value.iri, ELG("candidateRangeSet"))!)[0];
+    expect(point.lower?.value).toBe(720);
+    expect(point.upper?.value).toBe(720);
+    expect(removeQuestion(value.graph, value.iri).size).toBe(concept.graph.size);
+  });
+
+  it("arranges concepts as a forest by broader among themselves", () => {
+    const parts = split(Graph.parse(read("samples/employment.ttl")));
+    const e = "https://example.org/lattice/surface/employment#";
+    const members = parts.vocabulary.subjects(SKOS("inScheme"), e + "JobFamilyScheme").map((c) => c.value);
+    const forest = conceptForest(parts.vocabulary, members);
+    const technical = forest.find((n) => n.iri === e + "Technical")!;
+    expect(technical.children.map((c) => c.iri)).toEqual([e + "Engineering"]);
+    expect(technical.children[0].children.map((c) => c.iri)).toEqual([e + "SiteReliability"]);
+  });
+
+  it("reads resolutions, expansions and test results from a job graph", () => {
+    const job = "urn:lattice:studio:job:00000000-0000-4000-8000-000000000001";
+    const g = Graph.empty().edit((e) => {
+      e.add(job, CST("resolution"), iri(job + "#r"));
+      e.add(job + "#r", CST("contract"), iri(ns + "contract"));
+      e.add(job + "#r", CST("validFrom"), literal("2026-01-01T00:00:00Z"));
+      e.add(job + "#r", CST("context"), iri(ns + "north"));
+      e.add(job + "#r", CST("outcome"), iri(CST("Conflict")));
+      e.add(job + "#r", CST("tied"), iri(ns + "b2"));
+      e.add(job + "#r", CST("tied"), iri(ns + "b1"));
+      e.add(job, CST("expansion"), iri(job + "#e"));
+      e.add(job + "#e", CST("condition"), iri(ns + "c"));
+      e.add(job + "#e", CST("concept"), iri(ns + "fire"));
+      e.add(job + "#e", CST("decision"), iri(CST("Permitted")));
+      e.add(job, CST("testResult"), iri(job + "#t"));
+      e.add(job + "#t", CST("question"), iri(ns + "q"));
+      e.add(job + "#t", CST("decision"), iri(CST("Denied")));
+      e.add(job + "#t", CST("passed"), literal("false"));
+    });
+    const read = readJob(g, job);
+    expect(read.resolutions[0]).toMatchObject({ outcome: "Conflict", context: [ns + "north"], tied: [ns + "b1", ns + "b2"], to: undefined });
+    expect(read.expansions[0].decision).toBe("Permitted");
+    expect(read.tests[0]).toMatchObject({ decision: "Denied", passed: false });
   });
 });

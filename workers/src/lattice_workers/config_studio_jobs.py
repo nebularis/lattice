@@ -9,12 +9,15 @@ from __future__ import annotations
 
 import functools
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Iterable, Optional, Tuple
 
 import pyshacl
 from rdflib import BNode, Graph, Literal, Namespace, URIRef
 from rdflib.namespace import RDF, XSD
+
+from . import config_studio_layers as layers
 
 CST = Namespace("https://www.nebularis.org/neuro-semantic/lattice/poc/config-studio#")
 SH = Namespace("http://www.w3.org/ns/shacl#")
@@ -66,21 +69,39 @@ def _parse(*paths: Path) -> Graph:
     return graph
 
 
+# The ontology files each target is validated with: (module, role, file pattern) for its data, and
+# (module, file) for its shapes. Surface's constraints.ttl is left out because pySHACL refuses it
+# (TD-11), and the surface compiler checks those laws. No layer's rules.ttl is run.
+_SPECS = {
+    "persistence": [("persistence", "spec", "persistence.ttl")],
+    "surface": [("surface", "spec", "surface.ttl")],
+    "vocabulary": [("foundation", "spec", "*.ttl"), ("foundation", "vocab", "*.ttl"), ("vocabulary", "spec", "*.ttl")],
+    "quantification": [("quantification", "spec", "*.ttl"), ("quantification", "vocab", "*.ttl")],
+    "eligibility": [
+        ("vocabulary", "spec", "*.ttl"), ("quantification", "spec", "*.ttl"), ("quantification", "vocab", "*.ttl"),
+        ("eligibility", "spec", "*.ttl"), ("eligibility", "vocab", "*.ttl"),
+    ],
+}
+_SHAPES = {
+    "persistence": [("persistence", "constraints.ttl")],
+    "surface": [("surface", "structural.ttl")],
+    "vocabulary": [("vocabulary", "structural.ttl"), ("vocabulary", "constraints.ttl")],
+    "quantification": [("quantification", "structural.ttl"), ("quantification", "constraints.ttl")],
+    "eligibility": [("eligibility", "structural.ttl"), ("eligibility", "constraints.ttl")],
+}
+TARGETS = tuple(_SPECS)
+
+
 @functools.lru_cache(maxsize=None)
 def _spec(root: str, target: str) -> Graph:
     """The target's specification graph. Cached, so never modified."""
-    module = "persistence" if target == "persistence" else "surface"
-    return _parse(*sorted(_module_dir(root, module, "spec").glob(f"{module}.ttl")))
+    return _parse(*(path for module, role, pattern in _SPECS[target] for path in sorted(_module_dir(root, module, role).glob(pattern))))
 
 
 @functools.lru_cache(maxsize=None)
 def _shapes(root: str, target: str) -> Graph:
-    """The shapes graph to validate against. Cached, so never modified. Surface's constraints.ttl is
-    left out because pySHACL refuses it (TD-11), and the surface compiler checks those laws."""
-    if target == "persistence":
-        return _merge(_spec(root, target), _parse(_module_dir(root, "persistence", "shapes") / "constraints.ttl"))
-    shapes = _module_dir(root, "surface", "shapes")
-    return _merge(_spec(root, target), _parse(shapes / "structural.ttl"))
+    """The shapes graph to validate against. Cached, so never modified."""
+    return _merge(_spec(root, target), _parse(*(_module_dir(root, module, "shapes") / name for module, name in _SHAPES[target])))
 
 
 def _merge(*graphs: Graph) -> Graph:
@@ -174,15 +195,21 @@ def _copy_shacl_report(result: _Result, report: Graph) -> None:
             add((node, SH.resultMessage, Literal(message)))
 
 
-def _validate(result: _Result, target: str, config: Graph, baseline: Graph, root: str) -> None:
-    data = _merge(_spec(root, target) if target == "persistence" else Graph(), baseline, config)
+def _validate(result: _Result, target: str, config: Graph, baseline: Graph, root: str, now: datetime) -> None:
+    data = _merge(Graph() if target == "surface" else _spec(root, target), baseline, config)
     conforms, report, _ = pyshacl.validate(
         data, shacl_graph=_shapes(root, target), inference="none", advanced=True, allow_warnings=True
     )
     _copy_shacl_report(result, report)
     # The dal: shapes target the dimension classes, so a dal:DataAccessProfile that declares several
     # dimensions at once is checked only by the compiler. Its refusal and warnings join the report.
-    compiled = target != "persistence" or _persistence_findings(result, config, baseline, root) is not None
+    compiled = True
+    if target == "persistence":
+        compiled = _persistence_findings(result, config, baseline, root) is not None
+    elif target == "vocabulary":
+        layers.resolution_table(result, _merge(baseline, config), now)
+    elif target == "eligibility":
+        compiled = layers.eligibility(result, data, now)
     result.conforms(bool(conforms) and compiled)
     if target == "surface":
         result.finding(
@@ -263,14 +290,19 @@ def run_job(
 ) -> Graph:
     """The triples a finished job adds. `kind` is `validate` or `compile`, `target` is `persistence`
     or `surface`. `submitted_at` is the compile time of a surface, so two runs give the same files."""
-    if kind not in ("validate", "compile") or target not in ("persistence", "surface"):
+    if kind not in ("validate", "compile") or target not in TARGETS:
         raise ValueError(f"unknown job kind {kind!r} or target {target!r}")
+    if kind == "compile" and target in ("vocabulary", "quantification"):
+        raise ValueError(f"{target} configuration has nothing to compile")
     base = str(Path(root).resolve())
+    now = datetime.fromisoformat(submitted_at.replace("Z", "+00:00"))
     result = _Result(job)
     if kind == "validate":
-        _validate(result, target, config, baseline, base)
+        _validate(result, target, config, baseline, base, now)
     elif target == "persistence":
         _compile_persistence(result, config, baseline, base)
+    elif target == "eligibility":
+        result.conforms(layers.eligibility_artefacts(result, _merge(_spec(base, target), baseline, config), now))
     else:
         _compile_surface(result, config, baseline, submitted_at)
     return result.graph

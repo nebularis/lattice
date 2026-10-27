@@ -31,10 +31,42 @@ export interface Gap {
   message: string;
 }
 
+export type Outcome = "Resolved" | "Fallback" | "Conflict" | "Unresolved";
+
+/** A contract's resolution for one time segment and one set of active scopes. */
+export interface Resolution {
+  contract: string;
+  from?: string;
+  to?: string;
+  context: string[];
+  outcome: Outcome;
+  scheme?: string;
+  binding?: string;
+  tied: string[];
+}
+
+export type Decision = "Permitted" | "Denied" | "Undetermined";
+
+/** A concept condition's decision for one member of its resolved scheme. */
+export interface Expansion {
+  condition: string;
+  concept: string;
+  decision: Decision;
+}
+
+/** A question decided by its condition's compiled query. */
+export interface TestResult {
+  question: string;
+  condition: string;
+  decision: Decision | "NotTested";
+  diagnostic?: string;
+  passed?: boolean;
+}
+
 export interface Job {
   iri: string;
   kind: "Validate" | "Compile";
-  target: "Persistence" | "Surface";
+  target: "Persistence" | "Surface" | "Vocabulary" | "Quantification" | "Eligibility";
   status: JobStatus;
   submittedAt?: string;
   finishedAt?: string;
@@ -43,6 +75,9 @@ export interface Job {
   issues: Issue[];
   artefacts: Artefact[];
   gaps: Gap[];
+  resolutions: Resolution[];
+  expansions: Expansion[];
+  tests: TestResult[];
 }
 
 export function readJob(graph: Graph, iri: string): Job {
@@ -79,6 +114,31 @@ export function readJob(graph: Graph, iri: string): Job {
         message: graph.value(g, CST("message")) ?? "",
       }))
       .sort((a, b) => a.group.localeCompare(b.group) || a.obligation.localeCompare(b.obligation)),
+    resolutions: graph.objects(iri, CST("resolution")).map((r) => ({
+      contract: graph.value(r, CST("contract")) ?? "",
+      from: graph.value(r, CST("validFrom")),
+      to: graph.value(r, CST("validTo")),
+      context: graph.objects(r, CST("context")).map((t) => t.value).sort(),
+      outcome: localName(graph.value(r, CST("outcome")) ?? CST("Unresolved")) as Outcome,
+      scheme: graph.value(r, CST("scheme")),
+      binding: graph.value(r, CST("binding")),
+      tied: graph.objects(r, CST("tied")).map((t) => t.value).sort(),
+    })),
+    expansions: graph.objects(iri, CST("expansion")).map((e) => ({
+      condition: graph.value(e, CST("condition")) ?? "",
+      concept: graph.value(e, CST("concept")) ?? "",
+      decision: localName(graph.value(e, CST("decision")) ?? CST("Undetermined")) as Decision,
+    })),
+    tests: graph.objects(iri, CST("testResult")).map((t) => {
+      const passed = graph.value(t, CST("passed"));
+      return {
+        question: graph.value(t, CST("question")) ?? "",
+        condition: graph.value(t, CST("condition")) ?? "",
+        decision: localName(graph.value(t, CST("decision")) ?? CST("Undetermined")) as TestResult["decision"],
+        diagnostic: graph.value(t, CST("diagnostic")),
+        passed: passed === undefined ? undefined : passed === "true",
+      };
+    }),
   };
 }
 

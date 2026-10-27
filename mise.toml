@@ -519,7 +519,7 @@ run = "python tools/config_studio_stage.py"
 description = "Test the Configuration Studio: its staging, worker, service, and browser code"
 depends = ["build:config-studio-assets"]
 run = [
-  "python -m pytest tools/test_config_studio_stage.py workers/tests/test_config_studio_worker.py -q",
+  "python -m pytest tools/test_config_studio_stage.py workers/tests/test_config_studio_worker.py workers/tests/test_config_studio_layers.py -q",
   "mvn -q -f platform/pom.xml -pl config-studio-service -am verify",
   "yarn workspace @lattice/config-studio run check",
 ]

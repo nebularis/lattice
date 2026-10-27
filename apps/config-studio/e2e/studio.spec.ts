@@ -10,7 +10,7 @@ async function lendingWorkspace(page: Page, fake: FakeService): Promise<string> 
   await fake.install(page);
   await page.goto("/");
   await page.getByRole("button", { name: "New workspace" }).first().click();
-  await page.getByRole("button", { name: /^Lending/ }).click();
+  await page.getByRole("button", { name: /^Lending Loan/ }).click();
   await page.getByRole("button", { name: "Create workspace" }).click();
   await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
   return [...fake.workspaces.keys()][0];
@@ -24,7 +24,11 @@ test("a sample is sorted into baseline and persistence, and the overview shows t
   expect(w.graphs.baseline).toContain("LoanApplication");
   expect(w.graphs.baseline).not.toContain("DataAccessProfile");
   expect(w.graphs.persistence).toContain("dal:DataAccessProfile");
-  expect(fake.saves.map((s) => [s.name, s.ifMatch])).toEqual([["persistence", '"0"']]);
+  // The baseline's outcome scheme is vocabulary, so the sample saves that too.
+  expect(fake.saves.map((s) => [s.name, s.ifMatch]).sort()).toEqual([
+    ["persistence", '"0"'],
+    ["vocabulary", '"0"'],
+  ]);
   const row = page.getByRole("row", { name: /^Loan application/ });
   await expect(row.getByRole("button", { name: /Data access profile: Named graph boundary · Optimistic/ })).toBeVisible();
   await expect(page.getByText("1/6")).toBeVisible();
@@ -130,4 +134,102 @@ test("the command palette jumps to a class of the baseline", async ({ page }) =>
   await page.keyboard.press("Enter");
   await expect(page.getByRole("heading", { name: "Guarantor", level: 2 })).toBeVisible();
   await expect(page.getByText("Subclass of Party")).toBeVisible();
+});
+
+const SECTOR = "https://example.org/lattice/eligibility/eligible-sector";
+const CREDIT = "https://example.org/lattice/eligibility/minimum-credit-condition";
+
+async function eligibilityWorkspace(page: Page, fake: FakeService): Promise<string> {
+  await fake.install(page);
+  await page.goto("/");
+  await page.getByRole("button", { name: "New workspace" }).first().click();
+  await page.getByRole("button", { name: /^Lending eligibility/ }).click();
+  await page.getByRole("button", { name: "Create workspace" }).click();
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+  return [...fake.workspaces.keys()][0];
+}
+
+test("an eligibility sample is sorted into vocabulary, quantification and eligibility, each saved from revision 0", async ({ page }) => {
+  const fake = new FakeService();
+  const ws = await eligibilityWorkspace(page, fake);
+  const w = fake.workspaces.get(ws)!;
+  expect(w.graphs.vocabulary).toContain("voc:SchemeBinding");
+  expect(w.graphs.quantification).toContain("qnt:RangeSet");
+  expect(w.graphs.eligibility).toContain("elg:IntervalCondition");
+  expect(w.graphs.eligibility).not.toContain("qnt:Bound");
+  expect(fake.saves.map((s) => [s.name, s.ifMatch]).sort()).toEqual([
+    ["eligibility", '"0"'],
+    ["quantification", '"0"'],
+    ["vocabulary", '"0"'],
+  ]);
+});
+
+test("a scheme contract's resolutions are a table of segments and scopes, and trying a moment picks one cell", async ({ page }) => {
+  const fake = new FakeService();
+  const ws = await eligibilityWorkspace(page, fake);
+  await page.goto(`/#/w/${ws}/vocabulary/${encodeURIComponent("https://example.org/lattice/eligibility/sector-contract")}`);
+  const table = page.getByRole("table", { name: "Resolution table" });
+  await expect(table.getByRole("columnheader", { name: "From 2026-01-01" })).toBeVisible();
+  await expect(table.getByRole("row", { name: /Lender B/ })).toContainText("Lender B sector codes");
+  await page.getByLabel("Resolution time").fill("2026-06-01T12:00");
+  await page.locator(".try").getByRole("checkbox").check();
+  await expect(page.getByRole("status", { name: "Resolution" })).toContainText("Resolves to Lender B sector codes by binding lender-b-binding");
+  await page.getByLabel("Resolution time").fill("2025-06-01T12:00");
+  await expect(page.getByRole("status", { name: "Resolution" })).toContainText("as the contract's fallback");
+});
+
+test("a concept condition shows each concept's decision and decides a new test against its expectation", async ({ page }) => {
+  const fake = new FakeService();
+  const ws = await eligibilityWorkspace(page, fake);
+  await page.goto(`/#/w/${ws}/eligibility/${encodeURIComponent(SECTOR)}`);
+  const expansion = page.getByRole("region", { name: "Decision by concept" });
+  await expect(expansion.getByText("1 permitted")).toBeVisible();
+  await expect(expansion.getByText("1 denied")).toBeVisible();
+  const tests = page.getByRole("region", { name: "Tests" });
+  await expect(tests.getByRole("row", { name: /q-retail/ })).toContainText("Permitted");
+  await tests.getByPlaceholder("A candidate concept").fill("Textil");
+  await tests.getByPlaceholder("A candidate concept").press("Enter");
+  await tests.getByLabel("Expect", { exact: true }).selectOption("Permitted");
+  await tests.getByRole("button", { name: "Add test" }).click();
+  await expect.poll(() => fake.submitted.filter((s) => s.target === "eligibility").pop()?.body ?? "").toContain("cst:expectedDecision elg:Permitted");
+  await expect(tests.getByText("1 fail")).toBeVisible();
+  await expect(tests.getByLabel("fails")).toBeVisible();
+});
+
+test("an interval test writes its candidate as a point range set, and the number line marks it", async ({ page }) => {
+  const fake = new FakeService();
+  const ws = await eligibilityWorkspace(page, fake);
+  await page.goto(`/#/w/${ws}/eligibility/${encodeURIComponent(CREDIT)}`);
+  await expect(page.getByRole("img", { name: "Ranges on a number line" })).toBeVisible();
+  const tests = page.getByRole("region", { name: "Tests" });
+  await tests.getByLabel("Candidate value").fill("650");
+  await tests.getByLabel("Expect", { exact: true }).selectOption("Denied");
+  await tests.getByRole("button", { name: "Add test" }).click();
+  await expect.poll(() => fake.submitted.filter((s) => s.target === "eligibility").pop()?.body ?? "").toContain('qnt:numericValue "650"^^xsd:decimal');
+  await expect(tests.getByText("1 pass")).toBeVisible();
+  await expect(page.getByRole("region", { name: "Required values" }).getByText("650 outside")).toBeVisible();
+  expect(fake.submitted.filter((s) => s.target === "eligibility").pop()!.body).toContain("elg:candidateRangeSet");
+});
+
+test("a scheme's concepts are added as a tree, and a binding's validity is written as a temporal scope", async ({ page }) => {
+  const fake = new FakeService();
+  const ws = await eligibilityWorkspace(page, fake);
+  await page.goto(`/#/w/${ws}/vocabulary/${encodeURIComponent("https://example.org/lattice/eligibility/industry-classification")}`);
+  const concepts = page.getByRole("region", { name: "Concepts" });
+  await concepts.getByRole("button", { name: "Narrower" }).first().click();
+  await concepts.getByLabel("New concept").fill("Bakery");
+  await concepts.getByRole("button", { name: "Add concept" }).click();
+  await expect(concepts.getByRole("button", { name: "Bakery", exact: true })).toBeVisible();
+  await expect.poll(() => fake.submitted.filter((s) => s.target === "vocabulary").pop()?.body ?? "").toMatch(/skos:prefLabel "Bakery"@en/);
+
+  await page.goto(`/#/w/${ws}/vocabulary/${encodeURIComponent("https://example.org/lattice/eligibility/lender-b-binding")}`);
+  await page.getByLabel("Valid to").fill("2027-01-01T00:00");
+  await expect.poll(() => fake.submitted.filter((s) => s.target === "vocabulary").pop()?.body ?? "").toContain('fnd:validTo "2027-01-01T00:00:00Z"^^xsd:dateTime');
+});
+
+test("testing a profile's composed decision is marked as under construction", async ({ page }) => {
+  const fake = new FakeService();
+  const ws = await eligibilityWorkspace(page, fake);
+  await page.goto(`/#/w/${ws}/eligibility/${encodeURIComponent("https://example.org/lattice/eligibility/profile-a")}`);
+  await expect(page.getByRole("note")).toContainText("Under construction");
 });

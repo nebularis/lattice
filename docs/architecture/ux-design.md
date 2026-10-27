@@ -224,5 +224,7 @@ A proof of concept ([ADR-A136](decisions/ADR-A136-configuration-studio.md)) for 
 | Save | `PUT` with `If-Match` on the graph's revision | `412` opens the line diff of theirs and mine, to keep mine or take theirs |
 | Compile | a job, polled until finished | queued, running, succeeded or failed, with the compiler's findings, the artefacts and the gaps |
 
-Every field and option comes from the vocabularies, with the option's `rdfs:comment` shown beside it, so the author reads what a value means where they choose it. The studio's [README](../../apps/config-studio/README.md) describes the views.
+Every field and option comes from the vocabularies, with the option's `rdfs:comment` shown beside it, so the author reads what a value means where they choose it.
+
+A layer's engine answers the questions its shapes cannot, in the same live validation: how a scheme contract resolves for every period and set of scopes, shown as a table the author can try a moment against, and how a condition decides every concept of its scheme and each test, shown as a coloured tree and a pass or fail per test. What waits on other work is shown and marked as under construction, with what it waits on, rather than left out. The studio's [README](../../apps/config-studio/README.md) describes the views.
 

@@ -48,3 +48,7 @@ The `dal:` and `srf:` specifications already hold what a form needs: each proper
 **Unit:** [`config-studio`](../../developer/plans/config-studio.md) (plan), [sketch](../../developer/sketches/config-studio.md), slices CS0 to CS4.
 
 Drafted on 2026-10-27 by the unit, built autonomously at the maintainer's request. The decisions taken alone are CS-D1 to CS-D9 in the [status record](../../developer/status/config-studio.md). The maintainer has not accepted it.
+
+## Addendum, 2026-10-27: vocabulary, quantification and eligibility (Proposed)
+
+The studio keeps three more configurations, `vocabulary`, `quantification` and `eligibility`, as graphs revisioned and saved like persistence and surface, and validated by their layers' own shapes as the author edits. A vocabulary validation also resolves every scheme contract with `tools/vocabulary` for every time segment and set of scopes its bindings draw. An eligibility validation also compiles every condition with `tools/mork_compilers`, expands each concept condition over its resolved scheme, and decides each `elg:Question` with the condition's compiled SPARQL against the decision the author expects of it, given as `cst:expectedDecision`. A question is the eligibility layer's own input, so a test is the query a deployment would run on it. The reference evaluator is not used: it is a test-time oracle (ADR-A-FM3). A job's body is every configuration as edited, and its target names the one checked. Features that wait on other work are shown and marked as under construction. Decision 4 and the rest stand.

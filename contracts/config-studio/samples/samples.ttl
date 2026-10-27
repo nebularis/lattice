@@ -22,3 +22,20 @@
     rdfs:label "SaaS subscriptions" ;
     rdfs:comment "Subscriptions, plans and pricing, with a promotion of the billing currency over a three-step read path." ;
     cst:part [ cst:module "surface" ; cst:role "examples" ; cst:fileName "saas-subscription-currency.ttl" ] .
+
+<urn:lattice:studio:sample:lending-eligibility> a cst:Sample ;
+    rdfs:label "Lending eligibility" ;
+    rdfs:comment "A sector condition that meets a hierarchical classification or one lender's flat list depending on the binding scope, and a credit score range, with questions to test them." ;
+    cst:part [ cst:module "eligibility" ; cst:role "examples" ; cst:fileName "flat-scheme-lending.ttl" ] ,
+             [ cst:module "eligibility" ; cst:role "examples" ; cst:fileName "interval-containment.ttl" ] .
+
+<urn:lattice:studio:sample:vocabulary-bindings> a cst:Sample ;
+    rdfs:label "Scheme bindings" ;
+    rdfs:comment "Category schemes bound by region and tier, and an edition handed over to its successor at a date, to explore how a concept scheme resolves." ;
+    cst:part [ cst:module "vocabulary" ; cst:role "examples" ; cst:fileName "conjunctive-scopes.ttl" ] ,
+             [ cst:module "vocabulary" ; cst:role "examples" ; cst:fileName "temporal-handover.ttl" ] .
+
+<urn:lattice:studio:sample:quantities> a cst:Sample ;
+    rdfs:label "Quantities and units" ;
+    rdfs:comment "Value spaces, units, conversions and derived rate spaces, with the operations each space permits." ;
+    cst:part [ cst:module "quantification" ; cst:role "examples" ; cst:fileName "additivity.ttl" ] .

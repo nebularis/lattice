@@ -5,15 +5,27 @@
 // at most one job in flight per configuration, and a result for an older graph is discarded.
 
 import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
-import { ApiError, Conflict, api, awaitJob, type Target, type WorkspaceSummary } from "./api";
+import { ApiError, Conflict, api, awaitJob, type WorkspaceSummary } from "./api";
 import { Baseline } from "./rdf/baseline";
 import { checkReferences } from "./rdf/editors";
 import { Graph } from "./rdf/graph";
-import { bySeverity, type Issue } from "./rdf/report";
+import { bySeverity, type Issue, type Job } from "./rdf/report";
+import { CONFIG_PARTS, type ConfigPart } from "./rdf/split";
 import type { Vocabulary } from "./rdf/vocabulary";
 
-export type Part = Target;
-export const PARTS: Part[] = ["persistence", "surface"];
+export type Part = ConfigPart;
+export const PARTS: Part[] = CONFIG_PARTS;
+
+/** The parts whose edits change what a part's validation finds: eligibility decides over the
+ * vocabulary's schemes and the quantification's ranges, and a surface population names a scheme
+ * contract. */
+const DEPENDS: Record<Part, Part[]> = {
+  vocabulary: [],
+  quantification: [],
+  eligibility: ["vocabulary", "quantification"],
+  persistence: [],
+  surface: ["vocabulary"],
+};
 
 export interface Validation {
   state: "idle" | "running" | "done" | "failed";
@@ -21,6 +33,8 @@ export interface Validation {
   /** The graph the issues are for. */
   of?: Graph;
   message?: string;
+  /** The finished job, for what a layer's engine adds: resolutions, expansions and tests. */
+  job?: Job;
 }
 
 export interface Config {
@@ -117,13 +131,9 @@ export function useWorkspace(id: string, vocab: Vocabulary) {
 
   const load = useCallback(async () => {
     try {
-      const [summary, baseline, persistence, surface] = await Promise.all([
-        api.workspace(id),
-        api.graph(id, "baseline"),
-        api.graph(id, "persistence"),
-        api.graph(id, "surface"),
-      ]);
-      dispatch({ type: "loaded", summary, baseline: baseline.graph, baselineRevision: baseline.revision, configs: { persistence, surface } });
+      const [summary, baseline, ...graphs] = await Promise.all([api.workspace(id), api.graph(id, "baseline"), ...PARTS.map((p) => api.graph(id, p))]);
+      const configs = Object.fromEntries(PARTS.map((p, i) => [p, graphs[i]])) as Record<Part, { graph: Graph; revision: string }>;
+      dispatch({ type: "loaded", summary, baseline: baseline.graph, baselineRevision: baseline.revision, configs });
     } catch (error) {
       dispatch({ type: "error", error: error instanceof Error ? error.message : String(error) });
     }
@@ -186,22 +196,33 @@ export function useWorkspace(id: string, vocab: Vocabulary) {
     [id],
   );
 
-  useValidation(id, "persistence", state, dispatch, vocab);
-  useValidation(id, "surface", state, dispatch, vocab);
+  // A fixed number of calls in a fixed order, as the rules of hooks require.
+  for (const part of PARTS) useValidation(id, part, state, dispatch); // eslint-disable-line react-hooks/rules-of-hooks
+
+  /** The baseline and every configuration as edited, for references that cross parts. */
+  const world = useMemo(() => {
+    let g = state.baseline?.graph ?? Graph.empty();
+    for (const part of PARTS) {
+      const c = state.configs[part];
+      if (c) g = g.merge(c.current);
+    }
+    return g;
+  }, [state.configs, state.baseline]);
 
   const issues = useMemo(() => {
-    const out: Record<Part, Issue[]> = { persistence: [], surface: [] };
+    const out = Object.fromEntries(PARTS.map((p) => [p, [] as Issue[]])) as Record<Part, Issue[]>;
     for (const part of PARTS) {
       const c = state.configs[part];
       if (!c || !state.baseline) continue;
-      out[part] = [...c.validation.issues, ...checkReferences(c.current, state.baseline.index, vocab)].sort(bySeverity);
+      out[part] = [...c.validation.issues, ...checkReferences(c.current, state.baseline.index, vocab, world)].sort(bySeverity);
     }
     return out;
-  }, [state.configs, state.baseline, vocab]);
+  }, [state.configs, state.baseline, vocab, world]);
 
   return {
     state,
     issues,
+    world,
     edit,
     save,
     resolve,
@@ -215,14 +236,23 @@ export function useWorkspace(id: string, vocab: Vocabulary) {
 
 export type WorkspaceModel = ReturnType<typeof useWorkspace>;
 
-function useValidation(id: string, part: Part, state: State, dispatch: (a: Action) => void, vocab: Vocabulary) {
+function useValidation(id: string, part: Part, state: State, dispatch: (a: Action) => void) {
   const current = state.configs[part]?.current;
   const baselineRevision = state.baseline?.revision;
   const inFlight = useRef(false);
   const queued = useRef<Graph | undefined>(undefined);
+  const latest = useRef(state);
+  latest.current = state;
+  const dependencies = DEPENDS[part].map((p) => state.configs[p]?.current);
 
   useEffect(() => {
     if (!current || !baselineRevision) return;
+    // The job checks this part with every other part as edited beside it, as context.
+    const body = () => {
+      let g = Graph.empty();
+      for (const p of PARTS) g = g.merge(latest.current.configs[p]?.current ?? Graph.empty());
+      return g;
+    };
     const run = async (graph: Graph): Promise<void> => {
       // An empty configuration conforms by definition, and the store holds no graph for it.
       if (graph.size === 0) {
@@ -234,15 +264,15 @@ function useValidation(id: string, part: Part, state: State, dispatch: (a: Actio
         return;
       }
       inFlight.current = true;
-      dispatch({ type: "validation", part, validation: { state: "running", issues: [], of: graph } });
+      dispatch({ type: "validation", part, validation: { state: "running", issues: latest.current.configs[part]?.validation.issues ?? [], of: graph, job: latest.current.configs[part]?.validation.job } });
       try {
-        const jobId = await api.submit(id, "validate", part, graph);
+        const jobId = await api.submit(id, "validate", part, body());
         const job = await awaitJob(jobId);
         void api.deleteJob(jobId).catch(() => undefined);
         const validation: Validation =
           job.status === "Failed"
             ? { state: "failed", issues: [], of: graph, message: job.failure ?? "The validation job failed." }
-            : { state: "done", issues: job.issues, of: graph };
+            : { state: "done", issues: job.issues, of: graph, job };
         if (!queued.current) dispatch({ type: "validation", part, validation });
       } catch (error) {
         if (!queued.current) {
@@ -257,5 +287,5 @@ function useValidation(id: string, part: Part, state: State, dispatch: (a: Actio
     };
     const timer = setTimeout(() => void run(current), 600);
     return () => clearTimeout(timer);
-  }, [id, part, current, baselineRevision, dispatch, vocab]);
+  }, [id, part, current, baselineRevision, dispatch, ...dependencies]); // eslint-disable-line react-hooks/exhaustive-deps
 }

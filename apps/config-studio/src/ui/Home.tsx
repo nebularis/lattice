@@ -6,7 +6,7 @@ import { FilePlus2, FolderOpen, Layers, Trash2, Upload } from "lucide-react";
 import { api, type Sample, type WorkspaceSummary } from "../api";
 import { Baseline } from "../rdf/baseline";
 import { Graph, TurtleError } from "../rdf/graph";
-import { split } from "../rdf/split";
+import { CONFIG_PARTS, split } from "../rdf/split";
 import { Modal, Spinner, ago, go, readFiles } from "./kit";
 
 export function Home() {
@@ -82,8 +82,11 @@ export function Home() {
               <div className="row small muted">Changed {ago(w.modifiedAt)}</div>
               <div className="row" style={{ flexWrap: "wrap" }}>
                 <span className="chip baseline">baseline r{w.revisions.baseline}</span>
-                <span className="chip persist">persistence r{w.revisions.persistence}</span>
-                <span className="chip surface">surface r{w.revisions.surface}</span>
+                {CONFIG_PARTS.filter((p) => w.revisions[p] > 0).map((p) => (
+                  <span key={p} className="chip">
+                    {p} r{w.revisions[p]}
+                  </span>
+                ))}
               </div>
             </div>
           ))}
@@ -138,7 +141,7 @@ function NewWorkspace({ onClose }: { onClose: () => void }) {
     try {
       const parts = split(parsed());
       const b = new Baseline(parts.baseline);
-      preview = `${b.classes.size} classes, ${b.properties.size} properties, ${b.schemes.length} schemes in the baseline. ${parts.persistence.size} persistence and ${parts.surface.size} surface triples.`;
+      preview = `${b.classes.size} classes and ${b.properties.size} properties in the baseline. ${CONFIG_PARTS.map((p) => `${parts[p].size} ${p}`).join(", ")} triples.`;
     } catch (e) {
       preview = e instanceof Error ? e.message : String(e);
     }
@@ -151,7 +154,7 @@ function NewWorkspace({ onClose }: { onClose: () => void }) {
       const graph = source === "upload" ? parsed() : await api.sample(source);
       const parts = split(graph);
       const id = await api.createWorkspace(label.trim() || "Untitled workspace", parts.baseline);
-      for (const part of ["persistence", "surface"] as const) {
+      for (const part of CONFIG_PARTS) {
         if (parts[part].size) await api.save(id, part, parts[part], '"0"');
       }
       go("w", id);

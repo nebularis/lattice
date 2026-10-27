@@ -1,11 +1,11 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Validation Pack: config-studio CS0 to CS4
+# Validation Pack: config-studio CS0 to CS6
 
 **Plan:** [config-studio](../plans/config-studio.md)
 **Status record:** [config-studio](../status/config-studio.md)
 
-One pack for the unit's five slices, each a section, since they were built and are reviewed together (a deviation from one pack per slice, recorded in the status record).
+One pack for the unit's seven slices, each a section, since they were built and are reviewed together (a deviation from one pack per slice, recorded in the status record).
 
 ## Invariant
 
@@ -106,6 +106,47 @@ mise run test:config-studio
 
 `mise exec -- yarn workspace @lattice/config-studio run test:stack`, with the stack up as the service's README says.
 
+## CS5: vocabulary, quantification and eligibility, service and worker
+
+`workers/tests/test_config_studio_layers.py`, 12 cases, and two more in `StudioApiTest`.
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| CS5-01 | conjunctive scopes / validate vocabulary / two segments by four scope sets, north and gold resolving to the tier scheme from 2026, everything before it falling back | L4 | + | pass |
+| CS5-02 | an equal-specificity conflict / validate / a SHACL violation, and conflict rows naming both tied bindings | L4 | − | pass |
+| CS5-03 | a temporal handover / validate / nothing before January, edition 1 from January, edition 2 from July | L4 | + | pass |
+| CS5-04 | the quantification examples / validate / conform | L4 | + | pass |
+| CS5-05 | a hierarchical condition / validate / the expansion Denied, Permitted, Permitted over the scheme, and its question decided Permitted | L4 | + | pass |
+| CS5-06 | two questions expecting Permitted, one decided Denied / validate / one passes, one fails as a `TestFailed` violation, the job does not conform | L4 | − | pass |
+| CS5-07 | an interval question / validate / decided by the compiled query | L4 | + | pass |
+| CS5-08 | a hierarchical condition with no contract / validate / an `IRCompileError` violation | L4 | − | pass |
+| CS5-09 | conditions on bound subjects / validate / an `EvidenceBindingNotTested` note, nothing decided | L4 | − | pass |
+| CS5-10 | a hierarchical condition / compile eligibility / `decision.rq` and `shapes.ttl` per condition and profile | L4 | + | pass |
+| CS5-11 | vocabulary / compile / Failed, nothing to compile | L4 | − | pass |
+| CS5-12 | no baseline graph in the store / validate / Succeeded, the baseline read as empty | L4 | + | pass |
+| CS5-13 | the service / each new configuration saved and validated, compile refused for vocabulary and quantification / revisions 1, 202, 400 | L1 | +/− | pass |
+| CS5-14 | a workspace described before the new graphs / read and saved / their revisions read as 0 | L1 | + | pass |
+
+## CS6: the new views
+
+`src/rdf/rdf.test.ts`, 6 more cases, and `e2e/studio.spec.ts`, 6 more, against a fake service whose oracle answers resolutions, expansions and questions from the submitted Turtle.
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| CS6-01 | the lending eligibility sample / split / conditions, ranges and bindings each in their part, nothing in the baseline | L1 | + | pass |
+| CS6-02 | the vocabulary / fields / a contract reference despite one individual of its range, several required concepts, a language-tagged label, decimal values | L1 | + | pass (a probe found every `elg:` property single-valued, fixed) |
+| CS6-03 | a range written, read, tested for containment at both ends, and removed / nothing left behind | L1 | +/− | pass |
+| CS6-04 | a concept test and a value test / written as questions, the value as a point range set, removed whole | L1 | + | pass |
+| CS6-05 | the employment scheme / a forest by broader | L1 | + | pass |
+| CS6-06 | a job graph / resolutions, expansions and tests read | L1 | + | pass |
+| CS6-07 | the lending eligibility sample / created / three parts saved from revision 0 | L6 | + | pass |
+| CS6-08 | a scheme contract / the resolution table, a moment and a scope tried / the winning binding, then the fallback before its start | L6 | + | pass |
+| CS6-09 | a concept condition / its expansion counted, a test added expecting Permitted for an excluded concept / the body carries the expectation, the test fails | L6 | − | pass |
+| CS6-10 | an interval condition / a value test added / a point range set in the body, the number line marks it outside | L6 | + | pass |
+| CS6-11 | a scheme and a binding / a narrower concept added, a validity end set / a tagged label, a temporal scope in the body | L6 | + | pass |
+| CS6-12 | an admission profile / opened / its tests marked as under construction | L6 | + | pass |
+| CS6-13 | the live stack / an interval test failing then passing, a condition's expansion, a contract's table / each as the real engines decide | L5 | +/− | pass |
+
 ## Artefacts to inspect
 
 - The studio itself: `mise run studio:service`, `studio:worker`, `studio:web`, then <http://127.0.0.1:4175>.
@@ -118,4 +159,5 @@ mise run test:config-studio
 - `RabbitJobBus` and the Fuseki store have no automated integration test, only CS4-01. A Testcontainers suite like `check:authoring-service-it` would cover them.
 - The worker's `main` and its reconnect loop are exercised only by CS4-01.
 - Surface's `shapes/constraints.ttl` is not run (TD-11), and every surface validation says so as a warning.
-- Accessibility was checked by role-based selectors in CS3 and by hand, not by an audit tool.
+- Accessibility was checked by role-based selectors in CS3 and CS6 and by hand, not by an audit tool.
+- Under construction, shown as such in the studio: testing an admission profile's composed decision, testing a condition that reads bound subjects, and quantification's comparisons, conversions and canonical range sets. The last waits on a quantification reference implementation the repository does not have.

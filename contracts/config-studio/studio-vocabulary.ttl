@@ -31,6 +31,15 @@ cst:surfaceRevision a owl:DatatypeProperty ; rdfs:domain cst:Workspace ; rdfs:ra
 cst:persistenceRevision a owl:DatatypeProperty ; rdfs:domain cst:Workspace ; rdfs:range xsd:integer ;
     rdfs:comment "The revision of the saved persistence configuration, 0 before the first save. The ETag of that graph." .
 
+cst:vocabularyRevision a owl:DatatypeProperty ; rdfs:domain cst:Workspace ; rdfs:range xsd:integer ;
+    rdfs:comment "The revision of the saved vocabulary configuration, 0 before the first save, and when a description written before the graph existed lacks it." .
+
+cst:quantificationRevision a owl:DatatypeProperty ; rdfs:domain cst:Workspace ; rdfs:range xsd:integer ;
+    rdfs:comment "The revision of the saved quantification configuration, 0 before the first save." .
+
+cst:eligibilityRevision a owl:DatatypeProperty ; rdfs:domain cst:Workspace ; rdfs:range xsd:integer ;
+    rdfs:comment "The revision of the saved eligibility configuration, 0 before the first save." .
+
 cst:createdAt a owl:DatatypeProperty ; rdfs:range xsd:dateTime .
 cst:modifiedAt a owl:DatatypeProperty ; rdfs:range xsd:dateTime .
 
@@ -63,7 +72,10 @@ cst:Validate a cst:JobKind ; rdfs:comment "Validate the configuration and the ba
 cst:Compile a cst:JobKind ; rdfs:comment "Compile the configuration with the target's compiler." .
 
 cst:Target a owl:Class ;
-    owl:equivalentClass [ a owl:Class ; owl:oneOf ( cst:Persistence cst:Surface ) ] .
+    owl:equivalentClass [ a owl:Class ; owl:oneOf ( cst:Vocabulary cst:Quantification cst:Eligibility cst:Persistence cst:Surface ) ] .
+cst:Vocabulary a cst:Target ; rdfs:comment "voc: and skos: configuration: schemes, concepts, contracts, bindings and scopes, resolved by tools/vocabulary. Validated, never compiled." .
+cst:Quantification a cst:Target ; rdfs:comment "qnt: configuration: value spaces, units, quantities and ranges. Validated, never compiled." .
+cst:Eligibility a cst:Target ; rdfs:comment "elg: configuration: conditions, profiles and questions, compiled by tools/mork_compilers." .
 cst:Persistence a cst:Target ; rdfs:comment "dal: configuration, compiled by tools/persistence." .
 cst:Surface a cst:Target ; rdfs:comment "srf: configuration, compiled by tools/surface." .
 
@@ -112,3 +124,60 @@ cst:Gap a owl:Class ;
 cst:obligation a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain cst:Gap ; rdfs:range xsd:string ;
     rdfs:comment "Whose obligation the gap is: unimplemented, caller or housekeeping." .
 cst:message a owl:DatatypeProperty ; rdfs:range xsd:string .
+
+# --- what a layer's engine adds to a validation ------------------------------------
+
+cst:resolution a owl:ObjectProperty ; rdfs:domain cst:Job ; rdfs:range cst:Resolution .
+
+cst:Resolution a owl:Class ;
+    rdfs:comment "A scheme contract's resolution by tools/vocabulary for one time segment and one set of active binding scopes. The segments are those the contract's bindings' validity bounds draw, and the sets every combination of the scopes they name." .
+cst:contract a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:Resolution .
+cst:validFrom a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain cst:Resolution ; rdfs:range xsd:dateTime ;
+    rdfs:comment "The segment's first instant. Absent for the segment before every bound." .
+cst:validTo a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain cst:Resolution ; rdfs:range xsd:dateTime ;
+    rdfs:comment "The segment's first instant past it, exclusive. Absent for the segment after every bound." .
+cst:context a owl:ObjectProperty ; rdfs:domain cst:Resolution ;
+    rdfs:comment "An active binding scope. None means no scope is active." .
+cst:outcome a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:Resolution ; rdfs:range cst:Outcome .
+cst:scheme a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:Resolution .
+cst:binding a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:Resolution .
+cst:tied a owl:ObjectProperty ; rdfs:domain cst:Resolution ;
+    rdfs:comment "A binding in a conflict: no binding is more specific than every other that applies." .
+
+cst:Outcome a owl:Class ;
+    owl:equivalentClass [ a owl:Class ; owl:oneOf ( cst:Resolved cst:Fallback cst:Conflict cst:Unresolved ) ] .
+cst:Resolved a cst:Outcome ; rdfs:comment "One binding applies and wins." .
+cst:Fallback a cst:Outcome ; rdfs:comment "No binding applies, so the contract's voc:boundScheme does." .
+cst:Conflict a cst:Outcome ; rdfs:comment "More than one binding survives strict-superset precedence, so nothing resolves." .
+cst:Unresolved a cst:Outcome ; rdfs:comment "No binding applies and the contract names no fallback scheme." .
+
+cst:expansion a owl:ObjectProperty ; rdfs:domain cst:Job ; rdfs:range cst:Expansion .
+cst:Expansion a owl:Class ;
+    rdfs:comment "A concept condition's decision for one member of its resolved scheme, as tools/mork_compilers expands it." .
+cst:condition a owl:ObjectProperty, owl:FunctionalProperty .
+cst:concept a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:Expansion .
+cst:decision a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:range cst:Decision .
+
+cst:testResult a owl:ObjectProperty ; rdfs:domain cst:Job ; rdfs:range cst:TestResult .
+cst:TestResult a owl:Class ;
+    rdfs:comment "An elg:Question decided by its condition's compiled SPARQL, run on the configuration as submitted." .
+cst:question a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:TestResult .
+cst:diagnostic a owl:DatatypeProperty ; rdfs:domain cst:TestResult ; rdfs:comment "The exe: diagnostic of an Undetermined decision, by local name." .
+cst:passed a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain cst:TestResult ; rdfs:range xsd:boolean ;
+    rdfs:comment "Whether the decision is the question's cst:expectedDecision. Absent when the question expects none." .
+
+cst:Decision a owl:Class ;
+    owl:equivalentClass [ a owl:Class ; owl:oneOf ( cst:Permitted cst:Denied cst:Undetermined cst:NotTested ) ] .
+cst:Permitted a cst:Decision .
+cst:Denied a cst:Decision .
+cst:Undetermined a cst:Decision .
+cst:NotTested a cst:Decision ; rdfs:comment "The condition reads its candidate from bound subjects, which the studio does not test yet, or does not compile." .
+
+# --- what the author adds to eligibility configuration -------------------------------
+
+cst:expectedDecision a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:comment "On an elg:Question, the decision the author expects of it: elg:Permitted, elg:Denied or elg:Undetermined. A decision otherwise is a failed test, an sh:Violation with cst:code TestFailed." .
+cst:resolutionTime a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:range xsd:dateTime ;
+    rdfs:comment "On an elg:Question or a condition, the instant its scheme is resolved at. Absent, the job's submission time." .
+cst:resolutionScope a owl:ObjectProperty ;
+    rdfs:comment "On an elg:Question or a condition, a binding scope active when its scheme is resolved." .

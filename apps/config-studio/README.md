@@ -2,7 +2,7 @@
 
 # Configuration Studio
 
-A web application for authoring persistence (`dal:`) and surface (`srf:`) configuration against an applied ontology, its baseline, and compiling it. A proof of concept ([ADR-A136](../../docs/architecture/decisions/ADR-A136-configuration-studio.md)): its code and its contracts may change or be withdrawn without deprecation.
+A web application for authoring vocabulary (`voc:`), quantification (`qnt:`), eligibility (`elg:`), persistence (`dal:`) and surface (`srf:`) configuration against an applied ontology, its baseline, checking it with each layer's own engine as you edit, and compiling it. A proof of concept ([ADR-A136](../../docs/architecture/decisions/ADR-A136-configuration-studio.md)): its code and its contracts may change or be withdrawn without deprecation.
 
 It talks to the [service](../../platform/config-studio-service) in Turtle, as [contracts/config-studio](../../contracts/config-studio/README.md) defines, and the service hands validation and compilation to the [worker](../../workers/README.md#configuration-studio-jobs-adr-a136).
 
@@ -10,11 +10,16 @@ It talks to the [service](../../platform/config-studio-service) in Turtle, as [c
 
 | View | For |
 |---|---|
-| Workspaces | make a workspace from a sample or uploaded Turtle. Each subject is sorted into baseline, persistence or surface by its terms |
+| Workspaces | make a workspace from a sample or uploaded Turtle. Each subject is sorted into the baseline or a configuration by the terms it uses |
 | Overview | every baseline class with the persistence nodes declared at its class scope and the contracts it carries, and buttons to add either |
 | Baseline | the class tree, a class's properties and what configures it, concept schemes, and replacing the baseline with a check for terms the configuration would lose |
+| Vocabulary | concept schemes with their concepts as a tree, scheme contracts with a table of how each resolves for every period and set of binding scopes and a way to try one, bindings with their validity, binding scopes |
+| Quantification | value spaces, units, quantities and ranges, with ranges drawn on a number line and written with their bounds in one step |
+| Eligibility | conditions with each concept's decision over the resolved scheme, and tests: questions with a candidate and an expected decision, decided by the compiled query as you edit. Admission profiles |
 | Persistence, Surface | the nodes by kind, and an editor per node whose fields and options come from the vocabularies, with each option's meaning, a read path built hop by hop, and findings on the field that caused them |
-| Build | compile either configuration, follow the job, and read the compiled profile, the SPARQL per operation, the surfaces, findings and gaps |
+| Build | compile eligibility, persistence or surface configuration, follow the job, and read what it produced: decision queries and shapes, the compiled profile and its SPARQL, the surfaces, findings and gaps |
+
+What waits on other work is shown and marked as under construction: testing an admission profile's composed decision, testing a condition that reads bound subjects, and quantification's comparisons, conversions and canonical range sets.
 
 The inspector shows the selected node's Turtle and the unsaved changes as a diff. The problems drawer lists every finding and opens the node it concerns. `⌘K` goes to any view, node or class, `⌘S` saves, `⌘Z` and `⇧⌘Z` undo and redo.
 
@@ -25,10 +30,11 @@ The inspector shows the selected node's Turtle and the unsaved changes as a diff
 | `src/rdf/graph.ts` | an immutable graph over an n3 store, its edits, and Turtle written in a fixed order |
 | `src/rdf/vocabulary.ts` | fields derived from `rdfs:domain` and `rdfs:range`, and the few properties whose range the ontology leaves open |
 | `src/rdf/editors.ts` | the node kinds, how an editor groups its sections, node creation, and the reference check |
-| `src/rdf/baseline.ts`, `split.ts`, `path.ts`, `report.ts` | the baseline's terms, sorting an import, the read path, and reading a job graph |
+| `src/rdf/baseline.ts`, `split.ts`, `path.ts`, `report.ts` | the baseline's terms, sorting an import into the six graphs, the read path, and reading a job graph |
+| `src/rdf/quantity.ts`, `eligibility.ts` | ranges with their bounds and quantities, and questions as tests |
 | `src/state.ts` | a workspace in the browser: saved and edited graphs, undo, live validation, saving and conflicts |
 | `src/api.ts` | the HTTP API |
-| `src/ui/` | the views |
+| `src/ui/` | the views. `Specials.tsx` holds the sections the vocabularies cannot derive |
 
 ## Build, run and test
 

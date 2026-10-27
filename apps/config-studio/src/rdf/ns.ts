@@ -14,6 +14,9 @@ export const PREFIXES: Record<string, string> = {
   srf: "https://www.nebularis.org/neuro-semantic/lattice/surface#",
   fnd: "https://www.nebularis.org/neuro-semantic/lattice/foundation#",
   voc: "https://www.nebularis.org/neuro-semantic/lattice/vocabulary#",
+  qnt: "https://www.nebularis.org/neuro-semantic/lattice/quantification#",
+  elg: "https://www.nebularis.org/neuro-semantic/lattice/eligibility#",
+  exe: "https://www.nebularis.org/neuro-semantic/lattice/executable#",
   cst: "https://www.nebularis.org/neuro-semantic/lattice/poc/config-studio#",
 };
 
@@ -26,6 +29,10 @@ export const SKOS = ns(PREFIXES.skos);
 export const DAL = ns(PREFIXES.dal);
 export const SRF = ns(PREFIXES.srf);
 export const CST = ns(PREFIXES.cst);
+export const VOC = ns(PREFIXES.voc);
+export const FND = ns(PREFIXES.fnd);
+export const QNT = ns(PREFIXES.qnt);
+export const ELG = ns(PREFIXES.elg);
 
 export const TYPE = RDF("type");
 export const LABEL = RDFS("label");

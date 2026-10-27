@@ -23,7 +23,10 @@ CST = Namespace("https://www.nebularis.org/neuro-semantic/lattice/poc/config-stu
 SAMPLE_PREFIX = "urn:lattice:studio:sample:"
 
 # The modules whose specifications and vocabularies define what the studio's forms offer.
-VOCABULARY = (("persistence", "spec"), ("surface", "spec"), ("surface", "vocab"), ("foundation", "spec"), ("vocabulary", "spec"))
+VOCABULARY = (
+    ("persistence", "spec"), ("surface", "spec"), ("surface", "vocab"), ("foundation", "spec"), ("foundation", "vocab"), ("vocabulary", "spec"),
+    ("quantification", "spec"), ("quantification", "vocab"), ("eligibility", "spec"), ("eligibility", "vocab"),
+)
 
 
 def _turtle(directory: Path) -> List[Path]:

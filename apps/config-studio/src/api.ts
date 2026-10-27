@@ -4,9 +4,10 @@
 import { Graph } from "./rdf/graph";
 import { readJob, type Job } from "./rdf/report";
 import { CST, LABEL, COMMENT, localName } from "./rdf/ns";
+import { CONFIG_PARTS, type ConfigPart, type Part } from "./rdf/split";
 
-export type GraphName = "baseline" | "surface" | "persistence";
-export type Target = "surface" | "persistence";
+export type GraphName = Part;
+export type Target = ConfigPart;
 
 const TURTLE = "text/turtle";
 
@@ -50,13 +51,13 @@ export interface Sample {
 }
 
 function summary(graph: Graph, iri: string): WorkspaceSummary {
-  const n = (p: string) => Number(graph.value(iri, CST(p)) ?? 0);
+  const n = (name: GraphName) => Number(graph.value(iri, CST(`${name}Revision`)) ?? 0);
   return {
     id: iri.replace("urn:lattice:studio:ws:", ""),
     iri,
     label: graph.value(iri, LABEL) ?? "Untitled workspace",
     modifiedAt: graph.value(iri, CST("modifiedAt")),
-    revisions: { baseline: n("baselineRevision"), surface: n("surfaceRevision"), persistence: n("persistenceRevision") },
+    revisions: Object.fromEntries((["baseline", ...CONFIG_PARTS] as GraphName[]).map((name) => [name, n(name)])) as Record<GraphName, number>,
   };
 }
 

@@ -192,3 +192,33 @@ Dependencies are few and current: React, n3 and lucide-react in the browser, Jen
 ## 7. Out of scope
 
 Projection contracts (they lower to MORK and need the MORK workflow), multiple users and authentication, the store SPI, a revision ledger (the Surface workflow's ADR-A33 covers that), housekeeping, and running generated SPARQL against a store.
+
+## 8. Vocabulary, quantification and eligibility (added 2026-10-27)
+
+At the maintainer's request the studio gained three more configurations beside persistence and surface, each validated by its layer's own engine as the author edits. A feature that waits on other work is shown and marked as under construction, naming what it waits on.
+
+| Configuration | Holds | What its validation adds to the layer's shapes |
+|---|---|---|
+| vocabulary | concept schemes and their concepts, scheme contracts, bindings, binding scopes | the resolution table: every contract resolved by `tools/vocabulary` for every time segment its bindings draw and every set of the scopes they name |
+| quantification | value spaces, units, quantities, bounds, ranges, range sets | nothing yet. Comparison and conversion have no reference implementation (under construction) |
+| eligibility | conditions, admission profiles, questions | each condition compiled by `tools/mork_compilers`, each concept condition's expansion over its resolved scheme, and each `elg:Question` decided by the condition's compiled SPARQL against the decision its author expects |
+
+```mermaid
+flowchart LR
+    V["vocabulary: schemes, contracts, bindings"] -- "resolves a condition's scheme" --> E["eligibility: conditions, questions"]
+    Q["quantification: spaces, ranges"] -- "a condition's required ranges, a question's candidate" --> E
+    V -- "a population's scheme contract" --> S["surface"]
+```
+
+- **Tests are the layer's own questions.** A test is an `elg:Question` with a candidate, and the studio adds `cst:expectedDecision`, and optionally `cst:resolutionTime` and `cst:resolutionScope`. So a test is RDF the eligibility layer already defines, and the compiled SPARQL that decides it is the one a deployment would run. A failed expectation is a violation, so the configuration does not conform while a test fails.
+- **One table answers every resolution question.** Resolution depends on a contract, an instant and a set of scopes. The instants that matter are the bindings' bounds, and the scopes those the bindings name, so the worker resolves every combination once, at most 2⁶ sets per segment, and the browser answers "what applies on this date with these scopes" without a round trip. A contract with more than six scopes gets one row per binding's own scope set.
+- **Each part validates with the others as context.** The browser sends every configuration as edited, merged, as the body of a job, and the job's target names the one whose shapes and engine run. Eligibility revalidates when vocabulary or quantification changes, and surface when vocabulary does.
+- **A range is written as seven nodes at once.** A `qnt:Range` needs two `qnt:Bound`s and two `qnt:Quantity`s, so the studio writes them together and draws them on a number line. An interval test's candidate is a range set holding one closed point.
+
+| ID | Decision | Alternatives | Why |
+|---|---|---|---|
+| CS-D10 | Three more configuration graphs, revisioned like persistence and surface | vocabulary and value spaces kept in the baseline | the baseline is the uploaded ontology, replaced whole. Schemes and ranges are authored and saved like any configuration |
+| CS-D11 | Tests are `elg:Question` nodes with `cst:expectedDecision`, decided by the compiled SPARQL | a studio test-case vocabulary, or the reference evaluator | the question is the layer's own input. The reference evaluator is a test-time oracle that never runs on a live path (ADR-A-FM3) |
+| CS-D12 | The worker computes the whole resolution table on each vocabulary validation | a resolve job per question the author asks | the table is small, and the browser answers each question at once |
+| CS-D13 | A job's body is every configuration as edited | the target configuration, with the others read as saved | a surface population or a condition refers to vocabulary the author may not have saved yet |
+| CS-D14 | Under construction: testing a profile's composed decision, testing a condition on bound subjects, and quantification's comparisons, conversions and canonical range sets | leaving them out | the author sees what exists and what it waits on |

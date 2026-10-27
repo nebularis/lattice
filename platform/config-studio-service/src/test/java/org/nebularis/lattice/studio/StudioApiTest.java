@@ -54,7 +54,9 @@ class StudioApiTest {
         Resource node = Fixture.model(r).getResource(Graphs.workspace(WS));
         assertEquals("Café plan+1", node.getProperty(RDFS.label).getString());
         assertEquals(1, node.getProperty(Cst.baselineRevision).getInt());
-        assertEquals(0, node.getProperty(Cst.surfaceRevision).getInt());
+        for (String name : List.of("vocabulary", "quantification", "eligibility", "surface", "persistence")) {
+            assertEquals(0, node.getProperty(Cst.revision(name)).getInt(), name);
+        }
         assertEquals(Graphs.baseline(WS, 1), node.getProperty(Cst.baselineGraph).getResource().getURI());
         assertEquals("2026-10-27T10:00:00Z", node.getProperty(Cst.createdAt).getLiteral().getLexicalForm());
         assertEquals(1, f.store.graph(Graphs.baseline(WS, 1)).size());
@@ -189,6 +191,8 @@ class StudioApiTest {
         f.createWorkspace("One");
         assertEquals(400, f.post(WS_PATH + "/jobs", "kind=build&target=surface", CONFIG).status());
         assertEquals(400, f.post(WS_PATH + "/jobs", "kind=validate&target=baseline", CONFIG).status());
+        assertEquals(400, f.post(WS_PATH + "/jobs", "kind=compile&target=vocabulary", CONFIG).status());
+        assertEquals(400, f.post(WS_PATH + "/jobs", "kind=compile&target=quantification", CONFIG).status());
         assertEquals(400, f.post(WS_PATH + "/jobs", null, CONFIG).status());
         assertEquals(404, f.post("/api/workspaces/" + Fixture.id(9) + "/jobs", "kind=validate&target=surface", CONFIG).status());
         assertTrue(f.bus.published().isEmpty());
@@ -256,13 +260,39 @@ class StudioApiTest {
     }
 
     @Test
+    void eachNewPartIsSavedUnderItsOwnRevisionAndCheckedAsATarget() {
+        f.createWorkspace("One");
+        for (String name : List.of("vocabulary", "quantification", "eligibility")) {
+            ApiResponse saved = f.put(WS_PATH + "/graphs/" + name, "\"0\"", CONFIG);
+            assertEquals(204, saved.status(), name);
+            assertEquals("\"1\"", saved.headers().get("ETag"));
+            same(Fixture.model(CONFIG), f.store.graph(Graphs.config(WS, name)));
+            assertEquals(1, ws().getProperty(Cst.revision(name)).getInt());
+            assertEquals(202, f.post(WS_PATH + "/jobs", "kind=validate&target=" + name, CONFIG).status(), name);
+        }
+        assertEquals(202, f.post(WS_PATH + "/jobs", "kind=compile&target=eligibility", CONFIG).status());
+        assertEquals(0, ws().getProperty(Cst.surfaceRevision).getInt());
+    }
+
+    @Test
+    void aWorkspaceDescribedBeforeTheNewPartsReadsTheirRevisionsAsZero() {
+        f.createWorkspace("One");
+        Model old = f.store.graph(Graphs.workspace(WS));
+        old.removeAll(null, Cst.revision("vocabulary"), null).removeAll(null, Cst.revision("eligibility"), null);
+        f.store.write(List.of(), Map.of(Graphs.workspace(WS), old));
+        assertEquals("\"0\"", f.get(WS_PATH + "/graphs/vocabulary").headers().get("ETag"));
+        assertEquals(204, f.put(WS_PATH + "/graphs/eligibility", "\"0\"", CONFIG).status());
+    }
+
+    @Test
     void deleteWorkspaceDropsItsGraphs() {
         f.createWorkspace("One");
         f.put(WS_PATH + "/graphs/baseline", "\"1\"", Fixture.PREFIXES + "ex:x ex:p ex:y .");
         f.put(SURFACE, "\"0\"", CONFIG);
         assertEquals(204, f.send("DELETE", WS_PATH, Map.of(), null).status());
         for (String graph : List.of(Graphs.workspace(WS), Graphs.baseline(WS, 1), Graphs.baseline(WS, 2),
-            Graphs.config(WS, "surface"), Graphs.config(WS, "persistence"))) {
+            Graphs.config(WS, "surface"), Graphs.config(WS, "persistence"), Graphs.config(WS, "vocabulary"),
+            Graphs.config(WS, "quantification"), Graphs.config(WS, "eligibility"))) {
             assertTrue(f.store.graph(graph).isEmpty(), graph);
         }
         assertEquals(404, f.get(WS_PATH).status());

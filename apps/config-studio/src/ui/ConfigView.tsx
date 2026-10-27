@@ -3,13 +3,14 @@
 // sections and fields come from the vocabulary (rdf/editors.ts, rdf/vocabulary.ts).
 
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeftRight, ArrowRight, ChevronDown, ChevronRight, Database, Plus, Sparkles, Trash2, X } from "lucide-react";
-import { KINDS, classOf, concerns, create, describe, kindOf, nameOf, sectionsFor, type Kind } from "../rdf/editors";
+import { ArrowLeftRight, ArrowRight, BookOpen, ChevronDown, ChevronRight, Database, ListChecks, Plus, Ruler, Sparkles, Trash2, X } from "lucide-react";
+import { KINDS, classOf, concerns, create, describe, kindOf, nameOf, sectionsFor, type Kind, type Special as SpecialKind } from "../rdf/editors";
 import { DAL, SRF, compact } from "../rdf/ns";
 import { readPath, writePath, type Step } from "../rdf/path";
 import type { Issue } from "../rdf/report";
 import type { Part } from "../state";
 import { FieldControl, TermPicker } from "./Fields";
+import { ConceptsSection, ExpansionSection, LineSection, ProfileTestsSection, RangesSection, ResolutionSection, TemporalSection, TestsSection } from "./Specials";
 import { Modal, SeverityIcon, useDismiss } from "./kit";
 import { useStudio } from "./Workspace";
 
@@ -31,8 +32,8 @@ export function ConfigView({ part, selected, field }: { part: Part; selected?: s
       <div className="list">
         <div className="list-head">
           <div className="row" style={{ position: "relative" }} ref={menuRef}>
-            {part === "persistence" ? <Database size={16} color="var(--persist)" /> : <Sparkles size={16} color="var(--surface-c)" />}
-            <strong className="grow">{part === "persistence" ? "Persistence" : "Surface"}</strong>
+            {PART_INFO[part].icon(16)}
+            <strong className="grow">{PART_INFO[part].title}</strong>
             <button className="btn sm primary" aria-haspopup="menu" aria-expanded={menu} onClick={() => setMenu(!menu)}>
               <Plus size={13} /> Add
             </button>
@@ -85,13 +86,9 @@ export function ConfigView({ part, selected, field }: { part: Part; selected?: s
           <NodeEditor key={selected} part={part} node={selected} focusField={field} />
         ) : (
           <div className="empty">
-            {part === "persistence" ? <Database size={28} /> : <Sparkles size={28} />}
+            {PART_INFO[part].icon(28)}
             <h3>{selected ? "This node is not in the configuration" : "Pick a node to edit it"}</h3>
-            <p className="small">
-              {part === "persistence"
-                ? "A data access profile declares how a class is stored: its aggregate boundary, concurrency, ordering and more."
-                : "A promotion restates a value reached by a read path. An index makes carriers retrievable by a value."}
-            </p>
+            <p className="small">{PART_INFO[part].empty}</p>
           </div>
         )}
       </div>
@@ -104,7 +101,7 @@ function AddNode({ part, kind, onClose }: { part: Part; kind: Kind; onClose: () 
   const studio = useStudio();
   const [name, setName] = useState("");
   const [forClass, setForClass] = useState<string[]>([]);
-  const wantsClass = kind.type !== DAL("ClaimScheme") && kind.type !== DAL("DigestScheme") && kind.type !== SRF("SurfaceProfile") && !kind.type.endsWith("Population") && kind.type !== DAL("NamespaceScope") && kind.type !== DAL("GraphPatternScope");
+  const wantsClass = (part === "persistence" || part === "surface") && kind.type !== DAL("ClaimScheme") && kind.type !== DAL("DigestScheme") && kind.type !== SRF("SurfaceProfile") && !kind.type.endsWith("Population") && kind.type !== DAL("NamespaceScope") && kind.type !== DAL("GraphPatternScope");
   const submit = () => {
     const cls = forClass[0];
     const label = name.trim() || `${cls ? studio.baseline.classes.get(cls)?.label + " " : ""}${kind.title}`;
@@ -191,7 +188,7 @@ function NodeEditor({ part, node, focusField }: { part: Part; node: string; focu
     <div className="editor">
       <div className="editor-head">
         <div className="grow">
-          <span className={`chip ${part === "persistence" ? "persist" : "surface"}`}>{kind.title}</span>
+          <span className={`chip ${PART_INFO[part].tone}`}>{kind.title}</span>
           <h2 style={{ marginTop: 8 }}>{nameOf(graph, node)}</h2>
           <div className="iri">{node}</div>
           {describe(vocab, kind.type) && <p className="type-desc">{describe(vocab, kind.type)}</p>}
@@ -208,9 +205,9 @@ function NodeEditor({ part, node, focusField }: { part: Part; node: string; focu
         </div>
       )}
       {sections.map((s) => (
-        <SectionCard key={s.title} title={s.title} set={s.fields.filter((f) => graph.objects(node, f.property).length > 0).length} total={s.path ? undefined : s.fields.length} startOpen={s.fields.some((f) => graph.objects(node, f.property).length > 0) || s.path || sections.indexOf(s) < 3 || s.fields.some((f) => f.property === focusField)}>
-          {s.path ? (
-            <PathBuilder part={part} node={node} />
+        <SectionCard key={s.title} title={s.title} set={s.fields.filter((f) => graph.objects(node, f.property).length > 0).length} total={s.special ? undefined : s.fields.length} startOpen={s.fields.some((f) => graph.objects(node, f.property).length > 0) || !!s.special || sections.indexOf(s) < 3 || s.fields.some((f) => f.property === focusField)}>
+          {s.special ? (
+            <Special kind={s.special} part={part} node={node} />
           ) : (
             <div className="fields">
               {s.fields.map((f) => {
@@ -225,7 +222,7 @@ function NodeEditor({ part, node, focusField }: { part: Part; node: string; focu
                       <div className="prop">{compact(f.property)}</div>
                     </div>
                     <div>
-                      <FieldControl field={f} graph={graph} node={node} baseline={baseline} vocab={vocab} context={context} edit={edit} open={(n) => studio.open(part, n)} />
+                      <FieldControl field={f} graph={graph} node={node} baseline={baseline} vocab={vocab} context={context} edit={edit} part={part} world={studio.world} open={(n) => studio.open(studio.partOf(n) ?? part, n)} />
                     </div>
                     {errors.length > 0 && (
                       <div className="errors">
@@ -248,6 +245,62 @@ function NodeEditor({ part, node, focusField }: { part: Part; node: string; focu
     </div>
   );
 }
+
+function Special({ kind, part, node }: { kind: SpecialKind; part: Part; node: string }) {
+  switch (kind) {
+    case "path":
+      return <PathBuilder part={part} node={node} />;
+    case "concepts":
+      return <ConceptsSection node={node} />;
+    case "temporal":
+      return <TemporalSection part={part} node={node} />;
+    case "resolution":
+      return <ResolutionSection node={node} />;
+    case "expansion":
+      return <ExpansionSection node={node} />;
+    case "tests":
+      return <TestsSection node={node} />;
+    case "ranges":
+      return <RangesSection part={part} node={node} />;
+    case "line":
+      return <LineSection node={node} />;
+    case "profileTests":
+      return <ProfileTestsSection />;
+  }
+}
+
+const PART_INFO: Record<Part, { title: string; tone: string; icon: (size: number) => React.ReactNode; empty: string }> = {
+  vocabulary: {
+    title: "Vocabulary",
+    tone: "baseline",
+    icon: (n) => <BookOpen size={n} color="var(--baseline-c)" />,
+    empty: "A concept scheme holds concepts in a hierarchy. A scheme contract says which scheme a property's values come from, and its bindings choose an edition by scope and time.",
+  },
+  quantification: {
+    title: "Quantification",
+    tone: "accent",
+    icon: (n) => <Ruler size={n} color="var(--accent)" />,
+    empty: "A value space declares an order, a density and units. A range set is a set of ranges on one space, each between two bounds.",
+  },
+  eligibility: {
+    title: "Eligibility",
+    tone: "ok",
+    icon: (n) => <ListChecks size={n} color="var(--ok)" />,
+    empty: "A condition admits candidates by concept or by range. Add questions to it as tests, and the compiled query decides each as you edit.",
+  },
+  persistence: {
+    title: "Persistence",
+    tone: "persist",
+    icon: (n) => <Database size={n} color="var(--persist)" />,
+    empty: "A data access profile declares how a class is stored: its aggregate boundary, concurrency, ordering and more.",
+  },
+  surface: {
+    title: "Surface",
+    tone: "surface",
+    icon: (n) => <Sparkles size={n} color="var(--surface-c)" />,
+    empty: "A promotion restates a value reached by a read path. An index makes carriers retrievable by a value.",
+  },
+};
 
 export function fieldId(property: string): string {
   return "field-" + property.replace(/[^a-zA-Z0-9]+/g, "-");

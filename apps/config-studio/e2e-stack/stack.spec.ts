@@ -10,7 +10,7 @@ const PROFILE = "https://example.org/lending#LoanApplicationStrongProfile";
 test("an author edits, sees the compiler's refusal, fixes it and compiles", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "New workspace" }).first().click();
-  await page.getByRole("button", { name: /^Lending/ }).click();
+  await page.getByRole("button", { name: /^Lending Loan/ }).click();
   await page.getByLabel("Name").fill(`Stack test ${Date.now()}`);
   await page.getByRole("button", { name: "Create workspace" }).click();
   await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
@@ -36,4 +36,32 @@ test("an author edits, sees the compiler's refusal, fixes it and compiles", asyn
   await expect(page.getByRole("option", { name: "compiled-profile.ttl" })).toBeVisible();
   await page.getByRole("option", { name: "cas-replace.rq" }).click();
   await expect(page.locator("main .code")).toContainText("DELETE");
+});
+
+test("an author tests an interval condition and reads how a contract resolves, against the real engines", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "New workspace" }).first().click();
+  await page.getByRole("button", { name: /^Lending eligibility/ }).click();
+  await page.getByLabel("Name").fill(`Stack eligibility ${Date.now()}`);
+  await page.getByRole("button", { name: "Create workspace" }).click();
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+  const ws = page.url().split("/w/")[1];
+
+  await page.goto(`/#/w/${ws}/eligibility/${encodeURIComponent("https://example.org/lattice/eligibility/minimum-credit-condition")}`);
+  const tests = page.getByRole("region", { name: "Tests" });
+  await expect(tests.getByRole("row", { name: /question-1/ })).toContainText("Permitted", { timeout: 30_000 });
+  await tests.getByLabel("Candidate value").fill("650");
+  await tests.getByLabel("Expect", { exact: true }).selectOption("Permitted");
+  await tests.getByRole("button", { name: "Add test" }).click();
+  await expect(tests.getByLabel("fails")).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole("status").first()).toHaveText(/violation/);
+  await tests.getByLabel("Expected decision").first().selectOption("Denied");
+  await expect(tests.getByText("0 fail")).toBeVisible({ timeout: 30_000 });
+
+  await page.goto(`/#/w/${ws}/eligibility/${encodeURIComponent("https://example.org/lattice/eligibility/eligible-sector")}`);
+  await expect(page.getByRole("region", { name: "Decision by concept" })).toContainText("2 permitted", { timeout: 30_000 });
+
+  await page.goto(`/#/w/${ws}/vocabulary/${encodeURIComponent("https://example.org/lattice/eligibility/sector-contract")}`);
+  const table = page.getByRole("table", { name: "Resolution table" });
+  await expect(table.getByRole("row", { name: /Lender B/ })).toContainText("Lender B sector codes", { timeout: 30_000 });
 });

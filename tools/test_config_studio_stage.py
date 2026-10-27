@@ -30,12 +30,17 @@ def test_vocabulary_merges_the_persistence_and_surface_specifications(staged: Pa
     g = Graph().parse(staged / "vocabulary.ttl")
     assert (DAL.strategy, RDF.type, OWL.ObjectProperty) in g
     assert (SRF.NominalClass, RDF.type, SRF.IndexForm) in g
+    assert (URIRef("https://www.nebularis.org/neuro-semantic/lattice/eligibility#HierarchicalMatch"), None, None) in g
+    assert (URIRef("https://www.nebularis.org/neuro-semantic/lattice/quantification#ValueSpace"), None, None) in g
 
 
 def test_every_sample_is_listed_without_its_parts_and_staged_merged(staged: Path) -> None:
     listing = Graph().parse(staged / "samples.ttl")
     samples = sorted(str(s) for s in listing.subjects(RDF.type, CST.Sample))
-    assert samples == [f"urn:lattice:studio:sample:{n}" for n in ("employment", "lending", "saas")]
+    assert samples == [
+        f"urn:lattice:studio:sample:{n}"
+        for n in ("employment", "lending", "lending-eligibility", "quantities", "saas", "vocabulary-bindings")
+    ]
     assert not list(listing.objects(None, CST.part))
     lending = Graph().parse(staged / "samples" / "lending.ttl")
     assert (URIRef("https://example.org/lending#LoanApplication"), RDF.type, OWL.Class) in lending

@@ -5,7 +5,7 @@
 // here, in OVERRIDES.
 
 import { Graph, type Term } from "./graph";
-import { COMMENT, DAL, LABEL, OWL, RDF, RDFS, SRF, TYPE, XSD, humanise, localName, sentence } from "./ns";
+import { COMMENT, DAL, ELG, LABEL, OWL, QNT, RDF, RDFS, SKOS, SRF, TYPE, VOC, XSD, humanise, localName, sentence } from "./ns";
 
 export type FieldKind =
   | "text"
@@ -34,6 +34,7 @@ export interface Field {
   single: boolean;
   range?: string;
   datatype?: string;
+  lang?: string;
   options: Option[];
 }
 
@@ -42,6 +43,12 @@ interface Override {
   single?: boolean;
   /** Offer as options the individuals that carry this property, for a range the ontology leaves open. */
   optionsWith?: string;
+  /** The range, where the ontology leaves it open or the studio does not serve the property. */
+  range?: string;
+  datatype?: string;
+  label?: string;
+  /** Write a text value with this language tag. */
+  lang?: string;
 }
 
 /** Properties whose range the ontology leaves open, or whose values are a baseline's terms. */
@@ -59,6 +66,18 @@ const OVERRIDES: Record<string, Override> = {
   [DAL("appliesTo")]: { kind: "reference", single: true },
   [DAL("priority")]: { kind: "number", single: true },
   [SRF("hasPopulationMember")]: { kind: "iri", single: false },
+  // A range class with one individual in the vocabulary is still a reference to the author's nodes.
+  [VOC("forContract")]: { kind: "reference", single: true },
+  [ELG("constrainedByContract")]: { kind: "reference", single: true },
+  [QNT("underCalendar")]: { kind: "reference", single: true },
+  [QNT("numericValue")]: { kind: "number", single: true, datatype: XSD("decimal") },
+  [QNT("onSpace")]: { kind: "reference", single: true, range: QNT("ValueSpace") },
+  // SKOS is not among the vocabularies the studio is served.
+  [SKOS("prefLabel")]: { kind: "text", single: true, label: "Preferred label", lang: "en" },
+  [SKOS("definition")]: { kind: "text", single: true, label: "Definition", lang: "en" },
+  [SKOS("broader")]: { kind: "reference", single: false, range: SKOS("Concept"), label: "Broader concept" },
+  [SKOS("inScheme")]: { kind: "reference", single: true, range: VOC("ConceptScheme"), label: "In scheme" },
+  [SKOS("notation")]: { kind: "text", single: true, label: "Notation" },
 };
 
 const NUMBERS = new Set(["integer", "long", "int", "nonNegativeInteger", "positiveInteger", "decimal"].map(XSD));
@@ -128,14 +147,15 @@ export class Vocabulary {
     if (cached) return cached;
     const g = this.graph;
     const override = OVERRIDES[property];
-    const range = g.value(property, RDFS("range"));
-    // srf: declares owl:FunctionalProperty on every single-valued property. The persistence compiler
-    // reads every dal: property it compiles as single-valued, so elsewhere one value is the default
-    // and OVERRIDES names the exceptions.
-    const functional = g.types(property).includes(OWL("FunctionalProperty")) || !property.startsWith(SRF(""));
+    const range = override?.range ?? g.value(property, RDFS("range"));
+    // srf:, voc:, qnt: and elg: declare owl:FunctionalProperty on every single-valued property. dal:
+    // declares none, and the persistence compiler reads every dal: property it compiles as
+    // single-valued, so there one value is the default and OVERRIDES names the exceptions.
+    const functional = g.types(property).includes(OWL("FunctionalProperty")) || property.startsWith(DAL(""));
     const base = {
       property,
-      label: this.label(property),
+      label: override?.label ?? this.label(property),
+      lang: override?.lang,
       comment: this.comment(property),
       range,
       options: [] as Option[],
@@ -143,7 +163,7 @@ export class Vocabulary {
     let field: Field;
     if (override) {
       const options = override.optionsWith ? this.options(g.subjects(override.optionsWith)) : [];
-      field = { ...base, kind: override.kind, single: override.single ?? functional, options };
+      field = { ...base, kind: override.kind, single: override.single ?? functional, options, datatype: override.datatype };
     } else if (range === BOOLEAN) {
       field = { ...base, kind: "boolean", single: true, datatype: range };
     } else if (range && NUMBERS.has(range)) {

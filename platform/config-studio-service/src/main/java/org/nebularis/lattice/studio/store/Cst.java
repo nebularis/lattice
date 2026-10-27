@@ -37,6 +37,16 @@ public final class Cst {
     private Cst() {
     }
 
+    /** The revision property of a named graph, {@code cst:<name>Revision}. */
+    public static Property revision(String graph) {
+        return p(graph + "Revision");
+    }
+
+    /** The job target naming a configuration graph, {@code cst:Surface} for "surface". */
+    public static Resource target(String graph) {
+        return r(Character.toUpperCase(graph.charAt(0)) + graph.substring(1));
+    }
+
     private static Resource r(String name) {
         return ResourceFactory.createResource(NS + name);
     }

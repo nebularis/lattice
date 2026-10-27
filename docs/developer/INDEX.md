@@ -807,15 +807,15 @@ and coverage, as C13a's first path and NRS N3's overlap check. Slices IX-0 to IX
 
 | Field | Value |
 |-------|-------|
-| **Status** | 🟡 CS0 to CS4 built and verified 2026-10-27. Decisions CS-D1 to CS-D9 await ratification |
+| **Status** | 🟡 CS0 to CS6 built and verified 2026-10-27. Decisions CS-D1 to CS-D14 await ratification |
 | **Unit ID** | `config-studio` |
 | **Sketch** | [config-studio.md](sketches/config-studio.md) |
 | **Plan** | [config-studio.md](plans/config-studio.md) |
 | **Status Record** | [config-studio.md](status/config-studio.md) |
-| **Validation Packs** | [CS0 to CS4](validation/config-studio.md) |
+| **Validation Packs** | [CS0 to CS6](validation/config-studio.md) |
 | **ADRs** | A-136, Proposed |
 
-A web application for authoring `dal:` persistence and `srf:` surface configuration against an applied ontology, with forms derived from the LATTICE vocabularies, live SHACL and compiler findings, optimistic concurrency, and compilation to SPARQL and surfaces. A React application, a Java and Jena service, and a Python job over RabbitMQ and Fuseki, exchanging Turtle only.
+A web application for authoring vocabulary, quantification, eligibility, persistence and surface configuration against an applied ontology, with forms derived from the LATTICE vocabularies, live SHACL and compiler findings, optimistic concurrency, and compilation to SPARQL and surfaces. A React application, a Java and Jena service, and a Python job over RabbitMQ and Fuseki, exchanging Turtle only.
 
 ## 8. Phase Handoff Documents (0-6)
 

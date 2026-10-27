@@ -4,11 +4,12 @@
 // findings and the gaps between what is declared and what the SPARQL implements.
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Check, Copy, Database, Download, FileText, Hammer, Sparkles } from "lucide-react";
+import { Check, Copy, Database, Download, FileText, Hammer, ListChecks, Sparkles } from "lucide-react";
+import { Graph } from "../rdf/graph";
 import { api, jobId } from "../api";
 import { nodeFor } from "../rdf/editors";
 import type { Issue, Job } from "../rdf/report";
-import type { Part } from "../state";
+import { PARTS, type Part } from "../state";
 import { Code, Conforms, SeverityIcon, Spinner, ago, download } from "./kit";
 import { useStudio } from "./Workspace";
 
@@ -54,7 +55,11 @@ export function BuildView() {
   const compile = async (part: Part) => {
     setError(undefined);
     try {
-      const job = await api.submit(id, "compile", part, model.state.configs[part]!.current);
+      // The compiler reads the other parts as context, as validation does: a surface population
+      // names a vocabulary contract, and a condition a scheme and a range set.
+      let body = Graph.empty();
+      for (const p of PARTS) body = body.merge(model.state.configs[p]!.current);
+      const job = await api.submit(id, "compile", part, body);
       setDetail(undefined);
       setSelected(`urn:lattice:studio:job:${job}`);
       void refresh();
@@ -68,8 +73,11 @@ export function BuildView() {
       <div className="page-head">
         <div className="grow">
           <h1>Build</h1>
-          <p>Compile the configuration as it stands in the editor, saved or not. The persistence compiler gives the compiled profile and its SPARQL, the surface compiler the generated surfaces.</p>
+          <p>Compile the configuration as it stands in the editor, saved or not. The eligibility compiler gives each condition's decision query and shapes, the persistence compiler the compiled profile and its SPARQL, the surface compiler the generated surfaces.</p>
         </div>
+        <button className="btn" disabled={!model.state.configs.eligibility!.current.size} onClick={() => void compile("eligibility")}>
+          <ListChecks size={15} /> Compile eligibility
+        </button>
         <button className="btn" disabled={!model.state.configs.persistence!.current.size} onClick={() => void compile("persistence")}>
           <Database size={15} /> Compile persistence
         </button>
@@ -86,7 +94,7 @@ export function BuildView() {
           {jobs.length === 0 && <div className="empty small">No compile yet.</div>}
           {jobs.map((j) => (
             <div key={j.iri} className="list-item" aria-selected={j.iri === selected} onClick={() => setSelected(j.iri)}>
-              {j.target === "Persistence" ? <Database size={15} color="var(--persist)" /> : <Sparkles size={15} color="var(--surface-c)" />}
+              {j.target === "Persistence" ? <Database size={15} color="var(--persist)" /> : j.target === "Surface" ? <Sparkles size={15} color="var(--surface-c)" /> : <ListChecks size={15} color="var(--ok)" />}
               <div className="grow">
                 <div className="name">{j.target}</div>
                 <div className="detail">{ago(j.submittedAt)}</div>
@@ -98,7 +106,7 @@ export function BuildView() {
         <div>{detail ? <JobDetail
               job={detail}
               onIssue={(issue) => {
-                const part = detail.target === "Persistence" ? "persistence" : "surface";
+                const part = detail.target.toLowerCase() as Part;
                 const node = nodeFor(model.state.configs[part]!.current, issue);
                 if (node) open(part, node, issue.path);
               }}

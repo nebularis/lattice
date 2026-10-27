@@ -26,10 +26,14 @@ JOBS_QUEUE = "lattice.studio.jobs"
 
 _MESSAGE = re.compile(r"urn:lattice:studio:job:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
 _KINDS = {CST.Validate: "validate", CST.Compile: "compile"}
-_TARGETS = {CST.Persistence: "persistence", CST.Surface: "surface"}
+_TARGETS = {
+    CST.Persistence: "persistence", CST.Surface: "surface", CST.Vocabulary: "vocabulary",
+    CST.Quantification: "quantification", CST.Eligibility: "eligibility",
+}
 # What the worker writes, so that a rerun starts from what the service wrote.
 _WORKER_PREDICATES = (
     CST.status, CST.startedAt, CST.finishedAt, CST.failureMessage, CST.conforms, CST.report, CST.artefact, CST.gap,
+    CST.resolution, CST.expansion, CST.testResult,
 )
 
 
@@ -88,7 +92,7 @@ class ConfigStudioWorker:
             final += self._run(job, graph)
             final.add((job, CST.status, CST.Succeeded))
         except Exception as error:  # the job could not run, which the author reads as a failure
-            for predicate in (CST.conforms, CST.report, CST.artefact, CST.gap):
+            for predicate in (CST.conforms, CST.report, CST.artefact, CST.gap, CST.resolution, CST.expansion, CST.testResult):
                 final.remove((job, predicate, None))
             final.add((job, CST.status, CST.Failed))
             final.add((job, CST.failureMessage, Literal(str(error) or type(error).__name__)))
@@ -104,17 +108,22 @@ class ConfigStudioWorker:
         return run_job(
             job, kind, target,
             self._read(graph, job, CST.configGraph, "configuration"),
-            self._read(graph, job, CST.baselineGraph, "baseline"),
+            self._read(graph, job, CST.baselineGraph, "baseline", empty_if_missing=True),
             self._root, str(submitted),
         )
 
-    def _read(self, graph: Graph, job: URIRef, predicate: URIRef, what: str) -> Graph:
+    def _read(self, graph: Graph, job: URIRef, predicate: URIRef, what: str, empty_if_missing: bool = False) -> Graph:
+        """A graph the job names. A baseline may be empty, and the store keeps no empty graph, so a
+        missing baseline reads as empty. A missing configuration fails the job, since the service
+        writes the input of every job it publishes."""
         iri = graph.value(job, predicate)
         if iri is None:
             raise ValueError(f"job names no {what} graph")
         try:
             return self._store.get_graph(str(iri))
         except GraphNotFound as error:
+            if empty_if_missing:
+                return Graph()
             raise ValueError(f"{what} graph {iri} not found") from error
 
 

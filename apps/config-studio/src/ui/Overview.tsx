@@ -7,7 +7,7 @@ import { Plus } from "lucide-react";
 import { KINDS, create, type Kind } from "../rdf/editors";
 import type { Graph } from "../rdf/graph";
 import { DAL, SRF, compact } from "../rdf/ns";
-import type { Part } from "../state";
+import { PARTS, type Part } from "../state";
 import { go } from "./kit";
 import { useStudio, type Studio } from "./Workspace";
 
@@ -40,7 +40,7 @@ export function Overview() {
   const persistence = model.state.configs.persistence!.current;
   const surface = model.state.configs.surface!.current;
   const contracts = [...surface.ofType(SRF("PromotionContract")), ...surface.ofType(SRF("IndexContract"))];
-  const issues = [...model.issues.persistence, ...model.issues.surface];
+  const issues = PARTS.flatMap((p) => model.issues[p]);
   const classes = [...baseline.classes.values()].sort((a, b) => a.label.localeCompare(b.label));
   const configured = classes.filter(
     (c) => declaredFor(persistence, c.iri, baseline.ancestors(c.iri)).length || contracts.some((k) => surface.value(k, SRF("carrier")) === c.iri),

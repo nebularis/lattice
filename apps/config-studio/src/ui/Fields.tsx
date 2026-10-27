@@ -21,7 +21,12 @@ export interface FieldProps {
   /** The baseline class the node is about, to offer its properties first. */
   context?: string;
   edit: (change: (g: Graph) => Graph) => void;
+  /** Open a node in whichever configuration holds it. */
   open: (node: string) => void;
+  /** The baseline and every configuration, where a reference may point. */
+  world: Graph;
+  /** The configuration the node belongs to, where a new referenced node is made. */
+  part: string;
 }
 
 export function FieldControl(props: FieldProps) {
@@ -87,6 +92,7 @@ export function FieldControl(props: FieldProps) {
 }
 
 function literalFor(field: Field, value: string): Term {
+  if (field.lang) return literal(value, field.lang);
   return field.datatype && field.datatype !== XSD("string") ? typed(value, field.datatype) : literal(value);
 }
 
@@ -308,17 +314,29 @@ function TextList({ values, placeholder, onChange }: { values: string[]; placeho
 }
 
 function Reference(props: FieldProps & { selected: string[]; onChange: (v: string[]) => void }) {
-  const { field, graph, vocab, baseline } = props;
+  const { field, vocab, baseline, world } = props;
   const range = field.range;
-  const candidates = graph
+  const candidates = world
     .quads(null, "http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
     .filter((q) => q.subject.termType === "NamedNode" && q.subject.value !== props.node && (!range || vocab.ancestors(q.object.value).includes(range)))
     .map((q) => q.subject.value)
     .filter((v, i, a) => a.indexOf(v) === i);
-  const creatable = KINDS.find((k) => range && vocab.ancestors(k.type).includes(range));
+  const creatable = KINDS.find((k) => range && k.part === props.part && k.creatable && vocab.ancestors(k.type).includes(range));
+  if (!field.single) {
+    return (
+      <TermPicker
+        single={false}
+        selected={props.selected}
+        options={candidates.map((c) => ({ iri: c, label: world.value(c, "http://www.w3.org/2004/02/skos/core#prefLabel") ?? localName(c), group: compact(world.types(c)[0] ?? "") }))}
+        placeholder={`Add ${field.label.toLowerCase()}`}
+        onChange={props.onChange}
+      />
+    );
+  }
   const label = (n: string) => {
-    const target = graph.value(n, "https://www.nebularis.org/neuro-semantic/lattice/persistence#targetClass");
-    return target ? `${localName(n)} (class ${baseline.classes.get(target)?.label ?? localName(target)})` : localName(n);
+    const target = world.value(n, "https://www.nebularis.org/neuro-semantic/lattice/persistence#targetClass");
+    const pref = world.value(n, "http://www.w3.org/2004/02/skos/core#prefLabel");
+    return target ? `${localName(n)} (class ${baseline.classes.get(target)?.label ?? localName(target)})` : pref ? `${pref} (${localName(n)})` : localName(n);
   };
   return (
     <div className="row" style={{ flexWrap: "wrap" }}>
@@ -351,7 +369,7 @@ function Reference(props: FieldProps & { selected: string[]; onChange: (v: strin
         ))}
         {creatable && <option value="__new">New {creatable.title.toLowerCase()}…</option>}
       </select>
-      {props.selected[0] && graph.has(props.selected[0]) && (
+      {props.selected[0] && world.has(props.selected[0]) && field.single && (
         <button className="btn sm" onClick={() => props.open(props.selected[0])}>
           Open <ArrowRight size={13} />
         </button>
