@@ -213,3 +213,16 @@ its reason to the Markup tab and opens the pane, so the author is never left won
 happened. Every handler calls `event.completed()` in a `finally` block, since Word waits for it
 before considering the command finished.
 
+## 3. Configuration Studio
+
+A proof of concept ([ADR-A136](decisions/ADR-A136-configuration-studio.md)) for one role, the configuration author, who knows their baseline and not the `dal:` and `srf:` vocabularies by heart. It keeps §2.5's rules: no free-text Turtle box for configuration (a whole file may be imported, and is validated like an edit), no optimistic transition the server has not confirmed, and typed job states rather than one spinner.
+
+| Interaction | Mechanism | Failure shown as |
+|---|---|---|
+| Edit a field | the change applies to the graph in the browser, undoable | none until saved |
+| Validate | the unsaved graph is submitted 600 ms after the last edit, as a job | each finding on the field its focus node and path name, a badge in the navigation, a row in the problems drawer |
+| Save | `PUT` with `If-Match` on the graph's revision | `412` opens the line diff of theirs and mine, to keep mine or take theirs |
+| Compile | a job, polled until finished | queued, running, succeeded or failed, with the compiler's findings, the artefacts and the gaps |
+
+Every field and option comes from the vocabularies, with the option's `rdfs:comment` shown beside it, so the author reads what a value means where they choose it. The studio's [README](../../apps/config-studio/README.md) describes the views.
+

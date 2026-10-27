@@ -803,6 +803,20 @@ Concept schemes read as lines, with interval labels or closure bitsets as Surfac
 conditions in the interval-normal fragment decided by arithmetic: joint satisfiability, entailment
 and coverage, as C13a's first path and NRS N3's overlap check. Slices IX-0 to IX-6.
 
+## 8.23 Configuration Studio — Awaiting review
+
+| Field | Value |
+|-------|-------|
+| **Status** | 🟡 CS0 to CS4 built and verified 2026-10-27. Decisions CS-D1 to CS-D9 await ratification |
+| **Unit ID** | `config-studio` |
+| **Sketch** | [config-studio.md](sketches/config-studio.md) |
+| **Plan** | [config-studio.md](plans/config-studio.md) |
+| **Status Record** | [config-studio.md](status/config-studio.md) |
+| **Validation Packs** | [CS0 to CS4](validation/config-studio.md) |
+| **ADRs** | A-136, Proposed |
+
+A web application for authoring `dal:` persistence and `srf:` surface configuration against an applied ontology, with forms derived from the LATTICE vocabularies, live SHACL and compiler findings, optimistic concurrency, and compilation to SPARQL and surfaces. A React application, a Java and Jena service, and a Python job over RabbitMQ and Fuseki, exchanging Turtle only.
+
 ## 8. Phase Handoff Documents (0-6)
 
 | Phase | Status Record | Key Outcome |

@@ -1,0 +1,31 @@
+# SPDX-License-Identifier: MPL-2.0
+# Fuseki and RabbitMQ for the Configuration Studio (ADR-A136), on the ports the studio's mise
+# tasks use. The service, worker and browser code run on the host: `mise run studio:service`,
+# `studio:worker` and `studio:web`.
+services:
+  fuseki:
+    build:
+      context: .
+      dockerfile: fuseki.Dockerfile
+    ports:
+      - "127.0.0.1:3130:3030"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3030/$$/ping || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  rabbitmq:
+    image: rabbitmq:4.4-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: "-rabbit loopback_users []"
+    ports:
+      - "127.0.0.1:5673:5672"
+      - "127.0.0.1:15673:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20

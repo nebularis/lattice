@@ -1,0 +1,24 @@
+# SPDX-License-Identifier: MPL-2.0
+#
+# The Configuration Studio's samples (ADR-A136). Each part names a repository file: an ontology
+# module's file by module, role and file name, resolved through the repository catalogue, or a
+# file beside this one by file name alone. tools/config_studio_stage.py resolves and stages them.
+
+@prefix cst:  <https://www.nebularis.org/neuro-semantic/lattice/poc/config-studio#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<urn:lattice:studio:sample:lending> a cst:Sample ;
+    rdfs:label "Lending" ;
+    rdfs:comment "Loan applications, parties and branches, with a strong persistence profile and a uniqueness key per branch." ;
+    cst:part [ cst:fileName "lending-baseline.ttl" ] ,
+             [ cst:module "persistence" ; cst:role "examples" ; cst:fileName "baseline-single-class.ttl" ] .
+
+<urn:lattice:studio:sample:employment> a cst:Sample ;
+    rdfs:label "Employment job families" ;
+    rdfs:comment "Role assignments classified by a job family hierarchy, with an index contract that retrieves by any ancestor family." ;
+    cst:part [ cst:module "surface" ; cst:role "examples" ; cst:fileName "employment-job-family.ttl" ] .
+
+<urn:lattice:studio:sample:saas> a cst:Sample ;
+    rdfs:label "SaaS subscriptions" ;
+    rdfs:comment "Subscriptions, plans and pricing, with a promotion of the billing currency over a three-step read path." ;
+    cst:part [ cst:module "surface" ; cst:role "examples" ; cst:fileName "saas-subscription-currency.ttl" ] .

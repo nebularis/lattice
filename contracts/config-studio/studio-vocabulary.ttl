@@ -1,0 +1,114 @@
+# SPDX-License-Identifier: MPL-2.0
+#
+# The Configuration Studio's own terms (ADR-A136). A proof-of-concept vocabulary, outside
+# ontology/ and outside every release: the service, the worker and the studio's browser code
+# read and write these terms, and nothing else may depend on them.
+
+@prefix cst:  <https://www.nebularis.org/neuro-semantic/lattice/poc/config-studio#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+<https://www.nebularis.org/neuro-semantic/lattice/poc/config-studio> a owl:Ontology ;
+    rdfs:comment "Workspaces, jobs and job results of the Configuration Studio proof of concept." .
+
+# --- workspaces ---------------------------------------------------------------
+
+cst:Workspace a owl:Class ;
+    rdfs:comment "A baseline and the surface and persistence configuration authored against it. Described in its own graph, whose IRI is the workspace's." .
+
+cst:baselineGraph a owl:ObjectProperty ;
+    rdfs:comment "The graph holding the current baseline revision of a workspace, or the baseline a job read. A baseline revision is written once and never changed." ;
+    rdfs:range cst:Graph .
+
+cst:baselineRevision a owl:DatatypeProperty ; rdfs:domain cst:Workspace ; rdfs:range xsd:integer ;
+    rdfs:comment "The number of the current baseline revision, from 1. The ETag of the baseline." .
+
+cst:surfaceRevision a owl:DatatypeProperty ; rdfs:domain cst:Workspace ; rdfs:range xsd:integer ;
+    rdfs:comment "The revision of the saved surface configuration, 0 before the first save. The ETag of that graph." .
+
+cst:persistenceRevision a owl:DatatypeProperty ; rdfs:domain cst:Workspace ; rdfs:range xsd:integer ;
+    rdfs:comment "The revision of the saved persistence configuration, 0 before the first save. The ETag of that graph." .
+
+cst:createdAt a owl:DatatypeProperty ; rdfs:range xsd:dateTime .
+cst:modifiedAt a owl:DatatypeProperty ; rdfs:range xsd:dateTime .
+
+cst:Graph a owl:Class ;
+    rdfs:comment "A named graph of the studio's dataset." .
+
+# --- samples ------------------------------------------------------------------
+
+cst:Sample a owl:Class ;
+    rdfs:comment "A starting point for a workspace: one or more Turtle files, sorted into baseline, surface and persistence when a workspace is made from it." .
+
+cst:part a owl:ObjectProperty ; rdfs:domain cst:Sample ; rdfs:range cst:SamplePart ;
+    rdfs:comment "A file a sample is made of." .
+
+cst:SamplePart a owl:Class ;
+    rdfs:comment "A file, named either by an ontology module, a role and a file name, resolved through the repository catalogue, or by a file name in contracts/config-studio/samples." .
+
+cst:module a owl:DatatypeProperty ; rdfs:domain cst:SamplePart ; rdfs:range xsd:string .
+cst:role a owl:DatatypeProperty ; rdfs:domain cst:SamplePart ; rdfs:range xsd:string .
+cst:fileName a owl:DatatypeProperty ; rdfs:domain cst:SamplePart ; rdfs:range xsd:string .
+
+# --- jobs ---------------------------------------------------------------------
+
+cst:Job a owl:Class ;
+    rdfs:comment "One validation or compilation of one configuration graph against one baseline revision. Described in its own graph, whose IRI is the job's." .
+
+cst:JobKind a owl:Class ;
+    owl:equivalentClass [ a owl:Class ; owl:oneOf ( cst:Validate cst:Compile ) ] .
+cst:Validate a cst:JobKind ; rdfs:comment "Validate the configuration and the baseline against the target's SHACL shapes." .
+cst:Compile a cst:JobKind ; rdfs:comment "Compile the configuration with the target's compiler." .
+
+cst:Target a owl:Class ;
+    owl:equivalentClass [ a owl:Class ; owl:oneOf ( cst:Persistence cst:Surface ) ] .
+cst:Persistence a cst:Target ; rdfs:comment "dal: configuration, compiled by tools/persistence." .
+cst:Surface a cst:Target ; rdfs:comment "srf: configuration, compiled by tools/surface." .
+
+cst:JobStatus a owl:Class ;
+    owl:equivalentClass [ a owl:Class ; owl:oneOf ( cst:Queued cst:Running cst:Succeeded cst:Failed ) ] .
+cst:Queued a cst:JobStatus ; rdfs:comment "Written by the service when the job is published." .
+cst:Running a cst:JobStatus ; rdfs:comment "Written by the worker when it starts the job." .
+cst:Succeeded a cst:JobStatus ; rdfs:comment "The job ran to the end. Whether the configuration conforms or compiled is cst:conforms." .
+cst:Failed a cst:JobStatus ; rdfs:comment "The job could not run, for example an input graph was missing. cst:failureMessage says why." .
+
+cst:kind a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:Job ; rdfs:range cst:JobKind .
+cst:target a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:Job ; rdfs:range cst:Target .
+cst:status a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:Job ; rdfs:range cst:JobStatus .
+cst:workspace a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:Job ; rdfs:range cst:Workspace .
+cst:configGraph a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:Job ; rdfs:range cst:Graph ;
+    rdfs:comment "The job's input: the configuration as submitted, written once under the job's IRI." .
+cst:submittedAt a owl:DatatypeProperty ; rdfs:domain cst:Job ; rdfs:range xsd:dateTime .
+cst:startedAt a owl:DatatypeProperty ; rdfs:domain cst:Job ; rdfs:range xsd:dateTime .
+cst:finishedAt a owl:DatatypeProperty ; rdfs:domain cst:Job ; rdfs:range xsd:dateTime .
+cst:failureMessage a owl:DatatypeProperty ; rdfs:domain cst:Job ; rdfs:range xsd:string .
+
+cst:conforms a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain cst:Job ; rdfs:range xsd:boolean ;
+    rdfs:comment "For a validation, the report's sh:conforms. For a compilation, true when the compiler produced its output without a refusal." .
+
+cst:report a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:Job ; rdfs:range sh:ValidationReport ;
+    rdfs:comment "Every finding of the job as a SHACL report. A compiler's refusal is an sh:Violation and its warning an sh:Warning, each with cst:code." .
+
+cst:code a owl:DatatypeProperty ; rdfs:domain sh:ValidationResult ; rdfs:range xsd:string ;
+    rdfs:comment "The compiler's name for a finding, for example CrossAxisViolation. Absent on a SHACL finding." .
+
+cst:artefact a owl:ObjectProperty ; rdfs:domain cst:Job ; rdfs:range cst:Artefact .
+
+cst:Artefact a owl:Class ;
+    rdfs:comment "A file a compilation produced, kept as text so the author can read it." .
+cst:path a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain cst:Artefact ; rdfs:range xsd:string ;
+    rdfs:comment "Relative path, with / separators, as the compiler would have written it." .
+cst:mediaType a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain cst:Artefact ; rdfs:range xsd:string .
+cst:content a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain cst:Artefact ; rdfs:range xsd:string .
+cst:group a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:range xsd:string ;
+    rdfs:comment "What an artefact or gap belongs to: a persistence target, or a surface contract." .
+
+cst:gap a owl:ObjectProperty ; rdfs:domain cst:Job ; rdfs:range cst:Gap .
+
+cst:Gap a owl:Class ;
+    rdfs:comment "Something a configuration declares that the generated SPARQL does not implement, as python -m persistence gaps reports it." .
+cst:obligation a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain cst:Gap ; rdfs:range xsd:string ;
+    rdfs:comment "Whose obligation the gap is: unimplemented, caller or housekeeping." .
+cst:message a owl:DatatypeProperty ; rdfs:range xsd:string .

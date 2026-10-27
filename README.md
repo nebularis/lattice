@@ -122,18 +122,22 @@ lattice/
 │
 ├── contracts/
 │   ├── identity/            # Minting recipe and vector schemas, anchor vectors, independent verifier
-│   └── authoring/           # Word authoring POC contracts, templates and samples (ADR-A118)
+│   ├── authoring/           # Word authoring POC contracts, templates and samples (ADR-A118)
+│   └── config-studio/       # Configuration Studio vocabulary, topology and samples (ADR-A136)
 │
 ├── platform/
 │   ├── reasoning-testkit/   # Test-only OWL reasoner harness, never a runtime dependency (ADR-A83)
-│   └── authoring-service/   # Word authoring POC service (ADR-A118)
+│   ├── authoring-service/   # Word authoring POC service (ADR-A118)
+│   └── config-studio-service/  # Configuration Studio service, proof of concept (ADR-A136)
 │
 ├── apps/
-│   └── word-authoring-addin/  # Word add-in, proof of concept (ADR-A118)
+│   ├── word-authoring-addin/  # Word add-in, proof of concept (ADR-A118)
+│   └── config-studio/       # Authoring persistence and surface configuration, proof of concept (ADR-A136)
 │
 ├── deployment/
 │   └── compose/
-│       └── authoring/        # Word authoring POC compose stack (ADR-A118)
+│       ├── authoring/        # Word authoring POC compose stack (ADR-A118)
+│       └── config-studio/    # Fuseki and RabbitMQ for the Configuration Studio (ADR-A136)
 │
 ├── packages/
 │   └── minting/             # Standalone identity minting libraries (Python, Java), no LATTICE dependency

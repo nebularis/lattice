@@ -11,7 +11,7 @@
     "test:stack": "playwright test -c playwright.stack.config.ts"
   },
   "dependencies": {
-    "mermaid": "^11.4.1",
+    "mermaid": "^12.2.0",
     "react": "19.0.0",
     "react-dom": "19.0.0"
   },
@@ -26,6 +26,6 @@
     "jsdom": "^25.0.1",
     "typescript": "5.7.3",
     "vite": "6.4.4",
-    "vitest": "4.1.11"
+    "vitest": "4.1.12"
   }
 }

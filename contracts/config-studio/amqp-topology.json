@@ -1,0 +1,16 @@
+{
+  "exchange": "lattice.studio",
+  "deadLetterExchange": "lattice.studio.dlx",
+  "queues": [
+    {
+      "name": "lattice.studio.jobs",
+      "routingKey": "lattice.studio.jobs",
+      "deadLetter": true
+    },
+    {
+      "name": "lattice.studio.dead",
+      "routingKey": "#",
+      "deadLetter": false
+    }
+  ]
+}

@@ -29,7 +29,7 @@ run = "python tools/hooks.py install --bootstrap"
 [tasks."bootstrap:python"]
 description = "Install every Python package of the repository into this checkout's .venv in one resolve"
 depends = ["bootstrap:pip"]
-run = "python -m pip install -c requirements-lock.txt \".[reasoning,test,knowledge]\" -e \"./workers[test,authoring]\" -e ./tools/mork -e \"./tools/mork_compilers[test]\" -e ./tools/surface -e ./packages/persistence/python -e \"./tools/persistence[test]\" -e \"./tools/vocabulary[test]\" -e \"./tools/reference/eligibility[test]\" -e \"./packages/minting/python[test]\" -e \"./tools/testing/oxigraph[test]\" -e \"./tools/testing/mem_check[test]\""
+run = "python -m pip install -c requirements-lock.txt \".[reasoning,test,knowledge]\" -e \"./workers[test,authoring,studio]\" -e ./tools/mork -e \"./tools/mork_compilers[test]\" -e ./tools/surface -e ./packages/persistence/python -e \"./tools/persistence[test]\" -e \"./tools/vocabulary[test]\" -e \"./tools/reference/eligibility[test]\" -e \"./packages/minting/python[test]\" -e \"./tools/testing/oxigraph[test]\" -e \"./tools/testing/mem_check[test]\""
 
 # The knowledge index, after the packages it needs (ADR-A134 decision 13). The first build fetches
 # the embedding model, and where that is blocked it notes why and still builds, so bootstrap never
@@ -53,7 +53,7 @@ run = "python -m pip install -c requirements-lock.txt \".[reasoning,test]\""
 [tasks."bootstrap:workers"]
 depends = ["bootstrap:pip"]
 description = "Install the worker package with test dependencies"
-run = "python -m pip install -e \"./workers[test,authoring]\""
+run = "python -m pip install -e \"./workers[test,authoring,studio]\""
 
 [tasks."bootstrap:mork"]
 depends = ["bootstrap:pip"]
@@ -506,6 +506,48 @@ run = "docker compose -f deployment/compose/docker-compose.yml up -d"
 description = "Stop the reference platform services"
 run = "docker compose -f deployment/compose/docker-compose.yml down"
 
+# --- Configuration Studio (ADR-A136), a proof of concept ---------------------------------------
+# Fuseki on 127.0.0.1:3130 with a dataset "studio", and RabbitMQ on 127.0.0.1:5673, from
+# `mise run studio:infra` (Docker) or started by hand (the service's README). Then studio:service,
+# studio:worker and studio:web, each in its own terminal, and browse http://127.0.0.1:4175.
+
+[tasks."build:config-studio-assets"]
+description = "Stage the Configuration Studio's vocabulary and samples into .build/config-studio"
+run = "python tools/config_studio_stage.py"
+
+[tasks."check:config-studio"]
+description = "Test the Configuration Studio: its staging, worker, service, and browser code"
+depends = ["build:config-studio-assets"]
+run = [
+  "python -m pytest tools/test_config_studio_stage.py workers/tests/test_config_studio_worker.py -q",
+  "mvn -q -f platform/pom.xml -pl config-studio-service -am verify",
+  "yarn workspace @lattice/config-studio run check",
+]
+
+[tasks."test:config-studio"]
+description = "Run the Configuration Studio's browser tests against a fake service"
+depends = ["build:config-studio-assets"]
+run = "yarn workspace @lattice/config-studio run test"
+
+[tasks."studio:infra"]
+description = "Start Fuseki and RabbitMQ for the Configuration Studio in Docker"
+run = "docker compose -f deployment/compose/config-studio/docker-compose.yml up -d --wait"
+
+[tasks."studio:service"]
+description = "Build and run the Configuration Studio's service on 127.0.0.1:8090 against Fuseki and RabbitMQ"
+depends = ["build:config-studio-assets"]
+env = { LATTICE_FUSEKI_URL = "http://127.0.0.1:3130", LATTICE_FUSEKI_DATASET = "studio", LATTICE_AMQP_URI = "amqp://guest:guest@127.0.0.1:5673/%2F", LATTICE_STUDIO_STATIC = "apps/config-studio/dist" }
+run = "mvn -q -f platform/pom.xml -pl config-studio-service -am package -DskipTests && java -jar platform/config-studio-service/target/config-studio-service.jar"
+
+[tasks."studio:worker"]
+description = "Run the Configuration Studio's worker against Fuseki and RabbitMQ"
+env = { LATTICE_FUSEKI_URL = "http://127.0.0.1:3130", LATTICE_FUSEKI_DATASET = "studio", LATTICE_AMQP_URI = "amqp://guest:guest@127.0.0.1:5673/%2F" }
+run = "python -m lattice_workers.config_studio_main"
+
+[tasks."studio:web"]
+description = "Serve the Configuration Studio's browser code with hot reload on 127.0.0.1:4175, proxying /api to the service"
+run = "yarn workspace @lattice/config-studio run dev"
+
 [tasks.clean]
 description = "Clean all build artifacts and caches"
 run = [{ tasks = ["clean:java", "clean:python", "clean:frontend", "clean:build", "clean:docs"] }]
@@ -524,7 +566,7 @@ run = "rm -rf node_modules .yarn apps/*/node_modules apps/*/dist .build/yarn-cac
 
 [tasks."clean:build"]
 description = "Clean generated build outputs"
-run = "rm -rf build/ ontology/mork/mtp/out/ .build/authoring"
+run = "rm -rf build/ ontology/mork/mtp/out/ .build/authoring .build/config-studio"
 
 [tasks."clean:docs"]
 description = "Clean local Jekyll/Bundler artifacts under docs/ (never the committed Gemfile/Gemfile.lock)"
@@ -569,7 +611,7 @@ exit 0
 [tasks."clean-win:build"]
 description = "Clean generated build outputs (Windows)"
 shell = "powershell -c"
-run = '$ErrorActionPreference = "SilentlyContinue"; Remove-Item -Recurse -Force build, ontology/mork/mtp/out, .build/authoring; exit 0'
+run = '$ErrorActionPreference = "SilentlyContinue"; Remove-Item -Recurse -Force build, ontology/mork/mtp/out, .build/authoring, .build/config-studio; exit 0'
 
 [tasks."clean-win:docs"]
 description = "Clean local Jekyll/Bundler artifacts under docs/ (Windows, never the committed Gemfile/Gemfile.lock)"
