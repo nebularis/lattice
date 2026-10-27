@@ -3,16 +3,16 @@
 
 """Which engine runs a compiled query's SPARQL (python-test-melting TM11).
 
-Every backend test calls :func:`run_query` in place of ``graph.query(text)``. **rdflib stays the
-default here**, unlike the skill's usual default (ADR-A125, Oxigraph), until the maintainer decides
-otherwise (STD-274). Building this module's conformance task found one real disagreement between
-the two engines on this suite's own generated queries (TSD-41). It is understood and the profile
-query no longer depends on it, since an aggregate over an expression that errors on some row of its
-group is an error on Oxigraph and a skipped row on rdflib. The whole suite now passes on both, and
-`check:mork-compilers-conformance` runs Oxigraph, on demand and before a merge, to keep any further
-divergence visible. ``MORK_SPARQL_ENGINE`` names one of ``REGISTRY``, read once at import, so each
-task sets it, since these tests are ``unittest.TestCase`` methods with no per-test engine
-parametrisation. :func:`run_query` takes an ``engine`` for a test of one engine's behaviour.
+Every backend test calls :func:`run_query` in place of ``graph.query(text)``. Oxigraph is the
+default (ADR-A125, STD-153) since 2026-10-27, once the whole suite, the reasoner tests included,
+had passed on both engines (STD-274). Building this module's conformance task had found one real
+disagreement between the two engines on this suite's own generated queries (TSD-41): an aggregate
+over an expression that errors on some row of its group is an error on Oxigraph and a skipped row
+on rdflib, and the profile query no longer depends on it. `check:mork-compilers-conformance` runs
+rdflib, on demand and before a merge, to keep any further divergence visible. ``MORK_SPARQL_ENGINE``
+names one of ``REGISTRY``, read once at import, so each task sets it, since these tests are
+``unittest.TestCase`` methods with no per-test engine parametrisation. :func:`run_query` takes an
+``engine`` for a test of one engine's behaviour.
 
 On rdflib, :func:`run_query` returns ``graph.query(text)`` unchanged: every existing call site's
 ``row.question``-style attribute access already works, since rdflib's own result rows support it.
@@ -33,7 +33,7 @@ from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.namespace import XSD
 
 REGISTRY = ("rdflib", "oxigraph")
-DEFAULT = "rdflib"
+DEFAULT = "oxigraph"
 
 
 def _selected() -> str:

@@ -38,7 +38,7 @@ A finding is only as strong as its evidence. Source tells us the mechanism, Obse
 version, and the two together are what we aim for. A finding built only on Documented or Reasoned evidence says so in its
 first line.
 
-**A run record** goes with every Observed finding: the date, the store and its version, the Python version, and the kind of machine, never the machine or person (ADR-A124 decision 5). Nine run records appear below.
+**A run record** goes with every Observed finding: the date, the store and its version, the Python version, and the kind of machine, never the machine or person (ADR-A124 decision 5). Eleven run records appear below.
 
 | Run | Machine | Python | Stores |
 |---|---|---|---|
@@ -52,6 +52,7 @@ first line.
 | **R-H** | a Linux x86_64 container, 4 logical cores, used by an agent for H2.8c, 2026-10-20, where a fresh bootstrap installed pyoxigraph 0.5.12 | 3.14.8 | rdflib 7.6.0, pyoxigraph 0.5.11 and 0.5.12 |
 | **R-I** | a macOS arm64 laptop, used for the ledger posting-cost and graph-partition benchmarks, 2026-10-24 and 2026-10-27 | 3.14.7 | pyoxigraph 0.5.13 |
 | **R-J** | a macOS arm64 laptop, used by an agent to isolate TSD-41, 2026-10-27 | 3.14.7 | rdflib 7.6.0, pyoxigraph 0.5.13, and 0.5.11 for the minimal probes |
+| **R-K** | a macOS arm64 laptop, used to review C9b3 and the pyoxigraph lock, 2026-10-27 | 3.14.7 | pyoxigraph 0.5.11, 0.5.12 and 0.5.13 |
 
 **How to add a finding** is in §6.0 and in the skill. In short: say what you were testing, how you found it, the smallest
 SPARQL that shows it, the result on each store you have, the reason if you can find it in the source, what it means for
@@ -236,6 +237,7 @@ to the store or where it is a matter of capacity.
 | [TSD-36](#tsd-36-a-bound-object-does-not-give-the-seek-a-bound-subject-gives) | the same row reached by a bound object or by a bound subject | not specified | not tested | the bound object scans the predicate's matches, the bound subject seeks | Observed |
 | [TSD-40](#tsd-40-a-zero-or-more-property-paths-cost-changed-between-oxigraph-0511-and-0513) | a `*` property path from a bound object | not specified | not tested | 2.4 times faster on 0.5.13 than on 0.5.11, where enumeration is unchanged | Observed |
 | [TSD-41](#tsd-41-an-aggregate-over-an-expression-that-errors-on-one-row-of-a-group-is-unbound-on-oxigraph-and-skips-the-row-on-rdflib) | `GROUP_CONCAT`, `SUM` and `AVG` over an expression that errors on one row of the group. `COUNT` over such an expression | an error for `GROUP_CONCAT`, `SUM` and `AVG`. `COUNT` removes the error | ✘ skips the row. ✘ `COUNT` counts it | ✔ unbound. ✘ `COUNT` unbound | Source, Observed |
+| [TSD-42](#tsd-42-a-graph-variable-bound-outside-an-optional-makes-oxigraph-0513-read-every-graph) | `OPTIONAL { GRAPH ?g }`, `?g` bound outside | joined afterwards | not rerun (TSD-04 passes the binding in) | passes the binding in. ✘ reads every graph from 0.5.13 | Observed |
 
 ## 6. The findings
 
@@ -514,7 +516,7 @@ the form (H2.3-Q2).
 3. *Observed, both, R-A.* Probe P3 timed the `OPTIONAL` form over 100 graphs of 3,000 triples against 1 graph. The ratio was 1.1
    on both stores.
 
-**What the store does.** Both pass the outer binding of `?g` into the graph pattern, so they read one graph. A store that
+**What the store does.** Both pass the outer binding of `?g` into the graph pattern, so they read one graph. Oxigraph stopped doing so for a left join in 0.5.13 (TSD-42). A store that
 followed the algebra literally would read every graph and then discard most of what it read.
 
 **Why.** Not read for either store. The timings show both pass the left side's bindings into the right side, as an engine does
@@ -1470,6 +1472,29 @@ The first version of this entry guessed that the order of `GROUP_CONCAT` (TSD-19
 
 ---
 
+### TSD-42. A graph variable bound outside an OPTIONAL makes Oxigraph 0.5.13 read every graph
+
+**Evidence:** Observed on Oxigraph 0.5.11, 0.5.12 and 0.5.13, run R-K, 2026-10-27. Not rerun on rdflib, which TSD-04 measured.
+
+**Context.** Raising the lock to pyoxigraph 0.5.13, the floor TSD-40 set, made probe P3 in `tools/persistence/tests/test_store_probes.py` fail. P3 is TSD-04's measure: `OPTIONAL { GRAPH ?g { ?s ?p ?o } }` with `?g` bound outside, timed over 100 graphs of 3,000 triples against 1 graph. Its ratio rose from about 1 to between 68 and 86, against a bound of 8.
+
+**How we found it.** Four forms, each counting the 3,000 triples of one graph, timed over 100 graphs against 1, best of five, on each version.
+
+| Form | 0.5.11 | 0.5.12 | 0.5.13 |
+|---|---|---|---|
+| `BIND(<g> AS ?g) OPTIONAL { GRAPH ?g { ?s ?p ?o } }` | 1.0 | 1.0 | **73 to 78** |
+| `VALUES ?g { <g> } OPTIONAL { GRAPH ?g { ?s ?p ?o } }` | 1.0 | 1.0 | **73 to 78** |
+| `BIND(<g> AS ?g) GRAPH ?g { ?s ?p ?o }`, a join | 1.0 | 1.0 | 1.0 |
+| `GRAPH <g> { ?s ?p ?o }`, a constant | 1.0 | 1.0 | 1.0 |
+
+**What the store does.** On 0.5.13 a left join no longer passes the outer binding of `?g` into its right side, so the inner `GRAPH ?g` reads every graph and the join discards all but one. Whether the binding comes from `BIND` or `VALUES` makes no difference. A plain join still passes it in. 0.5.11 and 0.5.12 pass it into both. The result is the same on every version, only the cost moves.
+
+**Why.** Not read in Oxigraph's source. The controls hold the data and the machine fixed and differ only in `LeftJoin` against `Join`, so the change is in how 0.5.13 plans a left join, inferred rather than observed. It may be the same change that made TSD-40's path faster.
+
+**What it means for LATTICE.** TSD-04's finding, that both stores read one graph, no longer holds for Oxigraph from 0.5.13. The named-graph replace's sweep (`tools/persistence/tests/fixtures/ir/replace-named-graph.rq`) has this form, so on 0.5.13 its cost grows with the number of graphs in the store, not with the size of the root's graph. Writing the graph as a constant, or the sweep as a join, is unaffected on every version measured, which bears on H2.3-Q2's choice of the caller-named graph. P3 is marked as an expected failure on Oxigraph from 0.5.13, strictly, so it fails again the day a release restores the old cost (TSD-Q22). A cost is a hypothesis across patch versions of one engine (TSD-40, STD-176).
+
+**Reproduce it.** The four forms above, through `pyoxigraph.Store`, on stores of 1 and 100 graphs of 3,000 triples, under each version.
+
 ## 7. Corrections, and what they taught us
 
 ### 7.1 rdflib and the order of an update (TSD-01)
@@ -1552,3 +1577,4 @@ What we take from it. A divergence found in a large generated query is not expla
 | TSD-Q19 | why the sub-select decides TSD-34 when a `UNION` alone does not, and whether Fuseki or Jena ARQ shows the defect | TSD-34 is isolated on a non-lazy join of a sub-select and a `UNION`. The part of TSD-Q19 about the generated operations is answered under TSD-34 (FMH-H2-6g) | trace which solution comes first and which are kept in TSD-34's query, and run the query on Fuseki. The defect was reported upstream 2026-10-20 ([RDFLib/rdflib#3585](https://github.com/RDFLib/rdflib/issues/3585)) |
 | TSD-Q20 | answered 2026-10-27 | the profile query's `?closures` differed between engines | TSD-41. An aggregate over an expression that errors on one row of its group is unbound on Oxigraph and skips the row on rdflib, and the `UNION` and the nesting play no part |
 | TSD-Q21 | what `MIN` and `MAX` over a group with an error should give, and whether to report Oxigraph's `COUNT(expr)` upstream | the Recommendation's `Min` and `Max` do not say where an error element sorts, and TSD-41 states Oxigraph's `COUNT` departure from its source and one probe | read the Recommendation's ORDER BY ordering of an error, then probe Jena ARQ and Fuseki. The `COUNT` report is drafted in the Validation Pack and not filed |
+| TSD-Q22 | whether an Oxigraph release after 0.5.13 passes an outer binding into a left join again, and whether it is reported upstream | TSD-42 makes the named-graph replace's sweep read every graph, and the project's floor is 0.5.13 (TSD-40) | rerun TSD-42's four forms on each new release. P3's strict expected failure turns into a failure when one does. Search Oxigraph's issues, and report it if no one has |

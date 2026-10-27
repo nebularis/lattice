@@ -143,6 +143,12 @@ def test_h2_4b_t3_p2_a_request_that_fails_at_its_second_operation_keeps_or_loses
 # ---- P3 a correlated GRAPH ?g in an inner group -------------------------------------------------------------------------
 
 
+def _oxigraph_version() -> tuple[int, ...]:
+    import pyoxigraph
+
+    return tuple(int(part) for part in pyoxigraph.__version__.split(".")[:3])
+
+
 def _p3_ratio(triples: int = 3000, graphs: int = 100) -> float:
     def timed(count: int) -> float:
         ds = engines.dataset()
@@ -161,10 +167,13 @@ def _p3_ratio(triples: int = 3000, graphs: int = 100) -> float:
     return timed(graphs) / timed(1)
 
 
-def test_h2_4b_t4_p3_a_graph_variable_bound_outside_does_not_make_the_query_scan_every_graph():
+def test_h2_4b_t4_p3_a_graph_variable_bound_outside_does_not_make_the_query_scan_every_graph(request):
     """100 graphs of equal size, against 1. A store that evaluated the inner group before the join would take about 100
     times as long. Both engines pass the binding in (the cost note of H2.3-Q2), so `compile` has no reason yet to choose
     the caller-named graph for a store. The bound is wide, since the measure is a ratio of two timings of one machine."""
+    if _current() == "oxigraph" and _oxigraph_version() >= (0, 5, 13):
+        # Strict, so a release that passes the binding in again fails here and the marker comes off (TSD-Q22).
+        request.applymarker(pytest.mark.xfail(strict=True, reason="Oxigraph 0.5.13 reads every graph under a left join (TSD-42)"))
     assert _p3_ratio() < 8
 
 
