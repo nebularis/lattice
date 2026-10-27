@@ -149,9 +149,15 @@ A sealed book is registrable, and its registered content hash is the archive dig
 
 ### 5.3 Committed and speculative evaluation
 
-A scenario run, a what-if and a dispute replay produce the same volume as a real pass. Where every evaluation is persisted, scenarios rather than economic events set the growth rate, and the ratio is unbounded.
+A speculative pass produces the same volume as a real one. Where every evaluation is persisted, scenarios rather than economic events set the growth rate, and the ratio is unbounded.
 
-Only a committed pass belongs in the system of record. A speculative pass is written to a graph that can be dropped, or is never written. This is a semantic distinction rather than a storage trick, since a scenario result is not a fact about the instrument.
+Only a committed pass belongs in the system of record. This is a semantic distinction rather than a storage trick, since a speculative result is not a fact about the instrument. Two cases need separating, because they are kept out of the record by different means (LF-Q21 and MS-Q11, both answered 2026-10-27).
+
+**Evaluation against committed record.** A replay of a past decision, a what-if over a committed arrangement, a dispute reconstruction. It runs in the record's own dataset, against the real accounts, because that is what it is a question about. It is written to a graph that can be dropped, and no read on the correctness path folds a droppable graph into a balance. This is the case the ledger has to carry.
+
+**Evaluation before commitment.** Exploring arrangements that do not yet exist, over options that mostly never will: the permutations of a structure under negotiation, a plan compared against alternatives, an application scored under several configurations before one is chosen. This volume dominates in such a domain, and almost none of it is ever record. It is kept out not by a flag but by being a different phase of work, with its own store and its own write rate, and only a committed result crosses into the record. §4.1 of the [multi-store sketch](multi-store-runtime.md) has the shape, and §4 lists the lifecycle phase among the boundaries an adopter may choose.
+
+**LATTICE implements no pre-commitment phase**, and should not. What it owes is what it owes for every boundary an adopter may draw: the vocabulary to declare it, and generated reads that respect it. A ledger that assumed every evaluation it sees is record would force the first case's mechanism onto the second and lose the larger reduction.
 
 ### 5.4 Ordering, stated without a global counter
 
@@ -201,7 +207,7 @@ A projection onto a second T-Box earns its keep where the optimisation has no do
 | **LF-Q18** | Post at the drawn account only, or at every level? | (a) drawn account only, ancestors derived. (b) every level, as today. (c) drawn account only, with declared exceptions for purpose-counting accounts | **answered (c)**, 2026-10-27, the maintainer. The drawn account only, with declared exceptions for purpose-counting accounts | answered |
 | **LF-Q19** | Does an account instance gain a minted IRI? | (a) yes, which reverses ADR-A131 decision 4. (b) no, postings keep account, owner and key | **answered (a)**, 2026-10-27, the maintainer. An account instance gains a minted IRI, reversing ADR-A131 decision 4. MS-Q2's graph template now rests on it | answered, needs an ADR-A131 addendum |
 | **LF-Q20** | Is closing recurrence declared per account definition? | (a) yes, on the definition. (b) one system-wide interval. (c) no closings, unbounded history | **answered (a)**, 2026-10-27, the maintainer. On the account definition, so the interval is per account | answered |
-| **LF-Q21** | How is a speculative pass kept out of the record? | (a) a droppable named graph. (b) never written. (c) a flag on the pass, filtered by every query | **answered (a)**, 2026-10-27, the maintainer, a droppable named graph. MS-Q11 argues the better frame is a lifecycle boundary, and that stays open | answered, MS-Q11 open |
+| **LF-Q21** | How is a speculative pass kept out of the record? | (a) a droppable named graph. (b) never written. (c) a flag on the pass, filtered by every query | **answered (a), narrowed**, 2026-10-27, the maintainer. A droppable named graph, for speculative evaluation against committed record. MS-Q11 is answered (a) and does not compete with this: evaluation *before* commitment is a lifecycle boundary whose volume never reaches the record, and LATTICE implements no such phase. So (a) governs the case that does reach the record, and §5.3 states both | answered, with MS-Q11 |
 | **LF-Q22** | Is a maximum magnitude declared per value space? | (a) yes, in Quantification. (b) no, rely on the 18-digit floor | **answered (a)**, 2026-10-27, the maintainer. Declared per value space in Quantification | answered |
 
 ## 8. What this changes elsewhere
