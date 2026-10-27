@@ -1211,9 +1211,8 @@ requires a closure's one source.
 (ADR-A87), and `elg:ReachableExclusionShape` discharges L13. `elg:ClosureNeedsSetReadingShape` allows
 a closure only on a binding read some or every value, and `elg:ClosureReliedOnNamedShape` allows a
 decision to rely only on a closure a binding of its profile names (ADR-A105).
-`elg:HierarchyRelationShape` allows a condition one hierarchy relation, and only `skos:broader` or a property
-the graph declares a sub-property of it. `elg:HierarchyRelationNeedsHierarchicalMatchShape` warns of a
-condition that names one without matching hierarchically.
+
+`elg:HierarchyRelationShape` allows a condition one hierarchy relation, and only `skos:broader` or a property the graph declares a sub-property of it. `elg:HierarchyRelationNeedsHierarchicalMatchShape` warns of a condition that names one without matching hierarchically.
 
 `elg:ReachableExclusionShape` and `elg:HierarchyWellFoundednessShape` (§7.3) read `skos:broader`, whichever relation a condition names. They are exact for a condition that names none. For one that names a relation they are conservative where the scheme asserts each link under `skos:broader` as well (§5.1), and silent about a link asserted only under the named property, because a SHACL-SPARQL constraint cannot take its property path from data. The compilers check the named relation itself (§5.8).
 
