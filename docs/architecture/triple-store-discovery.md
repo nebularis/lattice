@@ -38,8 +38,7 @@ A finding is only as strong as its evidence. Source tells us the mechanism, Obse
 version, and the two together are what we aim for. A finding built only on Documented or Reasoned evidence says so in its
 first line.
 
-**A run record** goes with every Observed finding: the date, the store and its version, the Python version, and the kind of
-machine, never the machine or person (ADR-A124 decision 5). Seven run records appear below.
+**A run record** goes with every Observed finding: the date, the store and its version, the Python version, and the kind of machine, never the machine or person (ADR-A124 decision 5). Nine run records appear below.
 
 | Run | Machine | Python | Stores |
 |---|---|---|---|
@@ -51,6 +50,7 @@ machine, never the machine or person (ADR-A124 decision 5). Seven run records ap
 | **R-F** | a macOS arm64 laptop, used by an agent for H2.6f's `members` read, 2026-10-20 | 3.14.7 | rdflib 7.6.0, pyoxigraph 0.5.11 |
 | **R-G** | a macOS arm64 laptop, used by an agent for TSD-34's upstream report, 2026-10-20 | 3.14.7 | rdflib 7.6.0, rdflib `main` at `62bf240` (7.7.0a0), rdflib `next` at `0fdac39` (8.0.0a0) |
 | **R-H** | a Linux x86_64 container, 4 logical cores, used by an agent for H2.8c, 2026-10-20, where a fresh bootstrap installed pyoxigraph 0.5.12 | 3.14.8 | rdflib 7.6.0, pyoxigraph 0.5.11 and 0.5.12 |
+| **R-I** | a macOS arm64 laptop, used for the ledger posting-cost and graph-partition benchmarks, 2026-10-24 and 2026-10-27 | 3.14.7 | pyoxigraph 0.5.13 |
 
 **How to add a finding** is in §6.0 and in the skill. In short: say what you were testing, how you found it, the smallest
 SPARQL that shows it, the result on each store you have, the reason if you can find it in the source, what it means for
@@ -233,6 +233,7 @@ to the store or where it is a matter of capacity.
 | [TSD-34](#tsd-34-rdflib-evaluates-a-filter-not-exists-in-a-graph-block-against-the-wrong-graph-for-some-solutions) | `FILTER NOT EXISTS` without its own `GRAPH`, inside a `GRAPH` block that holds a sub-select and a `UNION` | tests the block's graph | ✘ sometimes tests the default graph, by hash seed | ✔ | Source, Observed |
 | [TSD-35](#tsd-35-a-literal-as-the-graph-of-a-graph-block-is-refused-by-oxigraph-and-parsed-by-rdflib) | a literal as the graph of a `GRAPH` block | a syntax error | ✘ parsed, the block matches nothing | ✔ a syntax error | Observed |
 | [TSD-36](#tsd-36-a-bound-object-does-not-give-the-seek-a-bound-subject-gives) | the same row reached by a bound object or by a bound subject | not specified | not tested | the bound object scans the predicate's matches, the bound subject seeks | Observed |
+| [TSD-40](#tsd-40-a-zero-or-more-property-paths-cost-changed-between-oxigraph-0511-and-0513) | a `*` property path from a bound object | not specified | not tested | 2.4 times faster on 0.5.13 than on 0.5.11, where enumeration is unchanged | Observed |
 
 ## 6. The findings
 
@@ -1337,7 +1338,7 @@ rdflib.
 
 ### TSD-36. A bound object does not give the seek a bound subject gives
 
-**Evidence:** Observed on Oxigraph 0.5.13, 2026-10-24, probing the ledger posting-cost benchmark. Not tested on rdflib.
+**Evidence:** Observed on Oxigraph 0.5.13, run R-I, 2026-10-24 and repeated 2026-10-27, probing the ledger posting-cost benchmark. Not tested on rdflib, so STD-176 makes it a hypothesis there.
 
 **Context.** The benchmark's checkpointed reads find the latest checkpoint of an account at or before a read point, then fold the postings after it. Partitioning the postings into a graph per period made the fold flat in the history, after which this lookup was the only term still growing. It rose from 0.04 ms at 2 closes an account to 1.06 ms at 200, so it grew with the number of closes and so with time.
 
@@ -1393,6 +1394,28 @@ SELECT ?b WHERE { <urn:checkpoint:100000:a0> l:balance ?b }
 **What it means for LATTICE.** Load many documents in one bulk write, isolating a bad document by parsing it on its own first rather than by giving it a bulk load of its own (TSD-37). And test a tool that opens many files at the default limit, not only in an agent's shell: this one passed where the limit was 1,048,576 and failed in the maintainer's terminal, which had 256.
 
 **Reproduce it.** `ulimit -n 256` and bulk load each of the ontology documents separately into one store, then query it. `check:knowledge` asserts the built index holds at most 32 SST files.
+
+### TSD-40. A zero-or-more property path's cost changed between Oxigraph 0.5.11 and 0.5.13
+
+**Evidence:** Observed on Oxigraph 0.5.11 and 0.5.13, run R-I, 2026-10-27, measuring the ledger posting-cost benchmark's subtree fold. Not tested on rdflib.
+
+**Context.** The benchmark's committed figures were taken on 0.5.13 on 2026-10-24. Repeating the run on 2026-10-27, in a checkout whose environment had 0.5.11, read a programme in 148.93 ms where the record said 43.89 ms, and a contract in 127.52 ms where the record said 0.95 ms. The figures looked irreproducible, and the engine version was the only difference.
+
+**How we found it.** Three forms of the same fold over one programme's subtree, 56 accounts and 10,063 postings, on one store, each returning the identical sum and count. The two forms that do not use a path are the controls.
+
+| Form | 0.5.11 | 0.5.13 |
+|---|---|---|
+| `?acc l:partOf* <programme>`, the subtree reached by a path | 178.88 ms | **73.74 ms** |
+| the 56 accounts enumerated in a `VALUES` block | 73.92 ms | 73.34 ms |
+| `l:partOf/l:partOf` and `l:partOf` in a `UNION`, the depth written out | 147.27 ms | 147.40 ms |
+
+**What the store does.** The path form is 2.4 times faster on 0.5.13, where neither control moves. On 0.5.13 the path costs what enumerating the same accounts costs, so the path is no longer the expensive part. Writing the depth out as a `UNION` of fixed-length paths is twice the cost of either on both versions, so it is not an optimisation.
+
+**Why.** We did not read Oxigraph's source for this. The controls hold the machine, the data and the query shape fixed, so the change is in how the engine evaluates `*`, and the mechanism is inferred rather than observed.
+
+**What it means for LATTICE.** A cost measured for a property path is a cost for one patch version, not for the engine. The project's floor is now `pyoxigraph>=0.5.13` (`tools/testing/oxigraph`), raised from `>=0.5.11` for this reason, so a figure quoted from the ledger benchmark is reproducible. Where a fold's cost matters, enumerating the accounts is the stable choice, since it measured the same on both versions, and a subtree whose members are known to the caller can be enumerated. This is a sharper case of STD-176 than the standard states: a cost is a hypothesis across patch versions of one engine, not only across engines.
+
+**Reproduce it.** The three forms above against the benchmark's `post-once` store at 20,000 events, under each version.
 
 ## 7. Corrections, and what they taught us
 

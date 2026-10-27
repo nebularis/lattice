@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: MPL-2.0 -->
+<!-- NB: This module has been produced using GenAI -->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>org.nebularis.lattice.benchmark</groupId>
+  <artifactId>ledger-store-comparison</artifactId>
+  <version>0.1.0</version>
+  <packaging>jar</packaging>
+  <name>Ledger store comparison</name>
+  <description>Whether the ledger's period-graph partition bounds an aggregate read on Jena TDB2 as it does on Oxigraph (ADR-A124).</description>
+
+  <properties>
+    <maven.compiler.release>25</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <jena.version>5.1.0</jena.version>
+    <exec.mainClass>org.nebularis.lattice.benchmark.ledger.StoreComparison</exec.mainClass>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.jena</groupId>
+      <artifactId>jena-tdb2</artifactId>
+      <version>${jena.version}</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.1.1</version>
+        <configuration>
+          <mainClass>${exec.mainClass}</mainClass>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

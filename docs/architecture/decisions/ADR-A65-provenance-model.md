@@ -50,3 +50,18 @@ Recorded in the `prov:{scope}` graph (ADR-A54) for that batch graph:
 - ADR-A57's change feed events carry the same `cause` shape, so change-feed consumers and provenance queries agree on vocabulary.
 - Every write path introduced through Phase 4 is audited against this rule (P2.5.1: enumerate every graph, assert exactly one cause).
 - `lattice:transactionTime` on the provenance record is the same field ADR-A67 requires on every assertion graph; these two ADRs share one field, not two.
+
+## Addendum (2026-10-27): a graph may be a provenance unit or a partitioning unit
+
+The homogeneity rule above says never to accumulate several causes into one graph for write efficiency, because the storage saving is trivial and the audit loss total. That reasoning holds wherever the graph is what carries the cause. It does not hold where each record carries its own.
+
+The ledger's postings are the case that shows the difference. A pass has an identity and a recorded time, and it stamps every posting it writes, so a posting's cause is recoverable from the posting. Partitioning postings into a graph per account partition and closing period then accumulates many passes into one graph and loses nothing, because nothing was being read from the graph's identity. The partition is what makes an aggregate's balance readable in time independent of the history, measured in [benchmark/ledger-posting-cost](../../../benchmark/ledger-posting-cost/README.md) finding 7.
+
+**The rule is therefore qualified rather than relaxed.** A graph is a provenance unit or a partitioning unit, declared, and whichever it is, every record's cause must be recoverable. Where the graph is the provenance unit, the homogeneity rule applies unchanged and one cause gets one graph. Where each record carries its cause, the graph is free to be a partitioning unit, and the audit requirement is discharged by the record rather than by the graph.
+
+Two consequences follow.
+
+- **The audit of ADR-A65 (P2.5.1) checks recoverability, not graph homogeneity alone.** A graph holding several causes passes where every record in it names its own cause, and fails where any record's cause can be reached only through the graph.
+- **The transaction time of ADR-A67 follows the same carrier.** Where the graph is the provenance unit, `lattice:transactionTime` sits on the graph as both ADRs state. Where the record is, it sits on the record, and one write path still sets it once.
+
+This addendum records a qualification found by measurement. It does not reopen the choice of named-graph-per-batch over per-triple provenance, which stands.

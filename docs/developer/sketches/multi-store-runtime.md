@@ -5,7 +5,7 @@
 **Unit:** `ledger`, reaching into `persistence` and `surface`
 **Status:** exploratory, 2026-10-24. Nothing here is decided.
 **Reads on:** [ledger-history-and-runtime.md](ledger-history-and-runtime.md) §5.2 and §6, [ledger-folds-and-stores.md](ledger-folds-and-stores.md) §6 and §7, the [Persistence README](../../../ontology/persistence/README.md) §5.6, the [Surface README](../../../ontology/surface/README.md) §11 and §12
-**Measured on:** `benchmark/ledger-posting-cost`, run of 2026-10-24, Oxigraph 0.5.13, depth 3
+**Measured on:** `benchmark/ledger-posting-cost`, runs of 2026-10-24 and 2026-10-27, Oxigraph 0.5.13 (run R-I of the discovery record), depth 3
 
 ## 1. Premise
 

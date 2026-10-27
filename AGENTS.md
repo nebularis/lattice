@@ -114,7 +114,7 @@ Skill `lattice-ontology-authoring` has the detail.
 
 Code under `platform/`, `workers/`, `packages/` and `apps/` keeps these, and so does any code that reads or writes a graph store. Each is a principle in the register, which points at the decision behind it. Most are not yet enforced by a check (TD-85), so a reviewer holds a change to them.
 
-- **The scoped dataset is the only door** to the RDF store (PRI-51).
+- **The store SPI is the only door** to the RDF store. Its Core tier is SPARQL 1.1 and the Graph Store Protocol, so a read that names several named graphs is Core. Depend on a capability beyond Core, such as a multi-graph atomic write, only where the adapter declares it or its stated Core fallback is used (PRI-51).
 - **No new authoritative store.** Anything persisted outside the graph is marked as coordination or derived, and can be rebuilt from the graph (PRI-52).
 - **Contract first.** Wire types are generated from the schemas in `contracts/`, never written again by hand (PRI-53).
 - **Every write carries its commit metadata**, its cause, principal, profile, transaction time and provenance (PRI-54).

@@ -285,9 +285,18 @@ depends = ["bootstrap:testing-oxigraph"]
 description = "Measure the forms of a SHACL-SPARQL constraint query on rdflib and Oxigraph (ADR-A124, ADR-A128). Run on demand, not part of check. Fails on a wrong result, never on time. SPARQL_COST_QUICK=1 runs the smallest sizes"
 run = "python -m pytest benchmark/sparql-constraint-query-cost -q -p no:cacheprovider && python benchmark/sparql-constraint-query-cost/check.py"
 
+[tasks."check:ledger-graph-partition"]
+depends = ["bootstrap:testing-oxigraph"]
+description = "Measure what a finer graph partition costs, by holding the events fixed and shortening the closing period so the named graphs multiply (ADR-A124, MS-Q9). Run on demand, not part of check. Fails on a wrong balance or an impossible graph count, never on time. LEDGER_SWEEP_EVENTS sets the events, LEDGER_SWEEP_QUICK=1 runs the coarsest three intervals"
+run = "python benchmark/ledger-posting-cost/sweep.py"
+
+[tasks."check:ledger-store-comparison"]
+description = "Measure whether the ledger's period-graph partition bounds an aggregate read on Jena TDB2 as it does on Oxigraph, so the result is a property of naming the graphs rather than of one engine (ADR-A124, STD-176). Run on demand, not part of check. Fails on a wrong balance, never on time. -Dledger.store.max caps the events"
+run = "mvn -q -f benchmark/ledger-store-comparison/pom.xml exec:java"
+
 [tasks."check:ledger-posting-cost"]
 depends = ["bootstrap:testing-oxigraph"]
-description = "Measure the storage and read cost of recording a draw at every level of an account tree, at the drawn account only, and with checkpoints, on Oxigraph (ADR-A124). Run on demand, not part of check. Fails on a wrong balance or count, never on time. LEDGER_COST_MAX caps the events, LEDGER_COST_QUICK=1 runs the smallest size"
+description = "Measure the storage and read cost of recording a draw on an account tree five ways on Oxigraph (ADR-A124): at every level, at the drawn account only, with checkpoints, with a running balance, and with each period's postings in a named graph. Run on demand, not part of check. Fails on a wrong balance or count, never on time. LEDGER_COST_MAX caps the events, LEDGER_COST_QUICK=1 runs the smallest size, LEDGER_COST_PROBE=N runs one size of its own"
 run = "python -m pytest benchmark/ledger-posting-cost -q -p no:cacheprovider && python benchmark/ledger-posting-cost/check.py"
 
 [tasks."check:vocabulary"]
