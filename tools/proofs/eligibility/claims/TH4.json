@@ -1,7 +1,7 @@
 {
   "subject": "TH4",
   "statedAs": "Hierarchy.hier_decide_empty_relation_is_flat",
-  "statementDigest": "sha256:07c7cc5ea11d9b44858e526a671587812fa07536acdc7cc7bd034202912d2a9c",
+  "statementDigest": "sha256:14579a557022bc73bbf11e7e0896364e7e6db4417294d37a2f40a4a0240111a4",
   "method": "Proof",
   "scope": "EveryHierarchyRelation",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found (E1.4)",

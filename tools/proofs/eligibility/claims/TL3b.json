@@ -1,7 +1,7 @@
 {
   "subject": "TL3b",
   "statedAs": "Eligibility.negate_before_same_reading_disagrees",
-  "statementDigest": "sha256:d15404e74afecc10dcba7a5cd68399078b8f92e26e8727548b5b7c8a65dc5361",
+  "statementDigest": "sha256:ac67368fc9fbcaf75608d7e6e596f86657068be3c92d6cae532c3a85d810485b",
   "method": "Proof",
   "scope": "SomeList",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found (E1.4)",

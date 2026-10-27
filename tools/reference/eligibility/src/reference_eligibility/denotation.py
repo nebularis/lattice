@@ -109,6 +109,14 @@ def decide_concept_match(
     if hierarchical and scheme is None:
         return UNDETERMINED
 
+    # L12: a condition with exclusions only admits every member of its bound
+    # scheme. With no resolved scheme there are no members to admit, and the
+    # empty scheme that could have resolved leaves every candidate
+    # Undetermined, so no other answer holds under every resolution, an
+    # excluded candidate included (Resolution.thy, TR4).
+    if not required and scheme is None:
+        return UNDETERMINED
+
     def matches(concept: Concept) -> bool:
         if not hierarchical:
             return candidate == concept

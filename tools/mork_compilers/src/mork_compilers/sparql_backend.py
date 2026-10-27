@@ -376,9 +376,10 @@ def profile_select(plan: ProfilePlan, record: str = "?record") -> str:
     order, and not from a ``GROUP_CONCAT`` over the rows' ``?closure``. A record's rows leave
     ``?closure`` unbound for each condition that did not rely on a closure, and an aggregate over an
     expression that errors on any row of its group is an error under SPARQL 1.1 §18.5.1, for
-    ``GROUP_CONCAT``, ``SUM`` and ``AVG`` (what ``MIN`` and ``MAX`` give is open, TSD-Q21). Oxigraph follows that and returns
-    no value for the group, and rdflib skips the row, so the two engines disagreed (TSD-41,
-    STD-279). Each flag coalesces the unbound value first, as the other aggregates here do.
+    ``GROUP_CONCAT``, ``SUM`` and ``AVG`` (``MIN`` is unbound, and ``MAX`` is open, TSD-43). Oxigraph follows that and
+    returns no value for the group, and rdflib skips the row, so the two engines disagreed (TSD-41). A condition that
+    relied on no closure contributes nothing to a closure's flag, so each flag gives the unbound value the neutral
+    element of ``SUM`` (STD-279, the second meaning).
 
     Cost (STD-020). The outer group holds one row per condition for each record, so ``c`` rows. It
     gains ``k`` accumulators, ``k`` being the number of distinct closures the conditions name, at

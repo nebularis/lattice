@@ -1,7 +1,7 @@
 {
   "subject": "TH2",
   "statedAs": "Hierarchy.hier_decide_no_hierarchy_undetermined",
-  "statementDigest": "sha256:8f74dd664d8594a4d28c0fc607cb9a3e907f7b9b200905ece3f13a561433f67f",
+  "statementDigest": "sha256:202e5b547bddf7b9db70ed76efd2d773764d5fe05983f007a96a53e3594be094",
   "method": "Proof",
   "scope": "EveryHierarchyRelation",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found (E1.4)",

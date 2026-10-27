@@ -3,7 +3,7 @@
    for every relation a condition may name, skos:broader or a sub-property of it. The decision reads the relation
    only through its links between members of the scheme (ordering), so a link of another relation, or a link
    to a concept outside the scheme, cannot change it. The scheme is resolved: the case of no resolved scheme is
-   Undetermined for every candidate and is not modelled here. *)
+   Undetermined for every candidate, and Resolution models it. *)
 
 theory Hierarchy
 imports Kernel

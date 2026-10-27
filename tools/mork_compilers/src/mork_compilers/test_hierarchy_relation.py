@@ -197,6 +197,20 @@ class NoApplicableBindingTests(unittest.TestCase):
         with self.assertRaises(IRCompileError):
             compile_concept_condition(self.data, EX["engineering-benefit"], AFTER)
 
+    def test_exclusions_only_with_no_applicable_binding_is_undetermined_for_every_candidate(self) -> None:
+        # C9b3c-23: L12, an excluded candidate included
+        self.data += graph(HEADER + """
+            ex:no-platform a elg:Condition ; elg:matchStrategy elg:ExactMatch ; elg:wildcardSemantics elg:NoWildcard ;
+                elg:constrainedByContract ex:grade-contract ; elg:excludedConcept ex:platform .
+        """)
+        plan = compile_concept_condition(self.data, EX["no-platform"], self.early)
+        self.assertTrue(plan.unresolved)
+        decided = sparql(plan, with_questions(self.data, EX["no-platform"], {"data": (EX.data,), "platform": (EX.platform,)}))
+        self.assertEqual(decided, {
+            EX["q-data"]: ("Undetermined", EXE.NoApplicableBinding),
+            EX["q-platform"]: ("Undetermined", EXE.NoApplicableBinding),
+        })
+
     def test_a_profile_over_an_unresolved_condition_is_undetermined(self) -> None:
         # C9b3c-23
         self.data += graph(HEADER + """
