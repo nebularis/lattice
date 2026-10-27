@@ -125,6 +125,7 @@ Code under `platform/`, `workers/`, `packages/` and `apps/` keeps these, and so 
 - **A function that claims determinism is tested** with a permutation and a repeat (PRI-58).
 - **Store isolation is verified** against the actual store and its configuration (PRI-59).
 - **A write path governed by a persistence profile is generated** by the persistence compiler, never written by hand (PRI-60).
+- **Each component validates what it receives**, even where a client or another layer already has, since it cannot know the input was not forged or altered on the way (PRI-75, STD-279).
 
 ## A public repository
 

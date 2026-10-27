@@ -66,7 +66,7 @@ No implementation is authorised by this note.
 
 ## Alignment with the Configuration Studio
 
-**Recorded 2026-10-27.** We intend to unify this proof of concept with the Configuration Studio in a later slice, CS12 of the [studio's plan](config-studio.md#roadmap). The web app of the follow-on tranche (WA14 to WA16) would then be a wording mode of the studio rather than a new `apps/word-authoring-webapp`, so WA-D14 and WA-D15 should be decided with CS12's questions, not alone. WA12 (nested clauses) and WA17 (add-in parity) stand either way. The authoring service's HTTP server (WA-D4, Javalin) should follow the studio's choice in its CS8. No implementation is authorised by this note.
+**Recorded 2026-10-27.** We decided to unify this proof of concept with the Configuration Studio, in step CS12 of the [studio's plan](config-studio.md#cs12-unifying-the-word-authoring-proof-of-concept), which records the decisions. In short, wording becomes a mode of the studio, so the web app of the follow-on tranche (WA14 to WA16) is not built and WA-D14 and WA-D15 are settled there: React and TypeScript as the studio is, and a shared domain package, `packages/authoring-domain`. The authoring service moves from Javalin (WA-D4) to Helidon SE WebServer, then folds into the studio's service as one deployable. Documents travel as XML in a LATTICE document vocabulary, and their meaning as RDF, so this plan's JSON contracts are retired in CS12d. WA12 (nested clauses) and WA17 (add-in parity) stand, and should be built against the shared package once it exists. No implementation is authorised by this note.
 
 ---
 

@@ -60,6 +60,7 @@ The index answered the architecture questions well (CAP-52, CAP-80, ADR-A38, ADR
 
 ## History
 
+- 2026-10-27, last: the maintainer decided CS-Q1 (Helidon), CS-Q3 and CS-Q4 (one deployable in steps, the document is XML and its meaning RDF, a shared domain package, one `studio:up`), and gave PRI-75 and STD-279. CS12 planned in steps CS12a to CS12e. CS8 is next.
 - 2026-10-27, later still: CS7, start and stop scripts for every platform, verified on macOS. Roadmap CS8 to CS13 added to the plan at the maintainer's request.
 - 2026-10-27, later: CS5 and CS6 at the maintainer's request: vocabulary, quantification and eligibility configurations, the resolution table, decision by concept and tests, with what waits on other work marked as under construction. Checked against the live stack.
 - 2026-10-27: unit opened, oriented, branch `claude/config-authoring-studio` cut from `main`. Sketch, contracts, staging, worker, service, browser application, stack tasks, compose file, tests, audit and documents written and verified. Fuseki 6.2.0 and RabbitMQ 4.4.0 run by hand, since Docker was not running.
