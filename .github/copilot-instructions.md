@@ -20,6 +20,7 @@ along the way.
   results. It does not change anything else in this contract.
 - **Never claim a check passed** unless it ran and passed. Say "authored, not yet run" and give the
   command.
+- **Read what a command printed, all of it.** A command that exits zero still reports: `mise run build:knowledge` prints a note naming a register cell it could not read, and a benchmark prints the engine version it actually ran on. A tail of the last few lines hides both. Every figure, version and verdict in a handoff comes from output that was read in full, never from what another agent said it saw.
 - **Pause for design decisions.** Do not make an architecture or modelling decision alone. Present
   the options and their consequences (skill `lattice-design`) and wait for the answer.
 - **When two standards conflict for a change, stop and ask the maintainer** before proceeding, and record the conflict in `docs/developer/pending-design-decisions.md`, so conflicts that recur show which standards to rework. Standards have no precedence order.
@@ -68,6 +69,7 @@ The knowledge index ranks the project's decisions, mechanisms, capabilities, pat
   mise run graph:ask -- read <ID>
   ```
   `mise run graph:ask -- find --help` lists every option, and the [facet register](../docs/developer/facets.md) defines every facet value. `exists <word>` finds a declared ontology term by name.
+- **Asking first means before searching the files.** `grep`, `sed` and reading a whole document are the fallback after `find` has answered weakly, never the opening move. Searching first is the common failure, and it costs twice: it finds the text and misses the entry that governs it, and it leaves nothing in the misses log, so a gap the index could have been told about stays invisible.
 - **Ask more than once.** Reword the question, or narrow, widen or drop a filter, until the answers fit the question or two attempts have found nothing better.
 - **Look for what is related, not only for the entry.** When reviewing, re-sourcing or changing an entry, ask for the decisions that ground it and the standards, patterns and mechanisms that bear on it, in your own words and with `--kind decision` among them, since the entry itself is rarely the whole answer.
 - **Ask for the reason, not only the rule.** A constraint's rationale lives in the decision that grounds it, and a decision holding several numbered decisions is indexed under one claim, so its later decisions may not come back from a question about their own subject. Ask for the rule, read the decision the answer names, and treat a rule you could find only by searching the files as a register gap (STD-272).
