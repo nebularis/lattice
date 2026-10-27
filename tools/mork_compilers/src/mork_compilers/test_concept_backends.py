@@ -27,6 +27,7 @@ from rdflib.compare import isomorphic
 
 from .common import mint
 from .eligibility_ir import ConceptPlan, compile_concept_condition, compile_condition
+from .engines import run_query
 from .namespaces import ELG, EXE, MORK, SH, SWRL, SWRLB
 from .shacl_backend import compile_shapes
 from .sparql_backend import compile_query_template
@@ -61,7 +62,7 @@ def with_questions(data: Graph, condition: URIRef, candidates: Dict[str, Tuple[U
 def sparql(plan, data: Graph) -> Dict[URIRef, Tuple[str, Optional[URIRef]]]:
     artefact = compile_query_template(plan)
     template = next(artefact.subjects(RDF.type, MORK.QueryTemplate))
-    rows = data.query(str(artefact.value(template, MORK.queryText)))
+    rows = run_query(data, str(artefact.value(template, MORK.queryText)))
     return {row.question: (str(row.decision), row.diagnostic) for row in rows}
 
 
@@ -134,7 +135,7 @@ def apply_rules(data: Graph, rules: Graph) -> Graph:
             body = [pattern(atom) for atom in atoms(rules.value(imp, SWRL.body))]
             head = [pattern(atom) for atom in atoms(rules.value(imp, SWRL.head))]
             query = "SELECT * WHERE { " + " ".join(clause(p) for p in body) + " }"
-            for row in facts.query(query):
+            for row in run_query(facts, query):
                 bound = {f"?{name}": value for name, value in row.asdict().items()}
                 for s, p, o in head:
                     triple = (bound.get(s) or URIRef(s[1:-1]), URIRef(p[1:-1]), bound.get(o) or URIRef(o[1:-1]))

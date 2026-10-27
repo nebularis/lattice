@@ -72,6 +72,7 @@ forward-slash paths on every platform."""
 from __future__ import annotations
 
 import contextlib
+import os
 import re
 import shutil
 import subprocess
@@ -95,6 +96,27 @@ ONTOLOGY = ROOT / "ontology"
 for _extra in (ROOT / "tools", ROOT / "tools" / "mork_compilers" / "src"):
     if str(_extra) not in sys.path:
         sys.path.insert(0, str(_extra))
+
+PER_WORKER = 900 * 1024 ** 2
+"""One worker's peak resident memory, for check:ontology-catalog and check:peril-vocabulary alike
+(the second is a subset of the first's files, so one process-tree figure covers both). Measured
+with -n 0 (python-test-melting TM10): 0.80 GB for the whole tree, the largest Python process at
+305 MB, and up to 3 JVMs concurrently holding 584 MB (a reasoning test's own thread pool over
+several subprocesses, not one JVM per xdist worker). Rounded up from the observed ~0.89 GB."""
+
+
+def pytest_xdist_auto_num_workers(config):
+    """What ``-n auto`` means for check:ontology-catalog and check:peril-vocabulary.
+    ``PYTEST_XDIST_AUTO_NUM_WORKERS`` decides when it is set. Otherwise mem_check gives as many
+    workers as fit in the memory available, up to the machine's count and never fewer than two
+    (ADR-A125, python-test-melting TM10)."""
+    if os.environ.get("PYTEST_XDIST_AUTO_NUM_WORKERS"):
+        return None
+    try:
+        import mem_check
+    except ImportError:
+        return None
+    return mem_check.workers(os.cpu_count() or 1, PER_WORKER)
 
 
 def _sort_key(source: Any) -> str:

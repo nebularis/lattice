@@ -273,7 +273,10 @@ WEAK = 0.69
 BOOST = 0.02
 FALLBACK = (
     "Fall back to reading the documents as you would without the index. If the answer is there\n"
-    "but no register entry holds it, that is a gap in the registers: tell the maintainer (STD-272)."
+    "but no register entry holds it, that is a gap in the registers: tell the maintainer (STD-272).\n"
+    f"The index holds the decisions and the registers, never the plans or the status records, so what\n"
+    f"a unit is doing now and what it does next is in {identifiers.DEVELOPER}/status/<unit>.md, and its\n"
+    f"scope and slices are in {identifiers.DEVELOPER}/plans/<unit>.md."
 )
 
 
@@ -336,8 +339,14 @@ def find(
         print(FALLBACK)
         return 0
     index = {node: i for i, node in enumerate(nodes)}
+    # An identifier written in the question names one entry outright, which no amount of meaning can
+    # beat and which the embedding scores poorly, since a name carries no sense of its own. Ranking it
+    # first stops `find PDD-08` reporting that the index may not hold PDD-08.
+    named = {identifiers.normalise(word) for word in words.split()}
     for r in rows:
         r["meaning"] = float(vectors[index[r["n"]]] @ question) if r["n"] in index else -1.0
+        if identifiers.normalise(r["id"]) in named:
+            r["meaning"] = 1.0
         r["facets"] = sum(bool(wanted & set((r[c] or "").split())) for c, wanted in facets.items())
         r["score"] = r["meaning"] + BOOST * r["facets"]
     best = max((r["meaning"] for r in rows), default=-1.0)

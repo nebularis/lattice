@@ -68,6 +68,7 @@ The knowledge index ranks the project's decisions, mechanisms, capabilities, pat
   `mise run graph:ask -- find --help` lists every option, and the [facet register](docs/developer/facets.md) defines every facet value. `exists <word>` finds a declared ontology term by name.
 - **Ask more than once.** Reword the question, or narrow, widen or drop a filter, until the answers fit the question or two attempts have found nothing better.
 - **Look for what is related, not only for the entry.** When reviewing, re-sourcing or changing an entry, ask for the decisions that ground it and the standards, patterns and mechanisms that bear on it, in your own words and with `--kind decision` among them, since the entry itself is rarely the whole answer.
+- **The index holds the decisions and the registers, never the plans or the status records.** What a unit is doing now and what it does next is in `docs/developer/status/<unit>.md`, and its scope and slices are in `docs/developer/plans/<unit>.md`, so no wording or facet will find them here. An identifier written in a question, such as `find PDD-08`, names its entry outright and ranks first, and `read <ID>` gives its text.
 - **An empty or weak answer never proves that nothing exists.** When `find` reports one, fall back to reading the documents and the code as you would without the index.
 - **A register gap is technical debt.** If the fallback finds an answer in the repository that no register entry holds, tell the maintainer in the handoff, and add the entry in the same change or a row to `docs/developer/technical-debt.md` (STD-272).
 - **Report misses and improvements as they come up.** At each handoff, list what the index answered weakly or not at all, from `mise run graph:ask -- misses`, and what would have answered it, so the maintainer can decide what to add.
@@ -114,7 +115,7 @@ Skill `lattice-ontology-authoring` has the detail.
 
 Code under `platform/`, `workers/`, `packages/` and `apps/` keeps these, and so does any code that reads or writes a graph store. Each is a principle in the register, which points at the decision behind it. Most are not yet enforced by a check (TD-85), so a reviewer holds a change to them.
 
-- **The scoped dataset is the only door** to the RDF store (PRI-51).
+- **The store SPI is the only door** to the RDF store. Its Core tier is SPARQL 1.1 and the Graph Store Protocol, so a read that names several named graphs is Core. Depend on a capability beyond Core, such as a multi-graph atomic write, only where the adapter declares it or its stated Core fallback is used (PRI-51).
 - **No new authoritative store.** Anything persisted outside the graph is marked as coordination or derived, and can be rebuilt from the graph (PRI-52).
 - **Contract first.** Wire types are generated from the schemas in `contracts/`, never written again by hand (PRI-53).
 - **Every write carries its commit metadata**, its cause, principal, profile, transaction time and provenance (PRI-54).
@@ -168,3 +169,4 @@ Load the skill whose description matches the task. Each lives in `.claude/skills
 | `lattice-testing` | a slow test suite, writing or extending a Python test under `tools/` that parses an ontology graph or calls pySHACL, sharing state across test modules with pytest fixtures, or a repository-wide text scan that must work on every platform |
 | `lattice-publication-hygiene` | before a commit or pull request, and whenever writing text that will be published |
 | `lattice-triple-stores` | relying on, probing or recording how a triple store behaves: running generated SPARQL on rdflib, Oxigraph or another engine, writing an engine test, or meeting unexpected store behaviour |
+| `lattice-constrained-environments` | a bootstrap, install or download refused by a registry, mirror or proxy, and deciding whether a blocked package can be worked around safely |

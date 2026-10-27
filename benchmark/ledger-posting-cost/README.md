@@ -50,7 +50,7 @@ We used `pyoxigraph` directly. The [Oxigraph test-support package](../../tools/t
 
 ## Measured results
 
-Run of 2026-10-24 on a laptop, Python 3.14, pyoxigraph 0.5.13, at 20,000 events. Each read figure is the mean over the accounts of that level and the 8 read points. "Folded" is the number of postings a read summed.
+Run of 2026-10-24 on a laptop, repeated 2026-10-27, run R-I of the [discovery record](../../docs/architecture/triple-store-discovery.md) (Python 3.14.7, pyoxigraph 0.5.13), at 20,000 events. The engine version matters here: the same run on 0.5.11 reads a programme in 148.93 ms rather than 43.89 ms, because the subtree fold's property path is slower there (TSD-40). Each read figure is the mean over the accounts of that level and the 8 read points. "Folded" is the number of postings a read summed.
 
 | Strategy | Stored triples | Per event | Write s | Contract ms (folded) | Layer ms (folded) | Programme ms (folded) |
 |---|---|---|---|---|---|---|
@@ -79,6 +79,38 @@ What the run shows.
 7. **Naming the periods' graphs removes the scan floor, and the read goes flat.** The programme read is 0.40, 0.34, 0.34 and 0.54 ms at 1,000, 5,000, 20,000 and 100,000 events, so it does not grow with the history over a hundredfold range. The same read checkpointed grows from 2.19 ms to 217.53 ms, so the saving grows from 5 times to 403 times. **The postings folded are identical to the checkpointed strategy's at every account and read point, and so are the stored triples**, at 178,254 at 20,000 events and 889,934 at 100,000, since a posting's 8 quads count the same in a named graph. The write time is the same within the noise. The whole gain is in postings the engine no longer visits. Layer reads fall from 6.57 ms to 0.12 ms and contract reads from 0.74 ms to 0.09 ms.
 8. **The position filter that remains is at the boundary of the read.** A graph is taken whole unless the read point falls inside its period. Checkpoints close on period ends, so the lower bound never cuts a period, and the filter is needed only for the period holding the read point, and not at all when the point is itself a period end. Whole periods between the two carry no filter. A contract read still names its own account, since a graph holds the ten contracts of a layer. We tried `VALUES ?g` with `GRAPH ?g` and a union of `GRAPH <name>` blocks, and they were within about 10% of each other, so we kept `VALUES` because it is shorter.
 9. **Deriving the checkpoint's IRI removes the one term that still grew.** Searching for the latest checkpoint with a filter and a sort cost 0.04 ms at 2 closes an account and 1.06 ms at 200, growing with the closes and so with time, which made it the next floor once finding 7 had flattened the fold. Computing the close position from the interval and naming the checkpoint directly is flat, at 0.020 to 0.023 ms over the same range. Binding the position as an object rather than naming the subject gives only half the saving and still grows. The measurement and the mechanism are [TSD-36](../../docs/architecture/triple-store-discovery.md#tsd-36-a-bound-object-does-not-give-the-seek-a-bound-subject-gives). All the figures above use the derived form, so findings 4 and 5 are reported with it too.
+
+## The partition sweep
+
+`sweep.py` asks the other question. It holds the events fixed and shortens the closing period, so the named graphs multiply while the postings stay the same. A shorter period also shrinks the fold, so the read should get faster before any cost of holding many graphs makes it slower again. Where it stops falling is the ceiling on how fine a partition may be, which is MS-Q9 of the [multi-store sketch](../../docs/developer/sketches/multi-store-runtime.md).
+
+```bash
+mise run check:ledger-graph-partition
+```
+
+```bash
+LEDGER_SWEEP_QUICK=1 mise run check:ledger-graph-partition
+```
+
+**Pass criterion.** At every interval the programme's balance equals the model's, and the store holds no more graphs than layers times periods. A wrong balance or an impossible graph count fails the run. Time never does. Figures go to `sweep.md` and `sweep.json`, generated and git-ignored.
+
+Run of 2026-10-27, run R-I, 20,000 events.
+
+| Period | Graphs | Quads | SST | MB | Write s | Folded | Read ms | Open ms |
+|---|---|---|---|---|---|---|---|---|
+| 5000 | 40 | 162,126 | 12 | 23.4 | 0.82 | 1294 | 6.683 | 2.3 |
+| 1000 | 200 | 169,294 | 12 | 24.8 | 0.74 | 259 | 1.424 | 2.1 |
+| 500 | 400 | 178,254 | 12 | 24.8 | 0.77 | 134 | 0.798 | 2.0 |
+| 200 | 1000 | 205,134 | 12 | 26.3 | 0.84 | 45 | 0.354 | 2.2 |
+| 100 | 2000 | 249,934 | 12 | 29.8 | 1.02 | 24 | 0.259 | 2.2 |
+| 50 | 3979 | 339,534 | 12 | 36.5 | 1.27 | 10 | 0.183 | 2.1 |
+| 20 | 8825 | 608,334 | 12 | 55.8 | 2.29 | 7 | 0.165 | 2.2 |
+| 10 | 13,082 | 1,056,334 | 12 | 145.4 | 4.52 | 1 | 0.132 | 2.1 |
+
+1. **There is no read ceiling in this range.** The graphs rise 327 times and the read falls monotonically, from 6.683 ms to 0.132 ms. Nothing in holding many graphs overtakes the saving from a smaller fold, so the partition may be as fine as the storage allows.
+2. **The SST files do not multiply with the graphs.** They stay at 12 at every interval, because the history is written in one `bulk_extend`. [TSD-39](../../docs/architecture/triple-store-discovery.md#tsd-39-one-oxigraph-bulk-load-per-document-fragments-the-store-past-a-default-open-file-limit) is about one load per document, not about one graph per load, and a read-only open stays near 2.1 ms throughout.
+3. **The cost is storage and write time, and it is the checkpoints.** Quads rise 6.5 times, disk 6.2 times and the write 5.5 times across the range, which is the `accounts × closes × 4` arithmetic of finding 6. The postings themselves do not change.
+4. **So the limit on partition fineness is storage, not the store's handling of graphs.** That is this engine. The SST and open-file parts are RocksDB's, and nothing here transfers to a B+tree or an in-memory store (STD-176). [ledger-store-comparison](../ledger-store-comparison/README.md) tests the read-shape claim on Jena TDB2.
 
 ## Extrapolation
 

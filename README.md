@@ -2,10 +2,7 @@
 
 A domain neutral semantic framework for representing governing instruments (contracts, protocols, agreements, etc) and the obligations, eligibility conditions, and lifecycle behaviours they define, as structured, queryable, versioned graphs.
 
-**New to this repository?** [Getting Started](docs/developer/getting-started.md) bootstraps a
-clean clone end to end. The [Developer Guide](docs/developer/developer-guide.md) covers every
-tool and script and when to use it. [`docs/diagrams/`](docs/diagrams/README.md) pictures the
-whole architecture, five ways.
+**New to this repository?** [Getting Started](docs/developer/getting-started.md) bootstraps a clean clone end to end. The [Developer Guide](docs/developer/developer-guide.md) covers every tool and script and when to use it. [`docs/diagrams/`](docs/diagrams/README.md) pictures the whole architecture, five ways.
 
 ---
 

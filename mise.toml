@@ -285,9 +285,18 @@ depends = ["bootstrap:testing-oxigraph"]
 description = "Measure the forms of a SHACL-SPARQL constraint query on rdflib and Oxigraph (ADR-A124, ADR-A128). Run on demand, not part of check. Fails on a wrong result, never on time. SPARQL_COST_QUICK=1 runs the smallest sizes"
 run = "python -m pytest benchmark/sparql-constraint-query-cost -q -p no:cacheprovider && python benchmark/sparql-constraint-query-cost/check.py"
 
+[tasks."check:ledger-graph-partition"]
+depends = ["bootstrap:testing-oxigraph"]
+description = "Measure what a finer graph partition costs, by holding the events fixed and shortening the closing period so the named graphs multiply (ADR-A124, MS-Q9). Run on demand, not part of check. Fails on a wrong balance or an impossible graph count, never on time. LEDGER_SWEEP_EVENTS sets the events, LEDGER_SWEEP_QUICK=1 runs the coarsest three intervals"
+run = "python benchmark/ledger-posting-cost/sweep.py"
+
+[tasks."check:ledger-store-comparison"]
+description = "Measure whether the ledger's period-graph partition bounds an aggregate read on Jena TDB2 as it does on Oxigraph, so the result is a property of naming the graphs rather than of one engine (ADR-A124, STD-176). Run on demand, not part of check. Fails on a wrong balance, never on time. -Dledger.store.max caps the events"
+run = "mvn -q -f benchmark/ledger-store-comparison/pom.xml exec:java"
+
 [tasks."check:ledger-posting-cost"]
 depends = ["bootstrap:testing-oxigraph"]
-description = "Measure the storage and read cost of recording a draw at every level of an account tree, at the drawn account only, and with checkpoints, on Oxigraph (ADR-A124). Run on demand, not part of check. Fails on a wrong balance or count, never on time. LEDGER_COST_MAX caps the events, LEDGER_COST_QUICK=1 runs the smallest size"
+description = "Measure the storage and read cost of recording a draw on an account tree five ways on Oxigraph (ADR-A124): at every level, at the drawn account only, with checkpoints, with a running balance, and with each period's postings in a named graph. Run on demand, not part of check. Fails on a wrong balance or count, never on time. LEDGER_COST_MAX caps the events, LEDGER_COST_QUICK=1 runs the smallest size, LEDGER_COST_PROBE=N runs one size of its own"
 run = "python -m pytest benchmark/ledger-posting-cost -q -p no:cacheprovider && python benchmark/ledger-posting-cost/check.py"
 
 [tasks."check:vocabulary"]
@@ -379,8 +388,14 @@ description = "Test the hooks dispatcher and the writing rules (ADR-A133)"
 run = "python -m pytest tools/test_hooks.py tools/test_writing_rules.py -q"
 
 [tasks."check:mork-compilers"]
-description = "Run the MORK backend compiler tests, including generated SPARQL executed against fixtures (ADR-A24, ADR-A89)"
-run = "python -m pytest tools/mork_compilers -q"
+description = "Run the MORK backend compiler tests, including generated SPARQL executed against fixtures (ADR-A24, ADR-A89). rdflib is the default engine (python-test-melting TM11): check:mork-compilers-conformance runs the same suite on Oxigraph, which TSD-41 found disagrees with rdflib on one test, not yet understood. -n auto sizes its workers with mem_check (tools/conftest.py, shared with check:ontology-catalog)"
+run = "python -m pytest tools/mork_compilers -q -n auto"
+env = { MORK_SPARQL_ENGINE = "rdflib" }
+
+[tasks."check:mork-compilers-conformance"]
+description = "Run the MORK backend compiler tests on Oxigraph (python-test-melting TM11). Run on demand and before a merge into main, not part of check, since TSD-41's divergence is expected to fail test_a_profile_row_names_the_union_of_its_conditions_closures until its mechanism (TSD-Q20) is understood"
+run = "python -m pytest tools/mork_compilers -q -n auto"
+env = { MORK_SPARQL_ENGINE = "oxigraph" }
 
 [tasks."check:ontology-versioning"]
 description = "Flag any ontology .ttl file changed without its owl:versionIRI, any shapes/projection file changed without its directory's .version, a missing version, or a current version with no release row (ADR-A86)"

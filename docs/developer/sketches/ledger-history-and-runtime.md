@@ -29,7 +29,7 @@ These are upstream of LF-Q1 to LF-Q8.
 |---|---|---|
 | **LF-Q11** | How many orderings does a posting carry, one (recorded) or two (recorded and effective)? | **two**, 2026-10-24 |
 | **LF-Q9** | May an evaluation read a balance mid-pass, after earlier settlements in the same pass? | **yes**, 2026-10-24 |
-| **LF-Q17** | Is a posting an independent fact, or does it carry a claim about the postings before it? | open, §4 |
+| **LF-Q17** | Is a posting an independent fact, or does it carry a claim about the postings before it? | **a running balance**, along the recorded ordering, with checkpoints at closings, 2026-10-27 |
 
 ### 2.1 LF-Q11, two orderings
 
@@ -187,12 +187,12 @@ A projection onto a second T-Box earns its keep where the optimisation has no do
 
 | ID | Question | Options | Leaning | Needed by |
 |---|---|---|---|---|
-| **LF-Q17** | Is a posting an independent fact, or does it carry a running balance? | (a) independent, with balance records. (b) a running balance along the recorded ordering, with checkpoints at closings | (b), since §5.1 removes the serialisation objection where it bit | LG-2 |
-| **LF-Q18** | Post at the drawn account only, or at every level? | (a) drawn account only, ancestors derived. (b) every level, as today. (c) drawn account only, with declared exceptions for purpose-counting accounts | (c) | LG-2 |
-| **LF-Q19** | Does an account instance gain a minted IRI? | (a) yes, which reverses ADR-A131 decision 4. (b) no, postings keep account, owner and key | (a). It saves two triples a posting and gives the reset anchor and per-instance configuration a home | LG-2, and an ADR-A131 addendum |
-| **LF-Q20** | Is closing recurrence declared per account definition? | (a) yes, on the definition. (b) one system-wide interval. (c) no closings, unbounded history | (a) | LG-2 |
-| **LF-Q21** | How is a speculative pass kept out of the record? | (a) a droppable named graph. (b) never written. (c) a flag on the pass, filtered by every query | (a), since a scenario is still worth reading back before it is dropped | LG-2 |
-| **LF-Q22** | Is a maximum magnitude declared per value space? | (a) yes, in Quantification. (b) no, rely on the 18-digit floor | (a), since a non-money space can exceed it | Quantification, before LG-2 |
+| **LF-Q17** | Is a posting an independent fact, or does it carry a running balance? | (a) independent, with balance records. (b) a running balance along the recorded ordering, with checkpoints at closings | **answered (b)**, 2026-10-27, the maintainer. A running balance along the recorded ordering, with checkpoints at closings | answered |
+| **LF-Q18** | Post at the drawn account only, or at every level? | (a) drawn account only, ancestors derived. (b) every level, as today. (c) drawn account only, with declared exceptions for purpose-counting accounts | **answered (c)**, 2026-10-27, the maintainer. The drawn account only, with declared exceptions for purpose-counting accounts | answered |
+| **LF-Q19** | Does an account instance gain a minted IRI? | (a) yes, which reverses ADR-A131 decision 4. (b) no, postings keep account, owner and key | **answered (a)**, 2026-10-27, the maintainer. An account instance gains a minted IRI, reversing ADR-A131 decision 4. MS-Q2's graph template now rests on it | answered, needs an ADR-A131 addendum |
+| **LF-Q20** | Is closing recurrence declared per account definition? | (a) yes, on the definition. (b) one system-wide interval. (c) no closings, unbounded history | **answered (a)**, 2026-10-27, the maintainer. On the account definition, so the interval is per account | answered |
+| **LF-Q21** | How is a speculative pass kept out of the record? | (a) a droppable named graph. (b) never written. (c) a flag on the pass, filtered by every query | **answered (a)**, 2026-10-27, the maintainer, a droppable named graph. MS-Q11 argues the better frame is a lifecycle boundary, and that stays open | answered, MS-Q11 open |
+| **LF-Q22** | Is a maximum magnitude declared per value space? | (a) yes, in Quantification. (b) no, rely on the 18-digit floor | **answered (a)**, 2026-10-27, the maintainer. Declared per value space in Quantification | answered |
 
 ## 8. What this changes elsewhere
 

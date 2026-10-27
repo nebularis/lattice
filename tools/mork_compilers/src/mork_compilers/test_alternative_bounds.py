@@ -15,6 +15,7 @@ from rdflib.namespace import RDF
 
 from .common import mint
 from .eligibility_ir import IRCompileError, compile_any_condition, compile_condition
+from .engines import run_query
 from .namespaces import ELG, EXE, MORK, QNT, SH
 from .shacl_backend import compile_shapes
 from .sparql_backend import compile_query_template
@@ -75,7 +76,7 @@ def questions() -> Graph:
 def sparql(plan, data: Graph) -> dict:
     artefact = compile_query_template(plan)
     query = str(artefact.value(next(artefact.subjects(RDF.type, MORK.QueryTemplate)), MORK.queryText))
-    return {str(row.question).rsplit("/q-", 1)[-1]: (str(row.decision), row.diagnostic) for row in data.query(query)}
+    return {str(row.question).rsplit("/q-", 1)[-1]: (str(row.decision), row.diagnostic) for row in run_query(data, query)}
 
 
 class AlternativeBoundTests(unittest.TestCase):

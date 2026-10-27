@@ -4,9 +4,10 @@
 Hierarchical match, exclusion-only conditions and scheme resolution through
 the shared IR (ADR-A85, ADR-A87, ADR-A89).
 
-Decisions are checked by executing the generated SPARQL with rdflib. The
-plan's own expansion is the oracle for parity: every member of the resolved
-scheme is asked once through SPARQL and must receive the expansion's decision.
+Decisions are checked by executing the generated SPARQL, Oxigraph by default
+(python-test-melting TM11). The plan's own expansion is the oracle for parity:
+every member of the resolved scheme is asked once through SPARQL and must
+receive the expansion's decision.
 """
 
 from __future__ import annotations
@@ -26,6 +27,7 @@ from .eligibility_ir import (
     ResolutionContext,
     compile_concept_condition,
 )
+from .engines import run_query
 from .namespaces import ELG, EXE, MORK
 from .shacl_backend import compile_shapes
 from .sparql_backend import compile_query_template
@@ -116,7 +118,7 @@ def ask(data: Graph, plan: ConceptPlan, candidates: Dict[str, URIRef]) -> Dict[s
             asked.add((question, ELG.candidateConcept, concept))
     artefact = compile_query_template(plan)
     template = next(artefact.subjects(RDF.type, MORK.QueryTemplate))
-    rows = asked.query(str(artefact.value(template, MORK.queryText)))
+    rows = run_query(asked, str(artefact.value(template, MORK.queryText)))
     by_question = {row.question: str(row.decision) for row in rows}
     return {name: by_question[EX[f"q-{name}"]] for name in candidates}
 
@@ -257,7 +259,7 @@ class ExampleTests(unittest.TestCase):
         plan = compile_concept_condition(data, EX["hierarchical-condition"])
         artefact = compile_query_template(plan)
         template = next(artefact.subjects(RDF.type, MORK.QueryTemplate))
-        rows = {row.question: str(row.decision) for row in data.query(str(artefact.value(template, MORK.queryText)))}
+        rows = {row.question: str(row.decision) for row in run_query(data, str(artefact.value(template, MORK.queryText)))}
         recorded = data.value(EX.decision, ELG.decisionValue)
         self.assertEqual(rows, {EX["subject-question"]: "Permitted"})
         self.assertEqual(recorded, ELG.Permitted)

@@ -21,6 +21,7 @@ from rdflib.namespace import RDF
 
 from .common import mint
 from .eligibility_ir import IRCompileError, compile_any_condition, compile_profile
+from .engines import run_query
 from .namespaces import ELG, EXE, MORK, SH
 from .shacl_backend import compile_shapes
 from .sparql_backend import compile_query_template
@@ -79,7 +80,7 @@ def sparql(plan, data: Graph) -> Dict[str, tuple]:
     variable = "record" if hasattr(plan, "profile") else "question"
     return {
         local(row[variable]): (str(row.decision), row.diagnostic)
-        for row in data.query(str(artefact.value(template, MORK.queryText)))
+        for row in run_query(data, str(artefact.value(template, MORK.queryText)))
     }
 
 

@@ -4,7 +4,9 @@
 Concept conditions through the shared IR (ADR-A87, ADR-A89).
 
 Every decision is checked by executing the generated SPARQL against a
-fixture graph with rdflib's own engine, not by inspecting query text.
+fixture graph, not by inspecting query text. Oxigraph is the default engine
+(python-test-melting TM11), and ``check:mork-compilers-conformance`` runs
+the same suite on rdflib.
 
 Run from the repository root::
 
@@ -22,6 +24,7 @@ from rdflib.compare import isomorphic
 from rdflib.namespace import RDF
 
 from .eligibility_ir import ConceptPlan, IRCompileError, compile_concept_condition
+from .engines import run_query
 from .namespaces import ELG, EXE, MORK
 from .sparql_backend import compile_query_template
 
@@ -67,7 +70,7 @@ def run(plan: ConceptPlan, data: Graph) -> Dict[URIRef, str]:
     artefact = compile_query_template(plan)
     template = next(artefact.subjects(RDF.type, MORK.QueryTemplate))
     query = str(artefact.value(template, MORK.queryText))
-    return {row.question: str(row.decision) for row in data.query(query)}
+    return {row.question: str(row.decision) for row in run_query(data, query)}
 
 
 class ConceptIRTests(unittest.TestCase):
