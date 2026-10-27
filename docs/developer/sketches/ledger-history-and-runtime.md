@@ -129,13 +129,23 @@ A purpose-counting account (`ldg:countsPurpose`) is not in the drawn account's s
 
 ### 5.2 Close the period
 
-Each account carries a closing recurrence. At each close, the account's balance at that point is written once as a checkpoint, and the detail before it is archived rather than deleted.
+Each account carries a closing recurrence. At each close the detail before it is archived rather than deleted, and the balance at that point is written as a checkpoint.
+
+**A checkpoint is written only where the balance moved** (MS-Q6, answered (a) 2026-10-27). An untouched account's previous checkpoint still stands, and a carry-forward keeps the lookup one hop rather than a search back through the closes that did nothing. On the tree the benchmark generates this is about a third of the checkpoint storage that writing one per account per close would cost, and it also makes a closing mean something: the accounts a close names are the accounts that moved.
+
+**A checkpoint's IRI is derived from the account and the close position**, never searched for (MS-Q8, answered (d) 2026-10-24). Computing the close position from the interval and naming the checkpoint directly is flat at 0.020 to 0.023 ms, where searching for the latest with a filter and a sort cost 0.04 ms at two closes and 1.06 ms at two hundred, growing with time. The mechanism is [TSD-36](../../architecture/triple-store-discovery.md#tsd-36-a-bound-object-does-not-give-the-seek-a-bound-subject-gives), and the carry-forward above is what keeps the derived name resolvable for an account that did not move.
 
 A balance as of a point is then the last checkpoint at or before it, plus the fold over the postings since. Both terms are bounded, the first by one lookup and the second by the closing interval.
 
-Storage in the hot store becomes O(accounts × checkpoints retained + postings since the last close) rather than O(every posting ever written). Read cost for an ancestor becomes O(subtree width × closing interval), which is the dial §5.1 needs.
+**Each period's postings live in their own named graph, and that is what flattens the fold.** The partitioned unit is the account's book for one period, a node the closing already produces, and it is itself an aggregate root, so the graph IRI template keeps its single slot and whole-graph replace keeps its meaning ([ADR-A13](../../architecture/decisions/ADR-A13-dataset-graph-role-model.md)'s addendum of 2026-10-27, STD-276). A read names the graphs of the periods since the last checkpoint rather than filtering a position over the whole history.
+
+Measured, this removes the scan floor (MS-Q1, answered (a), [benchmark/ledger-posting-cost](../../../benchmark/ledger-posting-cost/README.md) finding 7). The programme read is 0.40, 0.34, 0.34 and 0.54 ms at 1,000, 5,000, 20,000 and 100,000 events, so it does not grow with the history over a hundredfold range, where the same read against one graph grows from 2.19 ms to 217.53 ms. The postings folded and the stored triples are identical in both, since a posting's eight quads count the same in a named graph, so the whole gain is in postings the engine never visits. The shape replicates on Jena TDB2 (CAP-85), so it is a property of naming the graphs rather than of one engine.
+
+Storage in the hot store becomes O(accounts moved × checkpoints retained + postings since the last close) rather than O(every posting ever written). Read cost for an ancestor becomes O(subtree width × closing interval), which is the dial §5.1 needs.
 
 Closing recurrence is a property of the account definition, so a heavily drawn aggregate closes daily and a quiet one closes yearly, and the trade between storage and read cost is set per account rather than for the whole system. Quantification already models recurrence (`qnt:Recurrence`, `qnt:RecurrenceBin`, `qnt:AnchorBinding`), so this reuses declared machinery rather than adding any.
+
+A sealed book is registrable, and its registered content hash is the archive digest a restore checks ([ADR-A34](../../architecture/decisions/ADR-A34-surface-graph-family-registry-and-immutable-identity.md)'s addendum of 2026-10-27). The close is therefore a registration event as well as a write, and a close that seals without registering is a reconciliation case rather than a loss, since the hash recomputes from the sealed content.
 
 ### 5.3 Committed and speculative evaluation
 

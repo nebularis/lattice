@@ -356,7 +356,7 @@ Speculative, and marked as such. None of this should be written until §12 settl
 
 **The stratification to a second T-Box is not needed**, which strengthens §6 of the history sketch rather than overturning it, and now rests on measurement.
 
-**The caveats.** The graph count grows as partitions times periods and the benchmark reached 400, so a store that degrades on very many graphs would change point 2 (MS-Q9). Every measurement is Oxigraph's. Nothing measures a restore, a late posting into a closed period, or a materialisation path.
+**The caveats.** The graph count grows as partitions times periods, and MS-Q9 is now answered: the sweep took the graphs to 13,082 with no read ceiling, so what bounds point 2 is storage rather than the engine's graph handling. Not every measurement is Oxigraph's any more, since CAP-85 replicated the partition's shape on Jena TDB2, but one result there runs against the design and is unexplained, a write costing 1.32 s against 0.63 s with the partition on, where Oxigraph showed no difference. Nothing measures a restore, a late posting into a closed period, or a materialisation path.
 
 ## 12. Questions
 
@@ -370,7 +370,7 @@ Speculative, and marked as such. None of this should be written until §12 settl
 | **MS-Q6** | Is a checkpoint written for every account at a close, or only where the balance moved? | (a) only where it moved, with a carry-forward to keep the derived IRI one lookup. (b) every account, as §5.2 of the history sketch says today | (a), a third of the storage, and what a closing means | ledger, a correction to §5.2 |
 | **MS-Q7** | What bounds the staleness of a projected balance used by a limit check? | (a) the check reads the postings and the projection is for display only. (b) a declared bound, the check refusing when exceeded. (c) synchronous invalidation | (a), since §7.2 shows a stale balance admitting a draw the postings refuse | only for the OLTP pattern |
 | **MS-Q8** | How is the checkpoint lookup bounded? | (a) retire old checkpoints. (b) checkpoints in a graph per period. (c) promote the latest onto the account. (d) derive the checkpoint's IRI from the account and the close position | **answered (d)**, 2026-10-24. Flat, no new storage, no mutable triple, and it fixes the as-of read as well as the current one, which (c) does not. TSD-36 | answered |
-| **MS-Q9** | Does the engine degrade on a large number of graphs? | (a) no, the partition can be fine. (b) yes, which caps partitions times periods | unknown, and less pressing than it looked, since a good partition keeps the product small. The benchmark reached 400 | before MS-Q2 is authored |
+| **MS-Q9** | Does the engine degrade on a large number of graphs? | (a) no, the partition can be fine. (b) yes, which caps partitions times periods | **answered (a)**, 2026-10-27, by the partition sweep (CAP-84). No read ceiling in range: the graphs rise 327 times, from 40 to 13,082, and the read falls monotonically from 6.683 ms to 0.132 ms. The cost is storage and write time, rising 6.5 and 5.5 times, which is the `accounts × closes × 4` checkpoint arithmetic rather than anything to do with graphs. **So the limit on partition fineness is storage.** Two caveats: it is Oxigraph alone, the SST-file and open-file parts being RocksDB's, and the sweep shortens the period while holding events fixed, so the finest partition also has the smallest fold and the read falls for two reasons at once | answered |
 | **MS-Q10** | Which residency models does the model support, and how are they declared? | (a) all three of §5, declared per class or per account. (b) hot throughout only. (c) hot and cold on demand, without thresholds | (a), since the adopter's domain decides and a schedule forecloses the third | persistence, after §4.1 graduates |
 | **MS-Q11** | Is the proposed-against-bound split a lifecycle boundary rather than a graph flag? | (a) yes, which reopens LF-Q21. (b) no, a droppable graph is enough | (a). Most placement volume never becomes record, which is a larger reduction than any mechanism here | ledger, and LF-Q21 |
 
@@ -378,11 +378,11 @@ Speculative, and marked as such. None of this should be written until §12 settl
 
 | Unit | Effect |
 |---|---|
-| `ledger` | §5.2 of the history sketch needs the measured result, the graph partition and the derived checkpoint IRI recorded, and MS-Q6's correction applied. Its §6 judgement stands and is now measured. LF-Q21 should be reopened per MS-Q11 |
+| `ledger` | §5.2 of the history sketch records the measured result, the graph partition and the derived checkpoint IRI, and carries MS-Q6's correction, all applied 2026-10-27. Its §6 judgement stands and is now measured. LF-Q21 should be reopened per MS-Q11, which is the one thing here still open |
 | `persistence` | MS-Q3, MS-Q5 and MS-Q10 are its questions. MS-Q2 is answered, and the period-book node it settles on needs minting, which LF-Q19 already decided. MS-Q5 and MS-Q10 wait on §4.1 |
 | `surface` | nothing. §12's two laws already decide what a projection may be, and the projection is off the general read path |
 | `quantification` | nothing new, and the closing recurrence gains a second role as what makes a checkpoint addressable |
 | `docs/architecture/` | §4.1 should graduate here as durable guidance on demarcating a deployment, once §12 settles |
-| benchmark | the fifth strategy answered MS-Q1 and the derived lookup answered MS-Q8. MS-Q9 is the next it could answer. Nothing measures an archive, a restore or a materialisation |
+| benchmark | the fifth strategy answered MS-Q1, the derived lookup answered MS-Q8, and the partition sweep (CAP-84) answered MS-Q9. The store comparison (CAP-85) replicated MS-Q1's shape on Jena TDB2. Nothing measures an archive, a restore or a materialisation, and MS-Q4 is the next it could answer |
 | `docs/architecture/triple-store-discovery.md` | TSD-36 added. The graph-selection result is TSD-04 holding at scale |
 | `ensemble` | nothing directly. C4 waits on LF-Q9 and LF-Q17 |
