@@ -290,6 +290,11 @@ depends = ["bootstrap:testing-oxigraph"]
 description = "Measure what a finer graph partition costs, by holding the events fixed and shortening the closing period so the named graphs multiply (ADR-A124, MS-Q9). Run on demand, not part of check. Fails on a wrong balance or an impossible graph count, never on time. LEDGER_SWEEP_EVENTS sets the events, LEDGER_SWEEP_QUICK=1 runs the coarsest three intervals"
 run = "python benchmark/ledger-posting-cost/sweep.py"
 
+[tasks."check:ledger-cross-family"]
+depends = ["bootstrap:testing-oxigraph"]
+description = "Measure whether an as-of read whose range crosses a change of closing recurrence stays flat in the history, against same-width reads inside one graph family and against the unpartitioned fold (ADR-A124, PDD-12). Run on demand, not part of check. Fails on a wrong balance, stored count or folded total, never on time. LEDGER_CROSS_MAX caps the events, LEDGER_CROSS_QUICK=1 runs the smallest size"
+run = "python -m pytest benchmark/ledger-posting-cost/test_cross_family.py -q -p no:cacheprovider && python benchmark/ledger-posting-cost/cross_family.py"
+
 [tasks."check:ledger-store-comparison"]
 description = "Measure whether the ledger's period-graph partition bounds an aggregate read on Jena TDB2 as it does on Oxigraph, so the result is a property of naming the graphs rather than of one engine (ADR-A124, STD-176). Run on demand, not part of check. Fails on a wrong balance, never on time. -Dledger.store.max caps the events"
 run = "mvn -q -f benchmark/ledger-store-comparison/pom.xml exec:java"
