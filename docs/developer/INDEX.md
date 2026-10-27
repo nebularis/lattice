@@ -803,15 +803,16 @@ Concept schemes read as lines, with interval labels or closure bitsets as Surfac
 conditions in the interval-normal fragment decided by arithmetic: joint satisfiability, entailment
 and coverage, as C13a's first path and NRS N3's overlap check. Slices IX-0 to IX-6.
 
-## 8.23 Multi-Store Conformance — Planned
+## 8.23 Multi-Store Conformance — Built, awaiting review
 
 | Field | Value |
 |-------|-------|
-| **Status** | 📋 Planned 2026-10-27. Design questions MSC-Q1 to MSC-Q5 open |
+| **Status** | 🔨 Built 2026-10-27 on `multi-store-conformance`, MSC-1 to MSC-5, awaiting the maintainer's review before `main` |
 | **Unit ID** | `multi-store-conformance` |
 | **Plan** | [multi-store-conformance.md](plans/multi-store-conformance.md) |
 | **Status Record** | [multi-store-conformance.md](status/multi-store-conformance.md) |
-| **ADRs** | builds on A-83, A-124, A-125 and its 2026-10-21 addendum, A-128 |
+| **ADRs** | builds on A-83, A-124, A-125 and its 2026-10-21 addendum, A-128. A-125 addendum proposed 2026-10-27 |
+| **Validation Packs** | [MSC-1](validation/multi-store-conformance-msc1.md), [MSC-2](validation/multi-store-conformance-msc2.md), [MSC-3](validation/multi-store-conformance-msc3.md), [MSC-4](validation/multi-store-conformance-msc4.md), [MSC-5](validation/multi-store-conformance-msc5.md) |
 
 Apache Jena joins rdflib and Oxigraph in every conformance run, engine probes get a home of their own, and cost assertions move out of `check` into benchmarks.
 

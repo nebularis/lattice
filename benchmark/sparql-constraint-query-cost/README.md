@@ -3,7 +3,7 @@
 # SPARQL constraint query cost
 
 A benchmark under [ADR-A124](../../docs/architecture/decisions/ADR-A124-benchmark-root.md). It measures the forms of a
-SHACL-SPARQL constraint query that mattered when we made the ontology tests faster, on rdflib and on Oxigraph, and is the
+SHACL-SPARQL constraint query that mattered when we made the ontology tests faster, on rdflib and on Oxigraph, and on Apache Jena ARQ when its test kit is built ([TSD-57](../../docs/architecture/triple-store-discovery.md)), and is the
 evidence for the rules in [Efficient queries and shapes](../../docs/architecture/efficient-queries-and-shapes.md)
 ([ADR-A128](../../docs/architecture/decisions/ADR-A128-efficient-queries-and-shapes.md)).
 
@@ -37,7 +37,7 @@ mise run check:sparql-constraint-query-cost             # about one minute
 SPARQL_COST_QUICK=1 mise run check:sparql-constraint-query-cost   # the two smallest sizes of each experiment
 ```
 
-It is never a dependency of `check`. The task installs the Oxigraph test-support package
+It is never a dependency of `check`. Jena runs through `tools/testing/jena` with each focus node substituted into the text, so every call also pays the pipe to the JVM, about 0.15 ms. The task installs the Oxigraph test-support package
 ([ADR-A125](../../docs/architecture/decisions/ADR-A125-test-support-tooling.md)) and runs the check's own tests first.
 
 | File | Role |

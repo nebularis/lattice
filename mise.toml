@@ -318,7 +318,7 @@ run = "python -m pytest benchmark/persistence-composite-cost -q -p no:cacheprovi
 
 [tasks."check:sparql-constraint-query-cost"]
 depends = ["bootstrap:testing-oxigraph"]
-description = "Measure the forms of a SHACL-SPARQL constraint query on rdflib and Oxigraph (ADR-A124, ADR-A128). Run on demand, not part of check. Fails on a wrong result, never on time. SPARQL_COST_QUICK=1 runs the smallest sizes"
+description = "Measure the forms of a SHACL-SPARQL constraint query on rdflib, Oxigraph and Jena when its test kit is built (ADR-A124, ADR-A128, TSD-Q18). Run on demand, not part of check. Fails on a wrong result, never on time. SPARQL_COST_QUICK=1 runs the smallest sizes"
 run = "python -m pytest benchmark/sparql-constraint-query-cost -q -p no:cacheprovider && python benchmark/sparql-constraint-query-cost/check.py"
 
 [tasks."check:ledger-graph-partition"]
