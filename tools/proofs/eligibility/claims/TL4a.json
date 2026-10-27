@@ -1,7 +1,7 @@
 {
   "subject": "TL4a",
   "statedAs": "Eligibility.some_value_empty/every_value_empty",
-  "statementDigest": "sha256:953b959e16a41508d0bd11118cdf667ad8ab38e7c95267c130ac0f09ec890c31",
+  "statementDigest": "sha256:e15a1383d579ff62e5d8538f7e2e2b4596e8ff6c6a2ff528a3babb3c6e05c0ed",
   "method": "Proof",
   "scope": "EmptyList",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found (E1.4)",

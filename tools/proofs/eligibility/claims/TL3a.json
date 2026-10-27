@@ -1,7 +1,7 @@
 {
   "subject": "TL3a",
   "statedAs": "Eligibility.negate_after_is_every_of_negated",
-  "statementDigest": "sha256:ddc2843f4c4f517c6faa88c1d6229942bb214cfbf2717d89e3f43f74f6e4ec6f",
+  "statementDigest": "sha256:69f9ffd0c05e8fd6c8af1fb950e6eaa812d7865b71d80ce331f17a3d6e9a5236",
   "method": "Proof",
   "scope": "EveryList",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found (E1.4)",

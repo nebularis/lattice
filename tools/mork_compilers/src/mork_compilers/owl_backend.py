@@ -24,7 +24,11 @@ the candidate's filler:
 ``AnySufficient`` ones unite them. Concepts named in a module are declared
 distinct, as the SPARQL reference compares them by IRI. Sibling concepts'
 ``Within`` classes are declared disjoint only on request, and only for a
-scheme with one broader concept per member. Each claimed binding also gets a
+scheme with one broader concept per member. A hierarchical plan with no scheme,
+which L9 leaves Undetermined for every candidate, is refused, since a class cannot
+state Undetermined. Conditions that walk different relations over one scheme share a
+``Within`` class per concept, so a module holding them is refused where the relations
+place any member differently. Each claimed binding also gets a
 SHACL shape checking the claim on data, so classes and data agree.
 
 The checks ask the test-only reasoning harness (ADR-A83) and return an
@@ -42,7 +46,15 @@ from rdflib.namespace import OWL, RDF, RDFS, SH, XSD
 
 from . import reasoning
 from .common import local_name, mint
-from .eligibility_ir import ConceptPlan, IntervalPlan, IRCompileError, ProfilePlan, RequiredInterval, has_readings
+from .eligibility_ir import (
+    ConceptPlan,
+    IntervalPlan,
+    IRCompileError,
+    ProfilePlan,
+    RequiredInterval,
+    has_readings,
+    refuse_without_scheme,
+)
 from .namespaces import ELG, EXE, QNT
 from .sparql_backend import literal_readable
 
@@ -198,6 +210,7 @@ def _single_valued_shape(graph: Graph, plan: Union[IntervalPlan, ConceptPlan]) -
 
 
 def _condition(graph: Graph, plan: Union[IntervalPlan, ConceptPlan], artefact: URIRef) -> URIRef:
+    refuse_without_scheme(plan, "design-time class")
     evidence = plan.evidence
     if evidence is None:
         raise IRCompileError(f"{plan.condition} has no elg:EvidenceBinding, and the OWL backend compiles bound conditions only")
@@ -259,7 +272,10 @@ def _hierarchy(graph: Graph, concepts: Sequence[ConceptPlan], disjoint_siblings:
             continue
         for member, above in plan.hierarchy:
             if broader.setdefault(member, above) != above:
-                raise IRCompileError(f"{member} has different broader concepts in the schemes of one module")
+                raise IRCompileError(
+                    f"{member} has different members above it by {plan.relation} in the schemes of one module, "
+                    f"so one Within class cannot serve every condition's hierarchy relation"
+                )
     for member, above in sorted(broader.items()):
         graph.add((within(member), RDF.type, OWL.Class))
         graph.add((_one_of(graph, [member]), RDFS.subClassOf, within(member)))

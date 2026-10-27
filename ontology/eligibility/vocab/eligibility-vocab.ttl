@@ -112,13 +112,13 @@ elg:L8 a elg:Law ;
 	rdfs:comment "EligibilityDecision names one operational profile." .
 elg:L9 a elg:Law ;
 	elg:lawRegister elg:SemanticLaw ;
-	rdfs:comment "Hierarchical match closure. A candidate value satisfies a condition under hierarchical match exactly when it stands in the reflexive-transitive closure of the bound scheme's ordering relation, restricted to that scheme's members, below the asserted value. The ordering relation is acyclic over the bound scheme; a scheme carrying a cycle is not evaluable under hierarchical match. A condition under hierarchical match with no resolved scheme at all has no closure to test a candidate against, and is undetermined for every candidate, the same reasoning L14 applies once a scheme resolves but states nothing about the candidate's position within it." .
+	rdfs:comment "Hierarchical match closure. A candidate value satisfies a condition under hierarchical match exactly when it stands in the reflexive-transitive closure of the condition's hierarchy relation, restricted to that scheme's members, below the asserted value. The ordering relation is the condition's hierarchy relation, skos:broader when it names none, and it is acyclic over the bound scheme. A scheme carrying a cycle in that relation is not evaluable under hierarchical match. A condition under hierarchical match with no resolved scheme at all has no closure to test a candidate against, and is undetermined for every candidate, the same reasoning L14 applies once a scheme resolves but states nothing about the candidate's position within it." .
 elg:L10 a elg:Law ;
 	elg:lawRegister elg:SemanticLaw ;
 	rdfs:comment "Exclusion precedence. A candidate that matches an excluded concept of a condition, under the condition's match strategy, does not satisfy the condition, whether or not it also matches a required concept." .
 elg:L11 a elg:Law ;
 	elg:lawRegister elg:SemanticLaw ;
-	rdfs:comment "Exclusion granularity. Under hierarchical match, a candidate that stands strictly above an excluded concept in the bound scheme's ordering, and is otherwise admitted, leaves the condition undetermined for that candidate. Its true value may or may not fall under the exclusion." .
+	rdfs:comment "Exclusion granularity. Under hierarchical match, a candidate that stands strictly above an excluded concept in the condition's hierarchy relation, and is otherwise admitted, leaves the condition undetermined for that candidate. Its true value may or may not fall under the exclusion." .
 elg:L12 a elg:Law ;
 	elg:lawRegister elg:SemanticLaw ;
 	rdfs:comment "Default inclusion. A condition that declares excluded concepts and no required concept requires every member of its bound scheme, so it admits any member not excluded." .
@@ -127,7 +127,7 @@ elg:L13 a elg:Law ;
 	rdfs:comment "Reachable exclusions. Where a condition declares required concepts, each of its excluded concepts matches at least one of them under the condition's match strategy. An exclusion outside every inclusion excludes nothing." .
 elg:L14 a elg:Law ;
 	elg:lawRegister elg:SemanticLaw ;
-	rdfs:comment "Hierarchy precondition. Under hierarchical match, when no member of the resolved scheme has a broader concept within that scheme, a candidate that is a member and is neither a required nor an excluded concept leaves the condition undetermined. The scheme cannot say whether the candidate falls under a required or an excluded concept. This takes precedence over default inclusion (L12)." .
+	rdfs:comment "Hierarchy precondition. Under hierarchical match, when no member of the resolved scheme has a link of the condition's hierarchy relation to another member of it, a candidate that is a member and is neither a required nor an excluded concept leaves the condition undetermined. The scheme cannot say, by that relation, whether the candidate falls under a required or an excluded concept. This takes precedence over default inclusion (L12)." .
 elg:L15 a elg:Law ;
 	elg:lawRegister elg:SemanticLaw ;
 	rdfs:comment "Set readings. A bound condition whose binding reads some or every value decides each value it reaches as a single candidate would be decided, then combines the outcomes by strong Kleene logic. Under some value it is Permitted if any value is Permitted. Under every value it is Denied if any value is Denied. An outcome that needs the values reached to be all there are, Denied under some value and Permitted under every value, follows only under a closure in force that the binding names (L17): then some value is Denied when every value is Denied, and every value Permitted when every value is Permitted, the empty case included. Otherwise the condition is Undetermined." .

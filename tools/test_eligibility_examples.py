@@ -35,6 +35,7 @@ EXAMPLES = [
     "flat-scheme-lending", "flat-scheme-employment",  # AIR31-10
     "set-reading-admissions", "set-reading-trial",  # AIR32-12
     "closure-usage-reports",  # HQ6a1-10
+    "hierarchy-relation",  # C9b3c-01
 ]
 
 PREFIXES = """
@@ -292,3 +293,59 @@ def test_two_readings_and_a_double_negation_are_rejected() -> None:
     data.remove((EX.c, ELG.negated, None))
     data.remove((EX.b, ELG.valueReading, ELG.EveryValue))
     assert not {EX.c, EX.b} & violated(data)  # one reading and no negation conform
+
+
+HIERARCHY_SHAPE = ELG.HierarchyRelationShape
+HIERARCHY_WARNING = ELG.HierarchyRelationNeedsHierarchicalMatchShape
+
+
+def _hierarchy_violations(data: Graph) -> list:
+    return [(owner, focus) for owner, focus, _, _ in violations(data) if owner == HIERARCHY_SHAPE]
+
+
+def test_the_hierarchy_relation_example_names_two_relations_over_one_scheme() -> None:
+    # C9b3c-02
+    data = example("hierarchy-relation")
+    relations = {data.value(c, ELG.hierarchyRelation) for c in (EX["kind-of-tumour"], EX["part-of-tumour"])}
+    assert relations == {EX["kind-of"], EX["part-of"]}
+    assert data.value(EX["any-link-to-tumour"], ELG.hierarchyRelation) is None
+
+
+def test_a_relation_with_no_route_to_broader_is_refused() -> None:
+    # C9b3c-03: removing the sub-property declaration is the adversarial probe
+    data = example("hierarchy-relation")
+    data.remove((EX["kind-of"], URIRef("http://www.w3.org/2000/01/rdf-schema#subPropertyOf"), None))
+    assert _hierarchy_violations(data) == [(HIERARCHY_SHAPE, EX["kind-of-tumour"])]
+
+
+def test_broader_itself_and_a_two_step_sub_property_are_accepted() -> None:
+    # C9b3c-04
+    data = Graph().parse(
+        data=PREFIXES
+        + """
+        @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+        ex:near rdfs:subPropertyOf ex:linked . ex:linked rdfs:subPropertyOf skos:broader .
+        ex:a a elg:Condition ; elg:matchStrategy elg:HierarchicalMatch ; elg:wildcardSemantics elg:NoWildcard ;
+            elg:requiredConcept ex:x ; elg:hierarchyRelation skos:broader .
+        ex:b a elg:Condition ; elg:matchStrategy elg:HierarchicalMatch ; elg:wildcardSemantics elg:NoWildcard ;
+            elg:requiredConcept ex:x ; elg:hierarchyRelation ex:near .
+        """,
+        format="turtle",
+    )
+    assert _hierarchy_violations(data) == []
+
+
+def test_a_condition_names_at_most_one_relation() -> None:
+    # C9b3c-05, cardinality above one
+    data = example("hierarchy-relation")
+    data.add((EX["kind-of-tumour"], ELG.hierarchyRelation, EX["part-of"]))
+    assert _hierarchy_violations(data) == [(HIERARCHY_SHAPE, EX["kind-of-tumour"])]
+
+
+def test_a_relation_on_a_condition_that_does_not_match_hierarchically_warns() -> None:
+    # C9b3c-06
+    data = example("hierarchy-relation")
+    data.set((EX["kind-of-tumour"], ELG.matchStrategy, ELG.SetMembership))
+    warned = [focus for severity, shape, focus in results(data) if shape == HIERARCHY_WARNING and severity == SH.Warning]
+    assert warned == [EX["kind-of-tumour"]]
+    assert _hierarchy_violations(data) == []

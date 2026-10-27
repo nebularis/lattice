@@ -33,8 +33,10 @@ resolved scheme ("Expanded" in ADR-A89). The SPARQL backend walks the
 hierarchy at query time instead ("QueryTime"). The tests check that the two
 agree on every member.
 
-A hierarchical plan whose resolved scheme has no member with a broader member
-in the scheme (`plan.no_hierarchy`) follows `elg:L14` (ADR-A100): a required
+A hierarchical plan walks `plan.relation`, the condition's `elg:hierarchyRelation` or `skos:broader` when it names none (L9). The IR reads only the links of that exact property, refuses a relation the graph does not declare a sub-property of `skos:broader`, and refuses a cycle in it. The SPARQL walk is a constant property path over the same IRI. A condition that needs its scheme whose contract's bindings apply at no instant compiles to a plan with `plan.unresolved`, answering `Undetermined` for every candidate with `exe:NoApplicableBinding`. Conflicting bindings are still refused (ADR-A85), and the OWL and SWRL backends refuse an unresolved or schemeless hierarchical plan, since neither can state `Undetermined`. See `ontology/eligibility/examples/hierarchy-relation.ttl`.
+
+A hierarchical plan whose resolved scheme has no member with a link of its relation
+to another member (`plan.no_hierarchy`) follows `elg:L14` (ADR-A100): a required
 concept is `Permitted`, an excluded one `Denied`, and every other member
 `Undetermined` with `exe:NoHierarchy`, before default inclusion (L12)
 applies. The expansion and the SPARQL query both apply it, and the OWL backend

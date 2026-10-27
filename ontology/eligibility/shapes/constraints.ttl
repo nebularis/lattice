@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: MPL-2.0
 
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
 
 elg:SingleConditionMechanismShape a sh:NodeShape ;
@@ -108,6 +110,31 @@ elg:ClosureReliedOnNamedShape a sh:NodeShape ;
 					$this elg:forProfile/elg:hasCondition+ ?condition .
 					?binding elg:bindsCondition ?condition ; elg:closedUnder ?value .
 				}
+			}
+		"""
+	] .
+
+elg:HierarchyRelationShape a sh:NodeShape ;
+	sh:targetSubjectsOf elg:hierarchyRelation ;
+	sh:property [
+		sh:path elg:hierarchyRelation ;
+		sh:maxCount 1 ;
+		sh:or (
+			[ sh:hasValue skos:broader ]
+			[ sh:property [ sh:path [ sh:oneOrMorePath rdfs:subPropertyOf ] ; sh:hasValue skos:broader ] ]
+		) ;
+		sh:message "A hierarchy relation is skos:broader or a property declared a sub-property of it (rdfs:subPropertyOf)." ;
+	] .
+
+elg:HierarchyRelationNeedsHierarchicalMatchShape a sh:NodeShape ;
+	sh:targetSubjectsOf elg:hierarchyRelation ;
+	sh:severity sh:Warning ;
+	sh:sparql [
+		sh:message "Only a condition matching by HierarchicalMatch walks a hierarchy relation, so this one names a relation that decides nothing." ;
+		sh:select """
+			PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			SELECT $this WHERE {
+				FILTER NOT EXISTS { $this elg:matchStrategy elg:HierarchicalMatch }
 			}
 		"""
 	] .

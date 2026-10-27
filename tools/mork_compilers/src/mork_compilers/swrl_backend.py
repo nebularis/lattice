@@ -65,6 +65,7 @@ from .eligibility_ir import (
     ProfilePlan,
     RequiredInterval,
     has_readings,
+    refuse_without_scheme,
 )
 from .sparql_backend import literal_readable
 from .namespaces import ELG, EXE, MORK, QNT, SWRL, SWRLB
@@ -254,7 +255,10 @@ def _rule_for_interval(graph: Graph, plan: IntervalPlan, interval: RequiredInter
 
 def concept_facts(plan: ConceptPlan) -> tuple:
     """(admitted, denied) concepts to assert as facts. Without a resolved scheme
-    only the plan's own concepts are known: required less excluded, and excluded."""
+    only the plan's own concepts are known: required less excluded, and excluded.
+    A plan with no scheme to decide against, which every candidate leaves Undetermined
+    (L9), is refused: SWRL cannot state Undetermined."""
+    refuse_without_scheme(plan, "SWRL rule")
     if plan.scheme is None:
         return tuple(c for c in plan.required if c not in plan.excluded), tuple(plan.excluded)
     return (

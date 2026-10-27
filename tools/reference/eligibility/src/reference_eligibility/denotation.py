@@ -24,7 +24,7 @@ in ``decide_condition`` below -- a different reason for the same absence here.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import AbstractSet, Hashable, Mapping, Optional, Sequence, Tuple
+from typing import AbstractSet, Hashable, Iterable, Mapping, Optional, Sequence, Tuple
 
 from .kernel import DENIED, PERMITTED, UNDETERMINED, Decision, every_value, neg3, some_value
 
@@ -33,11 +33,25 @@ Concept = Hashable
 
 @dataclass(frozen=True)
 class Scheme:
-    """A concept scheme's membership and its ``skos:broader`` ordering,
-    restricted to members (L9's "within the bound scheme")."""
+    """A concept scheme's membership and its ordering by one hierarchy relation,
+    restricted to members (L9's "within the bound scheme"). The relation is the
+    condition's own, ``elg:hierarchyRelation`` or ``skos:broader``: ``broader`` holds
+    only the links of that relation, so every law below is stated over whichever
+    relation the caller chose, and none reads a link of another."""
 
     members: AbstractSet[Concept]
     broader: Mapping[Concept, AbstractSet[Concept]]
+
+    @classmethod
+    def over(cls, members: AbstractSet[Concept], links: Iterable[Tuple[Concept, Concept]]) -> "Scheme":
+        """The scheme whose ordering is ``links``, pairs of (narrower, broader) of the
+        condition's hierarchy relation. A pair with an end outside ``members`` is dropped
+        (L9's restriction to the bound scheme)."""
+        above: dict = {member: set() for member in members}
+        for narrower, broader in links:
+            if narrower in members and broader in members:
+                above[narrower].add(broader)
+        return cls(members=frozenset(members), broader={m: frozenset(b) for m, b in above.items()})
 
     def ancestors(self, concept: Concept) -> frozenset:
         """``concept`` and everything above it, reflexive-transitive (L9).
@@ -54,9 +68,9 @@ class Scheme:
         return frozenset(found)
 
     def has_hierarchy(self) -> bool:
-        """True when at least one member has a broader member within the
-        scheme (L14's own condition, negated: this is false exactly when L14
-        applies)."""
+        """True when at least one member has a link of the condition's hierarchy
+        relation to another member (L14's own condition, negated: this is false
+        exactly when L14 applies)."""
         return any(self.broader.get(member) for member in self.members)
 
 

@@ -35,6 +35,7 @@ from mork_compilers.test_concept_conditions import graph as flat_graph
 from mork_compilers.test_flat_schemes import LENDER_B
 from mork_compilers.test_flat_schemes import example as lending_example
 from mork_compilers.test_hierarchical_conditions import DIAGNOSES
+from mork_compilers.test_hierarchy_relation import EXAMPLE as RELATION_EXAMPLE
 from mork_compilers.test_hierarchical_conditions import EX as HIER_EX
 from mork_compilers.test_hierarchical_conditions import HEADER as HIER_HEADER
 from mork_compilers.test_hierarchical_conditions import graph as hier_graph
@@ -366,3 +367,81 @@ def graph_from(text: str) -> Graph:
     g = Graph()
     g.parse(data=text, format="turtle")
     return g
+
+
+# Hierarchy relation (L9, L11, L14 over the condition's own relation). The scheme the reference reads is
+# built here from the graph's links of the named relation, never from the compiler's plan, so a compiler
+# that walked another relation disagrees with it.
+_RELATION_EXAMPLE = RELATION_EXAMPLE
+_RELATION_MEMBERS = ("tumour", "carcinoma", "lung-carcinoma", "tumour-margin")
+
+
+def _independent_scheme(data: Graph, relation: URIRef) -> Scheme:
+    members = frozenset(HIER_EX[name] for name in _RELATION_MEMBERS)
+    return Scheme.over(members, data.subject_objects(relation))
+
+
+def _relation_case(data: Graph, relation: URIRef, required: Sequence[str], excluded: Sequence[str]) -> Dict[str, Dict[str, str]]:
+    condition = HIER_EX["swept"]
+    for old in list(data.predicate_objects(condition)):
+        data.remove((condition, *old))
+    data.add((condition, RDF.type, ELG.Condition))
+    data.add((condition, ELG.matchStrategy, ELG.HierarchicalMatch))
+    data.add((condition, ELG.wildcardSemantics, ELG.NoWildcard))
+    data.add((condition, ELG.constrainedByContract, HIER_EX["diagnosis-contract"]))
+    if relation != URIRef("http://www.w3.org/2004/02/skos/core#broader"):
+        data.add((condition, ELG.hierarchyRelation, relation))
+    for name in required:
+        data.add((condition, ELG.requiredConcept, HIER_EX[name]))
+    for name in excluded:
+        data.add((condition, ELG.excludedConcept, HIER_EX[name]))
+    plan = compile_concept_condition(data, condition)
+    scheme = _independent_scheme(data, relation)
+    candidates = {name: HIER_EX[name] for name in _RELATION_MEMBERS}
+    asked = with_questions(data, condition, {n: (c,) for n, c in candidates.items()})
+    sparql_rows, shacl_rows = sparql(plan, asked), shacl(plan, asked)
+    return {
+        name: {
+            "reference": DECISION_NAME[decide_concept_match(
+                concept, hierarchical=True, required={HIER_EX[r] for r in required},
+                excluded={HIER_EX[e] for e in excluded}, scheme=scheme)],
+            "sparql": sparql_rows[HIER_EX[f"q-{name}"]][0],
+            "shacl": shacl_rows[HIER_EX[f"q-{name}"]],
+        }
+        for name, concept in candidates.items()
+    }
+
+
+class TestHierarchyRelationSweep:
+    """C9b3c-28: every relation of the example, three required sets, three excluded sets, every member."""
+
+    RELATIONS = (HIER_EX["kind-of"], HIER_EX["part-of"], URIRef("http://www.w3.org/2004/02/skos/core#broader"))
+    REQUIRED = (("tumour",), ("carcinoma",), ("tumour-margin",))
+    EXCLUDED = ((), ("carcinoma",), ("tumour-margin",))
+
+    def test_reference_agrees_with_sparql_and_shacl_for_every_relation_and_every_member(self) -> None:
+        assert len(self.RELATIONS) * len(self.REQUIRED) * len(self.EXCLUDED) == 27  # fixed, so a change is deliberate
+        for relation in self.RELATIONS:
+            for required in self.REQUIRED:
+                for excluded in self.EXCLUDED:
+                    rows = _relation_case(Graph().parse(_RELATION_EXAMPLE), relation, required, excluded)
+                    for name, decided in rows.items():
+                        assert len(set(decided.values())) == 1, (relation, required, excluded, name, decided)
+
+    def test_a_relation_with_no_links_in_the_scheme_is_l14_for_the_reference_too(self) -> None:
+        # C9b3c-29, cardinality at zero links: no link of this relation, so only the named concepts decide
+        relation = HIER_EX["sibling-of"]
+        data = Graph().parse(_RELATION_EXAMPLE)
+        data.add((relation, URIRef("http://www.w3.org/2000/01/rdf-schema#subPropertyOf"), URIRef("http://www.w3.org/2004/02/skos/core#broader")))
+        rows = _relation_case(data, relation, ("tumour",), ())
+        assert {name: decided["reference"] for name, decided in rows.items()} == {
+            "tumour": "Permitted", "carcinoma": "Undetermined", "lung-carcinoma": "Undetermined", "tumour-margin": "Undetermined",
+        }
+        assert all(len(set(decided.values())) == 1 for decided in rows.values())
+
+    def test_a_compiler_walking_broader_for_a_named_relation_is_caught(self, monkeypatch) -> None:
+        # C9b3c-30: the seeded fault, the named relation read as skos:broader, disagrees with the independent scheme
+        monkeypatch.setattr(eligibility_ir, "hierarchy_relation", lambda graph, condition: URIRef("http://www.w3.org/2004/02/skos/core#broader"))
+        rows = _relation_case(Graph().parse(_RELATION_EXAMPLE), HIER_EX["kind-of"], ("tumour",), ())
+        assert rows["tumour-margin"]["reference"] == "Denied"
+        assert rows["tumour-margin"]["sparql"] == "Permitted"
