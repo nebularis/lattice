@@ -85,7 +85,7 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-68](ADR-A68-pii-and-erasure.md) | PII and erasure | Proposed |
 | [A-69](ADR-A69-pack-trust-and-safe-sparql-subset.md) | Pack trust model and safe SPARQL subset | Proposed |
 | [A-71](ADR-A71-platform-licence-and-spi-seam.md) | Platform licence (MPL-2.0) and SPI seam | Proposed |
-| [A-74](ADR-A74-graph-primary-realm-model.md) | Graph-primary realm model | Proposed |
+| [A-74](ADR-A74-graph-primary-realm-model.md) | One declared authority per kind of state | Proposed |
 | [A-75](ADR-A75-three-tier-store-spi.md) | Three-tier store SPI (Core/Extended/Native) | Proposed |
 | [A-81](ADR-A81-control-plane-http-runtime.md) | Control Plane HTTP runtime | Proposed |
 | [A-82](ADR-A82-framework-neutral-identity-pattern-selection.md) | Framework-neutral identity pattern selection | Proposed |
