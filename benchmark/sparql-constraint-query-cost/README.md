@@ -2,14 +2,9 @@
 
 # SPARQL constraint query cost
 
-A benchmark under [ADR-A124](../../docs/architecture/decisions/ADR-A124-benchmark-root.md). It measures the forms of a
-SHACL-SPARQL constraint query that mattered when we made the ontology tests faster, on rdflib and on Oxigraph, and on Apache Jena ARQ when its test kit is built ([TSD-57](../../docs/architecture/triple-store-discovery.md)), and is the
-evidence for the rules in [Efficient queries and shapes](../../docs/architecture/efficient-queries-and-shapes.md)
-([ADR-A128](../../docs/architecture/decisions/ADR-A128-efficient-queries-and-shapes.md)).
+A benchmark under [ADR-A124](../../docs/architecture/decisions/ADR-A124-benchmark-root.md). It measures the forms of a SHACL-SPARQL constraint query that mattered when we made the ontology tests faster, on rdflib and on Oxigraph, and on Apache Jena ARQ when its test kit is built ([TSD-57](../../docs/architecture/triple-store-discovery.md)), and is the evidence for the rules in [Efficient queries and shapes](../../docs/architecture/efficient-queries-and-shapes.md) ([ADR-A128](../../docs/architecture/decisions/ADR-A128-efficient-queries-and-shapes.md)).
 
-A SHACL-SPARQL constraint runs once per focus node, with `$this` bound to the node. Each experiment is a pair of queries
-that return the same solutions, a naive form and an improved one, run for every focus node of a synthetic graph whose size
-grows. The data is synthetic and domain-neutral, so the experiments reproduce a mechanism and not a particular shape.
+A SHACL-SPARQL constraint runs once per focus node, with `$this` bound to the node. Each experiment is a pair of queries that return the same solutions, a naive form and an improved one, run for every focus node of a synthetic graph whose size grows. The data is synthetic and domain-neutral, so the experiments reproduce a mechanism and not a particular shape.
 
 | Experiment | The naive form | The improved form | Findings |
 |---|---|---|---|
@@ -21,14 +16,9 @@ grows. The data is synthetic and domain-neutral, so the experiments reproduce a 
 
 ## Pass criterion
 
-In every experiment, at every size, on every engine, the two forms return the same number of solutions for every focus
-node, and the engines agree with each other. **A wrong result fails the check. Time never does.** What a form costs depends
-on the engine and the machine, and that is what the check reports. The report is `report.md` and `report.json` here, which
-are generated and git-ignored. Its first line gives the run: the date, the engines and their versions, Python, and the kind
-of machine.
+In every experiment, at every size, on every engine, the two forms return the same number of solutions for every focus node, and the engines agree with each other. **A wrong result fails the check. Time never does.** What a form costs depends on the engine and the machine, and that is what the check reports. The report is `report.md` and `report.json` here, which are generated and git-ignored. Its first line gives the run: the date, the engines and their versions, Python, and the kind of machine.
 
-Each query projects `COUNT(*)`, not `$this`. The Oxigraph adapter substitutes the parameter as text, and `SELECT <iri>` is
-not SPARQL. The count also makes the engine enumerate every solution, as a constraint does when it reports.
+Each query projects `COUNT(*)`, not `$this`. The Oxigraph adapter substitutes the parameter as text, and `SELECT <iri>` is not SPARQL. The count also makes the engine enumerate every solution, as a constraint does when it reports.
 
 ## Run it
 
@@ -37,8 +27,7 @@ mise run check:sparql-constraint-query-cost             # about one minute
 SPARQL_COST_QUICK=1 mise run check:sparql-constraint-query-cost   # the two smallest sizes of each experiment
 ```
 
-It is never a dependency of `check`. Jena runs through `tools/testing/jena` with each focus node substituted into the text, so every call also pays the pipe to the JVM, about 0.15 ms. The task installs the Oxigraph test-support package
-([ADR-A125](../../docs/architecture/decisions/ADR-A125-test-support-tooling.md)) and runs the check's own tests first.
+It is never a dependency of `check`. Jena runs through `tools/testing/jena` with each focus node substituted into the text, so every call also pays the pipe to the JVM, about 0.15 ms. The task installs the Oxigraph test-support package ([ADR-A125](../../docs/architecture/decisions/ADR-A125-test-support-tooling.md)) and runs the check's own tests first.
 
 | File | Role |
 |---|---|
