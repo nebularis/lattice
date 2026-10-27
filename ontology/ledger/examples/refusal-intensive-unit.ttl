@@ -1,0 +1,34 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. Refused: an account whose unit of account is an intensive value
+# space. Ledger holds amounts consumed and restored, which requires a space
+# whose parts add to the whole (qnt:Extensive). A temperature is intensive:
+# two readings do not add, nothing draws on them, and nothing restores them.
+# Refused by the shape requiring a unit of account whose additivity is
+# qnt:Extensive and whose operation capabilities include qnt:Sum and
+# qnt:Difference.
+
+@prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
+@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/ledger/refusal-intensive-unit/> .
+
+ex:owner a fnd:PersistentIdentity .
+ex:OwnerKind a owl:Class .
+
+ex:temperature a qnt:ValueSpace ;
+    qnt:spaceKey "ledger-refusal-intensive-unit-temperature" ; qnt:orderKind qnt:TotalOrder ;
+    qnt:densityKind qnt:Dense ; qnt:spaceHash "ledger-refusal-intensive-unit-temperature-v1" ;
+    qnt:additivity qnt:Intensive ;
+    qnt:hasOperationCapability ex:temperature-compare .
+ex:temperature-compare a qnt:OperationCapability ; qnt:operationKind qnt:Compare .
+
+ex:q-20-degrees a qnt:Quantity ; qnt:onSpace ex:temperature ; qnt:numericValue "20"^^xsd:decimal .
+
+ex:degree-days-account a ldg:AccountDefinition ;
+    ldg:statedAmount ex:q-20-degrees ; ldg:unitOfAccount ex:temperature ;
+    ldg:admitsOwnerKind ex:OwnerKind ; ldg:mergeRule ldg:Refuse ;
+    rdfs:comment "Refused. Its unit of account, a temperature, is intensive, not extensive." .

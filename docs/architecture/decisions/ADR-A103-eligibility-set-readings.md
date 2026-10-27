@@ -82,4 +82,6 @@ unchanged.
 
 ## Provenance
 
+**Unit:** [`applied-insurance-reference`](../../developer/plans/applied-insurance-reference.md) (plan), Phase 3, [`computable-contract-substrate`](../../developer/plans/computable-contract-substrate.md) (plan), addendum 2026-10-12 (HQ-6a.1)
+
 Part of the [`applied-insurance-reference`](../../developer/plans/applied-insurance-reference.md) unit (Phase 3, epic decision D12). The 2026-10-12 addendum was slice HQ-6a.1 of the [computable contract substrate](../../developer/plans/computable-contract-substrate.md) plan (CCS), question HQ6a-Q1.

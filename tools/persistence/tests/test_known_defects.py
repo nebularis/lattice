@@ -8,7 +8,7 @@ failure.
 While the defect stands, the test is reported as xfail and the suite stays
 green. When someone fixes the defect, the test starts to pass, strict mode
 turns that into a failure, and the fixer removes the marker and the entry in
-``docs/developer/plans/technical-debt.md``. Each reason names its register entry.
+``docs/developer/technical-debt.md``. Each reason names its register entry.
 """
 
 # None at present. TD-23 was fixed on 2026-10-23 and its test moved to test_validator.py.

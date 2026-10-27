@@ -9,6 +9,7 @@
 [ADR-A117](ADR-A117-agent-guidance-and-skill-library.md) (agent guidance),
 [ADR-A121](ADR-A121-repository-catalogue.md) (the repository catalogue and its site sections),
 [ADR-A126](ADR-A126-literate-specification-layout-and-grammar.md) (README layout)
+**Unit:** [`improved-ontology-documentation`](../../developer/plans/improved-ontology-documentation.md)
 
 ## Context
 

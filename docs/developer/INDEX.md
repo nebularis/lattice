@@ -2,7 +2,7 @@
 
 # LATTICE Developer Coordination Index
 
-**Last updated:** 2026-09-25 — ADR-A97 makes MORK OWL 2 DL (Mork 0.4.0). ADR-A83 reasoning harness delivered (`eligibility-compiler` Part B). `applied-ontology-readiness` AOR-10, AOR-11 and AOR-14 to AOR-17 implemented, ADRs A-83, A-86, A-93 to A-96 accepted. `documentation-link-repair` planned  
+**Last updated:** 2026-10-24 — `knowledge-index` KI-1 to KI-3 and KI-5 built, ADR-A134 Accepted, TSD-37 and TSD-38 recorded. ADR-A133 git hooks and merge gates added. A-130 (Ensemble) and A-131 (Ledger) drafted on `docs/placement-vehicles-structure`  
 **Purpose:** Single source of truth for all active units of work: sketches, plans, status, reviews, and validation packs.  
 **Format:** By unit identifier, with links to all related documents and current status.
 
@@ -540,7 +540,7 @@ longer exist. Five slices, about 180k tokens.
 | **Status** | 🚧 Rounds 1 and 2 complete (AIR-3.1, 1.1, 2.1, 3.2, 1.2), Phase 1 complete. Round 3 under way. Machine S builds AIR-2.2, then AIR-4.1, on one branch, `air/applied-reference` (trip 1, 2026-10-13). AIR-3.3 waits for CCS HQ-6a.2 and AIR-3.3-Q1. Trip 2 briefs (AIR-2.3, 2.4, 4.2, 4.4) to draft. Phase 0 complete, AIR-0.1 merged (`3377a71`), A-98, A-99, A-100, A-102, A-103 Accepted. [Review](review/applied-insurance-reference-review.md), [VP](validation/applied-insurance-reference-0.1.md) |
 | **Unit ID** | `applied-insurance-reference` (epic) |
 | **Sketches** | [insurance-claims-ontology.md](sketches/insurance-claims-ontology.md), [claims-sketch-references.md](sketches/claims-sketch-references.md), [claims-wire-formats.md](sketches/claims-wire-formats.md), [peril-vocabulary.md](sketches/peril-vocabulary.md), [asset-exposure-ontology.md](sketches/asset-exposure-ontology.md), [term-parameters.md](sketches/term-parameters.md), [mork-bridge.md](sketches/mork-bridge.md), [peril-structure-whitepaper.md](sketches/peril-structure-whitepaper.md) |
-| **Plan** | [applied-insurance-reference.md](plans/applied-insurance-reference.md), with phase plans 0 to 6, a [claims plan](plans/applied-insurance-reference-claims.md) (2026-10-16, subsuming AIR-6.2 to AIR-6.4), a substrate track, and [lanes and merge order](plans/applied-insurance-reference-lanes.md) |
+| **Plan** | [applied-insurance-reference.md](plans/applied-insurance-reference.md), with phase plans 0 to 7 (7 [proposed](plans/applied-insurance-reference-phase-7.md)), a [claims plan](plans/applied-insurance-reference-claims.md) (2026-10-16, subsuming AIR-6.2 to AIR-6.4), a substrate track, and [lanes and merge order](plans/applied-insurance-reference-lanes.md) |
 | **Status Record** | [applied-insurance-reference.md](status/applied-insurance-reference.md) |
 | **ADRs** | A-98 (with addendum), A-99, A-100, A-102, A-103 Accepted. A-101 reserved for Phase 5 |
 
@@ -550,6 +550,21 @@ ontology, term parameters with derived liability direction, and optional compila
 Capacity. Seven substrate items (L-P1 to L-P5, spatial guidance, evidence resolution) run as a
 non-blocking track.
 
+## 8.12 Knowledge Index — Building (2026-10-24)
+
+| Field | Value |
+|-------|-------|
+| **Status** | 🚧 KI-1 and KI-2 complete, KI-3 and KI-5 built. `mise run check:identifiers`, `mise run check:knowledge`, `mise run build:knowledge`, `mise run graph:ask`. KI-4, the mechanism register, is the next and highest-value slice. KI-6 waits on the registers and KI-7 on the shape vocabulary. KI-8 was dropped by measurement |
+| **Unit ID** | `knowledge-index` |
+| **Sketch** | [knowledge-index.md](sketches/knowledge-index.md), and for consumers [knowledge-index-for-consumers.md](sketches/knowledge-index-for-consumers.md) (KC-Q1 to KC-Q7) |
+| **Status Record** | [knowledge-index.md](status/knowledge-index.md), which lists what remains before agents use it |
+| **ADRs** | [A-134](../architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md), Accepted 2026-10-24, with addenda of 2026-10-25 and 2026-10-26 |
+| **Discoveries** | TSD-37 (a strict parser refuses IRIs rdflib accepts), TSD-38 (a read-only open is six times cheaper, and the queries are not the cost) |
+
+A derived graph over this repository's own working documents, so an agent can retrieve what the project already knows by meaning and by facet as well as by identifier, instead of reading whole plans. A live view of the AIR, CCS and FML epics is 89 files and about 463,000 tokens today, against about 4,000 for an indexed lookup. Markdown stays the source of truth and the index holds no content of its own, so deleting it loses nothing but speed.
+
+The remaining work is mostly ratification rather than code, of the drafted register rows and their facet tags. Sketch §8 states the row shape per register, the five tagging rules and about 20 hours of maintainer time, almost all of it ratifying drafted rows rather than writing them. §9.1 is the measurement that makes the mechanism register the first backfill: `graph:ask -- exists version` finds Foundation's class, and `exists versioning` finds nothing, because an identifier is a noun and a question is a gerund.
+
 # Part III — Archived/Historical Work
 
 ## 8.8 Normative Rule Substrate — Proposed
@@ -558,7 +573,7 @@ non-blocking track.
 |-------|-------|
 | **Status** | 📝 Proposed. D2 and D3 answered 2026-09-30, D7 answered 2026-10-10. N4 and N5 moved to the computable contract substrate unit (N5 as HQ-6, 2026-10-10). Remaining scope open (NQ-1 to NQ-4) |
 | **Unit ID** | `normative-rule-substrate` |
-| **Sketches** | [legalruleml-mapping.md](sketches/legalruleml-mapping.md), [rule-layers.md](sketches/rule-layers.md), [rule-layers-cross-check.md](sketches/rule-layers-cross-check.md) |
+| **Sketches** | [legalruleml-mapping.md](sketches/legalruleml-mapping.md), [rule-layers.md](sketches/rule-layers.md), [rule-layers-cross-check.md](sketches/rule-layers-cross-check.md), [normative-rules-ensembles-and-ledgers.md](sketches/normative-rules-ensembles-and-ledgers.md) (2026-10-21, NE-Q1 to NE-Q8: outside rules, precedence, one stratification graph) |
 | **Plan** | [normative-rule-substrate.md](plans/normative-rule-substrate.md) |
 | **Status Record** | [normative-rule-substrate.md](status/normative-rule-substrate.md) |
 | **ADRs** | A-104 and A-106 accepted in CCS. A-105 moved to CCS HQ-6a. A-107 to A-111 to be drafted |
@@ -714,6 +729,79 @@ Multilingual support is a pending design decision, PDD-10.
 their versions, widened by [ontology-release-model.md](sketches/ontology-release-model.md), one release for every
 ontology (REL-Q1 to REL-Q6 answered 2026-10-19, REL-Q2a open), and
 [release-bundles.md](sketches/release-bundles.md), what a release ships and where (BUN-Q1 to BUN-Q7 open).
+
+## 8.18 Ledger — 🚧 LG-0, LG-1 built
+
+| Field | Value |
+|-------|-------|
+| **Status** | 🚧 LG-0 (examples) and LG-1 (configuration document, registered in the root catalogue at substrate release 0.19.0) built and verified on `docs/placement-vehicles-structure` 2026-10-22, not yet committed. LG-2 briefed, not started. ADR-A131 and ADR-A01's 2026-10-19 addendum Accepted 2026-10-21, not yet Published (blocks `check:published-decisions` until the maintainer publishes them) |
+| **Unit ID** | `ledger` |
+| **Sketches** | [evaluation-context.md](sketches/evaluation-context.md) §5, [contract-amounts.md](sketches/contract-amounts.md), [persistence-history-and-versioning.md](sketches/persistence-history-and-versioning.md) §6.1, [ledger-folds-and-stores.md](sketches/ledger-folds-and-stores.md) (exactness, folds and where they run, LF-Q1 to LF-Q8 open), [ledger-history-and-runtime.md](sketches/ledger-history-and-runtime.md) (2026-10-24, defensible history against the runtime, LF-Q17 to LF-Q22 open), [multi-store-runtime.md](sketches/multi-store-runtime.md) (2026-10-24, boundaries, archiving and projection, MS-Q1 answered by measurement, MS-Q2 to MS-Q9 open) |
+| **Plan** | [ledger.md](plans/ledger.md) |
+| **Status Record** | [ledger.md](status/ledger.md) |
+| **Validation Packs** | [LG-0](validation/ledger-lg-0.md), [LG-1](validation/ledger-lg-1.md) |
+| **ADRs** | [A-131](../architecture/decisions/ADR-A131-ledger-layer.md), Accepted |
+
+A substrate layer above Quantification for amounts consumed and restored over time: account trees,
+postings, balances and merge rules. Behaviour's allowances become a shorthand for it. Slices LG-0 to
+LG-4, questions LG-Q1 to LG-Q8. CCS C12, AIR Phase 5 and AIR-6.8 wait on LG-3. Ensemble's ES-3 waits on
+LG-2, and ES-4 on LG-Q3. AIR-7.4 is LG-4, and AIR-7.5 waits on it.
+
+## 8.19 Ensemble — Proposed
+
+| Field | Value |
+|-------|-------|
+| **Status** | 📝 Plan proposed 2026-10-20, no slice briefed. ADR-A130, amended 2026-10-20 and 2026-10-21, and ADR-A01's 2026-10-18 addendum Proposed |
+| **Unit ID** | `ensemble` |
+| **Sketches** | [instrument-relations.md](sketches/instrument-relations.md), [normative-rules-ensembles-and-ledgers.md](sketches/normative-rules-ensembles-and-ledgers.md) (how outside rules, precedence and closures meet composition) |
+| **Plan** | [ensemble.md](plans/ensemble.md) |
+| **ADRs** | [A-130](../architecture/decisions/ADR-A130-ensemble-layer.md), Proposed |
+
+A substrate layer above Instrument and Behaviour for sets of instruments forming one operation:
+ensembles, reified relations K1 to K8, and evaluation by composition. Takes over CCS HQ-2's second
+case, HQ-7 and HQ-12. Slices ES-0 to ES-9, questions ES-Q1 to ES-Q9 (answered 2026-10-21). Formal methods C4, B4b and E4b.
+C12's composition step and AIR-6.8 follow ES-3, AIR-6.8's contribution follows ES-8, and phase 7's
+programme, vehicle and MRC modules follow ES-4 to ES-7.
+
+## 8.20 Consumer Distribution — Proposed
+
+| Field | Value |
+|-------|-------|
+| **Status** | 📝 Plan proposed 2026-10-21, no slice briefed. CD-Q1 to CD-Q6 open |
+| **Unit ID** | `consumer-distribution` |
+| **Sketch** | [consumer-distribution.md](sketches/consumer-distribution.md) |
+| **Plan** | [consumer-distribution.md](plans/consumer-distribution.md) |
+| **ADRs** | A-88, A-117, A-129 |
+
+Using LATTICE from another repository at a pinned release, with nothing copied: agent guidance and
+skills first (CD-1 to CD-3), then ontologies, tools, a consumer gate and upgrades (CD-4 to CD-7),
+then the conformance kit, minting in more languages, a guide and the first consumer (CD-8 to CD-11).
+
+## 8.21 Evaluator Implementation — Proposed
+
+| Field | Value |
+|-------|-------|
+| **Status** | 📝 Plan proposed 2026-10-21, no slice briefed. EV-Q11 decided, EV-Q2 to EV-Q10 and EV-Q12 open |
+| **Unit ID** | `evaluator-implementation` |
+| **Plan** | [evaluator-implementation.md](plans/evaluator-implementation.md) |
+| **ADRs** | A-FM1, A-FM3, A-130 and A-131 (Proposed). EV-3 drafts an ADR revising formal methods §13.1 |
+
+The evaluator as a pure core behind the codec and the conformance kit, generated for several hosts
+from one model and held together by an N-version gate. Slices EV-0 to EV-10, from the interface and a
+three-way spike to generated cores and the terms digest.
+
+## 8.22 Interval-Normal Scopes — Proposed
+
+| Field | Value |
+|-------|-------|
+| **Status** | 📝 Plan proposed 2026-10-21, no slice briefed. IX-Q1 to IX-Q7 open |
+| **Unit ID** | `interval-normal-scopes` |
+| **Sketch** | [interval-normal-scopes.md](sketches/interval-normal-scopes.md) |
+| **Plan** | [interval-normal-scopes.md](plans/interval-normal-scopes.md) |
+
+Concept schemes read as lines, with interval labels or closure bitsets as Surface index forms, and
+conditions in the interval-normal fragment decided by arithmetic: joint satisfiability, entailment
+and coverage, as C13a's first path and NRS N3's overlap check. Slices IX-0 to IX-6.
 
 ## 8. Phase Handoff Documents (0-6)
 

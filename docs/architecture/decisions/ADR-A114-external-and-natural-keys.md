@@ -241,6 +241,8 @@ replaced a Persistence-side property naming the class. Instrument takes 0.8.0 in
 
 ## Provenance
 
+**Unit:** [`computable-contract-substrate`](../../developer/plans/computable-contract-substrate.md) (plan)
+
 Unit `computable-contract-substrate`, decision CC-D9, slice F1. The
 [impact analysis](../../developer/sketches/keys-impact.md) (§4 lists the importers, §6 holds the gate
 questions) was written before acceptance and covers Persistence and Surface: uniqueness constraints

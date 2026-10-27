@@ -46,7 +46,7 @@ def test_c10a_03_a_projection_naming_a_lower_layer_passes() -> None:
 def _diagram_order() -> dict[str, set[str]]:
     """Each layer's allowed imports, read from the dependency diagram in
     ontology-architecture.md: its ancestors in the tree, plus any 'also imports'."""
-    text = (ROOT / "docs" / "architecture" / "ontology-architecture.md").read_text()
+    text = (ROOT / "docs" / "architecture" / "ontology-architecture.md").read_text(encoding="utf-8")
     block = text.split("Dependency order, per [ADR-A01]", 1)[1].split("```", 2)[1]
     stack: list[tuple[int, str]] = []
     allowed: dict[str, set[str]] = {}

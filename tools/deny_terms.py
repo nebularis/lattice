@@ -119,7 +119,7 @@ def install_hook(cwd: Path) -> str:
     hook.parent.mkdir(parents=True, exist_ok=True)
     hook.write_text(f"#!/bin/sh\n{HOOK_MARK}\n"
                     "command -v python3 >/dev/null 2>&1 && exec python3 tools/deny_terms.py\n"
-                    "exec python tools/deny_terms.py\n", encoding="utf-8")
+                    "exec python tools/deny_terms.py\n", encoding="utf-8", newline="\n")
     hook.chmod(0o755)
     return str(hook)
 

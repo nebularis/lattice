@@ -20,6 +20,7 @@ along the way.
   command.
 - **Pause for design decisions.** Do not make an architecture or modelling decision alone. Present
   the options and their consequences (skill `lattice-design`) and wait for the answer.
+- **When two standards conflict for a change, stop and ask the maintainer** before proceeding, and record the conflict in `docs/developer/pending-design-decisions.md`, so conflicts that recur show which standards to rework. Standards have no precedence order.
 - **The git hooks are a floor, never a ceiling.** `mise run bootstrap` installs them ([ADR-A133](docs/architecture/decisions/ADR-A133-git-hooks.md)). They run the checks a commit, or a merge into `main`, touches, and never block a push. Never bypass one (`--no-verify`, `LATTICE_HOOKS_SKIP`) without recording which and why in the slice's Validation Pack, and never report a passing hook as a passing `mise run check`.
 - **Never commit, merge, tag or push** without the maintainer's go-ahead. Release tags are always the
   maintainer's to create. Do not mark an ADR Accepted yourself.
@@ -37,19 +38,14 @@ along the way.
 | `benchmark/` | checks that measure, run on demand and never part of `check`. They fail on a wrong result, never on time (ADR-A124) |
 | `platform/`, `apps/`, `packages/`, `contracts/`, `deployment/`, `workers/`, `test/`, `spikes/` | services, applications, libraries, data contracts, the local environment, the worker runtime, end-to-end suites, experiments |
 | `docs/architecture/` | architecture documents and the ADRs, in `decisions/` |
-| `docs/developer/` | sketches, plans, status records, review requests, Validation Packs, and durable guidance |
+| `docs/developer/` | sketches, plans, status records, review requests, Validation Packs, the registers, and durable guidance |
 | `.claude/skills/` | the skills below |
 
 <!-- END GENERATED where-things-are -->
 
-How each triple store behaves, and how we found out, is recorded in
-[docs/architecture/triple-store-discovery.md](docs/architecture/triple-store-discovery.md). Read it before relying on what a
-store does with SPARQL, and add to it when you find something new (skill `lattice-triple-stores`).
+How each triple store behaves, and how we found out, is recorded in [docs/architecture/triple-store-discovery.md](docs/architecture/triple-store-discovery.md). Before relying on what a store does with SPARQL, find the findings that touch it with `mise run graph:ask -- find <the behaviour> --kind discovery` and read each with `read TSD-nn`, reading the whole record only when the query answers weakly. Add to it when you find something new (skill `lattice-triple-stores`).
 
-How to write a SPARQL constraint, a generated query or a test fixture that runs in reasonable time is recorded in
-[docs/architecture/efficient-queries-and-shapes.md](docs/architecture/efficient-queries-and-shapes.md)
-([ADR-A128](docs/architecture/decisions/ADR-A128-efficient-queries-and-shapes.md)). Read it before writing or changing one. It says
-which of its rules hold for any engine and which only for rdflib, pySHACL or our harness.
+How to write a SPARQL constraint, a generated query or a test fixture that runs in reasonable time is recorded in [docs/architecture/efficient-queries-and-shapes.md](docs/architecture/efficient-queries-and-shapes.md) ([ADR-A128](docs/architecture/decisions/ADR-A128-efficient-queries-and-shapes.md)), and its rules are standards in the register. Before writing or changing one, find the rules that apply with `mise run graph:ask -- find <what the query does> --kind standard --activity query-writing` and read each, reading the whole record only when the query answers weakly. It says which of its rules hold for any engine and which only for rdflib, pySHACL or our harness.
 
 Do not add a directory at the root, or a new kind of directory anywhere, without an accepted ADR.
 `mise` is the only task entry point (ADR-A29). Every command you run or give the maintainer goes
@@ -58,10 +54,29 @@ Only mise picks up this checkout's `.venv` and its dependencies, and a bare inte
 one (skill `lattice-toolchain`). The [developer guide](docs/developer/developer-guide.md)
 describes every tool.
 
+Code finds the repository root and every directory the [repository catalogue](repository-catalogue.md) names through its reader, `tools/lattice_repo_catalogue.py`, by a module's role or a root's or documentation area's name, such as `area("developer")` for the registers, never from `__file__` or a path written in code (STD-273, skill `lattice-toolchain`'s Finding paths).
+
+## Asking the knowledge index
+
+The knowledge index ranks the project's decisions, mechanisms, capabilities, patterns, principles, standards and store findings against a question, so an agent reads the one section that answers it instead of whole documents ([ADR-A134](docs/architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md)).
+
+- **Ask it first,** before a design, modelling, code or efficiency decision, and before adding a mechanism, a dependency or a component. Describe the problem in your own words, name every activity, quality and technology of the work at hand, several at once where several apply, then read the entries that answer it. `--activity`, `--quality` and `--tech` raise matching entries and hide none. `--kind`, `--phase` and `--audience` filter exactly, so use them only where an entry outside them could not answer.
+  ```bash
+  mise run graph:ask -- find <the problem in your own words> --activity physical-data-modelling --quality concurrency --phase runtime
+  mise run graph:ask -- read <ID>
+  ```
+  `mise run graph:ask -- find --help` lists every option, and the [facet register](docs/developer/facets.md) defines every facet value. `exists <word>` finds a declared ontology term by name.
+- **Ask more than once.** Reword the question, or narrow, widen or drop a filter, until the answers fit the question or two attempts have found nothing better.
+- **Look for what is related, not only for the entry.** When reviewing, re-sourcing or changing an entry, ask for the decisions that ground it and the standards, patterns and mechanisms that bear on it, in your own words and with `--kind decision` among them, since the entry itself is rarely the whole answer.
+- **An empty or weak answer never proves that nothing exists.** When `find` reports one, fall back to reading the documents and the code as you would without the index.
+- **A register gap is technical debt.** If the fallback finds an answer in the repository that no register entry holds, tell the maintainer in the handoff, and add the entry in the same change or a row to `docs/developer/technical-debt.md` (STD-272).
+- **Report misses and improvements as they come up.** At each handoff, list what the index answered weakly or not at all, from `mise run graph:ask -- misses`, and what would have answered it, so the maintainer can decide what to add.
+
 ## Writing
 
 Every piece of text, in documents, code comments, commit messages and replies:
 
+- do not put newlines in markdown text for formatting. Modern editors can word-wrap long lines. Newlines should be used to create space between paragraphs: don't assume a line length and enforce it with newlines.
 - no semicolons. Use periods or commas
 - colons sparingly, never to join two clauses or to lead into an explanation. A colon may introduce
   a list, a table or a quotation
@@ -72,6 +87,8 @@ Every piece of text, in documents, code comments, commit messages and replies:
 - keep rhetorical questions, emphatic short sentences and metaphors to a minimum
 - think critically. Look for logical gaps and errors, and present arguments as hypotheses where they
   are not settled
+- show structure with metadata a tool reads, and state a meaning once where it is defined rather than restating it in prose around it
+- name a thing by the term this repository already uses for it, never by a name another layer already defines for something else
 - do not coin technical terms from insurance market vocabulary. Producing bound meaning is
   **instantiation**, done by an **instantiator**, never a "binder" (skill `lattice-ontology-authoring`)
 - call a class that is a member of `fnd:Version` "versioned". Call a node "a version" only when it is
@@ -89,8 +106,24 @@ Every piece of text, in documents, code comments, commit messages and replies:
   any drift forced by usability.
 - Judgements, such as whether a rule was met or an act took effect, are evaluated from facts, never
   authored. Layers state, code executes.
+- **Weigh the runtime with the meaning.** A term written at runtime carries four costs at once: whether its history is defensible to a regulator, what it costs to store, what a read of it costs, and whether concurrent work contends for it. Keep stored data to the minimum correctness and robustness need, and reach for a mechanism the domain already has before inventing one for performance.
 
 Skill `lattice-ontology-authoring` has the detail.
+
+## Platform guardrails
+
+Code under `platform/`, `workers/`, `packages/` and `apps/` keeps these, and so does any code that reads or writes a graph store. Each is a principle in the register, which points at the decision behind it. Most are not yet enforced by a check (TD-85), so a reviewer holds a change to them.
+
+- **The scoped dataset is the only door** to the RDF store (PRI-51).
+- **No new authoritative store.** Anything persisted outside the graph is marked as coordination or derived, and can be rebuilt from the graph (PRI-52).
+- **Contract first.** Wire types are generated from the schemas in `contracts/`, never written again by hand (PRI-53).
+- **Every write carries its commit metadata**, its cause, principal, profile, transaction time and provenance (PRI-54).
+- **No string concatenation into SPARQL.** Use a prepared query with typed parameters (PRI-55).
+- **No `now()` in a guard, an effect, an ordering key, a canonicalisation or an identity.** Time is an input (PRI-56).
+- **A result-returning store method returns a cursor**, never a materialised collection (PRI-57).
+- **A function that claims determinism is tested** with a permutation and a repeat (PRI-58).
+- **Store isolation is verified** against the actual store and its configuration (PRI-59).
+- **A write path governed by a persistence profile is generated** by the persistence compiler, never written by hand (PRI-60).
 
 ## A public repository
 

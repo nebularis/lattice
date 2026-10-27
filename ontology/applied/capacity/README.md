@@ -78,6 +78,7 @@ list of substrate layers puts Instrument below Behaviour, the order before ADR-A
 
 Breaking versions at major version zero ([ADR-A113](../../../docs/architecture/decisions/ADR-A113-breaking-changes-at-major-version-zero.md)):
 
+- Next version: re-pinned to the substrate's next release, in which Ledger joins ([ADR-A131](../../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). No other change.
 - 0.8.0 (breaking): the execution profile imports `behaviour-runtime` 0.8.0 in place of `behaviour`
   0.7.0. Its import closure no longer includes Instrument, so a consumer that reached Instrument's
   terms through it must import Instrument directly. ADR-A106.

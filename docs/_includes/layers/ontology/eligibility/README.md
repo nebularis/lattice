@@ -1596,6 +1596,7 @@ Eligibility imports Foundation, Vocabulary, Quantification, and Party. Quantific
 
 Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).
 
+- Next release. Re-pinned: a new substrate layer joins the release. No other change.
 - 0.19.0. Every document takes the release's number and imports the other layers at it (no effect). No other change.
 - 0.18.0, the first release of the substrate and standalone modules as one set
   ([ADR-A129](../../docs/architecture/decisions/ADR-A129-one-release-for-the-substrate.md)). Every

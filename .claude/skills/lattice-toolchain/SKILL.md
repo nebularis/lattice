@@ -5,6 +5,8 @@ description: Building, testing and running LATTICE's checks, and setting up or r
 
 # The LATTICE toolchain
 
+Ask the knowledge index first, as AGENTS.md's "Asking the knowledge index" says, with `mise run graph:ask -- find <the task in your own words>` and every facet value that fits the task at hand, then `read` each entry that answers. This skill's tasks span the activities environment, build-automation, dependency-management and continuous-integration, and a task often needs several of them, named together and separated by commas. `--activity`, `--quality` and `--tech` raise matching entries and hide none, while `--kind` filters exactly, so leave `--kind` off unless only one kind of entry will do. The index finds the rules this skill does not mention, and the entries related to the ones it does.
+
 The [developer guide](https://github.com/nebularis/lattice/blob/main/docs/developer/developer-guide.md)
 describes every tool and task, and
 [getting started](https://github.com/nebularis/lattice/blob/main/docs/developer/getting-started.md)
@@ -34,7 +36,7 @@ are in [environment-lessons.md](environment-lessons.md), beside this file.
 | generated SPARQL, or a test that runs it on an engine | `check:persistence` on Oxigraph, and `check:persistence-conformance` on every engine before a merge (skill `lattice-triple-stores`) |
 | a benchmark under `benchmark/` | its own `check:<area>-<topic>`, run on demand, never part of `check` (ADR-A124) |
 | `AGENTS.md` or a skill | `build:agent-guidance`, then `check:agent-guidance`. The "Where things are" table in `AGENTS.md` is generated from `repository-catalogue.md`, so edit a root, tool package or documentation area there |
-| a root, a tool package, a documentation area or a generated path | `repository-catalogue.md`, then `build:agent-guidance` and `check:catalogue` |
+| a root, a tool package, a documentation area or a generated path | `repository-catalogue.md`, giving a new root or documentation area a `name` code asks for it by (see [Finding paths](#finding-paths)), then `build:agent-guidance` and `check:catalogue` |
 | anything to be committed | the commit hook runs what the change touches (below). `mise run hooks:run` runs it by hand over what is staged |
 
 ## Git hooks
@@ -94,6 +96,19 @@ Some networks reach public registries only through a mirror, or not at all.
 - A package missing from a mirror, or a registry that cannot be reached, is handed to the maintainer with
   the exact command. Do not retry it.
 
+## Finding paths
+
+**Find the repository root and every catalogued directory through the catalogue reader, never from `__file__` or a path written in code** ([ADR-A121](../../../docs/architecture/decisions/ADR-A121-repository-catalogue.md) decisions 4 and 5). A written path breaks when a directory moves, and a root counted from `__file__` is wrong in a copy or a worktree run with another checkout's interpreter.
+
+| To find | Ask the reader, in Python | From a task or a shell |
+|---|---|---|
+| the repository root | `lattice_repo_catalogue.find_root()`, or `catalogue.root` after `load()` | the working directory, or `LATTICE_ROOT` |
+| a module's role directory, such as its examples | `catalogue.module("instrument").directory("examples")` | `python tools/lattice_repo_catalogue.py path instrument examples` |
+| a module's generated files, in order | `catalogue.module("wording").files("shapes")` | `python tools/lattice_repo_catalogue.py paths wording shapes` |
+| a root or documentation area, such as the registers' | `catalogue.area("developer")` | `python tools/lattice_repo_catalogue.py area developer` |
+
+`load()` comes from `tools/lattice_repo_catalogue.py`, which a tool under `tools/` imports after putting `tools/` on `sys.path`. Each lookup returns a directory relative to the root, and a file's name is joined to it, as in `catalogue.root / catalogue.area("developer") / "facets.md"`. A name or role the catalogue lacks fails with an error naming where to declare it, so declare it there rather than writing the path. `check:catalogue` fails a tool under `tools/` that builds a path to a catalogued root itself. Its scan does not yet read tests (TD-54) or find a root counted from `__file__` (TD-87, TD-88), so there the rule holds only while it is followed.
+
 ## Rules for tasks and tools
 
 - `mise.toml` `run` strings run under `cmd.exe` on Windows and a POSIX shell elsewhere. Use double
@@ -109,3 +124,5 @@ Some networks reach public registries only through a mirror, or not at all.
 - A new build output outside `build/` or `.build/<name>/`, or a Maven module outside
   `platform/pom.xml`, needs adding to `clean` and `clean-win`, which list exact paths.
 - Ask the maintainer to start Docker Desktop if its engine is not running. Do not start it yourself.
+- A tool writes text with an explicit encoding and newline, for example `path.write_text(text, encoding="utf-8", newline="\n")`, never the platform's. Without it Windows writes `\r\n` for a `\n` inside a generated multi-line string, and the file is corrupt.
+- After changing a list other code counts or iterates over, such as a task's test modules, a version pin, or a set whose size a test asserts, run every task and test that reads that list, not only the one you edited. A merge resolution once left a task skipping two test modules without failing, and a contract added beyond a pinned count was caught only by the full sweep.

@@ -1,10 +1,8 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# ADR A-07: Eligibility authoring direction and extraction contract
+# ADR-A07: Eligibility authoring direction and extraction contract
 
-## Status
-
-Accepted
+**Status:** Accepted
 
 ## Context
 

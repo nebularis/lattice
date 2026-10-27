@@ -144,4 +144,6 @@ belongs to the applied ontology, not to the concept scheme.
 
 ## Provenance
 
+**Unit:** [`applied-ontology-readiness`](../../developer/plans/applied-ontology-readiness.md) (plan)
+
 Part of the [`applied-ontology-readiness`](../../developer/plans/applied-ontology-readiness.md) unit. The implementation notes record its slices AOR-10 and AOR-11.

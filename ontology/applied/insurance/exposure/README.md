@@ -2,27 +2,21 @@
 
 # Asset Exposure Ontology (`aeo:`)
 
-Literate specification for the asset exposure ontology, built by the
-[`applied-insurance-reference`](../../../../docs/developer/plans/applied-insurance-reference.md)
-epic, Phase 4. See [ADR-A98](../../../../docs/architecture/decisions/ADR-A98-applied-insurance-domain-layout.md)
-and the [asset exposure ontology sketch](../../../../docs/developer/sketches/asset-exposure-ontology.md)
-for the design this module implements.
+Literate specification for the asset exposure ontology. See [ADR-A98](../../../../docs/architecture/decisions/ADR-A98-applied-layout-and-insurance-modules.md) for the layout of the applied and insurance modules it belongs to.
 
 ## 1. Purpose and scope
 
 Exposure is facts about the world, not about cover: where a risk is, what it consists of, who
 holds an interest in it, and what it is worth. No class here says what a contract insures — that
-is the contract module's (Phase 5). This slice (AIR-4.1) builds the core: an exposure set's
-schedule, locations, legal entities and the control between them, assets, interests and
-valuations. Later slices of Phase 4 add to the same classes, each in its own region:
+is the contract module's. The `core` region holds an exposure set's schedule, locations, legal entities and the control between them, assets, interests and valuations. Each later region adds to the same classes:
 
-| Region | Slice | Adds |
-|---|---|---|
-| `core` | AIR-4.1 | exposure set, location, legal entity, control, asset, interest, valuation |
-| `zones-attributes-assessments` | AIR-4.2 | hazard zones, pool participation, attribute assessments |
-| `dependencies-metrics-units` | AIR-4.3 | dependencies, peril metrics, exposure units derived on demand |
-| `losses-requirements-cover` | AIR-4.4 | loss history, coverage requirements, existing cover |
-| `liability` | AIR-4.5 | liability exposure: counterparty populations, exposure bases |
+| Region | Adds |
+|---|---|
+| `core` | exposure set, location, legal entity, control, asset, interest, valuation |
+| `zones-attributes-assessments` | hazard zones, pool participation, attribute assessments |
+| `dependencies-metrics-units` | dependencies, peril metrics, exposure units derived on demand |
+| `losses-requirements-cover` | loss history, coverage requirements, existing cover |
+| `liability` | liability exposure: counterparty populations, exposure bases |
 
 ```mermaid
 flowchart TB
@@ -42,11 +36,10 @@ flowchart TB
     RO -->|pty:occupiedBy| LE
 ```
 
-Exposure imports Foundation, Vocabulary, Quantification, Party, Eligibility (for `elg:AdmissionProfile`, AIR-4.4)
+Exposure imports Foundation, Vocabulary, Quantification, Party, Eligibility (for `elg:AdmissionProfile`)
 and `insurance/common` (which brings `classification/`), all by exact version IRI. It does not import the `insurance/peril` spec, which no term here uses: perils are
 `icm:peril` values, and only the vocabulary imports `insurance/peril`'s vocabulary, for the cause
-concepts it links. Imported in turn
-by later Phase 4 slices and, eventually, the contract module (Phase 5).
+concepts it links. Imported in turn, eventually, by the contract module.
 
 ## 2. Namespace and prefixes
 
@@ -72,7 +65,7 @@ by later Phase 4 slices and, eventually, the contract module (Phase 5).
 - `turtle-vocab` blocks generate `vocab/exposure-vocab.ttl`.
 - `turtle-shapes` blocks generate, in order, `shapes/structural.ttl`, `shapes/constraints.ttl`,
   `shapes/profiles/construction-protection.ttl` and `shapes/profiles/cyber-posture.ttl` (the last
-  two from AIR-4.2).
+  two are profile shapes).
 - `turtle-example` blocks are illustrative only. The real fixture lives in
   [`examples/core.ttl`](examples/core.ttl).
 
@@ -95,7 +88,7 @@ vocab = ["vocab/exposure-vocab.ttl"]
 shapes = ["shapes/structural.ttl", "shapes/constraints.ttl", "shapes/profiles/construction-protection.ttl", "shapes/profiles/cyber-posture.ttl"]
 ```
 
-## 4. Core classes (AIR-4.1)
+## 4. Core classes
 
 ### 4.1 Legal entities and control
 
@@ -141,9 +134,9 @@ through a plain membership property, and is not owned by it. An unchanged member
 version it holds for, shared by identity and not duplicated by node, so a mid-term change adds the
 nodes that changed and a new version that lists the rest. Membership is not inverse functional,
 which a reasoner would read as an identity statement and merge two schedule versions that list one
-location (TD-49).
+location.
 
-Content names identities, not versions (AIR-66, TD-66). `aeo:locatedAt` names the `aeo:LocationIdentity`
+Content names identities, not versions. `aeo:locatedAt` names the `aeo:LocationIdentity`
 of an asset's location, and `aeo:valueOf` the `aeo:AssetIdentity` or `aeo:LocationIdentity` of what a
 valuation values. The exposure set version's `aeo:hasLocation`, `aeo:hasAsset` members fix which version of
 each identity holds for the set, so a location changing writes one location version, and the assets
@@ -164,15 +157,15 @@ governance state on the earlier version. `examples/versions.ttl` shows both.
 
 Every one of `aeo:ExposureSet`, `aeo:Location` and `aeo:Asset` has its own identity class
 (`aeo:ExposureIdentity`, `aeo:LocationIdentity`, `aeo:AssetIdentity`, each `⊑ fnd:PersistentIdentity`),
-so a location's loss history and zone designations (AIR-4.2 onwards) follow its identity across
+so a location's loss history and zone designations follow its identity across
 schedule versions, not one snapshot.
 
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/insurance/exposure>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/exposure/0.3.0> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/exposure/0.3.1> ;
     rdfs:label "LATTICE asset exposure ontology"@en ;
-    rdfs:comment "Facts about the world a risk sits in: exposure sets, locations, legal entities and control, assets, interests and valuations (AIR-4.1), with zones, attributes, dependencies, losses, requirements, cover and liability arriving in later regions (AIR-4.2 to AIR-4.5). No class here says what a contract insures, which is the contract module's (Phase 5). See the asset exposure ontology sketch." ;
+    rdfs:comment "Facts about the world a risk sits in: exposure sets, locations, legal entities and control, assets, interests and valuations, with zones, attributes, dependencies, losses, requirements, cover and liability in further regions. No class here says what a contract insures, which is the contract module's." ;
     owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ,
                 <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0> ,
                 <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.19.0> ,
@@ -181,9 +174,9 @@ schedule versions, not one snapshot.
                 <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.19.0> .
 
 #################################################################
-#    Identity classes (AIR-4.1). Each versioned class below has
+#    Identity classes. Each versioned class below has
 #    its own, so a location's or asset's loss history and zone
-#    designations (AIR-4.2 onwards) follow its identity across
+#    designations follow its identity across
 #    exposure set versions, not one schedule snapshot.
 #################################################################
 
@@ -197,7 +190,7 @@ aeo:LocationIdentity a owl:Class ;
     rdfs:subClassOf fnd:PersistentIdentity ;
     rdfs:label "Location identity"@en ;
     rdfs:comment "The identity a location keeps across exposure set versions and address or geometry changes." ;
-    fnd:utility "Give every aeo:Location version fnd:hasIdentity an individual of this class, so its loss history and zone designations (AIR-4.2 onwards) follow it." .
+    fnd:utility "Give every aeo:Location version fnd:hasIdentity an individual of this class, so its loss history and zone designations follow it." .
 
 aeo:AssetIdentity a owl:Class ;
     rdfs:subClassOf fnd:PersistentIdentity ;
@@ -206,7 +199,7 @@ aeo:AssetIdentity a owl:Class ;
     fnd:utility "Give every aeo:Asset version fnd:hasIdentity an individual of this class." .
 
 #################################################################
-#    Exposure set (sketch §5.2)
+#    Exposure set
 #################################################################
 
 aeo:ExposureSet a owl:Class ;
@@ -226,7 +219,7 @@ aeo:hasLocation a owl:ObjectProperty ;
     rdfs:domain aeo:ExposureSet ; rdfs:range aeo:Location ;
     rdfs:label "has location"@en ;
     rdfs:comment "A location belonging to this exposure set version." ;
-    fnd:utility "Subject: an exposure set. Value: one of its locations. Not inverse functional: an unchanged location version is listed by every exposure set version it holds for, shared by identity (TD-49)." .
+    fnd:utility "Subject: an exposure set. Value: one of its locations. Not inverse functional: an unchanged location version is listed by every exposure set version it holds for, shared by identity." .
 
 aeo:hasAsset a owl:ObjectProperty ;
     rdfs:domain aeo:ExposureSet ; rdfs:range aeo:Asset ;
@@ -247,14 +240,14 @@ aeo:hasValuation a owl:ObjectProperty ;
     fnd:utility "Subject: an exposure set. Value: one of its valuations. Not inverse functional, for the same reason as aeo:hasLocation." .
 
 #################################################################
-#    Location (sketch §5.3)
+#    Location
 #################################################################
 
 aeo:Location a owl:Class ;
     rdfs:subClassOf fnd:Version ;
     rdfs:label "Location"@en ;
     rdfs:comment "A place where exposure sits: a site, a building footprint, a pipeline segment, a port." ;
-    fnd:utility "Subject: a location version. A version per change of address or geometry, one identity (aeo:LocationIdentity) across schedules, so loss history and zone designations (AIR-4.2 onwards) follow it." .
+    fnd:utility "Subject: a location version. A version per change of address or geometry, one identity (aeo:LocationIdentity) across schedules, so loss history and zone designations follow it." .
 
 aeo:Address a owl:Class ;
     rdfs:label "Address"@en ;
@@ -287,7 +280,7 @@ aeo:territory a owl:ObjectProperty ;
     fnd:utility "Subject: a location. Value: one or more territory concepts. At least one. Specialises cls:territory (ADR-A98 decision 5)." .
 
 #################################################################
-#    Legal entities and control (sketch §5.1)
+#    Legal entities and control
 #################################################################
 
 aeo:LegalEntity a owl:Class ;
@@ -301,7 +294,7 @@ aeo:industry a owl:ObjectProperty ;
     rdfs:domain aeo:LegalEntity ; rdfs:range skos:Concept ;
     rdfs:label "industry"@en ;
     rdfs:comment "An industry or economic activity of a legal entity." ;
-    fnd:utility "Subject: a legal entity. Value: one or more industry concepts. No primary industry is privileged by this property: a primary industry is an attribute of the entity's assessment (AIR-4.2), not asserted here. Specialises cls:industry." .
+    fnd:utility "Subject: a legal entity. Value: one or more industry concepts. No primary industry is privileged by this property: a primary industry is an attribute of the entity's assessment, not asserted here. Specialises cls:industry." .
 
 aeo:domicile a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:subPropertyOf cls:territory ;
@@ -347,10 +340,10 @@ aeo:controlShare a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:domain aeo:ControlRelation ; rdfs:range qnt:Quantity ;
     rdfs:label "control share"@en ;
     rdfs:comment "The controller's proportionate share of the controlled entity, where stated." ;
-    fnd:utility "Subject: a control relation. Value: a qnt:Quantity on a proportion space. At most one. Not Party's pty:outwardShare/inwardShare (CCS slice C16c removes them): this is an exposure-ontology quantity, not a participation share." .
+    fnd:utility "Subject: a control relation. Value: a qnt:Quantity on a proportion space. At most one. Not Party's pty:outwardShare/inwardShare: this is an exposure-ontology quantity, not a participation share." .
 
 #################################################################
-#    Asset and interest (sketch §5.5)
+#    Asset and interest
 #################################################################
 
 aeo:Asset a owl:Class ;
@@ -366,7 +359,7 @@ aeo:assetClass a owl:ObjectProperty ;
     rdfs:domain aeo:Asset ; rdfs:range skos:Concept ;
     rdfs:label "asset class"@en ;
     rdfs:comment "The kind of asset (building, contents, stock, and others)." ;
-    fnd:utility "Subject: an asset. Value: a concept bound by a reference asset-class scheme (AIR-4.6). Exactly one. Specialises cls:assetClass." .
+    fnd:utility "Subject: an asset. Value: a concept bound by a reference asset-class scheme. Exactly one. Specialises cls:assetClass." .
 
 aeo:locatedAt a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:domain aeo:Asset ; rdfs:range aeo:LocationIdentity ;
@@ -439,7 +432,7 @@ aeo:extent a owl:ObjectProperty, owl:FunctionalProperty ;
     fnd:utility "Subject: an interest. Value: a qnt:Quantity. At most one." .
 
 #################################################################
-#    Valuation (sketch §5.6)
+#    Valuation
 #################################################################
 
 aeo:Valuation a owl:Class ;
@@ -495,7 +488,7 @@ aeo:horizon a owl:ObjectProperty, owl:FunctionalProperty ;
     fnd:utility "Subject: a rate valuation. Value: a qnt:Quantity (a duration). Required alongside aeo:rate." .
 
 #################################################################
-#    Zones and pool participation (AIR-4.2, sketch §5.4)
+#    Zones and pool participation
 #################################################################
 
 aeo:ZoneDesignation a owl:Class ;
@@ -510,7 +503,7 @@ aeo:zoneDesignation a owl:ObjectProperty ;
     rdfs:domain aeo:Location ; rdfs:range aeo:ZoneDesignation ;
     rdfs:label "zone designation"@en ;
     rdfs:comment "A zone designation belonging to this location." ;
-    fnd:utility "Subject: a location. Value: one of its zone designations. Not inverse functional: a designation follows a location's identity, so every version of the location it holds for carries it (TD-49)." .
+    fnd:utility "Subject: a location. Value: one of its zone designations. Not inverse functional: a designation follows a location's identity, so every version of the location it holds for carries it." .
 
 aeo:zone a owl:ObjectProperty ;
     rdfs:domain aeo:ZoneDesignation ; rdfs:range skos:Concept ;
@@ -572,7 +565,7 @@ aeo:poolParticipation a owl:ObjectProperty ;
     rdfs:domain aeo:Location ; rdfs:range aeo:PoolParticipation ;
     rdfs:label "pool participation"@en ;
     rdfs:comment "A pool participation belonging to this location." ;
-    fnd:utility "Subject: a location. Value: one of its pool participations. Not inverse functional: a participation follows a location's identity, so every version of the location it holds for carries it (TD-49)." .
+    fnd:utility "Subject: a location. Value: one of its pool participations. Not inverse functional: a participation follows a location's identity, so every version of the location it holds for carries it." .
 
 aeo:pool a owl:ObjectProperty ;
     rdfs:subPropertyOf icm:pool ;
@@ -586,10 +579,10 @@ aeo:perilScope a owl:ObjectProperty ;
     rdfs:range skos:Concept ;
     rdfs:label "peril scope"@en ;
     rdfs:comment "A peril this pool participation covers at this location." ;
-    fnd:utility "Subject: a pool participation. Value: a cause concept, bound under insurance/common's peril contract. Not functional: several perils may be named. Specialises icm:peril. Declared with no domain (AIR-4.3) because it is reused by peril metrics (AIR-4.3) and existing cover (AIR-4.4) for the same purpose: naming which perils a scope is about." .
+    fnd:utility "Subject: a pool participation. Value: a cause concept, bound under insurance/common's peril contract. Not functional: several perils may be named. Specialises icm:peril. Declared with no domain because it is reused by peril metrics and existing cover for the same purpose: naming which perils a scope is about." .
 
 #################################################################
-#    Assessments and attribute values (AIR-4.2, sketch §5.7, §5.8)
+#    Assessments and attribute values
 #################################################################
 
 aeo:Assessment a owl:Class ;
@@ -636,7 +629,7 @@ aeo:hasAttribute a owl:ObjectProperty ;
     rdfs:domain aeo:Assessment ; rdfs:range aeo:AttributeValue ;
     rdfs:label "has attribute"@en ;
     rdfs:comment "An attribute value belonging to this assessment." ;
-    fnd:utility "Subject: an assessment. Value: one of its attribute values. Not inverse functional: an assessment that restates an unchanged value may share the node (TD-49)." .
+    fnd:utility "Subject: an assessment. Value: one of its attribute values. Not inverse functional: an assessment that restates an unchanged value may share the node." .
 
 aeo:attributeType a owl:ObjectProperty ;
     rdfs:domain aeo:AttributeValue ; rdfs:range skos:Concept ;
@@ -707,7 +700,7 @@ aeo:LegalEntity owl:disjointWith aeo:ExposureSet , aeo:Location , aeo:Asset , ae
     aeo:ZoneDesignation , aeo:PoolParticipation , aeo:Assessment , aeo:AttributeValue .
 ```
 
-### 4.3 Dependencies, peril metrics and exposure units (AIR-4.3)
+### 4.3 Dependencies, peril metrics and exposure units
 
 Three groups of terms, none of which says what a contract insures.
 
@@ -716,8 +709,7 @@ location or asset, or a party) for something, such as power, a part or a custome
 carries the dependency's kind and, where known, the share of the dependent's output at risk, a
 recovery lead time, whether the provider can be substituted and whether it is the only source.
 These are the structure contingent business interruption underwriting reads. The maximum
-foreseeable interruption that could be derived from the dependency graph is deferred (see the
-Phase 4 plan). The data it would read is complete here.
+foreseeable interruption that could be derived from the dependency graph is not derived here. The data it would read is complete here.
 
 A **peril metric** is a derived artefact, a figure a model or a provider computed for a subject
 (an exposure set, a location or an asset) and a set of perils. The model and its version belong to
@@ -775,7 +767,7 @@ classDiagram
 
 ```turtle-spec
 #################################################################
-#    Dependencies (AIR-4.3, sketch §5.9)
+#    Dependencies
 #################################################################
 
 aeo:Dependency a owl:Class ;
@@ -833,10 +825,10 @@ aeo:hasDependency a owl:ObjectProperty ;
     rdfs:domain aeo:ExposureSet ; rdfs:range aeo:Dependency ;
     rdfs:label "has dependency"@en ;
     rdfs:comment "A dependency listed in this exposure set version." ;
-    fnd:utility "Subject: an exposure set. Value: one of its dependencies. Not inverse functional, for the same reason as aeo:hasLocation (TD-49)." .
+    fnd:utility "Subject: an exposure set. Value: one of its dependencies. Not inverse functional, for the same reason as aeo:hasLocation." .
 
 #################################################################
-#    Peril metrics (AIR-4.3, sketch §5.10)
+#    Peril metrics
 #################################################################
 
 aeo:PerilMetric a owl:Class ;
@@ -921,7 +913,7 @@ aeo:hasPerilMetric a owl:ObjectProperty ;
     rdfs:domain aeo:ExposureSet ; rdfs:range aeo:PerilMetric ;
     rdfs:label "has peril metric"@en ;
     rdfs:comment "A peril metric listed in this exposure set version." ;
-    fnd:utility "Subject: an exposure set. Value: one of its peril metrics. Not inverse functional, for the same reason as aeo:hasLocation (TD-49)." .
+    fnd:utility "Subject: an exposure set. Value: one of its peril metrics. Not inverse functional, for the same reason as aeo:hasLocation." .
 
 aeo:MetricComparison a owl:Class ;
     rdfs:subClassOf fnd:DerivedArtefact , fnd:Evidenced ,
@@ -937,7 +929,7 @@ aeo:comparedMetric a owl:ObjectProperty ;
     fnd:utility "Subject: a metric comparison. Value: a peril metric. At least two." .
 
 #################################################################
-#    Exposure units (AIR-4.3, sketch §5.11)
+#    Exposure units
 #################################################################
 
 aeo:ExposureUnit a owl:Class ;
@@ -977,21 +969,21 @@ aeo:unitValue a owl:ObjectProperty, owl:FunctionalProperty ;
     fnd:utility "Subject: an exposure unit. Value: a money qnt:Quantity. At most one. Omitted, with the derivation reporting it, when the assets' valuations are in several currencies and the graph holds no conversion (a conversion needs a rate and a date)." .
 
 #################################################################
-#    Groupings (AIR-4.3, R9)
+#    Groupings
 #################################################################
 
 aeo:scheduleGroup a owl:ObjectProperty ;
     rdfs:range skos:Concept ;
     rdfs:label "schedule group"@en ;
     rdfs:comment "A group the insured or drafter uses for a location or asset (a division, a portfolio, a location group of the Open Exposure Data schema)." ;
-    fnd:utility "Subject: an aeo:Location or aeo:Asset. Value: a concept bound by aeo-voc:ScheduleGroupContract, a scheme a deployment binds per insured or drafter. Not functional. A coverage requirement's scope (AIR-4.4) can select by group." .
+    fnd:utility "Subject: an aeo:Location or aeo:Asset. Value: a concept bound by aeo-voc:ScheduleGroupContract, a scheme a deployment binds per insured or drafter. Not functional. A coverage requirement's scope can select by group." .
 
 [] a owl:AllDisjointClasses ;
     owl:members ( aeo:ExposureSet aeo:Location aeo:Asset aeo:Interest aeo:Valuation
                   aeo:Dependency aeo:PerilMetric aeo:ExposureUnit aeo:MetricComparison ) .
 ```
 
-### 4.4 Losses, requirements, cover and financial metrics (AIR-4.4)
+### 4.4 Losses, requirements, cover and financial metrics
 
 Four groups of terms. Each is an evidenced fact about an insured. None of them computes cover.
 
@@ -1013,18 +1005,18 @@ in `tools/exposure_derivations.py` and never by hand: a recorded value is copied
 nothing is recorded is the cause concept's typical value used, with an `aeo:DefaultedCharacteristic`
 beside it so that a reviewer sees which values were defaulted. A cause concept with no typical
 values (a drafter's flat code) leaves the effective value empty, and a check reading it is
-Undetermined (sketch §5.12).
+Undetermined.
 
 **Coverage requirements.** An `aeo:CoverageRequirement` states what a client, lender or regulator
 requires of the cover on a set of exposure, with a source, a strength and one or more measure
 constraints (a limit of at least some amount, a retention of at most some amount, a net retained
 loss at a return period not above a share of equity). Its scope is an Eligibility admission profile
-over exposure units (AIR-4.3), so "flood exposure in a special flood hazard area" is a condition
+over exposure units, so "flood exposure in a special flood hazard area" is a condition
 and not a list. A relative bound has no construct in Quantification (an anchor binding derives a
 range from a nominal value and offsets, which is a different thing), so a bound relative to a
 metric is on a proportion space (ADR-A93) and names the metric with `aeo:relativeTo`. The link from
-a requirement to the obligation it arises from is not built: Instrument is being rewritten, and
-Phase 5 adds it. `aeo:owedTo` names the obligee until then.
+a requirement to the obligation it arises from is not modelled here. The contract module adds it, and
+`aeo:owedTo` names the obligee until then.
 
 **Existing cover, cover history and financial metrics.** An `aeo:ExistingCover` records a policy
 period, how it relates to the cover being placed (underlying, alongside or replaced), and either a
@@ -1078,7 +1070,7 @@ classDiagram
 
 ```turtle-spec
 #################################################################
-#    Loss experience and losses (AIR-4.4, sketch §5.12)
+#    Loss experience and losses
 #################################################################
 
 aeo:LossExperience a owl:Class ;
@@ -1119,13 +1111,13 @@ aeo:hasLossExperience a owl:ObjectProperty ;
     rdfs:domain aeo:ExposureSet ; rdfs:range aeo:LossExperience ;
     rdfs:label "has loss experience"@en ;
     rdfs:comment "A loss experience listed in this exposure set version." ;
-    fnd:utility "Subject: an exposure set. Value: one of its loss experiences. Not inverse functional, for the same reason as aeo:hasLocation (TD-49)." .
+    fnd:utility "Subject: an exposure set. Value: one of its loss experiences. Not inverse functional, for the same reason as aeo:hasLocation." .
 
 aeo:hasLossRecord a owl:ObjectProperty ;
     rdfs:domain aeo:LossExperience ; rdfs:range aeo:LossRecord ;
     rdfs:label "has loss record"@en ;
     rdfs:comment "A loss record in this loss experience." ;
-    fnd:utility "Subject: a loss experience. Value: one of its loss records. Not inverse functional (TD-49): a later experience from the same source may list a record unchanged." .
+    fnd:utility "Subject: a loss experience. Value: one of its loss records. Not inverse functional: a later experience from the same source may list a record unchanged." .
 
 aeo:LossRecord a owl:Class ;
     rdfs:subClassOf fnd:Evidenced , fnd:NaturallyKeyed ,
@@ -1280,7 +1272,7 @@ aeo:defaultedProperty a owl:ObjectProperty ;
     fnd:utility "Subject: a defaulted characteristic. Value: aeo:effectiveAgency or aeo:effectiveMechanism. Exactly one." .
 
 #################################################################
-#    Coverage requirements (AIR-4.4, sketch §5.13)
+#    Coverage requirements
 #################################################################
 
 aeo:RequirementIdentity a owl:Class ;
@@ -1322,13 +1314,13 @@ aeo:requirementScope a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:domain aeo:CoverageRequirement ; rdfs:range elg:AdmissionProfile ;
     rdfs:label "requirement scope"@en ;
     rdfs:comment "The exposure the requirement applies to, as an Eligibility admission profile over exposure units." ;
-    fnd:utility "Subject: a coverage requirement. Value: an elg:AdmissionProfile whose conditions are bound to subject class aeo:ExposureUnit (AIR-4.3), so the scope is evaluated over units computed for the perils it names. At most one. Absent says the requirement applies to the whole schedule." .
+    fnd:utility "Subject: a coverage requirement. Value: an elg:AdmissionProfile whose conditions are bound to subject class aeo:ExposureUnit, so the scope is evaluated over units computed for the perils it names. At most one. Absent says the requirement applies to the whole schedule." .
 
 aeo:owedTo a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:domain aeo:CoverageRequirement ; rdfs:range pty:RoleOccupancy ;
     rdfs:label "owed to"@en ;
     rdfs:comment "Who the requirement is owed to, as an occupancy of a role (a lender as mortgagee, for example)." ;
-    fnd:utility "Subject: a coverage requirement. Value: a pty:RoleOccupancy. At most one. Names the obligee until Phase 5 links a requirement to the obligation it arises from." .
+    fnd:utility "Subject: a coverage requirement. Value: a pty:RoleOccupancy. At most one. Names the obligee until the contract module links a requirement to the obligation it arises from." .
 
 aeo:MeasureConstraint a owl:Class ;
     rdfs:subClassOf
@@ -1374,10 +1366,10 @@ aeo:hasRequirement a owl:ObjectProperty ;
     rdfs:domain aeo:ExposureSet ; rdfs:range aeo:CoverageRequirement ;
     rdfs:label "has requirement"@en ;
     rdfs:comment "A coverage requirement listed in this exposure set version." ;
-    fnd:utility "Subject: an exposure set. Value: one of its coverage requirements. Not inverse functional, for the same reason as aeo:hasLocation (TD-49)." .
+    fnd:utility "Subject: an exposure set. Value: one of its coverage requirements. Not inverse functional, for the same reason as aeo:hasLocation." .
 
 #################################################################
-#    Existing cover and cover history (AIR-4.4, sketch §5.14)
+#    Existing cover and cover history
 #################################################################
 
 aeo:ExistingCover a owl:Class ;
@@ -1437,7 +1429,7 @@ aeo:hasExistingCover a owl:ObjectProperty ;
     rdfs:domain aeo:ExposureSet ; rdfs:range aeo:ExistingCover ;
     rdfs:label "has existing cover"@en ;
     rdfs:comment "An existing cover listed in this exposure set version." ;
-    fnd:utility "Subject: an exposure set. Value: one of its existing covers. Not inverse functional, for the same reason as aeo:hasLocation (TD-49)." .
+    fnd:utility "Subject: an exposure set. Value: one of its existing covers. Not inverse functional, for the same reason as aeo:hasLocation." .
 
 aeo:CoverHistoryEvent a owl:Class ;
     rdfs:subClassOf fnd:Evidenced ,
@@ -1477,10 +1469,10 @@ aeo:hasCoverHistoryEvent a owl:ObjectProperty ;
     rdfs:domain aeo:ExposureSet ; rdfs:range aeo:CoverHistoryEvent ;
     rdfs:label "has cover history event"@en ;
     rdfs:comment "A cover history event listed in this exposure set version." ;
-    fnd:utility "Subject: an exposure set. Value: one of its cover history events. Not inverse functional, for the same reason as aeo:hasLocation (TD-49)." .
+    fnd:utility "Subject: an exposure set. Value: one of its cover history events. Not inverse functional, for the same reason as aeo:hasLocation." .
 
 #################################################################
-#    Financial metrics (AIR-4.4, sketch §5.14)
+#    Financial metrics
 #################################################################
 
 aeo:FinancialMetric a owl:Class ;
@@ -1528,7 +1520,7 @@ aeo:hasFinancialMetric a owl:ObjectProperty ;
     rdfs:domain aeo:ExposureSet ; rdfs:range aeo:FinancialMetric ;
     rdfs:label "has financial metric"@en ;
     rdfs:comment "A financial metric listed in this exposure set version." ;
-    fnd:utility "Subject: an exposure set. Value: one of its financial metrics. Not inverse functional, for the same reason as aeo:hasLocation (TD-49)." .
+    fnd:utility "Subject: an exposure set. Value: one of its financial metrics. Not inverse functional, for the same reason as aeo:hasLocation." .
 
 [] a owl:AllDisjointClasses ;
     owl:members ( aeo:ExposureSet aeo:Location aeo:Asset aeo:Interest aeo:Valuation
@@ -1539,7 +1531,7 @@ aeo:hasFinancialMetric a owl:ObjectProperty ;
 
 ## 5. Vocabulary, `core` region
 
-For each concept-valued property of this slice, a `voc:SchemeContract` and a flat reference scheme
+For each concept-valued property of this region, a `voc:SchemeContract` and a flat reference scheme
 bound as its `voc:boundScheme`, declared as `insurance/peril`'s contracts are.
 
 | Contract, constrains | Reference concepts |
@@ -1582,8 +1574,8 @@ thousands.
 
 <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/exposure-vocab/0.3.0> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/insurance/exposure/0.3.0> ,
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/exposure-vocab/0.3.1> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/insurance/exposure/0.3.1> ,
                 <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0> ,
                 <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ,
                 <https://www.nebularis.org/neuro-semantic/insurance/common-vocab/0.8.0> ,
@@ -1591,7 +1583,7 @@ thousands.
                 <https://www.nebularis.org/neuro-semantic/lattice/applied/classification-vocab/0.4.0> .
 
 #################################################################
-#    Reference schemes (AIR-4.1), each the unscoped fallback
+#    Reference schemes, each the unscoped fallback
 #    (ADR-A99 decision 1).
 #################################################################
 
@@ -1645,7 +1637,7 @@ aeo-voc:ProgrammeRoleScheme a voc:ConceptScheme ;
 
 #################################################################
 #    Reference bindings: one voc:SchemeContract per concept-valued
-#    property of this slice, bound to its reference scheme as the
+#    property of this region, bound to its reference scheme as the
 #    unscoped fallback (ADR-A99 decision 1), declared as
 #    insurance/common's contracts are.
 #################################################################
@@ -1705,7 +1697,7 @@ aeo-voc:LegalFormContract a voc:SchemeContract ;
 
 aeo-voc:Rooftop a skos:Concept ; skos:inScheme aeo-voc:GeoPrecisionScheme ; skos:topConceptOf aeo-voc:GeoPrecisionScheme ; skos:notation "1"^^xsd:integer ;
     skos:prefLabel "Rooftop"@en ; skos:definition "Located to the exact building footprint."@en ;
-    skos:note "No single published standard names this axis. Follows common catastrophe-modelling geocoding precision levels. Notation 1, the finest: AIR-4.2's geo-precision-for-peril shape (sketch §5.7) compares these ranks."@en .
+    skos:note "No single published standard names this axis. Follows common catastrophe-modelling geocoding precision levels. Notation 1, the finest: the geo-precision-for-peril shape compares these ranks."@en .
 aeo-voc:Parcel a skos:Concept ; skos:inScheme aeo-voc:GeoPrecisionScheme ; skos:topConceptOf aeo-voc:GeoPrecisionScheme ; skos:notation "2"^^xsd:integer ;
     skos:prefLabel "Parcel"@en ; skos:definition "Located to the land parcel a building sits on."@en ;
     skos:note "Common catastrophe-modelling geocoding precision usage."@en .
@@ -1918,7 +1910,7 @@ aeo-voc:FirstNamedInsured a owl:NamedIndividual , pty:Role ;
 aeo-voc:AdditionalInsured a owl:NamedIndividual , pty:Role ;
     rdfs:label "Additional insured"@en ;
     rdfs:comment "A party added as an insured by endorsement, typically at a counterparty's request." ;
-    skos:note "Common liability market usage. The additional-insured variants by ISO endorsement (CG 20 10, CG 20 37, CG 20 38) are conferred by the contract (Phase 5), not this role alone."@en ;
+    skos:note "Common liability market usage. The additional-insured variants by ISO endorsement (CG 20 10, CG 20 37, CG 20 38) are conferred by the contract module, not this role alone."@en ;
     fnd:utility "Type a pty:RoleOccupancy with this role for an additional insured."@en .
 aeo-voc:LossPayee a owl:NamedIndividual , pty:Role ;
     rdfs:label "Loss payee"@en ;
@@ -1949,15 +1941,15 @@ aeo-voc:Bailor a owl:NamedIndividual , pty:Role ;
 aeo-voc:WaiverOfSubrogationBeneficiary a owl:NamedIndividual , pty:Role ;
     rdfs:label "Waiver of subrogation beneficiary"@en ;
     rdfs:comment "A party who benefits from a waiver of the insurer's subrogation rights against them." ;
-    skos:note "Common liability market usage. The waiver itself is a contract term (Phase 5): this role only names who benefits."@en ;
+    skos:note "Common liability market usage. The waiver itself is a contract term: this role only names who benefits."@en ;
     fnd:utility "Type a pty:RoleOccupancy with this role for a waiver beneficiary."@en .
 
-# ==== BEGIN README SECTION zones-attributes-assessments (AIR-4.2) ====
+# ==== BEGIN README SECTION zones-attributes-assessments ====
 
 #################################################################
-#    Zone contracts (AIR-4.2, sketch §5.4). Each has no reference
+#    Zone contracts. Each has no reference
 #    scheme: a deployment binds each jurisdiction's edition by
-#    territory scope (ADR-A99). AIR-4.6 adds example editions.
+#    territory scope (ADR-A99).
 #################################################################
 
 aeo-voc:FloodZoneContract a voc:SchemeContract ;
@@ -2084,7 +2076,7 @@ aeo-voc:AssessmentKindScheme skos:hasTopConcept aeo-voc:SurveyReport , aeo-voc:S
     aeo-voc:GeocoderRun , aeo-voc:ScreeningRun .
 
 #################################################################
-#    Profile family and attribute family (sketch §5.8). The eight
+#    Profile family and attribute family. The eight
 #    profile family concepts are also attribute family concepts
 #    (skos:inScheme both schemes), since a profile family and the
 #    attribute family it groups are the same grouping for these
@@ -2166,7 +2158,7 @@ aeo-voc:OperationsAndWorkforce a skos:Concept ; skos:inScheme aeo-voc:ProfileFam
 aeo-voc:SupplyChain a skos:Concept ; skos:inScheme aeo-voc:ProfileFamilyScheme , aeo-voc:AttributeFamilyScheme ;
     skos:topConceptOf aeo-voc:ProfileFamilyScheme ;
     skos:prefLabel "Supply chain"@en ; skos:definition "The question family covering an entity's supplier dependencies, summarised from questionnaires."@en ;
-    skos:note "Common contingent business interruption underwriting usage. The underlying dependency structure is AIR-4.3."@en .
+    skos:note "Common contingent business interruption underwriting usage. The underlying dependency structure is `aeo:Dependency`."@en .
 
 aeo-voc:ProfileFamilyScheme skos:hasTopConcept aeo-voc:ConstructionAndProtection , aeo-voc:CyberPosture ,
     aeo-voc:BusinessContinuity , aeo-voc:Environmental , aeo-voc:Fleet , aeo-voc:Compliance ,
@@ -2178,7 +2170,7 @@ aeo-voc:AttributeFamilyScheme skos:hasTopConcept aeo-voc:Construction , aeo-voc:
 
 #################################################################
 #    Value form, geo precision order, value spaces and ordinal
-#    scales for attribute types (sketch §5.7, §5.8).
+#    scales for attribute types.
 #################################################################
 
 aeo-voc:ValueFormScheme a voc:ConceptScheme ;
@@ -2201,7 +2193,7 @@ aeo-voc:ValueFormScheme skos:hasTopConcept aeo-voc:ConceptForm , aeo-voc:Quantit
 
 aeo-voc:GeoPrecisionOrder a skos:OrderedCollection ;
     skos:memberList ( aeo-voc:Rooftop aeo-voc:Parcel aeo-voc:Street aeo-voc:Postcode aeo-voc:City aeo-voc:ZoneCentroid ) ;
-    skos:note "AIR-4.1's geographic precision concepts, finest first, for human reading. The geo-precision-for-peril shape compares the skos:notation integer rank each concept now carries (1 finest to 6 coarsest), not this list, since SPARQL has no portable way to read a position out of an rdf:List."@en .
+    skos:note "The geographic precision concepts, finest first, for human reading. The geo-precision-for-peril shape compares the skos:notation integer rank each concept now carries (1 finest to 6 coarsest), not this list, since SPARQL has no portable way to read a position out of an rdf:List."@en .
 
 aeo-voc:Count a qnt:ValueSpace ;
     qnt:spaceKey "count" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Discrete ; qnt:spaceHash "count-v1" ;
@@ -2214,10 +2206,10 @@ aeo-voc:Length a qnt:ValueSpace ;
     skos:note "Canonical unit metre (icm-voc:Metre), commonly reported in feet (icm-voc:Foot)."@en .
 aeo-voc:Duration a qnt:ValueSpace ;
     qnt:spaceKey "exposure-duration" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ; qnt:spaceHash "exposure-duration-v1" ;
-    skos:note "Canonical unit hour (icm-voc:Hour), commonly reported in days (icm-voc:Day). Distinct from AIR-2.6's peril-specific prl-voc:EventDurationSpace: this space measures an exposure attribute's own duration (a lead time, a response time, a recovery objective), not a peril's customary event window."@en .
+    skos:note "Canonical unit hour (icm-voc:Hour), commonly reported in days (icm-voc:Day). Distinct from the peril-specific prl-voc:EventDurationSpace: this space measures an exposure attribute's own duration (a lead time, a response time, a recovery objective), not a peril's customary event window."@en .
 aeo-voc:Speed a qnt:ValueSpace ;
     qnt:spaceKey "exposure-speed" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ; qnt:spaceHash "exposure-speed-v1" ;
-    skos:note "Canonical unit metre per second (icm-voc:MPerSec), commonly reported in miles per hour (icm-voc:MilePerHour) for design wind speed. Distinct from AIR-2.6's peril-specific wind measure spaces: this space measures a design or rating speed, not an observed intensity."@en .
+    skos:note "Canonical unit metre per second (icm-voc:MPerSec), commonly reported in miles per hour (icm-voc:MilePerHour) for design wind speed. Distinct from the peril-specific wind measure spaces: this space measures a design or rating speed, not an observed intensity."@en .
 aeo-voc:AreaShare a qnt:DerivedValueSpace ;
     qnt:spaceKey "area-share" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ; qnt:spaceHash "area-share-v1" ;
     qnt:numeratorSpace aeo-voc:Area ; qnt:denominatorSpace aeo-voc:Area ;
@@ -2299,11 +2291,11 @@ aeo-voc:ConstructionClassScheme a voc:ConceptScheme ;
 aeo-voc:ConstructionClass a skos:Concept ; skos:inScheme aeo-voc:AttributeTypeScheme , aeo-voc:Construction ;
     aeo:valueForm aeo-voc:ConceptForm ; aeo:attributeFamily aeo-voc:Construction ; aeo:valueContract aeo-voc:ConstructionClassContract ;
     skos:prefLabel "Construction class"@en ; skos:definition "The primary construction material and system of a building."@en ;
-    skos:note "Corresponds to the OED location field ConstructionCode. No bound reference scheme (market): a deployment binds the US ISO construction classes 1 to 6, or another market's own code list, in AIR-4.6."@en .
+    skos:note "Corresponds to the OED location field ConstructionCode. No bound reference scheme (market): a deployment binds the US ISO construction classes 1 to 6, or another market's own code list."@en .
 aeo-voc:ConstructionClassContract a voc:SchemeContract ;
     fnd:hasIdentity aeo-voc:ConstructionClassContract-identity ; fnd:hasGovernanceState fnd:Active ;
     skos:prefLabel "Construction class contract"@en ;
-    skos:note "No reference scheme: a deployment binds a market's own construction class code list (for example the US ISO construction classes 1 to 6) in AIR-4.6."@en ;
+    skos:note "No reference scheme: a deployment binds a market's own construction class code list (for example the US ISO construction classes 1 to 6)."@en ;
     voc:constrainsProperty aeo:conceptValue .
 
 aeo-voc:YearBuilt a skos:Concept ; skos:inScheme aeo-voc:AttributeTypeScheme , aeo-voc:Construction ;
@@ -2571,9 +2563,9 @@ aeo-voc:SoftStorey a skos:Concept ; skos:inScheme aeo-voc:AttributeTypeScheme , 
 aeo-voc:OccupancyClass a skos:Concept ; skos:inScheme aeo-voc:AttributeTypeScheme , aeo-voc:Occupancy ;
     aeo:valueForm aeo-voc:ConceptForm ; aeo:attributeFamily aeo-voc:Occupancy ; aeo:valueContract aeo-voc:OccupancyClassContract ;
     skos:prefLabel "Occupancy class"@en ; skos:definition "The primary use of a building or location."@en ;
-    skos:note "Corresponds to the OED location field OccupancyCode. No bound reference scheme (market): a deployment binds a market's own occupancy code list (for example ATC-13) in AIR-4.6."@en .
+    skos:note "Corresponds to the OED location field OccupancyCode. No bound reference scheme (market): a deployment binds a market's own occupancy code list (for example ATC-13)."@en .
 aeo-voc:OccupancyClassContract a voc:SchemeContract ; fnd:hasIdentity aeo-voc:OccupancyClassContract-identity ; fnd:hasGovernanceState fnd:Active ;
-    skos:prefLabel "Occupancy class contract"@en ; skos:note "No reference scheme: a deployment binds a market's own occupancy code list (for example ATC-13) in AIR-4.6."@en ;
+    skos:prefLabel "Occupancy class contract"@en ; skos:note "No reference scheme: a deployment binds a market's own occupancy code list (for example ATC-13)."@en ;
     voc:constrainsProperty aeo:conceptValue .
 
 aeo-voc:VacantShare a skos:Concept ; skos:inScheme aeo-voc:AttributeTypeScheme , aeo-voc:Occupancy ;
@@ -2710,9 +2702,9 @@ aeo-voc:SpecialSuppression a skos:Concept ; skos:inScheme aeo-voc:AttributeTypeS
 aeo-voc:PublicProtectionClass a skos:Concept ; skos:inScheme aeo-voc:AttributeTypeScheme , aeo-voc:Protection ;
     aeo:valueForm aeo-voc:ConceptForm ; aeo:attributeFamily aeo-voc:Protection ; aeo:valueContract aeo-voc:PublicProtectionClassContract ;
     skos:prefLabel "Public protection class"@en ; skos:definition "The public fire protection grading of the location's community."@en ;
-    skos:note "No bound reference scheme (market): a deployment binds the US public protection classification, 1 to 10, in AIR-4.6."@en .
+    skos:note "No bound reference scheme (market): a deployment binds the US public protection classification, 1 to 10."@en .
 aeo-voc:PublicProtectionClassContract a voc:SchemeContract ; fnd:hasIdentity aeo-voc:PublicProtectionClassContract-identity ; fnd:hasGovernanceState fnd:Active ;
-    skos:prefLabel "Public protection class contract"@en ; skos:note "No reference scheme: a deployment binds the US public protection classification 1 to 10 in AIR-4.6."@en ;
+    skos:prefLabel "Public protection class contract"@en ; skos:note "No reference scheme: a deployment binds the US public protection classification 1 to 10."@en ;
     voc:constrainsProperty aeo:conceptValue .
 
 aeo-voc:FireServiceResponseTime a skos:Concept ; skos:inScheme aeo-voc:AttributeTypeScheme , aeo-voc:Protection ;
@@ -2946,7 +2938,7 @@ aeo-voc:EntityStatusContract a voc:SchemeContract ; fnd:hasIdentity aeo-voc:Enti
 aeo-voc:EntityStatus a skos:Concept ; skos:inScheme aeo-voc:AttributeTypeScheme , aeo-voc:Corporate ;
     aeo:valueForm aeo-voc:ConceptForm ; aeo:attributeFamily aeo-voc:Corporate ; aeo:valueContract aeo-voc:EntityStatusContract ;
     skos:prefLabel "Entity status"@en ; skos:definition "A legal entity's current trading status."@en ;
-    skos:note "Changes over time, so it is an attribute of the entity's assessment (AIR-4.1 review R2), not asserted directly on aeo:LegalEntity."@en .
+    skos:note "Changes over time, so it is an attribute of the entity's assessment, not asserted directly on aeo:LegalEntity."@en .
 
 aeo-voc:OperatingTerritory a skos:Concept ; skos:inScheme aeo-voc:AttributeTypeScheme , aeo-voc:Corporate ;
     aeo:valueForm aeo-voc:ConceptForm ; aeo:attributeFamily aeo-voc:Corporate ; aeo:valueContract cls-voc:TerritoryContract ;
@@ -3098,7 +3090,7 @@ aeo-voc:ContinuityPlanLastTested a skos:Concept ; skos:inScheme aeo-voc:Attribut
 aeo-voc:RecoveryTimeObjective a skos:Concept ; skos:inScheme aeo-voc:AttributeTypeScheme , aeo-voc:BusinessContinuity ;
     aeo:valueForm aeo-voc:QuantityForm ; aeo:attributeFamily aeo-voc:BusinessContinuity ; aeo:valueSpace aeo-voc:Duration ;
     skos:prefLabel "Recovery time objective"@en ; skos:definition "The targeted time to restore a process or system after a disruption."@en ;
-    skos:note "Follows ISO 22301. An entity's own objective, distinct from AIR-4.3's derived maximum foreseeable period of interruption."@en .
+    skos:note "Follows ISO 22301. An entity's own objective, distinct from the derived maximum foreseeable period of interruption."@en .
 aeo-voc:RecoveryPointObjective a skos:Concept ; skos:inScheme aeo-voc:AttributeTypeScheme , aeo-voc:BusinessContinuity ;
     aeo:valueForm aeo-voc:QuantityForm ; aeo:attributeFamily aeo-voc:BusinessContinuity ; aeo:valueSpace aeo-voc:Duration ;
     skos:prefLabel "Recovery point objective"@en ; skos:definition "The maximum tolerable period of data loss, measured back from the point of disruption."@en ;
@@ -3106,7 +3098,7 @@ aeo-voc:RecoveryPointObjective a skos:Concept ; skos:inScheme aeo-voc:AttributeT
 aeo-voc:MaximumTolerablePeriodOfDisruption a skos:Concept ; skos:inScheme aeo-voc:AttributeTypeScheme , aeo-voc:BusinessContinuity ;
     aeo:valueForm aeo-voc:QuantityForm ; aeo:attributeFamily aeo-voc:BusinessContinuity ; aeo:valueSpace aeo-voc:Duration ;
     skos:prefLabel "Maximum tolerable period of disruption"@en ; skos:definition "The entity's own stated limit on how long a disruption can last before unacceptable harm follows."@en ;
-    skos:note "Follows ISO 22301. An entity's own stated limit, distinct from AIR-4.3's derived maximum foreseeable period of interruption."@en .
+    skos:note "Follows ISO 22301. An entity's own stated limit, distinct from the derived maximum foreseeable period of interruption."@en .
 
 #################################################################
 #    Attribute types: Environmental (profile-only)
@@ -3307,7 +3299,7 @@ aeo-voc:SupplierConcentration a skos:Concept ; skos:inScheme aeo-voc:AttributeTy
     skos:note "Uses classification's own territory contract (cls-voc:TerritoryContract)."@en .
 
 #################################################################
-#    Links from perils to exposure (sketch §5.7). Written here, as
+#    Links from perils to exposure. Written here, as
 #    triples on peril concepts from prl-voc:, because the link is
 #    read by this module's own shapes. A link on a concept also
 #    holds for the concepts below it (read through skos:broader*),
@@ -3362,10 +3354,10 @@ prl-voc:C.MAL prl:relevantAttribute aeo-voc:MfaCoverage , aeo-voc:EndpointDetect
 
 # ==== END README SECTION zones-attributes-assessments ====
 
-# ==== BEGIN README SECTION dependencies-metrics-units (AIR-4.3) ====
+# ==== BEGIN README SECTION dependencies-metrics-units ====
 
 #################################################################
-#    Value spaces (AIR-4.3). OutputShare is a proportion over a
+#    Value spaces. OutputShare is a proportion over a
 #    production space named twice (ADR-A93), so a share of one
 #    dependent's output is never summed with a share of another's.
 #################################################################
@@ -3385,7 +3377,7 @@ aeo-voc:ExceedanceProbabilitySpace a qnt:ValueSpace ;
     skos:note "Dimensionless, an annual probability from 0 to 1. The reciprocal of a return period in years."@en .
 
 #################################################################
-#    Reference schemes (AIR-4.3), each the unscoped fallback
+#    Reference schemes, each the unscoped fallback
 #    (ADR-A99 decision 1).
 #################################################################
 
@@ -3426,7 +3418,7 @@ aeo-voc:ModelOptionScheme a voc:ConceptScheme ;
     skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
 
 #################################################################
-#    Reference bindings (AIR-4.3). The schedule group and scenario
+#    Reference bindings. The schedule group and scenario
 #    contracts have no reference scheme: a deployment binds one per
 #    insured, drafter or regulator (ADR-A99).
 #################################################################
@@ -3609,10 +3601,10 @@ aeo-voc:ModelOptionScheme skos:hasTopConcept aeo-voc:SecondaryUncertainty , aeo-
 
 # ==== END README SECTION dependencies-metrics-units ====
 
-# ==== BEGIN README SECTION losses-requirements-cover (AIR-4.4) ====
+# ==== BEGIN README SECTION losses-requirements-cover ====
 
 #################################################################
-#    Value spaces (AIR-4.4). MoneyShare is a proportion of money
+#    Value spaces. MoneyShare is a proportion of money
 #    over the same money space twice (ADR-A93): a capacity share of
 #    a limit, or a bound relative to a financial metric.
 #################################################################
@@ -3623,7 +3615,7 @@ aeo-voc:MoneyShare a qnt:DerivedValueSpace ;
     skos:note "A proportion space (ADR-A93): an amount of money as a share of another amount of money, for example a participant's share of a limit or a net retained loss as a share of equity. Dimensionless, from 0 upwards."@en .
 
 #################################################################
-#    Reference schemes (AIR-4.4), each the unscoped fallback
+#    Reference schemes, each the unscoped fallback
 #    (ADR-A99 decision 1).
 #################################################################
 
@@ -3688,7 +3680,7 @@ aeo-voc:FinancialMetricKindScheme a voc:ConceptScheme ;
     skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
 
 #################################################################
-#    Reference bindings (AIR-4.4)
+#    Reference bindings
 #################################################################
 
 aeo-voc:LossExperienceSourceContract a voc:SchemeContract ;
@@ -3988,7 +3980,7 @@ aeo-voc:FinancialMetricKindScheme skos:hasTopConcept aeo-voc:RevenueMetric , aeo
 
 # ==== END README SECTION losses-requirements-cover ====
 
-# ==== BEGIN README SECTION liability (AIR-4.5) ====
+# ==== BEGIN README SECTION liability ====
 # ==== END README SECTION liability ====
 ```
 
@@ -4001,55 +3993,55 @@ the shape itself since `sh:sparql`'s value is a constraint, not a nested propert
 
 | Shape | Rule |
 |---|---|
-| `aeo:ExposureSetShape` | exactly one identity, one reporting unit, one temporal scope, one governance state. Every identity named by `aeo:locatedAt` of a listed asset, and by `aeo:valueOf` of a listed valuation, resolves to exactly one listed location or asset (AIR-66) |
+| `aeo:ExposureSetShape` | exactly one identity, one reporting unit, one temporal scope, one governance state. Every identity named by `aeo:locatedAt` of a listed asset, and by `aeo:valueOf` of a listed valuation, resolves to exactly one listed location or asset |
 | `aeo:LocationShape` | exactly one identity, at least one territory. A location with a geometry has a geo precision |
-| `aeo:AssetShape` | exactly one identity and one asset class. Not both `aeo:locatedAt` and `aeo:presence`. `aeo:locatedAt` names an `aeo:LocationIdentity` (AIR-66) |
+| `aeo:AssetShape` | exactly one identity and one asset class. Not both `aeo:locatedAt` and `aeo:presence`. `aeo:locatedAt` names an `aeo:LocationIdentity` |
 | `aeo:InterestShape` | exactly one holder, one asset and one kind |
-| `aeo:ValuationShape` | exactly one `aeo:valueOf`, an `aeo:AssetIdentity` or `aeo:LocationIdentity` (AIR-66), one value type and one basis. Either one amount, or one rate and one horizon, never both and never neither |
+| `aeo:ValuationShape` | exactly one `aeo:valueOf`, an `aeo:AssetIdentity` or `aeo:LocationIdentity`, one value type and one basis. Either one amount, or one rate and one horizon, never both and never neither |
 | `aeo:ControlRelationShape` | exactly one controller and one controlled, and no cycle through `aeo:controller` / `aeo:controlled` |
 | `aeo:LegalEntityShape` | at most one domicile and one legal form |
-| `aeo:DocumentationShape` | every concept in an `aeo-voc:` scheme has at least one `skos:note` in `@en` (AIR-2.0 documentation rule) |
-| `aeo:ZoneDesignationShape` (AIR-4.2) | exactly one zone, through one of the six hazard-kind sub-properties, exactly one source, a temporal scope |
-| `aeo:ZoneInTerritoryShape` (AIR-4.2) | a zone designation's zone is in the scheme currently bound to its contract, where a deployment has bound one |
-| `aeo:SpatialJoinShape` (AIR-4.2) | a designation whose source is `aeo-voc:SpatialJoin` is a `fnd:DerivedArtefact` |
-| `aeo:PoolParticipationShape` (AIR-4.2) | exactly one pool, at least one peril scope |
-| `aeo:AssessmentShape` (AIR-4.2) | at least one subject, exactly one kind, at least one attribute value, a temporal scope |
-| `aeo:AttributeValueShape` (AIR-4.2) | exactly one value, in the form its attribute type declares. A quantity is on the type's space, a concept is in the scheme bound to the type's contract (where one is bound), a literal has the type's datatype |
-| `aeo:SingleValuedTypesShape` (AIR-4.2) | at most one value per attribute type per assessment, unless the type is `aeo:multiValued` |
-| `aeo:ScreeningShape` (AIR-4.2) | `aeo-voc:SanctionsScreeningOutcome` only in an assessment of kind `aeo-voc:ScreeningRun` that is a `fnd:DerivedArtefact` |
-| `aeo:PerilCompletenessShape` (AIR-4.2, warning) | a location exposed to a peril should have a value for each attribute type that peril, or a broader cause concept, names relevant, read per location not per asset |
-| `aeo:LossExperienceShape` (AIR-4.4) | exactly one entity, source and temporal scope |
-| `aeo:LossRecordShape` (AIR-4.4) | exactly one date and status, at most one class of business |
-| `aeo:LossRecordCurrencyShape` (AIR-4.4) | every money amount in a currency unit, all the same |
-| `aeo:LossInPeriodShape` (AIR-4.4) | a record's date within its experience's temporal scope |
-| `aeo:IncurredShape` (AIR-4.4) | incurred equals paid plus reserved when all three are present |
-| `aeo:LossCauseShape` (AIR-4.4) | exactly one peril and position, at most one agency and one effective agency |
-| `aeo:DefaultedAgencyShape`, `aeo:DefaultedMechanismShape` (AIR-4.4) | an effective value that differs from every recorded value has a defaulted characteristic, and one with a recorded value has none |
-| `aeo:CoverageRequirementShape` (AIR-4.4) | exactly one identity, source and strength, at least one required measure |
-| `aeo:RequirementNoPremiumShape` (AIR-4.4) | no requirement constrains `aeo-voc:Premium` |
-| `aeo:MeasureConstraintShape`, `aeo:MeasureSpaceShape` (AIR-4.4) | exactly one measure and bound. The bound is on the measure's space, or a proportion space over it when relative to a metric |
-| `aeo:RequirementScopeShape` (AIR-4.4) | a scope's conditions are bound to subject class `aeo:ExposureUnit` |
-| `aeo:ExistingCoverShape` (AIR-4.4) | exactly one relation and temporal scope, at most one trigger basis |
-| `aeo:ExistingCoverEvidenceShape` (AIR-4.4, warning) | a cover with neither a reference nor a summary term is reported |
-| `aeo:TermSummaryShape` (AIR-4.4) | exactly one measure and value, on the measure's space |
-| `aeo:CoverHistoryEventShape` (AIR-4.4) | exactly one kind and date |
-| `aeo:FinancialMetricShape`, `aeo:FinancialMetricSpaceShape` (AIR-4.4) | exactly one entity, kind, amount and temporal scope. A headcount is a count and the rest money |
-| `aeo:DependencyShape` (AIR-4.3) | exactly one dependent, provider and dependency kind |
-| `aeo:PerilMetricShape` (AIR-4.3) | at least one peril scope, exactly one subject, kind, perspective and value |
-| `aeo:ExceedanceMetricShape` (AIR-4.3) | an exceedance or tail value-at-risk kind states exactly one of a return period and an exceedance probability |
-| `aeo:HazardScoreShape` (AIR-4.3) | a hazard score states one score space and its value is on it |
-| `aeo:ScenarioMetricShape` (AIR-4.3) | a scenario-loss metric names exactly one scenario |
-| `aeo:ExposureUnitShape` (AIR-4.3) | exactly one location, asset class and peril, at most one value |
-| `aeo:DependencyCycleShape` (AIR-4.3, warning) | a cycle of dependencies is reported |
-| `aeo:MetricComparabilityShape` (AIR-4.3) | metrics compared together have equal peril scope, region scope and perspective |
-| `aeo:UnitDerivationShape` (AIR-4.3, warning) | an exposure unit with no derivation run that produced it is reported |
-| `aeo:GeoPrecisionForPerilShape` (AIR-4.2, warning) | a location exposed to a peril with a minimum geographic precision should be known at least that precisely |
-| `shapes/profiles/construction-protection.ttl` (AIR-4.2) | an assessment of this profile family assesses a location or an asset, and has `ConstructionClass`, `OccupancyClass`, `YearBuilt` and `Storeys` (violation). A type outside the Construction, Occupancy, Protection or External exposure families is reported (warning) |
-| `shapes/profiles/cyber-posture.ttl` (AIR-4.2) | an assessment of this profile family assesses a legal entity, and has `MfaCoverage`, `BackupStrategy` and `EndpointDetectionAndResponse` (violation). A type outside the Cyber posture family is reported (warning) |
+| `aeo:DocumentationShape` | every concept in an `aeo-voc:` scheme has at least one `skos:note` in `@en` |
+| `aeo:ZoneDesignationShape` | exactly one zone, through one of the six hazard-kind sub-properties, exactly one source, a temporal scope |
+| `aeo:ZoneInTerritoryShape` | a zone designation's zone is in the scheme currently bound to its contract, where a deployment has bound one |
+| `aeo:SpatialJoinShape` | a designation whose source is `aeo-voc:SpatialJoin` is a `fnd:DerivedArtefact` |
+| `aeo:PoolParticipationShape` | exactly one pool, at least one peril scope |
+| `aeo:AssessmentShape` | at least one subject, exactly one kind, at least one attribute value, a temporal scope |
+| `aeo:AttributeValueShape` | exactly one value, in the form its attribute type declares. A quantity is on the type's space, a concept is in the scheme bound to the type's contract (where one is bound), a literal has the type's datatype |
+| `aeo:SingleValuedTypesShape` | at most one value per attribute type per assessment, unless the type is `aeo:multiValued` |
+| `aeo:ScreeningShape` | `aeo-voc:SanctionsScreeningOutcome` only in an assessment of kind `aeo-voc:ScreeningRun` that is a `fnd:DerivedArtefact` |
+| `aeo:PerilCompletenessShape` (warning) | a location exposed to a peril should have a value for each attribute type that peril, or a broader cause concept, names relevant, read per location not per asset |
+| `aeo:LossExperienceShape` | exactly one entity, source and temporal scope |
+| `aeo:LossRecordShape` | exactly one date and status, at most one class of business |
+| `aeo:LossRecordCurrencyShape` | every money amount in a currency unit, all the same |
+| `aeo:LossInPeriodShape` | a record's date within its experience's temporal scope |
+| `aeo:IncurredShape` | incurred equals paid plus reserved when all three are present |
+| `aeo:LossCauseShape` | exactly one peril and position, at most one agency and one effective agency |
+| `aeo:DefaultedAgencyShape`, `aeo:DefaultedMechanismShape` | an effective value that differs from every recorded value has a defaulted characteristic, and one with a recorded value has none |
+| `aeo:CoverageRequirementShape` | exactly one identity, source and strength, at least one required measure |
+| `aeo:RequirementNoPremiumShape` | no requirement constrains `aeo-voc:Premium` |
+| `aeo:MeasureConstraintShape`, `aeo:MeasureSpaceShape` | exactly one measure and bound. The bound is on the measure's space, or a proportion space over it when relative to a metric |
+| `aeo:RequirementScopeShape` | a scope's conditions are bound to subject class `aeo:ExposureUnit` |
+| `aeo:ExistingCoverShape` | exactly one relation and temporal scope, at most one trigger basis |
+| `aeo:ExistingCoverEvidenceShape` (warning) | a cover with neither a reference nor a summary term is reported |
+| `aeo:TermSummaryShape` | exactly one measure and value, on the measure's space |
+| `aeo:CoverHistoryEventShape` | exactly one kind and date |
+| `aeo:FinancialMetricShape`, `aeo:FinancialMetricSpaceShape` | exactly one entity, kind, amount and temporal scope. A headcount is a count and the rest money |
+| `aeo:DependencyShape` | exactly one dependent, provider and dependency kind |
+| `aeo:PerilMetricShape` | at least one peril scope, exactly one subject, kind, perspective and value |
+| `aeo:ExceedanceMetricShape` | an exceedance or tail value-at-risk kind states exactly one of a return period and an exceedance probability |
+| `aeo:HazardScoreShape` | a hazard score states one score space and its value is on it |
+| `aeo:ScenarioMetricShape` | a scenario-loss metric names exactly one scenario |
+| `aeo:ExposureUnitShape` | exactly one location, asset class and peril, at most one value |
+| `aeo:DependencyCycleShape` (warning) | a cycle of dependencies is reported |
+| `aeo:MetricComparabilityShape` | metrics compared together have equal peril scope, region scope and perspective |
+| `aeo:UnitDerivationShape` (warning) | an exposure unit with no derivation run that produced it is reported |
+| `aeo:GeoPrecisionForPerilShape` (warning) | a location exposed to a peril with a minimum geographic precision should be known at least that precisely |
+| `shapes/profiles/construction-protection.ttl` | an assessment of this profile family assesses a location or an asset, and has `ConstructionClass`, `OccupancyClass`, `YearBuilt` and `Storeys` (violation). A type outside the Construction, Occupancy, Protection or External exposure families is reported (warning) |
+| `shapes/profiles/cyber-posture.ttl` | an assessment of this profile family assesses a legal entity, and has `MfaCoverage`, `BackupStrategy` and `EndpointDetectionAndResponse` (violation). A type outside the Cyber posture family is reported (warning) |
 
 ```turtle-shapes
 # Structural (per-node) shapes for the asset exposure ontology (ADR-A99-style
-# well-formedness, applied-insurance-reference AIR-4.1). Cross-node and
+# well-formedness). Cross-node and
 # cycle shapes are in constraints.ttl. Every rule is SHACL-SPARQL (sh:sparql,
 # never sh:property), so pySHACL's sh:sourceShape always names the shape
 # itself rather than an anonymous nested property shape, validated with
@@ -4266,7 +4258,7 @@ aeo:LegalEntityShape a sh:NodeShape ;
 aeo:DocumentationShape a sh:NodeShape ;
     sh:targetClass skos:Concept ;
     sh:sparql [
-        sh:message "A concept in a reference exposure scheme needs at least one skos:note in @en, naming the published standards, scales or sources it follows (AIR-2.0 documentation rule)." ;
+        sh:message "A concept in a reference exposure scheme needs at least one skos:note in @en, naming the published standards, scales or sources it follows." ;
         sh:select """
             PREFIX voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#>
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
@@ -4281,7 +4273,7 @@ aeo:DocumentationShape a sh:NodeShape ;
         """ ] .
 
 #################################################################
-#    AIR-4.2: zones, pool participation, assessments, attributes
+#    Zones, pool participation, assessments, attributes
 #################################################################
 
 aeo:ZoneDesignationShape a sh:NodeShape ;
@@ -4310,7 +4302,7 @@ aeo:ZoneDesignationShape a sh:NodeShape ;
 aeo:ZoneInTerritoryShape a sh:NodeShape ;
     sh:targetClass aeo:ZoneDesignation ;
     sh:sparql [
-        sh:message "A zone designation's zone must be in the scheme currently bound to its contract, where a deployment has bound one (AIR-4.6 binds a scheme per market; a zone kind with no binding yet is not checked here)." ;
+        sh:message "A zone designation's zone must be in the scheme currently bound to its contract, where a deployment has bound one (a deployment binds a scheme per market, and a zone kind with no binding yet is not checked here)." ;
         sh:select """
             PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
             PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#>
@@ -4421,7 +4413,7 @@ aeo:AttributeValueShape a sh:NodeShape ;
             }
         """ ] ;
     sh:sparql [
-        sh:message "A concept-valued attribute value's concept must be in the scheme currently bound to its attribute type's contract, where one is bound (an unbound, market-only contract is not checked here, see AIR-4.6)." ;
+        sh:message "A concept-valued attribute value's concept must be in the scheme currently bound to its attribute type's contract, where one is bound (an unbound, market-only contract is not checked here)." ;
         sh:select """
             PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
             PREFIX voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#>
@@ -4478,7 +4470,7 @@ aeo:ScreeningShape a sh:NodeShape ;
         """ ] .
 
 #################################################################
-#    AIR-4.3: dependencies, peril metrics, exposure units
+#    Dependencies, peril metrics, exposure units
 #################################################################
 
 aeo:DependencyShape a sh:NodeShape ;
@@ -4597,7 +4589,7 @@ aeo:ExposureUnitShape a sh:NodeShape ;
         """ ] .
 
 #################################################################
-#    AIR-4.4: losses, requirements, cover, financial metrics
+#    Losses, requirements, cover, financial metrics
 #################################################################
 
 aeo:LossExperienceShape a sh:NodeShape ;
@@ -4870,8 +4862,7 @@ aeo:FinancialMetricSpaceShape a sh:NodeShape ;
 ```
 
 ```turtle-shapes
-# Cross-node shapes for the asset exposure ontology: control cycles
-# (applied-insurance-reference AIR-4.1). Per-node shapes are in
+# Cross-node shapes for the asset exposure ontology: control cycles. Per-node shapes are in
 # structural.ttl.
 
 @prefix sh:  <http://www.w3.org/ns/shacl#> .
@@ -4890,7 +4881,7 @@ aeo:ControlRelationShape a sh:NodeShape ;
         """ ] .
 
 #################################################################
-#    AIR-4.2: peril-attribute completeness and geo precision,
+#    Peril-attribute completeness and geo precision,
 #    read per location, not per asset (a per-asset rule would
 #    warn about a roof on stock, since attribute types do not say
 #    which asset classes they apply to).
@@ -4947,7 +4938,7 @@ aeo:GeoPrecisionForPerilShape a sh:NodeShape ;
         """ ] .
 
 #################################################################
-#    AIR-4.3: dependency cycles, comparability, unit derivation
+#    Dependency cycles, comparability, unit derivation
 #################################################################
 
 aeo:DependencyCycleShape a sh:NodeShape ;
@@ -5003,7 +4994,7 @@ aeo:UnitDerivationShape a sh:NodeShape ;
         """ ] .
 
 #################################################################
-#    AIR-4.4: loss period, defaulted characteristics, scope
+#    Loss period, defaulted characteristics, scope
 #################################################################
 
 aeo:LossInPeriodShape a sh:NodeShape ;
@@ -5075,12 +5066,10 @@ aeo:RequirementScopeShape a sh:NodeShape ;
 
 A profile family's shape lives in its own file under `shapes/profiles/`, since each family grows and
 is extracted on its own cadence, independent of the structural and constraint shapes above.
-`shapes/profiles/construction-protection.ttl` and `shapes/profiles/cyber-posture.ttl` are the two
-AIR-4.2 adds (epic Q13 leaves the remaining five profile families' own shapes for later).
+`shapes/profiles/construction-protection.ttl` and `shapes/profiles/cyber-posture.ttl` are the two profile shapes so far. The remaining five profile families have no shape of their own yet.
 
 ```turtle-shapes
-# Profile shape: construction and protection (applied-insurance-reference
-# AIR-4.2, shapes/profiles/construction-protection.ttl). An assessment of
+# Profile shape: construction and protection (shapes/profiles/construction-protection.ttl). An assessment of
 # this profile family is expected to carry the four core attribute types
 # below, and only types from the four families a construction and
 # protection survey is about.
@@ -5139,8 +5128,7 @@ aeo:ConstructionProtectionProfileOutsideFamilyShape a sh:NodeShape ;
 ```
 
 ```turtle-shapes
-# Profile shape: cyber posture (applied-insurance-reference AIR-4.2,
-# shapes/profiles/cyber-posture.ttl). An assessment of this profile family
+# Profile shape: cyber posture (shapes/profiles/cyber-posture.ttl). An assessment of this profile family
 # is expected to carry the three core attribute types below, assess a
 # legal entity, and carry only types from the Cyber posture family.
 
@@ -5197,7 +5185,7 @@ aeo:CyberPostureProfileOutsideFamilyShape a sh:NodeShape ;
 ## 7. Documentation rule
 
 Every concept this module's vocabulary publishes carries a `skos:note` per the
-[AIR-2.0 documentation rule](../peril/README.md#7-documentation-rule-air-20): which published standards,
+[documentation rule](../peril/README.md#7-documentation-rule-air-20): which published standards,
 scales or sources it follows, how it follows them, and where it departs from them.
 
 ## 8. Sources consulted
@@ -5230,19 +5218,19 @@ domicile and a legal form. [`tools/test_exposure_ontology.py`](../../../../tools
 validates it, plus one negative case per shape, with pySHACL (`advanced=True`, `inference="none"`),
 modelled on `tools/test_peril_vocabulary.py`.
 
-[`examples/versions.ttl`](examples/versions.ttl) (AIR-4.2a, TD-49) shows two versions of one
+[`examples/versions.ttl`](examples/versions.ttl) shows two versions of one
 schedule sharing an unchanged location, building and valuation by identity, with one location
 changed between them. It passes every shape, and is the case that fails if membership is made
 inverse functional again.
 
-[`examples/dependencies.ttl`](examples/dependencies.ttl) (AIR-4.3) shows a dependency chain with a
+[`examples/dependencies.ttl`](examples/dependencies.ttl) shows a dependency chain with a
 single-source supplier, three peril metrics (an average annual loss, an occurrence exceedance loss
 and a hazard score) and a comparison of two comparable metrics. [`examples/units.ttl`](examples/units.ttl)
-is milestone M3's first half: four locations, two in a special flood hazard area, the exposure
+holds four locations, two in a special flood hazard area, the exposure
 units `tools/exposure_derivations.py` computes for flood and wind, and an Eligibility admission
 profile over them.
 
-[`examples/losses.ttl`](examples/losses.ttl) (AIR-4.4) holds a five-year loss experience stated
+[`examples/losses.ttl`](examples/losses.ttl) holds a five-year loss experience stated
 complete with two records (a flood loss with a two-link cause chain and a fire loss under a
 loss event with a GLIDE key), a second experience with no records, a lender's flood requirement and an
 appetite requirement relative to equity, an expiring programme with summary terms, a non-renewal and
@@ -5252,11 +5240,13 @@ revenue by territory, with the output of `effective_characteristics` for its cau
 
 | Version | Change |
 |---|---|
-| `0.1.0` | AIR-4.1: exposure set, location, legal entity, control relations, asset, interest, valuation. Seven scheme contracts, nine programme roles. Literate from the start |
-| `0.1.0` (AIR-4.2a) | Exposure set membership, zone designations, pool participations, assessments and attribute values are no longer inverse functional, and `aeo:MembershipShape` is withdrawn (TD-49). Unchanged members are shared across exposure set versions by identity, as this README always stated. Corrects `0.1.0` before it is released, so no version bump. Example `versions.ttl` added |
-| `0.1.0` (AIR-4.3) | Dependencies, peril metrics, metric comparisons and exposure units, with the dependency kind, substitutability, metric kind, perspective, calculation method and model option schemes, the schedule group and scenario contracts, and the output share, return period and exceedance probability spaces. `aeo:perilScope` loses its domain (AIR-4.2 gave it `aeo:PoolParticipation`, which a metric's use would have contradicted). Nine shapes |
-| `0.3.0` (AIR-66, breaking, spec and vocab) | `aeo:locatedAt` and `aeo:valueOf` name a location's or asset's persistent identity (`aeo:LocationIdentity`, `aeo:AssetIdentity`) instead of a version, fixed by the exposure set version's membership, so one location changing writes one location version and no asset or valuation version. Their ranges change, `aeo:AssetShape`, `aeo:ValuationShape` and `aeo:ExposureSetShape` check them, and `aeo:PerilCompletenessShape` joins through the identity. `examples/versions.ttl` no longer edits version 1 on succession. The module's version is not bumped on this branch (TD-64) |
-| `0.1.0` (AIR-4.4) | Loss experiences, loss records, cause chains with recorded and effective characteristics and defaulted characteristics, coverage requirements with measure constraints, existing cover with summary terms, cover history events and financial metrics, with ten reference schemes and contracts, the money share space, and nineteen shapes. Imports Eligibility 0.12.0 and `insurance/common` 0.6.0. Financial metric kinds for revenue, gross profit and headcount are `aeo-voc:RevenueMetric`, `aeo-voc:GrossProfitMetric` and `aeo-voc:HeadcountMetric`, since `Revenue`, `GrossProfit` and `Headcount` name a value type and an attribute type |
+| next version | re-pinned to the substrate's next release, in which Ledger joins ([ADR-A131](../../../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). Annotation and comment text no longer names delivery identifiers, and no axiom or shape changes |
+| `0.1.0` | Exposure set, location, legal entity, control relations, asset, interest, valuation. Seven scheme contracts, nine programme roles. Literate from the start |
+| `0.1.0` | Exposure set membership, zone designations, pool participations, assessments and attribute values are no longer inverse functional, and `aeo:MembershipShape` is withdrawn. Unchanged members are shared across exposure set versions by identity, as this README always stated. Corrects `0.1.0` before it is released, so no version bump. Example `versions.ttl` added |
+| `0.1.0` | Dependencies, peril metrics, metric comparisons and exposure units, with the dependency kind, substitutability, metric kind, perspective, calculation method and model option schemes, the schedule group and scenario contracts, and the output share, return period and exceedance probability spaces. `aeo:perilScope` loses its domain (it had `aeo:PoolParticipation`, which a metric's use would have contradicted). Nine shapes |
+| `0.3.0` (breaking, spec and vocab) | `aeo:locatedAt` and `aeo:valueOf` name a location's or asset's persistent identity (`aeo:LocationIdentity`, `aeo:AssetIdentity`) instead of a version, fixed by the exposure set version's membership, so one location changing writes one location version and no asset or valuation version. Their ranges change, `aeo:AssetShape`, `aeo:ValuationShape` and `aeo:ExposureSetShape` check them, and `aeo:PerilCompletenessShape` joins through the identity. `examples/versions.ttl` no longer edits version 1 on succession. |
+| `0.1.0` | Loss experiences, loss records, cause chains with recorded and effective characteristics and defaulted characteristics, coverage requirements with measure constraints, existing cover with summary terms, cover history events and financial metrics, with ten reference schemes and contracts, the money share space, and nineteen shapes. Imports Eligibility 0.12.0 and `insurance/common` 0.6.0. Financial metric kinds for revenue, gross profit and headcount are `aeo-voc:RevenueMetric`, `aeo-voc:GrossProfitMetric` and `aeo-voc:HeadcountMetric`, since `Revenue`, `GrossProfit` and `Headcount` name a value type and an attribute type |
 | shapes `0.1.1` | `aeo:DocumentationShape` reads the same concepts with its scheme check as a `FILTER EXISTS` and its note check as a `FILTER NOT EXISTS`, instead of joining the scheme's type and counting notes. About six times faster on the reference fixture, with the same targets, focus nodes and message |
-| shapes `0.2.0` | AIR-66's shapes: an asset's `aeo:locatedAt` names an `aeo:LocationIdentity`, a valuation's `aeo:valueOf` an identity, and each identity an asset or a valuation the set lists names resolves, through `fnd:hasIdentity`, to exactly one location or asset the set lists (may invalidate) |
-| `0.3.0` | both documents re-pinned to the substrate release 0.19.0 with AIR-66 above, and to `insurance/common` 0.8.0, `insurance/peril-vocab` 0.7.0 and `applied/classification-vocab` 0.4.0 |
+| shapes `0.2.0` | Identity shapes: an asset's `aeo:locatedAt` names an `aeo:LocationIdentity`, a valuation's `aeo:valueOf` an identity, and each identity an asset or a valuation the set lists names resolves, through `fnd:hasIdentity`, to exactly one location or asset the set lists (may invalidate) |
+| `0.3.0` | both documents re-pinned to the substrate release 0.19.0 with the identity change above, and to `insurance/common` 0.8.0, `insurance/peril-vocab` 0.7.0 and `applied/classification-vocab` 0.4.0 |
+| `0.3.1` (spec and vocab) | the annotations on the membership, designation, participation, assessment and loss properties no longer cite a working record. The vocabulary re-pinned to the specification `0.3.1`. No change to any axiom or shape |

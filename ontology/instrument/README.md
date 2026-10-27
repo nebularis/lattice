@@ -6242,6 +6242,7 @@ withdrawal counts is the facility's, since withdrawal has no default.
 
 Breaking versions at major version zero ([ADR-A113](../../docs/architecture/decisions/ADR-A113-breaking-changes-at-major-version-zero.md)):
 
+- Next release. Re-pinned: Ledger joins the substrate's release ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). No other change.
 - 0.19.0. Every document takes the release's number and imports the other layers at it (no effect). No other change to the
   vocabulary. The example `property-endorsement.ttl` gains a new version of the section holding the replaced clause,
   `ex:sec-2-v2`, which the second assembled wording includes, following Wording 0.19.0's shared values.

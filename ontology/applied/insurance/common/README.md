@@ -5,7 +5,7 @@
 Literate specification for `insurance/common`, built by the
 [`applied-insurance-reference`](../../../../docs/developer/plans/applied-insurance-reference.md)
 epic (AIR-1.2). Insurance scheme contracts shared by two or more of the applied insurance
-domain's modules ([ADR-A98](../../../../docs/architecture/decisions/ADR-A98-applied-insurance-domain-layout.md)
+domain's modules ([ADR-A98](../../../../docs/architecture/decisions/ADR-A98-applied-layout-and-insurance-modules.md)
 decision 1, epic D7), and the liability role types of
 [ADR-A102](../../../../docs/architecture/decisions/ADR-A102-liability-direction-from-party-roles.md).
 
@@ -595,6 +595,7 @@ every conversion's factor, and every currency's notation, QUDT match and placeme
 
 | Version | Change |
 |---|---|
+| next version | re-pinned to the substrate's next release, in which Ledger joins ([ADR-A131](../../../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). No content change |
 | `0.1.0` | AIR-1.2: the six shared classification properties, the six scheme contracts, the four liability role types |
 | `0.5.0` | re-pinned by the computable-contract-substrate unit's Foundation, Vocabulary and Party cascades (no content change) |
 | `0.6.0` (spec) | AIR-4.4: `icm:LossEvent` and `icm:classOfBusiness`. The vocabulary adds `icm-voc:ClassOfBusinessContract` and `icm-voc:GlideNumber` and re-pins to the spec's 0.6.0 |

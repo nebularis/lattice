@@ -6,6 +6,7 @@
 **Date:** 2026-09-20
 **Supersedes:** The repository-layout position in `docs/developer/sketches/updated-plan-ammendment.md` AM-05
 **Related:** ADR-A29, repository topology and documentation governance plan
+**Unit:** [`repository-topology-a77`](../../developer/status/repository-topology-a77.md) (status record)
 
 ## Context
 

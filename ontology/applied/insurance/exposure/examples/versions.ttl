@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MPL-2.0
 
-# Positive fixture (applied-insurance-reference AIR-4.2a, TD-49, and AIR-66,
+# Positive fixture (applied-insurance-reference AIR-4.2a and AIR-66,
 # TD-66): two versions of one insured's schedule that share an unchanged
 # location, its building and that building's valuation, and a warehouse
 # that changes address. No owl:Ontology header: not a released document.

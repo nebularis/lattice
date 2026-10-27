@@ -109,7 +109,7 @@ Isabelle statements and verified by exhaustive and bounded test, not proved.
 ## `tools/surface/` — the surface compiler
 
 Compiles surface contracts into generated module packages. Structure follows
-`tools/mork2rml.py`: a `SurfaceGraphAnalyser` that transcribes declarations, a
+`tools/mork/src/mork2rml.py`: a `SurfaceGraphAnalyser` that transcribes declarations, a
 `SurfaceCompiler` that folds a contract and its read set into a symbol
 inventory, and a thin CLI over both.
 

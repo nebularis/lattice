@@ -18,4 +18,4 @@ This is a restatement boundary, not a secrecy rule about the mechanism itself: t
 ## Consequences
 
 - A substrate layer's README may state and prove a law (for example, "meet is commutative, associative, and idempotent for every registered strategy") without reference to any specific deployment's dimension set.
-- An applied layer wanting to publish a generalisable finding follows [ADR-A-C2](ADR-AC2-clean-room-authoring-procedure.md): the generic version is authored first, from the generic premise, independent of the applied result, and only then checked against the applied result for sufficiency.
+- An applied layer wanting to publish a generalisable finding follows [ADR-A-C2](ADR-A-C2-clean-room-authoring-procedure.md): the generic version is authored first, from the generic premise, independent of the applied result, and only then checked against the applied result for sufficiency.

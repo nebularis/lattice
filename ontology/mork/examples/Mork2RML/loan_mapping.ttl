@@ -10,7 +10,7 @@
 @prefix mm:   <http://example.org/mapping#> .
 
 # Run via the compiler in tools: 
-# python3 mork2rml.py loan_mapping_clean.ttl \
+# python3 tools/mork/src/mork2rml.py loan_mapping_clean.ttl \
 #           --base-iri "http://example.org/fin/" \
 #           --rml-base "http://example.org/rml/" \
 #           --source "loan.json" > loan_mapping.rml

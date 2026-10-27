@@ -4798,6 +4798,7 @@ upstream changes (substrate track S1, S2). Neither blocks this module's first re
 
 | Version | Change |
 |---|---|
+| next version | re-pinned to the substrate's next release, in which Ledger joins ([ADR-A131](../../../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). No content change |
 | `0.1.0` | AIR-2.1: the `prl:` properties, kind/part/trigger/overlap/characteristic links, the eight reference schemes, the well-formedness shapes |
 | `0.4.0` | re-pinned by the computable-contract-substrate unit's Foundation and Quantification cascades (no content change). AIR-2.0 (this slice) converts the module to a literate README and adds `prl:DocumentationShape` to `shapes/constraints.ttl`, bumping the shapes `.version` to `0.2.0` only |
 | `0.5.0` | AIR-2.2: imports `insurance/common`, specialises four characteristic properties as its sub-properties, fills the characteristic and companion scheme regions |

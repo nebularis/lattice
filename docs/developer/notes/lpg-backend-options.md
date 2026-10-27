@@ -116,7 +116,7 @@ algorithm that refuses ambiguity rather than picking silently (ADR-A78 decisions
 
 **The SPARQL fragment the operations rely on** (A123 decision 2, the [patterns guide](../../architecture/rdf-sparql-patterns-guide.md), and the generated operations): named graphs in every pattern and never the default graph, `DELETE`/`INSERT`/`WHERE`, `FILTER NOT EXISTS`, `OPTIONAL`, property paths in `WHERE` only (the composite sweep), `BIND` with `IRI`, `CONCAT`, `STRDT`, `ENCODE_FOR_URI`, `NOW()` outside guards, `VALUES`, typed literals (`xsd:long` positions), and `DATATYPE` tests in parameter guards. No blank nodes.
 
-**A pending decision bears on both options.** [PDD-06](../plans/pending-design-decisions.md)
+**A pending decision bears on both options.** [PDD-06](../pending-design-decisions.md)
 proposes a second IR that models SPARQL's semantics between the configuration IR and the text, and
 notes that "a relational backend then needs its own path or IR". An LPG backend is in the same
 position.
@@ -1086,7 +1086,7 @@ distance, judged against the SPARQL guide in `.local/sparql-guide.md` and the sp
   Chapters 25 to 27
 - [docs/architecture/triple-store-discovery.md](../../architecture/triple-store-discovery.md)
 - ADRs [A15](../../architecture/decisions/ADR-A15-realisation-strategy-neutrality.md), [A30](../../architecture/decisions/ADR-A30-shared-semantic-platform-cross-runtime-boundary.md), [A74](../../architecture/decisions/ADR-A74-graph-primary-realm-model.md), [A75](../../architecture/decisions/ADR-A75-three-tier-store-spi.md), [A78](../../architecture/decisions/ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md), [A79](../../architecture/decisions/ADR-A79-persistence-compiler-toolchain.md), [A84](../../architecture/decisions/ADR-A84-standalone-minting-libraries.md), [A122](../../architecture/decisions/ADR-A122-aggregate-ownership.md), [A123](../../architecture/decisions/ADR-A123-typed-operation-ir.md)
-- [docs/developer/plans/pending-design-decisions.md](../plans/pending-design-decisions.md), PDD-06
+- [docs/developer/pending-design-decisions.md](../pending-design-decisions.md), PDD-06
 - [docs/developer/sketches/persistence-client-sdk.md](../sketches/persistence-client-sdk.md)
 - [docs/developer/notes/rdf-engine/lattice-sql.md](rdf-engine/lattice-sql.md)
 - [docs/developer/notes/rdf-engine/distirbuted-queries.md](rdf-engine/distirbuted-queries.md)

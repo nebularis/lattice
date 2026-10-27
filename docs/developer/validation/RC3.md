@@ -34,7 +34,7 @@ register.
 - `AGENTS.md` and `.github/copilot-instructions.md`. The table sits between `BEGIN GENERATED` and `END
   GENERATED` markers. The table's text is unchanged.
 - `tools/lattice_repo_catalogue_exceptions.txt`. The 12 known files, each with a reason.
-- `docs/developer/plans/technical-debt.md`. Row TD-54 names the file and gives its count.
+- `docs/developer/technical-debt.md`. Row TD-54 names the file and gives its count.
 - `docs/architecture/decisions/ADR-A121-repository-catalogue.md`. The addendum of 2026-10-19.
 - `mise.toml`. Three task descriptions.
 - `.claude/skills/lattice-toolchain/SKILL.md` and `docs/developer/developer-guide.md`. Where the table comes

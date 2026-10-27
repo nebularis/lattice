@@ -1,0 +1,234 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. Insurance, with the full tree, a limit stated in addition to the
+# aggregate, a purpose counted outside the path, and a reinstatement
+# (ADR-A131 decision 3). The programme's annual aggregate (10,000,000) has two
+# sections, one with a sublimit. A separate limit for one class of
+# beneficiary sits beside the aggregate, "in addition to" it, so it is never
+# an ancestor. A flood aggregate, also outside the tree, is debited whenever a
+# draw names the flood purpose. The whole aggregate sits under a reinstatement
+# pool of twice its amount (20,000,000), the programme's hard cap across the
+# original cover and one reinstatement.
+#
+# | Account                | Before      | Position 1 (flood loss 700,000) | Position 2 (recovery 300,000) | Position 3 (loss 9,600,000) | Position 4 (reinstatement) | After       |
+# |--------------------------|------------:|-----------------------------------|----------------------------------|--------------------------------|-------------------------------|------------:|
+# | reinstatement-pool        | 20,000,000  | -700,000 -> 19,300,000           | +300,000 -> 19,600,000           | -9,600,000 -> 10,000,000        | -- (not credited back)        | 10,000,000  |
+# | aggregate                 | 10,000,000  | -700,000 -> 9,300,000            | +300,000 -> 9,600,000            | -9,600,000 -> 0                 | +10,000,000 -> 10,000,000      | 10,000,000  |
+# | section-a                 |  6,000,000  | -700,000 -> 5,300,000            | +300,000 -> 5,600,000            | --                               | --                              |  5,600,000  |
+# | sublimit-a1                |  1,000,000  | -700,000 -> 300,000              | +300,000 -> 600,000              | --                               | --                              |    600,000  |
+# | section-b                 |  4,000,000  | --                                 | --                                | --                               | --                              |  4,000,000  |
+# | beneficiary-class-limit    |  2,000,000  | --                                 | --                                | --                               | --                              |  2,000,000  |
+# | flood-aggregate            |  3,000,000  | -700,000 -> 2,300,000            | +300,000 -> 2,600,000            | --                               | --                              |  2,600,000  |
+#
+# Position 3's loss is paid straight from the aggregate (a liability loss not
+# scoped to either section), so it does not touch section-a, sublimit-a1 or
+# section-b. Position 4's reinstatement is a modelling choice recorded here
+# for the maintainer: it restores the aggregate alone, since the
+# reinstatement pool's falling balance is the measure of total capacity ever
+# available across the original cover and the reinstatement, and a
+# reinstatement does not raise that total.
+
+@prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
+@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/ledger/insurance-aggregate/> .
+
+# ==== The owner, the purpose scheme and the value space =======================
+
+ex:programme a fnd:PersistentIdentity ; rdfs:comment "The programme, owner of every account in this example." .
+ex:Programme a owl:Class ; rdfs:comment "The kind of owner these accounts admit." .
+
+ex:purposes a skos:ConceptScheme ; skos:prefLabel "loss purposes" .
+ex:flood a skos:Concept ; skos:inScheme ex:purposes ; skos:prefLabel "flood" .
+
+ex:money a qnt:ValueSpace ;
+    qnt:spaceKey "ledger-insurance-aggregate-money" ; qnt:orderKind qnt:TotalOrder ;
+    qnt:densityKind qnt:Dense ; qnt:spaceHash "ledger-insurance-aggregate-money-v1" ;
+    qnt:additivity qnt:Extensive ;
+    qnt:hasOperationCapability ex:money-sum , ex:money-difference .
+ex:money-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ; qnt:resultSpace ex:money .
+ex:money-difference a qnt:OperationCapability ; qnt:operationKind qnt:Difference ; qnt:resultSpace ex:money .
+
+ex:q-20000000 a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "20000000"^^xsd:decimal .
+ex:q-10000000 a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "10000000"^^xsd:decimal .
+ex:q-6000000  a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "6000000"^^xsd:decimal .
+ex:q-4000000  a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "4000000"^^xsd:decimal .
+ex:q-1000000  a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "1000000"^^xsd:decimal .
+ex:q-2000000  a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "2000000"^^xsd:decimal .
+ex:q-3000000  a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "3000000"^^xsd:decimal .
+
+# ==== The configuration: the tree, a limit beside it, and a purpose outside ===
+
+ex:reinstatement-pool a ldg:AccountDefinition ;
+    ldg:statedAmount ex:q-20000000 ; ldg:unitOfAccount ex:money ;
+    ldg:admitsOwnerKind ex:Programme ; ldg:mergeRule ldg:Refuse ;
+    rdfs:comment "Twice the aggregate: the programme's hard cap across the original cover and one reinstatement." .
+
+ex:aggregate a ldg:AccountDefinition ;
+    ldg:statedAmount ex:q-10000000 ; ldg:unitOfAccount ex:money ;
+    ldg:admitsOwnerKind ex:Programme ; ldg:mergeRule ldg:Refuse ;
+    ldg:partOf ex:reinstatement-pool ; ldg:creditCeiling ex:q-10000000 ;
+    rdfs:comment "The programme's annual aggregate, reinstatable once." .
+
+ex:section-a a ldg:AccountDefinition ;
+    ldg:statedAmount ex:q-6000000 ; ldg:unitOfAccount ex:money ;
+    ldg:admitsOwnerKind ex:Programme ; ldg:mergeRule ldg:Refuse ;
+    ldg:partOf ex:aggregate .
+
+ex:sublimit-a1 a ldg:AccountDefinition ;
+    ldg:statedAmount ex:q-1000000 ; ldg:unitOfAccount ex:money ;
+    ldg:admitsOwnerKind ex:Programme ; ldg:mergeRule ldg:Refuse ;
+    ldg:partOf ex:section-a .
+
+ex:section-b a ldg:AccountDefinition ;
+    ldg:statedAmount ex:q-4000000 ; ldg:unitOfAccount ex:money ;
+    ldg:admitsOwnerKind ex:Programme ; ldg:mergeRule ldg:Refuse ;
+    ldg:partOf ex:aggregate .
+
+ex:beneficiary-class-limit a ldg:AccountDefinition ;
+    ldg:statedAmount ex:q-2000000 ; ldg:unitOfAccount ex:money ;
+    ldg:admitsOwnerKind ex:Programme ; ldg:mergeRule ldg:Refuse ;
+    rdfs:comment "A further limit for one class of beneficiary, in addition to the aggregate: no ldg:partOf edge." .
+
+ex:flood-aggregate a ldg:AccountDefinition ;
+    ldg:statedAmount ex:q-3000000 ; ldg:unitOfAccount ex:money ;
+    ldg:admitsOwnerKind ex:Programme ; ldg:mergeRule ldg:Refuse ;
+    ldg:countsPurpose ex:flood ;
+    rdfs:comment "Outside the tree. A draw naming the flood purpose debits this account too." .
+
+# ==== Position 1: a flood loss on the sublimit, and the flood purpose =========
+
+ex:loss-1-proposal rdfs:comment "A flood loss of 700,000, paid from the sublimit." .
+ex:loss-1-grant a ldg:Grant ;
+    ldg:forProposal ex:loss-1-proposal ;
+    ldg:requestedValue "700000"^^xsd:decimal ; ldg:grantedValue "700000"^^xsd:decimal .
+ex:loss-1-merge a ldg:MergeRecord ;
+    ldg:onAccount ex:sublimit-a1 ; ldg:forOwner ex:programme ;
+    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:grant ex:loss-1-grant .
+ex:loss-1-posting a ldg:Posting ;
+    ldg:onAccount ex:sublimit-a1 ; ldg:forOwner ex:programme ;
+    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:direction ldg:Debit ; ldg:amountValue "700000"^^xsd:decimal ; ldg:forPurpose ex:flood ;
+    prov:wasDerivedFrom ex:loss-1-merge , ex:loss-1-grant .
+ex:balance-1-sublimit a ldg:BalanceRecord ;
+    ldg:onAccount ex:sublimit-a1 ; ldg:forOwner ex:programme ;
+    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:remainingValue "300000"^^xsd:decimal ; ldg:availableValue "300000"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:loss-1-posting .
+ex:balance-1-section-a a ldg:BalanceRecord ;
+    ldg:onAccount ex:section-a ; ldg:forOwner ex:programme ;
+    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:remainingValue "5300000"^^xsd:decimal ; ldg:availableValue "5300000"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:loss-1-posting .
+ex:balance-1-aggregate a ldg:BalanceRecord ;
+    ldg:onAccount ex:aggregate ; ldg:forOwner ex:programme ;
+    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:remainingValue "9300000"^^xsd:decimal ; ldg:availableValue "9300000"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:loss-1-posting .
+ex:balance-1-pool a ldg:BalanceRecord ;
+    ldg:onAccount ex:reinstatement-pool ; ldg:forOwner ex:programme ;
+    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:remainingValue "19300000"^^xsd:decimal ; ldg:availableValue "19300000"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:loss-1-posting .
+
+ex:loss-1-flood-grant a ldg:Grant ;
+    ldg:forProposal ex:loss-1-proposal ;
+    ldg:requestedValue "700000"^^xsd:decimal ; ldg:grantedValue "700000"^^xsd:decimal .
+ex:loss-1-flood-merge a ldg:MergeRecord ;
+    ldg:onAccount ex:flood-aggregate ; ldg:forOwner ex:programme ;
+    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:grant ex:loss-1-flood-grant .
+ex:loss-1-flood-posting a ldg:Posting ;
+    ldg:onAccount ex:flood-aggregate ; ldg:forOwner ex:programme ;
+    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:direction ldg:Debit ; ldg:amountValue "700000"^^xsd:decimal ; ldg:forPurpose ex:flood ;
+    prov:wasDerivedFrom ex:loss-1-flood-merge , ex:loss-1-flood-grant .
+ex:balance-1-flood a ldg:BalanceRecord ;
+    ldg:onAccount ex:flood-aggregate ; ldg:forOwner ex:programme ;
+    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:remainingValue "2300000"^^xsd:decimal ; ldg:availableValue "2300000"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:loss-1-flood-posting .
+
+# ==== Position 2: a recovery, credited on the same path and purpose ==========
+
+ex:recovery-2-posting a ldg:Posting ;
+    ldg:onAccount ex:sublimit-a1 ; ldg:forOwner ex:programme ;
+    ldg:atPosition "2"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:direction ldg:Credit ; ldg:amountValue "300000"^^xsd:decimal ; ldg:forPurpose ex:flood ;
+    prov:wasDerivedFrom ex:loss-1-posting .
+ex:balance-2-sublimit a ldg:BalanceRecord ;
+    ldg:onAccount ex:sublimit-a1 ; ldg:forOwner ex:programme ;
+    ldg:atPosition "2"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:remainingValue "600000"^^xsd:decimal ; ldg:availableValue "600000"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:recovery-2-posting .
+ex:balance-2-section-a a ldg:BalanceRecord ;
+    ldg:onAccount ex:section-a ; ldg:forOwner ex:programme ;
+    ldg:atPosition "2"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:remainingValue "5600000"^^xsd:decimal ; ldg:availableValue "5600000"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:recovery-2-posting .
+ex:balance-2-aggregate a ldg:BalanceRecord ;
+    ldg:onAccount ex:aggregate ; ldg:forOwner ex:programme ;
+    ldg:atPosition "2"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:remainingValue "9600000"^^xsd:decimal ; ldg:availableValue "9600000"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:recovery-2-posting .
+ex:balance-2-pool a ldg:BalanceRecord ;
+    ldg:onAccount ex:reinstatement-pool ; ldg:forOwner ex:programme ;
+    ldg:atPosition "2"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:remainingValue "19600000"^^xsd:decimal ; ldg:availableValue "19600000"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:recovery-2-posting .
+
+ex:recovery-2-flood-posting a ldg:Posting ;
+    ldg:onAccount ex:flood-aggregate ; ldg:forOwner ex:programme ;
+    ldg:atPosition "2"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:direction ldg:Credit ; ldg:amountValue "300000"^^xsd:decimal ; ldg:forPurpose ex:flood ;
+    prov:wasDerivedFrom ex:loss-1-flood-posting .
+ex:balance-2-flood a ldg:BalanceRecord ;
+    ldg:onAccount ex:flood-aggregate ; ldg:forOwner ex:programme ;
+    ldg:atPosition "2"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:remainingValue "2600000"^^xsd:decimal ; ldg:availableValue "2600000"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:recovery-2-flood-posting .
+
+# ==== Position 3: a liability loss paid straight from the aggregate ==========
+
+ex:loss-3-proposal rdfs:comment "A liability loss of 9,600,000, not scoped to a section." .
+ex:loss-3-grant a ldg:Grant ;
+    ldg:forProposal ex:loss-3-proposal ;
+    ldg:requestedValue "9600000"^^xsd:decimal ; ldg:grantedValue "9600000"^^xsd:decimal .
+ex:loss-3-merge a ldg:MergeRecord ;
+    ldg:onAccount ex:aggregate ; ldg:forOwner ex:programme ;
+    ldg:atPosition "3"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:grant ex:loss-3-grant .
+ex:loss-3-posting a ldg:Posting ;
+    ldg:onAccount ex:aggregate ; ldg:forOwner ex:programme ;
+    ldg:atPosition "3"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:direction ldg:Debit ; ldg:amountValue "9600000"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:loss-3-merge , ex:loss-3-grant .
+ex:balance-3-aggregate a ldg:BalanceRecord ;
+    ldg:onAccount ex:aggregate ; ldg:forOwner ex:programme ;
+    ldg:atPosition "3"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:remainingValue "0"^^xsd:decimal ; ldg:availableValue "0"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:loss-3-posting .
+ex:balance-3-pool a ldg:BalanceRecord ;
+    ldg:onAccount ex:reinstatement-pool ; ldg:forOwner ex:programme ;
+    ldg:atPosition "3"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:remainingValue "10000000"^^xsd:decimal ; ldg:availableValue "10000000"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:loss-3-posting .
+
+# ==== Position 4: the aggregate is reinstated, the pool is not credited back =
+
+ex:reinstatement-4-posting a ldg:Posting ;
+    ldg:onAccount ex:aggregate ; ldg:forOwner ex:programme ;
+    ldg:atPosition "4"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:direction ldg:Credit ; ldg:amountValue "10000000"^^xsd:decimal ;
+    rdfs:comment "Restores the aggregate alone to its stated amount, within its credit ceiling." .
+ex:balance-4-aggregate a ldg:BalanceRecord ;
+    ldg:onAccount ex:aggregate ; ldg:forOwner ex:programme ;
+    ldg:atPosition "4"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:remainingValue "10000000"^^xsd:decimal ; ldg:availableValue "10000000"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:reinstatement-4-posting .

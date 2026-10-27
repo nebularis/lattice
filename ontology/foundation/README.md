@@ -898,6 +898,7 @@ Eight classes mutually disjoint (`Version`, `PersistentIdentity`, `Evidence`, `T
 
 ## 13. Release notes
 
+- **Next release.** Re-pinned: Ledger joins the substrate's release ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). No other change.
 - **0.19.0**. Every document takes the release's number and imports the other layers at it (no effect). No other change.
 - **0.18.0, the first release of the substrate and standalone modules as one set ([ADR-A129](../../docs/architecture/decisions/ADR-A129-one-release-for-the-substrate.md)). Every document of the layer takes the release's number and imports the other layers at it (no effect).** No other change.
 - **0.4.0** (additive, CCS F1, ADR-A114). Keys: `fnd:Key`, `fnd:KeyScheme`, `fnd:keyValue`,

@@ -10,6 +10,7 @@
 [ADR-A125](ADR-A125-test-support-tooling.md),
 [Track H plan §4.2](../../developer/plans/formal-methods-track-h.md#42-h24-the-composite-family-and-what-each-store-does-planned-2026-10-12)
 (H2.4-Q3, which raised it)
+**Unit:** [`formal-methods`](../../developer/plans/formal-methods.md) (epic), track H
 
 ## Context
 

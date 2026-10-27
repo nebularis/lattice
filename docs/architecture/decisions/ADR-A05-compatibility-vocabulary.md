@@ -3,7 +3,7 @@ published: true
 ---
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# ADR A-05: Compatibility operation vocabulary
+# ADR-A05: Compatibility operation vocabulary
 
 **Status:** Published, 2026-10-19. Accepted 2026-09-17.
 **Described in:** [Eligibility README](../../../ontology/eligibility/README.md)
@@ -41,5 +41,7 @@ refuse one they cannot evaluate.
 
 
 ## Provenance
+
+**Unit:** [`improved-ontology-documentation`](../../developer/plans/improved-ontology-documentation.md) (plan), addendum 2026-10-19
 
 Accepted when Eligibility was first specified, 2026-09-17. The 2026-10-19 addendum answers question OD6-Q7 of the [`improved-ontology-documentation`](../../developer/plans/improved-ontology-documentation.md) plan.

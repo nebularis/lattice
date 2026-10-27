@@ -21,7 +21,7 @@ Two checks, run per layer:
    This does **not** call that script's own ``--check`` mode directly, which
    also compares a layer's ``spec``/``vocab``/``shapes`` output and would
    fail on TD-16's existing, unrelated drift in several layers (Vocabulary,
-   Party, Eligibility — see ``docs/developer/plans/technical-debt.md``).
+   Party, Eligibility — see ``docs/developer/technical-debt.md``).
    Instead it calls ``parse_blocks``/``plan``/``render`` as a library and
    checks only the ``@proofs-root@`` output, the same narrow extraction
    E1.0 used when Eligibility's README was first wired (see

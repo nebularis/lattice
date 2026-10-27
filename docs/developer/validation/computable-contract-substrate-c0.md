@@ -35,7 +35,7 @@ A pass prints nothing.
   examples), and Decision 2's import lists.
 - `ADR-A01-layer-dependency-order.md`: the addendum's order against the sketch §1 diagram.
 - `ADR-A113-breaking-changes-at-major-version-zero.md`: the scope and the marking rule.
-- `ADR-AC2-clean-room-authoring-procedure.md`: the addendum's two conditions.
+- `ADR-A-C2-clean-room-authoring-procedure.md`: the addendum's two conditions.
 
 ## Deliberate non-coverage
 

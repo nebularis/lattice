@@ -121,9 +121,17 @@ document imports Foundation. Decision 2 already says an entry names the modules 
 guard now holds every `owl:imports` of a standalone module's documents to the module itself and that list,
 where before it judged only the substrate. The substrate's order is unchanged and still ADR-A01's.
 
+## Addendum (2026-10-26): roots and documentation areas are found by name
+
+Decision 4 resolves a module's role to a directory, but a root or a documentation area had only its path, so a tool that needed the directory of the developer registers either wrote `docs/developer` itself or compared that string with the catalogue's list, which keeps the written path while passing the scan of decision 5. A `[[roots]]` or `[[docs]]` entry now takes a `name`, a lower-case word unique across both, and the reader resolves it with `Catalogue.area(name)` in Python and `area <name>` on its command line. Like `Module.directory`, the lookup returns a directory relative to the root, and a name the catalogue lacks fails with an error naming where to declare it. Every root and documentation area has one, so code never needs to write a catalogued path.
+
 ## Provenance
+
+**Unit:** [`improved-ontology-documentation`](../../developer/plans/improved-ontology-documentation.md) (plan)
 
 Proposed in the [repository catalogue sketch](../../developer/sketches/repository-catalogue.md), whose
 questions RC-Q1 to RC-Q8 were answered on 2026-10-16, and planned in the
 [`improved-ontology-documentation` plan](../../developer/plans/improved-ontology-documentation.md)
 (slices RC1 to RC6, decisions OD-D14, OD-D16 and the RC rows). The 2026-10-19 addendum answers question RC3-Q3, and "until downstream projects extend the catalogue" is the plan's slice RC4.
+
+The 2026-10-26 addendum was asked for by the maintainer on that date, after the knowledge-index unit found its tools comparing a written path with the catalogue's list to pass the scan.

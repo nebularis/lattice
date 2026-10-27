@@ -6,6 +6,7 @@
 **Date:** 2026-09-18
 **Supersedes:** none
 **Related:** ADR-A16 (surface projection mechanism, profile-change regeneration), ADR-A21 (signature-scope composition), ADR-A19 (staged compiler architecture)
+**Unit:** [`surface-mork-unified-projection`](../../developer/plans/surface-mork-unified-projection-plan.md) (epic)
 **Source plan:** [surface-mork-unified-projection-delivery-plan.md](../../../ontology/surface/docs/surface-mork-unified-projection-delivery-plan.md)
 
 ## Context

@@ -2270,6 +2270,7 @@ What changed from the earlier draft, and why — kept here rather than only in a
 
 ## 17. Release Notes
 
+- **Next release.** Re-pinned: Ledger joins the substrate's release ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). No other change.
 - **0.19.0**. Every document takes the release's number and imports the other layers at it (no effect). No other change.
 - **0.18.0, the first release of the substrate and standalone modules as one set ([ADR-A129](../../docs/architecture/decisions/ADR-A129-one-release-for-the-substrate.md)). Every document of the layer takes the release's number and imports the other layers at it (no effect).** The shapes and projection directories no longer carry a `.version` of their own. No other change.
 - **0.8.0** (additive, CCS C9b2): `qnt:additivity`, with `qnt:Extensive` and `qnt:Intensive` in

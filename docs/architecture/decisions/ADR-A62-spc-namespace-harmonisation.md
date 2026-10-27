@@ -5,6 +5,7 @@
 **Status:** Proposed
 **Date:** 2026-09-23
 **Related:** Architecture Review §4.14, G-19, `ontology-architecture.md`, ADR-A01
+**Unit:** [`phase-0`](../../developer/plans/phase-0-plan.md)
 **Drafted in:** P0.1.12. Pending ratification — see [phase-0-status.md](../../developer/status/phase-0-status.md). The namespace change itself has already been executed (see Consequences).
 
 ## Context

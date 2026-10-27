@@ -3,7 +3,7 @@ published: true
 ---
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# ADR A-03: Eligibility condition taxonomy
+# ADR-A03: Eligibility condition taxonomy
 
 **Status:** Published, 2026-10-19. Accepted 2026-09-17.
 **Described in:** [Eligibility README](../../../ontology/eligibility/README.md)
@@ -44,5 +44,7 @@ date). Laws L1 to L3 and Eligibility's shapes say so.
 
 
 ## Provenance
+
+**Unit:** [`improved-ontology-documentation`](../../developer/plans/improved-ontology-documentation.md) (plan), addendum 2026-10-19
 
 Accepted when Eligibility was first specified, 2026-09-17. The 2026-10-19 addendum answers questions OD6-Q7, ELC-Q1 and ELC-Q2 of the [`improved-ontology-documentation`](../../developer/plans/improved-ontology-documentation.md) plan.

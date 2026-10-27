@@ -6,6 +6,7 @@
 **Date:** 2026-10-23
 **Supersedes:** none
 **Related:** [ADR-A29](ADR-A29-repository-toolchain-and-environment-boundary.md) (`mise` is the only task entry point), [ADR-A117](ADR-A117-agent-guidance-and-skill-library.md) (agent guidance and the deny-list), [ADR-A121](ADR-A121-repository-catalogue.md) (the repository catalogue), [ADR-A126](ADR-A126-literate-specification-layout-and-grammar.md) (literate READMEs), [ADR-A127](ADR-A127-published-architecture-decisions.md) (published decisions), [ADR-A129](ADR-A129-one-release-for-the-substrate.md) (one release, bumped at merge)
+**Unit:** [`git-hooks`](../../developer/plans/git-hooks.md)
 
 ## Context
 

@@ -48,7 +48,7 @@ ALL_SHAPES = [ONTOLOGY / layer / "shapes" / f"{kind}.ttl"
               for kind in ("structural", "constraints")]
 E = "https://example.org/lattice/instrument/"
 BOUND = {"facility-parameters": ("facility-parameters", "halden-v1"), "framework-lots": ("framework", "framework-v1"),
-         "services-schedule": ("services-schedule", "meridian-v1"), "service-towers": ("service-towers", "meridian-v1"),
+         "services-schedule": ("services-schedule", "northgate-v1"), "service-towers": ("service-towers", "harbourside-v1"),
          "facility-definitions": ("facility-definitions", "fenwick-v1"), "trial-definitions": ("trial-definitions", "site-311-v1"),
          "supply-classification": ("supply-classification", "harrow-v1")}
 
@@ -184,7 +184,7 @@ def test_c8_03_examples_are_consistent(name: str) -> None:
 def test_c8_04_a_bound_node_naming_a_variable_or_a_word_is_reported() -> None:
     data = _changed("facility-parameters", "ex:leverage-ceiling-halden ins:valueFrom ex:var-leverage-identity .")
     assert _reported(data, "/term-7-1", "still holds a placeholder")
-    data = _changed("services-schedule", "ex:in-territory-meridian elg:requiredConcept ex:Territory .")
+    data = _changed("services-schedule", "ex:in-territory-northgate elg:requiredConcept ex:Territory .")
     assert _reported(data, "/term-3-1", "still names the word")
 
 

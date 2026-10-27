@@ -62,9 +62,9 @@ reading of TM-Q2 option B: the cache is the fixture, not every test that
 benefits from it).
 
 `repo_files` (TM6, TD-29) replaces the five `git grep` subprocess calls the
-suite used to find a retired term or a pinned version: it walks the tree
-directly, so it works without `.git` (a source archive, a worktree-less
-checkout), reads every file as UTF-8 explicitly instead of letting a
+suite used to find a retired term or a pinned version: it asks `git ls-files`
+(tracked and untracked files that are not ignored) and refuses a checkout
+without `.git`, so a scan never reads a gitignored directory. It reads every file as UTF-8 explicitly instead of letting a
 subprocess capture fall back to the console's codepage (the Windows-only
 `UnicodeDecodeError` this replaces), and returns the same repo-relative,
 forward-slash paths on every platform."""
@@ -74,6 +74,7 @@ from __future__ import annotations
 import contextlib
 import re
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any, Iterator, Sequence
@@ -358,15 +359,27 @@ def _skippable(part: str) -> bool:
     return part in _SKIP_DIR_NAMES or part.endswith(".egg-info")
 
 
-def _iter_files(root: Path) -> list[Path]:
-    if not root.exists():
-        return []
-    if root.is_file():
-        return [root]
-    return [
-        path for path in sorted(root.rglob("*"))
-        if path.is_file() and not any(_skippable(part) for part in path.relative_to(root).parts[:-1])
-    ]
+def _iter_files(root: str, repo_root: Path) -> list[Path]:
+    """The files git lists under `root`, tracked or untracked but not ignored, so a scan never reads an
+    ignored directory. Refuses a checkout without git metadata."""
+    if not (repo_root / ".git").exists():
+        raise RuntimeError(
+            f"{repo_root} has no .git, and a scan needs a git checkout, since it asks git which files "
+            "are in the repository and never walks the tree (an ignored directory may hold material "
+            "that is not for the repository)"
+        )
+    listing = subprocess.run(
+        ["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard", "--", root],
+        cwd=repo_root, capture_output=True, check=True,
+    ).stdout.decode("utf-8")
+    base = Path(root)
+    files = []
+    for name in sorted(set(filter(None, listing.split("\0")))):
+        path = repo_root / name
+        below_root = Path(name).relative_to(base).parts[:-1] if base != Path(name) else ()
+        if path.is_file() and not any(_skippable(part) for part in below_root):
+            files.append(path)
+    return files
 
 
 _FILE_LIST_CACHE: dict[tuple, list[Path]] = {}
@@ -379,7 +392,7 @@ def _files_under(roots: Sequence[str], repo_root: Path) -> list[Path]:
         return cached
     files: list[Path] = []
     for name in roots:
-        files.extend(_iter_files(repo_root / name))
+        files.extend(_iter_files(name, repo_root))
     _FILE_LIST_CACHE[key] = files
     return files
 
@@ -389,9 +402,11 @@ def repo_files(roots: Sequence[str], pattern: str, *, fixed: bool = False, repo_
     or a file, relative to `repo_root`) with a line containing `pattern`: a
     fixed substring if `fixed`, a regular expression otherwise, matched the
     way `git grep` matches it, line by line, so `^`/`$` anchor one line, not
-    the whole file. Skips common build and dependency directories, since
-    walking the tree directly (unlike `git grep`, which only sees tracked
-    files) would otherwise also see untracked build output."""
+    the whole file. Files come from `git ls-files`, so an ignored file is
+    never read, and a `repo_root` with no `.git` raises RuntimeError. Skips
+    common build and dependency directories, since untracked files that are
+    not ignored (unlike `git grep`, which only sees tracked files) would
+    otherwise include build output."""
     finder = (lambda line: pattern in line) if fixed else re.compile(pattern).search
     matches = []
     for path in _files_under(roots, repo_root):

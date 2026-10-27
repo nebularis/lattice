@@ -30,7 +30,7 @@ The ontology defines `RuleMapping` as a mapping that generates a structured `swr
 
 This is consistent with the Mork architecture documentation, which describes deterministic generation of SHACL shapes, SPARQL queries, SWRL rules, and RML mappings from a validated mapping graph.
 
-The existing `tools/mork2rml.py` compiler confirms that this is intended as a compiler family. It identifies `ShapeMapping` and `RuleMapping`, but currently skips them because that compiler targets RML:
+The existing `tools/mork/src/mork2rml.py` compiler confirms that this is intended as a compiler family. It identifies `ShapeMapping` and `RuleMapping`, but currently skips them because that compiler targets RML:
 
 ```python
 if spec.role not in (

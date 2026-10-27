@@ -17,7 +17,7 @@ engine, published as both a Java library and a standalone sidecar process, that 
 SPI data to documents and reports on egress (building on the existing
 [xml-egress-and-transformation-kits.md](../sketches/xml-egress-and-transformation-kits.md) sketch),
 and lifts external, non-OWL XML into canonical triples on ingress, with a new MORK compiler backend
-(`mork2xslt`, sibling to the existing `tools/mork2rml.py`) able to generate an ingress kit's
+(`mork2xslt`, sibling to the existing `tools/mork/src/mork2rml.py`) able to generate an ingress kit's
 stylesheet from a MORK mapping graph.
 
 Seven decisions (XS-D1 to XS-D7, sketch §11) are proposed, none recorded. Seven slices (XS0 to XS6,

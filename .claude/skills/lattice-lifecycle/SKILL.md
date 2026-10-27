@@ -5,6 +5,8 @@ description: How work is run in LATTICE and projects built on it. Use when start
 
 # The LATTICE development lifecycle
 
+Ask the knowledge index first, as AGENTS.md's "Asking the knowledge index" says, with `mise run graph:ask -- find <the task in your own words>` and every facet value that fits the task at hand, then `read` each entry that answers. This skill's tasks span the activities delivery, planning-and-estimation, release-and-versioning, acceptance, regression-testing, continuous-integration, technical-debt-management, architecture-decision-making and documentation, and a task often needs several of them, named together and separated by commas. `--activity`, `--quality` and `--tech` raise matching entries and hide none, while `--kind` filters exactly, so leave `--kind` off unless only one kind of entry will do. The index finds the rules this skill does not mention, and the entries related to the ones it does.
+
 The always-on rules are in `AGENTS.md`. This skill is the procedure behind them. Paths are relative
 to the LATTICE repository, browsable at <https://github.com/nebularis/lattice>.
 
@@ -29,11 +31,42 @@ approved.
 | `docs/developer/status/<unit>.md` | live state, next action, history | after every material action, result, blocker or handoff |
 | `docs/developer/review/<unit>-review.md` | the review request: scope, artefacts, exact `mise` commands, pass criteria, open questions, a link to the status record | before handoff. Closed after disposition |
 | `docs/developer/validation/<slice-id>.md` | a slice's Validation Pack | written with the slice, results filled at verification |
-| `docs/developer/plans/pending-design-decisions.md` | design decisions that matter but cannot be made yet, with the options known | add when raised, remove naming the ADR, sketch or plan that settles it |
-| `docs/developer/plans/technical-debt.md` | debt with no planned home: a shortcut, a gap between a claim and the behaviour, a check that does not run | add when spotted, remove naming the plan that takes it on. Never features, follow-ups or deferred slices |
+| `docs/developer/pending-design-decisions.md` | design decisions that matter but cannot be made yet, with the options known | add when raised, remove naming the ADR, sketch or plan that settles it |
+| `docs/developer/technical-debt.md` | debt with no planned home: a shortcut, a gap between a claim and the behaviour, a check that does not run | add when spotted, remove naming the plan that takes it on. Never features, follow-ups or deferred slices |
 | `docs/developer/INDEX.md` | every unit and its documents | when a unit or slice changes state |
 
-Never create a second status record for a unit. `docs/developer/` itself holds durable guidance only.
+Never create a second status record for a unit. `docs/developer/` itself holds the registers and durable guidance only.
+
+## Recording what we learn
+
+A learning that outlives its session goes into a register in the same change that produced it, and the index is refreshed so other agents can find it ([ADR-A134](../../../docs/architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md)). A learning left in a commit message is lost: 22 of this project's learnings existed only in git history when the index was built, including a Windows newline translation that silently corrupted generated SPARQL and two merge resolutions that made a task skip test modules without failing.
+
+**Which register takes it.**
+
+| What was learned | Goes in |
+|---|---|
+| what a store, tool, engine or platform actually does, found by probing or being surprised | [`docs/architecture/triple-store-discovery.md`](../../../docs/architecture/triple-store-discovery.md) as the next `TSD-`*n*, for a store. Otherwise the unit's status record until a register owns it |
+| a choice made, where an ADR is warranted | an ADR, drafted as Proposed |
+| a choice that matters and cannot be made yet | `pending-design-decisions.md` |
+| a shortfall in something that exists, with no planned home | `technical-debt.md` |
+| an answer the repository holds and no register entry does, found by falling back from the knowledge index | the register that should hold it, in the same change. Otherwise `technical-debt.md`, and tell the maintainer (STD-272) |
+| a rule about how we write, name, structure or check something | the skill that an agent reads for that task, not a commit message |
+| a cost measured, with numbers | the discovery record, citing the benchmark |
+| a facet value an entry needs and the scheme lacks | [`docs/developer/facets.md`](../../../docs/developer/facets.md), as a row in its scheme's table with Ratified no, never in generated Turtle. Tag the entry with it in the same change |
+| a rule a skill states, so the index can rank it | the standard register, as a row whose Pointer is the skill's section, with Ratified no |
+
+**A register's header is a title, its Unit type line and at most one line of state.** A column's meaning is the `rdfs:comment` of the T-Box property it maps to, written once, so a header explaining its columns restates it. `check:knowledge` fails a register holding a table whose first column is not `ID` or `#`.
+
+**How to write the entry.** One bolded lead sentence stating the claim, then the detail. The index extracts that sentence as the claim and never stores a second copy, so an entry whose first sentence is a preamble indexes as a preamble. Keep it under 200 characters and state the cost as well as the benefit.
+
+**Then refresh the index.**
+
+```bash
+mise run build:knowledge
+mise run check:identifiers
+```
+
+The first derives the index again, in about two seconds, so the entry is findable. The second fails if the entry cites an identifier that resolves to nothing, which is the commonest way a new entry is wrong.
 
 ## Epics, phases, slices and milestones
 
@@ -80,6 +113,7 @@ justification in its Validation Pack, countersigned at the gate.
   maintainer commits them. The model phase follows.
 - **Pause before commit.** The agent builds and verifies, writes the Validation Pack's handoff and
   results, updates the status record, and stops. The maintainer commits.
+- **Report on the knowledge index at every handoff.** List the questions it answered weakly or not at all (`mise run graph:ask -- misses`), say which entry, facet value or relation would have answered each, and add any answer the fallback found to its register in the same change (STD-272).
 - **Executing a whole plan autonomously.** The request is the go-ahead to author every slice, but do
   not ratify ADRs, record each open design decision in the status record rather than choosing
   silently, and never report a check as passed that could not run.
@@ -94,6 +128,15 @@ justification in its Validation Pack, countersigned at the gate.
 - **One release tag.** The substrate and standalone modules are tagged once per release, as
   `ontologies-vX.Y.Z` (ADR-A129). An applied module takes its own tag for each new version
   (ADR-A86). The per-module tags from before release 0.18.0 are history.
+- **Ontology version bumps happen once, at merge, never mid-branch.** `mise run release:prepare`
+  moves every release member's shared version number forward (ADR-A129) and cascades into every
+  applied module that pins it. Nobody consumes a branch's version numbers before it merges, so
+  bumping per-slice re-pins dozens of files for no reader and still has to happen again at the
+  merge. A branch's new or changed ontology documents keep citing the version `main` was pinned to
+  at the branch point throughout the branch's life (skill `lattice-ontology-authoring`). Expect
+  `check:ontology-versioning` to report a pending bump for a branch's own new release-member
+  content until the actual merge-time bump — that is the correct state of a branch mid-flight, not
+  a defect to work around.
 - **Versions on a working branch.** Where the maintainer has agreed that a branch defers versioning,
   the branch makes no bump, its status record says so, and `check:ontology-versioning`'s `UNBUMPED`
   is expected there. The release moves once, by `mise run release:prepare`, before the merge into

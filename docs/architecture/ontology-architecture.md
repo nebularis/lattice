@@ -46,6 +46,7 @@ It is the middle of a three-part picture:
 | Foundation | Substrate | Identity/versioning, evidence, temporal scoping, governance status | `fnd:` | — |
 | Vocabulary | Substrate | Governed binding of external concept schemes into other layers' properties | `voc:` | Foundation |
 | Quantification | Substrate | Declared value spaces, quantities, ordered values, bounds, ranges, conversion, granularity, recurrence | `qnt:` | Foundation, Vocabulary |
+| Ledger | Substrate | Amounts consumed and restored over time: account trees, merge rules, postings and balances ([ADR-A131](decisions/ADR-A131-ledger-layer.md)) | `ldg:` | Foundation, Vocabulary, Quantification |
 | Party | Substrate | Actors, roles, role occupancy, participation groups, delegation | `pty:` | Foundation, Vocabulary, Quantification |
 | Eligibility | Substrate | Admissibility: conditions, unresolved questions, decisions | `elg:` | Foundation, Vocabulary, Quantification, Party |
 | Wording | Substrate | What a contract's documents say and how they are built: wordings, elements, text parts, references, variables | `wrd:` | Foundation, Vocabulary, Quantification, Eligibility |
@@ -58,6 +59,7 @@ Dependency order, per [ADR-A01](decisions/ADR-A01-layer-dependency-order.md) as 
 foundation
     └── vocabulary
             └── quantification
+                    ├── ledger
                     └── party
                             └── eligibility
                                     ├── wording
@@ -65,6 +67,9 @@ foundation
                                     └── behaviour configuration
                                             └── behaviour runtime
 ```
+
+Ledger is not yet imported by any layer above it (Behaviour's migration to it is a later slice,
+[ADR-A131](decisions/ADR-A131-ledger-layer.md)); it is shown here as the branch it already is.
 
 `mise run check:import-guard` (`tools/import_guard.py`) checks this order over the substrate layers:
 no layer imports, or names the namespace of, a layer above it, a sibling, or an applied module. Its

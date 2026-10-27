@@ -1,0 +1,98 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. Delegated authority, with a proportional merge (ADR-A131 decision
+# 6). An authority owns one aggregate of 100 units of delegated
+# capacity. Three proposals, each for 40, arrive at the same position, 120 in
+# all against 100 available. The merge rule is proportional: each proposal's
+# exact share is its request scaled by availability over the total requested,
+# kept as an exact rational, then rounded to the account's unit (half-even)
+# and corrected by the largest-remainder residual so the granted values still
+# sum to the availability.
+#
+# | Proposal | Requested | Exact share (100 x 40 / 120) | Rounded (half-even) | Residual | Granted |
+# |----------|----------:|------------------------------:|----------------------:|----------|--------:|
+# | 1        |        40 |                        33.3333 |                     33 | +1 (tie, first in order) | 34 |
+# | 2        |        40 |                        33.3333 |                     33 | --        |      33 |
+# | 3        |        40 |                        33.3333 |                     33 | --        |      33 |
+#
+# The three exact shares are equal, so half-even rounding alone would leave
+# the account one unit short (99 of 100). The largest-remainder residual
+# allocates the missing unit, and the three remainders are tied, so it goes
+# to the first proposal in the order they were made (ldg:ResidualAllocations'
+# tie-break).
+
+@prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
+@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/ledger/authority-aggregate/> .
+
+# ==== The owner and the value space ===========================================
+
+ex:authority a fnd:PersistentIdentity ; rdfs:comment "The delegated authority, owner of the aggregate." .
+ex:Authority a owl:Class ; rdfs:comment "The kind of owner this account admits." .
+
+ex:capacity a qnt:ValueSpace ;
+    qnt:spaceKey "ledger-authority-aggregate-capacity" ; qnt:orderKind qnt:TotalOrder ;
+    qnt:densityKind qnt:Discrete ; qnt:spaceHash "ledger-authority-aggregate-capacity-v1" ;
+    qnt:additivity qnt:Extensive ;
+    qnt:hasOperationCapability ex:capacity-sum , ex:capacity-difference .
+ex:capacity-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ; qnt:resultSpace ex:capacity .
+ex:capacity-difference a qnt:OperationCapability ; qnt:operationKind qnt:Difference ; qnt:resultSpace ex:capacity .
+
+ex:q-100 a qnt:Quantity ; qnt:onSpace ex:capacity ; qnt:numericValue "100"^^xsd:decimal .
+
+ex:delegated-aggregate a ldg:AccountDefinition ;
+    ldg:statedAmount ex:q-100 ; ldg:unitOfAccount ex:capacity ;
+    ldg:admitsOwnerKind ex:Authority ; ldg:mergeRule ldg:Proportional ;
+    ldg:roundingMethod ldg:HalfEven ; ldg:residualAllocation ldg:LargestRemainder ;
+    rdfs:comment "100 units of delegated capacity, shared proportionally when oversubscribed." .
+
+# ==== One position, three proposals, one merge record, three postings ========
+
+ex:proposal-1 rdfs:comment "The first proposal, 40 units." .
+ex:proposal-2 rdfs:comment "The second proposal, 40 units." .
+ex:proposal-3 rdfs:comment "The third proposal, 40 units." .
+
+ex:grant-1 a ldg:Grant ;
+    ldg:forProposal ex:proposal-1 ;
+    ldg:requestedValue "40"^^xsd:decimal ; ldg:grantedValue "34"^^xsd:decimal ;
+    ldg:grantedProportion "1/3"^^owl:rational .
+ex:grant-2 a ldg:Grant ;
+    ldg:forProposal ex:proposal-2 ;
+    ldg:requestedValue "40"^^xsd:decimal ; ldg:grantedValue "33"^^xsd:decimal ;
+    ldg:grantedProportion "1/3"^^owl:rational .
+ex:grant-3 a ldg:Grant ;
+    ldg:forProposal ex:proposal-3 ;
+    ldg:requestedValue "40"^^xsd:decimal ; ldg:grantedValue "33"^^xsd:decimal ;
+    ldg:grantedProportion "1/3"^^owl:rational .
+
+ex:merge-1 a ldg:MergeRecord ;
+    ldg:onAccount ex:delegated-aggregate ; ldg:forOwner ex:authority ;
+    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:grant ex:grant-1 , ex:grant-2 , ex:grant-3 .
+
+ex:posting-1 a ldg:Posting ;
+    ldg:onAccount ex:delegated-aggregate ; ldg:forOwner ex:authority ;
+    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:direction ldg:Debit ; ldg:amountValue "34"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:merge-1 , ex:grant-1 .
+ex:posting-2 a ldg:Posting ;
+    ldg:onAccount ex:delegated-aggregate ; ldg:forOwner ex:authority ;
+    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:direction ldg:Debit ; ldg:amountValue "33"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:merge-1 , ex:grant-2 .
+ex:posting-3 a ldg:Posting ;
+    ldg:onAccount ex:delegated-aggregate ; ldg:forOwner ex:authority ;
+    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:direction ldg:Debit ; ldg:amountValue "33"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:merge-1 , ex:grant-3 .
+
+ex:balance-1 a ldg:BalanceRecord ;
+    ldg:onAccount ex:delegated-aggregate ; ldg:forOwner ex:authority ;
+    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:remainingValue "0"^^xsd:decimal ; ldg:availableValue "0"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:merge-1 , ex:posting-1 , ex:posting-2 , ex:posting-3 .

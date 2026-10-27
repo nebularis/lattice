@@ -7,9 +7,9 @@ description: How to design in LATTICE and projects built on it. Use when writing
 
 ## Design first
 
-Before planning code, consult the architecture and the ADRs, and propose an ADR with either a
-design sketch or a detailed entry in `docs/architecture/solution-design-specification.md`. Keep
-these current with every change they cover:
+Ask the knowledge index first, as AGENTS.md's "Asking the knowledge index" says, with every design activity that fits the work, such as solution-design, ontology-design, physical-data-modelling or integration-design, and the phase the design runs in. A design often needs several activities, and `--kind` filters exactly, so leave it off unless only one kind of entry will do. Where it answers weakly, read the documents as before, and report any answer they hold that no register entry does.
+
+Before planning code, find the decisions and architecture sections the change touches, with `find <the change> --kind decision` and `read`, and propose an ADR with either a design sketch or a detailed entry in `docs/architecture/solution-design-specification.md`. Keep these current with every change they cover:
 
 - the root `README.md` (new structure, folders or projects) and each project's `README.md`
 - the ADR catalogue, `docs/architecture/decisions/README.md`
@@ -25,13 +25,18 @@ It imposes no design decision on its users unless correctness needs it. It offer
 where it can, configuration and capabilities that work on the user's chosen settings. A design that
 hard-codes one domain's practice as the only way is wrong at the substrate.
 
+## Standards for a design
+
+- **A class, column, status or classification is added only when some query or check answers differently because of it.** A distinction that changes no answer is one more thing to keep consistent, for nothing.
+- **A fact a query or check compares is a value from a closed set, never free text.** Free text cannot be compared and drifts into variants, as the decisions' status lines drifted into fifteen shapes.
+- **A section, row or definition is referred to by a name that survives an edit, never by its position.** A line number or a column index is right until the next edit, then silently wrong.
+- **A thing is recorded once, however many documents mention it, and every other mention points at that record, but a node is never shared across an aggregate boundary or where concurrent writers would contend for it.** Two records of one thing diverge, as the two copies of the MORK-to-RML compiler did until one was removed. A derived restatement, such as a new version, a projection to a lower layer or a promoted value, is not a second record, since it is derived and never edited.
+
 ## Writing a sketch or a plan
 
-- Re-read the latest version of everything the design touches. Never work from memory, and above
-  all never describe an ontology's behaviour without re-reading it.
+- Re-read the latest version of everything the design touches. `graph:ask -- reaches <ID>` names what an entry touches, and `read <ID>` returns its current text. Never work from memory, and above all never describe an ontology's behaviour without re-reading it.
 - Check each modelling consequence against the ontologies themselves.
-- Check the design against the roadmap: the epic plans, the held design questions, and the slices
-  waiting on this one. A design that works now and makes a roadmap item harder is wrong.
+- Check the design against the roadmap: the epic plans, the held design questions, which `find <the design> --kind pending-decision` returns, and the slices waiting on this one. A design that works now and makes a roadmap item harder is wrong.
 - Say a design decision once, and cross-reference it.
 - A design that depends on how a triple store evaluates SPARQL cites the finding in
   [docs/architecture/triple-store-discovery.md](../../../docs/architecture/triple-store-discovery.md) it rests on, or probes the
@@ -49,13 +54,11 @@ hard-codes one domain's practice as the only way is wrong at the substrate.
    before and after, a timeline of the failure cases (a race, a partial write, a retry), and the options
    side by side. Show them inline when presenting, and put the ones that last into the plan or sketch as
    mermaid, which renders on GitHub. Check every diagram renders before handing off, for example by
-   loading it with mermaid in a browser.
+   loading it with mermaid in a browser. Three rules, each found the hard way. Labels are ASCII only, because non-ASCII punctuation such as an em dash, and HTML entities, fail in some renderers. An edge targets a node, never a subgraph's own container ID, which breaks rendering. In a `classDiagram` a relation is `A --> B : label`, never `A : label --> B`, which silently declares a member instead.
 3. **Each option, then its consequences**, compared on:
    - *design overheads*: is it hard to reason about, easy to model incorrectly, hard to assure or
      govern, or brittle under likely change
-   - *runtime overheads*: does it explode the data, invite inconsistency, block common traversals or
-     processing, or make common operations, such as aggregating or summing a measure, behave in
-     surprising ways
+   - *runtime overheads*: does it explode the data, invite inconsistency, block common traversals or processing, or make common operations, such as aggregating or summing a measure, behave in surprising ways. Where the option writes terms at runtime, compare it on all four drivers of the skill `lattice-ontology-authoring`: defensible history, storage, retrieval and throughput
    - *space and time, quantified*: the order of each cost (triples stored per write, template fills
      or solutions per update, round trips, reads to reconstruct), then a worked example with stated
      numbers in a table. Name where an option's cost crosses another's

@@ -27,7 +27,7 @@ MERIDIAN FBO has a working, executed instance of a pattern that LATTICE needs ge
 
 This note designs the domain-neutral mechanism behind both, sited correctly in the LATTICE stack, and specifies how it later becomes a MORK generative-mapping family. It is a design document: rationale lives here and in the resulting ADR, never in the shipped artefacts.
 
-**Authoring-order constraint.** [ADR-A-C2](../../docs/architecture/decisions/ADR-AC2-clean-room-authoring-procedure.md) applies to everything this design produces on the substrate side. The generic premise (§2) is stated first; two non-domain worked examples (§13) are authored before mechanism prose; the layer README is written from the premise and those examples, **not** paraphrased from MERIDIAN or from this note's §1. MERIDIAN material may be read for sufficiency checking only.
+**Authoring-order constraint.** [ADR-A-C2](../../../docs/architecture/decisions/ADR-A-C2-clean-room-authoring-procedure.md) applies to everything this design produces on the substrate side. The generic premise (§2) is stated first. Two non-domain worked examples (§13) are authored before mechanism prose. The layer README is written from the premise and those examples, **not** paraphrased from MERIDIAN or from this note's §1. MERIDIAN material may be read for sufficiency checking only.
 
 ---
 
@@ -69,7 +69,7 @@ Two operations follow from that premise, and only two:
 
 Everything MERIDIAN's execution profile does is one of these two. So is a generated direct-property surface over Eligibility dimensions, a materialised recurrence-bin table over Quantification, a flattened peril-tree membership index, or a store-native label projection. The mechanism is the same; the surface form differs.
 
-The premise carries one non-negotiable property: **a surface is conservative over the source signature.** Adding it entails nothing new about source terms; removing it loses no authored fact. This is what makes a surface safe to regenerate, safe to discard, and correctly classified as `advisory` or `cached-reproducible` authority under [ADR-A12](../../docs/architecture/decisions/ADR-A12-identity-and-derivation-model.md) — never as a system of record.
+The premise carries one non-negotiable property: **a surface is conservative over the source signature.** Adding it entails nothing new about source terms, and removing it loses no authored fact. This is what makes a surface safe to regenerate, safe to discard, and correctly classified as `advisory` or `cached-reproducible` authority under [ADR-A12](../../../docs/architecture/decisions/ADR-A12-identity-and-derivation-model.md) — never as a system of record.
 
 ---
 

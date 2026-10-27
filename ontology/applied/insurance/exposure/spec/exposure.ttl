@@ -16,9 +16,9 @@
 
 <https://www.nebularis.org/neuro-semantic/insurance/exposure>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/exposure/0.3.0> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/exposure/0.3.1> ;
     rdfs:label "LATTICE asset exposure ontology"@en ;
-    rdfs:comment "Facts about the world a risk sits in: exposure sets, locations, legal entities and control, assets, interests and valuations (AIR-4.1), with zones, attributes, dependencies, losses, requirements, cover and liability arriving in later regions (AIR-4.2 to AIR-4.5). No class here says what a contract insures, which is the contract module's (Phase 5). See the asset exposure ontology sketch." ;
+    rdfs:comment "Facts about the world a risk sits in: exposure sets, locations, legal entities and control, assets, interests and valuations, with zones, attributes, dependencies, losses, requirements, cover and liability in further regions. No class here says what a contract insures, which is the contract module's." ;
     owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ,
                 <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0> ,
                 <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.19.0> ,
@@ -27,9 +27,9 @@
                 <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.19.0> .
 
 #################################################################
-#    Identity classes (AIR-4.1). Each versioned class below has
+#    Identity classes. Each versioned class below has
 #    its own, so a location's or asset's loss history and zone
-#    designations (AIR-4.2 onwards) follow its identity across
+#    designations follow its identity across
 #    exposure set versions, not one schedule snapshot.
 #################################################################
 
@@ -43,7 +43,7 @@ aeo:LocationIdentity a owl:Class ;
     rdfs:subClassOf fnd:PersistentIdentity ;
     rdfs:label "Location identity"@en ;
     rdfs:comment "The identity a location keeps across exposure set versions and address or geometry changes." ;
-    fnd:utility "Give every aeo:Location version fnd:hasIdentity an individual of this class, so its loss history and zone designations (AIR-4.2 onwards) follow it." .
+    fnd:utility "Give every aeo:Location version fnd:hasIdentity an individual of this class, so its loss history and zone designations follow it." .
 
 aeo:AssetIdentity a owl:Class ;
     rdfs:subClassOf fnd:PersistentIdentity ;
@@ -52,7 +52,7 @@ aeo:AssetIdentity a owl:Class ;
     fnd:utility "Give every aeo:Asset version fnd:hasIdentity an individual of this class." .
 
 #################################################################
-#    Exposure set (sketch §5.2)
+#    Exposure set
 #################################################################
 
 aeo:ExposureSet a owl:Class ;
@@ -72,7 +72,7 @@ aeo:hasLocation a owl:ObjectProperty ;
     rdfs:domain aeo:ExposureSet ; rdfs:range aeo:Location ;
     rdfs:label "has location"@en ;
     rdfs:comment "A location belonging to this exposure set version." ;
-    fnd:utility "Subject: an exposure set. Value: one of its locations. Not inverse functional: an unchanged location version is listed by every exposure set version it holds for, shared by identity (TD-49)." .
+    fnd:utility "Subject: an exposure set. Value: one of its locations. Not inverse functional: an unchanged location version is listed by every exposure set version it holds for, shared by identity." .
 
 aeo:hasAsset a owl:ObjectProperty ;
     rdfs:domain aeo:ExposureSet ; rdfs:range aeo:Asset ;
@@ -93,14 +93,14 @@ aeo:hasValuation a owl:ObjectProperty ;
     fnd:utility "Subject: an exposure set. Value: one of its valuations. Not inverse functional, for the same reason as aeo:hasLocation." .
 
 #################################################################
-#    Location (sketch §5.3)
+#    Location
 #################################################################
 
 aeo:Location a owl:Class ;
     rdfs:subClassOf fnd:Version ;
     rdfs:label "Location"@en ;
     rdfs:comment "A place where exposure sits: a site, a building footprint, a pipeline segment, a port." ;
-    fnd:utility "Subject: a location version. A version per change of address or geometry, one identity (aeo:LocationIdentity) across schedules, so loss history and zone designations (AIR-4.2 onwards) follow it." .
+    fnd:utility "Subject: a location version. A version per change of address or geometry, one identity (aeo:LocationIdentity) across schedules, so loss history and zone designations follow it." .
 
 aeo:Address a owl:Class ;
     rdfs:label "Address"@en ;
@@ -133,7 +133,7 @@ aeo:territory a owl:ObjectProperty ;
     fnd:utility "Subject: a location. Value: one or more territory concepts. At least one. Specialises cls:territory (ADR-A98 decision 5)." .
 
 #################################################################
-#    Legal entities and control (sketch §5.1)
+#    Legal entities and control
 #################################################################
 
 aeo:LegalEntity a owl:Class ;
@@ -147,7 +147,7 @@ aeo:industry a owl:ObjectProperty ;
     rdfs:domain aeo:LegalEntity ; rdfs:range skos:Concept ;
     rdfs:label "industry"@en ;
     rdfs:comment "An industry or economic activity of a legal entity." ;
-    fnd:utility "Subject: a legal entity. Value: one or more industry concepts. No primary industry is privileged by this property: a primary industry is an attribute of the entity's assessment (AIR-4.2), not asserted here. Specialises cls:industry." .
+    fnd:utility "Subject: a legal entity. Value: one or more industry concepts. No primary industry is privileged by this property: a primary industry is an attribute of the entity's assessment, not asserted here. Specialises cls:industry." .
 
 aeo:domicile a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:subPropertyOf cls:territory ;
@@ -193,10 +193,10 @@ aeo:controlShare a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:domain aeo:ControlRelation ; rdfs:range qnt:Quantity ;
     rdfs:label "control share"@en ;
     rdfs:comment "The controller's proportionate share of the controlled entity, where stated." ;
-    fnd:utility "Subject: a control relation. Value: a qnt:Quantity on a proportion space. At most one. Not Party's pty:outwardShare/inwardShare (CCS slice C16c removes them): this is an exposure-ontology quantity, not a participation share." .
+    fnd:utility "Subject: a control relation. Value: a qnt:Quantity on a proportion space. At most one. Not Party's pty:outwardShare/inwardShare: this is an exposure-ontology quantity, not a participation share." .
 
 #################################################################
-#    Asset and interest (sketch §5.5)
+#    Asset and interest
 #################################################################
 
 aeo:Asset a owl:Class ;
@@ -212,7 +212,7 @@ aeo:assetClass a owl:ObjectProperty ;
     rdfs:domain aeo:Asset ; rdfs:range skos:Concept ;
     rdfs:label "asset class"@en ;
     rdfs:comment "The kind of asset (building, contents, stock, and others)." ;
-    fnd:utility "Subject: an asset. Value: a concept bound by a reference asset-class scheme (AIR-4.6). Exactly one. Specialises cls:assetClass." .
+    fnd:utility "Subject: an asset. Value: a concept bound by a reference asset-class scheme. Exactly one. Specialises cls:assetClass." .
 
 aeo:locatedAt a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:domain aeo:Asset ; rdfs:range aeo:LocationIdentity ;
@@ -285,7 +285,7 @@ aeo:extent a owl:ObjectProperty, owl:FunctionalProperty ;
     fnd:utility "Subject: an interest. Value: a qnt:Quantity. At most one." .
 
 #################################################################
-#    Valuation (sketch §5.6)
+#    Valuation
 #################################################################
 
 aeo:Valuation a owl:Class ;
@@ -341,7 +341,7 @@ aeo:horizon a owl:ObjectProperty, owl:FunctionalProperty ;
     fnd:utility "Subject: a rate valuation. Value: a qnt:Quantity (a duration). Required alongside aeo:rate." .
 
 #################################################################
-#    Zones and pool participation (AIR-4.2, sketch §5.4)
+#    Zones and pool participation
 #################################################################
 
 aeo:ZoneDesignation a owl:Class ;
@@ -356,7 +356,7 @@ aeo:zoneDesignation a owl:ObjectProperty ;
     rdfs:domain aeo:Location ; rdfs:range aeo:ZoneDesignation ;
     rdfs:label "zone designation"@en ;
     rdfs:comment "A zone designation belonging to this location." ;
-    fnd:utility "Subject: a location. Value: one of its zone designations. Not inverse functional: a designation follows a location's identity, so every version of the location it holds for carries it (TD-49)." .
+    fnd:utility "Subject: a location. Value: one of its zone designations. Not inverse functional: a designation follows a location's identity, so every version of the location it holds for carries it." .
 
 aeo:zone a owl:ObjectProperty ;
     rdfs:domain aeo:ZoneDesignation ; rdfs:range skos:Concept ;
@@ -418,7 +418,7 @@ aeo:poolParticipation a owl:ObjectProperty ;
     rdfs:domain aeo:Location ; rdfs:range aeo:PoolParticipation ;
     rdfs:label "pool participation"@en ;
     rdfs:comment "A pool participation belonging to this location." ;
-    fnd:utility "Subject: a location. Value: one of its pool participations. Not inverse functional: a participation follows a location's identity, so every version of the location it holds for carries it (TD-49)." .
+    fnd:utility "Subject: a location. Value: one of its pool participations. Not inverse functional: a participation follows a location's identity, so every version of the location it holds for carries it." .
 
 aeo:pool a owl:ObjectProperty ;
     rdfs:subPropertyOf icm:pool ;
@@ -432,10 +432,10 @@ aeo:perilScope a owl:ObjectProperty ;
     rdfs:range skos:Concept ;
     rdfs:label "peril scope"@en ;
     rdfs:comment "A peril this pool participation covers at this location." ;
-    fnd:utility "Subject: a pool participation. Value: a cause concept, bound under insurance/common's peril contract. Not functional: several perils may be named. Specialises icm:peril. Declared with no domain (AIR-4.3) because it is reused by peril metrics (AIR-4.3) and existing cover (AIR-4.4) for the same purpose: naming which perils a scope is about." .
+    fnd:utility "Subject: a pool participation. Value: a cause concept, bound under insurance/common's peril contract. Not functional: several perils may be named. Specialises icm:peril. Declared with no domain because it is reused by peril metrics and existing cover for the same purpose: naming which perils a scope is about." .
 
 #################################################################
-#    Assessments and attribute values (AIR-4.2, sketch §5.7, §5.8)
+#    Assessments and attribute values
 #################################################################
 
 aeo:Assessment a owl:Class ;
@@ -482,7 +482,7 @@ aeo:hasAttribute a owl:ObjectProperty ;
     rdfs:domain aeo:Assessment ; rdfs:range aeo:AttributeValue ;
     rdfs:label "has attribute"@en ;
     rdfs:comment "An attribute value belonging to this assessment." ;
-    fnd:utility "Subject: an assessment. Value: one of its attribute values. Not inverse functional: an assessment that restates an unchanged value may share the node (TD-49)." .
+    fnd:utility "Subject: an assessment. Value: one of its attribute values. Not inverse functional: an assessment that restates an unchanged value may share the node." .
 
 aeo:attributeType a owl:ObjectProperty ;
     rdfs:domain aeo:AttributeValue ; rdfs:range skos:Concept ;
@@ -553,7 +553,7 @@ aeo:LegalEntity owl:disjointWith aeo:ExposureSet , aeo:Location , aeo:Asset , ae
     aeo:ZoneDesignation , aeo:PoolParticipation , aeo:Assessment , aeo:AttributeValue .
 
 #################################################################
-#    Dependencies (AIR-4.3, sketch §5.9)
+#    Dependencies
 #################################################################
 
 aeo:Dependency a owl:Class ;
@@ -611,10 +611,10 @@ aeo:hasDependency a owl:ObjectProperty ;
     rdfs:domain aeo:ExposureSet ; rdfs:range aeo:Dependency ;
     rdfs:label "has dependency"@en ;
     rdfs:comment "A dependency listed in this exposure set version." ;
-    fnd:utility "Subject: an exposure set. Value: one of its dependencies. Not inverse functional, for the same reason as aeo:hasLocation (TD-49)." .
+    fnd:utility "Subject: an exposure set. Value: one of its dependencies. Not inverse functional, for the same reason as aeo:hasLocation." .
 
 #################################################################
-#    Peril metrics (AIR-4.3, sketch §5.10)
+#    Peril metrics
 #################################################################
 
 aeo:PerilMetric a owl:Class ;
@@ -699,7 +699,7 @@ aeo:hasPerilMetric a owl:ObjectProperty ;
     rdfs:domain aeo:ExposureSet ; rdfs:range aeo:PerilMetric ;
     rdfs:label "has peril metric"@en ;
     rdfs:comment "A peril metric listed in this exposure set version." ;
-    fnd:utility "Subject: an exposure set. Value: one of its peril metrics. Not inverse functional, for the same reason as aeo:hasLocation (TD-49)." .
+    fnd:utility "Subject: an exposure set. Value: one of its peril metrics. Not inverse functional, for the same reason as aeo:hasLocation." .
 
 aeo:MetricComparison a owl:Class ;
     rdfs:subClassOf fnd:DerivedArtefact , fnd:Evidenced ,
@@ -715,7 +715,7 @@ aeo:comparedMetric a owl:ObjectProperty ;
     fnd:utility "Subject: a metric comparison. Value: a peril metric. At least two." .
 
 #################################################################
-#    Exposure units (AIR-4.3, sketch §5.11)
+#    Exposure units
 #################################################################
 
 aeo:ExposureUnit a owl:Class ;
@@ -755,21 +755,21 @@ aeo:unitValue a owl:ObjectProperty, owl:FunctionalProperty ;
     fnd:utility "Subject: an exposure unit. Value: a money qnt:Quantity. At most one. Omitted, with the derivation reporting it, when the assets' valuations are in several currencies and the graph holds no conversion (a conversion needs a rate and a date)." .
 
 #################################################################
-#    Groupings (AIR-4.3, R9)
+#    Groupings
 #################################################################
 
 aeo:scheduleGroup a owl:ObjectProperty ;
     rdfs:range skos:Concept ;
     rdfs:label "schedule group"@en ;
     rdfs:comment "A group the insured or drafter uses for a location or asset (a division, a portfolio, a location group of the Open Exposure Data schema)." ;
-    fnd:utility "Subject: an aeo:Location or aeo:Asset. Value: a concept bound by aeo-voc:ScheduleGroupContract, a scheme a deployment binds per insured or drafter. Not functional. A coverage requirement's scope (AIR-4.4) can select by group." .
+    fnd:utility "Subject: an aeo:Location or aeo:Asset. Value: a concept bound by aeo-voc:ScheduleGroupContract, a scheme a deployment binds per insured or drafter. Not functional. A coverage requirement's scope can select by group." .
 
 [] a owl:AllDisjointClasses ;
     owl:members ( aeo:ExposureSet aeo:Location aeo:Asset aeo:Interest aeo:Valuation
                   aeo:Dependency aeo:PerilMetric aeo:ExposureUnit aeo:MetricComparison ) .
 
 #################################################################
-#    Loss experience and losses (AIR-4.4, sketch §5.12)
+#    Loss experience and losses
 #################################################################
 
 aeo:LossExperience a owl:Class ;
@@ -810,13 +810,13 @@ aeo:hasLossExperience a owl:ObjectProperty ;
     rdfs:domain aeo:ExposureSet ; rdfs:range aeo:LossExperience ;
     rdfs:label "has loss experience"@en ;
     rdfs:comment "A loss experience listed in this exposure set version." ;
-    fnd:utility "Subject: an exposure set. Value: one of its loss experiences. Not inverse functional, for the same reason as aeo:hasLocation (TD-49)." .
+    fnd:utility "Subject: an exposure set. Value: one of its loss experiences. Not inverse functional, for the same reason as aeo:hasLocation." .
 
 aeo:hasLossRecord a owl:ObjectProperty ;
     rdfs:domain aeo:LossExperience ; rdfs:range aeo:LossRecord ;
     rdfs:label "has loss record"@en ;
     rdfs:comment "A loss record in this loss experience." ;
-    fnd:utility "Subject: a loss experience. Value: one of its loss records. Not inverse functional (TD-49): a later experience from the same source may list a record unchanged." .
+    fnd:utility "Subject: a loss experience. Value: one of its loss records. Not inverse functional: a later experience from the same source may list a record unchanged." .
 
 aeo:LossRecord a owl:Class ;
     rdfs:subClassOf fnd:Evidenced , fnd:NaturallyKeyed ,
@@ -971,7 +971,7 @@ aeo:defaultedProperty a owl:ObjectProperty ;
     fnd:utility "Subject: a defaulted characteristic. Value: aeo:effectiveAgency or aeo:effectiveMechanism. Exactly one." .
 
 #################################################################
-#    Coverage requirements (AIR-4.4, sketch §5.13)
+#    Coverage requirements
 #################################################################
 
 aeo:RequirementIdentity a owl:Class ;
@@ -1013,13 +1013,13 @@ aeo:requirementScope a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:domain aeo:CoverageRequirement ; rdfs:range elg:AdmissionProfile ;
     rdfs:label "requirement scope"@en ;
     rdfs:comment "The exposure the requirement applies to, as an Eligibility admission profile over exposure units." ;
-    fnd:utility "Subject: a coverage requirement. Value: an elg:AdmissionProfile whose conditions are bound to subject class aeo:ExposureUnit (AIR-4.3), so the scope is evaluated over units computed for the perils it names. At most one. Absent says the requirement applies to the whole schedule." .
+    fnd:utility "Subject: a coverage requirement. Value: an elg:AdmissionProfile whose conditions are bound to subject class aeo:ExposureUnit, so the scope is evaluated over units computed for the perils it names. At most one. Absent says the requirement applies to the whole schedule." .
 
 aeo:owedTo a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:domain aeo:CoverageRequirement ; rdfs:range pty:RoleOccupancy ;
     rdfs:label "owed to"@en ;
     rdfs:comment "Who the requirement is owed to, as an occupancy of a role (a lender as mortgagee, for example)." ;
-    fnd:utility "Subject: a coverage requirement. Value: a pty:RoleOccupancy. At most one. Names the obligee until Phase 5 links a requirement to the obligation it arises from." .
+    fnd:utility "Subject: a coverage requirement. Value: a pty:RoleOccupancy. At most one. Names the obligee until the contract module links a requirement to the obligation it arises from." .
 
 aeo:MeasureConstraint a owl:Class ;
     rdfs:subClassOf
@@ -1065,10 +1065,10 @@ aeo:hasRequirement a owl:ObjectProperty ;
     rdfs:domain aeo:ExposureSet ; rdfs:range aeo:CoverageRequirement ;
     rdfs:label "has requirement"@en ;
     rdfs:comment "A coverage requirement listed in this exposure set version." ;
-    fnd:utility "Subject: an exposure set. Value: one of its coverage requirements. Not inverse functional, for the same reason as aeo:hasLocation (TD-49)." .
+    fnd:utility "Subject: an exposure set. Value: one of its coverage requirements. Not inverse functional, for the same reason as aeo:hasLocation." .
 
 #################################################################
-#    Existing cover and cover history (AIR-4.4, sketch §5.14)
+#    Existing cover and cover history
 #################################################################
 
 aeo:ExistingCover a owl:Class ;
@@ -1128,7 +1128,7 @@ aeo:hasExistingCover a owl:ObjectProperty ;
     rdfs:domain aeo:ExposureSet ; rdfs:range aeo:ExistingCover ;
     rdfs:label "has existing cover"@en ;
     rdfs:comment "An existing cover listed in this exposure set version." ;
-    fnd:utility "Subject: an exposure set. Value: one of its existing covers. Not inverse functional, for the same reason as aeo:hasLocation (TD-49)." .
+    fnd:utility "Subject: an exposure set. Value: one of its existing covers. Not inverse functional, for the same reason as aeo:hasLocation." .
 
 aeo:CoverHistoryEvent a owl:Class ;
     rdfs:subClassOf fnd:Evidenced ,
@@ -1168,10 +1168,10 @@ aeo:hasCoverHistoryEvent a owl:ObjectProperty ;
     rdfs:domain aeo:ExposureSet ; rdfs:range aeo:CoverHistoryEvent ;
     rdfs:label "has cover history event"@en ;
     rdfs:comment "A cover history event listed in this exposure set version." ;
-    fnd:utility "Subject: an exposure set. Value: one of its cover history events. Not inverse functional, for the same reason as aeo:hasLocation (TD-49)." .
+    fnd:utility "Subject: an exposure set. Value: one of its cover history events. Not inverse functional, for the same reason as aeo:hasLocation." .
 
 #################################################################
-#    Financial metrics (AIR-4.4, sketch §5.14)
+#    Financial metrics
 #################################################################
 
 aeo:FinancialMetric a owl:Class ;
@@ -1219,7 +1219,7 @@ aeo:hasFinancialMetric a owl:ObjectProperty ;
     rdfs:domain aeo:ExposureSet ; rdfs:range aeo:FinancialMetric ;
     rdfs:label "has financial metric"@en ;
     rdfs:comment "A financial metric listed in this exposure set version." ;
-    fnd:utility "Subject: an exposure set. Value: one of its financial metrics. Not inverse functional, for the same reason as aeo:hasLocation (TD-49)." .
+    fnd:utility "Subject: an exposure set. Value: one of its financial metrics. Not inverse functional, for the same reason as aeo:hasLocation." .
 
 [] a owl:AllDisjointClasses ;
     owl:members ( aeo:ExposureSet aeo:Location aeo:Asset aeo:Interest aeo:Valuation

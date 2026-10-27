@@ -15,7 +15,7 @@ PYTHONUNBUFFERED = "1"
 
 [tasks.bootstrap]
 description = "Install configured toolchains and dependency sets, and the git hooks"
-depends = ["bootstrap:python", "bootstrap:frontend", "bootstrap:hooks"]
+depends = ["bootstrap:python", "bootstrap:frontend", "bootstrap:hooks", "bootstrap:knowledge"]
 
 # The git hooks (ADR-A133). Warns, never fails, where a hook it did not write is already present.
 [tasks."bootstrap:hooks"]
@@ -29,7 +29,15 @@ run = "python tools/hooks.py install --bootstrap"
 [tasks."bootstrap:python"]
 description = "Install every Python package of the repository into this checkout's .venv in one resolve"
 depends = ["bootstrap:pip"]
-run = "python -m pip install -c requirements-lock.txt \".[reasoning,test]\" -e \"./workers[test,authoring]\" -e ./tools/mork -e \"./tools/mork_compilers[test]\" -e ./tools/surface -e ./packages/persistence/python -e \"./tools/persistence[test]\" -e \"./tools/vocabulary[test]\" -e \"./tools/reference/eligibility[test]\" -e \"./packages/minting/python[test]\" -e \"./tools/testing/oxigraph[test]\" -e \"./tools/testing/mem_check[test]\""
+run = "python -m pip install -c requirements-lock.txt \".[reasoning,test,knowledge]\" -e \"./workers[test,authoring]\" -e ./tools/mork -e \"./tools/mork_compilers[test]\" -e ./tools/surface -e ./packages/persistence/python -e \"./tools/persistence[test]\" -e \"./tools/vocabulary[test]\" -e \"./tools/reference/eligibility[test]\" -e \"./packages/minting/python[test]\" -e \"./tools/testing/oxigraph[test]\" -e \"./tools/testing/mem_check[test]\""
+
+# The knowledge index, after the packages it needs (ADR-A134 decision 13). The first build fetches
+# the embedding model, and where that is blocked it notes why and still builds, so bootstrap never
+# fails on it.
+[tasks."bootstrap:knowledge"]
+description = "Build the knowledge index, fetching its embedding model on first run (ADR-A134)"
+depends = ["bootstrap:python"]
+run = "python tools/knowledge/extract.py --quiet"
 
 # A virtual environment that mise creates with uv has no pip. This puts one in, and does nothing
 # where pip is already there.
@@ -98,7 +106,7 @@ run = "corepack enable && yarn install --immutable"
 
 [tasks.check]
 description = "Run all repository validation tasks"
-depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:reasoning-isolation", "check:minting", "check:persistence-library", "check:formal-freshness", "check:catalogue", "check:agent-guidance", "build:mtp", "check:mtp", "check:authoring-tools", "check:published-decisions", "check:site-sections", "check:hooks"]
+depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:mork", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:reasoning-isolation", "check:minting", "check:persistence-library", "check:formal-freshness", "check:catalogue", "check:identifiers", "check:knowledge", "check:agent-guidance", "build:mtp", "check:mtp", "check:authoring-tools", "check:published-decisions", "check:site-sections", "check:hooks"]
 
 [tasks.test]
 description = "Run the repository test suites"
@@ -167,6 +175,10 @@ run = "python contracts/identity/verify-anchors.py"
 depends = ["bootstrap:pip"]
 description = "Install the standalone Python minting library (ADR-A84) with its test extra"
 run = "python -m pip install -e \"./packages/minting/python[test]\""
+
+[tasks."check:mork"]
+description = "Run the MORK tooling's tests under tools/mork/src, the compiler agent's among them"
+run = "python -m pytest tools/mork/src -q"
 
 [tasks."check:minting-python"]
 description = "Run the Python minting library against the anchors, the generated vectors and the Unicode 16.0 cross-checks"
@@ -273,6 +285,11 @@ depends = ["bootstrap:testing-oxigraph"]
 description = "Measure the forms of a SHACL-SPARQL constraint query on rdflib and Oxigraph (ADR-A124, ADR-A128). Run on demand, not part of check. Fails on a wrong result, never on time. SPARQL_COST_QUICK=1 runs the smallest sizes"
 run = "python -m pytest benchmark/sparql-constraint-query-cost -q -p no:cacheprovider && python benchmark/sparql-constraint-query-cost/check.py"
 
+[tasks."check:ledger-posting-cost"]
+depends = ["bootstrap:testing-oxigraph"]
+description = "Measure the storage and read cost of recording a draw at every level of an account tree, at the drawn account only, and with checkpoints, on Oxigraph (ADR-A124). Run on demand, not part of check. Fails on a wrong balance or count, never on time. LEDGER_COST_MAX caps the events, LEDGER_COST_QUICK=1 runs the smallest size"
+run = "python -m pytest benchmark/ledger-posting-cost -q -p no:cacheprovider && python benchmark/ledger-posting-cost/check.py"
+
 [tasks."check:vocabulary"]
 description = "Run the Vocabulary scoped/temporal binding conformance package (SHACL fixtures, resolver, determinism, consumer boundary; ADR-A85)"
 run = "python -m pytest tools/vocabulary/tests -q"
@@ -316,6 +333,22 @@ run = "python tools/site_sections.py check && python -m pytest tools/test_site_s
 [tasks."check:catalogue"]
 description = "Check the repository catalogue against the tree: every listed module's entry, roles and extracted files, every module on disk listed, the roots, documentation areas and tool packages declared, and the bypass scan of tools (ADR-A121)"
 run = "python tools/lattice_repo_catalogue.py check"
+
+[tasks."check:identifiers"]
+description = "Check every stable identifier a working document mentions resolves to a definition: decisions by filename, register entries by row, with tools/knowledge/identifier-exceptions.txt as the baseline"
+run = "python tools/knowledge/identifiers.py && python -m pytest tools/knowledge/test_identifiers.py -q"
+
+[tasks."build:knowledge"]
+description = "Derive the knowledge index from the working documents and ontologies into .build/knowledge (ADR-A134). Never committed, rebuilt in about two seconds"
+run = "python tools/knowledge/extract.py"
+
+[tasks."graph:ask"]
+description = "Ask the knowledge index a question: find <words> [--kind --phase --audience], read <id>, node <id>, reaches <id>, exists <text>, or sparql <query>. Opens the store read-only and exits, with no resident process (TSD-38)"
+run = "python tools/knowledge/ask.py"
+
+[tasks."check:knowledge"]
+description = "Check the knowledge index: the T-Box honours ADR-A134, every facet tag is a value of its scheme, and the extractor derives every node with a claim and a pointer from the real corpus, including the gerund-to-noun bridge the index exists for"
+run = "python -m pytest tools/knowledge/test_vocabulary.py tools/knowledge/test_quanta.py tools/knowledge/test_extract.py tools/knowledge/test_embed.py tools/knowledge/test_facets.py -q"
 
 [tasks."check:agent-guidance"]
 description = "Check AGENTS.md's Where things are table is current, Copilot's file matches AGENTS.md, every skill is well formed and listed, the plugin marketplace is right, and every link resolves (ADR-A117)"
@@ -369,6 +402,10 @@ run = "python tools/ontology_catalog.py write"
 description = "Run every check an ontology change needs, one line each, failures in red with their failing tests, full logs in .build/full-sweep. Versions are compared with main, or pass -- --base-ref REF"
 run = "python tools/full_sweep.py"
 
+[tasks."dev:guardrail-scan"]
+description = "Report the lines under platform, workers, packages and apps that may join a string into SPARQL (PRI-55) or read the wall clock (PRI-56). Report only, it never fails: mise run dev:guardrail-scan [-- --tests] (TD-85)"
+run = "python tools/guardrail_scan.py"
+
 [tasks."dev:time-ontology-tests"]
 description = "Profile check:ontology-catalog as one real run, slowest files and tests first, or with -- --per-file one process per file to find a hung file (python-test-melting, TM0)"
 run = "python tools/time_ontology_tests.py"
@@ -383,7 +420,7 @@ run = "python tools/validation_replay.py replay"
 
 [tasks."check:ontology-catalog"]
 description = "Run the ontology tool tests (catalog, versioning, Eligibility examples, PROV-O alignment, Wording, Behaviour split, Instrument with its regimes and terms in time), then fail when a catalog drifts, an import does not resolve, or a known defect is fixed but still listed (ADR-A88). Parallelised by test with --dist worksteal (python-test-melting, TM7): the shared, cached graphs in tools/conftest.py are per-worker-process, not global, so each worker parses what it needs. Measured on two machines, worksteal was 9 to 11 percent faster than the per-file --dist loadfile it replaces, because the largest file no longer sets a floor on the run. PYTEST_XDIST_AUTO_NUM_WORKERS sets what auto means, e.g. on a machine whose efficiency cores add nothing. tools/test_peril_vocabulary.py is included again (TD-45): under test-level distribution it adds about 22s on four cores, and no longer sets a floor on the run. `mise run check:peril-vocabulary` still runs it alone"
-run = "python -m pytest tools/test_applied_shared_contracts.py tools/test_eligibility_examples.py tools/test_exposure_ontology.py tools/test_lattice_repo_catalogue.py tools/test_literate_extract.py tools/test_literate_grammar.py tools/test_literate_migration_check.py tools/test_mork_order_relations.py tools/test_ontology_catalog.py tools/test_ontology_releases.py tools/test_ontology_version_check.py tools/test_peril_intensity.py tools/test_peril_vocabulary.py tools/test_provenance_alignment.py tools/test_reasoning_isolation.py tools/test_substrate_extensions.py tools/test_wording.py tools/test_behaviour_split.py tools/test_import_guard.py tools/test_behaviour_records.py tools/test_behaviour_nested.py tools/test_keys.py tools/test_instrument.py tools/test_regimes.py tools/test_terms_in_time.py tools/test_constitutive_terms.py tools/test_parameter_bindings.py tools/test_amendments.py tools/test_graph_cache.py tools/test_repo_files.py tools/test_environment_banner.py tools/test_reasoning_stalled_import.py tools/test_reasoning_jvm_options.py tools/test_reasoning_server.py tools/test_additivity.py tools/test_legal_acts.py tools/test_full_sweep.py tools/test_python_requirements.py tools/test_closures.py tools/test_validation_replay.py -q -n auto --dist worksteal && python tools/ontology_catalog.py check"
+run = "python -m pytest tools/test_applied_shared_contracts.py tools/test_eligibility_examples.py tools/test_exposure_ontology.py tools/test_lattice_repo_catalogue.py tools/test_literate_extract.py tools/test_literate_grammar.py tools/test_literate_migration_check.py tools/test_mork_order_relations.py tools/test_ontology_catalog.py tools/test_ontology_releases.py tools/test_ontology_version_check.py tools/test_peril_intensity.py tools/test_peril_vocabulary.py tools/test_provenance_alignment.py tools/test_reasoning_isolation.py tools/test_substrate_extensions.py tools/test_wording.py tools/test_behaviour_split.py tools/test_import_guard.py tools/test_behaviour_records.py tools/test_behaviour_nested.py tools/test_keys.py tools/test_instrument.py tools/test_regimes.py tools/test_terms_in_time.py tools/test_constitutive_terms.py tools/test_parameter_bindings.py tools/test_amendments.py tools/test_graph_cache.py tools/test_repo_files.py tools/test_environment_banner.py tools/test_reasoning_stalled_import.py tools/test_reasoning_jvm_options.py tools/test_reasoning_server.py tools/test_additivity.py tools/test_legal_acts.py tools/test_full_sweep.py tools/test_python_requirements.py tools/test_closures.py tools/test_validation_replay.py tools/test_ledger.py tools/test_structural_standards.py tools/test_guardrail_scan.py -q -n auto --dist worksteal && python tools/ontology_catalog.py check"
 
 [tasks."check:peril-vocabulary"]
 description = "tools/test_peril_vocabulary.py alone (TD-45), spread over workers by test. It is part of check:ontology-catalog, so this is only for running it by itself"

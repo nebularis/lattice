@@ -5,6 +5,7 @@
 **Status:** Proposed
 **Date:** 2026-09-23
 **Related:** Architecture Review Addendum 1 (§A1.1–A1.6, G-28, G-35, G-34), ADR-A75, ADR-A48, `data-architecture.md`, `ontology-architecture.md`
+**Unit:** [`phase-0`](../../developer/plans/phase-0-plan.md)
 **Drafted in:** P0.1.1. Pending ratification — see [phase-0-status.md](../../developer/status/phase-0-status.md).
 
 ## Context

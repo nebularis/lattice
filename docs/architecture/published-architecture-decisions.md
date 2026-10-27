@@ -27,4 +27,5 @@ Do not edit it by hand.
 | [A123](decisions/ADR-A123-typed-operation-ir.md) | A typed operation IR for the persistence compiler | 2026-10-20 | [Persistence](../../ontology/persistence/README.md) |
 | [A126](decisions/ADR-A126-literate-specification-layout-and-grammar.md) | Literate specification layout and grammar | 2026-10-19 | [Literate specifications](literate-specifications.md) |
 | [A129](decisions/ADR-A129-one-release-for-the-substrate.md) | One release for the substrate and standalone ontologies | 2026-10-20 | [Ontology versioning policy](ontology-versioning-policy.md) |
+| [A131](decisions/ADR-A131-ledger-layer.md) | Ledger, a substrate layer for amounts consumed and restored over time | 2026-10-26 | [Ledger](../../ontology/ledger/README.md) |
 | [A132](decisions/ADR-A132-persistence-caller-library.md) | A caller library for the generated persistence operations | 2026-10-20 | [the persistence caller library](../../packages/persistence/python/README.md) |

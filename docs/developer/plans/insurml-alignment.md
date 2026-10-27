@@ -188,7 +188,7 @@ profile when InsurML publishes an edition.
 | [Evaluation context](../sketches/evaluation-context.md) | ledgers | limits and excesses name the words each ledger account is read from |
 | Platform phases 2 and 3 | ingestion and operation planes | artefact realm for component files, workers for lifts and assembly |
 | Open CBAA, Open DARE | `wim:` removal, the proof of concept | Open CBAA imports the profile. The DOCX route becomes DOCX to InsurML to Wording, and the add-in writes InsurML |
-| [Technical debt](technical-debt.md) | none new | Wording's `sh:prefixes` departs from house style but is valid SHACL. It is aligned with phase 3's Wording change |
+| [Technical debt](../technical-debt.md) | none new | Wording's `sh:prefixes` departs from house style but is valid SHACL. It is aligned with phase 3's Wording change |
 
 ## 7. Decisions
 

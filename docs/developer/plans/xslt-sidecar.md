@@ -35,7 +35,7 @@ library and a standalone sidecar process, turns that known shape into documents,
 on the way out (egress), and turns external, non-OWL XML into the triples the persistence tier
 recognises on the way in (ingress), using kits any conformant XSLT processor can run without our
 code. A MORK compiler backend compiles a mapping graph into an ingress kit's stylesheet, the same
-way `tools/mork2rml.py` already compiles one into RML.
+way `tools/mork/src/mork2rml.py` already compiles one into RML.
 
 The unit is accepted when:
 
@@ -49,9 +49,9 @@ The unit is accepted when:
    §9)
 4. a MORK-compiled ingress kit, built from a mapping graph for the same external schema, produces
    the same triples as the hand-written kit for the same input (sketch §7.2)
-5. `tools/mork2rml.py`'s existing tests still pass, unchanged, after its DAG-walking logic is shared
+5. `tools/mork/src/mork2rml.py`'s existing tests still pass, unchanged, after its DAG-walking logic is shared
    with the new backend (sketch §7.1, XS-D5)
-6. `mise run check:java`, and whichever Python checks touch `tools/mork2rml.py`'s factored module,
+6. `mise run check:java`, and whichever Python checks touch `tools/mork/src/mork2rml.py`'s factored module,
    pass with no existing test weakened
 
 ---
@@ -77,7 +77,7 @@ The unit is accepted when:
 | `platform/semantic-xml-egress` | the core Java library, both directions (named for the egress sketch's own module, extended rather than renamed) |
 | `platform/xslt-sidecar` (new module) | the standalone HTTP process wrapping the library |
 | `contracts/xml/` (new) | published kits, egress and ingress, manifest-distinguished |
-| `tools/mork2rml.py` and a new shared module beside it | the factored DAG walk (XS-D5) |
+| `tools/mork/src/mork2rml.py` and a new shared module beside it | the factored DAG walk (XS-D5) |
 | `tools/mork2xslt.py` (new) | the new compiler backend |
 
 ### 2.3 Branch and commits
@@ -105,7 +105,7 @@ precondition line names are recorded.
 | XS2 | First kit, grounded in a compiled profile | `platform/semantic-xml-egress`, `contracts/xml/` | XS-D3, XS-D6 | `mise run check:xslt-sidecar` | 500k |
 | XS3 | The standalone sidecar process | `platform/xslt-sidecar` (new) | XS-D1, XS-D2 | `mise run check:xslt-sidecar-service` | 350k |
 | XS4 | Ingress direction, hand-written kit | `platform/semantic-xml-egress`, `contracts/xml/` | XS-D4, XS-D6 | `mise run check:xslt-sidecar` | 400k |
-| XS5 | MORK-to-XSLT compiler | `tools/mork2rml.py` (refactored), `tools/mork2xslt.py` (new) | XS-D5, XS-D6 | `mise run check:mork-xslt` | 450k |
+| XS5 | MORK-to-XSLT compiler | `tools/mork/src/mork2rml.py` (refactored), `tools/mork2xslt.py` (new) | XS-D5, XS-D6 | `mise run check:mork-xslt` | 450k |
 | XS6 | Documentation and close-out | docs only | none | `mise run check:xslt-sidecar` and the XS6 checks | 150k |
 
 Total about 2.31M tokens. Record the actual per slice in the status record.
@@ -139,7 +139,7 @@ As the word authoring POC's own WA0, adapted:
 | P1 | clean tree, branch, identity | empty `git status --short`, branch and identity set |
 | P2 | Java baseline | `mise run check:java` is BUILD SUCCESS |
 | P3 | Saxon-HE resolves from the configured Maven mirror, at the version the sketch's §7.1 names | `mvn dependency:get` exits 0 |
-| P4 | `tools/mork2rml.py`'s existing tests pass today, before any refactor | the current test command exits 0, recorded as the XS5 regression baseline |
+| P4 | `tools/mork/src/mork2rml.py`'s existing tests pass today, before any refactor | the current test command exits 0, recorded as the XS5 regression baseline |
 | P5 | `persistence instantiate` runs against a real example and produces `.rq` files | exits 0, at least one file produced |
 | P6 | the reasoning isolation check does not already flag anything Saxon-related | `tools/reasoning_isolation_check.py` still passes once a Saxon dependency is added in a throwaway spike, then reverted |
 
@@ -244,7 +244,7 @@ same kit run in a bare Saxon CLI).
 
 **Preconditions:** XS4 committed. Decision XS-D5 recorded.
 
-**Paths:** `tools/mork2rml.py` (refactored in place), a new shared module (exact name decided in the
+**Paths:** `tools/mork/src/mork2rml.py` (refactored in place), a new shared module (exact name decided in the
 slice, once XS-D5 is recorded), `tools/mork2xslt.py` (new).
 
 First, factor `mork2rml.py`'s DAG-walking and case-analysis logic (its own Definition 10.7) into a
@@ -260,7 +260,7 @@ acceptance criterion the sketch's §7.2 names directly. The generated stylesheet
 the portability check (XS1) and the third-party reproduction test (XS4), since a generated kit is
 published exactly as a hand-written one is (sketch §6.2).
 
-**Docs:** `tools/mork2rml.py`'s own module docstring updated to note the shared module and its
+**Docs:** `tools/mork/src/mork2rml.py`'s own module docstring updated to note the shared module and its
 sibling. A new `tools/mork2xslt.py` docstring matching its style.
 
 ---

@@ -72,7 +72,7 @@ def _emit(graph: Graph, out: Optional[str]) -> None:
         graph.bind(prefix, namespace)
     text = graph.serialize(format="turtle")
     if out:
-        Path(out).write_text(text, encoding="utf-8")
+        Path(out).write_text(text, encoding="utf-8", newline="\n")
     else:
         print(text)
 

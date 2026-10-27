@@ -5,6 +5,8 @@ description: Diagnosing and speeding up a slow test suite, and writing or extend
 
 # Testing in LATTICE
 
+Ask the knowledge index first, as AGENTS.md's "Asking the knowledge index" says, with `mise run graph:ask -- find <the task in your own words>` and every facet value that fits the task at hand, then `read` each entry that answers. This skill's tasks span the activities testing and its kinds, such as unit-testing, regression-testing, conformance-testing and performance-testing, with performance-tuning and scenario-and-test-data, and a task often needs several of them, named together and separated by commas. `--activity`, `--quality` and `--tech` raise matching entries and hide none, while `--kind` filters exactly, so leave `--kind` off unless only one kind of entry will do. The index finds the rules this skill does not mention, and the entries related to the ones it does.
+
 Grounded in the `python-test-melting` unit (2026-10-09), which took the ontology test suite from
 456s serial to about 124s under `pytest-xdist`, with zero change to any test's meaning. Full
 detail: [the plan](../../../docs/developer/plans/python-test-melting.md) and
@@ -20,6 +22,7 @@ description.
   directories per test, no file written in the tree.
 - **Sized to the memory available.** The suite's `conftest.py` answers `pytest_xdist_auto_num_workers` with `mem_check` (below), from
   its own measured peak per worker, and `PYTEST_XDIST_AUTO_NUM_WORKERS` still overrides it.
+- **Paths from the catalogue.** A test finds a module's examples, a register or the root through the catalogue reader, as skill `lattice-toolchain`'s Finding paths shows (STD-273), never from `__file__` or a written path. The catalogue's scan does not read tests yet (TD-54), so a reviewer holds this.
 - **Parse once, copy, never share a mutable graph.** Session-scoped fixtures parse a document once per process, and a test that
   changes a graph changes a copy. `_sparql_translated_once` (H1) parses and translates each query text once. A pure function that
   parses SPARQL is memoised on its input and returns a fresh value.
@@ -32,6 +35,7 @@ description.
   time (ADR-A124).
 - **Measured before and after.** A change made for speed records the wall time, the worker count and the peak memory, and keeps every
   assertion, as the next section says.
+- **A new check is seen to fail before it is relied on.** Break what it checks, watch it fail, then restore it. A check that has never failed may be checking nothing.
 
 ## Memory: `mem_check`
 
@@ -180,19 +184,9 @@ working unchanged: this assigns onto the module's own namespace, so a bare `MODE
   on it**, so a pattern using `\b` can pass on one platform while finding nothing real on another.
   Use `([^A-Za-z0-9_]|$)` instead, which means the same thing on every platform.
 
-`tools/conftest.py`'s `repo_files(roots, pattern, *, fixed=False, repo_root=ROOT)` replaces a
-`git grep` subprocess call: it walks the tree directly (so it also works in a source archive, with
-no `.git`), reads every file as UTF-8 explicitly, and matches line by line the way `git grep` does
-(so `^`/`$` anchor one line, not the whole file).
+`tools/conftest.py`'s `repo_files(roots, pattern, *, fixed=False, repo_root=ROOT)` replaces a `git grep` subprocess call: it lists files with `git ls-files` (tracked, and untracked but not ignored, so a file just written is scanned and an ignored directory never is), reads every file as UTF-8 explicitly, and matches line by line the way `git grep` does (so `^`/`$` anchor one line, not the whole file). In a checkout with no `.git` it raises, since a scan there cannot tell an ignored file from a tracked one.
 
-**The one real cost of walking the tree instead of asking git**: it sees *untracked* files too,
-which `git grep` would not. This bit the roll-out for real: a new test fixture file
-(`test_repo_files.py`) contained the literal string `"ins:Element"` as test data for exercising the
-pattern matcher itself, and a retired-term scan over `tools/` picked it up as a false positive.
-Fixed the same way the suite already handled its own `RETIRED`-constant test file: add the new file
-to the scan's own allow-list. If this keeps happening, it is a sign the roots are too broad, not
-that the approach is wrong (skip a named list of build/dependency directories; `.git`, `__pycache__`,
-`node_modules`, `.venv`, `.build`, `build`, `dist`, `target`, `.pytest_cache`, and similar).
+**The one real cost of including untracked files**: it sees them too, which `git grep` would not. This bit the roll-out for real: a new test fixture file (`test_repo_files.py`) contained the literal string `"ins:Element"` as test data for exercising the pattern matcher itself, and a retired-term scan over `tools/` picked it up as a false positive. Fixed the same way the suite already handled its own `RETIRED`-constant test file: add the new file to the scan's own allow-list. If this keeps happening, it is a sign the roots are too broad, not that the approach is wrong (skip a named list of build and dependency directories, namely `.git`, `__pycache__`, `node_modules`, `.venv`, `.build`, `build`, `dist`, `target`, `.pytest_cache`, and similar).
 
 ## Writing a new SHACL-validating test
 

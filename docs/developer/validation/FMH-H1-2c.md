@@ -123,7 +123,7 @@ observes both on every fixture. This is data for H4 (review §7.3, V2), not a pa
   `shape-WeakEtagCasWarningShape.ttl` and `ok-ShapeScopeShape.ttl` are the two with a story.
 - `tools/persistence/src/persistence/witness.py`: `observe_shapes` and `_focus_nodes`.
 - `tools/persistence/tests/test_known_defects.py`, and TD-23, TD-24 and TD-25 in
-  `docs/developer/plans/technical-debt.md`.
+  `docs/developer/technical-debt.md`.
 - `python -m persistence witness --verbose`.
 
 ## Deliberate non-coverage

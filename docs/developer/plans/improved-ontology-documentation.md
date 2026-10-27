@@ -53,7 +53,7 @@ Decided by the maintainer on 2026-10-15 and 2026-10-16. The status record's log 
 | OD-D18 | Generated Turtle is sorted by subject, then by a fixed predicate order |
 | OD-D19 | Sections are found by title. A numeral that differs from the layout is a warning, printed in yellow. An empty subsection keeps its heading and says "None." |
 | OD-D20 | The shared conventions live in `docs/architecture/literate-specifications.md`, which every README's section 3 and the tool documents link to |
-| OD-D21 | User-facing documents (READMEs, generated Turtle, user guides) never refer to developer documents (sketches, plans, status records, review requests, Validation Packs) and cite only published ADRs. An agent rule in AGENTS.md and ADR A127 state it |
+| OD-D21 | User-facing documents (READMEs, generated Turtle, user guides) never refer to developer documents (sketches, plans, status records, review requests, Validation Packs) and cite only published ADRs. An agent rule in AGENTS.md and ADR-A127 state it |
 | OD-D22 | Narrative sections draw on published ADRs, the architecture documents and the layers' own docs. Content moves, and the old place keeps a link |
 | OD-D23 | Migration order: Eligibility (the pilot), Vocabulary (with its TD-16 reconciliation), Quantification, Surface, Behaviour, Wording, then Foundation and Party after their part of TD-16. TD-20 runs when convenient, since a migrated README states each term once |
 | RC-Q1, Q2 | Option C, TOML read with `tomllib` |

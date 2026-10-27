@@ -124,7 +124,7 @@ def instantiate_to_directory(compiled_profile: Graph, out_dir: Path) -> list[Pat
         target_dir.mkdir(parents=True, exist_ok=True)
         for operation_name, text in rendered.items():
             path = target_dir / f"{operation_name.replace(':', '_').replace('/', '_')}.rq"
-            path.write_text(text, encoding="utf-8")
+            path.write_text(text, encoding="utf-8", newline="\n")
             written.append(path)
     return written
 

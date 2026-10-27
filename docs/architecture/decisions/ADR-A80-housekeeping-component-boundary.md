@@ -37,5 +37,7 @@ These jobs need to know *what* to check per target (its receipt model, retention
 
 ## Provenance
 
+**Unit:** [`persistence-profile-substrate`](../../developer/sketches/persistence-profile-substrate.md) (sketch)
+
 The open design question of decision 3 is recorded in the [platform development plan](../../developer/plans/lattice-platform-agentic-development-v0.2.md), Part 13. The store SPI is proposed decision A75. Published
 2026-10-20.

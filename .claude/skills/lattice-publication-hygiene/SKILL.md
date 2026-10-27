@@ -5,6 +5,8 @@ description: What may and may not be published from LATTICE and projects built o
 
 # Publication hygiene
 
+Ask the knowledge index first, as AGENTS.md's "Asking the knowledge index" says, with `mise run graph:ask -- find <the task in your own words>` and every facet value that fits the task at hand, then `read` each entry that answers. This skill's tasks span the activities documentation, licensing-and-ip, secrets-management and privacy-engineering, with the qualities confidentiality and privacy, and a task often needs several of them, named together and separated by commas. `--activity`, `--quality` and `--tech` raise matching entries and hide none, while `--kind` filters exactly, so leave `--kind` off unless only one kind of entry will do. The index finds the rules this skill does not mention, and the entries related to the ones it does.
+
 LATTICE's repository is public, and so is everything it publishes. Anything committed stays in its
 history, so the time to catch a problem is before the commit.
 
@@ -27,6 +29,29 @@ history, so the time to catch a problem is before the commit.
 - **Generated content drifts toward the domains a model has seen most.** Check AI-drafted
   examples for it, as [GENAI_CONTRIBUTION.md](https://github.com/nebularis/lattice/blob/main/GENAI_CONTRIBUTION.md) §3 asks.
 - **Placeholder IRIs use `example.org`**, never a real organisation's domain.
+
+## Delivery identifiers stay in working documents
+
+How work was planned and delivered is not part of what a layer means. Production text never names it.
+Production text is everything under `ontology/` (READMEs, the documents generated from them, shapes,
+examples and the comments in them), the site's pages, and published ADRs outside their Provenance
+section (ADR-A127 decision 4, ADR-A126 decision 11).
+
+- **Never in production text:** slice and phase identifiers (`LG-1`, `AIR-4.2`, `C9b3`), question
+  identifiers (`LG-Q3`, `P7-Q2`), unit, epic and plan names used as labels (`CCS`, `NRS`), technical
+  debt and test row identifiers (`TD-49`, `LG1-02`), and delivery phrasing such as "this slice", "the
+  plan's brief", "flagged at", "at verification", "not yet written in LG-2" or "open for the maintainer".
+- **Say what instead.** State the fact the identifier stood for. A term not yet specified is "not yet
+  specified". A rule decided in an ADR cites the ADR. A modelling choice is stated as the choice, with
+  its reason. A release note says what changed, never which slice changed it.
+- **Working documents keep them.** Sketches, plans, status records, review requests, Validation Packs,
+  the developer index, commit messages and agent memory use delivery identifiers freely, since that is
+  what they are for.
+- **Existing occurrences are debt, not precedent.** Some older READMEs and release notes still name
+  slices. Do not copy them. Remove them when you next edit that text.
+- **Check before handing off.** Search what you wrote under `ontology/` for slice, question and debt
+  identifiers and for the word "slice". An extracted section carries the identifier into generated
+  Turtle as well, so fix the README and regenerate.
 
 ## AI disclosure
 

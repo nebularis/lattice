@@ -137,9 +137,11 @@ module's artefacts are. `mise run check:catalogue`, part of `check`, fails when 
 tree disagree. The root file also declares the roots, the tool packages under `tools/`, the
 documentation areas and the generated outputs. A new root, tool package or documentation area is added
 there, and `mise run build:agent-guidance` then rewrites the "Where things are" table in `AGENTS.md`
-between its markers, never by hand. The same check reports Python under `tools/` that builds a path to a
+between its markers, never by hand. Each root and documentation area has a `name`, and code asks the
+reader for its directory by that name, `Catalogue.area("developer")` or `area developer` on the command
+line, rather than writing the path (STD-273). The same check reports Python under `tools/` that builds a path to a
 root itself, against the known cases in `tools/lattice_repo_catalogue_exceptions.txt`, a list that only
-shrinks. It does not scan tests.
+shrinks. It does not scan tests (TD-54), or find a root counted from `__file__` (TD-88).
 
 ```bash
 # The files a module's README generates for one role, in extraction order
@@ -147,6 +149,7 @@ mise exec -- python tools/lattice_repo_catalogue.py paths instrument shapes
 
 # A role's directory, and the whole catalogue as JSON for other runtimes
 mise exec -- python tools/lattice_repo_catalogue.py path party projection
+mise exec -- python tools/lattice_repo_catalogue.py area developer
 mise exec -- python tools/lattice_repo_catalogue.py dump --json
 ```
 

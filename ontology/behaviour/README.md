@@ -1554,5 +1554,6 @@ Breaking versions at major version zero ([ADR-A113](../../docs/architecture/deci
 - 0.13.1 (`behaviour`, `behaviour-runtime` and `behaviour-vocab`, patch): the runtime document is
   extracted from §5.2 instead of authored as a file, with the same triples, and the three move
   together (ADR-A120).
+- Next release. Re-pinned: Ledger joins the substrate's release ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). No other change. Behaviour does not yet import Ledger (LG-3).
 - 0.19.0. Every document takes the release's number and imports the other layers at it (no effect). No other change.
 - 0.18.0, the first release of the substrate and standalone modules as one set ([ADR-A129](../../docs/architecture/decisions/ADR-A129-one-release-for-the-substrate.md)). Every document of the layer takes the release's number and imports the other layers at it (no effect). The shapes and projection directories no longer carry a `.version` of their own. No other change.

@@ -55,4 +55,6 @@ implementation. No OWL axiom silently selects a binding.
 
 ## Provenance
 
+**Unit:** [`vocabulary-temporal-binding`](../../developer/status/vocabulary-temporal-binding.md) (status record)
+
 Proposed 2026-09-24 and accepted 2026-09-25, with the Vocabulary change it describes.

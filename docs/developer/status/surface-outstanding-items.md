@@ -270,7 +270,7 @@ See §1.3 above. Resolved by [ADR-A92](../../architecture/decisions/ADR-A92-deri
 
 ## 5. MORK Toolchain Join Assumptions — ⏳ Decision Needed
 
-`tools/surface/mork.py` and `tools/mork2rml.py` are written against this repository's ontologies. Before production, confirm these assumptions against a live toolchain checkout:
+`tools/surface/mork.py` and `tools/mork/src/mork2rml.py` are written against this repository's ontologies. Before production, confirm these assumptions against a live toolchain checkout:
 
 | Assumption | Verification |
 |---|---|

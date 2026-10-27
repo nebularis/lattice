@@ -81,7 +81,7 @@ The design rests on ten ideas:
 | 3 | **One loss, many contracts, one shared fact base.** A loss reaches a primary policy, excess layers, co-insurers, other insurance and reinsurance. Each responding instrument holds its own response, and all read the same facts | §7.5 |
 | 4 | **Facts, acts and judgements kept apart.** What happened is a fact. What a party did with legal effect (a notification, a reservation of rights, an offer, a release) is a legal act. Whether cover applies, a duty is breached or a claim is fraudulent is evaluated or found, never typed in | §5 |
 | 5 | **The law's own timing.** Under English law the property insurer's liability arises at the loss and the liability insurer's when the insured's liability is established and quantified. Claims-made covers trigger on the claim. The model follows the trigger the contract and its governing law use | §2, §8 |
-| 6 | **Money as movements, balances derived.** Every reserve change, payment and recovery is an evidenced movement with a valid time and a record time. Incurred, outstanding, eroded limits and loss triangles are derived, on the evaluation context's ledger | §9 |
+| 6 | **Money as movements, balances derived.** Every reserve change, payment and recovery is an evidenced movement with a valid time and a record time. Incurred, outstanding, eroded limits and loss triangles are derived, on the ledger (ADR-A131) | §9 |
 | 7 | **Settlement is a contract.** A settlement, a release, a Part 36 offer and its acceptance are Instrument constructs, so a settlement's terms are evaluated by the same machinery as the policy | §7.10 |
 | 8 | **Recovery is a claim run the other way.** Subrogation, contribution and salvage reuse the demand, notification and settlement model, with the insurer as the party claiming | §10 |
 | 9 | **Workflow is the deployment's.** Handling stages refine an occasion's arisen state (as `occasion-refinement.ttl` shows). Tasks, diaries and assignments stay with consumers (leftovers) | §8.3 |
@@ -249,7 +249,7 @@ Before adding anything, each need is matched to what exists or is planned. Statu
 | a loss event keyed by GLIDE, PCS or PERILS | `icm:LossEvent`, `fnd:naturalKey` | AIR-4.4, ADR-A114 |
 | what was harmed and its value | `aeo:Asset`, `aeo:Interest`, `aeo:Valuation` | AIR-4.1 |
 | what a requirement or a lender demands | `aeo:CoverageRequirement`, `aeo:owedTo` | AIR-4.4 |
-| limits, retentions, sublimits, erosion, order of payment, reinstatement | contract amounts catalogue A1 to A58, ledger accounts and combinators | sketches, not built |
+| limits, retentions, sublimits, erosion, order of payment, reinstatement | contract amounts catalogue A1 to A58, ledger accounts (ADR-A131, Ledger LG-3) and combinators | sketches, not built |
 | occurrence grouping by window | substrate S4 | not built |
 | causation profiles by governing law | N10, AIR-6.4 | not built, W-Q2 open |
 | amounts in currencies, conversion at a date, percentages of a base | `qnt:Quantity`, `qnt:Conversion`, `qnt:DerivedValueSpace` | Quantification |
@@ -787,12 +787,12 @@ summarises.
 
 ### 9.3 The ledger
 
-When the evaluation context lands, a response's limits, sublimits, retentions and aggregates are
-ledger accounts (evaluation context §5): a draw on a sublimit debits each enclosing account,
+When Ledger LG-3 lands (ADR-A131), a response's limits, sublimits, retentions and aggregates are
+ledger accounts: a draw on a sublimit debits each enclosing account,
 defence costs within limits erode them (A23), recoveries reinstate them less costs (A25), and an
 order of payments (A24) is a sequence of guarded draws. A payment movement is the trigger of a draw.
 Until then, erosion is a derived figure over movements and the instrument's static limits, which is
-what CCS §7.8 already prescribes ("dynamic quantities live in capacity or in Behaviour allowances").
+what CCS §7.8 already prescribes ("dynamic quantities live in capacity or in Behaviour allowances", now ledger accounts, with allowances deprecated by ADR-A131).
 CL-Q4 asks which comes first.
 
 ```mermaid
@@ -806,7 +806,7 @@ flowchart TB
         M2["movement: reserve change<br/>+GBP 1.2M, indemnity"]
         M3["movement: recovery receipt<br/>GBP 150K, subrogation"]
     end
-    subgraph LEDGER["Ledger (evaluation context, per response)"]
+    subgraph LEDGER["Ledger (ADR-A131, per response)"]
         AG["policy aggregate"]
         SL["section limit"]
         RT["retention"]
@@ -868,11 +868,11 @@ the recovery demand against the beneficiary. Recoveries credit the ledger accoun
 
 For a layered programme each layer is an instrument, and each responds to the claim. Whether an
 excess layer's indemnity occasion arises reads the underlying layers' exhaustion, a threshold
-regime on the underlying ledger (CCS §7.4, §7.8). Drop-down on underlying insolvency or
+regime on the underlying ledger (CCS §7.4, §7.8), which is an Ensemble K2 fact (ES-3). Other-insurance cycles are ES-8. Drop-down on underlying insolvency or
 exhaustion, follow-form provisions and "other valid and collectible insurance" (A6, A26, A27) are
 terms of the excess instrument, evaluated against the same claim. The broker's question "how do
 the limits erode under this scenario" is the what-if CCS §7.4.1 describes: occasions created for a
-proposal as subject, with nothing copied.
+proposal as subject, with nothing copied. Phase 7's P7-Q2 and P7-Q7 now make a layer a position on which instruments are placed, and one instrument per contract, so §10.2 is corrected with phase 7.
 
 ### 10.3 Reinsurance claims
 
@@ -1199,7 +1199,7 @@ Each follows ADR-A-C2: a domain-neutral premise and two non-insurance examples f
 | S-CL4 | **Erasure deferred by a duty to retain** | Persistence (`dal:ErasurePrecedence`) | GDPR art. 17(3) | as S-CL3 | new member of an existing class |
 | S4 | occurrence grouping by an anchored window | Capacity, then Quantification | the substrate track | already listed | planned |
 | S7 | resolution policy for conflicting assertions | Foundation | several sources for one value | already listed | planned |
-| EC | ledger, combinators and environments | evaluation context | already sketched | already listed | unplanned sketch |
+| EC | ledger, combinators and environments | evaluation context | already sketched | already listed | ledger planned (ADR-A131, Ledger LG-3), combinators unplanned |
 | `ins:computedBy` | computed amounts (Ogden multipliers, allocation, average) | Instrument, with EC | CCS §7.9 | already listed | open |
 
 ---
@@ -1280,8 +1280,8 @@ facts it is entitled to see, a Persistence profile choice.
 
 | Option | Consequence |
 |---|---|
-| (a) movements now, balances as derived artefacts, the ledger when the evaluation context lands | claims can be built and reported now. Erosion is derived from movements and static limits until then |
-| (b) wait for the evaluation context | one design, later |
+| (a) movements now, balances as derived artefacts, the ledger when Ledger LG-3 lands | claims can be built and reported now. Erosion is derived from movements and static limits until then |
+| (b) wait for Ledger LG-3 | one design, later |
 
 **Leaning: (a).** Movements are facts either way, and the ledger is a later consumer of them.
 

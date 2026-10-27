@@ -8,6 +8,11 @@ The only code that finds the repository root and reads the catalogue. The catalo
 modules, and one entry in each module's README. Data sits in fenced blocks tagged
 ``toml repository-catalogue``. A block shown inside another fence is text.
 
+Code asks it for every path it would otherwise write: ``find_root()`` for the root,
+``Module.directory(role)`` and ``Module.files(role)`` for a module, and ``Catalogue.area(name)``
+for a root or documentation area by the name its entry gives it, such as ``developer`` for the
+registers. Each returns a directory relative to the root.
+
 Standard library only, so it runs in any checkout's own interpreter, including where
 packages cannot install.
 
@@ -15,6 +20,7 @@ Usage::
 
     python tools/lattice_repo_catalogue.py path <module> <role>    # a role's directory
     python tools/lattice_repo_catalogue.py paths <module> <role>   # an extraction contract, in order
+    python tools/lattice_repo_catalogue.py area <name>             # a root's or documentation area's directory
     python tools/lattice_repo_catalogue.py check
     python tools/lattice_repo_catalogue.py dump --json
 """
@@ -39,7 +45,7 @@ BLOCK_TAG = "toml repository-catalogue"
 ANY_FENCE_RE = re.compile(r"^ {0,3}(?P<fence>`{3,}|~{3,})(?P<info>.*)$")
 
 EXCEPTIONS_FILE = "tools/lattice_repo_catalogue_exceptions.txt"
-DEBT_FILE = "docs/developer/plans/technical-debt.md"
+DEBT_FILE = "docs/developer/technical-debt.md"
 SCAN_SKIP_DIRS = {"node_modules", "__pycache__", "build", "dist"}
 
 # The schema. A key not listed here is an error, so later keys (for example a downstream
@@ -51,12 +57,13 @@ ROOT_KEYS = {
 }
 # Blocks written as lists of tables, [[roots]] and so on, and the keys of each table.
 ENTRY_KEYS = {
-    "roots": {"path", "owns", "adrs", "row", "group"},
-    "docs": {"path", "owns", "adrs", "row", "group"},
+    "roots": {"name", "path", "owns", "adrs", "row", "group"},
+    "docs": {"name", "path", "owns", "adrs", "row", "group"},
     "tools": {"name", "path", "import-names", "reaches"},
     "site": {"name", "title", "page", "layout", "order", "sources"},
 }
 MODULE_KEYS = {"kind", "roles", "imports", "extract"}
+AREA_NAME_RE = re.compile(r"^[a-z][a-z0-9-]*$")
 EXTRACT_KEYS = ("spec", "vocab", "shapes")
 
 
@@ -96,12 +103,14 @@ class Module:
 @dataclass(frozen=True)
 class Area:
     """A root or a documentation area. ``row`` is the text of its row in AGENTS.md's table. The first
-    entry of a group carries it, and the rest of the group share that row."""
+    entry of a group carries it, and the rest of the group share that row. ``name`` is what code asks
+    for it by, through ``Catalogue.area``, so no tool writes the area's path itself."""
     path: str
     owns: str
     adrs: Tuple[str, ...]
     row: Optional[str]
     group: Optional[str]
+    name: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -148,6 +157,19 @@ class Catalogue:
     def is_generated(self, path: str) -> bool:
         """Whether a path is, or lies under, a generated path that a check may find missing."""
         return any(path.rstrip("/") == g.rstrip("/") or path.startswith(g.rstrip("/") + "/") for g in self.generated)
+
+    def area(self, name: str) -> Path:
+        """The directory of a root or documentation area, by its name, relative to the root as
+        ``Module.directory`` is. Join it to ``root`` for a file, so no tool writes the path itself
+        (ADR-A121 decision 5)."""
+        for area in (*self.roots, *self.docs):
+            if area.name == name:
+                return Path(area.path.rstrip("/"))
+        known = ", ".join(sorted(a.name for a in (*self.roots, *self.docs) if a.name))
+        raise CatalogueError(
+            f"no root or documentation area named {name!r} (known: {known}): give its [[roots]] or [[docs]] "
+            f"entry a name in {CATALOGUE_FILE}"
+        )
 
     def module(self, name: str) -> Module:
         if name not in self.modules:
@@ -273,7 +295,10 @@ def _areas(value: Any, key: str) -> Tuple[Area, ...]:
     areas = []
     for entry in _entries(value, key, ("path", "owns")):
         adrs = _strings(entry.get("adrs", []), f"{CATALOGUE_FILE}: {key} {entry['path']}: adrs")
-        areas.append(Area(entry["path"], entry["owns"], adrs, entry.get("row"), entry.get("group")))
+        name = entry.get("name")
+        if name is not None and not AREA_NAME_RE.match(name):
+            raise CatalogueError(f"{CATALOGUE_FILE}: {key} {entry['path']}: name {name!r} is not a lower-case word")
+        areas.append(Area(entry["path"], entry["owns"], adrs, entry.get("row"), entry.get("group"), name))
     for index, area in enumerate(areas):
         follows = area.group is not None and index > 0 and areas[index - 1].group == area.group
         if follows and area.row is not None:
@@ -381,9 +406,14 @@ def load(root: Path | str | None = None) -> Catalogue:
             extract=extract,
         )
     generated = data.get("generated", {})
+    roots, docs = _areas(data.get("roots", []), "roots"), _areas(data.get("docs", []), "docs")
+    named = [a.name for a in (*roots, *docs) if a.name]
+    if len(set(named)) != len(named):
+        twice = sorted({n for n in named if named.count(n) > 1})
+        raise CatalogueError(f"{CATALOGUE_FILE}: the area name(s) {', '.join(twice)} are used twice")
     return Catalogue(
         base, conventions, modules,
-        _areas(data.get("roots", []), "roots"), _areas(data.get("docs", []), "docs"), _tools(data.get("tools", [])),
+        roots, docs, _tools(data.get("tools", [])),
         _strings(generated.get("paths", []), f"{CATALOGUE_FILE}: [generated] paths"),
         _site(data.get("site", [])),
     )
@@ -593,6 +623,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         sub = commands.add_parser(name, help=text)
         sub.add_argument("module")
         sub.add_argument("role")
+    area = commands.add_parser("area", help="print a root's or documentation area's directory, by name")
+    area.add_argument("name")
     commands.add_parser("check", help="fail when the catalogue and the tree disagree")
     dump = commands.add_parser("dump", help="print the resolved catalogue")
     dump.add_argument("--json", action="store_true", required=True)
@@ -604,6 +636,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         elif args.command == "paths":
             for file in catalogue.module(args.module).files(args.role):
                 print(file.as_posix())
+        elif args.command == "area":
+            print(catalogue.area(args.name).as_posix())
         elif args.command == "dump":
             print(json.dumps(_dump(catalogue), indent=2))
         else:

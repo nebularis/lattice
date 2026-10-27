@@ -6,6 +6,7 @@
 **Date:** 2026-09-18
 **Supersedes:** none
 **Related:** ADR-A01 (layer conventions), ADR-A12 (derived artefacts and canonicalisation), ADR-A15 (realisation neutrality)
+**Unit:** [`surface-mork-unified-projection`](../../developer/plans/surface-mork-unified-projection-plan.md) (epic)
 
 ## Context
 

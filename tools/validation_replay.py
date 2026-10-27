@@ -122,7 +122,7 @@ class Recorder:
         atexit.register(self._write_counts)
 
     def _write_counts(self) -> None:
-        (self.directory / f"not-recorded-{os.getpid()}.count").write_text(str(self.not_recorded))
+        (self.directory / f"not-recorded-{os.getpid()}.count").write_text(str(self.not_recorded), encoding="utf-8", newline="\n")
 
     def record(self, sources, data_nt: str, namespaces: dict[str, str], options: dict[str, Any], conforms: bool, rows) -> None:
         digest = hashlib.sha1(data_nt.encode()).hexdigest()
@@ -326,7 +326,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"done: {len(summary['differing'])} differences, {summary['known']} in the baseline, "
           f"{summary['unreadable']} graphs could not be read back, validation time summed {summary['seconds']:.0f}s, wall {summary['wall']:.0f}s")
     if args.write_baseline:
-        args.write_baseline.write_text(json.dumps(sorted(summary["differing"])))
+        args.write_baseline.write_text(json.dumps(sorted(summary["differing"])), encoding="utf-8", newline="\n")
         print(f"wrote {len(summary['differing'])} cases to {args.write_baseline}")
         return 0
     return 1 if summary["differing"] else 0

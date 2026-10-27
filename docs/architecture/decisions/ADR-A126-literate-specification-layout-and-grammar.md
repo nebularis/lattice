@@ -13,7 +13,7 @@ published: true
 and the [versioning policy](../ontology-versioning-policy.md),
 [ADR-A97](https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-A97-mork-order-relations-in-owl-2-dl.md) (OWL 2 DL), [ADR-A120](https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-A120-literate-specs-with-several-documents.md),
 [ADR-A121](ADR-A121-repository-catalogue.md), [ADR-A127](https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-A127-published-architecture-decisions.md),
-[ADR-A-C2](https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-AC2-clean-room-authoring-procedure.md) (examples first), [conventions document](../literate-specifications.md)
+[ADR-A-C2](https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-A-C2-clean-room-authoring-procedure.md) (examples first), [conventions document](../literate-specifications.md)
 
 ## Context
 
@@ -153,6 +153,8 @@ that does not use them.
 Enumerated classes written `**Equivalent to.** { ... }` as an `owl:oneOf` are unchanged.
 
 ## Provenance
+
+**Unit:** [`improved-ontology-documentation`](../../developer/plans/improved-ontology-documentation.md) (plan)
 
 Proposed in the [improved ontology documentation sketch](../../developer/sketches/improved-ontology-documentation.md)
 and settled in design discussion on 2026-10-15 and 2026-10-16, recorded as decisions OD-D1 to OD-D27 in the

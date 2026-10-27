@@ -69,7 +69,7 @@ shapes = ["shapes/structural.ttl", "shapes/constraints.ttl"]
 
 ## 4. Worked examples
 
-Authored before this specification ([ADR-A-C2](../../docs/architecture/decisions/ADR-AC2-clean-room-authoring-procedure.md)).
+Authored before this specification ([ADR-A-C2](../../docs/architecture/decisions/ADR-A-C2-clean-room-authoring-procedure.md)).
 Each file opens with its premise.
 
 | Example | Shows |
@@ -1612,6 +1612,7 @@ Breaking versions at major version zero ([ADR-A113](../../docs/architecture/deci
 - Shapes 0.4.1: the slot-overlap and slot-coverage queries run their cheap guards as a sub-group before the
   candidate points are enumerated, and law W8 looks up the versions of an identity before pairing the items a
   wording holds. The same reports as before, from about half the work on the slot queries and W8.
+- Next release. Re-pinned: Ledger joins the substrate's release ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). No other change.
 - 0.19.0. Every document takes the release's number and imports the other layers at it (no effect). `wrd:hasValue` is no
   longer inverse-functional, and a variable value belongs to at least one assembled wording, not exactly one. Two assembled
   wordings of one instrument may share a value record, so an endorsement or a requote writes only the records it changes

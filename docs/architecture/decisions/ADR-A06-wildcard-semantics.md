@@ -3,7 +3,7 @@ published: true
 ---
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# ADR A-06: Wildcard semantics and limits
+# ADR-A06: Wildcard semantics and limits
 
 **Status:** Published, 2026-10-19. Accepted 2026-09-17.
 **Described in:** [Eligibility README](../../../ontology/eligibility/README.md)

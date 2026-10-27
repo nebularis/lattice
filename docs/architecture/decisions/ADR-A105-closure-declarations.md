@@ -93,4 +93,6 @@ saying what one is. Instrument's `ins:when` and Behaviour's `bhv:closureReliedOn
 
 ## Provenance
 
+**Unit:** [`computable-contract-substrate`](../../developer/plans/computable-contract-substrate.md) (plan), slice HQ-6a, [`normative-rule-substrate`](../../developer/plans/normative-rule-substrate.md) (plan), decision D7
+
 Proposed in the HQ-6a slice of the [computable contract substrate](../../developer/plans/computable-contract-substrate.md) plan (CCS), questions HQ6a-Q1 to Q5. Decisions 1 to 4 and 6 answer HQ6a-Q1 (b), Q2 (a), Q3 (a), Q5 (b) and Q4 (2) in turn. The refusal in decision 7 is decision D7 of the [normative rule substrate](../../developer/plans/normative-rule-substrate.md) plan (NRS). The pointer in decision 8 is question AO-Q6 of formal-methods Track H. The 2026-10-12 addendum is slice HQ-6a.2, questions HQ6a2-Q1 to Q3, whose options, consequences and diagrams are in the CCS plan under "HQ-6a.2's questions". The evaluator in addendum item 3 is CCS C12.

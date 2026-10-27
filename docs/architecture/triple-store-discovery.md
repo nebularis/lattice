@@ -2,19 +2,12 @@
 
 # Triple-store discovery
 
-**What this is.** The project's record of how each triple store we run actually behaves: its features, its limits, and how it
-reads the standards it implements, SPARQL 1.1 Query and Update above all. Each entry says what we were doing, how we found out,
-what the store does, why, what follows for LATTICE, and how to see it again.
+**What this is.** The project's record of how each triple store we run actually behaves: its features, its limits, and how it reads the standards it implements, SPARQL 1.1 Query and Update above all. Each entry says what we were doing, how we found out, what the store does, why, what follows for LATTICE, and how to see it again.
 
-**Status:** a living document, begun 2026-10-13 from formal-methods Track H's persistence work (slices H2.1 to H2.4b). It is a
-source of truth for the project. Read it before relying on how a store behaves, and add to it when you find something. The
-skill `lattice-triple-stores` has the procedure.
+**Status:** a living document, begun 2026-10-13 from formal-methods Track H's persistence work (slices H2.1 to H2.4b). It is a source of truth for the project. Read it before relying on how a store behaves, and add to it when you find something. The skill `lattice-triple-stores` has the procedure.
 
-**Stores covered:** rdflib 7.6.0 and Oxigraph 0.5.11 (through `pyoxigraph`), and Oxigraph 0.5.12 for the findings the test suite probes, of which
-TSD-01 and TSD-17 changed (R-H). Each finding names the versions it was seen on.
-A finding holds for those versions only, until it is checked again. **Tools above a store covered:** pySHACL 0.40.1, which validates
-shapes on rdflib (TSD-23, TSD-24, TSD-31). TSD-22 to TSD-33 are about the cost of running queries and shapes, and
-[Efficient queries and shapes](efficient-queries-and-shapes.md) says which of them are properties of rdflib or pySHACL and which hold anywhere.
+**Stores covered:** rdflib 7.6.0 and Oxigraph 0.5.11 (through `pyoxigraph`), and Oxigraph 0.5.12 for the findings the test suite probes, of which TSD-01 and TSD-17 changed (R-H). Each finding names the versions it was seen on.
+A finding holds for those versions only, until it is checked again. **Tools above a store covered:** pySHACL 0.40.1, which validates shapes on rdflib (TSD-23, TSD-24, TSD-31). TSD-22 to TSD-33 are about the cost of running queries and shapes, and [Efficient queries and shapes](efficient-queries-and-shapes.md) says which of them are properties of rdflib or pySHACL and which hold anywhere.
 
 ## Contents
 
@@ -239,6 +232,7 @@ to the store or where it is a matter of capacity.
 | [TSD-33](#tsd-33-on-oxigraph-count-over-a-statically-false-filter-returns-no-row) | `COUNT(*)` over a filter that is statically false | one row, 0 | ✔ except TSD-32 | ✘ no row | Observed |
 | [TSD-34](#tsd-34-rdflib-evaluates-a-filter-not-exists-in-a-graph-block-against-the-wrong-graph-for-some-solutions) | `FILTER NOT EXISTS` without its own `GRAPH`, inside a `GRAPH` block that holds a sub-select and a `UNION` | tests the block's graph | ✘ sometimes tests the default graph, by hash seed | ✔ | Source, Observed |
 | [TSD-35](#tsd-35-a-literal-as-the-graph-of-a-graph-block-is-refused-by-oxigraph-and-parsed-by-rdflib) | a literal as the graph of a `GRAPH` block | a syntax error | ✘ parsed, the block matches nothing | ✔ a syntax error | Observed |
+| [TSD-36](#tsd-36-a-bound-object-does-not-give-the-seek-a-bound-subject-gives) | the same row reached by a bound object or by a bound subject | not specified | not tested | the bound object scans the predicate's matches, the bound subject seeks | Observed |
 
 ## 6. The findings
 
@@ -1299,7 +1293,7 @@ None of them covers the defect. It reproduces on 7.6.0, on `main` (7.7.0a0, `62b
 
 **What it means for LATTICE.**
 
-- Initial bindings inside a sub-select work on both stores. TD-68's account of the fast form of the `members` read is wrong, and the note on it should say so and cite this finding. The form is still not usable on rdflib.
+- Initial bindings inside a sub-select work on both stores. The account of the fast form of the `members` read that the paid debt TD-68 gave was wrong, and this finding corrects it. The form is still not usable on rdflib.
 - **Added 2026-10-20 (H2.8c).** The sub-select form with a `GRAPH` inside each `NOT EXISTS` body is right. It read every version of 24 random histories (checkpoint every 2, 3 and 4 versions, stray adds) as the reference model gives, on rdflib under 16 hash seeds in child processes and on Oxigraph, and the existing histories of `test_membership.py` on both engines with and without guards. It is the `members` read since H2.8c. The read of version 100 of a set of 500 took 1.28 s on rdflib, where the form without a sub-select took 98.6 s, and 0.005 s on Oxigraph, where it took 1.7 s (`benchmark/persistence-membership`).
 - The `members` read had no sub-select, and no history we built exposed the defect in it on 192 runs over 16 seeds (FMH-H2-6g). Its two `NOT EXISTS` bodies depend on solution variables, so it is the one generated operation where the defect could change an outcome. Since H2.6g each body names its graph, and a sweep holds it to the reference model.
 - A fast form of `members` on rdflib should put a `GRAPH` inside each `FILTER [NOT] EXISTS` body, which the audits (`key-claim-quarantine`, `key-claim-merge-rewrite`) already do, or avoid a sub-select beside a `UNION` in one `GRAPH` block, and be tested on a sweep of hash seeds against the reference model of `test_membership.py`.
@@ -1340,6 +1334,65 @@ conformance test. The caller check refuses a literal for a graph parameter befor
 
 **Reproduce it.** `mise run check:persistence-conformance` runs `test_named_graph_builders` t23, whose literal-graph case is pinned to
 rdflib.
+
+### TSD-36. A bound object does not give the seek a bound subject gives
+
+**Evidence:** Observed on Oxigraph 0.5.13, 2026-10-24, probing the ledger posting-cost benchmark. Not tested on rdflib.
+
+**Context.** The benchmark's checkpointed reads find the latest checkpoint of an account at or before a read point, then fold the postings after it. Partitioning the postings into a graph per period made the fold flat in the history, after which this lookup was the only term still growing. It rose from 0.04 ms at 2 closes an account to 1.06 ms at 200, so it grew with the number of closes and so with time.
+
+**How we found it.** Three forms of the same lookup were timed against the same store, at 1,000, 20,000 and 100,000 events, which is 2, 40 and 200 closes for each account. All three returned the same balance. The median of 40 runs is reported.
+
+| Form | What is bound | 2 closes | 40 closes | 200 closes |
+|---|---|---|---|---|
+| A | the account, as an object, with `FILTER(?pos <= p)`, `ORDER BY DESC(?pos)` and `LIMIT 1` | 0.040 ms | 0.224 ms | 1.059 ms |
+| B | the account and the exact position, both as objects | 0.032 ms | 0.114 ms | 0.485 ms |
+| C | the checkpoint itself, as the subject | 0.020 ms | 0.020 ms | 0.023 ms |
+
+**What the store does.** Form B binds every term that identifies the row and still grows linearly in the account's checkpoints, at about half of form A's cost. Removing the sort and the filter therefore accounts for half of the cost and the scan for the other half. Only form C, which names the subject, is flat.
+
+```sparql
+# B, both objects bound, still scans the account's checkpoints
+SELECT ?b WHERE { ?c l:account <urn:acct:a0> ; l:position 100000 ; l:balance ?b }
+# C, the subject bound, seeks
+SELECT ?b WHERE { <urn:checkpoint:100000:a0> l:balance ?b }
+```
+
+**Why.** The planner picks one pattern as the entry point and joins the rest to it. With `?c` unbound it enters on a predicate-object match, here `l:account <urn:acct:a0>`, which yields every checkpoint of that account, and tests each against the remaining patterns. Binding the position does not make the planner enter there, so the selectivity of the second pattern is not used. We read the behaviour from the timings rather than from the planner, so the mechanism is inferred and the measurement is not.
+
+**What it means for LATTICE.** [Efficient queries and shapes](efficient-queries-and-shapes.md) R8 asks that every pattern start from a bound term. This refines it. A bound term in the object position is not equivalent to a bound subject, and a query that looks fully constrained can still scan. Where a row's identity is computable, addressing it by a derived IRI is a different order of cost from searching for it by its properties, and Persistence already has the strategy for exactly that, `dal:PositionDerivedEvent`, an IRI minted from the target and the position. The ledger's checkpoints are position-derived in this sense, since a closing recurrence fixes the positions at which they exist.
+
+**Reproduce it.** The three forms above against a store holding the benchmark's checkpointed history. `benchmark/ledger-posting-cost` builds that history, and its `LEDGER_COST_PROBE` run reaches 200 closes an account.
+
+### TSD-37. Oxigraph refuses an IRI with two fragment separators and rdflib accepts it
+
+**Evidence:** Observed on both stores, 2026-10-24, loading every tracked ontology document into Oxigraph for the knowledge index (knowledge-index sketch KI-Q2). 269 of 270 documents loaded. The exception was `ontology/mork/test/data/Contracts.ttl`. That file was part of an early MORK demonstration in MORK's test data, imported only by the demonstration's `Demo.ttl` and read by no code. The three files were deleted on 2026-10-26, so every tracked ontology document now loads in Oxigraph.
+
+**What the store does.** That fixture's subjects concatenate two absolute IRIs, each with its own `#`, for example `http://www.nebularis.org/ontologies/Mork#http://www.nebularis.org/hyperthunk/examples/Contract#acceptingParty`. A second `#` is not a legal IRI code point, so Oxigraph refuses the document outright with a syntax error naming the line and column, and loads none of it. rdflib parses the same document and returns 190 triples, with the malformed text as the subject IRI.
+
+**What it means for LATTICE.** A document that only ever passes through rdflib can hold IRIs that no strict parser accepts, and the defect surfaces at the first strict consumer rather than at authoring time. Anything that loads the corpus into Oxigraph, or hands it to a consumer's own store, has to treat a parse failure per document as expected and report which document failed, rather than loading the corpus as one batch. The fixture itself is referenced by no tool, test or document, so whether it is live input or an orphan is a question for its owner rather than a finding here.
+
+**Reproduce it.** Load the file with `pyoxigraph.Store().load(path=..., format=RdfFormat.TURTLE)`, which raises `SyntaxError`, and with `rdflib.Graph().parse(..., format="turtle")`, which returns 190 triples.
+
+### TSD-38. Oxigraph's read-only open costs a fraction of a read-write open, and a query over the whole corpus is sub-millisecond
+
+**Evidence:** Measured 2026-10-24 on macOS (Darwin 27, Apple silicon), pyoxigraph 0.5.13, for the knowledge index's KI-Q2. The store held every tracked ontology document in a named graph each plus a synthetic index graph of 16,800 quads, 72,832 quads and 23.7 MB on disk in total, built in 1.17s.
+
+**What the store does.** `Store(path)` opens read-write in 141 ms cold and about 32 ms warm, because RocksDB recovers its write-ahead log and may compact. `Store.read_only(path)` opens in 23.8 ms, repeatably, doing neither. Queries themselves are then far cheaper than either open: a property-path traversal two hops out took 0.1 ms, a two-tag conjunctive lookup 0.3 ms, a `CONTAINS` filter over every `rdfs:label` in every graph 0.6 ms, and a `GROUP BY` histogram over 16,800 quads 0.9 ms. A whole process, counting interpreter start, importing pyoxigraph, opening read-only and running a query, costs 50 ms end to end.
+
+**What it means for LATTICE.** A caller that only reads opens read-only, which is both roughly six times faster and the mode that cannot write by accident. At this corpus size the query is not the cost and the open is, so a long-running server process to amortise loading buys little: 50 ms per call means twenty calls cost one second, against which a server has to be supervised, has a lifecycle to get wrong, and cannot be relied on where a process may not persist. Measure again before assuming this holds at ten times the quads, since the open is a fixed cost and the queries are not.
+
+**Reproduce it.** Build a store with the corpus, then time `pyoxigraph.Store.read_only(path)` against `pyoxigraph.Store(path)` and the queries above.
+
+### TSD-39. One Oxigraph bulk load per document fragments the store past a default open-file limit
+
+**Evidence:** Observed 2026-10-25 on macOS, pyoxigraph 0.5.13, building the knowledge index. The maintainer's build failed with `Too many open files` on an SST file numbered above 2,300. Reproduced at `ulimit -n 256`.
+
+**What the store does.** Each `Store.bulk_load` call writes SST files of its own and ingests them, and `Store.optimize()` does not merge them back. Loading 270 small documents with one `bulk_load` each left 1,016 SST files after compaction. A query, or a `Store.read_only` open, has to open them, so it exceeds macOS's default soft limit of 256 open files. Parsing each document with `pyoxigraph.parse` and writing all of them in one `bulk_extend` leaves 9 files, takes the same 2.1 seconds, and gives an identical graph: 56,032 quads and 5,173 blank nodes, none shared across documents, with `rename_blank_nodes=True` keeping each document's blank nodes its own as a per-document load did.
+
+**What it means for LATTICE.** Load many documents in one bulk write, isolating a bad document by parsing it on its own first rather than by giving it a bulk load of its own (TSD-37). And test a tool that opens many files at the default limit, not only in an agent's shell: this one passed where the limit was 1,048,576 and failed in the maintainer's terminal, which had 256.
+
+**Reproduce it.** `ulimit -n 256` and bulk load each of the ontology documents separately into one store, then query it. `check:knowledge` asserts the built index holds at most 32 SST files.
 
 ## 7. Corrections, and what they taught us
 

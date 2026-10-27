@@ -6,6 +6,7 @@
 **Date:** 2026-09-18
 **Supersedes:** none
 **Related:** ADR-A23 (MORK compiler family completion policy), ADR-A07 (Eligibility authoring direction), ADR-A03 (condition taxonomy), ADR-A04 (interval overlap law split)
+**Unit:** [`surface-mork-unified-projection`](../../developer/plans/surface-mork-unified-projection-plan.md) (epic)
 **Source plan:** [surface-mork-unified-projection-delivery-plan.md](../../../ontology/surface/docs/surface-mork-unified-projection-delivery-plan.md)
 
 ## Context
