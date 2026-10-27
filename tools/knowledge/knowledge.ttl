@@ -3,7 +3,7 @@
 #
 # The T-Box of the knowledge index (ADR-A134 decisions 4 to 7).
 #
-# This describes THIS REPOSITORY, not the insurance domain. It is deliberately outside ontology/
+# This describes THIS REPOSITORY, not a specific domain. It is deliberately outside ontology/
 # and outside the substrate release of ADR-A129, and the `dev` path segment marks that. Only this
 # repository consumes it, so changes are additive and there is no compatibility promise.
 #
