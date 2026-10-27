@@ -23,7 +23,7 @@ gave Eligibility 0.12.0 with L15 restated and L17 (2026-10-12), and HQ-6a.2 the 
 and `exe:NoClosureLicence` (Executable 0.7.0, merged 2026-10-16). From C5 on, slices are built and
 verified on the branch, and the maintainer commits by hand.
 
-**Next action, for us:** deliver C9b3c on `ccs/c9b3c-hierarchy-relation` and the profile union fix on `ccs/c9b3-profile-union`, each by a sub-agent in its own worktree, reviewed by the lead agent and merged into `ccs-trunk`, where the maintainer reviews the whole of C9b3 before it reaches `main`. C9b3a follows C9b3c, and C9b3b follows the profile union fix. HQ-6b, closures over a period, follows before C12.
+**Next action, for the maintainer:** review C9b3c and the profile union fix on `ccs-trunk`, and answer the open items in both Validation Packs: the pyoxigraph lock (`requirements-lock.txt` pins 0.5.11, `tools/testing/oxigraph` needs 0.5.13, and on 0.5.13 `test_h2_4b_t4_p3` in `check:persistence` fails its cost bound), STD-279, the default engine of `check:mork-compilers`, and C9b3c's questions on exclusion-only conditions with no applicable binding, per-relation acyclicity shapes (TD-94), the OWL `Within` class per relation, and an addendum to ADR-A100. Then we brief C9b3a on `ccs-trunk`. HQ-6b, closures over a period, follows before C12.
 
 ## Slice board
 
@@ -47,7 +47,7 @@ verified on the branch, and the maintainer commits by hand.
 | C9a | amendments, assents and taking effect | D | merged, tagged | |
 | C9b0, C9b1, C9b2 | Eligibility sources, legal acts, additivity | D | merged, tagged 2026-10-10 | |
 | HQ-6a.1, HQ-6a.2 | untimed closures (ADR-A105): the model and reference semantics, then the compilers | D | merged and tagged: HQ-6a.1 2026-10-12, HQ-6a.2 2026-10-16 (`executable-v0.7.0`) | |
-| C9b3, C9b4, C9d, C9c, C8a | set comparisons, qualifying rules, materiality, incorporation, template library | D | C9b3 briefed 2026-10-27, delivered on `ccs-trunk`: C9b3c and the profile union fix in progress, then C9b3a, C9b3b | C9b4 on C9b3 |
+| C9b3, C9b4, C9d, C9c, C8a | set comparisons, qualifying rules, materiality, incorporation, template library | D | C9b3 briefed 2026-10-27, delivered on `ccs-trunk`: C9b3c and the profile union fix merged into `ccs-trunk` 2026-10-27, then C9b3a, C9b3b | C9b4 on C9b3 |
 | C16c | remove Party's shares | F | planned, required before the epic closes | C9b4 |
 | C7a | regimes and gating, split from C7 | D | merged to `main` (`c6e5853`) and tagged | |
 | C12, C13 | runtime evaluator, relation plans | E | waiting | C9, C11, C11a, AIR-3.3, NRS N1 |
@@ -183,3 +183,4 @@ verified on the branch, and the maintainer commits by hand.
 - 2026-10-27: the maintainer countersigned HQ-6a.2's AIR32-08 change under the non-weakening rule, recorded in its Validation Pack. HQ-6a is complete
 - 2026-10-27: C9b3 briefed on `main`, with questions C9b3-Q1 to Q5 (split, set comparison form, aggregate binding form, where hierarchical matching names its relation, TD-92)
 - 2026-10-27: C9b3-Q2 (a′), Q3 (x) and Q4 (a) answered, and the deferral named in prose (STD-276). TD-92 moved into the plan as the profile union fix. The maintainer set the operating rules: autonomous, on `ccs-trunk` (from `main`), with two sub-agents committing and pushing their own branches and the lead merging them into `ccs-trunk`, never into `main`. Branches `ccs/c9b3c-hierarchy-relation` and `ccs/c9b3-profile-union` created from `ccs-trunk`
+- 2026-10-27: the profile union fix (`ccs/c9b3-profile-union`) and C9b3c (`ccs/c9b3c-hierarchy-relation`) merged into `ccs-trunk` after review. TSD-41's cause found: an aggregate over a row whose argument errors is unbound on Oxigraph, per SPARQL 1.1 §18.5.1, and rdflib skips the row (STD-279 proposed). C9b3c adds `elg:hierarchyRelation`, restates L9, L11 and L14, makes no applicable binding Undetermined with `exe:NoApplicableBinding`, and has OWL and SWRL refuse a schemeless hierarchical plan (MEC-84, TD-94). On `ccs-trunk` `check:mork-compilers` and `check:mork-compilers-conformance` pass, 149 each, `check:proofs -- eligibility` passes its gate, and `check:full-sweep` fails only on the expected UNBUMPED and on the pyoxigraph 0.5.13 persistence cost test. L9's wording corrected at merge
