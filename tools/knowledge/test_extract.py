@@ -460,9 +460,20 @@ def test_read_returns_the_bounded_text_of_a_pointer(built):
     _, store = built
     pieces = ask.read_ranges(store, "MEC-01")
     assert pieces and all(text.strip() for _, text in pieces)
-    path = pieces[0][0].rsplit(":", 1)[0]
+    path = pieces[0][0].removeprefix("row ").rsplit(":", 1)[0]
     whole = (extract.ROOT / path).read_text(encoding="utf-8").count("\n")
     assert sum(text.count("\n") + 1 for _, text in pieces) < whole
+
+
+@pytest.mark.parametrize("identifier", ["CAP-64", "STD-153"])
+def test_read_prints_the_register_row_before_what_its_pointer_names(built, identifier):
+    import ask
+
+    _, store = built
+    pieces = ask.read_ranges(store, identifier)
+    where, text = pieces[0]
+    assert where.startswith("row docs/developer/") and text.startswith(f"| {identifier} |")
+    assert len(pieces) > 1 and all(w.startswith("pointed-at ") for w, _ in pieces[1:])
 
 
 def test_a_query_rebuilds_an_index_older_than_the_files_it_reads(tmp_path, monkeypatch):

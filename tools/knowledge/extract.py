@@ -529,6 +529,8 @@ def register_rows(out: Extract) -> None:
                                     continue
                                 add(prop, ki(CONTROLLED[kind][value]))
                     add("status", ki(status))
+                    # The defining row, kept apart from the Pointer column so `read` prints it first.
+                    add("row", ox.Literal(f"{rel}:{number}-{number}"))
                     if not has_pointer:
                         add("pointer", ox.Literal(f"{rel}:{number}-{number}"))
                     if not has_claim:

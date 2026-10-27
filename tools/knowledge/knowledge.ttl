@@ -196,6 +196,11 @@ ki:pointer
     rdfs:label "pointer" ;
     rdfs:comment "Where the full entry is, as a repository-relative path with a line range, comma-separated when there are several. A register names an anchor and the extractor resolves it to the current range on every build, so the range follows an edit. The index is a handle, and `graph:ask -- read` is the route from it to the prose." .
 
+ki:row
+    rdf:type owl:DatatypeProperty ; rdfs:domain ki:Node ; rdfs:range xsd:string ;
+    rdfs:label "row" ;
+    rdfs:comment "The register row that defines the entry, as a repository-relative path with a single line number. The pointer is where the full entry is and may be elsewhere, so `graph:ask -- read` prints the row first and the pointed-at text after it." .
+
 ki:publishedOn
     rdf:type owl:DatatypeProperty ; rdfs:domain ki:Decision ; rdfs:range xsd:string ;
     rdfs:label "published on" ;
