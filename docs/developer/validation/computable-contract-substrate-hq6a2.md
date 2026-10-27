@@ -106,7 +106,8 @@ mise exec -- python -m pytest tools/mork_compilers/src/mork_compilers/test_closu
     Undetermined. Its binding now names a closure, as the examples phase did for the other
     AIR-3.2 tests, so its expected outcomes stand, and a second assertion checks the open reading:
     Undetermined, with a Denied value still Denied. This strengthens the test. It is listed here
-    under the non-weakening rule for the maintainer to countersign.
+    under the non-weakening rule for the maintainer to countersign. **Countersigned by the
+    maintainer on 2026-10-27.**
   - `test_concept_backends.py` pins the set of declared diagnostics. `exe:NoClosureLicence` joins it.
 
 **What to check first:** `_read_set`'s decision and diagnostic expressions in `sparql_backend.py`,
@@ -153,4 +154,5 @@ since it states the rule, and replaced the probe with the one above.
 ## Acceptance
 
 Accepted by the maintainer on 2026-10-12 (commit `349ccfa2`), with the three verification fixes and
-the probes above recorded after. The maintainer's merge into `main` is the sign-off.
+the probes above recorded after. The maintainer's merge into `main` is the sign-off. The AIR32-08
+change was countersigned by the maintainer on 2026-10-27.

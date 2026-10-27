@@ -4,11 +4,11 @@
 
 **Unit ID:** `computable-contract-substrate`
 **Status:** 🔨 In progress. Gate A passed. Tranche B and C briefed (C3, C10)
-**Last updated:** 2026-10-12
+**Last updated:** 2026-10-27
 **Plan:** [computable-contract-substrate.md](../plans/computable-contract-substrate.md)
 **Sketches:** [computable-contract-substrate.md](../sketches/computable-contract-substrate.md),
 [contract-amounts.md](../sketches/contract-amounts.md)
-**ADRs:** A-104, A-106, A-112, A-113, A-114, A-115 and A-120 accepted. A-105 to be drafted in HQ-6a
+**ADRs:** A-104, A-105, A-106, A-112, A-113, A-114, A-115 and A-120 accepted, with addenda
 **Machine:** R
 
 ## Current position
@@ -16,11 +16,15 @@
 Gate A passed on 2026-10-01. Tranches B and C are merged to `main` and tagged: Wording 0.3.0,
 Behaviour 0.10.0 (shapes 0.4.0) with nested states and history, the import guard in `mise run
 check`. In tranche D, C6 to C7c are merged and tagged (Instrument 0.12.0, Party 0.8.0, Quantification
-0.7.0). C8 and C8b are merged and tagged (Instrument 0.14.0, Wording 0.7.0). C9 is briefed and splits into C9a to C9c. Its materiality question has its own sketch. From C5 on, slices are built and verified on the branch, and the maintainer commits by hand.
+0.7.0). C8 and C8b are merged and tagged (Instrument 0.14.0, Wording 0.7.0). Of C9, C9a, C9b0 to C9b2
+and HQ-6a are merged and tagged: amendments and assents, Eligibility's README as its source, additivity,
+the legal acts tier (Instrument 0.16.0, Behaviour 0.14.0), and untimed closures (ADR-A105). HQ-6a.1
+gave Eligibility 0.12.0 with L15 restated and L17 (2026-10-12), and HQ-6a.2 the compilers' closures
+and `exe:NoClosureLicence` (Executable 0.7.0, merged 2026-10-16). From C5 on, slices are built and
+verified on the branch, and the maintainer commits by hand.
 
-**Next action, for the maintainer:** merge `ccs/hq6a2-closures-compilers` into `main`, countersign
-the AIR32-08 change in HQ-6a.2's [Validation Pack](../validation/computable-contract-substrate-hq6a2.md),
-then create and push the tag `executable-v0.7.0`.
+**Next action, for us:** brief C9b3, set comparisons and substrate S2, which no longer waits on
+HQ-6a. HQ-6b, closures over a period, follows before C12.
 
 ## Slice board
 
@@ -43,8 +47,8 @@ then create and push the tag `executable-v0.7.0`.
 | C8, C8b | values in stated meaning, Wording references by identity | D | merged, tagged | |
 | C9a | amendments, assents and taking effect | D | merged, tagged | |
 | C9b0, C9b1, C9b2 | Eligibility sources, legal acts, additivity | D | merged, tagged 2026-10-10 | |
-| HQ-6a.1, HQ-6a.2 | untimed closures (ADR-A105): the model and reference semantics, then the compilers | D | HQ-6a.1 merged 2026-10-12. HQ-6a.2 accepted 2026-10-12, to merge | |
-| C9b3, C9b4, C9d, C9c, C8a | set comparisons, qualifying rules, materiality, incorporation, template library | D | planned | C9b3 waits on HQ-6 (NRS N5, ADR-A105). C9b4 on C9b3 |
+| HQ-6a.1, HQ-6a.2 | untimed closures (ADR-A105): the model and reference semantics, then the compilers | D | merged and tagged: HQ-6a.1 2026-10-12, HQ-6a.2 2026-10-16 (`executable-v0.7.0`) | |
+| C9b3, C9b4, C9d, C9c, C8a | set comparisons, qualifying rules, materiality, incorporation, template library | D | planned. C9b3 to brief next | C9b4 on C9b3 |
 | C16c | remove Party's shares | F | planned, required before the epic closes | C9b4 |
 | C7a | regimes and gating, split from C7 | D | merged to `main` (`c6e5853`) and tagged | |
 | C12, C13 | runtime evaluator, relation plans | E | waiting | C9, C11, C11a, AIR-3.3, NRS N1 |
@@ -176,3 +180,5 @@ then create and push the tag `executable-v0.7.0`.
 - 2026-10-12: HQ-6a.1 merged and tagged. HQ-6a.2 started in its own worktree. Its examples state the compilers' outcomes under closures (15 tests red, as expected). HQ6a2-Q1 to Q3 answered as leaned: reliance as a `?closure` column per row, only where completeness decided, a profile naming the union of its conditions' closures, the compilers minting no records (C12 does), and the reference returning reliance. Recorded in the plan and an ADR-A105 addendum
 - 2026-10-12: HQ-6a.2's model phase written, not yet run: Executable 0.7.0 with `exe:NoClosureLicence`, the IR carrying a binding's closure and refusing an unlicensed one, SPARQL deciding on completeness only under a closure with a `?closure` column and a profile's `?closures`, SHACL following through the shared select, and the reference's `decide_condition_with_reliance`. `build:mtp` moves no pins, since the MTP hashes MORK's own terms only. Validation Pack written
 - 2026-10-12: HQ-6a.2 accepted by the maintainer (commit `349ccfa2`), who asked us to complete the slice autonomously. Verification found three things, fixed: an unterminated string in `profile_select`, AIR32-08 still expecting an open every-value reading to decide (its binding now names a closure, and the open case is asserted Undetermined, for countersignature), and `exe:NoClosureLicence` missing from the pinned diagnostic set. `check:full-sweep` passes, all 14 checks. Four adversarial probes, our pick, each caught: open bindings read as closed (5 tests fail), a closure with no source accepted (HQ6a2-07), a profile dropping reliance (HQ6a2-08), and the reference deciding reliance after negation (`TestReliance`). A first reference probe was an equivalent mutant, recorded in the Validation Pack
+- 2026-10-27: status corrected. HQ-6a.2 was merged into `main` on 2026-10-16 and tagged `executable-v0.7.0`, but the record still asked for the merge and the tag. The AIR32-08 countersignature is not recorded and is the maintainer's remaining item. C9b3 is next to brief
+- 2026-10-27: the maintainer countersigned HQ-6a.2's AIR32-08 change under the non-weakening rule, recorded in its Validation Pack. HQ-6a is complete
