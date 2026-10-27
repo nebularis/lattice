@@ -4446,6 +4446,13 @@ flowchart TB
 
 **C9b3a-Q4. The ADR.** The plan gives C9b3 its own ADR. (a) One ADR, ADR-A136, "Set comparisons and aggregate bindings", drafted Proposed in C9b3a with both decisions already taken (C9b3-Q2 (a′), C9b3-Q3 (x)), and C9b3b adding its implementation note. (b) One ADR per sub-slice. **Leaning (a):** the two share the reading of a set from a subject and its closure, and one record says it once.
 
+**Answers (2026-10-27):**
+
+- **Q1 (a),** `elg:testedBinding` and `elg:referenceBinding`.
+- **Q2, open.** The maintainer declined (a), since it makes drafting state existence as a set operation, and a flag. The lead's proposal, (c), takes existence as the count it is in drafting: "not fewer than one holder", like any quorum, is an aggregate condition, `qnt:Count` over the tested binding read by an interval condition from 1, built with aggregate bindings in C9b3b. A comparison keeps L15's reading of an empty set, which "each Subsidiary" needs, and C9b3a adds no term for existence. C9b3a goes ahead on that basis, since neither (c) nor any other option yet named changes what C9b3a builds.
+- **Q3 (a),** IRIs only for now.
+- **Q4 (a),** ADR-A136, drafted Proposed in C9b3a.
+
 **Decided by precedent, not asked:**
 
 - `elg:SetComparison` is an `elg:Condition` with a match strategy (`elg:ExactMatch` or `elg:HierarchicalMatch`, with its hierarchy relation) and one `elg:comparison` from a closed set, `elg:Subset`, `elg:Intersects` and `elg:Disjoint`. It names no required or excluded concept, since the reference set takes their place
