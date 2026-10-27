@@ -10,8 +10,6 @@ carries these answers with a probe each, and these are the probes. The engines d
 
 from __future__ import annotations
 
-import time
-
 import pytest
 from rdflib import Literal, URIRef
 
@@ -140,41 +138,7 @@ def test_h2_4b_t3_p2_a_request_that_fails_at_its_second_operation_keeps_or_loses
         assert _p2("DROP GRAPH <urn:absent>") == (True, False)  # an error at run time, and the first insert is rolled back
 
 
-# ---- P3 a correlated GRAPH ?g in an inner group -------------------------------------------------------------------------
-
-
-def _oxigraph_version() -> tuple[int, ...]:
-    import pyoxigraph
-
-    return tuple(int(part) for part in pyoxigraph.__version__.split(".")[:3])
-
-
-def _p3_ratio(triples: int = 3000, graphs: int = 100) -> float:
-    def timed(count: int) -> float:
-        ds = engines.dataset()
-        for i in range(count):
-            g = ds.graph(U(f"urn:g:{i}"))
-            for j in range(triples):
-                g.add((U(f"urn:s{j}"), U("urn:p"), Literal(j)))
-        best = float("inf")
-        for _ in range(3):
-            start = time.perf_counter()
-            rows = ds.query("SELECT (COUNT(*) AS ?n) WHERE { BIND(<urn:g:0> AS ?g) OPTIONAL { GRAPH ?g { ?s ?p ?o } } }")
-            best = min(best, time.perf_counter() - start)
-            assert int(list(rows)[0][0]) == triples
-        return best
-
-    return timed(graphs) / timed(1)
-
-
-def test_h2_4b_t4_p3_a_graph_variable_bound_outside_does_not_make_the_query_scan_every_graph(request):
-    """100 graphs of equal size, against 1. A store that evaluated the inner group before the join would take about 100
-    times as long. Both engines pass the binding in (the cost note of H2.3-Q2), so `compile` has no reason yet to choose
-    the caller-named graph for a store. The bound is wide, since the measure is a ratio of two timings of one machine."""
-    if _current() == "oxigraph" and _oxigraph_version() >= (0, 5, 13):
-        # Strict, so a release that passes the binding in again fails here and the marker comes off (TSD-Q22).
-        request.applymarker(pytest.mark.xfail(strict=True, reason="Oxigraph 0.5.13 reads every graph under a left join (TSD-42)"))
-    assert _p3_ratio() < 8
+# ---- P3 a correlated GRAPH ?g in an inner group is a cost measure, and lives in benchmark/persistence-store-probes (TSD-42, MSC-4) ----
 
 
 # ---- P4 an unbound graph variable in a template ------------------------------------------------------------------------

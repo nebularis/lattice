@@ -275,6 +275,11 @@ depends = ["bootstrap:testing-oxigraph"]
 description = "Measure full, delta and in-place-with-patch-log membership on rdflib and Oxigraph (ADR-A124, formal-methods H2.6f). Run on demand, not part of check. Fails on a wrong count, never on time. MEMBERSHIP_COST_MAX caps the versions"
 run = "python -m pytest benchmark/persistence-membership -q -p no:cacheprovider && python benchmark/persistence-membership/check.py"
 
+[tasks."check:persistence-store-probes"]
+depends = ["bootstrap:testing-oxigraph"]
+description = "Measure what a graph variable bound outside an OPTIONAL costs on rdflib, Oxigraph and Jena when it is available, in four forms, per engine version (ADR-A124, TSD-42, TSD-Q22). Run on demand, not part of check. Fails on a wrong count, never on time. STORE_PROBES_QUICK=1 uses a smaller store"
+run = "python -m pytest benchmark/persistence-store-probes -q -p no:cacheprovider && python benchmark/persistence-store-probes/check.py"
+
 [tasks."check:persistence-composite-cost"]
 depends = ["bootstrap:testing-oxigraph"]
 description = "Measure the composite replace on rdflib and Oxigraph (ADR-A124, TD-42). Run on demand, not part of check. Fails on a wrong result, never on time. COMPOSITE_COST_MAX caps the size"

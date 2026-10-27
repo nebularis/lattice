@@ -30,7 +30,7 @@ Our generated SPARQL is tested on Oxigraph by default and on rdflib before a mer
 
 - **Base.** The unit starts from `ccs-trunk` at the commit that adds this plan, since it needs TSD-41 to TSD-43, the aggregate matrix and `check:mork-compilers`' engine switch, which are not yet on `main`. It has its own integration branch, `multi-store-conformance` (see the operating rule under Answers). `multi-store-conformance` merges into `main` only after `ccs-trunk` has, and takes `main` back in before it does.
 - **Files shared with other work.** Keep edits to these small, and append rather than rewrite: `mise.toml` (new tasks, and the engine lists of existing conformance tasks), `tools/persistence/tests/engines.py` (one registry entry and one branch in `dataset`), `tools/mork_compilers/src/mork_compilers/engines.py` (the same), `docs/architecture/triple-store-discovery.md` (new entries and rows only), `docs/architecture/efficient-queries-and-shapes.md`, `repository-catalogue.md`, the registers.
-- **Reserved identifiers,** so this unit and the CCS unit never collide: TSD-50 to TSD-69, TSD-Q30 to TSD-Q39, run records R-S to R-Z (the CCS unit stays below R-S), TD-100 to TD-109, STD-290 to STD-299, CAP-90 to CAP-99, PDD-30 to PDD-34. CAP-90 is registered with this plan.
+- **Reserved identifiers,** so this unit and the CCS unit never collide: store findings numbered 50 to 69 and their open questions 30 to 39, run records lettered S to Z (the CCS unit stays below S), debt rows 100 to 109, standards 290 to 299, capabilities 90 to 99, pending decisions 30 to 34. CAP-90 is registered with this plan.
 
 ## Rules for whoever builds it
 

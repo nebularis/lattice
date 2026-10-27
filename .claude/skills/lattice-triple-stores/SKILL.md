@@ -50,7 +50,9 @@ Add an entry to the record in the shape of its §6.0, and a row to its §5 table
 Then:
 
 - Turn the probe into a test, under `tools/persistence/tests/test_store_probes.py` or the tool it concerns, opting in to every
-  engine with `@engines.each_engine`, so a change in a store fails a test.
+  engine with `@engines.each_engine`, so a change in a store fails a test. A probe of cost is not a test: it goes to a benchmark
+  under `benchmark/`, which reports per engine and version and fails only on a wrong result, never on time (ADR-A124, STD-290),
+  as `benchmark/persistence-store-probes` does for TSD-42.
 - Point the documents that rely on the behaviour at the finding, and correct any that it contradicts, with a dated note.
 - A finding that turns out wrong is corrected in place, dated, and its story goes in the record's §7.
 
