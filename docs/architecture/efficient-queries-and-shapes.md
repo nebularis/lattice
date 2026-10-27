@@ -69,7 +69,7 @@ This is the part to read first. The rules in §4 and §5 are not equally general
 | R4 | Prefer `FILTER NOT EXISTS` to `GROUP BY … HAVING COUNT` for absence | the forms mean the same | 1.4 times on one rule, noise on `OPTIONAL` plus `!BOUND` | noise | little anywhere, take it when rewriting |
 | R5 | A shape's cost is its focus nodes times one run, so target narrowly | the specification defines a constraint per focus node | one run per focus node, 15,713 runs for one rule | pySHACL runs only on rdflib | **pySHACL** (Source) |
 | R6 | Never write a constant `FILTER` to make a query fail | a constant false filter removes every solution | **dropped**, so it removes none (TSD-32) | correct | **rdflib defect**, a correctness rule |
-| R9 | Never aggregate an expression that can error on a row of its group, so coalesce it first | an aggregate over an error is an error for `GROUP_CONCAT`, `SUM` and `AVG`, and `COUNT` removes it (§18.5.1) | **skips the row** for `GROUP_CONCAT`, `SUM` and `AVG`, and counts it for `COUNT(expr)` (TSD-41) | unbound for `GROUP_CONCAT`, `SUM` and `AVG`, and for `COUNT(expr)` | **rdflib and Oxigraph defects**, a correctness rule, and the specification's own for `GROUP_CONCAT` and `SUM` |
+| R9 | Say what a row with no value means before an aggregate meets it: filter it, give it a neutral element, or detect and propagate it | `COUNT` removes an error row, `SUM`, `AVG` and `GROUP_CONCAT` are errors over one, `MIN` is unbound, and the engines differ, so a bare aggregate or a blanket coalesce gives a different or a wrong answer (TSD-41, TSD-43) | **skips the row** for `GROUP_CONCAT`, `SUM` and `AVG`, and counts it for `COUNT(expr)` (TSD-41) | unbound for `GROUP_CONCAT`, `SUM` and `AVG`, and for `COUNT(expr)` | **rdflib and Oxigraph defects**, a correctness rule, and the specification's own for `GROUP_CONCAT` and `SUM` |
 | H1 | Translate each distinct query text once | none | parsing is 20 ms of a 20 ms run, 0.5 ms when prepared (E5) | 0.17 ms for parse and run | **rdflib** |
 | H2 | Sort the `PREFIX` block before keying a cache | order does not matter | pySHACL writes it in a varying order | not applicable | **pySHACL** |
 | H3 | Parse a fixture once and copy it | blank-node labels are minted fresh by every parser | two parses never match as sets | the same | **any parser** |
@@ -256,9 +256,17 @@ reports the suite produces (§6.3), with `mise run dev:record-validations`, and 
 **Do.** A property path with `*` or `+`, or a long alternation, written with its unbound end first enumerates from there. Start from the end that is bound or restricted. **Evidence:** Reasoned, and consistent with the
 instrument word-use query, where the sections stage (a `wrd:directlyComprises*` closure) cost 9.5 ms of 18 ms per template. We did not isolate it. **Scope.** unknown.
 
-### R9. Never aggregate an expression that can error on a row of its group
+### R9. Say what a row with no value means before an aggregate meets it
 
-**Do.** Coalesce the argument of an aggregate to a value that is neutral for it, `COALESCE(STR(?x), "")` for `GROUP_CONCAT` and `COALESCE(?x, 0)` for `SUM`, or test it inside the argument as `SUM(IF(COALESCE(?x, "") = "a", 1, 0))` does. A group whose rows leave a variable unbound, as an `OPTIONAL` or a branch of a `UNION` does, otherwise gives a different answer on each engine. **Why.** Under SPARQL 1.1 §18.5.1 an aggregate over an error is an error for `GROUP_CONCAT`, `SUM` and `AVG`, so the variable is unbound, which is what Oxigraph does, while rdflib skips the row. `COUNT` removes the error before counting, which neither engine does for `COUNT(STR(?x))`. `COUNT(?x)`, `COUNT(*)` and `SAMPLE` agree on both ([TSD-41](triple-store-discovery.md#tsd-41-an-aggregate-over-an-expression-that-errors-on-one-row-of-a-group-is-unbound-on-oxigraph-and-skips-the-row-on-rdflib)). A coalesced `GROUP_CONCAT` puts the empty element at either end of the string by the engine's order of the group, so build a list of known members from one coalesced flag per member, as the profile query's `?closures` does, or trim the result. **Evidence:** Source and Observed, on rdflib 7.6.0 and Oxigraph 0.5.11 and 0.5.13. **Scope.** a correctness rule for both engines, and a portability rule for everyone.
+**Do.** An aggregate whose argument can be unbound, or can error, on a row of its group (an `OPTIONAL`, a branch of a `UNION`, `STR` of a blank node, arithmetic on a term that is not a number) is written with one of three meanings for that row, chosen from what the query is for.
+
+1. The row is not a member of the group. Filter it out inside the group with a test of the type the aggregate needs (`FILTER(isNumeric(?x))` for `SUM`, `AVG`, `MIN` and `MAX`), since `BOUND` alone leaves an IRI. State what the filter does to `COUNT(*)`, and to the group under `GROUP BY` where every row of a group goes.
+2. The row contributes the aggregate's neutral element, where one exists and absence contributes nothing. `SUM(COALESCE(?x, 0))`, `MAX(COALESCE(?x, floor))` where `floor` is below every value, a flag `SUM(IF(COALESCE(?x, "") = "k", 1, 0))`. `AVG`, `MIN` and `GROUP_CONCAT` have none. Build a list from one flag per known member and not from `GROUP_CONCAT(COALESCE(...))`, which leaves an empty element and a stray separator.
+3. The row makes the answer unknown. Detect it and propagate it, as `IF(COUNT(?x) = COUNT(*), <aggregate over the coalesced argument>, 1/0)`, or project `COUNT(*) - COUNT(?x)` beside the aggregate for the consumer to read. Use `COUNT(?x)` and `COUNT(*)` for the test and never `COUNT(<expression>)`.
+
+**Don't.** Pass a bare optional variable, or an expression that can error, to `SUM`, `AVG`, `MIN`, `MAX` or `GROUP_CONCAT`, or to `COUNT` as an expression, and rely on what the engine does with the row.
+
+**Why.** Under SPARQL 1.1 §18.5.1 `COUNT` removes an error row, `SUM`, `AVG` and `GROUP_CONCAT` are errors over one, and `MIN` is unbound, so the variable is unbound. What `MAX` gives is open. rdflib skips the row, `COUNT(expr)` differs on every engine, and a coalesce can change what the group means, for example `SUM(COALESCE(?w, 0))` cannot tell a missing weight from a zero and `AVG(COALESCE(?x, 0))` changes the denominator ([TSD-41](triple-store-discovery.md#tsd-41-an-aggregate-over-an-expression-that-errors-on-one-row-of-a-group-is-unbound-on-oxigraph-and-skips-the-row-on-rdflib), [TSD-43](triple-store-discovery.md#tsd-43-what-an-aggregate-does-with-a-row-that-has-no-value-or-errors-for-every-aggregate-and-what-each-remedy-does)). **Evidence:** Source, Observed and Documented, on rdflib 7.6.0, Oxigraph 0.5.13 and Jena ARQ 5.1.0. **Scope.** a correctness rule for every engine.
 
 ### 4.1 A checklist for a new constraint query
 
@@ -267,7 +275,7 @@ instrument word-use query, where the sections stage (a `wrd:directlyComprises*` 
 3. How many focus nodes will the target have in the largest data the tests build (R5)?
 4. Does a test make it fail, and is its cost per focus node measured on a graph of realistic size (R7, §6)?
 5. Does it use a constant filter, a `GROUP BY` on `$this`, or a projection of `$this` that a text-substituting engine would break (R6, TSD-33)?
-6. Does any aggregate take an expression that is unbound or errors on some row of its group (R9, TSD-41)?
+6. Does every aggregate whose argument can be unbound or error on some row say what that row means, filtered, neutral or detected (R9, TSD-41, TSD-43)?
 
 ## 5. Rules for the test harness
 
