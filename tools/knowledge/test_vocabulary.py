@@ -110,7 +110,7 @@ def test_status_is_a_closed_set_of_typed_individuals(graph: rdflib.Graph):
     Complete, all four of which an earlier draft declared. A status declared in anticipation makes
     the vocabulary wider than the corpus, so one is added when a document first uses it."""
     statuses = {_local(s) for s in graph.subjects(rdflib.RDF.type, rdflib.URIRef(KI + "Status"))}
-    assert statuses == {"Proposed", "Accepted", "Superseded", "Open"}
+    assert statuses == {"Proposed", "Accepted", "Superseded", "Open", "Answered"}
 
 
 def test_the_vocabulary_sits_outside_the_substrate_release(graph: rdflib.Graph):

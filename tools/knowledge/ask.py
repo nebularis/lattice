@@ -146,7 +146,7 @@ SELECT ?subject ?direction ?id ?kind ?status ?claim WHERE {
 POINTERS = (
     PREFIXES
     + """
-SELECT ?subject ?pointer WHERE { GRAPH ?g { ?subject ki:pointer ?pointer } }"""
+SELECT ?subject ?p ?pointer WHERE { GRAPH ?g { ?subject ?p ?pointer . VALUES ?p { ki:row ki:pointer } } }"""
 )
 
 # Every entry with a claim, with the facets find filters on. One fixed query and a filter in Python,
@@ -382,12 +382,21 @@ def read_ranges(db: ox.Store, identifier: str) -> list[tuple[str, str]]:
     is answered by rebuilding."""
     subject = ox.NamedNode(KI + "node/" + identifiers.normalise(identifier))
     found: list[tuple[str, str]] = []
-    for row in db.query(POINTERS, substitutions={ox.Variable("subject"): subject}):
+    # The defining register row first, then what the row points at, labelled as such.
+    rows = sorted(db.query(POINTERS, substitutions={ox.Variable("subject"): subject}), key=lambda r: r["p"].value != KI + "row")
+    for row in rows:
         for part in str(row["pointer"].value).split(","):
             path, start, end = anchors.parse_range(part)
             lines = (ROOT / path).read_text(encoding="utf-8", errors="replace").splitlines()
             last = len(lines) if end is None else min(end, len(lines))
-            found.append((f"{path}:{start}-{last}", "\n".join(lines[start - 1 : last])))
+            where = f"{path}:{start}-{last}"
+            if row["p"].value == KI + "row":
+                where = f"row {where}"
+            elif any(w == f"row {where}" for w, _ in found):
+                continue
+            else:
+                where = f"pointed-at {where}" if found else where
+            found.append((where, "\n".join(lines[start - 1 : last])))
     return found
 
 

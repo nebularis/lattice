@@ -29,7 +29,7 @@ run = "python tools/hooks.py install --bootstrap"
 [tasks."bootstrap:python"]
 description = "Install every Python package of the repository into this checkout's .venv in one resolve"
 depends = ["bootstrap:pip"]
-run = "python -m pip install -c requirements-lock.txt \".[reasoning,test,knowledge]\" -e \"./workers[test,authoring]\" -e ./tools/mork -e \"./tools/mork_compilers[test]\" -e ./tools/surface -e ./packages/persistence/python -e \"./tools/persistence[test]\" -e \"./tools/vocabulary[test]\" -e \"./tools/reference/eligibility[test]\" -e \"./packages/minting/python[test]\" -e \"./tools/testing/oxigraph[test]\" -e \"./tools/testing/mem_check[test]\""
+run = "python -m pip install -c requirements-lock.txt \".[reasoning,test,knowledge]\" -e \"./workers[test,authoring]\" -e ./tools/mork -e \"./tools/mork_compilers[test]\" -e ./tools/surface -e ./packages/persistence/python -e \"./tools/persistence[test]\" -e \"./tools/vocabulary[test]\" -e \"./tools/reference/eligibility[test]\" -e \"./packages/minting/python[test]\" -e \"./tools/testing/oxigraph[test]\" -e \"./tools/testing/jena[test]\" -e \"./tools/testing/sparql_probes[test]\" -e \"./tools/testing/mem_check[test]\""
 
 # The knowledge index, after the packages it needs (ADR-A134 decision 13). The first build fetches
 # the embedding model, and where that is blocked it notes why and still builds, so bootstrap never
@@ -79,6 +79,36 @@ run = "python -m pip install -e ./packages/persistence/python -e \"./tools/persi
 depends = ["bootstrap:pip"]
 description = "Install the Oxigraph test-support package, the default engine of the persistence tests (ADR-A125)"
 run = "python -m pip install -e \"./tools/testing/oxigraph[test]\""
+
+[tasks."bootstrap:testing-jena"]
+depends = ["bootstrap:pip", "bootstrap:sparql-testkit"]
+description = "Build the Jena testkit jar and install the Jena test-support package, the third engine of the conformance runs (ADR-A125). Tests skip without the jar"
+run = "python -m pip install -e \"./tools/testing/jena[test]\""
+
+[tasks."check:testing-jena"]
+depends = ["bootstrap:testing-jena"]
+description = "Run the Jena test-support package's own tests (ADR-A125)"
+run = "python -m pytest tools/testing/jena/tests -q"
+
+[tasks."bootstrap:testing-sparql-probes"]
+depends = ["bootstrap:testing-oxigraph", "bootstrap:testing-jena"]
+description = "Install the engine probes package and the three engines it runs on (ADR-A125)"
+run = "python -m pip install -e \"./tools/testing/sparql_probes[test]\""
+
+[tasks."check:sparql-probes-conformance"]
+depends = ["bootstrap:testing-sparql-probes"]
+description = "Run the engine probes (the aggregate-over-an-error matrix, TSD-43) on rdflib, Oxigraph and Jena ARQ, with Jena executed, and the Jena package's own tests. Run on demand and before a merge into main, not part of check (ADR-A125). SPARQL_PROBES_REQUIRED=1 fails where an engine is missing instead of skipping it"
+run = "python -m pytest tools/testing/sparql_probes/tests tools/testing/jena/tests -q"
+env = { SPARQL_PROBES_REQUIRED = "1" }
+
+[tasks."check:conformance"]
+description = "Run every conformance task in turn, so one command checks every engine before a merge into main (ADR-A125, MSC-Q5). Each task is on demand and none is part of check. Add a conformance task here when a suite gains one"
+run = [
+  { task = "check:persistence-conformance" },
+  { task = "check:mork-compilers-conformance" },
+  { task = "check:reference-eligibility-conformance" },
+  { task = "check:sparql-probes-conformance" },
+]
 
 [tasks."bootstrap:testing-mem-check"]
 depends = ["bootstrap:pip"]
@@ -250,9 +280,10 @@ run = "python -m pytest tools/testing/oxigraph/tests tools/persistence/tests -q 
 env = { PERSISTENCE_ENGINES_REQUIRED = "1" }
 
 [tasks."check:persistence-conformance"]
-description = "Run the persistence tests on every engine we have (rdflib and Oxigraph) and the conformance tests that check:persistence leaves out: the generated SPARQL on rdflib, the hash-seed sweeps and the probes of each engine's behaviour (ADR-A125). Run on demand and before a merge into main, not part of check. A new engine is added to PERSISTENCE_ENGINES here"
+depends = ["bootstrap:testing-jena"]
+description = "Run the persistence tests on every engine we have (rdflib, Oxigraph and Jena ARQ in memory) and the conformance tests that check:persistence leaves out: the generated SPARQL on rdflib, the hash-seed sweeps and the probes of each engine's behaviour (ADR-A125). Run on demand and before a merge into main, not part of check. A new engine is added to PERSISTENCE_ENGINES here"
 run = "python -m pytest tools/testing/oxigraph/tests tools/persistence/tests -q -n auto --dist loadgroup"
-env = { PERSISTENCE_ENGINES = "rdflib,oxigraph", PERSISTENCE_ENGINES_REQUIRED = "1" }
+env = { PERSISTENCE_ENGINES = "rdflib,oxigraph,jena", PERSISTENCE_ENGINES_REQUIRED = "1" }
 
 [tasks."check:persistence-expected-profiles"]
 description = "Check that the expected compiled profiles under ontology/persistence/test/expected-profiles are what the builders and compile give now (formal-methods H2.6). Fails with the names of the stale files. Part of check:persistence"
@@ -275,6 +306,11 @@ depends = ["bootstrap:testing-oxigraph"]
 description = "Measure full, delta and in-place-with-patch-log membership on rdflib and Oxigraph (ADR-A124, formal-methods H2.6f). Run on demand, not part of check. Fails on a wrong count, never on time. MEMBERSHIP_COST_MAX caps the versions"
 run = "python -m pytest benchmark/persistence-membership -q -p no:cacheprovider && python benchmark/persistence-membership/check.py"
 
+[tasks."check:persistence-store-probes"]
+depends = ["bootstrap:testing-oxigraph"]
+description = "Measure what a graph variable bound outside an OPTIONAL costs on rdflib, Oxigraph and Jena when it is available, in four forms, per engine version (ADR-A124, TSD-42, TSD-Q22). Run on demand, not part of check. Fails on a wrong count, never on time. STORE_PROBES_QUICK=1 uses a smaller store"
+run = "python -m pytest benchmark/persistence-store-probes -q -p no:cacheprovider && python benchmark/persistence-store-probes/check.py"
+
 [tasks."check:persistence-composite-cost"]
 depends = ["bootstrap:testing-oxigraph"]
 description = "Measure the composite replace on rdflib and Oxigraph (ADR-A124, TD-42). Run on demand, not part of check. Fails on a wrong result, never on time. COMPOSITE_COST_MAX caps the size"
@@ -282,7 +318,7 @@ run = "python -m pytest benchmark/persistence-composite-cost -q -p no:cacheprovi
 
 [tasks."check:sparql-constraint-query-cost"]
 depends = ["bootstrap:testing-oxigraph"]
-description = "Measure the forms of a SHACL-SPARQL constraint query on rdflib and Oxigraph (ADR-A124, ADR-A128). Run on demand, not part of check. Fails on a wrong result, never on time. SPARQL_COST_QUICK=1 runs the smallest sizes"
+description = "Measure the forms of a SHACL-SPARQL constraint query on rdflib, Oxigraph and Jena when its test kit is built (ADR-A124, ADR-A128, TSD-Q18). Run on demand, not part of check. Fails on a wrong result, never on time. SPARQL_COST_QUICK=1 runs the smallest sizes"
 run = "python -m pytest benchmark/sparql-constraint-query-cost -q -p no:cacheprovider && python benchmark/sparql-constraint-query-cost/check.py"
 
 [tasks."check:ledger-graph-partition"]
@@ -306,6 +342,25 @@ run = "python -m pytest tools/vocabulary/tests -q"
 [tasks."check:reference-eligibility"]
 description = "Run Eligibility's hand-written reference semantics and its differential tests against tools/mork_compilers (kernel, denotation, laws L9-L16; formal-methods track B1/B2, ADR-A-FM3)"
 run = "python -m pytest tools/reference/eligibility/tests -q"
+
+[tasks."check:reference-eligibility-conformance"]
+description = "Run Eligibility's differential tests on rdflib and on Jena (MSC-3). They run the compilers' generated SPARQL through mork_compilers.engines, so MORK_SPARQL_ENGINE picks the engine. check:reference-eligibility keeps Oxigraph. Run on demand and before a merge into main, not part of check (ADR-A125)"
+depends = ["bootstrap:testing-jena"]
+run = [
+  { task = "check:reference-eligibility-conformance:rdflib" },
+  { task = "check:reference-eligibility-conformance:jena" },
+]
+
+[tasks."check:reference-eligibility-conformance:rdflib"]
+description = "Eligibility's tests with the compilers' SPARQL on rdflib (part of check:reference-eligibility-conformance)"
+run = "python -m pytest tools/reference/eligibility/tests -q"
+env = { MORK_SPARQL_ENGINE = "rdflib" }
+
+[tasks."check:reference-eligibility-conformance:jena"]
+description = "Eligibility's tests with the compilers' SPARQL on Jena ARQ (part of check:reference-eligibility-conformance)"
+depends = ["bootstrap:testing-jena"]
+run = "python -m pytest tools/reference/eligibility/tests -q"
+env = { MORK_SPARQL_ENGINE = "jena" }
 
 [tasks."check:formal-freshness"]
 description = "Check every tools/proofs/<layer>/Kernel.thy and tools/reference/<layer>/ law-coverage still matches its layer's literate README (formal-methods epic, epic principle E1)"
@@ -392,10 +447,23 @@ description = "Run the MORK backend compiler tests, including generated SPARQL e
 run = "python -m pytest tools/mork_compilers -q -n auto"
 env = { MORK_SPARQL_ENGINE = "oxigraph" }
 
-[tasks."check:mork-compilers-conformance"]
-description = "Run the MORK backend compiler tests on rdflib. Run on demand and before a merge into main, not part of check, so a query that depends on one engine's reading of the specification stays visible (TSD-41)"
+[tasks."check:mork-compilers-conformance:rdflib"]
+description = "Run the MORK backend compiler tests on rdflib. Part of check:mork-compilers-conformance, so a query that depends on one engine's reading of the specification stays visible (TSD-41)"
 run = "python -m pytest tools/mork_compilers -q -n auto"
 env = { MORK_SPARQL_ENGINE = "rdflib" }
+
+[tasks."check:mork-compilers-conformance:jena"]
+description = "Run the MORK backend compiler tests on Apache Jena ARQ, through the test kit of tools/testing/jena (MSC-3). Part of check:mork-compilers-conformance. Fails where the kit is not built, since a silent skip would pass the run without Jena"
+depends = ["bootstrap:testing-jena"]
+run = "python -m pytest tools/mork_compilers -q -n auto"
+env = { MORK_SPARQL_ENGINE = "jena" }
+
+[tasks."check:mork-compilers-conformance"]
+description = "Run the MORK backend compiler tests on rdflib and on Jena, one task per engine. Run on demand and before a merge into main, not part of check (ADR-A125). check:mork-compilers keeps Oxigraph"
+run = [
+  { task = "check:mork-compilers-conformance:rdflib" },
+  { task = "check:mork-compilers-conformance:jena" },
+]
 [tasks."check:ontology-versioning"]
 description = "Flag any ontology .ttl file changed without its owl:versionIRI, any shapes/projection file changed without its directory's .version, a missing version, or a current version with no release row (ADR-A86)"
 run = "python tools/ontology_version_check.py && python tools/ontology_releases.py check"
@@ -447,6 +515,14 @@ run = "mvn -q -f platform/pom.xml -pl reasoning-testkit -am package -DskipTests"
 [tasks."check:reasoning-testkit"]
 description = "Run the reasoning harness self-tests (ADR-A83)"
 run = "mvn -q -f platform/pom.xml -pl reasoning-testkit -am verify"
+
+[tasks."bootstrap:sparql-testkit"]
+description = "Build the test-only Jena ARQ harness jar, the engine of tools/testing/jena (ADR-A125). Tests that need it skip without it"
+run = "mvn -q -f platform/pom.xml -pl sparql-testkit -am package -DskipTests"
+
+[tasks."check:sparql-testkit"]
+description = "Run the Jena harness self-tests and build its jar (ADR-A125)"
+run = "mvn -q -f platform/pom.xml -pl sparql-testkit -am verify"
 
 [tasks."check:reasoning-isolation"]
 description = "Fail when a reasoner, rules engine or JVM bridge is declared outside platform/reasoning-testkit (ADR-A83)"
